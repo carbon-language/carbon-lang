@@ -343,8 +343,8 @@ void BBState::MergePred(const BBState &Other) {
   // For each entry in the other set, if our set has an entry with the same key,
   // merge the entries. Otherwise, copy the entry and merge it with an empty
   // entry.
-  for (ptr_const_iterator MI = Other.top_down_ptr_begin(),
-       ME = Other.top_down_ptr_end(); MI != ME; ++MI) {
+  for (auto MI = Other.top_down_ptr_begin(), ME = Other.top_down_ptr_end();
+       MI != ME; ++MI) {
     std::pair<ptr_iterator, bool> Pair = PerPtrTopDown.insert(*MI);
     Pair.first->second.Merge(Pair.second ? PtrState() : MI->second,
                              /*TopDown=*/true);
@@ -352,8 +352,7 @@ void BBState::MergePred(const BBState &Other) {
 
   // For each entry in our set, if the other set doesn't have an entry with the
   // same key, force it to merge with an empty entry.
-  for (ptr_iterator MI = top_down_ptr_begin(),
-       ME = top_down_ptr_end(); MI != ME; ++MI)
+  for (auto MI = top_down_ptr_begin(), ME = top_down_ptr_end(); MI != ME; ++MI)
     if (Other.PerPtrTopDown.find(MI->first) == Other.PerPtrTopDown.end())
       MI->second.Merge(PtrState(), /*TopDown=*/true);
 }
@@ -387,8 +386,8 @@ void BBState::MergeSucc(const BBState &Other) {
   // For each entry in the other set, if our set has an entry with the
   // same key, merge the entries. Otherwise, copy the entry and merge
   // it with an empty entry.
-  for (ptr_const_iterator MI = Other.bottom_up_ptr_begin(),
-       ME = Other.bottom_up_ptr_end(); MI != ME; ++MI) {
+  for (auto MI = Other.bottom_up_ptr_begin(), ME = Other.bottom_up_ptr_end();
+       MI != ME; ++MI) {
     std::pair<ptr_iterator, bool> Pair = PerPtrBottomUp.insert(*MI);
     Pair.first->second.Merge(Pair.second ? PtrState() : MI->second,
                              /*TopDown=*/false);
@@ -396,8 +395,8 @@ void BBState::MergeSucc(const BBState &Other) {
 
   // For each entry in our set, if the other set doesn't have an entry
   // with the same key, force it to merge with an empty entry.
-  for (ptr_iterator MI = bottom_up_ptr_begin(),
-       ME = bottom_up_ptr_end(); MI != ME; ++MI)
+  for (auto MI = bottom_up_ptr_begin(), ME = bottom_up_ptr_end(); MI != ME;
+       ++MI)
     if (Other.PerPtrBottomUp.find(MI->first) == Other.PerPtrBottomUp.end())
       MI->second.Merge(PtrState(), /*TopDown=*/false);
 }
@@ -442,7 +441,7 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
   // MDNode it, attach a new MDNode onto it. If pointer is a result of
   // an instruction and does have a source MDNode attached to it, return a
   // reference to said Node. Otherwise just return 0.
-  if (Instruction *Inst = dyn_cast<Instruction>(Ptr)) {
+  if (auto *Inst = dyn_cast<Instruction>(Ptr)) {
     MDNode *Node;
     if (!(Node = Inst->getMetadata(NodeId))) {
       // We do not have any node. Generate and attatch the hash MDString to the
@@ -465,7 +464,7 @@ static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
         "An ARCAnnotationProvenanceSourceMDKind can only have 1 operand.");
       Hash = cast<MDString>(Node->getOperand(0));
     }
-  } else if (Argument *Arg = dyn_cast<Argument>(Ptr)) {
+  } else if (auto *Arg = dyn_cast<Argument>(Ptr)) {
     std::string str;
     raw_string_ostream os(str);
     os << "(" << Arg->getParent()->getName() << ",%" << Arg->getName()
@@ -2430,8 +2429,7 @@ HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
   if (DepInsts.size() != 1)
     return false;
 
-  CallInst *Call =
-    dyn_cast_or_null<CallInst>(*DepInsts.begin());
+  auto *Call = dyn_cast_or_null<CallInst>(*DepInsts.begin());
 
   // Check that the pointer is the return value of the call.
   if (!Call || Arg != Call)
@@ -2459,8 +2457,7 @@ FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
   if (DepInsts.size() != 1)
     return nullptr;
 
-  CallInst *Retain =
-    dyn_cast_or_null<CallInst>(*DepInsts.begin());
+  auto *Retain = dyn_cast_or_null<CallInst>(*DepInsts.begin());
 
   // Check that we found a retain with the same argument.
   if (!Retain || !IsRetain(GetBasicARCInstKind(Retain)) ||
@@ -2485,8 +2482,7 @@ FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
   if (DepInsts.size() != 1)
     return nullptr;
 
-  CallInst *Autorelease =
-    dyn_cast_or_null<CallInst>(*DepInsts.begin());
+  auto *Autorelease = dyn_cast_or_null<CallInst>(*DepInsts.begin());
   if (!Autorelease)
     return nullptr;
   ARCInstKind AutoreleaseClass = GetBasicARCInstKind(Autorelease);
