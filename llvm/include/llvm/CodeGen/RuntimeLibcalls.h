@@ -425,6 +425,10 @@ namespace RTLIB {
   /// getUINTTOFP - Return the UINTTOFP_*_* value for the given types, or
   /// UNKNOWN_LIBCALL if there is none.
   Libcall getUINTTOFP(EVT OpVT, EVT RetVT);
+
+  /// Return the SYNC_FETCH_AND_* value for the given opcode and type, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getATOMIC(unsigned Opc, MVT VT);
 }
 }
 
