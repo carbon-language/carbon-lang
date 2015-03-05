@@ -97,7 +97,7 @@ TEST(DWARFFormValue, SignedConstantForms) {
   // Check that we can handle big positive values, but that we return
   // an error just over the limit.
   auto UMax = createULEBFormValue(LLONG_MAX);
-  auto TooBig = createULEBFormValue(LLONG_MAX + 1);
+  auto TooBig = createULEBFormValue(uint64_t(LLONG_MAX) + 1);
   EXPECT_EQ(UMax.getAsSignedConstant().getValue(), LLONG_MAX);
   EXPECT_EQ(TooBig.getAsSignedConstant().hasValue(), false);
 
