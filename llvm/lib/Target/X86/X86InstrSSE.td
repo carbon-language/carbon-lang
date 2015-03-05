@@ -5902,7 +5902,6 @@ multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, string ExtTy, SDNode ExtO
             (!cast<I>(OpcPrefix#DQYrr) VR128:$src)>;
 
   // On AVX2, we also support 256bit inputs.
-  // FIXME: remove these patterns when the old shuffle lowering goes away.
   def : Pat<(v16i16 (ExtOp (v32i8 VR256:$src))),
             (!cast<I>(OpcPrefix#BWYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
   def : Pat<(v8i32 (ExtOp (v32i8 VR256:$src))),
