@@ -57,12 +57,12 @@ int main(int argc, char **argv) {
 // CHECK-foo-NOT: .so.[[PID]]
 //
 // CHECK-bar: PID: [[PID:[0-9]+]]
-// CHECK-bar: [[PID]].sancov: 1 PCs written
 // CHECK-bar: .so.[[PID]].sancov: 1 PCs written
+// CHECK-bar: [[PID]].sancov: 1 PCs written
 //
 // CHECK-foo-bar: PID: [[PID:[0-9]+]]
-// CHECK-foo-bar: [[PID]].sancov: 2 PCs written
 // CHECK-foo-bar: so.[[PID]].sancov: 1 PCs written
+// CHECK-foo-bar: [[PID]].sancov: 2 PCs written
 //
 // CHECK-report: AddressSanitizer: global-buffer-overflow
 // CHECK-report: PCs written

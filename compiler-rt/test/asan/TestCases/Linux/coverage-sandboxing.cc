@@ -78,8 +78,8 @@ int main(int argc, char **argv) {
 #endif
 
 // CHECK-vanilla: PID: [[PID:[0-9]+]]
-// CHECK-vanilla: [[PID]].sancov: 1 PCs written
 // CHECK-vanilla: .so.[[PID]].sancov: 258 PCs written
+// CHECK-vanilla: [[PID]].sancov: 1 PCs written
 
 // CHECK-sandbox: PID: [[PID:[0-9]+]]
 // CHECK-sandbox: 258 PCs written to packed file

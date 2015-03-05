@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
 // CHECK: PID: [[PID:[0-9]+]]
 // CHECK: [[PID]].sancov: 1 PCs written
-// CHECK: .so.[[PID]]
-// If we get coverage for both DSOs, it means the module wasn't unloaded and
-// this test is useless.
-// CHECK-NOT: .so.[[PID]]
+// CHECK: test_1.so.[[PID]]
+// CHECK: test_2.so.[[PID]]
+// Even though we've unloaded one of the libs we still dump the coverage file
+// for that lib (although the data will be inaccurate, it at all useful)
