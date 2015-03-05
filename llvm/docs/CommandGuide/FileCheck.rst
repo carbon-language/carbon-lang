@@ -364,7 +364,7 @@ simply uniquely match a single line in the file being verified.
 FileCheck Pattern Matching Syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The "``CHECK:``" and "``CHECK-NOT:``" directives both take a pattern to match.
+All FileCheck directives take a pattern to match.
 For most uses of FileCheck, fixed string matching is perfectly sufficient.  For
 some things, a more flexible form of matching is desired.  To support this,
 FileCheck allows you to specify regular expressions in matching strings,
