@@ -224,6 +224,7 @@ static void removeDuplicatesGCPtrs(SmallVectorImpl<const Value *> &Bases,
 /// call node. Also update NodeMap so that getValue(statepoint) will
 /// reference lowered call result
 static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
+                                       MachineBasicBlock *LandingPad,
                                        SelectionDAGBuilder &Builder) {
 
   ImmutableCallSite CS(StatepointSite.getCallSite());
@@ -245,15 +246,29 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
   Tmp->setTailCall(CS.isTailCall());
   Tmp->setCallingConv(CS.getCallingConv());
   Tmp->setAttributes(CS.getAttributes());
-  Builder.LowerCallTo(Tmp, Builder.getValue(ActualCallee), false);
+  Builder.LowerCallTo(Tmp, Builder.getValue(ActualCallee), false, LandingPad);
 
   // Handle the return value of the call iff any.
   const bool HasDef = !Tmp->getType()->isVoidTy();
   if (HasDef) {
-    // The value of the statepoint itself will be the value of call itself.
-    // We'll replace the actually call node shortly.  gc_result will grab
-    // this value.
-    Builder.setValue(CS.getInstruction(), Builder.getValue(Tmp));
+    if (CS.isInvoke()) {
+      // Result value will be used in different basic block for invokes
+      // so we need to export it now. But statepoint call has a different type
+      // than the actuall call. It means that standart exporting mechanism will
+      // create register of the wrong type. So instead we need to create
+      // register with correct type and save value into it manually.
+      // TODO: To eliminate this problem we can remove gc.result intrinsics
+      //       completelly and make statepoint call to return a tuple.
+      unsigned reg = Builder.FuncInfo.CreateRegs(Tmp->getType());
+      Builder.CopyValueToVirtualRegister(Tmp, reg);
+      Builder.FuncInfo.ValueMap[CS.getInstruction()] = reg;
+    }
+    else {
+      // The value of the statepoint itself will be the value of call itself.
+      // We'll replace the actually call node shortly.  gc_result will grab
+      // this value.
+      Builder.setValue(CS.getInstruction(), Builder.getValue(Tmp));
+    }
   } else {
     // The token value is never used from here on, just generate a poison value
     Builder.setValue(CS.getInstruction(), Builder.DAG.getIntPtrConstant(-1));
@@ -267,6 +282,15 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
   // Search for the call node
   // The following code is essentially reverse engineering X86's
   // LowerCallTo.
+  // We are expecting DAG to have the following form:
+  // ch = eh_label (only in case of invoke statepoint)
+  //   ch, glue = callseq_start ch
+  //   ch, glue = X86::Call ch, glue
+  //   ch, glue = callseq_end ch, glue
+  // ch = eh_label ch (only in case of invoke statepoint)
+  //
+  // DAG root will be either last eh_label or callseq_end.
+    
   SDNode *CallNode = nullptr;
 
   // We just emitted a call, so it should be last thing generated
@@ -276,8 +300,11 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
   SDNode *CallEnd = Chain.getNode();
   int Sanity = 0;
   while (CallEnd->getOpcode() != ISD::CALLSEQ_END) {
-    CallEnd = CallEnd->getGluedNode();
-    assert(CallEnd && "Can not find call node");
+    assert(CallEnd->getNumOperands() >= 1 &&
+           CallEnd->getOperand(0).getValueType() == MVT::Other);
+
+    CallEnd = CallEnd->getOperand(0).getNode();
+
     assert(Sanity < 20 && "should have found call end already");
     Sanity++;
   }
@@ -506,7 +533,9 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
   LowerStatepoint(ImmutableStatepoint(&CI));
 }
 
-void SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP) {
+void
+SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
+                                     MachineBasicBlock *LandingPad/*=nullptr*/) {
   // The basic scheme here is that information about both the original call and
   // the safepoint is encoded in the CallInst.  We create a temporary call and
   // lower it, then reverse engineer the calling sequence.
@@ -542,13 +571,12 @@ void SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP) {
   }
 #endif
 
-
   // Lower statepoint vmstate and gcstate arguments
   SmallVector<SDValue, 10> LoweredArgs;
   lowerStatepointMetaArgs(LoweredArgs, ISP, *this);
 
   // Get call node, we will replace it later with statepoint
-  SDNode *CallNode = lowerCallFromStatepoint(ISP, *this);
+  SDNode *CallNode = lowerCallFromStatepoint(ISP, LandingPad, *this);
 
   // Construct the actual STATEPOINT node with all the appropriate arguments
   // and return values.
@@ -634,7 +662,24 @@ void SelectionDAGBuilder::visitGCResult(const CallInst &CI) {
   assert(isStatepoint(I) &&
          "first argument must be a statepoint token");
 
-  setValue(&CI, getValue(I));
+  if (isa<InvokeInst>(I)) {
+    // For invokes we should have stored call result in a virtual register.
+    // We can not use default getValue() functionality to copy value from this
+    // register because statepoint and actuall call return types can be
+    // different, and getValue() will use CopyFromReg of the wrong type,
+    // which is always i32 in our case.
+    PointerType *CalleeType = cast<PointerType>(
+                                ImmutableStatepoint(I).actualCallee()->getType());
+    Type *RetTy = cast<FunctionType>(
+                                CalleeType->getElementType())->getReturnType();
+    SDValue CopyFromReg = getCopyFromRegs(I, RetTy);
+
+    assert(CopyFromReg.getNode());
+    setValue(&CI, CopyFromReg);
+  }
+  else {
+    setValue(&CI, getValue(I));
+  }
 }
 
 void SelectionDAGBuilder::visitGCRelocate(const CallInst &CI) {

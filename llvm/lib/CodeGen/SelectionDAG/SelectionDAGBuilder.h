@@ -606,6 +606,10 @@ public:
 
   void visit(unsigned Opcode, const User &I);
 
+  /// getCopyFromRegs - If there was virtual register allocated for the value V
+  /// emit CopyFromReg of the specified type Ty. Return empty SDValue() otherwise.
+  SDValue getCopyFromRegs(const Value *V, Type *Ty);
+
   // resolveDanglingDebugInfo - if we saw an earlier dbg_value referring to V,
   // generate the debug data structures now that we've seen its definition.
   void resolveDanglingDebugInfo(const Value *V, SDValue Val);
@@ -661,7 +665,9 @@ public:
   void UpdateSplitBlock(MachineBasicBlock *First, MachineBasicBlock *Last);
 
   // This function is responsible for the whole statepoint lowering process.
-  void LowerStatepoint(ImmutableStatepoint Statepoint);
+  // It uniformly handles invoke and call statepoints.
+  void LowerStatepoint(ImmutableStatepoint Statepoint,
+                       MachineBasicBlock *LandingPad = nullptr);
 private:
   std::pair<SDValue, SDValue> lowerInvokable(
           TargetLowering::CallLoweringInfo &CLI,

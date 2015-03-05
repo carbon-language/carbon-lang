@@ -1016,6 +1016,24 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
   }
 }
 
+/// getCopyFromRegs - If there was virtual register allocated for the value V
+/// emit CopyFromReg of the specified type Ty. Return empty SDValue() otherwise.
+SDValue SelectionDAGBuilder::getCopyFromRegs(const Value *V, Type *Ty) {
+  DenseMap<const Value *, unsigned>::iterator It = FuncInfo.ValueMap.find(V);
+  SDValue res;
+
+  if (It != FuncInfo.ValueMap.end()) {
+    unsigned InReg = It->second;
+    RegsForValue RFV(*DAG.getContext(), DAG.getTargetLoweringInfo(), InReg,
+                     Ty);
+    SDValue Chain = DAG.getEntryNode();
+    res = RFV.getCopyFromRegs(DAG, FuncInfo, getCurSDLoc(), Chain, nullptr, V);
+    resolveDanglingDebugInfo(V, res);
+  }
+
+  return res;
+}
+
 /// getValue - Return an SDValue for the given Value.
 SDValue SelectionDAGBuilder::getValue(const Value *V) {
   // If we already have an SDValue for this value, use it. It's important
@@ -1026,15 +1044,9 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
 
   // If there's a virtual register allocated and initialized for this
   // value, use it.
-  DenseMap<const Value *, unsigned>::iterator It = FuncInfo.ValueMap.find(V);
-  if (It != FuncInfo.ValueMap.end()) {
-    unsigned InReg = It->second;
-    RegsForValue RFV(*DAG.getContext(), DAG.getTargetLoweringInfo(), InReg,
-                     V->getType());
-    SDValue Chain = DAG.getEntryNode();
-    N = RFV.getCopyFromRegs(DAG, FuncInfo, getCurSDLoc(), Chain, nullptr, V);
-    resolveDanglingDebugInfo(V, N);
-    return N;
+  SDValue copyFromReg = getCopyFromRegs(V, V->getType());
+  if (copyFromReg.getNode()) {
+    return copyFromReg;
   }
 
   // Otherwise create a new SDValue and remember it.
@@ -2027,13 +2039,20 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
     case Intrinsic::experimental_patchpoint_i64:
       visitPatchpoint(&I, LandingPad);
       break;
+    case Intrinsic::experimental_gc_statepoint:
+      LowerStatepoint(ImmutableStatepoint(&I), LandingPad);
+      break;
     }
   } else
     LowerCallTo(&I, getValue(Callee), false, LandingPad);
 
   // If the value of the invoke is used outside of its defining block, make it
   // available as a virtual register.
-  CopyToExportRegsIfNeeded(&I);
+  // We already took care of the exported value for the statepoint instruction
+  // during call to the LowerStatepoint.
+  if (!isStatepoint(I)) {
+    CopyToExportRegsIfNeeded(&I);
+  }
 
   // Update successor info
   addSuccessorWithWeight(InvokeMBB, Return);
