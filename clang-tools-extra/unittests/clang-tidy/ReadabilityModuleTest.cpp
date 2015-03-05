@@ -89,7 +89,8 @@ TEST(NamespaceCommentCheckTest, FixWrongComments) {
             "} // namespace",
             runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
                                                   "} // namespace asdf"));
-  // Remove unknown comments.
+  // Remove unknown line comments. These are likely to be an unrecognized form
+  // of a namespace ending comment.
   EXPECT_EQ("namespace {\n"
             "} // namespace",
             runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
