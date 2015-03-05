@@ -3334,8 +3334,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
   DEBUG(dbgs() << "    common nesting levels = " << CommonLevels << "\n");
   DEBUG(dbgs() << "    maximum nesting levels = " << MaxLevels << "\n");
 
-  auto Result = llvm::make_unique<FullDependence>(
-      Src, Dst, PossiblyLoopIndependent, CommonLevels);
+  FullDependence Result(Src, Dst, PossiblyLoopIndependent, CommonLevels);
   ++TotalArrayPairs;
 
   // See if there are GEPs we can use.
@@ -3473,7 +3472,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       collectCommonLoops(Pair[SI].Dst,
                          LI->getLoopFor(Dst->getParent()),
                          Pair[SI].Loops);
-      Result->Consistent = false;
+      Result.Consistent = false;
     }
     else if (Pair[SI].Classification == Subscript::ZIV) {
       // always separable
@@ -3520,26 +3519,26 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
     switch (Pair[SI].Classification) {
     case Subscript::ZIV:
       DEBUG(dbgs() << ", ZIV\n");
-      if (testZIV(Pair[SI].Src, Pair[SI].Dst, *Result))
+      if (testZIV(Pair[SI].Src, Pair[SI].Dst, Result))
         return nullptr;
       break;
     case Subscript::SIV: {
       DEBUG(dbgs() << ", SIV\n");
       unsigned Level;
       const SCEV *SplitIter = nullptr;
-      if (testSIV(Pair[SI].Src, Pair[SI].Dst, Level, *Result, NewConstraint,
-                  SplitIter))
+      if (testSIV(Pair[SI].Src, Pair[SI].Dst, Level,
+                  Result, NewConstraint, SplitIter))
         return nullptr;
       break;
     }
     case Subscript::RDIV:
       DEBUG(dbgs() << ", RDIV\n");
-      if (testRDIV(Pair[SI].Src, Pair[SI].Dst, *Result))
+      if (testRDIV(Pair[SI].Src, Pair[SI].Dst, Result))
         return nullptr;
       break;
     case Subscript::MIV:
       DEBUG(dbgs() << ", MIV\n");
-      if (testMIV(Pair[SI].Src, Pair[SI].Dst, Pair[SI].Loops, *Result))
+      if (testMIV(Pair[SI].Src, Pair[SI].Dst, Pair[SI].Loops, Result))
         return nullptr;
       break;
     default:
@@ -3576,8 +3575,8 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
           unsigned Level;
           const SCEV *SplitIter = nullptr;
           DEBUG(dbgs() << "SIV\n");
-          if (testSIV(Pair[SJ].Src, Pair[SJ].Dst, Level, *Result, NewConstraint,
-                      SplitIter))
+          if (testSIV(Pair[SJ].Src, Pair[SJ].Dst, Level,
+                      Result, NewConstraint, SplitIter))
             return nullptr;
           ConstrainedLevels.set(Level);
           if (intersectConstraints(&Constraints[Level], &NewConstraint)) {
@@ -3598,7 +3597,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
             // SJ is an MIV subscript that's part of the current coupled group
             DEBUG(dbgs() << "\tSJ = " << SJ << "\n");
             if (propagate(Pair[SJ].Src, Pair[SJ].Dst, Pair[SJ].Loops,
-                          Constraints, Result->Consistent)) {
+                          Constraints, Result.Consistent)) {
               DEBUG(dbgs() << "\t    Changed\n");
               ++DeltaPropagations;
               Pair[SJ].Classification =
@@ -3608,7 +3607,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
               switch (Pair[SJ].Classification) {
               case Subscript::ZIV:
                 DEBUG(dbgs() << "ZIV\n");
-                if (testZIV(Pair[SJ].Src, Pair[SJ].Dst, *Result))
+                if (testZIV(Pair[SJ].Src, Pair[SJ].Dst, Result))
                   return nullptr;
                 Mivs.reset(SJ);
                 break;
@@ -3631,7 +3630,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       for (int SJ = Mivs.find_first(); SJ >= 0; SJ = Mivs.find_next(SJ)) {
         if (Pair[SJ].Classification == Subscript::RDIV) {
           DEBUG(dbgs() << "RDIV test\n");
-          if (testRDIV(Pair[SJ].Src, Pair[SJ].Dst, *Result))
+          if (testRDIV(Pair[SJ].Src, Pair[SJ].Dst, Result))
             return nullptr;
           // I don't yet understand how to propagate RDIV results
           Mivs.reset(SJ);
@@ -3644,19 +3643,19 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       for (int SJ = Mivs.find_first(); SJ >= 0; SJ = Mivs.find_next(SJ)) {
         if (Pair[SJ].Classification == Subscript::MIV) {
           DEBUG(dbgs() << "MIV test\n");
-          if (testMIV(Pair[SJ].Src, Pair[SJ].Dst, Pair[SJ].Loops, *Result))
+          if (testMIV(Pair[SJ].Src, Pair[SJ].Dst, Pair[SJ].Loops, Result))
             return nullptr;
         }
         else
           llvm_unreachable("expected only MIV subscripts at this point");
       }
 
-      // update Result->DV from constraint vector
+      // update Result.DV from constraint vector
       DEBUG(dbgs() << "    updating\n");
       for (int SJ = ConstrainedLevels.find_first();
            SJ >= 0; SJ = ConstrainedLevels.find_next(SJ)) {
-        updateDirection(Result->DV[SJ - 1], Constraints[SJ]);
-        if (Result->DV[SJ - 1].Direction == Dependence::DVEntry::NONE)
+        updateDirection(Result.DV[SJ - 1], Constraints[SJ]);
+        if (Result.DV[SJ - 1].Direction == Dependence::DVEntry::NONE)
           return nullptr;
       }
     }
@@ -3668,15 +3667,15 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
     CompleteLoops |= Pair[SI].Loops;
   for (unsigned II = 1; II <= CommonLevels; ++II)
     if (CompleteLoops[II])
-      Result->DV[II - 1].Scalar = false;
+      Result.DV[II - 1].Scalar = false;
 
   if (PossiblyLoopIndependent) {
     // Make sure the LoopIndependent flag is set correctly.
     // All directions must include equal, otherwise no
     // loop-independent dependence is possible.
     for (unsigned II = 1; II <= CommonLevels; ++II) {
-      if (!(Result->getDirection(II) & Dependence::DVEntry::EQ)) {
-        Result->LoopIndependent = false;
+      if (!(Result.getDirection(II) & Dependence::DVEntry::EQ)) {
+        Result.LoopIndependent = false;
         break;
       }
     }
@@ -3686,7 +3685,7 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
     // loop-independent dependence possible, then no dependence exists.
     bool AllEqual = true;
     for (unsigned II = 1; II <= CommonLevels; ++II) {
-      if (Result->getDirection(II) != Dependence::DVEntry::EQ) {
+      if (Result.getDirection(II) != Dependence::DVEntry::EQ) {
         AllEqual = false;
         break;
       }
@@ -3695,7 +3694,9 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       return nullptr;
   }
 
-  return std::move(Result);
+  auto Final = make_unique<FullDependence>(Result);
+  Result.DV = nullptr;
+  return std::move(Final);
 }
 
 
