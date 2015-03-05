@@ -83,6 +83,7 @@ bool Resolver::handleArchiveFile(File &file) {
     if (File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_ctx.getNextOrdinalAndIncrement());
       member->beforeLink();
+      updatePreloadArchiveMap();
       undefAdded = handleFile(*member) || undefAdded;
     }
   });
@@ -274,14 +275,21 @@ File *Resolver::getFile(int &index) {
   return cast<FileNode>(inputs[index++].get())->getFile();
 }
 
-// Make a map of Symbol -> ArchiveFile.
-void Resolver::makePreloadArchiveMap() {
+// Update a map of Symbol -> ArchiveFile. The map is used for speculative
+// file loading.
+void Resolver::updatePreloadArchiveMap() {
   std::vector<std::unique_ptr<Node>> &nodes = _ctx.getNodes();
-  for (int i = nodes.size() - 1; i >= 0; --i)
-    if (auto *fnode = dyn_cast<FileNode>(nodes[i].get()))
-      if (auto *archive = dyn_cast<ArchiveLibraryFile>(fnode->getFile()))
-        for (StringRef sym : archive->getDefinedSymbols())
-          _archiveMap[sym] = archive;
+  for (int i = nodes.size() - 1; i >= 0; --i) {
+    auto *fnode = dyn_cast<FileNode>(nodes[i].get());
+    if (!fnode)
+      continue;
+    auto *archive = dyn_cast<ArchiveLibraryFile>(fnode->getFile());
+    if (!archive || _archiveSeen.count(archive))
+      continue;
+    _archiveSeen.insert(archive);
+    for (StringRef sym : archive->getDefinedSymbols())
+      _archiveMap[sym] = archive;
+  }
 }
 
 // Keep adding atoms until _ctx.getNextFile() returns an error. This
@@ -301,6 +309,7 @@ bool Resolver::resolveUndefines() {
       return false;
     }
     file->beforeLink();
+    updatePreloadArchiveMap();
     switch (file->kind()) {
     case File::kindObject:
       // The same file may be visited more than once if the file is
@@ -477,7 +486,7 @@ void Resolver::removeCoalescedAwayAtoms() {
 }
 
 bool Resolver::resolve() {
-  makePreloadArchiveMap();
+  updatePreloadArchiveMap();
   if (!resolveUndefines())
     return false;
   updateReferences();

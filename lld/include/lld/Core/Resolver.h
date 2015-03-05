@@ -18,6 +18,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace lld {
@@ -64,7 +65,7 @@ private:
   void maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);
 
   /// \brief The main function that iterates over the files to resolve
-  void makePreloadArchiveMap();
+  void updatePreloadArchiveMap();
   bool resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
@@ -99,6 +100,7 @@ private:
 
   // Preloading
   std::map<StringRef, ArchiveLibraryFile *> _archiveMap;
+  std::unordered_set<ArchiveLibraryFile *> _archiveSeen;
 };
 
 } // namespace lld
