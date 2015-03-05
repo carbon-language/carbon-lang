@@ -47,7 +47,7 @@
 #include <algorithm>
 using namespace llvm;
 
-#define DEBUG_TYPE "block-placement2"
+#define DEBUG_TYPE "block-placement"
 
 STATISTIC(NumCondBranches, "Number of conditional branches");
 STATISTIC(NumUncondBranches, "Number of uncondittional branches");
@@ -267,13 +267,13 @@ public:
 
 char MachineBlockPlacement::ID = 0;
 char &llvm::MachineBlockPlacementID = MachineBlockPlacement::ID;
-INITIALIZE_PASS_BEGIN(MachineBlockPlacement, "block-placement2",
+INITIALIZE_PASS_BEGIN(MachineBlockPlacement, "block-placement",
                       "Branch Probability Basic Block Placement", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
-INITIALIZE_PASS_END(MachineBlockPlacement, "block-placement2",
+INITIALIZE_PASS_END(MachineBlockPlacement, "block-placement",
                     "Branch Probability Basic Block Placement", false, false)
 
 #ifndef NDEBUG
