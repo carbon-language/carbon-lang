@@ -601,10 +601,8 @@ public:
     const void *it = reinterpret_cast<const void *>(index);
     return reference_iterator(*this, it);
   }
+
 protected:
-
-  virtual ~ELFCommonAtom() {}
-
   const Reference *derefIterator(const void *iter) const override {
     return nullptr;
   }
