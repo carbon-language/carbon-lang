@@ -98,8 +98,7 @@ public:
       return scopeLinkageUnit;
     if (_symbol->getBinding() == llvm::ELF::STB_LOCAL)
       return scopeTranslationUnit;
-    else
-      return scopeGlobal;
+    return scopeGlobal;
   }
 
   StringRef name() const override { return _name; }
@@ -131,8 +130,7 @@ public:
   CanBeNull canBeNull() const override {
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return CanBeNull::canBeNullAtBuildtime;
-    else
-      return CanBeNull::canBeNullNever;
+    return CanBeNull::canBeNullNever;
   }
 
 private:
@@ -186,10 +184,9 @@ public:
       return scopeGlobal;
     if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
-    else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
+    if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
-    else
-      return scopeTranslationUnit;
+    return scopeTranslationUnit;
   }
 
   // FIXME: Need to revisit this in future.
@@ -303,7 +300,8 @@ public:
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(symValue));
-    } else if (_section->sh_addralign == 0) {
+    }
+    if (_section->sh_addralign == 0) {
       // sh_addralign of 0 means no alignment
       return Alignment(0, symValue);
     }
@@ -560,10 +558,9 @@ public:
   Scope scope() const override {
     if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
-    else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
+    if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
-    else
-      return scopeTranslationUnit;
+    return scopeTranslationUnit;
   }
 
   Interposable interposable() const override { return interposeNo; }
@@ -633,10 +630,9 @@ public:
   virtual Scope scope() const {
     if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
-    else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
+    if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
       return scopeGlobal;
-    else
-      return scopeTranslationUnit;
+    return scopeTranslationUnit;
   }
 
   StringRef loadName() const override { return _loadName; }
