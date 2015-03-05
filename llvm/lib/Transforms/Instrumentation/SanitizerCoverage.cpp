@@ -109,6 +109,7 @@ class SanitizerCoverageModule : public ModulePass {
                                       ArrayRef<Instruction *> IndirCalls);
   bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks,
                       ArrayRef<Instruction *> IndirCalls);
+  void SetNoSanitizeMetada(Instruction *I);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB, bool UseCalls);
   Function *SanCovFunction;
   Function *SanCovWithCheckFunction;
@@ -306,6 +307,12 @@ void SanitizerCoverageModule::InjectCoverageForIndirectCalls(
   }
 }
 
+void SanitizerCoverageModule::SetNoSanitizeMetada(Instruction *I) {
+  I->setMetadata(
+      I->getParent()->getParent()->getParent()->getMDKindID("nosanitize"),
+      MDNode::get(*C, None));
+}
+
 void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
                                                     bool UseCalls) {
   BasicBlock::iterator IP = BB.getFirstInsertionPt(), BE = BB.end();
@@ -335,8 +342,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     LoadInst *Load = IRB.CreateLoad(GuardP);
     Load->setAtomic(Monotonic);
     Load->setAlignment(4);
-    Load->setMetadata(F.getParent()->getMDKindID("nosanitize"),
-                      MDNode::get(*C, None));
+    SetNoSanitizeMetada(Load);
     Value *Cmp = IRB.CreateICmpSGE(Constant::getNullValue(Load->getType()), Load);
     Instruction *Ins = SplitBlockAndInsertIfThen(
         Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
@@ -353,9 +359,11 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
         IRB.CreatePointerCast(EightBitCounterArray, IntptrTy),
         ConstantInt::get(IntptrTy, SanCovFunction->getNumUses() - 1));
     P = IRB.CreateIntToPtr(P, IRB.getInt8PtrTy());
-    Value *LI = IRB.CreateLoad(P);
+    LoadInst *LI = IRB.CreateLoad(P);
     Value *Inc = IRB.CreateAdd(LI, ConstantInt::get(IRB.getInt8Ty(), 1));
-    IRB.CreateStore(Inc, P);
+    StoreInst *SI = IRB.CreateStore(Inc, P);
+    SetNoSanitizeMetada(LI);
+    SetNoSanitizeMetada(SI);
   }
 
   if (ClExperimentalTracing) {

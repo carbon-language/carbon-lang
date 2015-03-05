@@ -79,18 +79,18 @@ entry:
 ; test -sanitizer-coverage-8bit-counters=1
 ; CHECK-8BIT-LABEL: define void @foo
 
-; CHECK-8BIT: [[V11:%[0-9]*]] = load i8
+; CHECK-8BIT: [[V11:%[0-9]*]] = load i8{{.*}}!nosanitize
 ; CHECK-8BIT: [[V12:%[0-9]*]] = add i8 [[V11]], 1
-; CHECK-8BIT: store i8 [[V12]]
-; CHECK-8BIT: [[V21:%[0-9]*]] = load i8
+; CHECK-8BIT: store i8 [[V12]]{{.*}}!nosanitize
+; CHECK-8BIT: [[V21:%[0-9]*]] = load i8{{.*}}!nosanitize
 ; CHECK-8BIT: [[V22:%[0-9]*]] = add i8 [[V21]], 1
-; CHECK-8BIT: store i8 [[V22]]
-; CHECK-8BIT: [[V31:%[0-9]*]] = load i8
+; CHECK-8BIT: store i8 [[V22]]{{.*}}!nosanitize
+; CHECK-8BIT: [[V31:%[0-9]*]] = load i8{{.*}}!nosanitize
 ; CHECK-8BIT: [[V32:%[0-9]*]] = add i8 [[V31]], 1
-; CHECK-8BIT: store i8 [[V32]]
-; CHECK-8BIT: [[V41:%[0-9]*]] = load i8
+; CHECK-8BIT: store i8 [[V32]]{{.*}}!nosanitize
+; CHECK-8BIT: [[V41:%[0-9]*]] = load i8{{.*}}!nosanitize
 ; CHECK-8BIT: [[V42:%[0-9]*]] = add i8 [[V41]], 1
-; CHECK-8BIT: store i8 [[V42]]
+; CHECK-8BIT: store i8 [[V42]]{{.*}}!nosanitize
 
 ; CHECK-8BIT: ret void
 
