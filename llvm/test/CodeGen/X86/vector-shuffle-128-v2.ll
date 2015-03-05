@@ -810,6 +810,25 @@ define <2 x double> @shuffle_v2f64_z1(<2 x double> %a) {
   ret <2 x double> %shuffle
 }
 
+define <2 x double> @shuffle_v2f64_bitcast_1z(<2 x double> %a) {
+; SSE-LABEL: shuffle_v2f64_bitcast_1z:
+; SSE:       # BB#0:
+; SSE-NEXT:    xorpd %xmm1, %xmm1
+; SSE-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1],xmm1[0]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v2f64_bitcast_1z:
+; AVX:       # BB#0:
+; AVX-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
+; AVX-NEXT:    vshufpd {{.*#+}} xmm0 = xmm0[1],xmm1[0]
+; AVX-NEXT:    retq
+  %shuffle64 = shufflevector <2 x double> %a, <2 x double> zeroinitializer, <2 x i32> <i32 2, i32 1>
+  %bitcast32 = bitcast <2 x double> %shuffle64 to <4 x float>
+  %shuffle32 = shufflevector <4 x float> %bitcast32, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %bitcast64 = bitcast <4 x float> %shuffle32 to <2 x double>
+  ret <2 x double> %bitcast64
+}
+
 define <2 x i64> @insert_reg_and_zero_v2i64(i64 %a) {
 ; SSE-LABEL: insert_reg_and_zero_v2i64:
 ; SSE:       # BB#0:

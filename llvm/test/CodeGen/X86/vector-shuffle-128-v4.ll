@@ -1574,6 +1574,23 @@ define <4 x i32> @shuffle_v4i32_0zz3(<4 x i32> %a) {
   ret <4 x i32> %shuffle
 }
 
+define <4 x i32> @shuffle_v4i32_bitcast_0415(<4 x i32> %a, <4 x i32> %b) {
+; SSE-LABEL: shuffle_v4i32_bitcast_0415:
+; SSE:       # BB#0:
+; SSE-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v4i32_bitcast_0415:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; AVX-NEXT:    retq
+  %shuffle32 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 1, i32 5, i32 0, i32 4>
+  %bitcast64 = bitcast <4 x i32> %shuffle32 to <2 x double>
+  %shuffle64 = shufflevector <2 x double> %bitcast64, <2 x double> undef, <2 x i32> <i32 1, i32 0>
+  %bitcast32 = bitcast <2 x double> %shuffle64 to <4 x i32>
+  ret <4 x i32> %bitcast32
+}
+
 define <4 x i32> @insert_reg_and_zero_v4i32(i32 %a) {
 ; SSE-LABEL: insert_reg_and_zero_v4i32:
 ; SSE:       # BB#0:

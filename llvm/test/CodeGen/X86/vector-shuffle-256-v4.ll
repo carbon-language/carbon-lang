@@ -922,3 +922,22 @@ define <4 x double> @splat_v4f64(<2 x double> %r) {
   %1 = shufflevector <2 x double> %r, <2 x double> undef, <4 x i32> zeroinitializer
   ret <4 x double> %1
 }
+
+define <4 x double> @bitcast_v4f64_0426(<4 x double> %a, <4 x double> %b) {
+; AVX1-LABEL: bitcast_v4f64_0426:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vunpcklpd {{.*#+}} ymm0 = ymm0[0],ymm1[0],ymm0[2],ymm1[2]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: bitcast_v4f64_0426:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpunpcklqdq  {{.*#+}} ymm0 = ymm0[0],ymm1[0],ymm0[2],ymm1[2]
+; AVX2-NEXT:    retq
+  %shuffle64 = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 4, i32 0, i32 6, i32 2>
+  %bitcast32 = bitcast <4 x double> %shuffle64 to <8 x float>
+  %shuffle32 = shufflevector <8 x float> %bitcast32, <8 x float> undef, <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4>
+  %bitcast16 = bitcast <8 x float> %shuffle32 to <16 x i16>
+  %shuffle16 = shufflevector <16 x i16> %bitcast16, <16 x i16> undef, <16 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5, i32 10, i32 11, i32 8, i32 9, i32 14, i32 15, i32 12, i32 13>
+  %bitcast64 = bitcast <16 x i16> %shuffle16 to <4 x double>
+  ret <4 x double> %bitcast64
+}

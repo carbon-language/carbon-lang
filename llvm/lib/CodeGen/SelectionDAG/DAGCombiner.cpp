@@ -11877,6 +11877,89 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       return V;
   }
 
+  // If this shuffle only has a single input that is a bitcasted shuffle,
+  // attempt to merge the 2 shuffles and suitably bitcast the inputs/output
+  // back to their original types.
+  if (N0.getOpcode() == ISD::BITCAST && N0.hasOneUse() &&
+      N1.getOpcode() == ISD::UNDEF && Level < AfterLegalizeVectorOps &&
+      TLI.isTypeLegal(VT)) {
+
+    // Peek through the bitcast only if there is one user.
+    SDValue BC0 = N0;
+    while (BC0.getOpcode() == ISD::BITCAST) {
+      if (!BC0.hasOneUse())
+        break;
+      BC0 = BC0.getOperand(0);
+    }
+
+    auto ScaleShuffleMask = [](ArrayRef<int> Mask, int Scale) {
+      if (Scale == 1)
+        return SmallVector<int, 8>(Mask.begin(), Mask.end());
+
+      SmallVector<int, 8> NewMask;
+      for (int M : Mask)
+        for (int s = 0; s != Scale; ++s)
+          NewMask.push_back(M < 0 ? -1 : Scale * M + s);
+      return NewMask;
+    };
+
+    if (BC0.getOpcode() == ISD::VECTOR_SHUFFLE && BC0.hasOneUse()) {
+      EVT SVT = VT.getScalarType();
+      EVT InnerVT = BC0->getValueType(0);
+      EVT InnerSVT = InnerVT.getScalarType();
+
+      // Determine which shuffle works with the smaller scalar type.
+      EVT ScaleVT = SVT.bitsLT(InnerSVT) ? VT : InnerVT;
+      EVT ScaleSVT = ScaleVT.getScalarType();
+
+      if (TLI.isTypeLegal(ScaleVT) &&
+          0 == (InnerSVT.getSizeInBits() % ScaleSVT.getSizeInBits()) &&
+          0 == (SVT.getSizeInBits() % ScaleSVT.getSizeInBits())) {
+
+        int InnerScale = InnerSVT.getSizeInBits() / ScaleSVT.getSizeInBits();
+        int OuterScale = SVT.getSizeInBits() / ScaleSVT.getSizeInBits();
+
+        // Scale the shuffle masks to the smaller scalar type.
+        ShuffleVectorSDNode *InnerSVN = cast<ShuffleVectorSDNode>(BC0);
+        SmallVector<int, 8> InnerMask =
+            ScaleShuffleMask(InnerSVN->getMask(), InnerScale);
+        SmallVector<int, 8> OuterMask =
+            ScaleShuffleMask(SVN->getMask(), OuterScale);
+
+        // Merge the shuffle masks.
+        SmallVector<int, 8> NewMask;
+        for (int M : OuterMask)
+          NewMask.push_back(M < 0 ? -1 : InnerMask[M]);
+
+        // Test for shuffle mask legality over both commutations.
+        SDValue SV0 = BC0->getOperand(0);
+        SDValue SV1 = BC0->getOperand(1);
+        bool LegalMask = TLI.isShuffleMaskLegal(NewMask, ScaleVT);
+        if (!LegalMask) {
+          for (int i = 0, e = (int)NewMask.size(); i != e; ++i) {
+            int idx = NewMask[i];
+            if (idx < 0)
+              continue;
+            else if (idx < e)
+              NewMask[i] = idx + e;
+            else
+              NewMask[i] = idx - e;
+          }
+          std::swap(SV0, SV1);
+          LegalMask = TLI.isShuffleMaskLegal(NewMask, ScaleVT);
+        }
+
+        if (LegalMask) {
+          SV0 = DAG.getNode(ISD::BITCAST, SDLoc(N), ScaleVT, SV0);
+          SV1 = DAG.getNode(ISD::BITCAST, SDLoc(N), ScaleVT, SV1);
+          return DAG.getNode(
+              ISD::BITCAST, SDLoc(N), VT,
+              DAG.getVectorShuffle(ScaleVT, SDLoc(N), SV0, SV1, NewMask));
+        }
+      }
+    }
+  }
+
   // Canonicalize shuffles according to rules:
   //  shuffle(A, shuffle(A, B)) -> shuffle(shuffle(A,B), A)
   //  shuffle(B, shuffle(A, B)) -> shuffle(shuffle(A,B), B)
