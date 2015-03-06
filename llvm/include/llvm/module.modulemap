@@ -2,7 +2,12 @@ module LLVM_Analysis {
   requires cplusplus
   umbrella "Analysis"
   module * { export * }
+
+  // FIXME: Why is this excluded?
   exclude header "Analysis/BlockFrequencyInfoImpl.h"
+
+  // This is intended for (repeated) textual inclusion.
+  textual header "Analysis/TargetLibraryInfo.def"
 }
 
 module LLVM_AsmParser { requires cplusplus umbrella "AsmParser" module * { export * } }
