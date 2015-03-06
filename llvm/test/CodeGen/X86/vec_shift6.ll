@@ -1,6 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=corei7 | FileCheck %s -check-prefix=CHECK -check-prefix=SSE
-; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=core-avx2 | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2 -check-prefix=AVX2ONLY
-; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=knl | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2 -check-prefix=AVX512
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mattr=sse4.1 | FileCheck %s -check-prefix=CHECK -check-prefix=SSE
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mattr=avx2 | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2 -check-prefix=AVX2ONLY
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mattr=avx512f | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2 -check-prefix=AVX512
 
 
 ; Verify that we don't scalarize a packed vector shift left of 16-bit
