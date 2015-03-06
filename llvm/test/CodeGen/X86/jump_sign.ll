@@ -217,17 +217,15 @@ entry:
 ; PR13475
 ; If we have sub a, b and cmp b, a and the result of cmp is used
 ; by sbb, we should not optimize cmp away.
-define i32 @func_q(i32 %j.4, i32 %w, i32 %el) {
+define i32 @func_q(i32 %a0, i32 %a1, i32 %a2) {
 ; CHECK-LABEL: func_q:
 ; CHECK: cmp
 ; CHECK-NEXT: sbb
-  %tmp532 = add i32 %j.4, %w
-  %tmp533 = icmp ugt i32 %tmp532, %el
-  %tmp534 = icmp ult i32 %w, %el
-  %or.cond = and i1 %tmp533, %tmp534
-  %tmp535 = sub i32 %el, %w
-  %j.5 = select i1 %or.cond, i32 %tmp535, i32 %j.4
-  ret i32 %j.5
+  %1 = icmp ult i32 %a0, %a1
+  %2 = sub i32 %a1, %a0
+  %3 = select i1 %1, i32 -1, i32 0
+  %4 = xor i32 %2, %3
+  ret i32 %4
 }
 ; rdar://11873276
 define i8* @func_r(i8* %base, i32* nocapture %offset, i32 %size) nounwind {

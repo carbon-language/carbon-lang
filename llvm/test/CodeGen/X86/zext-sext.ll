@@ -34,11 +34,12 @@ entry:
   %tmp12 = add i64 %tmp11, 5089792279245435153
 
 ; CHECK:      addl	$2138875574, %e[[REGISTER_zext:[a-z0-9]+]]
-; CHECK:      movslq	%e[[REGISTER_zext]], [[REGISTER_sext:%r[a-z0-9]+]]
 ; CHECK:      cmpl	$-8608074, %e[[REGISTER_zext]]
+; CHECK:      movslq	%e[[REGISTER_zext]], [[REGISTER_sext:%r[a-z0-9]+]]
 ; CHECK-NOT:  [[REGISTER_zext]]
-; CHECK-DAG:  testl     %e[[REGISTER_zext]]
-; CHECK:      subq	%r[[REGISTER_zext]], [[REGISTER_sext]]
+; CHECK-DAG:  cmpl	$2138875573, %e[[REGISTER_zext]]
+; CHECK:      movq  [[REGISTER_sext]], [[REGISTER_sext2:%[a-z0-9]+]]
+; CHECK:      subq	%r[[REGISTER_zext]], [[REGISTER_sext2]]
 
   %tmp13 = sub i64 %tmp12, 2138875574
   %tmp14 = zext i32 %tmp4 to i64

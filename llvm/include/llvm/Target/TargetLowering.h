@@ -1097,6 +1097,25 @@ public:
   virtual LoadInst *lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *RMWI) const {
     return nullptr;
   }
+
+  /// Returns true if we should normalize
+  /// select(N0&N1, X, Y) => select(N0, select(N1, X, Y), Y) and
+  /// select(N0|N1, X, Y) => select(N0, select(N1, X, Y, Y)) if it is likely
+  /// that it saves us from materializing N0 and N1 in an integer register.
+  /// Targets that are able to perform and/or on flags should return false here.
+  virtual bool shouldNormalizeToSelectSequence(LLVMContext &Context,
+                                               EVT VT) const {
+    // If a target has multiple condition registers, then it likely has logical
+    // operations on those registers.
+    if (hasMultipleConditionRegisters())
+      return false;
+    // Only do the transform if the value won't be split into multiple
+    // registers.
+    LegalizeTypeAction Action = getTypeAction(Context, VT);
+    return Action != TypeExpandInteger && Action != TypeExpandFloat &&
+      Action != TypeSplitVector;
+  }
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
   // the derived class constructor to configure this object for the target.

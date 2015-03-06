@@ -4819,6 +4819,69 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     return SimplifySelect(SDLoc(N), N0, N1, N2);
   }
 
+  if (VT0 == MVT::i1) {
+    if (TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
+      // select (and Cond0, Cond1), X, Y
+      //   -> select Cond0, (select Cond1, X, Y), Y
+      if (N0->getOpcode() == ISD::AND && N0->hasOneUse()) {
+        SDValue Cond0 = N0->getOperand(0);
+        SDValue Cond1 = N0->getOperand(1);
+        SDValue InnerSelect = DAG.getNode(ISD::SELECT, SDLoc(N),
+                                          N1.getValueType(), Cond1, N1, N2);
+        return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Cond0,
+                           InnerSelect, N2);
+      }
+      // select (or Cond0, Cond1), X, Y -> select Cond0, X, (select Cond1, X, Y)
+      if (N0->getOpcode() == ISD::OR && N0->hasOneUse()) {
+        SDValue Cond0 = N0->getOperand(0);
+        SDValue Cond1 = N0->getOperand(1);
+        SDValue InnerSelect = DAG.getNode(ISD::SELECT, SDLoc(N),
+                                          N1.getValueType(), Cond1, N1, N2);
+        return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Cond0, N1,
+                           InnerSelect);
+      }
+    }
+
+    // select Cond0, (select Cond1, X, Y), Y -> select (and Cond0, Cond1), X, Y
+    if (N1->getOpcode() == ISD::SELECT) {
+      SDValue N1_0 = N1->getOperand(0);
+      SDValue N1_1 = N1->getOperand(1);
+      SDValue N1_2 = N1->getOperand(2);
+      if (N1_2 == N2) {
+        // Create the actual and node if we can generate good code for it.
+        if (!TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
+          SDValue And = DAG.getNode(ISD::AND, SDLoc(N), N0.getValueType(),
+                                    N0, N1_0);
+          return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), And,
+                             N1_1, N2);
+        }
+        // Otherwise see if we can optimize the "and" to a better pattern.
+        if (SDValue Combined = visitANDLike(N0, N1_0, N))
+          return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Combined,
+                             N1_1, N2);
+      }
+    }
+    // select Cond0, X, (select Cond1, X, Y) -> select (or Cond0, Cond1), X, Y
+    if (N2->getOpcode() == ISD::SELECT) {
+      SDValue N2_0 = N2->getOperand(0);
+      SDValue N2_1 = N2->getOperand(1);
+      SDValue N2_2 = N2->getOperand(2);
+      if (N2_1 == N1) {
+        // Create the actual or node if we can generate good code for it.
+        if (!TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
+          SDValue Or = DAG.getNode(ISD::OR, SDLoc(N), N0.getValueType(),
+                                   N0, N2_0);
+          return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Or,
+                             N1, N2_2);
+        }
+        // Otherwise see if we can optimize to a better pattern.
+        if (SDValue Combined = visitORLike(N0, N2_0, N))
+          return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Combined,
+                             N1, N2_2);
+      }
+    }
+  }
+
   return SDValue();
 }
 

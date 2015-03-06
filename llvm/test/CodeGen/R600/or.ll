@@ -156,14 +156,14 @@ define void @trunc_i64_or_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {
 ; EG: OR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
 
 ; SI: s_or_b64 s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}]
-define void @or_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
+define void @or_i1(i32 addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
   %a = load float, float addrspace(1)* %in0
   %b = load float, float addrspace(1)* %in1
   %acmp = fcmp oge float %a, 0.000000e+00
   %bcmp = fcmp oge float %b, 0.000000e+00
   %or = or i1 %acmp, %bcmp
-  %result = select i1 %or, float %a, float %b
-  store float %result, float addrspace(1)* %out
+  %result = zext i1 %or to i32
+  store i32 %result, i32 addrspace(1)* %out
   ret void
 }
 
