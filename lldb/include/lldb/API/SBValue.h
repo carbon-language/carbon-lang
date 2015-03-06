@@ -84,6 +84,7 @@ public:
     ValueType
     GetValueType ();
 
+    // It will be only valid starting from the second time.
     bool
     GetValueDidChange ();
 

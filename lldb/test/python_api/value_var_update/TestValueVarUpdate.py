@@ -52,6 +52,12 @@ class HelloWorldTestCase(TestBase):
 
         i = self.frame().FindVariable("i")
         i_val = i.GetValueAsUnsigned(0)
+        c = self.frame().FindVariable("c")
+
+        # Update any values from the SBValue objects so we can ask them if they changed after a continue
+        i.GetValueDidChange()
+        c.GetChildAtIndex(1).GetValueDidChange()
+        c.GetChildAtIndex(0).GetChildAtIndex(0).GetValueDidChange()
         
         if self.TraceOn(): self.runCmd("frame variable")
         
@@ -62,6 +68,9 @@ class HelloWorldTestCase(TestBase):
         self.assertTrue(i_val != i.GetValueAsUnsigned(0), "GetValue() is saying a lie")
         self.assertTrue(i.GetValueDidChange(), "GetValueDidChange() is saying a lie")
 
+        # Check complex type
+        self.assertTrue(c.GetChildAtIndex(0).GetChildAtIndex(0).GetValueDidChange() and
+                        not c.GetChildAtIndex(1).GetValueDidChange(), "GetValueDidChange() is saying a lie")
 
 if __name__ == '__main__':
     import atexit

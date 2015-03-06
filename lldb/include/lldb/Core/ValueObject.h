@@ -649,6 +649,7 @@ public:
     bool
     GetValueIsValid () const;
 
+    // It will be only valid starting from the second time.
     bool
     GetValueDidChange ();
 
