@@ -205,7 +205,7 @@ private:
 
 char ExeDepsFix::ID = 0;
 
-/// Translate TRI register number to a list of indizes into our stmaller tables
+/// Translate TRI register number to a list of indizes into our smaller tables
 /// of interesting registers.
 iterator_range<SmallVectorImpl<int>::const_iterator>
 ExeDepsFix::regIndizes(unsigned Reg) const {
