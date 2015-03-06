@@ -73,7 +73,7 @@ private:
   bool checkUndefines();
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();
-  void forEachUndefines(bool searchForOverrides, UndefCallback callback);
+  void forEachUndefines(File &file, bool searchForOverrides, UndefCallback callback);
 
   void markLive(const Atom *atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
@@ -102,6 +102,16 @@ private:
   // Preloading
   std::map<StringRef, ArchiveLibraryFile *> _archiveMap;
   std::unordered_set<ArchiveLibraryFile *> _archiveSeen;
+
+  // List of undefined symbols.
+  std::vector<StringRef> _undefines;
+
+  // Start position in _undefines for each archive/shared library file.
+  // Symbols from index 0 to the start position are already searched before.
+  // Searching them again would never succeed. When we look for undefined
+  // symbols from an archive/shared library file, start from its start
+  // position to save time.
+  std::map<File *, size_t> _undefineIndex;
 };
 
 } // namespace lld

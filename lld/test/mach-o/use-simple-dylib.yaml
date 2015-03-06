@@ -119,13 +119,13 @@ install-name:        libspecial.dylib
 # CHECK:   - name:            _myStatic
 # CHECK:   - name:            _myVariablePreviouslyKnownAsPrivateExtern
 # CHECK: shared-library-atoms:
-# CHECK:   - name:            _myHidden
-# CHECK:     load-name:       libspecial.dylib
 # CHECK:   - name:            _myGlobal
 # CHECK:     load-name:       libspecial.dylib
-# CHECK:   - name:            _myHiddenWeak
-# CHECK:     load-name:       libspecial.dylib
 # CHECK:   - name:            _myGlobalWeak
+# CHECK:     load-name:       libspecial.dylib
+# CHECK:   - name:            _myHidden
+# CHECK:     load-name:       libspecial.dylib
+# CHECK:   - name:            _myHiddenWeak
 # CHECK:     load-name:       libspecial.dylib
 # CHECK:   - name:            _myResolver
 # CHECK:     load-name:       libspecial.dylib

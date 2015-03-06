@@ -46,33 +46,35 @@ bool Resolver::handleFile(File &file) {
   return undefAdded;
 }
 
-void Resolver::forEachUndefines(bool searchForOverrides,
+void Resolver::forEachUndefines(File &file, bool searchForOverrides,
                                 UndefCallback callback) {
-  // Handle normal archives
-  unsigned undefineGenCount = 0;
+  size_t i = _undefineIndex[&file];
   do {
-    undefineGenCount = _symbolTable.size();
-    for (const UndefinedAtom *undefAtom : _symbolTable.undefines()) {
-      StringRef undefName = undefAtom->name();
-      // load for previous undefine may also have loaded this undefine
-      if (!_symbolTable.isDefined(undefName))
-        callback(undefName, false);
-    }
-
-    // search libraries for overrides of common symbols
-    if (searchForOverrides) {
-      for (StringRef tentDefName : _symbolTable.tentativeDefinitions()) {
-        // Load for previous tentative may also have loaded
-        // something that overrode this tentative, so always check.
-        const Atom *curAtom = _symbolTable.findByName(tentDefName);
-        assert(curAtom != nullptr);
-        if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
-          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative)
-            callback(tentDefName, true);
-        }
+    for (; i < _undefines.size(); ++i) {
+      StringRef undefName = _undefines[i];
+      if (undefName.empty())
+        continue;
+      if (_symbolTable.isDefined(undefName) ||
+          _symbolTable.isCoalescedAway(_symbolTable.findByName(undefName))) {
+        // The symbol was resolved by some other file. Cache the result.
+        _undefines[i] = "";
+        continue;
       }
+      callback(undefName, false);
     }
-  } while (undefineGenCount != _symbolTable.size());
+    if (!searchForOverrides)
+      continue;
+    for (StringRef tentDefName : _symbolTable.tentativeDefinitions()) {
+      // Load for previous tentative may also have loaded
+      // something that overrode this tentative, so always check.
+      const Atom *curAtom = _symbolTable.findByName(tentDefName);
+      assert(curAtom != nullptr);
+      if (const DefinedAtom *curDefAtom = dyn_cast<DefinedAtom>(curAtom))
+        if (curDefAtom->merge() == DefinedAtom::mergeAsTentative)
+          callback(tentDefName, true);
+    }
+  } while (i < _undefines.size());
+  _undefineIndex[&file] = i;
 }
 
 bool Resolver::handleArchiveFile(File &file) {
@@ -80,7 +82,7 @@ bool Resolver::handleArchiveFile(File &file) {
   bool searchForOverrides =
       _ctx.searchArchivesToOverrideTentativeDefinitions();
   bool undefAdded = false;
-  forEachUndefines(searchForOverrides,
+  forEachUndefines(file, searchForOverrides,
                    [&](StringRef undefName, bool dataSymbolOnly) {
     if (File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_ctx.getNextOrdinalAndIncrement());
@@ -98,7 +100,7 @@ void Resolver::handleSharedLibrary(File &file) {
   handleFile(*sharedLibrary);
   bool searchForOverrides =
       _ctx.searchSharedLibrariesToOverrideTentativeDefinitions();
-  forEachUndefines(searchForOverrides,
+  forEachUndefines(file, searchForOverrides,
                    [&](StringRef undefName, bool dataSymbolOnly) {
     if (const SharedLibraryAtom *atom =
             sharedLibrary->exports(undefName, dataSymbolOnly))
@@ -117,6 +119,8 @@ bool Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
 
   // tell symbol table
   bool newUndefAdded = _symbolTable.add(atom);
+  if (newUndefAdded)
+    _undefines.push_back(atom.name());
 
   // If the undefined symbol has an alternative name, try to resolve the
   // symbol with the name to give it a second chance. This feature is used

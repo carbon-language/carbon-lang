@@ -68,16 +68,7 @@
 # PLT-NEXT:     Section: Undefined (0x0)
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
-# PLT-NEXT:     Name: T3@ (1)
-# PLT-NEXT:     Value: 0x4001F0
-# PLT-NEXT:     Size: 0
-# PLT-NEXT:     Binding: Global (0x1)
-# PLT-NEXT:     Type: Function (0x2)
-# PLT-NEXT:     Other: 8
-# PLT-NEXT:     Section: Undefined (0x0)
-# PLT-NEXT:   }
-# PLT-NEXT:   Symbol {
-# PLT-NEXT:     Name: T1@ (4)
+# PLT-NEXT:     Name: T1@ (1)
 # PLT-NEXT:     Value: 0x4001D0
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
@@ -86,8 +77,17 @@
 # PLT-NEXT:     Section: Undefined (0x0)
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
-# PLT-NEXT:     Name: T2@ (7)
+# PLT-NEXT:     Name: T2@ (4)
 # PLT-NEXT:     Value: 0x4001E0
+# PLT-NEXT:     Size: 0
+# PLT-NEXT:     Binding: Global (0x1)
+# PLT-NEXT:     Type: Function (0x2)
+# PLT-NEXT:     Other: 8
+# PLT-NEXT:     Section: Undefined (0x0)
+# PLT-NEXT:   }
+# PLT-NEXT:   Symbol {
+# PLT-NEXT:     Name: T3@ (7)
+# PLT-NEXT:     Value: 0x4001F0
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)
