@@ -401,282 +401,6 @@ void BBState::MergeSucc(const BBState &Other) {
       MI->second.Merge(PtrState(), /*TopDown=*/false);
 }
 
-// Only enable ARC Annotations if we are building a debug version of
-// libObjCARCOpts.
-#ifndef NDEBUG
-#define ARC_ANNOTATIONS
-#endif
-
-// Define some macros along the lines of DEBUG and some helper functions to make
-// it cleaner to create annotations in the source code and to no-op when not
-// building in debug mode.
-#ifdef ARC_ANNOTATIONS
-
-#include "llvm/Support/CommandLine.h"
-
-/// Enable/disable ARC sequence annotations.
-static cl::opt<bool>
-EnableARCAnnotations("enable-objc-arc-annotations", cl::init(false),
-                     cl::desc("Enable emission of arc data flow analysis "
-                              "annotations"));
-static cl::opt<bool>
-DisableCheckForCFGHazards("disable-objc-arc-checkforcfghazards", cl::init(false),
-                          cl::desc("Disable check for cfg hazards when "
-                                   "annotating"));
-static cl::opt<std::string>
-ARCAnnotationTargetIdentifier("objc-arc-annotation-target-identifier",
-                              cl::init(""),
-                              cl::desc("filter out all data flow annotations "
-                                       "but those that apply to the given "
-                                       "target llvm identifier."));
-
-/// This function appends a unique ARCAnnotationProvenanceSourceMDKind id to an
-/// instruction so that we can track backwards when post processing via the llvm
-/// arc annotation processor tool. If the function is an
-static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
-                                         Value *Ptr) {
-  MDString *Hash = nullptr;
-
-  // If pointer is a result of an instruction and it does not have a source
-  // MDNode it, attach a new MDNode onto it. If pointer is a result of
-  // an instruction and does have a source MDNode attached to it, return a
-  // reference to said Node. Otherwise just return 0.
-  if (auto *Inst = dyn_cast<Instruction>(Ptr)) {
-    MDNode *Node;
-    if (!(Node = Inst->getMetadata(NodeId))) {
-      // We do not have any node. Generate and attatch the hash MDString to the
-      // instruction.
-
-      // We just use an MDString to ensure that this metadata gets written out
-      // of line at the module level and to provide a very simple format
-      // encoding the information herein. Both of these makes it simpler to
-      // parse the annotations by a simple external program.
-      std::string Str;
-      raw_string_ostream os(Str);
-      os << "(" << Inst->getParent()->getParent()->getName() << ",%"
-         << Inst->getName() << ")";
-
-      Hash = MDString::get(Inst->getContext(), os.str());
-      Inst->setMetadata(NodeId, MDNode::get(Inst->getContext(),Hash));
-    } else {
-      // We have a node. Grab its hash and return it.
-      assert(Node->getNumOperands() == 1 &&
-        "An ARCAnnotationProvenanceSourceMDKind can only have 1 operand.");
-      Hash = cast<MDString>(Node->getOperand(0));
-    }
-  } else if (auto *Arg = dyn_cast<Argument>(Ptr)) {
-    std::string str;
-    raw_string_ostream os(str);
-    os << "(" << Arg->getParent()->getName() << ",%" << Arg->getName()
-       << ")";
-    Hash = MDString::get(Arg->getContext(), os.str());
-  }
-
-  return Hash;
-}
-
-static std::string SequenceToString(Sequence A) {
-  std::string str;
-  raw_string_ostream os(str);
-  os << A;
-  return os.str();
-}
-
-/// Helper function to change a Sequence into a String object using our overload
-/// for raw_ostream so we only have printing code in one location.
-static MDString *SequenceToMDString(LLVMContext &Context,
-                                    Sequence A) {
-  return MDString::get(Context, SequenceToString(A));
-}
-
-/// A simple function to generate a MDNode which describes the change in state
-/// for Value *Ptr caused by Instruction *Inst.
-static void AppendMDNodeToInstForPtr(unsigned NodeId,
-                                     Instruction *Inst,
-                                     Value *Ptr,
-                                     MDString *PtrSourceMDNodeID,
-                                     Sequence OldSeq,
-                                     Sequence NewSeq) {
-  MDNode *Node = nullptr;
-  Metadata *tmp[3] = {PtrSourceMDNodeID,
-                      SequenceToMDString(Inst->getContext(), OldSeq),
-                      SequenceToMDString(Inst->getContext(), NewSeq)};
-  Node = MDNode::get(Inst->getContext(), tmp);
-
-  Inst->setMetadata(NodeId, Node);
-}
-
-/// Add to the beginning of the basic block llvm.ptr.annotations which show the
-/// state of a pointer at the entrance to a basic block.
-static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
-                                            Value *Ptr, Sequence Seq) {
-  // If we have a target identifier, make sure that we match it before
-  // continuing.
-  if(!ARCAnnotationTargetIdentifier.empty() &&
-     !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
-    return;
-
-  Module *M = BB->getParent()->getParent();
-  LLVMContext &C = M->getContext();
-  Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-  Type *I8XX = PointerType::getUnqual(I8X);
-  Type *Params[] = {I8XX, I8XX};
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), Params,
-                                        /*isVarArg=*/false);
-  Constant *Callee = M->getOrInsertFunction(Name, FTy);
-
-  IRBuilder<> Builder(BB, BB->getFirstInsertionPt());
-
-  Value *PtrName;
-  StringRef Tmp = Ptr->getName();
-  if (nullptr == (PtrName = M->getGlobalVariable(Tmp, true))) {
-    Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
-                                                         Tmp + "_STR");
-    PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
-                                 cast<Constant>(ActualPtrName), Tmp);
-  }
-
-  Value *S;
-  std::string SeqStr = SequenceToString(Seq);
-  if (nullptr == (S = M->getGlobalVariable(SeqStr, true))) {
-    Value *ActualPtrName = Builder.CreateGlobalStringPtr(SeqStr,
-                                                         SeqStr + "_STR");
-    S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
-                           cast<Constant>(ActualPtrName), SeqStr);
-  }
-
-  Builder.CreateCall2(Callee, PtrName, S);
-}
-
-/// Add to the end of the basic block llvm.ptr.annotations which show the state
-/// of the pointer at the bottom of the basic block.
-static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
-                                              Value *Ptr, Sequence Seq) {
-  // If we have a target identifier, make sure that we match it before emitting
-  // an annotation.
-  if(!ARCAnnotationTargetIdentifier.empty() &&
-     !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
-    return;
-
-  Module *M = BB->getParent()->getParent();
-  LLVMContext &C = M->getContext();
-  Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-  Type *I8XX = PointerType::getUnqual(I8X);
-  Type *Params[] = {I8XX, I8XX};
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), Params,
-                                        /*isVarArg=*/false);
-  Constant *Callee = M->getOrInsertFunction(Name, FTy);
-
-  IRBuilder<> Builder(BB, std::prev(BB->end()));
-
-  Value *PtrName;
-  StringRef Tmp = Ptr->getName();
-  if (nullptr == (PtrName = M->getGlobalVariable(Tmp, true))) {
-    Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
-                                                         Tmp + "_STR");
-    PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
-                                 cast<Constant>(ActualPtrName), Tmp);
-  }
-
-  Value *S;
-  std::string SeqStr = SequenceToString(Seq);
-  if (nullptr == (S = M->getGlobalVariable(SeqStr, true))) {
-    Value *ActualPtrName = Builder.CreateGlobalStringPtr(SeqStr,
-                                                         SeqStr + "_STR");
-    S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
-                           cast<Constant>(ActualPtrName), SeqStr);
-  }
-  Builder.CreateCall2(Callee, PtrName, S);
-}
-
-/// Adds a source annotation to pointer and a state change annotation to Inst
-/// referencing the source annotation and the old/new state of pointer.
-static void GenerateARCAnnotation(unsigned InstMDId,
-                                  unsigned PtrMDId,
-                                  Instruction *Inst,
-                                  Value *Ptr,
-                                  Sequence OldSeq,
-                                  Sequence NewSeq) {
-  if (EnableARCAnnotations) {
-    // If we have a target identifier, make sure that we match it before
-    // emitting an annotation.
-    if(!ARCAnnotationTargetIdentifier.empty() &&
-       !Ptr->getName().equals(ARCAnnotationTargetIdentifier))
-      return;
-
-    // First generate the source annotation on our pointer. This will return an
-    // MDString* if Ptr actually comes from an instruction implying we can put
-    // in a source annotation. If AppendMDNodeToSourcePtr returns 0 (i.e. NULL),
-    // then we know that our pointer is from an Argument so we put a reference
-    // to the argument number.
-    //
-    // The point of this is to make it easy for the
-    // llvm-arc-annotation-processor tool to cross reference where the source
-    // pointer is in the LLVM IR since the LLVM IR parser does not submit such
-    // information via debug info for backends to use (since why would anyone
-    // need such a thing from LLVM IR besides in non-standard cases
-    // [i.e. this]).
-    MDString *SourcePtrMDNode =
-      AppendMDNodeToSourcePtr(PtrMDId, Ptr);
-    AppendMDNodeToInstForPtr(InstMDId, Inst, Ptr, SourcePtrMDNode, OldSeq,
-                             NewSeq);
-  }
-}
-
-// The actual interface for accessing the above functionality is defined via
-// some simple macros which are defined below. We do this so that the user does
-// not need to pass in what metadata id is needed resulting in cleaner code and
-// additionally since it provides an easy way to conditionally no-op all
-// annotation support in a non-debug build.
-
-/// Use this macro to annotate a sequence state change when processing
-/// instructions bottom up,
-#define ANNOTATE_BOTTOMUP(inst, ptr, old, new)                          \
-  GenerateARCAnnotation(ARCAnnotationBottomUpMDKind,                    \
-                        ARCAnnotationProvenanceSourceMDKind, (inst),    \
-                        const_cast<Value*>(ptr), (old), (new))
-/// Use this macro to annotate a sequence state change when processing
-/// instructions top down.
-#define ANNOTATE_TOPDOWN(inst, ptr, old, new)                           \
-  GenerateARCAnnotation(ARCAnnotationTopDownMDKind,                     \
-                        ARCAnnotationProvenanceSourceMDKind, (inst),    \
-                        const_cast<Value*>(ptr), (old), (new))
-
-#define ANNOTATE_BB(_states, _bb, _name, _type, _direction)                   \
-  do {                                                                        \
-    if (EnableARCAnnotations) {                                               \
-      for(BBState::ptr_const_iterator I = (_states)._direction##_ptr_begin(), \
-          E = (_states)._direction##_ptr_end(); I != E; ++I) {                \
-        Value *Ptr = const_cast<Value*>(I->first);                            \
-        Sequence Seq = I->second.GetSeq();                                    \
-        GenerateARCBB ## _type ## Annotation(_name, (_bb), Ptr, Seq);         \
-      }                                                                       \
-    }                                                                         \
-  } while (0)
-
-#define ANNOTATE_BOTTOMUP_BBSTART(_states, _basicblock)                       \
-    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.bottomup.bbstart", \
-                Entrance, bottom_up)
-#define ANNOTATE_BOTTOMUP_BBEND(_states, _basicblock)                         \
-    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.bottomup.bbend",   \
-                Terminator, bottom_up)
-#define ANNOTATE_TOPDOWN_BBSTART(_states, _basicblock)                        \
-    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.topdown.bbstart",  \
-                Entrance, top_down)
-#define ANNOTATE_TOPDOWN_BBEND(_states, _basicblock)                          \
-    ANNOTATE_BB(_states, _basicblock, "llvm.arc.annotation.topdown.bbend",    \
-                Terminator, top_down)
-
-#else // !ARC_ANNOTATION
-// If annotations are off, noop.
-#define ANNOTATE_BOTTOMUP(inst, ptr, old, new)
-#define ANNOTATE_TOPDOWN(inst, ptr, old, new)
-#define ANNOTATE_BOTTOMUP_BBSTART(states, basicblock)
-#define ANNOTATE_BOTTOMUP_BBEND(states, basicblock)
-#define ANNOTATE_TOPDOWN_BBSTART(states, basicblock)
-#define ANNOTATE_TOPDOWN_BBEND(states, basicblock)
-#endif // !ARC_ANNOTATION
-
 namespace {
   /// \brief The main ARC optimization pass.
   class ObjCARCOpt : public FunctionPass {
@@ -703,14 +427,6 @@ namespace {
     /// The Metadata Kind for clang.arc.no_objc_arc_exceptions metadata.
     unsigned NoObjCARCExceptionsMDKind;
 
-#ifdef ARC_ANNOTATIONS
-    /// The Metadata Kind for llvm.arc.annotation.bottomup metadata.
-    unsigned ARCAnnotationBottomUpMDKind;
-    /// The Metadata Kind for llvm.arc.annotation.topdown metadata.
-    unsigned ARCAnnotationTopDownMDKind;
-    /// The Metadata Kind for llvm.arc.annotation.provenancesource metadata.
-    unsigned ARCAnnotationProvenanceSourceMDKind;
-#endif // ARC_ANNOATIONS
 
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
     void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
@@ -1345,7 +1061,6 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
 
     MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
     Sequence NewSeq = ReleaseMetadata ? S_MovableRelease : S_Release;
-    ANNOTATE_BOTTOMUP(Inst, Arg, S.GetSeq(), NewSeq);
     S.ResetSequenceProgress(NewSeq);
     S.SetReleaseMetadata(ReleaseMetadata);
     S.SetKnownSafe(S.HasKnownPositiveRefCount());
@@ -1390,7 +1105,6 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
     case S_Retain:
       llvm_unreachable("bottom-up pointer in retain state!");
     }
-    ANNOTATE_BOTTOMUP(Inst, Arg, OldSeq, S.GetSeq());
     // A retain moving bottom up can be a use.
     break;
   }
@@ -1446,7 +1160,6 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
       switch (Seq) {
       case S_Use:
         S.SetSeq(S_CanRelease);
-        ANNOTATE_BOTTOMUP(Inst, Ptr, Seq, S.GetSeq());
         continue;
       case S_CanRelease:
       case S_Release:
@@ -1475,13 +1188,11 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
         else
           S.InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
         S.SetSeq(S_Use);
-        ANNOTATE_BOTTOMUP(Inst, Ptr, Seq, S_Use);
       } else if (Seq == S_Release && IsUser(Class)) {
         DEBUG(dbgs() << "PreciseReleaseUse: Seq: " << Seq << "; " << *Ptr
               << "\n");
         // Non-movable releases depend on any possible objc pointer use.
         S.SetSeq(S_Stop);
-        ANNOTATE_BOTTOMUP(Inst, Ptr, S_Release, S_Stop);
         assert(!S.HasReverseInsertPts());
         // As above; handle invoke specially.
         if (isa<InvokeInst>(Inst))
@@ -1495,7 +1206,6 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
         DEBUG(dbgs() << "PreciseStopUse: Seq: " << Seq << "; " << *Ptr
               << "\n");
         S.SetSeq(S_Use);
-        ANNOTATE_BOTTOMUP(Inst, Ptr, Seq, S_Use);
       }
       break;
     case S_CanRelease:
@@ -1537,10 +1247,6 @@ bool ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
     }
   }
 
-  // If ARC Annotations are enabled, output the current state of pointers at the
-  // bottom of the basic block.
-  ANNOTATE_BOTTOMUP_BBEND(MyStates, BB);
-
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
     Instruction *Inst = std::prev(I);
@@ -1563,10 +1269,6 @@ bool ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
     if (InvokeInst *II = dyn_cast<InvokeInst>(&Pred->back()))
       NestingDetected |= VisitInstructionBottomUp(II, BB, Retains, MyStates);
   }
-
-  // If ARC Annotations are enabled, output the current state of pointers at the
-  // top of the basic block.
-  ANNOTATE_BOTTOMUP_BBSTART(MyStates, BB);
 
   return NestingDetected;
 }
@@ -1605,7 +1307,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       if (S.GetSeq() == S_Retain)
         NestingDetected = true;
 
-      ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_Retain);
       S.ResetSequenceProgress(S_Retain);
       S.SetKnownSafe(S.HasKnownPositiveRefCount());
       S.InsertCall(Inst);
@@ -1637,7 +1338,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       S.SetReleaseMetadata(ReleaseMetadata);
       S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
       Releases[Inst] = S.GetRRInfo();
-      ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_None);
       S.ClearSequenceProgress();
       break;
     case S_None:
@@ -1679,7 +1379,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       switch (Seq) {
       case S_Retain:
         S.SetSeq(S_CanRelease);
-        ANNOTATE_TOPDOWN(Inst, Ptr, Seq, S_CanRelease);
         assert(!S.HasReverseInsertPts());
         S.InsertReverseInsertPt(Inst);
 
@@ -1705,7 +1404,6 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
         DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr
               << "\n");
         S.SetSeq(S_Use);
-        ANNOTATE_TOPDOWN(Inst, Ptr, Seq, S_Use);
       }
       break;
     case S_Retain:
@@ -1748,10 +1446,6 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
     }
   }
 
-  // If ARC Annotations are enabled, output the current state of pointers at the
-  // top of the basic block.
-  ANNOTATE_TOPDOWN_BBSTART(MyStates, BB);
-
   // Visit all the instructions, top-down.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     Instruction *Inst = I;
@@ -1761,13 +1455,6 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
     NestingDetected |= VisitInstructionTopDown(Inst, Releases, MyStates);
   }
 
-  // If ARC Annotations are enabled, output the current state of pointers at the
-  // bottom of the basic block.
-  ANNOTATE_TOPDOWN_BBEND(MyStates, BB);
-
-#ifdef ARC_ANNOTATIONS
-  if (!(EnableARCAnnotations && DisableCheckForCFGHazards))
-#endif
   CheckForCFGHazards(BB, BBStates, MyStates);
   return NestingDetected;
 }
@@ -2141,12 +1828,6 @@ bool ObjCARCOpt::ConnectTDBUTraversals(
   // long as the existing imbalances are maintained.
   if (OldDelta != 0)
     return false;
-
-#ifdef ARC_ANNOTATIONS
-  // Do not move calls if ARC annotations are requested.
-  if (EnableARCAnnotations)
-    return false;
-#endif // ARC_ANNOTATIONS
 
   Changed = true;
   assert(OldCount != 0 && "Unreachable code?");
@@ -2604,14 +2285,6 @@ bool ObjCARCOpt::doInitialization(Module &M) {
     M.getContext().getMDKindID("clang.arc.copy_on_escape");
   NoObjCARCExceptionsMDKind =
     M.getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
-#ifdef ARC_ANNOTATIONS
-  ARCAnnotationBottomUpMDKind =
-    M.getContext().getMDKindID("llvm.arc.annotation.bottomup");
-  ARCAnnotationTopDownMDKind =
-    M.getContext().getMDKindID("llvm.arc.annotation.topdown");
-  ARCAnnotationProvenanceSourceMDKind =
-    M.getContext().getMDKindID("llvm.arc.annotation.provenancesource");
-#endif // ARC_ANNOTATIONS
 
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release
