@@ -55,6 +55,7 @@ public:
   /// \brief Information gathered about a DIE in the object file.
   struct DIEInfo {
     uint64_t Address;   ///< Linked address of the described entity.
+    DIE *Clone;         ///< Cloned version of that DIE.
     uint32_t ParentIdx; ///< The index of this DIE's parent.
     bool Keep;          ///< Is the DIE part of the linked output?
     bool InDebugMap;    ///< Was this DIE's entity found in the map?
@@ -89,6 +90,14 @@ public:
   /// debug_info section size).
   uint64_t computeNextUnitOffset();
 
+  /// \brief Keep track of a forward reference to DIE \p Die by
+  /// \p Attr. The attribute should be fixed up later to point to the
+  /// absolute offset of \p Die in the debug_info section.
+  void noteForwardReference(DIE *Die, DIEInteger *Attr);
+
+  /// \brief Apply all fixups recored by noteForwardReference().
+  void fixupForwardReferences();
+
 private:
   DWARFUnit &OrigUnit;
   std::vector<DIEInfo> Info;  ///< DIE info indexed by DIE index.
@@ -96,6 +105,14 @@ private:
 
   uint64_t StartOffset;
   uint64_t NextUnitOffset;
+
+  /// \brief A list of attributes to fixup with the absolute offset of
+  /// a DIE in the debug_info section.
+  ///
+  /// The offsets for the attributes in this array couldn't be set while
+  /// cloning because for forward refences the target DIE's offset isn't
+  /// known you emit the reference attribute.
+  std::vector<std::pair<DIE *, DIEInteger *>> ForwardDIEReferences;
 };
 
 uint64_t CompileUnit::computeNextUnitOffset() {
@@ -106,6 +123,17 @@ uint64_t CompileUnit::computeNextUnitOffset() {
   if (CUDie)
     NextUnitOffset += CUDie->getSize();
   return NextUnitOffset;
+}
+
+/// \brief Keep track of a forward reference to \p Die.
+void CompileUnit::noteForwardReference(DIE *Die, DIEInteger *Attr) {
+  ForwardDIEReferences.emplace_back(Die, Attr);
+}
+
+/// \brief Apply all fixups recorded by noteForwardReference().
+void CompileUnit::fixupForwardReferences() {
+  for (const auto &Ref : ForwardDIEReferences)
+    Ref.second->setValue(Ref.first->getOffset() + getStartOffset());
 }
 
 /// \brief A string table that doesn't need relocations.
@@ -518,8 +546,11 @@ private:
                                 const DWARFFormValue &Val, const DWARFUnit &U);
 
   /// \brief Helper for cloneDIE.
-  unsigned cloneDieReferenceAttribute(DIE &Die, AttributeSpec AttrSpec,
-                                      unsigned AttrSize);
+  unsigned
+  cloneDieReferenceAttribute(DIE &Die,
+                             const DWARFDebugInfoEntryMinimal &InputDIE,
+                             AttributeSpec AttrSpec, unsigned AttrSize,
+                             const DWARFFormValue &Val, const DWARFUnit &U);
 
   /// \brief Helper for cloneDIE.
   unsigned cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
@@ -1059,12 +1090,60 @@ unsigned DwarfLinker::cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec,
 /// \brief Clone an attribute referencing another DIE and add
 /// it to \p Die.
 /// \returns the size of the new attribute.
-unsigned DwarfLinker::cloneDieReferenceAttribute(DIE &Die,
-                                                 AttributeSpec AttrSpec,
-                                                 unsigned AttrSize) {
-  // FIXME: Handle DIE references.
+unsigned DwarfLinker::cloneDieReferenceAttribute(
+    DIE &Die, const DWARFDebugInfoEntryMinimal &InputDIE,
+    AttributeSpec AttrSpec, unsigned AttrSize, const DWARFFormValue &Val,
+    const DWARFUnit &U) {
+  uint32_t Ref = *Val.getAsReference(&U);
+  DIE *NewRefDie = nullptr;
+  CompileUnit *RefUnit = nullptr;
+  const DWARFDebugInfoEntryMinimal *RefDie = nullptr;
+
+  if (!(RefUnit = getUnitForOffset(Ref)) ||
+      !(RefDie = RefUnit->getOrigUnit().getDIEForOffset(Ref))) {
+    const char *AttributeString = dwarf::AttributeString(AttrSpec.Attr);
+    if (!AttributeString)
+      AttributeString = "DW_AT_???";
+    reportWarning(Twine("Missing DIE for ref in attribute ") + AttributeString +
+                      ". Dropping.",
+                  &U, &InputDIE);
+    return 0;
+  }
+
+  unsigned Idx = RefUnit->getOrigUnit().getDIEIndex(RefDie);
+  CompileUnit::DIEInfo &RefInfo = RefUnit->getInfo(Idx);
+  if (!RefInfo.Clone) {
+    assert(Ref > InputDIE.getOffset());
+    // We haven't cloned this DIE yet. Just create an empty one and
+    // store it. It'll get really cloned when we process it.
+    RefInfo.Clone = new DIE(dwarf::Tag(RefDie->getTag()));
+  }
+  NewRefDie = RefInfo.Clone;
+
+  if (AttrSpec.Form == dwarf::DW_FORM_ref_addr) {
+    // We cannot currently rely on a DIEEntry to emit ref_addr
+    // references, because the implementation calls back to DwarfDebug
+    // to find the unit offset. (We don't have a DwarfDebug)
+    // FIXME: we should be able to design DIEEntry reliance on
+    // DwarfDebug away.
+    DIEInteger *Attr;
+    if (Ref < InputDIE.getOffset()) {
+      // We must have already cloned that DIE.
+      uint32_t NewRefOffset =
+          RefUnit->getStartOffset() + NewRefDie->getOffset();
+      Attr = new (DIEAlloc) DIEInteger(NewRefOffset);
+    } else {
+      // A forward reference. Note and fixup later.
+      Attr = new (DIEAlloc) DIEInteger(0xBADDEF);
+      RefUnit->noteForwardReference(NewRefDie, Attr);
+    }
+    Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::DW_FORM_ref_addr,
+                 Attr);
+    return AttrSize;
+  }
+
   Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::Form(AttrSpec.Form),
-               new (DIEAlloc) DIEInteger(0));
+               new (DIEAlloc) DIEEntry(*NewRefDie));
   return AttrSize;
 }
 
@@ -1150,7 +1229,8 @@ unsigned DwarfLinker::cloneAttribute(DIE &Die,
   case dwarf::DW_FORM_ref2:
   case dwarf::DW_FORM_ref4:
   case dwarf::DW_FORM_ref8:
-    return cloneDieReferenceAttribute(Die, AttrSpec, AttrSize);
+    return cloneDieReferenceAttribute(Die, InputDIE, AttrSpec, AttrSize, Val,
+                                      U);
   case dwarf::DW_FORM_block:
   case dwarf::DW_FORM_block1:
   case dwarf::DW_FORM_block2:
@@ -1187,14 +1267,19 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
                            CompileUnit &Unit, uint32_t OutOffset) {
   DWARFUnit &U = Unit.getOrigUnit();
   unsigned Idx = U.getDIEIndex(&InputDIE);
+  CompileUnit::DIEInfo &Info = Unit.getInfo(Idx);
 
   // Should the DIE appear in the output?
   if (!Unit.getInfo(Idx).Keep)
     return nullptr;
 
   uint32_t Offset = InputDIE.getOffset();
-
-  DIE *Die = new DIE(static_cast<dwarf::Tag>(InputDIE.getTag()));
+  // The DIE might have been already created by a forward reference
+  // (see cloneDieReferenceAttribute()).
+  DIE *Die = Info.Clone;
+  if (!Die)
+    Die = Info.Clone = new DIE(dwarf::Tag(InputDIE.getTag()));
+  assert(Die->getTag() == InputDIE.getTag());
   Die->setOffset(OutOffset);
 
   // Extract and clone every attribute.
@@ -1317,6 +1402,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     // Emit all the compile unit's debug information.
     if (!ValidRelocs.empty() && !Options.NoOutput)
       for (auto &CurrentUnit : Units) {
+        CurrentUnit.fixupForwardReferences();
         Streamer->emitCompileUnitHeader(CurrentUnit);
         if (!CurrentUnit.getOutputUnitDIE())
           continue;
