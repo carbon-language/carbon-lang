@@ -3901,14 +3901,6 @@ void ASTWriter::WriteRedeclarations() {
       }
     }
 
-    if (!First->isFromASTFile() && Chain) {
-      Decl *FirstFromAST = MostRecent;
-      for (Decl *Prev = MostRecent; Prev; Prev = Prev->getPreviousDecl()) {
-        if (Prev->isFromASTFile())
-          FirstFromAST = Prev;
-      }
-    }
-
     LocalRedeclChains[Offset] = Size;
     
     // Reverse the set of local redeclarations, so that we store them in
