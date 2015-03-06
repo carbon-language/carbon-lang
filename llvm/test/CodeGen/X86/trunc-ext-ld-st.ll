@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=corei7 -mattr=+sse4.1 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse4.1 | FileCheck %s
 
 ;CHECK-LABEL: load_2_i8:
 ; A single 16-bit load
