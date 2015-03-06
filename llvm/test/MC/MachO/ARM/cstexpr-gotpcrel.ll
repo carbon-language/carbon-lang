@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i386-apple-darwin %s -o %t
+; RUN: llc -mtriple=arm-apple-darwin %s -o %t
 ; RUN:  FileCheck %s < %t
 ; RUN:  FileCheck %s -check-prefix=GOT-EQUIV < %t
 
