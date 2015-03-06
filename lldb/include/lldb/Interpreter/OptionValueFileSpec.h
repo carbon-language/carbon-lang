@@ -59,6 +59,7 @@ public:
         m_current_value = m_default_value;
         m_value_was_set = false;
         m_data_sp.reset();
+        m_data_mod_time.Clear();
         return true;
     }
     
@@ -123,6 +124,7 @@ protected:
     FileSpec m_current_value;
     FileSpec m_default_value;
     lldb::DataBufferSP m_data_sp;
+    TimeValue m_data_mod_time;
     uint32_t m_completion_mask;
     bool m_resolve;
 };
