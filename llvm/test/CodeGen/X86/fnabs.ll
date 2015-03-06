@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7-avx| FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx| FileCheck %s
 
 ; Verify that we generate a single OR instruction for a scalar, vec128, and vec256
 ; FNABS(x) operation -> FNEG (FABS(x)).
