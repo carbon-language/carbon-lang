@@ -545,9 +545,7 @@ struct LoopInterchange : public FunctionPass {
       if (!Interchanged)
         return Changed;
       // Loops interchanged reflect the same in LoopList
-      Loop *OldOuterLoop = LoopList[i - 1];
-      LoopList[i - 1] = LoopList[i];
-      LoopList[i] = OldOuterLoop;
+      std::swap(LoopList[i - 1], LoopList[i]);
 
       // Update the DependencyMatrix
       interChangeDepedencies(DependencyMatrix, i, i - 1);
@@ -974,18 +972,10 @@ bool LoopInterchangeTransform::transform() {
 
 void LoopInterchangeTransform::initialize() {}
 
-void LoopInterchangeTransform::splitInnerLoopLatch(Instruction *inc) {
-
+void LoopInterchangeTransform::splitInnerLoopLatch(Instruction *Inc) {
   BasicBlock *InnerLoopLatch = InnerLoop->getLoopLatch();
-  BasicBlock::iterator I = InnerLoopLatch->begin();
-  BasicBlock::iterator E = InnerLoopLatch->end();
-  for (; I != E; ++I) {
-    if (inc == I)
-      break;
-  }
-
   BasicBlock *InnerLoopLatchPred = InnerLoopLatch;
-  InnerLoopLatch = SplitBlock(InnerLoopLatchPred, I, DT, LI);
+  InnerLoopLatch = SplitBlock(InnerLoopLatchPred, Inc, DT, LI);
 }
 
 void LoopInterchangeTransform::splitOuterLoopLatch() {
@@ -1005,38 +995,28 @@ void LoopInterchangeTransform::splitInnerLoopHeader() {
                   "InnerLoopHeader \n");
 }
 
+/// \brief Move all instructions except the terminator from FromBB right before
+/// InsertBefore
+static void moveBBContents(BasicBlock *FromBB, Instruction *InsertBefore) {
+  auto &ToList = InsertBefore->getParent()->getInstList();
+  auto &FromList = FromBB->getInstList();
+
+  ToList.splice(InsertBefore, FromList, FromList.begin(),
+                FromBB->getTerminator());
+}
+
 void LoopInterchangeTransform::adjustOuterLoopPreheader() {
   BasicBlock *OuterLoopPreHeader = OuterLoop->getLoopPreheader();
-  SmallVector<Instruction *, 8> Inst;
-  for (auto I = OuterLoopPreHeader->begin(), E = OuterLoopPreHeader->end();
-       I != E; ++I) {
-    if (isa<BranchInst>(*I))
-      break;
-    Inst.push_back(I);
-  }
-
   BasicBlock *InnerPreHeader = InnerLoop->getLoopPreheader();
-  for (auto I = Inst.begin(), E = Inst.end(); I != E; ++I) {
-    Instruction *Ins = cast<Instruction>(*I);
-    Ins->moveBefore(InnerPreHeader->getTerminator());
-  }
+
+  moveBBContents(OuterLoopPreHeader, InnerPreHeader->getTerminator());
 }
 
 void LoopInterchangeTransform::adjustInnerLoopPreheader() {
-
   BasicBlock *InnerLoopPreHeader = InnerLoop->getLoopPreheader();
-  SmallVector<Instruction *, 8> Inst;
-  for (auto I = InnerLoopPreHeader->begin(), E = InnerLoopPreHeader->end();
-       I != E; ++I) {
-    if (isa<BranchInst>(*I))
-      break;
-    Inst.push_back(I);
-  }
   BasicBlock *OuterHeader = OuterLoop->getHeader();
-  for (auto I = Inst.begin(), E = Inst.end(); I != E; ++I) {
-    Instruction *Ins = cast<Instruction>(*I);
-    Ins->moveBefore(OuterHeader->getTerminator());
-  }
+
+  moveBBContents(InnerLoopPreHeader, OuterHeader->getTerminator());
 }
 
 bool LoopInterchangeTransform::adjustLoopBranches() {
@@ -1141,32 +1121,15 @@ void LoopInterchangeTransform::adjustLoopPreheaders() {
   BranchInst *InnerTermBI =
       cast<BranchInst>(InnerLoopPreHeader->getTerminator());
 
-  SmallVector<Value *, 16> OuterPreheaderInstr;
-  SmallVector<Value *, 16> InnerPreheaderInstr;
-
-  for (auto I = OuterLoopPreHeader->begin(); !isa<BranchInst>(I); ++I)
-    OuterPreheaderInstr.push_back(I);
-
-  for (auto I = InnerLoopPreHeader->begin(); !isa<BranchInst>(I); ++I)
-    InnerPreheaderInstr.push_back(I);
-
   BasicBlock *HeaderSplit =
       SplitBlock(OuterLoopHeader, OuterLoopHeader->getTerminator(), DT, LI);
   Instruction *InsPoint = HeaderSplit->getFirstNonPHI();
   // These instructions should now be executed inside the loop.
   // Move instruction into a new block after outer header.
-  for (auto I = InnerPreheaderInstr.begin(), E = InnerPreheaderInstr.end();
-       I != E; ++I) {
-    Instruction *Ins = cast<Instruction>(*I);
-    Ins->moveBefore(InsPoint);
-  }
+  moveBBContents(InnerLoopPreHeader, InsPoint);
   // These instructions were not executed previously in the loop so move them to
   // the older inner loop preheader.
-  for (auto I = OuterPreheaderInstr.begin(), E = OuterPreheaderInstr.end();
-       I != E; ++I) {
-    Instruction *Ins = cast<Instruction>(*I);
-    Ins->moveBefore(InnerTermBI);
-  }
+  moveBBContents(OuterLoopPreHeader, InnerTermBI);
 }
 
 bool LoopInterchangeTransform::adjustLoopLinks() {
