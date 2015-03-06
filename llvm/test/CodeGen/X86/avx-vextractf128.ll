@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx | FileCheck %s
 
 ; CHECK-LABEL: A:
 ; CHECK-NOT: vunpck
@@ -117,6 +117,5 @@ define void @t9(i64* %p) {
 ; CHECK-LABEL: t9:
 ; CHECK: vxorps	%xmm
 ; CHECK-NOT: vextractf
-; CHECK: vmovups
 ; CHECK: vmovups
 }
