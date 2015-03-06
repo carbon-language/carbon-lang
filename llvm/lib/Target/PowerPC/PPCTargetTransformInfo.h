@@ -78,6 +78,7 @@ public:
   /// \name Vector TTI Implementations
   /// @{
 
+  bool enableAggressiveInterleaving(bool LoopHasReductions);
   unsigned getNumberOfRegisters(bool Vector);
   unsigned getRegisterBitWidth(bool Vector);
   unsigned getMaxInterleaveFactor();

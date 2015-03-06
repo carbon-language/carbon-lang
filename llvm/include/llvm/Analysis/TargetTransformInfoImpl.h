@@ -235,6 +235,8 @@ public:
 
   bool shouldBuildLookupTables() { return true; }
 
+  bool enableAggressiveInterleaving(bool LoopHasReductions) { return false; }
+
   TTI::PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) {
     return TTI::PSK_Software;
   }

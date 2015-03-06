@@ -192,6 +192,10 @@ void PPCTTIImpl::getUnrollingPreferences(Loop *L,
   BaseT::getUnrollingPreferences(L, UP);
 }
 
+bool PPCTTIImpl::enableAggressiveInterleaving(bool LoopHasReductions) {
+  return LoopHasReductions;
+}
+
 unsigned PPCTTIImpl::getNumberOfRegisters(bool Vector) {
   if (Vector && !ST->hasAltivec() && !ST->hasQPX())
     return 0;

@@ -143,6 +143,10 @@ bool TargetTransformInfo::shouldBuildLookupTables() const {
   return TTIImpl->shouldBuildLookupTables();
 }
 
+bool TargetTransformInfo::enableAggressiveInterleaving(bool LoopHasReductions) const {
+  return TTIImpl->enableAggressiveInterleaving(LoopHasReductions);
+}
+
 TargetTransformInfo::PopcntSupportKind
 TargetTransformInfo::getPopcntSupport(unsigned IntTyWidthInBit) const {
   return TTIImpl->getPopcntSupport(IntTyWidthInBit);

@@ -4564,6 +4564,14 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
     return SmallUF;
   }
 
+  // Unroll if this is a large loop (small loops are already dealt with by this
+  // point) that could benefit from interleaved unrolling.
+  bool HasReductions = (Legal->getReductionVars()->size() > 0);
+  if (TTI.enableAggressiveInterleaving(HasReductions)) {
+    DEBUG(dbgs() << "LV: Unrolling to expose ILP.\n");
+    return UF;
+  }
+
   DEBUG(dbgs() << "LV: Not Unrolling.\n");
   return 1;
 }
