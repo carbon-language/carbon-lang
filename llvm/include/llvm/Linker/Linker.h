@@ -54,6 +54,7 @@ public:
     NonOpaqueStructTypeSet NonOpaqueStructTypes;
 
     void addNonOpaque(StructType *Ty);
+    void switchToNonOpaque(StructType *Ty);
     void addOpaque(StructType *Ty);
     StructType *findNonOpaque(ArrayRef<Type *> ETypes, bool IsPacked);
     bool hasType(StructType *Ty);

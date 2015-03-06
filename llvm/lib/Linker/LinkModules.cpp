@@ -226,6 +226,7 @@ void TypeMapTy::linkDefinedTypeBodies() {
       Elements[I] = get(SrcSTy->getElementType(I));
 
     DstSTy->setBody(Elements, SrcSTy->isPacked());
+    DstStructTypesSet.switchToNonOpaque(DstSTy);
   }
   SrcDefinitionsToResolve.clear();
   DstResolvedOpaqueTypes.clear();
@@ -1676,6 +1677,14 @@ bool Linker::StructTypeKeyInfo::isEqual(const StructType *LHS,
 void Linker::IdentifiedStructTypeSet::addNonOpaque(StructType *Ty) {
   assert(!Ty->isOpaque());
   NonOpaqueStructTypes.insert(Ty);
+}
+
+void Linker::IdentifiedStructTypeSet::switchToNonOpaque(StructType *Ty) {
+  assert(!Ty->isOpaque());
+  NonOpaqueStructTypes.insert(Ty);
+  bool Removed = OpaqueStructTypes.erase(Ty);
+  (void)Removed;
+  assert(Removed);
 }
 
 void Linker::IdentifiedStructTypeSet::addOpaque(StructType *Ty) {
