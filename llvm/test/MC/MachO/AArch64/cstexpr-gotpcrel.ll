@@ -2,6 +2,11 @@
 ; RUN:  FileCheck %s -check-prefix=ARM < %t
 ; RUN:  FileCheck %s -check-prefix=ARM-GOT-EQUIV < %t
 
+; FIXME: the checking for extgotequiv and localgotequiv rely on the emission
+; order, which is not guaranteed because we use DenseMap to hold the GOT
+; equivalents.
+; XFAIL: *
+
 ; GOT equivalent globals references can be replaced by the GOT entry of the
 ; final symbol instead.
 
