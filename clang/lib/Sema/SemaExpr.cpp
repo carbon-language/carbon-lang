@@ -3324,6 +3324,9 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
           Diag(Tok.getLocation(), diag::err_int128_unsupported);
           Width = MaxWidth;
           Ty = Context.getIntMaxType();
+        } else if (Literal.MicrosoftInteger == 8 && !Literal.isUnsigned) {
+          Width = 8;
+          Ty = Context.CharTy;
         } else {
           Width = Literal.MicrosoftInteger;
           Ty = Context.getIntTypeForBitwidth(Width,

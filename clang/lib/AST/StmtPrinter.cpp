@@ -1069,7 +1069,8 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   // Emit suffixes.  Integer literals are always a builtin integer type.
   switch (Node->getType()->getAs<BuiltinType>()->getKind()) {
   default: llvm_unreachable("Unexpected type for integer literal!");
-  case BuiltinType::SChar:     OS << "i8"; break;
+  case BuiltinType::Char_S:
+  case BuiltinType::Char_U:    OS << "i8"; break;
   case BuiltinType::UChar:     OS << "Ui8"; break;
   case BuiltinType::Short:     OS << "i16"; break;
   case BuiltinType::UShort:    OS << "Ui16"; break;
