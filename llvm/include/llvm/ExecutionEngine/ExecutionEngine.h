@@ -510,9 +510,6 @@ private:
   bool VerifyModules;
   bool UseOrcMCJITReplacement;
 
-  /// InitEngine - Does the common initialization of default options.
-  void InitEngine();
-
 public:
   /// Default constructor for EngineBuilder.
   EngineBuilder();

@@ -70,20 +70,10 @@ namespace {
   class GCOVProfiler : public ModulePass {
   public:
     static char ID;
-    GCOVProfiler() : ModulePass(ID), Options(GCOVOptions::getDefault()) {
-      init();
-    }
-    GCOVProfiler(const GCOVOptions &Options) : ModulePass(ID), Options(Options){
+    GCOVProfiler() : GCOVProfiler(GCOVOptions::getDefault()) {}
+    GCOVProfiler(const GCOVOptions &Opts) : ModulePass(ID), Options(Opts) {
       assert((Options.EmitNotes || Options.EmitData) &&
              "GCOVProfiler asked to do nothing?");
-      init();
-    }
-    const char *getPassName() const override {
-      return "GCOV Profiler";
-    }
-
-  private:
-    void init() {
       ReversedVersion[0] = Options.Version[3];
       ReversedVersion[1] = Options.Version[2];
       ReversedVersion[2] = Options.Version[1];
@@ -91,6 +81,11 @@ namespace {
       ReversedVersion[4] = '\0';
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
+    const char *getPassName() const override {
+      return "GCOV Profiler";
+    }
+
+  private:
     bool runOnModule(Module &M) override;
 
     // Create the .gcno files for the Module based on DebugInfo.

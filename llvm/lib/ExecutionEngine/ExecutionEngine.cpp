@@ -400,33 +400,12 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   return runFunction(Fn, GVArgs).IntVal.getZExtValue();
 }
 
-EngineBuilder::EngineBuilder() {
-  InitEngine();
-}
+EngineBuilder::EngineBuilder() : EngineBuilder(nullptr) {}
 
 EngineBuilder::EngineBuilder(std::unique_ptr<Module> M)
-  : M(std::move(M)), MCJMM(nullptr) {
-  InitEngine();
-}
-
-EngineBuilder::~EngineBuilder() {}
-
-EngineBuilder &EngineBuilder::setMCJITMemoryManager(
-                                   std::unique_ptr<RTDyldMemoryManager> mcjmm) {
-  MCJMM = std::move(mcjmm);
-  return *this;
-}
-
-void EngineBuilder::InitEngine() {
-  WhichEngine = EngineKind::Either;
-  ErrorStr = nullptr;
-  OptLevel = CodeGenOpt::Default;
-  MCJMM = nullptr;
-  Options = TargetOptions();
-  RelocModel = Reloc::Default;
-  CMModel = CodeModel::JITDefault;
-  UseOrcMCJITReplacement = false;
-
+    : M(std::move(M)), WhichEngine(EngineKind::Either), ErrorStr(nullptr),
+      OptLevel(CodeGenOpt::Default), MCJMM(nullptr), RelocModel(Reloc::Default),
+      CMModel(CodeModel::JITDefault), UseOrcMCJITReplacement(false) {
 // IR module verification is enabled by default in debug builds, and disabled
 // by default in release builds.
 #ifndef NDEBUG
@@ -434,6 +413,14 @@ void EngineBuilder::InitEngine() {
 #else
   VerifyModules = false;
 #endif
+}
+
+EngineBuilder::~EngineBuilder() = default;
+
+EngineBuilder &EngineBuilder::setMCJITMemoryManager(
+                                   std::unique_ptr<RTDyldMemoryManager> mcjmm) {
+  MCJMM = std::move(mcjmm);
+  return *this;
 }
 
 ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
