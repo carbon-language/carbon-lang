@@ -1723,7 +1723,7 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
     Tmp = TyBits - U->getOperand(0)->getType()->getScalarSizeInBits();
     return ComputeNumSignBits(U->getOperand(0), TD, Depth+1, Q) + Tmp;
 
-  case Instruction::SDiv:
+  case Instruction::SDiv: {
     const APInt *Denominator;
     // sdiv X, C -> adds log(C) sign bits.
     if (match(U->getOperand(1), m_APInt(Denominator))) {
@@ -1739,6 +1739,32 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
       return std::min(TyBits, NumBits + Denominator->logBase2());
     }
     break;
+  }
+
+  case Instruction::SRem: {
+    const APInt *Denominator;
+    // srem X, C -> we know that the result is within 0..C-1 when C is a
+    // positive constant and the sign bits are at most TypeBits - log2(C).
+    if (match(U->getOperand(1), m_APInt(Denominator))) {
+
+      // Ignore non-positive denominator.
+      if (!Denominator->isStrictlyPositive())
+        break;
+
+      // Calculate the incoming numerator bits. SRem by a positive constant
+      // can't lower the number of sign bits.
+      unsigned NumrBits = ComputeNumSignBits(U->getOperand(0), TD, Depth+1, Q);
+
+      // Calculate the leading sign bit constraints by examining the
+      // denominator. The remainder is in the range 0..C-1, which is
+      // calculated by the log2(denominator). The sign bits are the bit-width
+      // minus this value. The result of this subtraction has to be positive.
+      unsigned ResBits = TyBits - Denominator->logBase2();
+
+      return std::max(NumrBits, ResBits);
+    }
+    break;
+  }
 
   case Instruction::AShr: {
     Tmp = ComputeNumSignBits(U->getOperand(0), TD, Depth+1, Q);
