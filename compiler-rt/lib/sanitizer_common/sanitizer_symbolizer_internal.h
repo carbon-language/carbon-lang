@@ -26,6 +26,9 @@ const char *ExtractToken(const char *str, const char *delims, char **result);
 const char *ExtractInt(const char *str, const char *delims, int *result);
 const char *ExtractUptr(const char *str, const char *delims, uptr *result);
 
+// SymbolizerTool is an interface that is implemented by individual "tools"
+// that can perform symbolication (external llvm-symbolizer, libbacktrace,
+// Windows DbgHelp symbolizer, etc.).
 class SymbolizerTool {
  public:
   // POSIXSymbolizer implements a "fallback chain" of symbolizer tools. In a
