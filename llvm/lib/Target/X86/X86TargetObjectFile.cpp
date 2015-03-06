@@ -96,14 +96,12 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
       SubRHS->getPointerAddressSpace() != 0)
     return nullptr;
 
-  // Both ptrtoint instructions must wrap global variables:
+  // Both ptrtoint instructions must wrap global objects:
   // - Only global variables are eligible for image relative relocations.
-  // - The subtrahend refers to the special symbol __ImageBase, a global.
-  const GlobalVariable *GVLHS =
-      dyn_cast<GlobalVariable>(SubLHS->getPointerOperand());
-  const GlobalVariable *GVRHS =
-      dyn_cast<GlobalVariable>(SubRHS->getPointerOperand());
-  if (!GVLHS || !GVRHS)
+  // - The subtrahend refers to the special symbol __ImageBase, a GlobalVariable.
+  const auto *GOLHS = dyn_cast<GlobalObject>(SubLHS->getPointerOperand());
+  const auto *GVRHS = dyn_cast<GlobalVariable>(SubRHS->getPointerOperand());
+  if (!GOLHS || !GVRHS)
     return nullptr;
 
   // We expect __ImageBase to be a global variable without a section, externally
@@ -116,10 +114,10 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
     return nullptr;
 
   // An image-relative, thread-local, symbol makes no sense.
-  if (GVLHS->isThreadLocal())
+  if (GOLHS->isThreadLocal())
     return nullptr;
 
-  return MCSymbolRefExpr::Create(TM.getSymbol(GVLHS, Mang),
+  return MCSymbolRefExpr::Create(TM.getSymbol(GOLHS, Mang),
                                  MCSymbolRefExpr::VK_COFF_IMGREL32,
                                  getContext());
 }
