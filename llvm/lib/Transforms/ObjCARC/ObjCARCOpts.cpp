@@ -1048,28 +1048,7 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
     Arg = GetArgRCIdentityRoot(Inst);
 
     BottomUpPtrState &S = MyStates.getPtrBottomUpState(Arg);
-
-    // If we see two releases in a row on the same pointer. If so, make
-    // a note, and we'll cicle back to revisit it after we've
-    // hopefully eliminated the second release, which may allow us to
-    // eliminate the first release too.
-    // Theoretically we could implement removal of nested retain+release
-    // pairs by making PtrState hold a stack of states, but this is
-    // simple and avoids adding overhead for the non-nested case.
-    if (S.GetSeq() == S_Release || S.GetSeq() == S_MovableRelease) {
-      DEBUG(dbgs() << "Found nested releases (i.e. a release pair)\n");
-      NestingDetected = true;
-    }
-
-    MDNode *ReleaseMetadata =
-        Inst->getMetadata(MDKindCache.ImpreciseReleaseMDKind);
-    Sequence NewSeq = ReleaseMetadata ? S_MovableRelease : S_Release;
-    S.ResetSequenceProgress(NewSeq);
-    S.SetReleaseMetadata(ReleaseMetadata);
-    S.SetKnownSafe(S.HasKnownPositiveRefCount());
-    S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
-    S.InsertCall(Inst);
-    S.SetKnownPositiveRefCount();
+    NestingDetected |= S.InitBottomUp(MDKindCache, Inst);
     break;
   }
   case ARCInstKind::RetainBlock:
@@ -1294,30 +1273,8 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
   case ARCInstKind::Retain:
   case ARCInstKind::RetainRV: {
     Arg = GetArgRCIdentityRoot(Inst);
-
     TopDownPtrState &S = MyStates.getPtrTopDownState(Arg);
-
-    // Don't do retain+release tracking for ARCInstKind::RetainRV, because
-    // it's
-    // better to let it remain as the first instruction after a call.
-    if (Class != ARCInstKind::RetainRV) {
-      // If we see two retains in a row on the same pointer. If so, make
-      // a note, and we'll cicle back to revisit it after we've
-      // hopefully eliminated the second retain, which may allow us to
-      // eliminate the first retain too.
-      // Theoretically we could implement removal of nested retain+release
-      // pairs by making PtrState hold a stack of states, but this is
-      // simple and avoids adding overhead for the non-nested case.
-      if (S.GetSeq() == S_Retain)
-        NestingDetected = true;
-
-      S.ResetSequenceProgress(S_Retain);
-      S.SetKnownSafe(S.HasKnownPositiveRefCount());
-      S.InsertCall(Inst);
-    }
-
-    S.SetKnownPositiveRefCount();
-
+    NestingDetected |= S.InitTopDown(Class, Inst);
     // A retain can be a potential use; procede to the generic checking
     // code below.
     break;

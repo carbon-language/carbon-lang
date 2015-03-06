@@ -17,6 +17,7 @@
 #ifndef LLVM_LIB_TRANSFORMS_OBJCARC_PTRSTATE_H
 #define LLVM_LIB_TRANSFORMS_OBJCARC_PTRSTATE_H
 
+#include "ARCInstKind.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"
@@ -25,6 +26,8 @@
 
 namespace llvm {
 namespace objcarc {
+
+struct ARCMDKindCache;
 
 /// \enum Sequence
 ///
@@ -160,14 +163,20 @@ public:
   const RRInfo &GetRRInfo() const { return RRI; }
 };
 
-/// This is currently a stub.
 struct BottomUpPtrState : PtrState {
   BottomUpPtrState() : PtrState() {}
+
+  /// (Re-)Initialize this bottom up pointer returning true if we detected a
+  /// pointer with nested releases.
+  bool InitBottomUp(ARCMDKindCache &Cache, Instruction *I);
 };
 
-/// This is currently a stub.
 struct TopDownPtrState : PtrState {
   TopDownPtrState() : PtrState() {}
+
+  /// (Re-)Initialize this bottom up pointer returning true if we detected a
+  /// pointer with nested releases.
+  bool InitTopDown(ARCInstKind Kind, Instruction *I);
 };
 
 } // end namespace objcarc
