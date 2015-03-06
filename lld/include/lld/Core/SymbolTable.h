@@ -61,9 +61,6 @@ public:
   /// returns vector of tentative definitions
   std::vector<StringRef> tentativeDefinitions();
 
-  /// @brief count of by-name entries in symbol table
-  unsigned int size();
-
   /// @brief add atom to replacement table
   void addReplacement(const Atom *replaced, const Atom *replacement);
 

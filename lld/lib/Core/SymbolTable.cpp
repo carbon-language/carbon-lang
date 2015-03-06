@@ -362,10 +362,6 @@ bool SymbolTable::isCoalescedAway(const Atom *atom) {
   return _replacedAtoms.count(atom) > 0;
 }
 
-unsigned int SymbolTable::size() {
-  return _nameTable.size();
-}
-
 std::vector<const UndefinedAtom *> SymbolTable::undefines() {
   std::vector<const UndefinedAtom *> ret;
   for (auto it : _nameTable) {
