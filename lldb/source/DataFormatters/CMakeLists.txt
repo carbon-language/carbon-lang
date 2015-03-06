@@ -28,4 +28,5 @@ add_lldb_library(lldbDataFormatters
   TypeSynthetic.cpp
   TypeValidator.cpp
   ValueObjectPrinter.cpp
+  VectorType.cpp
   )
