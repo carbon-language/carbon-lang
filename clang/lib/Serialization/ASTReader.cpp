@@ -6285,6 +6285,7 @@ static Decl *getPredefinedDecl(ASTContext &Context, PredefinedDeclIDs ID) {
   case PREDEF_DECL_BUILTIN_VA_LIST_ID:
     return Context.getBuiltinVaListDecl();
   }
+  llvm_unreachable("PredefinedDeclIDs unknown enum value");
 }
 
 Decl *ASTReader::GetExistingDecl(DeclID ID) {

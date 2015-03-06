@@ -206,6 +206,7 @@ bool BottomUpPtrState::MatchWithRetain() {
   case S_Retain:
     llvm_unreachable("bottom-up pointer in retain state!");
   }
+  llvm_unreachable("Sequence unknown enum value");
 }
 
 bool BottomUpPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
@@ -233,6 +234,7 @@ bool BottomUpPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
   case S_Retain:
     llvm_unreachable("bottom-up pointer in retain state!");
   }
+  llvm_unreachable("Sequence unknown enum value");
 }
 
 void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
@@ -336,6 +338,7 @@ bool TopDownPtrState::MatchWithRelease(ARCMDKindCache &Cache,
   case S_MovableRelease:
     llvm_unreachable("top-down pointer in bottom up state!");
   }
+  llvm_unreachable("Sequence unknown enum value");
 }
 
 bool TopDownPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
