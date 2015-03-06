@@ -124,5 +124,69 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-list-children var6")
         #self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$15\",exp=\"\*\$15\",numchild=\"0\",type=\"const char\",thread-id=\"1\",has_more=\"0\"\}\]") #FIXME -var-list-children shows invalid thread-id
 
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_var_update(self):
+        """Test that 'lldb-mi --interpreter' works for -var-update."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to BP_var_update_test_init
+        line = line_number('main.cpp', '// BP_var_update_test_init')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Setup variables
+        self.runCmd("-var-create var_l * l")
+        self.expect("\^done,name=\"var_l\",numchild=\"0\",value=\"1\",type=\"long\",thread-id=\"1\",has_more=\"0\"")
+        self.runCmd("-var-create var_complx * complx")
+        self.expect("\^done,name=\"var_complx\",numchild=\"3\",value=\"\{\.\.\.\}\",type=\"complex_type\",thread-id=\"1\",has_more=\"0\"")
+        self.runCmd("-var-create var_complx_array * complx_array")
+        self.expect("\^done,name=\"var_complx_array\",numchild=\"2\",value=\"\{\.\.\.\}\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
+
+        # Go to BP_var_update_test_l
+        line = line_number('main.cpp', '// BP_var_update_test_l')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"2\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that var_l was updated
+        self.runCmd("-var-update --all-values var_l")
+        self.expect("\^done,changelist=\[\{name=\"var_l\",value=\"0\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
+
+        # Go to BP_var_update_test_complx
+        line = line_number('main.cpp', '// BP_var_update_test_complx')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"3\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that var_complx was updated
+        self.runCmd("-var-update --all-values var_complx")
+        self.expect("\^done,changelist=\[\{name=\"var_complx\",value=\"\{\.\.\.\}\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
+
+        # Go to BP_var_update_test_complx_array
+        line = line_number('main.cpp', '// BP_var_update_test_complx_array')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"4\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that var_complex_array was updated
+        self.runCmd("-var-update --all-values var_complx_array")
+        self.expect("\^done,changelist=\[\{name=\"var_complx_array\",value=\"\{\.\.\.\}\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
+
 if __name__ == '__main__':
     unittest2.main()

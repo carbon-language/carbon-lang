@@ -508,6 +508,19 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValueFormatted(void) const
 // Returns: lldb::SBValue & - LLDB Value object.
 // Throws:  None.
 //--
+lldb::SBValue &
+CMICmnLLDBDebugSessionInfoVarObj::GetValue(void)
+{
+    return m_SBValue;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve the LLDB Value object.
+// Type:    Method.
+// Args:    None.
+// Returns: lldb::SBValue & - Constant LLDB Value object.
+// Throws:  None.
+//--
 const lldb::SBValue &
 CMICmnLLDBDebugSessionInfoVarObj::GetValue(void) const
 {

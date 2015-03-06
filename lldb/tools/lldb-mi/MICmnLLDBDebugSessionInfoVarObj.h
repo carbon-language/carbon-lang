@@ -97,6 +97,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
     const CMIUtilString &GetName(void) const;
     const CMIUtilString &GetNameReal(void) const;
     const CMIUtilString &GetValueFormatted(void) const;
+    lldb::SBValue &GetValue(void);
     const lldb::SBValue &GetValue(void) const;
     varType_e GetType(void) const;
     bool SetVarFormat(const varFormat_e veVarFormat);
