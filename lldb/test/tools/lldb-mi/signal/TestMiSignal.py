@@ -13,7 +13,6 @@ import unittest2
 class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
-    lldb_server_path = "lldb-server"
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -89,7 +88,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped on entry (remote)."""
 
         # Prepare debugserver
-        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", lldb_server_path)))
+        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "lldb-server")))
         import lldbgdbserverutils
         debugserver_exe = lldbgdbserverutils.get_debugserver_exe()
         if not debugserver_exe:
