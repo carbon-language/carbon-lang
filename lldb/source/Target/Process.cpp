@@ -1011,6 +1011,10 @@ Process::WaitForProcessToStop (const TimeValue *timeout,
         if (log)
             log->Printf("Process::%s returning without waiting for events; process private and public states are already 'stopped'.",
                         __FUNCTION__);
+        // We need to toggle the run lock as this won't get done in
+        // SetPublicState() if the process is hijacked.
+        if (hijack_listener)
+            m_public_run_lock.SetStopped();
         return state;
     }
 

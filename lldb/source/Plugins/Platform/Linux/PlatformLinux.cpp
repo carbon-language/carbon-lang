@@ -765,7 +765,6 @@ PlatformLinux::DebugProcess (ProcessLaunchInfo &launch_info,
 
     // Adjust launch for a hijacker.
     ListenerSP listener_sp;
-#if 0
     if (!launch_info.GetHijackListener ())
     {
         if (log)
@@ -775,7 +774,6 @@ PlatformLinux::DebugProcess (ProcessLaunchInfo &launch_info,
         launch_info.SetHijackListener (listener_sp);
         process_sp->HijackProcessEvents (listener_sp.get ());
     }
-#endif
 
     // Log file actions.
     if (log)
@@ -801,7 +799,6 @@ PlatformLinux::DebugProcess (ProcessLaunchInfo &launch_info,
         if (listener_sp)
         {
             const StateType state = process_sp->WaitForProcessToStop (NULL, NULL, false, listener_sp.get());
-            process_sp->RestoreProcessEvents();
 
             if (state == eStateStopped)
             {
