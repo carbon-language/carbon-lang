@@ -402,11 +402,18 @@ void BBState::MergeSucc(const BBState &Other) {
 }
 
 namespace {
+
   /// \brief The main ARC optimization pass.
   class ObjCARCOpt : public FunctionPass {
     bool Changed;
     ProvenanceAnalysis PA;
+
+    /// A cache of references to runtime entry point constants.
     ARCRuntimeEntryPoints EP;
+
+    /// A cache of MDKinds that can be passed into other functions to propagate
+    /// MDKind identifiers.
+    ARCMDKindCache MDKindCache;
 
     // This is used to track if a pointer is stored into an alloca.
     DenseSet<const Value *> MultiOwnersSet;
@@ -417,16 +424,6 @@ namespace {
     /// Flags which determine whether each of the interesting runtine functions
     /// is in fact used in the current function.
     unsigned UsedInThisFunction;
-
-    /// The Metadata Kind for clang.imprecise_release metadata.
-    unsigned ImpreciseReleaseMDKind;
-
-    /// The Metadata Kind for clang.arc.copy_on_escape metadata.
-    unsigned CopyOnEscapeMDKind;
-
-    /// The Metadata Kind for clang.arc.no_objc_arc_exceptions metadata.
-    unsigned NoObjCARCExceptionsMDKind;
-
 
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
     void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
@@ -710,7 +707,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Release);
         CallInst *NewCall = CallInst::Create(Decl, Call->getArgOperand(0), "",
                                              Call);
-        NewCall->setMetadata(ImpreciseReleaseMDKind, MDNode::get(C, None));
+        NewCall->setMetadata(MDKindCache.ImpreciseReleaseMDKind,
+                             MDNode::get(C, None));
 
         DEBUG(dbgs() << "Replacing autorelease{,RV}(x) with objc_release(x) "
               "since x is otherwise unused.\nOld: " << *Call << "\nNew: "
@@ -1059,7 +1057,8 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
       NestingDetected = true;
     }
 
-    MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+    MDNode *ReleaseMetadata =
+        Inst->getMetadata(MDKindCache.ImpreciseReleaseMDKind);
     Sequence NewSeq = ReleaseMetadata ? S_MovableRelease : S_Release;
     S.ResetSequenceProgress(NewSeq);
     S.SetReleaseMetadata(ReleaseMetadata);
@@ -1326,7 +1325,8 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
     Sequence OldSeq = S.GetSeq();
 
-    MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+    MDNode *ReleaseMetadata =
+        Inst->getMetadata(MDKindCache.ImpreciseReleaseMDKind);
 
     switch (OldSeq) {
     case S_Retain:
@@ -1554,8 +1554,7 @@ bool ObjCARCOpt::Visit(Function &F,
   SmallVector<BasicBlock *, 16> PostOrder;
   SmallVector<BasicBlock *, 16> ReverseCFGPostOrder;
   ComputePostOrders(F, PostOrder, ReverseCFGPostOrder,
-                    NoObjCARCExceptionsMDKind,
-                    BBStates);
+                    MDKindCache.NoObjCARCExceptionsMDKind, BBStates);
 
   // Use reverse-postorder on the reverse CFG for bottom-up.
   bool BottomUpNestingDetected = false;
@@ -1605,7 +1604,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg, RRInfo &RetainsToMove,
     CallInst *Call = CallInst::Create(Decl, MyArg, "", InsertPt);
     // Attach a clang.imprecise_release metadata tag, if appropriate.
     if (MDNode *M = ReleasesToMove.ReleaseMetadata)
-      Call->setMetadata(ImpreciseReleaseMDKind, M);
+      Call->setMetadata(MDKindCache.ImpreciseReleaseMDKind, M);
     Call->setDoesNotThrow();
     if (ReleasesToMove.IsTailCallRelease)
       Call->setTailCall();
@@ -2279,12 +2278,12 @@ bool ObjCARCOpt::doInitialization(Module &M) {
     return false;
 
   // Identify the imprecise release metadata kind.
-  ImpreciseReleaseMDKind =
-    M.getContext().getMDKindID("clang.imprecise_release");
-  CopyOnEscapeMDKind =
-    M.getContext().getMDKindID("clang.arc.copy_on_escape");
-  NoObjCARCExceptionsMDKind =
-    M.getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
+  MDKindCache.ImpreciseReleaseMDKind =
+      M.getContext().getMDKindID("clang.imprecise_release");
+  MDKindCache.CopyOnEscapeMDKind =
+      M.getContext().getMDKindID("clang.arc.copy_on_escape");
+  MDKindCache.NoObjCARCExceptionsMDKind =
+      M.getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
 
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release

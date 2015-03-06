@@ -257,6 +257,18 @@ static inline bool IsObjCIdentifiedObject(const Value *V) {
   return false;
 }
 
+/// A cache of MDKinds used by various ARC optimizations.
+struct ARCMDKindCache {
+  /// The Metadata Kind for clang.imprecise_release metadata.
+  unsigned ImpreciseReleaseMDKind;
+
+  /// The Metadata Kind for clang.arc.copy_on_escape metadata.
+  unsigned CopyOnEscapeMDKind;
+
+  /// The Metadata Kind for clang.arc.no_objc_arc_exceptions metadata.
+  unsigned NoObjCARCExceptionsMDKind;
+};
+
 } // end namespace objcarc
 } // end namespace llvm
 
