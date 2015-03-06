@@ -400,6 +400,13 @@ TEST_F(ConstantRangeTest, Multiply) {
   EXPECT_EQ(ConstantRange(APInt(4, 1), APInt(4, 6)).multiply(
                 ConstantRange(APInt(4, 6), APInt(4, 2))),
             ConstantRange(4, /*isFullSet=*/true));
+
+  EXPECT_EQ(ConstantRange(APInt(8, 254), APInt(8, 0)).multiply(
+              ConstantRange(APInt(8, 252), APInt(8, 4))),
+            ConstantRange(APInt(8, 250), APInt(8, 9)));
+  EXPECT_EQ(ConstantRange(APInt(8, 254), APInt(8, 255)).multiply(
+              ConstantRange(APInt(8, 2), APInt(8, 4))),
+            ConstantRange(APInt(8, 250), APInt(8, 253)));
 }
 
 TEST_F(ConstantRangeTest, UMax) {

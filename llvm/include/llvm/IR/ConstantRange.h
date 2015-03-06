@@ -208,8 +208,8 @@ public:
   ConstantRange sub(const ConstantRange &Other) const;
 
   /// Return a new range representing the possible values resulting
-  /// from a multiplication of a value in this range and a value in \p Other.
-  /// TODO: This isn't fully implemented yet.
+  /// from a multiplication of a value in this range and a value in \p Other,
+  /// treating both this and \p Other as unsigned ranges.
   ConstantRange multiply(const ConstantRange &Other) const;
 
   /// Return a new range representing the possible values resulting
