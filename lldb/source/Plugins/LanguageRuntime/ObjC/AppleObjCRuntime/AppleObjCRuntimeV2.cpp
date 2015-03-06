@@ -1560,6 +1560,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
             DescriptorMapUpdateResult shared_cache_update_result = UpdateISAToDescriptorMapSharedCache();
             if (!shared_cache_update_result.any_found)
                 WarnIfNoClassesCached ();
+            else
+                m_loaded_objc_opt = true;
         }
         
     }
