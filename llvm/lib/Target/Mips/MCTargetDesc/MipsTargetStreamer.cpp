@@ -62,7 +62,7 @@ void MipsTargetStreamer::emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) {
 void MipsTargetStreamer::emitDirectiveSetArch(StringRef Arch) {
   forbidModuleDirective();
 }
-void MipsTargetStreamer::emitDirectiveSetMips0() {}
+void MipsTargetStreamer::emitDirectiveSetMips0() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips1() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips2() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips3() { forbidModuleDirective(); }
@@ -78,8 +78,8 @@ void MipsTargetStreamer::emitDirectiveSetMips64R2() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R3() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R5() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R6() { forbidModuleDirective(); }
-void MipsTargetStreamer::emitDirectiveSetPop() {}
-void MipsTargetStreamer::emitDirectiveSetPush() {}
+void MipsTargetStreamer::emitDirectiveSetPop() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetPush() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetNoDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveCpLoad(unsigned RegNo) {}
@@ -90,6 +90,10 @@ void MipsTargetStreamer::emitDirectiveModuleOddSPReg(bool Enabled,
                                                      bool IsO32ABI) {
   if (!Enabled && !IsO32ABI)
     report_fatal_error("+nooddspreg is only valid for O32");
+}
+void MipsTargetStreamer::emitDirectiveSetFp(
+    MipsABIFlagsSection::FpABIKind Value) {
+  forbidModuleDirective();
 }
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
@@ -198,7 +202,10 @@ void MipsTargetAsmStreamer::emitDirectiveSetArch(StringRef Arch) {
   MipsTargetStreamer::emitDirectiveSetArch(Arch);
 }
 
-void MipsTargetAsmStreamer::emitDirectiveSetMips0() { OS << "\t.set\tmips0\n"; }
+void MipsTargetAsmStreamer::emitDirectiveSetMips0() {
+  OS << "\t.set\tmips0\n";
+  MipsTargetStreamer::emitDirectiveSetMips0();
+}
 
 void MipsTargetAsmStreamer::emitDirectiveSetMips1() {
   OS << "\t.set\tmips1\n";
@@ -285,9 +292,15 @@ void MipsTargetAsmStreamer::emitDirectiveSetNoDsp() {
   MipsTargetStreamer::emitDirectiveSetNoDsp();
 }
 
-void MipsTargetAsmStreamer::emitDirectiveSetPop() { OS << "\t.set\tpop\n"; }
+void MipsTargetAsmStreamer::emitDirectiveSetPop() {
+  OS << "\t.set\tpop\n";
+  MipsTargetStreamer::emitDirectiveSetPop();
+}
 
-void MipsTargetAsmStreamer::emitDirectiveSetPush() { OS << "\t.set\tpush\n"; }
+void MipsTargetAsmStreamer::emitDirectiveSetPush() {
+ OS << "\t.set\tpush\n";
+ MipsTargetStreamer::emitDirectiveSetPush();
+}
 
 // Print a 32 bit hex number with all numbers.
 static void printHex32(unsigned Value, raw_ostream &OS) {
@@ -346,6 +359,8 @@ void MipsTargetAsmStreamer::emitDirectiveModuleFP(
 
 void MipsTargetAsmStreamer::emitDirectiveSetFp(
     MipsABIFlagsSection::FpABIKind Value) {
+  MipsTargetStreamer::emitDirectiveSetFp(Value);
+
   StringRef ModuleValue;
   OS << "\t.set\tfp=";
   OS << ABIFlagsSection.getFpABIString(Value) << "\n";

@@ -92,9 +92,10 @@ public:
   }
 
   virtual void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI);
-  virtual void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value){};
+  virtual void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value);
   virtual void emitMipsAbiFlags(){};
   void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
+  void reallowModuleDirective() { ModuleDirectiveAllowed = true; }
   bool isModuleDirectiveAllowed() { return ModuleDirectiveAllowed; }
 
   // This method enables template classes to set internal abi flags

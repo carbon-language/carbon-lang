@@ -236,6 +236,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
                        StringRef Directive);
 
+  bool parseInternalDirectiveReallowModule();
+
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
 
   bool eatComma(StringRef ErrorStr);
@@ -4429,7 +4431,23 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".module")
     return parseDirectiveModule();
 
+  if (IDVal == ".llvm_internal_mips_reallow_module_directive")
+    return parseInternalDirectiveReallowModule();
+
   return true;
+}
+
+bool MipsAsmParser::parseInternalDirectiveReallowModule() {
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  getTargetStreamer().reallowModuleDirective();
+
+  getParser().Lex(); // Eat EndOfStatement token.
+  return false;
 }
 
 extern "C" void LLVMInitializeMipsAsmParser() {

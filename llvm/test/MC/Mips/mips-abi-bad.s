@@ -22,9 +22,3 @@
 # CHECK: :[[@LINE-1]]:13: error: expected .module option identifier
 # CHECK-NEXT: .module 34
 # CHECK-NEXT:         ^
-
-    .set mips16
-    .module fp=32
-# CHECK: :[[@LINE-1]]:13: error: .module directive must appear before any code
-# CHECK-NEXT: .module fp=32
-# CHECK-NEXT:         ^
