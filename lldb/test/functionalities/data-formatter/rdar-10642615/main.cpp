@@ -1,4 +1,4 @@
-//===-- main.cpp ------------------------------------------------*- C++ -*-===//
+ //===-- main.cpp ------------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 
 int main()
 {
-	vFloat valueFL = {1,0,4,0};
-	vDouble valueDL = {1,4};
+	vFloat valueFL = {1.25,0,0.25,0};
+	vDouble valueDL = {1.25,2.25};
 	int16_t valueI16[8] = {1,0,4,0,0,1,0,4};
 	int32_t valueI32[4] = {1,0,4,0};
 	vUInt8 valueU8 = {1,0,4,0,0,1,0,4};

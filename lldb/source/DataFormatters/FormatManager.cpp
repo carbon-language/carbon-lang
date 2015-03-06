@@ -477,7 +477,7 @@ FormatManager::GetValidatorForType (lldb::TypeNameSpecifierImplSP type_sp)
 
 lldb::TypeCategoryImplSP
 FormatManager::GetCategory (const ConstString& category_name,
-                         bool can_create)
+                            bool can_create)
 {
     if (!category_name)
         return GetCategory(m_default_category_name);
@@ -1215,16 +1215,6 @@ FormatManager::LoadSystemFormatters()
     fourchar_flags.SetCascades(true).SetSkipPointers(true).SetSkipReferences(true);
     
     AddFormat(sys_category_sp, lldb::eFormatOSType, ConstString("FourCharCode"), fourchar_flags);
-    
-    SyntheticChildren::Flags synth_flags;
-    synth_flags.SetCascades(true).SetSkipPointers(true).SetSkipReferences(true);
-    
-    AddCXXSynthetic(sys_category_sp,
-                    lldb_private::formatters::VectorTypeSyntheticFrontEndCreator,
-                    "vector_type synthetic children",
-                    ConstString("unsigned char __attribute__\\(\\(ext_vector_type\\([0-9]+\\)\\)\\)"),
-                    synth_flags,
-                    true);
 #endif
 }
 
@@ -1615,6 +1605,20 @@ FormatManager::LoadHardcodedFormatters()
     }
     {
         // insert code to load synthetics here
+        m_hardcoded_synthetics.push_back(
+                                         [](lldb_private::ValueObject& valobj,
+                                            lldb::DynamicValueType,
+                                            FormatManager& fmt_mgr) -> SyntheticChildren::SharedPointer {
+                                             static CXXSyntheticChildren::SharedPointer formatter_sp(new CXXSyntheticChildren(SyntheticChildren::Flags().SetCascades(true).SetSkipPointers(true).SetSkipReferences(true),
+                                                                                                                              "vector_type synthetic children",
+                                                                                                                              lldb_private::formatters::VectorTypeSyntheticFrontEndCreator));
+                                             if (valobj.GetClangType().IsVectorType(nullptr, nullptr))
+                                             {
+                                                 if (fmt_mgr.GetCategory(fmt_mgr.m_vectortypes_category_name)->IsEnabled())
+                                                     return formatter_sp;
+                                             }
+                                             return nullptr;
+                                         });
     }
     {
         // insert code to load validators here

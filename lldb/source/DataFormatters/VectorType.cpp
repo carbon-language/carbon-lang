@@ -21,6 +21,7 @@ using namespace lldb_private::formatters;
 
 static ClangASTType
 GetClangTypeForFormat (lldb::Format format,
+                       ClangASTType element_type,
                        ClangASTContext *ast_ctx)
 {
     lldbassert(ast_ctx && "ast_ctx needs to be not NULL");
@@ -100,10 +101,12 @@ GetClangTypeForFormat (lldb::Format format,
         case lldb::eFormatVectorOfUInt8:
             return ast_ctx->GetIntTypeFromBitSize(8, false);
             
+        case lldb::eFormatDefault:
+            return element_type;
+        
         case lldb::eFormatBinary:
         case lldb::eFormatComplexInteger:
         case lldb::eFormatDecimal:
-        case lldb::eFormatDefault:
         case lldb::eFormatEnum:
         case lldb::eFormatInstruction:
         case lldb::eFormatOSType:
@@ -114,7 +117,8 @@ GetClangTypeForFormat (lldb::Format format,
 }
 
 static lldb::Format
-GetItemFormatForFormat (lldb::Format format)
+GetItemFormatForFormat (lldb::Format format,
+                        ClangASTType element_type)
 {
     switch (format)
     {
@@ -141,13 +145,23 @@ GetItemFormatForFormat (lldb::Format format)
         case lldb::eFormatBinary:
         case lldb::eFormatComplexInteger:
         case lldb::eFormatDecimal:
-        case lldb::eFormatDefault:
         case lldb::eFormatEnum:
         case lldb::eFormatInstruction:
         case lldb::eFormatOSType:
         case lldb::eFormatVoid:
             return eFormatHex;
 
+        case lldb::eFormatDefault:
+        {
+            // special case the (default, char) combination to actually display as an integer value
+            // most often, you won't want to see the ASCII characters... (and if you do, eFormatChar is a keystroke away)
+            bool is_char = element_type.IsCharType();
+            bool is_signed = false;
+            element_type.IsIntegerType(is_signed);
+            return is_char ? (is_signed ? lldb::eFormatDecimal : eFormatHex) : format;
+        }
+            break;
+            
         default:
             return format;
     }
@@ -215,10 +229,13 @@ namespace lldb_private {
             {
                 m_parent_format = m_backend.GetFormat();
                 ClangASTType parent_type(m_backend.GetClangType());
-                m_child_type = ::GetClangTypeForFormat(m_parent_format, ClangASTContext::GetASTContext(parent_type.GetASTContext()));
+                ClangASTType element_type;
+                parent_type.IsVectorType(&element_type, nullptr);
+                m_child_type = ::GetClangTypeForFormat(m_parent_format, element_type, ClangASTContext::GetASTContext(parent_type.GetASTContext()));
                 m_num_children = ::CalculateNumChildren(parent_type,
                                                         m_child_type);
-                m_item_format = GetItemFormatForFormat(m_parent_format);
+                m_item_format = GetItemFormatForFormat(m_parent_format,
+                                                       m_child_type);
                 return false;
             }
             

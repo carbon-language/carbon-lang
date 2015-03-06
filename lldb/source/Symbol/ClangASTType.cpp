@@ -315,6 +315,18 @@ ClangASTType::IsVectorType (ClangASTType *element_type,
                 return true;
             }
                 break;
+            case clang::Type::ExtVector:
+            {
+                const clang::ExtVectorType *ext_vector_type = qual_type->getAs<clang::ExtVectorType>();
+                if (ext_vector_type)
+                {
+                    if (size)
+                        *size = ext_vector_type->getNumElements();
+                    if (element_type)
+                        *element_type = ClangASTType(m_ast, ext_vector_type->getElementType().getAsOpaquePtr());
+                }
+                return true;
+            }
             default:
                 break;
         }
