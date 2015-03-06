@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 -mcpu=corei7 -mattr=-sse4.1 < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mattr=+sse2 < %s | FileCheck %s
 
 ; Verify that we correctly fold target specific packed vector shifts by
 ; immediate count into a simple build_vector when the elements of the vector
