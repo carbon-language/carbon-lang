@@ -278,6 +278,7 @@ public:
   void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const override;
 
   uint64_t getValue() const { return Integer; }
+  void setValue(uint64_t Val) { Integer = Val; }
 
   /// SizeOf - Determine size of integer value in bytes.
   ///
