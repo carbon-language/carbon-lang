@@ -722,7 +722,8 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
   // 'return', assignments or opening <({[. The indentation for these cases
   // is special cased.
   bool SkipFirstExtraIndent =
-      (Previous && (Previous->opensScope() || Previous->is(tok::kw_return) ||
+      (Previous && (Previous->opensScope() ||
+                    Previous->isOneOf(tok::semi, tok::kw_return) ||
                     (Previous->getPrecedence() == prec::Assignment &&
                      Style.AlignOperands) ||
                     Previous->is(TT_ObjCMethodExpr)));

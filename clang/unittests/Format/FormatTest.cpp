@@ -529,13 +529,15 @@ TEST_F(FormatTest, FormatsForLoop) {
                "         E = FD->getDeclsInPrototypeScope().end();\n"
                "     I != E; ++I) {\n}");
 
-  // FIXME: Not sure whether we want extra identation in line 3 here:
   verifyFormat(
       "for (aaaaaaaaaaaaaaaaa aaaaaaaaaaa = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n"
       "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa !=\n"
-      "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-      "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
+      "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
       "     ++aaaaaaaaaaa) {\n}");
+  verifyFormat("for (int i = 0; i < aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+               "                bbbbbbbbbbbbbbbbbbbb < ccccccccccccccc;\n"
+               "     ++i) {\n}");
   verifyFormat("for (int aaaaaaaaaaa = 1; aaaaaaaaaaa <= bbbbbbbbbbbbbbb;\n"
                "     aaaaaaaaaaa++, bbbbbbbbbbbbbbbbb++) {\n"
                "}");
