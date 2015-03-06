@@ -48,6 +48,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeLoopDeletionPass(Registry);
   initializeLoopAccessAnalysisPass(Registry);
   initializeLoopInstSimplifyPass(Registry);
+  initializeLoopInterchangePass(Registry);
   initializeLoopRotatePass(Registry);
   initializeLoopStrengthReducePass(Registry);
   initializeLoopRerollPass(Registry);

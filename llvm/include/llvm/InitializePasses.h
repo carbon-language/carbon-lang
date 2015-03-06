@@ -166,6 +166,7 @@ void initializeLocalStackSlotPassPass(PassRegistry&);
 void initializeLoopDeletionPass(PassRegistry&);
 void initializeLoopExtractorPass(PassRegistry&);
 void initializeLoopInfoWrapperPassPass(PassRegistry&);
+void initializeLoopInterchangePass(PassRegistry &);
 void initializeLoopInstSimplifyPass(PassRegistry&);
 void initializeLoopRotatePass(PassRegistry&);
 void initializeLoopSimplifyPass(PassRegistry&);
