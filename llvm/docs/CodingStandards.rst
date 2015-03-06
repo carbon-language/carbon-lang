@@ -130,6 +130,7 @@ unlikely to be supported by our host compilers.
   * But not defaulted move constructors or move assignment operators, MSVC 2013
     cannot synthesize them.
 * Initializer lists: N2627_
+* Delegating constructors: N1986_
 
 .. _N2118: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html
 .. _N2439: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2439.htm
@@ -154,6 +155,7 @@ unlikely to be supported by our host compilers.
 .. _N2437: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2437.pdf
 .. _N2346: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2346.htm
 .. _N2627: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2672.htm
+.. _N1986: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1986.pdf
 .. _MSVC-compatible RTTI: http://llvm.org/PR18951
 
 The supported features in the C++11 standard libraries are less well tracked,
