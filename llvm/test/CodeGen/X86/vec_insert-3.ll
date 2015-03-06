@@ -2,8 +2,7 @@
 
 define <2 x i64> @t1(i64 %s, <2 x i64> %tmp) nounwind {
 ; CHECK-LABEL: t1:
-; CHECK:       movd 
-; CHECK-NEXT:  punpcklqdq 
+; CHECK:  punpcklqdq 
 ; CHECK-NEXT:  retq 
 
   %tmp1 = insertelement <2 x i64> %tmp, i64 %s, i32 1
