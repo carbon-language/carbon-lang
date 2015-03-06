@@ -143,14 +143,8 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &langOpts,
 /// range will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *FromFile,
              const SourceManager &SM, const LangOptions &langOpts)
-  : FileLoc(SM.getLocForStartOfFile(FID)), LangOpts(langOpts) {
-
-  InitLexer(FromFile->getBufferStart(), FromFile->getBufferStart(),
-            FromFile->getBufferEnd());
-
-  // We *are* in raw mode.
-  LexingRawMode = true;
-}
+    : Lexer(SM.getLocForStartOfFile(FID), langOpts, FromFile->getBufferStart(),
+            FromFile->getBufferStart(), FromFile->getBufferEnd()) {}
 
 /// Create_PragmaLexer: Lexer constructor - Create a new lexer object for
 /// _Pragma expansion.  This has a variety of magic semantics that this method

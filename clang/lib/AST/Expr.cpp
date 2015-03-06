@@ -1141,40 +1141,13 @@ CallExpr::CallExpr(const ASTContext& C, StmtClass SC, Expr *fn,
   RParenLoc = rparenloc;
 }
 
-CallExpr::CallExpr(const ASTContext& C, Expr *fn, ArrayRef<Expr*> args,
+CallExpr::CallExpr(const ASTContext &C, Expr *fn, ArrayRef<Expr *> args,
                    QualType t, ExprValueKind VK, SourceLocation rparenloc)
-  : Expr(CallExprClass, t, VK, OK_Ordinary,
-         fn->isTypeDependent(),
-         fn->isValueDependent(),
-         fn->isInstantiationDependent(),
-         fn->containsUnexpandedParameterPack()),
-    NumArgs(args.size()) {
-
-  SubExprs = new (C) Stmt*[args.size()+PREARGS_START];
-  SubExprs[FN] = fn;
-  for (unsigned i = 0; i != args.size(); ++i) {
-    if (args[i]->isTypeDependent())
-      ExprBits.TypeDependent = true;
-    if (args[i]->isValueDependent())
-      ExprBits.ValueDependent = true;
-    if (args[i]->isInstantiationDependent())
-      ExprBits.InstantiationDependent = true;
-    if (args[i]->containsUnexpandedParameterPack())
-      ExprBits.ContainsUnexpandedParameterPack = true;
-
-    SubExprs[i+PREARGS_START] = args[i];
-  }
-
-  CallExprBits.NumPreArgs = 0;
-  RParenLoc = rparenloc;
+    : CallExpr(C, CallExprClass, fn, /*NumPreArgs=*/0, args, t, VK, rparenloc) {
 }
 
 CallExpr::CallExpr(const ASTContext &C, StmtClass SC, EmptyShell Empty)
-  : Expr(SC, Empty), SubExprs(nullptr), NumArgs(0) {
-  // FIXME: Why do we allocate this?
-  SubExprs = new (C) Stmt*[PREARGS_START];
-  CallExprBits.NumPreArgs = 0;
-}
+    : CallExpr(C, SC, /*NumPreArgs=*/0, Empty) {}
 
 CallExpr::CallExpr(const ASTContext &C, StmtClass SC, unsigned NumPreArgs,
                    EmptyShell Empty)

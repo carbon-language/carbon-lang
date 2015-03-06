@@ -170,15 +170,7 @@ DependentSizedExtVectorType::Profile(llvm::FoldingSetNodeID &ID,
 
 VectorType::VectorType(QualType vecType, unsigned nElements, QualType canonType,
                        VectorKind vecKind)
-  : Type(Vector, canonType, vecType->isDependentType(),
-         vecType->isInstantiationDependentType(),
-         vecType->isVariablyModifiedType(),
-         vecType->containsUnexpandedParameterPack()),
-    ElementType(vecType) 
-{
-  VectorTypeBits.VecKind = vecKind;
-  VectorTypeBits.NumElements = nElements;
-}
+    : VectorType(Vector, vecType, nElements, canonType, vecKind) {}
 
 VectorType::VectorType(TypeClass tc, QualType vecType, unsigned nElements,
                        QualType canonType, VectorKind vecKind)
