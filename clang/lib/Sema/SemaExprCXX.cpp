@@ -787,10 +787,9 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
     getUnambiguousPublicSubobjects(RD, UnambiguousPublicSubobjects);
     for (CXXRecordDecl *Subobject : UnambiguousPublicSubobjects) {
       if (CXXConstructorDecl *CD = LookupCopyingConstructor(Subobject, 0)) {
-        if (CD->isTrivial())
-          continue;
         MarkFunctionReferenced(E->getExprLoc(), CD);
-        Context.addCopyConstructorForExceptionObject(Subobject, CD);
+        if (!CD->isTrivial())
+          Context.addCopyConstructorForExceptionObject(Subobject, CD);
       }
     }
   }

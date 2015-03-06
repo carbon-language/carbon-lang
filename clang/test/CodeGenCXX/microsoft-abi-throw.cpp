@@ -26,6 +26,12 @@ void f(const Y &y) {
   // CHECK-LABEL: @"\01?f@@YAXABUY@@@Z"
   // CHECK: call x86_thiscallcc %struct.Y* @"\01??0Y@@QAE@ABU0@@Z"(%struct.Y* %[[mem:.*]], %struct.Y*
   // CHECK: %[[cast:.*]] = bitcast %struct.Y* %[[mem]] to i8*
-  // CHECK: call void @_CxxThrowException(i8* %[[cast]], %eh.ThrowInfo* @"_TI5?AUY@@") #4
+  // CHECK: call void @_CxxThrowException(i8* %[[cast]], %eh.ThrowInfo* @"_TI5?AUY@@")
+  throw y;
+}
+
+void g(const int *const *y) {
+  // CHECK-LABEL: @"\01?g@@YAXPBQBH@Z"
+  // CHECK: call void @_CxxThrowException(i8* %{{.*}}, %eh.ThrowInfo* @_TIC2PAPBH)
   throw y;
 }
