@@ -81,12 +81,13 @@ public:
   uint64_t getStartOffset() const { return StartOffset; }
   uint64_t getNextUnitOffset() const { return NextUnitOffset; }
 
-  /// \brief Set the start and end offsets for this unit. Must be
-  /// called after the CU's DIEs have been cloned. The unit start
-  /// offset will be set to \p DebugInfoSize.
+  void setStartOffset(uint64_t DebugInfoSize) { StartOffset = DebugInfoSize; }
+
+  /// \brief Compute the end offset for this unit. Must be
+  /// called after the CU's DIEs have been cloned.
   /// \returns the next unit offset (which is also the current
   /// debug_info section size).
-  uint64_t computeOffsets(uint64_t DebugInfoSize);
+  uint64_t computeNextUnitOffset();
 
 private:
   DWARFUnit &OrigUnit;
@@ -97,8 +98,7 @@ private:
   uint64_t NextUnitOffset;
 };
 
-uint64_t CompileUnit::computeOffsets(uint64_t DebugInfoSize) {
-  StartOffset = DebugInfoSize;
+uint64_t CompileUnit::computeNextUnitOffset() {
   NextUnitOffset = StartOffset + 11 /* Header size */;
   // The root DIE might be null, meaning that the Unit had nothing to
   // contribute to the linked output. In that case, we will emit the
@@ -1307,10 +1307,11 @@ bool DwarfLinker::link(const DebugMap &Map) {
     if (!ValidRelocs.empty())
       for (auto &CurrentUnit : Units) {
         const auto *InputDIE = CurrentUnit.getOrigUnit().getCompileUnitDIE();
+        CurrentUnit.setStartOffset(OutputDebugInfoSize);
         DIE *OutputDIE =
             cloneDIE(*InputDIE, CurrentUnit, 11 /* Unit Header size */);
         CurrentUnit.setOutputUnitDIE(OutputDIE);
-        OutputDebugInfoSize = CurrentUnit.computeOffsets(OutputDebugInfoSize);
+        OutputDebugInfoSize = CurrentUnit.computeNextUnitOffset();
       }
 
     // Emit all the compile unit's debug information.
