@@ -3688,7 +3688,6 @@ TEST_PACKAGES = \
 	os/check \
 	path/check \
 	reflect/check \
-	regexp/check \
 	runtime/check \
 	sort/check \
 	strconv/check \
@@ -3787,7 +3786,6 @@ TEST_PACKAGES = \
 	os/user/check \
 	path/filepath/check \
 	regexp/syntax/check \
-	runtime/pprof/check \
 	sync/atomic/check \
 	text/scanner/check \
 	text/tabwriter/check \

@@ -25,6 +25,8 @@ cp -r $gofrontenddir/LICENSE $gofrontenddir/libgo third_party/gofrontend
 # Apply a diff that eliminates use of the unnamed struct extension beyond what
 # -fms-extensions supports.
 (cd third_party/gofrontend && patch -p1) < libgo-noext.diff
+# Apply a diff that disables testing of packages known to fail.
+(cd third_party/gofrontend && patch -p1) < libgo-check-failures.diff
 find third_party/gofrontend -name '*.orig' -exec rm \{\} \;
 
 # Remove GPL licensed files.

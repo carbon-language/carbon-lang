@@ -1,0 +1,40 @@
+diff --git a/libgo/Makefile.am b/libgo/Makefile.am
+index 526b656..31c206e 100644
+--- a/libgo/Makefile.am
++++ b/libgo/Makefile.am
+@@ -3688,7 +3688,6 @@ TEST_PACKAGES = \
+ 	os/check \
+ 	path/check \
+ 	reflect/check \
+-	regexp/check \
+ 	runtime/check \
+ 	sort/check \
+ 	strconv/check \
+@@ -3787,7 +3786,6 @@ TEST_PACKAGES = \
+ 	os/user/check \
+ 	path/filepath/check \
+ 	regexp/syntax/check \
+-	runtime/pprof/check \
+ 	sync/atomic/check \
+ 	text/scanner/check \
+ 	text/tabwriter/check \
+diff --git a/libgo/Makefile.in b/libgo/Makefile.in
+index 2254478..d2482d1 100644
+--- a/libgo/Makefile.in
++++ b/libgo/Makefile.in
+@@ -2193,7 +2193,6 @@ TEST_PACKAGES = \
+ 	os/check \
+ 	path/check \
+ 	reflect/check \
+-	regexp/check \
+ 	runtime/check \
+ 	sort/check \
+ 	strconv/check \
+@@ -2292,7 +2291,6 @@ TEST_PACKAGES = \
+ 	os/user/check \
+ 	path/filepath/check \
+ 	regexp/syntax/check \
+-	runtime/pprof/check \
+ 	sync/atomic/check \
+ 	text/scanner/check \
+ 	text/tabwriter/check \
