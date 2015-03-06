@@ -62,24 +62,19 @@ public:
   /// should be marked live (along with all Atoms they reference).  Usually
   /// this method returns false for main executables, but true for dynamic
   /// shared libraries.
-  bool globalsAreDeadStripRoots() const {
-    assert(_deadStrip && "only applicable when deadstripping enabled");
-    return _globalsAreDeadStripRoots;
-  }
+  bool globalsAreDeadStripRoots() const { return _globalsAreDeadStripRoots; };
 
   /// Only used if deadStrip() returns true.  This method returns the names
   /// of DefinedAtoms that should be marked live (along with all Atoms they
   /// reference). Only Atoms with scope scopeLinkageUnit or scopeGlobal can
   /// be kept live using this method.
   const std::vector<StringRef> &deadStripRoots() const {
-    assert(_deadStrip && "only applicable when deadstripping enabled");
     return _deadStripRoots;
   }
 
   /// Add the given symbol name to the dead strip root set. Only used if
   /// deadStrip() returns true.
   void addDeadStripRoot(StringRef symbolName) {
-    assert(_deadStrip && "only applicable when deadstripping enabled");
     assert(!symbolName.empty() && "Empty symbol cannot be a dead strip root");
     _deadStripRoots.push_back(symbolName);
   }
