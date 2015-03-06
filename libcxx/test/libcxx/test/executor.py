@@ -133,9 +133,6 @@ class SSHExecutor(Executor):
             pass
 
     def run(self, exe_path, cmd=None, work_dir='.', env=None):
-        if work_dir != '.':
-            raise NotImplementedError(
-                'work_dir arg is not supported for SSHExecutor')
         target_exe_path = None
         target_cwd = None
         try:
