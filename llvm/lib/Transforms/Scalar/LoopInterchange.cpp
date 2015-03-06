@@ -901,14 +901,16 @@ bool LoopInterchangeProfitability::isProfitable(unsigned InnerLoopId,
 
 void LoopInterchangeTransform::removeChildLoop(Loop *OuterLoop,
                                                Loop *InnerLoop) {
-  for (Loop::iterator I = OuterLoop->begin(), E = OuterLoop->end();; ++I) {
-    assert(I != E && "Couldn't find loop");
+  for (Loop::iterator I = OuterLoop->begin(), E = OuterLoop->end(); I != E;
+       ++I) {
     if (*I == InnerLoop) {
       OuterLoop->removeChildLoop(I);
       return;
     }
   }
+  assert(false && "Couldn't find loop");
 }
+
 void LoopInterchangeTransform::restructureLoops(Loop *InnerLoop,
                                                 Loop *OuterLoop) {
   Loop *OuterLoopParent = OuterLoop->getParentLoop();
