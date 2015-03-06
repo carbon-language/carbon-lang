@@ -5,6 +5,7 @@
 
   <div class="submenu">
     <label>Clang Info</label>
+    <a href="http://llvm.org/releases/download.html">Download</a>
     <a href="/index.html">About</a>
     <a href="/features.html">Features</a>
     <a href="/comparison.html">Comparisons</a>
