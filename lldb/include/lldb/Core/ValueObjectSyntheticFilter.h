@@ -143,6 +143,14 @@ public:
     virtual bool
     SetValueFromCString (const char *value_str, Error& error);
     
+    virtual void
+    SetFormat (lldb::Format format)
+    {
+        if (m_parent)
+            m_parent->SetFormat(format);
+        this->ValueObject::SetFormat(format);
+    }
+    
 protected:
     virtual bool
     UpdateValue ();

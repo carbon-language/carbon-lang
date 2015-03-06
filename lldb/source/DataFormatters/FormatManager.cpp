@@ -1216,6 +1216,15 @@ FormatManager::LoadSystemFormatters()
     
     AddFormat(sys_category_sp, lldb::eFormatOSType, ConstString("FourCharCode"), fourchar_flags);
     
+    SyntheticChildren::Flags synth_flags;
+    synth_flags.SetCascades(true).SetSkipPointers(true).SetSkipReferences(true);
+    
+    AddCXXSynthetic(sys_category_sp,
+                    lldb_private::formatters::VectorTypeSyntheticFrontEndCreator,
+                    "vector_type synthetic children",
+                    ConstString("unsigned char __attribute__\\(\\(ext_vector_type\\([0-9]+\\)\\)\\)"),
+                    synth_flags,
+                    true);
 #endif
 }
 

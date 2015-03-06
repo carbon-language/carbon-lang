@@ -864,7 +864,7 @@ public:
     lldb::Format
     GetFormat () const;
     
-    void
+    virtual void
     SetFormat (lldb::Format format)
     {
         if (format != m_format)

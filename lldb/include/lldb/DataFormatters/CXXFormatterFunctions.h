@@ -398,6 +398,7 @@ namespace lldb_private {
         
         SyntheticChildrenFrontEnd* LibcxxInitializerListSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
+        SyntheticChildrenFrontEnd* VectorTypeSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
     } // namespace formatters
 } // namespace lldb_private
 
