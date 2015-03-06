@@ -1333,11 +1333,18 @@ std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
 /// and the shift amount is a constant 'Amt'.  Expand the operation.
 void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                                              SDValue &Lo, SDValue &Hi) {
-  assert(Amt && "Expected zero shifts to be already optimized away.");
   SDLoc DL(N);
   // Expand the incoming operand to be shifted, so that we have its parts
   SDValue InL, InH;
   GetExpandedInteger(N->getOperand(0), InL, InH);
+
+  // Though Amt shouldn't usually be 0, it's possible. E.g. when legalization
+  // splitted a vector shift, like this: <op1, op2> SHL <0, 2>.
+  if (!Amt) {
+    Lo = InL;
+    Hi = InH;
+    return;
+  }
 
   EVT NVT = InL.getValueType();
   unsigned VTBits = N->getValueType(0).getSizeInBits();
