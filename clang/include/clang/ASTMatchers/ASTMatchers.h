@@ -2993,7 +2993,7 @@ AST_MATCHER(CXXMethodDecl, isConst) {
 /// \endcode
 ///   matches B::x
 AST_MATCHER(CXXMethodDecl, isOverride) {
-  return Node.size_overridden_methods() > 0;
+  return Node.size_overridden_methods() > 0 || Node.hasAttr<OverrideAttr>();
 }
 
 /// \brief Matches member expressions that are called with '->' as opposed

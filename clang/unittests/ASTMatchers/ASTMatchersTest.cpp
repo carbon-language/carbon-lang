@@ -1790,6 +1790,9 @@ TEST(Matcher, MatchesOverridingMethod) {
        methodDecl(isOverride())));
   EXPECT_TRUE(notMatches("class X { int f(); int f(int); }; ",
        methodDecl(isOverride())));
+  EXPECT_TRUE(
+      matches("template <typename Base> struct Y : Base { void f() override;};",
+              methodDecl(isOverride(), hasName("::Y::f"))));
 }
 
 TEST(Matcher, ConstructorCall) {
