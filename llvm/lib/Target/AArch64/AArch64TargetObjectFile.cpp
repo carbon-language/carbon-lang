@@ -23,6 +23,12 @@ void AArch64_ELFTargetObjectFile::Initialize(MCContext &Ctx,
   InitializeELF(TM.Options.UseInitArray);
 }
 
+AArch64_MachoTargetObjectFile::AArch64_MachoTargetObjectFile()
+  : TargetLoweringObjectFileMachO() {
+  SupportIndirectSymViaGOTPCRel = true;
+  SupportGOTPCRelWithOffset = false;
+}
+
 const MCExpr *AArch64_MachoTargetObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
     const TargetMachine &TM, MachineModuleInfo *MMI,
@@ -49,4 +55,16 @@ MCSymbol *AArch64_MachoTargetObjectFile::getCFIPersonalitySymbol(
     const GlobalValue *GV, Mangler &Mang, const TargetMachine &TM,
     MachineModuleInfo *MMI) const {
   return TM.getSymbol(GV, Mang);
+}
+
+const MCExpr *AArch64_MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
+    const MCSymbol *Sym, int64_t Offset, MCStreamer &Streamer) const {
+  // On ARM64 Darwin, we can reference symbols with foo@GOT-., which
+  // is an indirect pc-relative reference.
+  const MCExpr *Res =
+      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
+  MCSymbol *PCSym = getContext().CreateTempSymbol();
+  Streamer.EmitLabel(PCSym);
+  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
+  return MCBinaryExpr::CreateSub(Res, PC, getContext());
 }

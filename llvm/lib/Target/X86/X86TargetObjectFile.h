@@ -34,8 +34,8 @@ namespace llvm {
                                       MachineModuleInfo *MMI) const override;
 
     const MCExpr *
-      getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
-                                int64_t Offset) const override;
+      getIndirectSymViaGOTPCRel(const MCSymbol *Sym, int64_t Offset,
+                                MCStreamer &Streamer) const override;
   };
 
   /// \brief This implemenatation is used for X86 ELF targets that don't
