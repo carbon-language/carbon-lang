@@ -7,7 +7,6 @@ import lit.TestRunner  # pylint: disable=import-error
 import lit.util        # pylint: disable=import-error
 
 from libcxx.test.executor import LocalExecutor as LocalExecutor
-import libcxx.test.executor
 import libcxx.util
 
 
