@@ -20,6 +20,7 @@
 namespace clang {
 
 class ASTContext;
+class CXXConstructorDecl;
 class MemberPointerType;
 class MangleNumberingContext;
 
@@ -41,6 +42,14 @@ public:
 
   /// Returns a new mangling number context for this C++ ABI.
   virtual MangleNumberingContext *createMangleNumberingContext() const = 0;
+
+  /// Adds a mapping from class to copy constructor for this C++ ABI.
+  virtual void addCopyConstructorForExceptionObject(CXXRecordDecl *,
+                                                    CXXConstructorDecl *) = 0;
+
+  /// Retrieves the mapping from class to copy constructor for this C++ ABI.
+  virtual const CXXConstructorDecl *
+  getCopyConstructorForExceptionObject(CXXRecordDecl *) = 0;
 };
 
 /// Creates an instance of a C++ ABI class.

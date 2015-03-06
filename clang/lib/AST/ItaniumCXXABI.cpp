@@ -133,6 +133,14 @@ public:
     return Layout.getNonVirtualSize() == PointerSize;
   }
 
+  const CXXConstructorDecl *
+  getCopyConstructorForExceptionObject(CXXRecordDecl *RD) override {
+    return nullptr;
+  }
+
+  void addCopyConstructorForExceptionObject(CXXRecordDecl *RD,
+                                            CXXConstructorDecl *CD) override {}
+
   MangleNumberingContext *createMangleNumberingContext() const override {
     return new ItaniumNumberingContext();
   }

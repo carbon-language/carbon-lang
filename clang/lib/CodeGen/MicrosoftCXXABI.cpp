@@ -17,6 +17,7 @@
 #include "CGCXXABI.h"
 #include "CGVTables.h"
 #include "CodeGenModule.h"
+#include "CodeGenTypes.h"
 #include "TargetInfo.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -3225,11 +3226,14 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
                                                   uint32_t VBIndex) {
   assert(!T->isReferenceType());
 
+  CXXRecordDecl *RD = T->getAsCXXRecordDecl();
+  const CXXConstructorDecl *CD =
+      RD ? CGM.getContext().getCopyConstructorForExceptionObject(RD) : nullptr;
   uint32_t Size = getContext().getTypeSizeInChars(T).getQuantity();
   SmallString<256> MangledName;
   {
     llvm::raw_svector_ostream Out(MangledName);
-    getMangleContext().mangleCXXCatchableType(T, Size, Out);
+    getMangleContext().mangleCXXCatchableType(T, CD, Size, Out);
   }
   if (llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(MangledName))
     return getImageRelativeConstant(GV);
@@ -3241,16 +3245,15 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
   // The runtime is responsible for calling the copy constructor if the
   // exception is caught by value.
   llvm::Constant *CopyCtor =
-      getImageRelativeConstant(llvm::Constant::getNullValue(CGM.Int8PtrTy));
+      CD ? llvm::ConstantExpr::getBitCast(
+               CGM.getAddrOfCXXStructor(CD, StructorType::Complete),
+               CGM.Int8PtrTy)
+         : llvm::Constant::getNullValue(CGM.Int8PtrTy);
+  CopyCtor = getImageRelativeConstant(CopyCtor);
 
-  bool IsScalar = true;
+  bool IsScalar = !RD;
   bool HasVirtualBases = false;
   bool IsStdBadAlloc = false; // std::bad_alloc is special for some reason.
-  if (T->getAsCXXRecordDecl()) {
-    IsScalar = false;
-    // TODO: Fill in the CopyCtor here!  This is not trivial due to
-    // copy-constructors possessing things like default arguments.
-  }
   QualType PointeeType = T;
   if (T->isPointerType())
     PointeeType = T->getPointeeType();

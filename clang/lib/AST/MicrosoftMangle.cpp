@@ -114,8 +114,8 @@ public:
                           uint32_t NumEntries, raw_ostream &Out) override;
   void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
                                    raw_ostream &Out) override;
-  void mangleCXXCatchableType(QualType T, uint32_t Size,
-                              raw_ostream &Out) override;
+  void mangleCXXCatchableType(QualType T, const CXXConstructorDecl *CD,
+                              uint32_t Size, raw_ostream &Out) override;
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
@@ -2307,13 +2307,25 @@ void MicrosoftMangleContextImpl::mangleCXXCatchableTypeArray(
   Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
 }
 
-void MicrosoftMangleContextImpl::mangleCXXCatchableType(QualType T,
-                                                        uint32_t Size,
-                                                        raw_ostream &Out) {
+void MicrosoftMangleContextImpl::mangleCXXCatchableType(
+    QualType T, const CXXConstructorDecl *CD, uint32_t Size, raw_ostream &Out) {
   MicrosoftCXXNameMangler Mangler(*this, Out);
-  Mangler.getStream() << "_CT??_R0";
-  Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
-  Mangler.getStream() << "@8";
+  Mangler.getStream() << "_CT";
+
+  llvm::SmallString<64> RTTIMangling;
+  {
+    llvm::raw_svector_ostream Stream(RTTIMangling);
+    mangleCXXRTTI(T, Stream);
+  }
+  Mangler.getStream() << RTTIMangling.substr(1);
+
+  llvm::SmallString<64> CopyCtorMangling;
+  if (CD) {
+    llvm::raw_svector_ostream Stream(CopyCtorMangling);
+    mangleCXXCtor(CD, Ctor_Complete, Stream);
+  }
+  Mangler.getStream() << CopyCtorMangling.substr(1);
+
   Mangler.getStream() << Size;
 }
 

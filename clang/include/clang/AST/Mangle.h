@@ -203,8 +203,8 @@ public:
   virtual void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
                                            raw_ostream &Out) = 0;
 
-  virtual void mangleCXXCatchableType(QualType T, uint32_t Size,
-                                      raw_ostream &Out) = 0;
+  virtual void mangleCXXCatchableType(QualType T, const CXXConstructorDecl *CD,
+                                      uint32_t Size, raw_ostream &Out) = 0;
 
   virtual void mangleCXXRTTIBaseClassDescriptor(
       const CXXRecordDecl *Derived, uint32_t NVOffset, int32_t VBPtrOffset,
