@@ -94,6 +94,7 @@ struct RRInfo {
 /// \brief This class summarizes several per-pointer runtime properties which
 /// are propogated through the flow graph.
 class PtrState {
+protected:
   /// True if the reference count is known to be incremented.
   bool KnownPositiveRefCount;
 
@@ -107,9 +108,9 @@ class PtrState {
   /// Unidirectional information about the current sequence.
   RRInfo RRI;
 
-public:
   PtrState() : KnownPositiveRefCount(false), Partial(false), Seq(S_None) {}
 
+public:
   bool IsKnownSafe() const { return RRI.KnownSafe; }
 
   void SetKnownSafe(const bool NewValue) { RRI.KnownSafe = NewValue; }
@@ -157,6 +158,16 @@ public:
   bool HasReverseInsertPts() const { return !RRI.ReverseInsertPts.empty(); }
 
   const RRInfo &GetRRInfo() const { return RRI; }
+};
+
+/// This is currently a stub.
+struct BottomUpPtrState : PtrState {
+  BottomUpPtrState() : PtrState() {}
+};
+
+/// This is currently a stub.
+struct TopDownPtrState : PtrState {
+  TopDownPtrState() : PtrState() {}
 };
 
 } // end namespace objcarc

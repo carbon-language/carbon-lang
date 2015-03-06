@@ -185,20 +185,18 @@ namespace {
     /// The number of unique control paths to exits from this block.
     unsigned BottomUpPathCount;
 
-    /// A type for PerPtrTopDown and PerPtrBottomUp.
-    typedef BlotMapVector<const Value *, PtrState> MapTy;
-
     /// The top-down traversal uses this to record information known about a
     /// pointer at the bottom of each block.
-    MapTy PerPtrTopDown;
+    BlotMapVector<const Value *, TopDownPtrState> PerPtrTopDown;
 
     /// The bottom-up traversal uses this to record information known about a
     /// pointer at the top of each block.
-    MapTy PerPtrBottomUp;
+    BlotMapVector<const Value *, BottomUpPtrState> PerPtrBottomUp;
 
     /// Effective predecessors of the current block ignoring ignorable edges and
     /// ignored backedges.
     SmallVector<BasicBlock *, 2> Preds;
+
     /// Effective successors of the current block ignoring ignorable edges and
     /// ignored backedges.
     SmallVector<BasicBlock *, 2> Succs;
@@ -208,24 +206,30 @@ namespace {
 
     BBState() : TopDownPathCount(0), BottomUpPathCount(0) { }
 
-    typedef MapTy::iterator ptr_iterator;
-    typedef MapTy::const_iterator ptr_const_iterator;
+    typedef decltype(PerPtrTopDown)::iterator top_down_ptr_iterator;
+    typedef decltype(PerPtrTopDown)::const_iterator const_top_down_ptr_iterator;
 
-    ptr_iterator top_down_ptr_begin() { return PerPtrTopDown.begin(); }
-    ptr_iterator top_down_ptr_end() { return PerPtrTopDown.end(); }
-    ptr_const_iterator top_down_ptr_begin() const {
+    top_down_ptr_iterator top_down_ptr_begin() { return PerPtrTopDown.begin(); }
+    top_down_ptr_iterator top_down_ptr_end() { return PerPtrTopDown.end(); }
+    const_top_down_ptr_iterator top_down_ptr_begin() const {
       return PerPtrTopDown.begin();
     }
-    ptr_const_iterator top_down_ptr_end() const {
+    const_top_down_ptr_iterator top_down_ptr_end() const {
       return PerPtrTopDown.end();
     }
 
-    ptr_iterator bottom_up_ptr_begin() { return PerPtrBottomUp.begin(); }
-    ptr_iterator bottom_up_ptr_end() { return PerPtrBottomUp.end(); }
-    ptr_const_iterator bottom_up_ptr_begin() const {
+    typedef decltype(PerPtrBottomUp)::iterator bottom_up_ptr_iterator;
+    typedef decltype(
+        PerPtrBottomUp)::const_iterator const_bottom_up_ptr_iterator;
+
+    bottom_up_ptr_iterator bottom_up_ptr_begin() {
       return PerPtrBottomUp.begin();
     }
-    ptr_const_iterator bottom_up_ptr_end() const {
+    bottom_up_ptr_iterator bottom_up_ptr_end() { return PerPtrBottomUp.end(); }
+    const_bottom_up_ptr_iterator bottom_up_ptr_begin() const {
+      return PerPtrBottomUp.begin();
+    }
+    const_bottom_up_ptr_iterator bottom_up_ptr_end() const {
       return PerPtrBottomUp.end();
     }
 
@@ -240,20 +244,20 @@ namespace {
     /// Attempt to find the PtrState object describing the top down state for
     /// pointer Arg. Return a new initialized PtrState describing the top down
     /// state for Arg if we do not find one.
-    PtrState &getPtrTopDownState(const Value *Arg) {
+    TopDownPtrState &getPtrTopDownState(const Value *Arg) {
       return PerPtrTopDown[Arg];
     }
 
     /// Attempt to find the PtrState object describing the bottom up state for
     /// pointer Arg. Return a new initialized PtrState describing the bottom up
     /// state for Arg if we do not find one.
-    PtrState &getPtrBottomUpState(const Value *Arg) {
+    BottomUpPtrState &getPtrBottomUpState(const Value *Arg) {
       return PerPtrBottomUp[Arg];
     }
 
     /// Attempt to find the PtrState object describing the bottom up state for
     /// pointer Arg.
-    ptr_iterator findPtrBottomUpState(const Value *Arg) {
+    bottom_up_ptr_iterator findPtrBottomUpState(const Value *Arg) {
       return PerPtrBottomUp.find(Arg);
     }
 
@@ -345,8 +349,8 @@ void BBState::MergePred(const BBState &Other) {
   // entry.
   for (auto MI = Other.top_down_ptr_begin(), ME = Other.top_down_ptr_end();
        MI != ME; ++MI) {
-    std::pair<ptr_iterator, bool> Pair = PerPtrTopDown.insert(*MI);
-    Pair.first->second.Merge(Pair.second ? PtrState() : MI->second,
+    auto Pair = PerPtrTopDown.insert(*MI);
+    Pair.first->second.Merge(Pair.second ? TopDownPtrState() : MI->second,
                              /*TopDown=*/true);
   }
 
@@ -354,7 +358,7 @@ void BBState::MergePred(const BBState &Other) {
   // same key, force it to merge with an empty entry.
   for (auto MI = top_down_ptr_begin(), ME = top_down_ptr_end(); MI != ME; ++MI)
     if (Other.PerPtrTopDown.find(MI->first) == Other.PerPtrTopDown.end())
-      MI->second.Merge(PtrState(), /*TopDown=*/true);
+      MI->second.Merge(TopDownPtrState(), /*TopDown=*/true);
 }
 
 /// The bottom-up traversal uses this to merge information about successors to
@@ -388,8 +392,8 @@ void BBState::MergeSucc(const BBState &Other) {
   // it with an empty entry.
   for (auto MI = Other.bottom_up_ptr_begin(), ME = Other.bottom_up_ptr_end();
        MI != ME; ++MI) {
-    std::pair<ptr_iterator, bool> Pair = PerPtrBottomUp.insert(*MI);
-    Pair.first->second.Merge(Pair.second ? PtrState() : MI->second,
+    auto Pair = PerPtrBottomUp.insert(*MI);
+    Pair.first->second.Merge(Pair.second ? BottomUpPtrState() : MI->second,
                              /*TopDown=*/false);
   }
 
@@ -398,7 +402,7 @@ void BBState::MergeSucc(const BBState &Other) {
   for (auto MI = bottom_up_ptr_begin(), ME = bottom_up_ptr_end(); MI != ME;
        ++MI)
     if (Other.PerPtrBottomUp.find(MI->first) == Other.PerPtrBottomUp.end())
-      MI->second.Merge(PtrState(), /*TopDown=*/false);
+      MI->second.Merge(BottomUpPtrState(), /*TopDown=*/false);
 }
 
 namespace {
@@ -872,7 +876,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 /// no CFG hazards by checking the states of various bottom up pointers.
 static void CheckForUseCFGHazard(const Sequence SuccSSeq,
                                  const bool SuccSRRIKnownSafe,
-                                 PtrState &S,
+                                 TopDownPtrState &S,
                                  bool &SomeSuccHasSame,
                                  bool &AllSuccsHaveSame,
                                  bool &NotAllSeqEqualButKnownSafe,
@@ -910,7 +914,7 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
 /// pointers.
 static void CheckForCanReleaseCFGHazard(const Sequence SuccSSeq,
                                         const bool SuccSRRIKnownSafe,
-                                        PtrState &S,
+                                        TopDownPtrState &S,
                                         bool &SomeSuccHasSame,
                                         bool &AllSuccsHaveSame,
                                         bool &NotAllSeqEqualButKnownSafe) {
@@ -943,9 +947,9 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
                                BBState &MyStates) const {
   // If any top-down local-use or possible-dec has a succ which is earlier in
   // the sequence, forget it.
-  for (BBState::ptr_iterator I = MyStates.top_down_ptr_begin(),
-         E = MyStates.top_down_ptr_end(); I != E; ++I) {
-    PtrState &S = I->second;
+  for (auto I = MyStates.top_down_ptr_begin(), E = MyStates.top_down_ptr_end();
+       I != E; ++I) {
+    TopDownPtrState &S = I->second;
     const Sequence Seq = I->second.GetSeq();
 
     // We only care about S_Retain, S_CanRelease, and S_Use.
@@ -971,7 +975,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       const DenseMap<const BasicBlock *, BBState>::iterator BBI =
         BBStates.find(*SI);
       assert(BBI != BBStates.end());
-      const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
+      const BottomUpPtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
       const Sequence SuccSSeq = SuccS.GetSeq();
 
       // If bottom up, the pointer is in an S_None state, clear the sequence
@@ -1043,7 +1047,7 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
   case ARCInstKind::Release: {
     Arg = GetArgRCIdentityRoot(Inst);
 
-    PtrState &S = MyStates.getPtrBottomUpState(Arg);
+    BottomUpPtrState &S = MyStates.getPtrBottomUpState(Arg);
 
     // If we see two releases in a row on the same pointer. If so, make
     // a note, and we'll cicle back to revisit it after we've
@@ -1077,7 +1081,7 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
   case ARCInstKind::RetainRV: {
     Arg = GetArgRCIdentityRoot(Inst);
 
-    PtrState &S = MyStates.getPtrBottomUpState(Arg);
+    BottomUpPtrState &S = MyStates.getPtrBottomUpState(Arg);
     S.SetKnownPositiveRefCount();
 
     Sequence OldSeq = S.GetSeq();
@@ -1130,8 +1134,8 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
     // both our retain and our release are KnownSafe.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (AreAnyUnderlyingObjectsAnAlloca(SI->getPointerOperand())) {
-        BBState::ptr_iterator I = MyStates.findPtrBottomUpState(
-          GetRCIdentityRoot(SI->getValueOperand()));
+        auto I = MyStates.findPtrBottomUpState(
+            GetRCIdentityRoot(SI->getValueOperand()));
         if (I != MyStates.bottom_up_ptr_end())
           MultiOwnersSet.insert(I->first);
       }
@@ -1143,12 +1147,13 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
 
   // Consider any other possible effects of this instruction on each
   // pointer being tracked.
-  for (BBState::ptr_iterator MI = MyStates.bottom_up_ptr_begin(),
-       ME = MyStates.bottom_up_ptr_end(); MI != ME; ++MI) {
+  for (auto MI = MyStates.bottom_up_ptr_begin(),
+            ME = MyStates.bottom_up_ptr_end();
+       MI != ME; ++MI) {
     const Value *Ptr = MI->first;
     if (Ptr == Arg)
       continue; // Handled above.
-    PtrState &S = MI->second;
+    BottomUpPtrState &S = MI->second;
     Sequence Seq = S.GetSeq();
 
     // Check for possible releases.
@@ -1290,7 +1295,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
   case ARCInstKind::RetainRV: {
     Arg = GetArgRCIdentityRoot(Inst);
 
-    PtrState &S = MyStates.getPtrTopDownState(Arg);
+    TopDownPtrState &S = MyStates.getPtrTopDownState(Arg);
 
     // Don't do retain+release tracking for ARCInstKind::RetainRV, because
     // it's
@@ -1320,7 +1325,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
   case ARCInstKind::Release: {
     Arg = GetArgRCIdentityRoot(Inst);
 
-    PtrState &S = MyStates.getPtrTopDownState(Arg);
+    TopDownPtrState &S = MyStates.getPtrTopDownState(Arg);
     S.ClearKnownPositiveRefCount();
 
     Sequence OldSeq = S.GetSeq();
@@ -1363,12 +1368,13 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
   // Consider any other possible effects of this instruction on each
   // pointer being tracked.
-  for (BBState::ptr_iterator MI = MyStates.top_down_ptr_begin(),
-       ME = MyStates.top_down_ptr_end(); MI != ME; ++MI) {
+  for (auto MI = MyStates.top_down_ptr_begin(),
+            ME = MyStates.top_down_ptr_end();
+       MI != ME; ++MI) {
     const Value *Ptr = MI->first;
     if (Ptr == Arg)
       continue; // Handled above.
-    PtrState &S = MI->second;
+    TopDownPtrState &S = MI->second;
     Sequence Seq = S.GetSeq();
 
     // Check for possible releases.
