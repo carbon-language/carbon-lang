@@ -164,6 +164,29 @@ bool BottomUpPtrState::InitBottomUp(ARCMDKindCache &Cache, Instruction *I) {
   return NestingDetected;
 }
 
+bool BottomUpPtrState::MatchWithRetain() {
+  SetKnownPositiveRefCount();
+
+  Sequence OldSeq = GetSeq();
+  switch (OldSeq) {
+  case S_Stop:
+  case S_Release:
+  case S_MovableRelease:
+  case S_Use:
+    // If OldSeq is not S_Use or OldSeq is S_Use and we are tracking an
+    // imprecise release, clear our reverse insertion points.
+    if (OldSeq != S_Use || IsTrackingImpreciseReleases())
+      ClearReverseInsertPts();
+  // FALL THROUGH
+  case S_CanRelease:
+    return true;
+  case S_None:
+    return false;
+  case S_Retain:
+    llvm_unreachable("bottom-up pointer in retain state!");
+  }
+}
+
 bool TopDownPtrState::InitTopDown(ARCInstKind Kind, Instruction *I) {
   bool NestingDetected = false;
   // Don't do retain+release tracking for ARCInstKind::RetainRV, because
@@ -187,4 +210,31 @@ bool TopDownPtrState::InitTopDown(ARCInstKind Kind, Instruction *I) {
 
   SetKnownPositiveRefCount();
   return NestingDetected;
+}
+
+bool TopDownPtrState::MatchWithRelease(ARCMDKindCache &Cache,
+                                       Instruction *Release) {
+  ClearKnownPositiveRefCount();
+
+  Sequence OldSeq = GetSeq();
+
+  MDNode *ReleaseMetadata = Release->getMetadata(Cache.ImpreciseReleaseMDKind);
+
+  switch (OldSeq) {
+  case S_Retain:
+  case S_CanRelease:
+    if (OldSeq == S_Retain || ReleaseMetadata != nullptr)
+      ClearReverseInsertPts();
+  // FALL THROUGH
+  case S_Use:
+    SetReleaseMetadata(ReleaseMetadata);
+    SetTailCallRelease(cast<CallInst>(Release)->isTailCall());
+    return true;
+  case S_None:
+    return false;
+  case S_Stop:
+  case S_Release:
+  case S_MovableRelease:
+    llvm_unreachable("top-down pointer in bottom up state!");
+  }
 }

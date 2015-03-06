@@ -1059,33 +1059,13 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
   case ARCInstKind::Retain:
   case ARCInstKind::RetainRV: {
     Arg = GetArgRCIdentityRoot(Inst);
-
     BottomUpPtrState &S = MyStates.getPtrBottomUpState(Arg);
-    S.SetKnownPositiveRefCount();
-
-    Sequence OldSeq = S.GetSeq();
-    switch (OldSeq) {
-    case S_Stop:
-    case S_Release:
-    case S_MovableRelease:
-    case S_Use:
-      // If OldSeq is not S_Use or OldSeq is S_Use and we are tracking an
-      // imprecise release, clear our reverse insertion points.
-      if (OldSeq != S_Use || S.IsTrackingImpreciseReleases())
-        S.ClearReverseInsertPts();
-      // FALL THROUGH
-    case S_CanRelease:
-      // Don't do retain+release tracking for ARCInstKind::RetainRV,
-      // because it's
-      // better to let it remain as the first instruction after a call.
+    if (S.MatchWithRetain()) {
+      // Don't do retain+release tracking for ARCInstKind::RetainRV, because
+      // it's better to let it remain as the first instruction after a call.
       if (Class != ARCInstKind::RetainRV)
         Retains[Inst] = S.GetRRInfo();
       S.ClearSequenceProgress();
-      break;
-    case S_None:
-      break;
-    case S_Retain:
-      llvm_unreachable("bottom-up pointer in retain state!");
     }
     // A retain moving bottom up can be a use.
     break;
@@ -1268,7 +1248,8 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
   case ARCInstKind::RetainBlock:
     // In OptimizeIndividualCalls, we have strength reduced all optimizable
     // objc_retainBlocks to objc_retains. Thus at this point any
-    // objc_retainBlocks that we see are not optimizable.
+    // objc_retainBlocks that we see are not optimizable. We need to break since
+    // a retain can be a potential use.
     break;
   case ARCInstKind::Retain:
   case ARCInstKind::RetainRV: {
@@ -1281,44 +1262,25 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
   }
   case ARCInstKind::Release: {
     Arg = GetArgRCIdentityRoot(Inst);
-
     TopDownPtrState &S = MyStates.getPtrTopDownState(Arg);
-    S.ClearKnownPositiveRefCount();
-
-    Sequence OldSeq = S.GetSeq();
-
-    MDNode *ReleaseMetadata =
-        Inst->getMetadata(MDKindCache.ImpreciseReleaseMDKind);
-
-    switch (OldSeq) {
-    case S_Retain:
-    case S_CanRelease:
-      if (OldSeq == S_Retain || ReleaseMetadata != nullptr)
-        S.ClearReverseInsertPts();
-      // FALL THROUGH
-    case S_Use:
-      S.SetReleaseMetadata(ReleaseMetadata);
-      S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
+    // Try to form a tentative pair in between this release instruction and the
+    // top down pointers that we are tracking.
+    if (S.MatchWithRelease(MDKindCache, Inst)) {
+      // If we succeed, copy S's RRInfo into the Release -> {Retain Set
+      // Map}. Then we clear S.
       Releases[Inst] = S.GetRRInfo();
       S.ClearSequenceProgress();
-      break;
-    case S_None:
-      break;
-    case S_Stop:
-    case S_Release:
-    case S_MovableRelease:
-      llvm_unreachable("top-down pointer in release state!");
     }
     break;
   }
   case ARCInstKind::AutoreleasepoolPop:
     // Conservatively, clear MyStates for all known pointers.
     MyStates.clearTopDownPointers();
-    return NestingDetected;
+    return false;
   case ARCInstKind::AutoreleasepoolPush:
   case ARCInstKind::None:
-    // These are irrelevant.
-    return NestingDetected;
+    // These can not be uses of
+    return false;
   default:
     break;
   }

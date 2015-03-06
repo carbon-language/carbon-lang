@@ -169,6 +169,14 @@ struct BottomUpPtrState : PtrState {
   /// (Re-)Initialize this bottom up pointer returning true if we detected a
   /// pointer with nested releases.
   bool InitBottomUp(ARCMDKindCache &Cache, Instruction *I);
+
+  /// Return true if this set of releases can be paired with a release. Modifies
+  /// state appropriately to reflect that the matching occured if it is
+  /// successful.
+  ///
+  /// It is assumed that one has already checked that the RCIdentity of the
+  /// retain and the RCIdentity of this ptr state are the same.
+  bool MatchWithRetain();
 };
 
 struct TopDownPtrState : PtrState {
@@ -177,6 +185,11 @@ struct TopDownPtrState : PtrState {
   /// (Re-)Initialize this bottom up pointer returning true if we detected a
   /// pointer with nested releases.
   bool InitTopDown(ARCInstKind Kind, Instruction *I);
+
+  /// Return true if this set of retains can be paired with the given
+  /// release. Modifies state appropriately to reflect that the matching
+  /// occured.
+  bool MatchWithRelease(ARCMDKindCache &Cache, Instruction *Release);
 };
 
 } // end namespace objcarc
