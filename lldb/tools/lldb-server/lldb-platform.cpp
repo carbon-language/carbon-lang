@@ -82,7 +82,7 @@ signal_handler(int signo)
         // Use SIGINT first, if that does not work, use SIGHUP as a last resort.
         // And we should not call exit() here because it results in the global destructors
         // to be invoked and wreaking havoc on the threads still running.
-        Host::SystemLog(Host::eSystemLogWarning, "SIGHUP received, exiting lldb-platform...\n");
+        Host::SystemLog(Host::eSystemLogWarning, "SIGHUP received, exiting lldb-server...\n");
         abort();
         break;
     }
@@ -305,7 +305,7 @@ main_platform (int argc, char *argv[])
         }
     } while (g_stay_alive);
 
-    fprintf(stderr, "lldb-platform exiting...\n");
+    fprintf(stderr, "lldb-server exiting...\n");
 
     return 0;
 }

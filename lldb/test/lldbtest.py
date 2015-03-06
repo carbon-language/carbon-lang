@@ -494,7 +494,7 @@ def debugserver_test(func):
     return wrapper
 
 def llgs_test(func):
-    """Decorate the item as a lldb-gdbserver test."""
+    """Decorate the item as a lldb-server test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
         raise Exception("@llgs_test can only be used to decorate a test method")
     @wraps(func)

@@ -134,9 +134,9 @@ class GdbRemoteTestCaseBase(TestBase):
         return stub_port
 
     def init_llgs_test(self, use_named_pipe=True):
-        self.debug_monitor_exe = get_lldb_gdbserver_exe()
+        self.debug_monitor_exe = get_lldb_server_exe()
         if not self.debug_monitor_exe:
-            self.skipTest("lldb_gdbserver exe not found")
+            self.skipTest("lldb-server exe not found")
         dname = os.path.join(os.environ["LLDB_TEST"],
                              os.environ["LLDB_SESSION_DIRNAME"])
         self.debug_monitor_extra_args = " gdbserver -c 'log enable -T -f {}/process-{}.log lldb break process thread' -c 'log enable -T -f {}/packets-{}.log gdb-remote packets'".format(dname, self.id(), dname, self.id())
@@ -161,7 +161,7 @@ class GdbRemoteTestCaseBase(TestBase):
         def shutdown_socket():
             if sock:
                 try:
-                    # send the kill packet so lldb-gdbserver shuts down gracefully
+                    # send the kill packet so lldb-server shuts down gracefully
                     sock.sendall(GdbRemoteTestCaseBase._GDBREMOTE_KILL_PACKET)
                 except:
                     logger.warning("failed to send kill packet to debug monitor: {}; ignoring".format(sys.exc_info()[0]))
@@ -204,7 +204,7 @@ class GdbRemoteTestCaseBase(TestBase):
         # Start the server.
         server = pexpect.spawn(commandline, logfile=logfile)
         self.assertIsNotNone(server)
-        server.expect(r"(debugserver|lldb-gdbserver)", timeout=10)
+        server.expect(r"(debugserver|lldb-server)", timeout=10)
 
         # If we're receiving the stub's listening port from the named pipe, do that here.
         if self.named_pipe:

@@ -1,8 +1,8 @@
 """
 Test case for testing the gdbremote protocol.
 
-Tests run against debugserver and lldb-gdbserver (llgs).
-lldb-gdbserver tests run where the lldb-gdbserver exe is
+Tests run against debugserver and lldb-server (llgs).
+lldb-server tests run where the lldb-server exe is
 available.
 
 This class will be broken into smaller test case classes by
@@ -52,8 +52,8 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         self.add_no_ack_remote_stream()
         self.test_sequence.add_log_lines(
-            ["lldb-gdbserver <  26> read packet: $QThreadSuffixSupported#e4",
-             "lldb-gdbserver <   6> send packet: $OK#9a"],
+            ["lldb-server <  26> read packet: $QThreadSuffixSupported#e4",
+             "lldb-server <   6> send packet: $OK#9a"],
             True)
 
         self.expect_gdbremote_sequence()
@@ -74,8 +74,8 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         self.add_no_ack_remote_stream()
         self.test_sequence.add_log_lines(
-            ["lldb-gdbserver <  27> read packet: $QListThreadsInStopReply#21",
-             "lldb-gdbserver <   6> send packet: $OK#9a"],
+            ["lldb-server <  27> read packet: $QListThreadsInStopReply#21",
+             "lldb-server <   6> send packet: $OK#9a"],
             True)
         self.expect_gdbremote_sequence()
 
@@ -95,7 +95,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # build launch args
         launch_args = [os.path.abspath('a.out')]
-
         self.add_no_ack_remote_stream()
         self.test_sequence.add_log_lines(
             ["read packet: %s" % lldbgdbserverutils.build_gdbremote_A_packet(launch_args),

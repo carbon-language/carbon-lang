@@ -42,7 +42,7 @@
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 
 #ifndef LLGS_PROGRAM_NAME
-#define LLGS_PROGRAM_NAME "lldb-gdbserver"
+#define LLGS_PROGRAM_NAME "lldb-server"
 #endif
 
 #ifndef LLGS_VERSION_STR
@@ -98,9 +98,9 @@ signal_handler(int signo)
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
-    fprintf (stderr, "lldb-gdbserver:%s received signal %d\n", __FUNCTION__, signo);
+    fprintf (stderr, "lldb-server:%s received signal %d\n", __FUNCTION__, signo);
     if (log)
-        log->Printf ("lldb-gdbserver:%s received signal %d", __FUNCTION__, signo);
+        log->Printf ("lldb-server:%s received signal %d", __FUNCTION__, signo);
 
     switch (signo)
     {
@@ -112,7 +112,7 @@ signal_handler(int signo)
 
         // For now, swallow SIGHUP.
         if (log)
-            log->Printf ("lldb-gdbserver:%s swallowing SIGHUP (receive count=%d)", __FUNCTION__, g_sighup_received_count);
+            log->Printf ("lldb-server:%s swallowing SIGHUP (receive count=%d)", __FUNCTION__, g_sighup_received_count);
         signal (SIGHUP, signal_handler);
         break;
     }
@@ -644,7 +644,7 @@ main_gdbserver (int argc, char *argv[])
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_VERBOSE));
     if (log)
     {
-        log->Printf ("lldb-gdbserver launch");
+        log->Printf ("lldb-server launch");
         for (int i = 0; i < argc; i++)
         {
             log->Printf ("argv[%i] = '%s'", i, argv[i]);
@@ -687,7 +687,7 @@ main_gdbserver (int argc, char *argv[])
 
     ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, subcommand, named_pipe_path.c_str ());
 
-    fprintf(stderr, "lldb-gdbserver exiting...\n");
+    fprintf(stderr, "lldb-server exiting...\n");
 
     return 0;
 }

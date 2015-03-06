@@ -29,7 +29,7 @@ class TestStubSetSIDTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         server = self.launch_debug_monitor()
         self.assertIsNotNone(server)
         self.assertTrue(server.isalive())
-        server.expect("(debugserver|lldb-gdbserver)", timeout=10)
+        server.expect("(debugserver|lldb-server)", timeout=10)
 
         # Get the process id for the stub.
         return os.getsid(server.pid)

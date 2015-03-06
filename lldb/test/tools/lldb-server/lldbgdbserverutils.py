@@ -1,4 +1,4 @@
-"""Module for supporting unit testing of the lldb-gdbserver debug monitor exe.
+"""Module for supporting unit testing of the lldb-server debug monitor exe.
 """
 
 import os
@@ -49,8 +49,8 @@ def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
         return None
 
 
-def get_lldb_gdbserver_exe():
-    """Return the lldb-gdbserver exe path.
+def get_lldb_server_exe():
+    """Return the lldb-server exe path.
 
     Returns:
         A path to the lldb-gdbserver exe if it is found to exist; otherwise,
@@ -86,7 +86,7 @@ def get_debugserver_exe():
         return None
 
 
-_LOG_LINE_REGEX = re.compile(r'^(lldb-gdbserver|debugserver)\s+<\s*(\d+)>' +
+_LOG_LINE_REGEX = re.compile(r'^(lldb-server|debugserver)\s+<\s*(\d+)>' +
     '\s+(read|send)\s+packet:\s+(.+)$')
 
 
@@ -831,8 +831,8 @@ def process_is_running(pid, unknown_value=True):
     return pid in process_ids
 
 if __name__ == '__main__':
-    EXE_PATH = get_lldb_gdbserver_exe()
+    EXE_PATH = get_lldb_server_exe()
     if EXE_PATH:
-        print "lldb-gdbserver path detected: {}".format(EXE_PATH)
+        print "lldb-server path detected: {}".format(EXE_PATH)
     else:
-        print "lldb-gdbserver could not be found"
+        print "lldb-server could not be found"
