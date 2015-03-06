@@ -13,29 +13,36 @@ CHECK: debug_info contents
 CHECK:  Compile Unit:
 
 CHECK:  DW_TAG_compile_unit [1] *
+CHECK:    DW_AT_producer [DW_FORM_strp]     ( .debug_str[0x00000001] = "Apple LLVM version 6.0 (clang-600.0.39) (based on LLVM 3.5svn)")
 CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
+CHECK:    DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000040] = "basic1.c")
+CHECK:    DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000049] = "/Inputs")
 CHECK:    DW_TAG_subprogram [2] *
+CHECK:    DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000051] = "main")
 CHECK:      DW_AT_decl_line [DW_FORM_data1]	(23)
 CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x01)
 CHECK:      DW_AT_external [DW_FORM_flag]	(0x01)
 CHECK:      DW_AT_accessibility [DW_FORM_data1]	(DW_ACCESS_public)
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000056] = "argc")
 CHECK:        DW_AT_decl_line [DW_FORM_data1]	(23)
 CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 78 )
 CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005b] = "argv")
 CHECK:        DW_AT_decl_file [DW_FORM_data1]	(0x01)
 CHECK:        DW_AT_decl_line [DW_FORM_data1]	(23)
 CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 70 )
 CHECK:      NULL
 CHECK:    DW_TAG_base_type [4]
-CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000000] = )
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000060] = "int")
 CHECK:      DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
 CHECK:      DW_AT_byte_size [DW_FORM_data1]	(0x04)
 CHECK:    DW_TAG_pointer_type [5]
 CHECK:    DW_TAG_pointer_type [5]
 CHECK:    DW_TAG_const_type [6]
 CHECK:    DW_TAG_base_type [4]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000064] = "char")
 CHECK:      DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed_char)
 CHECK:      DW_AT_byte_size [DW_FORM_data1]	(0x01)
 CHECK:    NULL
@@ -43,30 +50,47 @@ CHECK:    NULL
 CHECK:  Compile Unit:
 
 CHECK:  DW_TAG_compile_unit [1] *
+CHECK:   DW_AT_producer [DW_FORM_strp]     ( .debug_str[0x00000001] = "Apple LLVM version 6.0 (clang-600.0.39) (based on LLVM 3.5svn)")
+CHECK:   DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000069] = "basic2.c")
+CHECK:   DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000049] = "/Inputs")
 CHECK:    DW_TAG_base_type [4]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000060] = "int")
 CHECK:    DW_TAG_variable [7]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000072] = "private_int")
 CHECK:    DW_TAG_variable [7]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000007e] = "baz")
 CHECK:    DW_TAG_subprogram [2] *
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000082] = "foo")
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000086] = "arg")
 CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 7c )
 CHECK:      NULL
 CHECK:    DW_TAG_subprogram [8]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000008a] = "inc")
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:    NULL
 
 CHECK:  Compile Unit:
 
 CHECK:  DW_TAG_compile_unit [1] *
+CHECK:    DW_AT_producer [DW_FORM_strp]     ( .debug_str[0x00000001] = "Apple LLVM version 6.0 (clang-600.0.39) (based on LLVM 3.5svn)")
+CHECK:    DW_AT_name [DW_FORM_strp] ( .debug_str[0x0000008e] = "basic3.c")
+CHECK:    DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000049] = "/Inputs")
 CHECK:    DW_TAG_variable [9]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000097] = "val")
 CHECK:    DW_TAG_volatile_type [10]
 CHECK:    DW_TAG_base_type [4]
+CHACK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000060] = "int")
 CHECK:    DW_TAG_subprogram [2] *
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000009b] = "bar")
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000086] = "arg")
 CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 78 )
 CHECK:      NULL
 CHECK:    DW_TAG_subprogram [8]
+CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000008a] = "inc")
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 
 CHECK:    NULL

@@ -108,6 +108,91 @@ uint64_t CompileUnit::computeOffsets(uint64_t DebugInfoSize) {
   return NextUnitOffset;
 }
 
+/// \brief A string table that doesn't need relocations.
+///
+/// We are doing a final link, no need for a string table that
+/// has relocation entries for every reference to it. This class
+/// provides this ablitity by just associating offsets with
+/// strings.
+class NonRelocatableStringpool {
+public:
+  /// \brief Entries are stored into the StringMap and simply linked
+  /// together through the second element of this pair in order to
+  /// keep track of insertion order.
+  typedef StringMap<std::pair<uint32_t, StringMapEntryBase *>, BumpPtrAllocator>
+      MapTy;
+
+  NonRelocatableStringpool()
+      : CurrentEndOffset(0), Sentinel(0), Last(&Sentinel) {
+    // Legacy dsymutil puts an empty string at the start of the line
+    // table.
+    getStringOffset("");
+  }
+
+  /// \brief Get the offset of string \p S in the string table. This
+  /// can insert a new element or return the offset of a preexisitng
+  /// one.
+  uint32_t getStringOffset(StringRef S);
+
+  /// \brief Get permanent storage for \p S (but do not necessarily
+  /// emit \p S in the output section).
+  /// \returns The StringRef that points to permanent storage to use
+  /// in place of \p S.
+  StringRef internString(StringRef S);
+
+  // \brief Return the first entry of the string table.
+  const MapTy::MapEntryTy *getFirstEntry() const {
+    return getNextEntry(&Sentinel);
+  }
+
+  // \brief Get the entry following \p E in the string table or null
+  // if \p E was the last entry.
+  const MapTy::MapEntryTy *getNextEntry(const MapTy::MapEntryTy *E) const {
+    return static_cast<const MapTy::MapEntryTy *>(E->getValue().second);
+  }
+
+  uint64_t getSize() { return CurrentEndOffset; }
+
+private:
+  MapTy Strings;
+  uint32_t CurrentEndOffset;
+  MapTy::MapEntryTy Sentinel, *Last;
+};
+
+/// \brief Get the offset of string \p S in the string table. This
+/// can insert a new element or return the offset of a preexisitng
+/// one.
+uint32_t NonRelocatableStringpool::getStringOffset(StringRef S) {
+  if (S.empty() && !Strings.empty())
+    return 0;
+
+  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
+  MapTy::iterator It;
+  bool Inserted;
+
+  // A non-empty string can't be at offset 0, so if we have an entry
+  // with a 0 offset, it must be a previously interned string.
+  std::tie(It, Inserted) = Strings.insert(std::make_pair(S, Entry));
+  if (Inserted || It->getValue().first == 0) {
+    // Set offset and chain at the end of the entries list.
+    It->getValue().first = CurrentEndOffset;
+    CurrentEndOffset += S.size() + 1; // +1 for the '\0'.
+    Last->getValue().second = &*It;
+    Last = &*It;
+  }
+  return It->getValue().first;
+};
+
+/// \brief Put \p S into the StringMap so that it gets permanent
+/// storage, but do not actually link it in the chain of elements
+/// that go into the output section. A latter call to
+/// getStringOffset() with the same string will chain it though.
+StringRef NonRelocatableStringpool::internString(StringRef S) {
+  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
+  auto InsertResult = Strings.insert(std::make_pair(S, Entry));
+  return InsertResult.first->getKey();
+};
+
 /// \brief The Dwarf streaming logic
 ///
 /// All interactions with the MC layer that is used to build the debug
@@ -160,6 +245,9 @@ public:
   /// \brief Emit the abbreviation table \p Abbrevs to the
   /// debug_abbrev section.
   void emitAbbrevs(const std::vector<DIEAbbrev *> &Abbrevs);
+
+  /// \brief Emit the string table described by \p Pool.
+  void emitStrings(const NonRelocatableStringpool &Pool);
 };
 
 bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
@@ -276,6 +364,15 @@ void DwarfStreamer::emitAbbrevs(const std::vector<DIEAbbrev *> &Abbrevs) {
 void DwarfStreamer::emitDIE(DIE &Die) {
   MS->SwitchSection(MOFI->getDwarfInfoSection());
   Asm->emitDwarfDIE(Die);
+}
+
+/// \brief Emit the debug_str section stored in \p Pool.
+void DwarfStreamer::emitStrings(const NonRelocatableStringpool &Pool) {
+  Asm->OutStreamer.SwitchSection(MOFI->getDwarfStrSection());
+  for (auto *Entry = Pool.getFirstEntry(); Entry;
+       Entry = Pool.getNextEntry(Entry))
+    Asm->OutStreamer.EmitBytes(
+        StringRef(Entry->getKey().data(), Entry->getKey().size() + 1));
 }
 
 /// \brief The core of the Dwarf linking logic.
@@ -417,7 +514,8 @@ private:
                           const AttributeSpec AttrSpec, unsigned AttrSize);
 
   /// \brief Helper for cloneDIE.
-  unsigned cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec);
+  unsigned cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec,
+                                const DWARFFormValue &Val, const DWARFUnit &U);
 
   /// \brief Helper for cloneDIE.
   unsigned cloneDieReferenceAttribute(DIE &Die, AttributeSpec AttrSpec,
@@ -478,6 +576,9 @@ private:
 
   /// The debug map object curently under consideration.
   DebugMapObject *CurrentDebugObject;
+
+  /// \brief The Dwarf string pool
+  NonRelocatableStringpool StringPool;
 };
 
 /// \brief Similar to DWARFUnitSection::getUnitForOffset(), but
@@ -944,11 +1045,14 @@ void DwarfLinker::AssignAbbrev(DIEAbbrev &Abbrev) {
 /// \brief Clone a string attribute described by \p AttrSpec and add
 /// it to \p Die.
 /// \returns the size of the new attribute.
-unsigned DwarfLinker::cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec) {
+unsigned DwarfLinker::cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec,
+                                           const DWARFFormValue &Val,
+                                           const DWARFUnit &U) {
   // Switch everything to out of line strings.
-  // FIXME: Construct the actual string table.
+  const char *String = *Val.getAsCString(&U);
+  unsigned Offset = StringPool.getStringOffset(String);
   Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::DW_FORM_strp,
-               new (DIEAlloc) DIEInteger(0));
+               new (DIEAlloc) DIEInteger(Offset));
   return 4;
 }
 
@@ -1040,7 +1144,7 @@ unsigned DwarfLinker::cloneAttribute(DIE &Die,
   switch (AttrSpec.Form) {
   case dwarf::DW_FORM_strp:
   case dwarf::DW_FORM_string:
-    return cloneStringAttribute(Die, AttrSpec);
+    return cloneStringAttribute(Die, AttrSpec, Val, U);
   case dwarf::DW_FORM_ref_addr:
   case dwarf::DW_FORM_ref1:
   case dwarf::DW_FORM_ref2:
@@ -1223,8 +1327,10 @@ bool DwarfLinker::link(const DebugMap &Map) {
   }
 
   // Emit everything that's global.
-  if (!Options.NoOutput)
+  if (!Options.NoOutput) {
     Streamer->emitAbbrevs(Abbreviations);
+    Streamer->emitStrings(StringPool);
+  }
 
   return Options.NoOutput ? true : Streamer->finish();
 }
