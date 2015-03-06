@@ -18,6 +18,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -91,7 +92,7 @@ private:
   llvm::DenseSet<const Atom *>  _liveAtoms;
   llvm::DenseSet<const Atom *>  _deadAtoms;
   std::unique_ptr<MergedFile>   _result;
-  llvm::DenseMap<const Atom *, llvm::DenseSet<const Atom *>> _reverseRef;
+  std::unordered_multimap<const Atom *, const Atom *> _reverseRef;
 
   // --start-group and --end-group
   std::vector<File *> _files;

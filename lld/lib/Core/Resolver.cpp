@@ -17,12 +17,14 @@
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
+#include <utility>
 #include <vector>
 
 namespace lld {
@@ -372,8 +374,10 @@ void Resolver::markLive(const Atom *atom) {
   if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom)) {
     for (const Reference *ref : *defAtom)
       markLive(ref->target());
-    for (const Atom *target : _reverseRef.lookup(defAtom))
+    for (auto &p : llvm::make_range(_reverseRef.equal_range(defAtom))) {
+      const Atom *target = p.second;
       markLive(target);
+    }
   }
 }
 
@@ -399,7 +403,7 @@ void Resolver::deadStripOptimize() {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
       for (const Reference *ref : *defAtom)
         if (isBackref(ref))
-          _reverseRef[ref->target()].insert(atom);
+          _reverseRef.insert(std::make_pair(ref->target(), atom));
     if (const AbsoluteAtom *absAtom = dyn_cast<AbsoluteAtom>(atom))
       markLive(absAtom);
   }
