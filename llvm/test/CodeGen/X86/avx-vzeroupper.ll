@@ -1,4 +1,4 @@
-; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
+; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-apple-darwin -mattr=+avx | FileCheck %s
 
 declare i32 @foo()
 declare <4 x float> @do_sse(<4 x float>)
