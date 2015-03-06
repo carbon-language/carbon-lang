@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 -mattr=+sse2,+sse3 | FileCheck %s -check-prefix=CHECK -check-prefix=SSE3
 ; RUN: llc < %s -march=x86-64 -mattr=+sse2,+sse3,+ssse3 | FileCheck %s -check-prefix=CHECK -check-prefix=SSSE3
-; RUN: llc < %s -march=x86-64 -mcpu=corei7-avx | FileCheck %s -check-prefix=CHECK -check-prefix=AVX
-; RUN: llc < %s -march=x86-64 -mcpu=core-avx2 | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2
+; RUN: llc < %s -march=x86-64 -mattr=+avx | FileCheck %s -check-prefix=CHECK -check-prefix=AVX
+; RUN: llc < %s -march=x86-64 -mattr=+avx2 | FileCheck %s -check-prefix=CHECK -check-prefix=AVX2
 
 
 
