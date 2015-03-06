@@ -77,9 +77,16 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
   if (EC)
     return EC;
 
+#ifndef LLVM_ON_WIN32
+  // On Windows, CreateFileMapping (the mmap function on Windows)
+  // automatically extends the underlying file. We don't need to
+  // extend the file beforehand. _chsize (ftruncate on Windows) is
+  // pretty slow just like it writes specified amount of bytes,
+  // so we should avoid calling that.
   EC = sys::fs::resize_file(FD, Size);
   if (EC)
     return EC;
+#endif
 
   auto MappedFile = llvm::make_unique<mapped_file_region>(
       FD, mapped_file_region::readwrite, Size, 0, EC);
