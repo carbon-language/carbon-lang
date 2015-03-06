@@ -28,6 +28,7 @@ namespace llvm {
 namespace objcarc {
 
 struct ARCMDKindCache;
+class ProvenanceAnalysis;
 
 /// \enum Sequence
 ///
@@ -177,6 +178,11 @@ struct BottomUpPtrState : PtrState {
   /// It is assumed that one has already checked that the RCIdentity of the
   /// retain and the RCIdentity of this ptr state are the same.
   bool MatchWithRetain();
+
+  void HandlePotentialUse(BasicBlock *BB, Instruction *Inst, const Value *Ptr,
+                          ProvenanceAnalysis &PA, ARCInstKind Class);
+  bool HandlePotentialAlterRefCount(Instruction *Inst, const Value *Ptr,
+                                    ProvenanceAnalysis &PA, ARCInstKind Class);
 };
 
 struct TopDownPtrState : PtrState {
@@ -190,6 +196,12 @@ struct TopDownPtrState : PtrState {
   /// release. Modifies state appropriately to reflect that the matching
   /// occured.
   bool MatchWithRelease(ARCMDKindCache &Cache, Instruction *Release);
+
+  void HandlePotentialUse(Instruction *Inst, const Value *Ptr,
+                          ProvenanceAnalysis &PA, ARCInstKind Class);
+
+  bool HandlePotentialAlterRefCount(Instruction *Inst, const Value *Ptr,
+                                    ProvenanceAnalysis &PA, ARCInstKind Class);
 };
 
 } // end namespace objcarc

@@ -11,9 +11,14 @@
 #include "llvm/Support/Debug.h"
 #include "PtrState.h"
 #include "ObjCARC.h"
+#include "DependencyAnalysis.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;
+
+//===----------------------------------------------------------------------===//
+//                                  Utility
+//===----------------------------------------------------------------------===//
 
 raw_ostream &llvm::objcarc::operator<<(raw_ostream &OS, const Sequence S) {
   switch (S) {
@@ -34,6 +39,10 @@ raw_ostream &llvm::objcarc::operator<<(raw_ostream &OS, const Sequence S) {
   }
   llvm_unreachable("Unknown sequence type.");
 }
+
+//===----------------------------------------------------------------------===//
+//                                  Sequence
+//===----------------------------------------------------------------------===//
 
 static Sequence MergeSeqs(Sequence A, Sequence B, bool TopDown) {
   // The easy cases.
@@ -64,6 +73,10 @@ static Sequence MergeSeqs(Sequence A, Sequence B, bool TopDown) {
   return S_None;
 }
 
+//===----------------------------------------------------------------------===//
+//                                   RRInfo
+//===----------------------------------------------------------------------===//
+
 void RRInfo::clear() {
   KnownSafe = false;
   IsTailCallRelease = false;
@@ -93,6 +106,10 @@ bool RRInfo::Merge(const RRInfo &Other) {
     Partial |= ReverseInsertPts.insert(Inst).second;
   return Partial;
 }
+
+//===----------------------------------------------------------------------===//
+//                                  PtrState
+//===----------------------------------------------------------------------===//
 
 void PtrState::SetKnownPositiveRefCount() {
   DEBUG(dbgs() << "Setting Known Positive.\n");
@@ -138,6 +155,10 @@ void PtrState::Merge(const PtrState &Other, bool TopDown) {
     Partial = RRI.Merge(Other.RRI);
   }
 }
+
+//===----------------------------------------------------------------------===//
+//                              BottomUpPtrState
+//===----------------------------------------------------------------------===//
 
 bool BottomUpPtrState::InitBottomUp(ARCMDKindCache &Cache, Instruction *I) {
   // If we see two releases in a row on the same pointer. If so, make
@@ -186,6 +207,84 @@ bool BottomUpPtrState::MatchWithRetain() {
     llvm_unreachable("bottom-up pointer in retain state!");
   }
 }
+
+bool BottomUpPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
+                                                    const Value *Ptr,
+                                                    ProvenanceAnalysis &PA,
+                                                    ARCInstKind Class) {
+  Sequence Seq = GetSeq();
+
+  // Check for possible releases.
+  if (!CanAlterRefCount(Inst, Ptr, PA, Class))
+    return false;
+
+  DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr << "\n");
+  ClearKnownPositiveRefCount();
+  switch (Seq) {
+  case S_Use:
+    SetSeq(S_CanRelease);
+    return true;
+  case S_CanRelease:
+  case S_Release:
+  case S_MovableRelease:
+  case S_Stop:
+  case S_None:
+    return false;
+  case S_Retain:
+    llvm_unreachable("bottom-up pointer in retain state!");
+  }
+}
+
+void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
+                                          const Value *Ptr,
+                                          ProvenanceAnalysis &PA,
+                                          ARCInstKind Class) {
+  // Check for possible direct uses.
+  switch (GetSeq()) {
+  case S_Release:
+  case S_MovableRelease:
+    if (CanUse(Inst, Ptr, PA, Class)) {
+      DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr << "\n");
+      assert(!HasReverseInsertPts());
+      // If this is an invoke instruction, we're scanning it as part of
+      // one of its successor blocks, since we can't insert code after it
+      // in its own block, and we don't want to split critical edges.
+      if (isa<InvokeInst>(Inst))
+        InsertReverseInsertPt(BB->getFirstInsertionPt());
+      else
+        InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
+      SetSeq(S_Use);
+    } else if (Seq == S_Release && IsUser(Class)) {
+      DEBUG(dbgs() << "PreciseReleaseUse: Seq: " << Seq << "; " << *Ptr
+                   << "\n");
+      // Non-movable releases depend on any possible objc pointer use.
+      SetSeq(S_Stop);
+      assert(!HasReverseInsertPts());
+      // As above; handle invoke specially.
+      if (isa<InvokeInst>(Inst))
+        InsertReverseInsertPt(BB->getFirstInsertionPt());
+      else
+        InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
+    }
+    break;
+  case S_Stop:
+    if (CanUse(Inst, Ptr, PA, Class)) {
+      DEBUG(dbgs() << "PreciseStopUse: Seq: " << Seq << "; " << *Ptr << "\n");
+      SetSeq(S_Use);
+    }
+    break;
+  case S_CanRelease:
+  case S_Use:
+  case S_None:
+    break;
+  case S_Retain:
+    llvm_unreachable("bottom-up pointer in retain state!");
+  }
+}
+
+//===----------------------------------------------------------------------===//
+//                              TopDownPtrState
+//===----------------------------------------------------------------------===//
 
 bool TopDownPtrState::InitTopDown(ARCInstKind Kind, Instruction *I) {
   bool NestingDetected = false;
@@ -236,5 +335,59 @@ bool TopDownPtrState::MatchWithRelease(ARCMDKindCache &Cache,
   case S_Release:
   case S_MovableRelease:
     llvm_unreachable("top-down pointer in bottom up state!");
+  }
+}
+
+bool TopDownPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
+                                                   const Value *Ptr,
+                                                   ProvenanceAnalysis &PA,
+                                                   ARCInstKind Class) {
+  // Check for possible releases.
+  if (!CanAlterRefCount(Inst, Ptr, PA, Class))
+    return false;
+
+  DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr << "\n");
+  ClearKnownPositiveRefCount();
+  switch (Seq) {
+  case S_Retain:
+    SetSeq(S_CanRelease);
+    assert(!HasReverseInsertPts());
+    InsertReverseInsertPt(Inst);
+
+    // One call can't cause a transition from S_Retain to S_CanRelease
+    // and S_CanRelease to S_Use. If we've made the first transition,
+    // we're done.
+    return true;
+  case S_Use:
+  case S_CanRelease:
+  case S_None:
+    return false;
+  case S_Stop:
+  case S_Release:
+  case S_MovableRelease:
+    llvm_unreachable("top-down pointer in release state!");
+  }
+  llvm_unreachable("covered switch is not covered!?");
+}
+
+void TopDownPtrState::HandlePotentialUse(Instruction *Inst, const Value *Ptr,
+                                         ProvenanceAnalysis &PA,
+                                         ARCInstKind Class) {
+  // Check for possible direct uses.
+  switch (GetSeq()) {
+  case S_CanRelease:
+    if (!CanUse(Inst, Ptr, PA, Class))
+      return;
+    DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr << "\n");
+    SetSeq(S_Use);
+    return;
+  case S_Retain:
+  case S_Use:
+  case S_None:
+    return;
+  case S_Stop:
+  case S_Release:
+  case S_MovableRelease:
+    llvm_unreachable("top-down pointer in release state!");
   }
 }

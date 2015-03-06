@@ -1113,71 +1113,11 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
     if (Ptr == Arg)
       continue; // Handled above.
     BottomUpPtrState &S = MI->second;
-    Sequence Seq = S.GetSeq();
 
-    // Check for possible releases.
-    if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-      DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr
-            << "\n");
-      S.ClearKnownPositiveRefCount();
-      switch (Seq) {
-      case S_Use:
-        S.SetSeq(S_CanRelease);
-        continue;
-      case S_CanRelease:
-      case S_Release:
-      case S_MovableRelease:
-      case S_Stop:
-      case S_None:
-        break;
-      case S_Retain:
-        llvm_unreachable("bottom-up pointer in retain state!");
-      }
-    }
+    if (S.HandlePotentialAlterRefCount(Inst, Ptr, PA, Class))
+      continue;
 
-    // Check for possible direct uses.
-    switch (Seq) {
-    case S_Release:
-    case S_MovableRelease:
-      if (CanUse(Inst, Ptr, PA, Class)) {
-        DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr
-              << "\n");
-        assert(!S.HasReverseInsertPts());
-        // If this is an invoke instruction, we're scanning it as part of
-        // one of its successor blocks, since we can't insert code after it
-        // in its own block, and we don't want to split critical edges.
-        if (isa<InvokeInst>(Inst))
-          S.InsertReverseInsertPt(BB->getFirstInsertionPt());
-        else
-          S.InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
-        S.SetSeq(S_Use);
-      } else if (Seq == S_Release && IsUser(Class)) {
-        DEBUG(dbgs() << "PreciseReleaseUse: Seq: " << Seq << "; " << *Ptr
-              << "\n");
-        // Non-movable releases depend on any possible objc pointer use.
-        S.SetSeq(S_Stop);
-        assert(!S.HasReverseInsertPts());
-        // As above; handle invoke specially.
-        if (isa<InvokeInst>(Inst))
-          S.InsertReverseInsertPt(BB->getFirstInsertionPt());
-        else
-          S.InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
-      }
-      break;
-    case S_Stop:
-      if (CanUse(Inst, Ptr, PA, Class)) {
-        DEBUG(dbgs() << "PreciseStopUse: Seq: " << Seq << "; " << *Ptr
-              << "\n");
-        S.SetSeq(S_Use);
-      }
-      break;
-    case S_CanRelease:
-    case S_Use:
-    case S_None:
-      break;
-    case S_Retain:
-      llvm_unreachable("bottom-up pointer in retain state!");
-    }
+    S.HandlePotentialUse(BB, Inst, Ptr, PA, Class);
   }
 
   return NestingDetected;
@@ -1294,52 +1234,10 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     if (Ptr == Arg)
       continue; // Handled above.
     TopDownPtrState &S = MI->second;
-    Sequence Seq = S.GetSeq();
+    if (S.HandlePotentialAlterRefCount(Inst, Ptr, PA, Class))
+      continue;
 
-    // Check for possible releases.
-    if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-      DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr
-            << "\n");
-      S.ClearKnownPositiveRefCount();
-      switch (Seq) {
-      case S_Retain:
-        S.SetSeq(S_CanRelease);
-        assert(!S.HasReverseInsertPts());
-        S.InsertReverseInsertPt(Inst);
-
-        // One call can't cause a transition from S_Retain to S_CanRelease
-        // and S_CanRelease to S_Use. If we've made the first transition,
-        // we're done.
-        continue;
-      case S_Use:
-      case S_CanRelease:
-      case S_None:
-        break;
-      case S_Stop:
-      case S_Release:
-      case S_MovableRelease:
-        llvm_unreachable("top-down pointer in release state!");
-      }
-    }
-
-    // Check for possible direct uses.
-    switch (Seq) {
-    case S_CanRelease:
-      if (CanUse(Inst, Ptr, PA, Class)) {
-        DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr
-              << "\n");
-        S.SetSeq(S_Use);
-      }
-      break;
-    case S_Retain:
-    case S_Use:
-    case S_None:
-      break;
-    case S_Stop:
-    case S_Release:
-    case S_MovableRelease:
-      llvm_unreachable("top-down pointer in release state!");
-    }
+    S.HandlePotentialUse(Inst, Ptr, PA, Class);
   }
 
   return NestingDetected;
