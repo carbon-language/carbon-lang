@@ -29,6 +29,8 @@
 #include "lldb/Interpreter/Args.h"
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Signals.h"
 using namespace lldb;
 using namespace lldb_private;
 
@@ -122,8 +124,13 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
         header.PrintfVarArg (format, args);
         stream_sp->Printf("%s\n", header.GetData());
         
-        if (m_options.Test (LLDB_LOG_OPTION_BACKTRACE))
-            Host::Backtrace (*stream_sp, 1024);
+        if (m_options.Test(LLDB_LOG_OPTION_BACKTRACE)) 
+        {
+            std::string back_trace;
+            llvm::raw_string_ostream stream(back_trace);
+            llvm::sys::PrintStackTrace(stream);
+            stream_sp->PutCString(back_trace.c_str());
+        }
         stream_sp->Flush();
     }
 }

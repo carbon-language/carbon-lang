@@ -377,28 +377,6 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return GetProcessAndStatInfo (pid, process_info, stat_info, tracerpid);
 }
 
-void
-Host::Backtrace (Stream &strm, uint32_t max_frames)
-{
-#ifndef __ANDROID__
-    if (max_frames > 0)
-    {
-        std::vector<void *> frame_buffer (max_frames, NULL);
-        int num_frames = ::backtrace (&frame_buffer[0], frame_buffer.size());
-        char** strs = ::backtrace_symbols (&frame_buffer[0], num_frames);
-        if (strs)
-        {
-            // Start at 1 to skip the "Host::Backtrace" frame
-            for (int i = 1; i < num_frames; ++i)
-                strm.Printf("%s\n", strs[i]);
-            ::free (strs);
-        }
-    }
-#else
-    assert(false && "::backtrace() not supported on Android");
-#endif
-}
-
 size_t
 Host::GetEnvironment (StringList &env)
 {

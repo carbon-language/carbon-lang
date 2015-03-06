@@ -397,12 +397,6 @@ Host::WillTerminate ()
 
 #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__) // see macosx/Host.mm
 
-void
-Host::Backtrace (Stream &strm, uint32_t max_frames)
-{
-    // TODO: Is there a way to backtrace the current process on other systems?
-}
-
 size_t
 Host::GetEnvironment (StringList &env)
 {

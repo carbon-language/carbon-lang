@@ -704,25 +704,6 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 #endif // #if !defined(__arm__) && !defined(__arm64__) && !defined(__aarch64__)
 }
 
-
-void
-Host::Backtrace (Stream &strm, uint32_t max_frames)
-{
-    if (max_frames > 0)
-    {
-        std::vector<void *> frame_buffer (max_frames, NULL);
-        int num_frames = ::backtrace (&frame_buffer[0], frame_buffer.size());
-        char** strs = ::backtrace_symbols (&frame_buffer[0], num_frames);
-        if (strs)
-        {
-            // Start at 1 to skip the "Host::Backtrace" frame
-            for (int i = 1; i < num_frames; ++i)
-                strm.Printf("%s\n", strs[i]);
-            ::free (strs);
-        }
-    }
-}
-
 size_t
 Host::GetEnvironment (StringList &env)
 {

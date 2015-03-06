@@ -281,9 +281,6 @@ public:
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, 
                               uint32_t line_no);
-
-    static void
-    Backtrace (Stream &strm, uint32_t max_frames);
     
     static size_t
     GetEnvironment (StringList &env);
