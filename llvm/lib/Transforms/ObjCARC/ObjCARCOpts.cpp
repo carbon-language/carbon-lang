@@ -1479,16 +1479,14 @@ bool ObjCARCOpt::ConnectTDBUTraversals(
     for (SmallVectorImpl<Instruction *>::const_iterator
            NI = NewRetains.begin(), NE = NewRetains.end(); NI != NE; ++NI) {
       Instruction *NewRetain = *NI;
-      BlotMapVector<Value *, RRInfo>::const_iterator It =
-          Retains.find(NewRetain);
+      auto It = Retains.find(NewRetain);
       assert(It != Retains.end());
       const RRInfo &NewRetainRRI = It->second;
       KnownSafeTD &= NewRetainRRI.KnownSafe;
       MultipleOwners =
         MultipleOwners || MultiOwnersSet.count(GetArgRCIdentityRoot(NewRetain));
       for (Instruction *NewRetainRelease : NewRetainRRI.Calls) {
-        DenseMap<Value *, RRInfo>::const_iterator Jt =
-          Releases.find(NewRetainRelease);
+        auto Jt = Releases.find(NewRetainRelease);
         if (Jt == Releases.end())
           return false;
         const RRInfo &NewRetainReleaseRRI = Jt->second;
@@ -1557,15 +1555,13 @@ bool ObjCARCOpt::ConnectTDBUTraversals(
     for (SmallVectorImpl<Instruction *>::const_iterator
            NI = NewReleases.begin(), NE = NewReleases.end(); NI != NE; ++NI) {
       Instruction *NewRelease = *NI;
-      DenseMap<Value *, RRInfo>::const_iterator It =
-        Releases.find(NewRelease);
+      auto It = Releases.find(NewRelease);
       assert(It != Releases.end());
       const RRInfo &NewReleaseRRI = It->second;
       KnownSafeBU &= NewReleaseRRI.KnownSafe;
       CFGHazardAfflicted |= NewReleaseRRI.CFGHazardAfflicted;
       for (Instruction *NewReleaseRetain : NewReleaseRRI.Calls) {
-        BlotMapVector<Value *, RRInfo>::const_iterator Jt =
-            Retains.find(NewReleaseRetain);
+        auto Jt = Retains.find(NewReleaseRetain);
         if (Jt == Retains.end())
           return false;
         const RRInfo &NewReleaseRetainRRI = Jt->second;
