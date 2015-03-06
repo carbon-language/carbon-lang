@@ -1,6 +1,6 @@
 import os
 
-import tracing
+from libcxx.test import tracing
 
 from lit.util import executeCommand  # pylint: disable=import-error
 
@@ -50,7 +50,8 @@ class PrefixExecutor(Executor):
 
     def run(self, exe_path, cmd=None, work_dir='.', env=None):
         cmd = cmd or [exe_path]
-        return self.chain.run(self.commandPrefix + cmd, work_dir, env=env)
+        return self.chain.run(exe_path, self.commandPrefix + cmd, work_dir,
+                              env=env)
 
 
 class PostfixExecutor(Executor):
@@ -132,6 +133,9 @@ class SSHExecutor(Executor):
             pass
 
     def run(self, exe_path, cmd=None, work_dir='.', env=None):
+        if work_dir != '.':
+            raise NotImplementedError(
+                'work_dir arg is not supported for SSHExecutor')
         target_exe_path = None
         target_cwd = None
         try:
@@ -163,4 +167,3 @@ class SSHExecutor(Executor):
         if remote_work_dir != '.':
             remote_cmd = 'cd ' + remote_work_dir + ' && ' + remote_cmd
         return self.local_run(ssh_cmd + [remote_cmd])
-
