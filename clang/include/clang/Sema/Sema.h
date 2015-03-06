@@ -6604,10 +6604,8 @@ public:
     bool CheckInstantiationDepth(SourceLocation PointOfInstantiation,
                                  SourceRange InstantiationRange);
 
-    // FIXME: Replace this with a constructor once we can use delegating
-    // constructors in llvm.
-    void Initialize(
-        ActiveTemplateInstantiation::InstantiationKind Kind,
+    InstantiatingTemplate(
+        Sema &SemaRef, ActiveTemplateInstantiation::InstantiationKind Kind,
         SourceLocation PointOfInstantiation, SourceRange InstantiationRange,
         Decl *Entity, NamedDecl *Template = nullptr,
         ArrayRef<TemplateArgument> TemplateArgs = ArrayRef<TemplateArgument>(),
