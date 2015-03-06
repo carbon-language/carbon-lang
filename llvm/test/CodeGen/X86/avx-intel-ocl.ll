@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=i686-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck -check-prefix=X32 %s
-; RUN: llc < %s -mtriple=i386-pc-win32 -mcpu=corei7-avx -mattr=+avx | FileCheck -check-prefix=X32 %s
-; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=corei7-avx -mattr=+avx | FileCheck -check-prefix=WIN64 %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck -check-prefix=X64 %s
+; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+avx | FileCheck -check-prefix=X32 %s
+; RUN: llc < %s -mtriple=i386-pc-win32 -mattr=+avx | FileCheck -check-prefix=X32 %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+avx | FileCheck -check-prefix=WIN64 %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx | FileCheck -check-prefix=X64 %s
 
 declare <16 x float> @func_float16_ptr(<16 x float>, <16 x float> *)
 declare <16 x float> @func_float16(<16 x float>, <16 x float>)
