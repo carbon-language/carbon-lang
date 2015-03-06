@@ -8,12 +8,12 @@
 %struct.data = type { i32, %struct.anon }
 %struct.anon = type { i32, i32 }
 
-; Check that these got equivalent symbols are never emitted on x86-64 and
-; emitted on ARM64. Since ARM64 does not support encoding an extra offset with
-; @GOT, we still need to emit the equivalents for use by such IR constructs.
+; Check that these got equivalent symbols are emitted on ARM64. Since ARM64 does
+; not support encoding an extra offset with @GOT, we still need to emit the
+; equivalents for use by such IR constructs.
 
-; ARM-GOT-EQUIV-LABEL: l_extgotequiv:
-; ARM-GOT-EQUIV-LABEL: l_localgotequiv:
+; ARM-GOT-EQUIV: {{.*}}extgotequiv:
+; ARM-GOT-EQUIV: {{.*}}localgotequiv:
 @localfoo = global i32 42
 @localgotequiv = private unnamed_addr constant i32* @localfoo
 
@@ -24,7 +24,7 @@
 ; equivalent since it can't be replaced by the GOT entry. @bargotequiv is
 ; used by an instruction inside @t0.
 ;
-; ARM: l_bargotequiv:
+; ARM: {{.*}}bargotequiv:
 ; ARM-NEXT:  .quad   _extbar
 @extbar = external global i32
 @bargotequiv = private unnamed_addr constant i32* @extbar
@@ -57,7 +57,7 @@
 ; supported on x86-64 but not on ARM64
 
 ; ARM: .long   5
-; ARM-NEXT: .long (l_extgotequiv-(_table+44))+24
+; ARM-NEXT: .long ({{.*}}extgotequiv-(_table+44))+24
   %struct.data { i32 4, %struct.anon { i32 5,
     i32 add (i32 trunc (i64 sub (i64 ptrtoint (i32** @extgotequiv to i64),
                                  i64 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data]* @table, i32 0, i64 3, i32 1, i32 1) to i64))
@@ -75,7 +75,7 @@
                            to i32)
 
 ; ARM-LABEL: _deltaplus:
-; ARM: .long  (l_localgotequiv-_deltaplus)+55
+; ARM: .long  ({{.*}}localgotequiv-_deltaplus)+55
 @deltaplus = global i32 add (i32 trunc (i64 sub (i64 ptrtoint (i32** @localgotequiv to i64),
                                         i64 ptrtoint (i32* @deltaplus to i64))
                                         to i32), i32 55)
