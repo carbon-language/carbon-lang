@@ -24,6 +24,33 @@ define i64 @ldp_sext_int(i32* %p) nounwind {
   ret i64 %add
 }
 
+; CHECK-LABEL: ldp_half_sext_res0_int:
+; CHECK: ldp     w[[DST1:[0-9]+]], w[[DST2:[0-9]+]], [x0]
+; CHECK: sxtw     x[[DST1]], w[[DST1]]
+define i64 @ldp_half_sext_res0_int(i32* %p) nounwind {
+  %tmp = load i32, i32* %p, align 4
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 1
+  %tmp1 = load i32, i32* %add.ptr, align 4
+  %sexttmp = sext i32 %tmp to i64
+  %sexttmp1 = zext i32 %tmp1 to i64
+  %add = add nsw i64 %sexttmp1, %sexttmp
+  ret i64 %add
+}
+
+; CHECK-LABEL: ldp_half_sext_res1_int:
+; CHECK: ldp     w[[DST1:[0-9]+]], w[[DST2:[0-9]+]], [x0]
+; CHECK: sxtw     x[[DST2]], w[[DST2]]
+define i64 @ldp_half_sext_res1_int(i32* %p) nounwind {
+  %tmp = load i32, i32* %p, align 4
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 1
+  %tmp1 = load i32, i32* %add.ptr, align 4
+  %sexttmp = zext i32 %tmp to i64
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %add = add nsw i64 %sexttmp1, %sexttmp
+  ret i64 %add
+}
+
+
 ; CHECK: ldp_long
 ; CHECK: ldp
 define i64 @ldp_long(i64* %p) nounwind {
@@ -82,6 +109,39 @@ define i64 @ldur_sext_int(i32* %a) nounwind {
   %tmp3 = add i64 %sexttmp1, %sexttmp2
   ret i64 %tmp3
 }
+
+define i64 @ldur_half_sext_int_res0(i32* %a) nounwind {
+; LDUR_CHK: ldur_half_sext_int_res0
+; LDUR_CHK: ldp     w[[DST1:[0-9]+]], w[[DST2:[0-9]+]], [x0, #-8]
+; LDUR_CHK: sxtw     x[[DST1]], w[[DST1]]
+; LDUR_CHK-NEXT: add     x{{[0-9]+}}, x[[DST2]], x[[DST1]]
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32, i32* %a, i32 -1
+  %tmp1 = load i32, i32* %p1, align 2
+  %p2 = getelementptr inbounds i32, i32* %a, i32 -2
+  %tmp2 = load i32, i32* %p2, align 2
+  %sexttmp1 = zext i32 %tmp1 to i64
+  %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+  ret i64 %tmp3
+}
+
+define i64 @ldur_half_sext_int_res1(i32* %a) nounwind {
+; LDUR_CHK: ldur_half_sext_int_res1
+; LDUR_CHK: ldp     w[[DST1:[0-9]+]], w[[DST2:[0-9]+]], [x0, #-8]
+; LDUR_CHK: sxtw     x[[DST2]], w[[DST2]]
+; LDUR_CHK-NEXT: add     x{{[0-9]+}}, x[[DST2]], x[[DST1]]
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32, i32* %a, i32 -1
+  %tmp1 = load i32, i32* %p1, align 2
+  %p2 = getelementptr inbounds i32, i32* %a, i32 -2
+  %tmp2 = load i32, i32* %p2, align 2
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %sexttmp2 = zext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+  ret i64 %tmp3
+}
+
 
 define i64 @ldur_long(i64* %a) nounwind ssp {
 ; LDUR_CHK: ldur_long
@@ -149,6 +209,40 @@ define i64 @pairUpBarelyInSext(i32* %a) nounwind ssp {
   %tmp2 = load i32, i32* %p2, align 2
   %sexttmp1 = sext i32 %tmp1 to i64
   %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+  ret i64 %tmp3
+}
+
+define i64 @pairUpBarelyInHalfSextRes0(i32* %a) nounwind ssp {
+; LDUR_CHK: pairUpBarelyInHalfSextRes0
+; LDUR_CHK-NOT: ldur
+; LDUR_CHK: ldp     w[[DST1:[0-9]+]], w[[DST2:[0-9]+]], [x0, #-256]
+; LDUR_CHK: sxtw     x[[DST1]], w[[DST1]]
+; LDUR_CHK-NEXT: add     x{{[0-9]+}}, x[[DST2]], x[[DST1]]
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32, i32* %a, i64 -63
+  %tmp1 = load i32, i32* %p1, align 2
+  %p2 = getelementptr inbounds i32, i32* %a, i64 -64
+  %tmp2 = load i32, i32* %p2, align 2
+  %sexttmp1 = zext i32 %tmp1 to i64
+  %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+  ret i64 %tmp3
+}
+
+define i64 @pairUpBarelyInHalfSextRes1(i32* %a) nounwind ssp {
+; LDUR_CHK: pairUpBarelyInHalfSextRes1
+; LDUR_CHK-NOT: ldur
+; LDUR_CHK: ldp     w[[DST1:[0-9]+]], w[[DST2:[0-9]+]], [x0, #-256]
+; LDUR_CHK: sxtw     x[[DST2]], w[[DST2]]
+; LDUR_CHK-NEXT: add     x{{[0-9]+}}, x[[DST2]], x[[DST1]]
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32, i32* %a, i64 -63
+  %tmp1 = load i32, i32* %p1, align 2
+  %p2 = getelementptr inbounds i32, i32* %a, i64 -64
+  %tmp2 = load i32, i32* %p2, align 2
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %sexttmp2 = zext i32 %tmp2 to i64
   %tmp3 = add i64 %sexttmp1, %sexttmp2
   ret i64 %tmp3
 }
