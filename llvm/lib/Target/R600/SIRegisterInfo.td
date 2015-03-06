@@ -256,10 +256,3 @@ def VSrc_64 : RegImmOperand<VS_64>;
 def VCSrc_32 : RegInlineOperand<VS_32>;
 
 def VCSrc_64 : RegInlineOperand<VS_64>;
-
-//===----------------------------------------------------------------------===//
-// SGPR and VGPR register classes
-//===----------------------------------------------------------------------===//
-
-def VSrc_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128,
-                             (add VReg_128, SReg_128)>;
