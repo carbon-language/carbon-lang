@@ -378,15 +378,12 @@ public:
                            LoopInfo *LI, DominatorTree *DT,
                            LoopInterchange *Pass, BasicBlock *LoopNestExit)
       : OuterLoop(Outer), InnerLoop(Inner), SE(SE), LI(LI), DT(DT),
-        LoopExit(LoopNestExit) {
-    initialize();
-  }
+        LoopExit(LoopNestExit) {}
 
   /// Interchange OuterLoop and InnerLoop.
   bool transform();
   void restructureLoops(Loop *InnerLoop, Loop *OuterLoop);
   void removeChildLoop(Loop *OuterLoop, Loop *InnerLoop);
-  void initialize();
 
 private:
   void splitInnerLoopLatch(Instruction *);
@@ -969,8 +966,6 @@ bool LoopInterchangeTransform::transform() {
   restructureLoops(InnerLoop, OuterLoop);
   return true;
 }
-
-void LoopInterchangeTransform::initialize() {}
 
 void LoopInterchangeTransform::splitInnerLoopLatch(Instruction *Inc) {
   BasicBlock *InnerLoopLatch = InnerLoop->getLoopLatch();
