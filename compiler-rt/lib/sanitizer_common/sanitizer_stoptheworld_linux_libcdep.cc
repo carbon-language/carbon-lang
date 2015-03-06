@@ -421,9 +421,9 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     // Allow the tracer thread to start.
     tracer_thread_argument.mutex.Unlock();
     // NOTE: errno is shared between this thread and the tracer thread.
-    // internal_waitpid may call syscall() which can access/spoil errno,
+    // internal_waitpid() may call syscall() which can access/spoil errno,
     // so we can't call it now. Instead we for the tracer thread to finish using
-    // the spin loop below. Man page for sched_yield says "In the Linux
+    // the spin loop below. Man page for sched_yield() says "In the Linux
     // implementation, sched_yield() always succeeds", so let's hope it does not
     // spoil errno. Note that this spin loop runs only for brief periods before
     // the tracer thread has suspended us and when it starts unblocking threads.
