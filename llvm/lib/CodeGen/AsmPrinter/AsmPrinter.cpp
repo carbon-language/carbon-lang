@@ -2084,7 +2084,9 @@ static void handleIndirectSymViaGOTPCRel(AsmPrinter &AP, const MCExpr **ME,
   //
   //    gotpcrelcst := <offset from @foo base> + <cst>
   //
-  // Only encode <cst> if the target supports it.
+  // If gotpcrelcst is positive it means that we can safely fold the pc rel
+  // displacement into the GOTPCREL. We can also can have an extra offset <cst>
+  // if the target knows how to encode it.
   //
   int64_t GOTPCRelCst = Offset + MV.getConstant();
   if (GOTPCRelCst < 0)
@@ -2113,9 +2115,8 @@ static void handleIndirectSymViaGOTPCRel(AsmPrinter &AP, const MCExpr **ME,
   unsigned NumUses = Result.second;
   const GlobalValue *FinalGV = dyn_cast<GlobalValue>(GV->getOperand(0));
   const MCSymbol *FinalSym = AP.getSymbol(FinalGV);
-  *ME = AP.getObjFileLowering().getIndirectSymViaGOTPCRel(FinalSym,
-                                                          GOTPCRelCst,
-                                                          AP.OutStreamer);
+  *ME = AP.getObjFileLowering().getIndirectSymViaGOTPCRel(
+      FinalSym, MV, Offset, AP.MMI, AP.OutStreamer);
 
   // Update GOT equivalent usage information
   --NumUses;

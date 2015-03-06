@@ -13,6 +13,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Dwarf.h"
 using namespace llvm;
 using namespace dwarf;
@@ -25,7 +26,6 @@ void AArch64_ELFTargetObjectFile::Initialize(MCContext &Ctx,
 
 AArch64_MachoTargetObjectFile::AArch64_MachoTargetObjectFile()
   : TargetLoweringObjectFileMachO() {
-  SupportIndirectSymViaGOTPCRel = true;
   SupportGOTPCRelWithOffset = false;
 }
 
@@ -58,7 +58,10 @@ MCSymbol *AArch64_MachoTargetObjectFile::getCFIPersonalitySymbol(
 }
 
 const MCExpr *AArch64_MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
-    const MCSymbol *Sym, int64_t Offset, MCStreamer &Streamer) const {
+    const MCSymbol *Sym, const MCValue &MV, int64_t Offset,
+    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
+  assert((Offset+MV.getConstant() == 0) &&
+         "Arch64 does not support GOT PC rel with extra offset");
   // On ARM64 Darwin, we can reference symbols with foo@GOT-., which
   // is an indirect pc-relative reference.
   const MCExpr *Res =

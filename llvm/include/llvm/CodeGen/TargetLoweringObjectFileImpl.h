@@ -88,6 +88,7 @@ public:
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
 public:
   virtual ~TargetLoweringObjectFileMachO() {}
+  TargetLoweringObjectFileMachO();
 
   /// Extract the dependent library name from a linker option string. Returns
   /// StringRef() if the option does not specify a library.
@@ -122,6 +123,12 @@ public:
   MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                                     const TargetMachine &TM,
                                     MachineModuleInfo *MMI) const override;
+
+  /// Get MachO PC relative GOT entry relocation
+  const MCExpr *getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
+                                          const MCValue &MV, int64_t Offset,
+                                          MachineModuleInfo *MMI,
+                                          MCStreamer &Streamer) const override;
 };
 
 

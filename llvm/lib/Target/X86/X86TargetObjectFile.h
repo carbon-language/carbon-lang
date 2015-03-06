@@ -19,8 +19,6 @@ namespace llvm {
   /// x86-64.
   class X86_64MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
   public:
-    X86_64MachoTargetObjectFile();
-
     const MCExpr *
     getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,
                             Mangler &Mang, const TargetMachine &TM,
@@ -33,9 +31,10 @@ namespace llvm {
                                       const TargetMachine &TM,
                                       MachineModuleInfo *MMI) const override;
 
-    const MCExpr *
-      getIndirectSymViaGOTPCRel(const MCSymbol *Sym, int64_t Offset,
-                                MCStreamer &Streamer) const override;
+    const MCExpr *getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
+                                            const MCValue &MV, int64_t Offset,
+                                            MachineModuleInfo *MMI,
+                                            MCStreamer &Streamer) const override;
   };
 
   /// \brief This implemenatation is used for X86 ELF targets that don't

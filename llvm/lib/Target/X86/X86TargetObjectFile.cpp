@@ -15,16 +15,12 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 using namespace dwarf;
-
-X86_64MachoTargetObjectFile::X86_64MachoTargetObjectFile()
-  : TargetLoweringObjectFileMachO() {
-  SupportIndirectSymViaGOTPCRel = true;
-}
 
 const MCExpr *X86_64MachoTargetObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
@@ -52,13 +48,15 @@ MCSymbol *X86_64MachoTargetObjectFile::getCFIPersonalitySymbol(
 }
 
 const MCExpr *X86_64MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
-    const MCSymbol *Sym, int64_t Offset, MCStreamer &Streamer) const {
+    const MCSymbol *Sym, const MCValue &MV, int64_t Offset,
+    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
   // On Darwin/X86-64, we need to use foo@GOTPCREL+4 to access the got entry
   // from a data section. In case there's an additional offset, then use
   // foo@GOTPCREL+4+<offset>.
+  unsigned FinalOff = Offset+MV.getConstant()+4;
   const MCExpr *Res =
     MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
-  const MCExpr *Off = MCConstantExpr::Create(Offset+4, getContext());
+  const MCExpr *Off = MCConstantExpr::Create(FinalOff, getContext());
   return MCBinaryExpr::CreateAdd(Res, Off, getContext());
 }
 

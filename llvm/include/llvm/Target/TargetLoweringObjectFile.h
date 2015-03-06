@@ -29,19 +29,20 @@ namespace llvm {
   class MCSymbol;
   class MCSymbolRefExpr;
   class MCStreamer;
+  class MCValue;
   class ConstantExpr;
   class GlobalValue;
   class TargetMachine;
 
 class TargetLoweringObjectFile : public MCObjectFileInfo {
   MCContext *Ctx;
-  const DataLayout *DL;
 
   TargetLoweringObjectFile(
     const TargetLoweringObjectFile&) = delete;
   void operator=(const TargetLoweringObjectFile&) = delete;
 
 protected:
+  const DataLayout *DL;
   bool SupportIndirectSymViaGOTPCRel;
   bool SupportGOTPCRelWithOffset;
 
@@ -178,7 +179,9 @@ public:
 
   /// \brief Get the target specific PC relative GOT entry relocation
   virtual const MCExpr *getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
+                                                  const MCValue &MV,
                                                   int64_t Offset,
+                                                  MachineModuleInfo *MMI,
                                                   MCStreamer &Streamer) const {
     return nullptr;
   }

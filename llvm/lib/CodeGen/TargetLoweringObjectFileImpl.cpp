@@ -31,6 +31,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -431,6 +432,11 @@ TargetLoweringObjectFileELF::InitializeELF(bool UseInitArray_) {
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
+TargetLoweringObjectFileMachO::TargetLoweringObjectFileMachO()
+  : TargetLoweringObjectFile() {
+  SupportIndirectSymViaGOTPCRel = true;
+}
+
 /// getDepLibFromLinkerOpt - Extract the dependent library name from a linker
 /// option string. Returns StringRef() if the option does not specify a library.
 StringRef TargetLoweringObjectFileMachO::
@@ -703,6 +709,66 @@ MCSymbol *TargetLoweringObjectFileMachO::getCFIPersonalitySymbol(
   }
 
   return SSym;
+}
+
+const MCExpr *TargetLoweringObjectFileMachO::getIndirectSymViaGOTPCRel(
+    const MCSymbol *Sym, const MCValue &MV, int64_t Offset,
+    MachineModuleInfo *MMI, MCStreamer &Streamer) const {
+  // Although MachO 32-bit targets do not explictly have a GOTPCREL relocation
+  // as 64-bit do, we replace the GOT equivalent by accessing the final symbol
+  // through a non_lazy_ptr stub instead. One advantage is that it allows the
+  // computation of deltas to final external symbols. Example:
+  //
+  //    _extgotequiv:
+  //       .long   _extfoo
+  //
+  //    _delta:
+  //       .long   _extgotequiv-_delta
+  //
+  // is transformed to:
+  //
+  //    _delta:
+  //       .long   L_extfoo$non_lazy_ptr-(_delta+0)
+  //
+  //       .section        __IMPORT,__pointers,non_lazy_symbol_pointers
+  //    L_extfoo$non_lazy_ptr:
+  //       .indirect_symbol        _extfoo
+  //       .long   0
+  //
+  MachineModuleInfoMachO &MachOMMI =
+    MMI->getObjFileInfo<MachineModuleInfoMachO>();
+  MCContext &Ctx = getContext();
+
+  // The offset must consider the original displacement from the base symbol
+  // since 32-bit targets don't have a GOTPCREL to fold the PC displacement.
+  Offset = -MV.getConstant();
+  const MCSymbol *BaseSym = &MV.getSymB()->getSymbol();
+
+  // Access the final symbol via sym$non_lazy_ptr and generate the appropriated
+  // non_lazy_ptr stubs.
+  SmallString<128> Name;
+  StringRef Suffix = "$non_lazy_ptr";
+  Name += DL->getPrivateGlobalPrefix();
+  Name += Sym->getName();
+  Name += Suffix;
+  MCSymbol *Stub = Ctx.GetOrCreateSymbol(Name);
+
+  MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(Stub);
+  if (!StubSym.getPointer())
+    StubSym = MachineModuleInfoImpl::
+      StubValueTy(const_cast<MCSymbol *>(Sym), true /* access indirectly */);
+
+  const MCExpr *BSymExpr =
+    MCSymbolRefExpr::Create(BaseSym, MCSymbolRefExpr::VK_None, Ctx);
+  const MCExpr *LHS =
+    MCSymbolRefExpr::Create(Stub, MCSymbolRefExpr::VK_None, Ctx);
+
+  if (!Offset)
+    return MCBinaryExpr::CreateSub(LHS, BSymExpr, Ctx);
+
+  const MCExpr *RHS =
+    MCBinaryExpr::CreateAdd(BSymExpr, MCConstantExpr::Create(Offset, Ctx), Ctx);
+  return MCBinaryExpr::CreateSub(LHS, RHS, Ctx);
 }
 
 //===----------------------------------------------------------------------===//

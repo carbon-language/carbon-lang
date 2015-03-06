@@ -36,9 +36,10 @@ public:
                                     const TargetMachine &TM,
                                     MachineModuleInfo *MMI) const override;
 
-  const MCExpr *
-    getIndirectSymViaGOTPCRel(const MCSymbol *Sym, int64_t Offset,
-                              MCStreamer &Streamer) const override;
+  const MCExpr *getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
+                                          const MCValue &MV, int64_t Offset,
+                                          MachineModuleInfo *MMI,
+                                          MCStreamer &Streamer) const override;
 };
 
 } // end namespace llvm
