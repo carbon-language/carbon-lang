@@ -13,10 +13,12 @@
 
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "RuntimeDyldCheckerImpl.h"
+#include "RuntimeDyldCOFF.h"
 #include "RuntimeDyldELF.h"
 #include "RuntimeDyldImpl.h"
 #include "RuntimeDyldMachO.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MutexGuard.h"
 
@@ -264,6 +266,20 @@ static bool isRequiredForExecution(const SectionRef &Section) {
   const ObjectFile *Obj = Section.getObject();
   if (auto *ELFObj = dyn_cast<object::ELFObjectFileBase>(Obj))
     return ELFObj->getSectionFlags(Section) & ELF::SHF_ALLOC;
+  if (auto *COFFObj = dyn_cast<object::COFFObjectFile>(Obj)) {
+    const coff_section *CoffSection = COFFObj->getCOFFSection(Section);
+    // Avoid loading zero-sized COFF sections.
+    // In PE files, VirtualSize gives the section size, and SizeOfRawData
+    // may be zero for sections with content. In Obj files, SizeOfRawData 
+    // gives the section size, and VirtualSize is always zero. Hence
+    // the need to check for both cases below.
+    bool HasContent = (CoffSection->VirtualSize > 0) 
+      || (CoffSection->SizeOfRawData > 0);
+    bool IsDiscardable = CoffSection->Characteristics &
+      (COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_LNK_INFO);
+    return HasContent && !IsDiscardable;
+  }
+  
   assert(isa<MachOObjectFile>(Obj));
   return true;
  }
@@ -273,6 +289,15 @@ static bool isReadOnlyData(const SectionRef &Section) {
   if (auto *ELFObj = dyn_cast<object::ELFObjectFileBase>(Obj))
     return !(ELFObj->getSectionFlags(Section) &
              (ELF::SHF_WRITE | ELF::SHF_EXECINSTR));
+  if (auto *COFFObj = dyn_cast<object::COFFObjectFile>(Obj))
+    return ((COFFObj->getCOFFSection(Section)->Characteristics &
+             (COFF::IMAGE_SCN_CNT_INITIALIZED_DATA
+             | COFF::IMAGE_SCN_MEM_READ
+             | COFF::IMAGE_SCN_MEM_WRITE))
+             ==
+             (COFF::IMAGE_SCN_CNT_INITIALIZED_DATA
+             | COFF::IMAGE_SCN_MEM_READ));
+
   assert(isa<MachOObjectFile>(Obj));
   return false;
 }
@@ -281,6 +306,9 @@ static bool isZeroInit(const SectionRef &Section) {
   const ObjectFile *Obj = Section.getObject();
   if (auto *ELFObj = dyn_cast<object::ELFObjectFileBase>(Obj))
     return ELFObj->getSectionType(Section) == ELF::SHT_NOBITS;
+  if (auto *COFFObj = dyn_cast<object::COFFObjectFile>(Obj))
+    return COFFObj->getCOFFSection(Section)->Characteristics &
+            COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
 
   auto *MachO = cast<MachOObjectFile>(Obj);
   unsigned SectionType = MachO->getSectionType(Section);
@@ -512,7 +540,6 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
                                       const SectionRef &Section, bool IsCode) {
 
   StringRef data;
-  Check(Section.getContents(data));
   uint64_t Alignment64 = Section.getAlignment();
 
   unsigned Alignment = (unsigned)Alignment64 & 0xffffffffL;
@@ -542,6 +569,7 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
   // Some sections, such as debug info, don't need to be loaded for execution.
   // Leave those where they are.
   if (IsRequired) {
+    Check(Section.getContents(data));
     Allocate = DataSize + PaddingSize + StubBufSize;
     Addr = IsCode ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID,
                                                 Name)
@@ -816,6 +844,15 @@ RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
 
 RuntimeDyld::~RuntimeDyld() {}
 
+static std::unique_ptr<RuntimeDyldCOFF>
+createRuntimeDyldCOFF(Triple::ArchType Arch, RTDyldMemoryManager *MM,
+                      bool ProcessAllSections, RuntimeDyldCheckerImpl *Checker) {
+  std::unique_ptr<RuntimeDyldCOFF> Dyld(RuntimeDyldCOFF::create(Arch, MM));
+  Dyld->setProcessAllSections(ProcessAllSections);
+  Dyld->setRuntimeDyldChecker(Checker);
+  return Dyld;
+}
+
 static std::unique_ptr<RuntimeDyldELF>
 createRuntimeDyldELF(RTDyldMemoryManager *MM, bool ProcessAllSections,
                      RuntimeDyldCheckerImpl *Checker) {
@@ -841,6 +878,10 @@ RuntimeDyld::loadObject(const ObjectFile &Obj) {
       Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker);
     else if (Obj.isMachO())
       Dyld = createRuntimeDyldMachO(
+               static_cast<Triple::ArchType>(Obj.getArch()), MM,
+               ProcessAllSections, Checker);
+    else if (Obj.isCOFF())
+      Dyld = createRuntimeDyldCOFF(
                static_cast<Triple::ArchType>(Obj.getArch()), MM,
                ProcessAllSections, Checker);
     else

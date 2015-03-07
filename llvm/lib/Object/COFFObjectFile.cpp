@@ -190,7 +190,9 @@ std::error_code COFFObjectFile::getSymbolType(DataRefImpl Ref,
     Result = SymbolRef::ST_Data;
   } else if (Symb.isFileRecord()) {
     Result = SymbolRef::ST_File;
-  } else if (SectionNumber == COFF::IMAGE_SYM_DEBUG) {
+  } else if (SectionNumber == COFF::IMAGE_SYM_DEBUG ||
+             Symb.isSectionDefinition()) {
+    // TODO: perhaps we need a new symbol type ST_Section.
     Result = SymbolRef::ST_Debug;
   } else if (!COFF::isReservedSectionNumber(SectionNumber)) {
     const coff_section *Section = nullptr;
@@ -359,12 +361,17 @@ bool COFFObjectFile::isSectionData(DataRefImpl Ref) const {
 
 bool COFFObjectFile::isSectionBSS(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  const uint32_t BssFlags = COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
+                            COFF::IMAGE_SCN_MEM_READ |
+                            COFF::IMAGE_SCN_MEM_WRITE;
+  return (Sec->Characteristics & BssFlags) == BssFlags;
 }
 
 bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  // In COFF, a virtual section won't have any in-file 
+  // content, so the file pointer to the content will be zero.
+  return Sec->PointerToRawData == 0;
 }
 
 bool COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
