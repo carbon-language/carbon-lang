@@ -63,7 +63,7 @@ public:
   /// The passed DWARFUnit is allowed to be nullptr, in which
   /// case no relocation processing will be performed and some
   /// kind of forms that depend on Unit information are disallowed.
-  /// \returns wether the extraction succeeded.
+  /// \returns whether the extraction succeeded.
   bool extractValue(DataExtractor data, uint32_t *offset_ptr,
                     const DWARFUnit *u);
   bool isInlinedCStr() const {

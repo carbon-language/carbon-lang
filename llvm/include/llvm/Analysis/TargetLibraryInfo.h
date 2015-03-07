@@ -133,7 +133,7 @@ public:
     return Impl->getLibFunc(funcName, F);
   }
 
-  /// \brief Tests wether a library function is available.
+  /// \brief Tests whether a library function is available.
   bool has(LibFunc::Func F) const {
     return Impl->getState(F) != TargetLibraryInfoImpl::Unavailable;
   }

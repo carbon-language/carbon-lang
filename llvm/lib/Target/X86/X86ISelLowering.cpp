@@ -9020,7 +9020,7 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(SDLoc DL, MVT VT,
   int LaneSize = Mask.size() / 2;
 
   // If there are only inputs from one 128-bit lane, splitting will in fact be
-  // less expensive. The flags track wether the given lane contains an element
+  // less expensive. The flags track whether the given lane contains an element
   // that crosses to another lane.
   bool LaneCrossing[2] = {false, false};
   for (int i = 0, Size = Mask.size(); i < Size; ++i)
