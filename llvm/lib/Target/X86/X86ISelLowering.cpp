@@ -870,35 +870,16 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
   // MMX-sized vectors (other than x86mmx) are expected to be expanded
   // into smaller operations.
-  setOperationAction(ISD::MULHS,              MVT::v8i8,  Expand);
-  setOperationAction(ISD::MULHS,              MVT::v4i16, Expand);
-  setOperationAction(ISD::MULHS,              MVT::v2i32, Expand);
-  setOperationAction(ISD::MULHS,              MVT::v1i64, Expand);
-  setOperationAction(ISD::AND,                MVT::v8i8,  Expand);
-  setOperationAction(ISD::AND,                MVT::v4i16, Expand);
-  setOperationAction(ISD::AND,                MVT::v2i32, Expand);
-  setOperationAction(ISD::AND,                MVT::v1i64, Expand);
-  setOperationAction(ISD::OR,                 MVT::v8i8,  Expand);
-  setOperationAction(ISD::OR,                 MVT::v4i16, Expand);
-  setOperationAction(ISD::OR,                 MVT::v2i32, Expand);
-  setOperationAction(ISD::OR,                 MVT::v1i64, Expand);
-  setOperationAction(ISD::XOR,                MVT::v8i8,  Expand);
-  setOperationAction(ISD::XOR,                MVT::v4i16, Expand);
-  setOperationAction(ISD::XOR,                MVT::v2i32, Expand);
-  setOperationAction(ISD::XOR,                MVT::v1i64, Expand);
-  setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i8,  Expand);
-  setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v4i16, Expand);
-  setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v2i32, Expand);
-  setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v1i64, Expand);
+  for (MVT MMXTy : {MVT::v8i8, MVT::v4i16, MVT::v2i32, MVT::v1i64}) {
+    setOperationAction(ISD::MULHS,              MMXTy,      Expand);
+    setOperationAction(ISD::AND,                MMXTy,      Expand);
+    setOperationAction(ISD::OR,                 MMXTy,      Expand);
+    setOperationAction(ISD::XOR,                MMXTy,      Expand);
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MMXTy,      Expand);
+    setOperationAction(ISD::SELECT,             MMXTy,      Expand);
+    setOperationAction(ISD::BITCAST,            MMXTy,      Expand);
+  }
   setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v1i64, Expand);
-  setOperationAction(ISD::SELECT,             MVT::v8i8,  Expand);
-  setOperationAction(ISD::SELECT,             MVT::v4i16, Expand);
-  setOperationAction(ISD::SELECT,             MVT::v2i32, Expand);
-  setOperationAction(ISD::SELECT,             MVT::v1i64, Expand);
-  setOperationAction(ISD::BITCAST,            MVT::v8i8,  Expand);
-  setOperationAction(ISD::BITCAST,            MVT::v4i16, Expand);
-  setOperationAction(ISD::BITCAST,            MVT::v2i32, Expand);
-  setOperationAction(ISD::BITCAST,            MVT::v1i64, Expand);
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, &X86::VR128RegClass);
@@ -1064,27 +1045,13 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   }
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE41()) {
-    setOperationAction(ISD::FFLOOR,             MVT::f32,   Legal);
-    setOperationAction(ISD::FCEIL,              MVT::f32,   Legal);
-    setOperationAction(ISD::FTRUNC,             MVT::f32,   Legal);
-    setOperationAction(ISD::FRINT,              MVT::f32,   Legal);
-    setOperationAction(ISD::FNEARBYINT,         MVT::f32,   Legal);
-    setOperationAction(ISD::FFLOOR,             MVT::f64,   Legal);
-    setOperationAction(ISD::FCEIL,              MVT::f64,   Legal);
-    setOperationAction(ISD::FTRUNC,             MVT::f64,   Legal);
-    setOperationAction(ISD::FRINT,              MVT::f64,   Legal);
-    setOperationAction(ISD::FNEARBYINT,         MVT::f64,   Legal);
-
-    setOperationAction(ISD::FFLOOR,             MVT::v4f32, Legal);
-    setOperationAction(ISD::FCEIL,              MVT::v4f32, Legal);
-    setOperationAction(ISD::FTRUNC,             MVT::v4f32, Legal);
-    setOperationAction(ISD::FRINT,              MVT::v4f32, Legal);
-    setOperationAction(ISD::FNEARBYINT,         MVT::v4f32, Legal);
-    setOperationAction(ISD::FFLOOR,             MVT::v2f64, Legal);
-    setOperationAction(ISD::FCEIL,              MVT::v2f64, Legal);
-    setOperationAction(ISD::FTRUNC,             MVT::v2f64, Legal);
-    setOperationAction(ISD::FRINT,              MVT::v2f64, Legal);
-    setOperationAction(ISD::FNEARBYINT,         MVT::v2f64, Legal);
+    for (MVT RoundedTy : {MVT::f32, MVT::f64, MVT::v4f32, MVT::v2f64}) {
+      setOperationAction(ISD::FFLOOR,           RoundedTy,  Legal);
+      setOperationAction(ISD::FCEIL,            RoundedTy,  Legal);
+      setOperationAction(ISD::FTRUNC,           RoundedTy,  Legal);
+      setOperationAction(ISD::FRINT,            RoundedTy,  Legal);
+      setOperationAction(ISD::FNEARBYINT,       RoundedTy,  Legal);
+    }
 
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
