@@ -283,16 +283,6 @@ public:
   void ReadUnusedLocalTypedefNameCandidates(
       llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) override;
 
-  /// \brief Read the set of locally-scoped extern "C" declarations known to the
-  /// external Sema source.
-  ///
-  /// The external source should append its own locally-scoped external
-  /// declarations to the given vector of declarations. Note that this routine
-  /// may be invoked multiple times; the external source should take care not
-  /// to introduce the same declarations repeatedly.
-  void ReadLocallyScopedExternCDecls(
-                                   SmallVectorImpl<NamedDecl*> &Decls) override;
-
   /// \brief Read the set of referenced selectors known to the
   /// external Sema source.
   ///

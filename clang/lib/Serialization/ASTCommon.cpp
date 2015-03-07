@@ -94,6 +94,7 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   switch (DC->getDeclKind()) {
   // These entities may have multiple definitions.
   case Decl::TranslationUnit:
+  case Decl::ExternCContext:
   case Decl::Namespace:
   case Decl::LinkageSpec:
     return nullptr;
@@ -149,7 +150,11 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
 
 bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   switch (static_cast<Decl::Kind>(Kind)) {
-  case Decl::TranslationUnit: // Special case of a "merged" declaration.
+  case Decl::TranslationUnit:
+  case Decl::ExternCContext:
+    // Special case of a "merged" declaration.
+    return true;
+
   case Decl::Namespace:
   case Decl::NamespaceAlias:
   case Decl::Typedef:

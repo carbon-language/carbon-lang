@@ -3799,6 +3799,13 @@ TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   return new (C, (DeclContext *)nullptr) TranslationUnitDecl(C);
 }
 
+void ExternCContextDecl::anchor() { }
+
+ExternCContextDecl *ExternCContextDecl::Create(const ASTContext &C,
+                                               TranslationUnitDecl *DC) {
+  return new (C, DC) ExternCContextDecl(DC);
+}
+
 void LabelDecl::anchor() { }
 
 LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,

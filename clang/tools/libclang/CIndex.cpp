@@ -4951,6 +4951,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   // nonetheless harmless.
   case Decl::Empty:
   case Decl::TranslationUnit:
+  case Decl::ExternCContext:
     break;
 
   // Declaration kinds for which the definition is not resolvable.

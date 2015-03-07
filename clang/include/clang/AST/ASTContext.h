@@ -383,6 +383,7 @@ private:
   ImportDecl *LastLocalImport;
   
   TranslationUnitDecl *TUDecl;
+  mutable ExternCContextDecl *ExternCContext;
 
   /// \brief The associated SourceManager object.a
   SourceManager &SourceMgr;
@@ -782,6 +783,7 @@ public:
 
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
+  ExternCContextDecl *getExternCContextDecl() const;
 
   // Builtin Types.
   CanQualType VoidTy;

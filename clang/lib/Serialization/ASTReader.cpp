@@ -2892,11 +2892,6 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       }
       break;
 
-    case LOCALLY_SCOPED_EXTERN_C_DECLS:
-      for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        LocallyScopedExternCDecls.push_back(getGlobalDeclID(F, Record[I]));
-      break;
-
     case SELECTOR_OFFSETS: {
       F.SelectorOffsets = (const uint32_t *)Blob.data();
       F.LocalNumSelectors = Record[0];
@@ -6284,6 +6279,9 @@ static Decl *getPredefinedDecl(ASTContext &Context, PredefinedDeclIDs ID) {
 
   case PREDEF_DECL_BUILTIN_VA_LIST_ID:
     return Context.getBuiltinVaListDecl();
+
+  case PREDEF_DECL_EXTERN_C_CONTEXT_ID:
+    return Context.getExternCContextDecl();
   }
   llvm_unreachable("PredefinedDeclIDs unknown enum value");
 }
@@ -7324,17 +7322,6 @@ void ASTReader::ReadUnusedLocalTypedefNameCandidates(
       Decls.insert(D);
   }
   UnusedLocalTypedefNameCandidates.clear();
-}
-
-void 
-ASTReader::ReadLocallyScopedExternCDecls(SmallVectorImpl<NamedDecl *> &Decls) {
-  for (unsigned I = 0, N = LocallyScopedExternCDecls.size(); I != N; ++I) {
-    NamedDecl *D
-      = dyn_cast_or_null<NamedDecl>(GetDecl(LocallyScopedExternCDecls[I]));
-    if (D)
-      Decls.push_back(D);
-  }
-  LocallyScopedExternCDecls.clear();
 }
 
 void ASTReader::ReadReferencedSelectors(

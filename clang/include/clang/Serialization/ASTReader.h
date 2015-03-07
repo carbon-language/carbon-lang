@@ -770,12 +770,6 @@ private:
   /// \brief Fields containing data that is used for semantic analysis
   //@{
 
-  /// \brief The IDs of all locally scoped extern "C" decls in the chain.
-  ///
-  /// Sema tracks these to validate that the types are consistent across all
-  /// local extern "C" declarations.
-  SmallVector<uint64_t, 16> LocallyScopedExternCDecls;
-
   /// \brief The IDs of all potentially unused typedef names in the chain.
   ///
   /// Sema tracks these to emit warnings.
@@ -1794,9 +1788,6 @@ public:
 
   void ReadUnusedLocalTypedefNameCandidates(
       llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) override;
-
-  void ReadLocallyScopedExternCDecls(
-                                  SmallVectorImpl<NamedDecl *> &Decls) override;
 
   void ReadReferencedSelectors(
           SmallVectorImpl<std::pair<Selector, SourceLocation> > &Sels) override;

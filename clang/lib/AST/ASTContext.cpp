@@ -738,7 +738,8 @@ ASTContext::ASTContext(LangOptions &LOpts, SourceManager &SM,
       FILEDecl(nullptr), jmp_bufDecl(nullptr), sigjmp_bufDecl(nullptr),
       ucontext_tDecl(nullptr), BlockDescriptorType(nullptr),
       BlockDescriptorExtendedType(nullptr), cudaConfigureCallDecl(nullptr),
-      FirstLocalImport(), LastLocalImport(), SourceMgr(SM), LangOpts(LOpts),
+      FirstLocalImport(), LastLocalImport(), ExternCContext(nullptr),
+      SourceMgr(SM), LangOpts(LOpts),
       SanitizerBL(new SanitizerBlacklist(LangOpts.SanitizerBlacklistFiles, SM)),
       AddrSpaceMap(nullptr), Target(nullptr), PrintingPolicy(LOpts),
       Idents(idents), Selectors(sels), BuiltinInfo(builtins),
@@ -863,6 +864,13 @@ void ASTContext::PrintStats() const {
   }
 
   BumpAlloc.PrintStats();
+}
+
+ExternCContextDecl *ASTContext::getExternCContextDecl() const {
+  if (!ExternCContext)
+    ExternCContext = ExternCContextDecl::Create(*this, getTranslationUnitDecl());
+
+  return ExternCContext;
 }
 
 RecordDecl *ASTContext::buildImplicitRecord(StringRef Name,

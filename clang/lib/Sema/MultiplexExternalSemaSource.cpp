@@ -242,12 +242,6 @@ void MultiplexExternalSemaSource::ReadUnusedLocalTypedefNameCandidates(
     Sources[i]->ReadUnusedLocalTypedefNameCandidates(Decls);
 }
 
-void MultiplexExternalSemaSource::ReadLocallyScopedExternCDecls(
-                                           SmallVectorImpl<NamedDecl*> &Decls) {
-  for(size_t i = 0; i < Sources.size(); ++i)
-    Sources[i]->ReadLocallyScopedExternCDecls(Decls);
-}
-
 void MultiplexExternalSemaSource::ReadReferencedSelectors(
                   SmallVectorImpl<std::pair<Selector, SourceLocation> > &Sels) {
   for(size_t i = 0; i < Sources.size(); ++i)

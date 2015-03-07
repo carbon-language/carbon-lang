@@ -892,7 +892,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(STATISTICS);
   RECORD(TENTATIVE_DEFINITIONS);
   RECORD(UNUSED_FILESCOPED_DECLS);
-  RECORD(LOCALLY_SCOPED_EXTERN_C_DECLS);
   RECORD(SELECTOR_OFFSETS);
   RECORD(METHOD_POOL);
   RECORD(PP_COUNTER_VALUE);
@@ -4231,6 +4230,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     DeclIDs[Context.ObjCInstanceTypeDecl] = PREDEF_DECL_OBJC_INSTANCETYPE_ID;
   if (Context.BuiltinVaListDecl)
     DeclIDs[Context.getBuiltinVaListDecl()] = PREDEF_DECL_BUILTIN_VA_LIST_ID;
+  if (Context.ExternCContext)
+    DeclIDs[Context.ExternCContext] = PREDEF_DECL_EXTERN_C_CONTEXT_ID;
 
   if (!Chain) {
     // Make sure that we emit IdentifierInfos (and any attached
@@ -4289,20 +4290,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     }
   }
 
-  // Build a record containing all of the locally-scoped extern "C"
-  // declarations in this header file. Generally, this record will be
-  // empty.
-  RecordData LocallyScopedExternCDecls;
-  // FIXME: This is filling in the AST file in densemap order which is
-  // nondeterminstic!
-  for (llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
-         TD = SemaRef.LocallyScopedExternCDecls.begin(),
-         TDEnd = SemaRef.LocallyScopedExternCDecls.end();
-       TD != TDEnd; ++TD) {
-    if (!TD->second->isFromASTFile())
-      AddDeclRef(TD->second, LocallyScopedExternCDecls);
-  }
-  
   // Build a record containing all of the ext_vector declarations.
   RecordData ExtVectorDecls;
   AddLazyVectorDecls(*this, SemaRef.ExtVectorDecls, ExtVectorDecls);
@@ -4405,6 +4392,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
   UpdateVisibleAbbrev = Stream.EmitAbbrev(Abv);
   WriteDeclContextVisibleUpdate(TU);
+
+  // If we have any extern "C" names, write out a visible update for them.
+  if (Context.ExternCContext)
+    WriteDeclContextVisibleUpdate(Context.ExternCContext);
   
   // If the translation unit has an anonymous namespace, and we don't already
   // have an update block for it, write it as an update block.
@@ -4588,11 +4579,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   if (!WeakUndeclaredIdentifiers.empty())
     Stream.EmitRecord(WEAK_UNDECLARED_IDENTIFIERS,
                       WeakUndeclaredIdentifiers);
-
-  // Write the record containing locally-scoped extern "C" definitions.
-  if (!LocallyScopedExternCDecls.empty())
-    Stream.EmitRecord(LOCALLY_SCOPED_EXTERN_C_DECLS,
-                      LocallyScopedExternCDecls);
 
   // Write the record containing ext_vector type names.
   if (!ExtVectorDecls.empty())
