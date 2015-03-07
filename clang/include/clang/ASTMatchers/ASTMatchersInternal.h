@@ -887,7 +887,7 @@ typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
 /// \brief Helper meta-function to extract the argument out of a function of
 ///   type void(Arg).
 ///
-/// See AST_POLYMORPHIC_SUPPORTED_TYPES_* for details.
+/// See AST_POLYMORPHIC_SUPPORTED_TYPES for details.
 template <class T> struct ExtractFunctionArgMeta;
 template <class T> struct ExtractFunctionArgMeta<void(T)> {
   typedef T type;

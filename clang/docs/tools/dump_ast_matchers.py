@@ -163,7 +163,7 @@ def act_on_decl(declaration, comment, allowed_types):
     m = re.match(""".*AST_TYPE(LOC)?_TRAVERSE_MATCHER\(
                        \s*([^\s,]+\s*),
                        \s*(?:[^\s,]+\s*),
-                       \s*AST_POLYMORPHIC_SUPPORTED_TYPES_([^(]*)\(([^)]*)\)
+                       \s*AST_POLYMORPHIC_SUPPORTED_TYPES\(([^)]*)\)
                      \)\s*;\s*$""", declaration, flags=re.X)
     if m:
       loc, name, n_results, results = m.groups()[0:4]
@@ -182,7 +182,7 @@ def act_on_decl(declaration, comment, allowed_types):
 
     m = re.match(r"""^\s*AST_POLYMORPHIC_MATCHER(_P)?(.?)(?:_OVERLOAD)?\(
                           \s*([^\s,]+)\s*,
-                          \s*AST_POLYMORPHIC_SUPPORTED_TYPES_([^(]*)\(([^)]*)\)
+                          \s*AST_POLYMORPHIC_SUPPORTED_TYPES\(([^)]*)\)
                        (?:,\s*([^\s,]+)\s*
                           ,\s*([^\s,]+)\s*)?
                        (?:,\s*([^\s,]+)\s*
