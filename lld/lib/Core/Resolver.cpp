@@ -125,7 +125,7 @@ bool Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   // If the undefined symbol has an alternative name, try to resolve the
   // symbol with the name to give it a second chance. This feature is used
   // for COFF "weak external" symbol.
-  if (!_symbolTable.isDefined(atom.name())) {
+  if (newUndefAdded || !_symbolTable.isDefined(atom.name())) {
     if (const UndefinedAtom *fallbackAtom = atom.fallback()) {
       doUndefinedAtom(*fallbackAtom);
       _symbolTable.addReplacement(&atom, fallbackAtom);
