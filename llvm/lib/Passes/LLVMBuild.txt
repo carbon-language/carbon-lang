@@ -1,4 +1,4 @@
-;===- ./tools/opt/LLVMBuild.txt --------------------------------*- Conf -*--===;
+;===- ./lib/Passes/LLVMBuild.txt -------------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = Tool
-name = opt
-parent = Tools
-required_libraries = AsmParser BitReader BitWriter CodeGen IRReader IPO Instrumentation Scalar ObjCARC Passes all-targets
+type = Library
+name = Passes
+parent = Libraries
+required_libraries = Analysis Core IPA IPO InstCombine Scalar Support TransformUtils Vectorize

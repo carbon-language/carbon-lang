@@ -1,4 +1,4 @@
-//===- Passes.h - Utilities for manipulating all passes ---------*- C++ -*-===//
+//===- Parsing, selection, and construction of pass pipelines --*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 /// \file
 ///
-/// Interfaces for registering passes, producing common pass manager
+/// Interfaces for registering analysis passes, producing common pass manager
 /// configurations, and parsing of pass pipelines.
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_OPT_PASSES_H
-#define LLVM_TOOLS_OPT_PASSES_H
+#ifndef LLVM_PASSES_PASSBUILDER_H
+#define LLVM_PASSES_PASSBUILDER_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/CGSCCPassManager.h"
@@ -23,17 +23,17 @@
 namespace llvm {
 class TargetMachine;
 
-/// \brief This class provides access to all of LLVM's passes.
+/// \brief This class provides access to building LLVM's passes.
 ///
 /// It's members provide the baseline state available to passes during their
 /// construction. The \c PassRegistry.def file specifies how to construct all
 /// of the built-in passes, and those may reference these members during
 /// construction.
-class Passes {
+class PassBuilder {
   TargetMachine *TM;
 
 public:
-  explicit Passes(TargetMachine *TM = nullptr) : TM(TM) {}
+  explicit PassBuilder(TargetMachine *TM = nullptr) : TM(TM) {}
 
   /// \brief Registers all available module analysis passes.
   ///

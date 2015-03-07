@@ -1,4 +1,4 @@
-##===- tools/opt/Makefile ----------------------------------*- Makefile -*-===##
+##===- lib/Passes/Makefile ---------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ../..
-TOOLNAME := opt
-LINK_COMPONENTS := bitreader bitwriter asmparser irreader instrumentation scalaropts objcarcopts ipo vectorize all-targets codegen passes
-
-# Support plugins.
-NO_DEAD_STRIP := 1
+LEVEL = ../..
+LIBRARYNAME = LLVMPasses
+BUILD_ARCHIVE := 1
 
 include $(LEVEL)/Makefile.common

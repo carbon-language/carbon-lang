@@ -16,6 +16,7 @@ set(LLVM_LINK_COMPONENTS
   Target
   TransformUtils
   Vectorize
+  Passes
   )
 
 # Support plugins.
@@ -26,7 +27,6 @@ add_llvm_tool(opt
   BreakpointPrinter.cpp
   GraphPrinters.cpp
   NewPMDriver.cpp
-  Passes.cpp
   PassPrinters.cpp
   PrintSCC.cpp
   opt.cpp
