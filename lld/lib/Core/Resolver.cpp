@@ -54,8 +54,8 @@ void Resolver::forEachUndefines(File &file, bool searchForOverrides,
       StringRef undefName = _undefines[i];
       if (undefName.empty())
         continue;
-      if (_symbolTable.isDefined(undefName) ||
-          _symbolTable.isCoalescedAway(_symbolTable.findByName(undefName))) {
+      const Atom *atom = _symbolTable.findByName(undefName);
+      if (!isa<UndefinedAtom>(atom) || _symbolTable.isCoalescedAway(atom)) {
         // The symbol was resolved by some other file. Cache the result.
         _undefines[i] = "";
         continue;
