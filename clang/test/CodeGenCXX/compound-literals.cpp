@@ -28,7 +28,7 @@ int f() {
 
 // CHECK-LABEL: define i32 @_Z1gv()
 int g() {
-  // CHECK: store [2 x i32]* @{{.*}}, [2 x i32]** [[V:%[a-z0-9.]+]]
+  // CHECK: store [2 x i32]* %{{[a-z0-9.]+}}, [2 x i32]** [[V:%[a-z0-9.]+]]
   const int (&v)[2] = (int [2]) {1,2};
 
   // CHECK: [[A:%[a-z0-9.]+]] = load [2 x i32]*, [2 x i32]** [[V]]
