@@ -304,6 +304,7 @@ namespace {
     SDValue visitCONCAT_VECTORS(SDNode *N);
     SDValue visitEXTRACT_SUBVECTOR(SDNode *N);
     SDValue visitVECTOR_SHUFFLE(SDNode *N);
+    SDValue visitSCALAR_TO_VECTOR(SDNode *N);
     SDValue visitINSERT_SUBVECTOR(SDNode *N);
     SDValue visitMLOAD(SDNode *N);
     SDValue visitMSTORE(SDNode *N);
@@ -1371,6 +1372,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
   case ISD::EXTRACT_SUBVECTOR:  return visitEXTRACT_SUBVECTOR(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
+  case ISD::SCALAR_TO_VECTOR:   return visitSCALAR_TO_VECTOR(N);
   case ISD::INSERT_SUBVECTOR:   return visitINSERT_SUBVECTOR(N);
   case ISD::MLOAD:              return visitMLOAD(N);
   case ISD::MSTORE:             return visitMSTORE(N);
@@ -12183,6 +12185,34 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(A, C, M2)
     //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(B, C, M2)
     return DAG.getVectorShuffle(VT, SDLoc(N), SV0, SV1, &Mask[0]);
+  }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitSCALAR_TO_VECTOR(SDNode *N) {
+  SDValue InVal = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  // Replace a SCALAR_TO_VECTOR(EXTRACT_VECTOR_ELT(V,C0)) pattern
+  // with a VECTOR_SHUFFLE.
+  if (InVal.getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+    SDValue InVec = InVal->getOperand(0);
+    SDValue EltNo = InVal->getOperand(1);
+
+    // FIXME: We could support implicit truncation if the shuffle can be
+    // scaled to a smaller vector scalar type.
+    ConstantSDNode *C0 = dyn_cast<ConstantSDNode>(EltNo);
+    if (C0 && VT == InVec.getValueType() &&
+        VT.getScalarType() == InVal.getValueType()) {
+      SmallVector<int, 8> NewMask(VT.getVectorNumElements(), -1);
+      int Elt = C0->getZExtValue();
+      NewMask[0] = Elt;
+
+      if (TLI.isShuffleMaskLegal(NewMask, VT))
+        return DAG.getVectorShuffle(VT, SDLoc(N), InVec, DAG.getUNDEF(VT),
+                                    NewMask);
+    }
   }
 
   return SDValue();
