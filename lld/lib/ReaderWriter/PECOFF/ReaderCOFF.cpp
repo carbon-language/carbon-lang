@@ -198,7 +198,7 @@ private:
   std::map<const coff_section *, DefinedAtom::Merge> _merge;
 
   // COMDAT associative sections
-  std::map<const coff_section *, std::set<const coff_section *>> _association;
+  std::multimap<const coff_section *, const coff_section *> _association;
 
   // A sorted map to find an atom from a section and an offset within
   // the section.
@@ -628,7 +628,7 @@ std::error_code FileCOFF::cacheSectionAttributes() {
       if (std::error_code ec =
               _obj->getSection(aux->getNumber(sym.isBigObj()), parent))
         return ec;
-      _association[parent].insert(sec);
+      _association.insert(std::make_pair(parent, sec));
     }
   }
 
@@ -779,15 +779,10 @@ std::error_code FileCOFF::AtomizeDefinedSymbols(
   // associate list, so that Resolver takes care of them.
   for (auto i : _association) {
     const coff_section *parent = i.first;
-    const std::set<const coff_section *> &childSections = i.second;
-    assert(_sectionAtoms[parent].size() > 0);
-
-    COFFDefinedFileAtom *p = _sectionAtoms[parent][0];
-    for (const coff_section *sec : childSections) {
-      if (_sectionAtoms.count(sec)) {
-        assert(_sectionAtoms[sec].size() > 0);
-        p->addAssociate(_sectionAtoms[sec][0]);
-      }
+    const coff_section *child = i.second;
+    if (_sectionAtoms.count(child)) {
+      COFFDefinedFileAtom *p = _sectionAtoms[parent][0];
+      p->addAssociate(_sectionAtoms[child][0]);
     }
   }
 
