@@ -54,8 +54,7 @@ void Resolver::forEachUndefines(File &file, bool searchForOverrides,
       StringRef undefName = _undefines[i];
       if (undefName.empty())
         continue;
-      const Atom *atom = _symbolTable.findByName(undefName);
-      if (!isa<UndefinedAtom>(atom) || _symbolTable.isCoalescedAway(atom)) {
+      if (_symbolTable.isDefined(undefName)) {
         // The symbol was resolved by some other file. Cache the result.
         _undefines[i] = "";
         continue;
@@ -119,18 +118,18 @@ bool Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
 
   // tell symbol table
   bool newUndefAdded = _symbolTable.add(atom);
-  if (newUndefAdded)
-    _undefines.push_back(atom.name());
 
   // If the undefined symbol has an alternative name, try to resolve the
   // symbol with the name to give it a second chance. This feature is used
   // for COFF "weak external" symbol.
   if (newUndefAdded || !_symbolTable.isDefined(atom.name())) {
     if (const UndefinedAtom *fallbackAtom = atom.fallback()) {
-      doUndefinedAtom(*fallbackAtom);
       _symbolTable.addReplacement(&atom, fallbackAtom);
+      return doUndefinedAtom(*fallbackAtom);
     }
   }
+  if (newUndefAdded)
+    _undefines.push_back(atom.name());
   return newUndefAdded;
 }
 
