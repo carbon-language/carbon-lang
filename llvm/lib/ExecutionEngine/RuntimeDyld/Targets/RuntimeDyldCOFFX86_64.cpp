@@ -118,7 +118,6 @@ relocation_iterator RuntimeDyldCOFFX86_64::processRelocationRef(
     report_fatal_error("Unknown symbol in relocation");
   unsigned TargetSectionID = 0;
   uint64_t TargetOffset = UnknownAddressOrSize;
-  const COFFObjectFile *COFFObj = cast<COFFObjectFile>(&Obj);
   section_iterator SecI(Obj.section_end());
   Symbol->getSection(SecI);
   if (SecI == Obj.section_end())

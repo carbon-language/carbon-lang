@@ -60,7 +60,7 @@ RuntimeDyldCOFF::loadObject(const object::ObjectFile &O) {
 
 uint64_t RuntimeDyldCOFF::getSymbolOffset(const SymbolRef &Sym) {
   uint64_t Address;
-  if (std::error_code EC = Sym.getAddress(Address))
+  if (Sym.getAddress(Address))
     return UnknownAddressOrSize;
 
   if (Address == UnknownAddressOrSize)
@@ -68,7 +68,7 @@ uint64_t RuntimeDyldCOFF::getSymbolOffset(const SymbolRef &Sym) {
 
   const ObjectFile *Obj = Sym.getObject();
   section_iterator SecI(Obj->section_end());
-  if (std::error_code EC = Sym.getSection(SecI))
+  if (Sym.getSection(SecI))
     return UnknownAddressOrSize;
 
   if (SecI == Obj->section_end())

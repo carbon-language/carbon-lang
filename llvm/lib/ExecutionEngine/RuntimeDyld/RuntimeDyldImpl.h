@@ -36,15 +36,13 @@ using namespace llvm::object;
 
 namespace llvm {
 
-namespace {
   // Helper for extensive error checking in debug builds.
-  std::error_code Check(std::error_code Err) {
-    if (Err) {
-      report_fatal_error(Err.message());
-    }
-    return Err;
+inline std::error_code Check(std::error_code Err) {
+  if (Err) {
+    report_fatal_error(Err.message());
   }
-} // end anonymous namespace
+  return Err;
+}
 
 class Twine;
 
