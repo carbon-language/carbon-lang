@@ -1332,6 +1332,21 @@ public:
   }
   static bool isSplatMask(const int *Mask, EVT VT);
 
+  /// Change values in a shuffle permute mask assuming
+  /// the two vector operands have swapped position.
+  static void commuteMask(SmallVectorImpl<int> &Mask) {
+    unsigned NumElems = Mask.size();
+    for (unsigned i = 0; i != NumElems; ++i) {
+      int idx = Mask[i];
+      if (idx < 0)
+        continue;
+      else if (idx < (int)NumElems)
+        Mask[i] = idx + NumElems;
+      else
+        Mask[i] = idx - NumElems;
+    }
+  }
+
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::VECTOR_SHUFFLE;
   }

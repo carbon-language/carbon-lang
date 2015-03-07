@@ -1446,13 +1446,7 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
 // N2 to point at N1.
 static void commuteShuffle(SDValue &N1, SDValue &N2, SmallVectorImpl<int> &M) {
   std::swap(N1, N2);
-  int NElts = M.size();
-  for (int i = 0; i != NElts; ++i) {
-    if (M[i] >= NElts)
-      M[i] -= NElts;
-    else if (M[i] >= 0)
-      M[i] += NElts;
-  }
+  ShuffleVectorSDNode::commuteMask(M);
 }
 
 SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
@@ -1625,19 +1619,8 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
 
 SDValue SelectionDAG::getCommutedVectorShuffle(const ShuffleVectorSDNode &SV) {
   MVT VT = SV.getSimpleValueType(0);
-  unsigned NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> MaskVec;
-
-  for (unsigned i = 0; i != NumElems; ++i) {
-    int Idx = SV.getMaskElt(i);
-    if (Idx >= 0) {
-      if (Idx < (int)NumElems)
-        Idx += NumElems;
-      else
-        Idx -= NumElems;
-    }
-    MaskVec.push_back(Idx);
-  }
+  SmallVector<int, 8> MaskVec(SV.getMask().begin(), SV.getMask().end());
+  ShuffleVectorSDNode::commuteMask(MaskVec);
 
   SDValue Op0 = SV.getOperand(0);
   SDValue Op1 = SV.getOperand(1);

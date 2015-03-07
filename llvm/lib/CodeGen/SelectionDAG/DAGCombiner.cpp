@@ -12030,16 +12030,8 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         SDValue SV1 = BC0->getOperand(1);
         bool LegalMask = TLI.isShuffleMaskLegal(NewMask, ScaleVT);
         if (!LegalMask) {
-          for (int i = 0, e = (int)NewMask.size(); i != e; ++i) {
-            int idx = NewMask[i];
-            if (idx < 0)
-              continue;
-            else if (idx < e)
-              NewMask[i] = idx + e;
-            else
-              NewMask[i] = idx - e;
-          }
           std::swap(SV0, SV1);
+          ShuffleVectorSDNode::commuteMask(NewMask);
           LegalMask = TLI.isShuffleMaskLegal(NewMask, ScaleVT);
         }
 
@@ -12163,16 +12155,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
     // Avoid introducing shuffles with illegal mask.
     if (!TLI.isShuffleMaskLegal(Mask, VT)) {
-      // Compute the commuted shuffle mask and test again.
-      for (unsigned i = 0; i != NumElts; ++i) {
-        int idx = Mask[i];
-        if (idx < 0)
-          continue;
-        else if (idx < (int)NumElts)
-          Mask[i] = idx + NumElts;
-        else
-          Mask[i] = idx - NumElts;
-      }
+      ShuffleVectorSDNode::commuteMask(Mask);
 
       if (!TLI.isShuffleMaskLegal(Mask, VT))
         return SDValue();
