@@ -74,13 +74,8 @@ class FileCOFF : public File {
 private:
   typedef std::vector<llvm::object::COFFSymbolRef> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
-  typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
-  typedef std::map<const coff_section *, std::vector<COFFDefinedFileAtom *>>
-  SectionToAtomsT;
 
 public:
-  typedef const std::map<std::string, std::string> StringMap;
-
   FileCOFF(std::unique_ptr<MemoryBuffer> mb, PECOFFLinkingContext &ctx)
     : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
       _compatibleWithSEH(false), _ordinal(1),
