@@ -2882,9 +2882,10 @@ void RetainCountChecker::checkPostStmt(const ObjCIvarRefExpr *IRE,
 
     // Also don't do anything if the ivar is unretained. If so, we know that
     // there's no outstanding retain count for the value.
-    if (const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl()))
-      if (!Prop->isRetaining())
-        return;
+    if (Kind == RetEffect::ObjC)
+      if (const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl()))
+        if (!Prop->isRetaining())
+          return;
 
     // Note that this value has been loaded from an ivar.
     C.addTransition(setRefBinding(State, Sym, RV->withIvarAccess()));
@@ -2900,12 +2901,16 @@ void RetainCountChecker::checkPostStmt(const ObjCIvarRefExpr *IRE,
   }
 
   // Try to find the property associated with this ivar.
-  const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl());
-
-  if (Prop && !Prop->isRetaining())
-    State = setRefBinding(State, Sym, PlusZero);
-  else
+  if (Kind != RetEffect::ObjC) {
     State = setRefBinding(State, Sym, PlusZero.withIvarAccess());
+  } else {
+    const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl());
+
+    if (Prop && !Prop->isRetaining())
+      State = setRefBinding(State, Sym, PlusZero);
+    else
+      State = setRefBinding(State, Sym, PlusZero.withIvarAccess());
+  }
 
   C.addTransition(State);
 }

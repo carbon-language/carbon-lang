@@ -3,6 +3,10 @@
 
 void clang_analyzer_eval(int);
 
+typedef const void * CFTypeRef;
+extern CFTypeRef CFRetain(CFTypeRef cf);
+void CFRelease(CFTypeRef cf);
+
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;
 typedef struct _NSZone NSZone;
@@ -352,6 +356,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 @property (strong) id ownedProp;
 @property (unsafe_unretained) id unownedProp;
 @property (nonatomic, strong) id manualProp;
+@property CFTypeRef cfProp;
 @end
 
 @implementation RetainCountTesting {
@@ -382,6 +387,13 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ivarOnly release]; // expected-warning{{used after it is released}}
 }
 
+- (void)testOverreleaseCF {
+  CFRetain(_cfProp);
+  CFRelease(_cfProp);
+  CFRelease(_cfProp);
+  CFRelease(_cfProp); // expected-warning{{used after it is released}}
+}
+
 - (void)testOverreleaseOwnedIvarUse {
   [_ownedProp retain];
   [_ownedProp release];
@@ -394,6 +406,15 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ivarOnly release];
   [_ivarOnly release];
   [_ivarOnly myMethod]; // expected-warning{{used after it is released}}
+}
+
+- (void)testOverreleaseCFUse {
+  CFRetain(_cfProp);
+  CFRelease(_cfProp);
+  CFRelease(_cfProp);
+
+  extern void CFUse(CFTypeRef);
+  CFUse(_cfProp); // expected-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseOwnedIvarAutoreleaseOkay {
@@ -465,6 +486,21 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [fromIvar release]; // no-warning
 }
 
+- (void)testPropertyAccessThenReleaseCF {
+  CFTypeRef owned = CFRetain(self.cfProp);
+  CFRelease(owned);
+  CFRelease(_cfProp); // no-warning
+  clang_analyzer_eval(owned == _cfProp); // expected-warning{{TRUE}}
+}
+
+- (void)testPropertyAccessThenReleaseCF2 {
+  CFTypeRef fromIvar = _cfProp;
+  CFTypeRef owned = CFRetain(self.cfProp);
+  CFRelease(owned);
+  CFRelease(fromIvar);
+  clang_analyzer_eval(owned == fromIvar); // expected-warning{{TRUE}}
+}
+
 - (id)getUnownedFromProperty {
   [_ownedProp retain];
   [_ownedProp autorelease];
@@ -498,6 +534,11 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ivarOnly release]; // FIXME: no-warning{{not owned}}
 }
 
+- (void)testAssignCF:(CFTypeRef)newValue {
+  _cfProp = newValue;
+  CFRelease(_cfProp); // FIXME: no-warning{{not owned}}
+}
+
 - (void)testAssignOwnedOkay:(id)newValue {
   _ownedProp = [newValue retain];
   [_ownedProp release]; // no-warning
@@ -511,6 +552,11 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (void)testAssignIvarOnlyOkay:(id)newValue {
   _ivarOnly = [newValue retain];
   [_ivarOnly release]; // no-warning
+}
+
+- (void)testAssignCFOkay:(CFTypeRef)newValue {
+  _cfProp = CFRetain(newValue);
+  CFRelease(_cfProp); // no-warning
 }
 
 // rdar://problem/19862648
