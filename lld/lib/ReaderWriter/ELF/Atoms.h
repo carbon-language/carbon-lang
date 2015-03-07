@@ -797,7 +797,6 @@ public:
 };
 
 class PLT0Atom : public PLTAtom {
-
 public:
   PLT0Atom(const File &f) : PLTAtom(f, ".plt") {
 #ifndef NDEBUG

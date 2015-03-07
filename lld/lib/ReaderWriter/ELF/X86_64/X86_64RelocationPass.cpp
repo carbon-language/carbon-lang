@@ -76,11 +76,7 @@ public:
 
 class X86_64PLT0Atom : public PLT0Atom {
 public:
-  X86_64PLT0Atom(const File &f) : PLT0Atom(f) {
-#ifndef NDEBUG
-    _name = ".PLT0";
-#endif
-  }
+  X86_64PLT0Atom(const File &f) : PLT0Atom(f) {}
   ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(x86_64Plt0AtomContent, 16);
   }

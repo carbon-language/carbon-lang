@@ -104,11 +104,7 @@ public:
 
 class HexagonPLT0Atom : public PLT0Atom {
 public:
-  HexagonPLT0Atom(const File &f) : PLT0Atom(f) {
-#ifndef NDEBUG
-    _name = ".PLT0";
-#endif
-  }
+  HexagonPLT0Atom(const File &f) : PLT0Atom(f) {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(hexagonPlt0AtomContent);
