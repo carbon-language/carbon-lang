@@ -187,7 +187,6 @@ public:
 
   DefaultBool ChecksEnabled[CK_NumCheckKinds];
   CheckName CheckNames[CK_NumCheckKinds];
-  typedef llvm::SmallVector<CheckKind, CK_NumCheckKinds> CKVecTy;
 
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
