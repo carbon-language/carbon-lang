@@ -209,7 +209,7 @@ uint32_t NonRelocatableStringpool::getStringOffset(StringRef S) {
     Last = &*It;
   }
   return It->getValue().first;
-};
+}
 
 /// \brief Put \p S into the StringMap so that it gets permanent
 /// storage, but do not actually link it in the chain of elements
@@ -219,7 +219,7 @@ StringRef NonRelocatableStringpool::internString(StringRef S) {
   std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
   auto InsertResult = Strings.insert(std::make_pair(S, Entry));
   return InsertResult.first->getKey();
-};
+}
 
 /// \brief The Dwarf streaming logic
 ///
