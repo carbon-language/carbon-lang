@@ -42,10 +42,11 @@ namespace ValueInitArrayOfMemPtr {
     // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* bitcast ([3 x i32]* @[[THREE_NULL_MEMPTRS]] to i8*), i32 12, i32 4, i1 false)
   }
 
-  // CHECK-LABEL: define void @_ZN22ValueInitArrayOfMemPtr1gEv
-  void g() {
+  // Test dynamic initialization.
+  // CHECK-LABEL: define void @_ZN22ValueInitArrayOfMemPtr1gEMNS_1SEi
+  void g(p ptr) {
     // CHECK: store i32 -1,
-    f(a{});
+    f(a{ptr});
   }
 }
 

@@ -72,6 +72,9 @@ namespace thread_local_global_array {
 // CHECK: @[[PARTLY_CONSTANT_SECOND:_ZGRN15partly_constant2ilE.*]] = internal global [2 x i32] zeroinitializer, align 4
 // CHECK: @[[PARTLY_CONSTANT_THIRD:_ZGRN15partly_constant2ilE.*]] = internal constant [4 x i32] [i32 5, i32 6, i32 7, i32 8], align 4
 
+// CHECK: @[[REFTMP1:.*]] = private constant [2 x i32] [i32 42, i32 43], align 4
+// CHECK: @[[REFTMP2:.*]] = private constant [3 x %{{.*}}] [%{{.*}} { i32 1 }, %{{.*}} { i32 2 }, %{{.*}} { i32 3 }], align 4
+
 // CHECK: appending global
 
 
@@ -215,17 +218,16 @@ void fn9() {
 
 struct haslist1 {
   std::initializer_list<int> il;
-  haslist1();
+  haslist1(int i);
 };
 
-// CHECK-LABEL: define void @_ZN8haslist1C2Ev
-haslist1::haslist1()
+// CHECK-LABEL: define void @_ZN8haslist1C2Ei
+haslist1::haslist1(int i)
 // CHECK: alloca [3 x i32]
-// CHECK: store i32 1
+// CHECK: store i32 %
 // CHECK: store i32 2
 // CHECK: store i32 3
-// CHECK: store i{{32|64}} 3
-  : il{1, 2, 3}
+  : il{i, 2, 3}
 {
   destroyme2 dm2;
 }
@@ -244,16 +246,15 @@ haslist2::haslist2()
   // CHECK: call void @_ZN10destroyme1D1Ev
 }
 
-void fn10() {
-  // CHECK-LABEL: define void @_Z4fn10v
+void fn10(int i) {
+  // CHECK-LABEL: define void @_Z4fn10i
   // CHECK: alloca [3 x i32]
   // CHECK: call noalias i8* @_Znw{{[jm]}}
-  // CHECK: store i32 1
+  // CHECK: store i32 %
   // CHECK: store i32 2
   // CHECK: store i32 3
   // CHECK: store i32*
-  // CHECK: store i{{32|64}} 3
-  (void) new std::initializer_list<int> {1, 2, 3};
+  (void) new std::initializer_list<int> {i, 2, 3};
 }
 
 void fn11() {
@@ -462,6 +463,22 @@ namespace PR20445 {
   template<int x> void f() { new MyClass({42, 43}); }
   template void f<0>();
   // CHECK-LABEL: define {{.*}} @_ZN7PR204451fILi0EEEvv(
+  // CHECK: store i32* getelementptr inbounds ([2 x i32]* @[[REFTMP1]], i64 0, i64 0)
   // CHECK: call void @_ZN7PR204456vectorC1ESt16initializer_listIiE(
   // CHECK: call void @_ZN7PR204457MyClassC1ERKNS_6vectorE(
+}
+
+namespace ConstExpr {
+  class C {
+    int x;
+  public:
+    constexpr C(int x) : x(x) {}
+  };
+  void f(std::initializer_list<C>);
+  void g() {
+// CHECK-LABEL: _ZN9ConstExpr1gEv
+// CHECK: store %"class.ConstExpr::C"* getelementptr inbounds ([3 x %"class.ConstExpr::C"]* @[[REFTMP2]], i64 0, i64 0)
+// CHECK: call void @_ZN9ConstExpr1fESt16initializer_listINS_1CEE
+    f({C(1), C(2), C(3)});
+  }
 }
