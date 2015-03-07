@@ -94,6 +94,7 @@ set(SANITIZER_HEADERS
   sanitizer_symbolizer.h
   sanitizer_symbolizer_internal.h
   sanitizer_symbolizer_libbacktrace.h
+  sanitizer_symbolizer_win.h
   sanitizer_syscall_generic.inc
   sanitizer_syscall_linux_x86_64.inc
   sanitizer_thread_registry.h)
