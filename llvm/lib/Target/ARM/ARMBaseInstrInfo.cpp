@@ -4115,19 +4115,21 @@ enum ARMExeDomain {
 //
 std::pair<uint16_t, uint16_t>
 ARMBaseInstrInfo::getExecutionDomain(const MachineInstr *MI) const {
-  // VMOVD, VMOVRS and VMOVSR are VFP instructions, but can be changed to NEON
-  // if they are not predicated.
-  if (MI->getOpcode() == ARM::VMOVD && !isPredicated(MI))
-    return std::make_pair(ExeVFP, (1<<ExeVFP) | (1<<ExeNEON));
+  // If we don't have access to NEON instructions then we won't be able
+  // to swizzle anything to the NEON domain. Check to make sure.
+  if (Subtarget.hasNEON()) {
+    // VMOVD, VMOVRS and VMOVSR are VFP instructions, but can be changed to NEON
+    // if they are not predicated.
+    if (MI->getOpcode() == ARM::VMOVD && !isPredicated(MI))
+      return std::make_pair(ExeVFP, (1 << ExeVFP) | (1 << ExeNEON));
 
-  // CortexA9 is particularly picky about mixing the two and wants these
-  // converted.
-  if (Subtarget.isCortexA9() && !isPredicated(MI) &&
-      (MI->getOpcode() == ARM::VMOVRS ||
-       MI->getOpcode() == ARM::VMOVSR ||
-       MI->getOpcode() == ARM::VMOVS))
-    return std::make_pair(ExeVFP, (1<<ExeVFP) | (1<<ExeNEON));
-
+    // CortexA9 is particularly picky about mixing the two and wants these
+    // converted.
+    if (Subtarget.isCortexA9() && !isPredicated(MI) &&
+        (MI->getOpcode() == ARM::VMOVRS || MI->getOpcode() == ARM::VMOVSR ||
+         MI->getOpcode() == ARM::VMOVS))
+      return std::make_pair(ExeVFP, (1 << ExeVFP) | (1 << ExeNEON));
+  }
   // No other instructions can be swizzled, so just determine their domain.
   unsigned Domain = MI->getDesc().TSFlags & ARMII::DomainMask;
 
@@ -4219,6 +4221,9 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
 
       // Zap the predicate operands.
       assert(!isPredicated(MI) && "Cannot predicate a VORRd");
+
+      // Make sure we've got NEON instructions.
+      assert(Subtarget.hasNEON() && "VORRd requires NEON");
 
       // Source instruction is %DDst = VMOVD %DSrc, 14, %noreg (; implicits)
       DstReg = MI->getOperand(0).getReg();

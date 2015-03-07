@@ -1,5 +1,9 @@
 ; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+v6,+vfp2 | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+v6,+vfp2 | FileCheck --check-prefix=DOMAIN %s
 
+; The execution domain checking code would translate vmovs to vorr whether or not
+; we had NEON instructions. Verify we don't if we're not compiled with NEON.
+; DOMAIN-NOT: vorr
 @quant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
 @dequant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
 @A = external global [4 x [4 x i32]]		; <[4 x [4 x i32]]*> [#uses=1]
