@@ -9,7 +9,7 @@
 LLD_LEVEL := ..
 
 # ARCMigrate and Rewrite are always needed because of libclang.
-PARALLEL_DIRS = Config Core Driver Passes ReaderWriter
+PARALLEL_DIRS = Config Core Driver ReaderWriter
 
 include $(LLD_LEVEL)/../../Makefile.config
 
