@@ -1270,8 +1270,8 @@ unsigned DwarfLinker::cloneAttribute(DIE &Die,
 /// \returns wether any reloc has been applied.
 bool DwarfLinker::applyValidRelocs(MutableArrayRef<char> Data,
                                    uint32_t BaseOffset, bool isLittleEndian) {
-  assert(NextValidReloc == 0 ||
-         BaseOffset > ValidRelocs[NextValidReloc - 1].Offset &&
+  assert((NextValidReloc == 0 ||
+         BaseOffset > ValidRelocs[NextValidReloc - 1].Offset) &&
              "BaseOffset should only be increasing.");
   if (NextValidReloc >= ValidRelocs.size())
     return false;
