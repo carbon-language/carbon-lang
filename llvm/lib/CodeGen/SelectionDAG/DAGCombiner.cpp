@@ -11328,12 +11328,10 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   if (ISD::allOperandsUndef(N))
     return DAG.getUNDEF(VT);
 
-  SDValue V = reduceBuildVecExtToExtBuildVec(N);
-  if (V.getNode())
+  if (SDValue V = reduceBuildVecExtToExtBuildVec(N))
     return V;
 
-  V = reduceBuildVecConvertToConvertBuildVec(N);
-  if (V.getNode())
+  if (SDValue V = reduceBuildVecConvertToConvertBuildVec(N))
     return V;
 
   // Check to see if this is a BUILD_VECTOR of a bunch of EXTRACT_VECTOR_ELT
@@ -12305,8 +12303,9 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
 
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
-  SDValue Shuffle = XformToShuffleWithZero(N);
-  if (Shuffle.getNode()) return Shuffle;
+
+  if (SDValue Shuffle = XformToShuffleWithZero(N))
+    return Shuffle;
 
   // If the LHS and RHS are BUILD_VECTOR nodes, see if we can constant fold
   // this operation.
