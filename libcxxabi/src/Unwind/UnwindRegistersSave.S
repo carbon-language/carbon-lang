@@ -230,14 +230,14 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   blr
 
 
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
 
-;
-; extern int unw_getcontext(unw_context_t* thread_state)
-;
-; On entry:
-;  thread_state pointer is in x0
-;
+//
+// extern int unw_getcontext(unw_context_t* thread_state)
+//
+// On entry:
+//  thread_state pointer is in x0
+//
   .p2align 2
 DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stp    x0, x1,  [x0, #0x000]
@@ -258,8 +258,8 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   str    lr,      [x0, #0x0F0]
   mov    x1,sp
   str    x1,      [x0, #0x0F8]
-  str    lr,      [x0, #0x100]    ; store return address as pc
-  ; skip cpsr
+  str    lr,      [x0, #0x100]    // store return address as pc
+  // skip cpsr
   stp    d0, d1,  [x0, #0x110]
   stp    d2, d3,  [x0, #0x120]
   stp    d4, d5,  [x0, #0x130]
@@ -277,7 +277,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stp    d28,d29, [x0, #0x1F0]
   str    d30,     [x0, #0x200]
   str    d31,     [x0, #0x208]
-  ldr    x0, #0      ; return UNW_ESUCCESS
+  ldr    x0, #0                   // return UNW_ESUCCESS
   ret
 
 #elif defined(__arm__) && !defined(__APPLE__)

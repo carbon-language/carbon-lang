@@ -258,17 +258,17 @@ Lnovec:
   lwz    r3,20(r3)  ; do r3 last
   bctr
 
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
 
-;
-; void libunwind::Registers_arm64::jumpto()
-;
-; On entry:
-;  thread_state pointer is in x0
-;
+//
+// void libunwind::Registers_arm64::jumpto()
+//
+// On entry:
+//  thread_state pointer is in x0
+//
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
-  ; skip restore of x0,x1 for now
+  // skip restore of x0,x1 for now
   ldp    x2, x3,  [x0, #0x010]
   ldp    x4, x5,  [x0, #0x020]
   ldp    x6, x7,  [x0, #0x030]
@@ -283,9 +283,9 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ldp    x24,x25, [x0, #0x0C0]
   ldp    x26,x27, [x0, #0x0D0]
   ldp    x28,fp,  [x0, #0x0E0]
-  ldr    lr,      [x0, #0x100]  ; restore pc into lr
+  ldr    lr,      [x0, #0x100]  // restore pc into lr
   ldr    x1,      [x0, #0x0F8]
-  mov    sp,x1          ; restore sp
+  mov    sp,x1                  // restore sp
 
   ldp    d0, d1,  [x0, #0x110]
   ldp    d2, d3,  [x0, #0x120]
@@ -305,8 +305,8 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ldr    d30,     [x0, #0x200]
   ldr    d31,     [x0, #0x208]
 
-  ldp    x0, x1,  [x0, #0x000]  ; restore x0,x1
-  ret    lr            ; jump to pc
+  ldp    x0, x1,  [x0, #0x000]  // restore x0,x1
+  ret    lr                     // jump to pc
 
 #elif defined(__arm__) && !defined(__APPLE__)
 
