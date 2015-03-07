@@ -569,14 +569,12 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setTargetDAGCombine(ISD::LOAD);
 
     // It is legal to extload from v4i8 to v4i16 or v4i32.
-    MVT Tys[6] = {MVT::v8i8, MVT::v4i8, MVT::v2i8,
-                  MVT::v4i16, MVT::v2i16,
-                  MVT::v2i32};
-    for (unsigned i = 0; i < 6; ++i) {
+    for (MVT Ty : {MVT::v8i8, MVT::v4i8, MVT::v2i8, MVT::v4i16, MVT::v2i16,
+                   MVT::v2i32}) {
       for (MVT VT : MVT::integer_vector_valuetypes()) {
-        setLoadExtAction(ISD::EXTLOAD, VT, Tys[i], Legal);
-        setLoadExtAction(ISD::ZEXTLOAD, VT, Tys[i], Legal);
-        setLoadExtAction(ISD::SEXTLOAD, VT, Tys[i], Legal);
+        setLoadExtAction(ISD::EXTLOAD, VT, Ty, Legal);
+        setLoadExtAction(ISD::ZEXTLOAD, VT, Ty, Legal);
+        setLoadExtAction(ISD::SEXTLOAD, VT, Ty, Legal);
       }
     }
   }

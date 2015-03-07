@@ -122,12 +122,11 @@ void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
 // If neither T1 < T2 nor T2 < T1 according to this ordering, use T2 (the user
 // provided type).
 static unsigned CombineSymbolTypes(unsigned T1, unsigned T2) {
-  unsigned TypeOrdering[] = {ELF::STT_NOTYPE, ELF::STT_OBJECT, ELF::STT_FUNC,
-                             ELF::STT_GNU_IFUNC, ELF::STT_TLS};
-  for (unsigned i = 0; i != array_lengthof(TypeOrdering); ++i) {
-    if (T1 == TypeOrdering[i])
+  for (unsigned Type : {ELF::STT_NOTYPE, ELF::STT_OBJECT, ELF::STT_FUNC,
+                        ELF::STT_GNU_IFUNC, ELF::STT_TLS}) {
+    if (T1 == Type)
       return T2;
-    if (T2 == TypeOrdering[i])
+    if (T2 == Type)
       return T1;
   }
 

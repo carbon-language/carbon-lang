@@ -172,16 +172,12 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   setOperationAction(ISD::UDIV, MVT::i64, Expand);
   setOperationAction(ISD::UREM, MVT::i64, Expand);
 
-  // We only support LOAD/STORE and vector manipulation ops for vectors
-  // with > 4 elements.
-  MVT VecTypes[] = {
-    MVT::v8i32, MVT::v8f32, MVT::v16i32, MVT::v16f32
-  };
-
   setOperationAction(ISD::SELECT_CC, MVT::i1, Expand);
   setOperationAction(ISD::SELECT, MVT::i1, Promote);
 
-  for (MVT VT : VecTypes) {
+  // We only support LOAD/STORE and vector manipulation ops for vectors
+  // with > 4 elements.
+  for (MVT VT : {MVT::v8i32, MVT::v8f32, MVT::v16i32, MVT::v16f32}) {
     for (unsigned Op = 0; Op < ISD::BUILTIN_OP_END; ++Op) {
       switch(Op) {
       case ISD::LOAD:

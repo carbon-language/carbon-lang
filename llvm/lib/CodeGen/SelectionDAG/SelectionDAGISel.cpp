@@ -1936,7 +1936,7 @@ SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
   std::vector<SDValue> Ops(N->op_begin(), N->op_end());
   SelectInlineAsmMemoryOperands(Ops);
 
-  EVT VTs[] = { MVT::Other, MVT::Glue };
+  const EVT VTs[] = {MVT::Other, MVT::Glue};
   SDValue New = CurDAG->getNode(ISD::INLINEASM, SDLoc(N), VTs, Ops);
   New->setNodeId(-1);
   return New.getNode();

@@ -62,8 +62,8 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
 
 #ifndef NDEBUG
   // If the base register might conflict with our physical registers, bail out.
-  unsigned ClobberSet[] = {X86::RCX, X86::RAX, X86::RDI,
-                           X86::ECX, X86::EAX, X86::EDI};
+  const unsigned ClobberSet[] = {X86::RCX, X86::RAX, X86::RDI,
+                                 X86::ECX, X86::EAX, X86::EDI};
   assert(!isBaseRegConflictPossible(DAG, ClobberSet));
 #endif
 
@@ -228,8 +228,8 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
     return SDValue();
 
   // If the base register might conflict with our physical registers, bail out.
-  unsigned ClobberSet[] = {X86::RCX, X86::RSI, X86::RDI,
-                           X86::ECX, X86::ESI, X86::EDI};
+  const unsigned ClobberSet[] = {X86::RCX, X86::RSI, X86::RDI,
+                                 X86::ECX, X86::ESI, X86::EDI};
   if (isBaseRegConflictPossible(DAG, ClobberSet))
     return SDValue();
 
