@@ -440,8 +440,14 @@ CommandInterpreter::LoadCommandDictionary ()
     std::unique_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                       "_regexp-break",
-                                                      "Set a breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.",
-                                                      "_regexp-break [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>",
+                                                      "Set a breakpoint using a regular expression to specify the location, where <linenum> is in decimal and <address> is in hex.\n",
+                                                      "\n_regexp-break <filename>:<linenum> # _regexp-break main.c:12      // Break on line 12 of main.c\n"
+                                                      "_regexp-break <linenum>            # _regexp-break 12             // Break on line 12 of current file\n"
+                                                      "_regexp-break <address>            # _regexp-break 0x1234000      // Break on address 0x1234000\n"
+                                                      "_regexp-break <name>               # _regexp-break main           // Break in 'main' after the prologue\n"
+                                                      "_regexp-break &<name>              # _regexp-break &main          // Break on the first instruction in 'main'\n"
+                                                      "_regexp-break <module>`<name>      # _regexp-break libc.so`malloc // Break in 'malloc' only in the 'libc.so' shared library\n"
+                                                      "_regexp-break /<source-regex>/     # _regexp-break /break here/   // Break on all lines that match the regular expression 'break here' in the current file.\n",
                                                       2,
                                                       CommandCompletions::eSymbolCompletion |
                                                       CommandCompletions::eSourceFileCompletion,
