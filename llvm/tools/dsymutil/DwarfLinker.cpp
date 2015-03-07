@@ -463,7 +463,7 @@ private:
   /// consider. As we walk the DIEs in acsending file offset and as
   /// ValidRelocs is sorted by file offset, keeping this index
   /// uptodate is all we have to do to have a cheap lookup during the
-  /// root DIE selection.
+  /// root DIE selection and during DIE cloning.
   unsigned NextValidReloc;
 
   bool findValidRelocsInDebugInfo(const object::ObjectFile &Obj,
@@ -561,6 +561,10 @@ private:
                                 const DWARFDebugInfoEntryMinimal &InputDIE,
                                 const DWARFUnit &U, AttributeSpec AttrSpec,
                                 const DWARFFormValue &Val, unsigned AttrSize);
+
+  /// \brief Helper for cloneDIE.
+  bool applyValidRelocs(MutableArrayRef<char> Data, uint32_t BaseOffset,
+                        bool isLittleEndian);
 
   /// \brief Assign an abbreviation number to \p Abbrev
   void AssignAbbrev(DIEAbbrev &Abbrev);
@@ -1256,6 +1260,50 @@ unsigned DwarfLinker::cloneAttribute(DIE &Die,
   return 0;
 }
 
+/// \brief Apply the valid relocations found by findValidRelocs() to
+/// the buffer \p Data, taking into account that Data is at \p BaseOffset
+/// in the debug_info section.
+///
+/// Like for findValidRelocs(), this function must be called with
+/// monotonic \p BaseOffset values.
+///
+/// \returns wether any reloc has been applied.
+bool DwarfLinker::applyValidRelocs(MutableArrayRef<char> Data,
+                                   uint32_t BaseOffset, bool isLittleEndian) {
+  assert(NextValidReloc == 0 ||
+         BaseOffset > ValidRelocs[NextValidReloc - 1].Offset &&
+             "BaseOffset should only be increasing.");
+  if (NextValidReloc >= ValidRelocs.size())
+    return false;
+
+  // Skip relocs that haven't been applied.
+  while (NextValidReloc < ValidRelocs.size() &&
+         ValidRelocs[NextValidReloc].Offset < BaseOffset)
+    ++NextValidReloc;
+
+  bool Applied = false;
+  uint64_t EndOffset = BaseOffset + Data.size();
+  while (NextValidReloc < ValidRelocs.size() &&
+         ValidRelocs[NextValidReloc].Offset >= BaseOffset &&
+         ValidRelocs[NextValidReloc].Offset < EndOffset) {
+    const auto &ValidReloc = ValidRelocs[NextValidReloc++];
+    assert(ValidReloc.Offset - BaseOffset < Data.size());
+    assert(ValidReloc.Offset - BaseOffset + ValidReloc.Size <= Data.size());
+    char Buf[8];
+    uint64_t Value = ValidReloc.Mapping->getValue().BinaryAddress;
+    Value += ValidReloc.Addend;
+    for (unsigned i = 0; i != ValidReloc.Size; ++i) {
+      unsigned Index = isLittleEndian ? i : (ValidReloc.Size - i - 1);
+      Buf[i] = uint8_t(Value >> (Index * 8));
+    }
+    assert(ValidReloc.Size <= sizeof(Buf));
+    memcpy(&Data[ValidReloc.Offset - BaseOffset], Buf, ValidReloc.Size);
+    Applied = true;
+  }
+
+  return Applied;
+}
+
 /// \brief Recursively clone \p InputDIE's subtrees that have been
 /// selected to appear in the linked output.
 ///
@@ -1284,6 +1332,20 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
 
   // Extract and clone every attribute.
   DataExtractor Data = U.getDebugInfoExtractor();
+  uint32_t NextOffset = U.getDIEAtIndex(Idx + 1)->getOffset();
+
+  // We could copy the data only if we need to aply a relocation to
+  // it. After testing, it seems there is no performance downside to
+  // doing the copy unconditionally, and it makes the code simpler.
+  SmallString<40> DIECopy(Data.getData().substr(Offset, NextOffset - Offset));
+  Data = DataExtractor(DIECopy, Data.isLittleEndian(), Data.getAddressSize());
+  // Modify the copy with relocated addresses.
+  applyValidRelocs(DIECopy, Offset, Data.isLittleEndian());
+
+  // Reset the Offset to 0 as we will be working on the local copy of
+  // the data.
+  Offset = 0;
+
   const auto *Abbrev = InputDIE.getAbbreviationDeclarationPtr();
   Offset += getULEB128Size(Abbrev->getCode());
 
@@ -1385,6 +1447,11 @@ bool DwarfLinker::link(const DebugMap &Map) {
     for (auto &CurrentUnit : Units)
       lookForDIEsToKeep(*CurrentUnit.getOrigUnit().getCompileUnitDIE(), *Obj,
                         CurrentUnit, 0);
+
+    // The calls to applyValidRelocs inside cloneDIE will walk the
+    // reloc array again (in the same way findValidRelocsInDebugInfo()
+    // did). We need to reset the NextValidReloc index to the beginning.
+    NextValidReloc = 0;
 
     // Construct the output DIE tree by cloning the DIEs we chose to
     // keep above. If there are no valid relocs, then there's nothing
