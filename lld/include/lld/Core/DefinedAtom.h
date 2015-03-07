@@ -365,12 +365,6 @@ protected:
   // constructor.
   DefinedAtom() : Atom(definitionRegular) { }
 
-  // The memory for DefinedAtom objects is always managed by the owning File
-  // object.  Therefore, no one but the owning File object should call delete on
-  // an Atom.  In fact, some File objects may bulk allocate an array of Atoms,
-  // so they cannot be individually deleted by anyone.
-  virtual ~DefinedAtom() {}
-
   /// \brief Returns a pointer to the Reference object that the abstract
   /// iterator "points" to.
   virtual const Reference *derefIterator(const void *iter) const = 0;

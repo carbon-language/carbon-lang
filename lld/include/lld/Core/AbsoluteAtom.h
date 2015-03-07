@@ -36,7 +36,6 @@ public:
 
 protected:
   AbsoluteAtom() : Atom(definitionAbsolute) {}
-  virtual ~AbsoluteAtom() {}
 };
 
 } // namespace lld

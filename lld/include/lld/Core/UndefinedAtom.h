@@ -67,7 +67,6 @@ public:
 
 protected:
   UndefinedAtom() : Atom(definitionUndefined) {}
-  virtual ~UndefinedAtom() {}
 };
 
 } // namespace lld

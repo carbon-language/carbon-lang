@@ -46,7 +46,6 @@ public:
 
 protected:
   SharedLibraryAtom() : Atom(definitionSharedLibrary) {}
-  virtual ~SharedLibraryAtom() {}
 };
 
 } // namespace lld
