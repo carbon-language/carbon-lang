@@ -835,8 +835,10 @@ public:
 /// @brief Report regions that seem not profitable to be optimized.
 class ReportUnprofitable : public ReportOther {
   //===--------------------------------------------------------------------===//
+  Region *R;
+
 public:
-  ReportUnprofitable();
+  ReportUnprofitable(Region *R);
 
   /// @name LLVM-RTTI interface
   //@{
@@ -846,6 +848,8 @@ public:
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
+  virtual std::string getEndUserMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
   //@}
 };
 

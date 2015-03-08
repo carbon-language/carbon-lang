@@ -594,10 +594,27 @@ bool ReportEntry::classof(const RejectReason *RR) {
 
 //===----------------------------------------------------------------------===//
 // ReportUnprofitable.
-ReportUnprofitable::ReportUnprofitable() : ReportOther(rrkUnprofitable) {}
+ReportUnprofitable::ReportUnprofitable(Region *R)
+    : ReportOther(rrkUnprofitable), R(R) {}
 
 std::string ReportUnprofitable::getMessage() const {
   return "Region can not profitably be optimized!";
+}
+
+std::string ReportUnprofitable::getEndUserMessage() const {
+  return "The regions does not seem to be amendable to profitable polyhedral "
+         "optimization";
+}
+
+const DebugLoc &ReportUnprofitable::getDebugLoc() const {
+  for (const BasicBlock *BB : R->blocks())
+    for (const Instruction &Inst : *BB) {
+      const DebugLoc &DL = Inst.getDebugLoc();
+      if (!DL.isUnknown())
+        return DL;
+    }
+
+  return R->getEntry()->getTerminator()->getDebugLoc();
 }
 
 bool ReportUnprofitable::classof(const RejectReason *RR) {

@@ -761,12 +761,15 @@ static unsigned eraseAllChildren(ScopDetection::RegionSet &Regs,
 }
 
 void ScopDetection::findScops(Region &R) {
-  if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
-    return;
-
   DetectionContext Context(R, *AA, NonAffineSubRegionMap[&R],
                            false /*verifying*/);
-  bool RegionIsValid = isValidRegion(Context);
+
+  bool RegionIsValid = false;
+  if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
+    invalid<ReportUnprofitable>(Context, /*Assert=*/true, &R);
+  else
+    RegionIsValid = isValidRegion(Context);
+
   bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
 
   if (PollyTrackFailures && HasErrors)
@@ -905,7 +908,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   // We can probably not do a lot on scops that only write or only read
   // data.
   if (!DetectUnprofitable && (!Context.hasStores || !Context.hasLoads))
-    invalid<ReportUnprofitable>(Context, /*Assert=*/true);
+    invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   DEBUG(dbgs() << "OK\n");
   return true;
