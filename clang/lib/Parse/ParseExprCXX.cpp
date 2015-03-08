@@ -118,6 +118,7 @@ void Parser::CheckForLParenAfterColonColon() {
   // Eat the '('.
   ConsumeParen();
   Token RParen;
+  RParen.setLocation(SourceLocation());
   // Do we have a ')' ?
   NextTok = StarTok.is(tok::star) ? GetLookAheadToken(2) : GetLookAheadToken(1);
   if (NextTok.is(tok::r_paren)) {

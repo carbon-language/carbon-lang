@@ -35,8 +35,8 @@ class IdentifierInfo;
 /// can be represented by a single typename annotation token that carries
 /// information about the SourceRange of the tokens and the type object.
 class Token {
-  /// The location of the token.
-  SourceLocation Loc;
+  /// The location of the token. This is actually a SourceLocation.
+  unsigned Loc;
 
   // Conceptually these next two fields could be in a union.  However, this
   // causes gcc 4.2 to pessimize LexTokenInternal, a very performance critical
@@ -114,13 +114,15 @@ public:
 
   /// \brief Return a source location identifier for the specified
   /// offset in the current file.
-  SourceLocation getLocation() const { return Loc; }
+  SourceLocation getLocation() const {
+    return SourceLocation::getFromRawEncoding(Loc);
+  }
   unsigned getLength() const {
     assert(!isAnnotation() && "Annotation tokens have no length field");
     return UintData;
   }
 
-  void setLocation(SourceLocation L) { Loc = L; }
+  void setLocation(SourceLocation L) { Loc = L.getRawEncoding(); }
   void setLength(unsigned Len) {
     assert(!isAnnotation() && "Annotation tokens have no length field");
     UintData = Len;
@@ -157,7 +159,7 @@ public:
     Flags = 0;
     PtrData = nullptr;
     UintData = 0;
-    Loc = SourceLocation();
+    Loc = SourceLocation().getRawEncoding();
   }
 
   IdentifierInfo *getIdentifierInfo() const {
@@ -284,6 +286,8 @@ public:
     return (Flags & StringifiedInMacro) ? true : false;
   }
 };
+
+static_assert(std::is_pod<Token>::value, "Token should be a POD type!");
 
 /// \brief Information about the conditional stack (\#if directives)
 /// currently active.
