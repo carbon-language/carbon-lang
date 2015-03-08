@@ -375,8 +375,10 @@ void FileCOFF::beforeLink() {
 
   // Add /INCLUDE'ed symbols to the file as if they existed in the
   // file as undefined symbols.
-  for (StringRef sym : undefSyms)
+  for (StringRef sym : undefSyms) {
     addUndefinedSymbol(sym);
+    _ctx.addDeadStripRoot(sym);
+  }
 
   // One can define alias symbols using /alternatename:<sym>=<sym> option.
   // The mapping for /alternatename is in the context object. This helper
@@ -387,10 +389,6 @@ void FileCOFF::beforeLink() {
   // SEH. Disable SEH if the file being read is not compatible.
   if (!isCompatibleWithSEH())
     _ctx.setSafeSEH(false);
-
-  if (_ctx.deadStrip())
-    for (const UndefinedAtom *undef : undefined())
-      _ctx.addDeadStripRoot(undef->name());
 }
 
 /// Iterate over the symbol table to retrieve all symbols.
