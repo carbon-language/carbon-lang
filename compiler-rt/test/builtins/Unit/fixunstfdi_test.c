@@ -11,10 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <stdio.h>
+
 #if _ARCH_PPC
 
 #include "int_lib.h"
-#include <stdio.h>
 
 // Returns: convert a to a unsigned long long, rounding toward zero.
 //          Negative values all become zero.
