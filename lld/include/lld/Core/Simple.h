@@ -199,10 +199,6 @@ public:
     return DefinedAtom::sectionBasedOnContent;
   }
 
-  SectionPosition sectionPosition() const override {
-    return DefinedAtom::sectionPositionAny;
-  }
-
   StringRef customSectionName() const override { return StringRef(); }
   DeadStripKind deadStrip() const override {
     return DefinedAtom::deadStripNormal;

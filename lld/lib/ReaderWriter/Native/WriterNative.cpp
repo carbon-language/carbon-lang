@@ -422,8 +422,7 @@ private:
     attrs.interposable      = atom.interposable();
     attrs.merge             = atom.merge();
     attrs.contentType       = atom.contentType();
-    attrs.sectionChoiceAndPosition
-                          = atom.sectionChoice() << 4 | atom.sectionPosition();
+    attrs.sectionChoice     = atom.sectionChoice();
     attrs.deadStrip         = atom.deadStrip();
     attrs.dynamicExport     = atom.dynamicExport();
     attrs.codeModel         = atom.codeModel();

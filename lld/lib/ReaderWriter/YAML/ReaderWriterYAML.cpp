@@ -332,15 +332,6 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::SectionChoice> {
   }
 };
 
-template <> struct ScalarEnumerationTraits<lld::DefinedAtom::SectionPosition> {
-  static void enumeration(IO &io, lld::DefinedAtom::SectionPosition &value) {
-    io.enumCase(value, "start", lld::DefinedAtom::sectionPositionStart);
-    io.enumCase(value, "early", lld::DefinedAtom::sectionPositionEarly);
-    io.enumCase(value, "any",   lld::DefinedAtom::sectionPositionAny);
-    io.enumCase(value, "end",   lld::DefinedAtom::sectionPositionEnd);
-  }
-};
-
 template <> struct ScalarEnumerationTraits<lld::DefinedAtom::Interposable> {
   static void enumeration(IO &io, lld::DefinedAtom::Interposable &value) {
     io.enumCase(value, "no",           DefinedAtom::interposeNo);
@@ -810,7 +801,6 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
           _scope(atom->scope()), _interpose(atom->interposable()),
           _merge(atom->merge()), _contentType(atom->contentType()),
           _alignment(atom->alignment()), _sectionChoice(atom->sectionChoice()),
-          _sectionPosition(atom->sectionPosition()),
           _deadStrip(atom->deadStrip()), _dynamicExport(atom->dynamicExport()),
           _codeModel(atom->codeModel()),
           _permissions(atom->permissions()), _size(atom->size()),
@@ -862,7 +852,6 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     SectionChoice sectionChoice() const override { return _sectionChoice; }
     StringRef customSectionName() const override { return _sectionName; }
     uint64_t sectionSize() const override { return _sectionSize; }
-    SectionPosition sectionPosition() const override { return _sectionPosition; }
     DeadStripKind deadStrip() const override { return _deadStrip; }
     DynamicExport dynamicExport() const override { return _dynamicExport; }
     CodeModel codeModel() const override { return _codeModel; }
@@ -908,7 +897,6 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     ContentType                         _contentType;
     Alignment                           _alignment;
     SectionChoice                       _sectionChoice;
-    SectionPosition                     _sectionPosition;
     DeadStripKind                       _deadStrip;
     DynamicExport                       _dynamicExport;
     CodeModel                           _codeModel;
@@ -954,8 +942,6 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     io.mapOptional("section-choice",   keys->_sectionChoice,
                                          DefinedAtom::sectionBasedOnContent);
     io.mapOptional("section-name",     keys->_sectionName, StringRef());
-    io.mapOptional("section-position", keys->_sectionPosition,
-                                         DefinedAtom::sectionPositionAny);
     io.mapOptional("section-size",     keys->_sectionSize, (uint64_t)0);
     io.mapOptional("dead-strip",       keys->_deadStrip,
                                          DefinedAtom::deadStripNormal);

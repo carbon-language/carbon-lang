@@ -99,9 +99,6 @@ public:
   Merge merge() const override { return mergeNo; }
   Alignment alignment() const override { return Alignment(0); }
   StringRef customSectionName() const override { return ""; }
-  SectionPosition sectionPosition() const override {
-    return sectionPositionAny;
-  }
   DeadStripKind deadStrip() const override { return deadStripNormal; }
 
   Kind getKind() const { return _kind; }

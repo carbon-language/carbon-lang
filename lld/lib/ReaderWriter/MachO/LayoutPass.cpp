@@ -166,13 +166,12 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
 #endif // #ifndef NDEBUG
 
 /// The function compares atoms by sorting atoms in the following order
-/// a) Sorts atoms by Section position preference
-/// b) Sorts atoms by their ordinal overrides (layout-after/ingroup)
-/// c) Sorts atoms by their permissions
-/// d) Sorts atoms by their content
-/// e) Sorts atoms by custom sorter
-/// f) Sorts atoms on how they appear using File Ordinality
-/// g) Sorts atoms on how they appear within the File
+/// a) Sorts atoms by their ordinal overrides (layout-after/ingroup)
+/// b) Sorts atoms by their permissions
+/// c) Sorts atoms by their content
+/// d) Sorts atoms by custom sorter
+/// e) Sorts atoms on how they appear using File Ordinality
+/// f) Sorts atoms on how they appear within the File
 static bool compareAtomsSub(const LayoutPass::SortKey &lc,
                             const LayoutPass::SortKey &rc,
                             LayoutPass::SortOverride customSorter,
@@ -182,19 +181,6 @@ static bool compareAtomsSub(const LayoutPass::SortKey &lc,
   if (left == right) {
     reason = "same";
     return false;
-  }
-
-  // Sort by section position preference.
-  DefinedAtom::SectionPosition leftPos = left->sectionPosition();
-  DefinedAtom::SectionPosition rightPos = right->sectionPosition();
-
-  bool leftSpecialPos = (leftPos != DefinedAtom::sectionPositionAny);
-  bool rightSpecialPos = (rightPos != DefinedAtom::sectionPositionAny);
-  if (leftSpecialPos || rightSpecialPos) {
-    if (leftPos != rightPos) {
-      DEBUG(reason = formatReason("sectionPos", (int)leftPos, (int)rightPos));
-      return leftPos < rightPos;
-    }
   }
 
   // Find the root of the chain if it is a part of a follow-on chain.

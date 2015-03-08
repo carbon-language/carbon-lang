@@ -51,8 +51,6 @@ public:
 
   StringRef customSectionName() const override { return StringRef(); }
 
-  SectionPosition sectionPosition() const override { return sectionPositionAny; }
-
   DeadStripKind deadStrip() const override {
     return DefinedAtom::deadStripNormal;
   }
@@ -113,8 +111,6 @@ public:
   }
 
   StringRef customSectionName() const override { return StringRef(); }
-
-  SectionPosition sectionPosition() const override { return sectionPositionAny; }
 
   DeadStripKind deadStrip() const override {
     return DefinedAtom::deadStripNormal;

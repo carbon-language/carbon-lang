@@ -173,13 +173,6 @@ public:
     sectionCustomRequired   // linker must place in specific section
   };
 
-  enum SectionPosition {
-    sectionPositionStart,   // atom must be at start of section (and zero size)
-    sectionPositionEarly,   // atom should be near start of section
-    sectionPositionAny,     // atom can be anywhere in section
-    sectionPositionEnd      // atom must be at end of section (and zero size)
-  };
-
   enum DeadStripKind {
     deadStripNormal,        // linker may dead strip this atom
     deadStripNever,         // linker must never dead strip this atom
@@ -271,9 +264,6 @@ public:
   /// \brief If sectionChoice() != sectionBasedOnContent, then this return the
   /// name of the section the atom should be placed into.
   virtual StringRef customSectionName() const = 0;
-
-  /// \brief constraints on whether the linker may dead strip away this atom.
-  virtual SectionPosition sectionPosition() const = 0;
 
   /// \brief constraints on whether the linker may dead strip away this atom.
   virtual DeadStripKind deadStrip() const = 0;

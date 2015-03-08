@@ -335,10 +335,6 @@ public:
     return _sectionName;
   }
 
-  SectionPosition sectionPosition() const override {
-    return sectionPositionAny;
-  }
-
   // It isn't clear that __attribute__((used)) is transmitted to the ELF object
   // file.
   DeadStripKind deadStrip() const override { return deadStripNormal; }
@@ -496,10 +492,6 @@ public:
 
   StringRef customSectionName() const override { return _sectionName; }
 
-  SectionPosition sectionPosition() const override {
-    return sectionPositionAny;
-  }
-
   DeadStripKind deadStrip() const override { return deadStripNormal; }
 
   ContentPermissions permissions() const override { return permR__; }
@@ -576,10 +568,6 @@ public:
   SectionChoice sectionChoice() const override { return sectionBasedOnContent; }
 
   StringRef customSectionName() const override { return ".bss"; }
-
-  SectionPosition sectionPosition() const override {
-    return sectionPositionAny;
-  }
 
   DeadStripKind deadStrip() const override { return deadStripNormal; }
 
