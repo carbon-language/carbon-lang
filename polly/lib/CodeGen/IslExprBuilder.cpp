@@ -127,11 +127,17 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
     assert(NextIndex->getType()->isIntegerTy() &&
            "Access index should be an integer");
 
-    if (!IndexOp)
+    if (!IndexOp) {
       IndexOp = NextIndex;
-    else
+    } else {
+      assert(NextIndex->getType()->getScalarSizeInBits() <=
+                 IndexOp->getType()->getScalarSizeInBits() &&
+             "Truncating the index type may not be save");
+      NextIndex = Builder.CreateIntCast(NextIndex, IndexOp->getType(), true);
+
       IndexOp =
           Builder.CreateAdd(IndexOp, NextIndex, "polly.access.add." + BaseName);
+    }
 
     // For every but the last dimension multiply the size, for the last
     // dimension we can exit the loop.
