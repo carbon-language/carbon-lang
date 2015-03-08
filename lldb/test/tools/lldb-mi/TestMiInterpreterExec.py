@@ -31,6 +31,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_breakpoint_set(self):
         """Test that 'lldb-mi --interpreter' can set breakpoint by 'breakpoint set' command."""
 
@@ -52,6 +53,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_settings_set_target_run_args_before(self):
         """Test that 'lldb-mi --interpreter' can set target arguments by 'setting set target.run-args' command before than target was created."""
 
@@ -76,6 +78,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_settings_set_target_run_args_after(self):
         """Test that 'lldb-mi --interpreter' can set target arguments by 'setting set target.run-args' command after than target was created."""
 
@@ -100,6 +103,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_process_launch(self):
         """Test that 'lldb-mi --interpreter' can launch process by "process launch" command."""
 
@@ -123,6 +127,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_thread_step_in(self):
         """Test that 'lldb-mi --interpreter' can step in by "thread step-in" command."""
 
@@ -153,6 +158,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_thread_step_over(self):
         """Test that 'lldb-mi --interpreter' can step over by "thread step-over" command."""
 
@@ -178,6 +184,7 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_thread_continue(self):
         """Test that 'lldb-mi --interpreter' can continue execution by "thread continue" command."""
 
