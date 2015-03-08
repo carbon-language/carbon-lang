@@ -973,7 +973,7 @@ BaseRelocChunk::createContents(ChunkVectorT &chunks) const {
 
   // Base relocations for the same memory page are grouped together
   // and passed to createBaseRelocBlock.
-  for (size_t i = 0, e = relocSites.size(); i < e; ++i) {
+  for (size_t i = 0, e = relocSites.size(); i < e;) {
     const AtomChunk::BaseRelocation *begin = &relocSites[i];
     uint64_t pageAddr = (begin->first & ~mask);
     for (++i; i < e; ++i)
