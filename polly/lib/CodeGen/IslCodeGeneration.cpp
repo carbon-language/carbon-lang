@@ -65,8 +65,8 @@ public:
                  DominatorTree &DT, Scop &S)
       : S(S), Builder(Builder), Annotator(Annotator), Rewriter(SE, "polly"),
         ExprBuilder(Builder, IDToValue, Rewriter, DT, LI),
-        BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen),
-        P(P), DL(DL), LI(LI), SE(SE), DT(DT) {}
+        BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen), P(P),
+        DL(DL), LI(LI), SE(SE), DT(DT) {}
 
   ~IslNodeBuilder() {}
 
@@ -88,7 +88,7 @@ private:
   /// @brief Generator for region statements.
   RegionGenerator RegionGen;
 
-  Pass * const P;
+  Pass *const P;
   const DataLayout &DL;
   LoopInfo &LI;
   ScalarEvolution &SE;
