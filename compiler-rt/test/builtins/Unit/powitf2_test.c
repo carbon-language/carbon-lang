@@ -11,10 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <stdio.h>
+
 #if _ARCH_PPC
 
 #include "int_lib.h"
-#include <stdio.h>
 #include <math.h>
 
 // Returns: a ^ b

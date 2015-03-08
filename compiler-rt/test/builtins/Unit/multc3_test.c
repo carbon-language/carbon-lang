@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <stdio.h>
+
 #if _ARCH_PPC
 
 #include "int_lib.h"
 #include <math.h>
 #include <complex.h>
-#include <stdio.h>
 
 // Returns: the product of a + ib and c + id
 
