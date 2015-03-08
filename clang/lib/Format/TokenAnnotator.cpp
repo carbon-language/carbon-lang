@@ -1119,8 +1119,8 @@ private:
   const AdditionalKeywords &Keywords;
 };
 
-static int PrecedenceUnaryOperator = prec::PointerToMember + 1;
-static int PrecedenceArrowAndPeriod = prec::PointerToMember + 2;
+static const int PrecedenceUnaryOperator = prec::PointerToMember + 1;
+static const int PrecedenceArrowAndPeriod = prec::PointerToMember + 2;
 
 /// \brief Parses binary expressions by inserting fake parenthesis based on
 /// operator precedence.
