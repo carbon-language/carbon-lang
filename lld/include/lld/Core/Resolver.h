@@ -100,8 +100,8 @@ private:
   size_t _fileIndex;
 
   // Preloading
-  std::map<StringRef, ArchiveLibraryFile *> _archiveMap;
-  std::unordered_set<ArchiveLibraryFile *> _archiveSeen;
+  llvm::StringMap<ArchiveLibraryFile *> _archiveMap;
+  llvm::DenseSet<ArchiveLibraryFile *> _archiveSeen;
 
   // List of undefined symbols.
   std::vector<StringRef> _undefines;
