@@ -151,7 +151,7 @@ static cl::opt<bool, true>
     PollyDelinearizeX("polly-delinearize",
                       cl::desc("Delinearize array access functions"),
                       cl::location(PollyDelinearize), cl::Hidden,
-                      cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
+                      cl::ZeroOrMore, cl::init(true), cl::cat(PollyCategory));
 
 static cl::opt<bool>
     VerifyScops("polly-detect-verify",
