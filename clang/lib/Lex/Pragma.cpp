@@ -870,7 +870,9 @@ struct PragmaDebugHandler : public PragmaHandler {
       LLVM_BUILTIN_TRAP;
     } else if (II->isStr("parser_crash")) {
       Token Crasher;
+      Crasher.startToken();
       Crasher.setKind(tok::annot_pragma_parser_crash);
+      Crasher.setAnnotationRange(SourceRange(Tok.getLocation()));
       PP.EnterToken(Crasher);
     } else if (II->isStr("llvm_fatal_error")) {
       llvm::report_fatal_error("#pragma clang __debug llvm_fatal_error");
