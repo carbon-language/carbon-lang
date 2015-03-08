@@ -20,7 +20,7 @@ echo '; FIXME: Edit the run line and add checks!' >> ${LLFILE}
 echo ';' >> ${LLFILE}
 echo '; XFAIL: *' >> ${LLFILE}
 echo ';' >> ${LLFILE}
-clang-format $1 | sed -e 's/^/;    /' >> ${LLFILE}
+clang-format $1 | sed -e 's/^[^$]/;    &/' -e 's/^$/;/' >> ${LLFILE}
 echo ';' >> ${LLFILE}
 
 cat ${LLFILE_TMP} | sed -e 's/ \#0//' >> ${LLFILE}
