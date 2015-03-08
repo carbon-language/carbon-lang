@@ -479,9 +479,7 @@ unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
     // If we didn't find an integer alignment, fall back on most conservative.
     if (AlignType == INTEGER_ALIGN) {
       BestMatchIdx = LargestInt;
-    } else {
-      assert(AlignType == VECTOR_ALIGN && "Unknown alignment type!");
-
+    } else if (AlignType == VECTOR_ALIGN) {
       // By default, use natural alignment for vector types. This is consistent
       // with what clang and llvm-gcc do.
       unsigned Align = getTypeAllocSize(cast<VectorType>(Ty)->getElementType());
@@ -492,6 +490,19 @@ unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
         Align = NextPowerOf2(Align);
       return Align;
     }
+  }
+
+  // If we still couldn't find a reasonable default alignment, fall back
+  // to a simple heuristic that the alignment is the first power of two
+  // greater-or-equal to the store size of the type.  This is a reasonable
+  // approximation of reality, and if the user wanted something less
+  // less conservative, they should have specified it explicitly in the data
+  // layout.
+  if (BestMatchIdx == -1) {
+    unsigned Align = getTypeStoreSize(Ty);
+    if (Align & (Align-1))
+      Align = NextPowerOf2(Align);
+    return Align;
   }
 
   // Since we got a "best match" index, just return it.
