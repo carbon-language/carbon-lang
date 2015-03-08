@@ -2,13 +2,16 @@
 ;
 ;    void f(int *A, char c) {
 ;      for (int i = 0; i < 1024; i++)
-;        A[i * c]++;
+;        A[i * c - 3]++;
 ;    }
 ;
-; CHECK: ReadAccess := [Reduction Type: +] [Scalar: 0]
-; CHECK:     { Stmt_bb2[i0] -> MemRef_A[o0] : o0 <= 261115 and o0 >= -3 };
-; CHECK: MayWriteAccess := [Reduction Type: +] [Scalar: 0]
-; CHECK:     { Stmt_bb2[i0] -> MemRef_A[o0] : o0 <= 261115 and o0 >= -3 };
+; CHECK: Assumed Context:
+; CHECK:  [p_0] -> {  : 1 = 0 }
+; CHECK: ReadAccess :=       [Reduction Type: +] [Scalar: 0]
+; CHECK: [p_0] -> { Stmt_bb2[i0] -> MemRef_A[i0, -3] };
+; CHECK: MustWriteAccess :=  [Reduction Type: +] [Scalar: 0]
+; CHECK: [p_0] -> { Stmt_bb2[i0] -> MemRef_A[i0, -3] };
+
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

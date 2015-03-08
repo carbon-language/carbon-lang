@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-allow-nonaffine -analyze < %s | FileCheck %s --check-prefix=NONAFFINE
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-delinearize=false -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-delinearize=false -polly-allow-nonaffine -analyze < %s | FileCheck %s --check-prefix=NONAFFINE
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-delinearize -analyze < %s | FileCheck %s --check-prefix=DELIN
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-delinearize -polly-allow-nonaffine -analyze < %s | FileCheck %s --check-prefix=DELIN
 

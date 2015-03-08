@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -analyze < %s 2>&1| FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -polly-detect-keep-going -analyze < %s 2>&1| FileCheck %s -check-prefix=ALL
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -polly-delinearize=false -polly-detect-keep-going -analyze < %s 2>&1| FileCheck %s -check-prefix=ALL
 ; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -polly-delinearize -analyze < %s 2>&1| FileCheck %s -check-prefix=DELIN
 ; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -polly-delinearize -polly-detect-keep-going -analyze < %s 2>&1| FileCheck %s -check-prefix=DELIN-ALL
 ; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -polly-allow-nonaffine -analyze < %s 2>&1| FileCheck %s -check-prefix=NONAFFINE
