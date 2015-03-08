@@ -287,8 +287,6 @@ public:
   }
 };
 
-static_assert(std::is_pod<Token>::value, "Token should be a POD type!");
-
 /// \brief Information about the conditional stack (\#if directives)
 /// currently active.
 struct PPConditionalInfo {
