@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_REWRITE_CORE_REWRITEBUFFER_H
 #define LLVM_CLANG_REWRITE_CORE_REWRITEBUFFER_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Rewrite/Core/DeltaTree.h"
 #include "clang/Rewrite/Core/RewriteRope.h"
 #include "llvm/ADT/StringRef.h"
@@ -34,6 +35,15 @@ public:
   iterator begin() const { return Buffer.begin(); }
   iterator end() const { return Buffer.end(); }
   unsigned size() const { return Buffer.size(); }
+
+  /// Initialize - Start this rewrite buffer out with a copy of the unmodified
+  /// input buffer.
+  void Initialize(const char *BufStart, const char *BufEnd) {
+    Buffer.assign(BufStart, BufEnd);
+  }
+  void Initialize(StringRef Input) {
+    Initialize(Input.begin(), Input.end());
+  }
 
   /// \brief Write to \p Stream the result of applying all changes to the
   /// original buffer.
@@ -78,12 +88,6 @@ public:
                    StringRef NewStr);
 
 private:  // Methods only usable by Rewriter.
-
-  /// Initialize - Start this rewrite buffer out with a copy of the unmodified
-  /// input buffer.
-  void Initialize(const char *BufStart, const char *BufEnd) {
-    Buffer.assign(BufStart, BufEnd);
-  }
 
   /// getMappedOffset - Given an offset into the original SourceBuffer that this
   /// RewriteBuffer is based on, map it into the offset space of the

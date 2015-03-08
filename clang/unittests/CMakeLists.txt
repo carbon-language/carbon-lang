@@ -20,6 +20,7 @@ add_subdirectory(ASTMatchers)
 add_subdirectory(AST)
 add_subdirectory(Tooling)
 add_subdirectory(Format)
+add_subdirectory(Rewrite)
 add_subdirectory(Sema)
 add_subdirectory(CodeGen)
 # FIXME: Why are the libclang unit tests disabled on Windows?

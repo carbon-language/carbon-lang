@@ -54,7 +54,7 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size,
   if (Size == 0) return;
 
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
-  assert(RealOffset+Size < Buffer.size() && "Invalid location");
+  assert(RealOffset+Size <= Buffer.size() && "Invalid location");
 
   // Remove the dead characters.
   Buffer.erase(RealOffset, Size);

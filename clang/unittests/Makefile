@@ -15,7 +15,7 @@ ifndef CLANG_LEVEL
 IS_UNITTEST_LEVEL := 1
 CLANG_LEVEL := ..
 PARALLEL_DIRS = CodeGen Basic Lex Driver Format ASTMatchers AST Tooling \
-	        Sema
+	        Rewrite Sema
 
 include $(CLANG_LEVEL)/../..//Makefile.config
 
