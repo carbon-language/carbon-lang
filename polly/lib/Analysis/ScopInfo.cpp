@@ -307,14 +307,18 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
   isl_val *V;
   isl_ctx *ctx = isl_set_get_ctx(S);
 
-  V = isl_valFromAPInt(ctx, Range.getLower(), true);
+  bool isWrapping = Range.isSignWrappedSet();
+  const auto LB = isWrapping ? Range.getLower() : Range.getSignedMin();
+  V = isl_valFromAPInt(ctx, LB, true);
   isl_set *SLB = isl_set_lower_bound_val(isl_set_copy(S), type, dim, V);
 
-  V = isl_valFromAPInt(ctx, Range.getUpper(), true);
-  V = isl_val_sub_ui(V, 1);
+  const auto UB = isWrapping ? Range.getUpper() : Range.getSignedMax();
+  V = isl_valFromAPInt(ctx, UB, true);
+  if (isWrapping)
+    V = isl_val_sub_ui(V, 1);
   isl_set *SUB = isl_set_upper_bound_val(S, type, dim, V);
 
-  if (Range.isSignWrappedSet())
+  if (isWrapping)
     return isl_set_union(SLB, SUB);
   else
     return isl_set_intersect(SLB, SUB);
@@ -550,9 +554,13 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
   if (Range.isFullSet())
     return;
 
+  bool isWrapping = Range.isSignWrappedSet();
   unsigned BW = Range.getBitWidth();
-  auto Min = Range.getSignedMin().sdiv(APInt(BW, ElementSize));
-  auto Max = (Range.getSignedMax() - APInt(BW, 1)).sdiv(APInt(BW, ElementSize));
+  const auto LB = isWrapping ? Range.getLower() : Range.getSignedMin();
+  const auto UB = isWrapping ? Range.getUpper() : Range.getSignedMax();
+
+  auto Min = LB.sdiv(APInt(BW, ElementSize));
+  auto Max = (UB - APInt(BW, 1)).sdiv(APInt(BW, ElementSize));
 
   isl_set *AccessRange = isl_map_range(isl_map_copy(AccessRelation));
   AccessRange =
