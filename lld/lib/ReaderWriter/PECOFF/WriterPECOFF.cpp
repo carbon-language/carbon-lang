@@ -355,8 +355,8 @@ class BaseRelocChunk : public SectionChunk {
   typedef std::vector<std::unique_ptr<Chunk> > ChunkVectorT;
 
 public:
-  typedef std::pair<uint16_t, llvm::COFF::BaseRelocationType> BaseRelocation;
-  typedef std::vector<BaseRelocation> BaseRelocations;
+  typedef std::vector<std::pair<uint16_t, llvm::COFF::BaseRelocationType>>
+      BaseRelocations;
   typedef std::map<uint64_t, BaseRelocations> RelocationBlocks;
 
   BaseRelocChunk(ChunkVectorT &chunks, const PECOFFLinkingContext &ctx)
@@ -382,13 +382,11 @@ private:
   // at an address different from its preferred one.
   AtomChunk::BaseRelocationList listRelocSites(ChunkVectorT &chunks) const;
 
-  // Divide the given RVAs into blocks.
-  RelocationBlocks
-  groupByPage(const AtomChunk::BaseRelocationList &relocSites) const;
-
   // Create the content of a relocation block.
   std::vector<uint8_t>
-  createBaseRelocBlock(uint64_t pageAddr, const BaseRelocations &relocs) const;
+  createBaseRelocBlock(uint64_t pageAddr,
+                       const AtomChunk::BaseRelocation *begin,
+                       const AtomChunk::BaseRelocation *end) const;
 
   const PECOFFLinkingContext &_ctx;
   std::vector<uint8_t> _contents;
@@ -965,11 +963,24 @@ std::vector<uint8_t>
 BaseRelocChunk::createContents(ChunkVectorT &chunks) const {
   std::vector<uint8_t> contents;
   AtomChunk::BaseRelocationList relocSites = listRelocSites(chunks);
-  RelocationBlocks blocks = groupByPage(relocSites);
-  for (auto &i : blocks) {
-    uint64_t pageAddr = i.first;
-    const BaseRelocations &relocs = i.second;
-    std::vector<uint8_t> block = createBaseRelocBlock(pageAddr, relocs);
+
+  uint64_t mask = _ctx.getPageSize() - 1;
+  parallel_sort(relocSites.begin(), relocSites.end(),
+                [&](const AtomChunk::BaseRelocation &a,
+                    const AtomChunk::BaseRelocation &b) {
+                  return (a.first & ~mask) < (b.first & ~mask);
+                });
+
+  // Base relocations for the same memory page are grouped together
+  // and passed to createBaseRelocBlock.
+  for (size_t i = 0, e = relocSites.size(); i < e; ++i) {
+    const AtomChunk::BaseRelocation *begin = &relocSites[i];
+    uint64_t pageAddr = (begin->first & ~mask);
+    for (++i; i < e; ++i)
+      if ((relocSites[i].first & ~mask) != pageAddr)
+        break;
+    const AtomChunk::BaseRelocation *end = &relocSites[i];
+    std::vector<uint8_t> block = createBaseRelocBlock(pageAddr, begin, end);
     contents.insert(contents.end(), block.begin(), block.end());
   }
   return contents;
@@ -986,25 +997,16 @@ BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) const {
   return ret;
 }
 
-// Divide the given RVAs into blocks.
-BaseRelocChunk::RelocationBlocks BaseRelocChunk::groupByPage(
-    const AtomChunk::BaseRelocationList &relocSites) const {
-  RelocationBlocks blocks;
-  uint64_t mask = _ctx.getPageSize() - 1;
-  for (const auto &reloc : relocSites)
-    blocks[reloc.first & ~mask].push_back(
-        std::make_pair(reloc.first & mask, reloc.second));
-  return blocks;
-}
-
 // Create the content of a relocation block.
 std::vector<uint8_t>
-BaseRelocChunk::createBaseRelocBlock(uint64_t pageAddr,
-                                     const BaseRelocations &relocs) const {
+BaseRelocChunk::createBaseRelocBlock(
+    uint64_t pageAddr,
+    const AtomChunk::BaseRelocation *begin,
+    const AtomChunk::BaseRelocation *end) const {
   // Relocation blocks should be padded with IMAGE_REL_I386_ABSOLUTE to be
   // aligned to a DWORD size boundary.
   uint32_t size = llvm::RoundUpToAlignment(
-      sizeof(ulittle32_t) * 2 + sizeof(ulittle16_t) * relocs.size(),
+      sizeof(ulittle32_t) * 2 + sizeof(ulittle16_t) * (end - begin),
       sizeof(ulittle32_t));
   std::vector<uint8_t> contents(size);
   uint8_t *ptr = &contents[0];
@@ -1018,9 +1020,9 @@ BaseRelocChunk::createBaseRelocBlock(uint64_t pageAddr,
   write32le(ptr, size);
   ptr += sizeof(ulittle32_t);
 
-  for (const auto &reloc : relocs) {
-    assert(reloc.first < _ctx.getPageSize());
-    write16le(ptr, (reloc.second << 12) | reloc.first);
+  uint64_t mask = _ctx.getPageSize() - 1;
+  for (const AtomChunk::BaseRelocation *i = begin; i < end; ++i) {
+    write16le(ptr, (i->second << 12) | (i->first & mask));
     ptr += sizeof(ulittle16_t);
   }
   return contents;
