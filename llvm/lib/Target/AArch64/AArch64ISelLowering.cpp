@@ -370,9 +370,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FLOG10, MVT::v8f16, Expand);
 
   // AArch64 has implementations of a lot of rounding-like FP operations.
-  static MVT RoundingTypes[] = { MVT::f32, MVT::f64};
-  for (unsigned I = 0; I < array_lengthof(RoundingTypes); ++I) {
-    MVT Ty = RoundingTypes[I];
+  for (MVT Ty : {MVT::f32, MVT::f64}) {
     setOperationAction(ISD::FFLOOR, Ty, Legal);
     setOperationAction(ISD::FNEARBYINT, Ty, Legal);
     setOperationAction(ISD::FCEIL, Ty, Legal);
@@ -569,9 +567,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     }
 
     // AArch64 has implementations of a lot of rounding-like FP operations.
-    static MVT RoundingVecTypes[] = {MVT::v2f32, MVT::v4f32, MVT::v2f64 };
-    for (unsigned I = 0; I < array_lengthof(RoundingVecTypes); ++I) {
-      MVT Ty = RoundingVecTypes[I];
+    for (MVT Ty : {MVT::v2f32, MVT::v4f32, MVT::v2f64}) {
       setOperationAction(ISD::FFLOOR, Ty, Legal);
       setOperationAction(ISD::FNEARBYINT, Ty, Legal);
       setOperationAction(ISD::FCEIL, Ty, Legal);

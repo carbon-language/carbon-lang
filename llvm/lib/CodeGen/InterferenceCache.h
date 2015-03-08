@@ -170,8 +170,8 @@ public:
   /// Cursor - The primary query interface for the block interference cache.
   class Cursor {
     Entry *CacheEntry;
-    BlockInterference *Current;
-    static BlockInterference NoInterference;
+    const BlockInterference *Current;
+    static const BlockInterference NoInterference;
 
     void setEntry(Entry *E) {
       Current = nullptr;

@@ -59,10 +59,10 @@ using namespace llvm;
 
 namespace {
   namespace MemRef {
-    static unsigned Read     = 1;
-    static unsigned Write    = 2;
-    static unsigned Callee   = 4;
-    static unsigned Branchee = 8;
+    static const unsigned Read     = 1;
+    static const unsigned Write    = 2;
+    static const unsigned Callee   = 4;
+    static const unsigned Branchee = 8;
   }
 
   class Lint : public FunctionPass, public InstVisitor<Lint> {

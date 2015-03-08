@@ -752,58 +752,47 @@ public:
   }
 
   bool isMovZSymbolG3() const {
-    static AArch64MCExpr::VariantKind Variants[] = { AArch64MCExpr::VK_ABS_G3 };
-    return isMovWSymbol(Variants);
+    return isMovWSymbol(AArch64MCExpr::VK_ABS_G3);
   }
 
   bool isMovZSymbolG2() const {
-    static AArch64MCExpr::VariantKind Variants[] = {
-        AArch64MCExpr::VK_ABS_G2, AArch64MCExpr::VK_ABS_G2_S,
-        AArch64MCExpr::VK_TPREL_G2, AArch64MCExpr::VK_DTPREL_G2};
-    return isMovWSymbol(Variants);
+    return isMovWSymbol({AArch64MCExpr::VK_ABS_G2, AArch64MCExpr::VK_ABS_G2_S,
+                         AArch64MCExpr::VK_TPREL_G2,
+                         AArch64MCExpr::VK_DTPREL_G2});
   }
 
   bool isMovZSymbolG1() const {
-    static AArch64MCExpr::VariantKind Variants[] = {
-        AArch64MCExpr::VK_ABS_G1,      AArch64MCExpr::VK_ABS_G1_S,
+    return isMovWSymbol({
+        AArch64MCExpr::VK_ABS_G1, AArch64MCExpr::VK_ABS_G1_S,
         AArch64MCExpr::VK_GOTTPREL_G1, AArch64MCExpr::VK_TPREL_G1,
         AArch64MCExpr::VK_DTPREL_G1,
-    };
-    return isMovWSymbol(Variants);
+    });
   }
 
   bool isMovZSymbolG0() const {
-    static AArch64MCExpr::VariantKind Variants[] = {
-        AArch64MCExpr::VK_ABS_G0, AArch64MCExpr::VK_ABS_G0_S,
-        AArch64MCExpr::VK_TPREL_G0, AArch64MCExpr::VK_DTPREL_G0};
-    return isMovWSymbol(Variants);
+    return isMovWSymbol({AArch64MCExpr::VK_ABS_G0, AArch64MCExpr::VK_ABS_G0_S,
+                         AArch64MCExpr::VK_TPREL_G0,
+                         AArch64MCExpr::VK_DTPREL_G0});
   }
 
   bool isMovKSymbolG3() const {
-    static AArch64MCExpr::VariantKind Variants[] = { AArch64MCExpr::VK_ABS_G3 };
-    return isMovWSymbol(Variants);
+    return isMovWSymbol(AArch64MCExpr::VK_ABS_G3);
   }
 
   bool isMovKSymbolG2() const {
-    static AArch64MCExpr::VariantKind Variants[] = {
-        AArch64MCExpr::VK_ABS_G2_NC};
-    return isMovWSymbol(Variants);
+    return isMovWSymbol(AArch64MCExpr::VK_ABS_G2_NC);
   }
 
   bool isMovKSymbolG1() const {
-    static AArch64MCExpr::VariantKind Variants[] = {
-      AArch64MCExpr::VK_ABS_G1_NC, AArch64MCExpr::VK_TPREL_G1_NC,
-      AArch64MCExpr::VK_DTPREL_G1_NC
-    };
-    return isMovWSymbol(Variants);
+    return isMovWSymbol({AArch64MCExpr::VK_ABS_G1_NC,
+                         AArch64MCExpr::VK_TPREL_G1_NC,
+                         AArch64MCExpr::VK_DTPREL_G1_NC});
   }
 
   bool isMovKSymbolG0() const {
-    static AArch64MCExpr::VariantKind Variants[] = {
-      AArch64MCExpr::VK_ABS_G0_NC,   AArch64MCExpr::VK_GOTTPREL_G0_NC,
-      AArch64MCExpr::VK_TPREL_G0_NC, AArch64MCExpr::VK_DTPREL_G0_NC
-    };
-    return isMovWSymbol(Variants);
+    return isMovWSymbol(
+        {AArch64MCExpr::VK_ABS_G0_NC, AArch64MCExpr::VK_GOTTPREL_G0_NC,
+         AArch64MCExpr::VK_TPREL_G0_NC, AArch64MCExpr::VK_DTPREL_G0_NC});
   }
 
   template<int RegWidth, int Shift>

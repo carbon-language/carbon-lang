@@ -40,7 +40,7 @@ class TargetLibraryInfoImpl {
 
   unsigned char AvailableArray[(LibFunc::NumLibFuncs+3)/4];
   llvm::DenseMap<unsigned, std::string> CustomNames;
-  static const char* StandardNames[LibFunc::NumLibFuncs];
+  static const char *const StandardNames[LibFunc::NumLibFuncs];
 
   enum AvailabilityState {
     StandardName = 3, // (memset to all ones)

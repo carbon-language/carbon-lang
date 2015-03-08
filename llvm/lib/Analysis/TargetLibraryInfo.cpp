@@ -15,11 +15,10 @@
 #include "llvm/ADT/Triple.h"
 using namespace llvm;
 
-const char* TargetLibraryInfoImpl::StandardNames[LibFunc::NumLibFuncs] =
-  {
+const char *const TargetLibraryInfoImpl::StandardNames[LibFunc::NumLibFuncs] = {
 #define TLI_DEFINE_STRING
 #include "llvm/Analysis/TargetLibraryInfo.def"
-  };
+};
 
 static bool hasSinCosPiStret(const Triple &T) {
   // Only Darwin variants have _stret versions of combined trig functions.
@@ -43,7 +42,7 @@ static bool hasSinCosPiStret(const Triple &T) {
 /// specified target triple.  This should be carefully written so that a missing
 /// target triple gets a sane set of defaults.
 static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
-                       const char **StandardNames) {
+                       const char *const *StandardNames) {
 #ifndef NDEBUG
   // Verify that the StandardNames array is in alphabetical order.
   for (unsigned F = 1; F < LibFunc::NumLibFuncs; ++F) {
@@ -401,14 +400,14 @@ static StringRef sanitizeFunctionName(StringRef funcName) {
 
 bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,
                                    LibFunc::Func &F) const {
-  const char **Start = &StandardNames[0];
-  const char **End = &StandardNames[LibFunc::NumLibFuncs];
+  const char *const *Start = &StandardNames[0];
+  const char *const *End = &StandardNames[LibFunc::NumLibFuncs];
 
   funcName = sanitizeFunctionName(funcName);
   if (funcName.empty())
     return false;
 
-  const char **I = std::lower_bound(
+  const char *const *I = std::lower_bound(
       Start, End, funcName, [](const char *LHS, StringRef RHS) {
         return std::strncmp(LHS, RHS.data(), RHS.size()) < 0;
       });
