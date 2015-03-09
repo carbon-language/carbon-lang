@@ -2,12 +2,12 @@ set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangTidyReadabilityModule
   BracesAroundStatementsCheck.cpp
-  ContainerSizeEmpty.cpp
+  ContainerSizeEmptyCheck.cpp
   ElseAfterReturnCheck.cpp
-  FunctionSize.cpp
+  FunctionSizeCheck.cpp
   NamespaceCommentCheck.cpp
   ReadabilityTidyModule.cpp
-  RedundantSmartptrGet.cpp
+  RedundantSmartptrGetCheck.cpp
   ShrinkToFitCheck.cpp
 
   LINK_LIBS

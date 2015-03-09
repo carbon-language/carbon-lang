@@ -1,4 +1,4 @@
-//===--- RedundantSmartptrGet.h - clang-tidy --------------------*- C++ -*-===//
+//===--- RedundantSmartptrGetCheck.h - clang-tidy ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGET_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGET_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGETCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGETCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -22,9 +22,9 @@ namespace readability {
 ///   ptr.get()->Foo()  ==>  ptr->Foo()
 ///   *ptr.get()  ==>  *ptr
 ///   *ptr->get()  ==>  **ptr
-class RedundantSmartptrGet : public ClangTidyCheck {
+class RedundantSmartptrGetCheck : public ClangTidyCheck {
 public:
-  RedundantSmartptrGet(StringRef Name, ClangTidyContext *Context)
+  RedundantSmartptrGetCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -34,5 +34,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGET_H
-
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGETCHECK_H

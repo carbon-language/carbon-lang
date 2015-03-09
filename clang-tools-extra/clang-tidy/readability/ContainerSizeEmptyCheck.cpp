@@ -1,4 +1,4 @@
-//===--- ContainerSizeEmpty.cpp - clang-tidy ------------------------------===//
+//===--- ContainerSizeEmptyCheck.cpp - clang-tidy -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#include "ContainerSizeEmpty.h"
+#include "ContainerSizeEmptyCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"

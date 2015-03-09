@@ -1,4 +1,4 @@
-//===--- RedundantSmartptrGet.cpp - clang-tidy ----------------------------===//
+//===--- RedundantSmartptrGetCheck.cpp - clang-tidy -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "RedundantSmartptrGet.h"
+#include "RedundantSmartptrGetCheck.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
 
@@ -73,7 +73,7 @@ void registerMatchersForGetEquals(MatchFinder *Finder,
 
 }  // namespace
 
-void RedundantSmartptrGet::registerMatchers(MatchFinder *Finder) {
+void RedundantSmartptrGetCheck::registerMatchers(MatchFinder *Finder) {
   registerMatchersForGetArrowStart(Finder, this);
   registerMatchersForGetEquals(Finder, this);
 }
@@ -96,7 +96,7 @@ bool allReturnTypesMatch(const MatchFinder::MatchResult &Result) {
 }
 }  // namespace
 
-void RedundantSmartptrGet::check(const MatchFinder::MatchResult &Result) {
+void RedundantSmartptrGetCheck::check(const MatchFinder::MatchResult &Result) {
   if (!allReturnTypesMatch(Result)) return;
 
   bool IsPtrToPtr = Result.Nodes.getNodeAs<Decl>("ptr_to_ptr") != nullptr;

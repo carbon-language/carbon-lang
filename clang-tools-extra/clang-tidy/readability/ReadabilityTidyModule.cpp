@@ -11,10 +11,10 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "BracesAroundStatementsCheck.h"
-#include "ContainerSizeEmpty.h"
+#include "ContainerSizeEmptyCheck.h"
 #include "ElseAfterReturnCheck.h"
-#include "FunctionSize.h"
-#include "RedundantSmartptrGet.h"
+#include "FunctionSizeCheck.h"
+#include "RedundantSmartptrGetCheck.h"
 #include "ShrinkToFitCheck.h"
 
 namespace clang {
@@ -32,7 +32,7 @@ public:
         "readability-else-after-return");
     CheckFactories.registerCheck<FunctionSizeCheck>(
         "readability-function-size");
-    CheckFactories.registerCheck<RedundantSmartptrGet>(
+    CheckFactories.registerCheck<RedundantSmartptrGetCheck>(
         "readability-redundant-smartptr-get");
     CheckFactories.registerCheck<ShrinkToFitCheck>(
         "readability-shrink-to-fit");

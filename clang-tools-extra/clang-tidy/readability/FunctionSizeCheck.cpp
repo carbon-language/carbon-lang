@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "FunctionSize.h"
+#include "FunctionSizeCheck.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
 using namespace clang::ast_matchers;
