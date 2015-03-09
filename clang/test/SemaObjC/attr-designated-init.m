@@ -39,7 +39,7 @@ __attribute__((objc_root_class))
 @end
 
 @interface B1()
--(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 4 {{method marked as designated initializer of the class here}}
+-(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 6 {{method marked as designated initializer of the class here}}
 @end;
 
 @implementation B1
@@ -182,7 +182,7 @@ __attribute__((objc_root_class))
 -(id)initB1;
 @end
 
-@implementation SS4
+@implementation SS4 // expected-warning {{method override for the designated initializer of the superclass '-initB3' not found}}
 -(id)initB1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
   return 0;
 }
@@ -233,7 +233,7 @@ __attribute__((objc_root_class))
 -(id)initB1;
 @end
 
-@implementation SS9
+@implementation SS9 // expected-warning {{method override for the designated initializer of the superclass '-initB3' not found}}
 -(id)initB1 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
   return 0;
 }
@@ -418,3 +418,41 @@ __attribute__((objc_root_class))
 @interface CategoryForMissingInterface(Cat) // expected-error{{cannot find interface declaration}}
 - (instancetype)init NS_DESIGNATED_INITIALIZER; // expected-error{{only applies to init methods of interface or class extension declarations}}
 @end
+
+// rdar://19653785
+@class NSCoder;
+
+@interface NSView 
+- (instancetype)initWithFrame:(int)frameRect NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
+- (instancetype)initWithCoder:(NSCoder *)coder NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
+@end
+
+@interface MyHappyView : NSView
+- (instancetype)initWithFrame:(int)frameRect andOtherThing:(id)otherThing NS_DESIGNATED_INITIALIZER;
+@end
+
+@implementation MyHappyView // expected-warning {{method override for the designated initializer of the superclass '-initWithCoder:' not found}}
+- (instancetype)initWithFrame:(int)frameRect andOtherThing:(id)otherThing {
+ if (self = [super initWithFrame:frameRect]) {
+ }
+ return self;
+}
+
+- (instancetype)initWithFrame:(int)frameRect {
+ return [self initWithFrame:frameRect andOtherThing:((void *)0)];
+}
+@end
+
+@interface MySadView : NSView
+@end
+
+@implementation MySadView  // expected-warning {{method override for the designated initializer of the superclass '-initWithFrame:' not found}} \
+			   // expected-warning {{method override for the designated initializer of the superclass '-initWithCoder:' not found}}
+- (instancetype)initWithFrame:(int)frameRect andOtherThing:(id)otherThing {
+ if (self = [super initWithFrame:frameRect]) {
+ }
+
+ return self;
+}
+@end
+
