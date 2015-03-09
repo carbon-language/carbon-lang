@@ -38,9 +38,6 @@ defined-atoms:
   - name:            anotherfunction
     scope:           global
     type:            data
-    references:
-      - kind:            layout-before
-        target:          f3
   - name:            f1
     scope:           global
     type:            code
@@ -79,9 +76,5 @@ undefined-atoms:
 #CHECK:   - name:            anotherfunction
 #CHECK:     scope:           global
 #CHECK:     type:            data
-#CHECK:     references:
-#CHECK:       - kind:            layout-before
-#CHECK:         offset:          0
-#CHECK:         target:          f3
 #CHECK: undefined-atoms:
 #CHECK:   - name:            f3
