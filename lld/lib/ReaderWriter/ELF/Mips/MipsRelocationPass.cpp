@@ -587,7 +587,7 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
       refKind == R_MICROMIPS_CALL16 || refKind == R_MICROMIPS_GOT16)
     return true;
 
-  if (refKind != R_MIPS_32)
+  if (refKind != R_MIPS_32 && refKind != R_MIPS_64)
     return false;
   if ((atom.section()->sh_flags & SHF_ALLOC) == 0)
     return false;
