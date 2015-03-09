@@ -58,6 +58,7 @@ bool isPositiveHalfWord(SDNode *N);
       BARRIER,     // Memory barrier
       POPCOUNT,
       COMBINE,
+      PACKHL,
       WrapperJT,
       WrapperCP,
       WrapperCombineII,

@@ -104,10 +104,16 @@ def : T_CMP_pat <C2_cmpgtui, setugt, u9ImmPred>;
 //===----------------------------------------------------------------------===//
 // ALU32/ALU +
 //===----------------------------------------------------------------------===//
+// Add.
+
+def SDT_Int32Leaf  : SDTypeProfile<1, 0, [SDTCisVT<0, i32>]>;
+def SDT_Int32Unary : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
 def SDTHexagonI64I32I32 : SDTypeProfile<1, 2,
   [SDTCisVT<0, i64>, SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
 
 def HexagonCOMBINE : SDNode<"HexagonISD::COMBINE", SDTHexagonI64I32I32>;
+def HexagonPACKHL  : SDNode<"HexagonISD::PACKHL",  SDTHexagonI64I32I32>;
 
 let hasSideEffects = 0, hasNewValue = 1, InputType = "reg" in
 class T_ALU32_3op<string mnemonic, bits<3> MajOp, bits<3> MinOp, bit OpsRev,
@@ -242,6 +248,9 @@ let OutOperandList = (outs DoubleRegs:$Rd), hasNewValue = 0 in {
   def C2_ccombinewnewt : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 0, 1>;
   def C2_ccombinewnewf : T_ALU32_3op_pred<"combine", 0b101, 0b000, 0, 1, 1>;
 }
+
+def: BinOp32_pat<HexagonCOMBINE, A2_combinew, i64>;
+def: BinOp32_pat<HexagonPACKHL,  S2_packhl,   i64>;
 
 let hasSideEffects = 0, hasNewValue = 1, isCompare = 1, InputType = "reg"  in
 class T_ALU32_3op_cmp<string mnemonic, bits<2> MinOp, bit IsNeg, bit IsComm>
@@ -637,9 +646,13 @@ def A2_tfrpi : ALU64_rr<(outs DoubleRegs:$dst), (ins s8Imm64:$src1),
 
 // TODO: see if this instruction can be deleted..
 let isExtendable = 1, opExtendable = 1, opExtentBits = 6,
-    isAsmParserOnly = 1 in
-def TFRI64_V4 : ALU64_rr<(outs DoubleRegs:$dst), (ins u6Ext:$src1),
+    isAsmParserOnly = 1 in {
+def TFRI64_V4 : ALU64_rr<(outs DoubleRegs:$dst), (ins u64Imm:$src1),
                          "$dst = #$src1">;
+def TFRI64_V2_ext : ALU64_rr<(outs DoubleRegs:$dst),
+                             (ins s8Ext:$src1, s8Imm:$src2),
+                             "$dst = combine(##$src1, #$src2)">;
+}
 
 //===----------------------------------------------------------------------===//
 // ALU32/ALU -
@@ -705,6 +718,12 @@ def C2_muxii: ALU32Inst <(outs IntRegs:$Rd),
     let Inst{12-5}  = s8;
     let Inst{4-0}   = Rd;
   }
+
+let isCodeGenOnly = 1, isPseudo = 1 in
+def MUX64_rr : ALU64_rr<(outs DoubleRegs:$Rd),
+               (ins PredRegs:$Pu, DoubleRegs:$Rs, DoubleRegs:$Rt),
+               ".error \"should not emit\" ", []>;
+
 
 //===----------------------------------------------------------------------===//
 // template class for non-predicated alu32_2op instructions
@@ -987,6 +1006,17 @@ def: T_vcmp_pat<A2_vcmpwgtu, setugt, v2i32>;
 //===----------------------------------------------------------------------===//
 // ALU32/PRED +
 //===----------------------------------------------------------------------===//
+// No bits needed.  If cmp.ge is found the assembler parser will
+// transform it to cmp.gt subtracting 1 from the immediate.
+let isPseudo = 1 in {
+def C2_cmpgei: ALU32Inst <
+  (outs PredRegs:$Pd), (ins IntRegs:$Rs, s8Ext:$s8),
+  "$Pd = cmp.ge($Rs, #$s8)">;
+def C2_cmpgeui: ALU32Inst <
+  (outs PredRegs:$Pd), (ins IntRegs:$Rs, u8Ext:$s8),
+  "$Pd = cmp.geu($Rs, #$s8)">;
+}
+
 
 //===----------------------------------------------------------------------===//
 // ALU32/PRED -
@@ -4321,6 +4351,14 @@ def: Pat<(i1 (seteq (and (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), IntRegs:$Rt)),
 // XTYPE/PERM +
 //===----------------------------------------------------------------------===//
 
+def: Pat<(or (or (shl (or (shl (i32 (extloadi8 (add (i32 IntRegs:$b), 3))),
+                               (i32 8)),
+                          (i32 (zextloadi8 (add (i32 IntRegs:$b), 2)))),
+                      (i32 16)),
+                 (shl (i32 (zextloadi8 (add (i32 IntRegs:$b), 1))), (i32 8))),
+             (zextloadi8 (i32 IntRegs:$b))),
+         (A2_swiz (L2_loadri_io IntRegs:$b, 0))>;
+
 //===----------------------------------------------------------------------===//
 // XTYPE/PERM -
 //===----------------------------------------------------------------------===//
@@ -4474,6 +4512,14 @@ def Y2_barrier : SYSInst<(outs), (ins),
 //===----------------------------------------------------------------------===//
 // SYSTEM/SUPER -
 //===----------------------------------------------------------------------===//
+
+// Generate frameindex addresses.
+let isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
+    isPseudo = 1, isCodeGenOnly = 1 in
+def TFR_FI: ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$fi),
+                     ".error",
+                     [(set (i32 IntRegs:$Rd), AddrFI:$fi)]>;
+
 //===----------------------------------------------------------------------===//
 // CRUSER - Type.
 //===----------------------------------------------------------------------===//
@@ -4519,6 +4565,11 @@ class LOOP_rBase<string mnemonic, Operand brOp, bit mustExtend = 0>
 multiclass LOOP_ri<string mnemonic> {
   def i : LOOP_iBase<mnemonic, brtarget>;
   def r : LOOP_rBase<mnemonic, brtarget>;
+
+  let isCodeGenOnly = 1, isExtended = 1, opExtendable = 0 in {
+    def iext: LOOP_iBase<mnemonic, brtargetExt, 1>;
+    def rext: LOOP_rBase<mnemonic, brtargetExt, 1>;
+  }
 }
 
 
@@ -4699,12 +4750,6 @@ def TFR_condset_ii : ALU32_rr<(outs IntRegs:$dst),
                      [(set (i32 IntRegs:$dst),
                            (i32 (select (i1 PredRegs:$src1), s12ImmPred:$src2,
                                         s12ImmPred:$src3)))]>;
-
-// Generate frameindex addresses.
-let isReMaterializable = 1, isCodeGenOnly = 1 in
-def TFR_FI : ALU32_ri<(outs IntRegs:$dst), (ins FrameIndex:$src1),
-             "$dst = add($src1)",
-             [(set (i32 IntRegs:$dst), ADDRri:$src1)]>;
 
 // Support for generating global address.
 // Taken from X86InstrInfo.td.
