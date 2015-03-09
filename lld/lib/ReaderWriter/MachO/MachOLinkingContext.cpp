@@ -214,7 +214,7 @@ void MachOLinkingContext::configure(HeaderFileType type, Arch arch, OS os,
     }
     break;
   case llvm::MachO::MH_DYLIB:
-    _globalsAreDeadStripRoots = true;
+    setGlobalsAreDeadStripRoots(true);
     break;
   case llvm::MachO::MH_BUNDLE:
     break;
@@ -570,7 +570,7 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
       addDeadStripRoot(binderSymbolName());
     // If using -exported_symbols_list, make all exported symbols live.
     if (_exportMode == ExportMode::whiteList) {
-      _globalsAreDeadStripRoots = false;
+      setGlobalsAreDeadStripRoots(false);
       for (const auto &symbol : _exportedSymbols)
         addDeadStripRoot(symbol.getKey());
     }
