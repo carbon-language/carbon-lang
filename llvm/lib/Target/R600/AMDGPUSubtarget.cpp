@@ -70,7 +70,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
       CaymanISA(false), FlatAddressSpace(false), EnableIRStructurizer(true),
       EnablePromoteAlloca(false), EnableIfCvt(true), EnableLoadStoreOpt(false),
       WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
-      EnableVGPRSpilling(false),
+      EnableVGPRSpilling(false), SGPRInitBug(false),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
