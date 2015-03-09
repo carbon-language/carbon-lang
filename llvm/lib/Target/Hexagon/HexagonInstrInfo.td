@@ -4771,30 +4771,29 @@ def HI_PIC : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
              "$dst.h = #HI($label@GOTREL)",
              []>;
 
-let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def LOi : ALU32_ri<(outs IntRegs:$dst), (ins i32imm:$imm_value),
-                  "$dst.l = #LO($imm_value)",
-                  []>;
+let isReMaterializable = 1, isMoveImm = 1,
+    isCodeGenOnly = 1, hasSideEffects = 0 in
+def HI_GOT : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
+             "$dst.h = #HI($global@GOT)",
+             []>;
 
+let isReMaterializable = 1, isMoveImm = 1,
+    isCodeGenOnly = 1, hasSideEffects = 0 in
+def LO_GOT : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
+             "$dst.l = #LO($global@GOT)",
+             []>;
 
-let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def HIi : ALU32_ri<(outs IntRegs:$dst), (ins i32imm:$imm_value),
-                  "$dst.h = #HI($imm_value)",
-                  []>;
+let isReMaterializable = 1, isMoveImm = 1,
+    isCodeGenOnly = 1, hasSideEffects = 0 in
+def HI_GOTREL : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
+                "$dst.h = #HI($global@GOTREL)",
+                []>;
 
-let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def LO_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
-                  "$dst.l = #LO($jt)",
-                  []>;
-
-let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def HI_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
-                  "$dst.h = #HI($jt)",
-                  []>;
+let isReMaterializable = 1, isMoveImm = 1,
+    isCodeGenOnly = 1, hasSideEffects = 0 in
+def LO_GOTREL : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
+               "$dst.l = #LO($global@GOTREL)",
+               []>;
 
 // This pattern is incorrect. When we add small data, we should change
 // this pattern to use memw(#foo).
