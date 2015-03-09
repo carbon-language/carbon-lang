@@ -1,7 +1,10 @@
 ; RUN: llc -generate-arange-section < %s | FileCheck %s
 
+; CHECK: .Ldebug_end0:
+; CHECK-NEXT: .section .debug_aranges,"",@progbits
+
 ; First CU
-; CHECK:      .long   44                      # Length of ARange Set
+; CHECK-NEXT: .long   44                      # Length of ARange Set
 ; CHECK-NEXT: .short  2                       # DWARF Arange version number
 ; CHECK-NEXT: .long   .L.debug_info_begin0    # Offset Into Debug Info Section
 ; CHECK-NEXT: .byte   8                       # Address Size (in bytes)

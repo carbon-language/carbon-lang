@@ -1741,9 +1741,6 @@ void DwarfDebug::emitDebugARanges() {
   // Provides a unique id per text section.
   DenseMap<const MCSection *, SmallVector<SymbolCU, 8>> SectionMap;
 
-  // Prime section data.
-  SectionMap[Asm->getObjFileLowering().getTextSection()];
-
   // Filter labels by section.
   for (const SymbolCU &SCU : ArangeLabels) {
     if (SCU.Sym->isInSection()) {
