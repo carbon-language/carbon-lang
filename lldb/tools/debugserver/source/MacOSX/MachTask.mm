@@ -202,7 +202,7 @@ MachTask::ReadMemory (nub_addr_t addr, nub_size_t size, void *buf)
         if (DNBLogCheckLogBit(LOG_MEMORY_DATA_LONG) || (DNBLogCheckLogBit(LOG_MEMORY_DATA_SHORT) && size <= 8))
         {
             DNBDataRef data((uint8_t*)buf, n, false);
-            data.Dump(0, n, addr, DNBDataRef::TypeUInt8, 16);
+            data.Dump(0, static_cast<DNBDataRef::offset_t>(n), addr, DNBDataRef::TypeUInt8, 16);
         }
     }
     return n;
@@ -224,7 +224,7 @@ MachTask::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
         if (DNBLogCheckLogBit(LOG_MEMORY_DATA_LONG) || (DNBLogCheckLogBit(LOG_MEMORY_DATA_SHORT) && size <= 8))
         {
             DNBDataRef data((uint8_t*)buf, n, false);
-            data.Dump(0, n, addr, DNBDataRef::TypeUInt8, 16);
+            data.Dump(0, static_cast<DNBDataRef::offset_t>(n), addr, DNBDataRef::TypeUInt8, 16);
         }
     }
     return n;
@@ -411,8 +411,8 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
         
         if (scanType & eProfileThreadsCPU)
         {
-            int num_threads = threads_id.size();
-            for (int i=0; i<num_threads; i++)
+            const size_t num_threads = threads_id.size();
+            for (size_t i=0; i<num_threads; i++)
             {
                 profile_data_stream << "thread_used_id:" << std::hex << threads_id[i] << std::dec << ';';
                 profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
@@ -420,7 +420,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
                 if (scanType & eProfileThreadName)
                 {
                     profile_data_stream << "thread_used_name:";
-                    int len = threads_name[i].size();
+                    const size_t len = threads_name[i].size();
                     if (len)
                     {
                         const char *thread_name = threads_name[i].c_str();
@@ -890,7 +890,6 @@ MachTask::ExceptionThread (void *arg)
                     // Our task has died, exit the thread.
                     break;
                 }
-                continue;
             }
 
 #if defined (WITH_SPRINGBOARD) && !defined (WITH_BKS)

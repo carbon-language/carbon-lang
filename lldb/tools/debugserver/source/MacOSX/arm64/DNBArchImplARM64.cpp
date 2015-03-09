@@ -1722,7 +1722,7 @@ DNBArchMachARM64::FixGenericRegisterNumber (int &set, int &reg)
     return true;
 }
 bool
-DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
+DNBArchMachARM64::GetRegisterValue(uint32_t set, uint32_t reg, DNBRegisterValue *value)
 {
     if (!FixGenericRegisterNumber (set, reg))
         return false;
@@ -1821,7 +1821,7 @@ DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
 }
 
 bool
-DNBArchMachARM64::SetRegisterValue(int set, int reg, const DNBRegisterValue *value)
+DNBArchMachARM64::SetRegisterValue(uint32_t set, uint32_t reg, const DNBRegisterValue *value)
 {
     if (!FixGenericRegisterNumber (set, reg))
         return false;

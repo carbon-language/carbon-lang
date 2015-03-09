@@ -295,7 +295,7 @@ DNBArchImplI386::SetPC(uint64_t value)
     kern_return_t err = GetGPRState(false);
     if (err == KERN_SUCCESS)
     {
-        m_state.context.gpr.__eip = value;
+        m_state.context.gpr.__eip = static_cast<uint32_t>(value);
         err = SetGPRState();
     }
     return err == KERN_SUCCESS;
@@ -670,7 +670,7 @@ DNBArchImplI386::NotifyException(MachException::Data& exc)
                     // is at the address following the single byte trap instruction.
                     if (m_state.context.gpr.__eip > 0)
                     {
-                        m_state.context.gpr.__eip = pc;
+                        m_state.context.gpr.__eip = static_cast<uint32_t>(pc);
                         // Write the new PC back out
                         SetGPRState ();
                     }
@@ -1282,7 +1282,7 @@ DNBArchImplI386::Initialize()
 }
 
 bool
-DNBArchImplI386::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
+DNBArchImplI386::GetRegisterValue(uint32_t set, uint32_t reg, DNBRegisterValue *value)
 {
     if (set == REGISTER_SET_GENERIC)
     {
@@ -1429,7 +1429,7 @@ DNBArchImplI386::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
 
 
 bool
-DNBArchImplI386::SetRegisterValue(int set, int reg, const DNBRegisterValue *value)
+DNBArchImplI386::SetRegisterValue(uint32_t set, uint32_t reg, const DNBRegisterValue *value)
 {
     if (set == REGISTER_SET_GENERIC)
     {
@@ -1617,7 +1617,7 @@ DNBArchImplI386::GetRegisterContext (void *buf, nub_size_t buf_len)
     if (buf && buf_len)
     {
         if (size > buf_len)
-            size = buf_len;
+            size = static_cast<uint32_t>(buf_len);
 
         bool force = false;
         kern_return_t kret;

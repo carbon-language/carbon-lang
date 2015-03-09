@@ -53,8 +53,8 @@ public:
     static const DNBRegisterSetInfo *
     GetRegisterSetInfo(nub_size_t *num_reg_sets);
 
-    virtual bool            GetRegisterValue(int set, int reg, DNBRegisterValue *value);
-    virtual bool            SetRegisterValue(int set, int reg, const DNBRegisterValue *value);
+    virtual bool            GetRegisterValue(uint32_t set, uint32_t reg, DNBRegisterValue *value);
+    virtual bool            SetRegisterValue(uint32_t set, uint32_t reg, const DNBRegisterValue *value);
     virtual nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
     virtual nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
     virtual uint32_t        SaveRegisterState ();

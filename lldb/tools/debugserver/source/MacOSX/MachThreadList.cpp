@@ -200,21 +200,21 @@ MachThreadList::GetMachPortNumberByThreadID (nub_thread_t globally_unique_id) co
 }
 
 bool
-MachThreadList::GetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value ) const
+MachThreadList::GetRegisterValue (nub_thread_t tid, uint32_t set, uint32_t reg, DNBRegisterValue *reg_value ) const
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
-        return thread_sp->GetRegisterValue(reg_set_idx, reg_idx, reg_value);
+        return thread_sp->GetRegisterValue(set, reg, reg_value);
 
     return false;
 }
 
 bool
-MachThreadList::SetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value ) const
+MachThreadList::SetRegisterValue (nub_thread_t tid, uint32_t set, uint32_t reg, const DNBRegisterValue *reg_value ) const
 {
     MachThreadSP thread_sp (GetThreadByID (tid));
     if (thread_sp)
-        return thread_sp->SetRegisterValue(reg_set_idx, reg_idx, reg_value);
+        return thread_sp->SetRegisterValue(set, reg, reg_value);
 
     return false;
 }
@@ -387,7 +387,7 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
                              thread_list_size);
         }
     }
-    return m_threads.size();
+    return static_cast<uint32_t>(m_threads.size());
 }
 
 
@@ -401,7 +401,7 @@ MachThreadList::CurrentThread (MachThreadSP& thread_sp)
         // Figure out which thread is going to be our current thread.
         // This is currently done by finding the first thread in the list
         // that has a valid exception.
-        const uint32_t num_threads = m_threads.size();
+        const size_t num_threads = m_threads.size();
         for (uint32_t idx = 0; idx < num_threads; ++idx)
         {
             if (m_threads[idx]->GetStopException().IsValid())
@@ -418,7 +418,7 @@ void
 MachThreadList::Dump() const
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
-    const uint32_t num_threads = m_threads.size();
+    const size_t num_threads = m_threads.size();
     for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         m_threads[idx]->Dump(idx);
@@ -463,8 +463,8 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
     if (run_one_thread)
         resume_new_threads.state = eStateSuspended;
 
-    const uint32_t num_new_threads = new_threads.size();
-    const uint32_t num_threads = m_threads.size();
+    const size_t num_new_threads = new_threads.size();
+    const size_t num_threads = m_threads.size();
     for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         MachThread *thread = m_threads[idx].get();
@@ -533,7 +533,7 @@ MachThreadList::ShouldStop(bool &step_more)
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     uint32_t should_stop = false;
-    const uint32_t num_threads = m_threads.size();
+    const size_t num_threads = m_threads.size();
     for (uint32_t idx = 0; !should_stop && idx < num_threads; ++idx)
     {
         should_stop = m_threads[idx]->ShouldStop(step_more);
@@ -546,7 +546,7 @@ void
 MachThreadList::NotifyBreakpointChanged (const DNBBreakpoint *bp)
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
-    const uint32_t num_threads = m_threads.size();
+    const size_t num_threads = m_threads.size();
     for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         m_threads[idx]->NotifyBreakpointChanged(bp);
@@ -559,7 +559,7 @@ MachThreadList::EnableHardwareBreakpoint (const DNBBreakpoint* bp) const
 {
     if (bp != NULL)
     {
-        const uint32_t num_threads = m_threads.size();
+        const size_t num_threads = m_threads.size();
         for (uint32_t idx = 0; idx < num_threads; ++idx)
             m_threads[idx]->EnableHardwareBreakpoint(bp);
     }
@@ -571,7 +571,7 @@ MachThreadList::DisableHardwareBreakpoint (const DNBBreakpoint* bp) const
 {
     if (bp != NULL)
     {
-        const uint32_t num_threads = m_threads.size();
+        const size_t num_threads = m_threads.size();
         for (uint32_t idx = 0; idx < num_threads; ++idx)
             m_threads[idx]->DisableHardwareBreakpoint(bp);
     }
@@ -587,7 +587,7 @@ MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
     if (wp != NULL)
     {
         PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
-        const uint32_t num_threads = m_threads.size();
+        const size_t num_threads = m_threads.size();
         // On Mac OS X we have to prime the control registers for new threads.  We do this
         // using the control register data for the first thread, for lack of a better way of choosing.
         bool also_set_on_task = true;
@@ -616,7 +616,7 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
     if (wp != NULL)
     {
         PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
-        const uint32_t num_threads = m_threads.size();
+        const size_t num_threads = m_threads.size();
         
         // On Mac OS X we have to prime the control registers for new threads.  We do this
         // using the control register data for the first thread, for lack of a better way of choosing.
@@ -645,7 +645,7 @@ uint32_t
 MachThreadList::NumSupportedHardwareWatchpoints () const
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
-    const uint32_t num_threads = m_threads.size();
+    const size_t num_threads = m_threads.size();
     // Use an arbitrary thread to retrieve the number of supported hardware watchpoints.
     if (num_threads)
         return m_threads[0]->NumSupportedHardwareWatchpoints();
@@ -657,7 +657,7 @@ MachThreadList::GetThreadIndexForThreadStoppedWithSignal (const int signo) const
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     uint32_t should_stop = false;
-    const uint32_t num_threads = m_threads.size();
+    const size_t num_threads = m_threads.size();
     for (uint32_t idx = 0; !should_stop && idx < num_threads; ++idx)
     {
         if (m_threads[idx]->GetStopException().SoftSignal () == signo)

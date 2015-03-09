@@ -180,27 +180,39 @@ MachVMMemory::GetStolenPages(task_t task)
         
 		/* These are all declared as QUAD/uint64_t sysctls in the kernel. */
         
-		if(-1 == sysctl(mib_reserved, mib_reserved_len, &reserved,
-                        &reserved_len, NULL, 0))
+		if (sysctl (mib_reserved,
+                    static_cast<u_int>(mib_reserved_len),
+                    &reserved,
+                    &reserved_len,
+                    NULL,
+                    0))
         {
 			return 0;
 		}
         
-		if(-1 == sysctl(mib_unusable, mib_unusable_len, &unusable,
-                        &unusable_len, NULL, 0))
+		if (sysctl (mib_unusable,
+                    static_cast<u_int>(mib_unusable_len),
+                    &unusable,
+                    &unusable_len,
+                    NULL,
+                    0))
         {
 			return 0;
 		}
         
-		if(-1 == sysctl(mib_other, mib_other_len, &other,
-                        &other_len, NULL, 0))
+		if (sysctl (mib_other,
+                    static_cast<u_int>(mib_other_len),
+                    &other,
+                    &other_len,
+                    NULL,
+                    0))
         {
 			return 0;
 		}
         
-		if(reserved_len == sizeof(reserved)
-		   && unusable_len == sizeof(unusable)
-		   && other_len == sizeof(other))
+		if (reserved_len == sizeof(reserved) &&
+		    unusable_len == sizeof(unusable) &&
+            other_len == sizeof(other))
         {
 			uint64_t stolen = reserved + unusable + other;	
 			uint64_t mb128 = 128 * 1024 * 1024ULL;
@@ -546,7 +558,7 @@ MachVMMemory::WriteRegion(task_t task, const nub_addr_t address, const void *dat
     const uint8_t *curr_data = (const uint8_t*)data;
     while (total_bytes_written < data_count)
     {
-        mach_msg_type_number_t curr_data_count = MaxBytesLeftInPage(task, curr_addr, data_count - total_bytes_written);
+        mach_msg_type_number_t curr_data_count = static_cast<mach_msg_type_number_t>(MaxBytesLeftInPage(task, curr_addr, data_count - total_bytes_written));
         m_err = ::mach_vm_write (task, curr_addr, (pointer_t) curr_data, curr_data_count);
         if (DNBLogCheckLogBit(LOG_MEMORY) || m_err.Fail())
             m_err.LogThreaded("::mach_vm_write ( task = 0x%4.4x, addr = 0x%8.8llx, data = %8.8p, dataCnt = %u )", task, (uint64_t)curr_addr, curr_data, curr_data_count);

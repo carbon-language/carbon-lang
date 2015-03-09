@@ -1738,7 +1738,7 @@ DNBArchMachARM::GetRegisterSetInfo(nub_size_t *num_reg_sets)
 }
 
 bool
-DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
+DNBArchMachARM::GetRegisterValue(uint32_t set, uint32_t reg, DNBRegisterValue *value)
 {
     if (set == REGISTER_SET_GENERIC)
     {
@@ -1861,7 +1861,7 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
 }
 
 bool
-DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value)
+DNBArchMachARM::SetRegisterValue(uint32_t set, uint32_t reg, const DNBRegisterValue *value)
 {
     if (set == REGISTER_SET_GENERIC)
     {

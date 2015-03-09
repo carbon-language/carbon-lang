@@ -22,7 +22,7 @@
 #pragma mark -- DNBBreakpoint
 DNBBreakpoint::DNBBreakpoint(nub_addr_t addr, nub_size_t byte_size, bool hardware) :
     m_retain_count (1),
-    m_byte_size (byte_size),
+    m_byte_size (static_cast<uint32_t>(byte_size)),
     m_opcode(),
     m_addr(addr),
     m_enabled(0),

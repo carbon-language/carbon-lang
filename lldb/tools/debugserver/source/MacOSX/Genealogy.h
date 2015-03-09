@@ -85,7 +85,7 @@ public:
     typedef std::shared_ptr<ProcessExecutableInfo> ProcessExecutableInfoSP;
 
     ProcessExecutableInfoSP
-    GetProcessExecutableInfosAtIndex(uint32_t idx);
+    GetProcessExecutableInfosAtIndex(size_t idx);
 
     uint32_t
     AddProcessExecutableInfo(ProcessExecutableInfoSP process_exe_info);

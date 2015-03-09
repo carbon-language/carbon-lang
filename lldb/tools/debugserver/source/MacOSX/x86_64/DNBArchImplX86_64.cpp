@@ -1602,7 +1602,7 @@ DNBArchImplX86_64::Initialize()
 }
 
 bool
-DNBArchImplX86_64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
+DNBArchImplX86_64::GetRegisterValue(uint32_t set, uint32_t reg, DNBRegisterValue *value)
 {
     if (set == REGISTER_SET_GENERIC)
     {
@@ -1781,7 +1781,7 @@ DNBArchImplX86_64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
 
 
 bool
-DNBArchImplX86_64::SetRegisterValue(int set, int reg, const DNBRegisterValue *value)
+DNBArchImplX86_64::SetRegisterValue(uint32_t set, uint32_t reg, const DNBRegisterValue *value)
 {
     if (set == REGISTER_SET_GENERIC)
     {
@@ -2109,7 +2109,7 @@ DNBArchImplX86_64::SetRegisterContext (const void *buf, nub_size_t buf_len)
     if (size)
     {
         if (size > buf_len)
-            size = buf_len;
+            size = static_cast<uint32_t>(buf_len);
 
         uint8_t *p = (uint8_t *)buf;
         // Copy the GPR registers

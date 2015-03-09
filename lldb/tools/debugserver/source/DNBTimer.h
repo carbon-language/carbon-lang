@@ -83,7 +83,7 @@ public:
         }
 
         void
-        GetTime (uint32_t& sec, uint32_t& usec) const
+        GetTime (uint64_t& sec, uint32_t& usec) const
         {
             PTHREAD_MUTEX_LOCKER (locker, m_mutexAP.get());
             sec = m_timeval.tv_sec;

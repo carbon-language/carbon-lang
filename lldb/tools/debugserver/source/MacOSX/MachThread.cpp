@@ -97,7 +97,7 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
     if (MachPortNumberIsValid(m_mach_port_number) == false)
         return false;
         
-    size_t times_to_resume;
+    integer_t times_to_resume;
         
     if (others_stopped)
     {
@@ -538,7 +538,7 @@ MachThread::SetState(nub_state_t state)
     DNBLogThreadedIf(LOG_THREAD, "MachThread::SetState ( %s ) for tid = 0x%8.8" PRIx64 "", DNBStateAsString(state), m_unique_id);
 }
 
-uint32_t
+nub_size_t
 MachThread::GetNumRegistersInSet(int regSet) const
 {
     if (regSet < m_num_reg_sets)
@@ -575,7 +575,7 @@ MachThread::DumpRegisterState(int regSet)
         if (m_arch_ap->RegisterSetStateIsValid(regSet))
         {
             const size_t numRegisters = GetNumRegistersInSet(regSet);
-            size_t regIndex = 0;
+            uint32_t regIndex = 0;
             DNBRegisterValueClass reg;
             for (regIndex = 0; regIndex < numRegisters; ++regIndex)
             {

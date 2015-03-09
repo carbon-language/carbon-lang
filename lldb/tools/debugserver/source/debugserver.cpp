@@ -684,7 +684,7 @@ PortWasBoundCallbackUnixSocket (const void *baton, in_port_t port)
         saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
         saddr_un.sun_len = SUN_LEN (&saddr_un);
         
-        if (::connect (s, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) < 0)
+        if (::connect (s, (struct sockaddr *)&saddr_un, static_cast<socklen_t>(SUN_LEN (&saddr_un))) < 0)
         {
             perror("error: connect (socket, &saddr_un, saddr_un_len)");
             exit(1);
@@ -699,7 +699,7 @@ PortWasBoundCallbackUnixSocket (const void *baton, in_port_t port)
         
         char pid_str[64];
         const int pid_str_len = ::snprintf (pid_str, sizeof(pid_str), "%u", port);
-        const int bytes_sent = ::send (s, pid_str, pid_str_len, 0);
+        const ssize_t bytes_sent = ::send (s, pid_str, pid_str_len, 0);
         
         if (pid_str_len != bytes_sent)
         {
@@ -1014,7 +1014,7 @@ main (int argc, char *argv[])
                     if (isdigit(optarg[0]))
                     {
                         char *end = NULL;
-                        attach_pid = strtoul(optarg, &end, 0);
+                        attach_pid = static_cast<int>(strtoul(optarg, &end, 0));
                         if (end == NULL || *end != '\0')
                         {
                             RNBLogSTDERR ("error: invalid pid option '%s'\n", optarg);
@@ -1043,7 +1043,7 @@ main (int argc, char *argv[])
                 if (optarg && optarg[0])
                 {
                     char *end = NULL;
-                    waitfor_interval = strtoul(optarg, &end, 0);
+                    waitfor_interval = static_cast<useconds_t>(strtoul(optarg, &end, 0));
                     if (end == NULL || *end != '\0')
                     {
                         RNBLogSTDERR ("error: invalid waitfor-interval option value '%s'.\n", optarg);
@@ -1057,7 +1057,7 @@ main (int argc, char *argv[])
                 if (optarg && optarg[0])
                 {
                     char *end = NULL;
-                    waitfor_duration = strtoul(optarg, &end, 0);
+                    waitfor_duration = static_cast<useconds_t>(strtoul(optarg, &end, 0));
                     if (end == NULL || *end != '\0')
                     {
                         RNBLogSTDERR ("error: invalid waitfor-duration option value '%s'.\n", optarg);
@@ -1134,7 +1134,7 @@ main (int argc, char *argv[])
 
             case 'f': // Log Flags
                 if (optarg && optarg[0])
-                    log_flags = strtoul(optarg, NULL, 0);
+                    log_flags = static_cast<uint32_t>(strtoul(optarg, NULL, 0));
                 break;
 
             case 'g':

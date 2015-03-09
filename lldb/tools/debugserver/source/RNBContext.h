@@ -85,13 +85,13 @@ public:
     nub_event_t     StickyEventBits() const { return sticky_event_bits; }
     const char*     EventsAsString (nub_event_t events, std::string& s);
 
-    int             ArgumentCount () const { return m_arg_vec.size(); }
-    const char *    ArgumentAtIndex (int index);
+    size_t          ArgumentCount () const { return m_arg_vec.size(); }
+    const char *    ArgumentAtIndex (size_t index);
     void            PushArgument (const char *arg) { if (arg) m_arg_vec.push_back (arg); }
     void            ClearArgv () { m_arg_vec.erase (m_arg_vec.begin(), m_arg_vec.end()); }
 
-    int             EnvironmentCount () const { return m_env_vec.size(); }
-    const char *    EnvironmentAtIndex (int index);
+    size_t          EnvironmentCount () const { return m_env_vec.size(); }
+    const char *    EnvironmentAtIndex (size_t index);
     void            PushEnvironment (const char *arg) { if (arg) m_env_vec.push_back (arg); }
     void            ClearEnvironment () { m_env_vec.erase (m_env_vec.begin(), m_env_vec.end()); }
     DNBError&       LaunchStatus () { return m_launch_status; }

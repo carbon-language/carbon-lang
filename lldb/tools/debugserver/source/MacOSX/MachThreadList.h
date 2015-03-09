@@ -27,8 +27,8 @@ public:
 
     void            Clear ();
     void            Dump () const;
-    bool            GetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value) const;
-    bool            SetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value) const;
+    bool            GetRegisterValue (nub_thread_t tid, uint32_t set, uint32_t reg, DNBRegisterValue *reg_value) const;
+    bool            SetRegisterValue (nub_thread_t tid, uint32_t set, uint32_t reg, const DNBRegisterValue *reg_value) const;
     nub_size_t      GetRegisterContext (nub_thread_t tid, void *buf, size_t buf_len);
     nub_size_t      SetRegisterContext (nub_thread_t tid, const void *buf, size_t buf_len);
     uint32_t        SaveRegisterState (nub_thread_t tid);

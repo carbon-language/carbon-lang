@@ -395,10 +395,10 @@ RNBRemote::GetPacketPayload (std::string &return_packet)
 
         case '$':
         {
-            int packet_checksum = 0;
+            long packet_checksum = 0;
             if (!m_noack_mode)
             {
-                for (int i = return_packet.size() - 2; i < return_packet.size(); ++i)
+                for (size_t i = return_packet.size() - 2; i < return_packet.size(); ++i)
                 {
                     char checksum_char = tolower (return_packet[i]);
                     if (!isxdigit (checksum_char))
@@ -432,7 +432,7 @@ RNBRemote::GetPacketPayload (std::string &return_packet)
                 }
                 else
                 {
-                    DNBLogThreadedIf (LOG_RNB_MEDIUM, "%8u RNBRemote::%s sending ACK for '%s' (error: packet checksum mismatch  (0x%2.2x != 0x%2.2x))",
+                    DNBLogThreadedIf (LOG_RNB_MEDIUM, "%8u RNBRemote::%s sending ACK for '%s' (error: packet checksum mismatch  (0x%2.2lx != 0x%2.2x))",
                                       (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true),
                                       __FUNCTION__,
                                       return_packet.c_str(),
@@ -615,7 +615,7 @@ RNBRemote::CommDataReceived(const std::string& new_data)
         data += new_data;
 
         // Parse up the packets into gdb remote packets
-        uint32_t idx = 0;
+        size_t idx = 0;
         const size_t data_size = data.size();
 
         while (idx < data_size)
@@ -1120,7 +1120,7 @@ RNBRemote::HandlePacket_A (const char *p)
 
     while (*buf != '\0')
     {
-        int arglen, argnum;
+        unsigned long arglen, argnum;
         std::string arg;
         char *c;
 
@@ -1158,7 +1158,7 @@ RNBRemote::HandlePacket_A (const char *p)
             smallbuf[2] = '\0';
 
             errno = 0;
-            int ch = strtoul (smallbuf, NULL, 16);
+            int ch = static_cast<int>(strtoul (smallbuf, NULL, 16));
             if (errno != 0 && ch == 0)
             {
                 return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'A' pkt");
@@ -1424,7 +1424,7 @@ RNBRemote::HandlePacket_qRcmd (const char *p)
     {
         char smallbuf[3] = { c[0], c[1], '\0' };
         errno = 0;
-        int ch = strtoul (smallbuf, NULL, 16);
+        int ch = static_cast<int>(strtoul (smallbuf, NULL, 16));
         if (errno != 0 && ch == 0)
             return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in payload of qRcmd packet");
         line.push_back(ch);
@@ -1452,7 +1452,7 @@ RNBRemote::HandlePacket_qRcmd (const char *p)
             {
                 char *end;
                 errno = 0;
-                uint32_t logmask = strtoul (value.c_str(), &end, 0);
+                uint32_t logmask = static_cast<uint32_t>(strtoul (value.c_str(), &end, 0));
                 if (errno == 0 && end && *end == '\0')
                 {
                     DNBLogSetLogMask (logmask);
@@ -1461,7 +1461,7 @@ RNBRemote::HandlePacket_qRcmd (const char *p)
                     return SendPacket ("OK");
                 }
                 errno = 0;
-                logmask = strtoul (value.c_str(), &end, 16);
+                logmask = static_cast<uint32_t>(strtoul (value.c_str(), &end, 16));
                 if (errno == 0 && end && *end == '\0')
                 {
                     DNBLogSetLogMask (logmask);
@@ -1522,7 +1522,7 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
 
     nub_size_t num_reg_sets = 0;
     const DNBRegisterSetInfo *reg_set_info = DNBGetRegisterSetInfo (&num_reg_sets);
-    uint32_t reg_num = strtoul(p, 0, 16);
+    uint32_t reg_num = static_cast<uint32_t>(strtoul(p, 0, 16));
 
     if (reg_num < g_num_reg_entries)
     {
@@ -2087,7 +2087,7 @@ RNBRemote::HandlePacket_QSetMaxPayloadSize (const char *p)
      in this size.  */
     p += sizeof ("QSetMaxPayloadSize:") - 1;
     errno = 0;
-    uint32_t size = strtoul (p, NULL, 16);
+    uint32_t size = static_cast<uint32_t>(strtoul (p, NULL, 16));
     if (errno != 0 && size == 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in QSetMaxPayloadSize packet");
@@ -2104,7 +2104,7 @@ RNBRemote::HandlePacket_QSetMaxPacketSize (const char *p)
      QSetMaxPayloadSize is preferred because it is less ambiguous.  */
     p += sizeof ("QSetMaxPacketSize:") - 1;
     errno = 0;
-    uint32_t size = strtoul (p, NULL, 16);
+    uint32_t size = static_cast<uint32_t>(strtoul (p, NULL, 16));
     if (errno != 0 && size == 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in QSetMaxPacketSize packet");
@@ -2165,7 +2165,7 @@ RNBRemote::HandlePacket_QEnvironmentHexEncoded (const char *p)
         smallbuf[1] = *(c + 1);
         smallbuf[2] = '\0';
         errno = 0;
-        int ch = strtoul (smallbuf, NULL, 16);
+        int ch = static_cast<int>(strtoul (smallbuf, NULL, 16));
         if (errno != 0 && ch == 0)
           {
             return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'QEnvironmentHexEncoded' pkt");
@@ -2217,7 +2217,7 @@ append_hex_value (std::ostream& ostrm, const uint8_t* buf, size_t buf_size, bool
     int i;
     if (swap)
     {
-        for (i = buf_size-1; i >= 0; i--)
+        for (i = static_cast<int>(buf_size)-1; i >= 0; i--)
             ostrm << RAWHEX8(buf[i]);
     }
     else
@@ -2330,7 +2330,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
             case EXC_SOFTWARE:
                 if (tid_stop_info.details.exception.data_count == 2 &&
                     tid_stop_info.details.exception.data[0] == EXC_SOFT_SIGNAL)
-                    signum = tid_stop_info.details.exception.data[1];
+                    signum = static_cast<int>(tid_stop_info.details.exception.data[1]);
                 else
                     signum = TARGET_EXC_SOFTWARE;
                 break;
@@ -2540,7 +2540,7 @@ RNBRemote::HandlePacket_M (const char *p)
     p += (c - p) + 1;
 
     errno = 0;
-    uint32_t length = strtoul (p, &c, 16);
+    unsigned long length = strtoul (p, &c, 16);
     if (errno != 0 && length == 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in M packet");
@@ -2557,7 +2557,7 @@ RNBRemote::HandlePacket_M (const char *p)
     /* Advance 'p' to the data part of the packet.  */
     p += (c - p) + 1;
 
-    int datalen = strlen (p);
+    size_t datalen = strlen (p);
     if (datalen & 0x1)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Uneven # of hex chars for data in M packet");
@@ -2619,7 +2619,7 @@ RNBRemote::HandlePacket_m (const char *p)
     p += (c - p) + 1;
 
     errno = 0;
-    uint32_t length = strtoul (p, NULL, 16);
+    auto length = strtoul (p, NULL, 16);
     if (errno != 0 && length == 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in m packet");
@@ -2634,7 +2634,7 @@ RNBRemote::HandlePacket_m (const char *p)
     {
         return SendPacket ("E78");
     }
-    int bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, buf.size(), &buf[0]);
+    nub_size_t bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, buf.size(), &buf[0]);
     if (bytes_read == 0)
     {
         return SendPacket ("E08");
@@ -2686,7 +2686,7 @@ RNBRemote::HandlePacket_x (const char *p)
     p += (c - p) + 1;
 
     errno = 0;
-    int length = strtoul (p, NULL, 16);
+    auto length = strtoul (p, NULL, 16);
     if (errno != 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in x packet");
@@ -2704,7 +2704,7 @@ RNBRemote::HandlePacket_x (const char *p)
     {
         return SendPacket ("E79");
     }
-    int bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, buf.size(), &buf[0]);
+    nub_size_t bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, buf.size(), &buf[0]);
     if (bytes_read == 0)
     {
         return SendPacket ("E80");
@@ -2760,7 +2760,7 @@ RNBRemote::HandlePacket_X (const char *p)
     p += (c - p) + 1;
 
     errno = 0;
-    int length = strtoul (p, NULL, 16);
+    auto length = strtoul (p, NULL, 16);
     if (errno != 0 && length == 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in X packet");
@@ -3067,7 +3067,7 @@ GetProcessNameFrom_vAttach (const char *&p, std::string &attach_name)
         smallbuf[2] = '\0';
 
         errno = 0;
-        int ch = strtoul (smallbuf, NULL, 16);
+        int ch = static_cast<int>(strtoul (smallbuf, NULL, 16));
         if (errno != 0 && ch == 0)
         {
             return_val = false;
@@ -3145,7 +3145,7 @@ RNBRemote::HandlePacket_v (const char *p)
             {
                 case 'C':
                     errno = 0;
-                    thread_action.signal = strtoul (c, &c, 16);
+                    thread_action.signal = static_cast<int>(strtoul (c, &c, 16));
                     if (errno != 0)
                         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in vCont packet");
                     // Fall through to next case...
@@ -3157,7 +3157,7 @@ RNBRemote::HandlePacket_v (const char *p)
 
                 case 'S':
                     errno = 0;
-                    thread_action.signal = strtoul (c, &c, 16);
+                    thread_action.signal = static_cast<int>(strtoul (c, &c, 16));
                     if (errno != 0)
                         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in vCont packet");
                     // Fall through to next case...
@@ -3232,7 +3232,7 @@ RNBRemote::HandlePacket_v (const char *p)
         {
             p += strlen("vAttach;");
             char *end = NULL;
-            attach_pid = strtoul (p, &end, 16);    // PID will be in hex, so use base 16 to decode
+            attach_pid = static_cast<int>(strtoul (p, &end, 16));    // PID will be in hex, so use base 16 to decode
             if (p != end && *end == '\0')
             {
                 // Wait at most 30 second for attach
@@ -3331,7 +3331,7 @@ RNBRemote::HandlePacket_z (const char *p)
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma separator missing in z packet");
 
     errno = 0;
-    uint32_t byte_size = strtoul (p, &c, 16);
+    auto byte_size = strtoul (p, &c, 16);
     if (errno != 0 && byte_size == 0)
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in z packet");
 
@@ -3472,7 +3472,7 @@ RNBRemote::HandlePacket_p (const char *p)
     nub_process_t pid = m_ctx.ProcessID();
     errno = 0;
     char *tid_cstr = NULL;
-    uint32_t reg = strtoul (p + 1, &tid_cstr, 16);
+    uint32_t reg = static_cast<uint32_t>(strtoul (p + 1, &tid_cstr, 16));
     if (errno != 0 && reg == 0)
     {
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse register number in p packet");
@@ -3822,7 +3822,7 @@ RNBRemote::HandlePacket_C (const char *p)
         action.tid = GetContinueThread();
         char *end = NULL;
         errno = 0;
-        process_signo = strtoul (p + 1, &end, 16);
+        process_signo = static_cast<int>(strtoul (p + 1, &end, 16));
         if (errno != 0)
             return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in C packet");
         else if (*end == ';')
@@ -3944,7 +3944,7 @@ RNBRemote::HandlePacket_S (const char *p)
     {
         char *end = NULL;
         errno = 0;
-        action.signal = strtoul (p + 1, &end, 16);
+        action.signal = static_cast<int>(strtoul (p + 1, &end, 16));
         if (errno != 0)
             return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Could not parse signal in S packet");
         else if (*end == ';')
@@ -4059,10 +4059,11 @@ RNBRemote::HandlePacket_qGDBServerVersion (const char *p)
 {
     std::ostringstream strm;
     
-    if (DEBUGSERVER_PROGRAM_NAME)
-        strm << "name:" DEBUGSERVER_PROGRAM_NAME ";";
-    else
-        strm << "name:debugserver;";
+#if defined(DEBUGSERVER_PROGRAM_NAME)
+    strm << "name:" DEBUGSERVER_PROGRAM_NAME ";";
+#else
+    strm << "name:debugserver;";
+#endif
     strm << "version:" << DEBUGSERVER_VERSION_STR << ";";
 
     return SendPacket (strm.str());
@@ -4496,8 +4497,10 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     kern_return_t kr;
     x86_thread_state_t gp_regs;
     mach_msg_type_number_t gp_count = x86_THREAD_STATE_COUNT;
-    kr = thread_get_state (thread, x86_THREAD_STATE,
-                           (thread_state_t) &gp_regs, &gp_count);
+    kr = thread_get_state (static_cast<thread_act_t>(thread),
+                           x86_THREAD_STATE,
+                           (thread_state_t) &gp_regs,
+                           &gp_count);
     if (kr == KERN_SUCCESS)
     {
         if (gp_regs.tsh.flavor == x86_THREAD_STATE64)

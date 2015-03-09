@@ -156,12 +156,6 @@ const DNBRegisterSetInfo *
 nub_bool_t      DNBGetRegisterInfoByName        (const char *reg_name, DNBRegisterInfo* info);
 
 //----------------------------------------------------------------------
-// Printf style formatting for printing values in the inferior memory
-// space and registers.
-//----------------------------------------------------------------------
-nub_size_t      DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t addr, FILE *file, const char *format);
-
-//----------------------------------------------------------------------
 // Other static nub information calls.
 //----------------------------------------------------------------------
 const char *    DNBStateAsString (nub_state_t state);

@@ -40,7 +40,7 @@ RNBContext::~RNBContext()
 //----------------------------------------------------------------------
 
 const char *
-RNBContext::EnvironmentAtIndex (int index)
+RNBContext::EnvironmentAtIndex (size_t index)
 {
     if (index < m_env_vec.size())
         return m_env_vec[index].c_str();
@@ -50,7 +50,7 @@ RNBContext::EnvironmentAtIndex (int index)
 
 
 const char *
-RNBContext::ArgumentAtIndex (int index)
+RNBContext::ArgumentAtIndex (size_t index)
 {
     if (index < m_arg_vec.size())
         return m_arg_vec[index].c_str();

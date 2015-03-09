@@ -77,7 +77,7 @@ public:
         int SoftSignal() const
         {
             if (exc_type == EXC_SOFTWARE && exc_data.size() == 2 && exc_data[0] == EXC_SOFT_SIGNAL)
-                return exc_data[1];
+                return static_cast<int>(exc_data[1]);
             return 0;
         }
         bool IsBreakpoint() const

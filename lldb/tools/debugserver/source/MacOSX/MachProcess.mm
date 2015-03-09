@@ -40,7 +40,43 @@
 #include "CFData.h"
 #include "CFString.h"
 
-static CFStringRef CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str);
+#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
+// This returns a CFRetained pointer to the Bundle ID for app_bundle_path,
+// or NULL if there was some problem getting the bundle id.
+static CFStringRef
+CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str)
+{
+    CFBundle bundle(app_bundle_path);
+    CFStringRef bundleIDCFStr = bundle.GetIdentifier();
+    std::string bundleID;
+    if (CFString::UTF8(bundleIDCFStr, bundleID) == NULL)
+    {
+        struct stat app_bundle_stat;
+        char err_msg[PATH_MAX];
+        
+        if (::stat (app_bundle_path, &app_bundle_stat) < 0)
+        {
+            err_str.SetError(errno, DNBError::POSIX);
+            snprintf(err_msg, sizeof(err_msg), "%s: \"%s\"", err_str.AsString(), app_bundle_path);
+            err_str.SetErrorString(err_msg);
+            DNBLogThreadedIf(LOG_PROCESS, "%s() error: %s", __FUNCTION__, err_msg);
+        }
+        else
+        {
+            err_str.SetError(-1, DNBError::Generic);
+            snprintf(err_msg, sizeof(err_msg), "failed to extract CFBundleIdentifier from %s", app_bundle_path);
+            err_str.SetErrorString(err_msg);
+            DNBLogThreadedIf(LOG_PROCESS, "%s() error: failed to extract CFBundleIdentifier from '%s'", __FUNCTION__, app_bundle_path);
+        }
+        return NULL;
+    }
+    
+    DNBLogThreadedIf(LOG_PROCESS, "%s() extracted CFBundleIdentifier: %s", __FUNCTION__, bundleID.c_str());
+    CFRetain (bundleIDCFStr);
+    
+    return bundleIDCFStr;
+}
+#endif // #if defined 9WITH_SPRINGBOARD) || defined (WITH_BKS)
 
 #ifdef WITH_SPRINGBOARD
 
@@ -412,7 +448,7 @@ void
 MachProcess::SetEnableAsyncProfiling(bool enable, uint64_t interval_usec, DNBProfileDataScanType scan_type)
 {
     m_profile_enabled = enable;
-    m_profile_interval_usec = interval_usec;
+    m_profile_interval_usec = static_cast<useconds_t>(interval_usec);
     m_profile_scan_type = scan_type;
     
     if (m_profile_enabled && (m_profile_thread == NULL))
@@ -1515,7 +1551,7 @@ MachProcess::STDIOThread(void *arg)
         {
             char s[1024];
             s[sizeof(s)-1] = '\0';  // Ensure we have NULL termination
-            int bytes_read = 0;
+            ssize_t bytes_read = 0;
             if (stdout_fd >= 0 && FD_ISSET (stdout_fd, &read_fds))
             {
                 do
@@ -1524,12 +1560,12 @@ MachProcess::STDIOThread(void *arg)
                     if (bytes_read < 0)
                     {
                         int read_errno = errno;
-                        DNBLogThreadedIf(LOG_PROCESS, "read (stdout_fd, ) => %d   errno: %d (%s)", bytes_read, read_errno, strerror(read_errno));
+                        DNBLogThreadedIf(LOG_PROCESS, "read (stdout_fd, ) => %zd   errno: %d (%s)", bytes_read, read_errno, strerror(read_errno));
                     }
                     else if (bytes_read == 0)
                     {
                         // EOF...
-                        DNBLogThreadedIf(LOG_PROCESS, "read (stdout_fd, ) => %d  (reached EOF for child STDOUT)", bytes_read);
+                        DNBLogThreadedIf(LOG_PROCESS, "read (stdout_fd, ) => %zd  (reached EOF for child STDOUT)", bytes_read);
                         stdout_fd = -1;
                     }
                     else if (bytes_read > 0)
@@ -1548,12 +1584,12 @@ MachProcess::STDIOThread(void *arg)
                     if (bytes_read < 0)
                     {
                         int read_errno = errno;
-                        DNBLogThreadedIf(LOG_PROCESS, "read (stderr_fd, ) => %d   errno: %d (%s)", bytes_read, read_errno, strerror(read_errno));
+                        DNBLogThreadedIf(LOG_PROCESS, "read (stderr_fd, ) => %zd   errno: %d (%s)", bytes_read, read_errno, strerror(read_errno));
                     }
                     else if (bytes_read == 0)
                     {
                         // EOF...
-                        DNBLogThreadedIf(LOG_PROCESS, "read (stderr_fd, ) => %d  (reached EOF for child STDERR)", bytes_read);
+                        DNBLogThreadedIf(LOG_PROCESS, "read (stderr_fd, ) => %zd  (reached EOF for child STDERR)", bytes_read);
                         stderr_fd = -1;
                     }
                     else if (bytes_read > 0)
@@ -2309,7 +2345,7 @@ MachProcess::GetCPUTypeForLocalProcess (pid_t pid)
             
     cpu_type_t cpu;
     size_t cpu_len = sizeof(cpu);
-    if (::sysctl (mib, len, &cpu, &cpu_len, 0, 0))
+    if (::sysctl (mib, static_cast<u_int>(len), &cpu, &cpu_len, 0, 0))
         cpu = 0;
     return cpu;
 }
@@ -2389,43 +2425,6 @@ MachProcess::ForkChildForPTraceDebugging
     return pid;
 }
 
-#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
-// This returns a CFRetained pointer to the Bundle ID for app_bundle_path,
-// or NULL if there was some problem getting the bundle id.
-static CFStringRef
-CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str)
-{
-    CFBundle bundle(app_bundle_path);
-    CFStringRef bundleIDCFStr = bundle.GetIdentifier();
-    std::string bundleID;
-    if (CFString::UTF8(bundleIDCFStr, bundleID) == NULL)
-    {
-        struct stat app_bundle_stat;
-        char err_msg[PATH_MAX];
-
-        if (::stat (app_bundle_path, &app_bundle_stat) < 0)
-        {
-            err_str.SetError(errno, DNBError::POSIX);
-            snprintf(err_msg, sizeof(err_msg), "%s: \"%s\"", err_str.AsString(), app_bundle_path);
-            err_str.SetErrorString(err_msg);
-            DNBLogThreadedIf(LOG_PROCESS, "%s() error: %s", __FUNCTION__, err_msg);
-        }
-        else
-        {
-            err_str.SetError(-1, DNBError::Generic);
-            snprintf(err_msg, sizeof(err_msg), "failed to extract CFBundleIdentifier from %s", app_bundle_path);
-            err_str.SetErrorString(err_msg);
-            DNBLogThreadedIf(LOG_PROCESS, "%s() error: failed to extract CFBundleIdentifier from '%s'", __FUNCTION__, app_bundle_path);
-        }
-        return NULL;
-    }
-
-    DNBLogThreadedIf(LOG_PROCESS, "%s() extracted CFBundleIdentifier: %s", __FUNCTION__, bundleID.c_str());
-    CFRetain (bundleIDCFStr);
-
-    return bundleIDCFStr;
-}
-#endif // #if defined 9WITH_SPRINGBOARD) || defined (WITH_BKS)
 #ifdef WITH_SPRINGBOARD
 
 pid_t

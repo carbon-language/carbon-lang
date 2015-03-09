@@ -56,9 +56,9 @@ public:
                         m_swap = false;
                     }
 
-    offset_t        BytesLeft (offset_t offset) const
+    size_t          BytesLeft (size_t offset) const
                     {
-                        const offset_t size = GetSize();
+                        const size_t size = GetSize();
                         if (size > offset)
                             return size - offset;
                         return 0;

@@ -271,7 +271,7 @@ Genealogy::GetActivities(pid_t pid, const MachThreadList &thread_list, task_t ta
 uint32_t
 Genealogy::AddProcessExecutableInfo (ProcessExecutableInfoSP process_exe_info)
 {
-    const uint32_t info_size = m_process_executable_infos.size();
+    const uint32_t info_size = static_cast<uint32_t>(m_process_executable_infos.size());
     for (uint32_t idx = 0; idx < info_size; ++idx)
     {
         if (uuid_compare (m_process_executable_infos[idx]->image_uuid, process_exe_info->image_uuid) == 0)
@@ -284,7 +284,7 @@ Genealogy::AddProcessExecutableInfo (ProcessExecutableInfoSP process_exe_info)
 }
 
 Genealogy::ProcessExecutableInfoSP
-Genealogy::GetProcessExecutableInfosAtIndex(uint32_t idx)
+Genealogy::GetProcessExecutableInfosAtIndex(size_t idx)
 {
     ProcessExecutableInfoSP info_sp;
     if (idx > 0)

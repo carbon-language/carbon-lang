@@ -418,7 +418,7 @@ DNBArchMachPPC::GetRegisterSetInfo(nub_size_t *num_reg_sets) const
 }
 
 bool
-DNBArchMachPPC::GetRegisterValue(int set, int reg, DNBRegisterValue *value) const
+DNBArchMachPPC::GetRegisterValue(uint32_t set, uint32_t reg, DNBRegisterValue *value) const
 {
     if (set == REGISTER_SET_GENERIC)
     {
