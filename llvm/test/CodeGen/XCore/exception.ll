@@ -78,6 +78,7 @@ cont:
 ; CHECK: bl __cxa_end_catch
 lpad:
   %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          cleanup
           catch i8* bitcast (i8** @_ZTIi to i8*)
           catch i8* bitcast (i8** @_ZTId to i8*)
   %1 = extractvalue { i8*, i32 } %0, 0
@@ -110,13 +111,14 @@ Exit:
 ; CHECK: .long [[PRE_G]]-[[START]]
 ; CHECK: .long [[POST_G]]-[[PRE_G]]
 ; CHECK: .long [[LANDING]]-[[START]]
-; CHECK: .byte 3
+; CHECK: .byte 5
 ; CHECK: .long [[POST_G]]-[[START]]
 ; CHECK: .long [[END]]-[[POST_G]]
 ; CHECK: .long 0
 ; CHECK: .byte 0
-; CHECK: .byte 1
 ; CHECK: .byte 0
+; CHECK: .byte 1
+; CHECK: .byte 125
 ; CHECK: .byte 2
 ; CHECK: .byte 125
 ; CHECK: .long _ZTIi

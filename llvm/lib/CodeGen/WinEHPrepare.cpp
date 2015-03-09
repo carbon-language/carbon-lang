@@ -18,6 +18,8 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/LibCallSemantics.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
@@ -168,8 +170,13 @@ public:
 } // end anonymous namespace
 
 char WinEHPrepare::ID = 0;
-INITIALIZE_TM_PASS(WinEHPrepare, "winehprepare", "Prepare Windows exceptions",
-                   false, false)
+INITIALIZE_TM_PASS_BEGIN(WinEHPrepare, "winehprepare",
+                         "Prepare Windows exceptions", false, false)
+INITIALIZE_PASS_DEPENDENCY(DwarfEHPrepare)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
+INITIALIZE_TM_PASS_END(WinEHPrepare, "winehprepare",
+                       "Prepare Windows exceptions", false, false)
 
 FunctionPass *llvm::createWinEHPass(const TargetMachine *TM) {
   return new WinEHPrepare(TM);
@@ -198,8 +205,23 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   EHPersonality Pers = classifyEHPersonality(LPads.back()->getPersonalityFn());
 
   // Delegate through to the DWARF pass if this is unrecognized.
-  if (!isMSVCPersonality(Pers))
+  if (!isMSVCPersonality(Pers)) {
+    if (!DwarfPrepare->getResolver()) {
+      // Build an AnalysisResolver with the analyses needed by DwarfEHPrepare.
+      // It will take ownership of the AnalysisResolver.
+      assert(getResolver());
+      auto *AR = new AnalysisResolver(getResolver()->getPMDataManager());
+      AR->addAnalysisImplsPair(
+          &TargetTransformInfoWrapperPass::ID,
+          getResolver()->findImplPass(&TargetTransformInfoWrapperPass::ID));
+      AR->addAnalysisImplsPair(
+          &DominatorTreeWrapperPass::ID,
+          getResolver()->findImplPass(&DominatorTreeWrapperPass::ID));
+      DwarfPrepare->setResolver(AR);
+    }
+
     return DwarfPrepare->runOnFunction(Fn);
+  }
 
   // FIXME: This only returns true if the C++ EH handlers were outlined.
   //        When that code is complete, it should always return whatever
