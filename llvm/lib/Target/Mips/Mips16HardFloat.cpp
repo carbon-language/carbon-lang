@@ -12,12 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips16HardFloat.h"
+#include "MipsTargetMachine.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <string>
+using namespace llvm;
 
 #define DEBUG_TYPE "mips16-hard-float"
 
@@ -489,7 +491,20 @@ static void removeUseSoftFloat(Function &F) {
   F.addAttributes(AttributeSet::FunctionIndex, A);
 }
 
-namespace llvm {
+namespace {
+class Mips16HardFloat : public ModulePass {
+public:
+  static char ID;
+
+  Mips16HardFloat(MipsTargetMachine &TM_) : ModulePass(ID), TM(TM_) {}
+
+  const char *getPassName() const override { return "MIPS16 Hard Float Pass"; }
+  bool runOnModule(Module &M) override;
+
+protected:
+  const MipsTargetMachine &TM;
+};
+} // namespace
 
 //
 // This pass only makes sense when the underlying chip has floating point but
@@ -531,8 +546,6 @@ bool Mips16HardFloat::runOnModule(Module &M) {
 }
 
 char Mips16HardFloat::ID = 0;
-
-}
 
 ModulePass *llvm::createMips16HardFloat(MipsTargetMachine &TM) {
   return new Mips16HardFloat(TM);

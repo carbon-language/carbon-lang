@@ -12,13 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsOs16.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+using namespace llvm;
 
 #define DEBUG_TYPE "mips-os16"
-
 
 static cl::opt<std::string> Mips32FunctionMask(
   "mips32-function-mask",
@@ -90,8 +91,19 @@ namespace {
     return false;
   }
 }
-namespace llvm {
 
+namespace {
+
+class MipsOs16 : public ModulePass {
+public:
+  static char ID;
+
+  MipsOs16() : ModulePass(ID) {}
+
+  const char *getPassName() const override { return "MIPS Os16 Optimization"; }
+  bool runOnModule(Module &M) override;
+};
+} // namespace
 
 bool MipsOs16::runOnModule(Module &M) {
   bool usingMask = Mips32FunctionMask.length() > 0;
@@ -138,10 +150,6 @@ bool MipsOs16::runOnModule(Module &M) {
 
 char MipsOs16::ID = 0;
 
-}
-
 ModulePass *llvm::createMipsOs16(MipsTargetMachine &TM) {
   return new MipsOs16;
 }
-
-
