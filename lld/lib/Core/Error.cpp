@@ -86,6 +86,11 @@ public:
       return "Success";
     case LinkerScriptReaderError::parse_error:
       return "Error parsing linker script";
+    case LinkerScriptReaderError::unknown_symbol_in_expr:
+      return "Unknown symbol found when evaluating linker script expression";
+    case LinkerScriptReaderError::unrecognized_function_in_expr:
+      return "Unrecognized function call when evaluating linker script "
+             "expression";
     }
     llvm_unreachable("An enumerator of LinkerScriptReaderError does not have a "
                      "message defined.");

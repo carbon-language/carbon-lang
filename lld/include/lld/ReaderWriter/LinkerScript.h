@@ -18,6 +18,7 @@
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/range.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -360,11 +361,16 @@ private:
 ///
 class Expression {
 public:
+  // The symbol table does not need to own its string keys and the use of StringMap
+  // here is an overkill.
+  typedef llvm::StringMap<int64_t, llvm::BumpPtrAllocator> SymbolTableTy;
+
   enum class Kind { Constant, Symbol, FunctionCall, Unary, BinOp,
                     TernaryConditional };
   Kind getKind() const { return _kind; }
   inline llvm::BumpPtrAllocator &getAllocator() const;
   virtual void dump(raw_ostream &os) const = 0;
+  virtual ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const = 0;
   virtual ~Expression() {}
 
 protected:
@@ -388,6 +394,8 @@ public:
     return c->getKind() == Kind::Constant;
   }
 
+  ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const override;
+
 private:
   uint64_t _num;
 };
@@ -401,6 +409,8 @@ public:
   static bool classof(const Expression *c) {
     return c->getKind() == Kind::Symbol;
   }
+
+  ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const override;
 
 private:
   StringRef _name;
@@ -424,6 +434,8 @@ public:
     return c->getKind() == Kind::FunctionCall;
   }
 
+  ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const override;
+
 private:
   StringRef _name;
   llvm::ArrayRef<const Expression *> _args;
@@ -443,6 +455,8 @@ public:
   static bool classof(const Expression *c) {
     return c->getKind() == Kind::Unary;
   }
+
+  ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const override;
 
 private:
   Operation _op;
@@ -477,6 +491,8 @@ public:
     return c->getKind() == Kind::BinOp;
   }
 
+  ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const override;
+
 private:
   Operation _op;
   const Expression *_lhs;
@@ -510,6 +526,8 @@ public:
     return c->getKind() == Kind::TernaryConditional;
   }
 
+  ErrorOr<int64_t> evalExpr(SymbolTableTy &symbolTable) const override;
+
 private:
   const Expression *_conditional;
   const Expression *_trueExpr;
@@ -530,7 +548,7 @@ private:
 class SymbolAssignment : public Command {
 public:
   enum AssignmentKind { Simple, Sum, Sub, Mul, Div, Shl, Shr, And, Or };
-  enum AssignmentVisibility { Normal, Hidden, Provide, ProvideHidden };
+  enum AssignmentVisibility { Default, Hidden, Provide, ProvideHidden };
 
   SymbolAssignment(Parser &ctx, StringRef name, const Expression *expr,
                    AssignmentKind kind, AssignmentVisibility visibility)
@@ -542,6 +560,12 @@ public:
   }
 
   void dump(raw_ostream &os) const override;
+  const Expression *expr() const { return _expression; }
+  StringRef symbol() const { return _symbol; }
+  AssignmentKind assignmentKind() const { return _assignmentKind; }
+  AssignmentVisibility assignmentVisibility() const {
+    return _assignmentVisibility;
+  }
 
 private:
   const Expression *_expression;
@@ -749,6 +773,8 @@ public:
 /// Represents all the contents of the SECTIONS {} construct.
 class Sections : public Command {
 public:
+  typedef llvm::ArrayRef<const Command *>::const_iterator const_iterator;
+
   Sections(Parser &ctx,
            const SmallVectorImpl<const Command *> &sectionsCommands)
       : Command(ctx, Kind::Sections) {
@@ -765,6 +791,8 @@ public:
   }
 
   void dump(raw_ostream &os) const override;
+  const_iterator begin() const { return _sectionsCommands.begin(); }
+  const_iterator end() const { return _sectionsCommands.end(); }
 
 private:
   llvm::ArrayRef<const Command *> _sectionsCommands;

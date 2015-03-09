@@ -241,3 +241,43 @@ TEST_F(LinkerScriptTest, IgnoreSearchDirNoStdLib) {
   std::vector<StringRef> paths = _ctx->getSearchPaths();
   EXPECT_EQ((size_t)0, paths.size());
 }
+
+TEST_F(LinkerScriptTest, ExprEval) {
+  parse("SECTIONS { symbol = 0x4000 + 0x40; \n"
+        ". = (symbol >= 0x4040)? (0x5001 * 2 & 0xFFF0) << 1 : 0}");
+
+  EXPECT_EQ((size_t)1, _ctx->scripts().size());
+
+  script::LinkerScript *ls = _ctx->scripts()[0]->get();
+  EXPECT_EQ((size_t)1, ls->_commands.size());
+
+  auto *secs = dyn_cast<const script::Sections>(*ls->_commands.begin());
+  EXPECT_TRUE(secs != nullptr);
+  EXPECT_EQ(2, secs->end() - secs->begin());
+
+  auto command = secs->begin();
+  auto *sa1 = dyn_cast<const script::SymbolAssignment>(*command);
+  EXPECT_TRUE(sa1 != nullptr);
+  EXPECT_EQ(script::SymbolAssignment::Simple, sa1->assignmentKind());
+  EXPECT_EQ(script::SymbolAssignment::Default, sa1->assignmentVisibility());
+
+  ++command;
+  auto *sa2 = dyn_cast<const script::SymbolAssignment>(*command);
+  EXPECT_TRUE(sa2 != nullptr);
+  EXPECT_EQ(script::SymbolAssignment::Simple, sa2->assignmentKind());
+  EXPECT_EQ(script::SymbolAssignment::Default, sa2->assignmentVisibility());
+
+  script::Expression::SymbolTableTy mySymbolTable;
+  auto ans = sa1->expr()->evalExpr(mySymbolTable);
+  EXPECT_FALSE(ans.getError());
+  int64_t result = *ans;
+  EXPECT_EQ(0x4040, result);
+  mySymbolTable[sa1->symbol()] = result;
+
+  auto ans2 = sa2->expr()->evalExpr(mySymbolTable);
+  EXPECT_FALSE(ans2.getError());
+  result = *ans2;
+  EXPECT_EQ(0x14000, result);
+  EXPECT_EQ(0, sa2->symbol().compare(StringRef(".")));
+}
+

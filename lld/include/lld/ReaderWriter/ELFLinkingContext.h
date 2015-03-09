@@ -301,6 +301,10 @@ public:
     _scripts.push_back(std::move(script));
   }
 
+  const std::vector<std::unique_ptr<script::Parser>> &scripts() const {
+    return _scripts;
+  }
+
   // --wrap option.
   void addWrapForSymbol(StringRef sym) { _wrapCalls.insert(sym); }
 

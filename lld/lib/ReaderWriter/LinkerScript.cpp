@@ -532,8 +532,19 @@ void Lexer::skipWhitespace() {
 // Constant functions
 void Constant::dump(raw_ostream &os) const { os << _num; }
 
+ErrorOr<int64_t> Constant::evalExpr(SymbolTableTy &symbolTable) const {
+  return _num;
+}
+
 // Symbol functions
 void Symbol::dump(raw_ostream &os) const { os << _name; }
+
+ErrorOr<int64_t> Symbol::evalExpr(SymbolTableTy &symbolTable) const {
+  auto it = symbolTable.find(_name);
+  if (it == symbolTable.end())
+    return LinkerScriptReaderError::unknown_symbol_in_expr;
+  return it->second;
+}
 
 // FunctionCall functions
 void FunctionCall::dump(raw_ostream &os) const {
@@ -546,6 +557,10 @@ void FunctionCall::dump(raw_ostream &os) const {
   os << ")";
 }
 
+ErrorOr<int64_t> FunctionCall::evalExpr(SymbolTableTy &symbolTable) const {
+  return LinkerScriptReaderError::unrecognized_function_in_expr;
+}
+
 // Unary functions
 void Unary::dump(raw_ostream &os) const {
   os << "(";
@@ -555,6 +570,22 @@ void Unary::dump(raw_ostream &os) const {
     os << "~";
   _child->dump(os);
   os << ")";
+}
+
+ErrorOr<int64_t> Unary::evalExpr(SymbolTableTy &symbolTable) const {
+  auto child = _child->evalExpr(symbolTable);
+  if (child.getError())
+    return child.getError();
+
+  int64_t childRes = *child;
+  switch (_op) {
+  case Unary::Minus:
+    return -childRes;
+  case Unary::Not:
+    return ~childRes;
+  }
+
+  llvm_unreachable("");
 }
 
 // BinOp functions
@@ -611,6 +642,37 @@ void BinOp::dump(raw_ostream &os) const {
   os << ")";
 }
 
+ErrorOr<int64_t> BinOp::evalExpr(SymbolTableTy &symbolTable) const {
+  auto lhs = _lhs->evalExpr(symbolTable);
+  if (lhs.getError())
+    return lhs.getError();
+  auto rhs = _rhs->evalExpr(symbolTable);
+  if (rhs.getError())
+    return rhs.getError();
+
+  int64_t lhsRes = *lhs;
+  int64_t rhsRes = *rhs;
+
+  switch(_op) {
+  case And:                 return lhsRes & rhsRes;
+  case CompareDifferent:    return lhsRes != rhsRes;
+  case CompareEqual:        return lhsRes == rhsRes;
+  case CompareGreater:      return lhsRes > rhsRes;
+  case CompareGreaterEqual: return lhsRes >= rhsRes;
+  case CompareLess:         return lhsRes < rhsRes;
+  case CompareLessEqual:    return lhsRes <= rhsRes;
+  case Div:                 return lhsRes / rhsRes;
+  case Mul:                 return lhsRes * rhsRes;
+  case Or:                  return lhsRes | rhsRes;
+  case Shl:                 return lhsRes << rhsRes;
+  case Shr:                 return lhsRes >> rhsRes;
+  case Sub:                 return lhsRes - rhsRes;
+  case Sum:                 return lhsRes + rhsRes;
+  }
+
+  llvm_unreachable("");
+}
+
 // TernaryConditional functions
 void TernaryConditional::dump(raw_ostream &os) const {
   _conditional->dump(os);
@@ -620,11 +682,21 @@ void TernaryConditional::dump(raw_ostream &os) const {
   _falseExpr->dump(os);
 }
 
+ErrorOr<int64_t>
+TernaryConditional::evalExpr(SymbolTableTy &symbolTable) const {
+  auto conditional = _conditional->evalExpr(symbolTable);
+  if (conditional.getError())
+    return conditional.getError();
+  if (*conditional)
+    return _trueExpr->evalExpr(symbolTable);
+  return _falseExpr->evalExpr(symbolTable);
+}
+
 // SymbolAssignment functions
 void SymbolAssignment::dump(raw_ostream &os) const {
   int numParen = 0;
 
-  if (_assignmentVisibility != Normal) {
+  if (_assignmentVisibility != Default) {
     switch (_assignmentVisibility) {
     case Hidden:
       os << "HIDDEN(";
@@ -1354,7 +1426,7 @@ const SymbolAssignment *Parser::parseSymbolAssignment() {
           _tok._kind == Token::kw_provide ||
           _tok._kind == Token::kw_provide_hidden) &&
          "Expected identifier!");
-  SymbolAssignment::AssignmentVisibility visibility = SymbolAssignment::Normal;
+  SymbolAssignment::AssignmentVisibility visibility = SymbolAssignment::Default;
   SymbolAssignment::AssignmentKind kind;
   int numParen = 0;
 

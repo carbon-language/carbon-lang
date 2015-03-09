@@ -51,7 +51,9 @@ const std::error_category &LinkerScriptReaderCategory();
 
 enum class LinkerScriptReaderError {
   success = 0,
-  parse_error
+  parse_error,
+  unknown_symbol_in_expr,
+  unrecognized_function_in_expr
 };
 
 inline std::error_code make_error_code(LinkerScriptReaderError e) {
