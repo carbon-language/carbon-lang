@@ -5465,20 +5465,14 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
       ParseTypeAndValue(Ptr, Loc, PFS))
     return true;
 
-  Type *PtrTy = Ptr->getType();
-  if (VectorType *VT = dyn_cast<VectorType>(PtrTy))
-    PtrTy = VT->getElementType();
-  SequentialType *SeqPtrTy = dyn_cast<SequentialType>(PtrTy);
-  if (!SeqPtrTy)
-    return Error(Loc, "pointer type is not valid");
-  if (Ty != SeqPtrTy->getElementType())
-    return Error(ExplicitTypeLoc,
-                 "explicit pointee type doesn't match operand's pointee type");
-
   Type *BaseType = Ptr->getType();
   PointerType *BasePointerType = dyn_cast<PointerType>(BaseType->getScalarType());
   if (!BasePointerType)
     return Error(Loc, "base of getelementptr must be a pointer");
+
+  if (Ty != BasePointerType->getElementType())
+    return Error(ExplicitTypeLoc,
+                 "explicit pointee type doesn't match operand's pointee type");
 
   SmallVector<Value*, 16> Indices;
   bool AteExtraComma = false;
