@@ -344,6 +344,7 @@ enum {
   ELFOSABI_NSK = 14,          // Hewlett-Packard Non-Stop Kernel
   ELFOSABI_AROS = 15,         // AROS
   ELFOSABI_FENIXOS = 16,      // FenixOS
+  ELFOSABI_CLOUDABI = 17,     // Nuxi CloudABI
   ELFOSABI_C6000_ELFABI = 64, // Bare-metal TMS320C6000
   ELFOSABI_C6000_LINUX = 65,  // Linux TMS320C6000
   ELFOSABI_ARM = 97,          // ARM

@@ -120,6 +120,7 @@ public:
   enum OSType {
     UnknownOS,
 
+    CloudABI,
     Darwin,
     DragonFly,
     FreeBSD,
