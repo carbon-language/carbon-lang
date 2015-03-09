@@ -73,7 +73,8 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x04
-    Size:            0x20
+    Content:         '000000000000000000f4000000000000f400000000000000f400000000000000'
+#                                       jal .text     jal glob        jal T1
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab

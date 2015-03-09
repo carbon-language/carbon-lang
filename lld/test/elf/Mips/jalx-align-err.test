@@ -1,9 +1,10 @@
 # Check that LLD shows an error if jalx target value is not word-aligned.
 
 # RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t-exe %t-obj 2>&1 | FileCheck %s
+# RUN: not lld -flavor gnu -target mipsel -e T0 -o %t-exe %t-obj 2>&1 \
+# RUN:       | FileCheck %s
 
-# CHECK: The jalx target 0x00400116 is not word-aligned.
+# CHECK: The jalx target 0x400116 is not word-aligned
 
 !ELF
 FileHeader: !FileHeader

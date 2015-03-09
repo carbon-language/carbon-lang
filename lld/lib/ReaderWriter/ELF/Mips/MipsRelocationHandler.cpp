@@ -148,28 +148,31 @@ static void reloc32hi16(uint32_t &ins, uint64_t S, int64_t A) {
   applyReloc(ins, (S + A + 0x8000) & 0xffff0000, 0xffffffff);
 }
 
-static void adjustJumpOpCode(uint32_t &ins, uint64_t tgt, CrossJumpMode mode) {
+static std::error_code adjustJumpOpCode(uint32_t &ins, uint64_t tgt,
+                                        CrossJumpMode mode) {
   if (mode == CrossJumpMode::None)
-    return;
+    return std::error_code();
 
   bool toMicro = mode == CrossJumpMode::ToMicro;
   uint32_t opNative = toMicro ? 0x03 : 0x3d;
   uint32_t opCross = toMicro ? 0x1d : 0x3c;
 
-  // FIXME (simon): Convert this into the regular fatal error.
   if ((tgt & 1) != toMicro)
-    llvm_unreachable("Incorrect bit 0 for the jalx target");
+    return make_dynamic_error_code(
+        Twine("Incorrect bit 0 for the jalx target"));
 
   if (tgt & 2)
-    llvm::errs() << "The jalx target " << llvm::format_hex(tgt, 10)
-                 << " is not word-aligned.\n";
-
+    return make_dynamic_error_code(Twine("The jalx target 0x") +
+                                   Twine::utohexstr(tgt) +
+                                   " is not word-aligned");
   uint8_t op = ins >> 26;
   if (op != opNative && op != opCross)
-    llvm::errs() << "Unsupported jump opcode (" << llvm::format_hex(op, 4)
-                 << ") for ISA modes cross call.\n";
-  else
-    ins = (ins & ~(0x3f << 26)) | (opCross << 26);
+    return make_dynamic_error_code(Twine("Unsupported jump opcode (0x") +
+                                   Twine::utohexstr(op) +
+                                   ") for ISA modes cross call");
+
+  ins = (ins & ~(0x3f << 26)) | (opCross << 26);
+  return std::error_code();
 }
 
 static bool isMicroMipsAtom(const Atom *a) {
@@ -273,7 +276,8 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     targetVAddress |= 1;
 
   CrossJumpMode crossJump = getCrossJumpMode(ref);
-  adjustJumpOpCode(ins, targetVAddress, crossJump);
+  if (auto ec = adjustJumpOpCode(ins, targetVAddress, crossJump))
+    return ec;
 
   switch (ref.kindValue()) {
   case R_MIPS_NONE:
