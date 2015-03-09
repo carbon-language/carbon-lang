@@ -747,14 +747,14 @@ std::error_code FileCOFF::AtomizeDefinedSymbols(
     if (atoms.size() > 0)
       atoms[0]->setAlignment(getAlignment(section));
 
-    // Connect atoms with layout-before edges. It prevents atoms
+    // Connect atoms with layout-after edges. It prevents atoms
     // from being GC'ed if there is a reference to one of the atoms
-    // in the same layout-before chain. In such case we want to emit
+    // in the same layout-after chain. In such case we want to emit
     // all the atoms appeared in the same chain, because the "live"
     // atom may reference other atoms in the same chain.
     if (atoms.size() >= 2)
       for (auto it = atoms.begin(), e = atoms.end(); it + 1 != e; ++it)
-        addLayoutEdge(*(it + 1), *it, lld::Reference::kindLayoutBefore);
+        addLayoutEdge(*it, *(it + 1), lld::Reference::kindLayoutAfter);
 
     for (COFFDefinedFileAtom *atom : atoms) {
       _sectionAtoms[section].push_back(atom);

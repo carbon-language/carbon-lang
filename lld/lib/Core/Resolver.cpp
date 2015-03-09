@@ -382,7 +382,7 @@ void Resolver::markLive(const Atom *atom) {
 static bool isBackref(const Reference *ref) {
   if (ref->kindNamespace() != lld::Reference::KindNamespace::all)
     return false;
-  return (ref->kindValue() == lld::Reference::kindLayoutBefore ||
+  return (ref->kindValue() == lld::Reference::kindLayoutAfter ||
           ref->kindValue() == lld::Reference::kindGroupChild);
 }
 
