@@ -14,6 +14,7 @@
 #ifndef LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
 #define LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
 
+#include "JITSymbolFlags.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/Support/Memory.h"
@@ -28,7 +29,7 @@ namespace object {
 
 class RuntimeDyldImpl;
 class RuntimeDyldCheckerImpl;
-
+ 
 class RuntimeDyld {
   friend class RuntimeDyldCheckerImpl;
 
@@ -46,6 +47,18 @@ protected:
   // Any relocations already associated with the symbol will be re-resolved.
   void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
 public:
+
+  /// \brief Information about a named symbol.
+  class SymbolInfo : public JITSymbolBase {
+  public:
+    SymbolInfo(std::nullptr_t) : JITSymbolBase(JITSymbolFlags::None), Address(0) {}
+    SymbolInfo(uint64_t Address, JITSymbolFlags Flags)
+      : JITSymbolBase(Flags), Address(Address) {}
+    explicit operator bool() const { return Address != 0; }
+    uint64_t getAddress() const { return Address; }
+  private:
+    uint64_t Address;
+  };
 
   /// \brief Information about the loaded object.
   class LoadedObjectInfo {
@@ -79,15 +92,11 @@ public:
   /// Get the address of our local copy of the symbol. This may or may not
   /// be the address used for relocation (clients can copy the data around
   /// and resolve relocatons based on where they put it).
-  void *getSymbolAddress(StringRef Name) const;
+  void *getSymbolLocalAddress(StringRef Name) const;
 
-  /// Get the address of the target copy of the symbol (works for both exported
-  /// and non-exported symbols). This is the address used for relocation.
-  uint64_t getSymbolLoadAddress(StringRef Name) const;
-
-  /// Get the address of the target copy of the symbol (works for exported
-  /// symbols only). This is the address used for relocation.
-  uint64_t getExportedSymbolLoadAddress(StringRef Name) const;
+  /// Get the target address and flags for the named symbol.
+  /// This address is the one used for relocation.
+  SymbolInfo getSymbol(StringRef Name) const;
 
   /// Resolve the relocations for all symbols we currently know about.
   void resolveRelocations();
