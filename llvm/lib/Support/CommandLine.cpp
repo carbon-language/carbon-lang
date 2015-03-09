@@ -1516,7 +1516,7 @@ public:
 
   // Invoke the printer.
   void operator=(bool Value) {
-    if (Value == false)
+    if (!Value)
       return;
 
     StrOptionPairVector Opts;
@@ -1716,7 +1716,7 @@ static cl::opt<bool> PrintAllOptions(
     cl::init(false), cl::cat(GenericCategory));
 
 void HelpPrinterWrapper::operator=(bool Value) {
-  if (Value == false)
+  if (!Value)
     return;
 
   // Decide which printer to invoke. If more than one option category is

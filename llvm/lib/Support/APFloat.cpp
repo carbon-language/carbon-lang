@@ -1248,10 +1248,10 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
     return false;
 
   case rmTowardPositive:
-    return sign == false;
+    return !sign;
 
   case rmTowardNegative:
-    return sign == true;
+    return sign;
   }
   llvm_unreachable("Invalid rounding mode found");
 }

@@ -915,7 +915,7 @@ bool PeepholeOptimizer::optimizeCoalescableCopy(MachineInstr *MI) {
   // => v0 = COPY v1
   // Currently we haven't seen motivating example for that and we
   // want to avoid untested code.
-  NumRewrittenCopies += Changed == true;
+  NumRewrittenCopies += Changed;
   return Changed;
 }
 

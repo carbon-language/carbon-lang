@@ -1128,7 +1128,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
           RangeOverflow = true;
         }
       }
-      if (SymType == SymbolRef::ST_Unknown || RangeOverflow == true) {
+      if (SymType == SymbolRef::ST_Unknown || RangeOverflow) {
         // It is an external symbol (SymbolRef::ST_Unknown) or within a range
         // larger than 24-bits.
         StubMap::const_iterator i = Stubs.find(Value);

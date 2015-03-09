@@ -4466,8 +4466,7 @@ static void scaleWeights(uint64_t &NewTrue, uint64_t &NewFalse) {
 /// FIXME: Remove the (equivalent?) implementation in SelectionDAG.
 ///
 bool CodeGenPrepare::splitBranchCondition(Function &F) {
-  if (!TM || TM->Options.EnableFastISel != true ||
-      !TLI || TLI->isJumpExpensive())
+  if (!TM || !TM->Options.EnableFastISel || !TLI || TLI->isJumpExpensive())
     return false;
 
   bool MadeChange = false;

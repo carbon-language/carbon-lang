@@ -129,7 +129,7 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
 }
 
 bool DiagnosticInfoOptimizationBase::isLocationAvailable() const {
-  return getDebugLoc().isUnknown() == false;
+  return !getDebugLoc().isUnknown();
 }
 
 void DiagnosticInfoOptimizationBase::getLocation(StringRef *Filename,

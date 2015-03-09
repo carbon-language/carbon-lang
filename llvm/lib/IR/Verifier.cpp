@@ -2709,7 +2709,7 @@ Verifier::VerifyIntrinsicIsVarArg(bool isVarArg,
 
   // If there are no descriptors left, then it can't be a vararg.
   if (Infos.empty())
-    return isVarArg ? true : false;
+    return isVarArg;
 
   // There should be only one descriptor remaining at this point.
   if (Infos.size() != 1)
@@ -2719,7 +2719,7 @@ Verifier::VerifyIntrinsicIsVarArg(bool isVarArg,
   IITDescriptor D = Infos.front();
   Infos = Infos.slice(1);
   if (D.Kind == IITDescriptor::VarArg)
-    return isVarArg ? false : true;
+    return !isVarArg;
 
   return true;
 }

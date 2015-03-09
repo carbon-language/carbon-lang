@@ -626,7 +626,7 @@ bool DarwinAsmParser::parseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.secure_log_unique' directive");
 
-  if (getContext().getSecureLogUsed() != false)
+  if (getContext().getSecureLogUsed())
     return Error(IDLoc, ".secure_log_unique specified multiple times");
 
   // Get the secure log path.

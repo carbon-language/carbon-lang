@@ -75,7 +75,7 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
   ConstraintCodeVector *pCodes = &Codes;
 
   // Initialize
-  isMultipleAlternative = (multipleAlternativeCount > 1 ? true : false);
+  isMultipleAlternative = multipleAlternativeCount > 1;
   if (isMultipleAlternative) {
     multipleAlternatives.resize(multipleAlternativeCount);
     pCodes = &multipleAlternatives[0].Codes;

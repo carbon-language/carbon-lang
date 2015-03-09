@@ -120,7 +120,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
          ++II) {
       if (LoadInst *load = dyn_cast<LoadInst>(II)) {
 
-        if (load->hasOneUse() == false)
+        if (!load->hasOneUse())
           continue;
 
         if (DL.getTypeStoreSize(load->getType()) < MaxAggrCopySize)

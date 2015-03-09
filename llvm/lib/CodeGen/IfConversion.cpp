@@ -247,7 +247,7 @@ namespace {
         return true;
       else if (Incr1 == Incr2) {
         // Favors subsumption.
-        if (C1->NeedSubsumption == false && C2->NeedSubsumption == true)
+        if (!C1->NeedSubsumption && C2->NeedSubsumption)
           return true;
         else if (C1->NeedSubsumption == C2->NeedSubsumption) {
           // Favors diamond over triangle, etc.
