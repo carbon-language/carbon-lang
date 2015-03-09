@@ -592,7 +592,7 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
   if ((atom.section()->sh_flags & SHF_ALLOC) == 0)
     return false;
 
-  if (_ctx.getOutputELFType() == llvm::ELF::ET_DYN)
+  if (_ctx.getOutputELFType() == ET_DYN)
     return true;
   if (!isMipsReadonly(atom))
     return true;
@@ -640,7 +640,7 @@ bool RelocationPass<ELFT>::isDynamic(const Atom *atom) const {
   if (sa)
     return true;
 
-  if (_ctx.getOutputELFType() == llvm::ELF::ET_DYN) {
+  if (_ctx.getOutputELFType() == ET_DYN) {
     if (da && da->scope() != DefinedAtom::scopeTranslationUnit)
       return true;
 
@@ -743,7 +743,7 @@ bool RelocationPass<ELFT>::isLocalCall(const Atom *a) const {
     return true;
 
   // Calls to external symbols defined in an executable file resolved locally.
-  if (_ctx.getOutputELFType() == llvm::ELF::ET_EXEC)
+  if (_ctx.getOutputELFType() == ET_EXEC)
     return true;
 
   return false;
@@ -960,10 +960,10 @@ static std::unique_ptr<Pass> createPass(MipsLinkingContext &ctx) {
 std::unique_ptr<Pass>
 lld::elf::createMipsRelocationPass(MipsLinkingContext &ctx) {
   switch (ctx.getOutputELFType()) {
-  case llvm::ELF::ET_EXEC:
-  case llvm::ELF::ET_DYN:
+  case ET_EXEC:
+  case ET_DYN:
     return createPass(ctx);
-  case llvm::ELF::ET_REL:
+  case ET_REL:
     return nullptr;
   default:
     llvm_unreachable("Unhandled output file type");

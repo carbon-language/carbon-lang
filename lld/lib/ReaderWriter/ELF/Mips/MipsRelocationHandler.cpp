@@ -34,59 +34,59 @@ struct MipsRelocationParams {
 
 static MipsRelocationParams getRelocationParams(uint32_t rType) {
   switch (rType) {
-  case llvm::ELF::R_MIPS_NONE:
+  case R_MIPS_NONE:
     return {4, 0x0, 0, false};
-  case llvm::ELF::R_MIPS_64:
-  case llvm::ELF::R_MIPS_SUB:
+  case R_MIPS_64:
+  case R_MIPS_SUB:
     return {8, 0xffffffffffffffffull, 0, false};
-  case llvm::ELF::R_MIPS_32:
-  case llvm::ELF::R_MIPS_GPREL32:
-  case llvm::ELF::R_MIPS_PC32:
+  case R_MIPS_32:
+  case R_MIPS_GPREL32:
+  case R_MIPS_PC32:
   case LLD_R_MIPS_32_HI16:
     return {4, 0xffffffff, 0, false};
-  case llvm::ELF::R_MIPS_26:
+  case R_MIPS_26:
   case LLD_R_MIPS_GLOBAL_26:
     return {4, 0x3ffffff, 2, false};
-  case llvm::ELF::R_MIPS_HI16:
-  case llvm::ELF::R_MIPS_LO16:
-  case llvm::ELF::R_MIPS_GPREL16:
-  case llvm::ELF::R_MIPS_GOT16:
-  case llvm::ELF::R_MIPS_TLS_DTPREL_HI16:
-  case llvm::ELF::R_MIPS_TLS_DTPREL_LO16:
-  case llvm::ELF::R_MIPS_TLS_TPREL_HI16:
-  case llvm::ELF::R_MIPS_TLS_TPREL_LO16:
+  case R_MIPS_HI16:
+  case R_MIPS_LO16:
+  case R_MIPS_GPREL16:
+  case R_MIPS_GOT16:
+  case R_MIPS_TLS_DTPREL_HI16:
+  case R_MIPS_TLS_DTPREL_LO16:
+  case R_MIPS_TLS_TPREL_HI16:
+  case R_MIPS_TLS_TPREL_LO16:
   case LLD_R_MIPS_HI16:
   case LLD_R_MIPS_LO16:
     return {4, 0xffff, 0, false};
-  case llvm::ELF::R_MICROMIPS_TLS_DTPREL_HI16:
-  case llvm::ELF::R_MICROMIPS_TLS_DTPREL_LO16:
-  case llvm::ELF::R_MICROMIPS_TLS_TPREL_HI16:
-  case llvm::ELF::R_MICROMIPS_TLS_TPREL_LO16:
+  case R_MICROMIPS_TLS_DTPREL_HI16:
+  case R_MICROMIPS_TLS_DTPREL_LO16:
+  case R_MICROMIPS_TLS_TPREL_HI16:
+  case R_MICROMIPS_TLS_TPREL_LO16:
     return {4, 0xffff, 0, true};
-  case llvm::ELF::R_MICROMIPS_26_S1:
+  case R_MICROMIPS_26_S1:
   case LLD_R_MICROMIPS_GLOBAL_26_S1:
     return {4, 0x3ffffff, 1, true};
-  case llvm::ELF::R_MICROMIPS_HI16:
-  case llvm::ELF::R_MICROMIPS_LO16:
-  case llvm::ELF::R_MICROMIPS_GOT16:
+  case R_MICROMIPS_HI16:
+  case R_MICROMIPS_LO16:
+  case R_MICROMIPS_GOT16:
     return {4, 0xffff, 0, true};
-  case llvm::ELF::R_MICROMIPS_PC16_S1:
+  case R_MICROMIPS_PC16_S1:
     return {4, 0xffff, 1, true};
-  case llvm::ELF::R_MICROMIPS_PC7_S1:
+  case R_MICROMIPS_PC7_S1:
     return {4, 0x7f, 1, false};
-  case llvm::ELF::R_MICROMIPS_PC10_S1:
+  case R_MICROMIPS_PC10_S1:
     return {4, 0x3ff, 1, false};
-  case llvm::ELF::R_MICROMIPS_PC23_S2:
+  case R_MICROMIPS_PC23_S2:
     return {4, 0x7fffff, 2, true};
-  case llvm::ELF::R_MIPS_CALL16:
-  case llvm::ELF::R_MIPS_TLS_GD:
-  case llvm::ELF::R_MIPS_TLS_LDM:
-  case llvm::ELF::R_MIPS_TLS_GOTTPREL:
+  case R_MIPS_CALL16:
+  case R_MIPS_TLS_GD:
+  case R_MIPS_TLS_LDM:
+  case R_MIPS_TLS_GOTTPREL:
     return {4, 0xffff, 0, false};
-  case llvm::ELF::R_MICROMIPS_CALL16:
-  case llvm::ELF::R_MICROMIPS_TLS_GD:
-  case llvm::ELF::R_MICROMIPS_TLS_LDM:
-  case llvm::ELF::R_MICROMIPS_TLS_GOTTPREL:
+  case R_MICROMIPS_CALL16:
+  case R_MICROMIPS_TLS_GD:
+  case R_MICROMIPS_TLS_LDM:
+  case R_MICROMIPS_TLS_GOTTPREL:
     return {4, 0xffff, 0, true};
   case R_MIPS_JALR:
     return {4, 0x0, 0, false};
