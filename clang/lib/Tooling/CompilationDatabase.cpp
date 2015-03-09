@@ -29,9 +29,8 @@
 #include "llvm/Support/Path.h"
 #include <sstream>
 #include <system_error>
-
-namespace clang {
-namespace tooling {
+using namespace clang;
+using namespace tooling;
 
 CompilationDatabase::~CompilationDatabase() {}
 
@@ -109,6 +108,7 @@ CompilationDatabase::autoDetectFromDirectory(StringRef SourceDir,
 
 CompilationDatabasePlugin::~CompilationDatabasePlugin() {}
 
+namespace {
 // Helper for recursively searching through a chain of actions and collecting
 // all inputs, direct and indirect, of compile jobs.
 struct CompileJobAnalyzer {
@@ -183,6 +183,7 @@ struct MatchesAny {
 private:
   ArrayRef<std::string> Arr;
 };
+} // namespace
 
 /// \brief Strips any positional args and possible argv[0] from a command-line
 /// provided by the user to construct a FixedCompilationDatabase.
@@ -323,6 +324,9 @@ std::vector<CompileCommand>
 FixedCompilationDatabase::getAllCompileCommands() const {
   return std::vector<CompileCommand>();
 }
+
+namespace clang {
+namespace tooling {
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the JSONCompilationDatabasePlugin.
