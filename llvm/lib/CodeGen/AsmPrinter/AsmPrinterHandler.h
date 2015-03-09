@@ -41,6 +41,10 @@ public:
   /// call.
   virtual void beginFunction(const MachineFunction *MF) = 0;
 
+  // \brief Emit any of function marker (like .cfi_endproc). This is called
+  // before endFunction and cannot switch sections.
+  virtual void markFunctionEnd();
+
   /// \brief Gather post-function debug information.
   /// Please note that some AsmPrinter implementations may not call
   /// beginFunction at all.

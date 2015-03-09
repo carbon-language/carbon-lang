@@ -86,11 +86,13 @@ bb7:
 ; DARWIN64: _F3:
 ; DARWIN64: Lfunc_end
 ; DARWIN64-NEXT: .cfi_endproc
-; DARWIN64-NEXT: .section        __TEXT,__gcc_except_tab
-; DARWIN64-NOT: .section
-; DARWIN64: .section        __TEXT,__text,regular,pure_instructions
 ; DARWIN64-NOT: .section
 ; DARWIN64: LJTI{{.*}}:
+; DARWIN64-NEXT: .long
+; DARWIN64-NEXT: .long
+; DARWIN64-NEXT: .long
+; DARWIN64-NEXT: .long
+; DARWIN64-NEXT: .section        __TEXT,__gcc_except_tab
 
 ; int G1;
 @G1 = common global i32 0

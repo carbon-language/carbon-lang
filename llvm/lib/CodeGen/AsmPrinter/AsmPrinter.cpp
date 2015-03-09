@@ -900,15 +900,20 @@ void AsmPrinter::EmitFunctionBody() {
     OutStreamer.EmitELFSize(CurrentFnSym, SizeExp);
   }
 
+  for (const HandlerInfo &HI : Handlers) {
+    NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
+    HI.Handler->markFunctionEnd();
+  }
+
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo();
+
   // Emit post-function debug and/or EH information.
   for (const HandlerInfo &HI : Handlers) {
     NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
     HI.Handler->endFunction(MF);
   }
   MMI->EndFunction();
-
-  // Print out jump tables referenced by the function.
-  EmitJumpTableInfo();
 
   OutStreamer.AddBlankLine();
 }
@@ -1245,10 +1250,8 @@ void AsmPrinter::EmitJumpTableInfo() {
   bool JTInDiffSection = !TLOF.shouldPutJumpTableInFunctionSection(
       MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32,
       *F);
-  if (!JTInDiffSection) {
-    OutStreamer.SwitchSection(TLOF.SectionForGlobal(F, *Mang, TM));
-  } else {
-    // Otherwise, drop it in the readonly section.
+  if (JTInDiffSection) {
+    // Drop it in the readonly section.
     const MCSection *ReadOnlySection =
         TLOF.getSectionForJumpTable(*F, *Mang, TM);
     OutStreamer.SwitchSection(ReadOnlySection);
@@ -2504,3 +2507,5 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy &S) {
 
 /// Pin vtable to this file.
 AsmPrinterHandler::~AsmPrinterHandler() {}
+
+void AsmPrinterHandler::markFunctionEnd() {}

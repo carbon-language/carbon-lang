@@ -21,7 +21,17 @@ namespace llvm {
 class MachineFunction;
 class ARMTargetStreamer;
 
-class DwarfCFIException : public EHStreamer {
+class DwarfCFIExceptionBase : public EHStreamer {
+protected:
+  DwarfCFIExceptionBase(AsmPrinter *A);
+
+  /// Per-function flag to indicate if frame CFI info should be emitted.
+  bool shouldEmitCFI;
+
+  void markFunctionEnd() override;
+};
+
+class DwarfCFIException : public DwarfCFIExceptionBase {
   /// Per-function flag to indicate if .cfi_personality should be emitted.
   bool shouldEmitPersonality;
 
@@ -51,12 +61,9 @@ public:
   void endFunction(const MachineFunction *) override;
 };
 
-class ARMException : public EHStreamer {
+class ARMException : public DwarfCFIExceptionBase {
   void emitTypeInfos(unsigned TTypeEncoding) override;
   ARMTargetStreamer &getTargetStreamer();
-
-  /// Per-function flag to indicate if frame CFI info should be emitted.
-  bool shouldEmitCFI;
 
 public:
   //===--------------------------------------------------------------------===//

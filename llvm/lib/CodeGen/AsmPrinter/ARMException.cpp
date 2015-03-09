@@ -36,8 +36,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
-ARMException::ARMException(AsmPrinter *A)
-  : EHStreamer(A), shouldEmitCFI(false) {}
+ARMException::ARMException(AsmPrinter *A) : DwarfCFIExceptionBase(A) {}
 
 ARMException::~ARMException() {}
 
@@ -70,13 +69,7 @@ void ARMException::beginFunction(const MachineFunction *MF) {
 
 /// endFunction - Gather and emit post-function exception information.
 ///
-void ARMException::endFunction(const MachineFunction *) {
-  if (shouldEmitCFI)
-    Asm->OutStreamer.EmitCFIEndProc();
-
-  // Map all labels and get rid of any dead landing pads.
-  MMI->TidyLandingPads();
-
+void ARMException::endFunction(const MachineFunction *MF) {
   ARMTargetStreamer &ATS = getTargetStreamer();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry() &&
       MMI->getLandingPads().empty())
