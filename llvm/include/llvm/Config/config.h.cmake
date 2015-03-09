@@ -33,9 +33,6 @@
 /* Define to 1 if you have the `bcopy' function. */
 #undef HAVE_BCOPY
 
-/* Define to 1 if you have the `ceilf' function. */
-#cmakedefine HAVE_CEILF ${HAVE_CEILF}
-
 /* Define to 1 if you have the `closedir' function. */
 #cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
 
@@ -95,33 +92,6 @@
 /* Define to 1 if you have the <ffi.h> header file. */
 #cmakedefine HAVE_FFI_H ${HAVE_FFI_H}
 
-/* Set to 1 if the finite function is found in <ieeefp.h> */
-#cmakedefine HAVE_FINITE_IN_IEEEFP_H ${HAVE_FINITE_IN_IEEEFP_H}
-
-/* Define to 1 if you have the `floorf' function. */
-#cmakedefine HAVE_FLOORF ${HAVE_FLOORF}
-
-/* Define to 1 if you have the `log' function. */
-#cmakedefine HAVE_LOG ${HAVE_LOG}
-
-/* Define to 1 if you have the `log2' function. */
-#cmakedefine HAVE_LOG2 ${HAVE_LOG2}
-
-/* Define to 1 if you have the `log10' function. */
-#cmakedefine HAVE_LOG10 ${HAVE_LOG10}
-
-/* Define to 1 if you have the `exp' function. */
-#cmakedefine HAVE_EXP ${HAVE_EXP}
-
-/* Define to 1 if you have the `exp2' function. */
-#cmakedefine HAVE_EXP2 ${HAVE_EXP2}
-
-/* Define to 1 if you have the `exp10' function. */
-#cmakedefine HAVE_EXP10 ${HAVE_EXP10}
-
-/* Define to 1 if you have the `fmodf' function. */
-#cmakedefine HAVE_FMODF ${HAVE_FMODF}
-
 /* Define to 1 if you have the `futimes' function. */
 #cmakedefine HAVE_FUTIMES ${HAVE_FUTIMES}
 
@@ -151,18 +121,6 @@
 
 /* Define to 1 if you have the `isatty' function. */
 #cmakedefine HAVE_ISATTY 1
-
-/* Set to 1 if the isinf function is found in <cmath> */
-#cmakedefine HAVE_ISINF_IN_CMATH ${HAVE_ISINF_IN_CMATH}
-
-/* Set to 1 if the isinf function is found in <math.h> */
-#cmakedefine HAVE_ISINF_IN_MATH_H ${HAVE_ISINF_IN_MATH_H}
-
-/* Set to 1 if the isnan function is found in <cmath> */
-#cmakedefine HAVE_ISNAN_IN_CMATH ${HAVE_ISNAN_IN_CMATH}
-
-/* Set to 1 if the isnan function is found in <math.h> */
-#cmakedefine HAVE_ISNAN_IN_MATH_H ${HAVE_ISNAN_IN_MATH_H}
 
 /* Define if you have the libdl library or equivalent. */
 #cmakedefine HAVE_LIBDL ${HAVE_LIBDL}
@@ -247,17 +205,11 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #cmakedefine HAVE_NDIR_H ${HAVE_NDIR_H}
 
-/* Define to 1 if you have the `nearbyintf' function. */
-#cmakedefine HAVE_NEARBYINTF ${HAVE_NEARBYINTF}
-
 /* Define to 1 if you have the `opendir' function. */
 #cmakedefine HAVE_OPENDIR ${HAVE_OPENDIR}
 
 /* Define to 1 if you have the `posix_spawn' function. */
 #cmakedefine HAVE_POSIX_SPAWN ${HAVE_POSIX_SPAWN}
-
-/* Define to 1 if you have the `powf' function. */
-#cmakedefine HAVE_POWF ${HAVE_POWF}
 
 /* Define to 1 if you have the `pread' function. */
 #cmakedefine HAVE_PREAD ${HAVE_PREAD}
@@ -288,15 +240,6 @@
 
 /* Define to 1 if you have the `realpath' function. */
 #cmakedefine HAVE_REALPATH ${HAVE_REALPATH}
-
-/* Define to 1 if you have the `rintf' function. */
-#undef HAVE_RINTF
-
-/* Define to 1 if you have the `round' function. */
-#cmakedefine HAVE_ROUND ${HAVE_ROUND}
-
-/* Define to 1 if you have the `roundf' function. */
-#undef HAVE_ROUNDF
 
 /* Define to 1 if you have the `sbrk' function. */
 #cmakedefine HAVE_SBRK ${HAVE_SBRK}
@@ -339,9 +282,6 @@
 
 /* Define to 1 if you have the `strerror_r' function. */
 #cmakedefine HAVE_STRERROR_R ${HAVE_STRERROR_R}
-
-/* Define to 1 if you have the `strtof' function. */
-#cmakedefine HAVE_STRTOF ${HAVE_STRTOF}
 
 /* Define to 1 if you have the `strtoll' function. */
 #cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}

@@ -534,14 +534,6 @@ inline uint32_t FloatToBits(float Float) {
   return T.I;
 }
 
-/// Platform-independent wrappers for the C99 isnan() function.
-int IsNAN(float f);
-int IsNAN(double d);
-
-/// Platform-independent wrappers for the C99 isinf() function.
-int IsInf(float f);
-int IsInf(double d);
-
 /// MinAlign - A and B are either alignments or offsets.  Return the minimum
 /// alignment that may be assumed after adding the two together.
 inline uint64_t MinAlign(uint64_t A, uint64_t B) {

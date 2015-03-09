@@ -1310,13 +1310,8 @@ APInt APInt::sqrt() const {
   // libc sqrt function which will probably use a hardware sqrt computation.
   // This should be faster than the algorithm below.
   if (magnitude < 52) {
-#if HAVE_ROUND
     return APInt(BitWidth,
                  uint64_t(::round(::sqrt(double(isSingleWord()?VAL:pVal[0])))));
-#else
-    return APInt(BitWidth,
-                 uint64_t(::sqrt(double(isSingleWord()?VAL:pVal[0])) + 0.5));
-#endif
   }
 
   // Okay, all the short cuts are exhausted. We must compute it. The following

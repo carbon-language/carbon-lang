@@ -1451,26 +1451,16 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
         default: break;
         case Intrinsic::fabs:
           return ConstantFoldFP(fabs, V, Ty);
-#if HAVE_LOG2
         case Intrinsic::log2:
           return ConstantFoldFP(log2, V, Ty);
-#endif
-#if HAVE_LOG
         case Intrinsic::log:
           return ConstantFoldFP(log, V, Ty);
-#endif
-#if HAVE_LOG10
         case Intrinsic::log10:
           return ConstantFoldFP(log10, V, Ty);
-#endif
-#if HAVE_EXP
         case Intrinsic::exp:
           return ConstantFoldFP(exp, V, Ty);
-#endif
-#if HAVE_EXP2
         case Intrinsic::exp2:
           return ConstantFoldFP(exp2, V, Ty);
-#endif
         case Intrinsic::floor:
           return ConstantFoldFP(floor, V, Ty);
         case Intrinsic::ceil:

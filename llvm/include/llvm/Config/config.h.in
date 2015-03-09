@@ -39,9 +39,6 @@
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
 
-/* Define to 1 if you have the `ceilf' function. */
-#undef HAVE_CEILF
-
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 #undef HAVE_CRASHREPORTERCLIENT_H
 
@@ -67,9 +64,6 @@
    don't. */
 #undef HAVE_DECL_STRERROR_S
 
-/* Define to 1 if you have the DIA SDK installed, and to 0 if you don't. */
-#undef HAVE_DIA_SDK
-
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #undef HAVE_DIRENT_H
@@ -89,12 +83,6 @@
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
 
-/* Define to 1 if you have the `exp' function. */
-#undef HAVE_EXP
-
-/* Define to 1 if you have the `exp2' function. */
-#undef HAVE_EXP2
-
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -109,15 +97,6 @@
 
 /* Define to 1 if you have the <ffi.h> header file. */
 #undef HAVE_FFI_H
-
-/* Set to 1 if the finite function is found in <ieeefp.h> */
-#undef HAVE_FINITE_IN_IEEEFP_H
-
-/* Define to 1 if you have the `floorf' function. */
-#undef HAVE_FLOORF
-
-/* Define to 1 if you have the `fmodf' function. */
-#undef HAVE_FMODF
 
 /* Define to 1 if you have the `futimens' function. */
 #undef HAVE_FUTIMENS
@@ -148,18 +127,6 @@
 
 /* Define to 1 if you have the `isatty' function. */
 #undef HAVE_ISATTY
-
-/* Set to 1 if the isinf function is found in <cmath> */
-#undef HAVE_ISINF_IN_CMATH
-
-/* Set to 1 if the isinf function is found in <math.h> */
-#undef HAVE_ISINF_IN_MATH_H
-
-/* Set to 1 if the isnan function is found in <cmath> */
-#undef HAVE_ISNAN_IN_CMATH
-
-/* Set to 1 if the isnan function is found in <math.h> */
-#undef HAVE_ISNAN_IN_MATH_H
 
 /* Define if libedit is available on this platform. */
 #undef HAVE_LIBEDIT
@@ -192,15 +159,6 @@
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
 
-/* Define to 1 if you have the `log' function. */
-#undef HAVE_LOG
-
-/* Define to 1 if you have the `log10' function. */
-#undef HAVE_LOG10
-
-/* Define to 1 if you have the `log2' function. */
-#undef HAVE_LOG2
-
 /* Define to 1 if you have the `longjmp' function. */
 #undef HAVE_LONGJMP
 
@@ -209,9 +167,6 @@
 
 /* Define if mallinfo() is available on this platform. */
 #undef HAVE_MALLINFO
-
-/* Define if mallctl() is available on this plaform. */
-#undef HAVE_MALLCTL
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
@@ -247,14 +202,8 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
-/* Define to 1 if you have the `nearbyintf' function. */
-#undef HAVE_NEARBYINTF
-
 /* Define to 1 if you have the `posix_spawn' function. */
 #undef HAVE_POSIX_SPAWN
-
-/* Define to 1 if you have the `powf' function. */
-#undef HAVE_POWF
 
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
@@ -279,15 +228,6 @@
 
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
-
-/* Define to 1 if you have the `rintf' function. */
-#undef HAVE_RINTF
-
-/* Define to 1 if you have the `round' function. */
-#undef HAVE_ROUND
-
-/* Define to 1 if you have the `roundf' function. */
-#undef HAVE_ROUNDF
 
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
@@ -319,12 +259,6 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Set to 1 if the std::isinf function is found in <cmath> */
-#undef HAVE_STD_ISINF_IN_CMATH
-
-/* Set to 1 if the std::isnan function is found in <cmath> */
-#undef HAVE_STD_ISNAN_IN_CMATH
-
 /* Define to 1 if you have the `strerror' function. */
 #undef HAVE_STRERROR
 
@@ -336,9 +270,6 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strtof' function. */
-#undef HAVE_STRTOF
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL

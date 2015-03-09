@@ -1699,9 +1699,7 @@ dnl=== SECTION 8: Check for specific functions needed
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-AC_CHECK_FUNCS([backtrace ceilf floorf roundf rintf nearbyintf getcwd ])
-AC_CHECK_FUNCS([powf fmodf strtof round ])
-AC_CHECK_FUNCS([log log2 log10 exp exp2])
+AC_CHECK_FUNCS([backtrace getcwd ])
 AC_CHECK_FUNCS([getpagesize getrusage getrlimit setrlimit gettimeofday ])
 AC_CHECK_FUNCS([isatty mkdtemp mkstemp ])
 AC_CHECK_FUNCS([mktemp posix_spawn pread realpath sbrk setrlimit ])
@@ -1764,11 +1762,6 @@ if test "$llvm_cv_os_type" = "MingW" ; then
 ])
   AC_DEFINE_UNQUOTED([WIN32_ELMCB_PCSTR],$llvm_cv_win32_elmcb_pcstr,[Type of 1st arg on ELM Callback])
 fi
-
-dnl Check for variations in the Standard C++ library and STL. These macros are
-dnl provided by LLVM in the autoconf/m4 directory.
-AC_FUNC_ISNAN
-AC_FUNC_ISINF
 
 dnl Check for mmap support.We also need to know if /dev/zero is required to
 dnl be opened for allocating RWX memory.

@@ -58,8 +58,6 @@ add_llvm_library(LLVMSupport
   IntEqClasses.cpp
   IntervalMap.cpp
   IntrusiveRefCntPtr.cpp
-  IsInf.cpp
-  IsNAN.cpp
   LEB128.cpp
   LineIterator.cpp
   Locale.cpp
