@@ -10,6 +10,7 @@
 #include "AArch64TargetTransformInfo.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
@@ -426,6 +427,15 @@ unsigned AArch64TTIImpl::getMaxInterleaveFactor() {
 
 void AArch64TTIImpl::getUnrollingPreferences(Loop *L,
                                              TTI::UnrollingPreferences &UP) {
+  // Enable partial unrolling and runtime unrolling.
+  BaseT::getUnrollingPreferences(L, UP);
+
+  // For inner loop, it is more likely to be a hot one, and the runtime check
+  // can be promoted out from LICM pass, so the overhead is less, let's try
+  // a larger threshold to unroll more loops.
+  if (L->getLoopDepth() > 1)
+    UP.PartialThreshold *= 2;
+
   // Disable partial & runtime unrolling on -Os.
   UP.PartialOptSizeThreshold = 0;
 }
