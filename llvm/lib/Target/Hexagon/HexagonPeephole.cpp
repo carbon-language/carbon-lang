@@ -274,12 +274,6 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
             case Hexagon::TFR_condset_ii:
               NewOp = Op;
               break;
-            case Hexagon::TFR_condset_ri:
-              NewOp = Hexagon::TFR_condset_ir;
-              break;
-            case Hexagon::TFR_condset_ir:
-              NewOp = Hexagon::TFR_condset_ri;
-              break;
             case Hexagon::C2_muxri:
               NewOp = Hexagon::C2_muxir;
               break;

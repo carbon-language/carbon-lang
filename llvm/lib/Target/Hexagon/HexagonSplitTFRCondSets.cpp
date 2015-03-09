@@ -87,46 +87,6 @@ bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
          ++MII) {
       MachineInstr *MI = MII;
       switch(MI->getOpcode()) {
-        case Hexagon::TFR_condset_ri: {
-          int DestReg = MI->getOperand(0).getReg();
-          int SrcReg1 = MI->getOperand(2).getReg();
-
-          //  Do not emit the predicated copy if the source and the destination
-          // is the same register.
-          if (DestReg != SrcReg1) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-              TII->get(Hexagon::A2_tfrt), DestReg).
-              addReg(MI->getOperand(1).getReg()).addReg(SrcReg1);
-          }
-          BuildMI(*MBB, MII, MI->getDebugLoc(),
-            TII->get(Hexagon::C2_cmoveif), DestReg).
-            addReg(MI->getOperand(1).getReg()).
-            addImm(MI->getOperand(3).getImm());
-
-          MII = MBB->erase(MI);
-          --MII;
-          break;
-        }
-        case Hexagon::TFR_condset_ir: {
-          int DestReg = MI->getOperand(0).getReg();
-          int SrcReg2 = MI->getOperand(3).getReg();
-
-          BuildMI(*MBB, MII, MI->getDebugLoc(),
-            TII->get(Hexagon::C2_cmoveit), DestReg).
-            addReg(MI->getOperand(1).getReg()).
-            addImm(MI->getOperand(2).getImm());
-
-          // Do not emit the predicated copy if the source and
-          // the destination is the same register.
-          if (DestReg != SrcReg2) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-              TII->get(Hexagon::A2_tfrf), DestReg).
-              addReg(MI->getOperand(1).getReg()).addReg(SrcReg2);
-          }
-          MII = MBB->erase(MI);
-          --MII;
-          break;
-        }
         case Hexagon::TFR_condset_ii: {
           int DestReg = MI->getOperand(0).getReg();
           int SrcReg1 = MI->getOperand(1).getReg();

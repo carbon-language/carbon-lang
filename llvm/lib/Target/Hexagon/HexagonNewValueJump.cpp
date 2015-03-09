@@ -200,8 +200,6 @@ static bool commonChecksToProhibitNewValueJump(bool afterRA,
     // we don't know the scope of usage and definitions of these
     // instructions.
     if (MII->getOpcode() == Hexagon::TFR_condset_ii ||
-        MII->getOpcode() == Hexagon::TFR_condset_ri ||
-        MII->getOpcode() == Hexagon::TFR_condset_ir ||
         MII->getOpcode() == Hexagon::LDriw_pred     ||
         MII->getOpcode() == Hexagon::STriw_pred)
       return false;

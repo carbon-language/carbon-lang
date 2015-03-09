@@ -4728,22 +4728,6 @@ def Y4_trace: CRInst <(outs), (ins IntRegs:$Rs),
   }
 
 let AddedComplexity = 100, isPredicated = 1, isCodeGenOnly = 1 in
-def TFR_condset_ri : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s12Imm:$src3),
-            "Error; should not emit",
-            [(set (i32 IntRegs:$dst),
-             (i32 (select (i1 PredRegs:$src1), (i32 IntRegs:$src2),
-                          s12ImmPred:$src3)))]>;
-
-let AddedComplexity = 100, isPredicated = 1, isCodeGenOnly = 1 in
-def TFR_condset_ir : ALU32_rr<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, s12Imm:$src2, IntRegs:$src3),
-            "Error; should not emit",
-            [(set (i32 IntRegs:$dst),
-             (i32 (select (i1 PredRegs:$src1), s12ImmPred:$src2,
-                          (i32 IntRegs:$src3))))]>;
-
-let AddedComplexity = 100, isPredicated = 1, isCodeGenOnly = 1 in
 def TFR_condset_ii : ALU32_rr<(outs IntRegs:$dst),
                               (ins PredRegs:$src1, s12Imm:$src2, s12Imm:$src3),
                      "Error; should not emit",
