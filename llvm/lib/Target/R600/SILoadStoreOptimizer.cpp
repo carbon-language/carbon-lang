@@ -249,10 +249,10 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   DebugLoc DL = I->getDebugLoc();
   MachineInstrBuilder Read2
     = BuildMI(*MBB, I, DL, Read2Desc, DestReg)
-    .addImm(0) // gds
     .addOperand(*AddrReg) // addr
     .addImm(NewOffset0) // offset0
     .addImm(NewOffset1) // offset1
+    .addImm(0) // gds
     .addOperand(*M0Reg) // M0
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
@@ -332,12 +332,12 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
 
   MachineInstrBuilder Write2
     = BuildMI(*MBB, I, DL, Write2Desc)
-    .addImm(0) // gds
     .addOperand(*Addr) // addr
     .addOperand(*Data0) // data0
     .addOperand(*Data1) // data1
     .addImm(NewOffset0) // offset0
     .addImm(NewOffset1) // offset1
+    .addImm(0) // gds
     .addOperand(*M0Reg)  // m0
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());

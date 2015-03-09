@@ -264,6 +264,9 @@ def ds_offset0 : Operand<i8> {
 def ds_offset1 : Operand<i8> {
   let PrintMethod = "printDSOffset1";
 }
+def gds : Operand <i1> {
+  let PrintMethod = "printGDS";
+}
 def glc : Operand <i1> {
   let PrintMethod = "printGLC";
 }
@@ -1503,8 +1506,8 @@ class DS_Off16_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm
 
 multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
-  string asm = opName#" $vdst, $addr"#"$offset"> {
+  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, gds:$gds, M0Reg:$m0),
+  string asm = opName#" $vdst, $addr"#"$offset$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
 
@@ -1516,9 +1519,9 @@ multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
 
 multiclass DS_1A_Off8_RET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, ds_offset0:$offset0,
-                 ds_offset1:$offset1, M0Reg:$m0),
-  string asm = opName#" $vdst, $addr"#"$offset0"#"$offset1"> {
+  dag ins = (ins VGPR_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
+                 gds:$gds, M0Reg:$m0),
+  string asm = opName#" $vdst, $addr"#"$offset0"#"$offset1$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
 
@@ -1530,9 +1533,9 @@ multiclass DS_1A_Off8_RET <bits<8> op, string opName, RegisterClass rc,
 
 multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset,
+  dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds,
                  M0Reg:$m0),
-  string asm = opName#" $addr, $data0"#"$offset"> {
+  string asm = opName#" $addr, $data0"#"$offset$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
            AtomicNoRet<opName, 0>;
@@ -1545,9 +1548,9 @@ multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
 
 multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1,
-              ds_offset0:$offset0, ds_offset1:$offset1, M0Reg:$m0),
-  string asm = opName#" $addr, $data0, $data1"#"$offset0"#"$offset1"> {
+  dag ins = (ins VGPR_32:$addr, rc:$data0, rc:$data1,
+              ds_offset0:$offset0, ds_offset1:$offset1, gds:$gds, M0Reg:$m0),
+  string asm = opName#" $addr, $data0, $data1"#"$offset0"#"$offset1"#"$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
 
@@ -1560,9 +1563,9 @@ multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A1D_RET <bits<8> op, string opName, RegisterClass rc,
                         string noRetOp = "",
   dag outs = (outs rc:$vdst),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset,
+  dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds,
                  M0Reg:$m0),
-  string asm = opName#" $vdst, $addr, $data0"#"$offset"> {
+  string asm = opName#" $vdst, $addr, $data0"#"$offset$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
            AtomicNoRet<noRetOp, 1>;
@@ -1576,7 +1579,7 @@ multiclass DS_1A1D_RET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A2D_RET_m <bits<8> op, string opName, RegisterClass rc,
                           string noRetOp = "", dag ins,
   dag outs = (outs rc:$vdst),
-  string asm = opName#" $vdst, $addr, $data0, $data1"#"$offset"> {
+  string asm = opName#" $vdst, $addr, $data0, $data1"#"$offset"#"$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
            AtomicNoRet<noRetOp, 1>;
@@ -1588,16 +1591,16 @@ multiclass DS_1A2D_RET_m <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc,
                         string noRetOp = "", RegisterClass src = rc> :
   DS_1A2D_RET_m <op, asm, rc, noRetOp,
-                 (ins i1imm:$gds, VGPR_32:$addr, src:$data0, src:$data1,
-                      ds_offset:$offset, M0Reg:$m0)
+                 (ins VGPR_32:$addr, src:$data0, src:$data1,
+                      ds_offset:$offset, gds:$gds, M0Reg:$m0)
 >;
 
 multiclass DS_1A2D_NORET <bits<8> op, string opName, RegisterClass rc,
                           string noRetOp = opName,
   dag outs = (outs),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1,
-                 ds_offset:$offset, M0Reg:$m0),
-  string asm = opName#" $addr, $data0, $data1"#"$offset"> {
+  dag ins = (ins VGPR_32:$addr, rc:$data0, rc:$data1,
+                 ds_offset:$offset, gds:$gds, M0Reg:$m0),
+  string asm = opName#" $addr, $data0, $data1"#"$offset"#"$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
            AtomicNoRet<noRetOp, 0>;
@@ -1610,8 +1613,8 @@ multiclass DS_1A2D_NORET <bits<8> op, string opName, RegisterClass rc,
 
 multiclass DS_0A_RET <bits<8> op, string opName,
   dag outs = (outs VGPR_32:$vdst),
-  dag ins = (ins i1imm:$gds, ds_offset:$offset, M0Reg:$m0),
-  string asm = opName#" $vdst $offset"> {
+  dag ins = (ins ds_offset:$offset, gds:$gds, M0Reg:$m0),
+  string asm = opName#" $vdst"#"$offset"#"$gds"> {
 
   let mayLoad = 1, mayStore = 1 in {
     def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1626,7 +1629,7 @@ multiclass DS_0A_RET <bits<8> op, string opName,
 multiclass DS_1A_RET_GDS <bits<8> op, string opName,
   dag outs = (outs VGPR_32:$vdst),
   dag ins = (ins VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
-  string asm = opName#" $vdst, $addr $offset"> {
+  string asm = opName#" $vdst, $addr"#"$offset gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
 
@@ -1651,8 +1654,8 @@ multiclass DS_1A_GDS <bits<8> op, string opName,
 
 multiclass DS_1A <bits<8> op, string opName,
   dag outs = (outs),
-  dag ins = (ins i1imm:$gds, VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
-  string asm = opName#" $addr $offset"> {
+  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0, gds:$gds),
+  string asm = opName#" $addr"#"$offset"#"$gds"> {
 
   let mayLoad = 1, mayStore = 1 in {
     def "" : DS_Pseudo <opName, outs, ins, []>;

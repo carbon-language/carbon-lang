@@ -99,6 +99,12 @@ void AMDGPUInstPrinter::printDSOffset1(const MCInst *MI, unsigned OpNo,
   printU8ImmDecOperand(MI, OpNo, O);
 }
 
+void AMDGPUInstPrinter::printGDS(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " gds";
+}
+
 void AMDGPUInstPrinter::printGLC(const MCInst *MI, unsigned OpNo,
                                  raw_ostream &O) {
   if (MI->getOperand(OpNo).getImm())
