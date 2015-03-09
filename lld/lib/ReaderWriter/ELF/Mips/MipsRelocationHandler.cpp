@@ -435,21 +435,20 @@ std::error_code MipsRelocationHandler<ELFT>::applyRelocation(
 
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *location = atomContent + ref.offsetInAtom();
-  uint64_t targetVAddress = writer.addressOfAtom(ref.target());
-  uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
+  uint64_t tgtAddr = writer.addressOfAtom(ref.target());
+  uint64_t relAddr = atom._virtualAddr + ref.offsetInAtom();
 
   if (isMicroMipsAtom(ref.target()))
-    targetVAddress |= 1;
+    tgtAddr |= 1;
 
-  auto res =
-      calculateRelocation(ref, targetVAddress, relocVAddress, gpAddr, isGpDisp);
+  auto res = calculateRelocation(ref, tgtAddr, relAddr, gpAddr, isGpDisp);
   if (auto ec = res.getError())
     return ec;
 
   auto params = getRelocationParams(ref.kindValue());
   uint64_t ins = relocRead<ELFT>(params, location);
 
-  if (auto ec = adjustJumpOpCode(ins, targetVAddress, getCrossJumpMode(ref)))
+  if (auto ec = adjustJumpOpCode(ins, tgtAddr, getCrossJumpMode(ref)))
     return ec;
 
   ins = (ins & ~params._mask) | (*res & params._mask);
