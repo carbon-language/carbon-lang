@@ -512,7 +512,8 @@ void UnwrappedLineFormatter::formatFirstToken(FormatToken &RootToken,
     ++Newlines;
 
   // Remove empty lines after access specifiers.
-  if (PreviousLine && PreviousLine->First->isAccessSpecifier())
+  if (PreviousLine && PreviousLine->First->isAccessSpecifier() &&
+      (!PreviousLine->InPPDirective || !RootToken.HasUnescapedNewline))
     Newlines = std::min(1u, Newlines);
 
   Whitespaces->replaceWhitespace(RootToken, Newlines, IndentLevel, Indent,
