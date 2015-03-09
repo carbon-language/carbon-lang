@@ -38,6 +38,14 @@ large_numbers
 # LARGENUM-NEXT: Function count: 2305843009213693952
 # LARGENUM-NEXT: Block counts: [1152921504606846976, 576460752303423488, 288230376151711744, 144115188075855872, 72057594037927936]
 
+# RUN: llvm-profdata show %t.profdata --function hex_hash | FileCheck %s -check-prefix=HEX-HASH
+hex_hash
+0x1234
+1
+0
+# HEX-HASH: Hash: 0x0000000000001234
+# HEX-HASH-NEXT: Counters: 1
+
 # RUN: llvm-profdata show %t.profdata --function NOSUCHFUNC | FileCheck %s -check-prefix=NOSUCHFUNC
 # NOSUCHFUNC-NOT: Counters:
 # NOSUCHFUNC: Functions shown: 0
@@ -46,11 +54,11 @@ large_numbers
 # SOMEFUNCS: Counters:
 # SOMEFUNCS: function_count_only:
 # SOMEFUNCS: large_numbers:
-# SOMEFUNCS: Functions shown: 2
+# SOMEFUNCS: Functions shown: 3
 
 # RUN: llvm-profdata show %t.profdata | FileCheck %s -check-prefix=SUMMARY
 # SUMMARY-NOT: Counters:
 # SUMMARY-NOT: Functions shown:
-# SUMMARY: Total functions: 3
+# SUMMARY: Total functions: 4
 # SUMMARY: Maximum function count: 2305843009213693952
 # SUMMARY: Maximum internal block count: 1152921504606846976
