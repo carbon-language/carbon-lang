@@ -408,6 +408,19 @@ NativeRegisterContextLinux_x86_64::GetRegisterSetCount () const
     return sets;
 }
 
+uint32_t
+NativeRegisterContextLinux_x86_64::GetUserRegisterCount() const
+{
+    uint32_t count = 0;
+    for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index)
+    {
+        const lldb_private::RegisterSet* set = GetRegisterSet(set_index);
+        if (set)
+            count += set->num_registers;
+    }
+    return count;
+}
+
 const lldb_private::RegisterSet *
 NativeRegisterContextLinux_x86_64::GetRegisterSet (uint32_t set_index) const
 {
