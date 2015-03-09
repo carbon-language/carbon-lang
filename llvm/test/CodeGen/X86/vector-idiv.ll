@@ -4,7 +4,7 @@
 
 target triple = "x86_64-unknown-unknown"
 
-define <4 x i32> @test1(<4 x i32> %a) {
+define <4 x i32> @test1(<4 x i32> %a) #0 {
 ; SSE41-LABEL: test1:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm1 = [613566757,613566757,613566757,613566757]
@@ -55,7 +55,7 @@ define <4 x i32> @test1(<4 x i32> %a) {
   ret <4 x i32> %div
 }
 
-define <8 x i32> @test2(<8 x i32> %a) {
+define <8 x i32> @test2(<8 x i32> %a) #0 {
 ; SSE41-LABEL: test2:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [613566757,613566757,613566757,613566757]
@@ -126,7 +126,7 @@ define <8 x i32> @test2(<8 x i32> %a) {
   ret <8 x i32> %div
 }
 
-define <8 x i16> @test3(<8 x i16> %a) {
+define <8 x i16> @test3(<8 x i16> %a) #0 {
 ; SSE41-LABEL: test3:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm1 = [9363,9363,9363,9363,9363,9363,9363,9363]
@@ -159,7 +159,7 @@ define <8 x i16> @test3(<8 x i16> %a) {
   ret <8 x i16> %div
 }
 
-define <16 x i16> @test4(<16 x i16> %a) {
+define <16 x i16> @test4(<16 x i16> %a) #0 {
 ; SSE41-LABEL: test4:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [9363,9363,9363,9363,9363,9363,9363,9363]
@@ -204,7 +204,7 @@ define <16 x i16> @test4(<16 x i16> %a) {
   ret <16 x i16> %div
 }
 
-define <8 x i16> @test5(<8 x i16> %a) {
+define <8 x i16> @test5(<8 x i16> %a) #0 {
 ; SSE41-LABEL: test5:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    pmulhw {{.*}}(%rip), %xmm0
@@ -234,7 +234,7 @@ define <8 x i16> @test5(<8 x i16> %a) {
   ret <8 x i16> %div
 }
 
-define <16 x i16> @test6(<16 x i16> %a) {
+define <16 x i16> @test6(<16 x i16> %a) #0 {
 ; SSE41-LABEL: test6:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [18725,18725,18725,18725,18725,18725,18725,18725]
@@ -276,7 +276,7 @@ define <16 x i16> @test6(<16 x i16> %a) {
   ret <16 x i16> %div
 }
 
-define <16 x i8> @test7(<16 x i8> %a) {
+define <16 x i8> @test7(<16 x i8> %a) #0 {
 ; SSE41-LABEL: test7:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    pextrb $1, %xmm0, %eax
@@ -821,7 +821,7 @@ define <16 x i8> @test7(<16 x i8> %a) {
   ret <16 x i8> %div
 }
 
-define <4 x i32> @test8(<4 x i32> %a) {
+define <4 x i32> @test8(<4 x i32> %a) #0 {
 ; SSE41-LABEL: test8:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm1 = [2454267027,2454267027,2454267027,2454267027]
@@ -883,7 +883,7 @@ define <4 x i32> @test8(<4 x i32> %a) {
   ret <4 x i32> %div
 }
 
-define <8 x i32> @test9(<8 x i32> %a) {
+define <8 x i32> @test9(<8 x i32> %a) #0 {
 ; SSE41-LABEL: test9:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm3 = [2454267027,2454267027,2454267027,2454267027]
@@ -977,7 +977,7 @@ define <8 x i32> @test9(<8 x i32> %a) {
   ret <8 x i32> %div
 }
 
-define <8 x i32> @test10(<8 x i32> %a) {
+define <8 x i32> @test10(<8 x i32> %a) #0 {
 ; SSE41-LABEL: test10:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [613566757,613566757,613566757,613566757]
@@ -1075,7 +1075,7 @@ define <8 x i32> @test10(<8 x i32> %a) {
   ret <8 x i32> %rem
 }
 
-define <8 x i32> @test11(<8 x i32> %a) {
+define <8 x i32> @test11(<8 x i32> %a) #0 {
 ; SSE41-LABEL: test11:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [2454267027,2454267027,2454267027,2454267027]
@@ -1188,7 +1188,7 @@ define <8 x i32> @test11(<8 x i32> %a) {
   ret <8 x i32> %rem
 }
 
-define <2 x i16> @test12() {
+define <2 x i16> @test12() #0 {
 ; SSE41-LABEL: test12:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    xorps %xmm0, %xmm0
@@ -1209,7 +1209,7 @@ define <2 x i16> @test12() {
   ret <2 x i16> %B9
 }
 
-define <4 x i32> @PR20355(<4 x i32> %a) {
+define <4 x i32> @PR20355(<4 x i32> %a) #0 {
 ; SSE41-LABEL: PR20355:
 ; SSE41:       # BB#0: # %entry
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm1 = [1431655766,1431655766,1431655766,1431655766]
@@ -1263,3 +1263,5 @@ entry:
   %sdiv = sdiv <4 x i32> %a, <i32 3, i32 3, i32 3, i32 3>
   ret <4 x i32> %sdiv
 }
+
+attributes #0 = { nounwind }
