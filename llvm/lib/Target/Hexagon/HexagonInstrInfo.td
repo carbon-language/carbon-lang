@@ -4956,26 +4956,6 @@ def: Pat<(brcond (i1 (setlt (i32 IntRegs:$src1), s8ImmPred:$src2)), bb:$offset),
         (J2_jumpf (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s8ImmPred:$src2)),
                   bb:$offset)>;
 
-// cmp.lt(r0, r1) -> cmp.gt(r1, r0)
-def : Pat <(brcond (i1 (setlt (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-                        bb:$offset),
-      (J2_jumpt (C2_cmpgt (i32 IntRegs:$src2), (i32 IntRegs:$src1)), bb:$offset)>;
-
-def : Pat <(brcond (i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-                   bb:$offset),
-      (J2_jumpf (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)),
-                   bb:$offset)>;
-
-def : Pat <(brcond (i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-                        bb:$offset),
-      (J2_jumpf (C2_cmpgtu (i32 IntRegs:$src1), (i32 IntRegs:$src2)),
-                bb:$offset)>;
-
-def : Pat <(brcond (i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-                   bb:$offset),
-      (J2_jumpf (C2_cmpgtup (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
-                bb:$offset)>;
-
 // Map from a 64-bit select to an emulated 64-bit mux.
 // Hexagon does not support 64-bit MUXes; so emulate with combines.
 def: Pat<(select (i1 PredRegs:$src1), (i64 DoubleRegs:$src2),
@@ -4991,10 +4971,6 @@ def: Pat<(select (i1 PredRegs:$src1), (i1 PredRegs:$src2), (i1 PredRegs:$src3)),
          (C2_or (C2_and PredRegs:$src1, PredRegs:$src2),
                 (C2_and (C2_not PredRegs:$src1), PredRegs:$src3))>;
 
-// Map Pd = load(addr) -> Rs = load(addr); Pd = Rs.
-def : Pat<(i1 (load ADDRriS11_2:$addr)),
-      (i1 (C2_tfrrp (i32 (L2_loadrb_io AddrFI:$addr, 0))))>;
-
 // Map for truncating from 64 immediates to 32 bit immediates.
 def: Pat<(i32 (trunc (i64 DoubleRegs:$src))),
          (LoReg DoubleRegs:$src)>;
@@ -5002,38 +4978,6 @@ def: Pat<(i32 (trunc (i64 DoubleRegs:$src))),
 // Map for truncating from i64 immediates to i1 bit immediates.
 def: Pat<(i1 (trunc (i64 DoubleRegs:$src))),
          (C2_tfrrp (LoReg DoubleRegs:$src))>;
-
-// Map memb(Rs) = Rdd -> memb(Rs) = Rt.
-def : Pat<(truncstorei8 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
-      (S2_storerb_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
-                                                     subreg_loreg)))>;
-
-// Map memh(Rs) = Rdd -> memh(Rs) = Rt.
-def : Pat<(truncstorei16 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
-      (S2_storerh_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
-                                                     subreg_loreg)))>;
-// Map memw(Rs) = Rdd -> memw(Rs) = Rt
-def : Pat<(truncstorei32 (i64  DoubleRegs:$src), ADDRriS11_0:$addr),
-      (S2_storeri_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
-                                                     subreg_loreg)))>;
-
-// Map memw(Rs) = Rdd -> memw(Rs) = Rt.
-def : Pat<(truncstorei32 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
-      (S2_storeri_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
-                                                     subreg_loreg)))>;
-
-// Map from i1 = constant<-1>; memw(addr) = i1 -> r0 = 1; memw(addr) = r0.
-def : Pat<(store (i1 -1), ADDRriS11_2:$addr),
-      (S2_storerb_io AddrFI:$addr, 0, (A2_tfrsi 1))>;
-
-
-// Map from i1 = constant<-1>; store i1 -> r0 = 1; store r0.
-def : Pat<(store (i1 -1), ADDRriS11_2:$addr),
-      (S2_storerb_io AddrFI:$addr, 0, (A2_tfrsi 1))>;
-
-// Map from memb(Rs) = Pd -> Rt = mux(Pd, #0, #1); store Rt.
-def : Pat<(store (i1 PredRegs:$src1), ADDRriS11_2:$addr),
-      (S2_storerb_io AddrFI:$addr, 0, (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0)) )>;
 
 // rs <= rt -> !(rs > rt).
 let AddedComplexity = 30 in
@@ -5054,11 +4998,6 @@ def: Pat<(i1 (setle (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 let AddedComplexity = 30 in
 def: Pat<(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
          (C2_not (C2_cmpeqi IntRegs:$src1, s10ExtPred:$src2))>;
-
-// Map cmpne(Rs) -> !cmpeqe(Rs).
-// rs != rt -> !(rs == rt).
-def : Pat <(i1 (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (C2_not (i1 (C2_cmpeq (i32 IntRegs:$src1), (i32 IntRegs:$src2)))))>;
 
 // Convert setne back to xor for hexagon since we compute w/ pred registers.
 def: Pat<(i1 (setne (i1 PredRegs:$src1), (i1 PredRegs:$src2))),
