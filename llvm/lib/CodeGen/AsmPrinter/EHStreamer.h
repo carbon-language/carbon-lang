@@ -125,16 +125,6 @@ public:
   EHStreamer(AsmPrinter *A);
   virtual ~EHStreamer();
 
-  /// Emit all exception information that should come after the content.
-  void endModule() override;
-
-  /// Gather pre-function exception information.  Assumes being emitted
-  /// immediately after the function entry point.
-  void beginFunction(const MachineFunction *MF) override;
-
-  /// Gather and emit post-function exception information.
-  void endFunction(const MachineFunction *) override;
-
   // Unused.
   void setSymbolSize(const MCSymbol *Sym, uint64_t Size) override {}
   void beginInstruction(const MachineInstr *MI) override {}

@@ -687,19 +687,3 @@ void EHStreamer::emitTypeInfos(unsigned TTypeEncoding) {
     Asm->EmitULEB128(TypeID);
   }
 }
-
-/// Emit all exception information that should come after the content.
-void EHStreamer::endModule() {
-  llvm_unreachable("Should be implemented");
-}
-
-/// Gather pre-function exception information. Assumes it's being emitted
-/// immediately after the function entry point.
-void EHStreamer::beginFunction(const MachineFunction *MF) {
-  llvm_unreachable("Should be implemented");
-}
-
-/// Gather and emit post-function exception information.
-void EHStreamer::endFunction(const MachineFunction *) {
-  llvm_unreachable("Should be implemented");
-}
