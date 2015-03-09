@@ -216,6 +216,8 @@ void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
                              ThreadSafetyHandler &Handler,
                              BeforeSet **Bset);
 
+void threadSafetyCleanup(BeforeSet *Cache);
+
 /// \brief Helper function that returns a LockKind required for the given level
 /// of access.
 LockKind getLockKindFromAccessKind(AccessKind AK);

@@ -31,13 +31,11 @@
 #include <algorithm>
 #include <climits>
 #include <vector>
-
-
-namespace clang {
-namespace threadSafety {
+using namespace clang;
+using namespace threadSafety;
 
 // From ThreadSafetyUtil.h
-std::string getSourceLiteralString(const clang::Expr *CE) {
+std::string threadSafety::getSourceLiteralString(const clang::Expr *CE) {
   switch (CE->getStmtClass()) {
     case Stmt::IntegerLiteralClass:
       return cast<IntegerLiteral>(CE)->getValue().toString(10, true);
@@ -59,17 +57,12 @@ std::string getSourceLiteralString(const clang::Expr *CE) {
   }
 }
 
-namespace til {
-
 // Return true if E is a variable that points to an incomplete Phi node.
-static bool isIncompletePhi(const SExpr *E) {
-  if (const auto *Ph = dyn_cast<Phi>(E))
-    return Ph->status() == Phi::PH_Incomplete;
+static bool isIncompletePhi(const til::SExpr *E) {
+  if (const auto *Ph = dyn_cast<til::Phi>(E))
+    return Ph->status() == til::Phi::PH_Incomplete;
   return false;
 }
-
-}  // end namespace til
-
 
 typedef SExprBuilder::CallingContext CallingContext;
 
@@ -87,9 +80,7 @@ til::SCFG *SExprBuilder::buildCFG(CFGWalker &Walker) {
   return Scfg;
 }
 
-
-
-inline bool isCalleeArrow(const Expr *E) {
+static bool isCalleeArrow(const Expr *E) {
   const MemberExpr *ME = dyn_cast<MemberExpr>(E->IgnoreParenCasts());
   return ME ? ME->isArrow() : false;
 }
@@ -313,8 +304,7 @@ til::SExpr *SExprBuilder::translateCXXThisExpr(const CXXThisExpr *TE,
   return SelfVar;
 }
 
-
-const ValueDecl *getValueDeclFromSExpr(const til::SExpr *E) {
+static const ValueDecl *getValueDeclFromSExpr(const til::SExpr *E) {
   if (auto *V = dyn_cast<til::Variable>(E))
     return V->clangDecl();
   if (auto *Ph = dyn_cast<til::Phi>(E))
@@ -326,7 +316,7 @@ const ValueDecl *getValueDeclFromSExpr(const til::SExpr *E) {
   return 0;
 }
 
-bool hasCppPointerType(const til::SExpr *E) {
+static bool hasCppPointerType(const til::SExpr *E) {
   auto *VD = getValueDeclFromSExpr(E);
   if (VD && VD->getType()->isPointerType())
     return true;
@@ -336,9 +326,8 @@ bool hasCppPointerType(const til::SExpr *E) {
   return false;
 }
 
-
 // Grab the very first declaration of virtual method D
-const CXXMethodDecl* getFirstVirtualDecl(const CXXMethodDecl *D) {
+static const CXXMethodDecl *getFirstVirtualDecl(const CXXMethodDecl *D) {
   while (true) {
     D = D->getCanonicalDecl();
     CXXMethodDecl::method_iterator I = D->begin_overridden_methods(),
@@ -663,7 +652,7 @@ til::SExpr *SExprBuilder::lookupVarDecl(const ValueDecl *VD) {
 
 
 // if E is a til::Variable, update its clangDecl.
-inline void maybeUpdateVD(til::SExpr *E, const ValueDecl *VD) {
+static void maybeUpdateVD(til::SExpr *E, const ValueDecl *VD) {
   if (!E)
     return;
   if (til::Variable *V = dyn_cast<til::Variable>(E)) {
@@ -986,8 +975,3 @@ void printSCFG(CFGWalker &Walker) {
   TILPrinter::print(Scfg, llvm::errs());
 }
 */
-
-
-} // end namespace threadSafety
-
-} // end namespace clang

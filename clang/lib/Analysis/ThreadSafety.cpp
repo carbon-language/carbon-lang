@@ -44,14 +44,13 @@
 #include <sstream>
 #include <utility>
 #include <vector>
-
-
-namespace clang {
-namespace threadSafety {
+using namespace clang;
+using namespace threadSafety;
 
 // Key method definition
 ThreadSafetyHandler::~ThreadSafetyHandler() {}
 
+namespace {
 class TILPrinter :
   public til::PrettyPrinter<TILPrinter, llvm::raw_ostream> {};
 
@@ -68,7 +67,6 @@ static void warnInvalidLock(ThreadSafetyHandler &Handler,
   if (Loc.isValid())
     Handler.handleInvalidLockExp(Kind, Loc);
 }
-
 
 /// \brief A set of CapabilityInfo objects, which are compiled from the
 /// requires attributes on a function.
@@ -250,10 +248,11 @@ public:
   }
 };
 
-
 class ThreadSafetyAnalyzer;
+} // namespace
 
-
+namespace clang {
+namespace threadSafety {
 class BeforeSet {
 private:
   typedef SmallVector<const ValueDecl*, 4>  BeforeVect;
@@ -286,9 +285,10 @@ private:
   BeforeMap BMap;
   CycleMap  CycMap;
 };
+} // end namespace threadSafety
+} // end namespace clang
 
-
-
+namespace {
 typedef llvm::ImmutableMap<const NamedDecl*, unsigned> LocalVarContext;
 class LocalVariableMap;
 
@@ -903,7 +903,7 @@ public:
 /// \brief Class which implements the core thread safety analysis routines.
 class ThreadSafetyAnalyzer {
   friend class BuildLockset;
-  friend class BeforeSet;
+  friend class threadSafety::BeforeSet;
 
   llvm::BumpPtrAllocator Bpa;
   threadSafety::til::MemRegionRef Arena;
@@ -959,8 +959,7 @@ public:
 
   void runAnalysis(AnalysisDeclContext &AC);
 };
-
-
+} // namespace
 
 /// Process acquired_before and acquired_after attributes on Vd.
 BeforeSet::BeforeInfo* BeforeSet::insertAttrExprs(const ValueDecl* Vd,
@@ -1103,6 +1102,7 @@ static const ValueDecl *getValueDecl(const Expr *Exp) {
   return nullptr;
 }
 
+namespace {
 template <typename Ty>
 class has_arg_iterator_range {
   typedef char yes[1];
@@ -1117,6 +1117,7 @@ class has_arg_iterator_range {
 public:
   static const bool value = sizeof(test<Ty>(nullptr)) == sizeof(yes);
 };
+} // namespace
 
 static StringRef ClassifyDiagnostic(const CapabilityAttr *A) {
   return A->getName();
@@ -1307,8 +1308,7 @@ void ThreadSafetyAnalyzer::getMutexIDs(CapExprSet &Mtxs, AttrType *Attr,
   }
 }
 
-
-bool getStaticBooleanValue(Expr* E, bool& TCond) {
+static bool getStaticBooleanValue(Expr *E, bool &TCond) {
   if (isa<CXXNullPtrLiteralExpr>(E) || isa<GNUNullExpr>(E)) {
     TCond = false;
     return true;
@@ -1453,6 +1453,7 @@ void ThreadSafetyAnalyzer::getEdgeLockset(FactSet& Result,
             CapDiagKind);
 }
 
+namespace {
 /// \brief We use this class to visit different types of expressions in
 /// CFGBlocks, and build up the lockset.
 /// An expression may cause us to add or remove locks from the lockset, or else
@@ -1496,7 +1497,7 @@ public:
   void VisitCXXConstructExpr(CXXConstructExpr *Exp);
   void VisitDeclStmt(DeclStmt *S);
 };
-
+} // namespace
 
 /// \brief Warn if the LSet does not contain a lock sufficient to protect access
 /// of at least the passed in AccessKind.
@@ -2059,7 +2060,7 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
 
 
 // Return true if block B never continues to its successors.
-inline bool neverReturns(const CFGBlock* B) {
+static bool neverReturns(const CFGBlock *B) {
   if (B->hasNoReturnElement())
     return true;
   if (B->empty())
@@ -2376,24 +2377,20 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
-                             ThreadSafetyHandler &Handler,
-                             BeforeSet **BSet) {
+void threadSafety::runThreadSafetyAnalysis(AnalysisDeclContext &AC,
+                                           ThreadSafetyHandler &Handler,
+                                           BeforeSet **BSet) {
   if (!*BSet)
     *BSet = new BeforeSet;
   ThreadSafetyAnalyzer Analyzer(Handler, *BSet);
   Analyzer.runAnalysis(AC);
 }
 
-
-void threadSafetyCleanup(BeforeSet* Cache) {
-  delete Cache;
-}
-
+void threadSafety::threadSafetyCleanup(BeforeSet *Cache) { delete Cache; }
 
 /// \brief Helper function that returns a LockKind required for the given level
 /// of access.
-LockKind getLockKindFromAccessKind(AccessKind AK) {
+LockKind threadSafety::getLockKindFromAccessKind(AccessKind AK) {
   switch (AK) {
     case AK_Read :
       return LK_Shared;
@@ -2402,5 +2399,3 @@ LockKind getLockKindFromAccessKind(AccessKind AK) {
   }
   llvm_unreachable("Unknown AccessKind");
 }
-
-}} // end namespace clang::threadSafety

@@ -9,13 +9,11 @@
 
 #include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
 #include "clang/Analysis/Analyses/ThreadSafetyTraverse.h"
+using namespace clang;
+using namespace threadSafety;
+using namespace til;
 
-namespace clang {
-namespace threadSafety {
-namespace til {
-
-
-StringRef getUnaryOpcodeString(TIL_UnaryOpcode Op) {
+StringRef til::getUnaryOpcodeString(TIL_UnaryOpcode Op) {
   switch (Op) {
     case UOP_Minus:    return "-";
     case UOP_BitNot:   return "~";
@@ -24,8 +22,7 @@ StringRef getUnaryOpcodeString(TIL_UnaryOpcode Op) {
   return "";
 }
 
-
-StringRef getBinaryOpcodeString(TIL_BinaryOpcode Op) {
+StringRef til::getBinaryOpcodeString(TIL_BinaryOpcode Op) {
   switch (Op) {
     case BOP_Mul:      return "*";
     case BOP_Div:      return "/";
@@ -82,7 +79,7 @@ void BasicBlock::reservePredecessors(unsigned NumPreds) {
 
 // If E is a variable, then trace back through any aliases or redundant
 // Phi nodes to find the canonical definition.
-const SExpr *getCanonicalVal(const SExpr *E) {
+const SExpr *til::getCanonicalVal(const SExpr *E) {
   while (true) {
     if (auto *V = dyn_cast<Variable>(E)) {
       if (V->kind() == Variable::VK_Let) {
@@ -105,7 +102,7 @@ const SExpr *getCanonicalVal(const SExpr *E) {
 // If E is a variable, then trace back through any aliases or redundant
 // Phi nodes to find the canonical definition.
 // The non-const version will simplify incomplete Phi nodes.
-SExpr *simplifyToCanonicalVal(SExpr *E) {
+SExpr *til::simplifyToCanonicalVal(SExpr *E) {
   while (true) {
     if (auto *V = dyn_cast<Variable>(E)) {
       if (V->kind() != Variable::VK_Let)
@@ -135,7 +132,7 @@ SExpr *simplifyToCanonicalVal(SExpr *E) {
 // Trace the arguments of an incomplete Phi node to see if they have the same
 // canonical definition.  If so, mark the Phi node as redundant.
 // getCanonicalVal() will recursively call simplifyIncompletePhi().
-void simplifyIncompleteArg(til::Phi *Ph) {
+void til::simplifyIncompleteArg(til::Phi *Ph) {
   assert(Ph && Ph->status() == Phi::PH_Incomplete);
 
   // eliminate infinite recursion -- assume that this node is not redundant.
@@ -337,7 +334,3 @@ void SCFG::computeNormalForm() {
     computeNodeID(Block, &BasicBlock::PostDominatorNode);
   }
 }
-
-}  // end namespace til
-}  // end namespace threadSafety
-}  // end namespace clang
