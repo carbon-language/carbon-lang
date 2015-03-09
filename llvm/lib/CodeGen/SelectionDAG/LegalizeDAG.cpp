@@ -1442,13 +1442,27 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   Idx = DAG.getZExtOrTrunc(Idx, dl, TLI.getPointerTy());
   StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
 
+  SDValue NewLoad;
+
   if (Op.getValueType().isVector())
-    return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr,MachinePointerInfo(),
-                       false, false, false, 0);
-  return DAG.getExtLoad(ISD::EXTLOAD, dl, Op.getValueType(), Ch, StackPtr,
-                        MachinePointerInfo(),
-                        Vec.getValueType().getVectorElementType(),
-                        false, false, false, 0);
+    NewLoad = DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr,
+                          MachinePointerInfo(), false, false, false, 0);
+  else
+    NewLoad = DAG.getExtLoad(
+        ISD::EXTLOAD, dl, Op.getValueType(), Ch, StackPtr, MachinePointerInfo(),
+        Vec.getValueType().getVectorElementType(), false, false, false, 0);
+
+  // Replace the chain going out of the store, by the one out of the load.
+  DAG.ReplaceAllUsesOfValueWith(Ch, SDValue(NewLoad.getNode(), 1));
+
+  // We introduced a cycle though, so update the loads operands, making sure
+  // to use the original store's chain as an incoming chain.
+  SmallVector<SDValue, 6> NewLoadOperands(NewLoad->op_begin(),
+                                          NewLoad->op_end());
+  NewLoadOperands[0] = Ch;
+  NewLoad =
+      SDValue(DAG.UpdateNodeOperands(NewLoad.getNode(), NewLoadOperands), 0);
+  return NewLoad;
 }
 
 SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
