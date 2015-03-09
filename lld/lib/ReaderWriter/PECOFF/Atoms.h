@@ -20,34 +20,6 @@ namespace lld {
 namespace pecoff {
 class COFFDefinedAtom;
 
-/// A COFFReference represents relocation information for an atom. For
-/// example, if atom X has a reference to atom Y with offsetInAtom=8, that
-/// means that the address starting at 8th byte of the content of atom X needs
-/// to be fixed up so that the address points to atom Y's address.
-class COFFReference final : public Reference {
-public:
-  COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType,
-                Reference::KindArch arch,
-                Reference::KindNamespace ns = Reference::KindNamespace::COFF)
-      : Reference(ns, arch, relocType), _target(target),
-        _offsetInAtom(offsetInAtom) {}
-
-  const Atom *target() const override { return _target; }
-  void setTarget(const Atom *newAtom) override { _target = newAtom; }
-
-  // Addend is a value to be added to the relocation target. For example, if
-  // target=AtomX and addend=4, the relocation address will become the address
-  // of AtomX + 4. COFF does not support that sort of relocation, thus addend
-  // is always zero.
-  Addend addend() const override { return 0; }
-  void setAddend(Addend) override {}
-  uint64_t offsetInAtom() const override { return _offsetInAtom; }
-
-private:
-  const Atom *_target;
-  uint32_t _offsetInAtom;
-};
-
 class COFFAbsoluteAtom : public AbsoluteAtom {
 public:
   COFFAbsoluteAtom(const File &f, StringRef name, Scope scope, uint64_t value)
@@ -103,7 +75,7 @@ public:
 
   Kind getKind() const { return _kind; }
 
-  void addReference(std::unique_ptr<COFFReference> reference) {
+  void addReference(std::unique_ptr<SimpleReference> reference) {
     _references.push_back(std::move(reference));
   }
 
@@ -134,7 +106,7 @@ private:
   const File &_file;
   StringRef _name;
   Kind _kind;
-  std::vector<std::unique_ptr<COFFReference> > _references;
+  std::vector<std::unique_ptr<SimpleReference>> _references;
 };
 
 /// This is the root class of the atom read from a file. This class have two
@@ -164,10 +136,10 @@ public:
   Alignment alignment() const override { return _alignment; }
 
   void addAssociate(const DefinedAtom *other) {
-    auto *ref = new COFFReference(other, 0, lld::Reference::kindAssociate,
-                                  Reference::KindArch::all,
-                                  Reference::KindNamespace::all);
-    addReference(std::unique_ptr<COFFReference>(ref));
+    auto *ref = new SimpleReference(Reference::KindNamespace::all,
+                                    Reference::KindArch::all,
+                                    lld::Reference::kindAssociate, 0, other, 0);
+    addReference(std::unique_ptr<SimpleReference>(ref));
   }
 
 private:
@@ -178,7 +150,7 @@ private:
   ContentPermissions _permissions;
   uint64_t _ordinal;
   Alignment _alignment;
-  std::vector<std::unique_ptr<COFFReference> > _references;
+  std::vector<std::unique_ptr<SimpleReference>> _references;
 };
 
 // A COFFDefinedAtom represents an atom read from a file and has contents.
@@ -345,10 +317,10 @@ private:
 
 template <typename T, typename U>
 void addLayoutEdge(T *a, U *b, uint32_t which) {
-  auto ref = new COFFReference(nullptr, 0, which, Reference::KindArch::all,
-                               Reference::KindNamespace::all);
-  ref->setTarget(b);
-  a->addReference(std::unique_ptr<COFFReference>(ref));
+  auto ref = new SimpleReference(Reference::KindNamespace::all,
+                                 Reference::KindArch::all,
+                                 which, 0, b, 0);
+  a->addReference(std::unique_ptr<SimpleReference>(ref));
 }
 
 } // namespace pecoff

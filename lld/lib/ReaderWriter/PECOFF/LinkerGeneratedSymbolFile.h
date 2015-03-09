@@ -49,13 +49,19 @@ public:
                 bool is64)
       : SimpleFile(defsym), _undefined(*this, undefsym),
         _defined(*this, defsym, ordinal) {
-    auto *ref = is64 ? new COFFReference(&_undefined, 0,
-                                         llvm::COFF::IMAGE_REL_AMD64_ADDR32,
-                                         Reference::KindArch::x86_64)
-                     : new COFFReference(&_undefined, 0,
-                                         llvm::COFF::IMAGE_REL_I386_DIR32,
-                                         Reference::KindArch::x86);
-    _defined.addReference(std::unique_ptr<COFFReference>(ref));
+    SimpleReference *ref;
+    if (is64) {
+      ref = new SimpleReference(Reference::KindNamespace::COFF,
+                                Reference::KindArch::x86_64,
+                                llvm::COFF::IMAGE_REL_AMD64_ADDR32,
+                                0, &_undefined, 0);
+    } else {
+      ref = new SimpleReference(Reference::KindNamespace::COFF,
+                                Reference::KindArch::x86,
+                                llvm::COFF::IMAGE_REL_I386_DIR32,
+                                0, &_undefined, 0);
+    }
+    _defined.addReference(std::unique_ptr<SimpleReference>(ref));
     addAtom(_defined);
     addAtom(_undefined);
   };

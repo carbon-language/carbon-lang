@@ -164,25 +164,30 @@ const uint8_t FuncAtomContentARMNT[] = {
 
 static void setJumpInstTarget(COFFLinkerInternalAtom *src, const Atom *dst,
                               int off, MachineTypes machine) {
-  COFFReference *ref;
+  SimpleReference *ref;
 
   switch (machine) {
   default: llvm::report_fatal_error("unsupported machine type");
   case llvm::COFF::IMAGE_FILE_MACHINE_I386:
-    ref = new COFFReference(dst, off, llvm::COFF::IMAGE_REL_I386_DIR32,
-                            Reference::KindArch::x86);
+    ref = new SimpleReference(Reference::KindNamespace::COFF,
+                              Reference::KindArch::x86,
+                              llvm::COFF::IMAGE_REL_I386_DIR32,
+                              off, dst, 0);
     break;
   case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
-    ref = new COFFReference(dst, off, llvm::COFF::IMAGE_REL_AMD64_REL32,
-                            Reference::KindArch::x86_64);
+    ref = new SimpleReference(Reference::KindNamespace::COFF,
+                              Reference::KindArch::x86_64,
+                              llvm::COFF::IMAGE_REL_AMD64_REL32,
+                              off, dst, 0);
     break;
   case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
-    ref = new COFFReference(dst, off, llvm::COFF::IMAGE_REL_ARM_MOV32T,
-                            Reference::KindArch::ARM);
+    ref = new SimpleReference(Reference::KindNamespace::COFF,
+                              Reference::KindArch::ARM,
+                              llvm::COFF::IMAGE_REL_ARM_MOV32T,
+                              off, dst, 0);
     break;
   }
-
-  src->addReference(std::unique_ptr<COFFReference>(ref));
+  src->addReference(std::unique_ptr<SimpleReference>(ref));
 }
 
 /// The defined atom for jump table.
