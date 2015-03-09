@@ -493,32 +493,55 @@ FindCodeSymbolInContext
     SymbolContextList &sc_list
 )
 {
+    sc_list.Clear();
     SymbolContextList temp_sc_list;
     if (sym_ctx.module_sp)
-        sym_ctx.module_sp->FindSymbolsWithNameAndType(name, eSymbolTypeAny, temp_sc_list);
+        sym_ctx.module_sp->FindFunctions(name,
+                                         NULL,
+                                         eFunctionNameTypeAuto,
+                                         true,  // include_symbols
+                                         false, // include_inlines
+                                         true,  // append
+                                         temp_sc_list);
+    if (temp_sc_list.GetSize() == 0)
+    {
+        if (sym_ctx.target_sp)
+            sym_ctx.target_sp->GetImages().FindFunctions(name,
+                                                         eFunctionNameTypeAuto,
+                                                         true,  // include_symbols
+                                                         false, // include_inlines
+                                                         true,  // append
+                                                         temp_sc_list);
+    }
 
-    if (!sc_list.GetSize() && sym_ctx.target_sp)
-        sym_ctx.target_sp->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, temp_sc_list);
-
+    SymbolContextList internal_symbol_sc_list;
     unsigned temp_sc_list_size = temp_sc_list.GetSize();
     for (unsigned i = 0; i < temp_sc_list_size; i++)
     {
-        SymbolContext sym_ctx;
-        temp_sc_list.GetContextAtIndex(i, sym_ctx);
-        if (sym_ctx.symbol)
+        SymbolContext sc;
+        temp_sc_list.GetContextAtIndex(i, sc);
+        if (sc.function)
         {
-            switch (sym_ctx.symbol->GetType())
+            sc_list.Append(sc);
+        }
+        else if (sc.symbol)
+        {
+            if (sc.symbol->IsExternal())
             {
-                case eSymbolTypeCode:
-                case eSymbolTypeResolver:
-                case eSymbolTypeReExported:
-                    sc_list.Append(sym_ctx);
-                    break;
-
-                default:
-                    break;
+                sc_list.Append(sc);
+            }
+            else
+            {
+                internal_symbol_sc_list.Append(sc);
             }
         }
+    }
+
+    // If we had internal symbols and we didn't find any external symbols or
+    // functions in debug info, then fallback to the internal symbols
+    if (sc_list.GetSize() == 0 && internal_symbol_sc_list.GetSize())
+    {
+        sc_list = internal_symbol_sc_list;
     }
 }
 
