@@ -619,6 +619,11 @@ static bool HasUnrollDisablePragma(const Loop *L) {
   return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.disable");
 }
 
+// Returns true if the loop has an runtime unroll(disable) pragma.
+static bool HasRuntimeUnrollDisablePragma(const Loop *L) {
+  return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.runtime.disable");
+}
+
 // If loop has an unroll_count pragma return the (necessarily
 // positive) value from the pragma.  Otherwise return 0.
 static unsigned UnrollCountPragmaValue(const Loop *L) {
@@ -807,6 +812,9 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Reduce count based on the type of unrolling and the threshold values.
   unsigned OriginalCount = Count;
   bool AllowRuntime = UserRuntime ? CurrentRuntime : UP.Runtime;
+  if (HasRuntimeUnrollDisablePragma(L)) {
+    AllowRuntime = false;
+  }
   if (Unrolling == Partial) {
     bool AllowPartial = UserAllowPartial ? CurrentAllowPartial : UP.Partial;
     if (!AllowPartial && !CountSetExplicitly) {

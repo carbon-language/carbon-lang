@@ -3509,6 +3509,16 @@ which is the string ``llvm.loop.unroll.disable``.  For example:
 
    !0 = !{!"llvm.loop.unroll.disable"}
 
+'``llvm.loop.unroll.runtime.disable``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This metadata either disables runtime loop unrolling. The metadata has a single
+operand which is the string ``llvm.loop.unroll.runtime.disable``.  For example:
+
+.. code-block:: llvm
+
+   !0 = !{!"llvm.loop.unroll.runtime.disable"}
+
 '``llvm.loop.unroll.full``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

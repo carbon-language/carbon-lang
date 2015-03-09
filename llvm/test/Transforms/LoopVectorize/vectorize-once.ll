@@ -71,7 +71,8 @@ attributes #0 = { nounwind readonly ssp uwtable "fp-contract-model"="standard" "
 ; CHECK: !0 = distinct !{!0, !1, !2}
 ; CHECK: !1 = !{!"llvm.loop.vectorize.width", i32 1}
 ; CHECK: !2 = !{!"llvm.loop.interleave.count", i32 1}
-; CHECK: !3 = distinct !{!3, !1, !2}
+; CHECK: !3 = distinct !{!3, !4, !1, !2}
+; CHECK: !4 = !{!"llvm.loop.unroll.runtime.disable"}
 
 !0 = !{!0, !1}
 !1 = !{!"llvm.loop.vectorize.width", i32 1}

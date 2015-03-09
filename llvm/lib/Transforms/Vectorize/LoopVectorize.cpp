@@ -250,7 +250,7 @@ public:
       : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), TLI(TLI),
         VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()),
         Induction(nullptr), OldInduction(nullptr), WidenMap(UnrollFactor),
-        Legal(nullptr) {}
+        Legal(nullptr), AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *L) {
@@ -262,6 +262,11 @@ public:
     vectorizeLoop();
     // Register the new loop and update the analysis passes.
     updateAnalysis();
+  }
+
+  // Return true if any runtime check is added.
+  bool IsSafetyChecksAdded() {
+    return AddedSafetyChecks;
   }
 
   virtual ~InnerLoopVectorizer() {}
@@ -443,6 +448,9 @@ protected:
   EdgeMaskCache MaskCache;
 
   LoopVectorizationLegality *Legal;
+
+  // Record whether runtime check is added.
+  bool AddedSafetyChecks;
 };
 
 class InnerLoopUnroller : public InnerLoopVectorizer {
@@ -893,7 +901,7 @@ private:
 
   ValueToValueMap Strides;
   SmallPtrSet<Value *, 8> StrideSet;
-  
+
   /// While vectorizing these instructions we have to generate a
   /// call to the appropriate masked intrinsic
   SmallPtrSet<const Instruction*, 8> MaskedOp;
@@ -1320,6 +1328,40 @@ struct LoopVectorize : public FunctionPass {
     return Changed;
   }
 
+  static void AddRuntimeUnrollDisableMetaData(Loop *L) {
+    SmallVector<Metadata *, 4> MDs;
+    // Reserve first location for self reference to the LoopID metadata node.
+    MDs.push_back(nullptr);
+    bool IsUnrollMetadata = false;
+    MDNode *LoopID = L->getLoopID();
+    if (LoopID) {
+      // First find existing loop unrolling disable metadata.
+      for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
+        MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
+        if (MD) {
+          const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+          IsUnrollMetadata =
+              S && S->getString().startswith("llvm.loop.unroll.disable");
+        }
+        MDs.push_back(LoopID->getOperand(i));
+      }
+    }
+
+    if (!IsUnrollMetadata) {
+      // Add runtime unroll disable metadata.
+      LLVMContext &Context = L->getHeader()->getContext();
+      SmallVector<Metadata *, 1> DisableOperands;
+      DisableOperands.push_back(
+          MDString::get(Context, "llvm.loop.unroll.runtime.disable"));
+      MDNode *DisableNode = MDNode::get(Context, DisableOperands);
+      MDs.push_back(DisableNode);
+      MDNode *NewLoopID = MDNode::get(Context, MDs);
+      // Set operand 0 to refer to the loop id itself.
+      NewLoopID->replaceOperandWith(0, NewLoopID);
+      L->setLoopID(NewLoopID);
+    }
+  }
+
   bool processLoop(Loop *L) {
     assert(L->empty() && "Only process inner loops.");
 
@@ -1474,6 +1516,12 @@ struct LoopVectorize : public FunctionPass {
       InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
       LB.vectorize(&LVL);
       ++LoopsVectorized;
+
+      // Add metadata to disable runtime unrolling scalar loop when there's no
+      // runtime check about strides and memory. Because at this situation,
+      // scalar loop is rarely used not worthy to be unrolled.
+      if (!LB.IsSafetyChecksAdded())
+        AddRuntimeUnrollDisableMetaData(L);
 
       // Report the vectorization decision.
       emitOptimizationRemark(
@@ -2221,6 +2269,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   std::tie(FirstCheckInst, StrideCheck) =
       addStrideCheck(LastBypassBlock->getTerminator());
   if (StrideCheck) {
+    AddedSafetyChecks = true;
     // Create a new block containing the stride check.
     BasicBlock *CheckBlock =
         LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
@@ -2245,6 +2294,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   std::tie(FirstCheckInst, MemRuntimeCheck) =
     Legal->getLAI()->addRuntimeCheck(LastBypassBlock->getTerminator());
   if (MemRuntimeCheck) {
+    AddedSafetyChecks = true;
     // Create a new block containing the memory check.
     BasicBlock *CheckBlock =
         LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.memcheck");
