@@ -22,11 +22,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <set>
+using namespace clang;
 
-using namespace llvm;
-
-namespace clang {
-
+namespace {
 /// InheritanceHierarchyWriter - Helper class that writes out a
 /// GraphViz file that diagrams the inheritance hierarchy starting at
 /// a given C++ class type. Note that we do not use LLVM's
@@ -44,7 +42,8 @@ public:
     : Context(Context), Out(Out) { }
 
   void WriteGraph(QualType Type) {
-    Out << "digraph \"" << DOT::EscapeString(Type.getAsString()) << "\" {\n";
+    Out << "digraph \"" << llvm::DOT::EscapeString(Type.getAsString())
+        << "\" {\n";
     WriteNode(Type, false);
     Out << "}\n";
   }
@@ -59,6 +58,7 @@ protected:
   /// (only) virtual base.
   raw_ostream& WriteNodeReference(QualType Type, bool FromVirtual);
 };
+} // namespace
 
 void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
   QualType CanonType = Context.getCanonicalType(Type);
@@ -78,7 +78,7 @@ void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
 
   // Give the node a label based on the name of the class.
   std::string TypeName = Type.getAsString();
-  Out << " [ shape=\"box\", label=\"" << DOT::EscapeString(TypeName);
+  Out << " [ shape=\"box\", label=\"" << llvm::DOT::EscapeString(TypeName);
 
   // If the name of the class was a typedef or something different
   // from the "real" class name, show the real class name in
@@ -139,9 +139,8 @@ void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
 
   int FD;
   SmallString<128> Filename;
-  std::error_code EC =
-      sys::fs::createTemporaryFile(Self.getAsString(), "dot", FD, Filename);
-  if (EC) {
+  if (std::error_code EC = llvm::sys::fs::createTemporaryFile(
+          Self.getAsString(), "dot", FD, Filename)) {
     llvm::errs() << "Error: " << EC.message() << "\n";
     return;
   }
@@ -158,6 +157,4 @@ void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
 
   // Display the graph
   DisplayGraph(Filename);
-}
-
 }
