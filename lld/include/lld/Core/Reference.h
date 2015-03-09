@@ -76,9 +76,6 @@ public:
     // kindLayoutAfter is treated as a bidirected edge by the dead-stripping
     // pass.
     kindLayoutAfter = 1,
-    // kindLayoutBefore is currently used only by PECOFF port, and will
-    // be removed soon. To enforce layout, use kindLayoutAfter instead.
-    kindLayoutBefore,
     // kindGroupChild is treated as a bidirected edge too.
     kindGroupChild,
     kindAssociate,
