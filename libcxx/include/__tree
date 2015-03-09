@@ -2077,7 +2077,6 @@ template <class _Key>
 typename __tree<_Tp, _Compare, _Allocator>::size_type
 __tree<_Tp, _Compare, _Allocator>::__count_multi(const _Key& __k) const
 {
-    typedef pair<const_iterator, const_iterator> _Pp;
     __node_const_pointer __result = __end_node();
     __node_const_pointer __rt = __root();
     while (__rt != nullptr)
