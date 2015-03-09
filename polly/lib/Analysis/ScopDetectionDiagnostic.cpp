@@ -602,8 +602,7 @@ std::string ReportUnprofitable::getMessage() const {
 }
 
 std::string ReportUnprofitable::getEndUserMessage() const {
-  return "The regions does not seem to be amendable to profitable polyhedral "
-         "optimization";
+  return "No profitable polyhedral optimization found";
 }
 
 const DebugLoc &ReportUnprofitable::getDebugLoc() const {
