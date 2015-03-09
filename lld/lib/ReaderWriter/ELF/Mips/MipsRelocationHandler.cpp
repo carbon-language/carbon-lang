@@ -17,6 +17,14 @@ using namespace elf;
 using namespace llvm::ELF;
 using namespace llvm::support;
 
+namespace {
+enum class CrossJumpMode {
+  None,      // Not a jump or non-isa-cross jump
+  ToRegular, // cross isa jump to regular symbol
+  ToMicro    // cross isa jump to microMips symbol
+};
+}
+
 static inline void applyReloc(uint32_t &ins, uint32_t result, uint32_t mask) {
   ins = (ins & ~mask) | (result & mask);
 }
@@ -140,12 +148,16 @@ static void reloc32hi16(uint32_t &ins, uint64_t S, int64_t A) {
   applyReloc(ins, (S + A + 0x8000) & 0xffff0000, 0xffffffff);
 }
 
-static void fixJumpOpCode(uint32_t &ins, uint64_t tgt, bool isMicro) {
-  uint32_t opNative = isMicro ? 0x3d : 0x03;
-  uint32_t opCross = isMicro ? 0x3c : 0x1d;
+static void adjustJumpOpCode(uint32_t &ins, uint64_t tgt, CrossJumpMode mode) {
+  if (mode == CrossJumpMode::None)
+    return;
+
+  bool toMicro = mode == CrossJumpMode::ToMicro;
+  uint32_t opNative = toMicro ? 0x03 : 0x3d;
+  uint32_t opCross = toMicro ? 0x1d : 0x3c;
 
   // FIXME (simon): Convert this into the regular fatal error.
-  if ((tgt & 1) == isMicro)
+  if ((tgt & 1) != toMicro)
     llvm_unreachable("Incorrect bit 0 for the jalx target");
 
   if (tgt & 2)
@@ -165,6 +177,22 @@ static bool isMicroMipsAtom(const Atom *a) {
     return da->codeModel() == DefinedAtom::codeMipsMicro ||
            da->codeModel() == DefinedAtom::codeMipsMicroPIC;
   return false;
+}
+
+static CrossJumpMode getCrossJumpMode(const Reference &ref) {
+  if (!isa<DefinedAtom>(ref.target()))
+    return CrossJumpMode::None;
+  bool isTgtMicro = isMicroMipsAtom(ref.target());
+  switch (ref.kindValue()) {
+  case R_MIPS_26:
+  case LLD_R_MIPS_GLOBAL_26:
+    return isTgtMicro ? CrossJumpMode::ToMicro : CrossJumpMode::None;
+  case R_MICROMIPS_26_S1:
+  case LLD_R_MICROMIPS_GLOBAL_26_S1:
+    return isTgtMicro ? CrossJumpMode::None : CrossJumpMode::ToRegular;
+  default:
+    return CrossJumpMode::None;
+  }
 }
 
 static bool needMicroShuffle(const Reference &ref) {
@@ -241,26 +269,11 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
   if (shuffle)
     ins = microShuffle(ins);
 
-  bool isSrcMicroMips = isMicroMipsAtom(atom._atom);
-  bool isTgtMicroMips = isMicroMipsAtom(ref.target());
-  bool isCrossJump = isSrcMicroMips != isTgtMicroMips;
-
-  if (isTgtMicroMips)
+  if (isMicroMipsAtom(ref.target()))
     targetVAddress |= 1;
 
-  if (isCrossJump)
-    switch (ref.kindValue()) {
-    case R_MIPS_26:
-    case LLD_R_MIPS_GLOBAL_26:
-      fixJumpOpCode(ins, targetVAddress, false);
-      break;
-    case R_MICROMIPS_26_S1:
-    case LLD_R_MICROMIPS_GLOBAL_26_S1:
-      fixJumpOpCode(ins, targetVAddress, true);
-      break;
-    default:
-      break; // Do nothing.
-    }
+  CrossJumpMode crossJump = getCrossJumpMode(ref);
+  adjustJumpOpCode(ins, targetVAddress, crossJump);
 
   switch (ref.kindValue()) {
   case R_MIPS_NONE:
@@ -273,7 +286,7 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     break;
   case R_MICROMIPS_26_S1:
     reloc26loc(ins, relocVAddress, targetVAddress, ref.addend(),
-               isCrossJump ? 2 : 1);
+               crossJump != CrossJumpMode::None ? 2 : 1);
     break;
   case R_MIPS_HI16:
     relocHi16(ins, relocVAddress, targetVAddress, ref.addend(), isGpDisp);
@@ -361,7 +374,8 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     reloc26ext(ins, targetVAddress, ref.addend(), 2);
     break;
   case LLD_R_MICROMIPS_GLOBAL_26_S1:
-    reloc26ext(ins, targetVAddress, ref.addend(), isCrossJump ? 2 : 1);
+    reloc26ext(ins, targetVAddress, ref.addend(),
+               crossJump != CrossJumpMode::None ? 2 : 1);
     break;
   case LLD_R_MIPS_HI16:
     relocHi16(ins, 0, targetVAddress, 0, false);

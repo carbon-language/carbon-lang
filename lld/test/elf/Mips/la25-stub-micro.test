@@ -125,6 +125,7 @@ Symbols:
     - Name:    loc
       Section: .text
       Value:   0x10
+      Size:    0x18
       Other:   [ STO_MIPS_MICROMIPS ]
     - Name:    .text
       Type:    STT_SECTION
@@ -132,6 +133,7 @@ Symbols:
   Global:
     - Name:    glob
       Section: .text
+      Size:    0x10
       Other:   [ STO_MIPS_MICROMIPS ]
     - Name:    T1
     - Name:    T1N

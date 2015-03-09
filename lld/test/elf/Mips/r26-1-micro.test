@@ -19,7 +19,7 @@
 # Object file has three R_MICROMIPS_26_S1 relocations
 # OBJ-REL: Relocations [
 # OBJ-REL-NEXT:   Section (2) .rel.text {
-# OBJ-REL-NEXT:      0x8 R_MICROMIPS_26_S1 .text 0x0
+# OBJ-REL-NEXT:      0x8 R_MICROMIPS_26_S1 loc 0x0
 # OBJ-REL-NEXT:     0x10 R_MICROMIPS_26_S1 glob  0x0
 # OBJ-REL-NEXT:     0x18 R_MICROMIPS_26_S1 T1  0x0
 # OBJ-REL-NEXT:   }
@@ -55,7 +55,7 @@
 # DIS-NEXT:   400182:  02 0f         move    $24, $2
 
 # DIS:      Contents of section .text:
-# DIS-NEXT:  400184 09f82003 00000000 12006106 00000000  .. .......a.....
+# DIS-NEXT:  400184 09f82003 00000000 2400ca0c 00000000  .. .....$.......
 # DIS-NEXT:  400194 2000c20c 00000000 2000bc0c 00000000   ....... .......
 
 # so.o
@@ -105,7 +105,7 @@ Sections:
     Info:            .text
     Relocations:
       - Offset:          0x08
-        Symbol:          .text
+        Symbol:          loc
         Type:            R_MICROMIPS_26_S1
       - Offset:          0x10
         Symbol:          glob
