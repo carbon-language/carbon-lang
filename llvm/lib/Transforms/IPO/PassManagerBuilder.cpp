@@ -364,14 +364,8 @@ void PassManagerBuilder::populateModulePassManager(
   MPM.add(createCFGSimplificationPass());
   MPM.add(createInstructionCombiningPass());
 
-  if (!DisableUnrollLoops) {
+  if (!DisableUnrollLoops)
     MPM.add(createLoopUnrollPass());    // Unroll small loops
-    // Runtime unrollng will introduce runtime check in loop prologue. If the
-    // unrolled loop is a inner loop, then the prologue will be inside the
-    // outer loop. LICM pass can help to promote the runtime check out if the
-    // checked value is loop invariant.
-    MPM.add(createLICMPass());
-  }
 
   // After vectorization and unrolling, assume intrinsics may tell us more
   // about pointer alignments.

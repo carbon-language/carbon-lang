@@ -142,7 +142,7 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
                             BasicBlock *InsertTop, BasicBlock *InsertBot,
                             std::vector<BasicBlock *> &NewBlocks,
                             LoopBlocksDFS &LoopBlocks, ValueToValueMapTy &VMap,
-                            LoopInfo *LI, LPPassManager *LPM) {
+                            LoopInfo *LI) {
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *Header = L->getHeader();
   BasicBlock *Latch = L->getLoopLatch();
@@ -153,7 +153,10 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
   Loop *ParentLoop = L->getParentLoop();
   if (!UnrollProlog) {
     NewLoop = new Loop();
-    LPM->insertLoop(NewLoop, ParentLoop);
+    if (ParentLoop)
+      ParentLoop->addChildLoop(NewLoop);
+    else
+      LI->addTopLevelLoop(NewLoop);
   }
 
   // For each block in the original loop, create a new copy,
@@ -387,7 +390,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   // the loop, otherwise we create a cloned loop to execute the extra
   // iterations. This function adds the appropriate CFG connections.
   CloneLoopBlocks(L, ModVal, UnrollPrologue, PH, PEnd, NewBlocks, LoopBlocks,
-                  VMap, LI, LPM);
+                  VMap, LI);
 
   // Insert the cloned blocks into function just before the original loop
   F->getBasicBlockList().splice(PEnd, F->getBasicBlockList(), NewBlocks[0],
