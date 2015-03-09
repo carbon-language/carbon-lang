@@ -789,6 +789,18 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
   // Common case: exactly the same scope, which is fine.
   if (FromScope == ToScope) return;
 
+  // Warn on gotos out of __finally blocks.
+  if (isa<GotoStmt>(From) || isa<IndirectGotoStmt>(From)) {
+    // If FromScope > ToScope, FromScope is more nested and the jump goes to a
+    // less nested scope.  Check if it crosses a __finally along the way.
+    for (unsigned I = FromScope; I > ToScope; I = Scopes[I].ParentScope) {
+      if (Scopes[I].InDiag == diag::note_protected_by_seh_finally) {
+        S.Diag(From->getLocStart(), diag::warn_jump_out_of_seh_finally);
+        break;
+      }
+    }
+  }
+
   unsigned CommonScope = GetDeepestCommonScope(FromScope, ToScope);
 
   // It's okay to jump out from a nested scope.

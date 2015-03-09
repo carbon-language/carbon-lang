@@ -507,12 +507,12 @@ out_of_finally_try:
 
   __try {
   } __finally {
-    // FIXME: This should warn that jumping out of __finally has undefined
-    // behavior.
-    // FIXME: Once that warns, check that
-    //   __try { __try {} __finally { __leave; } } __except (0) {}
-    // warns in the same way.
-    goto out_of_finally_finally;
+    goto out_of_finally_finally; // expected-warning {{jump out of __finally block has undefined behavior}}
+  }
+
+  __try {
+  } __finally {
+    goto *&&out_of_finally_finally; // expected-warning {{jump out of __finally block has undefined behavior}}
   }
 out_of_finally_finally:
   ;
@@ -548,7 +548,7 @@ void jump_try_finally() {
   from_finally_to_try:
     ;
   } __finally {
-    goto from_finally_to_try; // expected-error {{cannot jump from this goto statement to its label}}
+    goto from_finally_to_try; // expected-error {{cannot jump from this goto statement to its label}} expected-warning {{jump out of __finally block has undefined behavior}}
   }
 }
 
@@ -578,9 +578,7 @@ void nested() {
   __try {
     __try {
     } __finally {
-      // FIXME: This should warn that jumping out of __finally has undefined
-      // behavior.
-      goto after_outer_except;
+      goto after_outer_except; // expected-warning {{jump out of __finally block has undefined behavior}}
     }
   } __except(0) {
   }
