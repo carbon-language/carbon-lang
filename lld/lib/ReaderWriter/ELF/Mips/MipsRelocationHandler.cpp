@@ -37,6 +37,7 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case llvm::ELF::R_MIPS_NONE:
     return {4, 0x0, 0, false};
   case llvm::ELF::R_MIPS_64:
+  case llvm::ELF::R_MIPS_SUB:
     return {8, 0xffffffffffffffffull, 0, false};
   case llvm::ELF::R_MIPS_32:
   case llvm::ELF::R_MIPS_GPREL32:
@@ -121,6 +122,10 @@ static uint32_t reloc32(uint64_t S, int64_t A) { return S + A; }
 /// \brief R_MIPS_64
 /// local/external: word64 S + A (truncate)
 static uint64_t reloc64(uint64_t S, int64_t A) { return S + A; }
+
+/// \brief R_MIPS_SUB
+/// local/external: word64 S - A (truncate)
+static uint64_t relocSub(uint64_t S, int64_t A) { return S - A; }
 
 /// \brief R_MIPS_PC32
 /// local/external: word32 S + A i- P (truncate)
@@ -291,6 +296,8 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
     return reloc32(tgtAddr, ref.addend());
   case R_MIPS_64:
     return reloc64(tgtAddr, ref.addend());
+  case R_MIPS_SUB:
+    return relocSub(tgtAddr, ref.addend());
   case R_MIPS_26:
     return reloc26loc(relAddr, tgtAddr, ref.addend(), 2);
   case R_MICROMIPS_26_S1:
