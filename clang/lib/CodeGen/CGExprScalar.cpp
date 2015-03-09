@@ -2664,21 +2664,34 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
   if (Ops.LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, Ops.LHS->getType(), false, "sh_prom");
 
-  if (CGF.SanOpts.has(SanitizerKind::Shift) && !CGF.getLangOpts().OpenCL &&
-      isa<llvm::IntegerType>(Ops.LHS->getType())) {
+  bool SanitizeBase = CGF.SanOpts.has(SanitizerKind::ShiftBase) &&
+                      Ops.Ty->hasSignedIntegerRepresentation();
+  bool SanitizeExponent = CGF.SanOpts.has(SanitizerKind::ShiftExponent);
+  // OpenCL 6.3j: shift values are effectively % word size of LHS.
+  if (CGF.getLangOpts().OpenCL)
+    RHS =
+        Builder.CreateAnd(RHS, GetWidthMinusOneValue(Ops.LHS, RHS), "shl.mask");
+  else if ((SanitizeBase || SanitizeExponent) &&
+           isa<llvm::IntegerType>(Ops.LHS->getType())) {
     CodeGenFunction::SanitizerScope SanScope(&CGF);
+    SmallVector<std::pair<Value *, SanitizerKind>, 2> Checks;
     llvm::Value *WidthMinusOne = GetWidthMinusOneValue(Ops.LHS, RHS);
-    llvm::Value *Valid = Builder.CreateICmpULE(RHS, WidthMinusOne);
+    llvm::Value *ValidExponent = Builder.CreateICmpULE(RHS, WidthMinusOne);
 
-    if (Ops.Ty->hasSignedIntegerRepresentation()) {
+    if (SanitizeExponent) {
+      Checks.push_back(
+          std::make_pair(ValidExponent, SanitizerKind::ShiftExponent));
+    }
+
+    if (SanitizeBase) {
+      // Check whether we are shifting any non-zero bits off the top of the
+      // integer. We only emit this check if exponent is valid - otherwise
+      // instructions below will have undefined behavior themselves.
       llvm::BasicBlock *Orig = Builder.GetInsertBlock();
       llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
-      llvm::BasicBlock *CheckBitsShifted = CGF.createBasicBlock("check");
-      Builder.CreateCondBr(Valid, CheckBitsShifted, Cont);
-
-      // Check whether we are shifting any non-zero bits off the top of the
-      // integer.
-      CGF.EmitBlock(CheckBitsShifted);
+      llvm::BasicBlock *CheckShiftBase = CGF.createBasicBlock("check");
+      Builder.CreateCondBr(ValidExponent, CheckShiftBase, Cont);
+      CGF.EmitBlock(CheckShiftBase);
       llvm::Value *BitsShiftedOff =
         Builder.CreateLShr(Ops.LHS,
                            Builder.CreateSub(WidthMinusOne, RHS, "shl.zeros",
@@ -2693,19 +2706,17 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
         BitsShiftedOff = Builder.CreateLShr(BitsShiftedOff, One);
       }
       llvm::Value *Zero = llvm::ConstantInt::get(BitsShiftedOff->getType(), 0);
-      llvm::Value *SecondCheck = Builder.CreateICmpEQ(BitsShiftedOff, Zero);
+      llvm::Value *ValidBase = Builder.CreateICmpEQ(BitsShiftedOff, Zero);
       CGF.EmitBlock(Cont);
-      llvm::PHINode *P = Builder.CreatePHI(Valid->getType(), 2);
-      P->addIncoming(Valid, Orig);
-      P->addIncoming(SecondCheck, CheckBitsShifted);
-      Valid = P;
+      llvm::PHINode *BaseCheck = Builder.CreatePHI(ValidBase->getType(), 2);
+      BaseCheck->addIncoming(Builder.getTrue(), Orig);
+      BaseCheck->addIncoming(ValidBase, CheckShiftBase);
+      Checks.push_back(std::make_pair(BaseCheck, SanitizerKind::ShiftBase));
     }
 
-    EmitBinOpCheck(std::make_pair(Valid, SanitizerKind::Shift), Ops);
+    assert(!Checks.empty());
+    EmitBinOpCheck(Checks, Ops);
   }
-  // OpenCL 6.3j: shift values are effectively % word size of LHS.
-  if (CGF.getLangOpts().OpenCL)
-    RHS = Builder.CreateAnd(RHS, GetWidthMinusOneValue(Ops.LHS, RHS), "shl.mask");
 
   return Builder.CreateShl(Ops.LHS, RHS, "shl");
 }
@@ -2717,17 +2728,17 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
   if (Ops.LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, Ops.LHS->getType(), false, "sh_prom");
 
-  if (CGF.SanOpts.has(SanitizerKind::Shift) && !CGF.getLangOpts().OpenCL &&
-      isa<llvm::IntegerType>(Ops.LHS->getType())) {
+  // OpenCL 6.3j: shift values are effectively % word size of LHS.
+  if (CGF.getLangOpts().OpenCL)
+    RHS =
+        Builder.CreateAnd(RHS, GetWidthMinusOneValue(Ops.LHS, RHS), "shr.mask");
+  else if (CGF.SanOpts.has(SanitizerKind::ShiftExponent) &&
+           isa<llvm::IntegerType>(Ops.LHS->getType())) {
     CodeGenFunction::SanitizerScope SanScope(&CGF);
     llvm::Value *Valid =
         Builder.CreateICmpULE(RHS, GetWidthMinusOneValue(Ops.LHS, RHS));
-    EmitBinOpCheck(std::make_pair(Valid, SanitizerKind::Shift), Ops);
+    EmitBinOpCheck(std::make_pair(Valid, SanitizerKind::ShiftExponent), Ops);
   }
-
-  // OpenCL 6.3j: shift values are effectively % word size of LHS.
-  if (CGF.getLangOpts().OpenCL)
-    RHS = Builder.CreateAnd(RHS, GetWidthMinusOneValue(Ops.LHS, RHS), "shr.mask");
 
   if (Ops.Ty->hasUnsignedIntegerRepresentation())
     return Builder.CreateLShr(Ops.LHS, RHS, "shr");
