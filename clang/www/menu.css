@@ -3,8 +3,8 @@
 /***************/
 
 [id=menu] {
-	position:fixed;
 	width:25ex;
+	float:left;
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
