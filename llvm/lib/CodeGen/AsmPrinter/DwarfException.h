@@ -22,16 +22,13 @@ class MachineFunction;
 class ARMTargetStreamer;
 
 class DwarfCFIException : public EHStreamer {
-  /// shouldEmitPersonality - Per-function flag to indicate if .cfi_personality
-  /// should be emitted.
+  /// Per-function flag to indicate if .cfi_personality should be emitted.
   bool shouldEmitPersonality;
 
-  /// shouldEmitLSDA - Per-function flag to indicate if .cfi_lsda
-  /// should be emitted.
+  /// Per-function flag to indicate if .cfi_lsda should be emitted.
   bool shouldEmitLSDA;
 
-  /// shouldEmitMoves - Per-function flag to indicate if frame moves info
-  /// should be emitted.
+  /// Per-function flag to indicate if frame moves info should be emitted.
   bool shouldEmitMoves;
 
   AsmPrinter::CFIMoveType moveTypeModule;
@@ -43,15 +40,14 @@ public:
   DwarfCFIException(AsmPrinter *A);
   virtual ~DwarfCFIException();
 
-  /// endModule - Emit all exception information that should come after the
-  /// content.
+  /// Emit all exception information that should come after the content.
   void endModule() override;
 
-  /// beginFunction - Gather pre-function exception information.  Assumes being
-  /// emitted immediately after the function entry point.
+  /// Gather pre-function exception information.  Assumes being emitted
+  /// immediately after the function entry point.
   void beginFunction(const MachineFunction *MF) override;
 
-  /// endFunction - Gather and emit post-function exception information.
+  /// Gather and emit post-function exception information.
   void endFunction(const MachineFunction *) override;
 };
 
@@ -59,8 +55,7 @@ class ARMException : public EHStreamer {
   void emitTypeInfos(unsigned TTypeEncoding) override;
   ARMTargetStreamer &getTargetStreamer();
 
-  /// shouldEmitCFI - Per-function flag to indicate if frame CFI info
-  /// should be emitted.
+  /// Per-function flag to indicate if frame CFI info should be emitted.
   bool shouldEmitCFI;
 
 public:
@@ -70,15 +65,14 @@ public:
   ARMException(AsmPrinter *A);
   virtual ~ARMException();
 
-  /// endModule - Emit all exception information that should come after the
-  /// content.
+  /// Emit all exception information that should come after the content.
   void endModule() override;
 
-  /// beginFunction - Gather pre-function exception information.  Assumes being
-  /// emitted immediately after the function entry point.
+  /// Gather pre-function exception information.  Assumes being emitted
+  /// immediately after the function entry point.
   void beginFunction(const MachineFunction *MF) override;
 
-  /// endFunction - Gather and emit post-function exception information.
+  /// Gather and emit post-function exception information.
   void endFunction(const MachineFunction *) override;
 };
 } // End of namespace llvm
