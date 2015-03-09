@@ -31,7 +31,12 @@ class AttachDeniedTestCase(TestBase):
         pid_pipe_path = os.path.join(self.get_process_working_directory(),
                                      "pid_pipe_%d" % (int(time.time())))
 
-        err, _ = self.run_platform_command("mkfifo %s" % (pid_pipe_path))
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        if re.match(".*-.*-.*-android", triple):
+            err, _ = self.run_platform_command("mknod %s p" % (pid_pipe_path))
+        else:
+            err, _ = self.run_platform_command("mkfifo %s" % (pid_pipe_path))
+
         self.assertTrue(err.Success(), "Failed to create FIFO %s: %s" % (pid_pipe_path, err.GetCString()))
 
         self.addTearDownHook(lambda: self.run_platform_command("rm %s" % (pid_pipe_path)))
