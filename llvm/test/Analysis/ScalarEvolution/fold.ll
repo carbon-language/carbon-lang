@@ -34,7 +34,7 @@ loop:
   %rand2 = icmp ugt i32 %A, %Z1
   %Z2 = select i1 %rand2, i32 %A, i32 %Z1
 ; CHECK: %Z2 =
-; CHECK-NEXT: -->  ([[EXPR:.*]]){{ +}}Exits: 20
+; CHECK-NEXT: -->  ([[EXPR:.*]]){{ U: [^ ]+ S: [^ ]+}}{{ +}}Exits: 20
   %B = trunc i32 %Z2 to i16
   %C = sext i16 %B to i30
 ; CHECK: %C =

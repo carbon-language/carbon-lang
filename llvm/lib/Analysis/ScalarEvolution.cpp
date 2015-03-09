@@ -8150,6 +8150,12 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
       OS << "  -->  ";
       const SCEV *SV = SE.getSCEV(&*I);
       SV->print(OS);
+      if (!isa<SCEVCouldNotCompute>(SV)) {
+        OS << " U: ";
+        SE.getUnsignedRange(SV).print(OS);
+        OS << " S: ";
+        SE.getSignedRange(SV).print(OS);
+      }
 
       const Loop *L = LI->getLoopFor((*I).getParent());
 
@@ -8157,6 +8163,12 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
       if (AtUse != SV) {
         OS << "  -->  ";
         AtUse->print(OS);
+        if (!isa<SCEVCouldNotCompute>(AtUse)) {
+          OS << " U: ";
+          SE.getUnsignedRange(AtUse).print(OS);
+          OS << " S: ";
+          SE.getSignedRange(AtUse).print(OS);
+        }
       }
 
       if (L) {

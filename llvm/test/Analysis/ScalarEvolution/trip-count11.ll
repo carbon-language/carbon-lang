@@ -13,7 +13,7 @@ entry:
 
 for.cond:                                         ; preds = %for.inc, %entry
   %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-; CHECK: --> %sum.0 Exits: 28
+; CHECK: --> %sum.0{{ U: [^ ]+ S: [^ ]+}}{{ *}}Exits: 28
   %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   %cmp = icmp ult i32 %i.0, 8
   br i1 %cmp, label %for.inc, label %for.end
@@ -36,7 +36,7 @@ entry:
 
 for.cond:                                         ; preds = %for.inc, %entry
   %sum.0 = phi i32 [ 0, %entry ], [ %add, %for.inc ]
-; CHECK: --> %sum.0 Exits: 28
+; CHECK: --> %sum.0{{ U: [^ ]+ S: [^ ]+}}{{ *}}Exits: 28
   %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   %cmp = icmp ult i32 %i.0, 8
   br i1 %cmp, label %for.inc, label %for.end
