@@ -3422,6 +3422,10 @@ void Sema::ActOnStartSEHFinallyBlock() {
   CurrentSEHFinally.push_back(CurScope);
 }
 
+void Sema::ActOnAbortSEHFinallyBlock() {
+  CurrentSEHFinally.pop_back();
+}
+
 StmtResult Sema::ActOnFinishSEHFinallyBlock(SourceLocation Loc, Stmt *Block) {
   assert(Block);
   CurrentSEHFinally.pop_back();

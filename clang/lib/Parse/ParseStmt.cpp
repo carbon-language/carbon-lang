@@ -519,8 +519,10 @@ StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyLoc) {
   Actions.ActOnStartSEHFinallyBlock();
 
   StmtResult Block(ParseCompoundStatement());
-  if(Block.isInvalid())
+  if(Block.isInvalid()) {
+    Actions.ActOnAbortSEHFinallyBlock();
     return Block;
+  }
 
   return Actions.ActOnFinishSEHFinallyBlock(FinallyLoc, Block.get());
 }

@@ -3297,6 +3297,7 @@ public:
                                  Expr *FilterExpr,
                                  Stmt *Block);
   void ActOnStartSEHFinallyBlock();
+  void ActOnAbortSEHFinallyBlock();
   StmtResult ActOnFinishSEHFinallyBlock(SourceLocation Loc, Stmt *Block);
   StmtResult ActOnSEHLeaveStmt(SourceLocation Loc, Scope *CurScope);
 
