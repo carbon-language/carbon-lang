@@ -1,4 +1,4 @@
-//===--- UniqueptrResetRelease.cpp - clang-tidy ---------------------------===//
+//===--- UniqueptrResetReleaseCheck.cpp - clang-tidy ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "UniqueptrResetRelease.h"
+#include "UniqueptrResetReleaseCheck.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
 
@@ -17,7 +17,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-void UniqueptrResetRelease::registerMatchers(MatchFinder *Finder) {
+void UniqueptrResetReleaseCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       memberCallExpr(
           on(expr().bind("left")), callee(memberExpr().bind("reset_member")),
@@ -32,7 +32,7 @@ void UniqueptrResetRelease::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void UniqueptrResetRelease::check(const MatchFinder::MatchResult &Result) {
+void UniqueptrResetReleaseCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *ResetMember = Result.Nodes.getNodeAs<MemberExpr>("reset_member");
   const auto *ReleaseMember =
       Result.Nodes.getNodeAs<MemberExpr>("release_member");

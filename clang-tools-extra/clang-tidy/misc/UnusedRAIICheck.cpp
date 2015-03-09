@@ -1,4 +1,4 @@
-//===--- UnusedRAII.cpp - clang-tidy ---------------------------===//
+//===--- UnusedRAIICheck.cpp - clang-tidy ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "UnusedRAII.h"
+#include "UnusedRAIICheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/Lexer.h"
 

@@ -1,4 +1,4 @@
-//===--- UnusedRAII.h - clang-tidy ------------------------------*- C++ -*-===//
+//===--- UnusedRAIICheck.h - clang-tidy -------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNUSED_RAII_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNUSED_RAII_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNUSED_RAII_CHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNUSED_RAII_CHECK_H
 
 #include "../ClangTidy.h"
 
@@ -48,4 +48,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNUSED_RAII_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNUSED_RAII_CHECK_H

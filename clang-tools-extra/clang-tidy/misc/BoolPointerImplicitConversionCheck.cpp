@@ -1,4 +1,4 @@
-//===--- BoolPointerImplicitConversion.cpp - clang-tidy -------------------===//
+//===--- BoolPointerImplicitConversionCheck.cpp - clang-tidy --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BoolPointerImplicitConversion.h"
+#include "BoolPointerImplicitConversionCheck.h"
 
 using namespace clang::ast_matchers;
 
@@ -24,7 +24,7 @@ AST_MATCHER(QualType, isBoolean) { return Node->isBooleanType(); }
 namespace tidy {
 namespace misc {
 
-void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
+void BoolPointerImplicitConversionCheck::registerMatchers(MatchFinder *Finder) {
   // Look for ifs that have an implicit bool* to bool conversion in the
   // condition. Filter negations.
   Finder->addMatcher(
@@ -38,8 +38,8 @@ void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void
-BoolPointerImplicitConversion::check(const MatchFinder::MatchResult &Result) {
+void BoolPointerImplicitConversionCheck::check(
+    const MatchFinder::MatchResult &Result) {
   auto *If = Result.Nodes.getStmtAs<IfStmt>("if");
   auto *Var = Result.Nodes.getStmtAs<DeclRefExpr>("expr");
 

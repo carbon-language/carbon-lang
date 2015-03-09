@@ -13,15 +13,15 @@
 #include "ArgumentCommentCheck.h"
 #include "AssertSideEffectCheck.h"
 #include "AssignOperatorSignatureCheck.h"
-#include "BoolPointerImplicitConversion.h"
+#include "BoolPointerImplicitConversionCheck.h"
 #include "InaccurateEraseCheck.h"
 #include "InefficientAlgorithmCheck.h"
 #include "StaticAssertCheck.h"
 #include "SwappedArgumentsCheck.h"
 #include "UndelegatedConstructor.h"
-#include "UniqueptrResetRelease.h"
-#include "UnusedRAII.h"
-#include "UseOverride.h"
+#include "UniqueptrResetReleaseCheck.h"
+#include "UnusedRAIICheck.h"
+#include "UseOverrideCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -35,7 +35,7 @@ public:
         "misc-assert-side-effect");
     CheckFactories.registerCheck<AssignOperatorSignatureCheck>(
         "misc-assign-operator-signature");
-    CheckFactories.registerCheck<BoolPointerImplicitConversion>(
+    CheckFactories.registerCheck<BoolPointerImplicitConversionCheck>(
         "misc-bool-pointer-implicit-conversion");
     CheckFactories.registerCheck<InaccurateEraseCheck>(
         "misc-inaccurate-erase");
@@ -47,10 +47,10 @@ public:
         "misc-swapped-arguments");
     CheckFactories.registerCheck<UndelegatedConstructorCheck>(
         "misc-undelegated-constructor");
-    CheckFactories.registerCheck<UniqueptrResetRelease>(
+    CheckFactories.registerCheck<UniqueptrResetReleaseCheck>(
         "misc-uniqueptr-reset-release");
     CheckFactories.registerCheck<UnusedRAIICheck>("misc-unused-raii");
-    CheckFactories.registerCheck<UseOverride>("misc-use-override");
+    CheckFactories.registerCheck<UseOverrideCheck>("misc-use-override");
   }
 };
 

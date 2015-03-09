@@ -1,4 +1,4 @@
-//===--- BoolPointerImplicitConversion.h - clang-tidy -----------*- C++ -*-===//
+//===--- BoolPointerImplicitConversionCheck.h - clang-tidy ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_BOOL_POINTER_IMPLICIT_CONV_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_BOOL_POINTER_IMPLICIT_CONV_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_BOOL_POINTER_IMPLICIT_CONVERSION_CHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_BOOL_POINTER_IMPLICIT_CONVERSION_CHECK_H
 
 #include "../ClangTidy.h"
 
@@ -22,9 +22,9 @@ namespace misc {
 /// if (p) {
 ///   // Never used in a pointer-specific way.
 /// }
-class BoolPointerImplicitConversion : public ClangTidyCheck {
+class BoolPointerImplicitConversionCheck : public ClangTidyCheck {
 public:
-  BoolPointerImplicitConversion(StringRef Name, ClangTidyContext *Context)
+  BoolPointerImplicitConversionCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -34,5 +34,5 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_BOOL_POINTER_IMPLICIT_CONV_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_BOOL_POINTER_IMPLICIT_CONVERSION_CHECK_H
 

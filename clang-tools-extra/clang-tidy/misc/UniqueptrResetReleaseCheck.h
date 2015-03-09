@@ -1,4 +1,4 @@
-//===--- UniqueptrResetRelease.h - clang-tidy -------------------*- C++ -*-===//
+//===--- UniqueptrResetReleaseCheck.h - clang-tidy --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNIQUEPTR_RESET_RELEASE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNIQUEPTR_RESET_RELEASE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNIQUEPTR_RESET_RELEASE_CHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNIQUEPTR_RESET_RELEASE_CHECK_H
 
 #include "../ClangTidy.h"
 
@@ -24,9 +24,9 @@ namespace misc {
 ///
 /// If "y" is already rvalue, std::move is not added.
 /// "x" and "y" can also be std::unique_ptr<Foo>*.
-class UniqueptrResetRelease : public ClangTidyCheck {
+class UniqueptrResetReleaseCheck : public ClangTidyCheck {
 public:
-  UniqueptrResetRelease(StringRef Name, ClangTidyContext *Context)
+  UniqueptrResetReleaseCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
 
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
@@ -37,4 +37,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNIQUEPTR_RESET_RELEASE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_UNIQUEPTR_RESET_RELEASE_CHECK_H

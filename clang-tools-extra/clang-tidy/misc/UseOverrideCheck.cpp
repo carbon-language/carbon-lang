@@ -1,4 +1,4 @@
-//===--- UseOverride.cpp - clang-tidy -------------------------------------===//
+//===--- UseOverrideCheck.cpp - clang-tidy --------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "UseOverride.h"
+#include "UseOverrideCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
@@ -18,7 +18,7 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-void UseOverride::registerMatchers(MatchFinder *Finder) {
+void UseOverrideCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(methodDecl(isOverride()).bind("method"), this);
 }
 
@@ -57,7 +57,7 @@ static StringRef GetText(const Token &Tok, const SourceManager &Sources) {
                    Tok.getLength());
 }
 
-void UseOverride::check(const MatchFinder::MatchResult &Result) {
+void UseOverrideCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Result.Context->getLangOpts().CPlusPlus11)
     return;
 
