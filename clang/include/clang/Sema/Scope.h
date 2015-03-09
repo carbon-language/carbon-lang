@@ -416,6 +416,12 @@ public:
   /// \brief Determine whether this scope is a SEH '__except' block.
   bool isSEHExceptScope() const { return getFlags() & Scope::SEHExceptScope; }
 
+  /// \brief Returns if rhs has a higher scope depth than this.
+  ///
+  /// The caller is responsible for calling this only if one of the two scopes
+  /// is an ancestor of the other.
+  bool Contains(const Scope& rhs) const { return Depth < rhs.Depth; }
+
   /// containedInPrototypeScope - Return true if this or a parent scope
   /// is a FunctionPrototypeScope.
   bool containedInPrototypeScope() const;

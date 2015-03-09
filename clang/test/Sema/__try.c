@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fborland-extensions -DBORLAND -fsyntax-only -verify %s
-// RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fborland-extensions -DBORLAND -fsyntax-only -verify -fblocks %s
+// RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify -fblocks %s
 
 #define JOIN2(x,y) x ## y
 #define JOIN(x,y) JOIN2(x,y)
@@ -206,4 +206,78 @@ void test_seh_leave_stmt() {
     __leave; // expected-error{{'__leave' statement not in __try block}}
   }
   __leave; // expected-error{{'__leave' statement not in __try block}}
+}
+
+void test_jump_out_of___finally() {
+  while(1) {
+    __try {
+    } __finally {
+      continue; // expected-warning{{jump out of __finally block has undefined behavior}}
+    }
+  }
+  __try {
+  } __finally {
+    while (1) {
+      continue;
+    }
+  }
+
+  // Check that a deep __finally containing a block with a shallow continue
+  // doesn't trigger the warning.
+  while(1) {{{{
+    __try {
+    } __finally {
+      ^{
+        while(1)
+          continue;
+      }();
+    }
+  }}}}
+
+  while(1) {
+    __try {
+    } __finally {
+      break; // expected-warning{{jump out of __finally block has undefined behavior}}
+    }
+  }
+  switch(1) {
+  case 1:
+    __try {
+    } __finally {
+      break; // expected-warning{{jump out of __finally block has undefined behavior}}
+    }
+  }
+  __try {
+  } __finally {
+    while (1) {
+      break;
+    }
+  }
+
+  __try {
+    __try {
+    } __finally {
+      __leave; // expected-warning{{jump out of __finally block has undefined behavior}}
+    }
+  } __finally {
+  }
+  __try {
+  } __finally {
+    __try {
+      __leave;
+    } __finally {
+    }
+  }
+
+  __try {
+  } __finally {
+    return; // expected-warning{{jump out of __finally block has undefined behavior}}
+  }
+
+  __try {
+  } __finally {
+    ^{
+      return;
+    }();
+  }
 }

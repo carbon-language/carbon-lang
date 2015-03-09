@@ -507,7 +507,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
 /// seh-finally-block:
 ///   '__finally' compound-statement
 ///
-StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyBlock) {
+StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyLoc) {
   PoisonIdentifierRAIIObject raii(Ident__abnormal_termination, false),
     raii2(Ident___abnormal_termination, false),
     raii3(Ident_AbnormalTermination, false);
@@ -515,11 +515,14 @@ StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyBlock) {
   if (Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected) << tok::l_brace);
 
+  ParseScope FinallyScope(this, 0);
+  Actions.ActOnStartSEHFinallyBlock();
+
   StmtResult Block(ParseCompoundStatement());
   if(Block.isInvalid())
     return Block;
 
-  return Actions.ActOnSEHFinallyBlock(FinallyBlock,Block.get());
+  return Actions.ActOnFinishSEHFinallyBlock(FinallyLoc, Block.get());
 }
 
 /// Handle __leave
