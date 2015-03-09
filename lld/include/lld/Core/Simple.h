@@ -25,18 +25,6 @@
 
 namespace lld {
 
-// Copy all atoms from src to dst. Atom ownership is not transferred.
-inline void copyAtoms(MutableFile *dst, File *src) {
-  for (const DefinedAtom *atom : src->defined())
-    dst->addAtom(*atom);
-  for (const UndefinedAtom *atom : src->undefined())
-    dst->addAtom(*atom);
-  for (const SharedLibraryAtom *atom : src->sharedLibrary())
-    dst->addAtom(*atom);
-  for (const AbsoluteAtom *atom : src->absolute())
-    dst->addAtom(*atom);
-}
-
 class SimpleFile : public MutableFile {
 public:
   SimpleFile(StringRef path) : MutableFile(path) {}
