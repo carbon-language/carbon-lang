@@ -767,7 +767,7 @@ static inline bool isUnionField(const FieldRegion *FR) {
 
 typedef SmallVector<const FieldDecl *, 8> FieldVector;
 
-void getSymbolicOffsetFields(BindingKey K, FieldVector &Fields) {
+static void getSymbolicOffsetFields(BindingKey K, FieldVector &Fields) {
   assert(K.hasSymbolicOffset() && "Not implemented for concrete offset keys");
 
   const MemRegion *Base = K.getConcreteOffsetRegion();

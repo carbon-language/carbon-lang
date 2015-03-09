@@ -8,10 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/ASTMatchers/Dynamic/Diagnostics.h"
-
-namespace clang {
-namespace ast_matchers {
-namespace dynamic {
+using namespace clang;
+using namespace clang::ast_matchers;
+using namespace clang::ast_matchers::dynamic;
 
 Diagnostics::ArgStream Diagnostics::pushContextFrame(ContextType Type,
                                                      SourceRange Range) {
@@ -75,7 +74,7 @@ Diagnostics::ArgStream Diagnostics::addError(const SourceRange &Range,
   return ArgStream(&Last.Messages.back().Args);
 }
 
-StringRef contextTypeToFormatString(Diagnostics::ContextType Type) {
+static StringRef contextTypeToFormatString(Diagnostics::ContextType Type) {
   switch (Type) {
     case Diagnostics::CT_MatcherConstruct:
       return "Error building matcher $0.";
@@ -85,7 +84,7 @@ StringRef contextTypeToFormatString(Diagnostics::ContextType Type) {
   llvm_unreachable("Unknown ContextType value.");
 }
 
-StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
+static StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
   switch (Type) {
   case Diagnostics::ET_RegistryMatcherNotFound:
     return "Matcher not found: $0";
@@ -130,8 +129,9 @@ StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
   llvm_unreachable("Unknown ErrorType value.");
 }
 
-void formatErrorString(StringRef FormatString, ArrayRef<std::string> Args,
-                       llvm::raw_ostream &OS) {
+static void formatErrorString(StringRef FormatString,
+                              ArrayRef<std::string> Args,
+                              llvm::raw_ostream &OS) {
   while (!FormatString.empty()) {
     std::pair<StringRef, StringRef> Pieces = FormatString.split("$");
     OS << Pieces.first.str();
@@ -150,7 +150,7 @@ void formatErrorString(StringRef FormatString, ArrayRef<std::string> Args,
   }
 }
 
-static void maybeAddLineAndColumn(const SourceRange &Range,
+static void maybeAddLineAndColumn(const dynamic::SourceRange &Range,
                                   llvm::raw_ostream &OS) {
   if (Range.Start.Line > 0 && Range.Start.Column > 0) {
     OS << Range.Start.Line << ":" << Range.Start.Column << ": ";
@@ -216,7 +216,3 @@ std::string Diagnostics::toStringFull() const {
   printToStreamFull(OS);
   return OS.str();
 }
-
-}  // namespace dynamic
-}  // namespace ast_matchers
-}  // namespace clang

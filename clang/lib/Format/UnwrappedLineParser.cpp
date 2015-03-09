@@ -605,7 +605,7 @@ void UnwrappedLineParser::parsePPUnknown() {
 // Here we blacklist certain tokens that are not usually the first token in an
 // unwrapped line. This is used in attempt to distinguish macro calls without
 // trailing semicolons from other constructs split to several lines.
-bool tokenCanStartNewLine(clang::Token Tok) {
+static bool tokenCanStartNewLine(const clang::Token &Tok) {
   // Semicolon can be a null-statement, l_square can be a start of a macro or
   // a C++11 attribute, but this doesn't seem to be common.
   return Tok.isNot(tok::semi) && Tok.isNot(tok::l_brace) &&

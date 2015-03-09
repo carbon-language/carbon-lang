@@ -1406,7 +1406,7 @@ static bool CheckConstantExpression(EvalInfo &Info, SourceLocation DiagLoc,
   return true;
 }
 
-const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
+static const ValueDecl *GetLValueBaseDecl(const LValue &LVal) {
   return LVal.Base.dyn_cast<const ValueDecl*>();
 }
 
@@ -2502,8 +2502,9 @@ static bool AreElementsOfSameArray(QualType ObjType,
 }
 
 /// Find the complete object to which an LValue refers.
-CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
-                                  const LValue &LVal, QualType LValType) {
+static CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E,
+                                         AccessKinds AK, const LValue &LVal,
+                                         QualType LValType) {
   if (!LVal.Base) {
     Info.Diag(E, diag::note_constexpr_access_null) << AK;
     return CompleteObject();
