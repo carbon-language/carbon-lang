@@ -771,7 +771,6 @@ defm V_CMPX_CLASS_F64 : VOPCX_CLASS_F64 <vopc<0xb8, 0x13>, "v_cmpx_class_f64">;
 // DS Instructions
 //===----------------------------------------------------------------------===//
 
-
 defm DS_ADD_U32 : DS_1A1D_NORET <0x0, "ds_add_u32", VGPR_32>;
 defm DS_SUB_U32 : DS_1A1D_NORET <0x1, "ds_sub_u32", VGPR_32>;
 defm DS_RSUB_U32 : DS_1A1D_NORET <0x2, "ds_rsub_u32", VGPR_32>;
@@ -784,12 +783,22 @@ defm DS_MAX_U32 : DS_1A1D_NORET <0x8, "ds_max_u32", VGPR_32>;
 defm DS_AND_B32 : DS_1A1D_NORET <0x9, "ds_and_b32", VGPR_32>;
 defm DS_OR_B32 : DS_1A1D_NORET <0xa, "ds_or_b32", VGPR_32>;
 defm DS_XOR_B32 : DS_1A1D_NORET <0xb, "ds_xor_b32", VGPR_32>;
-defm DS_MSKOR_B32 : DS_1A1D_NORET <0xc, "ds_mskor_b32", VGPR_32>;
+defm DS_MSKOR_B32 : DS_1A2D_NORET <0xc, "ds_mskor_b32", VGPR_32>;
+defm DS_WRITE_B32 : DS_Store_Helper <0xd, "ds_write_b32", VGPR_32>;
+defm DS_WRITE2_B32 : DS_Store2_Helper <0xe, "ds_write2_b32", VGPR_32>;
+defm DS_WRITE2ST64_B32 : DS_Store2_Helper <0xf, "ds_write2st64_b32", VGPR_32>;
 defm DS_CMPST_B32 : DS_1A2D_NORET <0x10, "ds_cmpst_b32", VGPR_32>;
 defm DS_CMPST_F32 : DS_1A2D_NORET <0x11, "ds_cmpst_f32", VGPR_32>;
-defm DS_MIN_F32 : DS_1A1D_NORET <0x12, "ds_min_f32", VGPR_32>;
-defm DS_MAX_F32 : DS_1A1D_NORET <0x13, "ds_max_f32", VGPR_32>;
+defm DS_MIN_F32 : DS_1A2D_NORET <0x12, "ds_min_f32", VGPR_32>;
+defm DS_MAX_F32 : DS_1A2D_NORET <0x13, "ds_max_f32", VGPR_32>;
 
+defm DS_GWS_INIT : DS_1A_GDS <0x19, "ds_gws_init">;
+defm DS_GWS_SEMA_V : DS_1A_GDS <0x1a, "ds_gws_sema_v">;
+defm DS_GWS_SEMA_BR : DS_1A_GDS <0x1b, "ds_gws_sema_br">;
+defm DS_GWS_SEMA_P : DS_1A_GDS <0x1c, "ds_gws_sema_p">;
+defm DS_GWS_BARRIER : DS_1A_GDS <0x1d, "ds_gws_barrier">;
+defm DS_WRITE_B8 : DS_Store_Helper <0x1e, "ds_write_b8", VGPR_32>;
+defm DS_WRITE_B16 : DS_Store_Helper <0x1f, "ds_write_b16", VGPR_32>;
 defm DS_ADD_RTN_U32 : DS_1A1D_RET <0x20, "ds_add_rtn_u32", VGPR_32, "ds_add_u32">;
 defm DS_SUB_RTN_U32 : DS_1A1D_RET <0x21, "ds_sub_rtn_u32", VGPR_32, "ds_sub_u32">;
 defm DS_RSUB_RTN_U32 : DS_1A1D_RET <0x22, "ds_rsub_rtn_u32", VGPR_32, "ds_rsub_u32">;
@@ -802,20 +811,32 @@ defm DS_MAX_RTN_U32 : DS_1A1D_RET <0x28, "ds_max_rtn_u32", VGPR_32, "ds_max_u32"
 defm DS_AND_RTN_B32 : DS_1A1D_RET <0x29, "ds_and_rtn_b32", VGPR_32, "ds_and_b32">;
 defm DS_OR_RTN_B32 : DS_1A1D_RET <0x2a, "ds_or_rtn_b32", VGPR_32, "ds_or_b32">;
 defm DS_XOR_RTN_B32 : DS_1A1D_RET <0x2b, "ds_xor_rtn_b32", VGPR_32, "ds_xor_b32">;
-defm DS_MSKOR_RTN_B32 : DS_1A1D_RET <0x2c, "ds_mskor_rtn_b32", VGPR_32, "ds_mskor_b32">;
+defm DS_MSKOR_RTN_B32 : DS_1A2D_RET <0x2c, "ds_mskor_rtn_b32", VGPR_32, "ds_mskor_b32">;
 defm DS_WRXCHG_RTN_B32 : DS_1A1D_RET <0x2d, "ds_wrxchg_rtn_b32", VGPR_32>;
-//def DS_WRXCHG2_RTN_B32 : DS_2A0D_RET <0x2e, "ds_wrxchg2_rtn_b32", VGPR_32, "ds_wrxchg2_b32">;
-//def DS_WRXCHG2ST64_RTN_B32 : DS_2A0D_RET <0x2f, "ds_wrxchg2_rtn_b32", VGPR_32, "ds_wrxchg2st64_b32">;
+defm DS_WRXCHG2_RTN_B32 : DS_1A2D_RET <
+  0x2e, "ds_wrxchg2_rtn_b32", VReg_64, "", VGPR_32
+>;
+defm DS_WRXCHG2ST64_RTN_B32 : DS_1A2D_RET <
+  0x2f, "ds_wrxchg2st64_rtn_b32", VReg_64, "", VGPR_32
+>;
 defm DS_CMPST_RTN_B32 : DS_1A2D_RET <0x30, "ds_cmpst_rtn_b32", VGPR_32, "ds_cmpst_b32">;
 defm DS_CMPST_RTN_F32 : DS_1A2D_RET <0x31, "ds_cmpst_rtn_f32", VGPR_32, "ds_cmpst_f32">;
-defm DS_MIN_RTN_F32 : DS_1A1D_RET <0x32, "ds_min_rtn_f32", VGPR_32, "ds_min_f32">;
-defm DS_MAX_RTN_F32 : DS_1A1D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32">;
-
+defm DS_MIN_RTN_F32 : DS_1A2D_RET <0x32, "ds_min_rtn_f32", VGPR_32, "ds_min_f32">;
+defm DS_MAX_RTN_F32 : DS_1A2D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32">;
 let SubtargetPredicate = isCI in {
 defm DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "ds_wrap_rtn_f32", VGPR_32, "ds_wrap_f32">;
 } // End isCI
-
-
+defm DS_SWIZZLE_B32 : DS_Load_Helper <0x35, "ds_swizzle_b32", VGPR_32>;
+defm DS_READ_B32 : DS_Load_Helper <0x36, "ds_read_b32", VGPR_32>;
+defm DS_READ2_B32 : DS_Load2_Helper <0x37, "ds_read2_b32", VReg_64>;
+defm DS_READ2ST64_B32 : DS_Load2_Helper <0x38, "ds_read2st64_b32", VReg_64>;
+defm DS_READ_I8 : DS_Load_Helper <0x39, "ds_read_i8", VGPR_32>;
+defm DS_READ_U8 : DS_Load_Helper <0x3a, "ds_read_u8", VGPR_32>;
+defm DS_READ_I16 : DS_Load_Helper <0x3b, "ds_read_i16", VGPR_32>;
+defm DS_READ_U16 : DS_Load_Helper <0x3c, "ds_read_u16", VGPR_32>;
+defm DS_CONSUME : DS_0A_RET <0x3d, "ds_consume">;
+defm DS_APPEND : DS_0A_RET <0x3e, "ds_append">;
+defm DS_ORDERED_COUNT : DS_1A_RET_GDS <0x3f, "ds_ordered_count">;
 defm DS_ADD_U64 : DS_1A1D_NORET <0x40, "ds_add_u64", VReg_64>;
 defm DS_SUB_U64 : DS_1A1D_NORET <0x41, "ds_sub_u64", VReg_64>;
 defm DS_RSUB_U64 : DS_1A1D_NORET <0x42, "ds_rsub_u64", VReg_64>;
@@ -828,7 +849,10 @@ defm DS_MAX_U64 : DS_1A1D_NORET <0x48, "ds_max_u64", VReg_64>;
 defm DS_AND_B64 : DS_1A1D_NORET <0x49, "ds_and_b64", VReg_64>;
 defm DS_OR_B64 : DS_1A1D_NORET <0x4a, "ds_or_b64", VReg_64>;
 defm DS_XOR_B64 : DS_1A1D_NORET <0x4b, "ds_xor_b64", VReg_64>;
-defm DS_MSKOR_B64 : DS_1A1D_NORET <0x4c, "ds_mskor_b64", VReg_64>;
+defm DS_MSKOR_B64 : DS_1A2D_NORET <0x4c, "ds_mskor_b64", VReg_64>;
+defm DS_WRITE_B64 : DS_Store_Helper <0x4d, "ds_write_b64", VReg_64>;
+defm DS_WRITE2_B64 : DS_Store2_Helper <0x4E, "ds_write2_b64", VReg_64>;
+defm DS_WRITE2ST64_B64 : DS_Store2_Helper <0x4f, "ds_write2st64_b64", VReg_64>;
 defm DS_CMPST_B64 : DS_1A2D_NORET <0x50, "ds_cmpst_b64", VReg_64>;
 defm DS_CMPST_F64 : DS_1A2D_NORET <0x51, "ds_cmpst_f64", VReg_64>;
 defm DS_MIN_F64 : DS_1A1D_NORET <0x52, "ds_min_f64", VReg_64>;
@@ -846,44 +870,57 @@ defm DS_MAX_RTN_U64 : DS_1A1D_RET <0x68, "ds_max_rtn_u64", VReg_64, "ds_max_u64"
 defm DS_AND_RTN_B64 : DS_1A1D_RET <0x69, "ds_and_rtn_b64", VReg_64, "ds_and_b64">;
 defm DS_OR_RTN_B64 : DS_1A1D_RET <0x6a, "ds_or_rtn_b64", VReg_64, "ds_or_b64">;
 defm DS_XOR_RTN_B64 : DS_1A1D_RET <0x6b, "ds_xor_rtn_b64", VReg_64, "ds_xor_b64">;
-defm DS_MSKOR_RTN_B64 : DS_1A1D_RET <0x6c, "ds_mskor_rtn_b64", VReg_64, "ds_mskor_b64">;
+defm DS_MSKOR_RTN_B64 : DS_1A2D_RET <0x6c, "ds_mskor_rtn_b64", VReg_64, "ds_mskor_b64">;
 defm DS_WRXCHG_RTN_B64 : DS_1A1D_RET <0x6d, "ds_wrxchg_rtn_b64", VReg_64, "ds_wrxchg_b64">;
-//def DS_WRXCHG2_RTN_B64 : DS_2A0D_RET <0x6e, "ds_wrxchg2_rtn_b64", VReg_64, "ds_wrxchg2_b64">;
-//def DS_WRXCHG2ST64_RTN_B64 : DS_2A0D_RET <0x6f, "ds_wrxchg2_rtn_b64", VReg_64, "ds_wrxchg2st64_b64">;
+defm DS_WRXCHG2_RTN_B64 : DS_1A2D_RET <0x6e, "ds_wrxchg2_rtn_b64", VReg_128, "ds_wrxchg2_b64", VReg_64>;
+defm DS_WRXCHG2ST64_RTN_B64 : DS_1A2D_RET <0x6f, "ds_wrxchg2st64_rtn_b64", VReg_128, "ds_wrxchg2st64_b64", VReg_64>;
 defm DS_CMPST_RTN_B64 : DS_1A2D_RET <0x70, "ds_cmpst_rtn_b64", VReg_64, "ds_cmpst_b64">;
 defm DS_CMPST_RTN_F64 : DS_1A2D_RET <0x71, "ds_cmpst_rtn_f64", VReg_64, "ds_cmpst_f64">;
 defm DS_MIN_RTN_F64 : DS_1A1D_RET <0x72, "ds_min_rtn_f64", VReg_64, "ds_min_f64">;
 defm DS_MAX_RTN_F64 : DS_1A1D_RET <0x73, "ds_max_rtn_f64", VReg_64, "ds_max_f64">;
 
+defm DS_READ_B64 : DS_Load_Helper <0x76, "ds_read_b64", VReg_64>;
+defm DS_READ2_B64 : DS_Load2_Helper <0x77, "ds_read2_b64", VReg_128>;
+defm DS_READ2ST64_B64 : DS_Load2_Helper <0x78, "ds_read2st64_b64", VReg_128>;
+
+defm DS_ADD_SRC2_U32 : DS_1A <0x80, "ds_add_src2_u32">;
+defm DS_SUB_SRC2_U32 : DS_1A <0x81, "ds_sub_src2_u32">;
+defm DS_RSUB_SRC2_U32 : DS_1A <0x82, "ds_rsub_src2_u32">;
+defm DS_INC_SRC2_U32 : DS_1A <0x83, "ds_inc_src2_u32">;
+defm DS_DEC_SRC2_U32 : DS_1A <0x84, "ds_dec_src2_u32">;
+defm DS_MIN_SRC2_I32 : DS_1A <0x85, "ds_min_src2_i32">;
+defm DS_MAX_SRC2_I32 : DS_1A <0x86, "ds_max_src2_i32">;
+defm DS_MIN_SRC2_U32 : DS_1A <0x87, "ds_min_src2_u32">;
+defm DS_MAX_SRC2_U32 : DS_1A <0x88, "ds_max_src2_u32">;
+defm DS_AND_SRC2_B32 : DS_1A <0x89, "ds_and_src_b32">;
+defm DS_OR_SRC2_B32 : DS_1A <0x8a, "ds_or_src2_b32">;
+defm DS_XOR_SRC2_B32 : DS_1A <0x8b, "ds_xor_src2_b32">;
+defm DS_WRITE_SRC2_B32 : DS_1A <0x8c, "ds_write_src2_b32">;
+
+defm DS_MIN_SRC2_F32 : DS_1A <0x92, "ds_min_src2_f32">;
+defm DS_MAX_SRC2_F32 : DS_1A <0x93, "ds_max_src2_f32">;
+
+defm DS_ADD_SRC2_U64 : DS_1A <0xc0, "ds_add_src2_u64">;
+defm DS_SUB_SRC2_U64 : DS_1A <0xc1, "ds_sub_src2_u64">;
+defm DS_RSUB_SRC2_U64 : DS_1A <0xc2, "ds_rsub_src2_u64">;
+defm DS_INC_SRC2_U64 : DS_1A <0xc3, "ds_inc_src2_u64">;
+defm DS_DEC_SRC2_U64 : DS_1A <0xc4, "ds_dec_src2_u64">;
+defm DS_MIN_SRC2_I64 : DS_1A <0xc5, "ds_min_src2_i64">;
+defm DS_MAX_SRC2_I64 : DS_1A <0xc6, "ds_max_src2_i64">;
+defm DS_MIN_SRC2_U64 : DS_1A <0xc7, "ds_min_src2_u64">;
+defm DS_MAX_SRC2_U64 : DS_1A <0xc8, "ds_max_src2_u64">;
+defm DS_AND_SRC2_B64 : DS_1A <0xc9, "ds_and_src2_b64">;
+defm DS_OR_SRC2_B64 : DS_1A <0xca, "ds_or_src2_b64">;
+defm DS_XOR_SRC2_B64 : DS_1A <0xcb, "ds_xor_src2_b64">;
+defm DS_WRITE_SRC2_B64 : DS_1A <0xcc, "ds_write_src2_b64">;
+
+defm DS_MIN_SRC2_F64 : DS_1A <0xd2, "ds_min_src2_f64">;
+defm DS_MAX_SRC2_F64 : DS_1A <0xd3, "ds_max_src2_f64">;
+
 //let SubtargetPredicate = isCI in {
 // DS_CONDXCHG32_RTN_B64
 // DS_CONDXCHG32_RTN_B128
 //} // End isCI
-
-// TODO: _SRC2_* forms
-
-defm DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "ds_write_b32", VGPR_32>;
-defm DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "ds_write_b8", VGPR_32>;
-defm DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "ds_write_b16", VGPR_32>;
-defm DS_WRITE_B64 : DS_Store_Helper <0x00000004d, "ds_write_b64", VReg_64>;
-
-defm DS_READ_B32 : DS_Load_Helper <0x00000036, "ds_read_b32", VGPR_32>;
-defm DS_READ_I8 : DS_Load_Helper <0x00000039, "ds_read_i8", VGPR_32>;
-defm DS_READ_U8 : DS_Load_Helper <0x0000003a, "ds_read_u8", VGPR_32>;
-defm DS_READ_I16 : DS_Load_Helper <0x0000003b, "ds_read_i16", VGPR_32>;
-defm DS_READ_U16 : DS_Load_Helper <0x0000003c, "ds_read_u16", VGPR_32>;
-defm DS_READ_B64 : DS_Load_Helper <0x00000076, "ds_read_b64", VReg_64>;
-
-// 2 forms.
-defm DS_WRITE2_B32 : DS_Store2_Helper <0x0000000E, "ds_write2_b32", VGPR_32>;
-defm DS_WRITE2ST64_B32 : DS_Store2_Helper <0x0000000F, "ds_write2st64_b32", VGPR_32>;
-defm DS_WRITE2_B64 : DS_Store2_Helper <0x0000004E, "ds_write2_b64", VReg_64>;
-defm DS_WRITE2ST64_B64 : DS_Store2_Helper <0x0000004F, "ds_write2st64_b64", VReg_64>;
-
-defm DS_READ2_B32 : DS_Load2_Helper <0x00000037, "ds_read2_b32", VReg_64>;
-defm DS_READ2ST64_B32 : DS_Load2_Helper <0x00000038, "ds_read2st64_b32", VReg_64>;
-defm DS_READ2_B64 : DS_Load2_Helper <0x00000077, "ds_read2_b64", VReg_128>;
-defm DS_READ2ST64_B64 : DS_Load2_Helper <0x00000078, "ds_read2st64_b64", VReg_128>;
 
 //===----------------------------------------------------------------------===//
 // MUBUF Instructions
