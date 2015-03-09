@@ -40,7 +40,6 @@ public:
   bool UseCodeAlign() const override { return false; }
   bool isVirtualSection() const override { return false; }
   std::string getLabelBeginName() const override { return ""; }
-  std::string getLabelEndName() const override { return ""; }
 };
 
 } // end namespace llvm

@@ -55,7 +55,6 @@ namespace llvm {
     // Convenience routines to get label names for the beginning/end of a
     // section.
     virtual std::string getLabelBeginName() const = 0;
-    virtual std::string getLabelEndName() const = 0;
 
     /// isBaseAddressKnownZero - Return true if we know that this section will
     /// get a base address of zero.  In cases where we know that this is true we

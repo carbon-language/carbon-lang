@@ -70,11 +70,6 @@ public:
       return (SectionName.str() + '_' + Group->getName() + "_begin").str();
     return SectionName.str() + "_begin";
   }
-  std::string getLabelEndName() const override {
-    if (Group)
-      return (SectionName.str() + '_' + Group->getName() + "_end").str();
-    return SectionName.str() + "_end";
-  }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   unsigned getEntrySize() const { return EntrySize; }
