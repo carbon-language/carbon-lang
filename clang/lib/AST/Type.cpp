@@ -1713,7 +1713,7 @@ bool FunctionProtoType::isNothrow(const ASTContext &Ctx,
   if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)
     return true;
 
-  if (EST == EST_Dynamic && ResultIfDependent == true) {
+  if (EST == EST_Dynamic && ResultIfDependent) {
     // A dynamic exception specification is throwing unless every exception
     // type is an (unexpanded) pack expansion type.
     for (unsigned I = 0, N = NumExceptions; I != N; ++I)

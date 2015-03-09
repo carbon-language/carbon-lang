@@ -73,11 +73,8 @@ static bool isPreprocessedEntityIfInFileID(PreprocessedEntity *PPE, FileID FID,
   SourceLocation Loc = PPE->getSourceRange().getBegin();
   if (Loc.isInvalid())
     return false;
-  
-  if (SM.isInFileID(SM.getFileLoc(Loc), FID))
-    return true;
-  else
-    return false;
+
+  return SM.isInFileID(SM.getFileLoc(Loc), FID);
 }
 
 /// \brief Returns true if the preprocessed entity that \arg PPEI iterator

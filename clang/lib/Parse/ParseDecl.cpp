@@ -547,7 +547,7 @@ void Parser::ParseMicrosoftDeclSpec(ParsedAttributes &Attrs) {
 
     // We expect either a well-known identifier or a generic string.  Anything
     // else is a malformed declspec.
-    bool IsString = Tok.getKind() == tok::string_literal ? true : false;
+    bool IsString = Tok.getKind() == tok::string_literal;
     if (!IsString && Tok.getKind() != tok::identifier &&
         Tok.getKind() != tok::kw_restrict) {
       Diag(Tok, diag::err_ms_declspec_type);

@@ -841,12 +841,12 @@ private:
             // must be false.
             llvm::APSInt IntVal;
             if (Bop->getLHS()->EvaluateAsInt(IntVal, *Context)) {
-              if (IntVal.getBoolValue() == false) {
+              if (!IntVal.getBoolValue()) {
                 return TryResult(false);
               }
             }
             if (Bop->getRHS()->EvaluateAsInt(IntVal, *Context)) {
-              if (IntVal.getBoolValue() == false) {
+              if (!IntVal.getBoolValue()) {
                 return TryResult(false);
               }
             }

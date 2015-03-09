@@ -297,10 +297,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // '-mbig-endian'/'-EB'.
     if (Arg *A = Args.getLastArg(options::OPT_mlittle_endian,
                                  options::OPT_mbig_endian)) {
-      if (A->getOption().matches(options::OPT_mlittle_endian))
-        IsBigEndian = false;
-      else
-        IsBigEndian = true;
+      IsBigEndian = !A->getOption().matches(options::OPT_mlittle_endian);
     }
 
     // Thumb2 is the default for V7 on Darwin.

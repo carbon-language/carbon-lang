@@ -528,7 +528,7 @@ static bool getDiagnosticsInGroup(diag::Flavor Flavor,
   // An empty group is considered to be a warning group: we have empty groups
   // for GCC compatibility, and GCC does not have remarks.
   if (!Group->Members && !Group->SubGroups)
-    return Flavor == diag::Flavor::Remark ? true : false;
+    return Flavor == diag::Flavor::Remark;
 
   bool NotFound = true;
 
