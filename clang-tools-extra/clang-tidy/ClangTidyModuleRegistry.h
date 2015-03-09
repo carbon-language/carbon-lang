@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_MODULE_REGISTRY_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_MODULE_REGISTRY_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULEREGISTRY_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULEREGISTRY_H
 
 #include "ClangTidyModule.h"
 #include "llvm/Support/Registry.h"
@@ -23,4 +23,4 @@ typedef llvm::Registry<ClangTidyModule> ClangTidyModuleRegistry;
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_MODULE_REGISTRY_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULEREGISTRY_H

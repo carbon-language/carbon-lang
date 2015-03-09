@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STATIC_ASSERT_CHECK_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STATIC_ASSERT_CHECK_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STATICASSERTCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STATICASSERTCHECK_H
 
 #include "../ClangTidy.h"
 #include "llvm/ADT/StringRef.h"
@@ -36,4 +36,4 @@ private:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STATIC_ASSERT_CHECK_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_STATICASSERTCHECK_H

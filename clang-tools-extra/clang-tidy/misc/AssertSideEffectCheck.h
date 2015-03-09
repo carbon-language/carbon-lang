@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_ASSERT_SIDE_EFFECT_CHECK_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_ASSERT_SIDE_EFFECT_CHECK_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_ASSERTSIDEEFFECTCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_ASSERTSIDEEFFECTCHECK_H
 
 #include "../ClangTidy.h"
 #include "llvm/ADT/SmallVector.h"
@@ -47,4 +47,4 @@ private:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_ASSERT_SIDE_EFFECT_CHECK_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_ASSERTSIDEEFFECTCHECK_H

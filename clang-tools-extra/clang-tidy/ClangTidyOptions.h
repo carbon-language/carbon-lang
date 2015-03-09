@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYOPTIONS_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYOPTIONS_H
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringMap.h"
@@ -213,4 +213,4 @@ std::string configurationAsText(const ClangTidyOptions &Options);
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYOPTIONS_H

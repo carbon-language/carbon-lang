@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDY_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDY_H
 
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyOptions.h"
@@ -222,4 +222,4 @@ void exportReplacements(const std::vector<ClangTidyError> &Errors,
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDY_H

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_MODULE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_MODULE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULE_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULE_H
 
 #include "ClangTidy.h"
 #include "llvm/ADT/StringRef.h"
@@ -95,4 +95,4 @@ public:
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_MODULE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULE_H
