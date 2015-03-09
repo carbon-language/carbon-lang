@@ -31,9 +31,9 @@ const char *ExtractUptr(const char *str, const char *delims, uptr *result);
 // Windows DbgHelp symbolizer, etc.).
 class SymbolizerTool {
  public:
-  // POSIXSymbolizer implements a "fallback chain" of symbolizer tools. In a
-  // request to symbolize an address, if one tool returns false, the next tool
-  // in the chain will be tried.
+  // The main |Symbolizer| class implements a "fallback chain" of symbolizer
+  // tools. In a request to symbolize an address, if one tool returns false,
+  // the next tool in the chain will be tried.
   SymbolizerTool *next;
 
   SymbolizerTool() : next(nullptr) { }
@@ -56,7 +56,7 @@ class SymbolizerTool {
 
   virtual void Flush() {}
 
-  // Return nullptr to fallback to the default __cxxabiv1 demangler.
+  // Return nullptr to fallback to the default platform-specific demangler.
   virtual const char *Demangle(const char *name) {
     return nullptr;
   }

@@ -51,9 +51,9 @@ Symbolizer *Symbolizer::GetOrInit() {
   SpinMutexLock l(&init_mu_);
   if (symbolizer_)
     return symbolizer_;
-  if ((symbolizer_ = PlatformInit()))
-    return symbolizer_;
-  return Disable();
+  symbolizer_ = PlatformInit();
+  CHECK(symbolizer_);
+  return symbolizer_;
 }
 
 }  // namespace __sanitizer

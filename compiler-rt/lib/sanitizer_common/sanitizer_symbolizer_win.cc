@@ -147,42 +147,24 @@ bool FindModuleNameAndOffsetForAddress(uptr addr, const char **module_name,
 // TODO(kuba.brecka): To be merged with POSIXSymbolizer.
 class WinSymbolizer : public Symbolizer {
  public:
-  explicit WinSymbolizer(SymbolizerTool *tool) : Symbolizer(), tool_(tool) {
-    CHECK(tool);
-  }
-  SymbolizedStack *SymbolizePC(uptr addr) override {
-    BlockingMutexLock l(&mu_);
-    const char *module_name;
-    uptr module_offset;
-    SymbolizedStack *res = SymbolizedStack::New(addr);
-    if (FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
-      res->info.FillModuleInfo(module_name, module_offset);
-    tool_->SymbolizePC(addr, res);
-    return res;
-  }
-  bool CanReturnFileLineInfo() override {
-    return true;
-  }
-  const char *Demangle(const char *name) override {
-    BlockingMutexLock l(&mu_);
-    return tool_->Demangle(name);
-  }
-  bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
-                                   uptr *module_address) override {
-    BlockingMutexLock l(&mu_);
-    return FindModuleNameAndOffsetForAddress(pc, module_name, module_address);
-  }
+  explicit WinSymbolizer(IntrusiveList<SymbolizerTool> tools)
+      : Symbolizer(tools) {}
 
-  BlockingMutex mu_;
-  SymbolizerTool *tool_;
+ private:
+  bool PlatformFindModuleNameAndOffsetForAddress(
+      uptr addr, const char **module_name, uptr *module_offset) override {
+    return ::FindModuleNameAndOffsetForAddress(addr, module_name,
+                                               module_offset);
+  }
+  const char *PlatformDemangle(const char *name) override { return name; }
+  void PlatformPrepareForSandboxing() override { }
 };
 
 Symbolizer *Symbolizer::PlatformInit() {
-  static bool called_once = false;
-  CHECK(!called_once && "Shouldn't create more than one symbolizer");
-  called_once = true;
-  SymbolizerTool *tool = new(symbolizer_allocator_) WinSymbolizerTool();
-  return new(symbolizer_allocator_) WinSymbolizer(tool);
+  IntrusiveList<SymbolizerTool> list;
+  list.clear();
+  list.push_back(new(symbolizer_allocator_) WinSymbolizerTool());
+  return new(symbolizer_allocator_) WinSymbolizer(list);
 }
 
 }  // namespace __sanitizer

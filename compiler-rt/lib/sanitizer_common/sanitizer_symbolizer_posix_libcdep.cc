@@ -351,88 +351,21 @@ class InternalSymbolizer : public SymbolizerTool {
 class POSIXSymbolizer : public Symbolizer {
  public:
   explicit POSIXSymbolizer(IntrusiveList<SymbolizerTool> tools)
-      : Symbolizer(), tools_(tools) {}
+      : Symbolizer(tools) {}
 
-  SymbolizedStack *SymbolizePC(uptr addr) override {
-    BlockingMutexLock l(&mu_);
-    const char *module_name;
-    uptr module_offset;
-    SymbolizedStack *res = SymbolizedStack::New(addr);
-    if (!FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
-      return res;
-    // Always fill data about module name and offset.
-    res->info.FillModuleInfo(module_name, module_offset);
-    for (auto iter = Iterator(&tools_); iter.hasNext();) {
-      auto *tool = iter.next();
-      SymbolizerScope sym_scope(this);
-      if (tool->SymbolizePC(addr, res)) {
-        return res;
-      }
-    }
-    return res;
-  }
-
-  bool SymbolizeData(uptr addr, DataInfo *info) override {
-    BlockingMutexLock l(&mu_);
-    LoadedModule *module = FindModuleForAddress(addr);
-    if (module == 0)
-      return false;
-    const char *module_name = module->full_name();
-    uptr module_offset = addr - module->base_address();
-    info->Clear();
-    info->module = internal_strdup(module_name);
-    info->module_offset = module_offset;
-    for (auto iter = Iterator(&tools_); iter.hasNext();) {
-      auto *tool = iter.next();
-      SymbolizerScope sym_scope(this);
-      if (tool->SymbolizeData(addr, info)) {
-        return true;
-      }
-    }
-    return true;
-  }
-
-  bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
-                                   uptr *module_address) override {
-    BlockingMutexLock l(&mu_);
-    return FindModuleNameAndOffsetForAddress(pc, module_name, module_address);
-  }
-
-  bool CanReturnFileLineInfo() override {
-    return !tools_.empty();
-  }
-
-  void Flush() override {
-    BlockingMutexLock l(&mu_);
-    for (auto iter = Iterator(&tools_); iter.hasNext();) {
-      auto *tool = iter.next();
-      SymbolizerScope sym_scope(this);
-      tool->Flush();
-    }
-  }
-
-  const char *Demangle(const char *name) override {
-    BlockingMutexLock l(&mu_);
-    for (auto iter = Iterator(&tools_); iter.hasNext();) {
-      auto *tool = iter.next();
-      SymbolizerScope sym_scope(this);
-      if (const char *demangled = tool->Demangle(name))
-        return demangled;
-    }
+ private:
+  const char *PlatformDemangle(const char *name) override {
     return DemangleCXXABI(name);
   }
 
-  void PrepareForSandboxing() override {
+  void PlatformPrepareForSandboxing() override {
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-    BlockingMutexLock l(&mu_);
     // Cache /proc/self/exe on Linux.
     CacheBinaryName();
 #endif
   }
 
- private:
   LoadedModule *FindModuleForAddress(uptr address) {
-    mu_.CheckLocked();
     bool modules_were_reloaded = false;
     if (modules_ == 0 || !modules_fresh_) {
       modules_ = (LoadedModule*)(symbolizer_allocator_.Allocate(
@@ -461,9 +394,9 @@ class POSIXSymbolizer : public Symbolizer {
     return 0;
   }
 
-  bool FindModuleNameAndOffsetForAddress(uptr address, const char **module_name,
-                                         uptr *module_offset) {
-    mu_.CheckLocked();
+  bool PlatformFindModuleNameAndOffsetForAddress(uptr address,
+                                                 const char **module_name,
+                                                 uptr *module_offset) override {
     LoadedModule *module = FindModuleForAddress(address);
     if (module == 0)
       return false;
@@ -478,10 +411,6 @@ class POSIXSymbolizer : public Symbolizer {
   uptr n_modules_;
   // If stale, need to reload the modules before looking up addresses.
   bool modules_fresh_;
-  BlockingMutex mu_;
-
-  typedef IntrusiveList<SymbolizerTool>::Iterator Iterator;
-  IntrusiveList<SymbolizerTool> tools_;
 };
 
 static SymbolizerTool *ChooseSymbolizer(LowLevelAllocator *allocator) {

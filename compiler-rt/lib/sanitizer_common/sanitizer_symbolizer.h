@@ -73,6 +73,8 @@ struct DataInfo {
   void Clear();
 };
 
+class SymbolizerTool;
+
 class Symbolizer {
  public:
   /// Initialize and return platform-specific implementation of symbolizer
@@ -80,16 +82,10 @@ class Symbolizer {
   static Symbolizer *GetOrInit();
   // Returns a list of symbolized frames for a given address (containing
   // all inlined functions, if necessary).
-  virtual SymbolizedStack *SymbolizePC(uptr address) {
-    return SymbolizedStack::New(address);
-  }
-  virtual bool SymbolizeData(uptr address, DataInfo *info) {
-    return false;
-  }
-  virtual bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
-                                           uptr *module_address) {
-    return false;
-  }
+  SymbolizedStack *SymbolizePC(uptr address);
+  bool SymbolizeData(uptr address, DataInfo *info);
+  bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
+                                   uptr *module_address);
   const char *GetModuleNameForPc(uptr pc) {
     const char *module_name = 0;
     uptr unused;
@@ -97,16 +93,12 @@ class Symbolizer {
       return module_name;
     return nullptr;
   }
-  virtual bool CanReturnFileLineInfo() {
-    return false;
-  }
+  bool CanReturnFileLineInfo() { return !tools_.empty(); }
   // Release internal caches (if any).
-  virtual void Flush() {}
+  void Flush();
   // Attempts to demangle the provided C++ mangled name.
-  virtual const char *Demangle(const char *name) {
-    return name;
-  }
-  virtual void PrepareForSandboxing() {}
+  const char *Demangle(const char *name);
+  void PrepareForSandboxing();
 
   // Allow user to install hooks that would be called before/after Symbolizer
   // does the actual file/line info fetching. Specific sanitizers may need this
@@ -121,14 +113,28 @@ class Symbolizer {
  private:
   /// Platform-specific function for creating a Symbolizer object.
   static Symbolizer *PlatformInit();
-  /// Initialize the symbolizer in a disabled state.  Not thread safe.
-  static Symbolizer *Disable();
+
+  virtual bool PlatformFindModuleNameAndOffsetForAddress(
+      uptr address, const char **module_name, uptr *module_offset) {
+    UNIMPLEMENTED();
+  }
+  // Platform-specific default demangler, must not return nullptr.
+  virtual const char *PlatformDemangle(const char *name) { UNIMPLEMENTED(); }
+  virtual void PlatformPrepareForSandboxing() { UNIMPLEMENTED(); }
 
   static Symbolizer *symbolizer_;
   static StaticSpinMutex init_mu_;
 
+  // Mutex locked from public methods of |Symbolizer|, so that the internals
+  // (including individual symbolizer tools and platform-specific methods) are
+  // always synchronized.
+  BlockingMutex mu_;
+
+  typedef IntrusiveList<SymbolizerTool>::Iterator Iterator;
+  IntrusiveList<SymbolizerTool> tools_;
+
  protected:
-  Symbolizer();
+  explicit Symbolizer(IntrusiveList<SymbolizerTool> tools);
 
   static LowLevelAllocator symbolizer_allocator_;
 
