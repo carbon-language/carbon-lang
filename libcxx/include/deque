@@ -2288,19 +2288,14 @@ deque<_Tp, _Allocator>::__add_front_capacity()
         __split_buffer<pointer, typename __base::__pointer_allocator&>
             __buf(max<size_type>(2 * __base::__map_.capacity(), 1),
                   0, __base::__map_.__alloc());
-#ifndef _LIBCPP_NO_EXCEPTIONS
-        try
-        {
-#endif  // _LIBCPP_NO_EXCEPTIONS
-            __buf.push_back(__alloc_traits::allocate(__a, __base::__block_size));
-#ifndef _LIBCPP_NO_EXCEPTIONS
-        }
-        catch (...)
-        {
-            __alloc_traits::deallocate(__a, __buf.front(), __base::__block_size);
-            throw;
-        }
-#endif  // _LIBCPP_NO_EXCEPTIONS
+
+		typedef __allocator_destructor<_Allocator> _Dp;
+		unique_ptr<pointer, _Dp> __hold(
+			__alloc_traits::allocate(__a, __base::__block_size),
+				_Dp(__a, __base::__block_size));
+		__buf.push_back(__hold.get());
+		__hold.release();
+	
         for (typename __base::__map_pointer __i = __base::__map_.begin();
                 __i != __base::__map_.end(); ++__i)
             __buf.push_back(*__i);
@@ -2436,19 +2431,14 @@ deque<_Tp, _Allocator>::__add_back_capacity()
             __buf(max<size_type>(2* __base::__map_.capacity(), 1),
                   __base::__map_.size(),
                   __base::__map_.__alloc());
-#ifndef _LIBCPP_NO_EXCEPTIONS
-        try
-        {
-#endif  // _LIBCPP_NO_EXCEPTIONS
-            __buf.push_back(__alloc_traits::allocate(__a, __base::__block_size));
-#ifndef _LIBCPP_NO_EXCEPTIONS
-        }
-        catch (...)
-        {
-            __alloc_traits::deallocate(__a, __buf.back(), __base::__block_size);
-            throw;
-        }
-#endif  // _LIBCPP_NO_EXCEPTIONS
+
+		typedef __allocator_destructor<_Allocator> _Dp;
+		unique_ptr<pointer, _Dp> __hold(
+			__alloc_traits::allocate(__a, __base::__block_size),
+				_Dp(__a, __base::__block_size));
+		__buf.push_back(__hold.get());
+		__hold.release();
+
         for (typename __base::__map_pointer __i = __base::__map_.end();
                 __i != __base::__map_.begin();)
             __buf.push_front(*--__i);

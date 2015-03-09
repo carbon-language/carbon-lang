@@ -12,11 +12,11 @@
 // void push_back(const value_type& x);
 
 #include <deque>
+#include "test_allocator.h"
 #include <cassert>
 
 // Flag that makes the copy constructor for CMyClass throw an exception
 static bool gCopyConstructorShouldThow = false;
-
 
 class CMyClass {
     public: CMyClass(int tag);
@@ -25,6 +25,7 @@ class CMyClass {
 
     bool equal(const CMyClass &rhs) const
         { return fTag == rhs.fTag && fMagicValue == rhs.fMagicValue; }
+        
     private:
         int fMagicValue;
         int fTag;
@@ -66,6 +67,7 @@ bool operator==(const CMyClass &lhs, const CMyClass &rhs) { return lhs.equal(rhs
 int main()
 {
     CMyClass instance(42);
+    {
     std::deque<CMyClass> vec;
 
     vec.push_back(instance);
@@ -74,8 +76,26 @@ int main()
     gCopyConstructorShouldThow = true;
     try {
         vec.push_back(instance);
+        assert(false);
+    }
+    catch (...) {
+	    gCopyConstructorShouldThow = false;
+        assert(vec==vec2);
+    }
+	}
+	
+	{
+	typedef std::deque<CMyClass, test_allocator<CMyClass> > C;
+    C vec;
+    C vec2(vec);
+
+	C::allocator_type::throw_after = 1;
+    try {
+        vec.push_back(instance);
+        assert(false);
     }
     catch (...) {
         assert(vec==vec2);
+    }
     }
 }
