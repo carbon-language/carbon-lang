@@ -140,7 +140,7 @@ bool HexagonFrameLowering::hasTailCall(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   unsigned RetOpcode = MBBI->getOpcode();
 
-  return RetOpcode == Hexagon::TCRETURNtg || RetOpcode == Hexagon::TCRETURNtext;
+  return RetOpcode == Hexagon::TCRETURNi || RetOpcode == Hexagon::TCRETURNr;
 }
 
 void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,

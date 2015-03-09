@@ -211,9 +211,11 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return false;
     --I;
   }
-
+  
+  bool JumpToBlock = I->getOpcode() == Hexagon::J2_jump &&
+                     I->getOperand(0).isMBB();
   // Delete the JMP if it's equivalent to a fall-through.
-  if (AllowModify && I->getOpcode() == Hexagon::J2_jump &&
+  if (AllowModify && JumpToBlock &&
       MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
     DEBUG(dbgs()<< "\nErasing the jump to successor block\n";);
     I->eraseFromParent();
@@ -243,6 +245,14 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   } while(I);
 
   int LastOpcode = LastInst->getOpcode();
+  int SecLastOpcode = SecondLastInst ? SecondLastInst->getOpcode() : 0;
+  // If the branch target is not a basic block, it could be a tail call.
+  // (It is, if the target is a function.)
+  if (LastOpcode == Hexagon::J2_jump && !LastInst->getOperand(0).isMBB())
+    return true;
+  if (SecLastOpcode == Hexagon::J2_jump &&
+      !SecondLastInst->getOperand(0).isMBB())
+    return true;
 
   bool LastOpcodeHasJMP_c = PredOpcodeHasJMP_c(LastOpcode);
   bool LastOpcodeHasNot = PredOpcodeHasNot(LastOpcode);
@@ -269,8 +279,6 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     // Otherwise, don't know what this is.
     return true;
   }
-
-  int SecLastOpcode = SecondLastInst->getOpcode();
 
   bool SecLastOpcodeHasJMP_c = PredOpcodeHasJMP_c(SecLastOpcode);
   bool SecLastOpcodeHasNot = PredOpcodeHasNot(SecLastOpcode);
@@ -548,6 +556,21 @@ void HexagonInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                         const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   llvm_unreachable("Unimplemented");
+}
+bool
+HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  unsigned Opc = MI->getOpcode();
+
+  switch (Opc) {
+    case Hexagon::TCRETURNi:
+      MI->setDesc(get(Hexagon::J2_jump));
+      return true;
+    case Hexagon::TCRETURNr:
+      MI->setDesc(get(Hexagon::J2_jumpr));
+      return true;
+  }
+
+  return false;
 }
 
 MachineInstr *HexagonInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,

@@ -4877,21 +4877,17 @@ let isPseudo = 1, isCall = 1, isReturn = 1, isBarrier = 1, isPredicable = 0,
 def TCRETURNr : T_JMPr;
 
 // Direct tail-calls.
-let isCall = 1, isReturn = 1, isBarrier = 1, isPredicable = 0,
-isTerminator = 1, isCodeGenOnly = 1 in {
-  def TCRETURNtg   : JInst<(outs), (ins calltarget:$dst), "jump $dst",
-      [], "", J_tc_2early_SLOT23>;
-  def TCRETURNtext : JInst<(outs), (ins calltarget:$dst), "jump $dst",
-      [], "", J_tc_2early_SLOT23>;
-}
+let isPseudo = 1, isCall = 1, isReturn = 1, isBarrier = 1, isPredicable = 0,
+    isTerminator = 1, isCodeGenOnly = 1 in
+def TCRETURNi : JInst<(outs), (ins calltarget:$dst), "", []>;
 
 //Tail calls.
 def: Pat<(HexagonTCRet tglobaladdr:$dst),
-         (TCRETURNtg tglobaladdr:$dst)>;
+         (TCRETURNi tglobaladdr:$dst)>;
 def: Pat<(HexagonTCRet texternalsym:$dst),
-         (TCRETURNtext texternalsym:$dst)>;
+         (TCRETURNi texternalsym:$dst)>;
 def: Pat<(HexagonTCRet (i32 IntRegs:$dst)),
-         (TCRETURNr (i32 IntRegs:$dst))>;
+         (TCRETURNr IntRegs:$dst)>;
 
 // Map from r0 = and(r1, 65535) to r0 = zxth(r1)
 def: Pat<(and (i32 IntRegs:$src1), 65535),
