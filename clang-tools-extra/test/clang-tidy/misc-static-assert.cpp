@@ -34,6 +34,8 @@ template <class T> void doSomething(T t) {
 
   assert(t.method());
   // CHECK-FIXES: {{^  }}assert(t.method());
+
+  assert(sizeof(T) == 123);
 }
 
 int main() {

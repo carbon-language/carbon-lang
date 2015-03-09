@@ -69,7 +69,9 @@ void StaticAssertCheck::check(const MatchFinder::MatchResult &Result) {
   StringRef MacroName =
       Lexer::getImmediateMacroName(AssertExpansionLoc, SM, Opts);
 
-  if (MacroName != "assert" || !Condition->isEvaluatable(*ASTCtx))
+  if (MacroName != "assert" || Condition->isValueDependent() ||
+      Condition->isTypeDependent() || Condition->isInstantiationDependent() ||
+      !Condition->isEvaluatable(*ASTCtx))
     return;
 
   // False literal is not the result of macro expansion.
