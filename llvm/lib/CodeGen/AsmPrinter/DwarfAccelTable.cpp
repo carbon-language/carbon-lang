@@ -54,7 +54,7 @@ void DwarfAccelTable::ComputeBucketCount(void) {
   // Then compute the bucket size, minimum of 1 bucket.
   if (num > 1024)
     Header.bucket_count = num / 4;
-  if (num > 16)
+  else if (num > 16)
     Header.bucket_count = num / 2;
   else
     Header.bucket_count = num > 0 ? num : 1;
