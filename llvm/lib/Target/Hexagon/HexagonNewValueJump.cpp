@@ -199,8 +199,7 @@ static bool commonChecksToProhibitNewValueJump(bool afterRA,
     // of registers by individual passes in the backend. At this time,
     // we don't know the scope of usage and definitions of these
     // instructions.
-    if (MII->getOpcode() == Hexagon::TFR_condset_ii ||
-        MII->getOpcode() == Hexagon::LDriw_pred     ||
+    if (MII->getOpcode() == Hexagon::LDriw_pred     ||
         MII->getOpcode() == Hexagon::STriw_pred)
       return false;
   }

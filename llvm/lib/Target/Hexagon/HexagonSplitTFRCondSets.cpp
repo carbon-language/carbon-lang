@@ -87,22 +87,6 @@ bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
          ++MII) {
       MachineInstr *MI = MII;
       switch(MI->getOpcode()) {
-        case Hexagon::TFR_condset_ii: {
-          int DestReg = MI->getOperand(0).getReg();
-          int SrcReg1 = MI->getOperand(1).getReg();
-
-          int Immed1 = MI->getOperand(2).getImm();
-          int Immed2 = MI->getOperand(3).getImm();
-          BuildMI(*MBB, MII, MI->getDebugLoc(),
-                  TII->get(Hexagon::C2_cmoveit),
-                  DestReg).addReg(SrcReg1).addImm(Immed1);
-          BuildMI(*MBB, MII, MI->getDebugLoc(),
-                  TII->get(Hexagon::C2_cmoveif),
-                  DestReg).addReg(SrcReg1).addImm(Immed2);
-          MII = MBB->erase(MI);
-          --MII;
-          break;
-        }
       }
     }
   }

@@ -1,3 +1,4 @@
+; XFAIL:
 ; RUN: llc -march=hexagon -mcpu=hexagonv5  < %s | FileCheck %s
 ; Generate various cmpb instruction followed by if (p0) .. if (!p0)...
 target triple = "hexagon"

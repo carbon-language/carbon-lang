@@ -271,7 +271,6 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
           switch (Op) {
             case Hexagon::C2_mux:
             case Hexagon::C2_muxii:
-            case Hexagon::TFR_condset_ii:
               NewOp = Op;
               break;
             case Hexagon::C2_muxri:
