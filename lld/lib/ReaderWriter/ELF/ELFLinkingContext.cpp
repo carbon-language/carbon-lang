@@ -27,22 +27,6 @@
 
 namespace lld {
 
-class CommandLineAbsoluteAtom : public AbsoluteAtom {
-public:
-  CommandLineAbsoluteAtom(const File &file, StringRef name, uint64_t value)
-      : _file(file), _name(name), _value(value) {}
-
-  const File &file() const override { return _file; }
-  StringRef name() const override { return _name; }
-  uint64_t value() const override { return _value; }
-  Scope scope() const override { return scopeGlobal; }
-
-private:
-  const File &_file;
-  StringRef _name;
-  uint64_t _value;
-};
-
 class CommandLineUndefinedAtom : public SimpleUndefinedAtom {
 public:
   CommandLineUndefinedAtom(const File &f, StringRef name)
@@ -197,7 +181,8 @@ void ELFLinkingContext::createInternalFiles(
   for (auto &i : getAbsoluteSymbols()) {
     StringRef sym = i.first;
     uint64_t val = i.second;
-    file->addAtom(*(new (_allocator) CommandLineAbsoluteAtom(*file, sym, val)));
+    file->addAtom(*(new (_allocator) SimpleAbsoluteAtom(
+        *file, sym, Atom::scopeGlobal, val)));
   }
   files.push_back(std::move(file));
   LinkingContext::createInternalFiles(files);

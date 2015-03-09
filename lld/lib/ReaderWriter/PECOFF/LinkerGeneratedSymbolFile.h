@@ -137,7 +137,7 @@ public:
   };
 
 private:
-  COFFAbsoluteAtom _imageBaseAtom;
+  SimpleAbsoluteAtom _imageBaseAtom;
 };
 
 // A LocallyImporteSymbolFile is an archive file containing __imp_

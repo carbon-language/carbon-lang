@@ -39,7 +39,6 @@
 
 #define DEBUG_TYPE "ReaderCOFF"
 
-using lld::pecoff::COFFAbsoluteAtom;
 using lld::pecoff::COFFBSSAtom;
 using lld::pecoff::COFFDefinedAtom;
 using lld::pecoff::COFFDefinedFileAtom;
@@ -440,8 +439,8 @@ void FileCOFF::createAbsoluteAtoms(const SymbolVectorT &symbols,
   for (llvm::object::COFFSymbolRef sym : symbols) {
     if (sym.getSectionNumber() != llvm::COFF::IMAGE_SYM_ABSOLUTE)
       continue;
-    auto *atom = new (_alloc) COFFAbsoluteAtom(*this, _symbolName[sym],
-                                               getScope(sym), sym.getValue());
+    auto *atom = new (_alloc) SimpleAbsoluteAtom(*this, _symbolName[sym],
+                                                 getScope(sym), sym.getValue());
 
     result.push_back(atom);
     _symbolAtom[sym] = atom;

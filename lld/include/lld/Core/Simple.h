@@ -276,6 +276,23 @@ private:
   StringRef _name;
 };
 
+class SimpleAbsoluteAtom : public AbsoluteAtom {
+public:
+  SimpleAbsoluteAtom(const File &f, StringRef name, Scope s, uint64_t value)
+      : _file(f), _name(name), _scope(s), _value(value) {}
+
+  const File &file() const override { return _file; }
+  StringRef name() const override { return _name; }
+  uint64_t value() const override { return _value; }
+  Scope scope() const override { return _scope; }
+
+private:
+  const File &_file;
+  StringRef _name;
+  Scope _scope;
+  uint64_t _value;
+};
+
 } // end namespace lld
 
 #endif

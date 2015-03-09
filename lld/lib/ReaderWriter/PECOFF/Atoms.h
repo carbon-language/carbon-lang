@@ -20,23 +20,6 @@ namespace lld {
 namespace pecoff {
 class COFFDefinedAtom;
 
-class COFFAbsoluteAtom : public AbsoluteAtom {
-public:
-  COFFAbsoluteAtom(const File &f, StringRef name, Scope scope, uint64_t value)
-      : _owningFile(f), _name(name), _scope(scope), _value(value) {}
-
-  const File &file() const override { return _owningFile; }
-  Scope scope() const override { return _scope; }
-  StringRef name() const override { return _name; }
-  uint64_t value() const override { return _value; }
-
-private:
-  const File &_owningFile;
-  StringRef _name;
-  Scope _scope;
-  uint64_t _value;
-};
-
 class COFFUndefinedAtom : public UndefinedAtom {
 public:
   COFFUndefinedAtom(const File &file, StringRef name,
