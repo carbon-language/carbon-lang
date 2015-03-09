@@ -10342,9 +10342,9 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
          I != E; ++I) {
       NamedDecl *D = *I;
 
-      // Some of these decls (like enums) may have been pinned to the translation unit
-      // for lack of a real context earlier. If so, remove from the translation unit
-      // and reattach to the current context.
+      // Some of these decls (like enums) may have been pinned to the
+      // translation unit for lack of a real context earlier. If so, remove
+      // from the translation unit and reattach to the current context.
       if (D->getLexicalDeclContext() == Context.getTranslationUnitDecl()) {
         // Is the decl actually in the context?
         for (const auto *DI : Context.getTranslationUnitDecl()->decls()) {
