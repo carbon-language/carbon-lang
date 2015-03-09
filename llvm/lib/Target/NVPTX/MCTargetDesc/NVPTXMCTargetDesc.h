@@ -14,6 +14,8 @@
 #ifndef LLVM_LIB_TARGET_NVPTX_MCTARGETDESC_NVPTXMCTARGETDESC_H
 #define LLVM_LIB_TARGET_NVPTX_MCTARGETDESC_NVPTXMCTARGETDESC_H
 
+#include <stdint.h>
+
 namespace llvm {
 class Target;
 
