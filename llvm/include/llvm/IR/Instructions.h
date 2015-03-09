@@ -1201,10 +1201,14 @@ public:
 
   /// @returns true if the predicate of this instruction is EQ or NE.
   /// \brief Determine if this is an equality predicate.
-  bool isEquality() const {
-    return getPredicate() == FCMP_OEQ || getPredicate() == FCMP_ONE ||
-           getPredicate() == FCMP_UEQ || getPredicate() == FCMP_UNE;
+  static bool isEquality(Predicate Pred) {
+    return Pred == FCMP_OEQ || Pred == FCMP_ONE || Pred == FCMP_UEQ ||
+           Pred == FCMP_UNE;
   }
+
+  /// @returns true if the predicate of this instruction is EQ or NE.
+  /// \brief Determine if this is an equality predicate.
+  bool isEquality() const { return isEquality(getPredicate()); }
 
   /// @returns true if the predicate of this instruction is commutative.
   /// \brief Determine if this is a commutative predicate.

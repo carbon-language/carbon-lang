@@ -3054,8 +3054,13 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   if (Pred == FCmpInst::FCMP_TRUE)
     return ConstantInt::get(GetCompareTy(LHS), 1);
 
-  if (isa<UndefValue>(RHS))                  // fcmp pred X, undef -> undef
-    return UndefValue::get(GetCompareTy(LHS));
+  // fcmp pred x, undef  and  fcmp pred undef, x
+  // fold to true if unordered, false if ordered
+  if (isa<UndefValue>(LHS) || isa<UndefValue>(RHS)) {
+    // Choosing NaN for the undef will always make unordered comparison succeed
+    // and ordered comparison fail.
+    return ConstantInt::get(GetCompareTy(LHS), CmpInst::isUnordered(Pred));
+  }
 
   // fcmp x,x -> true/false.  Not all compares are foldable.
   if (LHS == RHS) {

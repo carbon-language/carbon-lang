@@ -240,3 +240,38 @@ define i32 @test17(double %a, double (double)* %p) nounwind {
   %conv = zext i1 %cmp to i32
   ret i32 %conv
 }
+
+; Can fold fcmp with undef on one side by choosing NaN for the undef
+define i32 @test18_undef_unordered(float %a) nounwind {
+; CHECK-LABEL: @test18_undef_unordered
+; CHECK: ret i32 1
+  %cmp = fcmp ueq float %a, undef
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}
+; Can fold fcmp with undef on one side by choosing NaN for the undef
+define i32 @test18_undef_ordered(float %a) nounwind {
+; CHECK-LABEL: @test18_undef_ordered
+; CHECK: ret i32 0
+  %cmp = fcmp oeq float %a, undef
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}
+
+; Can fold fcmp with undef on both side
+;   fcmp u_pred undef, undef -> true
+;   fcmp o_pred undef, undef -> false
+; because whatever you choose for the first undef
+; you can choose NaN for the other undef
+define i1 @test19_undef_unordered() nounwind {
+; CHECK-LABEL: @test19_undef
+; CHECK: ret i1 true
+  %cmp = fcmp ueq float undef, undef
+  ret i1 %cmp
+}
+define i1 @test19_undef_ordered() nounwind {
+; CHECK-LABEL: @test19_undef
+; CHECK: ret i1 false
+  %cmp = fcmp oeq float undef, undef
+  ret i1 %cmp
+}
