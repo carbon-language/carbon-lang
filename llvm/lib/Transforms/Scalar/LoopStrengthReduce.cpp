@@ -3825,7 +3825,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
           if (C->getValue()->isNegative() !=
                 (NewF.BaseOffset < 0) &&
               (C->getValue()->getValue().abs() * APInt(BitWidth, F.Scale))
-                .ule(abs64(NewF.BaseOffset)))
+                .ule(std::abs(NewF.BaseOffset)))
             continue;
 
         // OK, looks good.
@@ -3856,7 +3856,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
                J != JE; ++J)
             if (const SCEVConstant *C = dyn_cast<SCEVConstant>(*J))
               if ((C->getValue()->getValue() + NewF.BaseOffset).abs().slt(
-                   abs64(NewF.BaseOffset)) &&
+                   std::abs(NewF.BaseOffset)) &&
                   (C->getValue()->getValue() +
                    NewF.BaseOffset).countTrailingZeros() >=
                    countTrailingZeros<uint64_t>(NewF.BaseOffset))

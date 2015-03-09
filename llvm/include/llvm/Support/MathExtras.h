@@ -604,13 +604,6 @@ inline uint64_t OffsetToAlignment(uint64_t Value, uint64_t Align) {
   return RoundUpToAlignment(Value, Align) - Value;
 }
 
-/// abs64 - absolute value of a 64-bit int.  Not all environments support
-/// "abs" on whatever their name for the 64-bit int type is.  The absolute
-/// value of the largest negative number is undefined, as with "abs".
-inline int64_t abs64(int64_t x) {
-  return (x < 0) ? -x : x;
-}
-
 /// SignExtend32 - Sign extend B-bit number x to 32-bit int.
 /// Usage int32_t r = SignExtend32<5>(x);
 template <unsigned B> inline int32_t SignExtend32(uint32_t x) {

@@ -124,7 +124,7 @@ static unsigned getNewAlignmentDiff(const SCEV *DiffSCEV,
 
     // If the displacement is not an exact multiple, but the remainder is a
     // constant, then return this remainder (but only if it is a power of 2).
-    uint64_t DiffUnitsAbs = abs64(DiffUnits);
+    uint64_t DiffUnitsAbs = std::abs(DiffUnits);
     if (isPowerOf2_64(DiffUnitsAbs))
       return (unsigned) DiffUnitsAbs;
   }

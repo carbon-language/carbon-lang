@@ -192,7 +192,7 @@ bool PPCLoopDataPrefetch::runOnLoop(Loop *L) {
         const SCEV *PtrDiff = SE->getMinusSCEV(LSCEVAddRec, K->second);
         if (const SCEVConstant *ConstPtrDiff =
             dyn_cast<SCEVConstant>(PtrDiff)) {
-          int64_t PD = abs64(ConstPtrDiff->getValue()->getSExtValue());
+          int64_t PD = std::abs(ConstPtrDiff->getValue()->getSExtValue());
           if (PD < (int64_t) CacheLineSize) {
             DupPref = true;
             break;
