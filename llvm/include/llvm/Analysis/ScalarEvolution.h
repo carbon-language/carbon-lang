@@ -388,31 +388,30 @@ namespace llvm {
     /// computeBlockDisposition - Compute a BlockDisposition value.
     BlockDisposition computeBlockDisposition(const SCEV *S, const BasicBlock *BB);
 
-    /// UnsignedRanges - Memoized results from getUnsignedRange
+    /// UnsignedRanges - Memoized results from getRange
     DenseMap<const SCEV *, ConstantRange> UnsignedRanges;
 
-    /// SignedRanges - Memoized results from getSignedRange
+    /// SignedRanges - Memoized results from getRange
     DenseMap<const SCEV *, ConstantRange> SignedRanges;
 
-    /// setUnsignedRange - Set the memoized unsigned range for the given SCEV.
-    const ConstantRange &setUnsignedRange(const SCEV *S,
-                                          const ConstantRange &CR) {
+    /// RangeSignHint - Used to parameterize getRange
+    enum RangeSignHint { HINT_RANGE_UNSIGNED, HINT_RANGE_SIGNED };
+
+    /// setRange - Set the memoized range for the given SCEV.
+    const ConstantRange &setRange(const SCEV *S, RangeSignHint Hint,
+                                  const ConstantRange &CR) {
+      DenseMap<const SCEV *, ConstantRange> &Cache =
+          Hint == HINT_RANGE_UNSIGNED ? UnsignedRanges : SignedRanges;
+
       std::pair<DenseMap<const SCEV *, ConstantRange>::iterator, bool> Pair =
-        UnsignedRanges.insert(std::make_pair(S, CR));
+          Cache.insert(std::make_pair(S, CR));
       if (!Pair.second)
         Pair.first->second = CR;
       return Pair.first->second;
     }
 
-    /// setUnsignedRange - Set the memoized signed range for the given SCEV.
-    const ConstantRange &setSignedRange(const SCEV *S,
-                                        const ConstantRange &CR) {
-      std::pair<DenseMap<const SCEV *, ConstantRange>::iterator, bool> Pair =
-        SignedRanges.insert(std::make_pair(S, CR));
-      if (!Pair.second)
-        Pair.first->second = CR;
-      return Pair.first->second;
-    }
+    /// getRange - Determine the range for a particular SCEV.
+    ConstantRange getRange(const SCEV *S, RangeSignHint Hint);
 
     /// createSCEV - We know that there is no SCEV for the specified value.
     /// Analyze the expression.
@@ -843,11 +842,15 @@ namespace llvm {
 
     /// getUnsignedRange - Determine the unsigned range for a particular SCEV.
     ///
-    ConstantRange getUnsignedRange(const SCEV *S);
+    ConstantRange getUnsignedRange(const SCEV *S) {
+      return getRange(S, HINT_RANGE_UNSIGNED);
+    }
 
     /// getSignedRange - Determine the signed range for a particular SCEV.
     ///
-    ConstantRange getSignedRange(const SCEV *S);
+    ConstantRange getSignedRange(const SCEV *S) {
+      return getRange(S, HINT_RANGE_SIGNED);
+    }
 
     /// isKnownNegative - Test if the given expression is known to be negative.
     ///
