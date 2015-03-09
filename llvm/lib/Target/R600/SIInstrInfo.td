@@ -1483,10 +1483,8 @@ class DS_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
   DSe_vi <op>,
   SIMCInstr <opName, SISubtarget.VI>;
 
-class DS_1A_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm> :
-  DS <outs, ins, asm, []>,
-  DSe <op>,
-  SIMCInstr <opName, SISubtarget.SI> {
+class DS_Off16_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm> :
+  DS_Real_si <op,opName, outs, ins, asm> {
 
   // Single load interpret the 2 i8imm operands as a single i16 offset.
   bits<16> offset;
@@ -1494,10 +1492,8 @@ class DS_1A_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm> :
   let offset1 = offset{15-8};
 }
 
-class DS_1A_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
-  DS <outs, ins, asm, []>,
-  DSe_vi <op>,
-  SIMCInstr <opName, SISubtarget.VI> {
+class DS_Off16_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
+  DS_Real_vi <op, opName, outs, ins, asm> {
 
   // Single load interpret the 2 i8imm operands as a single i16 offset.
   bits<16> offset;
@@ -1505,180 +1501,112 @@ class DS_1A_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
   let offset1 = offset{15-8};
 }
 
-multiclass DS_1A_Load_m <bits<8> op, string opName, dag outs, dag ins, string asm,
-                         list<dag> pat> {
-  let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>;
+multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
+  dag outs = (outs rc:$vdst),
+  dag ins = (ins i1imm:$gds, VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
+  string asm = opName#" $vdst, $addr"#"$offset"> {
 
-    let data0 = 0, data1 = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-    }
+  def "" : DS_Pseudo <opName, outs, ins, []>;
+
+  let data0 = 0, data1 = 0 in {
+    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
   }
 }
 
-multiclass DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass>
-    : DS_1A_Load_m <
-  op,
-  asm,
-  (outs regClass:$vdst),
-  (ins i1imm:$gds, VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
-  asm#" $vdst, $addr"#"$offset",
-  []>;
+multiclass DS_1A_Off8_RET <bits<8> op, string opName, RegisterClass rc,
+  dag outs = (outs rc:$vdst),
+  dag ins = (ins i1imm:$gds, VGPR_32:$addr, ds_offset0:$offset0,
+                 ds_offset1:$offset1, M0Reg:$m0),
+  string asm = opName#" $vdst, $addr"#"$offset0"#"$offset1"> {
 
-multiclass DS_Load2_m <bits<8> op, string opName, dag outs, dag ins, string asm,
-                       list<dag> pat> {
-  let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>;
+  def "" : DS_Pseudo <opName, outs, ins, []>;
 
-    let data0 = 0, data1 = 0 in {
-      def _si : DS_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_Real_vi <op, opName, outs, ins, asm>;
-    }
+  let data0 = 0, data1 = 0 in {
+    def _si : DS_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Real_vi <op, opName, outs, ins, asm>;
   }
 }
 
-multiclass DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass>
-    : DS_Load2_m <
-  op,
-  asm,
-  (outs regClass:$vdst),
-  (ins i1imm:$gds, VGPR_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
-        M0Reg:$m0),
-  asm#" $vdst, $addr"#"$offset0"#"$offset1",
-  []>;
+multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
+  dag outs = (outs),
+  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset,
+                 M0Reg:$m0),
+  string asm = opName#" $addr, $data0"#"$offset"> {
 
-multiclass DS_1A_Store_m <bits<8> op, string opName, dag outs, dag ins,
-                          string asm, list<dag> pat> {
-  let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>;
+  def "" : DS_Pseudo <opName, outs, ins, []>,
+           AtomicNoRet<opName, 0>;
 
-    let data1 = 0, vdst = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-    }
+  let data1 = 0, vdst = 0 in {
+    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
   }
 }
 
-multiclass DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass>
-    : DS_1A_Store_m <
-  op,
-  asm,
-  (outs),
-  (ins i1imm:$gds, VGPR_32:$addr, regClass:$data0, ds_offset:$offset, M0Reg:$m0),
-  asm#" $addr, $data0"#"$offset",
-  []>;
+multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
+  dag outs = (outs),
+  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1,
+              ds_offset0:$offset0, ds_offset1:$offset1, M0Reg:$m0),
+  string asm = opName#" $addr, $data0, $data1"#"$offset0"#"$offset1"> {
 
-multiclass DS_Store_m <bits<8> op, string opName, dag outs, dag ins,
-                       string asm, list<dag> pat> {
-  let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>;
+  def "" : DS_Pseudo <opName, outs, ins, []>;
 
-    let vdst = 0 in {
-      def _si : DS_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_Real_vi <op, opName, outs, ins, asm>;
-    }
+  let vdst = 0 in {
+    def _si : DS_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Real_vi <op, opName, outs, ins, asm>;
   }
 }
 
-multiclass DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass>
-    : DS_Store_m <
-  op,
-  asm,
-  (outs),
-  (ins i1imm:$gds, VGPR_32:$addr, regClass:$data0, regClass:$data1,
-       ds_offset0:$offset0, ds_offset1:$offset1, M0Reg:$m0),
-  asm#" $addr, $data0, $data1"#"$offset0"#"$offset1",
-  []>;
+multiclass DS_1A1D_RET <bits<8> op, string opName, RegisterClass rc,
+                        string noRetOp = "",
+  dag outs = (outs rc:$vdst),
+  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset,
+                 M0Reg:$m0),
+  string asm = opName#" $vdst, $addr, $data0"#"$offset"> {
 
-// 1 address, 1 data.
-multiclass DS_1A1D_RET_m <bits<8> op, string opName, dag outs, dag ins,
-                          string asm, list<dag> pat, string noRetOp> {
-  let mayLoad = 1, mayStore = 1,
-      hasPostISelHook = 1 // Adjusted to no return version.
-      in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>,
-             AtomicNoRet<noRetOp, 1>;
+  def "" : DS_Pseudo <opName, outs, ins, []>,
+           AtomicNoRet<noRetOp, 1>;
 
-    let data1 = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-    }
+  let data1 = 0 in {
+    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
   }
 }
 
-multiclass DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc,
-                        string noRetOp = ""> : DS_1A1D_RET_m <
-  op, asm,
-  (outs rc:$vdst),
-  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
-  asm#" $vdst, $addr, $data0"#"$offset", [], noRetOp>;
+multiclass DS_1A2D_RET_m <bits<8> op, string opName, RegisterClass rc,
+                          string noRetOp = "", dag ins,
+  dag outs = (outs rc:$vdst),
+  string asm = opName#" $vdst, $addr, $data0, $data1"#"$offset"> {
 
-// 1 address, 2 data.
-multiclass DS_1A2D_RET_m <bits<8> op, string opName, dag outs, dag ins,
-                          string asm, list<dag> pat, string noRetOp> {
-  let mayLoad = 1, mayStore = 1,
-      hasPostISelHook = 1 // Adjusted to no return version.
-      in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>,
-             AtomicNoRet<noRetOp, 1>;
+  def "" : DS_Pseudo <opName, outs, ins, []>,
+           AtomicNoRet<noRetOp, 1>;
 
-    def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-    def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-  }
+  def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+  def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
 }
 
 multiclass DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc,
-                   string noRetOp = "", RegisterClass src = rc> : DS_1A2D_RET_m <
-  op, asm,
-  (outs rc:$vdst),
-  (ins i1imm:$gds, VGPR_32:$addr, src:$data0, src:$data1, ds_offset:$offset, M0Reg:$m0),
-  asm#" $vdst, $addr, $data0, $data1"#"$offset",
-  [], noRetOp>;
+                        string noRetOp = "", RegisterClass src = rc> :
+  DS_1A2D_RET_m <op, asm, rc, noRetOp,
+                 (ins i1imm:$gds, VGPR_32:$addr, src:$data0, src:$data1,
+                      ds_offset:$offset, M0Reg:$m0)
+>;
 
-// 1 address, 2 data.
-multiclass DS_1A2D_NORET_m <bits<8> op, string opName, dag outs, dag ins,
-                            string asm, list<dag> pat, string noRetOp> {
-  let mayLoad = 1, mayStore = 1 in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>,
-             AtomicNoRet<noRetOp, 0>;
+multiclass DS_1A2D_NORET <bits<8> op, string opName, RegisterClass rc,
+                          string noRetOp = opName,
+  dag outs = (outs),
+  dag ins = (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1,
+                 ds_offset:$offset, M0Reg:$m0),
+  string asm = opName#" $addr, $data0, $data1"#"$offset"> {
 
-    let vdst = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-    }
+  def "" : DS_Pseudo <opName, outs, ins, []>,
+           AtomicNoRet<noRetOp, 0>;
+
+  let vdst = 0 in {
+    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
   }
 }
-
-multiclass DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc,
-                     string noRetOp = asm> : DS_1A2D_NORET_m <
-  op, asm,
-  (outs),
-  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
-  asm#" $addr, $data0, $data1"#"$offset",
-  [], noRetOp>;
-
-// 1 address, 1 data.
-multiclass DS_1A1D_NORET_m <bits<8> op, string opName, dag outs, dag ins,
-                            string asm, list<dag> pat, string noRetOp> {
-  let mayLoad = 1, mayStore = 1 in {
-    def "" : DS_Pseudo <opName, outs, ins, pat>,
-             AtomicNoRet<noRetOp, 0>;
-
-    let data1 = 0, vdst = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-    }
-  }
-}
-
-multiclass DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc,
-                          string noRetOp = asm> : DS_1A1D_NORET_m <
-  op, asm,
-  (outs),
-  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
-  asm#" $addr, $data0"#"$offset",
-  [], noRetOp>;
 
 multiclass DS_0A_RET <bits<8> op, string opName,
   dag outs = (outs VGPR_32:$vdst),
@@ -1689,8 +1617,8 @@ multiclass DS_0A_RET <bits<8> op, string opName,
     def "" : DS_Pseudo <opName, outs, ins, []>;
 
     let addr = 0, data0 = 0, data1 = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
+      def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+      def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
     } // end addr = 0, data0 = 0, data1 = 0
   } // end mayLoad = 1, mayStore = 1
 }
@@ -1700,14 +1628,12 @@ multiclass DS_1A_RET_GDS <bits<8> op, string opName,
   dag ins = (ins VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
   string asm = opName#" $vdst, $addr $offset"> {
 
-  let mayLoad = 1, mayStore = 1 in {
-    def "" : DS_Pseudo <opName, outs, ins, []>;
+  def "" : DS_Pseudo <opName, outs, ins, []>;
 
-    let data0 = 0, data1 = 0, gds = 1 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
-    } // end data0 = 0, data1 = 0, gds = 1
-  } // end mayLoad = 1, mayStore = 1
+  let data0 = 0, data1 = 0, gds = 1 in {
+    def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+    def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
+  } // end data0 = 0, data1 = 0, gds = 1
 }
 
 multiclass DS_1A_GDS <bits<8> op, string opName,
@@ -1732,8 +1658,8 @@ multiclass DS_1A <bits<8> op, string opName,
     def "" : DS_Pseudo <opName, outs, ins, []>;
 
     let vdst = 0, data0 = 0, data1 = 0 in {
-      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
+      def _si : DS_Off16_Real_si <op, opName, outs, ins, asm>;
+      def _vi : DS_Off16_Real_vi <op, opName, outs, ins, asm>;
     } // let vdst = 0, data0 = 0, data1 = 0
   } // end mayLoad = 1, mayStore = 1
 }

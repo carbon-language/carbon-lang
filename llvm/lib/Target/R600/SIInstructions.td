@@ -784,9 +784,11 @@ defm DS_AND_B32 : DS_1A1D_NORET <0x9, "ds_and_b32", VGPR_32>;
 defm DS_OR_B32 : DS_1A1D_NORET <0xa, "ds_or_b32", VGPR_32>;
 defm DS_XOR_B32 : DS_1A1D_NORET <0xb, "ds_xor_b32", VGPR_32>;
 defm DS_MSKOR_B32 : DS_1A2D_NORET <0xc, "ds_mskor_b32", VGPR_32>;
-defm DS_WRITE_B32 : DS_Store_Helper <0xd, "ds_write_b32", VGPR_32>;
-defm DS_WRITE2_B32 : DS_Store2_Helper <0xe, "ds_write2_b32", VGPR_32>;
-defm DS_WRITE2ST64_B32 : DS_Store2_Helper <0xf, "ds_write2st64_b32", VGPR_32>;
+let mayLoad = 0 in {
+defm DS_WRITE_B32 : DS_1A1D_NORET <0xd, "ds_write_b32", VGPR_32>;
+defm DS_WRITE2_B32 : DS_1A1D_Off8_NORET <0xe, "ds_write2_b32", VGPR_32>;
+defm DS_WRITE2ST64_B32 : DS_1A1D_Off8_NORET <0xf, "ds_write2st64_b32", VGPR_32>;
+}
 defm DS_CMPST_B32 : DS_1A2D_NORET <0x10, "ds_cmpst_b32", VGPR_32>;
 defm DS_CMPST_F32 : DS_1A2D_NORET <0x11, "ds_cmpst_f32", VGPR_32>;
 defm DS_MIN_F32 : DS_1A2D_NORET <0x12, "ds_min_f32", VGPR_32>;
@@ -797,8 +799,10 @@ defm DS_GWS_SEMA_V : DS_1A_GDS <0x1a, "ds_gws_sema_v">;
 defm DS_GWS_SEMA_BR : DS_1A_GDS <0x1b, "ds_gws_sema_br">;
 defm DS_GWS_SEMA_P : DS_1A_GDS <0x1c, "ds_gws_sema_p">;
 defm DS_GWS_BARRIER : DS_1A_GDS <0x1d, "ds_gws_barrier">;
-defm DS_WRITE_B8 : DS_Store_Helper <0x1e, "ds_write_b8", VGPR_32>;
-defm DS_WRITE_B16 : DS_Store_Helper <0x1f, "ds_write_b16", VGPR_32>;
+let mayLoad = 0 in {
+defm DS_WRITE_B8 : DS_1A1D_NORET <0x1e, "ds_write_b8", VGPR_32>;
+defm DS_WRITE_B16 : DS_1A1D_NORET <0x1f, "ds_write_b16", VGPR_32>;
+}
 defm DS_ADD_RTN_U32 : DS_1A1D_RET <0x20, "ds_add_rtn_u32", VGPR_32, "ds_add_u32">;
 defm DS_SUB_RTN_U32 : DS_1A1D_RET <0x21, "ds_sub_rtn_u32", VGPR_32, "ds_sub_u32">;
 defm DS_RSUB_RTN_U32 : DS_1A1D_RET <0x22, "ds_rsub_rtn_u32", VGPR_32, "ds_rsub_u32">;
@@ -826,14 +830,16 @@ defm DS_MAX_RTN_F32 : DS_1A2D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32"
 let SubtargetPredicate = isCI in {
 defm DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "ds_wrap_rtn_f32", VGPR_32, "ds_wrap_f32">;
 } // End isCI
-defm DS_SWIZZLE_B32 : DS_Load_Helper <0x35, "ds_swizzle_b32", VGPR_32>;
-defm DS_READ_B32 : DS_Load_Helper <0x36, "ds_read_b32", VGPR_32>;
-defm DS_READ2_B32 : DS_Load2_Helper <0x37, "ds_read2_b32", VReg_64>;
-defm DS_READ2ST64_B32 : DS_Load2_Helper <0x38, "ds_read2st64_b32", VReg_64>;
-defm DS_READ_I8 : DS_Load_Helper <0x39, "ds_read_i8", VGPR_32>;
-defm DS_READ_U8 : DS_Load_Helper <0x3a, "ds_read_u8", VGPR_32>;
-defm DS_READ_I16 : DS_Load_Helper <0x3b, "ds_read_i16", VGPR_32>;
-defm DS_READ_U16 : DS_Load_Helper <0x3c, "ds_read_u16", VGPR_32>;
+defm DS_SWIZZLE_B32 : DS_1A_RET <0x35, "ds_swizzle_b32", VGPR_32>;
+let mayStore = 0 in {
+defm DS_READ_B32 : DS_1A_RET <0x36, "ds_read_b32", VGPR_32>;
+defm DS_READ2_B32 : DS_1A_Off8_RET <0x37, "ds_read2_b32", VReg_64>;
+defm DS_READ2ST64_B32 : DS_1A_Off8_RET <0x38, "ds_read2st64_b32", VReg_64>;
+defm DS_READ_I8 : DS_1A_RET <0x39, "ds_read_i8", VGPR_32>;
+defm DS_READ_U8 : DS_1A_RET <0x3a, "ds_read_u8", VGPR_32>;
+defm DS_READ_I16 : DS_1A_RET <0x3b, "ds_read_i16", VGPR_32>;
+defm DS_READ_U16 : DS_1A_RET <0x3c, "ds_read_u16", VGPR_32>;
+}
 defm DS_CONSUME : DS_0A_RET <0x3d, "ds_consume">;
 defm DS_APPEND : DS_0A_RET <0x3e, "ds_append">;
 defm DS_ORDERED_COUNT : DS_1A_RET_GDS <0x3f, "ds_ordered_count">;
@@ -850,9 +856,11 @@ defm DS_AND_B64 : DS_1A1D_NORET <0x49, "ds_and_b64", VReg_64>;
 defm DS_OR_B64 : DS_1A1D_NORET <0x4a, "ds_or_b64", VReg_64>;
 defm DS_XOR_B64 : DS_1A1D_NORET <0x4b, "ds_xor_b64", VReg_64>;
 defm DS_MSKOR_B64 : DS_1A2D_NORET <0x4c, "ds_mskor_b64", VReg_64>;
-defm DS_WRITE_B64 : DS_Store_Helper <0x4d, "ds_write_b64", VReg_64>;
-defm DS_WRITE2_B64 : DS_Store2_Helper <0x4E, "ds_write2_b64", VReg_64>;
-defm DS_WRITE2ST64_B64 : DS_Store2_Helper <0x4f, "ds_write2st64_b64", VReg_64>;
+let mayLoad = 0 in {
+defm DS_WRITE_B64 : DS_1A1D_NORET <0x4d, "ds_write_b64", VReg_64>;
+defm DS_WRITE2_B64 : DS_1A1D_Off8_NORET <0x4E, "ds_write2_b64", VReg_64>;
+defm DS_WRITE2ST64_B64 : DS_1A1D_Off8_NORET <0x4f, "ds_write2st64_b64", VReg_64>;
+}
 defm DS_CMPST_B64 : DS_1A2D_NORET <0x50, "ds_cmpst_b64", VReg_64>;
 defm DS_CMPST_F64 : DS_1A2D_NORET <0x51, "ds_cmpst_f64", VReg_64>;
 defm DS_MIN_F64 : DS_1A1D_NORET <0x52, "ds_min_f64", VReg_64>;
@@ -879,9 +887,11 @@ defm DS_CMPST_RTN_F64 : DS_1A2D_RET <0x71, "ds_cmpst_rtn_f64", VReg_64, "ds_cmps
 defm DS_MIN_RTN_F64 : DS_1A1D_RET <0x72, "ds_min_rtn_f64", VReg_64, "ds_min_f64">;
 defm DS_MAX_RTN_F64 : DS_1A1D_RET <0x73, "ds_max_rtn_f64", VReg_64, "ds_max_f64">;
 
-defm DS_READ_B64 : DS_Load_Helper <0x76, "ds_read_b64", VReg_64>;
-defm DS_READ2_B64 : DS_Load2_Helper <0x77, "ds_read2_b64", VReg_128>;
-defm DS_READ2ST64_B64 : DS_Load2_Helper <0x78, "ds_read2st64_b64", VReg_128>;
+let mayStore = 0 in {
+defm DS_READ_B64 : DS_1A_RET <0x76, "ds_read_b64", VReg_64>;
+defm DS_READ2_B64 : DS_1A_Off8_RET <0x77, "ds_read2_b64", VReg_128>;
+defm DS_READ2ST64_B64 : DS_1A_Off8_RET <0x78, "ds_read2st64_b64", VReg_128>;
+}
 
 defm DS_ADD_SRC2_U32 : DS_1A <0x80, "ds_add_src2_u32">;
 defm DS_SUB_SRC2_U32 : DS_1A <0x81, "ds_sub_src2_u32">;

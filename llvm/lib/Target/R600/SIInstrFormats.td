@@ -577,6 +577,12 @@ class DS <dag outs, dag ins, string asm, list<dag> pattern> :
   let DS = 1;
   let UseNamedOperandTable = 1;
   let DisableEncoding = "$m0";
+
+  // Most instruction load and store data, so set this as the default.
+  let mayLoad = 1;
+  let mayStore = 1;
+
+  let hasSideEffects = 0;
   let SchedRW = [WriteLDS];
 }
 
