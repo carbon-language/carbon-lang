@@ -4516,9 +4516,9 @@ def Y2_barrier : SYSInst<(outs), (ins),
 // Generate frameindex addresses.
 let isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
     isPseudo = 1, isCodeGenOnly = 1 in
-def TFR_FI: ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$fi),
+def TFR_FI: ALU32_ri<(outs IntRegs:$Rd), (ins FrameIndex:$fi),
                      ".error",
-                     [(set (i32 IntRegs:$Rd), AddrFI:$fi)]>;
+                     [(set (i32 IntRegs:$Rd), ADDRri:$fi)]>;
 
 //===----------------------------------------------------------------------===//
 // CRUSER - Type.
