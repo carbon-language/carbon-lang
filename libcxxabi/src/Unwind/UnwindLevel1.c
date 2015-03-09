@@ -23,7 +23,7 @@
 #include "unwind.h"
 #include "config.h"
 
-#if _LIBUNWIND_BUILD_ZERO_COST_APIS && !LIBCXXABI_ARM_EHABI
+#if !LIBCXXABI_ARM_EHABI
 
 static _Unwind_Reason_Code
 unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
@@ -454,44 +454,6 @@ _Unwind_DeleteException(_Unwind_Exception *exception_object) {
                                            exception_object);
 }
 
-#endif // _LIBUNWIND_BUILD_ZERO_COST_APIS && !LIBCXXABI_ARM_EHABI
-
-#if LIBCXXABI_ARM_EHABI
-
-_LIBUNWIND_EXPORT uintptr_t
-_Unwind_GetGR(struct _Unwind_Context *context, int index) {
-  uintptr_t value = 0;
-  _Unwind_VRS_Get(context, _UVRSC_CORE, (uint32_t)index, _UVRSD_UINT32, &value);
-  _LIBUNWIND_TRACE_API("_Unwind_GetGR(context=%p, reg=%d) => 0x%" PRIx64 "\n",
-                       (void *)context, index, (uint64_t)value);
-  return value;
-}
-
-_LIBUNWIND_EXPORT void _Unwind_SetGR(struct _Unwind_Context *context, int index,
-                                     uintptr_t value) {
-  _LIBUNWIND_TRACE_API("_Unwind_SetGR(context=%p, reg=%d, value=0x%0"PRIx64")\n",
-                       (void *)context, index, (uint64_t)value);
-  _Unwind_VRS_Set(context, _UVRSC_CORE, (uint32_t)index, _UVRSD_UINT32, &value);
-}
-
-_LIBUNWIND_EXPORT uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
-  // remove the thumb-bit before returning
-  uintptr_t value = _Unwind_GetGR(context, 15) & (~(uintptr_t)0x1);
-  _LIBUNWIND_TRACE_API("_Unwind_GetIP(context=%p) => 0x%" PRIx64 "\n",
-                       (void *)context, (uint64_t)value);
-  return value;
-}
-
-_LIBUNWIND_EXPORT void _Unwind_SetIP(struct _Unwind_Context *context,
-                                     uintptr_t value) {
-  _LIBUNWIND_TRACE_API("_Unwind_SetIP(context=%p, value=0x%0" PRIx64 ")\n",
-                       (void *)context, (uint64_t)value);
-  uintptr_t thumb_bit = _Unwind_GetGR(context, 15) & ((uintptr_t)0x1);
-  _Unwind_SetGR(context, 15, value | thumb_bit);
-}
-
-#else
-
 /// Called by personality handler during phase 2 to get register values.
 _LIBUNWIND_EXPORT uintptr_t
 _Unwind_GetGR(struct _Unwind_Context *context, int index) {
@@ -534,5 +496,39 @@ _LIBUNWIND_EXPORT void _Unwind_SetIP(struct _Unwind_Context *context,
   unw_set_reg(cursor, UNW_REG_IP, value);
 }
 
-#endif
+#else
+
+_LIBUNWIND_EXPORT uintptr_t
+_Unwind_GetGR(struct _Unwind_Context *context, int index) {
+  uintptr_t value = 0;
+  _Unwind_VRS_Get(context, _UVRSC_CORE, (uint32_t)index, _UVRSD_UINT32, &value);
+  _LIBUNWIND_TRACE_API("_Unwind_GetGR(context=%p, reg=%d) => 0x%" PRIx64 "\n",
+                       (void *)context, index, (uint64_t)value);
+  return value;
+}
+
+_LIBUNWIND_EXPORT void _Unwind_SetGR(struct _Unwind_Context *context, int index,
+                                     uintptr_t value) {
+  _LIBUNWIND_TRACE_API("_Unwind_SetGR(context=%p, reg=%d, value=0x%0"PRIx64")\n",
+                       (void *)context, index, (uint64_t)value);
+  _Unwind_VRS_Set(context, _UVRSC_CORE, (uint32_t)index, _UVRSD_UINT32, &value);
+}
+
+_LIBUNWIND_EXPORT uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
+  // remove the thumb-bit before returning
+  uintptr_t value = _Unwind_GetGR(context, 15) & (~(uintptr_t)0x1);
+  _LIBUNWIND_TRACE_API("_Unwind_GetIP(context=%p) => 0x%" PRIx64 "\n",
+                       (void *)context, (uint64_t)value);
+  return value;
+}
+
+_LIBUNWIND_EXPORT void _Unwind_SetIP(struct _Unwind_Context *context,
+                                     uintptr_t value) {
+  _LIBUNWIND_TRACE_API("_Unwind_SetIP(context=%p, value=0x%0" PRIx64 ")\n",
+                       (void *)context, (uint64_t)value);
+  uintptr_t thumb_bit = _Unwind_GetGR(context, 15) & ((uintptr_t)0x1);
+  _Unwind_SetGR(context, 15, value | thumb_bit);
+}
+
+#endif // !LIBCXXABI_ARM_EHABI
 
