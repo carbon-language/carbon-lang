@@ -287,13 +287,6 @@ static StringRef getObjCMethodName(StringRef In) {
   return In.slice(In.find(' ') + 1, In.find(']'));
 }
 
-// Helper for sorting sections into a stable output order.
-static bool SectionSort(const MCSection *A, const MCSection *B) {
-  std::string LA = (A ? A->getLabelBeginName() : "");
-  std::string LB = (B ? B->getLabelBeginName() : "");
-  return LA < LB;
-}
-
 // Add the various names to the Dwarf accelerator table names.
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
@@ -1739,7 +1732,7 @@ struct ArangeSpan {
 // address we can tie back to a CU.
 void DwarfDebug::emitDebugARanges() {
   // Provides a unique id per text section.
-  DenseMap<const MCSection *, SmallVector<SymbolCU, 8>> SectionMap;
+  MapVector<const MCSection *, SmallVector<SymbolCU, 8>> SectionMap;
 
   // Filter labels by section.
   for (const SymbolCU &SCU : ArangeLabels) {
@@ -1756,20 +1749,10 @@ void DwarfDebug::emitDebugARanges() {
     }
   }
 
-  // Build a list of sections used.
-  std::vector<const MCSection *> Sections;
-  for (const auto &it : SectionMap) {
-    const MCSection *Section = it.first;
-    Sections.push_back(Section);
-  }
-
-  // Sort the sections into order.
-  // This is only done to ensure consistent output order across different runs.
-  std::sort(Sections.begin(), Sections.end(), SectionSort);
-
   // Add terminating symbols for each section.
-  for (unsigned ID = 0, E = Sections.size(); ID != E; ID++) {
-    const MCSection *Section = Sections[ID];
+  unsigned ID = 0;
+  for (const auto &I : SectionMap) {
+    const MCSection *Section = I.first;
     MCSymbol *Sym = nullptr;
 
     if (Section) {
@@ -1784,12 +1767,14 @@ void DwarfDebug::emitDebugARanges() {
 
     // Insert a final terminator.
     SectionMap[Section].push_back(SymbolCU(nullptr, Sym));
+    ++ID;
   }
 
   DenseMap<DwarfCompileUnit *, std::vector<ArangeSpan>> Spans;
 
-  for (const MCSection *Section : Sections) {
-    SmallVector<SymbolCU, 8> &List = SectionMap[Section];
+  for (auto &I : SectionMap) {
+    const MCSection *Section = I.first;
+    SmallVector<SymbolCU, 8> &List = I.second;
     if (List.size() < 2)
       continue;
 
