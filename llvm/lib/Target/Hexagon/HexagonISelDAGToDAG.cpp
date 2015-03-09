@@ -332,73 +332,6 @@ static unsigned doesIntrinsicReturnPredicate(unsigned ID)
   }
 }
 
-static bool OffsetFitsS11(EVT MemType, int64_t Offset) {
-  if (MemType == MVT::i64 && isShiftedInt<11,3>(Offset)) {
-    return true;
-  }
-  if (MemType == MVT::i32 && isShiftedInt<11,2>(Offset)) {
-    return true;
-  }
-  if (MemType == MVT::i16 && isShiftedInt<11,1>(Offset)) {
-    return true;
-  }
-  if (MemType == MVT::i8 && isInt<11>(Offset)) {
-    return true;
-  }
-  return false;
-}
-
-
-//
-// Try to lower loads of GlobalAdresses into base+offset loads.  Custom
-// lowering for GlobalAddress nodes has already turned it into a
-// CONST32.
-//
-SDNode *HexagonDAGToDAGISel::SelectBaseOffsetLoad(LoadSDNode *LD, SDLoc dl) {
-  SDValue Chain = LD->getChain();
-  SDNode* Const32 = LD->getBasePtr().getNode();
-  unsigned Opcode = 0;
-
-  if (Const32->getOpcode() == HexagonISD::CONST32 &&
-      ISD::isNormalLoad(LD)) {
-    SDValue Base = Const32->getOperand(0);
-    EVT LoadedVT = LD->getMemoryVT();
-    int64_t Offset = cast<GlobalAddressSDNode>(Base)->getOffset();
-    if (Offset != 0 && OffsetFitsS11(LoadedVT, Offset)) {
-      MVT PointerTy = getTargetLowering()->getPointerTy();
-      const GlobalValue* GV =
-        cast<GlobalAddressSDNode>(Base)->getGlobal();
-      SDValue TargAddr =
-        CurDAG->getTargetGlobalAddress(GV, dl, PointerTy, 0);
-      SDNode* NewBase = CurDAG->getMachineNode(Hexagon::CONST32_set,
-                                               dl, PointerTy,
-                                               TargAddr);
-      // Figure out base + offset opcode
-      if (LoadedVT == MVT::i64) Opcode = Hexagon::L2_loadrd_io;
-      else if (LoadedVT == MVT::i32) Opcode = Hexagon::L2_loadri_io;
-      else if (LoadedVT == MVT::i16) Opcode = Hexagon::L2_loadrh_io;
-      else if (LoadedVT == MVT::i8) Opcode = Hexagon::L2_loadrb_io;
-      else llvm_unreachable("unknown memory type");
-
-      // Build indexed load.
-      SDValue TargetConstOff = CurDAG->getTargetConstant(Offset, PointerTy);
-      SDNode* Result = CurDAG->getMachineNode(Opcode, dl,
-                                              LD->getValueType(0),
-                                              MVT::Other,
-                                              SDValue(NewBase,0),
-                                              TargetConstOff,
-                                              Chain);
-      MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-      MemOp[0] = LD->getMemOperand();
-      cast<MachineSDNode>(Result)->setMemRefs(MemOp, MemOp + 1);
-      ReplaceUses(LD, Result);
-      return Result;
-    }
-  }
-
-  return SelectCode(LD);
-}
-
 
 SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
                                                            unsigned Opcode,
@@ -649,7 +582,7 @@ SDNode *HexagonDAGToDAGISel::SelectLoad(SDNode *N) {
   if (AM != ISD::UNINDEXED) {
     result = SelectIndexedLoad(LD, dl);
   } else {
-    result = SelectBaseOffsetLoad(LD, dl);
+    result = SelectCode(LD);
   }
 
   return result;
@@ -725,60 +658,6 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
 }
 
 
-SDNode *HexagonDAGToDAGISel::SelectBaseOffsetStore(StoreSDNode *ST,
-                                                   SDLoc dl) {
-  SDValue Chain = ST->getChain();
-  SDNode* Const32 = ST->getBasePtr().getNode();
-  SDValue Value = ST->getValue();
-  unsigned Opcode = 0;
-
-  // Try to lower stores of GlobalAdresses into indexed stores.  Custom
-  // lowering for GlobalAddress nodes has already turned it into a
-  // CONST32.  Avoid truncating stores for the moment.  Post-inc stores
-  // do the same.  Don't think there's a reason for it, so will file a
-  // bug to fix.
-  if ((Const32->getOpcode() == HexagonISD::CONST32) &&
-      !(Value.getValueType() == MVT::i64 && ST->isTruncatingStore())) {
-    SDValue Base = Const32->getOperand(0);
-    if (Base.getOpcode() == ISD::TargetGlobalAddress) {
-      EVT StoredVT = ST->getMemoryVT();
-      int64_t Offset = cast<GlobalAddressSDNode>(Base)->getOffset();
-      if (Offset != 0 && OffsetFitsS11(StoredVT, Offset)) {
-        MVT PointerTy = getTargetLowering()->getPointerTy();
-        const GlobalValue* GV =
-          cast<GlobalAddressSDNode>(Base)->getGlobal();
-        SDValue TargAddr =
-          CurDAG->getTargetGlobalAddress(GV, dl, PointerTy, 0);
-        SDNode* NewBase = CurDAG->getMachineNode(Hexagon::CONST32_set,
-                                                 dl, PointerTy,
-                                                 TargAddr);
-
-        // Figure out base + offset opcode
-        if (StoredVT == MVT::i64) Opcode = Hexagon::S2_storerd_io;
-        else if (StoredVT == MVT::i32) Opcode = Hexagon::S2_storeri_io;
-        else if (StoredVT == MVT::i16) Opcode = Hexagon::S2_storerh_io;
-        else if (StoredVT == MVT::i8) Opcode = Hexagon::S2_storerb_io;
-        else llvm_unreachable("unknown memory type");
-
-        SDValue Ops[] = {SDValue(NewBase,0),
-                         CurDAG->getTargetConstant(Offset,PointerTy),
-                         Value, Chain};
-        // build indexed store
-        SDNode* Result = CurDAG->getMachineNode(Opcode, dl,
-                                                MVT::Other, Ops);
-        MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-        MemOp[0] = ST->getMemOperand();
-        cast<MachineSDNode>(Result)->setMemRefs(MemOp, MemOp + 1);
-        ReplaceUses(ST, Result);
-        return Result;
-      }
-    }
-  }
-
-  return SelectCode(ST);
-}
-
-
 SDNode *HexagonDAGToDAGISel::SelectStore(SDNode *N) {
   SDLoc dl(N);
   StoreSDNode *ST = cast<StoreSDNode>(N);
@@ -789,7 +668,7 @@ SDNode *HexagonDAGToDAGISel::SelectStore(SDNode *N) {
     return SelectIndexedStore(ST, dl);
   }
 
-  return SelectBaseOffsetStore(ST, dl);
+  return SelectCode(ST);
 }
 
 SDNode *HexagonDAGToDAGISel::SelectMul(SDNode *N) {

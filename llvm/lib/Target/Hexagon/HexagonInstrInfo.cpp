@@ -640,7 +640,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
 
   switch(Opc) {
   case Hexagon::A2_tfrsi:
-    return isInt<12>(MI->getOperand(1).getImm());
+    return (isOperandExtended(MI, 1) && isConstExtended(MI)) || isInt<12>(MI->getOperand(1).getImm());
 
   case Hexagon::S2_storerd_io:
     return isShiftedUInt<6,3>(MI->getOperand(1).getImm());
@@ -1646,7 +1646,7 @@ bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
   // We currently only handle isGlobal() because it is the only kind of
   // object we are going to end up with here for now.
   // In the future we probably should add isSymbol(), etc.
-  if (MO.isGlobal() || MO.isSymbol())
+  if (MO.isGlobal() || MO.isSymbol() || MO.isBlockAddress())
     return true;
 
   // If the extendable operand is not 'Immediate' type, the instruction should

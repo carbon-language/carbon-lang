@@ -4805,31 +4805,19 @@ def CONST32 : CONSTLDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
                     (load (HexagonCONST32 tglobaltlsaddr:$global)))]>;
 
 let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
-                  "$dst = CONST32(#$global)",
-                  [(set (i32 IntRegs:$dst),
-                        (HexagonCONST32 tglobaladdr:$global))]>;
-
-let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_set_jt : CONSTLDInst<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                      "$dst = CONST32(#$jt)",
                      [(set (i32 IntRegs:$dst),
                            (HexagonCONST32 tjumptable:$jt))]>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
-def CONST32GP_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
-                    "$dst = CONST32(#$global)",
-                    [(set (i32 IntRegs:$dst),
-                          (HexagonCONST32_GP tglobaladdr:$global))]>;
-
-let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Int_Real : CONSTLDInst<(outs IntRegs:$dst), (ins i32imm:$global),
                        "$dst = CONST32(#$global)",
                        [(set (i32 IntRegs:$dst), imm:$global) ]>;
 
-// Map BlockAddress lowering to CONST32_Int_Real
-def : Pat<(HexagonCONST32_GP tblockaddress:$addr),
-          (CONST32_Int_Real tblockaddress:$addr)>;
+// Map TLS addressses to a CONST32 instruction
+def: Pat<(HexagonCONST32 tglobaltlsaddr:$addr), (A2_tfrsi s16Ext:$addr)>;
+def: Pat<(HexagonCONST32 bbl:$label), (A2_tfrsi s16Ext:$label)>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),

@@ -127,12 +127,21 @@ static bool isCombinableInstType(MachineInstr *MI,
   case Hexagon::A2_tfrsi: {
     // A transfer-immediate can be combined if its argument is a signed 8bit
     // value.
-    assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
-    unsigned DestReg = MI->getOperand(0).getReg();
+    const MachineOperand &Op0 = MI->getOperand(0);
+    const MachineOperand &Op1 = MI->getOperand(1);
+    assert(Op0.isReg());
 
-    // Only combine constant extended TFRI if we are in aggressive mode.
+    unsigned DestReg = Op0.getReg();
+    // Ensure that TargetFlags are MO_NO_FLAG for a global. This is a
+    // workaround for an ABI bug that prevents GOT relocations on combine
+    // instructions
+    if (!Op1.isImm() && Op1.getTargetFlags() != HexagonII::MO_NO_FLAG)
+      return false;
+
+    // Only combine constant extended A2_tfrsi if we are in aggressive mode.
+    bool NotExt = Op1.isImm() && isInt<8>(Op1.getImm());
     return Hexagon::IntRegsRegClass.contains(DestReg) &&
-      (ShouldCombineAggressively || isInt<8>(MI->getOperand(1).getImm()));
+           (ShouldCombineAggressively || NotExt);
   }
 
   case Hexagon::TFRI_V4: {
