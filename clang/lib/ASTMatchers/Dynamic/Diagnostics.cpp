@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/ASTMatchers/Dynamic/Diagnostics.h"
-using namespace clang;
-using namespace clang::ast_matchers;
-using namespace clang::ast_matchers::dynamic;
 
+namespace clang {
+namespace ast_matchers {
+namespace dynamic {
 Diagnostics::ArgStream Diagnostics::pushContextFrame(ContextType Type,
                                                      SourceRange Range) {
   ContextStack.push_back(ContextFrame());
@@ -150,7 +150,7 @@ static void formatErrorString(StringRef FormatString,
   }
 }
 
-static void maybeAddLineAndColumn(const dynamic::SourceRange &Range,
+static void maybeAddLineAndColumn(const SourceRange &Range,
                                   llvm::raw_ostream &OS) {
   if (Range.Start.Line > 0 && Range.Start.Column > 0) {
     OS << Range.Start.Line << ":" << Range.Start.Column << ": ";
@@ -216,3 +216,7 @@ std::string Diagnostics::toStringFull() const {
   printToStreamFull(OS);
   return OS.str();
 }
+
+}  // namespace dynamic
+}  // namespace ast_matchers
+}  // namespace clang
