@@ -11,6 +11,7 @@
 
 #include "ELFReader.h"
 #include "MipsLinkingContext.h"
+#include "MipsRelocationHandler.h"
 
 namespace llvm {
 namespace object {
@@ -213,13 +214,13 @@ private:
       ELFFile<ELFT>::addReferenceToSymbol(elfReference, symbol);
       this->_references.push_back(elfReference);
 
-      auto addend = getAddend(*rit, secContent);
+      auto addend = readAddend(*rit, secContent);
       auto pairRelType = getPairRelocation(*rit);
       if (pairRelType != llvm::ELF::R_MIPS_NONE) {
         addend <<= 16;
         auto mit = findMatchingRelocation(pairRelType, rit, eit);
         if (mit != eit)
-          addend += int16_t(getAddend(*mit, secContent));
+          addend += int16_t(readAddend(*mit, secContent));
         else
           // FIXME (simon): Show detailed warning.
           llvm::errs() << "lld warning: cannot matching LO16 relocation\n";
@@ -228,66 +229,10 @@ private:
     }
   }
 
-  static Reference::Addend readAddend(const uint8_t *data, uint32_t mask,
-                                      bool shuffle) {
-    using namespace llvm::support;
-    uint32_t ins = endian::read<uint32_t, ELFT::TargetEndianness, 1>(data);
-    if (shuffle)
-      ins = ((ins & 0xffff) << 16) | ((ins & 0xffff0000) >> 16);
-    return ins & mask;
-  }
-
-  Reference::Addend getAddend(const Elf_Rel &ri,
-                              const ArrayRef<uint8_t> content) const {
-    using namespace llvm::support;
-    const uint8_t *ap = content.data() + ri.r_offset;
-    switch (ri.getType(isMips64EL())) {
-    case llvm::ELF::R_MIPS_32:
-    case llvm::ELF::R_MIPS_GPREL32:
-    case llvm::ELF::R_MIPS_PC32:
-      return readAddend(ap, 0xffffffff, false);
-    case llvm::ELF::R_MIPS_26:
-      return readAddend(ap, 0x3ffffff, false) << 2;
-    case llvm::ELF::R_MIPS_HI16:
-    case llvm::ELF::R_MIPS_LO16:
-    case llvm::ELF::R_MIPS_GPREL16:
-    case llvm::ELF::R_MIPS_GOT16:
-    case llvm::ELF::R_MIPS_TLS_DTPREL_HI16:
-    case llvm::ELF::R_MIPS_TLS_DTPREL_LO16:
-    case llvm::ELF::R_MIPS_TLS_TPREL_HI16:
-    case llvm::ELF::R_MIPS_TLS_TPREL_LO16:
-      return readAddend(ap, 0xffff, false);
-    case llvm::ELF::R_MICROMIPS_TLS_DTPREL_HI16:
-    case llvm::ELF::R_MICROMIPS_TLS_DTPREL_LO16:
-    case llvm::ELF::R_MICROMIPS_TLS_TPREL_HI16:
-    case llvm::ELF::R_MICROMIPS_TLS_TPREL_LO16:
-      return readAddend(ap, 0xffff, true);
-    case llvm::ELF::R_MICROMIPS_26_S1:
-      return readAddend(ap, 0x3ffffff, true) << 1;
-    case llvm::ELF::R_MICROMIPS_HI16:
-    case llvm::ELF::R_MICROMIPS_LO16:
-    case llvm::ELF::R_MICROMIPS_GOT16:
-      return readAddend(ap, 0xffff, true);
-    case llvm::ELF::R_MICROMIPS_PC16_S1:
-      return readAddend(ap, 0xffff, true) << 1;
-    case llvm::ELF::R_MICROMIPS_PC7_S1:
-      return readAddend(ap, 0x7f, false) << 1;
-    case llvm::ELF::R_MICROMIPS_PC10_S1:
-      return readAddend(ap, 0x3ff, false) << 1;
-    case llvm::ELF::R_MICROMIPS_PC23_S2:
-      return readAddend(ap, 0x7fffff, true) << 2;
-    case llvm::ELF::R_MIPS_CALL16:
-    case llvm::ELF::R_MIPS_TLS_GD:
-    case llvm::ELF::R_MIPS_TLS_LDM:
-    case llvm::ELF::R_MIPS_TLS_GOTTPREL:
-    case llvm::ELF::R_MICROMIPS_CALL16:
-    case llvm::ELF::R_MICROMIPS_TLS_GD:
-    case llvm::ELF::R_MICROMIPS_TLS_LDM:
-    case llvm::ELF::R_MICROMIPS_TLS_GOTTPREL:
-      return 0;
-    default:
-      return 0;
-    }
+  Reference::Addend readAddend(const Elf_Rel &ri,
+                               const ArrayRef<uint8_t> content) const {
+    return MipsRelocationHandler<ELFT>::readAddend(
+        ri.getType(isMips64EL()), content.data() + ri.r_offset);
   }
 
   uint32_t getPairRelocation(const Elf_Rel &rel) const {
