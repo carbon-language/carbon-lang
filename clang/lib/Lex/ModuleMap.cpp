@@ -222,15 +222,24 @@ static bool violatesPrivateInclude(Module *RequestingModule,
   // Check for consistency between the module header role
   // as obtained from the lookup and as obtained from the module.
   // This check is not cheap, so enable it only for debugging.
-  bool IsPrivate = false;
-  SmallVectorImpl<Module::Header> *HeaderList[] =
-      {&RequestedModule->Headers[Module::HK_Private],
-       &RequestedModule->Headers[Module::HK_PrivateTextual]};
-  for (auto *Hdrs : HeaderList)
-    IsPrivate |=
-        std::find_if(Hdrs->begin(), Hdrs->end(), [&](const Module::Header &H) {
-          return H.Entry == IncFileEnt;
-        }) != Hdrs->end();
+  auto IsInHeaderList = [&](std::initializer_list<SmallVectorImpl<
+                                Module::Header>*> HeaderList) -> bool {
+    for (auto *Hs : HeaderList) {
+      if (std::find_if(Hs->begin(), Hs->end(), [&](const Module::Header &H) {
+            return H.Entry == IncFileEnt;
+          }) != Hs->end())
+        return true;
+    }
+    return false;
+  };
+  // If a header is both public and private, then it's available as a public
+  // header and that's OK.
+  // FIXME: Should we reject this when parsing the module map?
+  bool IsPrivate =
+      IsInHeaderList({&RequestedModule->Headers[Module::HK_Private],
+                      &RequestedModule->Headers[Module::HK_PrivateTextual]}) &&
+      !IsInHeaderList({&RequestedModule->Headers[Module::HK_Normal],
+                       &RequestedModule->Headers[Module::HK_Textual]});
   assert(IsPrivate == IsPrivateRole && "inconsistent headers and roles");
 #endif
   return IsPrivateRole &&
