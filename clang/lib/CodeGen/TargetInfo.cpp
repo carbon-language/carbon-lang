@@ -4634,14 +4634,11 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   uint64_t ABIAlign = 4;
   uint64_t TyAlign = getContext().getTypeAlign(Ty) / 8;
   if (getABIKind() == ARMABIInfo::AAPCS_VFP ||
-      getABIKind() == ARMABIInfo::AAPCS)
+       getABIKind() == ARMABIInfo::AAPCS)
     ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
+
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
-    // Update Allocated GPRs. Since this is only used when the size of the
-    // argument is greater than 64 bytes, this will always use up any available
-    // registers (of which there are 4). We also don't care about getting the
-    // alignment right, because general-purpose registers cannot be back-filled.
-    return ABIArgInfo::getIndirect(TyAlign, /*ByVal=*/true,
+    return ABIArgInfo::getIndirect(ABIAlign, /*ByVal=*/true,
            /*Realign=*/TyAlign > ABIAlign);
   }
 
