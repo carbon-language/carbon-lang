@@ -232,23 +232,6 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *DL,
   return nullptr;
 }
 
-/// isArrayMalloc - Returns the corresponding CallInst if the instruction
-/// is a call to malloc whose array size can be determined and the array size
-/// is not constant 1.  Otherwise, return NULL.
-const CallInst *llvm::isArrayMalloc(const Value *I,
-                                    const DataLayout *DL,
-                                    const TargetLibraryInfo *TLI) {
-  const CallInst *CI = extractMallocCall(I, TLI);
-  Value *ArraySize = computeArraySize(CI, DL, TLI);
-
-  if (ConstantInt *ConstSize = dyn_cast_or_null<ConstantInt>(ArraySize))
-    if (ConstSize->isOne())
-      return CI;
-
-  // CI is a non-array malloc or we can't figure out that it is an array malloc.
-  return nullptr;
-}
-
 /// getMallocType - Returns the PointerType resulting from the malloc call.
 /// The PointerType depends on the number of bitcast uses of the malloc call:
 ///   0: PointerType is the calls' return type.
