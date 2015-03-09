@@ -142,6 +142,7 @@ if (BUILD_SHARED_LIBS)
     LLVMTransformUtils
     LLVMAnalysis
     LLVMipo
+    LLVMMC
   )
   link_directories(
     ${LLVM_LIBRARY_DIR}

@@ -20,6 +20,7 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -559,11 +560,10 @@ static bool createASMAsString(Module *New, const StringRef &Triple,
   TargetMachine &Target = *target.get();
 
   // Build up all of the passes that we want to do to the module.
-  PassManager PM;
+  llvm::legacy::PassManager PM;
 
   PM.add(new TargetLibraryInfoWrapperPass(TheTriple));
-  PM.add(new DataLayoutPass(*Target.getDataLayout()));
-  Target.addAnalysisPasses(PM);
+  PM.add(createTargetTransformInfoWrapperPass(Target.getTargetIRAnalysis()));
 
   {
     raw_string_ostream NameROS(ASM);
