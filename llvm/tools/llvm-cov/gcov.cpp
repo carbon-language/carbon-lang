@@ -23,9 +23,10 @@
 #include <system_error>
 using namespace llvm;
 
-void reportCoverage(StringRef SourceFile, StringRef ObjectDir,
-                    const std::string &InputGCNO, const std::string &InputGCDA,
-                    bool DumpGCOV, const GCOVOptions &Options) {
+static void reportCoverage(StringRef SourceFile, StringRef ObjectDir,
+                           const std::string &InputGCNO,
+                           const std::string &InputGCDA, bool DumpGCOV,
+                           const GCOVOptions &Options) {
   SmallString<128> CoverageFileStem(ObjectDir);
   if (CoverageFileStem.empty()) {
     // If no directory was specified with -o, look next to the source file.

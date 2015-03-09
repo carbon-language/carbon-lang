@@ -91,9 +91,9 @@ static void VisitComponent(StringRef Name,
 /// are required to link the given components.
 /// \param IncludeNonInstalled - Whether non-installed components should be
 /// reported.
-void ComputeLibsForComponents(const std::vector<StringRef> &Components,
-                              std::vector<StringRef> &RequiredLibs,
-                              bool IncludeNonInstalled) {
+static void ComputeLibsForComponents(const std::vector<StringRef> &Components,
+                                     std::vector<StringRef> &RequiredLibs,
+                                     bool IncludeNonInstalled) {
   std::set<AvailableComponent*> VisitedComponents;
 
   // Build a map of component names to information.
@@ -126,7 +126,7 @@ void ComputeLibsForComponents(const std::vector<StringRef> &Components,
 
 /* *** */
 
-void usage() {
+static void usage() {
   errs() << "\
 usage: llvm-config <OPTION>... [<COMPONENT>...]\n\
 \n\

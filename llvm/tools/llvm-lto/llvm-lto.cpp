@@ -79,8 +79,8 @@ struct ModuleInfo {
 };
 }
 
-void handleDiagnostics(lto_codegen_diagnostic_severity_t Severity,
-                       const char *Msg, void *) {
+static void handleDiagnostics(lto_codegen_diagnostic_severity_t Severity,
+                              const char *Msg, void *) {
   switch (Severity) {
   case LTO_DS_NOTE:
     errs() << "note: ";
@@ -98,7 +98,7 @@ void handleDiagnostics(lto_codegen_diagnostic_severity_t Severity,
   errs() << Msg << "\n";
 }
 
-std::unique_ptr<LTOModule>
+static std::unique_ptr<LTOModule>
 getLocalLTOModule(StringRef Path, std::unique_ptr<MemoryBuffer> &Buffer,
                   const TargetOptions &Options, std::string &Error) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
@@ -118,7 +118,7 @@ getLocalLTOModule(StringRef Path, std::unique_ptr<MemoryBuffer> &Buffer,
 /// functionality that's exposed by the C API to list symbols.  Moreover, this
 /// provides testing coverage for modules that have been created in their own
 /// contexts.
-int listSymbols(StringRef Command, const TargetOptions &Options) {
+static int listSymbols(StringRef Command, const TargetOptions &Options) {
   for (auto &Filename : InputFilenames) {
     std::string Error;
     std::unique_ptr<MemoryBuffer> Buffer;

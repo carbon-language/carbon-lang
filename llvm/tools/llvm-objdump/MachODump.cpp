@@ -1608,8 +1608,8 @@ struct DisassembleInfo {
 // names and addends of the symbolic expression to add for the operand.  The
 // value of TagType is currently 1 (for the LLVMOpInfo1 struct). If symbolic
 // information is returned then this function returns 1 else it returns 0.
-int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
-                        uint64_t Size, int TagType, void *TagBuf) {
+static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
+                               uint64_t Size, int TagType, void *TagBuf) {
   struct DisassembleInfo *info = (struct DisassembleInfo *)DisInfo;
   struct LLVMOpInfo1 *op_info = (struct LLVMOpInfo1 *)TagBuf;
   uint64_t value = op_info->Value;
@@ -1993,8 +1993,8 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
 // GuessCstringPointer is passed the address of what might be a pointer to a
 // literal string in a cstring section.  If that address is in a cstring section
 // it returns a pointer to that string.  Else it returns nullptr.
-const char *GuessCstringPointer(uint64_t ReferenceValue,
-                                struct DisassembleInfo *info) {
+static const char *GuessCstringPointer(uint64_t ReferenceValue,
+                                       struct DisassembleInfo *info) {
   uint32_t LoadCommandCount = info->O->getHeader().ncmds;
   MachOObjectFile::LoadCommandInfo Load = info->O->getFirstLoadCommandInfo();
   for (unsigned I = 0;; ++I) {
@@ -2279,8 +2279,9 @@ static uint64_t GuessPointerPointer(uint64_t ReferenceValue,
 // offset into the section, number of bytes left in the section past the offset
 // and which section is was being referenced.  If the Address is not in a
 // section nullptr is returned.
-const char *get_pointer_64(uint64_t Address, uint32_t &offset, uint32_t &left,
-                           SectionRef &S, DisassembleInfo *info) {
+static const char *get_pointer_64(uint64_t Address, uint32_t &offset,
+                                  uint32_t &left, SectionRef &S,
+                                  DisassembleInfo *info) {
   offset = 0;
   left = 0;
   S = SectionRef();
@@ -2302,8 +2303,8 @@ const char *get_pointer_64(uint64_t Address, uint32_t &offset, uint32_t &left,
 // get_symbol_64() returns the name of a symbol (or nullptr) and the address of
 // the symbol indirectly through n_value. Based on the relocation information
 // for the specified section offset in the specified section reference.
-const char *get_symbol_64(uint32_t sect_offset, SectionRef S,
-                          DisassembleInfo *info, uint64_t &n_value) {
+static const char *get_symbol_64(uint32_t sect_offset, SectionRef S,
+                                 DisassembleInfo *info, uint64_t &n_value) {
   n_value = 0;
   if (info->verbose == false)
     return nullptr;
@@ -2437,9 +2438,9 @@ static const char *get_dyld_bind_info_symbolname(uint64_t ReferenceValue,
 // address of the pointer, so when the pointer is zero as it can be in an .o
 // file, that is used to look for an external relocation entry with a symbol
 // name.
-const char *get_objc2_64bit_class_name(uint64_t pointer_value,
-                                       uint64_t ReferenceValue,
-                                       struct DisassembleInfo *info) {
+static const char *get_objc2_64bit_class_name(uint64_t pointer_value,
+                                              uint64_t ReferenceValue,
+                                              struct DisassembleInfo *info) {
   const char *r;
   uint32_t offset, left;
   SectionRef S;
@@ -2488,8 +2489,8 @@ const char *get_objc2_64bit_class_name(uint64_t pointer_value,
 
 // get_objc2_64bit_cfstring_name is used for disassembly and is passed a
 // pointer to a cfstring and returns its name or nullptr.
-const char *get_objc2_64bit_cfstring_name(uint64_t ReferenceValue,
-                                          struct DisassembleInfo *info) {
+static const char *get_objc2_64bit_cfstring_name(uint64_t ReferenceValue,
+                                                 struct DisassembleInfo *info) {
   const char *r, *name;
   uint32_t offset, left;
   SectionRef S;
@@ -2522,8 +2523,8 @@ const char *get_objc2_64bit_cfstring_name(uint64_t ReferenceValue,
 // who's symbol's n_value is the real pointer to the selector name.  If that is
 // the case the real pointer to the selector name is returned else 0 is
 // returned
-uint64_t get_objc2_64bit_selref(uint64_t ReferenceValue,
-                                struct DisassembleInfo *info) {
+static uint64_t get_objc2_64bit_selref(uint64_t ReferenceValue,
+                                       struct DisassembleInfo *info) {
   uint32_t offset, left;
   SectionRef S;
 
@@ -2555,9 +2556,10 @@ uint64_t get_objc2_64bit_selref(uint64_t ReferenceValue,
 //
 // If there is no item in the Mach-O file for the address passed in as
 // ReferenceValue nullptr is returned and ReferenceType is unchanged.
-const char *GuessLiteralPointer(uint64_t ReferenceValue, uint64_t ReferencePC,
-                                uint64_t *ReferenceType,
-                                struct DisassembleInfo *info) {
+static const char *GuessLiteralPointer(uint64_t ReferenceValue,
+                                       uint64_t ReferencePC,
+                                       uint64_t *ReferenceType,
+                                       struct DisassembleInfo *info) {
   // First see if there is an external relocation entry at the ReferencePC.
   uint64_t sect_addr = info->S.getAddress();
   uint64_t sect_offset = ReferencePC - sect_addr;
@@ -2691,10 +2693,11 @@ const char *GuessLiteralPointer(uint64_t ReferenceValue, uint64_t ReferencePC,
 // SymbolValue is checked to be an address of literal pointer, symbol pointer,
 // or an Objective-C meta data reference.  If so the output ReferenceType is
 // set to correspond to that as well as setting the ReferenceName.
-const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
-                                   uint64_t *ReferenceType,
-                                   uint64_t ReferencePC,
-                                   const char **ReferenceName) {
+static const char *SymbolizerSymbolLookUp(void *DisInfo,
+                                          uint64_t ReferenceValue,
+                                          uint64_t *ReferenceType,
+                                          uint64_t ReferencePC,
+                                          const char **ReferenceName) {
   struct DisassembleInfo *info = (struct DisassembleInfo *)DisInfo;
   // If no verbose symbolic information is wanted then just return nullptr.
   if (info->verbose == false) {

@@ -32,7 +32,7 @@ int convertForTestingMain(int argc, const char *argv[]);
 int gcovMain(int argc, const char *argv[]);
 
 /// \brief Top level help.
-int helpMain(int argc, const char *argv[]) {
+static int helpMain(int argc, const char *argv[]) {
   errs() << "OVERVIEW: LLVM code coverage tool\n\n"
          << "USAGE: llvm-cov {gcov|report|show}\n";
   return 0;

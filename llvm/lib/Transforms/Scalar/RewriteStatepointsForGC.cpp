@@ -1165,11 +1165,11 @@ static AttributeSet legalizeCallAttributes(AttributeSet AS) {
 ///   statepointToken - statepoint instruction to which relocates should be
 ///   bound.
 ///   Builder - Llvm IR builder to be used to construct new calls.
-void CreateGCRelocates(ArrayRef<llvm::Value *> liveVariables,
-                       const int liveStart,
-                       ArrayRef<llvm::Value *> basePtrs,
-                       Instruction *statepointToken, IRBuilder<> Builder) {
-
+static void CreateGCRelocates(ArrayRef<llvm::Value *> liveVariables,
+                              const int liveStart,
+                              ArrayRef<llvm::Value *> basePtrs,
+                              Instruction *statepointToken,
+                              IRBuilder<> Builder) {
   SmallVector<Instruction *, 64> NewDefs;
   NewDefs.reserve(liveVariables.size());
 

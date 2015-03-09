@@ -282,7 +282,7 @@ raw_ostream &operator<<(raw_ostream &OS, const num_zeros_impl &NZI) {
   return OS;
 }
 
-num_zeros_impl num_zeros(size_t N) {
+static num_zeros_impl num_zeros(size_t N) {
   num_zeros_impl NZI(N);
   return NZI;
 }

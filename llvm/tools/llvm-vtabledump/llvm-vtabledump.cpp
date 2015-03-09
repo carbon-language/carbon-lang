@@ -42,7 +42,7 @@ static int ReturnValue = EXIT_SUCCESS;
 
 namespace llvm {
 
-bool error(std::error_code EC) {
+static bool error(std::error_code EC) {
   if (!EC)
     return false;
 

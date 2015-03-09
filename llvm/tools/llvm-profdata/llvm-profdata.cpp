@@ -38,8 +38,8 @@ static void exitWithError(const Twine &Message, StringRef Whence = "") {
 
 enum ProfileKinds { instr, sample };
 
-void mergeInstrProfile(const cl::list<std::string> &Inputs,
-                       StringRef OutputFilename) {
+static void mergeInstrProfile(const cl::list<std::string> &Inputs,
+                              StringRef OutputFilename) {
   if (OutputFilename.compare("-") == 0)
     exitWithError("Cannot write indexed profdata format to stdout.");
 
@@ -65,9 +65,9 @@ void mergeInstrProfile(const cl::list<std::string> &Inputs,
   Writer.write(Output);
 }
 
-void mergeSampleProfile(const cl::list<std::string> &Inputs,
-                        StringRef OutputFilename,
-                        sampleprof::SampleProfileFormat OutputFormat) {
+static void mergeSampleProfile(const cl::list<std::string> &Inputs,
+                               StringRef OutputFilename,
+                               sampleprof::SampleProfileFormat OutputFormat) {
   using namespace sampleprof;
   auto WriterOrErr = SampleProfileWriter::create(OutputFilename, OutputFormat);
   if (std::error_code EC = WriterOrErr.getError())
@@ -97,7 +97,7 @@ void mergeSampleProfile(const cl::list<std::string> &Inputs,
   Writer->write(ProfileMap);
 }
 
-int merge_main(int argc, const char *argv[]) {
+static int merge_main(int argc, const char *argv[]) {
   cl::list<std::string> Inputs(cl::Positional, cl::Required, cl::OneOrMore,
                                cl::desc("<filenames...>"));
 
@@ -130,9 +130,9 @@ int merge_main(int argc, const char *argv[]) {
   return 0;
 }
 
-int showInstrProfile(std::string Filename, bool ShowCounts,
-                     bool ShowAllFunctions, std::string ShowFunction,
-                     raw_fd_ostream &OS) {
+static int showInstrProfile(std::string Filename, bool ShowCounts,
+                            bool ShowAllFunctions, std::string ShowFunction,
+                            raw_fd_ostream &OS) {
   auto ReaderOrErr = InstrProfReader::create(Filename);
   if (std::error_code EC = ReaderOrErr.getError())
     exitWithError(EC.message(), Filename);
@@ -183,9 +183,9 @@ int showInstrProfile(std::string Filename, bool ShowCounts,
   return 0;
 }
 
-int showSampleProfile(std::string Filename, bool ShowCounts,
-                      bool ShowAllFunctions, std::string ShowFunction,
-                      raw_fd_ostream &OS) {
+static int showSampleProfile(std::string Filename, bool ShowCounts,
+                             bool ShowAllFunctions, std::string ShowFunction,
+                             raw_fd_ostream &OS) {
   using namespace sampleprof;
   auto ReaderOrErr = SampleProfileReader::create(Filename, getGlobalContext());
   if (std::error_code EC = ReaderOrErr.getError())
@@ -201,7 +201,7 @@ int showSampleProfile(std::string Filename, bool ShowCounts,
   return 0;
 }
 
-int show_main(int argc, const char *argv[]) {
+static int show_main(int argc, const char *argv[]) {
   cl::opt<std::string> Filename(cl::Positional, cl::Required,
                                 cl::desc("<profdata-file>"));
 

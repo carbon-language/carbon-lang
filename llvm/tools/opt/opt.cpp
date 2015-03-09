@@ -247,7 +247,7 @@ static void AddStandardLinkPasses(legacy::PassManagerBase &PM) {
 // CodeGen-related helper functions.
 //
 
-CodeGenOpt::Level GetCodeGenOptLevel() {
+static CodeGenOpt::Level GetCodeGenOptLevel() {
   if (OptLevelO1)
     return CodeGenOpt::Less;
   if (OptLevelO2)

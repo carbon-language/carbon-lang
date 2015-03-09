@@ -2533,10 +2533,9 @@ getReductionBinOp(LoopVectorizationLegality::ReductionKind Kind) {
   }
 }
 
-Value *createMinMaxOp(IRBuilder<> &Builder,
-                      LoopVectorizationLegality::MinMaxReductionKind RK,
-                      Value *Left,
-                      Value *Right) {
+static Value *createMinMaxOp(IRBuilder<> &Builder,
+                             LoopVectorizationLegality::MinMaxReductionKind RK,
+                             Value *Left, Value *Right) {
   CmpInst::Predicate P = CmpInst::ICMP_NE;
   switch (RK) {
   default:

@@ -339,7 +339,7 @@ static int checkAllExpressions(RuntimeDyldChecker &Checker) {
   return 0;
 }
 
-std::map<void*, uint64_t>
+static std::map<void *, uint64_t>
 applySpecificSectionMappings(RuntimeDyldChecker &Checker) {
 
   std::map<void*, uint64_t> SpecificMappings;
@@ -397,9 +397,9 @@ applySpecificSectionMappings(RuntimeDyldChecker &Checker) {
 //                            Defaults to zero. Set to something big
 //                            (e.g. 1 << 32) to stress-test stubs, GOTs, etc.
 //
-void remapSections(const llvm::Triple &TargetTriple,
-                   const TrivialMemoryManager &MemMgr,
-                   RuntimeDyldChecker &Checker) {
+static void remapSections(const llvm::Triple &TargetTriple,
+                          const TrivialMemoryManager &MemMgr,
+                          RuntimeDyldChecker &Checker) {
 
   // Set up a work list (section addr/size pairs).
   typedef std::list<std::pair<void*, uint64_t>> WorklistT;
