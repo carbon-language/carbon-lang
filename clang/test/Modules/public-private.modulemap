@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 -fmodules -fmodule-map-file=%s -I%S -include "Inputs/empty.h" /dev/null
-module Blah {
+// RUN: %clang_cc1 -fmodules -fmodule-map-file=%s -I%S -include "Inputs/dummy.h" /dev/null
+module A {
   header "Inputs/empty.h"
   private header "Inputs/empty.h"
+}
+module B {
+  private header "Inputs/dummy.h"
+  header "Inputs/dummy.h"
 }

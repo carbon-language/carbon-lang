@@ -219,28 +219,21 @@ static bool violatesPrivateInclude(Module *RequestingModule,
                                    Module *RequestedModule) {
   bool IsPrivateRole = Role & ModuleMap::PrivateHeader;
 #ifndef NDEBUG
-  // Check for consistency between the module header role
-  // as obtained from the lookup and as obtained from the module.
-  // This check is not cheap, so enable it only for debugging.
-  auto IsInHeaderList = [&](std::initializer_list<SmallVectorImpl<
-                                Module::Header>*> HeaderList) -> bool {
-    for (auto *Hs : HeaderList) {
-      if (std::find_if(Hs->begin(), Hs->end(), [&](const Module::Header &H) {
+  if (IsPrivateRole) {
+    // Check for consistency between the module header role
+    // as obtained from the lookup and as obtained from the module.
+    // This check is not cheap, so enable it only for debugging.
+    bool IsPrivate = false;
+    SmallVectorImpl<Module::Header> *HeaderList[] = {
+        &RequestedModule->Headers[Module::HK_Private],
+        &RequestedModule->Headers[Module::HK_PrivateTextual]};
+    for (auto *Hs : HeaderList)
+      IsPrivate |=
+          std::find_if(Hs->begin(), Hs->end(), [&](const Module::Header &H) {
             return H.Entry == IncFileEnt;
-          }) != Hs->end())
-        return true;
-    }
-    return false;
-  };
-  // If a header is both public and private, then it's available as a public
-  // header and that's OK.
-  // FIXME: Should we reject this when parsing the module map?
-  bool IsPrivate =
-      IsInHeaderList({&RequestedModule->Headers[Module::HK_Private],
-                      &RequestedModule->Headers[Module::HK_PrivateTextual]}) &&
-      !IsInHeaderList({&RequestedModule->Headers[Module::HK_Normal],
-                       &RequestedModule->Headers[Module::HK_Textual]});
-  assert(IsPrivate == IsPrivateRole && "inconsistent headers and roles");
+          }) != Hs->end();
+    assert((!IsPrivateRole || IsPrivate) && "inconsistent headers and roles");
+  }
 #endif
   return IsPrivateRole &&
          RequestedModule->getTopLevelModule() != RequestingModule;
