@@ -83,13 +83,14 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
 /// This is a wrapper around getUnderlyingObjCPtr along the lines of
 /// GetUnderlyingObjects except that it returns early when it sees the first
 /// alloca.
-static inline bool AreAnyUnderlyingObjectsAnAlloca(const Value *V) {
+static inline bool AreAnyUnderlyingObjectsAnAlloca(const Value *V,
+                                                   const DataLayout &DL) {
   SmallPtrSet<const Value *, 4> Visited;
   SmallVector<const Value *, 4> Worklist;
   Worklist.push_back(V);
   do {
     const Value *P = Worklist.pop_back_val();
-    P = GetUnderlyingObjCPtr(P);
+    P = GetUnderlyingObjCPtr(P, DL);
 
     if (isa<AllocaInst>(P))
       return true;
@@ -1092,7 +1093,8 @@ bool ObjCARCOpt::VisitInstructionBottomUp(
     // in the presence of allocas we only unconditionally remove pointers if
     // both our retain and our release are KnownSafe.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      if (AreAnyUnderlyingObjectsAnAlloca(SI->getPointerOperand())) {
+      const DataLayout &DL = BB->getModule()->getDataLayout();
+      if (AreAnyUnderlyingObjectsAnAlloca(SI->getPointerOperand(), DL)) {
         auto I = MyStates.findPtrBottomUpState(
             GetRCIdentityRoot(SI->getValueOperand()));
         if (I != MyStates.bottom_up_ptr_end())

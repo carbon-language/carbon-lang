@@ -764,9 +764,7 @@ bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
       return false;
     }
 
-    // FIXME: Make datalayout mandatory and just use getDataLayout().
-    DataLayout DL(Dest.getParent());
-
+    const DataLayout &DL = Dest.getParent()->getDataLayout();
     uint64_t DestSize = DL.getTypeAllocSize(Dest.getType()->getElementType());
     uint64_t SrcSize = DL.getTypeAllocSize(Src.getType()->getElementType());
     LinkFromSrc = SrcSize > DestSize;

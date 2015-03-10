@@ -74,8 +74,8 @@ ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
 
   // If that failed, climb to the underlying object, including climbing through
   // ObjC-specific no-ops, and try making an imprecise alias query.
-  const Value *UA = GetUnderlyingObjCPtr(SA);
-  const Value *UB = GetUnderlyingObjCPtr(SB);
+  const Value *UA = GetUnderlyingObjCPtr(SA, *DL);
+  const Value *UB = GetUnderlyingObjCPtr(SB, *DL);
   if (UA != SA || UB != SB) {
     Result = AliasAnalysis::alias(Location(UA), Location(UB));
     // We can't use MustAlias or PartialAlias results here because
@@ -104,7 +104,7 @@ ObjCARCAliasAnalysis::pointsToConstantMemory(const Location &Loc,
 
   // If that failed, climb to the underlying object, including climbing through
   // ObjC-specific no-ops, and try making an imprecise alias query.
-  const Value *U = GetUnderlyingObjCPtr(S);
+  const Value *U = GetUnderlyingObjCPtr(S, *DL);
   if (U != S)
     return AliasAnalysis::pointsToConstantMemory(Location(U), OrLocal);
 

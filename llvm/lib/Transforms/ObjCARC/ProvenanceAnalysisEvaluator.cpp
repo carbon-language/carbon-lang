@@ -14,6 +14,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -65,6 +66,7 @@ bool PAEval::runOnFunction(Function &F) {
 
   ProvenanceAnalysis PA;
   PA.setAA(&getAnalysis<AliasAnalysis>());
+  const DataLayout &DL = F.getParent()->getDataLayout();
 
   for (Value *V1 : Values) {
     StringRef NameV1 = getName(V1);
@@ -73,7 +75,7 @@ bool PAEval::runOnFunction(Function &F) {
       if (NameV1 >= NameV2)
         continue;
       errs() << NameV1 << " and " << NameV2;
-      if (PA.related(V1, V2))
+      if (PA.related(V1, V2, DL))
         errs() << " are related.\n";
       else
         errs() << " are not related.\n";

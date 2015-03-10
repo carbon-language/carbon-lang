@@ -31,7 +31,6 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -72,7 +71,6 @@ struct AlignmentFromAssumptions : public FunctionPass {
 
   ScalarEvolution *SE;
   DominatorTree *DT;
-  const DataLayout *DL;
 
   bool extractAlignmentInfo(CallInst *I, Value *&AAPtr, const SCEV *&AlignSCEV,
                             const SCEV *&OffSCEV);
@@ -317,7 +315,7 @@ bool AlignmentFromAssumptions::processAssumption(CallInst *ACall) {
       continue;
 
     if (Instruction *K = dyn_cast<Instruction>(J))
-      if (isValidAssumeForContext(ACall, K, DL, DT))
+      if (isValidAssumeForContext(ACall, K, DT))
         WorkList.push_back(K);
   }
 
@@ -401,7 +399,7 @@ bool AlignmentFromAssumptions::processAssumption(CallInst *ACall) {
     Visited.insert(J);
     for (User *UJ : J->users()) {
       Instruction *K = cast<Instruction>(UJ);
-      if (!Visited.count(K) && isValidAssumeForContext(ACall, K, DL, DT))
+      if (!Visited.count(K) && isValidAssumeForContext(ACall, K, DT))
         WorkList.push_back(K);
     }
   }
@@ -414,7 +412,6 @@ bool AlignmentFromAssumptions::runOnFunction(Function &F) {
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  DL = &F.getParent()->getDataLayout();
 
   NewDestAlignments.clear();
   NewSrcAlignments.clear();

@@ -24,6 +24,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -412,6 +413,8 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   for (; PHINode *PN = dyn_cast<PHINode>(I); ++I)
     ValueMap[PN] = PN->getIncomingValueForBlock(OrigPreheader);
 
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+
   // For the rest of the instructions, either hoist to the OrigPreheader if
   // possible or create a clone in the OldPreHeader if not.
   TerminatorInst *LoopEntryBranch = OrigPreheader->getTerminator();
@@ -442,8 +445,8 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     // With the operands remapped, see if the instruction constant folds or is
     // otherwise simplifyable.  This commonly occurs because the entry from PHI
     // nodes allows icmps and other instructions to fold.
-    // FIXME: Provide DL, TLI, DT, AC to SimplifyInstruction.
-    Value *V = SimplifyInstruction(C);
+    // FIXME: Provide TLI, DT, AC to SimplifyInstruction.
+    Value *V = SimplifyInstruction(C, DL);
     if (V && LI->replacementPreservesLCSSAForm(C, V)) {
       // If so, then delete the temporary instruction and stick the folded value
       // in the map.

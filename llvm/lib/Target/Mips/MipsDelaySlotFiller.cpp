@@ -140,7 +140,7 @@ namespace {
   /// memory instruction can be moved to a delay slot.
   class MemDefsUses : public InspectMemInstr {
   public:
-    MemDefsUses(const MachineFrameInfo *MFI);
+    MemDefsUses(const DataLayout &DL, const MachineFrameInfo *MFI);
 
   private:
     typedef PointerUnion<const Value *, const PseudoSourceValue *> ValueType;
@@ -158,6 +158,7 @@ namespace {
 
     const MachineFrameInfo *MFI;
     SmallPtrSet<ValueType, 4> Uses, Defs;
+    const DataLayout &DL;
 
     /// Flags indicating whether loads or stores with no underlying objects have
     /// been seen.
@@ -427,9 +428,9 @@ bool LoadFromStackOrConst::hasHazard_(const MachineInstr &MI) {
   return true;
 }
 
-MemDefsUses::MemDefsUses(const MachineFrameInfo *MFI_)
-  : InspectMemInstr(false), MFI(MFI_), SeenNoObjLoad(false),
-    SeenNoObjStore(false) {}
+MemDefsUses::MemDefsUses(const DataLayout &DL, const MachineFrameInfo *MFI_)
+    : InspectMemInstr(false), MFI(MFI_), DL(DL), SeenNoObjLoad(false),
+      SeenNoObjStore(false) {}
 
 bool MemDefsUses::hasHazard_(const MachineInstr &MI) {
   bool HasHazard = false;
@@ -482,7 +483,7 @@ getUnderlyingObjects(const MachineInstr &MI,
   const Value *V = (*MI.memoperands_begin())->getValue();
 
   SmallVector<Value *, 4> Objs;
-  GetUnderlyingObjects(const_cast<Value *>(V), Objs);
+  GetUnderlyingObjects(const_cast<Value *>(V), Objs, DL);
 
   for (SmallVectorImpl<Value *>::iterator I = Objs.begin(), E = Objs.end();
        I != E; ++I) {
@@ -688,7 +689,7 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
     return false;
 
   RegDefsUses RegDU(*MBB.getParent()->getSubtarget().getRegisterInfo());
-  MemDefsUses MemDU(MBB.getParent()->getFrameInfo());
+  MemDefsUses MemDU(*TM.getDataLayout(), MBB.getParent()->getFrameInfo());
   ReverseIter Filler;
 
   RegDU.init(*Slot);
@@ -754,7 +755,7 @@ bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
     IM.reset(new LoadFromStackOrConst());
   } else {
     const MachineFrameInfo *MFI = MBB.getParent()->getFrameInfo();
-    IM.reset(new MemDefsUses(MFI));
+    IM.reset(new MemDefsUses(*TM.getDataLayout(), MFI));
   }
 
   if (!searchRange(MBB, SuccBB->begin(), SuccBB->end(), RegDU, *IM, Slot,

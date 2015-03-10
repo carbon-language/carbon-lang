@@ -41,7 +41,8 @@ STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 STATISTIC(NumCpyToSet,    "Number of memcpys converted to memset");
 
 static int64_t GetOffsetFromIndex(const GEPOperator *GEP, unsigned Idx,
-                                  bool &VariableIdxFound, const DataLayout &TD){
+                                  bool &VariableIdxFound,
+                                  const DataLayout &DL) {
   // Skip over the first indices.
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (unsigned i = 1; i != Idx; ++i, ++GTI)
@@ -57,13 +58,13 @@ static int64_t GetOffsetFromIndex(const GEPOperator *GEP, unsigned Idx,
 
     // Handle struct indices, which add their field offset to the pointer.
     if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-      Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+      Offset += DL.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
       continue;
     }
 
     // Otherwise, we have a sequential type like an array or vector.  Multiply
     // the index by the ElementSize.
-    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
+    uint64_t Size = DL.getTypeAllocSize(GTI.getIndexedType());
     Offset += Size*OpC->getSExtValue();
   }
 
@@ -74,7 +75,7 @@ static int64_t GetOffsetFromIndex(const GEPOperator *GEP, unsigned Idx,
 /// constant offset, and return that constant offset.  For example, Ptr1 might
 /// be &A[42], and Ptr2 might be &A[40].  In this case offset would be -8.
 static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
-                            const DataLayout &TD) {
+                            const DataLayout &DL) {
   Ptr1 = Ptr1->stripPointerCasts();
   Ptr2 = Ptr2->stripPointerCasts();
 
@@ -92,12 +93,12 @@ static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
   // If one pointer is a GEP and the other isn't, then see if the GEP is a
   // constant offset from the base, as in "P" and "gep P, 1".
   if (GEP1 && !GEP2 && GEP1->getOperand(0)->stripPointerCasts() == Ptr2) {
-    Offset = -GetOffsetFromIndex(GEP1, 1, VariableIdxFound, TD);
+    Offset = -GetOffsetFromIndex(GEP1, 1, VariableIdxFound, DL);
     return !VariableIdxFound;
   }
 
   if (GEP2 && !GEP1 && GEP2->getOperand(0)->stripPointerCasts() == Ptr1) {
-    Offset = GetOffsetFromIndex(GEP2, 1, VariableIdxFound, TD);
+    Offset = GetOffsetFromIndex(GEP2, 1, VariableIdxFound, DL);
     return !VariableIdxFound;
   }
 
@@ -115,8 +116,8 @@ static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
     if (GEP1->getOperand(Idx) != GEP2->getOperand(Idx))
       break;
 
-  int64_t Offset1 = GetOffsetFromIndex(GEP1, Idx, VariableIdxFound, TD);
-  int64_t Offset2 = GetOffsetFromIndex(GEP2, Idx, VariableIdxFound, TD);
+  int64_t Offset1 = GetOffsetFromIndex(GEP1, Idx, VariableIdxFound, DL);
+  int64_t Offset2 = GetOffsetFromIndex(GEP2, Idx, VariableIdxFound, DL);
   if (VariableIdxFound) return false;
 
   Offset = Offset2-Offset1;
@@ -150,12 +151,11 @@ struct MemsetRange {
   /// TheStores - The actual stores that make up this range.
   SmallVector<Instruction*, 16> TheStores;
 
-  bool isProfitableToUseMemset(const DataLayout &TD) const;
-
+  bool isProfitableToUseMemset(const DataLayout &DL) const;
 };
 } // end anon namespace
 
-bool MemsetRange::isProfitableToUseMemset(const DataLayout &TD) const {
+bool MemsetRange::isProfitableToUseMemset(const DataLayout &DL) const {
   // If we found more than 4 stores to merge or 16 bytes, use memset.
   if (TheStores.size() >= 4 || End-Start >= 16) return true;
 
@@ -183,7 +183,7 @@ bool MemsetRange::isProfitableToUseMemset(const DataLayout &TD) const {
   // size. If so, check to see whether we will end up actually reducing the
   // number of stores used.
   unsigned Bytes = unsigned(End-Start);
-  unsigned MaxIntSize = TD.getLargestLegalIntTypeSize();
+  unsigned MaxIntSize = DL.getLargestLegalIntTypeSize();
   if (MaxIntSize == 0)
     MaxIntSize = 1;
   unsigned NumPointerStores = Bytes / MaxIntSize;
@@ -314,14 +314,12 @@ namespace {
   class MemCpyOpt : public FunctionPass {
     MemoryDependenceAnalysis *MD;
     TargetLibraryInfo *TLI;
-    const DataLayout *DL;
   public:
     static char ID; // Pass identification, replacement for typeid
     MemCpyOpt() : FunctionPass(ID) {
       initializeMemCpyOptPass(*PassRegistry::getPassRegistry());
       MD = nullptr;
       TLI = nullptr;
-      DL = nullptr;
     }
 
     bool runOnFunction(Function &F) override;
@@ -377,13 +375,13 @@ INITIALIZE_PASS_END(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
 /// attempts to merge them together into a memcpy/memset.
 Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
                                              Value *StartPtr, Value *ByteVal) {
-  if (!DL) return nullptr;
+  const DataLayout &DL = StartInst->getModule()->getDataLayout();
 
   // Okay, so we now have a single store that can be splatable.  Scan to find
   // all subsequent stores of the same value to offset from the same pointer.
   // Join these together into ranges, so we can decide whether contiguous blocks
   // are stored.
-  MemsetRanges Ranges(*DL);
+  MemsetRanges Ranges(DL);
 
   BasicBlock::iterator BI = StartInst;
   for (++BI; !isa<TerminatorInst>(BI); ++BI) {
@@ -406,8 +404,8 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
 
       // Check to see if this store is to a constant offset from the start ptr.
       int64_t Offset;
-      if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(),
-                           Offset, *DL))
+      if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset,
+                           DL))
         break;
 
       Ranges.addStore(Offset, NextStore);
@@ -420,7 +418,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
 
       // Check to see if this store is to a constant offset from the start ptr.
       int64_t Offset;
-      if (!IsPointerOffset(StartPtr, MSI->getDest(), Offset, *DL))
+      if (!IsPointerOffset(StartPtr, MSI->getDest(), Offset, DL))
         break;
 
       Ranges.addMemSet(Offset, MSI);
@@ -452,7 +450,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
     if (Range.TheStores.size() == 1) continue;
 
     // If it is profitable to lower this range to memset, do so now.
-    if (!Range.isProfitableToUseMemset(*DL))
+    if (!Range.isProfitableToUseMemset(DL))
       continue;
 
     // Otherwise, we do want to transform this!  Create a new memset.
@@ -464,7 +462,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
     if (Alignment == 0) {
       Type *EltType =
         cast<PointerType>(StartPtr->getType())->getElementType();
-      Alignment = DL->getABITypeAlignment(EltType);
+      Alignment = DL.getABITypeAlignment(EltType);
     }
 
     AMemSet =
@@ -494,8 +492,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
 
 bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   if (!SI->isSimple()) return false;
-
-  if (!DL) return false;
+  const DataLayout &DL = SI->getModule()->getDataLayout();
 
   // Detect cases where we're performing call slot forwarding, but
   // happen to be using a load-store pair to implement it, rather than
@@ -525,16 +522,16 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       if (C) {
         unsigned storeAlign = SI->getAlignment();
         if (!storeAlign)
-          storeAlign = DL->getABITypeAlignment(SI->getOperand(0)->getType());
+          storeAlign = DL.getABITypeAlignment(SI->getOperand(0)->getType());
         unsigned loadAlign = LI->getAlignment();
         if (!loadAlign)
-          loadAlign = DL->getABITypeAlignment(LI->getType());
+          loadAlign = DL.getABITypeAlignment(LI->getType());
 
-        bool changed = performCallSlotOptzn(LI,
-                        SI->getPointerOperand()->stripPointerCasts(),
-                        LI->getPointerOperand()->stripPointerCasts(),
-                        DL->getTypeStoreSize(SI->getOperand(0)->getType()),
-                        std::min(storeAlign, loadAlign), C);
+        bool changed = performCallSlotOptzn(
+            LI, SI->getPointerOperand()->stripPointerCasts(),
+            LI->getPointerOperand()->stripPointerCasts(),
+            DL.getTypeStoreSize(SI->getOperand(0)->getType()),
+            std::min(storeAlign, loadAlign), C);
         if (changed) {
           MD->removeInstruction(SI);
           SI->eraseFromParent();
@@ -606,15 +603,13 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   if (!srcAlloca)
     return false;
 
-  // Check that all of src is copied to dest.
-  if (!DL) return false;
-
   ConstantInt *srcArraySize = dyn_cast<ConstantInt>(srcAlloca->getArraySize());
   if (!srcArraySize)
     return false;
 
-  uint64_t srcSize = DL->getTypeAllocSize(srcAlloca->getAllocatedType()) *
-    srcArraySize->getZExtValue();
+  const DataLayout &DL = cpy->getModule()->getDataLayout();
+  uint64_t srcSize = DL.getTypeAllocSize(srcAlloca->getAllocatedType()) *
+                     srcArraySize->getZExtValue();
 
   if (cpyLen < srcSize)
     return false;
@@ -628,8 +623,8 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
     if (!destArraySize)
       return false;
 
-    uint64_t destSize = DL->getTypeAllocSize(A->getAllocatedType()) *
-      destArraySize->getZExtValue();
+    uint64_t destSize = DL.getTypeAllocSize(A->getAllocatedType()) *
+                        destArraySize->getZExtValue();
 
     if (destSize < srcSize)
       return false;
@@ -648,7 +643,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
         return false;
       }
 
-      uint64_t destSize = DL->getTypeAllocSize(StructTy);
+      uint64_t destSize = DL.getTypeAllocSize(StructTy);
       if (destSize < srcSize)
         return false;
     }
@@ -659,7 +654,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   // Check that dest points to memory that is at least as aligned as src.
   unsigned srcAlign = srcAlloca->getAlignment();
   if (!srcAlign)
-    srcAlign = DL->getABITypeAlignment(srcAlloca->getAllocatedType());
+    srcAlign = DL.getABITypeAlignment(srcAlloca->getAllocatedType());
   bool isDestSufficientlyAligned = srcAlign <= cpyAlign;
   // If dest is not aligned enough and we can't increase its alignment then
   // bail out.
@@ -959,12 +954,11 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
 
 /// processByValArgument - This is called on every byval argument in call sites.
 bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
-  if (!DL) return false;
-
+  const DataLayout &DL = CS.getCaller()->getParent()->getDataLayout();
   // Find out what feeds this byval argument.
   Value *ByValArg = CS.getArgument(ArgNo);
   Type *ByValTy = cast<PointerType>(ByValArg->getType())->getElementType();
-  uint64_t ByValSize = DL->getTypeAllocSize(ByValTy);
+  uint64_t ByValSize = DL.getTypeAllocSize(ByValTy);
   MemDepResult DepInfo =
     MD->getPointerDependencyFrom(AliasAnalysis::Location(ByValArg, ByValSize),
                                  true, CS.getInstruction(),
@@ -997,8 +991,8 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
           *CS->getParent()->getParent());
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   if (MDep->getAlignment() < ByValAlign &&
-      getOrEnforceKnownAlignment(MDep->getSource(), ByValAlign, DL, &AC,
-                                 CS.getInstruction(), &DT) < ByValAlign)
+      getOrEnforceKnownAlignment(MDep->getSource(), ByValAlign, DL,
+                                 CS.getInstruction(), &AC, &DT) < ByValAlign)
     return false;
 
   // Verify that the copied-from memory doesn't change in between the memcpy and
@@ -1077,7 +1071,6 @@ bool MemCpyOpt::runOnFunction(Function &F) {
 
   bool MadeChange = false;
   MD = &getAnalysis<MemoryDependenceAnalysis>();
-  DL = &F.getParent()->getDataLayout();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   // If we don't have at least memset and memcpy, there is little point of doing

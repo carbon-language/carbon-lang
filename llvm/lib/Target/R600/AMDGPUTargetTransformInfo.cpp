@@ -20,6 +20,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -36,13 +37,15 @@ void AMDGPUTTIImpl::getUnrollingPreferences(Loop *L,
   // TODO: Do we want runtime unrolling?
 
   for (const BasicBlock *BB : L->getBlocks()) {
+    const DataLayout &DL = BB->getModule()->getDataLayout();
     for (const Instruction &I : *BB) {
       const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I);
       if (!GEP || GEP->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
         continue;
 
       const Value *Ptr = GEP->getPointerOperand();
-      const AllocaInst *Alloca = dyn_cast<AllocaInst>(GetUnderlyingObject(Ptr));
+      const AllocaInst *Alloca =
+          dyn_cast<AllocaInst>(GetUnderlyingObject(Ptr, DL));
       if (Alloca) {
         // We want to do whatever we can to limit the number of alloca
         // instructions that make it through to the code generator.  allocas

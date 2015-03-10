@@ -36,16 +36,15 @@ namespace llvm {
 /// Note that this fails if not all of the operands are constant.  Otherwise,
 /// this function can only fail when attempting to fold instructions like loads
 /// and stores, which have no constant expression form.
-Constant *ConstantFoldInstruction(Instruction *I,
-                                  const DataLayout *TD = nullptr,
-                                  const TargetLibraryInfo *TLI = nullptr);
+  Constant *ConstantFoldInstruction(Instruction *I, const DataLayout &DL,
+                                    const TargetLibraryInfo *TLI = nullptr);
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
 /// using the specified DataLayout.  If successful, the constant result is
 /// result is returned, if not, null is returned.
-Constant *ConstantFoldConstantExpression(const ConstantExpr *CE,
-                                         const DataLayout *TD = nullptr,
-                                         const TargetLibraryInfo *TLI =nullptr);
+  Constant *
+  ConstantFoldConstantExpression(const ConstantExpr *CE, const DataLayout &DL,
+                                 const TargetLibraryInfo *TLI = nullptr);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
 /// specified operands.  If successful, the constant result is returned, if not,
@@ -53,19 +52,19 @@ Constant *ConstantFoldConstantExpression(const ConstantExpr *CE,
 /// fold instructions like loads and stores, which have no constant expression
 /// form.
 ///
-Constant *ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
-                                   ArrayRef<Constant *> Ops,
-                                   const DataLayout *TD = nullptr,
-                                   const TargetLibraryInfo *TLI = nullptr);
+  Constant *ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
+                                     ArrayRef<Constant *> Ops,
+                                     const DataLayout &DL,
+                                     const TargetLibraryInfo *TLI = nullptr);
 
 /// ConstantFoldCompareInstOperands - Attempt to constant fold a compare
 /// instruction (icmp/fcmp) with the specified operands.  If it fails, it
 /// returns a constant expression of the specified operands.
 ///
-Constant *ConstantFoldCompareInstOperands(unsigned Predicate,
-                                          Constant *LHS, Constant *RHS,
-                                          const DataLayout *TD = nullptr,
-                                          const TargetLibraryInfo *TLI=nullptr);
+  Constant *
+  ConstantFoldCompareInstOperands(unsigned Predicate, Constant *LHS,
+                                  Constant *RHS, const DataLayout &DL,
+                                  const TargetLibraryInfo *TLI = nullptr);
 
 /// ConstantFoldInsertValueInstruction - Attempt to constant fold an insertvalue
 /// instruction with the specified operands and indices.  The constant result is
@@ -76,8 +75,7 @@ Constant *ConstantFoldInsertValueInstruction(Constant *Agg, Constant *Val,
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.
-Constant *ConstantFoldLoadFromConstPtr(Constant *C,
-                                       const DataLayout *TD = nullptr);
+Constant *ConstantFoldLoadFromConstPtr(Constant *C, const DataLayout &DL);
 
 /// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
 /// getelementptr constantexpr, return the constant value being addressed by the

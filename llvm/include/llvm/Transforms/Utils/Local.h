@@ -88,7 +88,7 @@ bool RecursivelyDeleteDeadPHINode(PHINode *PN,
 ///
 /// This returns true if it changed the code, note that it can delete
 /// instructions in other blocks as well in this block.
-bool SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD = nullptr,
+bool SimplifyInstructionsInBlock(BasicBlock *BB,
                                  const TargetLibraryInfo *TLI = nullptr);
 
 //===----------------------------------------------------------------------===//
@@ -106,8 +106,7 @@ bool SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD = nullptr,
 ///
 /// .. and delete the predecessor corresponding to the '1', this will attempt to
 /// recursively fold the 'and' to 0.
-void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
-                                  DataLayout *TD = nullptr);
+void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred);
 
 /// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its
 /// predecessor is known to have one successor (BB!).  Eliminate the edge
@@ -137,8 +136,7 @@ bool EliminateDuplicatePHINodes(BasicBlock *BB);
 /// the basic block that was pointed to.
 ///
 bool SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
-                 unsigned BonusInstThreshold, const DataLayout *TD = nullptr,
-                 AssumptionCache *AC = nullptr);
+                 unsigned BonusInstThreshold, AssumptionCache *AC = nullptr);
 
 /// FlatternCFG - This function is used to flatten a CFG.  For
 /// example, it uses parallel-and and parallel-or mode to collapse
@@ -150,8 +148,7 @@ bool FlattenCFG(BasicBlock *BB, AliasAnalysis *AA = nullptr);
 /// and if a predecessor branches to us and one of our successors, fold the
 /// setcc into the predecessor and use logical operations to pick the right
 /// destination.
-bool FoldBranchToCommonDest(BranchInst *BI, const DataLayout *DL = nullptr,
-                            unsigned BonusInstThreshold = 1);
+bool FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold = 1);
 
 /// DemoteRegToStack - This function takes a virtual register computed by an
 /// Instruction and replaces it with a slot in the stack frame, allocated via
@@ -173,18 +170,17 @@ AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = nullptr);
 /// and it is more than the alignment of the ultimate object, see if we can
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
-                                    const DataLayout *TD = nullptr,
-                                    AssumptionCache *AC = nullptr,
+                                    const DataLayout &DL,
                                     const Instruction *CxtI = nullptr,
+                                    AssumptionCache *AC = nullptr,
                                     const DominatorTree *DT = nullptr);
 
 /// getKnownAlignment - Try to infer an alignment for the specified pointer.
-static inline unsigned getKnownAlignment(Value *V,
-                                         const DataLayout *TD = nullptr,
-                                         AssumptionCache *AC = nullptr,
+static inline unsigned getKnownAlignment(Value *V, const DataLayout &DL,
                                          const Instruction *CxtI = nullptr,
+                                         AssumptionCache *AC = nullptr,
                                          const DominatorTree *DT = nullptr) {
-  return getOrEnforceKnownAlignment(V, 0, TD, AC, CxtI, DT);
+  return getOrEnforceKnownAlignment(V, 0, DL, CxtI, AC, DT);
 }
 
 /// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
@@ -192,11 +188,11 @@ static inline unsigned getKnownAlignment(Value *V,
 /// in the base pointer).  Return the result as a signed integer of intptr size.
 /// When NoAssumptions is true, no assumptions about index computation not
 /// overflowing is made.
-template<typename IRBuilderTy>
-Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
+template <typename IRBuilderTy>
+Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &DL, User *GEP,
                      bool NoAssumptions = false) {
   GEPOperator *GEPOp = cast<GEPOperator>(GEP);
-  Type *IntPtrTy = TD.getIntPtrType(GEP->getType());
+  Type *IntPtrTy = DL.getIntPtrType(GEP->getType());
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // If the GEP is inbounds, we know that none of the addressing operations will
@@ -211,7 +207,7 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
   for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
        ++i, ++GTI) {
     Value *Op = *i;
-    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
+    uint64_t Size = DL.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
     if (Constant *OpC = dyn_cast<Constant>(Op)) {
       if (OpC->isZeroValue())
         continue;
@@ -222,7 +218,7 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
           OpC = OpC->getSplatValue();
 
         uint64_t OpValue = cast<ConstantInt>(OpC)->getZExtValue();
-        Size = TD.getStructLayout(STy)->getElementOffset(OpValue);
+        Size = DL.getStructLayout(STy)->getElementOffset(OpValue);
 
         if (Size)
           Result = Builder->CreateAdd(Result, ConstantInt::get(IntPtrTy, Size),

@@ -701,6 +701,7 @@ private:
       // by writing out the code here where we have tho underlying allocation
       // size readily available.
       APInt GEPOffset = Offset;
+      const DataLayout &DL = GEPI.getModule()->getDataLayout();
       for (gep_type_iterator GTI = gep_type_begin(GEPI),
                              GTE = gep_type_end(GEPI);
            GTI != GTE; ++GTI) {
@@ -750,6 +751,7 @@ private:
     if (!IsOffsetKnown)
       return PI.setAborted(&LI);
 
+    const DataLayout &DL = LI.getModule()->getDataLayout();
     uint64_t Size = DL.getTypeStoreSize(LI.getType());
     return handleLoadOrStore(LI.getType(), LI, Offset, Size, LI.isVolatile());
   }
@@ -761,6 +763,7 @@ private:
     if (!IsOffsetKnown)
       return PI.setAborted(&SI);
 
+    const DataLayout &DL = SI.getModule()->getDataLayout();
     uint64_t Size = DL.getTypeStoreSize(ValOp->getType());
 
     // If this memory access can be shown to *statically* extend outside the
@@ -898,6 +901,7 @@ private:
     SmallVector<std::pair<Instruction *, Instruction *>, 4> Uses;
     Visited.insert(Root);
     Uses.push_back(std::make_pair(cast<Instruction>(*U), Root));
+    const DataLayout &DL = Root->getModule()->getDataLayout();
     // If there are no loads or stores, the access is dead. We mark that as
     // a size zero access.
     Size = 0;
@@ -1194,7 +1198,6 @@ class SROA : public FunctionPass {
   const bool RequiresDomTree;
 
   LLVMContext *C;
-  const DataLayout *DL;
   DominatorTree *DT;
   AssumptionCache *AC;
 
@@ -1243,7 +1246,7 @@ class SROA : public FunctionPass {
 public:
   SROA(bool RequiresDomTree = true)
       : FunctionPass(ID), RequiresDomTree(RequiresDomTree), C(nullptr),
-        DL(nullptr), DT(nullptr) {
+        DT(nullptr) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
   bool runOnFunction(Function &F) override;
@@ -1349,7 +1352,7 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
 ///
 /// FIXME: This should be hoisted into a generic utility, likely in
 /// Transforms/Util/Local.h
-static bool isSafePHIToSpeculate(PHINode &PN, const DataLayout *DL = nullptr) {
+static bool isSafePHIToSpeculate(PHINode &PN) {
   // For now, we can only do this promotion if the load is in the same block
   // as the PHI, and if there are no stores between the phi and load.
   // TODO: Allow recursive phi users.
@@ -1381,6 +1384,8 @@ static bool isSafePHIToSpeculate(PHINode &PN, const DataLayout *DL = nullptr) {
   if (!HaveLoad)
     return false;
 
+  const DataLayout &DL = PN.getModule()->getDataLayout();
+
   // We can only transform this if it is safe to push the loads into the
   // predecessor blocks. The only thing to watch out for is that we can't put
   // a possibly trapping load in the predecessor if it is a critical edge.
@@ -1403,7 +1408,7 @@ static bool isSafePHIToSpeculate(PHINode &PN, const DataLayout *DL = nullptr) {
     // is already a load in the block, then we can move the load to the pred
     // block.
     if (InVal->isDereferenceablePointer(DL) ||
-        isSafeToLoadUnconditionally(InVal, TI, MaxAlign, DL))
+        isSafeToLoadUnconditionally(InVal, TI, MaxAlign))
       continue;
 
     return false;
@@ -1468,10 +1473,10 @@ static void speculatePHINodeLoads(PHINode &PN) {
 ///
 /// We can do this to a select if its only uses are loads and if the operand
 /// to the select can be loaded unconditionally.
-static bool isSafeSelectToSpeculate(SelectInst &SI,
-                                    const DataLayout *DL = nullptr) {
+static bool isSafeSelectToSpeculate(SelectInst &SI) {
   Value *TValue = SI.getTrueValue();
   Value *FValue = SI.getFalseValue();
+  const DataLayout &DL = SI.getModule()->getDataLayout();
   bool TDerefable = TValue->isDereferenceablePointer(DL);
   bool FDerefable = FValue->isDereferenceablePointer(DL);
 
@@ -1484,10 +1489,10 @@ static bool isSafeSelectToSpeculate(SelectInst &SI,
     // absolutely (e.g. allocas) or at this point because we can see other
     // accesses to it.
     if (!TDerefable &&
-        !isSafeToLoadUnconditionally(TValue, LI, LI->getAlignment(), DL))
+        !isSafeToLoadUnconditionally(TValue, LI, LI->getAlignment()))
       return false;
     if (!FDerefable &&
-        !isSafeToLoadUnconditionally(FValue, LI, LI->getAlignment(), DL))
+        !isSafeToLoadUnconditionally(FValue, LI, LI->getAlignment()))
       return false;
   }
 
@@ -3699,6 +3704,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
   // them to the alloca slices.
   SmallDenseMap<LoadInst *, std::vector<LoadInst *>, 1> SplitLoadsMap;
   std::vector<LoadInst *> SplitLoads;
+  const DataLayout &DL = AI.getModule()->getDataLayout();
   for (LoadInst *LI : Loads) {
     SplitLoads.clear();
 
@@ -3724,10 +3730,10 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       auto *PartTy = Type::getIntNTy(Ty->getContext(), PartSize * 8);
       auto *PartPtrTy = PartTy->getPointerTo(LI->getPointerAddressSpace());
       LoadInst *PLoad = IRB.CreateAlignedLoad(
-          getAdjustedPtr(IRB, *DL, BasePtr,
-                         APInt(DL->getPointerSizeInBits(), PartOffset),
+          getAdjustedPtr(IRB, DL, BasePtr,
+                         APInt(DL.getPointerSizeInBits(), PartOffset),
                          PartPtrTy, BasePtr->getName() + "."),
-          getAdjustedAlignment(LI, PartOffset, *DL), /*IsVolatile*/ false,
+          getAdjustedAlignment(LI, PartOffset, DL), /*IsVolatile*/ false,
           LI->getName());
 
       // Append this load onto the list of split loads so we can find it later
@@ -3777,10 +3783,10 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
             PLoad->getType()->getPointerTo(SI->getPointerAddressSpace());
 
         StoreInst *PStore = IRB.CreateAlignedStore(
-            PLoad, getAdjustedPtr(IRB, *DL, StoreBasePtr,
-                                  APInt(DL->getPointerSizeInBits(), PartOffset),
+            PLoad, getAdjustedPtr(IRB, DL, StoreBasePtr,
+                                  APInt(DL.getPointerSizeInBits(), PartOffset),
                                   PartPtrTy, StoreBasePtr->getName() + "."),
-            getAdjustedAlignment(SI, PartOffset, *DL), /*IsVolatile*/ false);
+            getAdjustedAlignment(SI, PartOffset, DL), /*IsVolatile*/ false);
         (void)PStore;
         DEBUG(dbgs() << "      +" << PartOffset << ":" << *PStore << "\n");
       }
@@ -3857,20 +3863,20 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       } else {
         IRB.SetInsertPoint(BasicBlock::iterator(LI));
         PLoad = IRB.CreateAlignedLoad(
-            getAdjustedPtr(IRB, *DL, LoadBasePtr,
-                           APInt(DL->getPointerSizeInBits(), PartOffset),
+            getAdjustedPtr(IRB, DL, LoadBasePtr,
+                           APInt(DL.getPointerSizeInBits(), PartOffset),
                            PartPtrTy, LoadBasePtr->getName() + "."),
-            getAdjustedAlignment(LI, PartOffset, *DL), /*IsVolatile*/ false,
+            getAdjustedAlignment(LI, PartOffset, DL), /*IsVolatile*/ false,
             LI->getName());
       }
 
       // And store this partition.
       IRB.SetInsertPoint(BasicBlock::iterator(SI));
       StoreInst *PStore = IRB.CreateAlignedStore(
-          PLoad, getAdjustedPtr(IRB, *DL, StoreBasePtr,
-                                APInt(DL->getPointerSizeInBits(), PartOffset),
+          PLoad, getAdjustedPtr(IRB, DL, StoreBasePtr,
+                                APInt(DL.getPointerSizeInBits(), PartOffset),
                                 PartPtrTy, StoreBasePtr->getName() + "."),
-          getAdjustedAlignment(SI, PartOffset, *DL), /*IsVolatile*/ false);
+          getAdjustedAlignment(SI, PartOffset, DL), /*IsVolatile*/ false);
 
       // Now build a new slice for the alloca.
       NewSlices.push_back(
@@ -3970,25 +3976,26 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   // won't always succeed, in which case we fall back to a legal integer type
   // or an i8 array of an appropriate size.
   Type *SliceTy = nullptr;
+  const DataLayout &DL = AI.getModule()->getDataLayout();
   if (Type *CommonUseTy = findCommonType(P.begin(), P.end(), P.endOffset()))
-    if (DL->getTypeAllocSize(CommonUseTy) >= P.size())
+    if (DL.getTypeAllocSize(CommonUseTy) >= P.size())
       SliceTy = CommonUseTy;
   if (!SliceTy)
-    if (Type *TypePartitionTy = getTypePartition(*DL, AI.getAllocatedType(),
+    if (Type *TypePartitionTy = getTypePartition(DL, AI.getAllocatedType(),
                                                  P.beginOffset(), P.size()))
       SliceTy = TypePartitionTy;
   if ((!SliceTy || (SliceTy->isArrayTy() &&
                     SliceTy->getArrayElementType()->isIntegerTy())) &&
-      DL->isLegalInteger(P.size() * 8))
+      DL.isLegalInteger(P.size() * 8))
     SliceTy = Type::getIntNTy(*C, P.size() * 8);
   if (!SliceTy)
     SliceTy = ArrayType::get(Type::getInt8Ty(*C), P.size());
-  assert(DL->getTypeAllocSize(SliceTy) >= P.size());
+  assert(DL.getTypeAllocSize(SliceTy) >= P.size());
 
-  bool IsIntegerPromotable = isIntegerWideningViable(P, SliceTy, *DL);
+  bool IsIntegerPromotable = isIntegerWideningViable(P, SliceTy, DL);
 
   VectorType *VecTy =
-      IsIntegerPromotable ? nullptr : isVectorPromotionViable(P, *DL);
+      IsIntegerPromotable ? nullptr : isVectorPromotionViable(P, DL);
   if (VecTy)
     SliceTy = VecTy;
 
@@ -4010,12 +4017,12 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
       // The minimum alignment which users can rely on when the explicit
       // alignment is omitted or zero is that required by the ABI for this
       // type.
-      Alignment = DL->getABITypeAlignment(AI.getAllocatedType());
+      Alignment = DL.getABITypeAlignment(AI.getAllocatedType());
     }
     Alignment = MinAlign(Alignment, P.beginOffset());
     // If we will get at least this much alignment from the type alone, leave
     // the alloca's alignment unconstrained.
-    if (Alignment <= DL->getABITypeAlignment(SliceTy))
+    if (Alignment <= DL.getABITypeAlignment(SliceTy))
       Alignment = 0;
     NewAI = new AllocaInst(
         SliceTy, nullptr, Alignment,
@@ -4035,7 +4042,7 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   SmallPtrSet<PHINode *, 8> PHIUsers;
   SmallPtrSet<SelectInst *, 8> SelectUsers;
 
-  AllocaSliceRewriter Rewriter(*DL, AS, *this, AI, *NewAI, P.beginOffset(),
+  AllocaSliceRewriter Rewriter(DL, AS, *this, AI, *NewAI, P.beginOffset(),
                                P.endOffset(), IsIntegerPromotable, VecTy,
                                PHIUsers, SelectUsers);
   bool Promotable = true;
@@ -4057,7 +4064,7 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   for (SmallPtrSetImpl<PHINode *>::iterator I = PHIUsers.begin(),
                                             E = PHIUsers.end();
        I != E; ++I)
-    if (!isSafePHIToSpeculate(**I, DL)) {
+    if (!isSafePHIToSpeculate(**I)) {
       Promotable = false;
       PHIUsers.clear();
       SelectUsers.clear();
@@ -4066,7 +4073,7 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   for (SmallPtrSetImpl<SelectInst *>::iterator I = SelectUsers.begin(),
                                                E = SelectUsers.end();
        I != E; ++I)
-    if (!isSafeSelectToSpeculate(**I, DL)) {
+    if (!isSafeSelectToSpeculate(**I)) {
       Promotable = false;
       PHIUsers.clear();
       SelectUsers.clear();
@@ -4110,6 +4117,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
 
   unsigned NumPartitions = 0;
   bool Changed = false;
+  const DataLayout &DL = AI.getModule()->getDataLayout();
 
   // First try to pre-split loads and stores.
   Changed |= presplitLoadsAndStores(AI, AS);
@@ -4127,7 +4135,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
     // confident that the above handling of splittable loads and stores is
     // completely sufficient before we forcibly disable the remaining handling.
     if (S.beginOffset() == 0 &&
-        S.endOffset() >= DL->getTypeAllocSize(AI.getAllocatedType()))
+        S.endOffset() >= DL.getTypeAllocSize(AI.getAllocatedType()))
       continue;
     if (isa<LoadInst>(S.getUse()->getUser()) ||
         isa<StoreInst>(S.getUse()->getUser())) {
@@ -4155,7 +4163,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
       Changed = true;
       if (NewAI != &AI) {
         uint64_t SizeOfByte = 8;
-        uint64_t AllocaSize = DL->getTypeSizeInBits(NewAI->getAllocatedType());
+        uint64_t AllocaSize = DL.getTypeSizeInBits(NewAI->getAllocatedType());
         // Don't include any padding.
         uint64_t Size = std::min(AllocaSize, P.size() * SizeOfByte);
         Pieces.push_back(Piece(NewAI, P.beginOffset() * SizeOfByte, Size));
@@ -4236,21 +4244,22 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
     AI.eraseFromParent();
     return true;
   }
+  const DataLayout &DL = AI.getModule()->getDataLayout();
 
   // Skip alloca forms that this analysis can't handle.
   if (AI.isArrayAllocation() || !AI.getAllocatedType()->isSized() ||
-      DL->getTypeAllocSize(AI.getAllocatedType()) == 0)
+      DL.getTypeAllocSize(AI.getAllocatedType()) == 0)
     return false;
 
   bool Changed = false;
 
   // First, split any FCA loads and stores touching this alloca to promote
   // better splitting and promotion opportunities.
-  AggLoadStoreRewriter AggRewriter(*DL);
+  AggLoadStoreRewriter AggRewriter(DL);
   Changed |= AggRewriter.rewrite(AI);
 
   // Build the slices using a recursive instruction-visiting builder.
-  AllocaSlices AS(*DL, AI);
+  AllocaSlices AS(DL, AI);
   DEBUG(AS.print(dbgs()));
   if (AS.isEscaped())
     return Changed;
@@ -4423,7 +4432,6 @@ bool SROA::runOnFunction(Function &F) {
 
   DEBUG(dbgs() << "SROA function: " << F.getName() << "\n");
   C = &F.getContext();
-  DL = &F.getParent()->getDataLayout();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;

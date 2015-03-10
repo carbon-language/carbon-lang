@@ -53,7 +53,7 @@ bool MemDerefPrinter::runOnFunction(Function &F) {
   for (auto &I: inst_range(F)) {
     if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
       Value *PO = LI->getPointerOperand();
-      if (PO->isDereferenceablePointer(&DL))
+      if (PO->isDereferenceablePointer(DL))
         Vec.push_back(PO);
     }
   }

@@ -2048,21 +2048,15 @@ bool CastInst::isNoopCast(Type *IntPtrTy) const {
   return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
 }
 
-bool CastInst::isNoopCast(const DataLayout *DL) const {
-  if (!DL) {
-    // Assume maximum pointer size.
-    return isNoopCast(Type::getInt64Ty(getContext()));
-  }
-
+bool CastInst::isNoopCast(const DataLayout &DL) const {
   Type *PtrOpTy = nullptr;
   if (getOpcode() == Instruction::PtrToInt)
     PtrOpTy = getOperand(0)->getType();
   else if (getOpcode() == Instruction::IntToPtr)
     PtrOpTy = getType();
 
-  Type *IntPtrTy = PtrOpTy
-                 ? DL->getIntPtrType(PtrOpTy)
-                 : DL->getIntPtrType(getContext(), 0);
+  Type *IntPtrTy =
+      PtrOpTy ? DL.getIntPtrType(PtrOpTy) : DL.getIntPtrType(getContext(), 0);
 
   return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
 }
@@ -2616,13 +2610,13 @@ bool CastInst::isBitCastable(Type *SrcTy, Type *DestTy) {
 }
 
 bool CastInst::isBitOrNoopPointerCastable(Type *SrcTy, Type *DestTy,
-                                          const DataLayout *DL) {
+                                          const DataLayout &DL) {
   if (auto *PtrTy = dyn_cast<PointerType>(SrcTy))
     if (auto *IntTy = dyn_cast<IntegerType>(DestTy))
-      return DL && IntTy->getBitWidth() == DL->getPointerTypeSizeInBits(PtrTy);
+      return IntTy->getBitWidth() == DL.getPointerTypeSizeInBits(PtrTy);
   if (auto *PtrTy = dyn_cast<PointerType>(DestTy))
     if (auto *IntTy = dyn_cast<IntegerType>(SrcTy))
-      return DL && IntTy->getBitWidth() == DL->getPointerTypeSizeInBits(PtrTy);
+      return IntTy->getBitWidth() == DL.getPointerTypeSizeInBits(PtrTy);
 
   return isBitCastable(SrcTy, DestTy);
 }

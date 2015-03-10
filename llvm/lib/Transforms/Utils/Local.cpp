@@ -417,7 +417,7 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN,
 ///
 /// This returns true if it changed the code, note that it can delete
 /// instructions in other blocks as well in this block.
-bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD,
+bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB,
                                        const TargetLibraryInfo *TLI) {
   bool MadeChange = false;
 
@@ -434,7 +434,7 @@ bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD,
     Instruction *Inst = BI++;
 
     WeakVH BIHandle(BI);
-    if (recursivelySimplifyInstruction(Inst, TD, TLI)) {
+    if (recursivelySimplifyInstruction(Inst, TLI)) {
       MadeChange = true;
       if (BIHandle != BI)
         BI = BB->begin();
@@ -464,8 +464,7 @@ bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD,
 ///
 /// .. and delete the predecessor corresponding to the '1', this will attempt to
 /// recursively fold the and to 0.
-void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
-                                        DataLayout *TD) {
+void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred) {
   // This only adjusts blocks with PHI nodes.
   if (!isa<PHINode>(BB->begin()))
     return;
@@ -480,7 +479,7 @@ void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
     PhiIt = &*++BasicBlock::iterator(cast<Instruction>(PhiIt));
     Value *OldPhiIt = PhiIt;
 
-    if (!recursivelySimplifyInstruction(PN, TD))
+    if (!recursivelySimplifyInstruction(PN))
       continue;
 
     // If recursive simplification ended up deleting the next PHI node we would
@@ -900,13 +899,14 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
 /// their preferred alignment from the beginning.
 ///
 static unsigned enforceKnownAlignment(Value *V, unsigned Align,
-                                      unsigned PrefAlign, const DataLayout *TD) {
+                                      unsigned PrefAlign,
+                                      const DataLayout &DL) {
   V = V->stripPointerCasts();
 
   if (AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
     // If the preferred alignment is greater than the natural stack alignment
     // then don't round up. This avoids dynamic stack realignment.
-    if (TD && TD->exceedsNaturalStackAlignment(PrefAlign))
+    if (DL.exceedsNaturalStackAlignment(PrefAlign))
       return Align;
     // If there is a requested alignment and if this is an alloca, round up.
     if (AI->getAlignment() >= PrefAlign)
@@ -945,13 +945,13 @@ static unsigned enforceKnownAlignment(Value *V, unsigned Align,
 /// and it is more than the alignment of the ultimate object, see if we can
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
-                                          const DataLayout *DL,
-                                          AssumptionCache *AC,
+                                          const DataLayout &DL,
                                           const Instruction *CxtI,
+                                          AssumptionCache *AC,
                                           const DominatorTree *DT) {
   assert(V->getType()->isPointerTy() &&
          "getOrEnforceKnownAlignment expects a pointer!");
-  unsigned BitWidth = DL ? DL->getPointerTypeSizeInBits(V->getType()) : 64;
+  unsigned BitWidth = DL.getPointerTypeSizeInBits(V->getType());
 
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
   computeKnownBits(V, KnownZero, KnownOne, DL, 0, AC, CxtI, DT);

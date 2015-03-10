@@ -127,9 +127,8 @@ namespace {
 /// side of claiming that two functions are different).
 class FunctionComparator {
 public:
-  FunctionComparator(const DataLayout *DL, const Function *F1,
-                     const Function *F2)
-      : FnL(F1), FnR(F2), DL(DL) {}
+  FunctionComparator(const Function *F1, const Function *F2)
+      : FnL(F1), FnR(F2) {}
 
   /// Test whether the two functions have equivalent behaviour.
   int compare();
@@ -292,8 +291,7 @@ private:
   /// Parts to be compared for each comparison stage,
   /// most significant stage first:
   /// 1. Address space. As numbers.
-  /// 2. Constant offset, (if "DataLayout *DL" field is not NULL,
-  /// using GEPOperator::accumulateConstantOffset method).
+  /// 2. Constant offset, (using GEPOperator::accumulateConstantOffset method).
   /// 3. Pointer operand type (using cmpType method).
   /// 4. Number of operands.
   /// 5. Compare operands, using cmpValues method.
@@ -354,8 +352,6 @@ private:
   // The two functions undergoing comparison.
   const Function *FnL, *FnR;
 
-  const DataLayout *DL;
-
   /// Assign serial numbers to values from left function, and values from
   /// right function.
   /// Explanation:
@@ -394,14 +390,13 @@ private:
 
 class FunctionNode {
   AssertingVH<Function> F;
-  const DataLayout *DL;
 
 public:
-  FunctionNode(Function *F, const DataLayout *DL) : F(F), DL(DL) {}
+  FunctionNode(Function *F) : F(F) {}
   Function *getFunc() const { return F; }
   void release() { F = 0; }
   bool operator<(const FunctionNode &RHS) const {
-    return (FunctionComparator(DL, F, RHS.getFunc()).compare()) == -1;
+    return (FunctionComparator(F, RHS.getFunc()).compare()) == -1;
   }
 };
 }
@@ -620,10 +615,11 @@ int FunctionComparator::cmpTypes(Type *TyL, Type *TyR) const {
   PointerType *PTyL = dyn_cast<PointerType>(TyL);
   PointerType *PTyR = dyn_cast<PointerType>(TyR);
 
-  if (DL) {
-    if (PTyL && PTyL->getAddressSpace() == 0) TyL = DL->getIntPtrType(TyL);
-    if (PTyR && PTyR->getAddressSpace() == 0) TyR = DL->getIntPtrType(TyR);
-  }
+  const DataLayout &DL = FnL->getParent()->getDataLayout();
+  if (PTyL && PTyL->getAddressSpace() == 0)
+    TyL = DL.getIntPtrType(TyL);
+  if (PTyR && PTyR->getAddressSpace() == 0)
+    TyR = DL.getIntPtrType(TyR);
 
   if (TyL == TyR)
     return 0;
@@ -855,13 +851,12 @@ int FunctionComparator::cmpGEPs(const GEPOperator *GEPL,
 
   // When we have target data, we can reduce the GEP down to the value in bytes
   // added to the address.
-  if (DL) {
-    unsigned BitWidth = DL->getPointerSizeInBits(ASL);
-    APInt OffsetL(BitWidth, 0), OffsetR(BitWidth, 0);
-    if (GEPL->accumulateConstantOffset(*DL, OffsetL) &&
-        GEPR->accumulateConstantOffset(*DL, OffsetR))
-      return cmpAPInts(OffsetL, OffsetR);
-  }
+  const DataLayout &DL = FnL->getParent()->getDataLayout();
+  unsigned BitWidth = DL.getPointerSizeInBits(ASL);
+  APInt OffsetL(BitWidth, 0), OffsetR(BitWidth, 0);
+  if (GEPL->accumulateConstantOffset(DL, OffsetL) &&
+      GEPR->accumulateConstantOffset(DL, OffsetR))
+    return cmpAPInts(OffsetL, OffsetR);
 
   if (int Res = cmpNumbers((uint64_t)GEPL->getPointerOperand()->getType(),
                            (uint64_t)GEPR->getPointerOperand()->getType()))
@@ -1122,9 +1117,6 @@ private:
   /// to modify it.
   FnTreeType FnTree;
 
-  /// DataLayout for more accurate GEP comparisons. May be NULL.
-  const DataLayout *DL;
-
   /// Whether or not the target supports global aliases.
   bool HasGlobalAliases;
 };
@@ -1152,8 +1144,8 @@ bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
       for (std::vector<WeakVH>::iterator J = I; J != E && j < Max; ++J, ++j) {
         Function *F1 = cast<Function>(*I);
         Function *F2 = cast<Function>(*J);
-        int Res1 = FunctionComparator(DL, F1, F2).compare();
-        int Res2 = FunctionComparator(DL, F2, F1).compare();
+        int Res1 = FunctionComparator(F1, F2).compare();
+        int Res2 = FunctionComparator(F2, F1).compare();
 
         // If F1 <= F2, then F2 >= F1, otherwise report failure.
         if (Res1 != -Res2) {
@@ -1174,8 +1166,8 @@ bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
             continue;
 
           Function *F3 = cast<Function>(*K);
-          int Res3 = FunctionComparator(DL, F1, F3).compare();
-          int Res4 = FunctionComparator(DL, F2, F3).compare();
+          int Res3 = FunctionComparator(F1, F3).compare();
+          int Res4 = FunctionComparator(F2, F3).compare();
 
           bool Transitive = true;
 
@@ -1212,7 +1204,6 @@ bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
 
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
-  DL = &M.getDataLayout();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
@@ -1419,7 +1410,7 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
 // that was already inserted.
 bool MergeFunctions::insert(Function *NewFunction) {
   std::pair<FnTreeType::iterator, bool> Result =
-      FnTree.insert(FunctionNode(NewFunction, DL));
+      FnTree.insert(FunctionNode(NewFunction));
 
   if (Result.second) {
     DEBUG(dbgs() << "Inserting as unique: " << NewFunction->getName() << '\n');
@@ -1456,7 +1447,7 @@ bool MergeFunctions::insert(Function *NewFunction) {
 void MergeFunctions::remove(Function *F) {
   // We need to make sure we remove F, not a function "equal" to F per the
   // function equality comparator.
-  FnTreeType::iterator found = FnTree.find(FunctionNode(F, DL));
+  FnTreeType::iterator found = FnTree.find(FunctionNode(F));
   size_t Erased = 0;
   if (found != FnTree.end() && found->getFunc() == F) {
     Erased = 1;

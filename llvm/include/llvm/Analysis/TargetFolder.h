@@ -30,7 +30,7 @@ class DataLayout;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {
-  const DataLayout *DL;
+  const DataLayout &DL;
 
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
@@ -41,7 +41,7 @@ class TargetFolder {
   }
 
 public:
-  explicit TargetFolder(const DataLayout *DL) : DL(DL) {}
+  explicit TargetFolder(const DataLayout &DL) : DL(DL) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators

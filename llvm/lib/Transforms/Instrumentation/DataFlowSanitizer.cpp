@@ -217,7 +217,6 @@ class DataFlowSanitizer : public ModulePass {
     WK_Custom
   };
 
-  const DataLayout *DL;
   Module *Mod;
   LLVMContext *Ctx;
   IntegerType *ShadowTy;
@@ -422,13 +421,13 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   bool IsMIPS64 = TargetTriple.getArch() == llvm::Triple::mips64 ||
                   TargetTriple.getArch() == llvm::Triple::mips64el;
 
-  DL = &M.getDataLayout();
+  const DataLayout &DL = M.getDataLayout();
 
   Mod = &M;
   Ctx = &M.getContext();
   ShadowTy = IntegerType::get(*Ctx, ShadowWidth);
   ShadowPtrTy = PointerType::getUnqual(ShadowTy);
-  IntptrTy = DL->getIntPtrType(*Ctx);
+  IntptrTy = DL.getIntPtrType(*Ctx);
   ZeroShadow = ConstantInt::getSigned(ShadowTy, 0);
   ShadowPtrMul = ConstantInt::getSigned(IntptrTy, ShadowWidth / 8);
   if (IsX86_64)
@@ -1050,7 +1049,7 @@ Value *DFSanFunction::loadShadow(Value *Addr, uint64_t Size, uint64_t Align,
 
   uint64_t ShadowAlign = Align * DFS.ShadowWidth / 8;
   SmallVector<Value *, 2> Objs;
-  GetUnderlyingObjects(Addr, Objs, DFS.DL);
+  GetUnderlyingObjects(Addr, Objs, Pos->getModule()->getDataLayout());
   bool AllConstants = true;
   for (SmallVector<Value *, 2>::iterator i = Objs.begin(), e = Objs.end();
        i != e; ++i) {
@@ -1151,7 +1150,8 @@ Value *DFSanFunction::loadShadow(Value *Addr, uint64_t Size, uint64_t Align,
 }
 
 void DFSanVisitor::visitLoadInst(LoadInst &LI) {
-  uint64_t Size = DFSF.DFS.DL->getTypeStoreSize(LI.getType());
+  auto &DL = LI.getModule()->getDataLayout();
+  uint64_t Size = DL.getTypeStoreSize(LI.getType());
   if (Size == 0) {
     DFSF.setShadow(&LI, DFSF.DFS.ZeroShadow);
     return;
@@ -1161,7 +1161,7 @@ void DFSanVisitor::visitLoadInst(LoadInst &LI) {
   if (ClPreserveAlignment) {
     Align = LI.getAlignment();
     if (Align == 0)
-      Align = DFSF.DFS.DL->getABITypeAlignment(LI.getType());
+      Align = DL.getABITypeAlignment(LI.getType());
   } else {
     Align = 1;
   }
@@ -1229,8 +1229,8 @@ void DFSanFunction::storeShadow(Value *Addr, uint64_t Size, uint64_t Align,
 }
 
 void DFSanVisitor::visitStoreInst(StoreInst &SI) {
-  uint64_t Size =
-      DFSF.DFS.DL->getTypeStoreSize(SI.getValueOperand()->getType());
+  auto &DL = SI.getModule()->getDataLayout();
+  uint64_t Size = DL.getTypeStoreSize(SI.getValueOperand()->getType());
   if (Size == 0)
     return;
 
@@ -1238,7 +1238,7 @@ void DFSanVisitor::visitStoreInst(StoreInst &SI) {
   if (ClPreserveAlignment) {
     Align = SI.getAlignment();
     if (Align == 0)
-      Align = DFSF.DFS.DL->getABITypeAlignment(SI.getValueOperand()->getType());
+      Align = DL.getABITypeAlignment(SI.getValueOperand()->getType());
   } else {
     Align = 1;
   }

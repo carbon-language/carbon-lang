@@ -52,7 +52,6 @@ namespace {
     // alignment to a concrete value.
     unsigned getAlignment(GlobalVariable *GV) const;
 
-    const DataLayout *DL;
   };
 }
 
@@ -89,31 +88,22 @@ static bool IsBetterCanonical(const GlobalVariable &A,
   return A.hasUnnamedAddr();
 }
 
-bool ConstantMerge::hasKnownAlignment(GlobalVariable *GV) const {
-  return DL || GV->getAlignment() != 0;
-}
-
 unsigned ConstantMerge::getAlignment(GlobalVariable *GV) const {
   unsigned Align = GV->getAlignment();
   if (Align)
     return Align;
-  if (DL)
-    return DL->getPreferredAlignment(GV);
-  return 0;
+  return GV->getParent()->getDataLayout().getPreferredAlignment(GV);
 }
 
 bool ConstantMerge::runOnModule(Module &M) {
-  DL = &M.getDataLayout();
 
   // Find all the globals that are marked "used".  These cannot be merged.
   SmallPtrSet<const GlobalValue*, 8> UsedGlobals;
   FindUsedValues(M.getGlobalVariable("llvm.used"), UsedGlobals);
   FindUsedValues(M.getGlobalVariable("llvm.compiler.used"), UsedGlobals);
-  
-  // Map unique <constants, has-unknown-alignment> pairs to globals.  We don't
-  // want to merge globals of unknown alignment with those of explicit
-  // alignment.  If we have DataLayout, we always know the alignment.
-  DenseMap<PointerIntPair<Constant*, 1, bool>, GlobalVariable*> CMap;
+
+  // Map unique constants to globals.
+  DenseMap<Constant *, GlobalVariable *> CMap;
 
   // Replacements - This vector contains a list of replacements to perform.
   SmallVector<std::pair<GlobalVariable*, GlobalVariable*>, 32> Replacements;
@@ -155,8 +145,7 @@ bool ConstantMerge::runOnModule(Module &M) {
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
-      PointerIntPair<Constant*, 1, bool> Pair(Init, hasKnownAlignment(GV));
-      GlobalVariable *&Slot = CMap[Pair];
+      GlobalVariable *&Slot = CMap[Init];
 
       // If this is the first constant we find or if the old one is local,
       // replace with the current one. If the current is externally visible
@@ -187,8 +176,7 @@ bool ConstantMerge::runOnModule(Module &M) {
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
-      PointerIntPair<Constant*, 1, bool> Pair(Init, hasKnownAlignment(GV));
-      GlobalVariable *Slot = CMap[Pair];
+      GlobalVariable *Slot = CMap[Init];
 
       if (!Slot || Slot == GV)
         continue;

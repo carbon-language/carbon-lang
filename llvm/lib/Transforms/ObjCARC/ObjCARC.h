@@ -72,9 +72,10 @@ static inline bool ModuleHasARC(const Module &M) {
 /// \brief This is a wrapper around getUnderlyingObject which also knows how to
 /// look through objc_retain and objc_autorelease calls, which we know to return
 /// their argument verbatim.
-static inline const Value *GetUnderlyingObjCPtr(const Value *V) {
+static inline const Value *GetUnderlyingObjCPtr(const Value *V,
+                                                const DataLayout &DL) {
   for (;;) {
-    V = GetUnderlyingObject(V);
+    V = GetUnderlyingObject(V, DL);
     if (!IsForwarding(GetBasicARCInstKind(V)))
       break;
     V = cast<CallInst>(V)->getArgOperand(0);

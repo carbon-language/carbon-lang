@@ -482,7 +482,7 @@ Value *Value::stripInBoundsOffsets() {
 ///
 /// Test if V is always a pointer to allocated and suitably aligned memory for
 /// a simple load or store.
-static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
+static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
                                      SmallPtrSetImpl<const Value *> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
@@ -497,17 +497,14 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   // to a type of smaller size (or the same size), and the alignment
   // is at least as large as for the resulting pointer type, then
   // we can look through the bitcast.
-  if (DL)
-    if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V)) {
-      Type *STy = BC->getSrcTy()->getPointerElementType(),
-           *DTy = BC->getDestTy()->getPointerElementType();
-      if (STy->isSized() && DTy->isSized() &&
-          (DL->getTypeStoreSize(STy) >=
-           DL->getTypeStoreSize(DTy)) &&
-          (DL->getABITypeAlignment(STy) >=
-           DL->getABITypeAlignment(DTy)))
-        return isDereferenceablePointer(BC->getOperand(0), DL, Visited);
-    }
+  if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V)) {
+    Type *STy = BC->getSrcTy()->getPointerElementType(),
+         *DTy = BC->getDestTy()->getPointerElementType();
+    if (STy->isSized() && DTy->isSized() &&
+        (DL.getTypeStoreSize(STy) >= DL.getTypeStoreSize(DTy)) &&
+        (DL.getABITypeAlignment(STy) >= DL.getABITypeAlignment(DTy)))
+      return isDereferenceablePointer(BC->getOperand(0), DL, Visited);
+  }
 
   // Global variables which can't collapse to null are ok.
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
@@ -520,7 +517,7 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
       return true;
     else if (uint64_t Bytes = A->getDereferenceableBytes()) {
       Type *Ty = V->getType()->getPointerElementType();
-      if (Ty->isSized() && DL && DL->getTypeStoreSize(Ty) <= Bytes)
+      if (Ty->isSized() && DL.getTypeStoreSize(Ty) <= Bytes)
         return true;
     }
 
@@ -532,7 +529,7 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   if (ImmutableCallSite CS = V) {
     if (uint64_t Bytes = CS.getDereferenceableBytes(0)) {
       Type *Ty = V->getType()->getPointerElementType();
-      if (Ty->isSized() && DL && DL->getTypeStoreSize(Ty) <= Bytes)
+      if (Ty->isSized() && DL.getTypeStoreSize(Ty) <= Bytes)
         return true;
     }
   }
@@ -586,15 +583,15 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   return false;
 }
 
-bool Value::isDereferenceablePointer(const DataLayout *DL) const {
+bool Value::isDereferenceablePointer(const DataLayout &DL) const {
   // When dereferenceability information is provided by a dereferenceable
   // attribute, we know exactly how many bytes are dereferenceable. If we can
   // determine the exact offset to the attributed variable, we can use that
   // information here.
   Type *Ty = getType()->getPointerElementType();
-  if (Ty->isSized() && DL) {
-    APInt Offset(DL->getTypeStoreSizeInBits(getType()), 0);
-    const Value *BV = stripAndAccumulateInBoundsConstantOffsets(*DL, Offset);
+  if (Ty->isSized()) {
+    APInt Offset(DL.getTypeStoreSizeInBits(getType()), 0);
+    const Value *BV = stripAndAccumulateInBoundsConstantOffsets(DL, Offset);
 
     APInt DerefBytes(Offset.getBitWidth(), 0);
     if (const Argument *A = dyn_cast<Argument>(BV))
@@ -603,7 +600,7 @@ bool Value::isDereferenceablePointer(const DataLayout *DL) const {
       DerefBytes = CS.getDereferenceableBytes(0);
 
     if (DerefBytes.getBoolValue() && Offset.isNonNegative()) {
-      if (DerefBytes.uge(Offset + DL->getTypeStoreSize(Ty)))
+      if (DerefBytes.uge(Offset + DL.getTypeStoreSize(Ty)))
         return true;
     }
   }

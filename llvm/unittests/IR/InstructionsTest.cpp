@@ -343,10 +343,10 @@ TEST(InstructionsTest, VectorGep) {
                 "2:32:32-f64:64:64-v64:64:64-v128:128:128-a:0:64-s:64:64-f80"
                 ":128:128-n8:16:32:64-S128");
   // Make sure we don't crash
-  GetPointerBaseWithConstantOffset(Gep0, Offset, &TD);
-  GetPointerBaseWithConstantOffset(Gep1, Offset, &TD);
-  GetPointerBaseWithConstantOffset(Gep2, Offset, &TD);
-  GetPointerBaseWithConstantOffset(Gep3, Offset, &TD);
+  GetPointerBaseWithConstantOffset(Gep0, Offset, TD);
+  GetPointerBaseWithConstantOffset(Gep1, Offset, TD);
+  GetPointerBaseWithConstantOffset(Gep2, Offset, TD);
+  GetPointerBaseWithConstantOffset(Gep3, Offset, TD);
 
   // Gep of Geps
   GetElementPtrInst *GepII0 = GetElementPtrInst::Create(Gep0, C2xi32b);

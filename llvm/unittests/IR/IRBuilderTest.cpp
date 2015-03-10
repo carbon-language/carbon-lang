@@ -122,7 +122,7 @@ TEST_F(IRBuilderTest, GetIntTy) {
   EXPECT_EQ(Ty1, IntegerType::get(Ctx, 1));
 
   DataLayout* DL = new DataLayout(M.get());
-  IntegerType *IntPtrTy = Builder.getIntPtrTy(DL);
+  IntegerType *IntPtrTy = Builder.getIntPtrTy(*DL);
   unsigned IntPtrBitSize =  DL->getPointerSizeInBits(0);
   EXPECT_EQ(IntPtrTy, IntegerType::get(Ctx, IntPtrBitSize));
   delete DL;

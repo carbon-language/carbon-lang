@@ -45,13 +45,13 @@ STATISTIC(NumReassoc, "Number of reassociations");
 
 namespace {
 struct Query {
-  const DataLayout *DL;
+  const DataLayout &DL;
   const TargetLibraryInfo *TLI;
   const DominatorTree *DT;
   AssumptionCache *AC;
   const Instruction *CxtI;
 
-  Query(const DataLayout *DL, const TargetLibraryInfo *tli,
+  Query(const DataLayout &DL, const TargetLibraryInfo *tli,
         const DominatorTree *dt, AssumptionCache *ac = nullptr,
         const Instruction *cxti = nullptr)
       : DL(DL), TLI(tli), DT(dt), AC(ac), CxtI(cxti) {}
@@ -584,7 +584,7 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 }
 
 Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
-                             const DataLayout *DL, const TargetLibraryInfo *TLI,
+                             const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
   return ::SimplifyAddInst(Op0, Op1, isNSW, isNUW, Query(DL, TLI, DT, AC, CxtI),
@@ -601,17 +601,11 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// This is very similar to GetPointerBaseWithConstantOffset except it doesn't
 /// follow non-inbounds geps. This allows it to remain usable for icmp ult/etc.
 /// folding.
-static Constant *stripAndComputeConstantOffsets(const DataLayout *DL,
-                                                Value *&V,
+static Constant *stripAndComputeConstantOffsets(const DataLayout &DL, Value *&V,
                                                 bool AllowNonInbounds = false) {
   assert(V->getType()->getScalarType()->isPointerTy());
 
-  // Without DataLayout, just be conservative for now. Theoretically, more could
-  // be done in this case.
-  if (!DL)
-    return ConstantInt::get(IntegerType::get(V->getContext(), 64), 0);
-
-  Type *IntPtrTy = DL->getIntPtrType(V->getType())->getScalarType();
+  Type *IntPtrTy = DL.getIntPtrType(V->getType())->getScalarType();
   APInt Offset = APInt::getNullValue(IntPtrTy->getIntegerBitWidth());
 
   // Even though we don't look through PHI nodes, we could be called on an
@@ -621,7 +615,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *DL,
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
       if ((!AllowNonInbounds && !GEP->isInBounds()) ||
-          !GEP->accumulateConstantOffset(*DL, Offset))
+          !GEP->accumulateConstantOffset(DL, Offset))
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
@@ -646,8 +640,8 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *DL,
 
 /// \brief Compute the constant difference between two pointer values.
 /// If the difference is not a constant, returns zero.
-static Constant *computePointerDifference(const DataLayout *DL,
-                                          Value *LHS, Value *RHS) {
+static Constant *computePointerDifference(const DataLayout &DL, Value *LHS,
+                                          Value *RHS) {
   Constant *LHSOffset = stripAndComputeConstantOffsets(DL, LHS);
   Constant *RHSOffset = stripAndComputeConstantOffsets(DL, RHS);
 
@@ -783,7 +777,7 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 }
 
 Value *llvm::SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
-                             const DataLayout *DL, const TargetLibraryInfo *TLI,
+                             const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
   return ::SimplifySubInst(Op0, Op1, isNSW, isNUW, Query(DL, TLI, DT, AC, CxtI),
@@ -962,7 +956,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const Query &Q,
 }
 
 Value *llvm::SimplifyFAddInst(Value *Op0, Value *Op1, FastMathFlags FMF,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -971,7 +965,7 @@ Value *llvm::SimplifyFAddInst(Value *Op0, Value *Op1, FastMathFlags FMF,
 }
 
 Value *llvm::SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -980,7 +974,7 @@ Value *llvm::SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
 }
 
 Value *llvm::SimplifyFMulInst(Value *Op0, Value *Op1, FastMathFlags FMF,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -988,7 +982,7 @@ Value *llvm::SimplifyFMulInst(Value *Op0, Value *Op1, FastMathFlags FMF,
                             RecursionLimit);
 }
 
-Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
@@ -1092,7 +1086,7 @@ static Value *SimplifySDivInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifySDivInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifySDivInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1110,7 +1104,7 @@ static Value *SimplifyUDivInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1138,7 +1132,7 @@ static Value *SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
 }
 
 Value *llvm::SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1217,7 +1211,7 @@ static Value *SimplifySRemInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifySRemInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifySRemInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1235,7 +1229,7 @@ static Value *SimplifyURemInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifyURemInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyURemInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1263,7 +1257,7 @@ static Value *SimplifyFRemInst(Value *Op0, Value *Op1, FastMathFlags FMF,
 }
 
 Value *llvm::SimplifyFRemInst(Value *Op0, Value *Op1, FastMathFlags FMF,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1387,7 +1381,7 @@ static Value *SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 }
 
 Value *llvm::SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
-                             const DataLayout *DL, const TargetLibraryInfo *TLI,
+                             const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
   return ::SimplifyShlInst(Op0, Op1, isNSW, isNUW, Query(DL, TLI, DT, AC, CxtI),
@@ -1411,7 +1405,7 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
 }
 
 Value *llvm::SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1445,7 +1439,7 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
 }
 
 Value *llvm::SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -1596,9 +1590,11 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const Query &Q,
   // A & (-A) = A if A is a power of two or zero.
   if (match(Op0, m_Neg(m_Specific(Op1))) ||
       match(Op1, m_Neg(m_Specific(Op0)))) {
-    if (isKnownToBeAPowerOfTwo(Op0, /*OrZero*/ true, 0, Q.AC, Q.CxtI, Q.DT))
+    if (isKnownToBeAPowerOfTwo(Op0, Q.DL, /*OrZero*/ true, 0, Q.AC, Q.CxtI,
+                               Q.DT))
       return Op0;
-    if (isKnownToBeAPowerOfTwo(Op1, /*OrZero*/ true, 0, Q.AC, Q.CxtI, Q.DT))
+    if (isKnownToBeAPowerOfTwo(Op1, Q.DL, /*OrZero*/ true, 0, Q.AC, Q.CxtI,
+                               Q.DT))
       return Op1;
   }
 
@@ -1643,7 +1639,7 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
@@ -1831,7 +1827,7 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const DataLayout &DL,
                             const TargetLibraryInfo *TLI,
                             const DominatorTree *DT, AssumptionCache *AC,
                             const Instruction *CxtI) {
@@ -1888,7 +1884,7 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const Query &Q,
   return nullptr;
 }
 
-Value *llvm::SimplifyXorInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyXorInst(Value *Op0, Value *Op1, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
@@ -1948,10 +1944,10 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
 // If the C and C++ standards are ever made sufficiently restrictive in this
 // area, it may be possible to update LLVM's semantics accordingly and reinstate
 // this optimization.
-static Constant *computePointerICmp(const DataLayout *DL,
+static Constant *computePointerICmp(const DataLayout &DL,
                                     const TargetLibraryInfo *TLI,
-                                    CmpInst::Predicate Pred,
-                                    Value *LHS, Value *RHS) {
+                                    CmpInst::Predicate Pred, Value *LHS,
+                                    Value *RHS) {
   // First, skip past any trivial no-ops.
   LHS = LHS->stripPointerCasts();
   RHS = RHS->stripPointerCasts();
@@ -2369,8 +2365,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
     // Turn icmp (ptrtoint x), (ptrtoint/constant) into a compare of the input
     // if the integer type is the same size as the pointer type.
-    if (MaxRecurse && Q.DL && isa<PtrToIntInst>(LI) &&
-        Q.DL->getTypeSizeInBits(SrcTy) == DstTy->getPrimitiveSizeInBits()) {
+    if (MaxRecurse && isa<PtrToIntInst>(LI) &&
+        Q.DL.getTypeSizeInBits(SrcTy) == DstTy->getPrimitiveSizeInBits()) {
       if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
         // Transfer the cast to the constant.
         if (Value *V = SimplifyICmpInst(Pred, SrcOp,
@@ -3024,7 +3020,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               Instruction *CxtI) {
@@ -3140,7 +3136,7 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                              const DataLayout *DL,
+                              const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
@@ -3235,7 +3231,7 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
 }
 
 Value *llvm::SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
-                                const DataLayout *DL,
+                                const DataLayout &DL,
                                 const TargetLibraryInfo *TLI,
                                 const DominatorTree *DT, AssumptionCache *AC,
                                 const Instruction *CxtI) {
@@ -3269,10 +3265,10 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
       return Ops[0];
 
     Type *Ty = PtrTy->getElementType();
-    if (Q.DL && Ty->isSized()) {
+    if (Ty->isSized()) {
       Value *P;
       uint64_t C;
-      uint64_t TyAllocSize = Q.DL->getTypeAllocSize(Ty);
+      uint64_t TyAllocSize = Q.DL.getTypeAllocSize(Ty);
       // getelementptr P, N -> P if P points to a type of zero size.
       if (TyAllocSize == 0)
         return Ops[0];
@@ -3280,7 +3276,7 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
       // The following transforms are only safe if the ptrtoint cast
       // doesn't truncate the pointers.
       if (Ops[1]->getType()->getScalarSizeInBits() ==
-          Q.DL->getPointerSizeInBits(AS)) {
+          Q.DL.getPointerSizeInBits(AS)) {
         auto PtrToIntOrZero = [GEPTy](Value *P) -> Value * {
           if (match(P, m_Zero()))
             return Constant::getNullValue(GEPTy);
@@ -3325,7 +3321,7 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
   return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]), Ops.slice(1));
 }
 
-Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops, const DataLayout *DL,
+Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
@@ -3362,7 +3358,7 @@ static Value *SimplifyInsertValueInst(Value *Agg, Value *Val,
 }
 
 Value *llvm::SimplifyInsertValueInst(
-    Value *Agg, Value *Val, ArrayRef<unsigned> Idxs, const DataLayout *DL,
+    Value *Agg, Value *Val, ArrayRef<unsigned> Idxs, const DataLayout &DL,
     const TargetLibraryInfo *TLI, const DominatorTree *DT, AssumptionCache *AC,
     const Instruction *CxtI) {
   return ::SimplifyInsertValueInst(Agg, Val, Idxs, Query(DL, TLI, DT, AC, CxtI),
@@ -3410,7 +3406,7 @@ static Value *SimplifyTruncInst(Value *Op, Type *Ty, const Query &Q, unsigned) {
   return nullptr;
 }
 
-Value *llvm::SimplifyTruncInst(Value *Op, Type *Ty, const DataLayout *DL,
+Value *llvm::SimplifyTruncInst(Value *Op, Type *Ty, const DataLayout &DL,
                                const TargetLibraryInfo *TLI,
                                const DominatorTree *DT, AssumptionCache *AC,
                                const Instruction *CxtI) {
@@ -3507,7 +3503,7 @@ static Value *SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                           const DataLayout *DL, const TargetLibraryInfo *TLI,
+                           const DataLayout &DL, const TargetLibraryInfo *TLI,
                            const DominatorTree *DT, AssumptionCache *AC,
                            const Instruction *CxtI) {
   return ::SimplifyBinOp(Opcode, LHS, RHS, Query(DL, TLI, DT, AC, CxtI),
@@ -3515,7 +3511,7 @@ Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                             const FastMathFlags &FMF, const DataLayout *DL,
+                             const FastMathFlags &FMF, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
@@ -3533,7 +3529,7 @@ static Value *SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                             const DataLayout *DL, const TargetLibraryInfo *TLI,
+                             const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
   return ::SimplifyCmpInst(Predicate, LHS, RHS, Query(DL, TLI, DT, AC, CxtI),
@@ -3609,7 +3605,7 @@ static Value *SimplifyCall(Value *V, IterTy ArgBegin, IterTy ArgEnd,
 }
 
 Value *llvm::SimplifyCall(Value *V, User::op_iterator ArgBegin,
-                          User::op_iterator ArgEnd, const DataLayout *DL,
+                          User::op_iterator ArgEnd, const DataLayout &DL,
                           const TargetLibraryInfo *TLI, const DominatorTree *DT,
                           AssumptionCache *AC, const Instruction *CxtI) {
   return ::SimplifyCall(V, ArgBegin, ArgEnd, Query(DL, TLI, DT, AC, CxtI),
@@ -3617,7 +3613,7 @@ Value *llvm::SimplifyCall(Value *V, User::op_iterator ArgBegin,
 }
 
 Value *llvm::SimplifyCall(Value *V, ArrayRef<Value *> Args,
-                          const DataLayout *DL, const TargetLibraryInfo *TLI,
+                          const DataLayout &DL, const TargetLibraryInfo *TLI,
                           const DominatorTree *DT, AssumptionCache *AC,
                           const Instruction *CxtI) {
   return ::SimplifyCall(V, Args.begin(), Args.end(),
@@ -3626,7 +3622,7 @@ Value *llvm::SimplifyCall(Value *V, ArrayRef<Value *> Args,
 
 /// SimplifyInstruction - See if we can compute a simplified version of this
 /// instruction.  If not, this returns null.
-Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *DL,
+Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout &DL,
                                  const TargetLibraryInfo *TLI,
                                  const DominatorTree *DT, AssumptionCache *AC) {
   Value *Result;
@@ -3774,12 +3770,12 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *DL,
 /// This routine returns 'true' only when *it* simplifies something. The passed
 /// in simplified value does not count toward this.
 static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
-                                              const DataLayout *DL,
                                               const TargetLibraryInfo *TLI,
                                               const DominatorTree *DT,
                                               AssumptionCache *AC) {
   bool Simplified = false;
   SmallSetVector<Instruction *, 8> Worklist;
+  const DataLayout &DL = I->getModule()->getDataLayout();
 
   // If we have an explicit value to collapse to, do that round of the
   // simplification loop by hand initially.
@@ -3827,19 +3823,18 @@ static bool replaceAndRecursivelySimplifyImpl(Instruction *I, Value *SimpleV,
   return Simplified;
 }
 
-bool llvm::recursivelySimplifyInstruction(Instruction *I, const DataLayout *DL,
+bool llvm::recursivelySimplifyInstruction(Instruction *I,
                                           const TargetLibraryInfo *TLI,
                                           const DominatorTree *DT,
                                           AssumptionCache *AC) {
-  return replaceAndRecursivelySimplifyImpl(I, nullptr, DL, TLI, DT, AC);
+  return replaceAndRecursivelySimplifyImpl(I, nullptr, TLI, DT, AC);
 }
 
 bool llvm::replaceAndRecursivelySimplify(Instruction *I, Value *SimpleV,
-                                         const DataLayout *DL,
                                          const TargetLibraryInfo *TLI,
                                          const DominatorTree *DT,
                                          AssumptionCache *AC) {
   assert(I != SimpleV && "replaceAndRecursivelySimplify(X,X) is not valid!");
   assert(SimpleV && "Must provide a simplified value.");
-  return replaceAndRecursivelySimplifyImpl(I, SimpleV, DL, TLI, DT, AC);
+  return replaceAndRecursivelySimplifyImpl(I, SimpleV, TLI, DT, AC);
 }

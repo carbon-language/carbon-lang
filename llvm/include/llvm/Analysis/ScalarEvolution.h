@@ -232,10 +232,6 @@ namespace llvm {
     ///
     LoopInfo *LI;
 
-    /// The DataLayout information for the target we are targeting.
-    ///
-    const DataLayout *DL;
-
     /// TLI - The target library information for the target we are targeting.
     ///
     TargetLibraryInfo *TLI;

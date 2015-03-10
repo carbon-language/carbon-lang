@@ -29,7 +29,6 @@ namespace llvm {
 /// This pass computes, caches, and vends lazy value constraint information.
 class LazyValueInfo : public FunctionPass {
   AssumptionCache *AC;
-  const DataLayout *DL;
   class TargetLibraryInfo *TLI;
   DominatorTree *DT;
   void *PImpl;

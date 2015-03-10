@@ -259,23 +259,18 @@ namespace {
     bool ModuleLevelChanges;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
-    const DataLayout *DL;
     CloningDirector *Director;
     ValueMapTypeRemapper *TypeMapper;
     ValueMaterializer *Materializer;
 
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
-                          ValueToValueMapTy &valueMap,
-                          bool moduleLevelChanges,
-                          const char *nameSuffix, 
-                          ClonedCodeInfo *codeInfo,
-                          const DataLayout *DL,
+                          ValueToValueMapTy &valueMap, bool moduleLevelChanges,
+                          const char *nameSuffix, ClonedCodeInfo *codeInfo,
                           CloningDirector *Director)
-    : NewFunc(newFunc), OldFunc(oldFunc),
-      VMap(valueMap), ModuleLevelChanges(moduleLevelChanges),
-      NameSuffix(nameSuffix), CodeInfo(codeInfo), DL(DL),
-      Director(Director) {
+        : NewFunc(newFunc), OldFunc(oldFunc), VMap(valueMap),
+          ModuleLevelChanges(moduleLevelChanges), NameSuffix(nameSuffix),
+          CodeInfo(codeInfo), Director(Director) {
       // These are optional components.  The Director may return null.
       if (Director) {
         TypeMapper = Director->getTypeRemapper();
@@ -360,7 +355,8 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       // If we can simplify this instruction to some other value, simply add
       // a mapping to that value rather than inserting a new instruction into
       // the basic block.
-      if (Value *V = SimplifyInstruction(NewInst, DL)) {
+      if (Value *V =
+              SimplifyInstruction(NewInst, BB->getModule()->getDataLayout())) {
         // On the off-chance that this simplifies to an instruction in the old
         // function, map it back into the new function.
         if (Value *MappedV = VMap.lookup(V))
@@ -466,7 +462,6 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
                                      SmallVectorImpl<ReturnInst *> &Returns,
                                      const char *NameSuffix, 
                                      ClonedCodeInfo *CodeInfo,
-                                     const DataLayout *DL,
                                      CloningDirector *Director) {
   assert(NameSuffix && "NameSuffix cannot be null!");
 
@@ -488,7 +483,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
 #endif
 
   PruningFunctionCloner PFC(NewFunc, OldFunc, VMap, ModuleLevelChanges,
-                            NameSuffix, CodeInfo, DL, Director);
+                            NameSuffix, CodeInfo, Director);
   const BasicBlock *StartingBB;
   if (StartingInst)
     StartingBB = StartingInst->getParent();
@@ -626,7 +621,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
   // node).
   for (unsigned Idx = 0, Size = PHIToResolve.size(); Idx != Size; ++Idx)
     if (PHINode *PN = dyn_cast<PHINode>(VMap[PHIToResolve[Idx]]))
-      recursivelySimplifyInstruction(PN, DL);
+      recursivelySimplifyInstruction(PN);
 
   // Now that the inlined function body has been fully constructed, go through
   // and zap unconditional fall-through branches.  This happen all the time when
@@ -704,9 +699,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      SmallVectorImpl<ReturnInst*> &Returns,
                                      const char *NameSuffix, 
                                      ClonedCodeInfo *CodeInfo,
-                                     const DataLayout *DL,
                                      Instruction *TheCall) {
-  CloneAndPruneIntoFromInst(NewFunc, OldFunc, OldFunc->front().begin(),
-                            VMap, ModuleLevelChanges, Returns, NameSuffix,
-                            CodeInfo, DL, nullptr);
+  CloneAndPruneIntoFromInst(NewFunc, OldFunc, OldFunc->front().begin(), VMap,
+                            ModuleLevelChanges, Returns, NameSuffix, CodeInfo,
+                            nullptr);
 }

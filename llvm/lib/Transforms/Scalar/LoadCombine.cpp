@@ -53,13 +53,10 @@ struct LoadPOPPair {
 
 class LoadCombine : public BasicBlockPass {
   LLVMContext *C;
-  const DataLayout *DL;
   AliasAnalysis *AA;
 
 public:
-  LoadCombine()
-      : BasicBlockPass(ID),
-        C(nullptr), DL(nullptr), AA(nullptr) {
+  LoadCombine() : BasicBlockPass(ID), C(nullptr), AA(nullptr) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
   
@@ -86,11 +83,6 @@ private:
 bool LoadCombine::doInitialization(Function &F) {
   DEBUG(dbgs() << "LoadCombine function: " << F.getName() << "\n");
   C = &F.getContext();
-  DL = &F.getParent()->getDataLayout();
-  if (!DL) {
-    DEBUG(dbgs() << "  Skipping LoadCombine -- no target data!\n");
-    return false;
-  }
   return true;
 }
 
@@ -100,9 +92,10 @@ PointerOffsetPair LoadCombine::getPointerOffsetPair(LoadInst &LI) {
   POP.Offset = 0;
   while (isa<BitCastInst>(POP.Pointer) || isa<GetElementPtrInst>(POP.Pointer)) {
     if (auto *GEP = dyn_cast<GetElementPtrInst>(POP.Pointer)) {
-      unsigned BitWidth = DL->getPointerTypeSizeInBits(GEP->getType());
+      auto &DL = LI.getModule()->getDataLayout();
+      unsigned BitWidth = DL.getPointerTypeSizeInBits(GEP->getType());
       APInt Offset(BitWidth, 0);
-      if (GEP->accumulateConstantOffset(*DL, Offset))
+      if (GEP->accumulateConstantOffset(DL, Offset))
         POP.Offset += Offset.getZExtValue();
       else
         // Can't handle GEPs with variable indices.
@@ -145,7 +138,8 @@ bool LoadCombine::aggregateLoads(SmallVectorImpl<LoadPOPPair> &Loads) {
     if (PrevOffset == -1ull) {
       BaseLoad = L.Load;
       PrevOffset = L.POP.Offset;
-      PrevSize = DL->getTypeStoreSize(L.Load->getType());
+      PrevSize = L.Load->getModule()->getDataLayout().getTypeStoreSize(
+          L.Load->getType());
       AggregateLoads.push_back(L);
       continue;
     }
@@ -164,7 +158,8 @@ bool LoadCombine::aggregateLoads(SmallVectorImpl<LoadPOPPair> &Loads) {
       // FIXME: We may want to handle this case.
       continue;
     PrevOffset = L.POP.Offset;
-    PrevSize = DL->getTypeStoreSize(L.Load->getType());
+    PrevSize = L.Load->getModule()->getDataLayout().getTypeStoreSize(
+        L.Load->getType());
     AggregateLoads.push_back(L);
   }
   if (combineLoads(AggregateLoads))
@@ -215,7 +210,8 @@ bool LoadCombine::combineLoads(SmallVectorImpl<LoadPOPPair> &Loads) {
   for (const auto &L : Loads) {
     Builder->SetInsertPoint(L.Load);
     Value *V = Builder->CreateExtractInteger(
-        *DL, NewLoad, cast<IntegerType>(L.Load->getType()),
+        L.Load->getModule()->getDataLayout(), NewLoad,
+        cast<IntegerType>(L.Load->getType()),
         L.POP.Offset - Loads[0].POP.Offset, "combine.extract");
     L.Load->replaceAllUsesWith(V);
   }
@@ -225,13 +221,13 @@ bool LoadCombine::combineLoads(SmallVectorImpl<LoadPOPPair> &Loads) {
 }
 
 bool LoadCombine::runOnBasicBlock(BasicBlock &BB) {
-  if (skipOptnoneFunction(BB) || !DL)
+  if (skipOptnoneFunction(BB))
     return false;
 
   AA = &getAnalysis<AliasAnalysis>();
 
-  IRBuilder<true, TargetFolder>
-  TheBuilder(BB.getContext(), TargetFolder(DL));
+  IRBuilder<true, TargetFolder> TheBuilder(
+      BB.getContext(), TargetFolder(BB.getModule()->getDataLayout()));
   Builder = &TheBuilder;
 
   DenseMap<const Value *, SmallVector<LoadPOPPair, 8>> LoadMap;

@@ -84,11 +84,6 @@ public:
   /// know the sizes of the potential memory references.
   static uint64_t const UnknownSize = ~UINT64_C(0);
 
-  /// getDataLayout - Return a pointer to the current DataLayout object, or
-  /// null if no DataLayout object is available.
-  ///
-  const DataLayout *getDataLayout() const { return DL; }
-
   /// getTargetLibraryInfo - Return a pointer to the current TargetLibraryInfo
   /// object, or null if no TargetLibraryInfo object is available.
   ///

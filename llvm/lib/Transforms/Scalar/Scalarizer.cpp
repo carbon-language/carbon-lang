@@ -165,7 +165,7 @@ private:
   void gather(Instruction *, const ValueVector &);
   bool canTransferMetadata(unsigned Kind);
   void transferMetadata(Instruction *, const ValueVector &);
-  bool getVectorLayout(Type *, unsigned, VectorLayout &);
+  bool getVectorLayout(Type *, unsigned, VectorLayout &, const DataLayout &);
   bool finish();
 
   template<typename T> bool splitBinary(Instruction &, const T &);
@@ -173,7 +173,6 @@ private:
   ScatterMap Scattered;
   GatherList Gathered;
   unsigned ParallelLoopAccessMDKind;
-  const DataLayout *DL;
   bool ScalarizeLoadStore;
 };
 
@@ -248,7 +247,6 @@ bool Scalarizer::doInitialization(Module &M) {
 }
 
 bool Scalarizer::runOnFunction(Function &F) {
-  DL = &F.getParent()->getDataLayout();
   for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = BBI;
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE;) {
@@ -344,10 +342,7 @@ void Scalarizer::transferMetadata(Instruction *Op, const ValueVector &CV) {
 // Try to fill in Layout from Ty, returning true on success.  Alignment is
 // the alignment of the vector, or 0 if the ABI default should be used.
 bool Scalarizer::getVectorLayout(Type *Ty, unsigned Alignment,
-                                 VectorLayout &Layout) {
-  if (!DL)
-    return false;
-
+                                 VectorLayout &Layout, const DataLayout &DL) {
   // Make sure we're dealing with a vector.
   Layout.VecTy = dyn_cast<VectorType>(Ty);
   if (!Layout.VecTy)
@@ -355,15 +350,15 @@ bool Scalarizer::getVectorLayout(Type *Ty, unsigned Alignment,
 
   // Check that we're dealing with full-byte elements.
   Layout.ElemTy = Layout.VecTy->getElementType();
-  if (DL->getTypeSizeInBits(Layout.ElemTy) !=
-      DL->getTypeStoreSizeInBits(Layout.ElemTy))
+  if (DL.getTypeSizeInBits(Layout.ElemTy) !=
+      DL.getTypeStoreSizeInBits(Layout.ElemTy))
     return false;
 
   if (Alignment)
     Layout.VecAlign = Alignment;
   else
-    Layout.VecAlign = DL->getABITypeAlignment(Layout.VecTy);
-  Layout.ElemSize = DL->getTypeStoreSize(Layout.ElemTy);
+    Layout.VecAlign = DL.getABITypeAlignment(Layout.VecTy);
+  Layout.ElemSize = DL.getTypeStoreSize(Layout.ElemTy);
   return true;
 }
 
@@ -594,7 +589,8 @@ bool Scalarizer::visitLoadInst(LoadInst &LI) {
     return false;
 
   VectorLayout Layout;
-  if (!getVectorLayout(LI.getType(), LI.getAlignment(), Layout))
+  if (!getVectorLayout(LI.getType(), LI.getAlignment(), Layout,
+                       LI.getModule()->getDataLayout()))
     return false;
 
   unsigned NumElems = Layout.VecTy->getNumElements();
@@ -618,7 +614,8 @@ bool Scalarizer::visitStoreInst(StoreInst &SI) {
 
   VectorLayout Layout;
   Value *FullValue = SI.getValueOperand();
-  if (!getVectorLayout(FullValue->getType(), SI.getAlignment(), Layout))
+  if (!getVectorLayout(FullValue->getType(), SI.getAlignment(), Layout,
+                       SI.getModule()->getDataLayout()))
     return false;
 
   unsigned NumElems = Layout.VecTy->getNumElements();

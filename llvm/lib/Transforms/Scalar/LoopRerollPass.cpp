@@ -160,7 +160,6 @@ namespace {
     AliasAnalysis *AA;
     LoopInfo *LI;
     ScalarEvolution *SE;
-    const DataLayout *DL;
     TargetLibraryInfo *TLI;
     DominatorTree *DT;
 
@@ -367,10 +366,8 @@ namespace {
     struct DAGRootTracker {
       DAGRootTracker(LoopReroll *Parent, Loop *L, Instruction *IV,
                      ScalarEvolution *SE, AliasAnalysis *AA,
-                     TargetLibraryInfo *TLI, const DataLayout *DL)
-        : Parent(Parent), L(L), SE(SE), AA(AA), TLI(TLI),
-          DL(DL), IV(IV) {
-      }
+                     TargetLibraryInfo *TLI)
+          : Parent(Parent), L(L), SE(SE), AA(AA), TLI(TLI), IV(IV) {}
 
       /// Stage 1: Find all the DAG roots for the induction variable.
       bool findRoots();
@@ -416,7 +413,6 @@ namespace {
       ScalarEvolution *SE;
       AliasAnalysis *AA;
       TargetLibraryInfo *TLI;
-      const DataLayout *DL;
 
       // The loop induction variable.
       Instruction *IV;
@@ -1131,7 +1127,7 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
         // needed because otherwise isSafeToSpeculativelyExecute returns
         // false on PHI nodes.
         if (!isa<PHINode>(I) && !isSimpleLoadStore(I) &&
-            !isSafeToSpeculativelyExecute(I, DL))
+            !isSafeToSpeculativelyExecute(I))
           // Intervening instructions cause side effects.
           FutureSideEffects = true;
       }
@@ -1161,11 +1157,10 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
       // side effects, and this instruction might also, then we can't reorder
       // them, and this matching fails. As an exception, we allow the alias
       // set tracker to handle regular (simple) load/store dependencies.
-      if (FutureSideEffects &&
-            ((!isSimpleLoadStore(BaseInst) &&
-              !isSafeToSpeculativelyExecute(BaseInst, DL)) ||
-             (!isSimpleLoadStore(RootInst) &&
-              !isSafeToSpeculativelyExecute(RootInst, DL)))) {
+      if (FutureSideEffects && ((!isSimpleLoadStore(BaseInst) &&
+                                 !isSafeToSpeculativelyExecute(BaseInst)) ||
+                                (!isSimpleLoadStore(RootInst) &&
+                                 !isSafeToSpeculativelyExecute(RootInst)))) {
         DEBUG(dbgs() << "LRR: iteration root match failed at " << *BaseInst <<
                         " vs. " << *RootInst <<
                         " (side effects prevent reordering)\n");
@@ -1272,6 +1267,7 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
 
     ++J;
   }
+  const DataLayout &DL = Header->getModule()->getDataLayout();
 
   // We need to create a new induction variable for each different BaseInst.
   for (auto &DRS : RootSets) {
@@ -1284,7 +1280,7 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
                          SE->getConstant(RealIVSCEV->getType(), 1),
                          L, SCEV::FlagAnyWrap));
     { // Limit the lifetime of SCEVExpander.
-      SCEVExpander Expander(*SE, "reroll");
+      SCEVExpander Expander(*SE, DL, "reroll");
       Value *NewIV = Expander.expandCodeFor(H, IV->getType(), Header->begin());
 
       for (auto &KV : Uses) {
@@ -1324,7 +1320,7 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
     }
   }
 
-  SimplifyInstructionsInBlock(Header, DL, TLI);
+  SimplifyInstructionsInBlock(Header, TLI);
   DeleteDeadPHIs(Header, TLI);
 }
 
@@ -1448,7 +1444,7 @@ void LoopReroll::ReductionTracker::replaceSelected() {
 bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
                         const SCEV *IterCount,
                         ReductionTracker &Reductions) {
-  DAGRootTracker DAGRoots(this, L, IV, SE, AA, TLI, DL);
+  DAGRootTracker DAGRoots(this, L, IV, SE, AA, TLI);
 
   if (!DAGRoots.findRoots())
     return false;
@@ -1477,7 +1473,6 @@ bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  DL = &L->getHeader()->getModule()->getDataLayout();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   BasicBlock *Header = L->getHeader();

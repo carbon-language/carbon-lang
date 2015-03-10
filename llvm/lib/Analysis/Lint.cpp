@@ -98,8 +98,8 @@ namespace {
     void visitInsertElementInst(InsertElementInst &I);
     void visitUnreachableInst(UnreachableInst &I);
 
-    Value *findValue(Value *V, bool OffsetOk) const;
-    Value *findValueImpl(Value *V, bool OffsetOk,
+    Value *findValue(Value *V, const DataLayout &DL, bool OffsetOk) const;
+    Value *findValueImpl(Value *V, const DataLayout &DL, bool OffsetOk,
                          SmallPtrSetImpl<Value *> &Visited) const;
 
   public:
@@ -107,7 +107,6 @@ namespace {
     AliasAnalysis *AA;
     AssumptionCache *AC;
     DominatorTree *DT;
-    const DataLayout *DL;
     TargetLibraryInfo *TLI;
 
     std::string Messages;
@@ -175,7 +174,6 @@ bool Lint::runOnFunction(Function &F) {
   AA = &getAnalysis<AliasAnalysis>();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  DL = &F.getParent()->getDataLayout();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   visit(F);
   dbgs() << MessagesStr.str();
@@ -195,11 +193,13 @@ void Lint::visitFunction(Function &F) {
 void Lint::visitCallSite(CallSite CS) {
   Instruction &I = *CS.getInstruction();
   Value *Callee = CS.getCalledValue();
+  const DataLayout &DL = CS->getModule()->getDataLayout();
 
   visitMemoryReference(I, Callee, AliasAnalysis::UnknownSize,
                        0, nullptr, MemRef::Callee);
 
-  if (Function *F = dyn_cast<Function>(findValue(Callee, /*OffsetOk=*/false))) {
+  if (Function *F = dyn_cast<Function>(findValue(Callee, DL,
+                                                 /*OffsetOk=*/false))) {
     Assert(CS.getCallingConv() == F->getCallingConv(),
            "Undefined behavior: Caller and callee calling convention differ",
            &I);
@@ -248,8 +248,8 @@ void Lint::visitCallSite(CallSite CS) {
           Type *Ty =
             cast<PointerType>(Formal->getType())->getElementType();
           visitMemoryReference(I, Actual, AA->getTypeStoreSize(Ty),
-                               DL ? DL->getABITypeAlignment(Ty) : 0,
-                               Ty, MemRef::Read | MemRef::Write);
+                               DL.getABITypeAlignment(Ty), Ty,
+                               MemRef::Read | MemRef::Write);
         }
       }
     }
@@ -258,9 +258,10 @@ void Lint::visitCallSite(CallSite CS) {
   if (CS.isCall() && cast<CallInst>(CS.getInstruction())->isTailCall())
     for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI) {
-      Value *Obj = findValue(*AI, /*OffsetOk=*/true);
+      Value *Obj = findValue(*AI, DL, /*OffsetOk=*/true);
       Assert(!isa<AllocaInst>(Obj),
-             "Undefined behavior: Call with \"tail\" keyword references alloca",
+             "Undefined behavior: Call with \"tail\" keyword references "
+             "alloca",
              &I);
     }
 
@@ -286,8 +287,8 @@ void Lint::visitCallSite(CallSite CS) {
       // overlap is not distinguished from the case where nothing is known.
       uint64_t Size = 0;
       if (const ConstantInt *Len =
-            dyn_cast<ConstantInt>(findValue(MCI->getLength(),
-                                            /*OffsetOk=*/false)))
+              dyn_cast<ConstantInt>(findValue(MCI->getLength(), DL,
+                                              /*OffsetOk=*/false)))
         if (Len->getValue().isIntN(32))
           Size = Len->getValue().getZExtValue();
       Assert(AA->alias(MCI->getSource(), Size, MCI->getDest(), Size) !=
@@ -365,7 +366,8 @@ void Lint::visitReturnInst(ReturnInst &I) {
          "Unusual: Return statement in function with noreturn attribute", &I);
 
   if (Value *V = I.getReturnValue()) {
-    Value *Obj = findValue(V, /*OffsetOk=*/true);
+    Value *Obj =
+        findValue(V, F->getParent()->getDataLayout(), /*OffsetOk=*/true);
     Assert(!isa<AllocaInst>(Obj), "Unusual: Returning alloca value", &I);
   }
 }
@@ -380,7 +382,8 @@ void Lint::visitMemoryReference(Instruction &I,
   if (Size == 0)
     return;
 
-  Value *UnderlyingObject = findValue(Ptr, /*OffsetOk=*/true);
+  Value *UnderlyingObject =
+      findValue(Ptr, I.getModule()->getDataLayout(), /*OffsetOk=*/true);
   Assert(!isa<ConstantPointerNull>(UnderlyingObject),
          "Undefined behavior: Null pointer dereference", &I);
   Assert(!isa<UndefValue>(UnderlyingObject),
@@ -419,6 +422,7 @@ void Lint::visitMemoryReference(Instruction &I,
   // Check for buffer overflows and misalignment.
   // Only handles memory references that read/write something simple like an
   // alloca instruction or a global variable.
+  auto &DL = I.getModule()->getDataLayout();
   int64_t Offset = 0;
   if (Value *Base = GetPointerBaseWithConstantOffset(Ptr, Offset, DL)) {
     // OK, so the access is to a constant offset from Ptr.  Check that Ptr is
@@ -429,21 +433,21 @@ void Lint::visitMemoryReference(Instruction &I,
 
     if (AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
       Type *ATy = AI->getAllocatedType();
-      if (DL && !AI->isArrayAllocation() && ATy->isSized())
-        BaseSize = DL->getTypeAllocSize(ATy);
+      if (!AI->isArrayAllocation() && ATy->isSized())
+        BaseSize = DL.getTypeAllocSize(ATy);
       BaseAlign = AI->getAlignment();
-      if (DL && BaseAlign == 0 && ATy->isSized())
-        BaseAlign = DL->getABITypeAlignment(ATy);
+      if (BaseAlign == 0 && ATy->isSized())
+        BaseAlign = DL.getABITypeAlignment(ATy);
     } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Base)) {
       // If the global may be defined differently in another compilation unit
       // then don't warn about funky memory accesses.
       if (GV->hasDefinitiveInitializer()) {
         Type *GTy = GV->getType()->getElementType();
-        if (DL && GTy->isSized())
-          BaseSize = DL->getTypeAllocSize(GTy);
+        if (GTy->isSized())
+          BaseSize = DL.getTypeAllocSize(GTy);
         BaseAlign = GV->getAlignment();
-        if (DL && BaseAlign == 0 && GTy->isSized())
-          BaseAlign = DL->getABITypeAlignment(GTy);
+        if (BaseAlign == 0 && GTy->isSized())
+          BaseAlign = DL.getABITypeAlignment(GTy);
       }
     }
 
@@ -456,8 +460,8 @@ void Lint::visitMemoryReference(Instruction &I,
 
     // Accesses that say that the memory is more aligned than it is are not
     // defined.
-    if (DL && Align == 0 && Ty && Ty->isSized())
-      Align = DL->getABITypeAlignment(Ty);
+    if (Align == 0 && Ty && Ty->isSized())
+      Align = DL.getABITypeAlignment(Ty);
     Assert(!BaseAlign || Align <= MinAlign(BaseAlign, Offset),
            "Undefined behavior: Memory reference address is misaligned", &I);
   }
@@ -487,22 +491,23 @@ void Lint::visitSub(BinaryOperator &I) {
 }
 
 void Lint::visitLShr(BinaryOperator &I) {
-  if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(findValue(I.getOperand(1), /*OffsetOk=*/false)))
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(
+          findValue(I.getOperand(1), I.getModule()->getDataLayout(),
+                    /*OffsetOk=*/false)))
     Assert(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
            "Undefined result: Shift count out of range", &I);
 }
 
 void Lint::visitAShr(BinaryOperator &I) {
-  if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(findValue(I.getOperand(1), /*OffsetOk=*/false)))
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(findValue(
+          I.getOperand(1), I.getModule()->getDataLayout(), /*OffsetOk=*/false)))
     Assert(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
            "Undefined result: Shift count out of range", &I);
 }
 
 void Lint::visitShl(BinaryOperator &I) {
-  if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(findValue(I.getOperand(1), /*OffsetOk=*/false)))
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(findValue(
+          I.getOperand(1), I.getModule()->getDataLayout(), /*OffsetOk=*/false)))
     Assert(CI->getValue().ult(cast<IntegerType>(I.getType())->getBitWidth()),
            "Undefined result: Shift count out of range", &I);
 }
@@ -688,7 +693,7 @@ void Lint::visitEHEndCatch(IntrinsicInst *II) {
          II);
 }
 
-static bool isZero(Value *V, const DataLayout *DL, DominatorTree *DT,
+static bool isZero(Value *V, const DataLayout &DL, DominatorTree *DT,
                    AssumptionCache *AC) {
   // Assume undef could be zero.
   if (isa<UndefValue>(V))
@@ -729,22 +734,22 @@ static bool isZero(Value *V, const DataLayout *DL, DominatorTree *DT,
 }
 
 void Lint::visitSDiv(BinaryOperator &I) {
-  Assert(!isZero(I.getOperand(1), DL, DT, AC),
+  Assert(!isZero(I.getOperand(1), I.getModule()->getDataLayout(), DT, AC),
          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitUDiv(BinaryOperator &I) {
-  Assert(!isZero(I.getOperand(1), DL, DT, AC),
+  Assert(!isZero(I.getOperand(1), I.getModule()->getDataLayout(), DT, AC),
          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitSRem(BinaryOperator &I) {
-  Assert(!isZero(I.getOperand(1), DL, DT, AC),
+  Assert(!isZero(I.getOperand(1), I.getModule()->getDataLayout(), DT, AC),
          "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitURem(BinaryOperator &I) {
-  Assert(!isZero(I.getOperand(1), DL, DT, AC),
+  Assert(!isZero(I.getOperand(1), I.getModule()->getDataLayout(), DT, AC),
          "Undefined behavior: Division by zero", &I);
 }
 
@@ -771,17 +776,17 @@ void Lint::visitIndirectBrInst(IndirectBrInst &I) {
 }
 
 void Lint::visitExtractElementInst(ExtractElementInst &I) {
-  if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(findValue(I.getIndexOperand(),
-                                        /*OffsetOk=*/false)))
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(
+          findValue(I.getIndexOperand(), I.getModule()->getDataLayout(),
+                    /*OffsetOk=*/false)))
     Assert(CI->getValue().ult(I.getVectorOperandType()->getNumElements()),
            "Undefined result: extractelement index out of range", &I);
 }
 
 void Lint::visitInsertElementInst(InsertElementInst &I) {
-  if (ConstantInt *CI =
-        dyn_cast<ConstantInt>(findValue(I.getOperand(2),
-                                        /*OffsetOk=*/false)))
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(
+          findValue(I.getOperand(2), I.getModule()->getDataLayout(),
+                    /*OffsetOk=*/false)))
     Assert(CI->getValue().ult(I.getType()->getNumElements()),
            "Undefined result: insertelement index out of range", &I);
 }
@@ -802,13 +807,13 @@ void Lint::visitUnreachableInst(UnreachableInst &I) {
 /// Most analysis passes don't require this logic, because instcombine
 /// will simplify most of these kinds of things away. But it's a goal of
 /// this Lint pass to be useful even on non-optimized IR.
-Value *Lint::findValue(Value *V, bool OffsetOk) const {
+Value *Lint::findValue(Value *V, const DataLayout &DL, bool OffsetOk) const {
   SmallPtrSet<Value *, 4> Visited;
-  return findValueImpl(V, OffsetOk, Visited);
+  return findValueImpl(V, DL, OffsetOk, Visited);
 }
 
 /// findValueImpl - Implementation helper for findValue.
-Value *Lint::findValueImpl(Value *V, bool OffsetOk,
+Value *Lint::findValueImpl(Value *V, const DataLayout &DL, bool OffsetOk,
                            SmallPtrSetImpl<Value *> &Visited) const {
   // Detect self-referential values.
   if (!Visited.insert(V).second)
@@ -829,7 +834,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
         break;
       if (Value *U = FindAvailableLoadedValue(L->getPointerOperand(),
                                               BB, BBI, 6, AA))
-        return findValueImpl(U, OffsetOk, Visited);
+        return findValueImpl(U, DL, OffsetOk, Visited);
       if (BBI != BB->begin()) break;
       BB = BB->getUniquePredecessor();
       if (!BB) break;
@@ -838,40 +843,38 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     if (Value *W = PN->hasConstantValue())
       if (W != V)
-        return findValueImpl(W, OffsetOk, Visited);
+        return findValueImpl(W, DL, OffsetOk, Visited);
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
     if (CI->isNoopCast(DL))
-      return findValueImpl(CI->getOperand(0), OffsetOk, Visited);
+      return findValueImpl(CI->getOperand(0), DL, OffsetOk, Visited);
   } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
     if (Value *W = FindInsertedValue(Ex->getAggregateOperand(),
                                      Ex->getIndices()))
       if (W != V)
-        return findValueImpl(W, OffsetOk, Visited);
+        return findValueImpl(W, DL, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     // Same as above, but for ConstantExpr instead of Instruction.
     if (Instruction::isCast(CE->getOpcode())) {
       if (CastInst::isNoopCast(Instruction::CastOps(CE->getOpcode()),
-                               CE->getOperand(0)->getType(),
-                               CE->getType(),
-                               DL ? DL->getIntPtrType(V->getType()) :
-                                    Type::getInt64Ty(V->getContext())))
-        return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
+                               CE->getOperand(0)->getType(), CE->getType(),
+                               DL.getIntPtrType(V->getType())))
+        return findValueImpl(CE->getOperand(0), DL, OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {
       ArrayRef<unsigned> Indices = CE->getIndices();
       if (Value *W = FindInsertedValue(CE->getOperand(0), Indices))
         if (W != V)
-          return findValueImpl(W, OffsetOk, Visited);
+          return findValueImpl(W, DL, OffsetOk, Visited);
     }
   }
 
   // As a last resort, try SimplifyInstruction or constant folding.
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Value *W = SimplifyInstruction(Inst, DL, TLI, DT, AC))
-      return findValueImpl(W, OffsetOk, Visited);
+      return findValueImpl(W, DL, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (Value *W = ConstantFoldConstantExpression(CE, DL, TLI))
       if (W != V)
-        return findValueImpl(W, OffsetOk, Visited);
+        return findValueImpl(W, DL, OffsetOk, Visited);
   }
 
   return V;

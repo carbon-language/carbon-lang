@@ -150,7 +150,7 @@ public:
     SmallVector<unsigned, 2> AliasSetId;
   };
 
-  LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
+  LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout &DL,
                  const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                  DominatorTree *DT, const ValueToValueMap &Strides);
 
@@ -209,7 +209,7 @@ private:
   RuntimePointerCheck PtrRtCheck;
   Loop *TheLoop;
   ScalarEvolution *SE;
-  const DataLayout *DL;
+  const DataLayout &DL;
   const TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   DominatorTree *DT;
@@ -280,7 +280,6 @@ private:
 
   // The used analysis passes.
   ScalarEvolution *SE;
-  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   DominatorTree *DT;

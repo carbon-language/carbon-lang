@@ -77,7 +77,6 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DominatorTree *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  const DataLayout *DL = &L->getHeader()->getModule()->getDataLayout();
   const TargetLibraryInfo *TLI =
       &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(
@@ -109,6 +108,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       WorklistItem Item = VisitStack.pop_back_val();
       BasicBlock *BB = Item.getPointer();
       bool IsSubloopHeader = Item.getInt();
+      const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
 
       // Simplify instructions in the current basic block.
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {

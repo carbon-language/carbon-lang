@@ -312,9 +312,9 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
 /// SimplifyWithOpReplaced - See if V simplifies when its operand Op is
 /// replaced with RepOp.
 static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
-                                     const DataLayout *TD,
                                      const TargetLibraryInfo *TLI,
-                                     DominatorTree *DT, AssumptionCache *AC) {
+                                     const DataLayout &DL, DominatorTree *DT,
+                                     AssumptionCache *AC) {
   // Trivial replacement.
   if (V == Op)
     return RepOp;
@@ -326,18 +326,18 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
   // If this is a binary operator, try to simplify it with the replaced op.
   if (BinaryOperator *B = dyn_cast<BinaryOperator>(I)) {
     if (B->getOperand(0) == Op)
-      return SimplifyBinOp(B->getOpcode(), RepOp, B->getOperand(1), TD, TLI);
+      return SimplifyBinOp(B->getOpcode(), RepOp, B->getOperand(1), DL, TLI);
     if (B->getOperand(1) == Op)
-      return SimplifyBinOp(B->getOpcode(), B->getOperand(0), RepOp, TD, TLI);
+      return SimplifyBinOp(B->getOpcode(), B->getOperand(0), RepOp, DL, TLI);
   }
 
   // Same for CmpInsts.
   if (CmpInst *C = dyn_cast<CmpInst>(I)) {
     if (C->getOperand(0) == Op)
-      return SimplifyCmpInst(C->getPredicate(), RepOp, C->getOperand(1), TD,
+      return SimplifyCmpInst(C->getPredicate(), RepOp, C->getOperand(1), DL,
                              TLI, DT, AC);
     if (C->getOperand(1) == Op)
-      return SimplifyCmpInst(C->getPredicate(), C->getOperand(0), RepOp, TD,
+      return SimplifyCmpInst(C->getPredicate(), C->getOperand(0), RepOp, DL,
                              TLI, DT, AC);
   }
 
@@ -361,14 +361,14 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
     if (ConstOps.size() == I->getNumOperands()) {
       if (CmpInst *C = dyn_cast<CmpInst>(I))
         return ConstantFoldCompareInstOperands(C->getPredicate(), ConstOps[0],
-                                               ConstOps[1], TD, TLI);
+                                               ConstOps[1], DL, TLI);
 
       if (LoadInst *LI = dyn_cast<LoadInst>(I))
         if (!LI->isVolatile())
-          return ConstantFoldLoadFromConstPtr(ConstOps[0], TD);
+          return ConstantFoldLoadFromConstPtr(ConstOps[0], DL);
 
-      return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                      ConstOps, TD, TLI);
+      return ConstantFoldInstOperands(I->getOpcode(), I->getType(), ConstOps,
+                                      DL, TLI);
     }
   }
 
@@ -635,25 +635,25 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   // arms of the select. See if substituting this value into the arm and
   // simplifying the result yields the same value as the other arm.
   if (Pred == ICmpInst::ICMP_EQ) {
-    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, DL, TLI, DT, AC) ==
+    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             TrueVal ||
-        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, DL, TLI, DT, AC) ==
+        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             TrueVal)
       return ReplaceInstUsesWith(SI, FalseVal);
-    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, DL, TLI, DT, AC) ==
+    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             FalseVal ||
-        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, DL, TLI, DT, AC) ==
+        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             FalseVal)
       return ReplaceInstUsesWith(SI, FalseVal);
   } else if (Pred == ICmpInst::ICMP_NE) {
-    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, DL, TLI, DT, AC) ==
+    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             FalseVal ||
-        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, DL, TLI, DT, AC) ==
+        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             FalseVal)
       return ReplaceInstUsesWith(SI, TrueVal);
-    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, DL, TLI, DT, AC) ==
+    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             TrueVal ||
-        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, DL, TLI, DT, AC) ==
+        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             TrueVal)
       return ReplaceInstUsesWith(SI, TrueVal);
   }

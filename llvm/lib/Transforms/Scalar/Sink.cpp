@@ -36,7 +36,6 @@ namespace {
     DominatorTree *DT;
     LoopInfo *LI;
     AliasAnalysis *AA;
-    const DataLayout *DL;
 
   public:
     static char ID; // Pass identification
@@ -101,7 +100,6 @@ bool Sinking::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   AA = &getAnalysis<AliasAnalysis>();
-  DL = &F.getParent()->getDataLayout();
 
   bool MadeChange, EverMadeChange = false;
 
@@ -196,7 +194,7 @@ bool Sinking::IsAcceptableTarget(Instruction *Inst,
   if (SuccToSinkTo->getUniquePredecessor() != Inst->getParent()) {
     // We cannot sink a load across a critical edge - there may be stores in
     // other code paths.
-    if (!isSafeToSpeculativelyExecute(Inst, DL))
+    if (!isSafeToSpeculativelyExecute(Inst))
       return false;
 
     // We don't want to sink across a critical edge if we don't dominate the

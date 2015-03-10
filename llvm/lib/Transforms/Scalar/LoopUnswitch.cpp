@@ -42,6 +42,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1082,6 +1083,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
 /// pass.
 ///
 void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
   while (!Worklist.empty()) {
     Instruction *I = Worklist.back();
     Worklist.pop_back();
@@ -1104,7 +1106,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     // See if instruction simplification can hack this up.  This is common for
     // things like "select false, X, Y" after unswitching made the condition be
     // 'false'.  TODO: update the domtree properly so we can pass it here.
-    if (Value *V = SimplifyInstruction(I))
+    if (Value *V = SimplifyInstruction(I, DL))
       if (LI->replacementPreservesLCSSAForm(I, V)) {
         ReplaceUsesOfWith(I, V, Worklist, L, LPM);
         continue;

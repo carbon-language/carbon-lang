@@ -204,11 +204,9 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
 /// TODO: When ScalarEvolution gets a SCEVSDivExpr, this can be made
 /// unnecessary; in its place, just signed-divide Ops[i] by the scale and
 /// check to see if the divide was folded.
-static bool FactorOutConstant(const SCEV *&S,
-                              const SCEV *&Remainder,
-                              const SCEV *Factor,
-                              ScalarEvolution &SE,
-                              const DataLayout *DL) {
+static bool FactorOutConstant(const SCEV *&S, const SCEV *&Remainder,
+                              const SCEV *Factor, ScalarEvolution &SE,
+                              const DataLayout &DL) {
   // Everything is divisible by one.
   if (Factor->isOne())
     return true;
@@ -248,35 +246,17 @@ static bool FactorOutConstant(const SCEV *&S,
   // In a Mul, check if there is a constant operand which is a multiple
   // of the given factor.
   if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
-    if (DL) {
-      // With DataLayout, the size is known. Check if there is a constant
-      // operand which is a multiple of the given factor. If so, we can
-      // factor it.
-      const SCEVConstant *FC = cast<SCEVConstant>(Factor);
-      if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
-        if (!C->getValue()->getValue().srem(FC->getValue()->getValue())) {
-          SmallVector<const SCEV *, 4> NewMulOps(M->op_begin(), M->op_end());
-          NewMulOps[0] =
-            SE.getConstant(C->getValue()->getValue().sdiv(
-                                                   FC->getValue()->getValue()));
-          S = SE.getMulExpr(NewMulOps);
-          return true;
-        }
-    } else {
-      // Without DataLayout, check if Factor can be factored out of any of the
-      // Mul's operands. If so, we can just remove it.
-      for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
-        const SCEV *SOp = M->getOperand(i);
-        const SCEV *Remainder = SE.getConstant(SOp->getType(), 0);
-        if (FactorOutConstant(SOp, Remainder, Factor, SE, DL) &&
-            Remainder->isZero()) {
-          SmallVector<const SCEV *, 4> NewMulOps(M->op_begin(), M->op_end());
-          NewMulOps[i] = SOp;
-          S = SE.getMulExpr(NewMulOps);
-          return true;
-        }
+    // Size is known, check if there is a constant operand which is a multiple
+    // of the given factor. If so, we can factor it.
+    const SCEVConstant *FC = cast<SCEVConstant>(Factor);
+    if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
+      if (!C->getValue()->getValue().srem(FC->getValue()->getValue())) {
+        SmallVector<const SCEV *, 4> NewMulOps(M->op_begin(), M->op_end());
+        NewMulOps[0] = SE.getConstant(
+            C->getValue()->getValue().sdiv(FC->getValue()->getValue()));
+        S = SE.getMulExpr(NewMulOps);
+        return true;
       }
-    }
   }
 
   // In an AddRec, check if both start and step are divisible.
@@ -402,9 +382,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   // without the other.
   SplitAddRecs(Ops, Ty, SE);
 
-  Type *IntPtrTy = SE.DL
-                 ? SE.DL->getIntPtrType(PTy)
-                 : Type::getInt64Ty(PTy->getContext());
+  Type *IntPtrTy = DL.getIntPtrType(PTy);
 
   // Descend down the pointer's type and attempt to convert the other
   // operands into GEP indices, at each level. The first index in a GEP
@@ -422,7 +400,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
         for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
           const SCEV *Op = Ops[i];
           const SCEV *Remainder = SE.getConstant(Ty, 0);
-          if (FactorOutConstant(Op, Remainder, ElSize, SE, SE.DL)) {
+          if (FactorOutConstant(Op, Remainder, ElSize, SE, DL)) {
             // Op now has ElSize factored out.
             ScaledOps.push_back(Op);
             if (!Remainder->isZero())
@@ -456,43 +434,25 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
       bool FoundFieldNo = false;
       // An empty struct has no fields.
       if (STy->getNumElements() == 0) break;
-      if (SE.DL) {
-        // With DataLayout, field offsets are known. See if a constant offset
-        // falls within any of the struct fields.
-        if (Ops.empty()) break;
-        if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[0]))
-          if (SE.getTypeSizeInBits(C->getType()) <= 64) {
-            const StructLayout &SL = *SE.DL->getStructLayout(STy);
-            uint64_t FullOffset = C->getValue()->getZExtValue();
-            if (FullOffset < SL.getSizeInBytes()) {
-              unsigned ElIdx = SL.getElementContainingOffset(FullOffset);
-              GepIndices.push_back(
-                  ConstantInt::get(Type::getInt32Ty(Ty->getContext()), ElIdx));
-              ElTy = STy->getTypeAtIndex(ElIdx);
-              Ops[0] =
+      // Field offsets are known. See if a constant offset falls within any of
+      // the struct fields.
+      if (Ops.empty())
+        break;
+      if (const SCEVConstant *C = dyn_cast<SCEVConstant>(Ops[0]))
+        if (SE.getTypeSizeInBits(C->getType()) <= 64) {
+          const StructLayout &SL = *DL.getStructLayout(STy);
+          uint64_t FullOffset = C->getValue()->getZExtValue();
+          if (FullOffset < SL.getSizeInBytes()) {
+            unsigned ElIdx = SL.getElementContainingOffset(FullOffset);
+            GepIndices.push_back(
+                ConstantInt::get(Type::getInt32Ty(Ty->getContext()), ElIdx));
+            ElTy = STy->getTypeAtIndex(ElIdx);
+            Ops[0] =
                 SE.getConstant(Ty, FullOffset - SL.getElementOffset(ElIdx));
-              AnyNonZeroIndices = true;
-              FoundFieldNo = true;
-            }
+            AnyNonZeroIndices = true;
+            FoundFieldNo = true;
           }
-      } else {
-        // Without DataLayout, just check for an offsetof expression of the
-        // appropriate struct type.
-        for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-          if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Ops[i])) {
-            Type *CTy;
-            Constant *FieldNo;
-            if (U->isOffsetOf(CTy, FieldNo) && CTy == STy) {
-              GepIndices.push_back(FieldNo);
-              ElTy =
-                STy->getTypeAtIndex(cast<ConstantInt>(FieldNo)->getZExtValue());
-              Ops[i] = SE.getConstant(Ty, 0);
-              AnyNonZeroIndices = true;
-              FoundFieldNo = true;
-              break;
-            }
-          }
-      }
+        }
       // If no struct field offsets were found, tentatively assume that
       // field zero was selected (since the zero offset would obviously
       // be folded away).
@@ -1746,7 +1706,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
 
     // Fold constant phis. They may be congruent to other constant phis and
     // would confuse the logic below that expects proper IVs.
-    if (Value *V = SimplifyInstruction(Phi, SE.DL, SE.TLI, SE.DT, SE.AC)) {
+    if (Value *V = SimplifyInstruction(Phi, DL, SE.TLI, SE.DT, SE.AC)) {
       Phi->replaceAllUsesWith(V);
       DeadInsts.push_back(Phi);
       ++NumElim;

@@ -31,6 +31,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
@@ -339,10 +340,11 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   BasicBlock *PEnd = SplitEdge(PH, Header, DT, LI);
   BasicBlock *NewPH = SplitBlock(PEnd, PEnd->getTerminator(), DT, LI);
   BranchInst *PreHeaderBR = cast<BranchInst>(PH->getTerminator());
+  const DataLayout &DL = Header->getModule()->getDataLayout();
 
   // Compute the number of extra iterations required, which is:
   //  extra iterations = run-time trip count % (loop unroll factor + 1)
-  SCEVExpander Expander(*SE, "loop-unroll");
+  SCEVExpander Expander(*SE, DL, "loop-unroll");
   Value *TripCount = Expander.expandCodeFor(TripCountSC, TripCountSC->getType(),
                                             PreHeaderBR);
   Value *BECount = Expander.expandCodeFor(BECountSC, BECountSC->getType(),

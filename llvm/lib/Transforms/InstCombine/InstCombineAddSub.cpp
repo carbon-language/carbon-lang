@@ -891,7 +891,7 @@ static bool checkRippleForAdd(const APInt &Op0KnownZero,
 /// This basically requires proving that the add in the original type would not
 /// overflow to change the sign bit or have a carry out.
 bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS,
-                                            Instruction *CxtI) {
+                                            Instruction &CxtI) {
   // There are different heuristics we can use for this.  Here are some simple
   // ones.
 
@@ -909,18 +909,18 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS,
   //
   // Since the carry into the most significant position is always equal to
   // the carry out of the addition, there is no signed overflow.
-  if (ComputeNumSignBits(LHS, 0, CxtI) > 1 &&
-      ComputeNumSignBits(RHS, 0, CxtI) > 1)
+  if (ComputeNumSignBits(LHS, 0, &CxtI) > 1 &&
+      ComputeNumSignBits(RHS, 0, &CxtI) > 1)
     return true;
 
   unsigned BitWidth = LHS->getType()->getScalarSizeInBits();
   APInt LHSKnownZero(BitWidth, 0);
   APInt LHSKnownOne(BitWidth, 0);
-  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, CxtI);
+  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, &CxtI);
 
   APInt RHSKnownZero(BitWidth, 0);
   APInt RHSKnownOne(BitWidth, 0);
-  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, CxtI);
+  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, &CxtI);
 
   // Addition of two 2's compliment numbers having opposite signs will never
   // overflow.
@@ -943,21 +943,21 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS,
 /// overflow to change the sign bit or have a carry out.
 /// TODO: Handle this for Vectors.
 bool InstCombiner::WillNotOverflowSignedSub(Value *LHS, Value *RHS,
-                                            Instruction *CxtI) {
+                                            Instruction &CxtI) {
   // If LHS and RHS each have at least two sign bits, the subtraction
   // cannot overflow.
-  if (ComputeNumSignBits(LHS, 0, CxtI) > 1 &&
-      ComputeNumSignBits(RHS, 0, CxtI) > 1)
+  if (ComputeNumSignBits(LHS, 0, &CxtI) > 1 &&
+      ComputeNumSignBits(RHS, 0, &CxtI) > 1)
     return true;
 
   unsigned BitWidth = LHS->getType()->getScalarSizeInBits();
   APInt LHSKnownZero(BitWidth, 0);
   APInt LHSKnownOne(BitWidth, 0);
-  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, CxtI);
+  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, &CxtI);
 
   APInt RHSKnownZero(BitWidth, 0);
   APInt RHSKnownOne(BitWidth, 0);
-  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, CxtI);
+  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, &CxtI);
 
   // Subtraction of two 2's compliment numbers having identical signs will
   // never overflow.
@@ -972,12 +972,14 @@ bool InstCombiner::WillNotOverflowSignedSub(Value *LHS, Value *RHS,
 /// \brief Return true if we can prove that:
 ///    (sub LHS, RHS)  === (sub nuw LHS, RHS)
 bool InstCombiner::WillNotOverflowUnsignedSub(Value *LHS, Value *RHS,
-                                              Instruction *CxtI) {
+                                              Instruction &CxtI) {
   // If the LHS is negative and the RHS is non-negative, no unsigned wrap.
   bool LHSKnownNonNegative, LHSKnownNegative;
   bool RHSKnownNonNegative, RHSKnownNegative;
-  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, /*Depth=*/0, CxtI);
-  ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, /*Depth=*/0, CxtI);
+  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, /*Depth=*/0,
+                 &CxtI);
+  ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, /*Depth=*/0,
+                 &CxtI);
   if (LHSKnownNegative && RHSKnownNonNegative)
     return true;
 
@@ -1046,15 +1048,15 @@ static Value *checkForNegativeOperand(BinaryOperator &I,
 }
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
-   bool Changed = SimplifyAssociativeOrCommutative(I);
-   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+  bool Changed = SimplifyAssociativeOrCommutative(I);
+  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-   if (Value *V = SimplifyVectorOp(I))
-     return ReplaceInstUsesWith(I, V);
+  if (Value *V = SimplifyVectorOp(I))
+    return ReplaceInstUsesWith(I, V);
 
-   if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
-                                  I.hasNoUnsignedWrap(), DL, TLI, DT, AC))
-     return ReplaceInstUsesWith(I, V);
+  if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
+                                 I.hasNoUnsignedWrap(), DL, TLI, DT, AC))
+    return ReplaceInstUsesWith(I, V);
 
    // (A*B)+(A*C) -> A*(B+C) etc
   if (Value *V = SimplifyUsingDistributiveLaws(I))
@@ -1243,7 +1245,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
       if (LHSConv->hasOneUse() &&
           ConstantExpr::getSExt(CI, I.getType()) == RHSC &&
-          WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI, &I)) {
+          WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI, I)) {
         // Insert the new, smaller add.
         Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                               CI, "addconv");
@@ -1256,10 +1258,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       // Only do this if x/y have the same type, if at last one of them has a
       // single use (so we don't increase the number of sexts), and if the
       // integer add will not overflow.
-      if (LHSConv->getOperand(0)->getType()==RHSConv->getOperand(0)->getType()&&
+      if (LHSConv->getOperand(0)->getType() ==
+              RHSConv->getOperand(0)->getType() &&
           (LHSConv->hasOneUse() || RHSConv->hasOneUse()) &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0),
-                                   RHSConv->getOperand(0), &I)) {
+                                   RHSConv->getOperand(0), I)) {
         // Insert the new integer add.
         Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                              RHSConv->getOperand(0), "addconv");
@@ -1307,7 +1310,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // TODO(jingyue): Consider WillNotOverflowSignedAdd and
   // WillNotOverflowUnsignedAdd to reduce the number of invocations of
   // computeKnownBits.
-  if (!I.hasNoSignedWrap() && WillNotOverflowSignedAdd(LHS, RHS, &I)) {
+  if (!I.hasNoSignedWrap() && WillNotOverflowSignedAdd(LHS, RHS, I)) {
     Changed = true;
     I.setHasNoSignedWrap(true);
   }
@@ -1371,7 +1374,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
       ConstantExpr::getFPToSI(CFP, LHSConv->getOperand(0)->getType());
       if (LHSConv->hasOneUse() &&
           ConstantExpr::getSIToFP(CI, I.getType()) == CFP &&
-          WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI, &I)) {
+          WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI, I)) {
         // Insert the new integer add.
         Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                               CI, "addconv");
@@ -1384,10 +1387,11 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
       // Only do this if x/y have the same type, if at last one of them has a
       // single use (so we don't increase the number of int->fp conversions),
       // and if the integer add will not overflow.
-      if (LHSConv->getOperand(0)->getType()==RHSConv->getOperand(0)->getType()&&
+      if (LHSConv->getOperand(0)->getType() ==
+              RHSConv->getOperand(0)->getType() &&
           (LHSConv->hasOneUse() || RHSConv->hasOneUse()) &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0),
-                                   RHSConv->getOperand(0), &I)) {
+                                   RHSConv->getOperand(0), I)) {
         // Insert the new integer add.
         Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                               RHSConv->getOperand(0),"addconv");
@@ -1436,8 +1440,6 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
 ///
 Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
                                                Type *Ty) {
-  assert(DL && "Must have target data info for this");
-
   // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize
   // this.
   bool Swapped = false;
@@ -1662,26 +1664,24 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
   // Optimize pointer differences into the same array into a size.  Consider:
   //  &A[10] - &A[0]: we should compile this to "10".
-  if (DL) {
-    Value *LHSOp, *RHSOp;
-    if (match(Op0, m_PtrToInt(m_Value(LHSOp))) &&
-        match(Op1, m_PtrToInt(m_Value(RHSOp))))
-      if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
-        return ReplaceInstUsesWith(I, Res);
+  Value *LHSOp, *RHSOp;
+  if (match(Op0, m_PtrToInt(m_Value(LHSOp))) &&
+      match(Op1, m_PtrToInt(m_Value(RHSOp))))
+    if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
+      return ReplaceInstUsesWith(I, Res);
 
-    // trunc(p)-trunc(q) -> trunc(p-q)
-    if (match(Op0, m_Trunc(m_PtrToInt(m_Value(LHSOp)))) &&
-        match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
-      if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
-        return ReplaceInstUsesWith(I, Res);
-      }
+  // trunc(p)-trunc(q) -> trunc(p-q)
+  if (match(Op0, m_Trunc(m_PtrToInt(m_Value(LHSOp)))) &&
+      match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
+    if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
+      return ReplaceInstUsesWith(I, Res);
 
   bool Changed = false;
-  if (!I.hasNoSignedWrap() && WillNotOverflowSignedSub(Op0, Op1, &I)) {
+  if (!I.hasNoSignedWrap() && WillNotOverflowSignedSub(Op0, Op1, I)) {
     Changed = true;
     I.setHasNoSignedWrap(true);
   }
-  if (!I.hasNoUnsignedWrap() && WillNotOverflowUnsignedSub(Op0, Op1, &I)) {
+  if (!I.hasNoUnsignedWrap() && WillNotOverflowUnsignedSub(Op0, Op1, I)) {
     Changed = true;
     I.setHasNoUnsignedWrap(true);
   }

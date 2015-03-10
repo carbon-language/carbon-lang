@@ -454,10 +454,9 @@ bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
 
   BasicBlock::iterator II = LPad;
 
-  CloneAndPruneIntoFromInst(
-      Handler, SrcFn, ++II, VMap,
-      /*ModuleLevelChanges=*/false, Returns, "", &InlinedFunctionInfo,
-      &SrcFn->getParent()->getDataLayout(), Director.get());
+  CloneAndPruneIntoFromInst(Handler, SrcFn, ++II, VMap,
+                            /*ModuleLevelChanges=*/false, Returns, "",
+                            &InlinedFunctionInfo, Director.get());
 
   // Move all the instructions in the first cloned block into our entry block.
   BasicBlock *FirstClonedBB = std::next(Function::iterator(Entry));

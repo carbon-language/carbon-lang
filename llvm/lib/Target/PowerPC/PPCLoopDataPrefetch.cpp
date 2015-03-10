@@ -211,7 +211,7 @@ bool PPCLoopDataPrefetch::runOnLoop(Loop *L) {
       PrefLoads.push_back(std::make_pair(MemI, LSCEVAddRec));
 
       Type *I8Ptr = Type::getInt8PtrTy((*I)->getContext(), PtrAddrSpace);
-      SCEVExpander SCEVE(*SE, "prefaddr");
+      SCEVExpander SCEVE(*SE, J->getModule()->getDataLayout(), "prefaddr");
       Value *PrefPtrValue = SCEVE.expandCodeFor(NextLSCEV, I8Ptr, MemI);
 
       IRBuilder<> Builder(MemI);

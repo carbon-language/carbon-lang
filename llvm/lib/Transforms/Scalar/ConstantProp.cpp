@@ -22,7 +22,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/IR/Constant.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/Pass.h"
@@ -77,7 +76,7 @@ bool ConstantPropagation::runOnFunction(Function &F) {
     WorkList.erase(WorkList.begin());    // Get an element from the worklist...
 
     if (!I->use_empty())                 // Don't muck with dead instructions...
-      if (Constant *C = ConstantFoldInstruction(I, &DL, TLI)) {
+      if (Constant *C = ConstantFoldInstruction(I, DL, TLI)) {
         // Add all of the users of this instruction to the worklist, they might
         // be constant propagatable now...
         for (User *U : I->users())

@@ -199,18 +199,15 @@ class ConstantOffsetExtractor {
   /// new index representing the remainder (equal to the original index minus
   /// the constant offset), or nullptr if we cannot extract a constant offset.
   /// \p Idx    The given GEP index
-  /// \p DL     The datalayout of the module
   /// \p GEP    The given GEP
-  static Value *Extract(Value *Idx, const DataLayout *DL,
-                        GetElementPtrInst *GEP);
+   static Value *Extract(Value *Idx, GetElementPtrInst *GEP);
   /// Looks for a constant offset from the given GEP index without extracting
   /// it. It returns the numeric value of the extracted constant offset (0 if
   /// failed). The meaning of the arguments are the same as Extract.
-  static int64_t Find(Value *Idx, const DataLayout *DL, GetElementPtrInst *GEP);
+   static int64_t Find(Value *Idx, GetElementPtrInst *GEP);
 
  private:
-  ConstantOffsetExtractor(const DataLayout *Layout, Instruction *InsertionPt)
-      : DL(Layout), IP(InsertionPt) {}
+   ConstantOffsetExtractor(Instruction *InsertionPt) : IP(InsertionPt) {}
   /// Searches the expression that computes V for a non-zero constant C s.t.
   /// V can be reassociated into the form V' + C. If the searching is
   /// successful, returns C and update UserChain as a def-use chain from C to V;
@@ -294,8 +291,6 @@ class ConstantOffsetExtractor {
   /// A data structure used in rebuildWithoutConstOffset. Contains all
   /// sext/zext instructions along UserChain.
   SmallVector<CastInst *, 16> ExtInsts;
-  /// The data layout of the module. Used in ComputeKnownBits.
-  const DataLayout *DL;
   Instruction *IP;  /// Insertion position of cloned instructions.
 };
 
@@ -314,11 +309,6 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
-  }
-
-  bool doInitialization(Module &M) override {
-    DL = &M.getDataLayout();
-    return false;
   }
 
   bool runOnFunction(Function &F) override;
@@ -368,7 +358,6 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   /// Verified in @i32_add in split-gep.ll
   bool canonicalizeArrayIndicesToPointerSize(GetElementPtrInst *GEP);
 
-  const DataLayout *DL;
   const TargetMachine *TM;
   /// Whether to lower a GEP with multiple indices into arithmetic operations or
   /// multiple GEPs with a single index.
@@ -642,9 +631,8 @@ Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
   return BO;
 }
 
-Value *ConstantOffsetExtractor::Extract(Value *Idx, const DataLayout *DL,
-                                        GetElementPtrInst *GEP) {
-  ConstantOffsetExtractor Extractor(DL, GEP);
+Value *ConstantOffsetExtractor::Extract(Value *Idx, GetElementPtrInst *GEP) {
+  ConstantOffsetExtractor Extractor(GEP);
   // Find a non-zero constant offset first.
   APInt ConstantOffset =
       Extractor.find(Idx, /* SignExtended */ false, /* ZeroExtended */ false,
@@ -655,10 +643,9 @@ Value *ConstantOffsetExtractor::Extract(Value *Idx, const DataLayout *DL,
   return Extractor.rebuildWithoutConstOffset();
 }
 
-int64_t ConstantOffsetExtractor::Find(Value *Idx, const DataLayout *DL,
-      GetElementPtrInst *GEP) {
+int64_t ConstantOffsetExtractor::Find(Value *Idx, GetElementPtrInst *GEP) {
   // If Idx is an index of an inbound GEP, Idx is guaranteed to be non-negative.
-  return ConstantOffsetExtractor(DL, GEP)
+  return ConstantOffsetExtractor(GEP)
       .find(Idx, /* SignExtended */ false, /* ZeroExtended */ false,
             GEP->isInBounds())
       .getSExtValue();
@@ -669,6 +656,7 @@ void ConstantOffsetExtractor::ComputeKnownBits(Value *V, APInt &KnownOne,
   IntegerType *IT = cast<IntegerType>(V->getType());
   KnownOne = APInt(IT->getBitWidth(), 0);
   KnownZero = APInt(IT->getBitWidth(), 0);
+  const DataLayout &DL = IP->getModule()->getDataLayout();
   llvm::computeKnownBits(V, KnownZero, KnownOne, DL, 0);
 }
 
@@ -684,7 +672,8 @@ bool ConstantOffsetExtractor::NoCommonBits(Value *LHS, Value *RHS) const {
 bool SeparateConstOffsetFromGEP::canonicalizeArrayIndicesToPointerSize(
     GetElementPtrInst *GEP) {
   bool Changed = false;
-  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
+  const DataLayout &DL = GEP->getModule()->getDataLayout();
+  Type *IntPtrTy = DL.getIntPtrType(GEP->getType());
   gep_type_iterator GTI = gep_type_begin(*GEP);
   for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end();
        I != E; ++I, ++GTI) {
@@ -705,18 +694,19 @@ SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
   NeedsExtraction = false;
   int64_t AccumulativeByteOffset = 0;
   gep_type_iterator GTI = gep_type_begin(*GEP);
+  const DataLayout &DL = GEP->getModule()->getDataLayout();
   for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
     if (isa<SequentialType>(*GTI)) {
       // Tries to extract a constant offset from this GEP index.
       int64_t ConstantOffset =
-          ConstantOffsetExtractor::Find(GEP->getOperand(I), DL, GEP);
+          ConstantOffsetExtractor::Find(GEP->getOperand(I), GEP);
       if (ConstantOffset != 0) {
         NeedsExtraction = true;
         // A GEP may have multiple indices.  We accumulate the extracted
         // constant offset to a byte offset, and later offset the remainder of
         // the original GEP with this byte offset.
         AccumulativeByteOffset +=
-            ConstantOffset * DL->getTypeAllocSize(GTI.getIndexedType());
+            ConstantOffset * DL.getTypeAllocSize(GTI.getIndexedType());
       }
     } else if (LowerGEP) {
       StructType *StTy = cast<StructType>(*GTI);
@@ -725,7 +715,7 @@ SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
       if (Field != 0) {
         NeedsExtraction = true;
         AccumulativeByteOffset +=
-            DL->getStructLayout(StTy)->getElementOffset(Field);
+            DL.getStructLayout(StTy)->getElementOffset(Field);
       }
     }
   }
@@ -735,7 +725,8 @@ SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
 void SeparateConstOffsetFromGEP::lowerToSingleIndexGEPs(
     GetElementPtrInst *Variadic, int64_t AccumulativeByteOffset) {
   IRBuilder<> Builder(Variadic);
-  Type *IntPtrTy = DL->getIntPtrType(Variadic->getType());
+  const DataLayout &DL = Variadic->getModule()->getDataLayout();
+  Type *IntPtrTy = DL.getIntPtrType(Variadic->getType());
 
   Type *I8PtrTy =
       Builder.getInt8PtrTy(Variadic->getType()->getPointerAddressSpace());
@@ -755,7 +746,7 @@ void SeparateConstOffsetFromGEP::lowerToSingleIndexGEPs(
           continue;
 
       APInt ElementSize = APInt(IntPtrTy->getIntegerBitWidth(),
-                                DL->getTypeAllocSize(GTI.getIndexedType()));
+                                DL.getTypeAllocSize(GTI.getIndexedType()));
       // Scale the index by element size.
       if (ElementSize != 1) {
         if (ElementSize.isPowerOf2()) {
@@ -786,7 +777,8 @@ void
 SeparateConstOffsetFromGEP::lowerToArithmetics(GetElementPtrInst *Variadic,
                                                int64_t AccumulativeByteOffset) {
   IRBuilder<> Builder(Variadic);
-  Type *IntPtrTy = DL->getIntPtrType(Variadic->getType());
+  const DataLayout &DL = Variadic->getModule()->getDataLayout();
+  Type *IntPtrTy = DL.getIntPtrType(Variadic->getType());
 
   Value *ResultPtr = Builder.CreatePtrToInt(Variadic->getOperand(0), IntPtrTy);
   gep_type_iterator GTI = gep_type_begin(*Variadic);
@@ -802,7 +794,7 @@ SeparateConstOffsetFromGEP::lowerToArithmetics(GetElementPtrInst *Variadic,
           continue;
 
       APInt ElementSize = APInt(IntPtrTy->getIntegerBitWidth(),
-                                DL->getTypeAllocSize(GTI.getIndexedType()));
+                                DL.getTypeAllocSize(GTI.getIndexedType()));
       // Scale the index by element size.
       if (ElementSize != 1) {
         if (ElementSize.isPowerOf2()) {
@@ -875,8 +867,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     if (isa<SequentialType>(*GTI)) {
       // Splits this GEP index into a variadic part and a constant offset, and
       // uses the variadic part as the new index.
-      Value *NewIdx =
-          ConstantOffsetExtractor::Extract(GEP->getOperand(I), DL, GEP);
+      Value *NewIdx = ConstantOffsetExtractor::Extract(GEP->getOperand(I), GEP);
       if (NewIdx != nullptr) {
         GEP->setOperand(I, NewIdx);
       }
@@ -953,9 +944,10 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   // Per ANSI C standard, signed / unsigned = unsigned and signed % unsigned =
   // unsigned.. Therefore, we cast ElementTypeSizeOfGEP to signed because it is
   // used with unsigned integers later.
+  const DataLayout &DL = GEP->getModule()->getDataLayout();
   int64_t ElementTypeSizeOfGEP = static_cast<int64_t>(
-      DL->getTypeAllocSize(GEP->getType()->getElementType()));
-  Type *IntPtrTy = DL->getIntPtrType(GEP->getType());
+      DL.getTypeAllocSize(GEP->getType()->getElementType()));
+  Type *IntPtrTy = DL.getIntPtrType(GEP->getType());
   if (AccumulativeByteOffset % ElementTypeSizeOfGEP == 0) {
     // Very likely. As long as %gep is natually aligned, the byte offset we
     // extracted should be a multiple of sizeof(*%gep).

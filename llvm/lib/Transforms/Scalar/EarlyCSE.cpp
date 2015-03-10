@@ -263,7 +263,6 @@ namespace {
 class EarlyCSE {
 public:
   Function &F;
-  const DataLayout *DL;
   const TargetLibraryInfo &TLI;
   const TargetTransformInfo &TTI;
   DominatorTree &DT;
@@ -308,11 +307,10 @@ public:
   unsigned CurrentGeneration;
 
   /// \brief Set up the EarlyCSE runner for a particular function.
-  EarlyCSE(Function &F, const DataLayout *DL, const TargetLibraryInfo &TLI,
+  EarlyCSE(Function &F, const TargetLibraryInfo &TLI,
            const TargetTransformInfo &TTI, DominatorTree &DT,
            AssumptionCache &AC)
-      : F(F), DL(DL), TLI(TLI), TTI(TTI), DT(DT), AC(AC), CurrentGeneration(0) {
-  }
+      : F(F), TLI(TLI), TTI(TTI), DT(DT), AC(AC), CurrentGeneration(0) {}
 
   bool run();
 
@@ -469,6 +467,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   Instruction *LastStore = nullptr;
 
   bool Changed = false;
+  const DataLayout &DL = BB->getModule()->getDataLayout();
 
   // See if any instructions in the block can be eliminated.  If so, do it.  If
   // not, add them to AvailableValues.
@@ -685,14 +684,12 @@ bool EarlyCSE::run() {
 
 PreservedAnalyses EarlyCSEPass::run(Function &F,
                                     AnalysisManager<Function> *AM) {
-  const DataLayout &DL = F.getParent()->getDataLayout();
-
   auto &TLI = AM->getResult<TargetLibraryAnalysis>(F);
   auto &TTI = AM->getResult<TargetIRAnalysis>(F);
   auto &DT = AM->getResult<DominatorTreeAnalysis>(F);
   auto &AC = AM->getResult<AssumptionAnalysis>(F);
 
-  EarlyCSE CSE(F, &DL, TLI, TTI, DT, AC);
+  EarlyCSE CSE(F, TLI, TTI, DT, AC);
 
   if (!CSE.run())
     return PreservedAnalyses::all();
@@ -724,13 +721,12 @@ public:
     if (skipOptnoneFunction(F))
       return false;
 
-    auto &DL = F.getParent()->getDataLayout();
     auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
     auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
-    EarlyCSE CSE(F, &DL, TLI, TTI, DT, AC);
+    EarlyCSE CSE(F, TLI, TTI, DT, AC);
 
     return CSE.run();
   }

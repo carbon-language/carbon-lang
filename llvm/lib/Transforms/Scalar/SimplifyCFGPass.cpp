@@ -127,7 +127,7 @@ static bool mergeEmptyReturnBlocks(Function &F) {
 /// iterativelySimplifyCFG - Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
 static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
-                                   const DataLayout *DL, AssumptionCache *AC,
+                                   AssumptionCache *AC,
                                    unsigned BonusInstThreshold) {
   bool Changed = false;
   bool LocalChange = true;
@@ -137,7 +137,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
     // Loop over all of the basic blocks and remove them if they are unneeded...
     //
     for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
-      if (SimplifyCFG(BBIt++, TTI, BonusInstThreshold, DL, AC)) {
+      if (SimplifyCFG(BBIt++, TTI, BonusInstThreshold, AC)) {
         LocalChange = true;
         ++NumSimpl;
       }
@@ -148,11 +148,10 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
 }
 
 static bool simplifyFunctionCFG(Function &F, const TargetTransformInfo &TTI,
-                                const DataLayout *DL, AssumptionCache *AC,
-                                int BonusInstThreshold) {
+                                AssumptionCache *AC, int BonusInstThreshold) {
   bool EverChanged = removeUnreachableBlocks(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
-  EverChanged |= iterativelySimplifyCFG(F, TTI, DL, AC, BonusInstThreshold);
+  EverChanged |= iterativelySimplifyCFG(F, TTI, AC, BonusInstThreshold);
 
   // If neither pass changed anything, we're done.
   if (!EverChanged) return false;
@@ -166,7 +165,7 @@ static bool simplifyFunctionCFG(Function &F, const TargetTransformInfo &TTI,
     return true;
 
   do {
-    EverChanged = iterativelySimplifyCFG(F, TTI, DL, AC, BonusInstThreshold);
+    EverChanged = iterativelySimplifyCFG(F, TTI, AC, BonusInstThreshold);
     EverChanged |= removeUnreachableBlocks(F);
   } while (EverChanged);
 
@@ -181,11 +180,10 @@ SimplifyCFGPass::SimplifyCFGPass(int BonusInstThreshold)
 
 PreservedAnalyses SimplifyCFGPass::run(Function &F,
                                        AnalysisManager<Function> *AM) {
-  auto &DL = F.getParent()->getDataLayout();
   auto &TTI = AM->getResult<TargetIRAnalysis>(F);
   auto &AC = AM->getResult<AssumptionAnalysis>(F);
 
-  if (!simplifyFunctionCFG(F, TTI, &DL, &AC, BonusInstThreshold))
+  if (!simplifyFunctionCFG(F, TTI, &AC, BonusInstThreshold))
     return PreservedAnalyses::none();
 
   return PreservedAnalyses::all();
@@ -207,8 +205,7 @@ struct CFGSimplifyPass : public FunctionPass {
         &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
     const TargetTransformInfo &TTI =
         getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-    const DataLayout &DL = F.getParent()->getDataLayout();
-    return simplifyFunctionCFG(F, TTI, &DL, AC, BonusInstThreshold);
+    return simplifyFunctionCFG(F, TTI, AC, BonusInstThreshold);
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {

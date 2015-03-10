@@ -52,7 +52,7 @@ bool BitSetInfo::containsGlobalOffset(uint64_t Offset) const {
 }
 
 bool BitSetInfo::containsValue(
-    const DataLayout *DL,
+    const DataLayout &DL,
     const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout, Value *V,
     uint64_t COffset) const {
   if (auto GV = dyn_cast<GlobalVariable>(V)) {
@@ -63,8 +63,8 @@ bool BitSetInfo::containsValue(
   }
 
   if (auto GEP = dyn_cast<GEPOperator>(V)) {
-    APInt APOffset(DL->getPointerSizeInBits(0), 0);
-    bool Result = GEP->accumulateConstantOffset(*DL, APOffset);
+    APInt APOffset(DL.getPointerSizeInBits(0), 0);
+    bool Result = GEP->accumulateConstantOffset(DL, APOffset);
     if (!Result)
       return false;
     COffset += APOffset.getZExtValue();
@@ -186,7 +186,6 @@ struct LowerBitSets : public ModulePass {
 
   Module *M;
 
-  const DataLayout *DL;
   IntegerType *Int1Ty;
   IntegerType *Int8Ty;
   IntegerType *Int32Ty;
@@ -234,14 +233,14 @@ ModulePass *llvm::createLowerBitSetsPass() { return new LowerBitSets; }
 
 bool LowerBitSets::doInitialization(Module &Mod) {
   M = &Mod;
-  DL = &Mod.getDataLayout();
+  const DataLayout &DL = Mod.getDataLayout();
 
   Int1Ty = Type::getInt1Ty(M->getContext());
   Int8Ty = Type::getInt8Ty(M->getContext());
   Int32Ty = Type::getInt32Ty(M->getContext());
   Int32PtrTy = PointerType::getUnqual(Int32Ty);
   Int64Ty = Type::getInt64Ty(M->getContext());
-  IntPtrTy = DL->getIntPtrType(M->getContext(), 0);
+  IntPtrTy = DL.getIntPtrType(M->getContext(), 0);
 
   BitSetNM = M->getNamedMetadata("llvm.bitsets");
 
@@ -396,6 +395,7 @@ Value *LowerBitSets::lowerBitSetCall(
     GlobalVariable *CombinedGlobal,
     const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout) {
   Value *Ptr = CI->getArgOperand(0);
+  const DataLayout &DL = M->getDataLayout();
 
   if (BSI.containsValue(DL, GlobalLayout, Ptr))
     return ConstantInt::getTrue(CombinedGlobal->getParent()->getContext());
@@ -430,8 +430,8 @@ Value *LowerBitSets::lowerBitSetCall(
     Value *OffsetSHR =
         B.CreateLShr(PtrOffset, ConstantInt::get(IntPtrTy, BSI.AlignLog2));
     Value *OffsetSHL = B.CreateShl(
-        PtrOffset, ConstantInt::get(IntPtrTy, DL->getPointerSizeInBits(0) -
-                                                  BSI.AlignLog2));
+        PtrOffset,
+        ConstantInt::get(IntPtrTy, DL.getPointerSizeInBits(0) - BSI.AlignLog2));
     BitOffset = B.CreateOr(OffsetSHR, OffsetSHL);
   }
 
@@ -466,9 +466,10 @@ void LowerBitSets::buildBitSetsFromGlobals(
     const std::vector<GlobalVariable *> &Globals) {
   // Build a new global with the combined contents of the referenced globals.
   std::vector<Constant *> GlobalInits;
+  const DataLayout &DL = M->getDataLayout();
   for (GlobalVariable *G : Globals) {
     GlobalInits.push_back(G->getInitializer());
-    uint64_t InitSize = DL->getTypeAllocSize(G->getInitializer()->getType());
+    uint64_t InitSize = DL.getTypeAllocSize(G->getInitializer()->getType());
 
     // Compute the amount of padding required to align the next element to the
     // next power of 2.
@@ -490,7 +491,7 @@ void LowerBitSets::buildBitSetsFromGlobals(
                          GlobalValue::PrivateLinkage, NewInit);
 
   const StructLayout *CombinedGlobalLayout =
-      DL->getStructLayout(cast<StructType>(NewInit->getType()));
+      DL.getStructLayout(cast<StructType>(NewInit->getType()));
 
   // Compute the offsets of the original globals within the new global.
   DenseMap<GlobalVariable *, uint64_t> GlobalLayout;

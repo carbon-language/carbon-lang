@@ -86,7 +86,6 @@ namespace {
                                const GlobalStatus &GS);
     bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
 
-    //    const DataLayout *DL;
     TargetLibraryInfo *TLI;
     SmallSet<const Comdat *, 8> NotDiscardableComdats;
   };
@@ -319,7 +318,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
       Constant *SubInit = nullptr;
       if (!isa<ConstantExpr>(GEP->getOperand(0))) {
         ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(
-            ConstantFoldInstruction(GEP, &DL, TLI));
+            ConstantFoldInstruction(GEP, DL, TLI));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
 
@@ -806,7 +805,7 @@ static void ConstantPropUsersOf(Value *V, const DataLayout &DL,
                                 TargetLibraryInfo *TLI) {
   for (Value::user_iterator UI = V->user_begin(), E = V->user_end(); UI != E; )
     if (Instruction *I = dyn_cast<Instruction>(*UI++))
-      if (Constant *NewC = ConstantFoldInstruction(I, &DL, TLI)) {
+      if (Constant *NewC = ConstantFoldInstruction(I, DL, TLI)) {
         I->replaceAllUsesWith(NewC);
 
         // Advance UI to the next non-I use to avoid invalidating it!
@@ -1490,7 +1489,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
   // This eliminates dynamic allocation, avoids an indirection accessing the
   // data, and exposes the resultant global to further GlobalOpt.
   // We cannot optimize the malloc if we cannot determine malloc array size.
-  Value *NElems = getMallocArraySize(CI, &DL, TLI, true);
+  Value *NElems = getMallocArraySize(CI, DL, TLI, true);
   if (!NElems)
     return false;
 
@@ -1544,7 +1543,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
         CI = cast<CallInst>(Malloc);
     }
 
-    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, &DL, TLI, true),
+    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, DL, TLI, true),
                                DL, TLI);
     return true;
   }
@@ -1948,7 +1947,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
     if (GV->hasInitializer())
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GV->getInitializer())) {
         auto &DL = M.getDataLayout();
-        Constant *New = ConstantFoldConstantExpression(CE, &DL, TLI);
+        Constant *New = ConstantFoldConstantExpression(CE, DL, TLI);
         if (New && New != CE)
           GV->setInitializer(New);
       }
@@ -2296,7 +2295,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
       Constant *Ptr = getVal(SI->getOperand(1));
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
         DEBUG(dbgs() << "Folding constant ptr expression: " << *Ptr);
-        Ptr = ConstantFoldConstantExpression(CE, &DL, TLI);
+        Ptr = ConstantFoldConstantExpression(CE, DL, TLI);
         DEBUG(dbgs() << "; To: " << *Ptr << "\n");
       }
       if (!isSimpleEnoughPointerToCommit(Ptr)) {
@@ -2341,7 +2340,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
 
               Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList);
               if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
-                Ptr = ConstantFoldConstantExpression(CE, &DL, TLI);
+                Ptr = ConstantFoldConstantExpression(CE, DL, TLI);
 
             // If we can't improve the situation by introspecting NewTy,
             // we have to give up.
@@ -2416,7 +2415,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
 
       Constant *Ptr = getVal(LI->getOperand(0));
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
-        Ptr = ConstantFoldConstantExpression(CE, &DL, TLI);
+        Ptr = ConstantFoldConstantExpression(CE, DL, TLI);
         DEBUG(dbgs() << "Found a constant pointer expression, constant "
               "folding: " << *Ptr << "\n");
       }
@@ -2600,7 +2599,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
 
     if (!CurInst->use_empty()) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InstResult))
-        InstResult = ConstantFoldConstantExpression(CE, &DL, TLI);
+        InstResult = ConstantFoldConstantExpression(CE, DL, TLI);
 
       setVal(CurInst, InstResult);
     }

@@ -160,7 +160,7 @@ protected:
 
 public:
   const TargetMachine &getTargetMachine() const { return TM; }
-  const DataLayout *getDataLayout() const { return DL; }
+  const DataLayout *getDataLayout() const { return TM.getDataLayout(); }
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
@@ -1639,7 +1639,6 @@ public:
 
 private:
   const TargetMachine &TM;
-  const DataLayout *DL;
 
   /// True if this is a little endian target.
   bool IsLittleEndian;

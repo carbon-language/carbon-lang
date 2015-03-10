@@ -28,52 +28,50 @@ namespace llvm {
   /// EmitStrLen - Emit a call to the strlen function to the builder, for the
   /// specified pointer.  Ptr is required to be some pointer type, and the
   /// return value has 'intptr_t' type.
-  Value *EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
+  Value *EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout &DL,
                     const TargetLibraryInfo *TLI);
 
   /// EmitStrNLen - Emit a call to the strnlen function to the builder, for the
   /// specified pointer.  Ptr is required to be some pointer type, MaxLen must
   /// be of size_t type, and the return value has 'intptr_t' type.
   Value *EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
-                     const DataLayout *TD, const TargetLibraryInfo *TLI);
+                     const DataLayout &DL, const TargetLibraryInfo *TLI);
 
   /// EmitStrChr - Emit a call to the strchr function to the builder, for the
   /// specified pointer and character.  Ptr is required to be some pointer type,
   /// and the return value has 'i8*' type.
-  Value *EmitStrChr(Value *Ptr, char C, IRBuilder<> &B, const DataLayout *TD,
+  Value *EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
                     const TargetLibraryInfo *TLI);
 
   /// EmitStrNCmp - Emit a call to the strncmp function to the builder.
   Value *EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B,
-                     const DataLayout *TD, const TargetLibraryInfo *TLI);
+                     const DataLayout &DL, const TargetLibraryInfo *TLI);
 
   /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
   /// specified pointer arguments.
   Value *EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
-                    const DataLayout *TD, const TargetLibraryInfo *TLI,
-                    StringRef Name = "strcpy");
+                    const TargetLibraryInfo *TLI, StringRef Name = "strcpy");
 
   /// EmitStrNCpy - Emit a call to the strncpy function to the builder, for the
   /// specified pointer arguments and length.
   Value *EmitStrNCpy(Value *Dst, Value *Src, Value *Len, IRBuilder<> &B,
-                     const DataLayout *TD, const TargetLibraryInfo *TLI,
-                     StringRef Name = "strncpy");
+                     const TargetLibraryInfo *TLI, StringRef Name = "strncpy");
 
   /// EmitMemCpyChk - Emit a call to the __memcpy_chk function to the builder.
   /// This expects that the Len and ObjSize have type 'intptr_t' and Dst/Src
   /// are pointers.
   Value *EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
-                       IRBuilder<> &B, const DataLayout *TD,
+                       IRBuilder<> &B, const DataLayout &DL,
                        const TargetLibraryInfo *TLI);
 
   /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
   /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
   Value *EmitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilder<> &B,
-                    const DataLayout *TD, const TargetLibraryInfo *TLI);
+                    const DataLayout &DL, const TargetLibraryInfo *TLI);
 
   /// EmitMemCmp - Emit a call to the memcmp function.
   Value *EmitMemCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B,
-                    const DataLayout *TD, const TargetLibraryInfo *TLI);
+                    const DataLayout &DL, const TargetLibraryInfo *TLI);
 
   /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name'
   /// (e.g.  'floor').  This function is known to take a single of type matching
@@ -93,28 +91,26 @@ namespace llvm {
 
   /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
   /// is an integer.
-  Value *EmitPutChar(Value *Char, IRBuilder<> &B, const DataLayout *TD,
-                     const TargetLibraryInfo *TLI);
+  Value *EmitPutChar(Value *Char, IRBuilder<> &B, const TargetLibraryInfo *TLI);
 
   /// EmitPutS - Emit a call to the puts function.  This assumes that Str is
   /// some pointer.
-  Value *EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
-                  const TargetLibraryInfo *TLI);
+  Value *EmitPutS(Value *Str, IRBuilder<> &B, const TargetLibraryInfo *TLI);
 
   /// EmitFPutC - Emit a call to the fputc function.  This assumes that Char is
   /// an i32, and File is a pointer to FILE.
   Value *EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
-                   const DataLayout *TD, const TargetLibraryInfo *TLI);
+                   const TargetLibraryInfo *TLI);
 
   /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
   /// pointer and File is a pointer to FILE.
-  Value *EmitFPutS(Value *Str, Value *File, IRBuilder<> &B, const DataLayout *TD,
+  Value *EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
                    const TargetLibraryInfo *TLI);
 
   /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
   /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
   Value *EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B,
-                    const DataLayout *TD, const TargetLibraryInfo *TLI);
+                    const DataLayout &DL, const TargetLibraryInfo *TLI);
 }
 
 #endif

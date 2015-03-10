@@ -36,9 +36,9 @@ namespace llvm {
 class PHITransAddr {
   /// Addr - The actual address we're analyzing.
   Value *Addr;
-  
-  /// The DataLayout we are playing with if known, otherwise null.
-  const DataLayout *DL;
+
+  /// The DataLayout we are playing with.
+  const DataLayout &DL;
 
   /// TLI - The target library info if known, otherwise null.
   const TargetLibraryInfo *TLI;
@@ -49,7 +49,7 @@ class PHITransAddr {
   /// InstInputs - The inputs for our symbolic address.
   SmallVector<Instruction*, 4> InstInputs;
 public:
-  PHITransAddr(Value *addr, const DataLayout *DL, AssumptionCache *AC)
+  PHITransAddr(Value *addr, const DataLayout &DL, AssumptionCache *AC)
       : Addr(addr), DL(DL), TLI(nullptr), AC(AC) {
     // If the address is an instruction, the whole thing is considered an input.
     if (Instruction *I = dyn_cast<Instruction>(Addr))

@@ -158,10 +158,10 @@ private:
   AssumptionCache *AC;
   TargetLibraryInfo *TLI;
   DominatorTree *DT;
+  const DataLayout &DL;
 
   // Optional analyses. When non-null, these can both be used to do better
   // combining and will be updated to reflect any changes.
-  const DataLayout *DL;
   LoopInfo *LI;
 
   bool MadeIRChange;
@@ -169,7 +169,7 @@ private:
 public:
   InstCombiner(InstCombineWorklist &Worklist, BuilderTy *Builder,
                bool MinimizeSize, AssumptionCache *AC, TargetLibraryInfo *TLI,
-               DominatorTree *DT, const DataLayout *DL, LoopInfo *LI)
+               DominatorTree *DT, const DataLayout &DL, LoopInfo *LI)
       : Worklist(Worklist), Builder(Builder), MinimizeSize(MinimizeSize),
         AC(AC), TLI(TLI), DT(DT), DL(DL), LI(LI), MadeIRChange(false) {}
 
@@ -180,7 +180,7 @@ public:
 
   AssumptionCache *getAssumptionCache() const { return AC; }
 
-  const DataLayout *getDataLayout() const { return DL; }
+  const DataLayout &getDataLayout() const { return DL; }
 
   DominatorTree *getDominatorTree() const { return DT; }
 
@@ -330,17 +330,17 @@ private:
                           Type *Ty);
 
   Instruction *visitCallSite(CallSite CS);
-  Instruction *tryOptimizeCall(CallInst *CI, const DataLayout *DL);
+  Instruction *tryOptimizeCall(CallInst *CI);
   bool transformConstExprCastCall(CallSite CS);
   Instruction *transformCallThroughTrampoline(CallSite CS,
                                               IntrinsicInst *Tramp);
   Instruction *transformZExtICmp(ICmpInst *ICI, Instruction &CI,
                                  bool DoXform = true);
   Instruction *transformSExtICmp(ICmpInst *ICI, Instruction &CI);
-  bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS, Instruction *CxtI);
-  bool WillNotOverflowSignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
-  bool WillNotOverflowUnsignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
-  bool WillNotOverflowSignedMul(Value *LHS, Value *RHS, Instruction *CxtI);
+  bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS, Instruction &CxtI);
+  bool WillNotOverflowSignedSub(Value *LHS, Value *RHS, Instruction &CxtI);
+  bool WillNotOverflowUnsignedSub(Value *LHS, Value *RHS, Instruction &CxtI);
+  bool WillNotOverflowSignedMul(Value *LHS, Value *RHS, Instruction &CxtI);
   Value *EmitGEPOffset(User *GEP);
   Instruction *scalarizePHI(ExtractElementInst &EI, PHINode *PN);
   Value *EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask);
@@ -423,7 +423,7 @@ public:
   }
 
   void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
-                        unsigned Depth = 0, Instruction *CxtI = nullptr) const {
+                        unsigned Depth, Instruction *CxtI) const {
     return llvm::computeKnownBits(V, KnownZero, KnownOne, DL, Depth, AC, CxtI,
                                   DT);
   }
@@ -468,7 +468,7 @@ private:
   /// bits.
   Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, APInt &KnownZero,
                                  APInt &KnownOne, unsigned Depth,
-                                 Instruction *CxtI = nullptr);
+                                 Instruction *CxtI);
   bool SimplifyDemandedBits(Use &U, APInt DemandedMask, APInt &KnownZero,
                             APInt &KnownOne, unsigned Depth = 0);
   /// Helper routine of SimplifyDemandedUseBits. It tries to simplify demanded

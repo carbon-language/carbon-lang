@@ -1244,7 +1244,6 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       WeakVH IterHandle(CurInstIterator);
 
       replaceAndRecursivelySimplify(CI, RetVal,
-                                    TLI ? TLI->getDataLayout() : nullptr,
                                     TLInfo, ModifiedDT ? nullptr : DT);
 
       // If the iterator instruction was recursively deleted, start over at the
@@ -1287,15 +1286,11 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
   // From here on out we're working with named functions.
   if (!CI->getCalledFunction()) return false;
 
-  // We'll need DataLayout from here on out.
-  const DataLayout *TD = TLI ? TLI->getDataLayout() : nullptr;
-  if (!TD) return false;
-
   // Lower all default uses of _chk calls.  This is very similar
   // to what InstCombineCalls does, but here we are only lowering calls
   // to fortified library functions (e.g. __memcpy_chk) that have the default
   // "don't know" as the objectsize.  Anything else should be left alone.
-  FortifiedLibCallSimplifier Simplifier(TD, TLInfo, true);
+  FortifiedLibCallSimplifier Simplifier(TLInfo, true);
   if (Value *V = Simplifier.optimizeCall(CI)) {
     CI->replaceAllUsesWith(V);
     CI->eraseFromParent();
@@ -4196,8 +4191,8 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
     // trivial PHI, go ahead and zap it here.
-    if (Value *V = SimplifyInstruction(P, TLI ? TLI->getDataLayout() : nullptr,
-                                       TLInfo, DT)) {
+    const DataLayout &DL = I->getModule()->getDataLayout();
+    if (Value *V = SimplifyInstruction(P, DL, TLInfo, DT)) {
       P->replaceAllUsesWith(V);
       P->eraseFromParent();
       ++NumPHIsElim;

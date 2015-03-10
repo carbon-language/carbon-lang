@@ -64,7 +64,6 @@ struct BDCE : public FunctionPass {
                                 APInt &KnownZero2, APInt &KnownOne2);
 
   AssumptionCache *AC;
-  const DataLayout *DL;
   DominatorTree *DT;
 };
 }
@@ -95,20 +94,21 @@ void BDCE::determineLiveOperandBits(const Instruction *UserI,
   // however, want to do this twice, so we cache the result in APInts that live
   // in the caller. For the two-relevant-operands case, both operand values are
   // provided here.
-  auto ComputeKnownBits = [&](unsigned BitWidth, const Value *V1,
-                              const Value *V2) {
-    KnownZero = APInt(BitWidth, 0);
-    KnownOne =  APInt(BitWidth, 0);
-    computeKnownBits(const_cast<Value*>(V1), KnownZero, KnownOne, DL, 0, AC,
-                     UserI, DT);
+  auto ComputeKnownBits =
+      [&](unsigned BitWidth, const Value *V1, const Value *V2) {
+        const DataLayout &DL = I->getModule()->getDataLayout();
+        KnownZero = APInt(BitWidth, 0);
+        KnownOne = APInt(BitWidth, 0);
+        computeKnownBits(const_cast<Value *>(V1), KnownZero, KnownOne, DL, 0,
+                         AC, UserI, DT);
 
-    if (V2) {
-      KnownZero2 = APInt(BitWidth, 0);
-      KnownOne2 =  APInt(BitWidth, 0);
-      computeKnownBits(const_cast<Value*>(V2), KnownZero2, KnownOne2, DL, 0, AC,
-                       UserI, DT);
-    }
-  };
+        if (V2) {
+          KnownZero2 = APInt(BitWidth, 0);
+          KnownOne2 = APInt(BitWidth, 0);
+          computeKnownBits(const_cast<Value *>(V2), KnownZero2, KnownOne2, DL,
+                           0, AC, UserI, DT);
+        }
+      };
 
   switch (UserI->getOpcode()) {
   default: break;
@@ -263,7 +263,6 @@ bool BDCE::runOnFunction(Function& F) {
     return false;
 
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  DL = &F.getParent()->getDataLayout();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   DenseMap<Instruction *, APInt> AliveBits;

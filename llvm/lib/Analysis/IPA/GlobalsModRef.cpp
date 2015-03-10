@@ -322,7 +322,8 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
         continue;
 
       // Check the value being stored.
-      Value *Ptr = GetUnderlyingObject(SI->getOperand(0));
+      Value *Ptr = GetUnderlyingObject(SI->getOperand(0),
+                                       GV->getParent()->getDataLayout());
 
       if (!isAllocLikeFn(Ptr, TLI))
         return false;  // Too hard to analyze.
@@ -481,8 +482,8 @@ AliasAnalysis::AliasResult
 GlobalsModRef::alias(const Location &LocA,
                      const Location &LocB) {
   // Get the base object these pointers point to.
-  const Value *UV1 = GetUnderlyingObject(LocA.Ptr);
-  const Value *UV2 = GetUnderlyingObject(LocB.Ptr);
+  const Value *UV1 = GetUnderlyingObject(LocA.Ptr, *DL);
+  const Value *UV2 = GetUnderlyingObject(LocB.Ptr, *DL);
 
   // If either of the underlying values is a global, they may be non-addr-taken
   // globals, which we can answer queries about.
@@ -540,8 +541,9 @@ GlobalsModRef::getModRefInfo(ImmutableCallSite CS,
 
   // If we are asking for mod/ref info of a direct call with a pointer to a
   // global we are tracking, return information if we have it.
+  const DataLayout &DL = CS.getCaller()->getParent()->getDataLayout();
   if (const GlobalValue *GV =
-        dyn_cast<GlobalValue>(GetUnderlyingObject(Loc.Ptr)))
+          dyn_cast<GlobalValue>(GetUnderlyingObject(Loc.Ptr, DL)))
     if (GV->hasLocalLinkage())
       if (const Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))

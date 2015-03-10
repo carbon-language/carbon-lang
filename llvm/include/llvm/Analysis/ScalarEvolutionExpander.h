@@ -36,6 +36,7 @@ namespace llvm {
   /// memory.
   class SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
+    const DataLayout &DL;
 
     // New instructions receive a name to identifies them with the current pass.
     const char* IVName;
@@ -91,10 +92,11 @@ namespace llvm {
 
   public:
     /// SCEVExpander - Construct a SCEVExpander in "canonical" mode.
-    explicit SCEVExpander(ScalarEvolution &se, const char *name)
-      : SE(se), IVName(name), IVIncInsertLoop(nullptr), IVIncInsertPos(nullptr),
-        CanonicalMode(true), LSRMode(false),
-        Builder(se.getContext(), TargetFolder(se.DL)) {
+    explicit SCEVExpander(ScalarEvolution &se, const DataLayout &DL,
+                          const char *name)
+        : SE(se), DL(DL), IVName(name), IVIncInsertLoop(nullptr),
+          IVIncInsertPos(nullptr), CanonicalMode(true), LSRMode(false),
+          Builder(se.getContext(), TargetFolder(DL)) {
 #ifndef NDEBUG
       DebugType = "";
 #endif

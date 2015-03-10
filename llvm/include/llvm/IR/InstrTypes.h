@@ -570,10 +570,9 @@ public:
   /// This ensures that any pointer<->integer cast has enough bits in the
   /// integer and any other cast is a bitcast.
   static bool isBitOrNoopPointerCastable(
-    Type *SrcTy, ///< The Type from which the value should be cast.
-    Type *DestTy, ///< The Type to which the value should be cast.
-    const DataLayout *Layout = 0 ///< Optional DataLayout.
-  );
+      Type *SrcTy,  ///< The Type from which the value should be cast.
+      Type *DestTy, ///< The Type to which the value should be cast.
+      const DataLayout &DL);
 
   /// Returns the opcode necessary to cast Val into Ty using usual casting
   /// rules.
@@ -621,9 +620,9 @@ public:
   ) const;
 
   /// @brief Determine if this cast is a no-op cast.
-  bool isNoopCast(
-    const DataLayout *DL ///< DataLayout to get the Int Ptr type from.
-  ) const;
+  ///
+  /// \param DL is the DataLayout to get the Int Ptr type from.
+  bool isNoopCast(const DataLayout &DL) const;
 
   /// Determine how a pair of casts can be eliminated, if they can be at all.
   /// This is a helper function for both CastInst and ConstantExpr.

@@ -101,10 +101,9 @@ Type *getMallocAllocatedType(const CallInst *CI, const TargetLibraryInfo *TLI);
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value *getMallocArraySize(CallInst *CI, const DataLayout *DL,
+Value *getMallocArraySize(CallInst *CI, const DataLayout &DL,
                           const TargetLibraryInfo *TLI,
                           bool LookThroughSExt = false);
-
 
 //===----------------------------------------------------------------------===//
 //  calloc Call Utility Functions.
@@ -141,10 +140,8 @@ static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
 /// underlying object pointed to by Ptr.
 /// If RoundToAlign is true, then Size is rounded up to the aligment of allocas,
 /// byval arguments, and global variables.
-bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *DL,
+bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout &DL,
                    const TargetLibraryInfo *TLI, bool RoundToAlign = false);
-
-
 
 typedef std::pair<APInt, APInt> SizeOffsetType;
 
@@ -153,7 +150,7 @@ typedef std::pair<APInt, APInt> SizeOffsetType;
 class ObjectSizeOffsetVisitor
   : public InstVisitor<ObjectSizeOffsetVisitor, SizeOffsetType> {
 
-  const DataLayout *DL;
+  const DataLayout &DL;
   const TargetLibraryInfo *TLI;
   bool RoundToAlign;
   unsigned IntTyBits;
@@ -167,7 +164,7 @@ class ObjectSizeOffsetVisitor
   }
 
 public:
-  ObjectSizeOffsetVisitor(const DataLayout *DL, const TargetLibraryInfo *TLI,
+  ObjectSizeOffsetVisitor(const DataLayout &DL, const TargetLibraryInfo *TLI,
                           LLVMContext &Context, bool RoundToAlign = false);
 
   SizeOffsetType compute(Value *V);
@@ -216,7 +213,7 @@ class ObjectSizeOffsetEvaluator
   typedef DenseMap<const Value*, WeakEvalType> CacheMapTy;
   typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
-  const DataLayout *DL;
+  const DataLayout &DL;
   const TargetLibraryInfo *TLI;
   LLVMContext &Context;
   BuilderTy Builder;
@@ -232,7 +229,7 @@ class ObjectSizeOffsetEvaluator
   SizeOffsetEvalType compute_(Value *V);
 
 public:
-  ObjectSizeOffsetEvaluator(const DataLayout *DL, const TargetLibraryInfo *TLI,
+  ObjectSizeOffsetEvaluator(const DataLayout &DL, const TargetLibraryInfo *TLI,
                             LLVMContext &Context, bool RoundToAlign = false);
   SizeOffsetEvalType compute(Value *V);
 

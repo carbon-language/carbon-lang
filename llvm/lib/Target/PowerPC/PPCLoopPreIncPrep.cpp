@@ -274,7 +274,7 @@ bool PPCLoopPreIncPrep::runOnLoop(Loop *L) {
       MemI->hasName() ? MemI->getName() + ".phi" : "",
       Header->getFirstNonPHI());
 
-    SCEVExpander SCEVE(*SE, "pistart");
+    SCEVExpander SCEVE(*SE, Header->getModule()->getDataLayout(), "pistart");
     Value *BasePtrStart = SCEVE.expandCodeFor(BasePtrStartSCEV, I8PtrTy,
       LoopPredecessor->getTerminator());
 

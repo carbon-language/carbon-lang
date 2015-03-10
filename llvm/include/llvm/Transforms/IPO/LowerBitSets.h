@@ -54,7 +54,7 @@ struct BitSetInfo {
 
   bool containsGlobalOffset(uint64_t Offset) const;
 
-  bool containsValue(const DataLayout *DL,
+  bool containsValue(const DataLayout &DL,
                      const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout,
                      Value *V, uint64_t COffset = 0) const;
 };

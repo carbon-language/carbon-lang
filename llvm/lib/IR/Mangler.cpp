@@ -73,7 +73,7 @@ static bool hasByteCountSuffix(CallingConv::ID CC) {
 /// Microsoft fastcall and stdcall functions require a suffix on their name
 /// indicating the number of words of arguments they take.
 static void addByteCountSuffix(raw_ostream &OS, const Function *F,
-                               const DataLayout &TD) {
+                               const DataLayout &DL) {
   // Calculate arguments size total.
   unsigned ArgWords = 0;
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
@@ -83,8 +83,8 @@ static void addByteCountSuffix(raw_ostream &OS, const Function *F,
     if (AI->hasByValOrInAllocaAttr())
       Ty = cast<PointerType>(Ty)->getElementType();
     // Size should be aligned to pointer size.
-    unsigned PtrSize = TD.getPointerSize();
-    ArgWords += RoundUpToAlignment(TD.getTypeAllocSize(Ty), PtrSize);
+    unsigned PtrSize = DL.getPointerSize();
+    ArgWords += RoundUpToAlignment(DL.getTypeAllocSize(Ty), PtrSize);
   }
 
   OS << '@' << ArgWords;

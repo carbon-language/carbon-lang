@@ -168,8 +168,8 @@ public:
   /// \brief Set of potential dependent memory accesses.
   typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
 
-  AccessAnalysis(const DataLayout *Dl, AliasAnalysis *AA, DepCandidates &DA) :
-    DL(Dl), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
+  AccessAnalysis(const DataLayout &Dl, AliasAnalysis *AA, DepCandidates &DA)
+      : DL(Dl), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
   void addLoad(AliasAnalysis::Location &Loc, bool IsReadOnly) {
@@ -217,13 +217,13 @@ private:
   /// Set of all accesses.
   PtrAccessSet Accesses;
 
+  const DataLayout &DL;
+
   /// Set of accesses that need a further dependence check.
   MemAccessInfoSet CheckDeps;
 
   /// Set of pointers that are read only.
   SmallPtrSet<Value*, 16> ReadOnlyPtr;
-
-  const DataLayout *DL;
 
   /// An alias set tracker to partition the access set by underlying object and
   //intrinsic property (such as TBAA metadata).
@@ -252,8 +252,8 @@ static bool hasComputableBounds(ScalarEvolution *SE,
 
 /// \brief Check the stride of the pointer and ensure that it does not wrap in
 /// the address space.
-static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
-                        const Loop *Lp, const ValueToValueMap &StridesMap);
+static int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
+                        const ValueToValueMap &StridesMap);
 
 bool AccessAnalysis::canCheckPtrAtRT(
     LoopAccessInfo::RuntimePointerCheck &RtCheck, unsigned &NumComparisons,
@@ -289,10 +289,10 @@ bool AccessAnalysis::canCheckPtrAtRT(
         ++NumReadPtrChecks;
 
       if (hasComputableBounds(SE, StridesMap, Ptr) &&
-          // When we run after a failing dependency check we have to make sure we
-          // don't have wrapping pointers.
+          // When we run after a failing dependency check we have to make sure
+          // we don't have wrapping pointers.
           (!ShouldCheckStride ||
-           isStridedPtr(SE, DL, Ptr, TheLoop, StridesMap) == 1)) {
+           isStridedPtr(SE, Ptr, TheLoop, StridesMap) == 1)) {
         // The id of the dependence set.
         unsigned DepId;
 
@@ -498,8 +498,8 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L)
-      : SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0),
+  MemoryDepChecker(ScalarEvolution *Se, const Loop *L)
+      : SE(Se), InnermostLoop(L), AccessIdx(0),
         ShouldRetryWithRuntimeCheck(false) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
@@ -536,7 +536,6 @@ public:
 
 private:
   ScalarEvolution *SE;
-  const DataLayout *DL;
   const Loop *InnermostLoop;
 
   /// \brief Maps access locations (ptr, read/write) to program order.
@@ -585,8 +584,8 @@ static bool isInBoundsGep(Value *Ptr) {
 }
 
 /// \brief Check whether the access through \p Ptr has a constant stride.
-static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
-                        const Loop *Lp, const ValueToValueMap &StridesMap) {
+static int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
+                        const ValueToValueMap &StridesMap) {
   const Type *Ty = Ptr->getType();
   assert(Ty->isPointerTy() && "Unexpected non-ptr");
 
@@ -640,7 +639,8 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
     return 0;
   }
 
-  int64_t Size = DL->getTypeAllocSize(PtrTy->getElementType());
+  auto &DL = Lp->getHeader()->getModule()->getDataLayout();
+  int64_t Size = DL.getTypeAllocSize(PtrTy->getElementType());
   const APInt &APStepVal = C->getValue()->getValue();
 
   // Huge step value - give up.
@@ -726,8 +726,8 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   const SCEV *AScev = replaceSymbolicStrideSCEV(SE, Strides, APtr);
   const SCEV *BScev = replaceSymbolicStrideSCEV(SE, Strides, BPtr);
 
-  int StrideAPtr = isStridedPtr(SE, DL, APtr, InnermostLoop, Strides);
-  int StrideBPtr = isStridedPtr(SE, DL, BPtr, InnermostLoop, Strides);
+  int StrideAPtr = isStridedPtr(SE, APtr, InnermostLoop, Strides);
+  int StrideBPtr = isStridedPtr(SE, BPtr, InnermostLoop, Strides);
 
   const SCEV *Src = AScev;
   const SCEV *Sink = BScev;
@@ -768,7 +768,8 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   Type *ATy = APtr->getType()->getPointerElementType();
   Type *BTy = BPtr->getType()->getPointerElementType();
-  unsigned TypeByteSize = DL->getTypeAllocSize(ATy);
+  auto &DL = InnermostLoop->getHeader()->getModule()->getDataLayout();
+  unsigned TypeByteSize = DL.getTypeAllocSize(ATy);
 
   // Negative distances are not plausible dependencies.
   const APInt &Val = C->getValue()->getValue();
@@ -939,7 +940,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   PtrRtCheck.Need = false;
 
   const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
-  MemoryDepChecker DepChecker(SE, DL, TheLoop);
+  MemoryDepChecker DepChecker(SE, TheLoop);
 
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
@@ -1009,7 +1010,8 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   }
 
   AccessAnalysis::DepCandidates DependentAccesses;
-  AccessAnalysis Accesses(DL, AA, DependentAccesses);
+  AccessAnalysis Accesses(TheLoop->getHeader()->getModule()->getDataLayout(),
+                          AA, DependentAccesses);
 
   // Holds the analyzed pointers. We don't want to call GetUnderlyingObjects
   // multiple times on the same object. If the ptr is accessed twice, once
@@ -1068,8 +1070,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
     // read a few words, modify, and write a few words, and some of the
     // words may be written to the same address.
     bool IsReadOnlyPtr = false;
-    if (Seen.insert(Ptr).second ||
-        !isStridedPtr(SE, DL, Ptr, TheLoop, Strides)) {
+    if (Seen.insert(Ptr).second || !isStridedPtr(SE, Ptr, TheLoop, Strides)) {
       ++NumReads;
       IsReadOnlyPtr = true;
     }
@@ -1223,7 +1224,7 @@ LoopAccessInfo::addRuntimeCheck(Instruction *Loc) const {
   SmallVector<TrackingVH<Value> , 2> Ends;
 
   LLVMContext &Ctx = Loc->getContext();
-  SCEVExpander Exp(*SE, "induction");
+  SCEVExpander Exp(*SE, DL, "induction");
   Instruction *FirstInst = nullptr;
 
   for (unsigned i = 0; i < NumPointers; ++i) {
@@ -1298,7 +1299,7 @@ LoopAccessInfo::addRuntimeCheck(Instruction *Loc) const {
 }
 
 LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
-                               const DataLayout *DL,
+                               const DataLayout &DL,
                                const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                                DominatorTree *DT,
                                const ValueToValueMap &Strides)
@@ -1336,6 +1337,7 @@ LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
 #endif
 
   if (!LAI) {
+    const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
     LAI = llvm::make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, Strides);
 #ifndef NDEBUG
     LAI->NumSymbolicStrides = Strides.size();
@@ -1360,7 +1362,6 @@ void LoopAccessAnalysis::print(raw_ostream &OS, const Module *M) const {
 
 bool LoopAccessAnalysis::runOnFunction(Function &F) {
   SE = &getAnalysis<ScalarEvolution>();
-  DL = &F.getParent()->getDataLayout();
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
   TLI = TLIP ? &TLIP->getTLI() : nullptr;
   AA = &getAnalysis<AliasAnalysis>();

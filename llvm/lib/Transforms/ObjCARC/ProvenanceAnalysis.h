@@ -30,6 +30,7 @@
 namespace llvm {
   class Value;
   class AliasAnalysis;
+  class DataLayout;
   class PHINode;
   class SelectInst;
 }
@@ -53,7 +54,7 @@ class ProvenanceAnalysis {
   typedef DenseMap<ValuePairTy, bool> CachedResultsTy;
   CachedResultsTy CachedResults;
 
-  bool relatedCheck(const Value *A, const Value *B);
+  bool relatedCheck(const Value *A, const Value *B, const DataLayout &DL);
   bool relatedSelect(const SelectInst *A, const Value *B);
   bool relatedPHI(const PHINode *A, const Value *B);
 
@@ -67,7 +68,7 @@ public:
 
   AliasAnalysis *getAA() const { return AA; }
 
-  bool related(const Value *A, const Value *B);
+  bool related(const Value *A, const Value *B, const DataLayout &DL);
 
   void clear() {
     CachedResults.clear();

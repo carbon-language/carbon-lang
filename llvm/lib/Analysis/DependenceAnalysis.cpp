@@ -60,6 +60,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -624,14 +625,12 @@ void Dependence::dump(raw_ostream &OS) const {
   OS << "!\n";
 }
 
-
-
-static
-AliasAnalysis::AliasResult underlyingObjectsAlias(AliasAnalysis *AA,
-                                                  const Value *A,
-                                                  const Value *B) {
-  const Value *AObj = GetUnderlyingObject(A);
-  const Value *BObj = GetUnderlyingObject(B);
+static AliasAnalysis::AliasResult underlyingObjectsAlias(AliasAnalysis *AA,
+                                                         const DataLayout &DL,
+                                                         const Value *A,
+                                                         const Value *B) {
+  const Value *AObj = GetUnderlyingObject(A, DL);
+  const Value *BObj = GetUnderlyingObject(B, DL);
   return AA->alias(AObj, AA->getTypeStoreSize(AObj->getType()),
                    BObj, AA->getTypeStoreSize(BObj->getType()));
 }
@@ -3313,7 +3312,8 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
   Value *SrcPtr = getPointerOperand(Src);
   Value *DstPtr = getPointerOperand(Dst);
 
-  switch (underlyingObjectsAlias(AA, DstPtr, SrcPtr)) {
+  switch (underlyingObjectsAlias(AA, F->getParent()->getDataLayout(), DstPtr,
+                                 SrcPtr)) {
   case AliasAnalysis::MayAlias:
   case AliasAnalysis::PartialAlias:
     // cannot analyse objects if we don't understand their aliasing.
@@ -3757,8 +3757,8 @@ const  SCEV *DependenceAnalysis::getSplitIteration(const Dependence &Dep,
   assert(isLoadOrStore(Dst));
   Value *SrcPtr = getPointerOperand(Src);
   Value *DstPtr = getPointerOperand(Dst);
-  assert(underlyingObjectsAlias(AA, DstPtr, SrcPtr) ==
-         AliasAnalysis::MustAlias);
+  assert(underlyingObjectsAlias(AA, F->getParent()->getDataLayout(), DstPtr,
+                                SrcPtr) == AliasAnalysis::MustAlias);
 
   // establish loop nesting levels
   establishNestingLevels(Src, Dst);

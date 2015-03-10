@@ -48,7 +48,6 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
-#include "llvm/IR/Module.h"
 #include "llvm/IR/PredIteratorCache.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -77,21 +76,21 @@ static bool isNotUsedInLoop(Instruction &I, Loop *CurLoop);
 static bool hoist(Instruction &I, BasicBlock *Preheader);
 static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT, 
                  Loop *CurLoop, AliasSetTracker *CurAST );
-static bool isGuaranteedToExecute(Instruction &Inst, DominatorTree *DT, 
-                                  Loop *CurLoop, LICMSafetyInfo * SafetyInfo); 
-static bool isSafeToExecuteUnconditionally(Instruction &Inst,DominatorTree *DT, 
-                                           const DataLayout *DL, Loop *CurLoop,
-                                           LICMSafetyInfo * SafetyInfo);
+static bool isGuaranteedToExecute(Instruction &Inst, DominatorTree *DT,
+                                  Loop *CurLoop, LICMSafetyInfo *SafetyInfo);
+static bool isSafeToExecuteUnconditionally(Instruction &Inst, DominatorTree *DT,
+                                           Loop *CurLoop,
+                                           LICMSafetyInfo *SafetyInfo);
 static bool pointerInvalidatedByLoop(Value *V, uint64_t Size,
                                      const AAMDNodes &AAInfo, 
                                      AliasSetTracker *CurAST);
 static Instruction *CloneInstructionInExitBlock(Instruction &I,
                                                 BasicBlock &ExitBlock,
                                                 PHINode &PN, LoopInfo *LI);
-static bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, 
-                               DominatorTree *DT, const DataLayout *DL, 
-                               Loop *CurLoop, AliasSetTracker *CurAST, 
-                               LICMSafetyInfo * SafetyInfo);
+static bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA,
+                               DominatorTree *DT, Loop *CurLoop,
+                               AliasSetTracker *CurAST,
+                               LICMSafetyInfo *SafetyInfo);
 
 namespace {
   struct LICM : public LoopPass {
@@ -131,7 +130,6 @@ namespace {
     LoopInfo      *LI;       // Current LoopInfo
     DominatorTree *DT;       // Dominator Tree for the current Loop.
 
-    const DataLayout *DL;    // DataLayout for constant folding.
     TargetLibraryInfo *TLI;  // TargetLibraryInfo for constant folding.
 
     // State that is updated as we process loops.
@@ -182,7 +180,6 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
-  DL = &L->getHeader()->getModule()->getDataLayout();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
@@ -235,10 +232,10 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   // instructions, we perform another pass to hoist them out of the loop.
   //
   if (L->hasDedicatedExits())
-    Changed |= sinkRegion(DT->getNode(L->getHeader()), AA, LI, DT, DL, TLI, 
-                          CurLoop, CurAST, &SafetyInfo);
+    Changed |= sinkRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, CurLoop,
+                          CurAST, &SafetyInfo);
   if (Preheader)
-    Changed |= hoistRegion(DT->getNode(L->getHeader()), AA, LI, DT, DL, TLI, 
+    Changed |= hoistRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI,
                            CurLoop, CurAST, &SafetyInfo);
 
   // Now that all loop invariants have been removed from the loop, promote any
@@ -291,10 +288,9 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 /// first order w.r.t the DominatorTree.  This allows us to visit uses before
 /// definitions, allowing us to sink a loop body in one pass without iteration.
 ///
-bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI, 
-                      DominatorTree *DT, const DataLayout *DL, 
-                      TargetLibraryInfo *TLI, Loop *CurLoop, 
-                      AliasSetTracker *CurAST, LICMSafetyInfo * SafetyInfo) { 
+bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
+                      DominatorTree *DT, TargetLibraryInfo *TLI, Loop *CurLoop,
+                      AliasSetTracker *CurAST, LICMSafetyInfo *SafetyInfo) {
 
   // Verify inputs.
   assert(N != nullptr && AA != nullptr && LI != nullptr && 
@@ -311,8 +307,8 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
   // We are processing blocks in reverse dfo, so process children first.
   const std::vector<DomTreeNode*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
-    Changed |= sinkRegion(Children[i], AA, LI, DT, DL, TLI, CurLoop, 
-                          CurAST, SafetyInfo);
+    Changed |=
+        sinkRegion(Children[i], AA, LI, DT, TLI, CurLoop, CurAST, SafetyInfo);
   // Only need to process the contents of this block if it is not part of a
   // subloop (which would already have been processed).
   if (inSubLoop(BB,CurLoop,LI)) return Changed;
@@ -336,8 +332,8 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
     // outside of the loop.  In this case, it doesn't even matter if the
     // operands of the instruction are loop invariant.
     //
-    if (isNotUsedInLoop(I, CurLoop) && 
-        canSinkOrHoistInst(I, AA, DT, DL, CurLoop, CurAST, SafetyInfo)) {
+    if (isNotUsedInLoop(I, CurLoop) &&
+        canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo)) {
       ++II;
       Changed |= sink(I, LI, DT, CurLoop, CurAST);
     }
@@ -350,10 +346,9 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
 /// order w.r.t the DominatorTree.  This allows us to visit definitions before
 /// uses, allowing us to hoist a loop body in one pass without iteration.
 ///
-bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI, 
-                       DominatorTree *DT, const DataLayout *DL, 
-                       TargetLibraryInfo *TLI, Loop *CurLoop,
-                       AliasSetTracker *CurAST, LICMSafetyInfo *SafetyInfo) { 
+bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
+                       DominatorTree *DT, TargetLibraryInfo *TLI, Loop *CurLoop,
+                       AliasSetTracker *CurAST, LICMSafetyInfo *SafetyInfo) {
   // Verify inputs.
   assert(N != nullptr && AA != nullptr && LI != nullptr && 
          DT != nullptr && CurLoop != nullptr && CurAST != nullptr && 
@@ -372,7 +367,8 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       // Try constant folding this instruction.  If all the operands are
       // constants, it is technically hoistable, but it would be better to just
       // fold it.
-      if (Constant *C = ConstantFoldInstruction(&I, DL, TLI)) {
+      if (Constant *C = ConstantFoldInstruction(
+              &I, I.getModule()->getDataLayout(), TLI)) {
         DEBUG(dbgs() << "LICM folding inst: " << I << "  --> " << *C << '\n');
         CurAST->copyValue(&I, C);
         CurAST->deleteValue(&I);
@@ -385,16 +381,16 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       // if all of the operands of the instruction are loop invariant and if it
       // is safe to hoist the instruction.
       //
-      if (CurLoop->hasLoopInvariantOperands(&I) && 
-          canSinkOrHoistInst(I, AA, DT, DL, CurLoop, CurAST, SafetyInfo) &&
-          isSafeToExecuteUnconditionally(I, DT, DL, CurLoop, SafetyInfo))
+      if (CurLoop->hasLoopInvariantOperands(&I) &&
+          canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo) &&
+          isSafeToExecuteUnconditionally(I, DT, CurLoop, SafetyInfo))
         Changed |= hoist(I, CurLoop->getLoopPreheader());
     }
 
   const std::vector<DomTreeNode*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
-    Changed |= hoistRegion(Children[i], AA, LI, DT, DL, TLI, CurLoop, 
-                           CurAST, SafetyInfo); 
+    Changed |=
+        hoistRegion(Children[i], AA, LI, DT, TLI, CurLoop, CurAST, SafetyInfo);
   return Changed;
 }
 
@@ -424,10 +420,9 @@ void llvm::computeLICMSafetyInfo(LICMSafetyInfo * SafetyInfo, Loop * CurLoop) {
 /// canSinkOrHoistInst - Return true if the hoister and sinker can handle this
 /// instruction.
 ///
-bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, 
-                        DominatorTree *DT, const DataLayout *DL, 
-                        Loop *CurLoop, AliasSetTracker *CurAST, 
-                        LICMSafetyInfo * SafetyInfo) {
+bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
+                        Loop *CurLoop, AliasSetTracker *CurAST,
+                        LICMSafetyInfo *SafetyInfo) {
   // Loads have extra constraints we have to verify before we can hoist them.
   if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
     if (!LI->isUnordered())
@@ -487,7 +482,7 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA,
       !isa<InsertValueInst>(I))
     return false;
 
-  return isSafeToExecuteUnconditionally(I, DT, DL, CurLoop, SafetyInfo);
+  return isSafeToExecuteUnconditionally(I, DT, CurLoop, SafetyInfo);
 }
 
 /// Returns true if a PHINode is a trivially replaceable with an
@@ -643,10 +638,10 @@ static bool hoist(Instruction &I, BasicBlock *Preheader) {
 /// or if it is a trapping instruction and is guaranteed to execute.
 ///
 static bool isSafeToExecuteUnconditionally(Instruction &Inst, DominatorTree *DT,
-                                           const DataLayout *DL, Loop *CurLoop, 
-                                           LICMSafetyInfo * SafetyInfo) {
+                                           Loop *CurLoop,
+                                           LICMSafetyInfo *SafetyInfo) {
   // If it is not a trapping instruction, it is always safe to hoist.
-  if (isSafeToSpeculativelyExecute(&Inst, DL))
+  if (isSafeToSpeculativelyExecute(&Inst))
     return true;
 
   return isGuaranteedToExecute(Inst, DT, CurLoop, SafetyInfo);

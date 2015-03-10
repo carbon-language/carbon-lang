@@ -164,7 +164,6 @@ void CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = nullptr,
-                               const DataLayout *DL = nullptr,
                                CloningDirector *Director = nullptr);
 
 
@@ -184,7 +183,6 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "",
                                ClonedCodeInfo *CodeInfo = nullptr,
-                               const DataLayout *DL = nullptr,
                                Instruction *TheCall = nullptr);
 
 /// InlineFunctionInfo - This class captures the data input to the

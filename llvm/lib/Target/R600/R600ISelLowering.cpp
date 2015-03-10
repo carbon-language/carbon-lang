@@ -1479,8 +1479,8 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
 
   // Lower loads constant address space global variable loads
   if (LoadNode->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
-      isa<GlobalVariable>(
-          GetUnderlyingObject(LoadNode->getMemOperand()->getValue()))) {
+      isa<GlobalVariable>(GetUnderlyingObject(
+          LoadNode->getMemOperand()->getValue(), *getDataLayout()))) {
 
     SDValue Ptr = DAG.getZExtOrTrunc(LoadNode->getBasePtr(), DL,
         getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));

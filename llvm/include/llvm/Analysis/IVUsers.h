@@ -122,7 +122,6 @@ class IVUsers : public LoopPass {
   LoopInfo *LI;
   DominatorTree *DT;
   ScalarEvolution *SE;
-  const DataLayout *DL;
   SmallPtrSet<Instruction*,16> Processed;
 
   /// IVUses - A list of all tracked IV uses of induction variable expressions

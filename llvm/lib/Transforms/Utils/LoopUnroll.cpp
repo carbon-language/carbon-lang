@@ -500,6 +500,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   // At this point, the code is well formed.  We now do a quick sweep over the
   // inserted code, doing constant propagation and dead code elimination as we
   // go.
+  const DataLayout &DL = Header->getModule()->getDataLayout();
   const std::vector<BasicBlock*> &NewLoopBlocks = L->getBlocks();
   for (std::vector<BasicBlock*>::const_iterator BB = NewLoopBlocks.begin(),
        BBE = NewLoopBlocks.end(); BB != BBE; ++BB)
@@ -508,7 +509,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
       if (isInstructionTriviallyDead(Inst))
         (*BB)->getInstList().erase(Inst);
-      else if (Value *V = SimplifyInstruction(Inst))
+      else if (Value *V = SimplifyInstruction(Inst, DL))
         if (LI->replacementPreservesLCSSAForm(Inst, V)) {
           Inst->replaceAllUsesWith(V);
           (*BB)->getInstList().erase(Inst);
@@ -531,8 +532,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     if (!OuterL && !CompletelyUnroll)
       OuterL = L;
     if (OuterL) {
-      const DataLayout &DL = F->getParent()->getDataLayout();
-      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE, &DL, AC);
+      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE, AC);
 
       // LCSSA must be performed on the outermost affected loop. The unrolled
       // loop's last loop latch is guaranteed to be in the outermost loop after

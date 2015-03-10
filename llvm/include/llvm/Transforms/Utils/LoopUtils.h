@@ -52,7 +52,6 @@ BasicBlock *InsertPreheaderForLoop(Loop *L, Pass *P);
 /// passed into it.
 bool simplifyLoop(Loop *L, DominatorTree *DT, LoopInfo *LI, Pass *PP,
                   AliasAnalysis *AA = nullptr, ScalarEvolution *SE = nullptr,
-                  const DataLayout *DL = nullptr,
                   AssumptionCache *AC = nullptr);
 
 /// \brief Put loop into LCSSA form.
@@ -85,13 +84,13 @@ bool formLCSSARecursively(Loop &L, DominatorTree &DT, LoopInfo *LI,
 /// dominated by the specified block, and that are in the current loop) in
 /// reverse depth first order w.r.t the DominatorTree. This allows us to visit
 /// uses before definitions, allowing us to sink a loop body in one pass without
-/// iteration. Takes DomTreeNode, AliasAnalysis, LoopInfo, DominatorTree, 
-/// DataLayout, TargetLibraryInfo, Loop, AliasSet information for all 
-/// instructions of the loop and loop safety information as arguments. 
-/// It returns changed status. 
+/// iteration. Takes DomTreeNode, AliasAnalysis, LoopInfo, DominatorTree,
+/// DataLayout, TargetLibraryInfo, Loop, AliasSet information for all
+/// instructions of the loop and loop safety information as arguments.
+/// It returns changed status.
 bool sinkRegion(DomTreeNode *, AliasAnalysis *, LoopInfo *, DominatorTree *,
-                const DataLayout *, TargetLibraryInfo *, Loop *,
-                AliasSetTracker *, LICMSafetyInfo *);
+                TargetLibraryInfo *, Loop *, AliasSetTracker *,
+                LICMSafetyInfo *);
 
 /// \brief Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
@@ -101,8 +100,8 @@ bool sinkRegion(DomTreeNode *, AliasAnalysis *, LoopInfo *, DominatorTree *,
 /// TargetLibraryInfo, Loop, AliasSet information for all instructions of the 
 /// loop and loop safety information as arguments. It returns changed status.
 bool hoistRegion(DomTreeNode *, AliasAnalysis *, LoopInfo *, DominatorTree *,
-                 const DataLayout *, TargetLibraryInfo *, Loop *,
-                 AliasSetTracker *, LICMSafetyInfo *);
+                 TargetLibraryInfo *, Loop *, AliasSetTracker *,
+                 LICMSafetyInfo *);
 
 /// \brief Try to promote memory values to scalars by sinking stores out of 
 /// the loop and moving loads to before the loop.  We do this by looping over

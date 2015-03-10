@@ -791,9 +791,10 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
          "loop variant exit count doesn't make sense!");
 
   assert(!L.contains(LatchExit) && "expected an exit block!");
-
-  Value *IndVarStartV = SCEVExpander(SE, "irce").expandCodeFor(
-      IndVarStart, IndVarTy, &*Preheader->rbegin());
+  const DataLayout &DL = Preheader->getModule()->getDataLayout();
+  Value *IndVarStartV =
+      SCEVExpander(SE, DL, "irce")
+          .expandCodeFor(IndVarStart, IndVarTy, &*Preheader->rbegin());
   IndVarStartV->setName("indvar.start");
 
   LoopStructure Result;
@@ -1132,7 +1133,7 @@ bool LoopConstrainer::run() {
   IntegerType *IVTy =
       cast<IntegerType>(MainLoopStructure.IndVarNext->getType());
 
-  SCEVExpander Expander(SE, "irce");
+  SCEVExpander Expander(SE, F.getParent()->getDataLayout(), "irce");
   Instruction *InsertPt = OriginalPreheader->getTerminator();
 
   // It would have been better to make `PreLoop' and `PostLoop'

@@ -396,7 +396,7 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
 /// parameters with noalias metadata specifying the new scope, and tag all
 /// non-derived loads, stores and memory intrinsics with the new alias scopes.
 static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
-                                  const DataLayout *DL, AliasAnalysis *AA) {
+                                  const DataLayout &DL, AliasAnalysis *AA) {
   if (!EnableNoAliasConversion)
     return;
 
@@ -646,8 +646,9 @@ static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
       // If we can already prove the asserted alignment in the context of the
       // caller, then don't bother inserting the assumption.
       Value *Arg = CS.getArgument(I->getArgNo());
-      if (getKnownAlignment(Arg, &DL, &IFI.ACT->getAssumptionCache(*CalledFunc),
-                            CS.getInstruction(), &DT) >= Align)
+      if (getKnownAlignment(Arg, DL, CS.getInstruction(),
+                            &IFI.ACT->getAssumptionCache(*CalledFunc),
+                            &DT) >= Align)
         continue;
 
       IRBuilder<>(CS.getInstruction())
@@ -755,12 +756,13 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
     if (ByValAlignment <= 1)  // 0 = unspecified, 1 = no particular alignment.
       return Arg;
 
+    const DataLayout &DL = Caller->getParent()->getDataLayout();
+
     // If the pointer is already known to be sufficiently aligned, or if we can
     // round it up to a larger alignment, then we don't need a temporary.
-    auto &DL = Caller->getParent()->getDataLayout();
-    if (getOrEnforceKnownAlignment(Arg, ByValAlignment, &DL,
-                                   &IFI.ACT->getAssumptionCache(*Caller),
-                                   TheCall) >= ByValAlignment)
+    if (getOrEnforceKnownAlignment(Arg, ByValAlignment, DL, TheCall,
+                                   &IFI.ACT->getAssumptionCache(*Caller)) >=
+        ByValAlignment)
       return Arg;
     
     // Otherwise, we have to make a memcpy to get a safe alignment.  This is bad
@@ -1042,7 +1044,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     // happy with whatever the cloner can do.
     CloneAndPruneFunctionInto(Caller, CalledFunc, VMap,
                               /*ModuleLevelChanges=*/false, Returns, ".i",
-                              &InlinedFunctionInfo, &DL, TheCall);
+                              &InlinedFunctionInfo, TheCall);
 
     // Remember the first block that is newly cloned over.
     FirstNewBlock = LastBlock; ++FirstNewBlock;
@@ -1063,7 +1065,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     CloneAliasScopeMetadata(CS, VMap);
 
     // Add noalias metadata if necessary.
-    AddAliasScopeMetadata(CS, VMap, &DL, IFI.AA);
+    AddAliasScopeMetadata(CS, VMap, DL, IFI.AA);
 
     // FIXME: We could register any cloned assumptions instead of clearing the
     // whole function's cache.
@@ -1443,7 +1445,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   // block other optimizations.
   if (PHI) {
     auto &DL = Caller->getParent()->getDataLayout();
-    if (Value *V = SimplifyInstruction(PHI, &DL, nullptr, nullptr,
+    if (Value *V = SimplifyInstruction(PHI, DL, nullptr, nullptr,
                                        &IFI.ACT->getAssumptionCache(*Caller))) {
       PHI->replaceAllUsesWith(V);
       PHI->eraseFromParent();

@@ -114,6 +114,8 @@ static bool isSimplifiedLoopNest(BasicBlock *BB, const DominatorTree *DT,
 /// return true.  Otherwise, return false.
 bool IVUsers::AddUsersImpl(Instruction *I,
                            SmallPtrSetImpl<Loop*> &SimpleLoopNests) {
+  const DataLayout &DL = I->getModule()->getDataLayout();
+
   // Add this IV user to the Processed set before returning false to ensure that
   // all IV users are members of the set. See IVUsers::isIVUserOrOperand.
   if (!Processed.insert(I).second)
@@ -125,14 +127,14 @@ bool IVUsers::AddUsersImpl(Instruction *I,
   // IVUsers is used by LSR which assumes that all SCEV expressions are safe to
   // pass to SCEVExpander. Expressions are not safe to expand if they represent
   // operations that are not safe to speculate, namely integer division.
-  if (!isa<PHINode>(I) && !isSafeToSpeculativelyExecute(I, DL))
+  if (!isa<PHINode>(I) && !isSafeToSpeculativelyExecute(I))
     return false;
 
   // LSR is not APInt clean, do not touch integers bigger than 64-bits.
   // Also avoid creating IVs of non-native types. For example, we don't want a
   // 64-bit IV in 32-bit code just because the loop has one 64-bit cast.
   uint64_t Width = SE->getTypeSizeInBits(I->getType());
-  if (Width > 64 || (DL && !DL->isLegalInteger(Width)))
+  if (Width > 64 || !DL.isLegalInteger(Width))
     return false;
 
   // Get the symbolic expression for this instruction.
@@ -254,7 +256,6 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
-  DL = &L->getHeader()->getModule()->getDataLayout();
 
   // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for

@@ -244,13 +244,12 @@ static Type* ToVectorTy(Type *Scalar, unsigned VF) {
 class InnerLoopVectorizer {
 public:
   InnerLoopVectorizer(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
-                      DominatorTree *DT, const DataLayout *DL,
-                      const TargetLibraryInfo *TLI, unsigned VecWidth,
-                      unsigned UnrollFactor)
-      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), TLI(TLI),
-        VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()),
-        Induction(nullptr), OldInduction(nullptr), WidenMap(UnrollFactor),
-        Legal(nullptr), AddedSafetyChecks(false) {}
+                      DominatorTree *DT, const TargetLibraryInfo *TLI,
+                      unsigned VecWidth, unsigned UnrollFactor)
+      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), TLI(TLI), VF(VecWidth),
+        UF(UnrollFactor), Builder(SE->getContext()), Induction(nullptr),
+        OldInduction(nullptr), WidenMap(UnrollFactor), Legal(nullptr),
+        AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *L) {
@@ -403,8 +402,6 @@ protected:
   DominatorTree *DT;
   /// Alias Analysis.
   AliasAnalysis *AA;
-  /// Data Layout.
-  const DataLayout *DL;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
 
@@ -456,9 +453,9 @@ protected:
 class InnerLoopUnroller : public InnerLoopVectorizer {
 public:
   InnerLoopUnroller(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
-                    DominatorTree *DT, const DataLayout *DL,
-                    const TargetLibraryInfo *TLI, unsigned UnrollFactor) :
-    InnerLoopVectorizer(OrigLoop, SE, LI, DT, DL, TLI, 1, UnrollFactor) { }
+                    DominatorTree *DT, const TargetLibraryInfo *TLI,
+                    unsigned UnrollFactor)
+      : InnerLoopVectorizer(OrigLoop, SE, LI, DT, TLI, 1, UnrollFactor) {}
 
 private:
   void scalarizeInstruction(Instruction *Instr,
@@ -560,14 +557,13 @@ static void propagateMetadata(SmallVectorImpl<Value *> &To, const Instruction *F
 /// induction variable and the different reduction variables.
 class LoopVectorizationLegality {
 public:
-  LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
-                            DominatorTree *DT, TargetLibraryInfo *TLI,
-                            AliasAnalysis *AA, Function *F,
-                            const TargetTransformInfo *TTI,
+  LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DominatorTree *DT,
+                            TargetLibraryInfo *TLI, AliasAnalysis *AA,
+                            Function *F, const TargetTransformInfo *TTI,
                             LoopAccessAnalysis *LAA)
-      : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr),
-        Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
+      : NumPredStores(0), TheLoop(L), SE(SE), TLI(TLI), TheFunction(F),
+        TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr), Induction(nullptr),
+        WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -859,8 +855,6 @@ private:
   Loop *TheLoop;
   /// Scev analysis.
   ScalarEvolution *SE;
-  /// DataLayout analysis.
-  const DataLayout *DL;
   /// Target Library Info.
   TargetLibraryInfo *TLI;
   /// Parent function
@@ -919,10 +913,9 @@ public:
   LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
                              LoopVectorizationLegality *Legal,
                              const TargetTransformInfo &TTI,
-                             const DataLayout *DL, const TargetLibraryInfo *TLI,
-                             AssumptionCache *AC, const Function *F,
-                             const LoopVectorizeHints *Hints)
-      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL), TLI(TLI),
+                             const TargetLibraryInfo *TLI, AssumptionCache *AC,
+                             const Function *F, const LoopVectorizeHints *Hints)
+      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), TLI(TLI),
         TheFunction(F), Hints(Hints) {
     CodeMetrics::collectEphemeralValues(L, AC, EphValues);
   }
@@ -1000,8 +993,6 @@ private:
   LoopVectorizationLegality *Legal;
   /// Vector target information.
   const TargetTransformInfo &TTI;
-  /// Target data layout information.
-  const DataLayout *DL;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
   const Function *TheFunction;
@@ -1266,7 +1257,6 @@ struct LoopVectorize : public FunctionPass {
   }
 
   ScalarEvolution *SE;
-  const DataLayout *DL;
   LoopInfo *LI;
   TargetTransformInfo *TTI;
   DominatorTree *DT;
@@ -1282,7 +1272,6 @@ struct LoopVectorize : public FunctionPass {
 
   bool runOnFunction(Function &F) override {
     SE = &getAnalysis<ScalarEvolution>();
-    DL = &F.getParent()->getDataLayout();
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -1302,12 +1291,6 @@ struct LoopVectorize : public FunctionPass {
     // vectorization.
     if (!TTI->getNumberOfRegisters(true))
       return false;
-
-    if (!DL) {
-      DEBUG(dbgs() << "\nLV: Not vectorizing " << F.getName()
-                   << ": Missing data layout\n");
-      return false;
-    }
 
     // Build up a worklist of inner-loops to vectorize. This is necessary as
     // the act of vectorizing or partially unrolling a loop creates new loops
@@ -1436,7 +1419,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F, TTI, LAA);
+    LoopVectorizationLegality LVL(L, SE, DT, TLI, AA, F, TTI, LAA);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1444,8 +1427,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL, TLI, AC, F,
-                                  &Hints);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, TLI, AC, F, &Hints);
 
     // Check the function attributes to find out if this function should be
     // optimized for size.
@@ -1509,11 +1491,11 @@ struct LoopVectorize : public FunctionPass {
 
       // We decided not to vectorize, but we may want to unroll.
 
-      InnerLoopUnroller Unroller(L, SE, LI, DT, DL, TLI, UF);
+      InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, UF);
       Unroller.vectorize(&LVL);
     } else {
       // If we decided that it is *legal* to vectorize the loop then do it.
-      InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
+      InnerLoopVectorizer LB(L, SE, LI, DT, TLI, VF.Width, UF);
       LB.vectorize(&LVL);
       ++LoopsVectorized;
 
@@ -1612,10 +1594,10 @@ Value *InnerLoopVectorizer::getStepVector(Value *Val, int StartIdx,
 /// \brief Find the operand of the GEP that should be checked for consecutive
 /// stores. This ignores trailing indices that have no effect on the final
 /// pointer.
-static unsigned getGEPInductionOperand(const DataLayout *DL,
-                                       const GetElementPtrInst *Gep) {
+static unsigned getGEPInductionOperand(const GetElementPtrInst *Gep) {
+  const DataLayout &DL = Gep->getModule()->getDataLayout();
   unsigned LastOperand = Gep->getNumOperands() - 1;
-  unsigned GEPAllocSize = DL->getTypeAllocSize(
+  unsigned GEPAllocSize = DL.getTypeAllocSize(
       cast<PointerType>(Gep->getType()->getScalarType())->getElementType());
 
   // Walk backwards and try to peel off zeros.
@@ -1626,7 +1608,7 @@ static unsigned getGEPInductionOperand(const DataLayout *DL,
 
     // If it's a type with the same allocation size as the result of the GEP we
     // can peel off the zero index.
-    if (DL->getTypeAllocSize(*GEPTI) != GEPAllocSize)
+    if (DL.getTypeAllocSize(*GEPTI) != GEPAllocSize)
       break;
     --LastOperand;
   }
@@ -1672,7 +1654,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     return II.getConsecutiveDirection();
   }
 
-  unsigned InductionOperand = getGEPInductionOperand(DL, Gep);
+  unsigned InductionOperand = getGEPInductionOperand(Gep);
 
   // Check that all of the gep indices are uniform except for our induction
   // operand.
@@ -1765,11 +1747,12 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   unsigned Alignment = LI ? LI->getAlignment() : SI->getAlignment();
   // An alignment of 0 means target abi alignment. We need to use the scalar's
   // target abi alignment in such a case.
+  const DataLayout &DL = Instr->getModule()->getDataLayout();
   if (!Alignment)
-    Alignment = DL->getABITypeAlignment(ScalarDataTy);
+    Alignment = DL.getABITypeAlignment(ScalarDataTy);
   unsigned AddressSpace = Ptr->getType()->getPointerAddressSpace();
-  unsigned ScalarAllocatedSize = DL->getTypeAllocSize(ScalarDataTy);
-  unsigned VectorElementSize = DL->getTypeStoreSize(DataTy)/VF;
+  unsigned ScalarAllocatedSize = DL.getTypeAllocSize(ScalarDataTy);
+  unsigned VectorElementSize = DL.getTypeStoreSize(DataTy) / VF;
 
   if (SI && Legal->blockNeedsPredication(SI->getParent()) &&
       !Legal->isMaskRequired(SI))
@@ -1810,7 +1793,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
     // The last index does not have to be the induction. It can be
     // consecutive and be a function of the index. For example A[I+1];
     unsigned NumOperands = Gep->getNumOperands();
-    unsigned InductionOperand = getGEPInductionOperand(DL, Gep);
+    unsigned InductionOperand = getGEPInductionOperand(Gep);
     // Create the new GEP with the new induction variable.
     GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
 
@@ -2131,9 +2114,11 @@ void InnerLoopVectorizer::createEmptyLoop() {
   ExitCount = SE->getAddExpr(BackedgeTakeCount,
                              SE->getConstant(BackedgeTakeCount->getType(), 1));
 
+  const DataLayout &DL = OldBasicBlock->getModule()->getDataLayout();
+
   // Expand the trip count and place the new instructions in the preheader.
   // Notice that the pre-header does not change, only the loop body.
-  SCEVExpander Exp(*SE, "induction");
+  SCEVExpander Exp(*SE, DL, "induction");
 
   // We need to test whether the backedge-taken count is uint##_max. Adding one
   // to it will cause overflow and an incorrect loop trip count in the vector
@@ -3515,6 +3500,7 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
   // Look for the attribute signaling the absence of NaNs.
   Function &F = *Header->getParent();
+  const DataLayout &DL = F.getParent()->getDataLayout();
   if (F.hasFnAttribute("no-nans-fp-math"))
     HasFunNoNaNAttr =
         F.getFnAttribute("no-nans-fp-math").getValueAsString() == "true";
@@ -3570,9 +3556,9 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         if (IK_NoInduction != IK) {
           // Get the widest type.
           if (!WidestIndTy)
-            WidestIndTy = convertPointerToIntegerType(*DL, PhiTy);
+            WidestIndTy = convertPointerToIntegerType(DL, PhiTy);
           else
-            WidestIndTy = getWiderType(*DL, PhiTy, WidestIndTy);
+            WidestIndTy = getWiderType(DL, PhiTy, WidestIndTy);
 
           // Int inductions are special because we only allow one IV.
           if (IK == IK_IntInduction && StepValue->isOne()) {
@@ -3717,13 +3703,12 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
 ///\brief Remove GEPs whose indices but the last one are loop invariant and
 /// return the induction operand of the gep pointer.
-static Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE,
-                                 const DataLayout *DL, Loop *Lp) {
+static Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE, Loop *Lp) {
   GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr);
   if (!GEP)
     return Ptr;
 
-  unsigned InductionOperand = getGEPInductionOperand(DL, GEP);
+  unsigned InductionOperand = getGEPInductionOperand(GEP);
 
   // Check that all of the gep indices are uniform except for our induction
   // operand.
@@ -3752,8 +3737,7 @@ static Value *getUniqueCastUse(Value *Ptr, Loop *Lp, Type *Ty) {
 ///\brief Get the stride of a pointer access in a loop.
 /// Looks for symbolic strides "a[i*stride]". Returns the symbolic stride as a
 /// pointer to the Value, or null otherwise.
-static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
-                                   const DataLayout *DL, Loop *Lp) {
+static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE, Loop *Lp) {
   const PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
   if (!PtrTy || PtrTy->isAggregateType())
     return nullptr;
@@ -3766,7 +3750,7 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
   // The size of the pointer access.
   int64_t PtrAccessSize = 1;
 
-  Ptr = stripGetElementPtr(Ptr, SE, DL, Lp);
+  Ptr = stripGetElementPtr(Ptr, SE, Lp);
   const SCEV *V = SE->getSCEV(Ptr);
 
   if (Ptr != OrigPtr)
@@ -3785,7 +3769,8 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
   // Strip off the size of access multiplication if we are still analyzing the
   // pointer.
   if (OrigPtr == Ptr) {
-    DL->getTypeAllocSize(PtrTy->getElementType());
+    const DataLayout &DL = Lp->getHeader()->getModule()->getDataLayout();
+    DL.getTypeAllocSize(PtrTy->getElementType());
     if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(V)) {
       if (M->getOperand(0)->getSCEVType() != scConstant)
         return nullptr;
@@ -3837,7 +3822,7 @@ void LoopVectorizationLegality::collectStridedAccess(Value *MemAccess) {
   else
     return;
 
-  Value *Stride = getStrideFromPointer(Ptr, SE, DL, TheLoop);
+  Value *Stride = getStrideFromPointer(Ptr, SE, TheLoop);
   if (!Stride)
     return;
 
@@ -4215,7 +4200,8 @@ LoopVectorizationLegality::isInductionVariable(PHINode *Phi,
   if (!PointerElementType->isSized())
     return IK_NoInduction;
 
-  int64_t Size = static_cast<int64_t>(DL->getTypeAllocSize(PointerElementType));
+  const DataLayout &DL = Phi->getModule()->getDataLayout();
+  int64_t Size = static_cast<int64_t>(DL.getTypeAllocSize(PointerElementType));
   int64_t CVSize = CV->getSExtValue();
   if (CVSize % Size)
     return IK_NoInduction;
@@ -4427,6 +4413,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
 
 unsigned LoopVectorizationCostModel::getWidestType() {
   unsigned MaxWidth = 8;
+  const DataLayout &DL = TheFunction->getParent()->getDataLayout();
 
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
@@ -4461,7 +4448,7 @@ unsigned LoopVectorizationCostModel::getWidestType() {
         continue;
 
       MaxWidth = std::max(MaxWidth,
-                          (unsigned)DL->getTypeSizeInBits(T->getScalarType()));
+                          (unsigned)DL.getTypeSizeInBits(T->getScalarType()));
     }
   }
 
@@ -4958,8 +4945,9 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // Scalarized loads/stores.
     int ConsecutiveStride = Legal->isConsecutivePtr(Ptr);
     bool Reverse = ConsecutiveStride < 0;
-    unsigned ScalarAllocatedSize = DL->getTypeAllocSize(ValTy);
-    unsigned VectorElementSize = DL->getTypeStoreSize(VectorTy)/VF;
+    const DataLayout &DL = I->getModule()->getDataLayout();
+    unsigned ScalarAllocatedSize = DL.getTypeAllocSize(ValTy);
+    unsigned VectorElementSize = DL.getTypeStoreSize(VectorTy) / VF;
     if (!ConsecutiveStride || ScalarAllocatedSize != VectorElementSize) {
       bool IsComplexComputation =
         isLikelyComplexAddressComputation(Ptr, Legal, SE, TheLoop);

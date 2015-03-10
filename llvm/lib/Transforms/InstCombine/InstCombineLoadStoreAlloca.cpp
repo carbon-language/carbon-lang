@@ -167,14 +167,11 @@ isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
 Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   // Ensure that the alloca array size argument has type intptr_t, so that
   // any casting is exposed early.
-  if (DL) {
-    Type *IntPtrTy = DL->getIntPtrType(AI.getType());
-    if (AI.getArraySize()->getType() != IntPtrTy) {
-      Value *V = Builder->CreateIntCast(AI.getArraySize(),
-                                        IntPtrTy, false);
-      AI.setOperand(0, V);
-      return &AI;
-    }
+  Type *IntPtrTy = DL.getIntPtrType(AI.getType());
+  if (AI.getArraySize()->getType() != IntPtrTy) {
+    Value *V = Builder->CreateIntCast(AI.getArraySize(), IntPtrTy, false);
+    AI.setOperand(0, V);
+    return &AI;
   }
 
   // Convert: alloca Ty, C - where C is a constant != 1 into: alloca [C x Ty], 1
@@ -194,9 +191,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      Type *IdxTy = DL
-                  ? DL->getIntPtrType(AI.getType())
-                  : Type::getInt64Ty(AI.getContext());
+      Type *IdxTy = DL.getIntPtrType(AI.getType());
       Value *NullIdx = Constant::getNullValue(IdxTy);
       Value *Idx[2] = { NullIdx, NullIdx };
       Instruction *GEP =
@@ -211,15 +206,15 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     }
   }
 
-  if (DL && AI.getAllocatedType()->isSized()) {
+  if (AI.getAllocatedType()->isSized()) {
     // If the alignment is 0 (unspecified), assign it the preferred alignment.
     if (AI.getAlignment() == 0)
-      AI.setAlignment(DL->getPrefTypeAlignment(AI.getAllocatedType()));
+      AI.setAlignment(DL.getPrefTypeAlignment(AI.getAllocatedType()));
 
     // Move all alloca's of zero byte objects to the entry block and merge them
     // together.  Note that we only do this for alloca's, because malloc should
     // allocate and return a unique pointer, even for a zero byte allocation.
-    if (DL->getTypeAllocSize(AI.getAllocatedType()) == 0) {
+    if (DL.getTypeAllocSize(AI.getAllocatedType()) == 0) {
       // For a zero sized alloca there is no point in doing an array allocation.
       // This is helpful if the array size is a complicated expression not used
       // elsewhere.
@@ -237,7 +232,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
         // dominance as the array size was forced to a constant earlier already.
         AllocaInst *EntryAI = dyn_cast<AllocaInst>(FirstInst);
         if (!EntryAI || !EntryAI->getAllocatedType()->isSized() ||
-            DL->getTypeAllocSize(EntryAI->getAllocatedType()) != 0) {
+            DL.getTypeAllocSize(EntryAI->getAllocatedType()) != 0) {
           AI.moveBefore(FirstInst);
           return &AI;
         }
@@ -246,7 +241,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
         // assign it the preferred alignment.
         if (EntryAI->getAlignment() == 0)
           EntryAI->setAlignment(
-            DL->getPrefTypeAlignment(EntryAI->getAllocatedType()));
+              DL.getPrefTypeAlignment(EntryAI->getAllocatedType()));
         // Replace this zero-sized alloca with the one at the start of the entry
         // block after ensuring that the address will be aligned enough for both
         // types.
@@ -270,7 +265,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     SmallVector<Instruction *, 4> ToDelete;
     if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(&AI, ToDelete)) {
       unsigned SourceAlign = getOrEnforceKnownAlignment(
-          Copy->getSource(), AI.getAlignment(), DL, AC, &AI, DT);
+          Copy->getSource(), AI.getAlignment(), DL, &AI, AC, DT);
       if (AI.getAlignment() <= SourceAlign) {
         DEBUG(dbgs() << "Found alloca equal to global: " << AI << '\n');
         DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
@@ -439,22 +434,22 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
     return nullptr;
 
   Type *Ty = LI.getType();
+  const DataLayout &DL = IC.getDataLayout();
 
   // Try to canonicalize loads which are only ever stored to operate over
   // integers instead of any other type. We only do this when the loaded type
   // is sized and has a size exactly the same as its store size and the store
   // size is a legal integer type.
-  const DataLayout *DL = IC.getDataLayout();
-  if (!Ty->isIntegerTy() && Ty->isSized() && DL &&
-      DL->isLegalInteger(DL->getTypeStoreSizeInBits(Ty)) &&
-      DL->getTypeStoreSizeInBits(Ty) == DL->getTypeSizeInBits(Ty)) {
+  if (!Ty->isIntegerTy() && Ty->isSized() &&
+      DL.isLegalInteger(DL.getTypeStoreSizeInBits(Ty)) &&
+      DL.getTypeStoreSizeInBits(Ty) == DL.getTypeSizeInBits(Ty)) {
     if (std::all_of(LI.user_begin(), LI.user_end(), [&LI](User *U) {
           auto *SI = dyn_cast<StoreInst>(U);
           return SI && SI->getPointerOperand() != &LI;
         })) {
       LoadInst *NewLoad = combineLoadToNewType(
           IC, LI,
-          Type::getIntNTy(LI.getContext(), DL->getTypeStoreSizeInBits(Ty)));
+          Type::getIntNTy(LI.getContext(), DL.getTypeStoreSizeInBits(Ty)));
       // Replace all the stores with stores of the newly loaded value.
       for (auto UI = LI.user_begin(), UE = LI.user_end(); UI != UE;) {
         auto *SI = cast<StoreInst>(*UI++);
@@ -489,7 +484,7 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
 //
 // FIXME: This should probably live in ValueTracking (or similar).
 static bool isObjectSizeLessThanOrEq(Value *V, uint64_t MaxSize,
-                                     const DataLayout *DL) {
+                                     const DataLayout &DL) {
   SmallPtrSet<Value *, 4> Visited;
   SmallVector<Value *, 4> Worklist(1, V);
 
@@ -529,7 +524,7 @@ static bool isObjectSizeLessThanOrEq(Value *V, uint64_t MaxSize,
       if (!CS)
         return false;
 
-      uint64_t TypeSize = DL->getTypeAllocSize(AI->getAllocatedType());
+      uint64_t TypeSize = DL.getTypeAllocSize(AI->getAllocatedType());
       // Make sure that, even if the multiplication below would wrap as an
       // uint64_t, we still do the right thing.
       if ((CS->getValue().zextOrSelf(128)*APInt(128, TypeSize)).ugt(MaxSize))
@@ -541,7 +536,7 @@ static bool isObjectSizeLessThanOrEq(Value *V, uint64_t MaxSize,
       if (!GV->hasDefinitiveInitializer() || !GV->isConstant())
         return false;
 
-      uint64_t InitSize = DL->getTypeAllocSize(GV->getType()->getElementType());
+      uint64_t InitSize = DL.getTypeAllocSize(GV->getType()->getElementType());
       if (InitSize > MaxSize)
         return false;
       continue;
@@ -570,8 +565,7 @@ static bool isObjectSizeLessThanOrEq(Value *V, uint64_t MaxSize,
 // offsets those indices implied.
 static bool canReplaceGEPIdxWithZero(InstCombiner &IC, GetElementPtrInst *GEPI,
                                      Instruction *MemI, unsigned &Idx) {
-  const DataLayout *DL = IC.getDataLayout();
-  if (GEPI->getNumOperands() < 2 || !DL)
+  if (GEPI->getNumOperands() < 2)
     return false;
 
   // Find the first non-zero index of a GEP. If all indices are zero, return
@@ -603,7 +597,8 @@ static bool canReplaceGEPIdxWithZero(InstCombiner &IC, GetElementPtrInst *GEPI,
     GetElementPtrInst::getIndexedType(GEPI->getOperand(0)->getType(), Ops);
   if (!AllocTy || !AllocTy->isSized())
     return false;
-  uint64_t TyAllocSize = DL->getTypeAllocSize(AllocTy);
+  const DataLayout &DL = IC.getDataLayout();
+  uint64_t TyAllocSize = DL.getTypeAllocSize(AllocTy);
 
   // If there are more indices after the one we might replace with a zero, make
   // sure they're all non-negative. If any of them are negative, the overall
@@ -665,18 +660,16 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     return Res;
 
   // Attempt to improve the alignment.
-  if (DL) {
-    unsigned KnownAlign = getOrEnforceKnownAlignment(
-        Op, DL->getPrefTypeAlignment(LI.getType()), DL, AC, &LI, DT);
-    unsigned LoadAlign = LI.getAlignment();
-    unsigned EffectiveLoadAlign = LoadAlign != 0 ? LoadAlign :
-      DL->getABITypeAlignment(LI.getType());
+  unsigned KnownAlign = getOrEnforceKnownAlignment(
+      Op, DL.getPrefTypeAlignment(LI.getType()), DL, &LI, AC, DT);
+  unsigned LoadAlign = LI.getAlignment();
+  unsigned EffectiveLoadAlign =
+      LoadAlign != 0 ? LoadAlign : DL.getABITypeAlignment(LI.getType());
 
-    if (KnownAlign > EffectiveLoadAlign)
-      LI.setAlignment(KnownAlign);
-    else if (LoadAlign == 0)
-      LI.setAlignment(EffectiveLoadAlign);
-  }
+  if (KnownAlign > EffectiveLoadAlign)
+    LI.setAlignment(KnownAlign);
+  else if (LoadAlign == 0)
+    LI.setAlignment(EffectiveLoadAlign);
 
   // Replace GEP indices if possible.
   if (Instruction *NewGEPI = replaceGEPIdxWithZero(*this, Op, LI)) {
@@ -738,8 +731,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op)) {
       // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
       unsigned Align = LI.getAlignment();
-      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI, Align, DL) &&
-          isSafeToLoadUnconditionally(SI->getOperand(2), SI, Align, DL)) {
+      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI, Align) &&
+          isSafeToLoadUnconditionally(SI->getOperand(2), SI, Align)) {
         LoadInst *V1 = Builder->CreateLoad(SI->getOperand(1),
                                            SI->getOperand(1)->getName()+".val");
         LoadInst *V2 = Builder->CreateLoad(SI->getOperand(2),
@@ -845,18 +838,16 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     return EraseInstFromFunction(SI);
 
   // Attempt to improve the alignment.
-  if (DL) {
-    unsigned KnownAlign = getOrEnforceKnownAlignment(
-        Ptr, DL->getPrefTypeAlignment(Val->getType()), DL, AC, &SI, DT);
-    unsigned StoreAlign = SI.getAlignment();
-    unsigned EffectiveStoreAlign = StoreAlign != 0 ? StoreAlign :
-      DL->getABITypeAlignment(Val->getType());
+  unsigned KnownAlign = getOrEnforceKnownAlignment(
+      Ptr, DL.getPrefTypeAlignment(Val->getType()), DL, &SI, AC, DT);
+  unsigned StoreAlign = SI.getAlignment();
+  unsigned EffectiveStoreAlign =
+      StoreAlign != 0 ? StoreAlign : DL.getABITypeAlignment(Val->getType());
 
-    if (KnownAlign > EffectiveStoreAlign)
-      SI.setAlignment(KnownAlign);
-    else if (StoreAlign == 0)
-      SI.setAlignment(EffectiveStoreAlign);
-  }
+  if (KnownAlign > EffectiveStoreAlign)
+    SI.setAlignment(KnownAlign);
+  else if (StoreAlign == 0)
+    SI.setAlignment(EffectiveStoreAlign);
 
   // Replace GEP indices if possible.
   if (Instruction *NewGEPI = replaceGEPIdxWithZero(*this, Ptr, SI)) {

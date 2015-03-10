@@ -532,7 +532,7 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   // selected branch.
   MadeChange = true;
 
-  SCEVExpander SCEVE(*SE, "loopcnt");
+  SCEVExpander SCEVE(*SE, Preheader->getModule()->getDataLayout(), "loopcnt");
   LLVMContext &C = SE->getContext();
   Type *CountType = TT.isArch64Bit() ? Type::getInt64Ty(C) :
                                        Type::getInt32Ty(C);

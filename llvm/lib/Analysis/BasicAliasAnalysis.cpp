@@ -103,7 +103,7 @@ static uint64_t getObjectSize(const Value *V, const DataLayout &DL,
                               const TargetLibraryInfo &TLI,
                               bool RoundToAlign = false) {
   uint64_t Size;
-  if (getObjectSize(V, Size, &DL, &TLI, RoundToAlign))
+  if (getObjectSize(V, Size, DL, &TLI, RoundToAlign))
     return Size;
   return AliasAnalysis::UnknownSize;
 }
@@ -221,7 +221,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
       case Instruction::Or:
         // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
         // analyze it.
-        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), &DL, 0, AC,
+        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), DL, 0, AC,
                                BOp, DT))
           break;
         // FALL THROUGH.
@@ -292,7 +292,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 static const Value *
 DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                        SmallVectorImpl<VariableGEPIndex> &VarIndices,
-                       bool &MaxLookupReached, const DataLayout *DL,
+                       bool &MaxLookupReached, const DataLayout &DL,
                        AssumptionCache *AC, DominatorTree *DT) {
   // Limit recursion depth to limit compile time in crazy cases.
   unsigned MaxLookup = MaxLookupSearchDepth;
@@ -341,16 +341,6 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
     if (!GEPOp->getOperand(0)->getType()->getPointerElementType()->isSized())
       return V;
 
-    // If we are lacking DataLayout information, we can't compute the offets of
-    // elements computed by GEPs.  However, we can handle bitcast equivalent
-    // GEPs.
-    if (!DL) {
-      if (!GEPOp->hasAllZeroIndices())
-        return V;
-      V = GEPOp->getOperand(0);
-      continue;
-    }
-
     unsigned AS = GEPOp->getPointerAddressSpace();
     // Walk the indices of the GEP, accumulating them into BaseOff/VarIndices.
     gep_type_iterator GTI = gep_type_begin(GEPOp);
@@ -363,30 +353,30 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
         unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
         if (FieldNo == 0) continue;
 
-        BaseOffs += DL->getStructLayout(STy)->getElementOffset(FieldNo);
+        BaseOffs += DL.getStructLayout(STy)->getElementOffset(FieldNo);
         continue;
       }
 
       // For an array/pointer, add the element offset, explicitly scaled.
       if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Index)) {
         if (CIdx->isZero()) continue;
-        BaseOffs += DL->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
+        BaseOffs += DL.getTypeAllocSize(*GTI) * CIdx->getSExtValue();
         continue;
       }
 
-      uint64_t Scale = DL->getTypeAllocSize(*GTI);
+      uint64_t Scale = DL.getTypeAllocSize(*GTI);
       ExtensionKind Extension = EK_NotExtended;
 
       // If the integer type is smaller than the pointer size, it is implicitly
       // sign extended to pointer size.
       unsigned Width = Index->getType()->getIntegerBitWidth();
-      if (DL->getPointerSizeInBits(AS) > Width)
+      if (DL.getPointerSizeInBits(AS) > Width)
         Extension = EK_SignExt;
 
       // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset, Extension,
-                                  *DL, 0, AC, DT);
+      Index = GetLinearExpression(Index, IndexScale, IndexOffset, Extension, DL,
+                                  0, AC, DT);
 
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
@@ -408,7 +398,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
 
       // Make sure that we have a scale that makes sense for this target's
       // pointer size.
-      if (unsigned ShiftBits = 64 - DL->getPointerSizeInBits(AS)) {
+      if (unsigned ShiftBits = 64 - DL.getPointerSizeInBits(AS)) {
         Scale <<= ShiftBits;
         Scale = (int64_t)Scale >> ShiftBits;
       }
@@ -610,7 +600,7 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   SmallVector<const Value *, 16> Worklist;
   Worklist.push_back(Loc.Ptr);
   do {
-    const Value *V = GetUnderlyingObject(Worklist.pop_back_val(), DL);
+    const Value *V = GetUnderlyingObject(Worklist.pop_back_val(), *DL);
     if (!Visited.insert(V).second) {
       Visited.clear();
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -828,7 +818,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   assert(notDifferentParent(CS.getInstruction(), Loc.Ptr) &&
          "AliasAnalysis query involving multiple functions!");
 
-  const Value *Object = GetUnderlyingObject(Loc.Ptr, DL);
+  const Value *Object = GetUnderlyingObject(Loc.Ptr, *DL);
 
   // If this is a tail call and Loc.Ptr points to a stack location, we know that
   // the tail call cannot access or modify the local stack.
@@ -1045,10 +1035,10 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
         const Value *GEP2BasePtr =
             DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices,
-                                   GEP2MaxLookupReached, DL, AC2, DT);
+                                   GEP2MaxLookupReached, *DL, AC2, DT);
         const Value *GEP1BasePtr =
             DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
-                                   GEP1MaxLookupReached, DL, AC1, DT);
+                                   GEP1MaxLookupReached, *DL, AC1, DT);
         // DecomposeGEPExpression and GetUnderlyingObject should return the
         // same result except when DecomposeGEPExpression has no DataLayout.
         if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
@@ -1077,14 +1067,14 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     // about the relation of the resulting pointer.
     const Value *GEP1BasePtr =
         DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
-                               GEP1MaxLookupReached, DL, AC1, DT);
+                               GEP1MaxLookupReached, *DL, AC1, DT);
 
     int64_t GEP2BaseOffset;
     bool GEP2MaxLookupReached;
     SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
     const Value *GEP2BasePtr =
         DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices,
-                               GEP2MaxLookupReached, DL, AC2, DT);
+                               GEP2MaxLookupReached, *DL, AC2, DT);
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
@@ -1134,7 +1124,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
 
     const Value *GEP1BasePtr =
         DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
-                               GEP1MaxLookupReached, DL, AC1, DT);
+                               GEP1MaxLookupReached, *DL, AC1, DT);
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
@@ -1203,7 +1193,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         const Value *V = GEP1VariableIndices[i].V;
 
         bool SignKnownZero, SignKnownOne;
-        ComputeSignBit(const_cast<Value *>(V), SignKnownZero, SignKnownOne, DL,
+        ComputeSignBit(const_cast<Value *>(V), SignKnownZero, SignKnownOne, *DL,
                        0, AC1, nullptr, DT);
 
         // Zero-extension widens the variable, and so forces the sign
@@ -1412,8 +1402,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
     return NoAlias;  // Scalars cannot alias each other
 
   // Figure out what objects these things are pointing to if we can.
-  const Value *O1 = GetUnderlyingObject(V1, DL, MaxLookupSearchDepth);
-  const Value *O2 = GetUnderlyingObject(V2, DL, MaxLookupSearchDepth);
+  const Value *O1 = GetUnderlyingObject(V1, *DL, MaxLookupSearchDepth);
+  const Value *O2 = GetUnderlyingObject(V2, *DL, MaxLookupSearchDepth);
 
   // Null values in the default address space don't point to any object, so they
   // don't alias any other pointer.

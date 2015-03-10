@@ -396,7 +396,8 @@ struct AddressSanitizer : public FunctionPass {
   }
   uint64_t getAllocaSizeInBytes(AllocaInst *AI) const {
     Type *Ty = AI->getAllocatedType();
-    uint64_t SizeInBytes = DL->getTypeAllocSize(Ty);
+    uint64_t SizeInBytes =
+        AI->getModule()->getDataLayout().getTypeAllocSize(Ty);
     return SizeInBytes;
   }
   /// Check if we want (and can) handle this alloca.
@@ -407,7 +408,7 @@ struct AddressSanitizer : public FunctionPass {
                                    uint64_t *TypeSize,
                                    unsigned *Alignment) const;
   void instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis, Instruction *I,
-                     bool UseCalls);
+                     bool UseCalls, const DataLayout &DL);
   void instrumentPointerComparisonOrSubtraction(Instruction *I);
   void instrumentAddress(Instruction *OrigIns, Instruction *InsertBefore,
                          Value *Addr, uint32_t TypeSize, bool IsWrite,
@@ -435,7 +436,6 @@ struct AddressSanitizer : public FunctionPass {
                     uint64_t TypeSize) const;
 
   LLVMContext *C;
-  const DataLayout *DL;
   Triple TargetTriple;
   int LongSize;
   Type *IntptrTy;
@@ -478,7 +478,6 @@ class AddressSanitizerModule : public ModulePass {
   GlobalsMetadata GlobalsMD;
   Type *IntptrTy;
   LLVMContext *C;
-  const DataLayout *DL;
   Triple TargetTriple;
   ShadowMapping Mapping;
   Function *AsanPoisonGlobals;
@@ -605,8 +604,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   // Right shift for BigEndian and left shift for LittleEndian.
   Value *shiftAllocaMagic(Value *Val, IRBuilder<> &IRB, Value *Shift) {
-    return ASan.DL->isLittleEndian() ? IRB.CreateShl(Val, Shift)
-                                     : IRB.CreateLShr(Val, Shift);
+    auto &DL = F.getParent()->getDataLayout();
+    return DL.isLittleEndian() ? IRB.CreateShl(Val, Shift)
+                               : IRB.CreateLShr(Val, Shift);
   }
 
   // Compute PartialRzMagic for dynamic alloca call. Since we don't know the
@@ -818,29 +818,29 @@ Value *AddressSanitizer::isInterestingMemoryAccess(Instruction *I,
   if (I->getMetadata("nosanitize")) return nullptr;
 
   Value *PtrOperand = nullptr;
+  const DataLayout &DL = I->getModule()->getDataLayout();
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!ClInstrumentReads) return nullptr;
     *IsWrite = false;
-    *TypeSize = DL->getTypeStoreSizeInBits(LI->getType());
+    *TypeSize = DL.getTypeStoreSizeInBits(LI->getType());
     *Alignment = LI->getAlignment();
     PtrOperand = LI->getPointerOperand();
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     if (!ClInstrumentWrites) return nullptr;
     *IsWrite = true;
-    *TypeSize = DL->getTypeStoreSizeInBits(SI->getValueOperand()->getType());
+    *TypeSize = DL.getTypeStoreSizeInBits(SI->getValueOperand()->getType());
     *Alignment = SI->getAlignment();
     PtrOperand = SI->getPointerOperand();
   } else if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(I)) {
     if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
-    *TypeSize = DL->getTypeStoreSizeInBits(RMW->getValOperand()->getType());
+    *TypeSize = DL.getTypeStoreSizeInBits(RMW->getValOperand()->getType());
     *Alignment = 0;
     PtrOperand = RMW->getPointerOperand();
   } else if (AtomicCmpXchgInst *XCHG = dyn_cast<AtomicCmpXchgInst>(I)) {
     if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
-    *TypeSize =
-        DL->getTypeStoreSizeInBits(XCHG->getCompareOperand()->getType());
+    *TypeSize = DL.getTypeStoreSizeInBits(XCHG->getCompareOperand()->getType());
     *Alignment = 0;
     PtrOperand = XCHG->getPointerOperand();
   }
@@ -896,7 +896,8 @@ void AddressSanitizer::instrumentPointerComparisonOrSubtraction(
 }
 
 void AddressSanitizer::instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis,
-                                     Instruction *I, bool UseCalls) {
+                                     Instruction *I, bool UseCalls,
+                                     const DataLayout &DL) {
   bool IsWrite = false;
   unsigned Alignment = 0;
   uint64_t TypeSize = 0;
@@ -906,8 +907,7 @@ void AddressSanitizer::instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis,
   if (ClOpt && ClOptGlobals) {
     // If initialization order checking is disabled, a simple access to a
     // dynamically initialized global is always valid.
-    GlobalVariable *G =
-        dyn_cast<GlobalVariable>(GetUnderlyingObject(Addr, nullptr));
+    GlobalVariable *G = dyn_cast<GlobalVariable>(GetUnderlyingObject(Addr, DL));
     if (G != NULL && (!ClInitializers || GlobalIsLinkerInitialized(G)) &&
         isSafeAccess(ObjSizeVis, Addr, TypeSize)) {
       NumOptimizedAccessesToGlobalVar++;
@@ -917,7 +917,7 @@ void AddressSanitizer::instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis,
 
   if (ClOpt && ClOptStack) {
     // A direct inbounds access to a stack variable is always valid.
-    if (isa<AllocaInst>(GetUnderlyingObject(Addr, nullptr)) &&
+    if (isa<AllocaInst>(GetUnderlyingObject(Addr, DL)) &&
         isSafeAccess(ObjSizeVis, Addr, TypeSize)) {
       NumOptimizedAccessesToStackVar++;
       return;
@@ -1221,6 +1221,7 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   GlobalVariable *ModuleName = createPrivateGlobalForString(
       M, M.getModuleIdentifier(), /*AllowMerging*/ false);
 
+  auto &DL = M.getDataLayout();
   for (size_t i = 0; i < n; i++) {
     static const uint64_t kMaxGlobalRedzone = 1 << 18;
     GlobalVariable *G = GlobalsToChange[i];
@@ -1234,7 +1235,7 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
 
     PointerType *PtrTy = cast<PointerType>(G->getType());
     Type *Ty = PtrTy->getElementType();
-    uint64_t SizeInBytes = DL->getTypeAllocSize(Ty);
+    uint64_t SizeInBytes = DL.getTypeAllocSize(Ty);
     uint64_t MinRZ = MinRedzoneSizeForGlobal();
     // MinRZ <= RZ <= kMaxGlobalRedzone
     // and trying to make RZ to be ~ 1/4 of SizeInBytes.
@@ -1320,9 +1321,8 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
 }
 
 bool AddressSanitizerModule::runOnModule(Module &M) {
-  DL = &M.getDataLayout();
   C = &(M.getContext());
-  int LongSize = DL->getPointerSizeInBits();
+  int LongSize = M.getDataLayout().getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
   TargetTriple = Triple(M.getTargetTriple());
   Mapping = getShadowMapping(TargetTriple, LongSize);
@@ -1396,12 +1396,11 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
 // virtual
 bool AddressSanitizer::doInitialization(Module &M) {
   // Initialize the private fields. No one has accessed them before.
-  DL = &M.getDataLayout();
 
   GlobalsMD.init(M);
 
   C = &(M.getContext());
-  LongSize = DL->getPointerSizeInBits();
+  LongSize = M.getDataLayout().getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
   TargetTriple = Triple(M.getTargetTriple());
 
@@ -1507,6 +1506,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
 
   const TargetLibraryInfo *TLI =
       &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  const DataLayout &DL = F.getParent()->getDataLayout();
   ObjectSizeOffsetVisitor ObjSizeVis(DL, TLI, F.getContext(),
                                      /*RoundToAlign=*/true);
 
@@ -1516,7 +1516,8 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     if (ClDebugMin < 0 || ClDebugMax < 0 ||
         (NumInstrumented >= ClDebugMin && NumInstrumented <= ClDebugMax)) {
       if (isInterestingMemoryAccess(Inst, &IsWrite, &TypeSize, &Alignment))
-        instrumentMop(ObjSizeVis, Inst, UseCalls);
+        instrumentMop(ObjSizeVis, Inst, UseCalls,
+                      F.getParent()->getDataLayout());
       else
         instrumentMemIntrinsic(cast<MemIntrinsic>(Inst));
     }
@@ -1588,7 +1589,7 @@ void FunctionStackPoisoner::poisonRedZones(ArrayRef<uint8_t> ShadowBytes,
     for (; i + LargeStoreSizeInBytes - 1 < n; i += LargeStoreSizeInBytes) {
       uint64_t Val = 0;
       for (size_t j = 0; j < LargeStoreSizeInBytes; j++) {
-        if (ASan.DL->isLittleEndian())
+        if (F.getParent()->getDataLayout().isLittleEndian())
           Val |= (uint64_t)ShadowBytes[i + j] << (8 * j);
         else
           Val = (Val << 8) | ShadowBytes[i + j];
@@ -1932,14 +1933,14 @@ Value *FunctionStackPoisoner::computePartialRzMagic(Value *PartialSize,
   Value *Shift = IRB.CreateAnd(PartialSize, IRB.getInt32(~7));
   unsigned Val1Int = kAsanAllocaPartialVal1;
   unsigned Val2Int = kAsanAllocaPartialVal2;
-  if (!ASan.DL->isLittleEndian()) {
+  if (!F.getParent()->getDataLayout().isLittleEndian()) {
     Val1Int = sys::getSwappedBytes(Val1Int);
     Val2Int = sys::getSwappedBytes(Val2Int);
   }
   Value *Val1 = shiftAllocaMagic(IRB.getInt32(Val1Int), IRB, Shift);
   Value *PartialBits = IRB.CreateAnd(PartialSize, IRB.getInt32(7));
   // For BigEndian get 0x000000YZ -> 0xYZ000000.
-  if (ASan.DL->isBigEndian())
+  if (F.getParent()->getDataLayout().isBigEndian())
     PartialBits = IRB.CreateShl(PartialBits, IRB.getInt32(24));
   Value *Val2 = IRB.getInt32(Val2Int);
   Value *Cond =
@@ -1973,7 +1974,8 @@ void FunctionStackPoisoner::handleDynamicAllocaCall(
   // redzones, and OldSize is number of allocated blocks with
   // ElementSize size, get allocated memory size in bytes by
   // OldSize * ElementSize.
-  unsigned ElementSize = ASan.DL->getTypeAllocSize(AI->getAllocatedType());
+  unsigned ElementSize =
+      F.getParent()->getDataLayout().getTypeAllocSize(AI->getAllocatedType());
   Value *OldSize = IRB.CreateMul(AI->getArraySize(),
                                  ConstantInt::get(IntptrTy, ElementSize));
 
