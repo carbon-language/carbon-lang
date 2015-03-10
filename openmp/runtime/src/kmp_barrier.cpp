@@ -1550,8 +1550,7 @@ __kmp_fork_barrier(int gtid, int tid)
 #endif // KMP_AFFINITY_SUPPORTED
 #if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     }
-    else if ((proc_bind != proc_bind_false)
-             && (proc_bind != proc_bind_disabled)) {
+    else if (proc_bind != proc_bind_false) {
         if (this_thr->th.th_new_place == this_thr->th.th_current_place) {
             KA_TRACE(100, ("__kmp_fork_barrier: T#%d already in correct place %d\n",
                            __kmp_gtid_from_thread(this_thr), this_thr->th.th_current_place));

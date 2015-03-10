@@ -3216,7 +3216,7 @@ __kmp_stg_parse_proc_bind( char const * name, char const * value, void * data )
         __kmp_affinity_type = affinity_disabled;
 # endif /* KMP_AFFINITY_SUPPORTED */
         __kmp_nested_proc_bind.used = 1;
-        __kmp_nested_proc_bind.bind_types[0] = proc_bind_disabled;
+        __kmp_nested_proc_bind.bind_types[0] = proc_bind_false;
     }
     else if ( ( num == (int)proc_bind_false )
       || __kmp_match_str( "false", buf, &next ) ) {
@@ -3360,10 +3360,6 @@ __kmp_stg_print_proc_bind( kmp_str_buf_t * buffer, char const * name,
 
                 case proc_bind_spread:
                 __kmp_str_buf_print( buffer, "spread" );
-                break;
-
-                case proc_bind_disabled:
-                __kmp_str_buf_print( buffer, "disabled" );
                 break;
 
                 case proc_bind_intel:
@@ -5120,7 +5116,7 @@ __kmp_env_initialize( char const * string ) {
 
 # if OMP_40_ENABLED
         if ( __kmp_affinity_type == affinity_disabled )  {
-            __kmp_nested_proc_bind.bind_types[0] = proc_bind_disabled;
+            __kmp_nested_proc_bind.bind_types[0] = proc_bind_false;
         }
         else if ( __kmp_nested_proc_bind.bind_types[0] == proc_bind_true ) {
             //

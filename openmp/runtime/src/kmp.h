@@ -761,7 +761,6 @@ typedef enum kmp_proc_bind_t {
     proc_bind_master,
     proc_bind_close,
     proc_bind_spread,
-    proc_bind_disabled,
     proc_bind_intel,    // use KMP_AFFINITY interface
     proc_bind_default
 } kmp_proc_bind_t;
