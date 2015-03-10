@@ -764,7 +764,7 @@ LowerBR_JT(SDValue Op, SelectionDAG &DAG) const
     BlockAddress::get(const_cast<BasicBlock *>(MBB->getBasicBlock()));
   }
 
-  SDValue JumpTableBase = DAG.getNode(HexagonISD::WrapperJT, dl,
+  SDValue JumpTableBase = DAG.getNode(HexagonISD::JT, dl,
                                       getPointerTy(), TargetJT);
   SDValue ShiftIndex = DAG.getNode(ISD::SHL, dl, MVT::i32, Index,
                                    DAG.getConstant(2, MVT::i32));

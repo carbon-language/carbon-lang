@@ -5129,10 +5129,13 @@ let AddedComplexity = 100 in
 def: Pat<(i32 (sext_inreg (Hexagon_ARGEXTEND (i32 IntRegs:$src1)), i16)),
          (i32 IntRegs:$src1)>;
 
-def HexagonWrapperJT: SDNode<"HexagonISD::WrapperJT", SDTIntUnaryOp>;
+def HexagonJT:     SDNode<"HexagonISD::JT", SDTIntUnaryOp>;
+def HexagonCP:     SDNode<"HexagonISD::CP", SDTIntUnaryOp>;
 
-def : Pat<(HexagonWrapperJT tjumptable:$dst),
-          (i32 (CONST32_set_jt tjumptable:$dst))>;
+def: Pat<(HexagonJT tjumptable:$dst),
+         (CONST32_set_jt tjumptable:$dst)>;
+def: Pat<(HexagonCP tconstpool :$dst),
+         (CONST32_set_jt tconstpool:$dst)>;
 
 // XTYPE/SHIFT
 //
