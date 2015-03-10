@@ -159,9 +159,6 @@ void HexagonPassConfig::addPreEmitPass() {
   // Expand Spill code for predicate registers.
   addPass(createHexagonExpandPredSpillCode(), false);
 
-  // Split up TFRcondsets into conditional transfers.
-  addPass(createHexagonSplitTFRCondSets(), false);
-
   // Create Packets.
   if (!NoOpt) {
     if (!DisableHardwareLoops)
