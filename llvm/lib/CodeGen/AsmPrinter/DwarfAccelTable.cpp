@@ -205,8 +205,8 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
 // Terminate each HashData bucket with 0.
 void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D,
                                MCSymbol *StrSym) {
-  uint64_t PrevHash = UINT64_MAX;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
+    uint64_t PrevHash = UINT64_MAX;
     for (HashList::const_iterator HI = Buckets[i].begin(),
                                   HE = Buckets[i].end();
          HI != HE; ++HI) {
@@ -235,7 +235,8 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D,
       PrevHash = (*HI)->HashValue;
     }
     // Emit the final end marker for the bucket.
-    Asm->EmitInt32(0);
+    if (!Buckets[i].empty())
+      Asm->EmitInt32(0);
   }
 }
 
