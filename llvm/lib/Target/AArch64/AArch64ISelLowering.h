@@ -141,6 +141,18 @@ enum {
   FCMLEz,
   FCMLTz,
 
+  // Vector across-lanes addition
+  // Only the lower result lane is defined.
+  SADDV,
+  UADDV,
+
+  // Vector across-lanes min/max
+  // Only the lower result lane is defined.
+  SMINV,
+  UMINV,
+  SMAXV,
+  UMAXV,
+
   // Vector bitwise negation
   NOT,
 

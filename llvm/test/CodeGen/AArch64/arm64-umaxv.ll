@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm64 -aarch64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -march=arm64 -aarch64-neon-syntax=apple -asm-verbose=false | FileCheck %s
 
 define i32 @vmax_u8x8(<8 x i8> %a) nounwind ssp {
 ; CHECK-LABEL: vmax_u8x8:
@@ -86,7 +86,79 @@ return:
   ret i32 %retval.0
 }
 
+define <8 x i8> @test_vmaxv_u8_used_by_laneop(<8 x i8> %a1, <8 x i8> %a2) {
+; CHECK-LABEL: test_vmaxv_u8_used_by_laneop:
+; CHECK: umaxv.8b b[[REGNUM:[0-9]+]], v1
+; CHECK-NEXT: ins.b v0[3], v[[REGNUM]][0]
+; CHECK-NEXT: ret
+entry:
+  %0 = tail call i32 @llvm.aarch64.neon.umaxv.i32.v8i8(<8 x i8> %a2)
+  %1 = trunc i32 %0 to i8
+  %2 = insertelement <8 x i8> %a1, i8 %1, i32 3
+  ret <8 x i8> %2
+}
+
+define <4 x i16> @test_vmaxv_u16_used_by_laneop(<4 x i16> %a1, <4 x i16> %a2) {
+; CHECK-LABEL: test_vmaxv_u16_used_by_laneop:
+; CHECK: umaxv.4h h[[REGNUM:[0-9]+]], v1
+; CHECK-NEXT: ins.h v0[3], v[[REGNUM]][0]
+; CHECK-NEXT: ret
+entry:
+  %0 = tail call i32 @llvm.aarch64.neon.umaxv.i32.v4i16(<4 x i16> %a2)
+  %1 = trunc i32 %0 to i16
+  %2 = insertelement <4 x i16> %a1, i16 %1, i32 3
+  ret <4 x i16> %2
+}
+
+define <2 x i32> @test_vmaxv_u32_used_by_laneop(<2 x i32> %a1, <2 x i32> %a2) {
+; CHECK-LABEL: test_vmaxv_u32_used_by_laneop:
+; CHECK: umaxp.2s v[[REGNUM:[0-9]+]], v1, v1
+; CHECK-NEXT: ins.s v0[1], v[[REGNUM]][0]
+; CHECK-NEXT: ret
+entry:
+  %0 = tail call i32 @llvm.aarch64.neon.umaxv.i32.v2i32(<2 x i32> %a2)
+  %1 = insertelement <2 x i32> %a1, i32 %0, i32 1
+  ret <2 x i32> %1
+}
+
+define <16 x i8> @test_vmaxvq_u8_used_by_laneop(<16 x i8> %a1, <16 x i8> %a2) {
+; CHECK-LABEL: test_vmaxvq_u8_used_by_laneop:
+; CHECK: umaxv.16b b[[REGNUM:[0-9]+]], v1
+; CHECK-NEXT: ins.b v0[3], v[[REGNUM]][0]
+; CHECK-NEXT: ret
+entry:
+  %0 = tail call i32 @llvm.aarch64.neon.umaxv.i32.v16i8(<16 x i8> %a2)
+  %1 = trunc i32 %0 to i8
+  %2 = insertelement <16 x i8> %a1, i8 %1, i32 3
+  ret <16 x i8> %2
+}
+
+define <8 x i16> @test_vmaxvq_u16_used_by_laneop(<8 x i16> %a1, <8 x i16> %a2) {
+; CHECK-LABEL: test_vmaxvq_u16_used_by_laneop:
+; CHECK: umaxv.8h h[[REGNUM:[0-9]+]], v1
+; CHECK-NEXT: ins.h v0[3], v[[REGNUM]][0]
+; CHECK-NEXT: ret
+entry:
+  %0 = tail call i32 @llvm.aarch64.neon.umaxv.i32.v8i16(<8 x i16> %a2)
+  %1 = trunc i32 %0 to i16
+  %2 = insertelement <8 x i16> %a1, i16 %1, i32 3
+  ret <8 x i16> %2
+}
+
+define <4 x i32> @test_vmaxvq_u32_used_by_laneop(<4 x i32> %a1, <4 x i32> %a2) {
+; CHECK-LABEL: test_vmaxvq_u32_used_by_laneop:
+; CHECK: umaxv.4s s[[REGNUM:[0-9]+]], v1
+; CHECK-NEXT: ins.s v0[3], v[[REGNUM]][0]
+; CHECK-NEXT: ret
+entry:
+  %0 = tail call i32 @llvm.aarch64.neon.umaxv.i32.v4i32(<4 x i32> %a2)
+  %1 = insertelement <4 x i32> %a1, i32 %0, i32 3
+  ret <4 x i32> %1
+}
+
 declare i32 @llvm.aarch64.neon.umaxv.i32.v16i8(<16 x i8>) nounwind readnone
 declare i32 @llvm.aarch64.neon.umaxv.i32.v8i16(<8 x i16>) nounwind readnone
 declare i32 @llvm.aarch64.neon.umaxv.i32.v4i16(<4 x i16>) nounwind readnone
 declare i32 @llvm.aarch64.neon.umaxv.i32.v8i8(<8 x i8>) nounwind readnone
+declare i32 @llvm.aarch64.neon.umaxv.i32.v2i32(<2 x i32>) nounwind readnone
+declare i32 @llvm.aarch64.neon.umaxv.i32.v4i32(<4 x i32>) nounwind readnone

@@ -815,6 +815,12 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::FCMGTz:            return "AArch64ISD::FCMGTz";
   case AArch64ISD::FCMLEz:            return "AArch64ISD::FCMLEz";
   case AArch64ISD::FCMLTz:            return "AArch64ISD::FCMLTz";
+  case AArch64ISD::SADDV:             return "AArch64ISD::SADDV";
+  case AArch64ISD::UADDV:             return "AArch64ISD::UADDV";
+  case AArch64ISD::SMINV:             return "AArch64ISD::SMINV";
+  case AArch64ISD::UMINV:             return "AArch64ISD::UMINV";
+  case AArch64ISD::SMAXV:             return "AArch64ISD::SMAXV";
+  case AArch64ISD::UMAXV:             return "AArch64ISD::UMAXV";
   case AArch64ISD::NOT:               return "AArch64ISD::NOT";
   case AArch64ISD::BIT:               return "AArch64ISD::BIT";
   case AArch64ISD::CBZ:               return "AArch64ISD::CBZ";
@@ -7610,6 +7616,15 @@ static SDValue tryCombineCRC32(unsigned Mask, SDNode *N, SelectionDAG &DAG) {
                      N->getOperand(0), N->getOperand(1), AndN.getOperand(0));
 }
 
+static SDValue combineAcrossLanesIntrinsic(unsigned Opc, SDNode *N,
+                                           SelectionDAG &DAG) {
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N), N->getValueType(0),
+                     DAG.getNode(Opc, SDLoc(N),
+                                 N->getOperand(1).getSimpleValueType(),
+                                 N->getOperand(1)),
+                     DAG.getConstant(0, MVT::i64));
+}
+
 static SDValue performIntrinsicCombine(SDNode *N,
                                        TargetLowering::DAGCombinerInfo &DCI,
                                        const AArch64Subtarget *Subtarget) {
@@ -7622,6 +7637,18 @@ static SDValue performIntrinsicCombine(SDNode *N,
   case Intrinsic::aarch64_neon_vcvtfxu2fp:
     return tryCombineFixedPointConvert(N, DCI, DAG);
     break;
+  case Intrinsic::aarch64_neon_saddv:
+    return combineAcrossLanesIntrinsic(AArch64ISD::SADDV, N, DAG);
+  case Intrinsic::aarch64_neon_uaddv:
+    return combineAcrossLanesIntrinsic(AArch64ISD::UADDV, N, DAG);
+  case Intrinsic::aarch64_neon_sminv:
+    return combineAcrossLanesIntrinsic(AArch64ISD::SMINV, N, DAG);
+  case Intrinsic::aarch64_neon_uminv:
+    return combineAcrossLanesIntrinsic(AArch64ISD::UMINV, N, DAG);
+  case Intrinsic::aarch64_neon_smaxv:
+    return combineAcrossLanesIntrinsic(AArch64ISD::SMAXV, N, DAG);
+  case Intrinsic::aarch64_neon_umaxv:
+    return combineAcrossLanesIntrinsic(AArch64ISD::UMAXV, N, DAG);
   case Intrinsic::aarch64_neon_fmax:
     return DAG.getNode(AArch64ISD::FMAX, SDLoc(N), N->getValueType(0),
                        N->getOperand(1), N->getOperand(2));
