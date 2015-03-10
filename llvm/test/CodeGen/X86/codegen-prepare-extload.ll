@@ -361,3 +361,34 @@ entry:
   %conv3 = sext i16 %add to i32
   ret i32 %conv3
 }
+
+; Check that we see that one zext can be derived from the other for free.
+; OPTALL-LABEL: @promoteTwoArgZextWithSourceExtendedTwice
+; OPTALL: [[LD:%[a-zA-Z_0-9-]+]] = load i8, i8* %p
+
+; OPT-NEXT: [[ZEXT64:%[a-zA-Z_0-9-]+]] = zext i8 [[LD]] to i64
+; OPT-NEXT: [[ZEXT32:%[a-zA-Z_0-9-]+]] = zext i8 [[LD]] to i32
+; OPT-NEXT: [[RES32:%[a-zA-Z_0-9-]+]] = add nuw i32 [[ZEXT32]], %b
+; OPT-NEXT: [[RES64:%[a-zA-Z_0-9-]+]] = add nuw i64 [[ZEXT64]], 12
+; OPT-NEXT: store i32 [[RES32]], i32* %addr
+; OPT-NEXT: store i64 [[RES64]], i64* %q
+;
+; DISABLE-NEXT: [[ZEXT32:%[a-zA-Z_0-9-]+]] = zext i8 [[LD]] to i32
+; DISABLE-NEXT: [[RES32:%[a-zA-Z_0-9-]+]] = add nuw i32 [[ZEXT32]], %b
+; DISABLE-NEXT: [[RES2_32:%[a-zA-Z_0-9-]+]] = add nuw i32 [[ZEXT32]], 12
+; DISABLE-NEXT: store i32 [[RES32]], i32* %addr
+; DISABLE-NEXT: [[ZEXT64:%[a-zA-Z_0-9-]+]] = zext i32 [[RES2_32]] to i64
+; DISABLE-NEXT: store i64 [[ZEXT64]], i64* %q
+;
+; OPTALL-NEXT: ret void
+define void @promoteTwoArgZextWithSourceExtendedTwice(i8* %p, i64* %q, i32 %b, i32* %addr) {
+entry:
+  %t = load i8, i8* %p
+  %zextt = zext i8 %t to i32
+  %add = add nuw i32 %zextt, %b
+  %add2 = add nuw i32 %zextt, 12
+  store i32 %add, i32 *%addr
+  %s = zext i32 %add2 to i64
+  store i64 %s, i64* %q
+  ret void
+}

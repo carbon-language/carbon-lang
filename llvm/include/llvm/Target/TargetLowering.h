@@ -1484,6 +1484,33 @@ public:
 
   virtual bool isProfitableToHoist(Instruction *I) const { return true; }
 
+  /// Return true if the extension represented by \p I is free.
+  /// Unlikely the is[Z|FP]ExtFree family which is based on types,
+  /// this method can use the context provided by \p I to decide
+  /// whether or not \p I is free.
+  /// This method extends the behavior of the is[Z|FP]ExtFree family.
+  /// In other words, if is[Z|FP]Free returns true, then this method
+  /// returns true as well. The converse is not true.
+  /// The target can perform the adequate checks by overriding isExtFreeImpl.
+  /// \pre \p I must be a sign, zero, or fp extension.
+  bool isExtFree(const Instruction *I) const {
+    switch (I->getOpcode()) {
+    case Instruction::FPExt:
+      if (isFPExtFree(EVT::getEVT(I->getType())))
+        return true;
+      break;
+    case Instruction::ZExt:
+      if (isZExtFree(I->getOperand(0)->getType(), I->getType()))
+        return true;
+      break;
+    case Instruction::SExt:
+      break;
+    default:
+      llvm_unreachable("Instruction is not an extension");
+    }
+    return isExtFreeImpl(I);
+  }
+
   /// Return true if any actual instruction that defines a value of type Ty1
   /// implicitly zero-extends the value to Ty2 in the result register.
   ///
@@ -1847,6 +1874,11 @@ private:
   CallingConv::ID LibcallCallingConvs[RTLIB::UNKNOWN_LIBCALL];
 
 protected:
+  /// Return true if the extension represented by \p I is free.
+  /// \pre \p I is a sign, zero, or fp extension and
+  ///      is[Z|FP]ExtFree of the related types is not true.
+  virtual bool isExtFreeImpl(const Instruction *I) const { return false; }
+
   /// \brief Specify maximum number of store instructions per memset call.
   ///
   /// When lowering \@llvm.memset this field specifies the maximum number of

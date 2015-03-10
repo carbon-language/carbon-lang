@@ -90,9 +90,7 @@ define i8 @oneArgPromotionZExt(i8 %arg1, i8* %base) {
 ; rolled back.
 ; Still, this test case exercises the desired code path.
 ; CHECK-LABEL: @oneArgPromotionCstZExt
-; CHECK: [[ZEXT:%[a-zA-Z_0-9-]+]] = zext i16 undef to i32
-; CHECK: [[SEXT:%[a-zA-Z_0-9-]+]] = sext i32 [[ZEXT]] to i64
-; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 [[SEXT]], 1
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 0, 1
 ; CHECK: getelementptr inbounds i8, i8* %base, i64 [[PROMOTED]]
 ; CHECK: ret
 define i8 @oneArgPromotionCstZExt(i8* %base) {
