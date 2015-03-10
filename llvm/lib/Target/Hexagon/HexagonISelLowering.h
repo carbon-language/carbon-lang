@@ -37,6 +37,10 @@ bool isPositiveHalfWord(SDNode *N);
       ADJDYNALLOC,
       ARGEXTEND,
 
+      PIC_ADD,
+      AT_GOT,
+      AT_PCREL,
+
       CMPICC,      // Compare two GPR operands, set icc.
       CMPFCC,      // Compare two FP operands, set fcc.
       BRICC,       // Branch to dest on icc condition

@@ -314,16 +314,15 @@ let opExtendable = 1 in
 def A4_combineir : T_Combine1<0b01, (ins s8Ext:$s8, IntRegs:$Rs),
                                     "$Rdd = combine(#$s8, $Rs)">;
 
-def HexagonWrapperCombineRI_V4 :
-  SDNode<"HexagonISD::WrapperCombineRI_V4", SDTHexagonI64I32I32>;
-def HexagonWrapperCombineIR_V4 :
-  SDNode<"HexagonISD::WrapperCombineIR_V4", SDTHexagonI64I32I32>;
+// The complexity of the combines involving immediates should be greater
+// than the complexity of the combine with two registers.
+let AddedComplexity = 50 in {
+def: Pat<(HexagonCOMBINE IntRegs:$r, s8ExtPred:$i),
+         (A4_combineri IntRegs:$r, s8ExtPred:$i)>;
 
-def : Pat <(HexagonWrapperCombineRI_V4 IntRegs:$r, s8ExtPred:$i),
-           (A4_combineri IntRegs:$r, s8ExtPred:$i)>;
-
-def : Pat <(HexagonWrapperCombineIR_V4 s8ExtPred:$i, IntRegs:$r),
-           (A4_combineir s8ExtPred:$i, IntRegs:$r)>;
+def: Pat<(HexagonCOMBINE s8ExtPred:$i, IntRegs:$r),
+         (A4_combineir s8ExtPred:$i, IntRegs:$r)>;
+}
 
 // A4_combineii: Set two small immediates.
 let hasSideEffects = 0, isExtendable = 1, opExtentBits = 6, opExtendable = 2 in
@@ -1818,6 +1817,49 @@ def: LogLogNot_pat<and, and, C4_and_andn>;
 def: LogLogNot_pat<and, or,  C4_and_orn>;
 def: LogLogNot_pat<or,  and, C4_or_andn>;
 def: LogLogNot_pat<or,  or,  C4_or_orn>;
+
+//===----------------------------------------------------------------------===//
+// PIC: Support for PIC compilations. The patterns and SD nodes defined
+// below are needed to support code generation for PIC
+//===----------------------------------------------------------------------===//
+
+def SDT_HexagonPICAdd
+  : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def SDT_HexagonGOTAdd
+  : SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
+def SDT_HexagonGOTAddInternal   : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
+def SDT_HexagonGOTAddInternalJT : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
+def SDT_HexagonGOTAddInternalBA : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
+
+def Hexagonpic_add      : SDNode<"HexagonISD::PIC_ADD", SDT_HexagonPICAdd>;
+def Hexagonat_got       : SDNode<"HexagonISD::AT_GOT", SDT_HexagonGOTAdd>;
+def Hexagongat_pcrel    : SDNode<"HexagonISD::AT_PCREL",
+                                 SDT_HexagonGOTAddInternal>;
+def Hexagongat_pcrel_jt : SDNode<"HexagonISD::AT_PCREL",
+                                 SDT_HexagonGOTAddInternalJT>;
+def Hexagongat_pcrel_ba : SDNode<"HexagonISD::AT_PCREL",
+                                 SDT_HexagonGOTAddInternalBA>;
+
+// PIC: Map from a block address computation to a PC-relative add
+def: Pat<(Hexagongat_pcrel_ba tblockaddress:$src1),
+         (C4_addipc u6ExtPred:$src1)>;
+
+// PIC: Map from the computation to generate a GOT pointer to a PC-relative add
+def: Pat<(Hexagonpic_add texternalsym:$src1),
+         (C4_addipc u6ExtPred:$src1)>;
+
+// PIC: Map from a jump table address computation to a PC-relative add
+def: Pat<(Hexagongat_pcrel_jt tjumptable:$src1),
+         (C4_addipc u6ExtPred:$src1)>;
+
+// PIC: Map from a GOT-relative symbol reference to a load
+def: Pat<(Hexagonat_got (i32 IntRegs:$src1), tglobaladdr:$src2),
+         (L2_loadri_io IntRegs:$src1, s11_2ExtPred:$src2)>;
+
+// PIC: Map from a static symbol reference to a PC-relative add
+def: Pat<(Hexagongat_pcrel tglobaladdr:$src1),
+         (C4_addipc u6ExtPred:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // CR -
