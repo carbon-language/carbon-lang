@@ -1509,64 +1509,6 @@ ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
   return nullptr;
 }
 
-static void DiagnoseARCUseOfWeakReceiver(Sema &S, Expr *Receiver) {
-  if (!Receiver)
-    return;
-  
-  if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Receiver))
-    Receiver = OVE->getSourceExpr();
-  
-  Expr *RExpr = Receiver->IgnoreParenImpCasts();
-  SourceLocation Loc = RExpr->getLocStart();
-  QualType T = RExpr->getType();
-  const ObjCPropertyDecl *PDecl = nullptr;
-  const ObjCMethodDecl *GDecl = nullptr;
-  if (PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(RExpr)) {
-    RExpr = POE->getSyntacticForm();
-    if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(RExpr)) {
-      if (PRE->isImplicitProperty()) {
-        GDecl = PRE->getImplicitPropertyGetter();
-        if (GDecl) {
-          T = GDecl->getReturnType();
-        }
-      }
-      else {
-        PDecl = PRE->getExplicitProperty();
-        if (PDecl) {
-          T = PDecl->getType();
-        }
-      }
-    }
-  }
-  else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(RExpr)) {
-    // See if receiver is a method which envokes a synthesized getter
-    // backing a 'weak' property.
-    ObjCMethodDecl *Method = ME->getMethodDecl();
-    if (Method && Method->getSelector().getNumArgs() == 0) {
-      PDecl = Method->findPropertyDecl();
-      if (PDecl)
-        T = PDecl->getType();
-    }
-  }
-  
-  if (T.getObjCLifetime() != Qualifiers::OCL_Weak) {
-    if (!PDecl)
-      return;
-    if (!(PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak))
-      return;
-  }
-
-  S.Diag(Loc, diag::warn_receiver_is_weak)
-    << ((!PDecl && !GDecl) ? 0 : (PDecl ? 1 : 2));
-
-  if (PDecl)
-    S.Diag(PDecl->getLocation(), diag::note_property_declare);
-  else if (GDecl)
-    S.Diag(GDecl->getLocation(), diag::note_method_declared_at) << GDecl;
-
-  S.Diag(Loc, diag::note_arc_assign_to_strong);
-}
-
 /// HandleExprPropertyRefExpr - Handle foo.bar where foo is a pointer to an
 /// objective C interface.  This is a property reference expression.
 ExprResult Sema::
@@ -2760,15 +2702,6 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   }
 
   if (getLangOpts().ObjCAutoRefCount) {
-    // Do not warn about IBOutlet weak property receivers being set to null
-    // as this cannot asynchronously happen.
-    bool WarnWeakReceiver = true;
-    if (isImplicit && Method)
-      if (const ObjCPropertyDecl *PropertyDecl = Method->findPropertyDecl())
-        WarnWeakReceiver = !PropertyDecl->hasAttr<IBOutletAttr>();
-    if (WarnWeakReceiver)
-      DiagnoseARCUseOfWeakReceiver(*this, Receiver);
-    
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&
         (SuperLoc.isValid() || isSelfExpr(Receiver))) {
