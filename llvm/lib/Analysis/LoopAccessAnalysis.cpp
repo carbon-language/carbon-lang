@@ -1086,21 +1086,24 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   if (NumComparisons == 0 && NeedRTCheck)
     NeedRTCheck = false;
 
-  // Check that we did not collect too many pointers or found an unsizeable
-  // pointer.
-  if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
-    PtrRtCheck.reset();
-    CanDoRT = false;
-  }
-
-  if (CanDoRT) {
+  // Check that we did not find an unsizeable pointer.
+  if (CanDoRT)
     DEBUG(dbgs() << "LAA: We can perform a memory runtime check if needed.\n");
-  }
-
-  if (NeedRTCheck && !CanDoRT) {
+  else if (NeedRTCheck) {
     emitAnalysis(LoopAccessReport() << "cannot identify array bounds");
     DEBUG(dbgs() << "LAA: We can't vectorize because we can't find " <<
           "the array bounds.\n");
+    PtrRtCheck.reset();
+    CanVecMem = false;
+    return;
+  }
+
+  if (NumComparisons > RuntimeMemoryCheckThreshold) {
+    emitAnalysis(LoopAccessReport()
+                 << NumComparisons << " exceeds limit of "
+                 << RuntimeMemoryCheckThreshold
+                 << " dependent memory operations checked at runtime");
+    DEBUG(dbgs() << "LAA: Too many memory checks needed.\n");
     PtrRtCheck.reset();
     CanVecMem = false;
     return;
@@ -1127,17 +1130,22 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
 
       CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE,
                                          TheLoop, Strides, true);
-      // Check that we did not collect too many pointers or found an unsizeable
-      // pointer.
-      if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
-        if (!CanDoRT && NumComparisons > 0)
-          emitAnalysis(LoopAccessReport()
-                       << "cannot check memory dependencies at runtime");
-        else
-          emitAnalysis(LoopAccessReport()
-                       << NumComparisons << " exceeds limit of "
-                       << RuntimeMemoryCheckThreshold
-                       << " dependent memory operations checked at runtime");
+      // Check that we didn't find an unsizeable pointer.
+      if (!CanDoRT && NumComparisons > 0) {
+        emitAnalysis(LoopAccessReport()
+                     << "cannot check memory dependencies at runtime");
+        DEBUG(dbgs() << "LAA: Can't vectorize with memory checks\n");
+        PtrRtCheck.reset();
+        CanVecMem = false;
+        return;
+      }
+
+      // Check that we did not collect too many pointers.
+      if (NumComparisons > RuntimeMemoryCheckThreshold) {
+        emitAnalysis(LoopAccessReport()
+                     << NumComparisons << " exceeds limit of "
+                     << RuntimeMemoryCheckThreshold
+                     << " dependent memory operations checked at runtime");
         DEBUG(dbgs() << "LAA: Can't vectorize with memory checks\n");
         PtrRtCheck.reset();
         CanVecMem = false;
