@@ -2002,6 +2002,15 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
     return &BI;
   }
 
+  // If the condition is irrelevant, remove the use so that other
+  // transforms on the condition become more effective.
+  if (BI.isConditional() &&
+      BI.getSuccessor(0) == BI.getSuccessor(1) &&
+      !isa<UndefValue>(BI.getCondition())) {
+    BI.setCondition(UndefValue::get(BI.getCondition()->getType()));
+    return &BI;
+  }
+
   // Canonicalize fcmp_one -> fcmp_oeq
   FCmpInst::Predicate FPred; Value *Y;
   if (match(&BI, m_Br(m_FCmp(FPred, m_Value(X), m_Value(Y)),
