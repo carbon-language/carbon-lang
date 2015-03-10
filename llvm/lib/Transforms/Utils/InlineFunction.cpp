@@ -89,7 +89,7 @@ namespace {
       CallerLPad = cast<LandingPadInst>(I);
     }
 
-    /// getOuterResumeDest - The outer unwind destination is the target of
+    /// The outer unwind destination is the target of
     /// unwind edges introduced for calls within the inlined function.
     BasicBlock *getOuterResumeDest() const {
       return OuterResumeDest;
@@ -99,17 +99,16 @@ namespace {
 
     LandingPadInst *getLandingPadInst() const { return CallerLPad; }
 
-    /// forwardResume - Forward the 'resume' instruction to the caller's landing
-    /// pad block. When the landing pad block has only one predecessor, this is
+    /// Forward the 'resume' instruction to the caller's landing pad block.
+    /// When the landing pad block has only one predecessor, this is
     /// a simple branch. When there is more than one predecessor, we need to
     /// split the landing pad block after the landingpad instruction and jump
     /// to there.
     void forwardResume(ResumeInst *RI,
                        SmallPtrSetImpl<LandingPadInst*> &InlinedLPads);
 
-    /// addIncomingPHIValuesFor - Add incoming-PHI values to the unwind
-    /// destination block for the given basic block, using the values for the
-    /// original invoke's source block.
+    /// Add incoming-PHI values to the unwind destination block for the given
+    /// basic block, using the values for the original invoke's source block.
     void addIncomingPHIValuesFor(BasicBlock *BB) const {
       addIncomingPHIValuesForInto(BB, OuterResumeDest);
     }
@@ -124,7 +123,7 @@ namespace {
   };
 }
 
-/// getInnerResumeDest - Get or create a target for the branch from ResumeInsts.
+/// Get or create a target for the branch from ResumeInsts.
 BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
   if (InnerResumeDest) return InnerResumeDest;
 
@@ -159,8 +158,8 @@ BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
   return InnerResumeDest;
 }
 
-/// forwardResume - Forward the 'resume' instruction to the caller's landing pad
-/// block. When the landing pad block has only one predecessor, this is a simple
+/// Forward the 'resume' instruction to the caller's landing pad block.
+/// When the landing pad block has only one predecessor, this is a simple
 /// branch. When there is more than one predecessor, we need to split the
 /// landing pad block after the landingpad instruction and jump to there.
 void InvokeInliningInfo::forwardResume(ResumeInst *RI,
@@ -178,9 +177,9 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI,
   RI->eraseFromParent();
 }
 
-/// HandleCallsInBlockInlinedThroughInvoke - When we inline a basic block into
-/// an invoke, we have to turn all of the calls that can throw into
-/// invokes.  This function analyze BB to see if there are any calls, and if so,
+/// When we inline a basic block into an invoke,
+/// we have to turn all of the calls that can throw into invokes.
+/// This function analyze BB to see if there are any calls, and if so,
 /// it rewrites them to be invokes that jump to InvokeDest and fills in the PHI
 /// nodes in that block with the values specified in InvokeDestPHIValues.
 static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
@@ -228,7 +227,7 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
   }
 }
 
-/// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
+/// If we inlined an invoke site, we need to convert calls
 /// in the body of the inlined function into invokes.
 ///
 /// II is the invoke instruction being inlined.  FirstNewBlock is the first
@@ -279,8 +278,8 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   InvokeDest->removePredecessor(II->getParent());
 }
 
-/// CloneAliasScopeMetadata - When inlining a function that contains noalias
-/// scope metadata, this metadata needs to be cloned so that the inlined blocks
+/// When inlining a function that contains noalias scope metadata,
+/// this metadata needs to be cloned so that the inlined blocks
 /// have different "unqiue scopes" at every call site. Were this not done, then
 /// aliasing scopes from a function inlined into a caller multiple times could
 /// not be differentiated (and this would lead to miscompiles because the
@@ -391,8 +390,8 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
   }
 }
 
-/// AddAliasScopeMetadata - If the inlined function has noalias arguments, then
-/// add new alias scopes for each noalias argument, tag the mapped noalias
+/// If the inlined function has noalias arguments,
+/// then add new alias scopes for each noalias argument, tag the mapped noalias
 /// parameters with noalias metadata specifying the new scope, and tag all
 /// non-derived loads, stores and memory intrinsics with the new alias scopes.
 static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
@@ -657,9 +656,9 @@ static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
   }
 }
 
-/// UpdateCallGraphAfterInlining - Once we have cloned code over from a callee
-/// into the caller, update the specified callgraph to reflect the changes we
-/// made.  Note that it's possible that not all code was copied over, so only
+/// Once we have cloned code over from a callee into the caller,
+/// update the specified callgraph to reflect the changes we made.
+/// Note that it's possible that not all code was copied over, so only
 /// some edges of the callgraph may remain.
 static void UpdateCallGraphAfterInlining(CallSite CS,
                                          Function::iterator FirstNewBlock,
@@ -735,7 +734,7 @@ static void HandleByValArgumentInit(Value *Dst, Value *Src, Module *M,
   Builder.CreateMemCpy(Dst, Src, Size, /*Align=*/1);
 }
 
-/// HandleByValArgument - When inlining a call site that has a byval argument,
+/// When inlining a call site that has a byval argument,
 /// we have to make the implicit memcpy explicit by adding it.
 static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
                                   const Function *CalledFunc,
@@ -787,8 +786,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   return NewAlloca;
 }
 
-// isUsedByLifetimeMarker - Check whether this Value is used by a lifetime
-// intrinsic.
+// Check whether this Value is used by a lifetime intrinsic.
 static bool isUsedByLifetimeMarker(Value *V) {
   for (User *U : V->users()) {
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
@@ -803,7 +801,7 @@ static bool isUsedByLifetimeMarker(Value *V) {
   return false;
 }
 
-// hasLifetimeMarkers - Check whether the given alloca already has
+// Check whether the given alloca already has
 // lifetime.start or lifetime.end intrinsics.
 static bool hasLifetimeMarkers(AllocaInst *AI) {
   Type *Ty = AI->getType();
@@ -860,7 +858,7 @@ updateInlinedAtInfo(DebugLoc DL, MDLocation *InlinedAtNode,
   return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(Ctx), Last);
 }
 
-/// fixupLineNumbers - Update inlined instructions' line numbers to 
+/// Update inlined instructions' line numbers to
 /// to encode location where these instructions are inlined.
 static void fixupLineNumbers(Function *Fn, Function::iterator FI,
                              Instruction *TheCall) {
@@ -918,10 +916,9 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
   }
 }
 
-/// InlineFunction - This function inlines the called function into the basic
-/// block of the caller.  This returns false if it is not possible to inline
-/// this call.  The program is still in a well defined state if this occurs
-/// though.
+/// This function inlines the called function into the basic block of the
+/// caller. This returns false if it is not possible to inline this call.
+/// The program is still in a well defined state if this occurs though.
 ///
 /// Note that this only does one level of inlining.  For example, if the
 /// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
