@@ -49,6 +49,13 @@ unsigned VectorizerParams::RuntimeMemoryCheckThreshold;
 /// Maximum SIMD width.
 const unsigned VectorizerParams::MaxVectorWidth = 64;
 
+/// \brief We collect interesting dependences up to this threshold.
+static cl::opt<unsigned> MaxInterestingDependence(
+    "max-interesting-dependences", cl::Hidden,
+    cl::desc("Maximum number of interesting dependences collected by "
+             "loop-access analysis (default = 100)"),
+    cl::init(100));
+
 bool VectorizerParams::isInterleaveForced() {
   return ::VectorizationInterleave.getNumOccurrences() > 0;
 }
@@ -360,7 +367,7 @@ void AccessAnalysis::processMemAccesses() {
 
   DEBUG(dbgs() << "LAA: Processing memory accesses...\n");
   DEBUG(dbgs() << "  AST: "; AST.dump());
-  DEBUG(dbgs() << "LAA:   Accesses:\n");
+  DEBUG(dbgs() << "LAA:   Accesses(" << Accesses.size() << "):\n");
   DEBUG({
     for (auto A : Accesses)
       dbgs() << "\t" << *A.getPointer() << " (" <<
@@ -546,6 +553,51 @@ static int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
   return Stride;
 }
 
+bool MemoryDepChecker::Dependence::isSafeForVectorization(DepType Type) {
+  switch (Type) {
+  case NoDep:
+  case Forward:
+  case BackwardVectorizable:
+    return true;
+
+  case Unknown:
+  case ForwardButPreventsForwarding:
+  case Backward:
+  case BackwardVectorizableButPreventsForwarding:
+    return false;
+  }
+}
+
+bool MemoryDepChecker::Dependence::isInterestingDependence(DepType Type) {
+  switch (Type) {
+  case NoDep:
+  case Forward:
+    return false;
+
+  case BackwardVectorizable:
+  case Unknown:
+  case ForwardButPreventsForwarding:
+  case Backward:
+  case BackwardVectorizableButPreventsForwarding:
+    return true;
+  }
+}
+
+bool MemoryDepChecker::Dependence::isPossiblyBackward() const {
+  switch (Type) {
+  case NoDep:
+  case Forward:
+  case ForwardButPreventsForwarding:
+    return false;
+
+  case Unknown:
+  case BackwardVectorizable:
+  case Backward:
+  case BackwardVectorizableButPreventsForwarding:
+    return true;
+  }
+}
+
 bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
                                                     unsigned TypeByteSize) {
   // If loads occur at a distance that is not a multiple of a feasible vector
@@ -585,9 +637,10 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   return false;
 }
 
-bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
-                                   const MemAccessInfo &B, unsigned BIdx,
-                                   const ValueToValueMap &Strides) {
+MemoryDepChecker::Dependence::DepType
+MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
+                              const MemAccessInfo &B, unsigned BIdx,
+                              const ValueToValueMap &Strides) {
   assert (AIdx < BIdx && "Must pass arguments in program order");
 
   Value *APtr = A.getPointer();
@@ -597,12 +650,12 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   // Two reads are independent.
   if (!AIsWrite && !BIsWrite)
-    return false;
+    return Dependence::NoDep;
 
   // We cannot check pointers in different address spaces.
   if (APtr->getType()->getPointerAddressSpace() !=
       BPtr->getType()->getPointerAddressSpace())
-    return true;
+    return Dependence::Unknown;
 
   const SCEV *AScev = replaceSymbolicStrideSCEV(SE, Strides, APtr);
   const SCEV *BScev = replaceSymbolicStrideSCEV(SE, Strides, BPtr);
@@ -637,14 +690,14 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   // the address space.
   if (!StrideAPtr || !StrideBPtr || StrideAPtr != StrideBPtr){
     DEBUG(dbgs() << "Non-consecutive pointer access\n");
-    return true;
+    return Dependence::Unknown;
   }
 
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Dist);
   if (!C) {
     DEBUG(dbgs() << "LAA: Dependence because of non-constant distance\n");
     ShouldRetryWithRuntimeCheck = true;
-    return true;
+    return Dependence::Unknown;
   }
 
   Type *ATy = APtr->getType()->getPointerElementType();
@@ -659,19 +712,19 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
     if (IsTrueDataDependence &&
         (couldPreventStoreLoadForward(Val.abs().getZExtValue(), TypeByteSize) ||
          ATy != BTy))
-      return true;
+      return Dependence::ForwardButPreventsForwarding;
 
     DEBUG(dbgs() << "LAA: Dependence is negative: NoDep\n");
-    return false;
+    return Dependence::Forward;
   }
 
   // Write to the same location with the same size.
   // Could be improved to assert type sizes are the same (i32 == float, etc).
   if (Val == 0) {
     if (ATy == BTy)
-      return false;
+      return Dependence::NoDep;
     DEBUG(dbgs() << "LAA: Zero dependence difference but different types\n");
-    return true;
+    return Dependence::Unknown;
   }
 
   assert(Val.isStrictlyPositive() && "Expect a positive value");
@@ -679,7 +732,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   if (ATy != BTy) {
     DEBUG(dbgs() <<
           "LAA: ReadWrite-Write positive dependency with different types\n");
-    return true;
+    return Dependence::Unknown;
   }
 
   unsigned Distance = (unsigned) Val.getZExtValue();
@@ -698,7 +751,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
       Distance < TypeByteSize * ForcedUnroll * ForcedFactor) {
     DEBUG(dbgs() << "LAA: Failure because of Positive distance "
         << Val.getSExtValue() << '\n');
-    return true;
+    return Dependence::Backward;
   }
 
   // Positive distance bigger than max vectorization factor.
@@ -708,12 +761,12 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   bool IsTrueDataDependence = (!AIsWrite && BIsWrite);
   if (IsTrueDataDependence &&
       couldPreventStoreLoadForward(Distance, TypeByteSize))
-     return true;
+    return Dependence::BackwardVectorizableButPreventsForwarding;
 
   DEBUG(dbgs() << "LAA: Positive distance " << Val.getSExtValue() <<
         " with max VF = " << MaxSafeDepDistBytes / TypeByteSize << '\n');
 
-  return false;
+  return Dependence::BackwardVectorizable;
 }
 
 bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
@@ -742,9 +795,33 @@ bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
              I1E = Accesses[*AI].end(); I1 != I1E; ++I1)
           for (std::vector<unsigned>::iterator I2 = Accesses[*OI].begin(),
                I2E = Accesses[*OI].end(); I2 != I2E; ++I2) {
-            if (*I1 < *I2 && isDependent(*AI, *I1, *OI, *I2, Strides))
-              return false;
-            if (*I2 < *I1 && isDependent(*OI, *I2, *AI, *I1, Strides))
+            auto A = std::make_pair(&*AI, *I1);
+            auto B = std::make_pair(&*OI, *I2);
+
+            assert(*I1 != *I2);
+            if (*I1 > *I2)
+              std::swap(A, B);
+
+            Dependence::DepType Type =
+                isDependent(*A.first, A.second, *B.first, B.second, Strides);
+            SafeForVectorization &= Dependence::isSafeForVectorization(Type);
+
+            // Gather dependences unless we accumulated MaxInterestingDependence
+            // dependences.  In that case return as soon as we find the first
+            // unsafe dependence.  This puts a limit on this quadratic
+            // algorithm.
+            if (RecordInterestingDependences) {
+              if (Dependence::isInterestingDependence(Type))
+                InterestingDependences.push_back(
+                    Dependence(A.second, B.second, Type));
+
+              if (InterestingDependences.size() >= MaxInterestingDependence) {
+                RecordInterestingDependences = false;
+                InterestingDependences.clear();
+                DEBUG(dbgs() << "Too many dependences, stopped recording\n");
+              }
+            }
+            if (!RecordInterestingDependences && !SafeForVectorization)
               return false;
           }
         ++OI;
@@ -752,7 +829,10 @@ bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
       AI++;
     }
   }
-  return true;
+
+  DEBUG(dbgs() << "Total Interesting Dependences: "
+               << InterestingDependences.size() << "\n");
+  return SafeForVectorization;
 }
 
 bool LoopAccessInfo::canAnalyzeLoop() {

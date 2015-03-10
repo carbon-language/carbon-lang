@@ -127,9 +127,52 @@ public:
   /// \brief Set of potential dependent memory accesses.
   typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
 
+  /// \brief Dependece between memory access instructions.
+  struct Dependence {
+    /// \brief The type of the dependence.
+    enum DepType {
+      // No dependence.
+      NoDep,
+      // We couldn't determine the direction or the distance.
+      Unknown,
+      // Lexically forward.
+      Forward,
+      // Forward, but if vectorized, is likely to prevent store-to-load
+      // forwarding.
+      ForwardButPreventsForwarding,
+      // Lexically backward.
+      Backward,
+      // Backward, but the distance allows a vectorization factor of
+      // MaxSafeDepDistBytes.
+      BackwardVectorizable,
+      // Same, but may prevent store-to-load forwarding.
+      BackwardVectorizableButPreventsForwarding
+    };
+
+    /// \brief Index of the source of the dependence in the InstMap vector.
+    unsigned Source;
+    /// \brief Index of the destination of the dependence in the InstMap vector.
+    unsigned Destination;
+    /// \brief The type of the dependence.
+    DepType Type;
+
+    Dependence(unsigned Source, unsigned Destination, DepType Type)
+        : Source(Source), Destination(Destination), Type(Type) {}
+
+    /// \brief Dependence types that don't prevent vectorization.
+    static bool isSafeForVectorization(DepType Type);
+
+    /// \brief Dependence types that can be queried from the analysis.
+    static bool isInterestingDependence(DepType Type);
+
+    /// \brief Lexically backward dependence types.
+    bool isPossiblyBackward() const;
+  };
+
   MemoryDepChecker(ScalarEvolution *Se, const Loop *L)
       : SE(Se), InnermostLoop(L), AccessIdx(0),
-        ShouldRetryWithRuntimeCheck(false) {}
+        ShouldRetryWithRuntimeCheck(false), SafeForVectorization(true),
+        RecordInterestingDependences(true) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
   /// of a write access.
@@ -155,6 +198,10 @@ public:
   bool areDepsSafe(DepCandidates &AccessSets, MemAccessInfoSet &CheckDeps,
                    const ValueToValueMap &Strides);
 
+  /// \brief No memory dependence was encountered that would inhibit
+  /// vectorization.
+  bool isSafeForVectorization() const { return SafeForVectorization; }
+
   /// \brief The maximum number of bytes of a vector register we can vectorize
   /// the accesses safely with.
   unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
@@ -162,6 +209,19 @@ public:
   /// \brief In same cases when the dependency check fails we can still
   /// vectorize the loop with a dynamic array access check.
   bool shouldRetryWithRuntimeCheck() { return ShouldRetryWithRuntimeCheck; }
+
+  /// \brief Returns the interesting dependences.  If null is returned we
+  /// exceeded the MaxInterestingDependence threshold and this information is
+  /// not available.
+  const SmallVectorImpl<Dependence> *getInterestingDependences() const {
+    return RecordInterestingDependences ? &InterestingDependences : nullptr;
+  }
+
+  /// \brief The vector of memory access instructions.  The indices are used as
+  /// instruction identifiers in the Dependence class.
+  const SmallVectorImpl<Instruction *> &getMemoryInstructions() const {
+    return InstMap;
+  }
 
 private:
   ScalarEvolution *SE;
@@ -183,6 +243,20 @@ private:
   /// vectorize this loop with runtime checks.
   bool ShouldRetryWithRuntimeCheck;
 
+  /// \brief No memory dependence was encountered that would inhibit
+  /// vectorization.
+  bool SafeForVectorization;
+
+  //// \brief True if InterestingDependences reflects the dependences in the
+  //// loop.  If false we exceeded MaxInterestingDependence and
+  //// InterestingDependences is invalid.
+  bool RecordInterestingDependences;
+
+  /// \brief Interesting memory dependences collected during the analysis as
+  /// defined by isInterestingDependence.  Only valid if
+  /// RecordInterestingDependences is true.
+  SmallVector<Dependence, 8> InterestingDependences;
+
   /// \brief Check whether there is a plausible dependence between the two
   /// accesses.
   ///
@@ -195,9 +269,9 @@ private:
   /// element access it records this distance in \p MaxSafeDepDistBytes (if this
   /// distance is smaller than any other distance encountered so far).
   /// Otherwise, this function returns true signaling a possible dependence.
-  bool isDependent(const MemAccessInfo &A, unsigned AIdx,
-                   const MemAccessInfo &B, unsigned BIdx,
-                   const ValueToValueMap &Strides);
+  Dependence::DepType isDependent(const MemAccessInfo &A, unsigned AIdx,
+                                  const MemAccessInfo &B, unsigned BIdx,
+                                  const ValueToValueMap &Strides);
 
   /// \brief Check whether the data dependence could prevent store-load
   /// forwarding.
