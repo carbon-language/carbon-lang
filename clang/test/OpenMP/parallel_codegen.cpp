@@ -62,6 +62,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  }
 
 // CHECK-LABEL: define internal void @.omp_outlined.(i32* %.global_tid., i32* %.bound_tid., %struct.anon* %__context)
+// CHECK:       #[[FN_ATTRS:[0-9]+]]
 // CHECK:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon*
 // CHECK:       store %struct.anon* %__context, %struct.anon** [[CONTEXT_ADDR]]
 // CHECK:       [[CONTEXT_PTR:%.+]] = load %struct.anon*, %struct.anon** [[CONTEXT_ADDR]]
@@ -74,6 +75,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  unreachable
 // CHECK-NEXT:  }
 // CHECK-DEBUG-LABEL: define internal void @.omp_outlined.(i32* %.global_tid., i32* %.bound_tid., %struct.anon* %__context)
+// CHECK-DEBUG:       #[[FN_ATTRS:[0-9]+]]
 // CHECK-DEBUG:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon*
 // CHECK-DEBUG:       store %struct.anon* %__context, %struct.anon** [[CONTEXT_ADDR]]
 // CHECK-DEBUG:       [[CONTEXT_PTR:%.+]] = load %struct.anon*, %struct.anon** [[CONTEXT_ADDR]]
@@ -141,5 +143,8 @@ int main (int argc, char **argv) {
 
 // CHECK: define linkonce_odr void [[FOO1]](i8** %argc)
 // CHECK-DEBUG: define linkonce_odr void [[FOO1]](i8** %argc)
+
+// CHECK: attributes #[[FN_ATTRS]] = {{.+}} nounwind
+// CHECK-DEBUG: attributes #[[FN_ATTRS]] = {{.+}} nounwind
 
 #endif

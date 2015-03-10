@@ -13,6 +13,7 @@
 
 #include "CGOpenMPRuntime.h"
 #include "CodeGenFunction.h"
+#include "CGCleanup.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/StmtOpenMP.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -1047,9 +1048,16 @@ InlinedOpenMPRegionRAII::InlinedOpenMPRegionRAII(
     CodeGenFunction &CGF, const OMPExecutableDirective &D)
     : CGF(CGF) {
   CGF.CapturedStmtInfo = new CGOpenMPInlinedRegionInfo(D, CGF.CapturedStmtInfo);
+  // 1.2.2 OpenMP Language Terminology
+  // Structured block - An executable statement with a single entry at the
+  // top and a single exit at the bottom.
+  // The point of exit cannot be a branch out of the structured block.
+  // longjmp() and throw() must not violate the entry/exit criteria.
+  CGF.EHStack.pushTerminate();
 }
 
 InlinedOpenMPRegionRAII::~InlinedOpenMPRegionRAII() {
+  CGF.EHStack.popTerminate();
   auto *OldCSI =
       cast<CGOpenMPInlinedRegionInfo>(CGF.CapturedStmtInfo)->getOldCSI();
   delete CGF.CapturedStmtInfo;
