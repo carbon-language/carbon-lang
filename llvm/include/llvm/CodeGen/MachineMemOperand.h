@@ -199,6 +199,24 @@ public:
   /// Profile - Gather unique data for the object.
   ///
   void Profile(FoldingSetNodeID &ID) const;
+
+  friend bool operator==(const MachineMemOperand &LHS,
+                         const MachineMemOperand &RHS) {
+    return LHS.getValue() == RHS.getValue() &&
+           LHS.getPseudoValue() == RHS.getPseudoValue() &&
+           LHS.getSize() == RHS.getSize() &&
+           LHS.getOffset() == RHS.getOffset() &&
+           LHS.getFlags() == RHS.getFlags() &&
+           LHS.getAAInfo() == RHS.getAAInfo() &&
+           LHS.getRanges() == RHS.getRanges() &&
+           LHS.getAlignment() == RHS.getAlignment() &&
+           LHS.getAddrSpace() == RHS.getAddrSpace();
+  }
+
+  friend bool operator!=(const MachineMemOperand &LHS,
+                         const MachineMemOperand &RHS) {
+    return !(LHS == RHS);
+  }
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MRO);

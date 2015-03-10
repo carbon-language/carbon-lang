@@ -1169,6 +1169,12 @@ public:
     assert(NumMemRefs == NewMemRefsEnd - NewMemRefs && "Too many memrefs");
   }
 
+  /// clearMemRefs - Clear this MachineInstr's memory reference descriptor list.
+  void clearMemRefs() {
+    MemRefs = nullptr;
+    NumMemRefs = 0;
+  }
+
 private:
   /// getRegInfo - If this instruction is embedded into a MachineFunction,
   /// return the MachineRegisterInfo object for the current function, otherwise

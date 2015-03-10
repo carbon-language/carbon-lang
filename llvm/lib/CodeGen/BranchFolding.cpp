@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -727,6 +728,60 @@ bool BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
   return true;
 }
 
+static bool hasIdenticalMMOs(const MachineInstr *MI1, const MachineInstr *MI2) {
+  auto I1 = MI1->memoperands_begin(), E1 = MI1->memoperands_end();
+  auto I2 = MI2->memoperands_begin(), E2 = MI2->memoperands_end();
+  if ((E1 - I1) != (E2 - I2))
+    return false;
+  for (; I1 != E1; ++I1, ++I2) {
+    if (**I1 != **I2)
+      return false;
+  }
+  return true;
+}
+
+static void
+removeMMOsFromMemoryOperations(MachineBasicBlock::iterator MBBIStartPos,
+                               MachineBasicBlock &MBBCommon) {
+  // Remove MMOs from memory operations in the common block
+  // when they do not match the ones from the block being tail-merged.
+  // This ensures later passes conservatively compute dependencies.
+  MachineBasicBlock *MBB = MBBIStartPos->getParent();
+  // Note CommonTailLen does not necessarily matches the size of
+  // the common BB nor all its instructions because of debug
+  // instructions differences.
+  unsigned CommonTailLen = 0;
+  for (auto E = MBB->end(); MBBIStartPos != E; ++MBBIStartPos)
+    ++CommonTailLen;
+
+  MachineBasicBlock::reverse_iterator MBBI = MBB->rbegin();
+  MachineBasicBlock::reverse_iterator MBBICommon = MBBCommon.rbegin();
+  MachineBasicBlock::reverse_iterator MBBIECommon = MBBCommon.rend();
+
+  while (CommonTailLen--) {
+    assert(MBBI != MBB->rend() && "Reached BB end within common tail length!");
+
+    if (MBBI->isDebugValue()) {
+      ++MBBI;
+      continue;
+    }
+
+    while ((MBBICommon != MBBIECommon) && MBBICommon->isDebugValue())
+      ++MBBICommon;
+
+    assert(MBBICommon != MBBIECommon &&
+           "Reached BB end within common tail length!");
+    assert(MBBICommon->isIdenticalTo(&*MBBI) && "Expected matching MIIs!");
+
+    if (MBBICommon->mayLoad() || MBBICommon->mayStore())
+      if (!hasIdenticalMMOs(&*MBBI, &*MBBICommon))
+        MBBICommon->clearMemRefs();
+
+    ++MBBI;
+    ++MBBICommon;
+  }
+}
+
 // See if any of the blocks in MergePotentials (which all have a common single
 // successor, or all have no successor) can be tail-merged.  If there is a
 // successor, any blocks in MergePotentials that are not tail-merged and
@@ -840,6 +895,8 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
         continue;
       DEBUG(dbgs() << "BB#" << SameTails[i].getBlock()->getNumber()
                    << (i == e-1 ? "" : ", "));
+      // Remove MMOs from memory operations as needed.
+      removeMMOsFromMemoryOperations(SameTails[i].getTailStartPos(), *MBB);
       // Hack the end off BB i, making it jump to BB commonTailIndex instead.
       ReplaceTailWithBranchTo(SameTails[i].getTailStartPos(), MBB);
       // BB i is no longer a predecessor of SuccBB; remove it from the worklist.
