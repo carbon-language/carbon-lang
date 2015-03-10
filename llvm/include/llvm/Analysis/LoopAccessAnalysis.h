@@ -86,6 +86,124 @@ struct VectorizerParams {
   static unsigned RuntimeMemoryCheckThreshold;
 };
 
+/// \brief Checks memory dependences among accesses to the same underlying
+/// object to determine whether there vectorization is legal or not (and at
+/// which vectorization factor).
+///
+/// Note: This class will compute a conservative dependence for access to
+/// different underlying pointers. Clients, such as the loop vectorizer, will
+/// sometimes deal these potential dependencies by emitting runtime checks.
+///
+/// We use the ScalarEvolution framework to symbolically evalutate access
+/// functions pairs. Since we currently don't restructure the loop we can rely
+/// on the program order of memory accesses to determine their safety.
+/// At the moment we will only deem accesses as safe for:
+///  * A negative constant distance assuming program order.
+///
+///      Safe: tmp = a[i + 1];     OR     a[i + 1] = x;
+///            a[i] = tmp;                y = a[i];
+///
+///   The latter case is safe because later checks guarantuee that there can't
+///   be a cycle through a phi node (that is, we check that "x" and "y" is not
+///   the same variable: a header phi can only be an induction or a reduction, a
+///   reduction can't have a memory sink, an induction can't have a memory
+///   source). This is important and must not be violated (or we have to
+///   resort to checking for cycles through memory).
+///
+///  * A positive constant distance assuming program order that is bigger
+///    than the biggest memory access.
+///
+///     tmp = a[i]        OR              b[i] = x
+///     a[i+2] = tmp                      y = b[i+2];
+///
+///     Safe distance: 2 x sizeof(a[0]), and 2 x sizeof(b[0]), respectively.
+///
+///  * Zero distances and all accesses have the same size.
+///
+class MemoryDepChecker {
+public:
+  typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
+  typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
+  /// \brief Set of potential dependent memory accesses.
+  typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
+
+  MemoryDepChecker(ScalarEvolution *Se, const Loop *L)
+      : SE(Se), InnermostLoop(L), AccessIdx(0),
+        ShouldRetryWithRuntimeCheck(false) {}
+
+  /// \brief Register the location (instructions are given increasing numbers)
+  /// of a write access.
+  void addAccess(StoreInst *SI) {
+    Value *Ptr = SI->getPointerOperand();
+    Accesses[MemAccessInfo(Ptr, true)].push_back(AccessIdx);
+    InstMap.push_back(SI);
+    ++AccessIdx;
+  }
+
+  /// \brief Register the location (instructions are given increasing numbers)
+  /// of a write access.
+  void addAccess(LoadInst *LI) {
+    Value *Ptr = LI->getPointerOperand();
+    Accesses[MemAccessInfo(Ptr, false)].push_back(AccessIdx);
+    InstMap.push_back(LI);
+    ++AccessIdx;
+  }
+
+  /// \brief Check whether the dependencies between the accesses are safe.
+  ///
+  /// Only checks sets with elements in \p CheckDeps.
+  bool areDepsSafe(DepCandidates &AccessSets, MemAccessInfoSet &CheckDeps,
+                   const ValueToValueMap &Strides);
+
+  /// \brief The maximum number of bytes of a vector register we can vectorize
+  /// the accesses safely with.
+  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
+
+  /// \brief In same cases when the dependency check fails we can still
+  /// vectorize the loop with a dynamic array access check.
+  bool shouldRetryWithRuntimeCheck() { return ShouldRetryWithRuntimeCheck; }
+
+private:
+  ScalarEvolution *SE;
+  const Loop *InnermostLoop;
+
+  /// \brief Maps access locations (ptr, read/write) to program order.
+  DenseMap<MemAccessInfo, std::vector<unsigned> > Accesses;
+
+  /// \brief Memory access instructions in program order.
+  SmallVector<Instruction *, 16> InstMap;
+
+  /// \brief The program order index to be used for the next instruction.
+  unsigned AccessIdx;
+
+  // We can access this many bytes in parallel safely.
+  unsigned MaxSafeDepDistBytes;
+
+  /// \brief If we see a non-constant dependence distance we can still try to
+  /// vectorize this loop with runtime checks.
+  bool ShouldRetryWithRuntimeCheck;
+
+  /// \brief Check whether there is a plausible dependence between the two
+  /// accesses.
+  ///
+  /// Access \p A must happen before \p B in program order. The two indices
+  /// identify the index into the program order map.
+  ///
+  /// This function checks  whether there is a plausible dependence (or the
+  /// absence of such can't be proved) between the two accesses. If there is a
+  /// plausible dependence but the dependence distance is bigger than one
+  /// element access it records this distance in \p MaxSafeDepDistBytes (if this
+  /// distance is smaller than any other distance encountered so far).
+  /// Otherwise, this function returns true signaling a possible dependence.
+  bool isDependent(const MemAccessInfo &A, unsigned AIdx,
+                   const MemAccessInfo &B, unsigned BIdx,
+                   const ValueToValueMap &Strides);
+
+  /// \brief Check whether the data dependence could prevent store-load
+  /// forwarding.
+  bool couldPreventStoreLoadForward(unsigned Distance, unsigned TypeByteSize);
+};
+
 /// \brief Drive the analysis of memory accesses in the loop
 ///
 /// This class is responsible for analyzing the memory accesses of a loop.  It
@@ -186,6 +304,10 @@ public:
   /// couldn't analyze the loop.
   const Optional<LoopAccessReport> &getReport() const { return Report; }
 
+  /// \brief the Memory Dependence Checker which can determine the
+  /// loop-independent and loop-carried dependences between memory accesses.
+  const MemoryDepChecker &getDepChecker() const { return DepChecker; }
+
   /// \brief Print the information about the memory accesses in the loop.
   void print(raw_ostream &OS, unsigned Depth = 0) const;
 
@@ -207,6 +329,11 @@ private:
   /// We need to check that all of the pointers in this list are disjoint
   /// at runtime.
   RuntimePointerCheck PtrRtCheck;
+
+  /// \brief the Memory Dependence Checker which can determine the
+  /// loop-independent and loop-carried dependences between memory accesses.
+  MemoryDepChecker DepChecker;
+
   Loop *TheLoop;
   ScalarEvolution *SE;
   const DataLayout &DL;

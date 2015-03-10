@@ -165,10 +165,8 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  /// \brief Set of potential dependent memory accesses.
-  typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
-
-  AccessAnalysis(const DataLayout &Dl, AliasAnalysis *AA, DepCandidates &DA)
+  AccessAnalysis(const DataLayout &Dl, AliasAnalysis *AA,
+                 MemoryDepChecker::DepCandidates &DA)
       : DL(Dl), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
@@ -232,7 +230,7 @@ private:
   /// Sets of potentially dependent accesses - members of one set share an
   /// underlying pointer. The set "CheckDeps" identfies which sets really need a
   /// dependence check.
-  DepCandidates &DepCands;
+  MemoryDepChecker::DepCandidates &DepCands;
 
   bool IsRTCheckNeeded;
 };
@@ -459,123 +457,6 @@ void AccessAnalysis::processMemAccesses() {
     }
   }
 }
-
-namespace {
-/// \brief Checks memory dependences among accesses to the same underlying
-/// object to determine whether there vectorization is legal or not (and at
-/// which vectorization factor).
-///
-/// This class works under the assumption that we already checked that memory
-/// locations with different underlying pointers are "must-not alias".
-/// We use the ScalarEvolution framework to symbolically evalutate access
-/// functions pairs. Since we currently don't restructure the loop we can rely
-/// on the program order of memory accesses to determine their safety.
-/// At the moment we will only deem accesses as safe for:
-///  * A negative constant distance assuming program order.
-///
-///      Safe: tmp = a[i + 1];     OR     a[i + 1] = x;
-///            a[i] = tmp;                y = a[i];
-///
-///   The latter case is safe because later checks guarantuee that there can't
-///   be a cycle through a phi node (that is, we check that "x" and "y" is not
-///   the same variable: a header phi can only be an induction or a reduction, a
-///   reduction can't have a memory sink, an induction can't have a memory
-///   source). This is important and must not be violated (or we have to
-///   resort to checking for cycles through memory).
-///
-///  * A positive constant distance assuming program order that is bigger
-///    than the biggest memory access.
-///
-///     tmp = a[i]        OR              b[i] = x
-///     a[i+2] = tmp                      y = b[i+2];
-///
-///     Safe distance: 2 x sizeof(a[0]), and 2 x sizeof(b[0]), respectively.
-///
-///  * Zero distances and all accesses have the same size.
-///
-class MemoryDepChecker {
-public:
-  typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
-  typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
-
-  MemoryDepChecker(ScalarEvolution *Se, const Loop *L)
-      : SE(Se), InnermostLoop(L), AccessIdx(0),
-        ShouldRetryWithRuntimeCheck(false) {}
-
-  /// \brief Register the location (instructions are given increasing numbers)
-  /// of a write access.
-  void addAccess(StoreInst *SI) {
-    Value *Ptr = SI->getPointerOperand();
-    Accesses[MemAccessInfo(Ptr, true)].push_back(AccessIdx);
-    InstMap.push_back(SI);
-    ++AccessIdx;
-  }
-
-  /// \brief Register the location (instructions are given increasing numbers)
-  /// of a write access.
-  void addAccess(LoadInst *LI) {
-    Value *Ptr = LI->getPointerOperand();
-    Accesses[MemAccessInfo(Ptr, false)].push_back(AccessIdx);
-    InstMap.push_back(LI);
-    ++AccessIdx;
-  }
-
-  /// \brief Check whether the dependencies between the accesses are safe.
-  ///
-  /// Only checks sets with elements in \p CheckDeps.
-  bool areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
-                   MemAccessInfoSet &CheckDeps, const ValueToValueMap &Strides);
-
-  /// \brief The maximum number of bytes of a vector register we can vectorize
-  /// the accesses safely with.
-  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
-
-  /// \brief In same cases when the dependency check fails we can still
-  /// vectorize the loop with a dynamic array access check.
-  bool shouldRetryWithRuntimeCheck() { return ShouldRetryWithRuntimeCheck; }
-
-private:
-  ScalarEvolution *SE;
-  const Loop *InnermostLoop;
-
-  /// \brief Maps access locations (ptr, read/write) to program order.
-  DenseMap<MemAccessInfo, std::vector<unsigned> > Accesses;
-
-  /// \brief Memory access instructions in program order.
-  SmallVector<Instruction *, 16> InstMap;
-
-  /// \brief The program order index to be used for the next instruction.
-  unsigned AccessIdx;
-
-  // We can access this many bytes in parallel safely.
-  unsigned MaxSafeDepDistBytes;
-
-  /// \brief If we see a non-constant dependence distance we can still try to
-  /// vectorize this loop with runtime checks.
-  bool ShouldRetryWithRuntimeCheck;
-
-  /// \brief Check whether there is a plausible dependence between the two
-  /// accesses.
-  ///
-  /// Access \p A must happen before \p B in program order. The two indices
-  /// identify the index into the program order map.
-  ///
-  /// This function checks  whether there is a plausible dependence (or the
-  /// absence of such can't be proved) between the two accesses. If there is a
-  /// plausible dependence but the dependence distance is bigger than one
-  /// element access it records this distance in \p MaxSafeDepDistBytes (if this
-  /// distance is smaller than any other distance encountered so far).
-  /// Otherwise, this function returns true signaling a possible dependence.
-  bool isDependent(const MemAccessInfo &A, unsigned AIdx,
-                   const MemAccessInfo &B, unsigned BIdx,
-                   const ValueToValueMap &Strides);
-
-  /// \brief Check whether the data dependence could prevent store-load
-  /// forwarding.
-  bool couldPreventStoreLoadForward(unsigned Distance, unsigned TypeByteSize);
-};
-
-} // end anonymous namespace
 
 static bool isInBoundsGep(Value *Ptr) {
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr))
@@ -835,7 +716,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   return false;
 }
 
-bool MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
+bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
                                    MemAccessInfoSet &CheckDeps,
                                    const ValueToValueMap &Strides) {
 
@@ -940,7 +821,6 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   PtrRtCheck.Need = false;
 
   const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
-  MemoryDepChecker DepChecker(SE, TheLoop);
 
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
@@ -1009,7 +889,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
     return;
   }
 
-  AccessAnalysis::DepCandidates DependentAccesses;
+  MemoryDepChecker::DepCandidates DependentAccesses;
   AccessAnalysis Accesses(TheLoop->getHeader()->getModule()->getDataLayout(),
                           AA, DependentAccesses);
 
@@ -1303,8 +1183,9 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                                DominatorTree *DT,
                                const ValueToValueMap &Strides)
-    : TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT), NumLoads(0),
-      NumStores(0), MaxSafeDepDistBytes(-1U), CanVecMem(false) {
+    : DepChecker(SE, L), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA),
+      DT(DT), NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
+      CanVecMem(false) {
   if (canAnalyzeLoop())
     analyzeLoop(Strides);
 }
