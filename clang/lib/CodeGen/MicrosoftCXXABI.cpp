@@ -3233,7 +3233,8 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
   SmallString<256> MangledName;
   {
     llvm::raw_svector_ostream Out(MangledName);
-    getMangleContext().mangleCXXCatchableType(T, CD, Size, Out);
+    getMangleContext().mangleCXXCatchableType(T, CD, Size, NVOffset,
+                                              VBPtrOffset, VBIndex, Out);
   }
   if (llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(MangledName))
     return getImageRelativeConstant(GV);

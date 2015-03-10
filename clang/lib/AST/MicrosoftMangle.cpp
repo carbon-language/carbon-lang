@@ -115,7 +115,9 @@ public:
   void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
                                    raw_ostream &Out) override;
   void mangleCXXCatchableType(QualType T, const CXXConstructorDecl *CD,
-                              uint32_t Size, raw_ostream &Out) override;
+                              uint32_t Size, uint32_t NVOffset,
+                              int32_t VBPtrOffset, uint32_t VBIndex,
+                              raw_ostream &Out) override;
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
@@ -2308,7 +2310,8 @@ void MicrosoftMangleContextImpl::mangleCXXCatchableTypeArray(
 }
 
 void MicrosoftMangleContextImpl::mangleCXXCatchableType(
-    QualType T, const CXXConstructorDecl *CD, uint32_t Size, raw_ostream &Out) {
+    QualType T, const CXXConstructorDecl *CD, uint32_t Size, uint32_t NVOffset,
+    int32_t VBPtrOffset, uint32_t VBIndex, raw_ostream &Out) {
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_CT";
 
@@ -2319,6 +2322,9 @@ void MicrosoftMangleContextImpl::mangleCXXCatchableType(
   }
   Mangler.getStream() << RTTIMangling.substr(1);
 
+  // VS2015 CTP6 omits the copy-constructor in the mangled name.  This name is,
+  // in fact, superfluous but I'm not sure the change was made consciously.
+  // TODO: Revisit this when VS2015 gets released.
   llvm::SmallString<64> CopyCtorMangling;
   if (CD) {
     llvm::raw_svector_ostream Stream(CopyCtorMangling);
@@ -2327,6 +2333,15 @@ void MicrosoftMangleContextImpl::mangleCXXCatchableType(
   Mangler.getStream() << CopyCtorMangling.substr(1);
 
   Mangler.getStream() << Size;
+  if (VBPtrOffset == -1) {
+    if (NVOffset) {
+      Mangler.getStream() << NVOffset;
+    }
+  } else {
+    Mangler.getStream() << NVOffset;
+    Mangler.getStream() << VBPtrOffset;
+    Mangler.getStream() << VBIndex;
+  }
 }
 
 void MicrosoftMangleContextImpl::mangleCXXRTTIBaseClassDescriptor(
