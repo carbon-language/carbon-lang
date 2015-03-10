@@ -580,6 +580,7 @@ bool MemoryDepChecker::Dependence::isSafeForVectorization(DepType Type) {
   case BackwardVectorizableButPreventsForwarding:
     return false;
   }
+  llvm_unreachable("unexpected DepType!");
 }
 
 bool MemoryDepChecker::Dependence::isInterestingDependence(DepType Type) {
@@ -595,6 +596,7 @@ bool MemoryDepChecker::Dependence::isInterestingDependence(DepType Type) {
   case BackwardVectorizableButPreventsForwarding:
     return true;
   }
+  llvm_unreachable("unexpected DepType!");
 }
 
 bool MemoryDepChecker::Dependence::isPossiblyBackward() const {
@@ -610,6 +612,7 @@ bool MemoryDepChecker::Dependence::isPossiblyBackward() const {
   case BackwardVectorizableButPreventsForwarding:
     return true;
   }
+  llvm_unreachable("unexpected DepType!");
 }
 
 bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
