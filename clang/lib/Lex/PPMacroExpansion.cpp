@@ -1314,7 +1314,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     if (PLoc.isValid()) {
       FN += PLoc.getFilename();
       Lexer::Stringify(FN);
-      OS << '"' << FN.str() << '"';
+      OS << '"' << FN << '"';
     }
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__DATE__) {

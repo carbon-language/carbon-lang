@@ -975,7 +975,7 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
   }
 
   if (BD.writeProgramToFile(SafeModuleBC.str(), SafeModuleFD, Safe)) {
-    errs() << "Error writing bitcode to `" << SafeModuleBC.str()
+    errs() << "Error writing bitcode to `" << SafeModuleBC
            << "'\nExiting.";
     exit(1);
   }
@@ -1050,7 +1050,7 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   }
 
   if (writeProgramToFile(TestModuleBC.str(), TestModuleFD, ToCodeGen)) {
-    errs() << "Error writing bitcode to `" << TestModuleBC.str()
+    errs() << "Error writing bitcode to `" << TestModuleBC
            << "'\nExiting.";
     exit(1);
   }
@@ -1068,7 +1068,7 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   }
 
   if (writeProgramToFile(SafeModuleBC.str(), SafeModuleFD, ToNotCodeGen)) {
-    errs() << "Error writing bitcode to `" << SafeModuleBC.str()
+    errs() << "Error writing bitcode to `" << SafeModuleBC
            << "'\nExiting.";
     exit(1);
   }
@@ -1079,17 +1079,17 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
 
   outs() << "You can reproduce the problem with the command line: \n";
   if (isExecutingJIT()) {
-    outs() << "  lli -load " << SharedObject << " " << TestModuleBC.str();
+    outs() << "  lli -load " << SharedObject << " " << TestModuleBC;
   } else {
-    outs() << "  llc " << TestModuleBC.str() << " -o " << TestModuleBC.str()
+    outs() << "  llc " << TestModuleBC << " -o " << TestModuleBC
            << ".s\n";
     outs() << "  gcc " << SharedObject << " " << TestModuleBC.str()
-              << ".s -o " << TestModuleBC.str() << ".exe";
+              << ".s -o " << TestModuleBC << ".exe";
 #if defined (HAVE_LINK_R)
     outs() << " -Wl,-R.";
 #endif
     outs() << "\n";
-    outs() << "  " << TestModuleBC.str() << ".exe";
+    outs() << "  " << TestModuleBC << ".exe";
   }
   for (unsigned i = 0, e = InputArgv.size(); i != e; ++i)
     outs() << " " << InputArgv[i];

@@ -7268,7 +7268,7 @@ cxindex::Logger::~Logger() {
 
   llvm::TimeRecord TR = llvm::TimeRecord::getCurrentTime();
   OS << llvm::format("%7.4f] ", TR.getWallTime() - sBeginTR.getWallTime());
-  OS << Msg.str() << '\n';
+  OS << Msg << '\n';
 
   if (Trace) {
     llvm::sys::PrintStackTrace(OS);

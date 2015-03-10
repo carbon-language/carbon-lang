@@ -188,7 +188,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
             << " children in Scope";
       }
 
-      OS << '\n' << TmpBuf.str();
+      OS << '\n' << TmpBuf;
       CurrentIdx += ChildSize;
     }
 
@@ -342,7 +342,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       if (!OmitComments)
         OS << "// ->" << CurrentIdx+ChildSize;
       OS << '\n';
-      OS << TmpBuf.str();
+      OS << TmpBuf;
       CurrentIdx += ChildSize;
     }
 

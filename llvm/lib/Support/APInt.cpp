@@ -2291,7 +2291,7 @@ void APInt::dump() const {
   this->toStringUnsigned(U);
   this->toStringSigned(S);
   dbgs() << "APInt(" << BitWidth << "b, "
-         << U.str() << "u " << S.str() << "s)";
+         << U << "u " << S << "s)";
 }
 
 void APInt::print(raw_ostream &OS, bool isSigned) const {

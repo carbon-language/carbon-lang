@@ -735,7 +735,7 @@ static std::unique_ptr<ExplodedNode::Auditor> CreateUbiViz() {
   SmallString<128> P;
   int FD;
   llvm::sys::fs::createTemporaryFile("llvm_ubi", "", FD, P);
-  llvm::errs() << "Writing '" << P.str() << "'.\n";
+  llvm::errs() << "Writing '" << P << "'.\n";
 
   auto Stream = llvm::make_unique<llvm::raw_fd_ostream>(FD, true);
 

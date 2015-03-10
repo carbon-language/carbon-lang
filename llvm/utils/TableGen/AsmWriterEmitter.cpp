@@ -727,7 +727,7 @@ public:
     OS.flush();
 
     // Emit the string.
-    O.indent(6) << "AsmString = \"" << OutString.str() << "\";\n";
+    O.indent(6) << "AsmString = \"" << OutString << "\";\n";
 
     O.indent(6) << "break;\n";
     O.indent(4) << '}';

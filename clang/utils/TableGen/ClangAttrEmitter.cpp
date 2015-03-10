@@ -1162,7 +1162,7 @@ writePrettyPrintFunction(Record &R,
 
     OS <<
       "  case " << I << " : {\n"
-      "    OS << \"" + Prefix.str() + Spelling.str();
+      "    OS << \"" << Prefix << Spelling;
 
     if (Variety == "Pragma") {
       OS << " \";\n";
@@ -1190,7 +1190,7 @@ writePrettyPrintFunction(Record &R,
 
     if (!Args.empty())
       OS << ")";
-    OS << Suffix.str() + "\";\n";
+    OS << Suffix + "\";\n";
 
     OS <<
       "    break;\n"

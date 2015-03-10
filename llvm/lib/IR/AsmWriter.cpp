@@ -1010,7 +1010,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
              (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
           // Reparse stringized version!
           if (APFloat(APFloat::IEEEdouble, StrVal).convertToDouble() == Val) {
-            Out << StrVal.str();
+            Out << StrVal;
             return;
           }
         }
