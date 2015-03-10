@@ -415,7 +415,7 @@ void parallel_simd(float *a) {
   // TERM_DEBUG:     invoke i32 {{.*}}bar{{.*}}()
   // TERM_DEBUG:     unwind label %[[TERM_LPAD:.+]],
   // TERM_DEBUG-NOT: __kmpc_global_thread_num
-  // TERM_DEBUG:     [[TERM_LPAD]]:
+  // TERM_DEBUG:     [[TERM_LPAD]]
   // TERM_DEBUG:     call void @__clang_call_terminate
   // TERM_DEBUG:     unreachable
   for (unsigned i = 131071; i <= 2147483647; i += 127)

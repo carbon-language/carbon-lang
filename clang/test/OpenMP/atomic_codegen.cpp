@@ -20,7 +20,7 @@ void parallel_atomic() {
     // TERM_DEBUG:     unwind label %[[TERM_LPAD:.+]],
     // TERM_DEBUG-NOT: __kmpc_global_thread_num
     // TERM_DEBUG:     store atomic i32 {{%.+}}, i32* @{{.+}} monotonic, {{.*}}!dbg [[WRITE_LOC:![0-9]+]]
-    // TERM_DEBUG:     [[TERM_LPAD]]:
+    // TERM_DEBUG:     [[TERM_LPAD]]
     // TERM_DEBUG:     call void @__clang_call_terminate
     // TERM_DEBUG:     unreachable
     a = foo();
