@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -triple x86_64-unknown-unknown -emit-llvm %s -fexceptions -fcxx-exceptions -o - | FileCheck %s
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -std=c++11 -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -g -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -fopenmp=libiomp5 -fexceptions -fcxx-exceptions -gline-tables-only -x c++ -emit-llvm %s -o - | FileCheck %s --check-prefix=TERM_DEBUG
 //
 // expected-no-diagnostics
 #ifndef HEADER
@@ -146,13 +147,28 @@ void static_chunked(float *a, float *b, float *c, float *d) {
 // CHECK: ret void
 }
 
+// TERM_DEBUG-LABEL: foo
+int foo() {return 0;};
+
+// TERM_DEBUG-LABEL: parallel_for
 void parallel_for(float *a) {
 #pragma omp parallel
 #pragma omp for schedule(static, 5)
-  // CHECK-NOT: __kmpc_global_thread_num
+  // TERM_DEBUG-NOT: __kmpc_global_thread_num
+  // TERM_DEBUG:     call void @__kmpc_for_static_init_4u({{.+}}), !dbg [[DBG_LOC_START:![0-9]+]]
+  // TERM_DEBUG:     invoke i32 {{.*}}foo{{.*}}()
+  // TERM_DEBUG:     unwind label %[[TERM_LPAD:.+]],
+  // TERM_DEBUG-NOT: __kmpc_global_thread_num
+  // TERM_DEBUG:     call void @__kmpc_for_static_fini({{.+}}), !dbg [[DBG_LOC_END:![0-9]+]]
+  // TERM_DEBUG:     call {{.+}} @__kmpc_cancel_barrier({{.+}}), !dbg [[DBG_LOC_CANCEL:![0-9]+]]
+  // TERM_DEBUG:     [[TERM_LPAD]]:
+  // TERM_DEBUG:     call void @__clang_call_terminate
+  // TERM_DEBUG:     unreachable
   for (unsigned i = 131071; i <= 2147483647; i += 127)
-    a[i] += i;
+    a[i] += foo();
 }
-
+// TERM_DEBUG-DAG: [[DBG_LOC_START]] = !MDLocation(line: 156,
+// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !MDLocation(line: 156,
+// TERM_DEBUG-DAG: [[DBG_LOC_CANCEL]] = !MDLocation(line: 156,
 #endif // HEADER
 

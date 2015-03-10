@@ -23,6 +23,20 @@ using namespace CodeGen;
 //===----------------------------------------------------------------------===//
 //                              OpenMP Directive Emission
 //===----------------------------------------------------------------------===//
+namespace {
+/// \brief RAII for inlined OpenMP regions (like 'omp for', 'omp simd', 'omp
+/// critical' etc.). Helps to generate proper debug info and provides correct
+/// code generation for such constructs.
+class InlinedOpenMPRegionScopeRAII {
+  InlinedOpenMPRegionRAII Region;
+  CodeGenFunction::LexicalScope DirectiveScope;
+
+public:
+  InlinedOpenMPRegionScopeRAII(CodeGenFunction &CGF,
+                               const OMPExecutableDirective &D)
+      : Region(CGF, D), DirectiveScope(CGF, D.getSourceRange()) {}
+};
+} // namespace
 
 /// \brief Emits code for OpenMP 'if' clause using specified \a CodeGen
 /// function. Here is the logic:
@@ -417,12 +431,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     }
   }
 
-  InlinedOpenMPRegionRAII Region(*this, S);
-  RunCleanupsScope DirectiveScope(*this);
-
-  CGDebugInfo *DI = getDebugInfo();
-  if (DI)
-    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
+  InlinedOpenMPRegionScopeRAII Region(*this, S);
 
   // Emit the loop iteration variable.
   const Expr *IVExpr = S.getIterationVariable();
@@ -466,9 +475,6 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     }
     EmitOMPSimdFinal(S);
   }
-
-  if (DI)
-    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 }
 
 void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
@@ -650,20 +656,13 @@ void CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
 }
 
 void CodeGenFunction::EmitOMPForDirective(const OMPForDirective &S) {
-  InlinedOpenMPRegionRAII Region(*this, S);
-  RunCleanupsScope DirectiveScope(*this);
-
-  CGDebugInfo *DI = getDebugInfo();
-  if (DI)
-    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
+  InlinedOpenMPRegionScopeRAII Region(*this, S);
 
   EmitOMPWorksharingLoop(S);
 
   // Emit an implicit barrier at the end.
   CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
                                          /*IsExplicit*/ false);
-  if (DI)
-    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 }
 
 void CodeGenFunction::EmitOMPForSimdDirective(const OMPForSimdDirective &) {
@@ -680,8 +679,7 @@ void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &) {
 
 void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
   CGM.getOpenMPRuntime().emitSingleRegion(*this, [&]() -> void {
-    InlinedOpenMPRegionRAII Region(*this, S);
-    RunCleanupsScope Scope(*this);
+    InlinedOpenMPRegionScopeRAII Region(*this, S);
     EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     EnsureInsertPoint();
   }, S.getLocStart());
@@ -689,8 +687,7 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
 
 void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {
   CGM.getOpenMPRuntime().emitMasterRegion(*this, [&]() -> void {
-    InlinedOpenMPRegionRAII Region(*this, S);
-    RunCleanupsScope Scope(*this);
+    InlinedOpenMPRegionScopeRAII Region(*this, S);
     EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     EnsureInsertPoint();
   }, S.getLocStart());
@@ -699,8 +696,7 @@ void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {
 void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &S) {
   CGM.getOpenMPRuntime().emitCriticalRegion(
       *this, S.getDirectiveName().getAsString(), [&]() -> void {
-        InlinedOpenMPRegionRAII Region(*this, S);
-        RunCleanupsScope Scope(*this);
+        InlinedOpenMPRegionScopeRAII Region(*this, S);
         EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
         EnsureInsertPoint();
       }, S.getLocStart());
@@ -898,6 +894,7 @@ void CodeGenFunction::EmitOMPAtomicDirective(const OMPAtomicDirective &S) {
       break;
     }
   }
+  InlinedOpenMPRegionScopeRAII Region(*this, S);
   EmitOMPAtomicExpr(*this, Kind, IsSeqCst, S.getX(), S.getV(), S.getExpr(),
                     S.getLocStart());
 }
