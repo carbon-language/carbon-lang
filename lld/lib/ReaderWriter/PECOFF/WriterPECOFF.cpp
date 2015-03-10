@@ -971,13 +971,13 @@ BaseRelocChunk::createContents(ChunkVectorT &chunks) const {
   // Base relocations for the same memory page are grouped together
   // and passed to createBaseRelocBlock.
   for (auto it = relocSites.begin(), e = relocSites.end(); it != e;) {
-    auto begin_it = it;
-    uint64_t pageAddr = (begin_it->addr & ~mask);
+    auto beginIt = it;
+    uint64_t pageAddr = (beginIt->addr & ~mask);
     for (++it; it != e; ++it)
       if ((it->addr & ~mask) != pageAddr)
         break;
-    const BaseReloc *begin = &*begin_it;
-    const BaseReloc *end = begin + (it - begin_it);
+    const BaseReloc *begin = &*beginIt;
+    const BaseReloc *end = begin + (it - beginIt);
     std::vector<uint8_t> block = createBaseRelocBlock(pageAddr, begin, end);
     contents.insert(contents.end(), block.begin(), block.end());
   }
