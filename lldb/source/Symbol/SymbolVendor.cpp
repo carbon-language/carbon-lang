@@ -437,6 +437,19 @@ SymbolVendor::GetCompileUnitAtIndex(size_t idx)
     return cu_sp;
 }
 
+FileSpec
+SymbolVendor::GetMainFileSpec() const
+{
+    if (m_sym_file_ap.get())
+    {
+        const ObjectFile *symfile_objfile = m_sym_file_ap->GetObjectFile();
+        if (symfile_objfile)
+            return symfile_objfile->GetFileSpec();
+    }
+
+    return FileSpec();
+}
+
 Symtab *
 SymbolVendor::GetSymtab ()
 {

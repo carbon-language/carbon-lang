@@ -164,6 +164,9 @@ public:
         return m_sym_file_ap.get();
     }
 
+    FileSpec
+    GetMainFileSpec() const;
+
     // Get module unified section list symbol table.
     virtual Symtab *
     GetSymtab ();

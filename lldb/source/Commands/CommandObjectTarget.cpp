@@ -3467,28 +3467,24 @@ protected:
                 case 's':
                 case 'S':
                     {
-                        SymbolVendor *symbol_vendor = module->GetSymbolVendor();
+                        const SymbolVendor *symbol_vendor = module->GetSymbolVendor();
                         if (symbol_vendor)
                         {
-                            SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
-                            if (symbol_file)
+                            const FileSpec symfile_spec = symbol_vendor->GetMainFileSpec();
+                            if (format_char == 'S')
                             {
-                                if (format_char == 'S')
+                                // Dump symbol file only if different from module file
+                                if (!symfile_spec || symfile_spec == module->GetFileSpec())
                                 {
-                                    FileSpec &symfile_spec = symbol_file->GetObjectFile()->GetFileSpec();
-                                    // Dump symbol file only if different from module file
-                                    if (!symfile_spec || symfile_spec == module->GetFileSpec())
-                                    {
-                                        print_space = false;
-                                        break;
-                                    }
-                                    // Add a newline and indent past the index
-                                    strm.Printf ("\n%*s", indent, "");
+                                    print_space = false;
+                                    break;
                                 }
-                                DumpFullpath (strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
-                                dump_object_name = true;
-                                break;
+                                // Add a newline and indent past the index
+                                strm.Printf ("\n%*s", indent, "");
                             }
+                            DumpFullpath (strm, &symfile_spec, width);
+                            dump_object_name = true;
+                            break;
                         }
                         strm.Printf("%.*s", width, "<NONE>");
                     }
