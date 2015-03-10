@@ -171,12 +171,10 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
     return;
   }
 
-  // Get the section that we're referring to, based on SectionLabel.
-  const MCSection &Section = SectionLabel->getSection();
-
   // If Label has already been emitted, verify that it is in the same section as
   // section label for sanity.
-  assert((!Label->isInSection() || &Label->getSection() == &Section) &&
+  assert((!Label->isInSection() ||
+          &Label->getSection() == &SectionLabel->getSection()) &&
          "Section offset using wrong section base for label");
 
   // If the format uses relocations with dwarf, refer to the symbol directly.
