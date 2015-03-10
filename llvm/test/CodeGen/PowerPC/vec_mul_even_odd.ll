@@ -34,8 +34,9 @@ define <2 x i64> @test_vmulosw(<4 x i32> %x, <4 x i32> %y) nounwind readnone {
 }
 
 define <4 x i32> @test_vmuluwm(<4 x i32> %x, <4 x i32> %y) nounwind readnone {
-       %tmp = tail call <4 x i32> @llvm.ppc.altivec.vmuluwm(<4 x i32> %x, <4 x i32> %y)
-       ret <4 x i32> %tmp
+	%tmp = mul <4 x i32> %x, %y
+	ret <4 x i32> %tmp
+; CHECK-LABEL: test_vmuluwm
 ; CHECK: vmuluwm 2, 2, 3
 }
 

@@ -421,9 +421,6 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_vmulouw : GCCBuiltin<"__builtin_altivec_vmulouw">,
           Intrinsic<[llvm_v2i64_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
                     [IntrNoMem]>;
-  def int_ppc_altivec_vmuluwm : GCCBuiltin<"__builtin_altivec_vmuluwm">,
-          Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
-                    [IntrNoMem]>;
 
   // Vector Sum Intructions.
   def int_ppc_altivec_vsumsws : GCCBuiltin<"__builtin_altivec_vsumsws">,

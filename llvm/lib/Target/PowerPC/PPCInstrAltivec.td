@@ -961,8 +961,9 @@ def VMULOSW : VX1_Int_Ty2<392, "vmulosw", int_ppc_altivec_vmulosw,
                           v2i64, v4i32>;
 def VMULOUW : VX1_Int_Ty2<136, "vmulouw", int_ppc_altivec_vmulouw,
                           v2i64, v4i32>;
-def VMULUWM : VX1_Int_Ty<137, "vmuluwm", int_ppc_altivec_vmuluwm,
-                         v4i32>;
+def VMULUWM : VXForm_1<137, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                       "vmuluwm $vD, $vA, $vB", IIC_VecGeneral,
+                       [(set v4i32:$vD, (mul v4i32:$vA, v4i32:$vB))]>;
 def VMAXSD : VX1_Int_Ty<450, "vmaxsd", int_ppc_altivec_vmaxsd, v2i64>;
 def VMAXUD : VX1_Int_Ty<194, "vmaxud", int_ppc_altivec_vmaxud, v2i64>;
 def VMINSD : VX1_Int_Ty<962, "vminsd", int_ppc_altivec_vminsd, v2i64>;

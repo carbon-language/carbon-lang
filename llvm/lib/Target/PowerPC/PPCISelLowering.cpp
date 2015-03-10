@@ -516,7 +516,12 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::FSQRT, MVT::v4f32, Legal);
     }
 
-    setOperationAction(ISD::MUL, MVT::v4i32, Custom);
+    
+    if (Subtarget.hasP8Altivec()) 
+      setOperationAction(ISD::MUL, MVT::v4i32, Legal);
+    else
+      setOperationAction(ISD::MUL, MVT::v4i32, Custom);
+      
     setOperationAction(ISD::MUL, MVT::v8i16, Custom);
     setOperationAction(ISD::MUL, MVT::v16i8, Custom);
 
