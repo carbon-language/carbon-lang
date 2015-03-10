@@ -1129,7 +1129,7 @@ void ASTDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 void ASTDeclWriter::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   VisitCXXMethodDecl(D);
 
-  Writer.AddDeclRef(D->OperatorDelete, Record);
+  Writer.AddDeclRef(D->getOperatorDelete(), Record);
 
   Code = serialization::DECL_CXX_DESTRUCTOR;
 }

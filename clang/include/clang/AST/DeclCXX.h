@@ -2372,9 +2372,7 @@ public:
                                    bool isImplicitlyDeclared);
   static CXXDestructorDecl *CreateDeserialized(ASTContext & C, unsigned ID);
 
-  void setOperatorDelete(FunctionDecl *OD) {
-    cast<CXXDestructorDecl>(getFirstDecl())->OperatorDelete = OD;
-  }
+  void setOperatorDelete(FunctionDecl *OD);
   const FunctionDecl *getOperatorDelete() const {
     return cast<CXXDestructorDecl>(getFirstDecl())->OperatorDelete;
   }

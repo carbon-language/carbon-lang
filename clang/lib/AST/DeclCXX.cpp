@@ -1886,6 +1886,15 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                        isInline, isImplicitlyDeclared);
 }
 
+void CXXDestructorDecl::setOperatorDelete(FunctionDecl *OD) {
+  auto *First = cast<CXXDestructorDecl>(getFirstDecl());
+  if (OD && !First->OperatorDelete) {
+    First->OperatorDelete = OD;
+    if (auto *L = getASTMutationListener())
+      L->ResolvedOperatorDelete(First, OD);
+  }
+}
+
 void CXXConversionDecl::anchor() { }
 
 CXXConversionDecl *

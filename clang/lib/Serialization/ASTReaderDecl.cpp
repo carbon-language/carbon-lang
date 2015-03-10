@@ -1620,7 +1620,12 @@ void ASTDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 void ASTDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   VisitCXXMethodDecl(D);
 
-  D->OperatorDelete = ReadDeclAs<FunctionDecl>(Record, Idx);
+  if (auto *OperatorDelete = ReadDeclAs<FunctionDecl>(Record, Idx)) {
+    auto *Canon = cast<CXXDestructorDecl>(D->getCanonicalDecl());
+    // FIXME: Check consistency if we have an old and new operator delete.
+    if (!Canon->OperatorDelete)
+      Canon->OperatorDelete = OperatorDelete;
+  }
 }
 
 void ASTDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
@@ -3621,10 +3626,6 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       if (auto *CD = dyn_cast<CXXConstructorDecl>(FD))
         std::tie(CD->CtorInitializers, CD->NumCtorInitializers) =
             Reader.ReadCXXCtorInitializers(ModuleFile, Record, Idx);
-      if (auto *DD = dyn_cast<CXXDestructorDecl>(FD))
-        // FIXME: Check consistency.
-        DD->setOperatorDelete(Reader.ReadDeclAs<FunctionDecl>(ModuleFile,
-                                                              Record, Idx));
       // Store the offset of the body so we can lazily load it later.
       Reader.PendingBodies[FD] = GetCurrentCursorOffset();
       HasPendingBody = true;
@@ -3688,6 +3689,17 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
         Reader.ReadAttributes(F, Attrs, Record, Idx);
         D->setAttrsImpl(Attrs, Reader.getContext());
       }
+      break;
+    }
+
+    case UPD_CXX_RESOLVED_DTOR_DELETE: {
+      // Set the 'operator delete' directly to avoid emitting another update
+      // record.
+      auto *Del = Reader.ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+      auto *First = cast<CXXDestructorDecl>(D->getCanonicalDecl());
+      // FIXME: Check consistency if we have an old and new operator delete.
+      if (!First->OperatorDelete)
+        First->OperatorDelete = Del;
       break;
     }
 

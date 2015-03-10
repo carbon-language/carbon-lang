@@ -99,6 +99,8 @@ public:
   void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                       const FunctionDecl *D) override;
   void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) override;
+  void ResolvedOperatorDelete(const CXXDestructorDecl *DD,
+                              const FunctionDecl *Delete) override;
   void CompletedImplicitDefinition(const FunctionDecl *D) override;
   void StaticDataMemberInstantiated(const VarDecl *D) override;
   void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
@@ -153,6 +155,11 @@ void MultiplexASTMutationListener::DeducedReturnType(const FunctionDecl *FD,
                                                      QualType ReturnType) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->DeducedReturnType(FD, ReturnType);
+}
+void MultiplexASTMutationListener::ResolvedOperatorDelete(
+    const CXXDestructorDecl *DD, const FunctionDecl *Delete) {
+  for (auto *L : Listeners)
+    L->ResolvedOperatorDelete(DD, Delete);
 }
 void MultiplexASTMutationListener::CompletedImplicitDefinition(
                                                         const FunctionDecl *D) {

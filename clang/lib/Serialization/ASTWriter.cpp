@@ -4761,6 +4761,10 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         break;
       }
 
+      case UPD_CXX_RESOLVED_DTOR_DELETE:
+        AddDeclRef(Update.getDecl(), Record);
+        break;
+
       case UPD_CXX_RESOLVED_EXCEPTION_SPEC:
         addExceptionSpec(
             *this,
@@ -4792,8 +4796,6 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
       Record.push_back(Def->isInlined());
       AddSourceLocation(Def->getInnerLocStart(), Record);
       AddFunctionDefinition(Def, Record);
-      if (auto *DD = dyn_cast<CXXDestructorDecl>(Def))
-        Record.push_back(GetDeclRef(DD->getOperatorDelete()));
     }
 
     OffsetsRecord.push_back(GetDeclRef(D));
@@ -5808,6 +5810,22 @@ void ASTWriter::DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) {
     return; // Not a function declared in PCH and defined outside.
 
   DeclUpdates[FD].push_back(DeclUpdate(UPD_CXX_DEDUCED_RETURN_TYPE, ReturnType));
+}
+
+void ASTWriter::ResolvedOperatorDelete(const CXXDestructorDecl *DD,
+                                       const FunctionDecl *Delete) {
+  assert(!WritingAST && "Already writing the AST!");
+  assert(Delete && "Not given an operator delete");
+  for (auto *D : DD->redecls()) {
+    if (D->isFromASTFile()) {
+      // We added an operator delete that some imported destructor didn't
+      // know about. Add an update record to let importers of us and that
+      // declaration know about it.
+      DeclUpdates[DD].push_back(
+          DeclUpdate(UPD_CXX_RESOLVED_DTOR_DELETE, Delete));
+      return;
+    }
+  }
 }
 
 void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
