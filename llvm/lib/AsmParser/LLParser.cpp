@@ -2810,7 +2810,9 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         }
       }
 
-      if (!Indices.empty() && !BasePointerType->getElementType()->isSized())
+      SmallPtrSet<const Type*, 4> Visited;
+      if (!Indices.empty() &&
+          !BasePointerType->getElementType()->isSized(&Visited))
         return Error(ID.Loc, "base element of getelementptr must be sized");
 
       if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(), Indices))
@@ -5496,7 +5498,9 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     Indices.push_back(Val);
   }
 
-  if (!Indices.empty() && !BasePointerType->getElementType()->isSized())
+  SmallPtrSet<const Type*, 4> Visited;
+  if (!Indices.empty() &&
+      !BasePointerType->getElementType()->isSized(&Visited))
     return Error(Loc, "base element of getelementptr must be sized");
 
   if (!GetElementPtrInst::getIndexedType(BaseType, Indices))
