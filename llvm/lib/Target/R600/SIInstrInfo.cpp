@@ -1863,10 +1863,10 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
       MachineInstr *Addr64 =
           BuildMI(MBB, MI, MI->getDebugLoc(), get(Addr64Opcode))
                   .addOperand(*VData)
-                  .addOperand(*SRsrc)
                   .addReg(AMDGPU::NoRegister) // Dummy value for vaddr.
                                               // This will be replaced later
                                               // with the new value of vaddr.
+                  .addOperand(*SRsrc)
                   .addOperand(*SOffset)
                   .addOperand(*Offset)
                   .addImm(0) // glc
@@ -2051,11 +2051,10 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
               .addImm(AMDGPU::sub3);
       MI->setDesc(get(NewOpcode));
       if (MI->getOperand(2).isReg()) {
-        MI->getOperand(2).setReg(MI->getOperand(1).getReg());
+        MI->getOperand(2).setReg(SRsrc);
       } else {
-        MI->getOperand(2).ChangeToRegister(MI->getOperand(1).getReg(), false);
+        MI->getOperand(2).ChangeToRegister(SRsrc, false);
       }
-      MI->getOperand(1).setReg(SRsrc);
       MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0));
       MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(ImmOffset));
       MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0)); // glc

@@ -1911,7 +1911,7 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
 
     let offen = 1, idxen = 0  in {
       defm _OFFEN  : MUBUF_m <op, name#"_offen", (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VGPR_32:$vaddr,
+                           (ins VGPR_32:$vaddr, SReg_128:$srsrc,
                            SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc, slc:$slc,
                            tfe:$tfe),
                            name#" $vdata, $vaddr, $srsrc, $soffset offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
@@ -1919,7 +1919,7 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
 
     let offen = 0, idxen = 1 in {
       defm _IDXEN  : MUBUF_m <op, name#"_idxen", (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VGPR_32:$vaddr,
+                           (ins VGPR_32:$vaddr, SReg_128:$srsrc,
                            SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc,
                            slc:$slc, tfe:$tfe),
                            name#" $vdata, $vaddr, $srsrc, $soffset idxen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
@@ -1927,14 +1927,14 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
 
     let offen = 1, idxen = 1 in {
       defm _BOTHEN : MUBUF_m <op, name#"_bothen", (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VReg_64:$vaddr, SCSrc_32:$soffset,
+                           (ins VReg_64:$vaddr, SReg_128:$srsrc, SCSrc_32:$soffset,
                            mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
                            name#" $vdata, $vaddr, $srsrc, $soffset idxen offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
     }
 
     let offen = 0, idxen = 0 in {
       defm _ADDR64 : MUBUFAddr64_m <op, name#"_addr64", (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VReg_64:$vaddr,
+                           (ins VReg_64:$vaddr, SReg_128:$srsrc,
                                 SCSrc_32:$soffset, mbuf_offset:$offset,
 				glc:$glc, slc:$slc, tfe:$tfe),
                            name#" $vdata, $vaddr, $srsrc, $soffset addr64"#"$offset"#
@@ -1951,7 +1951,7 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
                           ValueType store_vt = i32, SDPatternOperator st = null_frag> {
   let mayLoad = 0, mayStore = 1 in {
     defm : MUBUF_m <op, name, (outs),
-                    (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr, SCSrc_32:$soffset,
+                    (ins vdataClass:$vdata, VGPR_32:$vaddr, SReg_128:$srsrc, SCSrc_32:$soffset,
                     mbuf_offset:$offset, offen:$offen, idxen:$idxen, glc:$glc, slc:$slc,
                     tfe:$tfe),
                     name#" $vdata, $vaddr, $srsrc, $soffset"#"$offen"#"$idxen"#"$offset"#
@@ -1968,7 +1968,7 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
 
     let offen = 1, idxen = 0  in {
       defm _OFFEN : MUBUF_m <op, name#"_offen", (outs),
-                             (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr,
+                             (ins vdataClass:$vdata, VGPR_32:$vaddr, SReg_128:$srsrc,
                               SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc,
                               slc:$slc, tfe:$tfe),
                              name#" $vdata, $vaddr, $srsrc, $soffset offen"#"$offset"#
@@ -1977,8 +1977,8 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
 
     let offen = 0, idxen = 0 in {
       defm _ADDR64 : MUBUFAddr64_m <op, name#"_addr64", (outs),
-                                    (ins vdataClass:$vdata, SReg_128:$srsrc,
-                                         VReg_64:$vaddr, SCSrc_32:$soffset,
+                                    (ins vdataClass:$vdata, VReg_64:$vaddr, SReg_128:$srsrc,
+                                         SCSrc_32:$soffset,
                                          mbuf_offset:$offset, glc:$glc, slc:$slc,
                                          tfe:$tfe),
                                     name#" $vdata, $vaddr, $srsrc, $soffset addr64"#
