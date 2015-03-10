@@ -168,14 +168,6 @@ def getRegForm : InstrMapping {
   let ValueCols = [["reg"]];
 }
 
-def getRegShlForm : InstrMapping {
-  let FilterClass = "ImmRegShl";
-  let RowFields = ["CextOpcode", "PredSense", "PNewValue", "isNVStore"];
-  let ColFields = ["InputType"];
-  let KeyCol = ["imm"];
-  let ValueCols = [["reg"]];
-}
-
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//
