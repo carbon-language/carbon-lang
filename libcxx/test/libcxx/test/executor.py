@@ -78,21 +78,9 @@ class TimeoutExecutor(PrefixExecutor):
             ['timeout', duration], chain)
 
 
-class SSHExecutor(Executor):
-    def __init__(self, host, username=None):
-        super(SSHExecutor, self).__init__()
-
-        self.user_prefix = username + '@' if username else ''
-        self.host = host
-        self.scp_command = 'scp'
-        self.ssh_command = 'ssh'
-
+class RemoteExecutor(Executor):
+    def __init__(self):
         self.local_run = executeCommand
-        # TODO(jroelofs): switch this on some -super-verbose-debug config flag
-        if False:
-            self.local_run = tracing.trace_function(
-                self.local_run, log_calls=True, log_results=True,
-                label='ssh_local')
 
     def remote_temp_dir(self):
         return self._remote_temp(True)
@@ -101,33 +89,20 @@ class SSHExecutor(Executor):
         return self._remote_temp(False)
 
     def _remote_temp(self, is_dir):
-        # TODO: detect what the target system is, and use the correct
-        # mktemp command for it. (linux and darwin differ here, and I'm
-        # sure windows has another way to do it)
-
-        # Not sure how to do suffix on osx yet
-        dir_arg = '-d' if is_dir else ''
-        cmd = 'mktemp -q {} /tmp/libcxx.XXXXXXXXXX'.format(dir_arg)
-        temp_path, err, exitCode = self.__execute_command_remote([cmd])
-        temp_path = temp_path.strip()
-        if exitCode != 0:
-            raise RuntimeError(err)
-        return temp_path
+        raise NotImplementedError()
 
     def copy_in(self, local_srcs, remote_dsts):
-        scp = self.scp_command
-        remote = self.host
-        remote = self.user_prefix + remote
-
         # This could be wrapped up in a tar->scp->untar for performance
         # if there are lots of files to be copied/moved
         for src, dst in zip(local_srcs, remote_dsts):
-            cmd = [scp, '-p', src, remote + ':' + dst]
-            self.local_run(cmd)
+            self._copy_in_file(src, dst)
+
+    def _copy_in_file(self, src, dst):
+        raise NotImplementedError()
 
     def delete_remote(self, remote):
         try:
-            self.__execute_command_remote(['rm', '-rf', remote])
+            self._execute_command_remote(['rm', '-rf', remote])
         except OSError:
             # TODO: Log failure to delete?
             pass
@@ -144,7 +119,7 @@ class SSHExecutor(Executor):
             else:
                 cmd = [target_exe_path]
             self.copy_in([exe_path], [target_exe_path])
-            return self.__execute_command_remote(cmd, target_cwd, env)
+            return self._execute_command_remote(cmd, target_cwd, env)
         except:
             raise
         finally:
@@ -153,7 +128,47 @@ class SSHExecutor(Executor):
             if target_cwd:
                 self.delete_remote(target_cwd)
 
-    def __execute_command_remote(self, cmd, remote_work_dir='.', env=None):
+    def _execute_command_remote(self, cmd, remote_work_dir='.', env=None):
+        raise NotImplementedError()
+
+
+class SSHExecutor(RemoteExecutor):
+    def __init__(self, host, username=None):
+        super(SSHExecutor, self).__init__()
+
+        self.user_prefix = username + '@' if username else ''
+        self.host = host
+        self.scp_command = 'scp'
+        self.ssh_command = 'ssh'
+
+        # TODO(jroelofs): switch this on some -super-verbose-debug config flag
+        if False:
+            self.local_run = tracing.trace_function(
+                self.local_run, log_calls=True, log_results=True,
+                label='ssh_local')
+
+    def _remote_temp(self, is_dir):
+        # TODO: detect what the target system is, and use the correct
+        # mktemp command for it. (linux and darwin differ here, and I'm
+        # sure windows has another way to do it)
+
+        # Not sure how to do suffix on osx yet
+        dir_arg = '-d' if is_dir else ''
+        cmd = 'mktemp -q {} /tmp/libcxx.XXXXXXXXXX'.format(dir_arg)
+        temp_path, err, exitCode = self._execute_command_remote([cmd])
+        temp_path = temp_path.strip()
+        if exitCode != 0:
+            raise RuntimeError(err)
+        return temp_path
+
+    def _copy_in_file(self, src, dst):
+        scp = self.scp_command
+        remote = self.host
+        remote = self.user_prefix + remote
+        cmd = [scp, '-p', src, remote + ':' + dst]
+        self.local_run(cmd)
+
+    def _execute_command_remote(self, cmd, remote_work_dir='.', env=None):
         remote = self.user_prefix + self.host
         ssh_cmd = [self.ssh_command, '-oBatchMode=yes', remote]
         if env:
