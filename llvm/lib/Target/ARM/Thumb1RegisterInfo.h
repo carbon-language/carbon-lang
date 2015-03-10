@@ -27,7 +27,8 @@ public:
   Thumb1RegisterInfo(const ARMSubtarget &STI);
 
   const TargetRegisterClass *
-  getLargestLegalSuperClass(const TargetRegisterClass *RC) const override;
+  getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                            const MachineFunction &MF) const override;
 
   const TargetRegisterClass *
   getPointerRegClass(const MachineFunction &MF,

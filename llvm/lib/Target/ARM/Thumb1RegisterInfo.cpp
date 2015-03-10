@@ -42,12 +42,12 @@ Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMSubtarget &sti)
   : ARMBaseRegisterInfo(sti) {
 }
 
-const TargetRegisterClass*
-Thumb1RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
-                                                                         const {
+const TargetRegisterClass *
+Thumb1RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                                              const MachineFunction &MF) const {
   if (ARM::tGPRRegClass.hasSubClassEq(RC))
     return &ARM::tGPRRegClass;
-  return ARMBaseRegisterInfo::getLargestLegalSuperClass(RC);
+  return ARMBaseRegisterInfo::getLargestLegalSuperClass(RC, MF);
 }
 
 const TargetRegisterClass *

@@ -1554,7 +1554,8 @@ RAGreedy::tryInstructionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   DEBUG(dbgs() << "Split around " << Uses.size() << " individual instrs.\n");
 
-  const TargetRegisterClass *SuperRC = TRI->getLargestLegalSuperClass(CurRC);
+  const TargetRegisterClass *SuperRC =
+      TRI->getLargestLegalSuperClass(CurRC, *MF);
   unsigned SuperRCNumAllocatableRegs = RCI.getNumAllocatableRegs(SuperRC);
   // Split around every non-copy instruction if this split will relax
   // the constraints on the virtual register.

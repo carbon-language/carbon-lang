@@ -131,7 +131,8 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
     RCI.NumRegs = StressRA;
 
   // Check if RC is a proper sub-class.
-  if (const TargetRegisterClass *Super = TRI->getLargestLegalSuperClass(RC))
+  if (const TargetRegisterClass *Super =
+          TRI->getLargestLegalSuperClass(RC, *MF))
     if (Super != RC && getNumAllocatableRegs(Super) > RCI.NumRegs)
       RCI.ProperSubClass = true;
 

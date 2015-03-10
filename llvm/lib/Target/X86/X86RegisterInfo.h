@@ -76,8 +76,9 @@ public:
   getSubClassWithSubReg(const TargetRegisterClass *RC,
                         unsigned Idx) const override;
 
-  const TargetRegisterClass*
-  getLargestLegalSuperClass(const TargetRegisterClass *RC) const override;
+  const TargetRegisterClass *
+  getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                            const MachineFunction &MF) const override;
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.

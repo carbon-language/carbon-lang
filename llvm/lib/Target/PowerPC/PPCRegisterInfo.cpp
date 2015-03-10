@@ -288,8 +288,9 @@ unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   }
 }
 
-const TargetRegisterClass *PPCRegisterInfo::getLargestLegalSuperClass(
-    const TargetRegisterClass *RC) const {
+const TargetRegisterClass *
+PPCRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                                           const MachineFunction &MF) const {
   if (Subtarget.hasVSX()) {
     // With VSX, we can inflate various sub-register classes to the full VSX
     // register set.
@@ -300,7 +301,7 @@ const TargetRegisterClass *PPCRegisterInfo::getLargestLegalSuperClass(
       return &PPC::VSRCRegClass;
   }
 
-  return TargetRegisterInfo::getLargestLegalSuperClass(RC);
+  return TargetRegisterInfo::getLargestLegalSuperClass(RC, MF);
 }
 
 //===----------------------------------------------------------------------===//

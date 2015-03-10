@@ -927,7 +927,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
               TII->getRegClass(MCID, MONum, TRI, *MF)) {
           if (SubIdx) {
             const TargetRegisterClass *SuperRC =
-              TRI->getLargestLegalSuperClass(RC);
+                TRI->getLargestLegalSuperClass(RC, *MF);
             if (!SuperRC) {
               report("No largest legal super class exists.", MO, MONum);
               return;

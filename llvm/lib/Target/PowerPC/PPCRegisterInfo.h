@@ -40,8 +40,9 @@ public:
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;
 
-  const TargetRegisterClass*
-  getLargestLegalSuperClass(const TargetRegisterClass *RC) const override;
+  const TargetRegisterClass *
+  getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                            const MachineFunction &MF) const override;
 
   /// Code Generation virtual methods...
   const MCPhysReg *

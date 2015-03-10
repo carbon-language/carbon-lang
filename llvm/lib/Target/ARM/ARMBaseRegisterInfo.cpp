@@ -150,9 +150,9 @@ getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-const TargetRegisterClass*
-ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
-                                                                         const {
+const TargetRegisterClass *
+ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
+                                               const MachineFunction &) const {
   const TargetRegisterClass *Super = RC;
   TargetRegisterClass::sc_iterator I = RC->getSuperClasses();
   do {
