@@ -52,14 +52,6 @@ namespace llvm {
                                       raw_ostream &OS,
                                       const MCExpr *Subsection) const = 0;
 
-    /// isBaseAddressKnownZero - Return true if we know that this section will
-    /// get a base address of zero.  In cases where we know that this is true we
-    /// can emit section offsets as direct references to avoid a subtraction
-    /// from the base of the section, saving a relocation.
-    virtual bool isBaseAddressKnownZero() const {
-      return false;
-    }
-
     // UseCodeAlign - Return true if a .align directive should use
     // "optimized nops" to fill instead of 0s.
     virtual bool UseCodeAlign() const = 0;

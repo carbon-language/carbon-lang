@@ -75,12 +75,6 @@ public:
   bool UseCodeAlign() const override;
   bool isVirtualSection() const override;
 
-  /// isBaseAddressKnownZero - We know that non-allocatable sections (like
-  /// debug info) have a base of zero.
-  bool isBaseAddressKnownZero() const override {
-    return (getFlags() & ELF::SHF_ALLOC) == 0;
-  }
-
   static bool classof(const MCSection *S) {
     return S->getVariant() == SV_ELF;
   }
