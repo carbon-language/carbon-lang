@@ -489,6 +489,8 @@ typedef int PACKED_REDUCTION_METHOD_T;
 
 extern size_t __kmp_affin_mask_size;
 # define KMP_AFFINITY_CAPABLE() (__kmp_affin_mask_size > 0)
+# define KMP_AFFINITY_DISABLE() (__kmp_affin_mask_size = 0)
+# define KMP_AFFINITY_ENABLE(mask_size) (__kmp_affin_mask_size = mask_size)
 # define KMP_CPU_SETSIZE        (__kmp_affin_mask_size * CHAR_BIT)
 
 # if KMP_OS_LINUX

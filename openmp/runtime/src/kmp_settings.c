@@ -5101,7 +5101,7 @@ __kmp_env_initialize( char const * string ) {
         //
         const char *var = "KMP_AFFINITY";
         if ( __kmp_affinity_type == affinity_disabled ) {
-            __kmp_affin_mask_size = 0;  // should already be 0
+            KMP_AFFINITY_DISABLE();
         }
         else if ( ! KMP_AFFINITY_CAPABLE() ) {
             __kmp_affinity_determine_capable( var );

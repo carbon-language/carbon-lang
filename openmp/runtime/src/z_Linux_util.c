@@ -277,7 +277,7 @@ __kmp_affinity_determine_capable(const char *env_var)
                 __kmp_msg_null
             );
         }
-        __kmp_affin_mask_size = 0;  // should already be 0
+        KMP_AFFINITY_DISABLE();
         KMP_INTERNAL_FREE(buf);
         return;
     }
@@ -305,11 +305,11 @@ __kmp_affinity_determine_capable(const char *env_var)
                         __kmp_msg_null
                     );
                 }
-                __kmp_affin_mask_size = 0;  // should already be 0
+                KMP_AFFINITY_DISABLE();
                 KMP_INTERNAL_FREE(buf);
             }
             if (errno == EFAULT) {
-                __kmp_affin_mask_size = gCode;
+                KMP_AFFINITY_ENABLE(gCode);
                 KA_TRACE(10, ( "__kmp_affinity_determine_capable: "
                   "affinity supported (mask size %d)\n",
                   (int)__kmp_affin_mask_size));
@@ -353,7 +353,7 @@ __kmp_affinity_determine_capable(const char *env_var)
                         __kmp_msg_null
                     );
                 }
-                __kmp_affin_mask_size = 0;  // should already be 0
+                KMP_AFFINITY_DISABLE();
                 KMP_INTERNAL_FREE(buf);
                 return;
             }
@@ -384,12 +384,12 @@ __kmp_affinity_determine_capable(const char *env_var)
                         __kmp_msg_null
                     );
                 }
-                __kmp_affin_mask_size = 0;  // should already be 0
+                KMP_AFFINITY_DISABLE();
                 KMP_INTERNAL_FREE(buf);
                 return;
             }
             if (errno == EFAULT) {
-                __kmp_affin_mask_size = gCode;
+                KMP_AFFINITY_ENABLE(gCode);
                 KA_TRACE(10, ( "__kmp_affinity_determine_capable: "
                   "affinity supported (mask size %d)\n",
                    (int)__kmp_affin_mask_size));
@@ -405,7 +405,7 @@ __kmp_affinity_determine_capable(const char *env_var)
     //
     // Affinity is not supported
     //
-    __kmp_affin_mask_size = 0;
+    KMP_AFFINITY_DISABLE();
     KA_TRACE(10, ( "__kmp_affinity_determine_capable: "
       "cannot determine mask size - affinity not supported\n"));
     if (__kmp_affinity_verbose || (__kmp_affinity_warnings

@@ -3426,7 +3426,7 @@ __kmp_aux_affinity_initialize(void)
                     KMP_WARNING(ErrorInitializeAffinity);
                 }
                 __kmp_affinity_type = affinity_none;
-                __kmp_affin_mask_size = 0;
+                KMP_AFFINITY_DISABLE();
                 return;
             }
         }
@@ -3700,7 +3700,7 @@ __kmp_aux_affinity_initialize(void)
             KMP_WARNING(ErrorInitializeAffinity);
         }
         __kmp_affinity_type = affinity_none;
-        __kmp_affin_mask_size = 0;
+        KMP_AFFINITY_DISABLE();
         return;
     }
 
