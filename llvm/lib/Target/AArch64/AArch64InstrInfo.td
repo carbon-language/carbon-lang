@@ -3724,10 +3724,6 @@ multiclass Neon_INS_elt_pattern<ValueType VT128, ValueType VT64,
 defm : Neon_INS_elt_pattern<v8f16, v4f16, f16, INSvi16lane>;
 defm : Neon_INS_elt_pattern<v4f32, v2f32, f32, INSvi32lane>;
 defm : Neon_INS_elt_pattern<v2f64, v1f64, f64, INSvi64lane>;
-defm : Neon_INS_elt_pattern<v16i8, v8i8,  i32, INSvi8lane>;
-defm : Neon_INS_elt_pattern<v8i16, v4i16, i32, INSvi16lane>;
-defm : Neon_INS_elt_pattern<v4i32, v2i32, i32, INSvi32lane>;
-defm : Neon_INS_elt_pattern<v2i64, v1i64, i64, INSvi32lane>;
 
 
 // Floating point vector extractions are codegen'd as either a sequence of
