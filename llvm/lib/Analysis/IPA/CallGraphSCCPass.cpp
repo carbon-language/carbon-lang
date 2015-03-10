@@ -49,7 +49,7 @@ public:
   explicit CGPassManager() 
     : ModulePass(ID), PMDataManager() { }
 
-  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M) override;
 
@@ -164,7 +164,7 @@ bool CGPassManager::RunPassOnSCC(Pass *P, CallGraphSCC &CurSCC,
 }
 
 
-/// RefreshCallGraph - Scan the functions in the specified CFG and resync the
+/// Scan the functions in the specified CFG and resync the
 /// callgraph with the call sites found in it.  This is used after
 /// FunctionPasses have potentially munged the callgraph, and can be used after
 /// CallGraphSCC passes to verify that they correctly updated the callgraph.
@@ -369,15 +369,15 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
   return DevirtualizedCall;
 }
 
-/// RunAllPassesOnSCC -  Execute the body of the entire pass manager on the
-/// specified SCC.  This keeps track of whether a function pass devirtualizes
+/// Execute the body of the entire pass manager on the specified SCC.
+/// This keeps track of whether a function pass devirtualizes
 /// any calls and returns it in DevirtualizedCall.
 bool CGPassManager::RunAllPassesOnSCC(CallGraphSCC &CurSCC, CallGraph &CG,
                                       bool &DevirtualizedCall) {
   bool Changed = false;
   
-  // CallGraphUpToDate - Keep track of whether the callgraph is known to be
-  // up-to-date or not.  The CGSSC pass manager runs two types of passes:
+  // Keep track of whether the callgraph is known to be up-to-date or not.
+  // The CGSSC pass manager runs two types of passes:
   // CallGraphSCC Passes and other random function passes.  Because other
   // random function passes are not CallGraph aware, they may clobber the
   // call graph by introducing new calls or deleting other ones.  This flag
@@ -430,7 +430,7 @@ bool CGPassManager::RunAllPassesOnSCC(CallGraphSCC &CurSCC, CallGraph &CG,
   return Changed;
 }
 
-/// run - Execute all of the passes scheduled for execution.  Keep track of
+/// Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
 bool CGPassManager::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
@@ -516,7 +516,7 @@ bool CGPassManager::doFinalization(CallGraph &CG) {
 // CallGraphSCC Implementation
 //===----------------------------------------------------------------------===//
 
-/// ReplaceNode - This informs the SCC and the pass manager that the specified
+/// This informs the SCC and the pass manager that the specified
 /// Old node has been deleted, and New is to be used in its place.
 void CallGraphSCC::ReplaceNode(CallGraphNode *Old, CallGraphNode *New) {
   assert(Old != New && "Should not replace node with self");
@@ -575,8 +575,8 @@ void CallGraphSCCPass::assignPassManager(PMStack &PMS,
   CGP->add(this);
 }
 
-/// getAnalysisUsage - For this class, we declare that we require and preserve
-/// the call graph.  If the derived class implements this method, it should
+/// For this class, we declare that we require and preserve the call graph.
+/// If the derived class implements this method, it should
 /// always explicitly call the implementation here.
 void CallGraphSCCPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<CallGraphWrapperPass>();
