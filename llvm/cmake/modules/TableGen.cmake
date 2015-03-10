@@ -91,7 +91,7 @@ macro(add_tablegen target project)
   # Effective tblgen executable to be used:
   set(${project}_TABLEGEN_EXE ${${project}_TABLEGEN} PARENT_SCOPE)
 
-  if(CMAKE_CROSSCOMPILING)
+  if(LLVM_USE_HOST_TOOLS)
     if( ${${project}_TABLEGEN} STREQUAL "${target}" )
       set(${project}_TABLEGEN_EXE "${LLVM_NATIVE_BUILD}/bin/${target}")
       set(${project}_TABLEGEN_EXE ${${project}_TABLEGEN_EXE} PARENT_SCOPE)

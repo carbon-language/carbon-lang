@@ -350,6 +350,11 @@ if(LLVM_DISABLE_LLVM_DYLIB_ATEXIT)
   set(DISABLE_LLVM_DYLIB_ATEXIT 1)
 endif()
 
+option(LLVM_OPTIMIZED_TABLEGEN "Force TableGen to be built with optimization" OFF)
+if(CMAKE_CROSSCOMPILING OR (LLVM_OPTIMIZED_TABLEGEN AND LLVM_ENABLE_ASSERTIONS))
+  set(LLVM_USE_HOST_TOOLS ON)
+endif()
+
 # All options referred to from HandleLLVMOptions have to be specified
 # BEFORE this include, otherwise options will not be correctly set on
 # first cmake run
@@ -536,9 +541,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories( ${LLVM_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR})
 
 # when crosscompiling import the executable targets from a file
-if(CMAKE_CROSSCOMPILING)
+if(LLVM_USE_HOST_TOOLS)
   include(CrossCompile)
-endif(CMAKE_CROSSCOMPILING)
+endif(LLVM_USE_HOST_TOOLS)
 
 if( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
   # On FreeBSD, /usr/local/* is not used by default. In order to build LLVM
