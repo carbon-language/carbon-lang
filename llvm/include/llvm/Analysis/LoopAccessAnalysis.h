@@ -149,6 +149,9 @@ public:
       BackwardVectorizableButPreventsForwarding
     };
 
+    /// \brief String version of the types.
+    static const char *DepName[];
+
     /// \brief Index of the source of the dependence in the InstMap vector.
     unsigned Source;
     /// \brief Index of the destination of the dependence in the InstMap vector.
@@ -167,6 +170,11 @@ public:
 
     /// \brief Lexically backward dependence types.
     bool isPossiblyBackward() const;
+
+    /// \brief Print the dependence.  \p Instr is used to map the instruction
+    /// indices to instructions.
+    void print(raw_ostream &OS, unsigned Depth,
+               const SmallVectorImpl<Instruction *> &Instrs) const;
   };
 
   MemoryDepChecker(ScalarEvolution *Se, const Loop *L)

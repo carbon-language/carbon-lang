@@ -835,6 +835,18 @@ bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
   return SafeForVectorization;
 }
 
+const char *MemoryDepChecker::Dependence::DepName[] = {
+    "NoDep", "Unknown", "Forward", "ForwardButPreventsForwarding", "Backward",
+    "BackwardVectorizable", "BackwardVectorizableButPreventsForwarding"};
+
+void MemoryDepChecker::Dependence::print(
+    raw_ostream &OS, unsigned Depth,
+    const SmallVectorImpl<Instruction *> &Instrs) const {
+  OS.indent(Depth) << DepName[Type] << ":\n";
+  OS.indent(Depth + 2) << *Instrs[Source] << " -> \n";
+  OS.indent(Depth + 2) << *Instrs[Destination] << "\n";
+}
+
 bool LoopAccessInfo::canAnalyzeLoop() {
     // We can only analyze innermost loops.
   if (!TheLoop->empty()) {
@@ -1281,7 +1293,14 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   if (Report)
     OS.indent(Depth) << "Report: " << Report->str() << "\n";
 
-  // FIXME: Print unsafe dependences
+  if (auto *InterestingDependences = DepChecker.getInterestingDependences()) {
+    OS.indent(Depth) << "Interesting Dependences:\n";
+    for (auto &Dep : *InterestingDependences) {
+      Dep.print(OS, Depth + 2, DepChecker.getMemoryInstructions());
+      OS << "\n";
+    }
+  } else
+    OS.indent(Depth) << "Too many interesting dependences, not recorded\n";
 
   // List the pair of accesses need run-time checks to prove independence.
   PtrRtCheck.print(OS, Depth);

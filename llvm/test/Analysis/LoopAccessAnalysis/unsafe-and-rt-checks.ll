@@ -1,6 +1,4 @@
 ; RUN: opt -loop-accesses -analyze < %s | FileCheck %s
-; RUN: opt -loop-accesses -analyze -debug-only=loop-accesses < %s 2>&1 | FileCheck %s --check-prefix=DEBUG
-; REQUIRES: asserts
 
 ; Analyze this loop:
 ;   for (i = 0; i < n; i++)
@@ -10,10 +8,10 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
 ; CHECK: Report: unsafe dependent memory operations in loop
-
-; DEBUG: LAA: Distance for   %loadA = load i16, i16* %arrayidxA, align 2 to   store i16 %mul1, i16* %arrayidxA_plus_2, align 2: 2
-; DEBUG-NEXT: LAA: Failure because of Positive distance 2
-
+; CHECK-NEXT: Interesting Dependences:
+; CHECK-NEXT:   Backward:
+; CHECK-NEXT:     %loadA = load i16, i16* %arrayidxA, align 2 ->
+; CHECK-NEXT:     store i16 %mul1, i16* %arrayidxA_plus_2, align 2
 ; CHECK: Run-time memory checks:
 ; CHECK-NEXT: 0:
 ; CHECK-NEXT:   %arrayidxA_plus_2 = getelementptr inbounds i16, i16* %a, i64 %add
