@@ -258,23 +258,30 @@ namespace llvm {
     /// the operands to be valid.
     const MCSectionMachO *getMachOSection(StringRef Segment, StringRef Section,
                                           unsigned TypeAndAttributes,
-                                          unsigned Reserved2, SectionKind K);
+                                          unsigned Reserved2, SectionKind K,
+                                          const char *BeginSymName = nullptr);
+
     const MCSectionMachO *getMachOSection(StringRef Segment, StringRef Section,
                                           unsigned TypeAndAttributes,
-                                          SectionKind K) {
-      return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
+                                          SectionKind K,
+                                          const char *BeginSymName = nullptr) {
+      return getMachOSection(Segment, Section, TypeAndAttributes, 0, K,
+                             BeginSymName);
     }
 
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags);
+                                      unsigned Flags,
+                                      const char *BeginSymName = nullptr);
 
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                       unsigned Flags, unsigned EntrySize,
-                                      StringRef Group);
+                                      StringRef Group,
+                                      const char *BeginSymName = nullptr);
 
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                       unsigned Flags, unsigned EntrySize,
-                                      StringRef Group, bool Unique);
+                                      StringRef Group, bool Unique,
+                                      const char *BeginSymName = nullptr);
 
     void renameELFSection(const MCSectionELF *Section, StringRef Name);
 
@@ -283,11 +290,13 @@ namespace llvm {
     const MCSectionCOFF *getCOFFSection(StringRef Section,
                                         unsigned Characteristics,
                                         SectionKind Kind,
-                                        StringRef COMDATSymName, int Selection);
+                                        StringRef COMDATSymName, int Selection,
+                                        const char *BeginSymName = nullptr);
 
     const MCSectionCOFF *getCOFFSection(StringRef Section,
                                         unsigned Characteristics,
-                                        SectionKind Kind);
+                                        SectionKind Kind,
+                                        const char *BeginSymName = nullptr);
 
     const MCSectionCOFF *getCOFFSection(StringRef Section);
 

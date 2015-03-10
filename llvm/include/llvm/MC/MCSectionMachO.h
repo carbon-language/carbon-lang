@@ -35,8 +35,8 @@ class MCSectionMachO : public MCSection {
   /// size of stubs, for example.
   unsigned Reserved2;
 
-  MCSectionMachO(StringRef Segment, StringRef Section,
-                 unsigned TAA, unsigned reserved2, SectionKind K);
+  MCSectionMachO(StringRef Segment, StringRef Section, unsigned TAA,
+                 unsigned reserved2, SectionKind K, MCSymbol *Begin);
   friend class MCContext;
 public:
 

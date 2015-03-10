@@ -45,8 +45,9 @@ class MCSymbol;
   private:
     friend class MCContext;
     MCSectionCOFF(StringRef Section, unsigned Characteristics,
-                  MCSymbol *COMDATSymbol, int Selection, SectionKind K)
-        : MCSection(SV_COFF, K), SectionName(Section),
+                  MCSymbol *COMDATSymbol, int Selection, SectionKind K,
+                  MCSymbol *Begin)
+        : MCSection(SV_COFF, K, Begin), SectionName(Section),
           Characteristics(Characteristics), COMDATSymbol(COMDATSymbol),
           Selection(Selection) {
       assert ((Characteristics & 0x00F00000) == 0 &&

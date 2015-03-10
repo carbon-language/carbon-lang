@@ -243,12 +243,10 @@ DwarfDebug::~DwarfDebug() { }
 
 // Switch to the specified MCSection and emit an assembler
 // temporary label to it if SymbolStem is specified.
-static void emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
-                           StringRef SymbolStem) {
+static void emitSectionSym(AsmPrinter *Asm, const MCSection *Section) {
   Asm->OutStreamer.SwitchSection(Section);
-  MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
+  MCSymbol *TmpSym = Section->getBeginSymbol();
   Asm->OutStreamer.EmitLabel(TmpSym);
-  Section->setBeginSymbol(*TmpSym);
 }
 
 static bool isObjCClass(StringRef Name) {
@@ -628,7 +626,7 @@ void DwarfDebug::endModule() {
   // If we aren't actually generating debug info (check beginModule -
   // conditionalized on !DisableDebugInfoPrinting and the presence of the
   // llvm.dbg.cu metadata node)
-  if (!TLOF.getDwarfInfoSection()->getBeginSymbol())
+  if (!TLOF.getDwarfInfoSection()->getBeginSymbol()->isInSection())
     return;
 
   // Finalize the debug info for the module.
@@ -1306,24 +1304,24 @@ void DwarfDebug::emitSectionLabels() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   // Dwarf sections base addresses.
-  emitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
+  emitSectionSym(Asm, TLOF.getDwarfInfoSection());
   if (useSplitDwarf()) {
-    emitSectionSym(Asm, TLOF.getDwarfInfoDWOSection(), "section_info_dwo");
-    emitSectionSym(Asm, TLOF.getDwarfTypesDWOSection(), "section_types_dwo");
+    emitSectionSym(Asm, TLOF.getDwarfInfoDWOSection());
+    emitSectionSym(Asm, TLOF.getDwarfTypesDWOSection());
   }
-  emitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
+  emitSectionSym(Asm, TLOF.getDwarfAbbrevSection());
   if (useSplitDwarf())
-    emitSectionSym(Asm, TLOF.getDwarfAbbrevDWOSection(), "section_abbrev_dwo");
+    emitSectionSym(Asm, TLOF.getDwarfAbbrevDWOSection());
 
-  emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
-  emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
+  emitSectionSym(Asm, TLOF.getDwarfLineSection());
+  emitSectionSym(Asm, TLOF.getDwarfStrSection());
   if (useSplitDwarf()) {
-    emitSectionSym(Asm, TLOF.getDwarfStrDWOSection(), "skel_string");
-    emitSectionSym(Asm, TLOF.getDwarfAddrSection(), "addr_sec");
-    emitSectionSym(Asm, TLOF.getDwarfLocDWOSection(), "skel_loc");
+    emitSectionSym(Asm, TLOF.getDwarfStrDWOSection());
+    emitSectionSym(Asm, TLOF.getDwarfAddrSection());
+    emitSectionSym(Asm, TLOF.getDwarfLocDWOSection());
   } else
-    emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
-  emitSectionSym(Asm, TLOF.getDwarfRangesSection(), "debug_range");
+    emitSectionSym(Asm, TLOF.getDwarfLocSection());
+  emitSectionSym(Asm, TLOF.getDwarfRangesSection());
 }
 
 // Emit the debug info section.
@@ -1364,9 +1362,9 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 }
 
 void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
-                           StringRef TableName, StringRef SymName) {
+                           StringRef TableName) {
   Accel.FinalizeTable(Asm, TableName);
-  emitSectionSym(Asm, Section, SymName);
+  emitSectionSym(Asm, Section);
 
   // Emit the full data.
   Accel.emit(Asm, Section->getBeginSymbol(), this);
@@ -1375,27 +1373,27 @@ void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
 // Emit visible names into a hashed accelerator table section.
 void DwarfDebug::emitAccelNames() {
   emitAccel(AccelNames, Asm->getObjFileLowering().getDwarfAccelNamesSection(),
-            "Names", "names_begin");
+            "Names");
 }
 
 // Emit objective C classes and categories into a hashed accelerator table
 // section.
 void DwarfDebug::emitAccelObjC() {
   emitAccel(AccelObjC, Asm->getObjFileLowering().getDwarfAccelObjCSection(),
-            "ObjC", "objc_begin");
+            "ObjC");
 }
 
 // Emit namespace dies into a hashed accelerator table.
 void DwarfDebug::emitAccelNamespaces() {
   emitAccel(AccelNamespace,
             Asm->getObjFileLowering().getDwarfAccelNamespaceSection(),
-            "namespac", "namespac_begin");
+            "namespac");
 }
 
 // Emit type dies into a hashed accelerator table.
 void DwarfDebug::emitAccelTypes() {
   emitAccel(AccelTypes, Asm->getObjFileLowering().getDwarfAccelTypesSection(),
-            "types", "types_begin");
+            "types");
 }
 
 // Public name handling.

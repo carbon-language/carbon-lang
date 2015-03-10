@@ -34,11 +34,11 @@ private:
   MCSection(const MCSection &) = delete;
   void operator=(const MCSection &) = delete;
 
-  mutable const MCSymbol *Begin;
+  MCSymbol *Begin;
 
 protected:
-  MCSection(SectionVariant V, SectionKind K)
-      : Begin(nullptr), Variant(V), Kind(K) {}
+  MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
+      : Begin(Begin), Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
 
@@ -49,12 +49,7 @@ public:
 
   SectionVariant getVariant() const { return Variant; }
 
-  const MCSymbol *getBeginSymbol() const { return Begin; }
-
-  void setBeginSymbol(const MCSymbol &L) const {
-    assert(!Begin);
-    Begin = &L;
-  }
+  MCSymbol *getBeginSymbol() const { return Begin; }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

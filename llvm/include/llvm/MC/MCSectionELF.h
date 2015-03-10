@@ -51,9 +51,10 @@ class MCSectionELF : public MCSection {
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags, SectionKind K,
-               unsigned entrySize, const MCSymbol *group, bool Unique)
-      : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
-        Unique(Unique), EntrySize(entrySize), Group(group) {}
+               unsigned entrySize, const MCSymbol *group, bool Unique,
+               MCSymbol *Begin)
+      : MCSection(SV_ELF, K, Begin), SectionName(Section), Type(type),
+        Flags(flags), Unique(Unique), EntrySize(entrySize), Group(group) {}
   ~MCSectionELF();
 
   void setSectionName(StringRef Name) { SectionName = Name; }

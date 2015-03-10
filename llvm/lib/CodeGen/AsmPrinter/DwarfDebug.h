@@ -371,7 +371,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Emit a specified accelerator table.
   void emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
-                 StringRef TableName, StringRef SymName);
+                 StringRef TableName);
 
   /// \brief Emit visible names into a hashed accelerator table section.
   void emitAccelNames();
