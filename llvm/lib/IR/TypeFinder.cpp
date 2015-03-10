@@ -68,7 +68,7 @@ void TypeFinder::run(const Module &M, bool onlyNamed) {
         // instructions with this loop.)
         for (User::const_op_iterator OI = I.op_begin(), OE = I.op_end();
              OI != OE; ++OI)
-          if (!isa<Instruction>(OI))
+          if (*OI && !isa<Instruction>(OI))
             incorporateValue(*OI);
 
         // Incorporate types hiding in metadata.

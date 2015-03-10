@@ -69,15 +69,13 @@ Value::~Value() {
 #ifndef NDEBUG      // Only in -g mode...
   // Check to make sure that there are no uses of this value that are still
   // around when the value is destroyed.  If there are, then we have a dangling
-  // reference and something is wrong.  This code is here to print out what is
-  // still being referenced.  The value in question should be printed as
-  // a <badref>
+  // reference and something is wrong.  This code is here to print out where
+  // the value is still being referenced.
   //
   if (!use_empty()) {
     dbgs() << "While deleting: " << *VTy << " %" << getName() << "\n";
-    for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
-      dbgs() << "Use still stuck around after Def is destroyed:"
-           << **I << "\n";
+    for (auto *U : users())
+      dbgs() << "Use still stuck around after Def is destroyed:" << *U << "\n";
   }
 #endif
   assert(use_empty() && "Uses remain when a value is destroyed!");
