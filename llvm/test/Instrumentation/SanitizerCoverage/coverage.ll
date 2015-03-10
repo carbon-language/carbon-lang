@@ -2,6 +2,7 @@
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=1 -S | FileCheck %s --check-prefix=CHECK1
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK2
+; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=0  -S | FileCheck %s --check-prefix=CHECK_WITH_CHECK
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=1  -S | FileCheck %s --check-prefix=CHECK_WITH_CHECK
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=3 -sanitizer-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK3
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -S | FileCheck %s --check-prefix=CHECK4
@@ -51,6 +52,10 @@ entry:
 ; CHECK_WITH_CHECK-LABEL: define void @foo
 ; CHECK_WITH_CHECK: __sanitizer_cov_with_check
 ; CHECK_WITH_CHECK: ret void
+; CHECK_WITH_CHECK-LABEL: define internal void @sancov.module_ctor
+; CHECK_WITH_CHECK-NOT: ret
+; CHECK_WITH_CHECK: call void @__sanitizer_cov_module_init({{.*}}, i64 4,
+; CHECK_WITH_CHECK: ret
 
 ; CHECK2-LABEL: define void @foo
 ; CHECK2: call void @__sanitizer_cov

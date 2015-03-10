@@ -812,7 +812,8 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(u32 *guard) {
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_with_check(u32 *guard) {
   atomic_uint32_t *atomic_guard = reinterpret_cast<atomic_uint32_t*>(guard);
-  if (__sanitizer::atomic_load(atomic_guard, memory_order_relaxed))
+  if (static_cast<s32>(
+          __sanitizer::atomic_load(atomic_guard, memory_order_relaxed)) < 0)
     __sanitizer_cov(guard);
 }
 SANITIZER_INTERFACE_ATTRIBUTE void

@@ -111,6 +111,9 @@ class SanitizerCoverageModule : public ModulePass {
                       ArrayRef<Instruction *> IndirCalls);
   void SetNoSanitizeMetada(Instruction *I);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB, bool UseCalls);
+  unsigned NumberOfInstrumentedBlocks() {
+    return SanCovFunction->getNumUses() + SanCovWithCheckFunction->getNumUses();
+  }
   Function *SanCovFunction;
   Function *SanCovWithCheckFunction;
   Function *SanCovIndirCallFunction;
@@ -192,10 +195,11 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   for (auto &F : M)
     runOnFunction(F);
 
+  auto N = NumberOfInstrumentedBlocks();
+
   // Now we know how many elements we need. Create an array of guards
   // with one extra element at the beginning for the size.
-  Type *Int32ArrayNTy =
-      ArrayType::get(Int32Ty, SanCovFunction->getNumUses() + 1);
+  Type *Int32ArrayNTy = ArrayType::get(Int32Ty, N + 1);
   GlobalVariable *RealGuardArray = new GlobalVariable(
       M, Int32ArrayNTy, false, GlobalValue::PrivateLinkage,
       Constant::getNullValue(Int32ArrayNTy), "__sancov_gen_cov");
@@ -211,8 +215,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
     // Make sure the array is 16-aligned.
     static const int kCounterAlignment = 16;
     Type *Int8ArrayNTy =
-        ArrayType::get(Int8Ty, RoundUpToAlignment(SanCovFunction->getNumUses(),
-                                                  kCounterAlignment));
+        ArrayType::get(Int8Ty, RoundUpToAlignment(N, kCounterAlignment));
     RealEightBitCounterArray = new GlobalVariable(
         M, Int8ArrayNTy, false, GlobalValue::PrivateLinkage,
         Constant::getNullValue(Int8ArrayNTy), "__sancov_gen_cov_counter");
@@ -233,7 +236,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   IRB.SetInsertPoint(CtorFunc->getEntryBlock().getTerminator());
   IRB.CreateCall4(
       SanCovModuleInit, IRB.CreatePointerCast(RealGuardArray, Int32PtrTy),
-      ConstantInt::get(IntptrTy, SanCovFunction->getNumUses()),
+      ConstantInt::get(IntptrTy, N),
       ClUse8bitCounters
           ? IRB.CreatePointerCast(RealEightBitCounterArray, Int8PtrTy)
           : Constant::getNullValue(Int8PtrTy),
@@ -333,7 +336,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   SmallVector<Value *, 1> Indices;
   Value *GuardP = IRB.CreateAdd(
       IRB.CreatePointerCast(GuardArray, IntptrTy),
-      ConstantInt::get(IntptrTy, (1 + SanCovFunction->getNumUses()) * 4));
+      ConstantInt::get(IntptrTy, (1 + NumberOfInstrumentedBlocks()) * 4));
   Type *Int32PtrTy = PointerType::getUnqual(IRB.getInt32Ty());
   GuardP = IRB.CreateIntToPtr(GuardP, Int32PtrTy);
   if (UseCalls) {
@@ -357,7 +360,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     IRB.SetInsertPoint(IP);
     Value *P = IRB.CreateAdd(
         IRB.CreatePointerCast(EightBitCounterArray, IntptrTy),
-        ConstantInt::get(IntptrTy, SanCovFunction->getNumUses() - 1));
+        ConstantInt::get(IntptrTy, NumberOfInstrumentedBlocks() - 1));
     P = IRB.CreateIntToPtr(P, IRB.getInt8PtrTy());
     LoadInst *LI = IRB.CreateLoad(P);
     Value *Inc = IRB.CreateAdd(LI, ConstantInt::get(IRB.getInt8Ty(), 1));

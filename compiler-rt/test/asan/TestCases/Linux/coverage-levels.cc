@@ -6,6 +6,8 @@
 // RUN: ASAN_OPTIONS=coverage=1:coverage_bitset=1:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK2
 // RUN: %clangxx_asan -O1 -fsanitize-coverage=3  %s -o %t
 // RUN: ASAN_OPTIONS=coverage=1:coverage_bitset=1:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3
+// RUN: %clangxx_asan -O1 -fsanitize-coverage=3 -mllvm -sanitizer-coverage-block-threshold=0 %s -o %t
+// RUN: ASAN_OPTIONS=coverage=1:coverage_bitset=1:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3
 // RUN: %clangxx_asan -O1 -fsanitize-coverage=3 -mllvm -sanitizer-coverage-8bit-counters=1 %s -o %t
 // RUN: ASAN_OPTIONS=coverage=1:coverage_counters=1:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK_COUNTERS
 
