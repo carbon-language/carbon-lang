@@ -72,17 +72,6 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
-static MCCodeEmitter *createAMDGPUMCCodeEmitter(const MCInstrInfo &MCII,
-                                                const MCRegisterInfo &MRI,
-                                                const MCSubtargetInfo &STI,
-                                                MCContext &Ctx) {
-  if (STI.getFeatureBits() & AMDGPU::Feature64BitPtr) {
-    return createSIMCCodeEmitter(MCII, MRI, STI, Ctx);
-  } else {
-    return createR600MCCodeEmitter(MCII, MRI, STI);
-  }
-}
-
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS, MCCodeEmitter *_Emitter,
@@ -110,8 +99,8 @@ extern "C" void LLVMInitializeR600TargetMC() {
   TargetRegistry::RegisterMCInstPrinter(TheAMDGPUTarget, createAMDGPUMCInstPrinter);
   TargetRegistry::RegisterMCInstPrinter(TheGCNTarget, createAMDGPUMCInstPrinter);
 
-  TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget, createAMDGPUMCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(TheGCNTarget, createAMDGPUMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget, createR600MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheGCNTarget, createSIMCCodeEmitter);
 
   TargetRegistry::RegisterMCAsmBackend(TheAMDGPUTarget, createAMDGPUAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheGCNTarget, createAMDGPUAsmBackend);
