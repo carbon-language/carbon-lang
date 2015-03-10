@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -emit-llvm %s -fexceptions -fcxx-exceptions -o - | FileCheck %s
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -std=c++11 -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -emit-pch -o %t %s
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -g -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -fopenmp=libiomp5 -fexceptions -fcxx-exceptions -gline-tables-only -x c++ -emit-llvm %s -o - | FileCheck %s --check-prefix=TERM_DEBUG
 //
 // expected-no-diagnostics
 #ifndef HEADER
@@ -262,8 +261,8 @@ void iter_simple(IterDouble ia, IterDouble ib, IterDouble ic) {
 //
 // CHECK: store i32 0, i32* [[IT_OMP_IV:%[^,]+]]
 // Calculate number of iterations before the loop body.
-// CHECK: [[DIFF1:%.+]] = invoke {{.*}}i32 @{{.*}}IterDouble{{.*}}
-// CHECK: [[DIFF2:%.+]] = sub nsw i32 [[DIFF1]], 1
+// CHECK: [[DIFF1:%.+]] = call {{.*}}i32 @{{.*}}IterDouble{{.*}}
+// CHECK-NEXT: [[DIFF2:%.+]] = sub nsw i32 [[DIFF1]], 1
 // CHECK-NEXT: [[DIFF3:%.+]] = add nsw i32 [[DIFF2]], 1
 // CHECK-NEXT: [[DIFF4:%.+]] = sdiv i32 [[DIFF3]], 1
 // CHECK-NEXT: [[DIFF5:%.+]] = sub nsw i32 [[DIFF4]], 1
@@ -280,12 +279,12 @@ void iter_simple(IterDouble ia, IterDouble ib, IterDouble ic) {
 // Start of body: calculate i from index:
 // CHECK: [[IV1:%.+]] = load i32, i32* [[IT_OMP_IV]]{{.+}}!llvm.mem.parallel_loop_access ![[ITER_LOOP_ID]]
 // Call of operator+ (i, IV).
-// CHECK: {{%.+}} = invoke {{.+}} @{{.*}}IterDouble{{.*}}
+// CHECK: {{%.+}} = call {{.+}} @{{.*}}IterDouble{{.*}}!llvm.mem.parallel_loop_access ![[ITER_LOOP_ID]]
 // ... loop body ...
    *i = *ic * 0.5;
 // Float multiply and save result.
 // CHECK: [[MULR:%.+]] = fmul double {{%.+}}, 5.000000e-01
-// CHECK-NEXT: invoke {{.+}} @{{.*}}IterDouble{{.*}}
+// CHECK-NEXT: call {{.+}} @{{.*}}IterDouble{{.*}}
 // CHECK: store double [[MULR:%.+]], double* [[RESULT_ADDR:%.+]], !llvm.mem.parallel_loop_access ![[ITER_LOOP_ID]]
    ++ic;
 //
@@ -404,23 +403,13 @@ void widened(float *a, float *b, float *c, float *d) {
 // CHECK: ret void
 }
 
-// TERM_DEBUG-LABEL: bar
-int bar() {return 0;};
-
-// TERM_DEBUG-LABEL: parallel_simd
 void parallel_simd(float *a) {
 #pragma omp parallel
 #pragma omp simd
-  // TERM_DEBUG-NOT: __kmpc_global_thread_num
-  // TERM_DEBUG:     invoke i32 {{.*}}bar{{.*}}()
-  // TERM_DEBUG:     unwind label %[[TERM_LPAD:.+]],
-  // TERM_DEBUG-NOT: __kmpc_global_thread_num
-  // TERM_DEBUG:     [[TERM_LPAD]]:
-  // TERM_DEBUG:     call void @__clang_call_terminate
-  // TERM_DEBUG:     unreachable
+  // CHECK-NOT: __kmpc_global_thread_num
   for (unsigned i = 131071; i <= 2147483647; i += 127)
-    a[i] += bar();
+    a[i] += i;
 }
-// TERM_DEBUG: !{{[0-9]+}} = !MDLocation(line: 413,
+
 #endif // HEADER
 
