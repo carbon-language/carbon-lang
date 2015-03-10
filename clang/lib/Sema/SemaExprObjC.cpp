@@ -3477,6 +3477,9 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr,
     if (TB *ObjCBAttr = getObjCBridgeAttr<TB>(TD)) {
       if (IdentifierInfo *Parm = ObjCBAttr->getBridgedType()) {
         HadTheAttribute = true;
+        if (Parm->isStr("id"))
+          return true;
+
         NamedDecl *Target = nullptr;
         // Check for an existing type with this name.
         LookupResult R(S, DeclarationName(Parm), SourceLocation(),

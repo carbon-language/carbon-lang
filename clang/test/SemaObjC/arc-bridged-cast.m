@@ -62,3 +62,21 @@ CFTypeRef fixitsWithSpace(id obj) {
   // CHECK: fix-it:"{{.*}}":{59:9-59:9}:"(__bridge CFTypeRef)"
   // CHECK: fix-it:"{{.*}}":{59:9-59:9}:" CFBridgingRetain"
 }
+
+// rdar://problem/20107345
+typedef const struct __attribute__((objc_bridge(id))) __CFAnnotatedObject *CFAnnotatedObjectRef;
+CFAnnotatedObjectRef CFGetAnnotated();
+
+void testObjCBridgeId() {
+  id obj;
+  obj = (__bridge id)CFGetAnnotated();
+  obj = (__bridge NSString*)CFGetAnnotated();
+  obj = (__bridge_transfer id)CFGetAnnotated();
+  obj = (__bridge_transfer NSString*)CFGetAnnotated();
+
+  CFAnnotatedObjectRef ref;
+  ref = (__bridge CFAnnotatedObjectRef) CreateSomething();
+  ref = (__bridge CFAnnotatedObjectRef) CreateNSString();
+  ref = (__bridge_retained CFAnnotatedObjectRef) CreateSomething();
+  ref = (__bridge_retained CFAnnotatedObjectRef) CreateNSString();
+}
