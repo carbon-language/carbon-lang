@@ -22,7 +22,7 @@ configure_lit_site_cfg(
 set(LLD_TEST_DEPS
   FileCheck not llvm-nm
   lld llvm-config llvm-objdump llvm-readobj yaml2obj obj2yaml
-  linker-script-test macho-dump llvm-mc
+  linker-script-test macho-dump llvm-mc llvm-nm
   LLDUnitTests
   )
 set(LLD_TEST_PARAMS
