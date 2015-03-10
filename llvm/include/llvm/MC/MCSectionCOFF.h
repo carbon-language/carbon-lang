@@ -60,9 +60,6 @@ class MCSymbol;
     bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
     StringRef getSectionName() const { return SectionName; }
-    std::string getLabelBeginName() const override {
-      return SectionName.str() + "_begin";
-    }
     unsigned getCharacteristics() const { return Characteristics; }
     MCSymbol *getCOMDATSymbol() const { return COMDATSymbol; }
     int getSelection() const { return Selection; }

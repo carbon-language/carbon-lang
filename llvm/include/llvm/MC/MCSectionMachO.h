@@ -53,10 +53,6 @@ public:
     return StringRef(SectionName);
   }
 
-  std::string getLabelBeginName() const override {
-    return StringRef(getSegmentName().str() + getSectionName().str() + "_begin");
-  }
-
   unsigned getTypeAndAttributes() const { return TypeAndAttributes; }
   unsigned getStubSize() const { return Reserved2; }
 

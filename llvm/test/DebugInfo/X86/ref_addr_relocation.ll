@@ -23,7 +23,7 @@
 ; CHECK: DW_TAG_variable
 ; CHECK: .long [[TYPE:.*]] # DW_AT_type
 ; CHECK: DW_TAG_structure_type
-; CHECK: debug_info_begin1
+; CHECK: cu_begin1
 ; CHECK: DW_TAG_compile_unit
 ; CHECK-NOT: DW_TAG_structure_type
 ; This variable's type is in the 1st CU.

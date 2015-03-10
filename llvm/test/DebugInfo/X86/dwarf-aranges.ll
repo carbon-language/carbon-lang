@@ -3,7 +3,7 @@
 
 ; -- header --
 ; CHECK: .short 2 # DWARF Arange version number
-; CHECK-NEXT: .long .L.debug_info_begin0
+; CHECK-NEXT: .long .Lcu_begin0
 ; CHECK-NEXT: .byte 8 # Address Size (in bytes)
 ; CHECK-NEXT: .byte 0 # Segment Size (in bytes)
 ; -- alignment --

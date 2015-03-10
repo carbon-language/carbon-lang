@@ -6,7 +6,7 @@
 ; First CU
 ; CHECK-NEXT: .long   44                      # Length of ARange Set
 ; CHECK-NEXT: .short  2                       # DWARF Arange version number
-; CHECK-NEXT: .long   .L.debug_info_begin0    # Offset Into Debug Info Section
+; CHECK-NEXT: .long   .Lcu_begin0             # Offset Into Debug Info Section
 ; CHECK-NEXT: .byte   8                       # Address Size (in bytes)
 ; CHECK-NEXT: .byte   0                       # Segment Size (in bytes)
 ; CHECK-NEXT: .zero   4,255
@@ -18,7 +18,7 @@
 ; Second CU
 ; CHECK-NEXT: .long   44                      # Length of ARange Set
 ; CHECK-NEXT: .short  2                       # DWARF Arange version number
-; CHECK-NEXT: .long   .L.debug_info_begin1    # Offset Into Debug Info Section
+; CHECK-NEXT: .long   .Lcu_begin1             # Offset Into Debug Info Section
 ; CHECK-NEXT: .byte   8                       # Address Size (in bytes)
 ; CHECK-NEXT: .byte   0                       # Segment Size (in bytes)
 ; CHECK-NEXT: .zero   4,255

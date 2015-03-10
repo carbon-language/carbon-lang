@@ -65,11 +65,6 @@ public:
   bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
   StringRef getSectionName() const { return SectionName; }
-  std::string getLabelBeginName() const override {
-    if (Group)
-      return (SectionName.str() + '_' + Group->getName() + "_begin").str();
-    return SectionName.str() + "_begin";
-  }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   unsigned getEntrySize() const { return EntrySize; }

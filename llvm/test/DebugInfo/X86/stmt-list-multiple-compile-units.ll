@@ -50,10 +50,10 @@
 ; DWARF3-NOT: file_names
 
 ; PR15408
-; ASM: L__DWARF__debug_info_begin0:
+; ASM: Lcu_begin0:
 ; ASM: Lset3 = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
 ; ASM-NEXT: .long   Lset3
-; ASM: L__DWARF__debug_info_begin1:
+; ASM: Lcu_begin1:
 ; ASM: Lset13 = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
 ; ASM-NEXT: .long   Lset13
 define i32 @test(i32 %a) nounwind uwtable ssp {

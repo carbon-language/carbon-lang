@@ -9,7 +9,7 @@
 
 ; CHECK: .LpubTypes_begin0:
 ; CHECK-NEXT: .short    2                       # DWARF Version
-; CHECK-NEXT: .long     .L.debug_info_begin0    # Offset of Compilation Unit Info
+; CHECK-NEXT: .long     .Lcu_begin0             # Offset of Compilation Unit Info
 
 ; Function Attrs: nounwind uwtable
 define i32 @main() #0 {
