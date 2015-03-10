@@ -115,8 +115,14 @@ class LibcxxTestFormat(object):
             env = None
             if self.exec_env:
                 env = self.exec_env
+            # TODO: Only list actually needed files in file_deps.
+            # Right now we just mark all of the .dat files in the same
+            # directory as dependencies, but it's likely less than that. We
+            # should add a `// FILE-DEP: foo.dat` to each test to track this.
+            data_files = [os.path.join(local_cwd, f)
+                          for f in os.listdir(local_cwd) if f.endswith('.dat')]
             out, err, rc = self.executor.run(exec_path, [exec_path],
-                                             local_cwd, env)
+                                             local_cwd, data_files, env)
             if rc != 0:
                 report = libcxx.util.makeReport(cmd, out, err, rc)
                 report = "Compiled With: %s\n%s" % (compile_cmd, report)

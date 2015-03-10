@@ -6,15 +6,16 @@ from lit.util import executeCommand  # pylint: disable=import-error
 
 
 class Executor(object):
-    def run(self, exe_path, cmd, local_cwd, env=None):
+    def run(self, exe_path, cmd, local_cwd, file_deps=None, env=None):
         """Execute a command.
             Be very careful not to change shared state in this function.
             Executor objects are shared between python processes in `lit -jN`.
         Args:
-            exe_path: str:   Local path to the executable to be run
-            cmd: [str]:      subprocess.call style command
-            local_cwd: str:  Local path to the working directory
-            env: {str: str}: Environment variables to execute under
+            exe_path: str:    Local path to the executable to be run
+            cmd: [str]:       subprocess.call style command
+            local_cwd: str:   Local path to the working directory
+            file_deps: [str]: Files required by the test
+            env: {str: str}:  Environment variables to execute under
         Returns:
             out, err, exitCode
         """
@@ -25,7 +26,7 @@ class LocalExecutor(Executor):
     def __init__(self):
         super(LocalExecutor, self).__init__()
 
-    def run(self, exe_path, cmd=None, work_dir='.', env=None):
+    def run(self, exe_path, cmd=None, work_dir='.', file_deps=None, env=None):
         cmd = cmd or [exe_path]
         env_cmd = []
         if env:
@@ -48,10 +49,10 @@ class PrefixExecutor(Executor):
         self.commandPrefix = commandPrefix
         self.chain = chain
 
-    def run(self, exe_path, cmd=None, work_dir='.', env=None):
+    def run(self, exe_path, cmd=None, work_dir='.', file_deps=None, env=None):
         cmd = cmd or [exe_path]
         return self.chain.run(exe_path, self.commandPrefix + cmd, work_dir,
-                              env=env)
+                              file_deps, env=env)
 
 
 class PostfixExecutor(Executor):
@@ -62,9 +63,10 @@ class PostfixExecutor(Executor):
         self.commandPostfix = commandPostfix
         self.chain = chain
 
-    def run(self, exe_path, cmd=None, work_dir='.', env=None):
+    def run(self, exe_path, cmd=None, work_dir='.', file_deps=None, env=None):
         cmd = cmd or [exe_path]
-        return self.chain.run(cmd + self.commandPostfix, work_dir, env=env)
+        return self.chain.run(cmd + self.commandPostfix, work_dir, file_deps,
+                              env=env)
 
 
 
@@ -107,24 +109,28 @@ class RemoteExecutor(Executor):
             # TODO: Log failure to delete?
             pass
 
-    def run(self, exe_path, cmd=None, work_dir='.', env=None):
+    def run(self, exe_path, cmd=None, work_dir='.', file_deps=None, env=None):
         target_exe_path = None
         target_cwd = None
         try:
-            target_exe_path = self.remote_temp_file()
             target_cwd = self.remote_temp_dir()
+            target_exe_path = os.path.join(target_cwd, 'libcxx_test.exe')
             if cmd:
                 # Replace exe_path with target_exe_path.
                 cmd = [c if c != exe_path else target_exe_path for c in cmd]
             else:
                 cmd = [target_exe_path]
-            self.copy_in([exe_path], [target_exe_path])
+
+            srcs = [exe_path]
+            dsts = [target_exe_path]
+            if file_deps is not None:
+                dev_paths = [os.path.join(target_cwd, os.path.basename(f))
+                             for f in file_deps]
+                srcs.extend(file_deps)
+                dsts.extend(dev_paths)
+            self.copy_in(srcs, dsts)
             return self._execute_command_remote(cmd, target_cwd, env)
-        except:
-            raise
         finally:
-            if target_exe_path:
-                self.delete_remote(target_exe_path)
             if target_cwd:
                 self.delete_remote(target_cwd)
 
