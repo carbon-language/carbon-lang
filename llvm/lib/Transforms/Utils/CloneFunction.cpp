@@ -624,7 +624,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
       recursivelySimplifyInstruction(PN);
 
   // Now that the inlined function body has been fully constructed, go through
-  // and zap unconditional fall-through branches.  This happen all the time when
+  // and zap unconditional fall-through branches. This happens all the time when
   // specializing code: code specialization turns conditional branches into
   // uncond branches, and this code folds them.
   Function::iterator Begin = cast<BasicBlock>(VMap[StartingBB]);
@@ -675,7 +675,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
     // Do not increment I, iteratively merge all things this block branches to.
   }
 
-  // Make a final pass over the basic blocks from theh old function to gather
+  // Make a final pass over the basic blocks from the old function to gather
   // any return instructions which survived folding. We have to do this here
   // because we can iteratively remove and merge returns above.
   for (Function::iterator I = cast<BasicBlock>(VMap[StartingBB]),
