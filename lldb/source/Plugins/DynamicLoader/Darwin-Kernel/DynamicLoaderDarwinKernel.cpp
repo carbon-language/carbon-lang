@@ -724,19 +724,20 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
         }
         if (m_uuid.IsValid())
         {
-            Module* exe_module = process->GetTarget().GetExecutableModulePointer();
-            if (exe_module && exe_module->GetUUID().IsValid())
+            ModuleSP exe_module_sp = process->GetTarget().GetExecutableModule();
+            if (exe_module_sp.get() && exe_module_sp->GetUUID().IsValid())
             {
-                if (m_uuid != exe_module->GetUUID())
+                if (m_uuid != exe_module_sp->GetUUID())
                 {
-                    Stream *s = process->GetTarget().GetDebugger().GetOutputFile().get();
-                    if (s)
-                    {
-                        s->Printf ("warning: Host-side kernel file has Mach-O UUID of %s but remote kernel has a UUID of %s -- a mismatched kernel file will result in a poor debugger experience.\n", 
-                                   exe_module->GetUUID().GetAsString().c_str(),
-                                   m_uuid.GetAsString().c_str());
-                        s->Flush ();
-                    }
+                    // The user specified a kernel binary that has a different UUID than
+                    // the kernel actually running in memory.  This never ends well; 
+                    // clear the user specified kernel binary from the Target.
+
+                    m_module_sp.reset();
+
+                    ModuleList user_specified_kernel_list;
+                    user_specified_kernel_list.Append (exe_module_sp);
+                    process->GetTarget().GetImages().Remove (user_specified_kernel_list);
                 }
             }
         }
