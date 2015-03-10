@@ -412,12 +412,24 @@ Debugger::TestDebuggerRefCount ()
     return g_shared_debugger_refcount;
 }
 
+static bool lldb_initialized_for_llgs = false;
+void
+Debugger::InitializeForLLGS (LoadPluginCallbackType load_plugin_callback)
+{
+    lldb_initialized_for_llgs = true;
+    g_shared_debugger_refcount++;
+    g_load_plugin_callback = load_plugin_callback;
+    lldb_private::InitializeForLLGS();
+}
+
+static bool lldb_initialized = true;
 void
 Debugger::Initialize (LoadPluginCallbackType load_plugin_callback)
 {
+    lldb_initialized = true;
+    g_shared_debugger_refcount++;
     g_load_plugin_callback = load_plugin_callback;
-    if (g_shared_debugger_refcount++ == 0)
-        lldb_private::Initialize();
+    lldb_private::Initialize();
 }
 
 void
@@ -429,7 +441,14 @@ Debugger::Terminate ()
         if (g_shared_debugger_refcount == 0)
         {
             lldb_private::WillTerminate();
-            lldb_private::Terminate();
+            if (lldb_initialized_for_llgs) {
+                lldb_initialized_for_llgs = false;
+                lldb_private::TerminateLLGS();
+            }
+            if (lldb_initialized) {
+                lldb_initialized = false;
+                lldb_private::Terminate();
+            }
 
             // Clear our master list of debugger objects
             Mutex::Locker locker (GetDebuggerListMutex ());

@@ -69,6 +69,9 @@ public:
     FindTargetWithProcess (Process *process);
 
     static void
+    InitializeForLLGS (LoadPluginCallbackType load_plugin_callback);
+
+    static void
     Initialize (LoadPluginCallbackType load_plugin_callback);
     
     static void 
