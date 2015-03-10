@@ -2085,13 +2085,6 @@ void NVPTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   }
 }
 
-
-// Force static initialization.
-extern "C" void LLVMInitializeNVPTXBackendAsmPrinter() {
-  RegisterAsmPrinter<NVPTXAsmPrinter> X(TheNVPTXTarget32);
-  RegisterAsmPrinter<NVPTXAsmPrinter> Y(TheNVPTXTarget64);
-}
-
 void NVPTXAsmPrinter::emitSrcInText(StringRef filename, unsigned line) {
   std::stringstream temp;
   LineReader *reader = this->getReader(filename.str());
