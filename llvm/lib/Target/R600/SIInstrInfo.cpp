@@ -1915,6 +1915,8 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
 
   // The SMRD has an 8-bit offset in dwords on SI and a 20-bit offset in bytes
   // on VI.
+
+  bool IsKill = SBase->isKill();
   if (OffOp) {
     bool isVI = RI.ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS;
     unsigned OffScale = isVI ? 1 : 4;
@@ -1922,7 +1924,9 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
     unsigned LoOffset = OffOp->getImm() * OffScale;
     unsigned HiOffset = LoOffset + HalfSize;
     Lo = BuildMI(*MBB, MI, DL, get(HalfImmOp), RegLo)
-                  .addOperand(*SBase)
+                  // Use addReg instead of addOperand
+                  // to make sure kill flag is cleared.
+                  .addReg(SBase->getReg(), 0, SBase->getSubReg())
                   .addImm(LoOffset / OffScale);
 
     if (!isUInt<20>(HiOffset) || (!isVI && !isUInt<8>(HiOffset / OffScale))) {
@@ -1931,25 +1935,28 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
       BuildMI(*MBB, MI, DL, get(AMDGPU::S_MOV_B32), OffsetSGPR)
               .addImm(HiOffset); // The offset in register is in bytes.
       Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp), RegHi)
-                    .addOperand(*SBase)
+                    .addReg(SBase->getReg(), getKillRegState(IsKill),
+                            SBase->getSubReg())
                     .addReg(OffsetSGPR);
     } else {
       Hi = BuildMI(*MBB, MI, DL, get(HalfImmOp), RegHi)
-                     .addOperand(*SBase)
+                     .addReg(SBase->getReg(), getKillRegState(IsKill),
+                             SBase->getSubReg())
                      .addImm(HiOffset / OffScale);
     }
   } else {
     // Handle the _SGPR variant
     MachineOperand *SOff = getNamedOperand(*MI, AMDGPU::OpName::soff);
     Lo = BuildMI(*MBB, MI, DL, get(HalfSGPROp), RegLo)
-                  .addOperand(*SBase)
+                  .addReg(SBase->getReg(), 0, SBase->getSubReg())
                   .addOperand(*SOff);
     unsigned OffsetSGPR = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
     BuildMI(*MBB, MI, DL, get(AMDGPU::S_ADD_I32), OffsetSGPR)
             .addOperand(*SOff)
             .addImm(HalfSize);
     Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp))
-                  .addOperand(*SBase)
+                  .addReg(SBase->getReg(), getKillRegState(IsKill),
+                          SBase->getSubReg())
                   .addReg(OffsetSGPR);
   }
 
