@@ -43,9 +43,9 @@ public:
   /// Output a dwarf operand and an optional assembler comment.
   virtual void EmitOp(uint8_t Op, const char *Comment = nullptr) = 0;
   /// Emit a raw signed value.
-  virtual void EmitSigned(int Value) = 0;
+  virtual void EmitSigned(int64_t Value) = 0;
   /// Emit a raw unsigned value.
-  virtual void EmitUnsigned(unsigned Value) = 0;
+  virtual void EmitUnsigned(uint64_t Value) = 0;
   /// Return whether the given machine register is the frame register in the
   /// current function.
   virtual bool isFrameRegister(unsigned MachineReg) = 0;
@@ -111,8 +111,8 @@ public:
     : DwarfExpression(TRI, DwarfVersion), BS(BS) {}
 
   void EmitOp(uint8_t Op, const char *Comment = nullptr) override;
-  void EmitSigned(int Value) override;
-  void EmitUnsigned(unsigned Value) override;
+  void EmitSigned(int64_t Value) override;
+  void EmitUnsigned(uint64_t Value) override;
   bool isFrameRegister(unsigned MachineReg) override;
 };
 
@@ -125,8 +125,8 @@ const AsmPrinter &AP;
 public:
   DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU, DIELoc &DIE);
   void EmitOp(uint8_t Op, const char *Comment = nullptr) override;
-  void EmitSigned(int Value) override;
-  void EmitUnsigned(unsigned Value) override;
+  void EmitSigned(int64_t Value) override;
+  void EmitUnsigned(uint64_t Value) override;
   bool isFrameRegister(unsigned MachineReg) override;
 };
 }

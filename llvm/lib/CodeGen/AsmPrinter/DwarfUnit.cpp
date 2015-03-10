@@ -53,10 +53,10 @@ DIEDwarfExpression::DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU,
 void DIEDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
   DU.addUInt(DIE, dwarf::DW_FORM_data1, Op);
 }
-void DIEDwarfExpression::EmitSigned(int Value) {
+void DIEDwarfExpression::EmitSigned(int64_t Value) {
   DU.addSInt(DIE, dwarf::DW_FORM_sdata, Value);
 }
-void DIEDwarfExpression::EmitUnsigned(unsigned Value) {
+void DIEDwarfExpression::EmitUnsigned(uint64_t Value) {
   DU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
 }
 bool DIEDwarfExpression::isFrameRegister(unsigned MachineReg) {

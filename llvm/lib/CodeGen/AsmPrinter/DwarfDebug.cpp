@@ -111,11 +111,11 @@ void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char *Comment) {
                   : dwarf::OperationEncodingString(Op));
 }
 
-void DebugLocDwarfExpression::EmitSigned(int Value) {
+void DebugLocDwarfExpression::EmitSigned(int64_t Value) {
   BS.EmitSLEB128(Value, Twine(Value));
 }
 
-void DebugLocDwarfExpression::EmitUnsigned(unsigned Value) {
+void DebugLocDwarfExpression::EmitUnsigned(uint64_t Value) {
   BS.EmitULEB128(Value, Twine(Value));
 }
 
