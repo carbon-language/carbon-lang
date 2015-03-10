@@ -1111,7 +1111,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   if (NumComparisons == 0 && NeedRTCheck)
     NeedRTCheck = false;
 
-  // Check that we did not find an unsizeable pointer.
+  // Check that we found the bounds for the pointer.
   if (CanDoRT)
     DEBUG(dbgs() << "LAA: We can perform a memory runtime check if needed.\n");
   else if (NeedRTCheck) {
@@ -1144,7 +1144,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
 
       CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE,
                                          TheLoop, Strides, true);
-      // Check that we didn't find an unsizeable pointer.
+      // Check that we found the bounds for the pointer.
       if (!CanDoRT && NumComparisons > 0) {
         emitAnalysis(LoopAccessReport()
                      << "cannot check memory dependencies at runtime");
