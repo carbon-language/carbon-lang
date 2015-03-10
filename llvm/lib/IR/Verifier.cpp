@@ -2969,8 +2969,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
     // Check that BaseIndex and DerivedIndex fall within the 'gc parameters'
     // section of the statepoint's argument
-    const int NumCallArgs =
+    Assert(StatepointCS.arg_size() > 0,
+           "gc.statepoint: insufficient arguments");
+    const unsigned NumCallArgs =
       cast<ConstantInt>(StatepointCS.getArgument(1))->getZExtValue();
+    Assert(StatepointCS.arg_size() > NumCallArgs+3,
+           "gc.statepoint: mismatch in number of call arguments");
     const int NumDeoptArgs =
       cast<ConstantInt>(StatepointCS.getArgument(NumCallArgs + 3))->getZExtValue();
     const int GCParamArgsStart = NumCallArgs + NumDeoptArgs + 4;
