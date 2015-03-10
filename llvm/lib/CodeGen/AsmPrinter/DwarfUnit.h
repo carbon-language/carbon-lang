@@ -252,6 +252,9 @@ public:
   void addConstantFPValue(DIE &Die, const MachineOperand &MO);
   void addConstantFPValue(DIE &Die, const ConstantFP *CFP);
 
+  /// \brief Add a linkage name, if it isn't empty.
+  void addLinkageName(DIE &Die, StringRef LinkageName);
+
   /// addTemplateParams - Add template parameters in buffer.
   void addTemplateParams(DIE &Buffer, DIArray TParams);
 

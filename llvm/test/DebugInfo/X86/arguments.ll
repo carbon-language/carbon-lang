@@ -16,7 +16,7 @@
 ; CHECK: debug_info contents
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name{{.*}}"_Z4func3fooS_"
+; CHECK: DW_AT_linkage_name{{.*}}"_Z4func3fooS_"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG

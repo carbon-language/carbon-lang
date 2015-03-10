@@ -4,7 +4,7 @@
 ; test that the DW_AT_specification is a back edge in the file.
 
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN3foo3barEv"
+; CHECK-NEXT: DW_AT_linkage_name {{.*}} "_ZN3foo3barEv"
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_specification {{.*}} "_ZN3foo3barEv"

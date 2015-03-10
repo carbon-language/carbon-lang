@@ -41,7 +41,7 @@
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name [DW_FORM_strp]{{.*}}"_Z3baz1A"
+; CHECK: DW_AT_linkage_name [DW_FORM_strp]{{.*}}"_Z3baz1A"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG

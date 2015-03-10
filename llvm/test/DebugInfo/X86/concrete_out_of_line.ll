@@ -9,11 +9,11 @@
 ; CHECK: DW_TAG_class_type
 ; CHECK:   DW_TAG_subprogram
 ; CHECK:   DW_TAG_subprogram
-; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN12nsAutoRefCntaSEi"
+; CHECK:     DW_AT_linkage_name {{.*}} "_ZN12nsAutoRefCntaSEi"
 
 ; CHECK: DW_TAG_class_type
 ; CHECK:   DW_TAG_subprogram
-; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN17nsAutoRefCnt7ReleaseEv"
+; CHECK:     DW_AT_linkage_name {{.*}} "_ZN17nsAutoRefCnt7ReleaseEv"
 ; CHECK:   DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}} "~nsAutoRefCnt"
 

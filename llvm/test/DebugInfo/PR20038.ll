@@ -20,7 +20,7 @@
 
 ; CHECK:  DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1CD1Ev"
+; CHECK:   DW_AT_linkage_name {{.*}} "_ZN1CD1Ev"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:  DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG

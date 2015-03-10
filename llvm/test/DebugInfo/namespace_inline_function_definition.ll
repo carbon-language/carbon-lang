@@ -17,7 +17,7 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN2ns4funcEi"
+; CHECK:   DW_AT_linkage_name {{.*}} "_ZN2ns4funcEi"
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK:   NULL

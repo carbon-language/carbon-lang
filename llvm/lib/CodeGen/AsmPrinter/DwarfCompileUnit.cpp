@@ -174,16 +174,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
     }
 
     addBlock(*VariableDIE, dwarf::DW_AT_location, Loc);
-    // Add the linkage name.
-    StringRef LinkageName = GV.getLinkageName();
-    if (!LinkageName.empty())
-      // From DWARF4: DIEs to which DW_AT_linkage_name may apply include:
-      // TAG_common_block, TAG_constant, TAG_entry_point, TAG_subprogram and
-      // TAG_variable.
-      addString(*VariableDIE,
-                DD->getDwarfVersion() >= 4 ? dwarf::DW_AT_linkage_name
-                                           : dwarf::DW_AT_MIPS_linkage_name,
-                GlobalValue::getRealLinkageName(LinkageName));
+    addLinkageName(*VariableDIE, GV.getLinkageName());
   } else if (const ConstantInt *CI =
                  dyn_cast_or_null<ConstantInt>(GV.getConstant())) {
     addConstantValue(*VariableDIE, CI, GTy);

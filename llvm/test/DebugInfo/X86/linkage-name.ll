@@ -2,7 +2,7 @@
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: DW_TAG_subprogram [9] *
-; CHECK-NOT: DW_AT_MIPS_linkage_name
+; CHECK-NOT: DW_AT_{{(MIPS_)?}}linkage_name
 ; CHECK: DW_AT_specification
 
 %class.A = type { i8 }

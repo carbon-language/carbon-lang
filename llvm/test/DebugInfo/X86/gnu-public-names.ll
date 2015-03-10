@@ -59,11 +59,11 @@
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_variable"
 
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
+; CHECK-NEXT: DW_AT_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "member_function"
 
 ; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_MIPS_linkage_name
+; CHECK-NEXT: DW_AT_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_function"
 
 ; CHECK: [[INT:0x[0-9a-f]+]]: DW_TAG_base_type
@@ -92,7 +92,7 @@
 
 ; CHECK: [[GLOB_NS_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name
+; CHECK: DW_AT_linkage_name
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name {{.*}} "global_namespace_function"
 
@@ -159,7 +159,7 @@
 
 ; CHECK: [[GLOBAL_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_MIPS_linkage_name
+; CHECK: DW_AT_linkage_name
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name {{.*}} "global_function"
 

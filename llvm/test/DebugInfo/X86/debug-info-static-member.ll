@@ -91,7 +91,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !32 = !MDLocation(line: 22, scope: !5)
 !33 = !MDFile(filename: "/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", directory: "/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm")
 ; PRESENT verifies that static member declarations have these attributes:
-; external, declaration, accessibility, and either DW_AT_MIPS_linkage_name
+; external, declaration, accessibility, and either DW_AT_linkage_name
 ; (for variables) or DW_AT_const_value (for constants).
 ;
 ; PRESENT:      .debug_info contents:

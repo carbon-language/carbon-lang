@@ -759,6 +759,15 @@ void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, bool Unsigned) {
   addBlock(Die, dwarf::DW_AT_const_value, Block);
 }
 
+// Add a linkage name to the DIE.
+void DwarfUnit::addLinkageName(DIE &Die, StringRef LinkageName) {
+  if (!LinkageName.empty())
+    addString(Die,
+              DD->getDwarfVersion() >= 4 ? dwarf::DW_AT_linkage_name
+                                         : dwarf::DW_AT_MIPS_linkage_name,
+              GlobalValue::getRealLinkageName(LinkageName));
+}
+
 /// addTemplateParams - Add template parameters into buffer.
 void DwarfUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   // Add template parameters.
@@ -1278,9 +1287,8 @@ bool DwarfUnit::applySubprogramDefinitionAttributes(DISubprogram SP,
   assert(((LinkageName.empty() || DeclLinkageName.empty()) ||
           LinkageName == DeclLinkageName) &&
          "decl has a linkage name and it is different");
-  if (!LinkageName.empty() && DeclLinkageName.empty())
-    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-              GlobalValue::getRealLinkageName(LinkageName));
+  if (DeclLinkageName.empty())
+    addLinkageName(SPDie, LinkageName);
 
   if (!DeclDie)
     return false;

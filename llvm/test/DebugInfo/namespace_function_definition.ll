@@ -14,7 +14,7 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_low_pc
 ; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN2ns4funcEv"
+; CHECK:   DW_AT_linkage_name {{.*}} "_ZN2ns4funcEv"
 ; CHECK: NULL
 ; CHECK: NULL
 

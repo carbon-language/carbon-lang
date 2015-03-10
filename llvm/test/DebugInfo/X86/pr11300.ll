@@ -7,7 +7,7 @@
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_TAG_class_type
 ; CHECK:   DW_TAG_subprogram
-; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN3foo3barEv"
+; CHECK:     DW_AT_linkage_name {{.*}} "_ZN3foo3barEv"
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_specification {{.*}} "_ZN3foo3barEv"
