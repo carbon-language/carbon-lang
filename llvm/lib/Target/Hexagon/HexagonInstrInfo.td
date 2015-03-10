@@ -1772,6 +1772,8 @@ def L2_loadalignb_io: T_loadalign_io <"memb_fifo", 0b0100, s11_0Ext>;
 multiclass Loadx_pat<PatFrag Load, ValueType VT, PatLeaf ImmPred,
                      InstHexagon MI> {
   def: Pat<(VT (Load AddrFI:$fi)), (VT (MI AddrFI:$fi, 0))>;
+  def: Pat<(VT (Load (add (i32 AddrFI:$fi), ImmPred:$Off))),
+           (VT (MI AddrFI:$fi, imm:$Off))>;
   def: Pat<(VT (Load (add (i32 IntRegs:$Rs), ImmPred:$Off))),
            (VT (MI IntRegs:$Rs, imm:$Off))>;
   def: Pat<(VT (Load (i32 IntRegs:$Rs))), (VT (MI IntRegs:$Rs, 0))>;
@@ -3544,7 +3546,8 @@ let addrMode = BaseImmOffset, InputType = "imm" in {
 }
 
 // Patterns for generating stores, where the address takes different forms:
-// - frameindex,,
+// - frameindex,
+// - frameindex + offset,
 // - base + offset,
 // - simple (base address without offset).
 // These would usually be used together (via Storex_pat defined below), but
@@ -3552,6 +3555,10 @@ let addrMode = BaseImmOffset, InputType = "imm" in {
 // AddedComplexity) to the individual patterns.
 class Storex_fi_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
   : Pat<(Store Value:$Rs, AddrFI:$fi), (MI AddrFI:$fi, 0, Value:$Rs)>;
+class Storex_fi_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                        InstHexagon MI>
+  : Pat<(Store Value:$Rs, (add (i32 AddrFI:$fi), ImmPred:$Off)),
+        (MI AddrFI:$fi, imm:$Off, Value:$Rs)>;
 class Storex_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
                      InstHexagon MI>
   : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
@@ -3567,6 +3574,10 @@ class Storexm_fi_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
                      InstHexagon MI>
   : Pat<(Store Value:$Rs, AddrFI:$fi),
         (MI AddrFI:$fi, 0, (ValueMod Value:$Rs))>;
+class Storexm_fi_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                         PatFrag ValueMod, InstHexagon MI>
+  : Pat<(Store Value:$Rs, (add (i32 AddrFI:$fi), ImmPred:$Off)),
+        (MI AddrFI:$fi, imm:$Off, (ValueMod Value:$Rs))>;
 class Storexm_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
                       PatFrag ValueMod, InstHexagon MI>
   : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
@@ -3578,14 +3589,16 @@ class Storexm_simple_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
 
 multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
                       InstHexagon MI> {
-  def: Storex_fi_pat  <Store, Value, MI>;
-  def: Storex_add_pat <Store, Value, ImmPred, MI>;
+  def: Storex_fi_pat     <Store, Value,          MI>;
+  def: Storex_fi_add_pat <Store, Value, ImmPred, MI>;
+  def: Storex_add_pat    <Store, Value, ImmPred, MI>;
 }
 
 multiclass Storexm_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
                        PatFrag ValueMod, InstHexagon MI> {
-  def: Storexm_fi_pat  <Store, Value,          ValueMod, MI>;
-  def: Storexm_add_pat <Store, Value, ImmPred, ValueMod, MI>;
+  def: Storexm_fi_pat     <Store, Value,          ValueMod, MI>;
+  def: Storexm_fi_add_pat <Store, Value, ImmPred, ValueMod, MI>;
+  def: Storexm_add_pat    <Store, Value, ImmPred, ValueMod, MI>;
 }
 
 // Regular stores in the DAG have two operands: value and address.

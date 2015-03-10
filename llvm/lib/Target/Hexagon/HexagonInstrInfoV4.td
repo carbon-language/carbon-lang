@@ -367,6 +367,8 @@ multiclass Loadxm_pat<PatFrag Load, ValueType VT, PatFrag ValueMod,
                       PatLeaf ImmPred, InstHexagon MI> {
   def: Pat<(VT (Load AddrFI:$fi)),
            (VT (ValueMod (MI AddrFI:$fi, 0)))>;
+  def: Pat<(VT (Load (add AddrFI:$fi, ImmPred:$Off))),
+           (VT (ValueMod (MI AddrFI:$fi, imm:$Off)))>;
   def: Pat<(VT (Load (add IntRegs:$Rs, ImmPred:$Off))),
            (VT (ValueMod (MI IntRegs:$Rs, imm:$Off)))>;
   def: Pat<(VT (Load (i32 IntRegs:$Rs))),
