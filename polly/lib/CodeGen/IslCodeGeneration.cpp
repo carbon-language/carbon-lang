@@ -63,7 +63,7 @@ public:
   IslNodeBuilder(PollyIRBuilder &Builder, ScopAnnotator &Annotator, Pass *P,
                  const DataLayout &DL, LoopInfo &LI, ScalarEvolution &SE,
                  DominatorTree &DT, Scop &S)
-      : S(S), Builder(Builder), Annotator(Annotator), Rewriter(SE, "polly"),
+      : S(S), Builder(Builder), Annotator(Annotator), Rewriter(SE, DL, "polly"),
         ExprBuilder(Builder, IDToValue, Rewriter, DT, LI),
         BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen), P(P),
         DL(DL), LI(LI), SE(SE), DT(DT) {}

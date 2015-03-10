@@ -28,6 +28,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "isl/aff.h"
@@ -114,7 +115,13 @@ Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
         VTV.insert(BBMap.begin(), BBMap.end());
         VTV.insert(GlobalMap.begin(), GlobalMap.end());
         NewScev = SCEVParameterRewriter::rewrite(NewScev, SE, VTV);
-        SCEVExpander Expander(SE, "polly");
+        SCEVExpander Expander(SE, Stmt.getParent()
+                                      ->getRegion()
+                                      .getEntry()
+                                      ->getParent()
+                                      ->getParent()
+                                      ->getDataLayout(),
+                              "polly");
         Value *Expanded = Expander.expandCodeFor(NewScev, Old->getType(),
                                                  Builder.GetInsertPoint());
 
