@@ -472,22 +472,6 @@ _mm256_extract_epi64(__m256i __a, const int __imm)
 }
 #endif
 
-/* Vector insert */
-#define _mm256_insertf128_pd(V1, V2, O) __extension__ ({ \
-  __m256d __V1 = (V1); \
-  __m128d __V2 = (V2); \
-  (__m256d)__builtin_ia32_vinsertf128_pd256((__v4df)__V1, (__v2df)__V2, (O)); })
-
-#define _mm256_insertf128_ps(V1, V2, O) __extension__ ({ \
-  __m256 __V1 = (V1); \
-  __m128 __V2 = (V2); \
-  (__m256)__builtin_ia32_vinsertf128_ps256((__v8sf)__V1, (__v4sf)__V2, (O)); })
-
-#define _mm256_insertf128_si256(V1, V2, O) __extension__ ({ \
-  __m256i __V1 = (V1); \
-  __m128i __V2 = (V2); \
-  (__m256i)__builtin_ia32_vinsertf128_si256((__v8si)__V1, (__v4si)__V2, (O)); })
-
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_insert_epi32(__m256i __a, int __b, int const __imm)
 {
@@ -1165,6 +1149,42 @@ _mm256_castsi128_si256(__m128i __a)
 {
   return __builtin_shufflevector(__a, __a, 0, 1, -1, -1);
 }
+
+/* 
+   Vector insert.
+   We use macros rather than inlines because we only want to accept
+   invocations where the immediate M is a constant expression.
+*/
+#define _mm256_insertf128_ps(V1, V2, M) __extension__ ({ \
+  (__m256)__builtin_shufflevector( \
+    (__v8sf)(V1), \
+    (__v8sf)_mm256_castps128_ps256((__m128)(V2)), \
+    (((M) & 1) ?  0 :  8), \
+    (((M) & 1) ?  1 :  9), \
+    (((M) & 1) ?  2 : 10), \
+    (((M) & 1) ?  3 : 11), \
+    (((M) & 1) ?  8 :  4), \
+    (((M) & 1) ?  9 :  5), \
+    (((M) & 1) ? 10 :  6), \
+    (((M) & 1) ? 11 :  7) );})
+
+#define _mm256_insertf128_pd(V1, V2, M) __extension__ ({ \
+  (__m256d)__builtin_shufflevector( \
+    (__v4df)(V1), \
+    (__v4df)_mm256_castpd128_pd256((__m128d)(V2)), \
+    (((M) & 1) ? 0 : 4), \
+    (((M) & 1) ? 1 : 5), \
+    (((M) & 1) ? 4 : 2), \
+    (((M) & 1) ? 5 : 3) );})
+
+#define _mm256_insertf128_si256(V1, V2, M) __extension__ ({ \
+  (__m256i)__builtin_shufflevector( \
+    (__v4di)(V1), \
+    (__v4di)_mm256_castsi128_si256((__m128i)(V2)), \
+    (((M) & 1) ? 0 : 4), \
+    (((M) & 1) ? 1 : 5), \
+    (((M) & 1) ? 4 : 2), \
+    (((M) & 1) ? 5 : 3) );})
 
 /* SIMD load ops (unaligned) */
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
