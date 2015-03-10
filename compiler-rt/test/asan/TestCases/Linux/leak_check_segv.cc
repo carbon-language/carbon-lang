@@ -1,6 +1,6 @@
 // Test that SIGSEGV during leak checking does not crash the process.
 // RUN: %clangxx_asan -O1 %s -o %t && LSAN_OPTIONS="verbosity=1" not %run %t 2>&1
-// REQUIRES: asan-64-bits
+// REQUIRES: leak-detection
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
