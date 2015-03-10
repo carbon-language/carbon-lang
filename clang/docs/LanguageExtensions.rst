@@ -935,6 +935,14 @@ C11 ``_Thread_local``
 Use ``__has_feature(c_thread_local)`` or ``__has_extension(c_thread_local)``
 to determine if support for ``_Thread_local`` variables is enabled.
 
+Modules
+-------
+
+Use ``__has_feature(modules)`` to determine if Modules have been enabled.
+For example, compiling code with ``-fmodules`` enables the use of Modules.
+
+More information could be found `here <http://clang.llvm.org/docs/Modules.html>`_.
+
 Checks for Type Trait Primitives
 ================================
 
