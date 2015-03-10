@@ -20,13 +20,21 @@
 				<div class="postcontent">
 
 
-                                  <p>The lldb coding conventions for the most part follow those used in llvm.  For instance the 
-                                    importance of comments, particularly for defining classes and methods, the restrictions on
-                                    features of C++ to use, and the generally excellent advice about using C++ features
-                                    properly should all be followed when writing code for lldb.  However, lldb does differ 
-                                    from the llvm coding conventions in several ways.  This document outlines the most important ones.
+                                  <p>The LLDB coding conventions differ in a few important respects from LLVM.</p>
+                                  
+                                  <p>
+                                    Note that <a href="http://clang.llvm.org/docs/ClangFormat.html">clang-format</a> will deal with
+                                    most of this for you, as such is suggested to run on patches before uploading.  Note however that
+                                    clang-format is not smart enough to detect instances of humans intentionally trying to line variables
+                                    up on a particular column boundary, and it will reformat them to remove this "extraneous" whitespace.
+                                    While this is usually the correct behavior, LLDB does have many uses of manually aligned types and
+                                    fields, so please be aware of this behavior of clang-format when editing this type of code.
+                                  </p>
+                                  <p>
+                                    <b>Important</b>: Where not explicitly outlined below, assume that the
+                                    <a href="http://llvm.org/docs/CodingStandards.html">LLVM Coding Conventions</a> are to be followed.
+                                  </p>
 
-                                    
                                       <h3>Source code width:</h3>
                                       <p>lldb does not follow the 80 character line restriction llvm imposes.  In our 
                                         experience, trying to fit C++ code into an 80 character line results in code that
@@ -37,14 +45,16 @@
                                         to make them better fit in 80 characters.  In our opinion choosing good descriptive 
                                         names is much more important than fitting in 80 characters.
                                         
-                                      <p>In lldb, we don't have a hard character limit, though we try to keep code statements under
-                                        120 characters because it gets awkward to scan longer lines even on a fairly big monitor,
-                                        and we've found at that length you seldom have to make code look ugly to get it to wrap.
+                                      <p>In lldb the limit for code lines is 120 characters because it gets awkward to scan
+                                         longer lines even on a fairly big monitor, and we've found at that length you seldom
+                                         have to make code look ugly to get it to wrap.
                                         
                                       <p>However you will see some instances of longer lines. The most common occurrence is in
                                         the options tables for the CommandInterpreter, which contain the help strings as well as 
                                         a bunch of important but hard to remember fields.  These tables are much easier to read if
                                         all the fields line up vertically, and don't have help text interleaved in between the lines.
+                                        This is another thing to keep in mind when running clang-format, as it will always wrap at
+                                        120, so you will need to tweak its output when running against intentionally too-long lines.
                                         
                                       <h3>Indentation:</h3>
                                       <p>lldb uses 4 character indentation.  We find this makes the code structure much easier to
