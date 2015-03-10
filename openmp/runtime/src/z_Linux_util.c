@@ -437,6 +437,40 @@ __kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
         if ( old_mask != NULL ) {
             status = __kmp_get_system_affinity( old_mask, TRUE );
             int error = errno;
+kmp_int8
+__kmp_test_then_or8( volatile kmp_int8 *p, kmp_int8 d )
+{
+    kmp_int8 old_value, new_value;
+
+    old_value = TCR_1( *p );
+    new_value = old_value | d;
+
+    while ( ! KMP_COMPARE_AND_STORE_REL8 ( p, old_value, new_value ) )
+    {
+        KMP_CPU_PAUSE();
+        old_value = TCR_1( *p );
+        new_value = old_value | d;
+    }
+    return old_value;
+}
+
+kmp_int8
+__kmp_test_then_and8( volatile kmp_int8 *p, kmp_int8 d )
+{
+    kmp_int8 old_value, new_value;
+
+    old_value = TCR_1( *p );
+    new_value = old_value & d;
+
+    while ( ! KMP_COMPARE_AND_STORE_REL8 ( p, old_value, new_value ) )
+    {
+        KMP_CPU_PAUSE();
+        old_value = TCR_1( *p );
+        new_value = old_value & d;
+    }
+    return old_value;
+}
+
             if ( status != 0 ) {
                 __kmp_msg(
                     kmp_ms_fatal,
@@ -471,6 +505,23 @@ __kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
 /* ------------------------------------------------------------------------ */
 
 #if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && !KMP_OS_CNK
+
+kmp_int8
+__kmp_test_then_add8( volatile kmp_int8 *p, kmp_int8 d )
+{
+    kmp_int8 old_value, new_value;
+
+    old_value = TCR_1( *p );
+    new_value = old_value + d;
+
+    while ( ! KMP_COMPARE_AND_STORE_REL8 ( p, old_value, new_value ) )
+    {
+        KMP_CPU_PAUSE();
+        old_value = TCR_1( *p );
+        new_value = old_value + d;
+    }
+    return old_value;
+}
 
 int
 __kmp_futex_determine_capable()

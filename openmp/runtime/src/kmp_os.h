@@ -458,6 +458,9 @@ enum kmp_mem_fence_type {
 # define KMP_TEST_THEN_DEC_ACQ32(p)             InterlockedExchangeAdd( (volatile long *)(p), -1 )
 # define KMP_TEST_THEN_ADD32(p, v)              InterlockedExchangeAdd( (volatile long *)(p), (v) )
 
+extern kmp_int8 __kmp_test_then_add8( volatile kmp_int8 *p, kmp_int8 v );
+extern kmp_int8 __kmp_test_then_or8( volatile kmp_int8 *p, kmp_int8 v );
+extern kmp_int8 __kmp_test_then_and8( volatile kmp_int8 *p, kmp_int8 v );
 # define KMP_COMPARE_AND_STORE_RET32(p, cv, sv) InterlockedCompareExchange( (volatile long *)(p),(long)(sv),(long)(cv) )
 
 # define KMP_XCHG_FIXED32(p, v)                 InterlockedExchange( (volatile long *)(p), (long)(v) )
@@ -494,8 +497,11 @@ extern kmp_int32 __kmp_xchg_fixed32( volatile kmp_int32 *p, kmp_int32 v );
 extern kmp_int64 __kmp_xchg_fixed64( volatile kmp_int64 *p, kmp_int64 v );
 extern kmp_real32 __kmp_xchg_real32( volatile kmp_real32 *p, kmp_real32 v );
 extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
+# define KMP_TEST_THEN_ADD8(p, v)              __kmp_test_then_add8( (p), (v) )
 
 //# define KMP_TEST_THEN_INC32(p)                 __kmp_test_then_add32( (p), 1 )
+# define KMP_TEST_THEN_OR8(p, v)               __kmp_test_then_or8( (p), (v) )
+# define KMP_TEST_THEN_AND8(p, v)              __kmp_test_then_and8( (p), (v) )
 //# define KMP_TEST_THEN_INC_ACQ32(p)             __kmp_test_then_add32( (p), 1 )
 # define KMP_TEST_THEN_INC64(p)                 __kmp_test_then_add64( (p), 1LL )
 # define KMP_TEST_THEN_INC_ACQ64(p)             __kmp_test_then_add64( (p), 1LL )
@@ -544,9 +550,12 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 
 
 #elif (KMP_ASM_INTRINS && KMP_OS_UNIX) || !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
+# define KMP_TEST_THEN_ADD8(p, v)               __sync_fetch_and_add( (kmp_int8 *)(p), (v) )
 
 /* cast p to correct type so that proper intrinsic will be used */
 # define KMP_TEST_THEN_INC32(p)                 __sync_fetch_and_add( (kmp_int32 *)(p), 1 )
+# define KMP_TEST_THEN_OR8(p, v)                __sync_fetch_and_or( (kmp_int8 *)(p), (v) )
+# define KMP_TEST_THEN_AND8(p, v)               __sync_fetch_and_and( (kmp_int8 *)(p), (v) )
 # define KMP_TEST_THEN_INC_ACQ32(p)             __sync_fetch_and_add( (kmp_int32 *)(p), 1 )
 # define KMP_TEST_THEN_INC64(p)                 __sync_fetch_and_add( (kmp_int64 *)(p), 1LL )
 # define KMP_TEST_THEN_INC_ACQ64(p)             __sync_fetch_and_add( (kmp_int64 *)(p), 1LL )
@@ -586,6 +595,9 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 #define KMP_XCHG_FIXED32(p, v)                  __sync_lock_test_and_set( (volatile kmp_uint32 *)(p), (kmp_uint32)(v) )
 #define KMP_XCHG_FIXED64(p, v)                  __sync_lock_test_and_set( (volatile kmp_uint64 *)(p), (kmp_uint64)(v) )
 
+extern kmp_int8 __kmp_test_then_add8( volatile kmp_int8 *p, kmp_int8 v );
+extern kmp_int8 __kmp_test_then_or8( volatile kmp_int8 *p, kmp_int8 v );
+extern kmp_int8 __kmp_test_then_and8( volatile kmp_int8 *p, kmp_int8 v );
 inline kmp_real32 KMP_XCHG_REAL32( volatile kmp_real32 *p, kmp_real32 v)
 {
     kmp_int32 tmp = __sync_lock_test_and_set( (kmp_int32*)p, *(kmp_int32*)&v);
@@ -621,9 +633,12 @@ extern kmp_int16 __kmp_xchg_fixed16( volatile kmp_int16 *p, kmp_int16 v );
 extern kmp_int32 __kmp_xchg_fixed32( volatile kmp_int32 *p, kmp_int32 v );
 extern kmp_int64 __kmp_xchg_fixed64( volatile kmp_int64 *p, kmp_int64 v );
 extern kmp_real32 __kmp_xchg_real32( volatile kmp_real32 *p, kmp_real32 v );
+# define KMP_TEST_THEN_ADD8(p, v)               __kmp_test_then_add8( (p), (v) )
 extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 
 # define KMP_TEST_THEN_INC32(p)                 __kmp_test_then_add32( (p), 1 )
+# define KMP_TEST_THEN_OR8(p, v)                __kmp_test_then_or8( (p), (v) )
+# define KMP_TEST_THEN_AND8(p, v)               __kmp_test_then_and8( (p), (v) )
 # define KMP_TEST_THEN_INC_ACQ32(p)             __kmp_test_then_add32( (p), 1 )
 # define KMP_TEST_THEN_INC64(p)                 __kmp_test_then_add64( (p), 1LL )
 # define KMP_TEST_THEN_INC_ACQ64(p)             __kmp_test_then_add64( (p), 1LL )
@@ -713,6 +728,8 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 # define KMP_LD_ACQ64(A)        ( *(A) )
 #endif
 
+#define TCR_1(a)            (a)
+#define TCW_1(a,b)          (a) = (b)
 /* ------------------------------------------------------------------------ */
 //
 // FIXME - maybe this should this be
