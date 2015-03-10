@@ -20,10 +20,12 @@
 //--
 
 // Third party headers:
+#include "lldb/API/SBAddress.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBCommandReturnObject.h"
@@ -150,6 +152,11 @@ CMICmnLLDBDebuggerHandleEvents::HandleEvent(const lldb::SBEvent &vEvent, bool &v
     {
         vrbHandledEvent = true;
         bOk = HandleEventSBThread(vEvent);
+    }
+    else if (lldb::SBTarget::EventIsTargetEvent(vEvent))
+    {
+        vrbHandledEvent = true;
+        bOk = HandleEventSBTarget(vEvent);
     }
 
     return bOk;
@@ -565,6 +572,168 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBThreadBitStackChanged(const lldb::S
     lldb::SBStream streamOut;
     const bool bOk = thread.GetStatus(streamOut);
     return bOk && TextToStdout(streamOut.GetData());
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Handle a LLDB SBTarget event.
+// Type:    Method.
+// Args:    vEvent  - (R) An LLDB broadcast event.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebuggerHandleEvents::HandleEventSBTarget(const lldb::SBEvent &vEvent)
+{
+    if (!ChkForStateChanges())
+        return MIstatus::failure;
+
+    bool bOk = MIstatus::success;
+    const MIchar *pEventType = "";
+    const MIuint nEventType = vEvent.GetType();
+    switch (nEventType)
+    {
+        case lldb::SBTarget::eBroadcastBitBreakpointChanged:
+            pEventType = "eBroadcastBitBreakpointChanged";
+            break;
+        case lldb::SBTarget::eBroadcastBitModulesLoaded:
+            pEventType = "eBroadcastBitModulesLoaded";
+            bOk = HandleTargetEventBroadcastBitModulesLoaded(vEvent);
+            break;
+        case lldb::SBTarget::eBroadcastBitModulesUnloaded:
+            pEventType = "eBroadcastBitModulesUnloaded";
+            bOk = HandleTargetEventBroadcastBitModulesUnloaded(vEvent);
+            break;
+        case lldb::SBTarget::eBroadcastBitWatchpointChanged:
+            pEventType = "eBroadcastBitWatchpointChanged";
+            break;
+        case lldb::SBTarget::eBroadcastBitSymbolsLoaded:
+            pEventType = "eBroadcastBitSymbolsLoaded";
+            break;
+        default:
+        {
+            const CMIUtilString msg(CMIUtilString::Format(MIRSRC(IDS_LLDBOUTOFBAND_ERR_UNKNOWN_EVENT), "SBTarget", (MIuint)nEventType));
+            SetErrorDescription(msg);
+            return MIstatus::failure;
+        }
+    }
+    m_pLog->WriteLog(CMIUtilString::Format("##### An SBTarget event occurred: %s", pEventType));
+
+    return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Print to stdout "=shlibs-added,shlib-info=[key=\"value\"...]"
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebuggerHandleEvents::HandleTargetEventBroadcastBitModulesLoaded(const lldb::SBEvent &vEvent)
+{
+    static MIuint s_nModulesLoadedNumber(0);
+    const MIuint nSize(lldb::SBTarget::GetNumModulesFromEvent(vEvent));
+    bool bOk = MIstatus::success;
+    for (MIuint nIndex(0); bOk && (nIndex < nSize); ++nIndex)
+    {
+        const lldb::SBModule sbModule = lldb::SBTarget::GetModuleAtIndexFromEvent(nIndex, vEvent);
+        CMICmnMIValueList miValueList(true);
+        bOk = MiHelpGetModuleInfo(sbModule, ++s_nModulesLoadedNumber, miValueList);
+        const CMICmnMIValueResult miValueResult("shlib-info", miValueList);
+        const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesLoaded, miValueResult);
+        bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    }
+
+    return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Print to stdout "=shlibs-removed,shlib-info=[key=\"value\"...]"
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebuggerHandleEvents::HandleTargetEventBroadcastBitModulesUnloaded(const lldb::SBEvent &vEvent)
+{
+    static MIuint s_nModulesUnloadedNumber(0);
+    const MIuint nSize(lldb::SBTarget::GetNumModulesFromEvent(vEvent));
+    bool bOk = MIstatus::success;
+    for (MIuint nIndex(0); bOk && (nIndex < nSize); ++nIndex)
+    {
+        const lldb::SBModule sbModule = lldb::SBTarget::GetModuleAtIndexFromEvent(nIndex, vEvent);
+        CMICmnMIValueList miValueList(true);
+        bOk = MiHelpGetModuleInfo(sbModule, ++s_nModulesUnloadedNumber, miValueList);
+        const CMICmnMIValueResult miValueResult("shlib-info", miValueList);
+        const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, miValueResult);
+        bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    }
+
+    return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Build module information for shlib-info "[num=\"%ld\",name=\"%s\",dyld-addr=\"%#lx\",reason=\"dyld\",path=\"%s\",loaded_addr=\"%#lx\",dsym-objpath=\"%s\"]"
+// Type:    Method.
+// Args:    vwrMiValueList    - (W) MI value list object.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebuggerHandleEvents::MiHelpGetModuleInfo(const lldb::SBModule &vModule, const MIuint nModuleNum,
+                                                    CMICmnMIValueList &vwrMiValueList)
+{
+    bool bOk = MIstatus::success;
+
+    // Build "num" field
+    const CMIUtilString strNum(CMIUtilString::Format("%ld", nModuleNum));
+    const CMICmnMIValueConst miValueConst(strNum);
+    const CMICmnMIValueResult miValueResult("num", miValueConst);
+    bOk = bOk && vwrMiValueList.Add(miValueResult);
+    // Build "name" field
+    const CMICmnMIValueConst miValueConst2(vModule.GetPlatformFileSpec().GetFilename());
+    const CMICmnMIValueResult miValueResult2("name", miValueConst2);
+    bOk = bOk && vwrMiValueList.Add(miValueResult2);
+    // Build "dyld-addr" field
+    const lldb::SBAddress sbAddress(vModule.GetObjectFileHeaderAddress());
+    const CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    const lldb::addr_t nLoadAddress(sbAddress.GetLoadAddress(rSessionInfo.GetTarget()));
+    const CMIUtilString strDyldAddr(CMIUtilString::Format("%#lx", nLoadAddress));
+    const CMICmnMIValueConst miValueConst3(nLoadAddress != LLDB_INVALID_ADDRESS ? strDyldAddr : "-");
+    const CMICmnMIValueResult miValueResult3("dyld-addr", miValueConst3);
+    bOk = bOk && vwrMiValueList.Add(miValueResult3);
+    // Build "reason" field
+    const CMICmnMIValueConst miValueConst4("dyld");
+    const CMICmnMIValueResult miValueResult4("reason", miValueConst4);
+    bOk = bOk && vwrMiValueList.Add(miValueResult4);
+    // Build "path" field
+    char path[PATH_MAX];
+    vModule.GetPlatformFileSpec().GetPath(path, sizeof(path));
+    const CMIUtilString strPlatformPath(path);
+    const CMICmnMIValueConst miValueConst5(strPlatformPath);
+    const CMICmnMIValueResult miValueResult5("path", miValueConst5);
+    bOk = bOk && vwrMiValueList.Add(miValueResult5);
+    // Build "loaded_addr" field
+    const CMIUtilString strLoadedAddr(CMIUtilString::Format("%#lx", nLoadAddress));
+    const CMICmnMIValueConst miValueConst6(nLoadAddress != LLDB_INVALID_ADDRESS ? strDyldAddr : "-");
+    const CMICmnMIValueResult miValueResult6("loaded_addr", miValueConst6);
+    bOk = bOk && vwrMiValueList.Add(miValueResult6);
+    // Build "dsym-objpath" field
+    vModule.GetSymbolFileSpec().GetPath(path, sizeof(path));
+    const CMIUtilString strSymbolFilePath(path);
+    if (!CMIUtilString::Compare(strPlatformPath, strSymbolFilePath))
+    {
+        const CMICmnMIValueConst miValueConst7(strSymbolFilePath);
+        const CMICmnMIValueResult miValueResult7("dsym-objpath", miValueConst7);
+        bOk = bOk && vwrMiValueList.Add(miValueResult7);
+    }
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------

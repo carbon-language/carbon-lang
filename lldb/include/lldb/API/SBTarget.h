@@ -60,7 +60,19 @@ public:
 
     bool
     IsValid() const;
+
+    static bool
+    EventIsTargetEvent (const lldb::SBEvent &event);
+
+    static lldb::SBTarget
+    GetTargetFromEvent (const lldb::SBEvent &event);
     
+    static uint32_t
+    GetNumModulesFromEvent (const lldb::SBEvent &event);
+
+    static lldb::SBModule
+    GetModuleAtIndexFromEvent (const uint32_t idx, const lldb::SBEvent &event);
+
     static const char *
     GetBroadcasterClassName ();
 

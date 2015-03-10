@@ -494,6 +494,57 @@ public:
     {
         return GetStaticBroadcasterClass();
     }
+
+    // This event data class is for use by the TargetList to broadcast new target notifications.
+    class TargetEventData : public EventData
+    {
+    public:
+        TargetEventData (const lldb::TargetSP &target_sp);
+
+        TargetEventData (const lldb::TargetSP &target_sp, const ModuleList &module_list);
+
+        virtual
+        ~TargetEventData();
+
+        static const ConstString &
+        GetFlavorString ();
+
+        virtual const ConstString &
+        GetFlavor () const
+        {
+            return TargetEventData::GetFlavorString ();
+        }
+
+        virtual void
+        Dump (Stream *s) const;
+
+        static const TargetEventData *
+        GetEventDataFromEvent (const Event *event_ptr);
+
+        static lldb::TargetSP
+        GetTargetFromEvent (const Event *event_ptr);
+
+        static ModuleList
+        GetModuleListFromEvent (const Event *event_ptr);
+
+        const lldb::TargetSP &
+        GetTarget() const
+        {
+            return m_target_sp;
+        }
+
+        const ModuleList &
+        GetModuleList() const
+        {
+            return m_module_list;
+        }
+
+    private:
+        lldb::TargetSP m_target_sp;
+        ModuleList     m_module_list;
+
+        DISALLOW_COPY_AND_ASSIGN (TargetEventData);
+    };
     
     static void
     SettingsInitialize ();

@@ -59,76 +59,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-namespace {
-// This event data class is for use by the TargetList to broadcast new target notifications.
-class TargetEventData : public EventData
-{
-public:
-    TargetEventData(const lldb::TargetSP &new_target_sp)
-        : EventData()
-        , m_target_sp(new_target_sp)
-    {
-    }
-        
-    virtual ~TargetEventData()
-    {
-    }
-
-    static const ConstString &
-    GetFlavorString()
-    {
-        static ConstString g_flavor("Target::TargetEventData");
-        return g_flavor;
-    }
-
-    virtual const ConstString &
-    GetFlavor() const
-    {
-        return GetFlavorString();
-    }
-
-    lldb::TargetSP &
-    GetTarget()
-    {
-        return m_target_sp;
-    }
-
-    virtual void
-    Dump(Stream *s) const
-    {
-    }
-
-    static const lldb::TargetSP
-    GetTargetFromEvent(const lldb::EventSP &event_sp)
-    {
-        TargetSP target_sp;
-
-        const TargetEventData *data = GetEventDataFromEvent (event_sp.get());
-        if (data)
-            target_sp = data->m_target_sp;
-
-        return target_sp;
-    }
-        
-    static const TargetEventData *
-    GetEventDataFromEvent(const Event *event_ptr)
-    {
-        if (event_ptr)
-        {
-            const EventData *event_data = event_ptr->GetData();
-            if (event_data && event_data->GetFlavor() == TargetEventData::GetFlavorString())
-                return static_cast <const TargetEventData *> (event_ptr->GetData());
-        }
-        return nullptr;
-    }
-
-private:
-    lldb::TargetSP m_target_sp;
-
-    DISALLOW_COPY_AND_ASSIGN (TargetEventData);
-};
-}
-
 ConstString &
 Target::GetStaticBroadcasterClass ()
 {
@@ -1307,8 +1237,7 @@ Target::ModulesDidLoad (ModuleList &module_list)
         {
             m_process_sp->ModulesDidLoad (module_list);
         }
-        // TODO: make event data that packages up the module_list
-        BroadcastEvent (eBroadcastBitModulesLoaded, NULL);
+        BroadcastEvent (eBroadcastBitModulesLoaded, new TargetEventData (this->shared_from_this(), module_list));
     }
 }
 
@@ -1328,7 +1257,7 @@ Target::SymbolsDidLoad (ModuleList &module_list)
         }
         
         m_breakpoint_list.UpdateBreakpoints (module_list, true, false);
-        BroadcastEvent(eBroadcastBitSymbolsLoaded, NULL);
+        BroadcastEvent (eBroadcastBitSymbolsLoaded, new TargetEventData (this->shared_from_this(), module_list));
     }
 }
 
@@ -1339,8 +1268,7 @@ Target::ModulesDidUnload (ModuleList &module_list, bool delete_locations)
     {
         UnloadModuleSections (module_list);
         m_breakpoint_list.UpdateBreakpoints (module_list, false, delete_locations);
-        // TODO: make event data that packages up the module_list
-        BroadcastEvent (eBroadcastBitModulesUnloaded, NULL);
+        BroadcastEvent (eBroadcastBitModulesUnloaded, new TargetEventData (this->shared_from_this(), module_list));
     }
 }
 
@@ -3607,4 +3535,70 @@ TargetProperties::DisableSTDIOValueChangedCallback(void *target_property_ptr, Op
         this_->m_launch_info.GetFlags().Set(lldb::eLaunchFlagDisableSTDIO);
     else
         this_->m_launch_info.GetFlags().Clear(lldb::eLaunchFlagDisableSTDIO);
+}
+
+//----------------------------------------------------------------------
+// Target::TargetEventData
+//----------------------------------------------------------------------
+
+Target::TargetEventData::TargetEventData (const lldb::TargetSP &target_sp) :
+    EventData (),
+    m_target_sp (target_sp),
+    m_module_list ()
+{
+}
+
+Target::TargetEventData::TargetEventData (const lldb::TargetSP &target_sp, const ModuleList &module_list) :
+    EventData (),
+    m_target_sp (target_sp),
+    m_module_list (module_list)
+{
+}
+
+Target::TargetEventData::~TargetEventData()
+{
+}
+
+const ConstString &
+Target::TargetEventData::GetFlavorString ()
+{
+    static ConstString g_flavor ("Target::TargetEventData");
+    return g_flavor;
+}
+
+void
+Target::TargetEventData::Dump (Stream *s) const
+{
+}
+
+const Target::TargetEventData *
+Target::TargetEventData::GetEventDataFromEvent (const Event *event_ptr)
+{
+    if (event_ptr)
+    {
+        const EventData *event_data = event_ptr->GetData();
+        if (event_data && event_data->GetFlavor() == TargetEventData::GetFlavorString())
+            return static_cast <const TargetEventData *> (event_ptr->GetData());
+    }
+    return NULL;
+}
+
+TargetSP
+Target::TargetEventData::GetTargetFromEvent (const Event *event_ptr)
+{
+    TargetSP target_sp;
+    const TargetEventData *event_data = GetEventDataFromEvent (event_ptr);
+    if (event_data)
+        target_sp = event_data->m_target_sp;
+    return target_sp;
+}
+
+ModuleList
+Target::TargetEventData::GetModuleListFromEvent (const Event *event_ptr)
+{
+    ModuleList module_list;
+    const TargetEventData *event_data = GetEventDataFromEvent (event_ptr);
+    if (event_data)
+        module_list = event_data->m_module_list;
+    return module_list;
 }

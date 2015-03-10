@@ -78,6 +78,7 @@ protected:
     friend class SBBreakpoint;
     friend class SBDebugger;
     friend class SBProcess;
+    friend class SBTarget;
     friend class SBThread;
     friend class SBWatchpoint;
 

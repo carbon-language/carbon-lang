@@ -685,3 +685,30 @@ SBModule::GetVersion (uint32_t *versions, uint32_t num_versions)
     }
 }
 
+lldb::SBFileSpec
+SBModule::GetSymbolFileSpec() const
+{
+    lldb::SBFileSpec sb_file_spec;
+    ModuleSP module_sp(GetSP());
+    if (module_sp)
+    {
+        SymbolVendor *symbol_vendor_ptr = module_sp->GetSymbolVendor();
+        if (symbol_vendor_ptr)
+            sb_file_spec.SetFileSpec(symbol_vendor_ptr->GetMainFileSpec());
+    }
+    return sb_file_spec;
+}
+
+lldb::SBAddress
+SBModule::GetObjectFileHeaderAddress() const
+{
+    lldb::SBAddress sb_addr;
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+    {
+        ObjectFile *objfile_ptr = module_sp->GetObjectFile();
+        if (objfile_ptr)
+            sb_addr.ref() = objfile_ptr->GetHeaderAddress();
+    }
+    return sb_addr;
+}

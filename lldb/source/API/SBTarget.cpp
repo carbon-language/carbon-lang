@@ -13,8 +13,9 @@
 
 #include "lldb/lldb-public.h"
 
-#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBBreakpoint.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBEvent.h"
 #include "lldb/API/SBExpressionOptions.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBListener.h"
@@ -127,6 +128,32 @@ SBTarget::operator = (const SBTarget& rhs)
 //----------------------------------------------------------------------
 SBTarget::~SBTarget()
 {
+}
+
+bool
+SBTarget::EventIsTargetEvent (const SBEvent &event)
+{
+    return Target::TargetEventData::GetEventDataFromEvent(event.get()) != NULL;
+}
+
+SBTarget
+SBTarget::GetTargetFromEvent (const SBEvent &event)
+{
+    return Target::TargetEventData::GetTargetFromEvent (event.get());
+}
+
+uint32_t
+SBTarget::GetNumModulesFromEvent (const SBEvent &event)
+{
+    const ModuleList module_list = Target::TargetEventData::GetModuleListFromEvent (event.get());
+    return module_list.GetSize();
+}
+
+SBModule
+SBTarget::GetModuleAtIndexFromEvent (const uint32_t idx, const SBEvent &event)
+{
+    const ModuleList module_list = Target::TargetEventData::GetModuleListFromEvent (event.get());
+    return SBModule(module_list.GetModuleAtIndex(idx));
 }
 
 const char *

@@ -293,7 +293,9 @@ CMICmnLLDBDebugger::InitSBListener(void)
     }
 
     const CMIUtilString strDbgId("CMICmnLLDBDebugger1");
-    MIuint eventMask = lldb::SBTarget::eBroadcastBitBreakpointChanged;
+    MIuint eventMask = lldb::SBTarget::eBroadcastBitBreakpointChanged | lldb::SBTarget::eBroadcastBitModulesLoaded |
+                       lldb::SBTarget::eBroadcastBitModulesUnloaded | lldb::SBTarget::eBroadcastBitWatchpointChanged |
+                       lldb::SBTarget::eBroadcastBitSymbolsLoaded;
     bool bOk = RegisterForEvent(strDbgId, CMIUtilString(lldb::SBTarget::GetBroadcasterClassName()), eventMask);
 
     eventMask = lldb::SBThread::eBroadcastBitStackChanged;
