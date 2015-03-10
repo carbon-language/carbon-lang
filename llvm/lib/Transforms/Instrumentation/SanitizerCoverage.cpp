@@ -72,7 +72,7 @@ static cl::opt<unsigned> ClCoverageBlockThreshold(
     "sanitizer-coverage-block-threshold",
     cl::desc("Use a callback with a guard check inside it if there are"
              " more than this number of blocks."),
-    cl::Hidden, cl::init(1000));
+    cl::Hidden, cl::init(500));
 
 static cl::opt<bool>
     ClExperimentalTracing("sanitizer-coverage-experimental-tracing",
