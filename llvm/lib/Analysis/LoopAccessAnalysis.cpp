@@ -1161,12 +1161,15 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
     }
   }
 
-  if (!CanVecMem)
+  if (CanVecMem)
+    DEBUG(dbgs() << "LAA: No unsafe dependent memory operations in loop.  We"
+                 << (NeedRTCheck ? "" : " don't")
+                 << " need a runtime memory check.\n");
+  else {
     emitAnalysis(LoopAccessReport() <<
                  "unsafe dependent memory operations in loop");
-
-  DEBUG(dbgs() << "LAA: We" << (NeedRTCheck ? "" : " don't") <<
-        " need a runtime memory check.\n");
+    DEBUG(dbgs() << "LAA: unsafe dependent memory operations in loop\n");
+  }
 }
 
 bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB, Loop *TheLoop,
