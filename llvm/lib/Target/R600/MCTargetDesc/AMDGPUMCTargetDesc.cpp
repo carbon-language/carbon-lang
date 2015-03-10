@@ -17,6 +17,7 @@
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "SIDefines.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"

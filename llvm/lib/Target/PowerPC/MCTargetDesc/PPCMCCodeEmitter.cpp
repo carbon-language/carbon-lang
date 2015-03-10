@@ -14,6 +14,7 @@
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -39,10 +40,10 @@ class PPCMCCodeEmitter : public MCCodeEmitter {
   bool IsLittleEndian;
 
 public:
-  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx, bool isLittle)
-    : MCII(mcii), CTX(ctx), IsLittleEndian(isLittle) {
-  }
-  
+  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx)
+      : MCII(mcii), CTX(ctx),
+        IsLittleEndian(ctx.getAsmInfo()->isLittleEndian()) {}
+
   ~PPCMCCodeEmitter() {}
 
   unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
@@ -158,14 +159,11 @@ public:
 };
   
 } // end anonymous namespace
-  
+
 MCCodeEmitter *llvm::createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                             const MCRegisterInfo &MRI,
-                                            const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
-  Triple TT(STI.getTargetTriple());
-  bool IsLittleEndian = TT.getArch() == Triple::ppc64le;
-  return new PPCMCCodeEmitter(MCII, Ctx, IsLittleEndian);
+  return new PPCMCCodeEmitter(MCII, Ctx);
 }
 
 unsigned PPCMCCodeEmitter::

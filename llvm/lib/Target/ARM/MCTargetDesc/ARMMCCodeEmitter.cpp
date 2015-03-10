@@ -441,14 +441,12 @@ public:
 
 MCCodeEmitter *llvm::createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
                                               const MCRegisterInfo &MRI,
-                                              const MCSubtargetInfo &STI,
                                               MCContext &Ctx) {
   return new ARMMCCodeEmitter(MCII, Ctx, true);
 }
 
 MCCodeEmitter *llvm::createARMBEMCCodeEmitter(const MCInstrInfo &MCII,
                                               const MCRegisterInfo &MRI,
-                                              const MCSubtargetInfo &STI,
                                               MCContext &Ctx) {
   return new ARMMCCodeEmitter(MCII, Ctx, false);
 }

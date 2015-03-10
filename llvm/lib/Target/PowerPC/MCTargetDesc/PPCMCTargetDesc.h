@@ -34,10 +34,9 @@ class raw_ostream;
 extern Target ThePPC32Target;
 extern Target ThePPC64Target;
 extern Target ThePPC64LETarget;
-  
+
 MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
-                                      const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
 MCAsmBackend *createPPCAsmBackend(const Target &T, const MCRegisterInfo &MRI,

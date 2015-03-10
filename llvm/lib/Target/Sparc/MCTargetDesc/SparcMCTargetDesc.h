@@ -33,7 +33,6 @@ extern Target TheSparcV9Target;
 
 MCCodeEmitter *createSparcMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
-                                        const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
 MCAsmBackend *createSparcAsmBackend(const Target &T,
                                     const MCRegisterInfo &MRI,

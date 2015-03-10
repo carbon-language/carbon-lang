@@ -37,9 +37,8 @@ extern Target TheAArch64beTarget;
 extern Target TheARM64Target;
 
 MCCodeEmitter *createAArch64MCCodeEmitter(const MCInstrInfo &MCII,
-                                        const MCRegisterInfo &MRI,
-                                        const MCSubtargetInfo &STI,
-                                        MCContext &Ctx);
+                                          const MCRegisterInfo &MRI,
+                                          MCContext &Ctx);
 MCAsmBackend *createAArch64leAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI, StringRef TT,
                                         StringRef CPU);

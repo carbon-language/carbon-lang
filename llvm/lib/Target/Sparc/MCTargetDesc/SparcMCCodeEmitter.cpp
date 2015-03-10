@@ -74,7 +74,6 @@ public:
 
 MCCodeEmitter *llvm::createSparcMCCodeEmitter(const MCInstrInfo &MCII,
                                               const MCRegisterInfo &MRI,
-                                              const MCSubtargetInfo &STI,
                                               MCContext &Ctx) {
   return new SparcMCCodeEmitter(Ctx);
 }

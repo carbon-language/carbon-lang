@@ -78,7 +78,6 @@ namespace X86_MC {
 
 MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
-                                      const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
 MCAsmBackend *createX86_32AsmBackend(const Target &T, const MCRegisterInfo &MRI,

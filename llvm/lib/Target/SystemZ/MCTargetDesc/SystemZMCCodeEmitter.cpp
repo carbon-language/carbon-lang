@@ -110,7 +110,6 @@ private:
 
 MCCodeEmitter *llvm::createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
                                                 const MCRegisterInfo &MRI,
-                                                const MCSubtargetInfo &MCSTI,
                                                 MCContext &Ctx) {
   return new SystemZMCCodeEmitter(MCII, Ctx);
 }

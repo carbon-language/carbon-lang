@@ -72,7 +72,6 @@ public:
 
 MCCodeEmitter *llvm::createSIMCCodeEmitter(const MCInstrInfo &MCII,
                                            const MCRegisterInfo &MRI,
-                                           const MCSubtargetInfo &STI,
                                            MCContext &Ctx) {
   return new SIMCCodeEmitter(MCII, MRI, Ctx);
 }

@@ -316,7 +316,7 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
   if (!MSTI)
     return error("no subtarget info for target " + TripleName, Context);
 
-  MCE = TheTarget->createMCCodeEmitter(*MII, *MRI, *MSTI, *MC);
+  MCE = TheTarget->createMCCodeEmitter(*MII, *MRI, *MC);
   if (!MCE)
     return error("no code emitter for target " + TripleName, Context);
 

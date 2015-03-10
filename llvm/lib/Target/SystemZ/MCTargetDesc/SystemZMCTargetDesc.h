@@ -71,7 +71,6 @@ inline unsigned getRegAsGRH32(unsigned Reg) {
 
 MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
                                           const MCRegisterInfo &MRI,
-                                          const MCSubtargetInfo &STI,
                                           MCContext &Ctx);
 
 MCAsmBackend *createSystemZMCAsmBackend(const Target &T,

@@ -35,11 +35,9 @@ extern Target TheMips64elTarget;
 
 MCCodeEmitter *createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
                                          const MCRegisterInfo &MRI,
-                                         const MCSubtargetInfo &STI,
                                          MCContext &Ctx);
 MCCodeEmitter *createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
                                          const MCRegisterInfo &MRI,
-                                         const MCSubtargetInfo &STI,
                                          MCContext &Ctx);
 
 MCAsmBackend *createMipsAsmBackendEB32(const Target &T,

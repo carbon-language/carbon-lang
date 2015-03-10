@@ -125,7 +125,6 @@ namespace llvm {
                                                   const MCSubtargetInfo &STI);
     typedef MCCodeEmitter *(*MCCodeEmitterCtorTy)(const MCInstrInfo &II,
                                                   const MCRegisterInfo &MRI,
-                                                  const MCSubtargetInfo &STI,
                                                   MCContext &Ctx);
     typedef MCStreamer *(*MCObjectStreamerCtorTy)(
         const Target &T, StringRef TT, MCContext &Ctx, MCAsmBackend &TAB,
@@ -406,11 +405,10 @@ namespace llvm {
     /// createMCCodeEmitter - Create a target specific code emitter.
     MCCodeEmitter *createMCCodeEmitter(const MCInstrInfo &II,
                                        const MCRegisterInfo &MRI,
-                                       const MCSubtargetInfo &STI,
                                        MCContext &Ctx) const {
       if (!MCCodeEmitterCtorFn)
         return nullptr;
-      return MCCodeEmitterCtorFn(II, MRI, STI, Ctx);
+      return MCCodeEmitterCtorFn(II, MRI, Ctx);
     }
 
     /// createMCObjectStreamer - Create a target specific MCStreamer.
@@ -1152,10 +1150,9 @@ namespace llvm {
     }
 
   private:
-    static MCCodeEmitter *Allocator(const MCInstrInfo &/*II*/,
-                                    const MCRegisterInfo &/*MRI*/,
-                                    const MCSubtargetInfo &/*STI*/,
-                                    MCContext &/*Ctx*/) {
+    static MCCodeEmitter *Allocator(const MCInstrInfo & /*II*/,
+                                    const MCRegisterInfo & /*MRI*/,
+                                    MCContext & /*Ctx*/) {
       return new MCCodeEmitterImpl();
     }
   };

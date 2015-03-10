@@ -77,8 +77,8 @@ namespace llvm {
   X86AsmPrinter::StackMapShadowTracker::startFunction(MachineFunction &F) {
     MF = &F;
     CodeEmitter.reset(TM.getTarget().createMCCodeEmitter(
-        *MF->getSubtarget().getInstrInfo(), *MF->getSubtarget().getRegisterInfo(),
-        MF->getSubtarget(), MF->getContext()));
+        *MF->getSubtarget().getInstrInfo(),
+        *MF->getSubtarget().getRegisterInfo(), MF->getContext()));
   }
 
   void X86AsmPrinter::StackMapShadowTracker::count(MCInst &Inst,

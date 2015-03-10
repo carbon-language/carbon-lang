@@ -49,9 +49,8 @@ void emitLittleEndian(uint64_t Binary, raw_ostream &OS) {
 }
 
 HexagonMCCodeEmitter::HexagonMCCodeEmitter(MCInstrInfo const &aMII,
-                                           MCSubtargetInfo const &aMST,
                                            MCContext &aMCT)
-    : MST(aMST), MCT(aMCT), MCII (aMII) {}
+    : MCT(aMCT), MCII(aMII) {}
 
 void HexagonMCCodeEmitter::EncodeInstruction(MCInst const &MI, raw_ostream &OS,
                                              SmallVectorImpl<MCFixup> &Fixups,
@@ -75,15 +74,10 @@ HexagonMCCodeEmitter::getMachineOpValue(MCInst const &MI, MCOperand const &MO,
   llvm_unreachable("Only Immediates and Registers implemented right now");
 }
 
-MCSubtargetInfo const &HexagonMCCodeEmitter::getSubtargetInfo() const {
-  return MST;
-}
-
 MCCodeEmitter *llvm::createHexagonMCCodeEmitter(MCInstrInfo const &MII,
                                                 MCRegisterInfo const &MRI,
-                                                MCSubtargetInfo const &MST,
                                                 MCContext &MCT) {
-  return new HexagonMCCodeEmitter(MII, MST, MCT);
+  return new HexagonMCCodeEmitter(MII, MCT);
 }
 
 #include "HexagonGenMCCodeEmitter.inc"

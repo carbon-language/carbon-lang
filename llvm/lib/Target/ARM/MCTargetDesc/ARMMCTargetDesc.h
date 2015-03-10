@@ -56,12 +56,10 @@ MCTargetStreamer *createARMNullTargetStreamer(MCStreamer &S);
 
 MCCodeEmitter *createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
-                                        const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
 
 MCCodeEmitter *createARMBEMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
-                                        const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
 
 MCAsmBackend *createARMAsmBackend(const Target &T, const MCRegisterInfo &MRI,
