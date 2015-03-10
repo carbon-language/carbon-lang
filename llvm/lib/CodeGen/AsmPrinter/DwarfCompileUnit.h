@@ -179,11 +179,6 @@ public:
   void initSection(const MCSection *Section, MCSymbol *SectionSym) {
     DwarfUnit::initSection(Section);
     this->SectionSym = SectionSym;
-
-    // Don't bother labeling the .dwo unit, as its offset isn't used.
-    if (!Skeleton)
-      LabelBegin =
-          Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
   }
 
   unsigned getLength() {
@@ -191,7 +186,7 @@ public:
         getHeaderSize() + UnitDie.getSize();
   }
 
-  void emitHeader(const MCSymbol *ASectionSym) const override;
+  void emitHeader(const MCSymbol *ASectionSym) override;
 
   MCSymbol *getLabelBegin() const {
     assert(Section);

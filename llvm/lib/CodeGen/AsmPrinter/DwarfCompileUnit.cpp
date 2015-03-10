@@ -711,10 +711,13 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
   }
 }
 
-void DwarfCompileUnit::emitHeader(const MCSymbol *ASectionSym) const {
+void DwarfCompileUnit::emitHeader(const MCSymbol *ASectionSym) {
   // Don't bother labeling the .dwo unit, as its offset isn't used.
-  if (!Skeleton)
+  if (!Skeleton) {
+    LabelBegin =
+      Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
     Asm->OutStreamer.EmitLabel(LabelBegin);
+  }
 
   DwarfUnit::emitHeader(ASectionSym);
 }

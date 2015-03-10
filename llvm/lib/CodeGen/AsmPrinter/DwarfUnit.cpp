@@ -1604,7 +1604,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
   return &StaticMemberDIE;
 }
 
-void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) const {
+void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) {
   // Emit size of content not including length itself
   Asm->OutStreamer.AddComment("Length of Unit");
   Asm->EmitInt32(getHeaderSize() + UnitDie.getSize());
@@ -1629,7 +1629,7 @@ void DwarfUnit::initSection(const MCSection *Section) {
   this->Section = Section;
 }
 
-void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {
+void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) {
   DwarfUnit::emitHeader(ASectionSym);
   Asm->OutStreamer.AddComment("Type Signature");
   Asm->OutStreamer.EmitIntValue(TypeSignature, sizeof(TypeSignature));
