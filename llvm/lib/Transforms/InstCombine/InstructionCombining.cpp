@@ -2060,7 +2060,8 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // x86 generates redundant zero-extenstion instructions if the operand is
   // truncated to i8 or i16.
   bool TruncCond = false;
-  if (BitWidth > NewWidth && NewWidth >= DL.getLargestLegalIntTypeSize()) {
+  if (NewWidth > 0 && BitWidth > NewWidth &&
+      NewWidth >= DL.getLargestLegalIntTypeSize()) {
     TruncCond = true;
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
