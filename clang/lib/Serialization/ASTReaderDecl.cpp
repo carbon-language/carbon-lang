@@ -2833,14 +2833,23 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
 
   // If this declaration has an unresolved exception specification but the
   // previous declaration had a resolved one, resolve the exception
-  // specification now.
+  // specification now. If this declaration has a resolved exception
+  // specification but the previous declarations did not, apply our exception
+  // specification to all prior ones now.
   auto *FPT = FD->getType()->getAs<FunctionProtoType>();
   auto *PrevFPT = PrevFD->getType()->getAs<FunctionProtoType>();
-  if (FPT && PrevFPT &&
-      isUnresolvedExceptionSpec(FPT->getExceptionSpecType()) &&
-      !isUnresolvedExceptionSpec(PrevFPT->getExceptionSpecType())) {
-    Reader.Context.adjustExceptionSpec(
-        FD, PrevFPT->getExtProtoInfo().ExceptionSpec);
+  if (FPT && PrevFPT) {
+    bool WasUnresolved = isUnresolvedExceptionSpec(FPT->getExceptionSpecType());
+    bool IsUnresolved = isUnresolvedExceptionSpec(PrevFPT->getExceptionSpecType());
+    if (WasUnresolved && !IsUnresolved) {
+      Reader.Context.adjustExceptionSpec(
+          FD, PrevFPT->getExtProtoInfo().ExceptionSpec);
+    } else if (!WasUnresolved && IsUnresolved) {
+      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+      for (FunctionDecl *PrevFDToUpdate = PrevFD; PrevFDToUpdate;
+           PrevFDToUpdate = PrevFDToUpdate->getPreviousDecl())
+         Reader.Context.adjustExceptionSpec(PrevFDToUpdate, EPI.ExceptionSpec);
+    }
   }
 }
 }
