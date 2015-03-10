@@ -72,8 +72,8 @@ Inliner::Inliner(char &ID, int Threshold, bool InsertLifetime)
                                           InlineLimit : Threshold),
     InsertLifetime(InsertLifetime) {}
 
-/// getAnalysisUsage - For this class, we declare that we require and preserve
-/// the call graph.  If the derived class implements this method, it should
+/// For this class, we declare that we require and preserve the call graph.
+/// If the derived class implements this method, it should
 /// always explicitly call the implementation here.
 void Inliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
@@ -111,12 +111,12 @@ static void AdjustCallerSSPLevel(Function *Caller, Function *Callee) {
     Caller->addFnAttr(Attribute::StackProtect);
 }
 
-/// InlineCallIfPossible - If it is possible to inline the specified call site,
+/// If it is possible to inline the specified call site,
 /// do so and update the CallGraph for this operation.
 ///
 /// This function also does some basic book-keeping to update the IR.  The
 /// InlinedArrayAllocas map keeps track of any allocas that are already
-/// available from other  functions inlined into the caller.  If we are able to
+/// available from other functions inlined into the caller.  If we are able to
 /// inline this call site we attempt to reuse already available allocas or add
 /// any new allocas to the set if not possible.
 static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
@@ -294,8 +294,7 @@ static void emitAnalysis(CallSite CS, const Twine &Msg) {
   emitOptimizationRemarkAnalysis(Ctx, DEBUG_TYPE, *Caller, DLoc, Msg);
 }
 
-/// shouldInline - Return true if the inliner should attempt to inline
-/// at the given CallSite.
+/// Return true if the inliner should attempt to inline at the given CallSite.
 bool Inliner::shouldInline(CallSite CS) {
   InlineCost IC = getInlineCost(CS);
   
@@ -409,7 +408,7 @@ bool Inliner::shouldInline(CallSite CS) {
   return true;
 }
 
-/// InlineHistoryIncludes - Return true if the specified inline history ID
+/// Return true if the specified inline history ID
 /// indicates an inline history that includes the specified function.
 static bool InlineHistoryIncludes(Function *F, int InlineHistoryID,
             const SmallVectorImpl<std::pair<Function*, int> > &InlineHistory) {
@@ -617,14 +616,13 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   return Changed;
 }
 
-// doFinalization - Remove now-dead linkonce functions at the end of
-// processing to avoid breaking the SCC traversal.
+/// Remove now-dead linkonce functions at the end of
+/// processing to avoid breaking the SCC traversal.
 bool Inliner::doFinalization(CallGraph &CG) {
   return removeDeadFunctions(CG);
 }
 
-/// removeDeadFunctions - Remove dead functions that are not included in
-/// DNR (Do Not Remove) list.
+/// Remove dead functions that are not included in DNR (Do Not Remove) list.
 bool Inliner::removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly) {
   SmallVector<CallGraphNode*, 16> FunctionsToRemove;
 
