@@ -168,8 +168,51 @@ TEST(Support, RelativePathIterator) {
   }
 }
 
+TEST(Support, RelativePathDotIterator) {
+  SmallString<64> Path(StringRef(".c/.d/../."));
+  typedef SmallVector<StringRef, 4> PathComponents;
+  PathComponents ExpectedPathComponents;
+  PathComponents ActualPathComponents;
+
+  StringRef(Path).split(ExpectedPathComponents, "/");
+
+  for (path::const_iterator I = path::begin(Path), E = path::end(Path); I != E;
+       ++I) {
+    ActualPathComponents.push_back(*I);
+  }
+
+  ASSERT_EQ(ExpectedPathComponents.size(), ActualPathComponents.size());
+
+  for (size_t i = 0; i <ExpectedPathComponents.size(); ++i) {
+    EXPECT_EQ(ExpectedPathComponents[i].str(), ActualPathComponents[i].str());
+  }
+}
+
 TEST(Support, AbsolutePathIterator) {
   SmallString<64> Path(StringRef("/c/d/e/foo.txt"));
+  typedef SmallVector<StringRef, 4> PathComponents;
+  PathComponents ExpectedPathComponents;
+  PathComponents ActualPathComponents;
+
+  StringRef(Path).split(ExpectedPathComponents, "/");
+
+  // The root path will also be a component when iterating
+  ExpectedPathComponents[0] = "/";
+
+  for (path::const_iterator I = path::begin(Path), E = path::end(Path); I != E;
+       ++I) {
+    ActualPathComponents.push_back(*I);
+  }
+
+  ASSERT_EQ(ExpectedPathComponents.size(), ActualPathComponents.size());
+
+  for (size_t i = 0; i <ExpectedPathComponents.size(); ++i) {
+    EXPECT_EQ(ExpectedPathComponents[i].str(), ActualPathComponents[i].str());
+  }
+}
+
+TEST(Support, AbsolutePathDotIterator) {
+  SmallString<64> Path(StringRef("/.c/.d/../."));
   typedef SmallVector<StringRef, 4> PathComponents;
   PathComponents ExpectedPathComponents;
   PathComponents ActualPathComponents;

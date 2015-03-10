@@ -49,7 +49,6 @@ namespace {
     // * empty (in this case we return an empty string)
     // * either C: or {//,\\}net.
     // * {/,\}
-    // * {.,..}
     // * {file,directory}name
 
     if (path.empty())
@@ -74,12 +73,6 @@ namespace {
 
     // {/,\}
     if (is_separator(path[0]))
-      return path.substr(0, 1);
-
-    if (path.startswith(".."))
-      return path.substr(0, 2);
-
-    if (path[0] == '.')
       return path.substr(0, 1);
 
     // * {file,directory}name
