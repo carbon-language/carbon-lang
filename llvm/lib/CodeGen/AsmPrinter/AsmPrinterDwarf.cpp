@@ -163,19 +163,12 @@ void AsmPrinter::EmitTTypeReference(const GlobalValue *GV,
 ///
 /// SectionLabel is a temporary label emitted at the start of the section that
 /// Label lives in.
-void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
-                                   const MCSymbol *SectionLabel) const {
+void AsmPrinter::emitSectionOffset(const MCSymbol *Label) const {
   // On COFF targets, we have to emit the special .secrel32 directive.
   if (MAI->needsDwarfSectionOffsetDirective()) {
     OutStreamer.EmitCOFFSecRel32(Label);
     return;
   }
-
-  // If Label has already been emitted, verify that it is in the same section as
-  // section label for sanity.
-  assert((!Label->isInSection() ||
-          &Label->getSection() == &SectionLabel->getSection()) &&
-         "Section offset using wrong section base for label");
 
   // If the format uses relocations with dwarf, refer to the symbol directly.
   if (MAI->doesDwarfUseRelocationsAcrossSections()) {
@@ -184,7 +177,7 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
   }
 
   // Otherwise, emit it as a label difference from the start of the section.
-  EmitLabelDifference(Label, SectionLabel, 4);
+  EmitLabelDifference(Label, Label->getSection().getBeginSymbol(), 4);
 }
 
 /// EmitDwarfRegOp - Emit dwarf register operation.

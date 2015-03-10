@@ -36,9 +36,6 @@ class DwarfCompileUnit : public DwarfUnit {
   /// Skeleton unit associated with this unit.
   DwarfCompileUnit *Skeleton;
 
-  /// A label at the start of the non-dwo section related to this unit.
-  MCSymbol *SectionSym;
-
   /// The start of the unit within its section.
   MCSymbol *LabelBegin;
 
@@ -76,7 +73,7 @@ public:
     return Skeleton;
   }
 
-  void initStmtList(MCSymbol *DwarfLineSectionSym);
+  void initStmtList();
 
   /// Apply the DW_AT_stmt_list from this compile unit to the specified DIE.
   void applyStmtList(DIE &D);
@@ -168,17 +165,9 @@ public:
   /// Set the skeleton unit associated with this unit.
   void setSkeleton(DwarfCompileUnit &Skel) { Skeleton = &Skel; }
 
-  MCSymbol *getSectionSym() const {
+  const MCSymbol *getSectionSym() const {
     assert(Section);
-    return SectionSym;
-  }
-
-  /// Pass in the SectionSym even though we could recreate it in every compile
-  /// unit (type units will have actually distinct symbols once they're in
-  /// comdat sections).
-  void initSection(const MCSection *Section, MCSymbol *SectionSym) {
-    DwarfUnit::initSection(Section);
-    this->SectionSym = SectionSym;
+    return Section->getBeginSymbol();
   }
 
   unsigned getLength() {
@@ -186,7 +175,7 @@ public:
         getHeaderSize() + UnitDie.getSize();
   }
 
-  void emitHeader(const MCSymbol *ASectionSym) override;
+  void emitHeader(bool UseOffsets) override;
 
   MCSymbol *getLabelBegin() const {
     assert(Section);

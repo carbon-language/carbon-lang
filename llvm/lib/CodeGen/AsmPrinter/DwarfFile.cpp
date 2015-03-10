@@ -47,13 +47,13 @@ void DwarfFile::addUnit(std::unique_ptr<DwarfUnit> U) {
 
 // Emit the various dwarf units to the unit section USection with
 // the abbreviations going into ASection.
-void DwarfFile::emitUnits(const MCSymbol *ASectionSym) {
+void DwarfFile::emitUnits(bool UseOffsets) {
   for (const auto &TheU : CUs) {
     DIE &Die = TheU->getUnitDie();
     const MCSection *USection = TheU->getSection();
     Asm->OutStreamer.SwitchSection(USection);
 
-    TheU->emitHeader(ASectionSym);
+    TheU->emitHeader(UseOffsets);
 
     Asm->emitDwarfDIE(Die);
   }

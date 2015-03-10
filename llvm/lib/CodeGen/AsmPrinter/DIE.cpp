@@ -588,9 +588,9 @@ void DIELocList::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
   MCSymbol *Label = DD->getDebugLocEntries()[Index].Label;
 
   if (AP->MAI->doesDwarfUseRelocationsAcrossSections() && !DD->useSplitDwarf())
-    AP->EmitSectionOffset(Label, DD->getDebugLocSym());
+    AP->emitSectionOffset(Label);
   else
-    AP->EmitLabelDifference(Label, DD->getDebugLocSym(), 4);
+    AP->EmitLabelDifference(Label, Label->getSection().getBeginSymbol(), 4);
 }
 
 #ifndef NDEBUG

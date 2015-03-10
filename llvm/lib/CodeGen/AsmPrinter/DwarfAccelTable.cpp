@@ -180,7 +180,7 @@ void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
 // element in each bucket. This is done via a symbol subtraction from the
 // beginning of the section. The non-section symbol will be output later
 // when we emit the actual data.
-void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
+void DwarfAccelTable::emitOffsets(AsmPrinter *Asm, const MCSymbol *SecBegin) {
   uint64_t PrevHash = UINT64_MAX;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
@@ -203,8 +203,7 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
 // Walk through the buckets and emit the full data for each element in
 // the bucket. For the string case emit the dies and the various offsets.
 // Terminate each HashData bucket with 0.
-void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D,
-                               MCSymbol *StrSym) {
+void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     uint64_t PrevHash = UINT64_MAX;
     for (HashList::const_iterator HI = Buckets[i].begin(),
@@ -217,7 +216,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D,
       // Remember to emit the label for our offset.
       Asm->OutStreamer.EmitLabel((*HI)->Sym);
       Asm->OutStreamer.AddComment((*HI)->Str);
-      Asm->EmitSectionOffset((*HI)->Data.StrSym, StrSym);
+      Asm->emitSectionOffset((*HI)->Data.StrSym);
       Asm->OutStreamer.AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.Values.size());
       for (HashDataContents *HD : (*HI)->Data.Values) {
@@ -241,8 +240,8 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D,
 }
 
 // Emit the entire data structure to the output file.
-void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin, DwarfDebug *D,
-                           MCSymbol *StrSym) {
+void DwarfAccelTable::emit(AsmPrinter *Asm, const MCSymbol *SecBegin,
+                           DwarfDebug *D) {
   // Emit the header.
   EmitHeader(Asm);
 
@@ -253,10 +252,10 @@ void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin, DwarfDebug *D,
   EmitHashes(Asm);
 
   // Emit the offsets.
-  EmitOffsets(Asm, SecBegin);
+  emitOffsets(Asm, SecBegin);
 
   // Emit the hash data.
-  EmitData(Asm, D, StrSym);
+  EmitData(Asm, D);
 }
 
 #ifndef NDEBUG

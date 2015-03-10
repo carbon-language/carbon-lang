@@ -264,12 +264,14 @@ void DwarfUnit::addIndexedString(DIE &Die, dwarf::Attribute Attribute,
 /// to be in the local string pool instead of indirected.
 void DwarfUnit::addLocalString(DIE &Die, dwarf::Attribute Attribute,
                                StringRef String) {
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   MCSymbol *Symb = DU->getStringPool().getSymbol(*Asm, String);
   DIEValue *Value;
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     Value = new (DIEValueAllocator) DIELabel(Symb);
   else
-    Value = new (DIEValueAllocator) DIEDelta(Symb, DD->getDebugStrSym());
+    Value = new (DIEValueAllocator)
+        DIEDelta(Symb, TLOF.getDwarfStrSection()->getBeginSymbol());
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
   Die.addValue(Attribute, dwarf::DW_FORM_strp, Str);
 }
@@ -1604,7 +1606,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
   return &StaticMemberDIE;
 }
 
-void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) {
+void DwarfUnit::emitHeader(bool UseOffsets) {
   // Emit size of content not including length itself
   Asm->OutStreamer.AddComment("Length of Unit");
   Asm->EmitInt32(getHeaderSize() + UnitDie.getSize());
@@ -1612,14 +1614,16 @@ void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(DD->getDwarfVersion());
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
+
   // We share one abbreviations table across all units so it's always at the
   // start of the section. Use a relocatable offset where needed to ensure
   // linking doesn't invalidate that offset.
-  if (ASectionSym)
-    Asm->EmitSectionOffset(ASectionSym, ASectionSym);
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+  if (!UseOffsets)
+    Asm->emitSectionOffset(TLOF.getDwarfAbbrevSection()->getBeginSymbol());
   else
-    // Use a constant value when no symbol is provided.
     Asm->EmitInt32(0);
+
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
@@ -1629,8 +1633,8 @@ void DwarfUnit::initSection(const MCSection *Section) {
   this->Section = Section;
 }
 
-void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) {
-  DwarfUnit::emitHeader(ASectionSym);
+void DwarfTypeUnit::emitHeader(bool UseOffsets) {
+  DwarfUnit::emitHeader(UseOffsets);
   Asm->OutStreamer.AddComment("Type Signature");
   Asm->OutStreamer.EmitIntValue(TypeSignature, sizeof(TypeSignature));
   Asm->OutStreamer.AddComment("Type DIE Offset");

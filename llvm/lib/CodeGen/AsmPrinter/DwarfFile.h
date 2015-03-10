@@ -80,7 +80,7 @@ public:
 
   /// \brief Emit all of the units to the section listed with the given
   /// abbreviation section.
-  void emitUnits(const MCSymbol *ASectionSym);
+  void emitUnits(bool UseOffsets);
 
   /// \brief Emit a set of abbreviations to the specific section.
   void emitAbbrevs(const MCSection *);

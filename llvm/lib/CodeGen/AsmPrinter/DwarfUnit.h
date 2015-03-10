@@ -120,7 +120,6 @@ protected:
   DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
-  void initSection(const MCSection *Section);
 
   /// Add a string attribute data and value.
   void addLocalString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
@@ -131,6 +130,8 @@ protected:
 
 public:
   virtual ~DwarfUnit();
+
+  void initSection(const MCSection *Section);
 
   const MCSection *getSection() const {
     assert(Section);
@@ -321,7 +322,7 @@ public:
   }
 
   /// Emit the header for this unit, not including the initial length field.
-  virtual void emitHeader(const MCSymbol *ASectionSym);
+  virtual void emitHeader(bool UseOffsets);
 
   virtual DwarfCompileUnit &getCU() = 0;
 
@@ -423,12 +424,11 @@ public:
   void setType(const DIE *Ty) { this->Ty = Ty; }
 
   /// Emit the header for this unit, not including the initial length field.
-  void emitHeader(const MCSymbol *ASectionSym) override;
+  void emitHeader(bool UseOffsets) override;
   unsigned getHeaderSize() const override {
     return DwarfUnit::getHeaderSize() + sizeof(uint64_t) + // Type Signature
            sizeof(uint32_t);                               // Type DIE Offset
   }
-  using DwarfUnit::initSection;
   DwarfCompileUnit &getCU() override { return CU; }
 };
 } // end llvm namespace

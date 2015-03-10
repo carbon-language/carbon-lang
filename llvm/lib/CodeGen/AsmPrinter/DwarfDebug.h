@@ -243,16 +243,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // If nonnull, stores the CU in which the previous subprogram was contained.
   const DwarfCompileUnit *PrevCU;
 
-  // Section Symbols: these are assembler temporary labels that are emitted at
-  // the beginning of each supported dwarf section.  These are used to form
-  // section offsets and are created by EmitSectionLabels.
-  MCSymbol *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
-  MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
-  MCSymbol *DwarfDebugLocSectionSym, *DwarfLineSectionSym, *DwarfAddrSectionSym;
-  MCSymbol *DwarfInfoDWOSectionSym, *DwarfAbbrevDWOSectionSym;
-  MCSymbol *DwarfTypesDWOSectionSym;
-  MCSymbol *DwarfStrDWOSectionSym;
-
   // As an optimization, there is no need to emit an entry in the directory
   // table for the same directory as DW_AT_comp_dir.
   StringRef CompilationDir;
@@ -558,15 +548,6 @@ public:
 
   /// Returns the Dwarf Version.
   unsigned getDwarfVersion() const { return DwarfVersion; }
-
-  /// Returns the section symbol for the .debug_loc section.
-  MCSymbol *getDebugLocSym() const { return DwarfDebugLocSectionSym; }
-
-  /// Returns the section symbol for the .debug_str section.
-  MCSymbol *getDebugStrSym() const { return DwarfStrSectionSym; }
-
-  /// Returns the section symbol for the .debug_ranges section.
-  MCSymbol *getRangeSectionSym() const { return DwarfDebugRangeSectionSym; }
 
   /// Returns the previous CU that was being updated
   const DwarfCompileUnit *getPrevCU() const { return PrevCU; }
