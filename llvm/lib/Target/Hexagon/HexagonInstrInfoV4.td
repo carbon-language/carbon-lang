@@ -2511,17 +2511,6 @@ def M4_mpyrr_addr: MInst_acc <(outs IntRegs:$Rx),
     let Inst{20-16} = Rs;
   }
 
-// Rd=add(##,mpyi(Rs,#U6))
-def : Pat <(add (mul (i32 IntRegs:$src2), u6ImmPred:$src3),
-                     (HexagonCONST32 tglobaladdr:$src1)),
-           (i32 (M4_mpyri_addi tglobaladdr:$src1, IntRegs:$src2,
-                               u6ImmPred:$src3))>;
-
-// Rd=add(##,mpyi(Rs,Rt))
-def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
-                     (HexagonCONST32 tglobaladdr:$src1)),
-           (i32 (M4_mpyrr_addi tglobaladdr:$src1, IntRegs:$src2,
-                               IntRegs:$src3))>;
 
 // Vector reduce multiply word by signed half (32x16)
 //Rdd=vrmpyweh(Rss,Rtt)[:<<1]
@@ -3914,6 +3903,18 @@ def: Storea_pat<SwapSt<atomic_store_16>, I32, addrgp, S2_storerhabs>;
 def: Storea_pat<SwapSt<atomic_store_32>, I32, addrgp, S2_storeriabs>;
 def: Storea_pat<SwapSt<atomic_store_64>, I64, addrgp, S2_storerdabs>;
 
+let Constraints = "@earlyclobber $dst" in
+def Insert4 : PseudoM<(outs DoubleRegs:$dst), (ins IntRegs:$a, IntRegs:$b,
+                                                   IntRegs:$c, IntRegs:$d),
+  ".error \"Should never try to emit Insert4\"",
+  [(set (i64 DoubleRegs:$dst),
+        (or (or (or (shl (i64 (zext (i32 (and (i32 IntRegs:$b), (i32 65535))))),
+                         (i32 16)),
+                    (i64 (zext (i32 (and (i32 IntRegs:$a), (i32 65535)))))),
+                (shl (i64 (anyext (i32 (and (i32 IntRegs:$c), (i32 65535))))),
+                     (i32 32))),
+            (shl (i64 (anyext (i32 IntRegs:$d))), (i32 48))))]>;
+
 //===----------------------------------------------------------------------===//
 // :raw for of boundscheck:hi:lo insns
 //===----------------------------------------------------------------------===//
@@ -4018,7 +4019,7 @@ class CJInst_tstbit_R0<string px, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
   ""#px#" = tstbit($Rs, #0); if ("
     #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND> {
+  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<11> r9_2;
 
@@ -4064,7 +4065,7 @@ class CJInst_RR<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, IntRegs:$Rt, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs, $Rt); if ("
    #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND> {
+  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<4> Rt;
   bits<11> r9_2;
@@ -4118,7 +4119,7 @@ class CJInst_RU5<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, u5Imm:$U5, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs, #$U5); if ("
     #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND> {
+  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<5> U5;
   bits<11> r9_2;
@@ -4173,7 +4174,7 @@ class CJInst_Rn1<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs,#-1); if ("
   #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
-  [], "", COMPOUND, TypeCOMPOUND> {
+  [], "", COMPOUND, TypeCOMPOUND>, OpcodeHexagon {
   bits<4> Rs;
   bits<11> r9_2;
 

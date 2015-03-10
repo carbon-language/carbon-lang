@@ -109,7 +109,7 @@ class InstDuplex<bits<4> iClass, list<dag> pattern = [],
 //
 class NVInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
              string cstr = "", InstrItinClass itin = NCJ_tc_3or4stall_SLOT0>
-  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeNV>;
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeNV>, OpcodeHexagon;
 
 class NVInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
                 string cstr = "", InstrItinClass itin = NCJ_tc_3or4stall_SLOT0>
@@ -134,7 +134,8 @@ class NCJInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
 let mayLoad = 1, mayStore = 1 in
 class MEMInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
               string cstr = "", InstrItinClass itin = V4LDST_tc_st_SLOT0>
-  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeMEMOP>;
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeMEMOP>,
+    OpcodeHexagon;
 
 class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
                  string cstr = "", InstrItinClass itin = V4LDST_tc_st_SLOT0>
@@ -143,8 +144,9 @@ class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern = [],
 let isCodeGenOnly = 1 in
 class EXTENDERInst<dag outs, dag ins, string asmstr, list<dag> pattern = []>
   : InstHexagon<outs, ins, asmstr, pattern, "", EXTENDER_tc_1_SLOT0123,
-                TypePREFIX>;
+                TypePREFIX>, OpcodeHexagon;
 
 class CJInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
               string cstr = "">
-  : InstHexagon<outs, ins, asmstr, pattern, cstr, COMPOUND, TypeCOMPOUND>;
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, COMPOUND, TypeCOMPOUND>,
+    OpcodeHexagon;
