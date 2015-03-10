@@ -587,6 +587,8 @@ Value *IslExprBuilder::createId(__isl_take isl_ast_expr *Expr) {
 
   V = IDToValue[Id];
 
+  assert(V && "Unknown parameter id found");
+
   isl_id_free(Id);
   isl_ast_expr_free(Expr);
 
