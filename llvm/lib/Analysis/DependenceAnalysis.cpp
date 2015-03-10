@@ -3651,6 +3651,8 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       DEBUG(dbgs() << "    updating\n");
       for (int SJ = ConstrainedLevels.find_first(); SJ >= 0;
            SJ = ConstrainedLevels.find_next(SJ)) {
+        if (SJ > (int)CommonLevels)
+          break;
         updateDirection(Result.DV[SJ - 1], Constraints[SJ]);
         if (Result.DV[SJ - 1].Direction == Dependence::DVEntry::NONE)
           return nullptr;
