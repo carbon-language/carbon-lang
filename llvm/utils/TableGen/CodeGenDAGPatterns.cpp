@@ -389,52 +389,6 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   else if (!Other.hasScalarTypes())
     MadeChange |= EnforceVector(TP);
 
-  // For vectors we need to ensure that smaller size doesn't produce larger
-  // vector and vice versa.
-  if (isConcrete() && isVector(getConcrete())) {
-    MVT IVT = getConcrete();
-    unsigned Size = IVT.getSizeInBits();
-
-    // Only keep types that have at least as many bits.
-    TypeSet InputSet(Other);
-
-    for (unsigned i = 0; i != Other.TypeVec.size(); ++i) {
-      assert(isVector(Other.TypeVec[i]) && "EnforceVector didn't work");
-      if (MVT(Other.TypeVec[i]).getSizeInBits() < Size) {
-        Other.TypeVec.erase(Other.TypeVec.begin()+i--);
-        MadeChange = true;
-      }
-    }
-
-    if (Other.TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
-      TP.error("Type inference contradiction found, forcing '" +
-               InputSet.getName() + "' to have at least as many bits as " +
-               getName() + "'");
-      return false;
-    }
-  } else if (Other.isConcrete() && isVector(Other.getConcrete())) {
-    MVT IVT = Other.getConcrete();
-    unsigned Size = IVT.getSizeInBits();
-
-    // Only keep types with the same or fewer total bits
-    TypeSet InputSet(*this);
-
-    for (unsigned i = 0; i != TypeVec.size(); ++i) {
-      assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
-      if (MVT(TypeVec[i]).getSizeInBits() > Size) {
-        TypeVec.erase(TypeVec.begin()+i--);
-        MadeChange = true;
-      }
-    }
-
-    if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
-      TP.error("Type inference contradiction found, forcing '" +
-               InputSet.getName() + "' to have the same or fewer bits than " +
-               Other.getName() + "'");
-      return false;
-    }
-  }
-
   // This code does not currently handle nodes which have multiple types,
   // where some types are integer, and some are fp.  Assert that this is not
   // the case.
@@ -445,12 +399,22 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   if (TP.hasError())
     return false;
 
-  // Okay, find the smallest scalar type from the other set and remove
-  // anything the same or smaller from the current set.
+  // Okay, find the smallest type from current set and remove anything the
+  // same or smaller from the other set. We need to ensure that the scalar
+  // type size is smaller than the scalar size of the smallest type. For
+  // vectors, we also need to make sure that the total size is no larger than
+  // the size of the smallest type.
   TypeSet InputSet(Other);
-  MVT::SimpleValueType Smallest = TypeVec[0];
+  MVT Smallest = TypeVec[0];
   for (unsigned i = 0; i != Other.TypeVec.size(); ++i) {
-    if (Other.TypeVec[i] <= Smallest) {
+    MVT OtherVT = Other.TypeVec[i];
+    // Don't compare vector and non-vector types.
+    if (OtherVT.isVector() != Smallest.isVector())
+      continue;
+    // The getSizeInBits() check here is only needed for vectors, but is
+    // a subset of the scalar check for scalars so no need to qualify.
+    if (OtherVT.getScalarSizeInBits() <= Smallest.getScalarSizeInBits() ||
+        OtherVT.getSizeInBits() < Smallest.getSizeInBits()) {
       Other.TypeVec.erase(Other.TypeVec.begin()+i--);
       MadeChange = true;
     }
@@ -462,12 +426,22 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
     return false;
   }
 
-  // Okay, find the largest scalar type from the other set and remove
-  // anything the same or larger from the current set.
+  // Okay, find the largest type from the other set and remove anything the
+  // same or smaller from the current set. We need to ensure that the scalar
+  // type size is larger than the scalar size of the largest type. For
+  // vectors, we also need to make sure that the total size is no smaller than
+  // the size of the largest type.
   InputSet = TypeSet(*this);
-  MVT::SimpleValueType Largest = Other.TypeVec[Other.TypeVec.size()-1];
+  MVT Largest = Other.TypeVec[Other.TypeVec.size()-1];
   for (unsigned i = 0; i != TypeVec.size(); ++i) {
-    if (TypeVec[i] >= Largest) {
+    MVT OtherVT = TypeVec[i];
+    // Don't compare vector and non-vector types.
+    if (OtherVT.isVector() != Largest.isVector())
+      continue;
+    // The getSizeInBits() check here is only needed for vectors, but is
+    // a subset of the scalar check for scalars so no need to qualify.
+    if (OtherVT.getScalarSizeInBits() >= Largest.getScalarSizeInBits() ||
+         OtherVT.getSizeInBits() > Largest.getSizeInBits()) {
       TypeVec.erase(TypeVec.begin()+i--);
       MadeChange = true;
     }
