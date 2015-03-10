@@ -372,6 +372,10 @@ public:
   /// I to the worklist, replace all uses of I with the new value, then return
   /// I, so that the inst combiner will know that I was modified.
   Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
+    // If there are no uses to replace, then we return nullptr to indicate that
+    // no changes were made to the program.
+    if (I.use_empty()) return nullptr;
+
     Worklist.AddUsersToWorkList(I); // Add all modified instrs to worklist.
 
     // If we are replacing the instruction with itself, this must be in a
