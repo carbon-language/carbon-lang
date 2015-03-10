@@ -2922,159 +2922,159 @@ static bool checkOperandClass(CGIOperandList::OperandInfo &OI,
 const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
     CodeGenInstruction &CGI, ListInit *Pat, DAGInstMap &DAGInsts) {
 
-    assert(!DAGInsts.count(CGI.TheDef) && "Instruction already parsed!");
+  assert(!DAGInsts.count(CGI.TheDef) && "Instruction already parsed!");
 
-    // Parse the instruction.
-    TreePattern *I = new TreePattern(CGI.TheDef, Pat, true, *this);
-    // Inline pattern fragments into it.
-    I->InlinePatternFragments();
+  // Parse the instruction.
+  TreePattern *I = new TreePattern(CGI.TheDef, Pat, true, *this);
+  // Inline pattern fragments into it.
+  I->InlinePatternFragments();
 
-    // Infer as many types as possible.  If we cannot infer all of them, we can
-    // never do anything with this instruction pattern: report it to the user.
-    if (!I->InferAllTypes())
-      I->error("Could not infer all types in pattern!");
+  // Infer as many types as possible.  If we cannot infer all of them, we can
+  // never do anything with this instruction pattern: report it to the user.
+  if (!I->InferAllTypes())
+    I->error("Could not infer all types in pattern!");
 
-    // InstInputs - Keep track of all of the inputs of the instruction, along
-    // with the record they are declared as.
-    std::map<std::string, TreePatternNode*> InstInputs;
+  // InstInputs - Keep track of all of the inputs of the instruction, along
+  // with the record they are declared as.
+  std::map<std::string, TreePatternNode*> InstInputs;
 
-    // InstResults - Keep track of all the virtual registers that are 'set'
-    // in the instruction, including what reg class they are.
-    std::map<std::string, TreePatternNode*> InstResults;
+  // InstResults - Keep track of all the virtual registers that are 'set'
+  // in the instruction, including what reg class they are.
+  std::map<std::string, TreePatternNode*> InstResults;
 
-    std::vector<Record*> InstImpResults;
+  std::vector<Record*> InstImpResults;
 
-    // Verify that the top-level forms in the instruction are of void type, and
-    // fill in the InstResults map.
-    for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
-      TreePatternNode *Pat = I->getTree(j);
-      if (Pat->getNumTypes() != 0)
-        I->error("Top-level forms in instruction pattern should have"
-                 " void types");
+  // Verify that the top-level forms in the instruction are of void type, and
+  // fill in the InstResults map.
+  for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
+    TreePatternNode *Pat = I->getTree(j);
+    if (Pat->getNumTypes() != 0)
+      I->error("Top-level forms in instruction pattern should have"
+               " void types");
 
-      // Find inputs and outputs, and verify the structure of the uses/defs.
-      FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults,
-                                  InstImpResults);
-    }
-
-    // Now that we have inputs and outputs of the pattern, inspect the operands
-    // list for the instruction.  This determines the order that operands are
-    // added to the machine instruction the node corresponds to.
-    unsigned NumResults = InstResults.size();
-
-    // Parse the operands list from the (ops) list, validating it.
-    assert(I->getArgList().empty() && "Args list should still be empty here!");
-
-    // Check that all of the results occur first in the list.
-    std::vector<Record*> Results;
-    TreePatternNode *Res0Node = nullptr;
-    for (unsigned i = 0; i != NumResults; ++i) {
-      if (i == CGI.Operands.size())
-        I->error("'" + InstResults.begin()->first +
-                 "' set but does not appear in operand list!");
-      const std::string &OpName = CGI.Operands[i].Name;
-
-      // Check that it exists in InstResults.
-      TreePatternNode *RNode = InstResults[OpName];
-      if (!RNode)
-        I->error("Operand $" + OpName + " does not exist in operand list!");
-
-      if (i == 0)
-        Res0Node = RNode;
-      Record *R = cast<DefInit>(RNode->getLeafValue())->getDef();
-      if (!R)
-        I->error("Operand $" + OpName + " should be a set destination: all "
-                 "outputs must occur before inputs in operand list!");
-
-      if (!checkOperandClass(CGI.Operands[i], R))
-        I->error("Operand $" + OpName + " class mismatch!");
-
-      // Remember the return type.
-      Results.push_back(CGI.Operands[i].Rec);
-
-      // Okay, this one checks out.
-      InstResults.erase(OpName);
-    }
-
-    // Loop over the inputs next.  Make a copy of InstInputs so we can destroy
-    // the copy while we're checking the inputs.
-    std::map<std::string, TreePatternNode*> InstInputsCheck(InstInputs);
-
-    std::vector<TreePatternNode*> ResultNodeOperands;
-    std::vector<Record*> Operands;
-    for (unsigned i = NumResults, e = CGI.Operands.size(); i != e; ++i) {
-      CGIOperandList::OperandInfo &Op = CGI.Operands[i];
-      const std::string &OpName = Op.Name;
-      if (OpName.empty())
-        I->error("Operand #" + utostr(i) + " in operands list has no name!");
-
-      if (!InstInputsCheck.count(OpName)) {
-        // If this is an operand with a DefaultOps set filled in, we can ignore
-        // this.  When we codegen it, we will do so as always executed.
-        if (Op.Rec->isSubClassOf("OperandWithDefaultOps")) {
-          // Does it have a non-empty DefaultOps field?  If so, ignore this
-          // operand.
-          if (!getDefaultOperand(Op.Rec).DefaultOps.empty())
-            continue;
-        }
-        I->error("Operand $" + OpName +
-                 " does not appear in the instruction pattern");
-      }
-      TreePatternNode *InVal = InstInputsCheck[OpName];
-      InstInputsCheck.erase(OpName);   // It occurred, remove from map.
-
-      if (InVal->isLeaf() && isa<DefInit>(InVal->getLeafValue())) {
-        Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
-        if (!checkOperandClass(Op, InRec))
-          I->error("Operand $" + OpName + "'s register class disagrees"
-                   " between the operand and pattern");
-      }
-      Operands.push_back(Op.Rec);
-
-      // Construct the result for the dest-pattern operand list.
-      TreePatternNode *OpNode = InVal->clone();
-
-      // No predicate is useful on the result.
-      OpNode->clearPredicateFns();
-
-      // Promote the xform function to be an explicit node if set.
-      if (Record *Xform = OpNode->getTransformFn()) {
-        OpNode->setTransformFn(nullptr);
-        std::vector<TreePatternNode*> Children;
-        Children.push_back(OpNode);
-        OpNode = new TreePatternNode(Xform, Children, OpNode->getNumTypes());
-      }
-
-      ResultNodeOperands.push_back(OpNode);
-    }
-
-    if (!InstInputsCheck.empty())
-      I->error("Input operand $" + InstInputsCheck.begin()->first +
-               " occurs in pattern but not in operands list!");
-
-    TreePatternNode *ResultPattern =
-      new TreePatternNode(I->getRecord(), ResultNodeOperands,
-                          GetNumNodeResults(I->getRecord(), *this));
-    // Copy fully inferred output node type to instruction result pattern.
-    for (unsigned i = 0; i != NumResults; ++i)
-      ResultPattern->setType(i, Res0Node->getExtType(i));
-
-    // Create and insert the instruction.
-    // FIXME: InstImpResults should not be part of DAGInstruction.
-    DAGInstruction TheInst(I, Results, Operands, InstImpResults);
-    DAGInsts.insert(std::make_pair(I->getRecord(), TheInst));
-
-    // Use a temporary tree pattern to infer all types and make sure that the
-    // constructed result is correct.  This depends on the instruction already
-    // being inserted into the DAGInsts map.
-    TreePattern Temp(I->getRecord(), ResultPattern, false, *this);
-    Temp.InferAllTypes(&I->getNamedNodesMap());
-
-    DAGInstruction &TheInsertedInst = DAGInsts.find(I->getRecord())->second;
-    TheInsertedInst.setResultPattern(Temp.getOnlyTree());
-
-    return TheInsertedInst;
+    // Find inputs and outputs, and verify the structure of the uses/defs.
+    FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults,
+                                InstImpResults);
   }
+
+  // Now that we have inputs and outputs of the pattern, inspect the operands
+  // list for the instruction.  This determines the order that operands are
+  // added to the machine instruction the node corresponds to.
+  unsigned NumResults = InstResults.size();
+
+  // Parse the operands list from the (ops) list, validating it.
+  assert(I->getArgList().empty() && "Args list should still be empty here!");
+
+  // Check that all of the results occur first in the list.
+  std::vector<Record*> Results;
+  TreePatternNode *Res0Node = nullptr;
+  for (unsigned i = 0; i != NumResults; ++i) {
+    if (i == CGI.Operands.size())
+      I->error("'" + InstResults.begin()->first +
+               "' set but does not appear in operand list!");
+    const std::string &OpName = CGI.Operands[i].Name;
+
+    // Check that it exists in InstResults.
+    TreePatternNode *RNode = InstResults[OpName];
+    if (!RNode)
+      I->error("Operand $" + OpName + " does not exist in operand list!");
+
+    if (i == 0)
+      Res0Node = RNode;
+    Record *R = cast<DefInit>(RNode->getLeafValue())->getDef();
+    if (!R)
+      I->error("Operand $" + OpName + " should be a set destination: all "
+               "outputs must occur before inputs in operand list!");
+
+    if (!checkOperandClass(CGI.Operands[i], R))
+      I->error("Operand $" + OpName + " class mismatch!");
+
+    // Remember the return type.
+    Results.push_back(CGI.Operands[i].Rec);
+
+    // Okay, this one checks out.
+    InstResults.erase(OpName);
+  }
+
+  // Loop over the inputs next.  Make a copy of InstInputs so we can destroy
+  // the copy while we're checking the inputs.
+  std::map<std::string, TreePatternNode*> InstInputsCheck(InstInputs);
+
+  std::vector<TreePatternNode*> ResultNodeOperands;
+  std::vector<Record*> Operands;
+  for (unsigned i = NumResults, e = CGI.Operands.size(); i != e; ++i) {
+    CGIOperandList::OperandInfo &Op = CGI.Operands[i];
+    const std::string &OpName = Op.Name;
+    if (OpName.empty())
+      I->error("Operand #" + utostr(i) + " in operands list has no name!");
+
+    if (!InstInputsCheck.count(OpName)) {
+      // If this is an operand with a DefaultOps set filled in, we can ignore
+      // this.  When we codegen it, we will do so as always executed.
+      if (Op.Rec->isSubClassOf("OperandWithDefaultOps")) {
+        // Does it have a non-empty DefaultOps field?  If so, ignore this
+        // operand.
+        if (!getDefaultOperand(Op.Rec).DefaultOps.empty())
+          continue;
+      }
+      I->error("Operand $" + OpName +
+               " does not appear in the instruction pattern");
+    }
+    TreePatternNode *InVal = InstInputsCheck[OpName];
+    InstInputsCheck.erase(OpName);   // It occurred, remove from map.
+
+    if (InVal->isLeaf() && isa<DefInit>(InVal->getLeafValue())) {
+      Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
+      if (!checkOperandClass(Op, InRec))
+        I->error("Operand $" + OpName + "'s register class disagrees"
+                 " between the operand and pattern");
+    }
+    Operands.push_back(Op.Rec);
+
+    // Construct the result for the dest-pattern operand list.
+    TreePatternNode *OpNode = InVal->clone();
+
+    // No predicate is useful on the result.
+    OpNode->clearPredicateFns();
+
+    // Promote the xform function to be an explicit node if set.
+    if (Record *Xform = OpNode->getTransformFn()) {
+      OpNode->setTransformFn(nullptr);
+      std::vector<TreePatternNode*> Children;
+      Children.push_back(OpNode);
+      OpNode = new TreePatternNode(Xform, Children, OpNode->getNumTypes());
+    }
+
+    ResultNodeOperands.push_back(OpNode);
+  }
+
+  if (!InstInputsCheck.empty())
+    I->error("Input operand $" + InstInputsCheck.begin()->first +
+             " occurs in pattern but not in operands list!");
+
+  TreePatternNode *ResultPattern =
+    new TreePatternNode(I->getRecord(), ResultNodeOperands,
+                        GetNumNodeResults(I->getRecord(), *this));
+  // Copy fully inferred output node type to instruction result pattern.
+  for (unsigned i = 0; i != NumResults; ++i)
+    ResultPattern->setType(i, Res0Node->getExtType(i));
+
+  // Create and insert the instruction.
+  // FIXME: InstImpResults should not be part of DAGInstruction.
+  DAGInstruction TheInst(I, Results, Operands, InstImpResults);
+  DAGInsts.insert(std::make_pair(I->getRecord(), TheInst));
+
+  // Use a temporary tree pattern to infer all types and make sure that the
+  // constructed result is correct.  This depends on the instruction already
+  // being inserted into the DAGInsts map.
+  TreePattern Temp(I->getRecord(), ResultPattern, false, *this);
+  Temp.InferAllTypes(&I->getNamedNodesMap());
+
+  DAGInstruction &TheInsertedInst = DAGInsts.find(I->getRecord())->second;
+  TheInsertedInst.setResultPattern(Temp.getOnlyTree());
+
+  return TheInsertedInst;
+}
 
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
 /// any fragments involved.  This populates the Instructions list with fully
