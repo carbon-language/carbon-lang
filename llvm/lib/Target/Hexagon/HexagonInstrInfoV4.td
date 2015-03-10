@@ -11,6 +11,25 @@
 //
 //===----------------------------------------------------------------------===//
 
+def DuplexIClass0:  InstDuplex < 0 >;
+def DuplexIClass1:  InstDuplex < 1 >;
+def DuplexIClass2:  InstDuplex < 2 >;
+let isExtendable = 1 in {
+  def DuplexIClass3:  InstDuplex < 3 >;
+  def DuplexIClass4:  InstDuplex < 4 >;
+  def DuplexIClass5:  InstDuplex < 5 >;
+  def DuplexIClass6:  InstDuplex < 6 >;
+  def DuplexIClass7:  InstDuplex < 7 >;
+}
+def DuplexIClass8:  InstDuplex < 8 >;
+def DuplexIClass9:  InstDuplex < 9 >;
+def DuplexIClassA:  InstDuplex < 0xA >;
+def DuplexIClassB:  InstDuplex < 0xB >;
+def DuplexIClassC:  InstDuplex < 0xC >;
+def DuplexIClassD:  InstDuplex < 0xD >;
+def DuplexIClassE:  InstDuplex < 0xE >;
+def DuplexIClassF:  InstDuplex < 0xF >;
+
 def addrga: PatLeaf<(i32 AddrGA:$Addr)>;
 def addrgp: PatLeaf<(i32 AddrGP:$Addr)>;
 

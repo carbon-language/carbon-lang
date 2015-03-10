@@ -5742,6 +5742,22 @@ def S2_tableidxw : tableidxRaw<"tableidxw", 0b10>;
 def S2_tableidxd : tableidxRaw<"tableidxd", 0b11>;
 
 //===----------------------------------------------------------------------===//
+// Template class for 'table index' instructions which are assembler mapped
+// to their :raw format.
+//===----------------------------------------------------------------------===//
+let isPseudo = 1 in
+class tableidx_goodsyntax <string mnemonic>
+  : SInst <(outs IntRegs:$Rx),
+           (ins IntRegs:$_dst_, IntRegs:$Rs, u4Imm:$u4, u5Imm:$u5),
+           "$Rx = "#mnemonic#"($Rs, #$u4, #$u5)",
+           [], "$Rx = $_dst_" >;
+
+def S2_tableidxb_goodsyntax : tableidx_goodsyntax<"tableidxb">;
+def S2_tableidxh_goodsyntax : tableidx_goodsyntax<"tableidxh">;
+def S2_tableidxw_goodsyntax : tableidx_goodsyntax<"tableidxw">;
+def S2_tableidxd_goodsyntax : tableidx_goodsyntax<"tableidxd">;
+
+//===----------------------------------------------------------------------===//
 // V3 Instructions +
 //===----------------------------------------------------------------------===//
 
