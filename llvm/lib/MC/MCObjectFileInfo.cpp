@@ -651,7 +651,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
       ".debug_types.dwo",
       COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
           COFF::IMAGE_SCN_MEM_READ,
-      SectionKind::getMetadata());
+      SectionKind::getMetadata(), "section_types_dwo");
   DwarfAbbrevDWOSection = Ctx->getCOFFSection(
       ".debug_abbrev.dwo",
       COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
