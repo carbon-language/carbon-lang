@@ -792,9 +792,9 @@ typedef enum kmp_cancel_kind_t {
 } kmp_cancel_kind_t;
 #endif // OMP_40_ENABLED
 
-extern unsigned int __kmp_place_num_cores;
-extern unsigned int __kmp_place_num_threads_per_core;
-extern unsigned int __kmp_place_core_offset;
+extern int __kmp_place_num_cores;
+extern int __kmp_place_num_threads_per_core;
+extern int __kmp_place_core_offset;
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */

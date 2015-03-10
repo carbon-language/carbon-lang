@@ -3351,7 +3351,7 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
     if ( __kmp_place_num_threads_per_core == 0 ) {
         __kmp_place_num_threads_per_core = __kmp_nThreadsPerCore;  // use all HW contexts
     }
-    if ( __kmp_place_core_offset + __kmp_place_num_cores > (unsigned int)nCoresPerPkg ) {
+    if ( __kmp_place_core_offset + __kmp_place_num_cores > nCoresPerPkg ) {
         KMP_WARNING( AffThrPlaceManyCores );
         return;
     }
@@ -3361,11 +3361,11 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
     int i, j, k, n_old = 0, n_new = 0;
     for ( i = 0; i < nPackages; ++i ) {
         for ( j = 0; j < nCoresPerPkg; ++j ) {
-            if ( (unsigned int)j < __kmp_place_core_offset || (unsigned int)j >= __kmp_place_core_offset + __kmp_place_num_cores ) {
+            if ( j < __kmp_place_core_offset || j >= __kmp_place_core_offset + __kmp_place_num_cores ) {
                 n_old += __kmp_nThreadsPerCore;   // skip not-requested core
             } else {
                 for ( k = 0; k < __kmp_nThreadsPerCore; ++k ) {
-                    if ( (unsigned int)k < __kmp_place_num_threads_per_core ) {
+                    if ( k < __kmp_place_num_threads_per_core ) {
                         newAddr[n_new] = (*pAddr)[n_old];   // copy requested core' data to new location
                         n_new++;
                     }
