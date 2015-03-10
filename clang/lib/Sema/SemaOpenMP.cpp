@@ -308,8 +308,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
     //  bound to the current team is shared.
     if (DVar.DKind == OMPD_task) {
       DSAVarData DVarTemp;
-      for (StackTy::reverse_iterator I = std::next(Iter),
-                                     EE = std::prev(Stack.rend());
+      for (StackTy::reverse_iterator I = std::next(Iter), EE = Stack.rend();
            I != EE; ++I) {
         // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables
         // Referenced
@@ -1122,11 +1121,19 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
     break;
   }
   case OMPD_task: {
+    QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
     Sema::CapturedParamNameType Params[] = {
+        std::make_pair(".global_tid.", KmpInt32Ty),
+        std::make_pair(".part_id.", KmpInt32Ty),
         std::make_pair(StringRef(), QualType()) // __context with shared vars
     };
     ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
                              Params);
+    // Mark this captured region as inlined, because we don't use outlined
+    // function directly.
+    getCurCapturedRegion()->TheCapturedDecl->addAttr(
+        AlwaysInlineAttr::CreateImplicit(
+            Context, AlwaysInlineAttr::Keyword_forceinline, SourceRange()));
     break;
   }
   case OMPD_ordered: {

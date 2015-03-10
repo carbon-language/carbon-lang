@@ -717,8 +717,35 @@ void CodeGenFunction::EmitOMPParallelSectionsDirective(
   llvm_unreachable("CodeGen for 'omp parallel sections' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &) {
-  llvm_unreachable("CodeGen for 'omp task' is not supported yet.");
+void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
+  // Emit outlined function for task construct.
+  auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
+  auto CapturedStruct = GenerateCapturedStmtArgument(*CS);
+  auto *I = CS->getCapturedDecl()->param_begin();
+  // The first function argument for tasks is a thread id, the second one is a
+  // part id (0 for tied tasks, >=0 for untied task).
+  auto OutlinedFn =
+      CGM.getOpenMPRuntime().emitTaskOutlinedFunction(S, *I, *std::next(I));
+  // Check if we should emit tied or untied task.
+  bool Tied = !S.getSingleClause(OMPC_untied);
+  // Check if the task is final
+  llvm::PointerIntPair<llvm::Value *, 1, bool> Final;
+  if (auto *Clause = S.getSingleClause(OMPC_final)) {
+    // If the condition constant folds and can be elided, try to avoid emitting
+    // the condition and the dead arm of the if/else.
+    auto *Cond = cast<OMPFinalClause>(Clause)->getCondition();
+    bool CondConstant;
+    if (ConstantFoldsToSimpleInteger(Cond, CondConstant))
+      Final.setInt(CondConstant);
+    else
+      Final.setPointer(EvaluateExprAsBool(Cond));
+  } else {
+    // By default the task is not final.
+    Final.setInt(/*IntVal=*/false);
+  }
+  auto SharedsTy = getContext().getRecordType(CS->getCapturedRecordDecl());
+  CGM.getOpenMPRuntime().emitTaskCall(*this, S.getLocStart(), Tied, Final,
+                                      OutlinedFn, SharedsTy, CapturedStruct);
 }
 
 void CodeGenFunction::EmitOMPTaskyieldDirective(
