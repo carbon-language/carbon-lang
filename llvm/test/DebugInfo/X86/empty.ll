@@ -1,10 +1,5 @@
-; REQUIRES: object-emission
-
-; RUN: %llc_dwarf < %s -filetype=obj | llvm-dwarfdump - | FileCheck %s
-; RUN: %llc_dwarf -split-dwarf=Enable < %s -filetype=obj | llvm-dwarfdump - | FileCheck --check-prefix=FISSION %s
-
-; darwin has a workaround for a linker bug so it always emits one line table entry
-; XFAIL: darwin
+; RUN: llc -mtriple i686-pc-cygwin < %s -filetype=obj | llvm-dwarfdump - | FileCheck %s
+; RUN: llc -mtriple i686-pc-cygwin -split-dwarf=Enable < %s -filetype=obj | llvm-dwarfdump - | FileCheck --check-prefix=FISSION %s
 
 ; Expect no line table entry since there are no functions and file references in this compile unit
 ; CHECK: .debug_line contents:
