@@ -12,11 +12,33 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXAllocaHoisting.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/CodeGen/StackProtector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+using namespace llvm;
 
-namespace llvm {
+namespace {
+// Hoisting the alloca instructions in the non-entry blocks to the entry
+// block.
+class NVPTXAllocaHoisting : public FunctionPass {
+public:
+  static char ID; // Pass ID
+  NVPTXAllocaHoisting() : FunctionPass(ID) {}
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addPreserved<MachineFunctionAnalysis>();
+    AU.addPreserved<StackProtector>();
+  }
+
+  const char *getPassName() const override {
+    return "NVPTX specific alloca hoisting";
+  }
+
+  bool runOnFunction(Function &function) override;
+};
+} // namespace
 
 bool NVPTXAllocaHoisting::runOnFunction(Function &function) {
   bool functionModified = false;
@@ -36,11 +58,15 @@ bool NVPTXAllocaHoisting::runOnFunction(Function &function) {
   return functionModified;
 }
 
-char NVPTXAllocaHoisting::ID = 1;
-static RegisterPass<NVPTXAllocaHoisting>
-X("alloca-hoisting", "Hoisting alloca instructions in non-entry "
-                     "blocks to the entry block");
+char NVPTXAllocaHoisting::ID = 0;
 
-FunctionPass *createAllocaHoisting() { return new NVPTXAllocaHoisting(); }
+namespace llvm {
+void initializeNVPTXAllocaHoistingPass(PassRegistry &);
+}
 
-} // end namespace llvm
+INITIALIZE_PASS(
+    NVPTXAllocaHoisting, "alloca-hoisting",
+    "Hoisting alloca instructions in non-entry blocks to the entry block",
+    false, false)
+
+FunctionPass *llvm::createAllocaHoisting() { return new NVPTXAllocaHoisting; }
