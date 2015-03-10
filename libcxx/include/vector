@@ -868,17 +868,17 @@ private:
     // but if an exception is thrown after that the annotation has to be undone.
     struct __RAII_IncreaseAnnotator {
       __RAII_IncreaseAnnotator(const vector &__v, size_type __n = 1)
-        : __commit(false), __v(__v), __n(__n) {
+        : __commit(false), __v(__v), __old_size(__v.size() + __n) {
         __v.__annotate_increase(__n);
       }
       void __done() { __commit = true; }
       ~__RAII_IncreaseAnnotator() {
         if (__commit) return;
-        __v.__annotate_shrink(__v.size() + __n);
+        __v.__annotate_shrink(__old_size);
       }
       bool __commit;
-      size_type __n;
       const vector &__v;
+      size_type __old_size;
     };
 #else
     struct __RAII_IncreaseAnnotator {

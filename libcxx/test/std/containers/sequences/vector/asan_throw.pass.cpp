@@ -37,6 +37,22 @@ private:
   char a;
 };
 
+class ThrowOnCopy {
+public:
+    ThrowOnCopy() : should_throw(false) {}
+    explicit ThrowOnCopy(bool should_throw) : should_throw(should_throw) {}
+
+    ThrowOnCopy(ThrowOnCopy const & other)
+        : should_throw(other.should_throw)
+    {
+        if (should_throw) {
+            throw 0;
+        }
+    }
+
+    bool should_throw;
+};
+
 void test_push_back() {
   std::vector<X> v;
   v.reserve(2);
@@ -157,6 +173,23 @@ void test_insert_n() {
   assert(0);
 }
 
+
+void test_insert_n2() {
+  std::vector<ThrowOnCopy> v(10);
+  v.reserve(100);
+  assert(v.size() == 10);
+  v[6].should_throw = true;
+  try {
+    v.insert(v.cbegin(), 5, ThrowOnCopy());
+    assert(0);
+  } catch (int e) {
+    assert(v.size() == 11);
+    assert(is_contiguous_container_asan_correct(v));
+    return;
+  }
+  assert(0);
+}
+
 void test_resize() {
   std::vector<X> v;
   v.reserve(3);
@@ -193,6 +226,7 @@ int main() {
   test_emplace();
   test_insert_range2();
   test_insert_n();
+  test_insert_n2();
   test_resize();
   test_resize_param();
 }
