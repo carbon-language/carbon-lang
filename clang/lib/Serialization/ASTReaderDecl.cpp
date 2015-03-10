@@ -2114,6 +2114,10 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase,
   if (!Reader.getContext().getLangOpts().Modules)
     return;
 
+  // If we're not the canonical declaration, we don't need to merge.
+  if (!DBase->isFirstDecl())
+    return;
+
   if (auto *Existing = Redecl.getKnownMergeTarget())
     // We already know of an existing declaration we should merge with.
     mergeRedeclarable(D, cast<T>(Existing), Redecl, TemplatePatternID);
@@ -2182,7 +2186,8 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase, T *Existing,
   T *ExistingCanon = Existing->getCanonicalDecl();
   T *DCanon = D->getCanonicalDecl();
   if (ExistingCanon != DCanon) {
-    assert(DCanon->getGlobalID() == Redecl.getFirstID());
+    assert(DCanon->getGlobalID() == Redecl.getFirstID() &&
+           "already merged this declaration");
 
     // Have our redeclaration link point back at the canonical declaration
     // of the existing declaration, so that this declaration has the
