@@ -28,6 +28,7 @@
 
 using namespace llvm;
 
+namespace {
 class FlattenedSpelling {
   std::string V, N, NS;
   bool K;
@@ -53,8 +54,10 @@ public:
   const std::string &nameSpace() const { return NS; }
   bool knownToGCC() const { return K; }
 };
+} // namespace
 
-std::vector<FlattenedSpelling> GetFlattenedSpellings(const Record &Attr) {
+static std::vector<FlattenedSpelling>
+GetFlattenedSpellings(const Record &Attr) {
   std::vector<Record *> Spellings = Attr.getValueAsListOfDefs("Spellings");
   std::vector<FlattenedSpelling> Ret;
 
