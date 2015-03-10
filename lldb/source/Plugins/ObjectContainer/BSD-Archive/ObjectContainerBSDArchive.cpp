@@ -595,7 +595,8 @@ ObjectContainerBSDArchive::GetModuleSpecifications (const lldb_private::FileSpec
                             TimeValue object_mod_time;
                             object_mod_time.OffsetWithSeconds(object->ar_date);
                             spec.GetObjectName () = object->ar_name;
-                            spec.SetObjectOffset(object_file_offset);
+                            spec.SetObjectOffset (object_file_offset);
+                            spec.SetObjectSize (file_size - object_file_offset);
                             spec.GetObjectModificationTime () = object_mod_time;
                         }
                     }

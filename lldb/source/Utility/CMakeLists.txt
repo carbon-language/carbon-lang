@@ -6,6 +6,7 @@ add_lldb_library(lldbUtility
   JSON.cpp
   KQueue.cpp
   LLDBAssert.cpp
+  ModuleCache.cpp
   PseudoTerminal.cpp
   Range.cpp
   RegisterNumber.cpp

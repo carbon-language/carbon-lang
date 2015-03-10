@@ -31,6 +31,12 @@ public:
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
+
+    virtual bool
+    GetModuleSpec (const lldb_private::FileSpec& module_file_spec,
+                   const lldb_private::ArchSpec& arch,
+                   lldb_private::ModuleSpec &module_spec);
+
     virtual lldb_private::OptionGroupOptions
     *GetConnectionOptions(
         lldb_private::CommandInterpreter &interpreter) override;
@@ -115,7 +121,7 @@ public:
                      int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
                      std::string *command_output,   // Pass NULL if you don't want the command output
                      uint32_t timeout_sec) override;// Timeout in seconds to wait for shell program to finish
-    
+
     virtual lldb_private::Error
     MakeDirectory (const char *path, uint32_t mode) override;
     

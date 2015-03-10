@@ -59,6 +59,11 @@ public:
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
+    virtual bool
+    GetModuleSpec (const lldb_private::FileSpec& module_file_spec,
+                   const lldb_private::ArchSpec& arch,
+                   lldb_private::ModuleSpec &module_spec);
+
     virtual Error
     ResolveExecutable(const lldb_private::ModuleSpec &module_spec,
                       lldb::ModuleSP &module_sp,

@@ -19,7 +19,6 @@
 // Other libraries and framework includes
 #include "llvm/ADT/Triple.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/StreamGDBRemote.h"
 #include "lldb/Core/StreamString.h"
@@ -1149,19 +1148,16 @@ GDBRemoteCommunicationServerCommon::Handle_qModuleInfo (StringExtractorGDBRemote
     if (!module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
         return SendErrorResponse (4);
 
-    const ModuleSP module(new Module(matched_module_spec));
-
-    const auto obj_file(module->GetObjectFile());
-    const auto file_offset = obj_file->GetFileOffset();
-    const auto file_size = obj_file->GetByteSize();
+    const auto file_offset = matched_module_spec.GetObjectOffset();
+    const auto file_size = matched_module_spec.GetObjectSize();
+    const auto uuid_str = matched_module_spec.GetUUID().GetAsString("");
 
     StreamGDBRemote response;
 
-    const auto uuid_str = module->GetUUID().GetAsString();
     if (uuid_str.empty())
     {
         std::string md5_hash;
-        if (!FileSystem::CalculateMD5AsString(module_path_spec, file_offset, file_size, md5_hash))
+        if (!FileSystem::CalculateMD5AsString(matched_module_spec.GetFileSpec(), file_offset, file_size, md5_hash))
             return SendErrorResponse (5);
         response.PutCString ("md5:");
         response.PutCStringAsRawHex8(md5_hash.c_str());

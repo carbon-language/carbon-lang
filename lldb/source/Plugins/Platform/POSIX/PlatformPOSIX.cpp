@@ -50,6 +50,17 @@ PlatformPOSIX::~PlatformPOSIX()
 {
 }
 
+bool
+PlatformPOSIX::GetModuleSpec (const FileSpec& module_file_spec,
+                              const ArchSpec& arch,
+                              ModuleSpec &module_spec)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetModuleSpec (module_file_spec, arch, module_spec);
+
+    return Platform::GetModuleSpec (module_file_spec, arch, module_spec);
+}
+
 lldb_private::OptionGroupOptions*
 PlatformPOSIX::GetConnectionOptions (lldb_private::CommandInterpreter& interpreter)
 {

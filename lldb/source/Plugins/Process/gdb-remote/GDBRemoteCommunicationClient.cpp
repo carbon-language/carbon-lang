@@ -3720,5 +3720,6 @@ GDBRemoteCommunicationClient::GetModuleInfo (const char* module_path,
     const auto& tripple = arch_spec.GetTriple().getTriple();
     packet.PutBytesAsRawHex8(tripple.c_str(), tripple.size());
 
-    return SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success;
+    return SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success &&
+        !response.IsErrorResponse ();
 }

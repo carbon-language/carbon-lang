@@ -604,8 +604,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
         {
             if (data_sp)
             {
-                ModuleSpec spec;
-                spec.GetFileSpec() = file;
+                ModuleSpec spec (file);
 
                 const uint32_t sub_type = subTypeFromElfHeader(header);
                 spec.GetArchitecture().SetArchitecture(eArchTypeELF,

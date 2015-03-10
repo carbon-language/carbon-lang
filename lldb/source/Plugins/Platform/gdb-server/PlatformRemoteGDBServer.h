@@ -68,6 +68,11 @@ public:
                        lldb::ModuleSP &module_sp,
                        const lldb_private::FileSpecList *module_search_paths_ptr);
 
+    virtual bool
+    GetModuleSpec (const lldb_private::FileSpec& module_file_spec,
+                   const lldb_private::ArchSpec& arch,
+                   lldb_private::ModuleSpec &module_spec);
+
     virtual const char *
     GetDescription ();
 
@@ -127,7 +132,6 @@ public:
     
     virtual bool
     SetRemoteWorkingDirectory(const lldb_private::ConstString &path);
-    
 
     // Remote subclasses should override this and return a valid instance
     // name if connected.

@@ -995,7 +995,8 @@ ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
                 ModuleSpec spec;
                 spec.GetFileSpec() = file;
                 spec.SetObjectOffset(file_offset);
-                
+                spec.SetObjectSize(length);
+
                 if (GetArchitecture (header, data, data_offset, spec.GetArchitecture()))
                 {
                     if (spec.GetArchitecture().IsValid())

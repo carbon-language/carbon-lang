@@ -27,6 +27,8 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
@@ -196,6 +198,73 @@ PlatformRemoteGDBServer::ResolveExecutable (const ModuleSpec &module_spec,
     return error;
 }
 
+bool
+PlatformRemoteGDBServer::GetModuleSpec (const FileSpec& module_file_spec,
+                                        const ArchSpec& arch,
+                                        ModuleSpec &module_spec)
+{
+    Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
+
+    const auto module_path = module_file_spec.GetPath ();
+
+    StringExtractorGDBRemote response;
+    if (!m_gdb_client.GetModuleInfo (module_path.c_str (), arch, response))
+    {
+        if (log)
+            log->Printf ("PlatformRemoteGDBServer::%s - failed to get module info for %s:%s",
+                         __FUNCTION__, module_path.c_str (), arch.GetTriple ().getTriple ().c_str ());
+        return false;
+    }
+
+    std::string name;
+    std::string value;
+    bool success;
+    StringExtractor extractor;
+
+    module_spec.Clear ();
+    module_spec.GetFileSpec () = module_file_spec;
+
+    while (response.GetNameColonValue (name, value))
+    {
+        if (name == "uuid" || name == "md5")
+        {
+            extractor.GetStringRef ().swap (value);
+            extractor.SetFilePos (0);
+            extractor.GetHexByteString (value);
+            module_spec.GetUUID().SetFromCString (value.c_str(), value.size() / 2);
+        }
+        else if (name == "triple")
+        {
+            extractor.GetStringRef ().swap (value);
+            extractor.SetFilePos (0);
+            extractor.GetHexByteString (value);
+            module_spec.GetArchitecture().SetTriple (value.c_str ());
+        }
+        else if (name == "file_offset")
+        {
+            const auto ival = StringConvert::ToUInt64 (value.c_str (), 0, 16, &success);
+            if (success)
+                module_spec.SetObjectOffset (ival);
+        }
+        else if (name == "file_size")
+        {
+            const auto ival = StringConvert::ToUInt64 (value.c_str (), 0, 16, &success);
+            if (success)
+                module_spec.SetObjectSize (ival);
+        }
+    }
+
+    if (log)
+    {
+        StreamString stream;
+        module_spec.Dump (stream);
+        log->Printf ("PlatformRemoteGDBServer::%s - got module info for (%s:%s) : %s",
+                     __FUNCTION__, module_path.c_str (), arch.GetTriple ().getTriple ().c_str (), stream.GetString ().c_str ());
+    }
+
+    return true;
+}
+
 Error
 PlatformRemoteGDBServer::GetFileWithUUID (const FileSpec &platform_file, 
                                           const UUID *uuid_ptr,
@@ -346,7 +415,6 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
         {
             const char *url = args.GetArgumentAtIndex(0);
             m_gdb_client.SetConnection (new ConnectionFileDescriptor());
-
             // we're going to reuse the hostname when we connect to the debugserver
             std::string scheme;
             int port;
@@ -380,7 +448,6 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
             error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
         }
     }
-
     return error;
 }
 
@@ -840,4 +907,4 @@ void
 PlatformRemoteGDBServer::CalculateTrapHandlerSymbolNames ()
 {   
     m_trap_handlers.push_back (ConstString ("_sigtramp"));
-}   
+}

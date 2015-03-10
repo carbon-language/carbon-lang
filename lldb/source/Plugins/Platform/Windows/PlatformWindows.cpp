@@ -201,6 +201,17 @@ PlatformWindows::~PlatformWindows()
 {
 }
 
+bool
+PlatformWindows::GetModuleSpec (const FileSpec& module_file_spec,
+                                const ArchSpec& arch,
+                                ModuleSpec &module_spec)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetModuleSpec (module_file_spec, arch, module_spec);
+
+    return Platform::GetModuleSpec (module_file_spec, arch, module_spec);
+}
+
 Error
 PlatformWindows::ResolveExecutable (const ModuleSpec &ms,
                                     lldb::ModuleSP &exe_module_sp,

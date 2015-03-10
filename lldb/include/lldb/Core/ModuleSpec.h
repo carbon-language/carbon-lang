@@ -14,6 +14,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/Target/PathMappingList.h"
 
 namespace lldb_private {
@@ -29,6 +30,7 @@ public:
         m_uuid (),
         m_object_name (),
         m_object_offset (0),
+        m_object_size (0),
         m_object_mod_time (),
         m_source_mappings ()
     {
@@ -42,6 +44,7 @@ public:
         m_uuid (),
         m_object_name (),
         m_object_offset (0),
+        m_object_size (file_spec.GetByteSize ()),
         m_object_mod_time (),
         m_source_mappings ()
     {
@@ -55,6 +58,7 @@ public:
         m_uuid (),
         m_object_name (),
         m_object_offset (0),
+        m_object_size (file_spec.GetByteSize ()),
         m_object_mod_time (),
         m_source_mappings ()
     {
@@ -68,6 +72,7 @@ public:
         m_uuid (rhs.m_uuid),
         m_object_name (rhs.m_object_name),
         m_object_offset (rhs.m_object_offset),
+        m_object_size (rhs.m_object_size),
         m_object_mod_time (rhs.m_object_mod_time),
         m_source_mappings (rhs.m_source_mappings)
     {
@@ -85,6 +90,7 @@ public:
             m_uuid = rhs.m_uuid;
             m_object_name = rhs.m_object_name;
             m_object_offset = rhs.m_object_offset;
+            m_object_size = rhs.m_object_size;
             m_object_mod_time = rhs.m_object_mod_time;
             m_source_mappings = rhs.m_source_mappings;
         }
@@ -254,7 +260,19 @@ public:
     {
         m_object_offset = object_offset;
     }
-    
+
+    uint64_t
+    GetObjectSize () const
+    {
+        return m_object_size;
+    }
+
+    void
+    SetObjectSize (uint64_t object_size)
+    {
+        m_object_size = object_size;
+    }
+
     TimeValue &
     GetObjectModificationTime ()
     {
@@ -283,6 +301,7 @@ public:
         m_uuid.Clear();
         m_object_name.Clear();
         m_object_offset = 0;
+        m_object_size = 0;
         m_source_mappings.Clear(false);
         m_object_mod_time.Clear();
     }
@@ -301,6 +320,8 @@ public:
         if (m_uuid.IsValid())
             return true;
         if (m_object_name)
+            return true;
+        if (m_object_size)
             return true;
         if (m_object_mod_time.IsValid())
             return true;
@@ -362,7 +383,14 @@ public:
         {
             if (dumped_something)
                 strm.PutCString(", ");
-            strm.Printf("object_offset = 0x%" PRIx64, m_object_offset);
+            strm.Printf("object_offset = %" PRIu64, m_object_offset);
+            dumped_something = true;
+        }
+        if (m_object_size > 0)
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.Printf("object size = %" PRIu64, m_object_size);
             dumped_something = true;
         }
         if (m_object_mod_time.IsValid())
@@ -425,6 +453,7 @@ protected:
     UUID m_uuid;
     ConstString m_object_name;
     uint64_t m_object_offset;
+    uint64_t m_object_size;
     TimeValue m_object_mod_time;
     mutable PathMappingList m_source_mappings;
 };

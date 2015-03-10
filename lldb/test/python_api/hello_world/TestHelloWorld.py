@@ -46,7 +46,6 @@ class HelloWorldTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_id_api()
 
-    @not_remote_testsuite_ready
     @python_api_test
     @dwarf_test
     @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
@@ -56,7 +55,7 @@ class HelloWorldTestCase(TestBase):
         Use dwarf map (no dsym) and attach to process with id API.
         """
         self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
+        #self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_id_api()
 
     @not_remote_testsuite_ready
@@ -72,7 +71,6 @@ class HelloWorldTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_name_api()
 
-    @not_remote_testsuite_ready
     @python_api_test
     @dwarf_test
     @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly

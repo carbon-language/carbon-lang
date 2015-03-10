@@ -98,6 +98,8 @@
 		254FBB971A81B03100BD6378 /* SBLaunchInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 254FBB961A81B03100BD6378 /* SBLaunchInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		254FBBA31A9166F100BD6378 /* SBAttachInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 254FBBA21A9166F100BD6378 /* SBAttachInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		254FBBA51A91670E00BD6378 /* SBAttachInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */; };
+		257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 257E47151AA56C2000A62F81 /* ModuleCache.cpp */; };
+		257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 257E47161AA56C2000A62F81 /* ModuleCache.h */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		260157C81885F53100F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		2606EDDF184E68A10034641B /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
@@ -1213,6 +1215,8 @@
 		254FBBA21A9166F100BD6378 /* SBAttachInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBAttachInfo.h; path = include/lldb/API/SBAttachInfo.h; sourceTree = "<group>"; };
 		254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBAttachInfo.cpp; path = source/API/SBAttachInfo.cpp; sourceTree = "<group>"; };
 		254FBBA61A91672800BD6378 /* SBAttachInfo.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBAttachInfo.i; sourceTree = "<group>"; };
+		257E47151AA56C2000A62F81 /* ModuleCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleCache.cpp; path = source/Utility/ModuleCache.cpp; sourceTree = "<group>"; };
+		257E47161AA56C2000A62F81 /* ModuleCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ModuleCache.h; path = source/Utility/ModuleCache.h; sourceTree = "<group>"; };
 		260157C41885F4FF00F875CF /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = /usr/lib/libpanel.dylib; sourceTree = "<absolute>"; };
 		260223E7115F06D500A601A2 /* SBCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommunication.h; path = include/lldb/API/SBCommunication.h; sourceTree = "<group>"; };
 		260223E8115F06E500A601A2 /* SBCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommunication.cpp; path = source/API/SBCommunication.cpp; sourceTree = "<group>"; };
@@ -3448,6 +3452,8 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				257E47151AA56C2000A62F81 /* ModuleCache.cpp */,
+				257E47161AA56C2000A62F81 /* ModuleCache.h */,
 				33064C9B1A5C7A490033D415 /* UriParser.h */,
 				33064C991A5C7A330033D415 /* UriParser.cpp */,
 				AF9107E91685709A00DBCD3C /* ARM64_GCC_Registers.h */,
@@ -5212,6 +5218,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */,
+				257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */,
 				26BC17AC18C7F4CB00D2196D /* ProcessElfCore.h in Headers */,
 				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
 				26474CD318D0CB710073DEBA /* RegisterInfos_i386.h in Headers */,
@@ -5976,6 +5983,7 @@
 				25420ED21A649D88009ADBCB /* PipeBase.cpp in Sources */,
 				2689007313353E1A00698AC0 /* Symbols.cpp in Sources */,
 				26474CBC18D0CB2D0073DEBA /* RegisterContextMach_arm.cpp in Sources */,
+				257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */,
 				2689007413353E1A00698AC0 /* Terminal.cpp in Sources */,
 				2689007513353E1A00698AC0 /* TimeValue.cpp in Sources */,
 				2689007613353E1A00698AC0 /* CFCBundle.cpp in Sources */,

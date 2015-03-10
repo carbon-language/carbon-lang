@@ -697,6 +697,10 @@ Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton) :
                                      ConstString("Settings specify to debugging targets."),
                                      true,
                                      Target::GetGlobalProperties()->GetValueProperties());
+    m_collection_sp->AppendProperty (ConstString("platform"),
+                                     ConstString("Platform settings."),
+                                     true,
+                                     Platform::GetGlobalPlatformProperties()->GetValueProperties());
     if (m_command_interpreter_ap.get())
     {
         m_collection_sp->AppendProperty (ConstString("interpreter"),

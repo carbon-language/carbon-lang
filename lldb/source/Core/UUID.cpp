@@ -234,7 +234,10 @@ UUID::SetFromCString (const char *cstr, uint32_t num_uuid_bytes)
     // If we successfully decoded a UUID, return the amount of characters that
     // were consumed
     if (uuid_byte_idx == num_uuid_bytes)
+    {
+        m_num_uuid_bytes = num_uuid_bytes;
         return p - cstr;
+    }
 
     // Else return zero to indicate we were not able to parse a UUID value
     return 0;

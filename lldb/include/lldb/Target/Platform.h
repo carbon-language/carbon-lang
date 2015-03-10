@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Core/UserSettingsController.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Host/Mutex.h"
 
@@ -31,6 +33,29 @@
 #include "lldb/Host/common/NativeProcessProtocol.h"
 
 namespace lldb_private {
+
+class ModuleCache;
+
+    class PlatformProperties : public Properties
+    {
+    public:
+        static ConstString
+        GetSettingName ();
+
+        PlatformProperties();
+
+        bool
+        GetUseModuleCache () const;
+        bool
+        SetUseModuleCache (bool use_module_cache);
+
+        FileSpec
+        GetModuleCacheDirectory () const;
+        bool
+        SetModuleCacheDirectory (const FileSpec& dir_spec);
+    };
+
+    typedef std::shared_ptr<PlatformProperties> PlatformPropertiesSP;
 
     //----------------------------------------------------------------------
     /// @class Platform Platform.h "lldb/Target/Platform.h"
@@ -49,12 +74,14 @@ namespace lldb_private {
         public PluginInterface
     {
     public:
-
         static void
         Initialize ();
 
         static void
         Terminate ();
+
+        static const PlatformPropertiesSP &
+        GetGlobalPlatformProperties ();
 
         //------------------------------------------------------------------
         /// Get the native host platform plug-in.
@@ -349,6 +376,11 @@ namespace lldb_private {
                          const FileSpecList *module_search_paths_ptr,
                          lldb::ModuleSP *old_module_sp_ptr,
                          bool *did_create_ptr);
+
+        virtual bool
+        GetModuleSpec (const FileSpec& module_file_spec,
+                       const ArchSpec& arch,
+                       ModuleSpec &module_spec);
 
         virtual Error
         ConnectRemote (Args& args);
@@ -988,6 +1020,7 @@ namespace lldb_private {
         std::string m_local_cache_directory;
         std::vector<ConstString> m_trap_handlers;
         bool m_calculated_trap_handlers;
+        const std::unique_ptr<ModuleCache> m_module_cache;
 
         //------------------------------------------------------------------
         /// Ask the Platform subclass to fill in the list of trap handler names
@@ -1089,6 +1122,22 @@ namespace lldb_private {
             Mutex::Locker locker (m_mutex);
             m_gid_map.clear();
         }
+
+        bool
+        GetCachedSharedModule (const ModuleSpec &module_spec,
+                               lldb::ModuleSP &module_sp);
+
+        Error
+        DownloadModuleSlice (const FileSpec& src_file_spec,
+                             const uint64_t src_offset,
+                             const uint64_t src_size,
+                             const FileSpec& dst_file_spec);
+
+        bool
+        GetFileFromLocalCache (const ModuleSpec& module_spec,
+                               FileSpec &cached_file_spec);
+
+        FileSpec GetModuleCacheRoot ();
 
     private:
         DISALLOW_COPY_AND_ASSIGN (Platform);
