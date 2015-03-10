@@ -3272,26 +3272,17 @@ defm L4_return: LD_MISC_L4_RETURN <"dealloc_return">, PredNewRel;
 // Restore registers and dealloc return function call.
 let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
     Defs = [R29, R30, R31, PC], isPredicable = 0, isAsmParserOnly = 1 in {
-  def RESTORE_DEALLOC_RET_JMP_V4 : JInst<(outs),
-                                   (ins calltarget:$dst),
-             "jump $dst",
-             []>;
+  def RESTORE_DEALLOC_RET_JMP_V4 : T_JMP<"">;
 }
 
 // Restore registers and dealloc frame before a tail call.
 let isCall = 1, Defs = [R29, R30, R31, PC], isAsmParserOnly = 1 in {
-  def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : JInst<(outs),
-                                           (ins calltarget:$dst),
-             "call $dst",
-             []>;
+  def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : T_Call<"">, PredRel;
 }
 
 // Save registers function call.
 let isCall = 1, Uses = [R29, R31], isAsmParserOnly = 1 in {
-  def SAVE_REGISTERS_CALL_V4 : JInst<(outs),
-                               (ins calltarget:$dst),
-             "call $dst // Save_calle_saved_registers",
-             []>;
+  def SAVE_REGISTERS_CALL_V4 : T_Call<"">, PredRel;
 }
 
 //===----------------------------------------------------------------------===//
