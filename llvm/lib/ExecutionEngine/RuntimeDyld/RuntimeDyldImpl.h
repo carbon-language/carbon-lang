@@ -164,24 +164,27 @@ public:
   }
 };
 
-/// @brief Symbol info for RuntimeDyld. 
-class SymbolTableEntry : public JITSymbolBase {
+/// @brief Symbol info for RuntimeDyld.
+class SymbolInfo {
 public:
-  SymbolTableEntry()
-    : JITSymbolBase(JITSymbolFlags::None), Offset(0), SectionID(0) {}
+  typedef enum { Hidden = 0, Default = 1 } Visibility;
 
-  SymbolTableEntry(unsigned SectionID, uint64_t Offset, JITSymbolFlags Flags)
-    : JITSymbolBase(Flags), Offset(Offset), SectionID(SectionID) {}
+  SymbolInfo() : Offset(0), SectionID(0), Vis(Hidden) {}
+
+  SymbolInfo(unsigned SectionID, uint64_t Offset, Visibility Vis)
+    : Offset(Offset), SectionID(SectionID), Vis(Vis) {}
 
   unsigned getSectionID() const { return SectionID; }
   uint64_t getOffset() const { return Offset; }
+  Visibility getVisibility() const { return Vis; }
 
 private:
   uint64_t Offset;
-  unsigned SectionID;
+  unsigned SectionID : 31;
+  Visibility Vis : 1;
 };
 
-typedef StringMap<SymbolTableEntry> RTDyldSymbolTable;
+typedef StringMap<SymbolInfo> RTDyldSymbolTable;
 
 class RuntimeDyldImpl {
   friend class RuntimeDyld::LoadedObjectInfo;
@@ -391,7 +394,7 @@ public:
   virtual std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
   loadObject(const object::ObjectFile &Obj) = 0;
 
-  uint8_t* getSymbolLocalAddress(StringRef Name) const {
+  uint8_t* getSymbolAddress(StringRef Name) const {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
     RTDyldSymbolTable::const_iterator pos = GlobalSymbolTable.find(Name);
@@ -401,16 +404,24 @@ public:
     return getSectionAddress(SymInfo.getSectionID()) + SymInfo.getOffset();
   }
 
-  RuntimeDyld::SymbolInfo getSymbol(StringRef Name) const {
+  uint64_t getSymbolLoadAddress(StringRef Name) const {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
     RTDyldSymbolTable::const_iterator pos = GlobalSymbolTable.find(Name);
     if (pos == GlobalSymbolTable.end())
-      return nullptr;
-    const auto &SymEntry = pos->second;
-    uint64_t TargetAddr =
-      getSectionLoadAddress(SymEntry.getSectionID()) + SymEntry.getOffset();
-    return RuntimeDyld::SymbolInfo(TargetAddr, SymEntry.getFlags());
+      return 0;
+    const auto &SymInfo = pos->second;
+    return getSectionLoadAddress(SymInfo.getSectionID()) + SymInfo.getOffset();
+  }
+
+  uint64_t getExportedSymbolLoadAddress(StringRef Name) const {
+    RTDyldSymbolTable::const_iterator pos = GlobalSymbolTable.find(Name);
+    if (pos == GlobalSymbolTable.end())
+      return 0;
+    const auto &SymInfo = pos->second;
+    if (SymInfo.getVisibility() == SymbolInfo::Hidden)
+      return 0;
+    return getSectionLoadAddress(SymInfo.getSectionID()) + SymInfo.getOffset();
   }
 
   void resolveRelocations();

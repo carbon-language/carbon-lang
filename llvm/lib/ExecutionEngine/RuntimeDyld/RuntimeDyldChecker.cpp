@@ -310,7 +310,7 @@ private:
           "");
 
     uint64_t SymbolAddr = PCtx.IsInsideLoad
-                              ? Checker.getSymbolLocalAddr(Symbol)
+                              ? Checker.getSymbolLinkerAddr(Symbol)
                               : Checker.getSymbolRemoteAddr(Symbol);
     uint64_t NextPC = SymbolAddr + InstSize;
 
@@ -437,7 +437,7 @@ private:
     // The value for the symbol depends on the context we're evaluating in:
     // Inside a load this is the address in the linker's memory, outside a
     // load it's the address in the target processes memory.
-    uint64_t Value = PCtx.IsInsideLoad ? Checker.getSymbolLocalAddr(Symbol)
+    uint64_t Value = PCtx.IsInsideLoad ? Checker.getSymbolLinkerAddr(Symbol)
                                        : Checker.getSymbolRemoteAddr(Symbol);
 
     // Looks like a plain symbol reference.
@@ -727,17 +727,17 @@ bool RuntimeDyldCheckerImpl::checkAllRulesInBuffer(StringRef RulePrefix,
 }
 
 bool RuntimeDyldCheckerImpl::isSymbolValid(StringRef Symbol) const {
-  return getRTDyld().getSymbolLocalAddress(Symbol) != nullptr;
+  return getRTDyld().getSymbolAddress(Symbol) != nullptr;
 }
 
-uint64_t RuntimeDyldCheckerImpl::getSymbolLocalAddr(StringRef Symbol) const {
+uint64_t RuntimeDyldCheckerImpl::getSymbolLinkerAddr(StringRef Symbol) const {
   return static_cast<uint64_t>(
-      reinterpret_cast<uintptr_t>(getRTDyld().getSymbolLocalAddress(Symbol)));
+      reinterpret_cast<uintptr_t>(getRTDyld().getSymbolAddress(Symbol)));
 }
 
 uint64_t RuntimeDyldCheckerImpl::getSymbolRemoteAddr(StringRef Symbol) const {
-  if (auto InternalSymbol = getRTDyld().getSymbol(Symbol))
-    return InternalSymbol.getAddress();
+  if (uint64_t InternalSymbolAddr = getRTDyld().getSymbolLoadAddress(Symbol))
+      return InternalSymbolAddr;
   return getRTDyld().MemMgr->getSymbolAddress(Symbol);
 }
 
@@ -929,6 +929,6 @@ bool RuntimeDyldChecker::checkAllRulesInBuffer(StringRef RulePrefix,
 
 std::pair<uint64_t, std::string>
 RuntimeDyldChecker::getSectionAddr(StringRef FileName, StringRef SectionName,
-                                   bool LocalAddress) {
-  return Impl->getSectionAddr(FileName, SectionName, LocalAddress);
+                                   bool LinkerAddress) {
+  return Impl->getSectionAddr(FileName, SectionName, LinkerAddress);
 }

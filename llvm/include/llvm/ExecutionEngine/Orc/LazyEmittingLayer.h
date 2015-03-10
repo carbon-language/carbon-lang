@@ -45,25 +45,23 @@ private:
     JITSymbol find(StringRef Name, bool ExportedSymbolsOnly, BaseLayerT &B) {
       switch (EmitState) {
       case NotEmitted:
-        if (auto GV = searchGVs(Name, ExportedSymbolsOnly)) {
+        if (provides(Name, ExportedSymbolsOnly)) {
           // Create a std::string version of Name to capture here - the argument
           // (a StringRef) may go away before the lambda is executed.
           // FIXME: Use capture-init when we move to C++14. 
-          auto PName = Name;
-          JITSymbolFlags Flags = JITSymbolBase::flagsFromGlobalValue(*GV);
-          auto GetAddress = 
-            [this, ExportedSymbolsOnly, PName, &B]() -> TargetAddress {
-              if (this->EmitState == Emitting)
-                return 0;
-              else if (this->EmitState == NotEmitted) {
-                this->EmitState = Emitting;
-                Handle = this->emitToBaseLayer(B);
-                this->EmitState = Emitted;
-              }
-              auto Sym = B.findSymbolIn(Handle, PName, ExportedSymbolsOnly);
-              return Sym.getAddress();
-          };
-          return JITSymbol(std::move(GetAddress), Flags);
+          std::string PName = Name;
+          return JITSymbol(
+              [this, ExportedSymbolsOnly, PName, &B]() -> TargetAddress {
+                if (this->EmitState == Emitting)
+                  return 0;
+                else if (this->EmitState == NotEmitted) {
+                  this->EmitState = Emitting;
+                  Handle = this->emitToBaseLayer(B);
+                  this->EmitState = Emitted;
+                }
+                return B.findSymbolIn(Handle, PName, ExportedSymbolsOnly)
+                          .getAddress();
+              });
         } else
           return nullptr;
       case Emitting:
@@ -100,8 +98,7 @@ private:
            std::unique_ptr<RTDyldMemoryManager> MM);
 
   protected:
-    virtual const GlobalValue* searchGVs(StringRef Name,
-                                         bool ExportedSymbolsOnly) const = 0;
+    virtual bool provides(StringRef Name, bool ExportedSymbolsOnly) const = 0;
     virtual BaseLayerHandleT emitToBaseLayer(BaseLayerT &BaseLayer) = 0;
 
   private:
@@ -118,48 +115,46 @@ private:
 
   protected:
 
-    const GlobalValue* searchGVs(StringRef Name,
-                                 bool ExportedSymbolsOnly) const override {
+    BaseLayerHandleT emitToBaseLayer(BaseLayerT &BaseLayer) override {
+      // We don't need the mangled names set any more: Once we've emitted this
+      // to the base layer we'll just look for symbols there.
+      MangledNames.reset();
+      return BaseLayer.addModuleSet(std::move(Ms), std::move(MM));
+    }
+
+    bool provides(StringRef Name, bool ExportedSymbolsOnly) const override {
       // FIXME: We could clean all this up if we had a way to reliably demangle
       //        names: We could just demangle name and search, rather than
       //        mangling everything else.
 
       // If we have already built the mangled name set then just search it.
-      if (MangledSymbols) {
-        auto VI = MangledSymbols->find(Name);
-        if (VI == MangledSymbols->end())
-          return nullptr;
-        auto GV = VI->second;
-        if (!ExportedSymbolsOnly || GV->hasDefaultVisibility())
-          return GV;
-        return nullptr;
+      if (MangledNames) {
+        auto VI = MangledNames->find(Name);
+        if (VI == MangledNames->end())
+          return false;
+        return !ExportedSymbolsOnly || VI->second;
       }
 
       // If we haven't built the mangled name set yet, try to build it. As an
       // optimization this will leave MangledNames set to nullptr if we find
       // Name in the process of building the set.
-      return buildMangledSymbols(Name, ExportedSymbolsOnly);
-    }
-
-    BaseLayerHandleT emitToBaseLayer(BaseLayerT &BaseLayer) override {
-      // We don't need the mangled names set any more: Once we've emitted this
-      // to the base layer we'll just look for symbols there.
-      MangledSymbols.reset();
-      return BaseLayer.addModuleSet(std::move(Ms), std::move(MM));
+      buildMangledNames(Name, ExportedSymbolsOnly);
+      if (!MangledNames)
+        return true;
+      return false;
     }
 
   private:
     // If the mangled name of the given GlobalValue matches the given search
     // name (and its visibility conforms to the ExportedSymbolsOnly flag) then
-    // return the symbol. Otherwise, add the mangled name to the Names map and
-    // return nullptr.
-    const GlobalValue* addGlobalValue(StringMap<const GlobalValue*> &Names,
-                                      const GlobalValue &GV,
-                                      const Mangler &Mang, StringRef SearchName,
-                                      bool ExportedSymbolsOnly) const {
+    // just return 'true'. Otherwise, add the mangled name to the Names map and
+    // return 'false'.
+    bool addGlobalValue(StringMap<bool> &Names, const GlobalValue &GV,
+                        const Mangler &Mang, StringRef SearchName,
+                        bool ExportedSymbolsOnly) const {
       // Modules don't "provide" decls or common symbols.
       if (GV.isDeclaration() || GV.hasCommonLinkage())
-        return nullptr;
+        return false;
 
       // Mangle the GV name.
       std::string MangledName;
@@ -172,42 +167,39 @@ private:
       // bail out early.
       if (MangledName == SearchName)
         if (!ExportedSymbolsOnly || GV.hasDefaultVisibility())
-          return &GV;
+          return true;
 
       // Otherwise add this to the map for later.
-      Names[MangledName] = &GV;
-      return nullptr;
+      Names[MangledName] = GV.hasDefaultVisibility();
+      return false;
     }
 
-    // Build the MangledSymbols map. Bails out early (with MangledSymbols left set
+    // Build the MangledNames map. Bails out early (with MangledNames left set
     // to nullptr) if the given SearchName is found while building the map.
-    const GlobalValue* buildMangledSymbols(StringRef SearchName,
-                                           bool ExportedSymbolsOnly) const {
-      assert(!MangledSymbols && "Mangled symbols map already exists?");
+    void buildMangledNames(StringRef SearchName,
+                           bool ExportedSymbolsOnly) const {
+      assert(!MangledNames && "Mangled names map already exists?");
 
-      auto Symbols = llvm::make_unique<StringMap<const GlobalValue*>>();
+      auto Names = llvm::make_unique<StringMap<bool>>();
 
       for (const auto &M : Ms) {
         Mangler Mang(&M->getDataLayout());
 
-        for (const auto &V : M->globals())
-          if (auto GV = addGlobalValue(*Symbols, V, Mang, SearchName,
-                                       ExportedSymbolsOnly))
-            return GV;
+        for (const auto &GV : M->globals())
+          if (addGlobalValue(*Names, GV, Mang, SearchName, ExportedSymbolsOnly))
+            return;
 
         for (const auto &F : *M)
-          if (auto GV = addGlobalValue(*Symbols, F, Mang, SearchName,
-                                       ExportedSymbolsOnly))
-            return GV;
+          if (addGlobalValue(*Names, F, Mang, SearchName, ExportedSymbolsOnly))
+            return;
       }
 
-      MangledSymbols = std::move(Symbols);
-      return nullptr;
+      MangledNames = std::move(Names);
     }
 
     ModuleSetT Ms;
     std::unique_ptr<RTDyldMemoryManager> MM;
-    mutable std::unique_ptr<StringMap<const GlobalValue*>> MangledSymbols;
+    mutable std::unique_ptr<StringMap<bool>> MangledNames;
   };
 
   typedef std::list<std::unique_ptr<EmissionDeferredSet>> ModuleSetListT;

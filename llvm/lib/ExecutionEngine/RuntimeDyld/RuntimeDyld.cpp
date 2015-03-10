@@ -197,13 +197,10 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
                      << " SID: " << SectionID << " Offset: "
                      << format("%p", (uintptr_t)SectOffset)
                      << " flags: " << Flags << "\n");
-        JITSymbolFlags RTDyldSymFlags = JITSymbolFlags::None;
-        if (Flags & SymbolRef::SF_Weak)
-          RTDyldSymFlags |= JITSymbolFlags::Weak;
-        if (Flags & SymbolRef::SF_Exported)
-          RTDyldSymFlags |= JITSymbolFlags::Exported;
-        GlobalSymbolTable[Name] =
-          SymbolTableEntry(SectionID, SectOffset, RTDyldSymFlags);
+        SymbolInfo::Visibility Vis =
+          (Flags & SymbolRef::SF_Exported) ?
+            SymbolInfo::Default : SymbolInfo::Hidden;
+        GlobalSymbolTable[Name] = SymbolInfo(SectionID, SectOffset, Vis);
       }
     }
   }
@@ -528,15 +525,12 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
       Offset += AlignOffset;
     }
     uint32_t Flags = Sym.getFlags();
-    JITSymbolFlags RTDyldSymFlags = JITSymbolFlags::None;
-    if (Flags & SymbolRef::SF_Weak)
-      RTDyldSymFlags |= JITSymbolFlags::Weak;
-    if (Flags & SymbolRef::SF_Exported)
-      RTDyldSymFlags |= JITSymbolFlags::Exported;
+    SymbolInfo::Visibility Vis =
+      (Flags & SymbolRef::SF_Exported) ?
+        SymbolInfo::Default : SymbolInfo::Hidden;
     DEBUG(dbgs() << "Allocating common symbol " << Name << " address "
                  << format("%p", Addr) << "\n");
-    GlobalSymbolTable[Name] =
-      SymbolTableEntry(SectionID, Offset, RTDyldSymFlags);
+    GlobalSymbolTable[Name] = SymbolInfo(SectionID, Offset, Vis);
     Offset += Size;
     Addr += Size;
   }
@@ -900,16 +894,22 @@ RuntimeDyld::loadObject(const ObjectFile &Obj) {
   return Dyld->loadObject(Obj);
 }
 
-void *RuntimeDyld::getSymbolLocalAddress(StringRef Name) const {
+void *RuntimeDyld::getSymbolAddress(StringRef Name) const {
   if (!Dyld)
     return nullptr;
-  return Dyld->getSymbolLocalAddress(Name);
+  return Dyld->getSymbolAddress(Name);
 }
 
-RuntimeDyld::SymbolInfo RuntimeDyld::getSymbol(StringRef Name) const {
+uint64_t RuntimeDyld::getSymbolLoadAddress(StringRef Name) const {
   if (!Dyld)
-    return nullptr;
-  return Dyld->getSymbol(Name);
+    return 0;
+  return Dyld->getSymbolLoadAddress(Name);
+}
+
+uint64_t RuntimeDyld::getExportedSymbolLoadAddress(StringRef Name) const {
+  if (!Dyld)
+    return 0;
+  return Dyld->getExportedSymbolLoadAddress(Name);
 }
 
 void RuntimeDyld::resolveRelocations() { Dyld->resolveRelocations(); }
