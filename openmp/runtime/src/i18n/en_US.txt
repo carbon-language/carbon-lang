@@ -313,7 +313,7 @@ OBSOLETE                     "%1$s: OS proc %2$d maps to package %3$d core %4$d 
 OBSOLETE                     "%1$s: OS proc %2$d maps to package %3$d [core %4$d] thread %5$d"
 OBSOLETE                     "%1$s: OS proc %2$d maps to package %3$d core %4$d thread %5$d"
 OSProcMapToPack              "%1$s: OS proc %2$d maps to %3$s"
-ChangeAffMask                "%1$s: Internal thread %2$d changed affinity mask from %3$s to %4$s"
+OBSOLETE                     "%1$s: Internal thread %2$d changed affinity mask from %3$s to %4$s"
 OBSOLETE                     "%1$s: OS proc %2$d maps to package %3$d, CPU %4$d, TPU %5$d"
 OBSOLETE                     "%1$s: OS proc %2$d maps to package %3$d, CPU %4$d"
 OBSOLETE                     "%1$s: HT enabled; %2$d packages; %3$d TPU; %4$d TPUs per package"

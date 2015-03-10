@@ -499,6 +499,55 @@ __kmp_test_then_and8( volatile kmp_int8 *p, kmp_int8 d )
     }
 }
 
+
+/*
+ * Change thread to the affinity mask pointed to by affin_mask argument
+ * and return a pointer to the old value in the old_mask argument, if argument
+ * is non-NULL.
+ */
+
+void
+__kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
+                                   kmp_affin_mask_t *old_mask )
+{
+    KMP_DEBUG_ASSERT( gtid == __kmp_get_gtid() );
+    if ( KMP_AFFINITY_CAPABLE() ) {
+        int status;
+        kmp_info_t  *th = __kmp_threads[ gtid ];
+
+        KMP_DEBUG_ASSERT( new_mask != NULL );
+
+        if ( old_mask != NULL ) {
+            status = __kmp_get_system_affinity( old_mask, TRUE );
+            int error = errno;
+            if ( status != 0 ) {
+                __kmp_msg(
+                    kmp_ms_fatal,
+                    KMP_MSG( ChangeThreadAffMaskError ),
+                    KMP_ERR( error ),
+                    __kmp_msg_null
+                );
+            }
+        }
+
+        __kmp_set_system_affinity( new_mask, TRUE );
+
+        if (__kmp_affinity_verbose) {
+            char old_buf[KMP_AFFIN_MASK_PRINT_LEN];
+            char new_buf[KMP_AFFIN_MASK_PRINT_LEN];
+            __kmp_affinity_print_mask(old_buf, KMP_AFFIN_MASK_PRINT_LEN, old_mask);
+            __kmp_affinity_print_mask(new_buf, KMP_AFFIN_MASK_PRINT_LEN, new_mask);
+            KMP_INFORM( ChangeAffMask, "KMP_AFFINITY (Bind)", gtid, old_buf, new_buf );
+
+        }
+
+        /* Make sure old value is correct in thread data structures */
+        KMP_DEBUG_ASSERT( old_mask != NULL && (memcmp(old_mask,
+          th->th.th_affin_mask, __kmp_affin_mask_size) == 0) );
+        KMP_CPU_COPY( th->th.th_affin_mask, new_mask );
+    }
+}
+
 #endif // KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
 
 /* ------------------------------------------------------------------------ */

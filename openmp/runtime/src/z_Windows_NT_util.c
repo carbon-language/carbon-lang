@@ -1155,46 +1155,6 @@ __kmp_read_system_time( double *delta )
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
-/*
- * Change thread to the affinity mask pointed to by affin_mask argument
- * and return a pointer to the old value in the old_mask argument, if argument
- * is non-NULL.
- */
-
-void
-__kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
-                                   kmp_affin_mask_t *old_mask )
-{
-    kmp_info_t  *th = __kmp_threads[ gtid ];
-
-    KMP_DEBUG_ASSERT( *new_mask != 0 );
-
-    if ( old_mask != NULL ) {
-        *old_mask = SetThreadAffinityMask( th -> th.th_info.ds.ds_thread, *new_mask );
-
-        if (! *old_mask ) {
-            DWORD error = GetLastError();
-            __kmp_msg(
-                kmp_ms_fatal,
-                KMP_MSG( CantSetThreadAffMask ),
-                KMP_ERR( error ),
-                __kmp_msg_null
-            );
-        }
-    }
-    if (__kmp_affinity_verbose)
-            KMP_INFORM( ChangeAffMask, "KMP_AFFINITY (Bind)", gtid, *old_mask, *new_mask );
-
-    /* Make sure old value is correct in thread data structures */
-    KMP_DEBUG_ASSERT( old_mask != NULL && *old_mask == *(th -> th.th_affin_mask ));
-
-    KMP_CPU_COPY(th -> th.th_affin_mask, new_mask);
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------ */
-
 void * __stdcall
 __kmp_launch_worker( void *arg )
 {
