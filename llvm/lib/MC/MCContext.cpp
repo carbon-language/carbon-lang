@@ -236,10 +236,11 @@ MCSymbol *MCContext::LookupSymbol(const Twine &Name) const {
 // Section Management
 //===----------------------------------------------------------------------===//
 
-const MCSectionMachO *MCContext::
-getMachOSection(StringRef Segment, StringRef Section,
-                unsigned TypeAndAttributes,
-                unsigned Reserved2, SectionKind Kind) {
+const MCSectionMachO *MCContext::getMachOSection(StringRef Segment,
+                                                 StringRef Section,
+                                                 unsigned TypeAndAttributes,
+                                                 unsigned Reserved2,
+                                                 SectionKind Kind) {
 
   // We unique sections by their segment/section pair.  The returned section
   // may not have the same flags as the requested section, if so this should be
@@ -253,7 +254,8 @@ getMachOSection(StringRef Segment, StringRef Section,
 
   // Do the lookup, if we have a hit, return it.
   const MCSectionMachO *&Entry = MachOUniquingMap[Name.str()];
-  if (Entry) return Entry;
+  if (Entry)
+    return Entry;
 
   // Otherwise, return a new section.
   return Entry = new (*this) MCSectionMachO(Segment, Section, TypeAndAttributes,
@@ -345,9 +347,9 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
   return Result;
 }
 
-const MCSectionCOFF *
-MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
-                          SectionKind Kind) {
+const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
+                                               unsigned Characteristics,
+                                               SectionKind Kind) {
   return getCOFFSection(Section, Characteristics, Kind, "", 0);
 }
 
