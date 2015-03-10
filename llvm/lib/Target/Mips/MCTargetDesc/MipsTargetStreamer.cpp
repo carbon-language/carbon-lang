@@ -382,7 +382,6 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
                                              const MCSubtargetInfo &STI)
     : MipsTargetStreamer(S), MicroMipsEnabled(false), STI(STI) {
   MCAssembler &MCA = getStreamer().getAssembler();
-  Triple T(STI.getTargetTriple());
   Pic = (MCA.getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_)
             ? true
             : false;
