@@ -10,3 +10,5 @@ set_target_properties(GPURuntime
   LINKER_LANGUAGE C
   PREFIX "lib"
   )
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
