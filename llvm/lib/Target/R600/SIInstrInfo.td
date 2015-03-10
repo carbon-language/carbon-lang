@@ -1975,6 +1975,21 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
                              "$glc"#"$slc"#"$tfe", []>;
     } // end offen = 1, idxen = 0
 
+    let offen = 0, idxen = 1 in {
+      defm _IDXEN  : MUBUF_m <op, name#"_idxen", (outs),
+                           (ins vdataClass:$vdata, VGPR_32:$vaddr, SReg_128:$srsrc,
+                           SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc,
+                           slc:$slc, tfe:$tfe),
+                           name#" $vdata, $vaddr, $srsrc, $soffset idxen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
+    }
+
+    let offen = 1, idxen = 1 in {
+      defm _BOTHEN : MUBUF_m <op, name#"_bothen", (outs),
+                           (ins vdataClass:$vdata, VReg_64:$vaddr, SReg_128:$srsrc, SCSrc_32:$soffset,
+                           mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
+                           name#" $vdata, $vaddr, $srsrc, $soffset idxen offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
+    }
+
     let offen = 0, idxen = 0 in {
       defm _ADDR64 : MUBUFAddr64_m <op, name#"_addr64", (outs),
                                     (ins vdataClass:$vdata, VReg_64:$vaddr, SReg_128:$srsrc,
