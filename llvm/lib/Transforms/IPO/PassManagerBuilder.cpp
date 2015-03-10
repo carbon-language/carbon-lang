@@ -311,8 +311,7 @@ void PassManagerBuilder::populateModulePassManager(
   // Re-rotate loops in all our loop nests. These may have fallout out of
   // rotated form due to GVN or other transformations, and the vectorizer relies
   // on the rotated form.
-  if (ExtraVectorizerPasses)
-    MPM.add(createLoopRotatePass());
+  MPM.add(createLoopRotatePass());
 
   MPM.add(createLoopVectorizePass(DisableUnrollLoops, LoopVectorize));
   // FIXME: Because of #pragma vectorize enable, the passes below are always
