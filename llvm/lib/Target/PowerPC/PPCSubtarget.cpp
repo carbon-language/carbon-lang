@@ -95,6 +95,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasLazyResolverStubs = false;
   HasICBT = false;
   HasInvariantFunctionDescriptors = false;
+  HasPartwordAtomics = false;
   IsQPXStackUnaligned = false;
 }
 

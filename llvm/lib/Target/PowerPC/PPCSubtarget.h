@@ -114,6 +114,7 @@ protected:
   bool IsLittleEndian;
   bool HasICBT;
   bool HasInvariantFunctionDescriptors;
+  bool HasPartwordAtomics;
 
   /// When targeting QPX running a stock PPC64 Linux kernel where the stack
   /// alignment has not been changed, we need to keep the 16-byte alignment
@@ -236,6 +237,7 @@ public:
   bool hasInvariantFunctionDescriptors() const {
     return HasInvariantFunctionDescriptors;
   }
+  bool hasPartwordAtomics() const { return HasPartwordAtomics; }
 
   bool isQPXStackUnaligned() const { return IsQPXStackUnaligned; }
   unsigned getPlatformStackAlignment() const {

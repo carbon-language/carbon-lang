@@ -113,12 +113,14 @@ def FeatureP8Altivec : SubtargetFeature<"power8-altivec", "HasP8Altivec", "true"
                                         "Enable POWER8 Altivec instructions",
                                         [FeatureAltivec]>;
 def FeatureP8Crypto : SubtargetFeature<"crypto", "HasP8Crypto", "true",
-                                        "Enable POWER8 Crypto instructions",
-                                        [FeatureP8Altivec]>;
+                                       "Enable POWER8 Crypto instructions",
+                                       [FeatureP8Altivec]>;
 def FeatureP8Vector  : SubtargetFeature<"power8-vector", "HasP8Vector", "true",
                                         "Enable POWER8 vector instructions",
                                         [FeatureVSX, FeatureP8Altivec]>;
-
+def FeaturePartwordAtomic : SubtargetFeature<"partword-atomics",
+                                             "HasPartwordAtomics", "true",
+                                             "Enable l[bh]arx and st[bh]cx.">;
 def FeatureInvariantFunctionDescriptors :
   SubtargetFeature<"invariant-function-descriptors",
                    "HasInvariantFunctionDescriptors", "true",
@@ -263,7 +265,7 @@ def ProcessorFeatures {
         FeatureFPRND, FeatureFPCVT, FeatureISEL,
         FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX, FeatureP8Crypto,
         Feature64Bit /*, Feature64BitRegs */, FeatureICBT,
-        DeprecatedMFTB, DeprecatedDST];
+        FeaturePartwordAtomic, DeprecatedMFTB, DeprecatedDST];
 }
 
 def : ProcessorModel<"970", G5Model,
@@ -342,7 +344,7 @@ def : ProcessorModel<"pwr7", P7Model,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
                    FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
-                   Feature64Bit /*, Feature64BitRegs */,
+                   Feature64Bit /*, Feature64BitRegs */, FeaturePartwordAtomic,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr8", P8Model, ProcessorFeatures.Power8FeatureList>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;

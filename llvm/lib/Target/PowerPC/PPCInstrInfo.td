@@ -46,13 +46,6 @@ def SDT_PPCstbrx : SDTypeProfile<0, 3, [
   SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
 ]>;
 
-def SDT_PPClarx : SDTypeProfile<1, 1, [
-  SDTCisInt<0>, SDTCisPtrTy<1>
-]>;
-def SDT_PPCstcx : SDTypeProfile<0, 2, [
-  SDTCisInt<0>, SDTCisPtrTy<1>
-]>;
-
 def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
   SDTCisPtrTy<0>, SDTCisVT<1, i32>
 ]>;
@@ -224,12 +217,6 @@ def PPCcr6set   : SDNode<"PPCISD::CR6SET", SDTNone,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def PPCcr6unset : SDNode<"PPCISD::CR6UNSET", SDTNone,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
-
-// Instructions to support atomic operations
-def PPClarx      : SDNode<"PPCISD::LARX", SDT_PPClarx,
-                          [SDNPHasChain, SDNPMayLoad]>;
-def PPCstcx      : SDNode<"PPCISD::STCX", SDT_PPCstcx,
-                          [SDNPHasChain, SDNPMayStore]>;
 
 // Instructions to support dynamic alloca.
 def SDTDynOp  : SDTypeProfile<1, 2, []>;
@@ -724,7 +711,7 @@ def IsPPC6xx  : Predicate<"PPCSubTarget->isPPC6xx()">;
 def IsE500  : Predicate<"PPCSubTarget->isE500()">;
 def HasSPE  : Predicate<"PPCSubTarget->HasSPE()">;
 def HasICBT : Predicate<"PPCSubTarget->hasICBT()">;
-
+def HasPartwordAtomics : Predicate<"PPCSubTarget->hasPartwordAtomics()">;
 def NoNaNsFPMath : Predicate<"TM.Options.NoNaNsFPMath">;
 def NaNsFPMath   : Predicate<"!TM.Options.NoNaNsFPMath">;
 
@@ -1455,15 +1442,44 @@ let usesCustomInserter = 1 in {
 }
 
 // Instructions to support atomic operations
-def LWARX : XForm_1<31,  20, (outs gprc:$rD), (ins memrr:$src),
-                   "lwarx $rD, $src", IIC_LdStLWARX,
-                   [(set i32:$rD, (PPClarx xoaddr:$src))]>;
+let mayLoad = 1, hasSideEffects = 0 in {
+def LBARX : XForm_1<31,  52, (outs gprc:$rD), (ins memrr:$src),
+                    "lbarx $rD, $src", IIC_LdStLWARX, []>,
+                    Requires<[HasPartwordAtomics]>;
 
-let Defs = [CR0] in
+def LHARX : XForm_1<31,  116, (outs gprc:$rD), (ins memrr:$src),
+                    "lharx $rD, $src", IIC_LdStLWARX, []>,
+                    Requires<[HasPartwordAtomics]>;
+
+def LWARX : XForm_1<31,  20, (outs gprc:$rD), (ins memrr:$src),
+                    "lwarx $rD, $src", IIC_LdStLWARX, []>;
+
+// Instructions to support lock versions of atomics
+// (EH=1 - see Power ISA 2.07 Book II 4.4.2)
+def LBARXL : XForm_1<31,  52, (outs gprc:$rD), (ins memrr:$src),
+                     "lbarx $rD, $src, 1", IIC_LdStLWARX, []>, isDOT,
+                     Requires<[HasPartwordAtomics]>;
+
+def LHARXL : XForm_1<31,  116, (outs gprc:$rD), (ins memrr:$src),
+                     "lharx $rD, $src, 1", IIC_LdStLWARX, []>, isDOT,
+                     Requires<[HasPartwordAtomics]>;
+
+def LWARXL : XForm_1<31,  20, (outs gprc:$rD), (ins memrr:$src),
+                     "lwarx $rD, $src, 1", IIC_LdStLWARX, []>, isDOT;
+}
+
+let Defs = [CR0], mayStore = 1, hasSideEffects = 0 in {
+def STBCX : XForm_1<31, 694, (outs), (ins gprc:$rS, memrr:$dst),
+                    "stbcx. $rS, $dst", IIC_LdStSTWCX, []>,
+                    isDOT, Requires<[HasPartwordAtomics]>;
+
+def STHCX : XForm_1<31, 726, (outs), (ins gprc:$rS, memrr:$dst),
+                    "sthcx. $rS, $dst", IIC_LdStSTWCX, []>,
+                    isDOT, Requires<[HasPartwordAtomics]>;
+
 def STWCX : XForm_1<31, 150, (outs), (ins gprc:$rS, memrr:$dst),
-                   "stwcx. $rS, $dst", IIC_LdStSTWCX,
-                   [(PPCstcx i32:$rS, xoaddr:$dst)]>,
-                   isDOT;
+                    "stwcx. $rS, $dst", IIC_LdStSTWCX, []>, isDOT;
+}
 
 let isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in
 def TRAP  : XForm_24<31, 4, (outs), (ins), "trap", IIC_LdStLoad, [(trap)]>;

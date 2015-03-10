@@ -235,15 +235,19 @@ let usesCustomInserter = 1 in {
 }
 
 // Instructions to support atomic operations
+let mayLoad = 1, hasSideEffects = 0 in {
 def LDARX : XForm_1<31,  84, (outs g8rc:$rD), (ins memrr:$ptr),
-                   "ldarx $rD, $ptr", IIC_LdStLDARX,
-                   [(set i64:$rD, (PPClarx xoaddr:$ptr))]>;
+                    "ldarx $rD, $ptr", IIC_LdStLDARX, []>;
 
-let Defs = [CR0] in
+// Instruction to support lock versions of atomics
+// (EH=1 - see Power ISA 2.07 Book II 4.4.2)
+def LDARXL : XForm_1<31,  84, (outs g8rc:$rD), (ins memrr:$ptr),
+                     "ldarx $rD, $ptr, 1", IIC_LdStLDARX, []>, isDOT;
+}
+
+let Defs = [CR0], mayStore = 1, hasSideEffects = 0 in
 def STDCX : XForm_1<31, 214, (outs), (ins g8rc:$rS, memrr:$dst),
-                   "stdcx. $rS, $dst", IIC_LdStSTDCX,
-                   [(PPCstcx i64:$rS, xoaddr:$dst)]>,
-                   isDOT;
+                    "stdcx. $rS, $dst", IIC_LdStSTDCX, []>, isDOT;
 
 let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in

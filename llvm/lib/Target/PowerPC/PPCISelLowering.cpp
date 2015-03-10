@@ -1002,8 +1002,6 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::STBRX:           return "PPCISD::STBRX";
   case PPCISD::LFIWAX:          return "PPCISD::LFIWAX";
   case PPCISD::LFIWZX:          return "PPCISD::LFIWZX";
-  case PPCISD::LARX:            return "PPCISD::LARX";
-  case PPCISD::STCX:            return "PPCISD::STCX";
   case PPCISD::COND_BRANCH:     return "PPCISD::COND_BRANCH";
   case PPCISD::BDNZ:            return "PPCISD::BDNZ";
   case PPCISD::BDZ:             return "PPCISD::BDZ";
@@ -7788,9 +7786,35 @@ Instruction* PPCTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
 
 MachineBasicBlock *
 PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
-                                    bool is64bit, unsigned BinOpcode) const {
+                                    unsigned AtomicSize,
+                                    unsigned BinOpcode) const {
   // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
+
+  auto LoadMnemonic = PPC::LDARX;
+  auto StoreMnemonic = PPC::STDCX;
+  switch (AtomicSize) {
+  default:
+    llvm_unreachable("Unexpected size of atomic entity");
+  case 1:
+    LoadMnemonic = PPC::LBARX;
+    StoreMnemonic = PPC::STBCX;
+    assert(Subtarget.hasPartwordAtomics() && "Call this only with size >=4");
+    break;
+  case 2:
+    LoadMnemonic = PPC::LHARX;
+    StoreMnemonic = PPC::STHCX;
+    assert(Subtarget.hasPartwordAtomics() && "Call this only with size >=4");
+    break;
+  case 4:
+    LoadMnemonic = PPC::LWARX;
+    StoreMnemonic = PPC::STWCX;
+    break;
+  case 8:
+    LoadMnemonic = PPC::LDARX;
+    StoreMnemonic = PPC::STDCX;
+    break;
+  }
 
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction *F = BB->getParent();
@@ -7813,7 +7837,7 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   MachineRegisterInfo &RegInfo = F->getRegInfo();
   unsigned TmpReg = (!BinOpcode) ? incr :
-    RegInfo.createVirtualRegister( is64bit ? &PPC::G8RCRegClass
+    RegInfo.createVirtualRegister( AtomicSize == 8 ? &PPC::G8RCRegClass
                                            : &PPC::GPRCRegClass);
 
   //  thisMBB:
@@ -7828,11 +7852,11 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //   bne- loopMBB
   //   fallthrough --> exitMBB
   BB = loopMBB;
-  BuildMI(BB, dl, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+  BuildMI(BB, dl, TII->get(LoadMnemonic), dest)
     .addReg(ptrA).addReg(ptrB);
   if (BinOpcode)
     BuildMI(BB, dl, TII->get(BinOpcode), TmpReg).addReg(incr).addReg(dest);
-  BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+  BuildMI(BB, dl, TII->get(StoreMnemonic))
     .addReg(TmpReg).addReg(ptrA).addReg(ptrB);
   BuildMI(BB, dl, TII->get(PPC::BCC))
     .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);
@@ -7850,6 +7874,10 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
                                             MachineBasicBlock *BB,
                                             bool is8bit,    // operation
                                             unsigned BinOpcode) const {
+  // If we support part-word atomic mnemonics, just use them
+  if (Subtarget.hasPartwordAtomics())
+    return EmitAtomicBinary(MI, BB, is8bit ? 1 : 2, BinOpcode);
+
   // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
   // In 64 bit mode we have to use 64 bits for addresses, even though the
@@ -8415,68 +8443,96 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::ADD4);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::ADD4);
+    BB = EmitAtomicBinary(MI, BB, 4, PPC::ADD4);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::ADD8);
+    BB = EmitAtomicBinary(MI, BB, 8, PPC::ADD8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_AND_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::AND);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_AND_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::AND);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_AND_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::AND);
+    BB = EmitAtomicBinary(MI, BB, 4, PPC::AND);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_AND_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::AND8);
+    BB = EmitAtomicBinary(MI, BB, 8, PPC::AND8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_OR_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::OR);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_OR_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::OR);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_OR_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::OR);
+    BB = EmitAtomicBinary(MI, BB, 4, PPC::OR);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_OR_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::OR8);
+    BB = EmitAtomicBinary(MI, BB, 8, PPC::OR8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_XOR_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::XOR);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_XOR_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::XOR);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_XOR_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::XOR);
+    BB = EmitAtomicBinary(MI, BB, 4, PPC::XOR);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_XOR_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::XOR8);
+    BB = EmitAtomicBinary(MI, BB, 8, PPC::XOR8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::NAND);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::NAND);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::NAND);
+    BB = EmitAtomicBinary(MI, BB, 4, PPC::NAND);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_NAND_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::NAND8);
+    BB = EmitAtomicBinary(MI, BB, 8, PPC::NAND8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, PPC::SUBF);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, PPC::SUBF);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I32)
-    BB = EmitAtomicBinary(MI, BB, false, PPC::SUBF);
+    BB = EmitAtomicBinary(MI, BB, 4, PPC::SUBF);
   else if (MI->getOpcode() == PPC::ATOMIC_LOAD_SUB_I64)
-    BB = EmitAtomicBinary(MI, BB, true, PPC::SUBF8);
+    BB = EmitAtomicBinary(MI, BB, 8, PPC::SUBF8);
 
   else if (MI->getOpcode() == PPC::ATOMIC_SWAP_I8)
     BB = EmitPartwordAtomicBinary(MI, BB, true, 0);
   else if (MI->getOpcode() == PPC::ATOMIC_SWAP_I16)
     BB = EmitPartwordAtomicBinary(MI, BB, false, 0);
   else if (MI->getOpcode() == PPC::ATOMIC_SWAP_I32)
-    BB = EmitAtomicBinary(MI, BB, false, 0);
+    BB = EmitAtomicBinary(MI, BB, 4, 0);
   else if (MI->getOpcode() == PPC::ATOMIC_SWAP_I64)
-    BB = EmitAtomicBinary(MI, BB, true, 0);
+    BB = EmitAtomicBinary(MI, BB, 8, 0);
 
   else if (MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I32 ||
-           MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64) {
+           MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64 ||
+           (Subtarget.hasPartwordAtomics() &&
+            MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I8) ||
+           (Subtarget.hasPartwordAtomics() &&
+            MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I16)) {
     bool is64bit = MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64;
 
+    auto LoadMnemonic = PPC::LDARX;
+    auto StoreMnemonic = PPC::STDCX;
+    switch(MI->getOpcode()) {
+    default:
+      llvm_unreachable("Compare and swap of unknown size");
+    case PPC::ATOMIC_CMP_SWAP_I8:
+      LoadMnemonic = PPC::LBARX;
+      StoreMnemonic = PPC::STBCX;
+      assert(Subtarget.hasPartwordAtomics() && "No support partword atomics.");
+      break;
+    case PPC::ATOMIC_CMP_SWAP_I16:
+      LoadMnemonic = PPC::LHARX;
+      StoreMnemonic = PPC::STHCX;
+      assert(Subtarget.hasPartwordAtomics() && "No support partword atomics.");
+      break;
+    case PPC::ATOMIC_CMP_SWAP_I32:
+      LoadMnemonic = PPC::LWARX;
+      StoreMnemonic = PPC::STWCX;
+      break;
+    case PPC::ATOMIC_CMP_SWAP_I64:
+      LoadMnemonic = PPC::LDARX;
+      StoreMnemonic = PPC::STDCX;
+      break;
+    }
     unsigned dest   = MI->getOperand(0).getReg();
     unsigned ptrA   = MI->getOperand(1).getReg();
     unsigned ptrB   = MI->getOperand(2).getReg();
@@ -8502,18 +8558,18 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BB->addSuccessor(loop1MBB);
 
     // loop1MBB:
-    //   l[wd]arx dest, ptr
+    //   l[bhwd]arx dest, ptr
     //   cmp[wd] dest, oldval
     //   bne- midMBB
     // loop2MBB:
-    //   st[wd]cx. newval, ptr
+    //   st[bhwd]cx. newval, ptr
     //   bne- loopMBB
     //   b exitBB
     // midMBB:
-    //   st[wd]cx. dest, ptr
+    //   st[bhwd]cx. dest, ptr
     // exitBB:
     BB = loop1MBB;
-    BuildMI(BB, dl, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+    BuildMI(BB, dl, TII->get(LoadMnemonic), dest)
       .addReg(ptrA).addReg(ptrB);
     BuildMI(BB, dl, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR0)
       .addReg(oldval).addReg(dest);
@@ -8523,7 +8579,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BB->addSuccessor(midMBB);
 
     BB = loop2MBB;
-    BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+    BuildMI(BB, dl, TII->get(StoreMnemonic))
       .addReg(newval).addReg(ptrA).addReg(ptrB);
     BuildMI(BB, dl, TII->get(PPC::BCC))
       .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loop1MBB);
@@ -8532,7 +8588,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BB->addSuccessor(exitMBB);
 
     BB = midMBB;
-    BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+    BuildMI(BB, dl, TII->get(StoreMnemonic))
       .addReg(dest).addReg(ptrA).addReg(ptrB);
     BB->addSuccessor(exitMBB);
 
