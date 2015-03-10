@@ -16,6 +16,7 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_H
 #define LLVM_CODEGEN_ASMPRINTER_H
 
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/IR/InlineAsm.h"
@@ -102,7 +103,7 @@ public:
   /// Map global GOT equivalent MCSymbols to GlobalVariables and keep track of
   /// its number of uses by other globals.
   typedef std::pair<const GlobalVariable *, unsigned> GOTEquivUsePair;
-  DenseMap<const MCSymbol *, GOTEquivUsePair> GlobalGOTEquivs;
+  MapVector<const MCSymbol *, GOTEquivUsePair> GlobalGOTEquivs;
 
 private:
   MCSymbol *CurrentFnBegin;
