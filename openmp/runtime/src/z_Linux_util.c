@@ -416,27 +416,39 @@ __kmp_affinity_determine_capable(const char *env_var)
     }
 }
 
+#endif // KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
 
+/* ------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------ */
+
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && !KMP_OS_CNK
+
+int
+__kmp_futex_determine_capable()
+{
+    int loc = 0;
+    int rc = syscall( __NR_futex, &loc, FUTEX_WAKE, 1, NULL, NULL, 0 );
+    int retval = ( rc == 0 ) || ( errno != ENOSYS );
+
+    KA_TRACE(10, ( "__kmp_futex_determine_capable: rc = %d errno = %d\n", rc,
+      errno ) );
+    KA_TRACE(10, ( "__kmp_futex_determine_capable: futex syscall%s supported\n",
+        retval ? "" : " not" ) );
+
+    return retval;
+}
+
+#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM) && !KMP_OS_CNK
+
+/* ------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------ */
+
+#if (KMP_ARCH_X86 || KMP_ARCH_X86_64) && (! KMP_ASM_INTRINS)
 /*
- * Change thread to the affinity mask pointed to by affin_mask argument
- * and return a pointer to the old value in the old_mask argument, if argument
- * is non-NULL.
+ * Only 32-bit "add-exchange" instruction on IA-32 architecture causes us to
+ * use compare_and_store for these routines
  */
 
-void
-__kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
-                                   kmp_affin_mask_t *old_mask )
-{
-    KMP_DEBUG_ASSERT( gtid == __kmp_get_gtid() );
-    if ( KMP_AFFINITY_CAPABLE() ) {
-        int status;
-        kmp_info_t  *th = __kmp_threads[ gtid ];
-
-        KMP_DEBUG_ASSERT( new_mask != NULL );
-
-        if ( old_mask != NULL ) {
-            status = __kmp_get_system_affinity( old_mask, TRUE );
-            int error = errno;
 kmp_int8
 __kmp_test_then_or8( volatile kmp_int8 *p, kmp_int8 d )
 {
@@ -470,133 +482,6 @@ __kmp_test_then_and8( volatile kmp_int8 *p, kmp_int8 d )
     }
     return old_value;
 }
-
-            if ( status != 0 ) {
-                __kmp_msg(
-                    kmp_ms_fatal,
-                    KMP_MSG( ChangeThreadAffMaskError ),
-                    KMP_ERR( error ),
-                    __kmp_msg_null
-                );
-            }
-        }
-
-        __kmp_set_system_affinity( new_mask, TRUE );
-
-        if (__kmp_affinity_verbose) {
-            char old_buf[KMP_AFFIN_MASK_PRINT_LEN];
-            char new_buf[KMP_AFFIN_MASK_PRINT_LEN];
-            __kmp_affinity_print_mask(old_buf, KMP_AFFIN_MASK_PRINT_LEN, old_mask);
-            __kmp_affinity_print_mask(new_buf, KMP_AFFIN_MASK_PRINT_LEN, new_mask);
-            KMP_INFORM( ChangeAffMask, "KMP_AFFINITY (Bind)", gtid, old_buf, new_buf );
-
-        }
-
-        /* Make sure old value is correct in thread data structures */
-        KMP_DEBUG_ASSERT( old_mask != NULL && (memcmp(old_mask,
-          th->th.th_affin_mask, __kmp_affin_mask_size) == 0) );
-        KMP_CPU_COPY( th->th.th_affin_mask, new_mask );
-    }
-}
-
-
-/*
- * Change thread to the affinity mask pointed to by affin_mask argument
- * and return a pointer to the old value in the old_mask argument, if argument
- * is non-NULL.
- */
-
-void
-__kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
-                                   kmp_affin_mask_t *old_mask )
-{
-    KMP_DEBUG_ASSERT( gtid == __kmp_get_gtid() );
-    if ( KMP_AFFINITY_CAPABLE() ) {
-        int status;
-        kmp_info_t  *th = __kmp_threads[ gtid ];
-
-        KMP_DEBUG_ASSERT( new_mask != NULL );
-
-        if ( old_mask != NULL ) {
-            status = __kmp_get_system_affinity( old_mask, TRUE );
-            int error = errno;
-            if ( status != 0 ) {
-                __kmp_msg(
-                    kmp_ms_fatal,
-                    KMP_MSG( ChangeThreadAffMaskError ),
-                    KMP_ERR( error ),
-                    __kmp_msg_null
-                );
-            }
-        }
-
-        __kmp_set_system_affinity( new_mask, TRUE );
-
-        if (__kmp_affinity_verbose) {
-            char old_buf[KMP_AFFIN_MASK_PRINT_LEN];
-            char new_buf[KMP_AFFIN_MASK_PRINT_LEN];
-            __kmp_affinity_print_mask(old_buf, KMP_AFFIN_MASK_PRINT_LEN, old_mask);
-            __kmp_affinity_print_mask(new_buf, KMP_AFFIN_MASK_PRINT_LEN, new_mask);
-            KMP_INFORM( ChangeAffMask, "KMP_AFFINITY (Bind)", gtid, old_buf, new_buf );
-
-        }
-
-        /* Make sure old value is correct in thread data structures */
-        KMP_DEBUG_ASSERT( old_mask != NULL && (memcmp(old_mask,
-          th->th.th_affin_mask, __kmp_affin_mask_size) == 0) );
-        KMP_CPU_COPY( th->th.th_affin_mask, new_mask );
-    }
-}
-
-#endif // KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
-
-/* ------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------ */
-
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && !KMP_OS_CNK
-
-kmp_int8
-__kmp_test_then_add8( volatile kmp_int8 *p, kmp_int8 d )
-{
-    kmp_int8 old_value, new_value;
-
-    old_value = TCR_1( *p );
-    new_value = old_value + d;
-
-    while ( ! KMP_COMPARE_AND_STORE_REL8 ( p, old_value, new_value ) )
-    {
-        KMP_CPU_PAUSE();
-        old_value = TCR_1( *p );
-        new_value = old_value + d;
-    }
-    return old_value;
-}
-
-int
-__kmp_futex_determine_capable()
-{
-    int loc = 0;
-    int rc = syscall( __NR_futex, &loc, FUTEX_WAKE, 1, NULL, NULL, 0 );
-    int retval = ( rc == 0 ) || ( errno != ENOSYS );
-
-    KA_TRACE(10, ( "__kmp_futex_determine_capable: rc = %d errno = %d\n", rc,
-      errno ) );
-    KA_TRACE(10, ( "__kmp_futex_determine_capable: futex syscall%s supported\n",
-        retval ? "" : " not" ) );
-
-    return retval;
-}
-
-#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM) && !KMP_OS_CNK
-
-/* ------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------ */
-
-#if (KMP_ARCH_X86 || KMP_ARCH_X86_64) && (! KMP_ASM_INTRINS)
-/*
- * Only 32-bit "add-exchange" instruction on IA-32 architecture causes us to
- * use compare_and_store for these routines
- */
 
 kmp_int32
 __kmp_test_then_or32( volatile kmp_int32 *p, kmp_int32 d )
@@ -633,6 +518,23 @@ __kmp_test_then_and32( volatile kmp_int32 *p, kmp_int32 d )
 }
 
 # if KMP_ARCH_X86 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
+kmp_int8
+__kmp_test_then_add8( volatile kmp_int8 *p, kmp_int8 d )
+{
+    kmp_int8 old_value, new_value;
+
+    old_value = TCR_1( *p );
+    new_value = old_value + d;
+
+    while ( ! KMP_COMPARE_AND_STORE_REL8 ( p, old_value, new_value ) )
+    {
+        KMP_CPU_PAUSE();
+        old_value = TCR_1( *p );
+        new_value = old_value + d;
+    }
+    return old_value;
+}
+
 kmp_int64
 __kmp_test_then_add64( volatile kmp_int64 *p, kmp_int64 d )
 {
