@@ -231,6 +231,10 @@ public:
     return InstMap;
   }
 
+  /// \brief Find the set of instructions that read or write via \p Ptr.
+  SmallVector<Instruction *, 4> getInstructionsForAccess(Value *Ptr,
+                                                         bool isWrite) const;
+
 private:
   ScalarEvolution *SE;
   const Loop *InnermostLoop;
@@ -328,10 +332,20 @@ public:
 
     /// \brief Decide whether we need to issue a run-time check for pointer at
     /// index \p I and \p J to prove their independence.
-    bool needsChecking(unsigned I, unsigned J) const;
+    ///
+    /// If \p PtrPartition is set, it contains the partition number for
+    /// pointers (-1 if the pointer belongs to multiple partitions).  In this
+    /// case omit checks between pointers belonging to the same partition.
+    bool needsChecking(unsigned I, unsigned J,
+                       const SmallVectorImpl<int> *PtrPartition) const;
 
     /// \brief Print the list run-time memory checks necessary.
-    void print(raw_ostream &OS, unsigned Depth = 0) const;
+    ///
+    /// If \p PtrPartition is set, it contains the partition number for
+    /// pointers (-1 if the pointer belongs to multiple partitions).  In this
+    /// case omit checks between pointers belonging to the same partition.
+    void print(raw_ostream &OS, unsigned Depth = 0,
+               const SmallVectorImpl<int> *PtrPartition = nullptr) const;
 
     /// This flag indicates if we need to add the runtime check.
     bool Need;
@@ -383,8 +397,13 @@ public:
   /// Returns a pair of instructions where the first element is the first
   /// instruction generated in possibly a sequence of instructions and the
   /// second value is the final comparator value or NULL if no check is needed.
+  ///
+  /// If \p PtrPartition is set, it contains the partition number for pointers
+  /// (-1 if the pointer belongs to multiple partitions).  In this case omit
+  /// checks between pointers belonging to the same partition.
   std::pair<Instruction *, Instruction *>
-    addRuntimeCheck(Instruction *Loc) const;
+  addRuntimeCheck(Instruction *Loc,
+                  const SmallVectorImpl<int> *PtrPartition = nullptr) const;
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
@@ -393,6 +412,13 @@ public:
   /// \brief the Memory Dependence Checker which can determine the
   /// loop-independent and loop-carried dependences between memory accesses.
   const MemoryDepChecker &getDepChecker() const { return DepChecker; }
+
+  /// \brief Return the list of instructions that use \p Ptr to read or write
+  /// memory.
+  SmallVector<Instruction *, 4> getInstructionsForAccess(Value *Ptr,
+                                                         bool isWrite) const {
+    return DepChecker.getInstructionsForAccess(Ptr, isWrite);
+  }
 
   /// \brief Print the information about the memory accesses in the loop.
   void print(raw_ostream &OS, unsigned Depth = 0) const;

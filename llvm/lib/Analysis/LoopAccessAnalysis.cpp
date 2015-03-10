@@ -127,8 +127,8 @@ void LoopAccessInfo::RuntimePointerCheck::insert(
   AliasSetId.push_back(ASId);
 }
 
-bool LoopAccessInfo::RuntimePointerCheck::needsChecking(unsigned I,
-                                                        unsigned J) const {
+bool LoopAccessInfo::RuntimePointerCheck::needsChecking(
+    unsigned I, unsigned J, const SmallVectorImpl<int> *PtrPartition) const {
   // No need to check if two readonly pointers intersect.
   if (!IsWritePtr[I] && !IsWritePtr[J])
     return false;
@@ -141,11 +141,19 @@ bool LoopAccessInfo::RuntimePointerCheck::needsChecking(unsigned I,
   if (AliasSetId[I] != AliasSetId[J])
     return false;
 
+  // If PtrPartition is set omit checks between pointers of the same partition.
+  // Partition number -1 means that the pointer is used in multiple partitions.
+  // In this case we can't omit the check.
+  if (PtrPartition && (*PtrPartition)[I] != -1 &&
+      (*PtrPartition)[I] == (*PtrPartition)[J])
+    return false;
+
   return true;
 }
 
-void LoopAccessInfo::RuntimePointerCheck::print(raw_ostream &OS,
-                                                unsigned Depth) const {
+void LoopAccessInfo::RuntimePointerCheck::print(
+    raw_ostream &OS, unsigned Depth,
+    const SmallVectorImpl<int> *PtrPartition) const {
   unsigned NumPointers = Pointers.size();
   if (NumPointers == 0)
     return;
@@ -154,10 +162,16 @@ void LoopAccessInfo::RuntimePointerCheck::print(raw_ostream &OS,
   unsigned N = 0;
   for (unsigned I = 0; I < NumPointers; ++I)
     for (unsigned J = I + 1; J < NumPointers; ++J)
-      if (needsChecking(I, J)) {
+      if (needsChecking(I, J, PtrPartition)) {
         OS.indent(Depth) << N++ << ":\n";
-        OS.indent(Depth + 2) << *Pointers[I] << "\n";
-        OS.indent(Depth + 2) << *Pointers[J] << "\n";
+        OS.indent(Depth + 2) << *Pointers[I];
+        if (PtrPartition)
+          OS << " (Partition: " << (*PtrPartition)[I] << ")";
+        OS << "\n";
+        OS.indent(Depth + 2) << *Pointers[J];
+        if (PtrPartition)
+          OS << " (Partition: " << (*PtrPartition)[J] << ")";
+        OS << "\n";
       }
 }
 
@@ -835,6 +849,18 @@ bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
   return SafeForVectorization;
 }
 
+SmallVector<Instruction *, 4>
+MemoryDepChecker::getInstructionsForAccess(Value *Ptr, bool isWrite) const {
+  MemAccessInfo Access(Ptr, isWrite);
+  auto &IndexVector = Accesses.find(Access)->second;
+
+  SmallVector<Instruction *, 4> Insts;
+  std::transform(IndexVector.begin(), IndexVector.end(),
+                 std::back_inserter(Insts),
+                 [&](unsigned Idx) { return this->InstMap[Idx]; });
+  return Insts;
+}
+
 const char *MemoryDepChecker::Dependence::DepName[] = {
     "NoDep", "Unknown", "Forward", "ForwardButPreventsForwarding", "Backward",
     "BackwardVectorizable", "BackwardVectorizableButPreventsForwarding"};
@@ -1169,8 +1195,8 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
   return nullptr;
 }
 
-std::pair<Instruction *, Instruction *>
-LoopAccessInfo::addRuntimeCheck(Instruction *Loc) const {
+std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
+    Instruction *Loc, const SmallVectorImpl<int> *PtrPartition) const {
   Instruction *tnullptr = nullptr;
   if (!PtrRtCheck.Need)
     return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
@@ -1211,7 +1237,7 @@ LoopAccessInfo::addRuntimeCheck(Instruction *Loc) const {
   Value *MemoryRuntimeCheck = nullptr;
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
-      if (!PtrRtCheck.needsChecking(i, j))
+      if (!PtrRtCheck.needsChecking(i, j, PtrPartition))
         continue;
 
       unsigned AS0 = Starts[i]->getType()->getPointerAddressSpace();
