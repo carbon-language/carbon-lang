@@ -34,7 +34,7 @@
 #include <map>
 using namespace llvm;
 
-// CloneBasicBlock - See comments in Cloning.h
+/// See comments in Cloning.h.
 BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   ValueToValueMapTy &VMap,
                                   const Twine &NameSuffix, Function *F,
@@ -202,7 +202,7 @@ static void CloneDebugInfoMetadata(Function *NewFunc, const Function *OldFunc,
   }
 }
 
-/// CloneFunction - Return a copy of the specified function, but without
+/// Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
 /// in the VMap are changed to refer to their mapped value instead of the
 /// original one.  If any of the arguments to the function are in the VMap,
@@ -250,8 +250,7 @@ Function *llvm::CloneFunction(const Function *F, ValueToValueMapTy &VMap,
 
 
 namespace {
-  /// PruningFunctionCloner - This class is a private class used to implement
-  /// the CloneAndPruneFunctionInto method.
+  /// This is a private class used to implement CloneAndPruneFunctionInto.
   struct PruningFunctionCloner {
     Function *NewFunc;
     const Function *OldFunc;
@@ -281,7 +280,7 @@ namespace {
       }
     }
 
-    /// CloneBlock - The specified block is found to be reachable, clone it and
+    /// The specified block is found to be reachable, clone it and
     /// anything that it can reach.
     void CloneBlock(const BasicBlock *BB, 
                     BasicBlock::const_iterator StartingInst,
@@ -289,7 +288,7 @@ namespace {
   };
 }
 
-/// CloneBlock - The specified block is found to be reachable, clone it and
+/// The specified block is found to be reachable, clone it and
 /// anything that it can reach.
 void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
                                        BasicBlock::const_iterator StartingInst,
@@ -451,10 +450,9 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   }
 }
 
-/// CloneAndPruneIntoFromInst - This works like CloneAndPruneFunctionInto, except
-/// that it does not clone the entire function. Instead it starts at an
-/// instruction provided by the caller and copies (and prunes) only the code 
-/// reachable from that instruction.
+/// This works like CloneAndPruneFunctionInto, except that it does not clone the
+/// entire function. Instead it starts at an instruction provided by the caller
+/// and copies (and prunes) only the code reachable from that instruction.
 void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
                                      const Instruction *StartingInst,
                                      ValueToValueMapTy &VMap,
@@ -686,7 +684,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
 }
 
 
-/// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
+/// This works exactly like CloneFunctionInto,
 /// except that it does some simple constant prop and DCE on the fly.  The
 /// effect of this is to copy significantly less code in cases where (for
 /// example) a function call with constant arguments is inlined, and those
