@@ -3874,7 +3874,19 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   auto &OptionalReport = LAI->getReport();
   if (OptionalReport)
     emitAnalysis(VectorizationReport(*OptionalReport));
-  return LAI->canVectorizeMemory();
+  if (!LAI->canVectorizeMemory())
+    return false;
+
+  if (LAI->getNumRuntimePointerChecks() >
+      VectorizerParams::RuntimeMemoryCheckThreshold) {
+    emitAnalysis(VectorizationReport()
+                 << LAI->getNumRuntimePointerChecks() << " exceeds limit of "
+                 << VectorizerParams::RuntimeMemoryCheckThreshold
+                 << " dependent memory operations checked at runtime");
+    DEBUG(dbgs() << "LV: Too many memory checks needed.\n");
+    return false;
+  }
+  return true;
 }
 
 static bool hasMultipleUsesOf(Instruction *I,

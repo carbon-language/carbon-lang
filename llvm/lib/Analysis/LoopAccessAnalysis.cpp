@@ -1072,7 +1072,6 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
 
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
-  unsigned NumComparisons = 0;
   bool CanDoRT = false;
   if (NeedRTCheck)
     CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE, TheLoop,
@@ -1093,17 +1092,6 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
     emitAnalysis(LoopAccessReport() << "cannot identify array bounds");
     DEBUG(dbgs() << "LAA: We can't vectorize because we can't find " <<
           "the array bounds.\n");
-    PtrRtCheck.reset();
-    CanVecMem = false;
-    return;
-  }
-
-  if (NumComparisons > RuntimeMemoryCheckThreshold) {
-    emitAnalysis(LoopAccessReport()
-                 << NumComparisons << " exceeds limit of "
-                 << RuntimeMemoryCheckThreshold
-                 << " dependent memory operations checked at runtime");
-    DEBUG(dbgs() << "LAA: Too many memory checks needed.\n");
     PtrRtCheck.reset();
     CanVecMem = false;
     return;
@@ -1134,18 +1122,6 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       if (!CanDoRT && NumComparisons > 0) {
         emitAnalysis(LoopAccessReport()
                      << "cannot check memory dependencies at runtime");
-        DEBUG(dbgs() << "LAA: Can't vectorize with memory checks\n");
-        PtrRtCheck.reset();
-        CanVecMem = false;
-        return;
-      }
-
-      // Check that we did not collect too many pointers.
-      if (NumComparisons > RuntimeMemoryCheckThreshold) {
-        emitAnalysis(LoopAccessReport()
-                     << NumComparisons << " exceeds limit of "
-                     << RuntimeMemoryCheckThreshold
-                     << " dependent memory operations checked at runtime");
         DEBUG(dbgs() << "LAA: Can't vectorize with memory checks\n");
         PtrRtCheck.reset();
         CanVecMem = false;
@@ -1283,9 +1259,9 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                                DominatorTree *DT,
                                const ValueToValueMap &Strides)
-    : DepChecker(SE, L), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA),
-      DT(DT), NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
-      CanVecMem(false) {
+    : DepChecker(SE, L), NumComparisons(0), TheLoop(L), SE(SE), DL(DL),
+      TLI(TLI), AA(AA), DT(DT), NumLoads(0), NumStores(0),
+      MaxSafeDepDistBytes(-1U), CanVecMem(false) {
   if (canAnalyzeLoop())
     analyzeLoop(Strides);
 }

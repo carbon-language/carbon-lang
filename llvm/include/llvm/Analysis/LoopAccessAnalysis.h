@@ -362,6 +362,10 @@ public:
     return &PtrRtCheck;
   }
 
+  /// \brief Number of memchecks required to prove independence of otherwise
+  /// may-alias pointers.
+  unsigned getNumRuntimePointerChecks() const { return NumComparisons; }
+
   /// Return true if the block BB needs to be predicated in order for the loop
   /// to be vectorized.
   static bool blockNeedsPredication(BasicBlock *BB, Loop *TheLoop,
@@ -415,6 +419,10 @@ private:
   /// \brief the Memory Dependence Checker which can determine the
   /// loop-independent and loop-carried dependences between memory accesses.
   MemoryDepChecker DepChecker;
+
+  /// \brief Number of memchecks required to prove independence of otherwise
+  /// may-alias pointers
+  unsigned NumComparisons;
 
   Loop *TheLoop;
   ScalarEvolution *SE;
