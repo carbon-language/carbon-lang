@@ -10,7 +10,7 @@
 // test nothrow sized operator delete[] by replacing
 // nothrow unsized operator delete[].
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>

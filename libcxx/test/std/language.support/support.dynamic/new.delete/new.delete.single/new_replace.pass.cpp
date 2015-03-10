@@ -9,7 +9,7 @@
 
 // test operator new replacement
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>

@@ -9,7 +9,7 @@
 
 // test operator new[] replacement by replacing only operator new
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>

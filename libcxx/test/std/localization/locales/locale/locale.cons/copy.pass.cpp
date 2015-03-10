@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // REQUIRES: locale.fr_FR.UTF-8
-// UNSUPPORTED: msan, asan
+// UNSUPPORTED: sanitizer-new-delete
 
 // <locale>
 

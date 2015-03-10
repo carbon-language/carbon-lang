@@ -11,7 +11,7 @@
 
 // iterator insert(const_iterator position, size_type n, const value_type& x);
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))

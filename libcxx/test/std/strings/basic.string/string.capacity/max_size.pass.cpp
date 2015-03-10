@@ -16,7 +16,7 @@
 //    returns null.
 // 2. If allocator_may_return_null=1 then they will fail because the allocation
 //    is too large to succeed.
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <string>
 #include <cassert>

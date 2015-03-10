@@ -10,7 +10,7 @@
 // test operator new
 
 // asan and msan will not call the new handler.
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>

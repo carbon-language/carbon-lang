@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // REQUIRES: locale.ru_RU.UTF-8
-// UNSUPPORTED: msan, asan
+// UNSUPPORTED: sanitizer-new-delete
 
 // <locale>
 

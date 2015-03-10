@@ -11,7 +11,7 @@
 
 // template<class Y> explicit shared_ptr(Y* p);
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <memory>
 #include <new>

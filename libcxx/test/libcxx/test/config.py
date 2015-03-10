@@ -544,6 +544,7 @@ class Configuration(object):
                 if llvm_symbolizer is not None:
                     self.env['ASAN_SYMBOLIZER_PATH'] = llvm_symbolizer
                 self.config.available_features.add('asan')
+                self.config.available_features.add('sanitizer-new-delete')
             elif san == 'Memory' or san == 'MemoryWithOrigins':
                 self.cxx.flags += ['-fsanitize=memory']
                 if san == 'MemoryWithOrigins':
@@ -552,6 +553,7 @@ class Configuration(object):
                 if llvm_symbolizer is not None:
                     self.env['MSAN_SYMBOLIZER_PATH'] = llvm_symbolizer
                 self.config.available_features.add('msan')
+                self.config.available_features.add('sanitizer-new-delete')
             elif san == 'Undefined':
                 self.cxx.flags += ['-fsanitize=undefined',
                                    '-fno-sanitize=vptr,function',
@@ -561,6 +563,7 @@ class Configuration(object):
             elif san == 'Thread':
                 self.cxx.flags += ['-fsanitize=thread']
                 self.config.available_features.add('tsan')
+                self.config.available_features.add('sanitizer-new-delete')
             else:
                 self.lit_config.fatal('unsupported value for '
                                       'use_sanitizer: {0}'.format(san))

@@ -9,7 +9,7 @@
 
 // test sized operator delete[] by replacing unsized operator delete[].
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <new>
 #include <cstddef>

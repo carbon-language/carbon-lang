@@ -15,7 +15,7 @@
 
 // template <class F, class ...Args> thread(F&& f, Args&&... args);
 
-// UNSUPPORTED: asan, msan
+// UNSUPPORTED: sanitizer-new-delete
 
 #include <thread>
 #include <new>
