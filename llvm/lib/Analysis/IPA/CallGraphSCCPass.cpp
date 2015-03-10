@@ -142,9 +142,8 @@ bool CGPassManager::RunPassOnSCC(Pass *P, CallGraphSCC &CurSCC,
   FPPassManager *FPP = (FPPassManager*)P;
   
   // Run pass P on all functions in the current SCC.
-  for (CallGraphSCC::iterator I = CurSCC.begin(), E = CurSCC.end();
-       I != E; ++I) {
-    if (Function *F = (*I)->getFunction()) {
+  for (CallGraphNode *CGN : CurSCC) {
+    if (Function *F = CGN->getFunction()) {
       dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
       {
         TimeRegion PassTimer(getPassTimer(FPP));
@@ -181,9 +180,8 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
   
   DEBUG(dbgs() << "CGSCCPASSMGR: Refreshing SCC with " << CurSCC.size()
                << " nodes:\n";
-        for (CallGraphSCC::iterator I = CurSCC.begin(), E = CurSCC.end();
-             I != E; ++I)
-          (*I)->dump();
+        for (CallGraphNode *CGN : CurSCC)
+          CGN->dump();
         );
 
   bool MadeChange = false;
@@ -357,9 +355,8 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
 
   DEBUG(if (MadeChange) {
           dbgs() << "CGSCCPASSMGR: Refreshed SCC is now:\n";
-          for (CallGraphSCC::iterator I = CurSCC.begin(), E = CurSCC.end();
-            I != E; ++I)
-              (*I)->dump();
+          for (CallGraphNode *CGN : CurSCC)
+            CGN->dump();
           if (DevirtualizedCall)
             dbgs() << "CGSCCPASSMGR: Refresh devirtualized a call!\n";
 
@@ -609,9 +606,9 @@ namespace {
 
     bool runOnSCC(CallGraphSCC &SCC) override {
       Out << Banner;
-      for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-        if ((*I)->getFunction())
-          (*I)->getFunction()->print(Out);
+      for (CallGraphNode *CGN : SCC) {
+        if (CGN->getFunction())
+          CGN->getFunction()->print(Out);
         else
           Out << "\nPrinting <null> Function\n";
       }
