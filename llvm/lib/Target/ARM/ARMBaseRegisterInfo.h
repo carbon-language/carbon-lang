@@ -138,8 +138,6 @@ public:
   void updateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const override;
 
-  bool avoidWriteAfterWrite(const TargetRegisterClass *RC) const override;
-
   bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const;
