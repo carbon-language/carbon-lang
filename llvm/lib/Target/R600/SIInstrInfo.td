@@ -802,6 +802,11 @@ def VOP_I1_F64_I32 : VOPProfile <[i1, f64, i32, untyped]> {
 def VOP_I64_I64_I32 : VOPProfile <[i64, i64, i32, untyped]>;
 def VOP_I64_I32_I64 : VOPProfile <[i64, i32, i64, untyped]>;
 def VOP_I64_I64_I64 : VOPProfile <[i64, i64, i64, untyped]>;
+def VOP_CNDMASK : VOPProfile <[i32, i32, i32, untyped]> {
+  let Ins32 = (ins Src0RC32:$src0, Src1RC32:$src1, VCCReg:$src2);
+  let Ins64 = (ins Src0RC64:$src0, Src1RC64:$src1, SSrc_64:$src2);
+  let Asm64 = " $dst, $src0, $src1, $src2";
+}
 
 def VOP_F32_F32_F32_F32 : VOPProfile <[f32, f32, f32, f32]>;
 def VOP_MADK : VOPProfile <[f32, f32, f32, f32]> {

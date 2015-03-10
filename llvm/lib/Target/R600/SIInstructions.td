@@ -1483,13 +1483,17 @@ defm V_INTERP_MOV_F32 : VINTRP_m <
 // VOP2 Instructions
 //===----------------------------------------------------------------------===//
 
-defm V_CNDMASK_B32_e64 : VOP3_m_nomods <vop3<0x100>, (outs VGPR_32:$dst),
-  (ins VSrc_32:$src0, VSrc_32:$src1, SSrc_64:$src2),
-  "v_cndmask_b32_e64 $dst, $src0, $src1, $src2",
-  [(set i32:$dst, (select i1:$src2, i32:$src1, i32:$src0))],
-  "v_cndmask_b32_e64", 3
->;
+multiclass V_CNDMASK <vop2 op, string name> {
+  defm _e32 : VOP2_m <
+      op, VOP_CNDMASK.Outs, VOP_CNDMASK.Ins32, VOP_CNDMASK.Asm32, [],
+      name, name>;
 
+  defm _e64  : VOP3_m <
+      op, VOP_CNDMASK.Outs, VOP_CNDMASK.Ins64,
+      name#"_e64"#!cast<string>(VOP_CNDMASK.Asm64), [], name, 3>;
+}
+
+defm V_CNDMASK_B32 : V_CNDMASK<vop2<0x0>, "v_cndmask_b32">;
 
 let isCommutable = 1 in {
 defm V_ADD_F32 : VOP2Inst <vop2<0x3, 0x1>, "v_add_f32",
@@ -2259,6 +2263,11 @@ def : RsqPat<V_RSQ_F64_e32, f64>;
 def : Pat <
   (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
   (V_BCNT_U32_B32_e64 $popcnt, $val)
+>;
+
+def : Pat <
+  (i32 (select i1:$src0, i32:$src1, i32:$src2)),
+  (V_CNDMASK_B32_e64 $src2, $src1, $src0)
 >;
 
 /********** ======================= **********/
