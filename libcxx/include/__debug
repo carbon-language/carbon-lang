@@ -22,7 +22,7 @@
 #   include <cstdio>
 #   include <cstddef>
 #   ifndef _LIBCPP_ASSERT
-#      define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : (_VSTD::printf("%s\n", m), _VSTD::abort()))
+#      define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : (_VSTD::fprintf(stderr, "%s\n", m), _VSTD::abort()))
 #   endif
 #endif
 
