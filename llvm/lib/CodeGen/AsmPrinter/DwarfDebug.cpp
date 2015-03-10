@@ -249,11 +249,8 @@ DwarfDebug::~DwarfDebug() { }
 // Switch to the specified MCSection and emit an assembler
 // temporary label to it if SymbolStem is specified.
 static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
-                                const char *SymbolStem = nullptr) {
+                                const char *SymbolStem) {
   Asm->OutStreamer.SwitchSection(Section);
-  if (!SymbolStem)
-    return nullptr;
-
   MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
   Asm->OutStreamer.EmitLabel(TmpSym);
   return TmpSym;
@@ -1320,21 +1317,9 @@ void DwarfDebug::emitSectionLabels() {
   if (useSplitDwarf())
     DwarfAbbrevDWOSectionSym = emitSectionSym(
         Asm, TLOF.getDwarfAbbrevDWOSection(), "section_abbrev_dwo");
-  if (GenerateARangeSection)
-    emitSectionSym(Asm, TLOF.getDwarfARangesSection());
 
   DwarfLineSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
-  if (GenerateGnuPubSections) {
-    DwarfGnuPubNamesSectionSym =
-        emitSectionSym(Asm, TLOF.getDwarfGnuPubNamesSection());
-    DwarfGnuPubTypesSectionSym =
-        emitSectionSym(Asm, TLOF.getDwarfGnuPubTypesSection());
-  } else if (HasDwarfPubSections) {
-    emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
-    emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
-  }
-
   DwarfStrSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
   if (useSplitDwarf()) {
