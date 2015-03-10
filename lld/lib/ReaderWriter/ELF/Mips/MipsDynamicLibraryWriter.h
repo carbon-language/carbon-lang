@@ -39,10 +39,10 @@ protected:
     return std::error_code();
   }
 
-  LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable() override;
-  LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable() override;
+  unique_bump_ptr<SymbolTable<ELFT>> createSymbolTable() override;
+  unique_bump_ptr<DynamicTable<ELFT>> createDynamicTable() override;
 
-  LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
+  unique_bump_ptr<DynamicSymbolTable<ELFT>>
       createDynamicSymbolTable() override;
 
 private:
@@ -72,27 +72,27 @@ void MipsDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
 }
 
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
+unique_bump_ptr<SymbolTable<ELFT>>
     MipsDynamicLibraryWriter<ELFT>::createSymbolTable() {
-  return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(new (
+  return unique_bump_ptr<SymbolTable<ELFT>>(new (
       this->_alloc) MipsSymbolTable<ELFT>(this->_context));
 }
 
 /// \brief create dynamic table
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)
+unique_bump_ptr<DynamicTable<ELFT>>
     MipsDynamicLibraryWriter<ELFT>::createDynamicTable() {
-  return LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)(new (
+  return unique_bump_ptr<DynamicTable<ELFT>>(new (
       this->_alloc) MipsDynamicTable<ELFT>(this->_context, _mipsTargetLayout));
 }
 
 /// \brief create dynamic symbol table
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
+unique_bump_ptr<DynamicSymbolTable<ELFT>>
     MipsDynamicLibraryWriter<ELFT>::createDynamicSymbolTable() {
-  return LLD_UNIQUE_BUMP_PTR(
-      DynamicSymbolTable<ELFT>)(new (this->_alloc) MipsDynamicSymbolTable<ELFT>(
-      this->_context, _mipsTargetLayout));
+  return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
+      new (this->_alloc) MipsDynamicSymbolTable<ELFT>(
+          this->_context, _mipsTargetLayout));
 }
 
 } // namespace elf

@@ -102,13 +102,13 @@ protected:
   virtual void createDefaultDynamicEntries() {}
 
   /// \brief Create symbol table.
-  virtual LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable();
+  virtual unique_bump_ptr<SymbolTable<ELFT>> createSymbolTable();
 
   /// \brief create dynamic table.
-  virtual LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable();
+  virtual unique_bump_ptr<DynamicTable<ELFT>> createDynamicTable();
 
   /// \brief create dynamic symbol table.
-  virtual LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
+  virtual unique_bump_ptr<DynamicSymbolTable<ELFT>>
       createDynamicSymbolTable();
 
   /// \brief Create entry in the dynamic symbols table for this atom.
@@ -129,19 +129,19 @@ protected:
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
   AtomToAddress _atomToAddressMap;
   TargetLayout<ELFT> &_layout;
-  LLD_UNIQUE_BUMP_PTR(ELFHeader<ELFT>) _elfHeader;
-  LLD_UNIQUE_BUMP_PTR(ProgramHeader<ELFT>) _programHeader;
-  LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) _symtab;
-  LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _strtab;
-  LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _shstrtab;
-  LLD_UNIQUE_BUMP_PTR(SectionHeader<ELFT>) _shdrtab;
-  LLD_UNIQUE_BUMP_PTR(EHFrameHeader<ELFT>) _ehFrameHeader;
+  unique_bump_ptr<ELFHeader<ELFT>> _elfHeader;
+  unique_bump_ptr<ProgramHeader<ELFT>> _programHeader;
+  unique_bump_ptr<SymbolTable<ELFT>> _symtab;
+  unique_bump_ptr<StringTable<ELFT>> _strtab;
+  unique_bump_ptr<StringTable<ELFT>> _shstrtab;
+  unique_bump_ptr<SectionHeader<ELFT>> _shdrtab;
+  unique_bump_ptr<EHFrameHeader<ELFT>> _ehFrameHeader;
   /// \name Dynamic sections.
   /// @{
-  LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) _dynamicTable;
-  LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) _dynamicSymbolTable;
-  LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _dynamicStringTable;
-  LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
+  unique_bump_ptr<DynamicTable<ELFT>> _dynamicTable;
+  unique_bump_ptr<DynamicSymbolTable<ELFT>> _dynamicSymbolTable;
+  unique_bump_ptr<StringTable<ELFT>> _dynamicStringTable;
+  unique_bump_ptr<HashSection<ELFT>> _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
 
@@ -368,27 +368,27 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
 }
 
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
+unique_bump_ptr<SymbolTable<ELFT>>
     OutputELFWriter<ELFT>::createSymbolTable() {
-  return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(new (_alloc) SymbolTable<ELFT>(
+  return unique_bump_ptr<SymbolTable<ELFT>>(new (_alloc) SymbolTable<ELFT>(
       this->_context, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
 }
 
 /// \brief create dynamic table
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)
+unique_bump_ptr<DynamicTable<ELFT>>
     OutputELFWriter<ELFT>::createDynamicTable() {
-  return LLD_UNIQUE_BUMP_PTR(
-      DynamicTable<ELFT>)(new (_alloc) DynamicTable<ELFT>(
+  return unique_bump_ptr<DynamicTable<ELFT>>(
+    new (_alloc) DynamicTable<ELFT>(
       this->_context, _layout, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
 }
 
 /// \brief create dynamic symbol table
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
+unique_bump_ptr<DynamicSymbolTable<ELFT>>
     OutputELFWriter<ELFT>::createDynamicSymbolTable() {
-  return LLD_UNIQUE_BUMP_PTR(
-      DynamicSymbolTable<ELFT>)(new (_alloc) DynamicSymbolTable<ELFT>(
+  return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
+    new (_alloc) DynamicSymbolTable<ELFT>(
       this->_context, _layout, ".dynsym",
       DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
 }

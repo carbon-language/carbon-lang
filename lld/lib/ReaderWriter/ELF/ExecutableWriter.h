@@ -40,7 +40,7 @@ protected:
     return this->_layout.isCopied(sla);
   }
 
-  LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
+  unique_bump_ptr<InterpSection<ELFT>> _interpSection;
   std::unique_ptr<CRuntimeFile<ELFT> > _runtimeFile;
 };
 

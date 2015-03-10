@@ -318,8 +318,8 @@ protected:
   std::vector<OutputSection<ELFT> *> _outputSections;
   ELFHeader<ELFT> *_elfHeader;
   ProgramHeader<ELFT> *_programHeader;
-  LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _dynamicRelocationTable;
-  LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
+  unique_bump_ptr<RelocationTable<ELFT>> _dynamicRelocationTable;
+  unique_bump_ptr<RelocationTable<ELFT>> _pltRelocationTable;
   std::vector<lld::AtomLayout *> _absoluteAtoms;
   AtomSetT _referencedDynAtoms;
   llvm::StringSet<> _copiedDynSymNames;

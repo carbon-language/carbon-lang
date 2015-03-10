@@ -37,7 +37,7 @@ protected:
   }
 
   /// \brief Create symbol table.
-  LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable() override;
+  unique_bump_ptr<SymbolTable<ELFT>> createSymbolTable() override;
 
 private:
   ARMLinkingContext &_context;
@@ -58,9 +58,9 @@ bool ARMExecutableWriter<ELFT>::createImplicitFiles(
 }
 
 template <class ELFT>
-LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
+unique_bump_ptr<SymbolTable<ELFT>>
     ARMExecutableWriter<ELFT>::createSymbolTable() {
-  return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(
+  return unique_bump_ptr<SymbolTable<ELFT>>(
       new (this->_alloc) ARMSymbolTable<ELFT>(this->_context));
 }
 

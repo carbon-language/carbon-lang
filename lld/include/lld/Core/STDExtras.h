@@ -21,12 +21,8 @@ struct destruct_delete {
   }
 };
 
-// Sadly VS 2012 doesn't support template aliases.
-// template <class T>
-// using unique_bump_ptr = std::unique_ptr<T, destruct_delete<T>>;
-
-#define LLD_UNIQUE_BUMP_PTR(...) \
-  std::unique_ptr<__VA_ARGS__, destruct_delete<__VA_ARGS__>>
+template <class T>
+using unique_bump_ptr = std::unique_ptr<T, destruct_delete<T>>;
 
 } // end namespace lld
 
