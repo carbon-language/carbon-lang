@@ -23,14 +23,12 @@
 #include <unistd.h>
 
 bool is_valid_random_device(const std::string &token) {
-#if defined(_WIN32)
-  return true;
-#elif defined(_LIBCPP_USING_NACL_RANDOM)
-  return token == "/dev/urandom";
-#else  // !defined(_WIN32) && !defined(_LIBCPP_USING_NACL_RANDOM)
+#if defined(_LIBCPP_USING_DEV_RANDOM)
   // Not an exhaustive list: they're the only tokens that are tested below.
   return token == "/dev/urandom" || token == "/dev/random";
-#endif // defined(_WIN32) || defined(_LIBCPP_USING_NACL_RANDOM)
+#else
+  return token == "/dev/urandom";
+#endif
 }
 
 void check_random_device_valid(const std::string &token) {
