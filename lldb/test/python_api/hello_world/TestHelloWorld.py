@@ -55,7 +55,7 @@ class HelloWorldTestCase(TestBase):
         Use dwarf map (no dsym) and attach to process with id API.
         """
         self.buildDwarf(dictionary=self.d)
-        #self.setTearDownCleanup(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_id_api()
 
     @not_remote_testsuite_ready
