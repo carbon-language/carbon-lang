@@ -3247,8 +3247,8 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
                     }
                     else if ((j > maxOsId) ||
                       (! KMP_CPU_ISSET(j, KMP_CPU_INDEX(osId2Mask, j)))) {
-                        if (__kmp_affinity_verbose || (__kmp_affinity_warnings
-                          && (__kmp_affinity_type != affinity_none))) {
+                        if ((__kmp_affinity_verbose || (__kmp_affinity_warnings
+                          && (__kmp_affinity_type != affinity_none))) && i < count - 1) {
                             KMP_WARNING(AffIgnoreInvalidProcID, j);
                         }
                         KMP_CPU_CLR(j, tempMask);
@@ -3279,8 +3279,8 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
                     }
                     else if ((j > maxOsId) ||
                       (! KMP_CPU_ISSET(j, KMP_CPU_INDEX(osId2Mask, j)))) {
-                        if (__kmp_affinity_verbose || (__kmp_affinity_warnings
-                          && (__kmp_affinity_type != affinity_none))) {
+                        if ((__kmp_affinity_verbose || (__kmp_affinity_warnings
+                          && (__kmp_affinity_type != affinity_none))) && i < count - 1) {
                             KMP_WARNING(AffIgnoreInvalidProcID, j);
                         }
                         KMP_CPU_CLR(j, tempMask);
