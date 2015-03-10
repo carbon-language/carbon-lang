@@ -35,7 +35,8 @@ namespace llvm {
 void initializeNVPTXLowerStructArgsPass(PassRegistry &);
 }
 
-class LLVM_LIBRARY_VISIBILITY NVPTXLowerStructArgs : public FunctionPass {
+namespace {
+class NVPTXLowerStructArgs : public FunctionPass {
   bool runOnFunction(Function &F) override;
 
   void handleStructPtrArgs(Function &);
@@ -48,6 +49,7 @@ public:
     return "Copy structure (byval *) arguments to stack";
   }
 };
+} // namespace
 
 char NVPTXLowerStructArgs::ID = 1;
 
