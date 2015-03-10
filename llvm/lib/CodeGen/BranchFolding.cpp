@@ -755,11 +755,13 @@ removeMMOsFromMemoryOperations(MachineBasicBlock::iterator MBBIStartPos,
     ++CommonTailLen;
 
   MachineBasicBlock::reverse_iterator MBBI = MBB->rbegin();
+  MachineBasicBlock::reverse_iterator MBBIE = MBB->rend();
   MachineBasicBlock::reverse_iterator MBBICommon = MBBCommon.rbegin();
   MachineBasicBlock::reverse_iterator MBBIECommon = MBBCommon.rend();
 
   while (CommonTailLen--) {
-    assert(MBBI != MBB->rend() && "Reached BB end within common tail length!");
+    assert(MBBI != MBBIE && "Reached BB end within common tail length!");
+    (void)MBBIE;
 
     if (MBBI->isDebugValue()) {
       ++MBBI;
