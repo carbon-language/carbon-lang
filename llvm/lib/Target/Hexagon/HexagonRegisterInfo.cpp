@@ -37,11 +37,8 @@
 
 using namespace llvm;
 
-
-HexagonRegisterInfo::HexagonRegisterInfo(HexagonSubtarget &st)
-  : HexagonGenRegisterInfo(Hexagon::R31),
-    Subtarget(st) {
-}
+HexagonRegisterInfo::HexagonRegisterInfo()
+    : HexagonGenRegisterInfo(Hexagon::R31) {}
 
 const MCPhysReg *
 HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
@@ -51,7 +48,7 @@ HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     Hexagon::R24,   Hexagon::R25,   Hexagon::R26,   Hexagon::R27, 0
   };
 
-  switch(Subtarget.getHexagonArchVersion()) {
+  switch (MF->getSubtarget<HexagonSubtarget>().getHexagonArchVersion()) {
   case HexagonSubtarget::V4:
   case HexagonSubtarget::V5:
     return CalleeSavedRegsV3;
@@ -89,7 +86,7 @@ HexagonRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
   };
 
-  switch(Subtarget.getHexagonArchVersion()) {
+  switch (MF->getSubtarget<HexagonSubtarget>().getHexagonArchVersion()) {
   case HexagonSubtarget::V4:
   case HexagonSubtarget::V5:
     return CalleeSavedRegClassesV3;

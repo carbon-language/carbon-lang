@@ -43,9 +43,7 @@ class HexagonInstrInfo;
 class Type;
 
 struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
-  HexagonSubtarget &Subtarget;
-
-  HexagonRegisterInfo(HexagonSubtarget &st);
+  HexagonRegisterInfo();
 
   /// Code Generation virtual methods...
   const MCPhysReg *
