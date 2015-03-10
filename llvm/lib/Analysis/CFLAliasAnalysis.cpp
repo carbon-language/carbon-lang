@@ -47,6 +47,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <forward_list>
 #include <tuple>
 
@@ -231,6 +232,10 @@ public:
 
     // Comparisons between global variables and other constants should be
     // handled by BasicAA.
+    // TODO: ConstantExpr handling -- CFLAA may report NoAlias when comparing
+    // a GlobalValue and ConstantExpr, but every query needs to have at least
+    // one Value tied to a Function, and neither GlobalValues nor ConstantExprs
+    // are.
     if (isa<Constant>(LocA.Ptr) && isa<Constant>(LocB.Ptr)) {
       return AliasAnalysis::alias(LocA, LocB);
     }
@@ -389,7 +394,7 @@ public:
 
     // I put this here to give us an upper bound on time taken by IPA. Is it
     // really (realistically) needed? Keep in mind that we do have an n^2 algo.
-    if (std::distance(Args.begin(), Args.end()) > (int) MaxSupportedArgs)
+    if (std::distance(Args.begin(), Args.end()) > (int)MaxSupportedArgs)
       return false;
 
     // Exit early if we'll fail anyway
@@ -747,6 +752,25 @@ static Level directionOfEdgeType(EdgeType);
 static void buildGraphFrom(CFLAliasAnalysis &, Function *,
                            SmallVectorImpl<Value *> &, NodeMapT &, GraphT &);
 
+// Gets the edges of a ConstantExpr as if it was an Instruction. This
+// function also acts on any nested ConstantExprs, adding the edges
+// of those to the given SmallVector as well.
+static void constexprToEdges(CFLAliasAnalysis &, ConstantExpr &,
+                             SmallVectorImpl<Edge> &);
+
+// Given an Instruction, this will add it to the graph, along with any
+// Instructions that are potentially only available from said Instruction
+// For example, given the following line:
+//   %0 = load i16* getelementptr ([1 x i16]* @a, 0, 0), align 2
+// addInstructionToGraph would add both the `load` and `getelementptr`
+// instructions to the graph appropriately.
+static void addInstructionToGraph(CFLAliasAnalysis &, Instruction &,
+                                  SmallVectorImpl<Value *> &, NodeMapT &,
+                                  GraphT &);
+
+// Notes whether it would be pointless to add the given Value to our sets.
+static bool canSkipAddingToSets(Value *Val);
+
 // Builds the graph + StratifiedSets for a function.
 static FunctionInfo buildSetsFrom(CFLAliasAnalysis &, Function *);
 
@@ -818,6 +842,8 @@ static EdgeType flipWeight(EdgeType Initial) {
 
 static void argsToEdges(CFLAliasAnalysis &Analysis, Instruction *Inst,
                         SmallVectorImpl<Edge> &Output) {
+  assert(hasUsefulEdges(Inst) &&
+         "Expected instructions to have 'useful' edges");
   GetEdgesVisitor v(Analysis, Output);
   v.visit(Inst);
 }
@@ -834,13 +860,41 @@ static Level directionOfEdgeType(EdgeType Weight) {
   llvm_unreachable("Incomplete switch coverage");
 }
 
-// Aside: We may remove graph construction entirely, because it doesn't really
-// buy us much that we don't already have. I'd like to add interprocedural
-// analysis prior to this however, in case that somehow requires the graph
-// produced by this for efficient execution
-static void buildGraphFrom(CFLAliasAnalysis &Analysis, Function *Fn,
-                           SmallVectorImpl<Value *> &ReturnedValues,
-                           NodeMapT &Map, GraphT &Graph) {
+static void constexprToEdges(CFLAliasAnalysis &Analysis,
+                             ConstantExpr &CExprToCollapse,
+                             SmallVectorImpl<Edge> &Results) {
+  SmallVector<ConstantExpr *, 4> Worklist;
+  Worklist.push_back(&CExprToCollapse);
+
+  SmallVector<Edge, 8> ConstexprEdges;
+  while (!Worklist.empty()) {
+    auto *CExpr = Worklist.pop_back_val();
+    std::unique_ptr<Instruction> Inst(CExpr->getAsInstruction());
+
+    if (!hasUsefulEdges(Inst.get()))
+      continue;
+
+    ConstexprEdges.clear();
+    argsToEdges(Analysis, Inst.get(), ConstexprEdges);
+    for (auto &Edge : ConstexprEdges) {
+      if (Edge.From == Inst.get())
+        Edge.From = CExpr;
+      else if (auto *Nested = dyn_cast<ConstantExpr>(Edge.From))
+        Worklist.push_back(Nested);
+
+      if (Edge.To == Inst.get())
+        Edge.To = CExpr;
+      else if (auto *Nested = dyn_cast<ConstantExpr>(Edge.To))
+        Worklist.push_back(Nested);
+    }
+
+    Results.append(ConstexprEdges.begin(), ConstexprEdges.end());
+  }
+}
+
+static void addInstructionToGraph(CFLAliasAnalysis &Analysis, Instruction &Inst,
+                                  SmallVectorImpl<Value *> &ReturnedValues,
+                                  NodeMapT &Map, GraphT &Graph) {
   const auto findOrInsertNode = [&Map, &Graph](Value *Val) {
     auto Pair = Map.insert(std::make_pair(Val, GraphT::Node()));
     auto &Iter = Pair.first;
@@ -851,40 +905,84 @@ static void buildGraphFrom(CFLAliasAnalysis &Analysis, Function *Fn,
     return Iter->second;
   };
 
+  // We don't want the edges of most "return" instructions, but we *do* want
+  // to know what can be returned.
+  if (isa<ReturnInst>(&Inst))
+    ReturnedValues.push_back(&Inst);
+
+  if (!hasUsefulEdges(&Inst))
+    return;
+
   SmallVector<Edge, 8> Edges;
-  for (auto &Bb : Fn->getBasicBlockList()) {
-    for (auto &Inst : Bb.getInstList()) {
-      // We don't want the edges of most "return" instructions, but we *do* want
-      // to know what can be returned.
-      if (auto *Ret = dyn_cast<ReturnInst>(&Inst))
-        ReturnedValues.push_back(Ret);
+  argsToEdges(Analysis, &Inst, Edges);
 
-      if (!hasUsefulEdges(&Inst))
-        continue;
-
-      Edges.clear();
-      argsToEdges(Analysis, &Inst, Edges);
-
-      // In the case of an unused alloca (or similar), edges may be empty. Note
-      // that it exists so we can potentially answer NoAlias.
-      if (Edges.empty()) {
-        auto MaybeVal = getTargetValue(&Inst);
-        assert(MaybeVal.hasValue());
-        auto *Target = *MaybeVal;
-        findOrInsertNode(Target);
-        continue;
-      }
-
-      for (const Edge &E : Edges) {
-        auto To = findOrInsertNode(E.To);
-        auto From = findOrInsertNode(E.From);
-        auto FlippedWeight = flipWeight(E.Weight);
-        auto Attrs = E.AdditionalAttrs;
-        Graph.addEdge(From, To, std::make_pair(E.Weight, Attrs),
-                                std::make_pair(FlippedWeight, Attrs));
-      }
-    }
+  // In the case of an unused alloca (or similar), edges may be empty. Note
+  // that it exists so we can potentially answer NoAlias.
+  if (Edges.empty()) {
+    auto MaybeVal = getTargetValue(&Inst);
+    assert(MaybeVal.hasValue());
+    auto *Target = *MaybeVal;
+    findOrInsertNode(Target);
+    return;
   }
+
+  const auto addEdgeToGraph = [&Graph, &findOrInsertNode](const Edge &E) {
+    auto To = findOrInsertNode(E.To);
+    auto From = findOrInsertNode(E.From);
+    auto FlippedWeight = flipWeight(E.Weight);
+    auto Attrs = E.AdditionalAttrs;
+    Graph.addEdge(From, To, std::make_pair(E.Weight, Attrs),
+                  std::make_pair(FlippedWeight, Attrs));
+  };
+
+  SmallVector<ConstantExpr *, 4> ConstantExprs;
+  for (const Edge &E : Edges) {
+    addEdgeToGraph(E);
+    if (auto *Constexpr = dyn_cast<ConstantExpr>(E.To))
+      ConstantExprs.push_back(Constexpr);
+    if (auto *Constexpr = dyn_cast<ConstantExpr>(E.From))
+      ConstantExprs.push_back(Constexpr);
+  }
+
+  for (ConstantExpr *CE : ConstantExprs) {
+    Edges.clear();
+    constexprToEdges(Analysis, *CE, Edges);
+    std::for_each(Edges.begin(), Edges.end(), addEdgeToGraph);
+  }
+}
+
+// Aside: We may remove graph construction entirely, because it doesn't really
+// buy us much that we don't already have. I'd like to add interprocedural
+// analysis prior to this however, in case that somehow requires the graph
+// produced by this for efficient execution
+static void buildGraphFrom(CFLAliasAnalysis &Analysis, Function *Fn,
+                           SmallVectorImpl<Value *> &ReturnedValues,
+                           NodeMapT &Map, GraphT &Graph) {
+  for (auto &Bb : Fn->getBasicBlockList())
+    for (auto &Inst : Bb.getInstList())
+      addInstructionToGraph(Analysis, Inst, ReturnedValues, Map, Graph);
+}
+
+static bool canSkipAddingToSets(Value *Val) {
+  // Constants can share instances, which may falsely unify multiple
+  // sets, e.g. in
+  // store i32* null, i32** %ptr1
+  // store i32* null, i32** %ptr2
+  // clearly ptr1 and ptr2 should not be unified into the same set, so
+  // we should filter out the (potentially shared) instance to
+  // i32* null.
+  if (isa<Constant>(Val)) {
+    bool Container = isa<ConstantVector>(Val) || isa<ConstantArray>(Val) ||
+                     isa<ConstantStruct>(Val);
+    // TODO: Because all of these things are constant, we can determine whether
+    // the data is *actually* mutable at graph building time. This will probably
+    // come for free/cheap with offset awareness.
+    bool CanStoreMutableData =
+        isa<GlobalValue>(Val) || isa<ConstantExpr>(Val) || Container;
+    return !CanStoreMutableData;
+  }
+
+  return false;
 }
 
 static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
@@ -918,7 +1016,7 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
     while (!Worklist.empty()) {
       auto Node = Worklist.pop_back_val();
       auto *CurValue = findValueOrDie(Node);
-      if (isa<Constant>(CurValue) && !isa<GlobalValue>(CurValue))
+      if (canSkipAddingToSets(CurValue))
         continue;
 
       for (const auto &EdgeTuple : Graph.edgesFor(Node)) {
@@ -927,7 +1025,7 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
         auto &OtherNode = std::get<1>(EdgeTuple);
         auto *OtherValue = findValueOrDie(OtherNode);
 
-        if (isa<Constant>(OtherValue) && !isa<GlobalValue>(OtherValue))
+        if (canSkipAddingToSets(OtherValue))
           continue;
 
         bool Added;
@@ -962,7 +1060,12 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
   // things that were present during construction being present in the graph.
   // So, we add all present arguments here.
   for (auto &Arg : Fn->args()) {
-    Builder.add(&Arg);
+    if (!Builder.add(&Arg))
+      continue;
+
+    auto Attrs = valueToAttrIndex(&Arg);
+    if (Attrs.hasValue())
+      Builder.noteAttributes(&Arg, *Attrs);
   }
 
   return FunctionInfo(Builder.build(), std::move(ReturnedValues));

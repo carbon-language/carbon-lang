@@ -18,7 +18,7 @@ define void @test(i1 %cond,
                   i32* %arg31, i32* %arg32, i32* %arg33, i32* %arg34, i32* %arg35) {
 
   ; CHECK: 946 Total Alias Queries Performed
-  ; CHECK: 810 no alias responses (85.6%)
+  ; CHECK: 43 no alias responses (4.5%)
   %a = alloca i32, align 4
   %b = select i1 %cond, i32* %arg35, i32* %arg34
   %c = select i1 %cond, i32* %arg34, i32* %arg33

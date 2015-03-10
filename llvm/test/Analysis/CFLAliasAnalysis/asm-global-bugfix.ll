@@ -7,7 +7,7 @@
 @G = private unnamed_addr constant [1 x i8] c"\00", align 1
 
 ; CHECK: Function: test_no_crash
-; CHECK: 1 no alias responses
+; CHECK: 0 no alias responses
 define void @test_no_crash() #0 {
 entry:
   call i8* asm "nop", "=r,r"(
