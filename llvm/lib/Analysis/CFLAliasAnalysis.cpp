@@ -85,11 +85,13 @@ typedef unsigned StratifiedAttr;
 LLVM_CONSTEXPR unsigned MaxStratifiedAttrIndex = NumStratifiedAttrs;
 LLVM_CONSTEXPR unsigned AttrAllIndex = 0;
 LLVM_CONSTEXPR unsigned AttrGlobalIndex = 1;
-LLVM_CONSTEXPR unsigned AttrFirstArgIndex = 2;
+LLVM_CONSTEXPR unsigned AttrUnknownIndex = 2;
+LLVM_CONSTEXPR unsigned AttrFirstArgIndex = 3;
 LLVM_CONSTEXPR unsigned AttrLastArgIndex = MaxStratifiedAttrIndex;
 LLVM_CONSTEXPR unsigned AttrMaxNumArgs = AttrLastArgIndex - AttrFirstArgIndex;
 
 LLVM_CONSTEXPR StratifiedAttr AttrNone = 0;
+LLVM_CONSTEXPR StratifiedAttr AttrUnknown = 1 << AttrUnknownIndex;
 LLVM_CONSTEXPR StratifiedAttr AttrAll = ~AttrNone;
 
 // \brief StratifiedSets call for knowledge of "direction", so this is how we
@@ -261,6 +263,16 @@ public:
 
   void visitInstruction(Instruction &) {
     llvm_unreachable("Unsupported instruction encountered");
+  }
+
+  void visitPtrToIntInst(PtrToIntInst &Inst) {
+    auto *Ptr = Inst.getOperand(0);
+    Output.push_back(Edge(Ptr, Ptr, EdgeType::Assign, AttrUnknown));
+  }
+
+  void visitIntToPtrInst(IntToPtrInst &Inst) {
+    auto *Ptr = &Inst;
+    Output.push_back(Edge(Ptr, Ptr, EdgeType::Assign, AttrUnknown));
   }
 
   void visitCastInst(CastInst &Inst) {
@@ -931,16 +943,16 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
           break;
         }
 
-        if (Added) {
-          auto Aliasing = Weight.second;
-          if (auto MaybeCurIndex = valueToAttrIndex(CurValue))
-            Aliasing.set(*MaybeCurIndex);
-          if (auto MaybeOtherIndex = valueToAttrIndex(OtherValue))
-            Aliasing.set(*MaybeOtherIndex);
-          Builder.noteAttributes(CurValue, Aliasing);
-          Builder.noteAttributes(OtherValue, Aliasing);
+        auto Aliasing = Weight.second;
+        if (auto MaybeCurIndex = valueToAttrIndex(CurValue))
+          Aliasing.set(*MaybeCurIndex);
+        if (auto MaybeOtherIndex = valueToAttrIndex(OtherValue))
+          Aliasing.set(*MaybeOtherIndex);
+        Builder.noteAttributes(CurValue, Aliasing);
+        Builder.noteAttributes(OtherValue, Aliasing);
+
+        if (Added)
           Worklist.push_back(OtherNode);
-        }
       }
     }
   }
