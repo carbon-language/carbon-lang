@@ -4956,9 +4956,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     setValue(&I, Res);
     return nullptr;
   }
-  case Intrinsic::x86_avx_vinsertf128_pd_256:
-  case Intrinsic::x86_avx_vinsertf128_ps_256:
-  case Intrinsic::x86_avx_vinsertf128_si_256:
   case Intrinsic::x86_avx2_vinserti128: {
     EVT DestVT = TLI.getValueType(I.getType());
     EVT ElVT = TLI.getValueType(I.getArgOperand(1)->getType());

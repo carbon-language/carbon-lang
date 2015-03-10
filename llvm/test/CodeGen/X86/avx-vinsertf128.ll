@@ -1,6 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck -check-prefix=CHECK-SSE %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx | FileCheck %s
 
+; CHECK-LABEL: A:
 ; CHECK-NOT: vunpck
 ; CHECK: vinsertf128 $1
 define <8 x float> @A(<8 x float> %a) nounwind uwtable readnone ssp {
@@ -9,6 +9,7 @@ entry:
   ret <8 x float> %shuffle
 }
 
+; CHECK-LABEL: B:
 ; CHECK-NOT: vunpck
 ; CHECK: vinsertf128 $1
 define <4 x double> @B(<4 x double> %a) nounwind uwtable readnone ssp {
@@ -22,7 +23,7 @@ declare <2 x double> @llvm.x86.sse2.min.pd(<2 x double>, <2 x double>) nounwind 
 declare <2 x double> @llvm.x86.sse2.min.sd(<2 x double>, <2 x double>) nounwind readnone
 
 ; Just check that no crash happens
-; CHECK-SSE: _insert_crash
+; CHECK-LABEL: _insert_crash:
 define void @insert_crash() nounwind {
 allocas:
   %v1.i.i451 = shufflevector <4 x double> zeroinitializer, <4 x double> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -39,7 +40,7 @@ allocas:
 
 ;; DAG Combine must remove useless vinsertf128 instructions
 
-; CHECK: DAGCombineA
+; CHECK-LABEL: DAGCombineA:
 ; CHECK-NOT: vinsertf128 $1
 define <4 x i32> @DAGCombineA(<4 x i32> %v1) nounwind readonly {
   %1 = shufflevector <4 x i32> %v1, <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
@@ -47,7 +48,7 @@ define <4 x i32> @DAGCombineA(<4 x i32> %v1) nounwind readonly {
   ret <4 x i32> %2
 }
 
-; CHECK: DAGCombineB
+; CHECK-LABEL: DAGCombineB:
 ; CHECK: vpaddd %xmm
 ; CHECK-NOT: vinsertf128  $1
 ; CHECK: vpaddd %xmm
@@ -57,14 +58,7 @@ define <8 x i32> @DAGCombineB(<8 x i32> %v1, <8 x i32> %v2) nounwind readonly {
   ret <8 x i32> %2
 }
 
-; CHECK: insert_pd
-define <4 x double> @insert_pd(<4 x double> %a0, <2 x double> %a1) {
-; CHECK: vinsertf128
-%res = call <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double> %a0, <2 x double> %a1, i8 0)
-ret <4 x double> %res
-}
-
-; CHECK: insert_undef_pd
+; CHECK-LABEL: insert_undef_pd:
 define <4 x double> @insert_undef_pd(<4 x double> %a0, <2 x double> %a1) {
 ; CHECK: vmovaps	%ymm1, %ymm0
 %res = call <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double> undef, <2 x double> %a1, i8 0)
@@ -73,14 +67,7 @@ ret <4 x double> %res
 declare <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double>, <2 x double>, i8) nounwind readnone
 
 
-; CHECK: insert_ps
-define <8 x float> @insert_ps(<8 x float> %a0, <4 x float> %a1) {
-; CHECK: vinsertf128
-%res = call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> %a0, <4 x float> %a1, i8 0)
-ret <8 x float> %res
-}
-
-; CHECK: insert_undef_ps
+; CHECK-LABEL: insert_undef_ps:
 define <8 x float> @insert_undef_ps(<8 x float> %a0, <4 x float> %a1) {
 ; CHECK: vmovaps	%ymm1, %ymm0
 %res = call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> undef, <4 x float> %a1, i8 0)
@@ -89,14 +76,7 @@ ret <8 x float> %res
 declare <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float>, <4 x float>, i8) nounwind readnone
 
 
-; CHECK: insert_si
-define <8 x i32> @insert_si(<8 x i32> %a0, <4 x i32> %a1) {
-; CHECK: vinsertf128
-%res = call <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32> %a0, <4 x i32> %a1, i8 0)
-ret <8 x i32> %res
-}
-
-; CHECK: insert_undef_si
+; CHECK-LABEL: insert_undef_si:
 define <8 x i32> @insert_undef_si(<8 x i32> %a0, <4 x i32> %a1) {
 ; CHECK: vmovaps	%ymm1, %ymm0
 %res = call <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32> undef, <4 x i32> %a1, i8 0)
@@ -105,7 +85,7 @@ ret <8 x i32> %res
 declare <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32>, <4 x i32>, i8) nounwind readnone
 
 ; rdar://10643481
-; CHECK: vinsertf128_combine
+; CHECK-LABEL: vinsertf128_combine:
 define <8 x float> @vinsertf128_combine(float* nocapture %f) nounwind uwtable readonly ssp {
 ; CHECK-NOT: vmovaps
 ; CHECK: vinsertf128
@@ -118,7 +98,7 @@ entry:
 }
 
 ; rdar://11076953
-; CHECK: vinsertf128_ucombine
+; CHECK-LABEL: vinsertf128_ucombine:
 define <8 x float> @vinsertf128_ucombine(float* nocapture %f) nounwind uwtable readonly ssp {
 ; CHECK-NOT: vmovups
 ; CHECK: vinsertf128

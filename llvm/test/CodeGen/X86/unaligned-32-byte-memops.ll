@@ -48,58 +48,6 @@ define void @store32bytes(<8 x float> %A, <8 x float>* %P) {
 ; Merge two consecutive 16-byte subvector loads into a single 32-byte load
 ; if it's faster.
 
-declare <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float>, <4 x float>, i8)
-
-; Use the vinsertf128 intrinsic to model source code 
-; that explicitly uses AVX intrinsics.
-define <8 x float> @combine_16_byte_loads(<4 x float>* %ptr) {
-  ; CHECK-LABEL: combine_16_byte_loads
-
-  ; SANDYB: vmovups
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vmovups
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL: vmovups
-  ; HASWELL-NEXT: retq
-
-  %ptr1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 1
-  %ptr2 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 2
-  %v1 = load <4 x float>, <4 x float>* %ptr1, align 1
-  %v2 = load <4 x float>, <4 x float>* %ptr2, align 1
-  %shuffle = shufflevector <4 x float> %v1, <4 x float> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
-  %v3 = tail call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> %shuffle, <4 x float> %v2, i8 1)
-  ret <8 x float> %v3
-}
-
-; Swap the operands of the shufflevector and vinsertf128 to ensure that the
-; pattern still matches.
-define <8 x float> @combine_16_byte_loads_swap(<4 x float>* %ptr) {
-  ; CHECK-LABEL: combine_16_byte_loads_swap
-
-  ; SANDYB: vmovups
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vmovups
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL: vmovups
-  ; HASWELL-NEXT: retq
-
-  %ptr1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 2
-  %ptr2 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 3
-  %v1 = load <4 x float>, <4 x float>* %ptr1, align 1
-  %v2 = load <4 x float>, <4 x float>* %ptr2, align 1
-  %shuffle = shufflevector <4 x float> %v2, <4 x float> undef, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 0, i32 1, i32 2, i32 3>
-  %v3 = tail call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> %shuffle, <4 x float> %v1, i8 0)
-  ret <8 x float> %v3
-}
-
-; Replace the vinsertf128 intrinsic with a shufflevector as might be
-; expected from auto-vectorized code.
 define <8 x float> @combine_16_byte_loads_no_intrinsic(<4 x float>* %ptr) {
   ; CHECK-LABEL: combine_16_byte_loads_no_intrinsic
 
