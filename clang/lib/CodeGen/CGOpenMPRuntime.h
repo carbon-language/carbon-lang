@@ -285,7 +285,7 @@ public:
   /// PartID, struct context_vars*).
   /// \param D OpenMP directive.
   /// \param ThreadIDVar Variable for thread id in the current OpenMP region.
-  /// \param PartID If not nullptr - variable used for part id in tasks.
+  /// \param PartIDVar If not nullptr - variable used for part id in tasks.
   ///
   virtual llvm::Value *emitTaskOutlinedFunction(const OMPExecutableDirective &D,
                                                 const VarDecl *ThreadIDVar,
