@@ -1071,3 +1071,33 @@ auto f4(T... x) -> decltype(operator+(x...));
 // CHECK-LABEL: @_ZN6test522f4IJNS_1XEEEEDTclonplspfp_EEDpT_
 void use() { f4(X{}); }
 }
+
+namespace test53 {
+struct c {
+  using t1 = struct { int z; };
+  using t2 = struct { double z; };
+  using t3 = struct { float z; };
+  using t4 = struct { float z; };
+
+  __attribute__((used)) c(t1) {}
+  __attribute__((used)) c(t2) {}
+  __attribute__((used)) c(t3) {}
+  __attribute__((used)) c(t4) {}
+  // CHECK-LABEL: @_ZN6test531cC2ENS0_2t1E
+  // CHECK-LABEL: @_ZN6test531cC2ENS0_2t2E
+  // CHECK-LABEL: @_ZN6test531cC2ENS0_2t3E
+  // CHECK-LABEL: @_ZN6test531cC2ENS0_2t4E
+};
+}
+
+namespace test54 {
+struct c {
+  using t1 = struct { int z; } *;
+  using t2 = struct { double z; } *;
+
+  __attribute__((used)) c(t1) {}
+  __attribute__((used)) c(t2) {}
+  // CHECK-LABEL: @_ZN6test541cC2EPNS0_Ut_E
+  // CHECK-LABEL: @_ZN6test541cC2EPNS0_Ut0_E
+};
+}

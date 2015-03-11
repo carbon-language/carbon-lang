@@ -8474,7 +8474,8 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
                                   SourceLocation UsingLoc,
                                   UnqualifiedId &Name,
                                   AttributeList *AttrList,
-                                  TypeResult Type) {
+                                  TypeResult Type,
+                                  Decl *DeclFromDeclSpec) {
   // Skip up to the relevant declaration scope.
   while (S->getFlags() & Scope::TemplateParamScope)
     S = S->getParent();
@@ -8602,6 +8603,10 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
 
     NewND = NewDecl;
   } else {
+    if (auto *TD = dyn_cast_or_null<TagDecl>(DeclFromDeclSpec)) {
+      setTagNameForLinkagePurposes(TD, NewTD);
+      handleTagNumbering(TD, S);
+    }
     ActOnTypedefNameDecl(S, CurContext, NewTD, Previous, Redeclaration);
     NewND = NewTD;
   }

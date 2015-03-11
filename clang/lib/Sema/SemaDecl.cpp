@@ -3416,8 +3416,8 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   return ParsedFreeStandingDeclSpec(S, AS, DS, MultiTemplateParamsArg());
 }
 
-static void HandleTagNumbering(Sema &S, const TagDecl *Tag, Scope *TagScope) {
-  if (!S.Context.getLangOpts().CPlusPlus)
+void Sema::handleTagNumbering(const TagDecl *Tag, Scope *TagScope) {
+  if (!Context.getLangOpts().CPlusPlus)
     return;
 
   if (isa<CXXRecordDecl>(Tag->getParent())) {
@@ -3426,21 +3426,61 @@ static void HandleTagNumbering(Sema &S, const TagDecl *Tag, Scope *TagScope) {
     if (!Tag->getName().empty() || Tag->getTypedefNameForAnonDecl())
       return;
     MangleNumberingContext &MCtx =
-        S.Context.getManglingNumberContext(Tag->getParent());
-    S.Context.setManglingNumber(
+        Context.getManglingNumberContext(Tag->getParent());
+    Context.setManglingNumber(
         Tag, MCtx.getManglingNumber(Tag, TagScope->getMSLocalManglingNumber()));
     return;
   }
 
   // If this tag isn't a direct child of a class, number it if it is local.
   Decl *ManglingContextDecl;
-  if (MangleNumberingContext *MCtx =
-          S.getCurrentMangleNumberContext(Tag->getDeclContext(),
-                                          ManglingContextDecl)) {
-    S.Context.setManglingNumber(
+  if (MangleNumberingContext *MCtx = getCurrentMangleNumberContext(
+          Tag->getDeclContext(), ManglingContextDecl)) {
+    Context.setManglingNumber(
         Tag,
         MCtx->getManglingNumber(Tag, TagScope->getMSLocalManglingNumber()));
   }
+}
+
+void Sema::setTagNameForLinkagePurposes(TagDecl *TagFromDeclSpec,
+                                        TypedefNameDecl *NewTD) {
+  // Do nothing if the tag is not anonymous or already has an
+  // associated typedef (from an earlier typedef in this decl group).
+  if (TagFromDeclSpec->getIdentifier())
+    return;
+  if (TagFromDeclSpec->getTypedefNameForAnonDecl())
+    return;
+
+  // A well-formed anonymous tag must always be a TUK_Definition.
+  assert(TagFromDeclSpec->isThisDeclarationADefinition());
+
+  // The type must match the tag exactly;  no qualifiers allowed.
+  if (!Context.hasSameType(NewTD->getUnderlyingType(),
+                           Context.getTagDeclType(TagFromDeclSpec)))
+    return;
+
+  // If we've already computed linkage for the anonymous tag, then
+  // adding a typedef name for the anonymous decl can change that
+  // linkage, which might be a serious problem.  Diagnose this as
+  // unsupported and ignore the typedef name.  TODO: we should
+  // pursue this as a language defect and establish a formal rule
+  // for how to handle it.
+  if (TagFromDeclSpec->hasLinkageBeenComputed()) {
+    Diag(NewTD->getLocation(), diag::err_typedef_changes_linkage);
+
+    SourceLocation tagLoc = TagFromDeclSpec->getInnerLocStart();
+    tagLoc = getLocForEndOfToken(tagLoc);
+
+    llvm::SmallString<40> textToInsert;
+    textToInsert += ' ';
+    textToInsert += NewTD->getIdentifier()->getName();
+    Diag(tagLoc, diag::note_typedef_changes_linkage)
+        << FixItHint::CreateInsertion(tagLoc, textToInsert);
+    return;
+  }
+
+  // Otherwise, set this is the anon-decl typedef for the tag.
+  TagFromDeclSpec->setTypedefNameForAnonDecl(NewTD);
 }
 
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
@@ -3472,7 +3512,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
 
   if (Tag) {
-    HandleTagNumbering(*this, Tag, S);
+    handleTagNumbering(Tag, S);
     Tag->setFreeStanding();
     if (Tag->isInvalidDecl())
       return Tag;
@@ -9720,7 +9760,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
 
   if (DeclSpec::isDeclRep(DS.getTypeSpecType())) {
     if (TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl())) {
-      HandleTagNumbering(*this, Tag, S);
+      handleTagNumbering(Tag, S);
       if (!Tag->hasNameForLinkage() && !Tag->hasDeclaratorForAnonDecl())
         Tag->setDeclaratorForAnonDecl(FirstDeclaratorInGroup);
     }
@@ -10935,44 +10975,10 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   case TST_union:
   case TST_class: {
     TagDecl *tagFromDeclSpec = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
-
-    // Do nothing if the tag is not anonymous or already has an
-    // associated typedef (from an earlier typedef in this decl group).
-    if (tagFromDeclSpec->getIdentifier()) break;
-    if (tagFromDeclSpec->getTypedefNameForAnonDecl()) break;
-
-    // A well-formed anonymous tag must always be a TUK_Definition.
-    assert(tagFromDeclSpec->isThisDeclarationADefinition());
-
-    // The type must match the tag exactly;  no qualifiers allowed.
-    if (!Context.hasSameType(T, Context.getTagDeclType(tagFromDeclSpec)))
-      break;
-
-    // If we've already computed linkage for the anonymous tag, then
-    // adding a typedef name for the anonymous decl can change that
-    // linkage, which might be a serious problem.  Diagnose this as
-    // unsupported and ignore the typedef name.  TODO: we should
-    // pursue this as a language defect and establish a formal rule
-    // for how to handle it.
-    if (tagFromDeclSpec->hasLinkageBeenComputed()) {
-      Diag(D.getIdentifierLoc(), diag::err_typedef_changes_linkage);
-
-      SourceLocation tagLoc = D.getDeclSpec().getTypeSpecTypeLoc();
-      tagLoc = getLocForEndOfToken(tagLoc);
-
-      llvm::SmallString<40> textToInsert;
-      textToInsert += ' ';
-      textToInsert += D.getIdentifier()->getName();
-      Diag(tagLoc, diag::note_typedef_changes_linkage)
-        << FixItHint::CreateInsertion(tagLoc, textToInsert);
-      break;
-    }
-
-    // Otherwise, set this is the anon-decl typedef for the tag.
-    tagFromDeclSpec->setTypedefNameForAnonDecl(NewTD);
+    setTagNameForLinkagePurposes(tagFromDeclSpec, NewTD);
     break;
   }
-    
+
   default:
     break;
   }

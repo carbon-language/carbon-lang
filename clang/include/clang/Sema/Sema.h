@@ -1588,6 +1588,9 @@ public:
   void CheckShadow(Scope *S, VarDecl *D, const LookupResult& R);
   void CheckShadow(Scope *S, VarDecl *D);
   void CheckCastAlign(Expr *Op, QualType T, SourceRange TRange);
+  void handleTagNumbering(const TagDecl *Tag, Scope *TagScope);
+  void setTagNameForLinkagePurposes(TagDecl *TagFromDeclSpec,
+                                    TypedefNameDecl *NewTD);
   void CheckTypedefForVariablyModifiedType(Scope *S, TypedefNameDecl *D);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     TypeSourceInfo *TInfo,
@@ -3989,7 +3992,8 @@ public:
                               SourceLocation UsingLoc,
                               UnqualifiedId &Name,
                               AttributeList *AttrList,
-                              TypeResult Type);
+                              TypeResult Type,
+                              Decl *DeclFromDeclSpec);
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
