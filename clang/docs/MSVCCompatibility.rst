@@ -85,8 +85,8 @@ The status of major ABI-impacting C++ features:
   finished, along with support for the ``/GR`` flag.
 
 * Exceptions and SEH: :partial:`Minimal`.  Clang can parse both constructs, but
-  does not know how to emit compatible handlers.  Clang cannot throw exceptions
-  but it can rethrow them.
+  does not know how to emit compatible handlers.  Clang can throw and rethrow
+  C++ exceptions.
 
 * Thread-safe initialization of local statics: :none:`Unstarted`.  We are ABI
   compatible with MSVC 2013, which does not support thread-safe local statics.
