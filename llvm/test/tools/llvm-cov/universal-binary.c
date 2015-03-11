@@ -1,6 +1,6 @@
 // The coverage reader should be able to handle universal binaries
 
-//CHECK: 100| @[[LINE+1]]| int main
+// CHECK: 100| [[@LINE+1]]| int main
 int main(int argc, const char *argv[]) {}
 
 // RUN: llvm-profdata merge %S/Inputs/universal-binary.proftext -o %t.profdata
@@ -10,4 +10,4 @@ int main(int argc, const char *argv[]) {}
 // WRONG-ARCH: Failed to load coverage
 
 // llvm-cov doesn't work on big endian yet
-// XFAIL: powerpc64-, s390x, mips-, mips64-, sparc
+// XFAIL: *
