@@ -279,7 +279,7 @@ static const SetOfMachineInstr *getUses(const InstrToInstrs *sets, unsigned reg,
 /// definition. It also consider definitions of ADRP instructions as uses and
 /// ignore other uses. The ADRPMode is used to collect the information for LHO
 /// that involve ADRP operation only.
-static void initReachingDef(MachineFunction &MF,
+static void initReachingDef(const MachineFunction &MF,
                             InstrToInstrs *ColorOpToReachedUses,
                             BlockToInstrPerColor &Gen, BlockToRegSet &Kill,
                             BlockToSetOfInstrsPerColor &ReachableUses,
@@ -288,7 +288,7 @@ static void initReachingDef(MachineFunction &MF,
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   unsigned NbReg = RegToId.size();
 
-  for (MachineBasicBlock &MBB : MF) {
+  for (const MachineBasicBlock &MBB : MF) {
     auto &BBGen = Gen[&MBB];
     BBGen = make_unique<const MachineInstr *[]>(NbReg);
     std::fill(BBGen.get(), BBGen.get() + NbReg, nullptr);
@@ -382,7 +382,7 @@ static void initReachingDef(MachineFunction &MF,
 ///                 op.reachedUses
 ///
 ///           Out[bb] = Gen[bb] U (In[bb] - Kill[bb])
-static void reachingDefAlgorithm(MachineFunction &MF,
+static void reachingDefAlgorithm(const MachineFunction &MF,
                                  InstrToInstrs *ColorOpToReachedUses,
                                  BlockToSetOfInstrsPerColor &In,
                                  BlockToSetOfInstrsPerColor &Out,
@@ -392,7 +392,7 @@ static void reachingDefAlgorithm(MachineFunction &MF,
   bool HasChanged;
   do {
     HasChanged = false;
-    for (MachineBasicBlock &MBB : MF) {
+    for (const MachineBasicBlock &MBB : MF) {
       unsigned CurReg;
       for (CurReg = 0; CurReg < NbReg; ++CurReg) {
         SetOfMachineInstr &BBInSet = getSet(In, MBB, CurReg, NbReg);
@@ -401,7 +401,7 @@ static void reachingDefAlgorithm(MachineFunction &MF,
         SetOfMachineInstr &BBOutSet = getSet(Out, MBB, CurReg, NbReg);
         unsigned Size = BBOutSet.size();
         //   In[bb][color] = U Out[bb.predecessors][color]
-        for (MachineBasicBlock *PredMBB : MBB.predecessors()) {
+        for (const MachineBasicBlock *PredMBB : MBB.predecessors()) {
           SetOfMachineInstr &PredOutSet = getSet(Out, *PredMBB, CurReg, NbReg);
           BBInSet.insert(PredOutSet.begin(), PredOutSet.end());
         }
@@ -433,7 +433,7 @@ static void reachingDefAlgorithm(MachineFunction &MF,
 /// @p DummyOp.
 /// \pre ColorOpToReachedUses is an array of at least number of registers of
 /// InstrToInstrs.
-static void reachingDef(MachineFunction &MF,
+static void reachingDef(const MachineFunction &MF,
                         InstrToInstrs *ColorOpToReachedUses,
                         const MapRegToId &RegToId, bool ADRPMode = false,
                         const MachineInstr *DummyOp = nullptr) {
@@ -983,7 +983,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
 /// Look for every register defined by potential LOHs candidates.
 /// Map these registers with dense id in @p RegToId and vice-versa in
 /// @p IdToReg. @p IdToReg is populated only in DEBUG mode.
-static void collectInvolvedReg(MachineFunction &MF, MapRegToId &RegToId,
+static void collectInvolvedReg(const MachineFunction &MF, MapRegToId &RegToId,
                                MapIdToReg &IdToReg,
                                const TargetRegisterInfo *TRI) {
   unsigned CurRegId = 0;
