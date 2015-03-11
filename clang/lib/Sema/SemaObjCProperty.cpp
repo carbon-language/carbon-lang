@@ -1894,11 +1894,9 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
 }
 
 void Sema::DiagnoseMissingDesignatedInitOverrides(
-                                            const ObjCImplementationDecl *ImplD) {
-  const ObjCInterfaceDecl *IFD = ImplD->getClassInterface();
-  assert(IFD);
-  assert(IFD->hasDesignatedInitializers() ||
-         IFD->hasDesignatedInitializersInSuperClass());
+                                            const ObjCImplementationDecl *ImplD,
+                                            const ObjCInterfaceDecl *IFD) {
+  assert(IFD->hasDesignatedInitializers());
   const ObjCInterfaceDecl *SuperD = IFD->getSuperClass();
   if (!SuperD)
     return;

@@ -803,8 +803,6 @@ public:
     return hasDesignatedInitializers() || inheritsDesignatedInitializers();
   }
 
-  bool hasDesignatedInitializersInSuperClass() const;
-
   const ObjCProtocolList &getReferencedProtocols() const {
     assert(hasDefinition() && "Caller did not check for forward reference!");
     if (data().ExternallyCompleted)

@@ -2715,9 +2715,8 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
       AtomicPropertySetterGetterRules(IC, IDecl);
       DiagnoseOwningPropertyGetterSynthesis(IC);
       DiagnoseUnusedBackingIvarInAccessor(S, IC);
-      if (IDecl->hasDesignatedInitializers() ||
-          IDecl->hasDesignatedInitializersInSuperClass())
-        DiagnoseMissingDesignatedInitOverrides(IC);
+      if (IDecl->hasDesignatedInitializers())
+        DiagnoseMissingDesignatedInitOverrides(IC, IDecl);
 
       bool HasRootClassAttr = IDecl->hasAttr<ObjCRootClassAttr>();
       if (IDecl->getSuperClass() == nullptr) {

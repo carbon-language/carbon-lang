@@ -1213,16 +1213,6 @@ bool ObjCInterfaceDecl::hasDesignatedInitializers() const {
   return data().HasDesignatedInitializers;
 }
 
-bool ObjCInterfaceDecl::hasDesignatedInitializersInSuperClass() const {
-  ObjCInterfaceDecl *OSC = getSuperClass();
-  while (OSC) {
-    if (OSC->hasDesignatedInitializers())
-      return true;
-    OSC = OSC->getSuperClass();
-  }
-  return false;
-}
-
 StringRef
 ObjCInterfaceDecl::getObjCRuntimeNameAsString() const {
   if (ObjCRuntimeNameAttr *ObjCRTName = getAttr<ObjCRuntimeNameAttr>())
