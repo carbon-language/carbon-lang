@@ -693,8 +693,15 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
     // If the call was inlined, but then constant folded, there is no edge to
     // add.  Check for this case.
     Instruction *NewCall = dyn_cast<Instruction>(VMI->second);
-    if (!NewCall) continue;
+    if (!NewCall)
+      continue;
 
+    // We do not treat intrinsic calls like real function calls because we
+    // expect them to become inline code; do not add an edge for an intrinsic.
+    CallSite CS = CallSite(NewCall);
+    if (CS && CS.getCalledFunction() && CS.getCalledFunction()->isIntrinsic())
+      continue;
+    
     // Remember that this call site got inlined for the client of
     // InlineFunction.
     IFI.InlinedCalls.push_back(NewCall);
