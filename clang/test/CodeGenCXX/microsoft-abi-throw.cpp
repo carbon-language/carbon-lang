@@ -72,7 +72,7 @@ void i(Variadic &v) {
 // CHECK:  store {{.*}} %this, {{.*}} %[[this_addr:.*]], align
 // CHECK:  %[[this:.*]] = load {{.*}} %[[this_addr]]
 // CHECK:  %[[src:.*]] = load {{.*}} %[[src_addr]]
-// CHECK:  %call = call {{.*}} @"\01??0Variadic@@QAA@AAU0@ZZ"({{.*}} %[[this]], {{.*}} %[[src]])
+// CHECK:  call {{.*}} @"\01??0Variadic@@QAA@AAU0@ZZ"({{.*}} %[[this]], {{.*}} %[[src]])
 // CHECK:  ret void
 
 struct TemplateWithDefault {
