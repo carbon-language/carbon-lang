@@ -412,7 +412,7 @@ void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 }
 
 
-void sys::SetInterruptFunction(void (*IF)()) {
+void llvm::sys::SetInterruptFunction(void (*IF)()) {
   RegisterHandler();
   InterruptFunction = IF;
   LeaveCriticalSection(&CriticalSection);
