@@ -1528,7 +1528,8 @@ const char *StyleOptionHelpDescription =
 static FormatStyle::LanguageKind getLanguageByFileName(StringRef FileName) {
   if (FileName.endswith(".java")) {
     return FormatStyle::LK_Java;
-  } else if (FileName.endswith_lower(".js")) {
+  } else if (FileName.endswith_lower(".js") || FileName.endswith_lower(".ts")) {
+    // JavaScript or TypeScript.
     return FormatStyle::LK_JavaScript;
   } else if (FileName.endswith_lower(".proto") ||
              FileName.endswith_lower(".protodevel")) {
