@@ -353,15 +353,13 @@ public:
     static const mask punct  = _PUNCT;
     static const mask xdigit = _HEX;
     static const mask blank  = _BLANK;
-#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__) || defined(__NetBSD__) || defined(__ANDROID__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__) || defined(__NetBSD__)
 # ifdef __APPLE__
     typedef __uint32_t mask;
 # elif defined(__FreeBSD__)
     typedef unsigned long mask;
 # elif defined(__EMSCRIPTEN__) ||  defined(__NetBSD__)
     typedef unsigned short mask;
-# elif defined(__ANDROID__)
-    typedef unsigned char mask;
 # endif
     static const mask space  = _CTYPE_S;
     static const mask print  = _CTYPE_R;
@@ -371,11 +369,7 @@ public:
     static const mask alpha  = _CTYPE_A;
     static const mask digit  = _CTYPE_D;
     static const mask punct  = _CTYPE_P;
-# if defined(__ANDROID__)
-    static const mask xdigit = _CTYPE_X | _CTYPE_D;
-# else
     static const mask xdigit = _CTYPE_X;
-# endif
 
 # if defined(__NetBSD__)
     static const mask blank  = _CTYPE_BL;

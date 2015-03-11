@@ -719,4 +719,8 @@ extern "C" void __sanitizer_annotate_contiguous_container(
          _LIBCPP_HAS_NO_THREADS is defined.
 #endif
 
+#if defined(__ANDROID__)
+#define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
+#endif
+
 #endif  // _LIBCPP_CONFIG
