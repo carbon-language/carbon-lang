@@ -24,9 +24,7 @@
 
 using namespace llvm;
 
-SIRegisterInfo::SIRegisterInfo(const AMDGPUSubtarget &st)
-: AMDGPURegisterInfo(st)
-  { }
+SIRegisterInfo::SIRegisterInfo() : AMDGPURegisterInfo() {}
 
 BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
@@ -48,7 +46,7 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   // Tonga and Iceland can only allocate a fixed number of SGPRs due
   // to a hw bug.
-  if (ST.hasSGPRInitBug()) {
+  if (MF.getSubtarget<AMDGPUSubtarget>().hasSGPRInitBug()) {
     unsigned NumSGPRs = AMDGPU::SGPR_32RegClass.getNumRegs();
     // Reserve some SGPRs for FLAT_SCRATCH and VCC (4 SGPRs).
     // Assume XNACK_MASK is unused.
@@ -69,10 +67,11 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 unsigned SIRegisterInfo::getRegPressureSetLimit(const MachineFunction &MF,
                                                 unsigned Idx) const {
 
+  const AMDGPUSubtarget &STI = MF.getSubtarget<AMDGPUSubtarget>();
   // FIXME: We should adjust the max number of waves based on LDS size.
-  unsigned SGPRLimit = getNumSGPRsAllowed(ST.getGeneration(),
-                                          ST.getMaxWavesPerCU());
-  unsigned VGPRLimit = getNumVGPRsAllowed(ST.getMaxWavesPerCU());
+  unsigned SGPRLimit = getNumSGPRsAllowed(STI.getGeneration(),
+                                          STI.getMaxWavesPerCU());
+  unsigned VGPRLimit = getNumVGPRsAllowed(STI.getMaxWavesPerCU());
 
   for (regclass_iterator I = regclass_begin(), E = regclass_end();
        I != E; ++I) {
@@ -143,9 +142,10 @@ void SIRegisterInfo::buildScratchLoadStore(MachineBasicBlock::iterator MI,
                                            int64_t Offset,
                                            RegScavenger *RS) const {
 
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo*>(ST.getInstrInfo());
   MachineBasicBlock *MBB = MI->getParent();
   const MachineFunction *MF = MI->getParent()->getParent();
+  const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo *>(MF->getSubtarget().getInstrInfo());
   LLVMContext &Ctx = MF->getFunction()->getContext();
   DebugLoc DL = MI->getDebugLoc();
   bool IsLoad = TII->get(LoadStoreOp).mayLoad();
@@ -196,7 +196,8 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   MachineBasicBlock *MBB = MI->getParent();
   SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
   MachineFrameInfo *FrameInfo = MF->getFrameInfo();
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo*>(ST.getInstrInfo());
+  const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo *>(MF->getSubtarget().getInstrInfo());
   DebugLoc DL = MI->getDebugLoc();
 
   MachineOperand &FIOp = MI->getOperand(FIOperandNum);

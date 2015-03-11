@@ -31,7 +31,7 @@ using namespace llvm;
 void AMDGPUInstrInfo::anchor() {}
 
 AMDGPUInstrInfo::AMDGPUInstrInfo(const AMDGPUSubtarget &st)
-  : AMDGPUGenInstrInfo(-1,-1), RI(st), ST(st) { }
+    : AMDGPUGenInstrInfo(-1, -1), ST(st) {}
 
 const AMDGPURegisterInfo &AMDGPUInstrInfo::getRegisterInfo() const {
   return RI;
@@ -356,8 +356,8 @@ static enum SISubtarget AMDGPUSubtargetToSISubtarget(unsigned Gen) {
 }
 
 int AMDGPUInstrInfo::pseudoToMCOpcode(int Opcode) const {
-  int MCOp = AMDGPU::getMCOpcode(Opcode,
-                        AMDGPUSubtargetToSISubtarget(RI.ST.getGeneration()));
+  int MCOp = AMDGPU::getMCOpcode(
+      Opcode, AMDGPUSubtargetToSISubtarget(ST.getGeneration()));
 
   // -1 means that Opcode is already a native instruction.
   if (MCOp == -1)

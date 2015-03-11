@@ -24,7 +24,7 @@ class AMDGPUSubtarget;
 struct R600RegisterInfo : public AMDGPURegisterInfo {
   RegClassWeight RCW;
 
-  R600RegisterInfo(const AMDGPUSubtarget &st);
+  R600RegisterInfo();
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 

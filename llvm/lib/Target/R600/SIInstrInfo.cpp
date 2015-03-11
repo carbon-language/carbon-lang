@@ -28,7 +28,7 @@
 using namespace llvm;
 
 SIInstrInfo::SIInstrInfo(const AMDGPUSubtarget &st)
-    : AMDGPUInstrInfo(st), RI(st) {}
+    : AMDGPUInstrInfo(st), RI() {}
 
 //===----------------------------------------------------------------------===//
 // TargetInstrInfo callbacks
@@ -1169,32 +1169,6 @@ bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
   return RI.opCanUseInlineConstant(OpInfo.OperandType);
 }
 
-bool SIInstrInfo::canFoldOffset(unsigned OffsetSize, unsigned AS) const {
-  switch (AS) {
-  case AMDGPUAS::GLOBAL_ADDRESS: {
-    // MUBUF instructions a 12-bit offset in bytes.
-    return isUInt<12>(OffsetSize);
-  }
-  case AMDGPUAS::CONSTANT_ADDRESS: {
-    // SMRD instructions have an 8-bit offset in dwords on SI and
-    // a 20-bit offset in bytes on VI.
-    if (RI.ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
-      return isUInt<20>(OffsetSize);
-    else
-      return (OffsetSize % 4 == 0) && isUInt<8>(OffsetSize / 4);
-  }
-  case AMDGPUAS::LOCAL_ADDRESS:
-  case AMDGPUAS::REGION_ADDRESS: {
-    // The single offset versions have a 16-bit offset in bytes.
-    return isUInt<16>(OffsetSize);
-  }
-  case AMDGPUAS::PRIVATE_ADDRESS:
-    // Indirect register addressing does not use any offsets.
-  default:
-    return 0;
-  }
-}
-
 bool SIInstrInfo::hasVALU32BitEncoding(unsigned Opcode) const {
   int Op32 = AMDGPU::getVOPe32(Opcode);
   if (Op32 == -1)
@@ -1918,7 +1892,9 @@ void SIInstrInfo::splitSMRD(MachineInstr *MI,
 
   bool IsKill = SBase->isKill();
   if (OffOp) {
-    bool isVI = RI.ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS;
+    bool isVI =
+        MBB->getParent()->getSubtarget<AMDGPUSubtarget>().getGeneration() >=
+        AMDGPUSubtarget::VOLCANIC_ISLANDS;
     unsigned OffScale = isVI ? 1 : 4;
     // Handle the _IMM variant
     unsigned LoOffset = OffOp->getImm() * OffScale;
@@ -2011,7 +1987,8 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
         // SMRD instructions take a dword offsets on SI and byte offset on VI
         // and MUBUF instructions always take a byte offset.
         ImmOffset = MI->getOperand(2).getImm();
-        if (RI.ST.getGeneration() <= AMDGPUSubtarget::SEA_ISLANDS)
+        if (MBB->getParent()->getSubtarget<AMDGPUSubtarget>().getGeneration() <=
+            AMDGPUSubtarget::SEA_ISLANDS)
           ImmOffset <<= 2;
         RegOffset = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
 

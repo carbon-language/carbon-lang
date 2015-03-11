@@ -17,10 +17,7 @@
 
 using namespace llvm;
 
-AMDGPURegisterInfo::AMDGPURegisterInfo(const AMDGPUSubtarget &st)
-: AMDGPUGenRegisterInfo(0),
-  ST(st)
-  { }
+AMDGPURegisterInfo::AMDGPURegisterInfo() : AMDGPUGenRegisterInfo(0) {}
 
 //===----------------------------------------------------------------------===//
 // Function handling callbacks - Functions are a seldom used feature of GPUS, so

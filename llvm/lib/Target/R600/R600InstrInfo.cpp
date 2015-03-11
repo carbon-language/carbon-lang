@@ -29,9 +29,7 @@ using namespace llvm;
 #include "AMDGPUGenDFAPacketizer.inc"
 
 R600InstrInfo::R600InstrInfo(const AMDGPUSubtarget &st)
-  : AMDGPUInstrInfo(st),
-    RI(st)
-  { }
+    : AMDGPUInstrInfo(st), RI() {}
 
 const R600RegisterInfo &R600InstrInfo::getRegisterInfo() const {
   return RI;

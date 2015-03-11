@@ -259,7 +259,8 @@ void SIInsertWaits::pushInstruction(MachineBasicBlock &MBB,
     return;
   }
 
-  if (TRI->ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+  if (MBB.getParent()->getSubtarget<AMDGPUSubtarget>().getGeneration() >=
+      AMDGPUSubtarget::VOLCANIC_ISLANDS) {
     // Any occurence of consecutive VMEM or SMEM instructions forms a VMEM
     // or SMEM clause, respectively.
     //
@@ -412,7 +413,8 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 
 void SIInsertWaits::handleSendMsg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I) {
-  if (TRI->ST.getGeneration() < AMDGPUSubtarget::VOLCANIC_ISLANDS)
+  if (MBB.getParent()->getSubtarget<AMDGPUSubtarget>().getGeneration() <
+      AMDGPUSubtarget::VOLCANIC_ISLANDS)
     return;
 
   // There must be "S_NOP 0" between an instruction writing M0 and S_SENDMSG.
