@@ -801,7 +801,8 @@ bool FastISel::selectPatchpoint(const CallInst *I) {
     return false;
 
   // Push the register mask info.
-  Ops.push_back(MachineOperand::CreateRegMask(TRI.getCallPreservedMask(CC)));
+  Ops.push_back(MachineOperand::CreateRegMask(
+      TRI.getCallPreservedMask(*FuncInfo.MF, CC)));
 
   // Add scratch registers as implicit def and early clobber.
   const MCPhysReg *ScratchRegs = TLI.getScratchRegisters(CC);

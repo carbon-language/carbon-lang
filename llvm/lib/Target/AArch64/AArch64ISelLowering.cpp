@@ -2794,13 +2794,13 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   const AArch64RegisterInfo *TRI = Subtarget->getRegisterInfo();
   if (IsThisReturn) {
     // For 'this' returns, use the X0-preserving mask if applicable
-    Mask = TRI->getThisReturnPreservedMask(CallConv);
+    Mask = TRI->getThisReturnPreservedMask(MF, CallConv);
     if (!Mask) {
       IsThisReturn = false;
-      Mask = TRI->getCallPreservedMask(CallConv);
+      Mask = TRI->getCallPreservedMask(MF, CallConv);
     }
   } else
-    Mask = TRI->getCallPreservedMask(CallConv);
+    Mask = TRI->getCallPreservedMask(MF, CallConv);
 
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));

@@ -277,8 +277,9 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_32_SaveList;
 }
 
-const uint32_t*
-X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+const uint32_t *
+X86RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                      CallingConv::ID CC) const {
   bool HasAVX = Subtarget.hasAVX();
   bool HasAVX512 = Subtarget.hasAVX512();
 
@@ -360,7 +361,7 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // Set the base-pointer register and its aliases as reserved if needed.
   if (hasBasePointer(MF)) {
     CallingConv::ID CC = MF.getFunction()->getCallingConv();
-    const uint32_t* RegMask = getCallPreservedMask(CC);
+    const uint32_t *RegMask = getCallPreservedMask(MF, CC);
     if (MachineOperand::clobbersPhysReg(RegMask, getBaseRegister()))
       report_fatal_error(
         "Stack realignment in presence of dynamic allocas is not supported with"

@@ -43,8 +43,9 @@ SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_SaveList;
 }
 
-const uint32_t*
-SparcRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+const uint32_t *
+SparcRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                        CallingConv::ID CC) const {
   return CSR_RegMask;
 }
 

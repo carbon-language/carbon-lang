@@ -3161,7 +3161,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = Subtarget->getRegisterInfo();
-  const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
+  const uint32_t *Mask = TRI->getCallPreservedMask(MF, CallConv);
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 
@@ -18453,7 +18453,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
 
   // Calls into a routine in libgcc to allocate more space from the heap.
   const uint32_t *RegMask =
-      Subtarget->getRegisterInfo()->getCallPreservedMask(CallingConv::C);
+      Subtarget->getRegisterInfo()->getCallPreservedMask(*MF, CallingConv::C);
   if (IsLP64) {
     BuildMI(mallocMBB, DL, TII->get(X86::MOV64rr), X86::RDI)
       .addReg(sizeVReg);
@@ -18538,7 +18538,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
   // FIXME: The 32-bit calls have non-standard calling conventions. Use a
   // proper register mask.
   const uint32_t *RegMask =
-      Subtarget->getRegisterInfo()->getCallPreservedMask(CallingConv::C);
+      Subtarget->getRegisterInfo()->getCallPreservedMask(*F, CallingConv::C);
   if (Subtarget->is64Bit()) {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
                                       TII->get(X86::MOV64rm), X86::RDI)

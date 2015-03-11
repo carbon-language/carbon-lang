@@ -915,9 +915,10 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
 
   // Add a register mask operand representing the call-preserved registers.
   const SparcRegisterInfo *TRI = Subtarget->getRegisterInfo();
-  const uint32_t *Mask = ((hasReturnsTwice)
-                          ? TRI->getRTCallPreservedMask(CallConv)
-                          : TRI->getCallPreservedMask(CallConv));
+  const uint32_t *Mask =
+      ((hasReturnsTwice)
+           ? TRI->getRTCallPreservedMask(CallConv)
+           : TRI->getCallPreservedMask(DAG.getMachineFunction(), CallConv));
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 
@@ -1229,7 +1230,8 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
   const SparcRegisterInfo *TRI = Subtarget->getRegisterInfo();
   const uint32_t *Mask =
       ((hasReturnsTwice) ? TRI->getRTCallPreservedMask(CLI.CallConv)
-                         : TRI->getCallPreservedMask(CLI.CallConv));
+                         : TRI->getCallPreservedMask(DAG.getMachineFunction(),
+                                                     CLI.CallConv));
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 
@@ -1904,8 +1906,8 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     Ops.push_back(Callee);
     Ops.push_back(Symbol);
     Ops.push_back(DAG.getRegister(SP::O0, PtrVT));
-    const uint32_t *Mask =
-        Subtarget->getRegisterInfo()->getCallPreservedMask(CallingConv::C);
+    const uint32_t *Mask = Subtarget->getRegisterInfo()->getCallPreservedMask(
+        DAG.getMachineFunction(), CallingConv::C);
     assert(Mask && "Missing call preserved mask for calling convention");
     Ops.push_back(DAG.getRegisterMask(Mask));
     Ops.push_back(InFlag);

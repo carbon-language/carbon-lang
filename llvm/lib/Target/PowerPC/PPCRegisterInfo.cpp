@@ -128,8 +128,9 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
                                 CSR_SVR432_SaveList);
 }
 
-const uint32_t*
-PPCRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+const uint32_t *
+PPCRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                      CallingConv::ID CC) const {
   if (CC == CallingConv::AnyReg) {
     if (Subtarget.hasVSX())
       return CSR_64_AllRegs_VSX_RegMask;

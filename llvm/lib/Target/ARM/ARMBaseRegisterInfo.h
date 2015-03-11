@@ -101,7 +101,8 @@ protected:
 public:
   /// Code Generation virtual methods...
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
-  const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
+  const uint32_t *getCallPreservedMask(const MachineFunction &MF,
+                                       CallingConv::ID) const override;
   const uint32_t *getNoPreservedMask() const;
 
   /// getThisReturnPreservedMask - Returns a call preserved mask specific to the
@@ -112,7 +113,8 @@ public:
   ///
   /// Should return NULL in the case that the calling convention does not have
   /// this property
-  const uint32_t *getThisReturnPreservedMask(CallingConv::ID) const;
+  const uint32_t *getThisReturnPreservedMask(const MachineFunction &MF,
+                                             CallingConv::ID) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 

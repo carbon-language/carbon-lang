@@ -46,7 +46,8 @@ public:
 
   /// Code Generation virtual methods...
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
-  const uint32_t *getCallPreservedMask(CallingConv::ID CC) const override;
+  const uint32_t *getCallPreservedMask(const MachineFunction &MF,
+                                       CallingConv::ID CC) const override;
   const uint32_t *getNoPreservedMask() const;
 
   void adjustStackMapLiveOutMask(uint32_t *Mask) const override;

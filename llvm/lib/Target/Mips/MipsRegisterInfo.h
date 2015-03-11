@@ -48,7 +48,8 @@ public:
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
-  const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
+  const uint32_t *getCallPreservedMask(const MachineFunction &MF,
+                                       CallingConv::ID) const override;
   static const uint32_t *getMips16RetHelperMask();
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;

@@ -55,7 +55,8 @@ AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 }
 
 const uint32_t *
-AArch64RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+AArch64RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                          CallingConv::ID CC) const {
   if (CC == CallingConv::GHC)
     // This is academic becase all GHC calls are (supposed to be) tail calls
     return CSR_AArch64_NoRegs_RegMask;
@@ -74,7 +75,8 @@ const uint32_t *AArch64RegisterInfo::getTLSCallPreservedMask() const {
 }
 
 const uint32_t *
-AArch64RegisterInfo::getThisReturnPreservedMask(CallingConv::ID CC) const {
+AArch64RegisterInfo::getThisReturnPreservedMask(const MachineFunction &MF,
+                                                CallingConv::ID CC) const {
   // This should return a register mask that is the same as that returned by
   // getCallPreservedMask but that additionally preserves the register used for
   // the first i64 argument (which must also be the register used to return a

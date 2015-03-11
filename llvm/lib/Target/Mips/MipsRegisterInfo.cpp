@@ -100,8 +100,9 @@ MipsRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_O32_SaveList;
 }
 
-const uint32_t*
-MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
+const uint32_t *
+MipsRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                       CallingConv::ID) const {
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_RegMask;
 

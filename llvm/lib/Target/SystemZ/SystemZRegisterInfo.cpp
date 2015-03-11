@@ -28,7 +28,8 @@ SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 }
 
 const uint32_t *
-SystemZRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+SystemZRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                          CallingConv::ID CC) const {
   return CSR_SystemZ_RegMask;
 }
 
