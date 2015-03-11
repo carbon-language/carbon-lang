@@ -10,7 +10,6 @@
 #include "BinaryHolder.h"
 #include "DebugMap.h"
 #include "dsymutil.h"
-#include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -50,11 +49,6 @@ bool error(const Twine &Error, const Twine &Context) {
   return false;
 }
 
-template <typename KeyT, typename ValT>
-using HalfOpenIntervalMap =
-    IntervalMap<KeyT, ValT, IntervalMapImpl::NodeSizer<KeyT, ValT>::LeafSize,
-                IntervalMapHalfOpenInfo<KeyT>>;
-
 /// \brief Stores all information relating to a compile unit, be it in
 /// its original instance in the object file to its brand new cloned
 /// and linked DIE tree.
@@ -69,19 +63,15 @@ public:
     bool InDebugMap;    ///< Was this DIE's entity found in the map?
   };
 
-  CompileUnit(DWARFUnit &OrigUnit)
-      : OrigUnit(OrigUnit), RangeAlloc(), Ranges(RangeAlloc) {
+  CompileUnit(DWARFUnit &OrigUnit) : OrigUnit(OrigUnit) {
     Info.resize(OrigUnit.getNumDIEs());
   }
 
+  // Workaround MSVC not supporting implicit move ops
   CompileUnit(CompileUnit &&RHS)
       : OrigUnit(RHS.OrigUnit), Info(std::move(RHS.Info)),
         CUDie(std::move(RHS.CUDie)), StartOffset(RHS.StartOffset),
-        NextUnitOffset(RHS.NextUnitOffset), RangeAlloc(), Ranges(RangeAlloc) {
-    // The CompileUnit container has been 'reserve()'d with the right
-    // size. We cannot move the IntervalMap anyway.
-    llvm_unreachable("CompileUnits should not be moved.");
-  }
+        NextUnitOffset(RHS.NextUnitOffset) {}
 
   DWARFUnit &getOrigUnit() const { return OrigUnit; }
 
@@ -110,10 +100,6 @@ public:
   /// \brief Apply all fixups recored by noteForwardReference().
   void fixupForwardReferences();
 
-  /// \brief Add a function range [\p LowPC, \p HighPC) that is
-  /// relocatad by applying offset \p PCOffset.
-  void addFunctionRange(uint64_t LowPC, uint64_t HighPC, int64_t PCOffset);
-
 private:
   DWARFUnit &OrigUnit;
   std::vector<DIEInfo> Info;  ///< DIE info indexed by DIE index.
@@ -129,12 +115,6 @@ private:
   /// cloning because for forward refences the target DIE's offset isn't
   /// known you emit the reference attribute.
   std::vector<std::pair<DIE *, DIEInteger *>> ForwardDIEReferences;
-
-  HalfOpenIntervalMap<uint64_t, int64_t>::Allocator RangeAlloc;
-  /// \brief The ranges in that interval map are the PC ranges for
-  /// functions in this unit, associated with the PC offset to apply
-  /// to the addresses to get the linked address.
-  HalfOpenIntervalMap<uint64_t, int64_t> Ranges;
 };
 
 uint64_t CompileUnit::computeNextUnitOffset() {
@@ -156,11 +136,6 @@ void CompileUnit::noteForwardReference(DIE *Die, DIEInteger *Attr) {
 void CompileUnit::fixupForwardReferences() {
   for (const auto &Ref : ForwardDIEReferences)
     Ref.second->setValue(Ref.first->getOffset() + getStartOffset());
-}
-
-void CompileUnit::addFunctionRange(uint64_t LowPC, uint64_t HighPC,
-                                   int64_t PCOffset) {
-  Ranges.insert(LowPC, HighPC, PCOffset);
 }
 
 /// \brief A string table that doesn't need relocations.
@@ -969,25 +944,7 @@ unsigned DwarfLinker::shouldKeepSubprogramDIE(
   if (Options.Verbose)
     DIE.dump(outs(), const_cast<DWARFUnit *>(&OrigUnit), 0, 8 /* Indent */);
 
-  Flags |= TF_Keep;
-
-  DWARFFormValue HighPcValue;
-  if (!DIE.getAttributeValue(&OrigUnit, dwarf::DW_AT_high_pc, HighPcValue)) {
-    reportWarning("Function without high_pc. Range will be discarded.\n",
-                  &OrigUnit, &DIE);
-    return Flags;
-  }
-
-  uint64_t HighPc;
-  if (HighPcValue.isFormClass(DWARFFormValue::FC_Address)) {
-    HighPc = *HighPcValue.getAsAddress(&OrigUnit);
-  } else {
-    assert(HighPcValue.isFormClass(DWARFFormValue::FC_Constant));
-    HighPc = LowPc + *HighPcValue.getAsUnsignedConstant();
-  }
-
-  Unit.addFunctionRange(LowPc, HighPc, MyInfo.AddrAdjust);
-  return Flags;
+  return Flags | TF_Keep;
 }
 
 /// \brief Check if a DIE should be kept.
