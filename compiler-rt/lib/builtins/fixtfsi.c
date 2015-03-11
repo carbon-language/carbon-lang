@@ -1,4 +1,4 @@
-/* ===-- fixunsdfsi.c - Implement __fixunsdfsi -----------------------------===
+/* ===-- fixtfsi.c - Implement __fixtfsi -----------------------------------===
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -8,14 +8,16 @@
  * ===----------------------------------------------------------------------===
  */
 
-#define DOUBLE_PRECISION
+#define QUAD_PRECISION
 #include "fp_lib.h"
+
+#if defined(CRT_HAS_128BIT) && defined(CRT_LDBL_128BIT)
+typedef si_int fixint_t;
 typedef su_int fixuint_t;
 #include "fp_fixuint_impl.inc"
 
-ARM_EABI_FNALIAS(d2uiz, fixunsdfsi)
-
-COMPILER_RT_ABI su_int
-__fixunsdfsi(fp_t a) {
-    return __fixuint(a);
+COMPILER_RT_ABI si_int
+__fixtfsi(fp_t a) {
+    return __fixint(a);
 }
+#endif

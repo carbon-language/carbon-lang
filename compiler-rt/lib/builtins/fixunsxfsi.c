@@ -23,7 +23,6 @@
 /* Assumption: long double is an intel 80 bit floating point type padded with 6 bytes
  *             su_int is a 32 bit integral type
  *             value in long double is representable in su_int or is negative 
- *                 (no range checking performed)
  */
 
 /* gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
@@ -38,6 +37,8 @@ __fixunsxfsi(long double a)
     int e = (fb.u.high.s.low & 0x00007FFF) - 16383;
     if (e < 0 || (fb.u.high.s.low & 0x00008000))
         return 0;
+    if ((unsigned)e > sizeof(su_int) * CHAR_BIT)
+        return ~(su_int)0;
     return fb.u.low.s.high >> (31 - e);
 }
 

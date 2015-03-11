@@ -38,6 +38,8 @@ __fixunsxfdi(long double a)
     int e = (fb.u.high.s.low & 0x00007FFF) - 16383;
     if (e < 0 || (fb.u.high.s.low & 0x00008000))
         return 0;
+    if ((unsigned)e > sizeof(du_int) * CHAR_BIT)
+        return ~(du_int)0;
     return fb.u.low.all >> (63 - e);
 }
 

@@ -6,42 +6,18 @@
  * Source Licenses. See LICENSE.TXT for details.
  *
  * ===----------------------------------------------------------------------===
- *
- * This file implements __fixunsdfti for the compiler_rt library.
- *
- * ===----------------------------------------------------------------------===
  */
 
 #include "int_lib.h"
 
 #ifdef CRT_HAS_128BIT
-
-/* Returns: convert a to a unsigned long long, rounding toward zero.
- *          Negative values all become zero.
- */
-
-/* Assumption: double is a IEEE 64 bit floating point type 
- *             tu_int is a 64 bit integral type
- *             value in double is representable in tu_int or is negative 
- *                 (no range checking performed)
- */
-
-/* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
+#define DOUBLE_PRECISION
+#include "fp_lib.h"
+typedef tu_int fixuint_t;
+#include "fp_fixuint_impl.inc"
 
 COMPILER_RT_ABI tu_int
-__fixunsdfti(double a)
-{
-    double_bits fb;
-    fb.f = a;
-    int e = ((fb.u.s.high & 0x7FF00000) >> 20) - 1023;
-    if (e < 0 || (fb.u.s.high & 0x80000000))
-        return 0;
-    tu_int r = 0x0010000000000000uLL | (fb.u.all & 0x000FFFFFFFFFFFFFuLL);
-    if (e > 52)
-        r <<= (e - 52);
-    else
-        r >>= (52 - e);
-    return r;
+__fixunsdftti(fp_t a) {
+    return __fixuint(a);
 }
-
 #endif /* CRT_HAS_128BIT */
