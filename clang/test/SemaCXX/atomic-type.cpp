@@ -1,3 +1,4 @@
+// RUN: %clang_cc1 -verify -pedantic %s -std=c++98
 // RUN: %clang_cc1 -verify -pedantic %s -std=c++11
 
 template<typename T> struct atomic {
