@@ -247,7 +247,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
   OS << "// Get the register unit pressure limit for this dimension.\n"
      << "// This limit must be adjusted dynamically for reserved registers.\n"
      << "unsigned " << ClassName << "::\n"
-     << "getRegPressureSetLimit(unsigned Idx) const {\n"
+     << "getRegPressureSetLimit(const MachineFunction &MF, unsigned Idx) const {\n"
      << "  static const " << getMinimalTypeForRange(MaxRegUnitWeight)
      << " PressureLimitTable[] = {\n";
   for (unsigned i = 0; i < NumSets; ++i ) {
@@ -1088,7 +1088,8 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  unsigned getRegUnitWeight(unsigned RegUnit) const override;\n"
      << "  unsigned getNumRegPressureSets() const override;\n"
      << "  const char *getRegPressureSetName(unsigned Idx) const override;\n"
-     << "  unsigned getRegPressureSetLimit(unsigned Idx) const override;\n"
+     << "  unsigned getRegPressureSetLimit(const MachineFunction &MF, unsigned "
+        "Idx) const override;\n"
      << "  const int *getRegClassPressureSets("
      << "const TargetRegisterClass *RC) const override;\n"
      << "  const int *getRegUnitPressureSets("

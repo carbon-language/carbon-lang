@@ -66,7 +66,8 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-unsigned SIRegisterInfo::getRegPressureSetLimit(unsigned Idx) const {
+unsigned SIRegisterInfo::getRegPressureSetLimit(const MachineFunction &MF,
+                                                unsigned Idx) const {
 
   // FIXME: We should adjust the max number of waves based on LDS size.
   unsigned SGPRLimit = getNumSGPRsAllowed(ST.getGeneration(),

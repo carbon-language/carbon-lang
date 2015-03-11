@@ -176,6 +176,6 @@ unsigned RegisterClassInfo::computePSetLimit(unsigned Idx) const {
   }
   compute(RC);
   unsigned NReserved = RC->getNumRegs() - getNumAllocatableRegs(RC);
-  return TRI->getRegPressureSetLimit(Idx)
-    - TRI->getRegClassWeight(RC).RegWeight * NReserved;
+  return TRI->getRegPressureSetLimit(*MF, Idx) -
+         TRI->getRegClassWeight(RC).RegWeight * NReserved;
 }
