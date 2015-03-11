@@ -11,6 +11,8 @@
 #include "DebugMap.h"
 #include "dsymutil.h"
 #include "llvm/ADT/IntervalMap.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DIE.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
