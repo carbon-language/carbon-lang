@@ -227,6 +227,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
 
   if (HSOpts.UseStandardSystemIncludes) {
     switch (os) {
+    case llvm::Triple::CloudABI:
     case llvm::Triple::FreeBSD:
     case llvm::Triple::NetBSD:
     case llvm::Triple::OpenBSD:
@@ -269,6 +270,14 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   switch (os) {
   case llvm::Triple::Linux:
     llvm_unreachable("Include management is handled in the driver.");
+
+  case llvm::Triple::CloudABI: {
+    // <sysroot>/<triple>/include
+    SmallString<128> P = StringRef(HSOpts.ResourceDir);
+    llvm::sys::path::append(P, "../../..", triple.str(), "include");
+    AddPath(P.str(), System, false);
+    break;
+  }
 
   case llvm::Triple::Haiku:
     AddPath("/boot/common/include", System, false);
@@ -340,8 +349,14 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     break;
   }
 
-  if ( os != llvm::Triple::RTEMS )
+  switch (os) {
+  case llvm::Triple::CloudABI:
+  case llvm::Triple::RTEMS:
+    break;
+  default:
     AddPath("/usr/include", ExternCSystem, false);
+    break;
+  }
 }
 
 void InitHeaderSearch::
