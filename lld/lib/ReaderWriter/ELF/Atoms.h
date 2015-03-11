@@ -843,36 +843,6 @@ public:
 
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
-
-class InitFiniAtom : public SimpleELFDefinedAtom {
-  StringRef _section;
-
-public:
-  InitFiniAtom(const File &f, StringRef secName)
-      : SimpleELFDefinedAtom(f), _section(secName) {}
-
-  Scope scope() const override { return scopeGlobal; }
-
-  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
-
-  StringRef customSectionName() const override { return _section; }
-
-  ContentType contentType() const override { return typeData; }
-
-  uint64_t size() const override { return rawContent().size(); }
-
-  ContentPermissions permissions() const override { return permRW_; }
-
-  Alignment alignment() const override { return size(); }
-
-#ifndef NDEBUG
-  StringRef name() const override { return _name; }
-  std::string _name;
-#else
-  StringRef name() const override { return ""; }
-#endif
-};
-
 } // end namespace elf
 } // end namespace lld
 
