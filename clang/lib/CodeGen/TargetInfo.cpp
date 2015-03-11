@@ -664,10 +664,6 @@ public:
                    ('T' << 24);
     return llvm::ConstantInt::get(CGM.Int32Ty, Sig);
   }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return true;
-  }
 };
 
 }
@@ -1613,10 +1609,6 @@ public:
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
     return HasAVX ? 32 : 16;
   }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return true;
-  }
 };
 
 class PS4TargetCodeGenInfo : public X86_64TargetCodeGenInfo {
@@ -1723,10 +1715,6 @@ public:
 
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
     return HasAVX ? 32 : 16;
-  }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return true;
   }
 };
 
@@ -3127,10 +3115,6 @@ public:
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
     return 16; // Natural alignment for Altivec vectors.
   }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return true;
-  }
 };
 
 }
@@ -3381,10 +3365,6 @@ public:
 
     return 16; // Natural alignment for Altivec and VSX vectors.
   }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return true;
-  }
 };
 
 class PPC64TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
@@ -3401,10 +3381,6 @@ public:
 
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
     return 16; // Natural alignment for Altivec vectors.
-  }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return true;
   }
 };
 
@@ -4532,12 +4508,6 @@ public:
                       llvm::AttributeSet::get(CGM.getLLVMContext(),
                                               llvm::AttributeSet::FunctionIndex,
                                               B));
-  }
-
-  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
-    return false;
-    // FIXME: backend implementation too restricted, even on Darwin.
-    // return CGF.getTarget().getTriple().isOSDarwin();
   }
 };
 

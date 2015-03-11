@@ -9,9 +9,9 @@
 // RUN: %clang_cc1 -triple mips-unknown-unknown -emit-llvm-only -verify %s
 // RUN: %clang_cc1 -triple mips64-unknown-unknown -emit-llvm-only -verify %s
 
-// Check that __builtin_longjmp and __builtin_setjmp are lowerd into
+// Check that __builtin_longjmp and __builtin_setjmp are lowered into
 // IR intrinsics on those architectures that can handle them.
-// Check that they are lowered to the libcalls on other architectures.
+// Check that an error is created otherwise.
 
 typedef void *jmp_buf;
 jmp_buf buf;
@@ -23,12 +23,12 @@ jmp_buf buf;
 // CHECK:   call{{.*}} i32 @llvm.eh.sjlj.setjmp
 
 void do_jump(void) {
-  __builtin_longjmp(buf, 1); // expected-error {{cannot compile this __builtin_longjmp yet}}
+  __builtin_longjmp(buf, 1); // expected-error {{__builtin_longjmp is not supported for the current target}}
 }
 
 void f(void);
 
 void do_setjmp(void) {
-  if (!__builtin_setjmp(buf))
+  if (!__builtin_setjmp(buf)) // expected-error {{__builtin_setjmp is not supported for the current target}}
     f();
 }

@@ -225,12 +225,6 @@ public:
   virtual unsigned getOpenMPSimdDefaultAlignment(QualType Type) const {
     return 0;
   }
-
-  /// Control if __builtin_longjmp / __builtin_setjmp can be lowered to
-  /// llvm.eh.sjlj.longjmp / llvm.eh.sjlj.setjmp.
-  virtual bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const {
-    return false;
-  }
 };
 }
 

@@ -859,11 +859,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       return RValue::get(Builder.CreateZExt(Result, Int64Ty, "extend.zext"));
   }
   case Builtin::BI__builtin_setjmp: {
-    if (!getTargetHooks().hasSjLjLowering(*this)) {
-      CGM.ErrorUnsupported(E, "__builtin_setjmp");
-      return RValue::get(nullptr);
-    }
-
     // Buffer is a void**.
     Value *Buf = EmitScalarExpr(E->getArg(0));
 
@@ -886,10 +881,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F, Buf));
   }
   case Builtin::BI__builtin_longjmp: {
-    if (!getTargetHooks().hasSjLjLowering(*this)) {
-      CGM.ErrorUnsupported(E, "__builtin_longjmp");
-      return RValue::get(nullptr);
-    }
     Value *Buf = EmitScalarExpr(E->getArg(0));
     Buf = Builder.CreateBitCast(Buf, Int8PtrTy);
 
