@@ -1,4 +1,4 @@
-RUN: not lld -flavor gnu -t -lfnarchive -L%p/../elf/Inputs 2> %t.err
+RUN: not lld -flavor gnu -t -ltest -L%p/Inputs 2> %t.err
 RUN: FileCheck %s < %t.err
 
 RUN: not lld -flavor gnu -target x86_64--netbsd -t -ltest \
@@ -16,7 +16,7 @@ RUN: FileCheck -check-prefix=NETBSD-AMD64_32 %s < %t5
 
 # run linker with -t mode to dump full paths to input files
 
-CHECK: {{[^ ]+}}elf{{[\\/]}}Inputs{{[\\/]}}libfnarchive.a
+CHECK: {{[^ ]+[\\/]}}Inputs{{[\\/]}}libtest.a
 
 NETBSD-AMD64: {{[^ ]+}}{{[\\/]}}Inputs{{[\\/]}}usr{{[\\/]}}lib{{[\\/]}}libtest.a
 NETBSD-AMD64-NS-NOT: {{[^ ]+}}{{[\\/]}}Inputs{{[\\/]}}usr{{[\\/]}}lib{{[\\/]}}libtest.a
