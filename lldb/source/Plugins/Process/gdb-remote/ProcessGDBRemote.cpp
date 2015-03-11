@@ -2961,14 +2961,6 @@ ProcessGDBRemote::Initialize()
                                        GetPluginDescriptionStatic(),
                                        CreateInstance,
                                        DebuggerInitialize);
-
-        Log::Callbacks log_callbacks = {
-            ProcessGDBRemoteLog::DisableLog,
-            ProcessGDBRemoteLog::EnableLog,
-            ProcessGDBRemoteLog::ListLogCategories
-        };
-
-        Log::RegisterLogChannel (ProcessGDBRemote::GetPluginNameStatic(), log_callbacks);
     }
 }
 

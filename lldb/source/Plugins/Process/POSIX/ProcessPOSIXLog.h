@@ -43,6 +43,12 @@ class ProcessPOSIXLog
     static const char *m_pluginname;
 
 public:
+    // ---------------------------------------------------------------------
+    // Public Static Methods
+    // ---------------------------------------------------------------------
+    static void
+    Initialize(lldb_private::ConstString name);
+
     static void
     RegisterPluginName(const char *pluginName)
     {

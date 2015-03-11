@@ -60,15 +60,7 @@ ProcessLinux::Initialize()
         PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                       GetPluginDescriptionStatic(),
                                       CreateInstance);
-
-        Log::Callbacks log_callbacks = {
-            ProcessPOSIXLog::DisableLog,
-            ProcessPOSIXLog::EnableLog,
-            ProcessPOSIXLog::ListLogCategories
-        };
-        
-        Log::RegisterLogChannel (ProcessLinux::GetPluginNameStatic(), log_callbacks);
-        ProcessPOSIXLog::RegisterPluginName(GetPluginNameStatic());
+        ProcessPOSIXLog::Initialize(GetPluginNameStatic());
     }
 }
 

@@ -45,12 +45,6 @@ namespace lldb_private
     {
     public:
 
-        // ---------------------------------------------------------------------
-        // Public Static Methods
-        // ---------------------------------------------------------------------
-        static void
-        Initialize();
-
         static lldb_private::Error
         LaunchProcess (
             Module *exe_module,

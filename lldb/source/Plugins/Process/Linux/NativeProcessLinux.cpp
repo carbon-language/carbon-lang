@@ -1125,27 +1125,6 @@ NativeProcessLinux::AttachArgs::~AttachArgs()
 // Public Static Methods
 // -----------------------------------------------------------------------------
 
-void
-NativeProcessLinux::Initialize()
-{
-    static ConstString g_name("linux");
-    static bool g_initialized = false;
-
-    if (!g_initialized)
-    {
-        g_initialized = true;
-
-        Log::Callbacks log_callbacks = {
-            ProcessPOSIXLog::DisableLog,
-            ProcessPOSIXLog::EnableLog,
-            ProcessPOSIXLog::ListLogCategories
-        };
-
-        Log::RegisterLogChannel (g_name, log_callbacks);
-        ProcessPOSIXLog::RegisterPluginName (g_name);
-    }
-}
-
 lldb_private::Error
 NativeProcessLinux::LaunchProcess (
     lldb_private::Module *exe_module,

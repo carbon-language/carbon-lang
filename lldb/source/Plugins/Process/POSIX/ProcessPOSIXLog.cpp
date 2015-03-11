@@ -9,6 +9,8 @@
 
 #include "ProcessPOSIXLog.h"
 
+#include <mutex>
+
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/StreamFile.h"
 
@@ -33,6 +35,22 @@ GetLog ()
     return g_log;
 }
 
+void
+ProcessPOSIXLog::Initialize(ConstString name)
+{
+    static std::once_flag g_once_flag;
+
+    std::call_once(g_once_flag, [name](){
+        Log::Callbacks log_callbacks = {
+            DisableLog,
+            EnableLog,
+            ListLogCategories
+        };
+
+        Log::RegisterLogChannel (name, log_callbacks);
+        RegisterPluginName(name);
+    });
+}
 
 Log *
 ProcessPOSIXLog::GetLogIfAllCategoriesSet (uint32_t mask)

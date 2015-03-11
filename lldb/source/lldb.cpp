@@ -81,6 +81,7 @@
 
 #if defined (__linux__)
 #include "Plugins/Process/Linux/ProcessLinux.h"
+#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #endif
 
 #if defined (_WIN32)
@@ -95,6 +96,7 @@
 #endif
 
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
+#include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
 #include "Plugins/MemoryHistory/asan/MemoryHistoryASan.h"
@@ -146,8 +148,9 @@ lldb_private::InitializeForLLGS ()
 
         llvm::install_fatal_error_handler(fatal_error_handler, 0);
 
-        // Initialize plug-ins
+        ProcessGDBRemoteLog::Initialize();
 
+        // Initialize plug-ins
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
         ObjectFilePECOFF::Initialize();
@@ -172,6 +175,10 @@ lldb_private::InitializeForLLGS ()
         DynamicLoaderDarwinKernel::Initialize();
         PlatformDarwinKernel::Initialize();
         ObjectFileMachO::Initialize();
+#endif
+#if defined (__linux__)
+        static ConstString g_linux_log_name("linux");
+        ProcessPOSIXLog::Initialize(g_linux_log_name);
 #endif
 #ifndef LLDB_DISABLE_PYTHON
         ScriptInterpreterPython::InitializePrivate();

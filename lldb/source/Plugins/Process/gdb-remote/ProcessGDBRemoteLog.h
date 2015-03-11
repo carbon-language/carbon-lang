@@ -35,6 +35,9 @@
 class ProcessGDBRemoteLog
 {
 public:
+    static void
+    Initialize();
+
     static lldb_private::Log *
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
     
