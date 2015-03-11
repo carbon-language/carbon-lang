@@ -1,4 +1,4 @@
-; RUN: %llc_dwarf -O2 %s -o - | FileCheck %s
+; RUN: llc -mtriple mips-linux-gnu -O2 %s -o - | FileCheck %s
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK: section_info
