@@ -77,6 +77,9 @@ public:
     kw_hidden,
     kw_input,
     kw_keep,
+    kw_length,
+    kw_memory,
+    kw_origin,
     kw_provide,
     kw_provide_hidden,
     kw_only_if_ro,
@@ -154,6 +157,7 @@ public:
     Group,
     Input,
     InputSectionsCmd,
+    Memory,
     Output,
     OutputArch,
     OutputFormat,
@@ -798,6 +802,46 @@ private:
   llvm::ArrayRef<const Command *> _sectionsCommands;
 };
 
+/// Represents a single memory block definition in a MEMORY {} command.
+class MemoryBlock {
+public:
+  MemoryBlock(StringRef name, StringRef attr,
+              const Expression *origin, const Expression *length)
+      : _name(name), _attr(attr), _origin(origin), _length(length) {}
+
+  void dump(raw_ostream &os) const;
+
+private:
+  StringRef _name;
+  StringRef _attr;
+  const Expression *_origin;
+  const Expression *_length;
+};
+
+/// Represents all the contents of the MEMORY {} command.
+class Memory : public Command {
+public:
+  Memory(Parser &ctx,
+         const SmallVectorImpl<const MemoryBlock *> &blocks)
+      : Command(ctx, Kind::Memory) {
+    size_t numBlocks = blocks.size();
+    const MemoryBlock **blocksStart =
+        getAllocator().Allocate<const MemoryBlock *>(numBlocks);
+    std::copy(std::begin(blocks), std::end(blocks), blocksStart);
+    _blocks = llvm::makeArrayRef(blocksStart, numBlocks);
+  }
+
+  static bool classof(const Command *c) {
+    return c->getKind() == Kind::Memory;
+  }
+
+  void dump(raw_ostream &os) const override;
+
+private:
+  llvm::ArrayRef<const MemoryBlock *> _blocks;
+};
+
+
 /// Stores the parse tree of a linker script.
 class LinkerScript {
 public:
@@ -1065,6 +1109,17 @@ private:
   ///   }
   ///
   Sections *parseSections();
+
+  /// Parse the MEMORY linker script command.
+  /// Example:
+  ///
+  ///   MEMORY {
+  ///   ^~~~ parseMemory()
+  ///     ram (rwx) : ORIGIN = 0x20000000, LENGTH = 96K
+  ///     rom (rx)  : ORIGIN = 0x0,        LENGTH = 256K
+  ///   }
+  ///
+  Memory *parseMemory();
 
 private:
   // Owns the entire linker script AST nodes

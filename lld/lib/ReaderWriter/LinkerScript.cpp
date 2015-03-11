@@ -66,6 +66,9 @@ void Token::dump(raw_ostream &os) const {
     CASE(kw_hidden)
     CASE(kw_input)
     CASE(kw_keep)
+    CASE(kw_length)
+    CASE(kw_memory)
+    CASE(kw_origin)
     CASE(kw_provide)
     CASE(kw_provide_hidden)
     CASE(kw_only_if_ro)
@@ -468,8 +471,15 @@ void Lexer::lex(Token &tok) {
             .Case("HIDDEN", Token::kw_hidden)
             .Case("INPUT", Token::kw_input)
             .Case("KEEP", Token::kw_keep)
+            .Case("LENGTH", Token::kw_length)
+            .Case("l", Token::kw_length)
+            .Case("len", Token::kw_length)
+            .Case("MEMORY", Token::kw_memory)
             .Case("ONLY_IF_RO", Token::kw_only_if_ro)
             .Case("ONLY_IF_RW", Token::kw_only_if_rw)
+            .Case("ORIGIN", Token::kw_origin)
+            .Case("o", Token::kw_origin)
+            .Case("org", Token::kw_origin)
             .Case("OUTPUT", Token::kw_output)
             .Case("OUTPUT_ARCH", Token::kw_output_arch)
             .Case("OUTPUT_FORMAT", Token::kw_output_format)
@@ -916,6 +926,32 @@ void Sections::dump(raw_ostream &os) const {
   os << "}\n";
 }
 
+// Memory functions
+void MemoryBlock::dump(raw_ostream &os) const {
+    os << _name;
+
+    if (!_attr.empty())
+      os << " (" << _attr << ")";
+
+    os << " : ";
+
+    os << "ORIGIN = ";
+    _origin->dump(os);
+    os << ", ";
+
+    os << "LENGTH = ";
+    _length->dump(os);
+}
+
+void Memory::dump(raw_ostream &os) const {
+  os << "MEMORY\n{\n";
+  for (auto &block : _blocks) {
+    block->dump(os);
+    os << "\n";
+  }
+  os << "}\n";
+}
+
 // Parser functions
 std::error_code Parser::parse() {
   // Get the first token.
@@ -993,6 +1029,13 @@ std::error_code Parser::parse() {
     case Token::kw_provide:
     case Token::kw_provide_hidden: {
       const Command *cmd = parseSymbolAssignment();
+      if (!cmd)
+        return LinkerScriptReaderError::parse_error;
+      _script._commands.push_back(cmd);
+      break;
+    }
+    case Token::kw_memory: {
+      const Command *cmd = parseMemory();
       if (!cmd)
         return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(cmd);
@@ -1973,6 +2016,83 @@ Sections *Parser::parseSections() {
     return nullptr;
 
   return new (_alloc) Sections(*this, sectionsCommands);
+}
+
+Memory *Parser::parseMemory() {
+  assert(_tok._kind == Token::kw_memory && "Expected MEMORY!");
+  consumeToken();
+  if (!expectAndConsume(Token::l_brace, "expected {"))
+    return nullptr;
+  SmallVector<const MemoryBlock *, 8> blocks;
+
+  bool unrecognizedToken = false;
+  // Parse zero or more memory block descriptors.
+  while (!unrecognizedToken) {
+    if (_tok._kind == Token::identifier) {
+      StringRef name;
+      StringRef attrs;
+      const Expression *origin = nullptr;
+      const Expression *length = nullptr;
+
+      name = _tok._range;
+      consumeToken();
+
+      // Parse optional memory region attributes.
+      if (_tok._kind == Token::l_paren) {
+        consumeToken();
+
+        if (_tok._kind != Token::identifier) {
+          error(_tok, "Expected memory attribute string.");
+          return nullptr;
+        }
+        attrs = _tok._range;
+        consumeToken();
+
+        if (!expectAndConsume(Token::r_paren, "expected )"))
+          return nullptr;
+      }
+
+      if (!expectAndConsume(Token::colon, "expected :"))
+        return nullptr;
+
+      // Parse the ORIGIN (base address of memory block).
+      if (!expectAndConsume(Token::kw_origin, "expected ORIGIN"))
+        return nullptr;
+
+      if (!expectAndConsume(Token::equal, "expected ="))
+        return nullptr;
+
+      origin = parseExpression();
+      if (!origin)
+        return nullptr;
+
+      if (!expectAndConsume(Token::comma, "expected ,"))
+        return nullptr;
+
+      // Parse the LENGTH (length of memory block).
+      if (!expectAndConsume(Token::kw_length, "expected LENGTH"))
+        return nullptr;
+
+      if (!expectAndConsume(Token::equal, "expected ="))
+        return nullptr;
+
+      length = parseExpression();
+      if (!length)
+        return nullptr;
+
+      MemoryBlock *block =
+          new (_alloc) MemoryBlock(name, attrs, origin, length);
+      blocks.push_back(block);
+    } else {
+      unrecognizedToken = true;
+    }
+  }
+  if (!expectAndConsume(
+          Token::r_brace,
+          "expected memory block definition."))
+    return nullptr;
+
+  return new (_alloc) Memory(*this, blocks);
 }
 
 } // end namespace script
