@@ -35,7 +35,7 @@
 #else
 #include <unistd.h> // For the ::access()
 #endif              // _WIN32
-#include <limits.h>
+#include <limits.h> // for PATH_MAX
 
 // In-house headers:
 #include "MICmnLLDBDebuggerHandleEvents.h"
@@ -50,6 +50,7 @@
 #include "MICmnStreamStderr.h"
 #include "MIUtilDebug.h"
 #include "MIDriver.h"
+#include "Platform.h" // for PATH_MAX on Windows
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnLLDBDebuggerHandleEvents constructor.
