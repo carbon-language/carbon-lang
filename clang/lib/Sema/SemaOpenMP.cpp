@@ -3267,6 +3267,9 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   }
 
   auto Body = CS->getCapturedStmt();
+  if (auto *EWC = dyn_cast<ExprWithCleanups>(Body))
+    Body = EWC->getSubExpr();
+
   Expr *X = nullptr;
   Expr *V = nullptr;
   Expr *E = nullptr;

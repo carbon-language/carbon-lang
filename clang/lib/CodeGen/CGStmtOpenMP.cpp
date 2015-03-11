@@ -921,7 +921,13 @@ void CodeGenFunction::EmitOMPAtomicDirective(const OMPAtomicDirective &S) {
       break;
     }
   }
+
+  const auto *CS =
+      S.getAssociatedStmt()->IgnoreContainers(/*IgnoreCaptured=*/true);
+  if (const auto *EWC = dyn_cast<ExprWithCleanups>(CS))
+    enterFullExpression(EWC);
   InlinedOpenMPRegionScopeRAII Region(*this, S);
+
   EmitOMPAtomicExpr(*this, Kind, IsSeqCst, S.getX(), S.getV(), S.getExpr(),
                     S.getLocStart());
 }
