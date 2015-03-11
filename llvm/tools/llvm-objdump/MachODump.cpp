@@ -96,6 +96,11 @@ cl::list<std::string>
                        cl::desc("Prints the specified segment,section for "
                                 "Mach-O objects (requires -macho)"));
 
+cl::opt<bool>
+    llvm::InfoPlist("info-plist",
+                    cl::desc("Print the info plist section as strings for "
+                             "Mach-O objects (requires -macho)"));
+
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
               cl::ZeroOrMore);
@@ -981,6 +986,10 @@ static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
             DisassembleMachO(Filename, O, SegName, SectName);
             continue;
           }
+          if (SegName == "__TEXT" && SectName == "__info_plist") {
+            outs() << sect;
+            continue;
+          }
           switch (section_type) {
           case MachO::S_REGULAR:
             DumpRawSectionContents(O, sect, sect_size, sect_addr);
@@ -1022,6 +1031,24 @@ static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
             DumpRawSectionContents(O, sect, sect_size, sect_addr);
         }
       }
+    }
+  }
+}
+
+static void DumpInfoPlistSectionContents(StringRef Filename,
+                                         MachOObjectFile *O) {
+  for (const SectionRef &Section : O->sections()) {
+    StringRef SectName;
+    Section.getName(SectName);
+    DataRefImpl Ref = Section.getRawDataRefImpl();
+    StringRef SegName = O->getSectionFinalSegmentName(Ref);
+    if (SegName == "__TEXT" && SectName == "__info_plist") {
+      outs() << "Contents of (" << SegName << "," << SectName << ") section\n";
+      StringRef BytesStr;
+      Section.getContents(BytesStr);
+      const char *sect = reinterpret_cast<const char *>(BytesStr.data());
+      outs() << sect;
+      return;
     }
   }
 }
@@ -1097,6 +1124,8 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
     PrintSectionContents(MachOOF);
   if (DumpSections.size() != 0)
     DumpSectionContents(Filename, MachOOF, true);
+  if (InfoPlist)
+    DumpInfoPlistSectionContents(Filename, MachOOF);
   if (SymbolTable)
     PrintSymbolTable(MachOOF);
   if (UnwindInfo)
