@@ -4428,16 +4428,19 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   // Make sure all decls associated with an identifier are registered for
   // serialization.
+  llvm::SmallVector<const IdentifierInfo*, 256> IIsToVisit;
   for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
                               IDEnd = PP.getIdentifierTable().end();
        ID != IDEnd; ++ID) {
     const IdentifierInfo *II = ID->second;
-    if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization()) {
-      for (IdentifierResolver::iterator D = SemaRef.IdResolver.begin(II),
-                                     DEnd = SemaRef.IdResolver.end();
-           D != DEnd; ++D) {
-        GetDeclRef(*D);
-      }
+    if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization())
+      IIsToVisit.push_back(II);
+  }
+  for (const IdentifierInfo *II : IIsToVisit) {
+    for (IdentifierResolver::iterator D = SemaRef.IdResolver.begin(II),
+                                   DEnd = SemaRef.IdResolver.end();
+         D != DEnd; ++D) {
+      GetDeclRef(*D);
     }
   }
 
