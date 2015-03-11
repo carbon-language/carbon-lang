@@ -385,6 +385,10 @@ void sys::PrintStackTraceOnErrorSignal() {
   RegisterHandler();
   LeaveCriticalSection(&CriticalSection);
 }
+}
+
+// Provide a prototype for RtlCaptureContext, mingw32 is missing it.
+extern "C" VOID WINAPI RtlCaptureContext(PCONTEXT ContextRecord);
 
 void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 
@@ -424,7 +428,6 @@ void sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
   CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
   RegisterHandler();
   LeaveCriticalSection(&CriticalSection);
-}
 }
 
 static void Cleanup() {
