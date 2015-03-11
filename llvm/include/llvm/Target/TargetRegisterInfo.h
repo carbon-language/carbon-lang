@@ -425,7 +425,7 @@ public:
   /// closest to the incoming stack pointer if stack grows down, and vice versa.
   ///
   virtual const MCPhysReg*
-  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const = 0;
+  getCalleeSavedRegs(const MachineFunction *MF) const = 0;
 
   /// getCallPreservedMask - Return a mask of call-preserved registers for the
   /// given calling convention on the current sub-target.  The mask should

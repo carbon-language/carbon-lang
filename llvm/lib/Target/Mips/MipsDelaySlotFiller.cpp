@@ -321,7 +321,8 @@ void RegDefsUses::setCallerSaved(const MachineInstr &MI) {
   CallerSavedRegs.reset(Mips::ZERO);
   CallerSavedRegs.reset(Mips::ZERO_64);
 
-  for (const MCPhysReg *R = TRI.getCalleeSavedRegs(); *R; ++R)
+  for (const MCPhysReg *R = TRI.getCalleeSavedRegs(MI.getParent()->getParent());
+       *R; ++R)
     for (MCRegAliasIterator AI(*R, &TRI, true); AI.isValid(); ++AI)
       CallerSavedRegs.reset(*AI);
 

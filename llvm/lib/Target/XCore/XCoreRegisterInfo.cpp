@@ -208,8 +208,8 @@ bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF) {
     MF.getFunction()->needsUnwindTableEntry();
 }
 
-const MCPhysReg* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
-                                                                         const {
+const MCPhysReg *
+XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   // The callee saved registers LR & FP are explicitly handled during
   // emitPrologue & emitEpilogue and related functions.
   static const MCPhysReg CalleeSavedRegs[] = {

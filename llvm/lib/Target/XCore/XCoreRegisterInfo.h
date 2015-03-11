@@ -29,8 +29,7 @@ public:
 
   /// Code Generation virtual methods...
 
-  const MCPhysReg *
-  getCalleeSavedRegs(const MachineFunction *MF =nullptr) const override;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
   

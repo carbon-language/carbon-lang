@@ -389,7 +389,9 @@ static bool IsLoopN(MachineInstr *MI) {
 /// callee-saved register.
 static bool DoesModifyCalleeSavedReg(MachineInstr *MI,
                                      const TargetRegisterInfo *TRI) {
-  for (const MCPhysReg *CSR = TRI->getCalleeSavedRegs(); *CSR; ++CSR) {
+  for (const MCPhysReg *CSR =
+           TRI->getCalleeSavedRegs(MI->getParent()->getParent());
+       *CSR; ++CSR) {
     unsigned CalleeSavedReg = *CSR;
     if (MI->modifiesRegister(CalleeSavedReg, TRI))
       return true;

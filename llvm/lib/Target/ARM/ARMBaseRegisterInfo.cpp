@@ -63,8 +63,6 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const MCPhysReg *RegList =
       STI.isTargetDarwin() ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
 
-  if (!MF) return RegList;
-
   const Function *F = MF->getFunction();
   if (F->getCallingConv() == CallingConv::GHC) {
     // GHC set of callee saved regs is empty as all those regs are
