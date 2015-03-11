@@ -29,10 +29,6 @@ using namespace llvm;
 static cl:: opt<bool> DisableHardwareLoops("disable-hexagon-hwloops",
       cl::Hidden, cl::desc("Disable Hardware Loops for Hexagon target"));
 
-static cl::opt<bool> DisableHexagonMISched("disable-hexagon-misched",
-      cl::Hidden, cl::ZeroOrMore, cl::init(false),
-      cl::desc("Disable Hexagon MI Scheduling"));
-
 static cl::opt<bool> DisableHexagonCFGOpt("disable-hexagon-cfgopt",
       cl::Hidden, cl::ZeroOrMore, cl::init(false),
       cl::desc("Disable Hexagon CFG Optimization"));
@@ -82,16 +78,7 @@ namespace {
 class HexagonPassConfig : public TargetPassConfig {
 public:
   HexagonPassConfig(HexagonTargetMachine *TM, PassManagerBase &PM)
-    : TargetPassConfig(TM, PM) {
-    // FIXME: Rather than calling enablePass(&MachineSchedulerID) below, define
-    // HexagonSubtarget::enableMachineScheduler() { return true; }.
-    // That will bypass the SelectionDAG VLIW scheduler, which is probably just
-    // hurting compile time and will be removed eventually anyway.
-    if (DisableHexagonMISched)
-      disablePass(&MachineSchedulerID);
-    else
-      enablePass(&MachineSchedulerID);
-  }
+      : TargetPassConfig(TM, PM) {}
 
   HexagonTargetMachine &getHexagonTargetMachine() const {
     return getTM<HexagonTargetMachine>();

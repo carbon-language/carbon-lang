@@ -85,6 +85,11 @@ public:
   bool hasV5TOps() const { return getHexagonArchVersion() >= V5; }
   bool hasV5TOpsOnly() const { return getHexagonArchVersion() == V5; }
   bool modeIEEERndNear() const { return ModeIEEERndNear; }
+  bool enableMachineScheduler() const override;
+  // Always use the TargetLowering default scheduler.
+  // FIXME: This will use the vliw scheduler which is probably just hurting
+  // compiler time and will be removed eventually anyway.
+  bool enableMachineSchedDefaultSched() const override { return false; }
 
   const std::string &getCPUString () const { return CPUString; }
 

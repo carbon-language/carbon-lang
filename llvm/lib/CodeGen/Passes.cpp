@@ -55,9 +55,6 @@ static cl::opt<bool> DisableMachineCSE("disable-machine-cse", cl::Hidden,
 static cl::opt<cl::boolOrDefault>
 OptimizeRegAlloc("optimize-regalloc", cl::Hidden,
     cl::desc("Enable optimized register allocation compilation path."));
-static cl::opt<cl::boolOrDefault>
-EnableMachineSched("enable-misched",
-    cl::desc("Enable the machine instruction scheduling pass."));
 static cl::opt<bool> DisablePostRAMachineLICM("disable-postra-machine-licm",
     cl::Hidden,
     cl::desc("Disable Machine LICM"));
@@ -116,28 +113,6 @@ static IdentifyingPassPtr applyDisable(IdentifyingPassPtr PassID,
   return PassID;
 }
 
-/// Allow Pass selection to be overriden by command line options. This supports
-/// flags with ternary conditions. TargetID is passed through by default. The
-/// pass is suppressed when the option is false. When the option is true, the
-/// StandardID is selected if the target provides no default.
-static IdentifyingPassPtr applyOverride(IdentifyingPassPtr TargetID,
-                                        cl::boolOrDefault Override,
-                                        AnalysisID StandardID) {
-  switch (Override) {
-  case cl::BOU_UNSET:
-    return TargetID;
-  case cl::BOU_TRUE:
-    if (TargetID.isValid())
-      return TargetID;
-    if (StandardID == nullptr)
-      report_fatal_error("Target cannot enable pass");
-    return StandardID;
-  case cl::BOU_FALSE:
-    return IdentifyingPassPtr();
-  }
-  llvm_unreachable("Invalid command line option state");
-}
-
 /// Allow standard passes to be disabled by the command line, regardless of who
 /// is adding the pass.
 ///
@@ -181,9 +156,6 @@ static IdentifyingPassPtr overridePass(AnalysisID StandardID,
 
   if (StandardID == &MachineCSEID)
     return applyDisable(TargetID, DisableMachineCSE);
-
-  if (StandardID == &MachineSchedulerID)
-    return applyOverride(TargetID, EnableMachineSched, StandardID);
 
   if (StandardID == &TargetPassConfig::PostRAMachineLICMID)
     return applyDisable(TargetID, DisablePostRAMachineLICM);
@@ -249,11 +221,6 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   // Substitute Pseudo Pass IDs for real ones.
   substitutePass(&EarlyTailDuplicateID, &TailDuplicateID);
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
-
-  // Temporarily disable experimental passes.
-  const TargetSubtargetInfo &ST = *TM->getSubtargetImpl();
-  if (!ST.useMachineScheduler())
-    disablePass(&MachineSchedulerID);
 }
 
 /// Insert InsertedPassID pass after TargetPassID.
