@@ -4077,7 +4077,7 @@ defm PMULUDQ : PDI_binop_rm2<0xF4, "pmuludq", X86pmuludq, v2i64, v4i32, VR128,
 // SSE2 - Packed Integer Logical Instructions
 //===---------------------------------------------------------------------===//
 
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
 defm VPSLLW : PDI_binop_rmi<0xF1, 0x71, MRM6r, "vpsllw", X86vshl, X86vshli,
                             VR128, v8i16, v8i16, bc_v8i16, loadv2i64,
                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
@@ -4123,7 +4123,7 @@ let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
 }
 } // Predicates = [HasAVX]
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, NoVLX] in {
 defm VPSLLWY : PDI_binop_rmi<0xF1, 0x71, MRM6r, "vpsllw", X86vshl, X86vshli,
                              VR256, v16i16, v8i16, bc_v8i16, loadv2i64,
                              SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
