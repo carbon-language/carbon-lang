@@ -3724,6 +3724,10 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0x63,0x2d,0x40,0x18,0x03]
           vdpps  $3, (%rax), %ymm10, %ymm11
 
+// CHECK: vbroadcasti128  (%rax), %ymm12
+// CHECK: encoding: [0xc4,0x62,0x7d,0x5a,0x20]
+          vbroadcasti128  (%rax), %ymm12
+
 // CHECK: vbroadcastf128  (%rax), %ymm12
 // CHECK: encoding: [0xc4,0x62,0x7d,0x1a,0x20]
           vbroadcastf128  (%rax), %ymm12
