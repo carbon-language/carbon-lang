@@ -261,8 +261,8 @@ private:
 class CatchHandler : public ActionHandler {
 public:
   CatchHandler(BasicBlock *BB, Constant *Selector, BasicBlock *NextBB)
-      : Selector(Selector), NextBB(NextBB), ExceptionObjectVar(nullptr),
-        ActionHandler(BB, ActionType::Catch) {}
+      : ActionHandler(BB, ActionType::Catch), Selector(Selector),
+        NextBB(NextBB), ExceptionObjectVar(nullptr) {}
 
   // Method for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ActionHandler *H) {
@@ -1140,7 +1140,6 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
   VisitedBlockSet VisitedBlocks;
 
   while (HandlersFound != NumClauses) {
-    Constant *Selector = nullptr;
     BasicBlock *NextBB = nullptr;
 
     // See if the clause we're looking for is a catch-all.
