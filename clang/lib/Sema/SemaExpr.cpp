@@ -9747,6 +9747,19 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
       return ExprError();
   }
 
+  if (getLangOpts().OpenCL) {
+    // OpenCLC v2.0 s6.13.11.8 forbids operations on atomic types.
+    if (LHSExpr->getType()->isAtomicType() ||
+        RHSExpr->getType()->isAtomicType()) {
+      SourceRange SR(LHSExpr->getLocStart(), RHSExpr->getLocEnd());
+      if (Opc == BO_Assign)
+        Diag(OpLoc, diag::err_atomic_assignment) << SR;
+      else
+        ResultTy = InvalidOperands(OpLoc, LHS, RHS);
+      return ExprError();
+    }
+  }
+
   switch (Opc) {
   case BO_Assign:
     ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, QualType());
@@ -10219,6 +10232,15 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   ExprValueKind VK = VK_RValue;
   ExprObjectKind OK = OK_Ordinary;
   QualType resultType;
+  if (getLangOpts().OpenCL) {
+    // OpenCLC v2.0 s6.13.11.8, the only legal unary operation.
+    // for atomics is '&'.
+    if (Opc != UO_AddrOf && InputExpr->getType()->isAtomicType()) {
+      return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
+                       << InputExpr->getType()
+                       << Input.get()->getSourceRange());
+    }
+  }
   switch (Opc) {
   case UO_PreInc:
   case UO_PreDec:
