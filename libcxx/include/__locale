@@ -353,6 +353,7 @@ public:
     static const mask punct  = _PUNCT;
     static const mask xdigit = _HEX;
     static const mask blank  = _BLANK;
+# define _LIBCPP_CTYPE_MASK_IS_COMPOSITE_PRINT
 #elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__) || defined(__NetBSD__)
 # ifdef __APPLE__
     typedef __uint32_t mask;
@@ -401,6 +402,9 @@ public:
     static const mask punct  = _P;
     static const mask xdigit = _X | _N;
     static const mask blank  = _B;
+# define _LIBCPP_CTYPE_MASK_IS_COMPOSITE_PRINT
+# define _LIBCPP_CTYPE_MASK_IS_COMPOSITE_ALPHA
+# define _LIBCPP_CTYPE_MASK_IS_COMPOSITE_XDIGIT
 #else
     typedef unsigned long mask;
     static const mask space  = 1<<0;
