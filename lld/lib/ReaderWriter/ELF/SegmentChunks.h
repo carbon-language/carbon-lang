@@ -346,6 +346,9 @@ bool Segment<ELFT>::compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
   int64_t type1 = sega->segmentType();
   int64_t type2 = segb->segmentType();
 
+  if (type1 == type2)
+    return sega->atomflags() < segb->atomflags();
+
   // The single PT_PHDR segment is required to precede any loadable
   // segment.  We simply make it always first.
   if (type1 == llvm::ELF::PT_PHDR)
@@ -361,30 +364,30 @@ bool Segment<ELFT>::compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
     return false;
 
   // We then put PT_LOAD segments before any other segments.
-  if (type1 == llvm::ELF::PT_LOAD && type2 != llvm::ELF::PT_LOAD)
+  if (type1 == llvm::ELF::PT_LOAD)
     return true;
-  if (type2 == llvm::ELF::PT_LOAD && type1 != llvm::ELF::PT_LOAD)
+  if (type2 == llvm::ELF::PT_LOAD)
     return false;
-
-  // We put the PT_TLS segment last except for the PT_GNU_RELRO
-  // segment, because that is where the dynamic linker expects to find
-  if (type1 == llvm::ELF::PT_TLS && type2 != llvm::ELF::PT_TLS &&
-      type2 != llvm::ELF::PT_GNU_RELRO)
-    return false;
-  if (type2 == llvm::ELF::PT_TLS && type1 != llvm::ELF::PT_TLS &&
-      type1 != llvm::ELF::PT_GNU_RELRO)
-    return true;
 
   // We put the PT_GNU_RELRO segment last, because that is where the
   // dynamic linker expects to find it
-  if (type1 == llvm::ELF::PT_GNU_RELRO && type2 != llvm::ELF::PT_GNU_RELRO)
+  if (type1 == llvm::ELF::PT_GNU_RELRO)
     return false;
-  if (type2 == llvm::ELF::PT_GNU_RELRO && type1 != llvm::ELF::PT_GNU_RELRO)
+  if (type2 == llvm::ELF::PT_GNU_RELRO)
     return true;
 
-  if (type1 == type2)
-    return sega->atomflags() < segb->atomflags();
-  return false;
+  // We put the PT_TLS segment last except for the PT_GNU_RELRO
+  // segment, because that is where the dynamic linker expects to find
+  if (type1 == llvm::ELF::PT_TLS)
+    return false;
+  if (type2 == llvm::ELF::PT_TLS)
+    return true;
+
+  // Otherwise compare the types to establish an arbitrary ordering.
+  // FIXME: Should figure out if we should just make all other types compare
+  // equal, but if so, we should probably do the same for atom flags and change
+  // users of this to use stable_sort.
+  return type1 < type2;
 }
 
 template <class ELFT>

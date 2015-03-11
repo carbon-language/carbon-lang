@@ -11,8 +11,8 @@ RUN: llvm-readobj -program-headers %t2.elf | FileCheck %s -check-prefix=RO-SEGME
 #NORO-SEGMENT:    Type: PT_INTERP
 #NORO-SEGMENT:    Type: PT_LOAD
 #NORO-SEGMENT:    Type: PT_LOAD
-#NORO-SEGMENT:    Type: PT_GNU_EH_FRAME
 #NORO-SEGMENT:    Type: PT_DYNAMIC
+#NORO-SEGMENT:    Type: PT_GNU_EH_FRAME
 
 #RO-SEGMENT:    Type: PT_PHDR
 #RO-SEGMENT:    Type: PT_INTERP
@@ -22,5 +22,5 @@ RUN: llvm-readobj -program-headers %t2.elf | FileCheck %s -check-prefix=RO-SEGME
 #RO-SEGMENT:      PF_R (0x4)
 #RO-SEGMENT:    ]
 #RO-SEGMENT:    Type: PT_LOAD
-#RO-SEGMENT:    Type: PT_GNU_EH_FRAME
 #RO-SEGMENT:    Type: PT_DYNAMIC
+#RO-SEGMENT:    Type: PT_GNU_EH_FRAME
