@@ -1195,7 +1195,7 @@ GDBRemoteCommunicationServerCommon::CreateProcessInfoResponse (const ProcessInst
                      proc_info.GetEffectiveUserID(),
                      proc_info.GetEffectiveGroupID());
     response.PutCString ("name:");
-    response.PutCStringAsRawHex8(proc_info.GetName());
+    response.PutCStringAsRawHex8(proc_info.GetExecutableFile().GetPath().c_str());
     response.PutChar(';');
     const ArchSpec &proc_arch = proc_info.GetArchitecture();
     if (proc_arch.IsValid())
