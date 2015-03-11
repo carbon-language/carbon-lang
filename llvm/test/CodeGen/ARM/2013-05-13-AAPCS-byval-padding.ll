@@ -4,7 +4,7 @@
 %struct.S227 = type { [49 x i32], i32 }
 
 define void @check227(
-                      i32 %b,                              
+                      i32 %b,
                       %struct.S227* byval nocapture %arg0,
                       %struct.S227* %arg1) {
 ; b --> R0
@@ -13,14 +13,16 @@ define void @check227(
 
 entry:
 
-;CHECK:  sub   sp, sp, #16
+;CHECK:  sub   sp, sp, #12
 ;CHECK:  push  {r11, lr}
+;CHECK:  sub   sp, sp, #4
 ;CHECK:  add   r0, sp, #12
 ;CHECK:  stm   r0, {r1, r2, r3}
 ;CHECK:  ldr   r0, [sp, #212]
 ;CHECK:  bl    useInt
+;CHECK:  add   sp, sp, #4
 ;CHECK:  pop   {r11, lr}
-;CHECK:  add   sp, sp, #16
+;CHECK:  add   sp, sp, #12
 
   %0 = ptrtoint %struct.S227* %arg1 to i32
   tail call void @useInt(i32 %0)

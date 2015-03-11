@@ -13,15 +13,16 @@ declare void @usePtr(%struct8bytes8align*)
 ; c -> sp+0..sp+7
 define void @foo1(i32 %a, %struct12bytes* byval %b, i64 %c) {
 ; CHECK-LABEL: foo1
-; CHECK: sub  sp, sp, #16
+; CHECK: sub  sp, sp, #12
 ; CHECK: push  {r11, lr}
+; CHECK: sub sp, sp, #4
 ; CHECK: add  [[SCRATCH:r[0-9]+]], sp, #12
 ; CHECK: stm  [[SCRATCH]], {r1, r2, r3}
 ; CHECK: ldr  r0, [sp, #24]
 ; CHECK: ldr  r1, [sp, #28]
 ; CHECK: bl  useLong
 ; CHECK: pop  {r11, lr}
-; CHECK: add  sp, sp, #16
+; CHECK: add  sp, sp, #12
 
   call void @useLong(i64 %c)
   ret void

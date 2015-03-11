@@ -21,11 +21,12 @@ define void @foo(double %vfp0,     ; --> D0,     NSAA=SP
 		 i32 %p2,          ; --> R3,     NSAA=SP+8 
                  i32 %p3) #0 {     ; --> SP+4,   NSAA=SP+12
 entry:
-  ;CHECK: sub sp, #8
+  ;CHECK: sub sp, #12
   ;CHECK: push.w {r11, lr}
-  ;CHECK: add r0, sp, #8
-  ;CHECK: str r2, [sp, #12]
-  ;CHECK: str r1, [sp, #8]
+  ;CHECK: sub sp, #4
+  ;CHECK: add r0, sp, #12
+  ;CHECK: str r2, [sp, #16]
+  ;CHECK: str r1, [sp, #12]
   ;CHECK: bl  fooUseStruct
   call void @fooUseStruct(%st_t* %p1)
   ret void

@@ -528,24 +528,14 @@ namespace llvm {
                        SDLoc dl, SDValue &Chain,
                        const Value *OrigArg,
                        unsigned InRegsParamRecordIdx,
-                       unsigned OffsetFromOrigArg,
-                       unsigned ArgOffset,
-                       unsigned ArgSize,
-                       bool ForceMutable,
-                       unsigned ByValStoreOffset,
-                       unsigned TotalArgRegsSaveSize) const;
+                       int ArgOffset,
+                       unsigned ArgSize) const;
 
     void VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                               SDLoc dl, SDValue &Chain,
                               unsigned ArgOffset,
                               unsigned TotalArgRegsSaveSize,
                               bool ForceMutable = false) const;
-
-    void computeRegArea(CCState &CCInfo, MachineFunction &MF,
-                        unsigned InRegsParamRecordIdx,
-                        unsigned ArgSize,
-                        unsigned &ArgRegsSize,
-                        unsigned &ArgRegsSaveSize) const;
 
     SDValue
       LowerCall(TargetLowering::CallLoweringInfo &CLI,
