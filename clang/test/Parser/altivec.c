@@ -73,12 +73,12 @@ vector bool v_b;                    // expected-warning {{type specifier missing
 vector __bool v___b;                // expected-warning {{type specifier missing, defaults to 'int'}}
 
 // These should have errors.
-__vector double vv_d1;               // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)}}
-vector double v_d2;                  // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)}}
-__vector bool long long v_bll1;      // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
-__vector __bool long long v_bll2;    // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
-vector bool long long v_bll3;        // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
-vector __bool long long v_bll4;      // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
+__vector double vv_d1;               // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on POWER7 or later)}}
+vector double v_d2;                  // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on POWER7 or later)}}
+__vector bool long long v_bll1;      // expected-error {{use of 'long long' with '__vector bool' requires VSX support (available on POWER7 or later) or extended Altivec support (available on POWER8 or later) to be enabled}}
+__vector __bool long long v_bll2;    // expected-error {{use of 'long long' with '__vector bool' requires VSX support (available on POWER7 or later) or extended Altivec support (available on POWER8 or later) to be enabled}}
+vector bool long long v_bll3;        // expected-error {{use of 'long long' with '__vector bool' requires VSX support (available on POWER7 or later) or extended Altivec support (available on POWER8 or later) to be enabled}}
+vector __bool long long v_bll4;      // expected-error {{use of 'long long' with '__vector bool' requires VSX support (available on POWER7 or later) or extended Altivec support (available on POWER8 or later) to be enabled}}
 __vector long double  vv_ld3;        // expected-error {{cannot use 'long double' with '__vector'}}
 vector long double  v_ld4;           // expected-error {{cannot use 'long double' with '__vector'}}
 vector bool float v_bf;              // expected-error {{cannot use 'float' with '__vector bool'}}

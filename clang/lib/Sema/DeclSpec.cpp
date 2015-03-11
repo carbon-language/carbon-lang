@@ -989,7 +989,9 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
           << getSpecifierName((TSW)TypeSpecWidth);
 
       // vector bool long long requires VSX support.
-      if ((TypeSpecWidth == TSW_longlong) && (!PP.getTargetInfo().hasFeature("vsx")))
+      if ((TypeSpecWidth == TSW_longlong) &&
+          (!PP.getTargetInfo().hasFeature("vsx")) &&
+          (!PP.getTargetInfo().hasFeature("power8-vector")))
         Diag(D, TSTLoc, diag::err_invalid_vector_long_long_decl_spec);
 
       // Elements of vector bool are interpreted as unsigned. (PIM 2.1)
