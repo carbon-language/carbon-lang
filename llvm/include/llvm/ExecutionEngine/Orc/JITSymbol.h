@@ -14,6 +14,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_JITSYMBOL_H
 #define LLVM_EXECUTIONENGINE_ORC_JITSYMBOL_H
 
+#include "llvm/ExecutionEngine/JITSymbolFlags.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <functional>
@@ -25,17 +26,19 @@ namespace orc {
 typedef uint64_t TargetAddress;
 
 /// @brief Represents a symbol in the JIT.
-class JITSymbol {
-public:
+class JITSymbol : public JITSymbolBase {
+public:  
+
   typedef std::function<TargetAddress()> GetAddressFtor;
 
   /// @brief Create a 'null' symbol that represents failure to find a symbol
   ///        definition.
-  JITSymbol(std::nullptr_t) : CachedAddr(0) {}
+  JITSymbol(std::nullptr_t)
+      : JITSymbolBase(JITSymbolFlags::None), CachedAddr(0) {}
 
   /// @brief Create a symbol for a definition with a known address.
-  JITSymbol(TargetAddress Addr)
-    : CachedAddr(Addr) {}
+  JITSymbol(TargetAddress Addr, JITSymbolFlags Flags)
+    : JITSymbolBase(Flags), CachedAddr(Addr) {}
 
   /// @brief Create a symbol for a definition that doesn't have a known address
   ///        yet.
@@ -46,8 +49,8 @@ public:
   /// definition without actually materializing the definition up front. The
   /// user can materialize the definition at any time by calling the getAddress
   /// method.
-  JITSymbol(GetAddressFtor GetAddress)
-    : CachedAddr(0), GetAddress(std::move(GetAddress)) {}
+  JITSymbol(GetAddressFtor GetAddress, JITSymbolFlags Flags)
+      : JITSymbolBase(Flags), GetAddress(std::move(GetAddress)), CachedAddr(0) {}
 
   /// @brief Returns true if the symbol exists, false otherwise.
   explicit operator bool() const { return CachedAddr || GetAddress; }
@@ -64,8 +67,8 @@ public:
   }
 
 private:
-  TargetAddress CachedAddr;
   GetAddressFtor GetAddress;
+  TargetAddress CachedAddr;
 };
 
 } // End namespace orc.

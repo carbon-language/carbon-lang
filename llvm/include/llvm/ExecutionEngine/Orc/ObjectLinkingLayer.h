@@ -51,10 +51,8 @@ protected:
       return RTDyld->loadObject(Obj);
     }
 
-    TargetAddress getSymbolAddress(StringRef Name, bool ExportedSymbolsOnly) {
-      if (ExportedSymbolsOnly)
-        return RTDyld->getExportedSymbolLoadAddress(Name);
-      return RTDyld->getSymbolLoadAddress(Name);
+    RuntimeDyld::SymbolInfo getSymbol(StringRef Name) const {
+      return RTDyld->getSymbol(Name);
     }
 
     bool NeedsFinalization() const { return (State == Raw); }
@@ -214,28 +212,32 @@ public:
   ///         given object set.
   JITSymbol findSymbolIn(ObjSetHandleT H, StringRef Name,
                          bool ExportedSymbolsOnly) {
-    if (auto Addr = H->getSymbolAddress(Name, ExportedSymbolsOnly)) {
-      if (!H->NeedsFinalization()) {
-        // If this instance has already been finalized then we can just return
-        // the address.
-        return JITSymbol(Addr);
-      } else {
-        // If this instance needs finalization return a functor that will do it.
-        // The functor still needs to double-check whether finalization is
-        // required, in case someone else finalizes this set before the functor
-        // is called.
-        return JITSymbol(
-          [this, Addr, H]() {
-            if (H->NeedsFinalization()) {
-              H->Finalize();
-              if (NotifyFinalized)
-                NotifyFinalized(H);
-            }
-            return Addr;
-          });
+    if (auto Sym = H->getSymbol(Name)) {
+      if (Sym.isExported() || !ExportedSymbolsOnly) {
+        auto Addr = Sym.getAddress();
+        auto Flags = Sym.getFlags();
+        if (!H->NeedsFinalization()) {
+          // If this instance has already been finalized then we can just return
+          // the address.
+          return JITSymbol(Addr, Flags);
+        } else {
+          // If this instance needs finalization return a functor that will do
+          // it. The functor still needs to double-check whether finalization is
+          // required, in case someone else finalizes this set before the
+          // functor is called.
+          auto GetAddress = 
+            [this, Addr, H]() {
+              if (H->NeedsFinalization()) {
+                H->Finalize();
+                if (NotifyFinalized)
+                  NotifyFinalized(H);
+              }
+              return Addr;
+            };
+          return JITSymbol(std::move(GetAddress), Flags);
+        }
       }
     }
-
     return nullptr;
   }
 
