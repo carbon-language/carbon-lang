@@ -113,7 +113,7 @@ public:
     assert(!CheckName.empty());
   }
 
-  virtual ~ClangTidyCheck() {}
+  ~ClangTidyCheck() override = default;
 
   /// \brief Override this to register \c PPCallbacks with \c Compiler.
   ///
