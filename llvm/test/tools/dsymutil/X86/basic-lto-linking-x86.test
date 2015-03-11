@@ -19,6 +19,7 @@ CHECK:      DW_AT_type [DW_FORM_ref4]       (cu + 0x0063 => {0x00000063})
 CHECK:      DW_AT_external [DW_FORM_flag]	(0x01)
 CHECK:      DW_AT_accessibility [DW_FORM_data1]	(DW_ACCESS_public)
 CHECK:      DW_AT_low_pc [DW_FORM_addr]     (0x0000000100000f40)
+CHECK:      DW_AT_high_pc [DW_FORM_addr]     (0x0000000100000f4b)
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [3]
 CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000056] = "argc")
@@ -63,12 +64,15 @@ CHECK:    DW_TAG_subprogram [8] *
 CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000082] = "foo")
 CHECK:      DW_AT_type [DW_FORM_ref_addr]   (0x0000000000000063)
 CHECK:      DW_AT_low_pc [DW_FORM_addr]     (0x0000000100000f50)
+CHECK:      DW_AT_high_pc [DW_FORM_addr]    (0x0000000100000f89)
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [9]
 CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000086] = "arg")
 CHECK:        DW_AT_type [DW_FORM_ref_addr] (0x0000000000000063)
 CHECK:      DW_TAG_inlined_subroutine [10]
 CHECK:        DW_AT_abstract_origin [DW_FORM_ref4]  (cu + 0x00a7 => {0x00000128} "inc")
+CHECK:        DW_AT_low_pc [DW_FORM_addr]   (0x0000000100000f63)
+CHECK:        DW_AT_high_pc [DW_FORM_addr]  (0x0000000100000f72)
 CHECK:        DW_AT_call_line [DW_FORM_data1]	(20)
 CHECK:      NULL
 CHECK:    DW_TAG_subprogram [11]
@@ -93,11 +97,14 @@ CHECK:    DW_TAG_subprogram [8] *
 CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000009b] = "bar")
 CHECK:      DW_AT_type [DW_FORM_ref_addr]   (0x0000000000000063)
 CHECK:      DW_AT_low_pc [DW_FORM_addr]     (0x0000000100000f90)
+CHECK:      DW_AT_high_pc [DW_FORM_addr]    (0x0000000100000fb4)
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [9]
 CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000086] = "arg")
 CHECK:        DW_AT_type [DW_FORM_ref_addr] (0x0000000000000063)
 CHECK:      DW_TAG_lexical_block [14] *
+CHECK:        DW_AT_low_pc [DW_FORM_addr]   (0x0000000100000f94)
+CHECK         DW_AT_high_pc [DW_FORM_addr]  (0x0000000100000fa7)
 CHECK:        DW_TAG_inlined_subroutine [15]
 CHECK:          DW_AT_abstract_origin [DW_FORM_ref4]        (cu + 0x009a => {0x000001d4} "inc")
 
