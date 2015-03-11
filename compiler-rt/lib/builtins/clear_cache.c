@@ -9,6 +9,7 @@
  */
 
 #include "int_lib.h"
+#include <stddef.h>
 
 #if __APPLE__
   #include <libkern/OSCacheControl.h>
