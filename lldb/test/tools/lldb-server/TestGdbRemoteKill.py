@@ -24,9 +24,10 @@ class TestGdbRemoteKill(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Wait a moment for completed and now-detached inferior process to clear.
         time.sleep(1)
 
-        # Process should be dead now.  Reap results.
-        poll_result = procs["inferior"].poll()
-        self.assertIsNotNone(poll_result)
+        if not lldb.remote_platform:
+            # Process should be dead now. Reap results.
+            poll_result = procs["inferior"].poll()
+            self.assertIsNotNone(poll_result)
 
         # Where possible, verify at the system level that the process is not running.
         self.assertFalse(lldbgdbserverutils.process_is_running(procs["inferior"].pid, False))

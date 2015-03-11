@@ -5,6 +5,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import gdbremote_testcase
+import lldbgdbserverutils
 import re
 import select
 import socket
@@ -43,7 +44,7 @@ class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     def reverse_connect_works(self):
         # Indicate stub startup should do a reverse connect.
-        appended_stub_args = " --reverse-connect"
+        appended_stub_args = ["--reverse-connect"]
         if self.debug_monitor_extra_args:
             self.debug_monitor_extra_args += appended_stub_args
         else:
@@ -55,7 +56,7 @@ class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Start the stub.
         server = self.launch_debug_monitor(logfile=sys.stdout)
         self.assertIsNotNone(server)
-        self.assertTrue(server.isalive())
+        self.assertTrue(lldbgdbserverutils.process_is_running(server.pid, True))
 
         # Listen for the stub's connection to us.
         (stub_socket, address) = self.listener_socket.accept()

@@ -134,12 +134,31 @@ class GdbRemoteTestCaseBase(TestBase):
         return stub_port
 
     def init_llgs_test(self, use_named_pipe=True):
-        self.debug_monitor_exe = get_lldb_server_exe()
-        if not self.debug_monitor_exe:
-            self.skipTest("lldb-server exe not found")
-        dname = os.path.join(os.environ["LLDB_TEST"],
-                             os.environ["LLDB_SESSION_DIRNAME"])
-        self.debug_monitor_extra_args = " gdbserver -c 'log enable -T -f {}/process-{}.log lldb break process thread' -c 'log enable -T -f {}/packets-{}.log gdb-remote packets'".format(dname, self.id(), dname, self.id())
+        if lldb.remote_platform:
+            # Remote platforms don't support named pipe based port negotiation
+            use_named_pipe = False
+
+            platform = self.dbg.GetSelectedPlatform()
+
+            shell_command = lldb.SBPlatformShellCommand("echo $PPID")
+            err = platform.Run(shell_command)
+            if err.Fail():
+                raise Exception("remote_platform.RunShellCommand('echo $PPID') failed: %s" % err)
+            pid = shell_command.GetOutput().strip()
+
+            shell_command = lldb.SBPlatformShellCommand("readlink /proc/%s/exe" % pid)
+            err = platform.Run(shell_command)
+            if err.Fail():
+                raise Exception("remote_platform.RunShellCommand('readlink /proc/%d/exe') failed: %s" % (pid, err))
+            self.debug_monitor_exe = shell_command.GetOutput().strip()
+            dname = self.dbg.GetSelectedPlatform().GetWorkingDirectory()
+        else:
+            self.debug_monitor_exe = get_lldb_server_exe()
+            if not self.debug_monitor_exe:
+                self.skipTest("lldb-server exe not found")
+            dname = os.path.join(os.environ["LLDB_TEST"], os.environ["LLDB_SESSION_DIRNAME"])
+
+        self.debug_monitor_extra_args = ["gdbserver", "-c", "log enable -T -f {}/process-{}.log lldb break process thread".format(dname, self.id()), "-c", "log enable -T -f {}/packets-{}.log gdb-remote packets".format(dname, self.id())]
         if use_named_pipe:
             (self.named_pipe_path, self.named_pipe, self.named_pipe_fd) = self.create_named_pipe()
 
@@ -147,7 +166,7 @@ class GdbRemoteTestCaseBase(TestBase):
         self.debug_monitor_exe = get_debugserver_exe()
         if not self.debug_monitor_exe:
             self.skipTest("debugserver exe not found")
-        self.debug_monitor_extra_args = " --log-file=/tmp/packets-{}.log --log-flags=0x800000".format(self._testMethodName)
+        self.debug_monitor_extra_args = ["--log-file=/tmp/packets-{}.log".format(self._testMethodName), "--log-flags=0x800000"]
         if use_named_pipe:
             (self.named_pipe_path, self.named_pipe, self.named_pipe_fd) = self.create_named_pipe()
         # The debugserver stub has a race on handling the 'k' command, so it sends an X09 right away, then sends the real X notification
@@ -173,6 +192,14 @@ class GdbRemoteTestCaseBase(TestBase):
 
         self.addTearDownHook(shutdown_socket)
 
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        if re.match(".*-.*-.*-android", triple):
+            subprocess.call(["adb", "forward", "tcp:%d" % self.port, "tcp:%d" % self.port])
+            def remove_port_forward():
+                subprocess.call(["adb", "forward", "--remove", "tcp:%d" % self.port])
+
+            self.addTearDownHook(remove_port_forward)
+
         connect_info = (self.stub_hostname, self.port)
         # print "connecting to stub on {}:{}".format(connect_info[0], connect_info[1])
         sock.connect(connect_info)
@@ -188,32 +215,32 @@ class GdbRemoteTestCaseBase(TestBase):
     def set_inferior_startup_attach_manually(self):
         self._inferior_startup = self._STARTUP_ATTACH_MANUALLY
 
-    def get_debug_monitor_command_line(self, attach_pid=None):
-        commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
+    def get_debug_monitor_command_line_args(self, attach_pid=None):
+        commandline_args = self.debug_monitor_extra_args + ["localhost:{}".format(self.port)]
         if attach_pid:
-            commandline += " --attach=%d" % attach_pid
+            commandline_args += ["--attach=%d" % attach_pid]
         if self.named_pipe_path:
-            commandline += " --named-pipe %s" % self.named_pipe_path
-        return commandline
+            commandline_args += ["--named-pipe", self.named_pipe_path]
+        return commandline_args
+
+    def run_platform_command(self, cmd):
+        platform = self.dbg.GetSelectedPlatform()
+        shell_command = lldb.SBPlatformShellCommand(cmd)
+        err = platform.Run(shell_command)
+        return (err, shell_command.GetOutput())
 
     def launch_debug_monitor(self, attach_pid=None, logfile=None):
         # Create the command line.
-        import pexpect
-        commandline = self.get_debug_monitor_command_line(attach_pid=attach_pid)
+        commandline_args = self.get_debug_monitor_command_line_args(attach_pid=attach_pid)
 
         # Start the server.
-        server = pexpect.spawn(commandline, logfile=logfile)
+        server = self.spawnSubprocess(self.debug_monitor_exe, commandline_args, install_remote=False)
+        self.addTearDownHook(self.cleanupSubprocesses)
         self.assertIsNotNone(server)
-        server.expect(r"(debugserver|lldb-server)", timeout=10)
 
         # If we're receiving the stub's listening port from the named pipe, do that here.
         if self.named_pipe:
             self.port = self.get_stub_port_from_named_socket()
-            # print "debug server listening on {}".format(self.port)
-
-        # Turn on logging for what the child sends back.
-        if self.TraceOn():
-            server.logfile_read = sys.stdout
 
         return server
 
@@ -225,7 +252,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
             def shutdown_debug_monitor():
                 try:
-                    server.close()
+                    server.terminate()
                 except:
                     logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
             self.addTearDownHook(shutdown_debug_monitor)
@@ -245,34 +272,25 @@ class GdbRemoteTestCaseBase(TestBase):
         while attempts < MAX_ATTEMPTS:
             server = self.launch_debug_monitor(attach_pid=attach_pid)
 
-            # Wait until we receive the server ready message before continuing.
-            port_good = True
-            try:
-                server.expect_exact('Listening to port {} for a connection from localhost'.format(self.port))
-            except:
-                port_good = False
-                server.close()
-
-            if port_good:
-                # Schedule debug monitor to be shut down during teardown.
-                logger = self.logger
-                def shutdown_debug_monitor():
-                    try:
-                        server.close()
-                    except:
-                        logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
-                self.addTearDownHook(shutdown_debug_monitor)
-
-                # Create a socket to talk to the server
+            # Schedule debug monitor to be shut down during teardown.
+            logger = self.logger
+            def shutdown_debug_monitor():
                 try:
-                    self.sock = self.create_socket()
-                    return server
-                except socket.error as serr:
-                    # We're only trying to handle connection refused.
-                    if serr.errno != errno.ECONNREFUSED:
-                        raise serr
-                    # We should close the server here to be safe.
-                    server.close()
+                    server.terminate()
+                except:
+                    logger.warning("failed to terminate server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
+            self.addTearDownHook(shutdown_debug_monitor)
+
+            # Create a socket to talk to the server
+            try:
+                self.sock = self.create_socket()
+                return server
+            except socket.error as serr:
+                # We're only trying to handle connection refused.
+                if serr.errno != errno.ECONNREFUSED:
+                    raise serr
+                # We should close the server here to be safe.
+                server.terminate()
 
             # Increment attempts.
             print("connect to debug monitor on port %d failed, attempt #%d of %d" % (self.port, attempts + 1, MAX_ATTEMPTS))
@@ -286,20 +304,20 @@ class GdbRemoteTestCaseBase(TestBase):
 
         raise Exception("failed to create a socket to the launched debug monitor after %d tries" % attempts)
 
-    def launch_process_for_attach(self,inferior_args=None, sleep_seconds=3, exe_path=None):
+    def launch_process_for_attach(self, inferior_args=None, sleep_seconds=3, exe_path=None):
         # We're going to start a child process that the debug monitor stub can later attach to.
         # This process needs to be started so that it just hangs around for a while.  We'll
         # have it sleep.
         if not exe_path:
             exe_path = os.path.abspath("a.out")
 
-        args = [exe_path]
+        args = []
         if inferior_args:
             args.extend(inferior_args)
         if sleep_seconds:
             args.append("sleep:%d" % sleep_seconds)
 
-        return subprocess.Popen(args)
+        return self.spawnSubprocess(exe_path, args)
 
     def prep_debug_monitor_and_inferior(self, inferior_args=None, inferior_sleep_seconds=3, inferior_exe_path=None):
         """Prep the debug monitor, the inferior, and the expected packet stream.
@@ -333,17 +351,27 @@ class GdbRemoteTestCaseBase(TestBase):
                 # In this case, we want the stub to attach via the command line, so set the command line attach pid here.
                 attach_pid = inferior.pid
 
-        # Launch the debug monitor stub, attaching to the inferior.
-        server = self.connect_to_debug_monitor(attach_pid=attach_pid)
-        self.assertIsNotNone(server)
-
         if self._inferior_startup == self._STARTUP_LAUNCH:
             # Build launch args
             if not inferior_exe_path:
                 inferior_exe_path = os.path.abspath("a.out")
+
+            if lldb.remote_platform:
+                remote_work_dir = lldb.remote_platform.GetWorkingDirectory()
+                remote_path = os.path.join(remote_work_dir, os.path.basename(inferior_exe_path))
+                remote_file_spec = lldb.SBFileSpec(remote_path, False)
+                err = lldb.remote_platform.Install(lldb.SBFileSpec(inferior_exe_path, True), remote_file_spec)
+                if err.Fail():
+                    raise Exception("remote_platform.Install('%s', '%s') failed: %s" % (inferior_exe_path, remote_path, err))
+                inferior_exe_path = remote_path
+
             launch_args = [inferior_exe_path]
             if inferior_args:
                 launch_args.extend(inferior_args)
+
+        # Launch the debug monitor stub, attaching to the inferior.
+        server = self.connect_to_debug_monitor(attach_pid=attach_pid)
+        self.assertIsNotNone(server)
 
         # Build the expected protocol stream
         self.add_no_ack_remote_stream()

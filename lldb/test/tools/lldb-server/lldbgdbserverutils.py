@@ -9,6 +9,7 @@ import re
 import socket_packet_pump
 import subprocess
 import time
+from lldbtest import *
 
 def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
     """Return the debug monitor exe path given the lldb exe path.
@@ -808,12 +809,16 @@ def process_is_running(pid, unknown_value=True):
         If we don't know how to check running process ids on the given OS:
         return the value provided by the unknown_value arg.
     """
-    if type(pid) != int:
-        raise Exception("pid must be of type int")
+    if type(pid) not in [int, long]:
+        raise Exception("pid must be of type int (actual type: %s)" % str(type(pid)))
 
     process_ids = []
 
-    if platform.system() in ['Darwin', 'Linux', 'FreeBSD', 'NetBSD']:
+    if lldb.remote_platform:
+        # Don't know how to get list of running process IDs on a remote
+        # platform
+        return unknown_value
+    elif platform.system() in ['Darwin', 'Linux', 'FreeBSD', 'NetBSD']:
         # Build the list of running process ids
         output = subprocess.check_output("ps ax | awk '{ print $1; }'", shell=True)
         text_process_ids = output.split('\n')[1:]
