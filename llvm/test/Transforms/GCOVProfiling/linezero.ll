@@ -1,6 +1,5 @@
-; RUN: sed -e 's|PATTERN|%/T|g' < %s > %t1
-; RUN: opt -insert-gcov-profiling -disable-output < %t1
-; RUN: rm %T/linezero.gcno %t1
+; RUN: sed -e 's|PATTERN|%/T|g' %s | opt -insert-gcov-profiling -disable-output
+; RUN: rm %T/linezero.gcno
 
 ; This is a crash test.
 
