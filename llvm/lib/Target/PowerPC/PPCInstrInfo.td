@@ -1498,7 +1498,7 @@ def TD : XForm_1<31, 68, (outs), (ins u5imm:$to, g8rc:$rA, g8rc:$rB),
 //
 
 // Unindexed (r+i) Loads. 
-let canFoldAsLoad = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 def LBZ : DForm_1<34, (outs gprc:$rD), (ins memri:$src),
                   "lbz $rD, $src", IIC_LdStLoad,
                   [(set i32:$rD, (zextloadi8 iaddr:$src))]>;
@@ -1595,7 +1595,7 @@ def LFDUX : XForm_1<31, 631, (outs f8rc:$rD, ptr_rc_nor0:$ea_result),
 
 // Indexed (r+r) Loads.
 //
-let canFoldAsLoad = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 def LBZX : XForm_1<31,  87, (outs gprc:$rD), (ins memrr:$src),
                    "lbzx $rD, $src", IIC_LdStLoad,
                    [(set i32:$rD, (zextloadi8 xaddr:$src))]>;

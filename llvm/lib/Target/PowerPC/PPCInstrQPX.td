@@ -501,7 +501,7 @@ let Uses = [RM] in {
                       "qvflogical $FRT, $FRA, $FRB, $tttt", IIC_VecPerm, []>;
 
   // Load indexed instructions
-  let mayLoad = 1, canFoldAsLoad = 1 in {
+  let mayLoad = 1 in {
     def QVLFDX : XForm_1<31, 583,
                         (outs qfrc:$FRT), (ins memrr:$src),
                         "qvlfdx $FRT, $src", IIC_LdStLFD,
