@@ -254,6 +254,7 @@ Produces the following code with -mtriple=powerpc64-unknown-linux-gnu:
 The two stxvw4x instructions are not needed.
 With -mtriple=powerpc64le-unknown-linux-gnu, the associated permutes
 are present too.
+
 //===----------------------------------------------------------------------===//
 
 The following example is found in test/CodeGen/PowerPC/vec_add_sub_doubleword.ll:
@@ -279,4 +280,36 @@ the stack, unless it's being done set up the vector register. Instead,
 it would be better to splat teh value into a vector register, and then
 remove the (dead) stores to the stack.
 
+//===----------------------------------------------------------------------===//
 
+At the moment we always generate a lxsdx in preference to lfd, or stxsdx in
+preference to stfd.  When we have a reg-immediate addressing mode, this is a
+poor choice, since we have to load the address into an index register.  This
+should be fixed for P7/P8. 
+
+//===----------------------------------------------------------------------===//
+
+Right now, ShuffleKind 0 is supported only on BE, and ShuffleKind 2 only on LE.
+However, we could actually support both kinds on either endianness, if we check
+for the appropriate shufflevector pattern for each case ...  this would cause
+some additional shufflevectors to be recognized and implemented via the
+"swapped" form.
+
+//===----------------------------------------------------------------------===//
+
+There is a utility program called PerfectShuffle that generates a table of the
+shortest instruction sequence for implementing a shufflevector operation on
+PowerPC.  However, this was designed for big-endian code generation.  We could
+modify this program to create a little endian version of the table.  The table
+is used in PPCISelLowering.cpp, PPCTargetLowering::LOWERVECTOR_SHUFFLE().
+
+//===----------------------------------------------------------------------===//
+
+Opportunies to use instructions from PPCInstrVSX.td during code gen
+  - Conversion instructions (Sections 7.6.1.5 and 7.6.1.6 of ISA 2.07)
+  - Scalar comparisons (xscmpodp and xscmpudp)
+  - Min and max (xsmaxdp, xsmindp, xvmaxdp, xvmindp, xvmaxsp, xvminsp)
+
+Related to this: we currently do not generate the lxvw4x instruction for either
+v4f32 or v4i32, probably because adding a dag pattern to the recognizer requires
+a single target type.  This should probably be addressed in the PPCISelDAGToDAG logic.

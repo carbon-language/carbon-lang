@@ -621,3 +621,10 @@ void foo() {
   bar(x);
   __asm__("" ::: "cr2");
 }
+
+//===----------------------------------------------------------------------===//
+
+Instruction fusion was introduced in ISA 2.06 and more opportunities added in
+ISA 2.07.  LLVM needs to add infrastructure to recognize fusion opportunities
+and force instruction pairs to be scheduled together.
+
