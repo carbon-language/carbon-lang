@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -fopenmp=libiomp5 -triple x86_64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -fopenmp=libiomp5 -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fopenmp=libiomp5 -triple x86_64-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
+// RUN: %clang_cc1 -fopenmp=libiomp5 -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
+// RUN: %clang_cc1 -fopenmp=libiomp5 -triple powerpc64-unknown-unknown -target-abi elfv1-qpx -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=QPX
 
 void h1(float *c, float *a, double b[], int size)
 {
@@ -15,7 +16,8 @@ void h1(float *c, float *a, double b[], int size)
 // CHECK-NEXT:    [[A_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[A_MASKEDPTR]], 0
 // CHECK-NEXT:    call void @llvm.assume(i1 [[A_MASKCOND]])
 // CHECK:         [[B_PTRINT:%.+]] = ptrtoint
-// CHECK-NEXT:    [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// NORMAL-NEXT:    [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// QPX-NEXT:    [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 31
 // CHECK-NEXT:    [[B_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[B_MASKEDPTR]], 0
 // CHECK-NEXT:    call void @llvm.assume(i1 [[B_MASKCOND]])
   for (int i = 0; i < size; ++i) {

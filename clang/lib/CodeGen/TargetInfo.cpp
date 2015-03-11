@@ -3280,13 +3280,42 @@ public:
 private:
   static const unsigned GPRBits = 64;
   ABIKind Kind;
+  bool HasQPX;
+
+  // A vector of float or double will be promoted to <4 x f32> or <4 x f64> and
+  // will be passed in a QPX register.
+  bool IsQPXVectorTy(const Type *Ty) const {
+    if (!HasQPX)
+      return false;
+
+    if (const VectorType *VT = Ty->getAs<VectorType>()) {
+      unsigned NumElements = VT->getNumElements();
+      if (NumElements == 1)
+        return false;
+
+      if (VT->getElementType()->isSpecificBuiltinType(BuiltinType::Double)) {
+        if (getContext().getTypeSize(Ty) <= 256)
+          return true;
+      } else if (VT->getElementType()->
+                   isSpecificBuiltinType(BuiltinType::Float)) {
+        if (getContext().getTypeSize(Ty) <= 128)
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool IsQPXVectorTy(QualType Ty) const {
+    return IsQPXVectorTy(Ty.getTypePtr());
+  }
 
 public:
-  PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT, ABIKind Kind)
-    : DefaultABIInfo(CGT), Kind(Kind) {}
+  PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT, ABIKind Kind, bool HasQPX)
+    : DefaultABIInfo(CGT), Kind(Kind), HasQPX(HasQPX) {}
 
   bool isPromotableTypeForABI(QualType Ty) const;
-  bool isAlignedParamType(QualType Ty) const;
+  bool isAlignedParamType(QualType Ty, bool &Align32) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType Ty) const;
@@ -3311,7 +3340,8 @@ public:
       const Type *T = isSingleElementStruct(I.type, getContext());
       if (T) {
         const BuiltinType *BT = T->getAs<BuiltinType>();
-        if ((T->isVectorType() && getContext().getTypeSize(T) == 128) ||
+        if (IsQPXVectorTy(T) ||
+            (T->isVectorType() && getContext().getTypeSize(T) == 128) ||
             (BT && BT->isFloatingPoint())) {
           QualType QT(T, 0);
           I.info = ABIArgInfo::getDirectInReg(CGT.ConvertType(QT));
@@ -3327,10 +3357,13 @@ public:
 };
 
 class PPC64_SVR4_TargetCodeGenInfo : public TargetCodeGenInfo {
+  bool HasQPX;
+
 public:
   PPC64_SVR4_TargetCodeGenInfo(CodeGenTypes &CGT,
-                               PPC64_SVR4_ABIInfo::ABIKind Kind)
-    : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT, Kind)) {}
+                               PPC64_SVR4_ABIInfo::ABIKind Kind, bool HasQPX)
+    : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT, Kind, HasQPX)),
+      HasQPX(HasQPX) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const override {
     // This is recovered from gcc output.
@@ -3340,7 +3373,12 @@ public:
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
 
-  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
+  unsigned getOpenMPSimdDefaultAlignment(QualType QT) const override {
+    if (HasQPX)
+      if (const PointerType *PT = QT->getAs<PointerType>())
+        if (PT->getPointeeType()->isSpecificBuiltinType(BuiltinType::Double))
+          return 32; // Natural alignment for QPX doubles.
+
     return 16; // Natural alignment for Altivec and VSX vectors.
   }
 
@@ -3401,15 +3439,23 @@ PPC64_SVR4_ABIInfo::isPromotableTypeForABI(QualType Ty) const {
 /// isAlignedParamType - Determine whether a type requires 16-byte
 /// alignment in the parameter area.
 bool
-PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty) const {
+PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty, bool &Align32) const {
+  Align32 = false;
+
   // Complex types are passed just like their elements.
   if (const ComplexType *CTy = Ty->getAs<ComplexType>())
     Ty = CTy->getElementType();
 
   // Only vector types of size 16 bytes need alignment (larger types are
   // passed via reference, smaller types are not aligned).
-  if (Ty->isVectorType())
+  if (IsQPXVectorTy(Ty)) {
+    if (getContext().getTypeSize(Ty) > 128)
+      Align32 = true;
+
+    return true;
+  } else if (Ty->isVectorType()) {
     return getContext().getTypeSize(Ty) == 128;
+  }
 
   // For single-element float/vector structs, we consider the whole type
   // to have the same alignment requirements as its single element.
@@ -3417,7 +3463,7 @@ PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty) const {
   const Type *EltType = isSingleElementStruct(Ty, getContext());
   if (EltType) {
     const BuiltinType *BT = EltType->getAs<BuiltinType>();
-    if ((EltType->isVectorType() &&
+    if (IsQPXVectorTy(EltType) || (EltType->isVectorType() &&
          getContext().getTypeSize(EltType) == 128) ||
         (BT && BT->isFloatingPoint()))
       AlignAsType = EltType;
@@ -3431,13 +3477,22 @@ PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty) const {
     AlignAsType = Base;
 
   // With special case aggregates, only vector base types need alignment.
-  if (AlignAsType)
+  if (AlignAsType && IsQPXVectorTy(AlignAsType)) {
+    if (getContext().getTypeSize(AlignAsType) > 128)
+      Align32 = true;
+
+    return true;
+  } else if (AlignAsType) {
     return AlignAsType->isVectorType();
+  }
 
   // Otherwise, we only need alignment for any aggregate type that
   // has an alignment requirement of >= 16 bytes.
-  if (isAggregateTypeForABI(Ty) && getContext().getTypeAlign(Ty) >= 128)
+  if (isAggregateTypeForABI(Ty) && getContext().getTypeAlign(Ty) >= 128) {
+    if (HasQPX && getContext().getTypeAlign(Ty) >= 256)
+      Align32 = true;
     return true;
+  }
 
   return false;
 }
@@ -3543,7 +3598,7 @@ bool PPC64_SVR4_ABIInfo::isHomogeneousAggregateBaseType(QualType Ty) const {
       return true;
   }
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
-    if (getContext().getTypeSize(VT) == 128)
+    if (getContext().getTypeSize(VT) == 128 || IsQPXVectorTy(Ty))
       return true;
   }
   return false;
@@ -3569,7 +3624,7 @@ PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
 
   // Non-Altivec vector types are passed in GPRs (smaller than 16 bytes)
   // or via reference (larger than 16 bytes).
-  if (Ty->isVectorType()) {
+  if (Ty->isVectorType() && !IsQPXVectorTy(Ty)) {
     uint64_t Size = getContext().getTypeSize(Ty);
     if (Size > 128)
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
@@ -3583,7 +3638,9 @@ PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
     if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
       return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
 
-    uint64_t ABIAlign = isAlignedParamType(Ty)? 16 : 8;
+    bool Align32;
+    uint64_t ABIAlign = isAlignedParamType(Ty, Align32) ?
+                          (Align32 ? 32 : 16) : 8;
     uint64_t TyAlign = getContext().getTypeAlign(Ty) / 8;
 
     // ELFv2 homogeneous aggregates are passed as array types.
@@ -3640,7 +3697,7 @@ PPC64_SVR4_ABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Non-Altivec vector types are returned in GPRs (smaller than 16 bytes)
   // or via reference (larger than 16 bytes).
-  if (RetTy->isVectorType()) {
+  if (RetTy->isVectorType() && !IsQPXVectorTy(RetTy)) {
     uint64_t Size = getContext().getTypeSize(RetTy);
     if (Size > 128)
       return ABIArgInfo::getIndirect(0);
@@ -3697,10 +3754,13 @@ llvm::Value *PPC64_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
   llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
 
   // Handle types that require 16-byte alignment in the parameter save area.
-  if (isAlignedParamType(Ty)) {
+  bool Align32;
+  if (isAlignedParamType(Ty, Align32)) {
     llvm::Value *AddrAsInt = Builder.CreatePtrToInt(Addr, CGF.Int64Ty);
-    AddrAsInt = Builder.CreateAdd(AddrAsInt, Builder.getInt64(15));
-    AddrAsInt = Builder.CreateAnd(AddrAsInt, Builder.getInt64(-16));
+    AddrAsInt = Builder.CreateAdd(AddrAsInt,
+                                  Builder.getInt64(Align32 ? 31 : 15));
+    AddrAsInt = Builder.CreateAnd(AddrAsInt,
+                                  Builder.getInt64(Align32 ? -32 : -16));
     Addr = Builder.CreateIntToPtr(AddrAsInt, BP, "ap.align");
   }
 
@@ -6978,19 +7038,21 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
       PPC64_SVR4_ABIInfo::ABIKind Kind = PPC64_SVR4_ABIInfo::ELFv1;
       if (getTarget().getABI() == "elfv2")
         Kind = PPC64_SVR4_ABIInfo::ELFv2;
+      bool HasQPX = getTarget().getABI() == "elfv1-qpx";
 
       return *(TheTargetCodeGenInfo =
-               new PPC64_SVR4_TargetCodeGenInfo(Types, Kind));
+               new PPC64_SVR4_TargetCodeGenInfo(Types, Kind, HasQPX));
     } else
       return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
   case llvm::Triple::ppc64le: {
     assert(Triple.isOSBinFormatELF() && "PPC64 LE non-ELF not supported!");
     PPC64_SVR4_ABIInfo::ABIKind Kind = PPC64_SVR4_ABIInfo::ELFv2;
-    if (getTarget().getABI() == "elfv1")
+    if (getTarget().getABI() == "elfv1" || getTarget().getABI() == "elfv1-qpx")
       Kind = PPC64_SVR4_ABIInfo::ELFv1;
+    bool HasQPX = getTarget().getABI() == "elfv1-qpx";
 
     return *(TheTargetCodeGenInfo =
-             new PPC64_SVR4_TargetCodeGenInfo(Types, Kind));
+             new PPC64_SVR4_TargetCodeGenInfo(Types, Kind, HasQPX));
   }
 
   case llvm::Triple::nvptx:

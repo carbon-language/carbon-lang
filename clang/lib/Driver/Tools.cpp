@@ -1316,9 +1316,22 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
     ABIName = A->getValue();
   } else if (getToolChain().getTriple().isOSLinux())
     switch(getToolChain().getArch()) {
-    case llvm::Triple::ppc64:
+    case llvm::Triple::ppc64: {
+      // When targeting a processor that supports QPX, or if QPX is
+      // specifically enabled, default to using the ABI that supports QPX (so
+      // long as it is not specifically disabled).
+      bool HasQPX = false;
+      if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
+        HasQPX = A->getValue() == StringRef("a2q");
+      HasQPX = Args.hasFlag(options::OPT_mqpx, options::OPT_mno_qpx, HasQPX);
+      if (HasQPX) {
+        ABIName = "elfv1-qpx";
+        break;
+      }
+
       ABIName = "elfv1";
       break;
+    }
     case llvm::Triple::ppc64le:
       ABIName = "elfv2";
       break;

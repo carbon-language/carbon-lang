@@ -6004,6 +6004,7 @@
 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv1 < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv1-qpx < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv2 < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu -target-abi elfv1 < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s

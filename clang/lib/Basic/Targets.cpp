@@ -742,6 +742,7 @@ class PPCTargetInfo : public TargetInfo {
   bool HasVSX;
   bool HasP8Vector;
   bool HasP8Crypto;
+  bool HasQPX;
 
 protected:
   std::string ABI;
@@ -749,7 +750,7 @@ protected:
 public:
   PPCTargetInfo(const llvm::Triple &Triple)
     : TargetInfo(Triple), HasVSX(false), HasP8Vector(false),
-      HasP8Crypto(false) {
+      HasP8Crypto(false), HasQPX(false) {
     BigEndian = (Triple.getArch() != llvm::Triple::ppc64le);
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::PPCDoubleDouble;
@@ -1015,6 +1016,11 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       continue;
     }
 
+    if (Feature == "qpx") {
+      HasQPX = true;
+      continue;
+    }
+
     // TODO: Finish this list and add an assert that we've handled them
     // all.
   }
@@ -1049,7 +1055,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   }
 
   // ABI options.
-  if (ABI == "elfv1")
+  if (ABI == "elfv1" || ABI == "elfv1-qpx")
     Builder.defineMacro("_CALL_ELF", "1");
   if (ABI == "elfv2")
     Builder.defineMacro("_CALL_ELF", "2");
@@ -1223,6 +1229,7 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
     .Case("vsx", HasVSX)
     .Case("power8-vector", HasP8Vector)
     .Case("crypto", HasP8Crypto)
+    .Case("qpx", HasQPX)
     .Default(false);
 }
 
@@ -1403,7 +1410,7 @@ public:
   }
   // PPC64 Linux-specifc ABI options.
   bool setABI(const std::string &Name) override {
-    if (Name == "elfv1" || Name == "elfv2") {
+    if (Name == "elfv1" || Name == "elfv1-qpx" || Name == "elfv2") {
       ABI = Name;
       return true;
     }
