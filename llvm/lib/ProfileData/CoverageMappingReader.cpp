@@ -14,6 +14,7 @@
 
 #include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LEB128.h"
@@ -444,11 +445,31 @@ static std::error_code loadTestingFormat(StringRef Data,
 static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
                                         SectionData &ProfileNames,
                                         StringRef &CoverageMapping,
-                                        uint8_t &BytesInAddress) {
-  auto ObjectFileOrErr = object::ObjectFile::createObjectFile(ObjectBuffer);
-  if (std::error_code EC = ObjectFileOrErr.getError())
+                                        uint8_t &BytesInAddress,
+                                        Triple::ArchType Arch) {
+  auto BinOrErr = object::createBinary(ObjectBuffer);
+  if (std::error_code EC = BinOrErr.getError())
     return EC;
-  auto OF = std::move(ObjectFileOrErr.get());
+  auto Bin = std::move(BinOrErr.get());
+  std::unique_ptr<ObjectFile> OF;
+  if (auto *Universal = dyn_cast<object::MachOUniversalBinary>(Bin.get())) {
+    // If we have a universal binary, try to look up the object for the
+    // appropriate architecture.
+    auto ObjectFileOrErr = Universal->getObjectForArch(Arch);
+    if (std::error_code EC = ObjectFileOrErr.getError())
+      return EC;
+    OF = std::move(ObjectFileOrErr.get());
+  } else if (isa<object::ObjectFile>(Bin.get())) {
+    // For any other object file, upcast and take ownership.
+    OF.reset(cast<object::ObjectFile>(Bin.release()));
+    // If we've asked for a particular arch, make sure they match.
+    if (Arch != Triple::ArchType::UnknownArch && OF->getArch() != Arch)
+      return object_error::arch_not_found;
+  } else
+    // We can only handle object files.
+    return instrprof_error::malformed;
+
+  // The coverage uses native pointer sizes for the object it's written in.
   BytesInAddress = OF->getBytesInAddress();
 
   // Look for the sections that we are interested in.
@@ -479,7 +500,8 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
 }
 
 ErrorOr<std::unique_ptr<BinaryCoverageReader>>
-BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer) {
+BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer,
+                             Triple::ArchType Arch) {
   std::unique_ptr<BinaryCoverageReader> Reader(new BinaryCoverageReader());
 
   SectionData Profile;
@@ -492,7 +514,7 @@ BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer) {
                            BytesInAddress);
   else
     EC = loadBinaryFormat(ObjectBuffer->getMemBufferRef(), Profile, Coverage,
-                          BytesInAddress);
+                          BytesInAddress, Arch);
   if (EC)
     return EC;
 

@@ -20,6 +20,7 @@
 #include "SourceCoverageView.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/CommandLine.h"
@@ -87,6 +88,7 @@ public:
       LoadedSourceFiles;
   bool CompareFilenamesOnly;
   StringMap<std::string> RemappedFilenames;
+  llvm::Triple::ArchType CoverageArch;
 };
 }
 
@@ -193,7 +195,8 @@ CodeCoverageTool::createSourceFileView(StringRef SourceFile,
 }
 
 std::unique_ptr<CoverageMapping> CodeCoverageTool::load() {
-  auto CoverageOrErr = CoverageMapping::load(ObjectFilename, PGOFilename);
+  auto CoverageOrErr = CoverageMapping::load(ObjectFilename, PGOFilename,
+                                             CoverageArch);
   if (std::error_code EC = CoverageOrErr.getError()) {
     colored_ostream(errs(), raw_ostream::RED)
         << "error: Failed to load coverage: " << EC.message();
@@ -241,6 +244,9 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
       "instr-profile", cl::Required, cl::location(this->PGOFilename),
       cl::desc(
           "File with the profile data obtained after an instrumented run"));
+
+  cl::opt<std::string> Arch(
+      "arch", cl::desc("architecture of the coverage mapping binary"));
 
   cl::opt<bool> DebugDump("dump", cl::Optional,
                           cl::desc("Show internal debug dump"));
@@ -320,6 +326,16 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
         StatFilterer->push_back(llvm::make_unique<LineCoverageFilter>(
             RegionCoverageFilter::GreaterThan, LineCoverageGtFilter));
       Filters.push_back(std::unique_ptr<CoverageFilter>(StatFilterer));
+    }
+
+    if (Arch.empty())
+      CoverageArch = llvm::Triple::ArchType::UnknownArch;
+    else {
+      CoverageArch = Triple(Arch).getArch();
+      if (CoverageArch == llvm::Triple::ArchType::UnknownArch) {
+        errs() << "error: Unknown architecture: " << Arch << "\n";
+        return 1;
+      }
     }
 
     for (const auto &File : InputSourceFiles) {
