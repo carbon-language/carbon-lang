@@ -58,8 +58,8 @@ Especially it's important to understand chapter 3 of tutorial:
 
 :doc:`tutorial/LangImpl3`
 
-Reader also should know how passes work in LLVM, he could use next article as a
-reference and start point here:
+Reader also should know how passes work in LLVM, they could use next article as
+a reference and start point here:
 
 :doc:`WritingAnLLVMPass`
 
@@ -88,7 +88,7 @@ part describes the merging process.
 In every part author also tried to put the contents into the top-down form.
 First, the top-level methods will be described, while the terminal ones will be
 at the end, in the tail of each part. If reader will see the reference to the
-method that wasn't described yet, he will find its description a bit below.
+method that wasn't described yet, they will find its description a bit below.
 
 Basics
 ======

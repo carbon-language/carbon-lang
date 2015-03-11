@@ -74,7 +74,7 @@
 // define it to 0 to indicate otherwise.
 //
 // If the user's ::std::string and ::string are the same class due to
-// aliasing, he should define GTEST_HAS_GLOBAL_STRING to 0.
+// aliasing, they should define GTEST_HAS_GLOBAL_STRING to 0.
 //
 // If the user doesn't define GTEST_HAS_GLOBAL_STRING, it is defined
 // heuristically.
