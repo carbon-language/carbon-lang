@@ -241,14 +241,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 // Define out of line so we don't have to include DwarfUnit.h in DwarfDebug.h.
 DwarfDebug::~DwarfDebug() { }
 
-// Switch to the specified MCSection and emit an assembler
-// temporary label to it if SymbolStem is specified.
-static void emitSectionSym(AsmPrinter *Asm, const MCSection *Section) {
-  Asm->OutStreamer.SwitchSection(Section);
-  MCSymbol *TmpSym = Section->getBeginSymbol();
-  Asm->OutStreamer.EmitLabel(TmpSym);
-}
-
 static bool isObjCClass(StringRef Name) {
   return Name.startswith("+") || Name.startswith("-");
 }
@@ -449,9 +441,6 @@ void DwarfDebug::beginModule() {
     return;
   TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
 
-  // Emit initial sections so we can reference labels later.
-  emitSectionLabels();
-
   SingleCU = CU_Nodes->getNumOperands() == 1;
 
   for (MDNode *N : CU_Nodes->operands()) {
@@ -619,14 +608,13 @@ void DwarfDebug::finalizeModuleInfo() {
 
 // Emit all Dwarf sections that should come after the content.
 void DwarfDebug::endModule() {
-  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   assert(CurFn == nullptr);
   assert(CurMI == nullptr);
 
   // If we aren't actually generating debug info (check beginModule -
   // conditionalized on !DisableDebugInfoPrinting and the presence of the
   // llvm.dbg.cu metadata node)
-  if (!TLOF.getDwarfInfoSection()->getBeginSymbol()->isInSection())
+  if (!MMI->hasDebugInfo())
     return;
 
   // Finalize the debug info for the module.
@@ -640,11 +628,11 @@ void DwarfDebug::endModule() {
     // Emit info into a debug loc section.
     emitDebugLoc();
 
-  // Emit all the DIEs into a debug info section.
-  emitDebugInfo();
-
   // Corresponding abbreviations into a abbrev section.
   emitAbbreviations();
+
+  // Emit all the DIEs into a debug info section.
+  emitDebugInfo();
 
   // Emit info into a debug aranges section.
   if (GenerateARangeSection)
@@ -1299,31 +1287,6 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
 // Emit Methods
 //===----------------------------------------------------------------------===//
 
-// Emit initial Dwarf sections with a label at the start of each one.
-void DwarfDebug::emitSectionLabels() {
-  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-
-  // Dwarf sections base addresses.
-  emitSectionSym(Asm, TLOF.getDwarfInfoSection());
-  if (useSplitDwarf()) {
-    emitSectionSym(Asm, TLOF.getDwarfInfoDWOSection());
-    emitSectionSym(Asm, TLOF.getDwarfTypesDWOSection());
-  }
-  emitSectionSym(Asm, TLOF.getDwarfAbbrevSection());
-  if (useSplitDwarf())
-    emitSectionSym(Asm, TLOF.getDwarfAbbrevDWOSection());
-
-  emitSectionSym(Asm, TLOF.getDwarfLineSection());
-  emitSectionSym(Asm, TLOF.getDwarfStrSection());
-  if (useSplitDwarf()) {
-    emitSectionSym(Asm, TLOF.getDwarfStrDWOSection());
-    emitSectionSym(Asm, TLOF.getDwarfAddrSection());
-    emitSectionSym(Asm, TLOF.getDwarfLocDWOSection());
-  } else
-    emitSectionSym(Asm, TLOF.getDwarfLocSection());
-  emitSectionSym(Asm, TLOF.getDwarfRangesSection());
-}
-
 // Emit the debug info section.
 void DwarfDebug::emitDebugInfo() {
   DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
@@ -1364,7 +1327,7 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
                            StringRef TableName) {
   Accel.FinalizeTable(Asm, TableName);
-  emitSectionSym(Asm, Section);
+  Asm->OutStreamer.SwitchSection(Section);
 
   // Emit the full data.
   Accel.emit(Asm, Section->getBeginSymbol(), this);

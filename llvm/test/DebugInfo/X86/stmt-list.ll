@@ -1,9 +1,10 @@
 ; RUN: llc -mtriple x86_64-pc-linux-gnu < %s | FileCheck %s
 
+; CHECK:      .long   .Lline_table_start0          # DW_AT_stmt_list
+
 ; CHECK:      .section        .debug_line,"",@progbits
 ; CHECK-NEXT: .Lsection_line:
-
-; CHECK:      .long   .Lline_table_start0          # DW_AT_stmt_list
+; CHECK-NEXT: .Lline_table_start0:
 
 define void @f() {
 entry:

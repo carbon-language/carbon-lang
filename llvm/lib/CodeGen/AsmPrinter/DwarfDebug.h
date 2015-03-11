@@ -339,9 +339,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Construct a DIE for this abstract scope.
   void constructAbstractSubprogramScopeDIE(LexicalScope *Scope);
 
-  /// \brief Emit initial Dwarf sections with a label at the start of each one.
-  void emitSectionLabels();
-
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
 

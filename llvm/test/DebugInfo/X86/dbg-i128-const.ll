@@ -1,5 +1,6 @@
 ; RUN: llc -mtriple=x86_64-linux < %s | FileCheck %s
 
+; CHECK: .section        .debug_info
 ; CHECK: DW_AT_const_value
 ; CHECK-NEXT: 42
 

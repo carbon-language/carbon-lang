@@ -34,6 +34,7 @@ foo:
 // ASM: .section .debug_info
 
 // ASM: .section .debug_abbrev
+// ASM-NEXT: .Lsection_abbrev:
 // ASM-NEXT: [[ABBREV_LABEL:.Ltmp[0-9]+]]
 
 // Second instance of the section has the CU
@@ -48,6 +49,7 @@ foo:
 // ASM-NEXT: .long [[LINE_LABEL:.L[a-z0-9]+]]
 
 // ASM: .section .debug_line
+// ASM-NEXT:.Lsection_line:
 // ASM-NEXT: [[LINE_LABEL]]
 
 // DWARF1: Dwarf version 1 is not supported.

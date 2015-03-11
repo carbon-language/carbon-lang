@@ -25,6 +25,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !7 = distinct !MDLexicalBlock(line: 3, column: 12, file: !14, scope: !0)
 !8 = !MDCompositeType(tag: DW_TAG_array_type, align: 32, file: !14, scope: !2, baseType: !5, elements: !9)
 !9 = !{!10}
+;CHECK: section_info:
 ;CHECK: DW_TAG_subrange_type
 ;CHECK-NEXT: DW_AT_type
 ;CHECK-NOT: DW_AT_lower_bound

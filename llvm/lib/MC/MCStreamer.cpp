@@ -16,6 +16,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCWin64EH.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -670,5 +671,8 @@ void MCStreamer::SwitchSection(const MCSection *Section,
   if (MCSectionSubPair(Section, Subsection) != curSection) {
     SectionStack.back().first = MCSectionSubPair(Section, Subsection);
     ChangeSection(Section, Subsection);
+    MCSymbol *Sym = Section->getBeginSymbol();
+    if (Sym && !Sym->isInSection())
+      EmitLabel(Sym);
   }
 }
