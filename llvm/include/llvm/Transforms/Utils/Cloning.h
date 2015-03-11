@@ -144,7 +144,9 @@ public:
     ///< Skip this instruction but continue cloning the current basic block.
     SkipInstruction,
     ///< Skip this instruction and stop cloning the current basic block.
-    StopCloningBB
+    StopCloningBB,
+    ///< Don't clone the terminator but clone the current block's successors.
+    CloneSuccessors
   };
 
   virtual ~CloningDirector() {}

@@ -18,6 +18,12 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
+; The function entry in this case remains unchanged.
+; CHECK: define void @_Z4testv() #0 {
+; CHECK: entry:
+; CHECK:   invoke void @_Z9may_throwv()
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
 entry:
@@ -29,6 +35,16 @@ entry:
 invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
+; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %entry
+; CHECK:   [[LPAD_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:           catch i8* null
+; CHECK-NOT:   extractvalue { i8*, i32 }
+; CHECK-NOT:   store i8*
+; CHECK-NOT:   store i32
+; CHECK-NOT:   br label %catch
+; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 0, i8* null, i8* null, i8* bitcast (i8* (i8*, i8*)* @_Z4testv.catch to i8*))
+; CHECK:   indirectbr i8* [[RECOVER]], [label %try.cont]
+
 lpad:                                             ; preds = %entry
   %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch i8* null
@@ -38,11 +54,15 @@ lpad:                                             ; preds = %entry
   store i32 %tmp2, i32* %ehselector.slot
   br label %catch
 
+; CHECK-NOT: catch:
+
 catch:                                            ; preds = %lpad
   %exn = load i8*, i8** %exn.slot
   call void @llvm.eh.begincatch(i8* %exn, i8* null) #2
   call void @_Z16handle_exceptionv()
   br label %invoke.cont2
+
+; CHECK-NOT: invoke.cont2:
 
 invoke.cont2:                                     ; preds = %catch
   call void @llvm.eh.endcatch()
@@ -50,6 +70,8 @@ invoke.cont2:                                     ; preds = %catch
 
 try.cont:                                         ; preds = %invoke.cont2, %invoke.cont
   ret void
+
+; CHECK: }
 }
 
 ; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {

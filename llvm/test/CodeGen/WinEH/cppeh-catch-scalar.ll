@@ -23,12 +23,10 @@ target triple = "x86_64-pc-windows-msvc"
 ; The function entry will be rewritten like this.
 ; CHECK: define void @_Z4testv() #0 {
 ; CHECK: entry:
-; CHECK:   %exn.slot = alloca i8*
-; CHECK:   %ehselector.slot = alloca i32
-; CHECK:   %i = alloca i32, align 4
-; CHECK:   call void (...)* @llvm.frameescape(i32* %i)
+; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
+; CHECK:   call void (...)* @llvm.frameescape(i32* [[I_PTR]])
 ; CHECK:   invoke void @_Z9may_throwv()
-; CHECK:           to label %invoke.cont unwind label %lpad
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
@@ -42,6 +40,16 @@ entry:
 invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
+; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %entry
+; CHECK:   [[LPAD_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:           catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NOT:   extractvalue { i8*, i32 }
+; CHECK-NOT:   store i8*
+; CHECK-NOT:   store i32
+; CHECK-NOT:   br label
+; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 0, i8* bitcast (i8** @_ZTIi to i8*), i32* %i, i8* bitcast (i8* (i8*, i8*)* @_Z4testv.catch to i8*))
+; CHECK:   indirectbr i8* [[RECOVER]], [label %try.cont]
+
 lpad:                                             ; preds = %entry
   %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch i8* bitcast (i8** @_ZTIi to i8*)
@@ -51,11 +59,15 @@ lpad:                                             ; preds = %entry
   store i32 %tmp2, i32* %ehselector.slot
   br label %catch.dispatch
 
+; CHECK-NOT: catch-dispatch:
+
 catch.dispatch:                                   ; preds = %lpad
   %sel = load i32, i32* %ehselector.slot
   %tmp3 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) #3
   %matches = icmp eq i32 %sel, %tmp3
   br i1 %matches, label %catch, label %eh.resume
+
+; CHECK-NOT: catch:
 
 catch:                                            ; preds = %catch.dispatch
   %exn11 = load i8*, i8** %exn.slot
@@ -65,6 +77,8 @@ catch:                                            ; preds = %catch.dispatch
   call void @_Z10handle_inti(i32 %tmp7)
   br label %invoke.cont2
 
+; CHECK-NOT: invoke.cont2:
+
 invoke.cont2:                                     ; preds = %catch
   call void @llvm.eh.endcatch() #3
   br label %try.cont
@@ -72,20 +86,24 @@ invoke.cont2:                                     ; preds = %catch
 try.cont:                                         ; preds = %invoke.cont2, %invoke.cont
   ret void
 
+; CHECK-NOT: eh.resume:
+
 eh.resume:                                        ; preds = %catch.dispatch
   %exn3 = load i8*, i8** %exn.slot
   %sel4 = load i32, i32* %ehselector.slot
   %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn3, 0
   %lpad.val5 = insertvalue { i8*, i32 } %lpad.val, i32 %sel4, 1
   resume { i8*, i32 } %lpad.val5
+
+; CHECK: }
 }
 
 ; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %i.i81 = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
-; CHECK:   %i = bitcast i8* %i.i81 to i32*
-; CHECK:   %tmp7 = load i32, i32* %i, align 4
-; CHECK:   call void @_Z10handle_inti(i32 %tmp7)
+; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
+; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
+; CHECK:   [[TMP:\%.+]] = load i32, i32* [[I_PTR1]], align 4
+; CHECK:   call void @_Z10handle_inti(i32 [[TMP]])
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }
 

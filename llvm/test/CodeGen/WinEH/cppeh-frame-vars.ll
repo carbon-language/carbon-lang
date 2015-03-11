@@ -49,18 +49,16 @@ $"\01??_R0H@8" = comdat any
 ; The function entry should be rewritten like this.
 ; CHECK: define void @"\01?test@@YAXXZ"() #0 {
 ; CHECK: entry:
-; CHECK:   %NumExceptions = alloca i32, align 4
-; CHECK:   %ExceptionVal = alloca [10 x i32], align 16
-; CHECK:   %Data = alloca %struct.SomeData, align 4
-; CHECK:   %i = alloca i32, align 4
-; CHECK:   %exn.slot = alloca i8*
-; CHECK:   %ehselector.slot = alloca i32
-; CHECK:   %e = alloca i32, align 4
-; CHECK:   store i32 0, i32* %NumExceptions, align 4
-; CHECK:   %tmp = bitcast %struct.SomeData* %Data to i8*
-; CHECK:   call void @llvm.memset(i8* %tmp, i8 0, i64 8, i32 4, i1 false)
-; CHECK:   store i32 0, i32* %i, align 4
-; CHECK:   call void (...)* @llvm.frameescape(i32* %e, i32* %NumExceptions, [10 x i32]* %ExceptionVal, i32* %i, %struct.SomeData* %Data)
+; CHECK:   [[NUMEXCEPTIONS_PTR:\%.+]] = alloca i32, align 4
+; CHECK:   [[EXCEPTIONVAL_PTR:\%.+]] = alloca [10 x i32], align 16
+; CHECK:   [[DATA_PTR:\%.+]] = alloca %struct.SomeData, align 4
+; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
+; CHECK:   [[E_PTR:\%.+]] = alloca i32, align 4
+; CHECK:   store i32 0, i32* [[NUMEXCEPTIONS_PTR]], align 4
+; CHECK:   [[TMP:\%.+]] = bitcast %struct.SomeData* [[DATA_PTR]] to i8*
+; CHECK:   call void @llvm.memset(i8* [[TMP]], i8 0, i64 8, i32 4, i1 false)
+; CHECK:   store i32 0, i32* [[I_PTR]], align 4
+; CHECK:   call void (...)* @llvm.frameescape(i32* [[E_PTR]], i32* [[NUMEXCEPTIONS_PTR]], [10 x i32]* [[EXCEPTIONVAL_PTR]], i32* [[I_PTR]], %struct.SomeData* [[DATA_PTR]])
 ; CHECK:   br label %for.cond
 
 ; Function Attrs: uwtable
@@ -84,6 +82,10 @@ for.cond:                                         ; preds = %for.inc, %entry
   %cmp = icmp slt i32 %tmp1, 10
   br i1 %cmp, label %for.body, label %for.end
 
+; CHECK: for.body:
+; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+
 for.body:                                         ; preds = %for.cond
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont unwind label %lpad
@@ -96,6 +98,16 @@ invoke.cont:                                      ; preds = %for.body
   store i32 %add, i32* %a, align 4
   br label %try.cont
 
+; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %for.body
+; CHECK:   [[LPAD_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
+; CHECK-NOT:   extractvalue { i8*, i32 }
+; CHECK-NOT:   store i8*
+; CHECK-NOT:   store i32
+; CHECK-NOT:   br label
+; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32* %e, i8* bitcast (i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch" to i8*))
+; CHECK:   indirectbr i8* [[RECOVER]], [label %try.cont]
+
 lpad:                                             ; preds = %for.body
   %tmp4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
@@ -105,11 +117,15 @@ lpad:                                             ; preds = %for.body
   store i32 %tmp6, i32* %ehselector.slot
   br label %catch.dispatch
 
+; CHECK-NOT: catch.dispatch:
+
 catch.dispatch:                                   ; preds = %lpad
   %sel = load i32, i32* %ehselector.slot
   %tmp7 = call i32 @llvm.eh.typeid.for(i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)) #1
   %matches = icmp eq i32 %sel, %tmp7
   br i1 %matches, label %catch, label %eh.resume
+
+; CHECK-NOT: catch:
 
 catch:                                            ; preds = %catch.dispatch
   %exn = load i8*, i8** %exn.slot
@@ -128,6 +144,8 @@ catch:                                            ; preds = %catch.dispatch
   %cmp1 = icmp eq i32 %tmp14, %tmp15
   br i1 %cmp1, label %if.then, label %if.else
 
+; CHECK-NOT: if.then:
+
 if.then:                                          ; preds = %catch
   %tmp16 = load i32, i32* %e, align 4
   %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 1
@@ -136,6 +154,8 @@ if.then:                                          ; preds = %catch
   store i32 %add2, i32* %b, align 4
   br label %if.end
 
+; CHECK-NOT: if.else:
+
 if.else:                                          ; preds = %catch
   %tmp18 = load i32, i32* %e, align 4
   %a3 = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 0
@@ -143,6 +163,8 @@ if.else:                                          ; preds = %catch
   %add4 = add nsw i32 %tmp19, %tmp18
   store i32 %add4, i32* %a3, align 4
   br label %if.end
+
+; CHECK-NOT: if.end:
 
 if.end:                                           ; preds = %if.else, %if.then
   call void @llvm.eh.endcatch() #1
@@ -165,63 +187,63 @@ for.end:                                          ; preds = %for.cond
   call void @"\01?dump@@YAXPEAHHAEAUSomeData@@@Z"(i32* %arraydecay, i32 %tmp22, %struct.SomeData* dereferenceable(8) %Data)
   ret void
 
+; CHECK-NOT: eh.resume:
+
 eh.resume:                                        ; preds = %catch.dispatch
   %exn6 = load i8*, i8** %exn.slot
   %sel7 = load i32, i32* %ehselector.slot
   %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn6, 0
   %lpad.val8 = insertvalue { i8*, i32 } %lpad.val, i32 %sel7, 1
   resume { i8*, i32 } %lpad.val8
+
+; CHECK: }
 }
 
 ; The following catch handler should be outlined.
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %e.i81 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
-; CHECK:   %e = bitcast i8* %e.i81 to i32*
-; CHECK:   %NumExceptions.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
-; CHECK:   %NumExceptions = bitcast i8* %NumExceptions.i8 to i32*
-; CHECK:   %ExceptionVal.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
-; CHECK:   %ExceptionVal = bitcast i8* %ExceptionVal.i8 to [10 x i32]*
-; CHECK:   %i.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 3)
-; CHECK:   %i = bitcast i8* %i.i8 to i32*
-; CHECK:   %Data.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 4)
-; CHECK:   %Data = bitcast i8* %Data.i8 to %struct.SomeData*
-; CHECK:   %tmp11 = load i32, i32* %e, align 4
-; CHECK:   %tmp12 = load i32, i32* %NumExceptions, align 4
-; CHECK:   %idxprom = sext i32 %tmp12 to i64
-; CHECK:   %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i32 0, i64 %idxprom
-; CHECK:   store i32 %tmp11, i32* %arrayidx, align 4
-; CHECK:   %tmp13 = load i32, i32* %NumExceptions, align 4
-; CHECK:   %inc = add nsw i32 %tmp13, 1
-; CHECK:   store i32 %inc, i32* %NumExceptions, align 4
-; CHECK:   %tmp14 = load i32, i32* %e, align 4
-; CHECK:   %tmp15 = load i32, i32* %i, align 4
-; CHECK:   %cmp1 = icmp eq i32 %tmp14, %tmp15
-; CHECK:   br i1 %cmp1, label %if.then, label %if.else
+; CHECK:   [[RECOVER_E:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+; CHECK:   [[E_PTR1:\%.+]] = bitcast i8* [[RECOVER_E]] to i32*
+; CHECK:   [[RECOVER_NUMEXCEPTIONS:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   [[NUMEXCEPTIONS_PTR1:\%.+]] = bitcast i8* [[RECOVER_NUMEXCEPTIONS]] to i32*
+; CHECK:   [[RECOVER_EXCEPTIONVAL:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   [[EXCEPTIONVAL_PTR1:\%.+]] = bitcast i8* [[RECOVER_EXCEPTIONVAL]] to [10 x i32]*
+; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 3)
+; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
+; CHECK:   [[RECOVER_DATA:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 4)
+; CHECK:   [[DATA_PTR1:\%.+]] = bitcast i8* [[RECOVER_DATA]] to %struct.SomeData*
+; CHECK:   [[TMP:\%.+]] = load i32, i32* [[E_PTR1]], align 4
+; CHECK:   [[TMP1:\%.+]] = load i32, i32* [[NUMEXCEPTIONS_PTR]], align 4
+; CHECK:   [[IDXPROM:\%.+]] = sext i32 [[TMP1]] to i64
+; CHECK:   [[ARRAYIDX:\%.+]] = getelementptr inbounds [10 x i32], [10 x i32]* [[EXCEPTIONVAL_PTR1]], i32 0, i64 [[IDXPROM]]
+; CHECK:   store i32 [[TMP]], i32* [[ARRAYIDX]], align 4
+; CHECK:   [[TMP2:\%.+]] = load i32, i32* [[NUMEXCEPTIONS_PTR1]], align 4
+; CHECK:   [[INC:\%.+]] = add nsw i32 [[TMP2]], 1
+; CHECK:   store i32 [[INC]], i32* [[NUMEXCEPTIONS_PTR]], align 4
+; CHECK:   [[TMP3:\%.+]] = load i32, i32* [[E_PTR1]], align 4
+; CHECK:   [[TMP4:\%.+]] = load i32, i32* [[I_PTR1]], align 4
+; CHECK:   [[CMP:\%.+]] = icmp eq i32 [[TMP3]], [[TMP4]]
+; CHECK:   br i1 [[CMP]], label %if.then, label %if.else
 ;
 ; CHECK: if.then:                                          ; preds = %entry
-; CHECK:   %tmp16 = load i32, i32* %e, align 4
-; CHECK:   %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 1
-; CHECK:   %tmp17 = load i32, i32* %b, align 4
-; CHECK:   %add2 = add nsw i32 %tmp17, %tmp16
-; CHECK:   store i32 %add2, i32* %b, align 4
+; CHECK:   [[TMP5:\%.+]] = load i32, i32* [[E_PTR1]], align 4
+; CHECK:   [[B_PTR:\%.+]] = getelementptr inbounds %struct.SomeData, %struct.SomeData* [[DATA_PTR1]], i32 0, i32 1
+; CHECK:   [[TMP6:\%.+]] = load i32, i32* [[B_PTR]], align 4
+; CHECK:   %add2 = add nsw i32 [[TMP6]], [[TMP5]]
+; CHECK:   store i32 [[ADD:\%.+]], i32* [[B_PTR]], align 4
 ; CHECK:   br label %if.end
 ;
 ; CHECK: if.else:                                          ; preds = %entry
-; CHECK:   %tmp18 = load i32, i32* %e, align 4
-; CHECK:   %a3 = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 0
-; CHECK:   %tmp19 = load i32, i32* %a3, align 4
-; CHECK:   %add4 = add nsw i32 %tmp19, %tmp18
-; CHECK:   store i32 %add4, i32* %a3, align 4
+; CHECK:   [[TMP7:\%.+]] = load i32, i32* %e, align 4
+; CHECK:   [[A3:\%.+]] = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 0
+; CHECK:   [[TMP8:\%.+]] = load i32, i32* %a3, align 4
+; CHECK:   [[ADD1:\%.+]] = add nsw i32 [[TMP8]], [[TMP7]]
+; CHECK:   store i32 [[ADD1]], i32* [[A3]], align 4
 ; CHECK:   br label %if.end
 ;
 ; CHECK: if.end:                                           ; preds = %if.else, %if.then
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont)
 ; CHECK: }
-
-
-
-
 
 
 ; Function Attrs: nounwind
