@@ -251,12 +251,13 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   uint64_t RecoverableKinds = RecoverableByDefault;
   uint64_t DiagnosedUnrecoverableKinds = 0;
   for (const auto *Arg : Args) {
+    const char *DeprecatedReplacement = nullptr;
     if (Arg->getOption().matches(options::OPT_fsanitize_recover)) {
-      // FIXME: Add deprecation notice, and then remove this flag.
+      DeprecatedReplacement = "-fsanitize-recover=undefined,integer";
       RecoverableKinds |= expandGroups(LegacyFsanitizeRecoverMask);
       Arg->claim();
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_recover)) {
-      // FIXME: Add deprecation notice, and then remove this flag.
+      DeprecatedReplacement = "-fno-sanitize-recover=undefined,integer";
       RecoverableKinds &= ~expandGroups(LegacyFsanitizeRecoverMask);
       Arg->claim();
     } else if (Arg->getOption().matches(options::OPT_fsanitize_recover_EQ)) {
@@ -276,6 +277,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_recover_EQ)) {
       RecoverableKinds &= ~expandGroups(parseArgValues(D, Arg, true));
       Arg->claim();
+    }
+    if (DeprecatedReplacement) {
+      D.Diag(diag::warn_drv_deprecated_arg) << Arg->getAsString(Args)
+                                            << DeprecatedReplacement;
     }
   }
   RecoverableKinds &= Kinds;
