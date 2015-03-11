@@ -5371,6 +5371,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("if (int *a = (&b))");
   verifyIndependentOfContext("while (int *a = &b)");
   verifyIndependentOfContext("size = sizeof *a;");
+  verifyIndependentOfContext("if (a && (b = c))");
   verifyFormat("void f() {\n"
                "  for (const int &v : Values) {\n"
                "  }\n"

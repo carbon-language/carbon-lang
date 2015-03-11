@@ -767,6 +767,8 @@ private:
             if (!Previous)
               break;
           }
+          if (Previous->opensScope())
+            break;
           if (Previous->isOneOf(TT_BinaryOperator, TT_UnaryOperator) &&
               Previous->isOneOf(tok::star, tok::amp, tok::ampamp) &&
               Previous->Previous && Previous->Previous->isNot(tok::equal))
