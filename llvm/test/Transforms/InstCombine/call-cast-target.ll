@@ -72,3 +72,18 @@ entry:
   %call = tail call i32 bitcast (i32 (i32)* @fn4 to i32 (i32*)*)(i32* %a)
   ret i32 %call
 }
+
+declare i1 @fn5({ i32, i32 }* byval align 4 %r)
+
+define i1 @test5() {
+; CHECK-LABEL: @test5
+; CHECK:      %[[call:.*]] = call i1 bitcast (i1 ({ i32, i32 }*)* @fn5 to i1 (i32, i32)*)(i32 {{.*}}, i32 {{.*}})
+; CHECK-NEXT: ret i1 %[[call]]
+  %1 = alloca { i32, i32 }, align 4
+  %2 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %1, i32 0, i32 0
+  %3 = load i32, i32* %2, align 4
+  %4 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %1, i32 0, i32 1
+  %5 = load i32, i32* %4, align 4
+  %6 = call i1 bitcast (i1 ({ i32, i32 }*)* @fn5 to i1 (i32, i32)*)(i32 %3, i32 %5)
+  ret i1 %6
+}

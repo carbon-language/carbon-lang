@@ -1485,7 +1485,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   //
   // into:
   //  call void @takes_i32_inalloca(i32* null)
-  if (Callee->getAttributes().hasAttrSomewhere(Attribute::InAlloca))
+  //
+  //  Similarly, avoid folding away bitcasts of byval calls.
+  if (Callee->getAttributes().hasAttrSomewhere(Attribute::InAlloca) ||
+      Callee->getAttributes().hasAttrSomewhere(Attribute::ByVal))
     return false;
 
   CallSite::arg_iterator AI = CS.arg_begin();
