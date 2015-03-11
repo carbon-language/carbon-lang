@@ -14,7 +14,7 @@ ifndef LLD_LEVEL
 
 IS_TOP_LEVEL := 1
 LLD_LEVEL := .
-DIRS := include lib tools utils unittests
+DIRS := include lib tools unittests
 
 PARALLEL_DIRS :=
 

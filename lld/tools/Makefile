@@ -12,6 +12,6 @@ LEVEL := $(LLD_LEVEL)/../..
 
 include $(LLD_LEVEL)/../../Makefile.config
 
-DIRS := lld
+PARALLEL_DIRS := linker-script-test lld
 
 include $(LLD_LEVEL)/Makefile
