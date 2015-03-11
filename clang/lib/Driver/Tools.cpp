@@ -8065,8 +8065,8 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!llvm::sys::Process::GetEnv("LIB")) {
     // If the VC environment hasn't been configured (perhaps because the user
     // did not run vcvarsall), try to build a consistent link environment.  If
-    // the environment variable is set however, assume the user knows what he's
-    // doing.
+    // the environment variable is set however, assume the user knows what
+    // they're doing.
     std::string VisualStudioDir;
     const auto &MSVC = static_cast<const toolchains::MSVCToolChain &>(TC);
     if (MSVC.getVisualStudioInstallDir(VisualStudioDir)) {
