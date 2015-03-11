@@ -459,8 +459,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
                                           "section_abbrev");
   DwarfInfoSection =
       Ctx->getELFSection(".debug_info", ELF::SHT_PROGBITS, 0, "section_info");
-  DwarfLineSection =
-      Ctx->getELFSection(".debug_line", ELF::SHT_PROGBITS, 0, "section_line");
+  DwarfLineSection = Ctx->getELFSection(".debug_line", ELF::SHT_PROGBITS, 0);
   DwarfFrameSection = Ctx->getELFSection(".debug_frame", ELF::SHT_PROGBITS, 0);
   DwarfPubNamesSection =
       Ctx->getELFSection(".debug_pubnames", ELF::SHT_PROGBITS, 0);
@@ -470,11 +469,10 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       Ctx->getELFSection(".debug_gnu_pubnames", ELF::SHT_PROGBITS, 0);
   DwarfGnuPubTypesSection =
       Ctx->getELFSection(".debug_gnu_pubtypes", ELF::SHT_PROGBITS, 0);
-  DwarfStrSection = Ctx->getELFSection(".debug_str", ELF::SHT_PROGBITS,
-                                       ELF::SHF_MERGE | ELF::SHF_STRINGS, 1, "",
-                                       "info_string");
-  DwarfLocSection = Ctx->getELFSection(".debug_loc", ELF::SHT_PROGBITS, 0,
-                                       "section_debug_loc");
+  DwarfStrSection =
+      Ctx->getELFSection(".debug_str", ELF::SHT_PROGBITS,
+                         ELF::SHF_MERGE | ELF::SHF_STRINGS, 1, "");
+  DwarfLocSection = Ctx->getELFSection(".debug_loc", ELF::SHT_PROGBITS, 0);
   DwarfARangesSection =
       Ctx->getELFSection(".debug_aranges", ELF::SHT_PROGBITS, 0);
   DwarfRangesSection =
@@ -493,15 +491,15 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       Ctx->getELFSection(".apple_types", ELF::SHT_PROGBITS, 0, "types_begin");
 
   // Fission Sections
-  DwarfInfoDWOSection = Ctx->getELFSection(".debug_info.dwo", ELF::SHT_PROGBITS,
-                                           0, "section_info_dwo");
-  DwarfTypesDWOSection = Ctx->getELFSection(
-      ".debug_types.dwo", ELF::SHT_PROGBITS, 0, "section_types_dwo");
-  DwarfAbbrevDWOSection = Ctx->getELFSection(
-      ".debug_abbrev.dwo", ELF::SHT_PROGBITS, 0, "section_abbrev_dwo");
-  DwarfStrDWOSection = Ctx->getELFSection(".debug_str.dwo", ELF::SHT_PROGBITS,
-                                          ELF::SHF_MERGE | ELF::SHF_STRINGS, 1,
-                                          "", "skel_string");
+  DwarfInfoDWOSection =
+      Ctx->getELFSection(".debug_info.dwo", ELF::SHT_PROGBITS, 0);
+  DwarfTypesDWOSection =
+      Ctx->getELFSection(".debug_types.dwo", ELF::SHT_PROGBITS, 0);
+  DwarfAbbrevDWOSection =
+      Ctx->getELFSection(".debug_abbrev.dwo", ELF::SHT_PROGBITS, 0);
+  DwarfStrDWOSection =
+      Ctx->getELFSection(".debug_str.dwo", ELF::SHT_PROGBITS,
+                         ELF::SHF_MERGE | ELF::SHF_STRINGS, 1, "");
   DwarfLineDWOSection =
       Ctx->getELFSection(".debug_line.dwo", ELF::SHT_PROGBITS, 0);
   DwarfLocDWOSection =

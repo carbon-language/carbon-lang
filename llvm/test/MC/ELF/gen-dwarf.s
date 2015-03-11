@@ -49,7 +49,6 @@ foo:
 // ASM-NEXT: .long [[LINE_LABEL:.L[a-z0-9]+]]
 
 // ASM: .section .debug_line
-// ASM-NEXT:.Lsection_line:
 // ASM-NEXT: [[LINE_LABEL]]
 
 // DWARF1: Dwarf version 1 is not supported.
