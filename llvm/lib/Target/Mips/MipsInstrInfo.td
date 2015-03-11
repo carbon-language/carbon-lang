@@ -1763,9 +1763,11 @@ def : WrapperPat<tblockaddress, ADDiu, GPR32>;
 def : WrapperPat<tjumptable, ADDiu, GPR32>;
 def : WrapperPat<tglobaltlsaddr, ADDiu, GPR32>;
 
+let AdditionalPredicates = [NotInMicroMips] in {
 // Mips does not have "not", so we expand our way
 def : MipsPat<(not GPR32:$in),
               (NOR GPR32Opnd:$in, ZERO)>;
+}
 
 // extended loads
 def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;

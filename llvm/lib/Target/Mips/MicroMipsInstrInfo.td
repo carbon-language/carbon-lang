@@ -885,6 +885,8 @@ def : MipsPat<(i32 immSExt16:$imm),
               (ADDiu_MM ZERO, immSExt16:$imm)>;
 def : MipsPat<(i32 immZExt16:$imm),
               (ORi_MM ZERO, immZExt16:$imm)>;
+def : MipsPat<(not GPR32:$in),
+              (NOR_MM GPR32Opnd:$in, ZERO)>;
 
 def : MipsPat<(add GPRMM16:$src, immSExtAddiur2:$imm),
               (ADDIUR2_MM GPRMM16:$src, immSExtAddiur2:$imm)>;
