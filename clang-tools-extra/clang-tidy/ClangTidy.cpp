@@ -204,6 +204,17 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
   }
 }
 
+static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
+                                         AnalyzerOptionsRef AnalyzerOptions) {
+  StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
+  for (const auto &Opt : Opts.CheckOptions) {
+    StringRef OptName(Opt.first);
+    if (!OptName.startswith(AnalyzerPrefix))
+      continue;
+    AnalyzerOptions->Config[OptName.substr(AnalyzerPrefix.size())] = Opt.second;
+  }
+}
+
 std::unique_ptr<clang::ASTConsumer>
 ClangTidyASTConsumerFactory::CreateASTConsumer(
     clang::CompilerInstance &Compiler, StringRef File) {
@@ -241,6 +252,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   GlobList &Filter = Context.getChecksFilter();
   AnalyzerOptions->CheckersControlList = getCheckersControlList(Filter);
   if (!AnalyzerOptions->CheckersControlList.empty()) {
+    setStaticAnalyzerCheckerOpts(Context.getOptions(), AnalyzerOptions);
     AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
     AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
     AnalyzerOptions->AnalyzeNestedBlocks = true;
