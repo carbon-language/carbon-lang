@@ -1159,6 +1159,12 @@ private:
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(serialization::DeclID ID);
   void markIncompleteDeclChain(Decl *Canon);
+
+  /// \brief Returns the most recent declaration of a declaration (which must be
+  /// of a redeclarable kind) that is either local or has already been loaded
+  /// merged into its redecl chain.
+  Decl *getMostRecentExistingDecl(Decl *D);
+
   RecordLocation DeclCursorForID(serialization::DeclID ID,
                                  unsigned &RawLocation);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);

@@ -2799,6 +2799,10 @@ Decl *ASTDeclReader::getMostRecentDecl(Decl *D) {
   llvm_unreachable("unknown decl kind");
 }
 
+Decl *ASTReader::getMostRecentExistingDecl(Decl *D) {
+  return ASTDeclReader::getMostRecentDecl(D->getCanonicalDecl());
+}
+
 template<typename DeclT>
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
                                            Redeclarable<DeclT> *D,
