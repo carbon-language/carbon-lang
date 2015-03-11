@@ -948,6 +948,31 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   return DataSection;
 }
 
+const MCSection *TargetLoweringObjectFileCOFF::getSectionForJumpTable(
+    const Function &F, Mangler &Mang, const TargetMachine &TM) const {
+  // If the function can be removed, produce a unique section so that
+  // the table doesn't prevent the removal.
+  const Comdat *C = F.getComdat();
+  bool EmitUniqueSection = TM.getFunctionSections() || C;
+  if (!EmitUniqueSection)
+    return ReadOnlySection;
+
+  // FIXME: we should produce a symbol for F instead.
+  if (F.hasPrivateLinkage())
+    return ReadOnlySection;
+
+  MCSymbol *Sym = TM.getSymbol(&F, Mang);
+  StringRef COMDATSymName = Sym->getName();
+
+  SectionKind Kind = SectionKind::getReadOnly();
+  const char *Name = getCOFFSectionNameForUniqueGlobal(Kind);
+  unsigned Characteristics = getCOFFSectionFlags(Kind);
+  Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
+
+  return getContext().getCOFFSection(Name, Characteristics, Kind, COMDATSymName,
+                                     COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE);
+}
+
 StringRef TargetLoweringObjectFileCOFF::
 getDepLibFromLinkerOpt(StringRef LinkerOption) const {
   const char *LibCmd = "/DEFAULTLIB:";
