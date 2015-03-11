@@ -198,7 +198,8 @@ template <class charT> class messages_byname;
 // include of <sys/cdefs.h> once https://sourceware.org/ml/newlib-cvs/2014-q3/msg00038.html
 // has had a chance to bake for a bit
 #include <support/newlib/xlocale.h>
-#elif !defined(__ANDROID__)
+#endif
+#ifdef _LIBCPP_HAS_CATOPEN
 #include <nl_types.h>
 #endif
 
@@ -3681,14 +3682,14 @@ template <class _CharT>
 typename messages<_CharT>::catalog
 messages<_CharT>::do_open(const basic_string<char>& __nm, const locale&) const
 {
-#if defined(_WIN32) || defined(__ANDROID__) || defined(_NEWLIB_VERSION)
-    return -1;
-#else // _WIN32 || __ANDROID__
+#ifdef _LIBCPP_HAS_CATOPEN
     catalog __cat = (catalog)catopen(__nm.c_str(), NL_CAT_LOCALE);
     if (__cat != -1)
         __cat = static_cast<catalog>((static_cast<size_t>(__cat) >> 1));
     return __cat;
-#endif // _WIN32 || __ANDROID__
+#else // !_LIBCPP_HAS_CATOPEN
+    return -1;
+#endif // _LIBCPP_HAS_CATOPEN
 }
 
 template <class _CharT>
@@ -3696,9 +3697,7 @@ typename messages<_CharT>::string_type
 messages<_CharT>::do_get(catalog __c, int __set, int __msgid,
                          const string_type& __dflt) const
 {
-#if defined(_WIN32) || defined(__ANDROID__) || defined(_NEWLIB_VERSION)
-    return __dflt;
-#else // _WIN32
+#ifdef _LIBCPP_HAS_CATOPEN
     string __ndflt;
     __narrow_to_utf8<sizeof(char_type)*__CHAR_BIT__>()(back_inserter(__ndflt),
                                                        __dflt.c_str(),
@@ -3711,19 +3710,21 @@ messages<_CharT>::do_get(catalog __c, int __set, int __msgid,
     __widen_from_utf8<sizeof(char_type)*__CHAR_BIT__>()(back_inserter(__w),
                                                         __n, __n + strlen(__n));
     return __w;
-#endif // _WIN32
+#else // !_LIBCPP_HAS_CATOPEN
+    return __dflt;
+#endif // _LIBCPP_HAS_CATOPEN
 }
 
 template <class _CharT>
 void
 messages<_CharT>::do_close(catalog __c) const
 {
-#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(_NEWLIB_VERSION)
+#ifdef _LIBCPP_HAS_CATOPEN
     if (__c != -1)
         __c <<= 1;
     nl_catd __cat = (nl_catd)__c;
     catclose(__cat);
-#endif // !_WIN32
+#endif // _LIBCPP_HAS_CATOPEN
 }
 
 _LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS messages<char>)

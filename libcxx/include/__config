@@ -647,6 +647,11 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
 
+#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(_NEWLIB_VERSION) && \
+    !defined(__CloudABI__)
+#define _LIBCPP_HAS_CATOPEN 1
+#endif
+
 #ifdef __FreeBSD__
 #define _DECLARE_C99_LDBL_MATH 1
 #endif
