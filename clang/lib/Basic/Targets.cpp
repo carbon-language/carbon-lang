@@ -183,6 +183,28 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   PlatformMinVersion = VersionTuple(Maj, Min, Rev);
 }
 
+// CloudABI Target
+template <typename Target>
+class CloudABITargetInfo : public OSTargetInfo<Target> {
+protected:
+  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                    MacroBuilder &Builder) const override {
+    Builder.defineMacro("__CloudABI__");
+    Builder.defineMacro("__ELF__");
+
+    // CloudABI uses ISO/IEC 10646:2012 for wchar_t, char16_t and char32_t.
+    Builder.defineMacro("__STDC_ISO_10646__", "201206L");
+    Builder.defineMacro("__STDC_UTF_16__");
+    Builder.defineMacro("__STDC_UTF_32__");
+  }
+
+public:
+  CloudABITargetInfo(const llvm::Triple &Triple)
+      : OSTargetInfo<Target>(Triple) {
+    this->UserLabelPrefix = "";
+  }
+};
+
 namespace {
 template<typename Target>
 class DarwinTargetInfo : public OSTargetInfo<Target> {
@@ -6871,6 +6893,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new DarwinX86_64TargetInfo(Triple);
 
     switch (os) {
+    case llvm::Triple::CloudABI:
+      return new CloudABITargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::DragonFly:
