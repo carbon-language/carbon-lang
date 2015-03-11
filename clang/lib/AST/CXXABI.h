@@ -21,6 +21,7 @@ namespace clang {
 
 class ASTContext;
 class CXXConstructorDecl;
+class Expr;
 class MemberPointerType;
 class MangleNumberingContext;
 
@@ -50,6 +51,12 @@ public:
   /// Retrieves the mapping from class to copy constructor for this C++ ABI.
   virtual const CXXConstructorDecl *
   getCopyConstructorForExceptionObject(CXXRecordDecl *) = 0;
+
+  virtual void addDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
+                                               unsigned ParmIdx, Expr *DAE) = 0;
+
+  virtual Expr *getDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
+                                                unsigned ParmIdx) = 0;
 };
 
 /// Creates an instance of a C++ ABI class.

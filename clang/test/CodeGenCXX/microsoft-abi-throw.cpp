@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - -triple=i386-pc-win32 %s -fcxx-exceptions | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -triple=i386-pc-win32 -std=c++11 %s -fcxx-exceptions | FileCheck %s
 
 // CHECK-DAG: @"\01??_R0?AUY@@@8" = linkonce_odr global %rtti.TypeDescriptor7 { i8** @"\01??_7type_info@@6B@", i8* null, [8 x i8] c".?AUY@@\00" }, comdat
 // CHECK-DAG: @"_CT??_R0?AUY@@@8??0Y@@QAE@ABU0@@Z8" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 4, i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUY@@@8" to i8*), i32 0, i32 -1, i32 0, i32 8, i8* bitcast (%struct.Y* (%struct.Y*, %struct.Y*, i32)* @"\01??0Y@@QAE@ABU0@@Z" to i8*) }, section ".xdata", comdat
@@ -12,6 +12,9 @@
 // CHECK-DAG: @"_CT??_R0?AUV@@@81044" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUV@@@8" to i8*), i32 0, i32 4, i32 4, i32 1, i8* null }, section ".xdata", comdat
 // CHECK-DAG: @"_CTA5?AUY@@" = linkonce_odr unnamed_addr constant %eh.CatchableTypeArray.5 { i32 5, [5 x %eh.CatchableType*] [%eh.CatchableType* @"_CT??_R0?AUY@@@8??0Y@@QAE@ABU0@@Z8", %eh.CatchableType* @"_CT??_R0?AUZ@@@81", %eh.CatchableType* @"_CT??_R0?AUW@@@8??0W@@QAE@ABU0@@Z44", %eh.CatchableType* @"_CT??_R0?AUM@@@818", %eh.CatchableType* @"_CT??_R0?AUV@@@81044"] }, section ".xdata", comdat
 // CHECK-DAG: @"_TI5?AUY@@" = linkonce_odr unnamed_addr constant %eh.ThrowInfo { i32 0, i8* bitcast (void (%struct.Y*)* @"\01??_DY@@QAE@XZ" to i8*), i8* null, i8* bitcast (%eh.CatchableTypeArray.5* @"_CTA5?AUY@@" to i8*) }, section ".xdata", comdat
+// CHECK-DAG: @"_CT??_R0?AUDefault@@@8??_ODefault@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor13* @"\01??_R0?AUDefault@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.Default*, %struct.Default*)* @"\01??_ODefault@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
+// CHECK-DAG: @"_CT??_R0?AUVariadic@@@8??_OVariadic@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor14* @"\01??_R0?AUVariadic@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.Variadic*, %struct.Variadic*)* @"\01??_OVariadic@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
+// CHECK-DAG: @"_CT??_R0?AUTemplateWithDefault@@@8??$?_OH@TemplateWithDefault@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor25* @"\01??_R0?AUTemplateWithDefault@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.TemplateWithDefault*, %struct.TemplateWithDefault*)* @"\01??$?_OH@TemplateWithDefault@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
 
 
 struct N { ~N(); };
@@ -34,4 +37,53 @@ void g(const int *const *y) {
   // CHECK-LABEL: @"\01?g@@YAXPBQBH@Z"
   // CHECK: call void @_CxxThrowException(i8* %{{.*}}, %eh.ThrowInfo* @_TIC2PAPBH)
   throw y;
+}
+
+struct Default {
+  Default(Default &, int = 42);
+};
+
+// CHECK-LABEL: @"\01??_ODefault@@QAEXAAU0@@Z"
+// CHECK: %[[src_addr:.*]] = alloca
+// CHECK: %[[this_addr:.*]] = alloca
+// CHECK: store {{.*}} %src, {{.*}} %[[src_addr]], align 4
+// CHECK: store {{.*}} %this, {{.*}} %[[this_addr]], align 4
+// CHECK: %[[this:.*]] = load {{.*}} %[[this_addr]]
+// CHECK: %[[src:.*]] = load {{.*}} %[[src_addr]]
+// CHECK: call x86_thiscallcc {{.*}} @"\01??0Default@@QAE@AAU0@H@Z"({{.*}} %[[this]], {{.*}} %[[src]], i32 42)
+// CHECK: ret void
+
+void h(Default &d) {
+  throw d;
+}
+
+struct Variadic {
+  Variadic(Variadic &, ...);
+};
+
+void i(Variadic &v) {
+  throw v;
+}
+
+// CHECK-LABEL: @"\01??_OVariadic@@QAEXAAU0@@Z"
+// CHECK:  %[[src_addr:.*]] = alloca
+// CHECK:  %[[this_addr:.*]] = alloca
+// CHECK:  store {{.*}} %src, {{.*}} %[[src_addr:.*]], align
+// CHECK:  store {{.*}} %this, {{.*}} %[[this_addr:.*]], align
+// CHECK:  %[[this:.*]] = load {{.*}} %[[this_addr]]
+// CHECK:  %[[src:.*]] = load {{.*}} %[[src_addr]]
+// CHECK:  %call = call {{.*}} @"\01??0Variadic@@QAA@AAU0@ZZ"({{.*}} %[[this]], {{.*}} %[[src]])
+// CHECK:  ret void
+
+struct TemplateWithDefault {
+  template <typename T>
+  static int f() {
+    return 0;
+  }
+  template <typename T = int>
+  TemplateWithDefault(TemplateWithDefault &, T = f<T>());
+};
+
+void j(TemplateWithDefault &twd) {
+  throw twd;
 }

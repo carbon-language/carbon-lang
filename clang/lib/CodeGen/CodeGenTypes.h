@@ -82,6 +82,9 @@ inline StructorType getFromCtorType(CXXCtorType T) {
     return StructorType::Base;
   case Ctor_Comdat:
     llvm_unreachable("not expecting a COMDAT");
+  case Ctor_CopyingClosure:
+  case Ctor_DefaultClosure:
+    llvm_unreachable("not expecting a closure");
   }
   llvm_unreachable("not a CXXCtorType");
 }
@@ -261,6 +264,7 @@ public:
                                              const FunctionProtoType *type,
                                              RequiredArgs required);
   const CGFunctionInfo &arrangeMSMemberPointerThunk(const CXXMethodDecl *MD);
+  const CGFunctionInfo &arrangeMSCopyCtorClosure(const CXXConstructorDecl *CD);
 
   const CGFunctionInfo &arrangeFreeFunctionType(CanQual<FunctionProtoType> Ty);
   const CGFunctionInfo &arrangeFreeFunctionType(CanQual<FunctionNoProtoType> Ty);

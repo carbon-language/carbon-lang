@@ -67,11 +67,15 @@ static const DeclContext *getEffectiveParentContext(const DeclContext *DC) {
   return getEffectiveDeclContext(cast<Decl>(DC));
 }
 
-static const FunctionDecl *getStructor(const FunctionDecl *fn) {
-  if (const FunctionTemplateDecl *ftd = fn->getPrimaryTemplate())
-    return ftd->getTemplatedDecl();
+static const FunctionDecl *getStructor(const NamedDecl *ND) {
+  if (const auto *FTD = dyn_cast<FunctionTemplateDecl>(ND))
+    return FTD->getTemplatedDecl();
 
-  return fn;
+  const auto *FD = cast<FunctionDecl>(ND);
+  if (const auto *FTD = FD->getPrimaryTemplate())
+    return FTD->getTemplatedDecl();
+
+  return FD;
 }
 
 static bool isLambda(const NamedDecl *ND) {
@@ -115,7 +119,7 @@ public:
   void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
                                    raw_ostream &Out) override;
   void mangleCXXCatchableType(QualType T, const CXXConstructorDecl *CD,
-                              uint32_t Size, uint32_t NVOffset,
+                              CXXCtorType CT, uint32_t Size, uint32_t NVOffset,
                               int32_t VBPtrOffset, uint32_t VBIndex,
                               raw_ostream &Out) override;
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
@@ -224,6 +228,12 @@ public:
                          64) {}
 
   MicrosoftCXXNameMangler(MicrosoftMangleContextImpl &C, raw_ostream &Out_,
+                          const CXXConstructorDecl *D, CXXCtorType Type)
+      : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
+        PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
+                         64) {}
+
+  MicrosoftCXXNameMangler(MicrosoftMangleContextImpl &C, raw_ostream &Out_,
                           const CXXDestructorDecl *D, CXXDtorType Type)
       : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
         PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
@@ -284,6 +294,7 @@ private:
   void mangleDecayedArrayType(const ArrayType *T);
   void mangleArrayType(const ArrayType *T);
   void mangleFunctionClass(const FunctionDecl *FD);
+  void mangleCallingConvention(CallingConv CC);
   void mangleCallingConvention(const FunctionType *T);
   void mangleIntegerLiteral(const llvm::APSInt &Number, bool IsBoolean);
   void mangleExpression(const Expr *E);
@@ -770,12 +781,18 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       llvm_unreachable("Can't mangle Objective-C selector names here!");
 
     case DeclarationName::CXXConstructorName:
-      if (ND == Structor) {
-        assert(StructorType == Ctor_Complete &&
-               "Should never be asked to mangle a ctor other than complete");
+      if (Structor == getStructor(ND)) {
+        if (StructorType == Ctor_CopyingClosure) {
+          Out << "?_O";
+          return;
+        }
+        if (StructorType == Ctor_DefaultClosure) {
+          Out << "?_F";
+          return;
+        }
       }
       Out << "?0";
-      break;
+      return;
 
     case DeclarationName::CXXDestructorName:
       if (ND == Structor)
@@ -1566,12 +1583,22 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
   SourceRange Range;
   if (D) Range = D->getSourceRange();
 
-  bool IsStructor = false, HasThisQuals = ForceThisQuals;
+  bool IsStructor = false, HasThisQuals = ForceThisQuals, IsCtorClosure = false;
+  CallingConv CC = T->getCallConv();
   if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(D)) {
     if (MD->isInstance())
       HasThisQuals = true;
-    if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
+    if (isa<CXXDestructorDecl>(MD)) {
       IsStructor = true;
+    } else if (isa<CXXConstructorDecl>(MD)) {
+      IsStructor = true;
+      IsCtorClosure = (StructorType == Ctor_CopyingClosure ||
+                       StructorType == Ctor_DefaultClosure) &&
+                      getStructor(MD) == Structor;
+      if (IsCtorClosure)
+        CC = getASTContext().getDefaultCallingConvention(
+            /*IsVariadic=*/false, /*IsCXXMethod=*/true);
+    }
   }
 
   // If this is a C++ instance method, mangle the CVR qualifiers for the
@@ -1583,7 +1610,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     mangleQualifiers(Quals, /*IsMember=*/false);
   }
 
-  mangleCallingConvention(T);
+  mangleCallingConvention(CC);
 
   // <return-type> ::= <type>
   //               ::= @ # structors (they have no declared return type)
@@ -1595,6 +1622,28 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
       // FIXME: This is a temporary hack.
       // Maybe should fix the FunctionType creation instead?
       Out << (PointersAre64Bit ? "PEAXI@Z" : "PAXI@Z");
+      return;
+    }
+    if (IsCtorClosure) {
+      // Default constructor closure and copy constructor closure both return
+      // void.
+      Out << 'X';
+
+      if (StructorType == Ctor_DefaultClosure) {
+        // Default constructor closure always has no arguments.
+        Out << 'X';
+      } else if (StructorType == Ctor_CopyingClosure) {
+        // Copy constructor closure always takes an unqualified reference.
+        mangleArgumentType(getASTContext().getLValueReferenceType(
+                               Proto->getParamType(0)
+                                   ->getAs<LValueReferenceType>()
+                                   ->getPointeeType(),
+                               /*SpelledAsLValue=*/true),
+                           Range);
+      } else {
+        llvm_unreachable("unexpected constructor closure!");
+      }
+      Out << "@Z";
       return;
     }
     Out << '@';
@@ -1689,7 +1738,7 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
   } else
     Out << 'Y';
 }
-void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
+void MicrosoftCXXNameMangler::mangleCallingConvention(CallingConv CC) {
   // <calling-convention> ::= A # __cdecl
   //                      ::= B # __export __cdecl
   //                      ::= C # __pascal
@@ -1706,7 +1755,7 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
   // that keyword. (It didn't actually export them, it just made them so
   // that they could be in a DLL and somebody from another module could call
   // them.)
-  CallingConv CC = T->getCallConv();
+
   switch (CC) {
     default:
       llvm_unreachable("Unsupported CC for mangling");
@@ -1719,6 +1768,9 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
     case CC_X86FastCall: Out << 'I'; break;
     case CC_X86VectorCall: Out << 'Q'; break;
   }
+}
+void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T) {
+  mangleCallingConvention(T->getCallConv());
 }
 void MicrosoftCXXNameMangler::mangleThrowSpecification(
                                                 const FunctionProtoType *FT) {
@@ -2310,8 +2362,9 @@ void MicrosoftMangleContextImpl::mangleCXXCatchableTypeArray(
 }
 
 void MicrosoftMangleContextImpl::mangleCXXCatchableType(
-    QualType T, const CXXConstructorDecl *CD, uint32_t Size, uint32_t NVOffset,
-    int32_t VBPtrOffset, uint32_t VBIndex, raw_ostream &Out) {
+    QualType T, const CXXConstructorDecl *CD, CXXCtorType CT, uint32_t Size,
+    uint32_t NVOffset, int32_t VBPtrOffset, uint32_t VBIndex,
+    raw_ostream &Out) {
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_CT";
 
@@ -2328,7 +2381,7 @@ void MicrosoftMangleContextImpl::mangleCXXCatchableType(
   llvm::SmallString<64> CopyCtorMangling;
   if (CD) {
     llvm::raw_svector_ostream Stream(CopyCtorMangling);
-    mangleCXXCtor(CD, Ctor_Complete, Stream);
+    mangleCXXCtor(CD, CT, Stream);
   }
   Mangler.getStream() << CopyCtorMangling.substr(1);
 
@@ -2411,7 +2464,7 @@ void MicrosoftMangleContextImpl::mangleTypeName(QualType T, raw_ostream &Out) {
 void MicrosoftMangleContextImpl::mangleCXXCtor(const CXXConstructorDecl *D,
                                                CXXCtorType Type,
                                                raw_ostream &Out) {
-  MicrosoftCXXNameMangler mangler(*this, Out);
+  MicrosoftCXXNameMangler mangler(*this, Out, D, Type);
   mangler.mangle(D);
 }
 

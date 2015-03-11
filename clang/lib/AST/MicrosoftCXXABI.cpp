@@ -64,6 +64,8 @@ public:
 class MicrosoftCXXABI : public CXXABI {
   ASTContext &Context;
   llvm::SmallDenseMap<CXXRecordDecl *, CXXConstructorDecl *> RecordToCopyCtor;
+  llvm::SmallDenseMap<std::pair<const CXXConstructorDecl *, unsigned>, Expr *>
+      CtorToDefaultArgExpr;
 
 public:
   MicrosoftCXXABI(ASTContext &Ctx) : Context(Ctx) { }
@@ -90,6 +92,16 @@ public:
         Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
     return Layout.getNonVirtualSize() == PointerSize ||
       Layout.getNonVirtualSize() == PointerSize * 2;
+  }
+
+  void addDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
+                                       unsigned ParmIdx, Expr *DAE) override {
+    CtorToDefaultArgExpr[std::make_pair(CD, ParmIdx)] = DAE;
+  }
+
+  Expr *getDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
+                                        unsigned ParmIdx) override {
+    return CtorToDefaultArgExpr[std::make_pair(CD, ParmIdx)];
   }
 
   const CXXConstructorDecl *

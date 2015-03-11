@@ -8210,6 +8210,18 @@ void ASTContext::addCopyConstructorForExceptionObject(CXXRecordDecl *RD,
       cast<CXXConstructorDecl>(CD->getFirstDecl()));
 }
 
+void ASTContext::addDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
+                                                 unsigned ParmIdx, Expr *DAE) {
+  ABI->addDefaultArgExprForConstructor(
+      cast<CXXConstructorDecl>(CD->getFirstDecl()), ParmIdx, DAE);
+}
+
+Expr *ASTContext::getDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
+                                                  unsigned ParmIdx) {
+  return ABI->getDefaultArgExprForConstructor(
+      cast<CXXConstructorDecl>(CD->getFirstDecl()), ParmIdx);
+}
+
 void ASTContext::setParameterIndex(const ParmVarDecl *D, unsigned int index) {
   ParamIndices[D] = index;
 }

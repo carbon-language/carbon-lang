@@ -782,14 +782,51 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
     }
   }
 
+  // The MSVC ABI creates a list of all types which can catch the exception
+  // object.  This list also references the appropriate copy constructor to call
+  // if the object is caught by value and has a non-trivial copy constructor.
   if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+    // We are only interested in the public, unambiguous bases contained within
+    // the exception object.  Bases which are ambiguous or otherwise
+    // inaccessible are not catchable types.
     llvm::SmallVector<CXXRecordDecl *, 2> UnambiguousPublicSubobjects;
     getUnambiguousPublicSubobjects(RD, UnambiguousPublicSubobjects);
+
     for (CXXRecordDecl *Subobject : UnambiguousPublicSubobjects) {
-      if (CXXConstructorDecl *CD = LookupCopyingConstructor(Subobject, 0)) {
-        MarkFunctionReferenced(E->getExprLoc(), CD);
-        if (!CD->isTrivial())
-          Context.addCopyConstructorForExceptionObject(Subobject, CD);
+      // Attempt to lookup the copy constructor.  Various pieces of machinery
+      // will spring into action, like template instantiation, which means this
+      // cannot be a simple walk of the class's decls.  Instead, we must perform
+      // lookup and overload resolution.
+      CXXConstructorDecl *CD = LookupCopyingConstructor(Subobject, 0);
+      if (!CD)
+        continue;
+
+      // Mark the constructor referenced as it is used by this throw expression.
+      MarkFunctionReferenced(E->getExprLoc(), CD);
+
+      // Skip this copy constructor if it is trivial, we don't need to record it
+      // in the catchable type data.
+      if (CD->isTrivial())
+        continue;
+
+      // The copy constructor is non-trivial, create a mapping from this class
+      // type to this constructor.
+      // N.B.  The selection of copy constructor is not sensitive to this
+      // particular throw-site.  Lookup will be performed at the catch-site to
+      // ensure that the copy constructor is, in fact, accessible (via
+      // friendship or any other means).
+      Context.addCopyConstructorForExceptionObject(Subobject, CD);
+
+      // We don't keep the instantiated default argument expressions around so
+      // we must rebuild them here.
+      for (unsigned I = 1, E = CD->getNumParams(); I != E; ++I) {
+        // Skip any default arguments that we've already instantiated.
+        if (Context.getDefaultArgExprForConstructor(CD, I))
+          continue;
+
+        Expr *DefaultArg =
+            BuildCXXDefaultArgExpr(ThrowLoc, CD, CD->getParamDecl(I)).get();
+        Context.addDefaultArgExprForConstructor(CD, I, DefaultArg);
       }
     }
   }

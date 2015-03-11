@@ -3442,6 +3442,9 @@ void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
   case Ctor_Comdat:
     Out << "C5";
     break;
+  case Ctor_DefaultClosure:
+  case Ctor_CopyingClosure:
+    llvm_unreachable("closure constructors don't exist for the Itanium ABI!");
   }
 }
 

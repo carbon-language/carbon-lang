@@ -346,6 +346,22 @@ CodeGenTypes::arrangeMSMemberPointerThunk(const CXXMethodDecl *MD) {
                                  FTP->getExtInfo(), RequiredArgs(1));
 }
 
+const CGFunctionInfo &
+CodeGenTypes::arrangeMSCopyCtorClosure(const CXXConstructorDecl *CD) {
+  CanQual<FunctionProtoType> FTP = GetFormalType(CD);
+  SmallVector<CanQualType, 2> ArgTys;
+  const CXXRecordDecl *RD = CD->getParent();
+  ArgTys.push_back(GetThisType(Context, RD));
+  ArgTys.push_back(*FTP->param_type_begin());
+  if (RD->getNumVBases() > 0)
+    ArgTys.push_back(Context.IntTy);
+  CallingConv CC = Context.getDefaultCallingConvention(
+      /*IsVariadic=*/false, /*IsCXXMethod=*/true);
+  return arrangeLLVMFunctionInfo(Context.VoidTy, /*instanceMethod=*/true,
+                                 /*chainCall=*/false, ArgTys,
+                                 FunctionType::ExtInfo(CC), RequiredArgs::All);
+}
+
 /// Arrange a call as unto a free function, except possibly with an
 /// additional number of formal parameters considered required.
 static const CGFunctionInfo &
