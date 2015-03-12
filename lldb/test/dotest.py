@@ -932,14 +932,20 @@ def setupSysPath():
 
     pluginPath = os.path.join(scriptPath, 'plugins')
     pexpectPath = os.path.join(scriptPath, 'pexpect-2.4')
+    toolsLLDBMIPath = os.path.join(scriptPath, 'tools', 'lldb-mi')
+    toolsLLDBServerPath = os.path.join(scriptPath, 'tools', 'lldb-server')
 
     # Put embedded pexpect at front of the load path so we ensure we
     # use that version.
     sys.path.insert(0, pexpectPath)
 
-    # Append script dir and plugin dir to the sys.path.
+    # Append script dir, plugin dir, lldb-mi dir and lldb-server dir to the sys.path.
     sys.path.append(scriptPath)
     sys.path.append(pluginPath)
+    sys.path.append(toolsLLDBMIPath)     # Adding test/tools/lldb-mi to the path makes it easy
+                                         # to "import lldbmi_testcase" from the MI tests
+    sys.path.append(toolsLLDBServerPath) # Adding test/tools/lldb-server to the path makes it easy
+                                         # to "import lldbgdbserverutils" from the lldb-server tests
 
     # This is our base name component.
     base = os.path.abspath(os.path.join(scriptPath, os.pardir))

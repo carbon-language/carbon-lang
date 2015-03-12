@@ -1,9 +1,3 @@
-# Add the directory above ours to the python library path since we
-# will import from there.
-import os.path
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 import gdbremote_testcase
 import lldbgdbserverutils
 import re

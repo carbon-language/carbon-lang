@@ -2,12 +2,8 @@ import os.path
 import re
 import sys
 
-# adjust path for embedded unittest2
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', '..'))
 import unittest2
 
-# adjust path for lldbgdbserverutils.py
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from lldbgdbserverutils import *
 
 

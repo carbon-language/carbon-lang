@@ -2,10 +2,6 @@
 Test lldb-mi -var-xxx commands.
 """
 
-# adjust path for lldbmi_testcase.py
-import sys, os.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import lldbmi_testcase
 from lldbtest import *
 import unittest2
