@@ -23,8 +23,11 @@ set(LLD_TEST_DEPS
   FileCheck not llvm-nm
   lld llvm-config llvm-objdump llvm-readobj yaml2obj obj2yaml
   linker-script-test macho-dump llvm-mc llvm-nm
-  LLDUnitTests
   )
+if (LLVM_INCLUDE_TESTS)
+  set(LLD_TEST_DEPS ${LLD_TEST_DEPS} LLDUnitTests)
+endif()
+
 set(LLD_TEST_PARAMS
   lld_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
