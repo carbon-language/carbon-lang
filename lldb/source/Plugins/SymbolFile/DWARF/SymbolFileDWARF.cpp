@@ -3564,8 +3564,6 @@ SymbolFileDWARF::ParseFunctions (const DIEArray &die_offsets,
     const size_t num_matches = die_offsets.size();
     if (num_matches)
     {
-        SymbolContext sc;
-
         DWARFCompileUnit* dwarf_cu = NULL;
         for (size_t i=0; i<num_matches; ++i)
         {
