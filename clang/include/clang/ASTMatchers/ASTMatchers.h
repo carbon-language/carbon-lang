@@ -47,6 +47,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclFriend.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
 #include "clang/ASTMatchers/ASTMatchersMacros.h"
@@ -868,6 +869,20 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, LambdaExpr> lambdaExpr;
 const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CXXMemberCallExpr> memberCallExpr;
+
+/// \brief Matches ObjectiveC Message invocation expressions.
+///
+/// The innermost message send invokes the "alloc" class method on the
+/// NSString class, while the outermost message send invokes the
+/// "initWithString" instance method on the object returned from
+/// NSString's "alloc". This matcher should match both message sends.
+/// \code
+///   [[NSString alloc] initWithString:@"Hello"]
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  ObjCMessageExpr> objcMessageExpr;
+
 
 /// \brief Matches expressions that introduce cleanups to be run at the end
 /// of the sub-expression's evaluation.
@@ -2007,6 +2022,104 @@ AST_MATCHER_P(CXXMemberCallExpr, on, internal::Matcher<Expr>,
           InnerMatcher.matches(*ExprNode, Finder, Builder));
 }
 
+
+/// \brief Matches on the receiver of an ObjectiveC Message expression.
+///
+/// Example
+/// matcher = objCMessageExpr(hasRecieverType(asString("UIWebView *")));
+/// matches the [webView ...] message invocation.
+/// \code
+///   NSString *webViewJavaScript = ...
+///   UIWebView *webView = ...
+///   [webView stringByEvaluatingJavaScriptFromString:webViewJavascript];
+/// \endcode
+AST_MATCHER_P(ObjCMessageExpr, hasReceiverType, internal::Matcher<QualType>,
+              InnerMatcher) {
+  const QualType TypeDecl = Node.getReceiverType();
+  return InnerMatcher.matches(TypeDecl, Finder, Builder);
+}
+  
+/// \brief Matches when BaseName == Selector.getAsString()
+///
+///  matcher = objCMessageExpr(hasSelector("loadHTMLString:baseURL:"));
+///  matches the outer message expr in the code below, but NOT the message
+///  invocation for self.bodyView.
+/// \code
+///     [self.bodyView loadHTMLString:html baseURL:NULL];
+/// \endcode
+  AST_MATCHER_P(ObjCMessageExpr, hasSelector, std::string, BaseName) {
+  Selector Sel = Node.getSelector();
+  return BaseName.compare(Sel.getAsString()) == 0;
+}
+
+  
+/// \brief Matches ObjC selectors whose name contains
+/// a substring matched by the given RegExp.
+///  matcher = objCMessageExpr(matchesSelector("loadHTMLString\:baseURL?"));
+///  matches the outer message expr in the code below, but NOT the message
+///  invocation for self.bodyView.
+/// \code
+///     [self.bodyView loadHTMLString:html baseURL:NULL];
+/// \endcode
+AST_MATCHER_P(ObjCMessageExpr, matchesSelector, std::string, RegExp) {
+  assert(!RegExp.empty());
+  std::string SelectorString = Node.getSelector().getAsString();
+  llvm::Regex RE(RegExp);
+  return RE.match(SelectorString);
+}
+
+/// \brief Matches when the selector is the empty selector
+///
+/// Matches only when the selector of the objCMessageExpr is NULL. This may
+/// represent an error condition in the tree!
+AST_MATCHER(ObjCMessageExpr, hasNullSelector) {
+  return Node.getSelector().isNull();
+}
+
+/// \brief Matches when the selector is a Unary Selector
+///
+///  matcher = objCMessageExpr(matchesSelector(hasUnarySelector());
+///  matches self.bodyView in the code below, but NOT the outer message
+///  invocation of "loadHTMLString:baseURL:".
+/// \code
+///     [self.bodyView loadHTMLString:html baseURL:NULL];
+/// \endcode
+AST_MATCHER(ObjCMessageExpr, hasUnarySelector) {
+  return Node.getSelector().isUnarySelector();
+}
+
+/// \brief Matches when the selector is a keyword selector
+///
+/// objCMessageExpr(hasKeywordSelector()) matches the generated setFrame
+/// message expression in
+///
+/// \code
+///   UIWebView *webView = ...;
+///   CGRect bodyFrame = webView.frame;
+///   bodyFrame.size.height = self.bodyContentHeight;
+///   webView.frame = bodyFrame;
+///   //     ^---- matches here
+/// \endcode
+
+AST_MATCHER(ObjCMessageExpr, hasKeywordSelector) {
+  return Node.getSelector().isKeywordSelector();
+}
+
+/// \brief Matches when the selector has the specified number of arguments
+///
+///  matcher = objCMessageExpr(numSelectorArgs(1));
+///  matches self.bodyView in the code below
+///
+///  matcher = objCMessageExpr(numSelectorArgs(2));
+///  matches the invocation of "loadHTMLString:baseURL:" but not that
+///  of self.bodyView
+/// \code
+///     [self.bodyView loadHTMLString:html baseURL:NULL];
+/// \endcode
+AST_MATCHER_P(ObjCMessageExpr, numSelectorArgs, unsigned, N) {
+  return Node.getSelector().getNumArgs() == N;
+}
+   
 /// \brief Matches if the call expression's callee expression matches.
 ///
 /// Given
@@ -2316,7 +2429,8 @@ AST_MATCHER(VarDecl, hasGlobalStorage) {
 /// \endcode
 AST_POLYMORPHIC_MATCHER_P(argumentCountIs,
                           AST_POLYMORPHIC_SUPPORTED_TYPES(CallExpr,
-                                                          CXXConstructExpr),
+                                                          CXXConstructExpr,
+                                                          ObjCMessageExpr),
                           unsigned, N) {
   return Node.getNumArgs() == N;
 }
@@ -2331,7 +2445,8 @@ AST_POLYMORPHIC_MATCHER_P(argumentCountIs,
 /// \endcode
 AST_POLYMORPHIC_MATCHER_P2(hasArgument,
                            AST_POLYMORPHIC_SUPPORTED_TYPES(CallExpr,
-                                                           CXXConstructExpr),
+                                                           CXXConstructExpr,
+                                                           ObjCMessageExpr),
                            unsigned, N, internal::Matcher<Expr>, InnerMatcher) {
   return (N < Node.getNumArgs() &&
           InnerMatcher.matches(

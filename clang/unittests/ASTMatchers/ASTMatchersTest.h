@@ -62,7 +62,8 @@ template <typename T>
 testing::AssertionResult matchesConditionally(
     const std::string &Code, const T &AMatcher, bool ExpectMatch,
     llvm::StringRef CompileArg,
-    const FileContentMappings &VirtualMappedFiles = FileContentMappings()) {
+    const FileContentMappings &VirtualMappedFiles = FileContentMappings(),
+    const std::string &Filename = "input.cc") {
   bool Found = false, DynamicFound = false;
   MatchFinder Finder;
   VerifyMatch VerifyFound(nullptr, &Found);
@@ -78,7 +79,7 @@ testing::AssertionResult matchesConditionally(
   // Some tests need rtti/exceptions on
   Args.push_back("-frtti");
   Args.push_back("-fexceptions");
-  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, "input.cc",
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, Filename,
                              VirtualMappedFiles)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }
@@ -108,6 +109,23 @@ testing::AssertionResult notMatches(const std::string &Code,
                                     const T &AMatcher) {
   return matchesConditionally(Code, AMatcher, false, "-std=c++11");
 }
+
+template <typename T>
+testing::AssertionResult matchesObjC(const std::string &Code,
+                                     const T &AMatcher) {
+  return matchesConditionally(
+    Code, AMatcher, true,
+    "", FileContentMappings(), "input.m");
+}
+
+template <typename T>
+testing::AssertionResult notMatchesObjC(const std::string &Code,
+                                     const T &AMatcher) {
+  return matchesConditionally(
+    Code, AMatcher, false,
+    "", FileContentMappings(), "input.m");
+}
+
 
 // Function based on matchesConditionally with "-x cuda" argument added and
 // small CUDA header prepended to the code string.
