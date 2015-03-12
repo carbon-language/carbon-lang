@@ -16,13 +16,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <fcntl.h>
 #include <string>
 #endif // _MSC_VER
 
 #include "Platform.h" // CODETAG_IOR_SIGNALS
-#include "Driver.h"
+#include "Driver.h" // for PATH_MAX
 
 #ifdef _MSC_VER
 #include <lldb\Host\windows\getopt\GetOptInc.h>

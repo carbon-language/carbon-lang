@@ -89,6 +89,7 @@ extern sighandler_t signal(int sig, sighandler_t);
 #else
 
 #include <inttypes.h>
+#include <limits.h>
 
 #include <getopt.h>
 #include <libgen.h>
