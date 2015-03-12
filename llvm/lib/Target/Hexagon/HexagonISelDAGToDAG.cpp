@@ -57,7 +57,6 @@ public:
       : SelectionDAGISel(targetmachine, OptLevel), TM(targetmachine) {
     initializeHexagonDAGToDAGISelPass(*PassRegistry::getPassRegistry());
   }
-  bool hasNumUsesBelowThresGA(SDNode *N) const;
 
   SDNode *Select(SDNode *N) override;
 
@@ -1455,9 +1454,8 @@ bool HexagonDAGToDAGISel::foldGlobalAddressImpl(SDValue &N, SDValue &R,
 
       if (Const && GA &&
           (GA->getOpcode() == ISD::TargetGlobalAddress)) {
-        if ((N0.getOpcode() == HexagonISD::CONST32) &&
-                !hasNumUsesBelowThresGA(GA))
-            return false;
+        if (N0.getOpcode() == HexagonISD::CONST32)
+          return false;
         R = CurDAG->getTargetGlobalAddress(GA->getGlobal(),
                                           SDLoc(Const),
                                           N.getValueType(),
