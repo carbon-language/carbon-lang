@@ -57,6 +57,7 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <ucontext.h>
 #include <unistd.h>
 
 #if SANITIZER_FREEBSD
