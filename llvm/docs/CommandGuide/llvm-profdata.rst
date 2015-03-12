@@ -15,12 +15,12 @@ data files.
 COMMANDS
 --------
 
-* `merge <profdata_merge_>`_
-* `show <profdata_show_>`_
+* :ref:`merge <profdata-merge>`
+* :ref:`show <profdata-show>`
 
 .. program:: llvm-profdata merge
 
-.. _profdata_merge:
+.. _profdata-merge:
 
 MERGE
 -----
@@ -51,7 +51,7 @@ OPTIONS
 
 .. program:: llvm-profdata show
 
-.. _profdata_show:
+.. _profdata-show:
 
 SHOW
 ----
