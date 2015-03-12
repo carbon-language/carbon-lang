@@ -8,4 +8,5 @@ add_clang_library(clangASTMatchers
 
   LINK_LIBS
   clangAST
+  clangBasic
   )
