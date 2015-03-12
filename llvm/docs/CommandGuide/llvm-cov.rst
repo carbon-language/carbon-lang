@@ -280,7 +280,7 @@ coverage data. If any files are provided, summaries are shown for each function
 in the listed files instead.
 
 For information on compiling programs for coverage and generating profile data,
-see :ref:`report <llvm-cov-show>`.
+see :ref:`llvm-cov-show`.
 
 OPTIONS
 ^^^^^^^
