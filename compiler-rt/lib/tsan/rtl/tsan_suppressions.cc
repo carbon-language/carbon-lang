@@ -21,6 +21,7 @@
 #include "tsan_mman.h"
 #include "tsan_platform.h"
 
+#ifndef SANITIZER_GO
 // Suppressions for true/false positives in standard libraries.
 static const char *const std_suppressions =
 // Libstdc++ 4.4 has data races in std::string.
@@ -33,7 +34,6 @@ static const char *const std_suppressions =
 "race:std::_Sp_counted_ptr_inplace<std::thread::_Impl\n";
 
 // Can be overriden in frontend.
-#ifndef SANITIZER_GO
 extern "C" const char *WEAK __tsan_default_suppressions() {
   return 0;
 }
