@@ -189,7 +189,15 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   }
 
   /// Access to the STV_xxx flag stored in the first two bits of st_other.
+  /// STV_DEFAULT: 0
+  /// STV_INTERNAL: 1
+  /// STV_HIDDEN: 2
+  /// STV_PROTECTED: 3
   unsigned char getVisibility() const { return st_other & 0x3; }
+  void setVisibility(unsigned char v) {
+    assert(v < 4 && "Invalid value for visibility");
+    st_other = (st_other & ~0x3) | v;
+  }
 };
 
 /// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section
