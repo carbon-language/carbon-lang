@@ -179,6 +179,8 @@ class CMICmdCmdStackListArguments : public CMICmdBase
     const CMIUtilString m_constStrArgNoValues;
     const CMIUtilString m_constStrArgAllValues;
     const CMIUtilString m_constStrArgSimpleValues;
+    const CMIUtilString m_constStrArgFrameLow;
+    const CMIUtilString m_constStrArgFrameHigh;
 };
 
 //++ ============================================================================
