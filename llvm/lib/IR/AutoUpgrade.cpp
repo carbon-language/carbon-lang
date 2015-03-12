@@ -568,7 +568,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
           CI->getArgOperand(0),
           PointerType::getUnqual(VectorType::get(Type::getInt64Ty(C), 2)));
       Value *Load = Builder.CreateLoad(Op);
-      int Idxs[4] = { 0, 1, 0, 1 };
+      const int Idxs[4] = { 0, 1, 0, 1 };
       Rep = Builder.CreateShuffleVector(Load, UndefValue::get(Load->getType()),
                                         Idxs);
     } else if (Name == "llvm.x86.sse2.psll.dq") {
