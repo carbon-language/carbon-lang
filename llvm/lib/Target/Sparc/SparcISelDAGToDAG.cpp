@@ -50,7 +50,7 @@ public:
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                    char ConstraintCode,
+                                    unsigned ConstraintID,
                                     std::vector<SDValue> &OutOps) override;
 
   const char *getPassName() const override {
@@ -195,12 +195,12 @@ SDNode *SparcDAGToDAGISel::Select(SDNode *N) {
 /// inline asm expressions.
 bool
 SparcDAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                                char ConstraintCode,
+                                                unsigned ConstraintID,
                                                 std::vector<SDValue> &OutOps) {
   SDValue Op0, Op1;
-  switch (ConstraintCode) {
+  switch (ConstraintID) {
   default: return true;
-  case 'm':   // memory
+  case InlineAsm::Constraint_m: // memory
    if (!SelectADDRrr(Op, Op0, Op1))
      SelectADDRri(Op, Op0, Op1);
    break;

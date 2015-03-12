@@ -189,6 +189,19 @@ public:
   
   // These are helper methods for dealing with flags in the INLINEASM SDNode
   // in the backend.
+  //
+  // The encoding of the flag word is currently:
+  //   Bits 2-0 - A Kind_* value indicating the kind of the operand.
+  //   Bits 15-3 - The number of SDNode operands associated with this inline
+  //               assembly operand.
+  //   If bits 2-0 are Kind_Mem:
+  //     Bit 31 - 0
+  //     Bit 30-16 - A Constraint_* value indicating the original constraint
+  //                 code.
+  //   Else if bit 31 is set:
+  //     Bit 30-16 - The operand number that this operand must match.
+  //   Else if bit 31 is clear:
+  //     Bit 30-16 - The register class ID to use for the operand.
   
   enum : uint32_t {
     // Fixed operands on an INLINEASM SDNode.
@@ -219,6 +232,17 @@ public:
     Kind_Clobber = 4,            // Clobbered register, "~r".
     Kind_Imm = 5,                // Immediate.
     Kind_Mem = 6,                // Memory operand, "m".
+
+    // Memory constraint codes.
+    // These could be tablegenerated but there's little need to do that since
+    // there's plenty of space in the encoding to support the union of all
+    // constraint codes for all targets.
+    Constraint_Unknown = 0,
+    Constraint_m,
+    Constraint_o, // Unused at the moment since Constraint_m is always used.
+    Constraint_v, // Unused at the moment since Constraint_m is always used.
+    Constraints_Max = Constraint_v,
+    Constraints_ShiftAmount = 16,
 
     Flag_MatchingOperand = 0x80000000
   };
@@ -252,6 +276,15 @@ public:
     return InputFlag | (RC << 16);
   }
 
+  /// Augment an existing flag word returned by getFlagWord with the constraint
+  /// code for a memory constraint.
+  static unsigned getFlagWordForMem(unsigned InputFlag, unsigned Constraint) {
+    assert(Constraint <= 0x7fff && "Too large a memory constraint ID");
+    assert(Constraint <= Constraints_Max && "Unknown constraint ID");
+    assert((InputFlag & ~0xffff) == 0 && "High bits already contain data");
+    return InputFlag | (Constraint << Constraints_ShiftAmount);
+  }
+
   static unsigned getKind(unsigned Flags) {
     return Flags & 7;
   }
@@ -264,6 +297,11 @@ public:
   }
   static bool isClobberKind(unsigned Flag) {
     return getKind(Flag) == Kind_Clobber;
+  }
+
+  static unsigned getMemoryConstraintID(unsigned Flag) {
+    assert(isMemKind(Flag));
+    return (Flag >> Constraints_ShiftAmount) & 0x7fff;
   }
 
   /// getNumOperandRegisters - Extract the number of registers field from the

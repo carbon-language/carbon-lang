@@ -93,7 +93,7 @@ public:
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                    char ConstraintCode,
+                                    unsigned ConstraintID,
                                     std::vector<SDValue> &OutOps) override;
   bool SelectAddr(SDNode *Op, SDValue Addr, SDValue &Base, SDValue &Offset);
 
@@ -1405,15 +1405,15 @@ bool HexagonDAGToDAGISel::SelectAddr(SDNode *Op, SDValue Addr,
 
 
 bool HexagonDAGToDAGISel::
-SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
+SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
   SDValue Op0, Op1;
 
-  switch (ConstraintCode) {
-  case 'o':   // Offsetable.
-  case 'v':   // Not offsetable.
+  switch (ConstraintID) {
+  case InlineAsm::Constraint_o:   // Offsetable.
+  case InlineAsm::Constraint_v:   // Not offsetable.
   default: return true;
-  case 'm':   // Memory.
+  case InlineAsm::Constraint_m:   // Memory.
     if (!SelectAddr(Op.getNode(), Op, Op0, Op1))
       return true;
     break;

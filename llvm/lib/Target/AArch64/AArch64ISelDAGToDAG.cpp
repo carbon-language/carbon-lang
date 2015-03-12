@@ -65,7 +65,7 @@ public:
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                    char ConstraintCode,
+                                    unsigned ConstraintID,
                                     std::vector<SDValue> &OutOps) override;
 
   SDNode *SelectMLAV64LaneV128(SDNode *N);
@@ -211,8 +211,9 @@ static bool isOpcWithIntImmediate(const SDNode *N, unsigned Opc,
 }
 
 bool AArch64DAGToDAGISel::SelectInlineAsmMemoryOperand(
-    const SDValue &Op, char ConstraintCode, std::vector<SDValue> &OutOps) {
-  assert(ConstraintCode == 'm' && "unexpected asm memory constraint");
+    const SDValue &Op, unsigned ConstraintID, std::vector<SDValue> &OutOps) {
+  assert(ConstraintID == InlineAsm::Constraint_m &&
+         "unexpected asm memory constraint");
   // Require the address to be in a register.  That is safe for all AArch64
   // variants and it is hard to do anything much smarter without knowing
   // how the operand is used.
