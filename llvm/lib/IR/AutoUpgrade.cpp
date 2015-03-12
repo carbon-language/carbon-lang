@@ -568,11 +568,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
           CI->getArgOperand(0),
           PointerType::getUnqual(VectorType::get(Type::getInt64Ty(C), 2)));
       Value *Load = Builder.CreateLoad(Op);
-      SmallVector<Constant *, 4> Idxs; // 0, 1, 0, 1.
-      for (unsigned i = 0; i != 4; ++i)
-        Idxs.push_back(Builder.getInt32(i & 1));
+      int Idxs[4] = { 0, 1, 0, 1 };
       Rep = Builder.CreateShuffleVector(Load, UndefValue::get(Load->getType()),
-                                        ConstantVector::get(Idxs));
+                                        Idxs);
     } else if (Name == "llvm.x86.sse2.psll.dq") {
       // 128-bit shift left specified in bits.
       unsigned Shift = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
