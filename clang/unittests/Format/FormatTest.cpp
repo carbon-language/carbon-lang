@@ -5648,6 +5648,8 @@ TEST_F(FormatTest, BreaksLongVariableDeclarations) {
                "    LoooooooooooooooooooooooooooooooooooooooongVariable;");
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType const\n"
                "    LoooooooooooooooooooooooooooooooooooooooongVariable;");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
+               "    *LoooooooooooooooooooooooooooooooooooooooongVariable;");
 
   // Different ways of ()-initializiation.
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
@@ -5664,6 +5666,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyFormat("typedef LongTemplateType<aaaaaaaaaaaaaaaaaaa()>\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
+               "LoooooooooooooooooooooooooooooooongFunctionDeclaration();");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType *\n"
                "LoooooooooooooooooooooooooooooooongFunctionDeclaration();");
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
@@ -5703,12 +5707,12 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
       "                                   SourceLocation L, IdentifierIn *II,\n"
       "                                   Type *T) {}");
   verifyFormat("ReallyLongReturnType<TemplateParam1, TemplateParam2>\n"
-               "ReallyReallyLongFunctionName(\n"
+               "ReallyReaaallyLongFunctionName(\n"
                "    const std::string &SomeParameter,\n"
-               "    const SomeType<string, SomeOtherTemplateParameter> &\n"
-               "        ReallyReallyLongParameterName,\n"
-               "    const SomeType<string, SomeOtherTemplateParameter> &\n"
-               "        AnotherLongParameterName) {}");
+               "    const SomeType<string, SomeOtherTemplateParameter>\n"
+               "        &ReallyReallyLongParameterName,\n"
+               "    const SomeType<string, SomeOtherTemplateParameter>\n"
+               "        &AnotherLongParameterName) {}");
   verifyFormat("template <typename A>\n"
                "SomeLoooooooooooooooooooooongType<\n"
                "    typename some_namespace::SomeOtherType<A>::Type>\n"
@@ -5732,8 +5736,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                      "                   int aaaaaaaaaaaaaaaaaaaaaaa);");
 
   verifyFormat("typedef size_t (*aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)(\n"
-               "    const aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *\n"
-               "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+               "    const aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "        *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, FormatsArrays) {

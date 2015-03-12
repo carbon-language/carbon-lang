@@ -580,7 +580,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
       return State.Stack.back().StartOfArraySubscripts;
     return ContinuationIndent;
   }
-  if (NextNonComment->is(TT_StartOfName) ||
+  if (NextNonComment->isOneOf(TT_StartOfName, TT_PointerOrReference) ||
       Previous.isOneOf(tok::coloncolon, tok::equal)) {
     return ContinuationIndent;
   }
