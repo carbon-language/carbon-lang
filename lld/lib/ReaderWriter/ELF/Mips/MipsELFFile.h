@@ -231,8 +231,10 @@ private:
 
   Reference::Addend readAddend(const Elf_Rel &ri,
                                const ArrayRef<uint8_t> content) const {
-    return MipsRelocationHandler<ELFT>::readAddend(
-        ri.getType(isMips64EL()), content.data() + ri.r_offset);
+    const auto &rh =
+        this->_ctx.template getTargetHandler<ELFT>().getRelocationHandler();
+    return static_cast<const MipsRelocationHandler &>(rh)
+        .readAddend(ri.getType(isMips64EL()), content.data() + ri.r_offset);
   }
 
   uint32_t getPairRelocation(const Elf_Rel &rel) const {

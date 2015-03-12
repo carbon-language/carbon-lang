@@ -15,24 +15,10 @@
 namespace lld {
 namespace elf {
 
-class MipsLinkingContext;
-template <class ELFT> class MipsTargetLayout;
-
-template <class ELFT>
 class MipsRelocationHandler : public TargetRelocationHandler {
 public:
-  MipsRelocationHandler(MipsLinkingContext &ctx) : _ctx(ctx) {}
-
-  std::error_code applyRelocation(ELFWriter &writer,
-                                  llvm::FileOutputBuffer &buf,
-                                  const lld::AtomLayout &atom,
-                                  const Reference &ref) const override;
-
-  static Reference::Addend readAddend(Reference::KindValue kind,
-                                      const uint8_t *content);
-
-private:
-  MipsLinkingContext &_ctx;
+  virtual Reference::Addend readAddend(Reference::KindValue kind,
+                                       const uint8_t *content) const = 0;
 };
 
 template <class ELFT>

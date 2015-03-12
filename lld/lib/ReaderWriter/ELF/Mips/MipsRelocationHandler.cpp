@@ -29,6 +29,22 @@ struct MipsRelocationParams {
   uint8_t _shift; // Relocation's addendum left shift size
   bool _shuffle;  // Relocation's addendum/result needs to be shuffled
 };
+
+template <class ELFT> class RelocationHandler : public MipsRelocationHandler {
+public:
+  RelocationHandler(MipsLinkingContext &ctx) : _ctx(ctx) {}
+
+  std::error_code applyRelocation(ELFWriter &writer,
+                                  llvm::FileOutputBuffer &buf,
+                                  const lld::AtomLayout &atom,
+                                  const Reference &ref) const override;
+
+  Reference::Addend readAddend(Reference::KindValue kind,
+                               const uint8_t *content) const override;
+
+private:
+  MipsLinkingContext &_ctx;
+};
 }
 
 static MipsRelocationParams getRelocationParams(uint32_t rType) {
@@ -416,7 +432,7 @@ static void relocWrite(uint64_t data, const MipsRelocationParams &params,
 }
 
 template <class ELFT>
-std::error_code MipsRelocationHandler<ELFT>::applyRelocation(
+std::error_code RelocationHandler<ELFT>::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
@@ -458,8 +474,8 @@ std::error_code MipsRelocationHandler<ELFT>::applyRelocation(
 
 template <class ELFT>
 Reference::Addend
-MipsRelocationHandler<ELFT>::readAddend(Reference::KindValue kind,
-                                        const uint8_t *content) {
+RelocationHandler<ELFT>::readAddend(Reference::KindValue kind,
+                                    const uint8_t *content) const {
   auto params = getRelocationParams(kind);
   uint64_t ins = relocRead<ELFT>(params, content);
   return (ins & params._mask) << params._shift;
@@ -468,23 +484,18 @@ MipsRelocationHandler<ELFT>::readAddend(Reference::KindValue kind,
 namespace lld {
 namespace elf {
 
-template class MipsRelocationHandler<Mips32ELType>;
-template class MipsRelocationHandler<Mips32BEType>;
-template class MipsRelocationHandler<Mips64ELType>;
-template class MipsRelocationHandler<Mips64BEType>;
-
 template <>
 std::unique_ptr<TargetRelocationHandler>
 createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx) {
   return std::unique_ptr<TargetRelocationHandler>(
-      new MipsRelocationHandler<Mips32ELType>(ctx));
+      new RelocationHandler<Mips32ELType>(ctx));
 }
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
 createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx) {
   return std::unique_ptr<TargetRelocationHandler>(
-      new MipsRelocationHandler<Mips64ELType>(ctx));
+      new RelocationHandler<Mips64ELType>(ctx));
 }
 
 } // elf
