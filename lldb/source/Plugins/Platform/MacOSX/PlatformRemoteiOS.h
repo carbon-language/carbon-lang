@@ -163,6 +163,10 @@ protected:
     uint32_t
     GetConnectedSDKIndex ();
 
+    // Get index of SDK in SDKDirectoryInfoCollection by its pointer and return UINT32_MAX if that SDK not found.
+    uint32_t
+    GetSDKIndexBySDKDirectoryInfo (const SDKDirectoryInfo *sdk_info);
+
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);
 

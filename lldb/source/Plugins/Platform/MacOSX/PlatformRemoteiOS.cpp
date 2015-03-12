@@ -304,6 +304,14 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded()
 {
     if (m_sdk_directory_infos.empty())
     {
+        // A --sysroot option was supplied - add it to our list of SDKs to check
+        if (m_sdk_sysroot)
+        {
+            FileSpec sdk_sysroot_fspec(m_sdk_sysroot.GetCString(), true);
+            const SDKDirectoryInfo sdk_sysroot_directory_info(sdk_sysroot_fspec);
+            m_sdk_directory_infos.push_back(sdk_sysroot_directory_info);
+            return true;
+        }
         const char *device_support_dir = GetDeviceSupportDirectory();
         if (device_support_dir)
         {
@@ -745,7 +753,28 @@ PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
             }
         }
         
-        // First try for an exact match of major, minor and update
+        // First try for an exact match of major, minor and update:
+        // If a particalar SDK version was specified via --version or --build, look for a match on disk.
+        const SDKDirectoryInfo *current_sdk_info = GetSDKDirectoryForCurrentOSVersion();
+        const uint32_t current_sdk_idx = GetSDKIndexBySDKDirectoryInfo(current_sdk_info);
+        if (current_sdk_idx < num_sdk_infos && current_sdk_idx != m_last_module_sdk_idx)
+        {
+            if (GetFileInSDK (platform_file_path, current_sdk_idx, platform_module_spec.GetFileSpec()))
+            {
+                module_sp.reset();
+                error = ResolveExecutable (platform_module_spec,
+                                           module_sp,
+                                           NULL);
+                if (module_sp)
+                {
+                    m_last_module_sdk_idx = current_sdk_idx;
+                    error.Clear();
+                    return error;
+                }
+            }
+        }
+
+        // Second try all SDKs that were found.
         for (uint32_t sdk_idx=0; sdk_idx<num_sdk_infos; ++sdk_idx)
         {
             if (m_last_module_sdk_idx == sdk_idx)
@@ -827,3 +856,13 @@ PlatformRemoteiOS::GetConnectedSDKIndex ()
     return m_connected_module_sdk_idx;
 }
 
+uint32_t
+PlatformRemoteiOS::GetSDKIndexBySDKDirectoryInfo (const SDKDirectoryInfo *sdk_info)
+{
+    if (sdk_info == NULL)
+    {
+        return UINT32_MAX;
+    }
+
+    return sdk_info - &m_sdk_directory_infos[0];
+}
