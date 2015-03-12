@@ -8239,7 +8239,7 @@ std::unique_ptr<Command> visualstudio::Compile::GetCommand(
     }
   }
 
-  // Flags for which clang-cl have an alias.
+  // Flags for which clang-cl has an alias.
   // FIXME: How can we ensure this stays in sync with relevant clang-cl options?
 
   if (Args.hasFlag(options::OPT__SLASH_GR_, options::OPT__SLASH_GR,
@@ -8259,7 +8259,8 @@ std::unique_ptr<Command> visualstudio::Compile::GetCommand(
   if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only))
     CmdArgs.push_back("/Z7");
 
-  std::vector<std::string> Includes = Args.getAllArgValues(options::OPT_include);
+  std::vector<std::string> Includes =
+      Args.getAllArgValues(options::OPT_include);
   for (const auto &Include : Includes)
     CmdArgs.push_back(Args.MakeArgString(std::string("/FI") + Include));
 
