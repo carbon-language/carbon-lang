@@ -34,9 +34,7 @@ static cl::opt<bool>
 ReserveAppRegisters("sparc-reserve-app-registers", cl::Hidden, cl::init(false),
                     cl::desc("Reserve application registers (%g2-%g4)"));
 
-SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st)
-  : SparcGenRegisterInfo(SP::O7), Subtarget(st) {
-}
+SparcRegisterInfo::SparcRegisterInfo() : SparcGenRegisterInfo(SP::O7) {}
 
 const MCPhysReg*
 SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
@@ -56,6 +54,7 @@ SparcRegisterInfo::getRTCallPreservedMask(CallingConv::ID CC) const {
 
 BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  const SparcSubtarget &Subtarget = MF.getSubtarget<SparcSubtarget>();
   // FIXME: G1 reserved for now for large imm generation by frame code.
   Reserved.set(SP::G1);
 
@@ -90,6 +89,7 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 const TargetRegisterClass*
 SparcRegisterInfo::getPointerRegClass(const MachineFunction &MF,
                                       unsigned Kind) const {
+  const SparcSubtarget &Subtarget = MF.getSubtarget<SparcSubtarget>();
   return Subtarget.is64Bit() ? &SP::I64RegsRegClass : &SP::IntRegsRegClass;
 }
 
@@ -161,6 +161,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();
+  const SparcSubtarget &Subtarget = MF.getSubtarget<SparcSubtarget>();
   int64_t Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                    MI.getOperand(FIOperandNum + 1).getImm() +
                    Subtarget.getStackPointerBias();
@@ -175,7 +176,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   if (!Subtarget.isV9() || !Subtarget.hasHardQuad()) {
     if (MI.getOpcode() == SP::STQFri) {
-      const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+      const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
       unsigned SrcReg = MI.getOperand(2).getReg();
       unsigned SrcEvenReg = getSubReg(SrcReg, SP::sub_even64);
       unsigned SrcOddReg  = getSubReg(SrcReg, SP::sub_odd64);
@@ -187,7 +188,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.getOperand(2).setReg(SrcOddReg);
       Offset += 8;
     } else if (MI.getOpcode() == SP::LDQFri) {
-      const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+      const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
       unsigned DestReg     = MI.getOperand(0).getReg();
       unsigned DestEvenReg = getSubReg(DestReg, SP::sub_even64);
       unsigned DestOddReg  = getSubReg(DestReg, SP::sub_odd64);

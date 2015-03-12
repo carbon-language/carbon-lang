@@ -21,14 +21,11 @@
 
 namespace llvm {
 
-class SparcSubtarget;
 class TargetInstrInfo;
 class Type;
 
 struct SparcRegisterInfo : public SparcGenRegisterInfo {
-  SparcSubtarget &Subtarget;
-
-  SparcRegisterInfo(SparcSubtarget &st);
+  SparcRegisterInfo();
 
   /// Code Generation virtual methods...
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;

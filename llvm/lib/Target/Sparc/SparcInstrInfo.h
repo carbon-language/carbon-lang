@@ -22,6 +22,8 @@
 
 namespace llvm {
 
+class SparcSubtarget;
+
 /// SPII - This namespace holds all of the target specific flags that
 /// instruction info tracks.
 ///
