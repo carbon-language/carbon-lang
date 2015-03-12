@@ -1181,7 +1181,7 @@ _mm256_castsi128_si256(__m128i __a)
 #define _mm256_extractf128_ps(V, M) __extension__ ({ \
   (__m128)__builtin_shufflevector( \
     (__v8sf)(V), \
-    (__v8sf)(V), \
+    (__v8sf)(_mm256_setzero_ps()), \
     (((M) & 1) ? 4 : 0), \
     (((M) & 1) ? 5 : 1), \
     (((M) & 1) ? 6 : 2), \
@@ -1190,14 +1190,14 @@ _mm256_castsi128_si256(__m128i __a)
 #define _mm256_extractf128_pd(V, M) __extension__ ({ \
   (__m128d)__builtin_shufflevector( \
     (__v4df)(V), \
-    (__v4df)(V), \
+    (__v4df)(_mm256_setzero_pd()), \
     (((M) & 1) ? 2 : 0), \
     (((M) & 1) ? 3 : 1) );})
 
 #define _mm256_extractf128_si256(V, M) __extension__ ({ \
   (__m128i)__builtin_shufflevector( \
     (__v4di)(V), \
-    (__v4di)(V), \
+    (__v4di)(_mm256_setzero_si256()), \
     (((M) & 1) ? 2 : 0), \
     (((M) & 1) ? 3 : 1) );})
 
