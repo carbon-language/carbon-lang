@@ -47,6 +47,19 @@ const char *ExtractUptr(const char *str, const char *delims, uptr *result) {
   return ret;
 }
 
+const char *ExtractTokenUpToDelimiter(const char *str, const char *delimiter,
+                                      char **result) {
+  const char *found_delimiter = internal_strstr(str, delimiter);
+  uptr prefix_len =
+      found_delimiter ? found_delimiter - str : internal_strlen(str);
+  *result = (char *)InternalAlloc(prefix_len + 1);
+  internal_memcpy(*result, str, prefix_len);
+  (*result)[prefix_len] = '\0';
+  const char *prefix_end = str + prefix_len;
+  if (*prefix_end != '\0') prefix_end += internal_strlen(delimiter);
+  return prefix_end;
+}
+
 Symbolizer *Symbolizer::GetOrInit() {
   SpinMutexLock l(&init_mu_);
   if (symbolizer_)

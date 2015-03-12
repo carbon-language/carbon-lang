@@ -20,15 +20,20 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#if SANITIZER_MAC
+#include <util.h>  // for forkpty()
+#endif  // SANITIZER_MAC
+
 namespace __sanitizer {
 
-SymbolizerProcess::SymbolizerProcess(const char *path)
+SymbolizerProcess::SymbolizerProcess(const char *path, bool use_forkpty)
     : path_(path),
       input_fd_(kInvalidFd),
       output_fd_(kInvalidFd),
       times_restarted_(0),
       failed_to_start_(false),
-      reported_invalid_path_(false) {
+      reported_invalid_path_(false),
+      use_forkpty_(use_forkpty) {
   CHECK(path_);
   CHECK_NE(path_[0], '\0');
 }
@@ -106,73 +111,104 @@ bool SymbolizerProcess::StartSymbolizerSubprocess() {
     return false;
   }
 
-  int *infd = NULL;
-  int *outfd = NULL;
-  // The client program may close its stdin and/or stdout and/or stderr
-  // thus allowing socketpair to reuse file descriptors 0, 1 or 2.
-  // In this case the communication between the forked processes may be
-  // broken if either the parent or the child tries to close or duplicate
-  // these descriptors. The loop below produces two pairs of file
-  // descriptors, each greater than 2 (stderr).
-  int sock_pair[5][2];
-  for (int i = 0; i < 5; i++) {
-    if (pipe(sock_pair[i]) == -1) {
-      for (int j = 0; j < i; j++) {
-        internal_close(sock_pair[j][0]);
-        internal_close(sock_pair[j][1]);
-      }
-      Report("WARNING: Can't create a socket pair to start "
-             "external symbolizer (errno: %d)\n", errno);
+  int pid;
+  if (use_forkpty_) {
+#if SANITIZER_MAC
+    fd_t fd = kInvalidFd;
+    // Use forkpty to disable buffering in the new terminal.
+    pid = forkpty(&fd, 0, 0, 0);
+    if (pid == -1) {
+      // forkpty() failed.
+      Report("WARNING: failed to fork external symbolizer (errno: %d)\n",
+             errno);
       return false;
-    } else if (sock_pair[i][0] > 2 && sock_pair[i][1] > 2) {
-      if (infd == NULL) {
-        infd = sock_pair[i];
-      } else {
-        outfd = sock_pair[i];
+    } else if (pid == 0) {
+      // Child subprocess.
+      ExecuteWithDefaultArgs(path_);
+      internal__exit(1);
+    }
+
+    // Continue execution in parent process.
+    input_fd_ = output_fd_ = fd;
+
+    // Disable echo in the new terminal, disable CR.
+    struct termios termflags;
+    tcgetattr(fd, &termflags);
+    termflags.c_oflag &= ~ONLCR;
+    termflags.c_lflag &= ~ECHO;
+    tcsetattr(fd, TCSANOW, &termflags);
+#else  // SANITIZER_MAC
+    UNIMPLEMENTED();
+#endif  // SANITIZER_MAC
+  } else {
+    int *infd = NULL;
+    int *outfd = NULL;
+    // The client program may close its stdin and/or stdout and/or stderr
+    // thus allowing socketpair to reuse file descriptors 0, 1 or 2.
+    // In this case the communication between the forked processes may be
+    // broken if either the parent or the child tries to close or duplicate
+    // these descriptors. The loop below produces two pairs of file
+    // descriptors, each greater than 2 (stderr).
+    int sock_pair[5][2];
+    for (int i = 0; i < 5; i++) {
+      if (pipe(sock_pair[i]) == -1) {
         for (int j = 0; j < i; j++) {
-          if (sock_pair[j] == infd) continue;
           internal_close(sock_pair[j][0]);
           internal_close(sock_pair[j][1]);
         }
-        break;
+        Report("WARNING: Can't create a socket pair to start "
+               "external symbolizer (errno: %d)\n", errno);
+        return false;
+      } else if (sock_pair[i][0] > 2 && sock_pair[i][1] > 2) {
+        if (infd == NULL) {
+          infd = sock_pair[i];
+        } else {
+          outfd = sock_pair[i];
+          for (int j = 0; j < i; j++) {
+            if (sock_pair[j] == infd) continue;
+            internal_close(sock_pair[j][0]);
+            internal_close(sock_pair[j][1]);
+          }
+          break;
+        }
       }
     }
-  }
-  CHECK(infd);
-  CHECK(outfd);
+    CHECK(infd);
+    CHECK(outfd);
 
-  // Real fork() may call user callbacks registered with pthread_atfork().
-  int pid = internal_fork();
-  if (pid == -1) {
-    // Fork() failed.
-    internal_close(infd[0]);
-    internal_close(infd[1]);
-    internal_close(outfd[0]);
-    internal_close(outfd[1]);
-    Report("WARNING: failed to fork external symbolizer "
-           " (errno: %d)\n", errno);
-    return false;
-  } else if (pid == 0) {
-    // Child subprocess.
-    internal_close(STDOUT_FILENO);
-    internal_close(STDIN_FILENO);
-    internal_dup2(outfd[0], STDIN_FILENO);
-    internal_dup2(infd[1], STDOUT_FILENO);
-    internal_close(outfd[0]);
-    internal_close(outfd[1]);
-    internal_close(infd[0]);
-    internal_close(infd[1]);
-    for (int fd = sysconf(_SC_OPEN_MAX); fd > 2; fd--)
-      internal_close(fd);
-    ExecuteWithDefaultArgs(path_);
-    internal__exit(1);
-  }
+    // Real fork() may call user callbacks registered with pthread_atfork().
+    pid = internal_fork();
+    if (pid == -1) {
+      // Fork() failed.
+      internal_close(infd[0]);
+      internal_close(infd[1]);
+      internal_close(outfd[0]);
+      internal_close(outfd[1]);
+      Report("WARNING: failed to fork external symbolizer "
+             " (errno: %d)\n", errno);
+      return false;
+    } else if (pid == 0) {
+      // Child subprocess.
+      internal_close(STDOUT_FILENO);
+      internal_close(STDIN_FILENO);
+      internal_dup2(outfd[0], STDIN_FILENO);
+      internal_dup2(infd[1], STDOUT_FILENO);
+      internal_close(outfd[0]);
+      internal_close(outfd[1]);
+      internal_close(infd[0]);
+      internal_close(infd[1]);
+      for (int fd = sysconf(_SC_OPEN_MAX); fd > 2; fd--)
+        internal_close(fd);
+      ExecuteWithDefaultArgs(path_);
+      internal__exit(1);
+    }
 
-  // Continue execution in parent process.
-  internal_close(outfd[0]);
-  internal_close(infd[1]);
-  input_fd_ = infd[0];
-  output_fd_ = outfd[1];
+    // Continue execution in parent process.
+    internal_close(outfd[0]);
+    internal_close(infd[1]);
+    input_fd_ = infd[0];
+    output_fd_ = outfd[1];
+  }
 
   // Check that symbolizer subprocess started successfully.
   int pid_status;

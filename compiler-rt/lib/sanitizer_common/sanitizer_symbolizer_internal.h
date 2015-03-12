@@ -25,6 +25,8 @@ namespace __sanitizer {
 const char *ExtractToken(const char *str, const char *delims, char **result);
 const char *ExtractInt(const char *str, const char *delims, int *result);
 const char *ExtractUptr(const char *str, const char *delims, uptr *result);
+const char *ExtractTokenUpToDelimiter(const char *str, const char *delimiter,
+                                      char **result);
 
 // SymbolizerTool is an interface that is implemented by individual "tools"
 // that can perform symbolication (external llvm-symbolizer, libbacktrace,
@@ -67,7 +69,7 @@ class SymbolizerTool {
 // SymbolizerProcess may not be used from two threads simultaneously.
 class SymbolizerProcess {
  public:
-  explicit SymbolizerProcess(const char *path);
+  explicit SymbolizerProcess(const char *path, bool use_forkpty = false);
   const char *SendCommand(const char *command);
 
  private:
@@ -97,6 +99,7 @@ class SymbolizerProcess {
   uptr times_restarted_;
   bool failed_to_start_;
   bool reported_invalid_path_;
+  bool use_forkpty_;
 };
 
 }  // namespace __sanitizer

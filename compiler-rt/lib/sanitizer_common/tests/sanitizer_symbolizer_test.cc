@@ -46,4 +46,13 @@ TEST(Symbolizer, ExtractUptr) {
   EXPECT_STREQ("456;789", rest);
 }
 
+TEST(Symbolizer, ExtractTokenUpToDelimiter) {
+  char *token;
+  const char *rest =
+      ExtractTokenUpToDelimiter("aaa-+-bbb-+-ccc", "-+-", &token);
+  EXPECT_STREQ("aaa", token);
+  EXPECT_STREQ("bbb-+-ccc", rest);
+  InternalFree(token);
+}
+
 }  // namespace __sanitizer
