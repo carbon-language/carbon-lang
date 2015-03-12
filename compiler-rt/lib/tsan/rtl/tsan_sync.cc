@@ -162,8 +162,10 @@ void MetaMap::ResetRange(ThreadState *thr, uptr pc, uptr p, uptr sz) {
   // freed). Note: we can't simply madvise, because we need to leave a zeroed
   // range (otherwise __tsan_java_move can crash if it encounters a left-over
   // meta objects in java heap).
-  UnmapOrDie((void*)p0, sz0);
-  MmapFixedNoReserve(p0, sz0);
+  uptr metap = (uptr)MemToMeta(p0);
+  uptr metasz = sz0 / kMetaRatio;
+  UnmapOrDie((void*)metap, metasz);
+  MmapFixedNoReserve(metap, metasz);
 }
 
 MBlock* MetaMap::GetBlock(uptr p) {
