@@ -101,6 +101,7 @@
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include <iterator>
@@ -953,11 +954,6 @@ class IntervalMap {
     RootBranch node;
   };
 
-  enum {
-    RootDataSize = sizeof(RootBranchData) > sizeof(RootLeaf) ?
-                   sizeof(RootBranchData) : sizeof(RootLeaf)
-  };
-
 public:
   typedef typename Sizer::Allocator Allocator;
   typedef KeyT KeyType;
@@ -966,13 +962,7 @@ public:
 
 private:
   // The root data is either a RootLeaf or a RootBranchData instance.
-  // We can't put them in a union since C++03 doesn't allow non-trivial
-  // constructors in unions.
-  // Instead, we use a char array with pointer alignment. The alignment is
-  // ensured by the allocator member in the class, but still verified in the
-  // constructor. We don't support keys or values that are more aligned than a
-  // pointer.
-  char data[RootDataSize];
+  AlignedCharArrayUnion<RootLeaf, RootBranchData> data;
 
   // Tree height.
   // 0: Leaves in root.
@@ -993,7 +983,7 @@ private:
       const char *d;
       T *t;
     } u;
-    u.d = data;
+    u.d = data.buffer;
     return *u.t;
   }
 
@@ -1051,7 +1041,7 @@ private:
 
 public:
   explicit IntervalMap(Allocator &a) : height(0), rootSize(0), allocator(a) {
-    assert((uintptr_t(data) & (alignOf<RootLeaf>() - 1)) == 0 &&
+    assert((uintptr_t(data.buffer) & (alignOf<RootLeaf>() - 1)) == 0 &&
            "Insufficient alignment");
     new(&rootLeaf()) RootLeaf();
   }
