@@ -85,6 +85,7 @@ class AbbreviationsTestCase(TestBase):
         self.running_abbreviations ()
 
     @dwarf_test
+    @expectedFailureLinux # not related to abbreviations, "dis -f" output has int3 in it
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.running_abbreviations ()
@@ -149,12 +150,18 @@ class AbbreviationsTestCase(TestBase):
                                  "stop reason = breakpoint 2.1" ])
 
         # ARCH, if not specified, defaults to x86_64.
+        self.runCmd("dis -f")
+        disassembly = self.res.GetOutput()
         if self.getArchitecture() in ["", 'x86_64', 'i386']:
-            self.expect("dis -f",
+            # hey! we shouldn't have a software breakpoint in here
+            self.assertFalse("int3" in disassembly)
+            self.expect(disassembly, exe=False,
                         startstr = "a.out`sum(int, int)",
                         substrs = [' mov',
                                    ' addl ',
                                    'ret'])
+        else:
+            self.fail('unimplemented for arch = "{arch}"'.format(arch=self.getArchitecture()))
 
         self.expect("i d l main.cpp",
                     patterns = ["Line table for .*main.cpp in `a.out"])
