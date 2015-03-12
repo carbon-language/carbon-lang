@@ -778,6 +778,21 @@ def skipIfi386(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipUnlessCompilerRt(func):
+    """Decorate the item to skip tests if testing remotely."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipUnless can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        import os.path
+        compilerRtPath = os.path.join(os.path.dirname(__file__), "..", "..", "..", "projects", "compiler-rt")
+        if not os.path.exists(compilerRtPath):
+            self = args[0]
+            self.skipTest("skip if compiler-rt not found")
+        else:
+            func(*args, **kwargs)
+    return wrapper
 
 class _PlatformContext(object):
     """Value object class which contains platform-specific options."""
@@ -1532,6 +1547,11 @@ class Base(unittest2.TestCase):
             path = os.path.join(lldb_root_path, p)
             if os.path.exists(path):
                 return path
+
+        # Tries to find clang at the same folder as the lldb
+        path = os.path.join(os.path.dirname(self.lldbExec), "clang")
+        if os.path.exists(path):
+            return path
         
         return os.environ["CC"]
 
