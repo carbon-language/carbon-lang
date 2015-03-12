@@ -1308,9 +1308,14 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   // Turn FP extload into load/fextend.
   for (MVT VT : MVT::fp_valuetypes())
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
-  // Hexagon has a i1 sign extending load.
-  for (MVT VT : MVT::integer_valuetypes())
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Expand);
+
+  // No extending loads from i32.
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i32, Expand);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i32, Expand);
+  }
+
   // Turn FP truncstore into trunc + store.
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
@@ -1429,7 +1434,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
 
   setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-  
+
   setOperationAction(ISD::MULHS, MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);

@@ -4528,10 +4528,8 @@ def Y2_barrier : SYSInst<(outs), (ins),
 
 // Generate frameindex addresses.
 let isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
-    isPseudo = 1, isCodeGenOnly = 1 in
-def TFR_FI: ALU32_ri<(outs IntRegs:$Rd), (ins FrameIndex:$fi),
-                     ".error",
-                     [(set (i32 IntRegs:$Rd), ADDRri:$fi)]>;
+    isPseudo = 1, isCodeGenOnly = 1, hasSideEffects = 0 in
+def TFR_FI: ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$fi, s32Imm:$Off), "">;
 
 //===----------------------------------------------------------------------===//
 // CRUSER - Type.
@@ -5075,11 +5073,6 @@ def: Pat<(i32 (sext (i1 PredRegs:$src1))),
 def: Pat<(i64 (sext (i1 PredRegs:$src1))),
          (A2_combinew (A2_tfrsi -1), (C2_muxii PredRegs:$src1, -1, 0))>;
 
-// Convert sign-extended load back to load and sign extend.
-// i32 -> i64
-def:  Pat <(i64 (sextloadi32 ADDRriS11_2:$src1)),
-      (i64 (A2_sxtw (L2_loadri_io AddrFI:$src1, 0)))>;
-
 // Zero extends.
 // i1 -> i32
 def: Pat<(i32 (zext (i1 PredRegs:$src1))),
@@ -5092,12 +5085,6 @@ def: Pat<(i32 (anyext (i1 PredRegs:$src1))),
 // Map from Rss = Pd to Rdd = sxtw (mux(Pd, #1, #0))
 def: Pat<(i64 (anyext (i1 PredRegs:$src1))),
          (A2_sxtw (C2_muxii PredRegs:$src1, 1, 0))>;
-
-def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
-                           (i32 32))),
-               (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
-        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (L2_loadri_io AddrFI:$srcLow, 0)))>;
 
 // Multiply 64-bit unsigned and use upper result.
 def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),

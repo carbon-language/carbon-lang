@@ -658,19 +658,6 @@ def: Pat<(i64 (zext (i1 PredRegs:$src1))),
 def: Pat<(i64 (zext (i32 IntRegs:$src1))),
          (Zext64 IntRegs:$src1)>;
 
-// zext i32->i64
-def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>;
-
-let AddedComplexity = 100 in
-def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s30_2ImmPred:$offset)))),
-      (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
-                                  s30_2ImmPred:$offset)))>;
-
-// anyext i32->i64
-def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>;
-
 //===----------------------------------------------------------------------===//
 // LD -
 //===----------------------------------------------------------------------===//

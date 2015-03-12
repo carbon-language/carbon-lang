@@ -45,35 +45,17 @@ namespace llvm {
 ///
 namespace {
 class HexagonDAGToDAGISel : public SelectionDAGISel {
-  /// Subtarget - Keep a pointer to the Hexagon Subtarget around so that we can
-  /// make the right decision when generating code for different targets.
-  const HexagonSubtarget *Subtarget;
-
-  // Keep a reference to HexagonTargetMachine.
-  const HexagonTargetMachine& TM;
+  const HexagonTargetMachine& HTM;
+  const HexagonSubtarget &HST;
 public:
-  explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine,
+  explicit HexagonDAGToDAGISel(HexagonTargetMachine &tm,
                                CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(targetmachine, OptLevel), TM(targetmachine) {
+      : SelectionDAGISel(tm, OptLevel), HTM(tm),
+        HST(tm.getSubtarget<HexagonSubtarget>()) {
     initializeHexagonDAGToDAGISelPass(*PassRegistry::getPassRegistry());
   }
 
   SDNode *Select(SDNode *N) override;
-
-  // Complex Pattern Selectors.
-  inline bool foldGlobalAddress(SDValue &N, SDValue &R);
-  inline bool foldGlobalAddressGP(SDValue &N, SDValue &R);
-  bool foldGlobalAddressImpl(SDValue &N, SDValue &R, bool ShouldLookForGP);
-  bool SelectADDRri(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectADDRriS11_0(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectADDRriS11_1(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectADDRriS11_2(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectMEMriS11_2(SDValue& Addr, SDValue &Base, SDValue &Offset);
-  bool SelectADDRriS11_3(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectADDRrr(SDValue &Addr, SDValue &Base, SDValue &Offset);
-  bool SelectADDRriU6_0(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectADDRriU6_1(SDValue& N, SDValue &R1, SDValue &R2);
-  bool SelectADDRriU6_2(SDValue& N, SDValue &R1, SDValue &R2);
 
   // Complex Pattern Selectors.
   inline bool SelectAddrGA(SDValue &N, SDValue &R);
@@ -85,18 +67,12 @@ public:
     return "Hexagon DAG->DAG Pattern Instruction Selection";
   }
 
-  bool runOnMachineFunction(MachineFunction &MF) override {
-    Subtarget = &MF.getSubtarget<HexagonSubtarget>();
-    return SelectionDAGISel::runOnMachineFunction(MF);
-  }
-
+  SDNode *SelectFrameIndex(SDNode *N);
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                     unsigned ConstraintID,
                                     std::vector<SDValue> &OutOps) override;
-  bool SelectAddr(SDNode *Op, SDValue Addr, SDValue &Base, SDValue &Offset);
-
   SDNode *SelectLoad(SDNode *N);
   SDNode *SelectBaseOffsetLoad(LoadSDNode *LD, SDLoc dl);
   SDNode *SelectIndexedLoad(LoadSDNode *LD, SDLoc dl);
@@ -118,87 +94,88 @@ public:
   SDNode *SelectConstantFP(SDNode *N);
   SDNode *SelectAdd(SDNode *N);
 
-// XformMskToBitPosU5Imm - Returns the bit position which
-// the single bit 32 bit mask represents.
-// Used in Clr and Set bit immediate memops.
-SDValue XformMskToBitPosU5Imm(uint32_t Imm) {
-  int32_t bitPos;
-  bitPos = Log2_32(Imm);
-  assert(bitPos >= 0 && bitPos < 32 &&
-         "Constant out of range for 32 BitPos Memops");
-  return CurDAG->getTargetConstant(bitPos, MVT::i32);
-}
+  // XformMskToBitPosU5Imm - Returns the bit position which
+  // the single bit 32 bit mask represents.
+  // Used in Clr and Set bit immediate memops.
+  SDValue XformMskToBitPosU5Imm(uint32_t Imm) {
+    int32_t bitPos;
+    bitPos = Log2_32(Imm);
+    assert(bitPos >= 0 && bitPos < 32 &&
+           "Constant out of range for 32 BitPos Memops");
+    return CurDAG->getTargetConstant(bitPos, MVT::i32);
+  }
 
-// XformMskToBitPosU4Imm - Returns the bit position which the single bit 16 bit
-// mask represents. Used in Clr and Set bit immediate memops.
-SDValue XformMskToBitPosU4Imm(uint16_t Imm) {
-  return XformMskToBitPosU5Imm(Imm);
-}
+  // XformMskToBitPosU4Imm - Returns the bit position which the single-bit
+  // 16 bit mask represents. Used in Clr and Set bit immediate memops.
+  SDValue XformMskToBitPosU4Imm(uint16_t Imm) {
+    return XformMskToBitPosU5Imm(Imm);
+  }
 
-// XformMskToBitPosU3Imm - Returns the bit position which the single bit 8 bit
-// mask represents. Used in Clr and Set bit immediate memops.
-SDValue XformMskToBitPosU3Imm(uint8_t Imm) {
-  return XformMskToBitPosU5Imm(Imm);
-}
+  // XformMskToBitPosU3Imm - Returns the bit position which the single-bit
+  // 8 bit mask represents. Used in Clr and Set bit immediate memops.
+  SDValue XformMskToBitPosU3Imm(uint8_t Imm) {
+    return XformMskToBitPosU5Imm(Imm);
+  }
 
-// Return true if there is exactly one bit set in V, i.e., if V is one of the
-// following integers: 2^0, 2^1, ..., 2^31.
-bool ImmIsSingleBit(uint32_t v) const {
-  return isPowerOf2_32(v);
-}
+  // Return true if there is exactly one bit set in V, i.e., if V is one of the
+  // following integers: 2^0, 2^1, ..., 2^31.
+  bool ImmIsSingleBit(uint32_t v) const {
+    return isPowerOf2_32(v);
+  }
 
-// XformM5ToU5Imm - Return a target constant with the specified value, of type
-// i32 where the negative literal is transformed into a positive literal for
-// use in -= memops.
-inline SDValue XformM5ToU5Imm(signed Imm) {
-   assert( (Imm >= -31 && Imm <= -1)  && "Constant out of range for Memops");
-   return CurDAG->getTargetConstant( - Imm, MVT::i32);
-}
+  // XformM5ToU5Imm - Return a target constant with the specified value, of
+  // type i32 where the negative literal is transformed into a positive literal
+  // for use in -= memops.
+  inline SDValue XformM5ToU5Imm(signed Imm) {
+     assert( (Imm >= -31 && Imm <= -1)  && "Constant out of range for Memops");
+     return CurDAG->getTargetConstant( - Imm, MVT::i32);
+  }
 
+  // XformU7ToU7M1Imm - Return a target constant decremented by 1, in range
+  // [1..128], used in cmpb.gtu instructions.
+  inline SDValue XformU7ToU7M1Imm(signed Imm) {
+    assert((Imm >= 1 && Imm <= 128) && "Constant out of range for cmpb op");
+    return CurDAG->getTargetConstant(Imm - 1, MVT::i8);
+  }
 
-// XformU7ToU7M1Imm - Return a target constant decremented by 1, in range
-// [1..128], used in cmpb.gtu instructions.
-inline SDValue XformU7ToU7M1Imm(signed Imm) {
-  assert((Imm >= 1 && Imm <= 128) && "Constant out of range for cmpb op");
-  return CurDAG->getTargetConstant(Imm - 1, MVT::i8);
-}
+  // XformS8ToS8M1Imm - Return a target constant decremented by 1.
+  inline SDValue XformSToSM1Imm(signed Imm) {
+    return CurDAG->getTargetConstant(Imm - 1, MVT::i32);
+  }
 
-// XformS8ToS8M1Imm - Return a target constant decremented by 1.
-inline SDValue XformSToSM1Imm(signed Imm) {
-  return CurDAG->getTargetConstant(Imm - 1, MVT::i32);
-}
+  // XformU8ToU8M1Imm - Return a target constant decremented by 1.
+  inline SDValue XformUToUM1Imm(unsigned Imm) {
+    assert((Imm >= 1) && "Cannot decrement unsigned int less than 1");
+    return CurDAG->getTargetConstant(Imm - 1, MVT::i32);
+  }
 
-// XformU8ToU8M1Imm - Return a target constant decremented by 1.
-inline SDValue XformUToUM1Imm(unsigned Imm) {
-  assert((Imm >= 1) && "Cannot decrement unsigned int less than 1");
-  return CurDAG->getTargetConstant(Imm - 1, MVT::i32);
-}
+  // XformSToSM2Imm - Return a target constant decremented by 2.
+  inline SDValue XformSToSM2Imm(unsigned Imm) {
+    return CurDAG->getTargetConstant(Imm - 2, MVT::i32);
+  }
 
-// XformSToSM2Imm - Return a target constant decremented by 2.
-inline SDValue XformSToSM2Imm(unsigned Imm) {
-  return CurDAG->getTargetConstant(Imm - 2, MVT::i32);
-}
+  // XformSToSM3Imm - Return a target constant decremented by 3.
+  inline SDValue XformSToSM3Imm(unsigned Imm) {
+    return CurDAG->getTargetConstant(Imm - 3, MVT::i32);
+  }
 
-// XformSToSM3Imm - Return a target constant decremented by 3.
-inline SDValue XformSToSM3Imm(unsigned Imm) {
-  return CurDAG->getTargetConstant(Imm - 3, MVT::i32);
-}
-
-// Include the pieces autogenerated from the target description.
-#include "HexagonGenDAGISel.inc"
+  // Include the pieces autogenerated from the target description.
+  #include "HexagonGenDAGISel.inc"
 
 private:
-  bool isValueExtension(SDValue const &Val, unsigned FromBits, SDValue &Src);
-};
+  bool isValueExtension(const SDValue &Val, unsigned FromBits, SDValue &Src);
+}; // end HexagonDAGToDAGISel
 }  // end anonymous namespace
 
 
 /// createHexagonISelDag - This pass converts a legalized DAG into a
 /// Hexagon-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createHexagonISelDag(HexagonTargetMachine &TM,
-                                         CodeGenOpt::Level OptLevel) {
+namespace llvm {
+FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
+                                   CodeGenOpt::Level OptLevel) {
   return new HexagonDAGToDAGISel(TM, OptLevel);
+}
 }
 
 static void initializePassOnce(PassRegistry &Registry) {
@@ -210,76 +187,6 @@ static void initializePassOnce(PassRegistry &Registry) {
 
 void llvm::initializeHexagonDAGToDAGISelPass(PassRegistry &Registry) {
   CALL_ONCE_INITIALIZATION(initializePassOnce)
-}
-
-
-static bool IsS11_0_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isInt<11>(v);
-}
-
-
-static bool IsS11_1_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isShiftedInt<11,1>(v);
-}
-
-
-static bool IsS11_2_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isShiftedInt<11,2>(v);
-}
-
-
-static bool IsS11_3_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // immS16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isShiftedInt<11,3>(v);
-}
-
-
-static bool IsU6_0_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // u6 predicate - True if the immediate fits in a 6-bit unsigned extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isUInt<6>(v);
-}
-
-
-static bool IsU6_1_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // u6 predicate - True if the immediate fits in a 6-bit unsigned extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isShiftedUInt<6,1>(v);
-}
-
-
-static bool IsU6_2_Offset(SDNode * S) {
-    ConstantSDNode *N = cast<ConstantSDNode>(S);
-
-  // u6 predicate - True if the immediate fits in a 6-bit unsigned extended
-  // field.
-  int64_t v = (int64_t)N->getSExtValue();
-  return isShiftedUInt<6,2>(v);
 }
 
 
@@ -329,149 +236,119 @@ static unsigned doesIntrinsicReturnPredicate(unsigned ID)
   }
 }
 
-
 SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
                                                            unsigned Opcode,
-                                                           SDLoc dl)
-{
+                                                           SDLoc dl) {
   SDValue Chain = LD->getChain();
   EVT LoadedVT = LD->getMemoryVT();
   SDValue Base = LD->getBasePtr();
   SDValue Offset = LD->getOffset();
   SDNode *OffsetNode = Offset.getNode();
   int32_t Val = cast<ConstantSDNode>(OffsetNode)->getSExtValue();
-  SDValue N1 = LD->getOperand(1);
-  SDValue CPTmpN1_0;
-  SDValue CPTmpN1_1;
 
-  if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
-      N1.getNode()->getValueType(0) == MVT::i32) {
-    const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
-    if (TII->isValidAutoIncImm(LoadedVT, Val)) {
-      SDValue TargetConst = CurDAG->getTargetConstant(Val, MVT::i32);
-      SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::i32,
-                                                MVT::Other, Base, TargetConst,
-                                                Chain);
-      SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl, MVT::i64,
-                                                SDValue(Result_1, 0));
-      MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-      MemOp[0] = LD->getMemOperand();
-      cast<MachineSDNode>(Result_1)->setMemRefs(MemOp, MemOp + 1);
-      const SDValue Froms[] = { SDValue(LD, 0),
-                                SDValue(LD, 1),
-                                SDValue(LD, 2)
-      };
-      const SDValue Tos[]   = { SDValue(Result_2, 0),
-                                SDValue(Result_1, 1),
-                                SDValue(Result_1, 2)
-      };
-      ReplaceUses(Froms, Tos, 3);
-      return Result_2;
-    }
-    SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
-    SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
-    SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
-                                              MVT::Other, Base, TargetConst0,
+  const HexagonInstrInfo &TII = *HST.getInstrInfo();
+  if (TII.isValidAutoIncImm(LoadedVT, Val)) {
+    SDValue TargetConst = CurDAG->getTargetConstant(Val, MVT::i32);
+    SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::i32,
+                                              MVT::Other, Base, TargetConst,
                                               Chain);
-    SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl,
-                                                MVT::i64, SDValue(Result_1, 0));
-    SDNode* Result_3 = CurDAG->getMachineNode(Hexagon::A2_addi, dl,
-                                              MVT::i32, Base, TargetConstVal,
-                                                SDValue(Result_1, 1));
+    SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl, MVT::i64,
+                                              SDValue(Result_1, 0));
     MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
     MemOp[0] = LD->getMemOperand();
     cast<MachineSDNode>(Result_1)->setMemRefs(MemOp, MemOp + 1);
     const SDValue Froms[] = { SDValue(LD, 0),
                               SDValue(LD, 1),
-                              SDValue(LD, 2)
-    };
+                              SDValue(LD, 2) };
     const SDValue Tos[]   = { SDValue(Result_2, 0),
-                              SDValue(Result_3, 0),
-                              SDValue(Result_1, 1)
-    };
+                              SDValue(Result_1, 1),
+                              SDValue(Result_1, 2) };
     ReplaceUses(Froms, Tos, 3);
     return Result_2;
   }
-  return SelectCode(LD);
+
+  SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
+  SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
+  SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::Other,
+                                            Base, TargetConst0, Chain);
+  SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl, MVT::i64,
+                                            SDValue(Result_1, 0));
+  SDNode* Result_3 = CurDAG->getMachineNode(Hexagon::A2_addi, dl, MVT::i32,
+                                            Base, TargetConstVal,
+                                            SDValue(Result_1, 1));
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = LD->getMemOperand();
+  cast<MachineSDNode>(Result_1)->setMemRefs(MemOp, MemOp + 1);
+  const SDValue Froms[] = { SDValue(LD, 0),
+                            SDValue(LD, 1),
+                            SDValue(LD, 2) };
+  const SDValue Tos[]   = { SDValue(Result_2, 0),
+                            SDValue(Result_3, 0),
+                            SDValue(Result_1, 1) };
+  ReplaceUses(Froms, Tos, 3);
+  return Result_2;
 }
 
 
 SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
                                                            unsigned Opcode,
-                                                           SDLoc dl)
-{
+                                                           SDLoc dl) {
   SDValue Chain = LD->getChain();
   EVT LoadedVT = LD->getMemoryVT();
   SDValue Base = LD->getBasePtr();
   SDValue Offset = LD->getOffset();
   SDNode *OffsetNode = Offset.getNode();
   int32_t Val = cast<ConstantSDNode>(OffsetNode)->getSExtValue();
-  SDValue N1 = LD->getOperand(1);
-  SDValue CPTmpN1_0;
-  SDValue CPTmpN1_1;
 
-  if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
-      N1.getNode()->getValueType(0) == MVT::i32) {
-    const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
-    if (TII->isValidAutoIncImm(LoadedVT, Val)) {
-      SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
-      SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
-      SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
-                                                MVT::i32, MVT::Other, Base,
-                                                TargetConstVal, Chain);
-      SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_tfrsi, dl, MVT::i32,
-                                                TargetConst0);
-      SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::A2_combinew, dl,
-                                                MVT::i64, MVT::Other,
-                                                SDValue(Result_2,0),
-                                                SDValue(Result_1,0));
-      MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-      MemOp[0] = LD->getMemOperand();
-      cast<MachineSDNode>(Result_1)->setMemRefs(MemOp, MemOp + 1);
-      const SDValue Froms[] = { SDValue(LD, 0),
-                                SDValue(LD, 1),
-                                SDValue(LD, 2)
-      };
-      const SDValue Tos[]   = { SDValue(Result_3, 0),
-                                SDValue(Result_1, 1),
-                                SDValue(Result_1, 2)
-      };
-      ReplaceUses(Froms, Tos, 3);
-      return Result_3;
-    }
-
-    // Generate an indirect load.
-    SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
+  const HexagonInstrInfo &TII = *HST.getInstrInfo();
+  if (TII.isValidAutoIncImm(LoadedVT, Val)) {
     SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
+    SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
     SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
-                                              MVT::Other,
-                                              Base, TargetConst0, Chain);
-    SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_tfrsi, dl, MVT::i32,
-                                              TargetConst0);
-    SDNode *Result_3 = CurDAG->getMachineNode(Hexagon::A2_combinew, dl,
+                                              MVT::i32, MVT::Other, Base,
+                                              TargetConstVal, Chain);
+    SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A4_combineir, dl,
                                               MVT::i64, MVT::Other,
-                                              SDValue(Result_2,0),
+                                              TargetConst0,
                                               SDValue(Result_1,0));
-    // Add offset to base.
-    SDNode* Result_4 = CurDAG->getMachineNode(Hexagon::A2_addi, dl, MVT::i32,
-                                              Base, TargetConstVal,
-                                              SDValue(Result_1, 1));
     MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
     MemOp[0] = LD->getMemOperand();
     cast<MachineSDNode>(Result_1)->setMemRefs(MemOp, MemOp + 1);
     const SDValue Froms[] = { SDValue(LD, 0),
                               SDValue(LD, 1),
-                              SDValue(LD, 2)
-    };
-    const SDValue Tos[]   = { SDValue(Result_3, 0), // Load value.
-                              SDValue(Result_4, 0), // New address.
-                              SDValue(Result_1, 1)
-    };
+                              SDValue(LD, 2) };
+    const SDValue Tos[]   = { SDValue(Result_2, 0),
+                              SDValue(Result_1, 1),
+                              SDValue(Result_1, 2) };
     ReplaceUses(Froms, Tos, 3);
-    return Result_3;
+    return Result_2;
   }
 
-  return SelectCode(LD);
+  // Generate an indirect load.
+  SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
+  SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
+  SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
+                                            MVT::Other, Base, TargetConst0,
+                                            Chain);
+  SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A4_combineir, dl,
+                                            MVT::i64, MVT::Other,
+                                            TargetConst0,
+                                            SDValue(Result_1,0));
+  // Add offset to base.
+  SDNode* Result_3 = CurDAG->getMachineNode(Hexagon::A2_addi, dl, MVT::i32,
+                                            Base, TargetConstVal,
+                                            SDValue(Result_1, 1));
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = LD->getMemOperand();
+  cast<MachineSDNode>(Result_1)->setMemRefs(MemOp, MemOp + 1);
+  const SDValue Froms[] = { SDValue(LD, 0),
+                            SDValue(LD, 1),
+                            SDValue(LD, 2) };
+  const SDValue Tos[]   = { SDValue(Result_2, 0), // Load value.
+                            SDValue(Result_3, 0), // New address.
+                            SDValue(Result_1, 1) };
+  ReplaceUses(Froms, Tos, 3);
+  return Result_2;
 }
 
 
@@ -485,45 +362,44 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
   EVT LoadedVT = LD->getMemoryVT();
   unsigned Opcode = 0;
 
-  // Check for zero ext loads.
-  bool zextval = (LD->getExtensionType() == ISD::ZEXTLOAD);
+  // Check for zero extended loads. Treat any-extend loads as zero extended
+  // loads.
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  bool IsZeroExt = (ExtType == ISD::ZEXTLOAD || ExtType == ISD::EXTLOAD);
 
   // Figure out the opcode.
-  const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
+  const HexagonInstrInfo &TII = *HST.getInstrInfo();
   if (LoadedVT == MVT::i64) {
-    if (TII->isValidAutoIncImm(LoadedVT, Val))
+    if (TII.isValidAutoIncImm(LoadedVT, Val))
       Opcode = Hexagon::L2_loadrd_pi;
     else
       Opcode = Hexagon::L2_loadrd_io;
   } else if (LoadedVT == MVT::i32) {
-    if (TII->isValidAutoIncImm(LoadedVT, Val))
+    if (TII.isValidAutoIncImm(LoadedVT, Val))
       Opcode = Hexagon::L2_loadri_pi;
     else
       Opcode = Hexagon::L2_loadri_io;
   } else if (LoadedVT == MVT::i16) {
-    if (TII->isValidAutoIncImm(LoadedVT, Val))
-      Opcode = zextval ? Hexagon::L2_loadruh_pi : Hexagon::L2_loadrh_pi;
+    if (TII.isValidAutoIncImm(LoadedVT, Val))
+      Opcode = IsZeroExt ? Hexagon::L2_loadruh_pi : Hexagon::L2_loadrh_pi;
     else
-      Opcode = zextval ? Hexagon::L2_loadruh_io : Hexagon::L2_loadrh_io;
+      Opcode = IsZeroExt ? Hexagon::L2_loadruh_io : Hexagon::L2_loadrh_io;
   } else if (LoadedVT == MVT::i8) {
-    if (TII->isValidAutoIncImm(LoadedVT, Val))
-      Opcode = zextval ? Hexagon::L2_loadrub_pi : Hexagon::L2_loadrb_pi;
+    if (TII.isValidAutoIncImm(LoadedVT, Val))
+      Opcode = IsZeroExt ? Hexagon::L2_loadrub_pi : Hexagon::L2_loadrb_pi;
     else
-      Opcode = zextval ? Hexagon::L2_loadrub_io : Hexagon::L2_loadrb_io;
+      Opcode = IsZeroExt ? Hexagon::L2_loadrub_io : Hexagon::L2_loadrb_io;
   } else
     llvm_unreachable("unknown memory type");
 
-  // For zero ext i64 loads, we need to add combine instructions.
-  if (LD->getValueType(0) == MVT::i64 &&
-      LD->getExtensionType() == ISD::ZEXTLOAD) {
+  // For zero extended i64 loads, we need to add combine instructions.
+  if (LD->getValueType(0) == MVT::i64 && IsZeroExt)
     return SelectIndexedLoadZeroExtend64(LD, Opcode, dl);
-  }
-  if (LD->getValueType(0) == MVT::i64 &&
-             LD->getExtensionType() == ISD::SEXTLOAD) {
-    // Handle sign ext i64 loads.
+  // Handle sign extended i64 loads.
+  if (LD->getValueType(0) == MVT::i64 && ExtType == ISD::SEXTLOAD)
     return SelectIndexedLoadSignExtend64(LD, Opcode, dl);
-  }
-  if (TII->isValidAutoIncImm(LoadedVT, Val)) {
+
+  if (TII.isValidAutoIncImm(LoadedVT, Val)) {
     SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
     SDNode* Result = CurDAG->getMachineNode(Opcode, dl,
                                             LD->getValueType(0),
@@ -595,13 +471,12 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
   // Get the constant value.
   int32_t Val = cast<ConstantSDNode>(OffsetNode)->getSExtValue();
   EVT StoredVT = ST->getMemoryVT();
+  EVT ValueVT = Value.getValueType();
 
   // Offset value must be within representable range
   // and must have correct alignment properties.
-  const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
-  if (TII->isValidAutoIncImm(StoredVT, Val)) {
-    SDValue Ops[] = {Base, CurDAG->getTargetConstant(Val, MVT::i32), Value,
-                     Chain};
+  const HexagonInstrInfo &TII = *HST.getInstrInfo();
+  if (TII.isValidAutoIncImm(StoredVT, Val)) {
     unsigned Opcode = 0;
 
     // Figure out the post inc version of opcode.
@@ -611,6 +486,13 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
     else if (StoredVT == MVT::i8) Opcode = Hexagon::S2_storerb_pi;
     else llvm_unreachable("unknown memory type");
 
+    if (ST->isTruncatingStore() && ValueVT.getSizeInBits() == 64) {
+      assert(StoredVT.getSizeInBits() < 64 && "Not a truncating store");
+      Value = CurDAG->getTargetExtractSubreg(Hexagon::subreg_loreg,
+                                             dl, MVT::i32, Value);
+    }
+    SDValue Ops[] = {Base, CurDAG->getTargetConstant(Val, MVT::i32), Value,
+                     Chain};
     // Build post increment store.
     SDNode* Result = CurDAG->getMachineNode(Opcode, dl, MVT::i32,
                                             MVT::Other, Ops);
@@ -624,7 +506,8 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
   }
 
   // Note: Order of operands matches the def of instruction:
-  // def STrid : STInst<(outs), (ins MEMri:$addr, DoubleRegs:$src1), ...
+  // def S2_storerd_io
+  //   : STInst<(outs), (ins IntRegs:$base, imm:$offset, DoubleRegs:$src1), ...
   // and it differs for POST_ST* for instance.
   SDValue Ops[] = { Base, CurDAG->getTargetConstant(0, MVT::i32), Value,
                     Chain};
@@ -653,7 +536,6 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
   ReplaceUses(SDValue(ST,1), SDValue(Result_1,0));
   return Result_2;
 }
-
 
 SDNode *HexagonDAGToDAGISel::SelectStore(SDNode *N) {
   SDLoc dl(N);
@@ -1093,7 +975,6 @@ SDNode *HexagonDAGToDAGISel::SelectConstantFP(SDNode *N) {
   return SelectCode(N);
 }
 
-
 //
 // Map predicate true (encoded as -1 in LLVM) to a XOR.
 //
@@ -1159,6 +1040,19 @@ SDNode *HexagonDAGToDAGISel::SelectAdd(SDNode *N) {
   return Result;
 }
 
+SDNode *HexagonDAGToDAGISel::SelectFrameIndex(SDNode *N) {
+  int FX = cast<FrameIndexSDNode>(N)->getIndex();
+  SDValue FI = CurDAG->getTargetFrameIndex(FX, MVT::i32);
+  SDValue Zero = CurDAG->getTargetConstant(0, MVT::i32);
+  SDLoc DL(N);
+
+  SDNode *R = CurDAG->getMachineNode(Hexagon::TFR_FI, DL, MVT::i32, FI, Zero);
+
+  if (N->getHasDebugValue())
+    CurDAG->TransferDbgValues(SDValue(N, 0), SDValue(R, 0));
+  return R;
+}
+
 
 SDNode *HexagonDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode()) {
@@ -1166,13 +1060,15 @@ SDNode *HexagonDAGToDAGISel::Select(SDNode *N) {
     return nullptr;   // Already selected.
   }
 
-
   switch (N->getOpcode()) {
   case ISD::Constant:
     return SelectConstant(N);
 
   case ISD::ConstantFP:
     return SelectConstantFP(N);
+
+  case ISD::FrameIndex:
+    return SelectFrameIndex(N);
 
   case ISD::ADD:
     return SelectAdd(N);
@@ -1206,265 +1102,25 @@ SDNode *HexagonDAGToDAGISel::Select(SDNode *N) {
 }
 
 
-//
-// Hexagon_TODO: Five functions for ADDRri?! Surely there must be a better way
-// to define these instructions.
-//
-bool HexagonDAGToDAGISel::SelectADDRri(SDValue& Addr, SDValue &Base,
-                                       SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return true;
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return true;
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriS11_0(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsS11_0_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsS11_0_Offset(Offset.getNode()));
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriS11_1(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsS11_1_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsS11_1_Offset(Offset.getNode()));
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriS11_2(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsS11_2_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsS11_2_Offset(Offset.getNode()));
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriU6_0(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsU6_0_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsU6_0_Offset(Offset.getNode()));
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriU6_1(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsU6_1_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsU6_1_Offset(Offset.getNode()));
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriU6_2(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsU6_2_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsU6_2_Offset(Offset.getNode()));
-}
-
-
-bool HexagonDAGToDAGISel::SelectMEMriS11_2(SDValue& Addr, SDValue &Base,
-                                           SDValue &Offset) {
-
-  if (Addr.getOpcode() != ISD::ADD) {
-    return(SelectADDRriS11_2(Addr, Base, Offset));
-  }
-
-  return SelectADDRriS11_2(Addr, Base, Offset);
-}
-
-
-bool HexagonDAGToDAGISel::SelectADDRriS11_3(SDValue& Addr, SDValue &Base,
-                                            SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return (IsS11_3_Offset(Offset.getNode()));
-  }
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return (IsS11_3_Offset(Offset.getNode()));
-}
-
-bool HexagonDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1,
-                                       SDValue &R2) {
-  if (Addr.getOpcode() == ISD::FrameIndex) return false;
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (Addr.getOpcode() == ISD::ADD) {
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      if (isInt<13>(CN->getSExtValue()))
-        return false;  // Let the reg+imm pattern catch this!
-    R1 = Addr.getOperand(0);
-    R2 = Addr.getOperand(1);
-    return true;
-  }
-
-  R1 = Addr;
-
-  return true;
-}
-
-
-// Handle generic address case. It is accessed from inlined asm =m constraints,
-// which could have any kind of pointer.
-bool HexagonDAGToDAGISel::SelectAddr(SDNode *Op, SDValue Addr,
-                                          SDValue &Base, SDValue &Offset) {
-  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
-      Addr.getOpcode() == ISD::TargetGlobalAddress)
-    return false;  // Direct calls.
-
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return true;
-  }
-
-  if (Addr.getOpcode() == ISD::ADD) {
-    Base = Addr.getOperand(0);
-    Offset = Addr.getOperand(1);
-    return true;
-  }
-
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return true;
-}
-
-
 bool HexagonDAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
-  SDValue Op0, Op1;
+  SDValue Inp = Op, Res;
 
   switch (ConstraintID) {
   case InlineAsm::Constraint_o:   // Offsetable.
   case InlineAsm::Constraint_v:   // Not offsetable.
-  default: return true;
+  default:
+    return true;
   case InlineAsm::Constraint_m:   // Memory.
-    if (!SelectAddr(Op.getNode(), Op, Op0, Op1))
-      return true;
+    if (SelectAddrFI(Inp, Res))
+      OutOps.push_back(Res);
+    else
+      OutOps.push_back(Inp);
     break;
   }
 
-  OutOps.push_back(Op0);
-  OutOps.push_back(Op1);
-  return false;
-}
-
-//===--------------------------------------------------------------------===//
-// Return true if the non-GP-relative global address can be folded.
-//===--------------------------------------------------------------------===//
-inline bool HexagonDAGToDAGISel::foldGlobalAddress(SDValue &N, SDValue &R) {
-  return foldGlobalAddressImpl(N, R, false);
-}
-
-//===--------------------------------------------------------------------===//
-// Return true if the GP-relative global address can be folded.
-//===--------------------------------------------------------------------===//
-inline bool HexagonDAGToDAGISel::foldGlobalAddressGP(SDValue &N, SDValue &R) {
-  return foldGlobalAddressImpl(N, R, true);
-}
-
-//===--------------------------------------------------------------------===//
-// Fold offset of the global address if number of uses are below threshold.
-//===--------------------------------------------------------------------===//
-bool HexagonDAGToDAGISel::foldGlobalAddressImpl(SDValue &N, SDValue &R,
-                                                bool ShouldLookForGP) {
-  if (N.getOpcode() == ISD::ADD) {
-    SDValue N0 = N.getOperand(0);
-    SDValue N1 = N.getOperand(1);
-    if ((ShouldLookForGP && (N0.getOpcode() == HexagonISD::CONST32_GP)) ||
-        (!ShouldLookForGP && (N0.getOpcode() == HexagonISD::CONST32))) {
-      ConstantSDNode *Const = dyn_cast<ConstantSDNode>(N1);
-      GlobalAddressSDNode *GA =
-        dyn_cast<GlobalAddressSDNode>(N0.getOperand(0));
-
-      if (Const && GA &&
-          (GA->getOpcode() == ISD::TargetGlobalAddress)) {
-        if (N0.getOpcode() == HexagonISD::CONST32)
-          return false;
-        R = CurDAG->getTargetGlobalAddress(GA->getGlobal(),
-                                          SDLoc(Const),
-                                          N.getValueType(),
-                                          GA->getOffset() +
-                                          (uint64_t)Const->getSExtValue());
-        return true;
-      }
-    }
-  }
+  OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
   return false;
 }
 
@@ -1525,8 +1181,8 @@ bool HexagonDAGToDAGISel::SelectGlobalAddress(SDValue &N, SDValue &R,
   return false;
 }
 
-bool HexagonDAGToDAGISel::isValueExtension(SDValue const &Val,
-                                           unsigned FromBits, SDValue &Src) {
+bool HexagonDAGToDAGISel::isValueExtension(const SDValue &Val,
+      unsigned FromBits, SDValue &Src) {
   unsigned Opc = Val.getOpcode();
   switch (Opc) {
   case ISD::SIGN_EXTEND:

@@ -119,7 +119,9 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset -= 2 * Hexagon_WordSize;
   }
 
-  const unsigned FrameSize = MFI.getStackSize();
+  unsigned FrameSize = MFI.getStackSize();
+  if (MI.getOpcode() == Hexagon::TFR_FI)
+    MI.setDesc(TII.get(Hexagon::A2_addi));
 
   if (!MFI.hasVarSizedObjects() &&
       TII.isValidOffset(MI.getOpcode(), (FrameSize+Offset)) &&
