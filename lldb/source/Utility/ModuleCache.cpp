@@ -10,6 +10,7 @@
 #include "ModuleCache.h"
 
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "llvm/Support/FileSystem.h"
 
@@ -52,16 +53,15 @@ MakeDirectory (const FileSpec &dir_path)
 Error
 ModuleCache::Put (const FileSpec &root_dir_spec,
                   const char *hostname,
-                  const UUID &uuid,
-                  const FileSpec &platform_module_spec,
+                  const ModuleSpec &module_spec,
                   const FileSpec &tmp_file)
 {
-    const auto module_spec_dir = GetModuleDirectory (root_dir_spec, uuid);
+    const auto module_spec_dir = GetModuleDirectory (root_dir_spec, module_spec.GetUUID ());
     auto error = MakeDirectory (module_spec_dir);
     if (error.Fail ())
         return error;
 
-    const auto module_file_path = JoinPath (module_spec_dir, platform_module_spec.GetFilename ().AsCString ());
+    const auto module_file_path = JoinPath (module_spec_dir, module_spec.GetFileSpec ().GetFilename ().AsCString ());
 
     const auto tmp_file_path = tmp_file.GetPath ();
     const auto err_code = llvm::sys::fs::copy_file (tmp_file_path.c_str (), module_file_path.GetPath ().c_str ());
@@ -74,36 +74,45 @@ ModuleCache::Put (const FileSpec &root_dir_spec,
     }
 
     // Create sysroot link to a module.
-    const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, platform_module_spec);
+    const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, module_spec.GetFileSpec ());
     return CreateHostSysRootModuleSymLink (sysroot_module_path_spec, module_file_path);
 }
 
 Error
 ModuleCache::Get (const FileSpec &root_dir_spec,
                   const char *hostname,
-                  const UUID &uuid,
-                  const FileSpec &platform_module_spec,
-                  FileSpec &cached_module_spec)
+                  const ModuleSpec &module_spec,
+                  ModuleSP &cached_module_sp)
 {
-    cached_module_spec.Clear ();
-
-    const auto module_spec_dir = GetModuleDirectory (root_dir_spec, uuid);
-    const auto module_file_path = JoinPath (module_spec_dir, platform_module_spec.GetFilename ().AsCString ());
-
-    Error error;
-    if (!module_file_path.Exists ())
+    const auto find_it = m_loaded_modules.find (module_spec.GetUUID ().GetAsString());
+    if (find_it != m_loaded_modules.end ())
     {
-        error.SetErrorStringWithFormat ("module %s not found", module_file_path.GetPath ().c_str ());
-        return error;
+        cached_module_sp = (*find_it).second.lock ();
+        if (cached_module_sp)
+            return Error ();
+        m_loaded_modules.erase (find_it);
     }
-    cached_module_spec = module_file_path;
+
+    const auto module_spec_dir = GetModuleDirectory (root_dir_spec,  module_spec.GetUUID ());
+    const auto module_file_path = JoinPath (module_spec_dir, module_spec.GetFileSpec ().GetFilename ().AsCString ());
+
+    if (!module_file_path.Exists ())
+        return Error ("module %s not found", module_file_path.GetPath ().c_str ());
 
     // We may have already cached module but downloaded from an another host - in this case let's create a symlink to it.
-    const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, platform_module_spec);
+    const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, module_spec.GetFileSpec ());
     if (!sysroot_module_path_spec.Exists ())
-        CreateHostSysRootModuleSymLink (sysroot_module_path_spec, cached_module_spec);
+        CreateHostSysRootModuleSymLink (sysroot_module_path_spec, module_spec.GetFileSpec ());
 
-    return error;
+    auto cached_module_spec (module_spec);
+    cached_module_spec.GetUUID ().Clear ();  // Clear UUID since it may contain md5 content hash instead of real UUID.
+    cached_module_spec.GetFileSpec () = module_file_path;
+    cached_module_spec.GetPlatformFileSpec () = module_spec.GetFileSpec ();
+    cached_module_sp.reset (new Module (cached_module_spec));
+
+    m_loaded_modules.insert (std::make_pair (module_spec.GetUUID ().GetAsString (), cached_module_sp));
+
+    return Error ();
 }
 
 FileSpec

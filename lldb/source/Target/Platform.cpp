@@ -1756,22 +1756,12 @@ bool
 Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
                                  lldb::ModuleSP &module_sp)
 {
-    FileSpec cached_file_spec;
-    if (m_module_cache && GetFileFromLocalCache (module_spec, cached_file_spec))
-    {
-        auto cached_module_spec (module_spec);
-        cached_module_spec.GetFileSpec () = cached_file_spec;
-        cached_module_spec.GetPlatformFileSpec () = module_spec.GetFileSpec ();
-        module_sp.reset (new Module (cached_module_spec));
-
-        return true;
-    }
-    return false;
+    return (m_module_cache && GetModuleFromLocalCache (module_spec, module_sp));
 }
 
 bool
-Platform::GetFileFromLocalCache (const ModuleSpec& module_spec,
-                                 FileSpec &cached_file_spec)
+Platform::GetModuleFromLocalCache (const ModuleSpec& module_spec,
+                                   lldb::ModuleSP &module_sp)
 {
     Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
 
@@ -1783,9 +1773,8 @@ Platform::GetFileFromLocalCache (const ModuleSpec& module_spec,
     // Check local cache for a module.
     auto error = m_module_cache->Get (GetModuleCacheRoot (),
                                       GetHostname (),
-                                      resolved_module_spec.GetUUID (),
-                                      resolved_module_spec.GetFileSpec (),
-                                      cached_file_spec);
+                                      resolved_module_spec,
+                                      module_sp);
     if (error.Success ())
         return true;
 
@@ -1825,8 +1814,7 @@ Platform::GetFileFromLocalCache (const ModuleSpec& module_spec,
     // Put downloaded file into local module cache.
     error = m_module_cache->Put (GetModuleCacheRoot (),
                                  GetHostname (),
-                                 resolved_module_spec.GetUUID (),
-                                 resolved_module_spec.GetFileSpec (),
+                                 resolved_module_spec,
                                  tmp_download_file_spec);
     if (error.Fail ())
     {
@@ -1839,9 +1827,8 @@ Platform::GetFileFromLocalCache (const ModuleSpec& module_spec,
 
     error = m_module_cache->Get (GetModuleCacheRoot (),
                                  GetHostname (),
-                                 resolved_module_spec.GetUUID (),
-                                 resolved_module_spec.GetFileSpec (),
-                                 cached_file_spec);
+                                 resolved_module_spec,
+                                 module_sp);
     return error.Success ();
 }
 

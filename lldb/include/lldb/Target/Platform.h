@@ -1134,8 +1134,8 @@ class ModuleCache;
                              const FileSpec& dst_file_spec);
 
         bool
-        GetFileFromLocalCache (const ModuleSpec& module_spec,
-                               FileSpec &cached_file_spec);
+        GetModuleFromLocalCache (const ModuleSpec& module_spec,
+                                 lldb::ModuleSP &module_sp);
 
         FileSpec GetModuleCacheRoot ();
 

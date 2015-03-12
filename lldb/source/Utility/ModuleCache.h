@@ -17,9 +17,11 @@
 #include "lldb/Host/FileSpec.h"
 
 #include <string>
+#include <unordered_map>
 
 namespace lldb_private {
 
+class Module;
 class UUID;
 
 //----------------------------------------------------------------------
@@ -45,16 +47,14 @@ public:
     Error
     Put (const FileSpec &root_dir_spec,
          const char *hostname,
-         const UUID &uuid,
-         const FileSpec &platform_module_spec,
+         const ModuleSpec &module_spec,
          const FileSpec &tmp_file);
 
     Error
     Get (const FileSpec &root_dir_spec,
          const char *hostname,
-         const UUID &uuid,
-         const FileSpec &platform_module_spec,
-         FileSpec &cached_module_spec);
+         const ModuleSpec &module_spec,
+         lldb::ModuleSP &cached_module_sp);
 
 private:
     static FileSpec
@@ -65,6 +65,8 @@ private:
 
     static Error
     CreateHostSysRootModuleSymLink (const FileSpec &sysroot_module_path_spec, const FileSpec &module_file_path);
+
+    std::unordered_map<std::string, lldb::ModuleWP> m_loaded_modules;
 };
 
 } // namespace lldb_private
