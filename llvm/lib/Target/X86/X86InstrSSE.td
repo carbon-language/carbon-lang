@@ -8595,9 +8595,7 @@ def : Pat<(vinsert128_insert:$ins (v16i16 VR256:$src1),
 //
 def VEXTRACTI128rr : AVX2AIi8<0x39, MRMDestReg, (outs VR128:$dst),
           (ins VR256:$src1, u8imm:$src2),
-          "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          [(set VR128:$dst,
-            (int_x86_avx2_vextracti128 VR256:$src1, imm:$src2))]>,
+          "vextracti128\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
           Sched<[WriteShuffle256]>, VEX, VEX_L;
 let hasSideEffects = 0, mayStore = 1 in
 def VEXTRACTI128mr : AVX2AIi8<0x39, MRMDestMem, (outs),

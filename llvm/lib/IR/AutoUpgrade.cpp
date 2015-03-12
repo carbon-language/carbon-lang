@@ -161,9 +161,11 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx.vinsertf128.pd.256" ||
         Name == "x86.avx.vinsertf128.ps.256" ||
         Name == "x86.avx.vinsertf128.si.256" ||
+        Name == "x86.avx2.vinserti128" ||
         Name == "x86.avx.vextractf128.pd.256" ||
         Name == "x86.avx.vextractf128.ps.256" ||
         Name == "x86.avx.vextractf128.si.256" ||
+        Name == "x86.avx2.vextracti128" ||
         Name == "x86.avx.movnt.dq.256" ||
         Name == "x86.avx.movnt.pd.256" ||
         Name == "x86.avx.movnt.ps.256" ||
@@ -634,7 +636,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateShuffleVector(Op0, Op1, ConstantVector::get(Idxs));
     } else if (Name == "llvm.x86.avx.vinsertf128.pd.256" ||
                Name == "llvm.x86.avx.vinsertf128.ps.256" ||
-               Name == "llvm.x86.avx.vinsertf128.si.256") {
+               Name == "llvm.x86.avx.vinsertf128.si.256" ||
+               Name == "llvm.x86.avx2.vinserti128") {
       Value *Op0 = CI->getArgOperand(0);
       Value *Op1 = CI->getArgOperand(1);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(2))->getZExtValue();
@@ -679,7 +682,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = Builder.CreateShuffleVector(Op0, Rep, ConstantVector::get(Idxs2));
     } else if (Name == "llvm.x86.avx.vextractf128.pd.256" ||
                Name == "llvm.x86.avx.vextractf128.ps.256" ||
-               Name == "llvm.x86.avx.vextractf128.si.256") {
+               Name == "llvm.x86.avx.vextractf128.si.256" ||
+               Name == "llvm.x86.avx2.vextracti128") {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       VectorType *VecTy = cast<VectorType>(CI->getType());
