@@ -6627,6 +6627,8 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
           "- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;"));
 
   // Very long objectiveC method declaration.
+  verifyFormat("- (void)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\n"
+               "    (SoooooooooooooooooooooomeType *)bbbbbbbbbb;");
   verifyFormat("- (NSUInteger)indexOfObject:(id)anObject\n"
                "                    inRange:(NSRange)range\n"
                "                   outRange:(NSRange)out_range\n"

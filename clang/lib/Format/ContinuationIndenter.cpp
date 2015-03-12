@@ -307,7 +307,9 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     else if (State.Stack.back().Indent + Current.LongestObjCSelectorName >
              State.Column + Spaces + Current.ColumnWidth)
       State.Stack.back().ColonPos =
-          State.Stack.back().Indent + Current.LongestObjCSelectorName;
+          std::max(State.FirstIndent + Style.ContinuationIndentWidth,
+                   State.Stack.back().Indent) +
+          Current.LongestObjCSelectorName;
     else
       State.Stack.back().ColonPos = State.Column + Spaces + Current.ColumnWidth;
   }
@@ -647,12 +649,6 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       State.Stack.back().AvoidBinPacking = true;
     State.Stack.back().BreakBeforeParameter = false;
   }
-
-  // In ObjC method declaration we align on the ":" of parameters, but we need
-  // to ensure that we indent parameters on subsequent lines by at least our
-  // continuation indent width.
-  if (Current.is(TT_ObjCMethodSpecifier))
-    State.Stack.back().Indent += Style.ContinuationIndentWidth;
 
   // Insert scopes created by fake parenthesis.
   const FormatToken *Previous = Current.getPreviousNonComment();
