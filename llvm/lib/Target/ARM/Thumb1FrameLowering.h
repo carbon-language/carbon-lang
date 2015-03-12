@@ -16,7 +16,7 @@
 
 #include "ARMFrameLowering.h"
 #include "Thumb1InstrInfo.h"
-#include "Thumb1RegisterInfo.h"
+#include "ThumbRegisterInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {

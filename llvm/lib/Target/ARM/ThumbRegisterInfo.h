@@ -1,4 +1,4 @@
-//===- Thumb1RegisterInfo.h - Thumb-1 Register Information Impl -*- C++ -*-===//
+//===- ThumbRegisterInfo.h - Thumb Register Information Impl -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Thumb-1 implementation of the TargetRegisterInfo
-// class.
+// This file contains the Thumb implementation of the TargetRegisterInfo
+// class. With the exception of emitLoadConstPool Thumb2 tracks
+// ARMBaseRegisterInfo, Thumb1 overloads the functions below.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,9 +23,9 @@ namespace llvm {
   class ARMSubtarget;
   class ARMBaseInstrInfo;
 
-struct Thumb1RegisterInfo : public ARMBaseRegisterInfo {
+struct ThumbRegisterInfo : public ARMBaseRegisterInfo {
 public:
-  Thumb1RegisterInfo();
+  ThumbRegisterInfo();
 
   const TargetRegisterClass *
   getLargestLegalSuperClass(const TargetRegisterClass *RC,

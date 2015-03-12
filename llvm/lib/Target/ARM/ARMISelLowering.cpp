@@ -1991,7 +1991,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
-  // FIXME: Completely disable sibcall for Thumb1 since Thumb1RegisterInfo::
+  // FIXME: Completely disable sibcall for Thumb1 since ThumbRegisterInfo::
   // emitEpilogue is not ready for them. Thumb tail calls also use t2B, as
   // the Thumb1 16-bit unconditional branch doesn't have sufficient relocation
   // support in the assembler and linker to be used. This would need to be

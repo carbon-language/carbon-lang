@@ -41,7 +41,7 @@ static void
 emitSPUpdate(MachineBasicBlock &MBB,
              MachineBasicBlock::iterator &MBBI,
              const TargetInstrInfo &TII, DebugLoc dl,
-             const Thumb1RegisterInfo &MRI,
+             const ThumbRegisterInfo &MRI,
              int NumBytes, unsigned MIFlags = MachineInstr::NoFlags)  {
   emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::SP, ARM::SP, NumBytes, TII,
                             MRI, MIFlags);
@@ -53,8 +53,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   const Thumb1InstrInfo &TII =
       *static_cast<const Thumb1InstrInfo *>(STI.getInstrInfo());
-  const Thumb1RegisterInfo *RegInfo =
-      static_cast<const Thumb1RegisterInfo *>(STI.getRegisterInfo());
+  const ThumbRegisterInfo *RegInfo =
+      static_cast<const ThumbRegisterInfo *>(STI.getRegisterInfo());
   if (!hasReservedCallFrame(MF)) {
     // If we have alloca, convert as follows:
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
@@ -89,8 +89,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
-  const Thumb1RegisterInfo *RegInfo =
-      static_cast<const Thumb1RegisterInfo *>(STI.getRegisterInfo());
+  const ThumbRegisterInfo *RegInfo =
+      static_cast<const ThumbRegisterInfo *>(STI.getRegisterInfo());
   const Thumb1InstrInfo &TII =
       *static_cast<const Thumb1InstrInfo *>(STI.getInstrInfo());
 
@@ -327,8 +327,8 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
   DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  const Thumb1RegisterInfo *RegInfo =
-      static_cast<const Thumb1RegisterInfo *>(STI.getRegisterInfo());
+  const ThumbRegisterInfo *RegInfo =
+      static_cast<const ThumbRegisterInfo *>(STI.getRegisterInfo());
   const Thumb1InstrInfo &TII =
       *static_cast<const Thumb1InstrInfo *>(STI.getInstrInfo());
 
