@@ -113,8 +113,6 @@ public:
     assert(!CheckName.empty());
   }
 
-  ~ClangTidyCheck() override = default;
-
   /// \brief Override this to register \c PPCallbacks with \c Compiler.
   ///
   /// This should be used for clang-tidy checks that analyze preprocessor-
