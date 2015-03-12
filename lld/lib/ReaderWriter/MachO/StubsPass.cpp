@@ -274,6 +274,7 @@ public:
       }
     }
     assert(binderFound && "dyld_stub_binder not found");
+    (void)binderFound;
 
     // Sort targets by name, so stubs and lazy pointers are consistent
     std::vector<const Atom *> targetsNeedingStubs;
