@@ -9,7 +9,7 @@ declare float @llvm.fabs.f32(float) nounwind readnone
 ; GCN-LABEL: {{^}}madak_f32:
 ; GCN: buffer_load_dword [[VA:v[0-9]+]]
 ; GCN: buffer_load_dword [[VB:v[0-9]+]]
-; GCN: v_madak_f32 {{v[0-9]+}}, [[VB]], [[VA]], 0x41200000
+; GCN: v_madak_f32_e32 {{v[0-9]+}}, [[VB]], [[VA]], 0x41200000
 define void @madak_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
@@ -63,7 +63,7 @@ define void @madak_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1
 
 ; GCN-LABEL: {{^}}madak_m_inline_imm_f32:
 ; GCN: buffer_load_dword [[VA:v[0-9]+]]
-; GCN: v_madak_f32 {{v[0-9]+}}, 4.0, [[VA]], 0x41200000
+; GCN: v_madak_f32_e32 {{v[0-9]+}}, 4.0, [[VA]], 0x41200000
 define void @madak_m_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid

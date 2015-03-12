@@ -7,7 +7,7 @@ declare float @llvm.fabs.f32(float) nounwind readnone
 ; GCN-LABEL: {{^}}madmk_f32:
 ; GCN-DAG: buffer_load_dword [[VA:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; GCN-DAG: buffer_load_dword [[VB:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; GCN: v_madmk_f32 {{v[0-9]+}}, [[VA]], [[VB]], 0x41200000
+; GCN: v_madmk_f32_e32 {{v[0-9]+}}, [[VA]], [[VB]], 0x41200000
 define void @madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid

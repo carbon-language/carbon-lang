@@ -49,6 +49,7 @@ private:
   void printSLC(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printTFE(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printRegOperand(unsigned RegNo, raw_ostream &O);
+  void printVOPDst(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printImmediate32(uint32_t I, raw_ostream &O);
   void printImmediate64(uint64_t I, raw_ostream &O);
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
