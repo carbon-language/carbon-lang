@@ -16,15 +16,22 @@ DOXYGEN = doxygen
 
 $(PROJ_OBJ_DIR)/doxygen.cfg: doxygen.cfg.in
 	cat $< | sed \
-	  -e 's/@abs_srcdir@/./g' \
 	  -e 's/@DOT@/dot/g' \
 	  -e 's/@PACKAGE_VERSION@/mainline/' \
 	  -e 's/@abs_builddir@/./g' \
-	  -e 's/@enable_searchengine@/NO/g' \
-	  -e 's/@searchengine_url@//g' \
-	  -e 's/@enable_server_based_search@/NO/g' \
+	  -e 's/@abs_srcdir@/./g' \
+	  -e 's/@clang_doxygen_generate_qhp@/NO/g' \
+	  -e 's/@clang_doxygen_qch_filename@//g' \
+	  -e 's/@clang_doxygen_qhelpgenerator_path@//g' \
+	  -e 's/@clang_doxygen_qhp_cust_filter_attrs@//g' \
+	  -e 's/@clang_doxygen_qhp_cust_filter_name@//g' \
+	  -e 's/@clang_doxygen_qhp_namespace@//g' \
 	  -e 's/@enable_external_search@/NO/g' \
-	  -e 's/@extra_search_mappings@//g' > $@
+	  -e 's/@enable_searchengine@/NO/g' \
+	  -e 's/@enable_server_based_search@/NO/g' \
+	  -e 's/@extra_search_mappings@//g' \
+	  -e 's/@searchengine_url@//g' \
+	  > $@
 endif
 
 include $(CLANG_LEVEL)/Makefile
