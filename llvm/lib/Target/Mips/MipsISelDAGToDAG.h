@@ -125,7 +125,7 @@ private:
   virtual void processFunctionAfterISel(MachineFunction &MF) = 0;
 
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                    unsigned ConstraintID,
+                                    char ConstraintCode,
                                     std::vector<SDValue> &OutOps) override;
 };
 }

@@ -2625,13 +2625,6 @@ public:
   getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
                                const std::string &Constraint, MVT VT) const;
 
-  virtual unsigned
-  getInlineAsmMemConstraint(const std::string &ConstraintCode) const {
-    // FIXME: This currently maps all constraints to the the same code.
-    //        This will be corrected once all targets are updated.
-    return InlineAsm::Constraint_m;
-  }
-
   /// Try to replace an X constraint, which matches anything, with another that
   /// has more specific requirements based on the type of the corresponding
   /// operand.  This returns null if there is no replacement to make.

@@ -80,12 +80,12 @@ public:
   virtual SDNode *Select(SDNode *N) = 0;
 
   /// SelectInlineAsmMemoryOperand - Select the specified address as a target
-  /// addressing mode, according to the specified constraint.  If this does
+  /// addressing mode, according to the specified constraint code.  If this does
   /// not match or is not implemented, return true.  The resultant operands
   /// (which will appear in the machine instruction) should be added to the
   /// OutOps vector.
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                            unsigned ConstraintID,
+                                            char ConstraintCode,
                                             std::vector<SDValue> &OutOps) {
     return true;
   }

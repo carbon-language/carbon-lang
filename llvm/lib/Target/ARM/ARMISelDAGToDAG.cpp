@@ -257,7 +257,7 @@ private:
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
-  bool SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
+  bool SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                                     std::vector<SDValue> &OutOps) override;
 
   // Form pairs of consecutive R, S, D, or Q registers.
@@ -3472,10 +3472,9 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
 
 
 bool ARMDAGToDAGISel::
-SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
+SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                              std::vector<SDValue> &OutOps) {
-  assert(ConstraintID == InlineAsm::Constraint_m &&
-         "unexpected asm memory constraint");
+  assert(ConstraintCode == 'm' && "unexpected asm memory constraint");
   // Require the address to be in a register.  That is safe for all ARM
   // variants and it is hard to do anything much smarter without knowing
   // how the operand is used.

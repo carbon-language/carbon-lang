@@ -65,7 +65,7 @@ namespace {
     // Complex Pattern Selectors.
     bool SelectADDRspii(SDValue Addr, SDValue &Base, SDValue &Offset);
 
-    bool SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
+    bool SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                                       std::vector<SDValue> &OutOps) override;
 
     const char *getPassName() const override {
@@ -108,12 +108,12 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Addr, SDValue &Base,
 }
 
 bool XCoreDAGToDAGISel::
-SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
+SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                              std::vector<SDValue> &OutOps) {
   SDValue Reg;
-  switch (ConstraintID) {
+  switch (ConstraintCode) {
   default: return true;
-  case InlineAsm::Constraint_m: // Memory.
+  case 'm': // Memory.
     switch (Op.getOpcode()) {
     default: return true;
     case XCoreISD::CPRelativeWrapper:

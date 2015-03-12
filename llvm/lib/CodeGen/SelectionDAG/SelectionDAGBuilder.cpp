@@ -6595,14 +6595,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         // Memory output, or 'other' output (e.g. 'X' constraint).
         assert(OpInfo.isIndirect && "Memory output must be indirect operand");
 
-        unsigned ConstraintID =
-            TLI.getInlineAsmMemConstraint(OpInfo.ConstraintCode);
-        assert(ConstraintID != InlineAsm::Constraint_Unknown &&
-               "Failed to convert memory constraint code to constraint id.");
-
         // Add information to the INLINEASM node to know about this output.
         unsigned OpFlags = InlineAsm::getFlagWord(InlineAsm::Kind_Mem, 1);
-        OpFlags = InlineAsm::getFlagWordForMem(OpFlags, ConstraintID);
         AsmNodeOperands.push_back(DAG.getTargetConstant(OpFlags, MVT::i32));
         AsmNodeOperands.push_back(OpInfo.CallOperand);
         break;
@@ -6746,14 +6740,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         assert(InOperandVal.getValueType() == TLI.getPointerTy() &&
                "Memory operands expect pointer values");
 
-        unsigned ConstraintID =
-            TLI.getInlineAsmMemConstraint(OpInfo.ConstraintCode);
-        assert(ConstraintID != InlineAsm::Constraint_Unknown &&
-               "Failed to convert memory constraint code to constraint id.");
-
         // Add information to the INLINEASM node to know about this input.
         unsigned ResOpType = InlineAsm::getFlagWord(InlineAsm::Kind_Mem, 1);
-        ResOpType = InlineAsm::getFlagWordForMem(ResOpType, ConstraintID);
         AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType, MVT::i32));
         AsmNodeOperands.push_back(InOperandVal);
         break;
