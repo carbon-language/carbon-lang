@@ -1,33 +1,55 @@
-if(NOT DEFINED LLVM_NATIVE_BUILD)
-  set(LLVM_NATIVE_BUILD "${CMAKE_BINARY_DIR}/native")
-  message(STATUS "Setting native build dir to ${LLVM_NATIVE_BUILD}")
-endif(NOT DEFINED LLVM_NATIVE_BUILD)
+function(llvm_create_cross_target_internal target_name toochain buildtype)
 
-add_custom_command(OUTPUT ${LLVM_NATIVE_BUILD}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${LLVM_NATIVE_BUILD}
-  COMMENT "Creating ${LLVM_NATIVE_BUILD}...")
+  if(NOT DEFINED LLVM_${target_name}_BUILD)
+    set(LLVM_${target_name}_BUILD "${CMAKE_BINARY_DIR}/${target_name}")
+    set(LLVM_${target_name}_BUILD ${LLVM_${target_name}_BUILD} PARENT_SCOPE)
+    message(STATUS "Setting native build dir to " ${LLVM_${target_name}_BUILD})
+  endif(NOT DEFINED LLVM_${target_name}_BUILD)
 
-add_custom_command(OUTPUT ${LLVM_NATIVE_BUILD}/CMakeCache.txt
-  COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" ${CMAKE_SOURCE_DIR}
-  WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
-  DEPENDS ${LLVM_NATIVE_BUILD}
-  COMMENT "Configuring native LLVM...")
+  if (EXISTS ${LLVM_MAIN_SRC_DIR}/cmake/platforms/${toolchain}.cmake)
+    set(CROSS_TOOLCHAIN_FLAGS_${target_name} 
+        -DCMAKE_TOOLCHAIN_FILE=\"${LLVM_MAIN_SRC_DIR}/cmake/platforms/${toolchain}.cmake\"
+        CACHE STRING "Toolchain file for ${target_name}")
+  endif()
 
-add_custom_target(ConfigureNativeLLVM DEPENDS ${LLVM_NATIVE_BUILD}/CMakeCache.txt)
+  add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${LLVM_${target_name}_BUILD}
+    COMMENT "Creating ${LLVM_${target_name}_BUILD}...")
 
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${LLVM_NATIVE_BUILD})
+  add_custom_command(OUTPUT ${LLVM_${target_name}_BUILD}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"
+        ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${LLVM_${target_name}_BUILD}
+    DEPENDS ${LLVM_${target_name}_BUILD}
+    COMMENT "Configuring ${target_name} LLVM...")
 
-if(NOT IS_DIRECTORY ${LLVM_NATIVE_BUILD})
-  if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
-    set(HOST_SYSROOT_FLAGS -DCMAKE_OSX_SYSROOT=macosx)
-  endif(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+  add_custom_target(CONFIGURE_LLVM_${target_name}
+                    DEPENDS ${LLVM_${target_name}_BUILD}/CMakeCache.txt)
 
-  message(STATUS "Configuring native build...")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
-    ${LLVM_NATIVE_BUILD} )
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+                                      ${LLVM_${target_name}_BUILD})
 
-  message(STATUS "Configuring native targets...")
-  execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release
-      -G "${CMAKE_GENERATOR}" -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD} ${HOST_SYSROOT_FLAGS} ${CMAKE_SOURCE_DIR}
-    WORKING_DIRECTORY ${LLVM_NATIVE_BUILD} )
-endif(NOT IS_DIRECTORY ${LLVM_NATIVE_BUILD})
+  if(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
+    
+
+    message(STATUS "Configuring ${target_name} build...")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
+      ${LLVM_${target_name}_BUILD} )
+
+    message(STATUS "Configuring ${target_name} targets...")
+    if (buildtype)
+      set(build_type_flags "-DCMAKE_BUILD_TYPE=${buildtype}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} ${build_type_flags}
+        -G "${CMAKE_GENERATOR}" -DLLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD}
+        ${CROSS_TOOLCHAIN_FLAGS_${target_name}} ${CMAKE_SOURCE_DIR}
+      WORKING_DIRECTORY ${LLVM_${target_name}_BUILD} )
+  endif(NOT IS_DIRECTORY ${LLVM_${target_name}_BUILD})
+
+endfunction()
+
+function(llvm_create_cross_target target_name sysroot)
+  llvm_create_cross_target_internal(${target_name} ${sysroot} ${CMAKE_BUILD_TYPE})
+endfunction()
+
+llvm_create_cross_target_internal(NATIVE "" Release)

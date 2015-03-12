@@ -44,7 +44,7 @@ if(CMAKE_CROSSCOMPILING)
     WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
     COMMENT "Building native llvm-config...")
   add_custom_target(${project}NativeLLVMConfig DEPENDS ${${project}_LLVM_CONFIG_EXE})
-  add_dependencies(${project}NativeLLVMConfig ConfigureNativeLLVM)
+  add_dependencies(${project}NativeLLVMConfig CONFIGURE_LLVM_NATIVE)
 
   add_dependencies(llvm-config ${project}NativeLLVMConfig)
 endif(CMAKE_CROSSCOMPILING)

@@ -102,7 +102,7 @@ macro(add_tablegen target project)
         WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
         COMMENT "Building native TableGen...")
       add_custom_target(${project}NativeTableGen DEPENDS ${${project}_TABLEGEN_EXE})
-      add_dependencies(${project}NativeTableGen ConfigureNativeLLVM)
+      add_dependencies(${project}NativeTableGen CONFIGURE_LLVM_NATIVE)
 
       add_dependencies(${target} ${project}NativeTableGen)
     endif()
