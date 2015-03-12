@@ -1053,7 +1053,6 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
     PrintCheckFailed(SM, *this, MatchBuffer, VariableTable);
     return StringRef::npos;
   }
-  MatchPos += LastPos;
 
   // Similar to the above, in "label-scan mode" we can't yet handle CHECK-NEXT
   // or CHECK-NOT
@@ -1076,7 +1075,7 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
       return StringRef::npos;
   }
 
-  return MatchPos;
+  return LastPos + MatchPos;
 }
 
 bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
