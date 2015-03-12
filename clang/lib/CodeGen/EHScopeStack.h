@@ -266,7 +266,7 @@ public:
 
   /// Push a lazily-created cleanup on the stack. Tuple version.
   template <class T, class... As>
-  void pushCleanup(CleanupKind Kind, std::tuple<As...> A) {
+  void pushCleanupTuple(CleanupKind Kind, std::tuple<As...> A) {
     void *Buffer = pushCleanup(Kind, sizeof(T));
     Cleanup *Obj = new (Buffer) T(std::move(A));
     (void) Obj;

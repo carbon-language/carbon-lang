@@ -380,7 +380,7 @@ public:
     SavedTuple Saved{saveValueInCond(A)...};
 
     typedef EHScopeStack::ConditionalCleanup<T, As...> CleanupType;
-    EHStack.pushCleanup<CleanupType>(kind, Saved);
+    EHStack.pushCleanupTuple<CleanupType>(kind, Saved);
     initFullExprCleanup();
   }
 
