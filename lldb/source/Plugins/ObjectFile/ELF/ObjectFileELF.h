@@ -104,11 +104,11 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
     //------------------------------------------------------------------
     // ObjectFile Protocol.
@@ -116,64 +116,64 @@ public:
     virtual
     ~ObjectFileELF();
 
-    virtual bool
-    ParseHeader();
+    bool
+    ParseHeader() override;
 
-    virtual bool
+    bool
     SetLoadAddress (lldb_private::Target &target,
                     lldb::addr_t value,
-                    bool value_is_offset);
+                    bool value_is_offset) override;
 
-    virtual lldb::ByteOrder
-    GetByteOrder() const;
+    lldb::ByteOrder
+    GetByteOrder() const override;
 
-    virtual bool
-    IsExecutable () const;
+    bool
+    IsExecutable () const override;
 
-    virtual uint32_t
-    GetAddressByteSize() const;
+    uint32_t
+    GetAddressByteSize() const override;
 
-    virtual lldb::AddressClass
-    GetAddressClass (lldb::addr_t file_addr);
+    lldb::AddressClass
+    GetAddressClass (lldb::addr_t file_addr) override;
 
-    virtual lldb_private::Symtab *
-    GetSymtab();
+    lldb_private::Symtab *
+    GetSymtab() override;
 
-    virtual lldb_private::Symbol *
-    ResolveSymbolForAddress(const lldb_private::Address& so_addr, bool verify_unique);
+    lldb_private::Symbol *
+    ResolveSymbolForAddress(const lldb_private::Address& so_addr, bool verify_unique) override;
 
-    virtual bool
-    IsStripped ();
+    bool
+    IsStripped () override;
 
-    virtual void
-    CreateSections (lldb_private::SectionList &unified_section_list);
+    void
+    CreateSections (lldb_private::SectionList &unified_section_list) override;
 
-    virtual void
-    Dump(lldb_private::Stream *s);
+    void
+    Dump(lldb_private::Stream *s) override;
 
-    virtual bool
-    GetArchitecture (lldb_private::ArchSpec &arch);
+    bool
+    GetArchitecture (lldb_private::ArchSpec &arch) override;
 
-    virtual bool
-    GetUUID(lldb_private::UUID* uuid);
+    bool
+    GetUUID(lldb_private::UUID* uuid) override;
 
-    virtual lldb_private::FileSpecList
-    GetDebugSymbolFilePaths();
+    lldb_private::FileSpecList
+    GetDebugSymbolFilePaths() override;
 
-    virtual uint32_t
-    GetDependentModules(lldb_private::FileSpecList& files);
+    uint32_t
+    GetDependentModules(lldb_private::FileSpecList& files) override;
 
-    virtual lldb_private::Address
-    GetImageInfoAddress(lldb_private::Target *target);
+    lldb_private::Address
+    GetImageInfoAddress(lldb_private::Target *target) override;
     
-    virtual lldb_private::Address
-    GetEntryPointAddress ();
+    lldb_private::Address
+    GetEntryPointAddress () override;
     
-    virtual ObjectFile::Type
-    CalculateType();
+    ObjectFile::Type
+    CalculateType() override;
     
-    virtual ObjectFile::Strata
-    CalculateStrata();
+    ObjectFile::Strata
+    CalculateStrata() override;
 
     // Returns number of program headers found in the ELF file.
     size_t
