@@ -86,6 +86,7 @@ public:
   const AArch64RegisterInfo *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();
   }
+  const Triple &getTargetTriple() const { return TargetTriple; }
   bool enableMachineScheduler() const override { return true; }
   bool enablePostMachineScheduler() const override {
     return isCortexA53() || isCortexA57();

@@ -19,19 +19,17 @@
 
 namespace llvm {
 
-class AArch64InstrInfo;
-class AArch64Subtarget;
 class MachineFunction;
 class RegScavenger;
 class TargetRegisterClass;
+class Triple;
 
 struct AArch64RegisterInfo : public AArch64GenRegisterInfo {
 private:
-  const AArch64InstrInfo *TII;
-  const AArch64Subtarget *STI;
+  const Triple &TT;
 
 public:
-  AArch64RegisterInfo(const AArch64InstrInfo *tii, const AArch64Subtarget *sti);
+  AArch64RegisterInfo(const Triple &TT);
 
   bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
 
