@@ -442,7 +442,7 @@ define <8 x i32> @stack_fold_permd(<8 x i32> %a0, <8 x i32> %a1) {
   ;CHECK-LABEL: stack_fold_permd
   ;CHECK:   vpermd {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
-  %2 = call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %a0, <8 x i32> %a1)
+  %2 = call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %a1, <8 x i32> %a0)
   ret <8 x i32> %2
 }
 declare <8 x i32> @llvm.x86.avx2.permd(<8 x i32>, <8 x i32>) nounwind readonly
@@ -461,7 +461,7 @@ define <8 x float> @stack_fold_permps(<8 x float> %a0, <8 x float> %a1) {
   ;CHECK-LABEL: stack_fold_permps
   ;CHECK:       vpermps {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
-  %2 = call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a0, <8 x float> %a1)
+  %2 = call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a1, <8 x float> %a0)
   ret <8 x float> %2
 }
 declare <8 x float> @llvm.x86.avx2.permps(<8 x float>, <8 x float>) nounwind readonly
