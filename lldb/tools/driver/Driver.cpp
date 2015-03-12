@@ -51,7 +51,6 @@ static void reset_stdin_termios ();
 static bool g_old_stdin_termios_is_valid = false;
 static struct termios g_old_stdin_termios;
 
-static char *g_debugger_name =  (char *) "";
 static Driver *g_driver = NULL;
 
 // In the Driver::MainLoop, we change the terminal settings.  This function is
@@ -146,16 +145,12 @@ Driver::Driver () :
     // We want to be able to handle CTRL+D in the terminal to have it terminate
     // certain input
     m_debugger.SetCloseInputOnEOF (false);
-    g_debugger_name = (char *) m_debugger.GetInstanceName();
-    if (g_debugger_name == NULL)
-        g_debugger_name = (char *) "";
     g_driver = this;
 }
 
 Driver::~Driver ()
 {
     g_driver = NULL;
-    g_debugger_name = NULL;
 }
 
 
