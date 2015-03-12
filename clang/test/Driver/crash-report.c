@@ -18,7 +18,9 @@
 // CHECK-NEXT: note: diagnostic msg: {{.*}}crash-report-{{.*}}.c
 FOO
 // CHECKSRC: FOO
-// CHECKSH: "-cc1"
+// CHECKSH: # Crash reproducer
+// CHECKSH-NEXT: # Original command: {{.*$}}
+// CHECKSH-NEXT: "-cc1"
 // CHECKSH: "-main-file-name" "crash-report.c"
 // CHECKSH: "-D" "FOO=BAR"
 // CHECKSH-NOT: "-F/tmp/"

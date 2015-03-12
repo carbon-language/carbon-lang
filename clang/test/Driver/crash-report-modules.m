@@ -25,7 +25,9 @@ const int x = MODULE_MACRO;
 // CHECKSRC: @import simple;
 // CHECKSRC: const int x = 10;
 
-// CHECKSH: "-cc1"
+// CHECKSH: # Crash reproducer
+// CHECKSH-NEXT: # Original command: {{.*$}}
+// CHECKSH-NEXT: "-cc1"
 // CHECKSH: "-D" "FOO=BAR"
 // CHECKSH-NOT: "-fmodules-cache-path=/tmp/"
 // CHECKSH: "crash-report-modules-{{[^ ]*}}.m"
