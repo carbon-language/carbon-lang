@@ -76,12 +76,15 @@ static cl::opt<CodeGenChoice, true> XCodeGenerator(
 VectorizerChoice polly::PollyVectorizerChoice;
 static cl::opt<polly::VectorizerChoice, true> Vectorizer(
     "polly-vectorizer", cl::desc("Select the vectorization strategy"),
-    cl::values(clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
-               clEnumValN(polly::VECTORIZER_POLLY, "polly",
-                          "Polly internal vectorizer"),
-               clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
-                          "Only grouped unroll the vectorize candidate loops"),
-               clEnumValEnd),
+    cl::values(
+        clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
+        clEnumValN(polly::VECTORIZER_POLLY, "polly",
+                   "Polly internal vectorizer"),
+        clEnumValN(polly::VECTORIZER_STRIPMINE, "stripmine",
+                   "Strip-mine outer loops for the loop-vectorizer to trigger"),
+        clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
+                   "Only grouped unroll the vectorize candidate loops"),
+        clEnumValEnd),
     cl::location(PollyVectorizerChoice), cl::init(polly::VECTORIZER_NONE),
     cl::ZeroOrMore, cl::cat(PollyCategory));
 
