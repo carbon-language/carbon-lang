@@ -100,13 +100,9 @@ invoke.cont:                                      ; preds = %for.body
 
 ; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %for.body
 ; CHECK:   [[LPAD_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
-; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
-; CHECK-NOT:   extractvalue { i8*, i32 }
-; CHECK-NOT:   store i8*
-; CHECK-NOT:   store i32
-; CHECK-NOT:   br label
-; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32* %e, i8* bitcast (i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch" to i8*))
-; CHECK:   indirectbr i8* [[RECOVER]], [label %try.cont]
+; CHECK-NEXT:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
+; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32* %e, i8* bitcast (i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch" to i8*))
+; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %try.cont]
 
 lpad:                                             ; preds = %for.body
   %tmp4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)

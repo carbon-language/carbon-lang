@@ -45,14 +45,9 @@ invoke.cont:                                      ; preds = %entry
 
 ; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %entry
 ; CHECK:   [[LPAD_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
-; CHECK:           cleanup
-; CHECK-NOT:   extractvalue { i8*, i32 }
-; CHECK-NOT:   store i8*
-; CHECK-NOT:   store i32
-; CHECK-NOT:   call void @_ZN9SomeClassD1Ev
-; CHECK-NOT:   br label %eh.resume
-; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 1, i8* bitcast (void (i8*, i8*)* @_Z4testv.cleanup to i8*))
-; CHECK:   indirectbr i8* [[RECOVER]], []
+; CHECK-NEXT:           cleanup
+; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD_VAL]], i32 1, i8* bitcast (void (i8*, i8*)* @_Z4testv.cleanup to i8*))
+; CHECK-NEXT:   indirectbr i8* [[RECOVER]], []
 
 lpad:                                             ; preds = %entry
   %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
