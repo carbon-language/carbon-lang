@@ -34,7 +34,7 @@ Command::Command(const Action &_Source, const Tool &_Creator,
       Executable(_Executable), Arguments(_Arguments),
       ResponseFile(nullptr) {}
 
-static int skipArgs(const char *Flag) {
+static int skipArgs(const char *Flag, bool HaveCrashVFS) {
   // These flags are all of the form -Flag <Arg> and are treated as two
   // arguments.  Therefore, we need to skip the flag and the next argument.
   bool Res = llvm::StringSwitch<bool>(Flag)
@@ -43,9 +43,11 @@ static int skipArgs(const char *Flag) {
     .Cases("-fdebug-compilation-dir", "-idirafter", true)
     .Cases("-include", "-include-pch", "-internal-isystem", true)
     .Cases("-internal-externc-isystem", "-iprefix", "-iwithprefix", true)
-    .Cases("-iwithprefixbefore", "-isysroot", "-isystem", "-iquote", true)
+    .Cases("-iwithprefixbefore", "-isystem", "-iquote", true)
     .Cases("-resource-dir", "-serialize-diagnostic-file", true)
     .Cases("-dwarf-debug-flags", "-ivfsoverlay", true)
+    // Some include flags shouldn't be skipped if we have a crash VFS
+    .Case("-isysroot", !HaveCrashVFS)
     .Default(false);
 
   // Match found.
@@ -164,11 +166,12 @@ void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
       if (StringRef(Args[I]).equals("-main-file-name"))
         MainFilename = Args[I + 1];
 
+  bool HaveCrashVFS = CrashInfo && !CrashInfo->VFSPath.empty();
   for (size_t i = 0, e = Args.size(); i < e; ++i) {
     const char *const Arg = Args[i];
 
     if (CrashInfo) {
-      if (int Skip = skipArgs(Arg)) {
+      if (int Skip = skipArgs(Arg, HaveCrashVFS)) {
         i += Skip - 1;
         continue;
       } else if (llvm::sys::path::filename(Arg) == MainFilename &&
@@ -185,7 +188,7 @@ void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
     PrintArg(OS, Arg, Quote);
   }
 
-  if (CrashInfo && !CrashInfo->VFSPath.empty()) {
+  if (CrashInfo && HaveCrashVFS) {
     OS << ' ';
     PrintArg(OS, "-ivfsoverlay", Quote);
     OS << ' ';
