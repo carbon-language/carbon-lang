@@ -129,14 +129,13 @@ public:
   class atom_iterator : public std::iterator<std::forward_iterator_tag, T> {
   public:
     atom_iterator(const atom_collection<T> &c, const void *it)
-              : _collection(c), _it(it) { }
+              : _collection(&c), _it(it) { }
 
     const T *operator*() const {
-      return _collection.deref(_it);
+      return _collection->deref(_it);
     }
     const T *operator->() const {
-
-      return _collection.deref(_it);
+      return _collection->deref(_it);
     }
 
     friend bool operator==(const atom_iterator<T> &lhs, const atom_iterator<T> &rhs)  {
@@ -148,11 +147,11 @@ public:
     }
 
     atom_iterator<T> &operator++() {
-      _collection.next(_it);
+      _collection->next(_it);
       return *this;
     }
   private:
-    const atom_collection<T> &_collection;
+    const atom_collection<T> *_collection;
     const void               *_it;
   };
 
