@@ -2163,30 +2163,6 @@ define <8 x float> @test_x86_avx_vbroadcastf128_ps_256(i8* %a0) {
 declare <8 x float> @llvm.x86.avx.vbroadcastf128.ps.256(i8*) nounwind readonly
 
 
-define <2 x double> @test_x86_avx_vextractf128_pd_256(<4 x double> %a0) {
-  ; CHECK: vextractf128
-  %res = call <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double> %a0, i8 7) ; <<2 x double>> [#uses=1]
-  ret <2 x double> %res
-}
-declare <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double>, i8) nounwind readnone
-
-
-define <4 x float> @test_x86_avx_vextractf128_ps_256(<8 x float> %a0) {
-  ; CHECK: vextractf128
-  %res = call <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float> %a0, i8 7) ; <<4 x float>> [#uses=1]
-  ret <4 x float> %res
-}
-declare <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float>, i8) nounwind readnone
-
-
-define <4 x i32> @test_x86_avx_vextractf128_si_256(<8 x i32> %a0) {
-  ; CHECK: vextractf128
-  %res = call <4 x i32> @llvm.x86.avx.vextractf128.si.256(<8 x i32> %a0, i8 7) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.avx.vextractf128.si.256(<8 x i32>, i8) nounwind readnone
-
-
 define <4 x double> @test_x86_avx_vperm2f128_pd_256(<4 x double> %a0, <4 x double> %a1) {
   ; CHECK: vperm2f128
   %res = call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 7) ; <<4 x double>> [#uses=1]

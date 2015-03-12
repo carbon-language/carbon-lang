@@ -161,6 +161,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx.vinsertf128.pd.256" ||
         Name == "x86.avx.vinsertf128.ps.256" ||
         Name == "x86.avx.vinsertf128.si.256" ||
+        Name == "x86.avx.vextractf128.pd.256" ||
+        Name == "x86.avx.vextractf128.ps.256" ||
+        Name == "x86.avx.vextractf128.si.256" ||
         Name == "x86.avx.movnt.dq.256" ||
         Name == "x86.avx.movnt.pd.256" ||
         Name == "x86.avx.movnt.ps.256" ||
@@ -676,6 +679,26 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs2.push_back(Builder.getInt32(Idx));
       }
       Rep = Builder.CreateShuffleVector(Op0, Rep, ConstantVector::get(Idxs2));
+    } else if (Name == "llvm.x86.avx.vextractf128.pd.256" ||
+               Name == "llvm.x86.avx.vextractf128.ps.256" ||
+               Name == "llvm.x86.avx.vextractf128.si.256") {
+      Value *Op0 = CI->getArgOperand(0);
+      unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+      VectorType *VecTy = cast<VectorType>(CI->getType());
+      unsigned NumElts = VecTy->getNumElements();
+      
+      // Mask off the high bits of the immediate value; hardware ignores those.
+      Imm = Imm & 1;
+
+      // Get indexes for either the high half or low half of the input vector.
+      SmallVector<Constant*, 4> Idxs(NumElts);
+      for (unsigned i = 0; i != NumElts; ++i) {
+        unsigned Idx = Imm ? (i + NumElts) : i;
+        Idxs[i] = Builder.getInt32(Idx);
+      }
+
+      Value *UndefV = UndefValue::get(Op0->getType());
+      Rep = Builder.CreateShuffleVector(Op0, UndefV, ConstantVector::get(Idxs));
     } else {
       bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;
       if (Name == "llvm.x86.avx.vpermil.pd.256")

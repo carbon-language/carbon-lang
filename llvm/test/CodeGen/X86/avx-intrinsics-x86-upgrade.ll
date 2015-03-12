@@ -36,6 +36,43 @@ define <8 x i32> @test_x86_avx_vinsertf128_si_256_2(<8 x i32> %a0, <4 x i32> %a1
 }
 declare <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32>, <4 x i32>, i8) nounwind readnone
 
+; We don't check any vextractf128 variant with immediate 0 because that's just a move. 
+
+define <2 x double> @test_x86_avx_vextractf128_pd_256_1(<4 x double> %a0) {
+; CHECK-LABEL:       test_x86_avx_vextractf128_pd_256_1: 
+; CHECK:             vextractf128 $1, %ymm0, %xmm0
+  %res = call <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double> %a0, i8 1)
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double>, i8) nounwind readnone
+
+define <4 x float> @test_x86_avx_vextractf128_ps_256_1(<8 x float> %a0) {
+; CHECK-LABEL:       test_x86_avx_vextractf128_ps_256_1: 
+; CHECK:             vextractf128 $1, %ymm0, %xmm0
+  %res = call <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float> %a0, i8 1)
+  ret <4 x float> %res
+}
+declare <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float>, i8) nounwind readnone
+
+define <4 x i32> @test_x86_avx_vextractf128_si_256_1(<8 x i32> %a0) {
+; CHECK-LABEL:    test_x86_avx_vextractf128_si_256_1: 
+; CHECK:          vextractf128 $1, %ymm0, %xmm0
+  %res = call <4 x i32> @llvm.x86.avx.vextractf128.si.256(<8 x i32> %a0, i8 1)
+  ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.avx.vextractf128.si.256(<8 x i32>, i8) nounwind readnone
+
+; Verify that high bits of the immediate are masked off. This should be the equivalent
+; of a vextractf128 $0 which should be optimized away, so just check that it's
+; not a vextractf128 of any kind.
+define <2 x double> @test_x86_avx_extractf128_pd_256_2(<4 x double> %a0) {
+; CHECK-LABEL:       test_x86_avx_extractf128_pd_256_2: 
+; CHECK-NOT:         vextractf128
+  %res = call <2 x double> @llvm.x86.avx.vextractf128.pd.256(<4 x double> %a0, i8 2)
+  ret <2 x double> %res
+}
+
+
 define <4 x double> @test_x86_avx_blend_pd_256(<4 x double> %a0, <4 x double> %a1) {
 ; CHECK-LABEL:       test_x86_avx_blend_pd_256: 
 ; CHECK:             vblendpd

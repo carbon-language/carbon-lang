@@ -1172,19 +1172,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   llvm_v8f32_ty, llvm_i8_ty], [IntrNoMem]>;
 }
 
-// Vector extract and insert
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx_vextractf128_pd_256 :
-        GCCBuiltin<"__builtin_ia32_vextractf128_pd256">,
-        Intrinsic<[llvm_v2f64_ty], [llvm_v4f64_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_avx_vextractf128_ps_256 :
-        GCCBuiltin<"__builtin_ia32_vextractf128_ps256">,
-        Intrinsic<[llvm_v4f32_ty], [llvm_v8f32_ty, llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_avx_vextractf128_si_256 :
-        GCCBuiltin<"__builtin_ia32_vextractf128_si256">,
-        Intrinsic<[llvm_v4i32_ty], [llvm_v8i32_ty, llvm_i8_ty], [IntrNoMem]>;
-}
-
 // Vector convert
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_cvtdq2_pd_256 : GCCBuiltin<"__builtin_ia32_cvtdq2pd256">,
