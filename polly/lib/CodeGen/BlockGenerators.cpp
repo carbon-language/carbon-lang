@@ -451,7 +451,7 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(
 void VectorBlockGenerator::generateLoad(ScopStmt &Stmt, const LoadInst *Load,
                                         ValueMapT &VectorMap,
                                         VectorValueMapT &ScalarMaps) {
-  if (PollyVectorizerChoice >= VECTORIZER_FIRST_NEED_GROUPED_UNROLL ||
+  if (PollyVectorizerChoice == VECTORIZER_UNROLL_ONLY ||
       !VectorType::isValidElementType(Load->getType())) {
     for (int i = 0; i < getVectorWidth(); i++)
       ScalarMaps[i][Load] =

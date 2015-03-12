@@ -81,8 +81,6 @@ static cl::opt<polly::VectorizerChoice, true> Vectorizer(
                           "Polly internal vectorizer"),
                clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
                           "Only grouped unroll the vectorize candidate loops"),
-               clEnumValN(polly::VECTORIZER_BB, "bb",
-                          "The Basic Block vectorizer driven by Polly"),
                clEnumValEnd),
     cl::location(PollyVectorizerChoice), cl::init(polly::VECTORIZER_NONE),
     cl::ZeroOrMore, cl::cat(PollyCategory));
