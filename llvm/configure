@@ -705,6 +705,24 @@ TARGET_HAS_JIT
 TARGETS_WITH_JIT
 ENABLE_DOCS
 ENABLE_DOXYGEN
+enable_searchengine
+enable_external_search
+enable_server_based_search
+searchengine_url
+extra_search_mappings
+QHELPGENERATOR
+llvm_doxygen_generate_qhp
+llvm_doxygen_qch_filename
+llvm_doxygen_qhp_namespace
+llvm_doxygen_qhelpgenerator_path
+llvm_doxygen_qhp_cust_filter_name
+llvm_doxygen_qhp_cust_filter_attrs
+clang_doxygen_generate_qhp
+clang_doxygen_qch_filename
+clang_doxygen_qhp_namespace
+clang_doxygen_qhelpgenerator_path
+clang_doxygen_qhp_cust_filter_name
+clang_doxygen_qhp_cust_filter_attrs
 LLVM_ENABLE_THREADS
 ENABLE_PTHREADS
 LLVM_ENABLE_ZLIB
@@ -1416,6 +1434,11 @@ Optional Features:
   --enable-jit            Enable Just In Time Compiling (default is YES)
   --enable-docs           Build documents (default is YES)
   --enable-doxygen        Build doxygen documentation (default is NO)
+  --enable-doxygen-search Enable doxygen search support (default is NO)
+  --enable-doxygen-external-search
+                          Enable doxygen exteranl search (default is NO)
+  --enable-doxygen-qt-help
+                          Build Qt help files (default is NO)
   --enable-threads        Use threads if available (default is YES)
   --enable-pthreads       Use pthreads if available (default is YES)
   --enable-zlib           Use zlib for compression/decompression if available
@@ -1450,6 +1473,10 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-doxygen-search-engine-url
+                          Specify the external search engine for doxygen
+  --with-doxygen-search-mappings
+                          Specify the extra search mapping for doxygen
   --with-optimize-option  Select the compiler options to use for optimized
                           builds
   --with-extra-options    Specify additional options to compile LLVM with
@@ -5114,12 +5141,228 @@ fi
 case "$enableval" in
   yes) ENABLE_DOXYGEN=1
  ;;
-  no)  ENABLE_DOXYGEN=0
- ;;
-  default) ENABLE_DOXYGEN=0
+  no|default) ENABLE_DOXYGEN=0
  ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-doxygen. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-doxygen. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+# Check whether --enable-doxygen-search was given.
+if test "${enable_doxygen_search+set}" = set; then
+  enableval=$enable_doxygen_search;
+else
+  enableval=default
+fi
+
+ENABLE_DOXYGEN_SEARCH="$enableval"
+
+case "$enableval" in
+  yes|no|default) ;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-doxygen-search. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-doxygen-search. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+# Check whether --enable-doxygen-external-search was given.
+if test "${enable_doxygen_external_search+set}" = set; then
+  enableval=$enable_doxygen_external_search;
+else
+  enableval=default
+fi
+
+ENABLE_DOXYGEN_EXTERNAL_SEARCH="$enableval"
+
+case "$enableval" in
+  yes)
+            case "$ENABLE_DOXYGEN_SEARCH" in
+      yes|default) ENABLE_DOXYGEN_SEARCH="yes" ;;
+      no) { { echo "$as_me:$LINENO: error: The option --enable-doxygen-external-search requires --enable-doxygen-search" >&5
+echo "$as_me: error: The option --enable-doxygen-external-search requires --enable-doxygen-search" >&2;}
+   { (exit 1); exit 1; }; } ;;
+    esac
+    ;;
+  no|default) ;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-doxygen-external-search. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-doxygen-external-search. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+
+# Check whether --with-doxygen-search-engine-url was given.
+if test "${with_doxygen_search_engine_url+set}" = set; then
+  withval=$with_doxygen_search_engine_url;
+fi
+
+WITH_DOXYGEN_SEARCH_ENGINE_URL="$withval"
+
+
+# Check whether --with-doxygen-search-mappings was given.
+if test "${with_doxygen_search_mappings+set}" = set; then
+  withval=$with_doxygen_search_mappings;
+fi
+
+WITH_DOXYGEN_SEARCH_MAPPINGS="$withval"
+
+case "$ENABLE_DOXYGEN_SEARCH" in
+  yes)
+    if test "$ENABLE_DOXYGEN" = "0" ; then
+      { { echo "$as_me:$LINENO: error: The option --enable-doxygen-search requires --enable-doxygen." >&5
+echo "$as_me: error: The option --enable-doxygen-search requires --enable-doxygen." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+
+    enable_searchengine=YES
+
+
+    case "$ENABLE_DOXYGEN_EXTERNAL_SEARCH" in
+      yes)
+        enable_external_search=YES
+
+        enable_server_based_search=YES
+
+        searchengine_url=$WITH_DOXYGEN_SEARCH_ENGINE_URL
+
+        extra_search_mappings=$WITH_DOXYGEN_SEARCH_MAPPINGS
+
+        ;;
+
+      no|default)
+        enable_external_search=NO
+
+        enable_server_based_search=NO
+
+
+
+        ;;
+    esac
+    ;;
+
+  no|default)
+    enable_searchengine=NO
+
+
+    enable_server_based_search=NO
+
+    enable_external_search=NO
+
+
+    ;;
+
+  *)
+    { { echo "$as_me:$LINENO: error: Invalid setting for --enable-doxygen-search. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-doxygen-search. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; }
+    ;;
+esac
+
+# Check whether --enable-doxygen-qt-help was given.
+if test "${enable_doxygen_qt_help+set}" = set; then
+  enableval=$enable_doxygen_qt_help;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes)
+    if test "$ENABLE_DOXYGEN" = "0" ; then
+      { { echo "$as_me:$LINENO: error: The option --enable-doxygen-qt-help requires --enable-doxygen." >&5
+echo "$as_me: error: The option --enable-doxygen-qt-help requires --enable-doxygen." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+
+    # Extract the first word of "qhelpgenerator", so it can be a program name with args.
+set dummy qhelpgenerator; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_QHELPGENERATOR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $QHELPGENERATOR in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_QHELPGENERATOR="$QHELPGENERATOR" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_QHELPGENERATOR="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_QHELPGENERATOR" && ac_cv_path_QHELPGENERATOR="qhelpgenerator"
+  ;;
+esac
+fi
+QHELPGENERATOR=$ac_cv_path_QHELPGENERATOR
+if test -n "$QHELPGENERATOR"; then
+  { echo "$as_me:$LINENO: result: $QHELPGENERATOR" >&5
+echo "${ECHO_T}$QHELPGENERATOR" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+
+        llvm_doxygen_generate_qhp=YES
+
+    llvm_doxygen_qch_filename=org.llvm.qch
+
+    llvm_doxygen_qhp_namespace=org.llvm
+
+    llvm_doxygen_qhelpgenerator_path=$QHELPGENERATOR
+
+    llvm_doxygen_qhp_cust_filter_name=$PACKAGE_STRING
+
+    llvm_doxygen_qhp_cust_filter_attrs=$PACKAGE_NAME,$PACKAGE_VERSION
+
+
+        clang_doxygen_generate_qhp=YES
+
+    clang_doxygen_qch_filename=org.llvm.clang.qch
+
+    clang_doxygen_qhp_namespace=org.llvm.clang
+
+    clang_doxygen_qhelpgenerator_path=$QHELPGENERATOR
+
+    clang_doxygen_qhp_cust_filter_name=Clang $PACKAGE_VERSION
+
+    clang_doxygen_qhp_cust_filter_attrs=Clang,$PACKAGE_VERSION
+
+    ;;
+
+  no|default)
+    llvm_doxygen_generate_qhp=NO
+
+
+
+
+
+
+
+    clang_doxygen_generate_qhp=NO
+
+
+
+
+    clang_doxygen_qhp_cust_filter_name=Clang $PACKAGE_VERSION
+
+    clang_doxygen_qhp_cust_filter_attrs=Clang,$PACKAGE_VERSION
+
+    ;;
+
+  *)
+    { { echo "$as_me:$LINENO: error: Invalid setting for --enable-doxygen-qt-help. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-doxygen-qt-help. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 
@@ -18610,6 +18853,24 @@ TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 TARGETS_WITH_JIT!$TARGETS_WITH_JIT$ac_delim
 ENABLE_DOCS!$ENABLE_DOCS$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
+enable_searchengine!$enable_searchengine$ac_delim
+enable_external_search!$enable_external_search$ac_delim
+enable_server_based_search!$enable_server_based_search$ac_delim
+searchengine_url!$searchengine_url$ac_delim
+extra_search_mappings!$extra_search_mappings$ac_delim
+QHELPGENERATOR!$QHELPGENERATOR$ac_delim
+llvm_doxygen_generate_qhp!$llvm_doxygen_generate_qhp$ac_delim
+llvm_doxygen_qch_filename!$llvm_doxygen_qch_filename$ac_delim
+llvm_doxygen_qhp_namespace!$llvm_doxygen_qhp_namespace$ac_delim
+llvm_doxygen_qhelpgenerator_path!$llvm_doxygen_qhelpgenerator_path$ac_delim
+llvm_doxygen_qhp_cust_filter_name!$llvm_doxygen_qhp_cust_filter_name$ac_delim
+llvm_doxygen_qhp_cust_filter_attrs!$llvm_doxygen_qhp_cust_filter_attrs$ac_delim
+clang_doxygen_generate_qhp!$clang_doxygen_generate_qhp$ac_delim
+clang_doxygen_qch_filename!$clang_doxygen_qch_filename$ac_delim
+clang_doxygen_qhp_namespace!$clang_doxygen_qhp_namespace$ac_delim
+clang_doxygen_qhelpgenerator_path!$clang_doxygen_qhelpgenerator_path$ac_delim
+clang_doxygen_qhp_cust_filter_name!$clang_doxygen_qhp_cust_filter_name$ac_delim
+clang_doxygen_qhp_cust_filter_attrs!$clang_doxygen_qhp_cust_filter_attrs$ac_delim
 LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 LLVM_ENABLE_ZLIB!$LLVM_ENABLE_ZLIB$ac_delim
@@ -18683,26 +18944,9 @@ MMAP_FILE!$MMAP_FILE$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
 LLVM_PREFIX!$LLVM_PREFIX$ac_delim
 LLVM_BINDIR!$LLVM_BINDIR$ac_delim
-LLVM_DATADIR!$LLVM_DATADIR$ac_delim
-LLVM_DOCSDIR!$LLVM_DOCSDIR$ac_delim
-LLVM_ETCDIR!$LLVM_ETCDIR$ac_delim
-LLVM_INCLUDEDIR!$LLVM_INCLUDEDIR$ac_delim
-LLVM_INFODIR!$LLVM_INFODIR$ac_delim
-LLVM_MANDIR!$LLVM_MANDIR$ac_delim
-LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
-BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
-HAVE_OCAMLOPT!$HAVE_OCAMLOPT$ac_delim
-HAVE_OCAML_OUNIT!$HAVE_OCAML_OUNIT$ac_delim
-OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
-ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
-RPATH!$RPATH$ac_delim
-RDYNAMIC!$RDYNAMIC$ac_delim
-program_prefix!$program_prefix$ac_delim
-LIBOBJS!$LIBOBJS$ac_delim
-LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 96; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -18734,6 +18978,66 @@ N; s/^.*\n//; s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g; b n
 ' >>$CONFIG_STATUS <conf$$subs.sed
 rm -f conf$$subs.sed
 cat >>$CONFIG_STATUS <<_ACEOF
+CEOF$ac_eof
+_ACEOF
+
+
+ac_delim='%!_!# '
+for ac_last_try in false false false false false :; do
+  cat >conf$$subs.sed <<_ACEOF
+LLVM_DATADIR!$LLVM_DATADIR$ac_delim
+LLVM_DOCSDIR!$LLVM_DOCSDIR$ac_delim
+LLVM_ETCDIR!$LLVM_ETCDIR$ac_delim
+LLVM_INCLUDEDIR!$LLVM_INCLUDEDIR$ac_delim
+LLVM_INFODIR!$LLVM_INFODIR$ac_delim
+LLVM_MANDIR!$LLVM_MANDIR$ac_delim
+LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
+BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
+HAVE_OCAMLOPT!$HAVE_OCAMLOPT$ac_delim
+HAVE_OCAML_OUNIT!$HAVE_OCAML_OUNIT$ac_delim
+OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
+ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
+RPATH!$RPATH$ac_delim
+RDYNAMIC!$RDYNAMIC$ac_delim
+program_prefix!$program_prefix$ac_delim
+LIBOBJS!$LIBOBJS$ac_delim
+LTLIBOBJS!$LTLIBOBJS$ac_delim
+_ACEOF
+
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 17; then
+    break
+  elif $ac_last_try; then
+    { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
+echo "$as_me: error: could not make $CONFIG_STATUS" >&2;}
+   { (exit 1); exit 1; }; }
+  else
+    ac_delim="$ac_delim!$ac_delim _$ac_delim!! "
+  fi
+done
+
+ac_eof=`sed -n '/^CEOF[0-9]*$/s/CEOF/0/p' conf$$subs.sed`
+if test -n "$ac_eof"; then
+  ac_eof=`echo "$ac_eof" | sort -nru | sed 1q`
+  ac_eof=`expr $ac_eof + 1`
+fi
+
+cat >>$CONFIG_STATUS <<_ACEOF
+cat >"\$tmp/subs-3.sed" <<\CEOF$ac_eof
+/@[a-zA-Z_][a-zA-Z_0-9]*@/!b end
+_ACEOF
+sed '
+s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g
+s/^/s,@/; s/!/@,|#_!!_#|/
+:n
+t n
+s/'"$ac_delim"'$/,g/; t
+s/$/\\/; p
+N; s/^.*\n//; s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g; b n
+' >>$CONFIG_STATUS <conf$$subs.sed
+rm -f conf$$subs.sed
+cat >>$CONFIG_STATUS <<_ACEOF
+:end
+s/|#_!!_#|//g
 CEOF$ac_eof
 _ACEOF
 
@@ -18981,7 +19285,7 @@ s&@abs_builddir@&$ac_abs_builddir&;t t
 s&@abs_top_builddir@&$ac_abs_top_builddir&;t t
 s&@INSTALL@&$ac_INSTALL&;t t
 $ac_datarootdir_hack
-" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" | sed 's/|#_!!_#|//g' >$tmp/out
+" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" | sed -f "$tmp/subs-3.sed" >$tmp/out
 
 test -z "$ac_datarootdir_hack$ac_datarootdir_seen" &&
   { ac_out=`sed -n '/\${datarootdir}/p' "$tmp/out"`; test -n "$ac_out"; } &&
