@@ -73,6 +73,7 @@ public:
     kw_discard,
     kw_entry,
     kw_exclude_file,
+    kw_extern,
     kw_group,
     kw_hidden,
     kw_input,
@@ -154,6 +155,7 @@ class Command {
 public:
   enum class Kind {
     Entry,
+    Extern,
     Group,
     Input,
     InputSectionsCmd,
@@ -841,6 +843,28 @@ private:
   llvm::ArrayRef<const MemoryBlock *> _blocks;
 };
 
+/// Represents an extern command.
+class Extern : public Command {
+public:
+  Extern(Parser &ctx,
+         const SmallVectorImpl<StringRef> &symbols)
+      : Command(ctx, Kind::Extern) {
+    size_t numSymbols = symbols.size();
+    StringRef *symbolsStart =
+        getAllocator().Allocate<StringRef>(numSymbols);
+    std::copy(std::begin(symbols), std::end(symbols), symbolsStart);
+    _symbols = llvm::makeArrayRef(symbolsStart, numSymbols);
+  }
+
+  static bool classof(const Command *c) {
+    return c->getKind() == Kind::Extern;
+  }
+
+  void dump(raw_ostream &os) const override;
+
+private:
+  llvm::ArrayRef<StringRef> _symbols;
+};
 
 /// Stores the parse tree of a linker script.
 class LinkerScript {
@@ -1120,6 +1144,14 @@ private:
   ///   }
   ///
   Memory *parseMemory();
+
+  /// Parse the EXTERN linker script command.
+  /// Example:
+  ///
+  /// EXTERN(symbol symbol ...)
+  /// ^~~~> parseExtern()
+  ///
+  Extern *parseExtern();
 
 private:
   // Owns the entire linker script AST nodes

@@ -62,6 +62,7 @@ void Token::dump(raw_ostream &os) const {
     CASE(kw_discard)
     CASE(kw_entry)
     CASE(kw_exclude_file)
+    CASE(kw_extern)
     CASE(kw_group)
     CASE(kw_hidden)
     CASE(kw_input)
@@ -467,6 +468,7 @@ void Lexer::lex(Token &tok) {
             .Case("AT", Token::kw_at)
             .Case("ENTRY", Token::kw_entry)
             .Case("EXCLUDE_FILE", Token::kw_exclude_file)
+            .Case("EXTERN", Token::kw_extern)
             .Case("GROUP", Token::kw_group)
             .Case("HIDDEN", Token::kw_hidden)
             .Case("INPUT", Token::kw_input)
@@ -952,6 +954,18 @@ void Memory::dump(raw_ostream &os) const {
   os << "}\n";
 }
 
+// Extern functions
+void Extern::dump(raw_ostream &os) const {
+  os << "EXTERN(";
+  for (unsigned i = 0, e = _symbols.size(); i != e; ++i) {
+    if (i)
+      os << " ";
+    os << _symbols[i];
+  }
+  os << ")\n";
+}
+
+
 // Parser functions
 std::error_code Parser::parse() {
   // Get the first token.
@@ -1036,6 +1050,13 @@ std::error_code Parser::parse() {
     }
     case Token::kw_memory: {
       const Command *cmd = parseMemory();
+      if (!cmd)
+        return LinkerScriptReaderError::parse_error;
+      _script._commands.push_back(cmd);
+      break;
+    }
+    case Token::kw_extern: {
+      const Command *cmd = parseExtern();
       if (!cmd)
         return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(cmd);
@@ -2093,6 +2114,31 @@ Memory *Parser::parseMemory() {
     return nullptr;
 
   return new (_alloc) Memory(*this, blocks);
+}
+
+Extern *Parser::parseExtern() {
+  assert(_tok._kind == Token::kw_extern && "Expected EXTERN!");
+  consumeToken();
+  if (!expectAndConsume(Token::l_paren, "expected ("))
+    return nullptr;
+
+  // Parse one or more symbols.
+  SmallVector<StringRef, 8> symbols;
+  if (_tok._kind != Token::identifier) {
+    error(_tok, "expected one or more symbols in EXTERN.");
+    return nullptr;
+  }
+  symbols.push_back(_tok._range);
+  consumeToken();
+  while (_tok._kind == Token::identifier) {
+    symbols.push_back(_tok._range);
+    consumeToken();
+  }
+
+  if (!expectAndConsume(Token::r_paren, "expected symbol in EXTERN."))
+    return nullptr;
+
+  return new (_alloc) Extern(*this, symbols);
 }
 
 } // end namespace script
