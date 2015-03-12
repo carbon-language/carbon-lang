@@ -38,9 +38,7 @@ extern cl::opt<bool> ReuseFrameIndexVals;
 
 using namespace llvm;
 
-Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMSubtarget &sti)
-  : ARMBaseRegisterInfo(sti) {
-}
+Thumb1RegisterInfo::Thumb1RegisterInfo() : ARMBaseRegisterInfo() {}
 
 const TargetRegisterClass *
 Thumb1RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
@@ -58,19 +56,16 @@ Thumb1RegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
 
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.
-void
-Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator &MBBI,
-                                      DebugLoc dl,
-                                      unsigned DestReg, unsigned SubIdx,
-                                      int Val,
-                                      ARMCC::CondCodes Pred, unsigned PredReg,
-                                      unsigned MIFlags) const {
+void Thumb1RegisterInfo::emitLoadConstPool(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI, DebugLoc dl,
+    unsigned DestReg, unsigned SubIdx, int Val, ARMCC::CondCodes Pred,
+    unsigned PredReg, unsigned MIFlags) const {
   assert((isARMLowRegister(DestReg) ||
           isVirtualRegister(DestReg)) &&
              "Thumb1 does not have ldr to high register");
 
   MachineFunction &MF = *MBB.getParent();
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C = ConstantInt::get(
@@ -388,6 +383,8 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
 
 void Thumb1RegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
                                            int64_t Offset) const {
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
   const ARMBaseInstrInfo &TII = *STI.getInstrInfo();
   int Off = Offset; // ARM doesn't need the general 64-bit offsets
   unsigned i = 0;
@@ -414,6 +411,7 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   // off the frame pointer (if, for example, there are alloca() calls in
   // the function, the offset will be negative. Use R12 instead since that's
   // a call clobbered register that we know won't be used in Thumb1 mode.
+  const ARMSubtarget &STI = MBB.getParent()->getSubtarget<ARMSubtarget>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   DebugLoc DL;
   AddDefaultPred(BuildMI(MBB, I, DL, TII.get(ARM::tMOVr))
@@ -460,6 +458,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
   const ARMBaseInstrInfo &TII = *STI.getInstrInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc dl = MI.getDebugLoc();

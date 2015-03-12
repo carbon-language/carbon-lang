@@ -23,7 +23,7 @@ class ARMSubtarget;
 struct ARMRegisterInfo : public ARMBaseRegisterInfo {
   virtual void anchor();
 public:
-  ARMRegisterInfo(const ARMSubtarget &STI);
+  ARMRegisterInfo();
 };
 
 } // end namespace llvm

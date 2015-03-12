@@ -25,9 +25,7 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-Thumb2RegisterInfo::Thumb2RegisterInfo(const ARMSubtarget &sti)
-  : ARMBaseRegisterInfo(sti) {
-}
+Thumb2RegisterInfo::Thumb2RegisterInfo() : ARMBaseRegisterInfo() {}
 
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.

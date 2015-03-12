@@ -45,21 +45,24 @@
 
 using namespace llvm;
 
-ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMSubtarget &sti)
-    : ARMGenRegisterInfo(ARM::LR, 0, 0, ARM::PC), STI(sti), BasePtr(ARM::R6) {
+ARMBaseRegisterInfo::ARMBaseRegisterInfo()
+    : ARMGenRegisterInfo(ARM::LR, 0, 0, ARM::PC), BasePtr(ARM::R6) {}
+
+static unsigned getFramePointerReg(const ARMSubtarget &STI) {
   if (STI.isTargetMachO()) {
     if (STI.isTargetDarwin() || STI.isThumb1Only())
-      FramePtr = ARM::R7;
+      return ARM::R7;
     else
-      FramePtr = ARM::R11;
+      return ARM::R11;
   } else if (STI.isTargetWindows())
-    FramePtr = ARM::R11;
+    return ARM::R11;
   else // ARM EABI
-    FramePtr = STI.isThumb() ? ARM::R7 : ARM::R11;
+    return STI.isThumb() ? ARM::R7 : ARM::R11;
 }
 
 const MCPhysReg*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  const ARMSubtarget &STI = MF->getSubtarget<ARMSubtarget>();
   const MCPhysReg *RegList =
       STI.isTargetDarwin() ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
 
@@ -90,6 +93,7 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const uint32_t *
 ARMBaseRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                           CallingConv::ID CC) const {
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
   if (CC == CallingConv::GHC)
     // This is academic becase all GHC calls are (supposed to be) tail calls
     return CSR_NoRegs_RegMask;
@@ -104,6 +108,7 @@ ARMBaseRegisterInfo::getNoPreservedMask() const {
 const uint32_t *
 ARMBaseRegisterInfo::getThisReturnPreservedMask(const MachineFunction &MF,
                                                 CallingConv::ID CC) const {
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
   // This should return a register mask that is the same as that returned by
   // getCallPreservedMask but that additionally preserves the register used for
   // the first i32 argument (which must also be the register used to return a
@@ -121,7 +126,8 @@ ARMBaseRegisterInfo::getThisReturnPreservedMask(const MachineFunction &MF,
 
 BitVector ARMBaseRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
+  const TargetFrameLowering *TFI = STI.getFrameLowering();
 
   // FIXME: avoid re-calculating this every time.
   BitVector Reserved(getNumRegs());
@@ -130,7 +136,7 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(ARM::FPSCR);
   Reserved.set(ARM::APSR_NZCV);
   if (TFI->hasFP(MF))
-    Reserved.set(FramePtr);
+    Reserved.set(getFramePointerReg(STI));
   if (hasBasePointer(MF))
     Reserved.set(BasePtr);
   // Some targets reserve R9.
@@ -187,7 +193,8 @@ ARMBaseRegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
 unsigned
 ARMBaseRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                          MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
+  const TargetFrameLowering *TFI = STI.getFrameLowering();
 
   switch (RC->getID()) {
   default:
@@ -327,7 +334,7 @@ bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
     return false;
   // Stack realignment requires a frame pointer.  If we already started
   // register allocation with frame pointer elimination, it is too late now.
-  if (!MRI->canReserveReg(FramePtr))
+  if (!MRI->canReserveReg(getFramePointerReg(MF.getSubtarget<ARMSubtarget>())))
     return false;
   // We may also need a base pointer if there are dynamic allocas or stack
   // pointer adjustments around calls.
@@ -361,10 +368,11 @@ cannotEliminateFrame(const MachineFunction &MF) const {
 
 unsigned
 ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const ARMSubtarget &STI = MF.getSubtarget<ARMSubtarget>();
+  const TargetFrameLowering *TFI = STI.getFrameLowering();
 
   if (TFI->hasFP(MF))
-    return FramePtr;
+    return getFramePointerReg(STI);
   return ARM::SP;
 }
 

@@ -23,7 +23,7 @@ class ARMSubtarget;
 
 struct Thumb2RegisterInfo : public ARMBaseRegisterInfo {
 public:
-  Thumb2RegisterInfo(const ARMSubtarget &STI);
+  Thumb2RegisterInfo();
 
   /// emitLoadConstPool - Emits a load from constpool to materialize the
   /// specified immediate.
