@@ -126,7 +126,7 @@ public:
   /// object. There are four kinds of Atoms, so this iterator is templated on
   /// the four base Atom kinds.
   template <typename T>
-  class atom_iterator {
+  class atom_iterator : public std::iterator<std::forward_iterator_tag, T> {
   public:
     atom_iterator(const atom_collection<T> &c, const void *it)
               : _collection(c), _it(it) { }
@@ -139,8 +139,12 @@ public:
       return _collection.deref(_it);
     }
 
-    bool operator!=(const atom_iterator<T> &other) const {
-      return (this->_it != other._it);
+    friend bool operator==(const atom_iterator<T> &lhs, const atom_iterator<T> &rhs)  {
+      return lhs._it == rhs._it;
+    }
+
+    friend bool operator!=(const atom_iterator<T> &lhs, const atom_iterator<T> &rhs)  {
+      return !(lhs == rhs);
     }
 
     atom_iterator<T> &operator++() {
@@ -151,7 +155,6 @@ public:
     const atom_collection<T> &_collection;
     const void               *_it;
   };
-
 
   /// \brief Must be implemented to return the atom_collection object for
   /// all DefinedAtoms in this File.

@@ -264,17 +264,13 @@ public:
     mergedFile->addAtom(*helperCacheNLPAtom);
 
     // Add reference to dyld_stub_binder in libSystem.dylib
-    bool binderFound = false;
-    for (const SharedLibraryAtom *atom : mergedFile->sharedLibrary()) {
-      if (atom->name().equals(_stubInfo.binderSymbolName)) {
-        addReference(helperBinderNLPAtom,
-                     _stubInfo.nonLazyPointerReferenceToBinder, atom);
-        binderFound = true;
-        break;
-      }
-    }
-    assert(binderFound && "dyld_stub_binder not found");
-    (void)binderFound;
+    auto I = std::find_if(
+        mergedFile->sharedLibrary().begin(), mergedFile->sharedLibrary().end(),
+        [&](const SharedLibraryAtom *atom) {
+          return atom->name().equals(_stubInfo.binderSymbolName);
+        });
+    assert(I != mergedFile->sharedLibrary().end() && "dyld_stub_binder not found");
+    addReference(helperBinderNLPAtom, _stubInfo.nonLazyPointerReferenceToBinder, *I);
 
     // Sort targets by name, so stubs and lazy pointers are consistent
     std::vector<const Atom *> targetsNeedingStubs;
