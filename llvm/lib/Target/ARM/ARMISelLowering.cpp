@@ -2853,7 +2853,7 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
     CCInfo.getInRegsParamInfo(InRegsParamRecordIdx, RBegin, REnd);
   } else {
     unsigned RBeginIdx = CCInfo.getFirstUnallocated(GPRArgRegs);
-    RBegin = RBeginIdx == 4 ? ARM::R4 : GPRArgRegs[RBeginIdx];
+    RBegin = RBeginIdx == 4 ? (unsigned)ARM::R4 : GPRArgRegs[RBeginIdx];
     REnd = ARM::R4;
   }
 
