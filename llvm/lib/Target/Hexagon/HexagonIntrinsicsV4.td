@@ -234,17 +234,17 @@ def: T_RR_pat<A4_orn,  int_hexagon_A4_orn>;
 *********************************************************************/
 
 // Combine Words Into Doublewords.
-def: T_RI_pat<A4_combineri, int_hexagon_A4_combineri, s8ExtPred>;
-def: T_IR_pat<A4_combineir, int_hexagon_A4_combineir, s8ExtPred>;
+def: T_RI_pat<A4_combineri, int_hexagon_A4_combineri, s32ImmPred>;
+def: T_IR_pat<A4_combineir, int_hexagon_A4_combineir, s32ImmPred>;
 
 /********************************************************************
 *            ALU32/PRED                                             *
 *********************************************************************/
 
 // Compare
-def : T_RI_pat<C4_cmpneqi, int_hexagon_C4_cmpneqi, s10ExtPred>;
-def : T_RI_pat<C4_cmpltei, int_hexagon_C4_cmpltei, s10ExtPred>;
-def : T_RI_pat<C4_cmplteui, int_hexagon_C4_cmplteui, u9ExtPred>;
+def : T_RI_pat<C4_cmpneqi, int_hexagon_C4_cmpneqi, s32ImmPred>;
+def : T_RI_pat<C4_cmpltei, int_hexagon_C4_cmpltei, s32ImmPred>;
+def : T_RI_pat<C4_cmplteui, int_hexagon_C4_cmplteui, u32ImmPred>;
 
 def: T_RR_pat<A4_rcmpeq,  int_hexagon_A4_rcmpeq>;
 def: T_RR_pat<A4_rcmpneq, int_hexagon_A4_rcmpneq>;

@@ -269,10 +269,10 @@ class T_RCMP_EQ_ri<string mnemonic, bit IsNeg>
 def A4_rcmpeqi  : T_RCMP_EQ_ri<"cmp.eq",  0>;
 def A4_rcmpneqi : T_RCMP_EQ_ri<"!cmp.eq", 1>;
 
-def: Pat<(i32 (zext (i1 (seteq (i32 IntRegs:$Rs), s8ExtPred:$s8)))),
-         (A4_rcmpeqi IntRegs:$Rs, s8ExtPred:$s8)>;
-def: Pat<(i32 (zext (i1 (setne (i32 IntRegs:$Rs), s8ExtPred:$s8)))),
-         (A4_rcmpneqi IntRegs:$Rs, s8ExtPred:$s8)>;
+def: Pat<(i32 (zext (i1 (seteq (i32 IntRegs:$Rs), s32ImmPred:$s8)))),
+         (A4_rcmpeqi IntRegs:$Rs, s32ImmPred:$s8)>;
+def: Pat<(i32 (zext (i1 (setne (i32 IntRegs:$Rs), s32ImmPred:$s8)))),
+         (A4_rcmpneqi IntRegs:$Rs, s32ImmPred:$s8)>;
 
 // Preserve the S2_tstbit_r generation
 def: Pat<(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
@@ -317,11 +317,11 @@ def A4_combineir : T_Combine1<0b01, (ins s8Ext:$s8, IntRegs:$Rs),
 // The complexity of the combines involving immediates should be greater
 // than the complexity of the combine with two registers.
 let AddedComplexity = 50 in {
-def: Pat<(HexagonCOMBINE IntRegs:$r, s8ExtPred:$i),
-         (A4_combineri IntRegs:$r, s8ExtPred:$i)>;
+def: Pat<(HexagonCOMBINE IntRegs:$r, s32ImmPred:$i),
+         (A4_combineri IntRegs:$r, s32ImmPred:$i)>;
 
-def: Pat<(HexagonCOMBINE s8ExtPred:$i, IntRegs:$r),
-         (A4_combineir s8ExtPred:$i, IntRegs:$r)>;
+def: Pat<(HexagonCOMBINE s32ImmPred:$i, IntRegs:$r),
+         (A4_combineir s32ImmPred:$i, IntRegs:$r)>;
 }
 
 // A4_combineii: Set two small immediates.
@@ -343,7 +343,7 @@ def A4_combineii: ALU32Inst<(outs DoubleRegs:$Rdd), (ins s8Imm:$s8, u6Ext:$U6),
 // The complexity of the combine with two immediates should be greater than
 // the complexity of a combine involving a register.
 let AddedComplexity = 75 in
-def: Pat<(HexagonCOMBINE s8ImmPred:$s8, u6ExtPred:$u6),
+def: Pat<(HexagonCOMBINE s8ImmPred:$s8, u32ImmPred:$u6),
          (A4_combineii imm:$s8, imm:$u6)>;
 
 //===----------------------------------------------------------------------===//
@@ -375,14 +375,14 @@ multiclass Loadxm_pat<PatFrag Load, ValueType VT, PatFrag ValueMod,
            (VT (ValueMod (MI IntRegs:$Rs, 0)))>;
 }
 
-defm: Loadxm_pat<extloadi1,   i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
-defm: Loadxm_pat<extloadi8,   i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
-defm: Loadxm_pat<extloadi16,  i64, Zext64, s11_1ExtPred, L2_loadruh_io>;
-defm: Loadxm_pat<zextloadi1,  i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
-defm: Loadxm_pat<zextloadi8,  i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
-defm: Loadxm_pat<zextloadi16, i64, Zext64, s11_1ExtPred, L2_loadruh_io>;
-defm: Loadxm_pat<sextloadi8,  i64, Sext64, s11_0ExtPred, L2_loadrb_io>;
-defm: Loadxm_pat<sextloadi16, i64, Sext64, s11_1ExtPred, L2_loadrh_io>;
+defm: Loadxm_pat<extloadi1,   i64, Zext64, s32_0ImmPred, L2_loadrub_io>;
+defm: Loadxm_pat<extloadi8,   i64, Zext64, s32_0ImmPred, L2_loadrub_io>;
+defm: Loadxm_pat<extloadi16,  i64, Zext64, s31_1ImmPred, L2_loadruh_io>;
+defm: Loadxm_pat<zextloadi1,  i64, Zext64, s32_0ImmPred, L2_loadrub_io>;
+defm: Loadxm_pat<zextloadi8,  i64, Zext64, s32_0ImmPred, L2_loadrub_io>;
+defm: Loadxm_pat<zextloadi16, i64, Zext64, s31_1ImmPred, L2_loadruh_io>;
+defm: Loadxm_pat<sextloadi8,  i64, Sext64, s32_0ImmPred, L2_loadrb_io>;
+defm: Loadxm_pat<sextloadi16, i64, Sext64, s31_1ImmPred, L2_loadrh_io>;
 
 // Map Rdd = anyext(Rs) -> Rdd = combine(#0, Rs).
 def: Pat<(i64 (anyext (i32 IntRegs:$src1))), (Zext64 IntRegs:$src1)>;
@@ -663,9 +663,9 @@ def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
       (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>;
 
 let AddedComplexity = 100 in
-def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
+def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s30_2ImmPred:$offset)))),
       (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
-                                  s11_2ExtPred:$offset)))>;
+                                  s30_2ImmPred:$offset)))>;
 
 // anyext i32->i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
@@ -791,8 +791,8 @@ multiclass T_StoreAbsReg_Pats <InstHexagon MI, RegisterClass RC, ValueType VT,
                            PatFrag stOp> {
  def : Pat<(stOp (VT RC:$src4),
                  (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
-                      u0AlwaysExtPred:$src3)),
-          (MI IntRegs:$src1, u2ImmPred:$src2, u0AlwaysExtPred:$src3, RC:$src4)>;
+                      u32ImmPred:$src3)),
+          (MI IntRegs:$src1, u2ImmPred:$src2, u32ImmPred:$src3, RC:$src4)>;
 
  def : Pat<(stOp (VT RC:$src4),
                  (add (shl IntRegs:$src1, u2ImmPred:$src2),
@@ -1180,17 +1180,17 @@ let AddedComplexity = 40 in {
   // is not extendable. This could cause problems during removing the frame
   // indices, since the offset with respect to R29/R30 may not fit in the
   // u6 field.
-  def: Storexm_add_pat<truncstorei8, s8ExtPred, u6_0ImmPred, ToImmByte,
+  def: Storexm_add_pat<truncstorei8, s32ImmPred, u6_0ImmPred, ToImmByte,
                        S4_storeirb_io>;
-  def: Storexm_add_pat<truncstorei16, s8ExtPred, u6_1ImmPred, ToImmHalf,
+  def: Storexm_add_pat<truncstorei16, s32ImmPred, u6_1ImmPred, ToImmHalf,
                        S4_storeirh_io>;
-  def: Storexm_add_pat<store, s8ExtPred, u6_2ImmPred, ToImmWord,
+  def: Storexm_add_pat<store, s32ImmPred, u6_2ImmPred, ToImmWord,
                        S4_storeiri_io>;
 }
 
-def: Storexm_simple_pat<truncstorei8,  s8ExtPred, ToImmByte, S4_storeirb_io>;
-def: Storexm_simple_pat<truncstorei16, s8ExtPred, ToImmHalf, S4_storeirh_io>;
-def: Storexm_simple_pat<store,         s8ExtPred, ToImmWord, S4_storeiri_io>;
+def: Storexm_simple_pat<truncstorei8,  s32ImmPred, ToImmByte, S4_storeirb_io>;
+def: Storexm_simple_pat<truncstorei16, s32ImmPred, ToImmHalf, S4_storeirh_io>;
+def: Storexm_simple_pat<store,         s32ImmPred, ToImmWord, S4_storeiri_io>;
 
 // memb(Rx++#s4:0:circ(Mu))=Rt
 // memb(Rx++I:circ(Mu))=Rt
@@ -1845,23 +1845,23 @@ def Hexagongat_pcrel_ba : SDNode<"HexagonISD::AT_PCREL",
 
 // PIC: Map from a block address computation to a PC-relative add
 def: Pat<(Hexagongat_pcrel_ba tblockaddress:$src1),
-         (C4_addipc u6ExtPred:$src1)>;
+         (C4_addipc u32ImmPred:$src1)>;
 
 // PIC: Map from the computation to generate a GOT pointer to a PC-relative add
 def: Pat<(Hexagonpic_add texternalsym:$src1),
-         (C4_addipc u6ExtPred:$src1)>;
+         (C4_addipc u32ImmPred:$src1)>;
 
 // PIC: Map from a jump table address computation to a PC-relative add
 def: Pat<(Hexagongat_pcrel_jt tjumptable:$src1),
-         (C4_addipc u6ExtPred:$src1)>;
+         (C4_addipc u32ImmPred:$src1)>;
 
 // PIC: Map from a GOT-relative symbol reference to a load
 def: Pat<(Hexagonat_got (i32 IntRegs:$src1), tglobaladdr:$src2),
-         (L2_loadri_io IntRegs:$src1, s11_2ExtPred:$src2)>;
+         (L2_loadri_io IntRegs:$src1, s30_2ImmPred:$src2)>;
 
 // PIC: Map from a static symbol reference to a PC-relative add
 def: Pat<(Hexagongat_pcrel tglobaladdr:$src1),
-         (C4_addipc u6ExtPred:$src1)>;
+         (C4_addipc u32ImmPred:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // CR -
@@ -1902,7 +1902,7 @@ def S4_addaddi : ALU64Inst <(outs IntRegs:$Rd),
                             (ins IntRegs:$Rs, IntRegs:$Ru, s6Ext:$s6),
   "$Rd = add($Rs, add($Ru, #$s6))" ,
   [(set (i32 IntRegs:$Rd), (add (i32 IntRegs:$Rs),
-                           (add (i32 IntRegs:$Ru), s6_16ExtPred:$s6)))],
+                           (add (i32 IntRegs:$Ru), s16_16ImmPred:$s6)))],
   "", ALU64_tc_2_SLOT23> {
     bits<5> Rd;
     bits<5> Rs;
@@ -1943,19 +1943,19 @@ def S4_subaddi: ALU64Inst <(outs IntRegs:$Rd),
   }
 
 // Rd=add(Rs,sub(#s6,Ru))
-def: Pat<(add (i32 IntRegs:$src1), (sub s6_10ExtPred:$src2,
+def: Pat<(add (i32 IntRegs:$src1), (sub s32ImmPred:$src2,
                                         (i32 IntRegs:$src3))),
-         (S4_subaddi IntRegs:$src1, s6_10ExtPred:$src2, IntRegs:$src3)>;
+         (S4_subaddi IntRegs:$src1, s32ImmPred:$src2, IntRegs:$src3)>;
 
 // Rd=sub(add(Rs,#s6),Ru)
-def: Pat<(sub (add (i32 IntRegs:$src1), s6_10ExtPred:$src2),
+def: Pat<(sub (add (i32 IntRegs:$src1), s32ImmPred:$src2),
                    (i32 IntRegs:$src3)),
-         (S4_subaddi IntRegs:$src1, s6_10ExtPred:$src2, IntRegs:$src3)>;
+         (S4_subaddi IntRegs:$src1, s32ImmPred:$src2, IntRegs:$src3)>;
 
 // Rd=add(sub(Rs,Ru),#s6)
 def: Pat<(add (sub (i32 IntRegs:$src1), (i32 IntRegs:$src3)),
-                   (s6_10ExtPred:$src2)),
-         (S4_subaddi IntRegs:$src1, s6_10ExtPred:$src2, IntRegs:$src3)>;
+                   (s32ImmPred:$src2)),
+         (S4_subaddi IntRegs:$src1, s32ImmPred:$src2, IntRegs:$src3)>;
 
 
 //  Add or subtract doublewords with carry.
@@ -2108,7 +2108,7 @@ def S4_or_andix:
             (ins IntRegs:$Ru, IntRegs:$_src_, s10Ext:$s10),
   "$Rx = or($Ru, and($_src_, #$s10))" ,
   [(set (i32 IntRegs:$Rx),
-        (or (i32 IntRegs:$Ru), (and (i32 IntRegs:$_src_), s10ExtPred:$s10)))] ,
+        (or (i32 IntRegs:$Ru), (and (i32 IntRegs:$_src_), s32ImmPred:$s10)))] ,
   "$_src_ = $Rx", ALU64_tc_2_SLOT23> {
     bits<5> Rx;
     bits<5> Ru;
@@ -2253,7 +2253,7 @@ class T_CompOR <string mnemonic, bits<2> MajOp, SDNode OpNode>
                (ins IntRegs:$src1, IntRegs:$Rs, s10Ext:$s10),
   "$Rx |= "#mnemonic#"($Rs, #$s10)",
   [(set (i32 IntRegs:$Rx), (or (i32 IntRegs:$src1),
-                           (OpNode (i32 IntRegs:$Rs), s10ExtPred:$s10)))],
+                           (OpNode (i32 IntRegs:$Rs), s32ImmPred:$s10)))],
   "$src1 = $Rx", ALU64_tc_2_SLOT23>, ImmRegRel {
     bits<5> Rx;
     bits<5> Rs;
@@ -2415,7 +2415,7 @@ def M4_mpyri_addi : MInst<(outs IntRegs:$Rd),
   "$Rd = add(#$u6, mpyi($Rs, #$U6))" ,
   [(set (i32 IntRegs:$Rd),
         (add (mul (i32 IntRegs:$Rs), u6ImmPred:$U6),
-             u6ExtPred:$u6))] ,"",ALU64_tc_3x_SLOT23> {
+             u32ImmPred:$u6))] ,"",ALU64_tc_3x_SLOT23> {
     bits<5> Rd;
     bits<6> u6;
     bits<5> Rs;
@@ -2440,7 +2440,7 @@ def M4_mpyrr_addi : MInst <(outs IntRegs:$Rd),
   (ins u6Ext:$u6, IntRegs:$Rs, IntRegs:$Rt),
   "$Rd = add(#$u6, mpyi($Rs, $Rt))" ,
   [(set (i32 IntRegs:$Rd),
-        (add (mul (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), u6ExtPred:$u6))],
+        (add (mul (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), u32ImmPred:$u6))],
   "", ALU64_tc_3x_SLOT23>, ImmRegRel {
     bits<5> Rd;
     bits<6> u6;
@@ -2490,7 +2490,7 @@ def M4_mpyri_addr_u2 : T_AddMpy<0b0, u6_2ImmPred,
 
 let isExtendable = 1, opExtentBits = 6, opExtendable = 3,
     CextOpcode = "ADD_MPY", InputType = "imm" in
-def M4_mpyri_addr : T_AddMpy<0b1, u6ExtPred,
+def M4_mpyri_addr : T_AddMpy<0b1, u32ImmPred,
                     (ins IntRegs:$src1, IntRegs:$src3, u6Ext:$src2)>, ImmRegRel;
 
 // Rx=add(Ru,mpyi(Rx,Rs))
@@ -2624,7 +2624,7 @@ class T_S4_ShiftOperate<string MnOp, string MnSh, SDNode Op, SDNode Sh,
   : MInst_acc<(outs IntRegs:$Rd), (ins u8Ext:$u8, IntRegs:$Rx, u5Imm:$U5),
       "$Rd = "#MnOp#"(#$u8, "#MnSh#"($Rx, #$U5))",
       [(set (i32 IntRegs:$Rd),
-            (Op (Sh I32:$Rx, u5ImmPred:$U5), u8ExtPred:$u8))],
+            (Op (Sh I32:$Rx, u5ImmPred:$U5), u32ImmPred:$u8))],
       "$Rd = $Rx", Itin> {
 
   bits<5> Rd;
@@ -2959,7 +2959,7 @@ let isExtendable = 1, opExtendable = 1, isExtentSigned = 0 in {
 // mem[bh](Rs+#u6) += #U5
 //===----------------------------------------------------------------------===//
 
-multiclass MemOpi_u5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf ExtPred,
+multiclass MemOpi_u5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf ImmPred,
                           InstHexagon MI, SDNode OpNode> {
   let AddedComplexity = 180 in
   def: Pat<(stOp (OpNode (ldOp IntRegs:$addr), u5ImmPred:$addend),
@@ -2967,24 +2967,24 @@ multiclass MemOpi_u5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf ExtPred,
             (MI IntRegs:$addr, 0, u5ImmPred:$addend)>;
 
   let AddedComplexity = 190 in
-  def: Pat<(stOp (OpNode (ldOp (add IntRegs:$base, ExtPred:$offset)),
+  def: Pat<(stOp (OpNode (ldOp (add IntRegs:$base, ImmPred:$offset)),
                   u5ImmPred:$addend),
-            (add IntRegs:$base, ExtPred:$offset)),
-            (MI IntRegs:$base, ExtPred:$offset, u5ImmPred:$addend)>;
+            (add IntRegs:$base, ImmPred:$offset)),
+            (MI IntRegs:$base, ImmPred:$offset, u5ImmPred:$addend)>;
 }
 
-multiclass MemOpi_u5ALUOp<PatFrag ldOp, PatFrag stOp, PatLeaf ExtPred,
+multiclass MemOpi_u5ALUOp<PatFrag ldOp, PatFrag stOp, PatLeaf ImmPred,
                           InstHexagon addMI, InstHexagon subMI> {
-  defm: MemOpi_u5Pats<ldOp, stOp, ExtPred, addMI, add>;
-  defm: MemOpi_u5Pats<ldOp, stOp, ExtPred, subMI, sub>;
+  defm: MemOpi_u5Pats<ldOp, stOp, ImmPred, addMI, add>;
+  defm: MemOpi_u5Pats<ldOp, stOp, ImmPred, subMI, sub>;
 }
 
 multiclass MemOpi_u5ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
   // Half Word
-  defm: MemOpi_u5ALUOp <ldOpHalf, truncstorei16, u6_1ExtPred,
+  defm: MemOpi_u5ALUOp <ldOpHalf, truncstorei16, u31_1ImmPred,
                         L4_iadd_memoph_io, L4_isub_memoph_io>;
   // Byte
-  defm: MemOpi_u5ALUOp <ldOpByte, truncstorei8, u6ExtPred,
+  defm: MemOpi_u5ALUOp <ldOpByte, truncstorei8, u32ImmPred,
                         L4_iadd_memopb_io, L4_isub_memopb_io>;
 }
 
@@ -2994,7 +2994,7 @@ let Predicates = [UseMEMOP] in {
   defm: MemOpi_u5ExtType<extloadi8,  extloadi16>;  // any extend
 
   // Word
-  defm: MemOpi_u5ALUOp <load, store, u6_2ExtPred, L4_iadd_memopw_io,
+  defm: MemOpi_u5ALUOp <load, store, u30_2ImmPred, L4_iadd_memopw_io,
                         L4_isub_memopw_io>;
 }
 
@@ -3005,7 +3005,7 @@ let Predicates = [UseMEMOP] in {
 // mem[bh](Rs+#u6) += #m5
 //===----------------------------------------------------------------------===//
 
-multiclass MemOpi_m5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf extPred,
+multiclass MemOpi_m5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf ImmPred,
                           PatLeaf immPred, SDNodeXForm xformFunc,
                           InstHexagon MI> {
   let AddedComplexity = 190 in
@@ -3013,18 +3013,18 @@ multiclass MemOpi_m5Pats <PatFrag ldOp, PatFrag stOp, PatLeaf extPred,
            (MI IntRegs:$addr, 0, (xformFunc immPred:$subend))>;
 
   let AddedComplexity = 195 in
-  def: Pat<(stOp (add (ldOp (add IntRegs:$base, extPred:$offset)),
+  def: Pat<(stOp (add (ldOp (add IntRegs:$base, ImmPred:$offset)),
                   immPred:$subend),
-           (add IntRegs:$base, extPred:$offset)),
-           (MI IntRegs:$base, extPred:$offset, (xformFunc immPred:$subend))>;
+           (add IntRegs:$base, ImmPred:$offset)),
+           (MI IntRegs:$base, ImmPred:$offset, (xformFunc immPred:$subend))>;
 }
 
 multiclass MemOpi_m5ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
   // Half Word
-  defm: MemOpi_m5Pats <ldOpHalf, truncstorei16, u6_1ExtPred, m5HImmPred,
+  defm: MemOpi_m5Pats <ldOpHalf, truncstorei16, u31_1ImmPred, m5HImmPred,
                        MEMOPIMM_HALF, L4_isub_memoph_io>;
   // Byte
-  defm: MemOpi_m5Pats <ldOpByte, truncstorei8, u6ExtPred, m5BImmPred,
+  defm: MemOpi_m5Pats <ldOpByte, truncstorei8, u32ImmPred, m5BImmPred,
                        MEMOPIMM_BYTE, L4_isub_memopb_io>;
 }
 
@@ -3034,7 +3034,7 @@ let Predicates = [UseMEMOP] in {
   defm: MemOpi_m5ExtType<extloadi8,  extloadi16>;  // any extend
 
   // Word
-  defm: MemOpi_m5Pats <load, store, u6_2ExtPred, m5ImmPred,
+  defm: MemOpi_m5Pats <load, store, u30_2ImmPred, m5ImmPred,
                        MEMOPIMM, L4_isub_memopw_io>;
 }
 
@@ -3063,16 +3063,16 @@ multiclass MemOpi_bitPats <PatFrag ldOp, PatFrag stOp, PatLeaf immPred,
 
 multiclass MemOpi_bitExtType<PatFrag ldOpByte, PatFrag ldOpHalf> {
   // Byte - clrbit
-  defm: MemOpi_bitPats<ldOpByte, truncstorei8, Clr3ImmPred, u6ExtPred,
+  defm: MemOpi_bitPats<ldOpByte, truncstorei8, Clr3ImmPred, u32ImmPred,
                        CLRMEMIMM_BYTE, L4_iand_memopb_io, and>;
   // Byte - setbit
-  defm: MemOpi_bitPats<ldOpByte, truncstorei8, Set3ImmPred, u6ExtPred,
+  defm: MemOpi_bitPats<ldOpByte, truncstorei8, Set3ImmPred, u32ImmPred,
                        SETMEMIMM_BYTE, L4_ior_memopb_io, or>;
   // Half Word - clrbit
-  defm: MemOpi_bitPats<ldOpHalf, truncstorei16, Clr4ImmPred, u6_1ExtPred,
+  defm: MemOpi_bitPats<ldOpHalf, truncstorei16, Clr4ImmPred, u31_1ImmPred,
                        CLRMEMIMM_SHORT, L4_iand_memoph_io, and>;
   // Half Word - setbit
-  defm: MemOpi_bitPats<ldOpHalf, truncstorei16, Set4ImmPred, u6_1ExtPred,
+  defm: MemOpi_bitPats<ldOpHalf, truncstorei16, Set4ImmPred, u31_1ImmPred,
                        SETMEMIMM_SHORT, L4_ior_memoph_io, or>;
 }
 
@@ -3085,9 +3085,9 @@ let Predicates = [UseMEMOP] in {
 
   // memw(Rs+#0) = [clrbit|setbit](#U5)
   // memw(Rs+#u6:2) = [clrbit|setbit](#U5)
-  defm: MemOpi_bitPats<load, store, Clr5ImmPred, u6_2ExtPred, CLRMEMIMM,
+  defm: MemOpi_bitPats<load, store, Clr5ImmPred, u30_2ImmPred, CLRMEMIMM,
                        L4_iand_memopw_io, and>;
-  defm: MemOpi_bitPats<load, store, Set5ImmPred, u6_2ExtPred, SETMEMIMM,
+  defm: MemOpi_bitPats<load, store, Set5ImmPred, u30_2ImmPred, SETMEMIMM,
                        L4_ior_memopw_io, or>;
 }
 
@@ -3125,11 +3125,11 @@ multiclass MemOPr_ALUOp<PatFrag ldOp, PatFrag stOp, PatLeaf extPred,
 
 multiclass MemOPr_ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
   // Half Word
-  defm: MemOPr_ALUOp <ldOpHalf, truncstorei16, u6_1ExtPred,
+  defm: MemOPr_ALUOp <ldOpHalf, truncstorei16, u31_1ImmPred,
                       L4_add_memoph_io, L4_sub_memoph_io,
                       L4_and_memoph_io, L4_or_memoph_io>;
   // Byte
-  defm: MemOPr_ALUOp <ldOpByte, truncstorei8, u6ExtPred,
+  defm: MemOPr_ALUOp <ldOpByte, truncstorei8, u32ImmPred,
                       L4_add_memopb_io, L4_sub_memopb_io,
                       L4_and_memopb_io, L4_or_memopb_io>;
 }
@@ -3141,7 +3141,7 @@ let Predicates = [UseMEMOP] in {
   defm: MemOPr_ExtType<sextloadi8, sextloadi16>; // sign extend
   defm: MemOPr_ExtType<extloadi8,  extloadi16>;  // any extend
   // Word
-  defm: MemOPr_ALUOp <load, store, u6_2ExtPred, L4_add_memopw_io,
+  defm: MemOPr_ALUOp <load, store, u30_2ImmPred, L4_add_memopw_io,
                       L4_sub_memopw_io, L4_and_memopw_io, L4_or_memopw_io>;
 }
 
@@ -3165,23 +3165,23 @@ def C4_cmpneqi  : T_CMP <"cmp.eq",  0b00, 1, s10Ext>;
 def C4_cmpltei  : T_CMP <"cmp.gt",  0b01, 1, s10Ext>;
 def C4_cmplteui : T_CMP <"cmp.gtu", 0b10, 1, u9Ext>;
 
-def : T_CMP_pat <C4_cmpneqi,  setne,  s10ExtPred>;
-def : T_CMP_pat <C4_cmpltei,  setle,  s10ExtPred>;
+def : T_CMP_pat <C4_cmpneqi,  setne,  s32ImmPred>;
+def : T_CMP_pat <C4_cmpltei,  setle,  s32ImmPred>;
 def : T_CMP_pat <C4_cmplteui, setule, u9ImmPred>;
 
 // rs <= rt -> !(rs > rt).
 /*
-def: Pat<(i1 (setle (i32 IntRegs:$src1), s10ExtPred:$src2)),
-         (C2_not (C2_cmpgti IntRegs:$src1, s10ExtPred:$src2))>;
-//         (C4_cmpltei IntRegs:$src1, s10ExtPred:$src2)>;
+def: Pat<(i1 (setle (i32 IntRegs:$src1), s32ImmPred:$src2)),
+         (C2_not (C2_cmpgti IntRegs:$src1, s32ImmPred:$src2))>;
+//         (C4_cmpltei IntRegs:$src1, s32ImmPred:$src2)>;
 */
 // Map cmplt(Rs, Imm) -> !cmpgt(Rs, Imm-1).
-def: Pat<(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
-         (C4_cmpltei IntRegs:$src1, (DEC_CONST_SIGNED s8ExtPred:$src2))>;
+def: Pat<(i1 (setlt (i32 IntRegs:$src1), s32ImmPred:$src2)),
+         (C4_cmpltei IntRegs:$src1, (DEC_CONST_SIGNED s32ImmPred:$src2))>;
 
 // rs != rt -> !(rs == rt).
-def: Pat<(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
-         (C4_cmpneqi IntRegs:$src1, s10ExtPred:$src2)>;
+def: Pat<(i1 (setne (i32 IntRegs:$src1), s32ImmPred:$src2)),
+         (C4_cmpneqi IntRegs:$src1, s32ImmPred:$src2)>;
 
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_BYTE : SDNodeXForm<imm, [{
@@ -3356,7 +3356,7 @@ class T_StoreAbs_Pred <string mnemonic, RegisterClass RC, bits<2> MajOp,
 //===----------------------------------------------------------------------===//
 class T_StoreAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
                  bits<2> MajOp, bit isHalf>
-  : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, u0AlwaysExt, 1, isHalf>,
+  : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, u32Imm, 1, isHalf>,
                   AddrModeRel {
   string ImmOpStr = !cast<string>(ImmOp);
   let opExtentBits = !if (!eq(ImmOpStr, "u16_3Imm"), 19,
@@ -3397,7 +3397,7 @@ multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC,
 let hasSideEffects = 0, isPredicable = 1, mayStore = 1, isNVStore = 1,
     isNewValue = 1, opNewValue = 1 in
 class T_StoreAbsGP_NV <string mnemonic, Operand ImmOp, bits<2>MajOp, bit isAbs>
-  : NVInst_V4<(outs), (ins u0AlwaysExt:$addr, IntRegs:$src),
+  : NVInst_V4<(outs), (ins u32Imm:$addr, IntRegs:$src),
   mnemonic # !if(isAbs, "(##", "(#")#"$addr) = $src.new",
   [], "", V2LDST_tc_st_SLOT0> {
     bits<19> addr;
@@ -3627,7 +3627,7 @@ class T_LoadAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
 
 class T_LoadAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
                  bits<3> MajOp>
-  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, u0AlwaysExt, 1>, AddrModeRel {
+  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, u32Imm, 1>, AddrModeRel {
 
     string ImmOpStr = !cast<string>(ImmOp);
     let opExtentBits = !if (!eq(ImmOpStr, "u16_3Imm"), 19,
@@ -3787,17 +3787,17 @@ def: Pat<(i64 (ctlz I64:$src1)), (Zext64 (S2_cl0p I64:$src1))>;
 def: Pat<(i64 (cttz I64:$src1)), (Zext64 (S2_ct0p I64:$src1))>;
 
 let AddedComplexity  = 30 in {
-  def: Storea_pat<truncstorei8,  I32, u0AlwaysExtPred, S2_storerbabs>;
-  def: Storea_pat<truncstorei16, I32, u0AlwaysExtPred, S2_storerhabs>;
-  def: Storea_pat<store,         I32, u0AlwaysExtPred, S2_storeriabs>;
+  def: Storea_pat<truncstorei8,  I32, u32ImmPred, S2_storerbabs>;
+  def: Storea_pat<truncstorei16, I32, u32ImmPred, S2_storerhabs>;
+  def: Storea_pat<store,         I32, u32ImmPred, S2_storeriabs>;
 }
 
 let AddedComplexity  = 30 in {
-  def: Loada_pat<load,        i32, u0AlwaysExtPred, L4_loadri_abs>;
-  def: Loada_pat<sextloadi8,  i32, u0AlwaysExtPred, L4_loadrb_abs>;
-  def: Loada_pat<zextloadi8,  i32, u0AlwaysExtPred, L4_loadrub_abs>;
-  def: Loada_pat<sextloadi16, i32, u0AlwaysExtPred, L4_loadrh_abs>;
-  def: Loada_pat<zextloadi16, i32, u0AlwaysExtPred, L4_loadruh_abs>;
+  def: Loada_pat<load,        i32, u32ImmPred, L4_loadri_abs>;
+  def: Loada_pat<sextloadi8,  i32, u32ImmPred, L4_loadrb_abs>;
+  def: Loada_pat<zextloadi8,  i32, u32ImmPred, L4_loadrub_abs>;
+  def: Loada_pat<sextloadi16, i32, u32ImmPred, L4_loadrh_abs>;
+  def: Loada_pat<zextloadi16, i32, u32ImmPred, L4_loadruh_abs>;
 }
 
 // Indexed store word - global address.

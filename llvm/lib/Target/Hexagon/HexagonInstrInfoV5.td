@@ -139,11 +139,11 @@ def S5_popcountp : ALU64_rr<(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
     let Inst{20-16} = Rss;
   }
 
-defm: Loadx_pat<load, f32, s11_2ExtPred, L2_loadri_io>;
-defm: Loadx_pat<load, f64, s11_3ExtPred, L2_loadrd_io>;
+defm: Loadx_pat<load, f32, s30_2ImmPred, L2_loadri_io>;
+defm: Loadx_pat<load, f64, s29_3ImmPred, L2_loadrd_io>;
 
-defm: Storex_pat<store, F32, s11_2ExtPred, S2_storeri_io>;
-defm: Storex_pat<store, F64, s11_3ExtPred, S2_storerd_io>;
+defm: Storex_pat<store, F32, s30_2ImmPred, S2_storeri_io>;
+defm: Storex_pat<store, F64, s29_3ImmPred, S2_storerd_io>;
 def: Storex_simple_pat<store, F32, S2_storeri_io>;
 def: Storex_simple_pat<store, F64, S2_storerd_io>;
 

@@ -51,7 +51,6 @@ class HexagonDAGToDAGISel : public SelectionDAGISel {
 
   // Keep a reference to HexagonTargetMachine.
   const HexagonTargetMachine& TM;
-  DenseMap<const GlobalValue *, unsigned> GlobalAddressUseCountMap;
 public:
   explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine,
                                CodeGenOpt::Level OptLevel)
@@ -119,7 +118,6 @@ public:
   SDNode *SelectConstant(SDNode *N);
   SDNode *SelectConstantFP(SDNode *N);
   SDNode *SelectAdd(SDNode *N);
-  bool isConstExtProfitable(SDNode *N) const;
 
 // XformMskToBitPosU5Imm - Returns the bit position which
 // the single bit 32 bit mask represents.
@@ -1425,37 +1423,6 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   OutOps.push_back(Op0);
   OutOps.push_back(Op1);
   return false;
-}
-
-bool HexagonDAGToDAGISel::isConstExtProfitable(SDNode *N) const {
-  unsigned UseCount = 0;
-  for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
-    UseCount++;
-  }
-
-  return (UseCount <= 1);
-
-}
-
-//===--------------------------------------------------------------------===//
-// Return 'true' if use count of the global address is below threshold.
-//===--------------------------------------------------------------------===//
-bool HexagonDAGToDAGISel::hasNumUsesBelowThresGA(SDNode *N) const {
-  assert(N->getOpcode() == ISD::TargetGlobalAddress &&
-         "Expecting a target global address");
-
-  // Always try to fold the address.
-  if (TM.getOptLevel() == CodeGenOpt::Aggressive)
-    return true;
-
-  GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
-  DenseMap<const GlobalValue *, unsigned>::const_iterator GI =
-    GlobalAddressUseCountMap.find(GA->getGlobal());
-
-  if (GI == GlobalAddressUseCountMap.end())
-    return false;
-
-  return GI->second <= MaxNumOfUsesForConstExtenders;
 }
 
 //===--------------------------------------------------------------------===//
