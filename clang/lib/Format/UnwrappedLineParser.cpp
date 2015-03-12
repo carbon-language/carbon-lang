@@ -868,6 +868,9 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::l_square:
       parseSquare();
       break;
+    case tok::kw_new:
+      parseNew();
+      break;
     default:
       nextToken();
       break;
@@ -1272,6 +1275,31 @@ void UnwrappedLineParser::parseNamespace() {
     addUnwrappedLine();
   }
   // FIXME: Add error handling.
+}
+
+void UnwrappedLineParser::parseNew() {
+  assert(FormatTok->is(tok::kw_new) && "'new' expected");
+  nextToken();
+  if (Style.Language != FormatStyle::LK_Java)
+    return;
+
+  // In Java, we can parse everything up to the parens, which aren't optional.
+  do {
+    // There should not be a ;, { or } before the new's open paren.
+    if (FormatTok->isOneOf(tok::semi, tok::l_brace, tok::r_brace))
+      return;
+
+    // Consume the parens.
+    if (FormatTok->is(tok::l_paren)) {
+      parseParens();
+
+      // If there is a class body of an anonymous class, consume that as child.
+      if (FormatTok->is(tok::l_brace))
+        parseChildBlock();
+      return;
+    }
+    nextToken();
+  } while (!eof());
 }
 
 void UnwrappedLineParser::parseForOrWhileLoop() {

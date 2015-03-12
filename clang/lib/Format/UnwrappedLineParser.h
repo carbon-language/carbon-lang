@@ -95,6 +95,7 @@ private:
   void parseCaseLabel();
   void parseSwitch();
   void parseNamespace();
+  void parseNew();
   void parseAccessSpecifier();
   void parseEnum();
   void parseJavaEnumBody();
