@@ -1686,7 +1686,6 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                 // module in the shared module cache.
                 if (m_platform_sp)
                 {
-                    FileSpec platform_file_spec;        
                     error = m_platform_sp->GetSharedModule (module_spec, 
                                                             module_sp, 
                                                             &GetExecutableSearchPaths(),
