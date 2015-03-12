@@ -2289,7 +2289,7 @@ ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_cr
         // lets make one and cache it for any future reference.
         synthetic_child_sp = GetValueForExpressionPath(expression,
                                                        NULL, NULL, NULL,
-                                                       GetValueForExpressionPathOptions().DontAllowSyntheticChildren());
+                                                       GetValueForExpressionPathOptions().SetSyntheticChildrenTraversal(GetValueForExpressionPathOptions::SyntheticChildrenTraversal::None));
         
         // Cache the value if we got one back...
         if (synthetic_child_sp.get())
@@ -2820,19 +2820,43 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         return child_valobj_sp;
                     }
-                    else if (options.m_no_synthetic_children == false) // let's try with synthetic children
+                    else
                     {
-                        if (root->IsSynthetic())
+                        switch (options.m_synthetic_children_traversal)
                         {
-                            *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchSyntheticChild;
-                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
-                            return ValueObjectSP();
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::None:
+                                break;
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::FromSynthetic:
+                                if (root->IsSynthetic())
+                                {
+                                    child_valobj_sp = root->GetNonSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                break;
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::ToSynthetic:
+                                if (!root->IsSynthetic())
+                                {
+                                    child_valobj_sp = root->GetSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                break;
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::Both:
+                                if (root->IsSynthetic())
+                                {
+                                    child_valobj_sp = root->GetNonSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                else
+                                {
+                                    child_valobj_sp = root->GetSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                break;
                         }
-
-                        child_valobj_sp = root->GetSyntheticValue();
-                        if (child_valobj_sp.get())
-                            child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
@@ -2863,19 +2887,43 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         continue;
                     }
-                    else if (options.m_no_synthetic_children == false) // let's try with synthetic children
+                    else
                     {
-                        if (root->IsSynthetic())
+                        switch (options.m_synthetic_children_traversal)
                         {
-                            *first_unparsed = expression_cstr;
-                            *reason_to_stop = ValueObject::eExpressionPathScanEndReasonNoSuchChild;
-                            *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
-                            return ValueObjectSP();
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::None:
+                                break;
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::FromSynthetic:
+                                if (root->IsSynthetic())
+                                {
+                                    child_valobj_sp = root->GetNonSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                break;
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::ToSynthetic:
+                                if (!root->IsSynthetic())
+                                {
+                                    child_valobj_sp = root->GetSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                break;
+                            case GetValueForExpressionPathOptions::SyntheticChildrenTraversal::Both:
+                                if (root->IsSynthetic())
+                                {
+                                    child_valobj_sp = root->GetNonSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                else
+                                {
+                                    child_valobj_sp = root->GetSyntheticValue();
+                                    if (child_valobj_sp.get())
+                                        child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
+                                }
+                                break;
                         }
-                        
-                        child_valobj_sp = root->GetSyntheticValue(true);
-                        if (child_valobj_sp)
-                            child_valobj_sp = child_valobj_sp->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
@@ -2903,7 +2951,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                 {
                     if (!root_clang_type_info.Test(eTypeIsScalar)) // if this is not even a scalar...
                     {
-                        if (options.m_no_synthetic_children) // ...only chance left is synthetic
+                        if (options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::None) // ...only chance left is synthetic
                         {
                             *first_unparsed = expression_cstr;
                             *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorInvalid;
@@ -3022,7 +3070,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             if (root->GetClangType().GetMinimumLanguage() == eLanguageTypeObjC
                                 && pointee_clang_type_info.AllClear(eTypeIsPointer)
                                 && root->HasSyntheticValue()
-                                && options.m_no_synthetic_children == false)
+                                && (options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::ToSynthetic ||
+                                    options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::Both))
                             {
                                 root = root->GetSyntheticValue()->GetChildAtIndex(index, true);
                             }
@@ -3078,7 +3127,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             continue;
                         }
                     }
-                    else if (options.m_no_synthetic_children == false)
+                    else if (options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::ToSynthetic ||
+                             options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::Both)
                     {
                         if (root->HasSyntheticValue())
                             root = root->GetSyntheticValue();
