@@ -3296,7 +3296,8 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
   CodeGenFunction::RunCleanupsScope Cleanups(CGF);
 
   const auto *FPT = CD->getType()->castAs<FunctionProtoType>();
-  ConstExprIterator ArgBegin(ArgVec.data()), ArgEnd(&*ArgVec.end());
+  ConstExprIterator ArgBegin(ArgVec.data()),
+      ArgEnd(ArgVec.data() + ArgVec.size());
   CGF.EmitCallArgs(Args, FPT, ArgBegin, ArgEnd, CD, 1);
 
   // Insert any ABI-specific implicit constructor arguments.
