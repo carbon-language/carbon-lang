@@ -20,12 +20,7 @@
 #include "X86GenRegisterInfo.inc"
 
 namespace llvm {
-class X86Subtarget;
-
 class X86RegisterInfo final : public X86GenRegisterInfo {
-public:
-  const X86Subtarget &Subtarget;
-
 private:
   /// Is64Bit - Is the target 64-bits.
   ///
@@ -53,7 +48,7 @@ private:
   unsigned BasePtr;
 
 public:
-  X86RegisterInfo(const X86Subtarget &STI);
+  X86RegisterInfo(const Triple &TT);
 
   // FIXME: This should be tablegen'd like getDwarfRegNum is
   int getSEHRegNum(unsigned i) const;
