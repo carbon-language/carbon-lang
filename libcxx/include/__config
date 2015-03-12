@@ -732,7 +732,7 @@ extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 #endif
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__CloudABI__)
 #define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 #endif
 
