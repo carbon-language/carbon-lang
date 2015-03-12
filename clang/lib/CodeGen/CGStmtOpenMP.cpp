@@ -282,9 +282,10 @@ void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &S,
   }
 }
 
-void CodeGenFunction::EmitOMPInnerLoop(const OMPLoopDirective &S,
-                                       OMPPrivateScope &LoopScope,
-                                       bool SeparateIter) {
+void CodeGenFunction::EmitOMPInnerLoop(const Stmt &S, bool RequiresCleanup,
+                                       const Expr *LoopCond,
+                                       const Expr *IncExpr,
+                                       const std::function<void()> &BodyGen) {
   auto LoopExit = getJumpDestInCurrentScope("omp.inner.for.end");
   auto Cnt = getPGORegionCounter(&S);
 
@@ -296,17 +297,13 @@ void CodeGenFunction::EmitOMPInnerLoop(const OMPLoopDirective &S,
   // If there are any cleanups between here and the loop-exit scope,
   // create a block to stage a loop exit along.
   auto ExitBlock = LoopExit.getBlock();
-  if (LoopScope.requiresCleanups())
+  if (RequiresCleanup)
     ExitBlock = createBasicBlock("omp.inner.for.cond.cleanup");
 
   auto LoopBody = createBasicBlock("omp.inner.for.body");
 
-  // Emit condition: "IV < LastIteration + 1 [ - 1]"
-  // ("- 1" when lastprivate clause is present - separate one iteration).
-  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond(SeparateIter));
-  Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock,
-                       PGO.createLoopWeights(S.getCond(SeparateIter), Cnt));
-
+  // Emit condition.
+  EmitBranchOnBoolExpr(LoopCond, LoopBody, ExitBlock, Cnt.getCount());
   if (ExitBlock != LoopExit.getBlock()) {
     EmitBlock(ExitBlock);
     EmitBranchThroughCleanup(LoopExit);
@@ -319,12 +316,11 @@ void CodeGenFunction::EmitOMPInnerLoop(const OMPLoopDirective &S,
   auto Continue = getJumpDestInCurrentScope("omp.inner.for.inc");
   BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
 
-  EmitOMPLoopBody(S);
-  EmitStopPoint(&S);
+  BodyGen();
 
   // Emit "IV = IV + 1" and a back-edge to the condition block.
   EmitBlock(Continue.getBlock());
-  EmitIgnoredExpr(S.getInc());
+  EmitIgnoredExpr(IncExpr);
   BreakContinueStack.pop_back();
   EmitBranch(CondBlock);
   LoopStack.pop();
@@ -460,7 +456,12 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
-      EmitOMPInnerLoop(S, LoopScope, /* SeparateIter */ true);
+      EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
+                       S.getCond(/*SeparateIter=*/true), S.getInc(),
+                       [&S, this]() {
+                         EmitOMPLoopBody(S);
+                         EmitStopPoint(&S);
+                       });
       EmitOMPLoopBody(S, /* SeparateIter */ true);
     }
     EmitOMPSimdFinal(S);
@@ -471,7 +472,12 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
-      EmitOMPInnerLoop(S, LoopScope);
+      EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
+                       S.getCond(/*SeparateIter=*/false), S.getInc(),
+                       [&S, this]() {
+                         EmitOMPLoopBody(S);
+                         EmitStopPoint(&S);
+                       });
     }
     EmitOMPSimdFinal(S);
   }
@@ -543,7 +549,11 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   auto Continue = getJumpDestInCurrentScope("omp.dispatch.inc");
   BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
 
-  EmitOMPInnerLoop(S, LoopScope);
+  EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
+                   S.getCond(/*SeparateIter=*/false), S.getInc(), [&S, this]() {
+                     EmitOMPLoopBody(S);
+                     EmitStopPoint(&S);
+                   });
 
   EmitBlock(Continue.getBlock());
   BreakContinueStack.pop_back();
@@ -638,7 +648,12 @@ void CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
         // IV = LB;
         EmitIgnoredExpr(S.getInit());
         // while (idx <= UB) { BODY; ++idx; }
-        EmitOMPInnerLoop(S, LoopScope);
+        EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
+                         S.getCond(/*SeparateIter=*/false), S.getInc(),
+                         [&S, this]() {
+                           EmitOMPLoopBody(S);
+                           EmitStopPoint(&S);
+                         });
         // Tell the runtime we are done.
         RT.emitForFinish(*this, S.getLocStart(), ScheduleKind);
       } else {
@@ -669,12 +684,108 @@ void CodeGenFunction::EmitOMPForSimdDirective(const OMPForSimdDirective &) {
   llvm_unreachable("CodeGen for 'omp for simd' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &) {
-  llvm_unreachable("CodeGen for 'omp sections' is not supported yet.");
+static LValue createSectionLVal(CodeGenFunction &CGF, QualType Ty,
+                                const Twine &Name,
+                                llvm::Value *Init = nullptr) {
+  auto LVal = CGF.MakeNaturalAlignAddrLValue(CGF.CreateMemTemp(Ty, Name), Ty);
+  if (Init)
+    CGF.EmitScalarInit(Init, LVal);
+  return LVal;
 }
 
-void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &) {
-  llvm_unreachable("CodeGen for 'omp section' is not supported yet.");
+void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
+  InlinedOpenMPRegionScopeRAII Region(*this, S);
+
+  auto *Stmt = cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt();
+  auto *CS = dyn_cast<CompoundStmt>(Stmt);
+  if (CS && CS->size() > 1) {
+    auto &C = CGM.getContext();
+    auto KmpInt32Ty = C.getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1);
+    // Emit helper vars inits.
+    LValue LB = createSectionLVal(*this, KmpInt32Ty, ".omp.sections.lb.",
+                                  Builder.getInt32(0));
+    auto *GlobalUBVal = Builder.getInt32(CS->size() - 1);
+    LValue UB =
+        createSectionLVal(*this, KmpInt32Ty, ".omp.sections.ub.", GlobalUBVal);
+    LValue ST = createSectionLVal(*this, KmpInt32Ty, ".omp.sections.st.",
+                                  Builder.getInt32(1));
+    LValue IL = createSectionLVal(*this, KmpInt32Ty, ".omp.sections.il.",
+                                  Builder.getInt32(0));
+    // Loop counter.
+    LValue IV = createSectionLVal(*this, KmpInt32Ty, ".omp.sections.iv.");
+    OpaqueValueExpr IVRefExpr(S.getLocStart(), KmpInt32Ty, VK_LValue);
+    OpaqueValueMapping OpaqueIV(*this, &IVRefExpr, IV);
+    OpaqueValueExpr UBRefExpr(S.getLocStart(), KmpInt32Ty, VK_LValue);
+    OpaqueValueMapping OpaqueUB(*this, &UBRefExpr, UB);
+    // Generate condition for loop.
+    BinaryOperator Cond(&IVRefExpr, &UBRefExpr, BO_LE, C.BoolTy, VK_RValue,
+                        OK_Ordinary, S.getLocStart(), /*fpContractable=*/false);
+    // Increment for loop counter.
+    UnaryOperator Inc(&IVRefExpr, UO_PreInc, KmpInt32Ty, VK_RValue, OK_Ordinary,
+                      S.getLocStart());
+    auto BodyGen = [this, CS, &S, &IV]() {
+      // Iterate through all sections and emit a switch construct:
+      // switch (IV) {
+      //   case 0:
+      //     <SectionStmt[0]>;
+      //     break;
+      // ...
+      //   case <NumSection> - 1:
+      //     <SectionStmt[<NumSection> - 1]>;
+      //     break;
+      // }
+      // .omp.sections.exit:
+      auto *ExitBB = createBasicBlock(".omp.sections.exit");
+      auto *SwitchStmt = Builder.CreateSwitch(
+          EmitLoadOfLValue(IV, S.getLocStart()).getScalarVal(), ExitBB,
+          CS->size());
+      unsigned CaseNumber = 0;
+      for (auto C = CS->children(); C; ++C, ++CaseNumber) {
+        auto CaseBB = createBasicBlock(".omp.sections.case");
+        EmitBlock(CaseBB);
+        SwitchStmt->addCase(Builder.getInt32(CaseNumber), CaseBB);
+        EmitStmt(*C);
+        EmitBranch(ExitBB);
+      }
+      EmitBlock(ExitBB, /*IsFinished=*/true);
+    };
+    // Emit static non-chunked loop.
+    CGM.getOpenMPRuntime().emitForInit(
+        *this, S.getLocStart(), OMPC_SCHEDULE_static, /*IVSize=*/32,
+        /*IVSigned=*/true, IL.getAddress(), LB.getAddress(), UB.getAddress(),
+        ST.getAddress());
+    // UB = min(UB, GlobalUB);
+    auto *UBVal = EmitLoadOfScalar(UB, S.getLocStart());
+    auto *MinUBGlobalUB = Builder.CreateSelect(
+        Builder.CreateICmpSLT(UBVal, GlobalUBVal), UBVal, GlobalUBVal);
+    EmitStoreOfScalar(MinUBGlobalUB, UB);
+    // IV = LB;
+    EmitStoreOfScalar(EmitLoadOfScalar(LB, S.getLocStart()), IV);
+    // while (idx <= UB) { BODY; ++idx; }
+    EmitOMPInnerLoop(S, /*RequiresCleanup=*/false, &Cond, &Inc, BodyGen);
+    // Tell the runtime we are done.
+    CGM.getOpenMPRuntime().emitForFinish(*this, S.getLocStart(),
+                                         OMPC_SCHEDULE_static);
+  } else {
+    // If only one section is found - no need to generate loop, emit as a single
+    // region.
+    CGM.getOpenMPRuntime().emitSingleRegion(*this, [&]() -> void {
+      InlinedOpenMPRegionScopeRAII Region(*this, S);
+      EmitStmt(Stmt);
+      EnsureInsertPoint();
+    }, S.getLocStart());
+  }
+
+  // Emit an implicit barrier at the end.
+  if (!S.getSingleClause(OMPC_nowait))
+    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
+                                           /*IsExplicit=*/false);
+}
+
+void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &S) {
+  InlinedOpenMPRegionScopeRAII Region(*this, S);
+  EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+  EnsureInsertPoint();
 }
 
 void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {

@@ -2094,8 +2094,9 @@ private:
   /// Helpers for the OpenMP loop directives.
   void EmitOMPLoopBody(const OMPLoopDirective &Directive,
                        bool SeparateIter = false);
-  void EmitOMPInnerLoop(const OMPLoopDirective &S, OMPPrivateScope &LoopScope,
-                        bool SeparateIter = false);
+  void EmitOMPInnerLoop(const Stmt &S, bool RequiresCleanup,
+                        const Expr *LoopCond, const Expr *IncExpr,
+                        const std::function<void()> &BodyGen);
   void EmitOMPSimdFinal(const OMPLoopDirective &S);
   void EmitOMPWorksharingLoop(const OMPLoopDirective &S);
   void EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
