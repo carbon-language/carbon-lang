@@ -31,7 +31,7 @@ using namespace llvm;
 
 AArch64InstrInfo::AArch64InstrInfo(const AArch64Subtarget &STI)
     : AArch64GenInstrInfo(AArch64::ADJCALLSTACKDOWN, AArch64::ADJCALLSTACKUP),
-      RI(STI.getTargetTriple()), Subtarget(STI) {}
+      Subtarget(STI) {}
 
 /// GetInstSize - Return the number of bytes of code the specified
 /// instruction may be.  This returns the maximum number of bytes.
@@ -375,7 +375,8 @@ bool AArch64InstrInfo::canInsertSelect(
   // Check register classes.
   const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   const TargetRegisterClass *RC =
-      RI.getCommonSubClass(MRI.getRegClass(TrueReg), MRI.getRegClass(FalseReg));
+      Subtarget.getRegisterInfo()->getCommonSubClass(MRI.getRegClass(TrueReg),
+                                                     MRI.getRegClass(FalseReg));
   if (!RC)
     return false;
 
@@ -612,7 +613,7 @@ bool
 AArch64InstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
                                                   MachineInstr *MIb,
                                                   AliasAnalysis *AA) const {
-  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   unsigned BaseRegA = 0, BaseRegB = 0;
   int OffsetA = 0, OffsetB = 0;
   int WidthA = 0, WidthB = 0;
@@ -865,7 +866,7 @@ bool AArch64InstrInfo::optimizeCompareInstr(
     return false;
 
   bool CheckOnlyCCWrites = false;
-  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   if (modifiesConditionCode(MI, CmpInstr, CheckOnlyCCWrites, TRI))
     return false;
 
@@ -1513,7 +1514,7 @@ void AArch64InstrInfo::copyPhysRegTuple(
     llvm::ArrayRef<unsigned> Indices) const {
   assert(Subtarget.hasNEON() &&
          "Unexpected register copy without NEON");
-  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   uint16_t DestEncoding = TRI->getEncodingValue(DestReg);
   uint16_t SrcEncoding = TRI->getEncodingValue(SrcReg);
   unsigned NumRegs = Indices.size();
@@ -1537,10 +1538,9 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I, DebugLoc DL,
                                    unsigned DestReg, unsigned SrcReg,
                                    bool KillSrc) const {
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   if (AArch64::GPR32spRegClass.contains(DestReg) &&
       (AArch64::GPR32spRegClass.contains(SrcReg) || SrcReg == AArch64::WZR)) {
-    const TargetRegisterInfo *TRI = &getRegisterInfo();
-
     if (DestReg == AArch64::WSP || SrcReg == AArch64::WSP) {
       // If either operand is WSP, expand to ADD #0.
       if (Subtarget.hasZeroCycleRegMove()) {
@@ -1694,10 +1694,10 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (AArch64::FPR64RegClass.contains(DestReg) &&
       AArch64::FPR64RegClass.contains(SrcReg)) {
     if(Subtarget.hasNEON()) {
-      DestReg = RI.getMatchingSuperReg(DestReg, AArch64::dsub,
-                                       &AArch64::FPR128RegClass);
-      SrcReg = RI.getMatchingSuperReg(SrcReg, AArch64::dsub,
-                                      &AArch64::FPR128RegClass);
+      DestReg = TRI->getMatchingSuperReg(DestReg, AArch64::dsub,
+                                         &AArch64::FPR128RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, AArch64::dsub,
+                                        &AArch64::FPR128RegClass);
       BuildMI(MBB, I, DL, get(AArch64::ORRv16i8), DestReg)
           .addReg(SrcReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
@@ -1711,10 +1711,10 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (AArch64::FPR32RegClass.contains(DestReg) &&
       AArch64::FPR32RegClass.contains(SrcReg)) {
     if(Subtarget.hasNEON()) {
-      DestReg = RI.getMatchingSuperReg(DestReg, AArch64::ssub,
-                                       &AArch64::FPR128RegClass);
-      SrcReg = RI.getMatchingSuperReg(SrcReg, AArch64::ssub,
-                                      &AArch64::FPR128RegClass);
+      DestReg = TRI->getMatchingSuperReg(DestReg, AArch64::ssub,
+                                         &AArch64::FPR128RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, AArch64::ssub,
+                                        &AArch64::FPR128RegClass);
       BuildMI(MBB, I, DL, get(AArch64::ORRv16i8), DestReg)
           .addReg(SrcReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
@@ -1728,18 +1728,18 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (AArch64::FPR16RegClass.contains(DestReg) &&
       AArch64::FPR16RegClass.contains(SrcReg)) {
     if(Subtarget.hasNEON()) {
-      DestReg = RI.getMatchingSuperReg(DestReg, AArch64::hsub,
-                                       &AArch64::FPR128RegClass);
-      SrcReg = RI.getMatchingSuperReg(SrcReg, AArch64::hsub,
-                                      &AArch64::FPR128RegClass);
+      DestReg = TRI->getMatchingSuperReg(DestReg, AArch64::hsub,
+                                         &AArch64::FPR128RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, AArch64::hsub,
+                                        &AArch64::FPR128RegClass);
       BuildMI(MBB, I, DL, get(AArch64::ORRv16i8), DestReg)
           .addReg(SrcReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
     } else {
-      DestReg = RI.getMatchingSuperReg(DestReg, AArch64::hsub,
-                                       &AArch64::FPR32RegClass);
-      SrcReg = RI.getMatchingSuperReg(SrcReg, AArch64::hsub,
-                                      &AArch64::FPR32RegClass);
+      DestReg = TRI->getMatchingSuperReg(DestReg, AArch64::hsub,
+                                         &AArch64::FPR32RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, AArch64::hsub,
+                                        &AArch64::FPR32RegClass);
       BuildMI(MBB, I, DL, get(AArch64::FMOVSr), DestReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
     }
@@ -1749,18 +1749,18 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (AArch64::FPR8RegClass.contains(DestReg) &&
       AArch64::FPR8RegClass.contains(SrcReg)) {
     if(Subtarget.hasNEON()) {
-      DestReg = RI.getMatchingSuperReg(DestReg, AArch64::bsub,
+      DestReg = TRI->getMatchingSuperReg(DestReg, AArch64::bsub,
                                        &AArch64::FPR128RegClass);
-      SrcReg = RI.getMatchingSuperReg(SrcReg, AArch64::bsub,
-                                      &AArch64::FPR128RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, AArch64::bsub,
+                                        &AArch64::FPR128RegClass);
       BuildMI(MBB, I, DL, get(AArch64::ORRv16i8), DestReg)
           .addReg(SrcReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
     } else {
-      DestReg = RI.getMatchingSuperReg(DestReg, AArch64::bsub,
-                                       &AArch64::FPR32RegClass);
-      SrcReg = RI.getMatchingSuperReg(SrcReg, AArch64::bsub,
-                                      &AArch64::FPR32RegClass);
+      DestReg = TRI->getMatchingSuperReg(DestReg, AArch64::bsub,
+                                         &AArch64::FPR32RegClass);
+      SrcReg = TRI->getMatchingSuperReg(SrcReg, AArch64::bsub,
+                                        &AArch64::FPR32RegClass);
       BuildMI(MBB, I, DL, get(AArch64::FMOVSr), DestReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
     }
@@ -2946,7 +2946,8 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr *MI) const {
   // Convert only when the condition code is not modified between
   // the CSINC and the branch. The CC may be used by other
   // instructions in between.
-  if (modifiesConditionCode(DefMI, MI, CheckOnlyCCWrites, &getRegisterInfo()))
+  if (modifiesConditionCode(DefMI, MI, CheckOnlyCCWrites,
+                            Subtarget.getRegisterInfo()))
     return false;
   MachineBasicBlock &RefToMBB = *MBB;
   MachineBasicBlock *TBB = MI->getOperand(TargetBBInMI).getMBB();

@@ -26,10 +26,10 @@ class Triple;
 
 struct AArch64RegisterInfo : public AArch64GenRegisterInfo {
 private:
-  const Triple &TT;
+  const Triple TT;
 
 public:
-  AArch64RegisterInfo(const Triple &TT);
+  AArch64RegisterInfo(StringRef TargetTriple);
 
   bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
 

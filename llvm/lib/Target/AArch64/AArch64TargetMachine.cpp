@@ -127,6 +127,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
     : LLVMTargetMachine(T, computeDataLayout(TT, LittleEndian), TT, CPU, FS,
                         Options, RM, CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
+      RI(TT),
       Subtarget(TT, CPU, FS, *this, LittleEndian),
       isLittle(LittleEndian) {
   initAsmInfo();
