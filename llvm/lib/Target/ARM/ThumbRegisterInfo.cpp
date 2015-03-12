@@ -355,8 +355,7 @@ bool ThumbRegisterInfo::rewriteFrameIndex(MachineBasicBlock::iterator II,
                                           const ARMBaseInstrInfo &TII) const {
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
-  const MachineFunction &MF = *MBB.getParent();
-  assert(MF.getSubtarget<ARMSubtarget>().isThumb1Only() &&
+  assert(MBB.getParent()->getSubtarget<ARMSubtarget>().isThumb1Only() &&
          "This isn't needed for thumb2!");
   DebugLoc dl = MI.getDebugLoc();
   MachineInstrBuilder MIB(*MBB.getParent(), &MI);
