@@ -38,9 +38,7 @@ include $(LEVEL)/Makefile.common
 
 HTML       := $(wildcard $(PROJ_SRC_DIR)/*.html) \
               $(wildcard $(PROJ_SRC_DIR)/*.css)
-DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
-              doxygen.intro
-EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide
+DOXYFILES  := doxygen.cfg.in doxygen.intro
 
 .PHONY: install-html install-doxygen doxygen install-ocamldoc ocamldoc generated
 
@@ -79,11 +77,14 @@ $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 
 install-doxygen: doxygen
 	$(Echo) Installing doxygen documentation
-	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/html/doxygen
 	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(DESTDIR)$(PROJ_docsdir)
-	$(Verb) cd $(PROJ_OBJ_DIR)/doxygen && \
-	  $(FIND) . -type f -exec \
-	    $(DataInstall) {} $(DESTDIR)$(PROJ_docsdir)/html/doxygen \;
+	$(Verb) cd $(PROJ_OBJ_DIR)/doxygen/html && \
+	  for DIR in $$($(FIND) . -type d); do \
+	    DESTSUB="$(DESTDIR)$(PROJ_docsdir)/html/doxygen/$$(echo $$DIR | cut -c 3-)"; \
+	    $(MKDIR) $$DESTSUB && \
+	    $(FIND) $$DIR -maxdepth 1 -type f -exec $(DataInstall) {} $$DESTSUB \; ; \
+	    if [ $$? != 0 ]; then exit 1; fi \
+	  done
 
 doxygen: regendoc $(PROJ_OBJ_DIR)/doxygen.tar.gz
 
