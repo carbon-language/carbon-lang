@@ -53,6 +53,19 @@ The bit vector for static types A, B and C will look like this:
   B, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
   C, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
 
+Bit vectors are represented in the object file as byte arrays. By loading
+from indexed offsets into the byte array and applying a mask, a program can
+test bits from the bit set with a relatively short instruction sequence. Bit
+vectors may overlap so long as they use different bits. For the full details,
+see the `ByteArrayBuilder`_ class.
+
+In this case, assuming A is laid out at offset 0 in bit 0, B at offset 0 in
+bit 1 and C at offset 0 in bit 2, the byte array would look like this:
+
+.. code-block:: c++
+
+  char bits[] = { 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 0, 5, 0, 0 };
+
 To emit a virtual call, the compiler will assemble code that checks that
 the object's virtual table pointer is in-bounds and aligned and that the
 relevant bit is set in the bit vector.
@@ -61,23 +74,19 @@ For example on x86 a typical virtual call may look like this:
 
 .. code-block:: none
 
-    159a:       48 8b 03                mov    (%rbx),%rax
-    159d:       48 8d 15 6c 33 00 00    lea    0x336c(%rip),%rdx
-    15a4:       48 89 c1                mov    %rax,%rcx
-    15a7:       48 29 d1                sub    %rdx,%rcx
-    15aa:       48 c1 c1 3d             rol    $0x3d,%rcx
-    15ae:       48 83 f9 51             cmp    $0x51,%rcx
-    15b2:       77 3b                   ja     15ef <main+0xcf>
-    15b4:       48 89 ca                mov    %rcx,%rdx
-    15b7:       48 c1 ea 05             shr    $0x5,%rdx
-    15bb:       48 8d 35 b8 07 00 00    lea    0x7b8(%rip),%rsi
-    15c2:       8b 14 96                mov    (%rsi,%rdx,4),%edx
-    15c5:       0f a3 ca                bt     %ecx,%edx
-    15c8:       73 25                   jae    15ef <main+0xcf>
-    15ca:       48 89 df                mov    %rbx,%rdi
-    15cd:       ff 10                   callq  *(%rax)
+  ca7fbb:       48 8b 0f                mov    (%rdi),%rcx
+  ca7fbe:       48 8d 15 c3 42 fb 07    lea    0x7fb42c3(%rip),%rdx
+  ca7fc5:       48 89 c8                mov    %rcx,%rax
+  ca7fc8:       48 29 d0                sub    %rdx,%rax
+  ca7fcb:       48 c1 c0 3d             rol    $0x3d,%rax
+  ca7fcf:       48 3d 7f 01 00 00       cmp    $0x17f,%rax
+  ca7fd5:       0f 87 36 05 00 00       ja     ca8511
+  ca7fdb:       48 8d 15 c0 0b f7 06    lea    0x6f70bc0(%rip),%rdx
+  ca7fe2:       f6 04 10 10             testb  $0x10,(%rax,%rdx,1)
+  ca7fe6:       0f 84 25 05 00 00       je     ca8511
+  ca7fec:       ff 91 98 00 00 00       callq  *0x98(%rcx)
     [...]
-    15ef:       0f 0b                   ud2    
+  ca8511:       0f 0b                   ud2
 
 The compiler relies on co-operation from the linker in order to assemble
 the bit vectors for the whole program. It currently does this using LLVM's
@@ -85,6 +94,7 @@ the bit vectors for the whole program. It currently does this using LLVM's
 
 .. _address point: https://mentorembedded.github.io/cxx-abi/abi.html#vtable-general
 .. _bit sets: http://llvm.org/docs/BitSets.html
+.. _ByteArrayBuilder: http://llvm.org/docs/doxygen/html/structllvm_1_1ByteArrayBuilder.html
 
 Optimizations
 -------------
