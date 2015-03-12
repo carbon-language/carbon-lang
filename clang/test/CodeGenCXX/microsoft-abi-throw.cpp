@@ -15,6 +15,7 @@
 // CHECK-DAG: @"_CT??_R0?AUDefault@@@8??_ODefault@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor13* @"\01??_R0?AUDefault@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.Default*, %struct.Default*)* @"\01??_ODefault@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
 // CHECK-DAG: @"_CT??_R0?AUVariadic@@@8??_OVariadic@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor14* @"\01??_R0?AUVariadic@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.Variadic*, %struct.Variadic*)* @"\01??_OVariadic@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
 // CHECK-DAG: @"_CT??_R0?AUTemplateWithDefault@@@8??$?_OH@TemplateWithDefault@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor25* @"\01??_R0?AUTemplateWithDefault@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.TemplateWithDefault*, %struct.TemplateWithDefault*)* @"\01??$?_OH@TemplateWithDefault@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
+// CHECK-DAG: @"_CTA2$$T" = linkonce_odr unnamed_addr constant %eh.CatchableTypeArray.2 { i32 2, [2 x %eh.CatchableType*] [%eh.CatchableType* @"_CT??_R0$$T@84", %eh.CatchableType* @"_CT??_R0PAX@84"] }, section ".xdata", comdat
 
 
 struct N { ~N(); };
@@ -86,4 +87,8 @@ struct TemplateWithDefault {
 
 void j(TemplateWithDefault &twd) {
   throw twd;
+}
+
+void h() {
+  throw nullptr;
 }

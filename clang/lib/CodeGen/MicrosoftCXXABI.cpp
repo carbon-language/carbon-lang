@@ -3490,6 +3490,17 @@ llvm::GlobalVariable *MicrosoftCXXABI::getCatchableTypeArray(QualType T) {
   if (IsPointer)
     CatchableTypes.insert(getCatchableType(getContext().VoidPtrTy));
 
+  // C++14 [except.handle]p3:
+  //   A handler is a match for an exception object of type E if [...]
+  //     - the handler is of type cv T or const T& where T is a pointer or
+  //       pointer to member type and E is std::nullptr_t.
+  //
+  // We cannot possibly list all possible pointer types here, making this
+  // implementation incompatible with the standard.  However, MSVC includes an
+  // entry for pointer-to-void in this case.  Let's do the same.
+  if (T->isNullPtrType())
+    CatchableTypes.insert(getCatchableType(getContext().VoidPtrTy));
+
   uint32_t NumEntries = CatchableTypes.size();
   llvm::Type *CTType =
       getImageRelativeType(getCatchableTypeType()->getPointerTo());
