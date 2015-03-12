@@ -429,19 +429,6 @@ _mm256_blendv_ps(__m256 __a, __m256 __b, __m256 __c)
   __m128 __b = (b); \
   (__m128)__builtin_ia32_cmpss((__v4sf)__a, (__v4sf)__b, (c)); })
 
-/* Vector extract */
-#define _mm256_extractf128_pd(A, O) __extension__ ({ \
-  __m256d __A = (A); \
-  (__m128d)__builtin_ia32_vextractf128_pd256((__v4df)__A, (O)); })
-
-#define _mm256_extractf128_ps(A, O) __extension__ ({ \
-  __m256 __A = (A); \
-  (__m128)__builtin_ia32_vextractf128_ps256((__v8sf)__A, (O)); })
-
-#define _mm256_extractf128_si256(A, O) __extension__ ({ \
-  __m256i __A = (A); \
-  (__m128i)__builtin_ia32_vextractf128_si256((__v8si)__A, (O)); })
-
 static __inline int __attribute__((__always_inline__, __nodebug__))
 _mm256_extract_epi32(__m256i __a, const int __imm)
 {
@@ -1185,6 +1172,34 @@ _mm256_castsi128_si256(__m128i __a)
     (((M) & 1) ? 1 : 5), \
     (((M) & 1) ? 4 : 2), \
     (((M) & 1) ? 5 : 3) );})
+
+/* 
+   Vector extract.
+   We use macros rather than inlines because we only want to accept
+   invocations where the immediate M is a constant expression.
+*/
+#define _mm256_extractf128_ps(V, M) __extension__ ({ \
+  (__m128)__builtin_shufflevector( \
+    (__v8sf)(V), \
+    (__v8sf)(V), \
+    (((M) & 1) ? 4 : 0), \
+    (((M) & 1) ? 5 : 1), \
+    (((M) & 1) ? 6 : 2), \
+    (((M) & 1) ? 7 : 3) );})
+
+#define _mm256_extractf128_pd(V, M) __extension__ ({ \
+  (__m128d)__builtin_shufflevector( \
+    (__v4df)(V), \
+    (__v4df)(V), \
+    (((M) & 1) ? 2 : 0), \
+    (((M) & 1) ? 3 : 1) );})
+
+#define _mm256_extractf128_si256(V, M) __extension__ ({ \
+  (__m128i)__builtin_shufflevector( \
+    (__v4di)(V), \
+    (__v4di)(V), \
+    (((M) & 1) ? 2 : 0), \
+    (((M) & 1) ? 3 : 1) );})
 
 /* SIMD load ops (unaligned) */
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
