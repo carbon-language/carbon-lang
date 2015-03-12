@@ -1,0 +1,10 @@
+-file-exec-and-symbols now takes two new (optional) options:
+
+Synopsis
+
+	-file-exec-and-symbols <file> [-p <platform>] [-r <remote-file>]
+
+Specify the executable file to be debugged. This file is the one from which the symbol table is also read. 
+When debugging remote targets specify a remote-file for execution and a file from which symbols are read. 
+The optional platform is the name of the platform, e.g., "remote-ios" or "ios-simulator". The remote-file 
+is the on-device path to the exe.

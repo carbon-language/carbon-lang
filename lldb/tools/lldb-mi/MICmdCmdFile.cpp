@@ -29,7 +29,9 @@
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MIUtilFileStd.h"
 #include "MICmdArgValFile.h"
+#include "MICmdArgValString.h"
 #include "MICmdArgValOptionLong.h"
+#include "MICmdArgValOptionShort.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdCmdFileExecAndSymbols constructor.
@@ -41,6 +43,8 @@
 CMICmdCmdFileExecAndSymbols::CMICmdCmdFileExecAndSymbols(void)
     : m_constStrArgNameFile("file")
     , m_constStrArgThreadGrp("thread-group")
+    , m_constStrArgNamedPlatformName("p")
+    , m_constStrArgNamedRemotePath("r")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "file-exec-and-symbols";
@@ -75,6 +79,12 @@ CMICmdCmdFileExecAndSymbols::ParseArgs(void)
     bool bOk = m_setCmdArgs.Add(
         *(new CMICmdArgValOptionLong(m_constStrArgThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
     bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNameFile, true, true)));
+    bOk = bOk &&
+    m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedPlatformName, false, true,
+                                                   CMICmdArgValListBase::eArgValType_String, 1)));
+    bOk = bOk &&
+    m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedRemotePath, false, true,
+                                                   CMICmdArgValListBase::eArgValType_StringQuotedNumberPath, 1)));
     return (bOk && ParseValidateCmdOptions());
 }
 
@@ -93,13 +103,21 @@ bool
 CMICmdCmdFileExecAndSymbols::Execute(void)
 {
     CMICMDBASE_GETOPTION(pArgNamedFile, File, m_constStrArgNameFile);
+    CMICMDBASE_GETOPTION(pArgPlatformName, OptionShort, m_constStrArgNamedPlatformName);
+    CMICMDBASE_GETOPTION(pArgRemotePath, OptionShort, m_constStrArgNamedRemotePath);
     CMICmdArgValFile *pArgFile = static_cast<CMICmdArgValFile *>(pArgNamedFile);
     const CMIUtilString &strExeFilePath(pArgFile->GetValue());
+    bool bPlatformName = pArgPlatformName->GetFound();
+    CMIUtilString platformName;
+    if (bPlatformName)
+    {
+        pArgPlatformName->GetExpectedOption<CMICmdArgValString, CMIUtilString>(platformName);
+    }
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBDebugger &rDbgr = rSessionInfo.GetDebugger();
     lldb::SBError error;
     const MIchar *pTargetTriple = nullptr; // Let LLDB discover the triple required
-    const MIchar *pTargetPlatformName = "";
+    const MIchar *pTargetPlatformName = platformName.c_str();
     const bool bAddDepModules = false;
     lldb::SBTarget target = rDbgr.CreateTarget(strExeFilePath.c_str(), pTargetTriple, pTargetPlatformName, bAddDepModules, error);
     CMIUtilString strWkDir;
@@ -118,6 +136,16 @@ CMICmdCmdFileExecAndSymbols::Execute(void)
 
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_FNFAILED), m_cmdData.strMiCmd.c_str(), "SetCurrentPlatformSDKRoot()"));
         return MIstatus::failure;
+    }
+    if (pArgRemotePath->GetFound())
+    {
+        CMIUtilString remotePath;
+        pArgRemotePath->GetExpectedOption<CMICmdArgValString, CMIUtilString>(remotePath);
+        lldb::SBModule module = target.FindModule(target.GetExecutable());
+        if (module.IsValid())
+        {
+            module.SetPlatformFileSpec(lldb::SBFileSpec(remotePath.c_str()));
+        }
     }
     lldb::SBStream err;
     if (error.Fail())
