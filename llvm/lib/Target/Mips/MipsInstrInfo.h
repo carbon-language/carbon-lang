@@ -29,7 +29,7 @@
 #include "MipsGenInstrInfo.inc"
 
 namespace llvm {
-
+class MipsSubtarget;
 class MipsInstrInfo : public MipsGenInstrInfo {
   virtual void anchor();
 protected:

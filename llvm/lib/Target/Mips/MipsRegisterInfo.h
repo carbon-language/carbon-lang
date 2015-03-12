@@ -21,15 +21,11 @@
 #include "MipsGenRegisterInfo.inc"
 
 namespace llvm {
-class MipsSubtarget;
 class Type;
 
 class MipsRegisterInfo : public MipsGenRegisterInfo {
-protected:
-  const MipsSubtarget &Subtarget;
-
 public:
-  MipsRegisterInfo(const MipsSubtarget &Subtarget);
+  MipsRegisterInfo();
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// Mips::RA, return the number that it corresponds to (e.g. 31).

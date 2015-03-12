@@ -18,7 +18,7 @@
 #include "MipsInstrInfo.h"
 
 namespace llvm {
-
+class MipsSubtarget;
 class Mips16InstrInfo : public MipsInstrInfo {
   const Mips16RegisterInfo RI;
 

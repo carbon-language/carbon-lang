@@ -1,4 +1,3 @@
-
 //===-- Mips16InstrInfo.cpp - Mips16 Instruction Information --------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -32,7 +31,7 @@ using namespace llvm;
 #define DEBUG_TYPE "mips16-instrinfo"
 
 Mips16InstrInfo::Mips16InstrInfo(const MipsSubtarget &STI)
-    : MipsInstrInfo(STI, Mips::Bimm16), RI(STI) {}
+    : MipsInstrInfo(STI, Mips::Bimm16), RI() {}
 
 const MipsRegisterInfo &Mips16InstrInfo::getRegisterInfo() const {
   return RI;

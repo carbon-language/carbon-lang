@@ -43,14 +43,14 @@ using namespace llvm;
 #define GET_REGINFO_TARGET_DESC
 #include "MipsGenRegisterInfo.inc"
 
-MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST)
-  : MipsGenRegisterInfo(Mips::RA), Subtarget(ST) {}
+MipsRegisterInfo::MipsRegisterInfo() : MipsGenRegisterInfo(Mips::RA) {}
 
 unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
 const TargetRegisterClass *
 MipsRegisterInfo::getPointerRegClass(const MachineFunction &MF,
                                      unsigned Kind) const {
+  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
   return Subtarget.isABI_N64() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 }
 
@@ -63,7 +63,7 @@ MipsRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case Mips::GPR32RegClassID:
   case Mips::GPR64RegClassID:
   case Mips::DSPRRegClassID: {
-    const TargetFrameLowering *TFI = Subtarget.getFrameLowering();
+    const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
     return 28 - TFI->hasFP(MF);
   }
   case Mips::FGR32RegClassID:
@@ -82,6 +82,7 @@ MipsRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 /// Mips Callee Saved Registers
 const MCPhysReg *
 MipsRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  const MipsSubtarget &Subtarget = MF->getSubtarget<MipsSubtarget>();
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_SaveList;
 
@@ -103,6 +104,7 @@ MipsRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const uint32_t *
 MipsRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                        CallingConv::ID) const {
+  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_RegMask;
 
@@ -136,6 +138,7 @@ getReservedRegs(const MachineFunction &MF) const {
   };
 
   BitVector Reserved(getNumRegs());
+  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
   typedef TargetRegisterClass::const_iterator RegIter;
 
   for (unsigned I = 0; I < array_lengthof(ReservedGPR32); ++I)
@@ -258,6 +261,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
 unsigned MipsRegisterInfo::
 getFrameRegister(const MachineFunction &MF) const {
+  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
   const TargetFrameLowering *TFI = Subtarget.getFrameLowering();
   bool IsN64 =
       static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI().IsN64();
