@@ -88,14 +88,18 @@ int main()
     std::size_t s = 0;
     char* cp = 0;
     std::va_list va;
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     static_assert((std::is_same<decltype(std::remove("")), int>::value), "");
     static_assert((std::is_same<decltype(std::rename("","")), int>::value), "");
     static_assert((std::is_same<decltype(std::tmpfile()), std::FILE*>::value), "");
     static_assert((std::is_same<decltype(std::tmpnam(cp)), char*>::value), "");
+#endif
     static_assert((std::is_same<decltype(std::fclose(fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::fflush(fp)), int>::value), "");
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     static_assert((std::is_same<decltype(std::fopen("", "")), std::FILE*>::value), "");
     static_assert((std::is_same<decltype(std::freopen("", "", fp)), std::FILE*>::value), "");
+#endif
     static_assert((std::is_same<decltype(std::setbuf(fp,cp)), void>::value), "");
     static_assert((std::is_same<decltype(std::vfprintf(fp,"",va)), int>::value), "");
     static_assert((std::is_same<decltype(std::fprintf(fp," ")), int>::value), "");

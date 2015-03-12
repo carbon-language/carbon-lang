@@ -15,6 +15,8 @@
 #ifndef PLATFORM_SUPPORT_H
 #define PLATFORM_SUPPORT_H
 
+#include <__config>
+
 // locale names
 #ifdef _WIN32
 // WARNING: Windows does not support UTF-8 codepages.
@@ -65,6 +67,7 @@ extern "C" {
 }
 #endif
 
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 inline
 std::string
 get_temp_file_name()
@@ -90,5 +93,6 @@ get_temp_file_name()
     return Name;
 #endif
 }
+#endif // _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 
 #endif // PLATFORM_SUPPORT_H

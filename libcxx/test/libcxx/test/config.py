@@ -347,6 +347,7 @@ class Configuration(object):
         # Configure feature flags.
         self.configure_compile_flags_exceptions()
         self.configure_compile_flags_rtti()
+        self.configure_compile_flags_no_global_filesystem_namespace()
         enable_32bit = self.get_lit_bool('enable_32bit', False)
         if enable_32bit:
             self.cxx.flags += ['-m32']
@@ -394,6 +395,15 @@ class Configuration(object):
         if not enable_rtti:
             self.config.available_features.add('libcpp-no-rtti')
             self.cxx.compile_flags += ['-fno-rtti', '-D_LIBCPP_NO_RTTI']
+
+    def configure_compile_flags_no_global_filesystem_namespace(self):
+        enable_global_filesystem_namespace = self.get_lit_bool(
+            'enable_global_filesystem_namespace', True)
+        if not enable_global_filesystem_namespace:
+            self.config.available_features.add(
+                'libcpp-has-no-global-filesystem-namespace')
+            self.cxx.compile_flags += [
+                '-D_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE']
 
     def configure_compile_flags_no_threads(self):
         self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_THREADS']

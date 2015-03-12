@@ -144,14 +144,18 @@ using ::FILE;
 using ::fpos_t;
 using ::size_t;
 
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 using ::remove;
 using ::rename;
 using ::tmpfile;
 using ::tmpnam;
+#endif
 using ::fclose;
 using ::fflush;
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 using ::fopen;
 using ::freopen;
+#endif
 using ::setbuf;
 using ::setvbuf;
 using ::fprintf;

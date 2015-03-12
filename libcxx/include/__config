@@ -724,6 +724,14 @@ extern "C" void __sanitizer_annotate_contiguous_container(
          _LIBCPP_HAS_NO_THREADS is defined.
 #endif
 
+// Systems that use capability-based security (FreeBSD with Capsicum,
+// Nuxi CloudABI) may only provide local filesystem access (using *at()).
+// Functions like open(), rename(), unlink() and stat() should not be
+// used, as they attempt to access the global filesystem namespace.
+#ifdef __CloudABI__
+#define _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
+#endif
+
 #if defined(__ANDROID__)
 #define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 #endif
