@@ -91,6 +91,7 @@ public:
         eBroadcastBitReadThreadDidExit      = (1 << 2), ///< Sent by the read thread when it exits to inform clients.
         eBroadcastBitReadThreadShouldExit   = (1 << 3), ///< Sent by clients that need to cancel the read thread.
         eBroadcastBitPacketAvailable        = (1 << 4), ///< Sent when data received makes a complete packet.
+        eBroadcastBitNoMorePendingInput     = (1 << 5), ///< Sent by the read thread to indicate all pending input has been processed.
         kLoUserBroadcastBit                 = (1 << 16),///< Subclasses can used bits 31:16 for any needed events.
         kHiUserBroadcastBit                 = (1 << 31),
         eAllEventBits                       = 0xffffffff
@@ -321,6 +322,16 @@ public:
     SetReadThreadBytesReceivedCallback (ReadThreadBytesReceived callback,
                                         void *callback_baton);
 
+
+    //------------------------------------------------------------------
+    /// Wait for the read thread to process all outstanding data.
+    ///
+    /// After this function returns, the read thread has processed all data that
+    /// has been waiting in the Connection queue.
+    ///
+    //------------------------------------------------------------------
+    void SynchronizeWithReadThread ();
+
     static const char *
     ConnectionStatusAsCString (lldb::ConnectionStatus status);
 
@@ -354,9 +365,11 @@ protected:
     lldb::ConnectionSP m_connection_sp; ///< The connection that is current in use by this communications class.
     HostThread m_read_thread;           ///< The read thread handle in case we need to cancel the thread.
     std::atomic<bool> m_read_thread_enabled;
+    std::atomic<bool> m_read_thread_did_exit;
     std::string m_bytes;    ///< A buffer to cache bytes read in the ReadThread function.
     Mutex m_bytes_mutex;    ///< A mutex to protect multi-threaded access to the cached bytes.
     Mutex m_write_mutex;    ///< Don't let multiple threads write at the same time...
+    Mutex m_synchronize_mutex;
     ReadThreadBytesReceived m_callback;
     void *m_callback_baton;
     bool m_close_on_eof;

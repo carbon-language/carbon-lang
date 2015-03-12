@@ -40,7 +40,7 @@ class ConnectionGenericFile : public lldb_private::Connection
 
     virtual std::string GetURI();
 
-    bool InterruptRead();
+    bool InterruptRead() override;
 
   protected:
     OVERLAPPED m_overlapped;

@@ -21,7 +21,6 @@ class ProcessIOTestCase(TestBase):
     @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # this test fails 7/100 dosep runs
     def test_stdin_by_api_with_dwarf(self):
         """Exercise SBProcess.PutSTDIN()."""
         self.buildDwarf()
@@ -38,7 +37,6 @@ class ProcessIOTestCase(TestBase):
     @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # this test fails 4/100 dosep runs
     def test_stdin_redirection_with_dwarf(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN without specifying STDOUT or STDERR."""
         self.buildDwarf()
@@ -55,7 +53,6 @@ class ProcessIOTestCase(TestBase):
     @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # this test fails 2/100 dosep runs
     def test_stdout_redirection_with_dwarf(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT without specifying STDIN or STDERR."""
         self.buildDwarf()
@@ -72,7 +69,6 @@ class ProcessIOTestCase(TestBase):
     @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # this test fails 5/100 dosep runs
     def test_stderr_redirection_with_dwarf(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDERR without specifying STDIN or STDOUT."""
         self.buildDwarf()

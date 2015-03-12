@@ -4060,12 +4060,14 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
     
     switch (state)
     {
-        case eStateConnected:
-        case eStateAttaching:
-        case eStateLaunching:
         case eStateDetached:
         case eStateExited:
         case eStateUnloaded:
+            m_stdio_communication.SynchronizeWithReadThread();
+            // fall-through
+        case eStateConnected:
+        case eStateAttaching:
+        case eStateLaunching:
             // These events indicate changes in the state of the debugging session, always report them.
             return_value = true;
             break;
@@ -4125,6 +4127,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
             // If no thread has an opinion, we don't report it.
 
+            m_stdio_communication.SynchronizeWithReadThread();
             RefreshStateAfterStop ();
             if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {

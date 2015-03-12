@@ -111,6 +111,13 @@ public:
     ///     The number of bytes to attempt to read, and also the max
     ///     number of bytes that can be placed into \a dst.
     ///
+    /// @param[in] timeout_usec
+    ///     The number of microseconds to wait for the data.
+    ///
+    /// @param[out] status
+    ///     On return, indicates whether the call was sucessful or terminated
+    ///     due to some error condition.
+    ///
     /// @param[out] error_ptr
     ///     A pointer to an error object that should be given an
     ///     approriate error value if this method returns zero. This
@@ -163,6 +170,22 @@ public:
     //------------------------------------------------------------------
     virtual std::string
     GetURI() = 0;
+
+    //------------------------------------------------------------------
+    /// Interrupts an ongoing Read() operation.
+    ///
+    /// If there is an ongoing read operation in another thread, this operation
+    /// return with status == eConnectionStatusInterrupted. Note that if there
+    /// data waiting to be read and an interrupt request is issued, the Read()
+    /// function will return the data immediately without processing the
+    /// interrupt request (which will remain queued for the next Read()
+    /// operation).
+    ///
+    /// @return
+    ///     Returns true is the interrupt request was sucessful.
+    //------------------------------------------------------------------
+    virtual bool
+    InterruptRead() = 0;
 
 private:
     //------------------------------------------------------------------

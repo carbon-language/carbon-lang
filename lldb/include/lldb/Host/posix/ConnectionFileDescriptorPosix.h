@@ -54,7 +54,7 @@ class ConnectionFileDescriptor : public Connection
 
     lldb::ConnectionStatus BytesAvailable(uint32_t timeout_usec, Error *error_ptr);
 
-    bool InterruptRead();
+    bool InterruptRead() override;
 
     lldb::IOObjectSP
     GetReadObject()
