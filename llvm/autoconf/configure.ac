@@ -801,9 +801,137 @@ AC_ARG_ENABLE(doxygen,
                              enableval=default)
 case "$enableval" in
   yes) AC_SUBST(ENABLE_DOXYGEN,[1]) ;;
-  no)  AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
-  default) AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
+  no|default) AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
   *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
+esac
+
+dnl Allow enablement of doxygen search engine
+AC_ARG_ENABLE(doxygen-search,
+              AS_HELP_STRING([--enable-doxygen-search],
+                             [Enable doxygen search support (default is NO)]),,
+                             enableval=default)
+ENABLE_DOXYGEN_SEARCH="$enableval"
+
+case "$enableval" in
+  yes|no|default) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-doxygen-search. Use "yes" or "no"]) ;;
+esac
+
+AC_ARG_ENABLE(doxygen-external-search,
+              AS_HELP_STRING([--enable-doxygen-external-search],
+                             [Enable doxygen exteranl search (default is NO)]),,
+                             enableval=default)
+ENABLE_DOXYGEN_EXTERNAL_SEARCH="$enableval"
+
+case "$enableval" in
+  yes)
+    dnl To match with the CMake behavior, enable doxygen when
+    dnl --enable-doxygen-external-search is enabled.
+    case "$ENABLE_DOXYGEN_SEARCH" in
+      yes|default) ENABLE_DOXYGEN_SEARCH="yes" ;;
+      no) AC_MSG_ERROR([The option --enable-doxygen-external-search requires --enable-doxygen-search]) ;;
+    esac
+    ;;
+  no|default) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-doxygen-external-search. Use "yes" or "no"]) ;;
+esac
+
+AC_ARG_WITH(doxygen-search-engine-url,
+            AS_HELP_STRING([--with-doxygen-search-engine-url],
+                           [Specify the external search engine for doxygen]),,)
+WITH_DOXYGEN_SEARCH_ENGINE_URL="$withval"
+
+AC_ARG_WITH(doxygen-search-mappings,
+            AS_HELP_STRING([--with-doxygen-search-mappings],
+                           [Specify the extra search mapping for doxygen]),,)
+WITH_DOXYGEN_SEARCH_MAPPINGS="$withval"
+
+case "$ENABLE_DOXYGEN_SEARCH" in
+  yes)
+    if test "$ENABLE_DOXYGEN" = "0" ; then
+      AC_MSG_ERROR([The option --enable-doxygen-search requires --enable-doxygen.])
+    fi
+
+    AC_SUBST(enable_searchengine,[YES])
+
+    case "$ENABLE_DOXYGEN_EXTERNAL_SEARCH" in
+      yes)
+        AC_SUBST(enable_external_search,[YES])
+        AC_SUBST(enable_server_based_search,[YES])
+        AC_SUBST(searchengine_url,[$WITH_DOXYGEN_SEARCH_ENGINE_URL])
+        AC_SUBST(extra_search_mappings,[$WITH_DOXYGEN_SEARCH_MAPPINGS])
+        ;;
+
+      no|default)
+        AC_SUBST(enable_external_search,[NO])
+        AC_SUBST(enable_server_based_search,[NO])
+        AC_SUBST(searchengine_url,[])
+        AC_SUBST(extra_search_mappings,[])
+        ;;
+    esac
+    ;;
+
+  no|default)
+    AC_SUBST(enable_searchengine,[NO])
+    AC_SUBST(searchengine_url,[])
+    AC_SUBST(enable_server_based_search,[NO])
+    AC_SUBST(enable_external_search,[NO])
+    AC_SUBST(extra_search_mappings,[])
+    ;;
+
+  *)
+    AC_MSG_ERROR([Invalid setting for --enable-doxygen-search. Use "yes" or "no"])
+    ;;
+esac
+
+dnl Allow enablement of doxygen generated Qt help files
+AC_ARG_ENABLE(doxygen-qt-help,
+	      AS_HELP_STRING([--enable-doxygen-qt-help],
+			     [Build Qt help files (default is NO)]),,
+			     enableval=default)
+case "$enableval" in
+  yes)
+    if test "$ENABLE_DOXYGEN" = "0" ; then
+      AC_MSG_ERROR([The option --enable-doxygen-qt-help requires --enable-doxygen.])
+    fi
+
+    AC_PATH_PROG(QHELPGENERATOR, [qhelpgenerator], [qhelpgenerator])
+
+    dnl Qt help file for llvm doxygen documentation
+    AC_SUBST(llvm_doxygen_generate_qhp,[YES])
+    AC_SUBST(llvm_doxygen_qch_filename,[org.llvm.qch])
+    AC_SUBST(llvm_doxygen_qhp_namespace,[org.llvm])
+    AC_SUBST(llvm_doxygen_qhelpgenerator_path,[$QHELPGENERATOR])
+    AC_SUBST(llvm_doxygen_qhp_cust_filter_name,[$PACKAGE_STRING])
+    AC_SUBST(llvm_doxygen_qhp_cust_filter_attrs,[$PACKAGE_NAME,$PACKAGE_VERSION])
+
+    dnl Qt help file for clang doxygen documentation
+    AC_SUBST(clang_doxygen_generate_qhp,[YES])
+    AC_SUBST(clang_doxygen_qch_filename,[org.llvm.clang.qch])
+    AC_SUBST(clang_doxygen_qhp_namespace,[org.llvm.clang])
+    AC_SUBST(clang_doxygen_qhelpgenerator_path,[$QHELPGENERATOR])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_name,[Clang $PACKAGE_VERSION])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_attrs,[Clang,$PACKAGE_VERSION])
+    ;;
+
+  no|default)
+    AC_SUBST(llvm_doxygen_generate_qhp,[NO])
+    AC_SUBST(llvm_doxygen_qch_filename,[])
+    AC_SUBST(llvm_doxygen_qhp_namespace,[])
+    AC_SUBST(llvm_doxygen_qhelpgenerator_path,[])
+    AC_SUBST(llvm_doxygen_qhp_cust_filter_name,[])
+    AC_SUBST(llvm_doxygen_qhp_cust_filter_attrs,[])
+
+    AC_SUBST(clang_doxygen_generate_qhp,[NO])
+    AC_SUBST(clang_doxygen_qch_filename,[])
+    AC_SUBST(clang_doxygen_qhp_namespace,[])
+    AC_SUBST(clang_doxygen_qhelpgenerator_path,[])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_name,[Clang $PACKAGE_VERSION])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_attrs,[Clang,$PACKAGE_VERSION])
+    ;;
+
+  *)
+    AC_MSG_ERROR([Invalid setting for --enable-doxygen-qt-help. Use "yes" or "no"]) ;;
 esac
 
 dnl Allow disablement of threads
