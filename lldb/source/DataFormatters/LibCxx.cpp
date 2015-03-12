@@ -266,7 +266,7 @@ lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::Update()
                                                      NULL,
                                                      NULL,
                                                      NULL,
-                                                     ValueObject::GetValueForExpressionPathOptions().DontCheckDotVsArrowSyntax().DontAllowSyntheticChildren(),
+                                                     ValueObject::GetValueForExpressionPathOptions().DontCheckDotVsArrowSyntax().SetSyntheticChildrenTraversal(ValueObject::GetValueForExpressionPathOptions::SyntheticChildrenTraversal::None),
                                                      NULL).get();
     
     return false;

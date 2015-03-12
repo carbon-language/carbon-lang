@@ -141,19 +141,27 @@ public:
     
     struct GetValueForExpressionPathOptions
     {
+        enum class SyntheticChildrenTraversal
+        {
+            None,
+            ToSynthetic,
+            FromSynthetic,
+            Both
+        };
+        
         bool m_check_dot_vs_arrow_syntax;
         bool m_no_fragile_ivar;
         bool m_allow_bitfields_syntax;
-        bool m_no_synthetic_children;
+        SyntheticChildrenTraversal m_synthetic_children_traversal;
         
         GetValueForExpressionPathOptions(bool dot = false,
                                          bool no_ivar = false,
                                          bool bitfield = true,
-                                         bool no_synth = false) :
+                                         SyntheticChildrenTraversal synth_traverse = SyntheticChildrenTraversal::ToSynthetic) :
             m_check_dot_vs_arrow_syntax(dot),
             m_no_fragile_ivar(no_ivar),
             m_allow_bitfields_syntax(bitfield),
-            m_no_synthetic_children(no_synth)
+            m_synthetic_children_traversal(synth_traverse)
         {
         }
         
@@ -200,16 +208,9 @@ public:
         }
         
         GetValueForExpressionPathOptions&
-        DoAllowSyntheticChildren()
+        SetSyntheticChildrenTraversal(SyntheticChildrenTraversal traverse)
         {
-            m_no_synthetic_children = false;
-            return *this;
-        }
-        
-        GetValueForExpressionPathOptions&
-        DontAllowSyntheticChildren()
-        {
-            m_no_synthetic_children = true;
+            m_synthetic_children_traversal = traverse;
             return *this;
         }
         

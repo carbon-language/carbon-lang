@@ -766,7 +766,7 @@ DumpValue (Stream &s,
     ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
                                                       ValueObject::eExpressionPathAftermathDereference : ValueObject::eExpressionPathAftermathNothing);
     ValueObject::GetValueForExpressionPathOptions options;
-    options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar().DoAllowSyntheticChildren();
+    options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar().SetSyntheticChildrenTraversal(ValueObject::GetValueForExpressionPathOptions::SyntheticChildrenTraversal::Both);
     ValueObject* target = NULL;
     const char* var_name_final_if_array_range = NULL;
     size_t close_bracket_index = llvm::StringRef::npos;
