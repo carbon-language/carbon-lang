@@ -256,6 +256,10 @@ protected:
   /// argument and how it is interpreted.  Defaults to NoAlignment.
   LCOMM::LCOMMType LCOMMDirectiveAlignmentType;
 
+  // True if the target allows .align directives on funtions. This is true for
+  // most targets, so defaults to true.
+  bool HasFunctionAlignment;
+
   /// True if the target has .type and .size directives, this is true for most
   /// ELF targets.  Defaults to true.
   bool HasDotTypeDotSizeDirective;
@@ -467,6 +471,7 @@ public:
   LCOMM::LCOMMType getLCOMMDirectiveAlignmentType() const {
     return LCOMMDirectiveAlignmentType;
   }
+  bool hasFunctionAlignment() const { return HasFunctionAlignment; }
   bool hasDotTypeDotSizeDirective() const { return HasDotTypeDotSizeDirective; }
   bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
   bool hasIdentDirective() const { return HasIdentDirective; }

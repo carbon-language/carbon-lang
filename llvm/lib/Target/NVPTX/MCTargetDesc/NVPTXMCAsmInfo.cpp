@@ -39,6 +39,8 @@ NVPTXMCAsmInfo::NVPTXMCAsmInfo(StringRef TT) {
   InlineAsmEnd = " inline asm";
 
   SupportsDebugInformation = CompileForDebugging;
+  // PTX does not allow .align on functions.
+  HasFunctionAlignment = false;
   HasDotTypeDotSizeDirective = false;
 
   Data8bitsDirective = " .b8 ";
