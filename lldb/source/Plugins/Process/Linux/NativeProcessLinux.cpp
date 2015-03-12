@@ -711,7 +711,7 @@ namespace
             ioVec.iov_base = &regs;
             ioVec.iov_len = sizeof regs;
             PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, sizeof regs, m_error);
-            if (m_error.Sucess())
+            if (m_error.Success())
             {
                 ::memcpy((void *)(((unsigned char *)(&regs)) + offset), m_value.GetBytes(), 16);
                 PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, sizeof regs, m_error);
@@ -726,7 +726,7 @@ namespace
             ioVec.iov_base = &regs;
             ioVec.iov_len = sizeof regs;
             PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, sizeof regs, m_error);
-            if (m_error.Sucess())
+            if (m_error.Success())
             {
                 ::memcpy((void *)(((unsigned char *)(&regs)) + m_offset), m_value.GetBytes(), 8);
                 PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, sizeof regs, m_error);
