@@ -490,14 +490,48 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
                                           llvm::Value *ST, llvm::Value *IL,
                                           llvm::Value *Chunk) {
   auto &RT = CGM.getOpenMPRuntime();
+
+  // Dynamic scheduling of the outer loop (dynamic, guided, auto, runtime).
+  const bool Dynamic = RT.isDynamic(ScheduleKind);
+
   assert(!RT.isStaticNonchunked(ScheduleKind, /* Chunked */ Chunk != nullptr) &&
          "static non-chunked schedule does not need outer loop");
-  if (RT.isDynamic(ScheduleKind)) {
-    ErrorUnsupported(&S, "OpenMP loop with dynamic schedule");
-    return;
-  }
 
   // Emit outer loop.
+  //
+  // OpenMP [2.7.1, Loop Construct, Description, table 2-1]
+  // When schedule(dynamic,chunk_size) is specified, the iterations are
+  // distributed to threads in the team in chunks as the threads request them.
+  // Each thread executes a chunk of iterations, then requests another chunk,
+  // until no chunks remain to be distributed. Each chunk contains chunk_size
+  // iterations, except for the last chunk to be distributed, which may have
+  // fewer iterations. When no chunk_size is specified, it defaults to 1.
+  //
+  // When schedule(guided,chunk_size) is specified, the iterations are assigned
+  // to threads in the team in chunks as the executing threads request them.
+  // Each thread executes a chunk of iterations, then requests another chunk,
+  // until no chunks remain to be assigned. For a chunk_size of 1, the size of
+  // each chunk is proportional to the number of unassigned iterations divided
+  // by the number of threads in the team, decreasing to 1. For a chunk_size
+  // with value k (greater than 1), the size of each chunk is determined in the
+  // same way, with the restriction that the chunks do not contain fewer than k
+  // iterations (except for the last chunk to be assigned, which may have fewer
+  // than k iterations).
+  //
+  // When schedule(auto) is specified, the decision regarding scheduling is
+  // delegated to the compiler and/or runtime system. The programmer gives the
+  // implementation the freedom to choose any possible mapping of iterations to
+  // threads in the team.
+  //
+  // When schedule(runtime) is specified, the decision regarding scheduling is
+  // deferred until run time, and the schedule and chunk size are taken from the
+  // run-sched-var ICV. If the ICV is set to auto, the schedule is
+  // implementation defined
+  //
+  // while(__kmpc_dispatch_next(&LB, &UB)) {
+  //   idx = LB;
+  //   while (idx <= UB) { BODY; ++idx; } // inner loop
+  // }
   //
   // OpenMP [2.7.1, Loop Construct, Description, table 2-1]
   // When schedule(static, chunk_size) is specified, iterations are divided into
@@ -510,12 +544,16 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   //   UB = UB + ST;
   // }
   //
+
   const Expr *IVExpr = S.getIterationVariable();
   const unsigned IVSize = getContext().getTypeSize(IVExpr->getType());
   const bool IVSigned = IVExpr->getType()->hasSignedIntegerRepresentation();
 
-  RT.emitForInit(*this, S.getLocStart(), ScheduleKind, IVSize, IVSigned, IL, LB,
-                 UB, ST, Chunk);
+  RT.emitForInit(
+      *this, S.getLocStart(), ScheduleKind, IVSize, IVSigned, IL, LB,
+      (Dynamic ? EmitAnyExpr(S.getLastIteration()).getScalarVal() : UB), ST,
+      Chunk);
+
   auto LoopExit = getJumpDestInCurrentScope("omp.dispatch.end");
 
   // Start the loop with a block that tests the condition.
@@ -524,12 +562,17 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   LoopStack.push(CondBlock);
 
   llvm::Value *BoolCondVal = nullptr;
-  // UB = min(UB, GlobalUB)
-  EmitIgnoredExpr(S.getEnsureUpperBound());
-  // IV = LB
-  EmitIgnoredExpr(S.getInit());
-  // IV < UB
-  BoolCondVal = EvaluateExprAsBool(S.getCond(false));
+  if (!Dynamic) {
+    // UB = min(UB, GlobalUB)
+    EmitIgnoredExpr(S.getEnsureUpperBound());
+    // IV = LB
+    EmitIgnoredExpr(S.getInit());
+    // IV < UB
+    BoolCondVal = EvaluateExprAsBool(S.getCond(false));
+  } else {
+    BoolCondVal = RT.emitForNext(*this, S.getLocStart(), IVSize, IVSigned,
+                                    IL, LB, UB, ST);
+  }
 
   // If there are any cleanups between here and the loop-exit scope,
   // create a block to stage a loop exit along.
@@ -545,6 +588,11 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   }
   EmitBlock(LoopBody);
 
+  // Emit "IV = LB" (in case of static schedule, we have already calculated new
+  // LB for loop condition and emitted it above).
+  if (Dynamic)
+    EmitIgnoredExpr(S.getInit());
+
   // Create a block for the increment.
   auto Continue = getJumpDestInCurrentScope("omp.dispatch.inc");
   BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
@@ -557,9 +605,11 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
 
   EmitBlock(Continue.getBlock());
   BreakContinueStack.pop_back();
-  // Emit "LB = LB + Stride", "UB = UB + Stride".
-  EmitIgnoredExpr(S.getNextLowerBound());
-  EmitIgnoredExpr(S.getNextUpperBound());
+  if (!Dynamic) {
+    // Emit "LB = LB + Stride", "UB = UB + Stride".
+    EmitIgnoredExpr(S.getNextLowerBound());
+    EmitIgnoredExpr(S.getNextUpperBound());
+  }
 
   EmitBranch(CondBlock);
   LoopStack.pop();
@@ -567,7 +617,9 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   EmitBlock(LoopExit.getBlock());
 
   // Tell the runtime we are done.
-  RT.emitForFinish(*this, S.getLocStart(), ScheduleKind);
+  // FIXME: Also call fini for ordered loops with dynamic scheduling.
+  if (!Dynamic)
+    RT.emitForFinish(*this, S.getLocStart(), ScheduleKind);
 }
 
 /// \brief Emit a helper variable and return corresponding lvalue.

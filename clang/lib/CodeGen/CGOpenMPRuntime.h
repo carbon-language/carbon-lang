@@ -222,6 +222,14 @@ class CGOpenMPRuntime {
   /// \return Specified function.
   llvm::Constant *createRuntimeFunction(OpenMPRTLFunction Function);
 
+  /// \brief Returns __kmpc_dispatch_init_* runtime function for the specified
+  /// size \a IVSize and sign \a IVSigned.
+  llvm::Constant *createDispatchInitFunction(unsigned IVSize, bool IVSigned);
+
+  /// \brief Returns __kmpc_dispatch_next_* runtime function for the specified
+  /// size \a IVSize and sign \a IVSigned.
+  llvm::Constant *createDispatchNextFunction(unsigned IVSize, bool IVSigned);
+
   /// \brief If the specified mangled name is not in the module, create and
   /// return threadprivate cache object. This object is a pointer's worth of
   /// storage that's reserved for use by the OpenMP runtime.
@@ -399,6 +407,25 @@ public:
   ///
   virtual void emitForFinish(CodeGenFunction &CGF, SourceLocation Loc,
                              OpenMPScheduleClauseKind ScheduleKind);
+
+  /// Call __kmpc_dispatch_next(
+  ///          ident_t *loc, kmp_int32 tid, kmp_int32 *p_lastiter,
+  ///          kmp_int[32|64] *p_lower, kmp_int[32|64] *p_upper,
+  ///          kmp_int[32|64] *p_stride);
+  /// \param IVSize Size of the iteration variable in bits.
+  /// \param IVSigned Sign of the interation variable.
+  /// \param IL Address of the output variable in which the flag of the
+  /// last iteration is returned.
+  /// \param LB Address of the output variable in which the lower iteration
+  /// number is returned.
+  /// \param UB Address of the output variable in which the upper iteration
+  /// number is returned.
+  /// \param ST Address of the output variable in which the stride value is
+  /// returned.
+  virtual llvm::Value *emitForNext(CodeGenFunction &CGF, SourceLocation Loc,
+                                   unsigned IVSize, bool IVSigned,
+                                   llvm::Value *IL, llvm::Value *LB,
+                                   llvm::Value *UB, llvm::Value *ST);
 
   /// \brief Emits call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32
   /// global_tid, kmp_int32 num_threads) to generate code for 'num_threads'
