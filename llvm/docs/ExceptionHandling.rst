@@ -498,6 +498,47 @@ When used in the native Windows C++ exception handling implementation, this
 intrinsic serves as a placeholder to delimit code before a catch handler is
 outlined.  After the handler is outlined, this intrinsic is simply removed.
 
+.. _llvm.eh.actions:
+
+``llvm.eh.actions``
+----------------------
+
+.. code-block:: llvm
+
+  void @llvm.eh.actions()
+
+This intrinsic represents the list of actions to take when an exception is
+thrown. It is typically used by Windows exception handling schemes where cleanup
+outlining is required by the runtime. The arguments are a sequence of ``i32``
+sentinels indicating the action type followed by some pre-determined number of
+arguments required to implement that action.
+
+A code of ``i32 0`` indicates a cleanup action, which expects one additional
+argument. The argument is a pointer to a function that implements the cleanup
+action.
+
+A code of ``i32 1`` indicates a catch action, which expects three additional
+arguments. Different EH schemes give different meanings to the three arguments,
+but the first argument indicates whether the catch should fire, the second is a
+pointer to stack object where the exception object should be stored, and the
+third is the code to run to catch the exception.
+
+For Windows C++ exception handling, the first argument for a catch handler is a
+pointer to the RTTI type descriptor for the object to catch. The third argument
+is a pointer to a function implementing the catch. This function returns the
+address of the basic block where execution should resume after handling the
+exception.
+
+For Windows SEH, the first argument is a pointer to the filter function, which
+indicates if the exception should be caught or not.  The second argument is
+typically null. The third argument is the address of a basic block where the
+exception will be handled. In other words, catch handlers are not outlined in
+SEH. After running cleanups, execution immediately resumes at this PC.
+
+In order to preserve the structure of the CFG, a call to '``llvm.eh.actions``'
+must be followed by an ':ref:`indirectbr <i_indirectbr>`' instruction that jumps
+to the result of the intrinsic call.
+
 
 SJLJ Intrinsics
 ---------------

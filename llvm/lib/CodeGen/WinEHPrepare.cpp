@@ -383,12 +383,10 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   Module *M = F.getParent();
   LLVMContext &Context = M->getContext();
 
-  // FIXME: Make this an intrinsic.
   // Create a new function to receive the handler contents.
   PointerType *Int8PtrType = Type::getInt8PtrTy(Context);
   Type *Int32Type = Type::getInt32Ty(Context);
-  FunctionType *ActionTy = FunctionType::get(Int8PtrType, true);
-  Value *ActionIntrin = M->getOrInsertFunction("llvm.eh.actions", ActionTy);
+  Function *ActionIntrin = Intrinsic::getDeclaration(M, Intrinsic::eh_actions);
 
   for (LandingPadInst *LPad : LPads) {
     // Look for evidence that this landingpad has already been processed.
@@ -396,8 +394,8 @@ bool WinEHPrepare::prepareCPPEHHandlers(
     BasicBlock *LPadBB = LPad->getParent();
     for (Instruction &Inst : LPadBB->getInstList()) {
       // FIXME: Make this an intrinsic.
-      if (auto *Call = dyn_cast<CallInst>(&Inst)) {
-        if (Call->getCalledFunction()->getName() == "llvm.eh.actions") {
+      if (auto *IntrinCall = dyn_cast<IntrinsicInst>(&Inst)) {
+        if (IntrinCall->getIntrinsicID() == Intrinsic::eh_actions) {
           LPadHasActionList = true;
           break;
         }
