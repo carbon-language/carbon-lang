@@ -882,8 +882,6 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   switch (BuiltinID) {
   default: return false;
   case X86::BI_mm_prefetch: i = 1; l = 0; u = 3; break;
-  case X86::BI__builtin_ia32_extract128i256: i = 1, l = 0, u = 1; break;
-  case X86::BI__builtin_ia32_insert128i256: i = 2, l = 0; u = 1; break;
   case X86::BI__builtin_ia32_sha1rnds4: i = 2, l = 0; u = 3; break;
   case X86::BI__builtin_ia32_vpermil2pd:
   case X86::BI__builtin_ia32_vpermil2pd256:
