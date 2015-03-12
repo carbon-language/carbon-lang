@@ -73,7 +73,8 @@ class MetaMap {
 
   void AllocBlock(ThreadState *thr, uptr pc, uptr p, uptr sz);
   uptr FreeBlock(ThreadState *thr, uptr pc, uptr p);
-  void FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz);
+  bool FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz);
+  void ResetRange(ThreadState *thr, uptr pc, uptr p, uptr sz);
   MBlock* GetBlock(uptr p);
 
   SyncVar* GetOrCreateAndLock(ThreadState *thr, uptr pc,

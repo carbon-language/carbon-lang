@@ -797,6 +797,7 @@ TSAN_INTERCEPTOR(void*, mmap64, void *addr, long_t sz, int prot,
 TSAN_INTERCEPTOR(int, munmap, void *addr, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(munmap, addr, sz);
   DontNeedShadowFor((uptr)addr, sz);
+  ctx->metamap.ResetRange(thr, pc, (uptr)addr, (uptr)sz);
   int res = REAL(munmap)(addr, sz);
   return res;
 }
