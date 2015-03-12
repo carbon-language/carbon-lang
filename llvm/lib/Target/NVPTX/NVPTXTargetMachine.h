@@ -27,7 +27,6 @@ namespace llvm {
 class NVPTXTargetMachine : public LLVMTargetMachine {
   bool is64bit;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
-  const DataLayout DL; // Calculates type size & alignment
   NVPTX::DrvInterface drvInterface;
   NVPTXSubtarget Subtarget;
 
@@ -40,7 +39,6 @@ public:
                      CodeModel::Model CM, CodeGenOpt::Level OP, bool is64bit);
 
   ~NVPTXTargetMachine() override;
-  const DataLayout *getDataLayout() const override { return &DL; }
   const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   bool is64Bit() const { return is64bit; }
   NVPTX::DrvInterface getDrvInterface() const { return drvInterface; }

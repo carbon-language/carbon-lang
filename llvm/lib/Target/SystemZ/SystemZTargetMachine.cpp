@@ -25,12 +25,12 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+    // Make sure that global data has at least 16 bits of alignment by
+    // default, so that we can refer to it using LARL.  We don't have any
+    // special requirements for stack variables though.
+    : LLVMTargetMachine(T, "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64",
+                        TT, CPU, FS, Options, RM, CM, OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
-      // Make sure that global data has at least 16 bits of alignment by
-      // default, so that we can refer to it using LARL.  We don't have any
-      // special requirements for stack variables though.
-      DL("E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64"),
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }

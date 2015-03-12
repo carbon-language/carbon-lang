@@ -20,7 +20,6 @@
 namespace llvm {
 class BPFTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
-  const DataLayout DL;
   BPFSubtarget Subtarget;
 
 public:

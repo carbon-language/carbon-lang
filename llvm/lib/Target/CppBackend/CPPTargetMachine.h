@@ -26,11 +26,11 @@ class CPPSubtarget : public TargetSubtargetInfo {
 };
 
 struct CPPTargetMachine : public TargetMachine {
-  CPPTargetMachine(const Target &T, StringRef TT,
-                   StringRef CPU, StringRef FS, const TargetOptions &Options,
-                   Reloc::Model RM, CodeModel::Model CM,
-                   CodeGenOpt::Level OL)
-    : TargetMachine(T, TT, CPU, FS, Options), Subtarget() {}
+  CPPTargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+                   const TargetOptions &Options, Reloc::Model RM,
+                   CodeModel::Model CM, CodeGenOpt::Level OL)
+      : TargetMachine(T, "", TT, CPU, FS, Options), Subtarget() {}
+
 private:
   CPPSubtarget Subtarget;
 

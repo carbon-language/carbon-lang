@@ -27,9 +27,10 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+    : LLVMTargetMachine(
+          T, "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f64:32-a:0:32-n32",
+          TT, CPU, FS, Options, RM, CM, OL),
       TLOF(make_unique<XCoreTargetObjectFile>()),
-      DL("e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f64:32-a:0:32-n32"),
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }

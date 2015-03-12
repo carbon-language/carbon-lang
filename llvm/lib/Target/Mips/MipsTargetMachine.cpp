@@ -46,8 +46,12 @@ extern "C" void LLVMInitializeMipsTarget() {
   RegisterTargetMachine<MipselTargetMachine> B(TheMips64elTarget);
 }
 
-static std::string computeDataLayout(bool isLittle, MipsABIInfo &ABI) {
+static std::string computeDataLayout(StringRef TT, StringRef CPU,
+                                     const TargetOptions &Options,
+                                     bool isLittle) {
   std::string Ret = "";
+  MipsABIInfo ABI =
+      MipsABIInfo::computeTargetABI(Triple(TT), CPU, Options.MCOptions);
 
   // There are both little and big endian mips.
   if (isLittle)
@@ -86,11 +90,11 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
                                      const TargetOptions &Options,
                                      Reloc::Model RM, CodeModel::Model CM,
                                      CodeGenOpt::Level OL, bool isLittle)
-    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT, CPU, Options, isLittle), TT,
+                        CPU, FS, Options, RM, CM, OL),
       isLittle(isLittle), TLOF(make_unique<MipsTargetObjectFile>()),
       ABI(MipsABIInfo::computeTargetABI(Triple(TT), CPU, Options.MCOptions)),
-      DL(computeDataLayout(isLittle, ABI)), Subtarget(nullptr),
-      DefaultSubtarget(TT, CPU, FS, isLittle, *this),
+      Subtarget(nullptr), DefaultSubtarget(TT, CPU, FS, isLittle, *this),
       NoMips16Subtarget(TT, CPU, FS.empty() ? "-mips16" : FS.str() + ",-mips16",
                         isLittle, *this),
       Mips16Subtarget(TT, CPU, FS.empty() ? "+mips16" : FS.str() + ",+mips16",

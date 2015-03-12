@@ -65,9 +65,10 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+    : LLVMTargetMachine(T, "e-m:e-p:32:32-i1:32-i64:64-a:0-n32", TT, CPU, FS,
+                        Options, RM, CM, OL),
       TLOF(make_unique<HexagonTargetObjectFile>()),
-      DL("e-m:e-p:32:32-i1:32-i64:64-a:0-n32"), Subtarget(TT, CPU, FS, *this) {
+      Subtarget(TT, CPU, FS, *this) {
     initAsmInfo();
 }
 

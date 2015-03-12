@@ -35,9 +35,9 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    StringRef FS, const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+    : LLVMTargetMachine(T, "e-m:e-p:64:64-i64:64-n32:64-S128", TT, CPU, FS,
+                        Options, RM, CM, OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
-      DL("e-m:e-p:64:64-i64:64-n32:64-S128"),
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }

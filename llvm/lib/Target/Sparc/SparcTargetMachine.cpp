@@ -56,12 +56,11 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
-                                       CodeGenOpt::Level OL,
-                                       bool is64bit)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    TLOF(make_unique<SparcELFTargetObjectFile>()),
-    DL(computeDataLayout(is64bit)),
-    Subtarget(TT, CPU, FS, *this, is64bit) {
+                                       CodeGenOpt::Level OL, bool is64bit)
+    : LLVMTargetMachine(T, computeDataLayout(is64bit), TT, CPU, FS, Options, RM,
+                        CM, OL),
+      TLOF(make_unique<SparcELFTargetObjectFile>()),
+      Subtarget(TT, CPU, FS, *this, is64bit) {
   initAsmInfo();
 }
 

@@ -15,6 +15,7 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetOptions.h"
@@ -62,11 +63,15 @@ class TargetMachine {
   TargetMachine(const TargetMachine &) = delete;
   void operator=(const TargetMachine &) = delete;
 protected: // Can only create subclasses.
-  TargetMachine(const Target &T, StringRef TargetTriple,
-                StringRef CPU, StringRef FS, const TargetOptions &Options);
+  TargetMachine(const Target &T, StringRef DataLayoutString,
+                StringRef TargetTriple, StringRef CPU, StringRef FS,
+                const TargetOptions &Options);
 
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
+
+  /// DataLayout - For ABI type size and alignment.
+  const DataLayout DL;
 
   /// TargetTriple, TargetCPU, TargetFS - Triple string, CPU name, and target
   /// feature strings the TargetMachine instance is created with.
@@ -119,9 +124,7 @@ public:
 
   /// getDataLayout - This method returns a pointer to the DataLayout for
   /// the target. It should be unchanging for every subtarget.
-  virtual const DataLayout *getDataLayout() const {
-    return nullptr;
-  }
+  const DataLayout *getDataLayout() const { return &DL; }
 
   /// \brief Reset the target options based on the function's attributes.
   // FIXME: Remove TargetOptions that affect per-function code generation
@@ -236,9 +239,9 @@ public:
 ///
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
-  LLVMTargetMachine(const Target &T, StringRef TargetTriple,
-                    StringRef CPU, StringRef FS, TargetOptions Options,
-                    Reloc::Model RM, CodeModel::Model CM,
+  LLVMTargetMachine(const Target &T, StringRef DataLayoutString,
+                    StringRef TargetTriple, StringRef CPU, StringRef FS,
+                    TargetOptions Options, Reloc::Model RM, CodeModel::Model CM,
                     CodeGenOpt::Level OL);
 
   void initAsmInfo();

@@ -36,14 +36,12 @@ using namespace llvm;
 // TargetMachine Class
 //
 
-TargetMachine::TargetMachine(const Target &T,
+TargetMachine::TargetMachine(const Target &T, StringRef DataLayoutString,
                              StringRef TT, StringRef CPU, StringRef FS,
                              const TargetOptions &Options)
-  : TheTarget(T), TargetTriple(TT), TargetCPU(CPU), TargetFS(FS),
-    CodeGenInfo(nullptr), AsmInfo(nullptr),
-    RequireStructuredCFG(false),
-    Options(Options) {
-}
+    : TheTarget(T), DL(DataLayoutString), TargetTriple(TT), TargetCPU(CPU),
+      TargetFS(FS), CodeGenInfo(nullptr), AsmInfo(nullptr),
+      RequireStructuredCFG(false), Options(Options) {}
 
 TargetMachine::~TargetMachine() {
   delete CodeGenInfo;
