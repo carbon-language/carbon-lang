@@ -181,7 +181,31 @@ class InvokeInst;
 
   /// \brief Returns true if this personality function catches asynchronous
   /// exceptions.
-  bool isAsynchronousEHPersonality(EHPersonality Pers);
+  inline bool isAsynchronousEHPersonality(EHPersonality Pers) {
+    // The two SEH personality functions can catch asynch exceptions. We assume
+    // unknown personalities don't catch asynch exceptions.
+    switch (Pers) {
+    case EHPersonality::MSVC_X86SEH:
+    case EHPersonality::MSVC_Win64SEH:
+      return true;
+    default: return false;
+    }
+    llvm_unreachable("invalid enum");
+  }
+
+  /// \brief Returns true if this is an MSVC personality function.
+  inline bool isMSVCEHPersonality(EHPersonality Pers) {
+    // The two SEH personality functions can catch asynch exceptions. We assume
+    // unknown personalities don't catch asynch exceptions.
+    switch (Pers) {
+    case EHPersonality::MSVC_CXX:
+    case EHPersonality::MSVC_X86SEH:
+    case EHPersonality::MSVC_Win64SEH:
+      return true;
+    default: return false;
+    }
+    llvm_unreachable("invalid enum");
+  }
 
   bool canSimplifyInvokeNoUnwind(const InvokeInst *II);
 

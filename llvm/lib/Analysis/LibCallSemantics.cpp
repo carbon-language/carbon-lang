@@ -80,18 +80,6 @@ EHPersonality llvm::classifyEHPersonality(const Value *Pers) {
     .Default(EHPersonality::Unknown);
 }
 
-bool llvm::isAsynchronousEHPersonality(EHPersonality Pers) {
-  // The two SEH personality functions can catch asynch exceptions. We assume
-  // unknown personalities don't catch asynch exceptions.
-  switch (Pers) {
-  case EHPersonality::MSVC_X86SEH:
-  case EHPersonality::MSVC_Win64SEH:
-    return true;
-  default: return false;
-  }
-  llvm_unreachable("invalid enum");
-}
-
 bool llvm::canSimplifyInvokeNoUnwind(const InvokeInst *II) {
   const LandingPadInst *LP = II->getLandingPadInst();
   EHPersonality Personality = classifyEHPersonality(LP->getPersonalityFn());

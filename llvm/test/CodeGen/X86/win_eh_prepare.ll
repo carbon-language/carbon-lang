@@ -1,4 +1,4 @@
-; RUN: opt -S -winehprepare -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -dwarfehprepare -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
 
 ; FIXME: Add and test outlining here.
 

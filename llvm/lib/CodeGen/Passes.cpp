@@ -422,7 +422,11 @@ void TargetPassConfig::addPassesToHandleExceptions() {
     addPass(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::WinEH:
+    // We support using both GCC-style and MSVC-style exceptions on Windows, so
+    // add both preparation passes. Each pass will only actually run if it
+    // recognizes the personality function.
     addPass(createWinEHPass(TM));
+    addPass(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::None:
     addPass(createLowerInvokePass());
