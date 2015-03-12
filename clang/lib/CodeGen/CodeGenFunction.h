@@ -368,84 +368,26 @@ public:
   /// pushFullExprCleanup - Push a cleanup to be run at the end of the
   /// current full-expression.  Safe against the possibility that
   /// we're currently inside a conditionally-evaluated expression.
-  template <class T, class A0>
-  void pushFullExprCleanup(CleanupKind kind, A0 a0) {
+  template <class T, class... As>
+  void pushFullExprCleanup(CleanupKind kind, As... A) {
     // If we're not in a conditional branch, or if none of the
     // arguments requires saving, then use the unconditional cleanup.
     if (!isInConditionalBranch())
-      return EHStack.pushCleanup<T>(kind, a0);
+      return EHStack.pushCleanup<T>(kind, A...);
 
-    typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
+    // Stash values in a tuple so we can guarantee the order of saves.
+    typedef std::tuple<typename DominatingValue<As>::saved_type...> SavedTuple;
+    SavedTuple Saved{saveValueInCond(A)...};
 
-    typedef EHScopeStack::ConditionalCleanup1<T, A0> CleanupType;
-    EHStack.pushCleanup<CleanupType>(kind, a0_saved);
-    initFullExprCleanup();
-  }
-
-  /// pushFullExprCleanup - Push a cleanup to be run at the end of the
-  /// current full-expression.  Safe against the possibility that
-  /// we're currently inside a conditionally-evaluated expression.
-  template <class T, class A0, class A1>
-  void pushFullExprCleanup(CleanupKind kind, A0 a0, A1 a1) {
-    // If we're not in a conditional branch, or if none of the
-    // arguments requires saving, then use the unconditional cleanup.
-    if (!isInConditionalBranch())
-      return EHStack.pushCleanup<T>(kind, a0, a1);
-
-    typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
-    typename DominatingValue<A1>::saved_type a1_saved = saveValueInCond(a1);
-
-    typedef EHScopeStack::ConditionalCleanup2<T, A0, A1> CleanupType;
-    EHStack.pushCleanup<CleanupType>(kind, a0_saved, a1_saved);
-    initFullExprCleanup();
-  }
-
-  /// pushFullExprCleanup - Push a cleanup to be run at the end of the
-  /// current full-expression.  Safe against the possibility that
-  /// we're currently inside a conditionally-evaluated expression.
-  template <class T, class A0, class A1, class A2>
-  void pushFullExprCleanup(CleanupKind kind, A0 a0, A1 a1, A2 a2) {
-    // If we're not in a conditional branch, or if none of the
-    // arguments requires saving, then use the unconditional cleanup.
-    if (!isInConditionalBranch()) {
-      return EHStack.pushCleanup<T>(kind, a0, a1, a2);
-    }
-    
-    typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
-    typename DominatingValue<A1>::saved_type a1_saved = saveValueInCond(a1);
-    typename DominatingValue<A2>::saved_type a2_saved = saveValueInCond(a2);
-    
-    typedef EHScopeStack::ConditionalCleanup3<T, A0, A1, A2> CleanupType;
-    EHStack.pushCleanup<CleanupType>(kind, a0_saved, a1_saved, a2_saved);
-    initFullExprCleanup();
-  }
-
-  /// pushFullExprCleanup - Push a cleanup to be run at the end of the
-  /// current full-expression.  Safe against the possibility that
-  /// we're currently inside a conditionally-evaluated expression.
-  template <class T, class A0, class A1, class A2, class A3>
-  void pushFullExprCleanup(CleanupKind kind, A0 a0, A1 a1, A2 a2, A3 a3) {
-    // If we're not in a conditional branch, or if none of the
-    // arguments requires saving, then use the unconditional cleanup.
-    if (!isInConditionalBranch()) {
-      return EHStack.pushCleanup<T>(kind, a0, a1, a2, a3);
-    }
-    
-    typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
-    typename DominatingValue<A1>::saved_type a1_saved = saveValueInCond(a1);
-    typename DominatingValue<A2>::saved_type a2_saved = saveValueInCond(a2);
-    typename DominatingValue<A3>::saved_type a3_saved = saveValueInCond(a3);
-    
-    typedef EHScopeStack::ConditionalCleanup4<T, A0, A1, A2, A3> CleanupType;
-    EHStack.pushCleanup<CleanupType>(kind, a0_saved, a1_saved,
-                                     a2_saved, a3_saved);
+    typedef EHScopeStack::ConditionalCleanup<T, As...> CleanupType;
+    EHStack.pushCleanup<CleanupType>(kind, Saved);
     initFullExprCleanup();
   }
 
   /// \brief Queue a cleanup to be pushed after finishing the current
   /// full-expression.
-  template <class T, class A0, class A1, class A2, class A3>
-  void pushCleanupAfterFullExpr(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3) {
+  template <class T, class... As>
+  void pushCleanupAfterFullExpr(CleanupKind Kind, As... A) {
     assert(!isInConditionalBranch() && "can't defer conditional cleanup");
 
     LifetimeExtendedCleanupHeader Header = { sizeof(T), Kind };
@@ -456,7 +398,7 @@ public:
 
     char *Buffer = &LifetimeExtendedCleanupStack[OldSize];
     new (Buffer) LifetimeExtendedCleanupHeader(Header);
-    new (Buffer + sizeof(Header)) T(a0, a1, a2, a3);
+    new (Buffer + sizeof(Header)) T(A...);
   }
 
   /// Set up the last cleaup that was pushed as a conditional
