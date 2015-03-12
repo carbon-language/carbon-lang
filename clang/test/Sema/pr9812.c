@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 #define bool _Bool
-int test1(int argc, char** argv)
+int main(int argc, char** argv)
 {
     bool signed;  // expected-error {{'bool' cannot be signed or unsigned}} expected-warning {{declaration does not declare anything}}
 

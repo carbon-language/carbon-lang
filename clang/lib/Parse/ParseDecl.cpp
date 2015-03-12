@@ -2569,7 +2569,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
   bool EnteringContext = (DSContext == DSC_class || DSContext == DSC_top_level);
   bool AttrsLastTime = false;
   ParsedAttributesWithRange attrs(AttrFactory);
-  const PrintingPolicy &Policy = Actions.getASTContext().getPrintingPolicy();
+  // We use Sema's policy to get bool macros right.
+  const PrintingPolicy &Policy = Actions.getPrintingPolicy();
   while (1) {
     bool isInvalid = false;
     bool isStorageClass = false;
