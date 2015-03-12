@@ -308,6 +308,11 @@ std::error_code GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
       ctx.setEntrySymbolName(entry->getEntryName());
     if (auto *output = dyn_cast<script::Output>(c))
       ctx.setOutputPath(output->getOutputFileName());
+    if (auto *externs = dyn_cast<script::Extern>(c)) {
+      for (auto symbol : *externs) {
+        ctx.addInitialUndefinedSymbol(symbol);
+      }
+    }
   }
   // Transfer ownership of the script to the linking context
   ctx.addLinkerScript(std::move(parser));

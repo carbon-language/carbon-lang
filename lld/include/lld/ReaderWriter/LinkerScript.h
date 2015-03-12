@@ -846,6 +846,8 @@ private:
 /// Represents an extern command.
 class Extern : public Command {
 public:
+  typedef llvm::ArrayRef<StringRef>::const_iterator const_iterator;
+
   Extern(Parser &ctx,
          const SmallVectorImpl<StringRef> &symbols)
       : Command(ctx, Kind::Extern) {
@@ -861,6 +863,8 @@ public:
   }
 
   void dump(raw_ostream &os) const override;
+  const_iterator begin() const { return _symbols.begin(); }
+  const_iterator end() const { return _symbols.end(); }
 
 private:
   llvm::ArrayRef<StringRef> _symbols;
