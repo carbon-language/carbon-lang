@@ -18,6 +18,7 @@
 #include "PPCInstrBuilder.h"
 #include "PPCMachineFunctionInfo.h"
 #include "PPCSubtarget.h"
+#include "PPCTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -56,11 +57,11 @@ static cl::opt<bool>
 AlwaysBasePointer("ppc-always-use-base-pointer", cl::Hidden, cl::init(false),
          cl::desc("Force the use of a base pointer in every function"));
 
-PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST)
-  : PPCGenRegisterInfo(ST.isPPC64() ? PPC::LR8 : PPC::LR,
-                       ST.isPPC64() ? 0 : 1,
-                       ST.isPPC64() ? 0 : 1),
-    Subtarget(ST) {
+PPCRegisterInfo::PPCRegisterInfo(const PPCTargetMachine &TM)
+  : PPCGenRegisterInfo(TM.isPPC64() ? PPC::LR8 : PPC::LR,
+                       TM.isPPC64() ? 0 : 1,
+                       TM.isPPC64() ? 0 : 1),
+    TM(TM) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
@@ -87,18 +88,19 @@ PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
   // Note that PPCInstrInfo::FoldImmediate also directly uses this Kind value
   // when it checks for ZERO folding.
   if (Kind == 1) {
-    if (Subtarget.isPPC64())
+    if (TM.isPPC64())
       return &PPC::G8RC_NOX0RegClass;
     return &PPC::GPRC_NOR0RegClass;
   }
 
-  if (Subtarget.isPPC64())
+  if (TM.isPPC64())
     return &PPC::G8RCRegClass;
   return &PPC::GPRCRegClass;
 }
 
 const MCPhysReg*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  const PPCSubtarget &Subtarget = MF->getSubtarget<PPCSubtarget>();
   if (MF->getFunction()->getCallingConv() == CallingConv::AnyReg) {
     if (Subtarget.hasVSX())
       return CSR_64_AllRegs_VSX_SaveList;
@@ -108,29 +110,28 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   }
 
   if (Subtarget.isDarwinABI())
-    return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
-                                  CSR_Darwin64_Altivec_SaveList :
-                                  CSR_Darwin64_SaveList) :
-                                 (Subtarget.hasAltivec() ?
-                                  CSR_Darwin32_Altivec_SaveList :
-                                  CSR_Darwin32_SaveList);
+    return TM.isPPC64()
+               ? (Subtarget.hasAltivec() ? CSR_Darwin64_Altivec_SaveList
+                                         : CSR_Darwin64_SaveList)
+               : (Subtarget.hasAltivec() ? CSR_Darwin32_Altivec_SaveList
+                                         : CSR_Darwin32_SaveList);
 
   // On PPC64, we might need to save r2 (but only if it is not reserved).
   bool SaveR2 = MF->getRegInfo().isAllocatable(PPC::X2);
 
-  return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
-                                (SaveR2 ? CSR_SVR464_R2_Altivec_SaveList :
-                                          CSR_SVR464_Altivec_SaveList) :
-                                (SaveR2 ? CSR_SVR464_R2_SaveList :
-                                          CSR_SVR464_SaveList)) :
-                               (Subtarget.hasAltivec() ?
-                                CSR_SVR432_Altivec_SaveList :
-                                CSR_SVR432_SaveList);
+  return TM.isPPC64()
+             ? (Subtarget.hasAltivec()
+                    ? (SaveR2 ? CSR_SVR464_R2_Altivec_SaveList
+                              : CSR_SVR464_Altivec_SaveList)
+                    : (SaveR2 ? CSR_SVR464_R2_SaveList : CSR_SVR464_SaveList))
+             : (Subtarget.hasAltivec() ? CSR_SVR432_Altivec_SaveList
+                                       : CSR_SVR432_SaveList);
 }
 
 const uint32_t *
 PPCRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                       CallingConv::ID CC) const {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   if (CC == CallingConv::AnyReg) {
     if (Subtarget.hasVSX())
       return CSR_64_AllRegs_VSX_RegMask;
@@ -140,19 +141,15 @@ PPCRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
   }
 
   if (Subtarget.isDarwinABI())
-    return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
-                                  CSR_Darwin64_Altivec_RegMask :
-                                  CSR_Darwin64_RegMask) :
-                                 (Subtarget.hasAltivec() ?
-                                  CSR_Darwin32_Altivec_RegMask :
-                                  CSR_Darwin32_RegMask);
+    return TM.isPPC64() ? (Subtarget.hasAltivec() ? CSR_Darwin64_Altivec_RegMask
+                                                  : CSR_Darwin64_RegMask)
+                        : (Subtarget.hasAltivec() ? CSR_Darwin32_Altivec_RegMask
+                                                  : CSR_Darwin32_RegMask);
 
-  return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
-                                CSR_SVR464_Altivec_RegMask :
-                                CSR_SVR464_RegMask) :
-                               (Subtarget.hasAltivec() ?
-                                CSR_SVR432_Altivec_RegMask :
-                                CSR_SVR432_RegMask);
+  return TM.isPPC64() ? (Subtarget.hasAltivec() ? CSR_SVR464_Altivec_RegMask
+                                                : CSR_SVR464_RegMask)
+                      : (Subtarget.hasAltivec() ? CSR_SVR432_Altivec_RegMask
+                                                : CSR_SVR432_RegMask);
 }
 
 const uint32_t*
@@ -167,6 +164,7 @@ void PPCRegisterInfo::adjustStackMapLiveOutMask(uint32_t *Mask) const {
 
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const PPCFrameLowering *PPCFI =
       static_cast<const PPCFrameLowering *>(Subtarget.getFrameLowering());
 
@@ -205,7 +203,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   }
   
   // On PPC64, r13 is the thread pointer. Never allocate this register.
-  if (Subtarget.isPPC64()) {
+  if (TM.isPPC64()) {
     Reserved.set(PPC::R13);
 
     Reserved.set(PPC::X1);
@@ -236,15 +234,15 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(PPC::R31);
 
   if (hasBasePointer(MF)) {
-  	if (Subtarget.isSVR4ABI() && !Subtarget.isPPC64() &&
-        MF.getTarget().getRelocationModel() == Reloc::PIC_)
+    if (Subtarget.isSVR4ABI() && !TM.isPPC64() &&
+        TM.getRelocationModel() == Reloc::PIC_)
       Reserved.set(PPC::R29);
     else
       Reserved.set(PPC::R30);
   }
 
-  if (Subtarget.isSVR4ABI() && !Subtarget.isPPC64() &&
-      MF.getTarget().getRelocationModel() == Reloc::PIC_)
+  if (Subtarget.isSVR4ABI() && !TM.isPPC64() &&
+      TM.getRelocationModel() == Reloc::PIC_)
     Reserved.set(PPC::R30);
 
   // Reserve Altivec registers when Altivec is unavailable.
@@ -258,6 +256,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                               MachineFunction &MF) const {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetFrameLowering *TFI = Subtarget.getFrameLowering();
   const unsigned DefaultSafety = 1;
 
@@ -292,6 +291,7 @@ unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 const TargetRegisterClass *
 PPCRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
                                            const MachineFunction &MF) const {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   if (Subtarget.hasVSX()) {
     // With VSX, we can inflate various sub-register classes to the full VSX
     // register set.
@@ -325,10 +325,11 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   MachineFunction &MF = *MBB.getParent();
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   // Get the instruction info.
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   // Determine whether 64-bit pointers are used.
-  bool LP64 = Subtarget.isPPC64();
+  bool LP64 = TM.isPPC64();
   DebugLoc dl = MI.getDebugLoc();
 
   // Get the maximum call stack size.
@@ -442,10 +443,11 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
-  bool LP64 = Subtarget.isPPC64();
+  bool LP64 = TM.isPPC64();
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
 
@@ -486,10 +488,11 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
-  bool LP64 = Subtarget.isPPC64();
+  bool LP64 = TM.isPPC64();
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
 
@@ -559,10 +562,11 @@ void PPCRegisterInfo::lowerCRBitSpilling(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
-  bool LP64 = Subtarget.isPPC64();
+  bool LP64 = TM.isPPC64();
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
 
@@ -602,10 +606,11 @@ void PPCRegisterInfo::lowerCRBitRestore(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
-  bool LP64 = Subtarget.isPPC64();
+  bool LP64 = TM.isPPC64();
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
 
@@ -649,6 +654,7 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
@@ -674,6 +680,7 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
@@ -696,14 +703,14 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
 bool
 PPCRegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
 				      unsigned Reg, int &FrameIdx) const {
-
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   // For the nonvolatile condition registers (CR2, CR3, CR4) in an SVR4
   // ABI, return true to prevent allocating an additional frame slot.
   // For 64-bit, the CR save area is at SP+8; the value of FrameIdx = 0
   // is arbitrary and will be subsequently ignored.  For 32-bit, we have
   // previously created the stack slot if needed, so return its FrameIdx.
   if (Subtarget.isSVR4ABI() && PPC::CR2 <= Reg && Reg <= PPC::CR4) {
-    if (Subtarget.isPPC64())
+    if (TM.isPPC64())
       FrameIdx = 0;
     else {
       const PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
@@ -756,6 +763,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineBasicBlock &MBB = *MI.getParent();
   // Get the basic block's function.
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   // Get the instruction info.
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   // Get the frame info.
@@ -846,7 +854,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // The offset doesn't fit into a single register, scavenge one to build the
   // offset in.
 
-  bool is64Bit = Subtarget.isPPC64();
+  bool is64Bit = TM.isPPC64();
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
   const TargetRegisterClass *RC = is64Bit ? G8RC : GPRC;
@@ -884,23 +892,25 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetFrameLowering *TFI = Subtarget.getFrameLowering();
 
-  if (!Subtarget.isPPC64())
+  if (!TM.isPPC64())
     return TFI->hasFP(MF) ? PPC::R31 : PPC::R1;
   else
     return TFI->hasFP(MF) ? PPC::X31 : PPC::X1;
 }
 
 unsigned PPCRegisterInfo::getBaseRegister(const MachineFunction &MF) const {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   if (!hasBasePointer(MF))
     return getFrameRegister(MF);
 
-  if (Subtarget.isPPC64())
+  if (TM.isPPC64())
     return PPC::X30;
 
   if (Subtarget.isSVR4ABI() &&
-      MF.getTarget().getRelocationModel() == Reloc::PIC_)
+      TM.getRelocationModel() == Reloc::PIC_)
     return PPC::R29;
 
   return PPC::R30;
@@ -926,6 +936,7 @@ bool PPCRegisterInfo::canRealignStack(const MachineFunction &MF) const {
 }
 
 bool PPCRegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *F = MF.getFunction();
   unsigned StackAlign = Subtarget.getFrameLowering()->getStackAlignment();
@@ -963,7 +974,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
 
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
-
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const PPCFrameLowering *PPCFI =
       static_cast<const PPCFrameLowering *>(Subtarget.getFrameLowering());
   unsigned StackEst =
@@ -991,7 +1002,7 @@ void PPCRegisterInfo::
 materializeFrameBaseRegister(MachineBasicBlock *MBB,
                              unsigned BaseReg, int FrameIdx,
                              int64_t Offset) const {
-  unsigned ADDriOpc = Subtarget.isPPC64() ? PPC::ADDI8 : PPC::ADDI;
+  unsigned ADDriOpc = TM.isPPC64() ? PPC::ADDI8 : PPC::ADDI;
 
   MachineBasicBlock::iterator Ins = MBB->begin();
   DebugLoc DL;                  // Defaults to "unknown"
@@ -999,6 +1010,7 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
     DL = Ins->getDebugLoc();
 
   const MachineFunction &MF = *MBB->getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   const MCInstrDesc &MCID = TII.get(ADDriOpc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
@@ -1024,6 +1036,7 @@ void PPCRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
 
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   const MCInstrDesc &MCID = MI.getDesc();
   MachineRegisterInfo &MRI = MF.getRegInfo();

@@ -61,7 +61,7 @@ void PPCInstrInfo::anchor() {}
 
 PPCInstrInfo::PPCInstrInfo(PPCSubtarget &STI)
     : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
-      Subtarget(STI), RI(STI) {}
+      Subtarget(STI), RI(STI.getTargetMachine()) {}
 
 /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
 /// this target when scheduling the DAG.
