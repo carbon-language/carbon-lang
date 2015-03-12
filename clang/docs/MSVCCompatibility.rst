@@ -112,7 +112,7 @@ time.  By default on Windows, Clang attempts to follow suit.  This behavior is
 controlled by the ``-fdelayed-template-parsing`` flag.  While Clang delays
 parsing of method bodies, it still parses the bodies *before* template argument
 substitution, which is not what MSVC does.  The following compatibility tweaks
-are necessary to parse the the template in those cases.
+are necessary to parse the template in those cases.
 
 MSVC allows some name lookup into dependent base classes.  Even on other
 platforms, this has been a `frequently asked question`_ for Clang users.  A
