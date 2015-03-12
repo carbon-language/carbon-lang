@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_LIB_DEBUGINFO_DWARFACCELERATORTABLE_H
+#define LLVM_LIB_DEBUGINFO_DWARFACCELERATORTABLE_H
+
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFRelocMap.h"
@@ -47,3 +50,5 @@ public:
 };
 
 }
+
+#endif
