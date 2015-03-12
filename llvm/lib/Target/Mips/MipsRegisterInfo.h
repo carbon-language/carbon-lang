@@ -21,8 +21,6 @@
 #include "MipsGenRegisterInfo.inc"
 
 namespace llvm {
-class Type;
-
 class MipsRegisterInfo : public MipsGenRegisterInfo {
 public:
   MipsRegisterInfo();

@@ -20,9 +20,7 @@
 #include "X86GenRegisterInfo.inc"
 
 namespace llvm {
-  class Type;
-  class TargetInstrInfo;
-  class X86Subtarget;
+class X86Subtarget;
 
 class X86RegisterInfo final : public X86GenRegisterInfo {
 public:

@@ -37,11 +37,6 @@
 #define HEXAGON_RESERVED_REG_2 Hexagon::R11
 
 namespace llvm {
-
-class HexagonSubtarget;
-class HexagonInstrInfo;
-class Type;
-
 struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   HexagonRegisterInfo();
 

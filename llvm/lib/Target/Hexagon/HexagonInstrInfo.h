@@ -26,7 +26,7 @@
 namespace llvm {
 
 struct EVT;
-
+class HexagonSubtarget;
 class HexagonInstrInfo : public HexagonGenInstrInfo {
   virtual void anchor();
   const HexagonRegisterInfo RI;

@@ -22,10 +22,6 @@
 #include "PPCGenRegisterInfo.inc"
 
 namespace llvm {
-class PPCSubtarget;
-class TargetInstrInfo;
-class Type;
-
 class PPCRegisterInfo : public PPCGenRegisterInfo {
   DenseMap<unsigned, unsigned> ImmToIdxMap;
   const PPCTargetMachine &TM;

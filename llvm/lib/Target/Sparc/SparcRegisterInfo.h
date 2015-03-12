@@ -20,10 +20,6 @@
 #include "SparcGenRegisterInfo.inc"
 
 namespace llvm {
-
-class TargetInstrInfo;
-class Type;
-
 struct SparcRegisterInfo : public SparcGenRegisterInfo {
   SparcRegisterInfo();
 

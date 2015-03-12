@@ -63,7 +63,7 @@ enum PPC970_Unit {
 };
 } // end namespace PPCII
 
-
+class PPCSubtarget;
 class PPCInstrInfo : public PPCGenInstrInfo {
   PPCSubtarget &Subtarget;
   const PPCRegisterInfo RI;

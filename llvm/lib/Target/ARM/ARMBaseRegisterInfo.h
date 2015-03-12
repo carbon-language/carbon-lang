@@ -21,10 +21,6 @@
 #include "ARMGenRegisterInfo.inc"
 
 namespace llvm {
-  class ARMSubtarget;
-  class ARMBaseInstrInfo;
-  class Type;
-
 /// Register allocation hints.
 namespace ARMRI {
   enum {
