@@ -1333,8 +1333,11 @@ class Base(unittest2.TestCase):
         if compiler[1] == ':':
             compiler = compiler[2:]
 
-        fname = os.path.join(dname, "%s-%s-%s-%s.log" % (prefix, self.getArchitecture(), "_".join(compiler.split(os.path.sep)), self.id()))
-        with open(fname, "w") as f:
+        fname = "%s-%s-%s-%s.log" % (prefix, self.getArchitecture(), "_".join(compiler.split(os.path.sep)), self.id())
+        if len(fname) > 255:
+            fname = "%s-%s-%s-%s.log" % (prefix, self.getArchitecture(), compiler.split(os.path.sep)[-1], self.id())
+        pname = os.path.join(dname, fname)
+        with open(pname, "w") as f:
             import datetime
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
             print >> f, self.session.getvalue()
