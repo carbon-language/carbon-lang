@@ -5221,9 +5221,9 @@ echo "$as_me: error: The option --enable-doxygen-search requires --enable-doxyge
 
         enable_server_based_search=YES
 
-        searchengine_url=$WITH_DOXYGEN_SEARCH_ENGINE_URL
+        searchengine_url="$WITH_DOXYGEN_SEARCH_ENGINE_URL"
 
-        extra_search_mappings=$WITH_DOXYGEN_SEARCH_MAPPINGS
+        extra_search_mappings="$WITH_DOXYGEN_SEARCH_MAPPINGS"
 
         ;;
 
@@ -5319,11 +5319,11 @@ fi
 
     llvm_doxygen_qhp_namespace=org.llvm
 
-    llvm_doxygen_qhelpgenerator_path=$QHELPGENERATOR
+    llvm_doxygen_qhelpgenerator_path="$QHELPGENERATOR"
 
-    llvm_doxygen_qhp_cust_filter_name=$PACKAGE_STRING
+    llvm_doxygen_qhp_cust_filter_name="$PACKAGE_STRING"
 
-    llvm_doxygen_qhp_cust_filter_attrs=$PACKAGE_NAME,$PACKAGE_VERSION
+    llvm_doxygen_qhp_cust_filter_attrs="$PACKAGE_NAME,$PACKAGE_VERSION"
 
 
         clang_doxygen_generate_qhp=YES
@@ -5332,11 +5332,11 @@ fi
 
     clang_doxygen_qhp_namespace=org.llvm.clang
 
-    clang_doxygen_qhelpgenerator_path=$QHELPGENERATOR
+    clang_doxygen_qhelpgenerator_path="$QHELPGENERATOR"
 
-    clang_doxygen_qhp_cust_filter_name=Clang $PACKAGE_VERSION
+    clang_doxygen_qhp_cust_filter_name="Clang $PACKAGE_VERSION"
 
-    clang_doxygen_qhp_cust_filter_attrs=Clang,$PACKAGE_VERSION
+    clang_doxygen_qhp_cust_filter_attrs="Clang,$PACKAGE_VERSION"
 
     ;;
 
@@ -5354,9 +5354,9 @@ fi
 
 
 
-    clang_doxygen_qhp_cust_filter_name=Clang $PACKAGE_VERSION
+    clang_doxygen_qhp_cust_filter_name="Clang $PACKAGE_VERSION"
 
-    clang_doxygen_qhp_cust_filter_attrs=Clang,$PACKAGE_VERSION
+    clang_doxygen_qhp_cust_filter_attrs="Clang,$PACKAGE_VERSION"
 
     ;;
 

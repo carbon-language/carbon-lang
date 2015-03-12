@@ -858,8 +858,8 @@ case "$ENABLE_DOXYGEN_SEARCH" in
       yes)
         AC_SUBST(enable_external_search,[YES])
         AC_SUBST(enable_server_based_search,[YES])
-        AC_SUBST(searchengine_url,[$WITH_DOXYGEN_SEARCH_ENGINE_URL])
-        AC_SUBST(extra_search_mappings,[$WITH_DOXYGEN_SEARCH_MAPPINGS])
+        AC_SUBST(searchengine_url,["$WITH_DOXYGEN_SEARCH_ENGINE_URL"])
+        AC_SUBST(extra_search_mappings,["$WITH_DOXYGEN_SEARCH_MAPPINGS"])
         ;;
 
       no|default)
@@ -901,17 +901,17 @@ case "$enableval" in
     AC_SUBST(llvm_doxygen_generate_qhp,[YES])
     AC_SUBST(llvm_doxygen_qch_filename,[org.llvm.qch])
     AC_SUBST(llvm_doxygen_qhp_namespace,[org.llvm])
-    AC_SUBST(llvm_doxygen_qhelpgenerator_path,[$QHELPGENERATOR])
-    AC_SUBST(llvm_doxygen_qhp_cust_filter_name,[$PACKAGE_STRING])
-    AC_SUBST(llvm_doxygen_qhp_cust_filter_attrs,[$PACKAGE_NAME,$PACKAGE_VERSION])
+    AC_SUBST(llvm_doxygen_qhelpgenerator_path,["$QHELPGENERATOR"])
+    AC_SUBST(llvm_doxygen_qhp_cust_filter_name,["$PACKAGE_STRING"])
+    AC_SUBST(llvm_doxygen_qhp_cust_filter_attrs,["$PACKAGE_NAME,$PACKAGE_VERSION"])
 
     dnl Qt help file for clang doxygen documentation
     AC_SUBST(clang_doxygen_generate_qhp,[YES])
     AC_SUBST(clang_doxygen_qch_filename,[org.llvm.clang.qch])
     AC_SUBST(clang_doxygen_qhp_namespace,[org.llvm.clang])
-    AC_SUBST(clang_doxygen_qhelpgenerator_path,[$QHELPGENERATOR])
-    AC_SUBST(clang_doxygen_qhp_cust_filter_name,[Clang $PACKAGE_VERSION])
-    AC_SUBST(clang_doxygen_qhp_cust_filter_attrs,[Clang,$PACKAGE_VERSION])
+    AC_SUBST(clang_doxygen_qhelpgenerator_path,["$QHELPGENERATOR"])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_name,["Clang $PACKAGE_VERSION"])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_attrs,["Clang,$PACKAGE_VERSION"])
     ;;
 
   no|default)
@@ -926,8 +926,8 @@ case "$enableval" in
     AC_SUBST(clang_doxygen_qch_filename,[])
     AC_SUBST(clang_doxygen_qhp_namespace,[])
     AC_SUBST(clang_doxygen_qhelpgenerator_path,[])
-    AC_SUBST(clang_doxygen_qhp_cust_filter_name,[Clang $PACKAGE_VERSION])
-    AC_SUBST(clang_doxygen_qhp_cust_filter_attrs,[Clang,$PACKAGE_VERSION])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_name,["Clang $PACKAGE_VERSION"])
+    AC_SUBST(clang_doxygen_qhp_cust_filter_attrs,["Clang,$PACKAGE_VERSION"])
     ;;
 
   *)
