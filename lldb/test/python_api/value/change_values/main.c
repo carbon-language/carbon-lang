@@ -19,8 +19,7 @@ int main ()
   ptr->third_val = 66666666;
 
   // Stop here and set values
-  printf ("Val - %d Mine - %d, %d, %llu. Ptr - %d, %d, %llu\n", 
-          val, 
+  printf ("Val - %d Mine - %d, %d, %llu. Ptr - %d, %d, %llu\n", val, 
           mine.first_val, mine.second_val, mine.third_val,
           ptr->first_val, ptr->second_val, ptr->third_val); 
 
