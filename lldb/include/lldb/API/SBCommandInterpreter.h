@@ -266,6 +266,15 @@ public:
     const char*
     GetHelp ();
     
+    const char*
+    GetHelpLong ();
+    
+    void
+    SetHelp (const char*);
+    
+    void
+    SetHelpLong (const char*);
+    
     lldb::SBCommand
     AddMultiwordCommand (const char* name, const char* help = NULL);
     

@@ -794,6 +794,28 @@ SBCommand::GetHelp ()
     return NULL;
 }
 
+const char*
+SBCommand::GetHelpLong ()
+{
+    if (IsValid ())
+        return m_opaque_sp->GetHelpLong ();
+    return NULL;
+}
+
+void
+SBCommand::SetHelp (const char* help)
+{
+    if (IsValid())
+        m_opaque_sp->SetHelp(help);
+}
+
+void
+SBCommand::SetHelpLong (const char* help)
+{
+    if (IsValid())
+        m_opaque_sp->SetHelpLong(help);
+}
+
 lldb::SBCommand
 SBCommand::AddMultiwordCommand (const char* name, const char* help)
 {
