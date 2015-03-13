@@ -99,5 +99,9 @@ CHECK:      DW_TAG_formal_parameter [16]
 CHECK:        DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000060] = "arg")
 CHECK:      DW_TAG_inlined_subroutine [17]  
 CHECK:        DW_AT_abstract_origin [DW_FORM_ref4]	(cu + 0x0044 => {0x0000015f} "inc")
+CHECK:        DW_AT_ranges [DW_FORM_sec_offset]     (0x00000000
+CHECK:           [0x0000000100000f94 - 0x0000000100000f9a)
+CHECK:           [0x0000000100000f9f - 0x0000000100000fa7))
+
 CHECK:      NULL
 CHECK:    NULL
