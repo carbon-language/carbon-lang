@@ -1,5 +1,31 @@
 include(LLVMParseArguments)
 
+# On Windows, CMAKE_*_FLAGS are built for MSVC but we use the GCC clang.exe,
+# which uses completely different flags. Translate some common flag types, and
+# drop the rest.
+function(translate_msvc_cflags out_flags msvc_flags)
+  # Insert an empty string in the list to simplify processing.
+  set(msvc_flags ";${msvc_flags}")
+
+  # Canonicalize /flag to -flag.
+  string(REPLACE ";/" ";-" msvc_flags "${msvc_flags}")
+
+  # Make space separated -D and -U flags into joined flags.
+  string(REGEX REPLACE ";-\([DU]\);" ";-\\1" msvc_flags "${msvc_flags}")
+
+  set(clang_flags "")
+  foreach(flag ${msvc_flags})
+    if ("${flag}" MATCHES "^-[DU]")
+      # Pass through basic command line macro definitions (-DNDEBUG).
+      list(APPEND clang_flags "${flag}")
+    elseif ("${flag}" MATCHES "^-O[2x]")
+      # Canonicalize normal optimization flags to -O2.
+      list(APPEND clang_flags "-O2")
+    endif()
+  endforeach()
+  set(${out_flags} "${clang_flags}" PARENT_SCOPE)
+endfunction()
+
 # Compile a source into an object file with COMPILER_RT_TEST_COMPILER using
 # a provided compile flags and dependenices.
 # clang_compile(<object> <source>
@@ -20,13 +46,11 @@ macro(clang_compile object_file source)
   else()
     string(REPLACE " " ";" global_flags "${CMAKE_C_FLAGS}")
   endif()
-  # On Windows, CMAKE_*_FLAGS are built for MSVC but we use the GCC clang.exe
-  # which doesn't support flags starting with "/smth". Replace those with
-  # "-smth" equivalents.
-  if(MSVC)
-    string(REGEX REPLACE "^/" "-" global_flags "${global_flags}")
-    string(REPLACE ";/" ";-" global_flags "${global_flags}")
+
+  if (MSVC)
+    translate_msvc_cflags(global_flags "${global_flags}")
   endif()
+
   # Ignore unknown warnings. CMAKE_CXX_FLAGS may contain GCC-specific options
   # which are not supported by Clang.
   list(APPEND global_flags -Wno-unknown-warning-option)
