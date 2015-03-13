@@ -190,6 +190,11 @@ class BitcodeReader : public GVMaterializer {
   /// stream.
   DenseMap<Function*, uint64_t> DeferredFunctionInfo;
 
+  /// When Metadata block is initially scanned when parsing the module, we may
+  /// choose to defer parsing of the metadata. This vector contains info about
+  /// which Metadata blocks are deferred.
+  std::vector<uint64_t> DeferredMetadataInfo;
+
   /// These are basic blocks forward-referenced by block addresses.  They are
   /// inserted lazily into functions when they're loaded.  The basic block ID is
   /// its index into the vector.
@@ -211,6 +216,9 @@ class BitcodeReader : public GVMaterializer {
 
   /// Functions that have block addresses taken.  This is usually empty.
   SmallPtrSet<const Function *, 4> BlockAddressesTaken;
+
+  /// True if any Metadata block has been materialized.
+  bool IsMetadataMaterialized;
 
 public:
   std::error_code Error(BitcodeError E, const Twine &Message);
@@ -237,13 +245,17 @@ public:
 
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
-  std::error_code ParseBitcodeInto(Module *M);
+  std::error_code ParseBitcodeInto(Module *M,
+                                   bool ShouldLazyLoadMetadata = false);
 
   /// @brief Cheap mechanism to just extract module triple
   /// @returns true if an error occurred.
   ErrorOr<std::string> parseTriple();
 
   static uint64_t decodeSignRotatedValue(uint64_t V);
+
+  /// Materialize any deferred Metadata block.
+  std::error_code materializeMetadata();
 
 private:
   std::vector<StructType *> IdentifiedStructTypes;
@@ -340,7 +352,7 @@ private:
   /// a corresponding error code.
   std::error_code parseAlignmentValue(uint64_t Exponent, unsigned &Alignment);
   std::error_code ParseAttrKind(uint64_t Code, Attribute::AttrKind *Kind);
-  std::error_code ParseModule(bool Resume);
+  std::error_code ParseModule(bool Resume, bool ShouldLazyLoadMetadata = false);
   std::error_code ParseAttributeBlock();
   std::error_code ParseAttributeGroupBlock();
   std::error_code ParseTypeTable();
@@ -349,6 +361,8 @@ private:
   std::error_code ParseValueSymbolTable();
   std::error_code ParseConstants();
   std::error_code RememberAndSkipFunctionBody();
+  /// Save the positions of the Metadata blocks and skip parsing the blocks.
+  std::error_code rememberAndSkipMetadata();
   std::error_code ParseFunctionBody(Function *F);
   std::error_code GlobalCleanup();
   std::error_code ResolveGlobalAndAliasInits();

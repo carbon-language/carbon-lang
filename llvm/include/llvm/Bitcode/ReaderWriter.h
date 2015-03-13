@@ -29,12 +29,14 @@ namespace llvm {
   class raw_ostream;
 
   /// Read the header of the specified bitcode buffer and prepare for lazy
-  /// deserialization of function bodies.  If successful, this moves Buffer. On
+  /// deserialization of function bodies. If ShouldLazyLoadMetadata is true,
+  /// lazily load metadata as well. If successful, this moves Buffer. On
   /// error, this *does not* move Buffer.
   ErrorOr<Module *>
   getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
                        LLVMContext &Context,
-                       DiagnosticHandlerFunction DiagnosticHandler = nullptr);
+                       DiagnosticHandlerFunction DiagnosticHandler = nullptr,
+                       bool ShouldLazyLoadMetadata = false);
 
   /// Read the header of the specified stream and prepare for lazy
   /// deserialization and streaming of function bodies.

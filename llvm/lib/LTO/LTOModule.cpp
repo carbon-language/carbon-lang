@@ -179,7 +179,8 @@ static Module *parseBitcodeFileImpl(MemoryBufferRef Buffer,
   std::unique_ptr<MemoryBuffer> LightweightBuf =
       MemoryBuffer::getMemBuffer(*MBOrErr, false);
   ErrorOr<Module *> M = getLazyBitcodeModule(std::move(LightweightBuf), Context,
-                                             DiagnosticHandler);
+                                             DiagnosticHandler,
+                                             true/*ShouldLazyLoadMetadata*/);
   if (!M)
     return nullptr;
   return *M;

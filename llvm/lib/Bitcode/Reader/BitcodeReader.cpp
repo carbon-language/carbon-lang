@@ -82,7 +82,7 @@ BitcodeReader::BitcodeReader(MemoryBuffer *buffer, LLVMContext &C,
       TheModule(nullptr), Buffer(buffer), LazyStreamer(nullptr),
       NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
       MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
-      WillMaterializeAllForwardRefs(false) {}
+      WillMaterializeAllForwardRefs(false), IsMetadataMaterialized(false) {}
 
 BitcodeReader::BitcodeReader(DataStreamer *streamer, LLVMContext &C,
                              DiagnosticHandlerFunction DiagnosticHandler)
@@ -90,7 +90,7 @@ BitcodeReader::BitcodeReader(DataStreamer *streamer, LLVMContext &C,
       TheModule(nullptr), Buffer(nullptr), LazyStreamer(streamer),
       NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
       MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
-      WillMaterializeAllForwardRefs(false) {}
+      WillMaterializeAllForwardRefs(false), IsMetadataMaterialized(false) {}
 
 std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
   if (WillMaterializeAllForwardRefs)
@@ -136,6 +136,7 @@ void BitcodeReader::FreeState() {
   std::vector<BasicBlock*>().swap(FunctionBBs);
   std::vector<Function*>().swap(FunctionsWithBodies);
   DeferredFunctionInfo.clear();
+  DeferredMetadataInfo.clear();
   MDKindMap.clear();
 
   assert(BasicBlockFwdRefs.empty() && "Unresolved blockaddress fwd references");
@@ -1199,6 +1200,7 @@ std::error_code BitcodeReader::ParseValueSymbolTable() {
 static int64_t unrotateSign(uint64_t U) { return U & 1 ? ~(U >> 1) : U >> 1; }
 
 std::error_code BitcodeReader::ParseMetadata() {
+  IsMetadataMaterialized = true;
   unsigned NextMDValueNo = MDValueList.size();
 
   if (Stream.EnterSubBlock(bitc::METADATA_BLOCK_ID))
@@ -2235,6 +2237,30 @@ std::error_code BitcodeReader::ParseUseLists() {
   }
 }
 
+/// When we see the block for metadata, remember where it is and then skip it.
+/// This lets us lazily deserialize the metadata.
+std::error_code BitcodeReader::rememberAndSkipMetadata() {
+  // Save the current stream state.
+  uint64_t CurBit = Stream.GetCurrentBitNo();
+  DeferredMetadataInfo.push_back(CurBit);
+
+  // Skip over the block for now.
+  if (Stream.SkipBlock())
+    return Error("Invalid record");
+  return std::error_code();
+}
+
+std::error_code BitcodeReader::materializeMetadata() {
+  for (uint64_t BitPos : DeferredMetadataInfo) {
+    // Move the bit stream to the saved position.
+    Stream.JumpToBit(BitPos);
+    if (std::error_code EC = ParseMetadata())
+      return EC;
+  }
+  DeferredMetadataInfo.clear();
+  return std::error_code();
+}
+
 /// RememberAndSkipFunctionBody - When we see the block for a function body,
 /// remember where it is and then skip it.  This lets us lazily deserialize the
 /// functions.
@@ -2285,7 +2311,8 @@ std::error_code BitcodeReader::GlobalCleanup() {
   return std::error_code();
 }
 
-std::error_code BitcodeReader::ParseModule(bool Resume) {
+std::error_code BitcodeReader::ParseModule(bool Resume,
+                                           bool ShouldLazyLoadMetadata) {
   if (Resume)
     Stream.JumpToBit(NextUnreadBit);
   else if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
@@ -2339,6 +2366,12 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
           return EC;
         break;
       case bitc::METADATA_BLOCK_ID:
+        if (ShouldLazyLoadMetadata && !IsMetadataMaterialized) {
+          if (std::error_code EC = rememberAndSkipMetadata())
+            return EC;
+          break;
+        }
+        assert(DeferredMetadataInfo.empty() && "Unexpected deferred metadata");
         if (std::error_code EC = ParseMetadata())
           return EC;
         break;
@@ -2653,7 +2686,8 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
   }
 }
 
-std::error_code BitcodeReader::ParseBitcodeInto(Module *M) {
+std::error_code BitcodeReader::ParseBitcodeInto(Module *M,
+                                                bool ShouldLazyLoadMetadata) {
   TheModule = nullptr;
 
   if (std::error_code EC = InitStream())
@@ -2694,7 +2728,7 @@ std::error_code BitcodeReader::ParseBitcodeInto(Module *M) {
         if (TheModule)
           return Error("Invalid multiple blocks");
         TheModule = M;
-        if (std::error_code EC = ParseModule(false))
+        if (std::error_code EC = ParseModule(false, ShouldLazyLoadMetadata))
           return EC;
         if (LazyStreamer)
           return std::error_code();
@@ -3894,6 +3928,9 @@ std::error_code BitcodeReader::FindFunctionInStream(
 void BitcodeReader::releaseBuffer() { Buffer.release(); }
 
 std::error_code BitcodeReader::materialize(GlobalValue *GV) {
+  if (std::error_code EC = materializeMetadata())
+    return EC;
+
   Function *F = dyn_cast<Function>(GV);
   // If it's not a function or is already material, ignore the request.
   if (!F || !F->isMaterializable())
@@ -3960,6 +3997,9 @@ void BitcodeReader::Dematerialize(GlobalValue *GV) {
 std::error_code BitcodeReader::MaterializeModule(Module *M) {
   assert(M == TheModule &&
          "Can only Materialize the Module this BitcodeReader is attached to.");
+
+  if (std::error_code EC = materializeMetadata())
+    return EC;
 
   // Promise to materialize all forward references.
   WillMaterializeAllForwardRefs = true;
@@ -4101,7 +4141,8 @@ const std::error_category &llvm::BitcodeErrorCategory() {
 static ErrorOr<Module *>
 getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
                          LLVMContext &Context, bool WillMaterializeAll,
-                         DiagnosticHandlerFunction DiagnosticHandler) {
+                         DiagnosticHandlerFunction DiagnosticHandler,
+                         bool ShouldLazyLoadMetadata = false) {
   Module *M = new Module(Buffer->getBufferIdentifier(), Context);
   BitcodeReader *R =
       new BitcodeReader(Buffer.get(), Context, DiagnosticHandler);
@@ -4113,7 +4154,8 @@ getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
     return EC;
   };
 
-  if (std::error_code EC = R->ParseBitcodeInto(M))
+  // Delay parsing Metadata if ShouldLazyLoadMetadata is true.
+  if (std::error_code EC = R->ParseBitcodeInto(M, ShouldLazyLoadMetadata))
     return cleanupOnError(EC);
 
   if (!WillMaterializeAll)
@@ -4128,9 +4170,10 @@ getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
 ErrorOr<Module *>
 llvm::getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
                            LLVMContext &Context,
-                           DiagnosticHandlerFunction DiagnosticHandler) {
+                           DiagnosticHandlerFunction DiagnosticHandler,
+                           bool ShouldLazyLoadMetadata) {
   return getLazyBitcodeModuleImpl(std::move(Buffer), Context, false,
-                                  DiagnosticHandler);
+                                  DiagnosticHandler, ShouldLazyLoadMetadata);
 }
 
 ErrorOr<std::unique_ptr<Module>>
