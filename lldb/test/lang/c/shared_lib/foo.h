@@ -6,7 +6,5 @@ struct sub_foo
   char *sub_2;
 };
 
-struct foo *GetMeAFoo();
-struct sub_foo *GetMeASubFoo (struct foo *in_foo);
-
-
+LLDB_TEST_API struct foo *GetMeAFoo();
+LLDB_TEST_API struct sub_foo *GetMeASubFoo(struct foo *in_foo);

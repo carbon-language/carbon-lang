@@ -12,7 +12,7 @@ Same idea holds for LLDB_ARCH environment variable, which maps to the ARCH make
 variable.
 """
 
-import os
+import os, sys
 import platform
 import lldbtest
 
@@ -78,8 +78,8 @@ def getCmdLine(d):
     # If d is None or an empty mapping, just return an empty string.
     if not d:
         return ""
-
-    cmdline = " ".join(["%s='%s'" % (k, v) for k, v in d.items()])
+    pattern = '%s="%s"' if "win32" in sys.platform else "%s='%s'"
+    cmdline = " ".join([pattern % (k, v) for k, v in d.items()])
 
     return cmdline
 
