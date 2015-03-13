@@ -26,6 +26,7 @@
 #include "lldb/Target/Process.h"
 
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #ifdef __ANDROID_NDK__
 #include "lldb/Host/android/Android.h"
 #endif
@@ -322,6 +323,7 @@ GetProcessAndStatInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info, Proce
 
     process_info.SetProcessID(pid);
     process_info.GetExecutableFile().SetFile(exe_path, false);
+    process_info.GetArchitecture().MergeFrom(HostInfo::GetArchitecture());
 
     lldb::DataBufferSP buf_sp;
 
