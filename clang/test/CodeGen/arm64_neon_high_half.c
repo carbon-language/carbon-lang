@@ -394,32 +394,32 @@ uint32x4_t test_vqrshrn_high_n_u64(uint32x2_t lowpart, uint64x2_t input) {
 }
 
 int8x16_t test_vaddhn_high_s16(int8x8_t lowpart, int16x8_t lhs, int16x8_t rhs) {
-  // CHECK: addhn2.16b v0, v1, v2
+  // CHECK: addhn2.16b v0, {{v1, v2|v2, v1}}
   return vaddhn_high_s16(lowpart, lhs, rhs);
 }
 
 int16x8_t test_vaddhn_high_s32(int16x4_t lowpart, int32x4_t lhs, int32x4_t rhs) {
-  // CHECK: addhn2.8h v0, v1, v2
+  // CHECK: addhn2.8h v0, {{v1, v2|v2, v1}}
   return vaddhn_high_s32(lowpart, lhs, rhs);
 }
 
 int32x4_t test_vaddhn_high_s64(int32x2_t lowpart, int64x2_t lhs, int64x2_t rhs) {
-  // CHECK: addhn2.4s v0, v1, v2
+  // CHECK: addhn2.4s v0, {{v1, v2|v2, v1}}
   return vaddhn_high_s64(lowpart, lhs, rhs);
 }
 
 uint8x16_t test_vaddhn_high_u16(uint8x8_t lowpart, uint16x8_t lhs, uint16x8_t rhs) {
-  // CHECK: addhn2.16b v0, v1, v2
+  // CHECK: addhn2.16b v0, {{v1, v2|v2, v1}}
   return vaddhn_high_s16(lowpart, lhs, rhs);
 }
 
 uint16x8_t test_vaddhn_high_u32(uint16x4_t lowpart, uint32x4_t lhs, uint32x4_t rhs) {
-  // CHECK: addhn2.8h v0, v1, v2
+  // CHECK: addhn2.8h v0, {{v1, v2|v2, v1}}
   return vaddhn_high_s32(lowpart, lhs, rhs);
 }
 
 uint32x4_t test_vaddhn_high_u64(uint32x2_t lowpart, uint64x2_t lhs, uint64x2_t rhs) {
-  // CHECK: addhn2.4s v0, v1, v2
+  // CHECK: addhn2.4s v0, {{v1, v2|v2, v1}}
   return vaddhn_high_s64(lowpart, lhs, rhs);
 }
 
