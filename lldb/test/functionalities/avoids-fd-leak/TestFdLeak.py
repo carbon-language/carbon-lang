@@ -14,11 +14,13 @@ class AvoidsFdLeakTestCase(TestBase):
 
     @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
+    @skipIfTargetAndroid # Android have some other file descriptors open by the shell
     def test_fd_leak_basic (self):
         self.do_test([])
 
     @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
+    @skipIfTargetAndroid # Android have some other file descriptors open by the shell
     def test_fd_leak_log (self):
         self.do_test(["log enable -f '/dev/null' lldb commands"])
 
@@ -40,13 +42,14 @@ class AvoidsFdLeakTestCase(TestBase):
 
     @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
+    @skipIfTargetAndroid # Android have some other file descriptors open by the shell
     def test_fd_leak_multitarget (self):
         self.buildDefault()
         exe = os.path.join (os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-	breakpoint = target.BreakpointCreateBySourceRegex ('Set breakpoint here', lldb.SBFileSpec ("main.c", False))
-	self.assertTrue(breakpoint, VALID_BREAKPOINT)
+        breakpoint = target.BreakpointCreateBySourceRegex ('Set breakpoint here', lldb.SBFileSpec ("main.c", False))
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         process1 = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(process1, PROCESS_IS_VALID)

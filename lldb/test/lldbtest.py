@@ -778,6 +778,21 @@ def skipIfi386(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipIfTargetAndroid(func):
+    """Decorate the item to skip tests that should be skipped when the target is Android."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfTargetAndroid can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        if re.match(".*-.*-.*-android", triple):
+            self.skipTest("skip on Android target")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
 def skipUnlessCompilerRt(func):
     """Decorate the item to skip tests if testing remotely."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
