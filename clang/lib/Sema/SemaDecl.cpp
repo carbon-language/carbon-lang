@@ -12064,6 +12064,24 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
          "Broken injected-class-name");
 }
 
+static void getDefaultArgExprsForConstructors(Sema &S, CXXRecordDecl *Class) {
+  for (Decl *Member : Class->decls()) {
+    auto *CD = dyn_cast<CXXConstructorDecl>(Member);
+    if (!CD || !CD->isDefaultConstructor() || !CD->hasAttr<DLLExportAttr>())
+      continue;
+
+    for (unsigned I = 0, E = CD->getNumParams(); I != E; ++I) {
+      // Skip any default arguments that we've already instantiated.
+      if (S.Context.getDefaultArgExprForConstructor(CD, I))
+        continue;
+
+      Expr *DefaultArg = S.BuildCXXDefaultArgExpr(Class->getLocation(), CD,
+                                                  CD->getParamDecl(I)).get();
+      S.Context.addDefaultArgExprForConstructor(CD, I, DefaultArg);
+    }
+  }
+}
+
 void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
                                     SourceLocation RBraceLoc) {
   AdjustDeclIfTemplate(TagD);
@@ -12077,8 +12095,16 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
       RD->completeDefinition();
   }
 
-  if (isa<CXXRecordDecl>(Tag))
+  if (auto *Class = dyn_cast<CXXRecordDecl>(Tag)) {
     FieldCollector->FinishClass();
+
+    // Default constructors that are annotated with __declspec(dllexport) which
+    // have default arguments or don't use the standard calling convention are
+    // wrapped with a thunk called the default constructor closure.
+    if (!Class->getDescribedClassTemplate() &&
+        Context.getTargetInfo().getCXXABI().isMicrosoft())
+      getDefaultArgExprsForConstructors(*this, Class);
+  }
 
   // Exit this scope of this tag's definition.
   PopDeclContext();

@@ -264,7 +264,8 @@ public:
                                              const FunctionProtoType *type,
                                              RequiredArgs required);
   const CGFunctionInfo &arrangeMSMemberPointerThunk(const CXXMethodDecl *MD);
-  const CGFunctionInfo &arrangeMSCopyCtorClosure(const CXXConstructorDecl *CD);
+  const CGFunctionInfo &arrangeMSCtorClosure(const CXXConstructorDecl *CD,
+                                                 CXXCtorType CT);
 
   const CGFunctionInfo &arrangeFreeFunctionType(CanQual<FunctionProtoType> Ty);
   const CGFunctionInfo &arrangeFreeFunctionType(CanQual<FunctionNoProtoType> Ty);

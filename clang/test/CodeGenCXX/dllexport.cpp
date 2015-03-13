@@ -484,6 +484,28 @@ struct S {
   };
 };
 
+struct CtorWithClosure {
+  __declspec(dllexport) CtorWithClosure(...) {}
+// M32-DAG: define weak_odr dllexport void @"\01??_FCtorWithClosure@@QAEXXZ"
+// M32-DAG:   %[[this_addr:.*]] = alloca %struct.CtorWithClosure*, align 4
+// M32-DAG:   store %struct.CtorWithClosure* %this, %struct.CtorWithClosure** %[[this_addr]], align 4
+// M32-DAG:   %[[this:.*]] = load %struct.CtorWithClosure*, %struct.CtorWithClosure** %[[this_addr]]
+// M32-DAG:   call %struct.CtorWithClosure* (%struct.CtorWithClosure*, ...)* @"\01??0CtorWithClosure@@QAA@ZZ"(%struct.CtorWithClosure* %[[this]])
+// M32-DAG:   ret void
+};
+
+struct __declspec(dllexport) ClassWithClosure {
+  ClassWithClosure(ClassWithClosure &&) = delete;
+  ClassWithClosure(ClassWithClosure &) = delete;
+  ~ClassWithClosure() = delete;
+  ClassWithClosure(...) {}
+// M32-DAG: define weak_odr dllexport void @"\01??_FClassWithClosure@@QAEXXZ"
+// M32-DAG:   %[[this_addr:.*]] = alloca %struct.ClassWithClosure*, align 4
+// M32-DAG:   store %struct.ClassWithClosure* %this, %struct.ClassWithClosure** %[[this_addr]], align 4
+// M32-DAG:   %[[this:.*]] = load %struct.ClassWithClosure*, %struct.ClassWithClosure** %[[this_addr]]
+// M32-DAG:   call %struct.ClassWithClosure* (%struct.ClassWithClosure*, ...)* @"\01??0ClassWithClosure@@QAA@ZZ"(%struct.ClassWithClosure* %[[this]])
+// M32-DAG:   ret void
+};
 
 struct __declspec(dllexport) T {
   // Copy assignment operator:

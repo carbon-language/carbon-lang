@@ -635,7 +635,8 @@ public:
     return Fn;
   }
 
-  llvm::Function *getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD);
+  llvm::Function *getAddrOfCXXCtorClosure(const CXXConstructorDecl *CD,
+                                          CXXCtorType CT);
 
   llvm::Constant *getCatchableType(QualType T,
                                    uint32_t NVOffset = 0,
@@ -1060,9 +1061,29 @@ void MicrosoftCXXABI::initializeHiddenVirtualInheritanceMembers(
   }
 }
 
+static bool hasDefaultCXXMethodCC(ASTContext &Context,
+                                  const CXXMethodDecl *MD) {
+  CallingConv ExpectedCallingConv = Context.getDefaultCallingConvention(
+      /*IsVariadic=*/false, /*IsCXXMethod=*/true);
+  CallingConv ActualCallingConv =
+      MD->getType()->getAs<FunctionProtoType>()->getCallConv();
+  return ExpectedCallingConv == ActualCallingConv;
+}
+
 void MicrosoftCXXABI::EmitCXXConstructors(const CXXConstructorDecl *D) {
   // There's only one constructor type in this ABI.
   CGM.EmitGlobal(GlobalDecl(D, Ctor_Complete));
+
+  // Exported default constructors either have a simple call-site where they use
+  // the typical calling convention and have a single 'this' pointer for an
+  // argument -or- they get a wrapper function which appropriately thunks to the
+  // real default constructor.  This thunk is the default constructor closure.
+  if (D->hasAttr<DLLExportAttr>() && D->isDefaultConstructor())
+    if (!hasDefaultCXXMethodCC(getContext(), D) || D->getNumParams() != 0) {
+      llvm::Function *Fn = getAddrOfCXXCtorClosure(D, Ctor_DefaultClosure);
+      Fn->setLinkage(llvm::GlobalValue::WeakODRLinkage);
+      Fn->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+    }
 }
 
 void MicrosoftCXXABI::EmitVBPtrStores(CodeGenFunction &CGF,
@@ -3223,11 +3244,14 @@ void MicrosoftCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
 }
 
 llvm::Function *
-MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
+MicrosoftCXXABI::getAddrOfCXXCtorClosure(const CXXConstructorDecl *CD,
+                                         CXXCtorType CT) {
+  assert(CT == Ctor_CopyingClosure || CT == Ctor_DefaultClosure);
+
   // Calculate the mangled name.
   SmallString<256> ThunkName;
   llvm::raw_svector_ostream Out(ThunkName);
-  getMangleContext().mangleCXXCtor(CD, Ctor_CopyingClosure, Out);
+  getMangleContext().mangleCXXCtor(CD, CT, Out);
   Out.flush();
 
   // If the thunk has been generated previously, just return it.
@@ -3235,12 +3259,13 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
     return cast<llvm::Function>(GV);
 
   // Create the llvm::Function.
-  const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeMSCopyCtorClosure(CD);
+  const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeMSCtorClosure(CD, CT);
   llvm::FunctionType *ThunkTy = CGM.getTypes().GetFunctionType(FnInfo);
   const CXXRecordDecl *RD = CD->getParent();
   QualType RecordTy = getContext().getRecordType(RD);
   llvm::Function *ThunkFn = llvm::Function::Create(
       ThunkTy, getLinkageForRTTI(RecordTy), ThunkName.str(), &CGM.getModule());
+  bool IsCopy = CT == Ctor_CopyingClosure;
 
   // Start codegen.
   CodeGenFunction CGF(CGM);
@@ -3249,8 +3274,7 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
   // Build FunctionArgs.
   FunctionArgList FunctionArgs;
 
-  // A copy constructor always starts with a 'this' pointer as its first
-  // argument.
+  // A constructor always starts with a 'this' pointer as its first argument.
   buildThisParam(CGF, FunctionArgs);
 
   // Following the 'this' pointer is a reference to the source object that we
@@ -3259,11 +3283,12 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
       getContext(), nullptr, SourceLocation(), &getContext().Idents.get("src"),
       getContext().getLValueReferenceType(RecordTy,
                                           /*SpelledAsLValue=*/true));
-  FunctionArgs.push_back(&SrcParam);
+  if (IsCopy)
+    FunctionArgs.push_back(&SrcParam);
 
-  // Copy constructors for classes which utilize virtual bases have an
-  // additional parameter which indicates whether or not it is being delegated
-  // to by a more derived constructor.
+  // Constructors for classes which utilize virtual bases have an additional
+  // parameter which indicates whether or not it is being delegated to by a more
+  // derived constructor.
   ImplicitParamDecl IsMostDerived(getContext(), nullptr, SourceLocation(),
                                   &getContext().Idents.get("is_most_derived"),
                                   getContext().IntTy);
@@ -3278,7 +3303,8 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
   llvm::Value *This = getThisValue(CGF);
 
   llvm::Value *SrcVal =
-      CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(&SrcParam), "src");
+      IsCopy ? CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(&SrcParam), "src")
+             : nullptr;
 
   CallArgList Args;
 
@@ -3286,11 +3312,12 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
   Args.add(RValue::get(This), CD->getThisType(getContext()));
 
   // Push the src ptr.
-  Args.add(RValue::get(SrcVal), SrcParam.getType());
+  if (SrcVal)
+    Args.add(RValue::get(SrcVal), SrcParam.getType());
 
   // Add the rest of the default arguments.
   std::vector<Stmt *> ArgVec;
-  for (unsigned I = 1, E = CD->getNumParams(); I != E; ++I)
+  for (unsigned I = IsCopy ? 1 : 0, E = CD->getNumParams(); I != E; ++I)
     ArgVec.push_back(getContext().getDefaultArgExprForConstructor(CD, I));
 
   CodeGenFunction::RunCleanupsScope Cleanups(CGF);
@@ -3298,7 +3325,7 @@ MicrosoftCXXABI::getAddrOfCXXCopyCtorClosure(const CXXConstructorDecl *CD) {
   const auto *FPT = CD->getType()->castAs<FunctionProtoType>();
   ConstExprIterator ArgBegin(ArgVec.data()),
       ArgEnd(ArgVec.data() + ArgVec.size());
-  CGF.EmitCallArgs(Args, FPT, ArgBegin, ArgEnd, CD, 1);
+  CGF.EmitCallArgs(Args, FPT, ArgBegin, ArgEnd, CD, IsCopy ? 1 : 0);
 
   // Insert any ABI-specific implicit constructor arguments.
   unsigned ExtraArgs = addImplicitConstructorArgs(CGF, CD, Ctor_Complete,
@@ -3330,14 +3357,9 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
   const CXXConstructorDecl *CD =
       RD ? CGM.getContext().getCopyConstructorForExceptionObject(RD) : nullptr;
   CXXCtorType CT = Ctor_Complete;
-  if (CD) {
-    CallingConv ExpectedCallingConv = getContext().getDefaultCallingConvention(
-        /*IsVariadic=*/false, /*IsCXXMethod=*/true);
-    CallingConv ActualCallingConv =
-        CD->getType()->getAs<FunctionProtoType>()->getCallConv();
-    if (ExpectedCallingConv != ActualCallingConv || CD->getNumParams() != 1)
+  if (CD)
+    if (!hasDefaultCXXMethodCC(getContext(), CD) || CD->getNumParams() != 1)
       CT = Ctor_CopyingClosure;
-  }
 
   uint32_t Size = getContext().getTypeSizeInChars(T).getQuantity();
   SmallString<256> MangledName;
@@ -3358,7 +3380,7 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
   llvm::Constant *CopyCtor;
   if (CD) {
     if (CT == Ctor_CopyingClosure)
-      CopyCtor = getAddrOfCXXCopyCtorClosure(CD);
+      CopyCtor = getAddrOfCXXCtorClosure(CD, Ctor_CopyingClosure);
     else
       CopyCtor = CGM.getAddrOfCXXStructor(CD, StructorType::Complete);
 

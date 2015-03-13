@@ -347,12 +347,16 @@ CodeGenTypes::arrangeMSMemberPointerThunk(const CXXMethodDecl *MD) {
 }
 
 const CGFunctionInfo &
-CodeGenTypes::arrangeMSCopyCtorClosure(const CXXConstructorDecl *CD) {
+CodeGenTypes::arrangeMSCtorClosure(const CXXConstructorDecl *CD,
+                                   CXXCtorType CT) {
+  assert(CT == Ctor_CopyingClosure || CT == Ctor_DefaultClosure);
+
   CanQual<FunctionProtoType> FTP = GetFormalType(CD);
   SmallVector<CanQualType, 2> ArgTys;
   const CXXRecordDecl *RD = CD->getParent();
   ArgTys.push_back(GetThisType(Context, RD));
-  ArgTys.push_back(*FTP->param_type_begin());
+  if (CT == Ctor_CopyingClosure)
+    ArgTys.push_back(*FTP->param_type_begin());
   if (RD->getNumVBases() > 0)
     ArgTys.push_back(Context.IntTy);
   CallingConv CC = Context.getDefaultCallingConvention(

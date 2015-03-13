@@ -1640,10 +1640,11 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
                                    ->getPointeeType(),
                                /*SpelledAsLValue=*/true),
                            Range);
+        Out << '@';
       } else {
         llvm_unreachable("unexpected constructor closure!");
       }
-      Out << "@Z";
+      Out << 'Z';
       return;
     }
     Out << '@';
