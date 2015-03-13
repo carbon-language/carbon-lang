@@ -1044,12 +1044,6 @@ public:
     bool
     ModuleIsExcludedForUnconstrainedSearches (const lldb::ModuleSP &module_sp);
 
-    ArchSpec &
-    GetArchitecture ()
-    {
-        return m_arch;
-    }
-    
     const ArchSpec &
     GetArchitecture () const
     {
