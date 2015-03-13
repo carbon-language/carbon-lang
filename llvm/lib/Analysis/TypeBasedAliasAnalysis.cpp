@@ -129,6 +129,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SetVector.h"
 using namespace llvm;
 
 // A handy option for disabling TBAA functionality. The same effect can also be
@@ -578,18 +579,22 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
     if (!B) return nullptr;
   }
 
-  SmallVector<MDNode *, 4> PathA;
+  SmallSetVector<MDNode *, 4> PathA;
   MDNode *T = A;
   while (T) {
-    PathA.push_back(T);
+    if (PathA.count(T))
+      report_fatal_error("Cycle found in TBAA metadata.");
+    PathA.insert(T);
     T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1))
                                  : nullptr;
   }
 
-  SmallVector<MDNode *, 4> PathB;
+  SmallSetVector<MDNode *, 4> PathB;
   T = B;
   while (T) {
-    PathB.push_back(T);
+    if (PathB.count(T))
+      report_fatal_error("Cycle found in TBAA metadata.");
+    PathB.insert(T);
     T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1))
                                  : nullptr;
   }
