@@ -539,6 +539,14 @@ private:
   /// been loaded.
   std::vector<MacroInfo *> MacrosLoaded;
 
+  typedef std::pair<IdentifierInfo *, serialization::SubmoduleID>
+      LoadedMacroInfo;
+
+  /// \brief A set of #undef directives that we have loaded; used to
+  /// deduplicate the same #undef information coming from multiple module
+  /// files.
+  llvm::DenseSet<LoadedMacroInfo> LoadedUndefs;
+
   typedef ContinuousRangeMap<serialization::MacroID, ModuleFile *, 4>
     GlobalMacroMapType;
 
@@ -1844,7 +1852,8 @@ public:
   serialization::IdentifierID getGlobalIdentifierID(ModuleFile &M,
                                                     unsigned LocalID);
 
-  ModuleMacroInfo *getModuleMacro(const PendingMacroInfo &PMInfo);
+  ModuleMacroInfo *getModuleMacro(IdentifierInfo *II,
+                                  const PendingMacroInfo &PMInfo);
 
   void resolvePendingMacro(IdentifierInfo *II, const PendingMacroInfo &PMInfo);
 
