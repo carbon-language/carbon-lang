@@ -393,10 +393,12 @@ protected:
                             // Given a die_offset, figure out the symbol context representing that die.
     bool                    ResolveFunction (dw_offset_t offset,
                                              DWARFCompileUnit *&dwarf_cu,
+                                             bool include_inlines,
                                              lldb_private::SymbolContextList& sc_list);
                             
     bool                    ResolveFunction (DWARFCompileUnit *cu,
                                              const DWARFDebugInfoEntry *die,
+                                             bool include_inlines,
                                              lldb_private::SymbolContextList& sc_list);
 
     bool                    FunctionDieMatchesPartialName (
@@ -410,16 +412,19 @@ protected:
     void                    FindFunctions(
                                 const lldb_private::ConstString &name, 
                                 const NameToDIE &name_to_die,
+                                bool include_inlines,
                                 lldb_private::SymbolContextList& sc_list);
 
     void                    FindFunctions (
                                 const lldb_private::RegularExpression &regex, 
                                 const NameToDIE &name_to_die,
+                                bool include_inlines,
                                 lldb_private::SymbolContextList& sc_list);
 
     void                    FindFunctions (
                                 const lldb_private::RegularExpression &regex, 
                                 const DWARFMappedHash::MemoryTable &memory_table,
+                                bool include_inlines,
                                 lldb_private::SymbolContextList& sc_list);
 
     lldb::TypeSP            FindDefinitionTypeForDWARFDeclContext (
@@ -438,6 +443,7 @@ protected:
     lldb_private::Symbol *  GetObjCClassSymbol (const lldb_private::ConstString &objc_class_name);
 
     void                    ParseFunctions (const DIEArray &die_offsets,
+                                            bool include_inlines,
                                             lldb_private::SymbolContextList& sc_list);
     lldb::TypeSP            GetTypeForDIE (DWARFCompileUnit *cu, 
                                            const DWARFDebugInfoEntry* die);

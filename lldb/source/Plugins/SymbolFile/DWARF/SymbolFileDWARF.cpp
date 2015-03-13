@@ -3455,16 +3455,18 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
 bool
 SymbolFileDWARF::ResolveFunction (dw_offset_t die_offset,
                                   DWARFCompileUnit *&dwarf_cu,
+                                  bool include_inlines,
                                   SymbolContextList& sc_list)
 {
     const DWARFDebugInfoEntry *die = DebugInfo()->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-    return ResolveFunction (dwarf_cu, die, sc_list);
+    return ResolveFunction (dwarf_cu, die, include_inlines, sc_list);
 }
     
 
 bool
 SymbolFileDWARF::ResolveFunction (DWARFCompileUnit *cu,
                                   const DWARFDebugInfoEntry *die,
+                                  bool include_inlines,
                                   SymbolContextList& sc_list)
 {
     SymbolContext sc;
@@ -3473,7 +3475,7 @@ SymbolFileDWARF::ResolveFunction (DWARFCompileUnit *cu,
         return false;
 
     // If we were passed a die that is not a function, just return false...
-    if (die->Tag() != DW_TAG_subprogram && die->Tag() != DW_TAG_inlined_subroutine)
+    if (! (die->Tag() == DW_TAG_subprogram || (include_inlines && die->Tag() == DW_TAG_inlined_subroutine)))
         return false;
     
     const DWARFDebugInfoEntry* inlined_die = NULL;
@@ -3520,12 +3522,13 @@ SymbolFileDWARF::ResolveFunction (DWARFCompileUnit *cu,
 void
 SymbolFileDWARF::FindFunctions (const ConstString &name, 
                                 const NameToDIE &name_to_die,
+                                bool include_inlines,
                                 SymbolContextList& sc_list)
 {
     DIEArray die_offsets;
     if (name_to_die.Find (name, die_offsets))
     {
-        ParseFunctions (die_offsets, sc_list);
+        ParseFunctions (die_offsets, include_inlines, sc_list);
     }
 }
 
@@ -3533,12 +3536,13 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
 void
 SymbolFileDWARF::FindFunctions (const RegularExpression &regex, 
                                 const NameToDIE &name_to_die,
+                                bool include_inlines,
                                 SymbolContextList& sc_list)
 {
     DIEArray die_offsets;
     if (name_to_die.Find (regex, die_offsets))
     {
-        ParseFunctions (die_offsets, sc_list);
+        ParseFunctions (die_offsets, include_inlines, sc_list);
     }
 }
 
@@ -3546,6 +3550,7 @@ SymbolFileDWARF::FindFunctions (const RegularExpression &regex,
 void
 SymbolFileDWARF::FindFunctions (const RegularExpression &regex, 
                                 const DWARFMappedHash::MemoryTable &memory_table,
+                                bool include_inlines,
                                 SymbolContextList& sc_list)
 {
     DIEArray die_offsets;
@@ -3553,12 +3558,13 @@ SymbolFileDWARF::FindFunctions (const RegularExpression &regex,
     if (memory_table.AppendAllDIEsThatMatchingRegex (regex, hash_data_array))
     {
         DWARFMappedHash::ExtractDIEArray (hash_data_array, die_offsets);
-        ParseFunctions (die_offsets, sc_list);
+        ParseFunctions (die_offsets, include_inlines, sc_list);
     }
 }
 
 void
 SymbolFileDWARF::ParseFunctions (const DIEArray &die_offsets,
+                                 bool include_inlines,
                                  SymbolContextList& sc_list)
 {
     const size_t num_matches = die_offsets.size();
@@ -3568,7 +3574,7 @@ SymbolFileDWARF::ParseFunctions (const DIEArray &die_offsets,
         for (size_t i=0; i<num_matches; ++i)
         {
             const dw_offset_t die_offset = die_offsets[i];
-            ResolveFunction (die_offset, dwarf_cu, sc_list);
+            ResolveFunction (die_offset, dwarf_cu, include_inlines, sc_list);
         }
     }
 }
@@ -3759,12 +3765,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                             continue;
                         
-                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                            continue;
-                        
                         if (resolved_dies.find(die) == resolved_dies.end())
                         {
-                            if (ResolveFunction (dwarf_cu, die, sc_list))
+                            if (ResolveFunction (dwarf_cu, die, include_inlines, sc_list))
                                 resolved_dies.insert(die);
                         }
                     }
@@ -3794,12 +3797,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         const char *die_name = die->GetName(this, dwarf_cu);
                         if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
                         {
-                            if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                                continue;
-                            
                             if (resolved_dies.find(die) == resolved_dies.end())
                             {
-                                if (ResolveFunction (dwarf_cu, die, sc_list))
+                                if (ResolveFunction (dwarf_cu, die, include_inlines, sc_list))
                                     resolved_dies.insert(die);
                             }
                         }
@@ -3828,15 +3828,12 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
                     if (die)
                     {
-                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                            continue;
-                        
                         if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                             continue;
 
                         // If we get to here, the die is good, and we should add it:
                         if (resolved_dies.find(die) == resolved_dies.end())
-                        if (ResolveFunction (dwarf_cu, die, sc_list))
+                        if (ResolveFunction (dwarf_cu, die, include_inlines, sc_list))
                         {
                             bool keep_die = true;
                             if ((name_type_mask & (eFunctionNameTypeBase|eFunctionNameTypeMethod)) != (eFunctionNameTypeBase|eFunctionNameTypeMethod))
@@ -3905,7 +3902,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
 
         if (name_type_mask & eFunctionNameTypeFull)
         {
-            FindFunctions (name, m_function_fullname_index, sc_list);
+            FindFunctions (name, m_function_fullname_index, include_inlines, sc_list);
 
             // FIXME Temporary workaround for global/anonymous namespace
             // functions on FreeBSD and Linux
@@ -3917,7 +3914,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             if (sc_list.GetSize() == 0)
             {
                 SymbolContextList temp_sc_list;
-                FindFunctions (name, m_function_basename_index, temp_sc_list);
+                FindFunctions (name, m_function_basename_index, include_inlines, temp_sc_list);
                 if (!namespace_decl)
                 {
                     SymbolContext sc;
@@ -3949,16 +3946,13 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                 const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                 if (die)
                 {
-                    if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                        continue;
-                    
                     if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                         continue;
                     
                     // If we get to here, the die is good, and we should add it:
                     if (resolved_dies.find(die) == resolved_dies.end())
                     {
-                        if (ResolveFunction (dwarf_cu, die, sc_list))
+                        if (ResolveFunction (dwarf_cu, die, include_inlines, sc_list))
                             resolved_dies.insert(die);
                     }
                 }
@@ -3978,13 +3972,10 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offsets[i], &dwarf_cu);
                     if (die)
                     {
-                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
-                            continue;
-                        
                         // If we get to here, the die is good, and we should add it:
                         if (resolved_dies.find(die) == resolved_dies.end())
                         {
-                            if (ResolveFunction (dwarf_cu, die, sc_list))
+                            if (ResolveFunction (dwarf_cu, die, include_inlines, sc_list))
                                 resolved_dies.insert(die);
                         }
                     }
@@ -3995,7 +3986,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
 
         if ((name_type_mask & eFunctionNameTypeSelector) && (!namespace_decl || !*namespace_decl))
         {
-            FindFunctions (name, m_function_selector_index, sc_list);
+            FindFunctions (name, m_function_selector_index, include_inlines, sc_list);
         }
         
     }
@@ -4006,9 +3997,10 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
     if (log && num_matches > 0)
     {
         GetObjectFile()->GetModule()->LogMessage (log,
-                                                  "SymbolFileDWARF::FindFunctions (name=\"%s\", name_type_mask=0x%x, append=%u, sc_list) => %u",
+                                                  "SymbolFileDWARF::FindFunctions (name=\"%s\", name_type_mask=0x%x, include_inlines=%d, append=%u, sc_list) => %u",
                                                   name.GetCString(), 
                                                   name_type_mask, 
+                                                  include_inlines,
                                                   append,
                                                   num_matches);
     }
@@ -4044,7 +4036,7 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool include_inli
     if (m_using_apple_tables)
     {
         if (m_apple_names_ap.get())
-            FindFunctions (regex, *m_apple_names_ap, sc_list);
+            FindFunctions (regex, *m_apple_names_ap, include_inlines, sc_list);
     }
     else
     {
@@ -4052,9 +4044,9 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool include_inli
         if (!m_indexed)
             Index ();
 
-        FindFunctions (regex, m_function_basename_index, sc_list);
+        FindFunctions (regex, m_function_basename_index, include_inlines, sc_list);
 
-        FindFunctions (regex, m_function_fullname_index, sc_list);
+        FindFunctions (regex, m_function_fullname_index, include_inlines, sc_list);
     }
 
     // Return the number of variable that were appended to the list
