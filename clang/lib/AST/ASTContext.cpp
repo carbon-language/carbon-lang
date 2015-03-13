@@ -7840,6 +7840,9 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
     ArgTypes.push_back(Ty);
   }
 
+  if (Id == Builtin::BI__GetExceptionInfo)
+    return QualType();
+
   assert((TypeStr[0] != '.' || TypeStr[1] == 0) &&
          "'.' should only occur at end of builtin type list!");
 

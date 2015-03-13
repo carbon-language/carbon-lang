@@ -644,7 +644,7 @@ public:
 
   llvm::GlobalVariable *getCatchableTypeArray(QualType T);
 
-  llvm::GlobalVariable *getThrowInfo(QualType T);
+  llvm::GlobalVariable *getThrowInfo(QualType T) override;
 
 private:
   typedef std::pair<const CXXRecordDecl *, CharUnits> VFTableIdTy;

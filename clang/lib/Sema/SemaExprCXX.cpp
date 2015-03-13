@@ -647,12 +647,39 @@ ExprResult Sema::BuildCXXThrow(SourceLocation OpLoc, Expr *Ex,
     Diag(OpLoc, diag::err_omp_simd_region_cannot_use_stmt) << "throw";
 
   if (Ex && !Ex->isTypeDependent()) {
-    ExprResult ExRes = CheckCXXThrowOperand(OpLoc, Ex, IsThrownVarInScope);
-    if (ExRes.isInvalid())
+    QualType ExceptionObjectTy = Context.getExceptionObjectType(Ex->getType());
+    if (CheckCXXThrowOperand(OpLoc, ExceptionObjectTy, Ex))
       return ExprError();
-    Ex = ExRes.get();
+
+    // Initialize the exception result.  This implicitly weeds out
+    // abstract types or types with inaccessible copy constructors.
+
+    // C++0x [class.copymove]p31:
+    //   When certain criteria are met, an implementation is allowed to omit the
+    //   copy/move construction of a class object [...]
+    //
+    //     - in a throw-expression, when the operand is the name of a
+    //       non-volatile automatic object (other than a function or
+    //       catch-clause
+    //       parameter) whose scope does not extend beyond the end of the
+    //       innermost enclosing try-block (if there is one), the copy/move
+    //       operation from the operand to the exception object (15.1) can be
+    //       omitted by constructing the automatic object directly into the
+    //       exception object
+    const VarDecl *NRVOVariable = nullptr;
+    if (IsThrownVarInScope)
+      NRVOVariable = getCopyElisionCandidate(QualType(), Ex, false);
+
+    InitializedEntity Entity = InitializedEntity::InitializeException(
+        OpLoc, ExceptionObjectTy,
+        /*NRVO=*/NRVOVariable != nullptr);
+    ExprResult Res = PerformMoveOrCopyInitialization(
+        Entity, NRVOVariable, QualType(), Ex, IsThrownVarInScope);
+    if (Res.isInvalid())
+      return ExprError();
+    Ex = Res.get();
   }
-  
+
   return new (Context)
       CXXThrowExpr(Ex, Context.VoidTy, OpLoc, IsThrownVarInScope);
 }
@@ -707,9 +734,8 @@ static void getUnambiguousPublicSubobjects(
 }
 
 /// CheckCXXThrowOperand - Validate the operand of a throw.
-ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
-                                      bool IsThrownVarInScope) {
-  QualType ExceptionObjectTy = Context.getExceptionObjectType(E->getType());
+bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc,
+                                QualType ExceptionObjectTy, Expr *E) {
   //   If the type of the exception would be an incomplete type or a pointer
   //   to an incomplete type other than (cv) void the program is ill-formed.
   QualType Ty = ExceptionObjectTy;
@@ -720,48 +746,20 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   }
   if (!isPointer || !Ty->isVoidType()) {
     if (RequireCompleteType(ThrowLoc, Ty,
-                            isPointer? diag::err_throw_incomplete_ptr
-                                     : diag::err_throw_incomplete,
+                            isPointer ? diag::err_throw_incomplete_ptr
+                                      : diag::err_throw_incomplete,
                             E->getSourceRange()))
-      return ExprError();
+      return true;
 
     if (RequireNonAbstractType(ThrowLoc, ExceptionObjectTy,
                                diag::err_throw_abstract_type, E))
-      return ExprError();
+      return true;
   }
 
-  // Initialize the exception result.  This implicitly weeds out
-  // abstract types or types with inaccessible copy constructors.
-  
-  // C++0x [class.copymove]p31:
-  //   When certain criteria are met, an implementation is allowed to omit the 
-  //   copy/move construction of a class object [...]
-  //
-  //     - in a throw-expression, when the operand is the name of a 
-  //       non-volatile automatic object (other than a function or catch-clause 
-  //       parameter) whose scope does not extend beyond the end of the 
-  //       innermost enclosing try-block (if there is one), the copy/move 
-  //       operation from the operand to the exception object (15.1) can be 
-  //       omitted by constructing the automatic object directly into the 
-  //       exception object
-  const VarDecl *NRVOVariable = nullptr;
-  if (IsThrownVarInScope)
-    NRVOVariable = getCopyElisionCandidate(QualType(), E, false);
-
-  InitializedEntity Entity =
-      InitializedEntity::InitializeException(ThrowLoc, ExceptionObjectTy,
-                                             /*NRVO=*/NRVOVariable != nullptr);
-  ExprResult Res = PerformMoveOrCopyInitialization(
-      Entity, NRVOVariable, QualType(), E, IsThrownVarInScope);
-  if (Res.isInvalid())
-    return ExprError();
-  E = Res.get();
-
   // If the exception has class type, we need additional handling.
-  const RecordType *RecordTy = Ty->getAs<RecordType>();
-  if (!RecordTy)
-    return E;
-  CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+  CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
+  if (!RD)
+    return false;
 
   // If we are throwing a polymorphic class type or pointer thereof,
   // exception handling will make use of the vtable.
@@ -769,7 +767,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
 
   // If a pointer is thrown, the referenced object will not be destroyed.
   if (isPointer)
-    return E;
+    return false;
 
   // If the class has a destructor, we must be able to call it.
   if (!RD->hasIrrelevantDestructor()) {
@@ -778,7 +776,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
       CheckDestructorAccess(E->getExprLoc(), Destructor,
                             PDiag(diag::err_access_dtor_exception) << Ty);
       if (DiagnoseUseOfDecl(Destructor, E->getExprLoc()))
-        return ExprError();
+        return true;
     }
   }
 
@@ -831,7 +829,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
     }
   }
 
-  return E;
+  return false;
 }
 
 QualType Sema::getCurrentThisType() {

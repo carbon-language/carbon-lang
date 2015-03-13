@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
 #include "TargetInfo.h"
@@ -1719,6 +1720,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       CS.setAttributes(ReturnsTwiceAttr);
       return RValue::get(CS.getInstruction());
     }
+  }
+
+  case Builtin::BI__GetExceptionInfo: {
+    if (llvm::GlobalVariable *GV =
+            CGM.getCXXABI().getThrowInfo(FD->getParamDecl(0)->getType()))
+      return RValue::get(llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy));
+    break;
   }
   }
 
