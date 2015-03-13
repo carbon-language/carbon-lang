@@ -413,6 +413,12 @@ std::error_code Module::materializeAllPermanently() {
   return std::error_code();
 }
 
+std::error_code Module::materializeMetadata() {
+  if (!Materializer)
+    return std::error_code();
+  return Materializer->materializeMetadata();
+}
+
 //===----------------------------------------------------------------------===//
 // Other module related stuff.
 //

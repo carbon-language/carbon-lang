@@ -598,6 +598,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
 
   Module &M = Obj.getModule();
 
+  M.materializeMetadata();
   UpgradeDebugInfo(M);
 
   SmallPtrSet<GlobalValue *, 8> Used;

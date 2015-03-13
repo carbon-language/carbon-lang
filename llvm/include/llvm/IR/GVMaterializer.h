@@ -53,6 +53,8 @@ public:
   ///
   virtual std::error_code MaterializeModule(Module *M) = 0;
 
+  virtual std::error_code materializeMetadata() = 0;
+
   virtual std::vector<StructType *> getIdentifiedStructTypes() const = 0;
 };
 

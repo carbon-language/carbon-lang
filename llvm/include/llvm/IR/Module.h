@@ -502,6 +502,8 @@ public:
   /// Materializer.
   std::error_code materializeAllPermanently();
 
+  std::error_code materializeMetadata();
+
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table
 /// @{

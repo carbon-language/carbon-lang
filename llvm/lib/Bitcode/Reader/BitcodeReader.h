@@ -255,7 +255,7 @@ public:
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
   /// Materialize any deferred Metadata block.
-  std::error_code materializeMetadata();
+  std::error_code materializeMetadata() override;
 
 private:
   std::vector<StructType *> IdentifiedStructTypes;
