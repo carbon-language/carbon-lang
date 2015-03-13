@@ -74,5 +74,5 @@ void FoldableAddrLabelDiff() { static long x = (long)&&a-(long)&&b; a:b:return;}
 int &i = reinterpret_cast<int&>(PR9558);
 
 int arr[2];
-// CHECK: @pastEnd = constant i32* bitcast (i8* getelementptr (i8* bitcast ([2 x i32]* @arr to i8*), i64 8) to i32*)
+// CHECK: @pastEnd = constant i32* bitcast (i8* getelementptr (i8, i8* bitcast ([2 x i32]* @arr to i8*), i64 8) to i32*)
 int &pastEnd = arr[2];

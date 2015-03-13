@@ -56,7 +56,7 @@ C n{};
 // CHECK: getelementptr inbounds i8, i8* %{{.*}}, {{.*}} %{{.*}}
 // CHECK: store i8 %{{.*}}, i8* getelementptr inbounds ({{.*}} @a, i32 0, i32 2)
 // CHECK: call i32 @_ZN1A1fEv({{.*}} @a)
-// CHECK: store i32 %{{.*}}, i32* getelementptr inbounds ({{.*}}* @a, i32 0, i32 3)
+// CHECK: store i32 %{{.*}}, i32* getelementptr inbounds ({{.*}}, {{.*}}* @a, i32 0, i32 3)
 // CHECK: store double 1.000000e+00, double* getelementptr inbounds ({{.*}} @a, i32 0, i32 4, i32 0)
 
 // No dynamic initialization of 'b':
@@ -70,7 +70,7 @@ C n{};
 // CHECK-NOT: load
 // CHECK: store i8 65, i8* getelementptr inbounds ({{.*}} @c, i32 0, i32 2)
 // CHECK: call i32 @_Z1fv()
-// CHECK: store i32 %{{.*}}, i32* getelementptr inbounds ({{.*}}* @c, i32 0, i32 3)
+// CHECK: store i32 %{{.*}}, i32* getelementptr inbounds ({{.*}}, {{.*}}* @c, i32 0, i32 3)
 // CHECK-NOT: C1Ev
 // CHECK: store i8 3, i8* {{.*}} @c, i32 0, i32 4)
 

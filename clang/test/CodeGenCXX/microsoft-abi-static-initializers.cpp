@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -fms-extensions -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 | FileCheck %s
 
 // CHECK: @llvm.global_ctors = appending global [5 x { i32, void ()*, i8* }] [
-// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Eselectany1@@YAXXZ", i8* getelementptr inbounds (%struct.S* @"\01?selectany1@@3US@@A", i32 0, i32 0) },
-// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Eselectany2@@YAXXZ", i8* getelementptr inbounds (%struct.S* @"\01?selectany2@@3US@@A", i32 0, i32 0) },
-// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Es@?$ExportedTemplate@H@@2US@@A@YAXXZ", i8* getelementptr inbounds (%struct.S* @"\01?s@?$ExportedTemplate@H@@2US@@A", i32 0, i32 0) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Eselectany1@@YAXXZ", i8* getelementptr inbounds (%struct.S, %struct.S* @"\01?selectany1@@3US@@A", i32 0, i32 0) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Eselectany2@@YAXXZ", i8* getelementptr inbounds (%struct.S, %struct.S* @"\01?selectany2@@3US@@A", i32 0, i32 0) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Es@?$ExportedTemplate@H@@2US@@A@YAXXZ", i8* getelementptr inbounds (%struct.S, %struct.S* @"\01?s@?$ExportedTemplate@H@@2US@@A", i32 0, i32 0) },
 // CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ", i8* bitcast (%class.A* @"\01?foo@?$B@H@@2VA@@A" to i8*) },
 // CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp, i8* null }
 // CHECK: ]

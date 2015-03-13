@@ -9,12 +9,12 @@
 // CHECK-DAG: %struct.anon = type { i32* }
 // CHECK-DAG: %struct.anon.0 = type { i8*** }
 // CHECK-DAG: [[STR:@.+]] = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00"
-// CHECK-DAG: [[DEF_LOC_2:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8]* [[STR]], i32 0, i32 0) }
+// CHECK-DAG: [[DEF_LOC_2:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* [[STR]], i32 0, i32 0) }
 // CHECK-DEBUG-DAG: %ident_t = type { i32, i32, i32, i32, i8* }
 // CHECK-DEBUG-DAG: %struct.anon = type { i32* }
 // CHECK-DEBUG-DAG: %struct.anon.0 = type { i8*** }
 // CHECK-DEBUG-DAG: [[STR:@.+]] = private unnamed_addr constant [23 x i8] c";unknown;unknown;0;0;;\00"
-// CHECK-DEBUG-DAG: [[DEF_LOC_2:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8]* [[STR]], i32 0, i32 0) }
+// CHECK-DEBUG-DAG: [[DEF_LOC_2:@.+]] = private unnamed_addr constant %ident_t { i32 0, i32 2, i32 0, i32 0, i8* getelementptr inbounds ([23 x i8], [23 x i8]* [[STR]], i32 0, i32 0) }
 // CHECK-DEBUG-DAG: [[LOC1:@.+]] = private unnamed_addr constant [{{.+}} x i8] c";{{.*}}parallel_codegen.cpp;main;[[@LINE+14]];9;;\00"
 // CHECK-DEBUG-DAG: [[LOC2:@.+]] = private unnamed_addr constant [{{.+}} x i8] c";{{.*}}parallel_codegen.cpp;tmain;[[@LINE+7]];9;;\00"
 
@@ -49,11 +49,11 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-DAG:   [[LOC_2_ADDR:%.+]] = alloca %ident_t
 // CHECK-DEBUG:       [[KMPC_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[LOC_2_ADDR]] to i8*
 // CHECK-DEBUG-NEXT:  [[KMPC_DEFAULT_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[DEF_LOC_2]] to i8*
-// CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t* null, i32 1) to i64), i32 8, i1 false)
+// CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t, %ident_t* null, i32 1) to i64), i32 8, i1 false)
 // CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  store i32* {{%[a-z0-9.]+}}, i32** [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t, %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
-// CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8]* [[LOC1]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
+// CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8], [{{.+}} x i8]* [[LOC1]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
 // CHECK-DEBUG-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
 // CHECK-DEBUG-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[LOC_2_ADDR]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* @.omp_outlined. to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-DEBUG-NEXT:  [[ARGV:%.+]] = load i8**, i8*** {{%[a-z0-9.]+}}
@@ -106,11 +106,11 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-DAG:   [[LOC_2_ADDR:%.+]] = alloca %ident_t
 // CHECK-DEBUG:       [[KMPC_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[LOC_2_ADDR]] to i8*
 // CHECK-DEBUG-NEXT:  [[KMPC_DEFAULT_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[DEF_LOC_2]] to i8*
-// CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t* null, i32 1) to i64), i32 8, i1 false)
+// CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t, %ident_t* null, i32 1) to i64), i32 8, i1 false)
 // CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t, %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
-// CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8]* [[LOC2]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
+// CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8], [{{.+}} x i8]* [[LOC2]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
 // CHECK-DEBUG-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon.0* [[AGG_CAPTURED]] to i8*
 // CHECK-DEBUG-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[LOC_2_ADDR]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon.0*)* @.omp_outlined.1 to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-DEBUG-NEXT:  ret i32 0

@@ -5,12 +5,12 @@ typedef union{Foo:0;}a;
 typedef union{int x; Foo:0;}b;
 extern int printf(const char*, ...);
 int main() {
-  // CHECK: getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 0
+  // CHECK: getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 0
   printf("%ld\n", sizeof(a));
-  // CHECK: getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 1
+  // CHECK: getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 1
   printf("%ld\n", __alignof__(a));
-  // CHECK: getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 4
+  // CHECK: getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 4
   printf("%ld\n", sizeof(b));
-  // CHECK: getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 4
+  // CHECK: getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 4
   printf("%ld\n", __alignof__(b));
 }

@@ -18,6 +18,6 @@ void (^mangle(void))(void) {
 // CHECK: define internal void @__mangle_block_invoke(i8* %.block_descriptor)
 
 // CHECK: define internal void @__mangle_block_invoke_2(i8* %.block_descriptor){{.*}}{
-// CHECK:   call void @__assert_rtn(i8* getelementptr inbounds ([24 x i8]* @__func__.__mangle_block_invoke_2, i32 0, i32 0), i8* getelementptr inbounds {{.*}}, i32 9, i8* getelementptr inbounds ([7 x i8]* @.str1, i32 0, i32 0))
+// CHECK:   call void @__assert_rtn(i8* getelementptr inbounds ([24 x i8], [24 x i8]* @__func__.__mangle_block_invoke_2, i32 0, i32 0), i8* getelementptr inbounds {{.*}}, i32 9, i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str1, i32 0, i32 0))
 // CHECK: }
 

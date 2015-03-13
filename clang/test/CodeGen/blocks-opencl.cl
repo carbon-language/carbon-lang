@@ -6,7 +6,7 @@ void dummy(float (^op)(float))
 {
 }
 
-// CHECK: i8 addrspace(3)* getelementptr inbounds ([9 x i8] addrspace(3)* @.str, i32 0, i32 0)
+// CHECK: i8 addrspace(3)* getelementptr inbounds ([9 x i8], [9 x i8] addrspace(3)* @.str, i32 0, i32 0)
 
 kernel void test_block()
 {

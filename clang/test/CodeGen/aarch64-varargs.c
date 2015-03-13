@@ -11,18 +11,18 @@ va_list the_list;
 int simple_int(void) {
 // CHECK-LABEL: define i32 @simple_int
   return va_arg(the_list, int);
-// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK: br i1 [[EARLY_ONSTACK]], label %[[VAARG_ON_STACK:[a-z_.0-9]+]], label %[[VAARG_MAYBE_REG:[a-z_.0-9]+]]
 
 // CHECK: [[VAARG_MAYBE_REG]]
 // CHECK: [[NEW_REG_OFFS:%[a-z_0-9]+]] = add i32 [[GR_OFFS]], 8
-// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[INREG:%[a-z_0-9]+]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK: br i1 [[INREG]], label %[[VAARG_IN_REG:[a-z_.0-9]+]], label %[[VAARG_ON_STACK]]
 
 // CHECK: [[VAARG_IN_REG]]
-// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 1)
+// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 1)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[REG_TOP]], i32 [[GR_OFFS]]
 // CHECK-BE: [[REG_ADDR_VAL:%[0-9]+]] = ptrtoint i8* [[REG_ADDR]] to i64
 // CHECK-BE: [[REG_ADDR_VAL_ALIGNED:%[a-z_0-9]*]] = add i64 [[REG_ADDR_VAL]], 4
@@ -31,9 +31,9 @@ int simple_int(void) {
 // CHECK: br label %[[VAARG_END:[a-z._0-9]+]]
 
 // CHECK: [[VAARG_ON_STACK]]
-// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8, i8* [[STACK]], i32 8
-// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK-BE: [[STACK_VAL:%[0-9]+]] = ptrtoint i8* [[STACK]] to i64
 // CHECK-BE: [[STACK_VAL_ALIGNED:%[a-z_0-9]*]] = add i64 [[STACK_VAL]], 4
 // CHECK-BE: [[STACK:%[0-9]+]] = inttoptr i64 [[STACK_VAL_ALIGNED]] to i8*
@@ -49,7 +49,7 @@ int simple_int(void) {
 __int128 aligned_int(void) {
 // CHECK-LABEL: define i128 @aligned_int
   return va_arg(the_list, __int128);
-// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK: br i1 [[EARLY_ONSTACK]], label %[[VAARG_ON_STACK:[a-z_.0-9]+]], label %[[VAARG_MAYBE_REG:[a-z_.0-9]+]]
 
@@ -57,24 +57,24 @@ __int128 aligned_int(void) {
 // CHECK: [[ALIGN_REGOFFS:%[a-z_0-9]+]] = add i32 [[GR_OFFS]], 15
 // CHECK: [[ALIGNED_REGOFFS:%[a-z_0-9]+]] = and i32 [[ALIGN_REGOFFS]], -16
 // CHECK: [[NEW_REG_OFFS:%[a-z_0-9]+]] = add i32 [[ALIGNED_REGOFFS]], 16
-// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[INREG:%[a-z_0-9]+]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK: br i1 [[INREG]], label %[[VAARG_IN_REG:[a-z_.0-9]+]], label %[[VAARG_ON_STACK]]
 
 // CHECK: [[VAARG_IN_REG]]
-// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 1)
+// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 1)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[REG_TOP]], i32 [[ALIGNED_REGOFFS]]
 // CHECK: [[FROMREG_ADDR:%[a-z_0-9]+]] = bitcast i8* [[REG_ADDR]] to i128*
 // CHECK: br label %[[VAARG_END:[a-z._0-9]+]]
 
 // CHECK: [[VAARG_ON_STACK]]
-// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[STACKINT:%[a-z_0-9]+]] = ptrtoint i8* [[STACK]] to i64
 // CHECK: [[ALIGN_STACK:%[a-z_0-9]+]] = add i64 [[STACKINT]], 15
 // CHECK: [[ALIGNED_STACK_INT:%[a-z_0-9]+]] = and i64 [[ALIGN_STACK]], -16
 // CHECK: [[ALIGNED_STACK_PTR:%[a-z_0-9]+]] = inttoptr i64 [[ALIGNED_STACK_INT]] to i8*
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8, i8* [[ALIGNED_STACK_PTR]], i32 16
-// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[FROMSTACK_ADDR:%[a-z_0-9]+]] = bitcast i8* [[ALIGNED_STACK_PTR]] to i128*
 // CHECK: br label %[[VAARG_END]]
 
@@ -91,28 +91,28 @@ struct bigstruct {
 struct bigstruct simple_indirect(void) {
 // CHECK-LABEL: define void @simple_indirect
   return va_arg(the_list, struct bigstruct);
-// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK: br i1 [[EARLY_ONSTACK]], label %[[VAARG_ON_STACK:[a-z_.0-9]+]], label %[[VAARG_MAYBE_REG:[a-z_.0-9]+]]
 
 // CHECK: [[VAARG_MAYBE_REG]]
 // CHECK-NOT: and i32
 // CHECK: [[NEW_REG_OFFS:%[a-z_0-9]+]] = add i32 [[GR_OFFS]], 8
-// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[INREG:%[a-z_0-9]+]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK: br i1 [[INREG]], label %[[VAARG_IN_REG:[a-z_.0-9]+]], label %[[VAARG_ON_STACK]]
 
 // CHECK: [[VAARG_IN_REG]]
-// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 1)
+// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 1)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[REG_TOP]], i32 [[GR_OFFS]]
 // CHECK: [[FROMREG_ADDR:%[a-z_0-9]+]] = bitcast i8* [[REG_ADDR]] to %struct.bigstruct**
 // CHECK: br label %[[VAARG_END:[a-z._0-9]+]]
 
 // CHECK: [[VAARG_ON_STACK]]
-// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK-NOT: and i64
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8, i8* [[STACK]], i32 8
-// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[FROMSTACK_ADDR:%[a-z_0-9]+]] = bitcast i8* [[STACK]] to %struct.bigstruct**
 // CHECK: br label %[[VAARG_END]]
 
@@ -129,26 +129,26 @@ struct aligned_bigstruct {
 struct aligned_bigstruct simple_aligned_indirect(void) {
 // CHECK-LABEL: define void @simple_aligned_indirect
   return va_arg(the_list, struct aligned_bigstruct);
-// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK: br i1 [[EARLY_ONSTACK]], label %[[VAARG_ON_STACK:[a-z_.0-9]+]], label %[[VAARG_MAYBE_REG:[a-z_.0-9]+]]
 
 // CHECK: [[VAARG_MAYBE_REG]]
 // CHECK: [[NEW_REG_OFFS:%[a-z_0-9]+]] = add i32 [[GR_OFFS]], 8
-// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
+// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[INREG:%[a-z_0-9]+]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK: br i1 [[INREG]], label %[[VAARG_IN_REG:[a-z_.0-9]+]], label %[[VAARG_ON_STACK]]
 
 // CHECK: [[VAARG_IN_REG]]
-// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 1)
+// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 1)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[REG_TOP]], i32 [[GR_OFFS]]
 // CHECK: [[FROMREG_ADDR:%[a-z_0-9]+]] = bitcast i8* [[REG_ADDR]] to %struct.aligned_bigstruct**
 // CHECK: br label %[[VAARG_END:[a-z._0-9]+]]
 
 // CHECK: [[VAARG_ON_STACK]]
-// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8, i8* [[STACK]], i32 8
-// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[FROMSTACK_ADDR:%[a-z_0-9]+]] = bitcast i8* [[STACK]] to %struct.aligned_bigstruct**
 // CHECK: br label %[[VAARG_END]]
 
@@ -160,18 +160,18 @@ struct aligned_bigstruct simple_aligned_indirect(void) {
 double simple_double(void) {
 // CHECK-LABEL: define double @simple_double
   return va_arg(the_list, double);
-// CHECK: [[VR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 4)
+// CHECK: [[VR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 4)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[VR_OFFS]], 0
 // CHECK: br i1 [[EARLY_ONSTACK]], label %[[VAARG_ON_STACK:[a-z_.0-9]+]], label %[[VAARG_MAYBE_REG]]
 
 // CHECK: [[VAARG_MAYBE_REG]]
 // CHECK: [[NEW_REG_OFFS:%[a-z_0-9]+]] = add i32 [[VR_OFFS]], 16
-// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 4)
+// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 4)
 // CHECK: [[INREG:%[a-z_0-9]+]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK: br i1 [[INREG]], label %[[VAARG_IN_REG:[a-z_.0-9]+]], label %[[VAARG_ON_STACK]]
 
 // CHECK: [[VAARG_IN_REG]]
-// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 2)
+// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 2)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[REG_TOP]], i32 [[VR_OFFS]]
 // CHECK-BE: [[REG_ADDR_VAL:%[0-9]+]] = ptrtoint i8* [[REG_ADDR]] to i64
 // CHECK-BE: [[REG_ADDR_VAL_ALIGNED:%[a-z_0-9]*]] = add i64 [[REG_ADDR_VAL]], 8
@@ -180,9 +180,9 @@ double simple_double(void) {
 // CHECK: br label %[[VAARG_END:[a-z._0-9]+]]
 
 // CHECK: [[VAARG_ON_STACK]]
-// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8, i8* [[STACK]], i32 8
-// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[FROMSTACK_ADDR:%[a-z_0-9]+]] = bitcast i8* [[STACK]] to double*
 // CHECK: br label %[[VAARG_END]]
 
@@ -199,18 +199,18 @@ struct hfa {
 struct hfa simple_hfa(void) {
 // CHECK-LABEL: define %struct.hfa @simple_hfa
   return va_arg(the_list, struct hfa);
-// CHECK: [[VR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 4)
+// CHECK: [[VR_OFFS:%[a-z_0-9]+]] = load i32, i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 4)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[VR_OFFS]], 0
 // CHECK: br i1 [[EARLY_ONSTACK]], label %[[VAARG_ON_STACK:[a-z_.0-9]+]], label %[[VAARG_MAYBE_REG:[a-z_.0-9]+]]
 
 // CHECK: [[VAARG_MAYBE_REG]]
 // CHECK: [[NEW_REG_OFFS:%[a-z_0-9]+]] = add i32 [[VR_OFFS]], 32
-// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 4)
+// CHECK: store i32 [[NEW_REG_OFFS]], i32* getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 4)
 // CHECK: [[INREG:%[a-z_0-9]+]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK: br i1 [[INREG]], label %[[VAARG_IN_REG:[a-z_.0-9]+]], label %[[VAARG_ON_STACK]]
 
 // CHECK: [[VAARG_IN_REG]]
-// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 2)
+// CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 2)
 // CHECK: [[FIRST_REG:%[a-z_0-9]+]] = getelementptr i8, i8* [[REG_TOP]], i32 [[VR_OFFS]]
 // CHECK-LE: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[FIRST_REG]], i32 0
 // CHECK-BE: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8, i8* [[FIRST_REG]], i32 12
@@ -228,9 +228,9 @@ struct hfa simple_hfa(void) {
 // CHECK: br label %[[VAARG_END:[a-z_.0-9]+]]
 
 // CHECK: [[VAARG_ON_STACK]]
-// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: [[STACK:%[a-z_0-9]+]] = load i8*, i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8, i8* [[STACK]], i32 8
-// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list, %struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[FROMSTACK_ADDR:%[a-z_0-9]+]] = bitcast i8* [[STACK]] to %struct.hfa*
 // CHECK: br label %[[VAARG_END]]
 

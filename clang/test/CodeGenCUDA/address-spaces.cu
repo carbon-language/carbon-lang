@@ -75,7 +75,7 @@ __device__ void func2() {
   *ap = 1.0f;
 }
 // CHECK: define void @_Z5func2v()
-// CHECK: store float* getelementptr inbounds ([256 x float]* addrspacecast ([256 x float] addrspace(3)* @_ZZ5func2vE1a to [256 x float]*), i32 0, i32 128), float** %ap
+// CHECK: store float* getelementptr inbounds ([256 x float], [256 x float]* addrspacecast ([256 x float] addrspace(3)* @_ZZ5func2vE1a to [256 x float]*), i32 0, i32 128), float** %ap
 
 __device__ void func3() {
   __shared__ float a;

@@ -81,8 +81,8 @@ namespace PR18097 {
       _Atomic(int) b;
     };
     // CHECK-LABEL: define {{.*}} @__cxx_global_var_init
-    // CHECK: call void @_ZN7PR180977dynamic1XC1Ei({{.*}}* getelementptr inbounds ({{.*}}* @_ZN7PR180977dynamic1yE, i32 0, i32 0), i32 4)
-    // CHECK: store i32 5, i32* getelementptr inbounds ({{.*}}* @_ZN7PR180977dynamic1yE, i32 0, i32 1)
+    // CHECK: call void @_ZN7PR180977dynamic1XC1Ei({{.*}}* getelementptr inbounds ({{.*}}, {{.*}}* @_ZN7PR180977dynamic1yE, i32 0, i32 0), i32 4)
+    // CHECK: store i32 5, i32* getelementptr inbounds ({{.*}}, {{.*}}* @_ZN7PR180977dynamic1yE, i32 0, i32 1)
     Y y = { X(4), 5 };
   }
 

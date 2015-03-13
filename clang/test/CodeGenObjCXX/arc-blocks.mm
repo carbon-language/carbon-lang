@@ -23,7 +23,7 @@ namespace test0 {
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BYREF_A]], [[BYREF_A]]* [[V]], i32 0, i32 5
   // CHECK-NEXT: store i8* bitcast (void (i8*)* [[DISPOSE_HELPER:@.*]] to i8*), i8** [[T0]]
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BYREF_A]], [[BYREF_A]]* [[V]], i32 0, i32 6
-  // CHECK-NEXT: store i8* getelementptr inbounds ([3 x i8]* [[LAYOUT0]], i32 0, i32 0), i8** [[T0]]
+  // CHECK-NEXT: store i8* getelementptr inbounds ([3 x i8], [3 x i8]* [[LAYOUT0]], i32 0, i32 0), i8** [[T0]]
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BYREF_A]], [[BYREF_A]]* [[V]], i32 0, i32 7
   // CHECK-NEXT: call void @_ZN5test01AC1Ev([[A]]* [[T0]])
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BYREF_A]], [[BYREF_A]]* [[V]], i32 0, i32 7

@@ -3,7 +3,7 @@
 void test0() {
   // CHECK-LABEL: define void @test0()
   // CHECK:      [[F:%.*]] = alloca float
-  // CHECK-NEXT: [[REAL:%.*]] = load volatile float, float* getelementptr inbounds ({ float, float }* @test0_v, i32 0, i32 0), align 4
+  // CHECK-NEXT: [[REAL:%.*]] = load volatile float, float* getelementptr inbounds ({ float, float }, { float, float }* @test0_v, i32 0, i32 0), align 4
   // CHECK-NEXT: load volatile float, float* getelementptr inbounds ({{.*}} @test0_v, i32 0, i32 1), align 4
   // CHECK-NEXT: store float [[REAL]], float* [[F]], align 4
   // CHECK-NEXT: ret void

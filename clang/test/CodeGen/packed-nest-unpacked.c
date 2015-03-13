@@ -9,40 +9,40 @@ struct X foo(void);
 // <rdar://problem/10463337>
 struct X test1() {
   // CHECK: @test1
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y, %struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
   return g.y;
 }
 struct X test2() {
   // CHECK: @test2
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y, %struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
   struct X a = g.y;
   return a;
 }
 
 void test3(struct X a) {
   // CHECK: @test3
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i8* {{.*}}, i64 24, i32 1, i1 false)
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y, %struct.Y* @g, i32 0, i32 1) to i8*), i8* {{.*}}, i64 24, i32 1, i1 false)
   g.y = a;
 }
 
 // <rdar://problem/10530444>
 void test4() {
   // CHECK: @test4
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y, %struct.Y* @g, i32 0, i32 1) to i8*), i64 24, i32 1, i1 false)
   f(g.y);
 }
 
 // PR12395
 int test5() {
   // CHECK: @test5
-  // CHECK: load i32, i32* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1, i32 0, i64 0), align 1
+  // CHECK: load i32, i32* getelementptr inbounds (%struct.Y, %struct.Y* @g, i32 0, i32 1, i32 0, i64 0), align 1
   return g.y.x[0];
 }
 
 // <rdar://problem/11220251>
 void test6() {
   // CHECK: @test6
-  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i8* %{{.*}}, i64 24, i32 1, i1 false)
+  // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y, %struct.Y* @g, i32 0, i32 1) to i8*), i8* %{{.*}}, i64 24, i32 1, i1 false)
   g.y = foo();
 }
 
@@ -60,6 +60,6 @@ struct YBitfield gbitfield;
 
 unsigned test7() {
   // CHECK: @test7
-  // CHECK: load i32, i32* getelementptr inbounds (%struct.YBitfield* @gbitfield, i32 0, i32 1, i32 0), align 4
+  // CHECK: load i32, i32* getelementptr inbounds (%struct.YBitfield, %struct.YBitfield* @gbitfield, i32 0, i32 1, i32 0), align 4
   return gbitfield.y.b2;
 }

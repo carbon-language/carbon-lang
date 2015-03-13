@@ -307,6 +307,6 @@ namespace N6 {
   extern struct x {char& x;}y;
   int a() { return y.x; }
   // CHECK-LABEL: define i32 @_ZN2N61aEv
-  // CHECK: [[REFLOAD3:%.*]] = load i8*, i8** getelementptr inbounds (%"struct.N6::x"* @_ZN2N61yE, i32 0, i32 0), align 8
+  // CHECK: [[REFLOAD3:%.*]] = load i8*, i8** getelementptr inbounds (%"struct.N6::x", %"struct.N6::x"* @_ZN2N61yE, i32 0, i32 0), align 8
   // CHECK: load i8, i8* [[REFLOAD3]], align 1
 }
