@@ -95,11 +95,11 @@ public:
 
   uint64_t getStartOffset() const { return StartOffset; }
   uint64_t getNextUnitOffset() const { return NextUnitOffset; }
+  void setStartOffset(uint64_t DebugInfoSize) { StartOffset = DebugInfoSize; }
 
   uint64_t getLowPc() const { return LowPc; }
   uint64_t getHighPc() const { return HighPc; }
 
-  void setStartOffset(uint64_t DebugInfoSize) { StartOffset = DebugInfoSize; }
 
   /// \brief Compute the end offset for this unit. Must be
   /// called after the CU's DIEs have been cloned.
