@@ -474,7 +474,27 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.buildDwarf()
         self.qRegisterInfo_contains_at_least_one_register_set()
 
-    def qRegisterInfo_contains_avx_registers_on_linux_x86_64(self):
+    def targetHasAVX(self):
+        # TODO we should be asking for targetGetSystem() 
+        # instead of platform.system()
+        # TODO other platforms, please implement this function
+        if platform.system() in ['Linux']:
+            return True
+
+        # Need to do something different for non-Linux/Android targets
+        if lldb.remote_platform:
+            self.runCmd('platform get-file "/proc/cpuinfo" "cpuinfo"')
+            cpuinfo_path = "cpuinfo"
+            self.addTearDownHook(lambda: os.unlink("cpuinfo"))
+        else:
+            cpuinfo_path = "/proc/cpuinfo"
+
+        f = open(cpuinfo_path, 'r')
+        cpuinfo = f.read()
+        f.close()
+        return " avx " in cpuinfo
+
+    def qRegisterInfo_contains_avx_registers(self):
         launch_args = self.install_and_create_launch_args()
 
         server = self.connect_to_debug_monitor()
@@ -494,18 +514,14 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Collect all generics found.
         register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
-        self.assertTrue("Advanced Vector Extensions" in register_sets)
+        self.assertEquals(self.targetHasAVX(), "Advanced Vector Extensions" in register_sets)
 
     @llgs_test
     @dwarf_test
-    def test_qRegisterInfo_contains_avx_registers_on_linux_x86_64_llgs_dwarf(self):
-        # Skip this test if not Linux x86_64.
-        if platform.system() != "Linux" or platform.processor() != "x86_64":
-            self.skipTest("linux x86_64 test")
-
+    def test_qRegisterInfo_contains_avx_registers_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
-        self.qRegisterInfo_contains_avx_registers_on_linux_x86_64()
+        self.qRegisterInfo_contains_avx_registers()
 
     def qThreadInfo_contains_thread(self):
         procs = self.prep_debug_monitor_and_inferior()
