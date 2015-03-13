@@ -19,6 +19,8 @@
 // RUN:     | FileCheck %s -check-prefix=THREAD
 // RUN: llvm-objdump -macho -p -arch i386 %p/Inputs/macho-universal.x86_64.i386 \
 // RUN:     | FileCheck %s -check-prefix=FATi386
+// RUN: llvm-objdump -p -non-verbose %p/Inputs/hello.obj.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=NON_VERBOSE
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -443,3 +445,95 @@ THREAD:     gs  0x0000000000000000
 FATi386: Mach header
 FATi386:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
 FATi386:    MH_MAGIC    I386        ALL  0x00     EXECUTE    16        716   NOUNDEFS DYLDLINK TWOLEVEL PIE MH_NO_HEAP_EXECUTION
+
+NON_VERBOSE: Mach header
+NON_VERBOSE:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+NON_VERBOSE:  0xfeedfacf 16777223          3  0x00           1     3        496 0x00002000
+NON_VERBOSE: Load command 0
+NON_VERBOSE:       cmd LC_SEGMENT_64
+NON_VERBOSE:   cmdsize 392
+NON_VERBOSE:   segname 
+NON_VERBOSE:    vmaddr 0x0000000000000000
+NON_VERBOSE:    vmsize 0x00000000000000a8
+NON_VERBOSE:   fileoff 528
+NON_VERBOSE:  filesize 168
+NON_VERBOSE:   maxprot 0x00000007
+NON_VERBOSE:  initprot 0x00000007
+NON_VERBOSE:    nsects 4
+NON_VERBOSE:     flags 0x0
+NON_VERBOSE: Section
+NON_VERBOSE:   sectname __text
+NON_VERBOSE:    segname __TEXT
+NON_VERBOSE:       addr 0x0000000000000000
+NON_VERBOSE:       size 0x000000000000003b
+NON_VERBOSE:     offset 528
+NON_VERBOSE:      align 2^4 (16)
+NON_VERBOSE:     reloff 696
+NON_VERBOSE:     nreloc 2
+NON_VERBOSE:      flags 0x80000400
+NON_VERBOSE:  reserved1 0
+NON_VERBOSE:  reserved2 0
+NON_VERBOSE: Section
+NON_VERBOSE:   sectname __cstring
+NON_VERBOSE:    segname __TEXT
+NON_VERBOSE:       addr 0x000000000000003b
+NON_VERBOSE:       size 0x000000000000000d
+NON_VERBOSE:     offset 587
+NON_VERBOSE:      align 2^0 (1)
+NON_VERBOSE:     reloff 0
+NON_VERBOSE:     nreloc 0
+NON_VERBOSE:      flags 0x00000002
+NON_VERBOSE:  reserved1 0
+NON_VERBOSE:  reserved2 0
+NON_VERBOSE: Section
+NON_VERBOSE:   sectname __compact_unwind
+NON_VERBOSE:    segname __LD
+NON_VERBOSE:       addr 0x0000000000000048
+NON_VERBOSE:       size 0x0000000000000020
+NON_VERBOSE:     offset 600
+NON_VERBOSE:      align 2^3 (8)
+NON_VERBOSE:     reloff 712
+NON_VERBOSE:     nreloc 1
+NON_VERBOSE:      flags 0x02000000
+NON_VERBOSE:  reserved1 0
+NON_VERBOSE:  reserved2 0
+NON_VERBOSE: Section
+NON_VERBOSE:   sectname __eh_frame
+NON_VERBOSE:    segname __TEXT
+NON_VERBOSE:       addr 0x0000000000000068
+NON_VERBOSE:       size 0x0000000000000040
+NON_VERBOSE:     offset 632
+NON_VERBOSE:      align 2^3 (8)
+NON_VERBOSE:     reloff 0
+NON_VERBOSE:     nreloc 0
+NON_VERBOSE:      flags 0x6800000b
+NON_VERBOSE:  reserved1 0
+NON_VERBOSE:  reserved2 0
+NON_VERBOSE: Load command 1
+NON_VERBOSE:      cmd LC_SYMTAB
+NON_VERBOSE:  cmdsize 24
+NON_VERBOSE:   symoff 720
+NON_VERBOSE:    nsyms 5
+NON_VERBOSE:   stroff 800
+NON_VERBOSE:  strsize 44
+NON_VERBOSE: Load command 2
+NON_VERBOSE:             cmd LC_DYSYMTAB
+NON_VERBOSE:         cmdsize 80
+NON_VERBOSE:       ilocalsym 0
+NON_VERBOSE:       nlocalsym 2
+NON_VERBOSE:      iextdefsym 2
+NON_VERBOSE:      nextdefsym 2
+NON_VERBOSE:       iundefsym 4
+NON_VERBOSE:       nundefsym 1
+NON_VERBOSE:          tocoff 0
+NON_VERBOSE:            ntoc 0
+NON_VERBOSE:       modtaboff 0
+NON_VERBOSE:         nmodtab 0
+NON_VERBOSE:    extrefsymoff 0
+NON_VERBOSE:     nextrefsyms 0
+NON_VERBOSE:  indirectsymoff 0
+NON_VERBOSE:   nindirectsyms 0
+NON_VERBOSE:       extreloff 0
+NON_VERBOSE:         nextrel 0
+NON_VERBOSE:       locreloff 0
+NON_VERBOSE:         nlocrel 0

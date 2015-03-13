@@ -41,6 +41,7 @@ extern cl::opt<bool> IndirectSymbols;
 extern cl::opt<bool> DataInCode;
 extern cl::opt<bool> LinkOptHints;
 extern cl::opt<bool> InfoPlist;
+extern cl::opt<bool> NonVerbose;
 extern cl::opt<bool> Relocations;
 extern cl::opt<bool> SectionHeaders;
 extern cl::opt<bool> SectionContents;

@@ -1,4 +1,5 @@
 # RUN: llvm-mc < %s -triple i386-apple-darwin -filetype=obj | llvm-objdump -m -section __DATA,__litp - | FileCheck %s
+# RUN: llvm-mc < %s -triple i386-apple-darwin -filetype=obj | llvm-objdump -m -section __DATA,__litp -non-verbose - | FileCheck %s -check-prefix=NON-VERBOSE
 
 .cstring
 L1: .asciz "Hello world\n"
@@ -32,3 +33,7 @@ L5: .asciz "const non-literal string"
 # CHECK: 00000054  __TEXT:__literal8:0x00000000 0x40200000
 # CHECK: 00000058  __TEXT:__literal16:0x10000016 0x20000016 0x30000016 0x40000016
 # CHECK: 0000005c  0x30 (not in a literal section)
+
+# NON-VERBOSE: Contents of (__DATA,__litp) section
+# NON-VERBOSE: 0000004c	00 00 00 00 10 00 00 00 18 00 00 00 20 00 00 00 
+# NON-VERBOSE: 0000005c	30 00 00 00 
