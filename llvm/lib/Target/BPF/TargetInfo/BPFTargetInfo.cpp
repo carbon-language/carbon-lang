@@ -14,5 +14,5 @@ using namespace llvm;
 Target llvm::TheBPFTarget;
 
 extern "C" void LLVMInitializeBPFTargetInfo() {
-  RegisterTarget<Triple::bpf> X(TheBPFTarget, "bpf", "BPF");
+  RegisterTarget<Triple::bpf, /*HasJIT=*/true> X(TheBPFTarget, "bpf", "BPF");
 }
