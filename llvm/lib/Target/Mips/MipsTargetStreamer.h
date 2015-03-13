@@ -93,7 +93,6 @@ public:
 
   virtual void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI);
   virtual void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value);
-  virtual void emitMipsAbiFlags(){};
   void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
   void reallowModuleDirective() { ModuleDirectiveAllowed = true; }
   bool isModuleDirectiveAllowed() { return ModuleDirectiveAllowed; }
@@ -198,7 +197,6 @@ public:
                              bool Is32BitABI) override;
   void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
   void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value) override;
-  void emitMipsAbiFlags() override;
 };
 
 // This part is for ELF object output
@@ -241,7 +239,7 @@ public:
 
   // ABI Flags
   void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
-  void emitMipsAbiFlags() override;
+  void emitMipsAbiFlags();
 };
 }
 #endif

@@ -366,10 +366,6 @@ void MipsTargetAsmStreamer::emitDirectiveSetFp(
   OS << ABIFlagsSection.getFpABIString(Value) << "\n";
 }
 
-void MipsTargetAsmStreamer::emitMipsAbiFlags() {
-  // No action required for text output.
-}
-
 void MipsTargetAsmStreamer::emitDirectiveModuleOddSPReg(bool Enabled,
                                                         bool IsO32ABI) {
   MipsTargetStreamer::emitDirectiveModuleOddSPReg(Enabled, IsO32ABI);
