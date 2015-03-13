@@ -411,6 +411,24 @@ Enter your Python command(s). Type 'DONE' to end.
             </td>
         </tr>
         </table>
+				
+				<p>Starting with SVN revision 232224, Python commands can also be implemented by means of a class
+					which should implement the following interface:</p>
+
+		<code>
+			<font color=blue>class</font> CommandObjectType:<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __init__(self, debugger, session_dict):<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should initialize the command with respect to the command interpeter for the passed-in debugger</i> <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __call__(self, debugger, command, exe_ctx, result): <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this is the actual bulk of the command, akin to Python command functions</i> <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> get_short_help(self): <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return the short help text for this command</i><sup>[1]</sup><br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> get_long_help(self): <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return the long help text for this command</i><sup>[1]</sup><br/>
+		</code>
+				
+<sup>[1]</sup> This method is optional.
+
         <p>As a convenience, you can treat the result object as a Python file object, and say
         <code><pre><tt>print >>result, "my command does lots of cool stuff"</tt></pre></code>
         SBCommandReturnObject and SBStream
