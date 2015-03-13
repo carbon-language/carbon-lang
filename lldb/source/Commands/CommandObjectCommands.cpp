@@ -2027,7 +2027,7 @@ CommandObjectCommandsScriptAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "function", 'f', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePythonFunction,        "Name of the Python function to bind to this command name."},
     { LLDB_OPT_SET_2, false, "class", 'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePythonClass,        "Name of the Python class to bind to this command name."},
-    { LLDB_OPT_SET_ALL, false, "help"  , 'h', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeHelpText, "The help text to display for this command."},
+    { LLDB_OPT_SET_1, false, "help"  , 'h', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeHelpText, "The help text to display for this command."},
     { LLDB_OPT_SET_ALL, false, "synchronicity", 's', OptionParser::eRequiredArgument, NULL, g_script_synchro_type, 0, eArgTypeScriptedCommandSynchronicity,        "Set the synchronicity of this command's executions with regard to LLDB event system."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
