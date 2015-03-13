@@ -562,8 +562,10 @@ def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
         return compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version)
     if bugnumber: return expectedFailure(fn, bugnumber)
 
-def expectedFailureClang(bugnumber=None):
-    if bugnumber: return expectedFailureCompiler('clang', None, bugnumber)
+# to XFAIL a specific clang versions, try this
+# @expectedFailureClang('bugnumber', ['<=', '3.4'])
+def expectedFailureClang(bugnumber=None, compiler_version=None):
+    if bugnumber: return expectedFailureCompiler('clang', compiler_version, bugnumber)
 
 def expectedFailureGcc(bugnumber=None, compiler_version=None):
     if bugnumber: return expectedFailureCompiler('gcc', compiler_version, bugnumber)
