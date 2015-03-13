@@ -155,8 +155,8 @@ define void @test10() {
 entry:
 ; ALL-LABEL: @test10(
 ; ALL: %v32 = alloca i1, align 8
-; ALL: %v64 = alloca i1, i64 1, align 8
-; ALL: %v33 = alloca i1, i33 1, align 8
+; ALL: %v64 = alloca i1, align 8
+; ALL: %v33 = alloca i1, align 8
   %v32 = alloca i1, align 8
   %v64 = alloca i1, i64 1, align 8
   %v33 = alloca i1, i33 1, align 8

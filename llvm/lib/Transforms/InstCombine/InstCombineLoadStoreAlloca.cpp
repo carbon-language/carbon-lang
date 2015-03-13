@@ -166,8 +166,16 @@ isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
 
 static Instruction *simplifyAllocaArraySize(InstCombiner &IC, AllocaInst &AI) {
   // Check for array size of 1 (scalar allocation).
-  if (!AI.isArrayAllocation())
-    return nullptr;
+  if (!AI.isArrayAllocation()) {
+    // i32 1 is the canonical array size for scalar allocations.
+    if (AI.getArraySize()->getType()->isIntegerTy(32))
+      return nullptr;
+
+    // Canonicalize it.
+    Value *V = IC.Builder->getInt32(1);
+    AI.setOperand(0, V);
+    return &AI;
+  }
 
   // Convert: alloca Ty, C - where C is a constant != 1 into: alloca [C x Ty], 1
   if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
