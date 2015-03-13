@@ -453,6 +453,44 @@ LLDBSwigPythonCreateSyntheticProvider
 }
 
 SWIGEXPORT void*
+LLDBSwigPythonCreateCommandObject
+(
+    const char *python_class_name,
+    const char *session_dictionary_name,
+    const lldb::DebuggerSP debugger_sp
+)
+{
+    PyObject* retval = NULL;
+
+    if (python_class_name == NULL || python_class_name[0] == '\0' || !session_dictionary_name)
+        Py_RETURN_NONE;
+
+    lldb::SBDebugger debugger_sb(debugger_sp);
+
+    {
+        PyErr_Cleaner py_err_cleaner(true);
+        
+        PyCallable pfunc = PyCallable::FindWithFunctionName(python_class_name,session_dictionary_name);
+        
+        if (!pfunc)
+            return retval;
+        
+        PyObject* session_dict = NULL;
+        session_dict = FindSessionDictionary(session_dictionary_name);
+        retval = pfunc(debugger_sb, session_dict);
+        
+        Py_XINCREF (session_dict);
+        
+        Py_XINCREF(retval);
+    }
+    
+    if (retval)
+        return retval;
+    else
+        Py_RETURN_NONE;
+}
+
+SWIGEXPORT void*
 LLDBSwigPythonCreateScriptedThreadPlan
 (
     const char *python_class_name,
@@ -837,6 +875,46 @@ LLDBSwigPythonCallCommand
             pvalue = pfunc(debugger_sb, args, &cmd_retobj_sb, session_dict = FindSessionDictionary(session_dictionary_name));
         
         Py_XINCREF (session_dict);
+        Py_XDECREF (pvalue);
+        
+        retval = true;
+    }
+    
+    return retval;
+}
+
+SWIGEXPORT bool
+LLDBSwigPythonCallCommandObject
+(
+    PyObject *implementor,
+    lldb::DebuggerSP& debugger,
+    const char* args,
+    lldb_private::CommandReturnObject& cmd_retobj,
+    lldb::ExecutionContextRefSP exe_ctx_ref_sp
+)
+{
+
+    lldb::SBCommandReturnObject cmd_retobj_sb(&cmd_retobj);
+    SBCommandReturnObjectReleaser cmd_retobj_sb_releaser(cmd_retobj_sb);
+    lldb::SBDebugger debugger_sb(debugger);
+    lldb::SBExecutionContext exe_ctx_sb(exe_ctx_ref_sp);
+
+    bool retval = false;
+
+    {
+        PyErr_Cleaner py_err_cleaner(true);
+
+        PyCallable pfunc = PyCallable::FindWithMemberFunction(implementor,"__call__");
+    
+        if (!pfunc)
+            return NULL;
+
+        // pass the pointer-to cmd_retobj_sb or watch the underlying object disappear from under you
+        // see comment above for SBCommandReturnObjectReleaser for further details
+        PyObject* pvalue = NULL;
+
+        pvalue = pfunc(debugger_sb, args, exe_ctx_sb, &cmd_retobj_sb);
+
         Py_XDECREF (pvalue);
         
         retval = true;

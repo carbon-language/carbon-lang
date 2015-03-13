@@ -603,6 +603,10 @@ LLDBSwigPythonCreateSyntheticProvider (const char *python_class_name,
                                        const char *session_dictionary_name,
                                        const lldb::ValueObjectSP& valobj_sp);
 
+extern "C" void*
+LLDBSwigPythonCreateCommandObject (const char *python_class_name,
+                                   const char *session_dictionary_name,
+                                   const lldb::DebuggerSP debugger_sp);
 
 extern "C" void*
 LLDBSwigPythonCreateScriptedThreadPlan (const char *python_class_name,
@@ -646,6 +650,13 @@ LLDBSwigPythonCallCommand (const char *python_function_name,
                            const char* args,
                            lldb_private::CommandReturnObject &cmd_retobj,
                            lldb::ExecutionContextRefSP exe_ctx_ref_sp);
+
+extern "C" bool
+LLDBSwigPythonCallCommandObject (void *implementor,
+                                 lldb::DebuggerSP& debugger,
+                                 const char* args,
+                                 lldb_private::CommandReturnObject& cmd_retobj,
+                                 lldb::ExecutionContextRefSP exe_ctx_ref_sp);
 
 extern "C" bool
 LLDBSwigPythonCallModuleInit (const char *python_module_name,
@@ -708,6 +719,7 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSwigPythonWatchpointCallbackFunction,
                                                   LLDBSwigPythonCallTypeScript,
                                                   LLDBSwigPythonCreateSyntheticProvider,
+                                                  LLDBSwigPythonCreateCommandObject,
                                                   LLDBSwigPython_CalculateNumChildren,
                                                   LLDBSwigPython_GetChildAtIndex,
                                                   LLDBSwigPython_GetIndexOfChildWithName,
@@ -717,6 +729,7 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSwigPython_MightHaveChildrenSynthProviderInstance,
                                                   LLDBSwigPython_GetValueSynthProviderInstance,
                                                   LLDBSwigPythonCallCommand,
+                                                  LLDBSwigPythonCallCommandObject,
                                                   LLDBSwigPythonCallModuleInit,
                                                   LLDBSWIGPythonCreateOSPlugin,
                                                   LLDBSWIGPythonRunScriptKeywordProcess,

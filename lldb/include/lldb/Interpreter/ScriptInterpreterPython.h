@@ -85,6 +85,9 @@ public:
                                      lldb::ValueObjectSP valobj) override;
 
     lldb::ScriptInterpreterObjectSP
+    CreateScriptCommandObject (const char *class_name) override;
+    
+    lldb::ScriptInterpreterObjectSP
     CreateScriptedThreadPlan (const char *class_name,
                               lldb::ThreadPlanSP thread_plan) override;
 
@@ -154,6 +157,14 @@ public:
                           lldb_private::CommandReturnObject& cmd_retobj,
                           Error& error,
                           const lldb_private::ExecutionContext& exe_ctx) override;
+    
+    bool
+    RunScriptBasedCommand (lldb::ScriptInterpreterObjectSP impl_obj_sp,
+                           const char* args,
+                           ScriptedCommandSynchronicity synchronicity,
+                           lldb_private::CommandReturnObject& cmd_retobj,
+                           Error& error,
+                           const lldb_private::ExecutionContext& exe_ctx) override;
     
     Error
     GenerateFunction(const char *signature, const StringList &input) override;
@@ -294,6 +305,7 @@ public:
                            SWIGWatchpointCallbackFunction swig_watchpoint_callback,
                            SWIGPythonTypeScriptCallbackFunction swig_typescript_callback,
                            SWIGPythonCreateSyntheticProvider swig_synthetic_script,
+                           SWIGPythonCreateCommandObject swig_create_cmd,
                            SWIGPythonCalculateNumChildren swig_calc_children,
                            SWIGPythonGetChildAtIndex swig_get_child_index,
                            SWIGPythonGetIndexOfChildWithName swig_get_index_child,
@@ -303,6 +315,7 @@ public:
                            SWIGPythonMightHaveChildrenSynthProviderInstance swig_mighthavechildren_provider,
                            SWIGPythonGetValueSynthProviderInstance swig_getvalue_provider,
                            SWIGPythonCallCommand swig_call_command,
+                           SWIGPythonCallCommandObject swig_call_command_object,
                            SWIGPythonCallModuleInit swig_call_module_init,
                            SWIGPythonCreateOSPlugin swig_create_os_plugin,
                            SWIGPythonScriptKeyword_Process swig_run_script_keyword_process,

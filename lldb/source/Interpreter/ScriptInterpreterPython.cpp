@@ -54,6 +54,7 @@ static ScriptInterpreter::SWIGBreakpointCallbackFunction g_swig_breakpoint_callb
 static ScriptInterpreter::SWIGWatchpointCallbackFunction g_swig_watchpoint_callback = nullptr;
 static ScriptInterpreter::SWIGPythonTypeScriptCallbackFunction g_swig_typescript_callback = nullptr;
 static ScriptInterpreter::SWIGPythonCreateSyntheticProvider g_swig_synthetic_script = nullptr;
+static ScriptInterpreter::SWIGPythonCreateCommandObject g_swig_create_cmd = nullptr;
 static ScriptInterpreter::SWIGPythonCalculateNumChildren g_swig_calc_children = nullptr;
 static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = nullptr;
 static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = nullptr;
@@ -63,6 +64,7 @@ static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_pr
 static ScriptInterpreter::SWIGPythonMightHaveChildrenSynthProviderInstance g_swig_mighthavechildren_provider = nullptr;
 static ScriptInterpreter::SWIGPythonGetValueSynthProviderInstance g_swig_getvalue_provider = nullptr;
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = nullptr;
+static ScriptInterpreter::SWIGPythonCallCommandObject g_swig_call_command_object = nullptr;
 static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = nullptr;
 static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = nullptr;
 static ScriptInterpreter::SWIGPythonScriptKeyword_Process g_swig_run_script_keyword_process = nullptr;
@@ -1807,6 +1809,29 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name
     return MakeScriptObject(ret_val);
 }
 
+lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::CreateScriptCommandObject (const char *class_name)
+{
+    DebuggerSP debugger_sp(GetCommandInterpreter().GetDebugger().shared_from_this());
+    
+    if (class_name == nullptr || class_name[0] == '\0')
+        return lldb::ScriptInterpreterObjectSP();
+    
+    if (!debugger_sp.get())
+        return lldb::ScriptInterpreterObjectSP();
+    
+    void* ret_val;
+    
+    {
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
+        ret_val = g_swig_create_cmd (class_name,
+                                     m_dictionary_name.c_str(),
+                                     debugger_sp);
+    }
+    
+    return MakeScriptObject(ret_val);
+}
+
 bool
 ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, std::string& output, const void* name_token)
 {
@@ -2680,6 +2705,62 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     return ret_val;
 }
 
+bool
+ScriptInterpreterPython::RunScriptBasedCommand (lldb::ScriptInterpreterObjectSP impl_obj_sp,
+                                                const char* args,
+                                                ScriptedCommandSynchronicity synchronicity,
+                                                lldb_private::CommandReturnObject& cmd_retobj,
+                                                Error& error,
+                                                const lldb_private::ExecutionContext& exe_ctx)
+{
+    if (!impl_obj_sp || !impl_obj_sp->GetObject())
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    
+    if (!g_swig_call_command_object)
+    {
+        error.SetErrorString("no helper function to run scripted commands");
+        return false;
+    }
+    
+    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().shared_from_this();
+    lldb::ExecutionContextRefSP exe_ctx_ref_sp(new ExecutionContextRef(exe_ctx));
+    
+    if (!debugger_sp.get())
+    {
+        error.SetErrorString("invalid Debugger pointer");
+        return false;
+    }
+    
+    bool ret_val = false;
+    
+    std::string err_msg;
+    
+    {
+        Locker py_lock(this,
+                       Locker::AcquireLock | Locker::InitSession | (cmd_retobj.GetInteractive() ? 0 : Locker::NoSTDIN),
+                       Locker::FreeLock    | Locker::TearDownSession);
+        
+        SynchronicityHandler synch_handler(debugger_sp,
+                                           synchronicity);
+        
+        ret_val = g_swig_call_command_object      (impl_obj_sp->GetObject(),
+                                                   debugger_sp,
+                                                   args,
+                                                   cmd_retobj,
+                                                   exe_ctx_ref_sp);
+    }
+    
+    if (!ret_val)
+        error.SetErrorString("unable to execute script function");
+    else
+        error.Clear();
+
+    return ret_val;
+}
+
 // in Python, a special attribute __doc__ contains the docstring
 // for an object (function, method, class, ...) if any is defined
 // Otherwise, the attribute's value is None
@@ -2727,6 +2808,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
                                                 SWIGWatchpointCallbackFunction swig_watchpoint_callback,
                                                 SWIGPythonTypeScriptCallbackFunction swig_typescript_callback,
                                                 SWIGPythonCreateSyntheticProvider swig_synthetic_script,
+                                                SWIGPythonCreateCommandObject swig_create_cmd,
                                                 SWIGPythonCalculateNumChildren swig_calc_children,
                                                 SWIGPythonGetChildAtIndex swig_get_child_index,
                                                 SWIGPythonGetIndexOfChildWithName swig_get_index_child,
@@ -2736,6 +2818,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
                                                 SWIGPythonMightHaveChildrenSynthProviderInstance swig_mighthavechildren_provider,
                                                 SWIGPythonGetValueSynthProviderInstance swig_getvalue_provider,
                                                 SWIGPythonCallCommand swig_call_command,
+                                                SWIGPythonCallCommandObject swig_call_command_object,
                                                 SWIGPythonCallModuleInit swig_call_module_init,
                                                 SWIGPythonCreateOSPlugin swig_create_os_plugin,
                                                 SWIGPythonScriptKeyword_Process swig_run_script_keyword_process,
@@ -2752,6 +2835,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
     g_swig_watchpoint_callback = swig_watchpoint_callback;
     g_swig_typescript_callback = swig_typescript_callback;
     g_swig_synthetic_script = swig_synthetic_script;
+    g_swig_create_cmd = swig_create_cmd;
     g_swig_calc_children = swig_calc_children;
     g_swig_get_child_index = swig_get_child_index;
     g_swig_get_index_child = swig_get_index_child;
@@ -2761,6 +2845,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
     g_swig_mighthavechildren_provider = swig_mighthavechildren_provider;
     g_swig_getvalue_provider = swig_getvalue_provider;
     g_swig_call_command = swig_call_command;
+    g_swig_call_command_object = swig_call_command_object;
     g_swig_call_module_init = swig_call_module_init;
     g_swig_create_os_plugin = swig_create_os_plugin;
     g_swig_run_script_keyword_process = swig_run_script_keyword_process;
