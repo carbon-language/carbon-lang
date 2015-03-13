@@ -14,6 +14,8 @@ int main() {
 
   S<int>(42, 42, 42,);
   S<int> z(42, 42, 42,);
+
+  int(42);
 }
 
 // RUN: c-index-test -code-completion-at=%s:11:10 %s | FileCheck -check-prefix=CHECK-CC1 %s
@@ -124,3 +126,15 @@ int main() {
 // CHECK-CC9-NEXT: Class name
 // CHECK-CC9-NEXT: Nested name specifier
 // CHECK-CC9-NEXT: Objective-C interface
+
+// RUN: c-index-test -code-completion-at=%s:18:7 %s | FileCheck -check-prefix=CHECK-CC10 %s
+// CHECK-CC10: FunctionDecl:{ResultType int}{TypedText main}{LeftParen (}{RightParen )} (12)
+// CHECK-CC10: Completion contexts:
+// CHECK-CC10-NEXT: Any type
+// CHECK-CC10-NEXT: Any value
+// CHECK-CC10-NEXT: Enum tag
+// CHECK-CC10-NEXT: Union tag
+// CHECK-CC10-NEXT: Struct tag
+// CHECK-CC10-NEXT: Class name
+// CHECK-CC10-NEXT: Nested name specifier
+// CHECK-CC10-NEXT: Objective-C interface

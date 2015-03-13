@@ -4035,12 +4035,18 @@ void Sema::CodeCompleteConstructor(Scope *S, QualType Type, SourceLocation Loc,
   if (RequireCompleteType(Loc, Type, 0))
     return;
 
+  CXXRecordDecl *RD = Type->getAsCXXRecordDecl();
+  if (!RD) {
+    CodeCompleteExpression(S, Type);
+    return;
+  }
+
   // FIXME: Provide support for member initializers.
   // FIXME: Provide support for variadic template constructors.
 
   OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
 
-  for (auto C : LookupConstructors(Type->getAsCXXRecordDecl())) {
+  for (auto C : LookupConstructors(RD)) {
     if (auto FD = dyn_cast<FunctionDecl>(C)) {
       AddOverloadCandidate(FD, DeclAccessPair::make(FD, C->getAccess()),
                            Args, CandidateSet,
