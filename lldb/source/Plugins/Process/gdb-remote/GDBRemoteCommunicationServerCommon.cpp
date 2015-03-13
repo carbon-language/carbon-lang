@@ -39,6 +39,10 @@
 #include "ProcessGDBRemoteLog.h"
 #include "Utility/StringExtractorGDBRemote.h"
 
+#ifdef __ANDROID__
+#include "lldb/Host/android/HostInfoAndroid.h"
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -1131,14 +1135,21 @@ GDBRemoteCommunicationServerCommon::Handle_qModuleInfo (StringExtractorGDBRemote
     packet.GetHexByteStringTerminatedBy(module_path, ';');
     if (module_path.empty())
         return SendErrorResponse (1);
-    const FileSpec module_path_spec(module_path.c_str(), true);
 
     if (packet.GetChar() != ';')
         return SendErrorResponse (2);
 
     std::string triple;
     packet.GetHexByteString(triple);
-    const ModuleSpec module_spec(module_path_spec, ArchSpec(triple.c_str()));
+    ArchSpec arch(triple.c_str());
+
+#ifdef __ANDROID__
+    const FileSpec module_path_spec = HostInfoAndroid::ResolveLibraryPath(module_path, arch);
+#else
+    const FileSpec module_path_spec(module_path.c_str(), true);
+#endif
+
+    const ModuleSpec module_spec(module_path_spec, arch);
 
     ModuleSpecList module_specs;
     if (!ObjectFile::GetModuleSpecifications(module_path_spec, 0, 0, module_specs))
@@ -1173,6 +1184,9 @@ GDBRemoteCommunicationServerCommon::Handle_qModuleInfo (StringExtractorGDBRemote
     response.PutCStringAsRawHex8( module_arch.GetTriple().getTriple().c_str());
     response.PutChar(';');
 
+    response.PutCString("file_path:");
+    response.PutCStringAsRawHex8(module_path_spec.GetPath().c_str());
+    response.PutChar(';');
     response.PutCString("file_offset:");
     response.PutHex64(file_offset);
     response.PutChar(';');

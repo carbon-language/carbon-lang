@@ -252,6 +252,13 @@ PlatformRemoteGDBServer::GetModuleSpec (const FileSpec& module_file_spec,
             if (success)
                 module_spec.SetObjectSize (ival);
         }
+        else if (name == "file_path")
+        {
+            extractor.GetStringRef ().swap (value);
+            extractor.SetFilePos (0);
+            extractor.GetHexByteString (value);
+            module_spec.GetFileSpec () = FileSpec (value.c_str(), false);
+        }
     }
 
     if (log)

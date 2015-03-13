@@ -21,6 +21,7 @@ class HostInfoAndroid : public HostInfoLinux
 
   public:
     static FileSpec GetDefaultShell();
+    static FileSpec ResolveLibraryPath (const std::string& path, const ArchSpec& arch);
 
   protected:
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
