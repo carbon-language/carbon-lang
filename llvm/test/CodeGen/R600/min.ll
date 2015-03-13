@@ -50,6 +50,24 @@ define void @s_test_imin_slt_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwin
   ret void
 }
 
+; FUNC-LABEL: {{^}}s_test_imin_slt_imm_i32:
+; SI: s_min_i32 {{s[0-9]+}}, {{s[0-9]+}}, 8
+define void @s_test_imin_slt_imm_i32(i32 addrspace(1)* %out, i32 %a) nounwind {
+  %cmp = icmp slt i32 %a, 8
+  %val = select i1 %cmp, i32 %a, i32 8
+  store i32 %val, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: {{^}}s_test_imin_sle_imm_i32:
+; SI: s_min_i32 {{s[0-9]+}}, {{s[0-9]+}}, 8
+define void @s_test_imin_sle_imm_i32(i32 addrspace(1)* %out, i32 %a) nounwind {
+  %cmp = icmp sle i32 %a, 8
+  %val = select i1 %cmp, i32 %a, i32 8
+  store i32 %val, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 ; FUNC-LABEL: @v_test_umin_ule_i32
 ; SI: v_min_u32_e32
 define void @v_test_umin_ule_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
