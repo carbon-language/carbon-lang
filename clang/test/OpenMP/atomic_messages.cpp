@@ -4,14 +4,16 @@ int foo() {
 L1:
   foo();
 #pragma omp atomic
-  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   {
     foo();
     goto L1; // expected-error {{use of undeclared label 'L1'}}
   }
   goto L2; // expected-error {{use of undeclared label 'L2'}}
 #pragma omp atomic
-  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   {
     foo();
   L2:
@@ -153,14 +155,88 @@ T update() {
   T a, b = 0;
 // Test for atomic update
 #pragma omp atomic update
-  // expected-error@+1 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'update' clause}}
 #pragma omp atomic update update
   a += b;
+#pragma omp atomic
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected built-in binary operator}}
+  a = b;
+#pragma omp atomic update
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected one of '+', '*', '-', '/', '&', '^', '|', '<<', or '>>' built-in operations}}
+  a = b || a;
+#pragma omp atomic update
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected one of '+', '*', '-', '/', '&', '^', '|', '<<', or '>>' built-in operations}}
+  a = a && b;
+#pragma omp atomic update
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  a = float(a) + b;
+#pragma omp atomic
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  a = 2 * b;
+#pragma omp atomic
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  a = b + *&a;
+#pragma omp atomic
+  *&a = b * *&a;
+#pragma omp atomic update
+  a++;
+#pragma omp atomic
+  ++a;
+#pragma omp atomic update
+  a--;
+#pragma omp atomic
+  --a;
+#pragma omp atomic update
+  a += b;
+#pragma omp atomic
+  a %= b;
+#pragma omp atomic update
+  a *= b;
+#pragma omp atomic
+  a -= b;
+#pragma omp atomic update
+  a /= b;
+#pragma omp atomic
+  a &= b;
+#pragma omp atomic update
+  a ^= b;
+#pragma omp atomic
+  a |= b;
+#pragma omp atomic update
+  a <<= b;
+#pragma omp atomic
+  a >>= b;
+#pragma omp atomic update
+  a = b + a;
+#pragma omp atomic
+  a = a * b;
+#pragma omp atomic update
+  a = b - a;
+#pragma omp atomic
+  a = a / b;
+#pragma omp atomic update
+  a = b & a;
+#pragma omp atomic
+  a = a ^ b;
+#pragma omp atomic update
+  a = b | a;
+#pragma omp atomic
+  a = a << b;
+#pragma omp atomic
+  a = b >> a;
 
 #pragma omp atomic
-  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 
   return T();
@@ -170,14 +246,85 @@ int update() {
   int a, b = 0;
 // Test for atomic update
 #pragma omp atomic update
-  // expected-error@+1 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'update' clause}}
 #pragma omp atomic update update
   a += b;
-
 #pragma omp atomic
-  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected built-in binary operator}}
+  a = b;
+#pragma omp atomic update
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected one of '+', '*', '-', '/', '&', '^', '|', '<<', or '>>' built-in operations}}
+  a = b || a;
+#pragma omp atomic update
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected one of '+', '*', '-', '/', '&', '^', '|', '<<', or '>>' built-in operations}}
+  a = a && b;
+#pragma omp atomic update
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  a = float(a) + b;
+#pragma omp atomic
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  a = 2 * b;
+#pragma omp atomic
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  a = b + *&a;
+#pragma omp atomic update
+  a++;
+#pragma omp atomic
+  ++a;
+#pragma omp atomic update
+  a--;
+#pragma omp atomic
+  --a;
+#pragma omp atomic update
+  a += b;
+#pragma omp atomic
+  a %= b;
+#pragma omp atomic update
+  a *= b;
+#pragma omp atomic
+  a -= b;
+#pragma omp atomic update
+  a /= b;
+#pragma omp atomic
+  a &= b;
+#pragma omp atomic update
+  a ^= b;
+#pragma omp atomic
+  a |= b;
+#pragma omp atomic update
+  a <<= b;
+#pragma omp atomic
+  a >>= b;
+#pragma omp atomic update
+  a = b + a;
+#pragma omp atomic
+  a = a * b;
+#pragma omp atomic update
+  a = b - a;
+#pragma omp atomic
+  a = a / b;
+#pragma omp atomic update
+  a = b & a;
+#pragma omp atomic
+  a = a ^ b;
+#pragma omp atomic update
+  a = b | a;
+#pragma omp atomic
+  a = a << b;
+#pragma omp atomic
+  a = b >> a;
+#pragma omp atomic
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 
   return update<int>();
@@ -221,14 +368,16 @@ T seq_cst() {
   T a, b = 0;
 // Test for atomic seq_cst
 #pragma omp atomic seq_cst
-  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'seq_cst' clause}}
 #pragma omp atomic seq_cst seq_cst
   a += b;
 
 #pragma omp atomic update seq_cst
-  // expected-error@+1 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 
   return T();
@@ -238,14 +387,16 @@ int seq_cst() {
   int a, b = 0;
 // Test for atomic seq_cst
 #pragma omp atomic seq_cst
-  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'seq_cst' clause}}
 #pragma omp atomic seq_cst seq_cst
   a += b;
 
 #pragma omp atomic update seq_cst
-  // expected-error@+1 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-error@+2 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected an expression statement}}
   ;
 
  return seq_cst<int>();

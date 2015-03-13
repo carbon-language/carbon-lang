@@ -1987,7 +1987,9 @@ void ASTStmtWriter::VisitOMPAtomicDirective(OMPAtomicDirective *D) {
   VisitStmt(D);
   Record.push_back(D->getNumClauses());
   VisitOMPExecutableDirective(D);
+  Record.push_back(D->getOpKind());
   Writer.AddStmt(D->getX());
+  Writer.AddStmt(D->getXRVal());
   Writer.AddStmt(D->getV());
   Writer.AddStmt(D->getExpr());
   Code = serialization::STMT_OMP_ATOMIC_DIRECTIVE;

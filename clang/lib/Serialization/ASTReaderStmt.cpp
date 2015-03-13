@@ -2132,7 +2132,9 @@ void ASTStmtReader::VisitOMPAtomicDirective(OMPAtomicDirective *D) {
   // The NumClauses field was read in ReadStmtFromStream.
   ++Idx;
   VisitOMPExecutableDirective(D);
+  D->setOpKind(static_cast<BinaryOperatorKind>(Record[Idx++]));
   D->setX(Reader.ReadSubExpr());
+  D->setXRVal(Reader.ReadSubExpr());
   D->setV(Reader.ReadSubExpr());
   D->setExpr(Reader.ReadSubExpr());
 }
