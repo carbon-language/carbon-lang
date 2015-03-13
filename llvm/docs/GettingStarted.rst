@@ -61,7 +61,37 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``cd llvm/projects``
    * ``svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite``
 
-#. Configure and build LLVM and Clang:
+#. Configure and build LLVM and Clang (Recommended process using CMake):
+
+   * ``cd where you want to build llvm``
+   * ``mkdir build``
+   * ``cd build``
+   * ``cmake -G <generator> [options] <path to llvm sources>``
+     
+     Some common generators are:
+
+     * ``Unix Makefiles`` --- for generating make-compatible parallel makefiles.
+     * ``Ninja`` --- for generating `Ninja <http://martine.github.io/ninja/>`
+        build files.
+     * ``Visual Studio`` --- for generating Visual Studio projects and
+        solutions.
+     * ``Xcode`` --- for generating Xcode projects.
+     
+     Some Common options:
+
+     * ``-DCMAKE_INSTALL_PREFIX=directory`` --- Specify for *directory* the full
+       pathname of where you want the LLVM tools and libraries to be installed
+       (default ``/usr/local``).
+
+     * ``-DCMAKE_BUILD_TYPE=type`` --- Valid options for *type* are Debug,
+       Release, RelWithDebInfo, and MinSizeRel. Default is Debug.
+
+     * ``-DLLVM_ENABLE_ASSERTIONS=On`` --- Compile with assertion checks enabled
+       (default is Yes for Debug builds, No for all other build types).
+
+   * For more information see `CMake <CMake.html>`_
+
+#. Configure and build LLVM and Clang (Alternate process using configure):
 
    * ``cd where-you-want-to-build-llvm``
    * ``mkdir build`` (for building without polluting the source dir)
@@ -86,11 +116,6 @@ Here's the short story for getting up and running quickly with LLVM:
 
    * ``make check-all`` --- This run the regression tests to ensure everything
      is in working order.
-
-   * It is also possible to use `CMake <CMake.html>`_ instead of the makefiles.
-     With CMake it is possible to generate project files for several IDEs:
-     Xcode, Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks
-     generator), KDevelop3.
 
    * If you get an "internal compiler error (ICE)" or test failures, see
      `below`.
@@ -134,7 +159,8 @@ Windows x64        x86-64                Visual Studio
   #. Code generation supported for Pentium processors and up
   #. Code generation supported for 32-bit ABI only
   #. To use LLVM modules on Win32-based system, you may configure LLVM
-     with ``--enable-shared``.
+     with ``-DBUILD_SHARED_LIBS=On`` for CMake builds or ``--enable-shared``
+     for configure builds.
   #. MCJIT not working well pre-v7, old JIT engine not supported any more.
 
 Note that you will need about 1-3 GB of space for a full LLVM build in Debug
@@ -435,7 +461,7 @@ follows:
 
 * ``cd where-you-want-llvm-to-live``
 * Read-Only: ``svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm``
-* Read-Write:``svn co https://user@llvm.org/svn/llvm-project/llvm/trunk llvm``
+* Read-Write: ``svn co https://user@llvm.org/svn/llvm-project/llvm/trunk llvm``
 
 This will create an '``llvm``' directory in the current directory and fully
 populate it with the LLVM source code, Makefiles, test directories, and local
@@ -664,66 +690,61 @@ Local LLVM Configuration
 ------------------------
 
 Once checked out from the Subversion repository, the LLVM suite source code must
-be configured via the ``configure`` script.  This script sets variables in the
-various ``*.in`` files, most notably ``llvm/Makefile.config`` and
-``llvm/include/Config/config.h``.  It also populates *OBJ_ROOT* with the
-Makefiles needed to begin building LLVM.
+be configured before being built. For instructions using autotools please see
+`Building LLVM With Autotools <BuildingLLVMWithAutotools.html>`_. The
+recommended process uses CMake. Unlinke the normal ``configure`` script, CMake
+generates the build files in whatever format you request as well as various
+``*.inc`` files, and ``llvm/include/Config/config.h``.
 
-The following environment variables are used by the ``configure`` script to
-configure the build system:
+Variables are passed to ``cmake`` on the command line using the format
+``-D<variable name>=<value>``. The following variables are some common options
+used by people developing LLVM.
 
-+------------+-----------------------------------------------------------+
-| Variable   | Purpose                                                   |
-+============+===========================================================+
-| CC         | Tells ``configure`` which C compiler to use.  By default, |
-|            | ``configure`` will check ``PATH`` for ``clang`` and GCC C |
-|            | compilers (in this order).  Use this variable to override |
-|            | ``configure``\'s  default behavior.                       |
-+------------+-----------------------------------------------------------+
-| CXX        | Tells ``configure`` which C++ compiler to use.  By        |
-|            | default, ``configure`` will check ``PATH`` for            |
-|            | ``clang++`` and GCC C++ compilers (in this order).  Use   |
-|            | this variable to override  ``configure``'s default        |
-|            | behavior.                                                 |
-+------------+-----------------------------------------------------------+
-
-The following options can be used to set or enable LLVM specific options:
-
-``--enable-optimized``
-
-  Enables optimized compilation (debugging symbols are removed and GCC
-  optimization flags are enabled). Note that this is the default setting if you
-  are using the LLVM distribution. The default behavior of a Subversion
-  checkout is to use an unoptimized build (also known as a debug build).
-
-``--enable-debug-runtime``
-
-  Enables debug symbols in the runtime libraries. The default is to strip debug
-  symbols from the runtime libraries.
-
-``--enable-jit``
-
-  Compile the Just In Time (JIT) compiler functionality.  This is not available
-  on all platforms.  The default is dependent on platform, so it is best to
-  explicitly enable it if you want it.
-
-``--enable-targets=target-option``
-
-  Controls which targets will be built and linked into llc. The default value
-  for ``target_options`` is "all" which builds and links all available targets.
-  The "host" target is selected as the target of the build host. You can also
-  specify a comma separated list of target names that you want available in llc.
-  The target names use all lower case. The current set of targets is:
-
-    ``aarch64, arm, arm64, cpp, hexagon, mips, mipsel, mips64, mips64el, msp430,
-    powerpc, nvptx, r600, sparc, systemz, x86, x86_64, xcore``.
-
-``--enable-doxygen``
-
-  Look for the doxygen program and enable construction of doxygen based
-  documentation from the source code. This is disabled by default because
-  generating the documentation can take a long time and producess 100s of
-  megabytes of output.
++-------------------------+----------------------------------------------------+
+| Variable                | Purpose                                            |
++=========================+====================================================+
+| CMAKE_C_COMPILER        | Tells ``cmake`` which C compiler to use. By        |
+|                         | default, this will be /usr/bin/cc.                 |
++-------------------------+----------------------------------------------------+
+| CMAKE_CXX_COMPILER      | Tells ``cmake`` which C++ compiler to use. By      |
+|                         | default, this will be /usr/bin/c++.                |
++-------------------------+----------------------------------------------------+
+| CMAKE_BUILD_TYPE        | Tells ``cmake`` what type of build you are trying  |
+|                         | to generate files for. Valid options are Debug,    |
+|                         | Release, RelWithDebInfo, and MinSizeRel. Default   |
+|                         | is Debug.                                          |
++-------------------------+----------------------------------------------------+
+| CMAKE_INSTALL_PREFIX    | Specifies the install directory to target when     |
+|                         | running the install action of the build files.     |
++-------------------------+----------------------------------------------------+
+| LLVM_TARGETS_TO_BUILD   | A semicolon delimited list controlling which       |
+|                         | targets will be built and linked into llc. This is |
+|                         | equivalent to the ``--enable-targets`` option in   |
+|                         | the configure script. The default list is defined  |
+|                         | as ``LLVM_ALL_TARGETS``, and can be set to include |
+|                         | out-of-tree targets. The default value includes:   |
+|                         | ``AArch64, ARM, CppBackend, Hexagon,               |
+|                         | Mips, MSP430, NVPTX, PowerPC, R600, Sparc,         |
+|                         | SystemZ, X86, XCore``.                             |
++-------------------------+----------------------------------------------------+
+| LLVM_ENABLE_DOXYGEN     | Build doxygen-based documentation from the source  |
+|                         | code This is disabled by default because it is     |
+|                         | slow and generates a lot of output.                |
++-------------------------+----------------------------------------------------+
+| LLVM_ENABLE_SPHINX      | Build sphinx-based documentation from the source   |
+|                         | code. This is disabled by default because it is    |
+|                         | slow and generates a lot of output.                |
++-------------------------+----------------------------------------------------+
+| LLVM_BUILD_LLVM_DYLIB   | Generate libLLVM.so. This library contains a       |
+|                         | default set of LLVM components that can be         |
+|                         | overridden with ``LLVM_DYLIB_COMPONENTS``. The     |
+|                         | default contains most of LLVM and is defined in    |
+|                         | ``tools/llvm-shlib/CMakelists.txt``.               |
++-------------------------+----------------------------------------------------+
+| LLVM_OPTIMIZED_TABLEGEN | Builds a release tablegen that gets used during    |
+|                         | the LLVM build. This can dramatically speed up     |
+|                         | debug builds.                                      |
++-------------------------+----------------------------------------------------+
 
 To configure LLVM, follow these steps:
 
@@ -733,47 +754,52 @@ To configure LLVM, follow these steps:
 
      % cd OBJ_ROOT
 
-#. Run the ``configure`` script located in the LLVM source tree:
+#. Run the ``cmake``:
 
    .. code-block:: console
 
-     % SRC_ROOT/configure --prefix=/install/path [other options]
+     % cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=prefix=/install/path
+       [other options] SRC_ROOT
 
 Compiling the LLVM Suite Source Code
 ------------------------------------
 
-Once you have configured LLVM, you can build it.  There are three types of
-builds:
+Unlike with autotools, with CMake your build type is defined at configuration.
+If you want to change your build type, you can re-run cmake with the following
+invocation:
 
-Debug Builds
+   .. code-block:: console
 
-  These builds are the default when one is using a Subversion checkout and
-  types ``gmake`` (unless the ``--enable-optimized`` option was used during
-  configuration).  The build system will compile the tools and libraries with
-  debugging information.  To get a Debug Build using the LLVM distribution the
-  ``--disable-optimized`` option must be passed to ``configure``.
+     % cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=type SRC_ROOT
 
-Release (Optimized) Builds
+Between runs, CMake preserves the values set for all options. CMake has the
+following build types defined:
 
-  These builds are enabled with the ``--enable-optimized`` option to
-  ``configure`` or by specifying ``ENABLE_OPTIMIZED=1`` on the ``gmake`` command
-  line.  For these builds, the build system will compile the tools and libraries
-  with GCC optimizations enabled and strip debugging information from the
-  libraries and executables it generates.  Note that Release Builds are default
-  when using an LLVM distribution.
+Debug
 
-Profile Builds
+  These builds are the default. The build system will compile the tools and
+  libraries unoptimized, with debugging information, and asserts enabled.
 
-  These builds are for use with profiling.  They compile profiling information
-  into the code for use with programs like ``gprof``.  Profile builds must be
-  started by specifying ``ENABLE_PROFILING=1`` on the ``gmake`` command line.
+Release
+
+  For these builds, the build system will compile the tools and libraries
+  with optimizations enabled and not generate debug info. CMakes default
+  optimization level is -O3. This can be configured by setting the
+  ``CMAKE_CXX_FLAGS_RELEASE`` variable on the CMake command line.
+
+RelWithDebInfo
+
+  These builds are useful when debugging. They generate optimized binaries with
+  debug information. CMakes default optimization level is -O2. This can be
+  configured by setting the ``CMAKE_CXX_FLAGS_RELWITHDEBINFO`` variable on the
+  CMake command line.
 
 Once you have LLVM configured, you can build it by entering the *OBJ_ROOT*
 directory and issuing the following command:
 
 .. code-block:: console
 
-  % gmake
+  % make
 
 If the build fails, please `check here`_ to see if you are using a version of
 GCC that is known not to compile LLVM.
@@ -784,110 +810,51 @@ command:
 
 .. code-block:: console
 
-  % gmake -j2
+  % make -j2
 
 There are several special targets which are useful when working with the LLVM
 source code:
 
-``gmake clean``
+``make clean``
 
   Removes all files generated by the build.  This includes object files,
   generated C/C++ files, libraries, and executables.
 
-``gmake dist-clean``
-
-  Removes everything that ``gmake clean`` does, but also removes files generated
-  by ``configure``.  It attempts to return the source tree to the original state
-  in which it was shipped.
-
-``gmake install``
+``make install``
 
   Installs LLVM header files, libraries, tools, and documentation in a hierarchy
-  under ``$PREFIX``, specified with ``./configure --prefix=[dir]``, which
+  under ``$PREFIX``, specified with ``CMAKE_INSTALL_PREFIX``, which
   defaults to ``/usr/local``.
 
-``gmake -C runtime install-bytecode``
+``make docs-llvm-html``
 
-  Assuming you built LLVM into $OBJDIR, when this command is run, it will
-  install bitcode libraries into the GCC front end's bitcode library directory.
-  If you need to update your bitcode libraries, this is the target to use once
-  you've built them.
-
-Please see the `Makefile Guide <MakefileGuide.html>`_ for further details on
-these ``make`` targets and descriptions of other targets available.
-
-It is also possible to override default values from ``configure`` by declaring
-variables on the command line.  The following are some examples:
-
-``gmake ENABLE_OPTIMIZED=1``
-
-  Perform a Release (Optimized) build.
-
-``gmake ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1``
-
-  Perform a Release (Optimized) build without assertions enabled.
- 
-``gmake ENABLE_OPTIMIZED=0``
-
-  Perform a Debug build.
-
-``gmake ENABLE_PROFILING=1``
-
-  Perform a Profiling build.
-
-``gmake VERBOSE=1``
-
-  Print what ``gmake`` is doing on standard output.
-
-``gmake TOOL_VERBOSE=1``
-
-  Ask each tool invoked by the makefiles to print out what it is doing on 
-  the standard output. This also implies ``VERBOSE=1``.
-
-Every directory in the LLVM object tree includes a ``Makefile`` to build it and
-any subdirectories that it contains.  Entering any directory inside the LLVM
-object tree and typing ``gmake`` should rebuild anything in or below that
-directory that is out of date.
-
-This does not apply to building the documentation.
-LLVM's (non-Doxygen) documentation is produced with the
-`Sphinx <http://sphinx-doc.org/>`_ documentation generation system.
-There are some HTML documents that have not yet been converted to the new
-system (which uses the easy-to-read and easy-to-write
-`reStructuredText <http://sphinx-doc.org/rest.html>`_ plaintext markup
-language).
-The generated documentation is built in the ``SRC_ROOT/docs`` directory using
-a special makefile.
-For instructions on how to install Sphinx, see
-`Sphinx Introduction for LLVM Developers
-<http://lld.llvm.org/sphinx_intro.html>`_.
-After following the instructions there for installing Sphinx, build the LLVM
-HTML documentation by doing the following:
-
-.. code-block:: console
-
-  $ cd SRC_ROOT/docs
-  $ make -f Makefile.sphinx
-
-This creates a ``_build/html`` sub-directory with all of the HTML files, not
-just the generated ones.
-This directory corresponds to ``llvm.org/docs``.
-For example, ``_build/html/SphinxQuickstartTemplate.html`` corresponds to
-``llvm.org/docs/SphinxQuickstartTemplate.html``.
-The :doc:`SphinxQuickstartTemplate` is useful when creating a new document.
+  If configured with ``-DLLVM_ENABLE_SPHINX=On``, this will generate a directory
+  at ``OBJ_ROOT/docs/html`` which contains the HTML formatted documentation.
 
 Cross-Compiling LLVM
 --------------------
 
 It is possible to cross-compile LLVM itself. That is, you can create LLVM
 executables and libraries to be hosted on a platform different from the platform
-where they are built (a Canadian Cross build). To configure a cross-compile,
-supply the configure script with ``--build`` and ``--host`` options that are
-different. The values of these options must be legal target triples that your
-GCC compiler supports.
+where they are built (a Canadian Cross build). To generate build files for
+cross-compiling CMake provides a variable ``CMAKE_TOOLCHAIN_FILE`` which can
+define compiler flags and variables used during the CMake test operations.
 
 The result of such a build is executables that are not runnable on on the build
-host (--build option) but can be executed on the compile host (--host option).
+host but can be executed on the target. As an example the following CMake
+invocation can generate build files targeting iOS. This will work on Mac OS X
+with the latest Xcode:
+
+.. code-block:: console
+
+  % cmake -G "Ninja" -DCMAKE_OSX_ARCHITECTURES=“armv7;armv7s;arm64"
+    -DCMAKE_TOOLCHAIN_FILE=<PATH_TO_LLVM>/cmake/platforms/iOS.cmake
+    -DCMAKE_BUILD_TYPE=Release -DLLVM_BUILD_RUNTIME=Off -DLLVM_INCLUDE_TESTS=Off
+    -DLLVM_INCLUDE_EXAMPLES=Off -DLLVM_ENABLE_BACKTRACES=Off [options]
+    <PATH_TO_LLVM>
+
+Note: There are some additional flags that need to be passed when building for
+iOS due to limitations in the iOS SDK.
 
 Check :doc:`HowToCrossCompileLLVM` and `Clang docs on how to cross-compile in general
 <http://clang.llvm.org/docs/CrossCompilation.html>`_ for more information
@@ -908,44 +875,25 @@ This is accomplished in the typical autoconf manner:
 
     % cd OBJ_ROOT
 
-* Run the ``configure`` script found in the LLVM source directory:
+* Run ``cmake``:
 
   .. code-block:: console
 
-    % SRC_ROOT/configure
+    % cmake -G "Unix Makefiles" SRC_ROOT
 
-The LLVM build will place files underneath *OBJ_ROOT* in directories named after
-the build type:
+The LLVM build will create a structure underneath *OBJ_ROOT* that matches the
+LLVM source tree. At each level where source files are present in the source
+tree there will be a corresponding ``CMakeFiles`` directory in the *OBJ_ROOT*.
+Underneath that directory there is another directory with a name ending in
+``.dir`` under which you'll find object files for each source.
 
-Debug Builds with assertions enabled (the default)
+For example:
 
-  Tools
-
-    ``OBJ_ROOT/Debug+Asserts/bin``
-
-  Libraries
-
-    ``OBJ_ROOT/Debug+Asserts/lib``
-
-Release Builds
-
-  Tools
-
-    ``OBJ_ROOT/Release/bin``
-
-  Libraries
-
-    ``OBJ_ROOT/Release/lib``
-
-Profile Builds
-
-  Tools
-
-    ``OBJ_ROOT/Profile/bin``
-
-  Libraries
-
-    ``OBJ_ROOT/Profile/lib``
+  .. code-block:: console
+  
+    % cd llvm_build_dir
+    % find lib/Support/ -name APFloat*
+    lib/Support/CMakeFiles/LLVMSupport.dir/APFloat.cpp.o
 
 Optional Configuration Items
 ----------------------------
