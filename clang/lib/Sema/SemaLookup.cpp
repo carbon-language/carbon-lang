@@ -3685,8 +3685,7 @@ void TypoCorrectionConsumer::performQualifiedLookups() {
 
 TypoCorrectionConsumer::NamespaceSpecifierSet::NamespaceSpecifierSet(
     ASTContext &Context, DeclContext *CurContext, CXXScopeSpec *CurScopeSpec)
-    : Context(Context), CurContextChain(buildContextChain(CurContext)),
-      isSorted(false) {
+    : Context(Context), CurContextChain(buildContextChain(CurContext)) {
   if (NestedNameSpecifier *NNS =
           CurScopeSpec ? CurScopeSpec->getScopeRep() : nullptr) {
     llvm::raw_string_ostream SpecifierOStream(CurNameSpecifier);
@@ -3705,7 +3704,6 @@ TypoCorrectionConsumer::NamespaceSpecifierSet::NamespaceSpecifierSet(
   }
 
   // Add the global context as a NestedNameSpecifier
-  Distances.insert(1);
   SpecifierInfo SI = {cast<DeclContext>(Context.getTranslationUnitDecl()),
                       NestedNameSpecifier::GlobalSpecifier(Context), 1};
   DistanceMap[1].push_back(SI);
@@ -3723,22 +3721,6 @@ auto TypoCorrectionConsumer::NamespaceSpecifierSet::buildContextChain(
       Chain.push_back(DC->getPrimaryContext());
   }
   return Chain;
-}
-
-void TypoCorrectionConsumer::NamespaceSpecifierSet::sortNamespaces() {
-  SmallVector<unsigned, 4> sortedDistances;
-  sortedDistances.append(Distances.begin(), Distances.end());
-
-  if (sortedDistances.size() > 1)
-    std::sort(sortedDistances.begin(), sortedDistances.end());
-
-  Specifiers.clear();
-  for (auto D : sortedDistances) {
-    SpecifierInfoList &SpecList = DistanceMap[D];
-    Specifiers.append(SpecList.begin(), SpecList.end());
-  }
-
-  isSorted = true;
 }
 
 unsigned
@@ -3821,8 +3803,6 @@ void TypoCorrectionConsumer::NamespaceSpecifierSet::addNameSpecifier(
         llvm::makeArrayRef(NewNameSpecifierIdentifiers));
   }
 
-  isSorted = false;
-  Distances.insert(NumSpecifiers);
   SpecifierInfo SI = {Ctx, NNS, NumSpecifiers};
   DistanceMap[NumSpecifiers].push_back(SI);
 }
