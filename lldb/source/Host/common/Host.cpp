@@ -113,7 +113,7 @@ Host::StartMonitoringChildProcess(Host::MonitorChildProcessCallback callback, vo
     return ThreadLauncher::LaunchThread(thread_name, MonitorChildProcessThreadFunction, info_ptr, NULL);
 }
 
-#if !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
+#ifndef __linux__
 //------------------------------------------------------------------
 // Scoped class that will disable thread canceling when it is
 // constructed, and exception safely restore the previous value it
@@ -140,7 +140,32 @@ public:
 private:
     int m_old_state;    // Save the old cancelability state.
 };
-#endif // __ANDROID_NDK__
+#endif // __linux__
+
+#ifdef __linux__
+static thread_local volatile sig_atomic_t g_usr1_called;
+
+static void
+SigUsr1Handler (int)
+{
+    g_usr1_called = 1;
+}
+#endif // __linux__
+
+static bool
+CheckForMonitorCancellation()
+{
+#ifdef __linux__
+    if (g_usr1_called)
+    {
+        g_usr1_called = 0;
+        return true;
+    }
+#else
+    ::pthread_testcancel ();
+#endif
+    return false;
+}
 
 static thread_result_t
 MonitorChildProcessThreadFunction (void *arg)
@@ -167,21 +192,29 @@ MonitorChildProcessThreadFunction (void *arg)
 #endif
     const int options = __WALL;
 
+#ifdef __linux__
+    // This signal is only used to interrupt the thread from waitpid
+    struct sigaction sigUsr1Action;
+    memset(&sigUsr1Action, 0, sizeof(sigUsr1Action));
+    sigUsr1Action.sa_handler = SigUsr1Handler;
+    ::sigaction(SIGUSR1, &sigUsr1Action, nullptr);
+#endif // __linux__    
+
     while (1)
     {
         log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
         if (log)
             log->Printf("%s ::waitpid (pid = %" PRIi32 ", &status, options = %i)...", function, pid, options);
 
-        // Wait for all child processes
-#if !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
-        ::pthread_testcancel ();
-#endif
+        if (CheckForMonitorCancellation ())
+            break;
+
         // Get signals from all children with same process group of pid
         const ::pid_t wait_pid = ::waitpid (pid, &status, options);
-#if !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
-        ::pthread_testcancel ();
-#endif
+
+        if (CheckForMonitorCancellation ())
+            break;
+
         if (wait_pid == -1)
         {
             if (errno == EINTR)
@@ -226,7 +259,7 @@ MonitorChildProcessThreadFunction (void *arg)
 
             // Scope for pthread_cancel_disabler
             {
-#if !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
+#ifndef __linux__
                 ScopedPThreadCancelDisabler pthread_cancel_disabler;
 #endif
 

@@ -257,7 +257,7 @@ namespace lldb_private
             Error &error);
 
         /// Attaches to an existing process.  Forms the
-        /// implementation of Process::DoLaunch.
+        /// implementation of Process::DoAttach
         void
         AttachToInferior (lldb::pid_t pid, Error &error);
 
@@ -317,7 +317,7 @@ namespace lldb_private
 
         /// Stops the child monitor thread.
         void
-        StopMonitoringChildProcess();
+        StopMonitorThread();
 
         /// Stops the operation thread used to attach/launch a process.
         void

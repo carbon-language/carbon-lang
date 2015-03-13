@@ -35,11 +35,12 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/State.h"
+#include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/HostNativeThread.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Utility/PseudoTerminal.h"
@@ -3557,11 +3558,11 @@ NativeProcessLinux::DupDescriptor(const char *path, int fd, int flags)
 }
 
 void
-NativeProcessLinux::StopMonitoringChildProcess()
+NativeProcessLinux::StopMonitorThread()
 {
     if (m_monitor_thread.IsJoinable())
     {
-        m_monitor_thread.Cancel();
+        ::pthread_kill(m_monitor_thread.GetNativeThread().GetSystemHandle(), SIGUSR1);
         m_monitor_thread.Join(nullptr);
     }
 }
@@ -3569,7 +3570,7 @@ NativeProcessLinux::StopMonitoringChildProcess()
 void
 NativeProcessLinux::StopMonitor()
 {
-    StopMonitoringChildProcess();
+    StopMonitorThread();
     StopCoordinatorThread ();
     StopOpThread();
     sem_destroy(&m_operation_pending);
