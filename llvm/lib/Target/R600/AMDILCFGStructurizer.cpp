@@ -8,6 +8,8 @@
 /// \file
 //==-----------------------------------------------------------------------===//
 
+#include <deque>
+
 #include "AMDGPU.h"
 #include "AMDGPUInstrInfo.h"
 #include "R600InstrInfo.h"
@@ -1075,21 +1077,19 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
 }
 
 int AMDGPUCFGStructurizer::loopendPatternMatch() {
-  std::vector<MachineLoop *> NestedLoops;
-  for (MachineLoopInfo::iterator It = MLI->begin(), E = MLI->end(); It != E;
-       ++It)
-    for (MachineLoop *ML : depth_first(*It))
-      NestedLoops.push_back(ML);
+  std::deque<MachineLoop *> NestedLoops;
+  for (auto &It: *MLI)
+    for (MachineLoop *ML : depth_first(It))
+      NestedLoops.push_front(ML);
 
   if (NestedLoops.size() == 0)
     return 0;
 
-  // Process nested loop outside->inside, so "continue" to a outside loop won't
-  // be mistaken as "break" of the current loop.
+  // Process nested loop outside->inside (we did push_front),
+  // so "continue" to a outside loop won't be mistaken as "break"
+  // of the current loop.
   int Num = 0;
-  for (std::vector<MachineLoop *>::reverse_iterator It = NestedLoops.rbegin(),
-      E = NestedLoops.rend(); It != E; ++It) {
-    MachineLoop *ExaminedLoop = *It;
+  for (MachineLoop *ExaminedLoop : NestedLoops) {
     if (ExaminedLoop->getNumBlocks() == 0 || Visited[ExaminedLoop])
       continue;
     DEBUG(dbgs() << "Processing:\n"; ExaminedLoop->dump(););
