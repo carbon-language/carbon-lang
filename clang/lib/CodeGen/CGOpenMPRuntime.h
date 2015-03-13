@@ -65,11 +65,7 @@ class CGOpenMPRuntime {
     // Call to kmp_int32 __kmpc_cancel_barrier(ident_t *loc, kmp_int32
     // global_tid);
     OMPRTL__kmpc_cancel_barrier,
-    // Calls for static scheduling 'omp for' loops.
-    OMPRTL__kmpc_for_static_init_4,
-    OMPRTL__kmpc_for_static_init_4u,
-    OMPRTL__kmpc_for_static_init_8,
-    OMPRTL__kmpc_for_static_init_8u,
+    // Call to void __kmpc_for_static_fini(ident_t *loc, kmp_int32 global_tid);
     OMPRTL__kmpc_for_static_fini,
     // Call to void __kmpc_serialized_parallel(ident_t *loc, kmp_int32
     // global_tid);
@@ -221,6 +217,10 @@ class CGOpenMPRuntime {
   /// \param Function OpenMP runtime function.
   /// \return Specified function.
   llvm::Constant *createRuntimeFunction(OpenMPRTLFunction Function);
+
+  /// \brief Returns __kmpc_for_static_init_* runtime function for the specified
+  /// size \a IVSize and sign \a IVSigned.
+  llvm::Constant *createForStaticInitFunction(unsigned IVSize, bool IVSigned);
 
   /// \brief Returns __kmpc_dispatch_init_* runtime function for the specified
   /// size \a IVSize and sign \a IVSigned.
