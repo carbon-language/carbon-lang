@@ -1517,9 +1517,9 @@ static void emitDebugLocValue(const AsmPrinter &AP,
                               const DebugLocEntry::Value &Value,
                               unsigned PieceOffsetInBits) {
   DIVariable DV = Value.getVariable();
-  DebugLocDwarfExpression DwarfExpr(
-      *AP.TM.getSubtargetImpl()->getRegisterInfo(),
-      AP.getDwarfDebug()->getDwarfVersion(), Streamer);
+  DebugLocDwarfExpression DwarfExpr(*AP.MF->getSubtarget().getRegisterInfo(),
+                                    AP.getDwarfDebug()->getDwarfVersion(),
+                                    Streamer);
   // Regular entry.
   if (Value.isInt()) {
     DIBasicType BTy(DV.getType().resolve(TypeIdentifierMap));
@@ -1570,9 +1570,9 @@ void DebugLocEntry::finalize(const AsmPrinter &AP,
       assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
       if (Offset < PieceOffset) {
         // The DWARF spec seriously mandates pieces with no locations for gaps.
-        DebugLocDwarfExpression Expr(
-            *AP.TM.getSubtargetImpl()->getRegisterInfo(),
-            AP.getDwarfDebug()->getDwarfVersion(), Streamer);
+        DebugLocDwarfExpression Expr(*AP.MF->getSubtarget().getRegisterInfo(),
+                                     AP.getDwarfDebug()->getDwarfVersion(),
+                                     Streamer);
         Expr.AddOpPiece(PieceOffset-Offset, 0);
         Offset += PieceOffset-Offset;
       }
