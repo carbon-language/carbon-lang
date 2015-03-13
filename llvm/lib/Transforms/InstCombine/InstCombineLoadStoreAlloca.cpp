@@ -164,12 +164,12 @@ isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
   return nullptr;
 }
 
-Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
+static Instruction *simplifyAllocaArraySize(InstCombiner &IC, AllocaInst &AI) {
   // Ensure that the alloca array size argument has type intptr_t, so that
   // any casting is exposed early.
-  Type *IntPtrTy = DL.getIntPtrType(AI.getType());
+  Type *IntPtrTy = IC.getDataLayout().getIntPtrType(AI.getType());
   if (AI.getArraySize()->getType() != IntPtrTy) {
-    Value *V = Builder->CreateIntCast(AI.getArraySize(), IntPtrTy, false);
+    Value *V = IC.Builder->CreateIntCast(AI.getArraySize(), IntPtrTy, false);
     AI.setOperand(0, V);
     return &AI;
   }
@@ -179,7 +179,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       Type *NewTy =
         ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
-      AllocaInst *New = Builder->CreateAlloca(NewTy, nullptr, AI.getName());
+      AllocaInst *New = IC.Builder->CreateAlloca(NewTy, nullptr, AI.getName());
       New->setAlignment(AI.getAlignment());
 
       // Scan to the end of the allocation instructions, to skip over a block of
@@ -191,20 +191,27 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      Type *IdxTy = DL.getIntPtrType(AI.getType());
+      Type *IdxTy = IC.getDataLayout().getIntPtrType(AI.getType());
       Value *NullIdx = Constant::getNullValue(IdxTy);
       Value *Idx[2] = { NullIdx, NullIdx };
       Instruction *GEP =
         GetElementPtrInst::CreateInBounds(New, Idx, New->getName() + ".sub");
-      InsertNewInstBefore(GEP, *It);
+      IC.InsertNewInstBefore(GEP, *It);
 
       // Now make everything use the getelementptr instead of the original
       // allocation.
-      return ReplaceInstUsesWith(AI, GEP);
+      return IC.ReplaceInstUsesWith(AI, GEP);
     } else if (isa<UndefValue>(AI.getArraySize())) {
-      return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
+      return IC.ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
     }
   }
+
+  return nullptr;
+}
+
+Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
+  if (auto *I = simplifyAllocaArraySize(*this, AI))
+    return I;
 
   if (AI.getAllocatedType()->isSized()) {
     // If the alignment is 0 (unspecified), assign it the preferred alignment.
