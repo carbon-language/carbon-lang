@@ -11,6 +11,8 @@ CHECK:    DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000001] = "clang versio
 CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
 CHECK:    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000016] = "basic1.c")
 CHECK:    DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000001f] = "/Inputs")
+CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f40)
+CHECK:    DW_AT_high_pc [DW_FORM_data4]     (0x0000000b)
 CHECK:    DW_TAG_subprogram [2] *
 CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000100000f40)
 CHECK:      DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
@@ -40,6 +42,8 @@ CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000001] = "clang version 3.7.0 ")
 CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
 CHECK:    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000003b] = "basic2.c")
+CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f50)
+CHECK:    DW_AT_high_pc [DW_FORM_data4]     (0x00000037)
 CHECK:    DW_TAG_base_type [7]  
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000044] = "int")
 CHECK:    DW_TAG_variable [8]  
@@ -74,6 +78,8 @@ CHECK:  Compile Unit: {{.*}} version = 0x0004
 CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000001] = "clang version 3.7.0 ")
 CHECK:    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000064] = "basic3.c")
+CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f90)
+CHECK:    DW_AT_high_pc [DW_FORM_data4]     (0x00000024)
 CHECK:    DW_TAG_variable [13]  
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000006d] = "val")
 CHECK:      DW_AT_location [DW_FORM_exprloc]	(<0x9> 03 04 10 00 00 01 00 00 00 )
