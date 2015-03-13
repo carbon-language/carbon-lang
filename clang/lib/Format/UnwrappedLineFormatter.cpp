@@ -35,9 +35,17 @@ public:
   tryFitMultipleLinesInOne(unsigned Indent,
                            SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                            SmallVectorImpl<AnnotatedLine *>::const_iterator E) {
+    // Can't join the last line with anything.
+    if (I + 1 == E)
+      return 0;
     // We can never merge stuff if there are trailing line comments.
     const AnnotatedLine *TheLine = *I;
     if (TheLine->Last->is(TT_LineComment))
+      return 0;
+    if (I[1]->Type == LT_Invalid || I[1]->First->MustBreakBefore)
+      return 0;
+    if (TheLine->InPPDirective &&
+        (!I[1]->InPPDirective || I[1]->First->HasUnescapedNewline))
       return 0;
 
     if (Style.ColumnLimit > 0 && Indent > Style.ColumnLimit)
@@ -50,9 +58,6 @@ public:
     Limit = TheLine->Last->TotalLength > Limit
                 ? 0
                 : Limit - TheLine->Last->TotalLength;
-
-    if (I + 1 == E || I[1]->Type == LT_Invalid || I[1]->First->MustBreakBefore)
-      return 0;
 
     // FIXME: TheLine->Level != 0 might or might not be the right check to do.
     // If necessary, change to something smarter.
@@ -120,8 +125,6 @@ private:
                             SmallVectorImpl<AnnotatedLine *>::const_iterator E,
                             unsigned Limit) {
     if (Limit == 0)
-      return 0;
-    if (!I[1]->InPPDirective || I[1]->First->HasUnescapedNewline)
       return 0;
     if (I + 2 != E && I[2]->InPPDirective && !I[2]->First->HasUnescapedNewline)
       return 0;

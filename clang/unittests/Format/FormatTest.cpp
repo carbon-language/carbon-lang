@@ -2686,6 +2686,13 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                "#define b }\\\n"
                "  a\n"
                "a");
+  verifyFormat("#define A     \\\n"
+               "  {           \\\n"
+               "    {\n"
+               "#define B     \\\n"
+               "  }           \\\n"
+               "  }",
+               getLLVMStyleWithColumns(15));
 
   verifyNoCrash("#if a\na(\n#else\n#endif\n{a");
   verifyNoCrash("a={0,1\n#if a\n#else\n;\n#endif\n}");
