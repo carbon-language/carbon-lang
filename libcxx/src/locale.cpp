@@ -1312,8 +1312,10 @@ ctype_byname<wchar_t>::do_is(const char_type* low, const char_type* high, mask* 
             if (iswxdigit_l(ch, __l))
                 *vec |= xdigit;
 #endif
+#if !defined(__sun__)
             if (iswblank_l(ch, __l))
                 *vec |= blank;
+#endif
         }
     }
     return low;
