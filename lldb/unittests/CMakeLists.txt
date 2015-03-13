@@ -3,7 +3,7 @@ set_target_properties(LLDBUnitTests PROPERTIES FOLDER "LLDB tests")
 
 include_directories(${LLDB_SOURCE_ROOT})
 
-set(LLDB_GTEST_COMMON_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include/gtest_common.h)
+set(LLDB_GTEST_COMMON_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gtest_common.h)
 if (MSVC)
   list(APPEND LLVM_COMPILE_FLAGS /FI ${LLDB_GTEST_COMMON_INCLUDE})
 else ()
@@ -18,4 +18,6 @@ function(add_lldb_unittest test_name)
   target_link_libraries(${test_name} liblldb)
 endfunction()
 
-add_subdirectory(unittest)
+add_subdirectory(Host)
+add_subdirectory(Plugins)
+add_subdirectory(Utility)
