@@ -60,7 +60,6 @@ public:
 
 MCCodeEmitter *llvm::createBPFMCCodeEmitter(const MCInstrInfo &MCII,
                                             const MCRegisterInfo &MRI,
-                                            const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
   return new BPFMCCodeEmitter(MRI);
 }

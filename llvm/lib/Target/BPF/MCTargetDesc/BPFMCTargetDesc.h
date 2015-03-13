@@ -33,7 +33,6 @@ extern Target TheBPFTarget;
 
 MCCodeEmitter *createBPFMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
-                                      const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
 MCAsmBackend *createBPFAsmBackend(const Target &T, const MCRegisterInfo &MRI,

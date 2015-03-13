@@ -27,7 +27,6 @@ public:
                    const TargetOptions &Options, Reloc::Model RM,
                    CodeModel::Model CM, CodeGenOpt::Level OL);
 
-  const DataLayout *getDataLayout() const override { return &DL; }
   const BPFSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
