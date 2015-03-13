@@ -16,8 +16,9 @@
 #include "llvm/Support/MathExtras.h"
 
 #ifdef _MSC_VER
-// Exceptions are disabled so this isn't defined, but concrt assumes it is.
-static void *__uncaught_exception() { return nullptr; }
+// concrt.h depends on eh.h for __uncaught_exception declaration
+// even if we disable exceptions.
+#include <eh.h>
 #endif
 
 #include <algorithm>
