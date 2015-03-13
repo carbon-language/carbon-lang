@@ -307,9 +307,7 @@ PlatformLinux::ResolveExecutable (const ModuleSpec &ms,
     {
         if (m_remote_platform_sp)
         {
-            error = m_remote_platform_sp->ResolveExecutable (ms,
-                                                             exe_module_sp,
-                                                             NULL);
+            error = GetCachedExecutable (resolved_module_spec, exe_module_sp, nullptr, *m_remote_platform_sp);
         }
         else
         {

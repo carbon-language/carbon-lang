@@ -121,16 +121,7 @@ DynamicLoaderPOSIXDYLD::DidAttach()
         log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " reloaded auxv data", __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID);
 
     ModuleSP executable_sp = GetTargetExecutable();
-    ModuleSpec process_module_spec;
-    if (GetProcessModuleSpec(process_module_spec))
-    {
-        if (executable_sp == nullptr || !executable_sp->MatchesModuleSpec(process_module_spec))
-        {
-            executable_sp.reset(new Module(process_module_spec));
-            assert(m_process != nullptr);
-            m_process->GetTarget().SetExecutableModule(executable_sp, false);
-        }
-    }
+    ResolveExecutableModule(executable_sp);
 
     addr_t load_offset = ComputeLoadOffset();
     if (log)
@@ -626,17 +617,45 @@ DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const l
     return tls_block;
 }
 
-bool
-DynamicLoaderPOSIXDYLD::GetProcessModuleSpec (ModuleSpec& module_spec)
+void
+DynamicLoaderPOSIXDYLD::ResolveExecutableModule (lldb::ModuleSP &module_sp)
 {
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+
     if (m_process == nullptr)
-        return false;
+        return;
 
-    auto& target = m_process->GetTarget ();
+    auto &target = m_process->GetTarget ();
+    const auto platform_sp = target.GetPlatform ();
+
     ProcessInstanceInfo process_info;
-    if (!target.GetPlatform ()->GetProcessInfo (m_process->GetID (), process_info))
-        return false;
+    if (!platform_sp->GetProcessInfo (m_process->GetID (), process_info))
+    {
+        if (log)
+            log->Printf ("DynamicLoaderPOSIXDYLD::%s - failed to get process info for pid %" PRIu64,
+                         __FUNCTION__, m_process->GetID ());
+        return;
+    }
 
-    module_spec = ModuleSpec (process_info.GetExecutableFile (), process_info.GetArchitecture ());
-    return true;
+    if (log)
+        log->Printf ("DynamicLoaderPOSIXDYLD::%s - got executable by pid %" PRIu64 ": %s",
+                     __FUNCTION__, m_process->GetID (), process_info.GetExecutableFile ().GetPath ().c_str ());
+
+    ModuleSpec module_spec (process_info.GetExecutableFile (), process_info.GetArchitecture ());
+    if (module_sp && module_sp->MatchesModuleSpec (module_spec))
+        return;
+
+    auto error = platform_sp->ResolveExecutable (module_spec, module_sp, nullptr);
+    if (error.Fail ())
+    {
+        StreamString stream;
+        module_spec.Dump (stream);
+
+        if (log)
+            log->Printf ("DynamicLoaderPOSIXDYLD::%s - failed to resolve executable with module spec \"%s\": %s",
+                         __FUNCTION__, stream.GetString ().c_str (), error.AsCString ());
+        return;
+    }
+
+    target.SetExecutableModule (module_sp, false);
 }

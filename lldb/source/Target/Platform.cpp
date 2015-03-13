@@ -1752,6 +1752,43 @@ Platform::GetTrapHandlerSymbolNames ()
     return m_trap_handlers;
 }
 
+Error
+Platform::GetCachedExecutable (ModuleSpec &module_spec,
+                               lldb::ModuleSP &module_sp,
+                               const FileSpecList *module_search_paths_ptr,
+                               Platform &remote_platform)
+{
+    const auto platform_spec = module_spec.GetFileSpec ();
+    const auto error = LoadCachedExecutable (module_spec,
+                                             module_sp,
+                                             module_search_paths_ptr,
+                                             remote_platform);
+    if (error.Success ())
+    {
+        module_spec.GetFileSpec () = module_sp->GetFileSpec ();
+        module_spec.GetPlatformFileSpec () = platform_spec;
+    }
+
+    return error;
+}
+
+Error
+Platform::LoadCachedExecutable (const ModuleSpec &module_spec,
+                                lldb::ModuleSP &module_sp,
+                                const FileSpecList *module_search_paths_ptr,
+                                Platform &remote_platform)
+{
+    if (GetGlobalPlatformProperties ()->GetUseModuleCache ())
+    {
+        if (GetCachedSharedModule (module_spec, module_sp))
+            return Error ();
+    }
+
+    return remote_platform.ResolveExecutable (module_spec,
+                                              module_sp,
+                                              module_search_paths_ptr);
+}
+
 bool
 Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
                                  lldb::ModuleSP &module_sp)

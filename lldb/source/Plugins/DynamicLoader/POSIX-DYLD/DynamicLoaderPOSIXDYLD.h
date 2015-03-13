@@ -168,9 +168,9 @@ protected:
     lldb::addr_t
     GetEntryPoint();
 
-    /// Loads ModuleSpec data from inferior process.
-    bool
-    GetProcessModuleSpec(lldb_private::ModuleSpec& module_spec);
+    /// Loads Module from inferior process.
+    void
+    ResolveExecutableModule(lldb::ModuleSP &module_sp);
 
 private:
     DISALLOW_COPY_AND_ASSIGN(DynamicLoaderPOSIXDYLD);

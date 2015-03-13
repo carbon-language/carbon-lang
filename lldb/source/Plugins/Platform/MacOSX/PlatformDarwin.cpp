@@ -212,9 +212,7 @@ PlatformDarwin::ResolveExecutable (const ModuleSpec &module_spec,
     {
         if (m_remote_platform_sp)
         {
-            error = m_remote_platform_sp->ResolveExecutable (module_spec,
-                                                             exe_module_sp,
-                                                             module_search_paths_ptr);
+            error = GetCachedExecutable (resolved_module_spec, exe_module_sp, module_search_paths_ptr, *m_remote_platform_sp);
         }
         else
         {

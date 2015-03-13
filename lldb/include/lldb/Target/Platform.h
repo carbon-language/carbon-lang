@@ -1123,6 +1123,12 @@ class ModuleCache;
             m_gid_map.clear();
         }
 
+        Error
+        GetCachedExecutable (ModuleSpec &module_spec,
+                             lldb::ModuleSP &module_sp,
+                             const FileSpecList *module_search_paths_ptr,
+                             Platform &remote_platform);
+
         bool
         GetCachedSharedModule (const ModuleSpec &module_spec,
                                lldb::ModuleSP &module_sp);
@@ -1140,6 +1146,12 @@ class ModuleCache;
         FileSpec GetModuleCacheRoot ();
 
     private:
+        Error
+        LoadCachedExecutable (const ModuleSpec &module_spec,
+                              lldb::ModuleSP &module_sp,
+                              const FileSpecList *module_search_paths_ptr,
+                              Platform &remote_platform);
+
         DISALLOW_COPY_AND_ASSIGN (Platform);
     };
 
