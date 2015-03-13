@@ -818,7 +818,7 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
 
   // Sort by hash value so that blocks with identical end sequences sort
   // together.
-  std::stable_sort(MergePotentials.begin(), MergePotentials.end());
+  array_pod_sort(MergePotentials.begin(), MergePotentials.end());
 
   // Walk through equivalence sets looking for actual exact matches.
   while (MergePotentials.size() > 1) {
