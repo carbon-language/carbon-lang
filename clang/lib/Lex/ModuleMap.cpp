@@ -265,7 +265,8 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
   if (Known != Headers.end()) {
     for (const KnownHeader &Header : Known->second) {
       // If 'File' is part of 'RequestingModule' we can definitely include it.
-      if (Header.getModule() == RequestingModule)
+      if (Header.getModule() &&
+          Header.getModule()->isSubModuleOf(RequestingModule))
         return;
 
       // Remember private headers for later printing of a diagnostic.
