@@ -33,6 +33,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include <string>
+#include <tuple>
 
 namespace llvm {
 namespace dsymutil {
@@ -70,8 +71,8 @@ public:
   };
 
   CompileUnit(DWARFUnit &OrigUnit)
-    : OrigUnit(OrigUnit), LowPc(UINT64_MAX), HighPc(0), RangeAlloc(),
-      Ranges(RangeAlloc) {
+      : OrigUnit(OrigUnit), LowPc(UINT64_MAX), HighPc(0), RangeAlloc(),
+        Ranges(RangeAlloc) {
     Info.resize(OrigUnit.getNumDIEs());
   }
 
@@ -106,10 +107,11 @@ public:
   /// debug_info section size).
   uint64_t computeNextUnitOffset();
 
-  /// \brief Keep track of a forward reference to DIE \p Die by
-  /// \p Attr. The attribute should be fixed up later to point to the
-  /// absolute offset of \p Die in the debug_info section.
-  void noteForwardReference(DIE *Die, DIEInteger *Attr);
+  /// \brief Keep track of a forward reference to DIE \p Die in \p
+  /// RefUnit by \p Attr. The attribute should be fixed up later to
+  /// point to the absolute offset of \p Die in the debug_info section.
+  void noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
+                            DIEInteger *Attr);
 
   /// \brief Apply all fixups recored by noteForwardReference().
   void fixupForwardReferences();
@@ -133,9 +135,10 @@ private:
   /// a DIE in the debug_info section.
   ///
   /// The offsets for the attributes in this array couldn't be set while
-  /// cloning because for forward refences the target DIE's offset isn't
-  /// known you emit the reference attribute.
-  std::vector<std::pair<DIE *, DIEInteger *>> ForwardDIEReferences;
+  /// cloning because for cross-cu forward refences the target DIE's
+  /// offset isn't known you emit the reference attribute.
+  std::vector<std::tuple<DIE *, const CompileUnit *, DIEInteger *>>
+      ForwardDIEReferences;
 
   HalfOpenIntervalMap<uint64_t, int64_t>::Allocator RangeAlloc;
   /// \brief The ranges in that interval map are the PC ranges for
@@ -154,15 +157,22 @@ uint64_t CompileUnit::computeNextUnitOffset() {
   return NextUnitOffset;
 }
 
-/// \brief Keep track of a forward reference to \p Die.
-void CompileUnit::noteForwardReference(DIE *Die, DIEInteger *Attr) {
-  ForwardDIEReferences.emplace_back(Die, Attr);
+/// \brief Keep track of a forward cross-cu reference from this unit
+/// to \p Die that lives in \p RefUnit.
+void CompileUnit::noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
+                                       DIEInteger *Attr) {
+  ForwardDIEReferences.emplace_back(Die, RefUnit, Attr);
 }
 
 /// \brief Apply all fixups recorded by noteForwardReference().
 void CompileUnit::fixupForwardReferences() {
-  for (const auto &Ref : ForwardDIEReferences)
-    Ref.second->setValue(Ref.first->getOffset() + getStartOffset());
+  for (const auto &Ref : ForwardDIEReferences) {
+    DIE *RefDie;
+    const CompileUnit *RefUnit;
+    DIEInteger *Attr;
+    std::tie(RefDie, RefUnit, Attr) = Ref;
+    Attr->setValue(RefDie->getOffset() + RefUnit->getStartOffset());
+  }
 }
 
 void CompileUnit::addFunctionRange(uint64_t FuncLowPc, uint64_t FuncHighPc,
@@ -598,7 +608,7 @@ private:
   cloneDieReferenceAttribute(DIE &Die,
                              const DWARFDebugInfoEntryMinimal &InputDIE,
                              AttributeSpec AttrSpec, unsigned AttrSize,
-                             const DWARFFormValue &Val, const DWARFUnit &U);
+                             const DWARFFormValue &Val, CompileUnit &Unit);
 
   /// \brief Helper for cloneDIE.
   unsigned cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
@@ -1169,8 +1179,8 @@ unsigned DwarfLinker::cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec,
 unsigned DwarfLinker::cloneDieReferenceAttribute(
     DIE &Die, const DWARFDebugInfoEntryMinimal &InputDIE,
     AttributeSpec AttrSpec, unsigned AttrSize, const DWARFFormValue &Val,
-    const DWARFUnit &U) {
-  uint32_t Ref = *Val.getAsReference(&U);
+    CompileUnit &Unit) {
+  uint32_t Ref = *Val.getAsReference(&Unit.getOrigUnit());
   DIE *NewRefDie = nullptr;
   CompileUnit *RefUnit = nullptr;
   const DWARFDebugInfoEntryMinimal *RefDie = nullptr;
@@ -1182,7 +1192,7 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
       AttributeString = "DW_AT_???";
     reportWarning(Twine("Missing DIE for ref in attribute ") + AttributeString +
                       ". Dropping.",
-                  &U, &InputDIE);
+                  &Unit.getOrigUnit(), &InputDIE);
     return 0;
   }
 
@@ -1211,7 +1221,7 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
     } else {
       // A forward reference. Note and fixup later.
       Attr = new (DIEAlloc) DIEInteger(0xBADDEF);
-      RefUnit->noteForwardReference(NewRefDie, Attr);
+      Unit.noteForwardReference(NewRefDie, RefUnit, Attr);
     }
     Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::DW_FORM_ref_addr,
                  Attr);
@@ -1346,7 +1356,7 @@ unsigned DwarfLinker::cloneAttribute(DIE &Die,
   case dwarf::DW_FORM_ref4:
   case dwarf::DW_FORM_ref8:
     return cloneDieReferenceAttribute(Die, InputDIE, AttrSpec, AttrSize, Val,
-                                      U);
+                                      Unit);
   case dwarf::DW_FORM_block:
   case dwarf::DW_FORM_block1:
   case dwarf::DW_FORM_block2:
