@@ -1225,7 +1225,7 @@ unsigned DwarfLinker::cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
   DIELoc *Loc = nullptr;
   DIEBlock *Block = nullptr;
   // Just copy the block data over.
-  if (AttrSpec.Attr == dwarf::DW_FORM_exprloc) {
+  if (AttrSpec.Form == dwarf::DW_FORM_exprloc) {
     Loc = new (DIEAlloc) DIELoc();
     DIELocs.push_back(Loc);
   } else {
