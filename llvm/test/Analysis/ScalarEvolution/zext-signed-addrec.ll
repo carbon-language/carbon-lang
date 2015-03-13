@@ -63,7 +63,7 @@ for.cond.for.end9_crit_edge:                      ; preds = %for.inc8
 
 for.end9:                                         ; preds = %entry.for.end9_crit_edge, %for.cond.for.end9_crit_edge
   %3 = phi i32 [ %.pre, %entry.for.end9_crit_edge ], [ %shl, %for.cond.for.end9_crit_edge ]
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %3) #2
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %3) #2
   br label %return
 
 return.loopexit.split:                            ; preds = %for.cond1.preheader.lr.ph

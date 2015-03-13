@@ -14,7 +14,7 @@ for.cond2.preheader:                              ; preds = %for.end, %entry
   br label %for.body4
 
 for.body4:                                        ; preds = %for.body4, %for.cond2.preheader
-  %lsr.iv4 = phi [16000 x double]* [ %i11, %for.body4 ], [ bitcast (double* getelementptr inbounds ([16000 x double]* @Y, i64 0, i64 8)
+  %lsr.iv4 = phi [16000 x double]* [ %i11, %for.body4 ], [ bitcast (double* getelementptr inbounds ([16000 x double], [16000 x double]* @Y, i64 0, i64 8)
  to [16000 x double]*), %for.cond2.preheader ]
   %lsr.iv1 = phi [16000 x double]* [ %i10, %for.body4 ], [ @X, %for.cond2.preheader ]
 

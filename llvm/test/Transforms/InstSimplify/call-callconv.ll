@@ -29,7 +29,7 @@ declare arm_aapcscc i32 @labs(i32) nounwind readnone
 
 define arm_aapcscc i32 @_strlen1() {
 ; CHECK: _strlen1
-  %call = tail call arm_aapcscc i32 @strlen(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0))
+  %call = tail call arm_aapcscc i32 @strlen(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0))
   ret i32 %call
 ; CHECK: ret i32 3
 }

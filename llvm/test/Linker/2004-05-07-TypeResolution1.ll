@@ -30,6 +30,6 @@ declare void @func(%struct2*)
 
 define void @tty_init() {
 entry:
-	store volatile void (%struct2*)* @func, void (%struct2*)** getelementptr (%struct1* @driver1, i64 0, i32 1)
+	store volatile void (%struct2*)* @func, void (%struct2*)** getelementptr (%struct1, %struct1* @driver1, i64 0, i32 1)
 	ret void
 }

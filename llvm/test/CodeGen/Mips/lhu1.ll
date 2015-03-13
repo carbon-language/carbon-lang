@@ -12,7 +12,7 @@ entry:
 ; 16:	lhu	${{[0-9]+}}, 0(${{[0-9]+}})
   store i32 %conv, i32* %i, align 4
   %1 = load i32, i32* %i, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %1)
   ret i32 0
 }
 

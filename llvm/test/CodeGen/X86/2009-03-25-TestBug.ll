@@ -15,11 +15,11 @@ bb1579.i.i:		; preds = %bb1514.i.i, %bb191.i.i
         br i1 %tmp178, label %hello, label %world
 
 hello:
-	%h = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @hello, i32 0, i32 0))
+	%h = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8], [7 x i8]* @hello, i32 0, i32 0))
         ret void
 
 world:
-	%w = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @world, i32 0, i32 0))
+	%w = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8], [7 x i8]* @world, i32 0, i32 0))
         ret void
 }
 

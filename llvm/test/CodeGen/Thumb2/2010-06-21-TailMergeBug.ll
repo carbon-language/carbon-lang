@@ -91,7 +91,7 @@ bb11:                                             ; preds = %bb10, %bb9
   br label %bb12
 
 bb12:                                             ; preds = %bb11, %bb.i.i
-  %p.1 = phi i8* [ %p.0, %bb11 ], [ getelementptr inbounds ([1025 x i8]* @token_buffer, i32 0, i32 0), %bb.i.i ] ; <i8*> [#uses=2]
+  %p.1 = phi i8* [ %p.0, %bb11 ], [ getelementptr inbounds ([1025 x i8], [1025 x i8]* @token_buffer, i32 0, i32 0), %bb.i.i ] ; <i8*> [#uses=2]
   %2 = icmp ult i32 undef, 128                    ; <i1> [#uses=1]
   br i1 %2, label %bb.i.i2, label %bb1.i.i3
 

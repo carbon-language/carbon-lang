@@ -35,7 +35,7 @@ define zeroext i1 @just_one_past_the_end() {
   %t = icmp eq i32* %x, @opte_b
   ret i1 %t
   ; CHECK: just_one_past_the_end(
-  ; CHECK: ret i1 icmp eq (i32* getelementptr inbounds (i32* @opte_a, i32 1), i32* @opte_b)
+  ; CHECK: ret i1 icmp eq (i32* getelementptr inbounds (i32, i32* @opte_a, i32 1), i32* @opte_b)
 }
 
 ; Comparing base addresses of two distinct allocas. Never equal.

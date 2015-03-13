@@ -30,7 +30,7 @@ bb:
 
 define internal i8* @func29(i32* nocapture %this) align 2 {
 bb:
-  ret i8* getelementptr inbounds ([9 x i8]* @g2, i32 0, i32 0)
+  ret i8* getelementptr inbounds ([9 x i8], [9 x i8]* @g2, i32 0, i32 0)
 }
 
 define internal i32* @func33(%.qux.2585* nocapture %this) align 2 {

@@ -65,7 +65,7 @@ switch.lookup:                                    ; preds = %3
   br label %6
 
 ; <label>:6                                       ; preds = %5, %4
-  %7 = phi [2 x i8]* [ getelementptr inbounds ([64 x [2 x i8]]* @FIELD_SCAN8x8, i32 0, i32 0), %4 ], [ null, %5 ]
+  %7 = phi [2 x i8]* [ getelementptr inbounds ([64 x [2 x i8]], [64 x [2 x i8]]* @FIELD_SCAN8x8, i32 0, i32 0), %4 ], [ null, %5 ]
   br i1 undef, label %switch.lookup6, label %8
 
 switch.lookup6:                                   ; preds = %6

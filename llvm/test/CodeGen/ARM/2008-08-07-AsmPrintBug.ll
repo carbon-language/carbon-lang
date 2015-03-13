@@ -8,6 +8,6 @@
 
 define i32 @__gcov_close() nounwind {
 entry:
-	load i32, i32* getelementptr (%struct.__gcov_var* @__gcov_var, i32 0, i32 5), align 4		; <i32>:0 [#uses=1]
+	load i32, i32* getelementptr (%struct.__gcov_var, %struct.__gcov_var* @__gcov_var, i32 0, i32 5), align 4		; <i32>:0 [#uses=1]
 	ret i32 %0
 }

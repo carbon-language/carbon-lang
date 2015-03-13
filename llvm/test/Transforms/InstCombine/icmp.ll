@@ -244,8 +244,8 @@ define i1 @test23(i32 %x) nounwind {
 ; CHECK:    %cmp = icmp eq i64 %i, 1000
 ; CHECK:   ret i1 %cmp
 define i1 @test24(i64 %i) {
-  %p1 = getelementptr inbounds i32, i32* getelementptr inbounds ([1000 x i32]* @X, i64 0, i64 0), i64 %i
-  %cmp = icmp eq i32* %p1, getelementptr inbounds ([1000 x i32]* @X, i64 1, i64 0)
+  %p1 = getelementptr inbounds i32, i32* getelementptr inbounds ([1000 x i32], [1000 x i32]* @X, i64 0, i64 0), i64 %i
+  %cmp = icmp eq i32* %p1, getelementptr inbounds ([1000 x i32], [1000 x i32]* @X, i64 1, i64 0)
   ret i1 %cmp
 }
 
@@ -256,8 +256,8 @@ define i1 @test24(i64 %i) {
 ; CHECK: %cmp = icmp eq i16 %1, 1000
 ; CHECK: ret i1 %cmp
 define i1 @test24_as1(i64 %i) {
-  %p1 = getelementptr inbounds i32, i32 addrspace(1)* getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 0, i64 0), i64 %i
-  %cmp = icmp eq i32 addrspace(1)* %p1, getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 1, i64 0)
+  %p1 = getelementptr inbounds i32, i32 addrspace(1)* getelementptr inbounds ([1000 x i32], [1000 x i32] addrspace(1)* @X_as1, i64 0, i64 0), i64 %i
+  %cmp = icmp eq i32 addrspace(1)* %p1, getelementptr inbounds ([1000 x i32], [1000 x i32] addrspace(1)* @X_as1, i64 1, i64 0)
   ret i1 %cmp
 }
 

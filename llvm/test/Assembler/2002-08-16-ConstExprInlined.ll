@@ -18,6 +18,6 @@ declare i32 @puts(i8*)
 
 define void @main() {
 bb1:
-	%reg211 = call i32 @puts( i8* getelementptr ([4 x i8]* @.LC0, i64 0, i64 0) )		; <i32> [#uses=0]
+	%reg211 = call i32 @puts( i8* getelementptr ([4 x i8], [4 x i8]* @.LC0, i64 0, i64 0) )		; <i32> [#uses=0]
 	ret void
 }

@@ -36,7 +36,7 @@ for.body3.preheader:
 for.body3:                                        
   %j.011 = phi i32 [ %inc, %for.body3 ], [ 0, %for.body3.preheader ]
   %0 = load i32, i32* %arrayidx
-  store i32 %0, i32* getelementptr inbounds (%struct.s* @S, i64 0, i32 0, i64 0, i64 0)
+  store i32 %0, i32* getelementptr inbounds (%struct.s, %struct.s* @S, i64 0, i32 0, i64 0, i64 0)
   %inc = add nuw nsw i32 %j.011, 1
   %exitcond = icmp eq i32 %inc, %N
   br i1 %exitcond, label %for.inc4, label %for.body3

@@ -36,7 +36,7 @@ entry:
 define void @_Z4funcv() #1 {
 entry:
   %literal = alloca i8*, align 8
-  store i8* getelementptr inbounds ([14 x i8]* @.str, i32 0, i32 0), i8** %literal, align 8
+  store i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str, i32 0, i32 0), i8** %literal, align 8
   ret void
 }
 

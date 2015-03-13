@@ -29,13 +29,13 @@ declare void @check(i32 %name) nounwind
 
 define i32 @s3110() nounwind {
 entry:
-  %call = tail call i32 @init(i8* getelementptr inbounds ([6 x i8]* @.str81, i64 0, i64 0))
+  %call = tail call i32 @init(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str81, i64 0, i64 0))
   %call1 = tail call i64 @clock() nounwind
   br label %for.body
 
 for.body:                                         ; preds = %for.end17, %entry
   %nl.041 = phi i32 [ 0, %entry ], [ %inc22, %for.end17 ]
-  %0 = load float, float* getelementptr inbounds ([256 x [256 x float]]* @aa, i64 0, i64 0, i64 0), align 16
+  %0 = load float, float* getelementptr inbounds ([256 x [256 x float]], [256 x [256 x float]]* @aa, i64 0, i64 0, i64 0), align 16
   br label %for.cond5.preheader
 
 for.cond5.preheader:                              ; preds = %for.inc15, %for.body
@@ -194,7 +194,7 @@ for.end17:                                        ; preds = %for.inc15
   %add = fadd float %max.3.15, %conv
   %conv18 = sitofp i32 %yindex.3.15 to float
   %add19 = fadd float %add, %conv18
-  %call20 = tail call i32 @dummy(float* getelementptr inbounds ([32000 x float]* @a, i64 0, i64 0), float* getelementptr inbounds ([32000 x float]* @b, i64 0, i64 0), float* getelementptr inbounds ([32000 x float]* @c, i64 0, i64 0), float* getelementptr inbounds ([32000 x float]* @d, i64 0, i64 0), float* getelementptr inbounds ([32000 x float]* @e, i64 0, i64 0), [256 x float]* getelementptr inbounds ([256 x [256 x float]]* @aa, i64 0, i64 0), [256 x float]* getelementptr inbounds ([256 x [256 x float]]* @bb, i64 0, i64 0), [256 x float]* getelementptr inbounds ([256 x [256 x float]]* @cc, i64 0, i64 0), float %add19) nounwind
+  %call20 = tail call i32 @dummy(float* getelementptr inbounds ([32000 x float], [32000 x float]* @a, i64 0, i64 0), float* getelementptr inbounds ([32000 x float], [32000 x float]* @b, i64 0, i64 0), float* getelementptr inbounds ([32000 x float], [32000 x float]* @c, i64 0, i64 0), float* getelementptr inbounds ([32000 x float], [32000 x float]* @d, i64 0, i64 0), float* getelementptr inbounds ([32000 x float], [32000 x float]* @e, i64 0, i64 0), [256 x float]* getelementptr inbounds ([256 x [256 x float]], [256 x [256 x float]]* @aa, i64 0, i64 0), [256 x float]* getelementptr inbounds ([256 x [256 x float]], [256 x [256 x float]]* @bb, i64 0, i64 0), [256 x float]* getelementptr inbounds ([256 x [256 x float]], [256 x [256 x float]]* @cc, i64 0, i64 0), float %add19) nounwind
   %inc22 = add nsw i32 %nl.041, 1
   %exitcond44 = icmp eq i32 %inc22, 78100
   br i1 %exitcond44, label %for.end23, label %for.body
@@ -204,7 +204,7 @@ for.end23:                                        ; preds = %for.end17
   %sub = sub nsw i64 %call24, %call1
   %conv25 = sitofp i64 %sub to double
   %div = fdiv double %conv25, 1.000000e+06
-  %call26 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str235, i64 0, i64 0), double %div) nounwind
+  %call26 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str235, i64 0, i64 0), double %div) nounwind
   %add29 = fadd float %add, 1.000000e+00
   %add31 = fadd float %add29, %conv18
   %add32 = fadd float %add31, 1.000000e+00

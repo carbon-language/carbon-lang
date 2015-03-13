@@ -13,7 +13,7 @@ entry:
   %2 = load i8, i8* @c, align 1
   %conv1 = sext i8 %2 to i32
 ; 16:	sb	${{[0-9]+}}, 0(${{[0-9]+}})
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8]* @.str, i32 0, i32 0), i32 %1, i32 %conv1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %1, i32 %conv1)
   ret i32 0
 }
 

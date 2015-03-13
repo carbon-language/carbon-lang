@@ -28,7 +28,7 @@ entry:
 	br i1 %tmp7, label %cond_true, label %cond_next
 
 cond_true:		; preds = %entry
-	store i8 0, i8* getelementptr (%"struct.std::map<int,int,std::less<int>,std::allocator<std::pair<const int, int> > >"* @someMap, i32 0, i32 0, i32 0, i32 0, i32 0)
+	store i8 0, i8* getelementptr (%"struct.std::map<int,int,std::less<int>,std::allocator<std::pair<const int, int> > >", %"struct.std::map<int,int,std::less<int>,std::allocator<std::pair<const int, int> > >"* @someMap, i32 0, i32 0, i32 0, i32 0, i32 0)
 	ret void
 
 cond_next:		; preds = %entry

@@ -82,7 +82,7 @@ cond_true1369.preheader:                          ; preds = %cond_true1254
   ret void
 
 bb1567:                                           ; preds = %cond_true1254
-  %tmp1591 = load i64, i64* getelementptr inbounds (%struct.CHESS_POSITION* @search, i32 0, i32 4) ; <i64> [#uses=1]
+  %tmp1591 = load i64, i64* getelementptr inbounds (%struct.CHESS_POSITION, %struct.CHESS_POSITION* @search, i32 0, i32 4) ; <i64> [#uses=1]
   %tmp1572 = tail call fastcc i32 @FirstOne()     ; <i32> [#uses=1]
   %tmp1594 = load i32, i32* undef                      ; <i32> [#uses=1]
   %tmp1594.upgrd.5 = trunc i32 %tmp1594 to i8     ; <i8> [#uses=1]

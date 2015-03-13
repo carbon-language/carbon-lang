@@ -311,7 +311,7 @@ entry:
   ret void
 }
 
-define void @getelementptr({i8, i8}* %s, <4 x i8*> %ptrs, <4 x i64> %offsets ){
+define void @getelementptr({i8, i8}, {i8, i8}* %s, <4 x i8*> %ptrs, <4 x i64> %offsets ){
 entry:
 ; CHECK: %res1 = getelementptr { i8, i8 }, { i8, i8 }* %s, i32 1, i32 1
   %res1 = getelementptr {i8, i8}, {i8, i8}* %s, i32 1, i32 1

@@ -42,7 +42,7 @@ define signext i32 @main() #0 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
-  %call = call signext i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str, i32 0, i32 0)), !dbg !12
+  %call = call signext i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str, i32 0, i32 0)), !dbg !12
   ret i32 0, !dbg !13
 }
 

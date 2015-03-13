@@ -102,7 +102,7 @@ main_body:
   %1 = extractelement <4 x float> %reg1, i32 1
   %2 = fadd float %0, 2.5
   %3 = fmul float %1, 3.5
-  %4 = load <4 x float>, <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
+  %4 = load <4 x float>, <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>], [1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
   %5 = extractelement <4 x float> %4, i32 0
   %6 = call float @llvm.cos.f32(float %5)
   %7 = load <4 x float>, <4 x float> addrspace(8)* null

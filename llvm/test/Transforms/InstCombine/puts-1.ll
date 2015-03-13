@@ -25,7 +25,7 @@ define i32 @test_no_simplify1() {
 ; CHECK-LABEL: @test_no_simplify1(
   %str = getelementptr [1 x i8], [1 x i8]* @empty, i32 0, i32 0
   %ret = call i32 @puts(i8* %str)
-; CHECK-NEXT: call i32 @puts(i8* getelementptr inbounds ([1 x i8]* @empty, i32 0, i32 0))
+; CHECK-NEXT: call i32 @puts(i8* getelementptr inbounds ([1 x i8], [1 x i8]* @empty, i32 0, i32 0))
   ret i32 %ret
 ; CHECK-NEXT: ret i32 %ret
 }

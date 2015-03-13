@@ -380,7 +380,7 @@ _Z5tointRKe.exit:
   %result.0.i = phi x86_fp80 [ %1, %sw.bb4.i ], [ %0, %entry ]
   %conv.i1814 = fptosi x86_fp80 %result.0.i to i32
   %conv626 = sitofp i32 %conv.i1814 to x86_fp80
-  store x86_fp80 %conv626, x86_fp80* getelementptr inbounds (%struct.fpu_t* @fpu, i32 0, i32 1)
+  store x86_fp80 %conv626, x86_fp80* getelementptr inbounds (%struct.fpu_t, %struct.fpu_t* @fpu, i32 0, i32 1)
   br label %return
 
 return:

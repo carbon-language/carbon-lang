@@ -184,7 +184,7 @@ entry:
   %4 = load i32, i32* %y, align 4, !dbg !41
   %5 = load i64, i64* %N, align 8, !dbg !41
   %call = call i64 @_Z3fooiil(i32 %3, i32 %4, i64 %5), !dbg !41
-  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([24 x i8]* @.str, i32 0, i32 0), i32 %0, i32 %1, i64 %2, i64 %call), !dbg !41
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([24 x i8], [24 x i8]* @.str, i32 0, i32 0), i32 %0, i32 %1, i64 %2, i64 %call), !dbg !41
   ret i32 0, !dbg !42
 }
 

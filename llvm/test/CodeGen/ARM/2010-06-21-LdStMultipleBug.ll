@@ -13,7 +13,7 @@
 define void @TW_oldinput(%struct.FILE* nocapture %fp) nounwind {
 entry:
   %xcenter = alloca i32, align 4                  ; <i32*> [#uses=2]
-  %0 = call i32 (%struct.FILE*, i8*, ...)* @fscanf(%struct.FILE* %fp, i8* getelementptr inbounds ([14 x i8]* @.str2708, i32 0, i32 0), i32* undef, i32* undef, i32* %xcenter, i32* null) nounwind ; <i32> [#uses=1]
+  %0 = call i32 (%struct.FILE*, i8*, ...)* @fscanf(%struct.FILE* %fp, i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str2708, i32 0, i32 0), i32* undef, i32* undef, i32* %xcenter, i32* null) nounwind ; <i32> [#uses=1]
   %1 = icmp eq i32 %0, 4                          ; <i1> [#uses=1]
   br i1 %1, label %bb, label %return
 
@@ -137,7 +137,7 @@ bb322:                                            ; preds = %bb248
   br i1 undef, label %bb248, label %bb445
 
 bb445:                                            ; preds = %bb322, %bb10, %bb
-  %49 = call i32 (%struct.FILE*, i8*, ...)* @fscanf(%struct.FILE* %fp, i8* getelementptr inbounds ([14 x i8]* @.str2708, i32 0, i32 0), i32* undef, i32* undef, i32* %xcenter, i32* null) nounwind ; <i32> [#uses=1]
+  %49 = call i32 (%struct.FILE*, i8*, ...)* @fscanf(%struct.FILE* %fp, i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str2708, i32 0, i32 0), i32* undef, i32* undef, i32* %xcenter, i32* null) nounwind ; <i32> [#uses=1]
   %50 = icmp eq i32 %49, 4                        ; <i1> [#uses=1]
   br i1 %50, label %bb, label %return
 

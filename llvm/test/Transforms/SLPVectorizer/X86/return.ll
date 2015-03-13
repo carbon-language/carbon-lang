@@ -19,11 +19,11 @@ target triple = "x86_64--linux-gnu"
 
 define double @return1() {
 entry:
-  %a0 = load double, double* getelementptr inbounds ([4 x double]* @a, i32 0, i32 0), align 8
-  %b0 = load double, double* getelementptr inbounds ([4 x double]* @b, i32 0, i32 0), align 8
+  %a0 = load double, double* getelementptr inbounds ([4 x double], [4 x double]* @a, i32 0, i32 0), align 8
+  %b0 = load double, double* getelementptr inbounds ([4 x double], [4 x double]* @b, i32 0, i32 0), align 8
   %add0 = fadd double %a0, %b0
-  %a1 = load double, double* getelementptr inbounds ([4 x double]* @a, i32 0, i32 1), align 8
-  %b1 = load double, double* getelementptr inbounds ([4 x double]* @b, i32 0, i32 1), align 8
+  %a1 = load double, double* getelementptr inbounds ([4 x double], [4 x double]* @a, i32 0, i32 1), align 8
+  %b1 = load double, double* getelementptr inbounds ([4 x double], [4 x double]* @b, i32 0, i32 1), align 8
   %add1 = fadd double %a1, %b1
   %add2 = fadd double %add0, %add1
   ret double %add2

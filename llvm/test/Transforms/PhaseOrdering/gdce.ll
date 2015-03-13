@@ -15,7 +15,7 @@
 @_ZTV4Base = linkonce_odr unnamed_addr constant [4 x i8*] [i8* null, i8* bitcast ({ i8*, i8* }* @_ZTI4Base to i8*), i8* bitcast (void (%class.Base*)* @_ZN4BaseD1Ev to i8*), i8* bitcast (void (%class.Base*)* @_ZN4BaseD0Ev to i8*)]
 @_ZTVN10__cxxabiv117__class_type_infoE = external global i8*
 @_ZTS4Base = linkonce_odr constant [6 x i8] c"4Base\00"
-@_ZTI4Base = linkonce_odr unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([6 x i8]* @_ZTS4Base, i32 0, i32 0) }
+@_ZTI4Base = linkonce_odr unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([6 x i8], [6 x i8]* @_ZTS4Base, i32 0, i32 0) }
 
 define i32 @main() uwtable ssp {
 entry:
@@ -63,7 +63,7 @@ entry:
   store %class.Base* %this, %class.Base** %this.addr, align 8
   %this1 = load %class.Base*, %class.Base** %this.addr
   %0 = bitcast %class.Base* %this1 to i8***
-  store i8** getelementptr inbounds ([4 x i8*]* @_ZTV4Base, i64 0, i64 2), i8*** %0
+  store i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV4Base, i64 0, i64 2), i8*** %0
   ret void
 }
 

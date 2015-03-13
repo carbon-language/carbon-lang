@@ -21,7 +21,7 @@ entry:
 pass_block:
 	ret void
 fail_block:
-	call i32 @puts(i8* getelementptr([46 x i8]* @lcaic_failure, i32 0, i32 0))
+	call i32 @puts(i8* getelementptr([46 x i8], [46 x i8]* @lcaic_failure, i32 0, i32 0))
 	call void @exit(i32 1)
 	unreachable
 }

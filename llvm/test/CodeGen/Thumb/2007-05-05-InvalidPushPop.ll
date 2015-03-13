@@ -25,12 +25,12 @@ entry:
 	%ret3 = bitcast i32* %ret to i8**		; <i8**> [#uses=2]
 	%tmp4 = call i32 @pthread_join( i32 %tmp2, i8** %ret3 )		; <i32> [#uses=0]
 	%tmp5 = load i32, i32* %ret		; <i32> [#uses=1]
-	%tmp7 = call i32 (i8*, ...)* @printf( i8* getelementptr ([14 x i8]* @.str, i32 0, i32 0), i32 %tmp5 )		; <i32> [#uses=0]
+	%tmp7 = call i32 (i8*, ...)* @printf( i8* getelementptr ([14 x i8], [14 x i8]* @.str, i32 0, i32 0), i32 %tmp5 )		; <i32> [#uses=0]
 	%tmp8 = call i32 @pthread_create( i32* %t, %struct.pthread_attr_t* null, i8* (i8*)* @f, i8* null )		; <i32> [#uses=0]
 	%tmp9 = load i32, i32* %t		; <i32> [#uses=1]
 	%tmp11 = call i32 @pthread_join( i32 %tmp9, i8** %ret3 )		; <i32> [#uses=0]
 	%tmp12 = load i32, i32* %ret		; <i32> [#uses=1]
-	%tmp14 = call i32 (i8*, ...)* @printf( i8* getelementptr ([14 x i8]* @.str1, i32 0, i32 0), i32 %tmp12 )		; <i32> [#uses=0]
+	%tmp14 = call i32 (i8*, ...)* @printf( i8* getelementptr ([14 x i8], [14 x i8]* @.str1, i32 0, i32 0), i32 %tmp12 )		; <i32> [#uses=0]
 	ret i32 0
 }
 

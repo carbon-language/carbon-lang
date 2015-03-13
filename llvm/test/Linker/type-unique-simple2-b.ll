@@ -15,7 +15,7 @@
 @_ZTV1A = unnamed_addr constant [4 x i8*] [i8* null, i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast (void (%class.A*)* @_ZN1A6setFooEv to i8*), i8* bitcast (i32 (%class.A*)* @_ZN1A6getFooEv to i8*)]
 @_ZTVN10__cxxabiv117__class_type_infoE = external global i8*
 @_ZTS1A = constant [3 x i8] c"1A\00"
-@_ZTI1A = unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8]* @_ZTS1A, i32 0, i32 0) }
+@_ZTI1A = unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1A, i32 0, i32 0) }
 
 ; Function Attrs: nounwind
 define void @_ZN1A6setFooEv(%class.A* %this) unnamed_addr #0 align 2 {

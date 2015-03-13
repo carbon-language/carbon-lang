@@ -30,7 +30,7 @@ bb.i:                                             ; preds = %bb3
   unreachable
 
 bb.nph41:                                         ; preds = %bb3
-  %0 = call %struct.FILE* @"\01_fopen$UNIX2003"(i8* undef, i8* getelementptr inbounds ([2 x i8]* @.str12, i32 0, i32 0)) nounwind ; <%struct.FILE*> [#uses=3]
+  %0 = call %struct.FILE* @"\01_fopen$UNIX2003"(i8* undef, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str12, i32 0, i32 0)) nounwind ; <%struct.FILE*> [#uses=3]
   br i1 undef, label %bb4, label %bb5.preheader
 
 bb5.preheader:                                    ; preds = %bb.nph41
@@ -85,7 +85,7 @@ bb28:                                             ; preds = %bb28, %bb26.prehead
   br label %bb28
 
 bb30:                                             ; preds = %bb26.preheader
-  %5 = call i32 @strcmp(i8* undef, i8* getelementptr inbounds ([7 x i8]* @.str19, i32 0, i32 0)) nounwind readonly ; <i32> [#uses=0]
+  %5 = call i32 @strcmp(i8* undef, i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str19, i32 0, i32 0)) nounwind readonly ; <i32> [#uses=0]
   br i1 undef, label %bb34, label %bb70
 
 bb32.loopexit:                                    ; preds = %bb45
@@ -109,7 +109,7 @@ bb42:                                             ; preds = %bb39.preheader
   unreachable
 
 bb45:                                             ; preds = %bb39.preheader
-  %9 = call i32 @strcmp(i8* undef, i8* getelementptr inbounds ([4 x i8]* @.str24, i32 0, i32 0)) nounwind readonly ; <i32> [#uses=0]
+  %9 = call i32 @strcmp(i8* undef, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str24, i32 0, i32 0)) nounwind readonly ; <i32> [#uses=0]
   br i1 false, label %bb47, label %bb32.loopexit
 
 bb47:                                             ; preds = %bb45

@@ -24,7 +24,7 @@ entry:
 	%15 = sext i8 %6 to i32		; <i32> [#uses=2]
 	%16 = sext i16 %10 to i32		; <i32> [#uses=2]
 	%17 = sext i16 %13 to i32		; <i32> [#uses=2]
-	%18 = call  i32 (i8*, ...)* @printf(i8* getelementptr ([36 x i8]* @"\01LC", i32 0, i32 0), i32 -128, i32 0, i32 %15, i32 %16, i32 %17, i32 0, i32 %14) nounwind		; <i32> [#uses=0]
+	%18 = call  i32 (i8*, ...)* @printf(i8* getelementptr ([36 x i8], [36 x i8]* @"\01LC", i32 0, i32 0), i32 -128, i32 0, i32 %15, i32 %16, i32 %17, i32 0, i32 %14) nounwind		; <i32> [#uses=0]
 	%19 = add i32 0, %15		; <i32> [#uses=1]
 	%20 = add i32 %19, %16		; <i32> [#uses=1]
 	%21 = add i32 %20, %14		; <i32> [#uses=1]

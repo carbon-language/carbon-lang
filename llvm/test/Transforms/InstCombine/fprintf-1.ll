@@ -21,7 +21,7 @@ define void @test_simplify1(%FILE* %fp) {
 ; CHECK-LABEL: @test_simplify1(
   %fmt = getelementptr [13 x i8], [13 x i8]* @hello_world, i32 0, i32 0
   call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt)
-; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0), i32 12, i32 1, %FILE* %fp)
+; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @hello_world, i32 0, i32 0), i32 12, i32 1, %FILE* %fp)
   ret void
 ; CHECK-NEXT: ret void
 }
@@ -45,7 +45,7 @@ define void @test_simplify3(%FILE* %fp) {
   %fmt = getelementptr [3 x i8], [3 x i8]* @percent_s, i32 0, i32 0
   %str = getelementptr [13 x i8], [13 x i8]* @hello_world, i32 0, i32 0
   call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt, i8* %str)
-; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0), i32 12, i32 1, %FILE* %fp)
+; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @hello_world, i32 0, i32 0), i32 12, i32 1, %FILE* %fp)
   ret void
 ; CHECK-NEXT: ret void
 }
@@ -56,7 +56,7 @@ define void @test_simplify4(%FILE* %fp) {
 ; CHECK-IPRINTF-LABEL: @test_simplify4(
   %fmt = getelementptr [3 x i8], [3 x i8]* @percent_d, i32 0, i32 0
   call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt, i32 187)
-; CHECK-IPRINTF-NEXT: call i32 (%FILE*, i8*, ...)* @fiprintf(%FILE* %fp, i8* getelementptr inbounds ([3 x i8]* @percent_d, i32 0, i32 0), i32 187)
+; CHECK-IPRINTF-NEXT: call i32 (%FILE*, i8*, ...)* @fiprintf(%FILE* %fp, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @percent_d, i32 0, i32 0), i32 187)
   ret void
 ; CHECK-IPRINTF-NEXT: ret void
 }
@@ -65,7 +65,7 @@ define void @test_no_simplify1(%FILE* %fp) {
 ; CHECK-IPRINTF-LABEL: @test_no_simplify1(
   %fmt = getelementptr [3 x i8], [3 x i8]* @percent_f, i32 0, i32 0
   call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt, double 1.87)
-; CHECK-IPRINTF-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([3 x i8]* @percent_f, i32 0, i32 0), double 1.870000e+00)
+; CHECK-IPRINTF-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @percent_f, i32 0, i32 0), double 1.870000e+00)
   ret void
 ; CHECK-IPRINTF-NEXT: ret void
 }
@@ -74,7 +74,7 @@ define void @test_no_simplify2(%FILE* %fp, double %d) {
 ; CHECK-LABEL: @test_no_simplify2(
   %fmt = getelementptr [3 x i8], [3 x i8]* @percent_f, i32 0, i32 0
   call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt, double %d)
-; CHECK-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([3 x i8]* @percent_f, i32 0, i32 0), double %d)
+; CHECK-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @percent_f, i32 0, i32 0), double %d)
   ret void
 ; CHECK-NEXT: ret void
 }
@@ -83,7 +83,7 @@ define i32 @test_no_simplify3(%FILE* %fp) {
 ; CHECK-LABEL: @test_no_simplify3(
   %fmt = getelementptr [13 x i8], [13 x i8]* @hello_world, i32 0, i32 0
   %1 = call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* %fmt)
-; CHECK-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0))
+; CHECK-NEXT: call i32 (%FILE*, i8*, ...)* @fprintf(%FILE* %fp, i8* getelementptr inbounds ([13 x i8], [13 x i8]* @hello_world, i32 0, i32 0))
   ret i32 %1
 ; CHECK-NEXT: ret i32 %1
 }

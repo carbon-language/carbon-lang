@@ -27,7 +27,7 @@ bb.i:                                             ; preds = %entry
 
 ; CHECK-NOT: assert
 bb6.i.i:                                          ; preds = %bb.i
-  tail call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8]* @_ZZN4llvm4castINS_11InstructionEPNS_5ValueEEENS_10cast_rettyIT_T0_E8ret_typeERKS6_E8__func__, i64 0, i64 0), i8* getelementptr inbounds ([31 x i8]* @.str, i64 0, i64 0), i32 202, i8* getelementptr inbounds ([59 x i8]* @.str1, i64 0, i64 0)) noreturn
+  tail call void @__assert_rtn(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @_ZZN4llvm4castINS_11InstructionEPNS_5ValueEEENS_10cast_rettyIT_T0_E8ret_typeERKS6_E8__func__, i64 0, i64 0), i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str, i64 0, i64 0), i32 202, i8* getelementptr inbounds ([59 x i8], [59 x i8]* @.str1, i64 0, i64 0)) noreturn
   unreachable
 
 _ZN4llvm8dyn_castINS_11InstructionEPNS_5ValueEEENS_10cast_rettyIT_T0_E8ret_typeERKS6_.exit: ; preds = %bb.i

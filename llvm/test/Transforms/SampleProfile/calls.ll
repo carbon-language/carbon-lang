@@ -83,7 +83,7 @@ if.end:                                           ; preds = %if.else, %if.then
 
 while.end:                                        ; preds = %while.cond
   %4 = load i32, i32* %s, align 4, !dbg !24
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i32 %4), !dbg !24
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i32 %4), !dbg !24
   ret i32 0, !dbg !25
 }
 

@@ -14,7 +14,7 @@ entry:
 lpad:
   %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
           catch i8* null
-  call i32 @puts(i8* getelementptr inbounds ([10 x i8]* @str, i64 0, i64 0))
+  call i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str, i64 0, i64 0))
   br label %__try.cont
 
 __try.cont:

@@ -10,7 +10,7 @@ entry:
           to label %invoke.cont unwind label %lpad
 
 invoke.cont:                                      ; preds = %entry
-  %call = call i32 @puts(i8* getelementptr inbounds ([10 x i8]* @str_recovered, i64 0, i64 0))
+  %call = call i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str_recovered, i64 0, i64 0))
   call void @abort()
   ret i32 0
 
@@ -19,7 +19,7 @@ lpad:                                             ; preds = %entry
           cleanup
   %1 = extractvalue { i8*, i32 } %0, 0
   %2 = extractvalue { i8*, i32 } %0, 1
-  %call2 = invoke i32 @puts(i8* getelementptr inbounds ([10 x i8]* @str_recovered, i64 0, i64 0))
+  %call2 = invoke i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str_recovered, i64 0, i64 0))
           to label %invoke.cont1 unwind label %terminate.lpad
 
 invoke.cont1:                                     ; preds = %lpad

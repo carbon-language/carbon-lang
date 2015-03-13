@@ -76,7 +76,7 @@ if.end:                                           ; preds = %if.else, %if.then
   %arrayidx24 = getelementptr inbounds i8, i8* %tmp1, i32 24
   %7 = bitcast i8* %arrayidx24 to i32*
   %tmp25 = load i32, i32* %7, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([22 x i8]* @.str, i32 0, i32 0), i32 %tmp7, i32 %tmp10, i32 %tmp13, i32 %tmp16, i32 %tmp19, i32 %tmp22, i32 %tmp25) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([22 x i8], [22 x i8]* @.str, i32 0, i32 0), i32 %tmp7, i32 %tmp10, i32 %tmp13, i32 %tmp16, i32 %tmp19, i32 %tmp22, i32 %tmp25) nounwind
   ret i32 0
 }
 

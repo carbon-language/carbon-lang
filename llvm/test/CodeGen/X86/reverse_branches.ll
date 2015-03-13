@@ -38,7 +38,7 @@ for.body3:
   br i1 %cmp7, label %for.cond1, label %if.then
 
 if.then:
-  %puts = call i32 @puts(i8* getelementptr inbounds ([5 x i8]* @str4, i64 0, i64 0))
+  %puts = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @str4, i64 0, i64 0))
   call void @exit(i32 1) noreturn
   unreachable
 
@@ -47,7 +47,7 @@ for.inc9:
   br label %for.cond
 
 for.end11:
-  %puts42 = call i32 @puts(i8* getelementptr inbounds ([7 x i8]* @.str2, i64 0, i64 0))
+  %puts42 = call i32 @puts(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str2, i64 0, i64 0))
   br label %for.cond14
 
 for.cond14:
@@ -85,7 +85,7 @@ exit:
   br i1 %cmp31, label %for.cond18, label %if.then32
 
 if.then32:
-  %puts43 = call i32 @puts(i8* getelementptr inbounds ([5 x i8]* @str4, i64 0, i64 0))
+  %puts43 = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @str4, i64 0, i64 0))
   call void @exit(i32 1) noreturn
   unreachable
 
@@ -94,7 +94,7 @@ for.inc38:
   br label %for.cond14
 
 for.end40:
-  %puts44 = call i32 @puts(i8* getelementptr inbounds ([11 x i8]* @.str3, i64 0, i64 0))
+  %puts44 = call i32 @puts(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str3, i64 0, i64 0))
   ret i32 0
 }
 

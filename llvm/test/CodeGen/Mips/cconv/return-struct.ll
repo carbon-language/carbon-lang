@@ -52,7 +52,7 @@ define inreg {i16} @ret_struct_i16() nounwind {
 entry:
         %retval = alloca {i8,i8}, align 1
         %0 = bitcast {i8,i8}* %retval to i8*
-        call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds ({i8,i8}* @struct_2byte, i32 0, i32 0), i64 2, i32 1, i1 false)
+        call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds ({i8,i8}, {i8,i8}* @struct_2byte, i32 0, i32 0), i64 2, i32 1, i1 false)
         %1 = bitcast {i8,i8}* %retval to {i16}*
         %2 = load volatile {i16}, {i16}* %1
         ret {i16} %2

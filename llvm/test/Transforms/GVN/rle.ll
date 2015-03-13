@@ -632,9 +632,9 @@ if.end:
 
 define i32 @test_widening1(i8* %P) nounwind ssp noredzone {
 entry:
-  %tmp = load i8, i8* getelementptr inbounds (%widening1* @f, i64 0, i32 1), align 4
+  %tmp = load i8, i8* getelementptr inbounds (%widening1, %widening1* @f, i64 0, i32 1), align 4
   %conv = zext i8 %tmp to i32
-  %tmp1 = load i8, i8* getelementptr inbounds (%widening1* @f, i64 0, i32 2), align 1
+  %tmp1 = load i8, i8* getelementptr inbounds (%widening1, %widening1* @f, i64 0, i32 2), align 1
   %conv2 = zext i8 %tmp1 to i32
   %add = add nsw i32 %conv, %conv2
   ret i32 %add
@@ -647,17 +647,17 @@ entry:
 
 define i32 @test_widening2() nounwind ssp noredzone {
 entry:
-  %tmp = load i8, i8* getelementptr inbounds (%widening1* @f, i64 0, i32 1), align 4
+  %tmp = load i8, i8* getelementptr inbounds (%widening1, %widening1* @f, i64 0, i32 1), align 4
   %conv = zext i8 %tmp to i32
-  %tmp1 = load i8, i8* getelementptr inbounds (%widening1* @f, i64 0, i32 2), align 1
+  %tmp1 = load i8, i8* getelementptr inbounds (%widening1, %widening1* @f, i64 0, i32 2), align 1
   %conv2 = zext i8 %tmp1 to i32
   %add = add nsw i32 %conv, %conv2
 
-  %tmp2 = load i8, i8* getelementptr inbounds (%widening1* @f, i64 0, i32 3), align 2
+  %tmp2 = load i8, i8* getelementptr inbounds (%widening1, %widening1* @f, i64 0, i32 3), align 2
   %conv3 = zext i8 %tmp2 to i32
   %add2 = add nsw i32 %add, %conv3
 
-  %tmp3 = load i8, i8* getelementptr inbounds (%widening1* @f, i64 0, i32 4), align 1
+  %tmp3 = load i8, i8* getelementptr inbounds (%widening1, %widening1* @f, i64 0, i32 4), align 1
   %conv4 = zext i8 %tmp3 to i32
   %add3 = add nsw i32 %add2, %conv3
 
@@ -691,7 +691,7 @@ declare void @use3(i8***, i8**)
 ; PR8908
 define void @test_escape1() nounwind {
   %x = alloca i8**, align 8
-  store i8** getelementptr inbounds ([5 x i8*]* @_ZTV1X, i64 0, i64 2), i8*** %x, align 8
+  store i8** getelementptr inbounds ([5 x i8*], [5 x i8*]* @_ZTV1X, i64 0, i64 2), i8*** %x, align 8
   call void @use() nounwind
   %DEAD = load i8**, i8*** %x, align 8
   call void @use3(i8*** %x, i8** %DEAD) nounwind

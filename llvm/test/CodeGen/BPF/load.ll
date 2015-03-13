@@ -36,7 +36,7 @@ define i16 @am5(i16* %a) nounwind {
 @baz = common global %S zeroinitializer, align 1
 
 define i16 @am6() nounwind {
-  %1 = load i16, i16* getelementptr (%S* @baz, i32 0, i32 1)
+  %1 = load i16, i16* getelementptr (%S, %S* @baz, i32 0, i32 1)
   ret i16 %1
 }
 ; CHECK-LABEL: am6:

@@ -35,7 +35,7 @@ define void @h(i8*) nounwind ssp {
   indirectbr i8* %16, [label %17, label %18]
 
 ; <label>:17                                      ; preds = %11
-  tail call void (i8*, ...)* @g(i8* getelementptr inbounds ([35 x i8]* @.str40, i32 0, i32 0))
+  tail call void (i8*, ...)* @g(i8* getelementptr inbounds ([35 x i8], [35 x i8]* @.str40, i32 0, i32 0))
   br label %22
 
 ; <label>:18                                      ; preds = %11

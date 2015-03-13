@@ -67,10 +67,10 @@ while.cond.backedge.i:                            ; preds = %if.end.i, %while.bo
 
 ; CHECK: func.exit:
 ; CHECK-NOT: load
-; CHECK: %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([6 x i8]* @.str, i64 0, i64 0), i32 %tmp) [[NUW:#[0-9]+]]
+; CHECK: %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0), i32 %tmp) [[NUW:#[0-9]+]]
 func.exit:                                        ; preds = %while.body.i.func.exit_crit_edge, %while.cond.i.func.exit_crit_edge
   %tmp3 = load i32, i32* %x.i, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([6 x i8]* @.str, i64 0, i64 0), i32 %tmp3) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0), i32 %tmp3) nounwind
   ret i32 0
 }
 

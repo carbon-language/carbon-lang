@@ -24,13 +24,13 @@ declare void @_ZdlPv(i8*)
 define void @_ZN4llvm21PrettyStackTraceEntryD0Ev(%"class.llvm::PrettyStackTraceEntry"* %this) unnamed_addr align 2 {
 entry:
   %0 = getelementptr inbounds %"class.llvm::PrettyStackTraceEntry", %"class.llvm::PrettyStackTraceEntry"* %this, i64 0, i32 0
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([5 x i8*]* @_ZTVN4llvm21PrettyStackTraceEntryE, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([5 x i8*], [5 x i8*]* @_ZTVN4llvm21PrettyStackTraceEntryE, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   %1 = load %"class.llvm::PrettyStackTraceEntry"*, %"class.llvm::PrettyStackTraceEntry"** @_ZL20PrettyStackTraceHead, align 8
   %cmp.i = icmp eq %"class.llvm::PrettyStackTraceEntry"* %1, %this
   br i1 %cmp.i, label %_ZN4llvm21PrettyStackTraceEntryD2Ev.exit, label %cond.false.i
 
 cond.false.i:                                     ; preds = %entry
-  tail call void @__assert_fail(i8* getelementptr inbounds ([87 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([64 x i8]* @.str1, i64 0, i64 0), i32 zeroext 119, i8* getelementptr inbounds ([62 x i8]* @__PRETTY_FUNCTION__._ZN4llvm21PrettyStackTraceEntryD2Ev, i64 0, i64 0))
+  tail call void @__assert_fail(i8* getelementptr inbounds ([87 x i8], [87 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([64 x i8], [64 x i8]* @.str1, i64 0, i64 0), i32 zeroext 119, i8* getelementptr inbounds ([62 x i8], [62 x i8]* @__PRETTY_FUNCTION__._ZN4llvm21PrettyStackTraceEntryD2Ev, i64 0, i64 0))
   unreachable
 
 _ZN4llvm21PrettyStackTraceEntryD2Ev.exit:         ; preds = %entry

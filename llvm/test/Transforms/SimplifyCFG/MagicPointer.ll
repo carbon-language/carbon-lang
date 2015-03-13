@@ -33,7 +33,7 @@ entry:
   br i1 %tobool, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %call = call i32 @puts(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end21
 
 if.else:                                          ; preds = %entry
@@ -41,7 +41,7 @@ if.else:                                          ; preds = %entry
   br i1 %cmp, label %if.then2, label %if.else4
 
 if.then2:                                         ; preds = %if.else
-  %call3 = call i32 @puts(i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call3 = call i32 @puts(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end20
 
 if.else4:                                         ; preds = %if.else
@@ -53,7 +53,7 @@ lor.lhs.false:                                    ; preds = %if.else4
   br i1 %cmp8, label %if.then9, label %if.else11
 
 if.then9:                                         ; preds = %lor.lhs.false, %if.else4
-  %call10 = call i32 @puts(i8* getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call10 = call i32 @puts(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str2, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end19
 
 if.else11:                                        ; preds = %lor.lhs.false
@@ -61,7 +61,7 @@ if.else11:                                        ; preds = %lor.lhs.false
   br i1 %cmp13, label %if.then14, label %if.else16
 
 if.then14:                                        ; preds = %if.else11
-  %call15 = call i32 @puts(i8* getelementptr inbounds ([5 x i8]* @.str3, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call15 = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str3, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end
 
 if.else16:                                        ; preds = %if.else11
@@ -99,7 +99,7 @@ entry:
   br i1 %tobool, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %call = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([5 x i8] addrspace(1)* @.str_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([5 x i8], [5 x i8] addrspace(1)* @.str_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end21
 
 if.else:                                          ; preds = %entry
@@ -107,7 +107,7 @@ if.else:                                          ; preds = %entry
   br i1 %cmp, label %if.then2, label %if.else4
 
 if.then2:                                         ; preds = %if.else
-  %call3 = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([4 x i8] addrspace(1)* @.str1_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call3 = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([4 x i8], [4 x i8] addrspace(1)* @.str1_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end20
 
 if.else4:                                         ; preds = %if.else
@@ -119,7 +119,7 @@ lor.lhs.false:                                    ; preds = %if.else4
   br i1 %cmp8, label %if.then9, label %if.else11
 
 if.then9:                                         ; preds = %lor.lhs.false, %if.else4
-  %call10 = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([4 x i8] addrspace(1)* @.str2_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call10 = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([4 x i8], [4 x i8] addrspace(1)* @.str2_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end19
 
 if.else11:                                        ; preds = %lor.lhs.false
@@ -127,7 +127,7 @@ if.else11:                                        ; preds = %lor.lhs.false
   br i1 %cmp13, label %if.then14, label %if.else16
 
 if.then14:                                        ; preds = %if.else11
-  %call15 = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([5 x i8] addrspace(1)* @.str3_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %call15 = call i32 @puts_as1(i8 addrspace(1)* getelementptr inbounds ([5 x i8], [5 x i8] addrspace(1)* @.str3_as1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %if.end
 
 if.else16:                                        ; preds = %if.else11

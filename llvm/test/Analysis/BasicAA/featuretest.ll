@@ -97,7 +97,7 @@ define i32 @constexpr_test() {
    call void @external(i32* %X)
 
    %Y = load i32, i32* %X
-   store i32 5, i32* getelementptr ({ i32 }* @Global, i64 0, i32 0)
+   store i32 5, i32* getelementptr ({ i32 }, { i32 }* @Global, i64 0, i32 0)
    %REMOVE = load i32, i32* %X
    %retval = sub i32 %Y, %REMOVE
    ret i32 %retval

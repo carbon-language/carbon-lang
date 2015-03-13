@@ -32,7 +32,7 @@ bb1:                                              ; preds = %entry
   br label %bb2, !dbg !27
 
 bb2:                                              ; preds = %bb1, %bb
-  %.0 = phi i8* [ getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0), %bb ], [ %name, %bb1 ] ; <i8*> [#uses=1]
+  %.0 = phi i8* [ getelementptr inbounds ([1 x i8], [1 x i8]* @.str, i64 0, i64 0), %bb ], [ %name, %bb1 ] ; <i8*> [#uses=1]
   ret i8* %.0, !dbg !27
 }
 

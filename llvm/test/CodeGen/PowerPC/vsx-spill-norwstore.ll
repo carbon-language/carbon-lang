@@ -23,7 +23,7 @@ check.exit69.i:                                   ; preds = %entry
   br i1 undef, label %if.then.i63.i, label %check.exit64.i
 
 if.then.i63.i:                                    ; preds = %check.exit69.i
-  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str10, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8]* @.str1, i64 0, i64 0)) #0
+  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str10, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str1, i64 0, i64 0)) #0
   br label %check.exit64.i
 
 check.exit64.i:                                   ; preds = %if.then.i63.i, %check.exit69.i

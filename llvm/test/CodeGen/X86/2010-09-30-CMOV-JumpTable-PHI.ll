@@ -19,7 +19,7 @@ declare i32 @strlen(i8* nocapture) nounwind readonly
 define hidden zeroext i8 @f(i8* %this, i8* %Name.0, i32 %Name.1, i8* noalias %NameLoc, i8* %Operands) nounwind align 2 {
 bb.i:
   %0 = icmp eq i8 undef, 0
-  %iftmp.285.0 = select i1 %0, i8* getelementptr inbounds ([5 x i8]* @.str1189, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8]* @.str706, i32 0, i32 0)
+  %iftmp.285.0 = select i1 %0, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str1189, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str706, i32 0, i32 0)
   %1 = call i32 @strlen(i8* %iftmp.285.0) nounwind readonly
   switch i32 %Name.1, label %_ZNK4llvm12StringSwitchINS_9StringRefES1_E7DefaultERKS1_.exit [
     i32 3, label %bb1.i
@@ -63,7 +63,7 @@ _ZNK4llvm12StringSwitchINS_9StringRefES1_E7DefaultERKS1_.exit: ; preds = %bb.i18
   br i1 undef, label %bb141, label %_ZNK4llvm9StringRef10startswithES0_.exit
 
 _ZNK4llvm9StringRef10startswithES0_.exit:         ; preds = %_ZNK4llvm12StringSwitchINS_9StringRefES1_E7DefaultERKS1_.exit
-  %2 = call i32 @memcmp(i8* %PatchedName.0.0, i8* getelementptr inbounds ([4 x i8]* @.str146, i32 0, i32 0), i32 3) nounwind readonly
+  %2 = call i32 @memcmp(i8* %PatchedName.0.0, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str146, i32 0, i32 0), i32 3) nounwind readonly
   unreachable
 
 bb141:                                            ; preds = %_ZNK4llvm12StringSwitchINS_9StringRefES1_E7DefaultERKS1_.exit

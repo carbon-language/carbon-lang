@@ -51,7 +51,7 @@ entry:
 ; ARM: @word_aligned_f64_store
 ; THUMB: @word_aligned_f64_store
   %add = fadd double %a, %b
-  store double %add, double* getelementptr inbounds (%struct.anon.0* @foo_unpacked, i32 0, i32 0), align 4
+  store double %add, double* getelementptr inbounds (%struct.anon.0, %struct.anon.0* @foo_unpacked, i32 0, i32 0), align 4
 ; ARM: vstr d16, [r0]
 ; THUMB: vstr d16, [r0]
   ret void

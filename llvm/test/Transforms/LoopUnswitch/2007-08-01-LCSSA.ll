@@ -19,7 +19,7 @@ declare i32 @strcmp(i8*, i8*)
 
 define i32 @_ZN9Generator6strregEPKc(%struct.Generator* %this, i8* %s) {
 entry:
-	%s_addr.0 = select i1 false, i8* getelementptr ([1 x i8]* @.str9, i32 0, i32 0), i8* %s		; <i8*> [#uses=2]
+	%s_addr.0 = select i1 false, i8* getelementptr ([1 x i8], [1 x i8]* @.str9, i32 0, i32 0), i8* %s		; <i8*> [#uses=2]
 	%tmp122 = icmp eq i8* %s_addr.0, null		; <i1> [#uses=1]
 	br label %bb184
 

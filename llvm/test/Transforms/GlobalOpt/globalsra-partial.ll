@@ -6,7 +6,7 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 @G = internal global { i32, [4 x float] } zeroinitializer               ; <{ i32, [4 x float] }*> [#uses=3]
 
 define void @onlystore() {
-        store i32 12345, i32* getelementptr ({ i32, [4 x float] }* @G, i32 0, i32 0)
+        store i32 12345, i32* getelementptr ({ i32, [4 x float] }, { i32, [4 x float] }* @G, i32 0, i32 0)
         ret void
 }
 

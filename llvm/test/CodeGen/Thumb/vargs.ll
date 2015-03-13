@@ -27,7 +27,7 @@ bb:             ; preds = %bb, %entry
 bb7:            ; preds = %bb
         %tmp3 = bitcast i8* %tmp to i32*                ; <i32*> [#uses=1]
         %tmp.upgrd.3 = load i32, i32* %tmp3          ; <i32> [#uses=1]
-        %tmp10 = call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @str, i32 0, i64 0), i32 %tmp.upgrd.3 )                ; <i32> [#uses=0]
+        %tmp10 = call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @str, i32 0, i64 0), i32 %tmp.upgrd.3 )                ; <i32> [#uses=0]
         %va.upgrd.4 = bitcast i8** %va to i8*           ; <i8*> [#uses=1]
         call void @llvm.va_end( i8* %va.upgrd.4 )
         ret void

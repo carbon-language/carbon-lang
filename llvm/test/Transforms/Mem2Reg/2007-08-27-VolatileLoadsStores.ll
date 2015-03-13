@@ -15,7 +15,7 @@ entry:
 	%tmp = alloca i32, align 4		; <i32*> [#uses=3]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store volatile i32 0, i32* %v, align 4
-	%tmp1 = call i32 @_setjmp( %struct.__jmp_buf_tag* getelementptr ([1 x %struct.__jmp_buf_tag]* @j, i32 0, i32 0) )		; <i32> [#uses=1]
+	%tmp1 = call i32 @_setjmp( %struct.__jmp_buf_tag* getelementptr ([1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* @j, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp2 = icmp ne i32 %tmp1, 0		; <i1> [#uses=1]
 	%tmp23 = zext i1 %tmp2 to i8		; <i8> [#uses=1]
 	%toBool = icmp ne i8 %tmp23, 0		; <i1> [#uses=1]

@@ -14,7 +14,7 @@ entry:
         %tmp.11 = call i64 @getL( )             ; <i64> [#uses=2]
         %tmp.5 = trunc i64 %tmp.11 to i32               ; <i32> [#uses=2]
         %tmp.23 = and i64 %tmp.11, -4294967296          ; <i64> [#uses=2]
-        %tmp.16 = call i32 (i8*, ...)* @printf( i8* getelementptr ([42 x i8]* @.str_1, i64 0, i64 0), i32 %tmp.5, i32 %tmp.5, i64 %tmp.23, i64 %tmp.23 )              ; <i32> [#uses=0]
+        %tmp.16 = call i32 (i8*, ...)* @printf( i8* getelementptr ([42 x i8], [42 x i8]* @.str_1, i64 0, i64 0), i32 %tmp.5, i32 %tmp.5, i64 %tmp.23, i64 %tmp.23 )              ; <i32> [#uses=0]
         ret i32 0
 }
 

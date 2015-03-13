@@ -12,7 +12,7 @@
 @_ZTV1A = linkonce_odr unnamed_addr constant [4 x i8*] [i8* null, i8* bitcast ({ i8*, i8* }* @_ZTI1A to i8*), i8* bitcast (void (%class.A*)* @_ZN1AD2Ev to i8*), i8* bitcast (void (%class.A*)* @_ZN1AD0Ev to i8*)]
 @_ZTVN10__cxxabiv117__class_type_infoE = external global i8*
 @_ZTS1A = linkonce_odr constant [3 x i8] c"1A\00"
-@_ZTI1A = linkonce_odr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8]* @_ZTS1A, i32 0, i32 0) }
+@_ZTI1A = linkonce_odr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1A, i32 0, i32 0) }
 
 @_ZN1AC1Ei = alias void (%class.A*, i32)* @_ZN1AC2Ei
 @_ZN1AC1ERKS_ = alias void (%class.A*, %class.A*)* @_ZN1AC2ERKS_
@@ -28,7 +28,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %i.addr, metadata !70, metadata !MDExpression()), !dbg !71
   %this1 = load %class.A*, %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !72
-  store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !72
+  store i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !72
   %m_int = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 1, !dbg !72
   %1 = load i32, i32* %i.addr, align 4, !dbg !72
   store i32 %1, i32* %m_int, align 4, !dbg !72
@@ -49,7 +49,7 @@ entry:
   call void @llvm.dbg.declare(metadata %class.A** %rhs.addr, metadata !76, metadata !MDExpression()), !dbg !77
   %this1 = load %class.A*, %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !78
-  store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !78
+  store i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !78
   %m_int = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 1, !dbg !78
   %1 = load %class.A*, %class.A** %rhs.addr, align 8, !dbg !78
   %m_int2 = getelementptr inbounds %class.A, %class.A* %1, i32 0, i32 1, !dbg !78

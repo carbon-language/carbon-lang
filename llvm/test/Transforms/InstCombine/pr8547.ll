@@ -21,6 +21,6 @@ for.cond:                                         ; preds = %for.cond, %codeRepl
   br i1 %tobool, label %for.cond, label %codeRepl2
 
 codeRepl2:                                        ; preds = %for.cond
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i64 0, i64 0), i32 %conv2) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i64 0, i64 0), i32 %conv2) nounwind
   ret i32 0
 }

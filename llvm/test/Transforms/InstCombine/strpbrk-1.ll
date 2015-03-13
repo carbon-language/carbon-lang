@@ -41,7 +41,7 @@ define i8* @test_simplify3() {
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
   ret i8* %ret
-; CHECK-NEXT: ret i8* getelementptr inbounds ([12 x i8]* @hello, i32 0, i32 6)
+; CHECK-NEXT: ret i8* getelementptr inbounds ([12 x i8], [12 x i8]* @hello, i32 0, i32 6)
 }
 
 ; Check strpbrk(s, "a") -> strchr(s, 'a').

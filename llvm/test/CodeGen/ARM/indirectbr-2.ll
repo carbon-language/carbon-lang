@@ -27,7 +27,7 @@ define i32 @func() nounwind ssp {
   %9 = load i32, i32* %8
   %10 = add i32 %9, ptrtoint (i8* blockaddress(@func, %4) to i32)
   %11 = inttoptr i32 %10 to i8*
-  %12 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([45 x i8]* @0, i32 0, i32 0))
+  %12 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([45 x i8], [45 x i8]* @0, i32 0, i32 0))
   indirectbr i8* %11, [label %13, label %14]
 
 ; <label>:13                                      ; preds = %4

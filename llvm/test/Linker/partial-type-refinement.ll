@@ -1,7 +1,7 @@
 ; RUN: llvm-link %s %p/partial-type-refinement-link.ll -S | FileCheck %s
 ; PR4954
 
-; CHECK: load %PI*, %PI** getelementptr inbounds (%"RegisterP<LowerArrayLength>"* @_ZN3mvmL1XE, i64 0, i32 0, i32 6, i32 0, i32 0, i32 0), align 16
+; CHECK: load %PI*, %PI** getelementptr inbounds (%"RegisterP<LowerArrayLength>", %"RegisterP<LowerArrayLength>"* @_ZN3mvmL1XE, i64 0, i32 0, i32 6, i32 0, i32 0, i32 0), align 16
 
 %AnalysisResolver = type { i8, %PMDataManager* }
 %"DenseMap<P*,AU*>" = type { i64, %"pair<P*,AU*>"*, i64, i64 }
@@ -19,6 +19,6 @@
 
 define void @__tcf_0() nounwind {
 entry:
-  %0 = load %PI*, %PI** getelementptr inbounds (%"RegisterP<LowerArrayLength>"* @_ZN3mvmL1XE, i64 0, i32 0, i32 6, i32 0, i32 0, i32 0), align 16
+  %0 = load %PI*, %PI** getelementptr inbounds (%"RegisterP<LowerArrayLength>", %"RegisterP<LowerArrayLength>"* @_ZN3mvmL1XE, i64 0, i32 0, i32 6, i32 0, i32 0, i32 0), align 16
   ret void
 }

@@ -11,14 +11,14 @@ entry:
 
 L1:                                               ; preds = %entry, %L1
   %i.0 = phi i32 [ 0, %entry ], [ %inc, %L1 ]
-  %puts = tail call i32 @puts(i8* getelementptr inbounds ([2 x i8]* @str, i32 0, i32 0))
+  %puts = tail call i32 @puts(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @str, i32 0, i32 0))
   %inc = add i32 %i.0, 1
   %arrayidx = getelementptr inbounds [3 x i8*], [3 x i8*]* @main.L, i32 0, i32 %i.0
   %0 = load i8*, i8** %arrayidx, align 4, !tbaa !1
   indirectbr i8* %0, [label %L1, label %L2]
 
 L2:                                               ; preds = %L1
-  %puts2 = tail call i32 @puts(i8* getelementptr inbounds ([2 x i8]* @str2, i32 0, i32 0))
+  %puts2 = tail call i32 @puts(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @str2, i32 0, i32 0))
   ret i32 0
 }
 

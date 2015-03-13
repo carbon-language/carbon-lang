@@ -123,13 +123,13 @@ entry:
 for.body:
   %inc3 = phi i32 [ 0, %entry ], [ %inc, %cond.end ]
   %or2 = phi i32 [ 0, %entry ], [ %or, %cond.end ]
-  br i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 0), i32** @c), label %cond.false, label %cond.end
+  br i1 icmp eq (i32** getelementptr inbounds ([1 x i32*], [1 x i32*]* @a, i64 0, i64 0), i32** @c), label %cond.false, label %cond.end
 
 cond.false:
   br label %cond.end
 
 cond.end:
-  %cond = phi i32 [ sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 0), i32** @c) to i32)), %cond.false ], [ 0, %for.body ]
+  %cond = phi i32 [ sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*], [1 x i32*]* @a, i64 0, i64 0), i32** @c) to i32)), %cond.false ], [ 0, %for.body ]
   %or = or i32 %or2, %cond
   %inc = add nsw i32 %inc3, 1
   %cmp = icmp slt i32 %inc, 128
@@ -153,10 +153,10 @@ entry:
 for.body:
   %inc3 = phi i32 [ 0, %entry ], [ %inc, %cond.end ]
   %or2 = phi i32 [ 0, %entry ], [ %or, %cond.end ]
-  br i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 0), i32** @c), label %cond.false, label %cond.end
+  br i1 icmp eq (i32** getelementptr inbounds ([1 x i32*], [1 x i32*]* @a, i64 0, i64 0), i32** @c), label %cond.false, label %cond.end
 
 cond.false:
-  %cond.1 = or i32 %inc3, sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 1), i32** @c) to i32))
+  %cond.1 = or i32 %inc3, sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*], [1 x i32*]* @a, i64 0, i64 1), i32** @c) to i32))
   br label %cond.end
 
 cond.end:

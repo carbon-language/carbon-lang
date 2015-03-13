@@ -37,7 +37,7 @@ entry:
   %0 = call i8* @llvm.frameaddress(i32 0)
   store i8* %0, i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**)
   %1 = call i8* @llvm.stacksave()
-  store i8* %1, i8** getelementptr (i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**), i32 2)
+  store i8* %1, i8** getelementptr (i8*, i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**), i32 2)
   %2 = call i32 @llvm.eh.sjlj.setjmp(i8* bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8*))
   %tobool = icmp ne i32 %2, 0
   br i1 %tobool, label %if.then, label %if.else
@@ -110,7 +110,7 @@ entry:
   %0 = call i8* @llvm.frameaddress(i32 0)
   store i8* %0, i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**)
   %1 = call i8* @llvm.stacksave()
-  store i8* %1, i8** getelementptr (i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**), i32 2)
+  store i8* %1, i8** getelementptr (i8*, i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**), i32 2)
   %2 = call i32 @llvm.eh.sjlj.setjmp(i8* bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8*))
   %tobool = icmp ne i32 %2, 0
   br i1 %tobool, label %if.then, label %if.else

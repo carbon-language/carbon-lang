@@ -60,7 +60,7 @@ if.then:                                          ; preds = %for.body5
 if.end:                                           ; preds = %if.then, %for.body5
   %6 = load i32, i32* @e, align 4
   %idxprom6 = sext i32 %6 to i64
-  %arrayidx7 = getelementptr inbounds [3 x i8], [3 x i8]* getelementptr inbounds ([1 x [3 x i8]]* @f, i32 0, i64 0), i32 0, i64 %idxprom6
+  %arrayidx7 = getelementptr inbounds [3 x i8], [3 x i8]* getelementptr inbounds ([1 x [3 x i8]], [1 x [3 x i8]]* @f, i32 0, i64 0), i32 0, i64 %idxprom6
   store i8 1, i8* %arrayidx7, align 1
   br label %for.inc
 
@@ -89,7 +89,7 @@ entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
   call void @fn1()
-  %0 = load i8, i8* getelementptr inbounds ([1 x [3 x i8]]* @f, i32 0, i64 0, i64 1), align 1
+  %0 = load i8, i8* getelementptr inbounds ([1 x [3 x i8]], [1 x [3 x i8]]* @f, i32 0, i64 0, i64 1), align 1
   %conv = sext i8 %0 to i32
   %cmp = icmp ne i32 %conv, 1
   br i1 %cmp, label %if.then, label %if.end

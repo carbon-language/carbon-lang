@@ -6,7 +6,7 @@
 
 define void @foo() #0 {
 entry:
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str, i32 0, i32 0))
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str, i32 0, i32 0))
   ret void
 }
 

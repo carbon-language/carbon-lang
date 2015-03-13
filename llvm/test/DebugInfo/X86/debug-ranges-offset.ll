@@ -26,10 +26,10 @@ entry:
   %1 = and i64 %0, -70368744177672, !dbg !19
   %2 = inttoptr i64 %1 to i64*, !dbg !19
   store i64 -1, i64* %2, align 8, !dbg !19
-  store i64 0, i64* getelementptr inbounds ([1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !19
-  store i64 0, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
+  store i64 0, i64* getelementptr inbounds ([1000 x i64], [1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !19
+  store i64 0, i64* getelementptr inbounds ([8 x i64], [8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %call = call i8* @_Znwm(i64 4) #4, !dbg !19
-  %_msret = load i64, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
+  %_msret = load i64, i64* getelementptr inbounds ([8 x i64], [8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %3 = bitcast i8* %call to i32*, !dbg !19
   tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !MDExpression()), !dbg !19
   %4 = inttoptr i64 %1 to i64*, !dbg !19
@@ -69,9 +69,9 @@ entry:
   br i1 %tobool, label %if.end, label %if.then, !dbg !20
 
 if.then:                                          ; preds = %16
-  store i64 0, i64* getelementptr inbounds ([1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !28
+  store i64 0, i64* getelementptr inbounds ([1000 x i64], [1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !28
   store i32 0, i32* bitcast ([8 x i64]* @__msan_retval_tls to i32*), align 8, !dbg !28
-  %puts = call i32 @puts(i8* getelementptr inbounds ([4 x i8]* @str, i64 0, i64 0)), !dbg !28
+  %puts = call i32 @puts(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @str, i64 0, i64 0)), !dbg !28
   br label %if.end, !dbg !28
 
 if.end:                                           ; preds = %16, %if.then
@@ -91,10 +91,10 @@ entry:
   store i64 -1, i64* %2, align 8, !dbg !30
   %p.i.0..sroa_cast = bitcast i32** %p.i to i8*, !dbg !30
   call void @llvm.lifetime.start(i64 8, i8* %p.i.0..sroa_cast), !dbg !30
-  store i64 0, i64* getelementptr inbounds ([1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !30
-  store i64 0, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
+  store i64 0, i64* getelementptr inbounds ([1000 x i64], [1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !30
+  store i64 0, i64* getelementptr inbounds ([8 x i64], [8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %call.i = call i8* @_Znwm(i64 4) #4, !dbg !30
-  %_msret = load i64, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
+  %_msret = load i64, i64* getelementptr inbounds ([8 x i64], [8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %3 = bitcast i8* %call.i to i32*, !dbg !30
   tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !MDExpression()), !dbg !30
   %4 = inttoptr i64 %1 to i64*, !dbg !30
@@ -134,9 +134,9 @@ entry:
   br i1 %tobool.i, label %_Z1fv.exit, label %if.then.i, !dbg !33
 
 if.then.i:                                        ; preds = %16
-  store i64 0, i64* getelementptr inbounds ([1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !34
+  store i64 0, i64* getelementptr inbounds ([1000 x i64], [1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !34
   store i32 0, i32* bitcast ([8 x i64]* @__msan_retval_tls to i32*), align 8, !dbg !34
-  %puts.i = call i32 @puts(i8* getelementptr inbounds ([4 x i8]* @str, i64 0, i64 0)), !dbg !34
+  %puts.i = call i32 @puts(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @str, i64 0, i64 0)), !dbg !34
   br label %_Z1fv.exit, !dbg !34
 
 _Z1fv.exit:                                       ; preds = %16, %if.then.i

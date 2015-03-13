@@ -19,7 +19,7 @@ bb1:		; preds = %bb
 
 bb3:		; preds = %bb1, %bb
 	%iftmp.0.0 = phi i32 [ 0, %bb1 ], [ -1, %bb ]		; <i32> [#uses=1]
-	%1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([7 x i8]* @"\01LC", i32 0, i32 0), i32 0, i32 %iftmp.0.0) nounwind		; <i32> [#uses=0]
+	%1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([7 x i8], [7 x i8]* @"\01LC", i32 0, i32 0), i32 0, i32 %iftmp.0.0) nounwind		; <i32> [#uses=0]
 	%2 = load %struct.List*, %struct.List** null, align 4		; <%struct.List*> [#uses=2]
 	%phitmp = icmp eq %struct.List* %2, null		; <i1> [#uses=1]
 	br i1 %phitmp, label %bb5, label %bb

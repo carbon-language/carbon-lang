@@ -1012,7 +1012,7 @@ bb7:		; preds = %bb
 	br i1 %764, label %bb10, label %bb11
 
 bb8:		; preds = %entry
-	%768 = call  i32 @puts(i8* getelementptr ([21 x i8]* @_2E_str7, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
+	%768 = call  i32 @puts(i8* getelementptr ([21 x i8], [21 x i8]* @_2E_str7, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
 	call  void @exit(i32 -1) noreturn nounwind
 	unreachable
 

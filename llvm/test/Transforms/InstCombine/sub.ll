@@ -300,7 +300,7 @@ define i64 @test24b(i8* %P, i64 %A){
 define i64 @test25(i8* %P, i64 %A){
   %B = getelementptr inbounds [42 x i16], [42 x i16]* @Arr, i64 0, i64 %A
   %C = ptrtoint i16* %B to i64
-  %G = sub i64 %C, ptrtoint (i16* getelementptr ([42 x i16]* @Arr, i64 1, i64 0) to i64)
+  %G = sub i64 %C, ptrtoint (i16* getelementptr ([42 x i16], [42 x i16]* @Arr, i64 1, i64 0) to i64)
   ret i64 %G
 ; CHECK-LABEL: @test25(
 ; CHECK-NEXT: shl nuw i64 %A, 1
@@ -318,7 +318,7 @@ define i16 @test25_as1(i8 addrspace(1)* %P, i64 %A) {
 ; CHECK-NEXT: ret i16
   %B = getelementptr inbounds [42 x i16], [42 x i16] addrspace(1)* @Arr_as1, i64 0, i64 %A
   %C = ptrtoint i16 addrspace(1)* %B to i16
-  %G = sub i16 %C, ptrtoint (i16 addrspace(1)* getelementptr ([42 x i16] addrspace(1)* @Arr_as1, i64 1, i64 0) to i16)
+  %G = sub i16 %C, ptrtoint (i16 addrspace(1)* getelementptr ([42 x i16], [42 x i16] addrspace(1)* @Arr_as1, i64 1, i64 0) to i16)
   ret i16 %G
 }
 

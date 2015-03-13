@@ -12,11 +12,11 @@ entry:
 	br label %loopentry.1
 loopentry.1:		; preds = %loopexit.1, %entry
 	%indvar20 = phi i32 [ 0, %entry ], [ %indvar.next21, %loopexit.1 ]		; <i32> [#uses=1]
-	%a.1 = phi i32* [ getelementptr ([3000000 x i32]* @A, i32 0, i32 0), %entry ], [ %inc.0, %loopexit.1 ]		; <i32*> [#uses=1]
+	%a.1 = phi i32* [ getelementptr ([3000000 x i32], [3000000 x i32]* @A, i32 0, i32 0), %entry ], [ %inc.0, %loopexit.1 ]		; <i32*> [#uses=1]
 	br label %no_exit.2
 no_exit.2:		; preds = %loopexit.2, %no_exit.2, %loopentry.1
 	%a.0.4.ph = phi i32* [ %a.1, %loopentry.1 ], [ %inc.0, %loopexit.2 ], [ %a.0.4.ph, %no_exit.2 ]		; <i32*> [#uses=3]
-	%b.1.4.ph = phi i32* [ getelementptr ([20000 x i32]* @B, i32 0, i32 0), %loopentry.1 ], [ %inc.1, %loopexit.2 ], [ %b.1.4.ph, %no_exit.2 ]		; <i32*> [#uses=3]
+	%b.1.4.ph = phi i32* [ getelementptr ([20000 x i32], [20000 x i32]* @B, i32 0, i32 0), %loopentry.1 ], [ %inc.1, %loopexit.2 ], [ %b.1.4.ph, %no_exit.2 ]		; <i32*> [#uses=3]
 	%indvar17 = phi i32 [ 0, %loopentry.1 ], [ %indvar.next18, %loopexit.2 ], [ %indvar17, %no_exit.2 ]		; <i32> [#uses=2]
 	%indvar = phi i32 [ %indvar.next, %no_exit.2 ], [ 0, %loopexit.2 ], [ 0, %loopentry.1 ]		; <i32> [#uses=5]
 	%b.1.4.rec = bitcast i32 %indvar to i32		; <i32> [#uses=1]

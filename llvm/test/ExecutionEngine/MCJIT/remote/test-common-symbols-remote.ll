@@ -81,7 +81,7 @@ for.inc:                                          ; preds = %for.body
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
-  %10 = load i32, i32* getelementptr inbounds ([10 x i32]* @zero_arr, i32 0, i64 9), align 4
+  %10 = load i32, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @zero_arr, i32 0, i64 9), align 4
   %cmp12 = icmp eq i32 %10, 110
   %cond = select i1 %cmp12, i32 0, i32 -1
   ret i32 %cond

@@ -13,8 +13,8 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define i32 @fn1() {
 entry:
-  %0 = load i32, i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 0), align 4
-  %1 = load i32, i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 1), align 4
+  %0 = load i32, i32* getelementptr inbounds (%struct.DState, %struct.DState* @b, i32 0, i32 0), align 4
+  %1 = load i32, i32* getelementptr inbounds (%struct.DState, %struct.DState* @b, i32 0, i32 1), align 4
   %2 = load i32, i32* @d, align 4
   %cond = icmp eq i32 %2, 0
   br i1 %cond, label %sw.bb, label %save_state_and_return
@@ -34,8 +34,8 @@ if.end:                                           ; preds = %sw.bb
 save_state_and_return:                            ; preds = %sw.bb, %sw.bb, %if.end, %entry
   %t.0 = phi i32 [ 0, %if.end ], [ %0, %entry ], [ %0, %sw.bb ], [ %0, %sw.bb ]
   %f.0 = phi i32 [ 0, %if.end ], [ %1, %entry ], [ 0, %sw.bb ], [ 0, %sw.bb ]
-  store i32 %t.0, i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 0), align 4
-  store i32 %f.0, i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 1), align 4
+  store i32 %t.0, i32* getelementptr inbounds (%struct.DState, %struct.DState* @b, i32 0, i32 0), align 4
+  store i32 %f.0, i32* getelementptr inbounds (%struct.DState, %struct.DState* @b, i32 0, i32 1), align 4
   ret i32 undef
 }
 

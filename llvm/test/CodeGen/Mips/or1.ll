@@ -10,7 +10,7 @@ entry:
   %1 = load i32, i32* @y, align 4
   %or = or i32 %0, %1
 ; 16:	or	${{[0-9]+}}, ${{[0-9]+}}
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0), i32 %or)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), i32 %or)
   ret i32 0
 }
 

@@ -14,7 +14,7 @@
 ; 
 
 @test = global [2 x i32] [i32 -1, i32 0], align 4
-@p = global i32* getelementptr inbounds ([2 x i32]* @test, i64 0, i64 1), align 8
+@p = global i32* getelementptr inbounds ([2 x i32], [2 x i32]* @test, i64 0, i64 1), align 8
 
 define i32 @main() {
 entry:

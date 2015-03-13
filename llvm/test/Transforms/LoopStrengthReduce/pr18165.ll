@@ -20,9 +20,9 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind optsize ssp uwtable
 define i32 @main() #0 {
 entry:
-  %0 = load i32, i32* getelementptr inbounds (%struct.anon* @a, i64 0, i32 0), align 4, !tbaa !1
+  %0 = load i32, i32* getelementptr inbounds (%struct.anon, %struct.anon* @a, i64 0, i32 0), align 4, !tbaa !1
   %tobool7.i = icmp eq i32 %0, 0
-  %.promoted.i = load i32, i32* getelementptr inbounds (%struct.anon* @a, i64 0, i32 2), align 4, !tbaa !6
+  %.promoted.i = load i32, i32* getelementptr inbounds (%struct.anon, %struct.anon* @a, i64 0, i32 2), align 4, !tbaa !6
   %f.promoted.i = load i32, i32* @f, align 4, !tbaa !7
   br label %for.body6.i.outer
 
@@ -59,12 +59,12 @@ lor.end.i:                                        ; preds = %lor.rhs.i, %if.end9
 
 fn1.exit:                                         ; preds = %lor.end.i
   store i32 0, i32* @g, align 4, !tbaa !7
-  store i32 %or14.i, i32* getelementptr inbounds (%struct.anon* @a, i64 0, i32 2), align 4, !tbaa !6
+  store i32 %or14.i, i32* getelementptr inbounds (%struct.anon, %struct.anon* @a, i64 0, i32 2), align 4, !tbaa !6
   store i32 %or15.i, i32* @f, align 4, !tbaa !7
-  store i32 %add.i, i32* getelementptr inbounds (%struct.anon* @e, i64 0, i32 1), align 4, !tbaa !8
+  store i32 %add.i, i32* getelementptr inbounds (%struct.anon, %struct.anon* @e, i64 0, i32 1), align 4, !tbaa !8
   store i32 0, i32* @h, align 4, !tbaa !7
   %3 = load i32, i32* @b, align 4, !tbaa !7
-  %call1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %3) #2
+  %call1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %3) #2
   ret i32 0
 }
 

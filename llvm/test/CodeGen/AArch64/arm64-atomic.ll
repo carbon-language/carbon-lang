@@ -319,13 +319,13 @@ define void @atomic_store_relaxed_64(i64* %p, i32 %off32, i64 %val) {
 
 define i32 @next_id() nounwind optsize ssp align 2 {
 entry:
-  %0 = atomicrmw add i32* getelementptr inbounds (%"class.X::Atomic"* @counter, i64 0, i32 0, i32 0), i32 1 seq_cst
+  %0 = atomicrmw add i32* getelementptr inbounds (%"class.X::Atomic", %"class.X::Atomic"* @counter, i64 0, i32 0, i32 0), i32 1 seq_cst
   %add.i = add i32 %0, 1
   %tobool = icmp eq i32 %add.i, 0
   br i1 %tobool, label %if.else, label %return
 
 if.else:                                          ; preds = %entry
-  %1 = atomicrmw add i32* getelementptr inbounds (%"class.X::Atomic"* @counter, i64 0, i32 0, i32 0), i32 1 seq_cst
+  %1 = atomicrmw add i32* getelementptr inbounds (%"class.X::Atomic", %"class.X::Atomic"* @counter, i64 0, i32 0, i32 0), i32 1 seq_cst
   %add.i2 = add i32 %1, 1
   br label %return
 

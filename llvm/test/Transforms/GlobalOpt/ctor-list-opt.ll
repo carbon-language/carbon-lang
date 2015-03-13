@@ -110,6 +110,6 @@ entry:
   %1 = getelementptr inbounds i8, i8* %0, i64 16
   %2 = bitcast i8* %1 to %struct.A*
   %3 = bitcast %struct.B* @GV1 to i8***
-  store i8** getelementptr inbounds ([3 x i8*]* @GV2, i64 1, i64 0), i8*** %3
+  store i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @GV2, i64 1, i64 0), i8*** %3
   ret void
 }

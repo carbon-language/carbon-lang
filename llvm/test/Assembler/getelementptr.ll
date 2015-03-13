@@ -3,21 +3,21 @@
 
 ; Verify that over-indexed getelementptrs are folded.
 @A = external global [2 x [3 x [5 x [7 x i32]]]]
-@B = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]]* @A, i64 0, i64 0, i64 2, i64 1, i64 7523)
-; CHECK: @B = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]]* @A, i64 36, i64 0, i64 1, i64 0, i64 5)
-@C = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]]* @A, i64 3, i64 2, i64 0, i64 0, i64 7523)
-; CHECK: @C = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]]* @A, i64 39, i64 1, i64 1, i64 4, i64 5)
+@B = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]], [2 x [3 x [5 x [7 x i32]]]]* @A, i64 0, i64 0, i64 2, i64 1, i64 7523)
+; CHECK: @B = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]], [2 x [3 x [5 x [7 x i32]]]]* @A, i64 36, i64 0, i64 1, i64 0, i64 5)
+@C = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]], [2 x [3 x [5 x [7 x i32]]]]* @A, i64 3, i64 2, i64 0, i64 0, i64 7523)
+; CHECK: @C = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]], [2 x [3 x [5 x [7 x i32]]]]* @A, i64 39, i64 1, i64 1, i64 4, i64 5)
 
 ; Verify that constant expression GEPs work with i84 indices.
 @D = external global [1 x i32]
 
-@E = global i32* getelementptr inbounds ([1 x i32]* @D, i84 0, i64 1)
-; CHECK: @E = global i32* getelementptr inbounds ([1 x i32]* @D, i84 1, i64 0)
+@E = global i32* getelementptr inbounds ([1 x i32], [1 x i32]* @D, i84 0, i64 1)
+; CHECK: @E = global i32* getelementptr inbounds ([1 x i32], [1 x i32]* @D, i84 1, i64 0)
 
 ; Verify that i16 indices work.
 @x = external global {i32, i32}
-@y = global i32* getelementptr ({ i32, i32 }* @x, i16 42, i32 0)
-; CHECK: @y = global i32* getelementptr ({ i32, i32 }* @x, i16 42, i32 0)
+@y = global i32* getelementptr ({ i32, i32 }, { i32, i32 }* @x, i16 42, i32 0)
+; CHECK: @y = global i32* getelementptr ({ i32, i32 }, { i32, i32 }* @x, i16 42, i32 0)
 
 ; See if i92 indices work too.
 define i32 *@test({i32, i32}* %t, i92 %n) {
@@ -29,7 +29,7 @@ define i32 *@test({i32, i32}* %t, i92 %n) {
 
 ; Verify that constant expression vector GEPs work.
 
-@z = global <2 x i32*> getelementptr (<2 x [3 x {i32, i32}]*> zeroinitializer, <2 x i32> <i32 1, i32 2>, <2 x i32> <i32 2, i32 3>, <2 x i32> <i32 1, i32 1>)
+@z = global <2 x i32*> getelementptr ([3 x {i32, i32}], <2 x [3 x {i32, i32}]*> zeroinitializer, <2 x i32> <i32 1, i32 2>, <2 x i32> <i32 2, i32 3>, <2 x i32> <i32 1, i32 1>)
 
 ; Verify that struct GEP works with a vector of pointers.
 define <2 x i32*> @test7(<2 x {i32, i32}*> %a) {

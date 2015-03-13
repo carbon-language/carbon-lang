@@ -46,7 +46,7 @@ bb17.i:		; preds = %cond_next119.i
 cond_true53.i:		; preds = %bb17.i
 	ret { i16, %struct.rnode* }* null
 cond_false99.i:		; preds = %bb17.i
-        %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64), i64 2) to i32))
+        %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i1** getelementptr (i1*, i1** null, i32 1) to i64), i64 2) to i32))
         %tmp106.i = bitcast i8* %malloccall to %struct.ch_set*
 	br i1 false, label %bb126.i, label %cond_next119.i
 cond_next119.i:		; preds = %cond_false99.i, %bb42

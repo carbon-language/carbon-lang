@@ -50,8 +50,8 @@ define void @memcpy_fp80_padding() {
 ; CHECK-LABEL: define void @memcpy_fp80_padding
 ; CHECK: alloca x86_fp80
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i32
-; CHECK: load i64, i64* getelementptr inbounds (%union.Foo* @foo_copy_source, i64 0, i32 1)
-; CHECK: load i64, i64* getelementptr inbounds (%union.Foo* @foo_copy_source, i64 0, i32 2)
+; CHECK: load i64, i64* getelementptr inbounds (%union.Foo, %union.Foo* @foo_copy_source, i64 0, i32 1)
+; CHECK: load i64, i64* getelementptr inbounds (%union.Foo, %union.Foo* @foo_copy_source, i64 0, i32 2)
 
 define void @memset_fp80_padding() {
   %x = alloca %union.Foo

@@ -11,4 +11,4 @@
 ; CHECK: x:
 ; CHECK: .quad	((0+1)&4294967295)*3
 
-@x = global i64 mul (i64 3, i64 ptrtoint (i2* getelementptr (i2* null, i64 1) to i64))
+@x = global i64 mul (i64 3, i64 ptrtoint (i2* getelementptr (i2, i2* null, i64 1) to i64))

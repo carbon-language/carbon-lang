@@ -4,14 +4,14 @@
 @data = external global [400 x i64]		; <[400 x i64]*> [#uses=5]
 
 define void @foo(double* noalias, double* noalias) {
-	load i64, i64* getelementptr ([400 x i64]* @data, i32 0, i64 200), align 4		; <i64>:3 [#uses=1]
-	load i64, i64* getelementptr ([400 x i64]* @data, i32 0, i64 199), align 4		; <i64>:4 [#uses=1]
-	load i64, i64* getelementptr ([400 x i64]* @data, i32 0, i64 198), align 4		; <i64>:5 [#uses=2]
-	load i64, i64* getelementptr ([400 x i64]* @data, i32 0, i64 197), align 4		; <i64>:6 [#uses=1]
+	load i64, i64* getelementptr ([400 x i64], [400 x i64]* @data, i32 0, i64 200), align 4		; <i64>:3 [#uses=1]
+	load i64, i64* getelementptr ([400 x i64], [400 x i64]* @data, i32 0, i64 199), align 4		; <i64>:4 [#uses=1]
+	load i64, i64* getelementptr ([400 x i64], [400 x i64]* @data, i32 0, i64 198), align 4		; <i64>:5 [#uses=2]
+	load i64, i64* getelementptr ([400 x i64], [400 x i64]* @data, i32 0, i64 197), align 4		; <i64>:6 [#uses=1]
 	br i1 false, label %28, label %7
 
 ; <label>:7		; preds = %2
-	load double*, double** getelementptr (double** bitcast ([400 x i64]* @data to double**), i64 180), align 8		; <double*>:8 [#uses=1]
+	load double*, double** getelementptr (double*, double** bitcast ([400 x i64]* @data to double**), i64 180), align 8		; <double*>:8 [#uses=1]
 	bitcast double* %8 to double*		; <double*>:9 [#uses=1]
 	ptrtoint double* %9 to i64		; <i64>:10 [#uses=1]
 	mul i64 %4, %3		; <i64>:11 [#uses=1]

@@ -51,7 +51,7 @@ entry:
   %3 = call i32 asm "", "={ax}"() nounwind        ; <i32> [#uses=1]
   call void asm sideeffect alignstack "movl $0, $1", "{eax},*m,~{dirflag},~{fpsr},~{flags},~{memory}"(i32 %3, i32* %result) nounwind
   %4 = load i32, i32* %result, align 4                 ; <i32> [#uses=1]
-  %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8]* @.str, i32 0, i32 0), i32 %4) nounwind ; <i32> [#uses=0]
+  %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str, i32 0, i32 0), i32 %4) nounwind ; <i32> [#uses=0]
   store i32 0, i32* %0, align 4
   %6 = load i32, i32* %0, align 4                      ; <i32> [#uses=1]
   store i32 %6, i32* %retval, align 4

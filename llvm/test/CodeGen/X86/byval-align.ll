@@ -18,7 +18,7 @@ entry:
   %1 = ptrtoint i8* %0 to i64                     ; <i64> [#uses=1]
   store i64 %1, i64* %p, align 8
   %2 = load i8*, i8** %ptr, align 8                    ; <i8*> [#uses=1]
-  %3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i64 0, i64 0), i8* %2) nounwind ; <i32> [#uses=0]
+  %3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i64 0, i64 0), i8* %2) nounwind ; <i32> [#uses=0]
   %4 = load i64, i64* %p, align 8                      ; <i64> [#uses=1]
   %5 = and i64 %4, 140737488355264                ; <i64> [#uses=1]
   %6 = load i64, i64* %p, align 8                      ; <i64> [#uses=1]
@@ -26,8 +26,8 @@ entry:
   br i1 %7, label %bb, label %bb2
 
 bb:                                               ; preds = %entry
-  %8 = call i32 @puts(i8* getelementptr inbounds ([8 x i8]* @.str1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
-  call void @__assert_fail(i8* getelementptr inbounds ([2 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([7 x i8]* @.str3, i64 0, i64 0), i32 18, i8* getelementptr inbounds ([13 x i8]* @__PRETTY_FUNCTION__.2067, i64 0, i64 0)) noreturn nounwind
+  %8 = call i32 @puts(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str1, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  call void @__assert_fail(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str3, i64 0, i64 0), i32 18, i8* getelementptr inbounds ([13 x i8], [13 x i8]* @__PRETTY_FUNCTION__.2067, i64 0, i64 0)) noreturn nounwind
   unreachable
 
 bb2:                                              ; preds = %entry

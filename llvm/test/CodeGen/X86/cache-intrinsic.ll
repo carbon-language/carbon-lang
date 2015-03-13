@@ -10,10 +10,10 @@ define i32 @main() {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([32 x i8]* @buffer, i32 0, i32 0))
-  %call1 = call i8* @strcpy(i8* getelementptr inbounds ([32 x i8]* @buffer, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8]* @.str1, i32 0, i32 0)) #3
-  call void @llvm.clear_cache(i8* getelementptr inbounds ([32 x i8]* @buffer, i32 0, i32 0), i8* getelementptr inbounds (i8* getelementptr inbounds ([32 x i8]* @buffer, i32 0, i32 0), i32 32)) #3
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([32 x i8]* @buffer, i32 0, i32 0))
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([32 x i8], [32 x i8]* @buffer, i32 0, i32 0))
+  %call1 = call i8* @strcpy(i8* getelementptr inbounds ([32 x i8], [32 x i8]* @buffer, i32 0, i32 0), i8* getelementptr inbounds ([25 x i8], [25 x i8]* @.str1, i32 0, i32 0)) #3
+  call void @llvm.clear_cache(i8* getelementptr inbounds ([32 x i8], [32 x i8]* @buffer, i32 0, i32 0), i8* getelementptr inbounds (i8, i8* getelementptr inbounds ([32 x i8], [32 x i8]* @buffer, i32 0, i32 0), i32 32)) #3
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([32 x i8], [32 x i8]* @buffer, i32 0, i32 0))
   ret i32 0
 }
 

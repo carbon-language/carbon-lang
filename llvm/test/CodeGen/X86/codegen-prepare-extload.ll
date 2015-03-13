@@ -348,16 +348,16 @@ entry:
 ; OPTALL: [[LD:%[a-zA-Z_0-9-]+]] = load i16, i16* %addr
 
 ; OPT-NEXT: [[SEXT:%[a-zA-Z_0-9-]+]] = sext i16 [[LD]] to i32
-; OPT-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = add nuw nsw i32 [[SEXT]], zext (i1 icmp ne (i32* getelementptr inbounds ([2 x i32]* @c, i64 0, i64 1), i32* @a) to i32)
+; OPT-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = add nuw nsw i32 [[SEXT]], zext (i1 icmp ne (i32* getelementptr inbounds ([2 x i32], [2 x i32]* @c, i64 0, i64 1), i32* @a) to i32)
 ;
-; DISABLE-NEXT: [[ADD:%[a-zA-Z_0-9-]+]] = add nuw nsw i16 [[LD]], zext (i1 icmp ne (i32* getelementptr inbounds ([2 x i32]* @c, i64 0, i64 1), i32* @a) to i16)
+; DISABLE-NEXT: [[ADD:%[a-zA-Z_0-9-]+]] = add nuw nsw i16 [[LD]], zext (i1 icmp ne (i32* getelementptr inbounds ([2 x i32], [2 x i32]* @c, i64 0, i64 1), i32* @a) to i16)
 ; DISABLE-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = sext i16 [[ADD]] to i32
 ;
 ; OPTALL-NEXT: ret i32 [[RES]]
 define i32 @promotionOfArgEndsUpInValue(i16* %addr) {
 entry:
   %val = load i16, i16* %addr
-  %add = add nuw nsw i16 %val, zext (i1 icmp ne (i32* getelementptr inbounds ([2 x i32]* @c, i64 0, i64 1), i32* @a) to i16)
+  %add = add nuw nsw i16 %val, zext (i1 icmp ne (i32* getelementptr inbounds ([2 x i32], [2 x i32]* @c, i64 0, i64 1), i32* @a) to i16)
   %conv3 = sext i16 %add to i32
   ret i32 %conv3
 }

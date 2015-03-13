@@ -265,7 +265,7 @@ entry:
   %this1 = load %class.RagDoll*, %class.RagDoll** %this.addr
   store %class.RagDoll* %this1, %class.RagDoll** %retval
   %0 = bitcast %class.RagDoll* %this1 to i8***
-  store i8** getelementptr inbounds ([4 x i8*]* @_ZTV7RagDoll, i64 0, i64 2), i8*** %0
+  store i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV7RagDoll, i64 0, i64 2), i8*** %0
   %m_ownerWorld = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %1 = load %class.btDynamicsWorld*, %class.btDynamicsWorld** %ownerWorld.addr, align 4
   store %class.btDynamicsWorld* %1, %class.btDynamicsWorld** %m_ownerWorld, align 4

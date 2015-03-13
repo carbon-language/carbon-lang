@@ -23,8 +23,8 @@ while.body37:                                     ; preds = %while.body37, %entr
   br i1 false, label %while.end42, label %while.body37
 
 while.end42:                                      ; preds = %while.body37, %entry
-  %. = select i1 undef, i8* getelementptr inbounds ([200 x i8]* @F_floatmul.man1, i32 0, i32 0), i8* getelementptr inbounds ([200 x i8]* @F_floatmul.man2, i32 0, i32 0)
-  %.92 = select i1 undef, i8* getelementptr inbounds ([200 x i8]* @F_floatmul.man2, i32 0, i32 0), i8* getelementptr inbounds ([200 x i8]* @F_floatmul.man1, i32 0, i32 0)
+  %. = select i1 undef, i8* getelementptr inbounds ([200 x i8], [200 x i8]* @F_floatmul.man1, i32 0, i32 0), i8* getelementptr inbounds ([200 x i8], [200 x i8]* @F_floatmul.man2, i32 0, i32 0)
+  %.92 = select i1 undef, i8* getelementptr inbounds ([200 x i8], [200 x i8]* @F_floatmul.man2, i32 0, i32 0), i8* getelementptr inbounds ([200 x i8], [200 x i8]* @F_floatmul.man1, i32 0, i32 0)
   tail call void bitcast (void (...)* @S_trimzeros to void (i8*)*)(i8* %.92) nounwind
   %call47 = tail call i32 @strlen(i8* %.) nounwind
   unreachable

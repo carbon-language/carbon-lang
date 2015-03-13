@@ -55,6 +55,6 @@ define i32 @test.objectsize() {
 ; CHECK-LABEL: @test.objectsize(
 ; CHECK: @llvm.objectsize.i32.p0i8
 ; CHECK-DAG: declare i32 @llvm.objectsize.i32.p0i8
-  %s = call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([60 x i8]* @a, i32 0, i32 0), i1 false)
+  %s = call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([60 x i8], [60 x i8]* @a, i32 0, i32 0), i1 false)
   ret i32 %s
 }

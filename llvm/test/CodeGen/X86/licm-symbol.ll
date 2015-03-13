@@ -29,11 +29,11 @@ bb151:                                            ; preds = %bb59, %bb56, %bb14
   br i1 undef, label %bb56, label %bb59
 
 bb56:                                             ; preds = %bb151
-  %t0 = call i32 (%struct.FILE*)* @fprintf(%struct.FILE* getelementptr inbounds ([0 x %struct.FILE]* @__sF, i32 0, i32 2)) nounwind
+  %t0 = call i32 (%struct.FILE*)* @fprintf(%struct.FILE* getelementptr inbounds ([0 x %struct.FILE], [0 x %struct.FILE]* @__sF, i32 0, i32 2)) nounwind
   br label %bb151
 
 bb59:                                             ; preds = %bb151
-  %t1 = call i32 (%struct.FILE*)* @fprintf(%struct.FILE* getelementptr inbounds ([0 x %struct.FILE]* @__sF, i32 0, i32 2)) nounwind
+  %t1 = call i32 (%struct.FILE*)* @fprintf(%struct.FILE* getelementptr inbounds ([0 x %struct.FILE], [0 x %struct.FILE]* @__sF, i32 0, i32 2)) nounwind
   br label %bb151
 }
 

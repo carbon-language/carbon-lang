@@ -15,7 +15,7 @@ entry:
   %conv = sext i16 %b to i32
   %conv1 = sext i8 %E to i32
   %call = tail call i32 (i8*, ...)* @printf(
-	i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0), ; --> R0
+	i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), ; --> R0
         i32 %a,                                          ; --> R1
         i32 %conv,                                       ; --> R2
         double %C,                                       ; --> SP, NCRN := R4

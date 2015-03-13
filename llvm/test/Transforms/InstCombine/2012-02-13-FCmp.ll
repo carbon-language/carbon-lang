@@ -6,9 +6,9 @@
 declare i32 @printf(i8*, ...)
 define i64 @_Z8tempCastj(i32 %val) uwtable ssp {
 entry:
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([35 x i8]* @.str1, i64 0, i64 0), i32 %val)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([35 x i8], [35 x i8]* @.str1, i64 0, i64 0), i32 %val)
   %conv = uitofp i32 %val to double
-  %call.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([35 x i8]* @.str, i64 0, i64 0), double %conv)
+  %call.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([35 x i8], [35 x i8]* @.str, i64 0, i64 0), double %conv)
   %cmp.i = fcmp oge double %conv, -1.000000e+00
   br i1 %cmp.i, label %land.rhs.i, label %if.end.critedge
 ; CHECK:  br i1 true, label %land.rhs.i, label %if.end.critedge

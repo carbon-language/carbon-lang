@@ -48,7 +48,7 @@ entry:
 	%tmp1 = tail call i32 @bar( )		; <i32> [#uses=1]
 	%tmp2 = tail call i32 @foo( )		; <i32> [#uses=1]
 	%tmp3 = tail call i32 @quux( )		; <i32> [#uses=1]
-	%tmp5 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([13 x i8]* @.str, i32 0, i32 0), i32 %tmp3, i32 %tmp2, i32 %tmp1, i32 %tmp )		; <i32> [#uses=0]
+	%tmp5 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), i32 %tmp3, i32 %tmp2, i32 %tmp1, i32 %tmp )		; <i32> [#uses=0]
 	ret i32 undef
 }
 

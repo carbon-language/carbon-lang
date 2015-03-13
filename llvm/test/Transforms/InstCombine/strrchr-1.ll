@@ -10,7 +10,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 declare i8* @strrchr(i8*, i32)
 
 define void @test_simplify1() {
-; CHECK: store i8* getelementptr inbounds ([14 x i8]* @hello, i32 0, i32 6)
+; CHECK: store i8* getelementptr inbounds ([14 x i8], [14 x i8]* @hello, i32 0, i32 6)
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 
@@ -32,7 +32,7 @@ define void @test_simplify2() {
 }
 
 define void @test_simplify3() {
-; CHECK: store i8* getelementptr inbounds ([14 x i8]* @hello, i32 0, i32 13)
+; CHECK: store i8* getelementptr inbounds ([14 x i8], [14 x i8]* @hello, i32 0, i32 13)
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 
@@ -43,7 +43,7 @@ define void @test_simplify3() {
 }
 
 define void @test_simplify4() {
-; CHECK: store i8* getelementptr inbounds ([14 x i8]* @hello, i32 0, i32 13)
+; CHECK: store i8* getelementptr inbounds ([14 x i8], [14 x i8]* @hello, i32 0, i32 13)
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 

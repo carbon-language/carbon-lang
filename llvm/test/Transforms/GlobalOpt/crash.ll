@@ -11,7 +11,7 @@ target triple = "i386-apple-darwin9.8"
 
 define internal void @_GLOBAL__I__ZN21btConeTwistConstraintC2Ev() nounwind section "__TEXT,__StaticInit,regular,pure_instructions" {
 entry:
-  store float 1.0, float* getelementptr inbounds (%struct.btSimdScalar* @_ZL6vTwist, i32 0, i32 0, i32 0, i32 3), align 4
+  store float 1.0, float* getelementptr inbounds (%struct.btSimdScalar, %struct.btSimdScalar* @_ZL6vTwist, i32 0, i32 0, i32 0, i32 3), align 4
   ret void
 }
 
@@ -60,7 +60,7 @@ entry:
 
 @data8 = internal global [8000 x i8] zeroinitializer, align 16
 define void @memset_with_strange_user() ssp {
-  call void @llvm.memset.p0i8.i64(i8* getelementptr inbounds ([8000 x i8]* @data8, i64 0, i64 0), i8 undef, i64 ptrtoint (i8* getelementptr ([8000 x i8]* @data8, i64 1, i64 sub (i64 0, i64 ptrtoint ([8000 x i8]* @data8 to i64))) to i64), i32 16, i1 false)
+  call void @llvm.memset.p0i8.i64(i8* getelementptr inbounds ([8000 x i8], [8000 x i8]* @data8, i64 0, i64 0), i8 undef, i64 ptrtoint (i8* getelementptr ([8000 x i8], [8000 x i8]* @data8, i64 1, i64 sub (i64 0, i64 ptrtoint ([8000 x i8]* @data8 to i64))) to i64), i32 16, i1 false)
   ret void
 }
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind

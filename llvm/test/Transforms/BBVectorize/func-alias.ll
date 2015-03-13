@@ -49,12 +49,12 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
 "<bb 34>":                                        ; preds = %newFuncRoot
   %tmp128 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
   %tmp129 = getelementptr inbounds %struct.__st_parameter_common, %struct.__st_parameter_common* %tmp128, i32 0, i32 2
-  store i8* getelementptr inbounds ([11 x i8]* @.cst4, i64 0, i64 0), i8** %tmp129, align 8
+  store i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.cst4, i64 0, i64 0), i8** %tmp129, align 8
   %tmp130 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
   %tmp131 = getelementptr inbounds %struct.__st_parameter_common, %struct.__st_parameter_common* %tmp130, i32 0, i32 3
   store i32 31495, i32* %tmp131, align 4
   %tmp132 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 5
-  store i8* getelementptr inbounds ([214 x i8]* @.cst823, i64 0, i64 0), i8** %tmp132, align 8
+  store i8* getelementptr inbounds ([214 x i8], [214 x i8]* @.cst823, i64 0, i64 0), i8** %tmp132, align 8
   %tmp133 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 6
   store i32 214, i32* %tmp133, align 4
   %tmp134 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
@@ -67,75 +67,75 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   call void @_gfortran_st_write(%struct.__st_parameter_dt* %memtmp3) nounwind
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_integer_write to void (%struct.__st_parameter_dt*, i32*, i32)*)(%struct.__st_parameter_dt* %memtmp3, i32* @j.4580, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_integer_write
-  %D.75807_289 = load i8*, i8** getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 0), align 8
+  %D.75807_289 = load i8*, i8** getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 0), align 8
   %j.8758_290 = load i32, i32* @j.4580, align 4
   %D.75760_291 = sext i32 %j.8758_290 to i64
   %iave.8736_292 = load i32, i32* @__main1_MOD_iave, align 4
   %D.75620_293 = sext i32 %iave.8736_292 to i64
-  %D.75808_294 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 2, i32 0), align 8
+  %D.75808_294 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 2, i32 0), align 8
   %D.75809_295 = mul nsw i64 %D.75620_293, %D.75808_294
   %igrp.8737_296 = load i32, i32* @__main1_MOD_igrp, align 4
   %D.75635_297 = sext i32 %igrp.8737_296 to i64
-  %D.75810_298 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 1, i32 0), align 8
+  %D.75810_298 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 1, i32 0), align 8
   %D.75811_299 = mul nsw i64 %D.75635_297, %D.75810_298
   %D.75812_300 = add nsw i64 %D.75809_295, %D.75811_299
   %D.75813_301 = add nsw i64 %D.75760_291, %D.75812_300
   %ityp.8750_302 = load i32, i32* @__main1_MOD_ityp, align 4
   %D.75704_303 = sext i32 %ityp.8750_302 to i64
-  %D.75814_304 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 3, i32 0), align 8
+  %D.75814_304 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 3, i32 0), align 8
   %D.75815_305 = mul nsw i64 %D.75704_303, %D.75814_304
   %D.75816_306 = add nsw i64 %D.75813_301, %D.75815_305
-  %D.75817_307 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 1), align 8
+  %D.75817_307 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 1), align 8
   %D.75818_308 = add nsw i64 %D.75816_306, %D.75817_307
   %tmp138 = bitcast i8* %D.75807_289 to [0 x float]*
   %tmp139 = bitcast [0 x float]* %tmp138 to float*
   %D.75819_309 = getelementptr inbounds float, float* %tmp139, i64 %D.75818_308
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_real_write to void (%struct.__st_parameter_dt*, float*, i32)*)(%struct.__st_parameter_dt* %memtmp3, float* %D.75819_309, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_real_write
-  %D.75820_310 = load i8*, i8** getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 0), align 8
+  %D.75820_310 = load i8*, i8** getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 0), align 8
   %j.8758_311 = load i32, i32* @j.4580, align 4
   %D.75760_312 = sext i32 %j.8758_311 to i64
   %iave.8736_313 = load i32, i32* @__main1_MOD_iave, align 4
   %D.75620_314 = sext i32 %iave.8736_313 to i64
-  %D.75821_315 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 2, i32 0), align 8
+  %D.75821_315 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 2, i32 0), align 8
   %D.75822_316 = mul nsw i64 %D.75620_314, %D.75821_315
   %igrp.8737_317 = load i32, i32* @__main1_MOD_igrp, align 4
   %D.75635_318 = sext i32 %igrp.8737_317 to i64
-  %D.75823_319 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 1, i32 0), align 8
+  %D.75823_319 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 1, i32 0), align 8
   %D.75824_320 = mul nsw i64 %D.75635_318, %D.75823_319
   %D.75825_321 = add nsw i64 %D.75822_316, %D.75824_320
   %D.75826_322 = add nsw i64 %D.75760_312, %D.75825_321
   %ityp.8750_323 = load i32, i32* @__main1_MOD_ityp, align 4
   %D.75704_324 = sext i32 %ityp.8750_323 to i64
-  %D.75827_325 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 3, i32 0), align 8
+  %D.75827_325 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 3, i32 0), align 8
   %D.75828_326 = mul nsw i64 %D.75704_324, %D.75827_325
   %D.75829_327 = add nsw i64 %D.75826_322, %D.75828_326
-  %D.75830_328 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 1), align 8
+  %D.75830_328 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 1), align 8
   %D.75831_329 = add nsw i64 %D.75829_327, %D.75830_328
   %tmp140 = bitcast i8* %D.75820_310 to [0 x [1 x i8]]*
   %tmp141 = bitcast [0 x [1 x i8]]* %tmp140 to [1 x i8]*
   %D.75832_330 = getelementptr inbounds [1 x i8], [1 x i8]* %tmp141, i64 %D.75831_329
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_character_write to void (%struct.__st_parameter_dt*, [1 x i8]*, i32)*)(%struct.__st_parameter_dt* %memtmp3, [1 x i8]* %D.75832_330, i32 1) nounwind
 ; CHECK: @_gfortran_transfer_character_write
-  %D.75833_331 = load i8*, i8** getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 0), align 8
+  %D.75833_331 = load i8*, i8** getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 0), align 8
   %j.8758_332 = load i32, i32* @j.4580, align 4
   %D.75760_333 = sext i32 %j.8758_332 to i64
   %iave.8736_334 = load i32, i32* @__main1_MOD_iave, align 4
   %D.75620_335 = sext i32 %iave.8736_334 to i64
-  %D.75834_336 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 2, i32 0), align 8
+  %D.75834_336 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 2, i32 0), align 8
   %D.75835_337 = mul nsw i64 %D.75620_335, %D.75834_336
   %igrp.8737_338 = load i32, i32* @__main1_MOD_igrp, align 4
   %D.75635_339 = sext i32 %igrp.8737_338 to i64
-  %D.75836_340 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 1, i32 0), align 8
+  %D.75836_340 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 1, i32 0), align 8
   %D.75837_341 = mul nsw i64 %D.75635_339, %D.75836_340
   %D.75838_342 = add nsw i64 %D.75835_337, %D.75837_341
   %D.75839_343 = add nsw i64 %D.75760_333, %D.75838_342
   %ityp.8750_344 = load i32, i32* @__main1_MOD_ityp, align 4
   %D.75704_345 = sext i32 %ityp.8750_344 to i64
-  %D.75840_346 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 3, i32 0), align 8
+  %D.75840_346 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 3, i32 0), align 8
   %D.75841_347 = mul nsw i64 %D.75704_345, %D.75840_346
   %D.75842_348 = add nsw i64 %D.75839_343, %D.75841_347
-  %D.75843_349 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 1), align 8
+  %D.75843_349 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 1), align 8
   %D.75844_350 = add nsw i64 %D.75842_348, %D.75843_349
   %tmp142 = bitcast i8* %D.75833_331 to [0 x i32]*
   %tmp143 = bitcast [0 x i32]* %tmp142 to i32*
@@ -150,75 +150,75 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
 ; CHECK: @_gfortran_transfer_character_write
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_integer_write to void (%struct.__st_parameter_dt*, i32*, i32)*)(%struct.__st_parameter_dt* %memtmp3, i32* @j1.4581, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_integer_write
-  %D.75807_352 = load i8*, i8** getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 0), align 8
+  %D.75807_352 = load i8*, i8** getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 0), align 8
   %j1.8760_353 = load i32, i32* @j1.4581, align 4
   %D.75773_354 = sext i32 %j1.8760_353 to i64
   %iave.8736_355 = load i32, i32* @__main1_MOD_iave, align 4
   %D.75620_356 = sext i32 %iave.8736_355 to i64
-  %D.75808_357 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 2, i32 0), align 8
+  %D.75808_357 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 2, i32 0), align 8
   %D.75809_358 = mul nsw i64 %D.75620_356, %D.75808_357
   %igrp.8737_359 = load i32, i32* @__main1_MOD_igrp, align 4
   %D.75635_360 = sext i32 %igrp.8737_359 to i64
-  %D.75810_361 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 1, i32 0), align 8
+  %D.75810_361 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 1, i32 0), align 8
   %D.75811_362 = mul nsw i64 %D.75635_360, %D.75810_361
   %D.75812_363 = add nsw i64 %D.75809_358, %D.75811_362
   %D.75846_364 = add nsw i64 %D.75773_354, %D.75812_363
   %ityp.8750_365 = load i32, i32* @__main1_MOD_ityp, align 4
   %D.75704_366 = sext i32 %ityp.8750_365 to i64
-  %D.75814_367 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 3, i32 0), align 8
+  %D.75814_367 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 3, i64 3, i32 0), align 8
   %D.75815_368 = mul nsw i64 %D.75704_366, %D.75814_367
   %D.75847_369 = add nsw i64 %D.75846_364, %D.75815_368
-  %D.75817_370 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 1), align 8
+  %D.75817_370 = load i64, i64* getelementptr inbounds (%"struct.array4_real(kind=4)", %"struct.array4_real(kind=4)"* @__main1_MOD_rmxval, i64 0, i32 1), align 8
   %D.75848_371 = add nsw i64 %D.75847_369, %D.75817_370
   %tmp144 = bitcast i8* %D.75807_352 to [0 x float]*
   %tmp145 = bitcast [0 x float]* %tmp144 to float*
   %D.75849_372 = getelementptr inbounds float, float* %tmp145, i64 %D.75848_371
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_real_write to void (%struct.__st_parameter_dt*, float*, i32)*)(%struct.__st_parameter_dt* %memtmp3, float* %D.75849_372, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_real_write
-  %D.75820_373 = load i8*, i8** getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 0), align 8
+  %D.75820_373 = load i8*, i8** getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 0), align 8
   %j1.8760_374 = load i32, i32* @j1.4581, align 4
   %D.75773_375 = sext i32 %j1.8760_374 to i64
   %iave.8736_376 = load i32, i32* @__main1_MOD_iave, align 4
   %D.75620_377 = sext i32 %iave.8736_376 to i64
-  %D.75821_378 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 2, i32 0), align 8
+  %D.75821_378 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 2, i32 0), align 8
   %D.75822_379 = mul nsw i64 %D.75620_377, %D.75821_378
   %igrp.8737_380 = load i32, i32* @__main1_MOD_igrp, align 4
   %D.75635_381 = sext i32 %igrp.8737_380 to i64
-  %D.75823_382 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 1, i32 0), align 8
+  %D.75823_382 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 1, i32 0), align 8
   %D.75824_383 = mul nsw i64 %D.75635_381, %D.75823_382
   %D.75825_384 = add nsw i64 %D.75822_379, %D.75824_383
   %D.75850_385 = add nsw i64 %D.75773_375, %D.75825_384
   %ityp.8750_386 = load i32, i32* @__main1_MOD_ityp, align 4
   %D.75704_387 = sext i32 %ityp.8750_386 to i64
-  %D.75827_388 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 3, i32 0), align 8
+  %D.75827_388 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 3, i64 3, i32 0), align 8
   %D.75828_389 = mul nsw i64 %D.75704_387, %D.75827_388
   %D.75851_390 = add nsw i64 %D.75850_385, %D.75828_389
-  %D.75830_391 = load i64, i64* getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 1), align 8
+  %D.75830_391 = load i64, i64* getelementptr inbounds (%struct.array4_unknown, %struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 1), align 8
   %D.75852_392 = add nsw i64 %D.75851_390, %D.75830_391
   %tmp146 = bitcast i8* %D.75820_373 to [0 x [1 x i8]]*
   %tmp147 = bitcast [0 x [1 x i8]]* %tmp146 to [1 x i8]*
   %D.75853_393 = getelementptr inbounds [1 x i8], [1 x i8]* %tmp147, i64 %D.75852_392
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_character_write to void (%struct.__st_parameter_dt*, [1 x i8]*, i32)*)(%struct.__st_parameter_dt* %memtmp3, [1 x i8]* %D.75853_393, i32 1) nounwind
 ; CHECK: @_gfortran_transfer_character_write
-  %D.75833_394 = load i8*, i8** getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 0), align 8
+  %D.75833_394 = load i8*, i8** getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 0), align 8
   %j1.8760_395 = load i32, i32* @j1.4581, align 4
   %D.75773_396 = sext i32 %j1.8760_395 to i64
   %iave.8736_397 = load i32, i32* @__main1_MOD_iave, align 4
   %D.75620_398 = sext i32 %iave.8736_397 to i64
-  %D.75834_399 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 2, i32 0), align 8
+  %D.75834_399 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 2, i32 0), align 8
   %D.75835_400 = mul nsw i64 %D.75620_398, %D.75834_399
   %igrp.8737_401 = load i32, i32* @__main1_MOD_igrp, align 4
   %D.75635_402 = sext i32 %igrp.8737_401 to i64
-  %D.75836_403 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 1, i32 0), align 8
+  %D.75836_403 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 1, i32 0), align 8
   %D.75837_404 = mul nsw i64 %D.75635_402, %D.75836_403
   %D.75838_405 = add nsw i64 %D.75835_400, %D.75837_404
   %D.75854_406 = add nsw i64 %D.75773_396, %D.75838_405
   %ityp.8750_407 = load i32, i32* @__main1_MOD_ityp, align 4
   %D.75704_408 = sext i32 %ityp.8750_407 to i64
-  %D.75840_409 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 3, i32 0), align 8
+  %D.75840_409 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 3, i64 3, i32 0), align 8
   %D.75841_410 = mul nsw i64 %D.75704_408, %D.75840_409
   %D.75855_411 = add nsw i64 %D.75854_406, %D.75841_410
-  %D.75843_412 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 1), align 8
+  %D.75843_412 = load i64, i64* getelementptr inbounds (%"struct.array4_integer(kind=4).73", %"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 1), align 8
   %D.75856_413 = add nsw i64 %D.75855_411, %D.75843_412
   %tmp148 = bitcast i8* %D.75833_394 to [0 x i32]*
   %tmp149 = bitcast [0 x i32]* %tmp148 to i32*

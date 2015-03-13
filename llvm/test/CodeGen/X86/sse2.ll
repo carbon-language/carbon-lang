@@ -129,10 +129,10 @@ define <2 x i64> @test8() nounwind {
 ; CHECK-NEXT:    movl L_x$non_lazy_ptr, %eax
 ; CHECK-NEXT:    movups (%eax), %xmm0
 ; CHECK-NEXT:    retl
-	%tmp = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 0)		; <i32> [#uses=1]
-	%tmp3 = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 1)		; <i32> [#uses=1]
-	%tmp5 = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 2)		; <i32> [#uses=1]
-	%tmp7 = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 3)		; <i32> [#uses=1]
+	%tmp = load i32, i32* getelementptr ([4 x i32], [4 x i32]* @x, i32 0, i32 0)		; <i32> [#uses=1]
+	%tmp3 = load i32, i32* getelementptr ([4 x i32], [4 x i32]* @x, i32 0, i32 1)		; <i32> [#uses=1]
+	%tmp5 = load i32, i32* getelementptr ([4 x i32], [4 x i32]* @x, i32 0, i32 2)		; <i32> [#uses=1]
+	%tmp7 = load i32, i32* getelementptr ([4 x i32], [4 x i32]* @x, i32 0, i32 3)		; <i32> [#uses=1]
 	%tmp.upgrd.1 = insertelement <4 x i32> undef, i32 %tmp, i32 0		; <<4 x i32>> [#uses=1]
 	%tmp13 = insertelement <4 x i32> %tmp.upgrd.1, i32 %tmp3, i32 1		; <<4 x i32>> [#uses=1]
 	%tmp14 = insertelement <4 x i32> %tmp13, i32 %tmp5, i32 2		; <<4 x i32>> [#uses=1]

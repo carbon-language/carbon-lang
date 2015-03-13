@@ -17,7 +17,7 @@ bb36.outer:		; preds = %bb41, %bb36.preheader
 bb.nph:		; preds = %bb36.outer
 	%ttmp8 = icmp eq i8* null, null		; <i1> [#uses=1]
 	%ttmp6 = icmp eq i8* null, null		; <i1> [#uses=1]
-	%tmp31 = call i32 @strcspn( i8* null, i8* getelementptr ([3 x i8]* @str3, i64 0, i64 0) )		; <i32> [#uses=1]
+	%tmp31 = call i32 @strcspn( i8* null, i8* getelementptr ([3 x i8], [3 x i8]* @str3, i64 0, i64 0) )		; <i32> [#uses=1]
 	br i1 %ttmp8, label %cond_next, label %cond_true
 
 cond_true:		; preds = %bb.nph

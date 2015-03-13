@@ -47,12 +47,12 @@ bb:
   br i1 %tmp4, label %bb6, label %bb5
 
 bb5:                                              ; preds = %bb
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8]* @global1, i64 0, i64 0), i32 2021) nounwind
-  tail call void (...)* @snork(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 3, i64 1), i32 -2146631418) nounwind
+  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2021) nounwind
+  tail call void (...)* @snork(i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 1), i32 -2146631418) nounwind
   unreachable
 
 bb6:                                              ; preds = %bb
-  tail call void @zot(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 5, i64 0), i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 3, i64 1), i64 undef, i32 1, i1 false) nounwind
+  tail call void @zot(i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 0), i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 1), i64 undef, i32 1, i1 false) nounwind
   %tmp7 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 undef
   store i8 0, i8* %tmp7, align 1
   %tmp8 = add nsw i32 0, 1
@@ -95,12 +95,12 @@ bb30:                                             ; preds = %bb22
   br i1 %tmp31, label %bb33, label %bb32
 
 bb32:                                             ; preds = %bb30, %bb26, %bb17
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8]* @global1, i64 0, i64 0), i32 2038) nounwind
+  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2038) nounwind
   tail call void (...)* @snork(i8* %tmp11, i32 -2146631418) nounwind
   unreachable
 
 bb33:                                             ; preds = %bb30
-  tail call void @zot(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 5, i64 0), i8* %tmp11, i64 undef, i32 1, i1 false) nounwind
+  tail call void @zot(i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 0), i8* %tmp11, i64 undef, i32 1, i1 false) nounwind
   %tmp34 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 undef
   store i8 0, i8* %tmp34, align 1
   %tmp35 = add nsw i32 %tmp19, 1
@@ -141,13 +141,13 @@ bb55:                                             ; preds = %bb48
   br i1 %tmp57, label %bb59, label %bb58
 
 bb58:                                             ; preds = %bb55, %bb52, %bb43
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8]* @global1, i64 0, i64 0), i32 2055) nounwind
+  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2055) nounwind
   tail call void (...)* @snork(i8* %tmp38, i32 -2146631418) nounwind
   br label %bb247
 
 bb59:                                             ; preds = %bb55
   %tmp60 = sext i32 %tmp45 to i64
-  tail call void @zot(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 5, i64 0), i8* %tmp38, i64 %tmp60, i32 1, i1 false) nounwind
+  tail call void @zot(i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 0), i8* %tmp38, i64 %tmp60, i32 1, i1 false) nounwind
   %tmp61 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 %tmp60
   store i8 0, i8* %tmp61, align 1
   %tmp62 = add nsw i32 %tmp45, 1
@@ -168,12 +168,12 @@ bb68:                                             ; preds = %bb59
   ]
 
 bb69:                                             ; preds = %bb68
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8]* @global1, i64 0, i64 0), i32 2071) nounwind
-  %tmp70 = load i32, i32* getelementptr inbounds (%struct.snork* @global, i64 0, i32 2), align 4
+  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2071) nounwind
+  %tmp70 = load i32, i32* getelementptr inbounds (%struct.snork, %struct.snork* @global, i64 0, i32 2), align 4
   unreachable
 
 bb71:                                             ; preds = %bb68
-  %tmp72 = load i32, i32* getelementptr inbounds (%struct.snork* @global, i64 0, i32 4), align 4
+  %tmp72 = load i32, i32* getelementptr inbounds (%struct.snork, %struct.snork* @global, i64 0, i32 4), align 4
   %tmp73 = icmp eq i32 undef, 0
   br i1 %tmp73, label %bb247, label %bb74
 

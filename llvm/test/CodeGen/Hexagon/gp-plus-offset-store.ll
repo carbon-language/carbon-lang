@@ -12,7 +12,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  store i8 %ival, i8* getelementptr inbounds (%struct.struc* @foo, i32 0, i32 1), align 1
+  store i8 %ival, i8* getelementptr inbounds (%struct.struc, %struct.struc* @foo, i32 0, i32 1), align 1
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry
@@ -26,7 +26,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  store i16 %ival, i16* getelementptr inbounds (%struct.struc* @foo, i32 0, i32 2), align 2
+  store i16 %ival, i16* getelementptr inbounds (%struct.struc, %struct.struc* @foo, i32 0, i32 2), align 2
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry

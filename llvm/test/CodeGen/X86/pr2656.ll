@@ -19,7 +19,7 @@ entry:
 	%conv = fpext float %neg to double		; <double> [#uses=1]
 	%neg4 = fsub float -0.000000e+00, %tmp3		; <float> [#uses=1]
 	%conv5 = fpext float %neg4 to double		; <double> [#uses=1]
-	%call = call i32 (...)* @printf( i8* getelementptr ([17 x i8]* @.str, i32 0, i32 0), double %conv, double %conv5 )		; <i32> [#uses=0]
+	%call = call i32 (...)* @printf( i8* getelementptr ([17 x i8], [17 x i8]* @.str, i32 0, i32 0), double %conv, double %conv5 )		; <i32> [#uses=0]
 	ret void
 }
 

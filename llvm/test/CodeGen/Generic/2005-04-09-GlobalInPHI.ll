@@ -12,7 +12,7 @@ cond_true:              ; preds = %entry
 
 else.0:         ; preds = %cond_true, %entry
         %tmp.167.1 = phi i32 [ ptrtoint ([17 x i8]* @.str_87 to i32), %entry ], [ 0, %cond_true ]               ; <i32> [#uses=0]
-        call void @Pr( i8* getelementptr ([4 x i8]* @.str_67, i32 0, i32 0), i32 0, i32 0 )
+        call void @Pr( i8* getelementptr ([4 x i8], [4 x i8]* @.str_67, i32 0, i32 0), i32 0, i32 0 )
         ret void
 }
 

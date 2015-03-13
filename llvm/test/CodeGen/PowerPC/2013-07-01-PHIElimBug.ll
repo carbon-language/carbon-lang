@@ -14,13 +14,13 @@ entry:
   br i1 undef, label %for.cond940, label %if.end1018
 
 for.cond940:                                      ; preds = %for.cond940, %if.else876
-  %l_655.1 = phi i32* [ getelementptr inbounds ([8 x i32]* @g_51, i64 0, i64 6), %entry ], [ %l_654.0, %for.cond940 ]
+  %l_655.1 = phi i32* [ getelementptr inbounds ([8 x i32], [8 x i32]* @g_51, i64 0, i64 6), %entry ], [ %l_654.0, %for.cond940 ]
   %l_654.0 = phi i32* [ null, %entry ], [ %arrayidx638, %for.cond940 ]
   %exitcond = icmp eq i32 undef, 20
   br i1 %exitcond, label %if.end1018, label %for.cond940
 
 if.end1018:                                       ; preds = %for.end957, %for.end834
-  %l_655.3.ph33 = phi i32* [ %l_655.1, %for.cond940 ], [ getelementptr inbounds ([8 x i32]* @g_51, i64 0, i64 6), %entry ]
+  %l_655.3.ph33 = phi i32* [ %l_655.1, %for.cond940 ], [ getelementptr inbounds ([8 x i32], [8 x i32]* @g_51, i64 0, i64 6), %entry ]
   store i32 0, i32* %l_655.3.ph33, align 4
   ret void
 }

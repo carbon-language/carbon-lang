@@ -15,7 +15,7 @@ define void @foo() nounwind {
 ; CHECK: foo:
 ; CHECK: adrp x{{[0-9]}}, .L.str
 ; CHECK-NEXT: add x{{[0-9]}}, x{{[0-9]}}, :lo12:.L.str
-  tail call void @bar(i8* getelementptr inbounds ([6 x i8]* @.str, i64 0, i64 0))
+  tail call void @bar(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0))
   ret void
 }
 

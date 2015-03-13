@@ -17,7 +17,7 @@ bb.i:		; preds = %entry
 	br label %_ZN7cObjectnwEj.exit
 
 _ZN7cObjectnwEj.exit:		; preds = %bb.i, %entry
-	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([12 x i8]* @.str21179, i32 0, i32 0))
+	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([12 x i8], [12 x i8]* @.str21179, i32 0, i32 0))
 			to label %bb1 unwind label %lpad
 
 bb1:		; preds = %_ZN7cObjectnwEj.exit
@@ -39,7 +39,7 @@ bb2:		; preds = %_ZNK5cGate4sizeEv.exit122
 	unreachable
 
 bb8:		; preds = %_ZNK5cGate4sizeEv.exit122
-	%tmp = invoke i8* @_ZN7cModule3parEPKc(i8* undef, i8* getelementptr ([10 x i8]* @.str25183, i32 0, i32 0))
+	%tmp = invoke i8* @_ZN7cModule3parEPKc(i8* undef, i8* getelementptr ([10 x i8], [10 x i8]* @.str25183, i32 0, i32 0))
 			to label %invcont9 unwind label %lpad119		; <i8*> [#uses=1]
 
 invcont9:		; preds = %bb8
@@ -54,7 +54,7 @@ invcont11:		; preds = %invcont10
 	br i1 undef, label %bb12, label %bb18
 
 bb12:		; preds = %invcont11
-	invoke void (i8*, i8*, ...)* @_ZN6cEnvir6printfEPKcz(i8* null, i8* getelementptr ([3 x i8]* @.str12, i32 0, i32 0), i32 undef)
+	invoke void (i8*, i8*, ...)* @_ZN6cEnvir6printfEPKcz(i8* null, i8* getelementptr ([3 x i8], [3 x i8]* @.str12, i32 0, i32 0), i32 undef)
 			to label %bb.i.i159 unwind label %lpad119
 
 bb.i.i159:		; preds = %bb12
@@ -77,7 +77,7 @@ invcont35:		; preds = %bb34
 	br i1 undef, label %bb49, label %bb61
 
 bb49:		; preds = %invcont35
-	invoke void (i8*, i8*, ...)* @_ZNK13cSimpleModule5errorEPKcz(i8* undef, i8* getelementptr ([92 x i8]* @.str32190, i32 0, i32 0))
+	invoke void (i8*, i8*, ...)* @_ZNK13cSimpleModule5errorEPKcz(i8* undef, i8* getelementptr ([92 x i8], [92 x i8]* @.str32190, i32 0, i32 0))
 			to label %bb51 unwind label %lpad119
 
 bb51:		; preds = %bb49
@@ -87,7 +87,7 @@ bb61:		; preds = %invcont35
 	br label %bb106
 
 .noexc:		; preds = %bb106
-	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([25 x i8]* @.str41, i32 0, i32 0))
+	invoke void @_ZN7cObjectC2EPKc(i8* undef, i8* getelementptr ([25 x i8], [25 x i8]* @.str41, i32 0, i32 0))
 			to label %bb102 unwind label %lpad123
 
 bb102:		; preds = %.noexc
@@ -99,7 +99,7 @@ invcont103:		; preds = %bb102
 			to label %invcont104 unwind label %lpad119
 
 invcont104:		; preds = %invcont103
-	%tmp3 = invoke i32 @_ZN13cSimpleModule11sendDelayedEP8cMessagedPKci(i8* undef, i8* undef, double 0.000000e+00, i8* getelementptr ([4 x i8]* @.str17175, i32 0, i32 0), i32 undef)
+	%tmp3 = invoke i32 @_ZN13cSimpleModule11sendDelayedEP8cMessagedPKci(i8* undef, i8* undef, double 0.000000e+00, i8* getelementptr ([4 x i8], [4 x i8]* @.str17175, i32 0, i32 0), i32 undef)
 			to label %invcont105 unwind label %lpad119		; <i32> [#uses=0]
 
 invcont105:		; preds = %invcont104

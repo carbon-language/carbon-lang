@@ -3,7 +3,7 @@
 %struct.__objcFastEnumerationState = type { i64, i8**, i64*, [5 x i64] }
 
 @"\01L_OBJC_METH_VAR_NAME_" = internal global [43 x i8] c"countByEnumeratingWithState:objects:count:\00", section "__TEXT,__objc_methname,cstring_literals", align 1
-@"\01L_OBJC_SELECTOR_REFERENCES_" = internal global i8* getelementptr inbounds ([43 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i64 0, i64 0), section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
+@"\01L_OBJC_SELECTOR_REFERENCES_" = internal global i8* getelementptr inbounds ([43 x i8], [43 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i64 0, i64 0), section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
 @g = common global i8* null, align 8
 @"\01L_OBJC_IMAGE_INFO" = internal constant [2 x i32] [i32 0, i32 16], section "__DATA, __objc_imageinfo, regular, no_dead_strip"
 

@@ -61,7 +61,7 @@ define i32 @test4() {
 ; (This transform is rather difficult to trigger in a useful manner)
 define i32 @test5(i1 %b) {
 ; CHECK-LABEL: @test5(
-; CHECK: %memcmp = call i32 @memcmp(i8* getelementptr inbounds ([6 x i8]* @hello, i32 0, i32 0), i8* %str2, i32 5)
+; CHECK: %memcmp = call i32 @memcmp(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @hello, i32 0, i32 0), i8* %str2, i32 5)
 ; CHECK: ret i32 %memcmp
 
   %str1 = getelementptr inbounds [6 x i8], [6 x i8]* @hello, i32 0, i32 0

@@ -37,10 +37,10 @@ align 4
 ; PR14986
 define void @test3() nounwind {
 ; This is a weird way of computing zero.
-  %l = load i32, i32* getelementptr ([36 x i32]* @expect32, i32 29826161, i32 28), align 4
-  store i32 %l, i32* getelementptr ([36 x i32]* @rslts32, i32 29826161, i32 28), align 4
+  %l = load i32, i32* getelementptr ([36 x i32], [36 x i32]* @expect32, i32 29826161, i32 28), align 4
+  store i32 %l, i32* getelementptr ([36 x i32], [36 x i32]* @rslts32, i32 29826161, i32 28), align 4
   ret void
 
 ; CHECK-LABEL: @test3(
-; CHECK: store i32 1, i32* getelementptr inbounds ([36 x i32]* @rslts32, i32 0, i32 0)
+; CHECK: store i32 1, i32* getelementptr inbounds ([36 x i32], [36 x i32]* @rslts32, i32 0, i32 0)
 }

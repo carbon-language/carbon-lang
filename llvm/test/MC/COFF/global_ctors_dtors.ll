@@ -21,7 +21,7 @@
 declare i32 @puts(i8*)
 
 define void @a_global_ctor() nounwind {
-  %1 = call i32 @puts(i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0))
+  %1 = call i32 @puts(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0))
   ret void
 }
 
@@ -40,12 +40,12 @@ define void @c_global_ctor() nounwind {
 }
 
 define void @a_global_dtor() nounwind {
-  %1 = call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @.str2, i32 0, i32 0))
+  %1 = call i32 @puts(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str2, i32 0, i32 0))
   ret void
 }
 
 define i32 @main() nounwind {
-  %1 = call i32 @puts(i8* getelementptr inbounds ([5 x i8]* @.str3, i32 0, i32 0))
+  %1 = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str3, i32 0, i32 0))
   ret i32 0
 }
 

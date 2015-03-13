@@ -45,7 +45,7 @@ define i32 @main() nounwind {
 entry:
 	tail call void @func_1( ) nounwind
 	load i32, i32* @g_19, align 4		; <i32>:0 [#uses=1]
-	tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @"\01LC", i32 0, i32 0), i32 %0 ) nounwind		; <i32>:1 [#uses=0]
+	tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @"\01LC", i32 0, i32 0), i32 %0 ) nounwind		; <i32>:1 [#uses=0]
 	ret i32 0
 }
 

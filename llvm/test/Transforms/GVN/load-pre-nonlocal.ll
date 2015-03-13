@@ -62,7 +62,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:
-  %0 = load i32, i32* getelementptr inbounds (%struct.S1* @s1, i64 0, i32 0), align 8, !tbaa !5
+  %0 = load i32, i32* getelementptr inbounds (%struct.S1, %struct.S1* @s1, i64 0, i32 0), align 8, !tbaa !5
   br label %if.end
 
 if.else:
@@ -72,7 +72,7 @@ if.else:
 
 if.end:
   %i.0 = phi i32 [ %0, %if.then ], [ 0, %if.else ]
-  %p.0 = phi i32* [ getelementptr inbounds (%struct.S1* @s1, i64 0, i32 0), %if.then ], [ %b, %if.else ]
+  %p.0 = phi i32* [ getelementptr inbounds (%struct.S1, %struct.S1* @s1, i64 0, i32 0), %if.then ], [ %b, %if.else ]
   %add.ptr = getelementptr inbounds i32, i32* %p.0, i64 1
   %1 = load i32, i32* %add.ptr, align 4, !tbaa !5
   %add1 = add nsw i32 %1, %i.0

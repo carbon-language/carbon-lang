@@ -19,7 +19,7 @@ entry:
   %tmp21 = load i32, i32* undef                        ; <i32> [#uses=1]
   %0 = mul i32 1, %tmp21                          ; <i32> [#uses=1]
   %vla22 = alloca i8, i32 %0, align 1             ; <i8*> [#uses=1]
-  call  void (...)* @zz(i8* getelementptr inbounds ([1 x i8]* @.str, i32 0, i32 0), i32 2, i32 1)
+  call  void (...)* @zz(i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str, i32 0, i32 0), i32 2, i32 1)
   br i1 undef, label %if.then, label %if.end36
 
 if.then:                                          ; preds = %entry

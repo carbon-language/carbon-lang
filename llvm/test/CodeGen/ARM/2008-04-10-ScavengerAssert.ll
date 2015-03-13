@@ -24,7 +24,7 @@ define void @main(i32 %argc, i8** %argv) noreturn  {
 entry:
 	br i1 false, label %cond_next48, label %cond_false674
 cond_next48:		; preds = %entry
-	%tmp61 = call %struct.FILE* @fopen( i8* null, i8* getelementptr ([2 x i8]* @.str127, i32 0, i32 0) )		; <%struct.FILE*> [#uses=2]
+	%tmp61 = call %struct.FILE* @fopen( i8* null, i8* getelementptr ([2 x i8], [2 x i8]* @.str127, i32 0, i32 0) )		; <%struct.FILE*> [#uses=2]
 	br i1 false, label %bb220.i.i.i, label %bb62.preheader.i.i.i
 bb62.preheader.i.i.i:		; preds = %cond_next48
 	ret void
@@ -53,7 +53,7 @@ bb177.i393.i:		; preds = %bb40.i.i
 bb192.i.i:		; preds = %bb177.i393.i
 	ret void
 cond_false373.i.i:		; preds = %bb.i350.i
-	%tmp376.i.i = call i32 @strcmp( i8* null, i8* getelementptr ([9 x i8]* @.str8115, i32 0, i32 0) )		; <i32> [#uses=0]
+	%tmp376.i.i = call i32 @strcmp( i8* null, i8* getelementptr ([9 x i8], [9 x i8]* @.str8115, i32 0, i32 0) )		; <i32> [#uses=0]
 	br i1 false, label %cond_true380.i.i, label %cond_next602.i.i
 cond_true380.i.i:		; preds = %cond_false373.i.i
 	%tmp394.i418.i = add i32 %cell.0.i.i, 1		; <i32> [#uses=1]
@@ -73,10 +73,10 @@ bb609.i.i:		; preds = %cond_next602.i.i
 	br label %bb620.i.i
 bb620.i.i:		; preds = %bb620.i.i, %bb609.i.i
 	%indvar166.i465.i = phi i32 [ %indvar.next167.i.i, %bb620.i.i ], [ 0, %bb609.i.i ]		; <i32> [#uses=1]
-	%tmp640.i.i = call i32 (%struct.FILE*, i8*, ...)* @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
+	%tmp640.i.i = call i32 (%struct.FILE*, i8*, ...)* @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8], [5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
 	%tmp648.i.i = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%tmp650.i468.i = icmp sgt i32 0, %tmp648.i.i		; <i1> [#uses=1]
-	%tmp624.i469.i = call i32 (%struct.FILE*, i8*, ...)* @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
+	%tmp624.i469.i = call i32 (%struct.FILE*, i8*, ...)* @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8], [5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
 	%indvar.next167.i.i = add i32 %indvar166.i465.i, 1		; <i32> [#uses=1]
 	br i1 %tmp650.i468.i, label %bb653.i.i.loopexit, label %bb620.i.i
 bb653.i.i.loopexit:		; preds = %bb620.i.i

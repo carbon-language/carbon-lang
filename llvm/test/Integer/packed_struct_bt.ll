@@ -16,9 +16,9 @@
 
 define i35 @main() 
 {
-        %tmp = load i35, i35*  getelementptr (%struct.anon* @foos, i32 0, i32 1)            ; <i35> [#uses=1]
-        %tmp3 = load i35, i35* getelementptr (%struct.anon* @foos, i32 0, i32 2)            ; <i35> [#uses=1]
-        %tmp6 = load i35, i35* getelementptr (%struct.anon* @foos, i32 0, i32 3)            ; <i35> [#uses=1]
+        %tmp = load i35, i35*  getelementptr (%struct.anon, %struct.anon* @foos, i32 0, i32 1)            ; <i35> [#uses=1]
+        %tmp3 = load i35, i35* getelementptr (%struct.anon, %struct.anon* @foos, i32 0, i32 2)            ; <i35> [#uses=1]
+        %tmp6 = load i35, i35* getelementptr (%struct.anon, %struct.anon* @foos, i32 0, i32 3)            ; <i35> [#uses=1]
         %tmp4 = add i35 %tmp3, %tmp             ; <i35> [#uses=1]
         %tmp7 = add i35 %tmp4, %tmp6            ; <i35> [#uses=1]
         ret i35 %tmp7
@@ -26,8 +26,8 @@ define i35 @main()
 
 define i35 @bar() {
 entry:
-        %tmp = load i35, i35* getelementptr([2 x <{ i35, i8 }>]* @bara, i32 0, i32 0, i32 0 )            ; <i35> [#uses=1]
-        %tmp4 = load i35, i35* getelementptr ([2 x <{ i35, i8 }>]* @bara, i32 0, i32 1, i32 0)           ; <i35> [#uses=1]
+        %tmp = load i35, i35* getelementptr([2 x <{ i35, i8 }>], [2 x <{ i35, i8 }>]* @bara, i32 0, i32 0, i32 0 )            ; <i35> [#uses=1]
+        %tmp4 = load i35, i35* getelementptr ([2 x <{ i35, i8 }>], [2 x <{ i35, i8 }>]* @bara, i32 0, i32 1, i32 0)           ; <i35> [#uses=1]
         %tmp5 = add i35 %tmp4, %tmp             ; <i35> [#uses=1]
         ret i35 %tmp5
 }

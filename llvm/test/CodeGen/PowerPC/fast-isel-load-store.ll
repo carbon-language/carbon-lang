@@ -145,7 +145,7 @@ define void @t12(double %v) nounwind uwtable ssp {
 ;; lwa requires an offset divisible by 4, so we need lwax here.
 define i64 @t13() nounwind uwtable ssp {
 ; ELF64: t13
-  %1 = load i32, i32* getelementptr inbounds (%struct.s* @g, i32 0, i32 1), align 1
+  %1 = load i32, i32* getelementptr inbounds (%struct.s, %struct.s* @g, i32 0, i32 1), align 1
   %2 = sext i32 %1 to i64
 ; ELF64: li
 ; ELF64: lwax
@@ -157,7 +157,7 @@ define i64 @t13() nounwind uwtable ssp {
 ;; ld requires an offset divisible by 4, so we need ldx here.
 define i64 @t14() nounwind uwtable ssp {
 ; ELF64: t14
-  %1 = load i64, i64* getelementptr inbounds (%struct.t* @h, i32 0, i32 1), align 1
+  %1 = load i64, i64* getelementptr inbounds (%struct.t, %struct.t* @h, i32 0, i32 1), align 1
 ; ELF64: li
 ; ELF64: ldx
   %2 = add nsw i64 %1, 1
@@ -169,7 +169,7 @@ define i64 @t14() nounwind uwtable ssp {
 define void @t15(i64 %v) nounwind uwtable ssp {
 ; ELF64: t15
   %1 = add nsw i64 %v, 1
-  store i64 %1, i64* getelementptr inbounds (%struct.t* @h, i32 0, i32 1), align 1
+  store i64 %1, i64* getelementptr inbounds (%struct.t, %struct.t* @h, i32 0, i32 1), align 1
 ; ELF64: addis
 ; ELF64: addi
 ; ELF64: addi
@@ -181,7 +181,7 @@ define void @t15(i64 %v) nounwind uwtable ssp {
 ;; ld requires an offset that fits in 16 bits, so we need ldx here.
 define i64 @t16() nounwind uwtable ssp {
 ; ELF64: t16
-  %1 = load i64, i64* getelementptr inbounds ([8192 x i64]* @i, i32 0, i64 5000), align 8
+  %1 = load i64, i64* getelementptr inbounds ([8192 x i64], [8192 x i64]* @i, i32 0, i64 5000), align 8
 ; ELF64: lis
 ; ELF64: ori
 ; ELF64: ldx
@@ -194,7 +194,7 @@ define i64 @t16() nounwind uwtable ssp {
 define void @t17(i64 %v) nounwind uwtable ssp {
 ; ELF64: t17
   %1 = add nsw i64 %v, 1
-  store i64 %1, i64* getelementptr inbounds ([8192 x i64]* @i, i32 0, i64 5000), align 8
+  store i64 %1, i64* getelementptr inbounds ([8192 x i64], [8192 x i64]* @i, i32 0, i64 5000), align 8
 ; ELF64: addis
 ; ELF64: ld
 ; ELF64: addi

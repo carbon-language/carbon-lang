@@ -7,7 +7,7 @@
 declare void @llvm.gcwrite(%list*, %list*, %list**)
 
 define %list* @cons(i32 %hd, %list* %tl) gc "example" {
-	%tmp = call i8* @gcalloc(i32 bitcast(%list* getelementptr(%list* null, i32 1) to i32))
+	%tmp = call i8* @gcalloc(i32 bitcast(%list* getelementptr(%list, %list* null, i32 1) to i32))
 	%cell = bitcast i8* %tmp to %list*
 	
 	%hd.ptr = getelementptr %list, %list* %cell, i32 0, i32 0

@@ -69,9 +69,9 @@ bb:
 
 define void @blam() {
 bb:
-  store i32 ptrtoint (i32* @global to i32), i32* getelementptr inbounds (%struct.ham* @global8, i64 0, i32 0), align 4
+  store i32 ptrtoint (i32* @global to i32), i32* getelementptr inbounds (%struct.ham, %struct.ham* @global8, i64 0, i32 0), align 4
   store i32 0, i32* @global9, align 4
-  %tmp = load i32, i32* getelementptr inbounds (%struct.ham* @global8, i64 0, i32 0), align 4
+  %tmp = load i32, i32* getelementptr inbounds (%struct.ham, %struct.ham* @global8, i64 0, i32 0), align 4
   br label %bb1
 
 bb1:                                              ; preds = %bb1, %bb
@@ -89,7 +89,7 @@ bb1:                                              ; preds = %bb1, %bb
   br i1 %tmp12, label %bb13, label %bb1
 
 bb13:                                             ; preds = %bb1
-  store i32 %tmp10, i32* getelementptr inbounds (%struct.ham* @global8, i64 0, i32 0), align 4
+  store i32 %tmp10, i32* getelementptr inbounds (%struct.ham, %struct.ham* @global8, i64 0, i32 0), align 4
   store i32 0, i32* @global10, align 4
   store i32 %tmp6, i32* @global11, align 4
   store i32 20, i32* @global9, align 4

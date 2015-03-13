@@ -39,7 +39,7 @@ bb41:		; preds = %bb31
 	ret i32 0
 
 bb68:		; preds = %bb31
-	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([68 x i8]* @.str34, i32 0, i32 0), i64 %tmp34, i64 0, i32 131072 ) nounwind 
+	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([68 x i8], [68 x i8]* @.str34, i32 0, i32 0), i64 %tmp34, i64 0, i32 131072 ) nounwind 
 	%tmp2021.i = trunc i64 %Pos.0.reg2mem.0 to i32		; <i32> [#uses=1]
 	%tmp202122.i = inttoptr i32 %tmp2021.i to i8*		; <i8*> [#uses=1]
 	tail call void @IODelay( i32 500 ) nounwind 
@@ -55,7 +55,7 @@ bb65.i:		; preds = %bb68
 	br i1 %tmp67.i, label %_Z24unlock_then_erase_sectory.exit, label %bb70.i
 
 bb70.i:		; preds = %bb65.i
-	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([64 x i8]* @.str19, i32 0, i32 0), i32 %tmp5455.i ) nounwind 
+	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([64 x i8], [64 x i8]* @.str19, i32 0, i32 0), i32 %tmp5455.i ) nounwind 
 	ret i32 0
 
 _Z24unlock_then_erase_sectory.exit:		; preds = %bb65.i
@@ -66,11 +66,11 @@ _Z24unlock_then_erase_sectory.exit:		; preds = %bb65.i
 	br i1 %tmp100, label %bb31, label %bb103
 
 bb103:		; preds = %_Z24unlock_then_erase_sectory.exit, %bb
-	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([37 x i8]* @.str35, i32 0, i32 0) ) nounwind 
+	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([37 x i8], [37 x i8]* @.str35, i32 0, i32 0) ) nounwind 
 	ret i32 0
 
 bb107:		; preds = %entry
-	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([48 x i8]* @.str36, i32 0, i32 0) ) nounwind 
+	tail call void (i8*, ...)* @IOLog( i8* getelementptr ([48 x i8], [48 x i8]* @.str36, i32 0, i32 0) ) nounwind 
 	%tmp114115 = bitcast i8* %buffer to i16*		; <i16*> [#uses=1]
 	%tmp256 = lshr i64 %bufferSize, 1		; <i64> [#uses=1]
 	%tmp256257 = trunc i64 %tmp256 to i32		; <i32> [#uses=1]

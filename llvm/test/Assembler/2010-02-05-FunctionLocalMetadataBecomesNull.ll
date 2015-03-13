@@ -7,7 +7,7 @@ target triple = "x86_64-apple-darwin10.2"
 %struct.anon = type { i32, i32 }
 %struct.test = type { i64, %struct.anon, %struct.test* }
 
-@TestArrayPtr = global %struct.test* getelementptr inbounds ([10 x %struct.test]* @TestArray, i64 0, i64 3) ; <%struct.test**> [#uses=1]
+@TestArrayPtr = global %struct.test* getelementptr inbounds ([10 x %struct.test], [10 x %struct.test]* @TestArray, i64 0, i64 3) ; <%struct.test**> [#uses=1]
 @TestArray = common global [10 x %struct.test] zeroinitializer, align 32 ; <[10 x %struct.test]*> [#uses=2]
 
 define i32 @main() nounwind readonly {

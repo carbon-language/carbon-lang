@@ -108,7 +108,7 @@ func_1.exit:                                      ; preds = %bb.i.i, %func_4.exi
   %g_96.tmp.0.i = phi i8 [ %g_96.promoted.i, %bb.i.i ], [ %.mux.i, %func_4.exit.i ] ; <i8> [#uses=2]
   store i8 %g_96.tmp.0.i, i8* @g_96
   %6 = zext i8 %g_96.tmp.0.i to i32               ; <i32> [#uses=1]
-  %7 = tail call i32 (i8*, ...)* @printf(i8* noalias getelementptr ([15 x i8]* @_2E_str, i64 0, i64 0), i32 %6) nounwind ; <i32> [#uses=0]
+  %7 = tail call i32 (i8*, ...)* @printf(i8* noalias getelementptr ([15 x i8], [15 x i8]* @_2E_str, i64 0, i64 0), i32 %6) nounwind ; <i32> [#uses=0]
   ret i32 0
 }
 

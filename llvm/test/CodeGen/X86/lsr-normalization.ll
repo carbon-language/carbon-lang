@@ -44,7 +44,7 @@ bb10:                                             ; preds = %bb8, %bb
   br i1 %tmp13, label %bb14, label %bb16
 
 bb14:                                             ; preds = %bb10
-  %tmp15 = call i32 @puts(i8* getelementptr inbounds ([5 x i8]* @1, i64 0, i64 0))
+  %tmp15 = call i32 @puts(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @1, i64 0, i64 0))
   br label %bb35
 
 bb16:                                             ; preds = %bb16, %bb10
@@ -71,7 +71,7 @@ bb25:                                             ; preds = %bb25, %bb23
 
 bb32:                                             ; preds = %bb25
   %tmp33 = mul i64 %tmp31, %tmp24                 ; <i64> [#uses=1]
-  %tmp34 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8]* @0, i64 0, i64 0), i64 %tmp33) nounwind
+  %tmp34 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @0, i64 0, i64 0), i64 %tmp33) nounwind
   br label %bb35
 
 bb35:                                             ; preds = %bb32, %bb14

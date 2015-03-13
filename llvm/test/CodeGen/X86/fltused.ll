@@ -11,7 +11,7 @@
 
 define i32 @main() nounwind {
 entry:
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), double 1.000000e+000) nounwind
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double 1.000000e+000) nounwind
   ret i32 0
 }
 

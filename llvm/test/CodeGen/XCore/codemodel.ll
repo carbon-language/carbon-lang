@@ -101,17 +101,17 @@ entry:
   %2 = getelementptr inbounds i32, i32* %i, i32 16384
   %3 = load i32, i32* %2
   %4 = add nsw i32 %1, %3
-  %5 = load i32, i32* getelementptr inbounds ([100 x i32]* @l, i32 0, i32 0)
+  %5 = load i32, i32* getelementptr inbounds ([100 x i32], [100 x i32]* @l, i32 0, i32 0)
   %6 = add nsw i32 %4, %5
-  %7 = load i32, i32* getelementptr inbounds ([100 x i32]* @l, i32 0, i32 1)
+  %7 = load i32, i32* getelementptr inbounds ([100 x i32], [100 x i32]* @l, i32 0, i32 1)
   %8 = add nsw i32 %6, %7
-  %9 = load i32, i32* getelementptr inbounds ([100 x i32]* @l, i32 0, i32 98)
+  %9 = load i32, i32* getelementptr inbounds ([100 x i32], [100 x i32]* @l, i32 0, i32 98)
   %10 = add nsw i32 %8, %9
-  %11 = load i32, i32* getelementptr inbounds ([100 x i32]* @l, i32 0, i32 99)
+  %11 = load i32, i32* getelementptr inbounds ([100 x i32], [100 x i32]* @l, i32 0, i32 99)
   %12 = add nsw i32 %10, %11
-  %13 = load i32, i32* getelementptr inbounds ([10 x i32]* @s, i32 0, i32 0)
+  %13 = load i32, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @s, i32 0, i32 0)
   %14 = add nsw i32 %12, %13
-  %15 = load i32, i32* getelementptr inbounds ([10 x i32]* @s, i32 0, i32 9)
+  %15 = load i32, i32* getelementptr inbounds ([10 x i32], [10 x i32]* @s, i32 0, i32 9)
   %16 = add nsw i32 %14, %15
   ret i32 %16
 }
@@ -132,7 +132,7 @@ entry:
 @NoSize = external global [0 x i32]
 define i32 @UnknownSize() nounwind {
 entry:
-  %0 = load i32, i32* getelementptr inbounds ([0 x i32]* @NoSize, i32 0, i32 10)
+  %0 = load i32, i32* getelementptr inbounds ([0 x i32], [0 x i32]* @NoSize, i32 0, i32 10)
   ret i32 %0
 }
 

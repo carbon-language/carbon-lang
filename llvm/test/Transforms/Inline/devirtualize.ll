@@ -47,11 +47,11 @@ entry:
 @_ZTS1C = linkonce_odr constant [3 x i8] c"1C\00"     ; <[3 x i8]*> [#uses=1]
 @_ZTVN10__cxxabiv117__class_type_infoE = external global i8* ; <i8**> [#uses=1]
 @_ZTS1A = linkonce_odr constant [3 x i8] c"1A\00"     ; <[3 x i8]*> [#uses=1]
-@_ZTI1A = linkonce_odr constant %0 { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8]* @_ZTS1A, i32 0, i32 0) } ; <%0*> [#uses=1]
+@_ZTI1A = linkonce_odr constant %0 { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1A, i32 0, i32 0) } ; <%0*> [#uses=1]
 @_ZTS1B = linkonce_odr constant [3 x i8] c"1B\00"     ; <[3 x i8]*> [#uses=1]
-@_ZTI1B = linkonce_odr constant %0 { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8]* @_ZTS1B, i32 0, i32 0) } ; <%0*> [#uses=1]
-@_ZTI1C = linkonce_odr constant %1 { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8]* @_ZTS1C, i32 0, i32 0), i32 0, i32 2, i8* bitcast (%0* @_ZTI1A to i8*), i64 2, i8* bitcast (%0* @_ZTI1B to i8*), i64 2050 } ; <%1*> [#uses=1]
-@_ZTI1D = linkonce_odr constant %2 { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8]* @_ZTS1D, i32 0, i32 0), i8* bitcast (%1* @_ZTI1C to i8*) } ; <%2*> [#uses=1]
+@_ZTI1B = linkonce_odr constant %0 { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1B, i32 0, i32 0) } ; <%0*> [#uses=1]
+@_ZTI1C = linkonce_odr constant %1 { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv121__vmi_class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1C, i32 0, i32 0), i32 0, i32 2, i8* bitcast (%0* @_ZTI1A to i8*), i64 2, i8* bitcast (%0* @_ZTI1B to i8*), i64 2050 } ; <%1*> [#uses=1]
+@_ZTI1D = linkonce_odr constant %2 { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1D, i32 0, i32 0), i8* bitcast (%1* @_ZTI1C to i8*) } ; <%2*> [#uses=1]
 @_ZTV1C = linkonce_odr constant [6 x i8*] [i8* null, i8* bitcast (%1* @_ZTI1C to i8*), i8* bitcast (i32 (%struct.C*)* @_ZN1C1fEv to i8*), i8* inttoptr (i64 -8 to i8*), i8* bitcast (%1* @_ZTI1C to i8*), i8* bitcast (i32 (%struct.C*)* @_ZThn8_N1C1fEv to i8*)] ; <[6 x i8*]*> [#uses=2]
 @_ZTV1B = linkonce_odr constant [3 x i8*] [i8* null, i8* bitcast (%0* @_ZTI1B to i8*), i8* bitcast (i32 (%struct.A*)* @_ZN1B1fEv to i8*)] ; <[3 x i8*]*> [#uses=1]
 @_ZTV1A = linkonce_odr constant [3 x i8*] [i8* null, i8* bitcast (%0* @_ZTI1A to i8*), i8* bitcast (i32 (%struct.A*)* @_ZN1A1fEv to i8*)] ; <[3 x i8*]*> [#uses=1]
@@ -112,11 +112,11 @@ entry:
   %0 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
   %1 = getelementptr inbounds i8, i8* %0, i64 0       ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to i8***                    ; <i8***> [#uses=1]
-  store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1D, i64 0, i64 2), i8*** %2
+  store i8** getelementptr inbounds ([6 x i8*], [6 x i8*]* @_ZTV1D, i64 0, i64 2), i8*** %2
   %3 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
   %4 = getelementptr inbounds i8, i8* %3, i64 8       ; <i8*> [#uses=1]
   %5 = bitcast i8* %4 to i8***                    ; <i8***> [#uses=1]
-  store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1D, i64 0, i64 5), i8*** %5
+  store i8** getelementptr inbounds ([6 x i8*], [6 x i8*]* @_ZTV1D, i64 0, i64 5), i8*** %5
   ret void
 }
 
@@ -131,11 +131,11 @@ entry:
   %4 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
   %5 = getelementptr inbounds i8, i8* %4, i64 0       ; <i8*> [#uses=1]
   %6 = bitcast i8* %5 to i8***                    ; <i8***> [#uses=1]
-  store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1C, i64 0, i64 2), i8*** %6
+  store i8** getelementptr inbounds ([6 x i8*], [6 x i8*]* @_ZTV1C, i64 0, i64 2), i8*** %6
   %7 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
   %8 = getelementptr inbounds i8, i8* %7, i64 8       ; <i8*> [#uses=1]
   %9 = bitcast i8* %8 to i8***                    ; <i8***> [#uses=1]
-  store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1C, i64 0, i64 5), i8*** %9
+  store i8** getelementptr inbounds ([6 x i8*], [6 x i8*]* @_ZTV1C, i64 0, i64 5), i8*** %9
   ret void
 }
 
@@ -158,7 +158,7 @@ entry:
   %0 = bitcast %struct.A* %this to i8*            ; <i8*> [#uses=1]
   %1 = getelementptr inbounds i8, i8* %0, i64 0       ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to i8***                    ; <i8***> [#uses=1]
-  store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %2
+  store i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %2
   ret void
 }
 
@@ -167,7 +167,7 @@ entry:
   %0 = bitcast %struct.A* %this to i8*            ; <i8*> [#uses=1]
   %1 = getelementptr inbounds i8, i8* %0, i64 0       ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to i8***                    ; <i8***> [#uses=1]
-  store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1B, i64 0, i64 2), i8*** %2
+  store i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTV1B, i64 0, i64 2), i8*** %2
   ret void
 }
 

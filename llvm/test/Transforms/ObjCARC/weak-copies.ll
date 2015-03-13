@@ -10,9 +10,9 @@ target triple = "x86_64-apple-darwin11.0.0"
 @_NSConcreteStackBlock = external global i8*
 @.str = private unnamed_addr constant [6 x i8] c"v8@?0\00"
 @"\01L_OBJC_CLASS_NAME_" = internal global [3 x i8] c"\01@\00", section "__TEXT,__objc_classname,cstring_literals", align 1
-@__block_descriptor_tmp = internal constant %0 { i64 0, i64 40, i8* bitcast (void (i8*, i8*)* @__copy_helper_block_ to i8*), i8* bitcast (void (i8*)* @__destroy_helper_block_ to i8*), i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8]* @"\01L_OBJC_CLASS_NAME_", i32 0, i32 0) }
+@__block_descriptor_tmp = internal constant %0 { i64 0, i64 40, i8* bitcast (void (i8*, i8*)* @__copy_helper_block_ to i8*), i8* bitcast (void (i8*)* @__destroy_helper_block_ to i8*), i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @"\01L_OBJC_CLASS_NAME_", i32 0, i32 0) }
 @"\01L_OBJC_IMAGE_INFO" = internal constant [2 x i32] [i32 0, i32 16], section "__DATA, __objc_imageinfo, regular, no_dead_strip"
-@llvm.used = appending global [2 x i8*] [i8* getelementptr inbounds ([3 x i8]* @"\01L_OBJC_CLASS_NAME_", i32 0, i32 0), i8* bitcast ([2 x i32]* @"\01L_OBJC_IMAGE_INFO" to i8*)], section "llvm.metadata"
+@llvm.used = appending global [2 x i8*] [i8* getelementptr inbounds ([3 x i8], [3 x i8]* @"\01L_OBJC_CLASS_NAME_", i32 0, i32 0), i8* bitcast ([2 x i32]* @"\01L_OBJC_IMAGE_INFO" to i8*)], section "llvm.metadata"
 
 ; Eliminate unnecessary weak pointer copies.
 

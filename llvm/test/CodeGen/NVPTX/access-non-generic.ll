@@ -38,10 +38,10 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 ; PTX: bar.sync 0;
 
   ; load gep cast
-  %4 = load float, float* getelementptr inbounds ([10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
+  %4 = load float, float* getelementptr inbounds ([10 x float], [10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [array+20];
   ; store gep cast
-  store float %v, float* getelementptr inbounds ([10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
+  store float %v, float* getelementptr inbounds ([10 x float], [10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
 ; PTX: st.shared.f32 [array+20], %f{{[0-9]+}};
   call void @llvm.cuda.syncthreads()
 ; PTX: bar.sync 0;

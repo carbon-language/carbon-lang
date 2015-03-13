@@ -238,7 +238,7 @@ entry:
 
 ; MIPS64R6-NOT:  luxc1
 
-  %0 = load float, float* getelementptr inbounds (%struct.S3* @s3, i32 0, i32 1), align 1
+  %0 = load float, float* getelementptr inbounds (%struct.S3, %struct.S3* @s3, i32 0, i32 1), align 1
   ret float %0
 }
 
@@ -256,7 +256,7 @@ entry:
 
 ; MIPS64R6-NOT:  suxc1
 
-  store float %f, float* getelementptr inbounds (%struct.S3* @s3, i32 0, i32 1), align 1
+  store float %f, float* getelementptr inbounds (%struct.S3, %struct.S3* @s3, i32 0, i32 1), align 1
   ret void
 }
 

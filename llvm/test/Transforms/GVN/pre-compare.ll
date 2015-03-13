@@ -43,7 +43,7 @@ entry:
 
 if.then:                                          ; preds = %entry
   %cmp1 = icmp eq i32 %x, 2
-  %cond = select i1 %cmp1, i8* getelementptr inbounds ([2 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([2 x i8]* @.str1, i64 0, i64 0)
+  %cond = select i1 %cmp1, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str1, i64 0, i64 0)
   %call = tail call i32 @puts(i8* %cond) nounwind
   br label %for.cond.preheader
 
@@ -52,11 +52,11 @@ for.cond.preheader:                               ; preds = %entry, %if.then
   br label %for.cond
 
 for.cond:                                         ; preds = %for.cond.backedge, %for.cond.preheader
-  %call2 = tail call i32 @puts(i8* getelementptr inbounds ([7 x i8]* @.str2, i64 0, i64 0)) nounwind
+  %call2 = tail call i32 @puts(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str2, i64 0, i64 0)) nounwind
   br i1 %cmp3, label %for.cond.backedge, label %if.end5
 
 if.end5:                                          ; preds = %for.cond
-  %call6 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8]* @.str3, i64 0, i64 0), i32 %x) nounwind
+  %call6 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str3, i64 0, i64 0), i32 %x) nounwind
   br label %for.cond.backedge
 
 for.cond.backedge:                                ; preds = %if.end5, %for.cond

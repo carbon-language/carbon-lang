@@ -2,7 +2,7 @@
 ; PR7545
 @.str = private constant [4 x i8] c"one\00", align 1 ; <[4 x i8]*> [#uses=1]
 @.str1 = private constant [4 x i8] c"two\00", align 1 ; <[5 x i8]*> [#uses=1]
-@C.9.2167 = internal constant [2 x i8*] [i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0)]
+@C.9.2167 = internal constant [2 x i8*] [i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str1, i64 0, i64 0)]
 !38 = !MDFile(filename: "pbmsrch.c", directory: "/Users/grawp/LLVM/test-suite/MultiSource/Benchmarks/MiBench/office-stringsearch")
 !39 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build 9999)", isOptimized: true, emissionKind: 0, file: !109, enums: !108, retainedTypes: !108)
 !46 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !109, baseType: !47)

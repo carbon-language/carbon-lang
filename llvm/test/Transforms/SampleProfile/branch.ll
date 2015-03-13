@@ -70,7 +70,7 @@ for.body:                                         ; preds = %if.end, %for.body
 
 if.end6:                                          ; preds = %for.body, %if.end
   %result.0 = phi double [ 0.000000e+00, %if.end ], [ %sub, %for.body ]
-  %call7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str, i64 0, i64 0), double %result.0), !dbg !39
+  %call7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str, i64 0, i64 0), double %result.0), !dbg !39
   br label %return, !dbg !40
 ; CHECK: edge if.end6 -> return probability is 16 / 16 = 100% [HOT edge]
 

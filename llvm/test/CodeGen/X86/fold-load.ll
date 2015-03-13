@@ -10,7 +10,7 @@ entry:
 
 cond_true:		; preds = %entry
 	%new_size.0.i = select i1 false, i32 0, i32 0		; <i32> [#uses=1]
-	%tmp.i = load i32, i32* bitcast (i8* getelementptr (%struct.obstack* @stmt_obstack, i32 0, i32 10) to i32*)		; <i32> [#uses=1]
+	%tmp.i = load i32, i32* bitcast (i8* getelementptr (%struct.obstack, %struct.obstack* @stmt_obstack, i32 0, i32 10) to i32*)		; <i32> [#uses=1]
 	%tmp.i.upgrd.1 = trunc i32 %tmp.i to i8		; <i8> [#uses=1]
 	%tmp21.i = and i8 %tmp.i.upgrd.1, 1		; <i8> [#uses=1]
 	%tmp22.i = icmp eq i8 %tmp21.i, 0		; <i1> [#uses=1]

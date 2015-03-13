@@ -11,7 +11,7 @@ target triple = "powerpc-unknown-linux-gnu"
 @_D4core4time12TickDuration11ticksPerSecyl = global i64 0
 @.str5 = internal unnamed_addr constant [40 x i8] c"..\5Cldc\5Cruntime\5Cdruntime\5Csrc\5Ccore\5Ctime.d\00"
 @.str83 = internal constant [10 x i8] c"null this\00"
-@.modulefilename = internal constant { i32, i8* } { i32 39, i8* getelementptr inbounds ([40 x i8]* @.str5, i32 0, i32 0) }
+@.modulefilename = internal constant { i32, i8* } { i32 39, i8* getelementptr inbounds ([40 x i8], [40 x i8]* @.str5, i32 0, i32 0) }
 
 declare i8* @_d_assert_msg({ i32, i8* }, { i32, i8* }, i32)
 
@@ -24,7 +24,7 @@ entry:
 
 assert:                                           ; preds = %entry
   %tmp1 = load { i32, i8* }, { i32, i8* }* @.modulefilename
-  %0 = call i8* @_d_assert_msg({ i32, i8* } { i32 9, i8* getelementptr inbounds ([10 x i8]* @.str83, i32 0, i32 0) }, { i32, i8* } %tmp1, i32 1586)
+  %0 = call i8* @_d_assert_msg({ i32, i8* } { i32 9, i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str83, i32 0, i32 0) }, { i32, i8* } %tmp1, i32 1586)
   unreachable
 
 noassert:                                         ; preds = %entry

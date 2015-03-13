@@ -39,7 +39,7 @@ bb5:
   %tmp13 = add i32 %tmp12, %tmp10
   %tmp14 = lshr i32 %tmp13, 2
   %tmp15 = trunc i32 %tmp14 to i16
-  store i16 %tmp15, i16* getelementptr inbounds (%0* @images, i64 0, i32 47, i64 3, i64 0, i64 3), align 2
+  store i16 %tmp15, i16* getelementptr inbounds (%0, %0* @images, i64 0, i32 47, i64 3, i64 0, i64 3), align 2
   %tmp16 = lshr i208 %tmp, 96
   %tmp17 = trunc i208 %tmp16 to i32
   %tmp18 = and i32 %tmp17, 65535
@@ -48,12 +48,12 @@ bb5:
   %tmp21 = add i32 %tmp20, 0
   %tmp22 = lshr i32 %tmp21, 2
   %tmp23 = trunc i32 %tmp22 to i16
-  store i16 %tmp23, i16* getelementptr inbounds (%0* @images, i64 0, i32 47, i64 3, i64 2, i64 3), align 2
+  store i16 %tmp23, i16* getelementptr inbounds (%0, %0* @images, i64 0, i32 47, i64 3, i64 2, i64 3), align 2
   %tmp24 = add i32 %tmp6, %tmp9
   %tmp25 = add i32 %tmp24, 0
   %tmp26 = lshr i32 %tmp25, 2
   %tmp27 = trunc i32 %tmp26 to i16
-  store i16 %tmp27, i16* getelementptr inbounds (%0* @images, i64 0, i32 47, i64 7, i64 1, i64 2), align 4
+  store i16 %tmp27, i16* getelementptr inbounds (%0, %0* @images, i64 0, i32 47, i64 7, i64 1, i64 2), align 4
   %tmp28 = lshr i208 %tmp, 80
   %tmp29 = shl nuw nsw i208 %tmp28, 1
   %tmp30 = trunc i208 %tmp29 to i32
@@ -61,7 +61,7 @@ bb5:
   %tmp32 = add i32 %tmp12, %tmp31
   %tmp33 = lshr i32 %tmp32, 2
   %tmp34 = trunc i32 %tmp33 to i16
-  store i16 %tmp34, i16* getelementptr inbounds (%0* @images, i64 0, i32 47, i64 7, i64 1, i64 3), align 2
+  store i16 %tmp34, i16* getelementptr inbounds (%0, %0* @images, i64 0, i32 47, i64 7, i64 1, i64 3), align 2
   br label %bb35
 
 bb35:                                             ; preds = %bb5, %bb4

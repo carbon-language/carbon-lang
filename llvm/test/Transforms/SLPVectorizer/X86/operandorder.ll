@@ -193,7 +193,7 @@ entry:
   br label %for.cond1.preheader
 
 for.cond1.preheader:
-  %0 = load float, float* getelementptr inbounds ([32000 x float]* @a, i64 0, i64 0), align 16
+  %0 = load float, float* getelementptr inbounds ([32000 x float], [32000 x float]* @a, i64 0, i64 0), align 16
   br label %for.body3
 
 for.body3:

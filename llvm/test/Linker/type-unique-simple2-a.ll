@@ -67,7 +67,7 @@ entry:
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !44, metadata !MDExpression()), !dbg !45
   %this1 = load %class.A*, %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !46
-  store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !46
+  store i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !46
   ret void, !dbg !46
 }
 

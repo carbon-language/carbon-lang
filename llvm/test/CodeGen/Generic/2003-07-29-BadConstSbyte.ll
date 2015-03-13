@@ -28,8 +28,8 @@ loopentry:              ; preds = %loopentry, %entry
         %i = phi i64 [ 0, %entry ], [ %inc.i, %loopentry ]              ; <i64> [#uses=3]
         %cptr = getelementptr [6 x i8], [6 x i8]* @yy_ec, i64 0, i64 %i           ; <i8*> [#uses=1]
         %c = load i8, i8* %cptr             ; <i8> [#uses=1]
-        %ignore = call i32 (i8*, ...)* @printf( i8* getelementptr ([8 x i8]* @.str_3, i64 0, i64 0), i64 %i )        ; <i32> [#uses=0]
-        %ignore2 = call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @.str_4, i64 0, i64 0), i8 %c )        ; <i32> [#uses=0]
+        %ignore = call i32 (i8*, ...)* @printf( i8* getelementptr ([8 x i8], [8 x i8]* @.str_3, i64 0, i64 0), i64 %i )        ; <i32> [#uses=0]
+        %ignore2 = call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @.str_4, i64 0, i64 0), i8 %c )        ; <i32> [#uses=0]
         %inc.i = add i64 %i, 1          ; <i64> [#uses=2]
         %done = icmp sle i64 %inc.i, 5          ; <i1> [#uses=1]
         br i1 %done, label %loopentry, label %exit.1

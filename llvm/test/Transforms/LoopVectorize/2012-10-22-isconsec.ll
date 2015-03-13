@@ -41,7 +41,7 @@ entry:
 "3":                                              ; preds = %"3", %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %"3" ]
   %0 = shl nsw i64 %indvars.iv, 2
-  %1 = getelementptr inbounds i8, i8* bitcast (float* getelementptr inbounds ([32000 x float]* @b, i64 0, i64 16000) to i8*), i64 %0
+  %1 = getelementptr inbounds i8, i8* bitcast (float* getelementptr inbounds ([32000 x float], [32000 x float]* @b, i64 0, i64 16000) to i8*), i64 %0
   %2 = bitcast i8* %1 to float*
   store float -1.000000e+00, float* %2, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1

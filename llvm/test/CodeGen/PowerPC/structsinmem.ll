@@ -43,7 +43,7 @@ entry:
   %p6 = alloca %struct.s6, align 4
   %p7 = alloca %struct.s7, align 4
   %0 = bitcast %struct.s1* %p1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds (%struct.s1* @caller1.p1, i32 0, i32 0), i64 1, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds (%struct.s1, %struct.s1* @caller1.p1, i32 0, i32 0), i64 1, i32 1, i1 false)
   %1 = bitcast %struct.s2* %p2 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* bitcast (%struct.s2* @caller1.p2 to i8*), i64 2, i32 2, i1 false)
   %2 = bitcast %struct.s3* %p3 to i8*
@@ -132,7 +132,7 @@ entry:
   %p6 = alloca %struct.t6, align 1
   %p7 = alloca %struct.t7, align 1
   %0 = bitcast %struct.t1* %p1 to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds (%struct.t1* @caller2.p1, i32 0, i32 0), i64 1, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds (%struct.t1, %struct.t1* @caller2.p1, i32 0, i32 0), i64 1, i32 1, i1 false)
   %1 = bitcast %struct.t2* %p2 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* bitcast ({ i16 }* @caller2.p2 to i8*), i64 2, i32 1, i1 false)
   %2 = bitcast %struct.t3* %p3 to i8*

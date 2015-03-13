@@ -228,7 +228,7 @@ if.end517:
   ]
 
 if.then532:
-  store i8 0, i8* getelementptr inbounds ([512 x i8]* @SyFgets.yank, i64 0, i64 0), align 16, !tbaa !5
+  store i8 0, i8* getelementptr inbounds ([512 x i8], [512 x i8]* @SyFgets.yank, i64 0, i64 0), align 16, !tbaa !5
   br label %for.cond534
 
 for.cond534:
@@ -360,7 +360,7 @@ while.end1693:
   unreachable
 
 for.body1723:
-  %q.303203 = phi i8* [ getelementptr inbounds ([8192 x i8]* @syHistory, i64 0, i64 8189), %if.then1477 ], [ %incdec.ptr1730, %for.body1723 ]
+  %q.303203 = phi i8* [ getelementptr inbounds ([8192 x i8], [8192 x i8]* @syHistory, i64 0, i64 8189), %if.then1477 ], [ %incdec.ptr1730, %for.body1723 ]
   %add.ptr1728 = getelementptr i8, i8* %q.303203, i64 %idx.neg1727
   %5 = load i8, i8* %add.ptr1728, align 1, !tbaa !5
   %incdec.ptr1730 = getelementptr i8, i8* %q.303203, i64 -1

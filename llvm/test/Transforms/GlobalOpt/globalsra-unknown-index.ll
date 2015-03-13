@@ -12,7 +12,7 @@
 @addr = external global i8
 
 define void @frob() {
-  store i32 1, i32* getelementptr inbounds ([3 x %struct.X]* @Y, i64 0, i64 0, i32 0, i64 ptrtoint (i8* @addr to i64)), align 4
+  store i32 1, i32* getelementptr inbounds ([3 x %struct.X], [3 x %struct.X]* @Y, i64 0, i64 0, i32 0, i64 ptrtoint (i8* @addr to i64)), align 4
   ret void
 }
 define i32 @borf(i64 %i, i64 %j) {

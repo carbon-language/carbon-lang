@@ -5,7 +5,7 @@
 
 define i32 @main() nounwind {
 entry:
-	%0 = tail call i32 @puts(i8* getelementptr ([13 x i8]* @"\01LC", i32 0, i32 0)) nounwind		; <i32> [#uses=0]
+	%0 = tail call i32 @puts(i8* getelementptr ([13 x i8], [13 x i8]* @"\01LC", i32 0, i32 0)) nounwind		; <i32> [#uses=0]
 	ret i32 0
 }
 

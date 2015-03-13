@@ -85,7 +85,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.inc
-  %tmp8 = load i32, i32 addrspace(2)* getelementptr inbounds ([7 x i32] addrspace(2)* @g_50, i32 0, i64 6), align 4
+  %tmp8 = load i32, i32 addrspace(2)* getelementptr inbounds ([7 x i32], [7 x i32] addrspace(2)* @g_50, i32 0, i64 6), align 4
   ret i32 %tmp8
 }
 

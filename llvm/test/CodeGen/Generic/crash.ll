@@ -4,7 +4,7 @@
 %struct.AVCodecTag = type {}
 @ff_codec_bmp_tags = external global [0 x %struct.AVCodecTag]
 @tags = global [1 x %struct.AVCodecTag*] [%struct.AVCodecTag* getelementptr
-inbounds ([0 x %struct.AVCodecTag]* @ff_codec_bmp_tags, i32 0, i32 0)]
+inbounds ([0 x %struct.AVCodecTag], [0 x %struct.AVCodecTag]* @ff_codec_bmp_tags, i32 0, i32 0)]
 
 
 ; rdar://8878965

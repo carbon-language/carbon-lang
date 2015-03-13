@@ -29,6 +29,6 @@ entry:
 ; CHECK: or
 define i32 @align3() nounwind {
 entry:
-	%0 = load i32, i32* bitcast (i8* getelementptr ([5 x i8]* @a, i32 0, i32 1) to i32*), align 1
+	%0 = load i32, i32* bitcast (i8* getelementptr ([5 x i8], [5 x i8]* @a, i32 0, i32 1) to i32*), align 1
 	ret i32 %0
 }

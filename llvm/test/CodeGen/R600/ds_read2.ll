@@ -388,8 +388,8 @@ define void @misaligned_read2_f64(double addrspace(1)* %out, double addrspace(3)
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:1
 define void @load_constant_adjacent_offsets(i32 addrspace(1)* %out) {
-  %val0 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
-  %val1 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 1), align 4
+  %val0 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
+  %val1 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 1), align 4
   %sum = add i32 %val0, %val1
   store i32 %sum, i32 addrspace(1)* %out, align 4
   ret void
@@ -399,8 +399,8 @@ define void @load_constant_adjacent_offsets(i32 addrspace(1)* %out) {
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:2
 define void @load_constant_disjoint_offsets(i32 addrspace(1)* %out) {
-  %val0 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
-  %val1 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 2), align 4
+  %val0 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
+  %val1 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 2), align 4
   %sum = add i32 %val0, %val1
   store i32 %sum, i32 addrspace(1)* %out, align 4
   ret void
@@ -413,8 +413,8 @@ define void @load_constant_disjoint_offsets(i32 addrspace(1)* %out) {
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:1
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:2 offset1:3
 define void @load_misaligned64_constant_offsets(i64 addrspace(1)* %out) {
-  %val0 = load i64, i64 addrspace(3)* getelementptr inbounds ([4 x i64] addrspace(3)* @bar, i32 0, i32 0), align 4
-  %val1 = load i64, i64 addrspace(3)* getelementptr inbounds ([4 x i64] addrspace(3)* @bar, i32 0, i32 1), align 4
+  %val0 = load i64, i64 addrspace(3)* getelementptr inbounds ([4 x i64], [4 x i64] addrspace(3)* @bar, i32 0, i32 0), align 4
+  %val1 = load i64, i64 addrspace(3)* getelementptr inbounds ([4 x i64], [4 x i64] addrspace(3)* @bar, i32 0, i32 1), align 4
   %sum = add i64 %val0, %val1
   store i64 %sum, i64 addrspace(1)* %out, align 8
   ret void
@@ -429,8 +429,8 @@ define void @load_misaligned64_constant_offsets(i64 addrspace(1)* %out) {
 ; SI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASE1]] offset0:0 offset1:1
 ; SI: s_endpgm
 define void @load_misaligned64_constant_large_offsets(i64 addrspace(1)* %out) {
-  %val0 = load i64, i64 addrspace(3)* getelementptr inbounds ([4096 x i64] addrspace(3)* @bar.large, i32 0, i32 2048), align 4
-  %val1 = load i64, i64 addrspace(3)* getelementptr inbounds ([4096 x i64] addrspace(3)* @bar.large, i32 0, i32 4095), align 4
+  %val0 = load i64, i64 addrspace(3)* getelementptr inbounds ([4096 x i64], [4096 x i64] addrspace(3)* @bar.large, i32 0, i32 2048), align 4
+  %val1 = load i64, i64 addrspace(3)* getelementptr inbounds ([4096 x i64], [4096 x i64] addrspace(3)* @bar.large, i32 0, i32 4095), align 4
   %sum = add i64 %val0, %val1
   store i64 %sum, i64 addrspace(1)* %out, align 8
   ret void

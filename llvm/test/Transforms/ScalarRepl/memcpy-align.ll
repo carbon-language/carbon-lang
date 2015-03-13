@@ -15,7 +15,7 @@ entry:
   %tmp = bitcast %struct.anon* %x0 to i8*         ; <i8*> [#uses=1]
   call void @llvm.memset.p0i8.i32(i8* %tmp, i8 0, i32 4, i32 4, i1 false)
   %tmp1 = bitcast %struct.anon* %x0 to i8*        ; <i8*> [#uses=1]
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds (%0* @c, i32
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds (%0, %0* @c, i32
 0, i32 0, i32 0, i32 0), i8* %tmp1, i32 4, i32 4, i1 false)
   ret void
   

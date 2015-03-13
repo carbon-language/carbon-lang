@@ -1,7 +1,7 @@
 ; RUN: verify-uselistorder < %s
 
 @a = global [4 x i1] [i1 0, i1 1, i1 0, i1 1]
-@b = alias i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
+@b = alias i1* getelementptr ([4 x i1], [4 x i1]* @a, i64 0, i64 2)
 
 ; Check use-list order of constants used by globals.
 @glob1 = global i5 7
@@ -85,7 +85,7 @@ entry:
 
 define i1 @loada() {
 entry:
-  %a = load i1, i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
+  %a = load i1, i1* getelementptr ([4 x i1], [4 x i1]* @a, i64 0, i64 2)
   ret i1 %a
 }
 
@@ -134,11 +134,11 @@ loop2:
 
 ; Check that block addresses work.
 @ba1 = constant i8* blockaddress (@bafunc1, %bb)
-@ba2 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
-@ba3 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba2 = constant i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba3 = constant i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
 
 define i8* @babefore() {
-  ret i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+  ret i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
 bb1:
   ret i8* blockaddress (@bafunc1, %bb)
 bb2:

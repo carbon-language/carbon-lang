@@ -128,7 +128,7 @@ if.end:                                           ; preds = %.if.end_crit_edge, 
   br i1 %cmp19, label %cond.false, label %cond.end
 
 cond.false:                                       ; preds = %if.end
-  tail call void @__assert_fail(i8* getelementptr inbounds ([45 x i8]* @.str51, i32 0, i32 0), i8* getelementptr inbounds ([47 x i8]* @.str8, i32 0, i32 0), i32 1141, i8* getelementptr inbounds ([116 x i8]* @__PRETTY_FUNCTION__._ZNK4llvm7VarInit12getFieldInitERNS_6RecordEPKNS_9RecordValERKSs, i32 0, i32 0)) noreturn
+  tail call void @__assert_fail(i8* getelementptr inbounds ([45 x i8], [45 x i8]* @.str51, i32 0, i32 0), i8* getelementptr inbounds ([47 x i8], [47 x i8]* @.str8, i32 0, i32 0), i32 1141, i8* getelementptr inbounds ([116 x i8], [116 x i8]* @__PRETTY_FUNCTION__._ZNK4llvm7VarInit12getFieldInitERNS_6RecordEPKNS_9RecordValERKSs, i32 0, i32 0)) noreturn
   unreachable
 
 cond.end:                                         ; preds = %if.end

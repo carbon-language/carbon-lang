@@ -13,7 +13,7 @@ define void @test_inlineasm_globaladdress() {
 ; CHECK-LABEL: test_inlineasm_globaladdress_offset:
 ; CHECK: b {{_?}}test_symbol+4
 define void @test_inlineasm_globaladdress_offset() {
-  call void asm sideeffect "b $0", "i"(void ()* bitcast (i8* getelementptr (i8* bitcast (void ()* @test_symbol to i8*), i64 4) to void ()*))
+  call void asm sideeffect "b $0", "i"(void ()* bitcast (i8* getelementptr (i8, i8* bitcast (void ()* @test_symbol to i8*), i64 4) to void ()*))
   ret void
 }
 

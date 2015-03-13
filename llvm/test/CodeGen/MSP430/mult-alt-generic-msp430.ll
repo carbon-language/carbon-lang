@@ -145,7 +145,7 @@ entry:
   store i16 %1, i16* %out0, align 2
   %2 = call i16 asm "foo $1,$0", "=r,X"(i16 1) nounwind
   store i16 %2, i16* %out0, align 2
-  %3 = call i16 asm "foo $1,$0", "=r,X"(i16* getelementptr inbounds ([2 x i16]* @marray, i32 0, i32 0)) nounwind
+  %3 = call i16 asm "foo $1,$0", "=r,X"(i16* getelementptr inbounds ([2 x i16], [2 x i16]* @marray, i32 0, i32 0)) nounwind
   store i16 %3, i16* %out0, align 2
 ; No lowering support.
 ;  %4 = call i16 asm "foo $1,$0", "=r,X"(double 1.000000e+001) nounwind
@@ -159,7 +159,7 @@ define void @single_p() nounwind {
 entry:
   %out0 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
-  %0 = call i16 asm "foo $1,$0", "=r,r"(i16* getelementptr inbounds ([2 x i16]* @marray, i32 0, i32 0)) nounwind
+  %0 = call i16 asm "foo $1,$0", "=r,r"(i16* getelementptr inbounds ([2 x i16], [2 x i16]* @marray, i32 0, i32 0)) nounwind
   store i16 %0, i16* %out0, align 2
   ret void
 }
@@ -303,7 +303,7 @@ entry:
   store i16 %1, i16* %out0, align 2
   %2 = call i16 asm "foo $1,$0", "=r|r,r|X"(i16 1) nounwind
   store i16 %2, i16* %out0, align 2
-  %3 = call i16 asm "foo $1,$0", "=r|r,r|X"(i16* getelementptr inbounds ([2 x i16]* @marray, i32 0, i32 0)) nounwind
+  %3 = call i16 asm "foo $1,$0", "=r|r,r|X"(i16* getelementptr inbounds ([2 x i16], [2 x i16]* @marray, i32 0, i32 0)) nounwind
   store i16 %3, i16* %out0, align 2
 ; No lowering support.
 ;  %4 = call i16 asm "foo $1,$0", "=r|r,r|X"(double 1.000000e+001) nounwind
@@ -317,7 +317,7 @@ define void @multi_p() nounwind {
 entry:
   %out0 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
-  %0 = call i16 asm "foo $1,$0", "=r|r,r|r"(i16* getelementptr inbounds ([2 x i16]* @marray, i32 0, i32 0)) nounwind
+  %0 = call i16 asm "foo $1,$0", "=r|r,r|r"(i16* getelementptr inbounds ([2 x i16], [2 x i16]* @marray, i32 0, i32 0)) nounwind
   store i16 %0, i16* %out0, align 2
   ret void
 }

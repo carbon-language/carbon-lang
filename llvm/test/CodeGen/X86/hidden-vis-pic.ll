@@ -28,7 +28,7 @@ entry:
 
 define hidden void @func() nounwind ssp uwtable {
 entry:
-  %0 = call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @.str, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
+  %0 = call i32 @puts(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %return
 
 return:                                           ; preds = %entry

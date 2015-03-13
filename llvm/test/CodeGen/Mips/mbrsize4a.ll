@@ -17,7 +17,7 @@ z:                                                ; preds = %y, %entry
   br label %y
 
 y:                                                ; preds = %z
-  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0))
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0))
   br label %z
 
 return:                                           ; No predecessors!

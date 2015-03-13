@@ -15,7 +15,7 @@ define i32 @test1() nounwind readonly {
 ; X64-NEXT:    movl (%rax), %eax
 ; X64-NEXT:    retq
 entry:
-	%tmp = load i32*, i32* addrspace(256)* getelementptr (i32* addrspace(256)* inttoptr (i32 72 to i32* addrspace(256)*), i32 31)		; <i32*> [#uses=1]
+	%tmp = load i32*, i32* addrspace(256)* getelementptr (i32*, i32* addrspace(256)* inttoptr (i32 72 to i32* addrspace(256)*), i32 31)		; <i32*> [#uses=1]
 	%tmp1 = load i32, i32* %tmp		; <i32> [#uses=1]
 	ret i32 %tmp1
 }
@@ -83,9 +83,9 @@ define i32 @test_no_cse() nounwind readonly {
 ; X64-NEXT:    addl (%rcx), %eax
 ; X64-NEXT:    retq
 entry:
-	%tmp = load i32*, i32* addrspace(256)* getelementptr (i32* addrspace(256)* inttoptr (i32 72 to i32* addrspace(256)*), i32 31)		; <i32*> [#uses=1]
+	%tmp = load i32*, i32* addrspace(256)* getelementptr (i32*, i32* addrspace(256)* inttoptr (i32 72 to i32* addrspace(256)*), i32 31)		; <i32*> [#uses=1]
 	%tmp1 = load i32, i32* %tmp		; <i32> [#uses=1]
-	%tmp2 = load i32*, i32* addrspace(257)* getelementptr (i32* addrspace(257)* inttoptr (i32 72 to i32* addrspace(257)*), i32 31)		; <i32*> [#uses=1]
+	%tmp2 = load i32*, i32* addrspace(257)* getelementptr (i32*, i32* addrspace(257)* inttoptr (i32 72 to i32* addrspace(257)*), i32 31)		; <i32*> [#uses=1]
 	%tmp3 = load i32, i32* %tmp2		; <i32> [#uses=1]
 	%tmp4 = add i32 %tmp1, %tmp3
 	ret i32 %tmp4

@@ -42,7 +42,7 @@ land.lhs.true.i:                                  ; preds = %_ZN12StringSwitchI5
   ]
 
 land.lhs.true5.i:                                 ; preds = %land.lhs.true.i
-  %call.i = call i32 @memcmp(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* %tmp6, i64 4) nounwind ; <i32> [#uses=1]
+  %call.i = call i32 @memcmp(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i8* %tmp6, i64 4) nounwind ; <i32> [#uses=1]
   %cmp9.i = icmp eq i32 %call.i, 0                ; <i1> [#uses=1]
   br i1 %cmp9.i, label %_ZN12StringSwitchI5ColorE4CaseILj4EEERS1_RAT__KcRKS0_.exit, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit
 
@@ -50,7 +50,7 @@ _ZN12StringSwitchI5ColorE4CaseILj4EEERS1_RAT__KcRKS0_.exit: ; preds = %land.lhs.
   br label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit
 
 land.lhs.true5.i37:                               ; preds = %land.lhs.true.i
-  %call.i35 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8]* @.str1, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
+  %call.i35 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str1, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
   %cmp9.i36 = icmp eq i32 %call.i35, 0            ; <i1> [#uses=1]
   br i1 %cmp9.i36, label %if.then.i40, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit
 
@@ -66,7 +66,7 @@ _ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit: ; preds = %if.then.i
   br i1 %or.cond, label %land.lhs.true5.i55, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit60
 
 land.lhs.true5.i55:                               ; preds = %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit
-  %call.i53 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8]* @.str2, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
+  %call.i53 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str2, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
   %cmp9.i54 = icmp eq i32 %call.i53, 0            ; <i1> [#uses=1]
   br i1 %cmp9.i54, label %if.then.i58, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit60
 
@@ -83,7 +83,7 @@ _ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit60: ; preds = %if.then
   br i1 %or.cond168, label %land.lhs.true5.i74, label %_ZN12StringSwitchI5ColorE4CaseILj6EEERS1_RAT__KcRKS0_.exit
 
 land.lhs.true5.i74:                               ; preds = %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit60
-  %call.i72 = call i32 @memcmp(i8* getelementptr inbounds ([6 x i8]* @.str3, i64 0, i64 0), i8* %tmp6, i64 6) nounwind ; <i32> [#uses=1]
+  %call.i72 = call i32 @memcmp(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str3, i64 0, i64 0), i8* %tmp6, i64 6) nounwind ; <i32> [#uses=1]
   %cmp9.i73 = icmp eq i32 %call.i72, 0            ; <i1> [#uses=1]
   br i1 %cmp9.i73, label %if.then.i77, label %_ZN12StringSwitchI5ColorE4CaseILj6EEERS1_RAT__KcRKS0_.exit
 
@@ -100,7 +100,7 @@ _ZN12StringSwitchI5ColorE4CaseILj6EEERS1_RAT__KcRKS0_.exit: ; preds = %if.then.i
   br i1 %or.cond169, label %land.lhs.true5.i92, label %_ZN12StringSwitchI5ColorE4CaseILj5EEERS1_RAT__KcRKS0_.exit
 
 land.lhs.true5.i92:                               ; preds = %_ZN12StringSwitchI5ColorE4CaseILj6EEERS1_RAT__KcRKS0_.exit
-  %call.i90 = call i32 @memcmp(i8* getelementptr inbounds ([5 x i8]* @.str4, i64 0, i64 0), i8* %tmp6, i64 5) nounwind ; <i32> [#uses=1]
+  %call.i90 = call i32 @memcmp(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str4, i64 0, i64 0), i8* %tmp6, i64 5) nounwind ; <i32> [#uses=1]
   %cmp9.i91 = icmp eq i32 %call.i90, 0            ; <i1> [#uses=1]
   br i1 %cmp9.i91, label %if.then.i95, label %_ZN12StringSwitchI5ColorE4CaseILj5EEERS1_RAT__KcRKS0_.exit
 
@@ -117,7 +117,7 @@ _ZN12StringSwitchI5ColorE4CaseILj5EEERS1_RAT__KcRKS0_.exit: ; preds = %if.then.i
   br i1 %or.cond170, label %land.lhs.true5.i110, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit115
 
 land.lhs.true5.i110:                              ; preds = %_ZN12StringSwitchI5ColorE4CaseILj5EEERS1_RAT__KcRKS0_.exit
-  %call.i108 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8]* @.str5, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
+  %call.i108 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str5, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
   %cmp9.i109 = icmp eq i32 %call.i108, 0          ; <i1> [#uses=1]
   br i1 %cmp9.i109, label %if.then.i113, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit115
 
@@ -134,7 +134,7 @@ _ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit115: ; preds = %if.the
   br i1 %or.cond171, label %land.lhs.true5.i129, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit134
 
 land.lhs.true5.i129:                              ; preds = %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit115
-  %call.i127 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8]* @.str6, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
+  %call.i127 = call i32 @memcmp(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str6, i64 0, i64 0), i8* %tmp6, i64 7) nounwind ; <i32> [#uses=1]
   %cmp9.i128 = icmp eq i32 %call.i127, 0          ; <i1> [#uses=1]
   br i1 %cmp9.i128, label %if.then.i132, label %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit134
 
@@ -147,7 +147,7 @@ _ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit134: ; preds = %if.the
   %tmp7.i138 = and i8 %tmp2.i137, 1               ; <i8> [#uses=1]
   %tobool.i139 = icmp eq i8 %tmp7.i138, 0         ; <i1> [#uses=1]
   %retval.0.i = select i1 %tobool.i139, i32 0, i32 %retval.0.i.pre ; <i32> [#uses=1]
-  %call22 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8]* @.str7, i64 0, i64 0), i32 %retval.0.i) ; <i32> [#uses=0]
+  %call22 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str7, i64 0, i64 0), i32 %retval.0.i) ; <i32> [#uses=0]
   %exitcond = icmp eq i64 %tmp146, %tmp145        ; <i1> [#uses=1]
   br i1 %exitcond, label %for.end, label %land.lhs.true.i
 

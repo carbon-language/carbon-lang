@@ -8,7 +8,7 @@ entry:
   %0 = shufflevector <2 x i64> undef, <2 x i64> zeroinitializer, <2 x i32> <i32 1, i32 2> ; <<2 x i64>> [#uses=1]
   store <2 x i64> %0, <2 x i64>* undef, align 16
   %val4723 = load <8 x i16>, <8 x i16>* undef                ; <<8 x i16>> [#uses=1]
-  call void @PrintShortX(i8* getelementptr inbounds ([21 x i8]* @.str271, i32 0, i32 0), <8 x i16> %val4723, i32 0) nounwind
+  call void @PrintShortX(i8* getelementptr inbounds ([21 x i8], [21 x i8]* @.str271, i32 0, i32 0), <8 x i16> %val4723, i32 0) nounwind
   ret i32 undef
 }
 

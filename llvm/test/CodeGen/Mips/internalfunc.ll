@@ -38,7 +38,7 @@ if.end:                                           ; preds = %entry, %if.then
 
 define internal void @sf2() nounwind {
 entry:
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0)) nounwind
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0)) nounwind
   ret void
 }
 
@@ -46,7 +46,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 
 define internal fastcc void @f2() nounwind noinline {
 entry:
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0)) nounwind
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0)) nounwind
   ret void
 }
 

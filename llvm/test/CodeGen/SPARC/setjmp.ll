@@ -47,7 +47,7 @@ entry:
 
 bar.exit:                                         ; preds = %entry
   %8 = load i32, i32* %0, align 4, !tbaa !4
-  %9 = call i32 (i8*, ...)* @printf(i8* noalias getelementptr inbounds ([30 x i8]* @.cst, i32 0, i32 0), i32 %8) #0
+  %9 = call i32 (i8*, ...)* @printf(i8* noalias getelementptr inbounds ([30 x i8], [30 x i8]* @.cst, i32 0, i32 0), i32 %8) #0
   ret i32 0
 }
 

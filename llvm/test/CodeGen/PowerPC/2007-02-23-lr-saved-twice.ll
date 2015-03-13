@@ -7,7 +7,7 @@ target triple = "powerpc-apple-darwin8"
 
 define i32 @main() {
 entry:
-        %tmp = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([18 x i8]* @str, i32 0, i32 0) )                ; <i32> [#uses=0]
+        %tmp = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([18 x i8], [18 x i8]* @str, i32 0, i32 0) )                ; <i32> [#uses=0]
         ret i32 0
 }
 

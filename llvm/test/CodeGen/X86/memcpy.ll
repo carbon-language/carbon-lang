@@ -84,7 +84,7 @@ entry:
 
 define void @test5(i8* nocapture %C) nounwind uwtable ssp {
 entry:
-  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8], [30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
   ret void
 
 ; DARWIN-LABEL: test5:
@@ -101,7 +101,7 @@ entry:
 ; DARWIN: test6
 ; DARWIN: movw $0, 8
 ; DARWIN: movq $120, 0
-  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* null, i8* getelementptr inbounds ([2 x i8]* @.str2, i64 0, i64 0), i64 10, i32 1, i1 false)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* null, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str2, i64 0, i64 0), i64 10, i32 1, i1 false)
   ret void
 }
 

@@ -17,7 +17,7 @@ entry:
 ; CHECK:            0000: 00001C3C 00009C27 21E09903 0000828F
 ; CHECK-NEXT:       0010: 0E004188 0B004198
 
-  %call = tail call i32 @memcmp(i8* getelementptr inbounds ([11 x i8]* @string1, i32 0, i32 0), i8* getelementptr inbounds ([10 x i8]* @string2, i32 0, i32 0), i32 4) nounwind readonly
+  %call = tail call i32 @memcmp(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @string1, i32 0, i32 0), i8* getelementptr inbounds ([10 x i8], [10 x i8]* @string2, i32 0, i32 0), i32 4) nounwind readonly
   %cmp = icmp eq i32 %call, 0
   %conv = zext i1 %cmp to i32
   ret i32 %conv

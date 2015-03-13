@@ -41,7 +41,7 @@ for.inc10:                                        ; preds = %for.cond4
 
 for.end13:                                        ; preds = %for.cond
   %tmp14 = load i32, i32* @g_3, align 4
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %tmp14) nounwind
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %tmp14) nounwind
   ret i32 0
 }
 

@@ -20,12 +20,12 @@ cond.true:                                        ; preds = %entry
   %tmp1 = load i8*, i8** @p                            ; <i8*> [#uses=1]
   %tmp2 = load i8*, i8** @p                            ; <i8*> [#uses=1]
   %1 = call i64 @llvm.objectsize.i64.p0i8(i8* %tmp2, i1 1) ; <i64> [#uses=1]
-  %call = call i8* @__strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 %1) ssp ; <i8*> [#uses=1]
+  %call = call i8* @__strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i64 %1) ssp ; <i8*> [#uses=1]
   br label %cond.end
 
 cond.false:                                       ; preds = %entry
   %tmp3 = load i8*, i8** @p                            ; <i8*> [#uses=1]
-  %call4 = call i8* @__inline_strcpy_chk(i8* %tmp3, i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0)) ssp ; <i8*> [#uses=1]
+  %call4 = call i8* @__inline_strcpy_chk(i8* %tmp3, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0)) ssp ; <i8*> [#uses=1]
   br label %cond.end
 
 cond.end:                                         ; preds = %cond.false, %cond.true

@@ -43,7 +43,7 @@ entry:
   %3 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %2, i32 0, i32 0
   %4 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %3, i32 0, i32 0
   %5 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %4, i32 0, i32 0
-  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc22impl_fileline_FileLineE, i32 0, i32 2), i32 (...)*** %5, align 4
+  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*], [13 x i32 (...)*]* @_ZTVN2kc22impl_fileline_FileLineE, i32 0, i32 2), i32 (...)*** %5, align 4
   %6 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
   %7 = icmp eq %"struct.kc::impl_casestring__Str"* %6, null
   br i1 %7, label %bb, label %bb1
@@ -108,7 +108,7 @@ entry:
   %0 = load %"struct.kc::impl_fileline"*, %"struct.kc::impl_fileline"** %this_addr, align 4
   %1 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %0, i32 0, i32 0
   %2 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %1, i32 0, i32 0
-  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc13impl_filelineE, i32 0, i32 2), i32 (...)*** %2, align 4
+  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*], [13 x i32 (...)*]* @_ZTVN2kc13impl_filelineE, i32 0, i32 2), i32 (...)*** %2, align 4
   %3 = trunc i32 0 to i8
   %toBool = icmp ne i8 %3, 0
   br i1 %toBool, label %bb1, label %return
@@ -133,7 +133,7 @@ entry:
   %0 = load %"struct.kc::impl_fileline"*, %"struct.kc::impl_fileline"** %this_addr, align 4
   %1 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %0, i32 0, i32 0
   %2 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %1, i32 0, i32 0
-  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc13impl_filelineE, i32 0, i32 2), i32 (...)*** %2, align 4
+  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*], [13 x i32 (...)*]* @_ZTVN2kc13impl_filelineE, i32 0, i32 2), i32 (...)*** %2, align 4
   %3 = trunc i32 0 to i8
   %toBool = icmp ne i8 %3, 0
   br i1 %toBool, label %bb1, label %return
@@ -169,7 +169,7 @@ entry:
   %3 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %2, i32 0, i32 0
   %4 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %3, i32 0, i32 0
   %5 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %4, i32 0, i32 0
-  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc22impl_fileline_FileLineE, i32 0, i32 2), i32 (...)*** %5, align 4
+  store i32 (...)** getelementptr inbounds ([13 x i32 (...)*], [13 x i32 (...)*]* @_ZTVN2kc22impl_fileline_FileLineE, i32 0, i32 2), i32 (...)*** %5, align 4
   %6 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
   %7 = icmp eq %"struct.kc::impl_casestring__Str"* %6, null
   br i1 %7, label %bb, label %bb1

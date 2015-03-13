@@ -10,7 +10,7 @@ define internal void @_ZN1B1iEv(%struct.B* %this) {
 entry:
 	%tmp1 = getelementptr %struct.B, %struct.B* %this, i32 0, i32 0		; <i32*> [#uses=1]
 	%tmp2 = load i32, i32* %tmp1		; <i32> [#uses=1]
-	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @str, i32 0, i32 0), i32 %tmp2 )		; <i32> [#uses=0]
+	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8], [7 x i8]* @str, i32 0, i32 0), i32 %tmp2 )		; <i32> [#uses=0]
 	ret void
 }
 
@@ -20,7 +20,7 @@ define internal void @_ZN1B1jEv(%struct.B* %this) {
 entry:
 	%tmp1 = getelementptr %struct.B, %struct.B* %this, i32 0, i32 0		; <i32*> [#uses=1]
 	%tmp2 = load i32, i32* %tmp1		; <i32> [#uses=1]
-	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @str1, i32 0, i32 0), i32 %tmp2 )		; <i32> [#uses=0]
+	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8], [7 x i8]* @str1, i32 0, i32 0), i32 %tmp2 )		; <i32> [#uses=0]
 	ret void
 }
 

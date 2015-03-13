@@ -53,7 +53,7 @@ define x86_fastcallcc void @f8() comdat($f8) {
 $vftable = comdat largest
 
 @some_name = private unnamed_addr constant [2 x i8*] zeroinitializer, comdat($vftable)
-@vftable = alias getelementptr([2 x i8*]* @some_name, i32 0, i32 1)
+@vftable = alias getelementptr([2 x i8*], [2 x i8*]* @some_name, i32 0, i32 1)
 
 ; CHECK: .section        .text,"xr",discard,_f1
 ; CHECK: .globl  _f1

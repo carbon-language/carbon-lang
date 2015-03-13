@@ -4,11 +4,11 @@
 ; RUN: verify-uselistorder < %s
 
 @ba1 = constant i8* blockaddress (@bafunc1, %bb)
-@ba2 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
-@ba3 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba2 = constant i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba3 = constant i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
 
 define i8* @babefore() {
-  ret i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+  ret i8* getelementptr (i8, i8* blockaddress (@bafunc2, %bb), i61 0)
 bb1:
   ret i8* blockaddress (@bafunc1, %bb)
 bb2:

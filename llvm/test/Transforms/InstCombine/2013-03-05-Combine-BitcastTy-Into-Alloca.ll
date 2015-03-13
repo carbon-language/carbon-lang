@@ -17,7 +17,7 @@ define { i64, i64 } @function(i32 %x, i32 %y, i32 %z) nounwind {
 entry:
   %retval = alloca %struct._my_struct, align 8
   %k.sroa.0.0.copyload = load i96, i96* bitcast (%struct._my_struct* @initval to i96*), align 1
-  %k.sroa.1.12.copyload = load i32, i32* bitcast ([4 x i8]* getelementptr inbounds (%struct._my_struct* @initval, i64 0, i32 1) to i32*), align 1
+  %k.sroa.1.12.copyload = load i32, i32* bitcast ([4 x i8]* getelementptr inbounds (%struct._my_struct, %struct._my_struct* @initval, i64 0, i32 1) to i32*), align 1
   %0 = zext i32 %x to i96
   %bf.value = shl nuw nsw i96 %0, 6
   %bf.clear = and i96 %k.sroa.0.0.copyload, -288230376151711744

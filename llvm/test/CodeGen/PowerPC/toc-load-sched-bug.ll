@@ -212,10 +212,10 @@ if.then:                                          ; preds = %_ZNK4llvm7ErrorOrIS
   %vfn.i = getelementptr inbounds void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)*, void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)** %vtable.i, i64 3
   %7 = load void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)*, void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)** %vfn.i, align 8
   call void %7(%"class.std::basic_string"* sret %ref.tmp5, %"class.std::error_category"* %.c, i32 signext %phitmp) #3
-  %call2.i.i = call dereferenceable(8) %"class.std::basic_string"* @_ZNSs6insertEmPKcm(%"class.std::basic_string"* %ref.tmp5, i64 0, i8* getelementptr inbounds ([28 x i8]* @.str, i64 0, i64 0), i64 27) #3
+  %call2.i.i = call dereferenceable(8) %"class.std::basic_string"* @_ZNSs6insertEmPKcm(%"class.std::basic_string"* %ref.tmp5, i64 0, i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str, i64 0, i64 0), i64 27) #3
   %_M_p2.i.i.i.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %call2.i.i, i64 0, i32 0, i32 0
   %8 = load i8*, i8** %_M_p2.i.i.i.i, align 8, !tbaa !13
-  store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p2.i.i.i.i, align 8, !tbaa !1
+  store i8* bitcast (i64* getelementptr inbounds ([0 x i64], [0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p2.i.i.i.i, align 8, !tbaa !1
   %arrayidx.i.i.i36 = getelementptr inbounds i8, i8* %8, i64 -24
   %_M_length.i.i37 = bitcast i8* %arrayidx.i.i.i36 to i64*
   %9 = load i64, i64* %_M_length.i.i37, align 8, !tbaa !7
@@ -229,7 +229,7 @@ if.then:                                          ; preds = %_ZNK4llvm7ErrorOrIS
 
 if.then.i.i6.i:                                   ; preds = %if.then
   %_M_p.i.i.i.i.i.i5.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %Filename.i, i64 0, i32 0, i32 0
-  store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i.i5.i, align 8, !tbaa !13
+  store i8* bitcast (i64* getelementptr inbounds ([0 x i64], [0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i.i5.i, align 8, !tbaa !13
   br label %_ZNK4llvm9StringRefcvSsEv.exit9.i
 
 if.end.i.i8.i:                                    ; preds = %if.then
@@ -252,7 +252,7 @@ _ZNK4llvm9StringRefcvSsEv.exit9.i:                ; preds = %if.end.i.i8.i, %if.
 
 if.then.i.i.i:                                    ; preds = %_ZNK4llvm9StringRefcvSsEv.exit9.i
   %_M_p.i.i.i.i.i.i.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %Message.i, i64 0, i32 0, i32 0
-  store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i.i.i, align 8, !tbaa !13
+  store i8* bitcast (i64* getelementptr inbounds ([0 x i64], [0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i.i.i, align 8, !tbaa !13
   br label %_ZN4llvm12SMDiagnosticC2ENS_9StringRefENS_9SourceMgr8DiagKindES1_.exit
 
 if.end.i.i.i:                                     ; preds = %_ZNK4llvm9StringRefcvSsEv.exit9.i
@@ -262,7 +262,7 @@ if.end.i.i.i:                                     ; preds = %_ZNK4llvm9StringRef
 _ZN4llvm12SMDiagnosticC2ENS_9StringRefENS_9SourceMgr8DiagKindES1_.exit: ; preds = %if.then.i.i.i, %if.end.i.i.i
   call void @llvm.lifetime.end(i64 1, i8* %12) #3
   %_M_p.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 7, i32 0, i32 0
-  store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i, align 8, !tbaa !13
+  store i8* bitcast (i64* getelementptr inbounds ([0 x i64], [0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i, align 8, !tbaa !13
   %Ranges.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8
   %13 = bitcast %"class.std::vector.79"* %Ranges.i to i8*
   call void @llvm.memset.p0i8.i64(i8* %13, i8 0, i64 24, i32 8, i1 false) #3
@@ -399,7 +399,7 @@ _ZNSsD1Ev.exit62:                                 ; preds = %_ZNSsD1Ev.exit, %_Z
   br label %cleanup
 
 cond.false.i.i:                                   ; preds = %_ZNK4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE8getErrorEv.exit
-  call void @__assert_fail(i8* getelementptr inbounds ([54 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([61 x i8]* @.str2, i64 0, i64 0), i32 zeroext 242, i8* getelementptr inbounds ([206 x i8]* @__PRETTY_FUNCTION__._ZN4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE10getStorageEv, i64 0, i64 0)) #7
+  call void @__assert_fail(i8* getelementptr inbounds ([54 x i8], [54 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([61 x i8], [61 x i8]* @.str2, i64 0, i64 0), i32 zeroext 242, i8* getelementptr inbounds ([206 x i8], [206 x i8]* @__PRETTY_FUNCTION__._ZN4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE10getStorageEv, i64 0, i64 0)) #7
   unreachable
 
 _ZN4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE3getEv.exit: ; preds = %entry

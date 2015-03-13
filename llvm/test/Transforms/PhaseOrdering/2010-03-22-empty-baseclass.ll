@@ -38,7 +38,7 @@ entry:
   br i1 %toBool, label %bb, label %bb1
 
 bb:                                               ; preds = %entry
-  %10 = call i32 @puts(i8* getelementptr inbounds ([25 x i8]* @.str, i64 0, i64 0)) ; <i32> [#uses=0]
+  %10 = call i32 @puts(i8* getelementptr inbounds ([25 x i8], [25 x i8]* @.str, i64 0, i64 0)) ; <i32> [#uses=0]
   call void @abort() noreturn
   unreachable
 

@@ -35,7 +35,7 @@ for.body:                                         ; preds = %for.inc, %entry
   br i1 %cmp11, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([6 x i8]* @.str, i64 0, i64 0))
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0))
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body, %if.then

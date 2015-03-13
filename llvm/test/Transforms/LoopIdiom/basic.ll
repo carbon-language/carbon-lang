@@ -380,7 +380,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.inc
-  %tmp8 = load i32, i32* getelementptr inbounds ([7 x i32]* @g_50, i32 0, i64 6), align 4
+  %tmp8 = load i32, i32* getelementptr inbounds ([7 x i32], [7 x i32]* @g_50, i32 0, i64 6), align 4
   ret i32 %tmp8
 ; CHECK-LABEL: @test14(
 ; CHECK: for.body:

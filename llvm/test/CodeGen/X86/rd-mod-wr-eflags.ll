@@ -39,7 +39,7 @@ store i64 %dec.i, i64* @c, align 8
 %tobool.i = icmp ne i64 %dec.i, 0
 %lor.ext.i = zext i1 %tobool.i to i32
 store i32 %lor.ext.i, i32* @a, align 4
-%call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
+%call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
 ret i32 0
 }
 
@@ -53,7 +53,7 @@ store i64 %dec.i, i64* @c, align 8
 %tobool.i = icmp ne i64 %0, 0
 %lor.ext.i = zext i1 %tobool.i to i32
 store i32 %lor.ext.i, i32* @a, align 4
-%call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
+%call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
 ret i32 0
 }
 

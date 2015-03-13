@@ -429,7 +429,7 @@ entry:
 ; FIXME: At the moment, we don't seem to do addr+offset for any atomic load/store.
 define i32 @AtomicLoadAdd32_OffGt9Bit(i32 signext %incr) nounwind {
 entry:
-  %0 = atomicrmw add i32* getelementptr(i32* @x, i32 256), i32 %incr monotonic
+  %0 = atomicrmw add i32* getelementptr(i32, i32* @x, i32 256), i32 %incr monotonic
   ret i32 %0
 
 ; ALL-LABEL: AtomicLoadAdd32_OffGt9Bit:

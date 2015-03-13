@@ -114,7 +114,7 @@ for.inc12:                                        ; preds = %for.inc
 
 for.end14:                                        ; preds = %for.inc12
   %S.2.lcssa.lcssa = phi double [ %S.2.lcssa, %for.inc12 ]
-  %call15 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i64 0, i64 0), double %S.2.lcssa.lcssa), !dbg !24
+  %call15 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str, i64 0, i64 0), double %S.2.lcssa.lcssa), !dbg !24
   ret i32 0, !dbg !25
 }
 

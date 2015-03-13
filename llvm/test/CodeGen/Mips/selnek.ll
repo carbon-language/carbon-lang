@@ -79,13 +79,13 @@ define i32 @main() nounwind "target-cpu"="mips16" "target-features"="+mips16,+o3
 entry:
   call void @calc_z() "target-cpu"="mips16" "target-features"="+mips16,+o32"
   %0 = load i32, i32* @z1, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %0) "target-cpu"="mips16" "target-features"="+mips16,+o32"
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %0) "target-cpu"="mips16" "target-features"="+mips16,+o32"
   %1 = load i32, i32* @z2, align 4
-  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %1) "target-cpu"="mips16" "target-features"="+mips16,+o32"
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %1) "target-cpu"="mips16" "target-features"="+mips16,+o32"
   %2 = load i32, i32* @z3, align 4
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %2) "target-cpu"="mips16" "target-features"="+mips16,+o32"
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %2) "target-cpu"="mips16" "target-features"="+mips16,+o32"
   %3 = load i32, i32* @z4, align 4
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %3) "target-cpu"="mips16" "target-features"="+mips16,+o32"
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %3) "target-cpu"="mips16" "target-features"="+mips16,+o32"
   ret i32 0
 }
 

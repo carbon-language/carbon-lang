@@ -29,7 +29,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry.if.end_crit_edge, %if.then
   %tmp4 = phi i32 [ %tmp4.pre, %entry.if.end_crit_edge ], [ 1, %if.then ] ; <i32> [#uses=1]
-  %call5 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %tmp4) nounwind ; <i32> [#uses=0]
+  %call5 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %tmp4) nounwind ; <i32> [#uses=0]
   ret i32 0
 }
 

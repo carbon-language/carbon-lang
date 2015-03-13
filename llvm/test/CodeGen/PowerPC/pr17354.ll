@@ -14,7 +14,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define internal void @__cxx_global_var_init() section ".text.startup" {
 entry:
-  call void @_Z4funcv(%struct.CS* sret getelementptr inbounds ([1 x %struct.CS]* @_ZL3glb, i64 0, i64 0))
+  call void @_Z4funcv(%struct.CS* sret getelementptr inbounds ([1 x %struct.CS], [1 x %struct.CS]* @_ZL3glb, i64 0, i64 0))
   ret void
 }
 

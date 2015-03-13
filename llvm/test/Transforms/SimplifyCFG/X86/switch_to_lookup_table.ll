@@ -10,7 +10,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: @switch.table1 = private unnamed_addr constant [4 x float] [float 0x40091EB860000000, float 0x3FF3BE76C0000000, float 0x4012449BA0000000, float 0x4001AE1480000000]
 
 ; The table for @foostring
-; CHECK: @switch.table2 = private unnamed_addr constant [4 x i8*] [i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0)]
+; CHECK: @switch.table2 = private unnamed_addr constant [4 x i8*] [i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str1, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str2, i64 0, i64 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str3, i64 0, i64 0)]
 
 ; The table for @earlyreturncrash
 ; CHECK: @switch.table3 = private unnamed_addr constant [4 x i32] [i32 42, i32 9, i32 88, i32 5]
@@ -131,11 +131,11 @@ sw.bb3: br label %return
 sw.default: br label %return
 
 return:
-  %retval.0 = phi i8* [ getelementptr inbounds ([6 x i8]* @.str4, i64 0, i64 0), %sw.default ],
-                      [ getelementptr inbounds ([4 x i8]* @.str3, i64 0, i64 0), %sw.bb3 ],
-                      [ getelementptr inbounds ([4 x i8]* @.str2, i64 0, i64 0), %sw.bb2 ],
-                      [ getelementptr inbounds ([4 x i8]* @.str1, i64 0, i64 0), %sw.bb1 ],
-                      [ getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), %entry ]
+  %retval.0 = phi i8* [ getelementptr inbounds ([6 x i8], [6 x i8]* @.str4, i64 0, i64 0), %sw.default ],
+                      [ getelementptr inbounds ([4 x i8], [4 x i8]* @.str3, i64 0, i64 0), %sw.bb3 ],
+                      [ getelementptr inbounds ([4 x i8], [4 x i8]* @.str2, i64 0, i64 0), %sw.bb2 ],
+                      [ getelementptr inbounds ([4 x i8], [4 x i8]* @.str1, i64 0, i64 0), %sw.bb1 ],
+                      [ getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), %entry ]
   ret i8* %retval.0
 
 ; CHECK-LABEL: @foostring(
@@ -996,10 +996,10 @@ sw.bb2:
 sw.default:
   br label %return
 return:
-  %retval.0 = phi i32* [ getelementptr inbounds ([3 x i32]* @dllimport_d, i32 0, i32 0), %sw.default ],
-                       [ getelementptr inbounds ([3 x i32]* @dllimport_c, i32 0, i32 0), %sw.bb2 ],
-                       [ getelementptr inbounds ([3 x i32]* @dllimport_b, i32 0, i32 0), %sw.bb1 ],
-                       [ getelementptr inbounds ([3 x i32]* @dllimport_a, i32 0, i32 0), %entry ]
+  %retval.0 = phi i32* [ getelementptr inbounds ([3 x i32], [3 x i32]* @dllimport_d, i32 0, i32 0), %sw.default ],
+                       [ getelementptr inbounds ([3 x i32], [3 x i32]* @dllimport_c, i32 0, i32 0), %sw.bb2 ],
+                       [ getelementptr inbounds ([3 x i32], [3 x i32]* @dllimport_b, i32 0, i32 0), %sw.bb1 ],
+                       [ getelementptr inbounds ([3 x i32], [3 x i32]* @dllimport_a, i32 0, i32 0), %entry ]
   ret i32* %retval.0
 ; CHECK-LABEL: @dllimport(
 ; CHECK: switch i32

@@ -133,7 +133,7 @@ entry:
   store <4 x i32> %y, <4 x i32>* %y.addr, align 16
   %0 = load i32, i32* %x.addr, align 4
   %1 = load <4 x i32>, <4 x i32>* %y.addr, align 16
-  call void (i8*, ...)* @foo(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %0, <4 x i32> %1)
+  call void (i8*, ...)* @foo(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 %0, <4 x i32> %1)
   ret void
 }
 
@@ -186,6 +186,6 @@ entry:
   %1 = load i32, i32* %x.addr, align 4
   %2 = bitcast %struct.s41* %s41 to i128*
   %3 = load i128, i128* %2, align 1
-  call void (i8*, ...)* @foo2(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %1, i128 %3)
+  call void (i8*, ...)* @foo2(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 %1, i128 %3)
   ret void
 }

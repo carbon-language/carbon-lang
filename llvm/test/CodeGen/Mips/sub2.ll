@@ -10,7 +10,7 @@ entry:
   %1 = load i32, i32* @i, align 4
   %sub = sub nsw i32 %0, %1
 ; 16:	subu	${{[0-9]+}}, ${{[0-9]+}}, ${{[0-9]+}}
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %sub)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 %sub)
   ret i32 0
 }
 

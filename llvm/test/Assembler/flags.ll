@@ -195,8 +195,8 @@ define i64 @lshr_exact_ce() {
 }
 
 define i64* @gep_nw_ce() {
-; CHECK: ret i64* getelementptr inbounds (i64* @addr, i64 171)
-        ret i64* getelementptr inbounds (i64* @addr, i64 171)
+; CHECK: ret i64* getelementptr inbounds (i64, i64* @addr, i64 171)
+        ret i64* getelementptr inbounds (i64, i64* @addr, i64 171)
 }
 
 define i64 @add_plain_ce() {
@@ -220,8 +220,8 @@ define i64 @sdiv_plain_ce() {
 }
 
 define i64* @gep_plain_ce() {
-; CHECK: ret i64* getelementptr (i64* @addr, i64 171)
-        ret i64* getelementptr (i64* @addr, i64 171)
+; CHECK: ret i64* getelementptr (i64, i64* @addr, i64 171)
+        ret i64* getelementptr (i64, i64* @addr, i64 171)
 }
 
 define i64 @add_both_reversed_ce() {

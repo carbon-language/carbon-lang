@@ -28,7 +28,7 @@ bb1.i:		; preds = %bb2.i, %entry
 	br i1 %tmp1, label %bb.i.i, label %bb1.i.i
 
 bb.i.i:		; preds = %bb1.i
-	tail call void @__gnat_rcheck_12(i8* getelementptr ([13 x i8]* @.str, i32 0, i32 0), i32 24) noreturn
+	tail call void @__gnat_rcheck_12(i8* getelementptr ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), i32 24) noreturn
 	unreachable
 
 bb1.i.i:		; preds = %bb1.i
@@ -39,7 +39,7 @@ bb1.i.i:		; preds = %bb1.i
 	br i1 %tmp3, label %bb2.i.i, label %cc70a02__complex_integers__Oadd.153.exit.i
 
 bb2.i.i:		; preds = %bb1.i.i
-	tail call void @__gnat_rcheck_12(i8* getelementptr ([13 x i8]* @.str, i32 0, i32 0), i32 24) noreturn
+	tail call void @__gnat_rcheck_12(i8* getelementptr ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), i32 24) noreturn
 	unreachable
 
 cc70a02__complex_integers__Oadd.153.exit.i:		; preds = %bb1.i.i

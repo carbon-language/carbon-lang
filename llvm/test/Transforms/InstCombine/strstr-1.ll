@@ -39,7 +39,7 @@ define i8* @test_simplify3() {
   %pat = getelementptr inbounds [4 x i8], [4 x i8]* @.str3, i32 0, i32 0
   %ret = call i8* @strstr(i8* %str, i8* %pat)
   ret i8* %ret
-; CHECK-NEXT: getelementptr inbounds ([6 x i8]* @.str2, i64 0, i64 1)
+; CHECK-NEXT: getelementptr inbounds ([6 x i8], [6 x i8]* @.str2, i64 0, i64 1)
 }
 
 ; Check strstr(str, str) -> str.

@@ -16,7 +16,7 @@ entry:
   tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !20, metadata !MDExpression()), !dbg !26
   tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !21, metadata !MDExpression()), !dbg !26
   %0 = zext i8 %c to i32, !dbg !27
-  %1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %val, i32 %0) nounwind, !dbg !27
+  %1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %val, i32 %0) nounwind, !dbg !27
   ret i32 0, !dbg !29
 }
 
@@ -26,7 +26,7 @@ entry:
   tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !17, metadata !MDExpression()), !dbg !30
   tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !18, metadata !MDExpression()), !dbg !30
   %0 = zext i8 %c to i32, !dbg !31
-  %1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %val, i32 %0) nounwind, !dbg !31
+  %1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %val, i32 %0) nounwind, !dbg !31
   ret i32 0, !dbg !33
 }
 
@@ -41,7 +41,7 @@ entry:
   %0 = sitofp i32 %argc to double, !dbg !35
   %1 = fadd double %0, 5.555552e+05, !dbg !35
   tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !24, metadata !MDExpression()), !dbg !35
-  %2 = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8]* @.str1, i32 0, i32 0)) nounwind, !dbg !36
+  %2 = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str1, i32 0, i32 0)) nounwind, !dbg !36
   %3 = getelementptr inbounds i8, i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !37
   %4 = trunc i32 %argc to i8, !dbg !37
   %5 = add i8 %4, 97, !dbg !37
@@ -49,7 +49,7 @@ entry:
   tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !20, metadata !MDExpression()) nounwind, !dbg !38
   tail call void @llvm.dbg.value(metadata i8 %5, i64 0, metadata !21, metadata !MDExpression()) nounwind, !dbg !38
   %6 = zext i8 %5 to i32, !dbg !39
-  %7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %3, double %1, i32 %6) nounwind, !dbg !39
+  %7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %3, double %1, i32 %6) nounwind, !dbg !39
   %8 = tail call i32 @printer(i8* %3, double %1, i8 zeroext %5) nounwind, !dbg !40
   ret i32 0, !dbg !41
 }

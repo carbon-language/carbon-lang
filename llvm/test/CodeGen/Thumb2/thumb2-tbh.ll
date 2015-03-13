@@ -60,7 +60,7 @@ bb37.i:		; preds = %bb42.i
 	unreachable
 
 bb39.i:		; preds = %bb42.i
-	call  void @Z_fatal(i8* getelementptr ([28 x i8]* @.str31, i32 0, i32 0)) nounwind
+	call  void @Z_fatal(i8* getelementptr ([28 x i8], [28 x i8]* @.str31, i32 0, i32 0)) nounwind
 	unreachable
 
 bb40.i:		; preds = %bb42.i, %bb5.i, %bb1.i2

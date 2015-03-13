@@ -39,7 +39,7 @@ bb3261:		; preds = %bb7834, %bb161.i
 bb3267:		; preds = %bb3261
 	ret void
 bb3306:		; preds = %bb3261
-	%tmp3310 = invoke %struct.wxStringBase* @_ZN12wxStringBaseaSEPKw( %struct.wxStringBase* null, i32* getelementptr ([5 x i32]* @.str89, i32 0, i32 0) )
+	%tmp3310 = invoke %struct.wxStringBase* @_ZN12wxStringBaseaSEPKw( %struct.wxStringBase* null, i32* getelementptr ([5 x i32], [5 x i32]* @.str89, i32 0, i32 0) )
 			to label %bb3314 unwind label %lpad		; <%struct.wxStringBase*> [#uses=0]
 bb3314:		; preds = %bb3306
 	%tmp3316 = load i32, i32* null, align 4		; <i32> [#uses=1]
@@ -108,7 +108,7 @@ bb278.i8617:		; preds = %bb182.i8560
 	%timeOnly50.0.i8622 = add i32 0, 0		; <i32> [#uses=1]
 	br i1 %foo, label %bb440.i8663, label %bb448.i8694
 bb440.i8663:		; preds = %bb278.i8617
-	invoke void @_Z10wxOnAssertPKwiPKcS0_S0_( i32* getelementptr ([27 x i32]* @.str, i32 0, i32 0), i32 1717, i8* getelementptr ([6 x i8]* @_ZZNK10wxDateTime5GetTmERKNS_8TimeZoneEE12__FUNCTION__, i32 0, i32 0), i32* getelementptr ([29 x i32]* @.str33, i32 0, i32 0), i32* getelementptr ([14 x i32]* @.str4, i32 0, i32 0) )
+	invoke void @_Z10wxOnAssertPKwiPKcS0_S0_( i32* getelementptr ([27 x i32], [27 x i32]* @.str, i32 0, i32 0), i32 1717, i8* getelementptr ([6 x i8], [6 x i8]* @_ZZNK10wxDateTime5GetTmERKNS_8TimeZoneEE12__FUNCTION__, i32 0, i32 0), i32* getelementptr ([29 x i32], [29 x i32]* @.str33, i32 0, i32 0), i32* getelementptr ([14 x i32], [14 x i32]* @.str4, i32 0, i32 0) )
 			to label %bb448.i8694 unwind label %lpad
 bb448.i8694:		; preds = %bb440.i8663, %bb278.i8617
 	%tmp477.i8669 = srem i32 %timeOnly50.0.i8622, 1000		; <i32> [#uses=1]

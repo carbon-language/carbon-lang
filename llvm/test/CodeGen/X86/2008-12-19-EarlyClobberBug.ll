@@ -16,7 +16,7 @@ entry:
 	%1 = trunc i64 %u to i32		; <i32> [#uses=4]
 	%2 = lshr i64 %u, 32		; <i64> [#uses=1]
 	%3 = trunc i64 %2 to i32		; <i32> [#uses=2]
-	%4 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([7 x i8]* @"\01LC", i32 0, i32 0), i32 %1) nounwind		; <i32> [#uses=0]
+	%4 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([7 x i8], [7 x i8]* @"\01LC", i32 0, i32 0), i32 %1) nounwind		; <i32> [#uses=0]
 	%5 = icmp ult i32 %1, %0		; <i1> [#uses=1]
 	br i1 %5, label %bb2, label %bb
 

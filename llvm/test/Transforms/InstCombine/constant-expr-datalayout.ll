@@ -6,7 +6,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %test1.struct = type { i32, i32 }
 @test1.aligned_glbl = global %test1.struct zeroinitializer, align 4
 define void @test1(i64 *%ptr) {
-  store i64 and (i64 ptrtoint (i32* getelementptr (%test1.struct* @test1.aligned_glbl, i32 0, i32 1) to i64), i64 3), i64* %ptr
+  store i64 and (i64 ptrtoint (i32* getelementptr (%test1.struct, %test1.struct* @test1.aligned_glbl, i32 0, i32 1) to i64), i64 3), i64* %ptr
 ; CHECK: store i64 0, i64* %ptr
   ret void
 }

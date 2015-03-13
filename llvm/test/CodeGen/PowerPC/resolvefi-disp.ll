@@ -44,7 +44,7 @@ entry:
   %b = getelementptr inbounds %struct.S2760, %struct.S2760* %arg0, i32 0, i32 1
   %g = getelementptr inbounds %struct.anon, %struct.anon* %b, i32 0, i32 1
   %9 = load i64, i64* %g, align 8
-  %10 = load i64, i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
+  %10 = load i64, i64* getelementptr inbounds (%struct.S2760, %struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
   %cmp = icmp ne i64 %9, %10
   br i1 %cmp, label %if.then, label %if.end
 
@@ -55,7 +55,7 @@ if.then:                                          ; preds = %entry
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry
-  %12 = load i64, i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
+  %12 = load i64, i64* getelementptr inbounds (%struct.S2760, %struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
   %b3 = getelementptr inbounds %struct.S2760, %struct.S2760* %ret, i32 0, i32 1
   %g4 = getelementptr inbounds %struct.anon, %struct.anon* %b3, i32 0, i32 1
   store i64 %12, i64* %g4, align 8

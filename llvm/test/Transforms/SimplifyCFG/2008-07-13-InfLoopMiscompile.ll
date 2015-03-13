@@ -29,7 +29,7 @@ cowblock:		; preds = %beeblock, %monkeyblock
 
 func_1.exit:		; preds = %cowblock, %entry
 	%outval = phi i32 [ %cowval, %cowblock ], [ 1, %entry ]		; <i32> [#uses=1]
-	%pout = tail call i32 (i8*, ...)* @printf( i8* noalias  getelementptr ([4 x i8]* @.str, i32 0, i32 0), i32 %outval ) nounwind 		; <i32> [#uses=0]
+	%pout = tail call i32 (i8*, ...)* @printf( i8* noalias  getelementptr ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 %outval ) nounwind 		; <i32> [#uses=0]
 	ret i32 0
 }
 

@@ -9,7 +9,7 @@ define void @_ada_c34018a() {
 entry:
 	%0 = tail call i32 @report__ident_int(i32 90)		; <i32> [#uses=1]
 	%1 = trunc i32 %0 to i8		; <i8> [#uses=1]
-	invoke void @__gnat_rcheck_12(i8* getelementptr ([13 x i8]* @.str, i32 0, i32 0), i32 32) noreturn
+	invoke void @__gnat_rcheck_12(i8* getelementptr ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), i32 32) noreturn
 			to label %invcont unwind label %lpad
 
 invcont:		; preds = %entry

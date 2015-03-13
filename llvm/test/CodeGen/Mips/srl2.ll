@@ -13,7 +13,7 @@ entry:
 ; 16:	srlv	${{[0-9]+}}, ${{[0-9]+}}
   store i32 %shr, i32* @j, align 4
   %2 = load i32, i32* @j, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %2)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %2)
   ret i32 0
 }
 

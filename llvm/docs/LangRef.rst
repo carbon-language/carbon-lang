@@ -2707,11 +2707,11 @@ The following is the syntax for constant expressions:
     Convert a constant pointer or constant vector of pointer, CST, to another
     TYPE in a different address space. The constraints of the operands are the
     same as those for the :ref:`addrspacecast instruction <i_addrspacecast>`.
-``getelementptr (CSTPTR, IDX0, IDX1, ...)``, ``getelementptr inbounds (CSTPTR, IDX0, IDX1, ...)``
+``getelementptr (TY, CSTPTR, IDX0, IDX1, ...)``, ``getelementptr inbounds (TY, CSTPTR, IDX0, IDX1, ...)``
     Perform the :ref:`getelementptr operation <i_getelementptr>` on
     constants. As with the :ref:`getelementptr <i_getelementptr>`
     instruction, the index list may have zero or more indexes, which are
-    required to make sense for the type of "CSTPTR".
+    required to make sense for the type of "pointer to TY".
 ``select (COND, VAL1, VAL2)``
     Perform the :ref:`select operation <i_select>` on constants.
 ``icmp COND (VAL1, VAL2)``

@@ -59,7 +59,7 @@ define void @test5(i8 %B) {
         store i8 %B, i8* %A
         ret void
 ; CHECK-LABEL: @test5(
-; CHECK: store i8 %B, i8* getelementptr inbounds ([10 x i8]* @Global, i64 0, i64 4)
+; CHECK: store i8 %B, i8* getelementptr inbounds ([10 x i8], [10 x i8]* @Global, i64 0, i64 4)
 }
 
 define void @test5_as1(i8 %B) {
@@ -68,7 +68,7 @@ define void @test5_as1(i8 %B) {
         store i8 %B, i8 addrspace(1)* %A
         ret void
 ; CHECK-LABEL: @test5_as1(
-; CHECK: store i8 %B, i8 addrspace(1)* getelementptr inbounds ([10 x i8] addrspace(1)* @Global_as1, i16 0, i16 4)
+; CHECK: store i8 %B, i8 addrspace(1)* getelementptr inbounds ([10 x i8], [10 x i8] addrspace(1)* @Global_as1, i16 0, i16 4)
 }
 
 %as1_ptr_struct = type { i32 addrspace(1)* }
@@ -80,7 +80,7 @@ define void @test5_as1(i8 %B) {
 ; This should be turned into a constexpr instead of being an instruction
 define void @test_evaluate_gep_nested_as_ptrs(i32 addrspace(2)* %B) {
 ; CHECK-LABEL: @test_evaluate_gep_nested_as_ptrs(
-; CHECK-NEXT: store i32 addrspace(2)* %B, i32 addrspace(2)* addrspace(1)* getelementptr inbounds (%as2_ptr_struct addrspace(1)* @global_as1_as2_ptr, i16 0, i32 0), align 8
+; CHECK-NEXT: store i32 addrspace(2)* %B, i32 addrspace(2)* addrspace(1)* getelementptr inbounds (%as2_ptr_struct, %as2_ptr_struct addrspace(1)* @global_as1_as2_ptr, i16 0, i32 0), align 8
 ; CHECK-NEXT: ret void
   %A = getelementptr %as2_ptr_struct, %as2_ptr_struct addrspace(1)* @global_as1_as2_ptr, i16 0, i32 0
   store i32 addrspace(2)* %B, i32 addrspace(2)* addrspace(1)* %A
@@ -91,7 +91,7 @@ define void @test_evaluate_gep_nested_as_ptrs(i32 addrspace(2)* %B) {
 
 define void @test_evaluate_gep_as_ptrs_array(i8 addrspace(2)* %B) {
 ; CHECK-LABEL: @test_evaluate_gep_as_ptrs_array(
-; CHECK-NEXT: store i8 addrspace(2)* %B, i8 addrspace(2)* addrspace(1)* getelementptr inbounds ([4 x i8 addrspace(2)*] addrspace(1)* @arst, i16 0, i16 2), align 4
+; CHECK-NEXT: store i8 addrspace(2)* %B, i8 addrspace(2)* addrspace(1)* getelementptr inbounds ([4 x i8 addrspace(2)*], [4 x i8 addrspace(2)*] addrspace(1)* @arst, i16 0, i16 2), align 4
 
 ; CHECK-NEXT: ret void
   %A = getelementptr [4 x i8 addrspace(2)*], [4 x i8 addrspace(2)*] addrspace(1)* @arst, i16 0, i16 2
@@ -239,7 +239,7 @@ define i1 @test13_i128(i128 %X, %S* %P) {
 @G = external global [3 x i8]
 define i8* @test14(i32 %Idx) {
         %idx = zext i32 %Idx to i64
-        %tmp = getelementptr i8, i8* getelementptr ([3 x i8]* @G, i32 0, i32 0), i64 %idx
+        %tmp = getelementptr i8, i8* getelementptr ([3 x i8], [3 x i8]* @G, i32 0, i32 0), i64 %idx
         ret i8* %tmp
 ; CHECK-LABEL: @test14(
 ; CHECK: getelementptr [3 x i8], [3 x i8]* @G, i64 0, i64 %idx
@@ -249,7 +249,7 @@ define i8* @test14(i32 %Idx) {
 ; Test folding of constantexpr geps into normal geps.
 @Array = external global [40 x i32]
 define i32 *@test15(i64 %X) {
-        %A = getelementptr i32, i32* getelementptr ([40 x i32]* @Array, i64 0, i64 0), i64 %X
+        %A = getelementptr i32, i32* getelementptr ([40 x i32], [40 x i32]* @Array, i64 0, i64 0), i64 %X
         ret i32* %A
 ; CHECK-LABEL: @test15(
 ; CHECK: getelementptr [40 x i32], [40 x i32]* @Array, i64 0, i64 %X
@@ -374,11 +374,11 @@ define i32 @test21() {
 @B = global i32 2               ; <i32*> [#uses=1]
 
 define i1 @test22() {
-        %C = icmp ult i32* getelementptr (i32* @A, i64 1),
-                           getelementptr (i32* @B, i64 2)
+        %C = icmp ult i32* getelementptr (i32, i32* @A, i64 1),
+                           getelementptr (i32, i32* @B, i64 2)
         ret i1 %C
 ; CHECK-LABEL: @test22(
-; CHECK: icmp ult (i32* getelementptr inbounds (i32* @A, i64 1), i32* getelementptr (i32* @B, i64 2))
+; CHECK: icmp ult (i32* getelementptr inbounds (i32, i32* @A, i64 1), i32* getelementptr (i32, i32* @B, i64 2))
 }
 
 
@@ -450,7 +450,7 @@ entry:
 define i32 @test28() nounwind  {
 entry:
 	%orientations = alloca [1 x [1 x %struct.x]]
-	%tmp3 = call i32 @puts( i8* getelementptr ([6 x i8]* @.str, i32 0, i32 0) ) nounwind
+	%tmp3 = call i32 @puts( i8* getelementptr ([6 x i8], [6 x i8]* @.str, i32 0, i32 0) ) nounwind
 	%tmp45 = getelementptr inbounds [1 x [1 x %struct.x]], [1 x [1 x %struct.x]]* %orientations, i32 1, i32 0, i32 0
 	%orientations62 = getelementptr [1 x [1 x %struct.x]], [1 x [1 x %struct.x]]* %orientations, i32 0, i32 0, i32 0
 	br label %bb10
@@ -460,7 +460,7 @@ bb10:
 	%tmp.0.reg2mem.0.rec = mul i32 %indvar, -1
 	%tmp12.rec = add i32 %tmp.0.reg2mem.0.rec, -1
 	%tmp12 = getelementptr inbounds %struct.x, %struct.x* %tmp45, i32 %tmp12.rec
-	%tmp16 = call i32 (i8*, ...)* @printf( i8* getelementptr ([12 x i8]* @.str1, i32 0, i32 0), %struct.x* %tmp12 ) nounwind
+	%tmp16 = call i32 (i8*, ...)* @printf( i8* getelementptr ([12 x i8], [12 x i8]* @.str1, i32 0, i32 0), %struct.x* %tmp12 ) nounwind
 	%tmp84 = icmp eq %struct.x* %tmp12, %orientations62
 	%indvar.next = add i32 %indvar, 1
 	br i1 %tmp84, label %bb17, label %bb10
@@ -617,11 +617,11 @@ entry:
 ; Instcombine should be able to fold this getelementptr.
 
 define i32 @test35() nounwind {
-  call i32 (i8*, ...)* @printf(i8* getelementptr ([17 x i8]* @"\01LC8", i32 0, i32 0),
-             i8* getelementptr (%t1* bitcast (%t0* @s to %t1*), i32 0, i32 1, i32 0)) nounwind
+  call i32 (i8*, ...)* @printf(i8* getelementptr ([17 x i8], [17 x i8]* @"\01LC8", i32 0, i32 0),
+             i8* getelementptr (%t1, %t1* bitcast (%t0* @s to %t1*), i32 0, i32 1, i32 0)) nounwind
   ret i32 0
 ; CHECK-LABEL: @test35(
-; CHECK: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @"\01LC8", i64 0, i64 0), i8* getelementptr inbounds (%t0* @s, i64 0, i32 1, i64 0)) [[NUW:#[0-9]+]]
+; CHECK: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8], [17 x i8]* @"\01LC8", i64 0, i64 0), i8* getelementptr inbounds (%t0, %t0* @s, i64 0, i32 1, i64 0)) [[NUW:#[0-9]+]]
 }
 
 ; Instcombine should constant-fold the GEP so that indices that have
@@ -630,9 +630,9 @@ define i32 @test35() nounwind {
 ; the same address is computed, but 3 is in the range of [0,11).
 
 define i8* @test36() nounwind {
-  ret i8* getelementptr ([11 x i8]* @array, i32 0, i64 -1)
+  ret i8* getelementptr ([11 x i8], [11 x i8]* @array, i32 0, i64 -1)
 ; CHECK-LABEL: @test36(
-; CHECK: ret i8* getelementptr ([11 x i8]* @array, i64 1676976733973595601, i64 4)
+; CHECK: ret i8* getelementptr ([11 x i8], [11 x i8]* @array, i64 1676976733973595601, i64 4)
 }
 
 ; Instcombine shouldn't assume that gep(A,0,1) != gep(A,1,0).
@@ -640,8 +640,8 @@ define i8* @test36() nounwind {
 define i1 @test37() nounwind {
 ; CHECK-LABEL: @test37(
 ; CHECK: ret i1 true
-  %t = icmp eq i8* getelementptr ([1 x i8]* @A37, i64 0, i64 1),
-                   getelementptr ([1 x i8]* @A37, i64 1, i64 0)
+  %t = icmp eq i8* getelementptr ([1 x i8], [1 x i8]* @A37, i64 0, i64 1),
+                   getelementptr ([1 x i8], [1 x i8]* @A37, i64 1, i64 0)
   ret i1 %t
 }
 

@@ -362,7 +362,7 @@ bb1159:		; preds = %cond_next1150
 
 cond_true1169:		; preds = %bb1159
 	%tmp11741175 = trunc i64 %lsum.11225.0 to i32		; <i32> [#uses=1]
-	%tmp1178 = tail call i32 (%struct._IO_FILE*  , i8*  , ...)* @fprintf( %struct._IO_FILE* noalias %file  , i8* getelementptr ([49 x i8]* @.str32, i32 0, i64 0)  , i32 %tmp11741175, i32 0 )		; <i32> [#uses=0]
+	%tmp1178 = tail call i32 (%struct._IO_FILE*  , i8*  , ...)* @fprintf( %struct._IO_FILE* noalias %file  , i8* getelementptr ([49 x i8], [49 x i8]* @.str32, i32 0, i64 0)  , i32 %tmp11741175, i32 0 )		; <i32> [#uses=0]
 	ret void
 
 UnifiedReturnBlock:		; preds = %bb1159

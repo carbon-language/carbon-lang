@@ -3,7 +3,7 @@
 define i32 @main(i32 %argc, i8** %argv) {
 ; CHECK-LABEL: @main(
     %c_19 = alloca i8*
-    %malloc_206 = tail call i8* @malloc(i32 mul (i32 ptrtoint (i8* getelementptr (i8* null, i32 1) to i32), i32 10))
+    %malloc_206 = tail call i8* @malloc(i32 mul (i32 ptrtoint (i8* getelementptr (i8, i8* null, i32 1) to i32), i32 10))
     store i8* %malloc_206, i8** %c_19
     %tmp_207 = load i8*, i8** %c_19
     tail call void @free(i8* %tmp_207)

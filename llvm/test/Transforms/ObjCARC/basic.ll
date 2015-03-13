@@ -2701,7 +2701,7 @@ invoke.cont:
   %3 = bitcast i8* %arrayidx19 to float*
   %tmp20 = load float, float* %3, align 4
   %conv21 = fpext float %tmp20 to double
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([33 x i8]* @.str4, i64 0, i64 0), double %conv, double %conv8, double %conv14, double %conv21)
+  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([33 x i8], [33 x i8]* @.str4, i64 0, i64 0), double %conv, double %conv8, double %conv14, double %conv21)
   %ivar23 = load i64, i64* @"OBJC_IVAR_$_A.myZ", align 8
   %add.ptr24 = getelementptr i8, i8* %0, i64 %ivar23
   %4 = bitcast i8* %add.ptr24 to i128*
@@ -2725,14 +2725,14 @@ define i32 @"\01-[Top0 _getX]"({}* %self, i8* nocapture %_cmd) nounwind {
 invoke.cont:
   %0 = bitcast {}* %self to i8*
   %1 = tail call i8* @objc_retain(i8* %0) nounwind
-  %puts = tail call i32 @puts(i8* getelementptr inbounds ([16 x i8]* @str, i64 0, i64 0))
+  %puts = tail call i32 @puts(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @str, i64 0, i64 0))
   tail call void @objc_release(i8* %0) nounwind
   ret i32 0
 }
 
-@"\01L_OBJC_METH_VAR_NAME_" = internal global [5 x i8] c"frob\00", section "__TEXT,__cstring,cstring_literals", align 1@"\01L_OBJC_SELECTOR_REFERENCES_" = internal global i8* getelementptr inbounds ([5 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i64 0, i64 0), section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
+@"\01L_OBJC_METH_VAR_NAME_" = internal global [5 x i8] c"frob\00", section "__TEXT,__cstring,cstring_literals", align 1@"\01L_OBJC_SELECTOR_REFERENCES_" = internal global i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i64 0, i64 0), section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
 @"\01L_OBJC_IMAGE_INFO" = internal constant [2 x i32] [i32 0, i32 16], section "__DATA, __objc_imageinfo, regular, no_dead_strip"
-@llvm.used = appending global [3 x i8*] [i8* getelementptr inbounds ([5 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i32 0, i32 0), i8* bitcast (i8** @"\01L_OBJC_SELECTOR_REFERENCES_" to i8*), i8* bitcast ([2 x i32]* @"\01L_OBJC_IMAGE_INFO" to i8*)], section "llvm.metadata"
+@llvm.used = appending global [3 x i8*] [i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i32 0, i32 0), i8* bitcast (i8** @"\01L_OBJC_SELECTOR_REFERENCES_" to i8*), i8* bitcast ([2 x i32]* @"\01L_OBJC_IMAGE_INFO" to i8*)], section "llvm.metadata"
 
 ; A simple loop. Eliminate the retain and release inside of it!
 

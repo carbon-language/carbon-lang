@@ -24,7 +24,7 @@ target triple = "nvptx64-unknown-unknown"
 ; Function Attrs: nounwind
 define void @foo(i32 %a, float %b, i8 signext %c, i32 %e) {
 entry:
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0))
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0))
   ret void
 }
 

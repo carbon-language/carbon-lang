@@ -70,7 +70,7 @@ bb163:                                            ; preds = %bb162, %bb161
   unreachable
 
 bb224:                                            ; preds = %bb162
-  %0 = call  i32 @SyFopen(i8* undef, i8* getelementptr inbounds ([2 x i8]* @.str41196, i32 0, i32 0)) nounwind ; <i32> [#uses=2]
+  %0 = call  i32 @SyFopen(i8* undef, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str41196, i32 0, i32 0)) nounwind ; <i32> [#uses=2]
   br i1 false, label %bb297, label %bb300
 
 bb297:                                            ; preds = %bb224

@@ -12,11 +12,11 @@ entry:
   br i1 %obit, label %overflow, label %normal
 
 normal:
-  %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @ok, i32 0, i32 0), i32 %sum32 ) nounwind
+  %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @ok, i32 0, i32 0), i32 %sum32 ) nounwind
   ret i1 true
 
 overflow:
-  %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
+  %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @no, i32 0, i32 0) ) nounwind
   ret i1 false
 }
 
@@ -29,11 +29,11 @@ entry:
   br i1 %obit, label %carry, label %normal
 
 normal:
-  %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @ok, i32 0, i32 0), i32 %sum32 ) nounwind
+  %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @ok, i32 0, i32 0), i32 %sum32 ) nounwind
   ret i1 true
 
 carry:
-  %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
+  %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8], [4 x i8]* @no, i32 0, i32 0) ) nounwind
   ret i1 false
 }
 

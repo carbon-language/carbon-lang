@@ -13,7 +13,7 @@
 ; MACHO: @__llvm_profile_data_foo = hidden constant {{.*}}, section "__DATA,__llvm_prf_data", align 8
 ; ELF: @__llvm_profile_data_foo = hidden constant {{.*}}, section "__llvm_prf_data", align 8
 define void @foo() {
-  call void @llvm.instrprof.increment(i8* getelementptr inbounds ([3 x i8]* @__llvm_profile_name_foo, i32 0, i32 0), i64 0, i32 1, i32 0)
+  call void @llvm.instrprof.increment(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @__llvm_profile_name_foo, i32 0, i32 0), i64 0, i32 1, i32 0)
   ret void
 }
 

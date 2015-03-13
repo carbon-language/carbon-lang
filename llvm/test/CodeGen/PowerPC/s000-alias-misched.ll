@@ -22,7 +22,7 @@ declare signext i32 @init(i8*) nounwind
 
 define signext i32 @s000() nounwind {
 entry:
-  %call = tail call signext i32 @init(i8* getelementptr inbounds ([6 x i8]* @.str1, i64 0, i64 0))
+  %call = tail call signext i32 @init(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str1, i64 0, i64 0))
   %call1 = tail call i64 @clock() nounwind
   br label %for.cond2.preheader
 
@@ -77,7 +77,7 @@ for.body4:                                        ; preds = %for.body4, %for.con
 ; CHECK: bdnz
 
 for.end:                                          ; preds = %for.body4
-  %call7 = tail call signext i32 @dummy(double* getelementptr inbounds ([16000 x double]* @X, i64 0, i64 0), double* getelementptr inbounds ([16000 x double]* @Y, i64 0, i64 0), double* getelementptr inbounds ([16000 x double]* @Z, i64 0, i64 0), double* getelementptr inbounds ([16000 x double]* @U, i64 0, i64 0), double* getelementptr inbounds ([16000 x double]* @V, i64 0, i64 0), [256 x double]* getelementptr inbounds ([256 x [256 x double]]* @aa, i64 0, i64 0), [256 x double]* getelementptr inbounds ([256 x [256 x double]]* @bb, i64 0, i64 0), [256 x double]* getelementptr inbounds ([256 x [256 x double]]* @cc, i64 0, i64 0), double 0.000000e+00) nounwind
+  %call7 = tail call signext i32 @dummy(double* getelementptr inbounds ([16000 x double], [16000 x double]* @X, i64 0, i64 0), double* getelementptr inbounds ([16000 x double], [16000 x double]* @Y, i64 0, i64 0), double* getelementptr inbounds ([16000 x double], [16000 x double]* @Z, i64 0, i64 0), double* getelementptr inbounds ([16000 x double], [16000 x double]* @U, i64 0, i64 0), double* getelementptr inbounds ([16000 x double], [16000 x double]* @V, i64 0, i64 0), [256 x double]* getelementptr inbounds ([256 x [256 x double]], [256 x [256 x double]]* @aa, i64 0, i64 0), [256 x double]* getelementptr inbounds ([256 x [256 x double]], [256 x [256 x double]]* @bb, i64 0, i64 0), [256 x double]* getelementptr inbounds ([256 x [256 x double]], [256 x [256 x double]]* @cc, i64 0, i64 0), double 0.000000e+00) nounwind
   %inc9 = add nsw i32 %nl.018, 1
   %exitcond = icmp eq i32 %inc9, 400000
   br i1 %exitcond, label %for.end10, label %for.cond2.preheader
@@ -87,7 +87,7 @@ for.end10:                                        ; preds = %for.end
   %sub = sub nsw i64 %call11, %call1
   %conv = sitofp i64 %sub to double
   %div = fdiv double %conv, 1.000000e+06
-  %call12 = tail call signext i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str137, i64 0, i64 0), double %div) nounwind
+  %call12 = tail call signext i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str137, i64 0, i64 0), double %div) nounwind
   tail call void @check(i32 signext 1)
   ret i32 0
 }

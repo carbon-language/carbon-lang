@@ -9,9 +9,9 @@ target triple = "i686-apple-darwin8"
 @_ZZ19SFLGetVisibilityKeyvE19_kSFLLVisibilityKey = internal global %struct.__CFString* null             ; <%struct.__CFString**> [#uses=2]
 @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey = internal global %struct.__CFString* null               ; <%struct.__CFString**> [#uses=7]
 internal constant %struct.__builtin_CFString {
-    i32* getelementptr ([0 x i32]* @__CFConstantStringClassReference, i32 0, i32 0), 
+    i32* getelementptr ([0 x i32], [0 x i32]* @__CFConstantStringClassReference, i32 0, i32 0), 
     i32 1992, 
-    i8* getelementptr ([14 x i8]* @.str, i32 0, i32 0), 
+    i8* getelementptr ([14 x i8], [14 x i8]* @.str, i32 0, i32 0), 
     i32 13 }, section "__DATA,__cfstring"               ; <%struct.__builtin_CFString*>:0 [#uses=1]
 @__CFConstantStringClassReference = external global [0 x i32]           ; <[0 x i32]*> [#uses=1]
 @.str = internal constant [14 x i8] c"AlwaysVisible\00"         ; <[14 x i8]*> [#uses=1]

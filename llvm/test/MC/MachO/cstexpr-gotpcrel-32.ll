@@ -35,14 +35,14 @@
 ; CHECK-NEXT: L_localfoo$non_lazy_ptr-(_table+20)
   %struct.data { i32 4, %struct.anon { i32 5,
     i32 sub (i32 ptrtoint (i32** @localgotequiv to i32),
-             i32 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data]* @table, i32 0, i32 1, i32 1, i32 1) to i32))}
+             i32 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data], [4 x %struct.data]* @table, i32 0, i32 1, i32 1, i32 1) to i32))}
   },
 ; CHECK: .long   5
 ; CHECK-NOT: l_extgotequiv-(_table+32)
 ; CHECK-NEXT: L_extfoo$non_lazy_ptr-(_table+32)
   %struct.data { i32 4, %struct.anon { i32 5,
     i32 sub (i32 ptrtoint (i32** @extgotequiv to i32),
-             i32 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data]* @table, i32 0, i32 2, i32 1, i32 1) to i32))}
+             i32 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data], [4 x %struct.data]* @table, i32 0, i32 2, i32 1, i32 1) to i32))}
   },
 ; Test support for arbitrary constants into the GOTPCREL offset
 ; CHECK: .long   5
@@ -50,7 +50,7 @@
 ; CHECK-NEXT: L_extfoo$non_lazy_ptr-(_table+20)
   %struct.data { i32 4, %struct.anon { i32 5,
     i32 add (i32 sub (i32 ptrtoint (i32** @extgotequiv to i32),
-                      i32 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data]* @table, i32 0, i32 3, i32 1, i32 1) to i32)),
+                      i32 ptrtoint (i32* getelementptr inbounds ([4 x %struct.data], [4 x %struct.data]* @table, i32 0, i32 3, i32 1, i32 1) to i32)),
                       i32 24)}
   }
 ], align 16

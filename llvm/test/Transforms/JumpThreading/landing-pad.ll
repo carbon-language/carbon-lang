@@ -23,7 +23,7 @@ define void @_ZN1DC1Ev(%class.D* nocapture %this) unnamed_addr uwtable align 2 {
 entry:
   call void @_ZN24CompositeEditCommandImplC2Ev()
   %0 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 0, i32 0, i32 0
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   ret void
 }
 
@@ -31,7 +31,7 @@ define void @_ZN1DC2Ev(%class.D* nocapture %this) unnamed_addr uwtable align 2 {
 entry:
   call void @_ZN24CompositeEditCommandImplC2Ev()
   %0 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 0, i32 0, i32 0
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   ret void
 }
 
@@ -50,7 +50,7 @@ entry:
 
 _ZN1DC1Ev.exit:                                   ; preds = %entry
   %0 = bitcast i8* %call to i32 (...)***
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   %_ref.i.i.i = getelementptr inbounds i8, i8* %call, i64 8
   %1 = bitcast i8* %_ref.i.i.i to i32*
   %2 = load i32, i32* %1, align 4

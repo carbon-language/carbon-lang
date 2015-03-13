@@ -11,7 +11,7 @@ entry:
 ; CHECK-SMALL:   movl data(%rip), %eax
 ; CHECK-KERNEL-LABEL: foo:
 ; CHECK-KERNEL:  movl data, %eax
-	%0 = load i32, i32* getelementptr ([0 x i32]* @data, i64 0, i64 0), align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* getelementptr ([0 x i32], [0 x i32]* @data, i64 0, i64 0), align 4		; <i32> [#uses=1]
 	ret i32 %0
 }
 
@@ -21,7 +21,7 @@ entry:
 ; CHECK-SMALL:   movl data+40(%rip), %eax
 ; CHECK-KERNEL-LABEL: foo2:
 ; CHECK-KERNEL:  movl data+40, %eax
-	%0 = load i32, i32* getelementptr ([0 x i32]* @data, i32 0, i64 10), align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* getelementptr ([0 x i32], [0 x i32]* @data, i32 0, i64 10), align 4		; <i32> [#uses=1]
 	ret i32 %0
 }
 
@@ -31,7 +31,7 @@ entry:
 ; CHECK-SMALL:   movl data-40(%rip), %eax
 ; CHECK-KERNEL-LABEL: foo3:
 ; CHECK-KERNEL:  movq $-40, %rax
-	%0 = load i32, i32* getelementptr ([0 x i32]* @data, i32 0, i64 -10), align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* getelementptr ([0 x i32], [0 x i32]* @data, i32 0, i64 -10), align 4		; <i32> [#uses=1]
 	ret i32 %0
 }
 
@@ -43,7 +43,7 @@ entry:
 ; CHECK-SMALL:   movl data(%rax), %eax
 ; CHECK-KERNEL-LABEL: foo4:
 ; CHECK-KERNEL:  movl data+16777216, %eax
-	%0 = load i32, i32* getelementptr ([0 x i32]* @data, i32 0, i64 4194304), align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* getelementptr ([0 x i32], [0 x i32]* @data, i32 0, i64 4194304), align 4		; <i32> [#uses=1]
 	ret i32 %0
 }
 
@@ -53,7 +53,7 @@ entry:
 ; CHECK-SMALL:   movl data+16777212(%rip), %eax
 ; CHECK-KERNEL-LABEL: foo1:
 ; CHECK-KERNEL:  movl data+16777212, %eax
-        %0 = load i32, i32* getelementptr ([0 x i32]* @data, i32 0, i64 4194303), align 4            ; <i32> [#uses=1]
+        %0 = load i32, i32* getelementptr ([0 x i32], [0 x i32]* @data, i32 0, i64 4194303), align 4            ; <i32> [#uses=1]
         ret i32 %0
 }
 define i32 @foo5() nounwind readonly {
@@ -62,6 +62,6 @@ entry:
 ; CHECK-SMALL:   movl data-16777216(%rip), %eax
 ; CHECK-KERNEL-LABEL: foo5:
 ; CHECK-KERNEL:  movq $-16777216, %rax
-	%0 = load i32, i32* getelementptr ([0 x i32]* @data, i32 0, i64 -4194304), align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* getelementptr ([0 x i32], [0 x i32]* @data, i32 0, i64 -4194304), align 4		; <i32> [#uses=1]
 	ret i32 %0
 }

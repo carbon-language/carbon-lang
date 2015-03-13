@@ -15,7 +15,7 @@ target triple = "armv5e--netbsd-eabi"
 
 @_ZTVN10__cxxabiv117__class_type_infoE = external global i8*
 @_ZTS9exception = linkonce_odr constant [11 x i8] c"9exception\00"
-@_ZTI9exception = linkonce_odr unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8** @_ZTVN10__cxxabiv117__class_type_infoE, i32 2) to i8*), i8* getelementptr inbounds ([11 x i8]* @_ZTS9exception, i32 0, i32 0) }
+@_ZTI9exception = linkonce_odr unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i32 2) to i8*), i8* getelementptr inbounds ([11 x i8], [11 x i8]* @_ZTS9exception, i32 0, i32 0) }
 
 define void @f() uwtable {
   %1 = alloca i8*

@@ -145,7 +145,7 @@ entry:
   store i32 %1, i32* %out0, align 4
   %2 = call i32 asm "foo $1,$0", "=r,X"(i32 1) nounwind
   store i32 %2, i32* %out0, align 4
-  %3 = call i32 asm "foo $1,$0", "=r,X"(i32* getelementptr inbounds ([2 x i32]* @marray, i32 0, i32 0)) nounwind
+  %3 = call i32 asm "foo $1,$0", "=r,X"(i32* getelementptr inbounds ([2 x i32], [2 x i32]* @marray, i32 0, i32 0)) nounwind
   store i32 %3, i32* %out0, align 4
   %4 = call i32 asm "foo $1,$0", "=r,X"(double 1.000000e+001) nounwind
   store i32 %4, i32* %out0, align 4
@@ -158,7 +158,7 @@ define void @single_p() nounwind {
 entry:
   %out0 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
-  %0 = call i32 asm "foo $1,$0", "=r,r"(i32* getelementptr inbounds ([2 x i32]* @marray, i32 0, i32 0)) nounwind
+  %0 = call i32 asm "foo $1,$0", "=r,r"(i32* getelementptr inbounds ([2 x i32], [2 x i32]* @marray, i32 0, i32 0)) nounwind
   store i32 %0, i32* %out0, align 4
   ret void
 }
@@ -302,7 +302,7 @@ entry:
   store i32 %1, i32* %out0, align 4
   %2 = call i32 asm "foo $1,$0", "=r|r,r|X"(i32 1) nounwind
   store i32 %2, i32* %out0, align 4
-  %3 = call i32 asm "foo $1,$0", "=r|r,r|X"(i32* getelementptr inbounds ([2 x i32]* @marray, i32 0, i32 0)) nounwind
+  %3 = call i32 asm "foo $1,$0", "=r|r,r|X"(i32* getelementptr inbounds ([2 x i32], [2 x i32]* @marray, i32 0, i32 0)) nounwind
   store i32 %3, i32* %out0, align 4
   %4 = call i32 asm "foo $1,$0", "=r|r,r|X"(double 1.000000e+001) nounwind
   store i32 %4, i32* %out0, align 4
@@ -315,7 +315,7 @@ define void @multi_p() nounwind {
 entry:
   %out0 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
-  %0 = call i32 asm "foo $1,$0", "=r|r,r|r"(i32* getelementptr inbounds ([2 x i32]* @marray, i32 0, i32 0)) nounwind
+  %0 = call i32 asm "foo $1,$0", "=r|r,r|r"(i32* getelementptr inbounds ([2 x i32], [2 x i32]* @marray, i32 0, i32 0)) nounwind
   store i32 %0, i32* %out0, align 4
   ret void
 }

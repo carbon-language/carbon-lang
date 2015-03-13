@@ -37,7 +37,7 @@ define void @test_simplify3(%FILE* %fp) {
 ; CHECK-LABEL: @test_simplify3(
   %str = getelementptr [7 x i8], [7 x i8]* @hello, i32 0, i32 0
   call i32 @fputs(i8* %str, %FILE* %fp)
-; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([7 x i8]* @hello, i32 0, i32 0), i32 6, i32 1, %FILE* %fp)
+; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @hello, i32 0, i32 0), i32 6, i32 1, %FILE* %fp)
   ret void
 ; CHECK-NEXT: ret void
 }

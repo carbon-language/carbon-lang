@@ -20,7 +20,7 @@ main_:
   %DHSelect = select i1 %tmp8, i32 %tmp9, i32 %tmp10
   store i32 %DHSelect, i32* %i32X, align 4
   %tmp15 = load i32, i32* %i32X, align 4
-  %tmp17 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str2, i32 0, i32 0), i32 %tmp15)
+  %tmp17 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str2, i32 0, i32 0), i32 %tmp15)
   ret i32 0
 
 ; CHECK: main:

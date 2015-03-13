@@ -81,7 +81,7 @@ bb244:		; preds = %bb122, %bb122, %bb122, %bb122, %bb122, %bb122, %bb122, %bb122
 	br i1 %0, label %bb435, label %bb433
 
 bb394:		; preds = %bb122
-	call void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 3, i8* getelementptr ([23 x i8]* @"\01LC13423", i32 0, i32 0), i32 0, %struct.FILE_POS* @no_file_pos, i8* getelementptr ([13 x i8]* @"\01LC18972", i32 0, i32 0), i8* null) nounwind
+	call void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 3, i8* getelementptr ([23 x i8], [23 x i8]* @"\01LC13423", i32 0, i32 0), i32 0, %struct.FILE_POS* @no_file_pos, i8* getelementptr ([13 x i8], [13 x i8]* @"\01LC18972", i32 0, i32 0), i8* null) nounwind
 	br label %bb396
 
 bb396:		; preds = %bb394, %bb131, %bb122, %bb122, %bb122, %bb122, %RESUME

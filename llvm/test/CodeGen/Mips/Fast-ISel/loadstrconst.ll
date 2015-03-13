@@ -9,7 +9,7 @@
 ; Function Attrs: nounwind
 define void @foo() #0 {
 entry:
-  store i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0), i8** @s, align 4
+  store i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i32 0, i32 0), i8** @s, align 4
   ret void
 ; CHECK:        .ent    foo
 ; CHECK:        lw      $[[REG1:[0-9]+]], %got($.str)(${{[0-9]+}})

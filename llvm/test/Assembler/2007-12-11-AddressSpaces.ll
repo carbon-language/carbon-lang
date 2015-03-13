@@ -12,8 +12,8 @@
 
 define void @foo() {
 entry:
-	%tmp1 = load i32 addrspace(33)*, i32 addrspace(33)* addrspace(42)* getelementptr (%struct.mystruct addrspace(42)* @input, i32 0, i32 3), align 4		; <i32 addrspace(33)*> [#uses=1]
-	store i32 addrspace(33)* %tmp1, i32 addrspace(33)* addrspace(66)* getelementptr (%struct.mystruct addrspace(66)* @output, i32 0, i32 1), align 4
+	%tmp1 = load i32 addrspace(33)*, i32 addrspace(33)* addrspace(42)* getelementptr (%struct.mystruct, %struct.mystruct addrspace(42)* @input, i32 0, i32 3), align 4		; <i32 addrspace(33)*> [#uses=1]
+	store i32 addrspace(33)* %tmp1, i32 addrspace(33)* addrspace(66)* getelementptr (%struct.mystruct, %struct.mystruct addrspace(66)* @output, i32 0, i32 1), align 4
 	ret void
 }
 

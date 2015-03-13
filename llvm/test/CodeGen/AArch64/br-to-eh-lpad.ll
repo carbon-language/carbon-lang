@@ -30,12 +30,12 @@ invoke.cont7:
   unreachable
 
 if.end50.thread:
-  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str1, i64 0, i64 0), i32 125)
-  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str1, i64 0, i64 0), i32 128)
+  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8], [17 x i8]* @.str1, i64 0, i64 0), i32 125)
+  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8], [17 x i8]* @.str1, i64 0, i64 0), i32 128)
   unreachable
 
 invoke.cont33:
-  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str1, i64 0, i64 0), i32 119)
+  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8], [17 x i8]* @.str1, i64 0, i64 0), i32 119)
   unreachable
 
 invoke.cont41:
@@ -51,7 +51,7 @@ lpad40:
   br label %finally.catchall
 
 finally.catchall:
-  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str1, i64 0, i64 0), i32 125)
+  tail call void (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8], [17 x i8]* @.str1, i64 0, i64 0), i32 125)
   unreachable
 }
 

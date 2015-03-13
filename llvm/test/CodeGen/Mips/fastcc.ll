@@ -292,17 +292,17 @@ entry:
 ; NOODDSPREG-DAG:    lwc1    $[[F0:f[0-9]*[02468]]], 40($[[R0]])
 ; NOODDSPREG-DAG:    swc1    $[[F0]], 0($sp)
 
-  %0 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 0), align 4
-  %1 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 1), align 4
-  %2 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 2), align 4
-  %3 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 3), align 4
-  %4 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 4), align 4
-  %5 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 5), align 4
-  %6 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 6), align 4
-  %7 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 7), align 4
-  %8 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 8), align 4
-  %9 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 9), align 4
-  %10 = load float, float* getelementptr ([11 x float]* @fa, i32 0, i32 10), align 4
+  %0 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 0), align 4
+  %1 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 1), align 4
+  %2 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 2), align 4
+  %3 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 3), align 4
+  %4 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 4), align 4
+  %5 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 5), align 4
+  %6 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 6), align 4
+  %7 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 7), align 4
+  %8 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 8), align 4
+  %9 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 9), align 4
+  %10 = load float, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 10), align 4
   tail call fastcc void @callee2(float %0, float %1, float %2, float %3,
                                  float %4, float %5, float %6, float %7,
                                  float %8, float %9, float %10)
@@ -336,17 +336,17 @@ entry:
 ; NOODDSPREG-DAG:    lwc1    $[[F0:f[0-9]*[02468]]], [[OFFSET]]($sp)
 ; NOODDSPREG-DAG:    swc1    $[[F0]], 40($[[R0]])
 
-  store float %a0, float* getelementptr ([11 x float]* @fa, i32 0, i32 0), align 4
-  store float %a1, float* getelementptr ([11 x float]* @fa, i32 0, i32 1), align 4
-  store float %a2, float* getelementptr ([11 x float]* @fa, i32 0, i32 2), align 4
-  store float %a3, float* getelementptr ([11 x float]* @fa, i32 0, i32 3), align 4
-  store float %a4, float* getelementptr ([11 x float]* @fa, i32 0, i32 4), align 4
-  store float %a5, float* getelementptr ([11 x float]* @fa, i32 0, i32 5), align 4
-  store float %a6, float* getelementptr ([11 x float]* @fa, i32 0, i32 6), align 4
-  store float %a7, float* getelementptr ([11 x float]* @fa, i32 0, i32 7), align 4
-  store float %a8, float* getelementptr ([11 x float]* @fa, i32 0, i32 8), align 4
-  store float %a9, float* getelementptr ([11 x float]* @fa, i32 0, i32 9), align 4
-  store float %a10, float* getelementptr ([11 x float]* @fa, i32 0, i32 10), align 4
+  store float %a0, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 0), align 4
+  store float %a1, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 1), align 4
+  store float %a2, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 2), align 4
+  store float %a3, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 3), align 4
+  store float %a4, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 4), align 4
+  store float %a5, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 5), align 4
+  store float %a6, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 6), align 4
+  store float %a7, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 7), align 4
+  store float %a8, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 8), align 4
+  store float %a9, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 9), align 4
+  store float %a10, float* getelementptr ([11 x float], [11 x float]* @fa, i32 0, i32 10), align 4
   ret void
 }
 
@@ -373,17 +373,17 @@ entry:
 ; FP64-NOODDSPREG-DAG:    ldc1    $[[F0:f[0-9]*[02468]]], 80($[[R0]])
 ; FP64-NOODDSPREG-DAG:    sdc1    $[[F0]], 0($sp)
 
-  %0 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 0), align 8
-  %1 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 1), align 8
-  %2 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 2), align 8
-  %3 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 3), align 8
-  %4 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 4), align 8
-  %5 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 5), align 8
-  %6 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 6), align 8
-  %7 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 7), align 8
-  %8 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 8), align 8
-  %9 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 9), align 8
-  %10 = load double, double* getelementptr ([11 x double]* @da, i32 0, i32 10), align 8
+  %0 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 0), align 8
+  %1 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 1), align 8
+  %2 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 2), align 8
+  %3 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 3), align 8
+  %4 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 4), align 8
+  %5 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 5), align 8
+  %6 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 6), align 8
+  %7 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 7), align 8
+  %8 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 8), align 8
+  %9 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 9), align 8
+  %10 = load double, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 10), align 8
   tail call fastcc void @callee3(double %0, double %1, double %2, double %3,
                                  double %4, double %5, double %6, double %7,
                                  double %8, double %9, double %10)
@@ -417,16 +417,16 @@ entry:
 ; FP64-NOODDSPREG-DAG:    ldc1    $[[F0:f[0-9]*[02468]]], [[OFFSET]]($sp)
 ; FP64-NOODDSPREG-DAG:    sdc1    $[[F0]], 80($[[R0]])
 
-  store double %a0, double* getelementptr ([11 x double]* @da, i32 0, i32 0), align 8
-  store double %a1, double* getelementptr ([11 x double]* @da, i32 0, i32 1), align 8
-  store double %a2, double* getelementptr ([11 x double]* @da, i32 0, i32 2), align 8
-  store double %a3, double* getelementptr ([11 x double]* @da, i32 0, i32 3), align 8
-  store double %a4, double* getelementptr ([11 x double]* @da, i32 0, i32 4), align 8
-  store double %a5, double* getelementptr ([11 x double]* @da, i32 0, i32 5), align 8
-  store double %a6, double* getelementptr ([11 x double]* @da, i32 0, i32 6), align 8
-  store double %a7, double* getelementptr ([11 x double]* @da, i32 0, i32 7), align 8
-  store double %a8, double* getelementptr ([11 x double]* @da, i32 0, i32 8), align 8
-  store double %a9, double* getelementptr ([11 x double]* @da, i32 0, i32 9), align 8
-  store double %a10, double* getelementptr ([11 x double]* @da, i32 0, i32 10), align 8
+  store double %a0, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 0), align 8
+  store double %a1, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 1), align 8
+  store double %a2, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 2), align 8
+  store double %a3, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 3), align 8
+  store double %a4, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 4), align 8
+  store double %a5, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 5), align 8
+  store double %a6, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 6), align 8
+  store double %a7, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 7), align 8
+  store double %a8, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 8), align 8
+  store double %a9, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 9), align 8
+  store double %a10, double* getelementptr ([11 x double], [11 x double]* @da, i32 0, i32 10), align 8
   ret void
 }

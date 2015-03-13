@@ -31,11 +31,11 @@ entry:
         br i1 %tmp.8, label %then, label %else
 
 then:           ; preds = %entry
-        %tmp.11 = call i32 (i8*, ...)* @printf( i8* getelementptr ([6 x i8]* @.str_1, i64 0, i64 0) )           ; <i32> [#uses=0]
+        %tmp.11 = call i32 (i8*, ...)* @printf( i8* getelementptr ([6 x i8], [6 x i8]* @.str_1, i64 0, i64 0) )           ; <i32> [#uses=0]
         br label %UnifiedExitNode
 
 else:           ; preds = %entry
-        %tmp.13 = call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @.str_2, i64 0, i64 0) )           ; <i32> [#uses=0]
+        %tmp.13 = call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8], [7 x i8]* @.str_2, i64 0, i64 0) )           ; <i32> [#uses=0]
         br label %UnifiedExitNode
 
 UnifiedExitNode:                ; preds = %else, %then

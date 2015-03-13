@@ -19,7 +19,7 @@ bb1:
   br i1 undef, label %bb3, label %bb15
 
 ; CHECK: bb1:
-; CHECK: [[TMP:%.*]] = phi i8* [ getelementptr (i8* null, i64 undef), %bb10 ], [ null, %bb ]
+; CHECK: [[TMP:%.*]] = phi i8* [ getelementptr (i8, i8* null, i64 undef), %bb10 ], [ null, %bb ]
 
 ; CHECK: bb1.bb15_crit_edge:
 ; CHECK: %tmp17.pre = load i8, i8* [[TMP]], align 1

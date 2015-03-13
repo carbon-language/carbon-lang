@@ -121,13 +121,13 @@ entry:
 
 "11":                                             ; preds = %"8"
   %10 = tail call i8* @__cxa_begin_catch(i8* %exc_ptr12) #1
-  %11 = tail call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @.cst, i32 0, i32 0))
+  %11 = tail call i32 @puts(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.cst, i32 0, i32 0))
   tail call void @__cxa_end_catch() #1
   br label %"5"
 
 "13":                                             ; preds = %8
   %12 = tail call i8* @__cxa_begin_catch(i8* %exc_ptr12) #1
-  %13 = tail call i32 @puts(i8* getelementptr inbounds ([14 x i8]* @.cst1, i32 0, i32 0))
+  %13 = tail call i32 @puts(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.cst1, i32 0, i32 0))
   tail call void @__cxa_end_catch() #1
   br label %"5"
 }

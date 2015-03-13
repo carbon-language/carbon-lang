@@ -26,7 +26,7 @@ bb31:		; preds = %bb6
 	br label %bb33
 
 bb33:		; preds = %bb31, %bb
-	tail call void (%struct.SV*, i8*, ...)* @Perl_sv_catpvf( %struct.SV* %dsv, i8* getelementptr ([8 x i8]* @"\01LC25", i32 0, i64 0), i64 %0 ) nounwind 
+	tail call void (%struct.SV*, i8*, ...)* @Perl_sv_catpvf( %struct.SV* %dsv, i8* getelementptr ([8 x i8], [8 x i8]* @"\01LC25", i32 0, i64 0), i64 %0 ) nounwind 
 	unreachable
 
 bb40:		; preds = %entry

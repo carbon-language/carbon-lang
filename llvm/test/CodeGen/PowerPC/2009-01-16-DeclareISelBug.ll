@@ -5,7 +5,7 @@
 
 define i32 @main() nounwind {
 entry:
-	%0 = call i8* @fopen(i8* getelementptr ([13 x i8]* @"\01LC", i32 0, i32 0), i8* null) nounwind		; <i8*> [#uses=0]
+	%0 = call i8* @fopen(i8* getelementptr ([13 x i8], [13 x i8]* @"\01LC", i32 0, i32 0), i8* null) nounwind		; <i8*> [#uses=0]
 	unreachable
 }
 

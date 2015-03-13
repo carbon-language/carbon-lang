@@ -39,7 +39,7 @@ if.then:                                          ; preds = %do.body
   br label %if.end
 
 if.else:                                          ; preds = %do.body
-  call void @g_assertion_message_expr(i8* null, i8* getelementptr inbounds ([10 x i8]* @.str2, i32 0, i32 0), i32 581, i8* getelementptr inbounds ([62 x i8]* @__PRETTY_FUNCTION__.copy_filter_list, i32 0, i32 0), i8* getelementptr inbounds ([22 x i8]* @.str12, i32 0, i32 0)) noreturn
+  call void @g_assertion_message_expr(i8* null, i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str2, i32 0, i32 0), i32 581, i8* getelementptr inbounds ([62 x i8], [62 x i8]* @__PRETTY_FUNCTION__.copy_filter_list, i32 0, i32 0), i8* getelementptr inbounds ([22 x i8], [22 x i8]* @.str12, i32 0, i32 0)) noreturn
   unreachable
 
 if.end:                                           ; preds = %if.then
@@ -66,7 +66,7 @@ sw.bb3.i:                                         ; preds = %do.end
   br label %get_filter_list.exit
 
 sw.default.i:                                     ; preds = %do.end
-  call void @g_assertion_message(i8* null, i8* getelementptr inbounds ([10 x i8]* @.str2, i32 0, i32 0), i32 408, i8* getelementptr inbounds ([44 x i8]* @__PRETTY_FUNCTION__.get_filter_list, i32 0, i32 0), i8* null) noreturn nounwind
+  call void @g_assertion_message(i8* null, i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str2, i32 0, i32 0), i32 408, i8* getelementptr inbounds ([44 x i8], [44 x i8]* @__PRETTY_FUNCTION__.get_filter_list, i32 0, i32 0), i8* null) noreturn nounwind
   unreachable
 
 get_filter_list.exit:                             ; preds = %sw.bb3.i, %sw.bb2.i, %sw.bb1.i, %sw.bb.i
@@ -91,7 +91,7 @@ sw.bb3.i4:                                        ; preds = %get_filter_list.exi
   br label %get_filter_list.exit6
 
 sw.default.i5:                                    ; preds = %get_filter_list.exit
-  call void @g_assertion_message(i8* null, i8* getelementptr inbounds ([10 x i8]* @.str2, i32 0, i32 0), i32 408, i8* getelementptr inbounds ([44 x i8]* @__PRETTY_FUNCTION__.get_filter_list, i32 0, i32 0), i8* null) noreturn nounwind
+  call void @g_assertion_message(i8* null, i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str2, i32 0, i32 0), i32 408, i8* getelementptr inbounds ([44 x i8], [44 x i8]* @__PRETTY_FUNCTION__.get_filter_list, i32 0, i32 0), i8* null) noreturn nounwind
   unreachable
 
 ; CHECK: get_filter_list.exit
@@ -145,7 +145,7 @@ if.then7:                                         ; preds = %do.body4
   br label %if.end9
 
 if.else8:                                         ; preds = %do.body4
-  call void @g_assertion_message_expr(i8* null, i8* getelementptr inbounds ([10 x i8]* @.str2, i32 0, i32 0), i32 600, i8* getelementptr inbounds ([62 x i8]* @__PRETTY_FUNCTION__.copy_filter_list, i32 0, i32 0), i8* getelementptr inbounds ([31 x i8]* @.str13, i32 0, i32 0)) noreturn
+  call void @g_assertion_message_expr(i8* null, i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str2, i32 0, i32 0), i32 600, i8* getelementptr inbounds ([62 x i8], [62 x i8]* @__PRETTY_FUNCTION__.copy_filter_list, i32 0, i32 0), i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str13, i32 0, i32 0)) noreturn
   unreachable
 
 if.end9:                                          ; preds = %if.then7

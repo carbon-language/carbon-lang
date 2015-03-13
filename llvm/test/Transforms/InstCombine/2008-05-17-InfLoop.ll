@@ -14,7 +14,7 @@ entry:
 	store i32 %1, i32* %n
 	load i32, i32* %n		; <i32>:2 [#uses=1]
 	add i32 %2, 2		; <i32>:3 [#uses=1]
-	mul i32 %3, ptrtoint (i32* getelementptr (i32* null, i32 1) to i32)		; <i32>:4 [#uses=1]
+	mul i32 %3, ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i32)		; <i32>:4 [#uses=1]
 	call void @BZALLOC( i32 %4 )
 	br label %return
 

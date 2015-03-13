@@ -213,7 +213,7 @@ bb456:		; preds = %bb448, %bb425, %bb417, %bb395, %bb385, %bb371
 	%tmp460461 = fpext float %iftmp.7.0 to double		; <double> [#uses=1]
 	%tmp462463 = fpext float %iftmp.14.0 to double		; <double> [#uses=1]
 	%tmp464465 = fpext float %iftmp.0.0 to double		; <double> [#uses=1]
-	%tmp467 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([48 x i8]* @.str, i32 0, i32 0), double %tmp464465, double %tmp462463, double %tmp460461, double %tmp458459 ) nounwind 		; <i32> [#uses=0]
+	%tmp467 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([48 x i8], [48 x i8]* @.str, i32 0, i32 0), double %tmp464465, double %tmp462463, double %tmp460461, double %tmp458459 ) nounwind 		; <i32> [#uses=0]
 	ret void
 }
 

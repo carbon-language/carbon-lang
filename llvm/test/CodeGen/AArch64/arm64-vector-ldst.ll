@@ -270,7 +270,7 @@ define <1 x i64> @fct0() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct0:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <1 x i64>, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
+  %0 = load <1 x i64>, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
   ret <1 x i64> %0
 }
 
@@ -278,7 +278,7 @@ define <2 x i32> @fct1() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct1:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <2 x i32>, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
+  %0 = load <2 x i32>, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
   ret <2 x i32> %0
 }
 
@@ -286,7 +286,7 @@ define <4 x i16> @fct2() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct2:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <4 x i16>, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
+  %0 = load <4 x i16>, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
   ret <4 x i16> %0
 }
 
@@ -294,7 +294,7 @@ define <8 x i8> @fct3() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct3:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <8 x i8>, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
+  %0 = load <8 x i8>, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
   ret <8 x i8> %0
 }
 
@@ -302,7 +302,7 @@ define <2 x i64> @fct4() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct4:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <2 x i64>, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
+  %0 = load <2 x i64>, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
   ret <2 x i64> %0
 }
 
@@ -310,7 +310,7 @@ define <4 x i32> @fct5() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct5:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <4 x i32>, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
+  %0 = load <4 x i32>, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
   ret <4 x i32> %0
 }
 
@@ -318,7 +318,7 @@ define <8 x i16> @fct6() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct6:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <8 x i16>, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
+  %0 = load <8 x i16>, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
   ret <8 x i16> %0
 }
 
@@ -326,7 +326,7 @@ define <16 x i8> @fct7() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct7:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <16 x i8>, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
+  %0 = load <16 x i8>, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
   ret <16 x i8> %0
 }
 
@@ -335,8 +335,8 @@ entry:
 ; CHECK-LABEL: fct8:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <1 x i64>, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
-  store <1 x i64> %0, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <1 x i64>*), align 8
+  %0 = load <1 x i64>, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
+  store <1 x i64> %0, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <1 x i64>*), align 8
   ret void
 }
 
@@ -345,8 +345,8 @@ entry:
 ; CHECK-LABEL: fct9:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <2 x i32>, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
-  store <2 x i32> %0, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <2 x i32>*), align 8
+  %0 = load <2 x i32>, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
+  store <2 x i32> %0, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <2 x i32>*), align 8
   ret void
 }
 
@@ -355,8 +355,8 @@ entry:
 ; CHECK-LABEL: fct10:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <4 x i16>, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
-  store <4 x i16> %0, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <4 x i16>*), align 8
+  %0 = load <4 x i16>, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
+  store <4 x i16> %0, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <4 x i16>*), align 8
   ret void
 }
 
@@ -365,8 +365,8 @@ entry:
 ; CHECK-LABEL: fct11:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <8 x i8>, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
-  store <8 x i8> %0, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <8 x i8>*), align 8
+  %0 = load <8 x i8>, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
+  store <8 x i8> %0, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <8 x i8>*), align 8
   ret void
 }
 
@@ -375,8 +375,8 @@ entry:
 ; CHECK-LABEL: fct12:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <2 x i64>, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
-  store <2 x i64> %0, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <2 x i64>*), align 16
+  %0 = load <2 x i64>, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
+  store <2 x i64> %0, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <2 x i64>*), align 16
   ret void
 }
 
@@ -385,8 +385,8 @@ entry:
 ; CHECK-LABEL: fct13:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <4 x i32>, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
-  store <4 x i32> %0, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <4 x i32>*), align 16
+  %0 = load <4 x i32>, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
+  store <4 x i32> %0, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <4 x i32>*), align 16
   ret void
 }
 
@@ -395,8 +395,8 @@ entry:
 ; CHECK-LABEL: fct14:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <8 x i16>, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
-  store <8 x i16> %0, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <8 x i16>*), align 16
+  %0 = load <8 x i16>, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
+  store <8 x i16> %0, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <8 x i16>*), align 16
   ret void
 }
 
@@ -405,8 +405,8 @@ entry:
 ; CHECK-LABEL: fct15:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <16 x i8>, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
-  store <16 x i8> %0, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <16 x i8>*), align 16
+  %0 = load <16 x i8>, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
+  store <16 x i8> %0, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8], [63 x i8]* @str, i64 0, i64 4) to <16 x i8>*), align 16
   ret void
 }
 

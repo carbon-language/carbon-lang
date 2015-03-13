@@ -1223,6 +1223,14 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
       Out << ' ' << getPredicateText(CE->getPredicate());
     Out << " (";
 
+    if (const GEPOperator *GEP = dyn_cast<GEPOperator>(CE)) {
+      TypePrinter.print(
+          cast<PointerType>(GEP->getPointerOperandType()->getScalarType())
+              ->getElementType(),
+          Out);
+      Out << ", ";
+    }
+
     for (User::const_op_iterator OI=CE->op_begin(); OI != CE->op_end(); ++OI) {
       TypePrinter.print((*OI)->getType(), Out);
       Out << ' ';

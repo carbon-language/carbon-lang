@@ -93,7 +93,7 @@ cond_true1272:		; preds = %cond_next1267
 	%tmp42.i348 = sub i32 0, %tmp2930.i		; <i32> [#uses=1]
 	%tmp45.i = getelementptr %struct.TestObj, %struct.TestObj* %tmp1273, i32 0, i32 0		; <i8**> [#uses=2]
 	%tmp48.i = load i8*, i8** %tmp45.i		; <i8*> [#uses=1]
-	%tmp50.i350 = call i32 (i8*, i8*, ...)* @sprintf( i8* getelementptr ([256 x i8]* @Msg, i32 0, i32 0), i8* getelementptr ([48 x i8]* @.str53615, i32 0, i32 0), i8* null, i8** %tmp45.i, i8* %tmp48.i )		; <i32> [#uses=0]
+	%tmp50.i350 = call i32 (i8*, i8*, ...)* @sprintf( i8* getelementptr ([256 x i8], [256 x i8]* @Msg, i32 0, i32 0), i8* getelementptr ([48 x i8], [48 x i8]* @.str53615, i32 0, i32 0), i8* null, i8** %tmp45.i, i8* %tmp48.i )		; <i32> [#uses=0]
 	br i1 false, label %cond_true.i632.i, label %Ut_TraceMsg.exit648.i
 
 cond_true.i632.i:		; preds = %cond_true1272

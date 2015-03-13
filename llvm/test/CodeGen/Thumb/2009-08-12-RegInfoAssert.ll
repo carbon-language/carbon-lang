@@ -11,7 +11,7 @@ define i8* @vorbis_comment_query(%struct.vorbis_comment* nocapture %vc, i8* %tag
 entry:
 	%0 = alloca i8, i32 undef, align 4        ; <i8*> [#uses=2]
 	%1 = call  i8* @__strcpy_chk(i8* %0, i8* %tag, i32 -1) nounwind; <i8*> [#uses=0]
-	%2 = call  i8* @__strcat_chk(i8* %0, i8* getelementptr ([2 x i8]* @.str16, i32 0, i32 0), i32 -1) nounwind; <i8*> [#uses=0]
+	%2 = call  i8* @__strcat_chk(i8* %0, i8* getelementptr ([2 x i8], [2 x i8]* @.str16, i32 0, i32 0), i32 -1) nounwind; <i8*> [#uses=0]
 	%3 = getelementptr %struct.vorbis_comment, %struct.vorbis_comment* %vc, i32 0, i32 0; <i8***> [#uses=1]
 	br label %bb11
 

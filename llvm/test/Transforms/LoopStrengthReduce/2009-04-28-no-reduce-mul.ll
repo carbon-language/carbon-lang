@@ -33,7 +33,7 @@ bb4:		; preds = %bb2
 	br i1 %exitcond10, label %bb5, label %bb2
 
 bb5:		; preds = %bb4
-	%4 = load i32, i32* getelementptr ([32 x [256 x i32]]* @table, i32 0, i32 9, i32 132), align 16		; <i32> [#uses=1]
+	%4 = load i32, i32* getelementptr ([32 x [256 x i32]], [32 x [256 x i32]]* @table, i32 0, i32 9, i32 132), align 16		; <i32> [#uses=1]
 	%5 = icmp eq i32 %4, -1116		; <i1> [#uses=1]
 	br i1 %5, label %bb7, label %bb6
 

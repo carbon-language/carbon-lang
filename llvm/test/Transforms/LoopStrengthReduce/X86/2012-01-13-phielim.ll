@@ -68,7 +68,7 @@ entry:
 
 for.cond468:                                      ; preds = %if.then477, %entry
   %indvars.iv1163 = phi i64 [ %indvars.iv.next1164, %if.then477 ], [ 1, %entry ]
-  %k.0.in = phi i32* [ %last, %if.then477 ], [ getelementptr inbounds ([5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 0, i32 2), %entry ]
+  %k.0.in = phi i32* [ %last, %if.then477 ], [ getelementptr inbounds ([5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771], [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 0, i32 2), %entry ]
   %k.0 = load i32, i32* %k.0.in, align 4
   %0 = trunc i64 %indvars.iv1163 to i32
   %cmp469 = icmp slt i32 %0, %n

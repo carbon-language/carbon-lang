@@ -35,7 +35,7 @@ Entry:
   br label %Loop
 ; CHECK-LABEL: @test2(
 ; CHECK: Entry:
-; CHECK-NEXT:    %.promoted = load i32, i32* getelementptr inbounds (i32* @X, i64 1)
+; CHECK-NEXT:    %.promoted = load i32, i32* getelementptr inbounds (i32, i32* @X, i64 1)
 ; CHECK-NEXT:    br label %Loop
 
 Loop:   ; preds = %Loop, %0
@@ -50,7 +50,7 @@ Exit:   ; preds = %Loop
   ret void
 ; CHECK: Exit:
 ; CHECK-NEXT:   %[[LCSSAPHI:.*]] = phi i32 [ %V
-; CHECK-NEXT:   store i32 %[[LCSSAPHI]], i32* getelementptr inbounds (i32* @X, i64 1)
+; CHECK-NEXT:   store i32 %[[LCSSAPHI]], i32* getelementptr inbounds (i32, i32* @X, i64 1)
 ; CHECK-NEXT:   ret void
 }
 

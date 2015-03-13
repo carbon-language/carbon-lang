@@ -78,7 +78,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.base** %this.addr, metadata !44, metadata !36), !dbg !46
   %this1 = load %struct.base*, %struct.base** %this.addr
   %0 = bitcast %struct.base* %this1 to i32 (...)***, !dbg !47
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTV4base, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, !dbg !47
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV4base, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, !dbg !47
   ret void, !dbg !47
 }
 

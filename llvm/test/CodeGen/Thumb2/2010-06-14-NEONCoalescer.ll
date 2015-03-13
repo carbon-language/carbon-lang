@@ -32,10 +32,10 @@ entry:
   %tmp7 = extractelement <2 x double> %5, i32 0   ; <double> [#uses=1]
   %tmp5 = extractelement <2 x double> %5, i32 1   ; <double> [#uses=1]
 ; CHECK: printf
-  %7 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0), double %tmp7, double %tmp5) nounwind ; <i32> [#uses=0]
+  %7 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), double %tmp7, double %tmp5) nounwind ; <i32> [#uses=0]
   %tmp3 = extractelement <2 x double> %6, i32 0   ; <double> [#uses=1]
   %tmp1 = extractelement <2 x double> %6, i32 1   ; <double> [#uses=1]
-  %8 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0), double %tmp3, double %tmp1) nounwind ; <i32> [#uses=0]
+  %8 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), double %tmp3, double %tmp1) nounwind ; <i32> [#uses=0]
   ret i32 0
 }
 

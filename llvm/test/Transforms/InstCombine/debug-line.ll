@@ -5,7 +5,7 @@
 
 define void @foo() nounwind ssp {
 ;CHECK: call i32 @putchar{{.+}} !dbg
-  %1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i32 97), !dbg !5
+  %1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i32 97), !dbg !5
   ret void, !dbg !7
 }
 

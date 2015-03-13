@@ -133,7 +133,7 @@ cond_true61:		; preds = %ubyte_ctype_remainder.exit
 	%tmp63 = getelementptr i8*, i8** %tmp62, i64 25		; <i8**> [#uses=1]
 	%tmp64 = load i8*, i8** %tmp63		; <i8*> [#uses=1]
 	%tmp6465 = bitcast i8* %tmp64 to i32 (i8*, i32*, i32*, %struct.PyObject**)*		; <i32 (i8*, i32*, i32*, %struct.PyObject**)*> [#uses=1]
-	%tmp67 = call i32 %tmp6465( i8* getelementptr ([14 x i8]* @.str5, i32 0, i64 0), i32* %bufsize, i32* %errmask, %struct.PyObject** %errobj )		; <i32> [#uses=1]
+	%tmp67 = call i32 %tmp6465( i8* getelementptr ([14 x i8], [14 x i8]* @.str5, i32 0, i64 0), i32* %bufsize, i32* %errmask, %struct.PyObject** %errobj )		; <i32> [#uses=1]
 	%tmp68 = icmp slt i32 %tmp67, 0		; <i1> [#uses=1]
 	br i1 %tmp68, label %UnifiedReturnBlock, label %cond_next73
 

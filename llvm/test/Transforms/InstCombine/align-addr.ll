@@ -63,7 +63,7 @@ define <16 x i8> @test1_as1_gep(<2 x i64> %x) {
 ; CHECK-LABEL: @test1_as1_gep(
 ; CHECK: tmp = load
 ; CHECK: GLOBAL_as1_gep{{.*}}align 16
-  %tmp = load <16 x i8>, <16 x i8> addrspace(1)* bitcast (i32 addrspace(1)* getelementptr ([8 x i32] addrspace(1)* @GLOBAL_as1_gep, i16 0, i16 4) to <16 x i8> addrspace(1)*), align 1
+  %tmp = load <16 x i8>, <16 x i8> addrspace(1)* bitcast (i32 addrspace(1)* getelementptr ([8 x i32], [8 x i32] addrspace(1)* @GLOBAL_as1_gep, i16 0, i16 4) to <16 x i8> addrspace(1)*), align 1
   ret <16 x i8> %tmp
 }
 

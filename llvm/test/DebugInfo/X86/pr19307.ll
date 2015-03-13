@@ -44,7 +44,7 @@ entry:
   store i64* %limit, i64** %limit.addr, align 8
   call void @llvm.dbg.declare(metadata i64** %limit.addr, metadata !47, metadata !MDExpression()), !dbg !46
   call void @llvm.dbg.declare(metadata %"class.std::basic_string"* %range, metadata !48, metadata !MDExpression(DW_OP_deref)), !dbg !49
-  %call = call i32 @_ZNKSs7compareEmmPKc(%"class.std::basic_string"* %range, i64 0, i64 6, i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0)), !dbg !50
+  %call = call i32 @_ZNKSs7compareEmmPKc(%"class.std::basic_string"* %range, i64 0, i64 6, i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0)), !dbg !50
   %cmp = icmp ne i32 %call, 0, !dbg !50
   br i1 %cmp, label %if.then, label %lor.lhs.false, !dbg !50
 

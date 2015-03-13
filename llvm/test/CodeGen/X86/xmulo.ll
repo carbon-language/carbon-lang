@@ -17,7 +17,7 @@ define i32 @t1() nounwind {
     %2 = extractvalue {i64, i1} %1, 0
     %3 = extractvalue {i64, i1} %1, 1
     %4 = zext i1 %3 to i32
-    %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i64 %2, i32 %4)
+    %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i32 0, i32 0), i64 %2, i32 %4)
     ret i32 0
 }
 
@@ -31,7 +31,7 @@ define i32 @t2() nounwind {
     %2 = extractvalue {i64, i1} %1, 0
     %3 = extractvalue {i64, i1} %1, 1
     %4 = zext i1 %3 to i32
-    %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i64 %2, i32 %4)
+    %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i32 0, i32 0), i64 %2, i32 %4)
     ret i32 0
 }
 
@@ -45,6 +45,6 @@ define i32 @t3() nounwind {
     %2 = extractvalue {i64, i1} %1, 0
     %3 = extractvalue {i64, i1} %1, 1
     %4 = zext i1 %3 to i32
-    %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i64 %2, i32 %4)
+    %5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i32 0, i32 0), i64 %2, i32 %4)
     ret i32 0
 }

@@ -4,7 +4,7 @@
 
 define void @t(i8* %ptr) {
 entry:
-  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %ptr, i8* getelementptr inbounds ([7 x i8]* @.str, i64 0, i64 0), i64 7, i32 1, i1 false)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %ptr, i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i64 0, i64 0), i64 7, i32 1, i1 false)
   ret void
 }
 

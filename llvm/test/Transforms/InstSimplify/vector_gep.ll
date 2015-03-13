@@ -51,5 +51,5 @@ define <4 x i8*> @test5() {
   ret <4 x i8*> %gep
 
 ; CHECK-LABEL: @test5
-; CHECK-NEXT: ret <4 x i8*> getelementptr (<4 x i8*> <i8* inttoptr (i64 1 to i8*), i8* inttoptr (i64 2 to i8*), i8* inttoptr (i64 3 to i8*), i8* inttoptr (i64 4 to i8*)>, <4 x i32> <i32 1, i32 1, i32 1, i32 1>)
+; CHECK-NEXT: ret <4 x i8*> getelementptr (i8, <4 x i8*> <i8* inttoptr (i64 1 to i8*), i8* inttoptr (i64 2 to i8*), i8* inttoptr (i64 3 to i8*), i8* inttoptr (i64 4 to i8*)>, <4 x i32> <i32 1, i32 1, i32 1, i32 1>)
 }

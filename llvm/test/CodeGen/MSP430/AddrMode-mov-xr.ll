@@ -47,7 +47,7 @@ define void @am5(i16* nocapture %p, i16 %a) nounwind readonly {
 @baz = common global %S zeroinitializer, align 1
 
 define void @am6(i16 %a) nounwind {
-	store i16 %a, i16* getelementptr (%S* @baz, i32 0, i32 1)
+	store i16 %a, i16* getelementptr (%S, %S* @baz, i32 0, i32 1)
 	ret void
 }
 ; CHECK-LABEL: am6:

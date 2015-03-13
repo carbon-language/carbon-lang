@@ -17,10 +17,10 @@ define %structA** @test(%classA* %this, i32** %p1) #0 align 2 {
 entry:
 ; CHECK-LABEL: @test
 ; CHECK: load i32*, i32** %p1, align 8, !tbaa
-; CHECK: load i32*, i32** getelementptr (%classC* null, i32 0, i32 1, i32 0, i32 0), align 8, !tbaa
+; CHECK: load i32*, i32** getelementptr (%classC, %classC* null, i32 0, i32 1, i32 0, i32 0), align 8, !tbaa
 ; CHECK: call void @callee
   %0 = load i32*, i32** %p1, align 8, !tbaa !1
-  %1 = load i32*, i32** getelementptr (%classC* null, i32 0, i32 1, i32 0, i32 0), align 8, !tbaa !5
+  %1 = load i32*, i32** getelementptr (%classC, %classC* null, i32 0, i32 1, i32 0, i32 0), align 8, !tbaa !5
   call void @callee(i32* %0, i32* %1)
   unreachable
 }

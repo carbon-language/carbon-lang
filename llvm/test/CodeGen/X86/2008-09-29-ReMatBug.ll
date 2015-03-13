@@ -5,7 +5,7 @@
 	%struct.XCStringList = type { i32, %struct._XCStringListNode* }
 	%struct._XCStringListNode = type { [3 x i8], [0 x i8], i8 }
 	%struct.__builtin_CFString = type { i32*, i32, i8*, i32 }
-internal constant %struct.__builtin_CFString { i32* getelementptr ([0 x i32]* @__CFConstantStringClassReference, i32 0, i32 0), i32 1992, i8* getelementptr ([3 x i8]* @"\01LC", i32 0, i32 0), i32 2 }		; <%struct.__builtin_CFString*>:0 [#uses=1]
+internal constant %struct.__builtin_CFString { i32* getelementptr ([0 x i32], [0 x i32]* @__CFConstantStringClassReference, i32 0, i32 0), i32 1992, i8* getelementptr ([3 x i8], [3 x i8]* @"\01LC", i32 0, i32 0), i32 2 }		; <%struct.__builtin_CFString*>:0 [#uses=1]
 @__CFConstantStringClassReference = external global [0 x i32]		; <[0 x i32]*> [#uses=1]
 @"\01LC" = internal constant [3 x i8] c"NO\00"		; <[3 x i8]*> [#uses=1]
 @"\01LC1" = internal constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=1]
@@ -35,7 +35,7 @@ bb19:		; preds = %bb37, %bb6
 	br i1 %7, label %bb25.split, label %bb37
 
 bb25.split:		; preds = %bb19
-	call void @foo(i8* getelementptr ([1 x i8]* @"\01LC1", i32 0, i32 0)) nounwind nounwind
+	call void @foo(i8* getelementptr ([1 x i8], [1 x i8]* @"\01LC1", i32 0, i32 0)) nounwind nounwind
 	br label %bb35.outer
 
 bb34:		; preds = %bb35, %bb35, %bb35, %bb35

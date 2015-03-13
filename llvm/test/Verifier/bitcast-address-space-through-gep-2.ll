@@ -13,7 +13,7 @@ target datalayout = "e-p:32:32:32-p1:16:16:16-p2:8:8:8-p3:8:8:8-i1:8:32-i8:8:32-
 @bitcast_after_gep_bitcast_gep =
          global %struct.Foo1 { i32 addrspace(1)* bitcast
                                     (i32 addrspace(3)* getelementptr
-                                         (i32 addrspace(3)* bitcast
+                                         (i32, i32 addrspace(3)* bitcast
                                               (i32 addrspace(2)* getelementptr
-                                                   ([32 x i32] addrspace(2)* @as2_array, i32 0, i32 8) to i32 addrspace(3)*), i32 3) to i32 addrspace(1)*) }
+                                                   ([32 x i32], [32 x i32] addrspace(2)* @as2_array, i32 0, i32 8) to i32 addrspace(3)*), i32 3) to i32 addrspace(1)*) }
 

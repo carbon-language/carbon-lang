@@ -52,7 +52,7 @@ for.cond286.preheader:                            ; preds = %for.body252
   br label %for.cond290.preheader
 
 for.cond290.preheader:                            ; preds = %for.end520, %for.cond286.preheader
-  %srcptr.31595 = phi i16* [ getelementptr inbounds ([768 x i16]* @SetupFastFullPelSearch.orig_pels, i64 0, i64 0), %for.cond286.preheader ], [ null, %for.end520 ]
+  %srcptr.31595 = phi i16* [ getelementptr inbounds ([768 x i16], [768 x i16]* @SetupFastFullPelSearch.orig_pels, i64 0, i64 0), %for.cond286.preheader ], [ null, %for.end520 ]
   %1 = load i32, i32* undef, align 4
   %2 = load i32, i32* @weight_luma, align 4
   %3 = load i32, i32* @wp_luma_round, align 4

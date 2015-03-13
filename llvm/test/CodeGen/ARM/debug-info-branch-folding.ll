@@ -28,10 +28,10 @@ for.body9:                                        ; preds = %for.body9, %entry
 for.end54:                                        ; preds = %for.body9
   %tmp115 = extractelement <4 x float> %add19, i32 1
   %conv6.i75 = fpext float %tmp115 to double, !dbg !45
-  %call.i82 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0), double undef, double %conv6.i75, double undef, double undef) nounwind, !dbg !45
+  %call.i82 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), double undef, double %conv6.i75, double undef, double undef) nounwind, !dbg !45
   %tmp116 = extractelement <4 x float> %add20, i32 1
   %conv6.i76 = fpext float %tmp116 to double, !dbg !45
-  %call.i83 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0), double undef, double %conv6.i76, double undef, double undef) nounwind, !dbg !45
+  %call.i83 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i32 0, i32 0), double undef, double %conv6.i76, double undef, double undef) nounwind, !dbg !45
   ret i32 0, !dbg !49
 }
 

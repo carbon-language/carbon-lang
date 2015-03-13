@@ -9,7 +9,7 @@ target triple = "i686-pc-linux-gnu"
 
 define void @test291() nounwind  {
 entry:
-	store i32 1138410269, i32* getelementptr ([5 x %struct.S291]* @a291, i32 0, i32 2, i32 1)
-	%tmp54 = load i32, i32* bitcast (%struct.S291* getelementptr ([5 x %struct.S291]* @a291, i32 0, i32 2) to i32*), align 4		; <i32> [#uses=0]
+	store i32 1138410269, i32* getelementptr ([5 x %struct.S291], [5 x %struct.S291]* @a291, i32 0, i32 2, i32 1)
+	%tmp54 = load i32, i32* bitcast (%struct.S291* getelementptr ([5 x %struct.S291], [5 x %struct.S291]* @a291, i32 0, i32 2) to i32*), align 4		; <i32> [#uses=0]
 	unreachable
 }

@@ -57,7 +57,7 @@ define i8* @test_simplify3() {
 
   %ret = call i8* @strncpy(i8* %dst, i8* %src, i32 0)
   ret i8* %ret
-; CHECK: ret i8* getelementptr inbounds ([32 x i8]* @a, i32 0, i32 0)
+; CHECK: ret i8* getelementptr inbounds ([32 x i8], [32 x i8]* @a, i32 0, i32 0)
 }
 
 ; Check  strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant].

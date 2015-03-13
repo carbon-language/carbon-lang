@@ -17,7 +17,7 @@ for.cond1.preheader.i:                            ; preds = %for.cond1.preheader
 
 crc32_gentab.exit:                                ; preds = %for.cond1.preheader.i
   %tobool.i19.i.i = icmp eq i32 undef, 0
-  %retval.0.i.i.i = select i1 %tobool.i19.i.i, i32* getelementptr inbounds ([1 x [9 x i32]]* @g_62, i64 0, i64 0, i64 6), i32* getelementptr inbounds ([1 x [9 x i32]]* @g_62, i64 0, i64 0, i64 8)
+  %retval.0.i.i.i = select i1 %tobool.i19.i.i, i32* getelementptr inbounds ([1 x [9 x i32]], [1 x [9 x i32]]* @g_62, i64 0, i64 0, i64 6), i32* getelementptr inbounds ([1 x [9 x i32]], [1 x [9 x i32]]* @g_62, i64 0, i64 0, i64 8)
   br label %for.cond1.preheader.i2961.i
 
 for.cond1.preheader.i2961.i:                      ; preds = %for.inc44.i2977.i, %crc32_gentab.exit

@@ -17,7 +17,7 @@ bb1:		; preds = %entry
 
 bb2:		; preds = %bb1
 	%0 = call i8* @llvm.frameaddress(i32 0)		; <i8*> [#uses=1]
-	%1 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* noalias undef, i8* noalias getelementptr ([30 x i8]* @.str2, i32 0, i32 0), i8* %0, i8* null) nounwind		; <i32> [#uses=0]
+	%1 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* noalias undef, i8* noalias getelementptr ([30 x i8], [30 x i8]* @.str2, i32 0, i32 0), i8* %0, i8* null) nounwind		; <i32> [#uses=0]
 	unreachable
 
 bb9:		; preds = %bb1

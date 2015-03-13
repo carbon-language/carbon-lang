@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.7.2"
 
 define void @bar() nounwind uwtable ssp {
 entry:
-  store i8 97, i8* getelementptr inbounds ([4294967296 x i8]* @s, i32 0, i64 0), align 1, !dbg !18
+  store i8 97, i8* getelementptr inbounds ([4294967296 x i8], [4294967296 x i8]* @s, i32 0, i64 0), align 1, !dbg !18
   ret void, !dbg !20
 }
 

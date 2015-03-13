@@ -16,11 +16,11 @@ entry:
   %0 = load double, double* %d.addr, align 8
   %1 = load double, double* %d.addr, align 8
   %conv = fptoui double %1 to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), double %0, i64 %conv)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str, i32 0, i32 0), double %0, i64 %conv)
   %2 = load double, double* %d.addr, align 8
   %3 = load double, double* %d.addr, align 8
   %conv1 = fptoui double %3 to i32
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8]* @.str1, i32 0, i32 0), double %2, i32 %conv1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str1, i32 0, i32 0), double %2, i32 %conv1)
   ret void
 }
 
@@ -37,12 +37,12 @@ entry:
   %conv = fpext float %0 to double
   %1 = load float, float* %f.addr, align 4
   %conv1 = fptoui float %1 to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8]* @.str2, i32 0, i32 0), double %conv, i64 %conv1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str2, i32 0, i32 0), double %conv, i64 %conv1)
   %2 = load float, float* %f.addr, align 4
   %conv2 = fpext float %2 to double
   %3 = load float, float* %f.addr, align 4
   %conv3 = fptoui float %3 to i32
-  %call4 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8]* @.str3, i32 0, i32 0), double %conv2, i32 %conv3)
+  %call4 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str3, i32 0, i32 0), double %conv2, i32 %conv3)
   ret void
 }
 

@@ -49,7 +49,7 @@ match:                                            ; preds = %try.handler
   %5 = bitcast i8* %4 to i32*                     ; <i32*> [#uses=1]
   %6 = load i32, i32* %5                               ; <i32> [#uses=1]
   store i32 %6, i32* %0
-  %call = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), %struct.S* %s2)
+  %call = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), %struct.S* %s2)
           to label %invoke.cont2 unwind label %match.handler ; <i32> [#uses=0]
 
 invoke.cont2:                                     ; preds = %match

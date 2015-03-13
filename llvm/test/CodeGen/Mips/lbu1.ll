@@ -12,7 +12,7 @@ entry:
   store i32 %conv, i32* %i, align 4
   %1 = load i8, i8* @c, align 1
   %conv1 = zext i8 %1 to i32
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %conv1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), i32 %conv1)
   ret i32 0
 }
 

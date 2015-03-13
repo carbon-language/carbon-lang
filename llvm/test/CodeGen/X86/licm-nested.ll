@@ -81,7 +81,7 @@ for.inc35:                                        ; preds = %for.body15, %for.en
 
 while.end:                                        ; preds = %while.cond.loopexit, %while.cond.preheader
   %count.0.lcssa = phi i32 [ 0, %while.cond.preheader ], [ %count.1, %while.cond.loopexit ] ; <i32> [#uses=1]
-  %call40 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i64 0, i64 0), i32 %count.0.lcssa) nounwind ; <i32> [#uses=0]
+  %call40 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i64 0, i64 0), i32 %count.0.lcssa) nounwind ; <i32> [#uses=0]
   ret i32 0
 }
 

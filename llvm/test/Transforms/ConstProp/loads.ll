@@ -9,7 +9,7 @@
 
 ; Simple load
 define i32 @test1() {
-  %r = load i32, i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0)
+  %r = load i32, i32* getelementptr ({{i32,i8},i32}, {{i32,i8},i32}* @g1, i32 0, i32 0, i32 0)
   ret i32 %r
 
 ; 0xDEADBEEF
@@ -24,7 +24,7 @@ define i32 @test1() {
 ; PR3152
 ; Load of first 16 bits of 32-bit value.
 define i16 @test2() {
-  %r = load i16, i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*)
+  %r = load i16, i16* bitcast(i32* getelementptr ({{i32,i8},i32}, {{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*)
   ret i16 %r
 
 ; 0xBEEF
@@ -37,7 +37,7 @@ define i16 @test2() {
 }
 
 define i16 @test2_addrspacecast() {
-  %r = load i16, i16 addrspace(1)* addrspacecast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16 addrspace(1)*)
+  %r = load i16, i16 addrspace(1)* addrspacecast(i32* getelementptr ({{i32,i8},i32}, {{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16 addrspace(1)*)
   ret i16 %r
 
 ; 0xBEEF
@@ -51,7 +51,7 @@ define i16 @test2_addrspacecast() {
 
 ; Load of second 16 bits of 32-bit value.
 define i16 @test3() {
-  %r = load i16, i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 1)
+  %r = load i16, i16* getelementptr(i16, i16* bitcast(i32* getelementptr ({{i32,i8},i32}, {{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 1)
   ret i16 %r
 
 ; 0xDEAD
@@ -65,7 +65,7 @@ define i16 @test3() {
 
 ; Load of 8 bit field + tail padding.
 define i16 @test4() {
-  %r = load i16, i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 2)
+  %r = load i16, i16* getelementptr(i16, i16* bitcast(i32* getelementptr ({{i32,i8},i32}, {{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 2)
   ret i16 %r
 
 ; 0x00BA
@@ -168,7 +168,7 @@ entry:
 @test12g = private constant [6 x i8] c"a\00b\00\00\00"
 
 define i16 @test12() {
-  %a = load i16, i16* getelementptr inbounds ([3 x i16]* bitcast ([6 x i8]* @test12g to [3 x i16]*), i32 0, i64 1)
+  %a = load i16, i16* getelementptr inbounds ([3 x i16], [3 x i16]* bitcast ([6 x i8]* @test12g to [3 x i16]*), i32 0, i64 1)
   ret i16 %a
 
 ; 0x0062
@@ -223,7 +223,7 @@ entry:
 
 define i64 @test15() nounwind {
 entry:
-  %tmp = load i64, i64* bitcast (i8** getelementptr inbounds ([2 x i8*]* @g6, i32 0, i64 1) to i64*)
+  %tmp = load i64, i64* bitcast (i8** getelementptr inbounds ([2 x i8*], [2 x i8*]* @g6, i32 0, i64 1) to i64*)
   ret i64 %tmp
 
 ; LE-LABEL: @test15(
@@ -246,7 +246,7 @@ define i64 @test16.1() {
 }
 
 define i64 @test16.2() {
-  %v = load i64, i64* bitcast (i8** getelementptr inbounds ([4 x i8*]* @gv7, i64 0, i64 1) to i64*), align 8
+  %v = load i64, i64* bitcast (i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @gv7, i64 0, i64 1) to i64*), align 8
   ret i64 %v
 
 ; LE-LABEL: @test16.2(
@@ -257,7 +257,7 @@ define i64 @test16.2() {
 }
 
 define i64 @test16.3() {
-  %v = load i64, i64* bitcast (i8** getelementptr inbounds ([4 x i8*]* @gv7, i64 0, i64 2) to i64*), align 8
+  %v = load i64, i64* bitcast (i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @gv7, i64 0, i64 2) to i64*), align 8
   ret i64 %v
 
 ; LE-LABEL: @test16.3(

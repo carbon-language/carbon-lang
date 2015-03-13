@@ -27,6 +27,6 @@ bb43:		; preds = %bb42, %bb25
 	%reg323 = phi double [ -1.000000e+00, %bb25 ], [ %reg317, %bb42 ]		; <double> [#uses=1]
 	%reg324 = phi double [ -1.000000e+00, %bb25 ], [ %reg318, %bb42 ]		; <double> [#uses=1]
 	%reg325 = phi double [ 1.000000e+00, %bb25 ], [ %reg319, %bb42 ]		; <double> [#uses=1]
-	%reg609 = call i32 (i8*, ...)* @printf( i8* getelementptr ([44 x i8]* @.LC12, i64 0, i64 0), double %reg325, double %reg324, double %reg323, double %reg322, double %reg321 )		; <i32> [#uses=0]
+	%reg609 = call i32 (i8*, ...)* @printf( i8* getelementptr ([44 x i8], [44 x i8]* @.LC12, i64 0, i64 0), double %reg325, double %reg324, double %reg323, double %reg322, double %reg321 )		; <i32> [#uses=0]
 	ret i32 0
 }

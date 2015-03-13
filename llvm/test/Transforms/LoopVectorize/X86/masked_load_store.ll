@@ -402,7 +402,7 @@ if.then:                                          ; preds = %for.body
   %idxprom6 = sext i32 %10 to i64
   %11 = load i32*, i32** %A.addr, align 8
   %arrayidx7 = getelementptr inbounds i32, i32* %11, i64 %idxprom6
-  store i32 sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 1), i32** @c) to i32)), i32* %arrayidx7, align 4
+  store i32 sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*], [1 x i32*]* @a, i64 0, i64 1), i32** @c) to i32)), i32* %arrayidx7, align 4
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %for.body

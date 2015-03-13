@@ -6,7 +6,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 declare i32 @sprintf(i8*, i8*, ...)
 
 define void @foo(i8* %P, i32* %X) {
-	call i32 (i8*, i8*, ...)* @sprintf( i8* %P, i8* getelementptr ([3 x i8]* @G, i32 0, i32 0), i32* %X )		; <i32>:1 [#uses=0]
+	call i32 (i8*, i8*, ...)* @sprintf( i8* %P, i8* getelementptr ([3 x i8], [3 x i8]* @G, i32 0, i32 0), i32* %X )		; <i32>:1 [#uses=0]
 	ret void
 }
 
@@ -16,26 +16,26 @@ define void @foo(i8* %P, i32* %X) {
 @str2 = internal constant [5 x i8] c"Ponk\00"
 
 define i8* @test1() {
-        %tmp3 = tail call i8* @strchr( i8* getelementptr ([5 x i8]* @str, i32 0, i32 2), i32 103 )              ; <i8*> [#uses=1]
+        %tmp3 = tail call i8* @strchr( i8* getelementptr ([5 x i8], [5 x i8]* @str, i32 0, i32 2), i32 103 )              ; <i8*> [#uses=1]
         ret i8* %tmp3
 
 ; CHECK-LABEL: @test1(
-; CHECK: ret i8* getelementptr inbounds ([5 x i8]* @str, i32 0, i32 3)
+; CHECK: ret i8* getelementptr inbounds ([5 x i8], [5 x i8]* @str, i32 0, i32 3)
 }
 
 declare i8* @strchr(i8*, i32)
 
 define i8* @test2() {
-        %tmp3 = tail call i8* @strchr( i8* getelementptr ([8 x i8]* @str1, i32 0, i32 2), i32 0 )               ; <i8*> [#uses=1]
+        %tmp3 = tail call i8* @strchr( i8* getelementptr ([8 x i8], [8 x i8]* @str1, i32 0, i32 2), i32 0 )               ; <i8*> [#uses=1]
         ret i8* %tmp3
 
 ; CHECK-LABEL: @test2(
-; CHECK: ret i8* getelementptr inbounds ([8 x i8]* @str1, i32 0, i32 7)
+; CHECK: ret i8* getelementptr inbounds ([8 x i8], [8 x i8]* @str1, i32 0, i32 7)
 }
 
 define i8* @test3() {
 entry:
-        %tmp3 = tail call i8* @strchr( i8* getelementptr ([5 x i8]* @str2, i32 0, i32 1), i32 80 )              ; <i8*> [#uses=1]
+        %tmp3 = tail call i8* @strchr( i8* getelementptr ([5 x i8], [5 x i8]* @str2, i32 0, i32 1), i32 80 )              ; <i8*> [#uses=1]
         ret i8* %tmp3
 
 ; CHECK-LABEL: @test3(
@@ -49,7 +49,7 @@ declare i32 @memcmp(i8*, i8*, i32) nounwind readonly
 define i1 @PR2341(i8** %start_addr) {
 entry:
 	%tmp4 = load i8*, i8** %start_addr, align 4		; <i8*> [#uses=1]
-	%tmp5 = call i32 @memcmp( i8* %tmp4, i8* getelementptr ([5 x i8]* @_2E_str, i32 0, i32 0), i32 4 ) nounwind readonly 		; <i32> [#uses=1]
+	%tmp5 = call i32 @memcmp( i8* %tmp4, i8* getelementptr ([5 x i8], [5 x i8]* @_2E_str, i32 0, i32 0), i32 4 ) nounwind readonly 		; <i32> [#uses=1]
 	%tmp6 = icmp eq i32 %tmp5, 0		; <i1> [#uses=1]
 	ret i1 %tmp6
 
@@ -81,7 +81,7 @@ entry:
 define i32 @PR4641(i32 %argc, i8** %argv) nounwind {
 entry:
 	call void @exit(i32 0) nounwind
-	%cond392 = select i1 undef, i8* getelementptr ([2 x i8]* @.str13, i32 0, i32 0), i8* getelementptr ([2 x i8]* @.str14, i32 0, i32 0)		; <i8*> [#uses=1]
+	%cond392 = select i1 undef, i8* getelementptr ([2 x i8], [2 x i8]* @.str13, i32 0, i32 0), i8* getelementptr ([2 x i8], [2 x i8]* @.str14, i32 0, i32 0)		; <i8*> [#uses=1]
 	%call393 = call %struct.__sFILE* @fopen(i8* undef, i8* %cond392) nounwind		; <%struct.__sFILE*> [#uses=0]
 	unreachable
 }

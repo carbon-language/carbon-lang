@@ -21,6 +21,6 @@ define void @foo() {
 
 define void @unknown_bootoption() {
 entry:
-	call void asm sideeffect "ud2\0A\09.word ${0:c}\0A\09.long ${1:c}\0A", "i,i,~{dirflag},~{fpsr},~{flags}"( i32 235, i8* getelementptr ([12 x i8]* @str, i32 0, i64 0) )
+	call void asm sideeffect "ud2\0A\09.word ${0:c}\0A\09.long ${1:c}\0A", "i,i,~{dirflag},~{fpsr},~{flags}"( i32 235, i8* getelementptr ([12 x i8], [12 x i8]* @str, i32 0, i64 0) )
 	ret void
 }

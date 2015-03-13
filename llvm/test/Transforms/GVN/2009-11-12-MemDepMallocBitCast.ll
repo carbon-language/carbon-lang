@@ -3,7 +3,7 @@
 ; RUN: opt < %s -gvn -S | FileCheck %s
 
 define i64 @test() {
-  %1 = tail call i8* @malloc(i64 mul (i64 4, i64 ptrtoint (i64* getelementptr (i64* null, i64 1) to i64))) ; <i8*> [#uses=2]
+  %1 = tail call i8* @malloc(i64 mul (i64 4, i64 ptrtoint (i64* getelementptr (i64, i64* null, i64 1) to i64))) ; <i8*> [#uses=2]
   store i8 42, i8* %1
   %X = bitcast i8* %1 to i64*                     ; <i64*> [#uses=1]
   %Y = load i64, i64* %X                               ; <i64> [#uses=1]

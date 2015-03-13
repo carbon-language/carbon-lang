@@ -15,8 +15,8 @@ target triple = "x86_64-apple-macosx10.10.0"
 ; GCDA-NOT: @{{[0-9]+}} = private unnamed_addr constant .* c"bar\00"
 ; GCDA: @[[BAZ:[0-9]+]] = private unnamed_addr constant [4 x i8] c"baz\00"
 ; GCDA: define internal void @__llvm_gcov_writeout()
-; GCDA: call void @llvm_gcda_emit_function(i32 0, i8* getelementptr inbounds ([4 x i8]* @[[FOO]]
-; GCDA: call void @llvm_gcda_emit_function(i32 1, i8* getelementptr inbounds ([4 x i8]* @[[BAZ]]
+; GCDA: call void @llvm_gcda_emit_function(i32 0, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @[[FOO]]
+; GCDA: call void @llvm_gcda_emit_function(i32 1, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @[[BAZ]]
 
 ; GCNO: == foo (0) @
 ; GCNO-NOT: == bar ({{[0-9]+}}) @

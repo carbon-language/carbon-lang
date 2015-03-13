@@ -6,7 +6,7 @@
 define void @foo() nounwind {
 entry:
   tail call void asm sideeffect "", "s,i,~{fpsr},~{flags}"(i8* getelementptr
-inbounds ([4 x i8]* @__FUNCTION__.1623, i64 0, i64 0), i8* getelementptr
-inbounds ([4 x i8]* @__FUNCTION__.1623, i64 0, i64 0)) nounwind
+inbounds ([4 x i8], [4 x i8]* @__FUNCTION__.1623, i64 0, i64 0), i8* getelementptr
+inbounds ([4 x i8], [4 x i8]* @__FUNCTION__.1623, i64 0, i64 0)) nounwind
   ret void
 }

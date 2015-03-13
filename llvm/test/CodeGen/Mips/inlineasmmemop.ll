@@ -41,8 +41,8 @@ entry:
 define void @main() {
 entry:
 ; Second word:
-  tail call void asm sideeffect "    lw    $0,${1:D};", "r,*m,~{$11}"(i32 undef, i32* getelementptr inbounds ([20 x i32]* @b, i32 0, i32 3))
+  tail call void asm sideeffect "    lw    $0,${1:D};", "r,*m,~{$11}"(i32 undef, i32* getelementptr inbounds ([20 x i32], [20 x i32]* @b, i32 0, i32 3))
 ; First word. Notice, no 'D':
-  tail call void asm sideeffect "    lw    $0,${1};", "r,*m,~{$11}"(i32 undef, i32* getelementptr inbounds ([20 x i32]* @b, i32 0, i32 3))
+  tail call void asm sideeffect "    lw    $0,${1};", "r,*m,~{$11}"(i32 undef, i32* getelementptr inbounds ([20 x i32], [20 x i32]* @b, i32 0, i32 3))
   ret void
 }

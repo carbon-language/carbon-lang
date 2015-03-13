@@ -11,7 +11,7 @@ define void @t1() {
 ; ARM64: movz x2, #0x50
 ; ARM64: uxtb w1, w9
 ; ARM64: bl _memset
-  call void @llvm.memset.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i8 0, i64 80, i32 16, i1 false)
+  call void @llvm.memset.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i8 0, i64 80, i32 16, i1 false)
   ret void
 }
 
@@ -25,7 +25,7 @@ define void @t2() {
 ; ARM64: add x1, x8, _message@PAGEOFF
 ; ARM64: movz x2, #0x50
 ; ARM64: bl _memcpy
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 80, i32 16, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 80, i32 16, i1 false)
   ret void
 }
 
@@ -39,7 +39,7 @@ define void @t3() {
 ; ARM64: add x1, x8, _message@PAGEOFF
 ; ARM64: movz x2, #0x14
 ; ARM64: bl _memmove
-  call void @llvm.memmove.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 20, i32 16, i1 false)
+  call void @llvm.memmove.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 20, i32 16, i1 false)
   ret void
 }
 
@@ -58,7 +58,7 @@ define void @t4() {
 ; ARM64: ldrb w11, [x9, #16]
 ; ARM64: strb w11, [x8, #16]
 ; ARM64: ret
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 17, i32 16, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 17, i32 16, i1 false)
   ret void
 }
 
@@ -75,7 +75,7 @@ define void @t5() {
 ; ARM64: ldrb w11, [x9, #16]
 ; ARM64: strb w11, [x8, #16]
 ; ARM64: ret
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 17, i32 8, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 17, i32 8, i1 false)
   ret void
 }
 
@@ -92,7 +92,7 @@ define void @t6() {
 ; ARM64: ldrb w10, [x9, #8]
 ; ARM64: strb w10, [x8, #8]
 ; ARM64: ret
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 9, i32 4, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 9, i32 4, i1 false)
   ret void
 }
 
@@ -111,7 +111,7 @@ define void @t7() {
 ; ARM64: ldrb w10, [x9, #6]
 ; ARM64: strb w10, [x8, #6]
 ; ARM64: ret
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 7, i32 2, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 7, i32 2, i1 false)
   ret void
 }
 
@@ -130,7 +130,7 @@ define void @t8() {
 ; ARM64: ldrb w10, [x9, #3]
 ; ARM64: strb w10, [x8, #3]
 ; ARM64: ret
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 4, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8], [80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8], [80 x i8]* @message, i32 0, i32 0), i64 4, i32 1, i1 false)
   ret void
 }
 

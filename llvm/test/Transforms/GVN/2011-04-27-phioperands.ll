@@ -27,7 +27,7 @@ doemit.exit76.i:
   br label %"<bb 53>.i"
 
 "<L98>.i":
-  store i8* getelementptr inbounds ([10 x i8]* @nuls, i64 0, i64 0), i8** undef, align 8
+  store i8* getelementptr inbounds ([10 x i8], [10 x i8]* @nuls, i64 0, i64 0), i8** undef, align 8
   br label %"<bb 53>.i"
 
 "<L99>.i":

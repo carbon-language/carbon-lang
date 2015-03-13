@@ -11,7 +11,7 @@
 define i32 @_Z18read_response_sizev() #0 {
 entry:
   tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !23, metadata !MDExpression()), !dbg !39
-  %0 = load i64, i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
+  %0 = load i64, i64* getelementptr inbounds ({ i64, [56 x i8] }, { i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
   tail call void @llvm.dbg.value(metadata i32 undef, i64 0, metadata !64, metadata !MDExpression()), !dbg !71
   %1 = trunc i64 %0 to i32
   ret i32 %1
@@ -47,7 +47,7 @@ attributes #0 = { sspreq }
 !19 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 29, scope: !9, file: !10, type: !13)
 !20 = !{}
 !21 = !{i32 2, !"Dwarf Version", i32 2}
-!22 = !{i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0)}
+!22 = !{i64* getelementptr inbounds ({ i64, [56 x i8] }, { i64, [56 x i8] }* @a, i32 0, i32 0)}
 !23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "p2", line: 12, arg: 2, scope: !24, file: !10, type: !32, inlinedAt: !38)
 !24 = !MDSubprogram(name: "min<unsigned long long>", linkageName: "_ZN3__13minIyEERKT_S3_RS1_", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !1, scope: !25, type: !27, templateParams: !33, variables: !35)
 !25 = !MDNamespace(name: "__1", line: 1, file: !26, scope: null)

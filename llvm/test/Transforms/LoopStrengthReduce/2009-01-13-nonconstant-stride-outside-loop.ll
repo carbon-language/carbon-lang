@@ -34,6 +34,6 @@ nactive_heaps.exit:		; preds = %bb2.i3, %bb1.i
 	%3 = load i32, i32* @heap_size, align 4		; <i32> [#uses=1]
 	%4 = mul i32 %3, %m.0.i		; <i32> [#uses=1]
 	%5 = sub i32 %4, 0		; <i32> [#uses=1]
-	%6 = tail call i32 (i8*, i8*, ...)* @sprintf(i8* null, i8* getelementptr ([39 x i8]* @"\01LC85", i32 0, i32 0), i32 %m.0.i, i32 0, i32 %5, i32 0) nounwind		; <i32> [#uses=0]
+	%6 = tail call i32 (i8*, i8*, ...)* @sprintf(i8* null, i8* getelementptr ([39 x i8], [39 x i8]* @"\01LC85", i32 0, i32 0), i32 %m.0.i, i32 0, i32 %5, i32 0) nounwind		; <i32> [#uses=0]
 	ret %struct.obj* null
 }

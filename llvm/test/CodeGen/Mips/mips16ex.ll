@@ -16,7 +16,7 @@ entry:
   %ehselector.slot = alloca i32
   %e = alloca i32, align 4
   store i32 0, i32* %retval
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0))
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0))
   %exception = call i8* @__cxa_allocate_exception(i32 4) nounwind
   %0 = bitcast i8* %exception to i32*
   store i32 20, i32* %0
@@ -45,7 +45,7 @@ catch:                                            ; preds = %catch.dispatch
   %exn.scalar = load i32, i32* %6
   store i32 %exn.scalar, i32* %e, align 4
   %7 = load i32, i32* %e, align 4
-  %call2 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str1, i32 0, i32 0), i32 %7)
+  %call2 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str1, i32 0, i32 0), i32 %7)
           to label %invoke.cont unwind label %lpad1
 
 invoke.cont:                                      ; preds = %catch

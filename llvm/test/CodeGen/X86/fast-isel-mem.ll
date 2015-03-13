@@ -33,7 +33,7 @@ entry:
 
 define void @t(%stuff* %this) nounwind {
 entry:
-	store i32 (...)** getelementptr ([4 x i32 (...)*]* @LotsStuff, i32 0, i32 2), i32 (...)*** null, align 4
+	store i32 (...)** getelementptr ([4 x i32 (...)*], [4 x i32 (...)*]* @LotsStuff, i32 0, i32 2), i32 (...)*** null, align 4
 	ret void
 ; CHECK: _t:
 ; CHECK:	xorl    %eax, %eax

@@ -67,22 +67,22 @@ FontSize.exit:		; preds = %bb.i1, %FontHalfXHeight.exit
 	br i1 %2, label %bb.i5, label %FontName.exit
 
 bb.i5:		; preds = %FontSize.exit
-	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([10 x i8]* @.str81872, i32 0, i32 0)) nounwind
+	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8], [20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([10 x i8], [10 x i8]* @.str81872, i32 0, i32 0)) nounwind
 	br label %FontName.exit
 
 FontName.exit:		; preds = %bb.i5, %FontSize.exit
-	%3 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([8 x i8]* @.str1822946, i32 0, i32 0), i32 %1, i8* undef) nounwind		; <i32> [#uses=0]
-	%4 = call  i32 @"\01_fwrite"(i8* getelementptr ([11 x i8]* @.str1842948, i32 0, i32 0), i32 1, i32 10, i8* undef) nounwind		; <i32> [#uses=0]
+	%3 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([8 x i8], [8 x i8]* @.str1822946, i32 0, i32 0), i32 %1, i8* undef) nounwind		; <i32> [#uses=0]
+	%4 = call  i32 @"\01_fwrite"(i8* getelementptr ([11 x i8], [11 x i8]* @.str1842948, i32 0, i32 0), i32 1, i32 10, i8* undef) nounwind		; <i32> [#uses=0]
 	%5 = sub i32 %colmark, undef		; <i32> [#uses=1]
 	%6 = sub i32 %rowmark, undef		; <i32> [#uses=1]
 	%7 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
-	%8 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %7, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 %5, i32 %6) nounwind		; <i32> [#uses=0]
+	%8 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %7, i8* getelementptr ([17 x i8], [17 x i8]* @.str212784, i32 0, i32 0), i32 %5, i32 %6) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
 	%9 = getelementptr %struct.rec, %struct.rec* %y.0, i32 0, i32 0, i32 3, i32 0, i32 0, i32 1		; <i32*> [#uses=1]
 	%10 = load i32, i32* %9, align 4		; <i32> [#uses=1]
 	%11 = sub i32 0, %10		; <i32> [#uses=1]
 	%12 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
-	%13 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %12, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 undef, i32 %11) nounwind		; <i32> [#uses=0]
+	%13 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %12, i8* getelementptr ([17 x i8], [17 x i8]* @.str212784, i32 0, i32 0), i32 undef, i32 %11) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
 	br label %bb100.outer.outer
 

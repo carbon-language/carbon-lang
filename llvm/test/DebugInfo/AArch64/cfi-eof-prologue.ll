@@ -32,7 +32,7 @@ entry:
   %0 = getelementptr inbounds %struct.B, %struct.B* %this, i64 0, i32 0, !dbg !40
   %call = tail call %struct.A* @_ZN1AC2Ev(%struct.A* %0) #3, !dbg !40
   %1 = getelementptr inbounds %struct.B, %struct.B* %this, i64 0, i32 0, i32 0, !dbg !40
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTV1B, i64 0, i64 2) to i32 (...)**), i32 (...)*** %1, align 8, !dbg !40, !tbaa !41
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV1B, i64 0, i64 2) to i32 (...)**), i32 (...)*** %1, align 8, !dbg !40, !tbaa !41
   ret %struct.B* %this, !dbg !40
 }
 
@@ -46,7 +46,7 @@ entry:
   %0 = getelementptr inbounds %struct.B, %struct.B* %this, i64 0, i32 0, !dbg !48
   %call.i = tail call %struct.A* @_ZN1AC2Ev(%struct.A* %0) #3, !dbg !48
   %1 = getelementptr inbounds %struct.B, %struct.B* %this, i64 0, i32 0, i32 0, !dbg !48
-  store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTV1B, i64 0, i64 2) to i32 (...)**), i32 (...)*** %1, align 8, !dbg !48, !tbaa !41
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV1B, i64 0, i64 2) to i32 (...)**), i32 (...)*** %1, align 8, !dbg !48, !tbaa !41
   ret %struct.B* %this, !dbg !46
 }
 

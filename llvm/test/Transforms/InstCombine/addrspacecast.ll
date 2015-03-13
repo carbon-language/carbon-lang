@@ -127,7 +127,7 @@ declare void @foo(i8*) nounwind
 define i32 @memcpy_addrspacecast() nounwind {
 entry:
   %alloca = alloca i8, i32 48
-  call void @llvm.memcpy.p0i8.p1i8.i32(i8* %alloca, i8 addrspace(1)* addrspacecast (i8 addrspace(2)* getelementptr inbounds ([60 x i8] addrspace(2)* @const_array, i16 0, i16 4) to i8 addrspace(1)*), i32 48, i32 4, i1 false) nounwind
+  call void @llvm.memcpy.p0i8.p1i8.i32(i8* %alloca, i8 addrspace(1)* addrspacecast (i8 addrspace(2)* getelementptr inbounds ([60 x i8], [60 x i8] addrspace(2)* @const_array, i16 0, i16 4) to i8 addrspace(1)*), i32 48, i32 4, i1 false) nounwind
   br label %loop.body
 
 loop.body:

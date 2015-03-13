@@ -47,7 +47,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [16 x i8], [16 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -83,7 +83,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [16 x i8], [16 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -115,7 +115,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [16 x i8], [16 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -147,7 +147,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [16 x i8], [16 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -180,7 +180,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo, %struct.foo* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [16 x i8], [16 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -214,7 +214,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo, %struct.foo* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [16 x i8], [16 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -248,7 +248,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo, %struct.foo* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [16 x i8], [16 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -282,7 +282,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo, %struct.foo* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [16 x i8], [16 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -313,7 +313,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [4 x i8], [4 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -345,7 +345,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [4 x i8], [4 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -377,7 +377,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [4 x i8], [4 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -409,7 +409,7 @@ entry:
   %0 = load i8*, i8** %a.addr, align 8
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %arraydecay1 = getelementptr inbounds [4 x i8], [4 x i8]* %buf, i32 0, i32 0
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay1)
   ret void
 }
 
@@ -442,7 +442,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo.0, %struct.foo.0* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [4 x i8], [4 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -476,7 +476,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo.0, %struct.foo.0* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [4 x i8], [4 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -510,7 +510,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo.0, %struct.foo.0* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [4 x i8], [4 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -544,7 +544,7 @@ entry:
   %call = call i8* @strcpy(i8* %arraydecay, i8* %0)
   %buf1 = getelementptr inbounds %struct.foo.0, %struct.foo.0* %b, i32 0, i32 0
   %arraydecay2 = getelementptr inbounds [4 x i8], [4 x i8]* %buf1, i32 0, i32 0
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay2)
   ret void
 }
 
@@ -571,7 +571,7 @@ entry:
   %a.addr = alloca i8*, align 8
   store i8* %a, i8** %a.addr, align 8
   %0 = load i8*, i8** %a.addr, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %0)
   ret void
 }
 
@@ -599,7 +599,7 @@ entry:
   %a.addr = alloca i8*, align 8
   store i8* %a, i8** %a.addr, align 8
   %0 = load i8*, i8** %a.addr, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %0)
   ret void
 }
 
@@ -627,7 +627,7 @@ entry:
   %a.addr = alloca i8*, align 8
   store i8* %a, i8** %a.addr, align 8
   %0 = load i8*, i8** %a.addr, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %0)
   ret void
 }
 
@@ -655,7 +655,7 @@ entry:
   %a.addr = alloca i8*, align 8
   store i8* %a, i8** %a.addr, align 8
   %0 = load i8*, i8** %a.addr, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %0)
   ret void
 }
 
@@ -808,7 +808,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %a = alloca i32, align 4
   %0 = ptrtoint i32* %a to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -835,7 +835,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %a = alloca i32, align 4
   %0 = ptrtoint i32* %a to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -862,7 +862,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %a = alloca i32, align 4
   %0 = ptrtoint i32* %a to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -889,7 +889,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %a = alloca i32, align 4
   %0 = ptrtoint i32* %a to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -1021,7 +1021,7 @@ entry:
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), double* %y.1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double* %y.1)
   ret void
 }
 
@@ -1051,7 +1051,7 @@ entry:
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), double* %y.1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double* %y.1)
   ret void
 }
 
@@ -1081,7 +1081,7 @@ entry:
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), double* %y.1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double* %y.1)
   ret void
 }
 
@@ -1111,7 +1111,7 @@ entry:
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
-  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), double* %y.1)
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double* %y.1)
   ret void
 }
 
@@ -1155,7 +1155,7 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
@@ -1200,7 +1200,7 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
@@ -1245,7 +1245,7 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
@@ -1290,7 +1290,7 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
@@ -1319,7 +1319,7 @@ entry:
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   store i32* %y, i32** %b, align 8
   %0 = load i32*, i32** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32* %0)
   ret void
 }
 
@@ -1349,7 +1349,7 @@ entry:
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   store i32* %y, i32** %b, align 8
   %0 = load i32*, i32** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32* %0)
   ret void
 }
 
@@ -1379,7 +1379,7 @@ entry:
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   store i32* %y, i32** %b, align 8
   %0 = load i32*, i32** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32* %0)
   ret void
 }
 
@@ -1409,7 +1409,7 @@ entry:
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   store i32* %y, i32** %b, align 8
   %0 = load i32*, i32** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32* %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32* %0)
   ret void
 }
 
@@ -1437,7 +1437,7 @@ entry:
   %b = alloca i32*, align 8
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   %0 = ptrtoint i32* %y to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -1466,7 +1466,7 @@ entry:
   %b = alloca i32*, align 8
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   %0 = ptrtoint i32* %y to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -1494,7 +1494,7 @@ entry:
   %b = alloca i32*, align 8
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   %0 = ptrtoint i32* %y to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -1523,7 +1523,7 @@ entry:
   %b = alloca i32*, align 8
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i32 0, i32 1
   %0 = ptrtoint i32* %y to i64
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %0)
   ret void
 }
 
@@ -1549,7 +1549,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
@@ -1576,7 +1576,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
@@ -1603,7 +1603,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
@@ -1630,7 +1630,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair, %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
@@ -1656,7 +1656,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32, i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
@@ -1683,7 +1683,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32, i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
@@ -1710,7 +1710,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32, i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
@@ -1737,7 +1737,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32, i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
@@ -1768,7 +1768,7 @@ entry:
   %0 = bitcast i32* %a to float*
   store float* %0, float** %b, align 8
   %1 = load float*, float** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), float* %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), float* %1)
   ret void
 }
 
@@ -1800,7 +1800,7 @@ entry:
   %0 = bitcast i32* %a to float*
   store float* %0, float** %b, align 8
   %1 = load float*, float** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), float* %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), float* %1)
   ret void
 }
 
@@ -1832,7 +1832,7 @@ entry:
   %0 = bitcast i32* %a to float*
   store float* %0, float** %b, align 8
   %1 = load float*, float** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), float* %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), float* %1)
   ret void
 }
 
@@ -1864,7 +1864,7 @@ entry:
   %0 = bitcast i32* %a to float*
   store float* %0, float** %b, align 8
   %1 = load float*, float** %b, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), float* %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), float* %1)
   ret void
 }
 
@@ -2006,7 +2006,7 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec, %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>, <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
@@ -2034,7 +2034,7 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec, %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>, <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
@@ -2062,7 +2062,7 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec, %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>, <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
@@ -2090,7 +2090,7 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec, %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>, <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
@@ -3152,7 +3152,7 @@ entry:
   %b = getelementptr inbounds %struct.nest, %struct.nest* %c, i32 0, i32 1
   %_a = getelementptr inbounds %struct.pair, %struct.pair* %b, i32 0, i32 0
   %0 = load i32, i32* %_a, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %0)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 %0)
   ret void
 }
 
@@ -3235,7 +3235,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %test = alloca [32 x i8], align 16
   %arraydecay = getelementptr inbounds [32 x i8], [32 x i8]* %test, i32 0, i32 0
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
   ret i32 %call
 }
 
@@ -3261,7 +3261,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %test = alloca [33 x i8], align 16
   %arraydecay = getelementptr inbounds [33 x i8], [33 x i8]* %test, i32 0, i32 0
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
   ret i32 %call
 }
 
@@ -3287,7 +3287,7 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %test = alloca [4 x i8], align 1
   %arraydecay = getelementptr inbounds [4 x i8], [4 x i8]* %test, i32 0, i32 0
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
   ret i32 %call
 }
 
@@ -3313,7 +3313,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %test = alloca [5 x i8], align 1
   %arraydecay = getelementptr inbounds [5 x i8], [5 x i8]* %test, i32 0, i32 0
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
   ret i32 %call
 }
 
@@ -3347,7 +3347,7 @@ entry:
   %3 = load i64, i64* %2, align 1
   %4 = getelementptr { i64, i8 }, { i64, i8 }* %test.coerce, i32 0, i32 1
   %5 = load i8, i8* %4, align 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %3, i8 %5)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %3, i8 %5)
   ret i32 %call
 }
 
@@ -3381,7 +3381,7 @@ entry:
   %3 = load i64, i64* %2, align 1
   %4 = getelementptr { i64, i8 }, { i64, i8 }* %test.coerce, i32 0, i32 1
   %5 = load i8, i8* %4, align 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %3, i8 %5)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i64 %3, i8 %5)
   ret i32 %call
 }
 
@@ -3410,7 +3410,7 @@ entry:
   %0 = alloca i8, i64 4
   store i8* %0, i8** %test, align 8
   %1 = load i8*, i8** %test, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %1)
   ret i32 %call
 }
 
@@ -3438,7 +3438,7 @@ entry:
   %0 = alloca i8, i64 5
   store i8* %0, i8** %test, align 8
   %1 = load i8*, i8** %test, align 8
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* %1)
   ret i32 %call
 }
 

@@ -7,6 +7,6 @@ zeroinitializer
 
 define %hlvm_programs_element* @hlvm_get_programs() {
 entry:
-  ret %hlvm_programs_element* getelementptr([1 x %hlvm_programs_element]*  
+  ret %hlvm_programs_element* getelementptr([1 x %hlvm_programs_element], [1 x %hlvm_programs_element]*  
                                             @hlvm_programs, i32 0, i32 0)
 }

@@ -25,9 +25,9 @@ entry:
   %idx.ext19 = sext i32 %index.sroa.0.12.vec.extract to i64
   %add.ptr20 = getelementptr inbounds i8, i8* bitcast ([256 x double]* @stuff to i8*), i64 %idx.ext19
   %tmp7 = bitcast i8* %add.ptr20 to double*
-  %add.ptr46 = getelementptr inbounds i8, i8* bitcast (double* getelementptr inbounds ([256 x double]* @stuff, i64 0, i64 1) to i8*), i64 %idx.ext
+  %add.ptr46 = getelementptr inbounds i8, i8* bitcast (double* getelementptr inbounds ([256 x double], [256 x double]* @stuff, i64 0, i64 1) to i8*), i64 %idx.ext
   %tmp16 = bitcast i8* %add.ptr46 to double*
-  %add.ptr51 = getelementptr inbounds i8, i8* bitcast (double* getelementptr inbounds ([256 x double]* @stuff, i64 0, i64 1) to i8*), i64 %idx.ext5
+  %add.ptr51 = getelementptr inbounds i8, i8* bitcast (double* getelementptr inbounds ([256 x double], [256 x double]* @stuff, i64 0, i64 1) to i8*), i64 %idx.ext5
   %tmp17 = bitcast i8* %add.ptr51 to double*
   call void @toto(double* %tmp4, double* %tmp5, double* %tmp6, double* %tmp7, double* %tmp16, double* %tmp17)
   ret void

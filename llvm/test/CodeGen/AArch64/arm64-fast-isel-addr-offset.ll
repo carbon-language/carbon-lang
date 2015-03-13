@@ -13,7 +13,7 @@ entry:
 ; CHECK: add x[[REG3:[0-9]+]], x[[REG1]], x[[REG2]]
 ; CHECK: ldr w0, [x[[REG3]]]
 ; CHECK: ret
-  %0 = load i32, i32* getelementptr inbounds ([5001 x i32]* @sortlist, i32 0, i64 5000), align 4
+  %0 = load i32, i32* getelementptr inbounds ([5001 x i32], [5001 x i32]* @sortlist, i32 0, i64 5000), align 4
   ret i32 %0
 }
 
@@ -26,7 +26,7 @@ entry:
 ; CHECK: add x[[REG3:[0-9]+]], x[[REG1]], x[[REG2]]
 ; CHECK: ldr x0, [x[[REG3]]]
 ; CHECK: ret
-  %0 = load i64, i64* getelementptr inbounds ([5001 x i64]* @sortlist2, i32 0, i64 5000), align 4
+  %0 = load i64, i64* getelementptr inbounds ([5001 x i64], [5001 x i64]* @sortlist2, i32 0, i64 5000), align 4
   ret i64 %0
 }
 

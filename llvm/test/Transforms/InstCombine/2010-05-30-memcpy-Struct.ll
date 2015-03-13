@@ -10,7 +10,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @CopyEventArg(%union.anon* %ev) nounwind {
 entry:
-  %call = call i32 (i8*, i8*, ...)* @sprintf(i8* undef, i8* getelementptr inbounds ([3 x i8]* @.str, i64 0, i64 0), %union.anon* %ev) nounwind
+  %call = call i32 (i8*, i8*, ...)* @sprintf(i8* undef, i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), %union.anon* %ev) nounwind
 ; CHECK: bitcast %union.anon* %ev to i8*
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
   ret void

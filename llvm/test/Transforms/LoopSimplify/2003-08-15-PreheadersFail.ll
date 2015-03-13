@@ -8,7 +8,7 @@ target datalayout = "e-p:32:32"
 define i32 @_yylex() {
 	br label %loopentry.0
 loopentry.0:		; preds = %else.26, %0
-	store i32* getelementptr ([16386 x i32]* @yy_state_buf, i64 0, i64 0), i32** @yy_state_ptr
+	store i32* getelementptr ([16386 x i32], [16386 x i32]* @yy_state_buf, i64 0, i64 0), i32** @yy_state_ptr
 	%tmp.35 = load i32*, i32** @yy_state_ptr		; <i32*> [#uses=2]
 	%inc.0 = getelementptr i32, i32* %tmp.35, i64 1		; <i32*> [#uses=1]
 	store i32* %inc.0, i32** @yy_state_ptr

@@ -48,7 +48,7 @@ bb1:
   %tmp10 = zext i32 %tmp6 to i64
   %tmp11 = zext i32 %tmp5 to i64
   %tmp12 = mul nsw i64 %tmp10, %tmp11
-  %tmp13 = call i32 @foo(i8* getelementptr inbounds ([6 x i8]* @.str1, i32 0, i32 0), i64 %tmp12, i32 %tmp5) nounwind
+  %tmp13 = call i32 @foo(i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str1, i32 0, i32 0), i64 %tmp12, i32 %tmp5) nounwind
   br label %bb8
 
 bb4:

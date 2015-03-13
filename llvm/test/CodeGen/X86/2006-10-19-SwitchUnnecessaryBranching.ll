@@ -15,11 +15,11 @@ entry:
 	]
 
 bb:		; preds = %entry
-	%tmp1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([14 x i8]* @str, i32 0, i64 0) )		; <i32> [#uses=0]
+	%tmp1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([14 x i8], [14 x i8]* @str, i32 0, i64 0) )		; <i32> [#uses=0]
 	ret i32 0
 
 bb2:		; preds = %entry
-	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([13 x i8]* @str.upgrd.1, i32 0, i64 0) )		; <i32> [#uses=0]
+	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([13 x i8], [13 x i8]* @str.upgrd.1, i32 0, i64 0) )		; <i32> [#uses=0]
 	ret i32 0
 
 UnifiedReturnBlock:		; preds = %entry

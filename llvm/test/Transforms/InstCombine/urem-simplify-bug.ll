@@ -22,7 +22,7 @@ bb14:		; preds = %entry
 	br label %bb15
 
 bb15:		; preds = %bb14, %bb
-	%iftmp.0.0 = phi i8* [ getelementptr ([5 x i8]* @.str1, i32 0, i32 0), %bb14 ], [ getelementptr ([5 x i8]* @.str, i32 0, i32 0), %bb ]		; <i8*> [#uses=1]
+	%iftmp.0.0 = phi i8* [ getelementptr ([5 x i8], [5 x i8]* @.str1, i32 0, i32 0), %bb14 ], [ getelementptr ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), %bb ]		; <i8*> [#uses=1]
 	%tmp17 = call i32 (i8*, ...)* @printf( i8* %iftmp.0.0 ) nounwind 		; <i32> [#uses=0]
 	ret i32 0
 }

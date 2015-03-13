@@ -50,7 +50,7 @@ if.then4073:                                      ; preds = %if.then3344
   %conv4094 = sitofp i32 %add4093 to float
   %div4095 = fdiv float %conv4094, 5.670000e+02
   %conv4096 = fpext float %div4095 to double
-  %call4097 = call i32 (i8*, i32, i64, i8*, ...)* @__sprintf_chk(i8* %arraydecay4078, i32 0, i64 20, i8* getelementptr inbounds ([6 x i8]* @.str15, i64 0, i64 0), double %conv4096) nounwind
+  %call4097 = call i32 (i8*, i32, i64, i8*, ...)* @__sprintf_chk(i8* %arraydecay4078, i32 0, i64 20, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str15, i64 0, i64 0), double %conv4096) nounwind
   br i1 %cmp1733, label %if.then4107, label %if.else4114
 
 if.then4107:                                      ; preds = %if.then4073

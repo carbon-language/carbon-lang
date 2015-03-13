@@ -21,20 +21,20 @@ declare i16 @llvm.objectsize.i16.p3i8(i8 addrspace(3)*, i1) nounwind readonly
 define i32 @foo_as3() nounwind {
 ; CHECK-LABEL: @foo_as3(
 ; CHECK-NEXT: ret i32 60
-  %1 = call i32 @llvm.objectsize.i32.p3i8(i8 addrspace(3)* getelementptr inbounds ([60 x i8] addrspace(3)* @a_as3, i32 0, i32 0), i1 false)
+  %1 = call i32 @llvm.objectsize.i32.p3i8(i8 addrspace(3)* getelementptr inbounds ([60 x i8], [60 x i8] addrspace(3)* @a_as3, i32 0, i32 0), i1 false)
   ret i32 %1
 }
 
 define i16 @foo_as3_i16() nounwind {
 ; CHECK-LABEL: @foo_as3_i16(
 ; CHECK-NEXT: ret i16 60
-  %1 = call i16 @llvm.objectsize.i16.p3i8(i8 addrspace(3)* getelementptr inbounds ([60 x i8] addrspace(3)* @a_as3, i32 0, i32 0), i1 false)
+  %1 = call i16 @llvm.objectsize.i16.p3i8(i8 addrspace(3)* getelementptr inbounds ([60 x i8], [60 x i8] addrspace(3)* @a_as3, i32 0, i32 0), i1 false)
   ret i16 %1
 }
 
 @a_alias = weak alias [60 x i8] addrspace(3)* @a_as3
 define i32 @foo_alias() nounwind {
-  %1 = call i32 @llvm.objectsize.i32.p3i8(i8 addrspace(3)* getelementptr inbounds ([60 x i8] addrspace(3)* @a_alias, i32 0, i32 0), i1 false)
+  %1 = call i32 @llvm.objectsize.i32.p3i8(i8 addrspace(3)* getelementptr inbounds ([60 x i8], [60 x i8] addrspace(3)* @a_alias, i32 0, i32 0), i1 false)
   ret i32 %1
 }
 

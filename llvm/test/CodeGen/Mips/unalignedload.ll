@@ -30,7 +30,7 @@ entry:
 
 ; MIPS32R6-DAG:  lhu $[[PART1:[0-9]+]], 2($[[R0]])
 
-  tail call void @foo2(%struct.S1* byval getelementptr inbounds (%struct.S2* @s2, i32 0, i32 1)) nounwind
+  tail call void @foo2(%struct.S1* byval getelementptr inbounds (%struct.S2, %struct.S2* @s2, i32 0, i32 1)) nounwind
   ret void
 }
 

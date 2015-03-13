@@ -8,6 +8,6 @@ target triple = "x86_64-pc-linux"
 
 define i32 @unknown_bootoption() {
 entry:
-	tail call void asm sideeffect "foo ${0:c}\0A", "i,~{dirflag},~{fpsr},~{flags}"( i8* getelementptr ([12 x i8]* @str, i32 0, i64 0) )
+	tail call void asm sideeffect "foo ${0:c}\0A", "i,~{dirflag},~{fpsr},~{flags}"( i8* getelementptr ([12 x i8], [12 x i8]* @str, i32 0, i64 0) )
 	ret i32 undef
 }

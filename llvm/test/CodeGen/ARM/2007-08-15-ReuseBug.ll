@@ -46,7 +46,7 @@ bb102.i:		; preds = %cond_next212.i
 cond_true110.i:		; preds = %bb102.i
 	%tmp116.i = getelementptr i8*, i8** %argv_addr.2321.0.i, i32 2		; <i8**> [#uses=1]
 	%tmp117.i = load i8*, i8** %tmp116.i		; <i8*> [#uses=1]
-	%tmp126425.i = call %struct.FILE* @fopen( i8* %tmp117.i, i8* getelementptr ([2 x i8]* @.str44, i32 0, i32 0) )		; <%struct.FILE*> [#uses=0]
+	%tmp126425.i = call %struct.FILE* @fopen( i8* %tmp117.i, i8* getelementptr ([2 x i8], [2 x i8]* @.str44, i32 0, i32 0) )		; <%struct.FILE*> [#uses=0]
 	ret i32 0
 
 cond_next123.i:		; preds = %bb102.i

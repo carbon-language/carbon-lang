@@ -14,7 +14,7 @@ invoke.cont:
   ret void
 lpad:
   %tmp14 = landingpad { i8*, i32 } personality i8* bitcast (void ()* @h to i8*)
-           catch i8* getelementptr inbounds ([12 x i8]* @str, i64 0, i64 0)
+           catch i8* getelementptr inbounds ([12 x i8], [12 x i8]* @str, i64 0, i64 0)
   ret void
 }
 declare void @g()

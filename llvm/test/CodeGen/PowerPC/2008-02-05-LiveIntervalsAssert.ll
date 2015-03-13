@@ -44,7 +44,7 @@ bb103.preheader:		; preds = %bb113
 
 bb113:		; preds = %bb113, %bb93, %bb82, %bb52, %entry
 	%fingerprint_addr.0.reg2mem.9 = phi i64 [ 0, %entry ], [ 0, %bb52 ], [ 0, %bb82 ], [ 0, %bb93 ], [ %tmp118, %bb113 ]		; <i64> [#uses=1]
-	tail call void @_Z28report_should_not_reach_herePKci( i8* getelementptr ([44 x i8]* @.str, i32 0, i32 0), i32 817 ) nounwind 
+	tail call void @_Z28report_should_not_reach_herePKci( i8* getelementptr ([44 x i8], [44 x i8]* @.str, i32 0, i32 0), i32 817 ) nounwind 
 	%tmp118 = lshr i64 %fingerprint_addr.0.reg2mem.9, 4		; <i64> [#uses=2]
 	%tmp21158 = and i64 %tmp118, 15		; <i64> [#uses=1]
 	switch i64 %tmp21158, label %bb113 [

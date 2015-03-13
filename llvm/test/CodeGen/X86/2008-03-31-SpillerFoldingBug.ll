@@ -15,21 +15,21 @@
 
 define void @_GLOBAL__I__ZN5Pooma5pinfoE() nounwind  {
 entry:
-	store i32 (...)** getelementptr ([10 x i32 (...)*]* @_ZTVSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE, i32 0, i32 8), i32 (...)*** null, align 4
+	store i32 (...)** getelementptr ([10 x i32 (...)*], [10 x i32 (...)*]* @_ZTVSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE, i32 0, i32 8), i32 (...)*** null, align 4
 	%tmp96.i.i142.i = call i8* @_Znwm( i32 180 ) nounwind 		; <i8*> [#uses=2]
 	call void @_ZNSt8ios_baseC2Ev( %"struct.std::ios_base"* null ) nounwind 
-	store i32 (...)** getelementptr ([4 x i32 (...)*]* @_ZTVSt9basic_iosIcSt11char_traitsIcEE, i32 0, i32 2), i32 (...)*** null, align 4
+	store i32 (...)** getelementptr ([4 x i32 (...)*], [4 x i32 (...)*]* @_ZTVSt9basic_iosIcSt11char_traitsIcEE, i32 0, i32 2), i32 (...)*** null, align 4
 	store i32 (...)** null, i32 (...)*** null, align 4
 	%ctg2242.i.i163.i = getelementptr i8, i8* %tmp96.i.i142.i, i32 0		; <i8*> [#uses=1]
-	%tmp150.i.i164.i = load i8*, i8** getelementptr ([4 x i8*]* @_ZTTSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE, i32 0, i64 2), align 4		; <i8*> [#uses=1]
+	%tmp150.i.i164.i = load i8*, i8** getelementptr ([4 x i8*], [4 x i8*]* @_ZTTSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE, i32 0, i64 2), align 4		; <i8*> [#uses=1]
 	%tmp150151.i.i165.i = bitcast i8* %tmp150.i.i164.i to i32 (...)**		; <i32 (...)**> [#uses=1]
 	%tmp153.i.i166.i = bitcast i8* %ctg2242.i.i163.i to i32 (...)***		; <i32 (...)***> [#uses=1]
 	store i32 (...)** %tmp150151.i.i165.i, i32 (...)*** %tmp153.i.i166.i, align 4
 	%tmp159.i.i167.i = bitcast i8* %tmp96.i.i142.i to i32 (...)***		; <i32 (...)***> [#uses=1]
-	store i32 (...)** getelementptr ([10 x i32 (...)*]* @_ZTVSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE, i32 0, i32 3), i32 (...)*** %tmp159.i.i167.i, align 4
-	store i32 (...)** getelementptr ([16 x i32 (...)*]* @_ZTVSt15basic_streambufIcSt11char_traitsIcEE, i32 0, i32 2), i32 (...)*** null, align 4
+	store i32 (...)** getelementptr ([10 x i32 (...)*], [10 x i32 (...)*]* @_ZTVSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE, i32 0, i32 3), i32 (...)*** %tmp159.i.i167.i, align 4
+	store i32 (...)** getelementptr ([16 x i32 (...)*], [16 x i32 (...)*]* @_ZTVSt15basic_streambufIcSt11char_traitsIcEE, i32 0, i32 2), i32 (...)*** null, align 4
 	call void @_ZNSt6localeC1Ev( %"struct.std::locale"* null ) nounwind 
-	store i32 (...)** getelementptr ([16 x i32 (...)*]* @_ZTVSt15basic_stringbufIcSt11char_traitsIcESaIcEE, i32 0, i32 2), i32 (...)*** null, align 4
+	store i32 (...)** getelementptr ([16 x i32 (...)*], [16 x i32 (...)*]* @_ZTVSt15basic_stringbufIcSt11char_traitsIcESaIcEE, i32 0, i32 2), i32 (...)*** null, align 4
 	unreachable
 }
 

@@ -15,9 +15,9 @@ entry:
 ; CHECK:   movq    %rax, e+4(%rip)
 ; CHECK:   movl    $456, e+8(%rip)
 
-  store i32 1, i32* getelementptr inbounds (%structTy* @e, i64 0, i32 1), align 4
-  store i32 123, i32* getelementptr inbounds (%structTy* @e, i64 0, i32 2), align 4
-  store i32 456, i32* getelementptr inbounds (%structTy* @e, i64 0, i32 2), align 4
+  store i32 1, i32* getelementptr inbounds (%structTy, %structTy* @e, i64 0, i32 1), align 4
+  store i32 123, i32* getelementptr inbounds (%structTy, %structTy* @e, i64 0, i32 2), align 4
+  store i32 456, i32* getelementptr inbounds (%structTy, %structTy* @e, i64 0, i32 2), align 4
   ret void
 }
 

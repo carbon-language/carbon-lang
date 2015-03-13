@@ -13,7 +13,7 @@ declare i32 @printf(i8*, ...)
 
 define i32 @main(i32 %argc, i8** %argv) {
 bb0:
-	call i32 (i8*, ...)* @printf( i8* getelementptr ([10 x i8]* @.LC0, i64 0, i64 0), i32 %argc )		; <i32>:0 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* getelementptr ([10 x i8], [10 x i8]* @.LC0, i64 0, i64 0), i32 %argc )		; <i32>:0 [#uses=0]
 	%cast224 = bitcast i8** %argv to i8*		; <i8*> [#uses=1]
 	%local = alloca i8*		; <i8**> [#uses=3]
 	store i8* %cast224, i8** %local

@@ -57,6 +57,6 @@ Fft.exit.i:		; preds = %bb7.i.i
 	br i1 undef, label %bb5.i, label %bb1.outer2.i.i.outer
 
 bb5.i:		; preds = %Fft.exit.i
-	%0 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([15 x i8]* @"\01LC", i32 0, i32 0), double undef, double undef) nounwind		; <i32> [#uses=0]
+	%0 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([15 x i8], [15 x i8]* @"\01LC", i32 0, i32 0), double undef, double undef) nounwind		; <i32> [#uses=0]
 	unreachable
 }

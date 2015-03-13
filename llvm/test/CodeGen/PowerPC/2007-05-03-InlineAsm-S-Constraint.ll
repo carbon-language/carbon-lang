@@ -7,6 +7,6 @@ target triple = "powerpc-apple-darwin8.8.0"
 
 define void @foo() {
 entry:
-	tail call void asm sideeffect "$0 $1", "s,i"( i8* bitcast (i32* getelementptr ([2 x i32]* @x, i32 0, i32 1) to i8*), i8* bitcast (i32* getelementptr ([2 x i32]* @x, i32 0, i32 1) to i8*) )
+	tail call void asm sideeffect "$0 $1", "s,i"( i8* bitcast (i32* getelementptr ([2 x i32], [2 x i32]* @x, i32 0, i32 1) to i8*), i8* bitcast (i32* getelementptr ([2 x i32], [2 x i32]* @x, i32 0, i32 1) to i8*) )
 	ret void
 }

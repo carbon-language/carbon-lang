@@ -144,7 +144,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_1b* %0 to { i8 }*
   %2 = getelementptr { i8 }, { i8 }* %1, i32 0, i32 0
   %3 = load i8, i8* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i8 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i8 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_1b: 
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 56
@@ -158,7 +158,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_2b* %0 to { i16 }*
   %2 = getelementptr { i16 }, { i16 }* %1, i32 0, i32 0
   %3 = load i16, i16* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i16 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i16 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_2b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 48
@@ -175,7 +175,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 3, i32 0, i1 false)
   %3 = getelementptr { i24 }, { i24 }* %.coerce, i32 0, i32 0
   %4 = load i24, i24* %3, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i24 inreg %4)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i24 inreg %4)
   ret void
  ; CHECK-LABEL: smallStruct_3b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 40
@@ -191,7 +191,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_4b* %0 to { i32 }*
   %2 = getelementptr { i32 }, { i32 }* %1, i32 0, i32 0
   %3 = load i32, i32* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i32 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i32 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_4b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 32
@@ -208,7 +208,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 5, i32 0, i1 false)
   %3 = getelementptr { i40 }, { i40 }* %.coerce, i32 0, i32 0
   %4 = load i40, i40* %3, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i40 inreg %4)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i40 inreg %4)
   ret void
  ; CHECK-LABEL: smallStruct_5b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 24
@@ -225,7 +225,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 6, i32 0, i1 false)
   %3 = getelementptr { i48 }, { i48 }* %.coerce, i32 0, i32 0
   %4 = load i48, i48* %3, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i48 inreg %4)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i48 inreg %4)
   ret void
  ; CHECK-LABEL: smallStruct_6b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 16
@@ -242,7 +242,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 7, i32 0, i1 false)
   %3 = getelementptr { i56 }, { i56 }* %.coerce, i32 0, i32 0
   %4 = load i56, i56* %3, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i56 inreg %4)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i56 inreg %4)
   ret void
  ; CHECK-LABEL: smallStruct_7b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 8
@@ -256,7 +256,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_8b* %0 to { i64 }*
   %2 = getelementptr { i64 }, { i64 }* %1, i32 0, i32 0
   %3 = load i64, i64* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i64 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_8b:
  ; CHECK-NOT: dsll
@@ -275,7 +275,7 @@ entry:
   %4 = load i64, i64* %3, align 1
   %5 = getelementptr { i64, i8 }, { i64, i8 }* %.coerce, i32 0, i32 1
   %6 = load i8, i8* %5, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 inreg %4, i8 inreg %6)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i64 inreg %4, i8 inreg %6)
   ret void
  ; CHECK-LABEL: smallStruct_9b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 56

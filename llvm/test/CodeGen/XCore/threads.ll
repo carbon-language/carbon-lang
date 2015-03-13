@@ -78,7 +78,7 @@ define i32* @f_tl() {
 ; CHECK: ldc [[R2:r[0-9]]], 12
 ; r0 = id*12 + 8 + &tl
 ; CHECK: lmul {{r[0-9]}}, r0, r11, [[R2]], [[R0]], [[R1]]
-  ret i32* getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 2)
+  ret i32* getelementptr inbounds ([3 x i32], [3 x i32]* @tl, i32 0, i32 2)
 }
 
 define i32* @f_tle() {
@@ -88,7 +88,7 @@ define i32* @f_tle() {
 ; CHECK: ldaw [[R1:r[0-9]]], dp[tle]
 ; r0 = &tl + id*8
 ; CHECK: add r0, [[R1]], [[R0]]
-  ret i32* getelementptr inbounds ([2 x i32]* @tle, i32 0, i32 0)
+  ret i32* getelementptr inbounds ([2 x i32], [2 x i32]* @tle, i32 0, i32 0)
 }
 
 define i32 @f_tlExpr () {
@@ -99,8 +99,8 @@ define i32 @f_tlExpr () {
 ; CHECK: add [[R2:r[0-9]]], [[R1]], [[R0]]
 ; CHECK: add r0, [[R2]], [[R2]]
   ret i32 add(
-      i32 ptrtoint( i32* getelementptr inbounds ([2 x i32]* @tle, i32 0, i32 0) to i32),
-      i32 ptrtoint( i32* getelementptr inbounds ([2 x i32]* @tle, i32 0, i32 0) to i32))
+      i32 ptrtoint( i32* getelementptr inbounds ([2 x i32], [2 x i32]* @tle, i32 0, i32 0) to i32),
+      i32 ptrtoint( i32* getelementptr inbounds ([2 x i32], [2 x i32]* @tle, i32 0, i32 0) to i32))
 }
 
 define void @phiNode1() {
@@ -113,8 +113,8 @@ define void @phiNode1() {
 entry:
   br label %ConstantExpPhiNode
 ConstantExpPhiNode:
-  %ptr = phi i32* [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %entry ],
-                  [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %ConstantExpPhiNode ]
+  %ptr = phi i32* [ getelementptr inbounds ([3 x i32], [3 x i32]* @tl, i32 0, i32 0), %entry ],
+                  [ getelementptr inbounds ([3 x i32], [3 x i32]* @tl, i32 0, i32 0), %ConstantExpPhiNode ]
   br label %ConstantExpPhiNode
 exit:
   ret void
@@ -134,8 +134,8 @@ define void @phiNode2( i1 %bool) {
 entry:
   br i1 %bool, label %ConstantExpPhiNode, label %exit
 ConstantExpPhiNode:
-  %ptr = phi i32* [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %entry ],
-                  [ getelementptr inbounds ([3 x i32]* @tl, i32 0, i32 0), %ConstantExpPhiNode ]
+  %ptr = phi i32* [ getelementptr inbounds ([3 x i32], [3 x i32]* @tl, i32 0, i32 0), %entry ],
+                  [ getelementptr inbounds ([3 x i32], [3 x i32]* @tl, i32 0, i32 0), %ConstantExpPhiNode ]
   br label %ConstantExpPhiNode
 exit:
   ret void

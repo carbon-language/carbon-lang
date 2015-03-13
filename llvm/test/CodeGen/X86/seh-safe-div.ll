@@ -45,12 +45,12 @@ eh.dispatch1:
   br i1 %is_filt1, label %handler1, label %eh.resume
 
 handler0:
-  call void @puts(i8* getelementptr ([27 x i8]* @str1, i32 0, i32 0))
+  call void @puts(i8* getelementptr ([27 x i8], [27 x i8]* @str1, i32 0, i32 0))
   store i32 -1, i32* %r, align 4
   br label %__try.cont
 
 handler1:
-  call void @puts(i8* getelementptr ([29 x i8]* @str2, i32 0, i32 0))
+  call void @puts(i8* getelementptr ([29 x i8], [29 x i8]* @str2, i32 0, i32 0))
   store i32 -2, i32* %r, align 4
   br label %__try.cont
 
@@ -173,15 +173,15 @@ define i32 @main() {
   store i32 10, i32* %n.addr, align 4
   store i32 2, i32* %d.addr, align 4
   %r1 = call i32 @safe_div(i32* %n.addr, i32* %d.addr)
-  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8]* @str_result, i32 0, i32 0), i32 %r1)
+  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r1)
 
   store i32 10, i32* %n.addr, align 4
   store i32 0, i32* %d.addr, align 4
   %r2 = call i32 @safe_div(i32* %n.addr, i32* %d.addr)
-  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8]* @str_result, i32 0, i32 0), i32 %r2)
+  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r2)
 
   %r3 = call i32 @safe_div(i32* %n.addr, i32* null)
-  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8]* @str_result, i32 0, i32 0), i32 %r3)
+  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r3)
   ret i32 0
 }
 

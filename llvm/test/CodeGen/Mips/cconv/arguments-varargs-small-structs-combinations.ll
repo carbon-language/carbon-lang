@@ -78,7 +78,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_1b1s* %0 to { i32 }*
   %2 = getelementptr { i32 }, { i32 }* %1, i32 0, i32 0
   %3 = load i32, i32* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i32 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i32 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_1b1s:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 32
@@ -92,7 +92,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_1b1i* %0 to { i64 }*
   %2 = getelementptr { i64 }, { i64 }* %1, i32 0, i32 0
   %3 = load i64, i64* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i64 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_1b1i:
  ; CHECK-NOT: dsll
@@ -109,7 +109,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 6, i32 0, i1 false)
   %3 = getelementptr { i48 }, { i48 }* %.coerce, i32 0, i32 0
   %4 = load i48, i48* %3, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i48 inreg %4)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i48 inreg %4)
   ret void
  ; CHECK-LABEL: smallStruct_1b1s1b:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 16
@@ -125,7 +125,7 @@ entry:
   %1 = bitcast %struct.SmallStruct_1s1i* %0 to { i64 }*
   %2 = getelementptr { i64 }, { i64 }* %1, i32 0, i32 0
   %3 = load i64, i64* %2, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 inreg %3)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i64 inreg %3)
   ret void
  ; CHECK-LABEL: smallStruct_1s1i:
  ; CHECK-NOT: dsll
@@ -142,7 +142,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 6, i32 0, i1 false)
   %3 = getelementptr { i48 }, { i48 }* %.coerce, i32 0, i32 0
   %4 = load i48, i48* %3, align 1
-  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i48 inreg %4)
+  call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i48 inreg %4)
   ret void
  ; CHECK-LABEL: smallStruct_3b1s:
  ; CHECK: dsll $[[R1:[0-9]+]], $[[R2:[0-9]+]], 16

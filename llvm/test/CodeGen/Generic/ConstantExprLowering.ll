@@ -16,7 +16,7 @@ less:           ; preds = %entry
 
 not_less:               ; preds = %less, %entry
         %t2 = phi i32 [ sub (i32 ptrtoint (i32* @XA to i32), i32 ptrtoint (i32* @XB to i32)), %less ], [ sub (i32 ptrtoint (i32* @XA to i32), i32 ptrtoint (i32* @XB to i32)), %entry ]               ; <i32> [#uses=1]
-        %tmp.39 = call i32 (i8*, ...)* @printf( i8* getelementptr ([16 x i8]* @.str_1, i64 0, i64 0), i32 %t2 )      ; <i32> [#uses=0]
+        %tmp.39 = call i32 (i8*, ...)* @printf( i8* getelementptr ([16 x i8], [16 x i8]* @.str_1, i64 0, i64 0), i32 %t2 )      ; <i32> [#uses=0]
         ret void
 }
 

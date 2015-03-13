@@ -11,17 +11,17 @@ entry:
   %0 = load i32, i32* @x, align 4
   %addiu1 = add i32 %0, -7
   %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds
-                                  ([7 x i8]* @.str, i32 0, i32 0), i32 %addiu1)
+                                  ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), i32 %addiu1)
 
   %1 = load i32, i32* @y, align 4
   %addiu2 = add i32 %1, 55
   %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds
-                                  ([7 x i8]* @.str, i32 0, i32 0), i32 %addiu2)
+                                  ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), i32 %addiu2)
 
   %2 = load i32, i32* @z, align 4
   %addiu3 = add i32 %2, 24
   %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds
-                                  ([7 x i8]* @.str, i32 0, i32 0), i32 %addiu3)
+                                  ([7 x i8], [7 x i8]* @.str, i32 0, i32 0), i32 %addiu3)
   ret i32 0
 }
 

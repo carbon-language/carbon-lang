@@ -63,9 +63,9 @@ define void @foobar() nounwind optsize ssp {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.S1* @p, i64 0, metadata !9, metadata !MDExpression()) nounwind, !dbg !31
   tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !18, metadata !MDExpression()) nounwind, !dbg !35
-  store i32 1, i32* getelementptr inbounds (%struct.S1* @p, i64 0, i32 1), align 8, !dbg !36
+  store i32 1, i32* getelementptr inbounds (%struct.S1, %struct.S1* @p, i64 0, i32 1), align 8, !dbg !36
   %call.i = tail call float* @bar(i32 1) nounwind optsize, !dbg !37
-  store float* %call.i, float** getelementptr inbounds (%struct.S1* @p, i64 0, i32 0), align 8, !dbg !37
+  store float* %call.i, float** getelementptr inbounds (%struct.S1, %struct.S1* @p, i64 0, i32 0), align 8, !dbg !37
   ret void, !dbg !38
 }
 

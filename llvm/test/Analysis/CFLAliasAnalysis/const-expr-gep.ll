@@ -19,8 +19,8 @@
 ; CHECK:     MayAlias: i32* %F, i8* %X
 define void @test() {
   %D = getelementptr %T, %T* @G, i64 0, i32 0
-  %F = getelementptr i32, i32* getelementptr (%T* @G, i64 0, i32 0), i64 0
-  %X = getelementptr [10 x i8], [10 x i8]* getelementptr (%T* @G, i64 0, i32 1), i64 0, i64 5
+  %F = getelementptr i32, i32* getelementptr (%T, %T* @G, i64 0, i32 0), i64 0
+  %X = getelementptr [10 x i8], [10 x i8]* getelementptr (%T, %T* @G, i64 0, i32 1), i64 0, i64 5
 
   ret void
 }
@@ -30,7 +30,7 @@ define void @test() {
 ; CHECK:     MayAlias: i32* %H, i32* %arg0
 ; CHECK:     MayAlias: i32* %F, i32* %H
 define void @simplecheck(i32* %arg0) {
-  %F = getelementptr i32, i32* getelementptr (%T* @G, i64 0, i32 0), i64 0
+  %F = getelementptr i32, i32* getelementptr (%T, %T* @G, i64 0, i32 0), i64 0
   %H = getelementptr %T, %T* @G2, i64 0, i32 0
 
   ret void
@@ -48,7 +48,7 @@ define void @simplecheck(i32* %arg0) {
 define void @checkNesting(i32* %arg0) {
   %A = getelementptr [1 x i32],
          [1 x i32]* getelementptr
-           ([1 x [1 x i32]]* getelementptr (%NestedT* @NT, i64 0, i32 0),
+           ([1 x [1 x i32]], [1 x [1 x i32]]* getelementptr (%NestedT, %NestedT* @NT, i64 0, i32 0),
            i64 0,
            i32 0),
          i64 0,

@@ -119,7 +119,7 @@ for.body3.lr.ph.us.i:                             ; preds = %for.inc17, %for.inc
   br label %for.body3.us.i
 
 SumArray.exit:                                    ; preds = %for.inc6.us.i
-  %call20 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([23 x i8]* @.str, i64 0, i64 0), i32 100, i32 100, i32 %add.us.i) nounwind
+  %call20 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.str, i64 0, i64 0), i32 100, i32 100, i32 %add.us.i) nounwind
   ret i32 0
 
 ; CHECK: @main

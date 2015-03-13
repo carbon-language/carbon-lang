@@ -29,7 +29,7 @@ define i8* @test_simplify2() {
   %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
 
   %ret = call i8* @strcpy(i8* %dst, i8* %dst)
-; CHECK: ret i8* getelementptr inbounds ([32 x i8]* @a, i32 0, i32 0)
+; CHECK: ret i8* getelementptr inbounds ([32 x i8], [32 x i8]* @a, i32 0, i32 0)
   ret i8* %ret
 }
 
