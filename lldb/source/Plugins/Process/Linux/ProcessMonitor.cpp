@@ -37,12 +37,10 @@
 #include "ProcessLinux.h"
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
+#include "Procfs.h"
 
 // System includes - They have to be included after framework includes because they define some
 // macros which collide with variable names in other modules
-#ifndef __ANDROID__
-#include <sys/procfs.h>
-#endif
 #include <sys/personality.h>
 #include <sys/ptrace.h>
 #include <sys/socket.h>

@@ -18,6 +18,9 @@
 
 #define REG_CONTEXT_SIZE (GetGPRSize())
 
+using namespace lldb;
+using namespace lldb_private;
+
 RegisterContextPOSIXProcessMonitor_arm64::RegisterContextPOSIXProcessMonitor_arm64(lldb_private::Thread &thread,
                                                                                    uint32_t concrete_frame_idx,
                                                                                    lldb_private::RegisterInfoInterface *register_info)

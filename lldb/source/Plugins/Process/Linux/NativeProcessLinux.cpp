@@ -18,11 +18,6 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#if defined (__arm64__) || defined (__aarch64__)
-// NT_PRSTATUS and NT_FPREGSET definition
-#include <elf.h>
-#endif
-
 // C++ Includes
 #include <fstream>
 #include <string>
@@ -35,6 +30,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/State.h"
+#include "lldb/Host/common/NativeBreakpoint.h"
 #include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
@@ -45,21 +41,17 @@
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
-#include "lldb/Host/common/NativeBreakpoint.h"
-#include "Utility/StringExtractor.h"
-
+#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/LinuxSignals.h"
+#include "Utility/StringExtractor.h"
 #include "NativeThreadLinux.h"
 #include "ProcFileReader.h"
+#include "Procfs.h"
 #include "ThreadStateCoordinator.h"
-#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 
 // System includes - They have to be included after framework includes because they define some
 // macros which collide with variable names in other modules
 #include <linux/unistd.h>
-#ifndef __ANDROID__
-#include <sys/procfs.h>
-#endif
 #include <sys/personality.h>
 #include <sys/ptrace.h>
 #include <sys/socket.h>
@@ -68,6 +60,11 @@
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+
+#if defined (__arm64__) || defined (__aarch64__)
+// NT_PRSTATUS and NT_FPREGSET definition
+#include <elf.h>
+#endif
 
 #ifdef __ANDROID__
 #define __ptrace_request int
@@ -445,7 +442,7 @@ namespace
                                 (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
                                         size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
                     log->Printf ("NativeProcessLinux::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
-                            (void*)vm_addr, *(unsigned long*)src, data);
+                            (void*)vm_addr, *(const unsigned long*)src, data);
 
                 if (PTRACE(PTRACE_POKEDATA, pid, (void*)vm_addr, (void*)data, 0, error))
                 {
@@ -480,7 +477,7 @@ namespace
                                 (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
                                         size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
                     log->Printf ("NativeProcessLinux::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
-                            (void*)vm_addr, *(unsigned long*)src, *(unsigned long*)buff);
+                            (void*)vm_addr, *(const unsigned long*)src, *(unsigned long*)buff);
             }
 
             vm_addr += word_size;
@@ -807,10 +804,7 @@ namespace
 
         ioVec.iov_base = m_buf;
         ioVec.iov_len = m_buf_size;
-        if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, m_buf_size) < 0)
-            m_result = false;
-        else
-            m_result = true;
+        PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, m_buf_size, m_error);
 #else
         PTRACE(PTRACE_GETFPREGS, m_tid, nullptr, m_buf, m_buf_size, m_error);
 #endif
@@ -1933,10 +1927,10 @@ static int convert_pid_status_to_return_code (int status)
 // Main process monitoring waitpid-loop handler.
 bool
 NativeProcessLinux::MonitorCallback(void *callback_baton,
-                                lldb::pid_t pid,
-                                bool exited,
-                                int signal,
-                                int status)
+                                    lldb::pid_t pid,
+                                    bool exited,
+                                    int signal,
+                                    int status)
 {
     Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
 
@@ -3429,7 +3423,7 @@ NativeProcessLinux::WriteMemory (lldb::addr_t addr, const void *buf, lldb::addr_
 
 Error
 NativeProcessLinux::ReadRegisterValue(lldb::tid_t tid, uint32_t offset, const char* reg_name,
-                                  uint32_t size, RegisterValue &value)
+                                      uint32_t size, RegisterValue &value)
 {
     ReadRegOperation op(tid, offset, reg_name, value);
     DoOperation(&op);

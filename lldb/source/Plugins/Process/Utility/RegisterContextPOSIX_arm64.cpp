@@ -23,6 +23,9 @@
 #include "RegisterContextPOSIX_arm64.h"
 #include "Plugins/Process/elf-core/ProcessElfCore.h"
 
+using namespace lldb;
+using namespace lldb_private;
+
 // ARM64 general purpose registers.
 const uint32_t g_gpr_regnums_arm64[] =
 {

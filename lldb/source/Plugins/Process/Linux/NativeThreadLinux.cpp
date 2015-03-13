@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "NativeProcessLinux.h"
+#include "NativeRegisterContextLinux_arm64.h"
 #include "NativeRegisterContextLinux_x86_64.h"
 
 #include "lldb/Core/Log.h"
@@ -198,7 +199,12 @@ NativeThreadLinux::GetRegisterContext ()
             break;
         }
 #endif
-
+        case llvm::Triple::aarch64:
+        {
+            const uint32_t concrete_frame_idx = 0;
+            m_reg_context_sp.reset (new NativeRegisterContextLinux_arm64(*this, concrete_frame_idx, reg_interface));
+            break;
+        }
         case llvm::Triple::x86:
         case llvm::Triple::x86_64:
         {
