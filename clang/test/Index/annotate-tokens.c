@@ -57,6 +57,17 @@ TYPE_INST(Foo,
 
 void func2(void);
 
+typedef union {
+  struct {
+    int field : 16;
+  };
+} r_t;
+
+void test() {
+  r_t reg;
+  reg.field = 1;
+}
+
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:37:1 %s | FileCheck %s
 // CHECK: Identifier: "T" [4:3 - 4:4] TypeRef=T:1:13
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
@@ -205,7 +216,7 @@ void func2(void);
 // CHECK-RANGE1: Literal: "1" [54:10 - 54:11] IntegerLiteral=
 // CHECK-RANGE1: Punctuation: "," [54:11 - 54:12] InitListExpr=
 
-// RUN: c-index-test -test-annotate-tokens=%s:54:1:59:1 %s | FileCheck %s -check-prefix=CHECK-RANGE2
+// RUN: c-index-test -test-annotate-tokens=%s:54:1:70:1 %s | FileCheck %s -check-prefix=CHECK-RANGE2
 // CHECK-RANGE2: Punctuation: "." [54:5 - 54:6] UnexposedExpr=
 // CHECK-RANGE2: Identifier: "y" [54:6 - 54:7] MemberRef=y:52:1
 // CHECK-RANGE2: Punctuation: "=" [54:8 - 54:9] UnexposedExpr=
@@ -224,3 +235,7 @@ void func2(void);
 // CHECK-RANGE2: Keyword: "void" [58:12 - 58:16] FunctionDecl=func2:58:6
 // CHECK-RANGE2: Punctuation: ")" [58:16 - 58:17] FunctionDecl=func2:58:6
 // CHECK-RANGE2: Punctuation: ";" [58:17 - 58:18]
+
+// CHECK-RANGE2: Identifier: "reg" [68:3 - 68:6] DeclRefExpr=reg:67:7
+// CHECK-RANGE2: Punctuation: "." [68:6 - 68:7] MemberRefExpr=field:62:9
+// CHECK-RANGE2: Identifier: "field" [68:7 - 68:12] MemberRefExpr=field:62:9
