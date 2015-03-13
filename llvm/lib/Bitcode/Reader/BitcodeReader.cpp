@@ -3126,8 +3126,8 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(BasePtr, GEPIdx);
-      (void)Ty;
-      assert(!Ty || Ty == cast<GetElementPtrInst>(I)->getSourceElementType());
+      if (Ty && Ty != cast<GetElementPtrInst>(I)->getSourceElementType())
+        return Error("Invalid record");
       InstructionList.push_back(I);
       if (InBounds)
         cast<GetElementPtrInst>(I)->setIsInBounds(true);
