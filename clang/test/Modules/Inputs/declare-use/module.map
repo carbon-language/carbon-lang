@@ -39,6 +39,7 @@ module XG {
   use XE
   use XJ
   use XK
+  use XN
 }
 
 module XH {
@@ -64,6 +65,12 @@ module XL {
 module XM {
   private textual header "m.h"
   textual header "m2.h"
+}
+
+module XN {
+  module sub {
+    header "sub.h"
+  }
 }
 
 module XS {

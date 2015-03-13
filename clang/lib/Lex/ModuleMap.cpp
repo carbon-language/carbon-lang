@@ -208,9 +208,11 @@ ModuleMap::findHeaderInUmbrellaDirs(const FileEntry *File,
 // Returns true if RequestingModule directly uses RequestedModule.
 static bool directlyUses(const Module *RequestingModule,
                          const Module *RequestedModule) {
-  return std::find(RequestingModule->DirectUses.begin(),
-                   RequestingModule->DirectUses.end(),
-                   RequestedModule) != RequestingModule->DirectUses.end();
+  for (const Module* DirectUse : RequestingModule->DirectUses) {
+    if (RequestedModule->isSubModuleOf(DirectUse))
+      return true;
+  }
+  return false;
 }
 
 static bool violatesPrivateInclude(Module *RequestingModule,

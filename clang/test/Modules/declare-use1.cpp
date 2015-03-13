@@ -5,4 +5,5 @@
 #include "e.h"
 #include "f.h" // expected-error {{module XG does not depend on a module exporting 'f.h'}}
 #include "i.h"
-const int g2 = g1 + e + f + aux_i;
+#include "sub.h"
+const int g2 = g1 + e + f + aux_i + sub;
