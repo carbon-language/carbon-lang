@@ -1071,6 +1071,9 @@ public:
     bool
     SetArchitecture (const ArchSpec &arch_spec);
 
+    bool
+    MergeArchitecture (const ArchSpec &arch_spec);
+
     Debugger &
     GetDebugger ()
     {

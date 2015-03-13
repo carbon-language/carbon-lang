@@ -1189,6 +1189,30 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
     return false;
 }
 
+bool
+Target::MergeArchitecture (const ArchSpec &arch_spec)
+{
+    if (arch_spec.IsValid())
+    {
+        if (m_arch.IsCompatibleMatch(arch_spec))
+        {
+            // The current target arch is compatible with "arch_spec", see if we
+            // can improve our current architecture using bits from "arch_spec"
+
+            // Merge bits from arch_spec into "merged_arch" and set our architecture
+            ArchSpec merged_arch (m_arch);
+            merged_arch.MergeFrom (arch_spec);
+            return SetArchitecture(merged_arch);
+        }
+        else
+        {
+            // The new architecture is different, we just need to replace it
+            return SetArchitecture(arch_spec);
+        }
+    }
+    return false;
+}
+
 void
 Target::WillClearList (const ModuleList& module_list)
 {

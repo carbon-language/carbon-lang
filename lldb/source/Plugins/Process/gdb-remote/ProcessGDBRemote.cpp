@@ -939,16 +939,17 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 
             if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false) == GDBRemoteCommunication::PacketResult::Success)
             {
-                if (!m_target.GetArchitecture().IsValid()) 
+                const ArchSpec &process_arch = m_gdb_comm.GetProcessArchitecture();
+
+                if (process_arch.IsValid())
                 {
-                    if (m_gdb_comm.GetProcessArchitecture().IsValid())
-                    {
-                        m_target.SetArchitecture(m_gdb_comm.GetProcessArchitecture());
-                    }
-                    else
-                    {
-                        m_target.SetArchitecture(m_gdb_comm.GetHostArchitecture());
-                    }
+                    m_target.MergeArchitecture(process_arch);
+                }
+                else
+                {
+                    const ArchSpec &host_arch = m_gdb_comm.GetHostArchitecture();
+                    if (host_arch.IsValid())
+                        m_target.MergeArchitecture(host_arch);
                 }
 
                 SetPrivateState (SetThreadStopInfo (m_last_stop_packet));
