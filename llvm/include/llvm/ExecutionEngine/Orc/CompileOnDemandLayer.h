@@ -274,7 +274,7 @@ private:
       // Set the compile actions for this module:
       for (auto &KVPair : NewStubInfos) {
         std::string BodyName = Mangle(KVPair->first + BodySuffix,
-                                      *M.getDataLayout());
+                                      M.getDataLayout());
         auto &CCInfo = KVPair->second;
         CCInfo.setCompileAction(
           [=](){
@@ -291,7 +291,7 @@ private:
 
     for (auto &KVPair : StubInfos) {
       std::string AddrName = Mangle(KVPair.first + AddrSuffix,
-                                    *M.getDataLayout());
+                                    M.getDataLayout());
       auto &CCInfo = KVPair.second;
       CCInfo.setUpdateAction(
         CompileCallbackMgr.getLocalFPUpdater(StubsH, AddrName));
