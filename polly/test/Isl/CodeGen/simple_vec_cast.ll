@@ -16,7 +16,7 @@ bb1:                                              ; preds = %bb3, %bb
   br i1 %exitcond, label %bb2, label %bb4
 
 bb2:                                              ; preds = %bb1
-  %tmp = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
+  %tmp = load float, float* getelementptr inbounds ([1024 x float], [1024 x float]* @A, i64 0, i64 0), align 16
   %tmp2 = fpext float %tmp to double
   store double %tmp2, double* %scevgep, align 4
   br label %bb3

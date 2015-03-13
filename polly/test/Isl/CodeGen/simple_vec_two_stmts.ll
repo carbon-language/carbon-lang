@@ -38,7 +38,7 @@ bb5:
 
 define i32 @main() nounwind {
   call void @simple_vec_stride_one()
-  %1 = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %1 = load float, float* getelementptr inbounds ([1024 x float], [1024 x float]* @A, i64 0, i64 42), align 8
   %2 = fptosi float %1 to i32
   ret i32 %2
 }

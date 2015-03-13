@@ -94,14 +94,14 @@ for.body3:                                        ; preds = %for.cond1
   %arrayidx5 = getelementptr inbounds [1536 x float], [1536 x float]* %arrayidx, i32 0, i64 %idxprom
   %1 = load float, float* %arrayidx5, align 4
   %conv = fpext float %1 to double
-  %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %0, i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), double %conv)
+  %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %0, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str, i32 0, i32 0), double %conv)
   %rem = srem i32 %j.0, 80
   %cmp6 = icmp eq i32 %rem, 79
   br i1 %cmp6, label %if.then, label %if.end
 
 if.then:                                          ; preds = %for.body3
   %2 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8
-  %call8 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %2, i8* getelementptr inbounds ([2 x i8]* @.str1, i32 0, i32 0))
+  %call8 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %2, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str1, i32 0, i32 0))
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %for.body3
@@ -113,7 +113,7 @@ for.inc:                                          ; preds = %if.end
 
 for.end:                                          ; preds = %for.cond1
   %3 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8
-  %call9 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %3, i8* getelementptr inbounds ([2 x i8]* @.str1, i32 0, i32 0))
+  %call9 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %3, i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str1, i32 0, i32 0))
   br label %for.inc10
 
 for.inc10:                                        ; preds = %for.end

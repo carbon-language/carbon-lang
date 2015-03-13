@@ -49,7 +49,7 @@ bb34:                                             ; preds = %bb35
   %9 = getelementptr inbounds [32 x double], [32 x double]* %8, i64 0, i64 0 ; <double*> [#uses=1]
   %10 = load double, double* %9, align 8                  ; <double> [#uses=0]
   %11 = fsub double 0.000000e+00, undef           ; <double> [#uses=1]
-  %12 = getelementptr inbounds double, double* getelementptr inbounds ([4 x [36 x double]]* @win193, i64 0, i64 2, i64 4), i64 0 ; <double*> [#uses=1]
+  %12 = getelementptr inbounds double, double* getelementptr inbounds ([4 x [36 x double]], [4 x [36 x double]]* @win193, i64 0, i64 2, i64 4), i64 0 ; <double*> [#uses=1]
   store double %11, double* %12, align 8
   %13 = add nsw i32 %k.4, 9                       ; <i32> [#uses=1]
   %14 = add nsw i32 %k.4, 18                      ; <i32> [#uses=1]
@@ -74,7 +74,7 @@ bb34:                                             ; preds = %bb35
   %33 = getelementptr inbounds [32 x double], [32 x double]* %32, i64 0, i64 0 ; <double*> [#uses=1]
   %34 = load double, double* %33, align 8                 ; <double> [#uses=0]
   %35 = sext i32 %13 to i64                       ; <i64> [#uses=1]
-  %36 = getelementptr inbounds double, double* getelementptr inbounds ([4 x [36 x double]]* @win193, i64 0, i64 2, i64 4), i64 %35 ; <double*> [#uses=1]
+  %36 = getelementptr inbounds double, double* getelementptr inbounds ([4 x [36 x double]], [4 x [36 x double]]* @win193, i64 0, i64 2, i64 4), i64 %35 ; <double*> [#uses=1]
   store double 0.000000e+00, double* %36, align 8
   %37 = sub nsw i32 %k.4, 1                       ; <i32> [#uses=1]
   br label %bb35

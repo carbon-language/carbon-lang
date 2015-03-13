@@ -52,7 +52,7 @@ bb7:                                              ; preds = %bb2
 define i32 @main() nounwind {
 bb:
   call void @simple_vec_const()
-  %tmp = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %tmp = load float, float* getelementptr inbounds ([1024 x float], [1024 x float]* @A, i64 0, i64 42), align 8
   %tmp1 = fptosi float %tmp to i32
   ret i32 %tmp1
 }

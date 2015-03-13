@@ -33,7 +33,7 @@ define void @simple_vec_const() nounwind {
   br i1 %exitcond, label %2, label %5
 
 ; <label>:2                                       ; preds = %1
-  %3 = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
+  %3 = load float, float* getelementptr inbounds ([1024 x float], [1024 x float]* @A, i64 0, i64 0), align 16
   store float %3, float* %scevgep, align 4
   br label %4
 
@@ -47,7 +47,7 @@ define void @simple_vec_const() nounwind {
 
 define i32 @main() nounwind {
   call void @simple_vec_const()
-  %1 = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %1 = load float, float* getelementptr inbounds ([1024 x float], [1024 x float]* @A, i64 0, i64 42), align 8
   %2 = fptosi float %1 to i32
   ret i32 %2
 }

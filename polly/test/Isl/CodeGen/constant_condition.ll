@@ -33,11 +33,11 @@ bb:
   br i1 true, label %bb1, label %bb2
 
 bb1:                                              ; preds = %bb
-  store i32 0, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0)
+  store i32 0, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @A, i32 0, i32 0)
   br label %bb3
 
 bb2:                                              ; preds = %bb
-  store i32 1, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0)
+  store i32 1, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @A, i32 0, i32 0)
   br label %bb3
 
 bb3:                                              ; preds = %bb2, %bb1
@@ -46,9 +46,9 @@ bb3:                                              ; preds = %bb2, %bb1
 
 define i32 @main() nounwind {
 bb:
-  store i32 2, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0)
+  store i32 2, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @A, i32 0, i32 0)
   call void @constant_condition()
-  %tmp = load i32, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   ret i32 %tmp
 }
 

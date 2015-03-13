@@ -28,7 +28,7 @@ for.body:                                         ; preds = %for.cond
   %tmp2 = load float, float* %arrayidx, align 4
   %tmp5 = load float, float* %arrayidx4, align 4
   %add = fadd float %tmp2, %tmp5
-  store float %add, float* getelementptr inbounds ([100 x float]* @A, i32 0, i32 13), align 4
+  store float %add, float* getelementptr inbounds ([100 x float], [100 x float]* @A, i32 0, i32 13), align 4
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
@@ -38,4 +38,4 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %for.cond
   ret i32 0
 }
-; CHECK: load float, float* getelementptr inbounds ([100 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0)
+; CHECK: load float, float* getelementptr inbounds ([100 x float], [100 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0)

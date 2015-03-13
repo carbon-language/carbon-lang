@@ -52,7 +52,7 @@ entry:
 
 do.body:                                          ; preds = %do.cond, %entry
   %0 = phi i32 [ 0, %entry ], [ %inc, %do.cond ]  ; <i32> [#uses=2]
-  store i32 %0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
+  store i32 %0, i32* getelementptr inbounds ([20 x i32], [20 x i32]* @A, i32 0, i32 0)
   %inc = add nsw i32 %0, 1                        ; <i32> [#uses=2]
   br label %do.cond
 
@@ -67,12 +67,12 @@ do.end:                                           ; preds = %do.cond
 
 define i32 @main() nounwind {
 entry:
-  store i32 0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
+  store i32 0, i32* getelementptr inbounds ([20 x i32], [20 x i32]* @A, i32 0, i32 0)
   call void @single_do_loop_int_max_iterations()
   %tmp = load %struct._IO_FILE*, %struct._IO_FILE** @stdout          ; <%struct._IO_FILE*> [#uses=1]
-  %tmp1 = load i32, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
-  %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp, i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i32 %tmp1) ; <i32> [#uses=0]
-  %tmp2 = load i32, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp1 = load i32, i32* getelementptr inbounds ([20 x i32], [20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp, i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i32 %tmp1) ; <i32> [#uses=0]
+  %tmp2 = load i32, i32* getelementptr inbounds ([20 x i32], [20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   %cmp = icmp eq i32 %tmp2, 2147483646            ; <i1> [#uses=1]
   br i1 %cmp, label %if.then, label %if.else
 
