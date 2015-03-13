@@ -173,6 +173,13 @@ class GdbRemoteTestCaseBase(TestBase):
         # when the process truly dies.
         self.stub_sends_two_stop_notifications_on_kill = True
 
+    def forward_adb_port(self, source, target, direction):
+        def remove_port_forward():
+            subprocess.call(["adb", direction, "--remove", "tcp:%d" % source])
+        
+        subprocess.call(["adb", direction, "tcp:%d" % source, "tcp:%d" % target])
+        self.addTearDownHook(remove_port_forward)
+
     def create_socket(self):
         sock = socket.socket()
         logger = self.logger
@@ -194,11 +201,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
         triple = self.dbg.GetSelectedPlatform().GetTriple()
         if re.match(".*-.*-.*-android", triple):
-            subprocess.call(["adb", "forward", "tcp:%d" % self.port, "tcp:%d" % self.port])
-            def remove_port_forward():
-                subprocess.call(["adb", "forward", "--remove", "tcp:%d" % self.port])
-
-            self.addTearDownHook(remove_port_forward)
+            self.forward_adb_port(self.port, self.port, "forward")
 
         connect_info = (self.stub_hostname, self.port)
         # print "connecting to stub on {}:{}".format(connect_info[0], connect_info[1])

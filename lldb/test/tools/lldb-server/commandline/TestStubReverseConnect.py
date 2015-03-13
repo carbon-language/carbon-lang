@@ -47,6 +47,10 @@ class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.stub_hostname = "127.0.0.1"
         self.port = self.listener_port
 
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        if re.match(".*-.*-.*-android", triple):
+            self.forward_adb_port(self.port, self.port, "reverse")
+
         # Start the stub.
         server = self.launch_debug_monitor(logfile=sys.stdout)
         self.assertIsNotNone(server)
