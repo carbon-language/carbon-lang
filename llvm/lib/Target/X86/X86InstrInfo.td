@@ -855,11 +855,11 @@ def X86_COND_E_OR_NE : ImmLeaf<i8, [{
   return (Imm == X86::COND_E) || (Imm == X86::COND_NE);
 }]>;
 
-let FastIselShouldIgnore = 1 in { // FastIsel should ignore all simm8 instrs.
-  def i16immSExt8  : ImmLeaf<i16, [{ return Imm == (int8_t)Imm; }]>;
-  def i32immSExt8  : ImmLeaf<i32, [{ return Imm == (int8_t)Imm; }]>;
-  def i64immSExt8  : ImmLeaf<i64, [{ return Imm == (int8_t)Imm; }]>;
-}
+
+def i16immSExt8  : ImmLeaf<i16, [{ return Imm == (int8_t)Imm; }]>;
+def i32immSExt8  : ImmLeaf<i32, [{ return Imm == (int8_t)Imm; }]>;
+def i64immSExt8  : ImmLeaf<i64, [{ return Imm == (int8_t)Imm; }]>;
+
 
 def i64immSExt32 : ImmLeaf<i64, [{ return Imm == (int32_t)Imm; }]>;
 
