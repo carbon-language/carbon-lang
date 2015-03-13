@@ -18,7 +18,7 @@ namespace Mips {
   // one can have multiple fixup types for a given relocation and thus need
   // to be uniquely named.
   //
-  // This table *must* be in the save order of
+  // This table *must* be in the same order of
   // MCFixupKindInfo Infos[Mips::NumTargetFixupKinds]
   // in MipsAsmBackend.cpp.
   //

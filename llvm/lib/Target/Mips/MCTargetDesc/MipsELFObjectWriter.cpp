@@ -54,9 +54,11 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   switch (Kind) {
   default:
     llvm_unreachable("invalid fixup kind!");
+  case Mips::fixup_Mips_32:
   case FK_Data_4:
     Type = ELF::R_MIPS_32;
     break;
+  case Mips::fixup_Mips_64:
   case FK_Data_8:
     Type = ELF::R_MIPS_64;
     break;

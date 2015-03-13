@@ -186,7 +186,7 @@ namespace {
     /// register can be improved, but it is wrong to substitute Reg+Reg for
     /// Reg in an asm, because the load or store opcode would have to change.
     bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                      char ConstraintCode,
+                                      unsigned ConstraintID,
                                       std::vector<SDValue> &OutOps) override {
       // We need to make sure that this one operand does not end up in r0
       // (because we might end up lowering this as 0(%op)).

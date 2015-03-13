@@ -228,7 +228,7 @@ namespace {
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.
     bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                      char ConstraintCode,
+                                      unsigned ConstraintID,
                                       std::vector<SDValue> &OutOps) override;
 
     void EmitSpecialCodeForMain();
@@ -2814,14 +2814,14 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 }
 
 bool X86DAGToDAGISel::
-SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
+SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
   SDValue Op0, Op1, Op2, Op3, Op4;
-  switch (ConstraintCode) {
-  case 'o':   // offsetable        ??
-  case 'v':   // not offsetable    ??
+  switch (ConstraintID) {
+  case InlineAsm::Constraint_o: // offsetable        ??
+  case InlineAsm::Constraint_v: // not offsetable    ??
   default: return true;
-  case 'm':   // memory
+  case InlineAsm::Constraint_m: // memory
     if (!SelectAddr(nullptr, Op, Op0, Op1, Op2, Op3, Op4))
       return true;
     break;

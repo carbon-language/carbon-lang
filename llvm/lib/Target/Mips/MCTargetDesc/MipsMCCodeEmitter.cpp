@@ -449,7 +449,7 @@ getSImm9AddiuspValue(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned MipsMCCodeEmitter::
-getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
+getExprOpValue(const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups,
                const MCSubtargetInfo &STI) const {
   int64_t Res;
 
@@ -497,6 +497,9 @@ getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
 
     switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
     default: llvm_unreachable("Unknown fixup kind!");
+      break;
+    case MCSymbolRefExpr::VK_None:
+      FixupKind = Mips::fixup_Mips_32; // FIXME: This is ok for O32/N32 but not N64.
       break;
     case MCSymbolRefExpr::VK_Mips_GPOFF_HI :
       FixupKind = Mips::fixup_Mips_GPOFF_HI;

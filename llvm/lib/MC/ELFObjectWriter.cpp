@@ -1348,7 +1348,8 @@ static int cmpRel(const ELFRelocationEntry *AP, const ELFRelocationEntry *BP) {
     return B.Offset - A.Offset;
   if (B.Type != A.Type)
     return A.Type - B.Type;
-  llvm_unreachable("ELFRelocs might be unstable!");
+  //llvm_unreachable("ELFRelocs might be unstable!");
+  return 0;
 }
 
 static void sortRelocs(const MCAssembler &Asm,

@@ -230,9 +230,10 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 }
 
 bool MipsDAGToDAGISel::
-SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
+SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
-  assert(ConstraintCode == 'm' && "unexpected asm memory constraint");
+  assert(ConstraintID == InlineAsm::Constraint_m &&
+         "unexpected asm memory constraint");
   OutOps.push_back(Op);
   return false;
 }
