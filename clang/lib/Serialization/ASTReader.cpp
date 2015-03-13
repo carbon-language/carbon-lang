@@ -1950,15 +1950,13 @@ static bool areDefinedInSystemModules(MacroInfo *PrevMI, MacroInfo *NewMI,
   Module *PrevOwner = nullptr;
   if (SubmoduleID PrevModID = PrevMI->getOwningModuleID())
     PrevOwner = Reader.getSubmodule(PrevModID);
-  SourceManager &SrcMgr = Reader.getSourceManager();
-  bool PrevInSystem
-    = PrevOwner? PrevOwner->IsSystem
-               : SrcMgr.isInSystemHeader(PrevMI->getDefinitionLoc());
-  bool NewInSystem
-    = NewOwner? NewOwner->IsSystem
-              : SrcMgr.isInSystemHeader(NewMI->getDefinitionLoc());
   if (PrevOwner && PrevOwner == NewOwner)
     return false;
+  SourceManager &SrcMgr = Reader.getSourceManager();
+  bool PrevInSystem = (PrevOwner && PrevOwner->IsSystem) ||
+                      SrcMgr.isInSystemHeader(PrevMI->getDefinitionLoc());
+  bool NewInSystem = (NewOwner && NewOwner->IsSystem) ||
+                     SrcMgr.isInSystemHeader(NewMI->getDefinitionLoc());
   return PrevInSystem && NewInSystem;
 }
 
