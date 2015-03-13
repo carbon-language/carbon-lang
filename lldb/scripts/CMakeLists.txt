@@ -1,14 +1,15 @@
 set(LLVM_NO_RTTI 1)
 
-file(GLOB SWIG_INPUTS Python/interface/*.i)
+file(GLOB SWIG_INTERFACES Python/interface/*.i)
+file(GLOB_RECURSE SWIG_SOURCES *.swig)
 
 if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 	find_package(SWIG REQUIRED)
 	add_custom_command(
 	  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
-	  DEPENDS ${LLDB_SOURCE_DIR}/scripts/lldb.swig
+	  DEPENDS ${SWIG_SOURCES}
+      DEPENDS ${SWIG_INTERFACES}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/buildSwigWrapperClasses.py
-	  DEPENDS ${SWIG_INPUTS}
 	  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/buildSwigWrapperClasses.py "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}" "--prefix=${CMAKE_BINARY_DIR}" "--swigExecutable=${SWIG_EXECUTABLE}" -m
 	  COMMENT "Python script building LLDB Python wrapper")  
 	set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
@@ -25,8 +26,8 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 else ()
 	add_custom_command(
 	  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
-	  DEPENDS ${LLDB_SOURCE_DIR}/scripts/lldb.swig
-	  DEPENDS ${SWIG_INPUTS}
+	  DEPENDS ${SWIG_SOURCES}
+      DEPENDS ${SWIG_INTERFACES}
 	  # swig was directly invoked on Windows (where the Python API is not being generated) but on other platforms, we need to run the *swig-wrapper-classes.sh shell-scripts.
 	  #COMMAND swig -c++ -shadow -python -I${LLDB_SOURCE_DIR}/include -I./. -outdir ${LLDB_SOURCE_DIR}/scripts/Python  -o ${LLDB_SOURCE_DIR}/source/LLDBWrapPython.cpp ${LLDB_SOURCE_DIR}/scripts/lldb.swig
 	  COMMAND env PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/build-swig-wrapper-classes.sh ${LLDB_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} -m
