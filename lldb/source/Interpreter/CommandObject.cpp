@@ -124,6 +124,12 @@ CommandObject::SetHelp (const char *cstr)
 }
 
 void
+CommandObject::SetHelp (std::string str)
+{
+    m_cmd_help_short = str;
+}
+
+void
 CommandObject::SetHelpLong (const char *cstr)
 {
     m_cmd_help_long = cstr;

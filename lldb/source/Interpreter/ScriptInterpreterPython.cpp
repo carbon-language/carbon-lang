@@ -2793,6 +2793,156 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item, std::string& 
     }
 }
 
+bool
+ScriptInterpreterPython::GetShortHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                                       std::string& dest)
+{
+    bool got_string = false;
+    dest.clear();
+    
+    Locker py_lock (this,
+                    Locker::AcquireLock | Locker::NoSTDIN,
+                    Locker::FreeLock);
+    
+    static char callee_name[] = "get_short_help";
+    
+    if (!cmd_obj_sp)
+        return false;
+    
+    PyObject* implementor = (PyObject*)cmd_obj_sp->GetObject();
+    
+    if (implementor == nullptr || implementor == Py_None)
+        return false;
+    
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    if (pmeth == nullptr || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return false;
+    }
+    
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+        
+        Py_XDECREF(pmeth);
+        return false;
+    }
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    Py_XDECREF(pmeth);
+    
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, nullptr);
+    
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    if (py_return != nullptr && py_return != Py_None)
+    {
+        if (PyString_Check(py_return))
+        {
+            dest.assign(PyString_AsString(py_return));
+            got_string = true;
+        }
+    }
+    Py_XDECREF(py_return);
+    
+    return got_string;
+}
+
+bool
+ScriptInterpreterPython::GetLongHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                                      std::string& dest)
+{
+    bool got_string = false;
+    dest.clear();
+    
+    Locker py_lock (this,
+                    Locker::AcquireLock | Locker::NoSTDIN,
+                    Locker::FreeLock);
+    
+    static char callee_name[] = "get_long_help";
+    
+    if (!cmd_obj_sp)
+        return false;
+    
+    PyObject* implementor = (PyObject*)cmd_obj_sp->GetObject();
+    
+    if (implementor == nullptr || implementor == Py_None)
+        return false;
+    
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    if (pmeth == nullptr || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return false;
+    }
+    
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+        
+        Py_XDECREF(pmeth);
+        return false;
+    }
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    Py_XDECREF(pmeth);
+    
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, nullptr);
+    
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    if (py_return != nullptr && py_return != Py_None)
+    {
+        if (PyString_Check(py_return))
+        {
+            dest.assign(PyString_AsString(py_return));
+            got_string = true;
+        }
+    }
+    Py_XDECREF(py_return);
+    
+    return got_string;
+}
+
 std::unique_ptr<ScriptInterpreterLocker>
 ScriptInterpreterPython::AcquireInterpreterLock ()
 {

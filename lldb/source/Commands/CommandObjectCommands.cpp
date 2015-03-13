@@ -1435,6 +1435,8 @@ class CommandObjectScriptingObject : public CommandObjectRaw
 private:
     lldb::ScriptInterpreterObjectSP m_cmd_obj_sp;
     ScriptedCommandSynchronicity m_synchro;
+    bool m_fetched_help_short:1;
+    bool m_fetched_help_long:1;
     
 public:
     
@@ -1447,7 +1449,9 @@ public:
                       NULL,
                       NULL),
     m_cmd_obj_sp(cmd_obj_sp),
-    m_synchro(synch)
+    m_synchro(synch),
+    m_fetched_help_short(false),
+    m_fetched_help_long(false)
     {
         StreamString stream;
         stream.Printf("For more information run 'help %s'",name.c_str());
@@ -1476,10 +1480,38 @@ public:
     {
         return m_synchro;
     }
+
+    virtual const char *
+    GetHelp ()
+    {
+        if (!m_fetched_help_short)
+        {
+            ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
+            if (scripter)
+            {
+                std::string docstring;
+                m_fetched_help_short = scripter->GetShortHelpForCommandObject(m_cmd_obj_sp,docstring);
+                if (!docstring.empty())
+                    SetHelp(docstring);
+            }
+        }
+        return CommandObjectRaw::GetHelp();
+    }
     
     virtual const char *
     GetHelpLong ()
     {
+        if (!m_fetched_help_long)
+        {
+            ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
+            if (scripter)
+            {
+                std::string docstring;
+                m_fetched_help_long = scripter->GetLongHelpForCommandObject(m_cmd_obj_sp,docstring);
+                if (!docstring.empty())
+                    SetHelpLong(docstring);
+            }
+        }
         return CommandObjectRaw::GetHelpLong();
     }
     

@@ -1,12 +1,15 @@
 import sys
 
-def welcome_impl(debugger, args, result, dict):
-    """
-        Just a docstring for welcome_impl
-        A command that says hello to LLDB users
-    """
-    print >>result,  ('Hello ' + args + ', welcome to LLDB');
-    return None;
+class WelcomeCommand(object):
+    def __init__(self, debugger, session_dict):
+        pass
+    
+    def get_short_help(self):
+        return "Just a docstring for welcome_impl\nA command that says hello to LLDB users"
+        
+    def __call__(self, debugger, args, exe_ctx, result):
+        print >>result,  ('Hello ' + args + ', welcome to LLDB');
+        return None;
 
 def target_name_impl(debugger, args, result, dict):
     target = debugger.GetSelectedTarget()

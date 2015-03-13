@@ -119,7 +119,7 @@ class CmdPythonTestCase(TestBase):
         self.runCmd("command script clear")
 
         # Test that re-defining an existing command works
-        self.runCmd('command script add my_command --function welcome.welcome_impl')
+        self.runCmd('command script add my_command --class welcome.WelcomeCommand')
         self.expect('my_command Blah', substrs = ['Hello Blah, welcome to LLDB'])
 
         self.runCmd('command script add my_command --function welcome.target_name_impl')

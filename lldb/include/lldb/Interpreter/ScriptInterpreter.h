@@ -614,6 +614,22 @@ public:
     }
     
     virtual bool
+    GetShortHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                  std::string& dest)
+    {
+        dest.clear();
+        return false;
+    }
+
+    virtual bool
+    GetLongHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                 std::string& dest)
+    {
+        dest.clear();
+        return false;
+    }
+    
+    virtual bool
     CheckObjectExists (const char* name)
     {
         return false;

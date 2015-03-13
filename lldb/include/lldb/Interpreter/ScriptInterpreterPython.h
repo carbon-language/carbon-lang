@@ -214,6 +214,14 @@ public:
     GetDocumentationForItem (const char* item, std::string& dest) override;
     
     bool
+    GetShortHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                  std::string& dest) override;
+    
+    bool
+    GetLongHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                 std::string& dest) override ;
+    
+    bool
     CheckObjectExists (const char* name) override
     {
         if (!name || !name[0])
