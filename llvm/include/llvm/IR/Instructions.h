@@ -846,10 +846,8 @@ public:
   }
 
   Type *getSourceElementType() const {
-    SequentialType *Ty = cast<SequentialType>(getPointerOperandType());
-    if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-      Ty = cast<SequentialType>(VTy->getElementType());
-    return Ty->getElementType();
+    return cast<SequentialType>(getPointerOperandType()->getScalarType())
+        ->getElementType();
   }
 
   /// \brief Returns the address space of this instruction's pointer type.
