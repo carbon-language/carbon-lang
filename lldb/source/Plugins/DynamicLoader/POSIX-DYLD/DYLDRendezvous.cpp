@@ -120,7 +120,7 @@ DYLDRendezvous::DYLDRendezvous(Process *process)
         Module *exe_mod = m_process->GetTarget().GetExecutableModulePointer();
         if (exe_mod)
         {
-            exe_mod->GetFileSpec().GetPath(m_exe_path, PATH_MAX);
+            exe_mod->GetPlatformFileSpec().GetPath(m_exe_path, PATH_MAX);
             if (log)
                 log->Printf ("DYLDRendezvous::%s exe module executable path set: '%s'", __FUNCTION__, m_exe_path);
         }
@@ -281,8 +281,7 @@ bool
 DYLDRendezvous::SOEntryIsMainExecutable(const SOEntry &entry)
 {
     // On Linux the executable is indicated by an empty path in the entry. On
-    // FreeBSD it is the full path to the executable. On Android, it is the
-    // basename of the executable.
+    // FreeBSD and on Android it is the full path to the executable.
 
     auto triple = m_process->GetTarget().GetArchitecture().GetTriple();
     auto os_type = triple.getOS();
@@ -292,8 +291,12 @@ DYLDRendezvous::SOEntryIsMainExecutable(const SOEntry &entry)
         case llvm::Triple::FreeBSD:
             return ::strcmp(entry.path.c_str(), m_exe_path) == 0;
         case llvm::Triple::Linux:
-            return entry.path.empty() || (env_type == llvm::Triple::Android &&
-                   llvm::sys::path::filename(m_exe_path) == entry.path);
+            switch (env_type) {
+                case llvm::Triple::Android:
+                    return ::strcmp(entry.path.c_str(), m_exe_path) == 0;
+                default:
+                    return entry.path.empty();
+            }
         default:
             return false;
     }
