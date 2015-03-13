@@ -174,37 +174,40 @@ static Instruction *simplifyAllocaArraySize(InstCombiner &IC, AllocaInst &AI) {
     return &AI;
   }
 
+  // Check C != 1
+  if (!AI.isArrayAllocation())
+    return nullptr;
+
   // Convert: alloca Ty, C - where C is a constant != 1 into: alloca [C x Ty], 1
-  if (AI.isArrayAllocation()) {  // Check C != 1
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
-      Type *NewTy =
-        ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
-      AllocaInst *New = IC.Builder->CreateAlloca(NewTy, nullptr, AI.getName());
-      New->setAlignment(AI.getAlignment());
+  if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
+    Type *NewTy = ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
+    AllocaInst *New = IC.Builder->CreateAlloca(NewTy, nullptr, AI.getName());
+    New->setAlignment(AI.getAlignment());
 
-      // Scan to the end of the allocation instructions, to skip over a block of
-      // allocas if possible...also skip interleaved debug info
-      //
-      BasicBlock::iterator It = New;
-      while (isa<AllocaInst>(*It) || isa<DbgInfoIntrinsic>(*It)) ++It;
+    // Scan to the end of the allocation instructions, to skip over a block of
+    // allocas if possible...also skip interleaved debug info
+    //
+    BasicBlock::iterator It = New;
+    while (isa<AllocaInst>(*It) || isa<DbgInfoIntrinsic>(*It))
+      ++It;
 
-      // Now that I is pointing to the first non-allocation-inst in the block,
-      // insert our getelementptr instruction...
-      //
-      Type *IdxTy = IC.getDataLayout().getIntPtrType(AI.getType());
-      Value *NullIdx = Constant::getNullValue(IdxTy);
-      Value *Idx[2] = { NullIdx, NullIdx };
-      Instruction *GEP =
+    // Now that I is pointing to the first non-allocation-inst in the block,
+    // insert our getelementptr instruction...
+    //
+    Type *IdxTy = IC.getDataLayout().getIntPtrType(AI.getType());
+    Value *NullIdx = Constant::getNullValue(IdxTy);
+    Value *Idx[2] = {NullIdx, NullIdx};
+    Instruction *GEP =
         GetElementPtrInst::CreateInBounds(New, Idx, New->getName() + ".sub");
-      IC.InsertNewInstBefore(GEP, *It);
+    IC.InsertNewInstBefore(GEP, *It);
 
-      // Now make everything use the getelementptr instead of the original
-      // allocation.
-      return IC.ReplaceInstUsesWith(AI, GEP);
-    } else if (isa<UndefValue>(AI.getArraySize())) {
-      return IC.ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
-    }
+    // Now make everything use the getelementptr instead of the original
+    // allocation.
+    return IC.ReplaceInstUsesWith(AI, GEP);
   }
+
+  if (isa<UndefValue>(AI.getArraySize()))
+    return IC.ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
 
   return nullptr;
 }
