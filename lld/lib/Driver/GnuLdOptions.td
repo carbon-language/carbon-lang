@@ -253,6 +253,16 @@ defm wrap : smDash<"wrap", "wrap",
             " will be resolved to symbol.">,
             MetaVarName<"<symbol>">,
             Group<grp_symbolopts>;
+
+//===----------------------------------------------------------------------===//
+/// Script Options
+//===----------------------------------------------------------------------===//
+def grp_scriptopts : OptionGroup<"opts">,
+     HelpText<"SCRIPT OPTIONS">;
+defm T : smDash<"T", "script",
+      "Use the given linker script in place of the default script.">,
+      Group<grp_scriptopts>;
+
 //===----------------------------------------------------------------------===//
 /// Optimization Options
 //===----------------------------------------------------------------------===//

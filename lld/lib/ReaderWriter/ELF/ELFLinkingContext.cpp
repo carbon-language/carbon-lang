@@ -145,10 +145,10 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
     if (llvm::sys::fs::exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
   }
-  if (!llvm::sys::fs::exists(libName))
-    return make_error_code(llvm::errc::no_such_file_or_directory);
+  if (hasColonPrefix && llvm::sys::fs::exists(libName.drop_front()))
+      return libName.drop_front();
 
-  return libName;
+  return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
 ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,

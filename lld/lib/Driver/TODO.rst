@@ -31,7 +31,6 @@ Missing Options
 * -s,--strip-all
 * -S,--strip-debug
 * --trace
-* -T,--script
 * -dT,--default-script
 * -Ur
 * --unique

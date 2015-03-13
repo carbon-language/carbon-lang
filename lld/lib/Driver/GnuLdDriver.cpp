@@ -659,7 +659,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     }
 
     case OPT_INPUT:
-    case OPT_l: {
+    case OPT_l:
+    case OPT_T: {
       bool dashL = (arg->getOption().getID() == OPT_l);
       StringRef path = arg->getValue();
 
