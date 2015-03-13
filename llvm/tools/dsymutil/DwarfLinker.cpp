@@ -127,7 +127,7 @@ public:
   /// relocatad by applying offset \p PCOffset.
   void addFunctionRange(uint64_t LowPC, uint64_t HighPC, int64_t PCOffset);
 
-  /// \bried Keep trak of a DW_AT_range attribute that we will need to
+  /// \brief Keep trak of a DW_AT_range attribute that we will need to
   /// patch up later.
   void noteRangeAttribute(const DIE &Die, DIEInteger *Attr);
 
