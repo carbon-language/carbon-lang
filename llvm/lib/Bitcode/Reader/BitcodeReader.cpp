@@ -1955,19 +1955,25 @@ std::error_code BitcodeReader::ParseConstants() {
     }
     case bitc::CST_CODE_CE_INBOUNDS_GEP:
     case bitc::CST_CODE_CE_GEP: {  // CE_GEP:        [n x operands]
-      if (Record.size() & 1)
-        return Error("Invalid record");
+      unsigned OpNum = 0;
+      Type *PointeeType = nullptr;
+      if (Record.size() % 2)
+        PointeeType = getTypeByID(Record[OpNum++]);
       SmallVector<Constant*, 16> Elts;
-      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        Type *ElTy = getTypeByID(Record[i]);
+      while (OpNum != Record.size()) {
+        Type *ElTy = getTypeByID(Record[OpNum++]);
         if (!ElTy)
           return Error("Invalid record");
-        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
+        Elts.push_back(ValueList.getConstantFwdRef(Record[OpNum++], ElTy));
       }
+
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
       V = ConstantExpr::getGetElementPtr(Elts[0], Indices,
                                          BitCode ==
                                            bitc::CST_CODE_CE_INBOUNDS_GEP);
+      if (PointeeType &&
+          PointeeType != cast<GEPOperator>(V)->getSourceElementType())
+        return Error("Invalid record");
       break;
     }
     case bitc::CST_CODE_CE_SELECT: {  // CE_SELECT: [opval#, opval#, opval#]

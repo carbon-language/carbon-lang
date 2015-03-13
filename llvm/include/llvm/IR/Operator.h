@@ -400,6 +400,11 @@ public:
     return getPointerOperand()->getType();
   }
 
+  Type *getSourceElementType() const {
+    return cast<SequentialType>(getPointerOperandType()->getScalarType())
+        ->getElementType();
+  }
+
   /// Method to return the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperandType()->getPointerAddressSpace();

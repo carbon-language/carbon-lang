@@ -1522,15 +1522,18 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
             Record.push_back(Flags);
         }
         break;
-      case Instruction::GetElementPtr:
+      case Instruction::GetElementPtr: {
         Code = bitc::CST_CODE_CE_GEP;
-        if (cast<GEPOperator>(C)->isInBounds())
+        const auto *GO = cast<GEPOperator>(C);
+        if (GO->isInBounds())
           Code = bitc::CST_CODE_CE_INBOUNDS_GEP;
+        Record.push_back(VE.getTypeID(GO->getSourceElementType()));
         for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
           Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
           Record.push_back(VE.getValueID(C->getOperand(i)));
         }
         break;
+      }
       case Instruction::Select:
         Code = bitc::CST_CODE_CE_SELECT;
         Record.push_back(VE.getValueID(C->getOperand(0)));
