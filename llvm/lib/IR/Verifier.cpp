@@ -1014,7 +1014,8 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, unsigned Idx, Type *Ty,
          V);
 
   if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    if (!PTy->getElementType()->isSized()) {
+    SmallPtrSet<const Type*, 4> Visited;
+    if (!PTy->getElementType()->isSized(&Visited)) {
       Assert(!Attrs.hasAttribute(Idx, Attribute::ByVal) &&
                  !Attrs.hasAttribute(Idx, Attribute::InAlloca),
              "Attributes 'byval' and 'inalloca' do not support unsized types!",
