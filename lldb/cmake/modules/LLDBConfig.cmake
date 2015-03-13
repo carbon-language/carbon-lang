@@ -25,7 +25,7 @@ set(LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION ${LLDB_DEFAULT_ENABLE_PYTHON_
   "Enables using new Python scripts for SWIG API generation .")  
 
 set(LLDB_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/source")
-set(LLDB_INCLUDE_ROOT "${LLDB_INCLUDE_ROOT}/include")
+set(LLDB_INCLUDE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(LLDB_DISABLE_PYTHON 0 CACHE BOOL "Disables the Python scripting integration.")
 

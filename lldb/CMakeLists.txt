@@ -10,6 +10,7 @@ endif ()
 add_subdirectory(source)
 add_subdirectory(test)
 add_subdirectory(tools)
+add_subdirectory(gtest)
 
 
 if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION AND NOT LLDB_DISABLE_PYTHON )
