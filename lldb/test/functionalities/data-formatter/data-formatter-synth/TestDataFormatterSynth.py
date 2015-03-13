@@ -168,7 +168,7 @@ class SynthDataFormatterTestCase(TestBase):
         
         # skip synthetic children
         self.expect('frame variable plenty_of_stuff --synthetic-type no',
-                    substrs = ['some_values = 0x0',
+                    substrs = ['some_values = 0x',
                                'array = 0x',
                                'array_size = 5'])
 
