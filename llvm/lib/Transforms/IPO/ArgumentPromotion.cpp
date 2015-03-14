@@ -900,10 +900,9 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = ConstantInt::get(Type::getInt32Ty(F->getContext()), i);
-        Value *Idx = 
-          GetElementPtrInst::Create(TheAlloca, Idxs,
-                                    TheAlloca->getName()+"."+Twine(i), 
-                                    InsertPt);
+        Value *Idx = GetElementPtrInst::Create(
+            AgTy, TheAlloca, Idxs, TheAlloca->getName() + "." + Twine(i),
+            InsertPt);
         I2->setName(I->getName()+"."+Twine(i));
         new StoreInst(I2++, Idx, InsertPt);
       }

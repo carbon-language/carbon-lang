@@ -404,10 +404,9 @@ InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
       GEPOps.push_back(OpVal);
     }
 
-    GetElementPtrInst *Result =
-      GetElementPtrInst::Create(GEPOps[0], makeArrayRef(GEPOps).slice(1),
-                                InVal->getName()+".phi.trans.insert",
-                                PredBB->getTerminator());
+    GetElementPtrInst *Result = GetElementPtrInst::Create(
+        GEP->getSourceElementType(), GEPOps[0], makeArrayRef(GEPOps).slice(1),
+        InVal->getName() + ".phi.trans.insert", PredBB->getTerminator());
     Result->setIsInBounds(GEP->isInBounds());
     NewInsts.push_back(Result);
     return Result;

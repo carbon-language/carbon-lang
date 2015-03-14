@@ -123,10 +123,9 @@ bool NVPTXFavorNonGenericAddrSpaces::hoistAddrSpaceCastFromGEP(
     // =>
     // %0 = gep X, indices
     // %1 = addrspacecast %0
-    GetElementPtrInst *NewGEPI = GetElementPtrInst::Create(Cast->getOperand(0),
-                                                           Indices,
-                                                           GEP->getName(),
-                                                           GEPI);
+    GetElementPtrInst *NewGEPI = GetElementPtrInst::Create(
+        GEP->getSourceElementType(), Cast->getOperand(0), Indices,
+        GEP->getName(), GEPI);
     NewGEPI->setIsInBounds(GEP->isInBounds());
     GEP->replaceAllUsesWith(
         new AddrSpaceCastInst(NewGEPI, GEP->getType(), "", GEPI));

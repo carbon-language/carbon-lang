@@ -1476,10 +1476,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
 
     if (!Indices.empty())
-      return (GEP.isInBounds() && Src->isInBounds()) ?
-        GetElementPtrInst::CreateInBounds(Src->getOperand(0), Indices,
-                                          GEP.getName()) :
-        GetElementPtrInst::Create(Src->getOperand(0), Indices, GEP.getName());
+      return GEP.isInBounds() && Src->isInBounds()
+                 ? GetElementPtrInst::CreateInBounds(
+                       Src->getSourceElementType(), Src->getOperand(0), Indices,
+                       GEP.getName())
+                 : GetElementPtrInst::Create(Src->getSourceElementType(),
+                                             Src->getOperand(0), Indices,
+                                             GEP.getName());
   }
 
   if (GEP.getNumIndices() == 1) {
@@ -1557,8 +1560,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (CATy->getElementType() == StrippedPtrTy->getElementType()) {
           // -> GEP i8* X, ...
           SmallVector<Value*, 8> Idx(GEP.idx_begin()+1, GEP.idx_end());
-          GetElementPtrInst *Res =
-            GetElementPtrInst::Create(StrippedPtr, Idx, GEP.getName());
+          GetElementPtrInst *Res = GetElementPtrInst::Create(
+              StrippedPtrTy->getElementType(), StrippedPtr, Idx, GEP.getName());
           Res->setIsInBounds(GEP.isInBounds());
           if (StrippedPtrTy->getAddressSpace() == GEP.getAddressSpace())
             return Res;

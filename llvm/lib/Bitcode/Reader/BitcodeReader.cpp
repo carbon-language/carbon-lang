@@ -3131,7 +3131,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         GEPIdx.push_back(Op);
       }
 
-      I = GetElementPtrInst::Create(BasePtr, GEPIdx);
+      I = GetElementPtrInst::Create(Ty, BasePtr, GEPIdx);
       if (Ty && Ty != cast<GetElementPtrInst>(I)->getSourceElementType())
         return Error("Invalid record");
       InstructionList.push_back(I);
