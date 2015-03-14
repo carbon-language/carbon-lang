@@ -361,8 +361,10 @@ public:
       const std::vector<DWARFDebugRangeList::RangeListEntry> &Entries,
       unsigned AddressSize);
 
-  /// \brief Emit debug_ranges entries for a DW_TAG_compile_unit's DW_AT_ranges.
-  void emitUnitRangesEntries(CompileUnit &Unit);
+  /// \brief Emit debug_aranges entries for \p Unit and if \p
+  /// DoRangesSection is true, also emit the debug_ranges entries for
+  /// the DW_TAG_compile_unit's DW_AT_ranges attribute.
+  void emitUnitRangesEntries(CompileUnit &Unit, bool DoRangesSection);
 
   uint32_t getRangesSectionSize() const { return RangesSectionSize; }
 };
@@ -532,14 +534,13 @@ void DwarfStreamer::emitRangesEntries(
   RangesSectionSize += 2 * AddressSize;
 }
 
-/// \brief Emit the debug_range contents for a compile_unit level
-/// DW_AT_ranges attribute. Just aggregate all the ranges gathered
-/// inside that unit.
-void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit) {
-  MS->SwitchSection(MC->getObjectFileInfo()->getDwarfRangesSection());
-
-  // Offset each range by the right amount.
-  int64_t PcOffset = -Unit.getLowPc();
+/// \brief Emit the debug_aranges contribution of a unit and
+/// if \p DoDebugRanges is true the debug_range contents for a
+/// compile_unit level DW_AT_ranges attribute (Which are basically the
+/// same thing with a different base address).
+/// Just aggregate all the ranges gathered inside that unit.
+void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
+                                          bool DoDebugRanges) {
   unsigned AddressSize = Unit.getOrigUnit().getAddressByteSize();
   // Gather the ranges in a vector, so that we can simplify them. The
   // IntervalMap will have coalesced the non-linked ranges, but here
@@ -548,19 +549,65 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit) {
   const auto &FunctionRanges = Unit.getFunctionRanges();
   for (auto Range = FunctionRanges.begin(), End = FunctionRanges.end();
        Range != End; ++Range)
-    Ranges.push_back(std::make_pair(Range.start() + Range.value() + PcOffset,
-                                    Range.stop() + Range.value() + PcOffset));
+    Ranges.push_back(std::make_pair(Range.start() + Range.value(),
+                                    Range.stop() + Range.value()));
 
   // The object addresses where sorted, but again, the linked
   // addresses might end up in a different order.
   std::sort(Ranges.begin(), Ranges.end());
 
+  if (!Ranges.empty()) {
+    MS->SwitchSection(MC->getObjectFileInfo()->getDwarfARangesSection());
+
+    MCSymbol *BeginLabel = Asm->GetTempSymbol("Barange", Unit.getUniqueID());
+    MCSymbol *EndLabel = Asm->GetTempSymbol("Earange", Unit.getUniqueID());
+
+    unsigned HeaderSize =
+        sizeof(int32_t) + // Size of contents (w/o this field
+        sizeof(int16_t) + // DWARF ARange version number
+        sizeof(int32_t) + // Offset of CU in the .debug_info section
+        sizeof(int8_t) +  // Pointer Size (in bytes)
+        sizeof(int8_t);   // Segment Size (in bytes)
+
+    unsigned TupleSize = AddressSize * 2;
+    unsigned Padding = OffsetToAlignment(HeaderSize, TupleSize);
+
+    Asm->EmitLabelDifference(EndLabel, BeginLabel, 4); // Arange length
+    Asm->OutStreamer.EmitLabel(BeginLabel);
+    Asm->EmitInt16(dwarf::DW_ARANGES_VERSION); // Version number
+    Asm->EmitInt32(Unit.getStartOffset());     // Corresponding unit's offset
+    Asm->EmitInt8(AddressSize);                // Address size
+    Asm->EmitInt8(0);                          // Segment size
+
+    Asm->OutStreamer.EmitFill(Padding, 0x0);
+
+    for (auto Range = Ranges.begin(), End = Ranges.end(); Range != End;
+         ++Range) {
+      uint64_t RangeStart = Range->first;
+      MS->EmitIntValue(RangeStart, AddressSize);
+      while ((Range + 1) != End && Range->second == (Range + 1)->first)
+        ++Range;
+      MS->EmitIntValue(Range->second - RangeStart, AddressSize);
+    }
+
+    // Emit terminator
+    Asm->OutStreamer.EmitIntValue(0, AddressSize);
+    Asm->OutStreamer.EmitIntValue(0, AddressSize);
+    Asm->OutStreamer.EmitLabel(EndLabel);
+  }
+
+  if (!DoDebugRanges)
+    return;
+
+  MS->SwitchSection(MC->getObjectFileInfo()->getDwarfRangesSection());
+  // Offset each range by the right amount.
+  int64_t PcOffset = -Unit.getLowPc();
   // Emit coalesced ranges.
   for (auto Range = Ranges.begin(), End = Ranges.end(); Range != End; ++Range) {
-    MS->EmitIntValue(Range->first, AddressSize);
+    MS->EmitIntValue(Range->first + PcOffset, AddressSize);
     while (Range + 1 != End && Range->second == (Range + 1)->first)
       ++Range;
-    MS->EmitIntValue(Range->second, AddressSize);
+    MS->EmitIntValue(Range->second + PcOffset, AddressSize);
     RangesSectionSize += 2 * AddressSize;
   }
 
@@ -1707,16 +1754,17 @@ void DwarfLinker::patchRangesForUnit(const CompileUnit &Unit,
   }
 }
 
-/// \brief Generate the debug_ranges entries for \p Unit's
-/// DW_AT_ranges attribute if there is one.
+/// \brief Generate the debug_aranges entries for \p Unit and if the
+/// unit has a DW_AT_ranges attribute, also emit the debug_ranges
+/// contribution for this attribute.
 /// FIXME: this could actually be done right in patchRangesForUnit,
 /// but for the sake of initial bit-for-bit compatibility with legacy
 /// dsymutil, we have to do it in a delayed pass.
 void DwarfLinker::generateUnitRanges(CompileUnit &Unit) const {
-  if (DIEInteger *Attr = Unit.getUnitRangesAttribute()) {
+  DIEInteger *Attr = Unit.getUnitRangesAttribute();
+  if (Attr)
     Attr->setValue(Streamer->getRangesSectionSize());
-    Streamer->emitUnitRangesEntries(Unit);
-  }
+  Streamer->emitUnitRangesEntries(Unit, Attr != nullptr);
 }
 
 bool DwarfLinker::link(const DebugMap &Map) {

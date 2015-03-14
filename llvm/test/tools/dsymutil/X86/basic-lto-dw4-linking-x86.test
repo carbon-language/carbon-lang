@@ -105,3 +105,11 @@ CHECK:           [0x0000000100000f9f - 0x0000000100000fa7))
 
 CHECK:      NULL
 CHECK:    NULL
+
+CHECK: .debug_aranges contents:
+CHECK-NEXT: Address Range Header: length = 0x0000002c, version = 0x0002, cu_offset = 0x00000000, addr_size = 0x08, seg_size = 0x00
+CHECK-NEXT: [0x0000000100000f40 - 0x0000000100000f4b)
+CHECK-NEXT: Address Range Header: length = 0x0000002c, version = 0x0002, cu_offset = 0x00000077, addr_size = 0x08, seg_size = 0x00
+CHECK-NEXT: [0x0000000100000f50 - 0x0000000100000f87)
+CHECK-NEXT: Address Range Header: length = 0x0000002c, version = 0x0002, cu_offset = 0x0000011b, addr_size = 0x08, seg_size = 0x00
+CHECK-NEXT: [0x0000000100000f90 - 0x0000000100000fb4)
