@@ -955,7 +955,7 @@ static bool isLibrary(const std::unique_ptr<Node> &elem) {
 // comes before any library file. We also make a group for the library files
 // so that the Resolver will reiterate over the libraries as long as we find
 // new undefines from libraries.
-void MachOLinkingContext::maybeSortInputFiles() {
+void MachOLinkingContext::finalizeInputFiles() {
   std::vector<std::unique_ptr<Node>> &elements = getNodes();
   std::stable_sort(elements.begin(), elements.end(),
                    [](const std::unique_ptr<Node> &a,

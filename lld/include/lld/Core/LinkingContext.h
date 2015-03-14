@@ -307,8 +307,8 @@ public:
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
 
   // This function is called just before the Resolver kicks in.
-  // Derived classes may use that chance to rearrange the input files.
-  virtual void maybeSortInputFiles() {}
+  // Derived classes may use it to change the list of input files.
+  virtual void finalizeInputFiles() {}
 
   TaskGroup &getTaskGroup() { return _taskGroup; }
 

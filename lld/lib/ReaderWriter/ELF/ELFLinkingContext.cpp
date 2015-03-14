@@ -188,6 +188,12 @@ void ELFLinkingContext::createInternalFiles(
   LinkingContext::createInternalFiles(files);
 }
 
+void ELFLinkingContext::finalizeInputFiles() {
+  // Add virtual archive that resolves undefined symbols.
+  if (_resolver)
+    getNodes().push_back(llvm::make_unique<FileNode>(std::move(_resolver)));
+}
+
 std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
@@ -243,6 +249,11 @@ std::string ELFLinkingContext::demangle(StringRef symbolName) const {
 #endif
 
   return symbolName;
+}
+
+void ELFLinkingContext::setUndefinesResolver(std::unique_ptr<File> resolver) {
+  assert(isa<ArchiveLibraryFile>(resolver.get()) && "Wrong resolver type");
+  _resolver = std::move(resolver);
 }
 
 } // end namespace lld

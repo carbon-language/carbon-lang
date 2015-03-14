@@ -17,6 +17,7 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/UndefinedAtom.h"
@@ -75,6 +76,48 @@ private:
   atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
+};
+
+/// \brief Archive library file that may be used as a virtual container
+/// for symbols that should be added dynamically in response to
+/// call to find() method.
+class SimpleArchiveLibraryFile : public ArchiveLibraryFile {
+public:
+  SimpleArchiveLibraryFile(StringRef filename)
+      : ArchiveLibraryFile(filename) {}
+
+  const atom_collection<DefinedAtom> &defined() const override {
+    return _definedAtoms;
+  }
+
+  const atom_collection<UndefinedAtom> &undefined() const override {
+    return _undefinedAtoms;
+  }
+
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+    return _sharedLibraryAtoms;
+  }
+
+  const atom_collection<AbsoluteAtom> &absolute() const override {
+    return _absoluteAtoms;
+  }
+
+  File *find(StringRef sym, bool dataSymbolOnly) override {
+    // For descendants:
+    // do some checks here and return dynamically generated files with atoms.
+    return nullptr;
+  }
+
+  std::error_code
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) override {
+    return std::error_code();
+  }
+
+private:
+  atom_collection_vector<DefinedAtom> _definedAtoms;
+  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
+  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
 class SimpleReference : public Reference {

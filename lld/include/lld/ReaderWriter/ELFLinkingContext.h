@@ -29,6 +29,7 @@
 namespace lld {
 class DefinedAtom;
 class Reference;
+class File;
 
 namespace elf {
 template <typename ELFT> class TargetHandler;
@@ -170,6 +171,8 @@ public:
 
   void createInternalFiles(std::vector<std::unique_ptr<File>> &) const override;
 
+  void finalizeInputFiles() override;
+
   /// \brief Set the dynamic linker path
   void setInterpreter(StringRef dynamicLinker) {
     _dynamicLinkerArg = true;
@@ -310,6 +313,8 @@ public:
 
   const llvm::StringSet<> &wrapCalls() const { return _wrapCalls; }
 
+  void setUndefinesResolver(std::unique_ptr<File> resolver);
+
 private:
   ELFLinkingContext() = delete;
 
@@ -354,6 +359,7 @@ protected:
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
   std::vector<std::unique_ptr<script::Parser>> _scripts;
+  std::unique_ptr<File> _resolver;
 };
 } // end namespace lld
 

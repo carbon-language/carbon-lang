@@ -96,9 +96,10 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
     members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 
-  // Give target a chance to sort the input files.
+  // Give target a chance to postprocess input files.
   // Mach-O uses this chance to move all object files before library files.
-  context.maybeSortInputFiles();
+  // ELF adds specific undefined symbols resolver.
+  context.finalizeInputFiles();
 
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");

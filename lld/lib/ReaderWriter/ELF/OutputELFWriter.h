@@ -16,7 +16,9 @@
 #include "lld/Core/Parallel.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
+#include "lld/Core/Simple.h"
 #include "lld/Core/Writer.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Path.h"
 
@@ -27,6 +29,61 @@ using namespace llvm::object;
 
 template <class ELFT> class OutputELFWriter;
 template <class ELFT> class TargetLayout;
+
+namespace {
+
+template<class ELFT>
+class SymbolFile : public CRuntimeFile<ELFT> {
+public:
+  SymbolFile(ELFLinkingContext &context)
+      : CRuntimeFile<ELFT>(context, "Dynamic absolute symbols"),
+        _atomsAdded(false) {}
+
+  Atom *addAbsoluteAtom(StringRef symbolName) override {
+    auto *a = CRuntimeFile<ELFT>::addAbsoluteAtom(symbolName);
+    if (a) _atomsAdded = true;
+    return a;
+  }
+
+  Atom *addUndefinedAtom(StringRef) override {
+    llvm_unreachable("Cannot add undefined atoms to resolve undefined symbols");
+  }
+
+  bool hasAtoms() const { return _atomsAdded; }
+
+private:
+  bool _atomsAdded;
+};
+
+template<class ELFT>
+class DynamicSymbolFile : public SimpleArchiveLibraryFile {
+  typedef std::function<void(StringRef, CRuntimeFile<ELFT> &)> Resolver;
+public:
+  DynamicSymbolFile(ELFLinkingContext &context, Resolver resolver)
+      : SimpleArchiveLibraryFile("Dynamically added runtime symbols"),
+        _context(context), _resolver(resolver) {}
+
+  File *find(StringRef sym, bool dataSymbolOnly) override {
+    if (!_file)
+      _file.reset(new (_alloc) SymbolFile<ELFT>(_context));
+
+    assert(!_file->hasAtoms() && "The file shouldn't have atoms yet");
+    _resolver(sym, *_file);
+    // If atoms were added - release the file to the caller.
+    return _file->hasAtoms() ? _file.release() : nullptr;
+  }
+
+private:
+  ELFLinkingContext &_context;
+  Resolver _resolver;
+
+  // The allocator should go before bump pointers because of
+  // reversed destruction order.
+  llvm::BumpPtrAllocator _alloc;
+  unique_bump_ptr<SymbolFile<ELFT>> _file;
+};
+
+} // end anon namespace
 
 //===----------------------------------------------------------------------===//
 //  OutputELFWriter Class
@@ -120,6 +177,10 @@ protected:
   virtual bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
     return false;
   }
+
+  /// \brief Process undefined symbols that left after resolution step.
+  virtual void processUndefinedSymbol(StringRef symName,
+                                      CRuntimeFile<ELFT> &file) const {}
 
   llvm::BumpPtrAllocator _alloc;
 
@@ -305,6 +366,14 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
 template <class ELFT>
 bool OutputELFWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
+  // Add the virtual archive to resolve undefined symbols.
+  // The file will be added later in the linking context.
+  auto callback = [this](StringRef sym, CRuntimeFile<ELFT> &file) {
+    processUndefinedSymbol(sym, file);
+  };
+  auto &ctx = const_cast<ELFLinkingContext &>(_context);
+  ctx.setUndefinesResolver(
+      llvm::make_unique<DynamicSymbolFile<ELFT>>(ctx, std::move(callback)));
   return true;
 }
 
