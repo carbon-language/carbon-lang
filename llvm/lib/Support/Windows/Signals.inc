@@ -387,8 +387,9 @@ void sys::PrintStackTraceOnErrorSignal() {
 }
 }
 
-#ifdef __MINGW32__
-// Provide a prototype for RtlCaptureContext, mingw32 is missing it.
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+// Provide a prototype for RtlCaptureContext, mingw32 from mingw.org is
+// missing it but mingw-w64 has it.
 extern "C" VOID WINAPI RtlCaptureContext(PCONTEXT ContextRecord);
 #endif
 
