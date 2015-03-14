@@ -606,6 +606,9 @@ private:
   /// Add all of the functions arguments, basic blocks, and instructions.
   void processFunction();
 
+  /// Add all of the metadata from an instruction.
+  void processInstructionMetadata(const Instruction &I);
+
   SlotTracker(const SlotTracker &) = delete;
   void operator=(const SlotTracker &) = delete;
 };
@@ -715,8 +718,6 @@ void SlotTracker::processFunction() {
 
   ST_DEBUG("Inserting Instructions:\n");
 
-  SmallVector<std::pair<unsigned, MDNode *>, 4> MDForInst;
-
   // Add all of the basic blocks and instructions with no names.
   for (auto &BB : *TheFunction) {
     if (!BB.hasName())
@@ -726,17 +727,11 @@ void SlotTracker::processFunction() {
       if (!I.getType()->isVoidTy() && !I.hasName())
         CreateFunctionSlot(&I);
 
-      // Intrinsics can directly use metadata.  We allow direct calls to any
-      // llvm.foo function here, because the target may not be linked into the
-      // optimizer.
-      if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
-        if (Function *F = CI->getCalledFunction())
-          if (F->isIntrinsic())
-            for (auto &Op : I.operands())
-              if (auto *V = dyn_cast_or_null<MetadataAsValue>(Op))
-                if (MDNode *N = dyn_cast<MDNode>(V->getMetadata()))
-                  CreateMetadataSlot(N);
+      processInstructionMetadata(I);
 
+      // We allow direct calls to any llvm.foo function here, because the
+      // target may not be linked into the optimizer.
+      if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
         // Add all the call attributes to the table.
         AttributeSet Attrs = CI->getAttributes().getFnAttributes();
         if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
@@ -747,18 +742,29 @@ void SlotTracker::processFunction() {
         if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
           CreateAttributeSetSlot(Attrs);
       }
-
-      // Process metadata attached with this instruction.
-      I.getAllMetadata(MDForInst);
-      for (auto &MD : MDForInst)
-        CreateMetadataSlot(MD.second);
-      MDForInst.clear();
     }
   }
 
   FunctionProcessed = true;
 
   ST_DEBUG("end processFunction!\n");
+}
+
+void SlotTracker::processInstructionMetadata(const Instruction &I) {
+  // Process metadata used directly by intrinsics.
+  if (const CallInst *CI = dyn_cast<CallInst>(&I))
+    if (Function *F = CI->getCalledFunction())
+      if (F->isIntrinsic())
+        for (auto &Op : I.operands())
+          if (auto *V = dyn_cast_or_null<MetadataAsValue>(Op))
+            if (MDNode *N = dyn_cast<MDNode>(V->getMetadata()))
+              CreateMetadataSlot(N);
+
+  // Process metadata attached to this instruction.
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+  I.getAllMetadata(MDs);
+  for (auto &MD : MDs)
+    CreateMetadataSlot(MD.second);
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
