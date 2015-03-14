@@ -818,6 +818,30 @@ static bool combineStoreToValueType(InstCombiner &IC, StoreInst &SI) {
   return false;
 }
 
+static bool unpackStoreToAggregate(InstCombiner &IC, StoreInst &SI) {
+  // FIXME: We could probably with some care handle both volatile and atomic
+  // stores here but it isn't clear that this is important.
+  if (!SI.isSimple())
+    return false;
+
+  Value *V = SI.getValueOperand();
+  Type *T = V->getType();
+
+  if (!T->isAggregateType())
+    return false;
+
+  if (StructType *ST = dyn_cast<StructType>(T)) {
+    // If the struct only have one element, we unpack.
+    if (ST->getNumElements() == 1) {
+      V = IC.Builder->CreateExtractValue(V, 0);
+      combineStoreToNewValue(IC, SI, V);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// equivalentAddressValues - Test if A and B will obviously have the same
 /// value. This includes recognizing that %t0 and %t1 will have the same
 /// value in code like this:
@@ -866,6 +890,10 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     SI.setAlignment(KnownAlign);
   else if (StoreAlign == 0)
     SI.setAlignment(EffectiveStoreAlign);
+
+  // Try to canonicalize the stored type.
+  if (unpackStoreToAggregate(*this, SI))
+    return EraseInstFromFunction(SI);
 
   // Replace GEP indices if possible.
   if (Instruction *NewGEPI = replaceGEPIdxWithZero(*this, Ptr, SI)) {
