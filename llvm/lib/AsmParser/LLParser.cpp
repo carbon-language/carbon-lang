@@ -5521,7 +5521,7 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
 
   if (!GetElementPtrInst::getIndexedType(BaseType, Indices))
     return Error(Loc, "invalid getelementptr indices");
-  Inst = GetElementPtrInst::Create(Ptr, Indices);
+  Inst = GetElementPtrInst::Create(Ty, Ptr, Indices);
   if (InBounds)
     cast<GetElementPtrInst>(Inst)->setIsInBounds(true);
   return AteExtraComma ? InstExtraComma : InstNormal;
