@@ -115,11 +115,7 @@ public:
   };
 
   /// append a section to a segment
-  virtual void append(Section<ELFT> *chunk);
-
-  /// append a chunk to a segment, this function
-  /// is used by the ProgramHeader segment
-  virtual void append(Chunk<ELFT> *chunk) {}
+  virtual void append(Chunk<ELFT> *chunk);
 
   /// Sort segments depending on the property
   /// If we have a Program Header segment, it should appear first
@@ -283,9 +279,6 @@ public:
     this->_flags = (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR);
   }
 
-  /// append a section to a segment
-  void append(Chunk<ELFT> *chunk) { _sections.push_back(chunk); }
-
   /// Finalize the segment, before we want to write the segment header
   /// information
   void finalize() {
@@ -293,15 +286,12 @@ public:
     // and the fileSize need to be picked up from the last section, the first
     // section points to the ELF header and the second chunk points to the
     // actual program headers
-    this->setFileOffset(_sections.back()->fileOffset());
-    this->setVirtualAddr(_sections.back()->virtualAddr());
-    this->_fsize = _sections.back()->fileSize();
-    this->_msize = _sections.back()->memSize();
+    this->setFileOffset(this->_sections.back()->fileOffset());
+    this->setVirtualAddr(this->_sections.back()->virtualAddr());
+    this->_fsize = this->_sections.back()->fileSize();
+    this->_msize = this->_sections.back()->memSize();
   }
 
-protected:
-  /// \brief Section or some other chunk type.
-  std::vector<Chunk<ELFT> *> _sections;
 };
 
 template <class ELFT>
@@ -331,8 +321,11 @@ static DefinedAtom::ContentPermissions toAtomPerms(uint64_t flags) {
   }
 }
 
-template <class ELFT> void Segment<ELFT>::append(Section<ELFT> *section) {
-  _sections.push_back(section);
+template <class ELFT> void Segment<ELFT>::append(Chunk<ELFT> *chunk) {
+  _sections.push_back(chunk);
+  Section<ELFT> *section = dyn_cast<Section<ELFT>>(chunk);
+  if (!section)
+    return;
   if (_flags < section->getFlags())
     _flags |= section->getFlags();
   if (_atomflags < toAtomPerms(_flags))
