@@ -230,7 +230,7 @@ Args::ParseSingleArgument(llvm::StringRef command)
                 arg += '\\';
 
             arg += command.front();
-            command.drop_front();
+            command = command.drop_front();
 
             break;
 
