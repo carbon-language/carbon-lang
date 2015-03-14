@@ -448,7 +448,7 @@ public:
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_ABS;
     symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_OBJECT);
-    symbol->st_other = llvm::ELF::STV_DEFAULT;
+    symbol->setVisibility(llvm::ELF::STV_DEFAULT);
     symbol->st_size = 0;
     auto newAtom = this->handleAbsoluteSymbol(symbolName, symbol, -1);
     this->_absoluteAtoms._atoms.push_back(*newAtom);
@@ -463,7 +463,7 @@ public:
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_UNDEF;
     symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_NOTYPE);
-    symbol->st_other = llvm::ELF::STV_DEFAULT;
+    symbol->setVisibility(llvm::ELF::STV_DEFAULT);
     symbol->st_size = 0;
     auto newAtom = this->handleUndefinedSymbol(symbolName, symbol);
     this->_undefinedAtoms._atoms.push_back(*newAtom);

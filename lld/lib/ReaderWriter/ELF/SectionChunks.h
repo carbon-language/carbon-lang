@@ -784,7 +784,7 @@ void SymbolTable<ELFT>::addAbsoluteAtom(Elf_Sym &sym, const AbsoluteAtom *aa,
   sym.st_shndx = llvm::ELF::SHN_ABS;
   switch (aa->scope()) {
   case AbsoluteAtom::scopeLinkageUnit:
-    sym.st_other = llvm::ELF::STV_HIDDEN;
+    sym.setVisibility(llvm::ELF::STV_HIDDEN);
     binding = llvm::ELF::STB_LOCAL;
     break;
   case AbsoluteAtom::scopeTranslationUnit:
@@ -843,7 +843,8 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
   symbol.st_size = 0;
   symbol.st_shndx = sectionIndex;
   symbol.st_value = 0;
-  symbol.st_other = llvm::ELF::STV_DEFAULT;
+  symbol.st_other = 0;
+  symbol.setVisibility(llvm::ELF::STV_DEFAULT);
 
   // Add all the atoms
   if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom))
