@@ -24,6 +24,7 @@ namespace llvm {
   class FunctionPass;
 
   ModulePass *createMipsOs16Pass(MipsTargetMachine &TM);
+  ModulePass *createMips16HardFloatPass(MipsTargetMachine &TM);
 
   FunctionPass *createMipsOptimizePICCallPass(MipsTargetMachine &TM);
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);

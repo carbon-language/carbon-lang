@@ -14,7 +14,6 @@
 #include "MipsTargetMachine.h"
 #include "Mips.h"
 #include "Mips16FrameLowering.h"
-#include "Mips16HardFloat.h"
 #include "Mips16ISelDAGToDAG.h"
 #include "Mips16ISelLowering.h"
 #include "Mips16InstrInfo.h"
@@ -215,7 +214,7 @@ void MipsPassConfig::addIRPasses() {
   if (getMipsSubtarget().os16())
     addPass(createMipsOs16Pass(getMipsTargetMachine()));
   if (getMipsSubtarget().inMips16HardFloat())
-    addPass(createMips16HardFloat(getMipsTargetMachine()));
+    addPass(createMips16HardFloatPass(getMipsTargetMachine()));
 }
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.
