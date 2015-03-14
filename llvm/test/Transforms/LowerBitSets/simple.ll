@@ -1,4 +1,5 @@
 ; RUN: opt -S -lowerbitsets < %s | FileCheck %s
+; RUN: opt -S -lowerbitsets -mtriple=x86_64-apple-macosx10.8.0 < %s | FileCheck -check-prefix=CHECK-DARWIN %s
 ; RUN: opt -S -O3 < %s | FileCheck -check-prefix=CHECK-NODISCARD %s
 
 target datalayout = "e-p:32:32"
@@ -41,6 +42,10 @@ target datalayout = "e-p:32:32"
 ; CHECK: @b = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }, { i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 2)
 ; CHECK: @c = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }, { i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 4)
 ; CHECK: @d = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }, { i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 6)
+; CHECK-DARWIN: @a = private alias
+; CHECK-DARWIN: @b = private alias
+; CHECK-DARWIN: @c = private alias
+; CHECK-DARWIN: @d = private alias
 
 ; CHECK: @bits = private alias getelementptr inbounds ([68 x i8], [68 x i8]* [[BA]], i32 0, i32 0)
 ; CHECK: @bits1 = private alias getelementptr inbounds ([68 x i8], [68 x i8]* [[BA]], i32 0, i32 0)

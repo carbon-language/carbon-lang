@@ -16,6 +16,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -186,6 +187,7 @@ struct LowerBitSets : public ModulePass {
 
   Module *M;
 
+  bool LinkerSubsectionsViaSymbols;
   IntegerType *Int1Ty;
   IntegerType *Int8Ty;
   IntegerType *Int32Ty;
@@ -234,6 +236,9 @@ ModulePass *llvm::createLowerBitSetsPass() { return new LowerBitSets; }
 bool LowerBitSets::doInitialization(Module &Mod) {
   M = &Mod;
   const DataLayout &DL = Mod.getDataLayout();
+
+  Triple TargetTriple(M->getTargetTriple());
+  LinkerSubsectionsViaSymbols = TargetTriple.isMacOSX();
 
   Int1Ty = Type::getInt1Ty(M->getContext());
   Int8Ty = Type::getInt8Ty(M->getContext());
@@ -524,9 +529,12 @@ void LowerBitSets::buildBitSetsFromGlobals(
                                       ConstantInt::get(Int32Ty, I * 2)};
     Constant *CombinedGlobalElemPtr =
         ConstantExpr::getGetElementPtr(CombinedGlobal, CombinedGlobalIdxs);
+    GlobalValue::LinkageTypes GAliasLinkage = LinkerSubsectionsViaSymbols
+                                                  ? GlobalValue::PrivateLinkage
+                                                  : Globals[I]->getLinkage();
     GlobalAlias *GAlias = GlobalAlias::create(
         Globals[I]->getType()->getElementType(),
-        Globals[I]->getType()->getAddressSpace(), Globals[I]->getLinkage(),
+        Globals[I]->getType()->getAddressSpace(), GAliasLinkage,
         "", CombinedGlobalElemPtr, M);
     GAlias->takeName(Globals[I]);
     Globals[I]->replaceAllUsesWith(GAlias);
