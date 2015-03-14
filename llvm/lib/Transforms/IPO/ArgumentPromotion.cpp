@@ -584,7 +584,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   FunctionType *FTy = F->getFunctionType();
   std::vector<Type*> Params;
 
-  typedef std::set<std::pair<Type*, IndicesVector>> ScalarizeTable;
+  typedef std::set<std::pair<Type *, IndicesVector>> ScalarizeTable;
 
   // ScalarizedElements - If we are promoting a pointer that has elements
   // accessed out of it, keep track of which elements are accessed so that we
@@ -674,7 +674,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       for (ScalarizeTable::iterator SI = ArgIndices.begin(),
              E = ArgIndices.end(); SI != E; ++SI) {
         // not allowed to dereference ->begin() if size() is 0
-        Params.push_back(GetElementPtrInst::getIndexedType(I->getType(), SI->second));
+        Params.push_back(
+            GetElementPtrInst::getIndexedType(I->getType(), SI->second));
         assert(Params.back());
       }
 
@@ -788,7 +789,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
             Ops.reserve(SI->second.size());
             Type *ElTy = V->getType();
             for (IndicesVector::const_iterator II = SI->second.begin(),
-                 IE = SI->second.end(); II != IE; ++II) {
+                                               IE = SI->second.end();
+                 II != IE; ++II) {
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
               Type *IdxTy = (ElTy->isStructTy() ?
@@ -799,7 +801,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
               ElTy = cast<CompositeType>(ElTy)->getTypeAtIndex(*II);
             }
             // And create a GEP to extract those indices.
-            V = GetElementPtrInst::Create(SI->first, V, Ops, V->getName()+".idx", Call);
+            V = GetElementPtrInst::Create(SI->first, V, Ops,
+                                          V->getName() + ".idx", Call);
             Ops.clear();
             AA.copyValue(OrigLoad->getOperand(0), V);
           }
