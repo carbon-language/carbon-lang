@@ -54,6 +54,12 @@ HoistCheapInsts("hoist-cheap-insts",
                 cl::desc("MachineLICM should hoist even cheap instructions"),
                 cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+SinkInstsToAvoidSpills("sink-insts-to-avoid-spills",
+                       cl::desc("MachineLICM should sink instructions into "
+                                "loops to avoid register spills"),
+                       cl::init(false), cl::Hidden);
+
 STATISTIC(NumHoisted,
           "Number of machine instructions hoisted out of loops");
 STATISTIC(NumLowRP,
@@ -243,6 +249,11 @@ namespace {
     void HoistOutOfLoop(MachineDomTreeNode *LoopHeaderNode);
     void HoistRegion(MachineDomTreeNode *N, bool IsHeader);
 
+    /// SinkIntoLoop - Sink instructions into loops if profitable. This
+    /// especially tries to prevent register spills caused by register pressure
+    /// if there is little to no overhead moving instructions into loops.
+    void SinkIntoLoop();
+
     /// getRegisterClassIDAndCost - For a given MI, register, and the operand
     /// index, return the ID and cost of its representative register class by
     /// reference.
@@ -381,6 +392,9 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
       FirstInLoop = true;
       HoistOutOfLoop(N);
       CSEMap.clear();
+
+      if (SinkInstsToAvoidSpills)
+        SinkIntoLoop();
     }
   }
 
@@ -768,6 +782,53 @@ void MachineLICM::HoistOutOfLoop(MachineDomTreeNode *HeaderN) {
 
     // If it's a leaf node, it's done. Traverse upwards to pop ancestors.
     ExitScopeIfDone(Node, OpenChildren, ParentMap);
+  }
+}
+
+void MachineLICM::SinkIntoLoop() {
+  MachineBasicBlock *Preheader = getCurPreheader();
+  if (!Preheader)
+    return;
+
+  SmallVector<MachineInstr *, 8> Candidates;
+  for (MachineBasicBlock::instr_iterator I = Preheader->instr_begin();
+       I != Preheader->instr_end(); ++I) {
+    // We need to ensure that we can safely move this instruction into the loop.
+    // As such, it must not have side-effects, e.g. such as a call has.  
+    if (IsLoopInvariantInst(*I) && !HasLoopPHIUse(I))
+      Candidates.push_back(I);
+  }
+
+  for (MachineInstr *I : Candidates) {
+    const MachineOperand &MO = I->getOperand(0);
+    if (!MO.isDef() || !MO.isReg() || !MO.getReg())
+      continue;
+    if (!MRI->hasOneDef(MO.getReg()))
+      continue;
+    bool CanSink = true;
+    MachineBasicBlock *B = nullptr;
+    for (MachineInstr &MI : MRI->use_instructions(MO.getReg())) {
+      // FIXME: Come up with a proper cost model that estimates whether sinking
+      // the instruction (and thus possibly executing it on every loop
+      // iteration) is more expensive than a register.
+      // For now assumes that copies are cheap and thus almost always worth it.
+      if (!MI.isCopy()) {
+        CanSink = false;
+        break;
+      }
+      if (!B) {
+        B = MI.getParent();
+        continue;
+      }
+      B = DT->findNearestCommonDominator(B, MI.getParent());
+      if (!B) {
+        CanSink = false;
+        break;
+      }
+    }
+    if (!CanSink || !B || B == Preheader)
+      continue;
+    B->splice(B->getFirstNonPHI(), Preheader, I);
   }
 }
 
