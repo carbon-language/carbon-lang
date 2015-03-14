@@ -998,7 +998,7 @@ Currently, only the following parameter attributes are defined:
     This indicates that the parameter or return pointer is not null. This
     attribute may only be applied to pointer typed parameters. This is not
     checked or enforced by LLVM, the caller must ensure that the pointer
-    passed in is non-null, or the callee must ensure that the returned pointer 
+    passed in is non-null, or the callee must ensure that the returned pointer
     is non-null.
 
 ``dereferenceable(<n>)``
@@ -1024,12 +1024,12 @@ string:
 
     define void @f() gc "name" { ... }
 
-The supported values of *name* includes those :ref:`built in to LLVM 
+The supported values of *name* includes those :ref:`built in to LLVM
 <builtin-gc-strategies>` and any provided by loaded plugins.  Specifying a GC
-strategy will cause the compiler to alter its output in order to support the 
-named garbage collection algorithm.  Note that LLVM itself does not contain a 
+strategy will cause the compiler to alter its output in order to support the
+named garbage collection algorithm.  Note that LLVM itself does not contain a
 garbage collector, this functionality is restricted to generating machine code
-which can interoperate with a collector provided externally.  
+which can interoperate with a collector provided externally.
 
 .. _prefixdata:
 
@@ -1526,11 +1526,12 @@ the code generator should use.
 Instead, if specified, the target data layout is required to match what
 the ultimate *code generator* expects. This string is used by the
 mid-level optimizers to improve code, and this only works if it matches
-what the ultimate code generator uses. If you would like to generate IR
-that does not embed this target-specific detail into the IR, then you
-don't have to specify the string. This will disable some optimizations
-that require precise layout information, but this also prevents those
-optimizations from introducing target specificity into the IR.
+what the ultimate code generator uses. There is no way to generate IR
+that does not embed this target-specific detail into the IR. If you
+don't specify the string, the default specifications will be used to
+generate a Data Layout and the optimization phases will operate
+accordingly and introduce target specificity into the IR with respect to
+these default specifications.
 
 .. _langref_triple:
 
@@ -3539,28 +3540,28 @@ for optimizations are prefixed with ``llvm.mem``.
 '``llvm.mem.parallel_loop_access``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``llvm.mem.parallel_loop_access`` metadata refers to a loop identifier, 
-or metadata containing a list of loop identifiers for nested loops. 
-The metadata is attached to memory accessing instructions and denotes that 
-no loop carried memory dependence exist between it and other instructions denoted 
+The ``llvm.mem.parallel_loop_access`` metadata refers to a loop identifier,
+or metadata containing a list of loop identifiers for nested loops.
+The metadata is attached to memory accessing instructions and denotes that
+no loop carried memory dependence exist between it and other instructions denoted
 with the same loop identifier.
 
-Precisely, given two instructions ``m1`` and ``m2`` that both have the 
-``llvm.mem.parallel_loop_access`` metadata, with ``L1`` and ``L2`` being the 
-set of loops associated with that metadata, respectively, then there is no loop 
-carried dependence between ``m1`` and ``m2`` for loops in both ``L1`` and 
+Precisely, given two instructions ``m1`` and ``m2`` that both have the
+``llvm.mem.parallel_loop_access`` metadata, with ``L1`` and ``L2`` being the
+set of loops associated with that metadata, respectively, then there is no loop
+carried dependence between ``m1`` and ``m2`` for loops in both ``L1`` and
 ``L2``.
 
-As a special case, if all memory accessing instructions in a loop have 
-``llvm.mem.parallel_loop_access`` metadata that refers to that loop, then the 
-loop has no loop carried memory dependences and is considered to be a parallel 
-loop.  
+As a special case, if all memory accessing instructions in a loop have
+``llvm.mem.parallel_loop_access`` metadata that refers to that loop, then the
+loop has no loop carried memory dependences and is considered to be a parallel
+loop.
 
-Note that if not all memory access instructions have such metadata referring to 
-the loop, then the loop is considered not being trivially parallel. Additional 
-memory dependence analysis is required to make that determination.  As a fail 
-safe mechanism, this causes loops that were originally parallel to be considered 
-sequential (if optimization passes that are unaware of the parallel semantics 
+Note that if not all memory access instructions have such metadata referring to
+the loop, then the loop is considered not being trivially parallel. Additional
+memory dependence analysis is required to make that determination.  As a fail
+safe mechanism, this causes loops that were originally parallel to be considered
+sequential (if optimization passes that are unaware of the parallel semantics
 insert new memory instructions into the loop body).
 
 Example of a loop that is considered parallel due to its correct use of
@@ -5604,17 +5605,17 @@ metadata name ``<index>`` corresponding to a metadata node with no
 entries. The existence of the ``!invariant.load`` metadata on the
 instruction tells the optimizer and code generator that the address
 operand to this load points to memory which can be assumed unchanged.
-Being invariant does not imply that a location is dereferenceable, 
-but it does imply that once the location is known dereferenceable 
-its value is henceforth unchanging.  
+Being invariant does not imply that a location is dereferenceable,
+but it does imply that once the location is known dereferenceable
+its value is henceforth unchanging.
 
 The optional ``!nonnull`` metadata must reference a single
 metadata name ``<index>`` corresponding to a metadata node with no
 entries. The existence of the ``!nonnull`` metadata on the
 instruction tells the optimizer that the value loaded is known to
 never be null.  This is analogous to the ''nonnull'' attribute
-on parameters and return values.  This metadata can only be applied 
-to loads of a pointer type.  
+on parameters and return values.  This metadata can only be applied
+to loads of a pointer type.
 
 Semantics:
 """"""""""
@@ -7414,8 +7415,8 @@ Accurate Garbage Collection Intrinsics
 --------------------------------------
 
 LLVM's support for `Accurate Garbage Collection <GarbageCollection.html>`_
-(GC) requires the frontend to generate code containing appropriate intrinsic 
-calls and select an appropriate GC strategy which knows how to lower these 
+(GC) requires the frontend to generate code containing appropriate intrinsic
+calls and select an appropriate GC strategy which knows how to lower these
 intrinsics in a manner which is appropriate for the target collector.
 
 These intrinsics allow identification of :ref:`GC roots on the
@@ -7429,11 +7430,11 @@ Experimental Statepoint Intrinsics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 LLVM provides an second experimental set of intrinsics for describing garbage
-collection safepoints in compiled code.  These intrinsics are an alternative 
-to the ``llvm.gcroot`` intrinsics, but are compatible with the ones for 
-:ref:`read <int_gcread>` and :ref:`write <int_gcwrite>` barriers.  The 
-differences in approach are covered in the `Garbage Collection with LLVM 
-<GarbageCollection.html>`_ documentation.  The intrinsics themselves are 
+collection safepoints in compiled code.  These intrinsics are an alternative
+to the ``llvm.gcroot`` intrinsics, but are compatible with the ones for
+:ref:`read <int_gcread>` and :ref:`write <int_gcwrite>` barriers.  The
+differences in approach are covered in the `Garbage Collection with LLVM
+<GarbageCollection.html>`_ documentation.  The intrinsics themselves are
 described in :doc:`Statepoints`.
 
 .. _int_gcroot:
@@ -9690,7 +9691,7 @@ The result of this operation is equivalent to a regular vector load instruction 
 ::
 
        %res = call <16 x float> @llvm.masked.load.v16f32 (<16 x float>* %ptr, i32 4, <16 x i1>%mask, <16 x float> %passthru)
-       
+
        ;; The result of the two following instructions is identical aside from potential memory access exception
        %loadlal = load <16 x float>, <16 x float>* %ptr, align 4
        %res = select <16 x i1> %mask, <16 x float> %loadlal, <16 x float> %passthru
@@ -9729,7 +9730,7 @@ The result of this operation is equivalent to a load-modify-store sequence. Howe
 ::
 
        call void @llvm.masked.store.v16f32(<16 x float> %value, <16 x float>* %ptr, i32 4,  <16 x i1> %mask)
-       
+
        ;; The result of the following instructions is identical aside from potential data races and memory access exceptions
        %oldval = load <16 x float>, <16 x float>* %ptr, align 4
        %res = select <16 x i1> %mask, <16 x float> %value, <16 x float> %oldval
