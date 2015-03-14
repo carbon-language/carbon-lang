@@ -193,7 +193,7 @@ public:
 
   /// \brief Returns true/false depending on whether the section has a Output
   //         segment or not
-  bool hasOutputSegment(Section<ELFT> *section);
+  static bool hasOutputSegment(Section<ELFT> *section);
 
   // Adds an atom to the section
   ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom) override;

@@ -207,7 +207,7 @@ protected:
   /// @}
 
 private:
-  StringRef maybeGetSOName(Node *node);
+  static StringRef maybeGetSOName(Node *node);
 };
 
 //===----------------------------------------------------------------------===//
@@ -359,7 +359,7 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
   _layout.assignFileOffsetsForMiscSections();
   for (auto sec : _layout.sections())
     if (auto section = dyn_cast<Section<ELFT>>(sec))
-      if (!_layout.hasOutputSegment(section))
+      if (!DefaultLayout<ELFT>::hasOutputSegment(section))
         _shdrtab->updateSection(section);
 }
 
