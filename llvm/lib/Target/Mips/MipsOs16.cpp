@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsOs16.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
+#include "Mips.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "mips-os16"
@@ -28,82 +28,84 @@ static cl::opt<std::string> Mips32FunctionMask(
   cl::Hidden);
 
 namespace {
+  class MipsOs16 : public ModulePass {
+  public:
+    static char ID;
 
-  // Figure out if we need float point based on the function signature.
-  // We need to move variables in and/or out of floating point
-  // registers because of the ABI
-  //
-  bool needsFPFromSig(Function &F) {
-    Type* RetType = F.getReturnType();
-    switch (RetType->getTypeID()) {
+    MipsOs16() : ModulePass(ID) {}
+
+    const char *getPassName() const override {
+      return "MIPS Os16 Optimization";
+    }
+
+    bool runOnModule(Module &M) override;
+  };
+
+  char MipsOs16::ID = 0;
+}
+
+// Figure out if we need float point based on the function signature.
+// We need to move variables in and/or out of floating point
+// registers because of the ABI
+//
+static  bool needsFPFromSig(Function &F) {
+  Type* RetType = F.getReturnType();
+  switch (RetType->getTypeID()) {
+  case Type::FloatTyID:
+  case Type::DoubleTyID:
+    return true;
+  default:
+    ;
+  }
+  if (F.arg_size() >=1) {
+    Argument &Arg = F.getArgumentList().front();
+    switch (Arg.getType()->getTypeID()) {
     case Type::FloatTyID:
     case Type::DoubleTyID:
       return true;
     default:
       ;
     }
-    if (F.arg_size() >=1) {
-      Argument &Arg = F.getArgumentList().front();
-      switch (Arg.getType()->getTypeID()) {
-        case Type::FloatTyID:
-        case Type::DoubleTyID:
-          return true;
-        default:
-          ;
-      }
-    }
-    return false;
   }
-
-  // Figure out if the function will need floating point operations
-  //
-  bool needsFP(Function &F) {
-    if (needsFPFromSig(F))
-      return true;
-    for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
-         I != E; ++I) {
-        const Instruction &Inst = *I;
-        switch (Inst.getOpcode()) {
-        case Instruction::FAdd:
-        case Instruction::FSub:
-        case Instruction::FMul:
-        case Instruction::FDiv:
-        case Instruction::FRem:
-        case Instruction::FPToUI:
-        case Instruction::FPToSI:
-        case Instruction::UIToFP:
-        case Instruction::SIToFP:
-        case Instruction::FPTrunc:
-        case Instruction::FPExt:
-        case Instruction::FCmp:
-          return true;
-        default:
-          ;
-        }
-        if (const CallInst *CI = dyn_cast<CallInst>(I)) {
-          DEBUG(dbgs() << "Working on call" << "\n");
-          Function &F_ =  *CI->getCalledFunction();
-          if (needsFPFromSig(F_))
-            return true;
-        }
-      }
-    return false;
-  }
+  return false;
 }
 
-namespace {
+// Figure out if the function will need floating point operations
+//
+static bool needsFP(Function &F) {
+  if (needsFPFromSig(F))
+    return true;
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
+      const Instruction &Inst = *I;
+      switch (Inst.getOpcode()) {
+      case Instruction::FAdd:
+      case Instruction::FSub:
+      case Instruction::FMul:
+      case Instruction::FDiv:
+      case Instruction::FRem:
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::UIToFP:
+      case Instruction::SIToFP:
+      case Instruction::FPTrunc:
+      case Instruction::FPExt:
+      case Instruction::FCmp:
+        return true;
+      default:
+        ;
+      }
+      if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+        DEBUG(dbgs() << "Working on call" << "\n");
+        Function &F_ =  *CI->getCalledFunction();
+        if (needsFPFromSig(F_))
+          return true;
+      }
+    }
+  return false;
+}
 
-class MipsOs16 : public ModulePass {
-public:
-  static char ID;
-
-  MipsOs16() : ModulePass(ID) {}
-
-  const char *getPassName() const override { return "MIPS Os16 Optimization"; }
-  bool runOnModule(Module &M) override;
-};
-} // namespace
 
 bool MipsOs16::runOnModule(Module &M) {
   bool usingMask = Mips32FunctionMask.length() > 0;
@@ -148,8 +150,6 @@ bool MipsOs16::runOnModule(Module &M) {
   return modified;
 }
 
-char MipsOs16::ID = 0;
-
-ModulePass *llvm::createMipsOs16(MipsTargetMachine &TM) {
+ModulePass *llvm::createMipsOs16Pass(MipsTargetMachine &TM) {
   return new MipsOs16;
 }

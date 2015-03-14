@@ -21,7 +21,6 @@
 #include "MipsFrameLowering.h"
 #include "MipsInstrInfo.h"
 #include "MipsModuleISelDAGToDAG.h"
-#include "MipsOs16.h"
 #include "MipsSEFrameLowering.h"
 #include "MipsSEISelDAGToDAG.h"
 #include "MipsSEISelLowering.h"
@@ -34,6 +33,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "mips"
@@ -213,7 +213,7 @@ void MipsPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
   addPass(createAtomicExpandPass(&getMipsTargetMachine()));
   if (getMipsSubtarget().os16())
-    addPass(createMipsOs16(getMipsTargetMachine()));
+    addPass(createMipsOs16Pass(getMipsTargetMachine()));
   if (getMipsSubtarget().inMips16HardFloat())
     addPass(createMips16HardFloat(getMipsTargetMachine()));
 }
