@@ -8,6 +8,41 @@ Building LLVM With Autotools
 Overview
 ========
 
+This document details how to use the LLVM autotools based build system to
+configure and build LLVM from source. The normal developer process using CMake
+is detailed `here <GettingStarted.html#check-here>`_.
+
+A Quick Summary
+---------------
+
+#. Configure and build LLVM and Clang:
+
+   * ``cd where-you-want-to-build-llvm``
+   * ``mkdir build`` (for building without polluting the source dir)
+   * ``cd build``
+   * ``../llvm/configure [options]``
+     Some common options:
+
+     * ``--prefix=directory`` --- Specify for *directory* the full pathname of
+       where you want the LLVM tools and libraries to be installed (default
+       ``/usr/local``).
+
+     * ``--enable-optimized`` --- Compile with optimizations enabled (default
+       is NO).
+
+     * ``--enable-assertions`` --- Compile with assertion checks enabled
+       (default is YES).
+
+   * ``make [-j]`` --- The ``-j`` specifies the number of jobs (commands) to run
+     simultaneously.  This builds both LLVM and Clang for Debug+Asserts mode.
+     The ``--enable-optimized`` configure option is used to specify a Release
+     build.
+
+   * ``make check-all`` --- This run the regression tests to ensure everything
+     is in working order.
+
+   * If you get an "internal compiler error (ICE)" or test failures, see
+     `here <GettingStarted.html#check-here>`_.
 
 Local LLVM Configuration
 ------------------------

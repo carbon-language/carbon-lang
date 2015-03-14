@@ -61,7 +61,10 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``cd llvm/projects``
    * ``svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite``
 
-#. Configure and build LLVM and Clang (Recommended process using CMake):
+#. Configure and build LLVM and Clang:
+   
+   The usual build uses `CMake <CMake.html>`_. If you would rather use
+   autotools, see `Building LLVM with autotools <BuildingLLVMWithAutotools.html>`_.
 
    * ``cd where you want to build llvm``
    * ``mkdir build``
@@ -89,36 +92,20 @@ Here's the short story for getting up and running quickly with LLVM:
      * ``-DLLVM_ENABLE_ASSERTIONS=On`` --- Compile with assertion checks enabled
        (default is Yes for Debug builds, No for all other build types).
 
+   * Run your build tool of choice!
+
+     * The default target (i.e. ``make``) will build all of LLVM
+
+     * The ``check-all`` target (i.e. ``make check-all``) will run the
+       regression tests to ensure everything is in working order.
+
+     * CMake will generate build targets for each tool and library, and most
+       LLVM sub-projects generate their own ``check-<project>`` target.
+
    * For more information see `CMake <CMake.html>`_
 
-#. Configure and build LLVM and Clang (Alternate process using configure):
-
-   * ``cd where-you-want-to-build-llvm``
-   * ``mkdir build`` (for building without polluting the source dir)
-   * ``cd build``
-   * ``../llvm/configure [options]``
-     Some common options:
-
-     * ``--prefix=directory`` --- Specify for *directory* the full pathname of
-       where you want the LLVM tools and libraries to be installed (default
-       ``/usr/local``).
-
-     * ``--enable-optimized`` --- Compile with optimizations enabled (default
-       is NO).
-
-     * ``--enable-assertions`` --- Compile with assertion checks enabled
-       (default is YES).
-
-   * ``make [-j]`` --- The ``-j`` specifies the number of jobs (commands) to run
-     simultaneously.  This builds both LLVM and Clang for Debug+Asserts mode.
-     The ``--enable-optimized`` configure option is used to specify a Release
-     build.
-
-   * ``make check-all`` --- This run the regression tests to ensure everything
-     is in working order.
-
    * If you get an "internal compiler error (ICE)" or test failures, see
-     `below`.
+     `below`_.
 
 Consult the `Getting Started with LLVM`_ section for detailed information on
 configuring and compiling LLVM.  See `Setting Up Your Environment`_ for tips
