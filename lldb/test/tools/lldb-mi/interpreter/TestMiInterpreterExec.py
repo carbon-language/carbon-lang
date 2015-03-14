@@ -12,6 +12,8 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_target_create(self):
         """Test that 'lldb-mi --interpreter' can create target by 'target create' command."""
 

@@ -36,6 +36,7 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_specialchars(self):
         """Test that 'lldb-mi --interpreter' handles complicated strings."""
 
