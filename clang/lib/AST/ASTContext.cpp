@@ -3521,9 +3521,9 @@ QualType ASTContext::getPackExpansionType(QualType Pattern,
 
 /// CmpProtocolNames - Comparison predicate for sorting protocols
 /// alphabetically.
-static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,
-                            const ObjCProtocolDecl *RHS) {
-  return LHS->getDeclName() < RHS->getDeclName();
+static int CmpProtocolNames(ObjCProtocolDecl *const *LHS,
+                            ObjCProtocolDecl *const *RHS) {
+  return DeclarationName::compare((*LHS)->getDeclName(), (*RHS)->getDeclName());
 }
 
 static bool areSortedAndUniqued(ObjCProtocolDecl * const *Protocols,
@@ -3534,7 +3534,7 @@ static bool areSortedAndUniqued(ObjCProtocolDecl * const *Protocols,
     return false;
   
   for (unsigned i = 1; i != NumProtocols; ++i)
-    if (!CmpProtocolNames(Protocols[i-1], Protocols[i]) ||
+    if (CmpProtocolNames(&Protocols[i - 1], &Protocols[i]) >= 0 ||
         Protocols[i]->getCanonicalDecl() != Protocols[i])
       return false;
   return true;
@@ -3545,7 +3545,7 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **Protocols,
   ObjCProtocolDecl **ProtocolsEnd = Protocols+NumProtocols;
 
   // Sort protocols, keyed by name.
-  std::sort(Protocols, Protocols+NumProtocols, CmpProtocolNames);
+  llvm::array_pod_sort(Protocols, ProtocolsEnd, CmpProtocolNames);
 
   // Canonicalize.
   for (unsigned I = 0, N = NumProtocols; I != N; ++I)
