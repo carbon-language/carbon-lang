@@ -19,7 +19,6 @@
 #include "Mips16InstrInfo.h"
 #include "MipsFrameLowering.h"
 #include "MipsInstrInfo.h"
-#include "MipsModuleISelDAGToDAG.h"
 #include "MipsSEFrameLowering.h"
 #include "MipsSEISelDAGToDAG.h"
 #include "MipsSEISelLowering.h"
@@ -219,7 +218,7 @@ void MipsPassConfig::addIRPasses() {
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.
 bool MipsPassConfig::addInstSelector() {
-  addPass(createMipsModuleISelDag(getMipsTargetMachine()));
+  addPass(createMipsModuleISelDagPass(getMipsTargetMachine()));
   addPass(createMips16ISelDag(getMipsTargetMachine()));
   addPass(createMipsSEISelDag(getMipsTargetMachine()));
   return false;
