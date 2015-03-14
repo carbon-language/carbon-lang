@@ -12,7 +12,7 @@ void foo(void) {
   // Check unary ops
 
   // CHECK: call float @llvm.convert.from.fp16.f32(
-  // CHECK fptoi float
+  // CHECK: fptoui float
   test = (h0);
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fcmp une float

@@ -30,6 +30,6 @@ int main() {
     return 0;
 }
 
-// CHECK 2: (__Block_byref_BYREF_VAR_CHECK_0 *)BYREF_VAR_CHECK
+// CHECK: (__Block_byref_BYREF_VAR_CHECK_0 *)BYREF_VAR_CHECK
 // CHECK: (__Block_byref_BYREF_VAR_CHECK_0 *)&BYREF_VAR_CHECK
 // CHECK: (struct __Block_byref_BYREF_VAR_CHECK_0 *)&BYREF_VAR_CHECK, (struct __Block_byref_d_1 *)&d, 570425344));

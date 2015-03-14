@@ -291,7 +291,7 @@ namespace rdar13325066 {
     // CHECK: br label
     // CHECK: br i1
     // CHECK: br label
-    // CHECK call void @_ZN12rdar133250661XD1Ev
+    // CHECK: call void @_ZN12rdar133250661XD1Ev
     // CHECK: br label
     // CHECK: br label
     // CHECK: call void @_ZN12rdar133250661XD1Ev

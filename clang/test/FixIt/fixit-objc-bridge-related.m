@@ -25,11 +25,11 @@ void test(UIButton *myButton) {
 // CHECK: {17:36-17:36}:"["
 // CHECK: {17:54-17:54}:" CGColor]"
 
-// CHECK :{18:13-18:13}:"["
+// CHECK: {18:13-18:13}:"["
 // CHECK: {18:31-18:31}:" CGColor]"
 
-// CHECK :{22:25-22:25}:"["
-// CHECK :{22:45-22:45}:" CGColor]"
+// CHECK: {22:25-22:25}:"["
+// CHECK: {22:45-22:45}:" CGColor]"
 
 @interface ImplicitPropertyTest
 - (UIColor *)tintColor;
@@ -39,5 +39,5 @@ void test1(ImplicitPropertyTest *myImplicitPropertyTest) {
   CGColorRef cgColor = (CGColorRef)[myImplicitPropertyTest tintColor];
 }
 
-// CHECK :{39:36-39:36}:"["
-// CHECK :{39:70-39:70}:" CGColor]"
+// CHECK: {39:36-39:36}:"["
+// CHECK: {39:70-39:70}:" CGColor]"

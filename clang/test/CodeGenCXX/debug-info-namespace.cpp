@@ -94,7 +94,7 @@ void B::func_fwd() {}
 // CHECK: [[M11]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, name: "X", scope: [[FUNC]], entity: [[CTXT]]
 // CHECK: [[M12]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, name: "Y", scope: [[FUNC]], entity: [[M11]]
 // CHECK: [[M13]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[VAR_DECL:![0-9]+]]
-// CHECK [[VAR_DECL]] = !MDGlobalVariable(name: "var_decl", scope: [[NS]],{{.*}} line: 8,
+// CHECK: [[VAR_DECL]] = !MDGlobalVariable(name: "var_decl", linkageName: "_ZN1A1B8var_declE", scope: [[NS]],{{.*}} line: 8,
 // CHECK: [[M14]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[FUNC_DECL:![0-9]+]]
 // CHECK: [[FUNC_DECL]] = !MDSubprogram(name: "func_decl",
 // CHECK-SAME:                          scope: [[NS]], file: [[FOOCPP]], line: 9
