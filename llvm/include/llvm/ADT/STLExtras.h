@@ -263,10 +263,11 @@ inline int (*get_array_pod_sort_comparator(const T &))
 /// default to std::less.
 template<class IteratorTy>
 inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
-  // Don't dereference start iterator of empty sequence.
-  if (Start == End) return;
-  qsort(&*Start, End-Start, sizeof(*Start),
-        get_array_pod_sort_comparator(*Start));
+  // Don't inefficiently call qsort with one element or trigger undefined
+  // behavior with an empty sequence.
+  auto NElts = End - Start;
+  if (NElts <= 1) return;
+  qsort(&*Start, NElts, sizeof(*Start), get_array_pod_sort_comparator(*Start));
 }
 
 template <class IteratorTy>
@@ -275,9 +276,11 @@ inline void array_pod_sort(
     int (*Compare)(
         const typename std::iterator_traits<IteratorTy>::value_type *,
         const typename std::iterator_traits<IteratorTy>::value_type *)) {
-  // Don't dereference start iterator of empty sequence.
-  if (Start == End) return;
-  qsort(&*Start, End - Start, sizeof(*Start),
+  // Don't inefficiently call qsort with one element or trigger undefined
+  // behavior with an empty sequence.
+  auto NElts = End - Start;
+  if (NElts <= 1) return;
+  qsort(&*Start, NElts, sizeof(*Start),
         reinterpret_cast<int (*)(const void *, const void *)>(Compare));
 }
 
