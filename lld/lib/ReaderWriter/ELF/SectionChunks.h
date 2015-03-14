@@ -686,7 +686,7 @@ public:
 
   virtual void addSharedLibAtom(Elf_Sym &sym, const SharedLibraryAtom *sla);
 
-  virtual void finalize(bool sort = true);
+  virtual void finalize(bool sort);
 
   virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                      llvm::FileOutputBuffer &buffer);

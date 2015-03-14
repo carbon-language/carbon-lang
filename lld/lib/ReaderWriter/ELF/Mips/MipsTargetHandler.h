@@ -174,7 +174,7 @@ public:
     }
   }
 
-  void finalize(bool sort = true) override {
+  void finalize(bool sort) override {
     SymbolTable<ELFT>::finalize(sort);
 
     for (auto &ste : this->_symbolTable) {
