@@ -19,6 +19,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm-c/Support.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
@@ -1463,10 +1464,9 @@ void basic_parser_impl::printOptionNoValue(const Option &O,
 // -help and -help-hidden option implementation
 //
 
-static int OptNameCompare(const void *LHS, const void *RHS) {
-  typedef std::pair<const char *, Option *> pair_ty;
-
-  return strcmp(((const pair_ty *)LHS)->first, ((const pair_ty *)RHS)->first);
+static int OptNameCompare(const std::pair<const char *, Option *> *LHS,
+                          const std::pair<const char *, Option *> *RHS) {
+  return strcmp(LHS->first, RHS->first);
 }
 
 // Copy Options into a vector so we can sort them as we like.
@@ -1494,7 +1494,7 @@ static void sortOpts(StringMap<Option *> &OptMap,
   }
 
   // Sort the options list alphabetically.
-  qsort(Opts.data(), Opts.size(), sizeof(Opts[0]), OptNameCompare);
+  array_pod_sort(Opts.begin(), Opts.end(), OptNameCompare);
 }
 
 namespace {
@@ -1562,10 +1562,11 @@ public:
   explicit CategorizedHelpPrinter(bool showHidden) : HelpPrinter(showHidden) {}
 
   // Helper function for printOptions().
-  // It shall return true if A's name should be lexographically
-  // ordered before B's name. It returns false otherwise.
-  static bool OptionCategoryCompare(OptionCategory *A, OptionCategory *B) {
-    return strcmp(A->getName(), B->getName()) < 0;
+  // It shall return a negative value if A's name should be lexicographically
+  // ordered before B's name. It returns a value greater equal zero otherwise.
+  static int OptionCategoryCompare(OptionCategory *const *A,
+                                   OptionCategory *const *B) {
+    return strcmp((*A)->getName(), (*B)->getName());
   }
 
   // Make sure we inherit our base class's operator=()
@@ -1586,8 +1587,8 @@ protected:
 
     // Sort the different option categories alphabetically.
     assert(SortedCategories.size() > 0 && "No option categories registered!");
-    std::sort(SortedCategories.begin(), SortedCategories.end(),
-              OptionCategoryCompare);
+    array_pod_sort(SortedCategories.begin(), SortedCategories.end(),
+                   OptionCategoryCompare);
 
     // Create map to empty vectors.
     for (std::vector<OptionCategory *>::const_iterator
