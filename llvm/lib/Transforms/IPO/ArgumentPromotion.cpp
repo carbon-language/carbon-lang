@@ -584,7 +584,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   FunctionType *FTy = F->getFunctionType();
   std::vector<Type*> Params;
 
-  typedef std::set<IndicesVector> ScalarizeTable;
+  typedef std::set<std::pair<Type*, IndicesVector>> ScalarizeTable;
 
   // ScalarizedElements - If we are promoting a pointer that has elements
   // accessed out of it, keep track of which elements are accessed so that we
@@ -644,7 +644,11 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       ScalarizeTable &ArgIndices = ScalarizedElements[I];
       for (User *U : I->users()) {
         Instruction *UI = cast<Instruction>(U);
-        assert(isa<LoadInst>(UI) || isa<GetElementPtrInst>(UI));
+        Type *SrcTy;
+        if (LoadInst *L = dyn_cast<LoadInst>(UI))
+          SrcTy = L->getType();
+        else
+          SrcTy = cast<GetElementPtrInst>(UI)->getSourceElementType();
         IndicesVector Indices;
         Indices.reserve(UI->getNumOperands() - 1);
         // Since loads will only have a single operand, and GEPs only a single
@@ -656,7 +660,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
         // GEPs with a single 0 index can be merged with direct loads
         if (Indices.size() == 1 && Indices.front() == 0)
           Indices.clear();
-        ArgIndices.insert(Indices);
+        ArgIndices.insert(std::make_pair(SrcTy, Indices));
         LoadInst *OrigLoad;
         if (LoadInst *L = dyn_cast<LoadInst>(UI))
           OrigLoad = L;
@@ -670,11 +674,11 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       for (ScalarizeTable::iterator SI = ArgIndices.begin(),
              E = ArgIndices.end(); SI != E; ++SI) {
         // not allowed to dereference ->begin() if size() is 0
-        Params.push_back(GetElementPtrInst::getIndexedType(I->getType(), *SI));
+        Params.push_back(GetElementPtrInst::getIndexedType(I->getType(), SI->second));
         assert(Params.back());
       }
 
-      if (ArgIndices.size() == 1 && ArgIndices.begin()->empty())
+      if (ArgIndices.size() == 1 && ArgIndices.begin()->second.empty())
         ++NumArgumentsPromoted;
       else
         ++NumAggregatesPromoted;
@@ -765,9 +769,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
               ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), nullptr };
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           Idxs[1] = ConstantInt::get(Type::getInt32Ty(F->getContext()), i);
-          Value *Idx = GetElementPtrInst::Create(*AI, Idxs,
-                                                 (*AI)->getName()+"."+utostr(i),
-                                                 Call);
+          Value *Idx = GetElementPtrInst::Create(
+              STy, *AI, Idxs, (*AI)->getName() + "." + utostr(i), Call);
           // TODO: Tell AA about the new values?
           Args.push_back(new LoadInst(Idx, Idx->getName()+".val", Call));
         }
@@ -780,12 +783,12 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
         for (ScalarizeTable::iterator SI = ArgIndices.begin(),
                E = ArgIndices.end(); SI != E; ++SI) {
           Value *V = *AI;
-          LoadInst *OrigLoad = OriginalLoads[std::make_pair(I, *SI)];
-          if (!SI->empty()) {
-            Ops.reserve(SI->size());
+          LoadInst *OrigLoad = OriginalLoads[std::make_pair(I, SI->second)];
+          if (!SI->second.empty()) {
+            Ops.reserve(SI->second.size());
             Type *ElTy = V->getType();
-            for (IndicesVector::const_iterator II = SI->begin(),
-                 IE = SI->end(); II != IE; ++II) {
+            for (IndicesVector::const_iterator II = SI->second.begin(),
+                 IE = SI->second.end(); II != IE; ++II) {
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
               Type *IdxTy = (ElTy->isStructTy() ?
@@ -796,7 +799,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
               ElTy = cast<CompositeType>(ElTy)->getTypeAtIndex(*II);
             }
             // And create a GEP to extract those indices.
-            V = GetElementPtrInst::Create(V, Ops, V->getName()+".idx", Call);
+            V = GetElementPtrInst::Create(SI->first, V, Ops, V->getName()+".idx", Call);
             Ops.clear();
             AA.copyValue(OrigLoad->getOperand(0), V);
           }
@@ -935,7 +938,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
     while (!I->use_empty()) {
       if (LoadInst *LI = dyn_cast<LoadInst>(I->user_back())) {
-        assert(ArgIndices.begin()->empty() &&
+        assert(ArgIndices.begin()->second.empty() &&
                "Load element should sort to front!");
         I2->setName(I->getName()+".val");
         LI->replaceAllUsesWith(I2);
@@ -957,7 +960,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
         Function::arg_iterator TheArg = I2;
         for (ScalarizeTable::iterator It = ArgIndices.begin();
-             *It != Operands; ++It, ++TheArg) {
+             It->second != Operands; ++It, ++TheArg) {
           assert(It != ArgIndices.end() && "GEP not handled??");
         }
 
