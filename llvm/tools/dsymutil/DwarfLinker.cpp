@@ -72,8 +72,8 @@ public:
     bool InDebugMap;    ///< Was this DIE's entity found in the map?
   };
 
-  CompileUnit(DWARFUnit &OrigUnit)
-      : OrigUnit(OrigUnit), LowPc(UINT64_MAX), HighPc(0), RangeAlloc(),
+  CompileUnit(DWARFUnit &OrigUnit, unsigned ID)
+      : OrigUnit(OrigUnit), ID(ID), LowPc(UINT64_MAX), HighPc(0), RangeAlloc(),
         Ranges(RangeAlloc), UnitRangeAttribute(nullptr) {
     Info.resize(OrigUnit.getNumDIEs());
   }
@@ -88,6 +88,8 @@ public:
   }
 
   DWARFUnit &getOrigUnit() const { return OrigUnit; }
+
+  unsigned getUniqueID() const { return ID; }
 
   DIE *getOutputUnitDIE() const { return CUDie.get(); }
   void setOutputUnitDIE(DIE *Die) { CUDie.reset(Die); }
@@ -133,6 +135,7 @@ public:
 
 private:
   DWARFUnit &OrigUnit;
+  unsigned ID;
   std::vector<DIEInfo> Info;  ///< DIE info indexed by DIE index.
   std::unique_ptr<DIE> CUDie; ///< Root of the linked DIE tree.
 
@@ -1728,7 +1731,8 @@ bool DwarfLinker::link(const DebugMap &Map) {
 
   // Size of the DIEs (and headers) generated for the linked output.
   uint64_t OutputDebugInfoSize = 0;
-
+  // A unique ID that identifies each compile unit.
+  unsigned UnitID = 0;
   for (const auto &Obj : Map.objects()) {
     CurrentDebugObject = Obj.get();
 
@@ -1759,7 +1763,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
         outs() << "Input compilation unit:";
         CUDie->dump(outs(), CU.get(), 0);
       }
-      Units.emplace_back(*CU);
+      Units.emplace_back(*CU, UnitID++);
       gatherDIEParents(CUDie, 0, Units.back());
     }
 
