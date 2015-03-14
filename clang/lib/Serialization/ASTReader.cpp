@@ -89,11 +89,13 @@ ChainedASTReaderListener::ReadLanguageOptions(const LangOptions &LangOpts,
          Second->ReadLanguageOptions(LangOpts, Complain,
                                      AllowCompatibleDifferences);
 }
-bool
-ChainedASTReaderListener::ReadTargetOptions(const TargetOptions &TargetOpts,
-                                            bool Complain) {
-  return First->ReadTargetOptions(TargetOpts, Complain) ||
-         Second->ReadTargetOptions(TargetOpts, Complain);
+bool ChainedASTReaderListener::ReadTargetOptions(
+    const TargetOptions &TargetOpts, bool Complain,
+    bool AllowCompatibleDifferences) {
+  return First->ReadTargetOptions(TargetOpts, Complain,
+                                  AllowCompatibleDifferences) ||
+         Second->ReadTargetOptions(TargetOpts, Complain,
+                                   AllowCompatibleDifferences);
 }
 bool ChainedASTReaderListener::ReadDiagnosticOptions(
     IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts, bool Complain) {
@@ -232,7 +234,8 @@ static bool checkLanguageOptions(const LangOptions &LangOpts,
 /// \returns true if the target options mis-match, false otherwise.
 static bool checkTargetOptions(const TargetOptions &TargetOpts,
                                const TargetOptions &ExistingTargetOpts,
-                               DiagnosticsEngine *Diags) {
+                               DiagnosticsEngine *Diags,
+                               bool AllowCompatibleDifferences = true) {
 #define CHECK_TARGET_OPT(Field, Name)                             \
   if (TargetOpts.Field != ExistingTargetOpts.Field) {             \
     if (Diags)                                                    \
@@ -241,9 +244,16 @@ static bool checkTargetOptions(const TargetOptions &TargetOpts,
     return true;                                                  \
   }
 
+  // The triple and ABI must match exactly.
   CHECK_TARGET_OPT(Triple, "target");
-  CHECK_TARGET_OPT(CPU, "target CPU");
   CHECK_TARGET_OPT(ABI, "target ABI");
+
+  // We can tolerate different CPUs in many cases, notably when one CPU
+  // supports a strict superset of another. When allowing compatible
+  // differences skip this check.
+  if (!AllowCompatibleDifferences)
+    CHECK_TARGET_OPT(CPU, "target CPU");
+
 #undef CHECK_TARGET_OPT
 
   // Compare feature sets.
@@ -255,43 +265,31 @@ static bool checkTargetOptions(const TargetOptions &TargetOpts,
   std::sort(ExistingFeatures.begin(), ExistingFeatures.end());
   std::sort(ReadFeatures.begin(), ReadFeatures.end());
 
-  unsigned ExistingIdx = 0, ExistingN = ExistingFeatures.size();
-  unsigned ReadIdx = 0, ReadN = ReadFeatures.size();
-  while (ExistingIdx < ExistingN && ReadIdx < ReadN) {
-    if (ExistingFeatures[ExistingIdx] == ReadFeatures[ReadIdx]) {
-      ++ExistingIdx;
-      ++ReadIdx;
-      continue;
-    }
+  // We compute the set difference in both directions explicitly so that we can
+  // diagnose the differences differently.
+  SmallVector<StringRef, 4> UnmatchedExistingFeatures, UnmatchedReadFeatures;
+  std::set_difference(
+      ExistingFeatures.begin(), ExistingFeatures.end(), ReadFeatures.begin(),
+      ReadFeatures.end(), std::back_inserter(UnmatchedExistingFeatures));
+  std::set_difference(ReadFeatures.begin(), ReadFeatures.end(),
+                      ExistingFeatures.begin(), ExistingFeatures.end(),
+                      std::back_inserter(UnmatchedReadFeatures));
 
-    if (ReadFeatures[ReadIdx] < ExistingFeatures[ExistingIdx]) {
-      if (Diags)
-        Diags->Report(diag::err_pch_targetopt_feature_mismatch)
-          << false << ReadFeatures[ReadIdx];
-      return true;
-    }
+  // If we are allowing compatible differences and the read feature set is
+  // a strict subset of the existing feature set, there is nothing to diagnose.
+  if (AllowCompatibleDifferences && UnmatchedReadFeatures.empty())
+    return false;
 
-    if (Diags)
+  if (Diags) {
+    for (StringRef Feature : UnmatchedReadFeatures)
       Diags->Report(diag::err_pch_targetopt_feature_mismatch)
-        << true << ExistingFeatures[ExistingIdx];
-    return true;
+          << /* is-existing-feature */ false << Feature;
+    for (StringRef Feature : UnmatchedExistingFeatures)
+      Diags->Report(diag::err_pch_targetopt_feature_mismatch)
+          << /* is-existing-feature */ true << Feature;
   }
 
-  if (ExistingIdx < ExistingN) {
-    if (Diags)
-      Diags->Report(diag::err_pch_targetopt_feature_mismatch)
-        << true << ExistingFeatures[ExistingIdx];
-    return true;
-  }
-
-  if (ReadIdx < ReadN) {
-    if (Diags)
-      Diags->Report(diag::err_pch_targetopt_feature_mismatch)
-        << false << ReadFeatures[ReadIdx];
-    return true;
-  }
-
-  return false;
+  return !UnmatchedReadFeatures.empty() || !UnmatchedExistingFeatures.empty();
 }
 
 bool
@@ -305,10 +303,12 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts,
 }
 
 bool PCHValidator::ReadTargetOptions(const TargetOptions &TargetOpts,
-                                     bool Complain) {
+                                     bool Complain,
+                                     bool AllowCompatibleDifferences) {
   const TargetOptions &ExistingTargetOpts = PP.getTargetInfo().getTargetOpts();
   return checkTargetOptions(TargetOpts, ExistingTargetOpts,
-                            Complain? &Reader.Diags : nullptr);
+                            Complain ? &Reader.Diags : nullptr,
+                            AllowCompatibleDifferences);
 }
 
 namespace {
@@ -2476,7 +2476,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case TARGET_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch)==0;
       if (Listener && &F == *ModuleMgr.begin() &&
-          ParseTargetOptions(Record, Complain, *Listener) &&
+          ParseTargetOptions(Record, Complain, *Listener,
+                             AllowCompatibleConfigurationMismatch) &&
           !DisableValidation && !AllowConfigurationMismatch)
         return ConfigurationMismatch;
       break;
@@ -4222,9 +4223,10 @@ namespace {
       return checkLanguageOptions(ExistingLangOpts, LangOpts, nullptr,
                                   AllowCompatibleDifferences);
     }
-    bool ReadTargetOptions(const TargetOptions &TargetOpts,
-                           bool Complain) override {
-      return checkTargetOptions(ExistingTargetOpts, TargetOpts, nullptr);
+    bool ReadTargetOptions(const TargetOptions &TargetOpts, bool Complain,
+                           bool AllowCompatibleDifferences) override {
+      return checkTargetOptions(ExistingTargetOpts, TargetOpts, nullptr,
+                                AllowCompatibleDifferences);
     }
     bool ReadHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
                                  StringRef SpecificModuleCachePath,
@@ -4336,7 +4338,8 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       break;
 
     case TARGET_OPTIONS:
-      if (ParseTargetOptions(Record, false, Listener))
+      if (ParseTargetOptions(Record, false, Listener,
+                             /*AllowCompatibleConfigurationMismatch*/ false))
         return true;
       break;
 
@@ -4728,9 +4731,9 @@ bool ASTReader::ParseLanguageOptions(const RecordData &Record,
                                       AllowCompatibleDifferences);
 }
 
-bool ASTReader::ParseTargetOptions(const RecordData &Record,
-                                   bool Complain,
-                                   ASTReaderListener &Listener) {
+bool ASTReader::ParseTargetOptions(const RecordData &Record, bool Complain,
+                                   ASTReaderListener &Listener,
+                                   bool AllowCompatibleDifferences) {
   unsigned Idx = 0;
   TargetOptions TargetOpts;
   TargetOpts.Triple = ReadString(Record, Idx);
@@ -4743,7 +4746,8 @@ bool ASTReader::ParseTargetOptions(const RecordData &Record,
     TargetOpts.Features.push_back(ReadString(Record, Idx));
   }
 
-  return Listener.ReadTargetOptions(TargetOpts, Complain);
+  return Listener.ReadTargetOptions(TargetOpts, Complain,
+                                    AllowCompatibleDifferences);
 }
 
 bool ASTReader::ParseDiagnosticOptions(const RecordData &Record, bool Complain,

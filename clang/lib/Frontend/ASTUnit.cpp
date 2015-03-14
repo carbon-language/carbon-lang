@@ -513,8 +513,8 @@ public:
     return false;
   }
 
-  bool ReadTargetOptions(const TargetOptions &TargetOpts,
-                         bool Complain) override {
+  bool ReadTargetOptions(const TargetOptions &TargetOpts, bool Complain,
+                         bool AllowCompatibleDifferences) override {
     // If we've already initialized the target, don't do it again.
     if (Target)
       return false;
