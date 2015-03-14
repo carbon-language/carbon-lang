@@ -291,8 +291,10 @@ TEST(InstructionsTest, VectorGep) {
   LLVMContext &C(getGlobalContext());
 
   // Type Definitions
-  PointerType *Ptri8Ty = PointerType::get(IntegerType::get(C, 8), 0);
-  PointerType *Ptri32Ty = PointerType::get(IntegerType::get(C, 32), 0);
+  Type *I8Ty = IntegerType::get(C, 8);
+  Type *I32Ty = IntegerType::get(C, 32);
+  PointerType *Ptri8Ty = PointerType::get(I8Ty, 0);
+  PointerType *Ptri32Ty = PointerType::get(I32Ty, 0);
 
   VectorType *V2xi8PTy = VectorType::get(Ptri8Ty, 2);
   VectorType *V2xi32PTy = VectorType::get(Ptri32Ty, 2);
@@ -318,10 +320,10 @@ TEST(InstructionsTest, VectorGep) {
   ICmpInst *ICmp2 = new ICmpInst(*BB0, ICmpInst::ICMP_SGE, PtrVecA, PtrVecB);
   EXPECT_NE(ICmp0, ICmp2); // suppress warning.
 
-  GetElementPtrInst *Gep0 = GetElementPtrInst::Create(PtrVecA, C2xi32a);
-  GetElementPtrInst *Gep1 = GetElementPtrInst::Create(PtrVecA, C2xi32b);
-  GetElementPtrInst *Gep2 = GetElementPtrInst::Create(PtrVecB, C2xi32a);
-  GetElementPtrInst *Gep3 = GetElementPtrInst::Create(PtrVecB, C2xi32b);
+  GetElementPtrInst *Gep0 = GetElementPtrInst::Create(I32Ty, PtrVecA, C2xi32a);
+  GetElementPtrInst *Gep1 = GetElementPtrInst::Create(I32Ty, PtrVecA, C2xi32b);
+  GetElementPtrInst *Gep2 = GetElementPtrInst::Create(I32Ty, PtrVecB, C2xi32a);
+  GetElementPtrInst *Gep3 = GetElementPtrInst::Create(I32Ty, PtrVecB, C2xi32b);
 
   CastInst *BTC0 = new BitCastInst(Gep0, V2xi8PTy);
   CastInst *BTC1 = new BitCastInst(Gep1, V2xi8PTy);
@@ -349,10 +351,10 @@ TEST(InstructionsTest, VectorGep) {
   GetPointerBaseWithConstantOffset(Gep3, Offset, TD);
 
   // Gep of Geps
-  GetElementPtrInst *GepII0 = GetElementPtrInst::Create(Gep0, C2xi32b);
-  GetElementPtrInst *GepII1 = GetElementPtrInst::Create(Gep1, C2xi32a);
-  GetElementPtrInst *GepII2 = GetElementPtrInst::Create(Gep2, C2xi32b);
-  GetElementPtrInst *GepII3 = GetElementPtrInst::Create(Gep3, C2xi32a);
+  GetElementPtrInst *GepII0 = GetElementPtrInst::Create(I32Ty, Gep0, C2xi32b);
+  GetElementPtrInst *GepII1 = GetElementPtrInst::Create(I32Ty, Gep1, C2xi32a);
+  GetElementPtrInst *GepII2 = GetElementPtrInst::Create(I32Ty, Gep2, C2xi32b);
+  GetElementPtrInst *GepII3 = GetElementPtrInst::Create(I32Ty, Gep3, C2xi32a);
 
   EXPECT_EQ(GepII0->getNumIndices(), 1u);
   EXPECT_EQ(GepII1->getNumIndices(), 1u);

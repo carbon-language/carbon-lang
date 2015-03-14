@@ -804,11 +804,6 @@ class GetElementPtrInst : public Instruction {
 protected:
   GetElementPtrInst *clone_impl() const override;
 public:
-  static GetElementPtrInst *Create(Value *Ptr, ArrayRef<Value *> IdxList,
-                                   const Twine &NameStr = "",
-                                   Instruction *InsertBefore = nullptr) {
-    return Create(nullptr, Ptr, IdxList, NameStr, InsertBefore);
-  }
   static GetElementPtrInst *Create(Type *PointeeType, Value *Ptr,
                                    ArrayRef<Value *> IdxList,
                                    const Twine &NameStr = "",
@@ -816,11 +811,6 @@ public:
     unsigned Values = 1 + unsigned(IdxList.size());
     return new (Values) GetElementPtrInst(PointeeType, Ptr, IdxList, Values,
                                           NameStr, InsertBefore);
-  }
-  static GetElementPtrInst *Create(Value *Ptr, ArrayRef<Value *> IdxList,
-                                   const Twine &NameStr,
-                                   BasicBlock *InsertAtEnd) {
-    return Create(nullptr, Ptr, NameStr, InsertAtEnd);
   }
   static GetElementPtrInst *Create(Type *PointeeType, Value *Ptr,
                                    ArrayRef<Value *> IdxList,
