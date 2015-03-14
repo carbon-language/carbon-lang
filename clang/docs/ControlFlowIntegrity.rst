@@ -58,6 +58,60 @@ virtual-call-heavy SPEC 2006 xalancbmk.
 Note that this scheme has not yet been optimized for binary size; an increase
 of up to 15% has been observed for Chromium.
 
+Bad Cast Checking
+-----------------
+
+This scheme checks that pointer casts are made to an object of the correct
+dynamic type; that is, the dynamic type of the object must be a derived class
+of the pointee type of the cast. The checks are currently only introduced
+where the class being casted to is a polymorphic class.
+
+Bad casts are not in themselves control flow integrity violations, but they
+can also create security vulnerabilities, and the implementation uses many
+of the same mechanisms.
+
+There are two types of bad cast that may be forbidden: bad casts
+from a base class to a derived class (which can be checked with
+``-fsanitize=cfi-derived-cast``), and bad casts from a pointer of
+type ``void*`` or another unrelated type (which can be checked with
+``-fsanitize=cfi-unrelated-cast``).
+
+The difference between these two types of casts is that the first is defined
+by the C++ standard to produce an undefined value, while the second is not
+in itself undefined behavior (it is well defined to cast the pointer back
+to its original type).
+
+If a program as a matter of policy forbids the second type of cast, that
+restriction can normally be enforced. However it may in some cases be necessary
+for a function to perform a forbidden cast to conform with an external API
+(e.g. the ``allocate`` member function of a standard library allocator). Such
+functions may be blacklisted using a :doc:`SanitizerSpecialCaseList`.
+
+For this scheme to work, all translation units containing the definition
+of a virtual member function (whether inline or not) must be compiled with
+``-fsanitize=cfi-derived-cast`` or ``-fsanitize=cfi-unrelated-cast`` enabled
+and be statically linked into the program. Classes in the C++ standard library
+(under namespace ``std``) are exempted from checking, and therefore programs
+may be linked against a pre-built standard library, but this may change in
+the future.
+
+.. _cfi-strictness:
+
+Strictness
+~~~~~~~~~~
+
+If a class has a single non-virtual base and does not introduce or override
+virtual member functions or fields other than an implicitly defined virtual
+destructor, it will have the same layout and virtual function semantics as
+its base. By default, casts to such classes are checked as if they were made
+to the least derived such class.
+
+Casting an instance of a base class to such a derived class is technically
+undefined behavior, but it is a relatively common hack for introducing
+member functions on class instances with specific properties that works under
+most compilers and should not have security implications, so we allow it by
+default. It can be disabled with ``-fsanitize=cfi-cast-strict``.
+
 Design
 ------
 

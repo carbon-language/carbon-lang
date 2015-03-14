@@ -48,7 +48,7 @@ enum SanitizeKind : uint64_t {
   RecoverableByDefault = Undefined | Integer,
   Unrecoverable = Address | Unreachable | Return,
   LegacyFsanitizeRecoverMask = Undefined | Integer,
-  NeedsLTO = CFIVptr,
+  NeedsLTO = CFIDerivedCast | CFIUnrelatedCast | CFIVptr,
 };
 }
 
@@ -150,7 +150,7 @@ bool SanitizerArgs::needsUnwindTables() const {
 }
 
 bool SanitizerArgs::needsLTO() const {
-  return hasOneOf(Sanitizers, CFIVptr);
+  return hasOneOf(Sanitizers, NeedsLTO);
 }
 
 void SanitizerArgs::clear() {
