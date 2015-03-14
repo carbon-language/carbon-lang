@@ -1221,7 +1221,7 @@ static void RewriteHeapSROALoadUser(Instruction *LoadUser,
     GEPIdx.push_back(GEPI->getOperand(1));
     GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
 
-    Value *NGEPI = GetElementPtrInst::Create(NewPtr, GEPIdx,
+    Value *NGEPI = GetElementPtrInst::Create(GEPI->getResultElementType(), NewPtr, GEPIdx,
                                              GEPI->getName(), GEPI);
     GEPI->replaceAllUsesWith(NGEPI);
     GEPI->eraseFromParent();

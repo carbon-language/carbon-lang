@@ -1026,7 +1026,7 @@ public:
       if (i == e)
         return Insert(Folder.CreateGetElementPtr(PC, IdxList), Name);
     }
-    return Insert(GetElementPtrInst::Create(Ptr, IdxList), Name);
+    return Insert(GetElementPtrInst::Create(nullptr, Ptr, IdxList), Name);
   }
   Value *CreateInBoundsGEP(Value *Ptr, ArrayRef<Value *> IdxList,
                            const Twine &Name = "") {
@@ -1039,19 +1039,19 @@ public:
       if (i == e)
         return Insert(Folder.CreateInBoundsGetElementPtr(PC, IdxList), Name);
     }
-    return Insert(GetElementPtrInst::CreateInBounds(Ptr, IdxList), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, IdxList), Name);
   }
   Value *CreateGEP(Value *Ptr, Value *Idx, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return Insert(Folder.CreateGetElementPtr(PC, IC), Name);
-    return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idx), Name);
   }
   Value *CreateInBoundsGEP(Value *Ptr, Value *Idx, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return Insert(Folder.CreateInBoundsGetElementPtr(PC, IC), Name);
-    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
@@ -1059,7 +1059,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateGetElementPtr(PC, Idx), Name);
 
-    return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idx), Name);
   }
   Value *CreateConstInBoundsGEP1_32(Value *Ptr, unsigned Idx0,
                                     const Twine &Name = "") {
@@ -1068,7 +1068,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idx), Name);
 
-    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
   }
   Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
                     const Twine &Name = "") {
@@ -1080,7 +1080,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateGetElementPtr(PC, Idxs), Name);
 
-    return Insert(GetElementPtrInst::Create(Ptr, Idxs), Name);
+    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idxs), Name);
   }
   Value *CreateConstInBoundsGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
                                     const Twine &Name = "") {
@@ -1092,7 +1092,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idxs), Name);
 
-    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
   }
   Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
@@ -1100,7 +1100,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateGetElementPtr(PC, Idx), Name);
 
-    return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idx), Name);
   }
   Value *CreateConstInBoundsGEP1_64(Value *Ptr, uint64_t Idx0,
                                     const Twine &Name = "") {
@@ -1109,7 +1109,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idx), Name);
 
-    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
   }
   Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
                     const Twine &Name = "") {
@@ -1121,7 +1121,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateGetElementPtr(PC, Idxs), Name);
 
-    return Insert(GetElementPtrInst::Create(Ptr, Idxs), Name);
+    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idxs), Name);
   }
   Value *CreateConstInBoundsGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
                                     const Twine &Name = "") {
@@ -1133,7 +1133,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idxs), Name);
 
-    return Insert(GetElementPtrInst::CreateInBounds(Ptr, Idxs), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
   }
   Value *CreateStructGEP(Value *Ptr, unsigned Idx, const Twine &Name = "") {
     return CreateConstInBoundsGEP2_32(Ptr, 0, Idx, Name);

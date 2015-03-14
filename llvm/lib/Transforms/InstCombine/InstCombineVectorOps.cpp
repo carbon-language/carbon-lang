@@ -733,7 +733,8 @@ static Value *BuildNew(Instruction *I, ArrayRef<Value*> NewOps) {
     case Instruction::GetElementPtr: {
       Value *Ptr = NewOps[0];
       ArrayRef<Value*> Idx = NewOps.slice(1);
-      GetElementPtrInst *GEP = GetElementPtrInst::Create(Ptr, Idx, "", I);
+      GetElementPtrInst *GEP = GetElementPtrInst::Create(
+          cast<GetElementPtrInst>(I)->getSourceElementType(), Ptr, Idx, "", I);
       GEP->setIsInBounds(cast<GetElementPtrInst>(I)->isInBounds());
       return GEP;
     }
