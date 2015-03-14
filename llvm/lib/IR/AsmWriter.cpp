@@ -718,24 +718,22 @@ void SlotTracker::processFunction() {
   SmallVector<std::pair<unsigned, MDNode *>, 4> MDForInst;
 
   // Add all of the basic blocks and instructions with no names.
-  for (Function::const_iterator BB = TheFunction->begin(),
-       E = TheFunction->end(); BB != E; ++BB) {
-    if (!BB->hasName())
-      CreateFunctionSlot(BB);
+  for (auto &BB : *TheFunction) {
+    if (!BB.hasName())
+      CreateFunctionSlot(&BB);
 
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E;
-         ++I) {
-      if (!I->getType()->isVoidTy() && !I->hasName())
-        CreateFunctionSlot(I);
+    for (auto &I : BB) {
+      if (!I.getType()->isVoidTy() && !I.hasName())
+        CreateFunctionSlot(&I);
 
       // Intrinsics can directly use metadata.  We allow direct calls to any
       // llvm.foo function here, because the target may not be linked into the
       // optimizer.
-      if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+      if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
         if (Function *F = CI->getCalledFunction())
           if (F->isIntrinsic())
-            for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-              if (auto *V = dyn_cast_or_null<MetadataAsValue>(I->getOperand(i)))
+            for (auto &Op : I.operands())
+              if (auto *V = dyn_cast_or_null<MetadataAsValue>(Op))
                 if (MDNode *N = dyn_cast<MDNode>(V->getMetadata()))
                   CreateMetadataSlot(N);
 
@@ -743,7 +741,7 @@ void SlotTracker::processFunction() {
         AttributeSet Attrs = CI->getAttributes().getFnAttributes();
         if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
           CreateAttributeSetSlot(Attrs);
-      } else if (const InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+      } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
         // Add all the call attributes to the table.
         AttributeSet Attrs = II->getAttributes().getFnAttributes();
         if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
@@ -751,9 +749,9 @@ void SlotTracker::processFunction() {
       }
 
       // Process metadata attached with this instruction.
-      I->getAllMetadata(MDForInst);
-      for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
-        CreateMetadataSlot(MDForInst[i].second);
+      I.getAllMetadata(MDForInst);
+      for (auto &MD : MDForInst)
+        CreateMetadataSlot(MD.second);
       MDForInst.clear();
     }
   }
