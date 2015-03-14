@@ -432,11 +432,15 @@ void PathDiagnosticConsumer::FlushDiagnostics(
 
   // Sort the diagnostics so that they are always emitted in a deterministic
   // order.
-  if (!BatchDiags.empty())
-    std::sort(BatchDiags.begin(), BatchDiags.end(),
-              [](const PathDiagnostic *X, const PathDiagnostic *Y) {
-      return X != Y && compare(*X, *Y);
-    });
+  int (*Comp)(const PathDiagnostic *const *, const PathDiagnostic *const *) =
+      [](const PathDiagnostic *const *X, const PathDiagnostic *const *Y) {
+        assert(*X != *Y && "PathDiagnostics not uniqued!");
+        if (compare(**X, **Y))
+          return -1;
+        assert(compare(**Y, **X) && "Not a total order!");
+        return 1;
+      };
+  array_pod_sort(BatchDiags.begin(), BatchDiags.end(), Comp);
 
   FlushDiagnosticsImpl(BatchDiags, Files);
 
