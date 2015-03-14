@@ -38,7 +38,12 @@ add_subdirectory(Symbol)
 add_subdirectory(Target)
 add_subdirectory(Utility)
 
-include(../cmake/LLDBDependencies.cmake)
+include(${LLDB_PROJECT_ROOT}/cmake/LLDBDependencies.cmake)
+
+add_lldb_library(lldbBase STATIC
+  lldb.cpp
+  lldb-log.cpp
+  )
 
 add_lldb_library(liblldb SHARED
   lldb.cpp

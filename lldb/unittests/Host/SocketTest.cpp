@@ -140,6 +140,3 @@ TEST_F (SocketTest, GetAddress)
     EXPECT_STREQ ("127.0.0.1", socket_a_up->GetRemoteIPAddress ().c_str ());
     EXPECT_STREQ ("127.0.0.1", socket_b_up->GetRemoteIPAddress ().c_str ());
 }
-
-
-
