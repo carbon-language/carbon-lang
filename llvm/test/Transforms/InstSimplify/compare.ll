@@ -918,7 +918,7 @@ define i1 @nonnull_deref_as_arg(i32 addrspace(1)* dereferenceable(4) %i) {
   ret i1 %cmp
 ; CHECK-LABEL: @nonnull_deref_as_arg
 ; CHECK: icmp
-; CHECK ret
+; CHECK: ret
 }
 
 declare nonnull i32* @returns_nonnull_helper()

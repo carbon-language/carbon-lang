@@ -67,7 +67,7 @@ define void @f5_as1(i64 %x) nounwind {
 ; CHECK: @f5_as1
   %idx = getelementptr inbounds [8 x i8], [8 x i8] addrspace(1)* @.str_as1, i64 0, i64 %x
   ; CHECK: sub i16
-  ; CHECK icmp ult i16
+  ; CHECK: icmp ult i16
 ; CHECK: trap
   %1 = load i8, i8 addrspace(1)* %idx, align 4
   ret void

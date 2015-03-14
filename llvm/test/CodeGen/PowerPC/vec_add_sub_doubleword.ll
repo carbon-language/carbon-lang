@@ -12,7 +12,7 @@ define <2 x i64> @test_add(<2 x i64> %x, <2 x i64> %y) nounwind {
 define <2 x i64> @increment_by_one(<2 x i64> %x) nounwind {
        %result = add <2 x i64> %x, <i64 1, i64 1>
        ret <2 x i64> %result
-; CHECK vaddudm 2, 2, 3
+; CHECK: vaddudm 2, 2, 3
 }
 
 define <2 x i64> @increment_by_val(<2 x i64> %x, i64 %val) nounwind {
@@ -47,7 +47,7 @@ define <2 x i64> @test_sub(<2 x i64> %x, <2 x i64> %y) nounwind {
 define <2 x i64> @decrement_by_one(<2 x i64> %x) nounwind {
        %result = sub <2 x i64> %x, <i64 -1, i64 -1>
        ret <2 x i64> %result
-; CHECK vsubudm 2, 2, 3
+; CHECK: vsubudm 2, 2, 3
 }
 
 define <2 x i64> @decrement_by_val(<2 x i64> %x, i64 %val) nounwind {
@@ -55,7 +55,7 @@ define <2 x i64> @decrement_by_val(<2 x i64> %x, i64 %val) nounwind {
        %tmpvec2 = insertelement <2 x i64> %tmpvec, i64 %val, i32 1
        %result = sub <2 x i64> %x, %tmpvec2
        ret <2 x i64> %result
-; CHECK vsubudm 2, 2, 3
+; CHECK: vsubudm 2, 2, 3
 }
 
 

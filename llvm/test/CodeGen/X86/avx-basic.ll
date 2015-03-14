@@ -94,7 +94,7 @@ entry:
 
 ; PR22685
 ; CHECK: mov00
-; CHECK vmovss
+; CHECK: vmovss
 define <8 x float> @mov00_8f32(float* %ptr) {
   %val = load float, float* %ptr
   %vec = insertelement <8 x float> zeroinitializer, float %val, i32 0

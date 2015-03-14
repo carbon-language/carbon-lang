@@ -170,7 +170,7 @@ entry:
   %data = alloca <4 x float>, align 16
   %0 = load <4 x float>, <4 x float>* %data, align 16
   call void asm sideeffect "mov.2d v4, $0\0A", "x,~{v4}"(<4 x float> %0) nounwind
-  ; CHECK mov.2d v4, {{v([0-9])|(1[0-5])}}
+  ; CHECK: mov.2d v4, {{v([0-9])|(1[0-5])}}
   ret void
 }
 
