@@ -485,7 +485,7 @@ public:
   const GOTAtom *getSharedGOT(const SharedLibraryAtom *sla) {
     auto got = _gotMap.find(sla);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) AArch64GOTAtom(_file, ".got.dyn");
+      auto g = new (_file._alloc) AArch64GOTAtom(_file, ".got");
       g->addReferenceELF_AArch64(R_AARCH64_GLOB_DAT, 0, sla, 0);
 #ifndef NDEBUG
       g->_name = "__got_";

@@ -60,7 +60,7 @@ CHECK:        addend:          -4
 CHECK:    type:            got
 CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 CHECK:    section-choice:  custom-required
-CHECK:    section-name:    .got.dyn
+CHECK:    section-name:    .got
 CHECK:    permissions:     rw-
 CHECK:    references:
 CHECK:      - kind:            R_X86_64_GLOB_DAT

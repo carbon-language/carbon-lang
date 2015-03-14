@@ -470,7 +470,7 @@ public:
   const GOTAtom *getSharedGOT(const Atom *a) {
     auto got = _gotMap.find(a);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got.dyn");
+      auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got");
       g->addReferenceELF_x86_64(R_X86_64_GLOB_DAT, 0, a, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
