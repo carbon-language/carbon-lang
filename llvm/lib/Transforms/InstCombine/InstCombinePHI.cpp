@@ -230,7 +230,8 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
 
   Value *Base = FixedOperands[0];
   GetElementPtrInst *NewGEP =
-    GetElementPtrInst::Create(Base, makeArrayRef(FixedOperands).slice(1));
+      GetElementPtrInst::Create(FirstInst->getSourceElementType(), Base,
+                                makeArrayRef(FixedOperands).slice(1));
   if (AllInBounds) NewGEP->setIsInBounds();
   NewGEP->setDebugLoc(FirstInst->getDebugLoc());
   return NewGEP;

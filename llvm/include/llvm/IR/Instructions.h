@@ -794,28 +794,41 @@ class GetElementPtrInst : public Instruction {
   /// list of indices. The first ctor can optionally insert before an existing
   /// instruction, the second appends the new instruction to the specified
   /// BasicBlock.
-  inline GetElementPtrInst(Value *Ptr, ArrayRef<Value *> IdxList,
-                           unsigned Values, const Twine &NameStr,
-                           Instruction *InsertBefore);
-  inline GetElementPtrInst(Value *Ptr, ArrayRef<Value *> IdxList,
-                           unsigned Values, const Twine &NameStr,
-                           BasicBlock *InsertAtEnd);
+  inline GetElementPtrInst(Type *PointeeType, Value *Ptr,
+                           ArrayRef<Value *> IdxList, unsigned Values,
+                           const Twine &NameStr, Instruction *InsertBefore);
+  inline GetElementPtrInst(Type *PointeeType, Value *Ptr,
+                           ArrayRef<Value *> IdxList, unsigned Values,
+                           const Twine &NameStr, BasicBlock *InsertAtEnd);
+
 protected:
   GetElementPtrInst *clone_impl() const override;
 public:
   static GetElementPtrInst *Create(Value *Ptr, ArrayRef<Value *> IdxList,
                                    const Twine &NameStr = "",
                                    Instruction *InsertBefore = nullptr) {
+    return Create(nullptr, Ptr, IdxList, NameStr, InsertBefore);
+  }
+  static GetElementPtrInst *Create(Type *PointeeType, Value *Ptr,
+                                   ArrayRef<Value *> IdxList,
+                                   const Twine &NameStr = "",
+                                   Instruction *InsertBefore = nullptr) {
     unsigned Values = 1 + unsigned(IdxList.size());
-    return new(Values)
-      GetElementPtrInst(Ptr, IdxList, Values, NameStr, InsertBefore);
+    return new (Values) GetElementPtrInst(PointeeType, Ptr, IdxList, Values,
+                                          NameStr, InsertBefore);
   }
   static GetElementPtrInst *Create(Value *Ptr, ArrayRef<Value *> IdxList,
                                    const Twine &NameStr,
                                    BasicBlock *InsertAtEnd) {
+    return Create(nullptr, Ptr, NameStr, InsertAtEnd);
+  }
+  static GetElementPtrInst *Create(Type *PointeeType, Value *Ptr,
+                                   ArrayRef<Value *> IdxList,
+                                   const Twine &NameStr,
+                                   BasicBlock *InsertAtEnd) {
     unsigned Values = 1 + unsigned(IdxList.size());
-    return new(Values)
-      GetElementPtrInst(Ptr, IdxList, Values, NameStr, InsertAtEnd);
+    return new (Values) GetElementPtrInst(PointeeType, Ptr, IdxList, Values,
+                                          NameStr, InsertAtEnd);
   }
 
   /// Create an "inbounds" getelementptr. See the documentation for the
@@ -824,7 +837,14 @@ public:
                                            ArrayRef<Value *> IdxList,
                                            const Twine &NameStr = "",
                                            Instruction *InsertBefore = nullptr){
-    GetElementPtrInst *GEP = Create(Ptr, IdxList, NameStr, InsertBefore);
+    return CreateInBounds(nullptr, Ptr, IdxList, NameStr, InsertBefore);
+  }
+  static GetElementPtrInst *
+  CreateInBounds(Type *PointeeType, Value *Ptr, ArrayRef<Value *> IdxList,
+                 const Twine &NameStr = "",
+                 Instruction *InsertBefore = nullptr) {
+    GetElementPtrInst *GEP =
+        Create(PointeeType, Ptr, IdxList, NameStr, InsertBefore);
     GEP->setIsInBounds(true);
     return GEP;
   }
@@ -832,7 +852,14 @@ public:
                                            ArrayRef<Value *> IdxList,
                                            const Twine &NameStr,
                                            BasicBlock *InsertAtEnd) {
-    GetElementPtrInst *GEP = Create(Ptr, IdxList, NameStr, InsertAtEnd);
+    return CreateInBounds(nullptr, Ptr, IdxList, NameStr, InsertAtEnd);
+  }
+  static GetElementPtrInst *CreateInBounds(Type *PointeeType, Value *Ptr,
+                                           ArrayRef<Value *> IdxList,
+                                           const Twine &NameStr,
+                                           BasicBlock *InsertAtEnd) {
+    GetElementPtrInst *GEP =
+        Create(PointeeType, Ptr, IdxList, NameStr, InsertAtEnd);
     GEP->setIsInBounds(true);
     return GEP;
   }
@@ -849,6 +876,8 @@ public:
     return cast<SequentialType>(getPointerOperandType()->getScalarType())
         ->getElementType();
   }
+
+  Type *getResultElementType() const { return getType()->getElementType(); }
 
   /// \brief Returns the address space of this instruction's pointer type.
   unsigned getAddressSpace() const {
@@ -958,27 +987,25 @@ struct OperandTraits<GetElementPtrInst> :
   public VariadicOperandTraits<GetElementPtrInst, 1> {
 };
 
-GetElementPtrInst::GetElementPtrInst(Value *Ptr,
-                                     ArrayRef<Value *> IdxList,
-                                     unsigned Values,
+GetElementPtrInst::GetElementPtrInst(Type *PointeeType, Value *Ptr,
+                                     ArrayRef<Value *> IdxList, unsigned Values,
                                      const Twine &NameStr,
                                      Instruction *InsertBefore)
-  : Instruction(getGEPReturnType(Ptr, IdxList),
-                GetElementPtr,
-                OperandTraits<GetElementPtrInst>::op_end(this) - Values,
-                Values, InsertBefore) {
+    : Instruction(getGEPReturnType(Ptr, IdxList), GetElementPtr,
+                  OperandTraits<GetElementPtrInst>::op_end(this) - Values,
+                  Values, InsertBefore) {
   init(Ptr, IdxList, NameStr);
+  assert(!PointeeType || PointeeType == getSourceElementType());
 }
-GetElementPtrInst::GetElementPtrInst(Value *Ptr,
-                                     ArrayRef<Value *> IdxList,
-                                     unsigned Values,
+GetElementPtrInst::GetElementPtrInst(Type *PointeeType, Value *Ptr,
+                                     ArrayRef<Value *> IdxList, unsigned Values,
                                      const Twine &NameStr,
                                      BasicBlock *InsertAtEnd)
-  : Instruction(getGEPReturnType(Ptr, IdxList),
-                GetElementPtr,
-                OperandTraits<GetElementPtrInst>::op_end(this) - Values,
-                Values, InsertAtEnd) {
+    : Instruction(getGEPReturnType(Ptr, IdxList), GetElementPtr,
+                  OperandTraits<GetElementPtrInst>::op_end(this) - Values,
+                  Values, InsertAtEnd) {
   init(Ptr, IdxList, NameStr);
+  assert(!PointeeType || PointeeType == getSourceElementType());
 }
 
 

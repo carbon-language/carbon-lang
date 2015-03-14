@@ -332,11 +332,11 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
     DEBUG(dbgs() << **i << ", ");
   DEBUG(dbgs() << ")\n");
 
+  StructType *StructTy;
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
-    PointerType *StructPtr =
-           PointerType::getUnqual(StructType::get(M->getContext(), paramTy));
+    StructTy = StructType::get(M->getContext(), paramTy);
     paramTy.clear();
-    paramTy.push_back(StructPtr);
+    paramTy.push_back(PointerType::getUnqual(StructTy));
   }
   FunctionType *funcType =
                   FunctionType::get(RetTy, paramTy, false);
@@ -364,8 +364,8 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       Idx[0] = Constant::getNullValue(Type::getInt32Ty(header->getContext()));
       Idx[1] = ConstantInt::get(Type::getInt32Ty(header->getContext()), i);
       TerminatorInst *TI = newFunction->begin()->getTerminator();
-      GetElementPtrInst *GEP = 
-        GetElementPtrInst::Create(AI, Idx, "gep_" + inputs[i]->getName(), TI);
+      GetElementPtrInst *GEP = GetElementPtrInst::Create(
+          StructTy, AI, Idx, "gep_" + inputs[i]->getName(), TI);
       RewriteVal = new LoadInst(GEP, "loadgep_" + inputs[i]->getName(), TI);
     } else
       RewriteVal = AI++;
@@ -447,6 +447,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     }
   }
 
+  StructType *StructArgTy = nullptr;
   AllocaInst *Struct = nullptr;
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     std::vector<Type*> ArgTypes;
@@ -455,7 +456,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       ArgTypes.push_back((*v)->getType());
 
     // Allocate a struct at the beginning of this function
-    Type *StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
+    StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
     Struct =
       new AllocaInst(StructArgTy, nullptr, "structArg",
                      codeReplacer->getParent()->begin()->begin());
@@ -465,9 +466,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Value *Idx[2];
       Idx[0] = Constant::getNullValue(Type::getInt32Ty(Context));
       Idx[1] = ConstantInt::get(Type::getInt32Ty(Context), i);
-      GetElementPtrInst *GEP =
-        GetElementPtrInst::Create(Struct, Idx,
-                                  "gep_" + StructValues[i]->getName());
+      GetElementPtrInst *GEP = GetElementPtrInst::Create(
+          StructArgTy, Struct, Idx, "gep_" + StructValues[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       StoreInst *SI = new StoreInst(StructValues[i], GEP);
       codeReplacer->getInstList().push_back(SI);
@@ -491,9 +491,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Value *Idx[2];
       Idx[0] = Constant::getNullValue(Type::getInt32Ty(Context));
       Idx[1] = ConstantInt::get(Type::getInt32Ty(Context), FirstOut + i);
-      GetElementPtrInst *GEP
-        = GetElementPtrInst::Create(Struct, Idx,
-                                    "gep_reload_" + outputs[i]->getName());
+      GetElementPtrInst *GEP = GetElementPtrInst::Create(
+          StructArgTy, Struct, Idx, "gep_reload_" + outputs[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       Output = GEP;
     } else {
@@ -606,10 +605,9 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                 Idx[0] = Constant::getNullValue(Type::getInt32Ty(Context));
                 Idx[1] = ConstantInt::get(Type::getInt32Ty(Context),
                                           FirstOut+out);
-                GetElementPtrInst *GEP =
-                  GetElementPtrInst::Create(OAI, Idx,
-                                            "gep_" + outputs[out]->getName(),
-                                            NTRet);
+                GetElementPtrInst *GEP = GetElementPtrInst::Create(
+                    StructArgTy, OAI, Idx, "gep_" + outputs[out]->getName(),
+                    NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);
               } else {
                 new StoreInst(outputs[out], OAI, NTRet);

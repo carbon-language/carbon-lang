@@ -952,8 +952,9 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     // Very likely. As long as %gep is natually aligned, the byte offset we
     // extracted should be a multiple of sizeof(*%gep).
     int64_t Index = AccumulativeByteOffset / ElementTypeSizeOfGEP;
-    NewGEP = GetElementPtrInst::Create(
-        NewGEP, ConstantInt::get(IntPtrTy, Index, true), GEP->getName(), GEP);
+    NewGEP = GetElementPtrInst::Create(GEP->getResultElementType(), NewGEP,
+                                       ConstantInt::get(IntPtrTy, Index, true),
+                                       GEP->getName(), GEP);
   } else {
     // Unlikely but possible. For example,
     // #pragma pack(1)
@@ -973,8 +974,9 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
                                        GEP->getPointerAddressSpace());
     NewGEP = new BitCastInst(NewGEP, I8PtrTy, "", GEP);
     NewGEP = GetElementPtrInst::Create(
-        NewGEP, ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true),
-        "uglygep", GEP);
+        Type::getInt8Ty(GEP->getContext()), NewGEP,
+        ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true), "uglygep",
+        GEP);
     if (GEP->getType() != I8PtrTy)
       NewGEP = new BitCastInst(NewGEP, GEP->getType(), GEP->getName(), GEP);
   }
