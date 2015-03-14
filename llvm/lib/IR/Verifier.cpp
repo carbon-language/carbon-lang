@@ -106,7 +106,7 @@ private:
   void Write(const Metadata *MD) {
     if (!MD)
       return;
-    MD->printAsOperand(OS, true, M);
+    MD->print(OS, M);
     OS << '\n';
   }
 

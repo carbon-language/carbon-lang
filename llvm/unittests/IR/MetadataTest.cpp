@@ -221,7 +221,7 @@ TEST_F(MDNodeTest, Print) {
   std::string Expected;
   {
     raw_string_ostream OS(Expected);
-    OS << "!{";
+    OS << "<" << (void *)N << "> = !{";
     C->printAsOperand(OS);
     OS << ", ";
     S->printAsOperand(OS);
@@ -240,6 +240,89 @@ TEST_F(MDNodeTest, Print) {
 
   EXPECT_EQ(Expected, Actual);
 }
+
+#define EXPECT_PRINTER_EQ(EXPECTED, PRINT)                                     \
+  do {                                                                         \
+    std::string Actual_;                                                       \
+    raw_string_ostream OS(Actual_);                                            \
+    PRINT;                                                                     \
+    OS.flush();                                                                \
+    std::string Expected_(EXPECTED);                                           \
+    EXPECT_EQ(Expected_, Actual_);                                             \
+  } while (false)
+
+TEST_F(MDNodeTest, PrintFromModule) {
+  Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 7);
+  MDString *S = MDString::get(Context, "foo");
+  MDNode *N0 = getNode();
+  MDNode *N1 = getNode(N0);
+  MDNode *N2 = getNode(N0, N1);
+
+  Metadata *Args[] = {ConstantAsMetadata::get(C), S, nullptr, N0, N1, N2};
+  MDNode *N = MDNode::get(Context, Args);
+  Module M("test", Context);
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("named");
+  NMD->addOperand(N);
+
+  std::string Expected;
+  {
+    raw_string_ostream OS(Expected);
+    OS << "!0 = !{";
+    C->printAsOperand(OS);
+    OS << ", ";
+    S->printAsOperand(OS);
+    OS << ", null, !1, !2, !3}";
+  }
+
+  EXPECT_PRINTER_EQ(Expected, N->print(OS, &M));
+}
+
+TEST_F(MDNodeTest, PrintFromFunction) {
+  Module M("test", Context);
+  auto *FTy = FunctionType::get(Type::getVoidTy(Context), false);
+  auto *F0 = Function::Create(FTy, GlobalValue::ExternalLinkage, "F0", &M);
+  auto *F1 = Function::Create(FTy, GlobalValue::ExternalLinkage, "F1", &M);
+  auto *BB0 = BasicBlock::Create(Context, "entry", F0);
+  auto *BB1 = BasicBlock::Create(Context, "entry", F1);
+  auto *R0 = ReturnInst::Create(Context, BB0);
+  auto *R1 = ReturnInst::Create(Context, BB1);
+  auto *N0 = MDNode::getDistinct(Context, None);
+  auto *N1 = MDNode::getDistinct(Context, None);
+  R0->setMetadata("md", N0);
+  R1->setMetadata("md", N1);
+
+  EXPECT_PRINTER_EQ("!0 = distinct !{}", N0->print(OS, &M));
+  EXPECT_PRINTER_EQ("!1 = distinct !{}", N1->print(OS, &M));
+}
+
+TEST_F(MDNodeTest, PrintFromMetadataAsValue) {
+  Module M("test", Context);
+
+  auto *Intrinsic =
+      Function::Create(FunctionType::get(Type::getVoidTy(Context),
+                                         Type::getMetadataTy(Context), false),
+                       GlobalValue::ExternalLinkage, "llvm.intrinsic", &M);
+
+  auto *FTy = FunctionType::get(Type::getVoidTy(Context), false);
+  auto *F0 = Function::Create(FTy, GlobalValue::ExternalLinkage, "F0", &M);
+  auto *F1 = Function::Create(FTy, GlobalValue::ExternalLinkage, "F1", &M);
+  auto *BB0 = BasicBlock::Create(Context, "entry", F0);
+  auto *BB1 = BasicBlock::Create(Context, "entry", F1);
+  auto *N0 = MDNode::getDistinct(Context, None);
+  auto *N1 = MDNode::getDistinct(Context, None);
+  auto *MAV0 = MetadataAsValue::get(Context, N0);
+  auto *MAV1 = MetadataAsValue::get(Context, N1);
+  CallInst::Create(Intrinsic, MAV0, "", BB0);
+  CallInst::Create(Intrinsic, MAV1, "", BB1);
+
+  EXPECT_PRINTER_EQ("!0 = distinct !{}", MAV0->print(OS));
+  EXPECT_PRINTER_EQ("!1 = distinct !{}", MAV1->print(OS));
+  EXPECT_PRINTER_EQ("!0", MAV0->printAsOperand(OS, false));
+  EXPECT_PRINTER_EQ("!1", MAV1->printAsOperand(OS, false));
+  EXPECT_PRINTER_EQ("metadata !0", MAV0->printAsOperand(OS, true));
+  EXPECT_PRINTER_EQ("metadata !1", MAV1->printAsOperand(OS, true));
+}
+#undef EXPECT_PRINTER_EQ
 
 TEST_F(MDNodeTest, NullOperand) {
   // metadata !{}

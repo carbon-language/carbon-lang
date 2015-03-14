@@ -275,6 +275,15 @@ static const Module *getModuleFromVal(const Value *V) {
 
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return GV->getParent();
+
+  if (const auto *MAV = dyn_cast<MetadataAsValue>(V)) {
+    for (const User *U : MAV->users())
+      if (isa<Instruction>(U))
+        if (const Module *M = getModuleFromVal(U))
+          return M;
+    return nullptr;
+  }
+
   return nullptr;
 }
 
@@ -525,6 +534,7 @@ private:
   /// TheFunction - The function for which we are holding slot numbers.
   const Function* TheFunction;
   bool FunctionProcessed;
+  bool ShouldInitializeAllMetadata;
 
   /// mMap - The slot map for the module level data.
   ValueMap mMap;
@@ -542,10 +552,20 @@ private:
   DenseMap<AttributeSet, unsigned> asMap;
   unsigned asNext;
 public:
-  /// Construct from a module
-  explicit SlotTracker(const Module *M);
+  /// Construct from a module.
+  ///
+  /// If \c ShouldInitializeAllMetadata, initializes all metadata in all
+  /// functions, giving correct numbering for metadata referenced only from
+  /// within a function (even if no functions have been initialized).
+  explicit SlotTracker(const Module *M,
+                       bool ShouldInitializeAllMetadata = false);
   /// Construct from a function, starting out in incorp state.
-  explicit SlotTracker(const Function *F);
+  ///
+  /// If \c ShouldInitializeAllMetadata, initializes all metadata in all
+  /// functions, giving correct numbering for metadata referenced only from
+  /// within a function (even if no functions have been initialized).
+  explicit SlotTracker(const Function *F,
+                       bool ShouldInitializeAllMetadata = false);
 
   /// Return the slot number of the specified value in it's type
   /// plane.  If something is not in the SlotTracker, return -1.
@@ -606,6 +626,9 @@ private:
   /// Add all of the functions arguments, basic blocks, and instructions.
   void processFunction();
 
+  /// Add all of the metadata from a function.
+  void processFunctionMetadata(const Function &F);
+
   /// Add all of the metadata from an instruction.
   void processInstructionMetadata(const Instruction &I);
 
@@ -648,15 +671,18 @@ static SlotTracker *createSlotTracker(const Value *V) {
 
 // Module level constructor. Causes the contents of the Module (sans functions)
 // to be added to the slot table.
-SlotTracker::SlotTracker(const Module *M)
-    : TheModule(M), TheFunction(nullptr), FunctionProcessed(false), mNext(0),
+SlotTracker::SlotTracker(const Module *M, bool ShouldInitializeAllMetadata)
+    : TheModule(M), TheFunction(nullptr), FunctionProcessed(false),
+      ShouldInitializeAllMetadata(ShouldInitializeAllMetadata), mNext(0),
       fNext(0), mdnNext(0), asNext(0) {}
 
 // Function level constructor. Causes the contents of the Module and the one
 // function provided to be added to the slot table.
-SlotTracker::SlotTracker(const Function *F)
+SlotTracker::SlotTracker(const Function *F, bool ShouldInitializeAllMetadata)
     : TheModule(F ? F->getParent() : nullptr), TheFunction(F),
-      FunctionProcessed(false), mNext(0), fNext(0), mdnNext(0), asNext(0) {}
+      FunctionProcessed(false),
+      ShouldInitializeAllMetadata(ShouldInitializeAllMetadata), mNext(0),
+      fNext(0), mdnNext(0), asNext(0) {}
 
 inline void SlotTracker::initialize() {
   if (TheModule) {
@@ -694,6 +720,9 @@ void SlotTracker::processModule() {
     if (!I->hasName())
       // Add all the unnamed functions to the table.
       CreateModuleSlot(I);
+
+    if (ShouldInitializeAllMetadata)
+      processFunctionMetadata(*I);
 
     // Add all the function attributes to the table.
     // FIXME: Add attributes of other objects?
@@ -748,6 +777,12 @@ void SlotTracker::processFunction() {
   FunctionProcessed = true;
 
   ST_DEBUG("end processFunction!\n");
+}
+
+void SlotTracker::processFunctionMetadata(const Function &F) {
+  for (auto &BB : F)
+    for (auto &I : BB)
+      processInstructionMetadata(I);
 }
 
 void SlotTracker::processInstructionMetadata(const Instruction &I) {
@@ -3134,11 +3169,24 @@ void Type::print(raw_ostream &OS) const {
     }
 }
 
+static bool isReferencingMDNode(const Instruction &I) {
+  if (const auto *CI = dyn_cast<CallInst>(&I))
+    if (Function *F = CI->getCalledFunction())
+      if (F->isIntrinsic())
+        for (auto &Op : I.operands())
+          if (auto *V = dyn_cast_or_null<MetadataAsValue>(Op))
+            if (isa<MDNode>(V->getMetadata()))
+              return true;
+  return false;
+}
+
 void Value::print(raw_ostream &ROS) const {
   formatted_raw_ostream OS(ROS);
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
     const Function *F = I->getParent() ? I->getParent()->getParent() : nullptr;
-    SlotTracker SlotTable(F);
+    SlotTracker SlotTable(
+        F,
+        /* ShouldInitializeAllMetadata */ isReferencingMDNode(*I));
     AssemblyWriter W(OS, SlotTable, getModuleFromVal(I), nullptr);
     W.printInstruction(*I);
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
@@ -3146,7 +3194,8 @@ void Value::print(raw_ostream &ROS) const {
     AssemblyWriter W(OS, SlotTable, getModuleFromVal(BB), nullptr);
     W.printBasicBlock(BB);
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
-    SlotTracker SlotTable(GV->getParent());
+    SlotTracker SlotTable(GV->getParent(),
+                          /* ShouldInitializeAllMetadata */ isa<Function>(GV));
     AssemblyWriter W(OS, SlotTable, GV->getParent(), nullptr);
     if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
       W.printGlobal(V);
@@ -3155,7 +3204,7 @@ void Value::print(raw_ostream &ROS) const {
     else
       W.printAlias(cast<GlobalAlias>(GV));
   } else if (const MetadataAsValue *V = dyn_cast<MetadataAsValue>(this)) {
-    V->getMetadata()->print(ROS);
+    V->getMetadata()->print(ROS, getModuleFromVal(V));
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
@@ -3171,8 +3220,9 @@ void Value::print(raw_ostream &ROS) const {
 void Value::printAsOperand(raw_ostream &O, bool PrintType, const Module *M) const {
   // Fast path: Don't construct and populate a TypePrinting object if we
   // won't be needing any types printed.
-  if (!PrintType && ((!isa<Constant>(this) && !isa<MetadataAsValue>(this)) ||
-                     hasName() || isa<GlobalValue>(this))) {
+  bool IsMetadata = isa<MetadataAsValue>(this);
+  if (!PrintType && ((!isa<Constant>(this) && !IsMetadata) || hasName() ||
+                     isa<GlobalValue>(this))) {
     WriteAsOperandInternal(O, this, nullptr, nullptr, M);
     return;
   }
@@ -3188,33 +3238,35 @@ void Value::printAsOperand(raw_ostream &O, bool PrintType, const Module *M) cons
     O << ' ';
   }
 
-  WriteAsOperandInternal(O, this, &TypePrinter, nullptr, M);
+  SlotTracker Machine(M, /* ShouldInitializeAllMetadata */ IsMetadata);
+  WriteAsOperandInternal(O, this, &TypePrinter, &Machine, M);
 }
 
-void Metadata::print(raw_ostream &ROS) const {
-  formatted_raw_ostream OS(ROS);
-  if (auto *N = dyn_cast<MDNode>(this)) {
-    SlotTracker SlotTable(static_cast<Function *>(nullptr));
-    AssemblyWriter W(OS, SlotTable, nullptr, nullptr);
-    W.printMDNodeBody(N);
-
-    return;
-  }
-  printAsOperand(OS);
-}
-
-void Metadata::printAsOperand(raw_ostream &ROS, bool PrintType,
-                              const Module *M) const {
+static void printMetadataImpl(raw_ostream &ROS, const Metadata &MD,
+                              const Module *M, bool OnlyAsOperand) {
   formatted_raw_ostream OS(ROS);
 
-  std::unique_ptr<TypePrinting> TypePrinter;
-  if (PrintType) {
-    TypePrinter.reset(new TypePrinting);
-    if (M)
-      TypePrinter->incorporateTypes(*M);
-  }
-  WriteAsOperandInternal(OS, this, TypePrinter.get(), nullptr, M,
+  auto *N = dyn_cast<MDNode>(&MD);
+  TypePrinting TypePrinter;
+  SlotTracker Machine(M, /* ShouldInitializeAllMetadata */ N);
+  if (M)
+    TypePrinter.incorporateTypes(*M);
+
+  WriteAsOperandInternal(OS, &MD, &TypePrinter, &Machine, M,
                          /* FromValue */ true);
+  if (OnlyAsOperand || !N)
+    return;
+
+  OS << " = ";
+  WriteMDNodeBodyInternal(OS, N, &TypePrinter, &Machine, M);
+}
+
+void Metadata::printAsOperand(raw_ostream &OS, const Module *M) const {
+  printMetadataImpl(OS, *this, M, /* OnlyAsOperand */ true);
+}
+
+void Metadata::print(raw_ostream &OS, const Module *M) const {
+  printMetadataImpl(OS, *this, M, /* OnlyAsOperand */ false);
 }
 
 // Value::dump - allow easy printing of Values from the debugger.
@@ -3238,7 +3290,7 @@ LLVM_DUMP_METHOD
 void NamedMDNode::dump() const { print(dbgs()); }
 
 LLVM_DUMP_METHOD
-void Metadata::dump() const {
-  print(dbgs());
+void Metadata::dump(const Module *M) const {
+  print(dbgs(), M);
   dbgs() << '\n';
 }
