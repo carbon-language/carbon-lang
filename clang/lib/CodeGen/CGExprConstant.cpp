@@ -383,14 +383,19 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
 
     if (!EltInit)
       return false;
-    
+
     if (!Field->isBitField()) {
       // Handle non-bitfield members.
       AppendField(*Field, Layout.getFieldOffset(FieldNo), EltInit);
     } else {
       // Otherwise we have a bitfield.
-      AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
-                     cast<llvm::ConstantInt>(EltInit));
+      if (auto *CI = dyn_cast<llvm::ConstantInt>(EltInit)) {
+        AppendBitField(*Field, Layout.getFieldOffset(FieldNo), CI);
+      } else {
+        // We are trying to initialize a bitfield with a non-trivial constant,
+        // this must require run-time code.
+        return false;
+      }
     }
   }
 
