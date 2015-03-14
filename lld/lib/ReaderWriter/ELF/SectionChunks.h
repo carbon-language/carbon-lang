@@ -574,7 +574,7 @@ private:
 
   struct StringRefMappingInfo {
     static StringRef getEmptyKey() { return StringRef(); }
-    static StringRef getTombstoneKey() { return StringRef(" ", 0); }
+    static StringRef getTombstoneKey() { return StringRef(" ", 1); }
     static unsigned getHashValue(StringRef const val) {
       return llvm::HashString(val);
     }
