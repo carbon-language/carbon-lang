@@ -110,6 +110,11 @@ public:
     return RangeAttributes;
   }
 
+  const std::vector<std::pair<DIEInteger *, int64_t>> &
+  getLocationAttributes() const {
+    return LocationAttributes;
+  }
+
   /// \brief Compute the end offset for this unit. Must be
   /// called after the CU's DIEs have been cloned.
   /// \returns the next unit offset (which is also the current
@@ -132,6 +137,10 @@ public:
   /// \brief Keep track of a DW_AT_range attribute that we will need to
   /// patch up later.
   void noteRangeAttribute(const DIE &Die, DIEInteger *Attr);
+
+  /// \brief Keep track of a location attribute pointing to a location
+  /// list in the debug_loc section.
+  void noteLocationAttribute(DIEInteger *Attr, int64_t PcOffset);
 
 private:
   DWARFUnit &OrigUnit;
@@ -166,6 +175,12 @@ private:
   std::vector<DIEInteger *> RangeAttributes;
   DIEInteger *UnitRangeAttribute;
   /// @}
+
+  /// \brief Location attributes that need to be transfered from th
+  /// original debug_loc section to the liked one. They are stored
+  /// along with the PC offset that is to be applied to their
+  /// function's address.
+  std::vector<std::pair<DIEInteger *, int64_t>> LocationAttributes;
 };
 
 uint64_t CompileUnit::computeNextUnitOffset() {
@@ -208,6 +223,10 @@ void CompileUnit::noteRangeAttribute(const DIE &Die, DIEInteger *Attr) {
     RangeAttributes.push_back(Attr);
   else
     UnitRangeAttribute = Attr;
+}
+
+void CompileUnit::noteLocationAttribute(DIEInteger *Attr, int64_t PcOffset) {
+  LocationAttributes.emplace_back(Attr, PcOffset);
 }
 
 /// \brief A string table that doesn't need relocations.
@@ -319,6 +338,7 @@ class DwarfStreamer {
   std::unique_ptr<raw_fd_ostream> OutFile;
 
   uint32_t RangesSectionSize;
+  uint32_t LocSectionSize;
 
 public:
   /// \brief Actually create the streamer and the ouptut file.
@@ -367,6 +387,11 @@ public:
   void emitUnitRangesEntries(CompileUnit &Unit, bool DoRangesSection);
 
   uint32_t getRangesSectionSize() const { return RangesSectionSize; }
+
+  /// \brief Emit the debug_loc contribution for \p Unit by copying
+  /// the entries from \p Dwarf and offseting them. Update the
+  /// location attributes to point to the new entries.
+  void emitLocationsForUnit(const CompileUnit &Unit, DWARFContext &Dwarf);
 };
 
 bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
@@ -433,6 +458,7 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
     return error("no asm printer for target " + TripleName, Context);
 
   RangesSectionSize = 0;
+  LocSectionSize = 0;
 
   return true;
 }
@@ -617,6 +643,57 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
   RangesSectionSize += 2 * AddressSize;
 }
 
+/// \brief Emit location lists for \p Unit and update attribtues to
+/// point to the new entries.
+void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
+                                         DWARFContext &Dwarf) {
+  const std::vector<std::pair<DIEInteger *, int64_t>> &Attributes =
+      Unit.getLocationAttributes();
+
+  if (Attributes.empty())
+    return;
+
+  MS->SwitchSection(MC->getObjectFileInfo()->getDwarfLocSection());
+
+  unsigned AddressSize = Unit.getOrigUnit().getAddressByteSize();
+  const DWARFSection &InputSec = Dwarf.getLocSection();
+  DataExtractor Data(InputSec.Data, Dwarf.isLittleEndian(), AddressSize);
+  DWARFUnit &OrigUnit = Unit.getOrigUnit();
+  const auto *OrigUnitDie = OrigUnit.getCompileUnitDIE(false);
+  int64_t UnitPcOffset = 0;
+  uint64_t OrigLowPc = OrigUnitDie->getAttributeValueAsAddress(
+      &OrigUnit, dwarf::DW_AT_low_pc, -1ULL);
+  if (OrigLowPc != -1ULL)
+    UnitPcOffset = int64_t(OrigLowPc) - Unit.getLowPc();
+
+  for (const auto &Attr : Attributes) {
+    uint32_t Offset = Attr.first->getValue();
+    Attr.first->setValue(LocSectionSize);
+    // This is the quantity to add to the old location address to get
+    // the correct address for the new one.
+    int64_t LocPcOffset = Attr.second + UnitPcOffset;
+    while (Data.isValidOffset(Offset)) {
+      uint64_t Low = Data.getUnsigned(&Offset, AddressSize);
+      uint64_t High = Data.getUnsigned(&Offset, AddressSize);
+      LocSectionSize += 2 * AddressSize;
+      if (Low == 0 && High == 0) {
+        Asm->OutStreamer.EmitIntValue(0, AddressSize);
+        Asm->OutStreamer.EmitIntValue(0, AddressSize);
+        break;
+      }
+      Asm->OutStreamer.EmitIntValue(Low + LocPcOffset, AddressSize);
+      Asm->OutStreamer.EmitIntValue(High + LocPcOffset, AddressSize);
+      uint64_t Length = Data.getU16(&Offset);
+      Asm->OutStreamer.EmitIntValue(Length, 2);
+      // Just copy the bytes over.
+      Asm->OutStreamer.EmitBytes(
+          StringRef(InputSec.Data.substr(Offset, Length)));
+      Offset += Length;
+      LocSectionSize += Length + 2;
+    }
+  }
+}
+
 /// \brief The core of the Dwarf linking logic.
 ///
 /// The link of the dwarf information from the object files will be
@@ -791,7 +868,8 @@ private:
   unsigned cloneScalarAttribute(DIE &Die,
                                 const DWARFDebugInfoEntryMinimal &InputDIE,
                                 CompileUnit &U, AttributeSpec AttrSpec,
-                                const DWARFFormValue &Val, unsigned AttrSize);
+                                const DWARFFormValue &Val, unsigned AttrSize,
+                                const AttributesInfo &Info);
 
   /// \brief Helper for cloneDIE.
   bool applyValidRelocs(MutableArrayRef<char> Data, uint32_t BaseOffset,
@@ -1486,7 +1564,8 @@ unsigned DwarfLinker::cloneAddressAttribute(DIE &Die, AttributeSpec AttrSpec,
 /// \returns the size of the new attribute.
 unsigned DwarfLinker::cloneScalarAttribute(
     DIE &Die, const DWARFDebugInfoEntryMinimal &InputDIE, CompileUnit &Unit,
-    AttributeSpec AttrSpec, const DWARFFormValue &Val, unsigned AttrSize) {
+    AttributeSpec AttrSpec, const DWARFFormValue &Val, unsigned AttrSize,
+    const AttributesInfo &Info) {
   uint64_t Value;
   if (AttrSpec.Attr == dwarf::DW_AT_high_pc &&
       Die.getTag() == dwarf::DW_TAG_compile_unit) {
@@ -1508,6 +1587,13 @@ unsigned DwarfLinker::cloneScalarAttribute(
   DIEInteger *Attr = new (DIEAlloc) DIEInteger(Value);
   if (AttrSpec.Attr == dwarf::DW_AT_ranges)
     Unit.noteRangeAttribute(Die, Attr);
+  // A more generic way to check for location attributes would be
+  // nice, but it's very unlikely that any other attribute needs a
+  // location list.
+  else if (AttrSpec.Attr == dwarf::DW_AT_location ||
+           AttrSpec.Attr == dwarf::DW_AT_frame_base)
+    Unit.noteLocationAttribute(Attr, Info.PCOffset);
+
   Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::Form(AttrSpec.Form),
                Attr);
   return AttrSize;
@@ -1552,7 +1638,8 @@ unsigned DwarfLinker::cloneAttribute(DIE &Die,
   case dwarf::DW_FORM_sec_offset:
   case dwarf::DW_FORM_flag:
   case dwarf::DW_FORM_flag_present:
-    return cloneScalarAttribute(Die, InputDIE, Unit, AttrSpec, Val, AttrSize);
+    return cloneScalarAttribute(Die, InputDIE, Unit, AttrSpec, Val, AttrSize,
+                                Info);
   default:
     reportWarning("Unsupported attribute form in cloneAttribute. Dropping.", &U,
                   &InputDIE);
@@ -1843,6 +1930,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
         if (!OutputDIE || Options.NoOutput)
           continue;
         patchRangesForUnit(CurrentUnit, DwarfContext);
+        Streamer->emitLocationsForUnit(CurrentUnit, DwarfContext);
       }
 
     // Emit all the compile unit's debug information.
