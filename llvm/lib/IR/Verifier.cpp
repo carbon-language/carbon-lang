@@ -181,7 +181,7 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   DenseMap<Function *, std::pair<unsigned, unsigned>> FrameEscapeInfo;
 
 public:
-  explicit Verifier(raw_ostream &OS = dbgs())
+  explicit Verifier(raw_ostream &OS)
       : VerifierSupport(OS), Context(nullptr), PersonalityFn(nullptr),
         SawFrameEscape(false) {}
 
@@ -3112,7 +3112,7 @@ struct VerifierLegacyPass : public FunctionPass {
   Verifier V;
   bool FatalErrors;
 
-  VerifierLegacyPass() : FunctionPass(ID), FatalErrors(true) {
+  VerifierLegacyPass() : FunctionPass(ID), V(dbgs()), FatalErrors(true) {
     initializeVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
   }
   explicit VerifierLegacyPass(bool FatalErrors)
