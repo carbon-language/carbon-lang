@@ -60,8 +60,8 @@
 
 int main()
 {
-    std::fenv_t fenv = {0};
-    std::fexcept_t fex = 0;
+    std::fenv_t fenv;
+    std::fexcept_t fex;
     static_assert((std::is_same<decltype(std::feclearexcept(0)), int>::value), "");
     static_assert((std::is_same<decltype(std::fegetexceptflag(&fex, 0)), int>::value), "");
     static_assert((std::is_same<decltype(std::feraiseexcept(0)), int>::value), "");
