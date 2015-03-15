@@ -5,6 +5,7 @@ RUN: llvm-dsymutil -o %t2 -oso-prepend-path=%p/.. %p/../Inputs/basic.macho.x86_6
 RUN: llvm-dwarfdump %t2 | FileCheck %s
 RUN: llvm-dsymutil -o - -oso-prepend-path=%p/.. %p/../Inputs/basic.macho.x86_64 | llvm-dwarfdump - | FileCheck %s --check-prefix=CHECK --check-prefix=BASIC
 RUN: llvm-dsymutil -o - -oso-prepend-path=%p/.. %p/../Inputs/basic-archive.macho.x86_64 | llvm-dwarfdump - | FileCheck %s --check-prefix=CHECK --check-prefix=ARCHIVE
+REQUIRES: shell
 
 CHECK: file format Mach-O 64-bit x86-64
 
