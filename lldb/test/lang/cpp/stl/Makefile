@@ -9,7 +9,7 @@ clean: OBJECTS+=$(wildcard main.d.*)
 # targets.  Other targets do not, which causes this test to fail.
 # This flag enables FullDebugInfo for all targets.
 ifneq (,$(findstring clang,$(CC)))
-  CFLAGS_EXTRAS := -fstandalone-debug
+  CFLAGS_EXTRAS := -fno-limit-debug-info
 endif
 
 include $(LEVEL)/Makefile.rules
