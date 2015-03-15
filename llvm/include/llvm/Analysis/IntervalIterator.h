@@ -105,6 +105,12 @@ public:
     }
   }
 
+  IntervalIterator(IntervalIterator &&x)
+      : IntStack(std::move(x.IntStack)), Visited(std::move(x.Visited)),
+        OrigContainer(x.OrigContainer), IOwnMem(x.IOwnMem) {
+    x.IOwnMem = false;
+  }
+
   IntervalIterator(IntervalPartition &IP, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = &IP;
     if (!ProcessInterval(IP.getRootInterval())) {
