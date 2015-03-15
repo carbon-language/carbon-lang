@@ -203,33 +203,14 @@ public:
   // Iterators.
   //===--------------------------------------------------===//
 
-  class iterator {
-    typename TreeTy::iterator itr;
-
-    iterator() {}
-    iterator(TreeTy* t) : itr(t) {}
+  class iterator : public ImutAVLValueIterator<ImmutableMap> {
+    iterator() = default;
+    explicit iterator(TreeTy *Tree) : iterator::ImutAVLValueIterator(Tree) {}
     friend class ImmutableMap;
 
   public:
-    typedef ptrdiff_t difference_type;
-    typedef typename ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
-    typedef typename ImmutableMap<KeyT,ValT,ValInfo>::value_type_ref reference;
-    typedef typename iterator::value_type *pointer;
-    typedef std::bidirectional_iterator_tag iterator_category;
-
-    typename iterator::reference operator*() const { return itr->getValue(); }
-    typename iterator::pointer   operator->() const { return &itr->getValue(); }
-
-    key_type_ref getKey() const { return itr->getValue().first; }
-    data_type_ref getData() const { return itr->getValue().second; }
-
-    iterator& operator++() { ++itr; return *this; }
-    iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
-    iterator& operator--() { --itr; return *this; }
-    iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
-
-    bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
-    bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
+    key_type_ref getKey() const { return (*this)->first; }
+    data_type_ref getData() const { return (*this)->second; }
   };
 
   iterator begin() const { return iterator(Root); }
@@ -376,30 +357,17 @@ public:
   //===--------------------------------------------------===//
   // Iterators.
   //===--------------------------------------------------===//
-  
-  class iterator {
-    typename TreeTy::iterator itr;
-    
-    iterator() {}
-    iterator(TreeTy* t) : itr(t) {}
+
+  class iterator : public ImutAVLValueIterator<ImmutableMapRef> {
+    iterator() = default;
+    explicit iterator(TreeTy *Tree) : iterator::ImutAVLValueIterator(Tree) {}
     friend class ImmutableMapRef;
-    
+
   public:
-    value_type_ref operator*() const { return itr->getValue(); }
-    value_type*    operator->() const { return &itr->getValue(); }
-    
-    key_type_ref getKey() const { return itr->getValue().first; }
-    data_type_ref getData() const { return itr->getValue().second; }
-    
-    
-    iterator& operator++() { ++itr; return *this; }
-    iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
-    iterator& operator--() { --itr; return *this; }
-    iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
-    bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
-    bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
+    key_type_ref getKey() const { return (*this)->first; }
+    data_type_ref getData() const { return (*this)->second; }
   };
-  
+
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }
   

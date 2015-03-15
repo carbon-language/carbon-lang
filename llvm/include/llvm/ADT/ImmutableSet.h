@@ -142,13 +142,13 @@ public:
     iterator RItr = RHS.begin(), REnd = RHS.end();
 
     while (LItr != LEnd && RItr != REnd) {
-      if (*LItr == *RItr) {
+      if (&*LItr == &*RItr) {
         LItr.skipSubTree();
         RItr.skipSubTree();
         continue;
       }
 
-      if (!LItr->isElementEqual(*RItr))
+      if (!LItr->isElementEqual(&*RItr))
         return false;
 
       ++LItr;
@@ -442,7 +442,7 @@ protected:
                                      typename TreeTy::iterator& TE) {
     typename TreeTy::iterator I = T->begin(), E = T->end();
     for ( ; I!=E ; ++I, ++TI) {
-      if (TI == TE || !I->isElementEqual(*TI))
+      if (TI == TE || !I->isElementEqual(&*TI))
         return false;
     }
     return true;
@@ -645,7 +645,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 template <typename ImutInfo>
-class ImutAVLTreeGenericIterator {
+class ImutAVLTreeGenericIterator
+    : public std::iterator<std::bidirectional_iterator_tag,
+                           ImutAVLTree<ImutInfo>> {
   SmallVector<uintptr_t,20> stack;
 public:
   enum VisitFlag { VisitedNone=0x0, VisitedLeft=0x1, VisitedRight=0x3,
@@ -659,10 +661,11 @@ public:
     if (Root) stack.push_back(reinterpret_cast<uintptr_t>(Root));
   }
 
-  TreeTy* operator*() const {
+  TreeTy &operator*() const {
     assert(!stack.empty());
-    return reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
+    return *reinterpret_cast<TreeTy *>(stack.back() & ~Flags);
   }
+  TreeTy *operator->() const { return &*this; }
 
   uintptr_t getVisitState() const {
     assert(!stack.empty());
@@ -750,7 +753,9 @@ public:
 };
 
 template <typename ImutInfo>
-class ImutAVLTreeInOrderIterator {
+class ImutAVLTreeInOrderIterator
+    : public std::iterator<std::bidirectional_iterator_tag,
+                           ImutAVLTree<ImutInfo>> {
   typedef ImutAVLTreeGenericIterator<ImutInfo> InternalIteratorTy;
   InternalIteratorTy InternalItr;
 
@@ -771,8 +776,8 @@ public:
 
   bool operator!=(const SelfTy &x) const { return !(*this == x); }
 
-  TreeTy *operator*() const { return *InternalItr; }
-  TreeTy *operator->() const { return *InternalItr; }
+  TreeTy &operator*() const { return *InternalItr; }
+  TreeTy *operator->() const { return &*InternalItr; }
 
   SelfTy &operator++() {
     do ++InternalItr;
@@ -796,6 +801,24 @@ public:
     while (!InternalItr.atEnd() &&
            InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft)
       ++InternalItr;
+  }
+};
+
+/// Generic iterator that wraps a T::TreeTy::iterator and exposes
+/// iterator::getValue() on dereference.
+template <typename T>
+struct ImutAVLValueIterator
+    : iterator_adaptor_base<
+          ImutAVLValueIterator<T>, typename T::TreeTy::iterator,
+          typename std::iterator_traits<
+              typename T::TreeTy::iterator>::iterator_category,
+          const typename T::value_type> {
+  ImutAVLValueIterator() = default;
+  explicit ImutAVLValueIterator(typename T::TreeTy *Tree)
+      : ImutAVLValueIterator::iterator_adaptor_base(Tree) {}
+
+  typename ImutAVLValueIterator::reference operator*() const {
+    return this->I->getValue();
   }
 };
 
@@ -1052,31 +1075,7 @@ public:
   // Iterators.
   //===--------------------------------------------------===//
 
-  class iterator {
-    typename TreeTy::iterator itr;
-
-    iterator() {}
-    iterator(TreeTy* t) : itr(t) {}
-    friend class ImmutableSet<ValT,ValInfo>;
-
-  public:
-    typedef ptrdiff_t difference_type;
-    typedef typename ImmutableSet<ValT,ValInfo>::value_type value_type;
-    typedef typename ImmutableSet<ValT,ValInfo>::value_type_ref reference;
-    typedef typename iterator::value_type *pointer;
-    typedef std::bidirectional_iterator_tag iterator_category;
-
-    typename iterator::reference operator*() const { return itr->getValue(); }
-    typename iterator::pointer operator->() const { return &**this; }
-
-    iterator& operator++() { ++itr; return *this; }
-    iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
-    iterator& operator--() { --itr; return *this; }
-    iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
-
-    bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
-    bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
-  };
+  typedef ImutAVLValueIterator<ImmutableSet> iterator;
 
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }
@@ -1186,35 +1185,7 @@ public:
   // Iterators.
   //===--------------------------------------------------===//
 
-  class iterator {
-    typename TreeTy::iterator itr;
-    iterator(TreeTy* t) : itr(t) {}
-    friend class ImmutableSetRef<ValT,ValInfo>;
-  public:
-    iterator() {}
-    value_type_ref operator*() const { return itr->getValue(); }
-    iterator &operator++() {
-      ++itr;
-      return *this;
-    }
-    iterator operator++(int) {
-      iterator tmp(*this);
-      ++itr;
-      return tmp;
-    }
-    iterator &operator--() {
-      --itr;
-      return *this;
-    }
-    iterator operator--(int) {
-      iterator tmp(*this);
-      --itr;
-      return tmp;
-    }
-    bool operator==(const iterator &RHS) const { return RHS.itr == itr; }
-    bool operator!=(const iterator &RHS) const { return RHS.itr != itr; }
-    value_type *operator->() const { return &**this; }
-  };
+  typedef ImutAVLValueIterator<ImmutableSetRef> iterator;
 
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }
