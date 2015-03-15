@@ -27,37 +27,36 @@ class constant_iterator : public std::iterator<std::forward_iterator_tag,
   const_inst_iterator InstI;                // Method instruction iterator
   unsigned OpIdx;                           // Operand index
 
-  typedef constant_iterator _Self;
-
-  inline bool isAtConstant() const {
+  bool isAtConstant() const {
     assert(!InstI.atEnd() && OpIdx < InstI->getNumOperands() &&
            "isAtConstant called with invalid arguments!");
     return isa<Constant>(InstI->getOperand(OpIdx));
   }
 
 public:
-  inline constant_iterator(const Function *F) : InstI(inst_begin(F)), OpIdx(0) {
+  constant_iterator(const Function *F) : InstI(inst_begin(F)), OpIdx(0) {
     // Advance to first constant... if we are not already at constant or end
     if (InstI != inst_end(F) &&                            // InstI is valid?
         (InstI->getNumOperands() == 0 || !isAtConstant())) // Not at constant?
       operator++();
   }
 
-  inline constant_iterator(const Function *F, bool)   // end ctor
-    : InstI(inst_end(F)), OpIdx(0) {
+  constant_iterator(const Function *F, bool) // end ctor
+      : InstI(inst_end(F)),
+        OpIdx(0) {}
+
+  bool operator==(const constant_iterator &x) const {
+    return OpIdx == x.OpIdx && InstI == x.InstI;
   }
+  bool operator!=(const constant_iterator &x) const { return !(*this == x); }
 
-  inline bool operator==(const _Self& x) const { return OpIdx == x.OpIdx &&
-                                                        InstI == x.InstI; }
-  inline bool operator!=(const _Self& x) const { return !operator==(x); }
-
-  inline pointer operator*() const {
+  pointer operator*() const {
     assert(isAtConstant() && "Dereferenced an iterator at the end!");
     return cast<Constant>(InstI->getOperand(OpIdx));
   }
-  inline pointer operator->() const { return operator*(); }
+  pointer operator->() const { return **this; }
 
-  inline _Self& operator++() {   // Preincrement implementation
+  constant_iterator &operator++() { // Preincrement implementation
     ++OpIdx;
     do {
       unsigned NumOperands = InstI->getNumOperands();
@@ -73,11 +72,13 @@ public:
     return *this;  // At the end of the method
   }
 
-  inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp;
+  onstant_iterator operator++(int) { // Postincrement
+    constant_iterator tmp = *this;
+    ++*this;
+    return tmp;
   }
 
-  inline bool atEnd() const { return InstI.atEnd(); }
+  bool atEnd() const { return InstI.atEnd(); }
 };
 
 inline constant_iterator constant_begin(const Function *F) {
