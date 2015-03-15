@@ -118,7 +118,7 @@ public:
     }
   }
 
-  inline ~IntervalIterator() {
+  ~IntervalIterator() {
     if (IOwnMem)
       while (!IntStack.empty()) {
         delete operator*();
@@ -126,13 +126,13 @@ public:
       }
   }
 
-  inline bool operator==(const _Self& x) const { return IntStack == x.IntStack;}
-  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  bool operator==(const _Self &x) const { return IntStack == x.IntStack; }
+  bool operator!=(const _Self &x) const { return !(*this == x); }
 
-  inline const Interval *operator*() const { return IntStack.back().first; }
-  inline       Interval *operator*()       { return IntStack.back().first; }
-  inline const Interval *operator->() const { return operator*(); }
-  inline       Interval *operator->()       { return operator*(); }
+  const Interval *operator*() const { return IntStack.back().first; }
+  Interval *operator*() { return IntStack.back().first; }
+  const Interval *operator->() const { return operator*(); }
+  Interval *operator->() { return operator*(); }
 
   _Self& operator++() {  // Preincrement
     assert(!IntStack.empty() && "Attempting to use interval iterator at end!");
@@ -156,7 +156,7 @@ public:
 
     return *this;
   }
-  inline _Self operator++(int) { // Postincrement
+  _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp;
   }
 
