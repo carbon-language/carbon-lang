@@ -94,7 +94,6 @@ class IntervalIterator {
   bool IOwnMem;     // If True, delete intervals when done with them
                     // See file header for conditions of use
 public:
-  typedef IntervalIterator<NodeTy, OrigContainer_t> _Self;
   typedef std::forward_iterator_tag iterator_category;
 
   IntervalIterator() {} // End iterator, empty stack
@@ -126,15 +125,17 @@ public:
       }
   }
 
-  bool operator==(const _Self &x) const { return IntStack == x.IntStack; }
-  bool operator!=(const _Self &x) const { return !(*this == x); }
+  bool operator==(const IntervalIterator &x) const {
+    return IntStack == x.IntStack;
+  }
+  bool operator!=(const IntervalIterator &x) const { return !(*this == x); }
 
   const Interval *operator*() const { return IntStack.back().first; }
   Interval *operator*() { return IntStack.back().first; }
   const Interval *operator->() const { return operator*(); }
   Interval *operator->() { return operator*(); }
 
-  _Self& operator++() {  // Preincrement
+  IntervalIterator &operator++() { // Preincrement
     assert(!IntStack.empty() && "Attempting to use interval iterator at end!");
     do {
       // All of the intervals on the stack have been visited.  Try visiting
@@ -156,8 +157,10 @@ public:
 
     return *this;
   }
-  _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp;
+  IntervalIterator operator++(int) { // Postincrement
+    IntervalIterator tmp = *this;
+    ++*this;
+    return tmp;
   }
 
 private:
