@@ -12,7 +12,7 @@ entry:
 !2 = !MDCompileUnit(language: DW_LANG_Mips_Assembler, producer: "clang version 3.3 ", isOptimized: false, emissionKind: 1, file: !4, enums: !3, retainedTypes: !3, subprograms: !3, globals: !3, imports:  !3)
 !3 = !{}
 !0 = !MDLocation(line: 662302, column: 26, scope: !1)
-!1 = !{i32 4, !"foo"}
+!1 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "foo")
 !4 = !MDFile(filename: "scratch.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone

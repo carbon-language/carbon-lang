@@ -118,7 +118,7 @@ entry:
 
   ; Insert a meaningless dbg.value intrinsic; it should have no
   ; effect on the working of DSE in any way.
-  call void @llvm.dbg.value(metadata i32* undef, i64 0, metadata !10, metadata !{})
+  call void @llvm.dbg.value(metadata i32* undef, i64 0, metadata !10, metadata !MDExpression())
 
   ; CHECK:  store i32 -1, i32* @x, align 4
   store i32 -1, i32* @x, align 4
@@ -255,7 +255,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !7 = !{!8}
 !8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !MDGlobalVariable(name: "x", line: 1, isLocal: false, isDefinition: true, scope: null, file: !5, type: !8, variable: i32* @x)
+!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", scope: !4, type: !8)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32* undef}
 

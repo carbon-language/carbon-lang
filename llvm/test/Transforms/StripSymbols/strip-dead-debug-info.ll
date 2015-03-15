@@ -18,7 +18,7 @@ entry:
 ; Function Attrs: nounwind readonly ssp
 define i32 @foo(i32 %i) #2 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !15, metadata !{}), !dbg !20
+  tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !15, metadata !MDExpression()), !dbg !20
   %.0 = load i32, i32* @xyz, align 4
   ret i32 %.0, !dbg !21
 }

@@ -15,7 +15,7 @@ if.then:                                          ; preds = %for.body
 
 if.then27:                                        ; preds = %if.then
 ; CHECK: tail call void @llvm.dbg.value
-  tail call void @llvm.dbg.value(metadata double undef, i64 0, metadata !19, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata double undef, i64 0, metadata !19, metadata !MDExpression()), !dbg !21
   br label %for.body61.us
 
 if.end.if.end.split_crit_edge.critedge:           ; preds = %if.then

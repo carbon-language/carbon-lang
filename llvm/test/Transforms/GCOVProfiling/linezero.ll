@@ -18,17 +18,17 @@ entry:
   %__begin = alloca i8*, align 8
   %__end = alloca i8*, align 8
   %spec = alloca i8, align 1
-  call void @llvm.dbg.declare(metadata %struct.vector** %__range, metadata !27, metadata !{}), !dbg !30
+  call void @llvm.dbg.declare(metadata %struct.vector** %__range, metadata !27, metadata !MDExpression()), !dbg !30
   br label %0
 
 ; <label>:0                                       ; preds = %entry
   call void @_Z13TagFieldSpecsv(), !dbg !31
   store %struct.vector* %ref.tmp, %struct.vector** %__range, align 8, !dbg !31
-  call void @llvm.dbg.declare(metadata i8** %__begin, metadata !32, metadata !{}), !dbg !30
+  call void @llvm.dbg.declare(metadata i8** %__begin, metadata !32, metadata !MDExpression()), !dbg !30
   %1 = load %struct.vector*, %struct.vector** %__range, align 8, !dbg !31
   %call = call i8* @_ZN6vector5beginEv(%struct.vector* %1), !dbg !31
   store i8* %call, i8** %__begin, align 8, !dbg !31
-  call void @llvm.dbg.declare(metadata i8** %__end, metadata !33, metadata !{}), !dbg !30
+  call void @llvm.dbg.declare(metadata i8** %__end, metadata !33, metadata !MDExpression()), !dbg !30
   %2 = load %struct.vector*, %struct.vector** %__range, align 8, !dbg !31
   %call1 = call i8* @_ZN6vector3endEv(%struct.vector* %2), !dbg !31
   store i8* %call1, i8** %__end, align 8, !dbg !31
@@ -41,7 +41,7 @@ for.cond:                                         ; preds = %for.inc, %0
   br i1 %cmp, label %for.body, label %for.end, !dbg !34
 
 for.body:                                         ; preds = %for.cond
-  call void @llvm.dbg.declare(metadata i8* %spec, metadata !37, metadata !{}), !dbg !31
+  call void @llvm.dbg.declare(metadata i8* %spec, metadata !37, metadata !MDExpression()), !dbg !31
   %5 = load i8*, i8** %__begin, align 8, !dbg !38
   %6 = load i8, i8* %5, align 1, !dbg !38
   store i8 %6, i8* %spec, align 1, !dbg !38

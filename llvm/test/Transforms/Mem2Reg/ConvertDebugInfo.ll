@@ -7,13 +7,13 @@ entry:
   %retval = alloca double                         ; <double*> [#uses=2]
   %0 = alloca double                              ; <double*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata i32* %i_addr, metadata !0, metadata !{}), !dbg !8
+  call void @llvm.dbg.declare(metadata i32* %i_addr, metadata !0, metadata !MDExpression()), !dbg !8
 ; CHECK: call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata ![[IVAR:[0-9]*]], metadata {{.*}})
 ; CHECK: call void @llvm.dbg.value(metadata double %j, i64 0, metadata ![[JVAR:[0-9]*]], metadata {{.*}})
 ; CHECK: ![[IVAR]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i"
 ; CHECK: ![[JVAR]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j"
   store i32 %i, i32* %i_addr
-  call void @llvm.dbg.declare(metadata double* %j_addr, metadata !9, metadata !{}), !dbg !8
+  call void @llvm.dbg.declare(metadata double* %j_addr, metadata !9, metadata !MDExpression()), !dbg !8
   store double %j, double* %j_addr
   %1 = load i32, i32* %i_addr, align 4, !dbg !10       ; <i32> [#uses=1]
   %2 = add nsw i32 %1, 1, !dbg !10                ; <i32> [#uses=1]

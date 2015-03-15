@@ -15,9 +15,9 @@ tailrecurse:                                      ; preds = %if.then, %entry
   %x.tr = phi i32 [ %x, %entry ], [ %call, %if.then ]
   %y.tr = phi i32 [ %y, %entry ], [ %call9, %if.then ]
   %z.tr = phi i32 [ %z, %entry ], [ %call14, %if.then ]
-  tail call void @llvm.dbg.value(metadata i32 %x.tr, i64 0, metadata !6, metadata !{}), !dbg !7
-  tail call void @llvm.dbg.value(metadata i32 %y.tr, i64 0, metadata !8, metadata !{}), !dbg !9
-  tail call void @llvm.dbg.value(metadata i32 %z.tr, i64 0, metadata !10, metadata !{}), !dbg !11
+  tail call void @llvm.dbg.value(metadata i32 %x.tr, i64 0, metadata !6, metadata !MDExpression()), !dbg !7
+  tail call void @llvm.dbg.value(metadata i32 %y.tr, i64 0, metadata !8, metadata !MDExpression()), !dbg !9
+  tail call void @llvm.dbg.value(metadata i32 %z.tr, i64 0, metadata !10, metadata !MDExpression()), !dbg !11
   %cmp = icmp slt i32 %y.tr, %x.tr, !dbg !12
   br i1 %cmp, label %if.then, label %if.end, !dbg !12
 
@@ -72,7 +72,7 @@ for.body:
 
 for.inc:
   %dec = add i64 %i.0, -1
-  tail call void @llvm.dbg.value(metadata i64 %dec, i64 0, metadata !{!"undef"}, metadata !{})
+  tail call void @llvm.dbg.value(metadata i64 %dec, i64 0, metadata !MDLocalVariable(tag: DW_TAG_auto_variable), metadata !MDExpression())
   br label %for.cond
 
 for.end:

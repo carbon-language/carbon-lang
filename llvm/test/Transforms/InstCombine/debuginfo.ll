@@ -14,11 +14,11 @@ entry:
   store i8* %__dest, i8** %__dest.addr, align 8
 ; CHECK-NOT: call void @llvm.dbg.declare
 ; CHECK: call void @llvm.dbg.value
-  call void @llvm.dbg.declare(metadata i8** %__dest.addr, metadata !0, metadata !{}), !dbg !16
+  call void @llvm.dbg.declare(metadata i8** %__dest.addr, metadata !0, metadata !MDExpression()), !dbg !16
   store i32 %__val, i32* %__val.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %__val.addr, metadata !7, metadata !{}), !dbg !18
+  call void @llvm.dbg.declare(metadata i32* %__val.addr, metadata !7, metadata !MDExpression()), !dbg !18
   store i64 %__len, i64* %__len.addr, align 8
-  call void @llvm.dbg.declare(metadata i64* %__len.addr, metadata !9, metadata !{}), !dbg !20
+  call void @llvm.dbg.declare(metadata i64* %__len.addr, metadata !9, metadata !MDExpression()), !dbg !20
   %tmp = load i8*, i8** %__dest.addr, align 8, !dbg !21
   %tmp1 = load i32, i32* %__val.addr, align 4, !dbg !21
   %tmp2 = load i64, i64* %__len.addr, align 8, !dbg !21

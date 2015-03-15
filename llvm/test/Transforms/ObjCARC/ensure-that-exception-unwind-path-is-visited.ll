@@ -41,10 +41,10 @@ entry:
   %tmp2 = bitcast %struct._class_t* %tmp to i8*, !dbg !37
 ; CHECK: call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1)
   %call = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1), !dbg !37, !clang.arc.no_objc_arc_exceptions !38
-  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata i32 02, metadata !{}), !dbg !37
+  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !MDExpression()), !dbg !37
 ; CHECK: call i8* @objc_retain(i8* %call) [[NUW:#[0-9]+]]
   %tmp3 = call i8* @objc_retain(i8* %call) nounwind, !dbg !39
-  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !{}), !dbg !39
+  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !MDExpression()), !dbg !39
   invoke fastcc void @ThrowFunc(i8* %call)
           to label %eh.cont unwind label %lpad, !dbg !40, !clang.arc.no_objc_arc_exceptions !38
 
@@ -58,7 +58,7 @@ lpad:                                             ; preds = %entry
           catch i8* null, !dbg !40
   %tmp5 = extractvalue { i8*, i32 } %tmp4, 0, !dbg !40
   %exn.adjusted = call i8* @objc_begin_catch(i8* %tmp5) nounwind, !dbg !44
-  call void @llvm.dbg.value(metadata i8 0, i64 0, metadata !21, metadata !{}), !dbg !46
+  call void @llvm.dbg.value(metadata i8 0, i64 0, metadata !21, metadata !MDExpression()), !dbg !46
   call void @objc_end_catch(), !dbg !49, !clang.arc.no_objc_arc_exceptions !38
 ; CHECK: call void @objc_release(i8* %call)
   call void @objc_release(i8* %call) nounwind, !dbg !42, !clang.imprecise_release !38
@@ -87,7 +87,7 @@ declare void @objc_exception_rethrow()
 define internal fastcc void @ThrowFunc(i8* %obj) uwtable noinline ssp {
 entry:
   %tmp = call i8* @objc_retain(i8* %obj) nounwind
-  call void @llvm.dbg.value(metadata i8* %obj, i64 0, metadata !32, metadata !{}), !dbg !55
+  call void @llvm.dbg.value(metadata i8* %obj, i64 0, metadata !32, metadata !MDExpression()), !dbg !55
   %tmp1 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_1", align 8, !dbg !56
   %tmp2 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_5", align 8, !dbg !56, !invariant.load !38
   %tmp3 = bitcast %struct._class_t* %tmp1 to i8*, !dbg !56

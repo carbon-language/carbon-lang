@@ -17,10 +17,10 @@ entry:
   %b.addr = alloca i32, align 4
   %c = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !6, metadata !{}), !dbg !7
+  call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !6, metadata !MDExpression()), !dbg !7
   store i32 %b, i32* %b.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !8, metadata !{}), !dbg !9
-  call void @llvm.dbg.declare(metadata i32* %c, metadata !10, metadata !{}), !dbg !12
+  call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !8, metadata !MDExpression()), !dbg !9
+  call void @llvm.dbg.declare(metadata i32* %c, metadata !10, metadata !MDExpression()), !dbg !12
   %tmp = load i32, i32* %a.addr, align 4, !dbg !13
   store i32 %tmp, i32* %c, align 4, !dbg !13
   %tmp1 = load i32, i32* %a.addr, align 4, !dbg !14

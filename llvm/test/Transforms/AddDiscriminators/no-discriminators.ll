@@ -17,7 +17,7 @@ entry:
   %retval = alloca i32, align 4
   %i.addr = alloca i64, align 8
   store i64 %i, i64* %i.addr, align 8
-  call void @llvm.dbg.declare(metadata i64* %i.addr, metadata !13, metadata !{}), !dbg !14
+  call void @llvm.dbg.declare(metadata i64* %i.addr, metadata !13, metadata !MDExpression()), !dbg !14
   %0 = load i64, i64* %i.addr, align 8, !dbg !15
 ; CHECK:  %0 = load i64, i64* %i.addr, align 8, !dbg ![[ENTRY:[0-9]+]]
   %cmp = icmp slt i64 %0, 5, !dbg !15

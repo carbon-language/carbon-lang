@@ -329,6 +329,8 @@ private:
   void visitUserOp1(Instruction &I);
   void visitUserOp2(Instruction &I) { visitUserOp1(I); }
   void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
+  template <class DbgIntrinsicTy>
+  void visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII);
   void visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI);
   void visitAtomicRMWInst(AtomicRMWInst &RMWI);
   void visitFenceInst(FenceInst &FI);
@@ -2798,6 +2800,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::dbg_declare: // llvm.dbg.declare
     Assert(isa<MetadataAsValue>(CI.getArgOperand(0)),
            "invalid llvm.dbg.declare intrinsic call 1", &CI);
+    visitDbgIntrinsic("declare", cast<DbgDeclareInst>(CI));
+    break;
+  case Intrinsic::dbg_value: // llvm.dbg.value
+    visitDbgIntrinsic("value", cast<DbgValueInst>(CI));
     break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
@@ -3010,6 +3016,24 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
   };
+}
+
+template <class DbgIntrinsicTy>
+void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
+  auto *MD = cast<MetadataAsValue>(DII.getArgOperand(0))->getMetadata();
+  Assert(isa<ValueAsMetadata>(MD) ||
+             (isa<MDNode>(MD) && !cast<MDNode>(MD)->getNumOperands()),
+         "invalid llvm.dbg." + Kind + " intrinsic address/value", &DII, MD);
+  Assert(isa<MDLocalVariable>(DII.getRawVariable()),
+         "invalid llvm.dbg." + Kind + " intrinsic variable", &DII,
+         DII.getRawVariable());
+  Assert(isa<MDExpression>(DII.getRawExpression()),
+         "invalid llvm.dbg." + Kind + " intrinsic expression", &DII,
+         DII.getRawExpression());
+
+  // Don't call visitMDNode(), since that will recurse through operands.
+  visitMDLocalVariable(*cast<MDLocalVariable>(DII.getVariable()));
+  visitMDExpression(*cast<MDExpression>(DII.getExpression()));
 }
 
 void DebugInfoVerifier::verifyDebugInfo() {

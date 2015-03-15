@@ -4,10 +4,10 @@
 
 define i8* @vfs_addname(i8* %name, i32 %len, i32 %hash, i32 %flags) nounwind ssp {
 entry:
-  call void @llvm.dbg.value(metadata i8* %name, i64 0, metadata !0, metadata !{})
-  call void @llvm.dbg.value(metadata i32 %len, i64 0, metadata !10, metadata !{})
-  call void @llvm.dbg.value(metadata i32 %hash, i64 0, metadata !11, metadata !{})
-  call void @llvm.dbg.value(metadata i32 %flags, i64 0, metadata !12, metadata !{})
+  call void @llvm.dbg.value(metadata i8* %name, i64 0, metadata !0, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %len, i64 0, metadata !10, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %hash, i64 0, metadata !11, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %flags, i64 0, metadata !12, metadata !MDExpression())
 ; CHECK:  call fastcc i8* @add_name_internal(i8* %name, i32 %hash) [[NUW:#[0-9]+]], !dbg !{{[0-9]+}}
   %0 = call fastcc i8* @add_name_internal(i8* %name, i32 %len, i32 %hash, i8 zeroext 0, i32 %flags) nounwind, !dbg !13 ; <i8*> [#uses=1]
   ret i8* %0, !dbg !13
@@ -17,11 +17,11 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define internal fastcc i8* @add_name_internal(i8* %name, i32 %len, i32 %hash, i8 zeroext %extra, i32 %flags) noinline nounwind ssp {
 entry:
-  call void @llvm.dbg.value(metadata i8* %name, i64 0, metadata !15, metadata !{})
-  call void @llvm.dbg.value(metadata i32 %len, i64 0, metadata !20, metadata !{})
-  call void @llvm.dbg.value(metadata i32 %hash, i64 0, metadata !21, metadata !{})
-  call void @llvm.dbg.value(metadata i8 %extra, i64 0, metadata !22, metadata !{})
-  call void @llvm.dbg.value(metadata i32 %flags, i64 0, metadata !23, metadata !{})
+  call void @llvm.dbg.value(metadata i8* %name, i64 0, metadata !15, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %len, i64 0, metadata !20, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %hash, i64 0, metadata !21, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i8 %extra, i64 0, metadata !22, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %flags, i64 0, metadata !23, metadata !MDExpression())
   %0 = icmp eq i32 %hash, 0, !dbg !24             ; <i1> [#uses=1]
   br i1 %0, label %bb, label %bb1, !dbg !24
 

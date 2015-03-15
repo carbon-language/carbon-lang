@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; CHECK-LABEL: @test(
 define i32 @test() #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !9, metadata !{}), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !9, metadata !MDExpression()), !dbg !18
   br label %for.body, !dbg !18
 
 for.body:
@@ -25,7 +25,7 @@ for.body:
   %arrayidx4 = getelementptr inbounds [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvars.iv, !dbg !19
   store i32 %add, i32* %arrayidx4, align 4, !dbg !19
   %indvars.iv.next = add i64 %indvars.iv, 1, !dbg !18
-  tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !9, metadata !{}), !dbg !18
+  tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !9, metadata !MDExpression()), !dbg !18
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32, !dbg !18
   %exitcond = icmp ne i32 %lftr.wideiv, 1024, !dbg !18
   br i1 %exitcond, label %for.body, label %for.end, !dbg !18
