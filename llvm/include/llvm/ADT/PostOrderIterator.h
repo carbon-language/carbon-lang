@@ -154,10 +154,7 @@ public:
   // time... so that you can actually call methods ON the BasicBlock, because
   // the contained type is a pointer.  This allows BBIt->getTerminator() f.e.
   //
-  NodeType *operator->() const {
-    return **this;
-    ;
-  }
+  NodeType *operator->() const { return **this; }
 
   po_iterator &operator++() { // Preincrement
     this->finishPostorder(VisitStack.back().first);
