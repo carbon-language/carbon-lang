@@ -477,132 +477,42 @@ class LazyVector {
   SmallVector<T, LocalStorage> Local;
 
 public:
-  // Iteration over the elements in the vector.
-  class iterator {
+  /// Iteration over the elements in the vector.
+  ///
+  /// In a complete iteration, the iterator walks the range [-M, N),
+  /// where negative values are used to indicate elements
+  /// loaded from the external source while non-negative values are used to
+  /// indicate elements added via \c push_back().
+  /// However, to provide iteration in source order (for, e.g., chained
+  /// precompiled headers), dereferencing the iterator flips the negative
+  /// values (corresponding to loaded entities), so that position -M
+  /// corresponds to element 0 in the loaded entities vector, position -M+1
+  /// corresponds to element 1 in the loaded entities vector, etc. This
+  /// gives us a reasonably efficient, source-order walk.
+  ///
+  /// We define this as a wrapping iterator around an int. The
+  /// iterator_adaptor_base class forwards the iterator methods to basic integer
+  /// arithmetic.
+  class iterator : public llvm::iterator_adaptor_base<
+                       iterator, int, std::random_access_iterator_tag, T, int> {
     LazyVector *Self;
-    
-    /// \brief Position within the vector..
-    ///
-    /// In a complete iteration, the Position field walks the range [-M, N),
-    /// where negative values are used to indicate elements
-    /// loaded from the external source while non-negative values are used to
-    /// indicate elements added via \c push_back().
-    /// However, to provide iteration in source order (for, e.g., chained
-    /// precompiled headers), dereferencing the iterator flips the negative
-    /// values (corresponding to loaded entities), so that position -M 
-    /// corresponds to element 0 in the loaded entities vector, position -M+1
-    /// corresponds to element 1 in the loaded entities vector, etc. This
-    /// gives us a reasonably efficient, source-order walk.
-    int Position;
-    
+
+    iterator(LazyVector *Self, int Position)
+        : iterator::iterator_adaptor_base(Position), Self(Self) {}
+
+    bool isLoaded() const { return this->I < 0; }
     friend class LazyVector;
-    
+
   public:
-    typedef T                   value_type;
-    typedef value_type&         reference;
-    typedef value_type*         pointer;
-    typedef std::random_access_iterator_tag iterator_category;
-    typedef int                 difference_type;
-    
-    iterator() : Self(0), Position(0) { }
-    
-    iterator(LazyVector *Self, int Position) 
-      : Self(Self), Position(Position) { }
-    
-    reference operator*() const {
-      if (Position < 0)
-        return Self->Loaded.end()[Position];
-      return Self->Local[Position];
-    }
-    
-    pointer operator->() const {
-      if (Position < 0)
-        return &Self->Loaded.end()[Position];
-      
-      return &Self->Local[Position];        
-    }
-    
-    reference operator[](difference_type D) {
-      return *(*this + D);
-    }
-    
-    iterator &operator++() {
-      ++Position;
-      return *this;
-    }
-    
-    iterator operator++(int) {
-      iterator Prev(*this);
-      ++Position;
-      return Prev;
-    }
-    
-    iterator &operator--() {
-      --Position;
-      return *this;
-    }
-    
-    iterator operator--(int) {
-      iterator Prev(*this);
-      --Position;
-      return Prev;
-    }
-    
-    friend bool operator==(const iterator &X, const iterator &Y) {
-      return X.Position == Y.Position;
-    }
-    
-    friend bool operator!=(const iterator &X, const iterator &Y) {
-      return X.Position != Y.Position;
-    }
-    
-    friend bool operator<(const iterator &X, const iterator &Y) {
-      return X.Position < Y.Position;
-    }
-    
-    friend bool operator>(const iterator &X, const iterator &Y) {
-      return X.Position > Y.Position;
-    }
-    
-    friend bool operator<=(const iterator &X, const iterator &Y) {
-      return X.Position < Y.Position;
-    }
-    
-    friend bool operator>=(const iterator &X, const iterator &Y) {
-      return X.Position > Y.Position;
-    }
-    
-    friend iterator& operator+=(iterator &X, difference_type D) {
-      X.Position += D;
-      return X;
-    }
-    
-    friend iterator& operator-=(iterator &X, difference_type D) {
-      X.Position -= D;
-      return X;
-    }
-    
-    friend iterator operator+(iterator X, difference_type D) {
-      X.Position += D;
-      return X;
-    }
-    
-    friend iterator operator+(difference_type D, iterator X) {
-      X.Position += D;
-      return X;
-    }
-    
-    friend difference_type operator-(const iterator &X, const iterator &Y) {
-      return X.Position - Y.Position;
-    }
-    
-    friend iterator operator-(iterator X, difference_type D) {
-      X.Position -= D;
-      return X;
+    iterator() : iterator(nullptr, 0) {}
+
+    typename iterator::reference operator*() const {
+      if (isLoaded())
+        return Self->Loaded.end()[this->I];
+      return Self->Local.begin()[this->I];
     }
   };
-  friend class iterator;
-  
+
   iterator begin(Source *source, bool LocalOnly = false) {
     if (LocalOnly)
       return iterator(this, 0);
@@ -621,17 +531,17 @@ public:
   }
   
   void erase(iterator From, iterator To) {
-    if (From.Position < 0 && To.Position < 0) {
-      Loaded.erase(Loaded.end() + From.Position, Loaded.end() + To.Position);
+    if (From.isLoaded() && To.isLoaded()) {
+      Loaded.erase(&*From, &*To);
       return;
     }
-    
-    if (From.Position < 0) {
-      Loaded.erase(Loaded.end() + From.Position, Loaded.end());
+
+    if (From.isLoaded()) {
+      Loaded.erase(&*From, Loaded.end());
       From = begin(nullptr, true);
     }
-    
-    Local.erase(Local.begin() + From.Position, Local.begin() + To.Position);
+
+    Local.erase(&*From, &*To);
   }
 };
 

@@ -88,7 +88,7 @@ bool PreprocessingRecord::isEntityInFileID(iterator PPEI, FileID FID) {
   if (FID.isInvalid())
     return false;
 
-  int Pos = PPEI.Position;
+  int Pos = std::distance(iterator(this, 0), PPEI);
   if (Pos < 0) {
     if (unsigned(-Pos-1) >= LoadedPreprocessedEntities.size()) {
       assert(0 && "Out-of bounds loaded preprocessed entity");

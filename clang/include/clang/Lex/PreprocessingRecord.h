@@ -20,6 +20,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include <vector>
@@ -378,125 +379,44 @@ namespace clang {
 
     SourceManager &getSourceManager() const { return SourceMgr; }
 
-    // Iteration over the preprocessed entities.
-    class iterator {
+    /// Iteration over the preprocessed entities.
+    ///
+    /// In a complete iteration, the iterator walks the range [-M, N),
+    /// where negative values are used to indicate preprocessed entities
+    /// loaded from the external source while non-negative values are used to
+    /// indicate preprocessed entities introduced by the current preprocessor.
+    /// However, to provide iteration in source order (for, e.g., chained
+    /// precompiled headers), dereferencing the iterator flips the negative
+    /// values (corresponding to loaded entities), so that position -M
+    /// corresponds to element 0 in the loaded entities vector, position -M+1
+    /// corresponds to element 1 in the loaded entities vector, etc. This
+    /// gives us a reasonably efficient, source-order walk.
+    ///
+    /// We define this as a wrapping iterator around an int. The
+    /// iterator_adaptor_base class forwards the iterator methods to basic
+    /// integer arithmetic.
+    class iterator : public llvm::iterator_adaptor_base<
+                         iterator, int, std::random_access_iterator_tag,
+                         PreprocessedEntity *, int, PreprocessedEntity *,
+                         PreprocessedEntity *> {
       PreprocessingRecord *Self;
-      
-      /// \brief Position within the preprocessed entity sequence.
-      ///
-      /// In a complete iteration, the Position field walks the range [-M, N),
-      /// where negative values are used to indicate preprocessed entities
-      /// loaded from the external source while non-negative values are used to
-      /// indicate preprocessed entities introduced by the current preprocessor.
-      /// However, to provide iteration in source order (for, e.g., chained
-      /// precompiled headers), dereferencing the iterator flips the negative
-      /// values (corresponding to loaded entities), so that position -M 
-      /// corresponds to element 0 in the loaded entities vector, position -M+1
-      /// corresponds to element 1 in the loaded entities vector, etc. This
-      /// gives us a reasonably efficient, source-order walk.
-      int Position;
-      
-    public:
-      typedef PreprocessedEntity *value_type;
-      typedef value_type&         reference;
-      typedef value_type*         pointer;
-      typedef std::random_access_iterator_tag iterator_category;
-      typedef int                 difference_type;
-      
-      iterator() : Self(nullptr), Position(0) { }
-      
+
       iterator(PreprocessingRecord *Self, int Position)
-        : Self(Self), Position(Position) { }
-      
-      value_type operator*() const {
-        bool isLoaded = Position < 0;
+          : iterator::iterator_adaptor_base(Position), Self(Self) {}
+      friend class PreprocessingRecord;
+
+    public:
+      iterator() : iterator(nullptr, 0) {}
+
+      PreprocessedEntity *operator*() const {
+        bool isLoaded = this->I < 0;
         unsigned Index = isLoaded ?
-            Self->LoadedPreprocessedEntities.size() + Position : Position;
+            Self->LoadedPreprocessedEntities.size() + this->I : this->I;
         PPEntityID ID = Self->getPPEntityID(Index, isLoaded);
         return Self->getPreprocessedEntity(ID);
       }
-      
-      value_type operator[](difference_type D) {
-        return *(*this + D);
-      }
-      
-      iterator &operator++() {
-        ++Position;
-        return *this;
-      }
-      
-      iterator operator++(int) {
-        iterator Prev(*this);
-        ++Position;
-        return Prev;
-      }
-
-      iterator &operator--() {
-        --Position;
-        return *this;
-      }
-      
-      iterator operator--(int) {
-        iterator Prev(*this);
-        --Position;
-        return Prev;
-      }
-
-      friend bool operator==(const iterator &X, const iterator &Y) {
-        return X.Position == Y.Position;
-      }
-
-      friend bool operator!=(const iterator &X, const iterator &Y) {
-        return X.Position != Y.Position;
-      }
-      
-      friend bool operator<(const iterator &X, const iterator &Y) {
-        return X.Position < Y.Position;
-      }
-
-      friend bool operator>(const iterator &X, const iterator &Y) {
-        return X.Position > Y.Position;
-      }
-
-      friend bool operator<=(const iterator &X, const iterator &Y) {
-        return X.Position < Y.Position;
-      }
-      
-      friend bool operator>=(const iterator &X, const iterator &Y) {
-        return X.Position > Y.Position;
-      }
-
-      friend iterator& operator+=(iterator &X, difference_type D) {
-        X.Position += D;
-        return X;
-      }
-
-      friend iterator& operator-=(iterator &X, difference_type D) {
-        X.Position -= D;
-        return X;
-      }
-
-      friend iterator operator+(iterator X, difference_type D) {
-        X.Position += D;
-        return X;
-      }
-
-      friend iterator operator+(difference_type D, iterator X) {
-        X.Position += D;
-        return X;
-      }
-
-      friend difference_type operator-(const iterator &X, const iterator &Y) {
-        return X.Position - Y.Position;
-      }
-
-      friend iterator operator-(iterator X, difference_type D) {
-        X.Position -= D;
-        return X;
-      }
-      friend class PreprocessingRecord;
+      PreprocessedEntity *operator->() const { return **this; }
     };
-    friend class iterator;
 
     /// \brief Begin iterator for all preprocessed entities.
     iterator begin() {
