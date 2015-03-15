@@ -3032,8 +3032,8 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
          DII.getRawExpression());
 
   // Don't call visitMDNode(), since that will recurse through operands.
-  visitMDLocalVariable(*cast<MDLocalVariable>(DII.getVariable()));
-  visitMDExpression(*cast<MDExpression>(DII.getExpression()));
+  visitMDLocalVariable(*DII.getVariable());
+  visitMDExpression(*DII.getExpression());
 }
 
 void DebugInfoVerifier::verifyDebugInfo() {

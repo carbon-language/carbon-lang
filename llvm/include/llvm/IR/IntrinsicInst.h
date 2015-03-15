@@ -82,8 +82,12 @@ namespace llvm {
   class DbgDeclareInst : public DbgInfoIntrinsic {
   public:
     Value *getAddress() const;
-    MDNode *getVariable() const { return cast<MDNode>(getRawVariable()); }
-    MDNode *getExpression() const { return cast<MDNode>(getRawExpression()); }
+    MDLocalVariable *getVariable() const {
+      return cast<MDLocalVariable>(getRawVariable());
+    }
+    MDExpression *getExpression() const {
+      return cast<MDExpression>(getRawExpression());
+    }
 
     Metadata *getRawVariable() const {
       return cast<MetadataAsValue>(getArgOperand(1))->getMetadata();
@@ -111,8 +115,12 @@ namespace llvm {
       return cast<ConstantInt>(
                           const_cast<Value*>(getArgOperand(1)))->getZExtValue();
     }
-    MDNode *getVariable() const { return cast<MDNode>(getRawVariable()); }
-    MDNode *getExpression() const { return cast<MDNode>(getRawExpression()); }
+    MDLocalVariable *getVariable() const {
+      return cast<MDLocalVariable>(getRawVariable());
+    }
+    MDExpression *getExpression() const {
+      return cast<MDExpression>(getRawExpression());
+    }
 
     Metadata *getRawVariable() const {
       return cast<MetadataAsValue>(getArgOperand(2))->getMetadata();
