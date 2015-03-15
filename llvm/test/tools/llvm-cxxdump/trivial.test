@@ -1,7 +1,7 @@
-RUN: llvm-vtabledump %p/Inputs/trivial.obj.coff-i386 \
+RUN: llvm-cxxdump %p/Inputs/trivial.obj.coff-i386 \
 RUN:   | FileCheck %s --check-prefix=COFF-I386
 
-RUN: llvm-vtabledump %p/Inputs/trivial.obj.elf-i386 \
+RUN: llvm-cxxdump %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s --check-prefix=ELF-I386
 
 COFF-I386:      ??_7S@@6B@[0]: ??_R4S@@6B@

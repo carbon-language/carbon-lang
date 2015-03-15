@@ -28,6 +28,7 @@ set(LLVM_TEST_DEPENDS
           llvm-bcanalyzer
           llvm-c-test
           llvm-cov
+          llvm-cxxdump
           llvm-diff
           llvm-dis
           llvm-dsymutil
@@ -46,7 +47,6 @@ set(LLVM_TEST_DEPENDS
           llvm-size
           llvm-symbolizer
           llvm-tblgen
-          llvm-vtabledump
           macho-dump
           opt
           FileCheck

@@ -1,4 +1,4 @@
-//===-- llvm-vtabledump.h ---------------------------------------*- C++ -*-===//
+//===-- llvm-cxxdump.h ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_VTABLEDUMP_LLVM_VTABLEDUMP_H
-#define LLVM_TOOLS_LLVM_VTABLEDUMP_LLVM_VTABLEDUMP_H
+#ifndef LLVM_TOOLS_LLVM_CXXDUMP_LLVM_CXXDUMP_H
+#define LLVM_TOOLS_LLVM_CXXDUMP_LLVM_CXXDUMP_H
 
 #include "llvm/Support/CommandLine.h"
 #include <string>
@@ -17,7 +17,7 @@ namespace opts {
 extern llvm::cl::list<std::string> InputFilenames;
 } // namespace opts
 
-#define LLVM_VTABLEDUMP_ENUM_ENT(ns, enum)                                     \
+#define LLVM_CXXDUMP_ENUM_ENT(ns, enum)                                        \
   { #enum, ns::enum }
 
 #endif

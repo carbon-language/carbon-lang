@@ -1,4 +1,4 @@
-//===- Error.cpp - system_error extensions for llvm-vtabledump --*- C++ -*-===//
+//===- Error.cxx - system_error extensions for llvm-cxxdump -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines a new error_category for the llvm-vtabledump tool.
+// This defines a new error_category for the llvm-cxxdump tool.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,27 +17,27 @@
 using namespace llvm;
 
 namespace {
-class vtabledump_error_category : public std::error_category {
+class cxxdump_error_category : public std::error_category {
 public:
-  const char *name() const LLVM_NOEXCEPT override { return "llvm.vtabledump"; }
+  const char *name() const LLVM_NOEXCEPT override { return "llvm.cxxdump"; }
   std::string message(int ev) const override {
-    switch (static_cast<vtabledump_error>(ev)) {
-    case vtabledump_error::success:
+    switch (static_cast<cxxdump_error>(ev)) {
+    case cxxdump_error::success:
       return "Success";
-    case vtabledump_error::file_not_found:
+    case cxxdump_error::file_not_found:
       return "No such file.";
-    case vtabledump_error::unrecognized_file_format:
+    case cxxdump_error::unrecognized_file_format:
       return "Unrecognized file type.";
     }
     llvm_unreachable(
-        "An enumerator of vtabledump_error does not have a message defined.");
+        "An enumerator of cxxdump_error does not have a message defined.");
   }
 };
 } // namespace
 
 namespace llvm {
-const std::error_category &vtabledump_category() {
-  static vtabledump_error_category o;
+const std::error_category &cxxdump_category() {
+  static cxxdump_error_category o;
   return o;
 }
 } // namespace llvm

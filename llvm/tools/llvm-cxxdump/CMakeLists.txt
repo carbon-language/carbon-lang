@@ -4,7 +4,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_tool(llvm-vtabledump
-  llvm-vtabledump.cpp
+add_llvm_tool(llvm-cxxdump
+  llvm-cxxdump.cpp
   Error.cpp
   )

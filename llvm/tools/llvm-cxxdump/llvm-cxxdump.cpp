@@ -1,4 +1,4 @@
-//===- llvm-vtabledump.cpp - Dump vtables in an Object File -----*- C++ -*-===//
+//===- llvm-cxxdump.cpp - Dump C++ data in an Object File -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Dumps VTables resident in object files and archives.
+// Dumps C++ data resident in object files and archives.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-vtabledump.h"
+#include "llvm-cxxdump.h"
 #include "Error.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/Archive.h"
@@ -134,7 +134,7 @@ static bool collectRelocationOffsets(
   return false;
 }
 
-static void dumpVTables(const ObjectFile *Obj) {
+static void dumpCXXData(const ObjectFile *Obj) {
   struct CompleteObjectLocator {
     StringRef Symbols[2];
     ArrayRef<little32_t> Data;
@@ -333,7 +333,8 @@ static void dumpVTables(const ObjectFile *Obj) {
         auto Key = std::make_pair(SymName, SymOffI);
         if (VTableSymEntries.count(Key))
           continue;
-        const char *DataPtr = SymContents.substr(SymOffI, BytesInAddress).data();
+        const char *DataPtr =
+            SymContents.substr(SymOffI, BytesInAddress).data();
         int64_t VData;
         if (BytesInAddress == 8)
           VData = *reinterpret_cast<const little64_t *>(DataPtr);
@@ -347,8 +348,7 @@ static void dumpVTables(const ObjectFile *Obj) {
       // FIXME: Do something with these!
     }
   }
-  for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VFTableEntry :
-       VFTableEntries) {
+  for (const auto &VFTableEntry : VFTableEntries) {
     StringRef VFTableName = VFTableEntry.first.first;
     uint64_t Offset = VFTableEntry.first.second;
     StringRef SymName = VFTableEntry.second;
@@ -369,7 +369,8 @@ static void dumpVTables(const ObjectFile *Obj) {
     outs() << COLName << "[OffsetToTop]: " << COL.Data[1] << '\n';
     outs() << COLName << "[VFPtrOffset]: " << COL.Data[2] << '\n';
     outs() << COLName << "[TypeDescriptor]: " << COL.Symbols[0] << '\n';
-    outs() << COLName << "[ClassHierarchyDescriptor]: " << COL.Symbols[1] << '\n';
+    outs() << COLName << "[ClassHierarchyDescriptor]: " << COL.Symbols[1]
+           << '\n';
   }
   for (const std::pair<StringRef, ClassHierarchyDescriptor> &CHDPair : CHDs) {
     StringRef CHDName = CHDPair.first;
@@ -395,7 +396,8 @@ static void dumpVTables(const ObjectFile *Obj) {
     outs() << BCDName << "[VBPtrOffset]: " << BCD.Data[2] << '\n';
     outs() << BCDName << "[OffsetInVBTable]: " << BCD.Data[3] << '\n';
     outs() << BCDName << "[Flags]: " << BCD.Data[4] << '\n';
-    outs() << BCDName << "[ClassHierarchyDescriptor]: " << BCD.Symbols[1] << '\n';
+    outs() << BCDName << "[ClassHierarchyDescriptor]: " << BCD.Symbols[1]
+           << '\n';
   }
   for (const std::pair<StringRef, TypeDescriptor> &TDPair : TDs) {
     StringRef TDName = TDPair.first;
@@ -515,17 +517,16 @@ static void dumpArchive(const Archive *Arc) {
     }
 
     if (ObjectFile *Obj = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
-      dumpVTables(Obj);
+      dumpCXXData(Obj);
     else
-      reportError(Arc->getFileName(),
-                  vtabledump_error::unrecognized_file_format);
+      reportError(Arc->getFileName(), cxxdump_error::unrecognized_file_format);
   }
 }
 
 static void dumpInput(StringRef File) {
   // If file isn't stdin, check that it exists.
   if (File != "-" && !sys::fs::exists(File)) {
-    reportError(File, vtabledump_error::file_not_found);
+    reportError(File, cxxdump_error::file_not_found);
     return;
   }
 
@@ -540,9 +541,9 @@ static void dumpInput(StringRef File) {
   if (Archive *Arc = dyn_cast<Archive>(&Binary))
     dumpArchive(Arc);
   else if (ObjectFile *Obj = dyn_cast<ObjectFile>(&Binary))
-    dumpVTables(Obj);
+    dumpCXXData(Obj);
   else
-    reportError(File, vtabledump_error::unrecognized_file_format);
+    reportError(File, cxxdump_error::unrecognized_file_format);
 }
 
 int main(int argc, const char *argv[]) {
@@ -556,7 +557,7 @@ int main(int argc, const char *argv[]) {
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
-  cl::ParseCommandLineOptions(argc, argv, "LLVM VTable Dumper\n");
+  cl::ParseCommandLineOptions(argc, argv, "LLVM C++ ABI Data Dumper\n");
 
   // Default to stdin if no filename is specified.
   if (opts::InputFilenames.size() == 0)

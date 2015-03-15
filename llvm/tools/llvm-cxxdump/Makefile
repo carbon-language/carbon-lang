@@ -1,4 +1,4 @@
-##===- tools/llvm-vtabledump/Makefile ----------------------*- Makefile -*-===##
+##===- tools/llvm-cxxdump/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-TOOLNAME := llvm-vtabledump
+TOOLNAME := llvm-cxxdump
 LINK_COMPONENTS := bitreader object all-targets
 
 # This tool has no plugins, optimize startup time.

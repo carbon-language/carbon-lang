@@ -1,4 +1,4 @@
-;===- ./tools/llvm-vtabledump/LLVMBuild.txt --------------------*- Conf -*--===;
+;===- ./tools/llvm-cxxdump/LLVMBuild.txt -----------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,6 +17,6 @@
 
 [component_0]
 type = Tool
-name = llvm-vtabledump
+name = llvm-cxxdump
 parent = Tools
 required_libraries = all-targets BitReader Object
