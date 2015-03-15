@@ -652,7 +652,7 @@ public:
                    Flags=0x3 };
 
   typedef ImutAVLTree<ImutInfo> TreeTy;
-  typedef ImutAVLTreeGenericIterator<ImutInfo> Self;
+  typedef ImutAVLTreeGenericIterator<ImutInfo> SelfTy;
 
   ImutAVLTreeGenericIterator() {}
   ImutAVLTreeGenericIterator(const TreeTy *Root) {
@@ -693,11 +693,11 @@ public:
     }
   }
 
-  bool operator==(const Self &x) const { return stack == x.stack; }
+  bool operator==(const SelfTy &x) const { return stack == x.stack; }
 
-  bool operator!=(const Self &x) const { return !operator==(x); }
+  bool operator!=(const SelfTy &x) const { return !operator==(x); }
 
-  Self &operator++() {
+  SelfTy &operator++() {
     assert(!stack.empty());
     TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
     assert(Current);
@@ -723,7 +723,7 @@ public:
     return *this;
   }
 
-  Self &operator--() {
+  SelfTy &operator--() {
     assert(!stack.empty());
     TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
     assert(Current);
@@ -756,7 +756,7 @@ class ImutAVLTreeInOrderIterator {
 
 public:
   typedef ImutAVLTree<ImutInfo> TreeTy;
-  typedef ImutAVLTreeInOrderIterator<ImutInfo> Self;
+  typedef ImutAVLTreeInOrderIterator<ImutInfo> SelfTy;
 
   ImutAVLTreeInOrderIterator(const TreeTy* Root) : InternalItr(Root) {
     if (Root)
@@ -765,14 +765,16 @@ public:
 
   ImutAVLTreeInOrderIterator() : InternalItr() {}
 
-  bool operator==(const Self &x) const { return InternalItr == x.InternalItr; }
+  bool operator==(const SelfTy &x) const {
+    return InternalItr == x.InternalItr;
+  }
 
-  bool operator!=(const Self &x) const { return !(*this == x); }
+  bool operator!=(const SelfTy &x) const { return !(*this == x); }
 
   TreeTy *operator*() const { return *InternalItr; }
   TreeTy *operator->() const { return *InternalItr; }
 
-  Self &operator++() {
+  SelfTy &operator++() {
     do ++InternalItr;
     while (!InternalItr.atEnd() &&
            InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft);
@@ -780,7 +782,7 @@ public:
     return *this;
   }
 
-  Self &operator--() {
+  SelfTy &operator--() {
     do --InternalItr;
     while (!InternalItr.atBeginning() &&
            InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft);
