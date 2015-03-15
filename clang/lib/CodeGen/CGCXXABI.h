@@ -224,7 +224,7 @@ public:
   emitTerminateForUnexpectedException(CodeGenFunction &CGF,
                                       llvm::Value *Exn);
 
-  virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;
+  virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty, bool ForEH) = 0;
 
   virtual bool shouldTypeidBeNullChecked(bool IsDeref,
                                          QualType SrcRecordTy) = 0;

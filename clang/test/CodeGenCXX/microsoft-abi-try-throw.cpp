@@ -31,3 +31,15 @@ int main() {
 #endif
   return rv;
 }
+
+#ifdef TRY
+// TRY-LABEL: define void @"\01?qual_catch@@YAXXZ"
+void qual_catch() {
+  try {
+    external();
+  } catch (const int *) {
+  }
+  // TRY: catch i8* bitcast (%rtti.TypeDescriptor4* @"\01??_R0PAH@8" to i8*)
+  // TRY: call i32 @llvm.eh.typeid.for(i8* bitcast (%rtti.TypeDescriptor4* @"\01??_R0PAH@8" to i8*))
+}
+#endif
