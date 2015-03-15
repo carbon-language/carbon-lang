@@ -125,6 +125,10 @@ public:
 
   llvm::StringRef getObjectFilename() const { return Filename; }
 
+  iterator_range<StringMap<SymbolMapping>::const_iterator> symbols() const {
+    return make_range(Symbols.begin(), Symbols.end());
+  }
+
   void print(raw_ostream &OS) const;
 #ifndef NDEBUG
   void dump() const;
