@@ -652,7 +652,6 @@ public:
                    Flags=0x3 };
 
   typedef ImutAVLTree<ImutInfo> TreeTy;
-  typedef ImutAVLTreeGenericIterator<ImutInfo> ImutAVLTreeGenericIterator;
 
   ImutAVLTreeGenericIterator() {}
   ImutAVLTreeGenericIterator(const TreeTy *Root) {
