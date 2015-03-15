@@ -51,6 +51,10 @@ private:
   /// Element of the debug map corresponfing to the current object file.
   DebugMapObject *CurrentDebugMapObject;
 
+  /// Holds function info while function scope processing.
+  const char *CurrentFunctionName;
+  uint64_t CurrentFunctionAddress;
+
   void switchToNewDebugMapObject(StringRef Filename);
   void resetParserState();
   uint64_t getMainBinarySymbolAddress(StringRef Name);
@@ -149,6 +153,7 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
   if (!CurrentDebugMapObject)
     return;
 
+  uint32_t Size = 0;
   switch (Type) {
   case MachO::N_GSYM:
     // This is a global variable. We need to query the main binary
@@ -159,11 +164,18 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
       return;
     break;
   case MachO::N_FUN:
-    // Functions are scopes in STABS. They have an end marker that we
-    // need to ignore.
-    if (Name[0] == '\0')
+    // Functions are scopes in STABS. They have an end marker that
+    // contains the function size.
+    if (Name[0] == '\0') {
+      Size = Value;
+      Value = CurrentFunctionAddress;
+      Name = CurrentFunctionName;
+      break;
+    } else {
+      CurrentFunctionName = Name;
+      CurrentFunctionAddress = Value;
       return;
-    break;
+    }
   case MachO::N_STSYM:
     break;
   default:
@@ -174,7 +186,8 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
   if (ObjectSymIt == CurrentObjectAddresses.end())
     return Warning("could not find object file symbol for symbol " +
                    Twine(Name));
-  if (!CurrentDebugMapObject->addSymbol(Name, ObjectSymIt->getValue(), Value))
+  if (!CurrentDebugMapObject->addSymbol(Name, ObjectSymIt->getValue(), Value,
+                                        Size))
     return Warning(Twine("failed to insert symbol '") + Name +
                    "' in the debug map.");
 }

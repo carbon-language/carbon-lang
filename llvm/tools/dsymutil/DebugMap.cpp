@@ -23,9 +23,9 @@ DebugMapObject::DebugMapObject(StringRef ObjectFilename)
     : Filename(ObjectFilename) {}
 
 bool DebugMapObject::addSymbol(StringRef Name, uint64_t ObjectAddress,
-                               uint64_t LinkedAddress) {
+                               uint64_t LinkedAddress, uint32_t Size) {
   auto InsertResult = Symbols.insert(
-      std::make_pair(Name, SymbolMapping(ObjectAddress, LinkedAddress)));
+      std::make_pair(Name, SymbolMapping(ObjectAddress, LinkedAddress, Size)));
 
   if (InsertResult.second)
     AddressToMapping[ObjectAddress] = &*InsertResult.first;
@@ -45,9 +45,9 @@ void DebugMapObject::print(raw_ostream &OS) const {
       Entries.begin(), Entries.end(),
       [](const Entry &LHS, const Entry &RHS) { return LHS.first < RHS.first; });
   for (const auto &Sym : Entries) {
-    OS << format("\t%016" PRIx64 " => %016" PRIx64 "\t%s\n",
+    OS << format("\t%016" PRIx64 " => %016" PRIx64 "+0x%x\t%s\n",
                  Sym.second.ObjectAddress, Sym.second.BinaryAddress,
-                 Sym.first.data());
+                 Sym.second.Size, Sym.first.data());
   }
   OS << '\n';
 }
