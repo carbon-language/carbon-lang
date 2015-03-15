@@ -722,7 +722,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
   MS->EmitBytes(PrologueBytes);
   LineSectionSize += PrologueBytes.size() + 4;
 
-  SmallString<16> EncodingBuffer;
+  SmallString<128> EncodingBuffer;
   raw_svector_ostream EncodingOS(EncodingBuffer);
 
   if (Rows.empty()) {
@@ -731,7 +731,6 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
     MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
     MS->EmitBytes(EncodingOS.str());
     LineSectionSize += EncodingBuffer.size();
-    EncodingBuffer.resize(0);
     MS->EmitLabel(LineEndSym);
     return;
   }
@@ -815,6 +814,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
       MS->EmitBytes(EncodingOS.str());
       LineSectionSize += EncodingBuffer.size();
       EncodingBuffer.resize(0);
+      EncodingOS.resync();
       Address = Row.Address;
       LastLine = Row.Line;
       RowsSinceLastSequence++;
@@ -833,7 +833,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
       MS->EmitBytes(EncodingOS.str());
       LineSectionSize += EncodingBuffer.size();
       EncodingBuffer.resize(0);
-
+      EncodingOS.resync();
       Address = -1ULL;
       LastLine = FileNum = IsStatement = 1;
       RowsSinceLastSequence = Column = Isa = 0;
@@ -845,6 +845,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
     MS->EmitBytes(EncodingOS.str());
     LineSectionSize += EncodingBuffer.size();
     EncodingBuffer.resize(0);
+    EncodingOS.resync();
   }
 
   MS->EmitLabel(LineEndSym);
