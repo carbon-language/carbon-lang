@@ -106,7 +106,14 @@ public:
   ///
   /// If \c M is provided, metadata nodes will be numbered canonically;
   /// otherwise, pointer addresses are substituted.
-  void dump(const Module *M = nullptr) const;
+  ///
+  /// Note: this uses an explicit overload instead of default arguments so that
+  /// the nullptr version is easy to call from a debugger.
+  ///
+  /// @{
+  void dump() const;
+  void dump(const Module *M) const;
+  /// @}
 
   /// \brief Print.
   ///

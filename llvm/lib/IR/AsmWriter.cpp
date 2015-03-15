@@ -3290,6 +3290,9 @@ LLVM_DUMP_METHOD
 void NamedMDNode::dump() const { print(dbgs()); }
 
 LLVM_DUMP_METHOD
+void Metadata::dump() const { dump(nullptr); }
+
+LLVM_DUMP_METHOD
 void Metadata::dump(const Module *M) const {
   print(dbgs(), M);
   dbgs() << '\n';
