@@ -78,7 +78,7 @@ static Optional<Value *> getTargetValue(Instruction *);
 static bool hasUsefulEdges(Instruction *);
 
 const StratifiedIndex StratifiedLink::SetSentinel =
-  std::numeric_limits<StratifiedIndex>::max();
+    std::numeric_limits<StratifiedIndex>::max();
 
 namespace {
 // StratifiedInfo Attribute things.
@@ -147,9 +147,8 @@ struct FunctionInfo {
   // Lots of functions have < 4 returns. Adjust as necessary.
   SmallVector<Value *, 4> ReturnedValues;
 
-  FunctionInfo(StratifiedSets<Value *> &&S,
-               SmallVector<Value *, 4> &&RV)
-    : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
+  FunctionInfo(StratifiedSets<Value *> &&S, SmallVector<Value *, 4> &&RV)
+      : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
 };
 
 struct CFLAliasAnalysis;
@@ -281,8 +280,8 @@ public:
   }
 
   void visitCastInst(CastInst &Inst) {
-    Output.push_back(Edge(&Inst, Inst.getOperand(0), EdgeType::Assign,
-                          AttrNone));
+    Output.push_back(
+        Edge(&Inst, Inst.getOperand(0), EdgeType::Assign, AttrNone));
   }
 
   void visitBinaryOperator(BinaryOperator &Inst) {
@@ -446,7 +445,7 @@ public:
         }
         if (AddEdge)
           Output.push_back(Edge(FuncValue, ArgVal, EdgeType::Assign,
-                            StratifiedAttrs().flip()));
+                                StratifiedAttrs().flip()));
       }
 
       if (Parameters.size() != Arguments.size())
@@ -588,8 +587,7 @@ private:
     EdgeTypeT Weight;
     Node Other;
 
-    Edge(const EdgeTypeT &W, const Node &N)
-      : Weight(W), Other(N) {}
+    Edge(const EdgeTypeT &W, const Node &N) : Weight(W), Other(N) {}
 
     bool operator==(const Edge &E) const {
       return Weight == E.Weight && Other == E.Other;
