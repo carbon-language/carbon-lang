@@ -123,7 +123,6 @@ public:
   typedef void reference;        // Can't modify value returned by fn
 
   typedef RootIt iterator_type;
-  typedef mapped_iterator<RootIt, UnaryFunc> _Self;
 
   inline const RootIt &getCurrent() const { return current; }
   inline const UnaryFunc &getFunc() const { return Fn; }
@@ -135,25 +134,47 @@ public:
     return Fn(*current);         // little change
   }
 
-  _Self& operator++() { ++current; return *this; }
-  _Self& operator--() { --current; return *this; }
-  _Self  operator++(int) { _Self __tmp = *this; ++current; return __tmp; }
-  _Self  operator--(int) { _Self __tmp = *this; --current; return __tmp; }
-  _Self  operator+    (difference_type n) const {
-    return _Self(current + n, Fn);
+  mapped_iterator &operator++() {
+    ++current;
+    return *this;
   }
-  _Self& operator+=   (difference_type n) { current += n; return *this; }
-  _Self  operator-    (difference_type n) const {
-    return _Self(current - n, Fn);
+  mapped_iterator &operator--() {
+    --current;
+    return *this;
   }
-  _Self& operator-=   (difference_type n) { current -= n; return *this; }
+  mapped_iterator operator++(int) {
+    mapped_iterator __tmp = *this;
+    ++current;
+    return __tmp;
+  }
+  mapped_iterator operator--(int) {
+    mapped_iterator __tmp = *this;
+    --current;
+    return __tmp;
+  }
+  mapped_iterator operator+(difference_type n) const {
+    return mapped_iterator(current + n, Fn);
+  }
+  mapped_iterator &operator+=(difference_type n) {
+    current += n;
+    return *this;
+  }
+  mapped_iterator operator-(difference_type n) const {
+    return mapped_iterator(current - n, Fn);
+  }
+  mapped_iterator &operator-=(difference_type n) {
+    current -= n;
+    return *this;
+  }
   reference operator[](difference_type n) const { return *(*this + n); }
 
-  inline bool operator!=(const _Self &X) const { return !operator==(X); }
-  inline bool operator==(const _Self &X) const { return current == X.current; }
-  inline bool operator< (const _Self &X) const { return current <  X.current; }
+  bool operator!=(const mapped_iterator &X) const { return !operator==(X); }
+  bool operator==(const mapped_iterator &X) const {
+    return current == X.current;
+  }
+  bool operator<(const mapped_iterator &X) const { return current < X.current; }
 
-  inline difference_type operator-(const _Self &X) const {
+  difference_type operator-(const mapped_iterator &X) const {
     return current - X.current;
   }
 };
