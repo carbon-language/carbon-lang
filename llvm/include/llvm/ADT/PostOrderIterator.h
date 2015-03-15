@@ -111,53 +111,55 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
     }
   }
 
-  inline po_iterator(NodeType *BB) {
+  po_iterator(NodeType *BB) {
     this->insertEdge((NodeType*)nullptr, BB);
     VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
     traverseChild();
   }
-  inline po_iterator() {} // End is when stack is empty.
+  po_iterator() {} // End is when stack is empty.
 
-  inline po_iterator(NodeType *BB, SetType &S) :
-    po_iterator_storage<SetType, ExtStorage>(S) {
+  po_iterator(NodeType *BB, SetType &S)
+      : po_iterator_storage<SetType, ExtStorage>(S) {
     if (this->insertEdge((NodeType*)nullptr, BB)) {
       VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       traverseChild();
     }
   }
 
-  inline po_iterator(SetType &S) :
-      po_iterator_storage<SetType, ExtStorage>(S) {
+  po_iterator(SetType &S)
+      : po_iterator_storage<SetType, ExtStorage>(S) {
   } // End is when stack is empty.
 public:
   typedef typename super::pointer pointer;
-  typedef po_iterator<GraphT, SetType, ExtStorage, GT> _Self;
 
   // Provide static "constructors"...
-  static inline _Self begin(GraphT G) { return _Self(GT::getEntryNode(G)); }
-  static inline _Self end  (GraphT G) { return _Self(); }
-
-  static inline _Self begin(GraphT G, SetType &S) {
-    return _Self(GT::getEntryNode(G), S);
+  static po_iterator begin(GraphT G) {
+    return po_iterator(GT::getEntryNode(G));
   }
-  static inline _Self end  (GraphT G, SetType &S) { return _Self(S); }
+  static po_iterator end(GraphT G) { return po_iterator(); }
 
-  inline bool operator==(const _Self& x) const {
+  static po_iterator begin(GraphT G, SetType &S) {
+    return po_iterator(GT::getEntryNode(G), S);
+  }
+  static po_iterator end(GraphT G, SetType &S) { return po_iterator(S); }
+
+  bool operator==(const po_iterator &x) const {
     return VisitStack == x.VisitStack;
   }
-  inline bool operator!=(const _Self& x) const { return !operator==(x); }
+  bool operator!=(const po_iterator &x) const { return !(*this == x); }
 
-  inline pointer operator*() const {
-    return VisitStack.back().first;
-  }
+  pointer operator*() const { return VisitStack.back().first; }
 
   // This is a nonstandard operator-> that dereferences the pointer an extra
   // time... so that you can actually call methods ON the BasicBlock, because
   // the contained type is a pointer.  This allows BBIt->getTerminator() f.e.
   //
-  inline NodeType *operator->() const { return operator*(); }
+  NodeType *operator->() const {
+    return **this;
+    ;
+  }
 
-  inline _Self& operator++() {   // Preincrement
+  po_iterator &operator++() { // Preincrement
     this->finishPostorder(VisitStack.back().first);
     VisitStack.pop_back();
     if (!VisitStack.empty())
@@ -165,8 +167,10 @@ public:
     return *this;
   }
 
-  inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp;
+  po_iterator operator++(int) { // Postincrement
+    po_iterator tmp = *this;
+    ++*this;
+    return tmp;
   }
 };
 
@@ -260,19 +264,17 @@ template<class GraphT, class GT = GraphTraits<GraphT> >
 class ReversePostOrderTraversal {
   typedef typename GT::NodeType NodeType;
   std::vector<NodeType*> Blocks;       // Block list in normal PO order
-  inline void Initialize(NodeType *BB) {
+  void Initialize(NodeType *BB) {
     std::copy(po_begin(BB), po_end(BB), std::back_inserter(Blocks));
   }
 public:
   typedef typename std::vector<NodeType*>::reverse_iterator rpo_iterator;
 
-  inline ReversePostOrderTraversal(GraphT G) {
-    Initialize(GT::getEntryNode(G));
-  }
+  ReversePostOrderTraversal(GraphT G) { Initialize(GT::getEntryNode(G)); }
 
   // Because we want a reverse post order, use reverse iterators from the vector
-  inline rpo_iterator begin() { return Blocks.rbegin(); }
-  inline rpo_iterator end()   { return Blocks.rend(); }
+  rpo_iterator begin() { return Blocks.rbegin(); }
+  rpo_iterator end() { return Blocks.rend(); }
 };
 
 } // End llvm namespace
