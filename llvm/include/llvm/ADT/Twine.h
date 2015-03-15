@@ -166,17 +166,16 @@ namespace llvm {
     }
 
     /// Construct a binary twine.
-    explicit Twine(const Twine &_LHS, const Twine &_RHS)
-      : LHSKind(TwineKind), RHSKind(TwineKind) {
-      LHS.twine = &_LHS;
-      RHS.twine = &_RHS;
+    explicit Twine(const Twine &LHS, const Twine &RHS)
+        : LHSKind(TwineKind), RHSKind(TwineKind) {
+      this->LHS.twine = &LHS;
+      this->RHS.twine = &RHS;
       assert(isValid() && "Invalid twine!");
     }
 
     /// Construct a twine from explicit values.
-    explicit Twine(Child _LHS, NodeKind _LHSKind,
-                   Child _RHS, NodeKind _RHSKind)
-      : LHS(_LHS), RHS(_RHS), LHSKind(_LHSKind), RHSKind(_RHSKind) {
+    explicit Twine(Child LHS, NodeKind LHSKind, Child RHS, NodeKind RHSKind)
+        : LHS(LHS), RHS(RHS), LHSKind(LHSKind), RHSKind(RHSKind) {
       assert(isValid() && "Invalid twine!");
     }
 
@@ -349,18 +348,18 @@ namespace llvm {
     // right thing. Yet.
 
     /// Construct as the concatenation of a C string and a StringRef.
-    /*implicit*/ Twine(const char *_LHS, const StringRef &_RHS)
-      : LHSKind(CStringKind), RHSKind(StringRefKind) {
-      LHS.cString = _LHS;
-      RHS.stringRef = &_RHS;
+    /*implicit*/ Twine(const char *LHS, const StringRef &RHS)
+        : LHSKind(CStringKind), RHSKind(StringRefKind) {
+      this->LHS.cString = LHS;
+      this->RHS.stringRef = &RHS;
       assert(isValid() && "Invalid twine!");
     }
 
     /// Construct as the concatenation of a StringRef and a C string.
-    /*implicit*/ Twine(const StringRef &_LHS, const char *_RHS)
-      : LHSKind(StringRefKind), RHSKind(CStringKind) {
-      LHS.stringRef = &_LHS;
-      RHS.cString = _RHS;
+    /*implicit*/ Twine(const StringRef &LHS, const char *RHS)
+        : LHSKind(StringRefKind), RHSKind(CStringKind) {
+      this->LHS.stringRef = &LHS;
+      this->RHS.cString = RHS;
       assert(isValid() && "Invalid twine!");
     }
 
