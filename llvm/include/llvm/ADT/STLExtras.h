@@ -179,11 +179,11 @@ public:
   }
 };
 
-template <class _Iterator, class Func>
-inline mapped_iterator<_Iterator, Func>
-operator+(typename mapped_iterator<_Iterator, Func>::difference_type N,
-          const mapped_iterator<_Iterator, Func>& X) {
-  return mapped_iterator<_Iterator, Func>(X.getCurrent() - N, X.getFunc());
+template <class Iterator, class Func>
+inline mapped_iterator<Iterator, Func>
+operator+(typename mapped_iterator<Iterator, Func>::difference_type N,
+          const mapped_iterator<Iterator, Func> &X) {
+  return mapped_iterator<Iterator, Func>(X.getCurrent() - N, X.getFunc());
 }
 
 
