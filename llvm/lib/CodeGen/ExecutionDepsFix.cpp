@@ -113,7 +113,7 @@ struct DomainValue {
 }
 
 namespace {
-/// LiveReg - Information about a live register.
+/// Information about a live register.
 struct LiveReg {
   /// Value currently in this register, or NULL when no value is being tracked.
   /// This counts as a DomainValue reference.
@@ -225,7 +225,7 @@ DomainValue *ExeDepsFix::alloc(int domain) {
   return dv;
 }
 
-/// release - Release a reference to DV.  When the last reference is released,
+/// Release a reference to DV.  When the last reference is released,
 /// collapse if needed.
 void ExeDepsFix::release(DomainValue *DV) {
   while (DV) {
@@ -245,8 +245,8 @@ void ExeDepsFix::release(DomainValue *DV) {
   }
 }
 
-/// resolve - Follow the chain of dead DomainValues until a live DomainValue is
-/// reached.  Update the referenced pointer when necessary.
+/// Follow the chain of dead DomainValues until a live DomainValue is reached.
+/// Update the referenced pointer when necessary.
 DomainValue *ExeDepsFix::resolve(DomainValue *&DVRef) {
   DomainValue *DV = DVRef;
   if (!DV || !DV->Next)
@@ -325,8 +325,7 @@ void ExeDepsFix::collapse(DomainValue *dv, unsigned domain) {
         setLiveReg(rx, alloc(domain));
 }
 
-/// Merge - All instructions and registers in B are moved to A, and B is
-/// released.
+/// All instructions and registers in B are moved to A, and B is released.
 bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   assert(!A->isCollapsed() && "Cannot merge into collapsed");
   assert(!B->isCollapsed() && "Cannot merge from collapsed");
@@ -352,7 +351,7 @@ bool ExeDepsFix::merge(DomainValue *A, DomainValue *B) {
   return true;
 }
 
-// enterBasicBlock - Set up LiveRegs by merging predecessor live-out values.
+/// Set up LiveRegs by merging predecessor live-out values.
 void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   // Detect back-edges from predecessors we haven't processed yet.
   SeenUnknownBackEdge = false;
