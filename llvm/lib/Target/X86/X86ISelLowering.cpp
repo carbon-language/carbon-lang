@@ -22043,12 +22043,10 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  SDValue Zext = VectorZextCombine(N, DAG, DCI, Subtarget);
-  if (Zext.getNode())
+  if (SDValue Zext = VectorZextCombine(N, DAG, DCI, Subtarget))
     return Zext;
 
-  SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget);
-  if (R.getNode())
+  if (SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget))
     return R;
 
   EVT VT = N->getValueType(0);
