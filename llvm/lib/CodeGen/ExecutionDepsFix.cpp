@@ -125,7 +125,7 @@ struct LiveReg {
   /// will be a negative number.
   int Def;
 };
-} // anonynous namespace
+} // anonymous namespace
 
 namespace {
 class ExeDepsFix : public MachineFunctionPass {
