@@ -2795,10 +2795,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
            "constant int",
            &CI);
     break;
-  case Intrinsic::dbg_declare: {  // llvm.dbg.declare
-    Assert(CI.getArgOperand(0) && isa<MetadataAsValue>(CI.getArgOperand(0)),
+  case Intrinsic::dbg_declare: // llvm.dbg.declare
+    Assert(isa<MetadataAsValue>(CI.getArgOperand(0)),
            "invalid llvm.dbg.declare intrinsic call 1", &CI);
-  } break;
+    break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
   case Intrinsic::memset: {
