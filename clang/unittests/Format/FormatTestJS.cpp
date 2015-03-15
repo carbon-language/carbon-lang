@@ -616,5 +616,17 @@ TEST_F(FormatTestJS, TemplateStrings) {
   verifyFormat("var x = `hello` == `hello`;");
 }
 
+TEST_F(FormatTestJS, CastSyntax) {
+  verifyFormat("var x = <type>foo;");
+}
+
+TEST_F(FormatTestJS, TypeArguments) {
+  verifyFormat("class X<Y> {}");
+  verifyFormat("new X<Y>();");
+  verifyFormat("foo<Y>(a);");
+  verifyFormat("var x: X<Y>[];");
+  verifyFormat("class C extends D<E> implements F<G>, H<I> {}");
+}
+
 } // end namespace tooling
 } // end namespace clang

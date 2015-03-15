@@ -1779,6 +1779,13 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     if ((Left.is(tok::l_brace) || Right.is(tok::r_brace)) &&
         Line.First->isOneOf(Keywords.kw_import, tok::kw_export))
       return false;
+    if (Left.is(TT_TemplateCloser) &&
+        !Right.isOneOf(tok::l_brace, tok::comma, tok::l_square,
+                       Keywords.kw_implements, Keywords.kw_extends))
+      // Type assertions ('<type>expr') are not followed by whitespace. Other
+      // locations that should have whitespace following are identified by the
+      // above set of follower tokens.
+      return false;
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
