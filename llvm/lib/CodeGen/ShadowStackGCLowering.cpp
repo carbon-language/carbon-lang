@@ -53,10 +53,10 @@ private:
   Type *GetConcreteStackEntryType(Function &F);
   void CollectRoots(Function &F);
   static GetElementPtrInst *CreateGEP(LLVMContext &Context, IRBuilder<> &B,
-                                      Value *BasePtr, int Idx1,
+                                      Type *Ty, Value *BasePtr, int Idx1,
                                       const char *Name);
   static GetElementPtrInst *CreateGEP(LLVMContext &Context, IRBuilder<> &B,
-                                      Value *BasePtr, int Idx1, int Idx2,
+                                      Type *Ty, Value *BasePtr, int Idx1, int Idx2,
                                       const char *Name);
 };
 }
@@ -343,13 +343,14 @@ void ShadowStackGCLowering::CollectRoots(Function &F) {
 }
 
 GetElementPtrInst *ShadowStackGCLowering::CreateGEP(LLVMContext &Context,
-                                            IRBuilder<> &B, Value *BasePtr,
-                                            int Idx, int Idx2,
-                                            const char *Name) {
+                                                    IRBuilder<> &B, Type *Ty,
+                                                    Value *BasePtr, int Idx,
+                                                    int Idx2,
+                                                    const char *Name) {
   Value *Indices[] = {ConstantInt::get(Type::getInt32Ty(Context), 0),
                       ConstantInt::get(Type::getInt32Ty(Context), Idx),
                       ConstantInt::get(Type::getInt32Ty(Context), Idx2)};
-  Value *Val = B.CreateGEP(BasePtr, Indices, Name);
+  Value *Val = B.CreateGEP(Ty, BasePtr, Indices, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
 
@@ -357,11 +358,11 @@ GetElementPtrInst *ShadowStackGCLowering::CreateGEP(LLVMContext &Context,
 }
 
 GetElementPtrInst *ShadowStackGCLowering::CreateGEP(LLVMContext &Context,
-                                            IRBuilder<> &B, Value *BasePtr,
+                                            IRBuilder<> &B, Type *Ty, Value *BasePtr,
                                             int Idx, const char *Name) {
   Value *Indices[] = {ConstantInt::get(Type::getInt32Ty(Context), 0),
                       ConstantInt::get(Type::getInt32Ty(Context), Idx)};
-  Value *Val = B.CreateGEP(BasePtr, Indices, Name);
+  Value *Val = B.CreateGEP(Ty, BasePtr, Indices, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
 
@@ -402,14 +403,15 @@ bool ShadowStackGCLowering::runOnFunction(Function &F) {
 
   // Initialize the map pointer and load the current head of the shadow stack.
   Instruction *CurrentHead = AtEntry.CreateLoad(Head, "gc_currhead");
-  Instruction *EntryMapPtr =
-      CreateGEP(Context, AtEntry, StackEntry, 0, 1, "gc_frame.map");
+  Instruction *EntryMapPtr = CreateGEP(Context, AtEntry, ConcreteStackEntryTy,
+                                       StackEntry, 0, 1, "gc_frame.map");
   AtEntry.CreateStore(FrameMap, EntryMapPtr);
 
   // After all the allocas...
   for (unsigned I = 0, E = Roots.size(); I != E; ++I) {
     // For each root, find the corresponding slot in the aggregate...
-    Value *SlotPtr = CreateGEP(Context, AtEntry, StackEntry, 1 + I, "gc_root");
+    Value *SlotPtr = CreateGEP(Context, AtEntry, ConcreteStackEntryTy,
+                               StackEntry, 1 + I, "gc_root");
 
     // And use it in lieu of the alloca.
     AllocaInst *OriginalAlloca = Roots[I].second;
@@ -426,10 +428,10 @@ bool ShadowStackGCLowering::runOnFunction(Function &F) {
   AtEntry.SetInsertPoint(IP->getParent(), IP);
 
   // Push the entry onto the shadow stack.
-  Instruction *EntryNextPtr =
-      CreateGEP(Context, AtEntry, StackEntry, 0, 0, "gc_frame.next");
-  Instruction *NewHeadVal =
-      CreateGEP(Context, AtEntry, StackEntry, 0, "gc_newhead");
+  Instruction *EntryNextPtr = CreateGEP(Context, AtEntry, ConcreteStackEntryTy,
+                                        StackEntry, 0, 0, "gc_frame.next");
+  Instruction *NewHeadVal = CreateGEP(Context, AtEntry, ConcreteStackEntryTy,
+                                      StackEntry, 0, "gc_newhead");
   AtEntry.CreateStore(CurrentHead, EntryNextPtr);
   AtEntry.CreateStore(NewHeadVal, Head);
 
@@ -439,7 +441,8 @@ bool ShadowStackGCLowering::runOnFunction(Function &F) {
     // Pop the entry from the shadow stack. Don't reuse CurrentHead from
     // AtEntry, since that would make the value live for the entire function.
     Instruction *EntryNextPtr2 =
-        CreateGEP(Context, *AtExit, StackEntry, 0, 0, "gc_frame.next");
+        CreateGEP(Context, *AtExit, ConcreteStackEntryTy, StackEntry, 0, 0,
+                  "gc_frame.next");
     Value *SavedHead = AtExit->CreateLoad(EntryNextPtr2, "gc_savedhead");
     AtExit->CreateStore(SavedHead, Head);
   }

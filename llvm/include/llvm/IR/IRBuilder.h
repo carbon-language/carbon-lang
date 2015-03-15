@@ -1017,6 +1017,10 @@ public:
   }
   Value *CreateGEP(Value *Ptr, ArrayRef<Value *> IdxList,
                    const Twine &Name = "") {
+    return CreateGEP(nullptr, Ptr, IdxList, Name);
+  }
+  Value *CreateGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
+                   const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
       size_t i, e;
@@ -1026,7 +1030,7 @@ public:
       if (i == e)
         return Insert(Folder.CreateGetElementPtr(PC, IdxList), Name);
     }
-    return Insert(GetElementPtrInst::Create(nullptr, Ptr, IdxList), Name);
+    return Insert(GetElementPtrInst::Create(Ty, Ptr, IdxList), Name);
   }
   Value *CreateInBoundsGEP(Value *Ptr, ArrayRef<Value *> IdxList,
                            const Twine &Name = "") {

@@ -1460,11 +1460,16 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     APInt Offset(OffsetBits, 0);
     BitCastInst *BCI = dyn_cast<BitCastInst>(GEP->getOperand(0));
     if (GEP->hasOneUse() && BCI && GEP->accumulateConstantOffset(DL, Offset)) {
+      // FIXME: This is insufficiently tested - just a no-crash test
+      // (test/Transforms/InstCombine/2007-05-14-Crash.ll)
+      //
       // Get the base pointer input of the bitcast, and the type it points to.
       Value *OrigBase = BCI->getOperand(0);
       SmallVector<Value*, 8> NewIndices;
       if (FindElementAtOffset(OrigBase->getType(), Offset.getSExtValue(),
                               NewIndices)) {
+        // FIXME: This codepath is completely untested - could be unreachable
+        // for all I know.
         // If we were able to index down into an element, create the GEP
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.
