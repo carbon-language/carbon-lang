@@ -12,6 +12,9 @@ void abort() {}
 
 #define ZERO_MACRO 0
 
+#define False false
+#define FALSE 0
+
 #define my_macro() assert(0 == 1)
 // CHECK-FIXES: #define my_macro() assert(0 == 1)
 
@@ -59,6 +62,11 @@ int main() {
 
   assert(false);
   // CHECK-FIXES: {{^  }}assert(false);
+
+  assert(False);
+  // CHECK-FIXES: {{^  }}assert(False);
+  assert(FALSE);
+  // CHECK-FIXES: {{^  }}assert(FALSE);
 
   assert(ZERO_MACRO);
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be

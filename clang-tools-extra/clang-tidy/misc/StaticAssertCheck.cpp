@@ -75,9 +75,17 @@ void StaticAssertCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   // False literal is not the result of macro expansion.
-  if (IsAlwaysFalse &&
-      !SM.getImmediateSpellingLoc(IsAlwaysFalse->getExprLoc()).isMacroID())
-    return;
+  if (IsAlwaysFalse) {
+    SourceLocation FalseLiteralLoc =
+        SM.getImmediateSpellingLoc(IsAlwaysFalse->getExprLoc());
+    if (!FalseLiteralLoc.isMacroID())
+      return;
+
+    StringRef FalseMacroName =
+        Lexer::getImmediateMacroName(FalseLiteralLoc, SM, Opts);
+    if (FalseMacroName.compare_lower("false") == 0)
+      return;
+  }
 
   SourceLocation AssertLoc = SM.getImmediateMacroCallerLoc(AssertExpansionLoc);
 
