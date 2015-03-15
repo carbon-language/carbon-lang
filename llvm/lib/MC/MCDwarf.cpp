@@ -446,7 +446,7 @@ void MCDwarfLineAddr::Encode(MCContext &Context, int64_t LineDelta,
   if (LineDelta == INT64_MAX) {
     if (AddrDelta == MAX_SPECIAL_ADDR_DELTA)
       OS << char(dwarf::DW_LNS_const_add_pc);
-    else {
+    else if (AddrDelta) {
       OS << char(dwarf::DW_LNS_advance_pc);
       encodeULEB128(AddrDelta, OS);
     }
