@@ -9,6 +9,7 @@ CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000001] = "clang version 3.7.0 ")
 CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
 CHECK:    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000016] = "basic1.c")
+CHECK:    DW_AT_stmt_list [DW_FORM_sec_offset]      (0x00000000)
 CHECK:    DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000001f] = "/Inputs")
 CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f40)
 CHECK:    DW_AT_high_pc [DW_FORM_data4]     (0x0000000b)
@@ -17,12 +18,14 @@ CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000100000f40)
 CHECK:      DW_AT_high_pc [DW_FORM_data4]	(0x0000000b)
 CHECK:      DW_AT_frame_base [DW_FORM_exprloc]	(<0x1> 56 )
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000027] = "main")
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic1.c")
 CHECK:      DW_AT_prototyped [DW_FORM_flag_present]	(true)
 CHECK:      DW_AT_type [DW_FORM_ref_addr]   (0x00000000000000a1)
 CHECK:      DW_AT_external [DW_FORM_flag_present]	(true)
 CHECK:      DW_TAG_formal_parameter [3]  
 CHECK:        DW_AT_location [DW_FORM_exprloc]	(<0x3> 55 93 04 )
 CHECK:        DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000002c] = "argc")
+CHECK:        DW_AT_decl_file [DW_FORM_data1]       ("/Inputs/basic1.c")
 CHECK:        DW_AT_type [DW_FORM_ref_addr] (0x00000000000000a1)
 CHECK:      DW_TAG_formal_parameter [4]  
 CHECK:        DW_AT_location [DW_FORM_exprloc]	(<0x1> 54 )
@@ -45,6 +48,7 @@ CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000001] = "clang version 3.7.0 ")
 CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
 CHECK:    DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000003b] = "basic2.c")
+CHECK:    DW_AT_stmt_list [DW_FORM_sec_offset]      (0x00000044)
 CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f50)
 CHECK:    DW_AT_high_pc [DW_FORM_data4]     (0x00000037)
 CHECK:    DW_TAG_base_type [7]  
@@ -54,6 +58,7 @@ CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000048] = "baz")
 CHECK:      DW_AT_location [DW_FORM_exprloc]	(<0x9> 03 00 10 00 00 01 00 00 00 )
 CHECK:    DW_TAG_variable [8]  
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000004c] = "private_int")
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic2.c")
 CHECK:      DW_AT_location [DW_FORM_exprloc]	(<0x9> 03 08 10 00 00 01 00 00 00 )
 CHECK:    DW_TAG_subprogram [9]  
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000058] = "inc")
@@ -64,6 +69,7 @@ CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000100000f50)
 CHECK:      DW_AT_high_pc [DW_FORM_data4]	(0x00000037)
 CHECK:      DW_AT_frame_base [DW_FORM_exprloc]	(<0x1> 56 )
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000005c] = "foo")
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic2.c")
 CHECK:      DW_AT_prototyped [DW_FORM_flag_present]	(true)
 CHECK:      DW_AT_type [DW_FORM_ref4]	(cu + 0x002a => {0x000000a1})
 CHECK:      DW_TAG_formal_parameter [11]
@@ -82,10 +88,12 @@ CHECK:  Compile Unit: {{.*}} version = 0x0004
 CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000001] = "clang version 3.7.0 ")
 CHECK:    DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000064] = "basic3.c")
+CHECK:    DW_AT_stmt_list [DW_FORM_sec_offset]      (0x0000009a)
 CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f90)
 CHECK:    DW_AT_high_pc [DW_FORM_data4]     (0x00000024)
 CHECK:    DW_TAG_variable [13]  
 CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000006d] = "val")
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic3.c")
 CHECK:      DW_AT_location [DW_FORM_exprloc]	(<0x9> 03 04 10 00 00 01 00 00 00 )
 CHECK:    DW_TAG_volatile_type [14]  
 CHECK:    DW_TAG_subprogram [15]  
@@ -129,3 +137,45 @@ CHECK-NEXT: Address Range Header: length = 0x0000002c, version = 0x0002, cu_offs
 CHECK-NEXT: [0x0000000100000f50 - 0x0000000100000f87)
 CHECK-NEXT: Address Range Header: length = 0x0000002c, version = 0x0002, cu_offset = 0x0000011b, addr_size = 0x08, seg_size = 0x00
 CHECK-NEXT: [0x0000000100000f90 - 0x0000000100000fb4)
+
+CHECK: .debug_line contents:
+CHECK:                 Dir  Mod Time   File Len   File Name
+CHECK-NEXT:                 ---- ---------- ---------- ---------------------------
+CHECK-NEXT: file_names[  1]    0 0x00000000 0x00000000 basic1.c
+CHECK: Address            Line   Column File   ISA Discriminator Flags
+CHECK-NEXT: ------------------ ------ ------ ------ --- ------------- -------------
+CHECK-NEXT: 0x0000000100000f40     26      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f44     27     10      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000f49     27      3      1   0             0 
+CHECK-NEXT: 0x0000000100000f4b     27      3      1   0             0  end_sequence
+
+CHECK:                 Dir  Mod Time   File Len   File Name
+CHECK-NEXT:                 ---- ---------- ---------- ---------------------------
+CHECK-NEXT: file_names[  1]    0 0x00000000 0x00000000 basic2.c
+CHECK: Address            Line   Column File   ISA Discriminator Flags
+CHECK-NEXT: ------------------ ------ ------ ------ --- ------------- -------------
+CHECK-NEXT: 0x0000000100000f50     19      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f54     20     18      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000f5a     20     17      1   0             0 
+CHECK-NEXT: 0x0000000100000f5c     20     10      1   0             0 
+CHECK-NEXT: 0x0000000100000f61     15     10      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f70     20     23      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f74     20     36      1   0             0 
+CHECK-NEXT: 0x0000000100000f83     20     31      1   0             0 
+CHECK-NEXT: 0x0000000100000f85     20      3      1   0             0 
+CHECK-NEXT: 0x0000000100000f87     20      3      1   0             0  end_sequence
+
+CHECK:                 Dir  Mod Time   File Len   File Name
+CHECK-NEXT:                 ---- ---------- ---------- ---------------------------
+CHECK-NEXT: file_names[  1]    0 0x00000000 0x00000000 basic3.c
+CHECK: Address            Line   Column File   ISA Discriminator Flags
+CHECK-NEXT: ------------------ ------ ------ ------ --- ------------- -------------
+CHECK-NEXT: 0x0000000100000f90     16      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f94     12     10      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000f9a     17      7      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f9f     12     10      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000fa7     20      1      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000fa9     19     18      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000fab     19     10      1   0             0 
+CHECK-NEXT: 0x0000000100000fb2     20      1      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000fb4     20      1      1   0             0  is_stmt end_sequence

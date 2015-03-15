@@ -16,10 +16,12 @@ CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]     ( .debug_str[0x00000001] = "Apple LLVM version 6.0 (clang-600.0.39) (based on LLVM 3.5svn)")
 CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
 CHECK:    DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000040] = "basic1.c")
+CHECK:    DW_AT_stmt_list [DW_FORM_data4]   (0x00000000)
 CHECK:    DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000049] = "/Inputs")
 CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000ea0)
 CHECK:    DW_TAG_subprogram [2] *
 CHECK:    DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000051] = "main")
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic1.c")
 CHECK:      DW_AT_decl_line [DW_FORM_data1]	(23)
 CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x01)
 CHECK:      DW_AT_type [DW_FORM_ref4]       (cu + 0x0063 => {0x00000063})
@@ -30,12 +32,13 @@ CHECK:      DW_AT_high_pc [DW_FORM_addr]    (0x0000000100000ec4)
 CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
 CHECK:      DW_TAG_formal_parameter [3]
 CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000056] = "argc")
+CHECK:        DW_AT_decl_file [DW_FORM_data1]       ("/Inputs/basic1.c")
 CHECK:        DW_AT_decl_line [DW_FORM_data1]	(23)
 CHECK:        DW_AT_type [DW_FORM_ref4]     (cu + 0x0063 => {0x00000063})
 CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 78 )
 CHECK:      DW_TAG_formal_parameter [3]
 CHECK:        DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005b] = "argv")
-CHECK:        DW_AT_decl_file [DW_FORM_data1]	(0x01)
+CHECK:        DW_AT_decl_file [DW_FORM_data1]	("/Inputs/basic1.c")
 CHECK:        DW_AT_decl_line [DW_FORM_data1]	(23)
 CHECK:        DW_AT_type [DW_FORM_ref4]     (cu + 0x006a => {0x0000006a})
 CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 70 )
@@ -61,6 +64,7 @@ CHECK:  Compile Unit:
 CHECK:  DW_TAG_compile_unit [1] *
 CHECK:   DW_AT_producer [DW_FORM_strp]     ( .debug_str[0x00000001] = "Apple LLVM version 6.0 (clang-600.0.39) (based on LLVM 3.5svn)")
 CHECK:   DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000069] = "basic2.c")
+CHECK:   DW_AT_stmt_list [DW_FORM_data4]   (0x0000003f)
 CHECK:   DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000049] = "/Inputs")
 CHECK:   DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000ed0)
 CHECK:    DW_TAG_base_type [4]
@@ -68,14 +72,17 @@ CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000060] = "int")
 CHECK:    DW_TAG_variable [7]
 CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000072] = "private_int")
 CHECK:      DW_AT_type [DW_FORM_ref4]       (cu + 0x0026 => {0x000000a7})
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic2.c")
 BASIC:      DW_AT_location [DW_FORM_block1] (<0x09> 03 08 10 00 00 01 00 00 00 )
 ARCHIVE:    DW_AT_location [DW_FORM_block1] (<0x09> 03 04 10 00 00 01 00 00 00 )
 CHECK:    DW_TAG_variable [7]
 CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000007e] = "baz")
 CHECK:      DW_AT_type [DW_FORM_ref4]       (cu + 0x0026 => {0x000000a7})
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic2.c")
 CHECK:      DW_AT_location [DW_FORM_block1] (<0x09> 03 00 10 00 00 01 00 00 00 )
 CHECK:    DW_TAG_subprogram [2] *
 CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000082] = "foo")
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic2.c")
 CHECK:      DW_AT_type [DW_FORM_ref4]       (cu + 0x0026 => {0x000000a7})
 CHECK:      DW_AT_low_pc [DW_FORM_addr]     (0x0000000100000ed0)
 CHECK:      DW_AT_high_pc [DW_FORM_addr]    (0x0000000100000f19)
@@ -98,11 +105,13 @@ CHECK:  Compile Unit:
 CHECK:  DW_TAG_compile_unit [1] *
 CHECK:    DW_AT_producer [DW_FORM_strp]     ( .debug_str[0x00000001] = "Apple LLVM version 6.0 (clang-600.0.39) (based on LLVM 3.5svn)")
 CHECK:    DW_AT_name [DW_FORM_strp] ( .debug_str[0x0000008e] = "basic3.c")
+CHECK:    DW_AT_stmt_list [DW_FORM_data4]   (0x00000093)
 CHECK:    DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000049] = "/Inputs")
 CHECK:    DW_AT_low_pc [DW_FORM_addr]       (0x0000000100000f40)
 CHECK:    DW_TAG_variable [9]
 CHECK:      DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000097] = "val")
 CHECK:      DW_AT_type [DW_FORM_ref4]       (cu + 0x003c => {0x00000162})
+CHECK:      DW_AT_decl_file [DW_FORM_data1] ("/Inputs/basic3.c")
 BASIC:      DW_AT_location [DW_FORM_block1] (<0x09> 03 04 10 00 00 01 00 00 00 )
 ARCHIVE:    DW_AT_location [DW_FORM_block1] (<0x09> 03 08 10 00 00 01 00 00 00 )
 CHECK:    DW_TAG_volatile_type [10]
@@ -142,3 +151,39 @@ CHECK-NEXT:Address Range Header: length = 0x0000003c, version = 0x0002, cu_offse
 CHECK-NEXT:[0x0000000100000f40 - 0x0000000100000f84)
 CHECK-NEXT:[0x0000000100000f90 - 0x0000000100000fa9)
 
+CHECK: .debug_line contents:
+CHECK:                Dir  Mod Time   File Len   File Name
+CHECK-NEXT:                 ---- ---------- ---------- ---------------------------
+CHECK-NEXT: file_names[  1]    0 0x00000000 0x00000000 basic1.c
+CHECK: Address            Line   Column File   ISA Discriminator Flags
+CHECK-NEXT: ------------------ ------ ------ ------ --- ------------- -------------
+CHECK-NEXT: 0x0000000100000ea0     23      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000eb6     24      0      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000ec4     24      0      1   0             0  is_stmt end_sequence
+
+CHECK:                 Dir  Mod Time   File Len   File Name
+CHECK-NEXT:                 ---- ---------- ---------- ---------------------------
+CHECK-NEXT: file_names[  1]    0 0x00000000 0x00000000 basic2.c
+CHECK: Address            Line   Column File   ISA Discriminator Flags
+CHECK-NEXT: ------------------ ------ ------ ------ --- ------------- -------------
+CHECK-NEXT: 0x0000000100000ed0     19      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000ee2     20      0      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000f19     20      0      1   0             0  is_stmt end_sequence
+CHECK-NEXT: 0x0000000100000f20     14      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f24     15      0      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000f37     15      0      1   0             0  is_stmt end_sequence
+
+CHECK:                 Dir  Mod Time   File Len   File Name
+CHECK-NEXT:                 ---- ---------- ---------- ---------------------------
+CHECK-NEXT: file_names[  1]    0 0x00000000 0x00000000 basic3.c
+CHECK: Address            Line   Column File   ISA Discriminator Flags
+CHECK-NEXT: ------------------ ------ ------ ------ --- ------------- -------------
+CHECK-NEXT: 0x0000000100000f40     16      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f4b     17      0      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000f58     18      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f6c     19      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f7b     20      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f84     20      0      1   0             0  is_stmt end_sequence
+CHECK-NEXT: 0x0000000100000f90     11      0      1   0             0  is_stmt
+CHECK-NEXT: 0x0000000100000f9b     12      0      1   0             0  is_stmt prologue_end
+CHECK-NEXT: 0x0000000100000fa9     12      0      1   0             0  is_stmt end_sequence

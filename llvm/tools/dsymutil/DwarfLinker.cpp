@@ -22,6 +22,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -339,6 +340,7 @@ class DwarfStreamer {
 
   uint32_t RangesSectionSize;
   uint32_t LocSectionSize;
+  uint32_t LineSectionSize;
 
 public:
   /// \brief Actually create the streamer and the ouptut file.
@@ -392,6 +394,14 @@ public:
   /// the entries from \p Dwarf and offseting them. Update the
   /// location attributes to point to the new entries.
   void emitLocationsForUnit(const CompileUnit &Unit, DWARFContext &Dwarf);
+
+  /// \brief Emit the line table described in \p Rows into the
+  /// debug_line section.
+  void emitLineTableForUnit(StringRef PrologueBytes, unsigned MinInstLength,
+                            std::vector<DWARFDebugLine::Row> &Rows,
+                            unsigned AdddressSize);
+
+  uint32_t getLineSectionSize() const { return LineSectionSize; }
 };
 
 bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
@@ -459,6 +469,7 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
 
   RangesSectionSize = 0;
   LocSectionSize = 0;
+  LineSectionSize = 0;
 
   return true;
 }
@@ -694,6 +705,151 @@ void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
   }
 }
 
+void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
+                                         unsigned MinInstLength,
+                                         std::vector<DWARFDebugLine::Row> &Rows,
+                                         unsigned PointerSize) {
+  // Switch to the section where the table will be emitted into.
+  MS->SwitchSection(MC->getObjectFileInfo()->getDwarfLineSection());
+  MCSymbol *LineStartSym = MC->CreateTempSymbol();
+  MCSymbol *LineEndSym = MC->CreateTempSymbol();
+
+  // The first 4 bytes is the total length of the information for this
+  // compilation unit (not including these 4 bytes for the length).
+  Asm->EmitLabelDifference(LineEndSym, LineStartSym, 4);
+  Asm->OutStreamer.EmitLabel(LineStartSym);
+  // Copy Prologue.
+  MS->EmitBytes(PrologueBytes);
+  LineSectionSize += PrologueBytes.size() + 4;
+
+  SmallString<16> EncodingBuffer;
+  raw_svector_ostream EncodingOS(EncodingBuffer);
+
+  if (Rows.empty()) {
+    // We only have the dummy entry, dsymutil emits an entry with a 0
+    // address in that case.
+    MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
+    MS->EmitBytes(EncodingOS.str());
+    LineSectionSize += EncodingBuffer.size();
+    EncodingBuffer.resize(0);
+    MS->EmitLabel(LineEndSym);
+    return;
+  }
+
+  // Line table state machine fields
+  unsigned FileNum = 1;
+  unsigned LastLine = 1;
+  unsigned Column = 0;
+  unsigned IsStatement = 1;
+  unsigned Isa = 0;
+  uint64_t Address = -1ULL;
+
+  unsigned RowsSinceLastSequence = 0;
+
+  for (unsigned Idx = 0; Idx < Rows.size(); ++Idx) {
+    auto &Row = Rows[Idx];
+
+    int64_t AddressDelta;
+    if (Address == -1ULL) {
+      MS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
+      MS->EmitULEB128IntValue(PointerSize + 1);
+      MS->EmitIntValue(dwarf::DW_LNE_set_address, 1);
+      MS->EmitIntValue(Row.Address, PointerSize);
+      LineSectionSize += 2 + PointerSize + getULEB128Size(PointerSize + 1);
+      AddressDelta = 0;
+    } else {
+      AddressDelta = (Row.Address - Address) / MinInstLength;
+    }
+
+    // FIXME: code copied and transfromed from
+    // MCDwarf.cpp::EmitDwarfLineTable. We should find a way to share
+    // this code, but the current compatibility requirement with
+    // classic dsymutil makes it hard. Revisit that once this
+    // requirement is dropped.
+
+    if (FileNum != Row.File) {
+      FileNum = Row.File;
+      MS->EmitIntValue(dwarf::DW_LNS_set_file, 1);
+      MS->EmitULEB128IntValue(FileNum);
+      LineSectionSize += 1 + getULEB128Size(FileNum);
+    }
+    if (Column != Row.Column) {
+      Column = Row.Column;
+      MS->EmitIntValue(dwarf::DW_LNS_set_column, 1);
+      MS->EmitULEB128IntValue(Column);
+      LineSectionSize += 1 + getULEB128Size(Column);
+    }
+
+    // FIXME: We should handle the discriminator here, but dsymutil
+    // doesn' consider it, thus ignore it for now.
+
+    if (Isa != Row.Isa) {
+      Isa = Row.Isa;
+      MS->EmitIntValue(dwarf::DW_LNS_set_isa, 1);
+      MS->EmitULEB128IntValue(Isa);
+      LineSectionSize += 1 + getULEB128Size(Isa);
+    }
+    if (IsStatement != Row.IsStmt) {
+      IsStatement = Row.IsStmt;
+      MS->EmitIntValue(dwarf::DW_LNS_negate_stmt, 1);
+      LineSectionSize += 1;
+    }
+    if (Row.BasicBlock) {
+      MS->EmitIntValue(dwarf::DW_LNS_set_basic_block, 1);
+      LineSectionSize += 1;
+    }
+
+    if (Row.PrologueEnd) {
+      MS->EmitIntValue(dwarf::DW_LNS_set_prologue_end, 1);
+      LineSectionSize += 1;
+    }
+
+    if (Row.EpilogueBegin) {
+      MS->EmitIntValue(dwarf::DW_LNS_set_epilogue_begin, 1);
+      LineSectionSize += 1;
+    }
+
+    int64_t LineDelta = int64_t(Row.Line) - LastLine;
+    if (!Row.EndSequence) {
+      MCDwarfLineAddr::Encode(*MC, LineDelta, AddressDelta, EncodingOS);
+      MS->EmitBytes(EncodingOS.str());
+      LineSectionSize += EncodingBuffer.size();
+      EncodingBuffer.resize(0);
+      Address = Row.Address;
+      LastLine = Row.Line;
+      RowsSinceLastSequence++;
+    } else {
+      if (LineDelta) {
+        MS->EmitIntValue(dwarf::DW_LNS_advance_line, 1);
+        MS->EmitSLEB128IntValue(LineDelta);
+        LineSectionSize += 1 + getSLEB128Size(LineDelta);
+      }
+      if (AddressDelta) {
+        MS->EmitIntValue(dwarf::DW_LNS_advance_pc, 1);
+        MS->EmitULEB128IntValue(AddressDelta);
+        LineSectionSize += 1 + getULEB128Size(AddressDelta);
+      }
+      MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
+      MS->EmitBytes(EncodingOS.str());
+      LineSectionSize += EncodingBuffer.size();
+      EncodingBuffer.resize(0);
+
+      Address = -1ULL;
+      LastLine = FileNum = IsStatement = 1;
+      RowsSinceLastSequence = Column = Isa = 0;
+    }
+  }
+
+  if (RowsSinceLastSequence) {
+    MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
+    MS->EmitBytes(EncodingOS.str());
+    LineSectionSize += EncodingBuffer.size();
+    EncodingBuffer.resize(0);
+  }
+
+  MS->EmitLabel(LineEndSym);
+}
+
 /// \brief The core of the Dwarf linking logic.
 ///
 /// The link of the dwarf information from the object files will be
@@ -724,7 +880,7 @@ public:
 
 private:
   /// \brief Called at the start of a debug object link.
-  void startDebugObject(DWARFContext &);
+  void startDebugObject(DWARFContext &, DebugMapObject &);
 
   /// \brief Called at the end of a debug object link.
   void endDebugObject();
@@ -893,6 +1049,11 @@ private:
   /// compile_unit if it had one.
   void generateUnitRanges(CompileUnit &Unit) const;
 
+  /// \brief Extract the line tables fromt he original dwarf, extract
+  /// the relevant parts according to the linked function ranges and
+  /// emit the result in the debug_line section.
+  void patchLineTableForUnit(CompileUnit &Unit, DWARFContext &OrigDwarf);
+
   /// \brief DIELoc objects that need to be destructed (but not freed!).
   std::vector<DIELoc *> DIELocs;
   /// \brief DIEBlock objects that need to be destructed (but not freed!).
@@ -931,6 +1092,14 @@ private:
 
   /// \brief The Dwarf string pool
   NonRelocatableStringpool StringPool;
+
+  /// \brief This map is keyed by the entry PC of functions in that
+  /// debug object and the associated value is a pair storing the
+  /// corresponding end PC and the offset to apply to get the linked
+  /// address.
+  ///
+  /// See startDebugObject() for a more complete description of its use.
+  std::map<uint64_t, std::pair<uint64_t, int64_t>> Ranges;
 };
 
 /// \brief Similar to DWARFUnitSection::getUnitForOffset(), but
@@ -1015,14 +1184,36 @@ static bool dieNeedsChildrenToBeMeaningful(uint32_t Tag) {
   llvm_unreachable("Invalid Tag");
 }
 
-void DwarfLinker::startDebugObject(DWARFContext &Dwarf) {
+void DwarfLinker::startDebugObject(DWARFContext &Dwarf, DebugMapObject &Obj) {
   Units.reserve(Dwarf.getNumCompileUnits());
   NextValidReloc = 0;
+  // Iterate over the debug map entries and put all the ones that are
+  // functions (because they have a size) into the Ranges map. This
+  // map is very similar to the FunctionRanges that are stored in each
+  // unit, with 2 notable differences:
+  //  - obviously this one is global, while the other ones are per-unit.
+  //  - this one contains not only the functions described in the DIE
+  // tree, but also the ones that are only in the debug map.
+  // The latter information is required to reproduce dsymutil's logic
+  // while linking line tables. The cases where this information
+  // matters look like bugs that need to be investigated, but for now
+  // we need to reproduce dsymutil's behavior.
+  // FIXME: Once we understood exactly if that information is needed,
+  // maybe totally remove this (or try to use it to do a real
+  // -gline-tables-only on Darwin.
+  for (const auto &Entry : Obj.symbols()) {
+    const auto &Mapping = Entry.getValue();
+    if (Mapping.Size)
+      Ranges[Mapping.ObjectAddress] = std::make_pair(
+          Mapping.ObjectAddress + Mapping.Size,
+          int64_t(Mapping.BinaryAddress) - Mapping.ObjectAddress);
+  }
 }
 
 void DwarfLinker::endDebugObject() {
   Units.clear();
   ValidRelocs.clear();
+  Ranges.clear();
 
   for (auto *Block : DIEBlocks)
     Block->~DIEBlock();
@@ -1259,6 +1450,8 @@ unsigned DwarfLinker::shouldKeepSubprogramDIE(
     HighPc = LowPc + *HighPcValue.getAsUnsignedConstant();
   }
 
+  // Replace the debug map range with a more accurate one.
+  Ranges[LowPc] = std::make_pair(HighPc, MyInfo.AddrAdjust);
   Unit.addFunctionRange(LowPc, HighPc, MyInfo.AddrAdjust);
   return Flags;
 }
@@ -1854,6 +2047,176 @@ void DwarfLinker::generateUnitRanges(CompileUnit &Unit) const {
   Streamer->emitUnitRangesEntries(Unit, Attr != nullptr);
 }
 
+/// \brief Insert the new line info sequence \p Seq into the current
+/// set of already linked line info \p Rows.
+static void insertLineSequence(std::vector<DWARFDebugLine::Row> &Seq,
+                               std::vector<DWARFDebugLine::Row> &Rows) {
+  if (Seq.empty())
+    return;
+
+  if (!Rows.empty() && Rows.back().Address < Seq.front().Address) {
+    Rows.insert(Rows.end(), Seq.begin(), Seq.end());
+    Seq.clear();
+    return;
+  }
+
+  auto InsertPoint = std::lower_bound(
+      Rows.begin(), Rows.end(), Seq.front(),
+      [](const DWARFDebugLine::Row &LHS, const DWARFDebugLine::Row &RHS) {
+        return LHS.Address < RHS.Address;
+      });
+
+  // FIXME: this only removes the unneeded end_sequence if the
+  // sequences have been inserted in order. using a global sort like
+  // described in patchLineTableForUnit() and delaying the end_sequene
+  // elimination to emitLineTableForUnit() we can get rid of all of them.
+  if (InsertPoint != Rows.end() &&
+      InsertPoint->Address == Seq.front().Address && InsertPoint->EndSequence) {
+    *InsertPoint = Seq.front();
+    Rows.insert(InsertPoint + 1, Seq.begin() + 1, Seq.end());
+  } else {
+    Rows.insert(InsertPoint, Seq.begin(), Seq.end());
+  }
+
+  Seq.clear();
+}
+
+/// \brief Extract the line table for \p Unit from \p OrigDwarf, and
+/// recreate a relocated version of these for the address ranges that
+/// are present in the binary.
+void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
+                                        DWARFContext &OrigDwarf) {
+  const DWARFDebugInfoEntryMinimal *CUDie =
+      Unit.getOrigUnit().getCompileUnitDIE();
+  uint64_t StmtList = CUDie->getAttributeValueAsSectionOffset(
+      &Unit.getOrigUnit(), dwarf::DW_AT_stmt_list, -1ULL);
+  if (StmtList == -1ULL)
+    return;
+
+  // Update the cloned DW_AT_stmt_list with the correct debug_line offset.
+  if (auto *OutputDIE = Unit.getOutputUnitDIE()) {
+    const auto &Abbrev = OutputDIE->getAbbrev().getData();
+    auto Stmt = std::find_if(
+        Abbrev.begin(), Abbrev.end(), [](const DIEAbbrevData &AbbrevData) {
+          return AbbrevData.getAttribute() == dwarf::DW_AT_stmt_list;
+        });
+    assert(Stmt < Abbrev.end() && "Didn't find DW_AT_stmt_list in cloned DIE!");
+    DIEInteger *StmtAttr =
+        cast<DIEInteger>(OutputDIE->getValues()[Stmt - Abbrev.begin()]);
+    StmtAttr->setValue(Streamer->getLineSectionSize());
+  }
+
+  // Parse the original line info for the unit.
+  DWARFDebugLine::LineTable LineTable;
+  uint32_t StmtOffset = StmtList;
+  StringRef LineData = OrigDwarf.getLineSection().Data;
+  DataExtractor LineExtractor(LineData, OrigDwarf.isLittleEndian(),
+                              Unit.getOrigUnit().getAddressByteSize());
+  LineTable.parse(LineExtractor, &OrigDwarf.getLineSection().Relocs,
+                  &StmtOffset);
+
+  // This vector is the output line table.
+  std::vector<DWARFDebugLine::Row> NewRows;
+  NewRows.reserve(LineTable.Rows.size());
+
+  // Current sequence of rows being extracted, before being inserted
+  // in NewRows.
+  std::vector<DWARFDebugLine::Row> Seq;
+  const auto &FunctionRanges = Unit.getFunctionRanges();
+  auto InvalidRange = FunctionRanges.end(), CurrRange = InvalidRange;
+
+  // FIXME: This logic is meant to generate exactly the same output as
+  // Darwin's classic dsynutil. There is a nicer way to implement this
+  // by simply putting all the relocated line info in NewRows and simply
+  // sorting NewRows before passing it to emitLineTableForUnit. This
+  // should be correct as sequences for a function should stay
+  // together in the sorted output. There are a few corner cases that
+  // look suspicious though, and that required to implement the logic
+  // this way. Revisit that once initial validation is finished.
+
+  // Iterate over the object file line info and extract the sequences
+  // that correspond to linked functions.
+  for (auto &Row : LineTable.Rows) {
+    // Check wether we stepped out of the range. The range is
+    // half-open, but consider accept the end address of the range if
+    // it is marked as end_sequence in the input (because in that
+    // case, the relocation offset is accurate and that entry won't
+    // serve as the start of another function).
+    if (CurrRange == InvalidRange || Row.Address < CurrRange.start() ||
+        Row.Address > CurrRange.stop() ||
+        (Row.Address == CurrRange.stop() && !Row.EndSequence)) {
+      // We just stepped out of a known range. Insert a end_sequence
+      // corresponding to the end of the range.
+      uint64_t StopAddress = CurrRange != InvalidRange
+                                 ? CurrRange.stop() + CurrRange.value()
+                                 : -1ULL;
+      CurrRange = FunctionRanges.find(Row.Address);
+      bool CurrRangeValid =
+          CurrRange != InvalidRange && CurrRange.start() <= Row.Address;
+      if (!CurrRangeValid) {
+        CurrRange = InvalidRange;
+        if (StopAddress != -1ULL) {
+          // Try harder by looking in the DebugMapObject function
+          // ranges map. There are corner cases where this finds a
+          // valid entry. It's unclear if this is right or wrong, but
+          // for now do as dsymutil.
+          // FIXME: Understand exactly what cases this addresses and
+          // potentially remove it along with the Ranges map.
+          auto Range = Ranges.lower_bound(Row.Address);
+          if (Range != Ranges.begin() && Range != Ranges.end())
+            --Range;
+
+          if (Range != Ranges.end() && Range->first <= Row.Address &&
+              Range->second.first >= Row.Address) {
+            StopAddress = Row.Address + Range->second.second;
+          }
+        }
+      }
+      if (StopAddress != -1ULL && !Seq.empty()) {
+        // Insert end sequence row with the computed end address, but
+        // the same line as the previous one.
+        Seq.emplace_back(Seq.back());
+        Seq.back().Address = StopAddress;
+        Seq.back().EndSequence = 1;
+        Seq.back().PrologueEnd = 0;
+        Seq.back().BasicBlock = 0;
+        Seq.back().EpilogueBegin = 0;
+        insertLineSequence(Seq, NewRows);
+      }
+
+      if (!CurrRangeValid)
+        continue;
+    }
+
+    // Ignore empty sequences.
+    if (Row.EndSequence && Seq.empty())
+      continue;
+
+    // Relocate row address and add it to the current sequence.
+    Row.Address += CurrRange.value();
+    Seq.emplace_back(Row);
+
+    if (Row.EndSequence)
+      insertLineSequence(Seq, NewRows);
+  }
+
+  // Finished extracting, now emit the line tables.
+  uint32_t PrologueEnd = StmtList + 10 + LineTable.Prologue.PrologueLength;
+  // FIXME: LLVM hardcodes it's prologue values. We just copy the
+  // prologue over and that works because we act as both producer and
+  // consumer. It would be nicer to have a real configurable line
+  // table emitter.
+  if (LineTable.Prologue.Version != 2 ||
+      LineTable.Prologue.DefaultIsStmt != DWARF2_LINE_DEFAULT_IS_STMT ||
+      LineTable.Prologue.LineBase != -5 || LineTable.Prologue.LineRange != 14 ||
+      LineTable.Prologue.OpcodeBase != 13)
+    reportWarning("line table paramters mismatch. Cannot emit.");
+  else
+    Streamer->emitLineTableForUnit(LineData.slice(StmtList + 4, PrologueEnd),
+                                   LineTable.Prologue.MinInstLength, NewRows,
+                                   Unit.getOrigUnit().getAddressByteSize());
+}
+
 bool DwarfLinker::link(const DebugMap &Map) {
 
   if (Map.begin() == Map.end()) {
@@ -1888,7 +2251,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
 
     // Setup access to the debug info.
     DWARFContextInMemory DwarfContext(*ErrOrObj);
-    startDebugObject(DwarfContext);
+    startDebugObject(DwarfContext, *Obj);
 
     // In a first phase, just read in the debug info and store the DIE
     // parent links that we will use during the next phase.
@@ -1927,7 +2290,13 @@ bool DwarfLinker::link(const DebugMap &Map) {
                                   11 /* Unit Header size */);
         CurrentUnit.setOutputUnitDIE(OutputDIE);
         OutputDebugInfoSize = CurrentUnit.computeNextUnitOffset();
-        if (!OutputDIE || Options.NoOutput)
+        if (Options.NoOutput)
+          continue;
+        // FIXME: for compatibility with the classic dsymutil, we emit
+        // an empty line table for the unit, even if the unit doesn't
+        // actually exist in the DIE tree.
+        patchLineTableForUnit(CurrentUnit, DwarfContext);
+        if (!OutputDIE)
           continue;
         patchRangesForUnit(CurrentUnit, DwarfContext);
         Streamer->emitLocationsForUnit(CurrentUnit, DwarfContext);
