@@ -275,6 +275,59 @@ reverted. This is necessary when the change blocks other developers from making
 progress. The developer is welcome to re-commit the change after the problem has
 been fixed.
 
+.. _commit messages:
+
+Commit messages
+---------------
+
+Although we don't enforce the format of commit messages, we prefer that
+you follow these guidelines to help review, search in logs, email formatting
+and so on. These guidelines are very similar to rules used by other open source
+projects.
+
+Most importantly, the contents of the message should be carefully written to
+convey the rationale of the change (without delving too much in detail). It
+also should avoid being vague or overly specific. For example, "bits were not
+set right" will leave the reviewer wondering about which bits, and why they
+weren't right, while "Correctly set overflow bits in TargetInfo" conveys almost
+all there is to the change.
+
+Below are some guidelines about the format of the message itself:
+
+* Separate the commit message into title, body and, if you're not the original
+  author, a "Patch by" attribution line (see below).
+
+* The title should be concise. Because all commits are emailed to the list with
+  the first line as the subject, long titles are frowned upon.  Short titles
+  also look better in `git log`.
+
+* When the changes are restricted to a specific part of the code (e.g. a
+  back-end or optimization pass), it is customary to add a tag to the
+  beginning of the line in square brackets.  For example, "[SCEV] ..."
+  or "[OpenMP] ...". This helps email filters and searches for post-commit
+  reviews.
+
+* The body, if it exists, should be separated from the title by an empty line.
+
+* The body should be concise, but explanatory, including a complete
+  reasoning.  Unless it is required to understand the change, examples,
+  code snippets and gory details should be left to bug comments, web
+  review or the mailing list.
+
+* If the patch fixes a bug in bugzilla, please include the PR# in the message.
+
+* `Attribution of Changes`_ should be in a separate line, after the end of
+  the body, as simple as "Patch by John Doe.". This is how we officially
+  handle attribution, and there are automated processes that rely on this
+  format.
+
+* Text formatting and spelling should follow the same rules as documentation
+  and in-code comments, ex. capitalization, full stop, etc.
+
+For minor violations of these recommendations, the community normally favors
+reminding the contributor of this policy over reverting. Minor corrections and
+omissions can be handled by sending a reply to the commits mailing list.
+
 Obtaining Commit Access
 -----------------------
 
@@ -425,8 +478,9 @@ want the source code to be littered with random attributions "this code written
 by J. Random Hacker" (this is noisy and distracting). In practice, the revision
 control system keeps a perfect history of who changed what, and the CREDITS.txt
 file describes higher-level contributions. If you commit a patch for someone
-else, please say "patch contributed by J. Random Hacker!" in the commit
-message. Overall, please do not add contributor names to the source code.
+else, please follow the attribution of changes in the simple manner as outlined
+by the `commit messages`_ section. Overall, please do not add contributor names
+to the source code.
 
 Also, don't commit patches authored by others unless they have submitted the
 patch to the project or you have been authorized to submit them on their behalf
