@@ -3113,8 +3113,13 @@ bool llvm::verifyModule(const Module &M, raw_ostream *OS) {
 
   // Note that this function's return value is inverted from what you would
   // expect of a function called "verify".
+  if (!V.verify(M) || Broken)
+    return true;
+
+  // Run the debug info verifier only if the regular verifier succeeds, since
+  // sometimes checks that have already failed will cause crashes here.
   DebugInfoVerifier DIV(OS ? *OS : NullStr);
-  return !V.verify(M) || !DIV.verify(M) || Broken;
+  return !DIV.verify(M);
 }
 
 namespace {
