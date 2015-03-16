@@ -978,14 +978,46 @@ ModuleList::GetSharedModule
 
     if (module_sp)
         return error;
-    else
+
+    module_sp.reset (new Module (module_spec));
+    // Make sure there are a module and an object file since we can specify
+    // a valid file path with an architecture that might not be in that file.
+    // By getting the object file we can guarantee that the architecture matches
+    if (module_sp->GetObjectFile())
     {
-        module_sp.reset (new Module (module_spec));
-        // Make sure there are a module and an object file since we can specify
-        // a valid file path with an architecture that might not be in that file.
-        // By getting the object file we can guarantee that the architecture matches
-        if (module_sp)
+        // If we get in here we got the correct arch, now we just need
+        // to verify the UUID if one was given
+        if (uuid_ptr && *uuid_ptr != module_sp->GetUUID())
+            module_sp.reset();
+        else
         {
+            if (did_create_ptr)
+                *did_create_ptr = true;
+
+            shared_module_list.ReplaceEquivalent(module_sp);
+            return error;
+        }
+    }
+    else
+        module_sp.reset();
+
+    if (module_search_paths_ptr)
+    {
+        const auto num_directories = module_search_paths_ptr->GetSize();
+        for (size_t idx = 0; idx < num_directories; ++idx)
+        {
+            auto search_path_spec = module_search_paths_ptr->GetFileSpecAtIndex(idx);
+            if (!search_path_spec.ResolvePath())
+                continue;
+            if (!search_path_spec.Exists() || !search_path_spec.IsDirectory())
+                continue;
+            search_path_spec.AppendPathComponent(module_spec.GetFileSpec().GetFilename().AsCString());
+            if (!search_path_spec.Exists())
+                continue;
+
+            auto resolved_module_spec(module_spec);
+            resolved_module_spec.GetFileSpec() = search_path_spec;
+            module_sp.reset (new Module (resolved_module_spec));
             if (module_sp->GetObjectFile())
             {
                 // If we get in here we got the correct arch, now we just need
@@ -998,7 +1030,7 @@ ModuleList::GetSharedModule
                         *did_create_ptr = true;
 
                     shared_module_list.ReplaceEquivalent(module_sp);
-                    return error;
+                    return Error();
                 }
             }
             else
