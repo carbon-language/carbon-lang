@@ -1108,11 +1108,11 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
   SDValue Inp = Op, Res;
 
   switch (ConstraintID) {
+  case InlineAsm::Constraint_o:   // Offsetable.
+  case InlineAsm::Constraint_v:   // Not offsetable.
   default:
     return true;
-  case InlineAsm::Constraint_o: // Offsetable.
-  case InlineAsm::Constraint_v: // Not offsetable.
-  case InlineAsm::Constraint_m: // Memory.
+  case InlineAsm::Constraint_m:   // Memory.
     if (SelectAddrFI(Inp, Res))
       OutOps.push_back(Res);
     else
