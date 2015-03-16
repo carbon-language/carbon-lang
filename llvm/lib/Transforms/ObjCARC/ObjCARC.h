@@ -304,6 +304,7 @@ public:
             M->getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
       return *NoObjCARCExceptionsMDKind;
     }
+    llvm_unreachable("Covered switch isn't covered?!");
   }
 };
 
