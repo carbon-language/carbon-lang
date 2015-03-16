@@ -23,6 +23,3 @@ int main() {                      // CHECK: Marker at [[@LINE]]:12 = 1
 }
 
 // RUN: llvm-cov show %S/Inputs/regionMarkers.covmapping -instr-profile %t.profdata -show-regions -dump -filename-equivalence %s 2>&1 | FileCheck %s
-
-// llvm-cov doesn't work on big endian yet
-// XFAIL: powerpc64-, s390x, mips-, mips64-, sparc

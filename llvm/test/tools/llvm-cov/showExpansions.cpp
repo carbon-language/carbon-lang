@@ -24,6 +24,3 @@ int main(int argc, const char *argv[]) {
     DO_SOMETHING(i); // CHECK-DAG: Expansion at line [[@LINE]], 5 -> 17
   return 0;
 }
-
-// llvm-cov doesn't work on big endian yet
-// XFAIL: powerpc64-, s390x, mips-, mips64-, sparc

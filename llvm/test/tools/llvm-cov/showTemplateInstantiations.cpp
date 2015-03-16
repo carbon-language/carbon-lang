@@ -38,6 +38,3 @@ int main() {         // ALL:         1| [[@LINE]]|int main() {
 }                    // ALL-NEXT:    1| [[@LINE]]|}
 // after coverage    // ALL-NEXT:     | [[@LINE]]|// after
                      // FILTER-NOT:   | [[@LINE-1]]|// after
-
-// llvm-cov doesn't work on big endian yet
-// XFAIL: powerpc64-, s390x, mips-, mips64-, sparc
