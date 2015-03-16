@@ -606,12 +606,6 @@ public:
   /// \brief Determine the type ID of an already-emitted type.
   serialization::TypeID getTypeID(QualType T) const;
 
-  /// \brief Force a type to be emitted and get its index.
-  serialization::TypeIdx GetOrCreateTypeIdx( QualType T);
-
-  /// \brief Determine the type index of an already-emitted type.
-  serialization::TypeIdx getTypeIdx(QualType T) const;
-
   /// \brief Emits a reference to a declarator info.
   void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordDataImpl &Record);
 

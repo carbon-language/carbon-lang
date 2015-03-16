@@ -4999,46 +4999,40 @@ void ASTWriter::AddTypeRef(QualType T, RecordDataImpl &Record) {
   Record.push_back(GetOrCreateTypeID(T));
 }
 
-TypeID ASTWriter::GetOrCreateTypeID( QualType T) {
+TypeID ASTWriter::GetOrCreateTypeID(QualType T) {
   assert(Context);
-  return MakeTypeID(*Context, T,
-              std::bind1st(std::mem_fun(&ASTWriter::GetOrCreateTypeIdx), this));
+  return MakeTypeID(*Context, T, [&](QualType T) -> TypeIdx {
+    if (T.isNull())
+      return TypeIdx();
+    assert(!T.getLocalFastQualifiers());
+
+    TypeIdx &Idx = TypeIdxs[T];
+    if (Idx.getIndex() == 0) {
+      if (DoneWritingDeclsAndTypes) {
+        assert(0 && "New type seen after serializing all the types to emit!");
+        return TypeIdx();
+      }
+
+      // We haven't seen this type before. Assign it a new ID and put it
+      // into the queue of types to emit.
+      Idx = TypeIdx(NextTypeID++);
+      DeclTypesToEmit.push(T);
+    }
+    return Idx;
+  });
 }
 
 TypeID ASTWriter::getTypeID(QualType T) const {
   assert(Context);
-  return MakeTypeID(*Context, T,
-              std::bind1st(std::mem_fun(&ASTWriter::getTypeIdx), this));
-}
-
-TypeIdx ASTWriter::GetOrCreateTypeIdx(QualType T) {
-  if (T.isNull())
-    return TypeIdx();
-  assert(!T.getLocalFastQualifiers());
-
-  TypeIdx &Idx = TypeIdxs[T];
-  if (Idx.getIndex() == 0) {
-    if (DoneWritingDeclsAndTypes) {
-      assert(0 && "New type seen after serializing all the types to emit!");
+  return MakeTypeID(*Context, T, [&](QualType T) -> TypeIdx {
+    if (T.isNull())
       return TypeIdx();
-    }
+    assert(!T.getLocalFastQualifiers());
 
-    // We haven't seen this type before. Assign it a new ID and put it
-    // into the queue of types to emit.
-    Idx = TypeIdx(NextTypeID++);
-    DeclTypesToEmit.push(T);
-  }
-  return Idx;
-}
-
-TypeIdx ASTWriter::getTypeIdx(QualType T) const {
-  if (T.isNull())
-    return TypeIdx();
-  assert(!T.getLocalFastQualifiers());
-
-  TypeIdxMap::const_iterator I = TypeIdxs.find(T);
-  assert(I != TypeIdxs.end() && "Type not emitted!");
-  return I->second;
+    TypeIdxMap::const_iterator I = TypeIdxs.find(T);
+    assert(I != TypeIdxs.end() && "Type not emitted!");
+    return I->second;
+  });
 }
 
 void ASTWriter::AddDeclRef(const Decl *D, RecordDataImpl &Record) {
