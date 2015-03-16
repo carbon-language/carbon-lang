@@ -18,5 +18,5 @@
                        isDefinition: false, variable: i32* @foo,
                        declaration: !4)
 
-; CHECK: !6 = !MDGlobalVariable(name: "bar", scope: null, isLocal: false, isDefinition: true)
-!6 = !MDGlobalVariable(name: "bar")
+; CHECK: !6 = !MDGlobalVariable(scope: null, isLocal: false, isDefinition: true)
+!6 = !MDGlobalVariable()

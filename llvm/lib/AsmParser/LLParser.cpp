@@ -3534,7 +3534,7 @@ bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
 bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   OPTIONAL(scope, MDField, );                                                  \
-  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(linkageName, MDStringField, );                                      \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \
@@ -3649,7 +3649,7 @@ bool LLParser::ParseMDTemplateValueParameter(MDNode *&Result, bool IsDistinct) {
 bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   OPTIONAL(scope, MDField, );                                                  \
-  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(linkageName, MDStringField, );                                      \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \
@@ -3735,7 +3735,7 @@ bool LLParser::ParseMDExpression(MDNode *&Result, bool IsDistinct) {
 ///                       getter: "getFoo", attributes: 7, type: !2)
 bool LLParser::ParseMDObjCProperty(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \
   OPTIONAL(setter, MDStringField, );                                           \

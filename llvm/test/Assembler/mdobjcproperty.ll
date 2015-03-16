@@ -14,7 +14,7 @@
 !3 = !MDObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo",
                      getter: "getFoo", attributes: 7, type: !2)
 
-; CHECK-NEXT: !4 = !MDObjCProperty(name: "foo")
-!4 = !MDObjCProperty(name: "foo", file: null, line: 0, setter: "", getter: "",
+; CHECK-NEXT: !4 = !MDObjCProperty()
+!4 = !MDObjCProperty(name: "", file: null, line: 0, setter: "", getter: "",
                      attributes: 0, type: null)
-!5 = !MDObjCProperty(name: "foo")
+!5 = !MDObjCProperty()

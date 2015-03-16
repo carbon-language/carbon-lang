@@ -23,6 +23,6 @@ declare void @_Z3foov()
                    flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov,
                    templateParams: !5, declaration: !6, variables: !7)
 
-; CHECK: !9 = !MDSubprogram(name: "bar", scope: null, isLocal: false, isDefinition: true, isOptimized: false)
-!9 = !MDSubprogram(name: "bar")
+; CHECK: !9 = !MDSubprogram(scope: null, isLocal: false, isDefinition: true, isOptimized: false)
+!9 = !MDSubprogram()
 
