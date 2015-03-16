@@ -1617,6 +1617,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   case AMDGPUISD::UMAX:
   case AMDGPUISD::UMIN: {
     if (DCI.getDAGCombineLevel() >= AfterLegalizeDAG &&
+        N->getValueType(0) != MVT::f64 &&
         getTargetMachine().getOptLevel() > CodeGenOpt::None)
       return performMin3Max3Combine(N, DCI);
     break;
