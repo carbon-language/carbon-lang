@@ -13,7 +13,6 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Fails on FreeBSD apparently due to thread race conditions
-    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_stopped_when_interrupt(self):
         """Test that 'lldb-mi --interpreter' interrupt and resume a looping app."""
 
