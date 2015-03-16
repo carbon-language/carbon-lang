@@ -26,7 +26,7 @@ namespace elf {
 template <class ELFType>
 class MipsTargetLayout final : public TargetLayout<ELFType> {
 public:
-  MipsTargetLayout(const MipsLinkingContext &ctx)
+  MipsTargetLayout(MipsLinkingContext &ctx)
       : TargetLayout<ELFType>(ctx),
         _gotSection(new (_alloc) MipsGOTSection<ELFType>(ctx)),
         _pltSection(new (_alloc) MipsPLTSection<ELFType>(ctx)) {}

@@ -298,22 +298,14 @@ public:
   bool collectStats() const { return _collectStats; }
   void setCollectStats(bool s) { _collectStats = s; }
 
-  // We can parse several linker scripts via command line whose ASTs are stored
-  // in the current linking context via addLinkerScript().
-  void addLinkerScript(std::unique_ptr<script::Parser> script) {
-    _scripts.push_back(std::move(script));
-  }
-
-  const std::vector<std::unique_ptr<script::Parser>> &scripts() const {
-    return _scripts;
-  }
-
   // --wrap option.
   void addWrapForSymbol(StringRef sym) { _wrapCalls.insert(sym); }
 
   const llvm::StringSet<> &wrapCalls() const { return _wrapCalls; }
 
   void setUndefinesResolver(std::unique_ptr<File> resolver);
+
+  script::Sema &linkerScriptSema() { return _linkerScriptSema; }
 
 private:
   ELFLinkingContext() = delete;
@@ -358,8 +350,11 @@ protected:
   llvm::StringSet<> _wrapCalls;
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
-  std::vector<std::unique_ptr<script::Parser>> _scripts;
   std::unique_ptr<File> _resolver;
+
+  // The linker script semantic object, which owns all script ASTs, is stored
+  // in the current linking context via _linkerScriptSema.
+  script::Sema _linkerScriptSema;
 };
 } // end namespace lld
 

@@ -123,6 +123,14 @@ public:
     _outputSectionName = outputSectionName;
   }
 
+  void setArchiveNameOrPath(StringRef name) { _archivePath = name; }
+
+  void setMemberNameOrPath(StringRef name) { _memberPath = name; }
+
+  StringRef archivePath() { return _archivePath; }
+
+  StringRef memberPath() { return _memberPath; }
+
 protected:
   /// \brief OutputSection this Section is a member of, or nullptr.
   OutputSection<ELFT> *_outputSection;
@@ -144,6 +152,8 @@ protected:
   StringRef _inputSectionName;
   /// \brief Output section name.
   StringRef _outputSectionName;
+  StringRef _archivePath;
+  StringRef _memberPath;
 };
 
 /// \brief A section containing atoms.

@@ -269,6 +269,37 @@ protected:
   llvm::BumpPtrAllocator _segmentAllocate;
 };
 
+/// This chunk represents a linker script expression that needs to be calculated
+/// at the time the virtual addresses for the parent segment are being assigned.
+template <class ELFT> class ExpressionChunk : public Chunk<ELFT> {
+public:
+  ExpressionChunk(ELFLinkingContext &ctx, const script::SymbolAssignment *expr)
+      : Chunk<ELFT>(StringRef(), Chunk<ELFT>::Kind::Expression, ctx),
+        _expr(expr), _linkerScriptSema(ctx.linkerScriptSema()) {
+    this->_alignment = 1;
+  }
+
+  static bool classof(const Chunk<ELFT> *c) {
+    return c->kind() == Chunk<ELFT>::Kind::Expression;
+  }
+
+  int getContentType() const override {
+    return Chunk<ELFT>::ContentType::Unknown;
+  }
+  void write(ELFWriter *, TargetLayout<ELFT> &,
+             llvm::FileOutputBuffer &) override {}
+  void doPreFlight() override {}
+  void finalize() override {}
+
+  std::error_code evalExpr(uint64_t &curPos) {
+    return _linkerScriptSema.evalExpr(_expr, curPos);
+  }
+
+private:
+  const script::SymbolAssignment *_expr;
+  script::Sema &_linkerScriptSema;
+};
+
 /// \brief A Program Header segment contains a set of chunks instead of sections
 /// The segment doesn't contain any slice
 template <class ELFT> class ProgramHeaderSegment : public Segment<ELFT> {
@@ -390,11 +421,16 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
   bool isDataPageAlignedForNMagic = false;
   bool alignSegments = this->_context.alignSegments();
   uint64_t p_align = this->_context.getPageSize();
+  uint64_t lastVirtualAddress = 0;
 
   this->setFileOffset(startOffset);
   for (auto &slice : slices()) {
     bool isFirstSection = true;
     for (auto section : slice->sections()) {
+      // Handle linker script expressions, which may change the offset
+      if (!isFirstSection)
+        if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(section))
+          fileOffset += expr->virtualAddr() - lastVirtualAddress;
       // Align fileoffset to the alignment of the section.
       fileOffset = llvm::RoundUpToAlignment(fileOffset, section->alignment());
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
@@ -429,6 +465,7 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
       }
       section->setFileOffset(fileOffset);
       fileOffset += section->fileSize();
+      lastVirtualAddress = section->virtualAddr() + section->memSize();
     }
     slice->setFileSize(fileOffset - curSliceFileOffset);
   }
@@ -457,7 +494,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
   SegmentSlice<ELFT> *slice = nullptr;
   uint64_t tlsStartAddr = 0;
   bool alignSegments = this->_context.alignSegments();
-  StringRef prevOutputSectionName;
+  StringRef prevOutputSectionName = StringRef();
 
   for (auto si = _sections.begin(); si != _sections.end(); ++si) {
     // If this is first section in the segment, page align the section start
@@ -481,6 +518,10 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       }
       // align the startOffset to the section alignment
       uint64_t newAddr = llvm::RoundUpToAlignment(startAddr, (*si)->alignment());
+      // Handle linker script expressions, which *may update newAddr* if the
+      // expression assigns to "."
+      if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
+        expr->evalExpr(newAddr);
       curSliceAddress = newAddr;
       sliceAlign = (*si)->alignment();
       (*si)->setVirtualAddr(curSliceAddress);
@@ -513,9 +554,22 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         isDataPageAlignedForNMagic = true;
       }
       uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->alignment());
+      // Handle linker script expressions, which *may update newAddr* if the
+      // expression assigns to "."
+      if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
+        expr->evalExpr(newAddr);
       Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
-      StringRef curOutputSectionName =
-          sec ? sec->outputSectionName() : (*si)->name();
+      StringRef curOutputSectionName;
+      if (sec)
+        curOutputSectionName = sec->outputSectionName();
+      else {
+        // If this is a linker script expression, propagate the name of the
+        // previous section instead
+        if (isa<ExpressionChunk<ELFT>>(*si))
+          curOutputSectionName = prevOutputSectionName;
+        else
+          curOutputSectionName = (*si)->name();
+      }
       bool autoCreateSlice = true;
       if (curOutputSectionName == prevOutputSectionName)
         autoCreateSlice = false;

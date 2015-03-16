@@ -18,6 +18,8 @@
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/range.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Allocator.h"
@@ -26,6 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 #include <system_error>
+#include <unordered_map>
 #include <vector>
 
 namespace lld {
@@ -159,6 +162,7 @@ public:
     Group,
     Input,
     InputSectionsCmd,
+    InputSectionName,
     Memory,
     Output,
     OutputArch,
@@ -167,6 +171,7 @@ public:
     Overlay,
     SearchDir,
     Sections,
+    SortedGroup,
     SymbolAssignment,
   };
 
@@ -604,23 +609,15 @@ enum class WildcardSortMode {
 ///   .y: { *(SORT(.text*)) }
 ///   /*      ^~~~~~~~~~~^  InputSectionSortedGroup : InputSection  */
 /// }
-class InputSection {
+class InputSection : public Command {
 public:
-  enum class Kind { InputSectionName, SortedGroup };
-
-  Kind getKind() const { return _kind; }
-  inline llvm::BumpPtrAllocator &getAllocator() const;
-
-  virtual void dump(raw_ostream &os) const = 0;
-
-  virtual ~InputSection() {}
+  static bool classof(const Command *c) {
+    return c->getKind() == Kind::InputSectionName ||
+           c->getKind() == Kind::SortedGroup;
+  }
 
 protected:
-  InputSection(Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
-
-private:
-  Parser &_ctx;
-  Kind _kind;
+  InputSection(Parser &ctx, Kind k) : Command(ctx, k) {}
 };
 
 class InputSectionName : public InputSection {
@@ -631,10 +628,11 @@ public:
 
   void dump(raw_ostream &os) const override;
 
-  static bool classof(const InputSection *c) {
+  static bool classof(const Command *c) {
     return c->getKind() == Kind::InputSectionName;
   }
   bool hasExcludeFile() const { return _excludeFile; }
+  StringRef name() const { return _name; }
 
 private:
   StringRef _name;
@@ -643,6 +641,8 @@ private:
 
 class InputSectionSortedGroup : public InputSection {
 public:
+  typedef llvm::ArrayRef<const InputSection *>::const_iterator const_iterator;
+
   InputSectionSortedGroup(Parser &ctx, WildcardSortMode sort,
                           const SmallVectorImpl<const InputSection *> &sections)
       : InputSection(ctx, Kind::SortedGroup), _sortMode(sort) {
@@ -654,11 +654,14 @@ public:
   }
 
   void dump(raw_ostream &os) const override;
-  WildcardSortMode getSortMode() const { return _sortMode; }
+  WildcardSortMode sortMode() const { return _sortMode; }
 
-  static bool classof(const InputSection *c) {
+  static bool classof(const Command *c) {
     return c->getKind() == Kind::SortedGroup;
   }
+
+  const_iterator begin() const { return _sections.begin(); }
+  const_iterator end() const { return _sections.end(); }
 
 private:
   WildcardSortMode _sortMode;
@@ -677,13 +680,14 @@ private:
 /// }
 class InputSectionsCmd : public Command {
 public:
+  typedef llvm::ArrayRef<const InputSection *>::const_iterator const_iterator;
   typedef std::vector<const InputSection *> VectorTy;
 
-  InputSectionsCmd(Parser &ctx, StringRef fileName, StringRef archiveName,
+  InputSectionsCmd(Parser &ctx, StringRef memberName, StringRef archiveName,
                    bool keep, WildcardSortMode fileSortMode,
                    WildcardSortMode archiveSortMode,
                    const SmallVectorImpl<const InputSection *> &sections)
-      : Command(ctx, Kind::InputSectionsCmd), _fileName(fileName),
+      : Command(ctx, Kind::InputSectionsCmd), _memberName(memberName),
         _archiveName(archiveName), _keep(keep), _fileSortMode(fileSortMode),
         _archiveSortMode(archiveSortMode) {
     size_t numSections = sections.size();
@@ -699,8 +703,15 @@ public:
     return c->getKind() == Kind::InputSectionsCmd;
   }
 
+  StringRef memberName() const { return _memberName; }
+  StringRef archiveName() const { return _archiveName; }
+  const_iterator begin() const { return _sections.begin(); }
+  const_iterator end() const { return _sections.end(); }
+  WildcardSortMode archiveSortMode() const { return _archiveSortMode; }
+  WildcardSortMode fileSortMode() const { return _fileSortMode; }
+
 private:
-  StringRef _fileName;
+  StringRef _memberName;
   StringRef _archiveName;
   bool _keep;
   WildcardSortMode _fileSortMode;
@@ -723,6 +734,8 @@ private:
 class OutputSectionDescription : public Command {
 public:
   enum Constraint { C_None, C_OnlyIfRO, C_OnlyIfRW };
+
+  typedef llvm::ArrayRef<const Command *>::const_iterator const_iterator;
 
   OutputSectionDescription(
       Parser &ctx, StringRef sectionName, const Expression *address,
@@ -748,6 +761,10 @@ public:
   }
 
   void dump(raw_ostream &os) const override;
+
+  const_iterator begin() const { return _outputSectionCommands.begin(); }
+  const_iterator end() const { return _outputSectionCommands.end(); }
+  StringRef name() const { return _sectionName; }
 
 private:
   StringRef _sectionName;
@@ -1174,13 +1191,193 @@ private:
   Token _bufferedToken;
 };
 
+/// script::Sema traverses all parsed linker script structures and populate
+/// internal data structures to be able to answer the following questions:
+///
+///   * According to the linker script, which input section goes first in the
+///     output file layout, input section A or input section B?
+///
+///   * What is the name of the output section that input section A should be
+///     mapped to?
+///
+///   * Which linker script expressions should be calculated before emitting
+///     a given section?
+///
+///   * How to evaluate a given linker script expression?
+///
+class Sema {
+public:
+  /// From the linker script point of view, this class represents the minimum
+  /// set of information to uniquely identify an input section.
+  struct SectionKey {
+    StringRef archivePath;
+    StringRef memberPath;
+    StringRef sectionName;
+  };
+
+  Sema();
+
+  /// We can parse several linker scripts via command line whose ASTs are stored
+  /// here via addLinkerScript().
+  void addLinkerScript(std::unique_ptr<Parser> script) {
+    _scripts.push_back(std::move(script));
+  }
+
+  const std::vector<std::unique_ptr<Parser>> &getLinkerScripts() {
+    return _scripts;
+  }
+
+  /// Prepare our data structures according to the linker scripts currently in
+  /// our control (control given via addLinkerScript()). Called once all linker
+  /// scripts have been parsed.
+  void perform();
+
+  /// Answer if we have layout commands (section mapping rules). If we don't,
+  /// the output file writer can assume there is no linker script special rule
+  /// to handle.
+  bool hasLayoutCommands() const { return _layoutCommands.size() > 0; }
+
+  /// Return true if this section has a mapping rule in the linker script
+  bool hasMapping(const SectionKey &key) const {
+    return getLayoutOrder(key, true) >= 0;
+  }
+
+  /// Order function - used to sort input sections in the output file according
+  /// to linker script custom mappings. Return true if lhs should appear before
+  /// rhs.
+  bool less(const SectionKey &lhs, const SectionKey &rhs) const;
+
+  /// Retrieve the name of the output section that this input section is mapped
+  /// to, according to custom linker script mappings.
+  StringRef getOutputSection(const SectionKey &key) const;
+
+  /// Retrieve all the linker script expressions that need to be evaluated
+  /// before the given section is emitted. This is *not* const because the
+  /// first section to retrieve a given set of expression is the only one to
+  /// receive it. This set is marked as "delivered" and no other sections can
+  /// retrieve this set again. If we don't do this, multiple sections may map
+  /// to the same set of expressions because of wildcards rules.
+  std::vector<const SymbolAssignment *> getExprs(const SectionKey &key);
+
+  /// Evaluate a single linker script expression according to our current
+  /// context (symbol table). This function is *not* constant because it can
+  /// update our symbol table with new symbols calculated in this expression.
+  std::error_code evalExpr(const SymbolAssignment *assgn, uint64_t &curPos);
+
+  void dump() const;
+
+private:
+  /// A custom hash operator to teach the STL how to handle our custom keys.
+  /// This will be used in our hash table mapping Sections to a Layout Order
+  /// number (caching results).
+  struct SectionKeyHash {
+    int64_t operator()(const SectionKey &k) const {
+      return llvm::hash_combine(k.archivePath, k.memberPath, k.sectionName);
+    }
+  };
+
+  /// Teach the STL when two section keys are the same. This will be used in
+  /// our hash table mapping Sections to a Layout Order number (caching results)
+  struct SectionKeyEq {
+    bool operator()(const SectionKey &lhs, const SectionKey &rhs) const {
+      return ((lhs.archivePath == rhs.archivePath) &&
+              (lhs.memberPath == rhs.memberPath) &&
+              (lhs.sectionName == rhs.sectionName));
+    }
+  };
+
+  /// Given an order id, check if it matches the tuple
+  /// <archivePath, memberPath, sectionName> and returns the
+  /// internal id that matched, or -1 if no matches.
+  int matchSectionName(int id, const SectionKey &key) const;
+
+  /// Returns a number that will determine the order of this input section
+  /// in the final layout. If coarse is true, we simply return the layour order
+  /// of the higher-level node InputSectionsCmd, used to order input sections.
+  /// If coarse is false, we return the layout index down to the internal
+  /// InputSectionsCmd arrangement, used to get the set of preceding linker
+  ///expressions.
+  int getLayoutOrder(const SectionKey &key, bool coarse) const;
+
+  /// Compare two sections that have the same mapping rule (i.e., are matched
+  /// by the same InputSectionsCmd).
+  /// Determine if lhs < rhs by analyzing the InputSectionsCmd structure.
+  bool localCompare(int order, const SectionKey &lhs,
+                    const SectionKey &rhs) const;
+
+
+  /// Our goal with all linearizeAST overloaded functions is to
+  /// traverse the linker script AST while putting nodes in a vector and
+  /// thus enforcing order among nodes (which comes first).
+  ///
+  /// The order among nodes is determined by their indexes in this vector
+  /// (_layoutCommands). This index allows us to solve the problem of
+  /// establishing the order among two different input sections: we match each
+  /// input sections with their respective layout command and use the indexes
+  /// of these commands to order these sections.
+  ///
+  /// Example:
+  ///
+  ///     Given the linker script:
+  ///       SECTIONS {
+  ///         .text : { *(.text) }
+  ///         .data : { *(.data) }
+  ///       }
+  ///
+  ///     The _layoutCommands vector should contain:
+  ///         id 0 : <OutputSectionDescription> (_sectionName = ".text")
+  ///         id 1 : <InputSectionsCmd> (_memberName = "*")
+  ///         id 2 : <InputSectionName> (_name = ".text)
+  ///         id 3 : <OutputSectionDescription> (_sectionName = ".data")
+  ///         id 4 : <InputSectionsCmd> (_memberName = "*")
+  ///         id 5 : <InputSectionName> (_name = ".data")
+  ///
+  ///     If we need to sort the following input sections:
+  ///
+  ///     input section A:  .text from libc.a (member errno.o)
+  ///     input section B:  .data from libc.a (member write.o)
+  ///
+  ///     Then we match input section A with the InputSectionsCmd of id 1, and
+  ///     input section B with the InputSectionsCmd of id 4. Since 1 < 4, we
+  ///     put A before B.
+  ///
+  /// The second problem handled by the linearization of the AST is the task
+  /// of finding all preceding expressions that need to be calculated before
+  /// emitting a given section. This task is easier to deal with when all nodes
+  /// are in a vector because otherwise we would need to traverse multiple
+  /// levels of the AST to find the set of expressions that preceed a layout
+  /// command.
+  ///
+  /// The linker script commands that are linearized ("layout commands") are:
+  ///
+  ///   * OutputSectionDescription, containing an output section name
+  ///   * InputSectionsCmd, containing an input file name
+  ///   * InputSectionName, containing a single input section name
+  ///   * InputSectionSortedName, a group of input section names
+  ///   * SymbolAssignment, containing an expression that may
+  ///     change the address where the linker is outputting data
+  ///
+  void linearizeAST(const Sections *sections);
+  void linearizeAST(const InputSectionsCmd *inputSections);
+  void linearizeAST(const InputSection *inputSection);
+
+  void perform(const LinkerScript *ls);
+
+  std::vector<std::unique_ptr<Parser>> _scripts;
+  std::vector<const Command *> _layoutCommands;
+  std::unordered_multimap<std::string, int> _memberToLayoutOrder;
+  std::vector<std::pair<StringRef, int>> _memberNameWildcards;
+  mutable std::unordered_map<SectionKey, int, SectionKeyHash, SectionKeyEq>
+      _cacheSectionOrder, _cacheExpressionOrder;
+  llvm::DenseSet<int> _deliveredExprs;
+
+  Expression::SymbolTableTy _symbolTable;
+};
+
 llvm::BumpPtrAllocator &Command::getAllocator() const {
   return _ctx.getAllocator();
 }
 llvm::BumpPtrAllocator &Expression::getAllocator() const {
-  return _ctx.getAllocator();
-}
-llvm::BumpPtrAllocator &InputSection::getAllocator() const {
   return _ctx.getAllocator();
 }
 } // end namespace script

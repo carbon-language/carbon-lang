@@ -39,7 +39,8 @@ public:
                        SectionHeader, ///< Section header
                        ELFSegment,    ///< Segment
                        ELFSection,    ///< Section
-                       AtomSection    ///< A section containing atoms.
+                       AtomSection,   ///< A section containing atoms.
+                       Expression     ///< A linker script expression
   };
   /// \brief the ContentType of the chunk
   enum ContentType : uint8_t{ Unknown, Header, Code, Data, Note, TLS };

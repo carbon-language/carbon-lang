@@ -29,7 +29,7 @@ public:
     ORDER_SDATA = 205
   };
 
-  HexagonTargetLayout(const HexagonLinkingContext &hti)
+  HexagonTargetLayout(HexagonLinkingContext &hti)
       : TargetLayout<HexagonELFType>(hti), _sdataSection(nullptr),
         _gotSymAtom(nullptr), _cachedGotSymAtom(false) {
     _sdataSection = new (_alloc) SDataSection<HexagonELFType>(hti);

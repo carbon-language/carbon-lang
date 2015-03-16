@@ -246,9 +246,10 @@ TEST_F(LinkerScriptTest, ExprEval) {
   parse("SECTIONS { symbol = 0x4000 + 0x40; \n"
         ". = (symbol >= 0x4040)? (0x5001 * 2 & 0xFFF0) << 1 : 0}");
 
-  EXPECT_EQ((size_t)1, _ctx->scripts().size());
+  EXPECT_EQ((size_t)1, _ctx->linkerScriptSema().getLinkerScripts().size());
 
-  script::LinkerScript *ls = _ctx->scripts()[0]->get();
+  script::LinkerScript *ls =
+      _ctx->linkerScriptSema().getLinkerScripts()[0]->get();
   EXPECT_EQ((size_t)1, ls->_commands.size());
 
   auto *secs = dyn_cast<const script::Sections>(*ls->_commands.begin());

@@ -47,7 +47,7 @@ ELFLinkingContext::ELFLinkingContext(
       _mergeRODataToTextSegment(true), _demangle(true),
       _stripSymbols(false), _alignSegments(true), _collectStats(false),
       _outputMagic(OutputMagic::DEFAULT), _initFunction("_init"),
-      _finiFunction("_fini"), _sysrootPath("") {}
+      _finiFunction("_fini"), _sysrootPath(""), _linkerScriptSema() {}
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
   pm.add(llvm::make_unique<elf::OrderPass>());
