@@ -112,22 +112,22 @@ bool RRInfo::Merge(const RRInfo &Other) {
 //===----------------------------------------------------------------------===//
 
 void PtrState::SetKnownPositiveRefCount() {
-  DEBUG(dbgs() << "Setting Known Positive.\n");
+  DEBUG(dbgs() << "        Setting Known Positive.\n");
   KnownPositiveRefCount = true;
 }
 
 void PtrState::ClearKnownPositiveRefCount() {
-  DEBUG(dbgs() << "Clearing Known Positive.\n");
+  DEBUG(dbgs() << "        Clearing Known Positive.\n");
   KnownPositiveRefCount = false;
 }
 
 void PtrState::SetSeq(Sequence NewSeq) {
-  DEBUG(dbgs() << "Old: " << Seq << "; New: " << NewSeq << "\n");
+  DEBUG(dbgs() << "            Old: " << GetSeq() << "; New: " << NewSeq << "\n");
   Seq = NewSeq;
 }
 
 void PtrState::ResetSequenceProgress(Sequence NewSeq) {
-  DEBUG(dbgs() << "Resetting sequence progress.\n");
+  DEBUG(dbgs() << "        Resetting sequence progress.\n");
   SetSeq(NewSeq);
   Partial = false;
   RRI.clear();
@@ -170,7 +170,7 @@ bool BottomUpPtrState::InitBottomUp(ARCMDKindCache &Cache, Instruction *I) {
   // simple and avoids adding overhead for the non-nested case.
   bool NestingDetected = false;
   if (GetSeq() == S_Release || GetSeq() == S_MovableRelease) {
-    DEBUG(dbgs() << "Found nested releases (i.e. a release pair)\n");
+    DEBUG(dbgs() << "        Found nested releases (i.e. a release pair)\n");
     NestingDetected = true;
   }
 
@@ -214,14 +214,15 @@ bool BottomUpPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
                                                     const Value *Ptr,
                                                     ProvenanceAnalysis &PA,
                                                     ARCInstKind Class) {
-  Sequence Seq = GetSeq();
+  Sequence S = GetSeq();
 
   // Check for possible releases.
   if (!CanAlterRefCount(Inst, Ptr, PA, Class))
     return false;
 
-  DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr << "\n");
-  switch (Seq) {
+  DEBUG(dbgs() << "            CanAlterRefCount: Seq: " << S << "; " << *Ptr
+               << "\n");
+  switch (S) {
   case S_Use:
     SetSeq(S_CanRelease);
     return true;
@@ -246,7 +247,8 @@ void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
   case S_Release:
   case S_MovableRelease:
     if (CanUse(Inst, Ptr, PA, Class)) {
-      DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr << "\n");
+      DEBUG(dbgs() << "            CanUse: Seq: " << GetSeq() << "; " << *Ptr
+                   << "\n");
       assert(!HasReverseInsertPts());
       // If this is an invoke instruction, we're scanning it as part of
       // one of its successor blocks, since we can't insert code after it
@@ -257,8 +259,8 @@ void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
         InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
       SetSeq(S_Use);
     } else if (Seq == S_Release && IsUser(Class)) {
-      DEBUG(dbgs() << "PreciseReleaseUse: Seq: " << Seq << "; " << *Ptr
-                   << "\n");
+      DEBUG(dbgs() << "            PreciseReleaseUse: Seq: " << GetSeq() << "; "
+                   << *Ptr << "\n");
       // Non-movable releases depend on any possible objc pointer use.
       SetSeq(S_Stop);
       assert(!HasReverseInsertPts());
@@ -271,7 +273,8 @@ void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
     break;
   case S_Stop:
     if (CanUse(Inst, Ptr, PA, Class)) {
-      DEBUG(dbgs() << "PreciseStopUse: Seq: " << Seq << "; " << *Ptr << "\n");
+      DEBUG(dbgs() << "            PreciseStopUse: Seq: " << GetSeq() << "; "
+                   << *Ptr << "\n");
       SetSeq(S_Use);
     }
     break;
@@ -350,9 +353,10 @@ bool TopDownPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
   if (!CanAlterRefCount(Inst, Ptr, PA, Class))
     return false;
 
-  DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr << "\n");
+  DEBUG(dbgs() << "            CanAlterRefCount: Seq: " << GetSeq() << "; " << *Ptr
+               << "\n");
   ClearKnownPositiveRefCount();
-  switch (Seq) {
+  switch (GetSeq()) {
   case S_Retain:
     SetSeq(S_CanRelease);
     assert(!HasReverseInsertPts());
@@ -382,7 +386,8 @@ void TopDownPtrState::HandlePotentialUse(Instruction *Inst, const Value *Ptr,
   case S_CanRelease:
     if (!CanUse(Inst, Ptr, PA, Class))
       return;
-    DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr << "\n");
+    DEBUG(dbgs() << "             CanUse: Seq: " << GetSeq() << "; " << *Ptr
+                 << "\n");
     SetSeq(S_Use);
     return;
   case S_Retain:

@@ -99,5 +99,10 @@ public:
     Map.clear();
     Vector.clear();
   }
+
+  bool empty() const {
+    assert(Map.empty() == Vector.empty());
+    return Map.empty();
+  }
 };
 } //
