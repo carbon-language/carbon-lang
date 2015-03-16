@@ -1,7 +1,7 @@
 #RUN: yaml2obj -format=elf %s > %t
 #RUN: lld -flavor gnu -target x86_64-linux %t --noinhibit-exec \
 #RUN:   -o %t1
-#RUN: llvm-readobj -s %t1 | FileCheck %s
+#RUN: llvm-objdump -s %t1 | FileCheck %s
 
 !ELF
 FileHeader:
@@ -23,4 +23,8 @@ Symbols:
     Type: STT_SECTION
     Section: .eh_frame
 
-#CHECK: .eh_frame_hdr
+# CHECK:      Contents of section .eh_frame:
+# CHECK-NEXT:  4001e0 00
+# CHECK-NEXT: Contents of section .eh_frame_hdr:
+# CHECK-NEXT:  4001e8 011bffff f4ffffff
+#                              ^ 0x4001e0 - 0x4001e8 - 4 = 0xfffffff4

@@ -1450,7 +1450,8 @@ template <class ELFT> class EHFrameHeader : public Section<ELFT> {
 public:
   EHFrameHeader(const ELFLinkingContext &context, StringRef name,
                 TargetLayout<ELFT> &layout, int32_t order)
-      : Section<ELFT>(context, name, "EHFrameHeader"), _layout(layout) {
+      : Section<ELFT>(context, name, "EHFrameHeader"), _ehFrameOffset(0),
+        _layout(layout) {
     this->setOrder(order);
     this->_entSize = 0;
     this->_type = SHT_PROGBITS;
@@ -1467,24 +1468,27 @@ public:
 
   void finalize() override {
     OutputSection<ELFT> *s = _layout.findOutputSection(".eh_frame");
-    _ehFrameAddr = s ? s->virtualAddr() : 0;
+    OutputSection<ELFT> *h = _layout.findOutputSection(".eh_frame_hdr");
+    if (s && h)
+      _ehFrameOffset = s->virtualAddr() - (h->virtualAddr() + 4);
   }
 
-  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-                     llvm::FileOutputBuffer &buffer) override {
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     int pos = 0;
     dest[pos++] = 1; // version
-    dest[pos++] = llvm::dwarf::DW_EH_PE_udata4; // eh_frame_ptr_enc
+    dest[pos++] = llvm::dwarf::DW_EH_PE_pcrel |
+                  llvm::dwarf::DW_EH_PE_sdata4; // eh_frame_ptr_enc
     dest[pos++] = llvm::dwarf::DW_EH_PE_omit; // fde_count_enc
     dest[pos++] = llvm::dwarf::DW_EH_PE_omit; // table_enc
-    *reinterpret_cast<typename llvm::object::ELFFile<ELFT>::Elf_Word *>(
-         dest + pos) = (uint32_t)_ehFrameAddr;
+    *reinterpret_cast<typename llvm::object::ELFFile<ELFT>::Elf_Sword *>(
+        dest + pos) = _ehFrameOffset;
   }
 
 private:
-  uint64_t _ehFrameAddr;
+  int32_t _ehFrameOffset;
   TargetLayout<ELFT> &_layout;
 };
 } // end namespace elf
