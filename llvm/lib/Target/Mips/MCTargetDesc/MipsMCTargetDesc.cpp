@@ -119,15 +119,11 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   return S;
 }
 
-static MCStreamer *
-createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                    bool isVerboseAsm, bool useDwarfDirectory,
-                    MCInstPrinter *InstPrint, MCCodeEmitter *CE,
-                    MCAsmBackend *TAB, bool ShowInst) {
-  MCStreamer *S = llvm::createAsmStreamer(
-      Ctx, OS, isVerboseAsm, useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
-  new MipsTargetAsmStreamer(*S, OS);
-  return S;
+static MCTargetStreamer *createMipsAsmTargetStreamer(MCStreamer &S,
+                                                     formatted_raw_ostream &OS,
+                                                     MCInstPrinter *InstPrint,
+                                                     bool isVerboseAsm) {
+  return new MipsTargetAsmStreamer(S, OS);
 }
 
 static MCTargetStreamer *createMipsNullTargetStreamer(MCStreamer &S) {
@@ -183,10 +179,14 @@ extern "C" void LLVMInitializeMipsTargetMC() {
                                            createMCStreamer);
 
   // Register the asm streamer.
-  TargetRegistry::RegisterAsmStreamer(TheMipsTarget, createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheMipselTarget, createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheMips64Target, createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheMips64elTarget, createMCAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheMipsTarget,
+                                            createMipsAsmTargetStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheMipselTarget,
+                                            createMipsAsmTargetStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheMips64Target,
+                                            createMipsAsmTargetStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheMips64elTarget,
+                                            createMipsAsmTargetStreamer);
 
   TargetRegistry::RegisterNullTargetStreamer(TheMipsTarget,
                                              createMipsNullTargetStreamer);

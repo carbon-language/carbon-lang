@@ -131,16 +131,11 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   return S;
 }
 
-static MCStreamer *
-createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                    bool isVerboseAsm, bool useDwarfDirectory,
-                    MCInstPrinter *InstPrint, MCCodeEmitter *CE,
-                    MCAsmBackend *TAB, bool ShowInst) {
-
-  MCStreamer *S = llvm::createAsmStreamer(
-      Ctx, OS, isVerboseAsm, useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
-  new SparcTargetAsmStreamer(*S, OS);
-  return S;
+static MCTargetStreamer *createTargetAsmStreamer(MCStreamer &S,
+                                                 formatted_raw_ostream &OS,
+                                                 MCInstPrinter *InstPrint,
+                                                 bool isVerboseAsm) {
+  return new SparcTargetAsmStreamer(S, OS);
 }
 
 static MCInstPrinter *createSparcMCInstPrinter(const Target &T,
@@ -197,10 +192,10 @@ extern "C" void LLVMInitializeSparcTargetMC() {
                                            createMCStreamer);
 
   // Register the asm streamer.
-  TargetRegistry::RegisterAsmStreamer(TheSparcTarget,
-                                      createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheSparcV9Target,
-                                      createMCAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheSparcTarget,
+                                            createTargetAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheSparcV9Target,
+                                            createTargetAsmStreamer);
 
   // Register the MCInstPrinter
   TargetRegistry::RegisterMCInstPrinter(TheSparcTarget,

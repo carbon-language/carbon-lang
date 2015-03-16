@@ -28,6 +28,7 @@ class MCRegisterInfo;
 class MCObjectWriter;
 class MCStreamer;
 class MCSubtargetInfo;
+class MCTargetStreamer;
 class StringRef;
 class Target;
 class raw_ostream;
@@ -52,11 +53,10 @@ MCObjectWriter *createAArch64ELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
 MCObjectWriter *createAArch64MachObjectWriter(raw_ostream &OS, uint32_t CPUType,
                                             uint32_t CPUSubtype);
 
-MCStreamer *
-createAArch64MCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                           bool isVerboseAsm, bool useDwarfDirectory,
-                           MCInstPrinter *InstPrint, MCCodeEmitter *CE,
-                           MCAsmBackend *TAB, bool ShowInst);
+MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
+                                                 formatted_raw_ostream &OS,
+                                                 MCInstPrinter *InstPrint,
+                                                 bool isVerboseAsm);
 } // End llvm namespace
 
 // Defines symbolic names for AArch64 registers.  This defines a mapping from

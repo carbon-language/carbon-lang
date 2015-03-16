@@ -47,12 +47,11 @@ namespace ARM_MC {
                                             StringRef FS);
 }
 
-MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                bool isVerboseAsm, bool useDwarfDirectory,
-                                MCInstPrinter *InstPrint, MCCodeEmitter *CE,
-                                MCAsmBackend *TAB, bool ShowInst);
-
 MCTargetStreamer *createARMNullTargetStreamer(MCStreamer &S);
+MCTargetStreamer *createARMTargetAsmStreamer(MCStreamer &S,
+                                             formatted_raw_ostream &OS,
+                                             MCInstPrinter *InstPrint,
+                                             bool isVerboseAsm);
 
 MCCodeEmitter *createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,

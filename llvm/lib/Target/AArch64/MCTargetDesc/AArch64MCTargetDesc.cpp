@@ -199,12 +199,12 @@ extern "C" void LLVMInitializeAArch64TargetMC() {
   TargetRegistry::RegisterMCObjectStreamer(TheARM64Target, createMCStreamer);
 
   // Register the asm streamer.
-  TargetRegistry::RegisterAsmStreamer(TheAArch64leTarget,
-                                      createAArch64MCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheAArch64beTarget,
-                                      createAArch64MCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheARM64Target,
-                                      createAArch64MCAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheAArch64leTarget,
+                                            createAArch64AsmTargetStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheAArch64beTarget,
+                                            createAArch64AsmTargetStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheARM64Target,
+                                            createAArch64AsmTargetStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(TheAArch64leTarget,

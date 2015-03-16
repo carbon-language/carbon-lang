@@ -203,15 +203,11 @@ void AArch64TargetELFStreamer::emitInst(uint32_t Inst) {
 }
 
 namespace llvm {
-MCStreamer *
-createAArch64MCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                           bool isVerboseAsm, bool useDwarfDirectory,
-                           MCInstPrinter *InstPrint, MCCodeEmitter *CE,
-                           MCAsmBackend *TAB, bool ShowInst) {
-  MCStreamer *S = llvm::createAsmStreamer(
-      Ctx, OS, isVerboseAsm, useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
-  new AArch64TargetAsmStreamer(*S, OS);
-  return S;
+MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
+                                                 formatted_raw_ostream &OS,
+                                                 MCInstPrinter *InstPrint,
+                                                 bool isVerboseAsm) {
+  return new AArch64TargetAsmStreamer(S, OS);
 }
 
 MCELFStreamer *createAArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,

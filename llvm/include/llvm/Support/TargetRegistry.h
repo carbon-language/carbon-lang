@@ -130,15 +130,10 @@ namespace llvm {
         const Target &T, StringRef TT, MCContext &Ctx, MCAsmBackend &TAB,
         raw_ostream &OS, MCCodeEmitter *Emitter, const MCSubtargetInfo &STI,
         bool RelaxAll);
-    typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
-                                             formatted_raw_ostream &OS,
-                                             bool isVerboseAsm,
-                                             bool useDwarfDirectory,
-                                             MCInstPrinter *InstPrint,
-                                             MCCodeEmitter *CE,
-                                             MCAsmBackend *TAB,
-                                             bool ShowInst);
     typedef MCTargetStreamer *(*NullTargetStreamerCtorTy)(MCStreamer &S);
+    typedef MCTargetStreamer *(*AsmTargetStreamerCtorTy)(
+        MCStreamer &S, formatted_raw_ostream &OS, MCInstPrinter *InstPrint,
+        bool IsVerboseAsm);
     typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(StringRef TT,
                                                         MCContext &Ctx);
     typedef MCSymbolizer *(*MCSymbolizerCtorTy)(
@@ -219,13 +214,13 @@ namespace llvm {
     /// MCObjectStreamer, if registered.
     MCObjectStreamerCtorTy MCObjectStreamerCtorFn;
 
-    /// AsmStreamerCtorFn - Construction function for this target's
-    /// AsmStreamer, if registered (default = llvm::createAsmStreamer).
-    AsmStreamerCtorTy AsmStreamerCtorFn;
-
     /// Construction function for this target's null TargetStreamer, if
     /// registered (default = nullptr).
     NullTargetStreamerCtorTy NullTargetStreamerCtorFn;
+
+    /// Construction function for this target's asm TargetStreamer, if
+    /// registered (default = nullptr).
+    AsmTargetStreamerCtorTy AsmTargetStreamerCtorFn;
 
     /// MCRelocationInfoCtorFn - Construction function for this target's
     /// MCRelocationInfo, if registered (default = llvm::createMCRelocationInfo)
@@ -237,8 +232,8 @@ namespace llvm {
 
   public:
     Target()
-        : AsmStreamerCtorFn(nullptr), MCRelocationInfoCtorFn(nullptr),
-          MCSymbolizerCtorFn(nullptr) {}
+        : NullTargetStreamerCtorFn(nullptr), AsmTargetStreamerCtorFn(nullptr),
+          MCRelocationInfoCtorFn(nullptr), MCSymbolizerCtorFn(nullptr) {}
 
     /// @name Target Information
     /// @{
@@ -430,20 +425,24 @@ namespace llvm {
                                     RelaxAll);
     }
 
-    /// createAsmStreamer - Create a target specific MCStreamer.
-    MCStreamer *createAsmStreamer(MCContext &Ctx,
-                                  formatted_raw_ostream &OS,
-                                  bool isVerboseAsm,
-                                  bool useDwarfDirectory,
-                                  MCInstPrinter *InstPrint,
-                                  MCCodeEmitter *CE,
-                                  MCAsmBackend *TAB,
-                                  bool ShowInst) const {
-      if (AsmStreamerCtorFn)
-        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useDwarfDirectory,
-                                 InstPrint, CE, TAB, ShowInst);
-      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useDwarfDirectory,
-                                     InstPrint, CE, TAB, ShowInst);
+    MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+                                  bool IsVerboseAsm, bool UseDwarfDirectory,
+                                  MCInstPrinter *InstPrint, MCCodeEmitter *CE,
+                                  MCAsmBackend *TAB, bool ShowInst) const {
+      MCStreamer *S =
+          llvm::createAsmStreamer(Ctx, OS, IsVerboseAsm, UseDwarfDirectory,
+                                  InstPrint, CE, TAB, ShowInst);
+      createAsmTargetStreamer(*S, OS, InstPrint, IsVerboseAsm);
+      return S;
+    }
+
+    MCTargetStreamer *createAsmTargetStreamer(MCStreamer &S,
+                                              formatted_raw_ostream &OS,
+                                              MCInstPrinter *InstPrint,
+                                              bool IsVerboseAsm) const {
+      if (AsmTargetStreamerCtorFn)
+        return AsmTargetStreamerCtorFn(S, OS, InstPrint, IsVerboseAsm);
+      return nullptr;
     }
 
     MCStreamer *createNullStreamer(MCContext &Ctx) const {
@@ -771,22 +770,14 @@ namespace llvm {
       T.MCObjectStreamerCtorFn = Fn;
     }
 
-    /// RegisterAsmStreamer - Register an assembly MCStreamer implementation
-    /// for the given target.
-    ///
-    /// Clients are responsible for ensuring that registration doesn't occur
-    /// while another thread is attempting to access the registry. Typically
-    /// this is done by initializing all targets at program startup.
-    ///
-    /// @param T - The target being registered.
-    /// @param Fn - A function to construct an MCStreamer for the target.
-    static void RegisterAsmStreamer(Target &T, Target::AsmStreamerCtorTy Fn) {
-      T.AsmStreamerCtorFn = Fn;
-    }
-
     static void
     RegisterNullTargetStreamer(Target &T, Target::NullTargetStreamerCtorTy Fn) {
       T.NullTargetStreamerCtorFn = Fn;
+    }
+
+    static void RegisterAsmTargetStreamer(Target &T,
+                                          Target::AsmTargetStreamerCtorTy Fn) {
+      T.AsmTargetStreamerCtorFn = Fn;
     }
 
     /// RegisterMCRelocationInfo - Register an MCRelocationInfo

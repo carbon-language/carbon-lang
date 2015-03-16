@@ -450,10 +450,14 @@ extern "C" void LLVMInitializeARMTargetMC() {
   TargetRegistry::RegisterMCObjectStreamer(TheThumbBETarget, createMCStreamer);
 
   // Register the asm streamer.
-  TargetRegistry::RegisterAsmStreamer(TheARMLETarget, createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheARMBETarget, createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheThumbLETarget, createMCAsmStreamer);
-  TargetRegistry::RegisterAsmStreamer(TheThumbBETarget, createMCAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheARMLETarget,
+                                            createARMTargetAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheARMBETarget,
+                                            createARMTargetAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheThumbLETarget,
+                                            createARMTargetAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheThumbBETarget,
+                                            createARMTargetAsmStreamer);
 
   // Register the null TargetStreamer.
   TargetRegistry::RegisterNullTargetStreamer(TheARMLETarget,

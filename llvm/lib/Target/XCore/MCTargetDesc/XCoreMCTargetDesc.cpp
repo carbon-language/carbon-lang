@@ -126,15 +126,11 @@ void XCoreTargetAsmStreamer::emitCCBottomFunction(StringRef Name) {
 }
 }
 
-static MCStreamer *
-createXCoreMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                         bool isVerboseAsm, bool useDwarfDirectory,
-                         MCInstPrinter *InstPrint, MCCodeEmitter *CE,
-                         MCAsmBackend *TAB, bool ShowInst) {
-  MCStreamer *S = llvm::createAsmStreamer(
-      Ctx, OS, isVerboseAsm, useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
-  new XCoreTargetAsmStreamer(*S, OS);
-  return S;
+static MCTargetStreamer *createTargetAsmStreamer(MCStreamer &S,
+                                                 formatted_raw_ostream &OS,
+                                                 MCInstPrinter *InstPrint,
+                                                 bool isVerboseAsm) {
+  return new XCoreTargetAsmStreamer(S, OS);
 }
 
 // Force static initialization.
@@ -160,5 +156,6 @@ extern "C" void LLVMInitializeXCoreTargetMC() {
   TargetRegistry::RegisterMCInstPrinter(TheXCoreTarget,
                                         createXCoreMCInstPrinter);
 
-  TargetRegistry::RegisterAsmStreamer(TheXCoreTarget, createXCoreMCAsmStreamer);
+  TargetRegistry::RegisterAsmTargetStreamer(TheXCoreTarget,
+                                            createTargetAsmStreamer);
 }
