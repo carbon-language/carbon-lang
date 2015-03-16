@@ -3078,15 +3078,11 @@ void DebugInfoVerifier::processCallInst(DebugInfoFinder &Finder,
       case Intrinsic::dbg_declare: {
         auto *DDI = cast<DbgDeclareInst>(&CI);
         Finder.processDeclare(*M, DDI);
-        if (auto E = DDI->getExpression())
-          Assert(DIExpression(E).Verify(), "DIExpression does not Verify!", E);
         break;
       }
       case Intrinsic::dbg_value: {
         auto *DVI = cast<DbgValueInst>(&CI);
         Finder.processValue(*M, DVI);
-        if (auto E = DVI->getExpression())
-          Assert(DIExpression(E).Verify(), "DIExpression does not Verify!", E);
         break;
       }
       default:

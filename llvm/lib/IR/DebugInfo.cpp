@@ -92,7 +92,7 @@ bool DIDescriptor::Verify() const {
           DIObjCProperty(DbgNode).Verify() ||
           DITemplateTypeParameter(DbgNode).Verify() ||
           DITemplateValueParameter(DbgNode).Verify() ||
-          DIImportedEntity(DbgNode).Verify() || DIExpression(DbgNode).Verify());
+          DIImportedEntity(DbgNode).Verify());
 }
 
 static Metadata *getField(const MDNode *DbgNode, unsigned Elt) {
@@ -400,12 +400,6 @@ bool DIVariable::Verify() const {
       return false;
 
   return isTypeRef(N->getType());
-}
-
-bool DIExpression::Verify() const {
-  // FIXME: This should return false if it's null!
-  auto *N = getRaw();
-  return !N || N->isValid();
 }
 
 bool DILocation::Verify() const { return getRaw(); }

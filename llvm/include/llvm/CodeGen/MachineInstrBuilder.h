@@ -356,7 +356,7 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
   assert(DIVariable(Variable).Verify() && "not a DIVariable");
-  assert(DIExpression(Expr).Verify() && "not a DIExpression");
+  assert(DIExpression(Expr)->isValid() && "not a DIExpression");
   if (IsIndirect)
     return BuildMI(MF, DL, MCID)
         .addReg(Reg, RegState::Debug)
@@ -383,7 +383,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
   assert(DIVariable(Variable).Verify() && "not a DIVariable");
-  assert(DIExpression(Expr).Verify() && "not a DIExpression");
+  assert(DIExpression(Expr)->isValid() && "not a DIExpression");
   MachineFunction &MF = *BB.getParent();
   MachineInstr *MI =
       BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, Variable, Expr);

@@ -989,21 +989,24 @@ public:
 /// FIXME: Instead of DW_OP_plus taking an argument, this should use DW_OP_const
 /// and have DW_OP_plus consume the topmost elements on the stack.
 class DIExpression : public DIDescriptor {
-  MDExpression *getRaw() const { return dyn_cast_or_null<MDExpression>(get()); }
-
 public:
   explicit DIExpression(const MDNode *N = nullptr) : DIDescriptor(N) {}
   DIExpression(const MDExpression *N) : DIDescriptor(N) {}
 
-  bool Verify() const;
+  MDExpression *get() const {
+    return cast_or_null<MDExpression>(DIDescriptor::get());
+  }
+  operator MDExpression *() const { return get(); }
+  MDExpression *operator->() const { return get(); }
+
+  // Don't call this.  Call isValid() directly.
+  bool Verify() const = delete;
 
   /// \brief Return the number of elements in the complex expression.
-  unsigned getNumElements() const { RETURN_FROM_RAW(N->getNumElements(), 0); }
+  unsigned getNumElements() const { return get()->getNumElements(); }
 
   /// \brief return the Idx'th complex address element.
-  uint64_t getElement(unsigned I) const {
-    return cast<MDExpression>(get())->getElement(I);
-  }
+  uint64_t getElement(unsigned I) const { return get()->getElement(I); }
 
   /// \brief Return whether this is a piece of an aggregate variable.
   bool isBitPiece() const;
@@ -1069,8 +1072,8 @@ public:
     }
   };
 
-  iterator begin() const { return cast<MDExpression>(get())->elements_begin(); }
-  iterator end() const { return cast<MDExpression>(get())->elements_end(); }
+  iterator begin() const { return get()->elements_begin(); }
+  iterator end() const { return get()->elements_end(); }
 };
 
 /// \brief This object holds location information.

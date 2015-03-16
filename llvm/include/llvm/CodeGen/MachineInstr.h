@@ -257,9 +257,7 @@ public:
   /// this DBG_VALUE instruction.
   DIExpression getDebugExpression() const {
     assert(isDebugValue() && "not a DBG_VALUE");
-    DIExpression Expr(getOperand(3).getMetadata());
-    assert(Expr.Verify() && "not a DIExpression");
-    return Expr;
+    return cast<MDExpression>(getOperand(3).getMetadata());
   }
 
   /// emitError - Emit an error referring to the source location of this
