@@ -461,7 +461,7 @@ void GrowShadowStack(ThreadState *thr) {
 #endif
 
 u32 CurrentStackId(ThreadState *thr, uptr pc) {
-  if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
+  if (!thr->is_inited)  // May happen during bootstrap.
     return 0;
   if (pc != 0) {
 #ifndef SANITIZER_GO

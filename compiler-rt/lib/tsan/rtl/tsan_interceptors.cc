@@ -413,7 +413,7 @@ static void JmpBufGarbageCollect(ThreadState *thr, uptr sp) {
 }
 
 static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
-  if (thr->shadow_stack_pos == 0)  // called from libc guts during bootstrap
+  if (!thr->is_inited)  // called from libc guts during bootstrap
     return;
   // Cleanup old bufs.
   JmpBufGarbageCollect(thr, sp);
@@ -669,9 +669,12 @@ TSAN_INTERCEPTOR(void*, memset, void *dst, int v, uptr size) {
 }
 
 TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
-  SCOPED_TSAN_INTERCEPTOR(memcpy, dst, src, size);
-  MemoryAccessRange(thr, pc, (uptr)dst, size, true);
-  MemoryAccessRange(thr, pc, (uptr)src, size, false);
+  // On FreeBSD we get here from libthr internals on thread initialization.
+  if (cur_thread()->is_inited) {
+    SCOPED_TSAN_INTERCEPTOR(memcpy, dst, src, size);
+    MemoryAccessRange(thr, pc, (uptr)dst, size, true);
+    MemoryAccessRange(thr, pc, (uptr)src, size, false);
+  }
   return internal_memcpy(dst, src, size);
 }
 

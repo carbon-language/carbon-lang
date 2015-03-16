@@ -120,6 +120,7 @@ void ThreadContext::OnStarted(void *arg) {
   AcquireImpl(thr, 0, &sync);
   StatInc(thr, StatSyncAcquire);
   sync.Reset(&thr->clock_cache);
+  thr->is_inited = true;
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
           tid, (uptr)epoch0, args->stk_addr, args->stk_size,

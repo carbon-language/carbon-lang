@@ -371,6 +371,7 @@ struct ThreadState {
   const int unique_id;
   bool in_symbolizer;
   bool in_ignored_lib;
+  bool is_inited;
   bool is_dead;
   bool is_freeing;
   bool is_vptr_access;
