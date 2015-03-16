@@ -134,7 +134,7 @@ bool ObjCARCContract::optimizeRetainCall(Function &F, Instruction *Retain) {
 
   // We do not have to worry about tail calls/does not throw since
   // retain/retainRV have the same properties.
-  Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_RetainRV);
+  Constant *Decl = EP.get(ARCRuntimeEntryPointKind::RetainRV);
   cast<CallInst>(Retain)->setCalledFunction(Decl);
 
   DEBUG(dbgs() << "New: " << *Retain << "\n");
@@ -181,8 +181,8 @@ bool ObjCARCContract::contractAutorelease(
                   "        Retain: " << *Retain << "\n");
 
   Constant *Decl = EP.get(Class == ARCInstKind::AutoreleaseRV
-                              ? ARCRuntimeEntryPoints::EPT_RetainAutoreleaseRV
-                              : ARCRuntimeEntryPoints::EPT_RetainAutorelease);
+                              ? ARCRuntimeEntryPointKind::RetainAutoreleaseRV
+                              : ARCRuntimeEntryPointKind::RetainAutorelease);
   Retain->setCalledFunction(Decl);
 
   DEBUG(dbgs() << "        New RetainAutorelease: " << *Retain << "\n");
@@ -380,7 +380,7 @@ void ObjCARCContract::tryToContractReleaseIntoStoreStrong(Instruction *Release,
     Args[0] = new BitCastInst(Args[0], I8XX, "", Store);
   if (Args[1]->getType() != I8X)
     Args[1] = new BitCastInst(Args[1], I8X, "", Store);
-  Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_StoreStrong);
+  Constant *Decl = EP.get(ARCRuntimeEntryPointKind::StoreStrong);
   CallInst *StoreStrong = CallInst::Create(Decl, Args, "", Store);
   StoreStrong->setDoesNotThrow();
   StoreStrong->setDebugLoc(Store->getDebugLoc());
