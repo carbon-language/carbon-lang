@@ -189,7 +189,7 @@ void CodeGenFunction::EmitOMPFirstprivateClause(
           EmitDecl(*VD);
           return GetAddrOfLocalVar(VD);
         });
-      assert(IsRegistered && "counter already registered as private");
+      assert(IsRegistered && "firstprivate var already registered as private");
       // Silence the warning about unused variable.
       (void)IsRegistered;
       ++IRef, ++InitsRef;
@@ -216,7 +216,7 @@ void CodeGenFunction::EmitOMPPrivateClause(
             EmitDecl(*VD);
             return GetAddrOfLocalVar(VD);
           });
-      assert(IsRegistered && "counter already registered as private");
+      assert(IsRegistered && "private var already registered as private");
       // Silence the warning about unused variable.
       (void)IsRegistered;
       ++IRef;
@@ -379,7 +379,6 @@ static void EmitPrivateLoopCounters(CodeGenFunction &CGF,
     // Silence the warning about unused variable.
     (void)IsRegistered;
   }
-  (void)LoopScope.Privatize();
 }
 
 void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
@@ -456,6 +455,8 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
+      EmitOMPPrivateClause(S, LoopScope);
+      (void)LoopScope.Privatize();
       EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
                        S.getCond(/*SeparateIter=*/true), S.getInc(),
                        [&S, this]() {
@@ -472,6 +473,8 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
+      EmitOMPPrivateClause(S, LoopScope);
+      (void)LoopScope.Privatize();
       EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
                        S.getCond(/*SeparateIter=*/false), S.getInc(),
                        [&S, this]() {
@@ -670,6 +673,7 @@ void CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
 
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
+      (void)LoopScope.Privatize();
 
       // Detect the loop schedule kind and chunk.
       auto ScheduleKind = OMPC_SCHEDULE_unknown;

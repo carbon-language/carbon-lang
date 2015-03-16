@@ -362,15 +362,19 @@ void collapsed(float *a, float *b, float *c, float *d) {
 }
 
 extern char foo();
+extern double globalfloat;
 
 // CHECK-LABEL: define {{.*void}} @{{.*}}widened{{.*}}
 void widened(float *a, float *b, float *c, float *d) {
   int i; // outer loop counter
   short j; // inner loop counter
+  globalfloat = 1.0;
+  int localint = 1;
+// CHECK: store double {{.+}}, double* [[GLOBALFLOAT:@.+]]
 // Counter is widened to 64 bits.
 // CHECK: store i64 0, i64* [[OMP_IV:[^,]+]]
 //
-  #pragma omp simd collapse(2)
+  #pragma omp simd collapse(2) private(globalfloat, localint)
 
 // CHECK: [[IV:%.+]] = load i64, i64* [[OMP_IV]]{{.+}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID:[0-9]+]]
 // CHECK-NEXT: [[LI:%.+]] = load i64, i64* [[OMP_LI:%[^,]+]]{{.+}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
@@ -388,19 +392,31 @@ void widened(float *a, float *b, float *c, float *d) {
 // CHECK: [[IV1_2:%.+]] = load i64, i64* [[OMP_IV]]{{.+}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
 // CHECK: store i16 {{[^,]+}}, i16* [[LC_J:.+]]
 // ... loop body ...
-// End of body: store into a[i]:
-// CHECK: store float [[RESULT:%.+]], float* [[RESULT_ADDR:%.+]]{{.+}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
+//
+// Here we expect store into private double var, not global
+// CHECK-NOT: store double {{.+}}, double* [[GLOBALFLOAT]]
+    globalfloat = (float)j/i;
     float res = b[j] * c[j];
+// Store into a[i]:
+// CHECK: store float [[RESULT:%.+]], float* [[RESULT_ADDR:%.+]]{{.+}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
     a[i] = res * d[i];
+// Then there's a store into private var localint:
+// CHECK: store i32 {{.+}}, i32* [[LOCALINT:%[^,]+]]{{.+}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
+    localint = (int)j;
 // CHECK: [[IV2:%.+]] = load i64, i64* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
 // CHECK-NEXT: [[ADD2:%.+]] = add nsw i64 [[IV2]], 1
 // CHECK-NEXT: store i64 [[ADD2]], i64* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[WIDE1_LOOP_ID]]
+//
 // br label %{{[^,]+}}, !llvm.loop ![[WIDE1_LOOP_ID]]
 // CHECK: [[WIDE1_END]]
   }
 // i,j are updated.
 // CHECK: store i32 3, i32* [[I:%[^,]+]]
 // CHECK: store i16
+//
+// Here we expect store into original localint, not its privatized version.
+// CHECK-NOT: store i32 {{.+}}, i32* [[LOCALINT]]
+  localint = (int)j;
 // CHECK: ret void
 }
 
@@ -421,6 +437,6 @@ void parallel_simd(float *a) {
   for (unsigned i = 131071; i <= 2147483647; i += 127)
     a[i] += bar();
 }
-// TERM_DEBUG: !{{[0-9]+}} = !MDLocation(line: 413,
+// TERM_DEBUG: !{{[0-9]+}} = !MDLocation(line: [[@LINE-11]],
 #endif // HEADER
 
