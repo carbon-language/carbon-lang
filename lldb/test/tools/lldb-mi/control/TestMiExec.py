@@ -230,7 +230,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-next-instruction")
         self.expect("\^running")
         # Depending on compiler, it can stop at different line
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"29\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"(29|30)\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-next-instruction --thread 0")
@@ -283,7 +283,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # (and that --thread is optional)
         self.runCmd("-exec-step --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
         # Use -exec-finish here to make sure that control reaches the caller.
         # -exec-step can keep us in the g_MyFunction for gcc
         self.runCmd("-exec-finish --frame 0")
@@ -294,13 +294,13 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # (and that --frame is optional)
         self.runCmd("-exec-step --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction.*\"")
 
         # Test that -exec-step steps into g_MyFunction from inside
         # s_MyFunction (and that both --thread and --frame are optional)
         self.runCmd("-exec-step")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-step --thread 0")
@@ -345,25 +345,25 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # instruction
         self.runCmd("-exec-step-instruction --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"2[8-9]\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\"")
 
         # Test that -exec-step-instruction steps into g_MyFunction
         # instruction (and that --thread is optional)
         self.runCmd("-exec-step-instruction --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
 
         # Test that -exec-step-instruction steps over non branching
         # (and that --frame is optional)
         self.runCmd("-exec-step-instruction --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
 
         # Test that -exec-step-instruction steps into g_MyFunction
         # (and that both --thread and --frame are optional)
         self.runCmd("-exec-step-instruction")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-step-instruction --thread 0")
@@ -418,7 +418,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # s_MyFunction (and that --frame is optional)
         self.runCmd("-exec-finish --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction.*\"")
 
         # Test that -exec-finish returns from s_MyFunction
         # (and that both --thread and --frame are optional)
