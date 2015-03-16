@@ -41,18 +41,14 @@ protected:
 private:
   ARMLinkingContext &_context;
   ARMTargetLayout<ELFT> &_armLayout;
-
-  static StringRef gotSymbol;
+  StringRef _gotSymbol;
 };
-
-template <class ELFT>
-StringRef ARMExecutableWriter<ELFT>::gotSymbol = "_GLOBAL_OFFSET_TABLE_";
 
 template <class ELFT>
 ARMExecutableWriter<ELFT>::ARMExecutableWriter(ARMLinkingContext &context,
                                                ARMTargetLayout<ELFT> &layout)
     : ExecutableWriter<ELFT>(context, layout), _context(context),
-      _armLayout(layout) {}
+      _armLayout(layout), _gotSymbol("_GLOBAL_OFFSET_TABLE_") {}
 
 template <class ELFT>
 bool ARMExecutableWriter<ELFT>::createImplicitFiles(
@@ -65,7 +61,7 @@ template <class ELFT>
 void ARMExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
-  auto gotAtomIter = _armLayout.findAbsoluteAtom(gotSymbol);
+  auto gotAtomIter = _armLayout.findAbsoluteAtom(_gotSymbol);
   if (gotAtomIter != _armLayout.absoluteAtoms().end()) {
     auto *gotAtom = *gotAtomIter;
     if (auto gotpltSection = _armLayout.findOutputSection(".got.plt"))
@@ -88,8 +84,8 @@ unique_bump_ptr<SymbolTable<ELFT>>
 template <class ELFT>
 void ARMExecutableWriter<ELFT>::processUndefinedSymbol(
     StringRef symName, CRuntimeFile<ELFT> &file) const {
-  if (symName == gotSymbol) {
-    file.addAbsoluteAtom(gotSymbol);
+  if (symName == _gotSymbol) {
+    file.addAbsoluteAtom(_gotSymbol);
   } else if (symName.startswith("__exidx")) {
     file.addAbsoluteAtom("__exidx_start");
     file.addAbsoluteAtom("__exidx_end");
