@@ -73,9 +73,9 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
-                                    MCContext &Ctx, MCAsmBackend &MAB,
-                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+static MCStreamer *createMCStreamer(StringRef TT, MCContext &Ctx,
+                                    MCAsmBackend &MAB, raw_ostream &OS,
+                                    MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
   return createELFStreamer(Ctx, MAB, OS, Emitter, false);
 }

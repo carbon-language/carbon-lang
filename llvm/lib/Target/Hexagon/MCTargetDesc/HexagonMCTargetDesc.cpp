@@ -75,9 +75,9 @@ static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCStreamer *createMCStreamer(Target const &T, StringRef TT,
-                                    MCContext &Context, MCAsmBackend &MAB,
-                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+static MCStreamer *createMCStreamer(StringRef TT, MCContext &Context,
+                                    MCAsmBackend &MAB, raw_ostream &OS,
+                                    MCCodeEmitter *Emitter,
                                     MCSubtargetInfo const &STI, bool RelaxAll) {
   MCStreamer *ES = createHexagonELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
   new MCTargetStreamer(*ES);

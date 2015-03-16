@@ -127,9 +127,8 @@ namespace llvm {
                                                   const MCRegisterInfo &MRI,
                                                   MCContext &Ctx);
     typedef MCStreamer *(*MCObjectStreamerCtorTy)(
-        const Target &T, StringRef TT, MCContext &Ctx, MCAsmBackend &TAB,
-        raw_ostream &OS, MCCodeEmitter *Emitter, const MCSubtargetInfo &STI,
-        bool RelaxAll);
+        StringRef TT, MCContext &Ctx, MCAsmBackend &TAB, raw_ostream &OS,
+        MCCodeEmitter *Emitter, const MCSubtargetInfo &STI, bool RelaxAll);
     typedef MCTargetStreamer *(*NullTargetStreamerCtorTy)(MCStreamer &S);
     typedef MCTargetStreamer *(*AsmTargetStreamerCtorTy)(
         MCStreamer &S, formatted_raw_ostream &OS, MCInstPrinter *InstPrint,
@@ -421,8 +420,7 @@ namespace llvm {
                                        bool RelaxAll) const {
       if (!MCObjectStreamerCtorFn)
         return nullptr;
-      return MCObjectStreamerCtorFn(*this, TT, Ctx, TAB, OS, Emitter, STI,
-                                    RelaxAll);
+      return MCObjectStreamerCtorFn(TT, Ctx, TAB, OS, Emitter, STI, RelaxAll);
     }
 
     MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,

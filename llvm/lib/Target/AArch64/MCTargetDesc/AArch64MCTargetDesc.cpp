@@ -123,9 +123,9 @@ static MCInstPrinter *createAArch64MCInstPrinter(const Target &T,
   return nullptr;
 }
 
-static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
-                                    MCContext &Ctx, MCAsmBackend &TAB,
-                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+static MCStreamer *createMCStreamer(StringRef TT, MCContext &Ctx,
+                                    MCAsmBackend &TAB, raw_ostream &OS,
+                                    MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
   Triple TheTriple(TT);
 
