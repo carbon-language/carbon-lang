@@ -3030,10 +3030,6 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
   Assert(isa<MDExpression>(DII.getRawExpression()),
          "invalid llvm.dbg." + Kind + " intrinsic expression", &DII,
          DII.getRawExpression());
-
-  // Don't call visitMDNode(), since that will recurse through operands.
-  visitMDLocalVariable(*DII.getVariable());
-  visitMDExpression(*DII.getExpression());
 }
 
 void DebugInfoVerifier::verifyDebugInfo() {

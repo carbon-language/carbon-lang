@@ -1,4 +1,4 @@
-; RUN: not llvm-as -disable-output -verify-debug-info < %s 2>&1 | FileCheck %s
+; RUN: not llvm-as -disable-output < %s 2>&1 | FileCheck %s
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
@@ -50,5 +50,7 @@ attributes #1 = { nounwind readnone }
 !24 = !MDExpression(DW_OP_deref, DW_OP_bit_piece, 0, 64)
 !25 = !{}
 ; This expression has elements after DW_OP_bit_piece.
-; CHECK: DIExpression does not Verify
+; CHECK: invalid expression
+; CHECK-NEXT: !MDExpression({{[0-9]+}}, 64, 32, {{[0-9]+}})
+; CHECK-NOT: invalid expression
 !27 = !MDExpression(DW_OP_bit_piece, 64, 32, DW_OP_deref)
