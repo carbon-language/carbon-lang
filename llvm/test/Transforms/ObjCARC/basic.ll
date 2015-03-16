@@ -900,13 +900,14 @@ entry:
   ret i8* %x
 }
 
-; Trivial retain,release pair with intervening call, but it's dominated
-; by another retain - delete!
+; We can not delete this retain, release since we do not have a post-dominating
+; use of the release.
 
 ; CHECK-LABEL: define void @test12(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_retain(i8* %x)
-; CHECK-NOT: @objc_
+; CHECK-NEXT: @objc_retain
+; CHECK: @objc_release
 ; CHECK: }
 define void @test12(i8* %x, i64 %n) {
 entry:
@@ -942,6 +943,8 @@ entry:
 ; CHECK-NEXT: @objc_retain(i8* %x)
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @objc_release
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
 define void @test13b(i8* %x, i64 %n) {
@@ -949,6 +952,8 @@ entry:
   call i8* @objc_retain(i8* %x) nounwind
   call i8* @objc_retain(i8* %x) nounwind
   call void @use_pointer(i8* %x)
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
   call void @use_pointer(i8* %x)
   call void @objc_release(i8* %x) nounwind
   ret void
@@ -984,6 +989,8 @@ entry:
 ; CHECK-NEXT: @objc_autoreleasePoolPush
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @objc_release
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
 define void @test13d(i8* %x, i64 %n) {
@@ -994,16 +1001,21 @@ entry:
   call void @use_pointer(i8* %x)
   call void @use_pointer(i8* %x)
   call void @objc_release(i8* %x) nounwind
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
   ret void
 }
 
-; Trivial retain,release pair with intervening call, but it's post-dominated
-; by another release - delete!
+; Trivial retain,release pair with intervening call, and it's post-dominated by
+; another release. But it is not known safe in the top down direction. We can
+; not eliminate it.
 
 ; CHECK-LABEL: define void @test14(
 ; CHECK-NEXT: entry:
+; CHECK-NEXT: @objc_retain
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @objc_release
 ; CHECK-NEXT: @objc_release
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
@@ -1073,6 +1085,9 @@ entry:
 ; CHECK-LABEL: define void @test16a(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
+; CHECK: purple:
+; CHECK: @use_pointer
+; CHECK: @objc_release
 ; CHECK: }
 define void @test16a(i1 %a, i1 %b, i8* %x) {
 entry:
@@ -1101,12 +1116,18 @@ blue:
   br label %purple
 
 purple:
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
   ret void
 }
 
 ; CHECK-LABEL: define void @test16b(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
+; CHECK: purple:
+; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @use_pointer
+; CHECK-NEXT: @objc_release
 ; CHECK: }
 define void @test16b(i1 %a, i1 %b, i8* %x) {
 entry:
@@ -1135,12 +1156,18 @@ blue:
   br label %purple
 
 purple:
+  call void @use_pointer(i8* %x)
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
   ret void
 }
 
 ; CHECK-LABEL: define void @test16c(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
+; CHECK: purple:
+; CHECK: @use_pointer
+; CHECK: @objc_release
 ; CHECK: }
 define void @test16c(i1 %a, i1 %b, i8* %x) {
 entry:
@@ -1169,12 +1196,14 @@ blue:
   br label %purple
 
 purple:
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind, !clang.imprecise_release !0
   ret void
 }
 
 ; CHECK-LABEL: define void @test16d(
 ; CHECK: @objc_retain(i8* %x)
-; CHECK-NOT: @objc
+; CHECK: @objc
 ; CHECK: }
 define void @test16d(i1 %a, i1 %b, i8* %x) {
 entry:
@@ -1203,44 +1232,6 @@ blue:
   br label %purple
 
 purple:
-  ret void
-}
-
-
-; Retain+release pairs in diamonds, all post-dominated by a release.
-
-; CHECK-LABEL: define void @test17(
-; CHECK-NOT: @objc_
-; CHECK: purple:
-; CHECK: @objc_release
-; CHECK: }
-define void @test17(i1 %a, i1 %b, i8* %x) {
-entry:
-  br i1 %a, label %red, label %orange
-
-red:
-  call i8* @objc_retain(i8* %x) nounwind
-  br label %yellow
-
-orange:
-  call i8* @objc_retain(i8* %x) nounwind
-  br label %yellow
-
-yellow:
-  call void @use_pointer(i8* %x)
-  call void @use_pointer(i8* %x)
-  br i1 %b, label %green, label %blue
-
-green:
-  call void @objc_release(i8* %x) nounwind
-  br label %purple
-
-blue:
-  call void @objc_release(i8* %x) nounwind
-  br label %purple
-
-purple:
-  call void @objc_release(i8* %x) nounwind
   ret void
 }
 
@@ -1936,6 +1927,9 @@ exit:                                             ; preds = %loop
 ; CHECK-NEXT: call i8* @objc_autorelease(i8* %p)
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
+; CHECK-NEXT: call void @use_pointer(i8* %p)
+; CHECK-NEXT: call void @use_pointer(i8* %p)
+; CHECK-NEXT: call void @objc_release(i8* %p)
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
 define void @test42(i8* %p) {
@@ -1943,6 +1937,9 @@ entry:
   call i8* @objc_retain(i8* %p)
   call i8* @objc_autorelease(i8* %p)
   call i8* @objc_retain(i8* %p)
+  call void @use_pointer(i8* %p)
+  call void @use_pointer(i8* %p)
+  call void @objc_release(i8* %p)
   call void @use_pointer(i8* %p)
   call void @use_pointer(i8* %p)
   call void @objc_release(i8* %p)
@@ -1985,6 +1982,8 @@ entry:
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
 ; CHECK-NEXT: call i8* @objc_autoreleasePoolPush()
+; CHECK-NEXT: call void @use_pointer(i8* %p)
+; CHECK-NEXT: call void @objc_release
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
 define void @test43b(i8* %p) {
@@ -1995,6 +1994,8 @@ entry:
   call void @use_pointer(i8* %p)
   call void @use_pointer(i8* %p)
   call i8* @objc_autoreleasePoolPush()
+  call void @objc_release(i8* %p)
+  call void @use_pointer(i8* %p)
   call void @objc_release(i8* %p)
   ret void
 }
@@ -2260,15 +2261,16 @@ if.end:                                           ; preds = %entry, %if.then
   ret void
 }
 
-; When there are adjacent retain+release pairs, the first one is
-; known unnecessary because the presence of the second one means that
-; the first one won't be deleting the object.
+; When there are adjacent retain+release pairs, the first one is known
+; unnecessary because the presence of the second one means that the first one
+; won't be deleting the object.
 
 ; CHECK-LABEL:      define void @test57(
 ; CHECK-NEXT: entry:
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
-; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) [[NUW]]
+; CHECK-NEXT:   tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @objc_release(i8* %x) [[NUW]]
@@ -2276,6 +2278,7 @@ if.end:                                           ; preds = %entry, %if.then
 ; CHECK-NEXT: }
 define void @test57(i8* %x) nounwind {
 entry:
+  call i8* @objc_retain(i8* %x) nounwind
   call i8* @objc_retain(i8* %x) nounwind
   call void @use_pointer(i8* %x)
   call void @use_pointer(i8* %x)
@@ -2292,12 +2295,14 @@ entry:
 
 ; CHECK-LABEL:      define void @test58(
 ; CHECK-NEXT: entry:
+; CHECK-NEXT:   @objc_retain
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }
 define void @test58(i8* %x) nounwind {
 entry:
+  call i8* @objc_retain(i8* %x) nounwind
   call i8* @objc_retain(i8* %x) nounwind
   call void @use_pointer(i8* %x)
   call void @use_pointer(i8* %x)
@@ -2353,16 +2358,16 @@ define void @test60a() {
 ; CHECK-LABEL: define void @test60b(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: call i8* @objc_retain
-; CHECK-NOT: call i8* @objc_rrelease
+; CHECK-NOT: call i8* @objc_release
 ; CHECK: }
 define void @test60b() {
   %t = load i8*, i8** @constptr
   %s = load i8*, i8** @something
-  call i8* @objc_retain(i8* %s)
-  call i8* @objc_retain(i8* %s)
+  call i8* @objc_retain(i8* %t)
+  call i8* @objc_retain(i8* %t)
   call void @callee()
-  call void @use_pointer(i8* %t)
-  call void @objc_release(i8* %s)
+  call void @use_pointer(i8* %s)
+  call void @objc_release(i8* %t)
   ret void
 }
 
@@ -2372,10 +2377,10 @@ define void @test60b() {
 define void @test60c() {
   %t = load i8*, i8** @constptr
   %s = load i8*, i8** @something
-  call i8* @objc_retain(i8* %s)
+  call i8* @objc_retain(i8* %t)
   call void @callee()
-  call void @use_pointer(i8* %t)
-  call void @objc_release(i8* %s), !clang.imprecise_release !0
+  call void @use_pointer(i8* %s)
+  call void @objc_release(i8* %t), !clang.imprecise_release !0
   ret void
 }
 

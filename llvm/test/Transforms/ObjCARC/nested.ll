@@ -229,7 +229,6 @@ entry:
   %items.ptr = alloca [16 x i8*], align 8
   %call = call i8* @returner()
   %0 = call i8* @objc_retainAutoreleasedReturnValue(i8* %call) nounwind
-  call void @callee()
   %tmp = bitcast %struct.__objcFastEnumerationState* %state.ptr to i8*
   call void @llvm.memset.p0i8.i64(i8* %tmp, i8 0, i64 64, i32 8, i1 false)
   %1 = call i8* @objc_retain(i8* %0) nounwind
@@ -283,13 +282,12 @@ forcoll.empty:
   ret void
 }
 
-; TODO: Delete a nested retain+release pair.
-; The optimizer currently can't do this, because isn't isn't sophisticated enough in
-; reasnoning about nesting.
-
+; We handle this now due to the fact that a release just needs a post dominating
+; use.
+;
 ; CHECK-LABEL: define void @test6(
 ; CHECK: call i8* @objc_retain
-; CHECK: @objc_retain
+; CHECK-NOT: @objc_retain
 ; CHECK: }
 define void @test6() nounwind {
 entry:

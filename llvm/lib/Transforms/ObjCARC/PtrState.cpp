@@ -221,7 +221,6 @@ bool BottomUpPtrState::HandlePotentialAlterRefCount(Instruction *Inst,
     return false;
 
   DEBUG(dbgs() << "CanAlterRefCount: Seq: " << Seq << "; " << *Ptr << "\n");
-  ClearKnownPositiveRefCount();
   switch (Seq) {
   case S_Use:
     SetSeq(S_CanRelease);

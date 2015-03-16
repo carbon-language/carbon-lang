@@ -1617,11 +1617,8 @@ bool ObjCARCOpt::PairUpRetainsAndReleases(
     if (NewRetains.empty()) break;
   }
 
-  // If the pointer is known incremented in 1 direction and we do not have
-  // MultipleOwners, we can safely remove the retain/releases. Otherwise we need
-  // to be known safe in both directions.
-  bool UnconditionallySafe = (KnownSafeTD && KnownSafeBU) ||
-    ((KnownSafeTD || KnownSafeBU) && !MultipleOwners);
+  // We can only remove pointers if we are known safe in both directions.
+  bool UnconditionallySafe = KnownSafeTD && KnownSafeBU;
   if (UnconditionallySafe) {
     RetainsToMove.ReverseInsertPts.clear();
     ReleasesToMove.ReverseInsertPts.clear();
