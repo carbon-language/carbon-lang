@@ -131,14 +131,20 @@ using ::getenv;
 using ::system;
 using ::bsearch;
 using ::qsort;
+#undef abs
 using ::abs;
+#undef labs
 using ::labs;
 #ifndef _LIBCPP_HAS_NO_LONG_LONG
+#undef llabs
 using ::llabs;
 #endif // _LIBCPP_HAS_NO_LONG_LONG
+#undef div
 using ::div;
+#undef ldiv
 using ::ldiv;
 #ifndef _LIBCPP_HAS_NO_LONG_LONG
+#undef lldiv
 using ::lldiv;
 #endif // _LIBCPP_HAS_NO_LONG_LONG
 using ::mblen;
