@@ -504,7 +504,8 @@ private:
 
   /// Emit a blob of inline asm to the output streamer.
   void
-  EmitInlineAsm(StringRef Str, const MDNode *LocMDNode = nullptr,
+  EmitInlineAsm(StringRef Str, const MCSubtargetInfo &STI,
+                const MDNode *LocMDNode = nullptr,
                 InlineAsm::AsmDialect AsmDialect = InlineAsm::AD_ATT) const;
 
   /// This method formats and emits the specified machine instruction that is an
