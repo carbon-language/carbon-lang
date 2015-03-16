@@ -3123,6 +3123,13 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, BasePtr))
         return Error("Invalid record");
 
+      if (Ty &&
+          Ty !=
+              cast<SequentialType>(BasePtr->getType()->getScalarType())
+                  ->getElementType())
+        return Error(
+            "Explicit gep type does not match pointee type of pointer operand");
+
       SmallVector<Value*, 16> GEPIdx;
       while (OpNum != Record.size()) {
         Value *Op;
@@ -3132,8 +3139,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(Ty, BasePtr, GEPIdx);
-      if (Ty && Ty != cast<GetElementPtrInst>(I)->getSourceElementType())
-        return Error("Invalid record");
+
       InstructionList.push_back(I);
       if (InBounds)
         cast<GetElementPtrInst>(I)->setIsInBounds(true);
