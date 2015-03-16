@@ -185,8 +185,11 @@ bool isPositiveHalfWord(SDNode *N);
 
     unsigned getInlineAsmMemConstraint(
         const std::string &ConstraintCode) const override {
-      // FIXME: Map different constraints differently.
-      return InlineAsm::Constraint_m;
+      if (ConstraintCode == "o")
+        return InlineAsm::Constraint_o;
+      else if (ConstraintCode == "v")
+        return InlineAsm::Constraint_v;
+      return TargetLowering::getInlineAsmMemConstraint(ConstraintCode);
     }
 
     // Intrinsics

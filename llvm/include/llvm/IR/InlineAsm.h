@@ -240,8 +240,8 @@ public:
     // constraint codes for all targets.
     Constraint_Unknown = 0,
     Constraint_m,
-    Constraint_o, // Unused at the moment since Constraint_m is always used.
-    Constraint_v, // Unused at the moment since Constraint_m is always used.
+    Constraint_o,
+    Constraint_v,
     Constraints_Max = Constraint_v,
     Constraints_ShiftAmount = 16,
 
