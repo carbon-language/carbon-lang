@@ -316,8 +316,7 @@ namespace {
 }
 
 namespace llvm {
-  raw_ostream &operator<<(raw_ostream &OS,
-                          BBState &BBState) __attribute__ ((used));
+  raw_ostream &operator<<(raw_ostream &OS, BBState &BBState);
 }
 
 void BBState::InitFromPred(const BBState &Other) {
