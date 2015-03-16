@@ -25,20 +25,20 @@
 ; if they've changed due to a bugfix, change in register allocation, etc.
 
 ; CHECK: [[A]]: Beginning address index: 2
-; CHECK-NEXT:                    Length: 179
+; CHECK-NEXT:                    Length: 169
 ; CHECK-NEXT:      Location description: 11 00
 ; CHECK-NEXT: {{^$}}
 ; CHECK-NEXT:   Beginning address index: 3
-; CHECK-NEXT:                    Length: 23
-; CHECK-NEXT:      Location description: 50 93 04
-; CHECK: [[E]]: Beginning address index: 4
 ; CHECK-NEXT:                    Length: 21
 ; CHECK-NEXT:      Location description: 50 93 04
-; CHECK: [[B]]: Beginning address index: 5
+; CHECK: [[E]]: Beginning address index: 4
 ; CHECK-NEXT:                    Length: 19
 ; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[B]]: Beginning address index: 5
+; CHECK-NEXT:                    Length: 17
+; CHECK-NEXT:      Location description: 50 93 04
 ; CHECK: [[D]]: Beginning address index: 6
-; CHECK-NEXT:                    Length: 23
+; CHECK-NEXT:                    Length: 17
 ; CHECK-NEXT:      Location description: 50 93 04
 
 ; Make sure we don't produce any relocations in any .dwo section (though in particular, debug_info.dwo)

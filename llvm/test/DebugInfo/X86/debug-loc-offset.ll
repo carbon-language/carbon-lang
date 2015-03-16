@@ -55,7 +55,7 @@
 
 ; CHECK: .debug_loc contents:
 ; CHECK: 0x00000000: Beginning address offset: 0x0000000000000000
-; CHECK:                Ending address offset: 0x000000000000001a
+; CHECK:                Ending address offset: 0x0000000000000017
 
 %struct.A = type { i32 (...)**, i32 }
 
