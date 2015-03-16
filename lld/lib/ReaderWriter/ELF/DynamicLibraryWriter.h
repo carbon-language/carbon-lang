@@ -27,7 +27,7 @@ class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
   DynamicLibraryWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout)
       : OutputELFWriter<ELFT>(context, layout),
-        _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
+        _runtimeFile(new RuntimeFile<ELFT>(context, "C runtime")) {}
 
 protected:
   virtual void buildDynamicSymbolTable(const File &file);
@@ -36,7 +36,7 @@ protected:
   virtual void finalizeDefaultAtomValues();
 
 protected:
-  std::unique_ptr<CRuntimeFile<ELFT> > _runtimeFile;
+  std::unique_ptr<RuntimeFile<ELFT> > _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//

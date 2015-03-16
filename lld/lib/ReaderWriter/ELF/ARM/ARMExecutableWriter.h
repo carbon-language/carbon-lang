@@ -37,7 +37,7 @@ protected:
   unique_bump_ptr<SymbolTable<ELFT>> createSymbolTable() override;
 
   void processUndefinedSymbol(StringRef symName,
-                              CRuntimeFile<ELFT> &file) const override;
+                              RuntimeFile<ELFT> &file) const override;
 private:
   ARMLinkingContext &_context;
   ARMTargetLayout<ELFT> &_armLayout;
@@ -83,7 +83,7 @@ unique_bump_ptr<SymbolTable<ELFT>>
 
 template <class ELFT>
 void ARMExecutableWriter<ELFT>::processUndefinedSymbol(
-    StringRef symName, CRuntimeFile<ELFT> &file) const {
+    StringRef symName, RuntimeFile<ELFT> &file) const {
   if (symName == _gotSymbol) {
     file.addAbsoluteAtom(_gotSymbol);
   } else if (symName.startswith("__exidx")) {

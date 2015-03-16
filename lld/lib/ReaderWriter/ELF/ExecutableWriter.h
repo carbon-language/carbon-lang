@@ -27,7 +27,7 @@ class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
   ExecutableWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout)
       : OutputELFWriter<ELFT>(context, layout),
-        _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
+        _runtimeFile(new RuntimeFile<ELFT>(context, "C runtime")) {}
 
 protected:
   virtual void buildDynamicSymbolTable(const File &file);
@@ -41,7 +41,7 @@ protected:
   }
 
   unique_bump_ptr<InterpSection<ELFT>> _interpSection;
-  std::unique_ptr<CRuntimeFile<ELFT> > _runtimeFile;
+  std::unique_ptr<RuntimeFile<ELFT> > _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//
@@ -80,6 +80,7 @@ void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 /// absolute symbols
 template<class ELFT>
 void ExecutableWriter<ELFT>::addDefaultAtoms() {
+  OutputELFWriter<ELFT>::addDefaultAtoms();
   _runtimeFile->addUndefinedAtom(this->_context.entrySymbolName());
   _runtimeFile->addAbsoluteAtom("__bss_start");
   _runtimeFile->addAbsoluteAtom("__bss_end");
@@ -124,6 +125,7 @@ template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
 /// Finalize the value of all the absolute symbols that we
 /// created
 template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
+  OutputELFWriter<ELFT>::finalizeDefaultAtomValues();
   auto bssStartAtomIter = this->_layout.findAbsoluteAtom("__bss_start");
   auto bssEndAtomIter = this->_layout.findAbsoluteAtom("__bss_end");
   auto underScoreEndAtomIter = this->_layout.findAbsoluteAtom("_end");

@@ -87,10 +87,10 @@ private:
 
 /// \brief Mips Runtime file.
 template <class ELFType>
-class MipsRuntimeFile final : public CRuntimeFile<ELFType> {
+class MipsRuntimeFile final : public RuntimeFile<ELFType> {
 public:
   MipsRuntimeFile(MipsLinkingContext &ctx)
-      : CRuntimeFile<ELFType>(ctx, "Mips runtime file") {}
+      : RuntimeFile<ELFType>(ctx, "Mips runtime file") {}
 };
 
 /// \brief Auxiliary class holds relocation's names table.

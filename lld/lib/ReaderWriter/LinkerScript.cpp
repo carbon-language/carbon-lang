@@ -2232,6 +2232,28 @@ std::error_code Sema::evalExpr(const SymbolAssignment *assgn,
   return std::error_code();
 }
 
+const llvm::StringSet<> &Sema::getScriptDefinedSymbols() const {
+  // Do we have cached results?
+  if (!_definedSymbols.empty())
+    return _definedSymbols;
+
+  // Populate our defined set and return it
+  for (auto cmd : _layoutCommands)
+    if (auto sa = dyn_cast<SymbolAssignment>(cmd)) {
+      StringRef symbol = sa->symbol();
+      if (!symbol.empty() && symbol != ".")
+        _definedSymbols.insert(symbol);
+    }
+
+  return _definedSymbols;
+}
+
+uint64_t Sema::getLinkerScriptExprValue(StringRef name) const {
+  auto it = _symbolTable.find(name);
+  assert (it != _symbolTable.end() && "Invalid symbol name!");
+  return it->second;
+}
+
 void Sema::dump() const {
   raw_ostream &os = llvm::outs();
   os << "Linker script semantics dump\n";

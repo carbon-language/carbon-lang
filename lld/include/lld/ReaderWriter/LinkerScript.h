@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -1264,6 +1265,14 @@ public:
   /// update our symbol table with new symbols calculated in this expression.
   std::error_code evalExpr(const SymbolAssignment *assgn, uint64_t &curPos);
 
+  /// Retrieve the set of symbols defined in linker script expressions.
+  const llvm::StringSet<> &getScriptDefinedSymbols() const;
+
+  /// Queries the linker script symbol table for the value of a given symbol.
+  /// This function must be called after linker script expressions evaluation
+  /// has been performed (by calling evalExpr() for all expressions).
+  uint64_t getLinkerScriptExprValue(StringRef name) const;
+
   void dump() const;
 
 private:
@@ -1370,6 +1379,7 @@ private:
   mutable std::unordered_map<SectionKey, int, SectionKeyHash, SectionKeyEq>
       _cacheSectionOrder, _cacheExpressionOrder;
   llvm::DenseSet<int> _deliveredExprs;
+  mutable llvm::StringSet<> _definedSymbols;
 
   Expression::SymbolTableTy _symbolTable;
 };

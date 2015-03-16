@@ -430,14 +430,14 @@ protected:
 };
 
 /// \brief All atoms are owned by a File. To add linker specific atoms
-/// the atoms need to be inserted to a file called (CRuntimeFile) which
+/// the atoms need to be inserted to a file called (RuntimeFile) which
 /// are basically additional symbols required by libc and other runtime
 /// libraries part of executing a program. This class provides support
 /// for adding absolute symbols and undefined symbols
-template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
+template <class ELFT> class RuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFile(ELFLinkingContext &context, StringRef name = "C runtime")
+  RuntimeFile(ELFLinkingContext &context, StringRef name)
       : ELFFile<ELFT>(name, context) {}
 
   /// \brief add a global absolute atom
@@ -470,7 +470,7 @@ public:
     return *newAtom;
   }
 
-  // cannot add atoms to C Runtime file
+  // cannot add atoms to Runtime file
   virtual void addAtom(const Atom &) {
     llvm_unreachable("cannot add atoms to Runtime files");
   }

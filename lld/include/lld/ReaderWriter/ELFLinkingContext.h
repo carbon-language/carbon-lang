@@ -306,6 +306,7 @@ public:
   void setUndefinesResolver(std::unique_ptr<File> resolver);
 
   script::Sema &linkerScriptSema() { return _linkerScriptSema; }
+  const script::Sema &linkerScriptSema() const { return _linkerScriptSema; }
 
 private:
   ELFLinkingContext() = delete;

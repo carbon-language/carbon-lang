@@ -33,14 +33,14 @@ template <class ELFT> class TargetLayout;
 namespace {
 
 template<class ELFT>
-class SymbolFile : public CRuntimeFile<ELFT> {
+class SymbolFile : public RuntimeFile<ELFT> {
 public:
   SymbolFile(ELFLinkingContext &context)
-      : CRuntimeFile<ELFT>(context, "Dynamic absolute symbols"),
+      : RuntimeFile<ELFT>(context, "Dynamic absolute symbols"),
         _atomsAdded(false) {}
 
   Atom *addAbsoluteAtom(StringRef symbolName) override {
-    auto *a = CRuntimeFile<ELFT>::addAbsoluteAtom(symbolName);
+    auto *a = RuntimeFile<ELFT>::addAbsoluteAtom(symbolName);
     if (a) _atomsAdded = true;
     return a;
   }
@@ -57,7 +57,7 @@ private:
 
 template<class ELFT>
 class DynamicSymbolFile : public SimpleArchiveLibraryFile {
-  typedef std::function<void(StringRef, CRuntimeFile<ELFT> &)> Resolver;
+  typedef std::function<void(StringRef, RuntimeFile<ELFT> &)> Resolver;
 public:
   DynamicSymbolFile(ELFLinkingContext &context, Resolver resolver)
       : SimpleArchiveLibraryFile("Dynamically added runtime symbols"),
@@ -99,7 +99,7 @@ public:
   typedef Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef Elf_Dyn_Impl<ELFT> Elf_Dyn;
 
-  OutputELFWriter(const ELFLinkingContext &context, TargetLayout<ELFT> &layout);
+  OutputELFWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout);
 
 protected:
   // build the sections that need to be created
@@ -141,13 +141,13 @@ protected:
   virtual void assignSectionsWithNoSegments();
 
   // Add default atoms that need to be present in the output file
-  virtual void addDefaultAtoms() = 0;
+  virtual void addDefaultAtoms();
 
   // Add any runtime files and their atoms to the output
   bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   // Finalize the default atom values
-  virtual void finalizeDefaultAtomValues() = 0;
+  virtual void finalizeDefaultAtomValues();
 
   // This is called by the write section to apply relocations
   uint64_t addressOfAtom(const Atom *atom) override {
@@ -180,11 +180,11 @@ protected:
 
   /// \brief Process undefined symbols that left after resolution step.
   virtual void processUndefinedSymbol(StringRef symName,
-                                      CRuntimeFile<ELFT> &file) const {}
+                                      RuntimeFile<ELFT> &file) const {}
 
   llvm::BumpPtrAllocator _alloc;
 
-  const ELFLinkingContext &_context;
+  ELFLinkingContext &_context;
   TargetHandler<ELFT> &_targetHandler;
 
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
@@ -205,6 +205,7 @@ protected:
   unique_bump_ptr<HashSection<ELFT>> _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
+  std::unique_ptr<RuntimeFile<ELFT>> _scriptFile;
 
 private:
   static StringRef maybeGetSOName(Node *node);
@@ -214,10 +215,11 @@ private:
 //  OutputELFWriter
 //===----------------------------------------------------------------------===//
 template <class ELFT>
-OutputELFWriter<ELFT>::OutputELFWriter(const ELFLinkingContext &context,
+OutputELFWriter<ELFT>::OutputELFWriter(ELFLinkingContext &context,
                                        TargetLayout<ELFT> &layout)
     : _context(context), _targetHandler(context.getTargetHandler<ELFT>()),
-      _layout(layout) {}
+      _layout(layout),
+      _scriptFile(new RuntimeFile<ELFT>(context, "Linker script runtime")) {}
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildChunks(const File &file) {
@@ -363,18 +365,39 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
         _shdrtab->updateSection(section);
 }
 
+template <class ELFT> void OutputELFWriter<ELFT>::addDefaultAtoms() {
+  const llvm::StringSet<> &symbols =
+      _context.linkerScriptSema().getScriptDefinedSymbols();
+  for (auto &sym : symbols)
+    _scriptFile->addAbsoluteAtom(sym.getKey());
+}
+
 template <class ELFT>
 bool OutputELFWriter<ELFT>::createImplicitFiles(
-    std::vector<std::unique_ptr<File>> &) {
+    std::vector<std::unique_ptr<File>> &result) {
   // Add the virtual archive to resolve undefined symbols.
   // The file will be added later in the linking context.
-  auto callback = [this](StringRef sym, CRuntimeFile<ELFT> &file) {
+  auto callback = [this](StringRef sym, RuntimeFile<ELFT> &file) {
     processUndefinedSymbol(sym, file);
   };
   auto &ctx = const_cast<ELFLinkingContext &>(_context);
   ctx.setUndefinesResolver(
       llvm::make_unique<DynamicSymbolFile<ELFT>>(ctx, std::move(callback)));
+  // Add script defined symbols
+  result.push_back(std::move(_scriptFile));
   return true;
+}
+
+template <class ELFT>
+void OutputELFWriter<ELFT>::finalizeDefaultAtomValues() {
+  const llvm::StringSet<> &symbols =
+      _context.linkerScriptSema().getScriptDefinedSymbols();
+  for (auto &sym : symbols) {
+    uint64_t res =
+        _context.linkerScriptSema().getLinkerScriptExprValue(sym.getKey());
+    auto a = _layout.findAbsoluteAtom(sym.getKey());
+    (*a)->_virtualAddr = res;
+  }
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
