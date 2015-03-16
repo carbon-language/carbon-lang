@@ -102,6 +102,12 @@ namespace llvm {
                                  const std::string &Constraint,
                                  MVT VT) const override;
 
+    unsigned getInlineAsmMemConstraint(
+        const std::string &ConstraintCode) const override {
+      // FIXME: Map different constraints differently.
+      return InlineAsm::Constraint_m;
+    }
+
     /// isTruncateFree - Return true if it's free to truncate a value of type
     /// Ty1 to type Ty2. e.g. On msp430 it's free to truncate a i16 value in
     /// register R15W to i8 by referencing its sub-register R15B.

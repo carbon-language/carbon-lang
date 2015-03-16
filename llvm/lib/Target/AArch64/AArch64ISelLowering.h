@@ -473,6 +473,12 @@ private:
                                     std::vector<SDValue> &Ops,
                                     SelectionDAG &DAG) const override;
 
+  unsigned getInlineAsmMemConstraint(
+      const std::string &ConstraintCode) const override {
+    // FIXME: Map different constraints differently.
+    return InlineAsm::Constraint_m;
+  }
+
   bool isUsedByReturnOnly(SDNode *N, SDValue &Chain) const override;
   bool mayBeEmittedAsTailCall(CallInst *CI) const override;
   bool getIndexedAddressParts(SDNode *Op, SDValue &Base, SDValue &Offset,

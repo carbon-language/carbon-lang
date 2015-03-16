@@ -177,6 +177,12 @@ namespace llvm {
                                  const std::string &Constraint,
                                  MVT VT) const override;
 
+    unsigned getInlineAsmMemConstraint(
+        const std::string &ConstraintCode) const override {
+      // FIXME: Map different constraints differently.
+      return InlineAsm::Constraint_m;
+    }
+
     // Expand specifics
     SDValue TryExpandADDWithMul(SDNode *Op, SelectionDAG &DAG) const;
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG) const;

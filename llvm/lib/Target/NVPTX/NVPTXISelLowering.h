@@ -497,6 +497,12 @@ public:
                                     std::vector<SDValue> &Ops,
                                     SelectionDAG &DAG) const override;
 
+  unsigned getInlineAsmMemConstraint(
+      const std::string &ConstraintCode) const override {
+    // FIXME: Map different constraints differently.
+    return InlineAsm::Constraint_m;
+  }
+
   const NVPTXTargetMachine *nvTM;
 
   // PTX always uses 32-bit shift amounts

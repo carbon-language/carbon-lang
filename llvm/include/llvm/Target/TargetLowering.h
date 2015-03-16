@@ -2627,9 +2627,9 @@ public:
 
   virtual unsigned
   getInlineAsmMemConstraint(const std::string &ConstraintCode) const {
-    // FIXME: This currently maps all constraints to the the same code.
-    //        This will be corrected once all targets are updated.
-    return InlineAsm::Constraint_m;
+    if (ConstraintCode == "m")
+      return InlineAsm::Constraint_m;
+    return InlineAsm::Constraint_Unknown;
   }
 
   /// Try to replace an X constraint, which matches anything, with another that

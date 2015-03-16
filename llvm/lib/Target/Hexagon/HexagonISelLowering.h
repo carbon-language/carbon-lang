@@ -183,6 +183,12 @@ bool isPositiveHalfWord(SDNode *N);
                                  const std::string &Constraint,
                                  MVT VT) const override;
 
+    unsigned getInlineAsmMemConstraint(
+        const std::string &ConstraintCode) const override {
+      // FIXME: Map different constraints differently.
+      return InlineAsm::Constraint_m;
+    }
+
     // Intrinsics
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
     /// isLegalAddressingMode - Return true if the addressing mode represented
