@@ -315,7 +315,7 @@ struct SectionData {
 };
 }
 
-template <typename T>
+template <typename T, support::endianness Endian>
 std::error_code readCoverageMappingData(
     SectionData &ProfileNames, StringRef Data,
     std::vector<BinaryCoverageReader::ProfileMappingRecord> &Records,
@@ -327,10 +327,10 @@ std::error_code readCoverageMappingData(
   for (const char *Buf = Data.data(), *End = Buf + Data.size(); Buf < End;) {
     if (Buf + 4 * sizeof(uint32_t) > End)
       return instrprof_error::malformed;
-    uint32_t NRecords = endian::readNext<uint32_t, little, unaligned>(Buf);
-    uint32_t FilenamesSize = endian::readNext<uint32_t, little, unaligned>(Buf);
-    uint32_t CoverageSize = endian::readNext<uint32_t, little, unaligned>(Buf);
-    uint32_t Version = endian::readNext<uint32_t, little, unaligned>(Buf);
+    uint32_t NRecords = endian::readNext<uint32_t, Endian, unaligned>(Buf);
+    uint32_t FilenamesSize = endian::readNext<uint32_t, Endian, unaligned>(Buf);
+    uint32_t CoverageSize = endian::readNext<uint32_t, Endian, unaligned>(Buf);
+    uint32_t Version = endian::readNext<uint32_t, Endian, unaligned>(Buf);
 
     switch (Version) {
     case CoverageMappingVersion1:
@@ -362,10 +362,10 @@ std::error_code readCoverageMappingData(
 
     while (FunBuf < FunEnd) {
       // Read the function information
-      T NamePtr = endian::readNext<T, little, unaligned>(FunBuf);
-      uint32_t NameSize = endian::readNext<uint32_t, little, unaligned>(FunBuf);
-      uint32_t DataSize = endian::readNext<uint32_t, little, unaligned>(FunBuf);
-      uint64_t FuncHash = endian::readNext<uint64_t, little, unaligned>(FunBuf);
+      T NamePtr = endian::readNext<T, Endian, unaligned>(FunBuf);
+      uint32_t NameSize = endian::readNext<uint32_t, Endian, unaligned>(FunBuf);
+      uint32_t DataSize = endian::readNext<uint32_t, Endian, unaligned>(FunBuf);
+      uint64_t FuncHash = endian::readNext<uint64_t, Endian, unaligned>(FunBuf);
 
       // Now use that to read the coverage data.
       if (CovBuf + DataSize > CovEnd)
@@ -397,8 +397,10 @@ static const char *TestingFormatMagic = "llvmcovmtestdata";
 static std::error_code loadTestingFormat(StringRef Data,
                                          SectionData &ProfileNames,
                                          StringRef &CoverageMapping,
-                                         uint8_t &BytesInAddress) {
+                                         uint8_t &BytesInAddress,
+                                         support::endianness &Endian) {
   BytesInAddress = 8;
+  Endian = support::endianness::little;
 
   Data = Data.substr(StringRef(TestingFormatMagic).size());
   if (Data.size() < 1)
@@ -428,6 +430,7 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
                                         SectionData &ProfileNames,
                                         StringRef &CoverageMapping,
                                         uint8_t &BytesInAddress,
+                                        support::endianness &Endian,
                                         Triple::ArchType Arch) {
   auto BinOrErr = object::createBinary(ObjectBuffer);
   if (std::error_code EC = BinOrErr.getError())
@@ -453,6 +456,8 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
 
   // The coverage uses native pointer sizes for the object it's written in.
   BytesInAddress = OF->getBytesInAddress();
+  Endian = OF->isLittleEndian() ? support::endianness::little
+                                : support::endianness::big;
 
   // Look for the sections that we are interested in.
   int FoundSectionCount = 0;
@@ -489,22 +494,29 @@ BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer,
   SectionData Profile;
   StringRef Coverage;
   uint8_t BytesInAddress;
+  support::endianness Endian;
   std::error_code EC;
   if (ObjectBuffer->getBuffer().startswith(TestingFormatMagic))
     // This is a special format used for testing.
     EC = loadTestingFormat(ObjectBuffer->getBuffer(), Profile, Coverage,
-                           BytesInAddress);
+                           BytesInAddress, Endian);
   else
     EC = loadBinaryFormat(ObjectBuffer->getMemBufferRef(), Profile, Coverage,
-                          BytesInAddress, Arch);
+                          BytesInAddress, Endian, Arch);
   if (EC)
     return EC;
 
-  if (BytesInAddress == 4)
-    EC = readCoverageMappingData<uint32_t>(
+  if (BytesInAddress == 4 && Endian == support::endianness::little)
+    EC = readCoverageMappingData<uint32_t, support::endianness::little>(
         Profile, Coverage, Reader->MappingRecords, Reader->Filenames);
-  else if (BytesInAddress == 8)
-    EC = readCoverageMappingData<uint64_t>(
+  else if (BytesInAddress == 4 && Endian == support::endianness::big)
+    EC = readCoverageMappingData<uint32_t, support::endianness::big>(
+        Profile, Coverage, Reader->MappingRecords, Reader->Filenames);
+  else if (BytesInAddress == 8 && Endian == support::endianness::little)
+    EC = readCoverageMappingData<uint64_t, support::endianness::little>(
+        Profile, Coverage, Reader->MappingRecords, Reader->Filenames);
+  else if (BytesInAddress == 8 && Endian == support::endianness::big)
+    EC = readCoverageMappingData<uint64_t, support::endianness::big>(
         Profile, Coverage, Reader->MappingRecords, Reader->Filenames);
   else
     return instrprof_error::malformed;
