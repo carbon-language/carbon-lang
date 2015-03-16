@@ -383,10 +383,10 @@ private:
   bool isLocalCall(const Atom *a) const;
   bool isDynamic(const Atom *atom) const;
   bool requireLA25Stub(const Atom *a) const;
-  bool requirePLTEntry(Reference &ref);
-  bool requireCopy(Reference &ref);
+  bool requirePLTEntry(const Atom *a) const;
+  bool requireCopy(const Atom *a) const;
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
-                      const Reference &ref) const;
+                      Reference::KindValue refKind) const;
   bool hasPLTEntry(const Atom *atom) const;
 };
 
@@ -550,10 +550,11 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
 }
 
 template <typename ELFT>
-static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref) {
+static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom,
+                           Reference::KindValue refKind) {
   if ((atom.section()->sh_flags & SHF_ALLOC) == 0)
     return false;
-  switch (ref.kindValue()) {
+  switch (refKind) {
   case R_MIPS_NONE:
   case R_MIPS_JALR:
   case R_MICROMIPS_JALR:
@@ -573,17 +574,18 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
     return;
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
     return;
-  if (!isConstrainSym(atom, ref))
+
+  auto refKind = ref.kindValue();
+  if (!isConstrainSym(atom, refKind))
     return;
 
-  if (mightBeDynamic(atom, ref))
+  if (mightBeDynamic(atom, refKind))
     _rel32Candidates.push_back(&ref);
   else
     _hasStaticRelocations.insert(ref.target());
 
-  if (ref.kindValue() != R_MIPS_CALL16 &&
-      ref.kindValue() != R_MICROMIPS_CALL16 && ref.kindValue() != R_MIPS_26 &&
-      ref.kindValue() != R_MICROMIPS_26_S1)
+  if (refKind != R_MIPS_CALL16 && refKind != R_MICROMIPS_CALL16 &&
+      refKind != R_MIPS_26 && refKind != R_MICROMIPS_26_S1)
     _requiresPtrEquality.insert(ref.target());
 }
 
@@ -610,9 +612,7 @@ static bool isMipsReadonly(const MipsELFDefinedAtom<ELFT> &atom) {
 
 template <typename ELFT>
 bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
-                                          const Reference &ref) const {
-  auto refKind = ref.kindValue();
-
+                                          Reference::KindValue refKind) const {
   if (refKind == R_MIPS_CALL16 || refKind == R_MIPS_GOT16 ||
       refKind == R_MICROMIPS_CALL16 || refKind == R_MICROMIPS_GOT16)
     return true;
@@ -638,25 +638,25 @@ bool RelocationPass<ELFT>::hasPLTEntry(const Atom *atom) const {
 }
 
 template <typename ELFT>
-bool RelocationPass<ELFT>::requirePLTEntry(Reference &ref) {
-  if (!_hasStaticRelocations.count(ref.target()))
+bool RelocationPass<ELFT>::requirePLTEntry(const Atom *a) const {
+  if (!_hasStaticRelocations.count(a))
     return false;
-  const auto *sa = dyn_cast<ELFDynamicAtom<ELFT>>(ref.target());
+  const auto *sa = dyn_cast<ELFDynamicAtom<ELFT>>(a);
   if (sa && sa->type() != SharedLibraryAtom::Type::Code)
     return false;
-  const auto *da = dyn_cast<ELFDefinedAtom<ELFT>>(ref.target());
+  const auto *da = dyn_cast<ELFDefinedAtom<ELFT>>(a);
   if (da && da->contentType() != DefinedAtom::typeCode)
     return false;
-  if (isLocalCall(ref.target()))
+  if (isLocalCall(a))
     return false;
   return true;
 }
 
 template <typename ELFT>
-bool RelocationPass<ELFT>::requireCopy(Reference &ref) {
-  if (!_hasStaticRelocations.count(ref.target()))
+bool RelocationPass<ELFT>::requireCopy(const Atom *a) const {
+  if (!_hasStaticRelocations.count(a))
     return false;
-  const auto *sa = dyn_cast<ELFDynamicAtom<ELFT>>(ref.target());
+  const auto *sa = dyn_cast<ELFDynamicAtom<ELFT>>(a);
   return sa && sa->type() == SharedLibraryAtom::Type::Data;
 }
 
@@ -720,9 +720,9 @@ void RelocationPass<ELFT>::handlePlain(const MipsELFDefinedAtom<ELFT> &atom,
   if (!isDynamic(ref.target()))
       return;
 
-  if (requirePLTEntry(ref))
+  if (requirePLTEntry(ref.target()))
     ref.setTarget(getPLTEntry(ref.target()));
-  else if (requireCopy(ref))
+  else if (requireCopy(ref.target()))
     ref.setTarget(getObjectEntry(cast<SharedLibraryAtom>(ref.target())));
 }
 
