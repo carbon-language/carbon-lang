@@ -3075,16 +3075,12 @@ void DebugInfoVerifier::processCallInst(DebugInfoFinder &Finder,
   if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       switch (ID) {
-      case Intrinsic::dbg_declare: {
-        auto *DDI = cast<DbgDeclareInst>(&CI);
-        Finder.processDeclare(*M, DDI);
+      case Intrinsic::dbg_declare:
+        Finder.processDeclare(*M, cast<DbgDeclareInst>(&CI));
         break;
-      }
-      case Intrinsic::dbg_value: {
-        auto *DVI = cast<DbgValueInst>(&CI);
-        Finder.processValue(*M, DVI);
+      case Intrinsic::dbg_value:
+        Finder.processValue(*M, cast<DbgValueInst>(&CI));
         break;
-      }
       default:
         break;
       }
