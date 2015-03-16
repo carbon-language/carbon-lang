@@ -15,6 +15,11 @@ if(NOT COMPILER_RT_STANDALONE_BUILD)
       LLVMgold
     )
   endif()
+  if(APPLE)
+    list(APPEND CFI_TEST_DEPS
+      LTO
+    )
+  endif()
 endif()
 
 add_lit_testsuite(check-cfi "Running the cfi regression tests"
