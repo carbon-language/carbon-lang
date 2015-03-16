@@ -730,6 +730,7 @@ template <typename ELFT>
 void RelocationPass<ELFT>::handle26(const MipsELFDefinedAtom<ELFT> &atom,
                                     Reference &ref) {
   bool isMicro = ref.kindValue() == R_MICROMIPS_26_S1;
+  assert((isMicro || ref.kindValue() == R_MIPS_26) && "Unexpected relocation");
 
   const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target());
   if (sla && sla->type() == SharedLibraryAtom::Type::Code)
@@ -738,17 +739,12 @@ void RelocationPass<ELFT>::handle26(const MipsELFDefinedAtom<ELFT> &atom,
   if (requireLA25Stub(ref.target()))
     ref.setTarget(getLA25Entry(ref.target(), isMicro));
 
-  if (!isLocal(ref.target()))
-    switch (ref.kindValue()) {
-    case R_MIPS_26:
-      ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
-      break;
-    case R_MICROMIPS_26_S1:
+  if (!isLocal(ref.target())) {
+    if (isMicro)
       ref.setKindValue(LLD_R_MICROMIPS_GLOBAL_26_S1);
-      break;
-    default:
-      llvm_unreachable("Unexpected relocation kind");
-    }
+    else
+      ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
+  }
 }
 
 template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
