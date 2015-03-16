@@ -148,9 +148,13 @@ public:
                     break;
 
                 case 'C':
-                    m_column = StringConvert::ToUInt32 (option_arg, 0);
+                {
+                    bool success;
+                    m_column = StringConvert::ToUInt32 (option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid column number: %s", option_arg);
                     break;
-
+                }
                 case 'c':
                     m_condition.assign(option_arg);
                     break;
@@ -238,9 +242,13 @@ public:
                 break;
 
                 case 'l':
-                    m_line_num = StringConvert::ToUInt32 (option_arg, 0);
+                {
+                    bool success;
+                    m_line_num = StringConvert::ToUInt32 (option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat ("invalid line number: %s.", option_arg);
                     break;
-
+                }
                 case 'M':
                     m_func_names.push_back (option_arg);
                     m_func_name_type_mask |= eFunctionNameTypeMethod;
