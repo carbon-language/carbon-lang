@@ -161,7 +161,7 @@ D: BPF backend
 N: Tom Stellard
 E: thomas.stellard@amd.com
 E: mesa-dev@lists.freedesktop.org
-D: Release manager for the 3.5 branch, R600 Backend, libclc
+D: Release manager for the 3.5 and 3.6 branches, R600 Backend, libclc
 
 N: Evgeniy Stepanov
 E: eugenis@google.com
