@@ -349,9 +349,13 @@ void LowerBitSets::allocateByteArrays() {
     // Create an alias instead of RAUW'ing the gep directly. On x86 this ensures
     // that the pc-relative displacement is folded into the lea instead of the
     // test instruction getting another displacement.
-    GlobalAlias *Alias = GlobalAlias::create(
-        Int8Ty, 0, GlobalValue::PrivateLinkage, "bits", GEP, M);
-    BAI->ByteArray->replaceAllUsesWith(Alias);
+    if (LinkerSubsectionsViaSymbols) {
+      BAI->ByteArray->replaceAllUsesWith(GEP);
+    } else {
+      GlobalAlias *Alias = GlobalAlias::create(
+          Int8Ty, 0, GlobalValue::PrivateLinkage, "bits", GEP, M);
+      BAI->ByteArray->replaceAllUsesWith(Alias);
+    }
     BAI->ByteArray->eraseFromParent();
   }
 
@@ -529,15 +533,16 @@ void LowerBitSets::buildBitSetsFromGlobals(
                                       ConstantInt::get(Int32Ty, I * 2)};
     Constant *CombinedGlobalElemPtr =
         ConstantExpr::getGetElementPtr(CombinedGlobal, CombinedGlobalIdxs);
-    GlobalValue::LinkageTypes GAliasLinkage = LinkerSubsectionsViaSymbols
-                                                  ? GlobalValue::PrivateLinkage
-                                                  : Globals[I]->getLinkage();
-    GlobalAlias *GAlias = GlobalAlias::create(
-        Globals[I]->getType()->getElementType(),
-        Globals[I]->getType()->getAddressSpace(), GAliasLinkage,
-        "", CombinedGlobalElemPtr, M);
-    GAlias->takeName(Globals[I]);
-    Globals[I]->replaceAllUsesWith(GAlias);
+    if (LinkerSubsectionsViaSymbols) {
+      Globals[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
+    } else {
+      GlobalAlias *GAlias = GlobalAlias::create(
+          Globals[I]->getType()->getElementType(),
+          Globals[I]->getType()->getAddressSpace(), Globals[I]->getLinkage(),
+          "", CombinedGlobalElemPtr, M);
+      GAlias->takeName(Globals[I]);
+      Globals[I]->replaceAllUsesWith(GAlias);
+    }
     Globals[I]->eraseFromParent();
   }
 }
