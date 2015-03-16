@@ -2206,7 +2206,7 @@ IRForTarget::UnfoldConstant(Constant *old_constant,
 
                             ArrayRef <Value*> indices(index_vector);
 
-                            return GetElementPtrInst::Create(ptr, indices, "", llvm::cast<Instruction>(entry_instruction_finder.GetValue(function)));
+                            return GetElementPtrInst::Create(nullptr, ptr, indices, "", llvm::cast<Instruction>(entry_instruction_finder.GetValue(function)));
                         });
 
                         if (!UnfoldConstant(constant_expr, get_element_pointer_maker, entry_instruction_finder))
@@ -2393,7 +2393,8 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
                 llvm::Instruction *entry_instruction = llvm::cast<Instruction>(m_entry_instruction_finder.GetValue(function));
 
                 ConstantInt *offset_int(ConstantInt::get(offset_type, offset, true));
-                GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument,
+                GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(nullptr,
+                                                                               argument,
                                                                                offset_int,
                                                                                "",
                                                                                entry_instruction);
