@@ -84,6 +84,9 @@ bool MipsLinkingContext::isDynamicRelocation(const Reference &r) const {
   case llvm::ELF::R_MIPS_TLS_DTPMOD32:
   case llvm::ELF::R_MIPS_TLS_DTPREL32:
   case llvm::ELF::R_MIPS_TLS_TPREL32:
+  case llvm::ELF::R_MIPS_TLS_DTPMOD64:
+  case llvm::ELF::R_MIPS_TLS_DTPREL64:
+  case llvm::ELF::R_MIPS_TLS_TPREL64:
     return true;
   default:
     return false;

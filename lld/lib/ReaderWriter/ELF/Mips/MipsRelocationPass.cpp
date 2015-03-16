@@ -32,6 +32,8 @@ static const uint8_t mipsGotModulePointerAtomContent[] = {
 // TLS GD Entry
 static const uint8_t mipsGotTlsGdAtomContent[] = {
   0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00
 };
 
@@ -135,14 +137,20 @@ ArrayRef<uint8_t> GOTModulePointerAtom<Mips64ELType>::rawContent() const {
 }
 
 /// \brief MIPS GOT TLS GD entry.
-class GOTTLSGdAtom : public MipsGOTAtom {
+template <typename ELFT> class GOTTLSGdAtom : public MipsGOTAtom {
 public:
   GOTTLSGdAtom(const File &f) : MipsGOTAtom(f) {}
 
-  ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(mipsGotTlsGdAtomContent);
-  }
+  ArrayRef<uint8_t> rawContent() const override;
 };
+
+template <> ArrayRef<uint8_t> GOTTLSGdAtom<Mips32ELType>::rawContent() const {
+    return llvm::makeArrayRef(mipsGotTlsGdAtomContent).slice(8);
+}
+
+template <> ArrayRef<uint8_t> GOTTLSGdAtom<Mips64ELType>::rawContent() const {
+    return llvm::makeArrayRef(mipsGotTlsGdAtomContent);
+}
 
 class GOTPLTAtom : public GOTAtom {
 public:
@@ -294,7 +302,7 @@ private:
   llvm::DenseMap<const Atom *, GOTAtom *> _gotTLSGdMap;
 
   /// \brief GOT entry for the R_xxxMIPS_TLS_LDM relocations.
-  GOTTLSGdAtom *_gotLDMEntry;
+  GOTTLSGdAtom<ELFT> *_gotLDMEntry;
 
   /// \brief the list of local GOT atoms.
   std::vector<GOTAtom *> _localGotVector;
@@ -859,7 +867,9 @@ const GOTAtom *RelocationPass<ELFT>::getTLSGOTEntry(const Atom *a) {
   _gotTLSMap[a] = ga;
 
   _tlsGotVector.push_back(ga);
-  ga->addReferenceELF_Mips(R_MIPS_TLS_TPREL32, 0, a, 0);
+  Reference::KindValue relKind =
+      ELFT::Is64Bits ? R_MIPS_TLS_TPREL64 : R_MIPS_TLS_TPREL32;
+  ga->addReferenceELF_Mips(relKind, 0, a, 0);
 
   return ga;
 }
@@ -870,12 +880,17 @@ const GOTAtom *RelocationPass<ELFT>::getTLSGdGOTEntry(const Atom *a) {
   if (got != _gotTLSGdMap.end())
     return got->second;
 
-  auto ga = new (_file._alloc) GOTTLSGdAtom(_file);
+  auto ga = new (_file._alloc) GOTTLSGdAtom<ELFT>(_file);
   _gotTLSGdMap[a] = ga;
 
   _tlsGotVector.push_back(ga);
-  ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD32, 0, a, 0);
-  ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL32, 4, a, 0);
+  if (ELFT::Is64Bits) {
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD64, 0, a, 0);
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL64, 8, a, 0);
+  } else {
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD32, 0, a, 0);
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL32, 4, a, 0);
+  }
 
   return ga;
 }
@@ -885,9 +900,12 @@ const GOTAtom *RelocationPass<ELFT>::getTLSLdmGOTEntry(const Atom *a) {
   if (_gotLDMEntry)
     return _gotLDMEntry;
 
-  _gotLDMEntry = new (_file._alloc) GOTTLSGdAtom(_file);
+  _gotLDMEntry = new (_file._alloc) GOTTLSGdAtom<ELFT>(_file);
   _tlsGotVector.push_back(_gotLDMEntry);
-  _gotLDMEntry->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD32, 0, _gotLDMEntry, 0);
+  if (ELFT::Is64Bits)
+    _gotLDMEntry->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD64, 0, _gotLDMEntry, 0);
+  else
+    _gotLDMEntry->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD32, 0, _gotLDMEntry, 0);
 
   return _gotLDMEntry;
 }

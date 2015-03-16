@@ -63,10 +63,13 @@ public:
         return AtomSection<ELFType>::appendAtom(atom);
       case R_MIPS_TLS_TPREL32:
       case R_MIPS_TLS_DTPREL32:
+      case R_MIPS_TLS_TPREL64:
+      case R_MIPS_TLS_DTPREL64:
         _hasNonLocal = true;
         _tlsMap[r->target()] = _tlsMap.size();
         return AtomSection<ELFType>::appendAtom(atom);
       case R_MIPS_TLS_DTPMOD32:
+      case R_MIPS_TLS_DTPMOD64:
         _hasNonLocal = true;
         break;
       }

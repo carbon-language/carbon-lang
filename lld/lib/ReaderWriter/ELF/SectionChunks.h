@@ -1023,12 +1023,16 @@ private:
   std::vector<std::pair<const DefinedAtom *, const Reference *> > _relocs;
   const DynamicSymbolTable<ELFT> *_symbolTable;
 
+  bool isMips64ELOutput() const {
+    return this->_context.getTriple().getArch() == llvm::Triple::mips64el;
+  }
+
   void writeRela(ELFWriter *writer, Elf_Rela &r, const DefinedAtom &atom,
                  const Reference &ref) {
     uint32_t index =
         _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
                      : (uint32_t)STN_UNDEF;
-    r.setSymbolAndType(index, ref.kindValue(), false);
+    r.setSymbolAndType(index, ref.kindValue(), isMips64ELOutput());
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
     r.r_addend = 0;
     // The addend is used only by relative relocations
@@ -1046,7 +1050,7 @@ private:
     uint32_t index =
         _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
                      : (uint32_t)STN_UNDEF;
-    r.setSymbolAndType(index, ref.kindValue(), false);
+    r.setSymbolAndType(index, ref.kindValue(), isMips64ELOutput());
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
     DEBUG_WITH_TYPE("ELFRelocationTable",
                     llvm::dbgs() << ref.kindValue() << " relocation at "

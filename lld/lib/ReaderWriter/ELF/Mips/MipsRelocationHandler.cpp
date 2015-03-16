@@ -121,6 +121,10 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_TLS_TPREL32:
     // Ignore runtime relocations.
     return {4, 0x0, 0, false};
+  case R_MIPS_TLS_DTPMOD64:
+  case R_MIPS_TLS_DTPREL64:
+  case R_MIPS_TLS_TPREL64:
+    return {8, 0x0, 0, false};
   case LLD_R_MIPS_GLOBAL_GOT:
   case LLD_R_MIPS_STO_PLT:
     // Do nothing.
@@ -385,6 +389,9 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
   case R_MIPS_TLS_DTPMOD32:
   case R_MIPS_TLS_DTPREL32:
   case R_MIPS_TLS_TPREL32:
+  case R_MIPS_TLS_DTPMOD64:
+  case R_MIPS_TLS_DTPREL64:
+  case R_MIPS_TLS_TPREL64:
     // Ignore runtime relocations.
     return 0;
   case R_MIPS_PC32:
