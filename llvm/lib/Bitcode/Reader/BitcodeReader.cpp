@@ -1973,7 +1973,8 @@ std::error_code BitcodeReader::ParseConstants() {
                                            bitc::CST_CODE_CE_INBOUNDS_GEP);
       if (PointeeType &&
           PointeeType != cast<GEPOperator>(V)->getSourceElementType())
-        return Error("Invalid record");
+        return Error("Explicit gep operator type does not match pointee type "
+                     "of pointer operand");
       break;
     }
     case bitc::CST_CODE_CE_SELECT: {  // CE_SELECT: [opval#, opval#, opval#]

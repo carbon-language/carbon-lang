@@ -16,6 +16,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-gep-mismatched-explicit-type
 RUN:   FileCheck --check-prefix=MISMATCHED-EXPLICIT-GEP %s
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-load-mismatched-explicit-type.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=MISMATCHED-EXPLICIT-LOAD %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-gep-operator-mismatched-explicit-type.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=MISMATCHED-EXPLICIT-GEP-OPERATOR %s
 
 INVALID-ENCODING: Invalid encoding
 BAD-ABBREV: Abbreviation starts with an Array or a Blob
@@ -26,6 +28,7 @@ BAD-BITWIDTH: Bitwidth for integer type out of range
 BAD-ALIGN: Invalid alignment value
 MISMATCHED-EXPLICIT-GEP: Explicit gep type does not match pointee type of pointer operand
 MISMATCHED-EXPLICIT-LOAD: Explicit load type does not match pointee type of pointer operand
+MISMATCHED-EXPLICIT-GEP-OPERATOR: Explicit gep operator type does not match pointee type of pointer operand
 
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-extractval-array-idx.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=EXTRACT-ARRAY %s
