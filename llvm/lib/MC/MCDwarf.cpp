@@ -243,9 +243,8 @@ std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS)
       0, // length of DW_LNS_set_epilogue_begin
       1  // DW_LNS_set_isa
   };
-  static_assert(array_lengthof(StandardOpcodeLengths) ==
-                    (DWARF2_LINE_OPCODE_BASE - 1),
-                "");
+  assert(array_lengthof(StandardOpcodeLengths) ==
+         (DWARF2_LINE_OPCODE_BASE - 1));
   return Emit(MCOS, StandardOpcodeLengths);
 }
 
