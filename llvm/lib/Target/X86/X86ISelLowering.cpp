@@ -17841,7 +17841,8 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr *MI,
   // 9  ) EFLAGS (implicit-def)
 
   assert(MI->getNumOperands() == 10 && "VAARG_64 should have 10 operands!");
-  assert(X86::AddrNumOperands == 5 && "VAARG_64 assumes 5 address operands");
+  static_assert(X86::AddrNumOperands == 5,
+                "VAARG_64 assumes 5 address operands");
 
   unsigned DestReg = MI->getOperand(0).getReg();
   MachineOperand &Base = MI->getOperand(1);

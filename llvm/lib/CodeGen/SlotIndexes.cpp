@@ -127,7 +127,7 @@ void SlotIndexes::renumberIndexes() {
 void SlotIndexes::renumberIndexes(IndexList::iterator curItr) {
   // Number indexes with half the default spacing so we can catch up quickly.
   const unsigned Space = SlotIndex::InstrDist/2;
-  assert((Space & 3) == 0 && "InstrDist must be a multiple of 2*NUM");
+  static_assert((Space & 3) == 0, "InstrDist must be a multiple of 2*NUM");
 
   IndexList::iterator startItr = std::prev(curItr);
   unsigned index = startItr->getIndex();

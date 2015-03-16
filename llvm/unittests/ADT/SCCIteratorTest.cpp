@@ -250,7 +250,7 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
   typedef Graph<NUM_NODES> GT;
 
   /// Enumerate all graphs using NUM_GRAPHS bits.
-  assert(NUM_GRAPHS < sizeof(unsigned) * CHAR_BIT && "Too many graphs!");
+  static_assert(NUM_GRAPHS < sizeof(unsigned) * CHAR_BIT, "Too many graphs!");
   for (unsigned GraphDescriptor = 0; GraphDescriptor < (1U << NUM_GRAPHS);
        ++GraphDescriptor) {
     GT G;

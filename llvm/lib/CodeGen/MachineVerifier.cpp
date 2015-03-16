@@ -739,7 +739,7 @@ void MachineVerifier::verifyInlineAsm(const MachineInstr *MI) {
   if (!isUInt<5>(MI->getOperand(1).getImm()))
     report("Unknown asm flags", &MI->getOperand(1), 1);
 
-  assert(InlineAsm::MIOp_FirstOperand == 2 && "Asm format changed");
+  static_assert(InlineAsm::MIOp_FirstOperand == 2, "Asm format changed");
 
   unsigned OpNo = InlineAsm::MIOp_FirstOperand;
   unsigned NumOps;

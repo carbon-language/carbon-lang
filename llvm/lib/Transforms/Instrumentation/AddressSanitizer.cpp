@@ -1621,7 +1621,11 @@ static int StackMallocSizeClass(uint64_t LocalStackSize) {
 void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
     IRBuilder<> &IRB, Value *ShadowBase, int Size) {
   assert(!(Size % 8));
-  assert(kAsanStackAfterReturnMagic == 0xf5);
+
+  #ifndef NDEBUG
+  static_assert(kAsanStackAfterReturnMagic == 0xf5, "");
+  #endif
+
   for (int i = 0; i < Size; i += 8) {
     Value *p = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
     IRB.CreateStore(ConstantInt::get(IRB.getInt64Ty(), 0xf5f5f5f5f5f5f5f5ULL),
