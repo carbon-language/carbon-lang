@@ -724,13 +724,12 @@ public:
   virtual bool mayHaveInstructions() const { return true; }
 };
 
-/// createNullStreamer - Create a dummy machine code streamer, which does
-/// nothing. This is useful for timing the assembler front end.
+/// Create a dummy machine code streamer, which does nothing. This is useful for
+/// timing the assembler front end.
 MCStreamer *createNullStreamer(MCContext &Ctx);
 
-/// createAsmStreamer - Create a machine code streamer which will print out
-/// assembly for the native target, suitable for compiling with a native
-/// assembler.
+/// Create a machine code streamer which will print out assembly for the native
+/// target, suitable for compiling with a native assembler.
 ///
 /// \param InstPrint - If given, the instruction printer to use. If not given
 /// the MCInst representation will be printed.  This method takes ownership of
@@ -750,17 +749,15 @@ MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                               MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                               MCAsmBackend *TAB, bool ShowInst);
 
-/// createMachOStreamer - Create a machine code streamer which will generate
-/// Mach-O format object files.
+/// Create a machine code streamer which will generate Mach-O format object
+/// files.
 ///
 /// Takes ownership of \p TAB and \p CE.
 MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                 raw_ostream &OS, MCCodeEmitter *CE,
-                                bool RelaxAll = false,
-                                bool LabelSections = false);
+                                bool RelaxAll, bool LabelSections = false);
 
-/// createELFStreamer - Create a machine code streamer which will generate
-/// ELF format object files.
+/// Create a machine code streamer which will generate ELF format object files.
 MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                               raw_ostream &OS, MCCodeEmitter *CE,
                               bool RelaxAll);
