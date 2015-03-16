@@ -58,8 +58,9 @@ inline value_type read(const void *memory) {
 
 /// Read a value of a particular endianness from a buffer, and increment the
 /// buffer past that value.
-template<typename value_type, endianness endian, std::size_t alignment>
-inline value_type readNext(const unsigned char *&memory) {
+template<typename value_type, endianness endian, std::size_t alignment,
+         typename CharT>
+inline value_type readNext(const CharT *&memory) {
   value_type ret = read<value_type, endian, alignment>(memory);
   memory += sizeof(value_type);
   return ret;
