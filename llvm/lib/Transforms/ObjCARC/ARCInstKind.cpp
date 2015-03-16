@@ -168,6 +168,60 @@ ARCInstKind llvm::objcarc::GetFunctionClass(const Function *F) {
   return ARCInstKind::CallOrUser;
 }
 
+// A whitelist of intrinsics that we know do not use objc pointers or decrement
+// ref counts.
+static bool isInertIntrinsic(unsigned ID) {
+  // TODO: Make this into a covered switch.
+  switch (ID) {
+  case Intrinsic::returnaddress:
+  case Intrinsic::frameaddress:
+  case Intrinsic::stacksave:
+  case Intrinsic::stackrestore:
+  case Intrinsic::vastart:
+  case Intrinsic::vacopy:
+  case Intrinsic::vaend:
+  case Intrinsic::objectsize:
+  case Intrinsic::prefetch:
+  case Intrinsic::stackprotector:
+  case Intrinsic::eh_return_i32:
+  case Intrinsic::eh_return_i64:
+  case Intrinsic::eh_typeid_for:
+  case Intrinsic::eh_dwarf_cfa:
+  case Intrinsic::eh_sjlj_lsda:
+  case Intrinsic::eh_sjlj_functioncontext:
+  case Intrinsic::init_trampoline:
+  case Intrinsic::adjust_trampoline:
+  case Intrinsic::lifetime_start:
+  case Intrinsic::lifetime_end:
+  case Intrinsic::invariant_start:
+  case Intrinsic::invariant_end:
+  // Don't let dbg info affect our results.
+  case Intrinsic::dbg_declare:
+  case Intrinsic::dbg_value:
+    // Short cut: Some intrinsics obviously don't use ObjC pointers.
+    return true;
+  default:
+    return false;
+  }
+}
+
+// A whitelist of intrinsics that we know do not use objc pointers or decrement
+// ref counts.
+static bool isUseOnlyIntrinsic(unsigned ID) {
+  // We are conservative and even though intrinsics are unlikely to touch
+  // reference counts, we white list them for safety.
+  //
+  // TODO: Expand this into a covered switch. There is a lot more here.
+  switch (ID) {
+  case Intrinsic::memcpy:
+  case Intrinsic::memmove:
+  case Intrinsic::memset:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /// \brief Determine what kind of construct V is.
 ARCInstKind llvm::objcarc::GetARCInstKind(const Value *V) {
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
@@ -180,49 +234,23 @@ ARCInstKind llvm::objcarc::GetARCInstKind(const Value *V) {
     switch (I->getOpcode()) {
     case Instruction::Call: {
       const CallInst *CI = cast<CallInst>(I);
-      // Check for calls to special functions.
+      // See if we have a function that we know something about.
       if (const Function *F = CI->getCalledFunction()) {
         ARCInstKind Class = GetFunctionClass(F);
         if (Class != ARCInstKind::CallOrUser)
           return Class;
-
-        // None of the intrinsic functions do objc_release. For intrinsics, the
-        // only question is whether or not they may be users.
-        switch (F->getIntrinsicID()) {
-        case Intrinsic::returnaddress:
-        case Intrinsic::frameaddress:
-        case Intrinsic::stacksave:
-        case Intrinsic::stackrestore:
-        case Intrinsic::vastart:
-        case Intrinsic::vacopy:
-        case Intrinsic::vaend:
-        case Intrinsic::objectsize:
-        case Intrinsic::prefetch:
-        case Intrinsic::stackprotector:
-        case Intrinsic::eh_return_i32:
-        case Intrinsic::eh_return_i64:
-        case Intrinsic::eh_typeid_for:
-        case Intrinsic::eh_dwarf_cfa:
-        case Intrinsic::eh_sjlj_lsda:
-        case Intrinsic::eh_sjlj_functioncontext:
-        case Intrinsic::init_trampoline:
-        case Intrinsic::adjust_trampoline:
-        case Intrinsic::lifetime_start:
-        case Intrinsic::lifetime_end:
-        case Intrinsic::invariant_start:
-        case Intrinsic::invariant_end:
-        // Don't let dbg info affect our results.
-        case Intrinsic::dbg_declare:
-        case Intrinsic::dbg_value:
-          // Short cut: Some intrinsics obviously don't use ObjC pointers.
+        unsigned ID = F->getIntrinsicID();
+        if (isInertIntrinsic(ID))
           return ARCInstKind::None;
-        default:
-          break;
-        }
+        if (isUseOnlyIntrinsic(ID))
+          return ARCInstKind::User;
       }
+
+      // Otherwise, be conservative.
       return GetCallSiteClass(CI);
     }
     case Instruction::Invoke:
+      // Otherwise, be conservative.
       return GetCallSiteClass(cast<InvokeInst>(I));
     case Instruction::BitCast:
     case Instruction::GetElementPtr:
