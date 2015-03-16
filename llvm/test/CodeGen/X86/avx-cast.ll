@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx | FileCheck %s
 
 ; CHECK-LABEL: castA:
 ; CHECK: vxorps
