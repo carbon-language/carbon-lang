@@ -119,7 +119,7 @@ public:
                                                const char *session_dictionary_name,
                                                const lldb::ProcessSP& process_sp);
     
-    typedef uint32_t        (*SWIGPythonCalculateNumChildren)                   (void *implementor);
+    typedef size_t          (*SWIGPythonCalculateNumChildren)                   (void *implementor);
     typedef void*           (*SWIGPythonGetChildAtIndex)                        (void *implementor, uint32_t idx);
     typedef int             (*SWIGPythonGetIndexOfChildWithName)                (void *implementor, const char* child_name);
     typedef void*           (*SWIGPythonCastPyObjectToSBValue)                  (void* data);

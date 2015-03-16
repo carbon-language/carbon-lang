@@ -631,13 +631,14 @@ LLDBSwigPython_CallOptionalMember
     return py_return;
 }
 
-SWIGEXPORT uint32_t
+SWIGEXPORT size_t
 LLDBSwigPython_CalculateNumChildren
 (
     PyObject *implementor
 )
 {
-    uint32_t ret_val = UINT32_MAX;
+    size_t ret_val = UINT32_MAX;
+    bool int_match = false;
 
     static char callee_name[] = "num_children";
 
@@ -646,8 +647,27 @@ LLDBSwigPython_CalculateNumChildren
     if (!py_return)
         return ret_val;
 
-    if (PyInt_Check(py_return))
-        ret_val = PyInt_AsLong(py_return);
+    // PyInt_* are not available for Python 3 and above.
+#if PY_MAJOR_VERSION < 3
+    if (PyInt_Check (py_return))
+    {
+        int_match = true;
+        ret_val = static_cast<size_t> (PyInt_AsLong (py_return));
+    }
+#endif
+
+    // We want to check for PyLong only if the return value did not
+    // match PyInt. This is because we do not want to call PyLong_Check if
+    // PyInt_Check returns true but PyInt_AsLong generates an error.
+    if (!int_match && PyLong_Check (py_return))
+    {
+#if PY_MAJOR_VERSION < 3
+        ret_val = static_cast<size_t> (PyLong_AsUnsignedLong (py_return));
+#else
+        // PyLong_AsSize_t is available only for Python 3 and above.
+        ret_val = PyLong_AsSize_t (py_return);
+#endif
+    }
 
     Py_XDECREF(py_return);
 

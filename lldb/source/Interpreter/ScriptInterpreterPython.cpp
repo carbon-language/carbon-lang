@@ -2082,7 +2082,7 @@ ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObje
     if (!g_swig_calc_children)
         return 0;
 
-    uint32_t ret_val = 0;
+    size_t ret_val = 0;
     
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);

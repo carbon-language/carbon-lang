@@ -619,7 +619,7 @@ LLDBSWIGPythonCallThreadPlan (void *implementor,
                               Event *event_sp,
                               bool &got_error);
 
-extern "C" uint32_t
+extern "C" size_t
 LLDBSwigPython_CalculateNumChildren (void *implementor);
 
 extern "C" void *
