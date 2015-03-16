@@ -40,6 +40,8 @@
 
 namespace __asan {
 
+void InitializePlatformInterceptors() {}
+
 bool PlatformHasDifferentMemcpyAndMemmove() {
   // On OS X 10.7 memcpy() and memmove() are both resolved
   // into memmove$VARIANT$sse42.

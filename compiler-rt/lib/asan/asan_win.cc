@@ -22,9 +22,12 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_report.h"
+#include "asan_stack.h"
 #include "asan_thread.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_mutex.h"
+
+using namespace __asan;  // NOLINT
 
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -33,6 +36,7 @@ int __asan_should_detect_stack_use_after_return() {
   return __asan_option_detect_stack_use_after_return;
 }
 
+// -------------------- A workaround for the abscence of weak symbols ----- {{{
 // We don't have a direct equivalent of weak symbols when using MSVC, but we can
 // use the /alternatename directive to tell the linker to default a specific
 // symbol to a specific value, which works nicely for allocator hooks and
@@ -47,11 +51,115 @@ void __asan_default_on_error() {}
 #pragma comment(linker, "/alternatename:___asan_default_options=___asan_default_default_options")    // NOLINT
 #pragma comment(linker, "/alternatename:___asan_default_suppressions=___asan_default_default_suppressions")    // NOLINT
 #pragma comment(linker, "/alternatename:___asan_on_error=___asan_default_on_error")                  // NOLINT
+// }}}
 }  // extern "C"
+
+// ---------------------- Windows-specific inteceptors ---------------- {{{
+INTERCEPTOR_WINAPI(void, RaiseException, void *a, void *b, void *c, void *d) {
+  CHECK(REAL(RaiseException));
+  __asan_handle_no_return();
+  REAL(RaiseException)(a, b, c, d);
+}
+
+INTERCEPTOR(int, _except_handler3, void *a, void *b, void *c, void *d) {
+  CHECK(REAL(_except_handler3));
+  __asan_handle_no_return();
+  return REAL(_except_handler3)(a, b, c, d);
+}
+
+#if ASAN_DYNAMIC
+// This handler is named differently in -MT and -MD CRTs.
+#define _except_handler4 _except_handler4_common
+#endif
+INTERCEPTOR(int, _except_handler4, void *a, void *b, void *c, void *d) {
+  CHECK(REAL(_except_handler4));
+  __asan_handle_no_return();
+  return REAL(_except_handler4)(a, b, c, d);
+}
+
+static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
+  AsanThread *t = (AsanThread*)arg;
+  SetCurrentThread(t);
+  return t->ThreadStart(GetTid(), /* signal_thread_is_registered */ nullptr);
+}
+
+INTERCEPTOR_WINAPI(DWORD, CreateThread,
+                   void* security, uptr stack_size,
+                   DWORD (__stdcall *start_routine)(void*), void* arg,
+                   DWORD thr_flags, void* tid) {
+  // Strict init-order checking is thread-hostile.
+  if (flags()->strict_init_order)
+    StopInitOrderChecking();
+  GET_STACK_TRACE_THREAD;
+  // FIXME: The CreateThread interceptor is not the same as a pthread_create
+  // one.  This is a bandaid fix for PR22025.
+  bool detached = false;  // FIXME: how can we determine it on Windows?
+  u32 current_tid = GetCurrentTidOrInvalid();
+  AsanThread *t =
+        AsanThread::Create(start_routine, arg, current_tid, &stack, detached);
+  return REAL(CreateThread)(security, stack_size,
+                            asan_thread_start, t, thr_flags, tid);
+}
+
+namespace {
+struct UserWorkItemInfo {
+  DWORD (__stdcall *function)(void *arg);
+  void *arg;
+  u32 parent_tid;
+};
+
+BlockingMutex mu_for_thread_tracking(LINKER_INITIALIZED);
+
+// QueueUserWorkItem may silently create a thread we should keep track of.
+// We achieve this by wrapping the user-supplied work items with our function.
+DWORD __stdcall QueueUserWorkItemWrapper(void *arg) {
+  UserWorkItemInfo *item = (UserWorkItemInfo *)arg;
+
+  {
+    // FIXME: GetCurrentThread relies on TSD, which might not play well with
+    // system thread pools.  We might want to use something like reference
+    // counting to zero out GetCurrentThread() underlying storage when the last
+    // work item finishes?  Or can we disable reclaiming of threads in the pool?
+    BlockingMutexLock l(&mu_for_thread_tracking);
+    AsanThread *t = __asan::GetCurrentThread();
+    if (!t) {
+      GET_STACK_TRACE_THREAD;
+      t = AsanThread::Create(/* start_routine */ nullptr, /* arg */ nullptr,
+                             item->parent_tid, &stack, /* detached */ true);
+      t->Init();
+      asanThreadRegistry().StartThread(t->tid(), 0, 0);
+      SetCurrentThread(t);
+    }
+  }
+
+  DWORD ret = item->function(item->arg);
+  delete item;
+  return ret;
+}
+}  // namespace
+
+INTERCEPTOR_WINAPI(BOOL, QueueUserWorkItem, LPTHREAD_START_ROUTINE function,
+                   PVOID arg, ULONG flags) {
+  UserWorkItemInfo *work_item_info = new UserWorkItemInfo;
+  work_item_info->function = function;
+  work_item_info->arg = arg;
+  work_item_info->parent_tid = GetCurrentTidOrInvalid();
+  return REAL(QueueUserWorkItem)(QueueUserWorkItemWrapper,
+                                 work_item_info, flags);
+}
+// }}}
 
 namespace __asan {
 
-// ---------------------- TSD ---------------- {{{1
+void InitializePlatformInterceptors() {
+  ASAN_INTERCEPT_FUNC(CreateThread);
+  ASAN_INTERCEPT_FUNC(QueueUserWorkItem);
+  ASAN_INTERCEPT_FUNC(RaiseException);
+  ASAN_INTERCEPT_FUNC(_except_handler3);
+  ASAN_INTERCEPT_FUNC(_except_handler4);
+}
+
+// ---------------------- TSD ---------------- {{{
 static bool tsd_key_inited = false;
 
 static __declspec(thread) void *fake_tsd = 0;
@@ -74,7 +182,9 @@ void AsanTSDSet(void *tsd) {
 void PlatformTSDDtor(void *tsd) {
   AsanThread::TSDDtor(tsd);
 }
-// ---------------------- Various stuff ---------------- {{{1
+// }}}
+
+// ---------------------- Various stuff ---------------- {{{
 void DisableReexec() {
   // No need to re-exec on Windows.
 }
@@ -160,7 +270,7 @@ int __asan_set_seh_filter() {
 static __declspec(allocate(".CRT$XIZ"))
     int (*__intercept_seh)() = __asan_set_seh_filter;
 #endif
-
+// }}}
 }  // namespace __asan
 
 #endif  // _WIN32

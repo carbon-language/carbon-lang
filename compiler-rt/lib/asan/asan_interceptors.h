@@ -92,9 +92,21 @@ struct sigaction;
 DECLARE_REAL(int, sigaction, int signum, const struct sigaction *act,
                              struct sigaction *oldact)
 
+#if !SANITIZER_MAC
+#define ASAN_INTERCEPT_FUNC(name)                                        \
+  do {                                                                   \
+    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)))                      \
+      VReport(1, "AddressSanitizer: failed to intercept '" #name "'\n"); \
+  } while (0)
+#else
+// OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
+#define ASAN_INTERCEPT_FUNC(name)
+#endif  // SANITIZER_MAC
+
 namespace __asan {
 
 void InitializeAsanInterceptors();
+void InitializePlatformInterceptors();
 
 #define ENSURE_ASAN_INITED() do { \
   CHECK(!asan_init_is_running); \

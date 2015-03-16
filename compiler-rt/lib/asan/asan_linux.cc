@@ -68,6 +68,8 @@ asan_rt_version_t  __asan_rt_version;
 
 namespace __asan {
 
+void InitializePlatformInterceptors() {}
+
 void DisableReexec() {
   // No need to re-exec on Linux.
 }

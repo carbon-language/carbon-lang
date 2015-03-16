@@ -219,7 +219,6 @@ const interpose_substitution substitution_##func_name[] \
     namespace __interception { \
       FUNC_TYPE(func) PTR_TO_REAL(func); \
     } \
-    DECLARE_WRAPPER_WINAPI(ret_type, func, __VA_ARGS__) \
     extern "C" \
     INTERCEPTOR_ATTRIBUTE \
     ret_type __stdcall WRAP(func)(__VA_ARGS__)

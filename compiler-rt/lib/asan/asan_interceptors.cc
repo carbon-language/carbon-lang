@@ -120,17 +120,6 @@ using namespace __asan;  // NOLINT
 DECLARE_REAL_AND_INTERCEPTOR(void *, malloc, uptr)
 DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
 
-#if !SANITIZER_MAC
-#define ASAN_INTERCEPT_FUNC(name)                                        \
-  do {                                                                   \
-    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)))                      \
-      VReport(1, "AddressSanitizer: failed to intercept '" #name "'\n"); \
-  } while (0)
-#else
-// OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
-#define ASAN_INTERCEPT_FUNC(name)
-#endif  // SANITIZER_MAC
-
 #define ASAN_INTERCEPTOR_ENTER(ctx, func)                                      \
   AsanInterceptorContext _ctx = {#func};                                       \
   ctx = (void *)&_ctx;                                                         \
@@ -206,12 +195,6 @@ struct ThreadStartParam {
 };
 
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
-#if SANITIZER_WINDOWS
-  // FIXME: this is a bandaid fix for PR22025.
-  AsanThread *t = (AsanThread*)arg;
-  SetCurrentThread(t);
-  return t->ThreadStart(GetTid(), /* signal_thread_is_registered */ nullptr);
-#else
   ThreadStartParam *param = reinterpret_cast<ThreadStartParam *>(arg);
   AsanThread *t = nullptr;
   while ((t = reinterpret_cast<AsanThread *>(
@@ -219,7 +202,6 @@ static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
     internal_sched_yield();
   SetCurrentThread(t);
   return t->ThreadStart(GetTid(), &param->is_registered);
-#endif
 }
 
 #if ASAN_INTERCEPT_PTHREAD_CREATE
@@ -360,30 +342,6 @@ INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
   CHECK(REAL(__cxa_throw));
   __asan_handle_no_return();
   REAL(__cxa_throw)(a, b, c);
-}
-#endif
-
-#if SANITIZER_WINDOWS
-INTERCEPTOR_WINAPI(void, RaiseException, void *a, void *b, void *c, void *d) {
-  CHECK(REAL(RaiseException));
-  __asan_handle_no_return();
-  REAL(RaiseException)(a, b, c, d);
-}
-
-INTERCEPTOR(int, _except_handler3, void *a, void *b, void *c, void *d) {
-  CHECK(REAL(_except_handler3));
-  __asan_handle_no_return();
-  return REAL(_except_handler3)(a, b, c, d);
-}
-
-#if ASAN_DYNAMIC
-// This handler is named differently in -MT and -MD CRTs.
-#define _except_handler4 _except_handler4_common
-#endif
-INTERCEPTOR(int, _except_handler4, void *a, void *b, void *c, void *d) {
-  CHECK(REAL(_except_handler4));
-  __asan_handle_no_return();
-  return REAL(_except_handler4)(a, b, c, d);
 }
 #endif
 
@@ -813,82 +771,6 @@ INTERCEPTOR(int, fork, void) {
 }
 #endif  // ASAN_INTERCEPT_FORK
 
-#if SANITIZER_WINDOWS
-INTERCEPTOR_WINAPI(DWORD, CreateThread,
-                   void* security, uptr stack_size,
-                   DWORD (__stdcall *start_routine)(void*), void* arg,
-                   DWORD thr_flags, void* tid) {
-  // Strict init-order checking is thread-hostile.
-  if (flags()->strict_init_order)
-    StopInitOrderChecking();
-  GET_STACK_TRACE_THREAD;
-  // FIXME: The CreateThread interceptor is not the same as a pthread_create
-  // one.  This is a bandaid fix for PR22025.
-  bool detached = false;  // FIXME: how can we determine it on Windows?
-  u32 current_tid = GetCurrentTidOrInvalid();
-  AsanThread *t =
-        AsanThread::Create(start_routine, arg, current_tid, &stack, detached);
-  return REAL(CreateThread)(security, stack_size,
-                            asan_thread_start, t, thr_flags, tid);
-}
-
-struct UserWorkItemInfo {
-  DWORD (__stdcall *function)(void *arg);
-  void *arg;
-  u32 parent_tid;
-};
-
-static BlockingMutex mu_for_thread_tracking(LINKER_INITIALIZED);
-
-// QueueUserWorkItem may silently create a thread we should keep track of.
-// We achieve this by wrapping the user-supplied work items with our function.
-static DWORD __stdcall QueueUserWorkItemWrapper(void *arg) {
-  UserWorkItemInfo *item = (UserWorkItemInfo *)arg;
-
-  {
-    // FIXME: GetCurrentThread relies on TSD, which might not play well with
-    // system thread pools.  We might want to use something like reference
-    // counting to zero out GetCurrentThread() underlying storage when the last
-    // work item finishes?  Or can we disable reclaiming of threads in the pool?
-    BlockingMutexLock l(&mu_for_thread_tracking);
-    AsanThread *t = GetCurrentThread();
-    if (!t) {
-      GET_STACK_TRACE_THREAD;
-      t = AsanThread::Create(/* start_routine */ nullptr, /* arg */ nullptr,
-                             item->parent_tid, &stack, /* detached */ true);
-      t->Init();
-      asanThreadRegistry().StartThread(t->tid(), 0, 0);
-      SetCurrentThread(t);
-    }
-  }
-
-  DWORD ret = item->function(item->arg);
-  delete item;
-  return ret;
-}
-
-INTERCEPTOR_WINAPI(DWORD, QueueUserWorkItem, DWORD(__stdcall *function)(void *),
-                   void *arg, DWORD flags) {
-  UserWorkItemInfo *work_item_info = new UserWorkItemInfo;
-  work_item_info->function = function;
-  work_item_info->arg = arg;
-  work_item_info->parent_tid = GetCurrentTidOrInvalid();
-  return REAL(QueueUserWorkItem)(QueueUserWorkItemWrapper, work_item_info,
-                                 flags);
-}
-
-namespace __asan {
-void InitializeWindowsInterceptors() {
-  ASAN_INTERCEPT_FUNC(CreateThread);
-  ASAN_INTERCEPT_FUNC(QueueUserWorkItem);
-  ASAN_INTERCEPT_FUNC(RaiseException);
-  ASAN_INTERCEPT_FUNC(_except_handler3);
-  ASAN_INTERCEPT_FUNC(_except_handler4);
-}
-
-}  // namespace __asan
-#endif
-
 // ---------------------- InitializeAsanInterceptors ---------------- {{{1
 namespace __asan {
 void InitializeAsanInterceptors() {
@@ -971,10 +853,7 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(fork);
 #endif
 
-  // Some Windows-specific interceptors.
-#if SANITIZER_WINDOWS
-  InitializeWindowsInterceptors();
-#endif
+  InitializePlatformInterceptors();
 
   VReport(1, "AddressSanitizer: libc interceptors initialized\n");
 }
