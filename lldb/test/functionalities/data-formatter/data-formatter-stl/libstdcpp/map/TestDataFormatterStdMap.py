@@ -24,10 +24,6 @@ class StdMapDataFormatterTestCase(TestBase):
     @expectedFailureIcc   # llvm.org/pr15301: LLDB prints incorrect size of
                           # libstdc++ containers
     @skipIfFreeBSD
-    @skipIfLinux # non-core functionality, need to reenable and fix
-                 # later (DES 2014.11.07). Most likely failing because
-                 # of mis-match is version of libstdc++ supported by
-                 # the data-formatters.
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
