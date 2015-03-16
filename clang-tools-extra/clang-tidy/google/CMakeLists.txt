@@ -8,7 +8,6 @@ add_clang_library(clangTidyGoogleModule
   GoogleTidyModule.cpp
   IntegerTypesCheck.cpp
   MemsetZeroLengthCheck.cpp
-  NamedParameterCheck.cpp
   OverloadedUnaryAndCheck.cpp
   StringReferenceMemberCheck.cpp
   TodoCommentCheck.cpp

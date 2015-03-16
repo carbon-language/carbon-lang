@@ -16,7 +16,6 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
-namespace google {
 namespace readability {
 
 void NamedParameterCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
@@ -122,6 +121,5 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
 }
 
 } // namespace readability
-} // namespace google
 } // namespace tidy
 } // namespace clang

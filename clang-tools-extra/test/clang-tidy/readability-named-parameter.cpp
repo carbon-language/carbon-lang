@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s google-readability-function %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-named-parameter %t
 // REQUIRES: shell
 
 void Method(char *) { /* */ }

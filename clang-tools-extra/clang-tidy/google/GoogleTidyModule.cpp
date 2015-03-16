@@ -20,7 +20,6 @@
 #include "GlobalNamesInHeadersCheck.h"
 #include "IntegerTypesCheck.h"
 #include "MemsetZeroLengthCheck.h"
-#include "NamedParameterCheck.h"
 #include "OverloadedUnaryAndCheck.h"
 #include "StringReferenceMemberCheck.h"
 #include "TodoCommentCheck.h"
@@ -54,8 +53,6 @@ public:
         "google-runtime-memset");
     CheckFactories.registerCheck<readability::AvoidCStyleCastsCheck>(
         "google-readability-casting");
-    CheckFactories.registerCheck<readability::NamedParameterCheck>(
-        "google-readability-function");
     CheckFactories.registerCheck<readability::TodoCommentCheck>(
         "google-readability-todo");
     CheckFactories

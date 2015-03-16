@@ -14,6 +14,7 @@
 #include "ContainerSizeEmptyCheck.h"
 #include "ElseAfterReturnCheck.h"
 #include "FunctionSizeCheck.h"
+#include "NamedParameterCheck.h"
 #include "RedundantSmartptrGetCheck.h"
 #include "RedundantStringCStrCheck.h"
 #include "ShrinkToFitCheck.h"
@@ -33,6 +34,8 @@ public:
         "readability-else-after-return");
     CheckFactories.registerCheck<FunctionSizeCheck>(
         "readability-function-size");
+    CheckFactories.registerCheck<readability::NamedParameterCheck>(
+        "readability-named-parameter");
     CheckFactories.registerCheck<RedundantSmartptrGetCheck>(
         "readability-redundant-smartptr-get");
     CheckFactories.registerCheck<RedundantStringCStrCheck>(
