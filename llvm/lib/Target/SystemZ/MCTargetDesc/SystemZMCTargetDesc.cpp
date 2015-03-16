@@ -181,10 +181,9 @@ static MCInstPrinter *createSystemZMCInstPrinter(const Target &T,
   return new SystemZInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *
-createSystemZMCObjectStreamer(StringRef TT, MCContext &Ctx, MCAsmBackend &MAB,
-                              raw_ostream &OS, MCCodeEmitter *Emitter,
-                              const MCSubtargetInfo &STI, bool RelaxAll) {
+static MCStreamer *createSystemZMCObjectStreamer(
+    const Triple &T, MCContext &Ctx, MCAsmBackend &MAB, raw_ostream &OS,
+    MCCodeEmitter *Emitter, const MCSubtargetInfo &STI, bool RelaxAll) {
   return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 }
 

@@ -357,6 +357,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
   MCTargetOptions MCOptions = InitMCTargetOptionsFromFlags();
   TripleName = Triple::normalize(TripleName);
+  Triple TheTriple(TripleName);
   setDwarfDebugFlags(argc, argv);
 
   setDwarfDebugProducer();
@@ -470,7 +471,7 @@ int main(int argc, char **argv) {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
-    Str.reset(TheTarget->createMCObjectStreamer(TripleName, Ctx, *MAB, FOS, CE,
+    Str.reset(TheTarget->createMCObjectStreamer(TheTriple, Ctx, *MAB, FOS, CE,
                                                 *STI, RelaxAll));
     if (NoExecStack)
       Str->InitSections(true);

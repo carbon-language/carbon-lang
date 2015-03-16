@@ -344,18 +344,16 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCStreamer *createMCStreamer(StringRef TT, MCContext &Ctx,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
                                     MCAsmBackend &MAB, raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
-  Triple TheTriple(TT);
-
-  switch (TheTriple.getObjectFormat()) {
+  switch (T.getObjectFormat()) {
   default: llvm_unreachable("unsupported object format");
   case Triple::MachO:
     return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
   case Triple::COFF:
-    assert(TheTriple.isOSWindows() && "only Windows COFF is supported");
+    assert(T.isOSWindows() && "only Windows COFF is supported");
     return createX86WinCOFFStreamer(Ctx, MAB, Emitter, OS, RelaxAll);
   case Triple::ELF:
     return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);

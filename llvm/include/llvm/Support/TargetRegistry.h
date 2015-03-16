@@ -127,7 +127,7 @@ namespace llvm {
                                                   const MCRegisterInfo &MRI,
                                                   MCContext &Ctx);
     typedef MCStreamer *(*MCObjectStreamerCtorTy)(
-        StringRef TT, MCContext &Ctx, MCAsmBackend &TAB, raw_ostream &OS,
+        const Triple &T, MCContext &Ctx, MCAsmBackend &TAB, raw_ostream &OS,
         MCCodeEmitter *Emitter, const MCSubtargetInfo &STI, bool RelaxAll);
     typedef MCTargetStreamer *(*NullTargetStreamerCtorTy)(MCStreamer &S);
     typedef MCTargetStreamer *(*AsmTargetStreamerCtorTy)(
@@ -405,22 +405,22 @@ namespace llvm {
       return MCCodeEmitterCtorFn(II, MRI, Ctx);
     }
 
-    /// createMCObjectStreamer - Create a target specific MCStreamer.
+    /// Create a target specific MCStreamer.
     ///
-    /// \param TT The target triple.
+    /// \param T The target triple.
     /// \param Ctx The target context.
     /// \param TAB The target assembler backend object. Takes ownership.
     /// \param OS The stream object.
     /// \param Emitter The target independent assembler object.Takes ownership.
     /// \param RelaxAll Relax all fixups?
-    MCStreamer *createMCObjectStreamer(StringRef TT, MCContext &Ctx,
+    MCStreamer *createMCObjectStreamer(const Triple &T, MCContext &Ctx,
                                        MCAsmBackend &TAB, raw_ostream &OS,
                                        MCCodeEmitter *Emitter,
                                        const MCSubtargetInfo &STI,
                                        bool RelaxAll) const {
       if (!MCObjectStreamerCtorFn)
         return nullptr;
-      return MCObjectStreamerCtorFn(TT, Ctx, TAB, OS, Emitter, STI, RelaxAll);
+      return MCObjectStreamerCtorFn(T, Ctx, TAB, OS, Emitter, STI, RelaxAll);
     }
 
     MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,

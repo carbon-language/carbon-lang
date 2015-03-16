@@ -75,7 +75,7 @@ static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCStreamer *createMCStreamer(StringRef TT, MCContext &Context,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
                                     MCAsmBackend &MAB, raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     MCSubtargetInfo const &STI, bool RelaxAll) {

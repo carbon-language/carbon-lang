@@ -224,11 +224,11 @@ public:
 }
 
 // This is duplicated code. Refactor this.
-static MCStreamer *createMCStreamer(StringRef TT, MCContext &Ctx,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
                                     MCAsmBackend &MAB, raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
-  if (Triple(TT).isOSDarwin()) {
+  if (T.isOSDarwin()) {
     MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
     new PPCTargetMachOStreamer(*S);
     return S;

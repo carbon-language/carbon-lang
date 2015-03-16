@@ -510,7 +510,7 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
   if (EC)
     return error(Twine(OutputFilename) + ": " + EC.message(), Context);
 
-  MS = TheTarget->createMCObjectStreamer(TripleName, *MC, *MAB, *OutFile, MCE,
+  MS = TheTarget->createMCObjectStreamer(TheTriple, *MC, *MAB, *OutFile, MCE,
                                          *MSTI, false);
   if (!MS)
     return error("no object streamer for target " + TripleName, Context);

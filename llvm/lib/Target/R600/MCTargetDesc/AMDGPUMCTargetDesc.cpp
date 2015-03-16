@@ -73,7 +73,7 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *createMCStreamer(StringRef TT, MCContext &Ctx,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
                                     MCAsmBackend &MAB, raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {

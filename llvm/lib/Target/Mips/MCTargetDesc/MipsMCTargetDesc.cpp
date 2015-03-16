@@ -106,12 +106,12 @@ static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
   return new MipsInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *createMCStreamer(StringRef TT, MCContext &Context,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
                                     MCAsmBackend &MAB, raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
   MCStreamer *S;
-  if (!Triple(TT).isOSNaCl())
+  if (!T.isOSNaCl())
     S = createMipsELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll);
   else
     S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll);

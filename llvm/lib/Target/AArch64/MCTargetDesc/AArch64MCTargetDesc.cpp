@@ -123,13 +123,11 @@ static MCInstPrinter *createAArch64MCInstPrinter(const Target &T,
   return nullptr;
 }
 
-static MCStreamer *createMCStreamer(StringRef TT, MCContext &Ctx,
+static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
                                     MCAsmBackend &TAB, raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
-  Triple TheTriple(TT);
-
-  if (TheTriple.isOSDarwin())
+  if (T.isOSDarwin())
     return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll,
                                /*LabelSections*/ true);
 
