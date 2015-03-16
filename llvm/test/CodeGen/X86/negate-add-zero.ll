@@ -486,8 +486,6 @@ declare void @_ZN7CDSListIP9HingeNodeEC1Eii(%"struct.CDSList<HingeNode*>"*, i32,
 
 declare i8* @_Znwm(i32)
 
-declare i32 @llvm.eh.typeid.for.i32(i8*) nounwind
-
 declare void @_ZdlPv(i8*) nounwind
 
 declare i32 @__gxx_personality_v0(...)
