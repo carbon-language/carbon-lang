@@ -19,11 +19,13 @@ using namespace llvm::ELF;
 
 // Lazy resolver
 static const uint8_t mipsGot0AtomContent[] = {
+  0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00
 };
 
 // Module pointer
 static const uint8_t mipsGotModulePointerAtomContent[] = {
+  0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x80
 };
 
@@ -101,24 +103,36 @@ public:
 };
 
 /// \brief MIPS GOT entry initialized by zero.
-class GOT0Atom : public MipsGOTAtom {
+template <typename ELFT> class GOT0Atom : public MipsGOTAtom {
 public:
   GOT0Atom(const File &f) : MipsGOTAtom(f) {}
 
-  ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(mipsGot0AtomContent);
-  }
+  ArrayRef<uint8_t> rawContent() const override;
 };
 
+template <> ArrayRef<uint8_t> GOT0Atom<Mips32ELType>::rawContent() const {
+  return llvm::makeArrayRef(mipsGot0AtomContent).slice(4);
+}
+template <> ArrayRef<uint8_t> GOT0Atom<Mips64ELType>::rawContent() const {
+  return llvm::makeArrayRef(mipsGot0AtomContent);
+}
+
 /// \brief MIPS GOT entry initialized by zero.
-class GOTModulePointerAtom : public MipsGOTAtom {
+template <typename ELFT> class GOTModulePointerAtom : public MipsGOTAtom {
 public:
   GOTModulePointerAtom(const File &f) : MipsGOTAtom(f) {}
 
-  ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(mipsGotModulePointerAtomContent);
-  }
+  ArrayRef<uint8_t> rawContent() const override;
 };
+
+template <>
+ArrayRef<uint8_t> GOTModulePointerAtom<Mips32ELType>::rawContent() const {
+  return llvm::makeArrayRef(mipsGotModulePointerAtomContent).slice(4);
+}
+template <>
+ArrayRef<uint8_t> GOTModulePointerAtom<Mips64ELType>::rawContent() const {
+  return llvm::makeArrayRef(mipsGotModulePointerAtomContent);
+}
 
 /// \brief MIPS GOT TLS GD entry.
 class GOTTLSGdAtom : public MipsGOTAtom {
@@ -146,7 +160,7 @@ public:
   Alignment alignment() const override { return Alignment(2); }
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(mipsGot0AtomContent);
+    return llvm::makeArrayRef(mipsGot0AtomContent).slice(4);
   }
 };
 
@@ -268,6 +282,7 @@ private:
   /// \brief Map Atoms and addend to local GOT entries.
   typedef std::pair<const Atom *, int64_t> LocalGotMapKeyT;
   llvm::DenseMap<LocalGotMapKeyT, GOTAtom *> _gotLocalMap;
+  llvm::DenseMap<LocalGotMapKeyT, GOTAtom *> _gotLocalPageMap;
 
   /// \brief Map Atoms to global GOT entries.
   llvm::DenseMap<const Atom *, GOTAtom *> _gotGlobalMap;
@@ -340,6 +355,7 @@ private:
   void handleGOT(Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
+  const GOTAtom *getLocalGOTPageEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
   const GOTAtom *getTLSGOTEntry(const Atom *a);
   const GOTAtom *getTLSGdGOTEntry(const Atom *a);
@@ -369,8 +385,9 @@ private:
 template <typename ELFT>
 RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
     : _ctx(ctx), _file(ctx), _gotLDMEntry(nullptr) {
-  _localGotVector.push_back(new (_file._alloc) GOT0Atom(_file));
-  _localGotVector.push_back(new (_file._alloc) GOTModulePointerAtom(_file));
+  _localGotVector.push_back(new (_file._alloc) GOT0Atom<ELFT>(_file));
+  _localGotVector.push_back(new (_file._alloc)
+                                GOTModulePointerAtom<ELFT>(_file));
 }
 
 template <typename ELFT>
@@ -483,7 +500,12 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MIPS_CALL16:
   case R_MICROMIPS_GOT16:
   case R_MICROMIPS_CALL16:
+  case R_MIPS_GOT_DISP:
+  case R_MIPS_GOT_PAGE:
     handleGOT(ref);
+    break;
+  case R_MIPS_GOT_OFST:
+    // Nothing to do. We create GOT page entry in the R_MIPS_GOT_PAGE handler.
     break;
   case R_MIPS_GPREL16:
     if (isLocal(ref.target()))
@@ -722,10 +744,19 @@ void RelocationPass<ELFT>::handle26(const MipsELFDefinedAtom<ELFT> &atom,
 }
 
 template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
-  if (isLocalCall(ref.target()))
-    ref.setTarget(getLocalGOTEntry(ref));
-  else
+  if (!isLocalCall(ref.target())) {
     ref.setTarget(getGlobalGOTEntry(ref.target()));
+    return;
+  }
+
+  if (ref.kindValue() == R_MIPS_GOT_PAGE)
+    ref.setTarget(getLocalGOTPageEntry(ref));
+  else if (ref.kindValue() == R_MIPS_GOT_DISP)
+    ref.setTarget(getLocalGOTEntry(ref));
+  else if (isLocal(ref.target()))
+    ref.setTarget(getLocalGOTPageEntry(ref));
+  else
+    ref.setTarget(getLocalGOTEntry(ref));
 }
 
 template <typename ELFT>
@@ -767,15 +798,35 @@ const GOTAtom *RelocationPass<ELFT>::getLocalGOTEntry(const Reference &ref) {
   if (got != _gotLocalMap.end())
     return got->second;
 
-  auto ga = new (_file._alloc) GOT0Atom(_file);
+  auto ga = new (_file._alloc) GOT0Atom<ELFT>(_file);
   _gotLocalMap[key] = ga;
 
   _localGotVector.push_back(ga);
 
-  if (isLocal(a))
-    ga->addReferenceELF_Mips(LLD_R_MIPS_32_HI16, 0, a, ref.addend());
-  else
-    ga->addReferenceELF_Mips(R_MIPS_32, 0, a, 0);
+  Reference::KindValue relKind = ELFT::Is64Bits ? R_MIPS_64 : R_MIPS_32;
+  ga->addReferenceELF_Mips(relKind, 0, a, 0);
+
+  return ga;
+}
+
+template <typename ELFT>
+const GOTAtom *
+RelocationPass<ELFT>::getLocalGOTPageEntry(const Reference &ref) {
+  const Atom *a = ref.target();
+  LocalGotMapKeyT key(a, ref.addend());
+
+  auto got = _gotLocalPageMap.find(key);
+  if (got != _gotLocalPageMap.end())
+    return got->second;
+
+  auto ga = new (_file._alloc) GOT0Atom<ELFT>(_file);
+  _gotLocalPageMap[key] = ga;
+
+  _localGotVector.push_back(ga);
+
+  Reference::KindValue relKind =
+      ELFT::Is64Bits ? LLD_R_MIPS_64_HI16 : LLD_R_MIPS_32_HI16;
+  ga->addReferenceELF_Mips(relKind, 0, a, ref.addend());
 
   return ga;
 }
@@ -786,7 +837,7 @@ const GOTAtom *RelocationPass<ELFT>::getGlobalGOTEntry(const Atom *a) {
   if (got != _gotGlobalMap.end())
     return got->second;
 
-  auto ga = new (_file._alloc) GOT0Atom(_file);
+  auto ga = new (_file._alloc) GOT0Atom<ELFT>(_file);
   _gotGlobalMap[a] = ga;
 
   _globalGotVector.push_back(ga);
@@ -804,7 +855,7 @@ const GOTAtom *RelocationPass<ELFT>::getTLSGOTEntry(const Atom *a) {
   if (got != _gotTLSMap.end())
     return got->second;
 
-  auto ga = new (_file._alloc) GOT0Atom(_file);
+  auto ga = new (_file._alloc) GOT0Atom<ELFT>(_file);
   _gotTLSMap[a] = ga;
 
   _tlsGotVector.push_back(ga);

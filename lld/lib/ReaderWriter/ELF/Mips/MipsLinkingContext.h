@@ -31,6 +31,8 @@ enum {
   LLD_R_MIPS_STO_PLT = 1029,
   /// \brief The same as R_MICROMIPS_26_S1 but for global symbols.
   LLD_R_MICROMIPS_GLOBAL_26_S1 = 1030,
+  /// \brief Apply high 32+16 bits of symbol + addend.
+  LLD_R_MIPS_64_HI16 = 1031,
 };
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ELType;
