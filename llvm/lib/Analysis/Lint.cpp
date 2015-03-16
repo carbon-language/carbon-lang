@@ -141,16 +141,16 @@ namespace {
       }
     }
 
-    // \brief A check failed, so printout out the condition and the message.
-    //
-    // This provides a nice place to put a breakpoint if you want to see why
-    // something is not correct.
+    /// \brief A check failed, so printout out the condition and the message.
+    ///
+    /// This provides a nice place to put a breakpoint if you want to see why
+    /// something is not correct.
     void CheckFailed(const Twine &Message) { MessagesStr << Message << '\n'; }
 
-    // \brief A check failed (with values to print).
-    //
-    // This calls the Message-only version so that the above is easier to set a
-    // breakpoint on.
+    /// \brief A check failed (with values to print).
+    ///
+    /// This calls the Message-only version so that the above is easier to set
+    /// a breakpoint on.
     template <typename T1, typename... Ts>
     void CheckFailed(const Twine &Message, const T1 &V1, const Ts &...Vs) {
       CheckFailed(Message);
