@@ -459,15 +459,16 @@ namespace {
                    DenseMap<Value *, RRInfo> &Releases,
                    SmallVectorImpl<Instruction *> &DeadInsts, Module *M);
 
-    bool ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState> &BBStates,
-                               BlotMapVector<Value *, RRInfo> &Retains,
-                               DenseMap<Value *, RRInfo> &Releases, Module *M,
-                               SmallVectorImpl<Instruction *> &NewRetains,
-                               SmallVectorImpl<Instruction *> &NewReleases,
-                               SmallVectorImpl<Instruction *> &DeadInsts,
-                               RRInfo &RetainsToMove, RRInfo &ReleasesToMove,
-                               Value *Arg, bool KnownSafe,
-                               bool &AnyPairsCompletelyEliminated);
+    bool
+    PairUpRetainsAndReleases(DenseMap<const BasicBlock *, BBState> &BBStates,
+                             BlotMapVector<Value *, RRInfo> &Retains,
+                             DenseMap<Value *, RRInfo> &Releases, Module *M,
+                             SmallVectorImpl<Instruction *> &NewRetains,
+                             SmallVectorImpl<Instruction *> &NewReleases,
+                             SmallVectorImpl<Instruction *> &DeadInsts,
+                             RRInfo &RetainsToMove, RRInfo &ReleasesToMove,
+                             Value *Arg, bool KnownSafe,
+                             bool &AnyPairsCompletelyEliminated);
 
     bool PerformCodePlacement(DenseMap<const BasicBlock *, BBState> &BBStates,
                               BlotMapVector<Value *, RRInfo> &Retains,
@@ -1453,7 +1454,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg, RRInfo &RetainsToMove,
 
 }
 
-bool ObjCARCOpt::ConnectTDBUTraversals(
+bool ObjCARCOpt::PairUpRetainsAndReleases(
     DenseMap<const BasicBlock *, BBState> &BBStates,
     BlotMapVector<Value *, RRInfo> &Retains,
     DenseMap<Value *, RRInfo> &Releases, Module *M,
@@ -1705,11 +1706,10 @@ bool ObjCARCOpt::PerformCodePlacement(
     // Connect the dots between the top-down-collected RetainsToMove and
     // bottom-up-collected ReleasesToMove to form sets of related calls.
     NewRetains.push_back(Retain);
-    bool PerformMoveCalls =
-      ConnectTDBUTraversals(BBStates, Retains, Releases, M, NewRetains,
-                            NewReleases, DeadInsts, RetainsToMove,
-                            ReleasesToMove, Arg, KnownSafe,
-                            AnyPairsCompletelyEliminated);
+    bool PerformMoveCalls = PairUpRetainsAndReleases(
+        BBStates, Retains, Releases, M, NewRetains, NewReleases, DeadInsts,
+        RetainsToMove, ReleasesToMove, Arg, KnownSafe,
+        AnyPairsCompletelyEliminated);
 
     if (PerformMoveCalls) {
       // Ok, everything checks out and we're all set. Let's move/delete some
