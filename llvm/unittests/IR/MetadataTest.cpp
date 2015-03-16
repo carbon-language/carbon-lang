@@ -251,6 +251,22 @@ TEST_F(MDNodeTest, Print) {
     EXPECT_EQ(Expected_, Actual_);                                             \
   } while (false)
 
+TEST_F(MDNodeTest, PrintTemporary) {
+  MDNode *Arg = getNode();
+  TempMDNode Temp = MDNode::getTemporary(Context, Arg);
+  MDNode *N = getNode(Temp.get());
+  Module M("test", Context);
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("named");
+  NMD->addOperand(N);
+
+  EXPECT_PRINTER_EQ("!0 = !{!1}", N->print(OS, &M));
+  EXPECT_PRINTER_EQ("!1 = <temporary!> !{!2}", Temp->print(OS, &M));
+  EXPECT_PRINTER_EQ("!2 = !{}", Arg->print(OS, &M));
+
+  // Cleanup.
+  Temp->replaceAllUsesWith(Arg);
+}
+
 TEST_F(MDNodeTest, PrintFromModule) {
   Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 7);
   MDString *S = MDString::get(Context, "foo");

@@ -1916,10 +1916,10 @@ static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
                                     TypePrinting *TypePrinter,
                                     SlotTracker *Machine,
                                     const Module *Context) {
-  assert(!Node->isTemporary() && "Unexpected forward declaration");
-
   if (Node->isDistinct())
     Out << "distinct ";
+  else if (Node->isTemporary())
+    Out << "<temporary!> "; // Handle broken code.
 
   switch (Node->getMetadataID()) {
   default:
