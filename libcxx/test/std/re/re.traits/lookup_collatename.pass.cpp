@@ -25,6 +25,8 @@
 #include <cassert>
 #include "test_iterators.h"
 
+#include "platform_support.h" // locale name macros
+
 template <class char_type>
 void
 test(const char_type* A, const std::basic_string<char_type>& expected)
@@ -108,7 +110,7 @@ int main()
 
     test("tild", std::string(""));
     test("ch", std::string(""));
-    std::locale::global(std::locale("cs_CZ.ISO8859-2"));
+    std::locale::global(std::locale(LOCALE_cs_CZ_ISO8859_2));
     test("ch", std::string("ch"));
     std::locale::global(std::locale("C"));
 
@@ -184,7 +186,7 @@ int main()
 
     test(L"tild", std::wstring(L""));
     test(L"ch", std::wstring(L""));
-    std::locale::global(std::locale("cs_CZ.ISO8859-2"));
+    std::locale::global(std::locale(LOCALE_cs_CZ_ISO8859_2));
     test(L"ch", std::wstring(L"ch"));
     std::locale::global(std::locale("C"));
 }

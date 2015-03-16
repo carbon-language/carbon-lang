@@ -23,8 +23,9 @@
 
 #include <regex>
 #include <cassert>
-
 #include "test_iterators.h"
+
+#include "platform_support.h" // locale name macros
 
 int main()
 {
@@ -617,7 +618,7 @@ int main()
                                                  std::regex_constants::extended)));
         assert(m.size() == 0);
     }
-    std::locale::global(std::locale("cs_CZ.ISO8859-2"));
+    std::locale::global(std::locale(LOCALE_cs_CZ_ISO8859_2));
     {
         std::cmatch m;
         const char s[] = "m";
@@ -1283,7 +1284,7 @@ int main()
                                                  std::regex_constants::extended)));
         assert(m.size() == 0);
     }
-    std::locale::global(std::locale("cs_CZ.ISO8859-2"));
+    std::locale::global(std::locale(LOCALE_cs_CZ_ISO8859_2));
     {
         std::wcmatch m;
         const wchar_t s[] = L"m";

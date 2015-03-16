@@ -22,6 +22,8 @@
 #include <cassert>
 #include "test_iterators.h"
 
+#include "platform_support.h" // locale name macros
+
 int main()
 {
     {
@@ -31,7 +33,7 @@ int main()
         typedef forward_iterator<const char*> F;
         assert(t.transform_primary(F(A), F(A+1)) !=
                t.transform_primary(F(Aacute), F(Aacute+1)));
-        t.imbue(std::locale("cs_CZ.ISO8859-2"));
+        t.imbue(std::locale(LOCALE_cs_CZ_ISO8859_2));
         assert(t.transform_primary(F(A), F(A+1)) ==
                t.transform_primary(F(Aacute), F(Aacute+1)));
     }
@@ -42,7 +44,7 @@ int main()
         typedef forward_iterator<const wchar_t*> F;
         assert(t.transform_primary(F(A), F(A+1)) !=
                t.transform_primary(F(Aacute), F(Aacute+1)));
-        t.imbue(std::locale("cs_CZ.ISO8859-2"));
+        t.imbue(std::locale(LOCALE_cs_CZ_ISO8859_2));
         assert(t.transform_primary(F(A), F(A+1)) ==
                t.transform_primary(F(Aacute), F(Aacute+1)));
     }
