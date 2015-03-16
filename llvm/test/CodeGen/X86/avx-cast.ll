@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
 
+; CHECK-LABEL: castA:
 ; CHECK: vxorps
 ; CHECK-NEXT: vinsertf128 $0
 define <8 x float> @castA(<4 x float> %m) nounwind uwtable readnone ssp {
@@ -8,6 +9,7 @@ entry:
   ret <8 x float> %shuffle.i
 }
 
+; CHECK-LABEL: castB:
 ; CHECK: vxorps
 ; CHECK-NEXT: vinsertf128 $0
 define <4 x double> @castB(<2 x double> %m) nounwind uwtable readnone ssp {
@@ -16,6 +18,7 @@ entry:
   ret <4 x double> %shuffle.i
 }
 
+; CHECK-LABEL: castC:
 ; CHECK: vxorps
 ; CHECK-NEXT: vinsertf128 $0
 define <4 x i64> @castC(<2 x i64> %m) nounwind uwtable readnone ssp {
@@ -24,6 +27,7 @@ entry:
   ret <4 x i64> %shuffle.i
 }
 
+; CHECK-LABEL: castD:
 ; CHECK-NOT: vextractf128 $0
 define <4 x float> @castD(<8 x float> %m) nounwind uwtable readnone ssp {
 entry:
@@ -31,6 +35,7 @@ entry:
   ret <4 x float> %shuffle.i
 }
 
+; CHECK-LABEL: castE:
 ; CHECK-NOT: vextractf128 $0
 define <2 x i64> @castE(<4 x i64> %m) nounwind uwtable readnone ssp {
 entry:
@@ -38,6 +43,7 @@ entry:
   ret <2 x i64> %shuffle.i
 }
 
+; CHECK-LABEL: castF:
 ; CHECK-NOT: vextractf128 $0
 define <2 x double> @castF(<4 x double> %m) nounwind uwtable readnone ssp {
 entry:
