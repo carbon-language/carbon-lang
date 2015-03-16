@@ -42,7 +42,6 @@ set(CLANG_TOOLS_TEST_DEPS
   clang-tidy
   modularize
   pp-trace
-  remove-cstr-calls
 
   # Unit tests
   ExtraToolsUnitTests
