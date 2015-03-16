@@ -10472,17 +10472,17 @@ SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
   // If the vector is wider than 128 bits, extract the 128-bit subvector, insert
   // into that, and then insert the subvector back into the result.
   if (VT.is256BitVector() || VT.is512BitVector()) {
-    // Get the desired 128-bit vector half.
+    // Get the desired 128-bit vector chunk.
     SDValue V = Extract128BitVector(N0, IdxVal, DAG, dl);
 
-    // Insert the element into the desired half.
+    // Insert the element into the desired chunk.
     unsigned NumEltsIn128 = 128 / EltVT.getSizeInBits();
     unsigned IdxIn128 = IdxVal - (IdxVal / NumEltsIn128) * NumEltsIn128;
 
     V = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, V.getValueType(), V, N1,
                     DAG.getConstant(IdxIn128, MVT::i32));
 
-    // Insert the changed part back to the 256-bit vector
+    // Insert the changed part back into the bigger vector
     return Insert128BitVector(N0, V, IdxVal, DAG, dl);
   }
   assert(VT.is128BitVector() && "Only 128-bit vector types should be left!");
