@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx | FileCheck %s
 ; PR11494
 
 define void @test(<4 x i32>* nocapture %p) nounwind {
@@ -14,5 +14,4 @@ define void @test(<4 x i32>* nocapture %p) nounwind {
   ret void
 }
 
-declare <4 x i32> @llvm.x86.sse41.pminsd(<4 x i32>, <4 x i32>) nounwind readnone
 declare <4 x i32> @llvm.x86.sse41.pmaxsd(<4 x i32>, <4 x i32>) nounwind readnone
