@@ -196,9 +196,8 @@ private:
 
   // A sorted map to find an atom from a section and an offset within
   // the section.
-  std::map<const coff_section *,
-           std::map<uint32_t, std::vector<COFFDefinedAtom *>>>
-  _definedAtomLocations;
+  std::map<const coff_section *, std::multimap<uint32_t, COFFDefinedAtom *>>
+      _definedAtomLocations;
 
   uint64_t _ordinal;
   llvm::COFF::MachineTypes _machineType;
@@ -696,7 +695,7 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
         *this, "", sectionName, sectionSize, Atom::scopeTranslationUnit,
         type, isComdat, perms, _merge[section], data, getNextOrdinal());
     atoms.push_back(atom);
-    _definedAtomLocations[section][0].push_back(atom);
+    _definedAtomLocations[section].insert(std::make_pair(0, atom));
     return std::error_code();
   }
 
@@ -709,7 +708,7 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
         *this, "", sectionName, sectionSize, Atom::scopeTranslationUnit,
         type, isComdat, perms, _merge[section], data, getNextOrdinal());
     atoms.push_back(atom);
-    _definedAtomLocations[section][0].push_back(atom);
+    _definedAtomLocations[section].insert(std::make_pair(0, atom));
   }
 
   for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
@@ -723,7 +722,7 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
         type, isComdat, perms, _merge[section], data, getNextOrdinal());
     atoms.push_back(atom);
     _symbolAtom[*si] = atom;
-    _definedAtomLocations[section][si->getValue()].push_back(atom);
+    _definedAtomLocations[section].insert(std::make_pair(si->getValue(), atom));
   }
   return std::error_code();
 }
@@ -786,19 +785,19 @@ std::error_code FileCOFF::findAtomAt(const coff_section *section,
                                      uint32_t targetAddress,
                                      COFFDefinedFileAtom *&result,
                                      uint32_t &offsetInAtom) {
-  for (auto i : _definedAtomLocations[section]) {
-    uint32_t atomAddress = i.first;
-    std::vector<COFFDefinedAtom *> &atomsAtSameLocation = i.second;
-    COFFDefinedAtom *atom = atomsAtSameLocation.back();
-    if (atomAddress <= targetAddress &&
-        targetAddress < atomAddress + atom->size()) {
-      result = atom;
-      offsetInAtom = targetAddress - atomAddress;
-      return std::error_code();
-    }
-  }
-  // Relocation target is out of range
-  return llvm::object::object_error::parse_failed;
+  auto loc = _definedAtomLocations.find(section);
+  if (loc == _definedAtomLocations.end())
+    return llvm::object::object_error::parse_failed;
+  std::multimap<uint32_t, COFFDefinedAtom *> &map = loc->second;
+
+  auto it = map.upper_bound(targetAddress);
+  if (it == map.begin())
+    return llvm::object::object_error::parse_failed;
+  --it;
+  uint32_t atomAddress = it->first;
+  result = it->second;
+  offsetInAtom = targetAddress - atomAddress;
+  return std::error_code();
 }
 
 /// Find the atom for the symbol that was at the \p index in the symbol
