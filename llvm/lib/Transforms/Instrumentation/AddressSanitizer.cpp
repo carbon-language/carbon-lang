@@ -2051,12 +2051,12 @@ bool AddressSanitizer::isSafeAccess(ObjectSizeOffsetVisitor &ObjSizeVis,
                                     Value *Addr, uint64_t TypeSize) const {
   SizeOffsetType SizeOffset = ObjSizeVis.compute(Addr);
   if (!ObjSizeVis.bothKnown(SizeOffset)) return false;
-  int64_t Size = SizeOffset.first.getSExtValue();
+  uint64_t Size = SizeOffset.first.getZExtValue();
   int64_t Offset = SizeOffset.second.getSExtValue();
   // Three checks are required to ensure safety:
   // . Offset >= 0  (since the offset is given from the base ptr)
   // . Size >= Offset  (unsigned)
   // . Size - Offset >= NeededSize  (unsigned)
-  return Offset >= 0 && Size >= Offset &&
-         uint64_t(Size - Offset) >= TypeSize / 8;
+  return Offset >= 0 && Size >= uint64_t(Offset) &&
+         Size - uint64_t(Offset) >= TypeSize / 8;
 }
