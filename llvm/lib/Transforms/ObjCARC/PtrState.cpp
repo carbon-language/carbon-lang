@@ -174,7 +174,8 @@ bool BottomUpPtrState::InitBottomUp(ARCMDKindCache &Cache, Instruction *I) {
     NestingDetected = true;
   }
 
-  MDNode *ReleaseMetadata = I->getMetadata(Cache.ImpreciseReleaseMDKind);
+  MDNode *ReleaseMetadata =
+      I->getMetadata(Cache.get(ARCMDKindID::ImpreciseRelease));
   Sequence NewSeq = ReleaseMetadata ? S_MovableRelease : S_Release;
   ResetSequenceProgress(NewSeq);
   SetReleaseMetadata(ReleaseMetadata);
@@ -319,7 +320,8 @@ bool TopDownPtrState::MatchWithRelease(ARCMDKindCache &Cache,
 
   Sequence OldSeq = GetSeq();
 
-  MDNode *ReleaseMetadata = Release->getMetadata(Cache.ImpreciseReleaseMDKind);
+  MDNode *ReleaseMetadata =
+      Release->getMetadata(Cache.get(ARCMDKindID::ImpreciseRelease));
 
   switch (OldSeq) {
   case S_Retain:

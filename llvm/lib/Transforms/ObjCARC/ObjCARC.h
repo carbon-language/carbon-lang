@@ -24,6 +24,7 @@
 #define LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARC_H
 
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -258,16 +259,52 @@ static inline bool IsObjCIdentifiedObject(const Value *V) {
   return false;
 }
 
+enum class ARCMDKindID {
+  ImpreciseRelease,
+  CopyOnEscape,
+  NoObjCARCExceptions,
+};
+
 /// A cache of MDKinds used by various ARC optimizations.
-struct ARCMDKindCache {
+class ARCMDKindCache {
+  Module *M;
+
   /// The Metadata Kind for clang.imprecise_release metadata.
-  unsigned ImpreciseReleaseMDKind;
+  llvm::Optional<unsigned> ImpreciseReleaseMDKind;
 
   /// The Metadata Kind for clang.arc.copy_on_escape metadata.
-  unsigned CopyOnEscapeMDKind;
+  llvm::Optional<unsigned> CopyOnEscapeMDKind;
 
   /// The Metadata Kind for clang.arc.no_objc_arc_exceptions metadata.
-  unsigned NoObjCARCExceptionsMDKind;
+  llvm::Optional<unsigned> NoObjCARCExceptionsMDKind;
+
+public:
+  void init(Module *Mod) {
+    M = Mod;
+    ImpreciseReleaseMDKind = NoneType::None;
+    CopyOnEscapeMDKind = NoneType::None;
+    NoObjCARCExceptionsMDKind = NoneType::None;
+  }
+
+  unsigned get(ARCMDKindID ID) {
+    switch (ID) {
+    case ARCMDKindID::ImpreciseRelease:
+      if (!ImpreciseReleaseMDKind)
+        ImpreciseReleaseMDKind =
+            M->getContext().getMDKindID("clang.imprecise_release");
+      return *ImpreciseReleaseMDKind;
+    case ARCMDKindID::CopyOnEscape:
+      if (!CopyOnEscapeMDKind)
+        CopyOnEscapeMDKind =
+            M->getContext().getMDKindID("clang.arc.copy_on_escape");
+      return *CopyOnEscapeMDKind;
+    case ARCMDKindID::NoObjCARCExceptions:
+      if (!NoObjCARCExceptionsMDKind)
+        NoObjCARCExceptionsMDKind =
+            M->getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
+      return *NoObjCARCExceptionsMDKind;
+    }
+  }
 };
 
 } // end namespace objcarc

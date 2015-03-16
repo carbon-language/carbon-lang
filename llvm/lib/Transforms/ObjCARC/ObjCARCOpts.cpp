@@ -712,7 +712,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         Constant *Decl = EP.get(ARCRuntimeEntryPointKind::Release);
         CallInst *NewCall = CallInst::Create(Decl, Call->getArgOperand(0), "",
                                              Call);
-        NewCall->setMetadata(MDKindCache.ImpreciseReleaseMDKind,
+        NewCall->setMetadata(MDKindCache.get(ARCMDKindID::ImpreciseRelease),
                              MDNode::get(C, None));
 
         DEBUG(dbgs() << "Replacing autorelease{,RV}(x) with objc_release(x) "
@@ -1379,7 +1379,8 @@ bool ObjCARCOpt::Visit(Function &F,
   SmallVector<BasicBlock *, 16> PostOrder;
   SmallVector<BasicBlock *, 16> ReverseCFGPostOrder;
   ComputePostOrders(F, PostOrder, ReverseCFGPostOrder,
-                    MDKindCache.NoObjCARCExceptionsMDKind, BBStates);
+                    MDKindCache.get(ARCMDKindID::NoObjCARCExceptions),
+                    BBStates);
 
   // Use reverse-postorder on the reverse CFG for bottom-up.
   bool BottomUpNestingDetected = false;
@@ -1429,7 +1430,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg, RRInfo &RetainsToMove,
     CallInst *Call = CallInst::Create(Decl, MyArg, "", InsertPt);
     // Attach a clang.imprecise_release metadata tag, if appropriate.
     if (MDNode *M = ReleasesToMove.ReleaseMetadata)
-      Call->setMetadata(MDKindCache.ImpreciseReleaseMDKind, M);
+      Call->setMetadata(MDKindCache.get(ARCMDKindID::ImpreciseRelease), M);
     Call->setDoesNotThrow();
     if (ReleasesToMove.IsTailCallRelease)
       Call->setTailCall();
@@ -2098,20 +2099,13 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   if (!Run)
     return false;
 
-  // Identify the imprecise release metadata kind.
-  MDKindCache.ImpreciseReleaseMDKind =
-      M.getContext().getMDKindID("clang.imprecise_release");
-  MDKindCache.CopyOnEscapeMDKind =
-      M.getContext().getMDKindID("clang.arc.copy_on_escape");
-  MDKindCache.NoObjCARCExceptionsMDKind =
-      M.getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
-
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release
   // calls finalizers which can have arbitrary side effects.
+  MDKindCache.init(&M);
 
   // Initialize our runtime entry point cache.
-  EP.Initialize(&M);
+  EP.init(&M);
 
   return false;
 }

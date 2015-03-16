@@ -647,7 +647,7 @@ bool ObjCARCContract::doInitialization(Module &M) {
   if (!Run)
     return false;
 
-  EP.Initialize(&M);
+  EP.init(&M);
 
   // Initialize RetainRVMarker.
   RetainRVMarker = nullptr;

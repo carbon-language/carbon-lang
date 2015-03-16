@@ -56,7 +56,7 @@ public:
 
   ~ARCRuntimeEntryPoints() { }
 
-  void Initialize(Module *M) {
+  void init(Module *M) {
     TheModule = M;
     AutoreleaseRV = nullptr;
     Release = nullptr;

@@ -27,7 +27,7 @@
 namespace llvm {
 namespace objcarc {
 
-struct ARCMDKindCache;
+class ARCMDKindCache;
 class ProvenanceAnalysis;
 
 /// \enum Sequence
