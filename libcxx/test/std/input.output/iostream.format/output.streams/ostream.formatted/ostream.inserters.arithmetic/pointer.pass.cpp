@@ -59,18 +59,27 @@ int main()
         assert(os.fail());
     }
     {
-        testbuf<char> sb;
-        std::ostream os(&sb);
-        const void* n = 0;
-        os << n;
-        assert(os.good());
-        // %p is implementation defined.
-        // On some platforms (Windows), it's a hex number without
-        // any leading 0x like prefix.
-        // In that format, we assume a null pointer will yield 2 '0' hex digits
-        // for each 8 bits of address space.
-        assert(sb.str() == "0x0" || sb.str() == "(nil)" ||
-                                  sb.str() == std::string(sizeof(void*)*2,'0'));
+        testbuf<char> sb1;
+        std::ostream os1(&sb1);
+        int n1;
+        os1 << &n1;
+        assert(os1.good());
+        std::string s1(sb1.str());
+
+        testbuf<char> sb2;
+        std::ostream os2(&sb2);
+        int n2;
+        os2 << &n2;
+        assert(os2.good());
+        std::string s2(sb2.str());
+
+        // %p is implementation defined. Instead of validating the
+        // output, at least ensure that it does not generate an empty
+        // string. Also make sure that given two distinct addresses, the
+        // output of %p is different.
+        assert(!s1.empty());
+        assert(!s2.empty());
+        assert(s1 != s2);
     }
     {
         testbuf<char> sb;
