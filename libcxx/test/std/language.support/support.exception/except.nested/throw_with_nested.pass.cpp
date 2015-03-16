@@ -36,6 +36,10 @@ public:
     friend bool operator==(const B& x, const B& y) {return x.data_ == y.data_;}
 };
 
+#if __cplusplus > 201103L
+struct Final final {};
+#endif
+
 int main()
 {
     {
@@ -100,4 +104,16 @@ int main()
             assert(i == 7);
         }
     }
+#if __cplusplus > 201103L
+    {
+        try
+        {
+            std::throw_with_nested(Final());
+            assert(false);
+        }
+        catch (const Final &f)
+        {
+        }
+    }
+#endif
 }
