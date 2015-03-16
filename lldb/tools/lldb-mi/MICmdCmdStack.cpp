@@ -7,22 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MICmdCmdStack.cpp
-//
 // Overview:    CMICmdCmdStackInfoDepth         implementation.
 //              CMICmdCmdStackInfoFrame         implementation.
 //              CMICmdCmdStackListFrames        implementation.
 //              CMICmdCmdStackListArguments     implementation.
 //              CMICmdCmdStackListLocals        implementation.
 //              CMICmdCmdStackSelectFrame       implementation.
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadmetxt.
-//
-// Copyright:   None.
-//--
 
 // Third Party Headers:
 #include "lldb/API/SBThread.h"

@@ -7,21 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MIDataTypes.h
-//
 // Overview:    Common global switches, macros, etc.
 //
 //              This file contains common data types required by applications
 //              generally. If supported by the compiler, this file should be
 //              #include'd as part of the project's PCH (precompiled header).
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadmetxt.
-//
-// Copyright:   None.
-//--
 
 #pragma once
 

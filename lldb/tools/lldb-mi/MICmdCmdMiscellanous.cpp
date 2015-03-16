@@ -7,20 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MICmdCmdMiscellanous.cpp
-//
 // Overview:    CMICmdCmdGdbExit                implementation.
 //              CMICmdCmdListThreadGroups       implementation.
 //              CMICmdCmdInterpreterExec        implementation.
 //              CMICmdCmdInferiorTtySet         implementation.
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadmetxt.
-//
-// Copyright:   None.
-//--
 
 // Third Party Headers:
 #include "lldb/API/SBCommandInterpreter.h"

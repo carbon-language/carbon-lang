@@ -7,9 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MICmdCommands.cpp
-//
 // Overview:    MI command are registered with the MI command factory.
 //
 //              To implement new MI commands derive a new command class from the command base
@@ -18,13 +15,6 @@
 //                  MICmdCommands.cpp
 //                  MICmdBase.h / .cpp
 //                  MICmdCmd.h / .cpp
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadmetxt.
-//
-// Copyright:   None.
-//--
 
 // In-house headers:
 #include "MICmdCommands.h"

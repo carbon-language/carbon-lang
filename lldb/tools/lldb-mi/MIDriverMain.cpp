@@ -7,9 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MIDriverMain.cpp
-//
 // Overview:    Defines the entry point for the console application.
 //              The MI application (project name MI) runs in two modes:
 //              An LLDB native driver mode where it acts no different from the LLDB driver.
@@ -23,25 +20,7 @@
 //                  MICmdCommands.cpp
 //                  MICmdBase.h / .cpp
 //                  MICmdCmd.h / .cpp
-// Versions:    1.0.0.1     First version from scratch 28/1/2014 to 28/3/2014. MI not complete.
-//              1.0.0.2     First deliverable to client 7/3/2014. MI not complete.
-//              1.0.0.3     Code refactor tidy. Release to community for evaluation 17/5/2014. MI not complete.
-//              1.0.0.4     Post release to the community for evaluation 17/5/2014. MI not complete.
-//              1.0.0.5     Second deliverable to client 16/6/2014.
-//              1.0.0.6     Post release of second deliverable to client 16/6/2014.
-//                          Released to the community 24/6/2014.
-//              1.0.0.7     Post release to the community.
-//                          Delivered to client 30/6/2014.
-//              1.0.0.8     Delivered to client 29/7/2014.
-//              1.0.0.9     Post release to client 29/7/2014.
-//              See MIreadme.txt for list of MI commands implemented.
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadme.txt.
-//
-// Copyright:   None.
-//--
+
 
 #if defined(_MSC_VER)
 #define _INC_SIGNAL // Stop window's signal.h being included - CODETAG_IOR_SIGNALS

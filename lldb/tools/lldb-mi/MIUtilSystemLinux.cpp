@@ -7,18 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MIUtilSystemLinux.cpp
-//
-// Overview:    CMIUtilSystemLinux implementation.
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadmetxt.
-//
-// Copyright:   None.
-//--
-
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__linux__)
 
 // In-house headers:

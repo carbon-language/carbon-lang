@@ -7,22 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-//++
-// File:        MICmdCmdBreak.cpp
-//
 // Overview:    CMICmdCmdBreakInsert            implementation.
 //              CMICmdCmdBreakDelete            implementation.
 //              CMICmdCmdBreakDisable           implementation.
 //              CMICmdCmdBreakEnable            implementation.
 //              CMICmdCmdBreakAfter             implementation.
 //              CMICmdCmdBreakCondition         implementation.
-//
-// Environment: Compilers:  Visual C++ 12.
-//                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
-//              Libraries:  See MIReadmetxt.
-//
-// Copyright:   None.
-//--
 
 // Third Party Headers:
 #include "lldb/API/SBBreakpointLocation.h"
