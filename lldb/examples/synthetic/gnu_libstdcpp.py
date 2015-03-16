@@ -141,22 +141,14 @@ class StdVectorSynthProvider:
 		logger = lldb.formatters.Logger.Logger()
 		self.count = None
 		self.valobj = valobj
-		logger >> "Providing synthetic children for a map named " + str(valobj.GetName())
+		logger >> "Providing synthetic children for a vector named " + str(valobj.GetName())
 
 	def num_children(self):
-		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
 		return self.count
 
-	def is_valid_pointer(ptr,process):
-		logger = lldb.formatters.Logger.Logger()
-		error = lldb.SBError()
-		process.ReadMemory(ptr,1,error)
-		return False if error.Fail() else True
-
 	def num_children_impl(self):
-		logger = lldb.formatters.Logger.Logger()
 		try:
 			start_val = self.start.GetValueAsUnsigned(0)
 			finish_val = self.finish.GetValueAsUnsigned(0)
@@ -191,7 +183,6 @@ class StdVectorSynthProvider:
 			return 0;
 
 	def get_child_index(self,name):
-		logger = lldb.formatters.Logger.Logger()
 		try:
 			return int(name.lstrip('[').rstrip(']'))
 		except:
@@ -211,7 +202,6 @@ class StdVectorSynthProvider:
 			return None
 
 	def update(self):
-		logger = lldb.formatters.Logger.Logger()
 		# preemptively setting this to None - we might end up changing our mind later
 		self.count = None
 		try:
