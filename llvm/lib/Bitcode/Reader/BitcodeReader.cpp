@@ -3648,9 +3648,9 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         return EC;
       I = new LoadInst(Op, "", Record[OpNum+1], Align);
 
-      (void)Ty;
-      assert((!Ty || Ty == I->getType()) &&
-             "Explicit type doesn't match pointee type of the first operand");
+      if (Ty && Ty != I->getType())
+        return Error("Explicit load type does not match pointee type of "
+                     "pointer operand");
 
       InstructionList.push_back(I);
       break;
