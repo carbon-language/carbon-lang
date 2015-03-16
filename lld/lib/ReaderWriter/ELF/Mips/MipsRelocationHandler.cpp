@@ -318,7 +318,6 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
   case R_MICROMIPS_26_S1:
     return reloc26loc(relAddr, tgtAddr, ref.addend(), isCrossJump ? 2 : 1);
   case R_MIPS_HI16:
-    return relocHi16(relAddr, tgtAddr, ref.addend(), isGP);
   case R_MICROMIPS_HI16:
     return relocHi16(relAddr, tgtAddr, ref.addend(), isGP);
   case R_MIPS_LO16:
@@ -327,9 +326,14 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
     return relocLo16(relAddr, tgtAddr, ref.addend(), isGP, true);
   case R_MIPS_GOT16:
   case R_MIPS_CALL16:
-    return relocGOT(tgtAddr, gpAddr);
   case R_MICROMIPS_GOT16:
   case R_MICROMIPS_CALL16:
+  case R_MIPS_TLS_GD:
+  case R_MIPS_TLS_LDM:
+  case R_MIPS_TLS_GOTTPREL:
+  case R_MICROMIPS_TLS_GD:
+  case R_MICROMIPS_TLS_LDM:
+  case R_MICROMIPS_TLS_GOTTPREL:
     return relocGOT(tgtAddr, gpAddr);
   case R_MICROMIPS_PC7_S1:
     return relocPc7(relAddr, tgtAddr, ref.addend());
@@ -339,13 +343,6 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
     return relocPc16(relAddr, tgtAddr, ref.addend());
   case R_MICROMIPS_PC23_S2:
     return relocPc23(relAddr, tgtAddr, ref.addend());
-  case R_MIPS_TLS_GD:
-  case R_MIPS_TLS_LDM:
-  case R_MIPS_TLS_GOTTPREL:
-  case R_MICROMIPS_TLS_GD:
-  case R_MICROMIPS_TLS_LDM:
-  case R_MICROMIPS_TLS_GOTTPREL:
-    return relocGOT(tgtAddr, gpAddr);
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_TPREL_HI16:
   case R_MICROMIPS_TLS_DTPREL_HI16:
