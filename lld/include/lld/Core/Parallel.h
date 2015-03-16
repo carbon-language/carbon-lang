@@ -295,7 +295,12 @@ void parallel_for_each(Iterator begin, Iterator end, Func func) {
 #else
 template <class Iterator, class Func>
 void parallel_for_each(Iterator begin, Iterator end, Func func) {
-  // TODO: Make this parallel.
+  TaskGroup tg;
+  ptrdiff_t taskSize = 1024;
+  while (taskSize <= std::distance(begin, end)) {
+    tg.spawn([=, &func] { std::for_each(begin, begin + taskSize, func); });
+    begin += taskSize;
+  }
   std::for_each(begin, end, func);
 }
 #endif
