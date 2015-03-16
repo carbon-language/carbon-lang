@@ -63,10 +63,10 @@ private:
 
 public:
   AsmToken() {}
-  AsmToken(TokenKind _Kind, StringRef _Str, APInt _IntVal)
-    : Kind(_Kind), Str(_Str), IntVal(_IntVal) {}
-  AsmToken(TokenKind _Kind, StringRef _Str, int64_t _IntVal = 0)
-    : Kind(_Kind), Str(_Str), IntVal(64, _IntVal, true) {}
+  AsmToken(TokenKind Kind, StringRef Str, APInt IntVal)
+      : Kind(Kind), Str(Str), IntVal(IntVal) {}
+  AsmToken(TokenKind Kind, StringRef Str, int64_t IntVal = 0)
+      : Kind(Kind), Str(Str), IntVal(64, IntVal, true) {}
 
   TokenKind getKind() const { return Kind; }
   bool is(TokenKind K) const { return Kind == K; }

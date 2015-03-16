@@ -88,7 +88,7 @@ private:
   /// @}
 
 protected:
-  MCFragment(FragmentType _Kind, MCSectionData *_Parent = nullptr);
+  MCFragment(FragmentType Kind, MCSectionData *Parent = nullptr);
 
 public:
   // Only for sentinel.
@@ -307,11 +307,9 @@ class MCRelaxableFragment : public MCEncodedFragmentWithFixups {
   SmallVector<MCFixup, 1> Fixups;
 
 public:
-  MCRelaxableFragment(const MCInst &_Inst,
-                      const MCSubtargetInfo &_STI,
+  MCRelaxableFragment(const MCInst &Inst, const MCSubtargetInfo &STI,
                       MCSectionData *SD = nullptr)
-    : MCEncodedFragmentWithFixups(FT_Relaxable, SD), Inst(_Inst), STI(_STI) {
-  }
+      : MCEncodedFragmentWithFixups(FT_Relaxable, SD), Inst(Inst), STI(STI) {}
 
   SmallVectorImpl<char> &getContents() override { return Contents; }
   const SmallVectorImpl<char> &getContents() const override { return Contents; }
@@ -364,11 +362,10 @@ class MCAlignFragment : public MCFragment {
   bool EmitNops : 1;
 
 public:
-  MCAlignFragment(unsigned _Alignment, int64_t _Value, unsigned _ValueSize,
-                  unsigned _MaxBytesToEmit, MCSectionData *SD = nullptr)
-    : MCFragment(FT_Align, SD), Alignment(_Alignment),
-      Value(_Value),ValueSize(_ValueSize),
-      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false) {}
+  MCAlignFragment(unsigned Alignment, int64_t Value, unsigned ValueSize,
+                  unsigned MaxBytesToEmit, MCSectionData *SD = nullptr)
+      : MCFragment(FT_Align, SD), Alignment(Alignment), Value(Value),
+        ValueSize(ValueSize), MaxBytesToEmit(MaxBytesToEmit), EmitNops(false) {}
 
   /// @name Accessors
   /// @{
@@ -405,10 +402,10 @@ class MCFillFragment : public MCFragment {
   uint64_t Size;
 
 public:
-  MCFillFragment(int64_t _Value, unsigned _ValueSize, uint64_t _Size,
+  MCFillFragment(int64_t Value, unsigned ValueSize, uint64_t Size,
                  MCSectionData *SD = nullptr)
-    : MCFragment(FT_Fill, SD),
-      Value(_Value), ValueSize(_ValueSize), Size(_Size) {
+      : MCFragment(FT_Fill, SD), Value(Value), ValueSize(ValueSize),
+        Size(Size) {
     assert((!ValueSize || (Size % ValueSize) == 0) &&
            "Fill size must be a multiple of the value size!");
   }
@@ -439,10 +436,8 @@ class MCOrgFragment : public MCFragment {
   int8_t Value;
 
 public:
-  MCOrgFragment(const MCExpr &_Offset, int8_t _Value,
-                MCSectionData *SD = nullptr)
-    : MCFragment(FT_Org, SD),
-      Offset(&_Offset), Value(_Value) {}
+  MCOrgFragment(const MCExpr &Offset, int8_t Value, MCSectionData *SD = nullptr)
+      : MCFragment(FT_Org, SD), Offset(&Offset), Value(Value) {}
 
   /// @name Accessors
   /// @{
@@ -505,10 +500,11 @@ class MCDwarfLineAddrFragment : public MCFragment {
   SmallString<8> Contents;
 
 public:
-  MCDwarfLineAddrFragment(int64_t _LineDelta, const MCExpr &_AddrDelta,
-                      MCSectionData *SD = nullptr)
-    : MCFragment(FT_Dwarf, SD),
-      LineDelta(_LineDelta), AddrDelta(&_AddrDelta) { Contents.push_back(0); }
+  MCDwarfLineAddrFragment(int64_t LineDelta, const MCExpr &AddrDelta,
+                          MCSectionData *SD = nullptr)
+      : MCFragment(FT_Dwarf, SD), LineDelta(LineDelta), AddrDelta(&AddrDelta) {
+    Contents.push_back(0);
+  }
 
   /// @name Accessors
   /// @{
@@ -537,10 +533,10 @@ class MCDwarfCallFrameFragment : public MCFragment {
   SmallString<8> Contents;
 
 public:
-  MCDwarfCallFrameFragment(const MCExpr &_AddrDelta,
-                           MCSectionData *SD = nullptr)
-    : MCFragment(FT_DwarfFrame, SD),
-      AddrDelta(&_AddrDelta) { Contents.push_back(0); }
+  MCDwarfCallFrameFragment(const MCExpr &AddrDelta, MCSectionData *SD = nullptr)
+      : MCFragment(FT_DwarfFrame, SD), AddrDelta(&AddrDelta) {
+    Contents.push_back(0);
+  }
 
   /// @name Accessors
   /// @{
@@ -722,7 +718,7 @@ class MCSymbolData : public ilist_node<MCSymbolData> {
 public:
   // Only for use as sentinel.
   MCSymbolData();
-  MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment, uint64_t _Offset,
+  MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment, uint64_t Offset,
                MCAssembler *A = nullptr);
 
   /// @name Accessors

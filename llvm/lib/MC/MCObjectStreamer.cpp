@@ -31,8 +31,8 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
                                    raw_ostream &OS, MCCodeEmitter *Emitter_,
-                                   MCAssembler *_Assembler)
-    : MCStreamer(Context), Assembler(_Assembler), CurSectionData(nullptr),
+                                   MCAssembler *Assembler)
+    : MCStreamer(Context), Assembler(Assembler), CurSectionData(nullptr),
       EmitEHFrame(true), EmitDebugFrame(false) {}
 
 MCObjectStreamer::~MCObjectStreamer() {

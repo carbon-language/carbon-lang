@@ -342,10 +342,10 @@ public:
 
   };
 
-  ARMAsmParser(MCSubtargetInfo & _STI, MCAsmParser & _Parser,
+  ARMAsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), MII(MII), UC(_Parser) {
-    MCAsmParserExtension::Initialize(_Parser);
+      : STI(STI), MII(MII), UC(Parser) {
+    MCAsmParserExtension::Initialize(Parser);
 
     // Cache the MCRegisterInfo.
     MRI = getContext().getRegisterInfo();

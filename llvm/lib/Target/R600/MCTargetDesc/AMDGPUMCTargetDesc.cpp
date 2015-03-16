@@ -75,9 +75,9 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
 
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
-                                    raw_ostream &_OS, MCCodeEmitter *_Emitter,
+                                    raw_ostream &OS, MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI, bool RelaxAll) {
-  return createELFStreamer(Ctx, MAB, _OS, _Emitter, false);
+  return createELFStreamer(Ctx, MAB, OS, Emitter, false);
 }
 
 extern "C" void LLVMInitializeR600TargetMC() {

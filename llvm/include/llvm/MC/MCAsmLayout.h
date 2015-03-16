@@ -56,7 +56,7 @@ private:
                                 uint64_t FOffset, uint64_t FSize);
 
 public:
-  MCAsmLayout(MCAssembler &_Assembler);
+  MCAsmLayout(MCAssembler &Assembler);
 
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }

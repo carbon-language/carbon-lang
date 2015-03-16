@@ -271,9 +271,9 @@ class PPCAsmParser : public MCTargetAsmParser {
 
 
 public:
-  PPCAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &_MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), MII(_MII) {
+  PPCAsmParser(MCSubtargetInfo &STI, MCAsmParser &, const MCInstrInfo &MII,
+               const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(STI), MII(MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
     Triple TheTriple(STI.getTargetTriple());
     IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||

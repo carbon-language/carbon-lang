@@ -277,9 +277,8 @@ MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 MCFragment::~MCFragment() {
 }
 
-MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
-  : Kind(_Kind), Parent(_Parent), Atom(nullptr), Offset(~UINT64_C(0))
-{
+MCFragment::MCFragment(FragmentType Kind, MCSectionData *Parent)
+    : Kind(Kind), Parent(Parent), Atom(nullptr), Offset(~UINT64_C(0)) {
   if (Parent)
     Parent->getFragmentList().push_back(this);
 }
@@ -298,15 +297,10 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 
 MCSectionData::MCSectionData() : Section(nullptr) {}
 
-MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
-  : Section(&_Section),
-    Ordinal(~UINT32_C(0)),
-    Alignment(1),
-    BundleLockState(NotBundleLocked),
-    BundleLockNestingDepth(0),
-    BundleGroupBeforeFirstInst(false),
-    HasInstructions(false)
-{
+MCSectionData::MCSectionData(const MCSection &Section, MCAssembler *A)
+    : Section(&Section), Ordinal(~UINT32_C(0)), Alignment(1),
+      BundleLockState(NotBundleLocked), BundleLockNestingDepth(0),
+      BundleGroupBeforeFirstInst(false), HasInstructions(false) {
   if (A)
     A->getSectionList().push_back(this);
 }
@@ -364,10 +358,10 @@ void MCSectionData::setBundleLockState(BundleLockStateType NewState) {
 
 MCSymbolData::MCSymbolData() : Symbol(nullptr) {}
 
-MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
-                           uint64_t _Offset, MCAssembler *A)
-    : Symbol(&_Symbol), Fragment(_Fragment), Offset(_Offset),
-      SymbolSize(nullptr), CommonAlign(-1U), Flags(0), Index(0) {
+MCSymbolData::MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment,
+                           uint64_t Offset, MCAssembler *A)
+    : Symbol(&Symbol), Fragment(Fragment), Offset(Offset), SymbolSize(nullptr),
+      CommonAlign(-1U), Flags(0), Index(0) {
   if (A)
     A->getSymbolList().push_back(this);
 }

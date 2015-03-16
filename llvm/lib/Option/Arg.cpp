@@ -17,22 +17,21 @@
 using namespace llvm;
 using namespace llvm::opt;
 
-Arg::Arg(const Option _Opt, StringRef S, unsigned _Index, const Arg *_BaseArg)
-  : Opt(_Opt), BaseArg(_BaseArg), Spelling(S), Index(_Index),
-    Claimed(false), OwnsValues(false) {
-}
+Arg::Arg(const Option Opt, StringRef S, unsigned Index, const Arg *BaseArg)
+    : Opt(Opt), BaseArg(BaseArg), Spelling(S), Index(Index), Claimed(false),
+      OwnsValues(false) {}
 
-Arg::Arg(const Option _Opt, StringRef S, unsigned _Index,
-         const char *Value0, const Arg *_BaseArg)
-  : Opt(_Opt), BaseArg(_BaseArg), Spelling(S), Index(_Index),
-    Claimed(false), OwnsValues(false) {
+Arg::Arg(const Option Opt, StringRef S, unsigned Index, const char *Value0,
+         const Arg *BaseArg)
+    : Opt(Opt), BaseArg(BaseArg), Spelling(S), Index(Index), Claimed(false),
+      OwnsValues(false) {
   Values.push_back(Value0);
 }
 
-Arg::Arg(const Option _Opt, StringRef S, unsigned _Index,
-         const char *Value0, const char *Value1, const Arg *_BaseArg)
-  : Opt(_Opt), BaseArg(_BaseArg), Spelling(S), Index(_Index),
-    Claimed(false), OwnsValues(false) {
+Arg::Arg(const Option Opt, StringRef S, unsigned Index, const char *Value0,
+         const char *Value1, const Arg *BaseArg)
+    : Opt(Opt), BaseArg(BaseArg), Spelling(S), Index(Index), Claimed(false),
+      OwnsValues(false) {
   Values.push_back(Value0);
   Values.push_back(Value1);
 }

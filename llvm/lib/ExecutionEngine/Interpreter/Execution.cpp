@@ -464,14 +464,14 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
     return Dest;                                                         \
   }
 
-#define IMPLEMENT_VECTOR_UNORDERED(TY, X,Y, _FUNC)                       \
-  if (TY->isVectorTy()) {                                                \
-    GenericValue DestMask = Dest;                                        \
-    Dest = _FUNC(Src1, Src2, Ty);                                        \
-      for( size_t _i=0; _i<Src1.AggregateVal.size(); _i++)               \
-        if (DestMask.AggregateVal[_i].IntVal == true)                    \
-          Dest.AggregateVal[_i].IntVal = APInt(1,true);                  \
-      return Dest;                                                       \
+#define IMPLEMENT_VECTOR_UNORDERED(TY, X, Y, FUNC)                             \
+  if (TY->isVectorTy()) {                                                      \
+    GenericValue DestMask = Dest;                                              \
+    Dest = FUNC(Src1, Src2, Ty);                                               \
+    for (size_t _i = 0; _i < Src1.AggregateVal.size(); _i++)                   \
+      if (DestMask.AggregateVal[_i].IntVal == true)                            \
+        Dest.AggregateVal[_i].IntVal = APInt(1, true);                         \
+    return Dest;                                                               \
   }
 
 static GenericValue executeFCMP_UEQ(GenericValue Src1, GenericValue Src2,

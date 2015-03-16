@@ -25,7 +25,7 @@ namespace opt {
 
   public:
     OptSpecifier() : ID(0) {}
-    /*implicit*/ OptSpecifier(unsigned _ID) : ID(_ID) {}
+    /*implicit*/ OptSpecifier(unsigned ID) : ID(ID) {}
     /*implicit*/ OptSpecifier(const Option *Opt);
 
     bool isValid() const { return ID != 0; }

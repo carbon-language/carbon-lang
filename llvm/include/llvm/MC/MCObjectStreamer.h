@@ -49,10 +49,10 @@ class MCObjectStreamer : public MCStreamer {
   void flushPendingLabels(MCFragment *F);
 
 protected:
-  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &_OS,
-                   MCCodeEmitter *_Emitter);
-  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &_OS,
-                   MCCodeEmitter *_Emitter, MCAssembler *_Assembler);
+  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
+                   MCCodeEmitter *Emitter);
+  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
+                   MCCodeEmitter *Emitter, MCAssembler *Assembler);
   ~MCObjectStreamer();
 
 public:

@@ -29,8 +29,8 @@ private:
   const VariantKind Kind;
   const APFloat Flt;
 
-  explicit NVPTXFloatMCExpr(VariantKind _Kind, APFloat _Flt)
-    : Kind(_Kind), Flt(_Flt) {}
+  explicit NVPTXFloatMCExpr(VariantKind Kind, APFloat Flt)
+      : Kind(Kind), Flt(Flt) {}
 
 public:
   /// @name Construction

@@ -73,8 +73,9 @@ private:
   }
 
 protected:
-  OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos,
-           bool _IgnoreCase = false);
+  OptTable(const Info *OptionInfos, unsigned NumOptionInfos,
+           bool IgnoreCase = false);
+
 public:
   ~OptTable();
 

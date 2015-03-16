@@ -52,10 +52,10 @@ public:
   typedef std::forward_iterator_tag   iterator_category;
   typedef std::ptrdiff_t              difference_type;
 
-  arg_iterator(SmallVectorImpl<Arg*>::const_iterator it,
-                const ArgList &_Args, OptSpecifier _Id0 = 0U,
-                OptSpecifier _Id1 = 0U, OptSpecifier _Id2 = 0U)
-    : Current(it), Args(_Args), Id0(_Id0), Id1(_Id1), Id2(_Id2) {
+  arg_iterator(SmallVectorImpl<Arg *>::const_iterator it, const ArgList &Args,
+               OptSpecifier Id0 = 0U, OptSpecifier Id1 = 0U,
+               OptSpecifier Id2 = 0U)
+      : Current(it), Args(Args), Id0(Id0), Id1(Id1), Id2(Id2) {
     SkipToNextArg();
   }
 

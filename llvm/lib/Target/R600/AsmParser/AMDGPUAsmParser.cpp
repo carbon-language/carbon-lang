@@ -46,10 +46,9 @@ class AMDGPUAsmParser : public MCTargetAsmParser {
   /// }
 
 public:
-  AMDGPUAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &_MII,
-               const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
+  AMDGPUAsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
+                  const MCInstrInfo &MII, const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(STI), Parser(Parser) {
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;

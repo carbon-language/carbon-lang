@@ -76,8 +76,8 @@ class X86AsmBackend : public MCAsmBackend {
   bool HasNopl;
   const uint64_t MaxNopLength;
 public:
-  X86AsmBackend(const Target &T, StringRef _CPU)
-    : MCAsmBackend(), CPU(_CPU), MaxNopLength(_CPU == "slm" ? 7 : 15) {
+  X86AsmBackend(const Target &T, StringRef CPU)
+      : MCAsmBackend(), CPU(CPU), MaxNopLength(CPU == "slm" ? 7 : 15) {
     HasNopl = CPU != "generic" && CPU != "i386" && CPU != "i486" &&
               CPU != "i586" && CPU != "pentium" && CPU != "pentium-mmx" &&
               CPU != "i686" && CPU != "k6" && CPU != "k6-2" && CPU != "k6-3" &&
@@ -351,8 +351,8 @@ namespace {
 class ELFX86AsmBackend : public X86AsmBackend {
 public:
   uint8_t OSABI;
-  ELFX86AsmBackend(const Target &T, uint8_t _OSABI, StringRef CPU)
-      : X86AsmBackend(T, CPU), OSABI(_OSABI) {}
+  ELFX86AsmBackend(const Target &T, uint8_t OSABI, StringRef CPU)
+      : X86AsmBackend(T, CPU), OSABI(OSABI) {}
 };
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {

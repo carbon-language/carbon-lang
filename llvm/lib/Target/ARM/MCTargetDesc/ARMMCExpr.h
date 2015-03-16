@@ -26,8 +26,8 @@ private:
   const VariantKind Kind;
   const MCExpr *Expr;
 
-  explicit ARMMCExpr(VariantKind _Kind, const MCExpr *_Expr)
-    : Kind(_Kind), Expr(_Expr) {}
+  explicit ARMMCExpr(VariantKind Kind, const MCExpr *Expr)
+      : Kind(Kind), Expr(Expr) {}
 
 public:
   /// @name Construction

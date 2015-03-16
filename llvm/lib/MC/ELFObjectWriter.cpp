@@ -185,9 +185,9 @@ class ELFObjectWriter : public MCObjectWriter {
     }
 
   public:
-    ELFObjectWriter(MCELFObjectTargetWriter *MOTW, raw_ostream &_OS,
+    ELFObjectWriter(MCELFObjectTargetWriter *MOTW, raw_ostream &OS,
                     bool IsLittleEndian)
-        : MCObjectWriter(_OS, IsLittleEndian), FWriter(IsLittleEndian),
+        : MCObjectWriter(OS, IsLittleEndian), FWriter(IsLittleEndian),
           TargetObjectWriter(MOTW), NeedsGOT(false) {}
 
     virtual ~ELFObjectWriter();

@@ -21,7 +21,7 @@
 #include <cstdlib>
 using namespace llvm;
 
-AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
+AsmLexer::AsmLexer(const MCAsmInfo &MAI) : MAI(MAI) {
   CurPtr = nullptr;
   isAtStartOfLine = true;
   AllowAtInIdentifier = !StringRef(MAI.getCommentString()).startswith("@");

@@ -113,11 +113,10 @@ public:
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "AArch64GenAsmMatcher.inc"
   };
-  AArch64AsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-                 const MCInstrInfo &MII,
-                 const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI) {
-    MCAsmParserExtension::Initialize(_Parser);
+  AArch64AsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
+                   const MCInstrInfo &MII, const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(STI) {
+    MCAsmParserExtension::Initialize(Parser);
     MCStreamer &S = getParser().getStreamer();
     if (S.getTargetStreamer() == nullptr)
       new AArch64TargetStreamer(S);
@@ -254,8 +253,7 @@ private:
   MCContext &Ctx;
 
 public:
-  AArch64Operand(KindTy K, MCContext &_Ctx)
-      : MCParsedAsmOperand(), Kind(K), Ctx(_Ctx) {}
+  AArch64Operand(KindTy K, MCContext &Ctx) : Kind(K), Ctx(Ctx) {}
 
   AArch64Operand(const AArch64Operand &o) : MCParsedAsmOperand(), Ctx(o.Ctx) {
     Kind = o.Kind;

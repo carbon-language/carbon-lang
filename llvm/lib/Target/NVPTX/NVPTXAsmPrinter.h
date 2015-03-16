@@ -92,8 +92,8 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
     bool EmitGeneric;
 
   public:
-    AggBuffer(unsigned _size, raw_ostream &_O, NVPTXAsmPrinter &_AP)
-        : size(_size), buffer(_size), O(_O), AP(_AP) {
+    AggBuffer(unsigned size, raw_ostream &O, NVPTXAsmPrinter &AP)
+        : size(size), buffer(size), O(O), AP(AP) {
       curpos = 0;
       numSymbols = 0;
       EmitGeneric = AP.EmitGeneric;

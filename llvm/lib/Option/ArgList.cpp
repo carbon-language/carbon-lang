@@ -340,9 +340,8 @@ const char *InputArgList::MakeArgString(StringRef Str) const {
 
 //
 
-DerivedArgList::DerivedArgList(const InputArgList &_BaseArgs)
-  : BaseArgs(_BaseArgs) {
-}
+DerivedArgList::DerivedArgList(const InputArgList &BaseArgs)
+    : BaseArgs(BaseArgs) {}
 
 DerivedArgList::~DerivedArgList() {}
 

@@ -63,9 +63,6 @@ private:
 
   DAGDeltaAlgorithm &DDA;
 
-  const changeset_ty &Changes;
-  const std::vector<edge_ty> &Dependencies;
-
   std::vector<change_ty> Roots;
 
   /// Cache of failed test results. Successful test results are never cached
@@ -139,9 +136,8 @@ private:
   }
 
 public:
-  DAGDeltaAlgorithmImpl(DAGDeltaAlgorithm &_DDA,
-                        const changeset_ty &_Changes,
-                        const std::vector<edge_ty> &_Dependencies);
+  DAGDeltaAlgorithmImpl(DAGDeltaAlgorithm &DDA, const changeset_ty &Changes,
+                        const std::vector<edge_ty> &Dependencies);
 
   changeset_ty Run();
 
@@ -174,21 +170,17 @@ protected:
   }
 
 public:
-  DeltaActiveSetHelper(DAGDeltaAlgorithmImpl &_DDAI,
-                       const changeset_ty &_Required)
-    : DDAI(_DDAI), Required(_Required) {}
+  DeltaActiveSetHelper(DAGDeltaAlgorithmImpl &DDAI,
+                       const changeset_ty &Required)
+      : DDAI(DDAI), Required(Required) {}
 };
 
 }
 
-DAGDeltaAlgorithmImpl::DAGDeltaAlgorithmImpl(DAGDeltaAlgorithm &_DDA,
-                                             const changeset_ty &_Changes,
-                                             const std::vector<edge_ty>
-                                               &_Dependencies)
-  : DDA(_DDA),
-    Changes(_Changes),
-    Dependencies(_Dependencies)
-{
+DAGDeltaAlgorithmImpl::DAGDeltaAlgorithmImpl(
+    DAGDeltaAlgorithm &DDA, const changeset_ty &Changes,
+    const std::vector<edge_ty> &Dependencies)
+    : DDA(DDA) {
   for (changeset_ty::const_iterator it = Changes.begin(),
          ie = Changes.end(); it != ie; ++it) {
     Predecessors.insert(std::make_pair(*it, std::vector<change_ty>()));

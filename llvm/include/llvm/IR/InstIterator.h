@@ -27,15 +27,14 @@ namespace llvm {
 // This class implements inst_begin() & inst_end() for
 // inst_iterator and const_inst_iterator's.
 //
-template <class _BB_t, class _BB_i_t, class _BI_t, class _II_t>
-class InstIterator {
-  typedef _BB_t   BBty;
-  typedef _BB_i_t BBIty;
-  typedef _BI_t   BIty;
-  typedef _II_t   IIty;
-  _BB_t  *BBs;      // BasicBlocksType
-  _BB_i_t BB;       // BasicBlocksType::iterator
-  _BI_t   BI;       // BasicBlock::iterator
+template <class BB_t, class BB_i_t, class BI_t, class II_t> class InstIterator {
+  typedef BB_t BBty;
+  typedef BB_i_t BBIty;
+  typedef BI_t BIty;
+  typedef II_t IIty;
+  BB_t *BBs; // BasicBlocksType
+  BB_i_t BB; // BasicBlocksType::iterator
+  BI_t BI;   // BasicBlock::iterator
 public:
   typedef std::bidirectional_iterator_tag iterator_category;
   typedef IIty                            value_type;

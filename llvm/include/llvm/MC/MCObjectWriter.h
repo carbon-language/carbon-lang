@@ -46,8 +46,8 @@ protected:
   unsigned IsLittleEndian : 1;
 
 protected: // Can only create subclasses.
-  MCObjectWriter(raw_ostream &_OS, bool _IsLittleEndian)
-    : OS(_OS), IsLittleEndian(_IsLittleEndian) {}
+  MCObjectWriter(raw_ostream &OS, bool IsLittleEndian)
+      : OS(OS), IsLittleEndian(IsLittleEndian) {}
 
 public:
   virtual ~MCObjectWriter();

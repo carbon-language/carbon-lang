@@ -486,10 +486,10 @@ extern MCAsmParserExtension *createCOFFAsmParser();
 
 enum { DEFAULT_ADDRSPACE = 0 };
 
-AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
-                     const MCAsmInfo &_MAI)
-    : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
-      PlatformParser(nullptr), CurBuffer(_SM.getMainFileID()),
+AsmParser::AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
+                     const MCAsmInfo &MAI)
+    : Lexer(MAI), Ctx(Ctx), Out(Out), MAI(MAI), SrcMgr(SM),
+      PlatformParser(nullptr), CurBuffer(SM.getMainFileID()),
       MacrosEnabledFlag(true), HadError(false), CppHashLineNumber(0),
       AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
@@ -500,7 +500,7 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer());
 
   // Initialize the platform / file format parser.
-  switch (_Ctx.getObjectFileInfo()->getObjectFileType()) {
+  switch (Ctx.getObjectFileInfo()->getObjectFileType()) {
   case MCObjectFileInfo::IsCOFF:
     PlatformParser.reset(createCOFFAsmParser());
     break;

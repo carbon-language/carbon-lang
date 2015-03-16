@@ -62,8 +62,8 @@ private:
   const VariantKind Kind;
   const MCExpr *Expr;
 
-  explicit SparcMCExpr(VariantKind _Kind, const MCExpr *_Expr)
-    : Kind(_Kind), Expr(_Expr) {}
+  explicit SparcMCExpr(VariantKind Kind, const MCExpr *Expr)
+      : Kind(Kind), Expr(Expr) {}
 
 public:
   /// @name Construction

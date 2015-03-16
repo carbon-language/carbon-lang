@@ -119,10 +119,9 @@ class MachObjectWriter : public MCObjectWriter {
   MachSymbolData *findSymbolData(const MCSymbol &Sym);
 
 public:
-  MachObjectWriter(MCMachObjectTargetWriter *MOTW, raw_ostream &_OS,
-                   bool _IsLittleEndian)
-    : MCObjectWriter(_OS, _IsLittleEndian), TargetObjectWriter(MOTW) {
-  }
+  MachObjectWriter(MCMachObjectTargetWriter *MOTW, raw_ostream &OS,
+                   bool IsLittleEndian)
+      : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(MOTW) {}
 
   /// @name Lifetime management Methods
   /// @{

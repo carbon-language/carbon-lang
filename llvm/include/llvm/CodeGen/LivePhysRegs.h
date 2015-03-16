@@ -57,9 +57,9 @@ public:
   }
 
   /// \brief Clear and initialize the LivePhysRegs set.
-  void init(const TargetRegisterInfo *_TRI) {
-    assert(_TRI && "Invalid TargetRegisterInfo pointer.");
-    TRI = _TRI;
+  void init(const TargetRegisterInfo *TRI) {
+    assert(TRI && "Invalid TargetRegisterInfo pointer.");
+    this->TRI = TRI;
     LiveRegs.clear();
     LiveRegs.setUniverse(TRI->getNumRegs());
   }

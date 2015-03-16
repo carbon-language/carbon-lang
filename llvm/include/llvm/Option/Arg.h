@@ -78,9 +78,7 @@ public:
   const Arg &getBaseArg() const {
     return BaseArg ? *BaseArg : *this;
   }
-  void setBaseArg(const Arg *_BaseArg) {
-    BaseArg = _BaseArg;
-  }
+  void setBaseArg(const Arg *BaseArg) { this->BaseArg = BaseArg; }
 
   bool getOwnsValues() const { return OwnsValues; }
   void setOwnsValues(bool Value) const { OwnsValues = Value; }
