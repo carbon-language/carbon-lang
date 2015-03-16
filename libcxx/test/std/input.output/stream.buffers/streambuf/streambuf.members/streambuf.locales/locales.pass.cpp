@@ -45,7 +45,8 @@ int main()
     {
         test<char> t;
         assert(t.getloc().name() == LOCALE_en_US_UTF_8);
-        assert(t.pubimbue(std::locale(LOCALE_fr_FR_UTF_8)).name() == "en_US.UTF-8");
+        assert(t.pubimbue(std::locale(LOCALE_fr_FR_UTF_8)).name() ==
+               LOCALE_en_US_UTF_8);
         assert(t.getloc().name() == LOCALE_fr_FR_UTF_8);
     }
 }
