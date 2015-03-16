@@ -22,5 +22,6 @@ define void @caller(i32** %Y) {
 !0 = !{i32 2, !"Debug Info Version", i32 3}
 !1 = !MDLocation(line: 8, scope: !2)
 !2 = !MDSubprogram(name: "test", line: 3, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, scope: null, function: void (i32**)* @test)
-!3 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 2, file: null, subprograms: !4)
+!3 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 2, file: !5, subprograms: !4)
 !4 = !{!2}
+!5 = !MDFile(filename: "test.c", directory: "")

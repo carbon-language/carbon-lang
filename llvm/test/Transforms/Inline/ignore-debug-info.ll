@@ -48,8 +48,8 @@ attributes #0 = { nounwind readnone }
 !llvm.ident = !{!5}
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !{}, globals: !2, imports: !2)
-!1 = !MDFile(filename: "", directory: "")
-!2 = !{i32 0}
+!1 = !MDFile(filename: "test.c", directory: "")
+!2 = !{}
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 1, !"Debug Info Version", i32 3}
 !5 = !{!""}

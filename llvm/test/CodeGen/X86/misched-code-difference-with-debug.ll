@@ -62,17 +62,17 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22, !23}
 
-!0 = !{!"", !1, !2, !3, !12, !20, !2} ; [ DW_TAG_compile_unit ] [test.cpp] [DW_LANG_C_plus_plus]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !20, imports: !2)
 !1 = !MDFile(filename: "test.cpp", directory: "")
 !2 = !{}
 !3 = !{!4}
 !4 = !MDCompositeType(tag: DW_TAG_class_type, name: "C", line: 2, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS1C")
 !5 = !{!6}
-!6 = !{!"", !1, !"_ZTS1C", !7, null, null, null, null, null} ; [ DW_TAG_subprogram ] [line 4] [public] [test]
-!7 = !{!"", null, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = !MDSubprogram(name: "test", file: !1, scope: !"_ZTS1C", type: !7)
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9, !10, !11, !11, !11, null}
-!9 = !{!"", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = !{!"", null, null, !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1C]
+!9 = !MDBasicType(encoding: DW_ATE_signed, size: 32, align: 32, name: "int")
+!10 = !MDDerivedType(baseType: !"_ZTS1C", tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial)
 !11 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !12 = !{!13}
 !13 = !MDSubprogram(name: "test_with_debug", linkageName: "test_with_debug", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !14, type: !15, function: void ()* @test_with_debug, variables: !17)

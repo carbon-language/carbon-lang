@@ -200,11 +200,11 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
 !1 = !MDFile(filename: "propagate.cc", directory: ".")
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!4, !7}
 !4 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: i64 (i32, i32, i64)* @_Z3fooiil, variables: !2)
 !5 = !MDFile(filename: "propagate.cc", directory: ".")
-!6 = !MDSubroutineType(types: !2)
+!6 = !MDSubroutineType(types: !{null})
 !7 = !MDSubprogram(name: "main", line: 24, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 24, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 1, !"Debug Info Version", i32 3}

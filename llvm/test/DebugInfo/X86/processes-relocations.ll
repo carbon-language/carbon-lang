@@ -13,8 +13,8 @@
 !llvm.module.flags = !{!3, !4}
 !llvm.ident = !{!5}
 
-!0 = !{i32 786449, !1, i32 12, !"clang version 3.6.0 ", i1 false, !"", i32 0, !2, !2, !2, !2, !2, !"", i32 1} ; [ DW_TAG_compile_unit ] [/a/empty.c] [DW_LANG_C99]
-!1 = !{!"empty.c", !"/a"}
+!0 = !MDCompileUnit(file: !1, language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2, emissionKind: 1)
+!1 = !MDFile(filename: "empty.c", directory: "/a")
 !2 = !{}
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}

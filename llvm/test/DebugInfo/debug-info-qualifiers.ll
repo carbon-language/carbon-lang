@@ -62,7 +62,7 @@ attributes #1 = { nounwind readnone }
 !llvm.ident = !{!23}
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !16, globals: !2, imports: !2)
-!1 = !MDFile(filename: "", directory: "")
+!1 = !MDFile(filename: "debug-info-qualifiers.cpp", directory: "")
 !2 = !{}
 !3 = !{!4}
 !4 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 2, size: 8, align: 8, file: !5, elements: !6, identifier: "_ZTS1A")
