@@ -567,9 +567,8 @@ static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom,
 }
 
 template <typename ELFT>
-void
-RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
-                                           Reference &ref) {
+void RelocationPass<ELFT>::collectReferenceInfo(
+    const MipsELFDefinedAtom<ELFT> &atom, Reference &ref) {
   if (!ref.target())
     return;
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
