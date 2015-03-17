@@ -435,11 +435,12 @@ DefaultLayout<ELFT>::getOutputSectionName(StringRef archivePath,
                                           StringRef memberPath,
                                           StringRef inputSectionName) const {
   StringRef outputSectionName;
-  if (_linkerScriptSema.hasLayoutCommands() &&
-      !(outputSectionName = _linkerScriptSema.getOutputSection(
-           {archivePath, memberPath, inputSectionName})).empty())
-    return outputSectionName;
-
+  if (_linkerScriptSema.hasLayoutCommands()) {
+    script::Sema::SectionKey key = {archivePath, memberPath, inputSectionName};
+    outputSectionName = _linkerScriptSema.getOutputSection(key);
+    if (!outputSectionName.empty())
+      return outputSectionName;
+  }
   return llvm::StringSwitch<StringRef>(inputSectionName)
       .StartsWith(".text", ".text")
       .StartsWith(".ctors", ".ctors")
