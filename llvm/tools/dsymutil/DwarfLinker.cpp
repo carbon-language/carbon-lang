@@ -919,9 +919,9 @@ void DwarfStreamer::emitPubSectionForUnit(
   // Start the dwarf pubnames section.
   Asm->OutStreamer.SwitchSection(Sec);
   MCSymbol *BeginLabel =
-      Asm->GetTempSymbol("pub" + SecName + "_begin", Unit.getUniqueID());
+      Asm->createTempSymbol("pub" + SecName + "_begin", Unit.getUniqueID());
   MCSymbol *EndLabel =
-      Asm->GetTempSymbol("pub" + SecName + "_end", Unit.getUniqueID());
+      Asm->createTempSymbol("pub" + SecName + "_end", Unit.getUniqueID());
 
   bool HeaderEmitted = false;
   // Emit the pubnames for this compilation unit.

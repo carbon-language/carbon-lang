@@ -1422,8 +1422,8 @@ void DwarfDebug::emitDebugPubSection(
 
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public " + Name + " Info");
-    MCSymbol *BeginLabel = Asm->GetTempSymbol("pub" + Name + "_begin", ID);
-    MCSymbol *EndLabel = Asm->GetTempSymbol("pub" + Name + "_end", ID);
+    MCSymbol *BeginLabel = Asm->createTempSymbol("pub" + Name + "_begin", ID);
+    MCSymbol *EndLabel = Asm->createTempSymbol("pub" + Name + "_end", ID);
     Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
 
     Asm->OutStreamer.EmitLabel(BeginLabel);
