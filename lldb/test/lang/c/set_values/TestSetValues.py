@@ -110,8 +110,6 @@ class SetValuesTestCase(TestBase):
 
         # main.c:85
         # Check that 'frame variable --show-types' displays the correct data type and value.
-        # rdar://problem/8422727
-        # set_values test directory: 'frame variable' shows only (long double) i =
         self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(long double) i = 2.25")
 
