@@ -41,8 +41,8 @@ typedef struct _FPR
 } FPR;
 
 // Computes the offset of the given GPR/FPR in the user data area.
-#define GPR_OFFSET(regname) (offsetof(GPR, regname))
-#define FPR_OFFSET(regname) (offsetof(FPR, regname))
+#define GPR_OFFSET(regname) (LLVM_EXTENSION offsetof(GPR, regname))
+#define FPR_OFFSET(regname) (LLVM_EXTENSION offsetof(FPR, regname))
 
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(member, reg, alt, kind1, kind2, kind3, kind4)                    \
