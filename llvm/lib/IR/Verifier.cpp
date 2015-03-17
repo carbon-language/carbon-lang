@@ -78,7 +78,7 @@
 #include <cstdarg>
 using namespace llvm;
 
-static cl::opt<bool> VerifyDebugInfo("verify-debug-info", cl::init(false));
+static cl::opt<bool> VerifyDebugInfo("verify-debug-info", cl::init(true));
 
 namespace {
 struct VerifierSupport {
