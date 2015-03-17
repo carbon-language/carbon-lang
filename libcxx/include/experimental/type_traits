@@ -190,7 +190,7 @@ inline namespace fundamentals_v1 {
 
 _LIBCPP_BEGIN_NAMESPACE_LFTS
 
-#if __has_feature(cxx_variable_templates)
+#ifndef _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
 // C++14 20.10.4.1, primary type categories
 
@@ -397,7 +397,7 @@ template <class _Tp, class _Up> _LIBCPP_CONSTEXPR bool is_base_of_v
 template <class _Tp, class _Up> _LIBCPP_CONSTEXPR bool is_convertible_v
     = is_convertible<_Tp, _Up>::value;
 
-#endif /* __has_feature(cxx_variable_templates) */
+#endif /* _LIBCPP_HAS_NO_VARIABLE_TEMPLATES */
 
 // 3.3.2, Other type transformations
 /*

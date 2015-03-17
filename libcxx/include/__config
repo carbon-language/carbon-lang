@@ -336,6 +336,10 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #endif
 
+#if !(__has_feature(cxx_variable_templates))
+#define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
+#endif
+
 #if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L
 #if defined(__FreeBSD__)
 #define _LIBCPP_HAS_QUICK_EXIT
@@ -415,6 +419,8 @@ namespace std {
 
 // No version of GCC supports relaxed constexpr rules
 #define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
+// GCC 5 will support variable templates
+#define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
@@ -486,6 +492,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
+#define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -528,6 +535,7 @@ namespace std {
 #define _LIBCPP_HAS_NO_NULLPTR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_IS_BASE_OF
+#define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
 #if defined(_AIX)
 #define __MULTILOCALE_API

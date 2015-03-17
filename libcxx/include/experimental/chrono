@@ -45,12 +45,12 @@ inline namespace fundamentals_v1 {
 
 _LIBCPP_BEGIN_NAMESPACE_CHRONO_LFTS
 
-#if __has_feature(cxx_variable_templates)
+#ifndef _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
 template <class _Rep> _LIBCPP_CONSTEXPR bool treat_as_floating_point_v
     = treat_as_floating_point<_Rep>::value;
 
-#endif /* __has_feature(cxx_variable_templates) */
+#endif /* _LIBCPP_HAS_NO_VARIABLE_TEMPLATES */
 
 _LIBCPP_END_NAMESPACE_CHRONO_LFTS
 

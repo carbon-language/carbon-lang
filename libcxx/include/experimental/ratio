@@ -48,7 +48,7 @@ inline namespace fundamentals_v1 {
 
 _LIBCPP_BEGIN_NAMESPACE_LFTS
 
-#if __has_feature(cxx_variable_templates)
+#ifndef _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
 template <class _R1, class _R2> _LIBCPP_CONSTEXPR bool ratio_equal_v
     = ratio_equal<_R1, _R2>::value;
@@ -68,7 +68,7 @@ template <class _R1, class _R2> _LIBCPP_CONSTEXPR bool ratio_greater_v
 template <class _R1, class _R2> _LIBCPP_CONSTEXPR bool ratio_greater_equal_v
     = ratio_greater_equal<_R1, _R2>::value;
 
-#endif /* __has_feature(cxx_variable_templates) */
+#endif /* _LIBCPP_HAS_NO_VARIABLE_TEMPLATES */
 
 _LIBCPP_END_NAMESPACE_LFTS
 
