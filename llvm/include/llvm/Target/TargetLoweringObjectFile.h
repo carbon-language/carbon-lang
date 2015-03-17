@@ -101,6 +101,11 @@ public:
     return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
   }
 
+  virtual void getNameWithPrefix(SmallVectorImpl<char> &OutName,
+                                 const GlobalValue *GV,
+                                 bool CannotUsePrivateLabel, Mangler &Mang,
+                                 const TargetMachine &TM) const;
+
   virtual const MCSection *
   getSectionForJumpTable(const Function &F, Mangler &Mang,
                          const TargetMachine &TM) const;
