@@ -91,9 +91,10 @@ static void addByteCountSuffix(raw_ostream &OS, const Function *F,
 }
 
 void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
-                                bool CannotUsePrivateLabel) const {
+                                bool CannotUsePrivateLabel,
+                                bool ForceNonPrivate) const {
   ManglerPrefixTy PrefixTy = Mangler::Default;
-  if (GV->hasPrivateLinkage()) {
+  if (GV->hasPrivateLinkage() && !ForceNonPrivate) {
     if (CannotUsePrivateLabel)
       PrefixTy = Mangler::LinkerPrivate;
     else
@@ -152,7 +153,8 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
 
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
                                 const GlobalValue *GV,
-                                bool CannotUsePrivateLabel) const {
+                                bool CannotUsePrivateLabel,
+                                bool ForceNonPrivate) const {
   raw_svector_ostream OS(OutName);
-  getNameWithPrefix(OS, GV, CannotUsePrivateLabel);
+  getNameWithPrefix(OS, GV, CannotUsePrivateLabel, ForceNonPrivate);
 }
