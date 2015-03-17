@@ -118,6 +118,7 @@ option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
 option(LIBCXXABI_ENABLE_THREADS "Build with threads enabled" ON)
 set(LIBCXXABI_GCC_TOOLCHAIN "" CACHE STRING "GCC toolchain for cross compiling.")
 set(LIBCXXABI_SYSROOT "" CACHE STRING "Sysroot for cross compiling.")
+set(LIBCXXABI_LIBCXX_LIBRARY_PATH "" CACHE STRING "The path to libc++ library.")
 
 # Default to building a shared library so that the default options still test
 # the libc++abi that is being built. There are two problems with testing a

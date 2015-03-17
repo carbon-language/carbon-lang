@@ -76,5 +76,10 @@ class Configuration(LibcxxConfiguration):
         self.cxx.link_flags += ['-lc++abi']
 
     def configure_env(self):
-        if sys.platform == 'darwin' and self.libcxxabi_lib_root:
-            self.env['DYLD_LIBRARY_PATH'] = self.libcxxabi_lib_root
+        library_paths = []
+        if self.libcxxabi_lib_root:
+            library_paths += [self.libcxxabi_lib_root]
+        if self.cxx_library_root:
+            library_paths += [self.cxx_library_root]
+        if sys.platform == 'darwin' and library_paths:
+            self.env['DYLD_LIBRARY_PATH'] = ':'.join(library_paths)
