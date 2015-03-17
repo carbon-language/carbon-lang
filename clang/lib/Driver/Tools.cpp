@@ -6138,6 +6138,16 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(std::string("-F") +
                                          (*it)->getValue()));
 
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    if (Arg *A = Args.getLastArg(options::OPT_fveclib)) {
+      if (A->getValue() == StringRef("Accelerate")) {
+        CmdArgs.push_back("-framework");
+        CmdArgs.push_back("Accelerate");
+      }
+    }
+  }
+
   const char *Exec =
     Args.MakeArgString(getToolChain().GetLinkerPath());
   std::unique_ptr<Command> Cmd =
