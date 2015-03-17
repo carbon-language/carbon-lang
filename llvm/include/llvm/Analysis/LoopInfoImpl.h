@@ -402,7 +402,6 @@ static void discoverAndMapSubloop(LoopT *L, ArrayRef<BlockT*> Backedges,
   L->reserveBlocks(NumBlocks);
 }
 
-namespace {
 /// Populate all loop data in a stable order during a single forward DFS.
 template<class BlockT, class LoopT>
 class PopulateLoopsDFS {
@@ -430,7 +429,6 @@ protected:
     DFSStack.push_back(std::make_pair(Block, BlockTraits::child_begin(Block)));
   }
 };
-} // anonymous
 
 /// Top-level driver for the forward DFS within the loop.
 template<class BlockT, class LoopT>

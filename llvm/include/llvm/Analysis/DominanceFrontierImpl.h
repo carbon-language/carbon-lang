@@ -23,7 +23,6 @@
 
 namespace llvm {
 
-namespace {
 template <class BlockT>
 class DFCalculateWorkObject {
 public:
@@ -37,7 +36,6 @@ public:
   const DomTreeNodeT *Node;
   const DomTreeNodeT *parentNode;
 };
-}
 
 template <class BlockT>
 void DominanceFrontierBase<BlockT>::removeBlock(BlockT *BB) {
