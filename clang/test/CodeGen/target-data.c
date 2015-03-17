@@ -8,11 +8,11 @@
 
 // RUN: %clang_cc1 -triple i686-unknown-win32 -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=I686-WIN32 %s
-// I686-WIN32: target datalayout = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32"
+// I686-WIN32: target datalayout = "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-S32"
 
 // RUN: %clang_cc1 -triple i686-unknown-cygwin -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=I686-CYGWIN %s
-// I686-CYGWIN: target datalayout = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32"
+// I686-CYGWIN: target datalayout = "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-S32"
 
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | \
 // RUN:     FileCheck --check-prefix=X86_64 %s
