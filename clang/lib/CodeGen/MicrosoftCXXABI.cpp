@@ -3309,6 +3309,8 @@ MicrosoftCXXABI::getAddrOfCXXCtorClosure(const CXXConstructorDecl *CD,
   QualType RecordTy = getContext().getRecordType(RD);
   llvm::Function *ThunkFn = llvm::Function::Create(
       ThunkTy, getLinkageForRTTI(RecordTy), ThunkName.str(), &CGM.getModule());
+  ThunkFn->setCallingConv(static_cast<llvm::CallingConv::ID>(
+      FnInfo.getEffectiveCallingConvention()));
   bool IsCopy = CT == Ctor_CopyingClosure;
 
   // Start codegen.

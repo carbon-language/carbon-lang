@@ -9421,6 +9421,44 @@ void Sema::ActOnFinishCXXMemberDecls() {
   }
 }
 
+static void getDefaultArgExprsForConstructors(Sema &S, CXXRecordDecl *Class) {
+  // Don't do anything for template patterns.
+  if (Class->getDescribedClassTemplate())
+    return;
+
+  for (Decl *Member : Class->decls()) {
+    auto *CD = dyn_cast<CXXConstructorDecl>(Member);
+    if (!CD) {
+      // Recurse on nested classes.
+      if (auto *NestedRD = dyn_cast<CXXRecordDecl>(Member))
+        getDefaultArgExprsForConstructors(S, NestedRD);
+      continue;
+    } else if (!CD->isDefaultConstructor() || !CD->hasAttr<DLLExportAttr>()) {
+      continue;
+    }
+
+    for (unsigned I = 0, E = CD->getNumParams(); I != E; ++I) {
+      // Skip any default arguments that we've already instantiated.
+      if (S.Context.getDefaultArgExprForConstructor(CD, I))
+        continue;
+
+      Expr *DefaultArg = S.BuildCXXDefaultArgExpr(Class->getLocation(), CD,
+                                                  CD->getParamDecl(I)).get();
+      S.Context.addDefaultArgExprForConstructor(CD, I, DefaultArg);
+    }
+  }
+}
+
+void Sema::ActOnFinishCXXMethodDefs(Decl *D) {
+  auto *RD = dyn_cast<CXXRecordDecl>(D);
+
+  // Default constructors that are annotated with __declspec(dllexport) which
+  // have default arguments or don't use the standard calling convention are
+  // wrapped with a thunk called the default constructor closure.
+  if (RD && Context.getTargetInfo().getCXXABI().isMicrosoft())
+    getDefaultArgExprsForConstructors(*this, RD);
+}
+
 void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
                                          CXXDestructorDecl *Destructor) {
   assert(getLangOpts().CPlusPlus11 &&

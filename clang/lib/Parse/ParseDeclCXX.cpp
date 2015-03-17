@@ -2915,6 +2915,10 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     ParseLexedMemberInitializers(getCurrentClass());
     ParseLexedMethodDefs(getCurrentClass());
     PrevTokLocation = SavedPrevTokLocation;
+
+    // We've finished parsing everything, including default argument
+    // initializers.
+    Actions.ActOnFinishCXXMethodDefs(TagDecl);
   }
 
   if (TagDecl)
