@@ -162,6 +162,9 @@ VALUE_CODEGENOPT(DwarfVersion, 3, 0)
 /// The kind of inlining to perform.
 ENUM_CODEGENOPT(Inlining, InliningMethod, 2, NoInlining)
 
+// Vector functions library to use.
+ENUM_CODEGENOPT(VecLib, VectorLibrary, 1, NoLibrary)
+
 /// The default TLS model to use.
 ENUM_CODEGENOPT(DefaultTLSModel, TLSModel, 2, GeneralDynamicTLSModel)
 

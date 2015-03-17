@@ -2864,6 +2864,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   else
     CmdArgs.push_back(Args.MakeArgString(getToolChain().getThreadModel()));
 
+  Args.AddLastArg(CmdArgs, options::OPT_fveclib);
+
   if (!Args.hasFlag(options::OPT_fmerge_all_constants,
                     options::OPT_fno_merge_all_constants))
     CmdArgs.push_back("-fno-merge-all-constants");

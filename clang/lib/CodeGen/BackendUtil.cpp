@@ -237,6 +237,14 @@ static TargetLibraryInfoImpl *createTLII(llvm::Triple &TargetTriple,
   TargetLibraryInfoImpl *TLII = new TargetLibraryInfoImpl(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
     TLII->disableAllFunctions();
+
+  switch (CodeGenOpts.getVecLib()) {
+  case CodeGenOptions::Accelerate:
+    TLII->addVectorizableFunctionsFromVecLib(TargetLibraryInfoImpl::Accelerate);
+    break;
+  default:
+    break;
+  }
   return TLII;
 }
 

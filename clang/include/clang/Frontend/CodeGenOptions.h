@@ -46,6 +46,11 @@ public:
     OnlyAlwaysInlining  // Only run the always inlining pass.
   };
 
+  enum VectorLibrary {
+    NoLibrary, // Don't use any vector library.
+    Accelerate // Use the Accelerate framework.
+  };
+
   enum ObjCDispatchMethodKind {
     Legacy = 0,
     NonLegacy = 1,
