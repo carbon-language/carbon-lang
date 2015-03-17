@@ -7176,21 +7176,21 @@ static SDValue performBitcastCombine(SDNode *N,
 static SDValue performConcatVectorsCombine(SDNode *N,
                                            TargetLowering::DAGCombinerInfo &DCI,
                                            SelectionDAG &DAG) {
+  SDLoc dl(N);
+  EVT VT = N->getValueType(0);
+  SDValue N0 = N->getOperand(0), N1 = N->getOperand(1);
+
   // Wait 'til after everything is legalized to try this. That way we have
   // legal vector types and such.
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  SDLoc dl(N);
-  EVT VT = N->getValueType(0);
-
   // If we see a (concat_vectors (v1x64 A), (v1x64 A)) it's really a vector
   // splat. The indexed instructions are going to be expecting a DUPLANE64, so
   // canonicalise to that.
-  if (N->getOperand(0) == N->getOperand(1) && VT.getVectorNumElements() == 2) {
+  if (N0 == N1 && VT.getVectorNumElements() == 2) {
     assert(VT.getVectorElementType().getSizeInBits() == 64);
-    return DAG.getNode(AArch64ISD::DUPLANE64, dl, VT,
-                       WidenVector(N->getOperand(0), DAG),
+    return DAG.getNode(AArch64ISD::DUPLANE64, dl, VT, WidenVector(N0, DAG),
                        DAG.getConstant(0, MVT::i64));
   }
 
@@ -7203,10 +7203,9 @@ static SDValue performConcatVectorsCombine(SDNode *N,
   // becomes
   //    (bitconvert (concat_vectors (v4i16 (bitconvert LHS)), RHS))
 
-  SDValue Op1 = N->getOperand(1);
-  if (Op1->getOpcode() != ISD::BITCAST)
+  if (N1->getOpcode() != ISD::BITCAST)
     return SDValue();
-  SDValue RHS = Op1->getOperand(0);
+  SDValue RHS = N1->getOperand(0);
   MVT RHSTy = RHS.getValueType().getSimpleVT();
   // If the RHS is not a vector, this is not the pattern we're looking for.
   if (!RHSTy.isVector())
@@ -7216,10 +7215,10 @@ static SDValue performConcatVectorsCombine(SDNode *N,
 
   MVT ConcatTy = MVT::getVectorVT(RHSTy.getVectorElementType(),
                                   RHSTy.getVectorNumElements() * 2);
-  return DAG.getNode(
-      ISD::BITCAST, dl, VT,
-      DAG.getNode(ISD::CONCAT_VECTORS, dl, ConcatTy,
-                  DAG.getNode(ISD::BITCAST, dl, RHSTy, N->getOperand(0)), RHS));
+  return DAG.getNode(ISD::BITCAST, dl, VT,
+                     DAG.getNode(ISD::CONCAT_VECTORS, dl, ConcatTy,
+                                 DAG.getNode(ISD::BITCAST, dl, RHSTy, N0),
+                                 RHS));
 }
 
 static SDValue tryCombineFixedPointConvert(SDNode *N,
