@@ -72,3 +72,19 @@ define zeroext i16 @test6() {
   %1 = load i16, i16* %x, align 2
   ret i16 %1
 }
+
+; Accessing the bottom of a large array shouldn't require materializing a base
+define void @test7() {
+  %arr = alloca [200 x i32], align 4
+
+  ; CHECK: movs [[REG:r[0-9]+]], #1
+  ; CHECK: str [[REG]], [sp, #4]
+  %arrayidx = getelementptr inbounds [200 x i32], [200 x i32]* %arr, i32 0, i32 1
+  store i32 1, i32* %arrayidx, align 4
+
+  ; CHECK: str [[REG]], [sp, #16]
+  %arrayidx1 = getelementptr inbounds [200 x i32], [200 x i32]* %arr, i32 0, i32 4
+  store i32 1, i32* %arrayidx1, align 4
+
+  ret void
+}

@@ -21,13 +21,13 @@
 define void @layout_ssp() ssp {
 entry:
 ; Expected stack layout for ssp is
-;  180 large_char          . Group 1, nested arrays, arrays >= ssp-buffer-size
-;  172 struct_large_char   .
-;  168 scalar1             | Everything else
-;  164 scalar2
-;  160 scalar3
-;  156 addr-of
-;  152 small_nonchar (84+68)
+;  176 large_char          . Group 1, nested arrays, arrays >= ssp-buffer-size
+;  168 struct_large_char   .
+;  164 scalar1             | Everything else
+;  160 scalar2
+;  156 scalar3
+;  152 addr-of
+;  148 small_nonchar
 ;  112 large_nonchar
 ;  110 small_char
 ;  108 struct_small_char
@@ -35,27 +35,25 @@ entry:
 ;   68 struct_small_nonchar
 
 ; CHECK: layout_ssp:
-; r[[SP]] is used as an offset into the stack later
-; CHECK: add r[[SP:[0-9]+]], sp, #68
 
 ; CHECK: bl get_scalar1
-; CHECK: str r0, [sp, #168]
+; CHECK: str r0, [sp, #164]
 ; CHECK: bl end_scalar1
 
 ; CHECK: bl get_scalar2
-; CHECK: str r0, [sp, #164]
+; CHECK: str r0, [sp, #160]
 ; CHECK: bl end_scalar2
 
 ; CHECK: bl get_scalar3
-; CHECK: str r0, [sp, #160]
+; CHECK: str r0, [sp, #156]
 ; CHECK: bl end_scalar3
 
 ; CHECK: bl get_addrof
-; CHECK: str r0, [sp, #156]
+; CHECK: str r0, [sp, #152]
 ; CHECK: bl end_addrof
 
 ; CHECK: get_small_nonchar
-; CHECK: strh r0, [r[[SP]], #84]
+; CHECK: strh r0, [sp, #148]
 ; CHECK: bl end_small_nonchar
 
 ; CHECK: bl get_large_nonchar
@@ -67,11 +65,11 @@ entry:
 ; CHECK: bl end_small_char
 
 ; CHECK: bl get_large_char
-; CHECK: strb r0, [sp, #180]
+; CHECK: strb r0, [sp, #176]
 ; CHECK: bl end_large_char
 
 ; CHECK: bl get_struct_large_char
-; CHECK: strb r0, [sp, #172]
+; CHECK: strb r0, [sp, #168]
 ; CHECK: bl end_struct_large_char
 
 ; CHECK: bl get_struct_small_char
@@ -83,7 +81,7 @@ entry:
 ; CHECK: bl end_struct_large_nonchar
 
 ; CHECK: bl get_struct_small_nonchar
-; CHECK: strh r0, [r[[SP]]]
+; CHECK: strh r0, [sp, #68]
 ; CHECK: bl end_struct_small_nonchar
   %x = alloca i32, align 4
   %y = alloca i32, align 4
@@ -182,8 +180,6 @@ entry:
 ; 68   scalar3                +
 ;   
 ; CHECK: layout_sspstrong:
-; r[[SP]] is used as an offset into the stack later
-; CHECK: add r[[SP:[0-9]+]], sp, #84
 
 ; CHECK: bl get_scalar1
 ; CHECK: str r0, [sp, #76]
@@ -202,7 +198,7 @@ entry:
 ; CHECK: bl end_addrof
 
 ; CHECK: get_small_nonchar
-; CHECK: strh r0, [r[[SP]], #8]
+; CHECK: strh r0, [sp, #92]
 ; CHECK: bl end_small_nonchar
 
 ; CHECK: bl get_large_nonchar
@@ -230,7 +226,7 @@ entry:
 ; CHECK: bl end_struct_large_nonchar
 
 ; CHECK: bl get_struct_small_nonchar
-; CHECK: strh r0, [r[[SP]]]
+; CHECK: strh r0, [sp, #84]
 ; CHECK: bl end_struct_small_nonchar
   %x = alloca i32, align 4
   %y = alloca i32, align 4
@@ -317,8 +313,6 @@ entry:
 ; Expected stack layout for sspreq is the same as sspstrong
 ;   
 ; CHECK: layout_sspreq:
-; r[[SP]] is used as an offset into the stack later
-; CHECK: add r[[SP:[0-9]+]], sp, #84
 
 ; CHECK: bl get_scalar1
 ; CHECK: str r0, [sp, #76]
@@ -337,7 +331,7 @@ entry:
 ; CHECK: bl end_addrof
 
 ; CHECK: get_small_nonchar
-; CHECK: strh r0, [r[[SP]], #8]
+; CHECK: strh r0, [sp, #92]
 ; CHECK: bl end_small_nonchar
 
 ; CHECK: bl get_large_nonchar
@@ -365,7 +359,7 @@ entry:
 ; CHECK: bl end_struct_large_nonchar
 
 ; CHECK: bl get_struct_small_nonchar
-; CHECK: strh r0, [r[[SP]]]
+; CHECK: strh r0, [sp, #84]
 ; CHECK: bl end_struct_small_nonchar
   %x = alloca i32, align 4
   %y = alloca i32, align 4
