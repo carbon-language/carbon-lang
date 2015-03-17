@@ -2638,6 +2638,9 @@ static Value *addFastMathFlag(Value *V) {
 /// the result needs to be inserted and/or extracted from vectors.
 static unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract,
                                          const TargetTransformInfo &TTI) {
+  if (Ty->isVoidTy())
+    return 0;
+
   assert(Ty->isVectorTy() && "Can only scalarize vectors");
   unsigned Cost = 0;
 
