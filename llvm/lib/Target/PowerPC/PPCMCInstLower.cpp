@@ -184,6 +184,9 @@ void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Register:
       assert(!MO.getSubReg() && "Subregs should be eliminated!");
+      assert(MO.getReg() > PPC::NoRegister &&
+             MO.getReg() < PPC::NUM_TARGET_REGS &&
+             "Invalid register for this target!");
       MCOp = MCOperand::CreateReg(MO.getReg());
       break;
     case MachineOperand::MO_Immediate:
