@@ -116,6 +116,10 @@ cl::opt<bool>
                      cl::desc("Print the info for Mach-O objects in "
                               "non-verbose or numeric form (requires -macho)"));
 
+cl::opt<std::string> llvm::DisSymName(
+    "dis-symname",
+    cl::desc("disassemble just this symbol's instructions (requires -macho"));
+
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
               cl::ZeroOrMore);
@@ -3181,6 +3185,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     // Create a map of symbol addresses to symbol names for use by
     // the SymbolizerSymbolLookUp() routine.
     SymbolAddressMap AddrMap;
+    bool DisSymNameFound = false;
     for (const SymbolRef &Symbol : MachOOF->symbols()) {
       SymbolRef::Type ST;
       Symbol.getType(ST);
@@ -3191,7 +3196,13 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
         StringRef SymName;
         Symbol.getName(SymName);
         AddrMap[Address] = SymName;
+        if (!DisSymName.empty() && DisSymName == SymName)
+          DisSymNameFound = true;
       }
+    }
+    if (!DisSymName.empty() && DisSymNameFound == false) {
+      outs() << "Can't find -dis-symname: " << DisSymName << "\n";
+      return;
     }
     // Set up the block of info used by the Symbolizer call backs.
     SymbolizerInfo.verbose = true;
@@ -3233,6 +3244,10 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
       // Make sure the symbol is defined in this section.
       bool containsSym = Sections[SectIdx].containsSymbol(Symbols[SymIdx]);
       if (!containsSym)
+        continue;
+
+      // If we are only disassembling one symbol see if this is that symbol.
+      if (!DisSymName.empty() && DisSymName != SymName)
         continue;
 
       // Start at the address of the symbol relative to the section's address.
