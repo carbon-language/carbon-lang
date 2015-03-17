@@ -48,9 +48,9 @@ Win64Exception::~Win64Exception() {}
 void Win64Exception::endModule() {
 }
 
-/// beginFunction - Gather pre-function exception information. Assumes it's
-/// being emitted immediately after the function entry point.
 void Win64Exception::beginFunction(const MachineFunction *MF) {
+  EHStreamer::beginFunction(MF);
+
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
 
   // If any landing pads survive, we need an EH table.

@@ -25,9 +25,21 @@
 
 using namespace llvm;
 
-EHStreamer::EHStreamer(AsmPrinter *A) : Asm(A), MMI(Asm->MMI) {}
+EHStreamer::EHStreamer(AsmPrinter *A)
+    : CurExceptionSym(nullptr), Asm(A), MMI(Asm->MMI) {}
 
 EHStreamer::~EHStreamer() {}
+
+MCSymbol *EHStreamer::getCurExceptionSym() {
+  if (!CurExceptionSym)
+    CurExceptionSym = Asm->OutContext.createTempSymbol(
+        "exception" + Twine(Asm->getFunctionNumber()));
+  return CurExceptionSym;
+}
+
+void EHStreamer::beginFunction(const MachineFunction *MF) {
+  CurExceptionSym = nullptr;
+}
 
 /// How many leading type ids two landing pads have in common.
 unsigned EHStreamer::sharedTypeIDs(const LandingPadInfo *L,
@@ -436,8 +448,7 @@ void EHStreamer::emitExceptionTable() {
     Asm->OutContext.GetOrCreateSymbol(Twine("GCC_except_table")+
                                       Twine(Asm->getFunctionNumber()));
   Asm->OutStreamer.EmitLabel(GCCETSym);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("exception",
-                                                Asm->getFunctionNumber()));
+  Asm->OutStreamer.EmitLabel(getCurExceptionSym());
 
   if (IsSJLJ)
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("_LSDA_",

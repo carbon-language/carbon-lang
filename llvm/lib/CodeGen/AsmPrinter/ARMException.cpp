@@ -52,9 +52,9 @@ void ARMException::endModule() {
     Asm->OutStreamer.EmitCFISections(false, true);
 }
 
-/// beginFunction - Gather pre-function exception information. Assumes it's
-/// being emitted immediately after the function entry point.
 void ARMException::beginFunction(const MachineFunction *MF) {
+  DwarfCFIExceptionBase::beginFunction(MF);
+
   if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
     getTargetStreamer().emitFnStart();
   // See if we need call frame info.
