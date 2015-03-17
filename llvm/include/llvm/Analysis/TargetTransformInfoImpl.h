@@ -303,6 +303,10 @@ public:
     return 1;
   }
 
+  unsigned getCallInstrCost(Function *F, Type *RetTy, ArrayRef<Type *> Tys) {
+    return 1;
+  }
+
   unsigned getNumberOfParts(Type *Tp) { return 0; }
 
   unsigned getAddressComputationCost(Type *Tp, bool) { return 0; }

@@ -21,6 +21,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 
 namespace llvm {
 
@@ -655,6 +656,20 @@ public:
     }
 
     // This is going to be turned into a library call, make it expensive.
+    return 10;
+  }
+
+  /// \brief Compute a cost of the given call instruction.
+  ///
+  /// Compute the cost of calling function F with return type RetTy and
+  /// argument types Tys. F might be nullptr, in this case the cost of an
+  /// arbitrary call with the specified signature will be returned.
+  /// This is used, for instance,  when we estimate call of a vector
+  /// counterpart of the given function.
+  /// \param F Called function, might be nullptr.
+  /// \param RetTy,Tys Return value and argument types.
+  /// \returns The cost of Call instruction.
+  unsigned getCallInstrCost(Function *F, Type *RetTy, ArrayRef<Type *> Tys) {
     return 10;
   }
 

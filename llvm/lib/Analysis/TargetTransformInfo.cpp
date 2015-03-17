@@ -237,6 +237,11 @@ TargetTransformInfo::getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
   return TTIImpl->getIntrinsicInstrCost(ID, RetTy, Tys);
 }
 
+unsigned TargetTransformInfo::getCallInstrCost(Function *F, Type *RetTy,
+                                               ArrayRef<Type *> Tys) const {
+  return TTIImpl->getCallInstrCost(F, RetTy, Tys);
+}
+
 unsigned TargetTransformInfo::getNumberOfParts(Type *Tp) const {
   return TTIImpl->getNumberOfParts(Tp);
 }
