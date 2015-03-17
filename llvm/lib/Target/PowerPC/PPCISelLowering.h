@@ -521,8 +521,17 @@ namespace llvm {
 
     unsigned getInlineAsmMemConstraint(
         const std::string &ConstraintCode) const override {
-      // FIXME: Map different constraints differently.
-      return InlineAsm::Constraint_m;
+      if (ConstraintCode == "es")
+        return InlineAsm::Constraint_es;
+      else if (ConstraintCode == "o")
+        return InlineAsm::Constraint_o;
+      else if (ConstraintCode == "Q")
+        return InlineAsm::Constraint_Q;
+      else if (ConstraintCode == "Z")
+        return InlineAsm::Constraint_Z;
+      else if (ConstraintCode == "Zy")
+        return InlineAsm::Constraint_Zy;
+      return TargetLowering::getInlineAsmMemConstraint(ConstraintCode);
     }
 
     /// isLegalAddressingMode - Return true if the addressing mode represented

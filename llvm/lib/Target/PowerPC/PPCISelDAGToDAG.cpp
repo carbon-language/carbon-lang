@@ -188,18 +188,31 @@ namespace {
     bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                       unsigned ConstraintID,
                                       std::vector<SDValue> &OutOps) override {
-      // We need to make sure that this one operand does not end up in r0
-      // (because we might end up lowering this as 0(%op)).
-      const TargetRegisterInfo *TRI = PPCSubTarget->getRegisterInfo();
-      const TargetRegisterClass *TRC = TRI->getPointerRegClass(*MF, /*Kind=*/1);
-      SDValue RC = CurDAG->getTargetConstant(TRC->getID(), MVT::i32);
-      SDValue NewOp =
-        SDValue(CurDAG->getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
-                                       SDLoc(Op), Op.getValueType(),
-                                       Op, RC), 0);
 
-      OutOps.push_back(NewOp);
-      return false;
+      switch(ConstraintID) {
+      default:
+        errs() << "ConstraintID: " << ConstraintID << "\n";
+        llvm_unreachable("Unexpected asm memory constraint");
+      case InlineAsm::Constraint_es:
+      case InlineAsm::Constraint_m:
+      case InlineAsm::Constraint_o:
+      case InlineAsm::Constraint_Q:
+      case InlineAsm::Constraint_Z:
+      case InlineAsm::Constraint_Zy:
+        // We need to make sure that this one operand does not end up in r0
+        // (because we might end up lowering this as 0(%op)).
+        const TargetRegisterInfo *TRI = PPCSubTarget->getRegisterInfo();
+        const TargetRegisterClass *TRC = TRI->getPointerRegClass(*MF, /*Kind=*/1);
+        SDValue RC = CurDAG->getTargetConstant(TRC->getID(), MVT::i32);
+        SDValue NewOp =
+          SDValue(CurDAG->getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
+                                         SDLoc(Op), Op.getValueType(),
+                                         Op, RC), 0);
+
+        OutOps.push_back(NewOp);
+        return false;
+      }
+      return true;
     }
 
     void InsertVRSaveCode(MachineFunction &MF);

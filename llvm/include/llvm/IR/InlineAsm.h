@@ -239,10 +239,14 @@ public:
     // there's plenty of space in the encoding to support the union of all
     // constraint codes for all targets.
     Constraint_Unknown = 0,
+    Constraint_es,
     Constraint_m,
-    Constraint_o, // Unused at the moment since Constraint_m is always used.
+    Constraint_o,
     Constraint_v, // Unused at the moment since Constraint_m is always used.
-    Constraints_Max = Constraint_v,
+    Constraint_Q,
+    Constraint_Z,
+    Constraint_Zy,
+    Constraints_Max = Constraint_Zy,
     Constraints_ShiftAmount = 16,
 
     Flag_MatchingOperand = 0x80000000
