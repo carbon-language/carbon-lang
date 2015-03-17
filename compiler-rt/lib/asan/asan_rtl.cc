@@ -112,11 +112,15 @@ static void OnLowLevelAllocate(uptr ptr, uptr size) {
 // -------------------------- Run-time entry ------------------- {{{1
 // exported functions
 #define ASAN_REPORT_ERROR(type, is_write, size)                     \
-extern "C" NOINLINE INTERFACE_ATTRIBUTE                        \
-void __asan_report_ ## type ## size(uptr addr);                \
-void __asan_report_ ## type ## size(uptr addr) {               \
+extern "C" NOINLINE INTERFACE_ATTRIBUTE                             \
+void __asan_report_ ## type ## size(uptr addr) {                    \
   GET_CALLER_PC_BP_SP;                                              \
-  __asan_report_error(pc, bp, sp, addr, is_write, size);            \
+  __asan_report_error(pc, bp, sp, addr, is_write, size, 0);         \
+}                                                                   \
+extern "C" NOINLINE INTERFACE_ATTRIBUTE                             \
+void __asan_report_exp_ ## type ## size(uptr addr, u32 exp) {       \
+  GET_CALLER_PC_BP_SP;                                              \
+  __asan_report_error(pc, bp, sp, addr, is_write, size, exp);       \
 }
 
 ASAN_REPORT_ERROR(load, false, 1)
@@ -132,18 +136,20 @@ ASAN_REPORT_ERROR(store, true, 16)
 
 #define ASAN_REPORT_ERROR_N(type, is_write)                    \
 extern "C" NOINLINE INTERFACE_ATTRIBUTE                        \
-void __asan_report_ ## type ## _n(uptr addr, uptr size);       \
 void __asan_report_ ## type ## _n(uptr addr, uptr size) {      \
   GET_CALLER_PC_BP_SP;                                         \
-  __asan_report_error(pc, bp, sp, addr, is_write, size);       \
+  __asan_report_error(pc, bp, sp, addr, is_write, size, 0);    \
+}                                                              \
+extern "C" NOINLINE INTERFACE_ATTRIBUTE                        \
+void __asan_report_exp_ ## type ## _n(uptr addr, uptr size, u32 exp) {      \
+  GET_CALLER_PC_BP_SP;                                                      \
+  __asan_report_error(pc, bp, sp, addr, is_write, size, exp);               \
 }
 
 ASAN_REPORT_ERROR_N(load, false)
 ASAN_REPORT_ERROR_N(store, true)
 
-#define ASAN_MEMORY_ACCESS_CALLBACK(type, is_write, size)                      \
-  extern "C" NOINLINE INTERFACE_ATTRIBUTE void __asan_##type##size(uptr addr); \
-  void __asan_##type##size(uptr addr) {                                        \
+#define ASAN_MEMORY_ACCESS_CALLBACK_BODY(type, is_write, size, exp_arg)        \
     uptr sp = MEM_TO_SHADOW(addr);                                             \
     uptr s = size <= SHADOW_GRANULARITY ? *reinterpret_cast<u8 *>(sp)          \
                                         : *reinterpret_cast<u16 *>(sp);        \
@@ -155,10 +161,19 @@ ASAN_REPORT_ERROR_N(store, true)
           *__asan_test_only_reported_buggy_pointer = addr;                     \
         } else {                                                               \
           GET_CALLER_PC_BP_SP;                                                 \
-          __asan_report_error(pc, bp, sp, addr, is_write, size);               \
+          __asan_report_error(pc, bp, sp, addr, is_write, size, exp_arg);      \
         }                                                                      \
       }                                                                        \
-    }                                                                          \
+    }
+
+#define ASAN_MEMORY_ACCESS_CALLBACK(type, is_write, size)                      \
+  extern "C" NOINLINE INTERFACE_ATTRIBUTE                                      \
+  void __asan_##type##size(uptr addr) {                                        \
+    ASAN_MEMORY_ACCESS_CALLBACK_BODY(type, is_write, size, 0)                  \
+  }                                                                            \
+  extern "C" NOINLINE INTERFACE_ATTRIBUTE                                      \
+  void __asan_exp_##type##size(uptr addr, u32 exp) {                           \
+    ASAN_MEMORY_ACCESS_CALLBACK_BODY(type, is_write, size, exp)                \
   }
 
 ASAN_MEMORY_ACCESS_CALLBACK(load, false, 1)
@@ -173,18 +188,38 @@ ASAN_MEMORY_ACCESS_CALLBACK(store, true, 8)
 ASAN_MEMORY_ACCESS_CALLBACK(store, true, 16)
 
 extern "C"
-NOINLINE INTERFACE_ATTRIBUTE void __asan_loadN(uptr addr, uptr size) {
+NOINLINE INTERFACE_ATTRIBUTE
+void __asan_loadN(uptr addr, uptr size) {
   if (__asan_region_is_poisoned(addr, size)) {
     GET_CALLER_PC_BP_SP;
-    __asan_report_error(pc, bp, sp, addr, false, size);
+    __asan_report_error(pc, bp, sp, addr, false, size, 0);
   }
 }
 
 extern "C"
-NOINLINE INTERFACE_ATTRIBUTE void __asan_storeN(uptr addr, uptr size) {
+NOINLINE INTERFACE_ATTRIBUTE
+void __asan_exp_loadN(uptr addr, uptr size, u32 exp) {
   if (__asan_region_is_poisoned(addr, size)) {
     GET_CALLER_PC_BP_SP;
-    __asan_report_error(pc, bp, sp, addr, true, size);
+    __asan_report_error(pc, bp, sp, addr, false, size, exp);
+  }
+}
+
+extern "C"
+NOINLINE INTERFACE_ATTRIBUTE
+void __asan_storeN(uptr addr, uptr size) {
+  if (__asan_region_is_poisoned(addr, size)) {
+    GET_CALLER_PC_BP_SP;
+    __asan_report_error(pc, bp, sp, addr, true, size, 0);
+  }
+}
+
+extern "C"
+NOINLINE INTERFACE_ATTRIBUTE
+void __asan_exp_storeN(uptr addr, uptr size, u32 exp) {
+  if (__asan_region_is_poisoned(addr, size)) {
+    GET_CALLER_PC_BP_SP;
+    __asan_report_error(pc, bp, sp, addr, true, size, exp);
   }
 }
 
@@ -203,26 +238,40 @@ static NOINLINE void force_interface_symbols() {
     case 3: __asan_report_load4(0); break;
     case 4: __asan_report_load8(0); break;
     case 5: __asan_report_load16(0); break;
-    case 6: __asan_report_store1(0); break;
-    case 7: __asan_report_store2(0); break;
-    case 8: __asan_report_store4(0); break;
-    case 9: __asan_report_store8(0); break;
-    case 10: __asan_report_store16(0); break;
-    case 12: __asan_register_globals(0, 0); break;
-    case 13: __asan_unregister_globals(0, 0); break;
-    case 14: __asan_set_death_callback(0); break;
-    case 15: __asan_set_error_report_callback(0); break;
-    case 16: __asan_handle_no_return(); break;
-    case 17: __asan_address_is_poisoned(0); break;
-    case 25: __asan_poison_memory_region(0, 0); break;
-    case 26: __asan_unpoison_memory_region(0, 0); break;
-    case 27: __asan_set_error_exit_code(0); break;
-    case 30: __asan_before_dynamic_init(0); break;
-    case 31: __asan_after_dynamic_init(); break;
-    case 32: __asan_poison_stack_memory(0, 0); break;
-    case 33: __asan_unpoison_stack_memory(0, 0); break;
-    case 34: __asan_region_is_poisoned(0, 0); break;
-    case 35: __asan_describe_address(0); break;
+    case 6: __asan_report_load_n(0, 0); break;
+    case 7: __asan_report_store1(0); break;
+    case 8: __asan_report_store2(0); break;
+    case 9: __asan_report_store4(0); break;
+    case 10: __asan_report_store8(0); break;
+    case 11: __asan_report_store16(0); break;
+    case 12: __asan_report_store_n(0, 0); break;
+    case 13: __asan_report_exp_load1(0, 0); break;
+    case 14: __asan_report_exp_load2(0, 0); break;
+    case 15: __asan_report_exp_load4(0, 0); break;
+    case 16: __asan_report_exp_load8(0, 0); break;
+    case 17: __asan_report_exp_load16(0, 0); break;
+    case 18: __asan_report_exp_load_n(0, 0, 0); break;
+    case 19: __asan_report_exp_store1(0, 0); break;
+    case 20: __asan_report_exp_store2(0, 0); break;
+    case 21: __asan_report_exp_store4(0, 0); break;
+    case 22: __asan_report_exp_store8(0, 0); break;
+    case 23: __asan_report_exp_store16(0, 0); break;
+    case 24: __asan_report_exp_store_n(0, 0, 0); break;
+    case 25: __asan_register_globals(0, 0); break;
+    case 26: __asan_unregister_globals(0, 0); break;
+    case 27: __asan_set_death_callback(0); break;
+    case 28: __asan_set_error_report_callback(0); break;
+    case 29: __asan_handle_no_return(); break;
+    case 30: __asan_address_is_poisoned(0); break;
+    case 31: __asan_poison_memory_region(0, 0); break;
+    case 32: __asan_unpoison_memory_region(0, 0); break;
+    case 33: __asan_set_error_exit_code(0); break;
+    case 34: __asan_before_dynamic_init(0); break;
+    case 35: __asan_after_dynamic_init(); break;
+    case 36: __asan_poison_stack_memory(0, 0); break;
+    case 37: __asan_unpoison_stack_memory(0, 0); break;
+    case 38: __asan_region_is_poisoned(0, 0); break;
+    case 39: __asan_describe_address(0); break;
   }
 }
 

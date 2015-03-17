@@ -128,7 +128,7 @@ extern "C" {
 
   SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_report_error(uptr pc, uptr bp, uptr sp,
-                           uptr addr, int is_write, uptr access_size);
+                           uptr addr, int is_write, uptr access_size, u32 exp);
 
   SANITIZER_INTERFACE_ATTRIBUTE
   int __asan_set_error_exit_code(int exit_code);
@@ -164,6 +164,21 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_store16(uptr p);
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_loadN(uptr p, uptr size);
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_storeN(uptr p, uptr size);
+
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_load1(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_load2(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_load4(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_load8(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_load16(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_store1(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_store2(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_store4(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_store8(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_store16(uptr p, u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_loadN(uptr p, uptr size,
+                                                      u32 exp);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_exp_storeN(uptr p, uptr size,
+                                                       u32 exp);
 
   SANITIZER_INTERFACE_ATTRIBUTE
       void* __asan_memcpy(void *dst, const void *src, uptr size);

@@ -218,7 +218,7 @@ uptr __asan_region_is_poisoned(uptr beg, uptr size) {
         __asan::AddressIsPoisoned(__p + __size - 1))) {       \
       GET_CURRENT_PC_BP_SP;                                   \
       uptr __bad = __asan_region_is_poisoned(__p, __size);    \
-      __asan_report_error(pc, bp, sp, __bad, isWrite, __size);\
+      __asan_report_error(pc, bp, sp, __bad, isWrite, __size, 0);\
     }                                                         \
   } while (false);                                            \
 

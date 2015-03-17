@@ -939,8 +939,17 @@ void ReportMacCfReallocUnknown(uptr addr, uptr zone_ptr, const char *zone_name,
 using namespace __asan;  // NOLINT
 
 void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
-                         uptr access_size) {
+                         uptr access_size, u32 exp) {
   ENABLE_FRAME_POINTER;
+
+  // Optimization experiments.
+  // The experiments can be used to evaluate potential optimizations that remove
+  // instrumentation (assess false negatives). Instead of completely removing
+  // some instrumentation, compiler can emit special calls into runtime
+  // (e.g. __asan_report_exp_load1 instead of __asan_report_load1) and pass
+  // mask of experiments (exp).
+  // The reaction to a non-zero value of exp is to be defined.
+  (void)exp;
 
   // Determine the error type.
   const char *bug_descr = "unknown-crash";

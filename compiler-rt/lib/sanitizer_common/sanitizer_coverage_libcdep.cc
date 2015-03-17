@@ -806,6 +806,13 @@ void CoverageUpdateMapping() {
 }  // namespace __sanitizer
 
 extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE WEAK
+void __sanitizer_cov_hint(uptr g, u64 c, u64 v) {
+  (void)g;
+  (void)c;
+  (void)v;
+}
+
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(u32 *guard) {
   coverage_data.Add(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()),
                     guard);
