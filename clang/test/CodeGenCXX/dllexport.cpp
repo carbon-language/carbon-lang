@@ -523,6 +523,15 @@ struct __declspec(dllexport) NestedOuter {
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??_FNestedOuter@@QAEXXZ"
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??_FNestedInner@NestedOuter@@QAEXXZ"
 
+template <typename T>
+struct SomeTemplate {
+  SomeTemplate(T o = T()) : o(o) {}
+  T o;
+};
+struct __declspec(dllexport) InheritFromTemplate : SomeTemplate<int> {};
+
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??_F?$SomeTemplate@H@@QAEXXZ"
+
 struct __declspec(dllexport) T {
   // Copy assignment operator:
   // M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@ABU0@@Z"

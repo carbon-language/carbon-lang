@@ -3411,8 +3411,11 @@ MicrosoftCXXABI::getAddrOfCXXCtorClosure(const CXXConstructorDecl *CD,
 
   // Add the rest of the default arguments.
   std::vector<Stmt *> ArgVec;
-  for (unsigned I = IsCopy ? 1 : 0, E = CD->getNumParams(); I != E; ++I)
-    ArgVec.push_back(getContext().getDefaultArgExprForConstructor(CD, I));
+  for (unsigned I = IsCopy ? 1 : 0, E = CD->getNumParams(); I != E; ++I) {
+    Stmt *DefaultArg = getContext().getDefaultArgExprForConstructor(CD, I);
+    assert(DefaultArg && "sema forgot to instantiate default args");
+    ArgVec.push_back(DefaultArg);
+  }
 
   CodeGenFunction::RunCleanupsScope Cleanups(CGF);
 

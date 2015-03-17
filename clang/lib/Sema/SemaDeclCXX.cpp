@@ -9449,7 +9449,7 @@ static void getDefaultArgExprsForConstructors(Sema &S, CXXRecordDecl *Class) {
   }
 }
 
-void Sema::ActOnFinishCXXMethodDefs(Decl *D) {
+void Sema::ActOnFinishCXXMemberDefaultArgs(Decl *D) {
   auto *RD = dyn_cast<CXXRecordDecl>(D);
 
   // Default constructors that are annotated with __declspec(dllexport) which
