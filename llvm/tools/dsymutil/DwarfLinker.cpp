@@ -653,8 +653,8 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
   if (!Ranges.empty()) {
     MS->SwitchSection(MC->getObjectFileInfo()->getDwarfARangesSection());
 
-    MCSymbol *BeginLabel = Asm->GetTempSymbol("Barange", Unit.getUniqueID());
-    MCSymbol *EndLabel = Asm->GetTempSymbol("Earange", Unit.getUniqueID());
+    MCSymbol *BeginLabel = Asm->createTempSymbol("Barange", Unit.getUniqueID());
+    MCSymbol *EndLabel = Asm->createTempSymbol("Earange", Unit.getUniqueID());
 
     unsigned HeaderSize =
         sizeof(int32_t) + // Size of contents (w/o this field
