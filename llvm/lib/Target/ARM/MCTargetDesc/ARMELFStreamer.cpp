@@ -783,6 +783,7 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
+  case ARM::ARMV6K:
   case ARM::ARMV6Z:
   case ARM::ARMV6ZK:
     setAttributeItem(ARM_ISA_use, Allowed, false);

@@ -195,6 +195,9 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
   case Triple::ARMSubArch_v6t2:
     ARMArchFeature = "+v6t2";
     break;
+  case Triple::ARMSubArch_v6k:
+    ARMArchFeature = "+v6k";
+    break;
   case Triple::ARMSubArch_v6m:
     isThumb = true;
     if (NoCPU)

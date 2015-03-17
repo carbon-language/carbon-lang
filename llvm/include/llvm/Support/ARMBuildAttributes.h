@@ -100,8 +100,8 @@ enum CPUArch {
   v5TEJ    = 5,   // e.g. ARM926EJ_S
   v6       = 6,   // e.g. ARM1136J_S
   v6KZ     = 7,   // e.g. ARM1176JZ_S
-  v6T2     = 8,   // e.g. ARM1156T2F_S
-  v6K      = 9,   // e.g. ARM1136J_S
+  v6T2     = 8,   // e.g. ARM1156T2_S
+  v6K      = 9,   // e.g. ARM1176JZ_S
   v7       = 10,  // e.g. Cortex A8, Cortex M3
   v6_M     = 11,  // e.g. Cortex M1
   v6S_M    = 12,  // v6_M with the System extensions
