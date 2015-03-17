@@ -71,6 +71,18 @@ class TargetLibraryInfoImpl {
   std::vector<VecDesc> ScalarDescs;
 
 public:
+  /// \brief  List of known vector-functions libraries.
+  ///
+  /// The vector-functions library defines, which functions are vectorizable
+  /// and with which factor. The library can be specified by either frontend,
+  /// or a commandline option, and then used by
+  /// addVectorizableFunctionsFromVecLib for filling up the tables of
+  /// vectorizable functions.
+  enum VectorLibrary {
+    NoLibrary, // Don't use any vector library.
+    Accelerate // Use Accelerate framework.
+  };
+
   TargetLibraryInfoImpl();
   explicit TargetLibraryInfoImpl(const Triple &T);
 
@@ -116,6 +128,10 @@ public:
   /// addVectorizableFunctions - Add a set of scalar -> vector mappings,
   /// queryable via getVectorizedFunction and getScalarizedFunction.
   void addVectorizableFunctions(ArrayRef<VecDesc> Fns);
+
+  /// Calls addVectorizableFunctions with a known preset of functions for the
+  /// given vector library.
+  void addVectorizableFunctionsFromVecLib(enum VectorLibrary VecLib);
 
   /// isFunctionVectorizable - Return true if the function F has a
   /// vector equivalent with vectorization factor VF.

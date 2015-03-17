@@ -13,7 +13,17 @@
 
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<TargetLibraryInfoImpl::VectorLibrary> ClVectorLibrary(
+    "vector-library", cl::Hidden, cl::desc("Vector functions library"),
+    cl::init(TargetLibraryInfoImpl::NoLibrary),
+    cl::values(clEnumValN(TargetLibraryInfoImpl::NoLibrary, "none",
+                          "No vector functions library"),
+               clEnumValN(TargetLibraryInfoImpl::Accelerate, "Accelerate",
+                          "Accelerate framework"),
+               clEnumValEnd));
 
 const char *const TargetLibraryInfoImpl::StandardNames[LibFunc::NumLibFuncs] = {
 #define TLI_DEFINE_STRING
@@ -345,6 +355,8 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::statvfs64);
     TLI.setUnavailable(LibFunc::tmpfile64);
   }
+
+  TLI.addVectorizableFunctionsFromVecLib(ClVectorLibrary);
 }
 
 TargetLibraryInfoImpl::TargetLibraryInfoImpl() {
@@ -450,6 +462,28 @@ void TargetLibraryInfoImpl::addVectorizableFunctions(ArrayRef<VecDesc> Fns) {
 
   ScalarDescs.insert(ScalarDescs.end(), Fns.begin(), Fns.end());
   std::sort(ScalarDescs.begin(), ScalarDescs.end(), compareByVectorFnName);
+}
+
+void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
+    enum VectorLibrary VecLib) {
+  switch (VecLib) {
+  case Accelerate: {
+    const VecDesc VecFuncs[] = {
+        {"expf", "vexpf", 4},
+        {"llvm.exp.f32", "vexpf", 4},
+        {"logf", "vlogf", 4},
+        {"llvm.log.f32", "vlogf", 4},
+        {"sqrtf", "vsqrtf", 4},
+        {"llvm.sqrt.f32", "vsqrtf", 4},
+        {"fabsf", "vfabsf", 4},
+        {"llvm.fabs.f32", "vfabsf", 4},
+    };
+    addVectorizableFunctions(VecFuncs);
+    break;
+  }
+  case NoLibrary:
+    break;
+  }
 }
 
 bool TargetLibraryInfoImpl::isFunctionVectorizable(StringRef funcName) const {
