@@ -105,10 +105,6 @@ static const char *const kAsanUnpoisonStackMemoryName =
 static const char *const kAsanOptionDetectUAR =
     "__asan_option_detect_stack_use_after_return";
 
-#ifndef NDEBUG
-static const int kAsanStackAfterReturnMagic = 0xf5;
-#endif
-
 // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
 static const size_t kNumberOfAccessSizes = 5;
 
@@ -1676,14 +1672,14 @@ void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
     IRBuilder<> &IRB, Value *ShadowBase, int Size) {
   assert(!(Size % 8));
 
-  #ifndef NDEBUG
-  static_assert(kAsanStackAfterReturnMagic == 0xf5, "");
-  #endif
+  // kAsanStackAfterReturnMagic is 0xf5.
+  const uint64_t kAsanStackAfterReturnMagic64 = 0xf5f5f5f5f5f5f5f5ULL;
 
   for (int i = 0; i < Size; i += 8) {
     Value *p = IRB.CreateAdd(ShadowBase, ConstantInt::get(IntptrTy, i));
-    IRB.CreateStore(ConstantInt::get(IRB.getInt64Ty(), 0xf5f5f5f5f5f5f5f5ULL),
-                    IRB.CreateIntToPtr(p, IRB.getInt64Ty()->getPointerTo()));
+    IRB.CreateStore(
+        ConstantInt::get(IRB.getInt64Ty(), kAsanStackAfterReturnMagic64),
+        IRB.CreateIntToPtr(p, IRB.getInt64Ty()->getPointerTo()));
   }
 }
 
