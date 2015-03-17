@@ -343,3 +343,9 @@ const MCExpr *TargetLoweringObjectFile::getDebugThreadLocalSymbol(const MCSymbol
   // null return could mean 'no location' & we should just do that here.
   return MCSymbolRefExpr::Create(Sym, *Ctx);
 }
+
+void TargetLoweringObjectFile::getNameWithPrefix(
+    SmallVectorImpl<char> &OutName, const GlobalValue *GV,
+    bool CannotUsePrivateLabel, Mangler &Mang, const TargetMachine &TM) const {
+  Mang.getNameWithPrefix(OutName, GV, CannotUsePrivateLabel);
+}

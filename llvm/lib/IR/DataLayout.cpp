@@ -150,8 +150,8 @@ DataLayout::InvalidPointerElem = { 0U, 0U, 0U, ~0U };
 const char *DataLayout::getManglingComponent(const Triple &T) {
   if (T.isOSBinFormatMachO())
     return "-m:o";
-  if (T.isOSWindows() && T.getArch() == Triple::x86 && T.isOSBinFormatCOFF())
-    return "-m:w";
+  if (T.isOSWindows() && T.isOSBinFormatCOFF())
+    return T.getArch() == Triple::x86 ? "-m:x" : "-m:w";
   return "-m:e";
 }
 
@@ -359,7 +359,10 @@ void DataLayout::parseSpecifier(StringRef Desc) {
         ManglingMode = MM_Mips;
         break;
       case 'w':
-        ManglingMode = MM_WINCOFF;
+        ManglingMode = MM_WinCOFF;
+        break;
+      case 'x':
+        ManglingMode = MM_WinCOFFX86;
         break;
       }
       break;

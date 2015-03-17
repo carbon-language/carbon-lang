@@ -108,7 +108,14 @@ private:
 
   unsigned StackNaturalAlign;
 
-  enum ManglingModeT { MM_None, MM_ELF, MM_MachO, MM_WINCOFF, MM_Mips };
+  enum ManglingModeT {
+    MM_None,
+    MM_ELF,
+    MM_MachO,
+    MM_WinCOFF,
+    MM_WinCOFFX86,
+    MM_Mips
+  };
   ManglingModeT ManglingMode;
 
   SmallVector<unsigned char, 8> LegalIntWidths;
@@ -244,7 +251,7 @@ public:
   unsigned getStackAlignment() const { return StackNaturalAlign; }
 
   bool hasMicrosoftFastStdCallMangling() const {
-    return ManglingMode == MM_WINCOFF;
+    return ManglingMode == MM_WinCOFFX86;
   }
 
   bool hasLinkerPrivateGlobalPrefix() const { return ManglingMode == MM_MachO; }
@@ -252,7 +259,7 @@ public:
   const char *getLinkerPrivateGlobalPrefix() const {
     if (ManglingMode == MM_MachO)
       return "l";
-    return getPrivateGlobalPrefix();
+    return "";
   }
 
   char getGlobalPrefix() const {
@@ -260,9 +267,10 @@ public:
     case MM_None:
     case MM_ELF:
     case MM_Mips:
+    case MM_WinCOFF:
       return '\0';
     case MM_MachO:
-    case MM_WINCOFF:
+    case MM_WinCOFFX86:
       return '_';
     }
     llvm_unreachable("invalid mangling mode");
@@ -277,7 +285,8 @@ public:
     case MM_Mips:
       return "$";
     case MM_MachO:
-    case MM_WINCOFF:
+    case MM_WinCOFF:
+    case MM_WinCOFFX86:
       return "L";
     }
     llvm_unreachable("invalid mangling mode");
