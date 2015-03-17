@@ -240,6 +240,7 @@ public:
     // constraint codes for all targets.
     Constraint_Unknown = 0,
     Constraint_es,
+    Constraint_i,
     Constraint_m,
     Constraint_o,
     Constraint_v, // Unused at the moment since Constraint_m is always used.

@@ -2627,7 +2627,9 @@ public:
 
   virtual unsigned
   getInlineAsmMemConstraint(const std::string &ConstraintCode) const {
-    if (ConstraintCode == "m")
+    if (ConstraintCode == "i")
+      return InlineAsm::Constraint_i;
+    else if (ConstraintCode == "m")
       return InlineAsm::Constraint_m;
     return InlineAsm::Constraint_Unknown;
   }
