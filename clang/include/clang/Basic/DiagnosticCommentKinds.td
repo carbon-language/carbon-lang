@@ -166,7 +166,7 @@ def warn_unknown_comment_command_name : Warning<
 
 def warn_correct_comment_command_name : Warning<
   "unknown command tag name '%0'; did you mean '%1'?">,
-  InGroup<Documentation>, DefaultIgnore;
+  InGroup<DocumentationUnknownCommand>, DefaultIgnore;
 
 } // end of documentation issue category
 } // end of AST component
