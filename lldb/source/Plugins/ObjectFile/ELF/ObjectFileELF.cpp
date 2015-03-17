@@ -283,8 +283,34 @@ kalimbaVariantFromElfFlags(const elf::elf_word e_flags)
 }
 
 static uint32_t
+mipsVariantFromElfFlags(const elf::elf_word e_flags, uint32_t endian)
+{
+    const uint32_t mips_arch = e_flags & llvm::ELF::EF_MIPS_ARCH;
+    uint32_t arch_variant = LLDB_INVALID_CPUTYPE;
+
+    switch (mips_arch)
+    {
+        case llvm::ELF::EF_MIPS_ARCH_64:
+            if (endian == ELFDATA2LSB)
+                arch_variant = llvm::Triple::mips64el;
+            else
+                arch_variant = llvm::Triple::mips64;
+            break;
+
+        default:
+            break;
+    }
+
+    return arch_variant;
+}
+
+static uint32_t
 subTypeFromElfHeader(const elf::ELFHeader& header)
 {
+    if (header.e_machine == llvm::ELF::EM_MIPS)
+        return mipsVariantFromElfFlags (header.e_flags,
+            header.e_ident[EI_DATA]);
+
     return
         llvm::ELF::EM_CSR_KALIMBA == header.e_machine ?
         kalimbaVariantFromElfFlags(header.e_flags) :

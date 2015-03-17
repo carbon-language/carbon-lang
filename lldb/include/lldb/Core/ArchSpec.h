@@ -65,8 +65,9 @@ public:
         eCore_arm_arm64,
         eCore_arm_armv8,
         eCore_arm_aarch64,
-        
+
         eCore_mips64,
+        eCore_mips64el,
 
         eCore_ppc_generic,
         eCore_ppc_ppc601,

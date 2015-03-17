@@ -586,6 +586,7 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
         }
         break;
     case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
         {
             static const uint8_t g_hex_opcode[] = { 0x00, 0x00, 0x00, 0x0d };
             trap_opcode = g_hex_opcode;

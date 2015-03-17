@@ -15,6 +15,7 @@
 #include "NativeProcessLinux.h"
 #include "NativeRegisterContextLinux_arm64.h"
 #include "NativeRegisterContextLinux_x86_64.h"
+#include "NativeRegisterContextLinux_mips64.h"
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
@@ -31,6 +32,7 @@
 #include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_mips64.h"
 #include "Plugins/Process/Utility/RegisterInfoInterface.h"
 
 using namespace lldb;
@@ -175,6 +177,12 @@ NativeThreadLinux::GetRegisterContext ()
                     reg_interface = static_cast<RegisterInfoInterface*> (new RegisterContextLinux_x86_64 (target_arch));
                 }
                 break;
+            case llvm::Triple::mips64:
+            case llvm::Triple::mips64el:
+                assert((HostInfo::GetArchitecture ().GetAddressByteSize() == 8)
+                    && "Register setting path assumes this is a 64-bit host");
+                reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_mips64 (target_arch));
+                break;
             default:
                 break;
             }
@@ -199,6 +207,13 @@ NativeThreadLinux::GetRegisterContext ()
             break;
         }
 #endif
+        case llvm::Triple::mips64:
+        case llvm::Triple::mips64el:
+        {
+            const uint32_t concrete_frame_idx = 0;
+            m_reg_context_sp.reset (new NativeRegisterContextLinux_mips64 (*this, concrete_frame_idx, reg_interface));
+            break;
+        }
         case llvm::Triple::aarch64:
         {
             const uint32_t concrete_frame_idx = 0;
