@@ -331,13 +331,6 @@ public:
   // Symbol Lowering Routines.
   //===------------------------------------------------------------------===//
 public:
-  /// Return the MCSymbol corresponding to the assembler temporary label with
-  /// the specified stem and unique ID.
-  MCSymbol *GetTempSymbol(const Twine &Name, unsigned ID) const;
-
-  /// Return an assembler temporary label with the specified stem.
-  MCSymbol *GetTempSymbol(const Twine &Name) const;
-
   MCSymbol *createTempSymbol(const Twine &Name, unsigned ID) const;
 
   /// Return the MCSymbol for a private symbol with global value name as its

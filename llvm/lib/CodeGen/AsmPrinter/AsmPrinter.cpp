@@ -2252,18 +2252,6 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
 // Symbol Lowering Routines.
 //===----------------------------------------------------------------------===//
 
-MCSymbol *AsmPrinter::GetTempSymbol(const Twine &Name, unsigned ID) const {
-  const DataLayout *DL = TM.getDataLayout();
-  return OutContext.GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix()) +
-                                      Name + Twine(ID));
-}
-
-MCSymbol *AsmPrinter::GetTempSymbol(const Twine &Name) const {
-  const DataLayout *DL = TM.getDataLayout();
-  return OutContext.GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix())+
-                                      Name);
-}
-
 MCSymbol *AsmPrinter::createTempSymbol(const Twine &Name, unsigned ID) const {
   return OutContext.createTempSymbol(Name + Twine(ID));
 }
