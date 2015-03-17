@@ -2250,16 +2250,12 @@ void AsmPrinter::printOffset(int64_t Offset, raw_ostream &OS) const {
 // Symbol Lowering Routines.
 //===----------------------------------------------------------------------===//
 
-/// GetTempSymbol - Return the MCSymbol corresponding to the assembler
-/// temporary label with the specified stem and unique ID.
 MCSymbol *AsmPrinter::GetTempSymbol(const Twine &Name, unsigned ID) const {
   const DataLayout *DL = TM.getDataLayout();
   return OutContext.GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix()) +
                                       Name + Twine(ID));
 }
 
-/// GetTempSymbol - Return an assembler temporary label with the specified
-/// stem.
 MCSymbol *AsmPrinter::GetTempSymbol(const Twine &Name) const {
   const DataLayout *DL = TM.getDataLayout();
   return OutContext.GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix())+
