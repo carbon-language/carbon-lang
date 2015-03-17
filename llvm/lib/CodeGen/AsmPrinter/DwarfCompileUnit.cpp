@@ -380,7 +380,7 @@ void DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
       TLOF.getDwarfRangesSection()->getBeginSymbol();
 
   RangeSpanList List(
-      Asm->GetTempSymbol("debug_ranges", DD->getNextRangeNumber()),
+      Asm->createTempSymbol("debug_ranges", DD->getNextRangeNumber()),
       std::move(Range));
 
   // Under fission, ranges are specified by constant offsets relative to the

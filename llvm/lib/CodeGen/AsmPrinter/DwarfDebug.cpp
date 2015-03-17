@@ -927,7 +927,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
     DebugLocList &LocList = DotDebugLocEntries.back();
     LocList.CU = &TheCU;
     LocList.Label =
-        Asm->GetTempSymbol("debug_loc", DotDebugLocEntries.size() - 1);
+        Asm->createTempSymbol("debug_loc", DotDebugLocEntries.size() - 1);
 
     // Build the location list for this variable.
     buildLocationList(LocList.List, Ranges);
@@ -1669,7 +1669,7 @@ void DwarfDebug::emitDebugARanges() {
       // if we know the section name up-front. For user-created sections, the
       // resulting label may not be valid to use as a label. (section names can
       // use a greater set of characters on some systems)
-      Sym = Asm->GetTempSymbol("debug_end", ID);
+      Sym = Asm->createTempSymbol("debug_end", ID);
       Asm->OutStreamer.SwitchSection(Section);
       Asm->OutStreamer.EmitLabel(Sym);
     }

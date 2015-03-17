@@ -464,7 +464,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   if (AArch64FI->getLOHRelated().count(MI)) {
     // Generate a label for LOH related instruction
-    MCSymbol *LOHLabel = GetTempSymbol("loh", LOHLabelCounter++);
+    MCSymbol *LOHLabel = createTempSymbol("loh", LOHLabelCounter++);
     // Associate the instruction with the label
     LOHInstToLabel[MI] = LOHLabel;
     OutStreamer.EmitLabel(LOHLabel);
