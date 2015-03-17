@@ -15,16 +15,41 @@
 
 #include <utility>
 
-int main()
+template <class T1, class T2>
+void test()
 {
     {
-        typedef std::pair<int, short> P1;
-        static_assert((std::is_same<std::tuple_element<0, P1>::type, int>::value), "");
-        static_assert((std::is_same<std::tuple_element<1, P1>::type, short>::value), "");
+    typedef T1 Exp1;
+    typedef T2 Exp2;
+    typedef std::pair<T1, T2> P;
+    static_assert((std::is_same<typename std::tuple_element<0, P>::type, Exp1>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<1, P>::type, Exp2>::value), "");
     }
     {
-        typedef std::pair<int*, char> P1;
-        static_assert((std::is_same<std::tuple_element<0, P1>::type, int*>::value), "");
-        static_assert((std::is_same<std::tuple_element<1, P1>::type, char>::value), "");
+    typedef T1 const Exp1;
+    typedef T2 const Exp2;
+    typedef std::pair<T1, T2> const P;
+    static_assert((std::is_same<typename std::tuple_element<0, P>::type, Exp1>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<1, P>::type, Exp2>::value), "");
     }
+    {
+    typedef T1 volatile Exp1;
+    typedef T2 volatile Exp2;
+    typedef std::pair<T1, T2> volatile P;
+    static_assert((std::is_same<typename std::tuple_element<0, P>::type, Exp1>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<1, P>::type, Exp2>::value), "");
+    }
+    {
+    typedef T1 const volatile Exp1;
+    typedef T2 const volatile Exp2;
+    typedef std::pair<T1, T2> const volatile P;
+    static_assert((std::is_same<typename std::tuple_element<0, P>::type, Exp1>::value), "");
+    static_assert((std::is_same<typename std::tuple_element<1, P>::type, Exp2>::value), "");
+    }
+}
+
+int main()
+{
+    test<int, short>();
+    test<int*, char>();
 }

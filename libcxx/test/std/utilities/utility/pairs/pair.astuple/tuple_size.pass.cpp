@@ -21,4 +21,16 @@ int main()
         typedef std::pair<int, short> P1;
         static_assert((std::tuple_size<P1>::value == 2), "");
     }
+    {
+        typedef std::pair<int, short> const P1;
+        static_assert((std::tuple_size<P1>::value == 2), "");
+    }
+    {
+        typedef std::pair<int, short> volatile P1;
+        static_assert((std::tuple_size<P1>::value == 2), "");
+    }
+    {
+        typedef std::pair<int, short> const volatile P1;
+        static_assert((std::tuple_size<P1>::value == 2), "");
+    }
 }

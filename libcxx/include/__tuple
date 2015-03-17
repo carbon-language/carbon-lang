@@ -19,39 +19,8 @@
 #pragma GCC system_header
 #endif
 
-#ifdef _LIBCPP_HAS_NO_VARIADICS
-
-#include <__tuple_03>
-
-#else  // _LIBCPP_HAS_NO_VARIADICS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
-
-// __lazy_and
-
-template <bool _Last, class ..._Preds>
-struct __lazy_and_impl;
-
-template <class ..._Preds>
-struct __lazy_and_impl<false, _Preds...> : false_type {};
-
-template <>
-struct __lazy_and_impl<true> : true_type {};
-
-template <class _Pred>
-struct __lazy_and_impl<true, _Pred> : integral_constant<bool, _Pred::type::value> {};
-
-template <class _Hp, class ..._Tp>
-struct __lazy_and_impl<true, _Hp, _Tp...> : __lazy_and_impl<_Hp::type::value, _Tp...> {};
-
-template <class _P1, class ..._Pr>
-struct __lazy_and : __lazy_and_impl<_P1::type::value, _Pr...> {};
-
-// __lazy_not
-
-template <class _Pred>
-struct __lazy_not : integral_constant<bool, !_Pred::type::value> {};
-
 
 template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size;
 
@@ -90,19 +59,18 @@ public:
     typedef typename add_cv<typename tuple_element<_Ip, _Tp>::type>::type type;
 };
 
-template <class ..._Tp> class _LIBCPP_TYPE_VIS_ONLY tuple;
-template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS_ONLY pair;
-template <class _Tp, size_t _Size> struct _LIBCPP_TYPE_VIS_ONLY array;
-
 template <class _Tp> struct __tuple_like : false_type {};
 
 template <class _Tp> struct __tuple_like<const _Tp> : public __tuple_like<_Tp> {};
 template <class _Tp> struct __tuple_like<volatile _Tp> : public __tuple_like<_Tp> {};
 template <class _Tp> struct __tuple_like<const volatile _Tp> : public __tuple_like<_Tp> {};
 
+// tuple specializations
+
+#if !defined(_LIBCPP_HAS_NO_VARIADICS)
+template <class ..._Tp> class _LIBCPP_TYPE_VIS_ONLY tuple;
+
 template <class... _Tp> struct __tuple_like<tuple<_Tp...> > : true_type {};
-template <class _T1, class _T2> struct __tuple_like<pair<_T1, _T2> > : true_type {};
-template <class _Tp, size_t _Size> struct __tuple_like<array<_Tp, _Size> > : true_type {};
 
 template <size_t _Ip, class ..._Tp>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
@@ -118,6 +86,13 @@ template <size_t _Ip, class ..._Tp>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, tuple<_Tp...> >::type&&
 get(tuple<_Tp...>&&) _NOEXCEPT;
+#endif
+
+// pair specializations
+
+template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS_ONLY pair;
+
+template <class _T1, class _T2> struct __tuple_like<pair<_T1, _T2> > : true_type {};
 
 template <size_t _Ip, class _T1, class _T2>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
@@ -129,10 +104,18 @@ _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(const pair<_T1, _T2>&) _NOEXCEPT;
 
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 template <size_t _Ip, class _T1, class _T2>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&&
 get(pair<_T1, _T2>&&) _NOEXCEPT;
+#endif
+
+// array specializations
+
+template <class _Tp, size_t _Size> struct _LIBCPP_TYPE_VIS_ONLY array;
+
+template <class _Tp, size_t _Size> struct __tuple_like<array<_Tp, _Size> > : true_type {};
 
 template <size_t _Ip, class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
@@ -144,10 +127,39 @@ _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const _Tp&
 get(const array<_Tp, _Size>&) _NOEXCEPT;
 
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 template <size_t _Ip, class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp&&
 get(array<_Tp, _Size>&&) _NOEXCEPT;
+#endif
+
+#if !defined(_LIBCPP_HAS_NO_VARIADICS)
+
+// __lazy_and
+
+template <bool _Last, class ..._Preds>
+struct __lazy_and_impl;
+
+template <class ..._Preds>
+struct __lazy_and_impl<false, _Preds...> : false_type {};
+
+template <>
+struct __lazy_and_impl<true> : true_type {};
+
+template <class _Pred>
+struct __lazy_and_impl<true, _Pred> : integral_constant<bool, _Pred::type::value> {};
+
+template <class _Hp, class ..._Tp>
+struct __lazy_and_impl<true, _Hp, _Tp...> : __lazy_and_impl<_Hp::type::value, _Tp...> {};
+
+template <class _P1, class ..._Pr>
+struct __lazy_and : __lazy_and_impl<_P1::type::value, _Pr...> {};
+
+// __lazy_not
+
+template <class _Pred>
+struct __lazy_not : integral_constant<bool, !_Pred::type::value> {};
 
 // __make_tuple_indices
 
@@ -354,8 +366,8 @@ struct __tuple_assignable<_Tp, _Up, true, true>
                                     tuple_size<_Up>::value, _Tp, _Up>
 {};
 
-_LIBCPP_END_NAMESPACE_STD
-
 #endif  // _LIBCPP_HAS_NO_VARIADICS
+
+_LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP___TUPLE

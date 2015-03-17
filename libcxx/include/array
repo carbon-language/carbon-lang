@@ -288,22 +288,11 @@ template <class _Tp, size_t _Size>
 class _LIBCPP_TYPE_VIS_ONLY tuple_size<array<_Tp, _Size> >
     : public integral_constant<size_t, _Size> {};
 
-template <class _Tp, size_t _Size>
-class _LIBCPP_TYPE_VIS_ONLY tuple_size<const array<_Tp, _Size> >
-    : public integral_constant<size_t, _Size> {};
-
 template <size_t _Ip, class _Tp, size_t _Size>
 class _LIBCPP_TYPE_VIS_ONLY tuple_element<_Ip, array<_Tp, _Size> >
 {
 public:
     typedef _Tp type;
-};
-
-template <size_t _Ip, class _Tp, size_t _Size>
-class _LIBCPP_TYPE_VIS_ONLY tuple_element<_Ip, const array<_Tp, _Size> >
-{
-public:
-    typedef const _Tp type;
 };
 
 template <size_t _Ip, class _Tp, size_t _Size>
