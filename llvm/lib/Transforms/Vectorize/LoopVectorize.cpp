@@ -245,11 +245,12 @@ class InnerLoopVectorizer {
 public:
   InnerLoopVectorizer(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
                       DominatorTree *DT, const TargetLibraryInfo *TLI,
-                      unsigned VecWidth, unsigned UnrollFactor)
-      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), TLI(TLI), VF(VecWidth),
-        UF(UnrollFactor), Builder(SE->getContext()), Induction(nullptr),
-        OldInduction(nullptr), WidenMap(UnrollFactor), Legal(nullptr),
-        AddedSafetyChecks(false) {}
+                      const TargetTransformInfo *TTI, unsigned VecWidth,
+                      unsigned UnrollFactor)
+      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), TLI(TLI), TTI(TTI),
+        VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()),
+        Induction(nullptr), OldInduction(nullptr), WidenMap(UnrollFactor),
+        Legal(nullptr), AddedSafetyChecks(false) {}
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *L) {
@@ -404,6 +405,8 @@ protected:
   AliasAnalysis *AA;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
+  /// Target Transform Info.
+  const TargetTransformInfo *TTI;
 
   /// The vectorization SIMD factor to use. Each vector will have this many
   /// vector elements.
@@ -454,8 +457,8 @@ class InnerLoopUnroller : public InnerLoopVectorizer {
 public:
   InnerLoopUnroller(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
                     DominatorTree *DT, const TargetLibraryInfo *TLI,
-                    unsigned UnrollFactor)
-      : InnerLoopVectorizer(OrigLoop, SE, LI, DT, TLI, 1, UnrollFactor) {}
+                    const TargetTransformInfo *TTI, unsigned UnrollFactor)
+      : InnerLoopVectorizer(OrigLoop, SE, LI, DT, TLI, TTI, 1, UnrollFactor) {}
 
 private:
   void scalarizeInstruction(Instruction *Instr,
@@ -1491,11 +1494,11 @@ struct LoopVectorize : public FunctionPass {
 
       // We decided not to vectorize, but we may want to unroll.
 
-      InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, UF);
+      InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, TTI, UF);
       Unroller.vectorize(&LVL);
     } else {
       // If we decided that it is *legal* to vectorize the loop then do it.
-      InnerLoopVectorizer LB(L, SE, LI, DT, TLI, VF.Width, UF);
+      InnerLoopVectorizer LB(L, SE, LI, DT, TLI, TTI, VF.Width, UF);
       LB.vectorize(&LVL);
       ++LoopsVectorized;
 
