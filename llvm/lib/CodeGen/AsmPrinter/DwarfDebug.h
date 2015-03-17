@@ -363,10 +363,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Emit the abbreviation section.
   void emitAbbreviations();
 
-  /// \brief Emit the last address of the section and the end of
-  /// the line matrix.
-  void emitEndOfLineMatrix(unsigned SectionEnd);
-
   /// \brief Emit a specified accelerator table.
   void emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
                  StringRef TableName);
