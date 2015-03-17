@@ -107,7 +107,7 @@ namespace lldb_private
         }
 
         void
-        SetArchitecture (ArchSpec arch)
+        SetArchitecture (const ArchSpec& arch)
         {
             m_arch = arch;
         }
