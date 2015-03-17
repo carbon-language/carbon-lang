@@ -303,6 +303,24 @@ NativeRegisterContext::ClearAllHardwareWatchpoints ()
     return Error ("not implemented");
 }
 
+Error
+NativeRegisterContext::IsWatchpointHit (uint8_t wp_index)
+{
+    return Error ("not implemented");
+}
+
+Error
+NativeRegisterContext::IsWatchpointVacant (uint32_t wp_index)
+{
+    return Error ("not implemented");
+}
+
+lldb::addr_t
+NativeRegisterContext::GetWatchpointAddress (uint32_t wp_index)
+{
+    return LLDB_INVALID_ADDRESS;
+}
+
 bool
 NativeRegisterContext::HardwareSingleStep (bool enable)
 {

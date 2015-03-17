@@ -99,6 +99,15 @@ public:
     virtual Error
     ClearAllHardwareWatchpoints ();
 
+    virtual Error
+    IsWatchpointHit (uint8_t wp_index);
+
+    virtual Error
+    IsWatchpointVacant (uint32_t wp_index);
+
+    virtual lldb::addr_t
+    GetWatchpointAddress (uint32_t wp_index);
+
     virtual bool
     HardwareSingleStep (bool enable);
 
