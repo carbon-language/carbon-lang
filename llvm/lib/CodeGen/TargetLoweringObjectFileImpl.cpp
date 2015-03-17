@@ -927,11 +927,6 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
       StringRef COMDATSymName = Sym->getName();
       return getContext().getCOFFSection(Name, Characteristics, Kind,
                                          COMDATSymName, Selection);
-    } else {
-      SmallString<256> TmpData;
-      getNameWithPrefix(TmpData, GV, true, Mang, TM);
-      return getContext().getCOFFSection(Name, Characteristics, Kind, TmpData,
-                                         Selection);
     }
   }
 
@@ -951,25 +946,6 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     return BSSSection;
 
   return DataSection;
-}
-
-void TargetLoweringObjectFileCOFF::getNameWithPrefix(
-    SmallVectorImpl<char> &OutName, const GlobalValue *GV,
-    bool CannotUsePrivateLabel, Mangler &Mang, const TargetMachine &TM) const {
-  if (GV->hasPrivateLinkage() &&
-      ((isa<Function>(GV) && TM.getFunctionSections()) ||
-       (isa<GlobalVariable>(GV) && TM.getDataSections()))) {
-    SmallString<256> Tmp;
-    Mang.getNameWithPrefix(Tmp, GV, /*CannotUsePrivateLabel=*/false);
-    if (Tmp.startswith(".L"))
-      OutName.append(Tmp.begin() + 2, Tmp.end());
-    else if (Tmp.startswith("L"))
-      OutName.append(Tmp.begin() + 1, Tmp.end());
-    else
-      OutName.append(Tmp.begin(), Tmp.end());
-    return;
-  }
-  Mang.getNameWithPrefix(OutName, GV, CannotUsePrivateLabel);
 }
 
 const MCSection *TargetLoweringObjectFileCOFF::getSectionForJumpTable(

@@ -275,8 +275,8 @@ bb7:
 ; LINUX-SECTIONS:        .asciz  "foo"
 ; LINUX-SECTIONS:        .size   .LG14, 4
 
-; WIN32-SECTIONS:        .section        .rdata,"dr",one_only,_G14
-; WIN32-SECTIONS: _G14:
+; WIN32-SECTIONS:        .section        .rdata,"dr"
+; WIN32-SECTIONS: L_G14:
 ; WIN32-SECTIONS:        .asciz  "foo"
 
 ; cannot be merged on MachO, but can on other formats.

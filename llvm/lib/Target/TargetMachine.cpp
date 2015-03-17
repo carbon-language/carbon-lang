@@ -175,7 +175,7 @@ void TargetMachine::getNameWithPrefix(SmallVectorImpl<char> &Name,
   const TargetLoweringObjectFile *TLOF = getObjFileLowering();
   const MCSection *TheSection = TLOF->SectionForGlobal(GV, GVKind, Mang, *this);
   bool CannotUsePrivateLabel = !canUsePrivateLabel(*AsmInfo, *TheSection);
-  TLOF->getNameWithPrefix(Name, GV, CannotUsePrivateLabel, Mang, *this);
+  Mang.getNameWithPrefix(Name, GV, CannotUsePrivateLabel);
 }
 
 MCSymbol *TargetMachine::getSymbol(const GlobalValue *GV, Mangler &Mang) const {

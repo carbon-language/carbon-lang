@@ -147,10 +147,6 @@ public:
                            SectionKind Kind, Mangler &Mang,
                            const TargetMachine &TM) const override;
 
-  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,
-                         bool CannotUsePrivateLabel, Mangler &Mang,
-                         const TargetMachine &TM) const override;
-
   const MCSection *
   getSectionForJumpTable(const Function &F, Mangler &Mang,
                          const TargetMachine &TM) const override;
