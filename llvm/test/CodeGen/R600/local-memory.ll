@@ -4,7 +4,6 @@
 
 @local_memory.local_mem = internal unnamed_addr addrspace(3) global [128 x i32] undef, align 4
 
-; FUNC-LABEL: {{^}}local_memory:
 
 ; Check that the LDS size emitted correctly
 ; EG: .long 166120
@@ -13,6 +12,8 @@
 ; SI-NEXT: .long 71560
 ; CI: .long 47180
 ; CI-NEXT: .long 38792
+
+; FUNC-LABEL: {{^}}local_memory:
 
 ; EG: LDS_WRITE
 ; SI-NOT: s_wqm_b64

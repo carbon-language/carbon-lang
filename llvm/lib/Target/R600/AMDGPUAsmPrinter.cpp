@@ -105,8 +105,6 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SetupMachineFunction(MF);
 
-  EmitFunctionHeader();
-
   MCContext &Context = getObjFileLowering().getContext();
   const MCSectionELF *ConfigSection =
       Context.getELFSection(".AMDGPU.config", ELF::SHT_PROGBITS, 0);
@@ -129,7 +127,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   HexLines.clear();
   DisasmLineMaxLen = 0;
 
-  OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
+  EmitFunctionHeader();
   EmitFunctionBody();
 
   if (isVerbose()) {

@@ -13,12 +13,12 @@
 ; ELF: Name: test
 ; ELF: Binding: Global
 
-; CONFIG: .align 256
-; CONFIG: test:
 ; CONFIG: .section .AMDGPU.config
 ; CONFIG-NEXT: .long   45096
 ; TYPICAL-NEXT: .long   0
 ; TONGA-NEXT: .long   576
+; CONFIG: .align 256
+; CONFIG: test:
 define void @test(i32 %p) #0 {
    %i = add i32 %p, 2
    %r = bitcast i32 %i to float

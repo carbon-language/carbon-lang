@@ -554,8 +554,8 @@ define void @sextload_i8_to_i32_bfe(i32 addrspace(1)* %out, i8 addrspace(1)* %pt
   ret void
 }
 
-; FUNC-LABEL: {{^}}sextload_i8_to_i32_bfe_0:
 ; SI: .text
+; FUNC-LABEL: {{^}}sextload_i8_to_i32_bfe_0:{{.*$}}
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @sextload_i8_to_i32_bfe_0(i32 addrspace(1)* %out, i8 addrspace(1)* %ptr) nounwind {

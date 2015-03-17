@@ -5,13 +5,14 @@
 @local_memory_two_objects.local_mem0 = internal unnamed_addr addrspace(3) global [4 x i32] undef, align 4
 @local_memory_two_objects.local_mem1 = internal unnamed_addr addrspace(3) global [4 x i32] undef, align 4
 
-; EG: {{^}}local_memory_two_objects:
 
 ; Check that the LDS size emitted correctly
 ; EG: .long 166120
 ; EG-NEXT: .long 8
 ; GCN: .long 47180
 ; GCN-NEXT: .long 38792
+
+; EG: {{^}}local_memory_two_objects:
 
 ; We would like to check the the lds writes are using different
 ; addresses, but due to variations in the scheduler, we can't do
