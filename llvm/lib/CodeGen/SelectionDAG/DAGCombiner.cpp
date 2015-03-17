@@ -12236,44 +12236,51 @@ SDValue DAGCombiner::visitINSERT_SUBVECTOR(SDNode *N) {
 ///      vector_shuffle V, Zero, <0, 4, 2, 4>
 SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
   EVT VT = N->getValueType(0);
-  SDLoc dl(N);
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
-  if (N->getOpcode() == ISD::AND) {
-    if (RHS.getOpcode() == ISD::BITCAST)
-      RHS = RHS.getOperand(0);
-    if (RHS.getOpcode() == ISD::BUILD_VECTOR) {
-      SmallVector<int, 8> Indices;
-      unsigned NumElts = RHS.getNumOperands();
-      for (unsigned i = 0; i != NumElts; ++i) {
-        SDValue Elt = RHS.getOperand(i);
-        if (!isa<ConstantSDNode>(Elt))
-          return SDValue();
+  SDLoc dl(N);
 
-        if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
-          Indices.push_back(i);
-        else if (cast<ConstantSDNode>(Elt)->isNullValue())
-          Indices.push_back(NumElts+i);
-        else
-          return SDValue();
-      }
+  // Make sure we're not running after operation legalization where it 
+  // may have custom lowered the vector shuffles.
+  if (LegalOperations)
+    return SDValue();
 
-      // Let's see if the target supports this vector_shuffle and make sure
-      // we're not running after operation legalization where it may have
-      // custom lowered the vector shuffles.
-      EVT RVT = RHS.getValueType();
-      if (LegalOperations || !TLI.isVectorClearMaskLegal(Indices, RVT))
+  if (N->getOpcode() != ISD::AND)
+    return SDValue();
+
+  if (RHS.getOpcode() == ISD::BITCAST)
+    RHS = RHS.getOperand(0);
+
+  if (RHS.getOpcode() == ISD::BUILD_VECTOR) {
+    SmallVector<int, 8> Indices;
+    unsigned NumElts = RHS.getNumOperands();
+
+    for (unsigned i = 0; i != NumElts; ++i) {
+      SDValue Elt = RHS.getOperand(i);
+      if (!isa<ConstantSDNode>(Elt))
         return SDValue();
 
-      // Return the new VECTOR_SHUFFLE node.
-      EVT EltVT = RVT.getVectorElementType();
-      SmallVector<SDValue,8> ZeroOps(RVT.getVectorNumElements(),
-                                     DAG.getConstant(0, EltVT));
-      SDValue Zero = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), RVT, ZeroOps);
-      LHS = DAG.getNode(ISD::BITCAST, dl, RVT, LHS);
-      SDValue Shuf = DAG.getVectorShuffle(RVT, dl, LHS, Zero, &Indices[0]);
-      return DAG.getNode(ISD::BITCAST, dl, VT, Shuf);
+      if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
+        Indices.push_back(i);
+      else if (cast<ConstantSDNode>(Elt)->isNullValue())
+        Indices.push_back(NumElts+i);
+      else
+        return SDValue();
     }
+
+    // Let's see if the target supports this vector_shuffle.
+    EVT RVT = RHS.getValueType();
+    if (!TLI.isVectorClearMaskLegal(Indices, RVT))
+      return SDValue();
+
+    // Return the new VECTOR_SHUFFLE node.
+    EVT EltVT = RVT.getVectorElementType();
+    SmallVector<SDValue,8> ZeroOps(RVT.getVectorNumElements(),
+                                   DAG.getConstant(0, EltVT));
+    SDValue Zero = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), RVT, ZeroOps);
+    LHS = DAG.getNode(ISD::BITCAST, dl, RVT, LHS);
+    SDValue Shuf = DAG.getVectorShuffle(RVT, dl, LHS, Zero, &Indices[0]);
+    return DAG.getNode(ISD::BITCAST, dl, VT, Shuf);
   }
 
   return SDValue();
