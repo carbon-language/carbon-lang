@@ -1131,17 +1131,27 @@ bool SystemZDAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op,
                              unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
-  assert(ConstraintID == InlineAsm::Constraint_m &&
-         "Unexpected constraint code");
-  // Accept addresses with short displacements, which are compatible
-  // with Q, R, S and T.  But keep the index operand for future expansion.
-  SDValue Base, Disp, Index;
-  if (!selectBDXAddr(SystemZAddressingMode::FormBD,
-                     SystemZAddressingMode::Disp12Only,
-                     Op, Base, Disp, Index))
-    return true;
-  OutOps.push_back(Base);
-  OutOps.push_back(Disp);
-  OutOps.push_back(Index);
-  return false;
+  switch(ConstraintID) {
+  default:
+    llvm_unreachable("Unexpected asm memory constraint");
+  case InlineAsm::Constraint_i:
+  case InlineAsm::Constraint_m:
+  case InlineAsm::Constraint_Q:
+  case InlineAsm::Constraint_R:
+  case InlineAsm::Constraint_S:
+  case InlineAsm::Constraint_T:
+    // Accept addresses with short displacements, which are compatible
+    // with Q, R, S and T.  But keep the index operand for future expansion.
+    SDValue Base, Disp, Index;
+    if (selectBDXAddr(SystemZAddressingMode::FormBD,
+                      SystemZAddressingMode::Disp12Only,
+                      Op, Base, Disp, Index)) {
+      OutOps.push_back(Base);
+      OutOps.push_back(Disp);
+      OutOps.push_back(Index);
+      return false;
+    }
+    break;
+  }
+  return true;
 }
