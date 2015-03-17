@@ -54,6 +54,7 @@ public:
         HST(tm.getSubtarget<HexagonSubtarget>()) {
     initializeHexagonDAGToDAGISelPass(*PassRegistry::getPassRegistry());
   }
+  virtual void PreprocessISelDAG() override;
 
   SDNode *Select(SDNode *N) override;
 
@@ -88,8 +89,8 @@ public:
   SDNode *SelectTruncate(SDNode *N);
   SDNode *SelectMul(SDNode *N);
   SDNode *SelectZeroExtend(SDNode *N);
-  SDNode *SelectIntrinsicWOChain(SDNode *N);
   SDNode *SelectIntrinsicWChain(SDNode *N);
+  SDNode *SelectIntrinsicWOChain(SDNode *N);
   SDNode *SelectConstant(SDNode *N);
   SDNode *SelectConstantFP(SDNode *N);
   SDNode *SelectAdd(SDNode *N);
@@ -899,7 +900,7 @@ SDNode *HexagonDAGToDAGISel::SelectZeroExtend(SDNode *N) {
     if (doesIntrinsicReturnPredicate(ID)) {
       // Now we need to differentiate target data types.
       if (N->getValueType(0) == MVT::i64) {
-        // Convert the zero_extend to Rs = Pd followed by COMBINE_rr(0,Rs).
+        // Convert the zero_extend to Rs = Pd followed by A2_combinew(0,Rs).
         SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
         SDNode *Result_1 = CurDAG->getMachineNode(Hexagon::C2_tfrpr, dl,
                                                   MVT::i32,
@@ -1124,6 +1125,55 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
   OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
   return false;
 }
+
+void HexagonDAGToDAGISel::PreprocessISelDAG() {
+  SelectionDAG &DAG = *CurDAG;
+  std::vector<SDNode*> Nodes;
+  for (auto I = DAG.allnodes_begin(), E = DAG.allnodes_end(); I != E; ++I)
+    Nodes.push_back(I);
+
+  // Simplify: (or (select c x 0) z)  ->  (select c (or x z) z)
+  //           (or (select c 0 y) z)  ->  (select c z (or y z))
+  // This may not be the right thing for all targets, so do it here.
+  for (auto I: Nodes) {
+    if (I->getOpcode() != ISD::OR)
+      continue;
+
+    auto IsZero = [] (const SDValue &V) -> bool {
+      if (ConstantSDNode *SC = dyn_cast<ConstantSDNode>(V.getNode()))
+        return SC->isNullValue();
+      return false;
+    };
+    auto IsSelect0 = [IsZero] (const SDValue &Op) -> bool {
+      if (Op.getOpcode() != ISD::SELECT)
+        return false;
+      return IsZero(Op.getOperand(1))  || IsZero(Op.getOperand(2));
+    };
+
+    SDValue N0 = I->getOperand(0), N1 = I->getOperand(1);
+    EVT VT = I->getValueType(0);
+    bool SelN0 = IsSelect0(N0);
+    SDValue SOp = SelN0 ? N0 : N1;
+    SDValue VOp = SelN0 ? N1 : N0;
+
+    if (SOp.getOpcode() == ISD::SELECT && SOp.getNode()->hasOneUse()) {
+      SDValue SC = SOp.getOperand(0);
+      SDValue SX = SOp.getOperand(1);
+      SDValue SY = SOp.getOperand(2);
+      SDLoc DLS = SOp;
+      if (IsZero(SY)) {
+        SDValue NewOr = DAG.getNode(ISD::OR, DLS, VT, SX, VOp);
+        SDValue NewSel = DAG.getNode(ISD::SELECT, DLS, VT, SC, NewOr, VOp);
+        DAG.ReplaceAllUsesWith(I, NewSel.getNode());
+      } else if (IsZero(SX)) {
+        SDValue NewOr = DAG.getNode(ISD::OR, DLS, VT, SY, VOp);
+        SDValue NewSel = DAG.getNode(ISD::SELECT, DLS, VT, SC, VOp, NewOr);
+        DAG.ReplaceAllUsesWith(I, NewSel.getNode());
+      }
+    }
+  }
+}
+
 
 bool HexagonDAGToDAGISel::SelectAddrFI(SDValue& N, SDValue &R) {
   if (N.getOpcode() != ISD::FrameIndex)
