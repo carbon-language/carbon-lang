@@ -105,6 +105,7 @@ add_custom_target(cgo ALL DEPENDS ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION
 
 llvm_add_go_executable(llgo-stage2 llvm.org/llgo/cmd/gllgo
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
+          ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION}/cgo
           ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
   GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
           "cxx=${CMAKE_BINARY_DIR}/bin/clang++"
@@ -125,6 +126,7 @@ llvm_add_go_executable(cc-wrapper llvm.org/llgo/cmd/cc-wrapper DEPENDS
 
 llvm_add_go_executable(llgoi llvm.org/llgo/cmd/llgoi
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
+          ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION}/cgo
           ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
           cmd/llgoi/isatty_posix.go
           cmd/llgoi/llgoi.go
