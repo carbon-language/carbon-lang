@@ -10,5 +10,5 @@
 // CHECK: .size  bar, .Ltmp0-bar
 // CHECK: .Ltmp01
 // CHECK: .size foo, .Ltmp01-foo
-// CHECK: .Ltmp02
-// CHECK: .size qux, .Ltmp02-qux
+// CHECK: .Ltmp00
+// CHECK: .size qux, .Ltmp00-qux

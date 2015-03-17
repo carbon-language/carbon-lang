@@ -23,7 +23,7 @@
 
 ; <text section> - it should have made one span covering all functions in this CU.
 ; CHECK-NEXT: .quad .Lfunc_begin0
-; CHECK-NEXT: .quad .Ldebug_end3-.Lfunc_begin0
+; CHECK-NEXT: .quad .Ldebug_end2-.Lfunc_begin0
 
 ; -- finish --
 ; CHECK-NEXT: # ARange terminator

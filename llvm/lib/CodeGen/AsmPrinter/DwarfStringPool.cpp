@@ -19,7 +19,7 @@ getEntry(AsmPrinter &Asm,
   std::pair<MCSymbol *, unsigned> &Entry = Pool[Str];
   if (!Entry.first) {
     Entry.second = Pool.size() - 1;
-    Entry.first = Asm.createTempSymbol(Prefix, Entry.second);
+    Entry.first = Asm.createTempSymbol(Prefix);
   }
   return Entry;
 }

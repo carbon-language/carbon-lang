@@ -653,8 +653,8 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
   if (!Ranges.empty()) {
     MS->SwitchSection(MC->getObjectFileInfo()->getDwarfARangesSection());
 
-    MCSymbol *BeginLabel = Asm->createTempSymbol("Barange", Unit.getUniqueID());
-    MCSymbol *EndLabel = Asm->createTempSymbol("Earange", Unit.getUniqueID());
+    MCSymbol *BeginLabel = Asm->createTempSymbol("Barange");
+    MCSymbol *EndLabel = Asm->createTempSymbol("Earange");
 
     unsigned HeaderSize =
         sizeof(int32_t) + // Size of contents (w/o this field
@@ -918,10 +918,8 @@ void DwarfStreamer::emitPubSectionForUnit(
 
   // Start the dwarf pubnames section.
   Asm->OutStreamer.SwitchSection(Sec);
-  MCSymbol *BeginLabel =
-      Asm->createTempSymbol("pub" + SecName + "_begin", Unit.getUniqueID());
-  MCSymbol *EndLabel =
-      Asm->createTempSymbol("pub" + SecName + "_end", Unit.getUniqueID());
+  MCSymbol *BeginLabel = Asm->createTempSymbol("pub" + SecName + "_begin");
+  MCSymbol *EndLabel = Asm->createTempSymbol("pub" + SecName + "_end");
 
   bool HeaderEmitted = false;
   // Emit the pubnames for this compilation unit.

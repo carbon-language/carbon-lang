@@ -331,7 +331,7 @@ public:
   // Symbol Lowering Routines.
   //===------------------------------------------------------------------===//
 public:
-  MCSymbol *createTempSymbol(const Twine &Name, unsigned ID) const;
+  MCSymbol *createTempSymbol(const Twine &Name) const;
 
   /// Return the MCSymbol for a private symbol with global value name as its
   /// base, with the specified suffix.
@@ -491,7 +491,6 @@ private:
   mutable const MachineInstr *LastMI;
   mutable unsigned LastFn;
   mutable unsigned Counter;
-  mutable unsigned SetCounter;
 
   /// This method emits the header for the current function.
   void EmitFunctionHeader();

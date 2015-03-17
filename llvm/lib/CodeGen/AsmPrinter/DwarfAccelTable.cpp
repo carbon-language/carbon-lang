@@ -96,7 +96,7 @@ void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, StringRef Prefix) {
   for (size_t i = 0, e = Data.size(); i < e; ++i) {
     uint32_t bucket = Data[i]->HashValue % Header.bucket_count;
     Buckets[bucket].push_back(Data[i]);
-    Data[i]->Sym = Asm->createTempSymbol(Prefix, i);
+    Data[i]->Sym = Asm->createTempSymbol(Prefix);
   }
 
   // Sort the contents of the buckets by hash value so that hash

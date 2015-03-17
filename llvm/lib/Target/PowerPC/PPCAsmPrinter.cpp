@@ -69,12 +69,11 @@ namespace {
   protected:
     MapVector<MCSymbol*, MCSymbol*> TOC;
     const PPCSubtarget *Subtarget;
-    uint64_t TOCLabelID;
     StackMaps SM;
   public:
     explicit PPCAsmPrinter(TargetMachine &TM,
                            std::unique_ptr<MCStreamer> Streamer)
-        : AsmPrinter(TM, std::move(Streamer)), TOCLabelID(0), SM(*this) {}
+        : AsmPrinter(TM, std::move(Streamer)), SM(*this) {}
 
     const char *getPassName() const override {
       return "PowerPC Assembly Printer";
@@ -323,7 +322,7 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 MCSymbol *PPCAsmPrinter::lookUpOrCreateTOCEntry(MCSymbol *Sym) {
   MCSymbol *&TOCEntry = TOC[Sym];
   if (!TOCEntry)
-    TOCEntry = createTempSymbol("C", TOCLabelID++);
+    TOCEntry = createTempSymbol("C");
   return TOCEntry;
 }
 

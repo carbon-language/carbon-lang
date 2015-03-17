@@ -52,7 +52,7 @@ class AArch64AsmPrinter : public AsmPrinter {
 public:
   AArch64AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
       : AsmPrinter(TM, std::move(Streamer)), MCInstLowering(OutContext, *this),
-        SM(*this), AArch64FI(nullptr), LOHLabelCounter(0) {}
+        SM(*this), AArch64FI(nullptr) {}
 
   const char *getPassName() const override {
     return "AArch64 Assembly Printer";
@@ -113,7 +113,6 @@ private:
 
   typedef std::map<const MachineInstr *, MCSymbol *> MInstToMCSymbol;
   MInstToMCSymbol LOHInstToLabel;
-  unsigned LOHLabelCounter;
 };
 
 } // end of anonymous namespace
@@ -464,7 +463,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   if (AArch64FI->getLOHRelated().count(MI)) {
     // Generate a label for LOH related instruction
-    MCSymbol *LOHLabel = createTempSymbol("loh", LOHLabelCounter++);
+    MCSymbol *LOHLabel = createTempSymbol("loh");
     // Associate the instruction with the label
     LOHInstToLabel[MI] = LOHLabel;
     OutStreamer.EmitLabel(LOHLabel);

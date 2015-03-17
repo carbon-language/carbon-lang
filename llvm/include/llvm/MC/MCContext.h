@@ -87,8 +87,9 @@ namespace llvm {
     /// artificial symbols.
     StringMap<bool, BumpPtrAllocator&> UsedNames;
 
-    /// The next ID to dole out to an unnamed assembler temporary symbol.
-    unsigned NextUniqueID;
+    /// The next ID to dole out to an unnamed assembler temporary symbol with
+    /// a given prefix.
+    StringMap<unsigned> NextID;
 
     /// Instances of directional local labels.
     DenseMap<unsigned, MCLabel *> Instances;
@@ -171,7 +172,7 @@ namespace llvm {
     /// Do automatic reset in destructor
     bool AutoReset;
 
-    MCSymbol *CreateSymbol(StringRef Name);
+    MCSymbol *CreateSymbol(StringRef Name, bool AlwaysAddSuffix);
 
     MCSymbol *getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
                                                 unsigned Instance);
@@ -212,10 +213,7 @@ namespace llvm {
     /// unspecified name.
     MCSymbol *CreateTempSymbol();
 
-    MCSymbol *createTempSymbol(const Twine &Name);
-
-    /// Return a unique identifier for use in constructing symbol names.
-    unsigned getUniqueSymbolID() { return NextUniqueID++; }
+    MCSymbol *createTempSymbol(const Twine &Name, bool AlwaysAddSuffix);
 
     /// Create the definition of a directional local symbol for numbered label
     /// (used for "1:" definitions).

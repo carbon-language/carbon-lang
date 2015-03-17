@@ -379,9 +379,7 @@ void DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
   const MCSymbol *RangeSectionSym =
       TLOF.getDwarfRangesSection()->getBeginSymbol();
 
-  RangeSpanList List(
-      Asm->createTempSymbol("debug_ranges", DD->getNextRangeNumber()),
-      std::move(Range));
+  RangeSpanList List(Asm->createTempSymbol("debug_ranges"), std::move(Range));
 
   // Under fission, ranges are specified by constant offsets relative to the
   // CU's DW_AT_GNU_ranges_base.
@@ -709,7 +707,7 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
 void DwarfCompileUnit::emitHeader(bool UseOffsets) {
   // Don't bother labeling the .dwo unit, as its offset isn't used.
   if (!Skeleton) {
-    LabelBegin = Asm->createTempSymbol("cu_begin", getUniqueID());
+    LabelBegin = Asm->createTempSymbol("cu_begin");
     Asm->OutStreamer.EmitLabel(LabelBegin);
   }
 
