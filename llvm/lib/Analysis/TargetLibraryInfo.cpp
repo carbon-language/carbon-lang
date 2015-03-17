@@ -364,12 +364,16 @@ TargetLibraryInfoImpl::TargetLibraryInfoImpl(const Triple &T) {
 TargetLibraryInfoImpl::TargetLibraryInfoImpl(const TargetLibraryInfoImpl &TLI)
     : CustomNames(TLI.CustomNames) {
   memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
+  VectorDescs = TLI.VectorDescs;
+  ScalarDescs = TLI.ScalarDescs;
 }
 
 TargetLibraryInfoImpl::TargetLibraryInfoImpl(TargetLibraryInfoImpl &&TLI)
     : CustomNames(std::move(TLI.CustomNames)) {
   std::move(std::begin(TLI.AvailableArray), std::end(TLI.AvailableArray),
             AvailableArray);
+  VectorDescs = TLI.VectorDescs;
+  ScalarDescs = TLI.ScalarDescs;
 }
 
 TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(const TargetLibraryInfoImpl &TLI) {
@@ -420,6 +424,72 @@ bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,
 
 void TargetLibraryInfoImpl::disableAllFunctions() {
   memset(AvailableArray, 0, sizeof(AvailableArray));
+}
+
+static bool compareByScalarFnName(const VecDesc &LHS, const VecDesc &RHS) {
+  return std::strncmp(LHS.ScalarFnName, RHS.ScalarFnName,
+                      std::strlen(RHS.ScalarFnName)) < 0;
+}
+
+static bool compareByVectorFnName(const VecDesc &LHS, const VecDesc &RHS) {
+  return std::strncmp(LHS.VectorFnName, RHS.VectorFnName,
+                      std::strlen(RHS.VectorFnName)) < 0;
+}
+
+static bool compareWithScalarFnName(const VecDesc &LHS, StringRef S) {
+  return std::strncmp(LHS.ScalarFnName, S.data(), S.size()) < 0;
+}
+
+static bool compareWithVectorFnName(const VecDesc &LHS, StringRef S) {
+  return std::strncmp(LHS.VectorFnName, S.data(), S.size()) < 0;
+}
+
+void TargetLibraryInfoImpl::addVectorizableFunctions(ArrayRef<VecDesc> Fns) {
+  VectorDescs.insert(VectorDescs.end(), Fns.begin(), Fns.end());
+  std::sort(VectorDescs.begin(), VectorDescs.end(), compareByScalarFnName);
+
+  ScalarDescs.insert(ScalarDescs.end(), Fns.begin(), Fns.end());
+  std::sort(ScalarDescs.begin(), ScalarDescs.end(), compareByVectorFnName);
+}
+
+bool TargetLibraryInfoImpl::isFunctionVectorizable(StringRef funcName) const {
+  funcName = sanitizeFunctionName(funcName);
+  if (funcName.empty())
+    return false;
+
+  std::vector<VecDesc>::const_iterator I = std::lower_bound(
+      VectorDescs.begin(), VectorDescs.end(), funcName,
+      compareWithScalarFnName);
+  return I != VectorDescs.end() && StringRef(I->ScalarFnName) == funcName;
+}
+
+StringRef TargetLibraryInfoImpl::getVectorizedFunction(StringRef F,
+                                                       unsigned VF) const {
+  F = sanitizeFunctionName(F);
+  if (F.empty())
+    return F;
+  std::vector<VecDesc>::const_iterator I = std::lower_bound(
+      VectorDescs.begin(), VectorDescs.end(), F, compareWithScalarFnName);
+  while (I != VectorDescs.end() && StringRef(I->ScalarFnName) == F) {
+    if (I->VectorizationFactor == VF)
+      return I->VectorFnName;
+    ++I;
+  }
+  return StringRef();
+}
+
+StringRef TargetLibraryInfoImpl::getScalarizedFunction(StringRef F,
+                                                       unsigned &VF) const {
+  F = sanitizeFunctionName(F);
+  if (F.empty())
+    return F;
+
+  std::vector<VecDesc>::const_iterator I = std::lower_bound(
+      ScalarDescs.begin(), ScalarDescs.end(), F, compareWithVectorFnName);
+  if (I == VectorDescs.end() || StringRef(I->VectorFnName) != F)
+    return StringRef();
+  VF = I->VectorizationFactor;
+  return I->ScalarFnName;
 }
 
 TargetLibraryInfo TargetLibraryAnalysis::run(Module &M) {
