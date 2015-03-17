@@ -11,12 +11,6 @@ namespace
     const ThreadStateCoordinator::ThreadIDSet EMPTY_THREAD_ID_SET;
 
     void
-    NOPLogger (const char *format, va_list args)
-    {
-        // Do nothing.
-    }
-
-    void
     StdoutLogger (const char *format, va_list args)
     {
         // Print to stdout.
@@ -279,7 +273,7 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterTheadsStopSignalsErrorOnUnknownPend
     ASSERT_EQ (false, DidFireDeferredNotification ());
 
     // Shouldn't have triggered stop request due to unknown tid.
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 }
 
 TEST_F (ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenNoPendingStops)
@@ -358,13 +352,13 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenTwoPendingStops
 
     // Neither trigger should have gone off yet.
     ASSERT_EQ (false, DidFireDeferredNotification ());
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 
     // Process next event.
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
 
     // Now the request thread stops should have been called for the pending stop tids.
-    ASSERT_EQ (2, GetRequestedStopCount ());
+    ASSERT_EQ (2u, GetRequestedStopCount ());
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID));
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID_02));
 
@@ -437,7 +431,7 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenTwoPendingOneAl
 
     // Neither trigger should have gone off yet.
     ASSERT_EQ (false, DidFireDeferredNotification ());
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 
     // Process next event.
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
@@ -471,7 +465,7 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenOnePendingThrea
 
     // Neither trigger should have gone off yet.
     ASSERT_EQ (false, DidFireDeferredNotification ());
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 
     // Process next event.
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
@@ -509,7 +503,7 @@ TEST_F (ThreadStateCoordinatorTest, ExistingPendingNotificationRequiresStopFromN
 
     // Neither trigger should have gone off yet.
     ASSERT_EQ (false, DidFireDeferredNotification ());
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 
     // Process next event.
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
@@ -524,7 +518,7 @@ TEST_F (ThreadStateCoordinatorTest, ExistingPendingNotificationRequiresStopFromN
     SetupKnownRunningThread (NEW_THREAD_TID);
 
     // We should have just received a stop request for the new thread id.
-    ASSERT_EQ (2, GetRequestedStopCount ());
+    ASSERT_EQ (2u, GetRequestedStopCount ());
     ASSERT_EQ (true, DidRequestStopForTid (NEW_THREAD_TID));
 
     // Now report the original pending tid stopped.  This should no longer
@@ -688,13 +682,13 @@ TEST_F (ThreadStateCoordinatorTest, ResumedThreadAlreadyMarkedDoesNotHoldUpPendi
 
     // Neither trigger should have gone off yet.
     ASSERT_EQ (false, DidFireDeferredNotification ());
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 
     // Execute CallAfterThreadsStop.
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
 
     // Both TID A and TID B should have had stop requests made.
-    ASSERT_EQ (2, GetRequestedStopCount ());
+    ASSERT_EQ (2u, GetRequestedStopCount ());
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_TID_A));
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_TID_B));
 
@@ -748,7 +742,7 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopFiresWhenNoRunnin
     ASSERT_EQ (TRIGGERING_TID, GetDeferredNotificationTID ());
 
     // And no stop requests should have been made.
-    ASSERT_EQ (0, GetRequestedStopCount ());
+    ASSERT_EQ (0u, GetRequestedStopCount ());
 }
 
 TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopRequestsTwoPendingStops)
@@ -768,7 +762,7 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopRequestsTwoPendin
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
 
     // We should have two stop requests for the two threads currently running.
-    ASSERT_EQ (2, GetRequestedStopCount ());
+    ASSERT_EQ (2u, GetRequestedStopCount ());
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID));
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID_02));
 
@@ -805,7 +799,7 @@ TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopRequestsStopTwoOt
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
 
     // We should have two stop requests for the two threads currently running.
-    ASSERT_EQ (1, GetRequestedStopCount ());
+    ASSERT_EQ (1u, GetRequestedStopCount ());
     ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID));
 
     // But the deferred stop notification should not have fired yet.

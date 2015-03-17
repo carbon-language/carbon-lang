@@ -919,28 +919,22 @@ LLDBSwigPythonCallCommandObject
     lldb::SBDebugger debugger_sb(debugger);
     lldb::SBExecutionContext exe_ctx_sb(exe_ctx_ref_sp);
 
-    bool retval = false;
+    PyErr_Cleaner py_err_cleaner(true);
 
-    {
-        PyErr_Cleaner py_err_cleaner(true);
+    PyCallable pfunc = PyCallable::FindWithMemberFunction(implementor,"__call__");
 
-        PyCallable pfunc = PyCallable::FindWithMemberFunction(implementor,"__call__");
+    if (!pfunc)
+        return false;
 
-        if (!pfunc)
-            return NULL;
+    // pass the pointer-to cmd_retobj_sb or watch the underlying object disappear from under you
+    // see comment above for SBCommandReturnObjectReleaser for further details
+    PyObject* pvalue = NULL;
 
-        // pass the pointer-to cmd_retobj_sb or watch the underlying object disappear from under you
-        // see comment above for SBCommandReturnObjectReleaser for further details
-        PyObject* pvalue = NULL;
+    pvalue = pfunc(debugger_sb, args, exe_ctx_sb, &cmd_retobj_sb);
 
-        pvalue = pfunc(debugger_sb, args, exe_ctx_sb, &cmd_retobj_sb);
+    Py_XDECREF (pvalue);
 
-        Py_XDECREF (pvalue);
-
-        retval = true;
-    }
-
-    return retval;
+    return true;
 }
 
 SWIGEXPORT void*

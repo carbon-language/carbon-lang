@@ -16,10 +16,10 @@ TEST_F (StringExtractorTest, InitEmpty)
     StringExtractor ex (kEmptyString);
 
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (0u, ex.GetFilePos());
     ASSERT_STREQ (kEmptyString, ex.GetStringRef().c_str());
     ASSERT_EQ (true, ex.Empty());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -29,7 +29,7 @@ TEST_F (StringExtractorTest, InitMisc)
     StringExtractor ex (kInitMiscString);
 
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (0u, ex.GetFilePos());
     ASSERT_STREQ (kInitMiscString, ex.GetStringRef().c_str());
     ASSERT_EQ (false, ex.Empty());
     ASSERT_EQ (sizeof(kInitMiscString)-1, ex.GetBytesLeft());
@@ -43,9 +43,9 @@ TEST_F (StringExtractorTest, DecodeHexU8_Underflow)
 
     ASSERT_EQ (-1, ex.DecodeHexU8());
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
+    ASSERT_EQ (0u, ex.GetFilePos());
     ASSERT_EQ (true, ex.Empty());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -56,8 +56,8 @@ TEST_F (StringExtractorTest, DecodeHexU8_Underflow2)
 
     ASSERT_EQ (-1, ex.DecodeHexU8());
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_EQ (1, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetFilePos());
+    ASSERT_EQ (1u, ex.GetBytesLeft());
     ASSERT_EQ ('1', *ex.Peek());
 }
 
@@ -68,8 +68,8 @@ TEST_F (StringExtractorTest, DecodeHexU8_InvalidHex)
 
     ASSERT_EQ (-1, ex.DecodeHexU8());
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetFilePos());
+    ASSERT_EQ (2u, ex.GetBytesLeft());
     ASSERT_EQ ('x', *ex.Peek());
 }
 
@@ -80,8 +80,8 @@ TEST_F (StringExtractorTest, DecodeHexU8_InvalidHex2)
 
     ASSERT_EQ (-1, ex.DecodeHexU8());
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetFilePos());
+    ASSERT_EQ (2u, ex.GetBytesLeft());
     ASSERT_EQ ('a', *ex.Peek());
 }
 
@@ -92,8 +92,8 @@ TEST_F (StringExtractorTest, DecodeHexU8_Exact)
 
     ASSERT_EQ (0x12, ex.DecodeHexU8());
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (2u, ex.GetFilePos());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -104,8 +104,8 @@ TEST_F (StringExtractorTest, DecodeHexU8_Extra)
 
     ASSERT_EQ (0x12, ex.DecodeHexU8());
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ (2u, ex.GetFilePos());
+    ASSERT_EQ (2u, ex.GetBytesLeft());
     ASSERT_EQ ('3', *ex.Peek());
 }
 
@@ -118,7 +118,7 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow)
     ASSERT_EQ (false, ex.IsGood());
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
     ASSERT_EQ (true, ex.Empty());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -130,7 +130,7 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow2)
     ASSERT_EQ (0xbc, ex.GetHexU8(0xbc));
     ASSERT_EQ (false, ex.IsGood());
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -142,7 +142,7 @@ TEST_F (StringExtractorTest, GetHexU8_InvalidHex)
     ASSERT_EQ (0xcd, ex.GetHexU8(0xcd));
     ASSERT_EQ (false, ex.IsGood());
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -153,8 +153,8 @@ TEST_F (StringExtractorTest, GetHexU8_Exact)
 
     ASSERT_EQ (0x12, ex.GetHexU8(0x12));
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (2u, ex.GetFilePos());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -165,8 +165,8 @@ TEST_F (StringExtractorTest, GetHexU8_Extra)
 
     ASSERT_EQ (0x12, ex.GetHexU8(0x12));
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ (2u, ex.GetFilePos());
+    ASSERT_EQ (2u, ex.GetBytesLeft());
     ASSERT_EQ ('3', *ex.Peek());
 }
 
@@ -180,7 +180,7 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow_NoEof)
     ASSERT_EQ (false, ex.IsGood()); // this result seems inconsistent with kSetEofOnFail == false
     ASSERT_EQ (UINT64_MAX, ex.GetFilePos());
     ASSERT_EQ (true, ex.Empty());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -192,8 +192,8 @@ TEST_F (StringExtractorTest, GetHexU8_Underflow2_NoEof)
 
     ASSERT_EQ (0xbc, ex.GetHexU8(0xbc, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_EQ (1, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetFilePos());
+    ASSERT_EQ (1u, ex.GetBytesLeft());
     ASSERT_EQ ('1', *ex.Peek());
 }
 
@@ -205,8 +205,8 @@ TEST_F (StringExtractorTest, GetHexU8_InvalidHex_NoEof)
 
     ASSERT_EQ (0xcd, ex.GetHexU8(0xcd, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (0, ex.GetFilePos());
-    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ (0u, ex.GetFilePos());
+    ASSERT_EQ (2u, ex.GetBytesLeft());
     ASSERT_EQ ('x', *ex.Peek());
 }
 
@@ -218,8 +218,8 @@ TEST_F (StringExtractorTest, GetHexU8_Exact_NoEof)
 
     ASSERT_EQ (0x12, ex.GetHexU8(0x12, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_EQ (0, ex.GetBytesLeft());
+    ASSERT_EQ (2u, ex.GetFilePos());
+    ASSERT_EQ (0u, ex.GetBytesLeft());
     ASSERT_EQ (nullptr, ex.Peek());
 }
 
@@ -231,8 +231,8 @@ TEST_F (StringExtractorTest, GetHexU8_Extra_NoEof)
 
     ASSERT_EQ (0x12, ex.GetHexU8(0x12, kSetEofOnFail));
     ASSERT_EQ (true, ex.IsGood());
-    ASSERT_EQ (2, ex.GetFilePos());
-    ASSERT_EQ (2, ex.GetBytesLeft());
+    ASSERT_EQ (2u, ex.GetFilePos());
+    ASSERT_EQ (2u, ex.GetBytesLeft());
     ASSERT_EQ ('3', *ex.Peek());
 }
 
@@ -256,7 +256,7 @@ TEST_F (StringExtractorTest, GetHexBytes)
     ASSERT_EQ(true, ex.IsGood());
     ASSERT_EQ(2*kValidHexPairs, ex.GetFilePos());
     ASSERT_EQ(false, ex.Empty());
-    ASSERT_EQ(4, ex.GetBytesLeft());
+    ASSERT_EQ(4u, ex.GetBytesLeft());
     ASSERT_EQ('x', *ex.Peek());
 }
 
@@ -285,7 +285,7 @@ TEST_F (StringExtractorTest, GetHexBytes_Underflow)
     ASSERT_EQ(false, ex.IsGood());
     ASSERT_EQ(UINT64_MAX, ex.GetFilePos());
     ASSERT_EQ(false, ex.Empty());
-    ASSERT_EQ(0, ex.GetBytesLeft());
+    ASSERT_EQ(0u, ex.GetBytesLeft());
     ASSERT_EQ(0, ex.Peek());
 }
 
@@ -315,7 +315,7 @@ TEST_F (StringExtractorTest, GetHexBytes_Partial)
     ASSERT_EQ(true, ex.IsGood());
     ASSERT_EQ(kReadBytes*2, ex.GetFilePos());
     ASSERT_EQ(false, ex.Empty());
-    ASSERT_EQ(12, ex.GetBytesLeft());
+    ASSERT_EQ(12u, ex.GetBytesLeft());
     ASSERT_EQ('2', *ex.Peek());
 }
 
@@ -339,7 +339,7 @@ TEST_F (StringExtractorTest, GetHexBytesAvail)
     ASSERT_EQ(true, ex.IsGood());
     ASSERT_EQ(2*kValidHexPairs, ex.GetFilePos());
     ASSERT_EQ(false, ex.Empty());
-    ASSERT_EQ(4, ex.GetBytesLeft());
+    ASSERT_EQ(4u, ex.GetBytesLeft());
     ASSERT_EQ('x', *ex.Peek());
 }
 
@@ -369,7 +369,7 @@ TEST_F (StringExtractorTest, GetHexBytesAvail_Underflow)
     ASSERT_EQ(true, ex.IsGood());
     ASSERT_EQ(kValidHexPairs*2, ex.GetFilePos());
     ASSERT_EQ(false, ex.Empty());
-    ASSERT_EQ(4, ex.GetBytesLeft());
+    ASSERT_EQ(4u, ex.GetBytesLeft());
     ASSERT_EQ('x', *ex.Peek());
 }
 
@@ -399,7 +399,7 @@ TEST_F (StringExtractorTest, GetHexBytesAvail_Partial)
     ASSERT_EQ(true, ex.IsGood());
     ASSERT_EQ(kReadBytes*2, ex.GetFilePos());
     ASSERT_EQ(false, ex.Empty());
-    ASSERT_EQ(12, ex.GetBytesLeft());
+    ASSERT_EQ(12u, ex.GetBytesLeft());
     ASSERT_EQ('2', *ex.Peek());
 }
 

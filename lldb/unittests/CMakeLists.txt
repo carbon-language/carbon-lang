@@ -15,9 +15,6 @@ endif ()
 # Will compile the list of files together and link against
 function(add_lldb_unittest test_name)
   add_unittest(LLDBUnitTests ${test_name} ${ARGN})
-
-  target_link_libraries(${test_name} lldbBase)
-  target_link_libraries(${test_name} ${LLDB_USED_LIBS})
 endfunction()
 
 add_subdirectory(Host)
