@@ -108,6 +108,7 @@ public:
 private:
   MCSymbol *CurrentFnBegin;
   MCSymbol *CurrentFnEnd;
+  MCSymbol *CurExceptionSym;
 
   // The garbage collection metadata printer table.
   void *GCMetadataPrinters; // Really a DenseMap.
@@ -154,6 +155,7 @@ public:
 
   MCSymbol *getFunctionBegin() const { return CurrentFnBegin; }
   MCSymbol *getFunctionEnd() const { return CurrentFnEnd; }
+  MCSymbol *getCurExceptionSym();
 
   /// Return information about object file lowering.
   const TargetLoweringObjectFile &getObjFileLowering() const;

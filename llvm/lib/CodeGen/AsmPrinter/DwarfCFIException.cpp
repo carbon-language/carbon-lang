@@ -88,8 +88,6 @@ void DwarfCFIException::endModule() {
 }
 
 void DwarfCFIException::beginFunction(const MachineFunction *MF) {
-  DwarfCFIExceptionBase::beginFunction(MF);
-
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
 
   // If any landing pads survive, we need an EH table.
@@ -133,7 +131,7 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitLSDA)
     return;
 
-  Asm->OutStreamer.EmitCFILsda(getCurExceptionSym(), LSDAEncoding);
+  Asm->OutStreamer.EmitCFILsda(Asm->getCurExceptionSym(), LSDAEncoding);
 }
 
 /// endFunction - Gather and emit post-function exception information.

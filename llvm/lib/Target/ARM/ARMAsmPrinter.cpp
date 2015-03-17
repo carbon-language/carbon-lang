@@ -960,10 +960,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 
   MCSymbol *MCSym;
   if (ACPV->isLSDA()) {
-    SmallString<128> Str;
-    raw_svector_ostream OS(Str);
-    OS << DL->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
-    MCSym = OutContext.GetOrCreateSymbol(OS.str());
+    MCSym = getCurExceptionSym();
   } else if (ACPV->isBlockAddress()) {
     const BlockAddress *BA =
       cast<ARMConstantPoolConstant>(ACPV)->getBlockAddress();

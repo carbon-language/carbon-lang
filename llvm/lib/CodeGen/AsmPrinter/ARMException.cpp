@@ -53,8 +53,6 @@ void ARMException::endModule() {
 }
 
 void ARMException::beginFunction(const MachineFunction *MF) {
-  DwarfCFIExceptionBase::beginFunction(MF);
-
   if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
     getTargetStreamer().emitFnStart();
   // See if we need call frame info.

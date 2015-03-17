@@ -108,7 +108,7 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, std::unique_ptr<MCStreamer> Streamer)
   MMI = nullptr;
   LI = nullptr;
   MF = nullptr;
-  CurrentFnSym = CurrentFnSymForSize = nullptr;
+  CurExceptionSym = CurrentFnSym = CurrentFnSymForSize = nullptr;
   CurrentFnBegin = nullptr;
   CurrentFnEnd = nullptr;
   GCMetadataPrinters = nullptr;
@@ -1129,12 +1129,19 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
+MCSymbol *AsmPrinter::getCurExceptionSym() {
+  if (!CurExceptionSym)
+    CurExceptionSym = createTempSymbol("exception", getFunctionNumber());
+  return CurExceptionSym;
+}
+
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
   // Get the function symbol.
   CurrentFnSym = getSymbol(MF.getFunction());
   CurrentFnSymForSize = CurrentFnSym;
   CurrentFnBegin = nullptr;
+  CurExceptionSym = nullptr;
   bool NeedsLocalForSize = MAI->needsLocalForSize();
   if (!MMI->getLandingPads().empty() || MMI->hasDebugInfo() ||
       NeedsLocalForSize) {

@@ -49,8 +49,6 @@ void Win64Exception::endModule() {
 }
 
 void Win64Exception::beginFunction(const MachineFunction *MF) {
-  EHStreamer::beginFunction(MF);
-
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
 
   // If any landing pads survive, we need an EH table.

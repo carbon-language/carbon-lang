@@ -1,7 +1,9 @@
 ; RUN: llc < %s -mtriple=arm-apple-darwin9 -march=arm | FileCheck %s
 
-; CHECK: L_LSDA_0:
-
+; CHECK: .cfi_lsda 16, [[LABEL:.*]]
+; CHECK: .long  [[LABEL]]-
+; CHECK: [[LABEL]]:
+; CHECK: .byte   255                     @ @LPStart Encoding = omit
 
 %struct.A = type { i32* }
 
