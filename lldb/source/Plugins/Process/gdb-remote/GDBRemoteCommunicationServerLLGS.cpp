@@ -113,8 +113,6 @@ GDBRemoteCommunicationServerLLGS::~GDBRemoteCommunicationServerLLGS()
 void
 GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
 {
-    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_A,
-                                  &GDBRemoteCommunicationServerLLGS::Handle_A);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_C,
                                   &GDBRemoteCommunicationServerLLGS::Handle_C);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_c,
