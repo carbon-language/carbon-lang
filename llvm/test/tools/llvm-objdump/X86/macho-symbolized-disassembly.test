@@ -7,6 +7,9 @@
 // RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.obj.macho-i386 | FileCheck %s -check-prefix=i386-OBJ
 // RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.exe.macho-i386 | FileCheck %s -check-prefix=i386-EXE
 
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex -no-symbolic-operands %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s -check-prefix=NO-SYM-OPS-OBJ
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex -no-symbolic-operands %p/Inputs/hello.exe.macho-x86_64 | FileCheck %s -check-prefix=NO-SYM-OPS-EXE
+
 OBJ: 0000000000000008	leaq	L_.str(%rip), %rax      ## literal pool for: "Hello world\n"
 OBJ: 0000000000000026	callq	_printf
 
@@ -36,3 +39,9 @@ CXX-EXE: 00000001000014cb	callq	__ZNSt3__116__pad_and_outputIcNS_11char_traitsIc
 i386-OBJ: 0000002f	calll	_printf
 
 i386-EXE: 00001f6f	calll	0x1f84                  ## symbol stub for: _printf
+
+NO-SYM-OPS-OBJ: 0000000000000008	leaq	(%rip), %rax
+NO-SYM-OPS-OBJ: 0000000000000026	callq	0x2b
+
+NO-SYM-OPS-EXE: 0000000100000f38	leaq	0x4f(%rip), %rax
+NO-SYM-OPS-EXE: 0000000100000f56	callq	0x100000f6c
