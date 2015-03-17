@@ -2634,6 +2634,92 @@ static Value *addFastMathFlag(Value *V) {
   return V;
 }
 
+/// Estimate the overhead of scalarizing a value. Insert and Extract are set if
+/// the result needs to be inserted and/or extracted from vectors.
+static unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract,
+                                         const TargetTransformInfo &TTI) {
+  assert(Ty->isVectorTy() && "Can only scalarize vectors");
+  unsigned Cost = 0;
+
+  for (int i = 0, e = Ty->getVectorNumElements(); i < e; ++i) {
+    if (Insert)
+      Cost += TTI.getVectorInstrCost(Instruction::InsertElement, Ty, i);
+    if (Extract)
+      Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, Ty, i);
+  }
+
+  return Cost;
+}
+
+// Estimate cost of a call instruction CI if it were vectorized with factor VF.
+// Return the cost of the instruction, including scalarization overhead if it's
+// needed. The flag NeedToScalarize shows if the call needs to be scalarized -
+// i.e. either vector version isn't available, or is too expensive.
+static unsigned getVectorCallCost(CallInst *CI, unsigned VF,
+                                  const TargetTransformInfo &TTI,
+                                  const TargetLibraryInfo *TLI,
+                                  bool &NeedToScalarize) {
+  Function *F = CI->getCalledFunction();
+  StringRef FnName = CI->getCalledFunction()->getName();
+  Type *ScalarRetTy = CI->getType();
+  SmallVector<Type *, 4> Tys, ScalarTys;
+  for (auto &ArgOp : CI->arg_operands())
+    ScalarTys.push_back(ArgOp->getType());
+
+  // Estimate cost of scalarized vector call. The source operands are assumed
+  // to be vectors, so we need to extract individual elements from there,
+  // execute VF scalar calls, and then gather the result into the vector return
+  // value.
+  unsigned ScalarCallCost = TTI.getCallInstrCost(F, ScalarRetTy, ScalarTys);
+  if (VF == 1)
+    return ScalarCallCost;
+
+  // Compute corresponding vector type for return value and arguments.
+  Type *RetTy = ToVectorTy(ScalarRetTy, VF);
+  for (unsigned i = 0, ie = ScalarTys.size(); i != ie; ++i)
+    Tys.push_back(ToVectorTy(ScalarTys[i], VF));
+
+  // Compute costs of unpacking argument values for the scalar calls and
+  // packing the return values to a vector.
+  unsigned ScalarizationCost =
+      getScalarizationOverhead(RetTy, true, false, TTI);
+  for (unsigned i = 0, ie = Tys.size(); i != ie; ++i)
+    ScalarizationCost += getScalarizationOverhead(Tys[i], false, true, TTI);
+
+  unsigned Cost = ScalarCallCost * VF + ScalarizationCost;
+
+  // If we can't emit a vector call for this function, then the currently found
+  // cost is the cost we need to return.
+  NeedToScalarize = true;
+  if (!TLI || !TLI->isFunctionVectorizable(FnName, VF) || CI->isNoBuiltin())
+    return Cost;
+
+  // If the corresponding vector cost is cheaper, return its cost.
+  unsigned VectorCallCost = TTI.getCallInstrCost(nullptr, RetTy, Tys);
+  if (VectorCallCost < Cost) {
+    NeedToScalarize = false;
+    return VectorCallCost;
+  }
+  return Cost;
+}
+
+// Estimate cost of an intrinsic call instruction CI if it were vectorized with
+// factor VF.  Return the cost of the instruction, including scalarization
+// overhead if it's needed.
+static unsigned getVectorIntrinsicCost(CallInst *CI, unsigned VF,
+                                       const TargetTransformInfo &TTI,
+                                       const TargetLibraryInfo *TLI) {
+  Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
+  assert(ID && "Expected intrinsic call!");
+
+  Type *RetTy = ToVectorTy(CI->getType(), VF);
+  SmallVector<Type *, 4> Tys;
+  for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i)
+    Tys.push_back(ToVectorTy(CI->getArgOperand(i)->getType(), VF));
+
+  return TTI.getIntrinsicInstrCost(ID, RetTy, Tys);
+}
+
 void InnerLoopVectorizer::vectorizeLoop() {
   //===------------------------------------------------===//
   //
@@ -3221,37 +3307,71 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
 
       Module *M = BB->getParent()->getParent();
       CallInst *CI = cast<CallInst>(it);
+
+      StringRef FnName = CI->getCalledFunction()->getName();
+      Function *F = CI->getCalledFunction();
+      Type *RetTy = ToVectorTy(CI->getType(), VF);
+      SmallVector<Type *, 4> Tys;
+      for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i)
+        Tys.push_back(ToVectorTy(CI->getArgOperand(i)->getType(), VF));
+
       Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
-      assert(ID && "Not an intrinsic call!");
-      switch (ID) {
-      case Intrinsic::assume:
-      case Intrinsic::lifetime_end:
-      case Intrinsic::lifetime_start:
+      if (ID &&
+          (ID == Intrinsic::assume || ID == Intrinsic::lifetime_end ||
+           ID == Intrinsic::lifetime_start)) {
         scalarizeInstruction(it);
         break;
-      default:
-        bool HasScalarOpd = hasVectorInstrinsicScalarOpd(ID, 1);
-        for (unsigned Part = 0; Part < UF; ++Part) {
-          SmallVector<Value *, 4> Args;
-          for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
-            if (HasScalarOpd && i == 1) {
-              Args.push_back(CI->getArgOperand(i));
-              continue;
-            }
-            VectorParts &Arg = getVectorValue(CI->getArgOperand(i));
-            Args.push_back(Arg[Part]);
-          }
-          Type *Tys[] = {CI->getType()};
-          if (VF > 1)
-            Tys[0] = VectorType::get(CI->getType()->getScalarType(), VF);
-
-          Function *F = Intrinsic::getDeclaration(M, ID, Tys);
-          Entry[Part] = Builder.CreateCall(F, Args);
-        }
-
-        propagateMetadata(Entry, it);
+      }
+      // The flag shows whether we use Intrinsic or a usual Call for vectorized
+      // version of the instruction.
+      // Is it beneficial to perform intrinsic call compared to lib call?
+      bool NeedToScalarize;
+      unsigned CallCost = getVectorCallCost(CI, VF, *TTI, TLI, NeedToScalarize);
+      bool UseVectorIntrinsic =
+          ID && getVectorIntrinsicCost(CI, VF, *TTI, TLI) <= CallCost;
+      if (!UseVectorIntrinsic && NeedToScalarize) {
+        scalarizeInstruction(it);
         break;
       }
+
+      for (unsigned Part = 0; Part < UF; ++Part) {
+        SmallVector<Value *, 4> Args;
+        for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
+          Value *Arg = CI->getArgOperand(i);
+          // Some intrinsics have a scalar argument - don't replace it with a
+          // vector.
+          if (!UseVectorIntrinsic || !hasVectorInstrinsicScalarOpd(ID, i)) {
+            VectorParts &VectorArg = getVectorValue(CI->getArgOperand(i));
+            Arg = VectorArg[Part];
+          }
+          Args.push_back(Arg);
+        }
+
+        Function *VectorF;
+        if (UseVectorIntrinsic) {
+          // Use vector version of the intrinsic.
+          Type *TysForDecl[] = {CI->getType()};
+          if (VF > 1)
+            TysForDecl[0] = VectorType::get(CI->getType()->getScalarType(), VF);
+          VectorF = Intrinsic::getDeclaration(M, ID, TysForDecl);
+        } else {
+          // Use vector version of the library call.
+          StringRef VFnName = TLI->getVectorizedFunction(FnName, VF);
+          assert(!VFnName.empty() && "Vector function name is empty.");
+          VectorF = M->getFunction(VFnName);
+          if (!VectorF) {
+            // Generate a declaration
+            FunctionType *FTy = FunctionType::get(RetTy, Tys, false);
+            VectorF =
+                Function::Create(FTy, Function::ExternalLinkage, VFnName, M);
+            VectorF->copyAttributesFrom(F);
+          }
+        }
+        assert(VectorF && "Can't create vector function.");
+        Entry[Part] = Builder.CreateCall(VectorF, Args);
+      }
+
+      propagateMetadata(Entry, it);
       break;
     }
 
@@ -3632,13 +3752,17 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         return false;
       }// end of PHI handling
 
-      // We still don't handle functions. However, we can ignore dbg intrinsic
-      // calls and we do handle certain intrinsic and libm functions.
+      // We handle calls that:
+      //   * Are debug info intrinsics.
+      //   * Have a mapping to an IR intrinsic.
+      //   * Have a vector version available.
       CallInst *CI = dyn_cast<CallInst>(it);
-      if (CI && !getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI)) {
+      if (CI && !getIntrinsicIDForCall(CI, TLI) && !isa<DbgInfoIntrinsic>(CI) &&
+          !(CI->getCalledFunction() && TLI &&
+            TLI->isFunctionVectorizable(CI->getCalledFunction()->getName()))) {
         emitAnalysis(VectorizationReport(it) <<
                      "call instruction cannot be vectorized");
-        DEBUG(dbgs() << "LV: Found a call site.\n");
+        DEBUG(dbgs() << "LV: Found a non-intrinsic, non-libfunc callsite.\n");
         return false;
       }
 
@@ -5023,14 +5147,12 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     return TTI.getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
   }
   case Instruction::Call: {
+    bool NeedToScalarize;
     CallInst *CI = cast<CallInst>(I);
-    Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
-    assert(ID && "Not an intrinsic call!");
-    Type *RetTy = ToVectorTy(CI->getType(), VF);
-    SmallVector<Type*, 4> Tys;
-    for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i)
-      Tys.push_back(ToVectorTy(CI->getArgOperand(i)->getType(), VF));
-    return TTI.getIntrinsicInstrCost(ID, RetTy, Tys);
+    unsigned CallCost = getVectorCallCost(CI, VF, TTI, TLI, NeedToScalarize);
+    if (getIntrinsicIDForCall(CI, TLI))
+      return std::min(CallCost, getVectorIntrinsicCost(CI, VF, TTI, TLI));
+    return CallCost;
   }
   default: {
     // We are scalarizing the instruction. Return the cost of the scalar
