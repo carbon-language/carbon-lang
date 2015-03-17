@@ -63,9 +63,6 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     OutStreamer.EndCOFFSymbolDef();
   }
 
-  // Have common code print out the function header with linkage info etc.
-  EmitFunctionHeader();
-
   // Emit the rest of the function body.
   EmitFunctionBody();
 

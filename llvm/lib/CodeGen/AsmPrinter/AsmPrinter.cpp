@@ -782,6 +782,8 @@ void AsmPrinter::emitFrameAlloc(const MachineInstr &MI) {
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
 void AsmPrinter::EmitFunctionBody() {
+  EmitFunctionHeader();
+
   // Emit target-specific gunk before the function body.
   EmitFunctionBodyStart();
 

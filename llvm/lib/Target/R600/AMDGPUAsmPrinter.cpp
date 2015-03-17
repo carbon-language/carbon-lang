@@ -127,7 +127,6 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   HexLines.clear();
   DisasmLineMaxLen = 0;
 
-  EmitFunctionHeader();
   EmitFunctionBody();
 
   if (isVerbose()) {

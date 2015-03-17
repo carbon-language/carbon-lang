@@ -198,7 +198,6 @@ public:
   /// Emit the specified function out to the OutStreamer.
   bool runOnMachineFunction(MachineFunction &MF) override {
     SetupMachineFunction(MF);
-    EmitFunctionHeader();
     EmitFunctionBody();
     return false;
   }
@@ -210,9 +209,6 @@ public:
   /// This should be called when a new MachineFunction is being processed from
   /// runOnMachineFunction.
   void SetupMachineFunction(MachineFunction &MF);
-
-  /// This method emits the header for the current function.
-  void EmitFunctionHeader();
 
   /// This method emits the body and trailer for a function.
   void EmitFunctionBody();
@@ -503,6 +499,9 @@ private:
   mutable unsigned LastFn;
   mutable unsigned Counter;
   mutable unsigned SetCounter;
+
+  /// This method emits the header for the current function.
+  void EmitFunctionHeader();
 
   /// Emit a blob of inline asm to the output streamer.
   void
