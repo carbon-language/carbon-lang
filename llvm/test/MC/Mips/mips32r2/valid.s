@@ -233,4 +233,5 @@
         trunc.w.s $f28,$f30
         wsbh      $k1,$9
         xor       $s2,$a0,$s8
+        xor       $2, 4                # CHECK: xori $2, $2, 4         # encoding: [0x38,0x42,0x00,0x04]
         synci     -15842($a2)          # CHECK: synci -15842($6)        # encoding: [0x04,0xdf,0xc2,0x1e]
