@@ -1816,7 +1816,7 @@ chain of ``F``:
 
   Function *F = ...;
 
-  for (User *U : GV->users()) {    
+  for (User *U : F->users()) {
     if (Instruction *Inst = dyn_cast<Instruction>(U)) {
       errs() << "F is used in instruction:\n";
       errs() << *Inst << "\n";
