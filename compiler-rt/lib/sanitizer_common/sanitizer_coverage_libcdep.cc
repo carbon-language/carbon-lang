@@ -701,7 +701,7 @@ void CoverageData::DumpOffsets() {
   auto sym = Symbolizer::GetOrInit();
   if (!common_flags()->coverage_pcs) return;
   CHECK_NE(sym, nullptr);
-  InternalMmapVector<u32> offsets(0);
+  InternalMmapVector<uptr> offsets(0);
   InternalScopedString path(kMaxPathLength);
   for (uptr m = 0; m < module_name_vec.size(); m++) {
     offsets.clear();
@@ -715,14 +715,13 @@ void CoverageData::DumpOffsets() {
       if (!pc) continue; // Not visited.
       uptr offset = 0;
       sym->GetModuleNameAndOffsetForPC(pc, &module_name, &offset);
-      if (!offset || offset > 0xffffffffU) continue;
-      offsets.push_back(static_cast<u32>(offset));
+      offsets.push_back(offset);
     }
     module_name = StripModuleName(r.name);
     if (cov_sandboxed) {
       if (cov_fd >= 0) {
         CovWritePacked(internal_getpid(), module_name, offsets.data(),
-                       offsets.size() * sizeof(u32));
+                       offsets.size() * sizeof(offsets[0]));
         VReport(1, " CovDump: %zd PCs written to packed file\n",
                 offsets.size());
       }
@@ -730,7 +729,7 @@ void CoverageData::DumpOffsets() {
       // One file per module per process.
       int fd = CovOpenFile(&path, false /* packed */, module_name);
       if (fd < 0) continue;
-      internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));
+      internal_write(fd, offsets.data(), offsets.size() * sizeof(offsets[0]));
       internal_close(fd);
       VReport(1, " CovDump: %s: %zd PCs written\n", path.data(),
               offsets.size());

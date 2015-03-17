@@ -13,39 +13,45 @@ prog_name = "";
 
 def Usage():
   print >> sys.stderr, "Usage: \n" + \
-      " " + prog_name + " merge file1 [file2 ...]  > output\n" \
-      " " + prog_name + " print file1 [file2 ...]\n" \
-      " " + prog_name + " unpack file1 [file2 ...]\n" \
-      " " + prog_name + " rawunpack file1 [file2 ...]\n"
+      " " + prog_name + " [32|64] merge file1 [file2 ...]  > output\n" \
+      " " + prog_name + " [32|64] print file1 [file2 ...]\n" \
+      " " + prog_name + " [32|64] unpack file1 [file2 ...]\n" \
+      " " + prog_name + " [32|64] rawunpack file1 [file2 ...]\n"
   exit(1)
 
-def ReadOneFile(path):
+def TypeCodeForBits(bits):
+  if bits == 64:
+    return 'L'
+  else:
+    return 'I'
+
+def ReadOneFile(path, bits):
   with open(path, mode="rb") as f:
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
-    s = set(array.array('I', f.read(size)))
-  print >>sys.stderr, "%s: read %d PCs from %s" % (prog_name, size / 4, path)
+    s = set(array.array(TypeCodeForBits(bits), f.read(size)))
+  print >>sys.stderr, "%s: read %d PCs from %s" % (prog_name, size * 8 / bits, path)
   return s
 
-def Merge(files):
+def Merge(files, bits):
   s = set()
   for f in files:
-    s = s.union(ReadOneFile(f))
+    s = s.union(ReadOneFile(f, bits))
   print >> sys.stderr, "%s: %d files merged; %d PCs total" % \
     (prog_name, len(files), len(s))
   return sorted(s)
 
-def PrintFiles(files):
-  s = Merge(files)
+def PrintFiles(files, bits):
+  s = Merge(files, bits)
   for i in s:
     print "0x%x" % i
 
-def MergeAndPrint(files):
+def MergeAndPrint(files, bits):
   if sys.stdout.isatty():
     Usage()
-  s = Merge(files)
-  a = array.array('I', s)
+  s = Merge(files, bits)
+  a = array.array(TypeCodeForBits(bits), s)
   a.tofile(sys.stdout)
 
 
@@ -77,11 +83,12 @@ def Unpack(files):
   for f in files:
     UnpackOneFile(f)
 
-def UnpackOneRawFile(path, map_path):
+def UnpackOneRawFile(path, map_path, bits):
   mem_map = []
   with open(map_path, mode="rt") as f_map:
     print >> sys.stderr, "%s: reading map %s" % (prog_name, map_path)
-    bits = int(f_map.readline())
+    if bits != int(f_map.readline()):
+      raise Exception('Wrong bits size in the map')
     for line in f_map:
       parts = line.rstrip().split()
       mem_map.append((int(parts[0], 16),
@@ -97,11 +104,7 @@ def UnpackOneRawFile(path, map_path):
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
-    if bits == 64:
-      typecode = 'L'
-    else:
-      typecode = 'I'
-    pcs = array.array(typecode, f.read(size))
+    pcs = array.array(TypeCodeForBits(bits), f.read(size))
     mem_map_pcs = [[] for i in range(0, len(mem_map))]
 
     for pc in pcs:
@@ -119,29 +122,37 @@ def UnpackOneRawFile(path, map_path):
       assert path.endswith('.sancov.raw')
       dst_path = module_path + '.' + os.path.basename(path)[:-4]
       print >> sys.stderr, "%s: writing %d PCs to %s" % (prog_name, len(pc_list), dst_path)
-      arr = array.array('I')
+      arr = array.array(TypeCodeForBits(bits))
       arr.fromlist(sorted(pc_list))
       with open(dst_path, 'ab') as f2:
         arr.tofile(f2)
 
-def RawUnpack(files):
+def RawUnpack(files, bits):
   for f in files:
     if not f.endswith('.sancov.raw'):
       raise Exception('Unexpected raw file name %s' % f)
     f_map = f[:-3] + 'map'
-    UnpackOneRawFile(f, f_map)
+    UnpackOneRawFile(f, f_map, bits)
 
 if __name__ == '__main__':
   prog_name = sys.argv[0]
-  if len(sys.argv) <= 2:
+  if len(sys.argv) <= 3:
     Usage();
-  if sys.argv[1] == "print":
-    PrintFiles(sys.argv[2:])
-  elif sys.argv[1] == "merge":
-    MergeAndPrint(sys.argv[2:])
-  elif sys.argv[1] == "unpack":
-    Unpack(sys.argv[2:])
-  elif sys.argv[1] == "rawunpack":
-    RawUnpack(sys.argv[2:])
+
+  if sys.argv[1] == "32":
+    bits = 32
+  elif sys.argv[1] == "64":
+    bits = 64
+  else:
+    Usage();
+
+  if sys.argv[2] == "print":
+    PrintFiles(sys.argv[3:], bits)
+  elif sys.argv[2] == "merge":
+    MergeAndPrint(sys.argv[3:], bits)
+  elif sys.argv[2] == "unpack":
+    Unpack(sys.argv[3:])
+  elif sys.argv[2] == "rawunpack":
+    RawUnpack(sys.argv[3:], bits)
   else:
     Usage()
