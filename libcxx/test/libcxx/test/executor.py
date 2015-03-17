@@ -17,7 +17,7 @@ class Executor(object):
             file_deps: [str]: Files required by the test
             env: {str: str}:  Environment variables to execute under
         Returns:
-            out, err, exitCode
+            cmd, out, err, exitCode
         """
         raise NotImplementedError
 
@@ -34,7 +34,8 @@ class LocalExecutor(Executor):
             env_cmd += ['%s=%s' % (k, v) for k, v in env.items()]
         if work_dir == '.':
             work_dir = os.getcwd()
-        return executeCommand(env_cmd + cmd, cwd=work_dir)
+        out, err, rc = executeCommand(env_cmd + cmd, cwd=work_dir)
+        return (env_cmd + cmd, out, err, rc)
 
 
 class PrefixExecutor(Executor):
@@ -129,6 +130,9 @@ class RemoteExecutor(Executor):
                 srcs.extend(file_deps)
                 dsts.extend(dev_paths)
             self.copy_in(srcs, dsts)
+            # TODO(jroelofs): capture the copy_in and delete_remote commands,
+            # and conjugate them with '&&'s around the first tuple element
+            # returned here:
             return self._execute_command_remote(cmd, target_cwd, env)
         finally:
             if target_cwd:
