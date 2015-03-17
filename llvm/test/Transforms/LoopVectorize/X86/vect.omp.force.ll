@@ -15,9 +15,9 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; The source code for the test:
 ;
 ; #include <math.h>
-; void foo(float* restrict A, float * restrict B, int size)
+; void foo(float* restrict A, float * restrict B)
 ; {
-;   for (int i = 0; i < size; ++i) A[i] = sinf(B[i]);
+;   for (int i = 0; i < 1000; i+=2) A[i] = sinf(B[i]);
 ; }
 ;
 
@@ -25,24 +25,20 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; This loop will be vectorized, although the scalar cost is lower than any of vector costs, but vectorization is explicitly forced in metadata.
 ;
 
-define void @vectorized(float* noalias nocapture %A, float* noalias nocapture %B, i32 %size) {
+define void @vectorized(float* noalias nocapture %A, float* noalias nocapture %B) {
 entry:
-  %cmp6 = icmp sgt i32 %size, 0
-  br i1 %cmp6, label %for.body.preheader, label %for.end
-
-for.body.preheader:
   br label %for.body
 
 for.body:
-  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !1
   %call = tail call float @llvm.sin.f32(float %0)
   %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   store float %call, float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !1
-  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 2
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
-  %exitcond = icmp eq i32 %lftr.wideiv, %size
+  %exitcond = icmp eq i32 %lftr.wideiv, 1000
   br i1 %exitcond, label %for.end.loopexit, label %for.body, !llvm.loop !1
 
 for.end.loopexit:
@@ -59,24 +55,20 @@ for.end:
 ; This method will not be vectorized, as scalar cost is lower than any of vector costs.
 ;
 
-define void @not_vectorized(float* noalias nocapture %A, float* noalias nocapture %B, i32 %size) {
+define void @not_vectorized(float* noalias nocapture %A, float* noalias nocapture %B) {
 entry:
-  %cmp6 = icmp sgt i32 %size, 0
-  br i1 %cmp6, label %for.body.preheader, label %for.end
-
-for.body.preheader:
   br label %for.body
 
 for.body:
-  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float, float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !3
   %call = tail call float @llvm.sin.f32(float %0)
   %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   store float %call, float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
-  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 2
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
-  %exitcond = icmp eq i32 %lftr.wideiv, %size
+  %exitcond = icmp eq i32 %lftr.wideiv, 1000
   br i1 %exitcond, label %for.end.loopexit, label %for.body, !llvm.loop !3
 
 for.end.loopexit:
