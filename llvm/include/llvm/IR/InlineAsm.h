@@ -243,7 +243,7 @@ public:
     Constraint_i,
     Constraint_m,
     Constraint_o,
-    Constraint_v, // Unused at the moment since Constraint_m is always used.
+    Constraint_v,
     Constraint_Q,
     Constraint_Z,
     Constraint_Zy,
