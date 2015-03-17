@@ -1205,6 +1205,8 @@ static void WriteModuleMetadata(const Module *M,
   SmallVector<uint64_t, 64> Record;
   for (const Metadata *MD : MDs) {
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {
+      assert(N->isResolved() && "Expected forward references to be resolved");
+
       switch (N->getMetadataID()) {
       default:
         llvm_unreachable("Invalid MDNode subclass");
