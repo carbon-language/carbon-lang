@@ -960,8 +960,13 @@ void TargetLoweringObjectFileCOFF::getNameWithPrefix(
       ((isa<Function>(GV) && TM.getFunctionSections()) ||
        (isa<GlobalVariable>(GV) && TM.getDataSections()))) {
     SmallString<256> Tmp;
-    Mang.getNameWithPrefix(Tmp, GV, CannotUsePrivateLabel, /*ForceNonPrivate=*/true);
-    OutName.append(Tmp.begin(), Tmp.end());
+    Mang.getNameWithPrefix(Tmp, GV, /*CannotUsePrivateLabel=*/false);
+    if (Tmp.startswith(".L"))
+      OutName.append(Tmp.begin() + 2, Tmp.end());
+    else if (Tmp.startswith("L"))
+      OutName.append(Tmp.begin() + 1, Tmp.end());
+    else
+      OutName.append(Tmp.begin(), Tmp.end());
     return;
   }
   Mang.getNameWithPrefix(OutName, GV, CannotUsePrivateLabel);

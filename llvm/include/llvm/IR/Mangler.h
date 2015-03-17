@@ -52,11 +52,9 @@ public:
   /// If the global variable doesn't have a name, this fills in a unique name
   /// for the global.
   void getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
-                         bool CannotUsePrivateLabel,
-                         bool ForceNonPrivate = false) const;
+                         bool CannotUsePrivateLabel) const;
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,
-                         bool CannotUsePrivateLabel,
-                         bool ForceNonPrivate = false) const;
+                         bool CannotUsePrivateLabel) const;
 
   /// Print the appropriate prefix and the specified name as the global variable
   /// name. GVName must not be empty.
