@@ -52,6 +52,7 @@ class Configuration(object):
         self.libcxx_src_root = None
         self.libcxx_obj_root = None
         self.cxx_library_root = None
+        self.abi_library_root = None
         self.env = {}
         self.use_target = False
         self.use_system_cxx_lib = False
@@ -90,9 +91,9 @@ class Configuration(object):
         self.configure_use_clang_verify()
         self.configure_execute_external()
         self.configure_ccache()
-        self.configure_env()
         self.configure_compile_flags()
         self.configure_link_flags()
+        self.configure_env()
         self.configure_color_diagnostics()
         self.configure_debug_mode()
         self.configure_warnings()
@@ -451,10 +452,10 @@ class Configuration(object):
 
     def configure_link_flags_abi_library_path(self):
         # Configure ABI library paths.
-        abi_library_path = self.get_lit_conf('abi_library_path', '')
-        if abi_library_path:
-            self.cxx.link_flags += ['-L' + abi_library_path,
-                                    '-Wl,-rpath,' + abi_library_path]
+        self.abi_library_root = self.get_lit_conf('abi_library_path')
+        if self.abi_library_root:
+            self.cxx.link_flags += ['-L' + self.abi_library_root,
+                                    '-Wl,-rpath,' + self.abi_library_root]
 
     def configure_link_flags_cxx_library(self):
         libcxx_library = self.get_lit_conf('libcxx_library')
@@ -643,12 +644,18 @@ class Configuration(object):
                 "inferred target_triple as: %r" % self.config.target_triple)
 
     def configure_env(self):
-        if (self.target_info.platform() == 'darwin' and
-            not self.use_system_cxx_lib):
+        if self.target_info.platform() == 'darwin':
+            library_paths = []
+            # Configure the library path for libc++
             libcxx_library = self.get_lit_conf('libcxx_library')
-            if libcxx_library:
-                cxx_library_root = os.path.dirname(libcxx_library)
-            else:
-                cxx_library_root = self.cxx_library_root
-            if cxx_library_root:
-                self.env['DYLD_LIBRARY_PATH'] = cxx_library_root
+            if self.use_system_cxx_lib:
+                pass
+            elif libcxx_library:
+                library_paths += [os.path.dirname(libcxx_library)]
+            elif self.cxx_library_root:
+                library_paths += [self.cxx_library_root]
+            # Configure the abi library path
+            if self.abi_library_root:
+                library_paths += [self.abi_library_root]
+            if library_paths:
+                self.env['DYLD_LIBRARY_PATH'] = ':'.join(library_paths)
