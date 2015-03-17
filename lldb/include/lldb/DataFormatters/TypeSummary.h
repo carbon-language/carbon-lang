@@ -25,8 +25,8 @@
 
 #include "lldb/Core/Error.h"
 #include "lldb/Core/FormatEntity.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/ValueObject.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
@@ -501,8 +501,8 @@ namespace lldb_private {
     {
         std::string m_function_name;
         std::string m_python_script;
-        lldb::ScriptInterpreterObjectSP m_script_function_sp;
-        
+        StructuredData::ObjectSP m_script_function_sp;
+
         ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
                             const char *function_name,
                             const char* python_script = NULL);

@@ -22,9 +22,10 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/PythonDataObjects.h"
+#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/VariableList.h"
@@ -116,8 +117,9 @@ OperatingSystemPython::OperatingSystemPython (lldb_private::Process *process, co
                     os_plugin_class_name.erase (py_extension_pos);
                 // Add ".OperatingSystemPlugIn" to the module name to get a string like "modulename.OperatingSystemPlugIn"
                 os_plugin_class_name += ".OperatingSystemPlugIn";
-                ScriptInterpreterObjectSP object_sp = m_interpreter->OSPlugin_CreatePluginObject(os_plugin_class_name.c_str(), process->CalculateProcess());
-                if (object_sp && object_sp->GetObject())
+                StructuredData::ObjectSP object_sp =
+                    m_interpreter->OSPlugin_CreatePluginObject(os_plugin_class_name.c_str(), process->CalculateProcess());
+                if (object_sp && object_sp->IsValid())
                     m_python_object_sp = object_sp;
             }
         }
@@ -139,12 +141,12 @@ OperatingSystemPython::GetDynamicRegisterInfo ()
         
         if (log)
             log->Printf ("OperatingSystemPython::GetDynamicRegisterInfo() fetching thread register definitions from python for pid %" PRIu64, m_process->GetID());
-        
-        PythonDictionary dictionary(m_interpreter->OSPlugin_RegisterInfo(m_python_object_sp));
+
+        StructuredData::DictionarySP dictionary = m_interpreter->OSPlugin_RegisterInfo(m_python_object_sp);
         if (!dictionary)
             return NULL;
-        
-        m_register_info_ap.reset (new DynamicRegisterInfo (dictionary, m_process->GetTarget().GetArchitecture().GetByteOrder()));
+
+        m_register_info_ap.reset(new DynamicRegisterInfo(*dictionary, m_process->GetTarget().GetArchitecture().GetByteOrder()));
         assert (m_register_info_ap->GetNumRegisters() > 0);
         assert (m_register_info_ap->GetNumRegisterSets() > 0);
     }
@@ -189,8 +191,8 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
     // lldb_private::Process subclass, no memory threads will be in this list.
     
     auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure threads_list stays alive
-    PythonList threads_list(m_interpreter->OSPlugin_ThreadsInfo(m_python_object_sp));
-    
+    StructuredData::ArraySP threads_list = m_interpreter->OSPlugin_ThreadsInfo(m_python_object_sp);
+
     const uint32_t num_cores = core_thread_list.GetSize(false);
     
     // Make a map so we can keep track of which cores were used from the
@@ -202,22 +204,19 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
         if (log)
         {
             StreamString strm;
-            threads_list.Dump(strm);
+            threads_list->Dump(strm);
             log->Printf("threads_list = %s", strm.GetString().c_str());
         }
-        uint32_t i;
-        const uint32_t num_threads = threads_list.GetSize();
-        if (num_threads > 0)
+
+        const uint32_t num_threads = threads_list->GetSize();
+        for (uint32_t i = 0; i < num_threads; ++i)
         {
-            for (i=0; i<num_threads; ++i)
+            StructuredData::ObjectSP thread_dict_obj = threads_list->GetItemAtIndex(i);
+            if (auto thread_dict = thread_dict_obj->GetAsDictionary())
             {
-                PythonDictionary thread_dict(threads_list.GetItemAtIndex(i));
-                if (thread_dict)
-                {
-                    ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_dict, core_thread_list, old_thread_list, core_used_map, NULL));
-                    if (thread_sp)
-                        new_thread_list.AddThread(thread_sp);
-                }
+                ThreadSP thread_sp(CreateThreadFromThreadInfo(*thread_dict, core_thread_list, old_thread_list, core_used_map, NULL));
+                if (thread_sp)
+                    new_thread_list.AddThread(thread_sp);
             }
         }
     }
@@ -239,79 +238,63 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
 }
 
 ThreadSP
-OperatingSystemPython::CreateThreadFromThreadInfo (PythonDictionary &thread_dict,
-                                                   ThreadList &core_thread_list,
-                                                   ThreadList &old_thread_list,
-                                                   std::vector<bool> &core_used_map,
-                                                   bool *did_create_ptr)
+OperatingSystemPython::CreateThreadFromThreadInfo(StructuredData::Dictionary &thread_dict, ThreadList &core_thread_list,
+                                                  ThreadList &old_thread_list, std::vector<bool> &core_used_map, bool *did_create_ptr)
 {
     ThreadSP thread_sp;
-    if (thread_dict)
-    {
-        PythonString tid_pystr("tid");
-        const tid_t tid = thread_dict.GetItemForKeyAsInteger (tid_pystr, LLDB_INVALID_THREAD_ID);
-        if (tid != LLDB_INVALID_THREAD_ID)
-        {
-            PythonString core_pystr("core");
-            PythonString name_pystr("name");
-            PythonString queue_pystr("queue");
-            //PythonString state_pystr("state");
-            //PythonString stop_reason_pystr("stop_reason");
-            PythonString reg_data_addr_pystr ("register_data_addr");
-            
-            const uint32_t core_number = thread_dict.GetItemForKeyAsInteger (core_pystr, UINT32_MAX);
-            const addr_t reg_data_addr = thread_dict.GetItemForKeyAsInteger (reg_data_addr_pystr, LLDB_INVALID_ADDRESS);
-            const char *name = thread_dict.GetItemForKeyAsString (name_pystr);
-            const char *queue = thread_dict.GetItemForKeyAsString (queue_pystr);
-            //const char *state = thread_dict.GetItemForKeyAsString (state_pystr);
-            //const char *stop_reason = thread_dict.GetItemForKeyAsString (stop_reason_pystr);
-            
-            // See if a thread already exists for "tid"
-            thread_sp = old_thread_list.FindThreadByID (tid, false);
-            if (thread_sp)
-            {
-                // A thread already does exist for "tid", make sure it was an operating system
-                // plug-in generated thread.
-                if (!IsOperatingSystemPluginThread(thread_sp))
-                {
-                    // We have thread ID overlap between the protocol threads and the
-                    // operating system threads, clear the thread so we create an
-                    // operating system thread for this.
-                    thread_sp.reset();
-                }
-            }
-    
-            if (!thread_sp)
-            {
-                if (did_create_ptr)
-                    *did_create_ptr = true;
-                thread_sp.reset (new ThreadMemory (*m_process,
-                                                   tid,
-                                                   name,
-                                                   queue,
-                                                   reg_data_addr));
-                
-            }
-            
-            if (core_number < core_thread_list.GetSize(false))
-            {
-                ThreadSP core_thread_sp (core_thread_list.GetThreadAtIndex(core_number, false));
-                if (core_thread_sp)
-                {
-                    // Keep track of which cores were set as the backing thread for memory threads...
-                    if (core_number < core_used_map.size())
-                        core_used_map[core_number] = true;
+    tid_t tid = LLDB_INVALID_THREAD_ID;
+    if (!thread_dict.GetValueForKeyAsInteger("tid", tid))
+        return ThreadSP();
 
-                    ThreadSP backing_core_thread_sp (core_thread_sp->GetBackingThread());
-                    if (backing_core_thread_sp)
-                    {
-                        thread_sp->SetBackingThread(backing_core_thread_sp);
-                    }
-                    else
-                    {
-                        thread_sp->SetBackingThread(core_thread_sp);
-                    }
-                }
+    uint32_t core_number;
+    addr_t reg_data_addr;
+    std::string name;
+    std::string queue;
+
+    thread_dict.GetValueForKeyAsInteger("core", core_number, UINT32_MAX);
+    thread_dict.GetValueForKeyAsInteger("register_data_addr", reg_data_addr, LLDB_INVALID_ADDRESS);
+    thread_dict.GetValueForKeyAsString("name", name);
+    thread_dict.GetValueForKeyAsString("queue", queue);
+
+    // See if a thread already exists for "tid"
+    thread_sp = old_thread_list.FindThreadByID(tid, false);
+    if (thread_sp)
+    {
+        // A thread already does exist for "tid", make sure it was an operating system
+        // plug-in generated thread.
+        if (!IsOperatingSystemPluginThread(thread_sp))
+        {
+            // We have thread ID overlap between the protocol threads and the
+            // operating system threads, clear the thread so we create an
+            // operating system thread for this.
+            thread_sp.reset();
+        }
+    }
+
+    if (!thread_sp)
+    {
+        if (did_create_ptr)
+            *did_create_ptr = true;
+        thread_sp.reset(new ThreadMemory(*m_process, tid, name.c_str(), queue.c_str(), reg_data_addr));
+    }
+
+    if (core_number < core_thread_list.GetSize(false))
+    {
+        ThreadSP core_thread_sp(core_thread_list.GetThreadAtIndex(core_number, false));
+        if (core_thread_sp)
+        {
+            // Keep track of which cores were set as the backing thread for memory threads...
+            if (core_number < core_used_map.size())
+                core_used_map[core_number] = true;
+
+            ThreadSP backing_core_thread_sp(core_thread_sp->GetBackingThread());
+            if (backing_core_thread_sp)
+            {
+                thread_sp->SetBackingThread(backing_core_thread_sp);
+            }
+            else
+            {
+                thread_sp->SetBackingThread(core_thread_sp);
             }
         }
     }
@@ -364,11 +347,11 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, addr_t re
                          thread->GetID(),
                          thread->GetProtocolID());
 
-        PythonString reg_context_data(m_interpreter->OSPlugin_RegisterContextData (m_python_object_sp, thread->GetID()));
+        StructuredData::StringSP reg_context_data = m_interpreter->OSPlugin_RegisterContextData(m_python_object_sp, thread->GetID());
         if (reg_context_data)
         {
-            DataBufferSP data_sp (new DataBufferHeap (reg_context_data.GetString(),
-                                                      reg_context_data.GetSize()));
+            std::string value = reg_context_data->GetValue();
+            DataBufferSP data_sp(new DataBufferHeap(value.c_str(), value.length()));
             if (data_sp->GetByteSize())
             {
                 RegisterContextMemory *reg_ctx_memory = new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), LLDB_INVALID_ADDRESS);
@@ -417,14 +400,14 @@ OperatingSystemPython::CreateThread (lldb::tid_t tid, addr_t context)
         Mutex::Locker api_locker (target.GetAPIMutex());
         
         auto lock = m_interpreter->AcquireInterpreterLock(); // to make sure thread_info_dict stays alive
-        PythonDictionary thread_info_dict (m_interpreter->OSPlugin_CreateThread(m_python_object_sp, tid, context));
+        StructuredData::DictionarySP thread_info_dict = m_interpreter->OSPlugin_CreateThread(m_python_object_sp, tid, context);
         std::vector<bool> core_used_map;
         if (thread_info_dict)
         {
             ThreadList core_threads(m_process);
             ThreadList &thread_list = m_process->GetThreadList();
             bool did_create = false;
-            ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_info_dict, core_threads, thread_list, core_used_map, &did_create));
+            ThreadSP thread_sp(CreateThreadFromThreadInfo(*thread_info_dict, core_threads, thread_list, core_used_map, &did_create));
             if (did_create)
                 thread_list.AddThread(thread_sp);
             return thread_sp;

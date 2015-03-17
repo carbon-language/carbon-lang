@@ -23,6 +23,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/ValueObject.h"
 
 namespace lldb_private {
@@ -551,7 +552,7 @@ namespace lldb_private {
         {
         private:
             std::string m_python_class;
-            lldb::ScriptInterpreterObjectSP m_wrapper_sp;
+            StructuredData::ObjectSP m_wrapper_sp;
             ScriptInterpreter *m_interpreter;
         public:
             

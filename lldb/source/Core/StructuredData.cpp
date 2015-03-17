@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include "lldb/Core/StreamString.h"
+
 using namespace lldb_private;
 
 
@@ -350,7 +352,15 @@ StructuredData::Object::GetObjectForDotSeparatedPath (llvm::StringRef path)
 }
 
 void
-StructuredData::Array::Dump (Stream &s) const
+StructuredData::Object::DumpToStdout() const
+{
+    StreamString stream;
+    Dump(stream);
+    printf("%s", stream.GetString().c_str());
+}
+
+void
+StructuredData::Array::Dump(Stream &s) const
 {
     s << "[";
     const size_t arrsize = m_items.size();
@@ -426,4 +436,10 @@ void
 StructuredData::Null::Dump (Stream &s) const
 {
     s << "null";
+}
+
+void
+StructuredData::Generic::Dump(Stream &s) const
+{
+    s << "0x" << m_object;
 }

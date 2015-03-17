@@ -19,21 +19,19 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/StructuredData.h"
 
 class DynamicRegisterInfo
 {
 public:
     DynamicRegisterInfo ();
 
-    DynamicRegisterInfo (const lldb_private::PythonDictionary &dict,
-                         lldb::ByteOrder byte_order);
-    
+    DynamicRegisterInfo(const lldb_private::StructuredData::Dictionary &dict, lldb::ByteOrder byte_order);
+
     virtual 
     ~DynamicRegisterInfo ();
 
-    size_t
-    SetRegisterInfo (const lldb_private::PythonDictionary &dict,
-                     lldb::ByteOrder byte_order);
+    size_t SetRegisterInfo(const lldb_private::StructuredData::Dictionary &dict, lldb::ByteOrder byte_order);
 
     void
     AddRegister (lldb_private::RegisterInfo &reg_info, 

@@ -17,12 +17,61 @@
 // Project includes
 #include "lldb/lldb-defines.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Interpreter/OptionValue.h"
 #include "lldb/lldb-python.h"
 
 namespace lldb_private {
-    
+class PythonString;
+class PythonList;
+class PythonDictionary;
+class PythonObject;
+class PythonInteger;
+
+class StructuredPythonObject : public StructuredData::Generic
+{
+  public:
+    StructuredPythonObject()
+        : StructuredData::Generic()
+    {
+    }
+
+    StructuredPythonObject(void *obj)
+        : StructuredData::Generic(obj)
+    {
+        Py_XINCREF(GetValue());
+    }
+
+    virtual ~StructuredPythonObject()
+    {
+        if (Py_IsInitialized())
+            Py_XDECREF(GetValue());
+        SetValue(nullptr);
+    }
+
+    bool
+    IsValid() const override
+    {
+        return GetValue() && GetValue() != Py_None;
+    }
+
+    void Dump(Stream &s) const override;
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(StructuredPythonObject);
+};
+
+enum class PyObjectType
+{
+    Unknown,
+    None,
+    Integer,
+    Dictionary,
+    List,
+    String
+};
+
     class PythonObject
     {
     public:
@@ -42,8 +91,6 @@ namespace lldb_private {
         {
             Reset (rhs.m_py_obj);
         }
-        
-        explicit PythonObject (const lldb::ScriptInterpreterObjectSP &script_object_sp);
 
         virtual
         ~PythonObject ()
@@ -89,6 +136,8 @@ namespace lldb_private {
             return m_py_obj;
         }
 
+        PyObjectType GetObjectType() const;
+
         PythonString
         Repr ();
         
@@ -102,7 +151,9 @@ namespace lldb_private {
         
         bool
         IsNULLOrNone () const;
-        
+
+        StructuredData::ObjectSP CreateStructuredObject() const;
+
     protected:
         PyObject* m_py_obj;
     };
@@ -110,25 +161,25 @@ namespace lldb_private {
     class PythonString: public PythonObject
     {
     public:
-        
         PythonString ();
         PythonString (PyObject *o);
         PythonString (const PythonObject &object);
-        PythonString (const lldb::ScriptInterpreterObjectSP &script_object_sp);
-        PythonString (const char* string);
+        PythonString (llvm::StringRef string);
+        PythonString (const char *string);
         virtual ~PythonString ();
-        
+
         virtual bool
         Reset (PyObject* py_obj = NULL);
 
-        const char*
+        llvm::StringRef
         GetString() const;
 
         size_t
         GetSize() const;
 
-        void
-        SetString (const char* string);        
+        void SetString(llvm::StringRef string);
+
+        StructuredData::StringSP CreateStructuredString() const;
     };
     
     class PythonInteger: public PythonObject
@@ -138,18 +189,18 @@ namespace lldb_private {
         PythonInteger ();
         PythonInteger (PyObject* py_obj);
         PythonInteger (const PythonObject &object);
-        PythonInteger (const lldb::ScriptInterpreterObjectSP &script_object_sp);
         PythonInteger (int64_t value);
         virtual ~PythonInteger ();
         
         virtual bool
         Reset (PyObject* py_obj = NULL);
-        
-        int64_t
-        GetInteger();
-        
+
+        int64_t GetInteger() const;
+
         void
         SetInteger (int64_t value);
+
+        StructuredData::IntegerSP CreateStructuredInteger() const;
     };
     
     class PythonList: public PythonObject
@@ -159,24 +210,23 @@ namespace lldb_private {
         PythonList (bool create_empty);
         PythonList (PyObject* py_obj);
         PythonList (const PythonObject &object);
-        PythonList (const lldb::ScriptInterpreterObjectSP &script_object_sp);
         PythonList (uint32_t count);
         virtual ~PythonList ();
         
         virtual bool
         Reset (PyObject* py_obj = NULL);
-        
-        uint32_t
-        GetSize();
-        
-        PythonObject
-        GetItemAtIndex (uint32_t index);
-        
+
+        uint32_t GetSize() const;
+
+        PythonObject GetItemAtIndex(uint32_t index) const;
+
         void
         SetItemAtIndex (uint32_t index, const PythonObject &object);
         
         void
         AppendItem (const PythonObject &object);
+
+        StructuredData::ArraySP CreateStructuredArray() const;
     };
     
     class PythonDictionary: public PythonObject
@@ -186,14 +236,13 @@ namespace lldb_private {
         explicit PythonDictionary (bool create_empty);
         PythonDictionary (PyObject* object);
         PythonDictionary (const PythonObject &object);
-        PythonDictionary (const lldb::ScriptInterpreterObjectSP &script_object_sp);
         virtual ~PythonDictionary ();
         
         virtual bool
         Reset (PyObject* object = NULL);
-        
-        uint32_t GetSize();
-        
+
+        uint32_t GetSize() const;
+
         PythonObject
         GetItemForKey (const PythonString &key) const;
         
@@ -222,6 +271,8 @@ namespace lldb_private {
 
         void
         SetItemForKey (const PythonString &key, const PythonObject& value);
+
+        StructuredData::DictionarySP CreateStructuredDictionary() const;
     };
     
 } // namespace lldb_private

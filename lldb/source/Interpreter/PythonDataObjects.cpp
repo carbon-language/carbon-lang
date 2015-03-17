@@ -23,19 +23,20 @@
 #include "lldb/Host/File.h"
 #include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
 
 using namespace lldb_private;
 using namespace lldb;
 
+void
+StructuredPythonObject::Dump(Stream &s) const
+{
+    s << "Python Obj: 0x" << GetValue();
+}
+
 //----------------------------------------------------------------------
 // PythonObject
 //----------------------------------------------------------------------
-PythonObject::PythonObject (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    m_py_obj (nullptr)
-{
-    if (script_object_sp)
-        Reset ((PyObject *)script_object_sp->GetObject());
-}
 
 void
 PythonObject::Dump (Stream &strm) const
@@ -60,6 +61,23 @@ PythonObject::Dump (Stream &strm) const
     }
     else
         strm.PutCString ("NULL");
+}
+
+PyObjectType
+PythonObject::GetObjectType() const
+{
+    if (IsNULLOrNone())
+        return PyObjectType::None;
+
+    if (PyList_Check(m_py_obj))
+        return PyObjectType::List;
+    if (PyDict_Check(m_py_obj))
+        return PyObjectType::Dictionary;
+    if (PyString_Check(m_py_obj))
+        return PyObjectType::String;
+    if (PyInt_Check(m_py_obj) || PyLong_Check(m_py_obj))
+        return PyObjectType::Integer;
+    return PyObjectType::Unknown;
 }
 
 PythonString
@@ -90,6 +108,26 @@ PythonObject::IsNULLOrNone () const
     return ((m_py_obj == nullptr) || (m_py_obj == Py_None));
 }
 
+StructuredData::ObjectSP
+PythonObject::CreateStructuredObject() const
+{
+    switch (GetObjectType())
+    {
+        case PyObjectType::Dictionary:
+            return PythonDictionary(m_py_obj).CreateStructuredDictionary();
+        case PyObjectType::Integer:
+            return PythonInteger(m_py_obj).CreateStructuredInteger();
+        case PyObjectType::List:
+            return PythonList(m_py_obj).CreateStructuredArray();
+        case PyObjectType::String:
+            return PythonString(m_py_obj).CreateStructuredString();
+        case PyObjectType::None:
+            return StructuredData::ObjectSP();
+        default:
+            return StructuredData::ObjectSP(new StructuredPythonObject(m_py_obj));
+    }
+}
+
 //----------------------------------------------------------------------
 // PythonString
 //----------------------------------------------------------------------
@@ -106,14 +144,12 @@ PythonString::PythonString (const PythonObject &object) :
     Reset(object.get()); // Use "Reset()" to ensure that py_obj is a string
 }
 
-PythonString::PythonString (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject()
+PythonString::PythonString (llvm::StringRef string) :
+    PythonObject(PyString_FromStringAndSize(string.data(), string.size()))
 {
-    if (script_object_sp)
-        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a string
 }
 
-PythonString::PythonString (const char* string) :
+PythonString::PythonString(const char *string) :
     PythonObject(PyString_FromString(string))
 {
 }
@@ -137,11 +173,11 @@ PythonString::Reset (PyObject *py_obj)
     return py_obj == nullptr;
 }
 
-const char*
+llvm::StringRef
 PythonString::GetString() const
 {
     if (m_py_obj)
-        return PyString_AsString(m_py_obj);
+        return llvm::StringRef(PyString_AsString(m_py_obj), GetSize());
     return nullptr;
 }
 
@@ -154,9 +190,17 @@ PythonString::GetSize() const
 }
 
 void
-PythonString::SetString (const char* string)
+PythonString::SetString (llvm::StringRef string)
 {
-    PythonObject::Reset(PyString_FromString(string));
+    PythonObject::Reset(PyString_FromStringAndSize(string.data(), string.size()));
+}
+
+StructuredData::StringSP
+PythonString::CreateStructuredString() const
+{
+    StructuredData::StringSP result(new StructuredData::String);
+    result->SetValue(GetString());
+    return result;
 }
 
 //----------------------------------------------------------------------
@@ -173,13 +217,6 @@ PythonInteger::PythonInteger (const PythonObject &object) :
     PythonObject()
 {
     Reset(object.get()); // Use "Reset()" to ensure that py_obj is a integer type
-}
-
-PythonInteger::PythonInteger (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject()
-{
-    if (script_object_sp)
-        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonInteger::PythonInteger (int64_t value) :
@@ -207,7 +244,7 @@ PythonInteger::Reset (PyObject *py_obj)
 }
 
 int64_t
-PythonInteger::GetInteger()
+PythonInteger::GetInteger() const
 {
     if (m_py_obj)
     {
@@ -223,6 +260,14 @@ void
 PythonInteger::SetInteger (int64_t value)
 {
     PythonObject::Reset(PyLong_FromLongLong(value));
+}
+
+StructuredData::IntegerSP
+PythonInteger::CreateStructuredInteger() const
+{
+    StructuredData::IntegerSP result(new StructuredData::Integer);
+    result->SetValue(GetInteger());
+    return result;
 }
 
 //----------------------------------------------------------------------
@@ -252,13 +297,6 @@ PythonList::PythonList (const PythonObject &object) :
     Reset(object.get()); // Use "Reset()" to ensure that py_obj is a list
 }
 
-PythonList::PythonList (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject()
-{
-    if (script_object_sp)
-        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a list
-}
-
 PythonList::~PythonList ()
 {
 }
@@ -274,7 +312,7 @@ PythonList::Reset (PyObject *py_obj)
 }
 
 uint32_t
-PythonList::GetSize()
+PythonList::GetSize() const
 {
     if (m_py_obj)
         return PyList_GET_SIZE(m_py_obj);
@@ -282,7 +320,7 @@ PythonList::GetSize()
 }
 
 PythonObject
-PythonList::GetItemAtIndex (uint32_t index)
+PythonList::GetItemAtIndex(uint32_t index) const
 {
     if (m_py_obj)
         return PythonObject(PyList_GetItem(m_py_obj, index));
@@ -301,6 +339,19 @@ PythonList::AppendItem (const PythonObject &object)
 {
     if (m_py_obj && object)
         PyList_Append(m_py_obj, object.get());
+}
+
+StructuredData::ArraySP
+PythonList::CreateStructuredArray() const
+{
+    StructuredData::ArraySP result(new StructuredData::Array);
+    uint32_t count = GetSize();
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        PythonObject obj = GetItemAtIndex(i);
+        result->AddItem(obj.CreateStructuredObject());
+    }
+    return result;
 }
 
 //----------------------------------------------------------------------
@@ -325,13 +376,6 @@ PythonDictionary::PythonDictionary (const PythonObject &object) :
     Reset(object.get()); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
-PythonDictionary::PythonDictionary (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    PythonObject ()
-{
-    if (script_object_sp)
-        Reset((PyObject *)script_object_sp->GetObject()); // Use "Reset()" to ensure that py_obj is a dictionary
-}
-
 PythonDictionary::~PythonDictionary ()
 {
 }
@@ -347,7 +391,7 @@ PythonDictionary::Reset (PyObject *py_obj)
 }
 
 uint32_t
-PythonDictionary::GetSize()
+PythonDictionary::GetSize() const
 {
     if (m_py_obj)
         return PyDict_Size(m_py_obj);
@@ -458,6 +502,23 @@ PythonDictionary::SetItemForKey (const PythonString &key, const PythonObject &va
 {
     if (m_py_obj && key && value)
         PyDict_SetItem(m_py_obj, key.get(), value.get());
+}
+
+StructuredData::DictionarySP
+PythonDictionary::CreateStructuredDictionary() const
+{
+    StructuredData::DictionarySP result(new StructuredData::Dictionary);
+    PythonList keys(GetKeys());
+    uint32_t num_keys = keys.GetSize();
+    for (uint32_t i = 0; i < num_keys; ++i)
+    {
+        PythonObject key = keys.GetItemAtIndex(i);
+        PythonString key_str = key.Str();
+        PythonObject value = GetItemForKey(key);
+        StructuredData::ObjectSP structured_value = value.CreateStructuredObject();
+        result->AddItem(key_str.GetString(), structured_value);
+    }
+    return result;
 }
 
 #endif

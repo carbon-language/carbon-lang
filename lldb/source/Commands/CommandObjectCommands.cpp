@@ -29,7 +29,6 @@
 #include "lldb/Interpreter/OptionValueUInt64.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1433,7 +1432,7 @@ protected:
 class CommandObjectScriptingObject : public CommandObjectRaw
 {
 private:
-    lldb::ScriptInterpreterObjectSP m_cmd_obj_sp;
+    StructuredData::GenericSP m_cmd_obj_sp;
     ScriptedCommandSynchronicity m_synchro;
     bool m_fetched_help_short:1;
     bool m_fetched_help_long:1;
@@ -1442,7 +1441,7 @@ public:
     
     CommandObjectScriptingObject (CommandInterpreter &interpreter,
                                   std::string name,
-                                  lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+                                  StructuredData::GenericSP cmd_obj_sp,
                                   ScriptedCommandSynchronicity synch) :
     CommandObjectRaw (interpreter,
                       name.c_str(),
@@ -1469,7 +1468,7 @@ public:
         return true;
     }
     
-    lldb::ScriptInterpreterObjectSP
+    StructuredData::GenericSP
     GetImplementingObject ()
     {
         return m_cmd_obj_sp;

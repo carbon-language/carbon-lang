@@ -18,11 +18,8 @@
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/DataFormatters/FormatManager.h"
-
-#ifndef LLDB_DISABLE_PYTHON
-#include "lldb/Interpreter/PythonDataObjects.h"
-#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -39,15 +36,15 @@ DynamicRegisterInfo::DynamicRegisterInfo () :
 {
 }
 
-DynamicRegisterInfo::DynamicRegisterInfo (const lldb_private::PythonDictionary &dict, ByteOrder byte_order) :
-    m_regs (),
-    m_sets (),
-    m_set_reg_nums (),
-    m_set_names (),
-    m_value_regs_map (),
-    m_invalidate_regs_map (),
-    m_reg_data_byte_size (0),
-    m_finalized (false)
+DynamicRegisterInfo::DynamicRegisterInfo(const StructuredData::Dictionary &dict, ByteOrder byte_order)
+    : m_regs()
+    , m_sets()
+    , m_set_reg_nums()
+    , m_set_names()
+    , m_value_regs_map()
+    , m_invalidate_regs_map()
+    , m_reg_data_byte_size(0)
+    , m_finalized(false)
 {
     SetRegisterInfo (dict, byte_order);
 }
@@ -56,23 +53,20 @@ DynamicRegisterInfo::~DynamicRegisterInfo ()
 {
 }
 
-
 size_t
-DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict,
-                                      ByteOrder byte_order)
+DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, ByteOrder byte_order)
 {
     assert(!m_finalized);
-#ifndef LLDB_DISABLE_PYTHON
-    PythonList sets (dict.GetItemForKey("sets"));
-    if (sets)
+    StructuredData::Array *sets = nullptr;
+    if (dict.GetValueForKeyAsArray("sets", sets))
     {
-        const uint32_t num_sets = sets.GetSize();
+        const uint32_t num_sets = sets->GetSize();
         for (uint32_t i=0; i<num_sets; ++i)
         {
-            PythonString py_set_name(sets.GetItemAtIndex(i));
+            std::string set_name_str;
             ConstString set_name;
-            if (py_set_name)
-                set_name.SetCString(py_set_name.GetString());
+            if (sets->GetItemAtIndexAsString(i, set_name_str))
+                set_name.SetCString(set_name_str.c_str());
             if (set_name)
             {
                 RegisterSet new_set = { set_name.AsCString(), NULL, 0, NULL };
@@ -87,346 +81,310 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
         }
         m_set_reg_nums.resize(m_sets.size());
     }
-    PythonList regs (dict.GetItemForKey("registers"));
-    if (regs)
-    {
-        const uint32_t num_regs = regs.GetSize();
-        PythonString name_pystr("name");
-        PythonString altname_pystr("alt-name");
-        PythonString bitsize_pystr("bitsize");
-        PythonString offset_pystr("offset");
-        PythonString encoding_pystr("encoding");
-        PythonString format_pystr("format");
-        PythonString set_pystr("set");
-        PythonString gcc_pystr("gcc");
-        PythonString dwarf_pystr("dwarf");
-        PythonString generic_pystr("generic");
-        PythonString slice_pystr("slice");
-        PythonString composite_pystr("composite");
-        PythonString invalidate_regs_pystr("invalidate-regs");
-        
+    StructuredData::Array *regs = nullptr;
+    if (!dict.GetValueForKeyAsArray("registers", regs))
+        return 0;
+
+    const uint32_t num_regs = regs->GetSize();
 //        typedef std::map<std::string, std::vector<std::string> > InvalidateNameMap;
 //        InvalidateNameMap invalidate_map;
-        for (uint32_t i=0; i<num_regs; ++i)
+    for (uint32_t i = 0; i < num_regs; ++i)
+    {
+        StructuredData::Dictionary *reg_info_dict = nullptr;
+        if (!regs->GetItemAtIndexAsDictionary(i, reg_info_dict))
         {
-            PythonDictionary reg_info_dict(regs.GetItemAtIndex(i));
-            if (reg_info_dict)
+            Clear();
+            printf("error: items in the 'registers' array must be dictionaries\n");
+            regs->DumpToStdout();
+            return 0;
+        }
+
+        // { 'name':'rcx'       , 'bitsize' :  64, 'offset' :  16, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 2,
+        // 'dwarf' : 2, 'generic':'arg4', 'alt-name':'arg4', },
+        RegisterInfo reg_info;
+        std::vector<uint32_t> value_regs;
+        std::vector<uint32_t> invalidate_regs;
+        memset(&reg_info, 0, sizeof(reg_info));
+
+        ConstString name_val;
+        ConstString alt_name_val;
+        if (!reg_info_dict->GetValueForKeyAsString("name", name_val, nullptr))
+        {
+            Clear();
+            printf("error: registers must have valid names and offsets\n");
+            reg_info_dict->DumpToStdout();
+            return 0;
+        }
+        reg_info.name = name_val.GetCString();
+        reg_info_dict->GetValueForKeyAsString("alt-name", alt_name_val, nullptr);
+        reg_info.alt_name = alt_name_val.GetCString();
+
+        reg_info_dict->GetValueForKeyAsInteger("offset", reg_info.byte_offset, UINT32_MAX);
+
+        if (reg_info.byte_offset == UINT32_MAX)
+        {
+            // No offset for this register, see if the register has a value expression
+            // which indicates this register is part of another register. Value expressions
+            // are things like "rax[31:0]" which state that the current register's value
+            // is in a concrete register "rax" in bits 31:0. If there is a value expression
+            // we can calculate the offset
+            bool success = false;
+            std::string slice_str;
+            if (reg_info_dict->GetValueForKeyAsString("slice", slice_str, nullptr))
             {
-                // { 'name':'rcx'       , 'bitsize' :  64, 'offset' :  16, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 2, 'dwarf' : 2, 'generic':'arg4', 'alt-name':'arg4', },
-                RegisterInfo reg_info;
-                std::vector<uint32_t> value_regs;
-                std::vector<uint32_t> invalidate_regs;
-                memset(&reg_info, 0, sizeof(reg_info));
-                
-                reg_info.name = ConstString (reg_info_dict.GetItemForKeyAsString(name_pystr)).GetCString();
-                if (reg_info.name == NULL)
+                // Slices use the following format:
+                //  REGNAME[MSBIT:LSBIT]
+                // REGNAME - name of the register to grab a slice of
+                // MSBIT - the most significant bit at which the current register value starts at
+                // LSBIT - the least significant bit at which the current register value ends at
+                static RegularExpression g_bitfield_regex("([A-Za-z_][A-Za-z0-9_]*)\\[([0-9]+):([0-9]+)\\]");
+                RegularExpression::Match regex_match(3);
+                if (g_bitfield_regex.Execute(slice_str.c_str(), &regex_match))
                 {
-                    Clear();
-                    printf("error: registers must have valid names\n");
-                    reg_info_dict.Dump();
-                    return 0;
-                }
-                    
-                reg_info.alt_name = ConstString (reg_info_dict.GetItemForKeyAsString(altname_pystr)).GetCString();
-                
-                reg_info.byte_offset = reg_info_dict.GetItemForKeyAsInteger(offset_pystr, UINT32_MAX);
-
-                if (reg_info.byte_offset == UINT32_MAX)
-                {
-                    // No offset for this register, see if the register has a value expression
-                    // which indicates this register is part of another register. Value expressions
-                    // are things like "rax[31:0]" which state that the current register's value
-                    // is in a concrete register "rax" in bits 31:0. If there is a value expression
-                    // we can calculate the offset
-                    bool success = false;
-                    const char *slice_cstr = reg_info_dict.GetItemForKeyAsString(slice_pystr);
-                    if (slice_cstr)
+                    llvm::StringRef reg_name_str;
+                    std::string msbit_str;
+                    std::string lsbit_str;
+                    if (regex_match.GetMatchAtIndex(slice_str.c_str(), 1, reg_name_str) &&
+                        regex_match.GetMatchAtIndex(slice_str.c_str(), 2, msbit_str) &&
+                        regex_match.GetMatchAtIndex(slice_str.c_str(), 3, lsbit_str))
                     {
-                        // Slices use the following format:
-                        //  REGNAME[MSBIT:LSBIT]
-                        // REGNAME - name of the register to grab a slice of
-                        // MSBIT - the most significant bit at which the current register value starts at
-                        // LSBIT - the least significant bit at which the current register value ends at
-                        static RegularExpression g_bitfield_regex("([A-Za-z_][A-Za-z0-9_]*)\\[([0-9]+):([0-9]+)\\]");
-                        RegularExpression::Match regex_match(3);
-                        if (g_bitfield_regex.Execute(slice_cstr, &regex_match))
+                        const uint32_t msbit = StringConvert::ToUInt32(msbit_str.c_str(), UINT32_MAX);
+                        const uint32_t lsbit = StringConvert::ToUInt32(lsbit_str.c_str(), UINT32_MAX);
+                        if (msbit != UINT32_MAX && lsbit != UINT32_MAX)
                         {
-                            llvm::StringRef reg_name_str;
-                            std::string msbit_str;
-                            std::string lsbit_str;
-                            if (regex_match.GetMatchAtIndex(slice_cstr, 1, reg_name_str) &&
-                                regex_match.GetMatchAtIndex(slice_cstr, 2, msbit_str) &&
-                                regex_match.GetMatchAtIndex(slice_cstr, 3, lsbit_str))
+                            if (msbit > lsbit)
                             {
-                                const uint32_t msbit = StringConvert::ToUInt32(msbit_str.c_str(), UINT32_MAX);
-                                const uint32_t lsbit = StringConvert::ToUInt32(lsbit_str.c_str(), UINT32_MAX);
-                                if (msbit != UINT32_MAX && lsbit != UINT32_MAX)
-                                {
-                                    if (msbit > lsbit)
-                                    {
-                                        const uint32_t msbyte = msbit / 8;
-                                        const uint32_t lsbyte = lsbit / 8;
+                                const uint32_t msbyte = msbit / 8;
+                                const uint32_t lsbyte = lsbit / 8;
 
-                                        ConstString containing_reg_name(reg_name_str);
-                                        
-                                        RegisterInfo *containing_reg_info = GetRegisterInfo (containing_reg_name);
-                                        if (containing_reg_info)
+                                ConstString containing_reg_name(reg_name_str);
+
+                                RegisterInfo *containing_reg_info = GetRegisterInfo(containing_reg_name);
+                                if (containing_reg_info)
+                                {
+                                    const uint32_t max_bit = containing_reg_info->byte_size * 8;
+                                    if (msbit < max_bit && lsbit < max_bit)
+                                    {
+                                        m_invalidate_regs_map[containing_reg_info->kinds[eRegisterKindLLDB]].push_back(i);
+                                        m_value_regs_map[i].push_back(containing_reg_info->kinds[eRegisterKindLLDB]);
+                                        m_invalidate_regs_map[i].push_back(containing_reg_info->kinds[eRegisterKindLLDB]);
+
+                                        if (byte_order == eByteOrderLittle)
                                         {
-                                            const uint32_t max_bit = containing_reg_info->byte_size * 8;
-                                            if (msbit < max_bit && lsbit < max_bit)
-                                            {
-                                                m_invalidate_regs_map[containing_reg_info->kinds[eRegisterKindLLDB]].push_back(i);
-                                                m_value_regs_map[i].push_back(containing_reg_info->kinds[eRegisterKindLLDB]);
-                                                m_invalidate_regs_map[i].push_back(containing_reg_info->kinds[eRegisterKindLLDB]);
-                                                
-                                                if (byte_order == eByteOrderLittle)
-                                                {
-                                                    success = true;
-                                                    reg_info.byte_offset = containing_reg_info->byte_offset + lsbyte;
-                                                }
-                                                else if (byte_order == eByteOrderBig)
-                                                {
-                                                    success = true;
-                                                    reg_info.byte_offset = containing_reg_info->byte_offset + msbyte;
-                                                }
-                                                else
-                                                {
-                                                    assert(!"Invalid byte order");
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (msbit > max_bit)
-                                                    printf("error: msbit (%u) must be less than the bitsize of the register (%u)\n", msbit, max_bit);
-                                                else
-                                                    printf("error: lsbit (%u) must be less than the bitsize of the register (%u)\n", lsbit, max_bit);
-                                            }
+                                            success = true;
+                                            reg_info.byte_offset = containing_reg_info->byte_offset + lsbyte;
+                                        }
+                                        else if (byte_order == eByteOrderBig)
+                                        {
+                                            success = true;
+                                            reg_info.byte_offset = containing_reg_info->byte_offset + msbyte;
                                         }
                                         else
                                         {
-                                            printf("error: invalid concrete register \"%s\"\n", containing_reg_name.GetCString());
+                                            assert(!"Invalid byte order");
                                         }
                                     }
                                     else
                                     {
-                                        printf("error: msbit (%u) must be greater than lsbit (%u)\n", msbit, lsbit);
+                                        if (msbit > max_bit)
+                                            printf("error: msbit (%u) must be less than the bitsize of the register (%u)\n", msbit,
+                                                   max_bit);
+                                        else
+                                            printf("error: lsbit (%u) must be less than the bitsize of the register (%u)\n", lsbit,
+                                                   max_bit);
                                     }
                                 }
                                 else
                                 {
-                                    printf("error: msbit (%u) and lsbit (%u) must be valid\n", msbit, lsbit);
+                                    printf("error: invalid concrete register \"%s\"\n", containing_reg_name.GetCString());
                                 }
                             }
                             else
                             {
-                                // TODO: print error invalid slice string that doesn't follow the format
-                                printf("error: failed to extract regex matches for parsing the register bitfield regex\n");
-
+                                printf("error: msbit (%u) must be greater than lsbit (%u)\n", msbit, lsbit);
                             }
                         }
                         else
                         {
-                            // TODO: print error invalid slice string that doesn't follow the format
-                            printf("error: failed to match against register bitfield regex\n");
+                            printf("error: msbit (%u) and lsbit (%u) must be valid\n", msbit, lsbit);
                         }
                     }
                     else
                     {
-                        PythonList composite_reg_list (reg_info_dict.GetItemForKey(composite_pystr));
-                        if (composite_reg_list)
-                        {
-                            const size_t num_composite_regs = composite_reg_list.GetSize();
-                            if (num_composite_regs > 0)
-                            {
-                                uint32_t composite_offset = UINT32_MAX;
-                                for (uint32_t composite_idx=0; composite_idx<num_composite_regs; ++composite_idx)
-                                {
-                                    PythonString composite_reg_name_pystr(composite_reg_list.GetItemAtIndex(composite_idx));
-                                    if (composite_reg_name_pystr)
-                                    {
-                                        ConstString composite_reg_name(composite_reg_name_pystr.GetString());
-                                        if (composite_reg_name)
-                                        {
-                                            RegisterInfo *composite_reg_info = GetRegisterInfo (composite_reg_name);
-                                            if (composite_reg_info)
-                                            {
-                                                if (composite_offset > composite_reg_info->byte_offset)
-                                                    composite_offset = composite_reg_info->byte_offset;
-                                                m_value_regs_map[i].push_back(composite_reg_info->kinds[eRegisterKindLLDB]);
-                                                m_invalidate_regs_map[composite_reg_info->kinds[eRegisterKindLLDB]].push_back(i);
-                                                m_invalidate_regs_map[i].push_back(composite_reg_info->kinds[eRegisterKindLLDB]);
-                                            }
-                                            else
-                                            {
-                                                // TODO: print error invalid slice string that doesn't follow the format
-                                                printf("error: failed to find composite register by name: \"%s\"\n", composite_reg_name.GetCString());
-                                            }
-                                        }
-                                        else
-                                        {
-                                            printf("error: 'composite' key contained an empty string\n");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        printf("error: 'composite' list value wasn't a python string\n");
-                                    }
-                                }
-                                if (composite_offset != UINT32_MAX)
-                                {
-                                    reg_info.byte_offset = composite_offset;
-                                    success = m_value_regs_map.find(i) != m_value_regs_map.end();
-                                }
-                                else
-                                {
-                                    printf("error: 'composite' registers must specify at least one real register\n");
-                                }
-                            }
-                            else
-                            {
-                                printf("error: 'composite' list was empty\n");
-                            }
-                        }
-                    }
-                    
-                    
-                    if (!success)
-                    {
-                        Clear();
-                        reg_info_dict.Dump();
-                        return 0;
-                    }
-                }
-                const int64_t bitsize = reg_info_dict.GetItemForKeyAsInteger(bitsize_pystr, 0);
-                if (bitsize == 0)
-                {
-                    Clear();
-                    printf("error: invalid or missing 'bitsize' key/value pair in register dictionary\n");
-                    reg_info_dict.Dump();
-                    return 0;
-                }
-
-                reg_info.byte_size =  bitsize / 8;
-                
-                const char *format_cstr = reg_info_dict.GetItemForKeyAsString(format_pystr);
-                if (format_cstr)
-                {
-                    if (Args::StringToFormat(format_cstr, reg_info.format, NULL).Fail())
-                    {
-                        Clear();
-                        printf("error: invalid 'format' value in register dictionary\n");
-                        reg_info_dict.Dump();
-                        return 0;
+                        // TODO: print error invalid slice string that doesn't follow the format
+                        printf("error: failed to extract regex matches for parsing the register bitfield regex\n");
                     }
                 }
                 else
                 {
-                    reg_info.format = (Format)reg_info_dict.GetItemForKeyAsInteger (format_pystr, eFormatHex);
+                    // TODO: print error invalid slice string that doesn't follow the format
+                    printf("error: failed to match against register bitfield regex\n");
                 }
-                
-                const char *encoding_cstr = reg_info_dict.GetItemForKeyAsString(encoding_pystr);
-                if (encoding_cstr)
-                    reg_info.encoding = Args::StringToEncoding (encoding_cstr, eEncodingUint);
-                else
-                    reg_info.encoding = (Encoding)reg_info_dict.GetItemForKeyAsInteger (encoding_pystr, eEncodingUint);
-
-                const int64_t set = reg_info_dict.GetItemForKeyAsInteger(set_pystr, -1);
-                if (static_cast<size_t>(set) >= m_sets.size())
-                {
-                    Clear();
-                    printf("error: invalid 'set' value in register dictionary, valid values are 0 - %i\n", (int)set);
-                    reg_info_dict.Dump();
-                    return 0;
-                }
-
-                // Fill in the register numbers
-                reg_info.kinds[lldb::eRegisterKindLLDB]    = i;
-                reg_info.kinds[lldb::eRegisterKindGDB]     = i;
-                reg_info.kinds[lldb::eRegisterKindGCC]     = reg_info_dict.GetItemForKeyAsInteger(gcc_pystr, LLDB_INVALID_REGNUM);
-                reg_info.kinds[lldb::eRegisterKindDWARF]   = reg_info_dict.GetItemForKeyAsInteger(dwarf_pystr, LLDB_INVALID_REGNUM);
-                const char *generic_cstr = reg_info_dict.GetItemForKeyAsString(generic_pystr);
-                if (generic_cstr)
-                    reg_info.kinds[lldb::eRegisterKindGeneric] = Args::StringToGenericRegister (generic_cstr);
-                else
-                    reg_info.kinds[lldb::eRegisterKindGeneric] = reg_info_dict.GetItemForKeyAsInteger(generic_pystr, LLDB_INVALID_REGNUM);
-
-                // Check if this register invalidates any other register values when it is modified
-                PythonList invalidate_reg_list (reg_info_dict.GetItemForKey(invalidate_regs_pystr));
-                if (invalidate_reg_list)
-                {
-                    const size_t num_regs = invalidate_reg_list.GetSize();
-                    if (num_regs > 0)
-                    {
-                        for (uint32_t idx=0; idx<num_regs; ++idx)
-                        {
-                            PythonObject invalidate_reg_object (invalidate_reg_list.GetItemAtIndex(idx));
-                            PythonString invalidate_reg_name_pystr(invalidate_reg_object);
-                            if (invalidate_reg_name_pystr)
-                            {
-                                ConstString invalidate_reg_name(invalidate_reg_name_pystr.GetString());
-                                if (invalidate_reg_name)
-                                {
-                                    RegisterInfo *invalidate_reg_info = GetRegisterInfo (invalidate_reg_name);
-                                    if (invalidate_reg_info)
-                                    {
-                                        m_invalidate_regs_map[i].push_back(invalidate_reg_info->kinds[eRegisterKindLLDB]);
-                                    }
-                                    else
-                                    {
-                                        // TODO: print error invalid slice string that doesn't follow the format
-                                        printf("error: failed to find a 'invalidate-regs' register for \"%s\" while parsing register \"%s\"\n", invalidate_reg_name.GetCString(), reg_info.name);
-                                    }
-                                }
-                                else
-                                {
-                                    printf("error: 'invalidate-regs' list value was an empty string\n");
-                                }
-                            }
-                            else
-                            {
-                                PythonInteger invalidate_reg_num(invalidate_reg_object);
-
-                                if (invalidate_reg_num)
-                                {
-                                    const int64_t r = invalidate_reg_num.GetInteger();
-                                    if (r != static_cast<int64_t>(UINT64_MAX))
-                                        m_invalidate_regs_map[i].push_back(r);
-                                    else
-                                        printf("error: 'invalidate-regs' list value wasn't a valid integer\n");
-                                }
-                                else
-                                {
-                                    printf("error: 'invalidate-regs' list value wasn't a python string or integer\n");
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        printf("error: 'invalidate-regs' contained an empty list\n");
-                    }
-                }
-
-                // Calculate the register offset
-                const size_t end_reg_offset = reg_info.byte_offset + reg_info.byte_size;
-                if (m_reg_data_byte_size < end_reg_offset)
-                    m_reg_data_byte_size = end_reg_offset;
-
-                m_regs.push_back (reg_info);
-                m_set_reg_nums[set].push_back(i);
-
             }
             else
             {
+                StructuredData::Array *composite_reg_list = nullptr;
+                if (reg_info_dict->GetValueForKeyAsArray("composite", composite_reg_list))
+                {
+                    const size_t num_composite_regs = composite_reg_list->GetSize();
+                    if (num_composite_regs > 0)
+                    {
+                        uint32_t composite_offset = UINT32_MAX;
+                        for (uint32_t composite_idx = 0; composite_idx < num_composite_regs; ++composite_idx)
+                        {
+                            ConstString composite_reg_name;
+                            if (composite_reg_list->GetItemAtIndexAsString(composite_idx, composite_reg_name, nullptr))
+                            {
+                                RegisterInfo *composite_reg_info = GetRegisterInfo(composite_reg_name);
+                                if (composite_reg_info)
+                                {
+                                    composite_offset = std::min(composite_offset, composite_reg_info->byte_offset);
+                                    m_value_regs_map[i].push_back(composite_reg_info->kinds[eRegisterKindLLDB]);
+                                    m_invalidate_regs_map[composite_reg_info->kinds[eRegisterKindLLDB]].push_back(i);
+                                    m_invalidate_regs_map[i].push_back(composite_reg_info->kinds[eRegisterKindLLDB]);
+                                }
+                                else
+                                {
+                                    // TODO: print error invalid slice string that doesn't follow the format
+                                    printf("error: failed to find composite register by name: \"%s\"\n", composite_reg_name.GetCString());
+                                }
+                            }
+                            else
+                            {
+                                printf("error: 'composite' list value wasn't a python string\n");
+                            }
+                        }
+                        if (composite_offset != UINT32_MAX)
+                        {
+                            reg_info.byte_offset = composite_offset;
+                            success = m_value_regs_map.find(i) != m_value_regs_map.end();
+                        }
+                        else
+                        {
+                            printf("error: 'composite' registers must specify at least one real register\n");
+                        }
+                    }
+                    else
+                    {
+                        printf("error: 'composite' list was empty\n");
+                    }
+                }
+            }
+
+            if (!success)
+            {
                 Clear();
-                printf("error: items in the 'registers' array must be dictionaries\n");
-                regs.Dump();
+                reg_info_dict->DumpToStdout();
                 return 0;
             }
         }
-        Finalize ();
+
+        int64_t bitsize = 0;
+        if (!reg_info_dict->GetValueForKeyAsInteger("bitsize", bitsize))
+        {
+            Clear();
+            printf("error: invalid or missing 'bitsize' key/value pair in register dictionary\n");
+            reg_info_dict->DumpToStdout();
+            return 0;
+        }
+
+        reg_info.byte_size = bitsize / 8;
+
+        std::string format_str;
+        if (reg_info_dict->GetValueForKeyAsString("format", format_str, nullptr))
+        {
+            if (Args::StringToFormat(format_str.c_str(), reg_info.format, NULL).Fail())
+            {
+                Clear();
+                printf("error: invalid 'format' value in register dictionary\n");
+                reg_info_dict->DumpToStdout();
+                return 0;
+            }
+        }
+        else
+        {
+            reg_info_dict->GetValueForKeyAsInteger("format", reg_info.format, eFormatHex);
+        }
+
+        std::string encoding_str;
+        if (reg_info_dict->GetValueForKeyAsString("encoding", encoding_str))
+            reg_info.encoding = Args::StringToEncoding(encoding_str.c_str(), eEncodingUint);
+        else
+            reg_info_dict->GetValueForKeyAsInteger("encoding", reg_info.encoding, eEncodingUint);
+
+        size_t set = 0;
+        if (!reg_info_dict->GetValueForKeyAsInteger<size_t>("set", set, -1) || set >= m_sets.size())
+        {
+            Clear();
+            printf("error: invalid 'set' value in register dictionary, valid values are 0 - %i\n", (int)set);
+            reg_info_dict->DumpToStdout();
+            return 0;
+        }
+
+        // Fill in the register numbers
+        reg_info.kinds[lldb::eRegisterKindLLDB] = i;
+        reg_info.kinds[lldb::eRegisterKindGDB] = i;
+        reg_info_dict->GetValueForKeyAsInteger("gcc", reg_info.kinds[lldb::eRegisterKindGCC], LLDB_INVALID_REGNUM);
+        reg_info_dict->GetValueForKeyAsInteger("dwarf", reg_info.kinds[lldb::eRegisterKindDWARF], LLDB_INVALID_REGNUM);
+        std::string generic_str;
+        if (reg_info_dict->GetValueForKeyAsString("generic", generic_str))
+            reg_info.kinds[lldb::eRegisterKindGeneric] = Args::StringToGenericRegister(generic_str.c_str());
+        else
+            reg_info_dict->GetValueForKeyAsInteger("generic", reg_info.kinds[lldb::eRegisterKindGeneric], LLDB_INVALID_REGNUM);
+
+        // Check if this register invalidates any other register values when it is modified
+        StructuredData::Array *invalidate_reg_list = nullptr;
+        if (reg_info_dict->GetValueForKeyAsArray("invalidate-regs", invalidate_reg_list))
+        {
+            const size_t num_regs = invalidate_reg_list->GetSize();
+            if (num_regs > 0)
+            {
+                for (uint32_t idx = 0; idx < num_regs; ++idx)
+                {
+                    ConstString invalidate_reg_name;
+                    uint64_t invalidate_reg_num;
+                    if (invalidate_reg_list->GetItemAtIndexAsString(idx, invalidate_reg_name))
+                    {
+                        RegisterInfo *invalidate_reg_info = GetRegisterInfo(invalidate_reg_name);
+                        if (invalidate_reg_info)
+                        {
+                            m_invalidate_regs_map[i].push_back(invalidate_reg_info->kinds[eRegisterKindLLDB]);
+                        }
+                        else
+                        {
+                            // TODO: print error invalid slice string that doesn't follow the format
+                            printf("error: failed to find a 'invalidate-regs' register for \"%s\" while parsing register \"%s\"\n",
+                                   invalidate_reg_name.GetCString(), reg_info.name);
+                        }
+                    }
+                    else if (invalidate_reg_list->GetItemAtIndexAsInteger(idx, invalidate_reg_num))
+                    {
+                        if (invalidate_reg_num != UINT64_MAX)
+                            m_invalidate_regs_map[i].push_back(invalidate_reg_num);
+                        else
+                            printf("error: 'invalidate-regs' list value wasn't a valid integer\n");
+                    }
+                    else
+                    {
+                        printf("error: 'invalidate-regs' list value wasn't a python string or integer\n");
+                    }
+                }
+            }
+            else
+            {
+                printf("error: 'invalidate-regs' contained an empty list\n");
+            }
+        }
+
+        // Calculate the register offset
+        const size_t end_reg_offset = reg_info.byte_offset + reg_info.byte_size;
+        if (m_reg_data_byte_size < end_reg_offset)
+            m_reg_data_byte_size = end_reg_offset;
+
+        m_regs.push_back(reg_info);
+        m_set_reg_nums[set].push_back(i);
     }
-#endif
+    Finalize();
     return m_regs.size();
 }
 

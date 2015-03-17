@@ -196,7 +196,7 @@ ScriptedSyntheticChildren::FrontEnd::GetChildAtIndex (size_t idx)
 bool
 ScriptedSyntheticChildren::FrontEnd::IsValid ()
 {
-    return m_wrapper_sp.get() != nullptr && m_wrapper_sp->operator bool() && m_interpreter != nullptr;
+    return (m_wrapper_sp && m_wrapper_sp->IsValid() && m_interpreter);
 }
 
 size_t

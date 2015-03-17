@@ -79,77 +79,45 @@ public:
     
     bool
     GenerateScriptAliasFunction (StringList &input, std::string& output) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    CreateSyntheticScriptedProvider (const char *class_name,
-                                     lldb::ValueObjectSP valobj) override;
 
-    lldb::ScriptInterpreterObjectSP
-    CreateScriptCommandObject (const char *class_name) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    CreateScriptedThreadPlan (const char *class_name,
-                              lldb::ThreadPlanSP thread_plan) override;
+    StructuredData::ObjectSP CreateSyntheticScriptedProvider(const char *class_name, lldb::ValueObjectSP valobj) override;
 
-    bool
-    ScriptedThreadPlanExplainsStop (lldb::ScriptInterpreterObjectSP implementor_sp,
-                                    Event *event,
-                                    bool &script_error) override;
-    bool
-    ScriptedThreadPlanShouldStop (lldb::ScriptInterpreterObjectSP implementor_sp,
-                                  Event *event,
-                                  bool &script_error) override;
-    lldb::StateType
-    ScriptedThreadPlanGetRunState (lldb::ScriptInterpreterObjectSP implementor_sp,
-                                   bool &script_error) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    OSPlugin_CreatePluginObject (const char *class_name,
-                                 lldb::ProcessSP process_sp) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    OSPlugin_RegisterContextData (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
-                                  lldb::tid_t thread_id) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
-                           lldb::tid_t tid,
-                           lldb::addr_t context) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    LoadPluginModule (const FileSpec& file_spec,
-                      lldb_private::Error& error) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    GetDynamicSettings (lldb::ScriptInterpreterObjectSP plugin_module_sp,
-                        Target* target,
-                        const char* setting_name,
-                        lldb_private::Error& error) override;
-    
-    size_t
-    CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor) override;
-    
-    lldb::ValueObjectSP
-    GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor, uint32_t idx) override;
-    
-    int
-    GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor, const char* child_name) override;
-    
-    bool
-    UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor) override;
-    
-    bool
-    MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor) override;
-    
-    lldb::ValueObjectSP
-    GetSyntheticValue (const lldb::ScriptInterpreterObjectSP& implementor) override;
-    
+    StructuredData::GenericSP CreateScriptCommandObject (const char *class_name) override;
+
+    StructuredData::ObjectSP CreateScriptedThreadPlan(const char *class_name, lldb::ThreadPlanSP thread_plan) override;
+
+    bool ScriptedThreadPlanExplainsStop(StructuredData::ObjectSP implementor_sp, Event *event, bool &script_error) override;
+    bool ScriptedThreadPlanShouldStop(StructuredData::ObjectSP implementor_sp, Event *event, bool &script_error) override;
+    lldb::StateType ScriptedThreadPlanGetRunState(StructuredData::ObjectSP implementor_sp, bool &script_error) override;
+
+    StructuredData::GenericSP OSPlugin_CreatePluginObject(const char *class_name, lldb::ProcessSP process_sp) override;
+
+    StructuredData::DictionarySP OSPlugin_RegisterInfo(StructuredData::ObjectSP os_plugin_object_sp) override;
+
+    StructuredData::ArraySP OSPlugin_ThreadsInfo(StructuredData::ObjectSP os_plugin_object_sp) override;
+
+    StructuredData::StringSP OSPlugin_RegisterContextData(StructuredData::ObjectSP os_plugin_object_sp, lldb::tid_t thread_id) override;
+
+    StructuredData::DictionarySP OSPlugin_CreateThread(StructuredData::ObjectSP os_plugin_object_sp, lldb::tid_t tid,
+                                                       lldb::addr_t context) override;
+
+    StructuredData::ObjectSP LoadPluginModule(const FileSpec &file_spec, lldb_private::Error &error) override;
+
+    StructuredData::DictionarySP GetDynamicSettings(StructuredData::ObjectSP plugin_module_sp, Target *target, const char *setting_name,
+                                                    lldb_private::Error &error) override;
+
+    size_t CalculateNumChildren(const StructuredData::ObjectSP &implementor) override;
+
+    lldb::ValueObjectSP GetChildAtIndex(const StructuredData::ObjectSP &implementor, uint32_t idx) override;
+
+    int GetIndexOfChildWithName(const StructuredData::ObjectSP &implementor, const char *child_name) override;
+
+    bool UpdateSynthProviderInstance(const StructuredData::ObjectSP &implementor) override;
+
+    bool MightHaveChildrenSynthProviderInstance(const StructuredData::ObjectSP &implementor) override;
+
+    lldb::ValueObjectSP GetSyntheticValue(const StructuredData::ObjectSP &implementor) override;
+
     bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,
@@ -159,7 +127,7 @@ public:
                           const lldb_private::ExecutionContext& exe_ctx) override;
     
     bool
-    RunScriptBasedCommand (lldb::ScriptInterpreterObjectSP impl_obj_sp,
+    RunScriptBasedCommand (StructuredData::GenericSP impl_obj_sp,
                            const char* args,
                            ScriptedCommandSynchronicity synchronicity,
                            lldb_private::CommandReturnObject& cmd_retobj,
@@ -199,14 +167,10 @@ public:
     WatchpointCallbackFunction (void *baton, 
                                 StoppointCallbackContext *context, 
                                 lldb::user_id_t watch_id);
-    
-    bool
-    GetScriptedSummary (const char *function_name,
-                        lldb::ValueObjectSP valobj,
-                        lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
-                        const TypeSummaryOptions& options,
-                        std::string& retval) override;
-    
+
+    bool GetScriptedSummary(const char *function_name, lldb::ValueObjectSP valobj, StructuredData::ObjectSP &callee_wrapper_sp,
+                            const TypeSummaryOptions &options, std::string &retval) override;
+
     void
     Clear () override;
 
@@ -214,12 +178,10 @@ public:
     GetDocumentationForItem (const char* item, std::string& dest) override;
     
     bool
-    GetShortHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
-                                  std::string& dest) override;
+    GetShortHelpForCommandObject(StructuredData::GenericSP cmd_obj_sp, std::string& dest) override;
     
     bool
-    GetLongHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
-                                 std::string& dest) override ;
+    GetLongHelpForCommandObject(StructuredData::GenericSP cmd_obj_sp, std::string& dest) override;
     
     bool
     CheckObjectExists (const char* name) override
@@ -259,20 +221,13 @@ public:
                             ValueObject* value,
                             std::string& output,
                             Error& error) override;
-    
-    bool
-    LoadScriptingModule (const char* filename,
-                         bool can_reload,
-                         bool init_session,
-                         lldb_private::Error& error,
-                         lldb::ScriptInterpreterObjectSP* module_sp = nullptr) override;
-    
+
+    bool LoadScriptingModule(const char *filename, bool can_reload, bool init_session, lldb_private::Error &error,
+                             StructuredData::ObjectSP *module_sp = nullptr) override;
+
     bool
     IsReservedWord (const char* word) override;
-    
-    lldb::ScriptInterpreterObjectSP
-    MakeScriptObject (void* object) override;
-    
+
     std::unique_ptr<ScriptInterpreterLocker>
     AcquireInterpreterLock () override;
     
@@ -393,35 +348,6 @@ protected:
         ~SynchronicityHandler();
     };
     
-    class ScriptInterpreterPythonObject : public ScriptInterpreterObject
-    {
-    public:
-        ScriptInterpreterPythonObject() :
-        ScriptInterpreterObject()
-        {}
-        
-        ScriptInterpreterPythonObject(void* obj) :
-        ScriptInterpreterObject(obj)
-        {
-            Py_XINCREF(m_object);
-        }
-        
-        explicit operator bool ()
-        {
-            return m_object && m_object != Py_None;
-        }
-        
-        
-        virtual
-        ~ScriptInterpreterPythonObject()
-        {
-            if (Py_IsInitialized())
-                Py_XDECREF(m_object);
-            m_object = NULL;
-        }
-        private:
-            DISALLOW_COPY_AND_ASSIGN (ScriptInterpreterPythonObject);
-    };
 public:
 	class Locker : public ScriptInterpreterLocker
 	{

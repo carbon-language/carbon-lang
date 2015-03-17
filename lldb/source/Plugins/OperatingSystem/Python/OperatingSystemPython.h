@@ -14,10 +14,15 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-#include "lldb/Interpreter/ScriptInterpreter.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Target/OperatingSystem.h"
 
 class DynamicRegisterInfo;
+
+namespace lldb_private
+{
+class ScriptInterpreter;
+}
 
 class OperatingSystemPython : public lldb_private::OperatingSystem
 {
@@ -86,15 +91,12 @@ protected:
     
     bool IsValid() const
     {
-        return m_python_object_sp && m_python_object_sp->GetObject() != NULL;
+        return m_python_object_sp && m_python_object_sp->IsValid();
     }
-    
-    lldb::ThreadSP
-    CreateThreadFromThreadInfo (lldb_private::PythonDictionary &thread_dict,
-                                lldb_private::ThreadList &core_thread_list,
-                                lldb_private::ThreadList &old_thread_list,
-                                std::vector<bool> &core_used_map,
-                                bool *did_create_ptr);
+
+    lldb::ThreadSP CreateThreadFromThreadInfo(lldb_private::StructuredData::Dictionary &thread_dict,
+                                              lldb_private::ThreadList &core_thread_list, lldb_private::ThreadList &old_thread_list,
+                                              std::vector<bool> &core_used_map, bool *did_create_ptr);
 
     DynamicRegisterInfo *
     GetDynamicRegisterInfo ();
@@ -102,8 +104,7 @@ protected:
     lldb::ValueObjectSP m_thread_list_valobj_sp;
     std::unique_ptr<DynamicRegisterInfo> m_register_info_ap;
     lldb_private::ScriptInterpreter *m_interpreter;
-    lldb::ScriptInterpreterObjectSP m_python_object_sp;
-    
+    lldb_private::StructuredData::ObjectSP m_python_object_sp;
 };
 
 #endif // #ifndef liblldb_OperatingSystemPython_h_

@@ -16,6 +16,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
@@ -68,8 +69,8 @@ protected:
     GetPlanRunState ();
 
 private:
-    std::string                     m_class_name;
-    lldb::ScriptInterpreterObjectSP m_implementation_sp;
+  std::string m_class_name;
+  StructuredData::ObjectSP m_implementation_sp;
 
     DISALLOW_COPY_AND_ASSIGN(ThreadPlanPython);
 };

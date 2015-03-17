@@ -52,9 +52,6 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/Property.h"
-#ifndef LLDB_DISABLE_PYTHON
-#include "lldb/Interpreter/PythonDataObjects.h"
-#endif
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
@@ -337,41 +334,47 @@ ProcessGDBRemote::GetPluginVersion()
 bool
 ProcessGDBRemote::ParsePythonTargetDefinition(const FileSpec &target_definition_fspec)
 {
-#ifndef LLDB_DISABLE_PYTHON
     ScriptInterpreter *interpreter = GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     Error error;
-    lldb::ScriptInterpreterObjectSP module_object_sp (interpreter->LoadPluginModule(target_definition_fspec, error));
+    StructuredData::ObjectSP module_object_sp(interpreter->LoadPluginModule(target_definition_fspec, error));
     if (module_object_sp)
     {
-        lldb::ScriptInterpreterObjectSP target_definition_sp (interpreter->GetDynamicSettings(module_object_sp,
-                                                                                              &GetTarget(),
-                                                                                              "gdb-server-target-definition",
-                                                                                              error));
-        
-        PythonDictionary target_dict(target_definition_sp);
+        StructuredData::DictionarySP target_definition_sp(
+            interpreter->GetDynamicSettings(module_object_sp, &GetTarget(), "gdb-server-target-definition", error));
 
-        if (target_dict)
+        if (target_definition_sp)
         {
-            PythonDictionary host_info_dict (target_dict.GetItemForKey("host-info"));
-            if (host_info_dict)
+            StructuredData::ObjectSP target_object(target_definition_sp->GetValueForKey("host-info"));
+            if (target_object)
             {
-                ArchSpec host_arch (host_info_dict.GetItemForKeyAsString(PythonString("triple")));
-                
-                if (!host_arch.IsCompatibleMatch(GetTarget().GetArchitecture()))
+                if (auto host_info_dict = target_object->GetAsDictionary())
                 {
-                    GetTarget().SetArchitecture(host_arch);
+                    StructuredData::ObjectSP triple_value = host_info_dict->GetValueForKey("triple");
+                    if (auto triple_string_value = triple_value->GetAsString())
+                    {
+                        std::string triple_string = triple_string_value->GetValue();
+                        ArchSpec host_arch(triple_string.c_str());
+                        if (!host_arch.IsCompatibleMatch(GetTarget().GetArchitecture()))
+                        {
+                            GetTarget().SetArchitecture(host_arch);
+                        }
+                    }
                 }
-                    
             }
-            m_breakpoint_pc_offset = target_dict.GetItemForKeyAsInteger("breakpoint-pc-offset", 0);
+            m_breakpoint_pc_offset = 0;
+            StructuredData::ObjectSP breakpoint_pc_offset_value = target_definition_sp->GetValueForKey("breakpoint-pc-offset");
+            if (breakpoint_pc_offset_value)
+            {
+                if (auto breakpoint_pc_int_value = breakpoint_pc_offset_value->GetAsInteger())
+                    m_breakpoint_pc_offset = breakpoint_pc_int_value->GetValue();
+            }
 
-            if (m_register_info.SetRegisterInfo (target_dict, GetTarget().GetArchitecture().GetByteOrder()) > 0)
+            if (m_register_info.SetRegisterInfo(*target_definition_sp, GetTarget().GetArchitecture().GetByteOrder()) > 0)
             {
                 return true;
             }
         }
     }
-#endif
     return false;
 }
 

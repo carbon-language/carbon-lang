@@ -1352,15 +1352,15 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::st
     return true;
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::OSPlugin_CreatePluginObject (const char *class_name, lldb::ProcessSP process_sp)
+StructuredData::GenericSP
+ScriptInterpreterPython::OSPlugin_CreatePluginObject(const char *class_name, lldb::ProcessSP process_sp)
 {
     if (class_name == nullptr || class_name[0] == '\0')
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::GenericSP();
+
     if (!process_sp)
-        return lldb::ScriptInterpreterObjectSP();
-        
+        return StructuredData::GenericSP();
+
     void* ret_val;
     
     {
@@ -1371,12 +1371,12 @@ ScriptInterpreterPython::OSPlugin_CreatePluginObject (const char *class_name, ll
                                               m_dictionary_name.c_str(),
                                               process_sp);
     }
-    
-    return MakeScriptObject(ret_val);
+
+    return StructuredData::GenericSP(new StructuredPythonObject(ret_val));
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp)
+StructuredData::DictionarySP
+ScriptInterpreterPython::OSPlugin_RegisterInfo(StructuredData::ObjectSP os_plugin_object_sp)
 {
     Locker py_lock(this,
                    Locker::AcquireLock | Locker::NoSTDIN,
@@ -1385,13 +1385,17 @@ ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP 
     static char callee_name[] = "get_register_info";
     
     if (!os_plugin_object_sp)
-        return lldb::ScriptInterpreterObjectSP();
-    
-    PyObject* implementor = (PyObject*)os_plugin_object_sp->GetObject();
-    
+        return StructuredData::DictionarySP();
+
+    StructuredData::Generic *generic = os_plugin_object_sp->GetAsGeneric();
+    if (!generic)
+        return nullptr;
+
+    PyObject *implementor = (PyObject *)generic->GetValue();
+
     if (implementor == nullptr || implementor == Py_None)
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::DictionarySP();
+
     PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
     
     if (PyErr_Occurred())
@@ -1402,7 +1406,7 @@ ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP 
     if (pmeth == nullptr || pmeth == Py_None)
     {
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::DictionarySP();
     }
     
     if (PyCallable_Check(pmeth) == 0)
@@ -1413,7 +1417,7 @@ ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP 
         }
         
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::DictionarySP();
     }
     
     if (PyErr_Occurred())
@@ -1432,27 +1436,31 @@ ScriptInterpreterPython::OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP 
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    return MakeScriptObject(py_return);
+
+    PythonDictionary result_dict(py_return);
+    return result_dict.CreateStructuredDictionary();
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp)
+StructuredData::ArraySP
+ScriptInterpreterPython::OSPlugin_ThreadsInfo(StructuredData::ObjectSP os_plugin_object_sp)
 {
     Locker py_lock (this,
                     Locker::AcquireLock | Locker::NoSTDIN,
                     Locker::FreeLock);
 
     static char callee_name[] = "get_thread_info";
-    
+
     if (!os_plugin_object_sp)
-        return lldb::ScriptInterpreterObjectSP();
-    
-    PyObject* implementor = (PyObject*)os_plugin_object_sp->GetObject();
-    
+        return StructuredData::ArraySP();
+
+    StructuredData::Generic *generic = os_plugin_object_sp->GetAsGeneric();
+    if (!generic)
+        return nullptr;
+    PyObject *implementor = (PyObject *)generic->GetValue();
+
     if (implementor == nullptr || implementor == Py_None)
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::ArraySP();
+
     PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
     
     if (PyErr_Occurred())
@@ -1463,7 +1471,7 @@ ScriptInterpreterPython::OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP o
     if (pmeth == nullptr || pmeth == Py_None)
     {
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::ArraySP();
     }
     
     if (PyCallable_Check(pmeth) == 0)
@@ -1474,7 +1482,7 @@ ScriptInterpreterPython::OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP o
         }
         
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::ArraySP();
     }
     
     if (PyErr_Occurred())
@@ -1493,8 +1501,9 @@ ScriptInterpreterPython::OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP o
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    return MakeScriptObject(py_return);
+
+    PythonList ResultList(py_return);
+    return ResultList.CreateStructuredArray();
 }
 
 // GetPythonValueFormatString provides a system independent type safe way to
@@ -1523,9 +1532,8 @@ template <> const char *GetPythonValueFormatString (unsigned long long) { return
 template <> const char *GetPythonValueFormatString (float t)            { return "f"; }
 template <> const char *GetPythonValueFormatString (double t)           { return "d"; }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::OSPlugin_RegisterContextData (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
-                                                       lldb::tid_t tid)
+StructuredData::StringSP
+ScriptInterpreterPython::OSPlugin_RegisterContextData(StructuredData::ObjectSP os_plugin_object_sp, lldb::tid_t tid)
 {
     Locker py_lock (this,
                     Locker::AcquireLock | Locker::NoSTDIN,
@@ -1535,12 +1543,15 @@ ScriptInterpreterPython::OSPlugin_RegisterContextData (lldb::ScriptInterpreterOb
     static char *param_format = const_cast<char *>(GetPythonValueFormatString(tid));
     
     if (!os_plugin_object_sp)
-        return lldb::ScriptInterpreterObjectSP();
-    
-    PyObject* implementor = (PyObject*)os_plugin_object_sp->GetObject();
-    
+        return StructuredData::StringSP();
+
+    StructuredData::Generic *generic = os_plugin_object_sp->GetAsGeneric();
+    if (!generic)
+        return nullptr;
+    PyObject *implementor = (PyObject *)generic->GetValue();
+
     if (implementor == nullptr || implementor == Py_None)
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::StringSP();
 
     PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
     
@@ -1552,7 +1563,7 @@ ScriptInterpreterPython::OSPlugin_RegisterContextData (lldb::ScriptInterpreterOb
     if (pmeth == nullptr || pmeth == Py_None)
     {
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::StringSP();
     }
     
     if (PyCallable_Check(pmeth) == 0)
@@ -1563,7 +1574,7 @@ ScriptInterpreterPython::OSPlugin_RegisterContextData (lldb::ScriptInterpreterOb
         }
         
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::StringSP();
     }
     
     if (PyErr_Occurred())
@@ -1582,14 +1593,12 @@ ScriptInterpreterPython::OSPlugin_RegisterContextData (lldb::ScriptInterpreterOb
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    return MakeScriptObject(py_return);
+    PythonString result_string(py_return);
+    return result_string.CreateStructuredString();
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
-                                                lldb::tid_t tid,
-                                                lldb::addr_t context)
+StructuredData::DictionarySP
+ScriptInterpreterPython::OSPlugin_CreateThread(StructuredData::ObjectSP os_plugin_object_sp, lldb::tid_t tid, lldb::addr_t context)
 {
     Locker py_lock(this,
                    Locker::AcquireLock | Locker::NoSTDIN,
@@ -1601,13 +1610,16 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
     param_format += GetPythonValueFormatString(context);
     
     if (!os_plugin_object_sp)
-        return lldb::ScriptInterpreterObjectSP();
-    
-    PyObject* implementor = (PyObject*)os_plugin_object_sp->GetObject();
-    
+        return StructuredData::DictionarySP();
+
+    StructuredData::Generic *generic = os_plugin_object_sp->GetAsGeneric();
+    if (!generic)
+        return nullptr;
+    PyObject *implementor = (PyObject *)generic->GetValue();
+
     if (implementor == nullptr || implementor == Py_None)
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::DictionarySP();
+
     PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
     
     if (PyErr_Occurred())
@@ -1618,7 +1630,7 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
     if (pmeth == nullptr || pmeth == Py_None)
     {
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::DictionarySP();
     }
     
     if (PyCallable_Check(pmeth) == 0)
@@ -1629,7 +1641,7 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
         }
         
         Py_XDECREF(pmeth);
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::DictionarySP();
     }
     
     if (PyErr_Occurred())
@@ -1648,27 +1660,27 @@ ScriptInterpreterPython::OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP 
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    return MakeScriptObject(py_return);
+
+    PythonDictionary result_dict(py_return);
+    return result_dict.CreateStructuredDictionary();
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::CreateScriptedThreadPlan (const char *class_name,
-                              lldb::ThreadPlanSP thread_plan_sp)
+StructuredData::ObjectSP
+ScriptInterpreterPython::CreateScriptedThreadPlan(const char *class_name, lldb::ThreadPlanSP thread_plan_sp)
 {
     if (class_name == nullptr || class_name[0] == '\0')
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::ObjectSP();
+
     if (!thread_plan_sp.get())
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::ObjectSP();
 
     Debugger &debugger = thread_plan_sp->GetTarget().GetDebugger();
     ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
     ScriptInterpreterPython *python_interpreter = static_cast<ScriptInterpreterPython *>(script_interpreter);
     
     if (!script_interpreter)
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::ObjectSP();
+
     void* ret_val;
 
     {
@@ -1678,20 +1690,21 @@ ScriptInterpreterPython::CreateScriptedThreadPlan (const char *class_name,
                                              python_interpreter->m_dictionary_name.c_str(),
                                              thread_plan_sp);
     }
-    
-    return MakeScriptObject(ret_val);
+
+    return StructuredData::ObjectSP(new StructuredPythonObject(ret_val));
 }
 
 bool
-ScriptInterpreterPython::ScriptedThreadPlanExplainsStop (lldb::ScriptInterpreterObjectSP implementor_sp,
-                                Event *event,
-                                bool &script_error)
+ScriptInterpreterPython::ScriptedThreadPlanExplainsStop(StructuredData::ObjectSP implementor_sp, Event *event, bool &script_error)
 {
     bool explains_stop = true;
+    StructuredData::Generic *generic = nullptr;
     if (implementor_sp)
+        generic = implementor_sp->GetAsGeneric();
+    if (generic)
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
-        explains_stop = g_swig_call_thread_plan (implementor_sp->GetObject(), "explains_stop", event, script_error);
+        explains_stop = g_swig_call_thread_plan(generic->GetValue(), "explains_stop", event, script_error);
         if (script_error)
             return true;
     }
@@ -1699,15 +1712,16 @@ ScriptInterpreterPython::ScriptedThreadPlanExplainsStop (lldb::ScriptInterpreter
 }
 
 bool
-ScriptInterpreterPython::ScriptedThreadPlanShouldStop (lldb::ScriptInterpreterObjectSP implementor_sp,
-                              Event *event,
-                              bool &script_error)
+ScriptInterpreterPython::ScriptedThreadPlanShouldStop(StructuredData::ObjectSP implementor_sp, Event *event, bool &script_error)
 {
     bool should_stop = true;
+    StructuredData::Generic *generic = nullptr;
     if (implementor_sp)
+        generic = implementor_sp->GetAsGeneric();
+    if (generic)
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
-        should_stop = g_swig_call_thread_plan (implementor_sp->GetObject(), "should_stop", event, script_error);
+        should_stop = g_swig_call_thread_plan(generic->GetValue(), "should_stop", event, script_error);
         if (script_error)
             return true;
     }
@@ -1715,14 +1729,16 @@ ScriptInterpreterPython::ScriptedThreadPlanShouldStop (lldb::ScriptInterpreterOb
 }
 
 lldb::StateType
-ScriptInterpreterPython::ScriptedThreadPlanGetRunState (lldb::ScriptInterpreterObjectSP implementor_sp,
-                                                        bool &script_error)
+ScriptInterpreterPython::ScriptedThreadPlanGetRunState(StructuredData::ObjectSP implementor_sp, bool &script_error)
 {
     bool should_step = false;
+    StructuredData::Generic *generic = nullptr;
     if (implementor_sp)
+        generic = implementor_sp->GetAsGeneric();
+    if (generic)
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
-        should_step = g_swig_call_thread_plan (implementor_sp->GetObject(), "should_step", NULL, script_error);
+        should_step = g_swig_call_thread_plan(generic->GetValue(), "should_step", NULL, script_error);
         if (script_error)
             should_step = true;
     }
@@ -1732,72 +1748,69 @@ ScriptInterpreterPython::ScriptedThreadPlanGetRunState (lldb::ScriptInterpreterO
         return lldb::eStateRunning;
 }
 
-
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::LoadPluginModule (const FileSpec& file_spec,
-                                           lldb_private::Error& error)
+StructuredData::ObjectSP
+ScriptInterpreterPython::LoadPluginModule(const FileSpec &file_spec, lldb_private::Error &error)
 {
     if (!file_spec.Exists())
     {
         error.SetErrorString("no such file");
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::ObjectSP();
     }
 
-    ScriptInterpreterObjectSP module_sp;
-    
+    StructuredData::ObjectSP module_sp;
+
     if (LoadScriptingModule(file_spec.GetPath().c_str(),true,true,error,&module_sp))
         return module_sp;
-    
-    return lldb::ScriptInterpreterObjectSP();
+
+    return StructuredData::ObjectSP();
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::GetDynamicSettings (lldb::ScriptInterpreterObjectSP plugin_module_sp,
-                                             Target* target,
-                                             const char* setting_name,
-                                             lldb_private::Error& error)
+StructuredData::DictionarySP
+ScriptInterpreterPython::GetDynamicSettings(StructuredData::ObjectSP plugin_module_sp, Target *target, const char *setting_name,
+                                            lldb_private::Error &error)
 {
-    if (!plugin_module_sp || !target || !setting_name || !setting_name[0])
-        return lldb::ScriptInterpreterObjectSP();
-    
-    if (!g_swig_plugin_get)
-        return lldb::ScriptInterpreterObjectSP();
-    
+    if (!plugin_module_sp || !target || !setting_name || !setting_name[0] || !g_swig_plugin_get)
+        return StructuredData::DictionarySP();
+    StructuredData::Generic *generic = plugin_module_sp->GetAsGeneric();
+    if (!generic)
+        return StructuredData::DictionarySP();
+
     PyObject *reply_pyobj = nullptr;
     
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
         TargetSP target_sp(target->shared_from_this());
-        reply_pyobj = (PyObject*)g_swig_plugin_get(plugin_module_sp->GetObject(),setting_name,target_sp);
+        reply_pyobj = (PyObject *)g_swig_plugin_get(generic->GetValue(), setting_name, target_sp);
     }
-    
-    return MakeScriptObject(reply_pyobj);
+
+    PythonDictionary py_dict(reply_pyobj);
+
+    return py_dict.CreateStructuredDictionary();
 }
 
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name,
-                                                          lldb::ValueObjectSP valobj)
+StructuredData::ObjectSP
+ScriptInterpreterPython::CreateSyntheticScriptedProvider(const char *class_name, lldb::ValueObjectSP valobj)
 {
     if (class_name == nullptr || class_name[0] == '\0')
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::ObjectSP();
+
     if (!valobj.get())
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::ObjectSP();
+
     ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
     Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
-        return lldb::ScriptInterpreterObjectSP();
-    
+        return StructuredData::ObjectSP();
+
     Debugger &debugger = target->GetDebugger();
     ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
     ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
     
     if (!script_interpreter)
-        return lldb::ScriptInterpreterObjectSP();
-    
-    void* ret_val;
+        return StructuredData::ObjectSP();
+
+    void *ret_val = nullptr;
 
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
@@ -1805,20 +1818,20 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name
                                            python_interpreter->m_dictionary_name.c_str(),
                                            valobj);
     }
-    
-    return MakeScriptObject(ret_val);
+
+    return StructuredData::ObjectSP(new StructuredPythonObject(ret_val));
 }
 
-lldb::ScriptInterpreterObjectSP
+StructuredData::GenericSP
 ScriptInterpreterPython::CreateScriptCommandObject (const char *class_name)
 {
     DebuggerSP debugger_sp(GetCommandInterpreter().GetDebugger().shared_from_this());
     
     if (class_name == nullptr || class_name[0] == '\0')
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::GenericSP();
     
     if (!debugger_sp.get())
-        return lldb::ScriptInterpreterObjectSP();
+        return StructuredData::GenericSP();
     
     void* ret_val;
     
@@ -1829,7 +1842,7 @@ ScriptInterpreterPython::CreateScriptCommandObject (const char *class_name)
                                      debugger_sp);
     }
     
-    return MakeScriptObject(ret_val);
+    return StructuredData::GenericSP(new StructuredPythonObject(ret_val));
 }
 
 bool
@@ -1896,11 +1909,9 @@ ScriptInterpreterPython::GenerateWatchpointCommandCallbackData (StringList &user
 }
 
 bool
-ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
-                                             lldb::ValueObjectSP valobj,
-                                             lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
-                                             const TypeSummaryOptions& options,
-                                             std::string& retval)
+ScriptInterpreterPython::GetScriptedSummary(const char *python_function_name, lldb::ValueObjectSP valobj,
+                                            StructuredData::ObjectSP &callee_wrapper_sp, const TypeSummaryOptions &options,
+                                            std::string &retval)
 {
     
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
@@ -1910,13 +1921,19 @@ ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
         retval.assign("<no object>");
         return false;
     }
-        
-    void* old_callee = (callee_wrapper_sp ? callee_wrapper_sp->GetObject() : nullptr);
+
+    void *old_callee = nullptr;
+    StructuredData::Generic *generic = nullptr;
+    if (callee_wrapper_sp)
+    {
+        generic = callee_wrapper_sp->GetAsGeneric();
+        if (generic)
+            old_callee = generic->GetValue();
+    }
     void* new_callee = old_callee;
     
     bool ret_val;
-    if (python_function_name 
-        && *python_function_name)
+    if (python_function_name && *python_function_name)
     {
         {
             Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
@@ -1940,10 +1957,9 @@ ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
     }
     
     if (new_callee && old_callee != new_callee)
-        callee_wrapper_sp = MakeScriptObject(new_callee);
-    
+        callee_wrapper_sp.reset(new StructuredPythonObject(new_callee));
+
     return ret_val;
-    
 }
 
 void
@@ -2069,13 +2085,14 @@ ScriptInterpreterPython::WatchpointCallbackFunction
 }
 
 size_t
-ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor_sp)
+ScriptInterpreterPython::CalculateNumChildren(const StructuredData::ObjectSP &implementor_sp)
 {
     if (!implementor_sp)
         return 0;
-    
-    void* implementor = implementor_sp->GetObject();
-    
+    StructuredData::Generic *generic = implementor_sp->GetAsGeneric();
+    if (!generic)
+        return 0;
+    void *implementor = generic->GetValue();
     if (!implementor)
         return 0;
     
@@ -2093,13 +2110,15 @@ ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObje
 }
 
 lldb::ValueObjectSP
-ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor_sp, uint32_t idx)
+ScriptInterpreterPython::GetChildAtIndex(const StructuredData::ObjectSP &implementor_sp, uint32_t idx)
 {
     if (!implementor_sp)
         return lldb::ValueObjectSP();
-    
-    void* implementor = implementor_sp->GetObject();
-    
+
+    StructuredData::Generic *generic = implementor_sp->GetAsGeneric();
+    if (!generic)
+        return lldb::ValueObjectSP();
+    void *implementor = generic->GetValue();
     if (!implementor)
         return lldb::ValueObjectSP();
     
@@ -2129,13 +2148,15 @@ ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP&
 }
 
 int
-ScriptInterpreterPython::GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor_sp, const char* child_name)
+ScriptInterpreterPython::GetIndexOfChildWithName(const StructuredData::ObjectSP &implementor_sp, const char *child_name)
 {
     if (!implementor_sp)
         return UINT32_MAX;
-    
-    void* implementor = implementor_sp->GetObject();
-    
+
+    StructuredData::Generic *generic = implementor_sp->GetAsGeneric();
+    if (!generic)
+        return UINT32_MAX;
+    void *implementor = generic->GetValue();
     if (!implementor)
         return UINT32_MAX;
     
@@ -2153,15 +2174,17 @@ ScriptInterpreterPython::GetIndexOfChildWithName (const lldb::ScriptInterpreterO
 }
 
 bool
-ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor_sp)
+ScriptInterpreterPython::UpdateSynthProviderInstance(const StructuredData::ObjectSP &implementor_sp)
 {
     bool ret_val = false;
     
     if (!implementor_sp)
         return ret_val;
-    
-    void* implementor = implementor_sp->GetObject();
-    
+
+    StructuredData::Generic *generic = implementor_sp->GetAsGeneric();
+    if (!generic)
+        return ret_val;
+    void *implementor = generic->GetValue();
     if (!implementor)
         return ret_val;
     
@@ -2177,15 +2200,17 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpre
 }
 
 bool
-ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor_sp)
+ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance(const StructuredData::ObjectSP &implementor_sp)
 {
     bool ret_val = false;
     
     if (!implementor_sp)
         return ret_val;
-    
-    void* implementor = implementor_sp->GetObject();
-    
+
+    StructuredData::Generic *generic = implementor_sp->GetAsGeneric();
+    if (!generic)
+        return ret_val;
+    void *implementor = generic->GetValue();
     if (!implementor)
         return ret_val;
     
@@ -2201,15 +2226,17 @@ ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance (const lldb::Scr
 }
 
 lldb::ValueObjectSP
-ScriptInterpreterPython::GetSyntheticValue (const lldb::ScriptInterpreterObjectSP& implementor_sp)
+ScriptInterpreterPython::GetSyntheticValue(const StructuredData::ObjectSP &implementor_sp)
 {
     lldb::ValueObjectSP ret_val(nullptr);
     
     if (!implementor_sp)
         return ret_val;
-    
-    void* implementor = implementor_sp->GetObject();
-    
+
+    StructuredData::Generic *generic = implementor_sp->GetAsGeneric();
+    if (!generic)
+        return ret_val;
+    void *implementor = generic->GetValue();
     if (!implementor)
         return ret_val;
     
@@ -2467,11 +2494,8 @@ uint64_t replace_all(std::string& str, const std::string& oldStr, const std::str
 }
 
 bool
-ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
-                                              bool can_reload,
-                                              bool init_session,
-                                              lldb_private::Error& error,
-                                              lldb::ScriptInterpreterObjectSP* module_sp)
+ScriptInterpreterPython::LoadScriptingModule(const char *pathname, bool can_reload, bool init_session, lldb_private::Error &error,
+                                             StructuredData::ObjectSP *module_sp)
 {
     if (!pathname || !pathname[0])
     {
@@ -2602,7 +2626,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
             command_stream.Printf("%s",basename.c_str());
             void* module_pyobj = nullptr;
             if (ExecuteOneLineWithReturn(command_stream.GetData(),ScriptInterpreter::eScriptReturnTypeOpaqueObject,&module_pyobj) && module_pyobj)
-                *module_sp = MakeScriptObject(module_pyobj);
+                module_sp->reset(new StructuredPythonObject(module_pyobj));
         }
         
         return true;
@@ -2622,12 +2646,6 @@ ScriptInterpreterPython::IsReservedWord (const char* word)
     if (ExecuteOneLineWithReturn(command_stream.GetData(), ScriptInterpreter::eScriptReturnTypeBool, &result, options))
         return result;
     return false;
-}
-
-lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::MakeScriptObject (void* object)
-{
-    return lldb::ScriptInterpreterObjectSP(new ScriptInterpreterPythonObject(object));
 }
 
 ScriptInterpreterPython::SynchronicityHandler::SynchronicityHandler (lldb::DebuggerSP debugger_sp,
@@ -2706,14 +2724,14 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
 }
 
 bool
-ScriptInterpreterPython::RunScriptBasedCommand (lldb::ScriptInterpreterObjectSP impl_obj_sp,
+ScriptInterpreterPython::RunScriptBasedCommand (StructuredData::GenericSP impl_obj_sp,
                                                 const char* args,
                                                 ScriptedCommandSynchronicity synchronicity,
                                                 lldb_private::CommandReturnObject& cmd_retobj,
                                                 Error& error,
                                                 const lldb_private::ExecutionContext& exe_ctx)
 {
-    if (!impl_obj_sp || !impl_obj_sp->GetObject())
+    if (!impl_obj_sp || !impl_obj_sp->IsValid())
     {
         error.SetErrorString("no function to execute");
         return false;
@@ -2746,7 +2764,7 @@ ScriptInterpreterPython::RunScriptBasedCommand (lldb::ScriptInterpreterObjectSP 
         SynchronicityHandler synch_handler(debugger_sp,
                                            synchronicity);
         
-        ret_val = g_swig_call_command_object      (impl_obj_sp->GetObject(),
+        ret_val = g_swig_call_command_object      (impl_obj_sp->GetValue(),
                                                    debugger_sp,
                                                    args,
                                                    cmd_retobj,
@@ -2794,7 +2812,7 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item, std::string& 
 }
 
 bool
-ScriptInterpreterPython::GetShortHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+ScriptInterpreterPython::GetShortHelpForCommandObject (StructuredData::GenericSP cmd_obj_sp,
                                                        std::string& dest)
 {
     bool got_string = false;
@@ -2809,7 +2827,7 @@ ScriptInterpreterPython::GetShortHelpForCommandObject (lldb::ScriptInterpreterOb
     if (!cmd_obj_sp)
         return false;
     
-    PyObject* implementor = (PyObject*)cmd_obj_sp->GetObject();
+    PyObject* implementor = (PyObject*)cmd_obj_sp->GetValue();
     
     if (implementor == nullptr || implementor == Py_None)
         return false;
@@ -2869,7 +2887,7 @@ ScriptInterpreterPython::GetShortHelpForCommandObject (lldb::ScriptInterpreterOb
 }
 
 bool
-ScriptInterpreterPython::GetLongHelpForCommandObject (lldb::ScriptInterpreterObjectSP cmd_obj_sp,
+ScriptInterpreterPython::GetLongHelpForCommandObject (StructuredData::GenericSP cmd_obj_sp,
                                                       std::string& dest)
 {
     bool got_string = false;
@@ -2884,7 +2902,7 @@ ScriptInterpreterPython::GetLongHelpForCommandObject (lldb::ScriptInterpreterObj
     if (!cmd_obj_sp)
         return false;
     
-    PyObject* implementor = (PyObject*)cmd_obj_sp->GetObject();
+    PyObject* implementor = (PyObject*)cmd_obj_sp->GetValue();
     
     if (implementor == nullptr || implementor == Py_None)
         return false;
