@@ -719,6 +719,8 @@ public:
   /// Get the address of the RTTI descriptor for the given type.
   llvm::Constant *GetAddrOfRTTIDescriptor(QualType Ty, bool ForEH = false);
 
+  llvm::Constant *getAddrOfCXXCatchDescriptor(QualType Ty);
+
   /// Get the address of a uuid descriptor .
   llvm::Constant *GetAddrOfUuidDescriptor(const CXXUuidofExpr* E);
 

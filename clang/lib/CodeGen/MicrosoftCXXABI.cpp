@@ -83,7 +83,8 @@ public:
   llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
                                                    const VPtrInfo *Info);
 
-  llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty, bool ForEH) override;
+  llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
+  llvm::Constant *getAddrOfCXXCatchDescriptor(QualType Ty) override;
 
   bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
   void EmitBadTypeidCall(CodeGenFunction &CGF) override;
@@ -3094,8 +3095,7 @@ MSRTTIBuilder::getBaseClassDescriptor(const MSRTTIClass &Class) {
   // Initialize the BaseClassDescriptor.
   llvm::Constant *Fields[] = {
       ABI.getImageRelativeConstant(
-          ABI.getAddrOfRTTIDescriptor(Context.getTypeDeclType(Class.RD),
-                                      /*ForEH=*/false)),
+          ABI.getAddrOfRTTIDescriptor(Context.getTypeDeclType(Class.RD))),
       llvm::ConstantInt::get(CGM.IntTy, Class.NumBases),
       llvm::ConstantInt::get(CGM.IntTy, Class.OffsetInVBase),
       llvm::ConstantInt::get(CGM.IntTy, VBPtrOffset),
@@ -3186,22 +3186,21 @@ static QualType decomposeTypeForEH(ASTContext &Context, QualType T,
   return T;
 }
 
+llvm::Constant *MicrosoftCXXABI::getAddrOfCXXCatchDescriptor(QualType Type) {
+  // TypeDescriptors for exceptions never has qualified pointer types,
+  // qualifiers are stored seperately in order to support qualification
+  // conversions.
+  bool IsConst, IsVolatile;
+  Type = decomposeTypeForEH(getContext(), Type, IsConst, IsVolatile);
+
+  return getAddrOfRTTIDescriptor(Type);
+}
+
 /// \brief Gets a TypeDescriptor.  Returns a llvm::Constant * rather than a
 /// llvm::GlobalVariable * because different type descriptors have different
 /// types, and need to be abstracted.  They are abstracting by casting the
 /// address to an Int8PtrTy.
-llvm::Constant *MicrosoftCXXABI::getAddrOfRTTIDescriptor(QualType Type,
-                                                         bool ForEH) {
-  // TypeDescriptors for exceptions never has qualified pointer types,
-  // qualifiers are stored seperately in order to support qualification
-  // conversions.
-  if (ForEH) {
-    // FIXME: This is only a 50% solution, we need to actually do something with
-    // these qualifiers.
-    bool IsConst, IsVolatile;
-    Type = decomposeTypeForEH(getContext(), Type, IsConst, IsVolatile);
-  }
-
+llvm::Constant *MicrosoftCXXABI::getAddrOfRTTIDescriptor(QualType Type) {
   SmallString<256> MangledName, TypeInfoString;
   {
     llvm::raw_svector_ostream Out(MangledName);
@@ -3419,8 +3418,7 @@ llvm::Constant *MicrosoftCXXABI::getCatchableType(QualType T,
 
   // The TypeDescriptor is used by the runtime to determine if a catch handler
   // is appropriate for the exception object.
-  llvm::Constant *TD =
-      getImageRelativeConstant(getAddrOfRTTIDescriptor(T, /*ForEH=*/true));
+  llvm::Constant *TD = getImageRelativeConstant(getAddrOfRTTIDescriptor(T));
 
   // The runtime is responsible for calling the copy constructor if the
   // exception is caught by value.

@@ -125,7 +125,10 @@ public:
 
   void EmitFundamentalRTTIDescriptor(QualType Type);
   void EmitFundamentalRTTIDescriptors();
-  llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty, bool ForEH) override;
+  llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
+  llvm::Constant *getAddrOfCXXCatchDescriptor(QualType Ty) {
+    return getAddrOfRTTIDescriptor(Ty);
+  }
 
   bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
   void EmitBadTypeidCall(CodeGenFunction &CGF) override;
@@ -3101,8 +3104,7 @@ ItaniumRTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
       ItaniumRTTIBuilder(CXXABI).BuildTypeInfo(QualType(ClassType, 0)));
 }
 
-llvm::Constant *ItaniumCXXABI::getAddrOfRTTIDescriptor(QualType Ty,
-                                                       bool ForEH) {
+llvm::Constant *ItaniumCXXABI::getAddrOfRTTIDescriptor(QualType Ty) {
   return ItaniumRTTIBuilder(*this).BuildTypeInfo(Ty);
 }
 
