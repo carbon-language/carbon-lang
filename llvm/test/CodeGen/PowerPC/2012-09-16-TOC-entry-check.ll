@@ -19,9 +19,9 @@ define i32 @foo(double %X, double %Y) nounwind readnone {
 }
 
 ; Check the creation of 2 .tc entries for both double constants. They
-; should be .LC1 and .LC3 to avoid name clash with global constants
-; .LC0 and .LC2
-; CHECK: .LC{{[13]}}:
+; avoid name clash with global constants .LC0 and .LC2
+; CHECK: .section	.toc,"aw",@progbits
+; CHECK: .LC{{.*}}:
 ; CHECK-NEXT: .tc {{[\._a-zA-Z0-9]+}}[TC],{{[\._a-zA-Z0-9]+}}
-; CHECK: .LC{{[13]}}:
+; CHECK: .LC{{.*}}:
 ; CHECK-NEXT: .tc {{[\._a-zA-Z0-9]+}}[TC],{{[\._a-zA-Z0-9]+}}

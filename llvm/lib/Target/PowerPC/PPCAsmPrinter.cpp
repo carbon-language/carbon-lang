@@ -321,17 +321,9 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 /// exists for it.  If not, create one.  Then return a symbol that references
 /// the TOC entry.
 MCSymbol *PPCAsmPrinter::lookUpOrCreateTOCEntry(MCSymbol *Sym) {
-  const DataLayout *DL = TM.getDataLayout();
   MCSymbol *&TOCEntry = TOC[Sym];
-
-  // To avoid name clash check if the name already exists.
-  while (!TOCEntry) {
-    if (OutContext.LookupSymbol(Twine(DL->getPrivateGlobalPrefix()) +
-                                "C" + Twine(TOCLabelID++)) == nullptr) {
-      TOCEntry = GetTempSymbol("C", TOCLabelID);
-    }
-  }
-
+  if (!TOCEntry)
+    TOCEntry = createTempSymbol("C", TOCLabelID++);
   return TOCEntry;
 }
 
