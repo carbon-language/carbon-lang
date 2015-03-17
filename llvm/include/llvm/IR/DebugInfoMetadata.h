@@ -146,7 +146,6 @@ public:
     case MDTemplateValueParameterKind:
     case MDGlobalVariableKind:
     case MDLocalVariableKind:
-    case MDExpressionKind:
     case MDObjCPropertyKind:
     case MDImportedEntityKind:
       return true;
@@ -1447,17 +1446,16 @@ public:
 /// \brief DWARF expression.
 ///
 /// TODO: Co-allocate the expression elements.
-/// TODO: Drop fake DW_TAG_expression and separate from DebugNode.
 /// TODO: Separate from MDNode, or otherwise drop Distinct and Temporary
 /// storage types.
-class MDExpression : public DebugNode {
+class MDExpression : public MDNode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   std::vector<uint64_t> Elements;
 
   MDExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements)
-      : DebugNode(C, MDExpressionKind, Storage, dwarf::DW_TAG_expression, None),
+      : MDNode(C, MDExpressionKind, Storage, None),
         Elements(Elements.begin(), Elements.end()) {}
   ~MDExpression() {}
 

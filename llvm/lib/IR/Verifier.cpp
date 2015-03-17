@@ -754,7 +754,6 @@ void Verifier::visitMDLocalVariable(const MDLocalVariable &N) {
 }
 
 void Verifier::visitMDExpression(const MDExpression &N) {
-  Assert(N.getTag() == dwarf::DW_TAG_expression, "invalid tag", &N);
   Assert(N.isValid(), "invalid expression", &N);
 }
 
