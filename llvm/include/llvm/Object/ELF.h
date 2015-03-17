@@ -96,13 +96,13 @@ public:
 
     ELFEntityIterator &operator+(difference_type n) {
       assert(Current && "Attempted to increment an invalid iterator!");
-      Current += n;
+      Current += (n * EntitySize);
       return *this;
     }
 
     ELFEntityIterator &operator-(difference_type n) {
       assert(Current && "Attempted to subtract an invalid iterator!");
-      Current -= n;
+      Current -= (n * EntitySize);
       return *this;
     }
 
