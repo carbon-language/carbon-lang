@@ -397,8 +397,8 @@ InductiveRangeCheck::create(InductiveRangeCheck::AllocatorTy &A, BranchInst *BI,
     return nullptr;
 
   assert(IndexSCEV && "contract with SplitRangeCheckCondition!");
-  assert(!(RCKind & InductiveRangeCheck::RANGE_CHECK_UPPER) ||
-         Length && "contract with SplitRangeCheckCondition!");
+  assert((!(RCKind & InductiveRangeCheck::RANGE_CHECK_UPPER) || Length) &&
+         "contract with SplitRangeCheckCondition!");
 
   const SCEVAddRecExpr *IndexAddRec = dyn_cast<SCEVAddRecExpr>(IndexSCEV);
   bool IsAffineIndex =
