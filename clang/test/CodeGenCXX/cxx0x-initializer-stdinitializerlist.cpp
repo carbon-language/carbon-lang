@@ -482,27 +482,3 @@ namespace ConstExpr {
     f({C(1), C(2), C(3)});
   }
 }
-
-namespace B19773010 {
-  template <class T1, class T2> struct pair {
-    T1 first;
-    T2 second;
-    constexpr pair(T1 a, T2 b) : first(a), second(b) {}
-  };
-
-  enum E { ENUM_CONSTANT };
-  struct testcase {
-    testcase(std::initializer_list<pair<const char *, E>>);
-  };
-  void f1() {
-    // CHECK-LABEL: @_ZN9B197730102f1Ev
-    testcase a{{"", ENUM_CONSTANT}};
-    // CHECK: store %"struct.B19773010::pair"* getelementptr inbounds ([1 x %"struct.B19773010::pair"], [1 x %"struct.B19773010::pair"]* bitcast ([1 x { i8*, i32 }]* @.ref.tmp{{.*}} to [1 x %"struct.B19773010::pair"]*), i64 0, i64 0), %"struct.B19773010::pair"** %{{.*}}, align 8
-  }
-  void f2() {
-    // CHECK-LABEL: @_ZN9B197730102f2Ev
-    // CHECK: store %"struct.B19773010::pair"* getelementptr inbounds ([1 x %"struct.B19773010::pair"], [1 x %"struct.B19773010::pair"]* bitcast ([1 x { i8*, i32 }]* @_ZGRZN9B197730102f2EvE1p_ to [1 x %"struct.B19773010::pair"]*), i64 0, i64 0), %"struct.B19773010::pair"** getelementptr inbounds ([2 x %"class.std::initializer_list.10"], [2 x %"class.std::initializer_list.10"]* @_ZZN9B197730102f2EvE1p, i64 0, i64 1, i32 0), align 8
-    static std::initializer_list<pair<const char *, E>> a, p[2] =
-        {a, {{"", ENUM_CONSTANT}}};
-  }
-}

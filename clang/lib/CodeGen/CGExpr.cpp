@@ -316,16 +316,13 @@ createReferenceTemporary(CodeGenFunction &CGF,
         GV->setAlignment(
             CGF.getContext().getTypeAlignInChars(M->getType()).getQuantity());
         // FIXME: Should we put the new global into a COMDAT?
-        return llvm::ConstantExpr::getBitCast(
-            GV, CGF.ConvertTypeForMem(Inner->getType())->getPointerTo());
+        return GV;
       }
     return CGF.CreateMemTemp(Inner->getType(), "ref.tmp");
 
   case SD_Thread:
   case SD_Static:
-    return llvm::ConstantExpr::getBitCast(
-        CGF.CGM.GetAddrOfGlobalTemporary(M, Inner),
-        CGF.ConvertTypeForMem(Inner->getType())->getPointerTo());
+    return CGF.CGM.GetAddrOfGlobalTemporary(M, Inner);
 
   case SD_Dynamic:
     llvm_unreachable("temporary can't have dynamic storage duration");
