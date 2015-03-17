@@ -29,6 +29,7 @@ TEST(TwineTest, Construction) {
   EXPECT_EQ("hi", Twine(StringRef("hi")).str());
   EXPECT_EQ("hi", Twine(StringRef(std::string("hi"))).str());
   EXPECT_EQ("hi", Twine(StringRef("hithere", 2)).str());
+  EXPECT_EQ("hi", Twine(SmallString<4>("hi")).str());
 }
 
 TEST(TwineTest, Numbers) {
@@ -62,6 +63,10 @@ TEST(TwineTest, Concat) {
             repr(Twine("hi").concat(Twine())));
   EXPECT_EQ("(Twine cstring:\"hi\" empty)", 
             repr(Twine().concat(Twine("hi"))));
+  EXPECT_EQ("(Twine smallstring:\"hi\" empty)", 
+            repr(Twine().concat(Twine(SmallString<5>("hi")))));
+  EXPECT_EQ("(Twine smallstring:\"hey\" cstring:\"there\")", 
+            repr(Twine(SmallString<7>("hey")).concat(Twine("there"))));
 
   // Concatenation of unary ropes.
   EXPECT_EQ("(Twine cstring:\"a\" cstring:\"b\")", 
@@ -72,6 +77,8 @@ TEST(TwineTest, Concat) {
             repr(Twine("a").concat(Twine("b")).concat(Twine("c"))));
   EXPECT_EQ("(Twine cstring:\"a\" rope:(Twine cstring:\"b\" cstring:\"c\"))",
             repr(Twine("a").concat(Twine("b").concat(Twine("c")))));
+  EXPECT_EQ("(Twine cstring:\"a\" rope:(Twine smallstring:\"b\" cstring:\"c\"))",
+            repr(Twine("a").concat(Twine(SmallString<3>("b")).concat(Twine("c")))));
 }
 
 TEST(TwineTest, toNullTerminatedStringRef) {
@@ -79,6 +86,9 @@ TEST(TwineTest, toNullTerminatedStringRef) {
   EXPECT_EQ(0, *Twine("hello").toNullTerminatedStringRef(storage).end());
   EXPECT_EQ(0,
            *Twine(StringRef("hello")).toNullTerminatedStringRef(storage).end());
+  EXPECT_EQ(0, *Twine(SmallString<11>("hello"))
+                    .toNullTerminatedStringRef(storage)
+                    .end());
 }
 
   // I suppose linking in the entire code generator to add a unit test to check

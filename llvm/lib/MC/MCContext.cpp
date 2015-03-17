@@ -98,13 +98,15 @@ void MCContext::reset() {
 // Symbol Manipulation
 //===----------------------------------------------------------------------===//
 
-MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
-  assert(!Name.empty() && "Normal symbols cannot be unnamed!");
+MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
+  SmallString<128> NameSV;
+  StringRef NameRef = Name.toStringRef(NameSV);
 
-  MCSymbol *&Sym = Symbols[Name];
+  assert(!NameRef.empty() && "Normal symbols cannot be unnamed!");
 
+  MCSymbol *&Sym = Symbols[NameRef];
   if (!Sym)
-    Sym = CreateSymbol(Name);
+    Sym = CreateSymbol(NameRef);
 
   return Sym;
 }
@@ -166,11 +168,6 @@ MCSymbol *MCContext::createTempSymbol(const Twine &Name) {
   SmallString<128> NameSV;
   raw_svector_ostream(NameSV) << MAI->getPrivateGlobalPrefix() << Name;
   return CreateSymbol(NameSV);
-}
-
-MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
-  SmallString<128> NameSV;
-  return GetOrCreateSymbol(Name.toStringRef(NameSV));
 }
 
 MCSymbol *MCContext::CreateLinkerPrivateTempSymbol() {

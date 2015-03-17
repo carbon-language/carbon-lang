@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Allocator.h"
@@ -36,8 +37,6 @@ namespace llvm {
   class MCRegisterInfo;
   class MCLineSection;
   class SMLoc;
-  class StringRef;
-  class Twine;
   class MCSectionMachO;
   class MCSectionELF;
   class MCSectionCOFF;
@@ -230,7 +229,6 @@ namespace llvm {
     /// return it.  If not, create a forward reference and return it.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *GetOrCreateSymbol(StringRef Name);
     MCSymbol *GetOrCreateSymbol(const Twine &Name);
 
     MCSymbol *getOrCreateSectionSymbol(const MCSectionELF &Section);

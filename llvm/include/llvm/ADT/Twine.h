@@ -10,6 +10,7 @@
 #ifndef LLVM_ADT_TWINE_H
 #define LLVM_ADT_TWINE_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -17,9 +18,6 @@
 #include <string>
 
 namespace llvm {
-  template <typename T>
-  class SmallVectorImpl;
-  class StringRef;
   class raw_ostream;
 
   /// Twine - A lightweight data structure for efficiently representing the
@@ -100,6 +98,9 @@ namespace llvm {
       /// A pointer to a StringRef instance.
       StringRefKind,
 
+      /// A pointer to a SmallString instance.
+      SmallStringKind,
+
       /// A char value reinterpreted as a pointer, to render as a character.
       CharKind,
 
@@ -136,6 +137,7 @@ namespace llvm {
       const char *cString;
       const std::string *stdString;
       const StringRef *stringRef;
+      const SmallVectorImpl<char> *smallString;
       char character;
       unsigned int decUI;
       int decI;
@@ -183,32 +185,32 @@ namespace llvm {
     /// when concatenating might cause undefined behavior or stack corruptions
     Twine &operator=(const Twine &Other) = delete;
 
-    /// isNull - Check for the null twine.
+    /// Check for the null twine.
     bool isNull() const {
       return getLHSKind() == NullKind;
     }
 
-    /// isEmpty - Check for the empty twine.
+    /// Check for the empty twine.
     bool isEmpty() const {
       return getLHSKind() == EmptyKind;
     }
 
-    /// isNullary - Check if this is a nullary twine (null or empty).
+    /// Check if this is a nullary twine (null or empty).
     bool isNullary() const {
       return isNull() || isEmpty();
     }
 
-    /// isUnary - Check if this is a unary twine.
+    /// Check if this is a unary twine.
     bool isUnary() const {
       return getRHSKind() == EmptyKind && !isNullary();
     }
 
-    /// isBinary - Check if this is a binary twine.
+    /// Check if this is a binary twine.
     bool isBinary() const {
       return getLHSKind() != NullKind && getRHSKind() != EmptyKind;
     }
 
-    /// isValid - Check if this is a valid twine (satisfying the invariants on
+    /// Check if this is a valid twine (satisfying the invariants on
     /// order and number of arguments).
     bool isValid() const {
       // Nullary twines always have Empty on the RHS.
@@ -234,16 +236,16 @@ namespace llvm {
       return true;
     }
 
-    /// getLHSKind - Get the NodeKind of the left-hand side.
+    /// Get the NodeKind of the left-hand side.
     NodeKind getLHSKind() const { return LHSKind; }
 
-    /// getRHSKind - Get the NodeKind of the right-hand side.
+    /// Get the NodeKind of the right-hand side.
     NodeKind getRHSKind() const { return RHSKind; }
 
-    /// printOneChild - Print one child from a twine.
+    /// Print one child from a twine.
     void printOneChild(raw_ostream &OS, Child Ptr, NodeKind Kind) const;
 
-    /// printOneChildRepr - Print the representation of one child from a twine.
+    /// Print the representation of one child from a twine.
     void printOneChildRepr(raw_ostream &OS, Child Ptr,
                            NodeKind Kind) const;
 
@@ -285,6 +287,13 @@ namespace llvm {
     /*implicit*/ Twine(const StringRef &Str)
       : LHSKind(StringRefKind), RHSKind(EmptyKind) {
       LHS.stringRef = &Str;
+      assert(isValid() && "Invalid twine!");
+    }
+
+    /// Construct from a SmallString.
+    /*implicit*/ Twine(const SmallVectorImpl<char> &Str)
+      : LHSKind(SmallStringKind), RHSKind(EmptyKind) {
+      LHS.smallString = &Str;
       assert(isValid() && "Invalid twine!");
     }
 
@@ -385,14 +394,14 @@ namespace llvm {
     /// @name Predicate Operations
     /// @{
 
-    /// isTriviallyEmpty - Check if this twine is trivially empty; a false
-    /// return value does not necessarily mean the twine is empty.
+    /// Check if this twine is trivially empty; a false return value does not
+    /// necessarily mean the twine is empty.
     bool isTriviallyEmpty() const {
       return isNullary();
     }
 
-    /// isSingleStringRef - Return true if this twine can be dynamically
-    /// accessed as a single StringRef value with getSingleStringRef().
+    /// Return true if this twine can be dynamically accessed as a single
+    /// StringRef value with getSingleStringRef().
     bool isSingleStringRef() const {
       if (getRHSKind() != EmptyKind) return false;
 
@@ -401,6 +410,7 @@ namespace llvm {
       case CStringKind:
       case StdStringKind:
       case StringRefKind:
+      case SmallStringKind:
         return true;
       default:
         return false;
@@ -417,15 +427,14 @@ namespace llvm {
     /// @name Output & Conversion.
     /// @{
 
-    /// str - Return the twine contents as a std::string.
+    /// Return the twine contents as a std::string.
     std::string str() const;
 
-    /// toVector - Write the concatenated string into the given SmallString or
-    /// SmallVector.
+    /// Write the concatenated string into the given SmallString or SmallVector.
     void toVector(SmallVectorImpl<char> &Out) const;
 
-    /// getSingleStringRef - This returns the twine as a single StringRef.  This
-    /// method is only valid if isSingleStringRef() is true.
+    /// This returns the twine as a single StringRef.  This method is only valid
+    /// if isSingleStringRef() is true.
     StringRef getSingleStringRef() const {
       assert(isSingleStringRef() &&"This cannot be had as a single stringref!");
       switch (getLHSKind()) {
@@ -434,18 +443,24 @@ namespace llvm {
       case CStringKind:    return StringRef(LHS.cString);
       case StdStringKind:  return StringRef(*LHS.stdString);
       case StringRefKind:  return *LHS.stringRef;
+      case SmallStringKind:
+        return StringRef(LHS.smallString->data(), LHS.smallString->size());
       }
     }
 
-    /// toStringRef - This returns the twine as a single StringRef if it can be
+    /// This returns the twine as a single StringRef if it can be
     /// represented as such. Otherwise the twine is written into the given
     /// SmallVector and a StringRef to the SmallVector's data is returned.
-    StringRef toStringRef(SmallVectorImpl<char> &Out) const;
+    StringRef toStringRef(SmallVectorImpl<char> &Out) const {
+      if (isSingleStringRef())
+        return getSingleStringRef();
+      toVector(Out);
+      return StringRef(Out.data(), Out.size());
+    }
 
-    /// toNullTerminatedStringRef - This returns the twine as a single null
-    /// terminated StringRef if it can be represented as such. Otherwise the
-    /// twine is written into the given SmallVector and a StringRef to the
-    /// SmallVector's data is returned.
+    /// This returns the twine as a single null terminated StringRef if it
+    /// can be represented as such. Otherwise the twine is written into the
+    /// given SmallVector and a StringRef to the SmallVector's data is returned.
     ///
     /// The returned StringRef's size does not include the null terminator.
     StringRef toNullTerminatedStringRef(SmallVectorImpl<char> &Out) const;

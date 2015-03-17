@@ -11,7 +11,9 @@
 #define LLVM_OPTION_ARGLIST_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Option/OptSpecifier.h"
 #include "llvm/Option/Option.h"
 #include <list>
@@ -277,16 +279,13 @@ public:
   /// @name Arg Synthesis
   /// @{
 
-  /// MakeArgString - Construct a constant string pointer whose
+  /// Construct a constant string pointer whose
   /// lifetime will match that of the ArgList.
-  virtual const char *MakeArgString(StringRef Str) const = 0;
-  const char *MakeArgString(const char *Str) const {
-    return MakeArgString(StringRef(Str));
+  virtual const char *MakeArgStringRef(StringRef Str) const = 0;
+  const char *MakeArgString(const Twine &Str) const {
+    SmallString<256> Buf;
+    return MakeArgStringRef(Str.toStringRef(Buf));
   }
-  const char *MakeArgString(std::string Str) const {
-    return MakeArgString(StringRef(Str));
-  }
-  const char *MakeArgString(const Twine &Str) const;
 
   /// \brief Create an arg string for (\p LHS + \p RHS), reusing the
   /// string at \p Index if possible.
@@ -336,7 +335,7 @@ public:
   unsigned MakeIndex(StringRef String0, StringRef String1) const;
 
   using ArgList::MakeArgString;
-  const char *MakeArgString(StringRef Str) const override;
+  const char *MakeArgStringRef(StringRef Str) const override;
 
   /// @}
 };
@@ -374,7 +373,7 @@ public:
   void AddSynthesizedArg(Arg *A);
 
   using ArgList::MakeArgString;
-  const char *MakeArgString(StringRef Str) const override;
+  const char *MakeArgStringRef(StringRef Str) const override;
 
   /// AddFlagArg - Construct a new FlagArg for the given option \p Id and
   /// append it to the argument list.

@@ -285,11 +285,6 @@ void ArgList::ClaimAllArgs() const {
       (*it)->claim();
 }
 
-const char *ArgList::MakeArgString(const Twine &T) const {
-  SmallString<256> Str;
-  return MakeArgString(T.toStringRef(Str));
-}
-
 const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
                                               StringRef LHS,
                                               StringRef RHS) const {
@@ -334,7 +329,7 @@ unsigned InputArgList::MakeIndex(StringRef String0,
   return Index0;
 }
 
-const char *InputArgList::MakeArgString(StringRef Str) const {
+const char *InputArgList::MakeArgStringRef(StringRef Str) const {
   return getArgString(MakeIndex(Str));
 }
 
@@ -345,7 +340,7 @@ DerivedArgList::DerivedArgList(const InputArgList &BaseArgs)
 
 DerivedArgList::~DerivedArgList() {}
 
-const char *DerivedArgList::MakeArgString(StringRef Str) const {
+const char *DerivedArgList::MakeArgStringRef(StringRef Str) const {
   return BaseArgs.MakeArgString(Str);
 }
 
