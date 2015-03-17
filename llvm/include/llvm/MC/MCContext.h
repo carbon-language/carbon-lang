@@ -236,7 +236,6 @@ namespace llvm {
     MCSymbol *getOrCreateFrameAllocSymbol(StringRef FuncName, unsigned Idx);
 
     /// Get the symbol for \p Name, or null.
-    MCSymbol *LookupSymbol(StringRef Name) const;
     MCSymbol *LookupSymbol(const Twine &Name) const;
 
     /// getSymbols - Get a reference for the symbol table for clients that

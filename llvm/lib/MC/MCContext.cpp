@@ -219,14 +219,10 @@ MCSymbol *MCContext::GetDirectionalLocalSymbol(unsigned LocalLabelVal,
   return getOrCreateDirectionalLocalSymbol(LocalLabelVal, Instance);
 }
 
-MCSymbol *MCContext::LookupSymbol(StringRef Name) const {
-  return Symbols.lookup(Name);
-}
-
 MCSymbol *MCContext::LookupSymbol(const Twine &Name) const {
   SmallString<128> NameSV;
-  Name.toVector(NameSV);
-  return LookupSymbol(NameSV.str());
+  StringRef NameRef = Name.toStringRef(NameSV);
+  return Symbols.lookup(NameRef);
 }
 
 //===----------------------------------------------------------------------===//
@@ -249,7 +245,7 @@ MCContext::getMachOSection(StringRef Segment, StringRef Section,
   Name += Section;
 
   // Do the lookup, if we have a hit, return it.
-  const MCSectionMachO *&Entry = MachOUniquingMap[Name.str()];
+  const MCSectionMachO *&Entry = MachOUniquingMap[Name];
   if (Entry)
     return Entry;
 
