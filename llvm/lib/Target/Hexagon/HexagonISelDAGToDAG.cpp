@@ -85,8 +85,6 @@ public:
   SDNode *SelectIndexedStore(StoreSDNode *ST, SDLoc dl);
   SDNode *SelectStore(SDNode *N);
   SDNode *SelectSHL(SDNode *N);
-  SDNode *SelectSelect(SDNode *N);
-  SDNode *SelectTruncate(SDNode *N);
   SDNode *SelectMul(SDNode *N);
   SDNode *SelectZeroExtend(SDNode *N);
   SDNode *SelectIntrinsicWChain(SDNode *N);
@@ -634,187 +632,6 @@ SDNode *HexagonDAGToDAGISel::SelectMul(SDNode *N) {
   return SelectCode(N);
 }
 
-
-SDNode *HexagonDAGToDAGISel::SelectSelect(SDNode *N) {
-  SDLoc dl(N);
-  SDValue N0 = N->getOperand(0);
-  if (N0.getOpcode() == ISD::SETCC) {
-    SDValue N00 = N0.getOperand(0);
-    if (N00.getOpcode() == ISD::SIGN_EXTEND_INREG) {
-      SDValue N000 = N00.getOperand(0);
-      SDValue N001 = N00.getOperand(1);
-      if (cast<VTSDNode>(N001)->getVT() == MVT::i16) {
-        SDValue N01 = N0.getOperand(1);
-        SDValue N02 = N0.getOperand(2);
-
-        // Pattern: (select:i32 (setcc:i1 (sext_inreg:i32 IntRegs:i32:$src2,
-        // i16:Other),IntRegs:i32:$src1, SETLT:Other),IntRegs:i32:$src1,
-        // IntRegs:i32:$src2)
-        // Emits: (MAXh_rr:i32 IntRegs:i32:$src1, IntRegs:i32:$src2)
-        // Pattern complexity = 9  cost = 1  size = 0.
-        if (cast<CondCodeSDNode>(N02)->get() == ISD::SETLT) {
-          SDValue N1 = N->getOperand(1);
-          if (N01 == N1) {
-            SDValue N2 = N->getOperand(2);
-            if (N000 == N2 &&
-                N0.getNode()->getValueType(N0.getResNo()) == MVT::i1 &&
-                N00.getNode()->getValueType(N00.getResNo()) == MVT::i32) {
-              SDNode *SextNode = CurDAG->getMachineNode(Hexagon::A2_sxth, dl,
-                                                        MVT::i32, N000);
-              SDNode *Result = CurDAG->getMachineNode(Hexagon::A2_max, dl,
-                                                      MVT::i32,
-                                                      SDValue(SextNode, 0),
-                                                      N1);
-              ReplaceUses(N, Result);
-              return Result;
-            }
-          }
-        }
-
-        // Pattern: (select:i32 (setcc:i1 (sext_inreg:i32 IntRegs:i32:$src2,
-        // i16:Other), IntRegs:i32:$src1, SETGT:Other), IntRegs:i32:$src1,
-        // IntRegs:i32:$src2)
-        // Emits: (MINh_rr:i32 IntRegs:i32:$src1, IntRegs:i32:$src2)
-        // Pattern complexity = 9  cost = 1  size = 0.
-        if (cast<CondCodeSDNode>(N02)->get() == ISD::SETGT) {
-          SDValue N1 = N->getOperand(1);
-          if (N01 == N1) {
-            SDValue N2 = N->getOperand(2);
-            if (N000 == N2 &&
-                N0.getNode()->getValueType(N0.getResNo()) == MVT::i1 &&
-                N00.getNode()->getValueType(N00.getResNo()) == MVT::i32) {
-              SDNode *SextNode = CurDAG->getMachineNode(Hexagon::A2_sxth, dl,
-                                                        MVT::i32, N000);
-              SDNode *Result = CurDAG->getMachineNode(Hexagon::A2_min, dl,
-                                                      MVT::i32,
-                                                      SDValue(SextNode, 0),
-                                                      N1);
-              ReplaceUses(N, Result);
-              return Result;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return SelectCode(N);
-}
-
-
-SDNode *HexagonDAGToDAGISel::SelectTruncate(SDNode *N) {
-  SDLoc dl(N);
-  SDValue Shift = N->getOperand(0);
-
-  //
-  // %conv.i = sext i32 %tmp1 to i64
-  // %conv2.i = sext i32 %add to i64
-  // %mul.i = mul nsw i64 %conv2.i, %conv.i
-  // %shr5.i = lshr i64 %mul.i, 32
-  // %conv3.i = trunc i64 %shr5.i to i32
-  //
-  //   --- match with the following ---
-  //
-  // %conv3.i = mpy (%tmp1, %add)
-  //
-  // Trunc to i32.
-  if (N->getValueType(0) == MVT::i32) {
-    // Trunc from i64.
-    if (Shift.getNode()->getValueType(0) == MVT::i64) {
-      // Trunc child is logical shift right.
-      if (Shift.getOpcode() != ISD::SRL) {
-        return SelectCode(N);
-      }
-
-      SDValue ShiftOp0 = Shift.getOperand(0);
-      SDValue ShiftOp1 = Shift.getOperand(1);
-
-      // Shift by const 32
-      if (ShiftOp1.getOpcode() != ISD::Constant) {
-        return SelectCode(N);
-      }
-
-      int32_t ShiftConst =
-        cast<ConstantSDNode>(ShiftOp1.getNode())->getSExtValue();
-      if (ShiftConst != 32) {
-        return SelectCode(N);
-      }
-
-      // Shifting a i64 signed multiply
-      SDValue Mul = ShiftOp0;
-      if (Mul.getOpcode() != ISD::MUL) {
-        return SelectCode(N);
-      }
-
-      SDValue MulOp0 = Mul.getOperand(0);
-      SDValue MulOp1 = Mul.getOperand(1);
-
-      SDValue OP0;
-      SDValue OP1;
-
-      // Handle sign_extend and sextload
-      if (MulOp0.getOpcode() == ISD::SIGN_EXTEND) {
-        SDValue Sext0 = MulOp0.getOperand(0);
-        if (Sext0.getNode()->getValueType(0) != MVT::i32) {
-          return SelectCode(N);
-        }
-
-        OP0 = Sext0;
-      } else if (MulOp0.getOpcode() == ISD::LOAD) {
-        LoadSDNode *LD = cast<LoadSDNode>(MulOp0.getNode());
-        if (LD->getMemoryVT() != MVT::i32 ||
-            LD->getExtensionType() != ISD::SEXTLOAD ||
-            LD->getAddressingMode() != ISD::UNINDEXED) {
-          return SelectCode(N);
-        }
-
-        SDValue Chain = LD->getChain();
-        SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
-        OP0 = SDValue(CurDAG->getMachineNode(Hexagon::L2_loadri_io, dl, MVT::i32,
-                                              MVT::Other,
-                                              LD->getBasePtr(),
-                                              TargetConst0, Chain), 0);
-      } else {
-        return SelectCode(N);
-      }
-
-      // Same goes for the second operand.
-      if (MulOp1.getOpcode() == ISD::SIGN_EXTEND) {
-        SDValue Sext1 = MulOp1.getOperand(0);
-        if (Sext1.getNode()->getValueType(0) != MVT::i32)
-          return SelectCode(N);
-
-        OP1 = Sext1;
-      } else if (MulOp1.getOpcode() == ISD::LOAD) {
-        LoadSDNode *LD = cast<LoadSDNode>(MulOp1.getNode());
-        if (LD->getMemoryVT() != MVT::i32 ||
-            LD->getExtensionType() != ISD::SEXTLOAD ||
-            LD->getAddressingMode() != ISD::UNINDEXED) {
-          return SelectCode(N);
-        }
-
-        SDValue Chain = LD->getChain();
-        SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
-        OP1 = SDValue(CurDAG->getMachineNode(Hexagon::L2_loadri_io, dl, MVT::i32,
-                                              MVT::Other,
-                                              LD->getBasePtr(),
-                                              TargetConst0, Chain), 0);
-      } else {
-        return SelectCode(N);
-      }
-
-      // Generate a mpy instruction.
-      SDNode *Result = CurDAG->getMachineNode(Hexagon::M2_mpy_up, dl, MVT::i32,
-                                              OP0, OP1);
-      ReplaceUses(N, Result);
-      return Result;
-    }
-  }
-
-  return SelectCode(N);
-}
-
-
 SDNode *HexagonDAGToDAGISel::SelectSHL(SDNode *N) {
   SDLoc dl(N);
   if (N->getValueType(0) == MVT::i32) {
@@ -1082,12 +899,6 @@ SDNode *HexagonDAGToDAGISel::Select(SDNode *N) {
 
   case ISD::STORE:
     return SelectStore(N);
-
-  case ISD::SELECT:
-    return SelectSelect(N);
-
-  case ISD::TRUNCATE:
-    return SelectTruncate(N);
 
   case ISD::MUL:
     return SelectMul(N);
