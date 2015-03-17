@@ -122,6 +122,8 @@ public:
                               CXXCtorType CT, uint32_t Size, uint32_t NVOffset,
                               int32_t VBPtrOffset, uint32_t VBIndex,
                               raw_ostream &Out) override;
+  void mangleCXXHandlerMapEntry(QualType T, bool IsConst, bool IsVolatile,
+                                bool IsReference, raw_ostream &Out);
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
@@ -2336,6 +2338,22 @@ void MicrosoftMangleContextImpl::mangleCXXRTTIName(QualType T,
                                                    raw_ostream &Out) {
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << '.';
+  Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
+}
+
+void MicrosoftMangleContextImpl::mangleCXXHandlerMapEntry(QualType T,
+                                                          bool IsConst,
+                                                          bool IsVolatile,
+                                                          bool IsReference,
+                                                          raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "llvm.eh.handlermapentry.";
+  if (IsConst)
+    Mangler.getStream() << "const.";
+  if (IsVolatile)
+    Mangler.getStream() << "volatile.";
+  if (IsReference)
+    Mangler.getStream() << "reference.";
   Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
 }
 

@@ -225,7 +225,8 @@ public:
                                       llvm::Value *Exn);
 
   virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;
-  virtual llvm::Constant *getAddrOfCXXCatchDescriptor(QualType Ty) = 0;
+  virtual llvm::Constant *
+  getAddrOfCXXHandlerMapEntry(QualType Ty, QualType CatchHandlerType) = 0;
 
   virtual bool shouldTypeidBeNullChecked(bool IsDeref,
                                          QualType SrcRecordTy) = 0;

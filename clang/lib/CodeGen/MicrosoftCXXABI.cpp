@@ -45,7 +45,7 @@ public:
       : CGCXXABI(CGM), BaseClassDescriptorType(nullptr),
         ClassHierarchyDescriptorType(nullptr),
         CompleteObjectLocatorType(nullptr), CatchableTypeType(nullptr),
-        ThrowInfoType(nullptr) {}
+        ThrowInfoType(nullptr), HandlerMapEntryType(nullptr) {}
 
   bool HasThisReturn(GlobalDecl GD) const override;
   bool hasMostDerivedReturn(GlobalDecl GD) const override;
@@ -84,7 +84,8 @@ public:
                                                    const VPtrInfo *Info);
 
   llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
-  llvm::Constant *getAddrOfCXXCatchDescriptor(QualType Ty) override;
+  llvm::Constant *
+  getAddrOfCXXHandlerMapEntry(QualType Ty, QualType CatchHandlerType) override;
 
   bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
   void EmitBadTypeidCall(CodeGenFunction &CGF) override;
@@ -572,6 +573,18 @@ public:
 
   void emitCXXStructor(const CXXMethodDecl *MD, StructorType Type) override;
 
+  llvm::StructType *getHandlerMapEntryType() {
+    if (!HandlerMapEntryType) {
+      llvm::Type *FieldTypes[] = {
+        CGM.IntTy,                           // Flags
+        getImageRelativeType(CGM.Int8PtrTy), // TypeDescriptor
+      };
+      HandlerMapEntryType = llvm::StructType::create(
+          CGM.getLLVMContext(), FieldTypes, "eh.HandlerMapEntry");
+    }
+    return HandlerMapEntryType;
+  }
+
   llvm::StructType *getCatchableTypeType() {
     if (CatchableTypeType)
       return CatchableTypeType;
@@ -685,6 +698,7 @@ private:
   llvm::StructType *CatchableTypeType;
   llvm::DenseMap<uint32_t, llvm::StructType *> CatchableTypeArrayTypeMap;
   llvm::StructType *ThrowInfoType;
+  llvm::StructType *HandlerMapEntryType;
 };
 
 }
@@ -3186,14 +3200,48 @@ static QualType decomposeTypeForEH(ASTContext &Context, QualType T,
   return T;
 }
 
-llvm::Constant *MicrosoftCXXABI::getAddrOfCXXCatchDescriptor(QualType Type) {
-  // TypeDescriptors for exceptions never has qualified pointer types,
+llvm::Constant *
+MicrosoftCXXABI::getAddrOfCXXHandlerMapEntry(QualType Type,
+                                             QualType CatchHandlerType) {
+  // TypeDescriptors for exceptions never have qualified pointer types,
   // qualifiers are stored seperately in order to support qualification
   // conversions.
   bool IsConst, IsVolatile;
   Type = decomposeTypeForEH(getContext(), Type, IsConst, IsVolatile);
 
-  return getAddrOfRTTIDescriptor(Type);
+  bool IsReference = CatchHandlerType->isReferenceType();
+
+  SmallString<256> MangledName;
+  {
+    llvm::raw_svector_ostream Out(MangledName);
+    getMangleContext().mangleCXXHandlerMapEntry(Type, IsConst, IsVolatile,
+                                                IsReference, Out);
+  }
+
+  if (llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(MangledName))
+    return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
+
+  uint32_t Flags = 0;
+  if (IsConst)
+    Flags |= 1;
+  if (IsVolatile)
+    Flags |= 2;
+  if (IsReference)
+    Flags |= 8;
+
+  llvm::Constant *Fields[] = {
+      llvm::ConstantInt::get(CGM.IntTy, Flags),                // Flags
+      getImageRelativeConstant(getAddrOfRTTIDescriptor(Type)), // TypeDescriptor
+  };
+  llvm::StructType *HandlerMapEntryType = getHandlerMapEntryType();
+  auto *Var = new llvm::GlobalVariable(
+      CGM.getModule(), HandlerMapEntryType, /*Constant=*/true,
+      llvm::GlobalValue::PrivateLinkage,
+      llvm::ConstantStruct::get(HandlerMapEntryType, Fields),
+      StringRef(MangledName));
+  Var->setUnnamedAddr(true);
+  Var->setSection("llvm.metadata");
+  return Var;
 }
 
 /// \brief Gets a TypeDescriptor.  Returns a llvm::Constant * rather than a
@@ -3201,7 +3249,7 @@ llvm::Constant *MicrosoftCXXABI::getAddrOfCXXCatchDescriptor(QualType Type) {
 /// types, and need to be abstracted.  They are abstracting by casting the
 /// address to an Int8PtrTy.
 llvm::Constant *MicrosoftCXXABI::getAddrOfRTTIDescriptor(QualType Type) {
-  SmallString<256> MangledName, TypeInfoString;
+  SmallString<256> MangledName;
   {
     llvm::raw_svector_ostream Out(MangledName);
     getMangleContext().mangleCXXRTTI(Type, Out);
@@ -3212,6 +3260,7 @@ llvm::Constant *MicrosoftCXXABI::getAddrOfRTTIDescriptor(QualType Type) {
     return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
 
   // Compute the fields for the TypeDescriptor.
+  SmallString<256> TypeInfoString;
   {
     llvm::raw_svector_ostream Out(TypeInfoString);
     getMangleContext().mangleCXXRTTIName(Type, Out);

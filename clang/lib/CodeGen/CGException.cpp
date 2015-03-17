@@ -567,7 +567,8 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       if (CaughtType->isObjCObjectPointerType())
         TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
       else
-        TypeInfo = CGM.getAddrOfCXXCatchDescriptor(CaughtType);
+        TypeInfo =
+            CGM.getAddrOfCXXHandlerMapEntry(CaughtType, C->getCaughtType());
       CatchScope->setHandler(I, TypeInfo, Handler);
     } else {
       // No exception decl indicates '...', a catch-all.
