@@ -84,6 +84,7 @@ static size_t RoundUpToInstrBoundary(size_t size, char *code) {
         cursor += 2;
         continue;
       case '\xE9':  // E9 XX YY ZZ WW = jmp WWZZYYXX
+      case '\xB8':  // B8 XX YY ZZ WW = mov eax, WWZZYYXX
         cursor += 5;
         continue;
     }
@@ -182,10 +183,14 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
 }
 
 static const void **InterestingDLLsAvailable() {
-  const char *InterestingDLLs[] = {"kernel32.dll",
-                                   "msvcr110.dll", // VS2012
-                                   "msvcr120.dll", // VS2013
-                                   NULL};
+  const char *InterestingDLLs[] = {
+    "kernel32.dll",
+    "msvcr110.dll", // VS2012
+    "msvcr120.dll", // VS2013
+    // NTDLL should go last as it exports some functions that we should override
+    // in the CRT [presumably only used internally].
+    "ntdll.dll", NULL
+  };
   static void *result[ARRAY_SIZE(InterestingDLLs)] = { 0 };
   if (!result[0]) {
     for (size_t i = 0, j = 0; InterestingDLLs[i]; ++i) {
