@@ -2897,6 +2897,8 @@ attached to the ``add`` instruction using the ``!dbg`` identifier:
 More information about specific metadata nodes recognized by the
 optimizers and code generator is found below.
 
+.. _specialized-metadata:
+
 Specialized Metadata Nodes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -2906,6 +2908,8 @@ order.
 
 These aren't inherently debug info centric, but currently all the specialized
 metadata nodes are related to debug info.
+
+.. _MDCompileUnit:
 
 MDCompileUnit
 """""""""""""
@@ -2924,6 +2928,14 @@ references to them from instructions).
                         enums: !2, retainedTypes: !3, subprograms: !4,
                         globals: !5, imports: !6)
 
+Compile unit descriptors provide the root scope for objects declared in a
+specific compilation unit.  File descriptors are defined using this scope.
+These descriptors are collected by a named metadata ``!llvm.dbg.cu``.  They
+keep track of subprograms, global variables, type information, and imported
+entities (declarations and namespaces).
+
+.. _MDFile:
+
 MDFile
 """"""
 
@@ -2933,19 +2945,35 @@ MDFile
 
     !0 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 
+Files are sometimes used in ``scope:`` fields, and are the only valid target
+for ``file:`` fields.
+
 .. _MDLocation:
 
 MDBasicType
 """""""""""
 
-``MDBasicType`` nodes represent primitive types.  ``tag:`` defaults to
-``DW_TAG_base_type``.
+``MDBasicType`` nodes represent primitive types, such as ``int``, ``bool`` and
+``float``.  ``tag:`` defaults to ``DW_TAG_base_type``.
 
 .. code-block:: llvm
 
     !0 = !MDBasicType(name: "unsigned char", size: 8, align: 8,
                       encoding: DW_ATE_unsigned_char)
     !1 = !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")
+
+The ``encoding:`` describes the details of the type.  Usually it's one of the
+following:
+
+.. code-block:: llvm
+
+  DW_ATE_address       = 1
+  DW_ATE_boolean       = 2
+  DW_ATE_float         = 4
+  DW_ATE_signed        = 5
+  DW_ATE_signed_char   = 6
+  DW_ATE_unsigned      = 7
+  DW_ATE_unsigned_char = 8
 
 .. _MDSubroutineType:
 
@@ -2963,6 +2991,8 @@ represents a function with no return value (such as ``void foo() {}`` in C++).
     !1 = !BasicType(name: "char", size: 8, align: 8, DW_ATE_signed_char)
     !2 = !MDSubroutineType(types: !{null, !0, !1}) ; void (int, char)
 
+.. _MDDerivedType:
+
 MDDerivedType
 """""""""""""
 
@@ -2975,6 +3005,34 @@ qualified types.
                       encoding: DW_ATE_unsigned_char)
     !1 = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: !0, size: 32,
                         align: 32)
+
+The following ``tag:`` values are valid:
+
+.. code-block:: llvm
+
+  DW_TAG_formal_parameter   = 5
+  DW_TAG_member             = 13
+  DW_TAG_pointer_type       = 15
+  DW_TAG_reference_type     = 16
+  DW_TAG_typedef            = 22
+  DW_TAG_ptr_to_member_type = 31
+  DW_TAG_const_type         = 38
+  DW_TAG_volatile_type      = 53
+  DW_TAG_restrict_type      = 55
+
+``DW_TAG_member`` is used to define a member of a :ref:`composite type
+<MDCompositeType>` or :ref:`subprogram <MDSubprogram>`.  The type of the member
+is the ``baseType:``.  The ``offset:`` is the member's bit offset.
+``DW_TAG_formal_parameter`` is used to define a member which is a formal
+argument of a subprogram.
+
+``DW_TAG_typedef`` is used to provide a name for the ``baseType:``.
+
+``DW_TAG_pointer_type``, ``DW_TAG_reference_type``, ``DW_TAG_const_type``,
+``DW_TAG_volatile_type`` and ``DW_TAG_restrict_type`` are used to qualify the
+``baseType:``.
+
+Note that the ``void *`` type is expressed as a type derived from NULL.
 
 .. _MDCompositeType:
 
@@ -2998,6 +3056,35 @@ can refer to composite types indirectly via a :ref:`metadata string
                           line: 2, size: 32, align: 32, identifier: "_M4Enum",
                           elements: !{!0, !1, !2})
 
+The following ``tag:`` values are valid:
+
+.. code-block:: llvm
+
+  DW_TAG_array_type       = 1
+  DW_TAG_class_type       = 2
+  DW_TAG_enumeration_type = 4
+  DW_TAG_structure_type   = 19
+  DW_TAG_union_type       = 23
+  DW_TAG_subroutine_type  = 21
+  DW_TAG_inheritance      = 28
+
+
+For ``DW_TAG_array_type``, the ``elements:`` should be :ref:`subrange
+descriptors <MDSubrange>`, each representing the range of subscripts at that
+level of indexing.  The ``DIFlagVector`` flag to ``flags:`` indicates that an
+array type is a native packed vector.
+
+For ``DW_TAG_enumeration_type``, the ``elements:`` should be :ref:`enumerator
+descriptors <MDEnumerator>`, each representing the definition of an enumeration
+value for the set.  All enumeration type descriptors are collected in the
+``enums:`` field of the :ref:`compile unit <MDCompileUnit>`.
+
+For ``DW_TAG_structure_type``, ``DW_TAG_class_type``, and
+``DW_TAG_union_type``, the ``elements:`` should be :ref:`derived types
+<MDDerivedType>` with ``tag: DW_TAG_member`` or ``tag: DW_TAG_inheritance``.
+
+.. _MDSubrange:
+
 MDSubrange
 """"""""""
 
@@ -3009,6 +3096,8 @@ MDSubrange
     !0 = !MDSubrange(count: 5, lowerBound: 0) ; array counting from 0
     !1 = !MDSubrange(count: 5, lowerBound: 1) ; array counting from 1
     !2 = !MDSubrange(count: -1) ; empty array.
+
+.. _MDEnumerator:
 
 MDEnumerator
 """"""""""""
@@ -3067,6 +3156,9 @@ MDGlobalVariable
                            isDefinition: false, variable: i32* @foo,
                            declaration: !4)
 
+All global variables should be referenced by the `globals:` field of a
+:ref:`compile unit <MDCompileUnit>`.
+
 .. _MDSubprogram:
 
 MDSubprogram
@@ -3092,12 +3184,17 @@ retained, even if their IR counterparts are optimized out of the IR.  The
 MDLexicalBlock
 """"""""""""""
 
-``MDLexicalBlock`` nodes represent lexical blocks in the source language (a
-scope).
+``MDLexicalBlock`` nodes describe nested blocks within a :ref:`subprogram
+<MDSubprogram>`.  The line number and column numbers are used to dinstinguish
+two lexical blocks at same depth.  They are valid targets for ``scope:``
+fields.
 
 .. code-block:: llvm
 
-    !0 = !MDLexicalBlock(scope: !1, file: !2, line: 7, column: 35)
+    !0 = distinct !MDLexicalBlock(scope: !1, file: !2, line: 7, column: 35)
+
+Usually lexical blocks are ``distinct`` to prevent node merging based on
+operands.
 
 .. _MDLexicalBlockFile:
 
