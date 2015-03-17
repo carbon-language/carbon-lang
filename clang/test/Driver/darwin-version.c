@@ -1,15 +1,15 @@
 // RUN: %clang -target armv6-apple-darwin9 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-OSX %s
-// CHECK-VERSION-OSX: "armv6-apple-macosx10.5.0"
+// CHECK-VERSION-OSX: "armv6k-apple-macosx10.5.0"
 // RUN: %clang -target armv6-apple-darwin9 -miphoneos-version-min=2.0 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-IOS2 %s
-// CHECK-VERSION-IOS2: "armv6-apple-ios2.0.0"
+// CHECK-VERSION-IOS2: "armv6k-apple-ios2.0.0"
 // RUN: %clang -target armv6-apple-darwin9 -miphoneos-version-min=2.2 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-IOS22 %s
-// CHECK-VERSION-IOS22: "armv6-apple-ios2.2.0"
+// CHECK-VERSION-IOS22: "armv6k-apple-ios2.2.0"
 // RUN: %clang -target armv6-apple-darwin9 -miphoneos-version-min=3.0 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-IOS3 %s
-// CHECK-VERSION-IOS3: "armv6-apple-ios3.0.0"
+// CHECK-VERSION-IOS3: "armv6k-apple-ios3.0.0"
 // RUN: %clang -target i686-apple-darwin8 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-OSX4 %s
 // RUN: %clang -target i686-apple-darwin9 -mmacosx-version-min=10.4 -c %s -### 2>&1 | \
@@ -46,4 +46,4 @@
 // RUN: env IPHONEOS_DEPLOYMENT_TARGET=2.3.1 \
 // RUN:   %clang -target armv6-apple-darwin9 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-IOS231 %s
-// CHECK-VERSION-IOS231: "armv6-apple-ios2.3.1"
+// CHECK-VERSION-IOS231: "armv6k-apple-ios2.3.1"

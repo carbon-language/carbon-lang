@@ -11,7 +11,7 @@
 // RUN: grep '"-cc1" "-triple" "x86_64--netbsd"' %t
 
 // RUN: %clang -target armv6--netbsd-eabihf -m32 %s -### 2> %t
-// RUN: grep '"-cc1" "-triple" "armv6--netbsd-eabihf"' %t
+// RUN: grep '"-cc1" "-triple" "armv6k--netbsd-eabihf"' %t
 
 // RUN: %clang -target sparcv9--netbsd -m32 %s -### 2> %t
 // RUN: grep '"-cc1" "-triple" "sparc--netbsd"' %t

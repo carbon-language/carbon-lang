@@ -4215,8 +4215,9 @@ public:
         .Cases("arm10e", "arm1020e", "arm1022e", "5TE")
         .Cases("xscale", "iwmmxt", "5TE")
         .Case("arm1136j-s", "6J")
-        .Cases("arm1176jz-s", "arm1176jzf-s", "6ZK")
-        .Cases("arm1136jf-s", "mpcorenovfp", "mpcore", "6K")
+        .Case("arm1136jf-s", "6")
+        .Cases("mpcorenovfp", "mpcore", "6K")
+        .Cases("arm1176jz-s", "arm1176jzf-s", "6K")
         .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
         .Cases("cortex-a5", "cortex-a7", "cortex-a8", "7A")
         .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait",
