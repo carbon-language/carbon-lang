@@ -82,6 +82,9 @@ static cl::opt<unsigned> LoopSizeCutoff("irce-loop-size-cutoff", cl::Hidden,
 static cl::opt<bool> PrintChangedLoops("irce-print-changed-loops", cl::Hidden,
                                        cl::init(false));
 
+static cl::opt<bool> PrintRangeChecks("irce-print-range-checks", cl::Hidden,
+                                      cl::init(false));
+
 static cl::opt<int> MaxExitProbReciprocal("irce-max-exit-prob-reciprocal",
                                           cl::Hidden, cl::init(10));
 
@@ -1392,12 +1395,18 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (RangeChecks.empty())
     return false;
 
-  DEBUG(dbgs() << "irce: looking at loop "; L->print(dbgs());
-        dbgs() << "irce: loop has " << RangeChecks.size()
-               << " inductive range checks: \n";
-        for (InductiveRangeCheck *IRC : RangeChecks)
-          IRC->print(dbgs());
-    );
+  auto PrintRecognizedRangeChecks = [&](raw_ostream &OS) {
+    OS << "irce: looking at loop "; L->print(OS);
+    OS << "irce: loop has " << RangeChecks.size()
+       << " inductive range checks: \n";
+    for (InductiveRangeCheck *IRC : RangeChecks)
+      IRC->print(OS);
+  };
+
+  DEBUG(PrintRecognizedRangeChecks(dbgs()));
+
+  if (PrintRangeChecks)
+    PrintRecognizedRangeChecks(errs());
 
   const char *FailureReason = nullptr;
   Optional<LoopStructure> MaybeLoopStructure =
