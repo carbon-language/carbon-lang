@@ -845,12 +845,35 @@ LoopConstrainer::calculateSubRanges() const {
   const SCEV *End = SE.getSCEV(MainLoopStructure.LoopExitAt);
 
   bool Increasing = MainLoopStructure.IndVarIncreasing;
+
   // We compute `Smallest` and `Greatest` such that [Smallest, Greatest) is the
   // range of values the induction variable takes.
-  const SCEV *Smallest =
-      Increasing ? Start : SE.getAddExpr(End, SE.getSCEV(One));
-  const SCEV *Greatest =
-      Increasing ? End : SE.getAddExpr(Start, SE.getSCEV(One));
+
+  const SCEV *Smallest = nullptr, *Greatest = nullptr;
+
+  if (Increasing) {
+    Smallest = Start;
+    Greatest = End;
+  } else {
+    // These two computations may sign-overflow.  Here is why that is okay:
+    //
+    // We know that the induction variable does not sign-overflow on any
+    // iteration except the last one, and it starts at `Start` and ends at
+    // `End`, decrementing by one every time.
+    //
+    //  * if `Smallest` sign-overflows we know `End` is `INT_SMAX`. Since the
+    //    induction variable is decreasing we know that that the smallest value
+    //    the loop body is actually executed with is `INT_SMIN` == `Smallest`.
+    //
+    //  * if `Greatest` sign-overflows, we know it can only be `INT_SMIN`.  In
+    //    that case, `Clamp` will always return `Smallest` and
+    //    [`Result.LowLimit`, `Result.HighLimit`) = [`Smallest`, `Smallest`)
+    //    will be an empty range.  Returning an empty range is always safe.
+    //
+
+    Smallest = SE.getAddExpr(End, SE.getSCEV(One));
+    Greatest = SE.getAddExpr(Start, SE.getSCEV(One));
+  }
 
   auto Clamp = [this, Smallest, Greatest](const SCEV *S) {
     return SE.getSMaxExpr(Smallest, SE.getSMinExpr(Greatest, S));
