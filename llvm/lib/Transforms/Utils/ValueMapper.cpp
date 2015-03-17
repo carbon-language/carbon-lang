@@ -291,13 +291,17 @@ static Metadata *MapMetadataImpl(const Metadata *MD,
     return nullptr;
   }
 
+  // Note: this cast precedes the Flags check so we always get its associated
+  // assertion.
   const MDNode *Node = cast<MDNode>(MD);
-  assert(Node->isResolved() && "Unexpected unresolved node");
 
   // If this is a module-level metadata and we know that nothing at the
   // module level is changing, then use an identity mapping.
   if (Flags & RF_NoModuleLevelChanges)
     return mapToSelf(VM, MD);
+
+  // Require resolved nodes whenever metadata might be remapped.
+  assert(Node->isResolved() && "Unexpected unresolved node");
 
   if (Node->isDistinct())
     return mapDistinctNode(Node, Cycles, VM, Flags, TypeMapper, Materializer);
