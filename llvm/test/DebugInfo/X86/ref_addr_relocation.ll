@@ -2,6 +2,7 @@
 ; RUN: llc -filetype=obj -O0 %s -mtriple=x86_64-linux-gnu -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s -check-prefix=CHECK-DWARF
 
+; RUN: llc -filetype=asm -O0 -mtriple=x86_64-apple-darwin < %s | FileCheck --check-prefix=DARWIN-ASM %s
 ; RUN: llc -filetype=obj %s -mtriple=x86_64-apple-darwin -o %t2
 ; RUN: llvm-dwarfdump %t2 | FileCheck %s -check-prefix=DARWIN-DWARF
 
@@ -32,6 +33,10 @@
 ; CHECK: .quad .Lsection_info+[[TYPE]] # DW_AT_type
 ; CHECK-NOT: DW_TAG_structure_type
 ; CHECK: .section
+
+; test that we don't create useless labels
+; DARWIN-ASM: .long [[TYPE:.*]] ## DW_AT_type
+; DARWIN-ASM: .quad [[TYPE]] ## DW_AT_type
 
 ; CHECK-DWARF: DW_TAG_compile_unit
 ; CHECK-DWARF: 0x[[ADDR:.*]]: DW_TAG_structure_type
