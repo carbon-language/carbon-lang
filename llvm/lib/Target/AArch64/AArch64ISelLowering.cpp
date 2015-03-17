@@ -7201,6 +7201,12 @@ static SDValue performConcatVectorsCombine(SDNode *N,
         (N00VT == MVT::v2i64 || N00VT == MVT::v4i32) &&
         N00VT.getScalarSizeInBits() == 4 * VT.getScalarSizeInBits()) {
       MVT MidVT = (N00VT == MVT::v2i64 ? MVT::v2i32 : MVT::v4i16);
+#if defined(__GNUC__)
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 7 && __GNUC_PATCHLEVEL__ == 2
+      // FIXME: g++-4.7.2 might miscompile PerformDAGCombine().
+      asm volatile("":::"memory");
+#endif
+#endif
       MVT ConcatMidVT = MVT::getVectorVT(MidVT.getVectorElementType(),
                                          MidVT.getVectorNumElements() * 2);
       return DAG.getNode(
