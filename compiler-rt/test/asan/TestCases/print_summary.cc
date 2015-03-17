@@ -1,14 +1,16 @@
 // RUN: %clangxx_asan -O0 %s -o %t
-// RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=YES
-// RUN: env ASAN_OPTIONS=print_summary=false not %run %t 2>&1 | FileCheck %s --check-prefix=NO
+// RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=SOURCE
+// RUN: env ASAN_OPTIONS=symbolize=false not %run %t 2>&1 | FileCheck %s --check-prefix=MODULE
+// RUN: env ASAN_OPTIONS=print_summary=false not %run %t 2>&1 | FileCheck %s --check-prefix=MISSING
 
 int main() {
   char *x = new char[20];
   delete[] x;
   return x[0];
-  // YES: ERROR: AddressSanitizer: heap-use-after-free
-  // YES: SUMMARY: AddressSanitizer: heap-use-after-free
-  // NO: ERROR: AddressSanitizer: heap-use-after-free
-  // NO-NOT: SUMMARY: AddressSanitizer: heap-use-after-free
+  // SOURCE: ERROR: AddressSanitizer: heap-use-after-free
+  // SOURCE: SUMMARY: AddressSanitizer: heap-use-after-free {{.*}}print_summary.cc:[[@LINE-2]]{{.*}} main
+  // MODULE: ERROR: AddressSanitizer: heap-use-after-free
+  // MODULE: SUMMARY: AddressSanitizer: heap-use-after-free ({{.*}}+0x{{.*}})
+  // MISSING: ERROR: AddressSanitizer: heap-use-after-free
+  // MISSING-NOT: SUMMARY
 }
-

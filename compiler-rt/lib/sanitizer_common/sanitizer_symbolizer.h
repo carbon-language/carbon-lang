@@ -93,7 +93,6 @@ class Symbolizer {
       return module_name;
     return nullptr;
   }
-  bool CanReturnFileLineInfo() { return !tools_.empty(); }
   // Release internal caches (if any).
   void Flush();
   // Attempts to demangle the provided C++ mangled name.
