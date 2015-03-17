@@ -79,7 +79,7 @@ protected:
 
 
     kern_return_t           EnableHardwareSingleStep (bool enable);
-    static bool             FixGenericRegisterNumber (int &set, int &reg);
+    static bool             FixGenericRegisterNumber (uint32_t &set, uint32_t &reg);
 
     typedef enum RegisterSetTag
     {

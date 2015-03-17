@@ -1674,7 +1674,7 @@ DNBArchMachARM64::GetRegisterSetInfo(nub_size_t *num_reg_sets)
 }
 
 bool
-DNBArchMachARM64::FixGenericRegisterNumber (int &set, int &reg)
+DNBArchMachARM64::FixGenericRegisterNumber (uint32_t &set, uint32_t &reg)
 {
     if (set == REGISTER_SET_GENERIC)
     {
