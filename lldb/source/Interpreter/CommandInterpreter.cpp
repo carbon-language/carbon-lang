@@ -109,7 +109,7 @@ CommandInterpreter::CommandInterpreter
     ScriptLanguage script_language,
     bool synchronous_execution
 ) :
-    Broadcaster (&debugger, "lldb.command-interpreter"),
+    Broadcaster (&debugger, CommandInterpreter::GetStaticBroadcasterClass().AsCString()),
     Properties(OptionValuePropertiesSP(new OptionValueProperties(ConstString("interpreter")))),
     IOHandlerDelegate (IOHandlerDelegate::Completion::LLDBCommand),
     m_debugger (debugger),

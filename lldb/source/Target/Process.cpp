@@ -704,7 +704,7 @@ Process::Process(Target &target, Listener &listener) :
 Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_signals_sp) :
     ProcessProperties (this),
     UserID (LLDB_INVALID_PROCESS_ID),
-    Broadcaster (&(target.GetDebugger()), "lldb.process"),
+    Broadcaster (&(target.GetDebugger()), Process::GetStaticBroadcasterClass().AsCString()),
     m_target (target),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),

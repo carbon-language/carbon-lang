@@ -10,7 +10,6 @@
 #include "lldb/lldb-python.h"
 
 #include "lldb/lldb-types.h"
-#include "lldb/Core/Communication.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -533,7 +532,7 @@ SBCommandInterpreter::GetBroadcaster ()
 const char *
 SBCommandInterpreter::GetBroadcasterClass ()
 {
-    return Communication::GetStaticBroadcasterClass().AsCString();
+    return CommandInterpreter::GetStaticBroadcasterClass().AsCString();
 }
 
 const char * 
