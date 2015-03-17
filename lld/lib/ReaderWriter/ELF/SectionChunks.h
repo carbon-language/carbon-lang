@@ -234,17 +234,17 @@ public:
   /// routine gets called after the linker fixes up the virtual address
   /// of the section
   virtual void assignVirtualAddress(uint64_t addr) override {
-    for (auto &ai : _atoms) {
+    parallel_for_each(_atoms.begin(), _atoms.end(), [&](AtomLayout *ai) {
       ai->_virtualAddr = addr + ai->_fileOffset;
-    }
+    });
   }
 
   /// \brief Set the file offset of each Atom in the section. This routine
   /// gets called after the linker fixes up the section offset
   void assignFileOffsets(uint64_t offset) override {
-    for (auto &ai : _atoms) {
+    parallel_for_each(_atoms.begin(), _atoms.end(), [&](AtomLayout *ai) {
       ai->_fileOffset = offset + ai->_fileOffset;
-    }
+    });
   }
 
   /// \brief Find the Atom address given a name, this is needed to properly

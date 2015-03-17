@@ -586,8 +586,10 @@ std::error_code OutputELFWriter<ELFT>::writeOutput(const File &file,
   _elfHeader->write(this, _layout, *buffer);
   _programHeader->write(this, _layout, *buffer);
 
-  for (auto section : _layout.sections())
-    section->write(this, _layout, *buffer);
+  auto sections = _layout.sections();
+  parallel_for_each(
+      sections.begin(), sections.end(),
+      [&](Chunk<ELFT> *section) { section->write(this, _layout, *buffer); });
   writeTask.end();
 
   ScopedTask commitTask(getDefaultDomain(), "ELF Writer commit to disk");
