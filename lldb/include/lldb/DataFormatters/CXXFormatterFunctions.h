@@ -232,37 +232,6 @@ namespace lldb_private {
         bool
         LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
-        class LibstdcppVectorBoolSyntheticFrontEnd : public SyntheticChildrenFrontEnd
-        {
-        public:
-            LibstdcppVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
-            
-            virtual size_t
-            CalculateNumChildren ();
-            
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
-            
-            virtual bool
-            Update();
-            
-            virtual bool
-            MightHaveChildren ();
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~LibstdcppVectorBoolSyntheticFrontEnd ();
-        private:
-            ExecutionContextRef m_exe_ctx_ref;
-            uint64_t m_count;
-            lldb::addr_t m_base_data_address;
-            EvaluateExpressionOptions m_options;
-        };
-        
-        SyntheticChildrenFrontEnd* LibstdcppVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
-        
         class LibstdcppMapIteratorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
         public:

@@ -21,10 +21,6 @@ class StdVBoolDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
-    @expectedFailureLinux # non-core functionality, need to reenable and fix
-                          # later (DES 2014.11.07). Most likely failing because
-                          # of mis-match is version of libstdc++ supported by
-                          # the data-formatters.
     @dwarf_test
     @skipIfWindows # http://llvm.org/pr21800
     @skipIfDarwin
@@ -39,7 +35,6 @@ class StdVBoolDataFormatterTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    @expectedFailureGcc # llvm.org/pr15301: lldb does not print the correct sizes of STL containers when building with GCC
     @expectedFailureIcc # llvm.org/pr15301: lldb does not print the correct sizes of STL containers when building with ICC
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
