@@ -81,7 +81,10 @@ static Reference::Addend readAddend(const uint8_t *location,
                                     Reference::KindValue kindValue) {
   switch (kindValue) {
   case R_ARM_ABS32:
+  case R_ARM_REL32:
     return (int32_t)read32le(location);
+  case R_ARM_PREL31:
+    return (int32_t)(read32le(location) & 0x7FFFFFFF);
   case R_ARM_THM_CALL:
   case R_ARM_THM_JUMP24:
     return readAddend_THM_CALL(location);
