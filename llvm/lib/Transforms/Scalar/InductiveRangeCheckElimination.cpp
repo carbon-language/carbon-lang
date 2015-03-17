@@ -104,7 +104,7 @@ namespace {
 ///
 class InductiveRangeCheck {
   // Classifies a range check
-  enum RangeCheckKind {
+  enum RangeCheckKind : unsigned {
     // Range check of the form "0 <= I".
     RANGE_CHECK_LOWER = 1,
 
