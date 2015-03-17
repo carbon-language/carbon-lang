@@ -126,8 +126,8 @@ public:
   void EmitFundamentalRTTIDescriptor(QualType Type);
   void EmitFundamentalRTTIDescriptors();
   llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
-  llvm::Constant *getAddrOfCXXHandlerMapEntry(QualType Ty,
-                                              QualType CatchHandlerType) {
+  llvm::Constant *
+  getAddrOfCXXHandlerMapEntry(QualType Ty, QualType CatchHandlerType) override {
     return getAddrOfRTTIDescriptor(Ty);
   }
 

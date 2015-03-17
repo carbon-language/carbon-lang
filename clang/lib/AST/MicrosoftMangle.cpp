@@ -123,7 +123,7 @@ public:
                               int32_t VBPtrOffset, uint32_t VBIndex,
                               raw_ostream &Out) override;
   void mangleCXXHandlerMapEntry(QualType T, bool IsConst, bool IsVolatile,
-                                bool IsReference, raw_ostream &Out);
+                                bool IsReference, raw_ostream &Out) override;
   void mangleCXXRTTI(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIName(QualType T, raw_ostream &Out) override;
   void mangleCXXRTTIBaseClassDescriptor(const CXXRecordDecl *Derived,
