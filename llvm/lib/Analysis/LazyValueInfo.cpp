@@ -854,10 +854,10 @@ bool getValueFromFromCondition(Value *Val, ICmpInst *ICI,
 
     ConstantInt *CI = dyn_cast<ConstantInt>(ICI->getOperand(1));
     if (CI && (ICI->getOperand(0) == Val || NegOffset)) {
-      // Calculate the range of values that would satisfy the comparison.
+      // Calculate the range of values that are allowed by the comparison
       ConstantRange CmpRange(CI->getValue());
       ConstantRange TrueValues =
-        ConstantRange::makeICmpRegion(ICI->getPredicate(), CmpRange);
+          ConstantRange::makeAllowedICmpRegion(ICI->getPredicate(), CmpRange);
 
       if (NegOffset) // Apply the offset from above.
         TrueValues = TrueValues.subtract(NegOffset->getValue());

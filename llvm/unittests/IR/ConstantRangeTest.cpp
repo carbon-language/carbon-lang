@@ -509,11 +509,63 @@ TEST_F(ConstantRangeTest, Lshr) {
   EXPECT_EQ(Wrap.lshr(Wrap), Full);
 }
 
-TEST(ConstantRange, MakeICmpRegion) {
+TEST(ConstantRange, MakeAllowedICmpRegion) {
   // PR8250
   ConstantRange SMax = ConstantRange(APInt::getSignedMaxValue(32));
-  EXPECT_TRUE(ConstantRange::makeICmpRegion(ICmpInst::ICMP_SGT,
-                                            SMax).isEmptySet());
+  EXPECT_TRUE(ConstantRange::makeAllowedICmpRegion(ICmpInst::ICMP_SGT, SMax)
+                  .isEmptySet());
+}
+
+TEST(ConstantRange, MakeSatisfyingICmpRegion) {
+  ConstantRange LowHalf(APInt(8, 0), APInt(8, 128));
+  ConstantRange HighHalf(APInt(8, 128), APInt(8, 0));
+  ConstantRange EmptySet(8, /* isFullSet = */ false);
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_NE, LowHalf),
+            HighHalf);
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_NE, HighHalf),
+      LowHalf);
+
+  EXPECT_TRUE(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_EQ,
+                                                      HighHalf).isEmptySet());
+
+  ConstantRange UnsignedSample(APInt(8, 5), APInt(8, 200));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_ULT,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 0), APInt(8, 5)));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_ULE,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 0), APInt(8, 6)));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_UGT,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 200), APInt(8, 0)));
+
+  EXPECT_EQ(ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_UGE,
+                                                    UnsignedSample),
+            ConstantRange(APInt(8, 199), APInt(8, 0)));
+
+  ConstantRange SignedSample(APInt(8, -5), APInt(8, 5));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SLT, SignedSample),
+      ConstantRange(APInt(8, -128), APInt(8, -5)));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SLE, SignedSample),
+      ConstantRange(APInt(8, -128), APInt(8, -4)));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SGT, SignedSample),
+      ConstantRange(APInt(8, 5), APInt(8, -128)));
+
+  EXPECT_EQ(
+      ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SGE, SignedSample),
+      ConstantRange(APInt(8, 4), APInt(8, -128)));
 }
 
 }  // anonymous namespace

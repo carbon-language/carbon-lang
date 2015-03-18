@@ -49,14 +49,15 @@ ConstantRange::ConstantRange(APIntMoveTy L, APIntMoveTy U)
          "Lower == Upper, but they aren't min or max value!");
 }
 
-ConstantRange ConstantRange::makeICmpRegion(unsigned Pred,
-                                            const ConstantRange &CR) {
+ConstantRange ConstantRange::makeAllowedICmpRegion(CmpInst::Predicate Pred,
+                                                   const ConstantRange &CR) {
   if (CR.isEmptySet())
     return CR;
 
   uint32_t W = CR.getBitWidth();
   switch (Pred) {
-    default: llvm_unreachable("Invalid ICmp predicate to makeICmpRegion()");
+  default:
+    llvm_unreachable("Invalid ICmp predicate to makeAllowedICmpRegion()");
     case CmpInst::ICMP_EQ:
       return CR;
     case CmpInst::ICMP_NE:
@@ -112,6 +113,16 @@ ConstantRange ConstantRange::makeICmpRegion(unsigned Pred,
       return ConstantRange(SMin, APInt::getSignedMinValue(W));
     }
   }
+}
+
+ConstantRange ConstantRange::makeSatisfyingICmpRegion(CmpInst::Predicate Pred,
+                                                      const ConstantRange &CR) {
+  // Follows from De-Morgan's laws:
+  //
+  // ~(~A union ~B) == A intersect B.
+  //
+  return makeAllowedICmpRegion(CmpInst::getInversePredicate(Pred), CR)
+      .inverse();
 }
 
 /// isFullSet - Return true if this set contains all of the elements possible

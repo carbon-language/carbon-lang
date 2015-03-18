@@ -979,9 +979,9 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   // Make a constant range that's the intersection of the two icmp ranges.
   // If the intersection is empty, we know that the result is false.
   ConstantRange LHSRange =
-    ConstantRange::makeICmpRegion(LHSCC, LHSCst->getValue());
+      ConstantRange::makeAllowedICmpRegion(LHSCC, LHSCst->getValue());
   ConstantRange RHSRange =
-    ConstantRange::makeICmpRegion(RHSCC, RHSCst->getValue());
+      ConstantRange::makeAllowedICmpRegion(RHSCC, RHSCst->getValue());
 
   if (LHSRange.intersectWith(RHSRange).isEmptySet())
     return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
