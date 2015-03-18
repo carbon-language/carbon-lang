@@ -797,6 +797,7 @@
 		947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 947A1D631616476A0017C8D1 /* CommandObjectPlugin.h */; };
 		9492E2A51A8AC11000295BBD /* CoreMedia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9492E2A41A8AC11000295BBD /* CoreMedia.cpp */; };
 		949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */; };
+		94A5B3971AB9FE8D00A5EE7F /* EmulateInstructionMIPS64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A5B3951AB9FE8300A5EE7F /* EmulateInstructionMIPS64.cpp */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
 		94BA8B6D176F8C9B005A91B5 /* Range.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94BA8B6C176F8C9B005A91B5 /* Range.cpp */; };
 		94BA8B70176F97CE005A91B5 /* CommandHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94BA8B6F176F97CE005A91B5 /* CommandHistory.cpp */; };
@@ -2448,6 +2449,8 @@
 		9492E2A41A8AC11000295BBD /* CoreMedia.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CoreMedia.cpp; path = source/DataFormatters/CoreMedia.cpp; sourceTree = "<group>"; };
 		949ADF001406F62E004833E1 /* ValueObjectConstResultImpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResultImpl.h; path = include/lldb/Core/ValueObjectConstResultImpl.h; sourceTree = "<group>"; };
 		949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResultImpl.cpp; path = source/Core/ValueObjectConstResultImpl.cpp; sourceTree = "<group>"; };
+		94A5B3951AB9FE8300A5EE7F /* EmulateInstructionMIPS64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstructionMIPS64.cpp; path = MIPS64/EmulateInstructionMIPS64.cpp; sourceTree = "<group>"; };
+		94A5B3961AB9FE8300A5EE7F /* EmulateInstructionMIPS64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EmulateInstructionMIPS64.h; path = MIPS64/EmulateInstructionMIPS64.h; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
 		94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectSyntheticFilter.cpp; path = source/Core/ValueObjectSyntheticFilter.cpp; sourceTree = "<group>"; };
 		94BA8B6C176F8C9B005A91B5 /* Range.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Range.cpp; path = source/Utility/Range.cpp; sourceTree = "<group>"; };
@@ -3347,8 +3350,9 @@
 				264A12FA1372522000875C42 /* EmulateInstructionARM64.cpp */,
 				264A12FB1372522000875C42 /* EmulateInstructionARM64.h */,
 			);
-			path = ARM64;
-			sourceTree = "<group>";
+			name = ARM64;
+			path = source/Plugins/Instruction/ARM64;
+			sourceTree = SOURCE_ROOT;
 		};
 		264A97BC133918A30017F0BE /* GDB Server */ = {
 			isa = PBXGroup;
@@ -4610,6 +4614,7 @@
 			children = (
 				26D9FDCB12F785270003F2EE /* ARM */,
 				264A12F91372522000875C42 /* ARM64 */,
+				94A5B3941AB9FE5F00A5EE7F /* MIPS64 */,
 			);
 			path = Instruction;
 			sourceTree = "<group>";
@@ -5000,6 +5005,15 @@
 				945759661534941F005A9070 /* PlatformPOSIX.h */,
 			);
 			name = POSIX;
+			sourceTree = "<group>";
+		};
+		94A5B3941AB9FE5F00A5EE7F /* MIPS64 */ = {
+			isa = PBXGroup;
+			children = (
+				94A5B3951AB9FE8300A5EE7F /* EmulateInstructionMIPS64.cpp */,
+				94A5B3961AB9FE8300A5EE7F /* EmulateInstructionMIPS64.h */,
+			);
+			name = MIPS64;
 			sourceTree = "<group>";
 		};
 		94CB255616B0683B0059775D /* DataFormatters */ = {
@@ -6143,6 +6157,7 @@
 				2689010A13353E6F00698AC0 /* ThreadPlanTracer.cpp in Sources */,
 				AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */,
 				26474CAA18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp in Sources */,
+				94A5B3971AB9FE8D00A5EE7F /* EmulateInstructionMIPS64.cpp in Sources */,
 				26CA97A1172B1FD5005DC71B /* RegisterContextThreadMemory.cpp in Sources */,
 				2689010B13353E6F00698AC0 /* ThreadSpec.cpp in Sources */,
 				2689010C13353E6F00698AC0 /* UnixSignals.cpp in Sources */,
