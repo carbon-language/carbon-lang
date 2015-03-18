@@ -92,6 +92,7 @@ public:
   SDNode *SelectConstant(SDNode *N);
   SDNode *SelectConstantFP(SDNode *N);
   SDNode *SelectAdd(SDNode *N);
+  SDNode *SelectBitOp(SDNode *N);
 
   // XformMskToBitPosU5Imm - Returns the bit position which
   // the single bit 32 bit mask represents.
@@ -858,6 +859,147 @@ SDNode *HexagonDAGToDAGISel::SelectAdd(SDNode *N) {
   return Result;
 }
 
+//
+// Map the following, where possible.
+// AND/FABS -> clrbit
+// OR -> setbit
+// XOR/FNEG ->toggle_bit.
+//
+SDNode *HexagonDAGToDAGISel::SelectBitOp(SDNode *N) {
+  SDLoc dl(N);
+  EVT ValueVT = N->getValueType(0);
+
+  // We handle only 32 and 64-bit bit ops.
+  if (!(ValueVT == MVT::i32 || ValueVT == MVT::i64 ||
+        ValueVT == MVT::f32 || ValueVT == MVT::f64))
+    return SelectCode(N);
+
+  // We handly only fabs and fneg for V5.
+  unsigned Opc = N->getOpcode();
+  if ((Opc == ISD::FABS || Opc == ISD::FNEG) && !HST.hasV5TOps())
+    return SelectCode(N);
+
+  int64_t Val = 0;
+  if (Opc != ISD::FABS && Opc != ISD::FNEG) {
+    if (N->getOperand(1).getOpcode() == ISD::Constant)
+      Val = cast<ConstantSDNode>((N)->getOperand(1))->getSExtValue();
+    else
+     return SelectCode(N);
+  }
+
+  if (Opc == ISD::AND) {
+    if (((ValueVT == MVT::i32) &&
+                  (!((Val & 0x80000000) || (Val & 0x7fffffff)))) ||
+        ((ValueVT == MVT::i64) &&
+                  (!((Val & 0x8000000000000000) || (Val & 0x7fffffff)))))
+      // If it's simple AND, do the normal op.
+      return SelectCode(N);
+    else
+      Val = ~Val;
+  }
+
+  // If OR or AND is being fed by shl, srl and, sra don't do this change,
+  // because Hexagon provide |= &= on shl, srl, and sra.
+  // Traverse the DAG to see if there is shl, srl and sra.
+  if (Opc == ISD::OR || Opc == ISD::AND) {
+    switch (N->getOperand(0)->getOpcode()) {
+      default: break;
+      case ISD::SRA:
+      case ISD::SRL:
+      case ISD::SHL:
+        return SelectCode(N);
+    }
+  }
+
+  // Make sure it's power of 2.
+  unsigned bitpos = 0;
+  if (Opc != ISD::FABS && Opc != ISD::FNEG) {
+    if (((ValueVT == MVT::i32) && !isPowerOf2_32(Val)) ||
+        ((ValueVT == MVT::i64) && !isPowerOf2_64(Val)))
+      return SelectCode(N);
+
+    // Get the bit position.
+    while (!(Val & 1)) {
+      Val >>= 1;
+      ++bitpos;
+    }
+  } else {
+    // For fabs and fneg, it's always the 31st bit.
+    bitpos = 31;
+  }
+
+  unsigned BitOpc = 0;
+  // Set the right opcode for bitwise operations.
+  switch(Opc) {
+    default: llvm_unreachable("Only bit-wise/abs/neg operations are allowed.");
+    case ISD::AND:
+    case ISD::FABS:
+      BitOpc = Hexagon::S2_clrbit_i;
+      break;
+    case ISD::OR:
+      BitOpc = Hexagon::S2_setbit_i;
+      break;
+    case ISD::XOR:
+    case ISD::FNEG:
+      BitOpc = Hexagon::S2_togglebit_i;
+      break;
+  }
+
+  SDNode *Result;
+  // Get the right SDVal for the opcode.
+  SDValue SDVal = CurDAG->getTargetConstant(bitpos, MVT::i32);
+
+  if (ValueVT == MVT::i32 || ValueVT == MVT::f32) {
+    Result = CurDAG->getMachineNode(BitOpc, dl, ValueVT,
+                                    N->getOperand(0), SDVal);
+  } else {
+    // 64-bit gymnastic to use REG_SEQUENCE. But it's worth it.
+    EVT SubValueVT;
+    if (ValueVT == MVT::i64)
+      SubValueVT = MVT::i32;
+    else
+      SubValueVT = MVT::f32;
+
+    SDNode *Reg = N->getOperand(0).getNode();
+    SDValue RegClass = CurDAG->getTargetConstant(Hexagon::DoubleRegsRegClassID,
+                                                 MVT::i64);
+
+    SDValue SubregHiIdx = CurDAG->getTargetConstant(Hexagon::subreg_hireg,
+                                                    MVT::i32);
+    SDValue SubregLoIdx = CurDAG->getTargetConstant(Hexagon::subreg_loreg,
+                                                    MVT::i32);
+
+    SDValue SubregHI = CurDAG->getTargetExtractSubreg(Hexagon::subreg_hireg, dl,
+                                                    MVT::i32, SDValue(Reg, 0));
+
+    SDValue SubregLO = CurDAG->getTargetExtractSubreg(Hexagon::subreg_loreg, dl,
+                                                    MVT::i32, SDValue(Reg, 0));
+
+    // Clear/set/toggle hi or lo registers depending on the bit position.
+    if (SubValueVT != MVT::f32 && bitpos < 32) {
+      SDNode *Result0 = CurDAG->getMachineNode(BitOpc, dl, SubValueVT,
+                                               SubregLO, SDVal);
+      const SDValue Ops[] = { RegClass, SubregHI, SubregHiIdx,
+                              SDValue(Result0, 0), SubregLoIdx };
+      Result = CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE,
+                                      dl, ValueVT, Ops);
+    } else {
+      if (Opc != ISD::FABS && Opc != ISD::FNEG)
+        SDVal = CurDAG->getTargetConstant(bitpos-32, MVT::i32);
+      SDNode *Result0 = CurDAG->getMachineNode(BitOpc, dl, SubValueVT,
+                                               SubregHI, SDVal);
+      const SDValue Ops[] = { RegClass, SDValue(Result0, 0), SubregHiIdx,
+                              SubregLO, SubregLoIdx };
+      Result = CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE,
+                                      dl, ValueVT, Ops);
+    }
+  }
+
+  ReplaceUses(N, Result);
+  return Result;
+}
+
+
 SDNode *HexagonDAGToDAGISel::SelectFrameIndex(SDNode *N) {
   int FX = cast<FrameIndexSDNode>(N)->getIndex();
   SDValue FI = CurDAG->getTargetFrameIndex(FX, MVT::i32);
@@ -902,6 +1044,13 @@ SDNode *HexagonDAGToDAGISel::Select(SDNode *N) {
 
   case ISD::MUL:
     return SelectMul(N);
+
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+  case ISD::FABS:
+  case ISD::FNEG:
+    return SelectBitOp(N);
 
   case ISD::ZERO_EXTEND:
     return SelectZeroExtend(N);
