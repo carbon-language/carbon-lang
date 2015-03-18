@@ -19,7 +19,7 @@ ifeq (Darwin,$(shell uname -s))
 BUILT_SOURCES = LLDB_vers.c
 endif
 
-SOURCES := lldb-log.cpp lldb.cpp
+SOURCES := lldb.cpp
 
 include $(LLDB_LEVEL)/Makefile
 
