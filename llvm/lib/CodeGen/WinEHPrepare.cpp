@@ -27,6 +27,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -77,8 +78,8 @@ public:
   }
 
 private:
-  bool prepareCPPEHHandlers(Function &F,
-                            SmallVectorImpl<LandingPadInst *> &LPads);
+  bool prepareExceptionHandlers(Function &F,
+                                SmallVectorImpl<LandingPadInst *> &LPads);
   bool outlineHandler(ActionHandler *Action, Function *SrcFn,
                       LandingPadInst *LPad, BasicBlock *StartBB,
                       FrameVarInfoMap &VarInfo);
@@ -88,6 +89,10 @@ private:
                                  VisitedBlockSet &VisitedBlocks);
   CleanupHandler *findCleanupHandler(BasicBlock *StartBB, BasicBlock *EndBB);
 
+  void processSEHCatchHandler(CatchHandler *Handler, BasicBlock *StartBB);
+
+  // All fields are reset by runOnFunction.
+  EHPersonality Personality;
   CatchHandlerMapTy CatchHandlerMap;
   CleanupHandlerMapTy CleanupHandlerMap;
   DenseMap<const LandingPadInst *, LandingPadMap>  LPadMaps;
@@ -238,20 +243,22 @@ public:
 class ActionHandler {
 public:
   ActionHandler(BasicBlock *BB, ActionType Type)
-      : StartBB(BB), Type(Type), OutlinedFn(nullptr) {}
+      : StartBB(BB), Type(Type), HandlerBlockOrFunc(nullptr) {}
 
   ActionType getType() const { return Type; }
   BasicBlock *getStartBlock() const { return StartBB; }
 
-  bool hasBeenOutlined() { return OutlinedFn != nullptr; }
+  bool hasBeenProcessed() { return HandlerBlockOrFunc != nullptr; }
 
-  void setOutlinedFunction(Function *F) { OutlinedFn = F; }
-  Function *getOutlinedFunction() { return OutlinedFn; }
+  void setHandlerBlockOrFunc(Constant *F) { HandlerBlockOrFunc = F; }
+  Constant *getHandlerBlockOrFunc() { return HandlerBlockOrFunc; }
 
 private:
   BasicBlock *StartBB;
   ActionType Type;
-  Function *OutlinedFn;
+
+  // Can be either a BlockAddress or a Function depending on the EH personality.
+  Constant *HandlerBlockOrFunc;
 };
 
 class CatchHandler : public ActionHandler {
@@ -326,6 +333,11 @@ FunctionPass *llvm::createWinEHPass(const TargetMachine *TM) {
   return new WinEHPrepare(TM);
 }
 
+// FIXME: Remove this once the backend can handle the prepared IR.
+static cl::opt<bool>
+SEHPrepare("sehprepare", cl::Hidden,
+           cl::desc("Prepare functions with SEH personalities"));
+
 bool WinEHPrepare::runOnFunction(Function &Fn) {
   SmallVector<LandingPadInst *, 4> LPads;
   SmallVector<ResumeInst *, 4> Resumes;
@@ -341,27 +353,24 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
     return false;
 
   // Classify the personality to see what kind of preparation we need.
-  EHPersonality Pers = classifyEHPersonality(LPads.back()->getPersonalityFn());
+  Personality = classifyEHPersonality(LPads.back()->getPersonalityFn());
 
   // Do nothing if this is not an MSVC personality.
-  if (!isMSVCEHPersonality(Pers))
+  if (!isMSVCEHPersonality(Personality))
     return false;
 
-  // FIXME: This only returns true if the C++ EH handlers were outlined.
-  //        When that code is complete, it should always return whatever
-  //        prepareCPPEHHandlers returns.
-  if (Pers == EHPersonality::MSVC_CXX && prepareCPPEHHandlers(Fn, LPads))
+  if (isAsynchronousEHPersonality(Personality) && !SEHPrepare) {
+    // Replace all resume instructions with unreachable.
+    // FIXME: Remove this once the backend can handle the prepared IR.
+    for (ResumeInst *Resume : Resumes) {
+      IRBuilder<>(Resume).CreateUnreachable();
+      Resume->eraseFromParent();
+    }
     return true;
-
-  // FIXME: SEH Cleanups are unimplemented. Replace them with unreachable.
-  if (Resumes.empty())
-    return false;
-
-  for (ResumeInst *Resume : Resumes) {
-    IRBuilder<>(Resume).CreateUnreachable();
-    Resume->eraseFromParent();
   }
 
+  // If there were any landing pads, prepareExceptionHandlers will make changes.
+  prepareExceptionHandlers(Fn, LPads);
   return true;
 }
 
@@ -371,7 +380,7 @@ bool WinEHPrepare::doFinalization(Module &M) {
 
 void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {}
 
-bool WinEHPrepare::prepareCPPEHHandlers(
+bool WinEHPrepare::prepareExceptionHandlers(
     Function &F, SmallVectorImpl<LandingPadInst *> &LPads) {
   // These containers are used to re-map frame variables that are used in
   // outlined catch and cleanup handlers.  They will be populated as the
@@ -417,9 +426,21 @@ bool WinEHPrepare::prepareCPPEHHandlers(
     mapLandingPadBlocks(LPad, Actions);
 
     for (ActionHandler *Action : Actions) {
-      if (Action->hasBeenOutlined())
+      if (Action->hasBeenProcessed())
         continue;
       BasicBlock *StartBB = Action->getStartBlock();
+
+      // SEH doesn't do any outlining for catches. Instead, pass the handler
+      // basic block addr to llvm.eh.actions and list the block as a return
+      // target.
+      if (isAsynchronousEHPersonality(Personality)) {
+        if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
+          processSEHCatchHandler(CatchAction, StartBB);
+          HandlersOutlined = true;
+          continue;
+        }
+      }
+
       if (outlineHandler(Action, &F, LPad, StartBB, FrameVarInfo)) {
         HandlersOutlined = true;
       }
@@ -440,6 +461,12 @@ bool WinEHPrepare::prepareCPPEHHandlers(
       Invoke->setUnwindDest(NewLPadBB);
     }
 
+    // Replace uses of the old lpad in phis with this block and delete the old
+    // block.
+    LPadBB->replaceSuccessorsPhiUsesWith(NewLPadBB);
+    LPadBB->getTerminator()->eraseFromParent();
+    new UnreachableInst(LPadBB->getContext(), LPadBB);
+
     // Add a call to describe the actions for this landing pad.
     std::vector<Value *> ActionArgs;
     ActionArgs.push_back(NewLPad);
@@ -455,8 +482,8 @@ bool WinEHPrepare::prepareCPPEHHandlers(
       } else {
         ActionArgs.push_back(ConstantInt::get(Int32Type, 1));
       }
-      Constant *HandlerPtr =
-          ConstantExpr::getBitCast(Action->getOutlinedFunction(), Int8PtrType);
+      Constant *HandlerPtr = ConstantExpr::getBitCast(
+          Action->getHandlerBlockOrFunc(), Int8PtrType);
       ActionArgs.push_back(HandlerPtr);
     }
     CallInst *Recover =
@@ -656,11 +683,10 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   LandingPadMap &LPadMap = LPadMaps[LPad];
   if (!LPadMap.isInitialized())
     LPadMap.mapLandingPad(LPad);
-  if (Action->getType() == Catch) {
-    Constant *SelectorType = cast<CatchHandler>(Action)->getSelector();
-    Director.reset(
-        new WinEHCatchDirector(Handler, SelectorType, VarInfo, LPadMap));
-    LPadMap.remapSelector(VMap, ConstantInt::get( Type::getInt32Ty(Context), 1));
+  if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
+    Constant *Sel = CatchAction->getSelector();
+    Director.reset(new WinEHCatchDirector(Handler, Sel, VarInfo, LPadMap));
+    LPadMap.remapSelector(VMap, ConstantInt::get(Type::getInt32Ty(Context), 1));
   } else {
     Director.reset(new WinEHCleanupDirector(Handler, VarInfo, LPadMap));
   }
@@ -687,9 +713,36 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
     CatchAction->setReturnTargets(CatchDirector->getReturnTargets());
   }
 
-  Action->setOutlinedFunction(Handler);
+  Action->setHandlerBlockOrFunc(Handler);
 
   return true;
+}
+
+/// This BB must end in a selector dispatch. All we need to do is pass the
+/// handler block to llvm.eh.actions and list it as a possible indirectbr
+/// target.
+void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
+                                          BasicBlock *StartBB) {
+  BasicBlock *HandlerBB;
+  BasicBlock *NextBB;
+  Constant *Selector;
+  bool Res = isSelectorDispatch(StartBB, HandlerBB, Selector, NextBB);
+  if (Res) {
+    // If this was EH dispatch, this must be a conditional branch to the handler
+    // block.
+    // FIXME: Handle instructions in the dispatch block. Currently we drop them,
+    // leading to crashes if some optimization hoists stuff here.
+    assert(CatchAction->getSelector() && HandlerBB &&
+           "expected catch EH dispatch");
+  } else {
+    // This must be a catch-all. Split the block after the landingpad.
+    assert(CatchAction->getSelector()->isNullValue() && "expected catch-all");
+    HandlerBB =
+        StartBB->splitBasicBlock(StartBB->getFirstInsertionPt(), "catch.all");
+  }
+  CatchAction->setHandlerBlockOrFunc(BlockAddress::get(HandlerBB));
+  TinyPtrVector<BasicBlock *> Targets(HandlerBB);
+  CatchAction->setReturnTargets(Targets);
 }
 
 void LandingPadMap::mapLandingPad(const LandingPadInst *LPad) {
@@ -1115,12 +1168,18 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
       // The catch all must occur last.
       assert(HandlersFound == NumClauses - 1);
 
-      // See if there is any interesting code executed before the catch.
-      if (auto *CleanupAction = findCleanupHandler(BB, BB)) {
-        //   Add a cleanup entry to the list
-        Actions.insertCleanupHandler(CleanupAction);
-        DEBUG(dbgs() << "  Found cleanup code in block "
-                     << CleanupAction->getStartBlock()->getName() << "\n");
+      // For C++ EH, check if there is any interesting cleanup code before we
+      // begin the catch. This is important because cleanups cannot rethrow
+      // exceptions but code called from catches can. For SEH, it isn't
+      // important if some finally code before a catch-all is executed out of
+      // line or after recovering from the exception.
+      if (Personality == EHPersonality::MSVC_CXX) {
+        if (auto *CleanupAction = findCleanupHandler(BB, BB)) {
+          //   Add a cleanup entry to the list
+          Actions.insertCleanupHandler(CleanupAction);
+          DEBUG(dbgs() << "  Found cleanup code in block "
+                       << CleanupAction->getStartBlock()->getName() << "\n");
+        }
       }
 
       // Add the catch handler to the action list.
@@ -1130,7 +1189,10 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
       Actions.insertCatchHandler(Action);
       DEBUG(dbgs() << "  Catch all handler at block " << BB->getName() << "\n");
       ++HandlersFound;
-      continue;
+
+      // Once we reach a catch-all, don't expect to hit a resume instruction.
+      BB = nullptr;
+      break;
     }
 
     CatchHandler *CatchAction = findCatchHandler(BB, NextBB, VisitedBlocks);
@@ -1155,7 +1217,8 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
     BB = NextBB;
   }
 
-  // See if there is any interesting code executed before the resume.
+  // If we didn't wind up in a catch-all, see if there is any interesting code
+  // executed before the resume.
   if (auto *CleanupAction = findCleanupHandler(BB, BB)) {
     //   Add a cleanup entry to the list
     Actions.insertCleanupHandler(CleanupAction);
@@ -1306,8 +1369,13 @@ CleanupHandler *WinEHPrepare::findCleanupHandler(BasicBlock *StartBB,
     if (auto *Resume = dyn_cast<ResumeInst>(Terminator)) {
       InsertValueInst *Insert1 = nullptr;
       InsertValueInst *Insert2 = nullptr;
-      if (!isa<PHINode>(Resume->getOperand(0))) {
-        Insert2 = dyn_cast<InsertValueInst>(Resume->getOperand(0));
+      Value *ResumeVal = Resume->getOperand(0);
+      // If there is only one landingpad, we may use the lpad directly with no
+      // insertions.
+      if (isa<LandingPadInst>(ResumeVal))
+        return nullptr;
+      if (!isa<PHINode>(ResumeVal)) {
+        Insert2 = dyn_cast<InsertValueInst>(ResumeVal);
         if (!Insert2)
           return createCleanupHandler(CleanupHandlerMap, BB);
         Insert1 = dyn_cast<InsertValueInst>(Insert2->getAggregateOperand());
