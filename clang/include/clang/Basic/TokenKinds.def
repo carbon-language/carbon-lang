@@ -225,8 +225,8 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //   KEYCXX11 - This is a C++ keyword introduced to C++ in C++11
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
-//   KEYNOMS  - This is a keyword that must never be enabled under
-//              Microsoft mode
+//   KEYNOMS18 - This is a keyword that must never be enabled under
+//               MSVC <= v18.
 //   KEYOPENCL  - This is a keyword in OpenCL
 //   KEYALTIVEC - This is a keyword in AltiVec
 //   KEYBORLAND - This is a keyword if Borland extensions are enabled
@@ -270,7 +270,7 @@ KEYWORD(volatile                    , KEYALL)
 KEYWORD(while                       , KEYALL)
 KEYWORD(_Alignas                    , KEYALL)
 KEYWORD(_Alignof                    , KEYALL)
-KEYWORD(_Atomic                     , KEYALL|KEYNOMS)
+KEYWORD(_Atomic                     , KEYALL|KEYNOMS18)
 KEYWORD(_Bool                       , KEYNOCXX)
 KEYWORD(_Complex                    , KEYALL)
 KEYWORD(_Generic                    , KEYALL)
@@ -331,8 +331,8 @@ CXX_KEYWORD_OPERATOR(xor_eq  , caretequal)
 // C++11 keywords
 KEYWORD(alignas                     , KEYCXX11)
 KEYWORD(alignof                     , KEYCXX11)
-KEYWORD(char16_t                    , KEYCXX11|KEYNOMS)
-KEYWORD(char32_t                    , KEYCXX11|KEYNOMS)
+KEYWORD(char16_t                    , KEYCXX11|KEYNOMS18)
+KEYWORD(char32_t                    , KEYCXX11|KEYNOMS18)
 KEYWORD(constexpr                   , KEYCXX11)
 KEYWORD(decltype                    , KEYCXX11)
 KEYWORD(noexcept                    , KEYCXX11)
