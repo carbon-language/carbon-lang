@@ -1260,7 +1260,7 @@ void CodeGenRegBank::computeSubRegLaneMasks() {
   for (auto &RegClass : RegClasses) {
     unsigned LaneMask = 0;
     for (const auto &SubRegIndex : SubRegIndices) {
-      if (RegClass.getSubClassWithSubReg(&SubRegIndex) != &RegClass)
+      if (RegClass.getSubClassWithSubReg(&SubRegIndex) == nullptr)
         continue;
       LaneMask |= SubRegIndex.LaneMask;
     }
