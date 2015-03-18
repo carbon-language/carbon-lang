@@ -2208,7 +2208,6 @@ public:
   }
   
 protected:
-protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
