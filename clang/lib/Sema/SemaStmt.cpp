@@ -906,12 +906,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           if (PrevString == CurrString)
             Diag(CaseVals[i].second->getLHS()->getLocStart(),
                  diag::err_duplicate_case) <<
-                 (PrevString.empty() ? CaseValStr : PrevString);
+                 (PrevString.empty() ? StringRef(CaseValStr) : PrevString);
           else
             Diag(CaseVals[i].second->getLHS()->getLocStart(),
                  diag::err_duplicate_case_differing_expr) <<
-                 (PrevString.empty() ? CaseValStr : PrevString) <<
-                 (CurrString.empty() ? CaseValStr : CurrString) <<
+                 (PrevString.empty() ? StringRef(CaseValStr) : PrevString) <<
+                 (CurrString.empty() ? StringRef(CaseValStr) : CurrString) <<
                  CaseValStr;
 
           Diag(CaseVals[i-1].second->getLHS()->getLocStart(),
