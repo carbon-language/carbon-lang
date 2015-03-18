@@ -610,7 +610,6 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextRegisterPlusOffset:
         case EmulateInstruction::eContextAdjustPC:
         case EmulateInstruction::eContextRegisterStore:
-        case EmulateInstruction::eContextRegisterLoad:  
         case EmulateInstruction::eContextAbsoluteBranchRegister:
         case EmulateInstruction::eContextSupervisorCall:
         case EmulateInstruction::eContextTableBranchReadMemory:
@@ -632,6 +631,35 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 //                    m_curr_row_modified = true;
 //                }
 //            }
+            break;
+
+        case EmulateInstruction::eContextRegisterLoad:
+            {
+                const uint32_t unwind_reg_kind = m_unwind_plan_ptr->GetRegisterKind();
+                const uint32_t reg_num = reg_info->kinds[unwind_reg_kind];
+                if (reg_num != LLDB_INVALID_REGNUM)
+                {
+                    m_curr_row->SetRegisterLocationToRegister (reg_num, reg_num, must_replace);
+                    m_curr_row_modified = true;
+                    m_curr_insn_restored_a_register = true;
+
+                    if (reg_info->kinds[eRegisterKindGeneric] == LLDB_REGNUM_GENERIC_RA)
+                    {
+                        // This load was restoring the return address register,
+                        // so this is also how we will unwind the PC...
+                        RegisterInfo pc_reg_info;
+                        if (instruction->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, pc_reg_info))
+                        {
+                            uint32_t pc_reg_num = pc_reg_info.kinds[unwind_reg_kind];
+                            if (pc_reg_num != LLDB_INVALID_REGNUM)
+                            {
+                                m_curr_row->SetRegisterLocationToRegister (pc_reg_num, reg_num, must_replace);
+                                m_curr_row_modified = true;
+                            }
+                        }
+                    }
+                }
+            }
             break;
 
         case EmulateInstruction::eContextRelativeBranchImmediate:

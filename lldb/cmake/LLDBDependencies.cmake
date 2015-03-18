@@ -49,6 +49,7 @@ set( LLDB_USED_LIBS
   lldbPluginABISysV_ppc64
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
+  lldbPluginInstructionMIPS64
   lldbPluginObjectFilePECOFF
   lldbPluginOSPython
   lldbPluginMemoryHistoryASan

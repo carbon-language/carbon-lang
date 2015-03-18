@@ -37,6 +37,7 @@
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 #include "Plugins/Instruction/ARM64/EmulateInstructionARM64.h"
+#include "Plugins/Instruction/MIPS64/EmulateInstructionMIPS64.h"
 #include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
@@ -224,6 +225,7 @@ lldb_private::Initialize ()
         UnwindAssembly_x86::Initialize();
         EmulateInstructionARM::Initialize();
         EmulateInstructionARM64::Initialize();
+        EmulateInstructionMIPS64::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
         AppleObjCRuntimeV2::Initialize();
@@ -339,6 +341,7 @@ lldb_private::Terminate ()
         UnwindAssemblyInstEmulation::Terminate();
         EmulateInstructionARM::Terminate();
         EmulateInstructionARM64::Terminate();
+        EmulateInstructionMIPS64::Terminate();
         SymbolFileDWARFDebugMap::Terminate();
         ItaniumABILanguageRuntime::Terminate();
         AppleObjCRuntimeV2::Terminate();

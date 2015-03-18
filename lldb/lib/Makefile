@@ -45,6 +45,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderMacOSX.a \
 	lldbPluginEmulateInstructionARM.a \
 	lldbPluginEmulateInstructionARM64.a \
+        lldbPluginEmulateInstructionMIPS64.a \
 	lldbPluginInstrumentationRuntimeAddressSanitizer.a \
 	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
