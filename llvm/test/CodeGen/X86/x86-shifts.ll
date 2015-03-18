@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse2 | FileCheck %s
 
 ; Splat patterns below
 
@@ -119,13 +119,14 @@ entry:
 define <2 x i64> @shr2_nosplat(<2 x i64> %A) nounwind {
 entry:
 ; CHECK-LABEL: shr2_nosplat
-; CHECK:       movdqa %xmm1, %xmm2
+; CHECK:       movdqa %xmm0, %xmm1
+; CHECK-NEXT:  psrlq  $1, %xmm1
+; CHECK-NEXT:  movdqa %xmm0, %xmm2
 ; CHECK-NEXT:  psrlq  $8, %xmm2
-; CHECK-NEXT:  movdqa %xmm1, %xmm0
-; CHECK-NEXT:  psrlq  $1, %xmm0
-; CHECK-NEXT:  movsd  {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; CHECK-NEXT:  movsd  {{.*#+}} xmm0 = xmm2[0],xmm0[1]
-; CHECK-NEXT:  xorpd  %xmm1, %xmm0
+; CHECK-NEXT:  movsd  {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; CHECK-NEXT:  movsd  {{.*#+}} xmm1 = xmm2[0],xmm1[1]
+; CHECK-NEXT:  xorpd  %xmm0, %xmm1
+; CHECK-NEXT:  movapd %xmm1, %xmm0
 ; CHECK-NEXT:  ret
   %B = lshr <2 x i64> %A,  < i64 8, i64 1>
   %C = lshr <2 x i64> %A,  < i64 1, i64 0>
