@@ -20,3 +20,20 @@
 
 // CHECK-NOT: error: unmatched .ifs or .elses
 
+.ifnes
+
+// CHECK: error: expected string parameter for '.ifnes' directive
+// CHECK: .ifnes
+// CHECK:       ^
+
+.ifnes "string1"
+
+// CHECK: error: expected comma after first string for '.ifnes' directive
+// CHECK: .ifnes "string1"
+// CHECK:                 ^
+
+.ifnes "string1",
+
+// CHECK: error: expected string parameter for '.ifnes' directive
+// CHECK: .ifnes "string1",
+// CHECK:                  ^
