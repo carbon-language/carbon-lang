@@ -5906,7 +5906,7 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
   return DAG.getNode(ISD::OR, dl, ResVT, V1, V2);
 }
 
-static SDValue LowerCONCAT_VECTORS(SDValue Op,
+static SDValue LowerCONCAT_VECTORS(SDValue Op, 
                                    const X86Subtarget *Subtarget,
                                    SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
@@ -13255,11 +13255,11 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       // If we have AVX, we can use a variable vector select (VBLENDV) instead
       // of 3 logic instructions for size savings and potentially speed.
       // Unfortunately, there is no scalar form of VBLENDV.
-
+      
       // If either operand is a constant, don't try this. We can expect to
       // optimize away at least one of the logic instructions later in that
       // case, so that sequence would be faster than a variable blend.
-
+      
       // BLENDV was introduced with SSE 4.1, but the 2 register form implicitly
       // uses XMM0 as the selection register. That may need just as many
       // instructions as the AND/ANDN/OR sequence due to register moves, so
@@ -13267,10 +13267,10 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
       if (Subtarget->hasAVX() &&
           !isa<ConstantFPSDNode>(Op1) && !isa<ConstantFPSDNode>(Op2)) {
-
+        
         // Convert to vectors, do a VSELECT, and convert back to scalar.
         // All of the conversions should be optimized away.
-
+        
         EVT VecVT = VT == MVT::f32 ? MVT::v4f32 : MVT::v2f64;
         SDValue VOp1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VecVT, Op1);
         SDValue VOp2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VecVT, Op2);
@@ -13278,9 +13278,9 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
         EVT VCmpVT = VT == MVT::f32 ? MVT::v4i32 : MVT::v2i64;
         VCmp = DAG.getNode(ISD::BITCAST, DL, VCmpVT, VCmp);
-
+        
         SDValue VSel = DAG.getNode(ISD::VSELECT, DL, VecVT, VCmp, VOp1, VOp2);
-
+        
         return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT,
                            VSel, DAG.getIntPtrConstant(0));
       }
@@ -16187,17 +16187,6 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
       return Op;
     if (Op.getOpcode() == ISD::SRA && (VT == MVT::v4i32 || VT == MVT::v8i32))
       return Op;
-  }
-
-  // 2i64 vector logical shifts can efficiently avoid scalarization - do the
-  // shifts per-lane and then shuffle the partial results back together.
-  if (VT == MVT::v2i64 && Op.getOpcode() != ISD::SRA) {
-    // Splat the shift amounts so the scalar shifts above will catch it.
-    SDValue Amt0 = DAG.getVectorShuffle(VT, dl, Amt, Amt, {0, 0});
-    SDValue Amt1 = DAG.getVectorShuffle(VT, dl, Amt, Amt, {1, 1});
-    SDValue R0 = DAG.getNode(Op->getOpcode(), dl, VT, R, Amt0);
-    SDValue R1 = DAG.getNode(Op->getOpcode(), dl, VT, R, Amt1);
-    return DAG.getVectorShuffle(VT, dl, R0, R1, {0, 3});
   }
 
   // If possible, lower this packed shift into a vector multiply instead of
@@ -21971,7 +21960,7 @@ static SDValue VectorZextCombine(SDNode *N, SelectionDAG &DAG,
   // an and with a mask.
   // We'd like to try to combine that into a shuffle with zero
   // plus a bitcast, removing the and.
-  if (N0.getOpcode() != ISD::BITCAST ||
+  if (N0.getOpcode() != ISD::BITCAST || 
       N0.getOperand(0).getOpcode() != ISD::VECTOR_SHUFFLE)
     return SDValue();
 
@@ -22001,7 +21990,7 @@ static SDValue VectorZextCombine(SDNode *N, SelectionDAG &DAG,
 
   unsigned ResSize = N1.getValueType().getScalarSizeInBits();
   // Make sure the splat matches the mask we expect
-  if (SplatBitSize > ResSize ||
+  if (SplatBitSize > ResSize || 
       (SplatValue + 1).exactLogBase2() != (int)SrcSize)
     return SDValue();
 
@@ -22959,7 +22948,7 @@ static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG) {
   if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N->getOperand(1)))
     if (C->getValueAPF().isPosZero())
       return N->getOperand(1);
-
+  
   return SDValue();
 }
 
@@ -23233,7 +23222,7 @@ static SDValue PerformISDSETCCCombine(SDNode *N, SelectionDAG &DAG,
         return DAG.getConstant(1, VT);
       if (CC == ISD::SETEQ || CC == ISD::SETGE)
         return DAG.getNOT(DL, LHS.getOperand(0), VT);
-
+      
       assert((CC == ISD::SETNE || CC == ISD::SETLT) &&
              "Unexpected condition code!");
       return LHS.getOperand(0);
@@ -23275,7 +23264,7 @@ static SDValue PerformINSERTPSCombine(SDNode *N, SelectionDAG &DAG,
     // countS and just gets an f32 from that address.
     unsigned DestIndex =
         cast<ConstantSDNode>(N->getOperand(2))->getZExtValue() >> 6;
-
+    
     Ld = NarrowVectorLoadToElement(cast<LoadSDNode>(Ld), DestIndex, DAG);
 
     // Create this as a scalar to vector to match the instruction pattern.
@@ -23299,7 +23288,7 @@ static SDValue PerformBLENDICombine(SDNode *N, SelectionDAG &DAG) {
   // pattern-matching possibilities related to scalar math ops in SSE/AVX.
   // x86InstrInfo knows how to commute this back after instruction selection
   // if it would help register allocation.
-
+  
   // TODO: If optimizing for size or a processor that doesn't suffer from
   // partial register update stalls, this should be transformed into a MOVSD
   // instruction because a MOVSD is 1-2 bytes smaller than a BLENDPD.

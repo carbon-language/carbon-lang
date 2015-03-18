@@ -13,16 +13,11 @@ entry:
   ret void
 }
 
-; shift1b can't use a packed shift but can shift lanes separately and shuffle back together
+; shift1b can't use a packed shift
 define void @shift1b(<2 x i64> %val, <2 x i64>* %dst, <2 x i64> %sh) nounwind {
 entry:
 ; CHECK-LABEL: shift1b:
-; CHECK:       pshufd {{.*#+}} xmm2 = xmm1[2,3,0,1]
-; CHECK-NEXT:  movdqa %xmm0, %xmm3
-; CHECK-NEXT:  psllq  %xmm2, %xmm3
-; CHECK-NEXT:  movq   {{.*#+}} xmm1 = xmm1[0],zero
-; CHECK-NEXT:  psllq  %xmm1, %xmm0
-; CHECK-NEXT:  movsd  {{.*#+}} xmm3 = xmm0[0],xmm3[1]
+; CHECK: shll
   %shamt = shufflevector <2 x i64> %sh, <2 x i64> undef, <2 x i32> <i32 0, i32 1>
   %shl = shl <2 x i64> %val, %shamt
   store <2 x i64> %shl, <2 x i64>* %dst
