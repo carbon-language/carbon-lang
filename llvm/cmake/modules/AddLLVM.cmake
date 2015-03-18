@@ -786,3 +786,26 @@ function(add_lit_testsuite target comment)
     ARGS ${ARG_ARGS}
     )
 endfunction()
+
+function(add_lit_testsuites project directory)
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+    file(GLOB_RECURSE litCfg ${directory}/lit*.cfg)
+    foreach(f ${litCfg})
+      get_filename_component(dir ${f} DIRECTORY)
+      string(REPLACE ${directory} "" name_slash ${dir})
+      if (name_slash)
+        string(REPLACE "/" "-" name_slash ${name_slash})
+        string(REPLACE "\\" "-" name_dashes ${name_slash})
+        string(TOLOWER "${project}${name_dashes}" name_var)
+        set(lit_args ${ARG_ARGS} ${dir})
+        add_lit_target("check-${name_var}" "Running lit suite ${dir}"
+          ${dir}
+          PARAMS ${ARG_PARAMS}
+          DEPENDS ${ARG_DEPENDS}
+          ARGS ${lit_args}
+        )
+      endif()
+    endforeach()
+  endif()
+endfunction()
