@@ -235,8 +235,9 @@ namespace llvm {
 
   public:
     Target()
-        : NullTargetStreamerCtorFn(nullptr), AsmTargetStreamerCtorFn(nullptr),
-          MCRelocationInfoCtorFn(nullptr), MCSymbolizerCtorFn(nullptr) {}
+        : MCObjectStreamerCtorFn(nullptr), NullTargetStreamerCtorFn(nullptr),
+          AsmTargetStreamerCtorFn(nullptr), MCRelocationInfoCtorFn(nullptr),
+          MCSymbolizerCtorFn(nullptr) {}
 
     /// @name Target Information
     /// @{
