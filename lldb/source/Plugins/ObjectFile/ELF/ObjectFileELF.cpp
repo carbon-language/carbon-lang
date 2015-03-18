@@ -48,6 +48,7 @@ const char *const LLDB_NT_OWNER_FREEBSD = "FreeBSD";
 const char *const LLDB_NT_OWNER_GNU     = "GNU";
 const char *const LLDB_NT_OWNER_NETBSD  = "NetBSD";
 const char *const LLDB_NT_OWNER_CSR     = "csr";
+const char *const LLDB_NT_OWNER_ANDROID = "Android";
 
 // ELF note type definitions
 const elf_word LLDB_NT_FREEBSD_ABI_TAG  = 0x01;
@@ -1362,6 +1363,11 @@ ObjectFileELF::RefineModuleDetailsFromNote (lldb_private::DataExtractor &data, l
                 (void)cstr;
             }
         }
+        else if (note.n_name == LLDB_NT_OWNER_ANDROID)
+        {
+            arch_spec.GetTriple().setOS(llvm::Triple::OSType::Linux);
+            arch_spec.GetTriple().setEnvironment(llvm::Triple::EnvironmentType::Android);
+        }
 
         if (!processed)
             offset += llvm::RoundUpToAlignment(note.n_descsz, 4);
@@ -1478,7 +1484,15 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 }
 
                 // Process ELF note section entries.
-                if (header.sh_type == SHT_NOTE)
+                bool is_note_header = (header.sh_type == SHT_NOTE);
+
+                // The section header ".note.android.ident" is stored as a
+                // PROGBITS type header but it is actually a note header.
+                static ConstString g_sect_name_android_ident (".note.android.ident");
+                if (!is_note_header && name == g_sect_name_android_ident)
+                    is_note_header = true;
+
+                if (is_note_header)
                 {
                     // Allow notes to refine module info.
                     DataExtractor data;
