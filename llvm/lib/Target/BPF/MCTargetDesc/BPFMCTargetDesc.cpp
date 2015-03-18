@@ -61,7 +61,7 @@ static MCCodeGenInfo *createBPFMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCStreamer *createBPFMCStreamer(const Target &T, StringRef TT,
+static MCStreamer *createBPFMCStreamer(const Triple &T,
                                        MCContext &Ctx, MCAsmBackend &MAB,
                                        raw_ostream &OS, MCCodeEmitter *Emitter,
                                        const MCSubtargetInfo &STI,
