@@ -102,6 +102,9 @@ type CompilerOptions struct {
 	// DisableUnusedImportCheck disables the unused import check performed
 	// by go/types if set to true.
 	DisableUnusedImportCheck bool
+
+	// Packages is used by go/types as the imported package map if non-nil.
+	Packages map[string]*types.Package
 }
 
 type Compiler struct {
@@ -208,8 +211,9 @@ func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, imp
 	impcfg := &loader.Config{
 		Fset: fset,
 		TypeChecker: types.Config{
-			Import: compiler.Importer,
-			Sizes:  compiler.llvmtypes,
+			Packages: compiler.Packages,
+			Import:   compiler.Importer,
+			Sizes:    compiler.llvmtypes,
 			DisableUnusedImportCheck: compiler.DisableUnusedImportCheck,
 		},
 		Build:          &buildctx.Context,
