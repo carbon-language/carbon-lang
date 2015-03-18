@@ -63,6 +63,7 @@ math/atan2.cl
 math/copysign.cl
 math/cos.cl
 math/cospi.cl
+math/erfc.cl
 math/exp.cl
 math/exp10.cl
 math/fmax.cl

@@ -40,6 +40,7 @@
 #include <clc/math/cos.h>
 #include <clc/math/cospi.h>
 #include <clc/math/ceil.h>
+#include <clc/math/erfc.h>
 #include <clc/math/exp.h>
 #include <clc/math/exp10.h>
 #include <clc/math/exp2.h>
