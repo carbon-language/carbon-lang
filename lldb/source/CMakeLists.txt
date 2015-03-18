@@ -25,7 +25,11 @@ include_directories(
   )
 endif ()
 
-add_subdirectory(API)
+add_lldb_library(lldbBase
+  lldb.cpp
+  lldb-log.cpp
+  )
+
 add_subdirectory(Breakpoint)
 add_subdirectory(Commands)
 add_subdirectory(Core)
@@ -38,43 +42,8 @@ add_subdirectory(Symbol)
 add_subdirectory(Target)
 add_subdirectory(Utility)
 
-include(${LLDB_PROJECT_ROOT}/cmake/LLDBDependencies.cmake)
-
-add_lldb_library(lldbBase STATIC
-  lldb.cpp
-  lldb-log.cpp
-  )
-
-add_lldb_library(liblldb SHARED
-  lldb.cpp
-  lldb-log.cpp
-  $<TARGET_OBJECTS:lldbAPI>
-  ${LLDB_WRAP_PYTHON}
-  ${LLDB_VERS_GENERATED_FILE}
-  )
-
-set_target_properties(liblldb
-  PROPERTIES
-  VERSION ${LLDB_VERSION}
-  )
-
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-  # Only MSVC has the ABI compatibility problem and avoids using FindPythonLibs,
-  # so only it needs to explicitly link against ${PYTHON_LIBRARY}
-  if (MSVC AND NOT LLDB_DISABLE_PYTHON)
-    target_link_libraries(liblldb PRIVATE ${PYTHON_LIBRARY})
-  endif()
-else()
-  set_target_properties(liblldb
-    PROPERTIES
-    OUTPUT_NAME lldb
-    )
-endif()
-
-if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
-  add_dependencies(liblldb swig_wrapper)
-endif()
-target_link_libraries(liblldb ${cmake_2_8_12_PRIVATE} ${LLDB_SYSTEM_LIBS})
+# Build API last, since liblldb needs to link against every other target
+add_subdirectory(API)
 
 # Determine LLDB revision and repository. GetSourceVersion and GetRepositoryPath are shell-scripts, and as
 # such will not work on Windows.
@@ -102,7 +71,3 @@ endif ()
 # FIXME: implement svn/git revision and repository parsing solution on Windows. There is an SVN-only
 #        revision parsing solution in tools/clang/lib/Basic/CMakelists.txt.
 
-install(TARGETS liblldb
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-  ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})

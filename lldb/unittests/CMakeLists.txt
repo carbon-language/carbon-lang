@@ -10,11 +10,21 @@ else ()
   list(APPEND LLVM_COMPILE_FLAGS -include ${LLDB_GTEST_COMMON_INCLUDE})
 endif ()
 
-# add_lldb_unittest(test_dirname file1.cpp file2.cpp)
-#
-# Will compile the list of files together and link against
+include(${LLDB_PROJECT_ROOT}/cmake/LLDBDependencies.cmake)
+
 function(add_lldb_unittest test_name)
-  add_unittest(LLDBUnitTests ${test_name} ${ARGN})
+  add_unittest(LLDBUnitTests
+    ${test_name}
+    ${ARGN}
+    )
+
+  if (MSVC)
+    target_link_libraries(${test_name} ${PYTHON_LIBRARY})
+  endif()
+
+  lldb_link_common_libs(${test_name} EXE)
+  target_link_libraries(${test_name} ${CLANG_USED_LIBS})
+  llvm_config(${test_name} ${LLVM_LINK_COMPONENTS})
 endfunction()
 
 add_subdirectory(Host)

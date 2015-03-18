@@ -14,8 +14,8 @@
 // platform functionality availability.
 //----------------------------------------------------------------------
 
-#ifndef liblldb_Platform_Config_h_
-#define liblldb_Platform_Config_h_
+#ifndef liblldb_host_msvc_Config_h_
+#define liblldb_host_msvc_Config_h_
 
 #define LLDB_DISABLE_POSIX
 
@@ -28,8 +28,10 @@
 //#define LLDB_CONFIG_FCNTL_GETPATH_SUPPORTED 1
 
 #if _HAS_EXCEPTIONS == 0
-// Exceptions are disabled so this isn't defined, but concrt assumes it is.
-static void *__uncaught_exception() { return nullptr; }
+// Due to a bug in <thread>, when _HAS_EXCEPTIONS == 0 the header will try to call
+// uncaught_exception() without having a declaration for it.  The fix for this is
+// to manually #include <eh.h>, which contains this declaration.
+#include <eh.h>
 #endif
 
 #endif // #ifndef liblldb_Platform_Config_h_

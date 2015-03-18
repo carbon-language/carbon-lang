@@ -17,16 +17,8 @@
 // units.  Be very leary about putting anything in this file.
 
 #if defined(_MSC_VER) && (_HAS_EXCEPTIONS == 0)
-// MSVC's STL implementation tries to work well with /EHs-c- and
-// _HAS_EXCEPTIONS=0.  But <thread> in particular doesn't work with it, because
-// it relies on <concrt.h> which tries to throw an exception without checking
-// for _HAS_EXCEPTIONS=0.  This causes the linker to require a definition of
-// __uncaught_exception(), but the STL doesn't define this function when
-// _HAS_EXCEPTIONS=0.  The workaround here is to just provide a stub
-// implementation to get it to link.
-inline bool
-__uncaught_exception()
-{
-    return true;
-}
+// Due to a bug in <thread>, when _HAS_EXCEPTIONS == 0 the header will try to call
+// uncaught_exception() without having a declaration for it.  The fix for this is
+// to manually #include <eh.h>, which contains this declaration.
+#include <eh.h>
 #endif

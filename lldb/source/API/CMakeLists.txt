@@ -4,22 +4,11 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   add_definitions( -DEXPORT_LIBLLDB )
 endif()
 
-# An OBJECT library is a special type of CMake library that produces
-# no archive, has no link interface, and no link inputs.  It is like
-# a regular archive, just without the physical output.  To link against
-# an OBJECT library, you reference it in the *source* file list of a
-# library using the special syntax $<TARGET_OBJECTS:lldbAPI>.  This will
-# cause every object file to be passed to the linker independently, as
-# opposed to a single archive being passed to the linker.
-#
-# This is *extremely* important on Windows.  lldbAPI exports all of the
-# SB classes using __declspec(dllexport).  Unfortunately for technical
-# reasons it is not possible (well, extremely difficult) to get the linker
-# to propagate a __declspec(dllexport) attribute from a symbol in an
-# object file in an archive to a DLL that links against that archive.
-# The solution to this is for the DLL to link the object file directly.
-# So lldbAPI must be an OBJECT library.
-add_lldb_library(lldbAPI OBJECT
+# Include this so that add_lldb_library() has the list of dependencies
+# for liblldb to link against
+include(${LLDB_PROJECT_ROOT}/cmake/LLDBDependencies.cmake)
+
+add_lldb_library(liblldb SHARED
   SBAddress.cpp
   SBAttachInfo.cpp
   SBBlock.cpp
@@ -77,4 +66,30 @@ add_lldb_library(lldbAPI OBJECT
   SBVariablesOptions.cpp
   SBWatchpoint.cpp
   SBUnixSignals.cpp
+  ${LLDB_WRAP_PYTHON}
+  ${LLDB_VERS_GENERATED_FILE}
   )
+
+set_target_properties(liblldb
+  PROPERTIES
+  VERSION ${LLDB_VERSION}
+  )
+
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  # Only MSVC has the ABI compatibility problem and avoids using FindPythonLibs,
+  # so only it needs to explicitly link against ${PYTHON_LIBRARY}
+  if (MSVC AND NOT LLDB_DISABLE_PYTHON)
+    target_link_libraries(liblldb PRIVATE ${PYTHON_LIBRARY})
+  endif()
+else()
+  set_target_properties(liblldb
+    PROPERTIES
+    OUTPUT_NAME lldb
+    )
+endif()
+
+if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
+  add_dependencies(liblldb swig_wrapper)
+endif()
+target_link_libraries(liblldb ${cmake_2_8_12_PRIVATE} ${LLDB_SYSTEM_LIBS})
+
