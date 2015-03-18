@@ -38,8 +38,8 @@ static cl::opt<bool>
 ReserveX18("aarch64-reserve-x18", cl::Hidden,
           cl::desc("Reserve X18, making it unavailable as GPR"));
 
-AArch64RegisterInfo::AArch64RegisterInfo(StringRef TargetTriple)
-    : AArch64GenRegisterInfo(AArch64::LR), TT(TargetTriple) {}
+AArch64RegisterInfo::AArch64RegisterInfo(const Triple &TT)
+    : AArch64GenRegisterInfo(AArch64::LR), TT(TT) {}
 
 const MCPhysReg *
 AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {

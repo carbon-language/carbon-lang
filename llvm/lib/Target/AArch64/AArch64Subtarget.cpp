@@ -14,7 +14,6 @@
 #include "AArch64InstrInfo.h"
 #include "AArch64PBQPRegAlloc.h"
 #include "AArch64Subtarget.h"
-#include "AArch64TargetMachine.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/IR/GlobalValue.h"
@@ -46,13 +45,12 @@ AArch64Subtarget::initializeSubtargetDependencies(StringRef FS) {
 AArch64Subtarget::AArch64Subtarget(const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS,
-                                   const AArch64TargetMachine &TM,
-                                   bool LittleEndian)
+                                   const TargetMachine &TM, bool LittleEndian)
     : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasFPARMv8(false), HasNEON(false), HasCrypto(false), HasCRC(false),
       HasZeroCycleRegMove(false), HasZeroCycleZeroing(false),
-      IsLittle(LittleEndian), CPUString(CPU), TargetTriple(TT), TM(TM),
-      FrameLowering(), InstrInfo(initializeSubtargetDependencies(FS)),
+      IsLittle(LittleEndian), CPUString(CPU), TargetTriple(TT), FrameLowering(),
+      InstrInfo(initializeSubtargetDependencies(FS)),
       TSInfo(TM.getDataLayout()), TLInfo(TM, *this) {}
 
 /// ClassifyGlobalReference - Find the target operand flags that describe
@@ -130,8 +128,4 @@ AArch64Subtarget::getCustomPBQPConstraints() const {
     return nullptr;
 
   return llvm::make_unique<A57ChainingConstraint>();
-}
-
-const AArch64RegisterInfo *AArch64Subtarget::getRegisterInfo() const {
-  return getTargetMachine().getRegisterInfo();
 }
