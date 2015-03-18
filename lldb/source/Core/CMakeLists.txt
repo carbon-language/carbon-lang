@@ -33,6 +33,7 @@ add_lldb_library(lldbCore
   Language.cpp
   Listener.cpp
   Log.cpp
+  Logging.cpp
   Mangled.cpp
   Module.cpp
   ModuleChild.cpp

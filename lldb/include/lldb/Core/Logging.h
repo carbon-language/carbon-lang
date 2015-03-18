@@ -1,4 +1,4 @@
-//===-- lldb-private-log.h --------------------------------------*- C++ -*-===//
+//===-- Logging.h -----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_lldb_private_log_h_
-#define liblldb_lldb_private_log_h_
+#ifndef liblldb_Core_Logging_h_
+#define liblldb_Core_Logging_h_
 
 // C Includes
 // C++ Includes
@@ -90,4 +90,4 @@ ListLogCategories (Stream *strm);
 
 } // namespace lldb_private
 
-#endif  // liblldb_lldb_private_log_h_
+#endif  // liblldb_Core_Logging_h_

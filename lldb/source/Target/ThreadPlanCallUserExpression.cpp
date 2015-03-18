@@ -14,7 +14,6 @@
 // Other libraries and framework includes
 
 // Project includes
-#include "lldb/lldb-private-log.h"
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Address.h"

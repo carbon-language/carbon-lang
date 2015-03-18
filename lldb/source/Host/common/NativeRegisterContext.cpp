@@ -12,8 +12,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegisterValue.h"
 
-#include "lldb/lldb-private-log.h"
-
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/Host/common/NativeThreadProtocol.h"
 

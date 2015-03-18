@@ -9,8 +9,6 @@
 
 #include "lldb/Symbol/Block.h"
 
-#include "lldb/lldb-private-log.h"
-
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"

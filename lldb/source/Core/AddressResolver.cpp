@@ -20,7 +20,6 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
-#include "lldb/lldb-private-log.h"
 
 using namespace lldb_private;
 

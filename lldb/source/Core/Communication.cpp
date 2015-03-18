@@ -11,7 +11,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-private-log.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Connection.h"
 #include "lldb/Core/Log.h"

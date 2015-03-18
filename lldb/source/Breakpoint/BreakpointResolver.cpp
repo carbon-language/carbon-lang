@@ -25,7 +25,6 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
-#include "lldb/lldb-private-log.h"
 
 using namespace lldb_private;
 using namespace lldb;

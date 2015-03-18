@@ -23,7 +23,6 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-private-enumerations.h"
 #include "lldb/lldb-private-interfaces.h"
-#include "lldb/lldb-private-log.h"
 #include "lldb/lldb-private-types.h"
 
 namespace lldb_private {

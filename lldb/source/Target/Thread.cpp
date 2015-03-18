@@ -9,7 +9,6 @@
 
 #include "lldb/lldb-python.h"
 
-#include "lldb/lldb-private-log.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"

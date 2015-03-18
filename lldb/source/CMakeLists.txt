@@ -27,7 +27,6 @@ endif ()
 
 add_lldb_library(lldbBase
   lldb.cpp
-  lldb-log.cpp
   )
 
 add_subdirectory(Breakpoint)

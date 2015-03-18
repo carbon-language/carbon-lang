@@ -30,8 +30,6 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
 
-#include "lldb/lldb-private-log.h"
-
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"

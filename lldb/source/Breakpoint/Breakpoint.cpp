@@ -31,7 +31,6 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
-#include "lldb/lldb-private-log.h"
 #include "llvm/Support/Casting.h"
 
 using namespace lldb;

@@ -39,7 +39,6 @@
 #include "llvm/ADT/SmallVector.h"
 #endif
 // Project includes
-#include "lldb/lldb-private-log.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"

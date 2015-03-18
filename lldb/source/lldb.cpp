@@ -10,7 +10,6 @@
 #include "lldb/lldb-python.h"
 
 #include "lldb/lldb-private.h"
-#include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"

@@ -31,7 +31,6 @@ else()
     lldb-server.cpp
     lldb-gdbserver.cpp
     lldb-platform.cpp
-    ../../source/lldb-log.cpp
     ../../source/lldb.cpp
     )
 

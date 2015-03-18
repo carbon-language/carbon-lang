@@ -23,7 +23,6 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/HostNativeThread.h"
 #include "lldb/lldb-enumerations.h"
-#include "lldb/lldb-private-log.h"
 
 #include "llvm/ADT/SmallString.h"
 

@@ -18,7 +18,6 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Host/TimeValue.h"
-#include "lldb/lldb-private-log.h"
 #include <algorithm>
 
 using namespace lldb;

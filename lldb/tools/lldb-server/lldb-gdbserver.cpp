@@ -23,7 +23,6 @@
 // C++ Includes
 
 // Other libraries and framework includes
-#include "lldb/lldb-private-log.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"

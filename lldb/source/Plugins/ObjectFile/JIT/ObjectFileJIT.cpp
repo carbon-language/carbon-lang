@@ -11,7 +11,6 @@
 
 #include "ObjectFileJIT.h"
 
-#include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataBufferHeap.h"

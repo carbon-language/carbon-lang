@@ -10,7 +10,6 @@
 #include "lldb/Core/FileLineResolver.h"
 
 // Project includes
-#include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/CompileUnit.h"

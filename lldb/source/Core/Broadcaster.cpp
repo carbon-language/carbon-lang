@@ -16,7 +16,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/lldb-private-log.h"
 
 using namespace lldb;
 using namespace lldb_private;
