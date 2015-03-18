@@ -211,6 +211,10 @@ CGOpenMPRuntime::CGOpenMPRuntime(CodeGenModule &CGM)
   KmpCriticalNameTy = llvm::ArrayType::get(CGM.Int32Ty, /*NumElements*/ 8);
 }
 
+void CGOpenMPRuntime::clear() {
+  InternalVars.clear();
+}
+
 llvm::Value *
 CGOpenMPRuntime::emitOutlinedFunction(const OMPExecutableDirective &D,
                                       const VarDecl *ThreadIDVar) {

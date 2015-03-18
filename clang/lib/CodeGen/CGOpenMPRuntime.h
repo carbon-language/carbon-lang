@@ -278,6 +278,7 @@ class CGOpenMPRuntime {
 public:
   explicit CGOpenMPRuntime(CodeGenModule &CGM);
   virtual ~CGOpenMPRuntime() {}
+  virtual void clear();
 
   /// \brief Emits outlined function for the specified OpenMP directive \a D.
   /// This outlined function has type void(*)(kmp_int32 *ThreadID, kmp_int32
