@@ -147,8 +147,7 @@ private:
 
   std::error_code
   addRelocationReference(const coff_relocation *rel,
-                         const coff_section *section,
-                         const std::vector<COFFDefinedFileAtom *> &atoms);
+                         const coff_section *section);
 
   std::error_code getSectionContents(StringRef sectionName,
                                      ArrayRef<uint8_t> &result);
@@ -815,9 +814,7 @@ std::error_code FileCOFF::getAtomBySymbolIndex(uint32_t index, Atom *&ret) {
 /// relocation entry for the \p section, and \p atoms are all the atoms
 /// defined in the \p section.
 std::error_code FileCOFF::addRelocationReference(
-    const coff_relocation *rel, const coff_section *section,
-    const std::vector<COFFDefinedFileAtom *> &atoms) {
-  assert(atoms.size() > 0);
+    const coff_relocation *rel, const coff_section *section) {
   // The address of the item which relocation is applied. Section's
   // VirtualAddress needs to be added for historical reasons, but the value
   // is usually just zero, so adding it is usually no-op.
@@ -947,8 +944,7 @@ std::error_code FileCOFF::addRelocationReferenceToAtoms() {
 
     for (const auto &reloc : sec.relocations()) {
       const coff_relocation *rel = _obj->getCOFFRelocation(reloc);
-      if (auto ec =
-              addRelocationReference(rel, section, _sectionAtoms[section]))
+      if (auto ec = addRelocationReference(rel, section))
         return ec;
     }
   }
