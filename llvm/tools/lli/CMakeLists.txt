@@ -39,4 +39,4 @@ add_llvm_tool(lli
   RemoteTarget.cpp
   RemoteTargetExternal.cpp
   )
-export_executable_symbols(llvm-stress)
+export_executable_symbols(lli)
