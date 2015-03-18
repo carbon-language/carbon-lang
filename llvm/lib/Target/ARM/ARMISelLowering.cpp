@@ -42,6 +42,7 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/CommandLine.h"
@@ -1161,6 +1162,20 @@ const TargetRegisterClass *ARMTargetLowering::getRegClassFor(MVT VT) const {
       return &ARM::QQQQPRRegClass;
   }
   return TargetLowering::getRegClassFor(VT);
+}
+
+// memcpy, and other memory intrinsics, typically tries to use LDM/STM if the
+// source/dest is aligned and the copy size is large enough. We therefore want
+// to align such objects passed to memory intrinsics.
+bool ARMTargetLowering::shouldAlignPointerArgs(CallInst *CI, unsigned &MinSize,
+                                               unsigned &PrefAlign) const {
+  if (!isa<MemIntrinsic>(CI))
+    return false;
+  MinSize = 8;
+  // On ARM11 onwards (excluding M class) 8-byte aligned LDM is typically 1
+  // cycle faster than 4-byte aligned LDM.
+  PrefAlign = (Subtarget->hasV6Ops() && !Subtarget->isMClass() ? 8 : 4);
+  return true;
 }
 
 // Create a fast isel object.

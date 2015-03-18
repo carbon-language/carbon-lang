@@ -1228,6 +1228,42 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       return true;
   }
 
+  const DataLayout *TD = TLI ? TLI->getDataLayout() : nullptr;
+
+  // Align the pointer arguments to this call if the target thinks it's a good
+  // idea
+  unsigned MinSize, PrefAlign;
+  if (TLI && TD && TLI->shouldAlignPointerArgs(CI, MinSize, PrefAlign)) {
+    for (auto &Arg : CI->arg_operands()) {
+      // We want to align both objects whose address is used directly and
+      // objects whose address is used in casts and GEPs, though it only makes
+      // sense for GEPs if the offset is a multiple of the desired alignment and
+      // if size - offset meets the size threshold.
+      if (!Arg->getType()->isPointerTy())
+        continue;
+      APInt Offset(TD->getPointerSizeInBits(
+                     cast<PointerType>(Arg->getType())->getAddressSpace()), 0);
+      Value *Val = Arg->stripAndAccumulateInBoundsConstantOffsets(*TD, Offset);
+      uint64_t Offset2 = Offset.getLimitedValue();
+      AllocaInst *AI;
+      if ((Offset2 & (PrefAlign-1)) == 0 &&
+          (AI = dyn_cast<AllocaInst>(Val)) &&
+          AI->getAlignment() < PrefAlign &&
+          TD->getTypeAllocSize(AI->getAllocatedType()) >= MinSize + Offset2)
+        AI->setAlignment(PrefAlign);
+      // TODO: Also align GlobalVariables
+    }
+    // If this is a memcpy (or similar) then we may be able to improve the
+    // alignment
+    if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(CI)) {
+      unsigned Align = getKnownAlignment(MI->getDest(), *TD);
+      if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI))
+        Align = std::min(Align, getKnownAlignment(MTI->getSource(), *TD));
+      if (Align > MI->getAlignment())
+        MI->setAlignment(ConstantInt::get(MI->getAlignmentType(), Align));
+    }
+  }
+
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
   if (II) {
     switch (II->getIntrinsicID()) {
