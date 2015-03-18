@@ -196,28 +196,15 @@ static const Target *getTarget(const ObjectFile *Obj = nullptr) {
 
 void llvm::DumpBytes(StringRef bytes) {
   static const char hex_rep[] = "0123456789abcdef";
-  // FIXME: The real way to do this is to figure out the longest instruction
-  //        and align to that size before printing. I'll fix this when I get
-  //        around to outputting relocations.
-  // 15 is the longest x86 instruction
-  // 3 is for the hex rep of a byte + a space.
-  // 1 is for the null terminator.
-  enum { OutputSize = (15 * 3) + 1 };
-  char output[OutputSize];
+  SmallString<64> output;
 
-  assert(bytes.size() <= 15
-    && "DumpBytes only supports instructions of up to 15 bytes");
-  memset(output, ' ', sizeof(output));
-  unsigned index = 0;
-  for (StringRef::iterator i = bytes.begin(),
-                           e = bytes.end(); i != e; ++i) {
-    output[index] = hex_rep[(*i & 0xF0) >> 4];
-    output[index + 1] = hex_rep[*i & 0xF];
-    index += 3;
+  for (char i: bytes) {
+    output.push_back(hex_rep[(i & 0xF0) >> 4]);
+    output.push_back(hex_rep[i & 0xF]);
+    output.push_back(' ');
   }
 
-  output[sizeof(output) - 1] = 0;
-  outs() << output;
+  outs() << output.c_str();
 }
 
 bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
