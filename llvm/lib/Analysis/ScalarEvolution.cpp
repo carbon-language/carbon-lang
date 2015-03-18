@@ -6942,6 +6942,9 @@ bool ScalarEvolution::isImpliedCondOperands(ICmpInst::Predicate Pred,
                                             const SCEV *LHS, const SCEV *RHS,
                                             const SCEV *FoundLHS,
                                             const SCEV *FoundRHS) {
+  if (isImpliedCondOperandsViaRanges(Pred, LHS, RHS, FoundLHS, FoundRHS))
+    return true;
+
   return isImpliedCondOperandsHelper(Pred, LHS, RHS,
                                      FoundLHS, FoundRHS) ||
          // ~x < ~y --> x > y
@@ -7077,6 +7080,47 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
   }
 
   return false;
+}
+
+/// isImpliedCondOperandsViaRanges - helper function for isImpliedCondOperands.
+/// Tries to get cases like "X `sgt` 0 => X - 1 `sgt` -1".
+bool ScalarEvolution::isImpliedCondOperandsViaRanges(ICmpInst::Predicate Pred,
+                                                     const SCEV *LHS,
+                                                     const SCEV *RHS,
+                                                     const SCEV *FoundLHS,
+                                                     const SCEV *FoundRHS) {
+  if (!isa<SCEVConstant>(RHS) || !isa<SCEVConstant>(FoundRHS))
+    // The restriction on `FoundRHS` be lifted easily -- it exists only to
+    // reduce the compile time impact of this optimization.
+    return false;
+
+  const SCEVAddExpr *AddLHS = dyn_cast<SCEVAddExpr>(LHS);
+  if (!AddLHS || AddLHS->getOperand(1) != FoundLHS ||
+      !isa<SCEVConstant>(AddLHS->getOperand(0)))
+    return false;
+
+  APInt ConstFoundRHS = cast<SCEVConstant>(FoundRHS)->getValue()->getValue();
+
+  // `FoundLHSRange` is the range we know `FoundLHS` to be in by virtue of the
+  // antecedent "`FoundLHS` `Pred` `FoundRHS`".
+  ConstantRange FoundLHSRange =
+      ConstantRange::makeAllowedICmpRegion(Pred, ConstFoundRHS);
+
+  // Since `LHS` is `FoundLHS` + `AddLHS->getOperand(0)`, we can compute a range
+  // for `LHS`:
+  APInt Addend =
+      cast<SCEVConstant>(AddLHS->getOperand(0))->getValue()->getValue();
+  ConstantRange LHSRange = FoundLHSRange.add(ConstantRange(Addend));
+
+  // We can also compute the range of values for `LHS` that satisfy the
+  // consequent, "`LHS` `Pred` `RHS`":
+  APInt ConstRHS = cast<SCEVConstant>(RHS)->getValue()->getValue();
+  ConstantRange SatisfyingLHSRange =
+      ConstantRange::makeSatisfyingICmpRegion(Pred, ConstRHS);
+
+  // The antecedent implies the consequent if every value of `LHS` that
+  // satisfies the antecedent also satisfies the consequent.
+  return SatisfyingLHSRange.contains(LHSRange);
 }
 
 // Verify if an linear IV with positive stride can overflow when in a
