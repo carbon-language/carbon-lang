@@ -388,7 +388,7 @@ CMIDriver::DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool 
 //              --executable
 //          The application's options --interpreter and --executable in code act very similar.
 //          The --executable is necessary to differentiate whether the MI Driver is being
-//          used by a client i.e. Eclipse or from the command line. Eclipse issues the option
+//          used by a client (e.g. Eclipse) or from the command line. Eclipse issues the option
 //          --interpreter and also passes additional arguments which can be interpreted as an
 //          executable if called from the command line. Using --executable tells the MI
 //          Driver is being called the command line and that the executable argument is indeed
