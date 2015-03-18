@@ -980,8 +980,8 @@ public:
   /// the object whose address is being passed. If so then MinSize is set to the
   /// minimum size the object must be to be aligned and PrefAlign is set to the
   /// preferred alignment.
-  virtual bool shouldAlignPointerArgs(CallInst */*CI*/, unsigned &/*MinSize*/,
-                                      unsigned &/*PrefAlign*/) const {
+  virtual bool shouldAlignPointerArgs(CallInst * /*CI*/, unsigned & /*MinSize*/,
+                                      unsigned & /*PrefAlign*/) const {
     return false;
   }
 
