@@ -65,7 +65,9 @@ def II_DSRL32           : InstrItinClass;
 def II_DSRLV            : InstrItinClass;
 def II_DSUBU            : InstrItinClass;
 def II_DSUB             : InstrItinClass;
+def II_EXT              : InstrItinClass; // Any EXT instruction
 def II_FLOOR            : InstrItinClass;
+def II_INS              : InstrItinClass; // Any INS instruction
 def II_LB               : InstrItinClass;
 def II_LBU              : InstrItinClass;
 def II_LD               : InstrItinClass;
@@ -198,6 +200,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_DSUB            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DROTR           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DROTRV          , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_EXT             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_INS             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_LUI             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVF            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVN            , [InstrStage<1,  [ALU]>]>,
