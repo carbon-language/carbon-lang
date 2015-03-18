@@ -19,8 +19,6 @@ class StdMapDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
-    @skipIfGcc # llvm.org/pr15036: When built with GCC, this test causes lldb to crash with
-               # assert DeclCXX.h:554 queried property of class with no definition
     @expectedFailureIcc   # llvm.org/pr15301: LLDB prints incorrect size of
                           # libstdc++ containers
     @skipIfFreeBSD

@@ -325,39 +325,17 @@ class StdMapSynthProvider:
 			if map_type.IsReferenceType():
 				logger >> "Dereferencing type"
 				map_type = map_type.GetDereferencedType()
-			
-			map_arg_0 = str(map_type.GetTemplateArgumentType(0).GetName())
-			map_arg_1 = str(map_type.GetTemplateArgumentType(1).GetName())
-			
-			logger >> "map has args " + str(map_arg_0) + " and " + str(map_arg_1)
-			
-			map_arg_0,fixed_0 = self.fixup_class_name(map_arg_0)
-			map_arg_1,fixed_1 = self.fixup_class_name(map_arg_1)
-			
-			logger >> "arg_0 has become: " + str(map_arg_0) + " (fixed: " + str(fixed_0) + ")"
-			logger >> "arg_1 has become: " + str(map_arg_1) + " (fixed: " + str(fixed_1) + ")"
-			
-			# HACK: this is related to the above issue with the typename for std::string
-			# being shortened by clang - the changes to typename display and searching to honor
-			# namespaces make it so that we go looking for std::pair<const std::basic_string<char>, ...>
-			# but when we find a type for this, we then compare it against the fully-qualified
-			# std::pair<const std::basic_string<char, std::char_traits... and of course fail
-			# the way to bypass this problem is to avoid using the std:: prefix in this specific case
-			if fixed_0 or fixed_1:
-				map_arg_type = "pair<const " + map_arg_0 + ", " + map_arg_1
-			else:
-				map_arg_type = "std::pair<const " + map_arg_0 + ", " + map_arg_1
-			
-			if map_arg_1[-1] == '>':
-				map_arg_type = map_arg_type + " >"
-			else:
-				map_arg_type = map_arg_type + ">"
-			
-			logger >> "final contents datatype is: " + str(map_arg_type)
-			
-			self.data_type = self.valobj.GetTarget().FindFirstType(map_arg_type)
-			
-			logger >> "and the SBType is: " + str(self.data_type)
+
+			# Get the type of std::pair<key, value>. It is the first template
+			# argument type of the 4th template argument to std::map.
+			allocator_type = map_type.GetTemplateArgumentType(3)
+			self.data_type = allocator_type.GetTemplateArgumentType(0)
+			if not self.data_type:
+				# GCC does not emit DW_TAG_template_type_parameter for
+				# std::allocator<...>. For such a case, get the type of
+				# std::pair from a member of std::map.
+				rep_type = self.valobj.GetChildMemberWithName('_M_t').GetType()
+				self.data_type = rep_type.GetTypedefedType().GetTemplateArgumentType(1)
 			
 			# from libstdc++ implementation of _M_root for rbtree
 			self.Mroot = self.Mheader.GetChildMemberWithName('_M_parent')
