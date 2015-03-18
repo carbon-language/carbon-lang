@@ -16,7 +16,7 @@
 #include <functional>
 #include <cassert>
 
-#include "test_allocator.h"
+#include "min_allocator.h"
 
 class A
 {
@@ -57,19 +57,19 @@ public:
 int main()
 {
     {
-    std::function<int(int)> f(std::allocator_arg, test_allocator<A>(), A());
+    std::function<int(int)> f(std::allocator_arg, bare_allocator<A>(), A());
     assert(A::count == 1);
     assert(f.target<A>());
     assert(f.target<int(*)(int)>() == 0);
     }
     assert(A::count == 0);
     {
-    std::function<int(int)> f(std::allocator_arg, test_allocator<int(*)(int)>(), g);
+    std::function<int(int)> f(std::allocator_arg, bare_allocator<int(*)(int)>(), g);
     assert(f.target<int(*)(int)>());
     assert(f.target<A>() == 0);
     }
     {
-    std::function<int(int)> f(std::allocator_arg, test_allocator<int(*)(int)>(),
+    std::function<int(int)> f(std::allocator_arg, bare_allocator<int(*)(int)>(),
                               (int (*)(int))0);
     assert(!f);
     assert(f.target<int(*)(int)>() == 0);
@@ -77,7 +77,7 @@ int main()
     }
     {
     std::function<int(const A*, int)> f(std::allocator_arg,
-                                        test_allocator<int(A::*)(int)const>(),
+                                        bare_allocator<int(A::*)(int)const>(),
                                         &A::foo);
     assert(f);
     assert(f.target<int (A::*)(int) const>() != 0);
@@ -91,7 +91,7 @@ int main()
 #endif
     {
     std::function<void(int)> fun(std::allocator_arg,
-                                 test_allocator<int(*)(int)>(),
+                                 bare_allocator<int(*)(int)>(),
                                  &g);
     assert(fun);
     assert(fun.target<int(*)(int)>() != 0);

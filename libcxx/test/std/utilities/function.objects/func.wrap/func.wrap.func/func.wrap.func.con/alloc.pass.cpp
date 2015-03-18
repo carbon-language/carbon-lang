@@ -16,10 +16,12 @@
 #include <functional>
 #include <cassert>
 
-#include "test_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {
-    std::function<int(int)> f(std::allocator_arg, test_allocator<int>());
+    {
+    std::function<int(int)> f(std::allocator_arg, bare_allocator<int>());
     assert(!f);
+    }
 }

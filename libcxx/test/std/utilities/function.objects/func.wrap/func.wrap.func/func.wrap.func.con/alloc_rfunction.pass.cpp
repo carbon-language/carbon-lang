@@ -16,7 +16,7 @@
 #include <functional>
 #include <cassert>
 
-#include "test_allocator.h"
+#include "min_allocator.h"
 #include "count_new.hpp"
 
 class A
@@ -56,7 +56,7 @@ int main()
     assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(f.target<A>());
     assert(f.target<int(*)(int)>() == 0);
-    std::function<int(int)> f2(std::allocator_arg, test_allocator<A>(), std::move(f));
+    std::function<int(int)> f2(std::allocator_arg, bare_allocator<A>(), std::move(f));
     assert(A::count == 1);
     assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(f2.target<A>());

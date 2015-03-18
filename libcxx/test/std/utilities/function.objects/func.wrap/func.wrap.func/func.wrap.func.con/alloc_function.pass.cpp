@@ -17,6 +17,7 @@
 #include <functional>
 #include <cassert>
 
+#include "min_allocator.h"
 #include "test_allocator.h"
 #include "count_new.hpp"
 
@@ -58,7 +59,7 @@ int main()
     assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(f.target<A>());
     assert(f.target<int(*)(int)>() == 0);
-    std::function<int(int)> f2(std::allocator_arg, test_allocator<A>(), f);
+    std::function<int(int)> f2(std::allocator_arg, bare_allocator<A>(), f);
     assert(A::count == 2);
     assert(globalMemCounter.checkOutstandingNewEq(2));
     assert(f2.target<A>());
@@ -71,7 +72,7 @@ int main()
     assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f.target<int(*)(int)>());
     assert(f.target<A>() == 0);
-    std::function<int(int)> f2(std::allocator_arg, test_allocator<int(*)(int)>(), f);
+    std::function<int(int)> f2(std::allocator_arg, bare_allocator<int(*)(int)>(), f);
     assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f2.target<int(*)(int)>());
     assert(f2.target<A>() == 0);
@@ -91,7 +92,7 @@ int main()
     assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f.target<int(*)(int)>() == 0);
     assert(f.target<A>() == 0);
-    std::function<int(int)> f2(std::allocator_arg, test_allocator<int>(), f);
+    std::function<int(int)> f2(std::allocator_arg, bare_allocator<int>(), f);
     assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f2.target<int(*)(int)>() == 0);
     assert(f2.target<A>() == 0);
