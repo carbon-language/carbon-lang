@@ -997,13 +997,30 @@ SDNode *HexagonDAGToDAGISel::SelectConstantFP(SDNode *N) {
 SDNode *HexagonDAGToDAGISel::SelectConstant(SDNode *N) {
   SDLoc dl(N);
   if (N->getValueType(0) == MVT::i1) {
-    SDNode* Result = 0;
+    SDNode* Result;
     int32_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-    if (Val == -1)
-      Result = CurDAG->getMachineNode(Hexagon::TFR_PdTrue, dl, MVT::i1);
-    else if (Val == 0)
-      Result = CurDAG->getMachineNode(Hexagon::TFR_PdFalse, dl, MVT::i1);
-    if (Result) {
+    if (Val == -1) {
+      // Create the IntReg = 1 node.
+      SDNode* IntRegTFR =
+        CurDAG->getMachineNode(Hexagon::A2_tfrsi, dl, MVT::i32,
+                               CurDAG->getTargetConstant(0, MVT::i32));
+
+      // Pd = IntReg
+      SDNode* Pd = CurDAG->getMachineNode(Hexagon::C2_tfrrp, dl, MVT::i1,
+                                          SDValue(IntRegTFR, 0));
+
+      // not(Pd)
+      SDNode* NotPd = CurDAG->getMachineNode(Hexagon::C2_not, dl, MVT::i1,
+                                             SDValue(Pd, 0));
+
+      // xor(not(Pd))
+      Result = CurDAG->getMachineNode(Hexagon::C2_xor, dl, MVT::i1,
+                                      SDValue(Pd, 0), SDValue(NotPd, 0));
+
+      // We have just built:
+      // Rs = Pd
+      // Pd = xor(not(Pd), Pd)
+
       ReplaceUses(N, Result);
       return Result;
     }
