@@ -24,8 +24,12 @@
 //    and atomically set Guard to -Guard.
 //  - __sanitizer_cov_dump: dump the coverage data to disk.
 //  For every module of the current process that has coverage data
-//  this will create a file module_name.PID.sancov. The file format is simple:
-//  it's just a sorted sequence of 4-byte offsets in the module.
+//  this will create a file module_name.PID.sancov.
+//
+// The file format is simple: the first 8 bytes is the magic,
+// one of 0xC0BFFFFFFFFFFF64 and 0xC0BFFFFFFFFFFF32. The last byte of the
+// magic defines the size of the following offsets.
+// The rest of the data is the offsets in the module.
 //
 // Eventually, this coverage implementation should be obsoleted by a more
 // powerful general purpose Clang/LLVM coverage instrumentation.
@@ -42,6 +46,9 @@
 #include "sanitizer_stacktrace.h"
 #include "sanitizer_symbolizer.h"
 #include "sanitizer_flags.h"
+
+static const u64 kMagic64 = 0xC0BFFFFFFFFFFF64ULL;
+static const u64 kMagic32 = 0xC0BFFFFFFFFFFF32ULL;
 
 static atomic_uint32_t dump_once_guard;  // Ensure that CovDump runs only once.
 
@@ -731,6 +738,9 @@ void CoverageData::DumpOffsets() {
   InternalScopedString path(kMaxPathLength);
   for (uptr m = 0; m < module_name_vec.size(); m++) {
     offsets.clear();
+    uptr num_words_for_magic = SANITIZER_WORDSIZE == 64 ? 1 : 2;
+    for (uptr i = 0; i < num_words_for_magic; i++)
+      offsets.push_back(0);
     auto r = module_name_vec[m];
     CHECK(r.name);
     CHECK_LE(r.beg, r.end);
@@ -745,17 +755,24 @@ void CoverageData::DumpOffsets() {
       offsets.push_back(BundlePcAndCounter(offset, counter));
     }
 
+    CHECK_GE(offsets.size(), num_words_for_magic);
     SortArray(offsets.data(), offsets.size());
     for (uptr i = 0; i < offsets.size(); i++)
       offsets[i] = UnbundlePc(offsets[i]);
+
+    uptr num_offsets = offsets.size() - num_words_for_magic;
+    u64 *magic_p = reinterpret_cast<u64*>(offsets.data());
+    CHECK_EQ(*magic_p, 0ULL);
+    // FIXME: we may want to write 32-bit offsets even in 64-mode
+    // if all the offsets are small enough.
+    *magic_p = SANITIZER_WORDSIZE == 64 ? kMagic64 : kMagic32;
 
     module_name = StripModuleName(r.name);
     if (cov_sandboxed) {
       if (cov_fd >= 0) {
         CovWritePacked(internal_getpid(), module_name, offsets.data(),
                        offsets.size() * sizeof(offsets[0]));
-        VReport(1, " CovDump: %zd PCs written to packed file\n",
-                offsets.size());
+        VReport(1, " CovDump: %zd PCs written to packed file\n", num_offsets);
       }
     } else {
       // One file per module per process.
@@ -763,8 +780,7 @@ void CoverageData::DumpOffsets() {
       if (fd < 0) continue;
       internal_write(fd, offsets.data(), offsets.size() * sizeof(offsets[0]));
       internal_close(fd);
-      VReport(1, " CovDump: %s: %zd PCs written\n", path.data(),
-              offsets.size());
+      VReport(1, " CovDump: %s: %zd PCs written\n", path.data(), num_offsets);
     }
   }
   if (cov_fd >= 0)
