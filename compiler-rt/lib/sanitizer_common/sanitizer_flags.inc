@@ -111,10 +111,12 @@ COMMON_FLAG(
     bool, coverage, false,
     "If set, coverage information will be dumped at program shutdown (if the "
     "coverage instrumentation was enabled at compile time).")
-// On by default, but works only if coverage == true.
 COMMON_FLAG(bool, coverage_pcs, true,
             "If set (and if 'coverage' is set too), the coverage information "
             "will be dumped as a set of PC offsets for every module.")
+COMMON_FLAG(bool, coverage_order_pcs, false,
+             "If true, the PCs will be dumped in the order they've"
+             " appeared during the execution.")
 COMMON_FLAG(bool, coverage_bitset, false,
             "If set (and if 'coverage' is set too), the coverage information "
             "will also be dumped as a bitset to a separate file.")

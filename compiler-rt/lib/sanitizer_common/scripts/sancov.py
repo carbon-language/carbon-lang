@@ -30,20 +30,23 @@ def ReadOneFile(path, bits):
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
-    s = set(array.array(TypeCodeForBits(bits), f.read(size)))
+    s = array.array(TypeCodeForBits(bits), f.read(size))
   print >>sys.stderr, "%s: read %d PCs from %s" % (prog_name, size * 8 / bits, path)
   return s
 
 def Merge(files, bits):
   s = set()
   for f in files:
-    s = s.union(ReadOneFile(f, bits))
+    s = s.union(set(ReadOneFile(f, bits)))
   print >> sys.stderr, "%s: %d files merged; %d PCs total" % \
     (prog_name, len(files), len(s))
   return sorted(s)
 
 def PrintFiles(files, bits):
-  s = Merge(files, bits)
+  if len(files) > 1:
+    s = Merge(files, bits)
+  else:  # If there is just on file, print the PCs in order.
+    s = ReadOneFile(files[0], bits)
   for i in s:
     print "0x%x" % i
 

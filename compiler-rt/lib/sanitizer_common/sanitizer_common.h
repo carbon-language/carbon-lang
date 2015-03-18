@@ -445,6 +445,9 @@ class InternalMmapVectorNoCtor {
   const T *data() const {
     return data_;
   }
+  T *data() {
+    return data_;
+  }
   uptr capacity() const {
     return capacity_;
   }

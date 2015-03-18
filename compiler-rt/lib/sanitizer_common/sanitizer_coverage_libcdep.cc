@@ -352,6 +352,32 @@ void CoverageData::InitializeGuards(s32 *guards, uptr n,
   UpdateModuleNameVec(caller_pc, range_beg, range_end);
 }
 
+static const uptr kBundleCounterBits = 16;
+
+// When coverage_order_pcs==true and SANITIZER_WORDSIZE==64
+// we insert the global counter into the first 16 bits of the PC.
+uptr BundlePcAndCounter(uptr pc, uptr counter) {
+  if (SANITIZER_WORDSIZE != 64 || !common_flags()->coverage_order_pcs)
+    return pc;
+  static const uptr kMaxCounter = (1 << kBundleCounterBits) - 1;
+  if (counter > kMaxCounter)
+    counter = kMaxCounter;
+  CHECK_EQ(0, pc >> (SANITIZER_WORDSIZE - kBundleCounterBits));
+  return pc | (counter << (SANITIZER_WORDSIZE - kBundleCounterBits));
+}
+
+uptr UnbundlePc(uptr bundle) {
+  if (SANITIZER_WORDSIZE != 64 || !common_flags()->coverage_order_pcs)
+    return bundle;
+  return (bundle << kBundleCounterBits) >> kBundleCounterBits;
+}
+
+uptr UnbundleCounter(uptr bundle) {
+  if (SANITIZER_WORDSIZE != 64 || !common_flags()->coverage_order_pcs)
+    return 0;
+  return bundle >> (SANITIZER_WORDSIZE - kBundleCounterBits);
+}
+
 // If guard is negative, atomically set it to -guard and store the PC in
 // pc_array.
 void CoverageData::Add(uptr pc, u32 *guard) {
@@ -367,8 +393,8 @@ void CoverageData::Add(uptr pc, u32 *guard) {
     return;  // May happen after fork when pc_array_index becomes 0.
   CHECK_LT(idx * sizeof(uptr),
            atomic_load(&pc_array_size, memory_order_acquire));
-  pc_array[idx] = pc;
-  atomic_fetch_add(&coverage_counter, 1, memory_order_relaxed);
+  uptr counter = atomic_fetch_add(&coverage_counter, 1, memory_order_relaxed);
+  pc_array[idx] = BundlePcAndCounter(pc, counter);
 }
 
 // Registers a pair caller=>callee.
@@ -555,7 +581,7 @@ void CoverageData::DumpTrace() {
   for (uptr i = 0, n = size(); i < n; i++) {
     const char *module_name = "<unknown>";
     uptr module_address = 0;
-    sym->GetModuleNameAndOffsetForPC(pc_array[i], &module_name,
+    sym->GetModuleNameAndOffsetForPC(UnbundlePc(pc_array[i]), &module_name,
                                      &module_address);
     out.append("%s 0x%zx\n", module_name, module_address);
   }
@@ -681,7 +707,7 @@ void CoverageData::DumpAsBitSet() {
     CHECK_LE(r.beg, r.end);
     CHECK_LE(r.end, size());
     for (uptr i = r.beg; i < r.end; i++) {
-      uptr pc = data()[i];
+      uptr pc = UnbundlePc(pc_array[i]);
       out[i] = pc ? '1' : '0';
       if (pc)
         n_set_bits++;
@@ -711,12 +737,18 @@ void CoverageData::DumpOffsets() {
     CHECK_LE(r.end, size());
     const char *module_name = "<unknown>";
     for (uptr i = r.beg; i < r.end; i++) {
-      uptr pc = data()[i];
+      uptr pc = UnbundlePc(pc_array[i]);
+      uptr counter = UnbundleCounter(pc_array[i]);
       if (!pc) continue; // Not visited.
       uptr offset = 0;
       sym->GetModuleNameAndOffsetForPC(pc, &module_name, &offset);
-      offsets.push_back(offset);
+      offsets.push_back(BundlePcAndCounter(offset, counter));
     }
+
+    SortArray(offsets.data(), offsets.size());
+    for (uptr i = 0; i < offsets.size(); i++)
+      offsets[i] = UnbundlePc(offsets[i]);
+
     module_name = StripModuleName(r.name);
     if (cov_sandboxed) {
       if (cov_fd >= 0) {
