@@ -118,6 +118,10 @@ public:
            !ObjCSubscriptingLegacyRuntime;
   }
 
+  bool isCompatibleWithMSVC(unsigned MajorVersion) const {
+    return MSCompatibilityVersion >= MajorVersion * 10000000U;
+  }
+
   /// \brief Reset all of the options that are not considered when building a
   /// module.
   void resetNonModularOptions();
