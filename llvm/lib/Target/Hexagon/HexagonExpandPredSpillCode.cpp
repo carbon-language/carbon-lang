@@ -79,7 +79,166 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
          ++MII) {
       MachineInstr *MI = MII;
       int Opc = MI->getOpcode();
-      if (Opc == Hexagon::STriw_pred) {
+      if (Opc == Hexagon::S2_storerb_pci_pseudo ||
+          Opc == Hexagon::S2_storerh_pci_pseudo ||
+          Opc == Hexagon::S2_storeri_pci_pseudo ||
+          Opc == Hexagon::S2_storerd_pci_pseudo ||
+          Opc == Hexagon::S2_storerf_pci_pseudo) {
+        unsigned Opcode;
+        if (Opc == Hexagon::S2_storerd_pci_pseudo)
+          Opcode = Hexagon::S2_storerd_pci;
+        else if (Opc == Hexagon::S2_storeri_pci_pseudo)
+          Opcode = Hexagon::S2_storeri_pci;
+        else if (Opc == Hexagon::S2_storerh_pci_pseudo)
+          Opcode = Hexagon::S2_storerh_pci;
+        else if (Opc == Hexagon::S2_storerf_pci_pseudo)
+          Opcode = Hexagon::S2_storerf_pci;
+        else if (Opc == Hexagon::S2_storerb_pci_pseudo)
+          Opcode = Hexagon::S2_storerb_pci;
+        else
+          llvm_unreachable("wrong Opc");
+        MachineOperand &Op0 = MI->getOperand(0);
+        MachineOperand &Op1 = MI->getOperand(1);
+        MachineOperand &Op2 = MI->getOperand(2);
+        MachineOperand &Op3 = MI->getOperand(3); // Modifier value.
+        MachineOperand &Op4 = MI->getOperand(4);
+        // Emit a "C6 = Rn, C6 is the control register for M0".
+        BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_tfrrcr),
+                Hexagon::C6)->addOperand(Op3);
+        // Replace the pseude circ_ldd by the real circ_ldd.
+        MachineInstr *NewMI = BuildMI(*MBB, MII, MI->getDebugLoc(),
+                                      TII->get(Opcode));
+        NewMI->addOperand(Op0);
+        NewMI->addOperand(Op1);
+        NewMI->addOperand(Op4);
+        NewMI->addOperand(MachineOperand::CreateReg(Hexagon::M0,
+                                                    false, /*isDef*/
+                                                    false, /*isImpl*/
+                                                    true   /*isKill*/));
+        NewMI->addOperand(Op2);
+        MII = MBB->erase(MI);
+        --MII;
+      } else if (Opc == Hexagon::L2_loadrd_pci_pseudo ||
+                 Opc == Hexagon::L2_loadri_pci_pseudo ||
+                 Opc == Hexagon::L2_loadrh_pci_pseudo ||
+                 Opc == Hexagon::L2_loadruh_pci_pseudo||
+                 Opc == Hexagon::L2_loadrb_pci_pseudo ||
+                 Opc == Hexagon::L2_loadrub_pci_pseudo) {
+        unsigned Opcode;
+        if (Opc == Hexagon::L2_loadrd_pci_pseudo)
+          Opcode = Hexagon::L2_loadrd_pci;
+        else if (Opc == Hexagon::L2_loadri_pci_pseudo)
+          Opcode = Hexagon::L2_loadri_pci;
+        else if (Opc == Hexagon::L2_loadrh_pci_pseudo)
+          Opcode = Hexagon::L2_loadrh_pci;
+        else if (Opc == Hexagon::L2_loadruh_pci_pseudo)
+          Opcode = Hexagon::L2_loadruh_pci;
+        else if (Opc == Hexagon::L2_loadrb_pci_pseudo)
+          Opcode = Hexagon::L2_loadrb_pci;
+        else if (Opc == Hexagon::L2_loadrub_pci_pseudo)
+          Opcode = Hexagon::L2_loadrub_pci;
+        else
+          llvm_unreachable("wrong Opc");
+
+        MachineOperand &Op0 = MI->getOperand(0);
+        MachineOperand &Op1 = MI->getOperand(1);
+        MachineOperand &Op2 = MI->getOperand(2);
+        MachineOperand &Op4 = MI->getOperand(4); // Modifier value.
+        MachineOperand &Op5 = MI->getOperand(5);
+        // Emit a "C6 = Rn, C6 is the control register for M0".
+        BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_tfrrcr),
+                Hexagon::C6)->addOperand(Op4);
+        // Replace the pseude circ_ldd by the real circ_ldd.
+        MachineInstr *NewMI = BuildMI(*MBB, MII, MI->getDebugLoc(),
+                                      TII->get(Opcode));
+        NewMI->addOperand(Op1);
+        NewMI->addOperand(Op0);
+        NewMI->addOperand(Op2);
+        NewMI->addOperand(Op5);
+        NewMI->addOperand(MachineOperand::CreateReg(Hexagon::M0,
+                                                    false, /*isDef*/
+                                                    false, /*isImpl*/
+                                                    true   /*isKill*/));
+        MII = MBB->erase(MI);
+        --MII;
+      } else if (Opc == Hexagon::L2_loadrd_pbr_pseudo ||
+                 Opc == Hexagon::L2_loadri_pbr_pseudo ||
+                 Opc == Hexagon::L2_loadrh_pbr_pseudo ||
+                 Opc == Hexagon::L2_loadruh_pbr_pseudo||
+                 Opc == Hexagon::L2_loadrb_pbr_pseudo ||
+                 Opc == Hexagon::L2_loadrub_pbr_pseudo) {
+        unsigned Opcode;
+        if (Opc == Hexagon::L2_loadrd_pbr_pseudo)
+          Opcode = Hexagon::L2_loadrd_pbr;
+        else if (Opc == Hexagon::L2_loadri_pbr_pseudo)
+          Opcode = Hexagon::L2_loadri_pbr;
+        else if (Opc == Hexagon::L2_loadrh_pbr_pseudo)
+          Opcode = Hexagon::L2_loadrh_pbr;
+        else if (Opc == Hexagon::L2_loadruh_pbr_pseudo)
+          Opcode = Hexagon::L2_loadruh_pbr;
+        else if (Opc == Hexagon::L2_loadrb_pbr_pseudo)
+          Opcode = Hexagon::L2_loadrb_pbr;
+        else if (Opc == Hexagon::L2_loadrub_pbr_pseudo)
+          Opcode = Hexagon::L2_loadrub_pbr;
+        else
+          llvm_unreachable("wrong Opc");
+        MachineOperand &Op0 = MI->getOperand(0);
+        MachineOperand &Op1 = MI->getOperand(1);
+        MachineOperand &Op2 = MI->getOperand(2);
+        MachineOperand &Op4 = MI->getOperand(4); // Modifier value.
+        // Emit a "C6 = Rn, C6 is the control register for M0".
+        BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_tfrrcr),
+                Hexagon::C6)->addOperand(Op4);
+        // Replace the pseudo brev_ldd by the real brev_ldd.
+        MachineInstr *NewMI = BuildMI(*MBB, MII, MI->getDebugLoc(),
+                                      TII->get(Opcode));
+        NewMI->addOperand(Op1);
+        NewMI->addOperand(Op0);
+        NewMI->addOperand(Op2);
+        NewMI->addOperand(MachineOperand::CreateReg(Hexagon::M0,
+                                                    false, /*isDef*/
+                                                    false, /*isImpl*/
+                                                    true   /*isKill*/));
+        MII = MBB->erase(MI);
+        --MII;
+      } else if (Opc == Hexagon::S2_storerd_pbr_pseudo ||
+                 Opc == Hexagon::S2_storeri_pbr_pseudo ||
+                 Opc == Hexagon::S2_storerh_pbr_pseudo ||
+                 Opc == Hexagon::S2_storerb_pbr_pseudo ||
+                 Opc == Hexagon::S2_storerf_pbr_pseudo) {
+        unsigned Opcode;
+        if (Opc == Hexagon::S2_storerd_pbr_pseudo)
+          Opcode = Hexagon::S2_storerd_pbr;
+        else if (Opc == Hexagon::S2_storeri_pbr_pseudo)
+          Opcode = Hexagon::S2_storeri_pbr;
+        else if (Opc == Hexagon::S2_storerh_pbr_pseudo)
+          Opcode = Hexagon::S2_storerh_pbr;
+        else if (Opc == Hexagon::S2_storerf_pbr_pseudo)
+          Opcode = Hexagon::S2_storerf_pbr;
+        else if (Opc == Hexagon::S2_storerb_pbr_pseudo)
+          Opcode = Hexagon::S2_storerb_pbr;
+        else
+          llvm_unreachable("wrong Opc");
+        MachineOperand &Op0 = MI->getOperand(0);
+        MachineOperand &Op1 = MI->getOperand(1);
+        MachineOperand &Op2 = MI->getOperand(2);
+        MachineOperand &Op3 = MI->getOperand(3); // Modifier value.
+        // Emit a "C6 = Rn, C6 is the control register for M0".
+        BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_tfrrcr),
+                Hexagon::C6)->addOperand(Op3);
+        // Replace the pseudo brev_ldd by the real brev_ldd.
+        MachineInstr *NewMI = BuildMI(*MBB, MII, MI->getDebugLoc(),
+                                      TII->get(Opcode));
+        NewMI->addOperand(Op0);
+        NewMI->addOperand(Op1);
+        NewMI->addOperand(MachineOperand::CreateReg(Hexagon::M0,
+                                                    false, /*isDef*/
+                                                    false, /*isImpl*/
+                                                    true   /*isKill*/));
+        NewMI->addOperand(Op2);
+        MII = MBB->erase(MI);
+        --MII;
+      } else if (Opc == Hexagon::STriw_pred) {
         // STriw_pred [R30], ofst, SrcReg;
         unsigned FP = MI->getOperand(0).getReg();
         assert(FP == QST.getRegisterInfo()->getFrameRegister() &&

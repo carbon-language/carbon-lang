@@ -422,9 +422,39 @@ class Hexagon_di_didisisi_Intrinsic<string GCCIntSuffix>
                            llvm_i32_ty, llvm_i32_ty],
                           [IntrNoMem]>;
 
+class Hexagon_mem_memmemsi_Intrinsic<string GCCIntSuffix>
+  : Hexagon_Intrinsic<GCCIntSuffix,
+                          [llvm_ptr_ty], [llvm_ptr_ty, llvm_ptr_ty,
+                           llvm_i32_ty],
+                          [IntrReadWriteArgMem]>;
+
+class Hexagon_mem_memsisi_Intrinsic<string GCCIntSuffix>
+  : Hexagon_Intrinsic<GCCIntSuffix,
+                          [llvm_ptr_ty], [llvm_ptr_ty, llvm_i32_ty,
+                           llvm_i32_ty],
+                          [IntrReadWriteArgMem]>;
+
+class Hexagon_mem_memdisi_Intrinsic<string GCCIntSuffix>
+  : Hexagon_Intrinsic<GCCIntSuffix,
+                          [llvm_ptr_ty], [llvm_ptr_ty, llvm_i64_ty,
+                           llvm_i32_ty],
+                          [IntrReadWriteArgMem]>;
+
 class Hexagon_mem_memmemsisi_Intrinsic<string GCCIntSuffix>
   : Hexagon_Intrinsic<GCCIntSuffix,
                           [llvm_ptr_ty], [llvm_ptr_ty, llvm_ptr_ty,
+                           llvm_i32_ty, llvm_i32_ty],
+                          [IntrReadWriteArgMem]>;
+
+class Hexagon_mem_memsisisi_Intrinsic<string GCCIntSuffix>
+  : Hexagon_Intrinsic<GCCIntSuffix,
+                          [llvm_ptr_ty], [llvm_ptr_ty, llvm_i32_ty,
+                           llvm_i32_ty, llvm_i32_ty],
+                          [IntrReadWriteArgMem]>;
+
+class Hexagon_mem_memdisisi_Intrinsic<string GCCIntSuffix>
+  : Hexagon_Intrinsic<GCCIntSuffix,
+                          [llvm_ptr_ty], [llvm_ptr_ty, llvm_i64_ty,
                            llvm_i32_ty, llvm_i32_ty],
                           [IntrReadWriteArgMem]>;
 
@@ -606,20 +636,126 @@ class Hexagon_df_dfdfdfqi_Intrinsic<string GCCIntSuffix>
                           [IntrNoMem, Throws]>;
 
 
-// This one below will not be generated from iset.py.
-// So make sure, you don't overwrite this one.
+// This one below will not be auto-generated,
+// so make sure, you don't overwrite this one.
 //
 // BUILTIN_INFO(SI_to_SXTHI_asrh,SI_ftype_SI,1)
 //
 def int_hexagon_SI_to_SXTHI_asrh :
 Hexagon_si_si_Intrinsic<"SI_to_SXTHI_asrh">;
 //
+// BUILTIN_INFO_NONCONST(brev_ldd,PTR_ftype_PTRPTRSI,3)
+//
+def int_hexagon_brev_ldd :
+Hexagon_mem_memmemsi_Intrinsic<"brev_ldd">;
+//
+// BUILTIN_INFO_NONCONST(brev_ldw,PTR_ftype_PTRPTRSI,3)
+//
+def int_hexagon_brev_ldw :
+Hexagon_mem_memmemsi_Intrinsic<"brev_ldw">;
+//
+// BUILTIN_INFO_NONCONST(brev_ldh,PTR_ftype_PTRPTRSI,3)
+//
+def int_hexagon_brev_ldh :
+Hexagon_mem_memmemsi_Intrinsic<"brev_ldh">;
+//
+// BUILTIN_INFO_NONCONST(brev_lduh,PTR_ftype_PTRPTRSI,3)
+//
+def int_hexagon_brev_lduh :
+Hexagon_mem_memmemsi_Intrinsic<"brev_lduh">;
+//
+// BUILTIN_INFO_NONCONST(brev_ldb,PTR_ftype_PTRPTRSI,3)
+//
+def int_hexagon_brev_ldb :
+Hexagon_mem_memmemsi_Intrinsic<"brev_ldb">;
+//
+// BUILTIN_INFO_NONCONST(brev_ldub,PTR_ftype_PTRPTRSI,3)
+//
+def int_hexagon_brev_ldub :
+Hexagon_mem_memmemsi_Intrinsic<"brev_ldub">;
+//
 // BUILTIN_INFO_NONCONST(circ_ldd,PTR_ftype_PTRPTRSISI,4)
 //
 def int_hexagon_circ_ldd :
 Hexagon_mem_memmemsisi_Intrinsic<"circ_ldd">;
-// This one above will not be generated from iset.py.
-// So make sure, you don't overwrite this one.
+//
+// BUILTIN_INFO_NONCONST(circ_ldw,PTR_ftype_PTRPTRSISI,4)
+//
+def int_hexagon_circ_ldw :
+Hexagon_mem_memmemsisi_Intrinsic<"circ_ldw">;
+//
+// BUILTIN_INFO_NONCONST(circ_ldh,PTR_ftype_PTRPTRSISI,4)
+//
+def int_hexagon_circ_ldh :
+Hexagon_mem_memmemsisi_Intrinsic<"circ_ldh">;
+//
+// BUILTIN_INFO_NONCONST(circ_lduh,PTR_ftype_PTRPTRSISI,4)
+//
+def int_hexagon_circ_lduh :
+Hexagon_mem_memmemsisi_Intrinsic<"circ_lduh">;
+//
+// BUILTIN_INFO_NONCONST(circ_ldb,PTR_ftype_PTRPTRSISI,4)
+//
+def int_hexagon_circ_ldb :
+Hexagon_mem_memmemsisi_Intrinsic<"circ_ldb">;
+//
+// BUILTIN_INFO_NONCONST(circ_ldub,PTR_ftype_PTRPTRSISI,4)
+//
+def int_hexagon_circ_ldub :
+Hexagon_mem_memmemsisi_Intrinsic<"circ_ldub">;
+
+//
+// BUILTIN_INFO_NONCONST(brev_stb,PTR_ftype_PTRSISI,3)
+//
+def int_hexagon_brev_stb :
+Hexagon_mem_memsisi_Intrinsic<"brev_stb">;
+//
+// BUILTIN_INFO_NONCONST(brev_sthhi,PTR_ftype_PTRSISI,3)
+//
+def int_hexagon_brev_sthhi :
+Hexagon_mem_memsisi_Intrinsic<"brev_sthhi">;
+//
+// BUILTIN_INFO_NONCONST(brev_sth,PTR_ftype_PTRSISI,3)
+//
+def int_hexagon_brev_sth :
+Hexagon_mem_memsisi_Intrinsic<"brev_sth">;
+//
+// BUILTIN_INFO_NONCONST(brev_stw,PTR_ftype_PTRSISI,3)
+//
+def int_hexagon_brev_stw :
+Hexagon_mem_memsisi_Intrinsic<"brev_stw">;
+//
+// BUILTIN_INFO_NONCONST(brev_std,PTR_ftype_PTRSISI,3)
+//
+def int_hexagon_brev_std :
+Hexagon_mem_memdisi_Intrinsic<"brev_std">;
+//
+// BUILTIN_INFO_NONCONST(circ_std,PTR_ftype_PTRDISISI,4)
+//
+def int_hexagon_circ_std :
+Hexagon_mem_memdisisi_Intrinsic<"circ_std">;
+//
+// BUILTIN_INFO_NONCONST(circ_stw,PTR_ftype_PTRSISISI,4)
+//
+def int_hexagon_circ_stw :
+Hexagon_mem_memsisisi_Intrinsic<"circ_stw">;
+//
+// BUILTIN_INFO_NONCONST(circ_sth,PTR_ftype_PTRSISISI,4)
+//
+def int_hexagon_circ_sth :
+Hexagon_mem_memsisisi_Intrinsic<"circ_sth">;
+//
+// BUILTIN_INFO_NONCONST(circ_sthhi,PTR_ftype_PTRSISISI,4)
+//
+def int_hexagon_circ_sthhi :
+Hexagon_mem_memsisisi_Intrinsic<"circ_sthhi">;
+//
+// BUILTIN_INFO_NONCONST(circ_stb,PTR_ftype_PTRSISISI,4)
+//
+def int_hexagon_circ_stb :
+Hexagon_mem_memsisisi_Intrinsic<"circ_stb">;
+
+
 //
 // BUILTIN_INFO(HEXAGON.C2_cmpeq,QI_ftype_SISI,2)
 //
