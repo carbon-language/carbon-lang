@@ -1996,9 +1996,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Left.isOneOf(TT_JavaAnnotation, TT_LeadingJavaAnnotation))
     return !Right.is(tok::l_paren);
   if (Left.is(TT_PointerOrReference))
-    return (!Line.IsMultiVariableDeclStmt &&
-            Style.PointerAlignment != FormatStyle::PAS_Right) ||
-           Right.is(TT_FunctionDeclarationName);
+    return Right.is(TT_FunctionDeclarationName);
   if (Right.is(TT_PointerOrReference))
     return Line.IsMultiVariableDeclStmt ||
            (Style.PointerAlignment == FormatStyle::PAS_Right &&
