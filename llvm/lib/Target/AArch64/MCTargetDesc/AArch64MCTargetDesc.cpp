@@ -136,79 +136,39 @@ static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
 
 // Force static initialization.
 extern "C" void LLVMInitializeAArch64TargetMC() {
-  // Register the MC asm info.
-  RegisterMCAsmInfoFn X(TheAArch64leTarget, createAArch64MCAsmInfo);
-  RegisterMCAsmInfoFn Y(TheAArch64beTarget, createAArch64MCAsmInfo);
-  RegisterMCAsmInfoFn Z(TheARM64Target, createAArch64MCAsmInfo);
+  for (Target *T :
+       {&TheAArch64leTarget, &TheAArch64beTarget, &TheARM64Target}) {
+    // Register the MC asm info.
+    RegisterMCAsmInfoFn X(*T, createAArch64MCAsmInfo);
 
-  // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64leTarget,
-                                        createAArch64MCCodeGenInfo);
-  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64beTarget,
-                                        createAArch64MCCodeGenInfo);
-  TargetRegistry::RegisterMCCodeGenInfo(TheARM64Target,
-                                        createAArch64MCCodeGenInfo);
+    // Register the MC codegen info.
+    TargetRegistry::RegisterMCCodeGenInfo(*T, createAArch64MCCodeGenInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheAArch64leTarget,
-                                      createAArch64MCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheAArch64beTarget,
-                                      createAArch64MCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheARM64Target,
-                                      createAArch64MCInstrInfo);
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createAArch64MCInstrInfo);
 
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheAArch64leTarget,
-                                    createAArch64MCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheAArch64beTarget,
-                                    createAArch64MCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheARM64Target,
-                                    createAArch64MCRegisterInfo);
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createAArch64MCRegisterInfo);
 
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64leTarget,
-                                          createAArch64MCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64beTarget,
-                                          createAArch64MCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheARM64Target,
-                                          createAArch64MCSubtargetInfo);
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createAArch64MCSubtargetInfo);
+
+    // Register the MC Code Emitter
+    TargetRegistry::RegisterMCCodeEmitter(*T, createAArch64MCCodeEmitter);
+
+    // Register the object streamer.
+    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+
+    // Register the asm streamer.
+    TargetRegistry::RegisterAsmTargetStreamer(*T,
+                                              createAArch64AsmTargetStreamer);
+    // Register the MCInstPrinter.
+    TargetRegistry::RegisterMCInstPrinter(*T, createAArch64MCInstPrinter);
+  }
 
   // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(TheAArch64leTarget,
-                                       createAArch64leAsmBackend);
+  for (Target *T : {&TheAArch64leTarget, &TheARM64Target})
+    TargetRegistry::RegisterMCAsmBackend(*T, createAArch64leAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheAArch64beTarget,
                                        createAArch64beAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheARM64Target,
-                                       createAArch64leAsmBackend);
-
-  // Register the MC Code Emitter
-  TargetRegistry::RegisterMCCodeEmitter(TheAArch64leTarget,
-                                        createAArch64MCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(TheAArch64beTarget,
-                                        createAArch64MCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(TheARM64Target,
-                                        createAArch64MCCodeEmitter);
-
-  // Register the object streamer.
-  TargetRegistry::RegisterMCObjectStreamer(TheAArch64leTarget,
-                                           createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(TheAArch64beTarget,
-                                           createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(TheARM64Target, createMCStreamer);
-
-  // Register the asm streamer.
-  TargetRegistry::RegisterAsmTargetStreamer(TheAArch64leTarget,
-                                            createAArch64AsmTargetStreamer);
-  TargetRegistry::RegisterAsmTargetStreamer(TheAArch64beTarget,
-                                            createAArch64AsmTargetStreamer);
-  TargetRegistry::RegisterAsmTargetStreamer(TheARM64Target,
-                                            createAArch64AsmTargetStreamer);
-
-  // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(TheAArch64leTarget,
-                                        createAArch64MCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheAArch64beTarget,
-                                        createAArch64MCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheARM64Target,
-                                        createAArch64MCInstPrinter);
 }

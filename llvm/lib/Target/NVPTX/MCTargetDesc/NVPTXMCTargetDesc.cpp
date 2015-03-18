@@ -71,35 +71,23 @@ static MCInstPrinter *createNVPTXMCInstPrinter(const Target &T,
 
 // Force static initialization.
 extern "C" void LLVMInitializeNVPTXTargetMC() {
-  // Register the MC asm info.
-  RegisterMCAsmInfo<NVPTXMCAsmInfo> X(TheNVPTXTarget32);
-  RegisterMCAsmInfo<NVPTXMCAsmInfo> Y(TheNVPTXTarget64);
+  for (Target *T : {&TheNVPTXTarget32, &TheNVPTXTarget64}) {
+    // Register the MC asm info.
+    RegisterMCAsmInfo<NVPTXMCAsmInfo> X(*T);
 
-  // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(TheNVPTXTarget32,
-                                        createNVPTXMCCodeGenInfo);
-  TargetRegistry::RegisterMCCodeGenInfo(TheNVPTXTarget64,
-                                        createNVPTXMCCodeGenInfo);
+    // Register the MC codegen info.
+    TargetRegistry::RegisterMCCodeGenInfo(*T, createNVPTXMCCodeGenInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheNVPTXTarget32, createNVPTXMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheNVPTXTarget64, createNVPTXMCInstrInfo);
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createNVPTXMCInstrInfo);
 
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheNVPTXTarget32,
-                                    createNVPTXMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheNVPTXTarget64,
-                                    createNVPTXMCRegisterInfo);
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createNVPTXMCRegisterInfo);
 
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheNVPTXTarget32,
-                                          createNVPTXMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheNVPTXTarget64,
-                                          createNVPTXMCSubtargetInfo);
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createNVPTXMCSubtargetInfo);
 
-  // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(TheNVPTXTarget32,
-                                        createNVPTXMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheNVPTXTarget64,
-                                        createNVPTXMCInstPrinter);
+    // Register the MCInstPrinter.
+    TargetRegistry::RegisterMCInstPrinter(*T, createNVPTXMCInstPrinter);
+  }
 }

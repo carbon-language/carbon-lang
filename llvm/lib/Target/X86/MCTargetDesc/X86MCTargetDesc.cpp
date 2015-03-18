@@ -390,61 +390,42 @@ static MCInstrAnalysis *createX86MCInstrAnalysis(const MCInstrInfo *Info) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86TargetMC() {
-  // Register the MC asm info.
-  RegisterMCAsmInfoFn A(TheX86_32Target, createX86MCAsmInfo);
-  RegisterMCAsmInfoFn B(TheX86_64Target, createX86MCAsmInfo);
+  for (Target *T : {&TheX86_32Target, &TheX86_64Target}) {
+    // Register the MC asm info.
+    RegisterMCAsmInfoFn X(*T, createX86MCAsmInfo);
 
-  // Register the MC codegen info.
-  RegisterMCCodeGenInfoFn C(TheX86_32Target, createX86MCCodeGenInfo);
-  RegisterMCCodeGenInfoFn D(TheX86_64Target, createX86MCCodeGenInfo);
+    // Register the MC codegen info.
+    RegisterMCCodeGenInfoFn Y(*T, createX86MCCodeGenInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheX86_32Target, createX86MCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheX86_64Target, createX86MCInstrInfo);
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createX86MCInstrInfo);
 
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheX86_32Target, createX86MCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheX86_64Target, createX86MCRegisterInfo);
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createX86MCRegisterInfo);
 
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
-                                          X86_MC::createX86MCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
-                                          X86_MC::createX86MCSubtargetInfo);
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T,
+                                            X86_MC::createX86MCSubtargetInfo);
 
-  // Register the MC instruction analyzer.
-  TargetRegistry::RegisterMCInstrAnalysis(TheX86_32Target,
-                                          createX86MCInstrAnalysis);
-  TargetRegistry::RegisterMCInstrAnalysis(TheX86_64Target,
-                                          createX86MCInstrAnalysis);
+    // Register the MC instruction analyzer.
+    TargetRegistry::RegisterMCInstrAnalysis(*T, createX86MCInstrAnalysis);
 
-  // Register the code emitter.
-  TargetRegistry::RegisterMCCodeEmitter(TheX86_32Target,
-                                        createX86MCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(TheX86_64Target,
-                                        createX86MCCodeEmitter);
+    // Register the code emitter.
+    TargetRegistry::RegisterMCCodeEmitter(*T, createX86MCCodeEmitter);
+
+    // Register the object streamer.
+    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+
+    // Register the MCInstPrinter.
+    TargetRegistry::RegisterMCInstPrinter(*T, createX86MCInstPrinter);
+
+    // Register the MC relocation info.
+    TargetRegistry::RegisterMCRelocationInfo(*T, createX86MCRelocationInfo);
+  }
 
   // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(TheX86_32Target,
                                        createX86_32AsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheX86_64Target,
                                        createX86_64AsmBackend);
-
-  // Register the object streamer.
-  TargetRegistry::RegisterMCObjectStreamer(TheX86_32Target,
-                                           createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(TheX86_64Target,
-                                           createMCStreamer);
-
-  // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(TheX86_32Target,
-                                        createX86MCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheX86_64Target,
-                                        createX86MCInstPrinter);
-
-  // Register the MC relocation info.
-  TargetRegistry::RegisterMCRelocationInfo(TheX86_32Target,
-                                           createX86MCRelocationInfo);
-  TargetRegistry::RegisterMCRelocationInfo(TheX86_64Target,
-                                           createX86MCRelocationInfo);
 }

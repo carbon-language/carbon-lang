@@ -257,63 +257,35 @@ static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
 }
 
 extern "C" void LLVMInitializePowerPCTargetMC() {
-  // Register the MC asm info.
-  RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
-  RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
-  RegisterMCAsmInfoFn E(ThePPC64LETarget, createPPCMCAsmInfo);  
+  for (Target *T : {&ThePPC32Target, &ThePPC64Target, &ThePPC64LETarget}) {
+    // Register the MC asm info.
+    RegisterMCAsmInfoFn C(*T, createPPCMCAsmInfo);
 
-  // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(ThePPC32Target, createPPCMCCodeGenInfo);
-  TargetRegistry::RegisterMCCodeGenInfo(ThePPC64Target, createPPCMCCodeGenInfo);
-  TargetRegistry::RegisterMCCodeGenInfo(ThePPC64LETarget,
-                                        createPPCMCCodeGenInfo);
+    // Register the MC codegen info.
+    TargetRegistry::RegisterMCCodeGenInfo(*T, createPPCMCCodeGenInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(ThePPC32Target, createPPCMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(ThePPC64Target, createPPCMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(ThePPC64LETarget,
-                                      createPPCMCInstrInfo);
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createPPCMCInstrInfo);
 
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(ThePPC32Target, createPPCMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(ThePPC64Target, createPPCMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(ThePPC64LETarget, createPPCMCRegisterInfo);
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createPPCMCRegisterInfo);
 
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC32Target,
-                                          createPPCMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
-                                          createPPCMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC64LETarget,
-                                          createPPCMCSubtargetInfo);
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createPPCMCSubtargetInfo);
 
-  // Register the MC Code Emitter
-  TargetRegistry::RegisterMCCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(ThePPC64LETarget,
-                                        createPPCMCCodeEmitter);
-  
+    // Register the MC Code Emitter
+    TargetRegistry::RegisterMCCodeEmitter(*T, createPPCMCCodeEmitter);
+
     // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(ThePPC32Target, createPPCAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(ThePPC64Target, createPPCAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(ThePPC64LETarget, createPPCAsmBackend);
-  
-  // Register the object streamer.
-  TargetRegistry::RegisterMCObjectStreamer(ThePPC32Target, createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(ThePPC64Target, createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(ThePPC64LETarget, createMCStreamer);
+    TargetRegistry::RegisterMCAsmBackend(*T, createPPCAsmBackend);
 
-  // Register the asm streamer.
-  TargetRegistry::RegisterAsmTargetStreamer(ThePPC32Target,
-                                            createAsmTargetStreamer);
-  TargetRegistry::RegisterAsmTargetStreamer(ThePPC64Target,
-                                            createAsmTargetStreamer);
-  TargetRegistry::RegisterAsmTargetStreamer(ThePPC64LETarget,
-                                            createAsmTargetStreamer);
+    // Register the object streamer.
+    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
 
-  // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(ThePPC64Target, createPPCMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(ThePPC64LETarget,
-                                        createPPCMCInstPrinter);
+    // Register the asm target streamer.
+    TargetRegistry::RegisterAsmTargetStreamer(*T, createAsmTargetStreamer);
+
+    // Register the MCInstPrinter.
+    TargetRegistry::RegisterMCInstPrinter(*T, createPPCMCInstPrinter);
+  }
 }

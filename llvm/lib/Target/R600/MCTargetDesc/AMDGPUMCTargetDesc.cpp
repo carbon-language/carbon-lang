@@ -74,28 +74,18 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
 }
 
 extern "C" void LLVMInitializeR600TargetMC() {
+  for (Target *T : {&TheAMDGPUTarget, &TheGCNTarget}) {
+    RegisterMCAsmInfo<AMDGPUMCAsmInfo> X(*T);
 
-  RegisterMCAsmInfo<AMDGPUMCAsmInfo> Y(TheAMDGPUTarget);
-  RegisterMCAsmInfo<AMDGPUMCAsmInfo> Z(TheGCNTarget);
+    TargetRegistry::RegisterMCCodeGenInfo(*T, createAMDGPUMCCodeGenInfo);
+    TargetRegistry::RegisterMCInstrInfo(*T, createAMDGPUMCInstrInfo);
+    TargetRegistry::RegisterMCRegInfo(*T, createAMDGPUMCRegisterInfo);
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createAMDGPUMCSubtargetInfo);
+    TargetRegistry::RegisterMCInstPrinter(*T, createAMDGPUMCInstPrinter);
+    TargetRegistry::RegisterMCAsmBackend(*T, createAMDGPUAsmBackend);
+  }
 
-  TargetRegistry::RegisterMCCodeGenInfo(TheAMDGPUTarget, createAMDGPUMCCodeGenInfo);
-  TargetRegistry::RegisterMCCodeGenInfo(TheGCNTarget, createAMDGPUMCCodeGenInfo);
-
-  TargetRegistry::RegisterMCInstrInfo(TheAMDGPUTarget, createAMDGPUMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheGCNTarget, createAMDGPUMCInstrInfo);
-
-  TargetRegistry::RegisterMCRegInfo(TheAMDGPUTarget, createAMDGPUMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheGCNTarget, createAMDGPUMCRegisterInfo);
-
-  TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDGPUMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheGCNTarget, createAMDGPUMCSubtargetInfo);
-
-  TargetRegistry::RegisterMCInstPrinter(TheAMDGPUTarget, createAMDGPUMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheGCNTarget, createAMDGPUMCInstPrinter);
-
-  TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget, createR600MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget,
+                                        createR600MCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(TheGCNTarget, createSIMCCodeEmitter);
-
-  TargetRegistry::RegisterMCAsmBackend(TheAMDGPUTarget, createAMDGPUAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheGCNTarget, createAMDGPUAsmBackend);
 }

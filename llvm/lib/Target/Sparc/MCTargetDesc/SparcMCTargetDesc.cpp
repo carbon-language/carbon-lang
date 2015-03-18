@@ -152,54 +152,36 @@ extern "C" void LLVMInitializeSparcTargetMC() {
   RegisterMCAsmInfoFn X(TheSparcTarget, createSparcMCAsmInfo);
   RegisterMCAsmInfoFn Y(TheSparcV9Target, createSparcV9MCAsmInfo);
 
+  for (Target *T : {&TheSparcTarget, &TheSparcV9Target}) {
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createSparcMCInstrInfo);
+
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createSparcMCRegisterInfo);
+
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createSparcMCSubtargetInfo);
+
+    // Register the MC Code Emitter.
+    TargetRegistry::RegisterMCCodeEmitter(*T, createSparcMCCodeEmitter);
+
+    // Register the asm backend.
+    TargetRegistry::RegisterMCAsmBackend(*T, createSparcAsmBackend);
+
+    // Register the object streamer.
+    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+
+    // Register the asm streamer.
+    TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
+
+    // Register the MCInstPrinter
+    TargetRegistry::RegisterMCInstPrinter(*T, createSparcMCInstPrinter);
+  }
+
   // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcTarget,
                                        createSparcMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcV9Target,
                                        createSparcV9MCCodeGenInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheSparcV9Target, createSparcMCInstrInfo);
-
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheSparcTarget, createSparcMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheSparcV9Target,
-                                    createSparcMCRegisterInfo);
-
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
-                                          createSparcMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheSparcV9Target,
-                                          createSparcMCSubtargetInfo);
-
-  // Register the MC Code Emitter.
-  TargetRegistry::RegisterMCCodeEmitter(TheSparcTarget,
-                                        createSparcMCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(TheSparcV9Target,
-                                        createSparcMCCodeEmitter);
-
-  //Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(TheSparcTarget,
-                                       createSparcAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheSparcV9Target,
-                                       createSparcAsmBackend);
-
-  // Register the object streamer.
-  TargetRegistry::RegisterMCObjectStreamer(TheSparcTarget,
-                                           createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(TheSparcV9Target,
-                                           createMCStreamer);
-
-  // Register the asm streamer.
-  TargetRegistry::RegisterAsmTargetStreamer(TheSparcTarget,
-                                            createTargetAsmStreamer);
-  TargetRegistry::RegisterAsmTargetStreamer(TheSparcV9Target,
-                                            createTargetAsmStreamer);
-
-  // Register the MCInstPrinter
-  TargetRegistry::RegisterMCInstPrinter(TheSparcTarget,
-                                        createSparcMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheSparcV9Target,
-                                        createSparcMCInstPrinter);
 }
