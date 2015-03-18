@@ -567,7 +567,8 @@ GDBRemoteCommunicationServerCommon::Handle_vFile_Open (StringExtractorGDBRemote 
     {
         if (packet.GetChar() == ',')
         {
-            uint32_t flags = packet.GetHexMaxU32(false, 0);
+            uint32_t flags = File::ConvertOpenOptionsForPOSIXOpen(
+                packet.GetHexMaxU32(false, 0));
             if (packet.GetChar() == ',')
             {
                 mode_t mode = packet.GetHexMaxU32(false, 0600);

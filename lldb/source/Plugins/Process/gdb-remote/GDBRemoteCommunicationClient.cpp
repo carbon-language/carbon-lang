@@ -3233,8 +3233,7 @@ GDBRemoteCommunicationClient::OpenFile (const lldb_private::FileSpec& file_spec,
         return UINT64_MAX;
     stream.PutCStringAsRawHex8(path.c_str());
     stream.PutChar(',');
-    const uint32_t posix_open_flags = File::ConvertOpenOptionsForPOSIXOpen(flags);
-    stream.PutHex32(posix_open_flags);
+    stream.PutHex32(flags);
     stream.PutChar(',');
     stream.PutHex32(mode);
     const char* packet = stream.GetData();
