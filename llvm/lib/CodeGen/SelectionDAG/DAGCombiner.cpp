@@ -3980,6 +3980,32 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   if (N0 == N1)
     return tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations, LegalTypes);
 
+  // fold (xor (shl 1, x), -1) -> (rotl ~1, x)
+  // Here is a concrete example of this equivalence:
+  // i16   x ==  14
+  // i16 shl ==   1 << 14  == 16384 == 0b0100000000000000
+  // i16 xor == ~(1 << 14) == 49151 == 0b1011111111111111
+  //
+  // =>
+  //
+  // i16     ~1      == 0b1111111111111110
+  // i16 rol(~1, 14) == 0b1011111111111111
+  //
+  // Some additional tips to help conceptualize this transform:
+  // - Try to see the operation as placing a single zero in a value of all ones.
+  // - There exists no value for x which would allow the result to contain zero.
+  // - Values of x larger than the bitwidth are undefined and do not require a
+  //   consistent result.
+  // - Pushing the zero left requires shifting one bits in from the right.
+  // A rotate left of ~1 is a nice way of achieving the desired result.
+  if (TLI.isOperationLegalOrCustom(ISD::ROTL, VT))
+    if (auto *N1C = dyn_cast<ConstantSDNode>(N1.getNode()))
+      if (N0.getOpcode() == ISD::SHL)
+        if (auto *ShlLHS = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
+          if (N1C->isAllOnesValue() && ShlLHS->isOne())
+            return DAG.getNode(ISD::ROTL, SDLoc(N), VT, DAG.getConstant(~1, VT),
+                               N0.getOperand(1));
+
   // Simplify: xor (op x...), (op y...)  -> (op (xor x, y))
   if (N0.getOpcode() == N1.getOpcode()) {
     SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N);

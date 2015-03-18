@@ -181,3 +181,15 @@ define i32 @PR17487(i1 %tobool) {
 ; X32-LABEL: PR17487:
 ; X32: andn
 }
+
+define i32 @test11(i32 %b) {
+  %shl = shl i32 1, %b
+  %neg = xor i32 %shl, -1
+  ret i32 %neg
+; X64-LABEL: test11:
+; X64: movl    $-2, %[[REG:.*]]
+; X64: roll    %{{.*}}, %[[REG]]
+; X32-LABEL: test11:
+; X32: movl    $-2, %[[REG:.*]]
+; X32: roll    %{{.*}}, %[[REG]]
+}
