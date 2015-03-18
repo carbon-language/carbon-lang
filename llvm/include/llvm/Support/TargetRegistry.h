@@ -58,6 +58,10 @@ namespace llvm {
                                 bool isVerboseAsm, bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
+  MCStreamer *createObjectStreamer(const Triple &T, MCContext &Ctx,
+                                   MCAsmBackend &TAB, raw_ostream &OS,
+                                   MCCodeEmitter *Emitter,
+                                   const MCSubtargetInfo &STI, bool RelaxAll);
 
   MCRelocationInfo *createMCRelocationInfo(StringRef TT, MCContext &Ctx);
 
@@ -419,7 +423,8 @@ namespace llvm {
                                        const MCSubtargetInfo &STI,
                                        bool RelaxAll) const {
       if (!MCObjectStreamerCtorFn)
-        return nullptr;
+        return llvm::createObjectStreamer(T, Ctx, TAB, OS, Emitter, STI,
+                                          RelaxAll);
       return MCObjectStreamerCtorFn(T, Ctx, TAB, OS, Emitter, STI, RelaxAll);
     }
 

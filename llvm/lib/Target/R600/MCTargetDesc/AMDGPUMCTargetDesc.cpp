@@ -73,13 +73,6 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
-                                    MCAsmBackend &MAB, raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll) {
-  return createELFStreamer(Ctx, MAB, OS, Emitter, false);
-}
-
 extern "C" void LLVMInitializeR600TargetMC() {
 
   RegisterMCAsmInfo<AMDGPUMCAsmInfo> Y(TheAMDGPUTarget);
@@ -105,7 +98,4 @@ extern "C" void LLVMInitializeR600TargetMC() {
 
   TargetRegistry::RegisterMCAsmBackend(TheAMDGPUTarget, createAMDGPUAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(TheGCNTarget, createAMDGPUAsmBackend);
-
-  TargetRegistry::RegisterMCObjectStreamer(TheAMDGPUTarget, createMCStreamer);
-  TargetRegistry::RegisterMCObjectStreamer(TheGCNTarget, createMCStreamer);
 }

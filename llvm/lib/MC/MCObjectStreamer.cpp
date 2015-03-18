@@ -20,6 +20,7 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
@@ -421,4 +422,17 @@ void MCObjectStreamer::FinishImpl() {
 
   flushPendingLabels(nullptr);
   getAssembler().Finish();
+}
+
+MCStreamer *llvm::createObjectStreamer(const Triple &T, MCContext &Ctx,
+                                       MCAsmBackend &TAB, raw_ostream &OS,
+                                       MCCodeEmitter *Emitter,
+                                       const MCSubtargetInfo &STI,
+                                       bool RelaxAll) {
+  switch (T.getObjectFormat()) {
+  default:
+    return nullptr;
+  case Triple::ELF:
+    return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+  }
 }

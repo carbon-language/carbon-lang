@@ -181,12 +181,6 @@ static MCInstPrinter *createSystemZMCInstPrinter(const Target &T,
   return new SystemZInstPrinter(MAI, MII, MRI);
 }
 
-static MCStreamer *createSystemZMCObjectStreamer(
-    const Triple &T, MCContext &Ctx, MCAsmBackend &MAB, raw_ostream &OS,
-    MCCodeEmitter *Emitter, const MCSubtargetInfo &STI, bool RelaxAll) {
-  return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
-}
-
 extern "C" void LLVMInitializeSystemZTargetMC() {
   // Register the MCAsmInfo.
   TargetRegistry::RegisterMCAsmInfo(TheSystemZTarget,
@@ -219,8 +213,4 @@ extern "C" void LLVMInitializeSystemZTargetMC() {
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(TheSystemZTarget,
                                         createSystemZMCInstPrinter);
-
-  // Register the MCObjectStreamer;
-  TargetRegistry::RegisterMCObjectStreamer(TheSystemZTarget,
-                                           createSystemZMCObjectStreamer);
 }
