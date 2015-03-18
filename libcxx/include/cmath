@@ -654,6 +654,10 @@ using ::double_t;
 
 // abs
 
+#if defined(__sun__)
+using ::abs;
+#endif
+
 #if !defined(_AIX) && !defined(__sun__)
 inline _LIBCPP_INLINE_VISIBILITY
 float
