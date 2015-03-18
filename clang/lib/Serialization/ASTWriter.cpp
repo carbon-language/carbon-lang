@@ -867,6 +867,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(MODULE_NAME);
   RECORD(MODULE_MAP_FILE);
   RECORD(IMPORTS);
+  RECORD(KNOWN_MODULE_FILES);
   RECORD(LANGUAGE_OPTIONS);
   RECORD(TARGET_OPTIONS);
   RECORD(ORIGINAL_FILE);
@@ -1222,20 +1223,28 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     serialization::ModuleManager &Mgr = Chain->getModuleManager();
     Record.clear();
 
-    for (ModuleManager::ModuleIterator M = Mgr.begin(), MEnd = Mgr.end();
-         M != MEnd; ++M) {
+    for (auto *M : Mgr) {
       // Skip modules that weren't directly imported.
-      if (!(*M)->isDirectlyImported())
+      if (!M->isDirectlyImported())
         continue;
 
-      Record.push_back((unsigned)(*M)->Kind); // FIXME: Stable encoding
-      AddSourceLocation((*M)->ImportLoc, Record);
-      Record.push_back((*M)->File->getSize());
-      Record.push_back((*M)->File->getModificationTime());
-      Record.push_back((*M)->Signature);
-      AddPath((*M)->FileName, Record);
+      Record.push_back((unsigned)M->Kind); // FIXME: Stable encoding
+      AddSourceLocation(M->ImportLoc, Record);
+      Record.push_back(M->File->getSize());
+      Record.push_back(M->File->getModificationTime());
+      Record.push_back(M->Signature);
+      AddPath(M->FileName, Record);
     }
     Stream.EmitRecord(IMPORTS, Record);
+
+    // Also emit a list of known module files that were not imported,
+    // but are made available by this module.
+    // FIXME: Should we also include a signature here?
+    Record.clear();
+    for (auto *E : Mgr.getAdditionalKnownModuleFiles())
+      AddPath(E->getName(), Record);
+    if (!Record.empty())
+      Stream.EmitRecord(KNOWN_MODULE_FILES, Record);
   }
 
   // Language options.
@@ -5655,6 +5664,8 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
 
   Chain = Reader;
 
+  // Note, this will get called multiple times, once one the reader starts up
+  // and again each time it's done reading a PCH or module.
   FirstDeclID = NUM_PREDEF_DECL_IDS + Chain->getTotalNumDecls();
   FirstTypeID = NUM_PREDEF_TYPE_IDS + Chain->getTotalNumTypes();
   FirstIdentID = NUM_PREDEF_IDENT_IDS + Chain->getTotalNumIdentifiers();

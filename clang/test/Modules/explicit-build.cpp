@@ -64,6 +64,19 @@
 // RUN:            -fmodule-file=%t/c.pcm \
 // RUN:            -verify %s -DHAVE_A -DHAVE_B -DHAVE_C
 
+// -------------------------------
+// Check that -fmodule-file= in a module build makes the file transitively
+// available even if it's not used.
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules -fno-implicit-modules -Rmodule-build -fno-modules-error-recovery \
+// RUN:            -fmodule-file=%t/b.pcm \
+// RUN:            -fmodule-name=d -emit-module %S/Inputs/explicit-build/module.modulemap -o %t/d.pcm \
+// RUN:            2>&1 | FileCheck --check-prefix=CHECK-NO-IMPLICIT-BUILD %s --allow-empty
+//
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules -fno-implicit-modules -Rmodule-build -fno-modules-error-recovery \
+// RUN:            -I%S/Inputs/explicit-build \
+// RUN:            -fmodule-file=%t/d.pcm \
+// RUN:            -verify %s -DHAVE_A -DHAVE_B
+
 #if HAVE_A
   #include "a.h"
   static_assert(a == 1, "");

@@ -295,6 +295,10 @@ namespace clang {
 
       /// \brief Record code for the module build directory.
       MODULE_DIRECTORY = 16,
+
+      /// \brief Record code for the list of other AST files made available by
+      /// this AST file but not actually used by it.
+      KNOWN_MODULE_FILES = 17,
     };
 
     /// \brief Record types that occur within the input-files block

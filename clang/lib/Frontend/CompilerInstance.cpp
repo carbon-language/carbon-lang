@@ -1331,6 +1331,19 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
     }
   } RMN(*this);
 
+  // If we don't already have an ASTReader, create one now.
+  if (!ModuleManager)
+    createModuleManager();
+
+  // Tell the module manager about this module file.
+  if (getModuleManager()->getModuleManager().addKnownModuleFile(FileName)) {
+    getDiagnostics().Report(SourceLocation(), diag::err_module_file_not_found)
+      << FileName;
+    return false;
+  }
+
+  // Build our mapping of module names to module files from this file
+  // and its imports.
   RMN.visitImport(FileName);
 
   if (RMN.Failed)
