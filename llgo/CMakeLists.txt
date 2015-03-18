@@ -75,13 +75,14 @@ set(LLGO_GO_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/cmd/go/zdefaultcc.go
 )
 
-add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/llgo-go
-  COMMAND ${CMAKE_BINARY_DIR}/bin/llgo -static-libgo -o ${CMAKE_BINARY_DIR}/bin/llgo-go
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
+  COMMAND ${CMAKE_BINARY_DIR}/bin/llgo -static-libgo
+          -o ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
           ${LLGO_GO_SOURCES}
   DEPENDS llgo libgo ${LLGO_GO_SOURCES}
   COMMENT "Building Go executable llgo-go"
   VERBATIM)
-add_custom_target(llgo-go ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/llgo-go)
+add_custom_target(llgo-go ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX})
 
 set(LLGO_CGO_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/ast.go
@@ -137,6 +138,7 @@ llvm_add_go_executable(llgoi llvm.org/llgo/cmd/llgoi
 
 install(FILES ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
               ${CMAKE_BINARY_DIR}/bin/llgoi${CMAKE_EXECUTABLE_SUFFIX}
+              ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
         DESTINATION bin
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                     GROUP_READ GROUP_EXECUTE
