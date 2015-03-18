@@ -5,6 +5,9 @@
 ; RUN: llc < %s -march=amdgcn -mcpu=carrizo -verify-machineinstrs -filetype=obj | llvm-readobj -s -symbols - | FileCheck --check-prefix=ELF %s
 ; RUN: llc < %s -march=amdgcn -mcpu=carrizo -verify-machineinstrs -o - | FileCheck --check-prefix=CONFIG --check-prefix=TYPICAL %s
 
+; Test that we don't try to produce a COFF file on windows
+; RUN: llc < %s -mtriple=amdgcn-pc-mingw -mcpu=SI -verify-machineinstrs -filetype=obj | llvm-readobj -s -symbols - | FileCheck --check-prefix=ELF %s
+
 ; ELF: Format: ELF32
 ; ELF: Name: .AMDGPU.config
 ; ELF: Type: SHT_PROGBITS

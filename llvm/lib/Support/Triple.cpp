@@ -439,6 +439,23 @@ static const char *getObjectFormatTypeName(Triple::ObjectFormatType Kind) {
 }
 
 static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
+  switch (T.getArch()) {
+  default:
+    break;
+  case Triple::hexagon:
+  case Triple::mips:
+  case Triple::mipsel:
+  case Triple::mips64:
+  case Triple::mips64el:
+  case Triple::r600:
+  case Triple::amdgcn:
+  case Triple::sparc:
+  case Triple::sparcv9:
+  case Triple::systemz:
+  case Triple::xcore:
+    return Triple::ELF;
+  }
+
   if (T.isOSDarwin())
     return Triple::MachO;
   else if (T.isOSWindows())
