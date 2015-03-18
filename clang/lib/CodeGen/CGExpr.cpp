@@ -341,14 +341,15 @@ EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *M) {
       M->getType().getObjCLifetime() != Qualifiers::OCL_None &&
       M->getType().getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
     llvm::Value *Object = createReferenceTemporary(*this, M, E);
-    LValue RefTempDst = MakeAddrLValue(Object, M->getType());
-
     if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
+      Object = llvm::ConstantExpr::getBitCast(
+          Var, ConvertTypeForMem(E->getType())->getPointerTo());
       // We should not have emitted the initializer for this temporary as a
       // constant.
       assert(!Var->hasInitializer());
       Var->setInitializer(CGM.EmitNullConstant(E->getType()));
     }
+    LValue RefTempDst = MakeAddrLValue(Object, M->getType());
 
     switch (getEvaluationKind(E->getType())) {
     default: llvm_unreachable("expected scalar or aggregate expression");
@@ -387,6 +388,8 @@ EmitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *M) {
   // Create and initialize the reference temporary.
   llvm::Value *Object = createReferenceTemporary(*this, M, E);
   if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
+    Object = llvm::ConstantExpr::getBitCast(
+        Var, ConvertTypeForMem(E->getType())->getPointerTo());
     // If the temporary is a global and has a constant initializer or is a
     // constant temporary that we promoted to a global, we may have already
     // initialized it.
