@@ -743,7 +743,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
     return DiscardableODRLinkage;
 
   case TSK_ExplicitInstantiationDeclaration:
-    llvm_unreachable("Should not have been asked to emit this");
+    return llvm::GlobalVariable::ExternalLinkage;
 
   case TSK_ExplicitInstantiationDefinition:
     return NonDiscardableODRLinkage;

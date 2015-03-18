@@ -1487,102 +1487,97 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
 #endif
   }
 
-  for (size_t J = 0, F = VFPtrs.size(); J != F; ++J) {
-    if (VFPtrs[J]->FullOffsetInMDC != VPtrOffset)
-      continue;
-    SmallString<256> VFTableName;
-    mangleVFTableName(getMangleContext(), RD, VFPtrs[J], VFTableName);
-    StringRef VTableName = VFTableName;
+  VPtrInfo *const *VFPtrI =
+      std::find_if(VFPtrs.begin(), VFPtrs.end(), [&](VPtrInfo *VPI) {
+        return VPI->FullOffsetInMDC == VPtrOffset;
+      });
+  if (VFPtrI == VFPtrs.end()) {
+    VFTablesMap[ID] = nullptr;
+    return nullptr;
+  }
+  VPtrInfo *VFPtr = *VFPtrI;
 
-    uint64_t NumVTableSlots =
-        VTContext.getVFTableLayout(RD, VFPtrs[J]->FullOffsetInMDC)
-            .getNumVTableComponents();
-    llvm::GlobalValue::LinkageTypes VTableLinkage =
-        llvm::GlobalValue::ExternalLinkage;
-    llvm::ArrayType *VTableType =
-        llvm::ArrayType::get(CGM.Int8PtrTy, NumVTableSlots);
-    if (getContext().getLangOpts().RTTIData) {
-      VTableLinkage = llvm::GlobalValue::PrivateLinkage;
-      VTableName = "";
-    }
+  SmallString<256> VFTableName;
+  mangleVFTableName(getMangleContext(), RD, VFPtr, VFTableName);
 
-    VTable = CGM.getModule().getNamedGlobal(VFTableName);
-    if (!VTable) {
-      // Create a backing variable for the contents of VTable.  The VTable may
-      // or may not include space for a pointer to RTTI data.
-      llvm::GlobalValue *VFTable = VTable = new llvm::GlobalVariable(
-          CGM.getModule(), VTableType, /*isConstant=*/true, VTableLinkage,
-          /*Initializer=*/nullptr, VTableName);
-      VTable->setUnnamedAddr(true);
+  llvm::GlobalValue::LinkageTypes VFTableLinkage = CGM.getVTableLinkage(RD);
+  bool VFTableComesFromAnotherTU =
+      llvm::GlobalValue::isAvailableExternallyLinkage(VFTableLinkage) ||
+      llvm::GlobalValue::isExternalLinkage(VFTableLinkage);
+  bool VTableAliasIsRequred =
+      !VFTableComesFromAnotherTU && getContext().getLangOpts().RTTIData;
 
-      // Only insert a pointer into the VFTable for RTTI data if we are not
-      // importing it.  We never reference the RTTI data directly so there is no
-      // need to make room for it.
-      if (getContext().getLangOpts().RTTIData &&
-          !RD->hasAttr<DLLImportAttr>()) {
-        llvm::Value *GEPIndices[] = {llvm::ConstantInt::get(CGM.IntTy, 0),
-                                     llvm::ConstantInt::get(CGM.IntTy, 1)};
-        // Create a GEP which points just after the first entry in the VFTable,
-        // this should be the location of the first virtual method.
-        llvm::Constant *VTableGEP =
-            llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, GEPIndices);
-        // The symbol for the VFTable is an alias to the GEP.  It is
-        // transparent, to other modules, what the nature of this symbol is; all
-        // that matters is that the alias be the address of the first virtual
-        // method.
-        VFTable = llvm::GlobalAlias::create(
-            cast<llvm::SequentialType>(VTableGEP->getType())->getElementType(),
-            /*AddressSpace=*/0, llvm::GlobalValue::ExternalLinkage,
-            VFTableName.str(), VTableGEP, &CGM.getModule());
-      } else {
-        // We don't need a GlobalAlias to be a symbol for the VTable if we won't
-        // be referencing any RTTI data.  The GlobalVariable will end up being
-        // an appropriate definition of the VFTable.
-        VTable->setName(VFTableName.str());
-      }
-
-      VFTable->setUnnamedAddr(true);
-      if (RD->hasAttr<DLLImportAttr>())
-        VFTable->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
-      else if (RD->hasAttr<DLLExportAttr>())
-        VFTable->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
-
-      llvm::GlobalValue::LinkageTypes VFTableLinkage = CGM.getVTableLinkage(RD);
-      if (VFTable != VTable) {
-        if (llvm::GlobalValue::isAvailableExternallyLinkage(VFTableLinkage)) {
-          // AvailableExternally implies that we grabbed the data from another
-          // executable.  No need to stick the alias in a Comdat.
-        } else if (llvm::GlobalValue::isInternalLinkage(VFTableLinkage) ||
-                   llvm::GlobalValue::isWeakODRLinkage(VFTableLinkage) ||
-                   llvm::GlobalValue::isLinkOnceODRLinkage(VFTableLinkage)) {
-          // The alias is going to be dropped into a Comdat, no need to make it
-          // weak.
-          if (!llvm::GlobalValue::isInternalLinkage(VFTableLinkage))
-            VFTableLinkage = llvm::GlobalValue::ExternalLinkage;
-          llvm::Comdat *C =
-              CGM.getModule().getOrInsertComdat(VFTable->getName());
-          // We must indicate which VFTable is larger to support linking between
-          // translation units which do and do not have RTTI data.  The largest
-          // VFTable contains the RTTI data; translation units which reference
-          // the smaller VFTable always reference it relative to the first
-          // virtual method.
-          C->setSelectionKind(llvm::Comdat::Largest);
-          VTable->setComdat(C);
-        } else {
-          llvm_unreachable("unexpected linkage for vftable!");
-        }
-      } else {
-        if (llvm::GlobalValue::isWeakForLinker(VFTableLinkage))
-          VTable->setComdat(
-              CGM.getModule().getOrInsertComdat(VTable->getName()));
-      }
-      VFTable->setLinkage(VFTableLinkage);
-      CGM.setGlobalVisibility(VFTable, RD);
-      VFTablesMap[ID] = VFTable;
-    }
-    break;
+  if (llvm::GlobalValue *VFTable =
+          CGM.getModule().getNamedGlobal(VFTableName)) {
+    VFTablesMap[ID] = VFTable;
+    return VTableAliasIsRequred
+               ? cast<llvm::GlobalVariable>(
+                     cast<llvm::GlobalAlias>(VFTable)->getBaseObject())
+               : cast<llvm::GlobalVariable>(VFTable);
   }
 
+  uint64_t NumVTableSlots =
+      VTContext.getVFTableLayout(RD, VFPtr->FullOffsetInMDC)
+          .getNumVTableComponents();
+  llvm::GlobalValue::LinkageTypes VTableLinkage =
+      VTableAliasIsRequred ? llvm::GlobalValue::PrivateLinkage : VFTableLinkage;
+
+  StringRef VTableName = VTableAliasIsRequred ? StringRef() : VFTableName.str();
+
+  llvm::ArrayType *VTableType =
+      llvm::ArrayType::get(CGM.Int8PtrTy, NumVTableSlots);
+
+  // Create a backing variable for the contents of VTable.  The VTable may
+  // or may not include space for a pointer to RTTI data.
+  llvm::GlobalValue *VFTable;
+  VTable = new llvm::GlobalVariable(CGM.getModule(), VTableType,
+                                    /*isConstant=*/true, VTableLinkage,
+                                    /*Initializer=*/nullptr, VTableName);
+  VTable->setUnnamedAddr(true);
+
+  llvm::Comdat *C = nullptr;
+  if (!VFTableComesFromAnotherTU &&
+      (llvm::GlobalValue::isWeakForLinker(VFTableLinkage) ||
+       (llvm::GlobalValue::isLocalLinkage(VFTableLinkage) &&
+        VTableAliasIsRequred)))
+    C = CGM.getModule().getOrInsertComdat(VFTableName.str());
+
+  // Only insert a pointer into the VFTable for RTTI data if we are not
+  // importing it.  We never reference the RTTI data directly so there is no
+  // need to make room for it.
+  if (VTableAliasIsRequred) {
+    llvm::Value *GEPIndices[] = {llvm::ConstantInt::get(CGM.IntTy, 0),
+                                 llvm::ConstantInt::get(CGM.IntTy, 1)};
+    // Create a GEP which points just after the first entry in the VFTable,
+    // this should be the location of the first virtual method.
+    llvm::Constant *VTableGEP =
+        llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, GEPIndices);
+    if (llvm::GlobalValue::isWeakForLinker(VFTableLinkage)) {
+      VFTableLinkage = llvm::GlobalValue::ExternalLinkage;
+      if (C)
+        C->setSelectionKind(llvm::Comdat::Largest);
+    }
+    VFTable = llvm::GlobalAlias::create(
+        cast<llvm::SequentialType>(VTableGEP->getType())->getElementType(),
+        /*AddressSpace=*/0, VFTableLinkage, VFTableName.str(), VTableGEP,
+        &CGM.getModule());
+    VFTable->setUnnamedAddr(true);
+  } else {
+    // We don't need a GlobalAlias to be a symbol for the VTable if we won't
+    // be referencing any RTTI data.
+    // The GlobalVariable will end up being an appropriate definition of the
+    // VFTable.
+    VFTable = VTable;
+  }
+  if (C)
+    VTable->setComdat(C);
+
+  if (RD->hasAttr<DLLImportAttr>())
+    VFTable->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+  else if (RD->hasAttr<DLLExportAttr>())
+    VFTable->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+
+  VFTablesMap[ID] = VFTable;
   return VTable;
 }
 
@@ -1811,9 +1806,6 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VPtrInfo &VBT,
     llvm::ArrayType::get(CGM.IntTy, Offsets.size());
   llvm::Constant *Init = llvm::ConstantArray::get(VBTableType, Offsets);
   GV->setInitializer(Init);
-
-  // Set the right visibility.
-  CGM.setGlobalVisibility(GV, RD);
 }
 
 llvm::Value *MicrosoftCXXABI::performThisAdjustment(CodeGenFunction &CGF,

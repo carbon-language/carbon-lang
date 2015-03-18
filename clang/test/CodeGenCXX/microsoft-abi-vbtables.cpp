@@ -528,3 +528,14 @@ D d;
 
 // CHECK-DAG: @"\01??_8D@Test29@@7BB@1@@" = linkonce_odr unnamed_addr constant [2 x i32] zeroinitializer
 }
+
+namespace Test30 {
+struct A {};
+template <class> struct B : virtual A {
+  B() {}
+};
+
+extern template class B<int>;
+template B<int>::B();
+// CHECK-DAG: @"\01??_8?$B@H@Test30@@7B@" = external unnamed_addr constant [2 x i32]{{$}}
+}
