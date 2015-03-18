@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -march=x86 -mcpu=corei7-avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -march=x86 -mattr=avx,aes,pclmul | FileCheck %s
 
 define <2 x i64> @test_x86_aesni_aesdec(<2 x i64> %a0, <2 x i64> %a1) {
   ; CHECK: vaesdec
@@ -2460,9 +2460,10 @@ define i32 @crc32_32_32(i32 %a, i32 %b) nounwind {
 declare i32 @llvm.x86.sse42.crc32.32.32(i32, i32) nounwind
 
 ; CHECK: movntdq
-define void @movnt_dq(i8* %p, <4 x i64> %a1) nounwind {
-  %a2 = add <4 x i64> %a1, <i64 1, i64 1, i64 1, i64 1>
-  tail call void @llvm.x86.avx.movnt.dq.256(i8* %p, <4 x i64> %a2) nounwind
+define void @movnt_dq(i8* %p, <2 x i64> %a1) nounwind {
+  %a2 = add <2 x i64> %a1, <i64 1, i64 1>
+  %a3 = shufflevector <2 x i64> %a2, <2 x i64> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  tail call void @llvm.x86.avx.movnt.dq.256(i8* %p, <4 x i64> %a3) nounwind
   ret void
 }
 declare void @llvm.x86.avx.movnt.dq.256(i8*, <4 x i64>) nounwind
