@@ -91,7 +91,7 @@ LockFileManager::LockFileManager(StringRef FileName)
   UniqueLockFileName += "-%%%%%%%%";
   int UniqueLockFileID;
   if (std::error_code EC = sys::fs::createUniqueFile(
-          UniqueLockFileName.str(), UniqueLockFileID, UniqueLockFileName)) {
+          UniqueLockFileName, UniqueLockFileID, UniqueLockFileName)) {
     Error = EC;
     return;
   }
@@ -116,7 +116,7 @@ LockFileManager::LockFileManager(StringRef FileName)
       // We failed to write out PID, so make up an excuse, remove the
       // unique lock file, and fail.
       Error = make_error_code(errc::no_space_on_device);
-      sys::fs::remove(UniqueLockFileName.c_str());
+      sys::fs::remove(UniqueLockFileName);
       return;
     }
   }
@@ -124,7 +124,7 @@ LockFileManager::LockFileManager(StringRef FileName)
   while (1) {
     // Create a link from the lock file name. If this succeeds, we're done.
     std::error_code EC =
-        sys::fs::create_link(UniqueLockFileName.str(), LockFileName.str());
+        sys::fs::create_link(UniqueLockFileName, LockFileName);
     if (!EC)
       return;
 
@@ -137,11 +137,11 @@ LockFileManager::LockFileManager(StringRef FileName)
     // from the lock file.
     if ((Owner = readLockFile(LockFileName))) {
       // Wipe out our unique lock file (it's useless now)
-      sys::fs::remove(UniqueLockFileName.str());
+      sys::fs::remove(UniqueLockFileName);
       return;
     }
 
-    if (!sys::fs::exists(LockFileName.str())) {
+    if (!sys::fs::exists(LockFileName)) {
       // The previous owner released the lock file before we could read it.
       // Try to get ownership again.
       continue;
@@ -149,7 +149,7 @@ LockFileManager::LockFileManager(StringRef FileName)
 
     // There is a lock file that nobody owns; try to clean it up and get
     // ownership.
-    if ((EC = sys::fs::remove(LockFileName.str()))) {
+    if ((EC = sys::fs::remove(LockFileName))) {
       Error = EC;
       return;
     }
@@ -171,8 +171,8 @@ LockFileManager::~LockFileManager() {
     return;
 
   // Since we own the lock, remove the lock file and our own unique lock file.
-  sys::fs::remove(LockFileName.str());
-  sys::fs::remove(UniqueLockFileName.str());
+  sys::fs::remove(LockFileName);
+  sys::fs::remove(UniqueLockFileName);
 }
 
 LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
@@ -203,7 +203,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
     if (sys::fs::access(LockFileName.c_str(), sys::fs::AccessMode::Exist) ==
         errc::no_such_file_or_directory) {
       // If the original file wasn't created, somone thought the lock was dead.
-      if (!sys::fs::exists(FileName.str()))
+      if (!sys::fs::exists(FileName))
         return Res_OwnerDied;
       return Res_Success;
     }
@@ -236,5 +236,5 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
 }
 
 std::error_code LockFileManager::unsafeRemoveLockFile() {
-  return sys::fs::remove(LockFileName.str());
+  return sys::fs::remove(LockFileName);
 }

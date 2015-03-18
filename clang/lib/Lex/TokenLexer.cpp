@@ -637,7 +637,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           // disabling it.
           PP.Diag(Loc, PP.getLangOpts().MicrosoftExt ? diag::ext_pp_bad_paste_ms
                                                      : diag::err_pp_bad_paste)
-              << Buffer.str();
+              << Buffer;
         }
 
         // An error has occurred so exit loop.

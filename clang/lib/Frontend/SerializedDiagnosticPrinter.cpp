@@ -632,7 +632,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
          "Unexpected diagnostic with valid location outside of a source file");
   SDiagsRenderer Renderer(*this, *LangOpts, &*State->DiagOpts);
   Renderer.emitDiagnostic(Info.getLocation(), DiagLevel,
-                          State->diagBuf.str(),
+                          State->diagBuf,
                           Info.getRanges(),
                           Info.getFixItHints(),
                           &Info.getSourceManager(),

@@ -60,7 +60,7 @@ AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
     SmallString<128> ResourceDir(D.ResourceDir);
     llvm::sys::path::append(ResourceDir, "include");
-    addSystemInclude(DriverArgs, CC1Args, ResourceDir.str());
+    addSystemInclude(DriverArgs, CC1Args, ResourceDir);
   }
   addExternCSystemInclude(DriverArgs, CC1Args, SysRoot + "/usr/include");
 }

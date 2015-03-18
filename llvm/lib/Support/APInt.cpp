@@ -2297,7 +2297,7 @@ void APInt::dump() const {
 void APInt::print(raw_ostream &OS, bool isSigned) const {
   SmallString<40> S;
   this->toString(S, 10, isSigned, /* formatAsCLiteral = */false);
-  OS << S.str();
+  OS << S;
 }
 
 // This implements a variety of operations on a representation of

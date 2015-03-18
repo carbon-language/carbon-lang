@@ -424,7 +424,7 @@ void MSVCToolChain::AddSystemIncludeWithSubfolder(const ArgList &DriverArgs,
                                                   const char *subfolder) const {
   llvm::SmallString<128> path(folder);
   llvm::sys::path::append(path, subfolder);
-  addSystemInclude(DriverArgs, CC1Args, path.str());
+  addSystemInclude(DriverArgs, CC1Args, path);
 }
 
 void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
@@ -435,7 +435,7 @@ void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
     SmallString<128> P(getDriver().ResourceDir);
     llvm::sys::path::append(P, "include");
-    addSystemInclude(DriverArgs, CC1Args, P.str());
+    addSystemInclude(DriverArgs, CC1Args, P);
   }
 
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))

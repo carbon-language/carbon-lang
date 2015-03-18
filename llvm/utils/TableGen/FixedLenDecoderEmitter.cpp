@@ -1091,7 +1091,7 @@ unsigned FilterChooser::getDecoderIndex(DecoderSet &Decoders,
   // overkill for now, though.
 
   // Make sure the predicate is in the table.
-  Decoders.insert(Decoder.str());
+  Decoders.insert(StringRef(Decoder));
   // Now figure out the index for when we write out the table.
   DecoderSet::const_iterator P = std::find(Decoders.begin(),
                                            Decoders.end(),

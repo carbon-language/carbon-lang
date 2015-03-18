@@ -382,19 +382,19 @@ void Clang::AddPreprocessingOptions(Compilation &C,
       P += ".dummy";
       if (UsePCH) {
         llvm::sys::path::replace_extension(P, "pch");
-        if (llvm::sys::fs::exists(P.str()))
+        if (llvm::sys::fs::exists(P))
           FoundPCH = true;
       }
 
       if (!FoundPCH) {
         llvm::sys::path::replace_extension(P, "pth");
-        if (llvm::sys::fs::exists(P.str()))
+        if (llvm::sys::fs::exists(P))
           FoundPTH = true;
       }
 
       if (!FoundPCH && !FoundPTH) {
         llvm::sys::path::replace_extension(P, "gch");
-        if (llvm::sys::fs::exists(P.str())) {
+        if (llvm::sys::fs::exists(P)) {
           FoundPCH = UsePCH;
           FoundPTH = !UsePCH;
         }
@@ -407,12 +407,12 @@ void Clang::AddPreprocessingOptions(Compilation &C,
             CmdArgs.push_back("-include-pch");
           else
             CmdArgs.push_back("-include-pth");
-          CmdArgs.push_back(Args.MakeArgString(P.str()));
+          CmdArgs.push_back(Args.MakeArgString(P));
           continue;
         } else {
           // Ignore the PCH if not first on command line and emit warning.
           D.Diag(diag::warn_drv_pch_not_first_include)
-              << P.str() << A->getAsString(Args);
+              << P << A->getAsString(Args);
         }
       }
     }
@@ -3377,10 +3377,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       } else {
         CoverageFilename = llvm::sys::path::filename(Output.getBaseInput());
       }
-      if (llvm::sys::path::is_relative(CoverageFilename.str())) {
+      if (llvm::sys::path::is_relative(CoverageFilename)) {
         SmallString<128> Pwd;
         if (!llvm::sys::fs::current_path(Pwd)) {
-          llvm::sys::path::append(Pwd, CoverageFilename.str());
+          llvm::sys::path::append(Pwd, CoverageFilename);
           CoverageFilename.swap(Pwd);
         }
       }
@@ -4603,7 +4603,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Flags += EscapedArg;
     }
     CmdArgs.push_back("-dwarf-debug-flags");
-    CmdArgs.push_back(Args.MakeArgString(Flags.str()));
+    CmdArgs.push_back(Args.MakeArgString(Flags));
   }
 
   // Add the split debug info name to the command lines here so we
@@ -5063,7 +5063,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
       Flags += EscapedArg;
     }
     CmdArgs.push_back("-dwarf-debug-flags");
-    CmdArgs.push_back(Args.MakeArgString(Flags.str()));
+    CmdArgs.push_back(Args.MakeArgString(Flags));
   }
 
   // FIXME: Add -static support, once we have it.
@@ -8135,7 +8135,7 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     SmallString<128> ImplibName(Output.getFilename());
     llvm::sys::path::replace_extension(ImplibName, "lib");
     CmdArgs.push_back(Args.MakeArgString(std::string("-implib:") +
-                                         ImplibName.str()));
+                                         ImplibName));
   }
 
   if (TC.getSanitizerArgs().needsAsanRt()) {

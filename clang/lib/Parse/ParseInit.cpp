@@ -148,7 +148,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
 
     Diag(NameLoc, diag::ext_gnu_old_style_field_designator)
       << FixItHint::CreateReplacement(SourceRange(NameLoc, ColonLoc),
-                                      NewSyntax.str());
+                                      NewSyntax);
 
     Designation D;
     D.AddDesignator(Designator::getField(FieldName, SourceLocation(), NameLoc));

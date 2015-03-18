@@ -1233,7 +1233,7 @@ void Preprocessor::HandleUserDiagnosticDirective(Token &Tok,
 
   // Find the first non-whitespace character, so that we can make the
   // diagnostic more succinct.
-  StringRef Msg = Message.str().ltrim(" ");
+  StringRef Msg = StringRef(Message).ltrim(" ");
 
   if (isWarning)
     Diag(Tok, diag::pp_hash_warning) << Msg;
@@ -1491,7 +1491,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     FilenameBuffer.push_back('<');
     if (ConcatenateIncludeName(FilenameBuffer, End))
       return;   // Found <eod> but no ">"?  Diagnostic already emitted.
-    Filename = FilenameBuffer.str();
+    Filename = FilenameBuffer;
     CharEnd = End.getLocWithOffset(1);
     break;
   default:
@@ -1680,9 +1680,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       CharSourceRange ReplaceRange(SourceRange(HashLoc, CharEnd), 
                                    /*IsTokenRange=*/false);
       Diag(HashLoc, diag::warn_auto_module_import)
-        << IncludeKind << PathString 
-        << FixItHint::CreateReplacement(ReplaceRange,
-             "@import " + PathString.str().str() + ";");
+          << IncludeKind << PathString
+          << FixItHint::CreateReplacement(
+                 ReplaceRange, ("@import " + PathString + ";").str());
     }
     
     // Load the module. Only make macros visible. We'll make the declarations

@@ -7771,7 +7771,7 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
   // turned off separately if needed.
   if (LeftBits == ResultBits - 1) {
     S.Diag(Loc, diag::warn_shift_result_sets_sign_bit)
-        << HexResult.str() << LHSType
+        << HexResult << LHSType
         << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
     return;
   }

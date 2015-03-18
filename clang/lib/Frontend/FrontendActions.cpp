@@ -209,7 +209,7 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
     std::error_code EC;
     SmallString<128> DirNative;
     llvm::sys::path::native(UmbrellaDir->getName(), DirNative);
-    for (llvm::sys::fs::recursive_directory_iterator Dir(DirNative.str(), EC), 
+    for (llvm::sys::fs::recursive_directory_iterator Dir(DirNative, EC), 
                                                      DirEnd;
          Dir != DirEnd && !EC; Dir.increment(EC)) {
       // Check whether this entry has an extension typically associated with 

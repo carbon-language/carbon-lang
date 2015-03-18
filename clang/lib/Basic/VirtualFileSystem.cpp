@@ -1134,7 +1134,7 @@ VFSFromYamlDirIterImpl::VFSFromYamlDirIterImpl(const Twine &_Path,
   if (Current != End) {
     SmallString<128> PathStr(Dir);
     llvm::sys::path::append(PathStr, (*Current)->getName());
-    llvm::ErrorOr<vfs::Status> S = FS.status(PathStr.str());
+    llvm::ErrorOr<vfs::Status> S = FS.status(PathStr);
     if (S)
       CurrentEntry = *S;
     else
@@ -1147,7 +1147,7 @@ std::error_code VFSFromYamlDirIterImpl::increment() {
   if (++Current != End) {
     SmallString<128> PathStr(Dir);
     llvm::sys::path::append(PathStr, (*Current)->getName());
-    llvm::ErrorOr<vfs::Status> S = FS.status(PathStr.str());
+    llvm::ErrorOr<vfs::Status> S = FS.status(PathStr);
     if (!S)
       return S.getError();
     CurrentEntry = *S;

@@ -267,7 +267,7 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
   }
 
   CommentStream.flush();
-  StringRef Comments = CommentToEmit.str();
+  StringRef Comments = CommentToEmit;
 
   assert(Comments.back() == '\n' &&
          "Comment array not newline terminated");

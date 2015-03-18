@@ -789,7 +789,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_LEB: {
     const MCLEBFragment &LF = cast<MCLEBFragment>(F);
-    OW->WriteBytes(LF.getContents().str());
+    OW->WriteBytes(LF.getContents());
     break;
   }
 
@@ -805,12 +805,12 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_Dwarf: {
     const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
-    OW->WriteBytes(OF.getContents().str());
+    OW->WriteBytes(OF.getContents());
     break;
   }
   case MCFragment::FT_DwarfFrame: {
     const MCDwarfCallFrameFragment &CF = cast<MCDwarfCallFrameFragment>(F);
-    OW->WriteBytes(CF.getContents().str());
+    OW->WriteBytes(CF.getContents());
     break;
   }
   }

@@ -197,7 +197,7 @@ static Multilib compose(const Multilib &Base, const Multilib &New) {
   llvm::sys::path::append(IncludeSuffix, "/", Base.includeSuffix(),
                           New.includeSuffix());
 
-  Multilib Composed(GCCSuffix.str(), OSSuffix.str(), IncludeSuffix.str());
+  Multilib Composed(GCCSuffix, OSSuffix, IncludeSuffix);
 
   Multilib::flags_list &Flags = Composed.flags();
 

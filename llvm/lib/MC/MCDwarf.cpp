@@ -1293,7 +1293,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
     Augmentation += "R";
     if (IsSignalFrame)
       Augmentation += "S";
-    streamer.EmitBytes(Augmentation.str());
+    streamer.EmitBytes(Augmentation);
   }
   streamer.EmitIntValue(0, 1);
 

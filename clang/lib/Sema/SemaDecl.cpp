@@ -10136,7 +10136,7 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
             << "  int " << FTI.Params[i].Ident->getName() << ";\n";
         Diag(FTI.Params[i].IdentLoc, diag::ext_param_not_declared)
             << FTI.Params[i].Ident
-            << FixItHint::CreateInsertion(LocAfterDecls, Code.str());
+            << FixItHint::CreateInsertion(LocAfterDecls, Code);
 
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.

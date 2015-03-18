@@ -757,7 +757,7 @@ void GlobalModuleIndexBuilder::writeIndex(llvm::BitstreamWriter &Stream) {
     Record.clear();
     Record.push_back(IDENTIFIER_INDEX);
     Record.push_back(BucketOffset);
-    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, IdentifierTable.str());
+    Stream.EmitRecordWithBlob(IDTableAbbrev, Record, IdentifierTable);
   }
 
   Stream.ExitBlock();
@@ -841,12 +841,12 @@ GlobalModuleIndex::writeIndex(FileManager &FileMgr, StringRef Path) {
     return EC_IOError;
 
   // Remove the old index file. It isn't relevant any more.
-  llvm::sys::fs::remove(IndexPath.str());
+  llvm::sys::fs::remove(IndexPath);
 
   // Rename the newly-written index file to the proper name.
-  if (llvm::sys::fs::rename(IndexTmpPath.str(), IndexPath.str())) {
+  if (llvm::sys::fs::rename(IndexTmpPath, IndexPath)) {
     // Rename failed; just remove the 
-    llvm::sys::fs::remove(IndexTmpPath.str());
+    llvm::sys::fs::remove(IndexTmpPath);
     return EC_IOError;
   }
 

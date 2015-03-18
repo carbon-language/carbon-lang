@@ -486,7 +486,7 @@ void ASTStmtReader::VisitStringLiteral(StringLiteral *E) {
 
   // Read string data
   SmallString<16> Str(&Record[Idx], &Record[Idx] + Len);
-  E->setString(Reader.getContext(), Str.str(), kind, isPascal);
+  E->setString(Reader.getContext(), Str, kind, isPascal);
   Idx += Len;
 
   // Read source locations

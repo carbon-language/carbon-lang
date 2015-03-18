@@ -733,8 +733,7 @@ Module *ModuleMap::inferFrameworkModule(StringRef ModuleName,
     = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(SubframeworksDirName, "Frameworks");
   llvm::sys::path::native(SubframeworksDirName);
-  for (llvm::sys::fs::directory_iterator 
-         Dir(SubframeworksDirName.str(), EC), DirEnd;
+  for (llvm::sys::fs::directory_iterator Dir(SubframeworksDirName, EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
     if (!StringRef(Dir->path()).endswith(".framework"))
       continue;
@@ -1587,7 +1586,7 @@ void ModuleMapParser::parseExternModuleDecl() {
   if (llvm::sys::path::is_relative(FileNameRef)) {
     ModuleMapFileName += Directory->getName();
     llvm::sys::path::append(ModuleMapFileName, FileName);
-    FileNameRef = ModuleMapFileName.str();
+    FileNameRef = ModuleMapFileName;
   }
   if (const FileEntry *File = SourceMgr.getFileManager().getFile(FileNameRef))
     Map.parseModuleMapFile(
@@ -1734,7 +1733,7 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
       
       // Check whether this file is in the public headers.
       llvm::sys::path::append(RelativePathName, "Headers", Header.FileName);
-      llvm::sys::path::append(FullPathName, RelativePathName.str());
+      llvm::sys::path::append(FullPathName, RelativePathName);
       File = SourceMgr.getFileManager().getFile(FullPathName);
       
       if (!File) {
@@ -1744,13 +1743,13 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
         FullPathName.resize(FullPathLength);
         llvm::sys::path::append(RelativePathName, "PrivateHeaders",
                                 Header.FileName);
-        llvm::sys::path::append(FullPathName, RelativePathName.str());
+        llvm::sys::path::append(FullPathName, RelativePathName);
         File = SourceMgr.getFileManager().getFile(FullPathName);
       }
     } else {
       // Lookup for normal headers.
       llvm::sys::path::append(RelativePathName, Header.FileName);
-      llvm::sys::path::append(FullPathName, RelativePathName.str());
+      llvm::sys::path::append(FullPathName, RelativePathName);
       File = SourceMgr.getFileManager().getFile(FullPathName);
 
       // If this is a system module with a top-level header, this header

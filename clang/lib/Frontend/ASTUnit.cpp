@@ -2433,7 +2433,7 @@ bool ASTUnit::Save(StringRef File) {
   TempPath = File;
   TempPath += "-%%%%%%%%";
   int fd;
-  if (llvm::sys::fs::createUniqueFile(TempPath.str(), fd, TempPath))
+  if (llvm::sys::fs::createUniqueFile(TempPath, fd, TempPath))
     return true;
 
   // FIXME: Can we somehow regenerate the stat cache here, or do we need to 
@@ -2447,8 +2447,8 @@ bool ASTUnit::Save(StringRef File) {
     return true;
   }
 
-  if (llvm::sys::fs::rename(TempPath.str(), File)) {
-    llvm::sys::fs::remove(TempPath.str());
+  if (llvm::sys::fs::rename(TempPath, File)) {
+    llvm::sys::fs::remove(TempPath);
     return true;
   }
 

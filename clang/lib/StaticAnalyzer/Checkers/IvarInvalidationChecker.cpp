@@ -336,7 +336,7 @@ const ObjCIvarDecl *IvarInvalidationCheckerImpl::findPropertyBackingIvar(
       llvm::raw_svector_ostream os(PropNameWithUnderscore);
       os << '_' << PropName;
     }
-    if (IvarName == PropNameWithUnderscore.str())
+    if (IvarName == PropNameWithUnderscore)
       return Iv;
   }
 

@@ -430,7 +430,7 @@ FileManager::getBufferForFile(const FileEntry *Entry, bool isVolatile,
 
   SmallString<128> FilePath(Entry->getName());
   FixupRelativePath(FilePath);
-  return FS->getBufferForFile(FilePath.str(), FileSize,
+  return FS->getBufferForFile(FilePath, FileSize,
                               /*RequiresNullTerminator=*/true, isVolatile);
 }
 

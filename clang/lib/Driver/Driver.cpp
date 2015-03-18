@@ -979,7 +979,7 @@ static bool DiagnoseInputExistence(const Driver &D, const DerivedArgList &Args,
 
   SmallString<64> Path(Value);
   if (Arg *WorkDir = Args.getLastArg(options::OPT_working_directory)) {
-    if (!llvm::sys::path::is_absolute(Path.str())) {
+    if (!llvm::sys::path::is_absolute(Path)) {
       SmallString<64> Directory(WorkDir->getValue());
       llvm::sys::path::append(Directory, Value);
       Path.assign(Directory);
@@ -992,7 +992,7 @@ static bool DiagnoseInputExistence(const Driver &D, const DerivedArgList &Args,
   if (D.IsCLMode() && llvm::sys::Process::FindInEnvPath("LIB", Value))
     return true;
 
-  D.Diag(clang::diag::err_drv_no_such_file) << Path.str();
+  D.Diag(clang::diag::err_drv_no_such_file) << Path;
   return false;
 }
 

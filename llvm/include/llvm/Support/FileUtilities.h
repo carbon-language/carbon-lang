@@ -51,7 +51,7 @@ namespace llvm {
     ~FileRemover() {
       if (DeleteIt) {
         // Ignore problems deleting the file.
-        sys::fs::remove(Filename.str());
+        sys::fs::remove(Filename);
       }
     }
 
@@ -61,7 +61,7 @@ namespace llvm {
     void setFile(const Twine& filename, bool deleteIt = true) {
       if (DeleteIt) {
         // Ignore problems deleting the file.
-        sys::fs::remove(Filename.str());
+        sys::fs::remove(Filename);
       }
 
       Filename.clear();

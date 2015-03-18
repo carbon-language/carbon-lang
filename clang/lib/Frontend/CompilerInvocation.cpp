@@ -2037,7 +2037,7 @@ std::string CompilerInvocation::getModuleHash() const {
     llvm::sys::path::append(systemVersionFile, "SystemVersion.plist");
 
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-        llvm::MemoryBuffer::getFile(systemVersionFile.str());
+        llvm::MemoryBuffer::getFile(systemVersionFile);
     if (buffer) {
       code = hash_combine(code, buffer.get()->getBuffer());
 

@@ -648,7 +648,7 @@ void Preprocessor::HandlePragmaIncludeAlias(Token &Tok) {
     SourceLocation End;
     if (ConcatenateIncludeName(FileNameBuffer, End))
       return; // Diagnostic already emitted
-    SourceFileName = FileNameBuffer.str();
+    SourceFileName = FileNameBuffer;
   } else {
     Diag(Tok, diag::warn_pragma_include_alias_expected_filename);
     return;
@@ -679,7 +679,7 @@ void Preprocessor::HandlePragmaIncludeAlias(Token &Tok) {
     SourceLocation End;
     if (ConcatenateIncludeName(FileNameBuffer, End))
       return; // Diagnostic already emitted
-    ReplaceFileName = FileNameBuffer.str();
+    ReplaceFileName = FileNameBuffer;
   } else {
     Diag(Tok, diag::warn_pragma_include_alias_expected_filename);
     return;

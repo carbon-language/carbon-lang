@@ -247,7 +247,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     // supplied path.
     SmallString<128> P = StringRef(HSOpts.ResourceDir);
     llvm::sys::path::append(P, "include");
-    AddUnmappedPath(P.str(), ExternCSystem, false);
+    AddUnmappedPath(P, ExternCSystem, false);
   }
 
   // All remaining additions are for system include directories, early exit if
@@ -275,7 +275,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     // <sysroot>/<triple>/include
     SmallString<128> P = StringRef(HSOpts.ResourceDir);
     llvm::sys::path::append(P, "../../..", triple.str(), "include");
-    AddPath(P.str(), System, false);
+    AddPath(P, System, false);
     break;
   }
 
@@ -326,18 +326,18 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       // <sysroot>/i686-w64-mingw32/include
       SmallString<128> P = StringRef(HSOpts.ResourceDir);
       llvm::sys::path::append(P, "../../../i686-w64-mingw32/include");
-      AddPath(P.str(), System, false);
+      AddPath(P, System, false);
 
       // <sysroot>/x86_64-w64-mingw32/include
       P.resize(HSOpts.ResourceDir.size());
       llvm::sys::path::append(P, "../../../x86_64-w64-mingw32/include");
-      AddPath(P.str(), System, false);
+      AddPath(P, System, false);
 
       // mingw.org crt include paths
       // <sysroot>/include
       P.resize(HSOpts.ResourceDir.size());
       llvm::sys::path::append(P, "../../../include");
-      AddPath(P.str(), System, false);
+      AddPath(P, System, false);
       AddPath("/mingw/include", System, false);
 #if defined(LLVM_ON_WIN32)
       AddPath("c:/mingw/include", System, false); 
@@ -503,7 +503,7 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
 
           // Get foo/include/c++/v1
           llvm::sys::path::append(P, "include", "c++", "v1");
-          AddUnmappedPath(P.str(), CXXSystem, false);
+          AddUnmappedPath(P, CXXSystem, false);
         }
       }
       // On Solaris, include the support directory for things like xlocale and
@@ -714,7 +714,7 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
     // Set up the builtin include directory in the module map.
     SmallString<128> P = StringRef(HSOpts.ResourceDir);
     llvm::sys::path::append(P, "include");
-    if (const DirectoryEntry *Dir = HS.getFileMgr().getDirectory(P.str()))
+    if (const DirectoryEntry *Dir = HS.getFileMgr().getDirectory(P))
       HS.getModuleMap().setBuiltinIncludeDir(Dir);
   }
 

@@ -135,7 +135,7 @@ bool EditedSource::commitInsertFromRange(SourceLocation OrigLoc,
     StrVec += text;
   }
 
-  return commitInsert(OrigLoc, Offs, StrVec.str(), beforePreviousInsertions);
+  return commitInsert(OrigLoc, Offs, StrVec, beforePreviousInsertions);
 }
 
 void EditedSource::commitRemove(SourceLocation OrigLoc,
@@ -360,14 +360,14 @@ void EditedSource::applyRewrites(EditsReceiver &receiver) {
       continue;
     }
 
-    applyRewrite(receiver, StrVec.str(), CurOffs, CurLen, SourceMgr, LangOpts);
+    applyRewrite(receiver, StrVec, CurOffs, CurLen, SourceMgr, LangOpts);
     CurOffs = offs;
     StrVec = act.Text;
     CurLen = act.RemoveLen;
     CurEnd = CurOffs.getWithOffset(CurLen);
   }
 
-  applyRewrite(receiver, StrVec.str(), CurOffs, CurLen, SourceMgr, LangOpts);
+  applyRewrite(receiver, StrVec, CurOffs, CurLen, SourceMgr, LangOpts);
 }
 
 void EditedSource::clearRewrites() {
