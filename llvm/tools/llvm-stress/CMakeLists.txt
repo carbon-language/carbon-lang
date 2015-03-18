@@ -7,4 +7,4 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_tool(llvm-stress
   llvm-stress.cpp
   )
-set_target_properties(llvm-stress PROPERTIES ENABLE_EXPORTS 1)
+export_executable_symbols(llvm-stress)

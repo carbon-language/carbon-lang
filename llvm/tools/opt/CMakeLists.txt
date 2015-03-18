@@ -31,7 +31,7 @@ add_llvm_tool(opt
   PrintSCC.cpp
   opt.cpp
   )
-set_target_properties(opt PROPERTIES ENABLE_EXPORTS 1)
+export_executable_symbols(opt)
 
 if(WITH_POLLY AND LINK_POLLY_INTO_TOOLS)
   target_link_libraries(opt Polly)

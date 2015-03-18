@@ -490,6 +490,12 @@ macro(add_llvm_executable name)
   endif( LLVM_COMMON_DEPENDS )
 endmacro(add_llvm_executable name)
 
+function(export_executable_symbols target)
+  if (NOT MSVC) # MSVC's linker doesn't support exporting all symbols.
+    set_target_properties(${target} PROPERTIES ENABLE_EXPORTS 1)
+  endif()
+endfunction()
+
 
 set (LLVM_TOOLCHAIN_TOOLS
   llvm-ar

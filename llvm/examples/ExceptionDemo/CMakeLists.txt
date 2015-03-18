@@ -15,4 +15,4 @@ add_llvm_example(ExceptionDemo
   ExceptionDemo.cpp
   )
 
-set_target_properties(ExceptionDemo PROPERTIES ENABLE_EXPORTS 1)
+export_executable_symbols(ExceptionDemo)
