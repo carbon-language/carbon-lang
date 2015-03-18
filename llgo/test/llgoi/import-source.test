@@ -7,8 +7,14 @@ import "foo"
 // CHECK: # bar
 // CHECK: # foo
 
+// Test that importing binary after source works.
+import "strconv"
+
 foo.Answer()
 // CHECK: #0 int = 42
+
+strconv.FormatBool(true)
+// CHECK: #0 string = true
 
 import "foo_cgo"
 // CHECK: foo_cgo: cannot load cgo package

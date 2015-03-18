@@ -1,5 +1,8 @@
 package bar
 
+import "strconv"
+
 func Answer() int {
-	return 42
+	n, _ := strconv.Atoi("42")
+	return n
 }

@@ -102,6 +102,9 @@ func (in *interp) makeCompilerOptions() error {
 		if pkg, ok := in.inputPkgmap[pkgpath]; ok {
 			return pkg, nil
 		}
+		if pkg, ok := pkgmap[pkgpath]; ok && pkg.Complete() {
+			return pkg, nil
+		}
 		return origImporter(pkgmap, pkgpath)
 	}
 	return nil
