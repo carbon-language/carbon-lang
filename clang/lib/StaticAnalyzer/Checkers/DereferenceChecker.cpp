@@ -162,7 +162,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
   os.flush();
   BugReport *report =
     new BugReport(*BT_null,
-                  buf.empty() ? BT_null->getDescription() : buf,
+                  buf.empty() ? BT_null->getDescription() : StringRef(buf),
                   N);
 
   bugreporter::trackNullOrUndefValue(N, bugreporter::getDerefExpr(S), *report);
