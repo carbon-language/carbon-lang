@@ -598,7 +598,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         // If this is a comment token in the argument list and we're just in
         // -C mode (not -CC mode), discard the comment.
         continue;
-      } else if (Tok.getIdentifierInfo() != nullptr) {
+      } else if (!Tok.isAnnotation() && Tok.getIdentifierInfo() != nullptr) {
         // Reading macro arguments can cause macros that we are currently
         // expanding from to be popped off the expansion stack.  Doing so causes
         // them to be reenabled for expansion.  Here we record whether any
