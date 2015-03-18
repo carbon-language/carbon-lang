@@ -693,7 +693,8 @@ public:
   /// This is used, for instance,  when we estimate call of a vector
   /// counterpart of the given function.
   /// \param F Called function, might be nullptr.
-  /// \param RetTy,Tys Return value and argument types.
+  /// \param RetTy Return value types.
+  /// \param Tys Argument types.
   /// \returns The cost of Call instruction.
   unsigned getCallInstrCost(Function *F, Type *RetTy, ArrayRef<Type *> Tys) {
     return 10;
