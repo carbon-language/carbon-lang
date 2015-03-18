@@ -12,6 +12,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/ConvertEnum.h"
 
 #include <limits>
 

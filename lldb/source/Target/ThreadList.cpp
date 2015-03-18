@@ -17,6 +17,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Utility/ConvertEnum.h"
 
 using namespace lldb;
 using namespace lldb_private;

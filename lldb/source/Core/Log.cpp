@@ -27,6 +27,7 @@
 #include "lldb/Host/ThisThread.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Utility/NameMatches.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"

@@ -94,15 +94,6 @@ TerminateLLGS();
 const char *
 GetVersion ();
 
-const char *
-GetVoteAsCString (Vote vote);
-
-const char *
-GetSectionTypeAsCString (lldb::SectionType sect_type);
-    
-bool
-NameMatches (const char *name, NameMatchType match_type, const char *match);
-
 } // namespace lldb_private
 
 
