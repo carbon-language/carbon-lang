@@ -566,9 +566,27 @@ void HexagonInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 bool
 HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  MachineBasicBlock &MBB = *MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
   unsigned Opc = MI->getOpcode();
 
   switch (Opc) {
+    case Hexagon::TFR_PdTrue: {
+      unsigned Reg = MI->getOperand(0).getReg();
+      BuildMI(MBB, MI, DL, get(Hexagon::C2_orn), Reg)
+        .addReg(Reg, RegState::Undef)
+        .addReg(Reg, RegState::Undef);
+      MBB.erase(MI);
+      return true;
+    }
+    case Hexagon::TFR_PdFalse: {
+      unsigned Reg = MI->getOperand(0).getReg();
+      BuildMI(MBB, MI, DL, get(Hexagon::C2_andn), Reg)
+        .addReg(Reg, RegState::Undef)
+        .addReg(Reg, RegState::Undef);
+      MBB.erase(MI);
+      return true;
+    }
     case Hexagon::TCRETURNi:
       MI->setDesc(get(Hexagon::J2_jump));
       return true;
