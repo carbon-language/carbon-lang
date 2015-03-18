@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s -block-placement-exit-block-bias=20 | FileCheck %s
+; RUN: llc -march=x86-64 < %s -block-placement-exit-block-bias=20 -no-phi-elim-live-out-early-exit | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
@@ -25,7 +25,6 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; the two hot blocks are laid out close to each other.
 ; CHECK-NEXT: %land.rhs131
 ; CHECK: jne
-; CHECK: jmp
 define i32 @longest_match(%struct.internal_state* nocapture %s, i32 %cur_match) nounwind {
 entry:
   %max_chain_length = getelementptr inbounds %struct.internal_state, %struct.internal_state* %s, i64 0, i32 31
