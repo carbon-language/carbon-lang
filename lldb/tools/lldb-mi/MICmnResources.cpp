@@ -63,13 +63,8 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDE_MI_APP_ARG_HELP, "-h\n--help\n\tPrints out usage information for the MI debugger. Exit the MI\n\tDriver immediately."},
     {IDE_MI_APP_ARG_VERSION, "--version\n\tPrints out GNU (gdb) version information. Exit the MI Driver\n\timmediately."},
     {IDE_MI_APP_ARG_VERSION_LONG, "--versionLong\n\tPrints out MI Driver version information. Exit the MI Driver\n\timmediately."},
-    {IDE_MI_APP_ARG_INTERPRETER, "--interpreter\n\tUse the MI Driver for the debugger (MI mode)(Default is the\n\tLLDB driver). Any LLDB "
-                                 "command line options are ignored even\n\tif the MI Driver falls through to the LLDB driver. "
-                                 "(Depends\n\ton the build configuration see MICmnConfig.h)\n\tNormally specified by the driver client "
-                                 "i.e. Eclipse.\n\tCannot specify an executable with this option, use --executable."},
-    {IDE_MI_APP_ARG_EXECUTEABLE, "--executable\n\tUse the MI Driver in MI mode for the debugging the specified\n\texecutable. Any LLDB "
-                                 "command line options are ignored even\n\tif the MI Driver falls through to the LLDB driver. "
-                                 "(Depends\n\ton the build configuration see MICmnConfig.h)\n\tNormally specified from the command line."},
+    {IDE_MI_APP_ARG_INTERPRETER, "--interpreter\n\t This option is kept for backward compatibility. This executable always run in MI mode"},
+    {IDE_MI_APP_ARG_EXECUTEABLE, "--executable\n\tUse the MI Driver in MI mode for the debugging the specified executable." },
     {IDE_MI_APP_ARG_APP_LOG, "--log\n\tUse this argument to tell the MI Driver to update it's log\n\tfile '%s'."},
     {IDE_MI_APP_ARG_EXAMPLE, "Example MI command:\n\t3-info-gdb-mi-command gdb-set\n\t3^done,command={exists=\"true\"}"},
     {IDE_MI_APP_ARG_EXECUTABLE, "executable (NOT IMPLEMENTED)\n\tThe file path to the executable i.e. '\"C:\\My Dev\\foo.exe\"'."},

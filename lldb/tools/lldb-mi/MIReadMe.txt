@@ -5,16 +5,6 @@
 The MI Driver is a stand alone executable that either be used via a 
 client i.e. Eclipse or directly from the command line. 
 
-The MI Driver has two modes of operation; LLDB and MI. The MI Driver (CMIDriver)
-which operates the MI mode is a driver in its own right to work alongside
-the LLDB driver (driver .h/.cpp). Only one is operatational at a time depending
-on the options entered on the command line. The MI Driver reads MI inputs and
-outputs MI responses to be interpreted by a client i.e. Eclipse. 
-Should the MI Driver not understand an instruction it could be passed to the 
-LLDB driver for interpretation (MI Driver build configuration dependant). Should 
-the LLDB driver mode be chosen then it the MI Driver will behave as the normal 
-LLDB driver.
-
 For help information on using the MI driver type at the command line:
 
 	lldb-mi --interpreter --help
@@ -33,12 +23,7 @@ registered in the MI Driver's Command Factory will be rejected and an error mess
 will be generated.
 
 All the files prefix with MI are specifically for the MI driver code only.
-Non prefixed code is the original LLDB driver which has been left untouched
-as much as possible. This allows the LLDB driver code to develop 
-independently and make future integration more straight forward. 
-
-File MIDriverMain.cpp contains the executables main() function and some 
-common global functions common to the two drivers.
+File MIDriverMain.cpp contains the executables main() function.
 
 =========================================================================
 Current limitations:
