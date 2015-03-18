@@ -439,7 +439,6 @@ void FileCOFF::createAbsoluteAtoms(const SymbolVectorT &symbols,
       continue;
     auto *atom = new (_alloc) SimpleAbsoluteAtom(*this, _symbolName[sym],
                                                  getScope(sym), sym.getValue());
-
     result.push_back(atom);
     _symbolAtom[sym] = atom;
   }
@@ -455,15 +454,12 @@ void FileCOFF::createAbsoluteAtoms(const SymbolVectorT &symbols,
 std::error_code
 FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
                                std::vector<const UndefinedAtom *> &result) {
-  // Sort out undefined symbols from all symbols.
-  std::set<llvm::object::COFFSymbolRef> undefines;
   std::map<llvm::object::COFFSymbolRef, llvm::object::COFFSymbolRef>
       weakExternal;
+  std::set<llvm::object::COFFSymbolRef> fallback;
   for (llvm::object::COFFSymbolRef sym : symbols) {
     if (sym.getSectionNumber() != llvm::COFF::IMAGE_SYM_UNDEFINED)
       continue;
-    undefines.insert(sym);
-
     // Create a mapping from sym1 to sym2, if the undefined symbol has
     // auxiliary data.
     auto iter = _auxSymbol.find(sym);
@@ -476,16 +472,16 @@ FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
     if (std::error_code ec = sym2.getError())
       return ec;
     weakExternal[sym] = *sym2;
+    fallback.insert(*sym2);
   }
 
-  // Sort out sym1s from sym2s. Sym2s shouldn't be added to the undefined atom
-  // list because they shouldn't be resolved unless sym1 is failed to
-  // be resolved.
-  for (auto i : weakExternal)
-    undefines.erase(i.second);
-
   // Create atoms for the undefined symbols.
-  for (llvm::object::COFFSymbolRef sym : undefines) {
+  for (llvm::object::COFFSymbolRef sym : symbols) {
+    if (sym.getSectionNumber() != llvm::COFF::IMAGE_SYM_UNDEFINED)
+      continue;
+    if (fallback.count(sym) > 0)
+      continue;
+
     // If the symbol has sym2, create an undefiend atom for sym2, so that we
     // can pass it as a fallback atom.
     UndefinedAtom *fallback = nullptr;
