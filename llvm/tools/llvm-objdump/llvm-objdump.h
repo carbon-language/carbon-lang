@@ -54,7 +54,7 @@ extern cl::opt<bool> UnwindInfo;
 // Various helper functions.
 bool error(std::error_code ec);
 bool RelocAddressLess(object::RelocationRef a, object::RelocationRef b);
-void DumpBytes(StringRef bytes);
+void DumpBytes(ArrayRef<uint8_t> bytes);
 void ParseInputMachO(StringRef Filename);
 void printCOFFUnwindInfo(const object::COFFObjectFile* o);
 void printMachOUnwindInfo(const object::MachOObjectFile* o);

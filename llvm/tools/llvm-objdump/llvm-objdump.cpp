@@ -194,7 +194,7 @@ static const Target *getTarget(const ObjectFile *Obj = nullptr) {
   return TheTarget;
 }
 
-void llvm::DumpBytes(StringRef bytes) {
+void llvm::DumpBytes(ArrayRef<uint8_t> bytes) {
   static const char hex_rep[] = "0123456789abcdef";
   SmallString<64> output;
 
@@ -399,8 +399,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           outs() << format("%8" PRIx64 ":", SectionAddr + Index);
           if (!NoShowRawInsn) {
             outs() << "\t";
-            DumpBytes(StringRef(
-                reinterpret_cast<const char *>(Bytes.data()) + Index, Size));
+            DumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, Size));
           }
           IP->printInst(&Inst, outs(), "");
           outs() << CommentStream.str();
