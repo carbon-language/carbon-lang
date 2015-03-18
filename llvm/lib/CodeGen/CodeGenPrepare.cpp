@@ -124,7 +124,6 @@ class TypePromotionTransaction;
     const TargetLowering *TLI;
     const TargetTransformInfo *TTI;
     const TargetLibraryInfo *TLInfo;
-    DominatorTree *DT;
 
     /// CurInstIterator - As we scan instructions optimizing them, this is the
     /// next instruction to optimize.  Xforms that can invalidate this should
@@ -142,8 +141,7 @@ class TypePromotionTransaction;
     /// promotion for the current function.
     InstrToOrigTy PromotedInsts;
 
-    /// ModifiedDT - If CFG is modified in anyway, dominator tree may need to
-    /// be updated.
+    /// ModifiedDT - If CFG is modified in anyway.
     bool ModifiedDT;
 
     /// OptSize - True if optimizing for size.
@@ -214,9 +212,6 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     TLI = TM->getSubtargetImpl(F)->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-  DominatorTreeWrapperPass *DTWP =
-      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  DT = DTWP ? &DTWP->getDomTree() : nullptr;
   OptSize = F.hasFnAttribute(Attribute::OptimizeForSize);
 
   /// This optimization identifies DIV instructions that can be
@@ -255,7 +250,6 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
       MadeChange |= OptimizeBlock(*BB, ModifiedDTOnIteration);
 
       // Restart BB iteration if the dominator tree of the Function was changed
-      ModifiedDT |= ModifiedDTOnIteration;
       if (ModifiedDTOnIteration)
         break;
     }
@@ -298,8 +292,6 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     if (EverMadeChange || MadeChange)
       MadeChange |= EliminateFallThrough(F);
 
-    if (MadeChange)
-      ModifiedDT = true;
     EverMadeChange |= MadeChange;
   }
 
@@ -312,9 +304,6 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     for (auto &I : Statepoints)
       EverMadeChange |= simplifyOffsetableRelocate(*I);
   }
-
-  if (ModifiedDT && DT)
-    DT->recalculate(F);
 
   return EverMadeChange;
 }
@@ -341,7 +330,7 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
       // Remember if SinglePred was the entry block of the function.
       // If so, we will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
-      MergeBasicBlockIntoOnlyPred(BB, DT);
+      MergeBasicBlockIntoOnlyPred(BB, nullptr);
 
       if (isEntry && BB != &BB->getParent()->getEntryBlock())
         BB->moveBefore(&BB->getParent()->getEntryBlock());
@@ -481,7 +470,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
       // Remember if SinglePred was the entry block of the function.  If so, we
       // will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
-      MergeBasicBlockIntoOnlyPred(DestBB, DT);
+      MergeBasicBlockIntoOnlyPred(DestBB, nullptr);
 
       if (isEntry && BB != &BB->getParent()->getEntryBlock())
         BB->moveBefore(&BB->getParent()->getEntryBlock());
@@ -523,13 +512,6 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
   BB->replaceAllUsesWith(DestBB);
-  if (DT && !ModifiedDT) {
-    BasicBlock *BBIDom  = DT->getNode(BB)->getIDom()->getBlock();
-    BasicBlock *DestBBIDom = DT->getNode(DestBB)->getIDom()->getBlock();
-    BasicBlock *NewIDom = DT->findNearestCommonDominator(BBIDom, DestBBIDom);
-    DT->changeImmediateDominator(DestBB, NewIDom);
-    DT->eraseNode(BB);
-  }
   BB->eraseFromParent();
   ++NumBlocksElim;
 
@@ -1280,7 +1262,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       WeakVH IterHandle(CurInstIterator);
 
       replaceAndRecursivelySimplify(CI, RetVal,
-                                    TLInfo, ModifiedDT ? nullptr : DT);
+                                    TLInfo, nullptr);
 
       // If the iterator instruction was recursively deleted, start over at the
       // start of the block.
@@ -4244,7 +4226,7 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
     // trivial PHI, go ahead and zap it here.
     const DataLayout &DL = I->getModule()->getDataLayout();
-    if (Value *V = SimplifyInstruction(P, DL, TLInfo, DT)) {
+    if (Value *V = SimplifyInstruction(P, DL, TLInfo, nullptr)) {
       P->replaceAllUsesWith(V);
       P->eraseFromParent();
       ++NumPHIsElim;
@@ -4674,10 +4656,8 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
       }
     }
 
-    // Request DOM Tree update.
     // Note: No point in getting fancy here, since the DT info is never
-    // available to CodeGenPrepare and the existing update code is broken
-    // anyways.
+    // available to CodeGenPrepare.
     ModifiedDT = true;
 
     MadeChange = true;
