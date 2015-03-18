@@ -871,7 +871,8 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     if (S.getLangOpts().OpenCL &&
         !((S.getLangOpts().OpenCLVersion >= 120) ||
           S.getOpenCLOptions().cl_khr_fp64)) {
-      S.Diag(DS.getTypeSpecTypeLoc(), diag::err_double_requires_fp64);
+      S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
+          << Result << "cl_khr_fp64";
       declarator.setInvalidType(true);
     }
     break;
@@ -946,6 +947,30 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         S.Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
           << DS.getSourceRange();
         declarator.setInvalidType(true);
+      }
+    } else if (S.getLangOpts().OpenCL) {
+      if (const AtomicType *AT = Result->getAs<AtomicType>()) {
+        const BuiltinType *BT = AT->getValueType()->getAs<BuiltinType>();
+        bool NoExtTypes = BT && (BT->getKind() == BuiltinType::Int ||
+                                 BT->getKind() == BuiltinType::UInt ||
+                                 BT->getKind() == BuiltinType::Float);
+        if (!S.getOpenCLOptions().cl_khr_int64_base_atomics && !NoExtTypes) {
+          S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
+              << Result << "cl_khr_int64_base_atomics";
+          declarator.setInvalidType(true);
+        }
+        if (!S.getOpenCLOptions().cl_khr_int64_extended_atomics &&
+            !NoExtTypes) {
+          S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
+              << Result << "cl_khr_int64_extended_atomics";
+          declarator.setInvalidType(true);
+        }
+        if (!S.getOpenCLOptions().cl_khr_fp64 && BT &&
+            BT->getKind() == BuiltinType::Double) {
+          S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_requires_extension)
+              << Result << "cl_khr_fp64";
+          declarator.setInvalidType(true);
+        }
       }
     }
 

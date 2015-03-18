@@ -212,6 +212,29 @@ void Sema::Initialize() {
     addImplicitTypedef("image3d_t", Context.OCLImage3dTy);
     addImplicitTypedef("sampler_t", Context.OCLSamplerTy);
     addImplicitTypedef("event_t", Context.OCLEventTy);
+    if (getLangOpts().OpenCLVersion >= 200) {
+      addImplicitTypedef("atomic_int", Context.getAtomicType(Context.IntTy));
+      addImplicitTypedef("atomic_uint",
+                         Context.getAtomicType(Context.UnsignedIntTy));
+      addImplicitTypedef("atomic_long", Context.getAtomicType(Context.LongTy));
+      addImplicitTypedef("atomic_ulong",
+                         Context.getAtomicType(Context.UnsignedLongTy));
+      addImplicitTypedef("atomic_float",
+                         Context.getAtomicType(Context.FloatTy));
+      addImplicitTypedef("atomic_double",
+                         Context.getAtomicType(Context.DoubleTy));
+      // OpenCLC v2.0, s6.13.11.6 requires that atomic_flag is implemented as
+      // 32-bit integer and OpenCLC v2.0, s6.1.1 int is always 32-bit wide.
+      addImplicitTypedef("atomic_flag", Context.getAtomicType(Context.IntTy));
+      addImplicitTypedef("atomic_intptr_t",
+                         Context.getAtomicType(Context.getIntPtrType()));
+      addImplicitTypedef("atomic_uintptr_t",
+                         Context.getAtomicType(Context.getUIntPtrType()));
+      addImplicitTypedef("atomic_size_t",
+                         Context.getAtomicType(Context.getSizeType()));
+      addImplicitTypedef("atomic_ptrdiff_t",
+                         Context.getAtomicType(Context.getPointerDiffType()));
+    }
   }
 
   DeclarationName BuiltinVaList = &Context.Idents.get("__builtin_va_list");
