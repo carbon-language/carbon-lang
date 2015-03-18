@@ -432,7 +432,7 @@ EmulateInstructionMIPS64::Emulate_load (const uint32_t opcode)
     Context context_t;
 
     /* We are looking for "saved register" being restored from stack */
-    if (!n == 29 || !nonvolatile_reg_p(t))
+    if (!(n == 29) || !nonvolatile_reg_p(t))
         return false;
 
     context_t.type = eContextRegisterLoad;
