@@ -191,6 +191,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         }
         break;
 
+      case X86::reloc_riprel_4byte:
       case X86::reloc_signed_4byte:
       case FK_PCRel_4:
       case FK_Data_4:

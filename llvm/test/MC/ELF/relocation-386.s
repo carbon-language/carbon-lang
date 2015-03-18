@@ -65,6 +65,7 @@
 // CHECK-NEXT:     0xA3         R_386_GOTOFF     und_symbol 0x0
 // Relocation 29 (zed@PLT) is of type R_386_PLT32 and uses the symbol
 // CHECK-NEXT:     0xA9         R_386_PLT32      zed 0x0
+// CHECK-NEXT:     0xAF         R_386_PC32       tr_start 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -132,6 +133,9 @@ bar2:
 
         leal 1 + und_symbol@GOTOFF, %edi
         movl zed@PLT(%eax), %eax
+
+        .code64
+        jmpq *tr_start(%rip)
 
         .section        zedsec,"awT",@progbits
 zed:
