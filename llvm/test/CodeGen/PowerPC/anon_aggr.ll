@@ -165,7 +165,7 @@ unequal:
 ; DARWIN32: lwz r[[REG3:[0-9]+]], 108(r1)
 ; DARWIN32: mr r[[REG2:[0-9]+]], r[[REG4]]
 ; DARWIN32: cmplw cr{{[0-9]+}}, r[[REG4]], r[[REG3]]
-; DARWIN32: stw r[[REG4]], -[[OFFSET1:[0-9]+]]
+; DARWIN32: stw r[[REG2]], -[[OFFSET1:[0-9]+]]
 ; DARWIN32: stw r[[REG3]], -[[OFFSET2:[0-9]+]]
 ; DARWIN32: lwz r[[REG1]], -[[OFFSET1]]
 ; DARWIN32: lwz r[[REG1]], -[[OFFSET2]]

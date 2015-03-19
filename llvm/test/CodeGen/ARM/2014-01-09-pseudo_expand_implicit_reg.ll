@@ -4,7 +4,7 @@
 define void @vst(i8* %m, [4 x i64] %v) {
 entry:
 ; CHECK: vst:
-; CHECK: VST1d64Q %R{{[0-9]+}}<kill>, 8, %D{{[0-9]+}}, pred:14, pred:%noreg, %Q{{[0-9]+}}_Q{{[0-9]+}}<imp-use>
+; CHECK: VST1d64Q %R{{[0-9]+}}<kill>, 8, %D{{[0-9]+}}, pred:14, pred:%noreg, %Q{{[0-9]+}}_Q{{[0-9]+}}<imp-use,kill>
 
   %v0 = extractvalue [4 x i64] %v, 0
   %v1 = extractvalue [4 x i64] %v, 1
