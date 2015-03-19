@@ -75,6 +75,8 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
     return {4, 0x3ffffff, 2, false};
   case R_MIPS_HI16:
   case R_MIPS_LO16:
+  case R_MIPS_PCHI16:
+  case R_MIPS_PCLO16:
   case R_MIPS_GPREL16:
   case R_MIPS_GOT16:
   case R_MIPS_GOT_DISP:
@@ -185,6 +187,13 @@ static uint32_t relocHi16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp) {
   return (result + 0x8000) >> 16;
 }
 
+/// \brief R_MIPS_PCHI16
+/// local/external: hi16 (S + AHL - P)
+static uint32_t relocPcHi16(uint64_t P, uint64_t S, int64_t AHL) {
+  int32_t result = S + AHL - P;
+  return (result + 0x8000) >> 16;
+}
+
 /// \brief R_MIPS_LO16, R_MIPS_TLS_DTPREL_LO16, R_MIPS_TLS_TPREL_LO16,
 /// R_MICROMIPS_LO16, R_MICROMIPS_TLS_DTPREL_LO16, R_MICROMIPS_TLS_TPREL_LO16,
 /// LLD_R_MIPS_LO16
@@ -193,6 +202,13 @@ static uint32_t relocHi16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp) {
 static uint32_t relocLo16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp,
                           bool micro) {
   int32_t result = isGPDisp ? AHL + S - P + (micro ? 3 : 4) : AHL + S;
+  return result;
+}
+
+/// local/external: lo16 (S + AHL - P)
+static uint32_t relocPcLo16(uint64_t P, uint64_t S, int64_t AHL) {
+  AHL = llvm::SignExtend32<16>(AHL);
+  int32_t result = S + AHL - P;
   return result;
 }
 
@@ -372,8 +388,12 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
   case R_MIPS_HI16:
   case R_MICROMIPS_HI16:
     return relocHi16(relAddr, tgtAddr, ref.addend(), isGP);
+  case R_MIPS_PCHI16:
+    return relocPcHi16(relAddr, tgtAddr, ref.addend());
   case R_MIPS_LO16:
     return relocLo16(relAddr, tgtAddr, ref.addend(), isGP, false);
+  case R_MIPS_PCLO16:
+    return relocPcLo16(relAddr, tgtAddr, ref.addend());
   case R_MICROMIPS_LO16:
     return relocLo16(relAddr, tgtAddr, ref.addend(), isGP, true);
   case R_MIPS_GOT16:

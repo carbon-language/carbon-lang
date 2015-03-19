@@ -241,6 +241,8 @@ private:
     switch (rel.getType(isMips64EL())) {
     case llvm::ELF::R_MIPS_HI16:
       return llvm::ELF::R_MIPS_LO16;
+    case llvm::ELF::R_MIPS_PCHI16:
+      return llvm::ELF::R_MIPS_PCLO16;
     case llvm::ELF::R_MIPS_GOT16:
       if (isLocalBinding(rel))
         return llvm::ELF::R_MIPS_LO16;

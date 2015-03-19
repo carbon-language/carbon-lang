@@ -495,6 +495,8 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MIPS_PC32:
   case R_MIPS_HI16:
   case R_MIPS_LO16:
+  case R_MIPS_PCHI16:
+  case R_MIPS_PCLO16:
   case R_MICROMIPS_HI16:
   case R_MICROMIPS_LO16:
     // FIXME (simon): Handle dynamic/static linking differently.
