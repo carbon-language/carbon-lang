@@ -280,7 +280,7 @@ int main() {
 // CHECK: [[FAILED_I128_OLD_VAL:%.+]] = extractvalue { i128, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i128, i1 } [[RES]], 1
 // CHECK: [[FAILED_OLD_VAL]] = bitcast i128 [[FAILED_I128_OLD_VAL]] to <4 x i32>
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   int4x[sv] = bv;
@@ -298,7 +298,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i32* bitcast (i8* getelementptr (i8, i8* bitcast (%struct.BitFields* @{{.+}} to i8*), i64 4) to i32*), i32 [[OLD_BF_VALUE]], i32 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i32, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i32, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx.a = ldv;
@@ -321,7 +321,7 @@ int main() {
 // CHECK: [[BITCAST_TEMP_NEW_BF_ADDR:%.+]] = bitcast i32* [[TEMP_NEW_BF_ADDR]] to i8*
 // CHECK: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i64 4, i8* getelementptr (i8, i8* bitcast (%struct.BitFields_packed* @{{.+}} to i8*), i64 4), i8* [[BITCAST_TEMP_OLD_BF_ADDR]], i8* [[BITCAST_TEMP_NEW_BF_ADDR]], i32 0, i32 0)
 // CHECK: [[FAILED_OLD_VAL]] = load i32, i32* [[TEMP_OLD_BF_ADDR]]
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx_packed.a = ldv;
@@ -340,7 +340,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i32* getelementptr inbounds (%struct.BitFields2, %struct.BitFields2* @{{.+}}, i32 0, i32 0), i32 [[OLD_BF_VALUE]], i32 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i32, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i32, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx2.a = ldv;
@@ -360,7 +360,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i8* getelementptr (i8, i8* bitcast (%struct.BitFields2_packed* @{{.+}} to i8*), i64 3), i8 [[OLD_BF_VALUE]], i8 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i8, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i8, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx2_packed.a = ldv;
@@ -379,7 +379,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i32* getelementptr inbounds (%struct.BitFields3, %struct.BitFields3* @{{.+}}, i32 0, i32 0), i32 [[OLD_BF_VALUE]], i32 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i32, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i32, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx3.a = ldv;
@@ -407,7 +407,7 @@ int main() {
 // CHECK: [[BITCAST_TEMP_NEW_BF_ADDR:%.+]] = bitcast i24* [[TEMP_NEW_BF_ADDR]] to i8*
 // CHECK: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i64 3, i8* getelementptr (i8, i8* bitcast (%struct.BitFields3_packed* @{{.+}} to i8*), i64 1), i8* [[BITCAST_TEMP_OLD_BF_ADDR]], i8* [[BITCAST_TEMP_NEW_BF_ADDR]], i32 0, i32 0)
 // CHECK: [[FAILED_OLD_VAL]] = load i24, i24* [[TEMP_OLD_BF_ADDR]]
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx3_packed.a = ldv;
@@ -427,7 +427,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i64* bitcast (%struct.BitFields4* @{{.+}} to i64*), i64 [[OLD_BF_VALUE]], i64 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i64, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i64, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx4.a = ldv;
@@ -446,7 +446,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i8* getelementptr inbounds (%struct.BitFields4_packed, %struct.BitFields4_packed* @{{.+}}, i32 0, i32 0, i64 2), i8 [[OLD_BF_VALUE]], i8 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i8, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i8, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx4_packed.a = ldv;
@@ -465,7 +465,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i64* bitcast (%struct.BitFields4* @{{.+}} to i64*), i64 [[OLD_BF_VALUE]], i64 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i64, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i64, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx4.b = ldv;
@@ -485,7 +485,7 @@ int main() {
 // CHECK: [[RES:%.+]] = cmpxchg i8* getelementptr inbounds (%struct.BitFields4_packed, %struct.BitFields4_packed* @{{.+}}, i32 0, i32 0, i64 2), i8 [[OLD_BF_VALUE]], i8 [[NEW_BF_VALUE]] monotonic monotonic
 // CHECK: [[FAILED_OLD_VAL]] = extractvalue { i8, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i8, i1 } [[RES]], 1
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   bfx4_packed.b = ldv;
@@ -507,7 +507,7 @@ int main() {
 // CHECK: [[FAILED_I64_OLD_VAL:%.+]] = extractvalue { i64, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i64, i1 } [[RES]], 1
 // CHECK: [[FAILED_OLD_VAL]] = bitcast i64 [[FAILED_I64_OLD_VAL]] to <2 x float>
-// CHECK: br i1 [[FAIL_SUCCESS]], label %[[CONT]], label %[[EXIT:.+]]
+// CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
   float2x.x = ulv;

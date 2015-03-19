@@ -1505,8 +1505,8 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
                            OldValue, AggValueSlot::ignored(), SourceLocation(),
                            /*AsValue=*/false).getScalarVal();
   PHI->addIncoming(OldValue, ContBB);
-  Builder.CreateCondBr(Pair.second, ContBB, ExitBB);
-  EmitBlock(ExitBB);
+  Builder.CreateCondBr(Pair.second, ExitBB, ContBB);
+  EmitBlock(ExitBB, /*IsFinished=*/true);
 }
 
 /// Emit a compare-and-exchange op for atomic type.
