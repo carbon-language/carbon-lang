@@ -42,7 +42,7 @@ set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
 
 # Support plugins.
 if(CLANG_PLUGIN_SUPPORT)
-  set_target_properties(clang PROPERTIES ENABLE_EXPORTS 1)
+  export_executable_symbols(clang)
 endif()
 
 add_dependencies(clang clang-headers)
