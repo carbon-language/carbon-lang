@@ -1083,6 +1083,8 @@ SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
 //
 bool HexagonInstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
+  if (!Cond.empty() && Cond[0].isMBB())
+    return true;
   if (!Cond.empty() && Cond[0].isImm() && Cond[0].getImm() == 0) {
     Cond.erase(Cond.begin());
   } else {
