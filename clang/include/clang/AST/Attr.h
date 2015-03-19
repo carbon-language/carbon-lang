@@ -52,8 +52,8 @@ protected:
   bool Inherited : 1;
   bool IsPackExpansion : 1;
   bool Implicit : 1;
-
-  virtual ~Attr();
+  bool IsLateParsed : 1;
+  bool DuplicatesAllowed : 1;
 
   void* operator new(size_t bytes) throw() {
     llvm_unreachable("Attrs cannot be allocated with regular 'new'.");
@@ -74,9 +74,11 @@ public:
   }
 
 protected:
-  Attr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
+  Attr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex,
+       bool IsLateParsed, bool DuplicatesAllowed)
     : Range(R), AttrKind(AK), SpellingListIndex(SpellingListIndex),
-      Inherited(false), IsPackExpansion(false), Implicit(false) {}
+      Inherited(false), IsPackExpansion(false), Implicit(false),
+      IsLateParsed(IsLateParsed), DuplicatesAllowed(DuplicatesAllowed) {}
 
 public:
 
@@ -85,7 +87,7 @@ public:
   }
   
   unsigned getSpellingListIndex() const { return SpellingListIndex; }
-  virtual const char *getSpelling() const = 0;
+  const char *getSpelling() const;
 
   SourceLocation getLocation() const { return Range.getBegin(); }
   SourceRange getRange() const { return Range; }
@@ -102,25 +104,24 @@ public:
   bool isPackExpansion() const { return IsPackExpansion; }
 
   // Clone this attribute.
-  virtual Attr *clone(ASTContext &C) const = 0;
+  Attr *clone(ASTContext &C) const;
 
-  virtual bool isLateParsed() const { return false; }
+  bool isLateParsed() const { return IsLateParsed; }
 
   // Pretty print this attribute.
-  virtual void printPretty(raw_ostream &OS,
-                           const PrintingPolicy &Policy) const = 0;
+  void printPretty(raw_ostream &OS, const PrintingPolicy &Policy) const;
 
   /// \brief By default, attributes cannot be duplicated when being merged;
   /// however, an attribute can override this. Returns true if the attribute
   /// can be duplicated when merging.
-  virtual bool duplicatesAllowed() const { return false; }
+  bool duplicatesAllowed() const { return DuplicatesAllowed; }
 };
 
 class InheritableAttr : public Attr {
-  virtual void anchor();
 protected:
-  InheritableAttr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex = 0)
-    : Attr(AK, R, SpellingListIndex) {}
+  InheritableAttr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex,
+                  bool IsLateParsed, bool DuplicatesAllowed)
+      : Attr(AK, R, SpellingListIndex, IsLateParsed, DuplicatesAllowed) {}
 
 public:
   void setInherited(bool I) { Inherited = I; }
@@ -132,11 +133,11 @@ public:
 };
 
 class InheritableParamAttr : public InheritableAttr {
-  void anchor() override;
 protected:
-  InheritableParamAttr(attr::Kind AK, SourceRange R,
-                       unsigned SpellingListIndex = 0)
-    : InheritableAttr(AK, R, SpellingListIndex) {}
+  InheritableParamAttr(attr::Kind AK, SourceRange R, unsigned SpellingListIndex,
+                       bool IsLateParsed, bool DuplicatesAllowed)
+      : InheritableAttr(AK, R, SpellingListIndex, IsLateParsed,
+                        DuplicatesAllowed) {}
 
 public:
   // Implement isa/cast/dyncast/etc.

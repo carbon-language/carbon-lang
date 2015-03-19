@@ -1520,7 +1520,9 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     OS << "unsigned SI\n";
 
     OS << "             )\n";
-    OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI)\n";
+    OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI, "
+       << R.getValueAsBit("LateParsed") << ", "
+       << R.getValueAsBit("DuplicatesAllowedWhileMerging") << ")\n";
 
     for (auto const &ai : Args) {
       OS << "              , ";
@@ -1552,7 +1554,9 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
       OS << "unsigned SI\n";
 
       OS << "             )\n";
-      OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI)\n";
+      OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI, "
+         << R.getValueAsBit("LateParsed") << ", "
+         << R.getValueAsBit("DuplicatesAllowedWhileMerging") << ")\n";
 
       for (auto const &ai : Args) {
         OS << "              , ";
@@ -1571,10 +1575,10 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
       OS << "  }\n\n";
     }
 
-    OS << "  " << R.getName() << "Attr *clone(ASTContext &C) const override;\n";
+    OS << "  " << R.getName() << "Attr *clone(ASTContext &C) const;\n";
     OS << "  void printPretty(raw_ostream &OS,\n"
-       << "                   const PrintingPolicy &Policy) const override;\n";
-    OS << "  const char *getSpelling() const override;\n";
+       << "                   const PrintingPolicy &Policy) const;\n";
+    OS << "  const char *getSpelling() const;\n";
     
     if (!ElideSpelling) {
       assert(!SemanticToSyntacticMap.empty() && "Empty semantic mapping list");
@@ -1602,13 +1606,6 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
 
     OS << "  static bool classof(const Attr *A) { return A->getKind() == "
        << "attr::" << R.getName() << "; }\n";
-
-    bool LateParsed = R.getValueAsBit("LateParsed");
-    OS << "  bool isLateParsed() const override { return "
-       << LateParsed << "; }\n";
-
-    if (R.getValueAsBit("DuplicatesAllowedWhileMerging"))
-      OS << "  bool duplicatesAllowed() const override { return true; }\n\n";
 
     OS << "};\n\n";
   }
@@ -1652,6 +1649,36 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     writePrettyPrintFunction(R, Args, OS);
     writeGetSpellingFunction(R, OS);
   }
+
+  // Instead of relying on virtual dispatch we just create a huge dispatch
+  // switch. This is both smaller and faster than virtual functions.
+  auto EmitFunc = [&](const char *Method) {
+    OS << "  switch (getKind()) {\n";
+    for (const auto *Attr : Attrs) {
+      const Record &R = *Attr;
+      if (!R.getValueAsBit("ASTNode"))
+        continue;
+
+      OS << "  case attr::" << R.getName() << ":\n";
+      OS << "    return cast<" << R.getName() << "Attr>(this)->" << Method
+         << ";\n";
+    }
+    OS << "  case attr::NUM_ATTRS:\n";
+    OS << "    break;\n";
+    OS << "  }\n";
+    OS << "  llvm_unreachable(\"Unexpected attribute kind!\");\n";
+    OS << "}\n\n";
+  };
+
+  OS << "const char *Attr::getSpelling() const {\n";
+  EmitFunc("getSpelling()");
+
+  OS << "Attr *Attr::clone(ASTContext &C) const {\n";
+  EmitFunc("clone(C)");
+
+  OS << "void Attr::printPretty(raw_ostream &OS, "
+        "const PrintingPolicy &Policy) const {\n";
+  EmitFunc("printPretty(OS, Policy)");
 }
 
 } // end namespace clang
