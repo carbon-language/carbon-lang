@@ -1585,19 +1585,13 @@ void SelectionDAGBuilder::visitBr(const BranchInst &I) {
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
 
-  // Figure out which block is immediately after the current one.
-  MachineBasicBlock *NextBlock = nullptr;
-  MachineFunction::iterator BBI = BrMBB;
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
-
   if (I.isUnconditional()) {
     // Update machine-CFG edges.
     BrMBB->addSuccessor(Succ0MBB);
 
     // If this is not a fall-through branch or optimizations are switched off,
     // emit the branch.
-    if (Succ0MBB != NextBlock || TM.getOptLevel() == CodeGenOpt::None)
+    if (Succ0MBB != NextBlock(BrMBB) || TM.getOptLevel() == CodeGenOpt::None)
       DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(),
                               MVT::Other, getControlRoot(),
                               DAG.getBasicBlock(Succ0MBB)));
@@ -1717,16 +1711,9 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB,
   if (CB.TrueBB != CB.FalseBB)
     addSuccessorWithWeight(SwitchBB, CB.FalseBB, CB.FalseWeight);
 
-  // Set NextBlock to be the MBB immediately after the current one, if any.
-  // This is used to avoid emitting unnecessary branches to the next block.
-  MachineBasicBlock *NextBlock = nullptr;
-  MachineFunction::iterator BBI = SwitchBB;
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
-
   // If the lhs block is the next block, invert the condition so that we can
   // fall through to the lhs instead of the rhs block.
-  if (CB.TrueBB == NextBlock) {
+  if (CB.TrueBB == NextBlock(SwitchBB)) {
     std::swap(CB.TrueBB, CB.FalseBB);
     SDValue True = DAG.getConstant(1, Cond.getValueType());
     Cond = DAG.getNode(ISD::XOR, dl, Cond.getValueType(), Cond, True);
@@ -1793,19 +1780,12 @@ void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
                                                          Sub.getValueType()),
                    Sub, DAG.getConstant(JTH.Last - JTH.First, VT), ISD::SETUGT);
 
-  // Set NextBlock to be the MBB immediately after the current one, if any.
-  // This is used to avoid emitting unnecessary branches to the next block.
-  MachineBasicBlock *NextBlock = nullptr;
-  MachineFunction::iterator BBI = SwitchBB;
-
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
-
   SDValue BrCond = DAG.getNode(ISD::BRCOND, getCurSDLoc(),
                                MVT::Other, CopyTo, CMP,
                                DAG.getBasicBlock(JT.Default));
 
-  if (JT.MBB != NextBlock)
+  // Avoid emitting unnecessary branches to the next block.
+  if (JT.MBB != NextBlock(SwitchBB))
     BrCond = DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other, BrCond,
                          DAG.getBasicBlock(JT.MBB));
 
@@ -1934,13 +1914,6 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurSDLoc(),
                                     B.Reg, Sub);
 
-  // Set NextBlock to be the MBB immediately after the current one, if any.
-  // This is used to avoid emitting unnecessary branches to the next block.
-  MachineBasicBlock *NextBlock = nullptr;
-  MachineFunction::iterator BBI = SwitchBB;
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
-
   MachineBasicBlock* MBB = B.Cases[0].ThisBB;
 
   addSuccessorWithWeight(SwitchBB, B.Default);
@@ -1950,7 +1923,8 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
                                 MVT::Other, CopyTo, RangeCmp,
                                 DAG.getBasicBlock(B.Default));
 
-  if (MBB != NextBlock)
+  // Avoid emitting unnecessary branches to the next block.
+  if (MBB != NextBlock(SwitchBB))
     BrRange = DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other, CopyTo,
                           DAG.getBasicBlock(MBB));
 
@@ -2003,14 +1977,8 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
                               MVT::Other, getControlRoot(),
                               Cmp, DAG.getBasicBlock(B.TargetBB));
 
-  // Set NextBlock to be the MBB immediately after the current one, if any.
-  // This is used to avoid emitting unnecessary branches to the next block.
-  MachineBasicBlock *NextBlock = nullptr;
-  MachineFunction::iterator BBI = SwitchBB;
-  if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
-
-  if (NextMBB != NextBlock)
+  // Avoid emitting unnecessary branches to the next block.
+  if (NextMBB != NextBlock(SwitchBB))
     BrAnd = DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other, BrAnd,
                         DAG.getBasicBlock(NextMBB));
 
@@ -2147,11 +2115,10 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
   MachineFunction *CurMF = FuncInfo.MF;
 
   // Figure out which block is immediately after the current one.
-  MachineBasicBlock *NextBlock = nullptr;
+  MachineBasicBlock *NextMBB = nullptr;
   MachineFunction::iterator BBI = CR.CaseBB;
-
   if (++BBI != FuncInfo.MF->end())
-    NextBlock = BBI;
+    NextMBB = BBI;
 
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
   // If any two of the cases has the same destination, and if one value
@@ -2224,13 +2191,12 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
   }
   // Rearrange the case blocks so that the last one falls through if possible.
   Case &BackCase = *(CR.Range.second-1);
-  if (Size > 1 &&
-      NextBlock && Default != NextBlock && BackCase.BB != NextBlock) {
-    // The last case block won't fall through into 'NextBlock' if we emit the
+  if (Size > 1 && NextMBB && Default != NextMBB && BackCase.BB != NextMBB) {
+    // The last case block won't fall through into 'NextMBB' if we emit the
     // branches in this order.  See if rearranging a case value would help.
     // We start at the bottom as it's the case with the least weight.
     for (Case *I = &*(CR.Range.second-2), *E = &*CR.Range.first-1; I != E; --I)
-      if (I->BB == NextBlock) {
+      if (I->BB == NextMBB) {
         std::swap(*I, BackCase);
         break;
       }
@@ -2746,12 +2712,6 @@ void SelectionDAGBuilder::UpdateSplitBlock(MachineBasicBlock *First,
 void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   MachineBasicBlock *SwitchMBB = FuncInfo.MBB;
 
-  // Figure out which block is immediately after the current one.
-  MachineBasicBlock *NextBlock = nullptr;
-  if (SwitchMBB + 1 != FuncInfo.MF->end())
-    NextBlock = SwitchMBB + 1;
-
-
   // Create a vector of Cases, sorted so that we can efficiently create a binary
   // search tree from them.
   CaseVector Cases;
@@ -2792,7 +2752,7 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
     SwitchMBB->addSuccessor(Default);
 
     // If this is not a fall-through branch, emit the branch.
-    if (Default != NextBlock) {
+    if (Default != NextBlock(SwitchMBB)) {
       DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other,
                               getControlRoot(), DAG.getBasicBlock(Default)));
     }
@@ -7822,4 +7782,11 @@ AddSuccessorMBB(const BasicBlock *BB,
   ParentMBB->addSuccessor(
       SuccMBB, BranchProbabilityInfo::getBranchWeightStackProtector(IsLikely));
   return SuccMBB;
+}
+
+MachineBasicBlock *SelectionDAGBuilder::NextBlock(MachineBasicBlock *MBB) {
+  MachineFunction::iterator I = MBB;
+  if (++I == FuncInfo.MF->end())
+    return nullptr;
+  return I;
 }

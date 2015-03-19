@@ -832,6 +832,9 @@ private:
   bool EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable, MDNode *Expr,
                                 int64_t Offset, bool IsIndirect,
                                 const SDValue &N);
+
+  /// Return the next block after MBB, or nullptr if there is none.
+  MachineBasicBlock *NextBlock(MachineBasicBlock *MBB);
 };
 
 } // end namespace llvm
