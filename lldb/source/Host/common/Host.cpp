@@ -423,11 +423,6 @@ Host::GetSignalAsCString (int signo)
 
 #endif
 
-void
-Host::WillTerminate ()
-{
-}
-
 #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__) // see macosx/Host.mm
 
 size_t

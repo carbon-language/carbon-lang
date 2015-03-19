@@ -35,13 +35,15 @@ add_subdirectory(Core)
 add_subdirectory(DataFormatters)
 add_subdirectory(Expression)
 add_subdirectory(Host)
+add_subdirectory(Initialization)
 add_subdirectory(Interpreter)
 add_subdirectory(Plugins)
 add_subdirectory(Symbol)
 add_subdirectory(Target)
 add_subdirectory(Utility)
 
-# Build API last, since liblldb needs to link against every other target
+# Build API last.  Since liblldb needs to link against every other target, it needs
+# those targets to have already been created.
 add_subdirectory(API)
 
 # Determine LLDB revision and repository. GetSourceVersion and GetRepositoryPath are shell-scripts, and as

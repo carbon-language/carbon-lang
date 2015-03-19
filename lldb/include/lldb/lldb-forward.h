@@ -433,7 +433,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::VariableList> VariableListSP;
     typedef std::shared_ptr<lldb_private::ValueObjectList> ValueObjectListSP;
     typedef std::shared_ptr<lldb_private::Watchpoint> WatchpointSP;
-    
+
 } // namespace lldb
 
 

@@ -14,10 +14,21 @@
 
 #include "lldb/lldb-private.h"
 
+namespace llvm
+{
+namespace sys
+{
+class DynamicLibrary;
+}
+}
+
 namespace lldb_private
 {
     class Platform;
     class ExecutionContext;
+
+    typedef llvm::sys::DynamicLibrary (*LoadPluginCallbackType)(const lldb::DebuggerSP &debugger_sp,
+                                                                const FileSpec &spec, Error &error);
 
     //----------------------------------------------------------------------
     // Every register is described in detail including its name, alternate

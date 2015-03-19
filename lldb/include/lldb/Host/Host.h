@@ -133,9 +133,6 @@ public:
     static const char *
     GetSignalAsCString (int signo);
 
-    static void
-    WillTerminate ();
-
     typedef void (*ThreadLocalStorageCleanupCallback) (void *p);
 
     static lldb::thread_key_t

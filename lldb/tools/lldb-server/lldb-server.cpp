@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Debugger.h"
+#include "lldb/Initialization/InitializeLLDB.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,13 +30,13 @@ int main_platform (int argc, char *argv[]);
 static void
 initialize ()
 {
-    lldb_private::Debugger::InitializeForLLGS(NULL);
+    lldb_private::InitializeForLLGS(nullptr);
 }
 
 static void
 terminate ()
 {
-    lldb_private::Debugger::Terminate();
+    lldb_private::TerminateLLGS();
 }
 
 //----------------------------------------------------------------------

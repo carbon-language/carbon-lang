@@ -686,6 +686,7 @@
 		3F8160A61AB9F7DD001DA9DF /* Logging.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8160A51AB9F7DD001DA9DF /* Logging.cpp */; };
 		3F8169191ABA2419001DA9DF /* ConvertEnum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169171ABA2419001DA9DF /* ConvertEnum.cpp */; };
 		3F81691A1ABA2419001DA9DF /* NameMatches.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169181ABA2419001DA9DF /* NameMatches.cpp */; };
+		3F8169281ABB73D9001DA9DF /* InitializeLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169271ABB73D9001DA9DF /* InitializeLLDB.cpp */; };
 		3FDFDDBD199C3A06009756A7 /* FileAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBC199C3A06009756A7 /* FileAction.cpp */; };
 		3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBE199D345E009756A7 /* FileCache.cpp */; };
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
@@ -2165,6 +2166,8 @@
 		3F8169181ABA2419001DA9DF /* NameMatches.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NameMatches.cpp; path = source/Utility/NameMatches.cpp; sourceTree = "<group>"; };
 		3F81691B1ABA242B001DA9DF /* ConvertEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ConvertEnum.h; path = include/lldb/Utility/ConvertEnum.h; sourceTree = "<group>"; };
 		3F81691C1ABA242B001DA9DF /* NameMatches.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NameMatches.h; path = include/lldb/Utility/NameMatches.h; sourceTree = "<group>"; };
+		3F8169271ABB73D9001DA9DF /* InitializeLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitializeLLDB.cpp; path = source/Initialization/InitializeLLDB.cpp; sourceTree = "<group>"; };
+		3F8169291ABB73E6001DA9DF /* InitializeLLDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InitializeLLDB.h; path = include/lldb/Initialization/InitializeLLDB.h; sourceTree = "<group>"; };
 		3FDFD6C3199C396E009756A7 /* FileAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileAction.h; path = include/lldb/Target/FileAction.h; sourceTree = "<group>"; };
 		3FDFDDBC199C3A06009756A7 /* FileAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAction.cpp; path = source/Target/FileAction.cpp; sourceTree = "<group>"; };
 		3FDFDDBE199D345E009756A7 /* FileCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileCache.cpp; path = source/Host/common/FileCache.cpp; sourceTree = "<group>"; };
@@ -2809,6 +2812,7 @@
 				94CB255616B0683B0059775D /* DataFormatters */,
 				26BC7DBE10F1B78200F91463 /* Expression */,
 				26BC7DD010F1B7C100F91463 /* Host */,
+				3F8169261ABB73C1001DA9DF /* Initialization */,
 				26BC7DDF10F1B7E200F91463 /* Interpreter */,
 				260C897110F57C5600BB2B04 /* Plugins */,
 				26BC7C4B10F1B6C100F91463 /* Symbol */,
@@ -4765,6 +4769,15 @@
 			path = "POSIX-DYLD";
 			sourceTree = "<group>";
 		};
+		3F8169261ABB73C1001DA9DF /* Initialization */ = {
+			isa = PBXGroup;
+			children = (
+				3F8169291ABB73E6001DA9DF /* InitializeLLDB.h */,
+				3F8169271ABB73D9001DA9DF /* InitializeLLDB.cpp */,
+			);
+			name = Initialization;
+			sourceTree = "<group>";
+		};
 		3FDFDDC4199D37BE009756A7 /* posix */ = {
 			isa = PBXGroup;
 			children = (
@@ -6345,6 +6358,7 @@
 				94CB257216B0A4270059775D /* TypeSynthetic.cpp in Sources */,
 				94CB257416B1D3880059775D /* FormatCache.cpp in Sources */,
 				A36FF33C17D8E94600244D40 /* OptionParser.cpp in Sources */,
+				3F8169281ABB73D9001DA9DF /* InitializeLLDB.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

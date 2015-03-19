@@ -33,11 +33,11 @@
 #include "lldb/API/SBTypeSummary.h"
 #include "lldb/API/SBTypeSynthetic.h"
 
-
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/DataFormatters/DataVisualization.h"
+#include "lldb/Initialization/InitializeLLDB.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
@@ -117,13 +117,13 @@ SBDebugger::Initialize ()
 
     SBCommandInterpreter::InitializeSWIG ();
 
-    Debugger::Initialize(LoadPlugin);
+    lldb_private::Initialize(LoadPlugin);
 }
 
 void
 SBDebugger::Terminate ()
 {
-    Debugger::Terminate();
+    lldb_private::Terminate();
 }
 
 void

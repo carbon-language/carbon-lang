@@ -6,6 +6,7 @@ set( LLDB_USED_LIBS
   lldbHost
   lldbCore
   lldbExpression
+  lldbInitialization
   lldbInterpreter
   lldbSymbol
   lldbTarget
