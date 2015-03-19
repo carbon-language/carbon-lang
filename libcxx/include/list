@@ -1480,7 +1480,7 @@ list<_Tp, _Alloc>::insert(const_iterator __p, _InpIter __f, _InpIter __l,
         try
         {
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            for (++__f; __f != __l; ++__f, ++__e, ++__ds)
+            for (++__f; __f != __l; ++__f, (void) ++__e, (void) ++__ds)
             {
                 __hold.reset(__node_alloc_traits::allocate(__na, 1));
                 __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), *__f);
