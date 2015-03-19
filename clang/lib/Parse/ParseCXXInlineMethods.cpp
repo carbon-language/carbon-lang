@@ -317,8 +317,7 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
       Token DefArgEnd;
       DefArgEnd.startToken();
       DefArgEnd.setKind(tok::eof);
-      DefArgEnd.setLocation(LastDefaultArgToken.getLocation().getLocWithOffset(
-          LastDefaultArgToken.getLength()));
+      DefArgEnd.setLocation(LastDefaultArgToken.getEndLoc());
       DefArgEnd.setEofData(Param);
       Toks->push_back(DefArgEnd);
 
@@ -392,9 +391,7 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
     Token ExceptionSpecEnd;
     ExceptionSpecEnd.startToken();
     ExceptionSpecEnd.setKind(tok::eof);
-    ExceptionSpecEnd.setLocation(
-        LastExceptionSpecToken.getLocation().getLocWithOffset(
-            LastExceptionSpecToken.getLength()));
+    ExceptionSpecEnd.setLocation(LastExceptionSpecToken.getEndLoc());
     ExceptionSpecEnd.setEofData(LM.Method);
     Toks->push_back(ExceptionSpecEnd);
 
@@ -499,8 +496,7 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   Token BodyEnd;
   BodyEnd.startToken();
   BodyEnd.setKind(tok::eof);
-  BodyEnd.setLocation(
-      LastBodyToken.getLocation().getLocWithOffset(LastBodyToken.getLength()));
+  BodyEnd.setLocation(LastBodyToken.getEndLoc());
   BodyEnd.setEofData(LM.D);
   LM.Toks.push_back(BodyEnd);
   // Append the current token at the end of the new token stream so that it

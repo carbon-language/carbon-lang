@@ -130,7 +130,7 @@ public:
 
   SourceLocation getAnnotationEndLoc() const {
     assert(isAnnotation() && "Used AnnotEndLocID on non-annotation token");
-    return SourceLocation::getFromRawEncoding(UintData);
+    return SourceLocation::getFromRawEncoding(UintData ? UintData : Loc);
   }
   void setAnnotationEndLoc(SourceLocation L) {
     assert(isAnnotation() && "Used AnnotEndLocID on non-annotation token");
@@ -139,6 +139,11 @@ public:
 
   SourceLocation getLastLoc() const {
     return isAnnotation() ? getAnnotationEndLoc() : getLocation();
+  }
+
+  SourceLocation getEndLoc() const {
+    return isAnnotation() ? getAnnotationEndLoc()
+                          : getLocation().getLocWithOffset(getLength());
   }
 
   /// \brief SourceRange of the group of tokens that this annotation token
