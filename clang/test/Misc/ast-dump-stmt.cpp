@@ -38,3 +38,20 @@ void TestCatch2() {
   catch (...) {
   }
 }
+
+void TestAllocationExprs() {
+  int *p;
+  p = new int;
+  delete p;
+  p = new int[2];
+  delete[] p;
+  p = ::new int;
+  ::delete p;
+}
+// CHECK: FunctionDecl {{.*}} TestAllocationExprs
+// CHECK: CXXNewExpr {{.*}} 'int *' Function {{.*}} 'operator new'
+// CHECK: CXXDeleteExpr {{.*}} 'void' Function {{.*}} 'operator delete'
+// CHECK: CXXNewExpr {{.*}} 'int *' array Function {{.*}} 'operator new[]'
+// CHECK: CXXDeleteExpr {{.*}} 'void' array Function {{.*}} 'operator delete[]'
+// CHECK: CXXNewExpr {{.*}} 'int *' global Function {{.*}} 'operator new'
+// CHECK: CXXDeleteExpr {{.*}} 'void' global Function {{.*}} 'operator delete'

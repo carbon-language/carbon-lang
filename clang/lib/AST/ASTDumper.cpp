@@ -508,6 +508,8 @@ namespace  {
     void VisitCXXFunctionalCastExpr(const CXXFunctionalCastExpr *Node);
     void VisitCXXConstructExpr(const CXXConstructExpr *Node);
     void VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *Node);
+    void VisitCXXNewExpr(const CXXNewExpr *Node);
+    void VisitCXXDeleteExpr(const CXXDeleteExpr *Node);
     void VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *Node);
     void VisitExprWithCleanups(const ExprWithCleanups *Node);
     void VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *Node);
@@ -1915,6 +1917,28 @@ void ASTDumper::VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *Node) {
   VisitExpr(Node);
   OS << " ";
   dumpCXXTemporary(Node->getTemporary());
+}
+
+void ASTDumper::VisitCXXNewExpr(const CXXNewExpr *Node) {
+  VisitExpr(Node);
+  OS << ' ';
+  if (Node->isGlobalNew())
+    OS << "global ";
+  if (Node->isArray())
+    OS << "array ";
+  dumpBareDeclRef(Node->getOperatorNew());
+  // We could dump the deallocation function used in case of error, but it's
+  // usually not that interesting.
+}
+
+void ASTDumper::VisitCXXDeleteExpr(const CXXDeleteExpr *Node) {
+  VisitExpr(Node);
+  OS << ' ';
+  if (Node->isGlobalDelete())
+    OS << "global ";
+  if (Node->isArrayForm())
+    OS << "array ";
+  dumpBareDeclRef(Node->getOperatorDelete());
 }
 
 void
