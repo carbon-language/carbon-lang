@@ -22,6 +22,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/HostNativeThread.h"
+#include "lldb/Utility/LLDBAssert.h"
 #include "lldb/lldb-enumerations.h"
 
 #include "llvm/ADT/SmallString.h"
@@ -379,53 +380,23 @@ NativeThreadLinux::SetStoppedByBreakpoint ()
 }
 
 void
-NativeThreadLinux::SetStoppedByWatchpoint ()
+NativeThreadLinux::SetStoppedByWatchpoint (uint32_t wp_index)
 {
-    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
-    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
-    if (log)
-    {
-        NativeProcessProtocolSP process_sp = m_process_wp.lock ();
-        if (process_sp)
-            pid = process_sp->GetID ();
-    }
-
     const StateType new_state = StateType::eStateStopped;
     MaybeLogStateChange (new_state);
     m_state = new_state;
-
-    NativeRegisterContextSP reg_ctx = GetRegisterContext ();
-    const uint32_t num_hw_watchpoints = reg_ctx->NumSupportedHardwareWatchpoints ();
-
     m_stop_description.clear ();
-    for (uint32_t wp_index = 0; wp_index < num_hw_watchpoints; ++wp_index)
-    {
-        if (reg_ctx->IsWatchpointHit (wp_index).Success())
-        {
-            if (log)
-                log->Printf ("NativeThreadLinux:%s (pid=%" PRIu64 ", tid=%" PRIu64 ") watchpoint found with idx: %u",
-                             __FUNCTION__, pid, GetID (), wp_index);
 
-            std::ostringstream ostr;
-            ostr << reg_ctx->GetWatchpointAddress (wp_index) << " " << wp_index;
-            m_stop_description = ostr.str();
+    lldbassert(wp_index != LLDB_INVALID_INDEX32 &&
+               "wp_index cannot be invalid");
 
-            m_stop_info.reason = StopReason::eStopReasonWatchpoint;
-            m_stop_info.details.signal.signo = SIGTRAP;
-            return;
-        }
-    }
+    std::ostringstream ostr;
+    ostr << GetRegisterContext()->GetWatchpointAddress(wp_index) << " ";
+    ostr << wp_index;
+    m_stop_description = ostr.str();
 
-    // The process reported a watchpoint was hit, but we haven't found the
-    // watchpoint. Assume that a stopped by trace is reported as a hardware
-    // watchpoint what happens on some linux kernels (e.g.: android-arm64
-    // platfrom-21).
-
-    if (log)
-        log->Printf ("NativeThreadLinux:%s (pid=%" PRIu64 ", tid=%" PRIu64 ") none of the watchpoint was hit.",
-                     __FUNCTION__, pid, GetID ());
-
-    SetStoppedByTrace ();
+    m_stop_info.reason = StopReason::eStopReasonWatchpoint;
+    m_stop_info.details.signal.signo = SIGTRAP;
 }
 
 bool

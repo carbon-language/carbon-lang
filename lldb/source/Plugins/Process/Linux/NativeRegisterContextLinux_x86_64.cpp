@@ -9,6 +9,7 @@
 
 #include "NativeRegisterContextLinux_x86_64.h"
 
+#include "lldb/Core/Log.h"
 #include "lldb/lldb-private-forward.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
@@ -1046,39 +1047,61 @@ NativeRegisterContextLinux_x86_64::WriteGPR()
 }
 
 Error
-NativeRegisterContextLinux_x86_64::IsWatchpointHit(uint8_t wp_index)
+NativeRegisterContextLinux_x86_64::IsWatchpointHit(uint32_t wp_index, bool &is_hit)
 {
     if (wp_index >= NumSupportedHardwareWatchpoints())
-        return Error ("Watchpoint index out of range");
+        return Error("Watchpoint index out of range");
 
     RegisterValue reg_value;
     Error error = ReadRegisterRaw(m_reg_info.first_dr + 6, reg_value);
-    if (error.Fail()) return error;
+    if (error.Fail())
+    {
+        is_hit = false;
+        return error;
+    }
 
     uint64_t status_bits = reg_value.GetAsUInt64();
 
-    bool is_hit = status_bits & (1 << wp_index);
-
-    error.SetError (!is_hit, lldb::eErrorTypeInvalid);
+    is_hit = status_bits & (1 << wp_index);
 
     return error;
 }
 
 Error
-NativeRegisterContextLinux_x86_64::IsWatchpointVacant(uint32_t wp_index)
+NativeRegisterContextLinux_x86_64::GetWatchpointHitIndex(uint32_t &wp_index) {
+    uint32_t num_hw_wps = NumSupportedHardwareWatchpoints();
+    for (wp_index = 0; wp_index < num_hw_wps; ++wp_index)
+    {
+        bool is_hit;
+        Error error = IsWatchpointHit(wp_index, is_hit);
+        if (error.Fail()) {
+            wp_index = LLDB_INVALID_INDEX32;
+            return error;
+        } else if (is_hit) {
+            return error;
+        }
+    }
+    wp_index = LLDB_INVALID_INDEX32;
+    return Error();
+}
+
+Error
+NativeRegisterContextLinux_x86_64::IsWatchpointVacant(uint32_t wp_index, bool &is_vacant)
 {
     if (wp_index >= NumSupportedHardwareWatchpoints())
         return Error ("Watchpoint index out of range");
 
     RegisterValue reg_value;
     Error error = ReadRegisterRaw(m_reg_info.first_dr + 7, reg_value);
-    if (error.Fail()) return error;
+    if (error.Fail())
+    {
+        is_vacant = false;
+        return error;
+    }
 
     uint64_t control_bits = reg_value.GetAsUInt64();
 
-    bool is_vacant = !(control_bits & (1 << (2 * wp_index)));
-
-    error.SetError (!is_vacant, lldb::eErrorTypeInvalid);
+    is_vacant = !(control_bits & (1 << (2 * wp_index)));
 
     return error;
 }
@@ -1096,8 +1119,10 @@ NativeRegisterContextLinux_x86_64::SetHardwareWatchpointWithIndex(
     if (size != 1 && size != 2 && size != 4 && size != 8)
         return Error ("Invalid size for watchpoint");
 
-    Error error = IsWatchpointVacant (wp_index);
+    bool is_vacant;
+    Error error = IsWatchpointVacant (wp_index, is_vacant);
     if (error.Fail()) return error;
+    if (!is_vacant) return Error("Watchpoint index not vacant");
 
     RegisterValue reg_value;
     error = ReadRegisterRaw(m_reg_info.first_dr + 7, reg_value);
@@ -1184,14 +1209,24 @@ uint32_t
 NativeRegisterContextLinux_x86_64::SetHardwareWatchpoint(
         lldb::addr_t addr, size_t size, uint32_t watch_flags)
 {
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_WATCHPOINTS));
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
     for (uint32_t wp_index = 0; wp_index < num_hw_watchpoints; ++wp_index)
-        if (IsWatchpointVacant(wp_index).Success())
+    {
+        bool is_vacant;
+        Error error = IsWatchpointVacant(wp_index, is_vacant);
+        if (is_vacant)
         {
-            if (SetHardwareWatchpointWithIndex(addr, size, watch_flags, wp_index).Fail())
-                continue;
-            return wp_index;
+            error = SetHardwareWatchpointWithIndex(addr, size, watch_flags, wp_index);
+            if (error.Success())
+                return wp_index;
         }
+        if (error.Fail() && log)
+        {
+            log->Printf("NativeRegisterContextLinux_x86_64::%s Error: %s",
+                    __FUNCTION__, error.AsCString());
+        }
+    }
     return LLDB_INVALID_INDEX32;
 }
 

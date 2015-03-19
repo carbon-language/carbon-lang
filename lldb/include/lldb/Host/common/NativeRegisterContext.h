@@ -100,10 +100,13 @@ public:
     ClearAllHardwareWatchpoints ();
 
     virtual Error
-    IsWatchpointHit (uint8_t wp_index);
+    IsWatchpointHit(uint32_t wp_index, bool &is_hit);
 
     virtual Error
-    IsWatchpointVacant (uint32_t wp_index);
+    GetWatchpointHitIndex(uint32_t &wp_index);
+
+    virtual Error
+    IsWatchpointVacant (uint32_t wp_index, bool &is_vacant);
 
     virtual lldb::addr_t
     GetWatchpointAddress (uint32_t wp_index);

@@ -302,14 +302,23 @@ NativeRegisterContext::ClearAllHardwareWatchpoints ()
 }
 
 Error
-NativeRegisterContext::IsWatchpointHit (uint8_t wp_index)
+NativeRegisterContext::IsWatchpointHit(uint32_t wp_index, bool &is_hit)
 {
+    is_hit = false;
     return Error ("not implemented");
 }
 
 Error
-NativeRegisterContext::IsWatchpointVacant (uint32_t wp_index)
+NativeRegisterContext::GetWatchpointHitIndex(uint32_t &wp_index)
 {
+    wp_index = LLDB_INVALID_INDEX32;
+    return Error ("not implemented");
+}
+
+Error
+NativeRegisterContext::IsWatchpointVacant (uint32_t wp_index, bool &is_vacant)
+{
+    is_vacant = false;
     return Error ("not implemented");
 }
 

@@ -296,6 +296,15 @@ namespace lldb_private
         MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid);
 
         void
+        MonitorTrace(lldb::pid_t pid, NativeThreadProtocolSP thread_sp);
+
+        void
+        MonitorBreakpoint(lldb::pid_t pid, NativeThreadProtocolSP thread_sp);
+
+        void
+        MonitorWatchpoint(lldb::pid_t pid, NativeThreadProtocolSP thread_sp, uint32_t wp_index);
+
+        void
         MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool exited);
 
 #if 0

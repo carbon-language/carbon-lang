@@ -155,19 +155,17 @@ NativeRegisterContextLinux_mips64::WriteAllRegisterValues (const lldb::DataBuffe
 }
 
 Error
-NativeRegisterContextLinux_mips64::IsWatchpointHit (uint8_t wp_index)
+NativeRegisterContextLinux_mips64::IsWatchpointHit (uint32_t wp_index, bool &is_hit)
 {
-    Error error;
-    error.SetErrorString ("MIPS TODO: NativeRegisterContextLinux_mips64::IsWatchpointHit not implemented");
-    return error;
+    is_hit = false;
+    return Error("MIPS TODO: NativeRegisterContextLinux_mips64::IsWatchpointHit not implemented");
 }
 
 Error
-NativeRegisterContextLinux_mips64::IsWatchpointVacant (uint32_t wp_index)
+NativeRegisterContextLinux_mips64::IsWatchpointVacant (uint32_t wp_index, bool &is_vacant)
 {
-    Error error;
-    error.SetErrorString ("MIPS TODO: NativeRegisterContextLinux_mips64::IsWatchpointVacant not implemented");
-    return error;
+    is_vacant = false;
+    return Error("MIPS TODO: NativeRegisterContextLinux_mips64::IsWatchpointVacant not implemented");
 }
 
 bool

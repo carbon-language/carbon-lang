@@ -91,10 +91,10 @@ namespace lldb_private
         WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
 
         Error
-        IsWatchpointHit (uint8_t wp_index) override;
+        IsWatchpointHit (uint32_t wp_index, bool &is_hit) override;
 
         Error
-        IsWatchpointVacant (uint32_t wp_index) override;
+        IsWatchpointVacant (uint32_t wp_index, bool &is_vacant) override;
 
         bool
         ClearHardwareWatchpoint (uint32_t wp_index) override;

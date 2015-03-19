@@ -39,6 +39,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
+#include "lldb/Utility/LLDBAssert.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
@@ -2251,93 +2252,31 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
     }
 
     case 0:
-    case TRAP_TRACE:
-        // We receive this on single stepping.
-        if (log)
-            log->Printf ("NativeProcessLinux::%s() received trace event, pid = %" PRIu64 " (single stepping)", __FUNCTION__, pid);
-
+    case TRAP_TRACE:  // We receive this on single stepping.
+    case TRAP_HWBKPT: // We receive this on watchpoint hit
         if (thread_sp)
         {
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedByTrace ();
+            // If a watchpoint was hit, report it
+            uint32_t wp_index;
+            Error error = thread_sp->GetRegisterContext()->GetWatchpointHitIndex(wp_index);
+            if (error.Fail() && log)
+                log->Printf("NativeProcessLinux::%s() "
+                            "received error while checking for watchpoint hits, "
+                            "pid = %" PRIu64 " error = %s",
+                            __FUNCTION__, pid, error.AsCString());
+            if (wp_index != LLDB_INVALID_INDEX32)
+            {
+                MonitorWatchpoint(pid, thread_sp, wp_index);
+                break;
+            }
         }
-
-        // This thread is currently stopped.
-        NotifyThreadStop (pid);
-
-        // Here we don't have to request the rest of the threads to stop or request a deferred stop.
-        // This would have already happened at the time the Resume() with step operation was signaled.
-        // At this point, we just need to say we stopped, and the deferred notifcation will fire off
-        // once all running threads have checked in as stopped.
-        SetCurrentThreadID (pid);
-        // Tell the process we have a stop (from software breakpoint).
-        CallAfterRunningThreadsStop (pid,
-                                     [=] (lldb::tid_t signaling_tid)
-                                     {
-                                         SetState (StateType::eStateStopped, true);
-                                     });
+        // Otherwise, report step over
+        MonitorTrace(pid, thread_sp);
         break;
 
     case SI_KERNEL:
     case TRAP_BRKPT:
-        if (log)
-            log->Printf ("NativeProcessLinux::%s() received breakpoint event, pid = %" PRIu64, __FUNCTION__, pid);
-
-        // This thread is currently stopped.
-        NotifyThreadStop (pid);
-
-        // Mark the thread as stopped at breakpoint.
-        if (thread_sp)
-        {
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedByBreakpoint ();
-            Error error = FixupBreakpointPCAsNeeded (thread_sp);
-            if (error.Fail ())
-            {
-                if (log)
-                    log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 " fixup: %s", __FUNCTION__, pid, error.AsCString ());
-            }
-        }
-        else
-        {
-            if (log)
-                log->Printf ("NativeProcessLinux::%s()  pid = %" PRIu64 ": warning, cannot process software breakpoint since no thread metadata", __FUNCTION__, pid);
-        }
-
-
-        // We need to tell all other running threads before we notify the delegate about this stop.
-        CallAfterRunningThreadsStop (pid,
-                                     [=](lldb::tid_t deferred_notification_tid)
-                                     {
-                                         SetCurrentThreadID (deferred_notification_tid);
-                                         // Tell the process we have a stop (from software breakpoint).
-                                         SetState (StateType::eStateStopped, true);
-                                     });
-        break;
-
-    case TRAP_HWBKPT:
-        if (log)
-            log->Printf ("NativeProcessLinux::%s() received watchpoint event, pid = %" PRIu64, __FUNCTION__, pid);
-
-        // This thread is currently stopped.
-        NotifyThreadStop (pid);
-
-        // Mark the thread as stopped at watchpoint.
-        // The address is at (lldb::addr_t)info->si_addr if we need it.
-        if (thread_sp)
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedByWatchpoint ();
-        else
-        {
-            if (log)
-                log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " tid %" PRIu64 ": warning, cannot process hardware breakpoint since no thread metadata", __FUNCTION__, GetID (), pid);
-        }
-
-        // We need to tell all other running threads before we notify the delegate about this stop.
-        CallAfterRunningThreadsStop (pid,
-                                     [=](lldb::tid_t deferred_notification_tid)
-                                     {
-                                         SetCurrentThreadID (deferred_notification_tid);
-                                         // Tell the process we have a stop (from hardware breakpoint).
-                                         SetState (StateType::eStateStopped, true);
-                                     });
+        MonitorBreakpoint(pid, thread_sp);
         break;
 
     case SIGTRAP:
@@ -2368,6 +2307,98 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         break;
         
     }
+}
+
+void
+NativeProcessLinux::MonitorTrace(lldb::pid_t pid, NativeThreadProtocolSP thread_sp)
+{
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("NativeProcessLinux::%s() received trace event, pid = %" PRIu64 " (single stepping)",
+                __FUNCTION__, pid);
+
+    if (thread_sp)
+        std::static_pointer_cast<NativeThreadLinux>(thread_sp)->SetStoppedByTrace();
+
+    // This thread is currently stopped.
+    NotifyThreadStop(pid);
+
+    // Here we don't have to request the rest of the threads to stop or request a deferred stop.
+    // This would have already happened at the time the Resume() with step operation was signaled.
+    // At this point, we just need to say we stopped, and the deferred notifcation will fire off
+    // once all running threads have checked in as stopped.
+    SetCurrentThreadID(pid);
+    // Tell the process we have a stop (from software breakpoint).
+    CallAfterRunningThreadsStop(pid,
+                                [=](lldb::tid_t signaling_tid)
+                                {
+                                   SetState(StateType::eStateStopped, true);
+                                });
+}
+
+void
+NativeProcessLinux::MonitorBreakpoint(lldb::pid_t pid, NativeThreadProtocolSP thread_sp)
+{
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_BREAKPOINTS));
+    if (log)
+        log->Printf("NativeProcessLinux::%s() received breakpoint event, pid = %" PRIu64,
+                __FUNCTION__, pid);
+
+    // This thread is currently stopped.
+    NotifyThreadStop(pid);
+
+    // Mark the thread as stopped at breakpoint.
+    if (thread_sp)
+    {
+        std::static_pointer_cast<NativeThreadLinux>(thread_sp)->SetStoppedByBreakpoint();
+        Error error = FixupBreakpointPCAsNeeded(thread_sp);
+        if (error.Fail())
+            if (log)
+                log->Printf("NativeProcessLinux::%s() pid = %" PRIu64 " fixup: %s",
+                        __FUNCTION__, pid, error.AsCString());
+    }
+    else
+        if (log)
+            log->Printf("NativeProcessLinux::%s()  pid = %" PRIu64 ": "
+                    "warning, cannot process software breakpoint since no thread metadata",
+                    __FUNCTION__, pid);
+
+
+    // We need to tell all other running threads before we notify the delegate about this stop.
+    CallAfterRunningThreadsStop(pid,
+                                [=](lldb::tid_t deferred_notification_tid)
+                                {
+                                    SetCurrentThreadID(deferred_notification_tid);
+                                    // Tell the process we have a stop (from software breakpoint).
+                                    SetState(StateType::eStateStopped, true);
+                                });
+}
+
+void
+NativeProcessLinux::MonitorWatchpoint(lldb::pid_t pid, NativeThreadProtocolSP thread_sp, uint32_t wp_index)
+{
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf("NativeProcessLinux::%s() received watchpoint event, "
+                    "pid = %" PRIu64 ", wp_index = %" PRIu32,
+                    __FUNCTION__, pid, wp_index);
+
+    // This thread is currently stopped.
+    NotifyThreadStop(pid);
+
+    // Mark the thread as stopped at watchpoint.
+    // The address is at (lldb::addr_t)info->si_addr if we need it.
+    lldbassert(thread_sp && "thread_sp cannot be NULL");
+    std::static_pointer_cast<NativeThreadLinux>(thread_sp)->SetStoppedByWatchpoint(wp_index);
+
+    // We need to tell all other running threads before we notify the delegate about this stop.
+    CallAfterRunningThreadsStop(pid,
+                                [=](lldb::tid_t deferred_notification_tid)
+                                {
+                                    SetCurrentThreadID(deferred_notification_tid);
+                                    // Tell the process we have a stop (from watchpoint).
+                                    SetState(StateType::eStateStopped, true);
+                                });
 }
 
 void
