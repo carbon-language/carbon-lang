@@ -42,13 +42,15 @@ TargetMachine::TargetMachine(const Target &T, StringRef DataLayoutString,
                              const TargetOptions &Options)
     : TheTarget(T), DL(DataLayoutString), TargetTriple(TT), TargetCPU(CPU),
       TargetFS(FS), CodeGenInfo(nullptr), AsmInfo(nullptr), MRI(nullptr),
-      MII(nullptr), RequireStructuredCFG(false), Options(Options) {}
+      MII(nullptr), STI(nullptr), RequireStructuredCFG(false),
+      Options(Options) {}
 
 TargetMachine::~TargetMachine() {
   delete CodeGenInfo;
   delete AsmInfo;
   delete MRI;
   delete MII;
+  delete STI;
 }
 
 /// \brief Reset the target options based on the function's attributes.

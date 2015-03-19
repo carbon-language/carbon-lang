@@ -49,6 +49,12 @@ EnableFastISelOption("fast-isel", cl::Hidden,
 void LLVMTargetMachine::initAsmInfo() {
   MRI = TheTarget.createMCRegInfo(getTargetTriple());
   MII = TheTarget.createMCInstrInfo();
+  // FIXME: Having an MCSubtargetInfo on the target machine is a hack due
+  // to some backends having subtarget feature dependent module level
+  // code generation. This is similar to the hack in the AsmPrinter for
+  // module level assembly etc.
+  STI = TheTarget.createMCSubtargetInfo(getTargetTriple(), getTargetCPU(),
+                                        getTargetFeatureString());
 
   MCAsmInfo *TmpAsmInfo = TheTarget.createMCAsmInfo(*MRI, getTargetTriple());
   // TargetSelect.h moved to a different directory between LLVM 2.9 and 3.0,
@@ -163,7 +169,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (Options.MCOptions.MCSaveTempLabels)
     Context->setAllowTemporaryLabels(false);
 
-  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
+  const MCSubtargetInfo &STI = *getMCSubtargetInfo();
   const MCAsmInfo &MAI = *getMCAsmInfo();
   const MCRegisterInfo &MRI = *getMCRegisterInfo();
   const MCInstrInfo &MII = *getMCInstrInfo();
@@ -249,7 +255,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
     return true;
 
   Triple T(getTargetTriple());
-  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
+  const MCSubtargetInfo &STI = *getMCSubtargetInfo();
   std::unique_ptr<MCStreamer> AsmStreamer(getTarget().createMCObjectStreamer(
       T, *Ctx, *MAB, Out, MCE, STI, Options.MCOptions.MCRelaxAll));
 

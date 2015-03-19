@@ -32,6 +32,7 @@ class MCCodeGenInfo;
 class MCContext;
 class MCInstrInfo;
 class MCRegisterInfo;
+class MCSubtargetInfo;
 class MCSymbol;
 class Target;
 class DataLayout;
@@ -90,6 +91,7 @@ protected: // Can only create subclasses.
   const MCAsmInfo *AsmInfo;
   const MCRegisterInfo *MRI;
   const MCInstrInfo *MII;
+  const MCSubtargetInfo *STI;
 
   unsigned RequireStructuredCFG : 1;
 
@@ -140,6 +142,7 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return AsmInfo; }
   const MCRegisterInfo *getMCRegisterInfo() const { return MRI; }
   const MCInstrInfo *getMCInstrInfo() const { return MII; }
+  const MCSubtargetInfo *getMCSubtargetInfo() const { return STI; }
 
   /// getIntrinsicInfo - If intrinsic information is available, return it.  If
   /// not, return null.
