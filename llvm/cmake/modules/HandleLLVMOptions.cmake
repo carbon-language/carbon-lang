@@ -253,7 +253,9 @@ if( MSVC )
     -D_CRT_NONSTDC_NO_WARNINGS
     -D_SCL_SECURE_NO_DEPRECATE
     -D_SCL_SECURE_NO_WARNINGS
+    )
 
+  set(msvc_warning_flags
     # Disabled warnings.
     -wd4146 # Suppress 'unary minus operator applied to unsigned type, result still unsigned'
     -wd4180 # Suppress 'qualifier applied to function type has no meaning; ignored'
@@ -282,14 +284,19 @@ if( MSVC )
 
   # Enable warnings
   if (LLVM_ENABLE_WARNINGS)
-    add_llvm_definitions( /W4 )
+    append("/W4" msvc_warning_flags)
     if (LLVM_ENABLE_PEDANTIC)
       # No MSVC equivalent available
     endif (LLVM_ENABLE_PEDANTIC)
   endif (LLVM_ENABLE_WARNINGS)
   if (LLVM_ENABLE_WERROR)
-    add_llvm_definitions( /WX )
+    append("/WX" msvc_warning_flags)
   endif (LLVM_ENABLE_WERROR)
+
+  foreach(flag ${msvc_warning_flags})
+    append("${flag}" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+  endforeach(flag)
+
 elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
   if (LLVM_ENABLE_WARNINGS)
     append("-Wall -W -Wno-unused-parameter -Wwrite-strings" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
