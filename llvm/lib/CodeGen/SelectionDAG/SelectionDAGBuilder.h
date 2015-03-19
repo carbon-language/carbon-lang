@@ -137,19 +137,19 @@ private:
   /// Case - A struct to record the Value for a switch case, and the
   /// case's target basic block.
   struct Case {
-    const Constant *Low;
-    const Constant *High;
+    const ConstantInt *Low;
+    const ConstantInt *High;
     MachineBasicBlock* BB;
     uint32_t ExtraWeight;
 
     Case() : Low(nullptr), High(nullptr), BB(nullptr), ExtraWeight(0) { }
-    Case(const Constant *low, const Constant *high, MachineBasicBlock *bb,
+    Case(const ConstantInt *low, const ConstantInt *high, MachineBasicBlock *bb,
          uint32_t extraweight) : Low(low), High(high), BB(bb),
          ExtraWeight(extraweight) { }
 
     APInt size() const {
-      const APInt &rHigh = cast<ConstantInt>(High)->getValue();
-      const APInt &rLow  = cast<ConstantInt>(Low)->getValue();
+      const APInt &rHigh = High->getValue();
+      const APInt &rLow  = Low->getValue();
       return (rHigh - rLow + 1ULL);
     }
   };
@@ -173,7 +173,7 @@ private:
   /// CaseRec - A struct with ctor used in lowering switches to a binary tree
   /// of conditional branches.
   struct CaseRec {
-    CaseRec(MachineBasicBlock *bb, const Constant *lt, const Constant *ge,
+    CaseRec(MachineBasicBlock *bb, const ConstantInt *lt, const ConstantInt *ge,
             CaseRange r) :
     CaseBB(bb), LT(lt), GE(ge), Range(r) {}
 
@@ -181,8 +181,8 @@ private:
     MachineBasicBlock *CaseBB;
     /// LT, GE - If nonzero, we know the current case value must be less-than or
     /// greater-than-or-equal-to these Constants.
-    const Constant *LT;
-    const Constant *GE;
+    const ConstantInt *LT;
+    const ConstantInt *GE;
     /// Range - A pair of iterators representing the range of case values to be
     /// processed at this point in the binary search tree.
     CaseRange Range;
@@ -194,10 +194,7 @@ private:
   /// WARNING: Case ranges should be disjoint!
   struct CaseCmp {
     bool operator()(const Case &C1, const Case &C2) {
-      assert(isa<ConstantInt>(C1.Low) && isa<ConstantInt>(C2.High));
-      const ConstantInt* CI1 = cast<const ConstantInt>(C1.Low);
-      const ConstantInt* CI2 = cast<const ConstantInt>(C2.High);
-      return CI1->getValue().slt(CI2->getValue());
+      return C1.Low->getValue().slt(C2.High->getValue());
     }
   };
 

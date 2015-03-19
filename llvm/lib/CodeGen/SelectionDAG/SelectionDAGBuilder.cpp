@@ -1694,7 +1694,7 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB,
     assert(CB.CC == ISD::SETLE && "Can handle only LE ranges now");
 
     const APInt& Low = cast<ConstantInt>(CB.CmpLHS)->getValue();
-    const APInt& High  = cast<ConstantInt>(CB.CmpRHS)->getValue();
+    const APInt& High = cast<ConstantInt>(CB.CmpRHS)->getValue();
 
     SDValue CmpOp = getValue(CB.CmpMHS);
     EVT VT = CmpOp.getValueType();
@@ -2165,8 +2165,8 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
     Case &Big = *(CR.Range.second-1);
 
     if (Small.Low == Small.High && Big.Low == Big.High && Small.BB == Big.BB) {
-      const APInt& SmallValue = cast<ConstantInt>(Small.Low)->getValue();
-      const APInt& BigValue = cast<ConstantInt>(Big.Low)->getValue();
+      const APInt& SmallValue = Small.Low->getValue();
+      const APInt& BigValue = Big.Low->getValue();
 
       // Check that there is only one bit different.
       if (BigValue.countPopulation() == SmallValue.countPopulation() + 1 &&
@@ -2306,8 +2306,8 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
 
-  const APInt &First = cast<ConstantInt>(FrontCase.Low)->getValue();
-  const APInt &Last  = cast<ConstantInt>(BackCase.High)->getValue();
+  const APInt &First = FrontCase.Low->getValue();
+  const APInt &Last  = BackCase.High->getValue();
 
   APInt TSize(First.getBitWidth(), 0);
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I)
@@ -2357,8 +2357,8 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
   std::vector<MachineBasicBlock*> DestBBs;
   APInt TEI = First;
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++TEI) {
-    const APInt &Low = cast<ConstantInt>(I->Low)->getValue();
-    const APInt &High = cast<ConstantInt>(I->High)->getValue();
+    const APInt &Low = I->Low->getValue();
+    const APInt &High = I->High->getValue();
 
     if (Low.sle(TEI) && TEI.sle(High)) {
       DestBBs.push_back(I->BB);
@@ -2422,8 +2422,8 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
   // Size is the number of Cases represented by this range.
   unsigned Size = CR.Range.second - CR.Range.first;
 
-  const APInt &First = cast<ConstantInt>(FrontCase.Low)->getValue();
-  const APInt &Last  = cast<ConstantInt>(BackCase.High)->getValue();
+  const APInt &First = FrontCase.Low->getValue();
+  const APInt &Last  = BackCase.High->getValue();
   double FMetric = 0;
   CaseItr Pivot = CR.Range.first + Size/2;
 
@@ -2442,8 +2442,8 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
        J!=E; ++I, ++J) {
-    const APInt &LEnd = cast<ConstantInt>(I->High)->getValue();
-    const APInt &RBegin = cast<ConstantInt>(J->Low)->getValue();
+    const APInt &LEnd = I->High->getValue();
+    const APInt &RBegin = J->Low->getValue();
     APInt Range = ComputeRange(LEnd, RBegin);
     assert((Range - 2ULL).isNonNegative() &&
            "Invalid case distance");
@@ -2498,7 +2498,7 @@ void SelectionDAGBuilder::splitSwitchCase(CaseRec &CR, CaseItr Pivot,
 
   CaseRange LHSR(CR.Range.first, Pivot);
   CaseRange RHSR(Pivot, CR.Range.second);
-  const Constant *C = Pivot->Low;
+  const ConstantInt *C = Pivot->Low;
   MachineBasicBlock *FalseBB = nullptr, *TrueBB = nullptr;
 
   // We know that we branch to the LHS if the Value being switched on is
@@ -2508,8 +2508,7 @@ void SelectionDAGBuilder::splitSwitchCase(CaseRec &CR, CaseItr Pivot,
   // Pivot's Value, then we can branch directly to the LHS's Target,
   // rather than creating a leaf node for it.
   if ((LHSR.second - LHSR.first) == 1 && LHSR.first->High == CR.GE &&
-      cast<ConstantInt>(C)->getValue() ==
-          (cast<ConstantInt>(CR.GE)->getValue() + 1LL)) {
+      C->getValue() == (CR.GE->getValue() + 1LL)) {
     TrueBB = LHSR.first->BB;
   } else {
     TrueBB = CurMF->CreateMachineBasicBlock(LLVMBB);
@@ -2525,8 +2524,7 @@ void SelectionDAGBuilder::splitSwitchCase(CaseRec &CR, CaseItr Pivot,
   // is CR.LT - 1, then we can branch directly to the target block for
   // the current Case Value, rather than emitting a RHS leaf node for it.
   if ((RHSR.second - RHSR.first) == 1 && CR.LT &&
-      cast<ConstantInt>(RHSR.first->Low)->getValue() ==
-          (cast<ConstantInt>(CR.LT)->getValue() - 1LL)) {
+      RHSR.first->Low->getValue() == (CR.LT->getValue() - 1LL)) {
     FalseBB = RHSR.first->BB;
   } else {
     FalseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
@@ -2590,8 +2588,8 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
         << "Total number of comparisons: " << numCmps << '\n');
 
   // Compute span of values.
-  const APInt& minValue = cast<ConstantInt>(FrontCase.Low)->getValue();
-  const APInt& maxValue = cast<ConstantInt>(BackCase.High)->getValue();
+  const APInt& minValue = FrontCase.Low->getValue();
+  const APInt& maxValue = BackCase.High->getValue();
   APInt cmpRange = maxValue - minValue;
 
   DEBUG(dbgs() << "Compare range: " << cmpRange << '\n'
@@ -2631,8 +2629,8 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
       count++;
     }
 
-    const APInt& lowValue = cast<ConstantInt>(I->Low)->getValue();
-    const APInt& highValue = cast<ConstantInt>(I->High)->getValue();
+    const APInt& lowValue = I->Low->getValue();
+    const APInt& highValue = I->High->getValue();
 
     uint64_t lo = (lowValue - lowBound).getZExtValue();
     uint64_t hi = (highValue - lowBound).getZExtValue();
@@ -2705,8 +2703,8 @@ void SelectionDAGBuilder::Clusterify(CaseVector& Cases,
     // invalidated by erase if we hold on to it
     for (CaseItr I = Cases.begin(), J = std::next(Cases.begin());
          J != Cases.end(); ) {
-      const APInt& nextValue = cast<ConstantInt>(J->Low)->getValue();
-      const APInt& currentValue = cast<ConstantInt>(I->High)->getValue();
+      const APInt& nextValue = J->Low->getValue();
+      const APInt& currentValue = I->High->getValue();
       MachineBasicBlock* nextBB = J->BB;
       MachineBasicBlock* currentBB = I->BB;
 
