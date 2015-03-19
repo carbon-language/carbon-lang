@@ -172,7 +172,8 @@ inline int define_lambda() {
 // CHECK-DAG: @"\01??R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ"
 // Finally, we have the local which is inside of "<lambda_1>" which is inside of
 // "define_lambda". Hooray.
-// CHECK-DAG: @"\01?local@?2???R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ@4HA"
+// MSVC2013-DAG: @"\01?local@?2???R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ@4HA"
+// MSVC2015-DAG: @"\01?local@?1???R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ@4HA"
   return lambda();
 }
 

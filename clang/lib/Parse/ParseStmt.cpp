@@ -1268,7 +1268,7 @@ StmtResult Parser::ParseSwitchStatement(SourceLocation *TrailingElseLoc) {
   // We have incremented the mangling number for the SwitchScope and the
   // InnerScope, which is one too many.
   if (C99orCXX)
-    getCurScope()->decrementMSLocalManglingNumber();
+    getCurScope()->decrementMSManglingNumber();
 
   // Read the body statement.
   StmtResult Body(ParseStatement(TrailingElseLoc));
@@ -1710,7 +1710,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   // It will only be incremented if the body contains other things that would
   // normally increment the mangling number (like a compound statement).
   if (C99orCXXorObjC)
-    getCurScope()->decrementMSLocalManglingNumber();
+    getCurScope()->decrementMSManglingNumber();
 
   // Read the body statement.
   StmtResult Body(ParseStatement(TrailingElseLoc));

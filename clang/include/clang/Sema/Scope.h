@@ -139,7 +139,9 @@ private:
 
   /// \brief Declarations with static linkage are mangled with the number of
   /// scopes seen as a component.
-  unsigned short MSLocalManglingNumber;
+  unsigned short MSLastManglingNumber;
+
+  unsigned short MSCurManglingNumber;
 
   /// PrototypeDepth - This is the number of function prototype scopes
   /// enclosing this scope, including this scope.
@@ -152,7 +154,7 @@ private:
   /// FnParent - If this scope has a parent scope that is a function body, this
   /// pointer is non-null and points to it.  This is used for label processing.
   Scope *FnParent;
-  Scope *MSLocalManglingParent;
+  Scope *MSLastManglingParent;
 
   /// BreakParent/ContinueParent - This is a direct link to the innermost
   /// BreakScope/ContinueScope which contains the contents of this scope
@@ -218,10 +220,10 @@ public:
   const Scope *getFnParent() const { return FnParent; }
   Scope *getFnParent() { return FnParent; }
 
-  const Scope *getMSLocalManglingParent() const {
-    return MSLocalManglingParent;
+  const Scope *getMSLastManglingParent() const {
+    return MSLastManglingParent;
   }
-  Scope *getMSLocalManglingParent() { return MSLocalManglingParent; }
+  Scope *getMSLastManglingParent() { return MSLastManglingParent; }
 
   /// getContinueParent - Return the closest scope that a continue statement
   /// would be affected by.
@@ -275,20 +277,28 @@ public:
     DeclsInScope.erase(D);
   }
 
-  void incrementMSLocalManglingNumber() {
-    if (Scope *MSLMP = getMSLocalManglingParent())
-      MSLMP->MSLocalManglingNumber += 1;
+  void incrementMSManglingNumber() {
+    if (Scope *MSLMP = getMSLastManglingParent()) {
+      MSLMP->MSLastManglingNumber += 1;
+      MSCurManglingNumber += 1;
+    }
   }
 
-  void decrementMSLocalManglingNumber() {
-    if (Scope *MSLMP = getMSLocalManglingParent())
-      MSLMP->MSLocalManglingNumber -= 1;
+  void decrementMSManglingNumber() {
+    if (Scope *MSLMP = getMSLastManglingParent()) {
+      MSLMP->MSLastManglingNumber -= 1;
+      MSCurManglingNumber -= 1;
+    }
   }
 
-  unsigned getMSLocalManglingNumber() const {
-    if (const Scope *MSLMP = getMSLocalManglingParent())
-      return MSLMP->MSLocalManglingNumber;
+  unsigned getMSLastManglingNumber() const {
+    if (const Scope *MSLMP = getMSLastManglingParent())
+      return MSLMP->MSLastManglingNumber;
     return 1;
+  }
+
+  unsigned getMSCurManglingNumber() const {
+    return MSCurManglingNumber;
   }
 
   /// isDeclScope - Return true if this is the scope that the specified decl is

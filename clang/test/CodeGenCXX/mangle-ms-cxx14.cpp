@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -std=c++1y -fms-extensions -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -std=c++1y -fms-extensions -emit-llvm %s -o - -triple=i386-pc-win32 -fms-compatibility-version=19.00 | FileCheck %s --check-prefix=CHECK --check-prefix=MSVC2015
+// RUN: %clang_cc1 -std=c++1y -fms-extensions -emit-llvm %s -o - -triple=i386-pc-win32 -fms-compatibility-version=18.00 | FileCheck %s --check-prefix=CHECK --check-prefix=MSVC2013
 
 template <typename> int x = 0;
 
@@ -34,7 +35,10 @@ auto TemplateFuncionWithLocalLambda(T) {
   return LocalLambdaWithLocalType();
 }
 
-// CHECK: "\01?ValueFromTemplateFuncionWithLocalLambda@@3ULocalType@?2???R<lambda_1>@??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z@QBA?A?3@XZ@A"
+// MSVC2013-DAG: "\01?ValueFromTemplateFuncionWithLocalLambda@@3ULocalType@?2???R<lambda_1>@??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z@QBA?A?3@XZ@A"
+// MSVC2013-DAG: "\01?ValueFromTemplateFuncionWithLocalLambda@@3ULocalType@?2???R<lambda_1>@??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z@QBA?A?3@XZ@A"
+// MSVC2015-DAG: "\01?ValueFromTemplateFuncionWithLocalLambda@@3ULocalType@?1???R<lambda_1>@??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z@QBA?A?3@XZ@A"
+// MSVC2015-DAG: "\01?ValueFromTemplateFuncionWithLocalLambda@@3ULocalType@?1???R<lambda_1>@??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z@QBA?A?3@XZ@A"
 // CHECK: "\01??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z"
 // CHECK: "\01??R<lambda_1>@??$TemplateFuncionWithLocalLambda@H@@YA?A?<auto>@@H@Z@QBA?A?1@XZ"
 auto ValueFromTemplateFuncionWithLocalLambda = TemplateFuncionWithLocalLambda(0);
