@@ -207,7 +207,7 @@ public:
   /// this, particularly to support spilled vector registers.
   virtual bool getStackSlotRange(const TargetRegisterClass *RC, unsigned SubIdx,
                                  unsigned &Size, unsigned &Offset,
-                                 const TargetMachine *TM) const;
+                                 const MachineFunction &MF) const;
 
   /// isAsCheapAsAMove - Return true if the instruction is as cheap as a move
   /// instruction.

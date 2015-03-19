@@ -285,21 +285,20 @@ bool TargetInstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
 bool TargetInstrInfo::getStackSlotRange(const TargetRegisterClass *RC,
                                         unsigned SubIdx, unsigned &Size,
                                         unsigned &Offset,
-                                        const TargetMachine *TM) const {
+                                        const MachineFunction &MF) const {
   if (!SubIdx) {
     Size = RC->getSize();
     Offset = 0;
     return true;
   }
-  unsigned BitSize =
-      TM->getSubtargetImpl()->getRegisterInfo()->getSubRegIdxSize(SubIdx);
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  unsigned BitSize = TRI->getSubRegIdxSize(SubIdx);
   // Convert bit size to byte size to be consistent with
   // MCRegisterClass::getSize().
   if (BitSize % 8)
     return false;
 
-  int BitOffset =
-      TM->getSubtargetImpl()->getRegisterInfo()->getSubRegIdxOffset(SubIdx);
+  int BitOffset = TRI->getSubRegIdxOffset(SubIdx);
   if (BitOffset < 0 || BitOffset % 8)
     return false;
 
@@ -308,7 +307,7 @@ bool TargetInstrInfo::getStackSlotRange(const TargetRegisterClass *RC,
 
   assert(RC->getSize() >= (Offset + Size) && "bad subregister range");
 
-  if (!TM->getDataLayout()->isLittleEndian()) {
+  if (!MF.getTarget().getDataLayout()->isLittleEndian()) {
     Offset = RC->getSize() - (Offset + Size);
   }
   return true;
@@ -423,8 +422,8 @@ static MachineInstr *foldPatchpoint(MachineFunction &MF, MachineInstr *MI,
       // Compute the spill slot size and offset.
       const TargetRegisterClass *RC =
         MF.getRegInfo().getRegClass(MO.getReg());
-      bool Valid = TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize,
-                                         SpillOffset, &MF.getTarget());
+      bool Valid =
+          TII.getStackSlotRange(RC, MO.getSubReg(), SpillSize, SpillOffset, MF);
       if (!Valid)
         report_fatal_error("cannot spill patchpoint subregister operand");
       MIB.addImm(StackMaps::IndirectMemRefOp);
