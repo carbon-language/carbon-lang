@@ -55,51 +55,51 @@ template <class C>
 void
 print_stack(const C& db)
 {
-    printf("---------\n");
-    printf("names:\n");
+    fprintf(stderr, "---------\n");
+    fprintf(stderr, "names:\n");
     for (auto& s : db.names)
-        printf("{%s#%s}\n", s.first.c_str(), s.second.c_str());
+        fprintf(stderr, "{%s#%s}\n", s.first.c_str(), s.second.c_str());
     int i = -1;
-    printf("subs:\n");
+    fprintf(stderr, "subs:\n");
     for (auto& v : db.subs)
     {
         if (i >= 0)
-            printf("S%i_ = {", i);
+            fprintf(stderr, "S%i_ = {", i);
         else
-            printf("S_  = {");
+            fprintf(stderr, "S_  = {");
         for (auto& s : v)
-            printf("{%s#%s}", s.first.c_str(), s.second.c_str());
-        printf("}\n");
+            fprintf(stderr, "{%s#%s}", s.first.c_str(), s.second.c_str());
+        fprintf(stderr, "}\n");
         ++i;
     }
-    printf("template_param:\n");
+    fprintf(stderr, "template_param:\n");
     for (auto& t : db.template_param)
     {
-        printf("--\n");
+        fprintf(stderr, "--\n");
         i = -1;
         for (auto& v : t)
         {
             if (i >= 0)
-                printf("T%i_ = {", i);
+                fprintf(stderr, "T%i_ = {", i);
             else
-                printf("T_  = {");
+                fprintf(stderr, "T_  = {");
             for (auto& s : v)
-                printf("{%s#%s}", s.first.c_str(), s.second.c_str());
-            printf("}\n");
+                fprintf(stderr, "{%s#%s}", s.first.c_str(), s.second.c_str());
+            fprintf(stderr, "}\n");
             ++i;
         }
     }
-    printf("---------\n\n");
+    fprintf(stderr, "---------\n\n");
 }
 
 template <class C>
 void
 print_state(const char* msg, const char* first, const char* last, const C& db)
 {
-    printf("%s: ", msg);
+    fprintf(stderr, "%s: ", msg);
     for (; first != last; ++first)
-        printf("%c", *first);
-    printf("\n");
+        fprintf(stderr, "%c", *first);
+    fprintf(stderr, "\n");
     print_stack(db);
 }
 
