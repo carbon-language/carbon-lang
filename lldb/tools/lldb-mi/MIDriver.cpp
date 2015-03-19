@@ -529,17 +529,18 @@ CMIDriver::DoMainLoop(void)
     if (!StartWorkerThreads())
         return MIstatus::failure;
 
-    // App is not quitting currently
-    m_bExitApp = false;
-
     if (HaveExecutableFileNamePathOnCmdLine())
     {
         if (!LocalDebugSessionStartupExecuteCommands())
         {
+            StopWorkerThreads();
             SetErrorDescription(MIRSRC(IDS_MI_INIT_ERR_LOCAL_DEBUG_SESSION));
             return MIstatus::failure;
         }
     }
+
+    // App is not quitting currently
+    m_bExitApp = false;
 
     // While the app is active
     while (!m_bExitApp)
