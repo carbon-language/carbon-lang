@@ -51,9 +51,6 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_DRIVERMGR_DRIVER_ERR_INIT, "Driver Manager. Driver '%s' (ID:'%s') initialise failed. %s"},
     {IDE_MEDIUMSTDERR_NAME, "Stderr"},
     {IDE_MEDIUMSTDOUT_NAME, "Stdout"},
-    {IDE_MI_APP_EXIT_OK, "Program exited OK"},
-    {IDE_MI_APP_EXIT_WITH_PROBLEM, "Program exited with a problem, see '%s' file"},
-    {IDE_MI_APP_EXIT_WITH_PROBLEM_NO_LOG, "Program exited with a problem, the application's log file '%s' was disabled"},
     {IDE_MI_APP_DESCRIPTION, "Description:\nThe Machine Interface Driver (MI Driver) is a stand alone executable\nthat either be used via "
                              "a client i.e. Eclipse or directly from the command\nline. It processes MI commands, actions those commands "
                              "using the internal\ndebugger then forms MI response formatted text which is returned to the\nclient."},

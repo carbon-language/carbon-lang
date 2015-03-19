@@ -104,37 +104,10 @@ CMIDriverMgr::Shutdown(void)
     // if( --m_clientUsageRefCnt > 0 )
     //  return MIstatus::success;
 
-    bool vbAppExitOk = true;
-
     ClrErrorDescription();
 
     if (!m_bInitialized)
         return MIstatus::success;
-
-    if (vbAppExitOk)
-    {
-#if _DEBUG
-        CMICmnStreamStdout::Instance().Write(MIRSRC(IDE_MI_APP_EXIT_OK)); // Both stdout and Log
-#else
-        CMICmnLog::WriteLog(MIRSRC(IDE_MI_APP_EXIT_OK)); // Just to the Log
-#endif // _DEBUG
-    }
-    else
-    {
-        CMICmnLog &rAppLog = CMICmnLog::Instance();
-        if (rAppLog.GetEnabled())
-        {
-            const CMIUtilString msg(
-                CMIUtilString::Format(MIRSRC(IDE_MI_APP_EXIT_WITH_PROBLEM), CMICmnLogMediumFile::Instance().GetFileName().c_str()));
-            CMICmnStreamStdout::Instance().Write(msg);
-        }
-        else
-        {
-            const CMIUtilString msg(
-                CMIUtilString::Format(MIRSRC(IDE_MI_APP_EXIT_WITH_PROBLEM_NO_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()));
-            CMICmnStreamStdout::Instance().Write(msg);
-        }
-    }
 
     m_bInitialized = false;
 
