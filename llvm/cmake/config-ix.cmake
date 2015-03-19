@@ -532,6 +532,10 @@ if(GOLD_EXECUTABLE)
 		"PATH to binutils/include containing plugin-api.h for gold plugin.")
 endif()
 
+if(APPLE)
+  find_program(LD64_EXECUTABLE NAMES ld DOC "The ld64 linker")
+endif()
+
 include(FindOCaml)
 include(AddOCaml)
 if(WIN32)
