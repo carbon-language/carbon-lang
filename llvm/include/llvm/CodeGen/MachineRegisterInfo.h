@@ -182,7 +182,18 @@ public:
   /// information.
   void invalidateLiveness() { TracksLiveness = false; }
 
-  bool tracksSubRegLiveness() const { return TracksSubRegLiveness; }
+  /// Returns true if liveness for register class @p RC should be tracked at
+  /// the subregister level.
+  bool shouldTrackSubRegLiveness(const TargetRegisterClass &RC) const {
+    return subRegLivenessEnabled() && RC.HasDisjunctSubRegs;
+  }
+  bool shouldTrackSubRegLiveness(unsigned VReg) const {
+    assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Must pass a VReg");
+    return shouldTrackSubRegLiveness(*getRegClass(VReg));
+  }
+  bool subRegLivenessEnabled() const {
+    return TracksSubRegLiveness;
+  }
 
   void enableSubRegLiveness(bool Enable = true) {
     TracksSubRegLiveness = Enable;

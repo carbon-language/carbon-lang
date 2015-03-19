@@ -108,6 +108,7 @@ CodeGenRegister::CodeGenRegister(Record *R, unsigned Enum)
     EnumValue(Enum),
     CostPerUse(R->getValueAsInt("CostPerUse")),
     CoveredBySubRegs(R->getValueAsBit("CoveredBySubRegs")),
+    HasDisjunctSubRegs(false),
     SubRegsComplete(false),
     SuperRegsComplete(false),
     TopoSig(~0u)
@@ -217,6 +218,8 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     return SubRegs;
   SubRegsComplete = true;
 
+  HasDisjunctSubRegs = ExplicitSubRegs.size() > 1;
+
   // First insert the explicit subregs and make sure they are fully indexed.
   for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
     CodeGenRegister *SR = ExplicitSubRegs[i];
@@ -237,6 +240,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
     CodeGenRegister *SR = ExplicitSubRegs[i];
     const SubRegMap &Map = SR->computeSubRegs(RegBank);
+    HasDisjunctSubRegs |= SR->HasDisjunctSubRegs;
 
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
          ++SI) {
@@ -1802,6 +1806,13 @@ void CodeGenRegBank::computeDerivedInfo() {
   computeRegUnitSets();
 
   computeRegUnitLaneMasks();
+
+  // Compute register class HasDisjunctSubRegs flag.
+  for (CodeGenRegisterClass &RC : RegClasses) {
+    RC.HasDisjunctSubRegs = false;
+    for (const CodeGenRegister *Reg : RC.getMembers())
+      RC.HasDisjunctSubRegs |= Reg->HasDisjunctSubRegs;
+  }
 
   // Get the weight of each set.
   for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx)

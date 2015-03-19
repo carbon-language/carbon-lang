@@ -187,7 +187,7 @@ public:
   /// Calculates liveness for the register specified in live interval @p LI.
   /// Creates subregister live ranges as needed if subreg liveness tracking is
   /// enabled.
-  void calculate(LiveInterval &LI);
+  void calculate(LiveInterval &LI, bool TrackSubRegs);
 
   //===--------------------------------------------------------------------===//
   // Low-level interface.

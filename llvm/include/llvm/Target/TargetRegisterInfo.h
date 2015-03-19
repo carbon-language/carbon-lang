@@ -46,6 +46,8 @@ public:
   const uint32_t *SubClassMask;
   const uint16_t *SuperRegIndices;
   const unsigned LaneMask;
+  /// Whether the class supports two (or more) disjunct subregister indices.
+  const bool HasDisjunctSubRegs;
   const sc_iterator SuperClasses;
   ArrayRef<MCPhysReg> (*OrderFunc)(const MachineFunction&);
 
@@ -357,13 +359,13 @@ public:
   ///
   /// then:
   ///
-  ///   getSubRegIndexLaneMask(A) & getSubRegIndexLaneMask(B) != 0
+  ///   (getSubRegIndexLaneMask(A) & getSubRegIndexLaneMask(B)) != 0
   ///
   /// The converse is not necessarily true. If two lane masks have a common
   /// bit, the corresponding sub-registers may not overlap, but it can be
   /// assumed that they usually will.
+  /// SubIdx == 0 is allowed, it has the lane mask ~0u.
   unsigned getSubRegIndexLaneMask(unsigned SubIdx) const {
-    // SubIdx == 0 is allowed, it has the lane mask ~0u.
     assert(SubIdx < getNumSubRegIndices() && "This is not a subregister index");
     return SubRegIndexLaneMasks[SubIdx];
   }

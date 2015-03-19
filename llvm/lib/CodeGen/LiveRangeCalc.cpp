@@ -50,7 +50,7 @@ static void createDeadDef(SlotIndexes &Indexes, VNInfo::Allocator &Alloc,
     LR.createDeadDef(DefIdx, Alloc);
 }
 
-void LiveRangeCalc::calculate(LiveInterval &LI) {
+void LiveRangeCalc::calculate(LiveInterval &LI, bool TrackSubRegs) {
   assert(MRI && Indexes && "call reset() first");
 
   // Step 1: Create minimal live segments for every definition of Reg.
@@ -63,7 +63,7 @@ void LiveRangeCalc::calculate(LiveInterval &LI) {
       continue;
 
     unsigned SubReg = MO.getSubReg();
-    if (LI.hasSubRanges() || (SubReg != 0 && MRI->tracksSubRegLiveness())) {
+    if (LI.hasSubRanges() || (SubReg != 0 && TrackSubRegs)) {
       unsigned Mask = SubReg != 0 ? TRI.getSubRegIndexLaneMask(SubReg)
                                   : MRI->getMaxLaneMaskForVReg(Reg);
 

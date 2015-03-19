@@ -199,7 +199,7 @@ void LiveIntervals::computeVirtRegInterval(LiveInterval &LI) {
   assert(LRCalc && "LRCalc not initialized.");
   assert(LI.empty() && "Should only compute empty intervals.");
   LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
-  LRCalc->calculate(LI);
+  LRCalc->calculate(LI, MRI->shouldTrackSubRegLiveness(LI.reg));
   computeDeadValues(LI, nullptr);
 }
 
@@ -466,7 +466,7 @@ bool LiveIntervals::computeDeadValues(LiveInterval &LI,
 
     // Is the register live before? Otherwise we may have to add a read-undef
     // flag for subregister defs.
-    if (MRI->tracksSubRegLiveness()) {
+    if (MRI->shouldTrackSubRegLiveness(LI.reg)) {
       if ((I == LI.begin() || std::prev(I)->end < Def) && !VNI->isPHIDef()) {
         MachineInstr *MI = getInstructionFromIndex(Def);
         MI->addRegisterDefReadUndef(LI.reg);
@@ -662,7 +662,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       RU.push_back(std::make_pair(&RURange, RURange.find(LI.begin()->end)));
     }
 
-    if (MRI->tracksSubRegLiveness()) {
+    if (MRI->subRegLivenessEnabled()) {
       SRs.clear();
       for (const LiveInterval::SubRange &SR : LI.subranges()) {
         SRs.push_back(std::make_pair(&SR, SR.find(LI.begin()->end)));
@@ -700,7 +700,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
         goto CancelKill;
       }
 
-      if (MRI->tracksSubRegLiveness()) {
+      if (MRI->subRegLivenessEnabled()) {
         // When reading a partial undefined value we must not add a kill flag.
         // The regalloc might have used the undef lane for something else.
         // Example:

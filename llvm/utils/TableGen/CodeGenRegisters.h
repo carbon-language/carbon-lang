@@ -129,6 +129,7 @@ namespace llvm {
     unsigned EnumValue;
     unsigned CostPerUse;
     bool CoveredBySubRegs;
+    bool HasDisjunctSubRegs;
 
     // Map SubRegIndex -> Register.
     typedef std::map<CodeGenSubRegIndex *, CodeGenRegister *, deref<llvm::less>>
@@ -307,6 +308,8 @@ namespace llvm {
     std::string AltOrderSelect;
     /// Contains the combination of the lane masks of all subregisters.
     unsigned LaneMask;
+    /// True if there are at least 2 subregisters which do not interfere.
+    bool HasDisjunctSubRegs;
 
     // Return the Record that defined this class, or NULL if the class was
     // created by TableGen.

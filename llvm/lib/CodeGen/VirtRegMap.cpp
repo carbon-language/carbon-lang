@@ -286,7 +286,7 @@ void VirtRegRewriter::addMBBLiveIns() {
 }
 
 void VirtRegRewriter::rewrite() {
-  bool NoSubRegLiveness = !MRI->tracksSubRegLiveness();
+  bool NoSubRegLiveness = !MRI->subRegLivenessEnabled();
   SmallVector<unsigned, 8> SuperDeads;
   SmallVector<unsigned, 8> SuperDefs;
   SmallVector<unsigned, 8> SuperKills;
