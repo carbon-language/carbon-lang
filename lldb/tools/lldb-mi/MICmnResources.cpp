@@ -86,7 +86,6 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMDFACTORY_ERR_CMD_ALREADY_REGED, "Command factory. Command '%s' by that name already registered"},
     {IDS_CMDMGR_ERR_CMD_FAILED_CREATE, "Command manager. Command creation failed. %s"},
     {IDS_CMDMGR_ERR_CMD_INVOKER, "Command manager. %s "},
-    {IDS_PROCESS_SIGNAL_RECEIVED, "Process signal. Application received signal '%s' (%d)"},
     {IDS_MI_INIT_ERR_LOG, "Log. Error occurred during initialisation %s"},
     {IDS_MI_INIT_ERR_RESOURCES, "Resources. Error occurred during initialisation %s"},
     {IDS_MI_INIT_ERR_INIT, "Driver. Error occurred during initialisation %s"},

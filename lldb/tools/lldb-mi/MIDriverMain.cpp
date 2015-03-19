@@ -39,7 +39,6 @@
 #include "MICmnResources.h"
 #include "MICmnStreamStdin.h"
 #include "MIUtilDebug.h"
-#include "MICmnLog.h"
 
 
 #if defined(_MSC_VER)
@@ -76,8 +75,6 @@ sigint_handler(int vSigno)
             g_interrupt_sent = false;
         }
     }
-
-    CMICmnLog::Instance().WriteLog(CMIUtilString::Format(MIRSRC(IDS_PROCESS_SIGNAL_RECEIVED), "SIGINT", vSigno));
 
     // Send signal to driver so that it can take suitable action
     rDriverMgr.DeliverSignal (vSigno);
