@@ -190,8 +190,9 @@ private:
   /// DimToVectorize can be divided by VectorWidth. The default VectorWidth is
   /// currently constant and not yet target specific. This function does not
   /// reason about parallelism.
-  static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
-                                  int ScheduleDimensions, int VectorWidth = 4);
+  static __isl_give isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
+                                             int ScheduleDimensions,
+                                             int VectorWidth = 4);
 
   /// @brief Get the scheduling map for a list of bands.
   ///
@@ -200,7 +201,8 @@ private:
   /// the individual bands are tiled.
   static isl_union_map *getScheduleForBandList(isl_band_list *BandList);
 
-  static isl_union_map *getScheduleMap(isl_schedule *Schedule);
+  static __isl_give isl_union_map *
+  getScheduleMap(__isl_keep isl_schedule *Schedule);
 
   using llvm::Pass::doFinalization;
 
@@ -326,9 +328,9 @@ isl_union_map *IslScheduleOptimizer::getScheduleForBand(isl_band *Band,
   return isl_union_map_apply_range(PartialSchedule, TileUMap);
 }
 
-isl_map *IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
-                                               int ScheduleDimensions,
-                                               int VectorWidth) {
+__isl_give isl_map *
+IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
+                                      int ScheduleDimensions, int VectorWidth) {
   isl_space *Space;
   isl_local_space *LocalSpace, *LocalSpaceRange;
   isl_set *Modulo;
@@ -448,7 +450,8 @@ IslScheduleOptimizer::getScheduleForBandList(isl_band_list *BandList) {
   return Schedule;
 }
 
-isl_union_map *IslScheduleOptimizer::getScheduleMap(isl_schedule *Schedule) {
+__isl_give isl_union_map *
+IslScheduleOptimizer::getScheduleMap(__isl_keep isl_schedule *Schedule) {
   isl_band_list *BandList = isl_schedule_get_band_forest(Schedule);
   isl_union_map *ScheduleMap = getScheduleForBandList(BandList);
   isl_band_list_free(BandList);
