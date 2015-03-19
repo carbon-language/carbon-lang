@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PrologEpilogInserter.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
@@ -28,6 +27,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/StackProtector.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -47,6 +47,53 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "pei"
+
+namespace {
+class PEI : public MachineFunctionPass {
+public:
+  static char ID;
+  PEI() : MachineFunctionPass(ID) {
+    initializePEIPass(*PassRegistry::getPassRegistry());
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+  /// runOnMachineFunction - Insert prolog/epilog code and replace abstract
+  /// frame indexes with appropriate references.
+  ///
+  bool runOnMachineFunction(MachineFunction &Fn) override;
+
+private:
+  RegScavenger *RS;
+
+  // MinCSFrameIndex, MaxCSFrameIndex - Keeps the range of callee saved
+  // stack frame indexes.
+  unsigned MinCSFrameIndex, MaxCSFrameIndex;
+
+  // Entry and return blocks of the current function.
+  MachineBasicBlock *EntryBlock;
+  SmallVector<MachineBasicBlock *, 4> ReturnBlocks;
+
+  // Flag to control whether to use the register scavenger to resolve
+  // frame index materialization registers. Set according to
+  // TRI->requiresFrameIndexScavenging() for the current function.
+  bool FrameIndexVirtualScavenging;
+
+  void calculateSets(MachineFunction &Fn);
+  void calculateCallsInformation(MachineFunction &Fn);
+  void calculateCalleeSavedRegisters(MachineFunction &Fn);
+  void insertCSRSpillsAndRestores(MachineFunction &Fn);
+  void calculateFrameObjectOffsets(MachineFunction &Fn);
+  void replaceFrameIndices(MachineFunction &Fn);
+  void replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
+                           int &SPAdj);
+  void scavengeFrameVirtualRegs(MachineFunction &Fn);
+  void insertPrologEpilogCode(MachineFunction &Fn);
+
+  // Convenience for recognizing return blocks.
+  bool isReturnBlock(MachineBasicBlock *MBB);
+};
+} // namespace
 
 char PEI::ID = 0;
 char &llvm::PrologEpilogCodeInserterID = PEI::ID;
