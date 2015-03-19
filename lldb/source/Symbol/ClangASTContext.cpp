@@ -144,6 +144,7 @@ ParseLangArgs
                 LangStd = LangStandard::lang_opencl;
                 break;
             case IK_CUDA:
+            case IK_PreprocessedCuda:
                 LangStd = LangStandard::lang_cuda;
                 break;
             case IK_Asm:
