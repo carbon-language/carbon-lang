@@ -55,3 +55,13 @@ void TestAllocationExprs() {
 // CHECK: CXXDeleteExpr {{.*}} 'void' array Function {{.*}} 'operator delete[]'
 // CHECK: CXXNewExpr {{.*}} 'int *' global Function {{.*}} 'operator new'
 // CHECK: CXXDeleteExpr {{.*}} 'void' global Function {{.*}} 'operator delete'
+
+// Don't crash on dependent exprs that haven't been resolved yet.
+template <typename T>
+void TestDependentAllocationExpr() {
+  T *p = new T;
+  delete p;
+}
+// CHECK: FunctionTemplateDecl {{.*}} TestDependentAllocationExpr
+// CHECK: CXXNewExpr {{.*'T \*'$}}
+// CHECK: CXXDeleteExpr {{.*'void'$}}

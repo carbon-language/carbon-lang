@@ -1921,24 +1921,28 @@ void ASTDumper::VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *Node) {
 
 void ASTDumper::VisitCXXNewExpr(const CXXNewExpr *Node) {
   VisitExpr(Node);
-  OS << ' ';
   if (Node->isGlobalNew())
-    OS << "global ";
+    OS << " global";
   if (Node->isArray())
-    OS << "array ";
-  dumpBareDeclRef(Node->getOperatorNew());
+    OS << " array";
+  if (Node->getOperatorNew()) {
+    OS << ' ';
+    dumpBareDeclRef(Node->getOperatorNew());
+  }
   // We could dump the deallocation function used in case of error, but it's
   // usually not that interesting.
 }
 
 void ASTDumper::VisitCXXDeleteExpr(const CXXDeleteExpr *Node) {
   VisitExpr(Node);
-  OS << ' ';
   if (Node->isGlobalDelete())
-    OS << "global ";
+    OS << " global";
   if (Node->isArrayForm())
-    OS << "array ";
-  dumpBareDeclRef(Node->getOperatorDelete());
+    OS << " array";
+  if (Node->getOperatorDelete()) {
+    OS << ' ';
+    dumpBareDeclRef(Node->getOperatorDelete());
+  }
 }
 
 void
