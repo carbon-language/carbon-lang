@@ -28,3 +28,9 @@ void func(int arg) {
     ;
   }
 }
+
+void banana(void);  // expected-note {{'banana' declared here}}
+int c11Generic(int arg) {
+  _Generic(hello, int : banana)();  // expected-error-re {{use of undeclared identifier 'hello'{{$}}}}
+  _Generic(arg, int : bandana)();  // expected-error {{use of undeclared identifier 'bandana'; did you mean 'banana'?}}
+}
