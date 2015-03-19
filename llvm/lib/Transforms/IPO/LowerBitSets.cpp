@@ -38,6 +38,11 @@ STATISTIC(NumByteArraysCreated, "Number of byte arrays created");
 STATISTIC(NumBitSetCallsLowered, "Number of bitset calls lowered");
 STATISTIC(NumBitSetDisjointSets, "Number of disjoint sets of bitsets");
 
+static cl::opt<bool> AvoidReuse(
+    "lowerbitsets-avoid-reuse",
+    cl::desc("Try to avoid reuse of byte array addresses using aliases"),
+    cl::Hidden, cl::init(true));
+
 bool BitSetInfo::containsGlobalOffset(uint64_t Offset) const {
   if (Offset < ByteOffset)
     return false;
@@ -389,7 +394,17 @@ Value *LowerBitSets::createBitSetTest(IRBuilder<> &B, BitSetInfo &BSI,
       BAI = createByteArray(BSI);
     }
 
-    Value *ByteAddr = B.CreateGEP(BAI->ByteArray, BitOffset);
+    Constant *ByteArray = BAI->ByteArray;
+    if (!LinkerSubsectionsViaSymbols && AvoidReuse) {
+      // Each use of the byte array uses a different alias. This makes the
+      // backend less likely to reuse previously computed byte array addresses,
+      // improving the security of the CFI mechanism based on this pass.
+      ByteArray = GlobalAlias::create(
+          BAI->ByteArray->getType()->getElementType(), 0,
+          GlobalValue::PrivateLinkage, "bits_use", ByteArray, M);
+    }
+
+    Value *ByteAddr = B.CreateGEP(ByteArray, BitOffset);
     Value *Byte = B.CreateLoad(ByteAddr);
 
     Value *ByteAndMask = B.CreateAnd(Byte, BAI->Mask);

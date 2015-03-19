@@ -38,6 +38,10 @@ target datalayout = "e-p:32:32"
 
 !llvm.bitsets = !{ !0, !1, !2, !3, !4, !5, !6, !7 }
 
+; CHECK: @bits_use{{[0-9]*}} = private alias i8* @bits{{[0-9]*}}
+; CHECK: @bits_use{{[0-9]*}} = private alias i8* @bits{{[0-9]*}}
+; CHECK: @bits_use{{[0-9]*}} = private alias i8* @bits{{[0-9]*}}
+
 ; CHECK: @a = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }, { i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 0)
 ; CHECK: @b = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }, { i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 2)
 ; CHECK: @c = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }, { i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 4)
@@ -57,8 +61,8 @@ target datalayout = "e-p:32:32"
 
 ; CHECK-DARWIN: [[G]] = private constant
 
-; CHECK: @bits = private alias getelementptr inbounds ([68 x i8], [68 x i8]* [[BA]], i32 0, i32 0)
-; CHECK: @bits1 = private alias getelementptr inbounds ([68 x i8], [68 x i8]* [[BA]], i32 0, i32 0)
+; CHECK: @bits{{[0-9]*}} = private alias getelementptr inbounds ([68 x i8], [68 x i8]* [[BA]], i32 0, i32 0)
+; CHECK: @bits{{[0-9]*}} = private alias getelementptr inbounds ([68 x i8], [68 x i8]* [[BA]], i32 0, i32 0)
 
 declare i1 @llvm.bitset.test(i8* %ptr, metadata %bitset) nounwind readnone
 
@@ -76,7 +80,7 @@ define i1 @foo(i32* %p) {
   ; CHECK: [[R6:%[^ ]*]] = icmp ult i32 [[R5]], 68
   ; CHECK: br i1 [[R6]]
 
-  ; CHECK: [[R8:%[^ ]*]] = getelementptr i8, i8* @bits, i32 [[R5]]
+  ; CHECK: [[R8:%[^ ]*]] = getelementptr i8, i8* @bits_use{{[0-9]*}}, i32 [[R5]]
   ; CHECK: [[R9:%[^ ]*]] = load i8, i8* [[R8]]
   ; CHECK: [[R10:%[^ ]*]] = and i8 [[R9]], 1
   ; CHECK: [[R11:%[^ ]*]] = icmp ne i8 [[R10]], 0
@@ -119,7 +123,7 @@ define i1 @baz(i32* %p) {
   ; CHECK: [[T6:%[^ ]*]] = icmp ult i32 [[T5]], 66
   ; CHECK: br i1 [[T6]]
 
-  ; CHECK: [[T8:%[^ ]*]] = getelementptr i8, i8* @bits1, i32 [[T5]]
+  ; CHECK: [[T8:%[^ ]*]] = getelementptr i8, i8* @bits_use{{[0-9]*}}, i32 [[T5]]
   ; CHECK: [[T9:%[^ ]*]] = load i8, i8* [[T8]]
   ; CHECK: [[T10:%[^ ]*]] = and i8 [[T9]], 2
   ; CHECK: [[T11:%[^ ]*]] = icmp ne i8 [[T10]], 0
