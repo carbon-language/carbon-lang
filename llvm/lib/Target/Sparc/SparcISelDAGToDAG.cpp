@@ -200,6 +200,7 @@ SparcDAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
   SDValue Op0, Op1;
   switch (ConstraintID) {
   default: return true;
+  case InlineAsm::Constraint_i:
   case InlineAsm::Constraint_m: // memory
    if (!SelectADDRrr(Op, Op0, Op1))
      SelectADDRri(Op, Op0, Op1);
