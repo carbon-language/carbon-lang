@@ -453,6 +453,13 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::sparcv9:
   case Triple::systemz:
   case Triple::xcore:
+  case Triple::ppc64le:
+    return Triple::ELF;
+
+  case Triple::ppc:
+  case Triple::ppc64:
+    if (T.isOSDarwin())
+      return Triple::MachO;
     return Triple::ELF;
   }
 

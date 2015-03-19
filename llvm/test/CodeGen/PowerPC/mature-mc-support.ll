@@ -10,6 +10,10 @@
 ; RUN: not llc -march=ppc32 -filetype=obj < %s > /dev/null 2> %t2
 ; RUN: FileCheck %s < %t2
 
+; Test that we don't try to produce COFF for ppc.
+; RUN: not llc -mtriple=powerpc-mingw32 -filetype=obj < %s > /dev/null 2> %t2
+; RUN: FileCheck %s < %t2
+
 ; SKIP: not llc -march=ppc64 < %s > /dev/null 2> %t3
 ; SKIP: FileCheck %s < %t3
 
