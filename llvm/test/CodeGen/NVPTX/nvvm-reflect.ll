@@ -46,3 +46,34 @@ define i32 @intrinsic() {
   %reflect = tail call i32 @llvm.nvvm.reflect.p0i8(i8* %ptr)
   ret i32 %reflect
 }
+
+; CUDA-7.0 passes __nvvm_reflect argument slightly differently.
+; Verify that it works, too
+
+@"$str" = private addrspace(1) constant [8 x i8] c"USE_MUL\00"
+
+define float @bar(float %a, float %b) {
+; USE_MUL_0: define float @bar
+; USE_MUL_0-NOT: call i32 @__nvvm_reflect
+; USE_MUL_1: define float @bar
+; USE_MUL_1-NOT: call i32 @__nvvm_reflect
+  %reflect = call i32 @__nvvm_reflect(i8* addrspacecast (i8 addrspace(1)* getelementptr inbounds ([8 x i8], [8 x i8] addrspace(1)* @"$str", i32 0, i32 0) to i8*))
+  %cmp = icmp ne i32 %reflect, 0
+  br i1 %cmp, label %use_mul, label %use_add
+
+use_mul:
+; USE_MUL_1: fmul float %a, %b
+; USE_MUL_0-NOT: fadd float %a, %b
+  %ret1 = fmul float %a, %b
+  br label %exit
+
+use_add:
+; USE_MUL_0: fadd float %a, %b
+; USE_MUL_1-NOT: fmul float %a, %b
+  %ret2 = fadd float %a, %b
+  br label %exit
+
+exit:
+  %ret = phi float [%ret1, %use_mul], [%ret2, %use_add]
+  ret float %ret
+}

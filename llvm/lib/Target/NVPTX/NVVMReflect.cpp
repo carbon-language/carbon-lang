@@ -137,6 +137,26 @@ bool NVVMReflect::handleFunction(Function *ReflectFunction) {
   // ConstantArray can be found successfully, see if it can be
   // found in VarMap. If so, replace the uses of CallInst with the
   // value found in VarMap. If not, replace the use  with value 0.
+
+  // IR for __nvvm_reflect calls differs between CUDA versions:
+  // CUDA 6.5 and earlier uses this sequence:
+  //    %ptr = tail call i8* @llvm.nvvm.ptr.constant.to.gen.p0i8.p4i8
+  //        (i8 addrspace(4)* getelementptr inbounds
+  //           ([8 x i8], [8 x i8] addrspace(4)* @str, i32 0, i32 0))
+  //    %reflect = tail call i32 @__nvvm_reflect(i8* %ptr)
+  //
+  // Value returned by Sym->getOperand(0) is a Constant with a
+  // ConstantDataSequential operand which can be converted to string and used
+  // for lookup.
+  //
+  // CUDA 7.0 does it slightly differently:
+  //   %reflect = call i32 @__nvvm_reflect(i8* addrspacecast
+  //        (i8 addrspace(1)* getelementptr inbounds
+  //           ([8 x i8], [8 x i8] addrspace(1)* @str, i32 0, i32 0) to i8*))
+  //
+  // In this case, we get a Constant with a GlobalVariable operand and we need
+  // to dig deeper to find its initializer with the string we'll use for lookup.
+
   for (User *U : ReflectFunction->users()) {
     assert(isa<CallInst>(U) && "Only a call instruction can use _reflect");
     CallInst *Reflect = cast<CallInst>(U);
@@ -158,16 +178,23 @@ bool NVVMReflect::handleFunction(Function *ReflectFunction) {
     const Value *Sym = GEP->getOperand(0);
     assert(isa<Constant>(Sym) && "Format of _reflect function not recognized");
 
-    const Constant *SymStr = cast<Constant>(Sym);
+    const Value *Operand = cast<Constant>(Sym)->getOperand(0);
+    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Operand)) {
+      // For CUDA-7.0 style __nvvm_reflect calls we need to find operand's
+      // initializer.
+      assert(GV->hasInitializer() &&
+             "Format of _reflect function not recognized");
+      const Constant *Initializer = GV->getInitializer();
+      Operand = Initializer;
+    }
 
-    assert(isa<ConstantDataSequential>(SymStr->getOperand(0)) &&
+    assert(isa<ConstantDataSequential>(Operand) &&
            "Format of _reflect function not recognized");
-
-    assert(cast<ConstantDataSequential>(SymStr->getOperand(0))->isCString() &&
+    assert(cast<ConstantDataSequential>(Operand)->isCString() &&
            "Format of _reflect function not recognized");
 
     std::string ReflectArg =
-        cast<ConstantDataSequential>(SymStr->getOperand(0))->getAsString();
+        cast<ConstantDataSequential>(Operand)->getAsString();
 
     ReflectArg = ReflectArg.substr(0, ReflectArg.size() - 1);
     DEBUG(dbgs() << "Arg of _reflect : " << ReflectArg << "\n");
