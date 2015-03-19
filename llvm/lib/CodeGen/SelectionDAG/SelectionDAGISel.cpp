@@ -595,9 +595,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 void SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
                                         BasicBlock::const_iterator End,
                                         bool &HadTailCall) {
-  // Lower all of the non-terminator instructions. If a call is emitted
-  // as a tail call, cease emitting nodes for this block. Terminators
-  // are handled below.
+  // Lower the instructions. If a call is emitted as a tail call, cease emitting
+  // nodes for this block.
   for (BasicBlock::const_iterator I = Begin; I != End && !SDB->HasTailCall; ++I)
     SDB->visit(*I);
 
