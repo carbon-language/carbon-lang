@@ -1422,71 +1422,6 @@ CodeGenFunction::pushCallObjectDeleteCleanup(const FunctionDecl *OperatorDelete,
                                         OperatorDelete, ElementType);
 }
 
-static void EmitDelete(CodeGenFunction &CGF,
-                              const CXXDeleteExpr *DE,
-                              llvm::Value *Ptr,
-                              QualType ElementType);
-
-static void EmitSizedDelete(CodeGenFunction &CGF,
-                            const CXXDeleteExpr *DE,
-                            llvm::Value *Ptr,
-                            QualType ElementType,
-                            FunctionDecl* UnsizedDealloc) {
-
-  if (CGF.getLangOpts().DefineSizedDeallocation) {
-    // The delete operator in use is fixed. So simply emit the delete expr.
-    EmitDelete(CGF, DE, Ptr, ElementType);
-    return;
-  }
-
-  assert(UnsizedDealloc && "We must be emiting a 'sized' delete expr");
-
-  // Branch off over the value of operator delete:
-  // Use the sized form if available, and default on the unsized form otherwise.
-  llvm::BasicBlock *ThenBlock = CGF.createBasicBlock("if.then");
-  llvm::BasicBlock *ContBlock = CGF.createBasicBlock("if.end");
-  llvm::BasicBlock *ElseBlock = CGF.createBasicBlock("if.else");
-
-  // Emit the condition.
-  const FunctionDecl *OpDelFD = DE->getOperatorDelete();
-  llvm::Value *OpDelAddr = CGF.CGM.GetAddrOfFunction(OpDelFD);
-  //llvm::Function *OpDel = dyn_cast<llvm::Function>(OpDelAddr);
-  llvm::Value *SDE = CGF.Builder.CreateIsNotNull(OpDelAddr, "sized.del.exists");
-  CGF.Builder.CreateCondBr(SDE, ThenBlock, ElseBlock);
-
-  // Emit the 'then' code.
-  CGF.EmitBlock(ThenBlock);
-  EmitDelete(CGF, DE, Ptr, ElementType);
-  CGF.EmitBranch(ContBlock);
-
-  // Compute the 'unsized' delete expr.
-  CXXDeleteExpr * E = const_cast<CXXDeleteExpr*>(DE);
-  CXXDeleteExpr *UnsizedDE =
-  new (CGF.getContext()) CXXDeleteExpr(CGF.getContext().VoidTy,
-                                       E->isGlobalDelete(),
-                                       E->isArrayForm(),
-                                       E->isArrayFormAsWritten(),
-                                       E->doesUsualArrayDeleteWantSize(),
-                                       UnsizedDealloc,
-                                       E->getArgument(),
-                                       E->getLocStart());
-  // Emit the 'else' code.
-  {
-    // There is no need to emit line number for an unconditional branch.
-    auto NL = ApplyDebugLocation::CreateEmpty(CGF);
-    CGF.EmitBlock(ElseBlock);
-  }
-  EmitDelete(CGF, UnsizedDE, Ptr, ElementType);
-  {
-    // There is no need to emit line number for an unconditional branch.
-    auto NL = ApplyDebugLocation::CreateEmpty(CGF);
-    CGF.EmitBranch(ContBlock);
-  }
-
-  // Emit the continuation block for code after the if.
-  CGF.EmitBlock(ContBlock, true);
-}
-
 /// Emit the code for deleting a single object.
 static void EmitObjectDelete(CodeGenFunction &CGF,
                              const CXXDeleteExpr *DE,
@@ -1646,17 +1581,6 @@ static void EmitArrayDelete(CodeGenFunction &CGF,
   CGF.PopCleanupBlock();
 }
 
-static void EmitDelete(CodeGenFunction &CGF,
-                       const CXXDeleteExpr *DE,
-                       llvm::Value *Ptr,
-                       QualType ElementType) {
-  if (DE->isArrayForm()) {
-    EmitArrayDelete(CGF, DE, Ptr, ElementType);
-  } else {
-    EmitObjectDelete(CGF, DE, Ptr, ElementType);
-  }
-}
-
 void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   const Expr *Arg = E->getArgument();
   llvm::Value *Ptr = EmitScalarExpr(Arg);
@@ -1696,12 +1620,11 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   assert(ConvertTypeForMem(DeleteTy) ==
          cast<llvm::PointerType>(Ptr->getType())->getElementType());
 
-  const FunctionDecl *Dealloc = E->getOperatorDelete();
-  if (FunctionDecl* UnsizedDealloc =
-      Dealloc->getCorrespondingUnsizedGlobalDeallocationFunction())
-    EmitSizedDelete(*this, E, Ptr, DeleteTy, UnsizedDealloc);
-  else
-    EmitDelete(*this, E, Ptr, DeleteTy);
+  if (E->isArrayForm()) {
+    EmitArrayDelete(*this, E, Ptr, DeleteTy);
+  } else {
+    EmitObjectDelete(*this, E, Ptr, DeleteTy);
+  }
 
   EmitBlock(DeleteEnd);
 }
