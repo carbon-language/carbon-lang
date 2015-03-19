@@ -38,6 +38,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Utility/CleanUp.h"
+#include "lldb/Utility/NameMatches.h"
 
 #include "Plugins/Process/Utility/FreeBSDSignals.h"
 
