@@ -529,13 +529,14 @@ CMIDriver::DoMainLoop(void)
     if (!StartWorkerThreads())
         return MIstatus::failure;
 
+    bool bOk = MIstatus::success;
+
     if (HaveExecutableFileNamePathOnCmdLine())
     {
         if (!LocalDebugSessionStartupExecuteCommands())
         {
-            StopWorkerThreads();
             SetErrorDescription(MIRSRC(IDS_MI_INIT_ERR_LOCAL_DEBUG_SESSION));
-            return MIstatus::failure;
+            bOk = MIstatus::failure;
         }
     }
 
@@ -543,7 +544,7 @@ CMIDriver::DoMainLoop(void)
     m_bExitApp = false;
 
     // While the app is active
-    while (!m_bExitApp)
+    while (bOk && !m_bExitApp)
     {
         CMIUtilString errorText;
         const MIchar *pCmd = m_rStdin.ReadLine (errorText);
@@ -559,7 +560,6 @@ CMIDriver::DoMainLoop(void)
                     break;
                 }
 
-                bool bOk = false;
                 {
                     // Lock Mutex before processing commands so that we don't disturb an event
                     // being processed
@@ -568,7 +568,7 @@ CMIDriver::DoMainLoop(void)
                 }
                 // Draw prompt if desired
                 if (bOk && m_rStdin.GetEnablePrompt())
-                    m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+                    bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
             }
         }
     }
@@ -877,9 +877,7 @@ CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbC
     const CMICmnMIValueConst vconst = CMICmnMIValueConst(msg);
     const CMICmnMIValueResult valueResult("msg", vconst);
     const CMICmnMIResultRecord miResultRecord(cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, valueResult);
-    bool bOk = m_rStdOut.WriteMIResponse(miResultRecord.GetString());
-    if (bOk && m_rStdin.GetEnablePrompt())
-        bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+    const bool bOk = m_rStdOut.WriteMIResponse(miResultRecord.GetString());
 
     // Proceed to wait for or execute next command
     return bOk;
