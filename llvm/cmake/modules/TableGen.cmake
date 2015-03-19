@@ -97,14 +97,12 @@ macro(add_tablegen target project)
       set(${project}_TABLEGEN_EXE ${${project}_TABLEGEN_EXE} PARENT_SCOPE)
 
       add_custom_command(OUTPUT ${${project}_TABLEGEN_EXE}
-        COMMAND ${CMAKE_COMMAND} --build . --target ${target} --config $<CONFIGURATION>
-        DEPENDS ${LLVM_NATIVE_BUILD}/CMakeCache.txt
+        COMMAND ${CMAKE_COMMAND} --build . --target ${target} --config Release
+        DEPENDS CONFIGURE_LLVM_NATIVE ${target}
         WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
         COMMENT "Building native TableGen...")
       add_custom_target(${project}NativeTableGen DEPENDS ${${project}_TABLEGEN_EXE})
       add_dependencies(${project}NativeTableGen CONFIGURE_LLVM_NATIVE)
-
-      add_dependencies(${target} ${project}NativeTableGen)
     endif()
   endif()
 
