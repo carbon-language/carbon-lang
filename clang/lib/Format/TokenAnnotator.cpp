@@ -1538,7 +1538,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 200;
   }
   if (Right.is(TT_PointerOrReference))
-    return 200;
+    return 190;
   if (Right.is(TT_TrailingReturnArrow))
     return 110;
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
@@ -1995,8 +1995,6 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.isOneOf(TT_JavaAnnotation, TT_LeadingJavaAnnotation))
     return !Right.is(tok::l_paren);
-  if (Left.is(TT_PointerOrReference))
-    return Right.is(TT_FunctionDeclarationName);
   if (Right.is(TT_PointerOrReference))
     return Line.IsMultiVariableDeclStmt ||
            (Style.PointerAlignment == FormatStyle::PAS_Right &&
@@ -2004,6 +2002,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.isOneOf(TT_StartOfName, TT_FunctionDeclarationName) ||
       Right.is(tok::kw_operator))
     return true;
+  if (Left.is(TT_PointerOrReference))
+    return false;
   if (Right.isTrailingComment())
     // We rely on MustBreakBefore being set correctly here as we should not
     // change the "binding" behavior of a comment.
