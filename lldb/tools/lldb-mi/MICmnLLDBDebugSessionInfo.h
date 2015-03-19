@@ -75,7 +75,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
         CMIUtilString m_strType;        // Break point type.
         bool m_bDisp;                   // True = "del", false = "keep".
         bool m_bEnabled;                // True = enabled, false = disabled break point.
-        MIuint m_pc;                    // Address number.
+        lldb::addr_t m_pc;              // Address number.
         CMIUtilString m_fnName;         // Function name.
         CMIUtilString m_fileName;       // File name text.
         CMIUtilString m_path;           // Full file name and path text.

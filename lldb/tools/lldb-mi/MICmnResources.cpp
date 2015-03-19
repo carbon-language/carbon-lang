@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // Third party headers
+#include <inttypes.h> // For PRIx64
 #include "assert.h"
 
 // In-house headers:
@@ -234,14 +235,14 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_DISASM_ADDR_START_INVALID, "Command '%s'. Invalid start value '%s'"},
     {IDS_CMD_ERR_DISASM_ADDR_END_INVALID, "Command '%s'. Invalid end value '%s'"},
     {IDS_CMD_ERR_MEMORY_ALLOC_FAILURE, "Command '%s'. Failed to allocate memory %d bytes"},
-    {IDS_CMD_ERR_LLDB_ERR_NOT_READ_WHOLE_BLK, "Command '%s'. LLDB unable to read entire memory block of %u bytes at address 0x%08x"},
-    {IDS_CMD_ERR_LLDB_ERR_READ_MEM_BYTES, "Command '%s'. Unable to read memory block of %u bytes at address 0x%08x: %s "},
+    {IDS_CMD_ERR_LLDB_ERR_NOT_READ_WHOLE_BLK, "Command '%s'. LLDB unable to read entire memory block of %u bytes at address 0x%016" PRIx64 },
+    {IDS_CMD_ERR_LLDB_ERR_READ_MEM_BYTES, "Command '%s'. Unable to read memory block of %u bytes at address 0x%016" PRIx64 ": %s "},
     {IDS_CMD_ERR_INVALID_PROCESS, "Command '%s'. Invalid process during debug session"},
     {IDS_CMD_ERR_INVALID_PRINT_VALUES, "Command '%s'. Unknown value for PRINT_VALUES: must be: 0 or \"--no-values\", 1 or \"--all-values\", 2 or \"--simple-values\""},
     {IDS_CMD_ERR_INVALID_FORMAT_TYPE, "Command '%s'. Invalid var format type '%s'"},
     {IDS_CMD_ERR_BRKPT_INFO_OBJ_NOT_FOUND, "Command '%s'. Breakpoint information for breakpoint ID %d not found"},
-    {IDS_CMD_ERR_LLDB_ERR_READ_MEM_BYTES, "Command '%s'. Unable to write memory block of %u bytes at address 0x%08x: %s "},
-    {IDS_CMD_ERR_LLDB_ERR_NOT_WRITE_WHOLEBLK, "Command '%s'. LLDB unable to write entire memory block of %u bytes at address 0x%08x"},
+    {IDS_CMD_ERR_LLDB_ERR_WRITE_MEM_BYTES, "Command '%s'. Unable to write memory block of %u bytes at address 0x%016" PRIx64 ": %s "},
+    {IDS_CMD_ERR_LLDB_ERR_NOT_WRITE_WHOLEBLK, "Command '%s'. LLDB unable to write entire memory block of %u bytes at address 0x%016" PRIX64},
     {IDS_CMD_ERR_SET_NEW_DRIVER_STATE, "Command '%s'. Command tried to set new MI Driver running state and failed. %s"},
     {IDS_CMD_ERR_INFO_PRINTFN_NOT_FOUND, "The request '%s' was not recogised, not implemented"},
     {IDS_CMD_ERR_INFO_PRINTFN_FAILED, "The request '%s' failed."},

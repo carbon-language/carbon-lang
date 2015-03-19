@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // Third party headers:
+#include <inttypes.h> // For PRIx64
 #include "lldb/API/SBThread.h"
 #ifdef _WIN32
 #include <io.h> // For the ::_access()
@@ -224,7 +225,7 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MI
     }
 
     // MI print
-    // "frame={level=\"%d\",addr=\"0x%08llx\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},frame={level=\"%d\",addr=\"0x%08llx\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},
+    // "frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},
     // ..."
     CMIUtilString strListCommaSeperated;
     for (MIuint nLevel = 0; nLevel < nFrames; nLevel++)
@@ -297,7 +298,7 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames2(const SMICmdData &vCmdData, const M
     }
 
     // MI print
-    // "frame={level=\"%d\",addr=\"0x%08llx\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},frame={level=\"%d\",addr=\"0x%08llx\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},
+    // "frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},
     // ..."
     CMIUtilString strListCommaSeperated;
     for (MIuint nLevel = 0; nLevel < nFrames; nLevel++)
@@ -874,7 +875,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::SBThread &vrThre
     if (!GetFrameInfo(frame, pc, fnName, fileName, path, nLine))
         return MIstatus::failure;
 
-    // MI print "{level=\"0\",addr=\"0x%08llx\",func=\"%s\",file=\"%s\",fullname=\"%s\",line=\"%d\"}"
+    // MI print "{level=\"0\",addr=\"0x%016" PRIx64 "\",func=\"%s\",file=\"%s\",fullname=\"%s\",line=\"%d\"}"
     const CMIUtilString strLevel(CMIUtilString::Format("%d", vnLevel));
     const CMICmnMIValueConst miValueConst(strLevel);
     const CMICmnMIValueResult miValueResult("level", miValueConst);
@@ -946,7 +947,7 @@ bool
 CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::addr_t vPc, const CMIUtilString &vFnName, const CMIUtilString &vFileName,
                                                     const CMIUtilString &vPath, const MIuint vnLine, CMICmnMIValueTuple &vwrMiValueTuple)
 {
-    const CMIUtilString strAddr(CMIUtilString::Format("0x%08llx", vPc));
+    const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, vPc));
     const CMICmnMIValueConst miValueConst2(strAddr);
     const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
     if (!vwrMiValueTuple.Add(miValueResult2))
@@ -993,7 +994,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo2(const lldb::addr_t vPc, con
                                                      const CMIUtilString &vFileName, const CMIUtilString &vPath, const MIuint vnLine,
                                                      CMICmnMIValueTuple &vwrMiValueTuple)
 {
-    const CMIUtilString strAddr(CMIUtilString::Format("0x%08llx", vPc));
+    const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, vPc));
     const CMICmnMIValueConst miValueConst2(strAddr);
     const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
     if (!vwrMiValueTuple.Add(miValueResult2))
@@ -1036,7 +1037,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo2(const lldb::addr_t vPc, con
 bool
 CMICmnLLDBDebugSessionInfo::MIResponseFormBrkPtFrameInfo(const SBrkPtInfo &vrBrkPtInfo, CMICmnMIValueTuple &vwrMiValueTuple)
 {
-    const CMIUtilString strAddr(CMIUtilString::Format("0x%08llx", vrBrkPtInfo.m_pc));
+    const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, vrBrkPtInfo.m_pc));
     const CMICmnMIValueConst miValueConst2(strAddr);
     const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
     if (!vwrMiValueTuple.Add(miValueResult2))
@@ -1076,7 +1077,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormBrkPtFrameInfo(const SBrkPtInfo &vrBrk
 bool
 CMICmnLLDBDebugSessionInfo::MIResponseFormBrkPtInfo(const SBrkPtInfo &vrBrkPtInfo, CMICmnMIValueTuple &vwrMiValueTuple)
 {
-    // MI print "=breakpoint-modified,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%08x\",
+    // MI print "=breakpoint-modified,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%016" PRIx64 "\",
     // func=\"%s\",file=\"%s\",fullname=\"%s/%s\",line=\"%d\",times=\"%d\",original-location=\"%s\"}"
 
     // "number="
