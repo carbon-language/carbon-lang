@@ -160,7 +160,7 @@ StackMaps::createLiveOutReg(unsigned Reg, const TargetRegisterInfo *TRI) const {
 StackMaps::LiveOutVec
 StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
   assert(Mask && "No register mask specified");
-  const TargetRegisterInfo *TRI = AP.TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = AP.MF->getSubtarget().getRegisterInfo();
   LiveOutVec LiveOuts;
 
   // Create a LiveOutReg for each bit that is set in the register mask.
