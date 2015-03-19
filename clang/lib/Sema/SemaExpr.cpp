@@ -82,10 +82,26 @@ static void DiagnoseUnusedOfDecl(Sema &S, NamedDecl *D, SourceLocation Loc) {
   }
 }
 
-static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
-                              NamedDecl *D, SourceLocation Loc,
-                              const ObjCInterfaceDecl *UnknownObjCClass,
-                              bool ObjCPropertyAccess) {
+static bool HasRedeclarationWithoutAvailabilityInCategory(const Decl *D) {
+  const auto *OMD = dyn_cast<ObjCMethodDecl>(D);
+  if (!OMD)
+    return false;
+  const ObjCInterfaceDecl *OID = OMD->getClassInterface();
+  if (!OID)
+    return false;
+
+  for (const ObjCCategoryDecl *Cat : OID->visible_categories())
+    if (ObjCMethodDecl *CatMeth =
+            Cat->getMethod(OMD->getSelector(), OMD->isInstanceMethod()))
+      if (!CatMeth->hasAttr<AvailabilityAttr>())
+        return true;
+  return false;
+}
+
+static AvailabilityResult
+DiagnoseAvailabilityOfDecl(Sema &S, NamedDecl *D, SourceLocation Loc,
+                           const ObjCInterfaceDecl *UnknownObjCClass,
+                           bool ObjCPropertyAccess) {
   // See if this declaration is unavailable or deprecated.
   std::string Message;
     
@@ -103,7 +119,8 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
     }
 
   const ObjCPropertyDecl *ObjCPDecl = nullptr;
-  if (Result == AR_Deprecated || Result == AR_Unavailable) {
+  if (Result == AR_Deprecated || Result == AR_Unavailable ||
+      AR_NotYetIntroduced) {
     if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
       if (const ObjCPropertyDecl *PD = MD->findPropertyDecl()) {
         AvailabilityResult PDeclResult = PD->getAvailability(nullptr);
@@ -115,7 +132,6 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
   
   switch (Result) {
     case AR_Available:
-    case AR_NotYetIntroduced:
       break;
 
     case AR_Deprecated:
@@ -124,6 +140,34 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
                                   D, Message, Loc, UnknownObjCClass, ObjCPDecl,
                                   ObjCPropertyAccess);
       break;
+
+    case AR_NotYetIntroduced: {
+      // Don't do this for enums, they can't be redeclared.
+      if (isa<EnumConstantDecl>(D) || isa<EnumDecl>(D))
+        break;
+ 
+      bool Warn = !D->getAttr<AvailabilityAttr>()->isInherited();
+      // Objective-C method declarations in categories are not modelled as
+      // redeclarations, so manually look for a redeclaration in a category
+      // if necessary.
+      if (Warn && HasRedeclarationWithoutAvailabilityInCategory(D))
+        Warn = false;
+      // In general, D will point to the most recent redeclaration. However,
+      // for `@class A;` decls, this isn't true -- manually go through the
+      // redecl chain in that case.
+      if (Warn && isa<ObjCInterfaceDecl>(D))
+        for (Decl *Redecl = D->getMostRecentDecl(); Redecl && Warn;
+             Redecl = Redecl->getPreviousDecl())
+          if (!Redecl->hasAttr<AvailabilityAttr>() ||
+              Redecl->getAttr<AvailabilityAttr>()->isInherited())
+            Warn = false;
+ 
+      if (Warn)
+        S.EmitAvailabilityWarning(Sema::AD_Partial, D, Message, Loc,
+                                  UnknownObjCClass, ObjCPDecl,
+                                  ObjCPropertyAccess);
+      break;
+    }
 
     case AR_Unavailable:
       if (S.getCurContextAvailability() != AR_Unavailable)
@@ -307,7 +351,8 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
         DeduceReturnType(FD, Loc))
       return true;
   }
-  DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass, ObjCPropertyAccess);
+  DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass,
+                             ObjCPropertyAccess);
 
   DiagnoseUnusedOfDecl(*this, D, Loc);
 

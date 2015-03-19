@@ -731,7 +731,7 @@ def warn_accessor_property_type_mismatch : Warning<
 def not_conv_function_declared_at : Note<"type conversion function declared here">;
 def note_method_declared_at : Note<"method %0 declared here">;
 def note_property_attribute : Note<"property %0 is declared "
-  "%select{deprecated|unavailable}1 here">;
+  "%select{deprecated|unavailable|partial}1 here">;
 def err_setter_type_void : Error<"type of setter must be void">;
 def err_duplicate_method_decl : Error<"duplicate declaration of method %0">;
 def warn_duplicate_method_decl : 
@@ -3867,6 +3867,15 @@ def err_not_found_by_two_phase_lookup : Error<"call to function %0 that is neith
 def note_not_found_by_two_phase_lookup : Note<"%0 should be declared prior to the "
     "call site%select{| or in %2| or in an associated namespace of one of its arguments}1">;
 def err_undeclared_use : Error<"use of undeclared %0">;
+def warn_partial_availability : Warning<"%0 is only available conditionally">,
+    InGroup<PartialAvailability>, DefaultIgnore;
+def note_partial_availability_silence : Note<
+  "explicitly redeclare %0 to silence this warning">;
+def warn_partial_message : Warning<"%0 is partial: %1">,
+    InGroup<PartialAvailability>, DefaultIgnore;
+def warn_partial_fwdclass_message : Warning<
+    "%0 may be partial because the receiver type is unknown">,
+    InGroup<PartialAvailability>, DefaultIgnore;
 def warn_deprecated : Warning<"%0 is deprecated">,
     InGroup<DeprecatedDeclarations>;
 def warn_property_method_deprecated :
@@ -3892,7 +3901,7 @@ def warn_unavailable_fwdclass_message : Warning<
     InGroup<UnavailableDeclarations>;
 def note_availability_specified_here : Note<
   "%0 has been explicitly marked "
-  "%select{unavailable|deleted|deprecated}1 here">;
+  "%select{unavailable|deleted|deprecated|partial}1 here">;
 def note_implicitly_deleted : Note<
   "explicitly defaulted function was implicitly deleted here">;
 def note_inherited_deleted_here : Note<

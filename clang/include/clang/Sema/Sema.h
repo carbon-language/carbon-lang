@@ -3272,7 +3272,7 @@ public:
 
   void redelayDiagnostics(sema::DelayedDiagnosticPool &pool);
 
-  enum AvailabilityDiagnostic { AD_Deprecation, AD_Unavailable };
+  enum AvailabilityDiagnostic { AD_Deprecation, AD_Unavailable, AD_Partial };
 
   void EmitAvailabilityWarning(AvailabilityDiagnostic AD,
                                NamedDecl *D, StringRef Message,

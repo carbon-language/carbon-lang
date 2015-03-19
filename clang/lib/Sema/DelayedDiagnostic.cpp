@@ -35,6 +35,8 @@ DelayedDiagnostic::makeAvailability(Sema::AvailabilityDiagnostic AD,
     case Sema::AD_Unavailable:
       DD.Kind = Unavailable;
       break;
+    case Sema::AD_Partial:
+      llvm_unreachable("AD_Partial diags should not be delayed");
   }
   DD.Triggered = false;
   DD.Loc = Loc;
