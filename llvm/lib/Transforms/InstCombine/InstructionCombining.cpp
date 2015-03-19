@@ -1333,11 +1333,24 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     if (!Op1)
       return nullptr;
 
+    // Don't fold a GEP into itself through a PHI node. This can only happen
+    // through the back-edge of a loop. Folding a GEP into itself means that
+    // the value of the previous iteration needs to be stored in the meantime,
+    // thus requiring an additional register variable to be live, but not
+    // actually achieving anything (the GEP still needs to be executed once per
+    // loop iteration).
+    if (Op1 == &GEP)
+      return nullptr;
+
     signed DI = -1;
 
     for (auto I = PN->op_begin()+1, E = PN->op_end(); I !=E; ++I) {
       GetElementPtrInst *Op2 = dyn_cast<GetElementPtrInst>(*I);
       if (!Op2 || Op1->getNumOperands() != Op2->getNumOperands())
+        return nullptr;
+
+      // As for Op1 above, don't try to fold a GEP into itself.
+      if (Op2 == &GEP)
         return nullptr;
 
       // Keep track of the type as we walk the GEP.

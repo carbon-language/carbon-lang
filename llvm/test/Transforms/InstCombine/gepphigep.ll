@@ -98,3 +98,39 @@ bb5:
 @_ZTIi = external constant i8*
 declare i32 @__gxx_personality_v0(...)
 declare i32 @foo1(i32)
+
+
+; Check that instcombine doesn't fold GEPs into themselves through a loop
+; back-edge.
+
+define i8* @test4(i32 %value, i8* %buffer) {
+entry:
+  %incptr = getelementptr inbounds i8, i8* %buffer, i64 1
+  %cmp = icmp ugt i32 %value, 127
+  br i1 %cmp, label %loop.header, label %exit
+
+loop.header:
+  br label %loop.body
+
+loop.body:
+  %loopptr = phi i8* [ %incptr, %loop.header ], [ %incptr2, %loop.body ]
+  %newval = phi i32 [ %value, %loop.header ], [ %shr, %loop.body ]
+  %shr = lshr i32 %newval, 7
+  %incptr2 = getelementptr inbounds i8, i8* %loopptr, i64 1
+  %cmp2 = icmp ugt i32 %shr, 127
+  br i1 %cmp2, label %loop.body, label %loop.exit
+
+loop.exit:
+  %exitptr = phi i8* [ %incptr2, %loop.body ]
+  br label %exit
+
+exit:
+  %ptr2 = phi i8* [ %exitptr, %loop.exit ], [ %incptr, %entry ]
+  %incptr3 = getelementptr inbounds i8, i8* %ptr2, i64 1
+  ret i8* %incptr3
+
+; CHECK-LABEL: @test4(
+; CHECK: loop.body:
+; CHECK: getelementptr{{.*}}i64 1
+; CHECK: exit:
+}
