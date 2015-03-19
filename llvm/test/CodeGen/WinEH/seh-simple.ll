@@ -39,7 +39,7 @@ eh.resume:
 ; CHECK-LABEL: define i32 @simple_except_store()
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: catch i32 ()* @filt
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions({{.*}}, i32 0, i8* bitcast (i32 ()* @filt to i8*), i8* null, i8* blockaddress(@simple_except_store, %__except))
+; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (i32 ()* @filt to i8*), i8* null, i8* blockaddress(@simple_except_store, %__except))
 ; CHECK-NEXT: indirectbr {{.*}} [label %__except]
 
 define i32 @catch_all() {
@@ -63,7 +63,7 @@ return:
 ; CHECK-LABEL: define i32 @catch_all()
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: catch i8* null
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions({{.*}}, i32 0, i8* null, i8* null, i8* blockaddress(@catch_all, %catch.all))
+; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(i32 1, i8* null, i8* null, i8* blockaddress(@catch_all, %catch.all))
 ; CHECK-NEXT: indirectbr {{.*}} [label %catch.all]
 ;
 ; CHECK: catch.all:
@@ -94,7 +94,7 @@ eh.resume:
 ; CHECK-LABEL: define i32 @except_phi()
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: catch i32 ()* @filt
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions({{.*}}, i32 0, i8* bitcast (i32 ()* @filt to i8*), i8* null, i8* blockaddress(@except_phi, %return))
+; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (i32 ()* @filt to i8*), i8* null, i8* blockaddress(@except_phi, %return))
 ; CHECK-NEXT: indirectbr {{.*}} [label %return]
 ;
 ; CHECK: return:
@@ -129,8 +129,8 @@ eh.resume:
 ; CHECK-NEXT: cleanup
 ; CHECK-NEXT: catch i32 ()* @filt
 ; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(
-; CHECK: i32 1, i8* bitcast (void (i8*, i8*)* @cleanup_and_except.cleanup to i8*),
-; CHECK: i32 0, i8* bitcast (i32 ()* @filt to i8*), i8* null, i8* blockaddress(@cleanup_and_except, %return))
+; CHECK: i32 0, void (i8*, i8*)* @cleanup_and_except.cleanup,
+; CHECK: i32 1, i8* bitcast (i32 ()* @filt to i8*), i8* null, i8* blockaddress(@cleanup_and_except, %return))
 ; CHECK-NEXT: indirectbr {{.*}} [label %return]
 ;
 ; CHECK: return:

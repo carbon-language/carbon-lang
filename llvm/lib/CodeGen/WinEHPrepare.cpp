@@ -401,8 +401,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
     // Look for evidence that this landingpad has already been processed.
     bool LPadHasActionList = false;
     BasicBlock *LPadBB = LPad->getParent();
-    for (Instruction &Inst : LPadBB->getInstList()) {
-      // FIXME: Make this an intrinsic.
+    for (Instruction &Inst : *LPadBB) {
       if (auto *IntrinCall = dyn_cast<IntrinsicInst>(&Inst)) {
         if (IntrinCall->getIntrinsicID() == Intrinsic::eh_actions) {
           LPadHasActionList = true;
@@ -469,10 +468,10 @@ bool WinEHPrepare::prepareExceptionHandlers(
 
     // Add a call to describe the actions for this landing pad.
     std::vector<Value *> ActionArgs;
-    ActionArgs.push_back(NewLPad);
     for (ActionHandler *Action : Actions) {
+      // Action codes from docs are: 0 cleanup, 1 catch.
       if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
-        ActionArgs.push_back(ConstantInt::get(Int32Type, 0));
+        ActionArgs.push_back(ConstantInt::get(Int32Type, 1));
         ActionArgs.push_back(CatchAction->getSelector());
         Value *EHObj = const_cast<Value *>(CatchAction->getExceptionVar());
         if (EHObj)
@@ -480,11 +479,9 @@ bool WinEHPrepare::prepareExceptionHandlers(
         else
           ActionArgs.push_back(ConstantPointerNull::get(Int8PtrType));
       } else {
-        ActionArgs.push_back(ConstantInt::get(Int32Type, 1));
+        ActionArgs.push_back(ConstantInt::get(Int32Type, 0));
       }
-      Constant *HandlerPtr = ConstantExpr::getBitCast(
-          Action->getHandlerBlockOrFunc(), Int8PtrType);
-      ActionArgs.push_back(HandlerPtr);
+      ActionArgs.push_back(Action->getHandlerBlockOrFunc());
     }
     CallInst *Recover =
         CallInst::Create(ActionIntrin, ActionArgs, "recover", NewLPadBB);
