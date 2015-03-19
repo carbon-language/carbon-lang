@@ -228,10 +228,6 @@ std::unique_ptr<CoverageMapping> CodeCoverageTool::load() {
   return Coverage;
 }
 
-namespace {
-enum Colors { Auto, Always, Never };
-}
-
 int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -298,22 +294,18 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
                "greater than the given threshold"),
       cl::cat(FilteringCategory));
 
-  cl::opt<Colors> Color(
-      "color", cl::desc("Configure color output:"), cl::init(Colors::Auto),
-      cl::values(clEnumValN(Colors::Auto, "auto",
-                            "Enable color if stdout seems to support it"),
-                 clEnumValN(Colors::Always, "always", "Enable color"),
-                 clEnumValN(Colors::Never, "never", "Disable color"),
-                 clEnumValEnd));
+  cl::opt<cl::boolOrDefault> UseColor(
+      "use-color", cl::desc("Emit colored output (default=autodetect)"),
+      cl::init(cl::BOU_UNSET));
 
   auto commandLineParser = [&, this](int argc, const char **argv) -> int {
     cl::ParseCommandLineOptions(argc, argv, "LLVM code coverage tool\n");
     ViewOpts.Debug = DebugDump;
     CompareFilenamesOnly = FilenameEquivalence;
 
-    ViewOpts.Colors =
-        Color == Colors::Always ||
-        (Color == Colors::Auto && sys::Process::StandardOutHasColors());
+    ViewOpts.Colors = UseColor == cl::BOU_UNSET
+                          ? sys::Process::StandardOutHasColors()
+                          : UseColor == cl::BOU_TRUE;
 
     // Create the function filters
     if (!NameFilters.empty() || !NameRegexFilters.empty()) {
