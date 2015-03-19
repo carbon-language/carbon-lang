@@ -23,6 +23,8 @@ struct MipsISATreeEdge {
 };
 
 static MipsISATreeEdge isaTree[] = {
+    // MIPS32R6 and MIPS64R6 are not compatible with other extensions
+
     // MIPS64 extensions.
     {EF_MIPS_ARCH_64R2, EF_MIPS_ARCH_64},
     // MIPS V extensions.
@@ -87,6 +89,8 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   case EF_MIPS_ARCH_64:
   case EF_MIPS_ARCH_32R2:
   case EF_MIPS_ARCH_64R2:
+  case EF_MIPS_ARCH_32R6:
+  case EF_MIPS_ARCH_64R6:
     break;
   default:
     return make_dynamic_error_code(Twine("Unsupported instruction set"));
