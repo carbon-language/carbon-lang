@@ -1,3 +1,5 @@
+; REQUIRES: ld_emu_elf32ppc
+
 ; RUN: llvm-as %s -o %t.o
 ; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so -m elf32ppc \
 ; RUN:    -plugin-opt=mtriple=powerpc-linux-gnu \
