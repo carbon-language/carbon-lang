@@ -806,6 +806,7 @@ GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor (int fd)
         return error;
     }
 
+    m_stdio_communication.SetCloseOnEOF (false);
     m_stdio_communication.SetConnection (conn_up.release());
     if (!m_stdio_communication.IsConnected ())
     {
