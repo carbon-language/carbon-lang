@@ -47,8 +47,10 @@ EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the \"fast\" instruction selector"));
 
 void LLVMTargetMachine::initAsmInfo() {
-  MCAsmInfo *TmpAsmInfo = TheTarget.createMCAsmInfo(
-      *getSubtargetImpl()->getRegisterInfo(), getTargetTriple());
+  MRI = TheTarget.createMCRegInfo(getTargetTriple());
+  MII = TheTarget.createMCInstrInfo();
+
+  MCAsmInfo *TmpAsmInfo = TheTarget.createMCAsmInfo(*MRI, getTargetTriple());
   // TargetSelect.h moved to a different directory between LLVM 2.9 and 3.0,
   // and if the old one gets included then MCAsmInfo will be NULL and
   // we'll crash later.
@@ -113,8 +115,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
   MachineModuleInfo *MMI = new MachineModuleInfo(
-      *TM->getMCAsmInfo(), *TM->getSubtargetImpl()->getRegisterInfo(),
-      TM->getObjFileLowering());
+      *TM->getMCAsmInfo(), *TM->getMCRegisterInfo(), TM->getObjFileLowering());
   PM.add(MMI);
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
@@ -164,15 +165,15 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   const MCAsmInfo &MAI = *getMCAsmInfo();
-  const MCRegisterInfo &MRI = *getSubtargetImpl()->getRegisterInfo();
-  const MCInstrInfo &MII = *getSubtargetImpl()->getInstrInfo();
+  const MCRegisterInfo &MRI = *getMCRegisterInfo();
+  const MCInstrInfo &MII = *getMCInstrInfo();
+
   std::unique_ptr<MCStreamer> AsmStreamer;
 
   switch (FileType) {
   case CGFT_AssemblyFile: {
-    MCInstPrinter *InstPrinter =
-      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI,
-                                      MII, MRI, STI);
+    MCInstPrinter *InstPrinter = getTarget().createMCInstPrinter(
+        MAI.getAssemblerDialect(), MAI, MII, MRI, STI);
 
     // Create a code emitter if asked to show the encoding.
     MCCodeEmitter *MCE = nullptr;
@@ -239,16 +240,16 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
-  const MCRegisterInfo &MRI = *getSubtargetImpl()->getRegisterInfo();
-  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(
-      *getSubtargetImpl()->getInstrInfo(), MRI, *Ctx);
+  const MCRegisterInfo &MRI = *getMCRegisterInfo();
+  MCCodeEmitter *MCE =
+      getTarget().createMCCodeEmitter(*getMCInstrInfo(), MRI, *Ctx);
   MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                      TargetCPU);
   if (!MCE || !MAB)
     return true;
 
   Triple T(getTargetTriple());
+  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   std::unique_ptr<MCStreamer> AsmStreamer(getTarget().createMCObjectStreamer(
       T, *Ctx, *MAB, Out, MCE, STI, Options.MCOptions.MCRelaxAll));
 
