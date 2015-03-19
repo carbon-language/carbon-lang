@@ -566,6 +566,8 @@ void HexagonInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 bool
 HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  const HexagonRegisterInfo &TRI = getRegisterInfo();
+  MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   MachineBasicBlock &MBB = *MI->getParent();
   DebugLoc DL = MI->getDebugLoc();
   unsigned Opc = MI->getOpcode();
@@ -585,6 +587,55 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
         .addReg(Reg, RegState::Undef)
         .addReg(Reg, RegState::Undef);
       MBB.erase(MI);
+      return true;
+    }
+    case Hexagon::VMULW: {
+      // Expand a 64-bit vector multiply into 2 32-bit scalar multiplies.
+      unsigned DstReg = MI->getOperand(0).getReg();
+      unsigned Src1Reg = MI->getOperand(1).getReg();
+      unsigned Src2Reg = MI->getOperand(2).getReg();
+      unsigned Src1SubHi = TRI.getSubReg(Src1Reg, Hexagon::subreg_hireg);
+      unsigned Src1SubLo = TRI.getSubReg(Src1Reg, Hexagon::subreg_loreg);
+      unsigned Src2SubHi = TRI.getSubReg(Src2Reg, Hexagon::subreg_hireg);
+      unsigned Src2SubLo = TRI.getSubReg(Src2Reg, Hexagon::subreg_loreg);
+      BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_mpyi),
+              TRI.getSubReg(DstReg, Hexagon::subreg_hireg)).addReg(Src1SubHi)
+          .addReg(Src2SubHi);
+      BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_mpyi),
+              TRI.getSubReg(DstReg, Hexagon::subreg_loreg)).addReg(Src1SubLo)
+          .addReg(Src2SubLo);
+      MBB.erase(MI);
+      MRI.clearKillFlags(Src1SubHi);
+      MRI.clearKillFlags(Src1SubLo);
+      MRI.clearKillFlags(Src2SubHi);
+      MRI.clearKillFlags(Src2SubLo);
+      return true;
+    }
+    case Hexagon::VMULW_ACC: {
+      // Expand 64-bit vector multiply with addition into 2 scalar multiplies.
+      unsigned DstReg = MI->getOperand(0).getReg();
+      unsigned Src1Reg = MI->getOperand(1).getReg();
+      unsigned Src2Reg = MI->getOperand(2).getReg();
+      unsigned Src3Reg = MI->getOperand(3).getReg();
+      unsigned Src1SubHi = TRI.getSubReg(Src1Reg, Hexagon::subreg_hireg);
+      unsigned Src1SubLo = TRI.getSubReg(Src1Reg, Hexagon::subreg_loreg);
+      unsigned Src2SubHi = TRI.getSubReg(Src2Reg, Hexagon::subreg_hireg);
+      unsigned Src2SubLo = TRI.getSubReg(Src2Reg, Hexagon::subreg_loreg);
+      unsigned Src3SubHi = TRI.getSubReg(Src3Reg, Hexagon::subreg_hireg);
+      unsigned Src3SubLo = TRI.getSubReg(Src3Reg, Hexagon::subreg_loreg);
+      BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_maci),
+              TRI.getSubReg(DstReg, Hexagon::subreg_hireg)).addReg(Src1SubHi)
+          .addReg(Src2SubHi).addReg(Src3SubHi);
+      BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_maci),
+              TRI.getSubReg(DstReg, Hexagon::subreg_loreg)).addReg(Src1SubLo)
+          .addReg(Src2SubLo).addReg(Src3SubLo);
+      MBB.erase(MI);
+      MRI.clearKillFlags(Src1SubHi);
+      MRI.clearKillFlags(Src1SubLo);
+      MRI.clearKillFlags(Src2SubHi);
+      MRI.clearKillFlags(Src2SubLo);
+      MRI.clearKillFlags(Src3SubHi);
+      MRI.clearKillFlags(Src3SubLo);
       return true;
     }
     case Hexagon::TCRETURNi:

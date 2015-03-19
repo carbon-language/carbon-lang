@@ -711,6 +711,36 @@ SDNode *HexagonDAGToDAGISel::SelectSHL(SDNode *N) {
 //
 SDNode *HexagonDAGToDAGISel::SelectZeroExtend(SDNode *N) {
   SDLoc dl(N);
+
+  SDValue Op0 = N->getOperand(0);
+  EVT OpVT = Op0.getValueType();
+  unsigned OpBW = OpVT.getSizeInBits();
+
+  // Special handling for zero-extending a vector of booleans.
+  if (OpVT.isVector() && OpVT.getVectorElementType() == MVT::i1 && OpBW <= 64) {
+    SDNode *Mask = CurDAG->getMachineNode(Hexagon::C2_mask, dl, MVT::i64, Op0);
+    unsigned NE = OpVT.getVectorNumElements();
+    EVT ExVT = N->getValueType(0);
+    unsigned ES = ExVT.getVectorElementType().getSizeInBits();
+    uint64_t MV = 0, Bit = 1;
+    for (unsigned i = 0; i < NE; ++i) {
+      MV |= Bit;
+      Bit <<= ES;
+    }
+    SDValue Ones = CurDAG->getTargetConstant(MV, MVT::i64);
+    SDNode *OnesReg = CurDAG->getMachineNode(Hexagon::CONST64_Int_Real, dl,
+                                             MVT::i64, Ones);
+    if (ExVT.getSizeInBits() == 32) {
+      SDNode *And = CurDAG->getMachineNode(Hexagon::A2_andp, dl, MVT::i64,
+                                           SDValue(Mask,0), SDValue(OnesReg,0));
+      SDValue SubR = CurDAG->getTargetConstant(Hexagon::subreg_loreg, MVT::i32);
+      return CurDAG->getMachineNode(Hexagon::EXTRACT_SUBREG, dl, ExVT,
+                                    SDValue(And,0), SubR);
+    }
+    return CurDAG->getMachineNode(Hexagon::A2_andp, dl, ExVT,
+                                  SDValue(Mask,0), SDValue(OnesReg,0));
+  }
+
   SDNode *IsIntrinsic = N->getOperand(0).getNode();
   if ((IsIntrinsic->getOpcode() == ISD::INTRINSIC_WO_CHAIN)) {
     unsigned ID =
