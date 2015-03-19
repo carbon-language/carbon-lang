@@ -1,5 +1,5 @@
-// RUN: llvm-cov show %S/Inputs/templateInstantiations.covmapping -instr-profile %S/Inputs/templateInstantiations.profdata -no-colors -filename-equivalence %s | FileCheck -check-prefix=CHECK -check-prefix=ALL %s
-// RUN: llvm-cov show %S/Inputs/templateInstantiations.covmapping -instr-profile %S/Inputs/templateInstantiations.profdata -no-colors -filename-equivalence -name=_Z4funcIbEiT_ %s | FileCheck -check-prefix=CHECK -check-prefix=FILTER %s
+// RUN: llvm-cov show %S/Inputs/templateInstantiations.covmapping -instr-profile %S/Inputs/templateInstantiations.profdata -filename-equivalence %s | FileCheck -check-prefix=CHECK -check-prefix=ALL %s
+// RUN: llvm-cov show %S/Inputs/templateInstantiations.covmapping -instr-profile %S/Inputs/templateInstantiations.profdata -filename-equivalence -name=_Z4funcIbEiT_ %s | FileCheck -check-prefix=CHECK -check-prefix=FILTER %s
 
 // before coverage   // WHOLE-FILE:   | [[@LINE]]|// before
                      // FILTER-NOT:   | [[@LINE-1]]|// before
