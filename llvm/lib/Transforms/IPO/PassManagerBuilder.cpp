@@ -511,10 +511,8 @@ void PassManagerBuilder::populateLTOPassManager(legacy::PassManagerBase &PM) {
   if (LibraryInfo)
     PM.add(new TargetLibraryInfoWrapperPass(*LibraryInfo));
 
-  if (VerifyInput) {
+  if (VerifyInput)
     PM.add(createVerifierPass());
-    PM.add(createDebugInfoVerifierPass());
-  }
 
   if (OptLevel > 1)
     addLTOOptimizationPasses(PM);
@@ -527,10 +525,8 @@ void PassManagerBuilder::populateLTOPassManager(legacy::PassManagerBase &PM) {
   if (OptLevel != 0)
     addLateLTOOptimizationPasses(PM);
 
-  if (VerifyOutput) {
+  if (VerifyOutput)
     PM.add(createVerifierPass());
-    PM.add(createDebugInfoVerifierPass());
-  }
 }
 
 inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {

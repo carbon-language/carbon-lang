@@ -471,7 +471,6 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   // Start off with a verification pass.
   legacy::PassManager passes;
   passes.add(createVerifierPass());
-  passes.add(createDebugInfoVerifierPass());
 
   // mark which symbols can not be internalized
   Mangler Mangler(TargetMach->getDataLayout());

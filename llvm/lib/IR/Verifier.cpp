@@ -3147,30 +3147,8 @@ struct VerifierLegacyPass : public FunctionPass {
     if (!V.verify(M) && FatalErrors)
       report_fatal_error("Broken module found, compilation aborted!");
 
-    return false;
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesAll();
-  }
-};
-struct DebugInfoVerifierLegacyPass : public ModulePass {
-  static char ID;
-
-  DebugInfoVerifier V;
-  bool FatalErrors;
-
-  DebugInfoVerifierLegacyPass() : ModulePass(ID), FatalErrors(true) {
-    initializeDebugInfoVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
-  }
-  explicit DebugInfoVerifierLegacyPass(bool FatalErrors)
-      : ModulePass(ID), V(dbgs()), FatalErrors(FatalErrors) {
-    initializeDebugInfoVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnModule(Module &M) override {
-    if (!V.verify(M) && FatalErrors)
-      report_fatal_error("Broken debug info found, compilation aborted!");
+    if (!DebugInfoVerifier(dbgs()).verify(M) && FatalErrors)
+      report_fatal_error("Broken module found, compilation aborted!");
 
     return false;
   }
@@ -3184,16 +3162,8 @@ struct DebugInfoVerifierLegacyPass : public ModulePass {
 char VerifierLegacyPass::ID = 0;
 INITIALIZE_PASS(VerifierLegacyPass, "verify", "Module Verifier", false, false)
 
-char DebugInfoVerifierLegacyPass::ID = 0;
-INITIALIZE_PASS(DebugInfoVerifierLegacyPass, "verify-di", "Debug Info Verifier",
-                false, false)
-
 FunctionPass *llvm::createVerifierPass(bool FatalErrors) {
   return new VerifierLegacyPass(FatalErrors);
-}
-
-ModulePass *llvm::createDebugInfoVerifierPass(bool FatalErrors) {
-  return new DebugInfoVerifierLegacyPass(FatalErrors);
 }
 
 PreservedAnalyses VerifierPass::run(Module &M) {

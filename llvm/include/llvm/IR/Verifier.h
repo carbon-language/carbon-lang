@@ -56,20 +56,9 @@ bool verifyModule(const Module &M, raw_ostream *OS = nullptr);
 /// printed to stderr, and by default they are fatal. You can override that by
 /// passing \c false to \p FatalErrors.
 ///
-/// Note that this creates a pass suitable for the legacy pass manager. It has nothing to do with \c VerifierPass.
-FunctionPass *createVerifierPass(bool FatalErrors = true);
-
-/// \brief Create a debug-info verifier pass.
-///
-/// Check a module for validity of debug info. This is essentially a pass
-/// wrapped around the debug-info parts of \a verifyModule().  When the pass
-/// detects a verification error it is always printed to stderr, and by default
-/// they are fatal. You can override that by passing \c false to \p
-/// FatalErrors.
-///
 /// Note that this creates a pass suitable for the legacy pass manager. It has
 /// nothing to do with \c VerifierPass.
-ModulePass *createDebugInfoVerifierPass(bool FatalErrors = true);
+FunctionPass *createVerifierPass(bool FatalErrors = true);
 
 class VerifierPass {
   bool FatalErrors;
