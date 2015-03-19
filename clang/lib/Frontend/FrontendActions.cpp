@@ -690,6 +690,7 @@ void PrintPreambleAction::ExecuteAction() {
   case IK_None:
   case IK_Asm:
   case IK_PreprocessedC:
+  case IK_PreprocessedCuda:
   case IK_PreprocessedCXX:
   case IK_PreprocessedObjC:
   case IK_PreprocessedObjCXX:
