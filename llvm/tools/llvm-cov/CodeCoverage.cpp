@@ -294,9 +294,9 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
                "greater than the given threshold"),
       cl::cat(FilteringCategory));
 
-  enum class Colors { Auto, Always, Never };
+  enum Colors { Auto, Always, Never };
   cl::opt<Colors> Color(
-      "color", cl::desc("Configure color output:"),
+      "color", cl::desc("Configure color output:"), cl::init(Colors::Auto),
       cl::values(clEnumValN(Colors::Auto, "auto",
                             "Enable color if stdout seems to support it"),
                  clEnumValN(Colors::Always, "always", "Enable color"),
