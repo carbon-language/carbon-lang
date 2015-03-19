@@ -5,10 +5,10 @@
 ; It's hard to test for the ISEL condition because CodeGen optimizes
 ; away the bugpointed code. Just ensure the basics are still there.
 ;CHECK-LABEL: func:
-;CHECK: vpxor
-;CHECK: vinserti128
+;CHECK: vxorps
 ;CHECK: vpshufd
 ;CHECK: vpbroadcastd
+;CHECK: vinserti128
 ;CHECK: vmulps
 ;CHECK: vmulps
 ;CHECK: ret

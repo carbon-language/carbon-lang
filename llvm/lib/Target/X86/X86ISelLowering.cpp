@@ -160,8 +160,51 @@ static SDValue InsertSubVector(SDValue Result, SDValue Vec,
 /// we want.  It need not be aligned to a 128-bit boundary.  That makes
 /// lowering INSERT_VECTOR_ELT operations easier.
 static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
-                                  SelectionDAG &DAG,SDLoc dl) {
+                                  SelectionDAG &DAG, SDLoc dl) {
   assert(Vec.getValueType().is128BitVector() && "Unexpected vector size!");
+
+  // For insertion into the zero index (low half) of a 256-bit vector, it is
+  // more efficient to generate a blend with immediate instead of an insert*128.
+  // We are still creating an INSERT_SUBVECTOR below with an undef node to
+  // extend the subvector to the size of the result vector. Make sure that
+  // we are not recursing on that node by checking for undef here.
+  if (IdxVal == 0 && Result.getValueType().is256BitVector() &&
+      Result.getOpcode() != ISD::UNDEF) {
+    EVT ResultVT = Result.getValueType();
+    SDValue ZeroIndex = DAG.getIntPtrConstant(0);
+    SDValue Undef = DAG.getUNDEF(ResultVT);
+    SDValue Vec256 = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Undef,
+                               Vec, ZeroIndex);
+
+    // The blend instruction, and therefore its mask, depend on the data type.
+    MVT ScalarType = ResultVT.getScalarType().getSimpleVT();
+    if (ScalarType.isFloatingPoint()) {
+      // Choose either vblendps (float) or vblendpd (double).
+      unsigned ScalarSize = ScalarType.getSizeInBits();
+      assert((ScalarSize == 64 || ScalarSize == 32) && "Unknown float type");
+      unsigned MaskVal = (ScalarSize == 64) ? 0x03 : 0x0f;
+      SDValue Mask = DAG.getConstant(MaskVal, MVT::i8);
+      return DAG.getNode(X86ISD::BLENDI, dl, ResultVT, Result, Vec256, Mask);
+    }
+    
+    const X86Subtarget &Subtarget =
+      static_cast<const X86Subtarget &>(DAG.getSubtarget());
+
+    // AVX2 is needed for 256-bit integer blend support.
+    // Integers must be cast to 32-bit because there is only vpblendd;
+    // vpblendw can't be used for this because it has a handicapped mask.
+
+    // If we don't have AVX2, then cast to float. Using a wrong domain blend
+    // is still more efficient than using the wrong domain vinsertf128 that
+    // will be created by InsertSubVector().
+    MVT CastVT = Subtarget.hasAVX2() ? MVT::v8i32 : MVT::v8f32;
+
+    SDValue Mask = DAG.getConstant(0x0f, MVT::i8);
+    Vec256 = DAG.getNode(ISD::BITCAST, dl, CastVT, Vec256);
+    Vec256 = DAG.getNode(X86ISD::BLENDI, dl, CastVT, Result, Vec256, Mask);
+    return DAG.getNode(ISD::BITCAST, dl, ResultVT, Vec256);
+  }
+
   return InsertSubVector(Result, Vec, IdxVal, DAG, dl, 128);
 }
 
