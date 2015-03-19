@@ -85,12 +85,6 @@ namespace llvm {
                                  const std::string &Constraint,
                                  MVT VT) const override;
 
-    unsigned getInlineAsmMemConstraint(
-        const std::string &ConstraintCode) const override {
-      // FIXME: Map different constraints differently.
-      return InlineAsm::Constraint_m;
-    }
-
     bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
     MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
 
