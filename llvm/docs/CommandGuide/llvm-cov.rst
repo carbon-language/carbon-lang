@@ -217,9 +217,9 @@ OPTIONS
  Show the execution counts for each line if there is only one region on the
  line, but show the individual regions if there are multiple on the line.
 
-.. option:: -no-colors
+.. option:: -use-color[=VALUE]
 
- Disable colorized output.
+ Enable or disable color output. By default this is autodetected.
 
 .. option:: -arch=<name>
 
@@ -285,9 +285,9 @@ see :ref:`llvm-cov-show`.
 OPTIONS
 ^^^^^^^
 
-.. option:: -no-colors
+.. option:: -use-color[=VALUE]
 
- Disable colorized output.
+ Enable or disable color output. By default this is autodetected.
 
 .. option:: -arch=<name>
 
