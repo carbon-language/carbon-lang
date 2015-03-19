@@ -228,6 +228,10 @@ std::unique_ptr<CoverageMapping> CodeCoverageTool::load() {
   return Coverage;
 }
 
+namespace {
+enum Colors { Auto, Always, Never };
+}
+
 int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -294,7 +298,6 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
                "greater than the given threshold"),
       cl::cat(FilteringCategory));
 
-  enum Colors { Auto, Always, Never };
   cl::opt<Colors> Color(
       "color", cl::desc("Configure color output:"), cl::init(Colors::Auto),
       cl::values(clEnumValN(Colors::Auto, "auto",
