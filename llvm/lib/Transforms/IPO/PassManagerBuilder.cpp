@@ -97,7 +97,6 @@ PassManagerBuilder::PassManagerBuilder() {
     DisableGVNLoadPRE = false;
     VerifyInput = false;
     VerifyOutput = false;
-    StripDebug = false;
     MergeFunctions = false;
 }
 
@@ -512,14 +511,10 @@ void PassManagerBuilder::populateLTOPassManager(legacy::PassManagerBase &PM) {
   if (LibraryInfo)
     PM.add(new TargetLibraryInfoWrapperPass(*LibraryInfo));
 
-  if (VerifyInput)
+  if (VerifyInput) {
     PM.add(createVerifierPass());
-
-  if (StripDebug)
-    PM.add(createStripSymbolsPass(true));
-
-  if (VerifyInput)
     PM.add(createDebugInfoVerifierPass());
+  }
 
   if (OptLevel != 0)
     addLTOOptimizationPasses(PM);

@@ -234,7 +234,6 @@ static void AddOptimizationPasses(legacy::PassManagerBase &MPM,
 static void AddStandardLinkPasses(legacy::PassManagerBase &PM) {
   PassManagerBuilder Builder;
   Builder.VerifyInput = true;
-  Builder.StripDebug = StripDebug;
   if (DisableOptimizations)
     Builder.OptLevel = 0;
 

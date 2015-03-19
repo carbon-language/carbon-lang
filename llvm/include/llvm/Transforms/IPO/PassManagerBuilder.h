@@ -120,7 +120,6 @@ public:
   bool DisableGVNLoadPRE;
   bool VerifyInput;
   bool VerifyOutput;
-  bool StripDebug;
   bool MergeFunctions;
 
 private:
