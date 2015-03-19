@@ -7,14 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-void
-g_MyFunction(void)
-{
-}
+#include <cstdio>
 
 int
 main(int argc, char const *argv[])
 {
-    g_MyFunction();
+    printf("");
     return 0; // BP_return
 }

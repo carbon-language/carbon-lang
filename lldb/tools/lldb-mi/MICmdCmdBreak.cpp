@@ -232,7 +232,7 @@ CMICmdCmdBreakInsert::Execute(void)
             m_brkPt = sbTarget.BreakpointCreateByLocation(fileName.c_str(), nFileLine);
             break;
         case eBreakPoint_ByName:
-            m_brkPt = sbTarget.BreakpointCreateByName(m_brkName.c_str(), sbTarget.GetExecutable().GetFilename());
+            m_brkPt = sbTarget.BreakpointCreateByName(m_brkName.c_str(), nullptr);
             break;
         case eBreakPoint_count:
         case eBreakPoint_NotDefineYet:

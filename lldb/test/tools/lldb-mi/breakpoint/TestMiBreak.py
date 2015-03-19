@@ -21,7 +21,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
         self.expect("\^done")
 
-        self.runCmd("-break-insert -f g_MyFunction")
+        self.runCmd("-break-insert -f printf")
         self.expect("\^done,bkpt={number=\"1\"")
 
         self.runCmd("-exec-run")
@@ -46,7 +46,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        self.runCmd("-break-insert g_MyFunction")
+        self.runCmd("-break-insert printf")
         self.expect("\^done,bkpt={number=\"2\"")
 
         self.runCmd("-exec-continue")

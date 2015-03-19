@@ -430,9 +430,8 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error: Frame index 10 is out of range")
 
         # Set BP at printf and run to BP
-        # FIXME: BP at printf not resolved and never hit!
-        self.runCmd("-interpreter-exec command \"breakpoint set --name printf\"") #FIXME: self.runCmd("-break-insert -f printf")
-        self.expect("\^done")                                                     #FIXME: self.expect("\^done,bkpt={number=\"3\"")
+        self.runCmd("-break-insert -f printf")
+        self.expect("\^done,bkpt={number=\"3\"")
         self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
