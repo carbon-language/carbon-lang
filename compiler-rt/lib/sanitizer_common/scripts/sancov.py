@@ -29,10 +29,27 @@ def TypeCodeForBits(bits):
 
 kMagic64 = 0xC0BFFFFFFFFFFF64
 kMagic32 = 0xC0BFFFFFFFFFFF32
+kMagic32SecondHalf = 0xFFFFFF32;
+kMagic64SecondHalf = 0xFFFFFF64;
+kMagicFirstHalf    = 0xC0BFFFFF;
 
 def MagicForBits(bits):
   CheckBits(bits)
   return kMagic64 if bits == 64 else kMagic32
+
+def ReadMagicAndReturnBitness(f):
+  magic_bytes = f.read(8)
+  magic_words = struct.unpack('II', magic_bytes);
+  bits = 0
+  # Assuming little endian.
+  if magic_words[1] == kMagicFirstHalf:
+    if magic_words[0] == kMagic64SecondHalf:
+      bits = 64
+    elif magic_words[0] == kMagic32SecondHalf:
+      bits = 32
+  if bits == 0:
+      raise Exception('Bad magic word in %s' % path)
+  return bits
 
 def ReadOneFile(path):
   with open(path, mode="rb") as f:
@@ -41,13 +58,7 @@ def ReadOneFile(path):
     f.seek(0, 0)
     if size <= 8:
       raise Exception('File %s is short (> 8 bytes)' % path)
-    magic_word = struct.unpack('L', f.read(8))[0];
-    if magic_word == kMagic64:
-      bits = 64
-    elif magic_word == kMagic32:
-      bits = 32
-    else:
-      raise Exception('Bad magic word in %s' % path)
+    bits = ReadMagicAndReturnBitness(f)
     size -= 8
     s = array.array(TypeCodeForBits(bits), f.read(size))
   print >>sys.stderr, "%s: read %d %d-bit PCs from %s" % (prog_name, size * 8 / bits, bits, path)
