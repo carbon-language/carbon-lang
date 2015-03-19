@@ -71,7 +71,7 @@ LTOCodeGenerator::LTOCodeGenerator()
 
 LTOCodeGenerator::LTOCodeGenerator(std::unique_ptr<LLVMContext> Context)
     : OwnedContext(std::move(Context)), Context(*OwnedContext),
-      IRLinker(new Module("ld-temp.o", *OwnedContext)) {
+      IRLinker(new Module("ld-temp.o", *OwnedContext)), OptLevel(2) {
   initialize();
 }
 
@@ -291,12 +291,11 @@ const void *LTOCodeGenerator::compileOptimized(size_t *length,
 
 
 bool LTOCodeGenerator::compile_to_file(const char **name,
-                                       bool disableOpt,
                                        bool disableInline,
                                        bool disableGVNLoadPRE,
                                        bool disableVectorization,
                                        std::string &errMsg) {
-  if (!optimize(disableOpt, disableInline, disableGVNLoadPRE,
+  if (!optimize(disableInline, disableGVNLoadPRE,
                 disableVectorization, errMsg))
     return false;
 
@@ -304,12 +303,11 @@ bool LTOCodeGenerator::compile_to_file(const char **name,
 }
 
 const void* LTOCodeGenerator::compile(size_t *length,
-                                      bool disableOpt,
                                       bool disableInline,
                                       bool disableGVNLoadPRE,
                                       bool disableVectorization,
                                       std::string &errMsg) {
-  if (!optimize(disableOpt, disableInline, disableGVNLoadPRE,
+  if (!optimize(disableInline, disableGVNLoadPRE,
                 disableVectorization, errMsg))
     return nullptr;
 
@@ -363,9 +361,25 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
       MCpu = "cyclone";
   }
 
+  CodeGenOpt::Level CGOptLevel;
+  switch (OptLevel) {
+  case 0:
+    CGOptLevel = CodeGenOpt::None;
+    break;
+  case 1:
+    CGOptLevel = CodeGenOpt::Less;
+    break;
+  case 2:
+    CGOptLevel = CodeGenOpt::Default;
+    break;
+  case 3:
+    CGOptLevel = CodeGenOpt::Aggressive;
+    break;
+  }
+
   TargetMach = march->createTargetMachine(TripleStr, MCpu, FeatureStr, Options,
                                           RelocModel, CodeModel::Default,
-                                          CodeGenOpt::Aggressive);
+                                          CGOptLevel);
   return true;
 }
 
@@ -512,8 +526,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::optimize(bool DisableOpt,
-                                bool DisableInline,
+bool LTOCodeGenerator::optimize(bool DisableInline,
                                 bool DisableGVNLoadPRE,
                                 bool DisableVectorization,
                                 std::string &errMsg) {
@@ -542,8 +555,7 @@ bool LTOCodeGenerator::optimize(bool DisableOpt,
   if (!DisableInline)
     PMB.Inliner = createFunctionInliningPass();
   PMB.LibraryInfo = new TargetLibraryInfoImpl(TargetTriple);
-  if (DisableOpt)
-    PMB.OptLevel = 0;
+  PMB.OptLevel = OptLevel;
   PMB.VerifyInput = true;
   PMB.VerifyOutput = true;
 

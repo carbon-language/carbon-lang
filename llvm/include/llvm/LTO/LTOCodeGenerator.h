@@ -76,6 +76,7 @@ struct LTOCodeGenerator {
 
   void setCpu(const char *mCpu) { MCpu = mCpu; }
   void setAttr(const char *mAttr) { MAttr = mAttr; }
+  void setOptLevel(unsigned optLevel) { OptLevel = optLevel; }
 
   void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
 
@@ -102,7 +103,6 @@ struct LTOCodeGenerator {
   //  Do not try to remove the object file in LTOCodeGenerator's destructor
   //  as we don't who (LTOCodeGenerator or the obj file) will last longer.
   bool compile_to_file(const char **name,
-                       bool disableOpt,
                        bool disableInline,
                        bool disableGVNLoadPRE,
                        bool disableVectorization,
@@ -114,15 +114,13 @@ struct LTOCodeGenerator {
   // caller. This function should delete intermediate object file once its content
   // is brought to memory. Return NULL if the compilation was not successful.
   const void *compile(size_t *length,
-                      bool disableOpt,
                       bool disableInline,
                       bool disableGVNLoadPRE,
                       bool disableVectorization,
                       std::string &errMsg);
 
   // Optimizes the merged module. Returns true on success.
-  bool optimize(bool disableOpt,
-                bool disableInline,
+  bool optimize(bool disableInline,
                 bool disableGVNLoadPRE,
                 bool disableVectorization,
                 std::string &errMsg);
@@ -171,6 +169,7 @@ private:
   std::string MAttr;
   std::string NativeObjectPath;
   TargetOptions Options;
+  unsigned OptLevel;
   lto_diagnostic_handler_t DiagHandler;
   void *DiagContext;
   LTOModule *OwnedModule;

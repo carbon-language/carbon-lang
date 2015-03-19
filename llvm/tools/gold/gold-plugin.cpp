@@ -91,6 +91,7 @@ namespace options {
   };
   static bool generate_api_file = false;
   static OutputType TheOutputType = OT_NORMAL;
+  static unsigned OptLevel = 2;
   static std::string obj_path;
   static std::string extra_library_path;
   static std::string triple;
@@ -124,6 +125,10 @@ namespace options {
       TheOutputType = OT_SAVE_TEMPS;
     } else if (opt == "disable-output") {
       TheOutputType = OT_DISABLE;
+    } else if (opt.size() == 2 && opt[0] == 'O') {
+      if (opt[1] < '0' || opt[1] > '3')
+        report_fatal_error("Optimization level must be between 0 and 3");
+      OptLevel = opt[1] - '0';
     } else {
       // Save this option to pass to the code generator.
       // ParseCommandLineOptions() expects argv[0] to be program name. Lazily
@@ -724,6 +729,7 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   PMB.VerifyOutput = true;
   PMB.LoopVectorize = true;
   PMB.SLPVectorize = true;
+  PMB.OptLevel = options::OptLevel;
   PMB.populateLTOPassManager(passes);
   passes.run(M);
 }
@@ -754,9 +760,24 @@ static void codegen(Module &M) {
     Features.AddFeature(A);
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  CodeGenOpt::Level CGOptLevel;
+  switch (options::OptLevel) {
+  case 0:
+    CGOptLevel = CodeGenOpt::None;
+    break;
+  case 1:
+    CGOptLevel = CodeGenOpt::Less;
+    break;
+  case 2:
+    CGOptLevel = CodeGenOpt::Default;
+    break;
+  case 3:
+    CGOptLevel = CodeGenOpt::Aggressive;
+    break;
+  }
   std::unique_ptr<TargetMachine> TM(TheTarget->createTargetMachine(
       TripleStr, options::mcpu, Features.getString(), Options, RelocationModel,
-      CodeModel::Default, CodeGenOpt::Aggressive));
+      CodeModel::Default, CGOptLevel));
 
   runLTOPasses(M, *TM);
 

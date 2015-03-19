@@ -25,7 +25,7 @@ define i32 @main(i32 %argc, i8** %argv) {
   ret i32 0
 }
 
-; RUN: llvm-lto -o %t -dso-symbol=zed1 -dso-symbol=zed2 %t1 -disable-opt
+; RUN: llvm-lto -o %t -dso-symbol=zed1 -dso-symbol=zed2 %t1 -O0
 ; RUN: llvm-nm %t | FileCheck %s -check-prefix=ZED1_AND_ZED2
 ; ZED1_AND_ZED2: V zed1
 @zed1 = linkonce_odr global i32 42
