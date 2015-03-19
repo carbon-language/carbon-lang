@@ -1340,7 +1340,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
   // If this is CUDA, be selective about which declarations we emit.
   if (LangOpts.CUDA) {
-    if (CodeGenOpts.CUDAIsDevice) {
+    if (LangOpts.CUDAIsDevice) {
       if (!Global->hasAttr<CUDADeviceAttr>() &&
           !Global->hasAttr<CUDAGlobalAttr>() &&
           !Global->hasAttr<CUDAConstantAttr>() &&
@@ -1909,7 +1909,7 @@ CharUnits CodeGenModule::GetTargetTypeStoreSize(llvm::Type *Ty) const {
 
 unsigned CodeGenModule::GetGlobalVarAddressSpace(const VarDecl *D,
                                                  unsigned AddrSpace) {
-  if (LangOpts.CUDA && CodeGenOpts.CUDAIsDevice) {
+  if (LangOpts.CUDA && LangOpts.CUDAIsDevice) {
     if (D->hasAttr<CUDAConstantAttr>())
       AddrSpace = getContext().getTargetAddressSpace(LangAS::cuda_constant);
     else if (D->hasAttr<CUDASharedAttr>())
