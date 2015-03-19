@@ -108,14 +108,12 @@ static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
 
 static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
                                     MCAsmBackend &MAB, raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll) {
+                                    MCCodeEmitter *Emitter, bool RelaxAll) {
   MCStreamer *S;
   if (!T.isOSNaCl())
-    S = createMipsELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll);
+    S = createMipsELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
   else
-    S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll);
-  new MipsTargetELFStreamer(*S, STI);
+    S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
   return S;
 }
 
@@ -128,6 +126,11 @@ static MCTargetStreamer *createMipsAsmTargetStreamer(MCStreamer &S,
 
 static MCTargetStreamer *createMipsNullTargetStreamer(MCStreamer &S) {
   return new MipsTargetStreamer(S);
+}
+
+static MCTargetStreamer *
+createMipsObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
+  return new MipsTargetELFStreamer(S, STI);
 }
 
 extern "C" void LLVMInitializeMipsTargetMC() {
@@ -145,8 +148,8 @@ extern "C" void LLVMInitializeMipsTargetMC() {
     // Register the MC register info.
     TargetRegistry::RegisterMCRegInfo(*T, createMipsMCRegisterInfo);
 
-    // Register the object streamer.
-    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+    // Register the elf streamer.
+    TargetRegistry::RegisterELFStreamer(*T, createMCStreamer);
 
     // Register the asm target streamer.
     TargetRegistry::RegisterAsmTargetStreamer(*T, createMipsAsmTargetStreamer);
@@ -159,6 +162,9 @@ extern "C" void LLVMInitializeMipsTargetMC() {
 
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createMipsMCInstPrinter);
+
+    TargetRegistry::RegisterObjectTargetStreamer(
+        *T, createMipsObjectTargetStreamer);
   }
 
   // Register the MC Code Emitter

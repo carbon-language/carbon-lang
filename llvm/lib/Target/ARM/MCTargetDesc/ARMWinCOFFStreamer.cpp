@@ -37,10 +37,10 @@ void ARMWinCOFFStreamer::EmitThumbFunc(MCSymbol *Symbol) {
 }
 }
 
-namespace llvm {
-MCStreamer *createARMWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     MCCodeEmitter &Emitter, raw_ostream &OS) {
-  return new ARMWinCOFFStreamer(Context, MAB, Emitter, OS);
-}
+MCStreamer *llvm::createARMWinCOFFStreamer(MCContext &Context,
+                                           MCAsmBackend &MAB, raw_ostream &OS,
+                                           MCCodeEmitter *Emitter,
+                                           bool RelaxAll) {
+  return new ARMWinCOFFStreamer(Context, MAB, *Emitter, OS);
 }
 

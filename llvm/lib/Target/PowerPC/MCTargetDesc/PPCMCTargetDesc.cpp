@@ -223,27 +223,19 @@ public:
 };
 }
 
-// This is duplicated code. Refactor this.
-static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
-                                    MCAsmBackend &MAB, raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll) {
-  if (T.isOSDarwin()) {
-    MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
-    new PPCTargetMachOStreamer(*S);
-    return S;
-  }
-
-  MCStreamer *S = createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
-  new PPCTargetELFStreamer(*S);
-  return S;
-}
-
 static MCTargetStreamer *createAsmTargetStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,
                                                  MCInstPrinter *InstPrint,
                                                  bool isVerboseAsm) {
   return new PPCTargetAsmStreamer(S, OS);
+}
+
+static MCTargetStreamer *
+createObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
+  Triple TT(STI.getTargetTriple());
+  if (TT.getObjectFormat() == Triple::ELF)
+    return new PPCTargetELFStreamer(S);
+  return new PPCTargetMachOStreamer(S);
 }
 
 static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
@@ -279,8 +271,9 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
     // Register the asm backend.
     TargetRegistry::RegisterMCAsmBackend(*T, createPPCAsmBackend);
 
-    // Register the object streamer.
-    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+    // Register the object target streamer.
+    TargetRegistry::RegisterObjectTargetStreamer(*T,
+                                                 createObjectTargetStreamer);
 
     // Register the asm target streamer.
     TargetRegistry::RegisterAsmTargetStreamer(*T, createAsmTargetStreamer);

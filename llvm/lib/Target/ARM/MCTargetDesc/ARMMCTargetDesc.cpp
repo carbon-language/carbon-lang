@@ -298,25 +298,18 @@ static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-// This is duplicated code. Refactor this.
-static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
-                                    MCAsmBackend &MAB, raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll) {
-  switch (T.getObjectFormat()) {
-  default: llvm_unreachable("unsupported object format");
-  case Triple::MachO: {
-    MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, false);
-    new ARMTargetStreamer(*S);
-    return S;
-  }
-  case Triple::COFF:
-    assert(T.isOSWindows() && "non-Windows ARM COFF is not supported");
-    return createARMWinCOFFStreamer(Ctx, MAB, *Emitter, OS);
-  case Triple::ELF:
-    return createARMELFStreamer(Ctx, MAB, OS, Emitter, false,
-                                T.getArch() == Triple::thumb);
-  }
+static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
+                                     MCAsmBackend &MAB, raw_ostream &OS,
+                                     MCCodeEmitter *Emitter, bool RelaxAll) {
+  return createARMELFStreamer(Ctx, MAB, OS, Emitter, false,
+                              T.getArch() == Triple::thumb);
+}
+
+static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
+                                          raw_ostream &OS,
+                                          MCCodeEmitter *Emitter,
+                                          bool RelaxAll) {
+  return createMachOStreamer(Ctx, MAB, OS, Emitter, false);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
@@ -401,8 +394,13 @@ extern "C" void LLVMInitializeARMTargetMC() {
     // Register the MC instruction analyzer.
     TargetRegistry::RegisterMCInstrAnalysis(*T, createARMMCInstrAnalysis);
 
-    // Register the object streamer.
-    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+    TargetRegistry::RegisterELFStreamer(*T, createELFStreamer);
+    TargetRegistry::RegisterCOFFStreamer(*T, createARMWinCOFFStreamer);
+    TargetRegistry::RegisterMachOStreamer(*T, createARMMachOStreamer);
+
+    // Register the obj target streamer.
+    TargetRegistry::RegisterObjectTargetStreamer(*T,
+                                                 createARMObjectTargetStreamer);
 
     // Register the asm streamer.
     TargetRegistry::RegisterAsmTargetStreamer(*T, createARMTargetAsmStreamer);

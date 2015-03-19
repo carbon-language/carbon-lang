@@ -48,13 +48,11 @@ void X86WinCOFFStreamer::FinishImpl() {
 }
 }
 
-namespace llvm {
-MCStreamer *createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
-                                     MCCodeEmitter *CE, raw_ostream &OS,
-                                     bool RelaxAll) {
+MCStreamer *llvm::createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
+                                           raw_ostream &OS, MCCodeEmitter *CE,
+                                           bool RelaxAll) {
   X86WinCOFFStreamer *S = new X86WinCOFFStreamer(C, AB, CE, OS);
   S->getAssembler().setRelaxAll(RelaxAll);
   return S;
-}
 }
 

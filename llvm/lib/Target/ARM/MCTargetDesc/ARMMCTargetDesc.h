@@ -32,6 +32,7 @@ class MCRelocationInfo;
 class MCTargetStreamer;
 class StringRef;
 class Target;
+class Triple;
 class raw_ostream;
 
 extern Target TheARMLETarget, TheThumbLETarget;
@@ -52,6 +53,8 @@ MCTargetStreamer *createARMTargetAsmStreamer(MCStreamer &S,
                                              formatted_raw_ostream &OS,
                                              MCInstPrinter *InstPrint,
                                              bool isVerboseAsm);
+MCTargetStreamer *createARMObjectTargetStreamer(MCStreamer &S,
+                                                const MCSubtargetInfo &STI);
 
 MCCodeEmitter *createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
@@ -77,10 +80,11 @@ MCAsmBackend *createThumbLEAsmBackend(const Target &T, const MCRegisterInfo &MRI
 MCAsmBackend *createThumbBEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                       StringRef TT, StringRef CPU);
 
-/// createARMWinCOFFStreamer - Construct a PE/COFF machine code streamer which
-/// will generate a PE/COFF object file.
+// Construct a PE/COFF machine code streamer which will generate a PE/COFF
+// object file.
 MCStreamer *createARMWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     MCCodeEmitter &Emitter, raw_ostream &OS);
+                                     raw_ostream &OS, MCCodeEmitter *Emitter,
+                                     bool RelaxAll);
 
 /// createARMELFObjectWriter - Construct an ELF Mach-O object writer.
 MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,

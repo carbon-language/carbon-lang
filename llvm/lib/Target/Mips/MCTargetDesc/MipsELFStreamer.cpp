@@ -69,11 +69,9 @@ void MipsELFStreamer::EmitMipsOptionRecords() {
     I->EmitMipsOptionRecord();
 }
 
-namespace llvm {
-MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                     const MCSubtargetInfo &STI,
-                                     bool RelaxAll) {
-  return new MipsELFStreamer(Context, MAB, OS, Emitter, STI);
-}
+MCELFStreamer *llvm::createMipsELFStreamer(MCContext &Context,
+                                           MCAsmBackend &MAB, raw_ostream &OS,
+                                           MCCodeEmitter *Emitter,
+                                           bool RelaxAll) {
+  return new MipsELFStreamer(Context, MAB, OS, Emitter);
 }

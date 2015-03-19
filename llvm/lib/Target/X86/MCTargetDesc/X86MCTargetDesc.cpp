@@ -344,22 +344,6 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCStreamer *createMCStreamer(const Triple &T, MCContext &Ctx,
-                                    MCAsmBackend &MAB, raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll) {
-  switch (T.getObjectFormat()) {
-  default: llvm_unreachable("unsupported object format");
-  case Triple::MachO:
-    return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
-  case Triple::COFF:
-    assert(T.isOSWindows() && "only Windows COFF is supported");
-    return createX86WinCOFFStreamer(Ctx, MAB, Emitter, OS, RelaxAll);
-  case Triple::ELF:
-    return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
-  }
-}
-
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
@@ -414,7 +398,7 @@ extern "C" void LLVMInitializeX86TargetMC() {
     TargetRegistry::RegisterMCCodeEmitter(*T, createX86MCCodeEmitter);
 
     // Register the object streamer.
-    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+    TargetRegistry::RegisterCOFFStreamer(*T, createX86WinCOFFStreamer);
 
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createX86MCInstPrinter);

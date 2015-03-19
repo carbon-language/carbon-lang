@@ -214,9 +214,16 @@ MCELFStreamer *createAArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                         raw_ostream &OS, MCCodeEmitter *Emitter,
                                         bool RelaxAll) {
   AArch64ELFStreamer *S = new AArch64ELFStreamer(Context, TAB, OS, Emitter);
-  new AArch64TargetELFStreamer(*S);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   return S;
+}
+
+MCTargetStreamer *
+createAArch64ObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
+  Triple TT(STI.getTargetTriple());
+  if (TT.getObjectFormat() == Triple::ELF)
+    return new AArch64TargetELFStreamer(S);
+  return nullptr;
 }
 }

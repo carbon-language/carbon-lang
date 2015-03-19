@@ -31,6 +31,7 @@ class MCSubtargetInfo;
 class MCTargetStreamer;
 class StringRef;
 class Target;
+class Triple;
 class raw_ostream;
 
 extern Target TheAArch64leTarget;
@@ -57,6 +58,10 @@ MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,
                                                  MCInstPrinter *InstPrint,
                                                  bool isVerboseAsm);
+
+MCTargetStreamer *createAArch64ObjectTargetStreamer(MCStreamer &S,
+                                                    const MCSubtargetInfo &STI);
+
 } // End llvm namespace
 
 // Defines symbolic names for AArch64 registers.  This defines a mapping from

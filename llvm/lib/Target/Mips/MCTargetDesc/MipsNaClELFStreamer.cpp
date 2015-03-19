@@ -37,8 +37,8 @@ const unsigned LoadStoreStackMaskReg = Mips::T7;
 class MipsNaClELFStreamer : public MipsELFStreamer {
 public:
   MipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
-                      MCCodeEmitter *Emitter, const MCSubtargetInfo &STI)
-    : MipsELFStreamer(Context, TAB, OS, Emitter, STI), PendingCall(false) {}
+                      MCCodeEmitter *Emitter)
+      : MipsELFStreamer(Context, TAB, OS, Emitter), PendingCall(false) {}
 
   ~MipsNaClELFStreamer() {}
 
@@ -254,10 +254,8 @@ bool baseRegNeedsLoadStoreMask(unsigned Reg) {
 MCELFStreamer *createMipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                          raw_ostream &OS,
                                          MCCodeEmitter *Emitter,
-                                         const MCSubtargetInfo &STI,
                                          bool RelaxAll) {
-  MipsNaClELFStreamer *S = new MipsNaClELFStreamer(Context, TAB, OS, Emitter,
-                                                   STI);
+  MipsNaClELFStreamer *S = new MipsNaClELFStreamer(Context, TAB, OS, Emitter);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
 

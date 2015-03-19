@@ -122,13 +122,9 @@ static MCCodeGenInfo *createSparcV9MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
-                                    MCAsmBackend &MAB, raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll) {
-  MCStreamer *S = createELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
-  new SparcTargetELFStreamer(*S);
-  return S;
+static MCTargetStreamer *
+createObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
+  return new SparcTargetELFStreamer(S);
 }
 
 static MCTargetStreamer *createTargetAsmStreamer(MCStreamer &S,
@@ -168,8 +164,9 @@ extern "C" void LLVMInitializeSparcTargetMC() {
     // Register the asm backend.
     TargetRegistry::RegisterMCAsmBackend(*T, createSparcAsmBackend);
 
-    // Register the object streamer.
-    TargetRegistry::RegisterMCObjectStreamer(*T, createMCStreamer);
+    // Register the object target streamer.
+    TargetRegistry::RegisterObjectTargetStreamer(*T,
+                                                 createObjectTargetStreamer);
 
     // Register the asm streamer.
     TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
