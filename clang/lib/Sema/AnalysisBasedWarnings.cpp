@@ -1439,7 +1439,7 @@ struct SortDiagBySourceLocation {
 //===----------------------------------------------------------------------===//
 namespace clang {
 namespace threadSafety {
-
+namespace {
 class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
   Sema &S;
   DiagList Warnings;
@@ -1704,9 +1704,9 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     CurrentFunction = 0;
   }
 };
-
-}
-}
+} // namespace
+} // namespace threadSafety
+} // namespace clang
 
 //===----------------------------------------------------------------------===//
 // -Wconsumed
