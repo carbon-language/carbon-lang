@@ -1,8 +1,10 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=64,1 < %s
-; CHECK: c0 += 64
-; CHECK: c1 += 1
-; CHECK: c0 <= c0 + 63
-; ModuleID = 'line-tiling.ll'
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=64,1 < %s | FileCheck %s
+
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 64)
+; CHECK:   for (int c1 = 0; c1 <= 511; c1 += 1)
+; CHECK:     for (int c2 = c0; c2 <= c0 + 63; c2 += 1)
+; CHECK:       Stmt_for_body3(c2, c1);
+
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
 ; Function Attrs: nounwind

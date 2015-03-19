@@ -1,9 +1,11 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=256,16 < %s
-; CHECK: c0 += 256
-; CHECK: c1 += 16
-; CHECK: c0 <= c0 + 255
-; CHECK: c1 <= c1 + 15
-; ModuleID = 'rectangular-tiling.ll'
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=256,16 < %s | FileCheck %s
+
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 256)
+; CHECK:   for (int c1 = 0; c1 <= 511; c1 += 16)
+; CHECK:     for (int c2 = c0; c2 <= c0 + 255; c2 += 1)
+; CHECK:       for (int c3 = c1; c3 <= c1 + 15; c3 += 1)
+; CHECK:         Stmt_for_body3(c2, c3);
+
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
 ; Function Attrs: nounwind
