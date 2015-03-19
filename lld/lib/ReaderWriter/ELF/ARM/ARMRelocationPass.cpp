@@ -28,11 +28,10 @@ using namespace lld;
 using namespace lld::elf;
 using namespace llvm::ELF;
 
-namespace {
 // ARM B/BL instructions of static relocation veneer.
 // TODO: consider different instruction set for archs below ARMv5
 // (one as for Thumb may be used though it's less optimal).
-const uint8_t Veneer_ARM_B_BL_StaticAtomContent[8] = {
+static const uint8_t Veneer_ARM_B_BL_StaticAtomContent[8] = {
     0x04, 0xf0, 0x1f, 0xe5,  // ldr pc, [pc, #-4]
     0x00, 0x00, 0x00, 0x00   // <target_symbol_address>
 };
@@ -40,12 +39,16 @@ const uint8_t Veneer_ARM_B_BL_StaticAtomContent[8] = {
 // Thumb B/BL instructions of static relocation veneer.
 // TODO: consider different instruction set for archs above ARMv5
 // (one as for ARM may be used since it's more optimal).
-const uint8_t Veneer_THM_B_BL_StaticAtomContent[8] = {
+static const uint8_t Veneer_THM_B_BL_StaticAtomContent[8] = {
     0x78, 0x47,              // bx pc
     0x00, 0x00,              // nop
     0xfe, 0xff, 0xff, 0xea   // b <target_symbol_address>
 };
 
+// .got values
+static const uint8_t ARMGotAtomContent[4] = {0};
+
+namespace {
 /// \brief Atoms that hold veneer code.
 class VeneerAtom : public SimpleELFDefinedAtom {
   StringRef _section;
@@ -104,6 +107,18 @@ public:
   }
 };
 
+/// \brief Atoms that are used by ARM dynamic linking
+class ARMGOTAtom : public GOTAtom {
+public:
+  ARMGOTAtom(const File &f, StringRef secName) : GOTAtom(f, secName) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(ARMGotAtomContent);
+  }
+
+  Alignment alignment() const override { return Alignment(2); }
+};
+
 class ELFPassFile : public SimpleFile {
 public:
   ELFPassFile(const ELFLinkingContext &eti) : SimpleFile("ELFPassFile") {
@@ -129,6 +144,9 @@ template <class Derived> class ARMRelocationPass : public Pass {
     case R_ARM_THM_JUMP24:
       static_cast<Derived *>(this)->handleVeneer(atom, ref);
       break;
+    case R_ARM_TLS_IE32:
+      static_cast<Derived *>(this)->handleTLSIE32(ref);
+      break;
     }
   }
 
@@ -136,7 +154,7 @@ protected:
   std::error_code handleVeneer(const DefinedAtom &atom, const Reference &ref) {
     // Target symbol and relocated place should have different
     // instruction sets in order a veneer to be generated in between.
-    const auto *target = dyn_cast_or_null<DefinedAtom>(ref.target());
+    const auto *target = dyn_cast<DefinedAtom>(ref.target());
     if (!target || target->codeModel() == atom.codeModel())
       return std::error_code();
 
@@ -181,6 +199,32 @@ protected:
     assert(veneer && "The veneer is not set");
     const_cast<Reference &>(ref).setTarget(veneer);
     return std::error_code();
+  }
+
+  std::error_code handleTLSIE32(const Reference &ref) {
+    if (const auto *target = dyn_cast<DefinedAtom>(ref.target())) {
+      const_cast<Reference &>(ref).setTarget(
+          static_cast<Derived *>(this)->getTLSTPOFF32(target));
+      return std::error_code();
+    }
+    llvm_unreachable("R_ARM_TLS_IE32 reloc targets wrong atom type");
+  }
+
+  /// \brief Create a GOT entry for TLS with reloc type and addend specified.
+  template <Reference::KindValue R_ARM_TLS, Reference::Addend A = 0>
+  const GOTAtom *getGOTTLSEntry(const DefinedAtom *da) {
+    auto got = _gotMap.find(da);
+    if (got != _gotMap.end())
+      return got->second;
+    auto g = new (_file._alloc) ARMGOTAtom(_file, ".got");
+    g->addReferenceELF_ARM(R_ARM_TLS, 0, da, A);
+#ifndef NDEBUG
+    g->_name = "__got_tls_";
+    g->_name += da->name();
+#endif
+    _gotMap[da] = g;
+    _gotVector.push_back(g);
+    return g;
   }
 
 public:
@@ -230,6 +274,10 @@ public:
 
     // Add all created atoms to the link.
     uint64_t ordinal = 0;
+    for (auto &got : _gotVector) {
+      got->setOrdinal(ordinal++);
+      mf->addAtom(*got);
+    }
     for (auto &veneer : _veneerVector) {
       veneer->setOrdinal(ordinal++);
       mf->addAtom(*veneer);
@@ -241,8 +289,14 @@ protected:
   ELFPassFile _file;
   const ELFLinkingContext &_ctx;
 
+  /// \brief Map Atoms to their GOT entries.
+  llvm::DenseMap<const Atom *, GOTAtom *> _gotMap;
+
   /// \brief Map Atoms to their veneers.
   llvm::DenseMap<const Atom *, VeneerAtom *> _veneerMap;
+
+  /// \brief the list of GOT/PLT atoms
+  std::vector<GOTAtom *> _gotVector;
 
   /// \brief the list of veneer atoms.
   std::vector<VeneerAtom *> _veneerVector;
@@ -296,6 +350,11 @@ public:
     _veneerMap[da] = v;
     _veneerVector.push_back(v);
     return v;
+  }
+
+  /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
+  const GOTAtom *getTLSTPOFF32(const DefinedAtom *da) {
+    return getGOTTLSEntry<R_ARM_TLS_LE32>(da);
   }
 };
 

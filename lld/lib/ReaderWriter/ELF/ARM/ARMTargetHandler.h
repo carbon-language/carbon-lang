@@ -29,6 +29,26 @@ template <class ELFT> class ARMTargetLayout : public TargetLayout<ELFT> {
 public:
   ARMTargetLayout(ARMLinkingContext &context)
       : TargetLayout<ELFT>(context) {}
+
+  uint64_t getTPOffset() {
+    if (_tpOff.hasValue())
+      return *_tpOff;
+
+    for (const auto &phdr : *this->_programHeader) {
+      if (phdr->p_type == llvm::ELF::PT_TLS) {
+        _tpOff = llvm::RoundUpToAlignment(TCB_SIZE, phdr->p_align);
+        return *_tpOff;
+      }
+    }
+    llvm_unreachable("TLS segment not found");
+  }
+
+private:
+  // TCB block size of the TLS.
+  enum { TCB_SIZE = 0x8 };
+
+  // Cached value of the TLS offset from the $tp pointer.
+  llvm::Optional<uint64_t> _tpOff;
 };
 
 class ARMTargetHandler final : public DefaultTargetHandler<ARMELFType> {

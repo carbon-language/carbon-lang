@@ -21,9 +21,15 @@ template <class ELFT> class ARMTargetLayout;
 class ARMTargetRelocationHandler final
     : public TargetRelocationHandler {
 public:
+  ARMTargetRelocationHandler(ARMTargetLayout<ARMELFType> &layout)
+      : _armLayout(layout) {}
+
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
                                   const Reference &) const override;
+
+private:
+  ARMTargetLayout<ARMELFType> &_armLayout;
 };
 
 } // end namespace elf

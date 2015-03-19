@@ -82,6 +82,8 @@ static Reference::Addend readAddend(const uint8_t *location,
   switch (kindValue) {
   case R_ARM_ABS32:
   case R_ARM_REL32:
+  case R_ARM_TLS_IE32:
+  case R_ARM_TLS_LE32:
     return (int32_t)read32le(location);
   case R_ARM_PREL31:
     return (int32_t)(read32le(location) & 0x7FFFFFFF);
@@ -382,6 +384,34 @@ static void relocR_ARM_THM_MOVT_ABS(uint8_t *location, uint64_t P, uint64_t S,
   return relocR_ARM_THM_MOV(location, arg);
 }
 
+/// \brief R_ARM_TLS_IE32 - GOT(S) + A - P => S + A - P
+static void relocR_ARM_TLS_IE32(uint8_t *location, uint64_t P, uint64_t S,
+                                int64_t A) {
+  uint32_t result = (uint32_t)(S + A - P);
+
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  applyArmReloc(location, result);
+}
+
+/// \brief R_ARM_TLS_LE32 - S + A - tp => S + A + tpoff
+static void relocR_ARM_TLS_LE32(uint8_t *location, uint64_t P, uint64_t S,
+                                int64_t A, uint64_t tpoff) {
+  uint32_t result = (uint32_t)(S + A + tpoff);
+
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  applyArmReloc(location, result);
+}
+
 std::error_code ARMTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
@@ -454,6 +484,13 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   case R_ARM_PREL31:
     relocR_ARM_PREL31(location, relocVAddress, targetVAddress, addend,
                      addressesThumb);
+    break;
+  case R_ARM_TLS_IE32:
+    relocR_ARM_TLS_IE32(location, relocVAddress, targetVAddress, addend);
+    break;
+  case R_ARM_TLS_LE32:
+    relocR_ARM_TLS_LE32(location, relocVAddress, targetVAddress, addend,
+                        _armLayout.getTPOffset());
     break;
   default:
     return make_unhandled_reloc_error();

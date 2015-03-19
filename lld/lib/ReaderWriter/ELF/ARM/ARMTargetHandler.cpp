@@ -18,7 +18,8 @@ using namespace elf;
 ARMTargetHandler::ARMTargetHandler(ARMLinkingContext &context)
     : _context(context), _armTargetLayout(
           new ARMTargetLayout<ARMELFType>(context)),
-      _armRelocationHandler(new ARMTargetRelocationHandler()) {}
+      _armRelocationHandler(new ARMTargetRelocationHandler(
+          *_armTargetLayout.get())) {}
 
 void ARMTargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::ARM,
