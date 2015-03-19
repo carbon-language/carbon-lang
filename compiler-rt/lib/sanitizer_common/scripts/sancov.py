@@ -35,9 +35,10 @@ kMagicFirstHalf    = 0xC0BFFFFF;
 
 def MagicForBits(bits):
   CheckBits(bits)
-  return kMagic64 if bits == 64 else kMagic32
+  # Little endian.
+  return [kMagic64SecondHalf if bits == 64 else kMagic32SecondHalf, kMagicFirstHalf]
 
-def ReadMagicAndReturnBitness(f):
+def ReadMagicAndReturnBitness(f, path):
   magic_bytes = f.read(8)
   magic_words = struct.unpack('II', magic_bytes);
   bits = 0
@@ -48,7 +49,7 @@ def ReadMagicAndReturnBitness(f):
     elif magic_words[0] == kMagic32SecondHalf:
       bits = 32
   if bits == 0:
-      raise Exception('Bad magic word in %s' % path)
+    raise Exception('Bad magic word in %s' % path)
   return bits
 
 def ReadOneFile(path):
@@ -56,9 +57,9 @@ def ReadOneFile(path):
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
-    if size <= 8:
-      raise Exception('File %s is short (> 8 bytes)' % path)
-    bits = ReadMagicAndReturnBitness(f)
+    if size < 8:
+      raise Exception('File %s is short (< 8 bytes)' % path)
+    bits = ReadMagicAndReturnBitness(f, path)
     size -= 8
     s = array.array(TypeCodeForBits(bits), f.read(size))
   print >>sys.stderr, "%s: read %d %d-bit PCs from %s" % (prog_name, size * 8 / bits, bits, path)
@@ -77,6 +78,8 @@ def PrintFiles(files):
     s = Merge(files)
   else:  # If there is just on file, print the PCs in order.
     s = ReadOneFile(files[0])
+    print >> sys.stderr, "%s: 1 file merged; %d PCs total" % \
+      (prog_name, len(s))
   for i in s:
     print "0x%x" % i
 
@@ -85,10 +88,9 @@ def MergeAndPrint(files):
     Usage()
   s = Merge(files)
   bits = 32
-  magic = kMagic32
   if max(s) > 0xFFFFFFFF:
     bits = 64
-    magic = kMagic64
+  array.array('I', MagicForBits(bits)).tofile(sys.stdout)
   a = array.array(TypeCodeForBits(bits), s)
   a.tofile(sys.stdout)
 
@@ -164,7 +166,7 @@ def UnpackOneRawFile(path, map_path):
       arr = array.array(TypeCodeForBits(bits))
       arr.fromlist(sorted(pc_list))
       with open(dst_path, 'ab') as f2:
-        array.array('L', [MagicForBits(bits)]).tofile(f2)
+        array.array('I', MagicForBits(bits)).tofile(f2)
         arr.tofile(f2)
 
 def RawUnpack(files):
