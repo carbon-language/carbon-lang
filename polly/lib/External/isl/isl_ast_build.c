@@ -1,5 +1,5 @@
 /*
- * Copyright 2012      Ecole Normale Superieure
+ * Copyright 2012-2013 Ecole Normale Superieure
  * Copyright 2014      INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
@@ -66,10 +66,12 @@ static __isl_give isl_ast_build *isl_ast_build_init_derived(
 	isl_multi_aff_free(build->offsets);
 	build->offsets = isl_multi_aff_zero(isl_space_copy(space));
 	isl_multi_aff_free(build->values);
-	build->values = isl_multi_aff_identity(space);
+	build->values = isl_multi_aff_identity(isl_space_copy(space));
+	isl_multi_aff_free(build->internal2input);
+	build->internal2input = isl_multi_aff_identity(space);
 
 	if (!build->iterators || !build->domain || !build->generated ||
-	    !build->pending || !build->values ||
+	    !build->pending || !build->values || !build->internal2input ||
 	    !build->strides || !build->offsets || !build->options)
 		return isl_ast_build_free(build);
 
@@ -146,6 +148,19 @@ error:
 	return NULL;
 }
 
+/* Create an isl_ast_build with a universe (parametric) context.
+ */
+__isl_give isl_ast_build *isl_ast_build_alloc(isl_ctx *ctx)
+{
+	isl_space *space;
+	isl_set *context;
+
+	space = isl_space_params_alloc(ctx, 0);
+	context = isl_set_universe(space);
+
+	return isl_ast_build_from_context(context);
+}
+
 __isl_give isl_ast_build *isl_ast_build_copy(__isl_keep isl_ast_build *build)
 {
 	if (!build)
@@ -176,6 +191,7 @@ __isl_give isl_ast_build *isl_ast_build_dup(__isl_keep isl_ast_build *build)
 	dup->generated = isl_set_copy(build->generated);
 	dup->pending = isl_set_copy(build->pending);
 	dup->values = isl_multi_aff_copy(build->values);
+	dup->internal2input = isl_multi_aff_copy(build->internal2input);
 	dup->value = isl_pw_aff_copy(build->value);
 	dup->strides = isl_vec_copy(build->strides);
 	dup->offsets = isl_multi_aff_copy(build->offsets);
@@ -190,12 +206,26 @@ __isl_give isl_ast_build *isl_ast_build_dup(__isl_keep isl_ast_build *build)
 	dup->after_each_for_user = build->after_each_for_user;
 	dup->create_leaf = build->create_leaf;
 	dup->create_leaf_user = build->create_leaf_user;
+	dup->node = isl_schedule_node_copy(build->node);
+	if (build->loop_type) {
+		int i;
+
+		dup->n = build->n;
+		dup->loop_type = isl_alloc_array(ctx,
+						enum isl_ast_loop_type, dup->n);
+		if (dup->n && !dup->loop_type)
+			return isl_ast_build_free(dup);
+		for (i = 0; i < dup->n; ++i)
+			dup->loop_type[i] = build->loop_type[i];
+	}
 
 	if (!dup->iterators || !dup->domain || !dup->generated ||
 	    !dup->pending || !dup->values ||
 	    !dup->strides || !dup->offsets || !dup->options ||
+	    (build->internal2input && !dup->internal2input) ||
 	    (build->executed && !dup->executed) ||
-	    (build->value && !dup->value))
+	    (build->value && !dup->value) ||
+	    (build->node && !dup->node))
 		return isl_ast_build_free(dup);
 
 	return dup;
@@ -223,7 +253,15 @@ __isl_give isl_ast_build *isl_ast_build_align_params(
 						isl_space_copy(model));
 	build->options = isl_union_map_align_params(build->options,
 						isl_space_copy(model));
-	isl_space_free(model);
+	if (build->internal2input) {
+		build->internal2input =
+			isl_multi_aff_align_params(build->internal2input,
+						model);
+		if (!build->internal2input)
+			return isl_ast_build_free(build);
+	} else {
+		isl_space_free(model);
+	}
 
 	if (!build->domain || !build->values || !build->offsets ||
 	    !build->options)
@@ -260,12 +298,16 @@ __isl_null isl_ast_build *isl_ast_build_free(
 	isl_set_free(build->generated);
 	isl_set_free(build->pending);
 	isl_multi_aff_free(build->values);
+	isl_multi_aff_free(build->internal2input);
 	isl_pw_aff_free(build->value);
 	isl_vec_free(build->strides);
 	isl_multi_aff_free(build->offsets);
 	isl_multi_aff_free(build->schedule_map);
 	isl_union_map_free(build->executed);
 	isl_union_map_free(build->options);
+	isl_schedule_node_free(build->node);
+	free(build->loop_type);
+	isl_set_free(build->isolated);
 
 	free(build);
 
@@ -586,6 +628,8 @@ void isl_ast_build_dump(__isl_keep isl_ast_build *build)
 	isl_vec_dump(build->strides);
 	fprintf(stderr, "offsets: ");
 	isl_multi_aff_dump(build->offsets);
+	fprintf(stderr, "internal2input: ");
+	isl_multi_aff_dump(build->internal2input);
 }
 
 /* Initialize "build" for AST construction in schedule space "space"
@@ -919,6 +963,95 @@ error:
 	return NULL;
 }
 
+/* Does "build" point to a band node?
+ * That is, are we currently handling a band node inside a schedule tree?
+ */
+int isl_ast_build_has_schedule_node(__isl_keep isl_ast_build *build)
+{
+	if (!build)
+		return -1;
+	return build->node != NULL;
+}
+
+/* Return a copy of the band node that "build" refers to.
+ */
+__isl_give isl_schedule_node *isl_ast_build_get_schedule_node(
+	__isl_keep isl_ast_build *build)
+{
+	if (!build)
+		return NULL;
+	return isl_schedule_node_copy(build->node);
+}
+
+/* Extract the loop AST generation types for the members of build->node
+ * and store them in build->loop_type.
+ */
+static __isl_give isl_ast_build *extract_loop_types(
+	__isl_take isl_ast_build *build)
+{
+	int i;
+	isl_ctx *ctx;
+	isl_schedule_node *node;
+
+	if (!build)
+		return NULL;
+	ctx = isl_ast_build_get_ctx(build);
+	if (!build->node)
+		isl_die(ctx, isl_error_internal, "missing AST node",
+			return isl_ast_build_free(build));
+
+	free(build->loop_type);
+	build->n = isl_schedule_node_band_n_member(build->node);
+	build->loop_type = isl_alloc_array(ctx,
+					    enum isl_ast_loop_type, build->n);
+	if (build->n && !build->loop_type)
+		return isl_ast_build_free(build);
+	node = build->node;
+	for (i = 0; i < build->n; ++i)
+		build->loop_type[i] =
+		    isl_schedule_node_band_member_get_ast_loop_type(node, i);
+
+	return build;
+}
+
+/* Replace the band node that "build" refers to by "node" and
+ * extract the corresponding loop AST generation types.
+ */
+__isl_give isl_ast_build *isl_ast_build_set_schedule_node(
+	__isl_take isl_ast_build *build,
+	__isl_take isl_schedule_node *node)
+{
+	build = isl_ast_build_cow(build);
+	if (!build || !node)
+		goto error;
+
+	isl_schedule_node_free(build->node);
+	build->node = node;
+
+	build = extract_loop_types(build);
+
+	return build;
+error:
+	isl_ast_build_free(build);
+	isl_schedule_node_free(node);
+	return NULL;
+}
+
+/* Remove any reference to a band node from "build".
+ */
+__isl_give isl_ast_build *isl_ast_build_reset_schedule_node(
+	__isl_take isl_ast_build *build)
+{
+	build = isl_ast_build_cow(build);
+	if (!build)
+		return NULL;
+
+	isl_schedule_node_free(build->node);
+	build->node = NULL;
+
+	return build;
+}
+
 /* Return a copy of the current schedule domain.
  */
 __isl_give isl_set *isl_ast_build_get_domain(__isl_keep isl_ast_build *build)
@@ -940,6 +1073,15 @@ __isl_give isl_set *isl_ast_build_get_generated(
 	__isl_keep isl_ast_build *build)
 {
 	return build ? isl_set_copy(build->generated) : NULL;
+}
+
+/* Return a copy of the map from the internal schedule domain
+ * to the original input schedule domain.
+ */
+__isl_give isl_multi_aff *isl_ast_build_get_internal2input(
+	__isl_keep isl_ast_build *build)
+{
+	return build ? isl_multi_aff_copy(build->internal2input) : NULL;
 }
 
 /* Return the number of variables of the given type
@@ -1428,9 +1570,9 @@ static __isl_give isl_map *construct_insertion_map(__isl_take isl_space *space,
 }
 
 static const char *option_str[] = {
-	[atomic] = "atomic",
-	[unroll] = "unroll",
-	[separate] = "separate"
+	[isl_ast_loop_atomic] = "atomic",
+	[isl_ast_loop_unroll] = "unroll",
+	[isl_ast_loop_separate] = "separate"
 };
 
 /* Update the "options" to reflect the insertion of a dimension
@@ -1459,7 +1601,7 @@ static __isl_give isl_union_map *options_insert_dim(
 {
 	isl_map *map;
 	isl_union_map *insertion;
-	enum isl_ast_build_domain_type type;
+	enum isl_ast_loop_type type;
 	const char *name = "separation_class";
 
 	space = isl_space_map_from_set(space);
@@ -1475,7 +1617,8 @@ static __isl_give isl_union_map *options_insert_dim(
 
 	insertion = isl_union_map_empty(isl_union_map_get_space(options));
 
-	for (type = atomic; type <= separate; ++type) {
+	for (type = isl_ast_loop_atomic;
+	    type <= isl_ast_loop_separate; ++type) {
 		isl_map *map_type = isl_map_copy(map);
 		const char *name = option_str[type];
 		map_type = isl_map_set_tuple_name(map_type, isl_dim_in, name);
@@ -1493,6 +1636,42 @@ static __isl_give isl_union_map *options_insert_dim(
 	return options;
 }
 
+/* If we are generating an AST from a schedule tree (build->node is set),
+ * then update the loop AST generation types
+ * to reflect the insertion of a dimension at (global) position "pos"
+ * in the schedule domain space.
+ * We do not need to adjust any isolate option since we would not be inserting
+ * any dimensions if there were any isolate option.
+ */
+static __isl_give isl_ast_build *node_insert_dim(
+	__isl_take isl_ast_build *build, int pos)
+{
+	int i;
+	int local_pos;
+	enum isl_ast_loop_type *loop_type;
+	isl_ctx *ctx;
+
+	build = isl_ast_build_cow(build);
+	if (!build)
+		return NULL;
+	if (!build->node)
+		return build;
+
+	ctx = isl_ast_build_get_ctx(build);
+	local_pos = pos - build->outer_pos;
+	loop_type = isl_realloc_array(ctx, build->loop_type,
+					enum isl_ast_loop_type, build->n + 1);
+	if (!loop_type)
+		return isl_ast_build_free(build);
+	build->loop_type = loop_type;
+	for (i = build->n - 1; i >= local_pos; --i)
+		loop_type[i + 1] = loop_type[i];
+	loop_type[local_pos] = isl_ast_loop_default;
+	build->n++;
+
+	return build;
+}
+
 /* Insert a single dimension in the schedule domain at position "pos".
  * The new dimension is given an isl_id with the empty string as name.
  *
@@ -1504,6 +1683,12 @@ static __isl_give isl_union_map *options_insert_dim(
  * However, the original schedule domain space may be named and/or
  * structured, so we have to take this possibility into account
  * while performing the transformations.
+ *
+ * Since the inserted schedule dimension is used by the caller
+ * to differentiate between different domain spaces, there is
+ * no longer a uniform mapping from the internal schedule space
+ * to the input schedule space.  The internal2input mapping is
+ * therefore removed.
  */
 __isl_give isl_ast_build *isl_ast_build_insert_dim(
 	__isl_take isl_ast_build *build, int pos)
@@ -1519,7 +1704,8 @@ __isl_give isl_ast_build *isl_ast_build_insert_dim(
 
 	ctx = isl_ast_build_get_ctx(build);
 	id = isl_id_alloc(ctx, "", NULL);
-	space = isl_ast_build_get_space(build, 1);
+	if (!build->node)
+		space = isl_ast_build_get_space(build, 1);
 	build->iterators = isl_id_list_insert(build->iterators, pos, id);
 	build->domain = isl_set_insert_dims(build->domain,
 						isl_dim_set, pos, 1);
@@ -1537,12 +1723,16 @@ __isl_give isl_ast_build *isl_ast_build_insert_dim(
 	build->offsets = isl_multi_aff_splice(build->offsets, pos, pos, ma);
 	ma = isl_multi_aff_identity(ma_space);
 	build->values = isl_multi_aff_splice(build->values, pos, pos, ma);
-	build->options = options_insert_dim(build->options, space, pos);
+	if (!build->node)
+		build->options = options_insert_dim(build->options, space, pos);
+	build->internal2input = isl_multi_aff_free(build->internal2input);
 
 	if (!build->iterators || !build->domain || !build->generated ||
 	    !build->pending || !build->values ||
 	    !build->strides || !build->offsets || !build->options)
 		return isl_ast_build_free(build);
+
+	build = node_insert_dim(build, pos);
 
 	return build;
 }
@@ -1556,7 +1746,11 @@ __isl_give isl_ast_build *isl_ast_build_insert_dim(
  * This function is called right after the strides have been
  * detected, but before any constraints on the current dimension
  * have been included in build->domain.
- * We therefore only need to update stride, offset and the options.
+ * We therefore only need to update stride, offset, the options and
+ * the mapping from internal schedule space to the original schedule
+ * space, if we are still keeping track of such a mapping.
+ * The latter mapping is updated by plugging in
+ * { [... i ...] -> [... m i ... ] }.
  */
 __isl_give isl_ast_build *isl_ast_build_scale_down(
 	__isl_take isl_ast_build *build, __isl_take isl_val *m,
@@ -1571,6 +1765,23 @@ __isl_give isl_ast_build *isl_ast_build_scale_down(
 		goto error;
 
 	depth = build->depth;
+
+	if (build->internal2input) {
+		isl_space *space;
+		isl_multi_aff *ma;
+		isl_aff *aff;
+
+		space = isl_multi_aff_get_space(build->internal2input);
+		space = isl_space_map_from_set(isl_space_domain(space));
+		ma = isl_multi_aff_identity(space);
+		aff = isl_multi_aff_get_aff(ma, depth);
+		aff = isl_aff_scale_val(aff, isl_val_copy(m));
+		ma = isl_multi_aff_set_aff(ma, depth, aff);
+		build->internal2input =
+		    isl_multi_aff_pullback_multi_aff(build->internal2input, ma);
+		if (!build->internal2input)
+			goto error;
+	}
 
 	v = isl_vec_get_element_val(build->strides, depth);
 	v = isl_val_div(v, isl_val_copy(m));
@@ -1614,7 +1825,7 @@ static __isl_give isl_id_list *generate_names(isl_ctx *ctx, int n, int first,
 /* Embed "options" into the given isl_ast_build space.
  *
  * This function is called from within a nested call to
- * isl_ast_build_ast_from_schedule.
+ * isl_ast_build_node_from_schedule_map.
  * "options" refers to the additional schedule,
  * while space refers to both the space of the outer isl_ast_build and
  * that of the additional schedule.
@@ -1716,7 +1927,18 @@ __isl_give isl_ast_build *isl_ast_build_product(
 	build->values = isl_multi_aff_align_params(build->values,
 						    isl_space_copy(space));
 	embedding = isl_multi_aff_identity(space);
-	build->values = isl_multi_aff_product(build->values, embedding);
+	build->values = isl_multi_aff_product(build->values,
+					isl_multi_aff_copy(embedding));
+	if (build->internal2input) {
+		build->internal2input =
+			isl_multi_aff_product(build->internal2input, embedding);
+		build->internal2input =
+			isl_multi_aff_flatten_range(build->internal2input);
+		if (!build->internal2input)
+			return isl_ast_build_free(build);
+	} else {
+		isl_multi_aff_free(embedding);
+	}
 
 	space = isl_ast_build_get_space(build, 1);
 	build->options = embed_options(build->options, space);
@@ -2020,8 +2242,7 @@ error:
  * but the position is still that within the current code generation.
  */
 __isl_give isl_set *isl_ast_build_get_option_domain(
-	__isl_keep isl_ast_build *build,
-	enum isl_ast_build_domain_type type)
+	__isl_keep isl_ast_build *build, enum isl_ast_loop_type type)
 {
 	const char *name;
 	isl_space *space;
@@ -2047,6 +2268,145 @@ __isl_give isl_set *isl_ast_build_get_option_domain(
 	domain = isl_ast_build_eliminate(build, domain);
 
 	return domain;
+}
+
+/* How does the user want the current schedule dimension to be generated?
+ * These choices have been extracted from the schedule node
+ * in extract_loop_types and stored in build->loop_type.
+ * They have been updated to reflect any dimension insertion in
+ * node_insert_dim.
+ * Return isl_ast_domain_error on error.
+ *
+ * If "isolated" is set, then we get the loop AST generation type
+ * directly from the band node since node_insert_dim cannot have been
+ * called on a band with the isolate option.
+ */
+enum isl_ast_loop_type isl_ast_build_get_loop_type(
+	__isl_keep isl_ast_build *build, int isolated)
+{
+	int local_pos;
+	isl_ctx *ctx;
+
+	if (!build)
+		return isl_ast_loop_error;
+	ctx = isl_ast_build_get_ctx(build);
+	if (!build->node)
+		isl_die(ctx, isl_error_internal,
+			"only works for schedule tree based AST generation",
+			return isl_ast_loop_error);
+
+	local_pos = build->depth - build->outer_pos;
+	if (!isolated)
+		return build->loop_type[local_pos];
+	return isl_schedule_node_band_member_get_isolate_ast_loop_type(
+							build->node, local_pos);
+}
+
+/* Extract the isolated set from the isolate option, if any,
+ * and store in the build.
+ * If there is no isolate option, then the isolated set is
+ * set to the empty set.
+ *
+ * The isolate option is of the form
+ *
+ *	isolate[[outer bands] -> current_band]
+ *
+ * We flatten this set and then map it back to the internal
+ * schedule space.
+ *
+ * If we have already extracted the isolated set
+ * or if internal2input is no longer set, then we do not
+ * need to do anything.  In the latter case, we know
+ * that the current band cannot have any isolate option.
+ */
+__isl_give isl_ast_build *isl_ast_build_extract_isolated(
+	__isl_take isl_ast_build *build)
+{
+	isl_space *space, *space2;
+	isl_union_set *options;
+	int n, n2;
+	isl_set *isolated;
+
+	if (!build)
+		return NULL;
+	if (!build->internal2input)
+		return build;
+	if (build->isolated)
+		return build;
+
+	build = isl_ast_build_cow(build);
+	if (!build)
+		return NULL;
+
+	options = isl_schedule_node_band_get_ast_build_options(build->node);
+
+	space = isl_multi_aff_get_space(build->internal2input);
+	space = isl_space_range(space);
+	space2 = isl_set_get_space(build->domain);
+	if (isl_space_is_wrapping(space2))
+		space2 = isl_space_range(isl_space_unwrap(space2));
+	n2 = isl_space_dim(space2, isl_dim_set);
+	n = isl_space_dim(space, isl_dim_set);
+	if (n < n2)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_internal,
+			"total input space dimension cannot be smaller "
+			"than dimension of innermost band",
+			space = isl_space_free(space));
+	space = isl_space_drop_dims(space, isl_dim_set, n - n2, n2);
+	space = isl_space_map_from_domain_and_range(space, space2);
+	space = isl_space_wrap(space);
+	space = isl_space_set_tuple_name(space, isl_dim_set, "isolate");
+	isolated = isl_union_set_extract_set(options, space);
+	isl_union_set_free(options);
+
+	isolated = isl_set_flatten(isolated);
+	isolated = isl_set_preimage_multi_aff(isolated,
+				    isl_multi_aff_copy(build->internal2input));
+
+	build->isolated = isolated;
+	if (!build->isolated)
+		return isl_ast_build_free(build);
+
+	return build;
+}
+
+/* Does "build" have a non-empty isolated set?
+ *
+ * The caller is assumed to have called isl_ast_build_extract_isolated first.
+ */
+int isl_ast_build_has_isolated(__isl_keep isl_ast_build *build)
+{
+	int empty;
+
+	if (!build)
+		return -1;
+	if (!build->internal2input)
+		return 0;
+	if (!build->isolated)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_internal,
+			"isolated set not extracted yet", return -1);
+
+	empty = isl_set_plain_is_empty(build->isolated);
+	return empty < 0 ? -1 : !empty;
+}
+
+/* Return a copy of the isolated set of "build".
+ *
+ * The caller is assume to have called isl_ast_build_has_isolated first,
+ * with this function returning true.
+ * In particular, this function should not be called if we are no
+ * longer keeping track of internal2input (and there therefore could
+ * not possibly be any isolated set).
+ */
+__isl_give isl_set *isl_ast_build_get_isolated(__isl_keep isl_ast_build *build)
+{
+	if (!build)
+		return NULL;
+	if (!build->internal2input)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_internal,
+			"build cannot have isolated set", return NULL);
+
+	return isl_set_copy(build->isolated);
 }
 
 /* Extract the separation class mapping at the current depth.

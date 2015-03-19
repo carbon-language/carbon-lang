@@ -15,6 +15,7 @@
 #include <isl/set.h>
 #include <isl/ilp.h>
 #include <isl/union_map.h>
+#include <isl/schedule_node.h>
 #include <isl_sort.h>
 #include <isl_tarjan.h>
 #include <isl_ast_private.h>
@@ -251,8 +252,15 @@ static __isl_give isl_ast_graft_list *call_create_leaf(
 	return isl_ast_graft_list_from_ast_graft(graft);
 }
 
+static __isl_give isl_ast_graft_list *build_ast_from_child(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed);
+
 /* Generate an AST after having handled the complete schedule
- * of this call to the code generator.
+ * of this call to the code generator or the complete band
+ * if we are generating an AST from a schedule tree.
+ *
+ * If we are inside a band node, then move on to the child of the band.
  *
  * If the user has specified a create_leaf callback, control
  * is passed to the user in call_create_leaf.
@@ -268,6 +276,13 @@ static __isl_give isl_ast_graft_list *generate_inner_level(
 
 	if (!build || !executed)
 		goto error;
+
+	if (isl_ast_build_has_schedule_node(build)) {
+		isl_schedule_node *node;
+		node = isl_ast_build_get_schedule_node(build);
+		build = isl_ast_build_reset_schedule_node(build);
+		return build_ast_from_child(build, node, executed);
+	}
 
 	if (build->create_leaf)
 		return call_create_leaf(executed, build);
@@ -2497,43 +2512,10 @@ error:
 	return isl_aff_free(data.lower);
 }
 
-/* Data structure for storing the results and the intermediate objects
- * of compute_domains.
- *
- * "list" is the main result of the function and contains a list
- * of disjoint basic sets for which code should be generated.
- *
- * "executed" and "build" are inputs to compute_domains.
- * "schedule_domain" is the domain of "executed".
- *
- * "option" constains the domains at the current depth that should by
- * atomic, separated or unrolled.  These domains are as specified by
- * the user, except that inner dimensions have been eliminated and
- * that they have been made pair-wise disjoint.
- *
- * "sep_class" contains the user-specified split into separation classes
- * specialized to the current depth.
- * "done" contains the union of the separation domains that have already
- * been handled.
- */
-struct isl_codegen_domains {
-	isl_basic_set_list *list;
-
-	isl_union_map *executed;
-	isl_ast_build *build;
-	isl_set *schedule_domain;
-
-	isl_set *option[3];
-
-	isl_map *sep_class;
-	isl_set *done;
-};
-
-/* Extend domains->list with a list of basic sets, one for each value
- * of the current dimension in "domain" and remove the corresponding
- * sets from the class domain.  Return the updated class domain.
- * The divs that involve the current dimension have not been projected out
- * from this domain.
+/* Call "fn" on each iteration of the current dimension of "domain".
+ * If "init" is not NULL, then it is called with the number of
+ * iterations before any call to "fn".
+ * Return -1 on failure.
  *
  * Since we are going to be iterating over the individual values,
  * we first check if there are any strides on the current dimension.
@@ -2561,52 +2543,45 @@ struct isl_codegen_domains {
  * will be taken into account at the next level, as in the case of the
  * atomic option.
  *
- * Finally, we map i' back to i and add each basic set to the list.
- * Since we may have dropped some constraints, we intersect with
- * the class domain again to ensure that each element in the list
- * is disjoint from the other class domains.
+ * Finally, we map i' back to i and call "fn".
  */
-static __isl_give isl_set *do_unroll(struct isl_codegen_domains *domains,
-	__isl_take isl_set *domain, __isl_take isl_set *class_domain)
+static int foreach_iteration(__isl_take isl_set *domain,
+	__isl_keep isl_ast_build *build, int (*init)(int n, void *user),
+	int (*fn)(__isl_take isl_basic_set *bset, void *user), void *user)
 {
 	int i, n;
 	int depth;
-	isl_aff *lower;
 	isl_multi_aff *expansion;
 	isl_basic_map *bmap;
-	isl_set *unroll_domain;
-	isl_ast_build *build;
+	isl_aff *lower;
+	isl_ast_build *stride_build;
 
-	if (!domain)
-		return isl_set_free(class_domain);
+	depth = isl_ast_build_get_depth(build);
 
-	depth = isl_ast_build_get_depth(domains->build);
-	build = isl_ast_build_copy(domains->build);
 	domain = isl_ast_build_eliminate_inner(build, domain);
 	domain = isl_set_intersect(domain, isl_ast_build_get_domain(build));
-	build = isl_ast_build_detect_strides(build, isl_set_copy(domain));
-	expansion = isl_ast_build_get_stride_expansion(build);
+	stride_build = isl_ast_build_copy(build);
+	stride_build = isl_ast_build_detect_strides(stride_build,
+							isl_set_copy(domain));
+	expansion = isl_ast_build_get_stride_expansion(stride_build);
 
 	domain = isl_set_preimage_multi_aff(domain,
 					    isl_multi_aff_copy(expansion));
-	domain = isl_ast_build_eliminate_divs(build, domain);
-
-	isl_ast_build_free(build);
+	domain = isl_ast_build_eliminate_divs(stride_build, domain);
+	isl_ast_build_free(stride_build);
 
 	bmap = isl_basic_map_from_multi_aff(expansion);
 
-	lower = find_unroll_lower_bound(domains->build, domain, depth, bmap,
-					&n);
+	lower = find_unroll_lower_bound(build, domain, depth, bmap, &n);
 	if (!lower)
-		class_domain = isl_set_free(class_domain);
+		domain = isl_set_free(domain);
 
-	unroll_domain = isl_set_empty(isl_set_get_space(domain));
-
-	for (i = 0; class_domain && i < n; ++i) {
+	if (init && init(n, user) < 0)
+		domain = isl_set_free(domain);
+	for (i = 0; i < n; ++i) {
 		isl_set *set;
 		isl_basic_set *bset;
 		isl_constraint *slice;
-		isl_basic_set_list *list;
 
 		slice = at_offset(depth, lower, i);
 		set = isl_set_copy(domain);
@@ -2614,19 +2589,116 @@ static __isl_give isl_set *do_unroll(struct isl_codegen_domains *domains,
 		bset = isl_set_unshifted_simple_hull(set);
 		bset = isl_basic_set_add_constraint(bset, slice);
 		bset = isl_basic_set_apply(bset, isl_basic_map_copy(bmap));
-		set = isl_set_from_basic_set(bset);
-		unroll_domain = isl_set_union(unroll_domain, isl_set_copy(set));
-		set = isl_set_intersect(set, isl_set_copy(class_domain));
-		set = isl_set_make_disjoint(set);
-		list = isl_basic_set_list_from_set(set);
-		domains->list = isl_basic_set_list_concat(domains->list, list);
-	}
 
-	class_domain = isl_set_subtract(class_domain, unroll_domain);
+		if (fn(bset, user) < 0)
+			break;
+	}
 
 	isl_aff_free(lower);
 	isl_set_free(domain);
 	isl_basic_map_free(bmap);
+
+	return i < n ? -1 : 0;
+}
+
+/* Data structure for storing the results and the intermediate objects
+ * of compute_domains.
+ *
+ * "list" is the main result of the function and contains a list
+ * of disjoint basic sets for which code should be generated.
+ *
+ * "executed" and "build" are inputs to compute_domains.
+ * "schedule_domain" is the domain of "executed".
+ *
+ * "option" constains the domains at the current depth that should by
+ * atomic, separated or unrolled.  These domains are as specified by
+ * the user, except that inner dimensions have been eliminated and
+ * that they have been made pair-wise disjoint.
+ *
+ * "sep_class" contains the user-specified split into separation classes
+ * specialized to the current depth.
+ * "done" contains the union of the separation domains that have already
+ * been handled.
+ */
+struct isl_codegen_domains {
+	isl_basic_set_list *list;
+
+	isl_union_map *executed;
+	isl_ast_build *build;
+	isl_set *schedule_domain;
+
+	isl_set *option[4];
+
+	isl_map *sep_class;
+	isl_set *done;
+};
+
+/* Internal data structure for do_unroll.
+ *
+ * "domains" stores the results of compute_domains.
+ * "class_domain" is the original class domain passed to do_unroll.
+ * "unroll_domain" collects the unrolled iterations.
+ */
+struct isl_ast_unroll_data {
+	struct isl_codegen_domains *domains;
+	isl_set *class_domain;
+	isl_set *unroll_domain;
+};
+
+/* Given an iteration of an unrolled domain represented by "bset",
+ * add it to data->domains->list.
+ * Since we may have dropped some constraints, we intersect with
+ * the class domain again to ensure that each element in the list
+ * is disjoint from the other class domains.
+ */
+static int do_unroll_iteration(__isl_take isl_basic_set *bset, void *user)
+{
+	struct isl_ast_unroll_data *data = user;
+	isl_set *set;
+	isl_basic_set_list *list;
+
+	set = isl_set_from_basic_set(bset);
+	data->unroll_domain = isl_set_union(data->unroll_domain,
+					    isl_set_copy(set));
+	set = isl_set_intersect(set, isl_set_copy(data->class_domain));
+	set = isl_set_make_disjoint(set);
+	list = isl_basic_set_list_from_set(set);
+	data->domains->list = isl_basic_set_list_concat(data->domains->list,
+							list);
+
+	return 0;
+}
+
+/* Extend domains->list with a list of basic sets, one for each value
+ * of the current dimension in "domain" and remove the corresponding
+ * sets from the class domain.  Return the updated class domain.
+ * The divs that involve the current dimension have not been projected out
+ * from this domain.
+ *
+ * We call foreach_iteration to iterate over the individual values and
+ * in do_unroll_iteration we collect the individual basic sets in
+ * domains->list and their union in data->unroll_domain, which is then
+ * used to update the class domain.
+ */
+static __isl_give isl_set *do_unroll(struct isl_codegen_domains *domains,
+	__isl_take isl_set *domain, __isl_take isl_set *class_domain)
+{
+	struct isl_ast_unroll_data data;
+
+	if (!domain)
+		return isl_set_free(class_domain);
+	if (!class_domain)
+		return isl_set_free(domain);
+
+	data.domains = domains;
+	data.class_domain = class_domain;
+	data.unroll_domain = isl_set_empty(isl_set_get_space(domain));
+
+	if (foreach_iteration(domain, domains->build, NULL,
+				&do_unroll_iteration, &data) < 0)
+		data.unroll_domain = isl_set_free(data.unroll_domain);
+
+	class_domain = isl_set_subtract(class_domain, data.unroll_domain);
 
 	return class_domain;
 }
@@ -2655,13 +2727,13 @@ static __isl_give isl_set *compute_unroll_domains(
 	int i, n;
 	int empty;
 
-	empty = isl_set_is_empty(domains->option[unroll]);
+	empty = isl_set_is_empty(domains->option[isl_ast_loop_unroll]);
 	if (empty < 0)
 		return isl_set_free(class_domain);
 	if (empty)
 		return class_domain;
 
-	unroll_domain = isl_set_copy(domains->option[unroll]);
+	unroll_domain = isl_set_copy(domains->option[isl_ast_loop_unroll]);
 	unroll_list = isl_basic_set_list_from_set(unroll_domain);
 
 	n = isl_basic_set_list_n_basic_set(unroll_list);
@@ -2714,7 +2786,7 @@ static __isl_give isl_set *compute_atomic_domain(
 	isl_set *domain, *atomic_domain;
 	int empty;
 
-	domain = isl_set_copy(domains->option[atomic]);
+	domain = isl_set_copy(domains->option[isl_ast_loop_atomic]);
 	domain = isl_set_intersect(domain, isl_set_copy(class_domain));
 	domain = isl_set_intersect(domain,
 				isl_set_copy(domains->schedule_domain));
@@ -2761,7 +2833,7 @@ static int compute_separate_domain(struct isl_codegen_domains *domains,
 	isl_basic_set_list *list;
 	int empty;
 
-	domain = isl_set_copy(domains->option[separate]);
+	domain = isl_set_copy(domains->option[isl_ast_loop_separate]);
 	domain = isl_set_intersect(domain, isl_set_copy(class_domain));
 	executed = isl_union_map_copy(domains->executed);
 	executed = isl_union_map_intersect_domain(executed,
@@ -2837,7 +2909,7 @@ static int compute_partial_domains(struct isl_codegen_domains *domains,
 	if (compute_separate_domain(domains, domain) < 0)
 		goto error;
 	domain = isl_set_subtract(domain,
-				    isl_set_copy(domains->option[separate]));
+			isl_set_copy(domains->option[isl_ast_loop_separate]));
 
 	domain = isl_set_intersect(domain,
 				isl_set_copy(domains->schedule_domain));
@@ -2897,20 +2969,24 @@ static int compute_class_domains(__isl_take isl_point *pnt, void *user)
  * The domains specified by the user might overlap, so we make
  * them disjoint by subtracting earlier domains from later domains.
  */
-static void compute_domains_init_options(isl_set *option[3],
+static void compute_domains_init_options(isl_set *option[4],
 	__isl_keep isl_ast_build *build)
 {
-	enum isl_ast_build_domain_type type, type2;
+	enum isl_ast_loop_type type, type2;
+	isl_set *unroll;
 
-	for (type = atomic; type <= separate; ++type) {
+	for (type = isl_ast_loop_atomic;
+	    type <= isl_ast_loop_separate; ++type) {
 		option[type] = isl_ast_build_get_option_domain(build, type);
-		for (type2 = atomic; type2 < type; ++type2)
+		for (type2 = isl_ast_loop_atomic; type2 < type; ++type2)
 			option[type] = isl_set_subtract(option[type],
 						isl_set_copy(option[type2]));
 	}
 
-	option[unroll] = isl_set_coalesce(option[unroll]);
-	option[unroll] = isl_set_make_disjoint(option[unroll]);
+	unroll = option[isl_ast_loop_unroll];
+	unroll = isl_set_coalesce(unroll);
+	unroll = isl_set_make_disjoint(unroll);
+	option[isl_ast_loop_unroll] = unroll;
 }
 
 /* Split up the domain at the current depth into disjoint
@@ -2944,7 +3020,7 @@ static __isl_give isl_basic_set_list *compute_domains(
 	isl_set *classes;
 	isl_space *space;
 	int n_param;
-	enum isl_ast_build_domain_type type;
+	enum isl_ast_loop_type type;
 	int empty;
 
 	if (!executed)
@@ -2989,20 +3065,20 @@ static __isl_give isl_basic_set_list *compute_domains(
 	isl_set_free(domains.schedule_domain);
 	isl_set_free(domains.done);
 	isl_map_free(domains.sep_class);
-	for (type = atomic; type <= separate; ++type)
+	for (type = isl_ast_loop_atomic; type <= isl_ast_loop_separate; ++type)
 		isl_set_free(domains.option[type]);
 
 	return domains.list;
 }
 
 /* Generate code for a single component, after shifting (if any)
- * has been applied.
+ * has been applied, in case the schedule was specified as a union map.
  *
  * We first split up the domain at the current depth into disjoint
  * basic sets based on the user-specified options.
  * Then we generated code for each of them and concatenate the results.
  */
-static __isl_give isl_ast_graft_list *generate_shifted_component(
+static __isl_give isl_ast_graft_list *generate_shifted_component_flat(
 	__isl_take isl_union_map *executed, __isl_take isl_ast_build *build)
 {
 	isl_basic_set_list *domain_list;
@@ -3016,6 +3092,306 @@ static __isl_give isl_ast_graft_list *generate_shifted_component(
 	isl_ast_build_free(build);
 
 	return list;
+}
+
+/* Generate code for a single component, after shifting (if any)
+ * has been applied, in case the schedule was specified as a schedule tree
+ * and the separate option was specified.
+ *
+ * We perform separation on the domain of "executed" and then generate
+ * an AST for each of the resulting disjoint basic sets.
+ */
+static __isl_give isl_ast_graft_list *generate_shifted_component_tree_separate(
+	__isl_take isl_union_map *executed, __isl_take isl_ast_build *build)
+{
+	isl_space *space;
+	isl_set *domain;
+	isl_basic_set_list *domain_list;
+	isl_ast_graft_list *list;
+
+	space = isl_ast_build_get_space(build, 1);
+	domain = separate_schedule_domains(space,
+					isl_union_map_copy(executed), build);
+	domain_list = isl_basic_set_list_from_set(domain);
+
+	list = generate_parallel_domains(domain_list, executed, build);
+
+	isl_basic_set_list_free(domain_list);
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+
+	return list;
+}
+
+/* Internal data structure for generate_shifted_component_tree_unroll.
+ *
+ * "executed" and "build" are inputs to generate_shifted_component_tree_unroll.
+ * "list" collects the constructs grafts.
+ */
+struct isl_ast_unroll_tree_data {
+	isl_union_map *executed;
+	isl_ast_build *build;
+	isl_ast_graft_list *list;
+};
+
+/* Initialize data->list to a list of "n" elements.
+ */
+static int init_unroll_tree(int n, void *user)
+{
+	struct isl_ast_unroll_tree_data *data = user;
+	isl_ctx *ctx;
+
+	ctx = isl_ast_build_get_ctx(data->build);
+	data->list = isl_ast_graft_list_alloc(ctx, n);
+
+	return 0;
+}
+
+/* Given an iteration of an unrolled domain represented by "bset",
+ * generate the corresponding AST and add the result to data->list.
+ */
+static int do_unroll_tree_iteration(__isl_take isl_basic_set *bset, void *user)
+{
+	struct isl_ast_unroll_tree_data *data = user;
+
+	data->list = add_node(data->list, isl_union_map_copy(data->executed),
+				bset, isl_ast_build_copy(data->build));
+
+	return 0;
+}
+
+/* Generate code for a single component, after shifting (if any)
+ * has been applied, in case the schedule was specified as a schedule tree
+ * and the unroll option was specified.
+ *
+ * We call foreach_iteration to iterate over the individual values and
+ * construct and collect the corresponding grafts in do_unroll_tree_iteration.
+ */
+static __isl_give isl_ast_graft_list *generate_shifted_component_tree_unroll(
+	__isl_take isl_union_map *executed, __isl_take isl_set *domain,
+	__isl_take isl_ast_build *build)
+{
+	struct isl_ast_unroll_tree_data data = { executed, build, NULL };
+
+	if (foreach_iteration(domain, build, &init_unroll_tree,
+				&do_unroll_tree_iteration, &data) < 0)
+		data.list = isl_ast_graft_list_free(data.list);
+
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+
+	return data.list;
+}
+
+/* Generate code for a single component, after shifting (if any)
+ * has been applied, in case the schedule was specified as a schedule tree.
+ * In particular, handle the base case where there is either no isolated
+ * set or we are within the isolated set (in which case "isolated" is set)
+ * or the iterations that precede or follow the isolated set.
+ *
+ * The schedule domain is broken up or combined into basic sets
+ * according to the AST generation option specified in the current
+ * schedule node, which may be either atomic, separate, unroll or
+ * unspecified.  If the option is unspecified, then we currently simply
+ * split the schedule domain into disjoint basic sets.
+ *
+ * In case the separate option is specified, the AST generation is
+ * handled by generate_shifted_component_tree_separate.
+ * In the other cases, we need the global schedule domain.
+ * In the unroll case, the AST generation is then handled by
+ * generate_shifted_component_tree_unroll which needs the actual
+ * schedule domain (with divs that may refer to the current dimension)
+ * so that stride detection can be performed.
+ * In the atomic or unspecified case, inner dimensions and divs involving
+ * the current dimensions should be eliminated.
+ * The result is then either combined into a single basic set or
+ * split up into disjoint basic sets.
+ * Finally an AST is generated for each basic set and the results are
+ * concatenated.
+ */
+static __isl_give isl_ast_graft_list *generate_shifted_component_tree_base(
+	__isl_take isl_union_map *executed, __isl_take isl_ast_build *build,
+	int isolated)
+{
+	isl_union_set *schedule_domain;
+	isl_set *domain;
+	isl_basic_set_list *domain_list;
+	isl_ast_graft_list *list;
+	enum isl_ast_loop_type type;
+
+	type = isl_ast_build_get_loop_type(build, isolated);
+	if (type < 0)
+		goto error;
+
+	if (type == isl_ast_loop_separate)
+		return generate_shifted_component_tree_separate(executed,
+								build);
+
+	schedule_domain = isl_union_map_domain(isl_union_map_copy(executed));
+	domain = isl_set_from_union_set(schedule_domain);
+
+	if (type == isl_ast_loop_unroll)
+		return generate_shifted_component_tree_unroll(executed, domain,
+								build);
+
+	domain = isl_ast_build_eliminate(build, domain);
+	domain = isl_set_coalesce(domain);
+
+	if (type == isl_ast_loop_atomic) {
+		isl_basic_set *hull;
+		hull = isl_set_unshifted_simple_hull(domain);
+		domain_list = isl_basic_set_list_from_basic_set(hull);
+	} else {
+		domain = isl_set_make_disjoint(domain);
+		domain_list = isl_basic_set_list_from_set(domain);
+	}
+
+	list = generate_parallel_domains(domain_list, executed, build);
+
+	isl_basic_set_list_free(domain_list);
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+
+	return list;
+error:
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+	return NULL;
+}
+
+/* Generate code for a single component, after shifting (if any)
+ * has been applied, in case the schedule was specified as a schedule tree.
+ * In particular, do so for the specified subset of the schedule domsain.
+ */
+static __isl_give isl_ast_graft_list *generate_shifted_component_tree_part(
+	__isl_keep isl_union_map *executed, __isl_take isl_set *domain,
+	__isl_keep isl_ast_build *build, int isolated)
+{
+	isl_union_set *uset;
+	int empty;
+
+	uset = isl_union_set_from_set(domain);
+	executed = isl_union_map_copy(executed);
+	executed = isl_union_map_intersect_domain(executed, uset);
+	empty = isl_union_map_is_empty(executed);
+	if (empty < 0)
+		goto error;
+	if (empty) {
+		isl_ctx *ctx;
+		isl_union_map_free(executed);
+		ctx = isl_ast_build_get_ctx(build);
+		return isl_ast_graft_list_alloc(ctx, 0);
+	}
+
+	build = isl_ast_build_copy(build);
+	return generate_shifted_component_tree_base(executed, build, isolated);
+error:
+	isl_union_map_free(executed);
+	return NULL;
+}
+
+/* Generate code for a single component, after shifting (if any)
+ * has been applied, in case the schedule was specified as a schedule tree.
+ *
+ * We first check if the user has specified a (non-empty) isolated
+ * schedule domain.
+ * If so, we break up the schedule domain into iterations that
+ * precede the isolated domain, the isolated domain itself,
+ * the iterations that follow the isolated domain and
+ * the remaining iterations (those that are incomparable
+ * to the isolated domain).
+ * We generate an AST for each piece and concatenate the results.
+ * If no isolated set has been specified, then we generate an
+ * AST for the entire inverse schedule.
+ */
+static __isl_give isl_ast_graft_list *generate_shifted_component_tree(
+	__isl_take isl_union_map *executed, __isl_take isl_ast_build *build)
+{
+	int i, depth;
+	int empty, has_isolate;
+	isl_space *space;
+	isl_union_set *schedule_domain;
+	isl_set *domain;
+	isl_basic_set *hull;
+	isl_set *isolated, *before, *after;
+	isl_map *gt, *lt;
+	isl_ast_graft_list *list, *res;
+
+	build = isl_ast_build_extract_isolated(build);
+	has_isolate = isl_ast_build_has_isolated(build);
+	if (has_isolate < 0)
+		executed = isl_union_map_free(executed);
+	else if (!has_isolate)
+		return generate_shifted_component_tree_base(executed, build, 0);
+
+	schedule_domain = isl_union_map_domain(isl_union_map_copy(executed));
+	domain = isl_set_from_union_set(schedule_domain);
+
+	isolated = isl_ast_build_get_isolated(build);
+	isolated = isl_set_intersect(isolated, isl_set_copy(domain));
+	empty = isl_set_is_empty(isolated);
+	if (empty < 0)
+		goto error;
+	if (empty) {
+		isl_set_free(isolated);
+		isl_set_free(domain);
+		return generate_shifted_component_tree_base(executed, build, 0);
+	}
+	isolated = isl_ast_build_eliminate(build, isolated);
+	hull = isl_set_unshifted_simple_hull(isolated);
+	isolated = isl_set_from_basic_set(hull);
+
+	depth = isl_ast_build_get_depth(build);
+	space = isl_space_map_from_set(isl_set_get_space(isolated));
+	gt = isl_map_universe(space);
+	for (i = 0; i < depth; ++i)
+		gt = isl_map_equate(gt, isl_dim_in, i, isl_dim_out, i);
+	gt = isl_map_order_gt(gt, isl_dim_in, depth, isl_dim_out, depth);
+	lt = isl_map_reverse(isl_map_copy(gt));
+	before = isl_set_apply(isl_set_copy(isolated), gt);
+	after = isl_set_apply(isl_set_copy(isolated), lt);
+
+	domain = isl_set_subtract(domain, isl_set_copy(isolated));
+	domain = isl_set_subtract(domain, isl_set_copy(before));
+	domain = isl_set_subtract(domain, isl_set_copy(after));
+	after = isl_set_subtract(after, isl_set_copy(isolated));
+	after = isl_set_subtract(after, isl_set_copy(before));
+	before = isl_set_subtract(before, isl_set_copy(isolated));
+
+	res = generate_shifted_component_tree_part(executed, before, build, 0);
+	list = generate_shifted_component_tree_part(executed, isolated,
+						    build, 1);
+	res = isl_ast_graft_list_concat(res, list);
+	list = generate_shifted_component_tree_part(executed, after, build, 0);
+	res = isl_ast_graft_list_concat(res, list);
+	list = generate_shifted_component_tree_part(executed, domain, build, 0);
+	res = isl_ast_graft_list_concat(res, list);
+
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+
+	return res;
+error:
+	isl_set_free(domain);
+	isl_set_free(isolated);
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+	return NULL;
+}
+
+/* Generate code for a single component, after shifting (if any)
+ * has been applied.
+ *
+ * Call generate_shifted_component_tree or generate_shifted_component_flat
+ * depending on whether the schedule was specified as a schedule tree.
+ */
+static __isl_give isl_ast_graft_list *generate_shifted_component(
+	__isl_take isl_union_map *executed, __isl_take isl_ast_build *build)
+{
+	if (isl_ast_build_has_schedule_node(build))
+		return generate_shifted_component_tree(executed, build);
+	else
+		return generate_shifted_component_flat(executed, build);
 }
 
 struct isl_set_map_pair {
@@ -3398,6 +3774,21 @@ error:
 	return NULL;
 }
 
+/* Does any node in the schedule tree rooted at the current schedule node
+ * of "build" depend on outer schedule nodes?
+ */
+static int has_anchored_subtree(__isl_keep isl_ast_build *build)
+{
+	isl_schedule_node *node;
+	int dependent = 0;
+
+	node = isl_ast_build_get_schedule_node(build);
+	dependent = isl_schedule_node_is_subtree_anchored(node);
+	isl_schedule_node_free(node);
+
+	return dependent;
+}
+
 /* Generate code for a single component.
  *
  * The component inverse schedule is specified as the "map" fields
@@ -3429,11 +3820,15 @@ error:
  * a fixed value for almost all domains then there is nothing to be done.
  * In particular, we need at least two domains where the current schedule
  * dimension does not have a fixed value.
- * Finally, if any of the options refer to the current schedule dimension,
+ * Finally, in case of a schedule map input,
+ * if any of the options refer to the current schedule dimension,
  * then we bail out as well.  It would be possible to reformulate the options
  * in terms of the new schedule domain, but that would introduce constraints
  * that separate the domains in the options and that is something we would
  * like to avoid.
+ * In the case of a schedule tree input, we bail out if any of
+ * the descendants of the current schedule node refer to outer
+ * schedule nodes in any way.
  *
  *
  * To see if there is any shifted stride, we look at the differences
@@ -3485,8 +3880,12 @@ static __isl_give isl_ast_graft_list *generate_component(
 	skip = n == 1;
 	if (skip >= 0 && !skip)
 		skip = at_most_one_non_fixed(domain, order, n, depth);
-	if (skip >= 0 && !skip)
-		skip = isl_ast_build_options_involve_depth(build);
+	if (skip >= 0 && !skip) {
+		if (isl_ast_build_has_schedule_node(build))
+			skip = has_anchored_subtree(build);
+		else
+			skip = isl_ast_build_options_involve_depth(build);
+	}
 	if (skip < 0)
 		goto error;
 	if (skip)
@@ -3578,8 +3977,339 @@ static int extract_domain(__isl_take isl_map *map, void *user)
 	return 0;
 }
 
+static int after_in_tree(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node);
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the child of "node"?
+ */
+static int after_in_child(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	isl_schedule_node *child;
+	int after;
+
+	child = isl_schedule_node_get_child(node, 0);
+	after = after_in_tree(umap, child);
+	isl_schedule_node_free(child);
+
+	return after;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the band node "node"?
+ *
+ * We first check if any domain element is scheduled after any
+ * of the corresponding image elements by the band node itself.
+ * If not, we restrict "map" to those pairs of element that
+ * are scheduled together by the band node and continue with
+ * the child of the band node.
+ * If there are no such pairs then the map passed to after_in_child
+ * will be empty causing it to return 0.
+ */
+static int after_in_band(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	isl_multi_union_pw_aff *mupa;
+	isl_union_map *partial, *test, *gt, *universe, *umap1, *umap2;
+	isl_union_set *domain, *range;
+	isl_space *space;
+	int empty;
+	int after;
+
+	if (isl_schedule_node_band_n_member(node) == 0)
+		return after_in_child(umap, node);
+
+	mupa = isl_schedule_node_band_get_partial_schedule(node);
+	space = isl_multi_union_pw_aff_get_space(mupa);
+	partial = isl_union_map_from_multi_union_pw_aff(mupa);
+	test = isl_union_map_copy(umap);
+	test = isl_union_map_apply_domain(test, isl_union_map_copy(partial));
+	test = isl_union_map_apply_range(test, isl_union_map_copy(partial));
+	gt = isl_union_map_from_map(isl_map_lex_gt(space));
+	test = isl_union_map_intersect(test, gt);
+	empty = isl_union_map_is_empty(test);
+	isl_union_map_free(test);
+
+	if (empty < 0 || !empty) {
+		isl_union_map_free(partial);
+		return empty < 0 ? -1 : 1;
+	}
+
+	universe = isl_union_map_universe(isl_union_map_copy(umap));
+	domain = isl_union_map_domain(isl_union_map_copy(universe));
+	range = isl_union_map_range(universe);
+	umap1 = isl_union_map_copy(partial);
+	umap1 = isl_union_map_intersect_domain(umap1, domain);
+	umap2 = isl_union_map_intersect_domain(partial, range);
+	test = isl_union_map_apply_range(umap1, isl_union_map_reverse(umap2));
+	test = isl_union_map_intersect(test, isl_union_map_copy(umap));
+	after = after_in_child(test, node);
+	isl_union_map_free(test);
+	return after;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the context node "node"?
+ *
+ * The context constraints apply to the schedule domain,
+ * so we cannot apply them directly to "umap", which contains
+ * pairs of statement instances.  Instead, we add them
+ * to the range of the prefix schedule for both domain and
+ * range of "umap".
+ */
+static int after_in_context(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	isl_union_map *prefix, *universe, *umap1, *umap2;
+	isl_union_set *domain, *range;
+	isl_set *context;
+	int after;
+
+	umap = isl_union_map_copy(umap);
+	context = isl_schedule_node_context_get_context(node);
+	prefix = isl_schedule_node_get_prefix_schedule_union_map(node);
+	universe = isl_union_map_universe(isl_union_map_copy(umap));
+	domain = isl_union_map_domain(isl_union_map_copy(universe));
+	range = isl_union_map_range(universe);
+	umap1 = isl_union_map_copy(prefix);
+	umap1 = isl_union_map_intersect_domain(umap1, domain);
+	umap2 = isl_union_map_intersect_domain(prefix, range);
+	umap1 = isl_union_map_intersect_range(umap1,
+					    isl_union_set_from_set(context));
+	umap1 = isl_union_map_apply_range(umap1, isl_union_map_reverse(umap2));
+	umap = isl_union_map_intersect(umap, umap1);
+
+	after = after_in_child(umap, node);
+
+	isl_union_map_free(umap);
+
+	return after;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the filter node "node"?
+ *
+ * We intersect domain and range of "umap" with the filter and
+ * continue with its child.
+ */
+static int after_in_filter(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	isl_union_set *filter;
+	int after;
+
+	umap = isl_union_map_copy(umap);
+	filter = isl_schedule_node_filter_get_filter(node);
+	umap = isl_union_map_intersect_domain(umap, isl_union_set_copy(filter));
+	umap = isl_union_map_intersect_range(umap, filter);
+
+	after = after_in_child(umap, node);
+
+	isl_union_map_free(umap);
+
+	return after;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the set node "node"?
+ *
+ * This is only the case if this condition holds in any
+ * of the (filter) children of the set node.
+ * In particular, if the domain and the range of "umap"
+ * are contained in different children, then the condition
+ * does not hold.
+ */
+static int after_in_set(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	int i, n;
+
+	n = isl_schedule_node_n_children(node);
+	for (i = 0; i < n; ++i) {
+		isl_schedule_node *child;
+		int after;
+
+		child = isl_schedule_node_get_child(node, i);
+		after = after_in_tree(umap, child);
+		isl_schedule_node_free(child);
+
+		if (after < 0 || after)
+			return after;
+	}
+
+	return 0;
+}
+
+/* Return the filter of child "i" of "node".
+ */
+static __isl_give isl_union_set *child_filter(
+	__isl_keep isl_schedule_node *node, int i)
+{
+	isl_schedule_node *child;
+	isl_union_set *filter;
+
+	child = isl_schedule_node_get_child(node, i);
+	filter = isl_schedule_node_filter_get_filter(child);
+	isl_schedule_node_free(child);
+
+	return filter;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the sequence node "node"?
+ *
+ * This happens in particular if any domain element is
+ * contained in a later child than one containing a range element or
+ * if the condition holds within a given child in the sequence.
+ * The later part of the condition is checked by after_in_set.
+ */
+static int after_in_sequence(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	int i, j, n;
+	isl_union_map *umap_i;
+	int empty, after = 0;
+
+	n = isl_schedule_node_n_children(node);
+	for (i = 1; i < n; ++i) {
+		isl_union_set *filter_i;
+
+		umap_i = isl_union_map_copy(umap);
+		filter_i = child_filter(node, i);
+		umap_i = isl_union_map_intersect_domain(umap_i, filter_i);
+		empty = isl_union_map_is_empty(umap_i);
+		if (empty < 0)
+			goto error;
+		if (empty) {
+			isl_union_map_free(umap_i);
+			continue;
+		}
+
+		for (j = 0; j < i; ++j) {
+			isl_union_set *filter_j;
+			isl_union_map *umap_ij;
+
+			umap_ij = isl_union_map_copy(umap_i);
+			filter_j = child_filter(node, j);
+			umap_ij = isl_union_map_intersect_range(umap_ij,
+								filter_j);
+			empty = isl_union_map_is_empty(umap_ij);
+			isl_union_map_free(umap_ij);
+
+			if (empty < 0)
+				goto error;
+			if (!empty)
+				after = 1;
+			if (after)
+				break;
+		}
+
+		isl_union_map_free(umap_i);
+		if (after)
+			break;
+	}
+
+	if (after < 0 || after)
+		return after;
+
+	return after_in_set(umap, node);
+error:
+	isl_union_map_free(umap_i);
+	return -1;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at "node"?
+ *
+ * If "umap" is empty, then clearly there is no such element.
+ * Otherwise, consider the different types of nodes separately.
+ */
+static int after_in_tree(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	int empty;
+	enum isl_schedule_node_type type;
+
+	empty = isl_union_map_is_empty(umap);
+	if (empty < 0)
+		return -1;
+	if (empty)
+		return 0;
+	if (!node)
+		return -1;
+
+	type = isl_schedule_node_get_type(node);
+	switch (type) {
+	case isl_schedule_node_error:
+		return -1;
+	case isl_schedule_node_leaf:
+		return 0;
+	case isl_schedule_node_band:
+		return after_in_band(umap, node);
+	case isl_schedule_node_domain:
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_internal,
+			"unexpected internal domain node", return -1);
+	case isl_schedule_node_context:
+		return after_in_context(umap, node);
+	case isl_schedule_node_filter:
+		return after_in_filter(umap, node);
+	case isl_schedule_node_set:
+		return after_in_set(umap, node);
+	case isl_schedule_node_sequence:
+		return after_in_sequence(umap, node);
+	}
+
+	return 1;
+}
+
+/* Is any domain element of "map1" scheduled after any domain
+ * element of "map2" by the subtree underneath the current band node,
+ * while at the same time being scheduled together by the current
+ * band node, i.e., by "map1" and "map2?
+ *
+ * If the child of the current band node is a leaf, then
+ * no element can be scheduled after any other element.
+ *
+ * Otherwise, we construct a relation between domain elements
+ * of "map1" and domain elements of "map2" that are scheduled
+ * together and then check if the subtree underneath the current
+ * band node determines their relative order.
+ */
+static int after_in_subtree(__isl_keep isl_ast_build *build,
+	__isl_keep isl_map *map1, __isl_keep isl_map *map2)
+{
+	isl_schedule_node *node;
+	isl_map *map;
+	isl_union_map *umap;
+	int after;
+
+	node = isl_ast_build_get_schedule_node(build);
+	if (!node)
+		return -1;
+	node = isl_schedule_node_child(node, 0);
+	if (isl_schedule_node_get_type(node) == isl_schedule_node_leaf) {
+		isl_schedule_node_free(node);
+		return 0;
+	}
+	map = isl_map_copy(map2);
+	map = isl_map_apply_domain(map, isl_map_copy(map1));
+	umap = isl_union_map_from_map(map);
+	after = after_in_tree(umap, node);
+	isl_union_map_free(umap);
+	isl_schedule_node_free(node);
+	return after;
+}
+
 /* Internal data for any_scheduled_after.
  *
+ * "build" is the build in which the AST is constructed.
  * "depth" is the number of loops that have already been generated
  * "group_coscheduled" is a local copy of options->ast_build_group_coscheduled
  * "domain" is an array of set-map pairs corresponding to the different
@@ -3587,6 +4317,7 @@ static int extract_domain(__isl_take isl_map *map, void *user)
  * of the inverse schedule, while the map is the inverse schedule itself.
  */
 struct isl_any_scheduled_after_data {
+	isl_ast_build *build;
 	int depth;
 	int group_coscheduled;
 	struct isl_set_map_pair *domain;
@@ -3597,6 +4328,11 @@ struct isl_any_scheduled_after_data {
  *
  * data->domain[i].set contains the domain of the inverse schedule
  * for domain "i", i.e., elements in the schedule domain.
+ *
+ * If we are inside a band of a schedule tree and there is a pair
+ * of elements in the two domains that is schedule together by
+ * the current band, then we check if any element of "i" may be schedule
+ * after element of "j" by the descendants of the band node.
  *
  * If data->group_coscheduled is set, then we also return 1 if there
  * is any pair of elements in the two domains that are scheduled together.
@@ -3619,6 +4355,15 @@ static int any_scheduled_after(int i, int j, void *user)
 			return 1;
 		if (follows < 0)
 			return 0;
+	}
+
+	if (isl_ast_build_has_schedule_node(data->build)) {
+		int after;
+
+		after = after_in_subtree(data->build, data->domain[i].map,
+					    data->domain[j].map);
+		if (after < 0 || after)
+			return after;
 	}
 
 	return data->group_coscheduled;
@@ -3667,6 +4412,7 @@ static __isl_give isl_ast_graft_list *generate_components(
 
 	if (!build)
 		goto error;
+	data.build = build;
 	data.depth = isl_ast_build_get_depth(build);
 	data.group_coscheduled = isl_options_get_ast_build_group_coscheduled(ctx);
 	g = isl_tarjan_graph_init(ctx, n, &any_scheduled_after, &data);
@@ -3753,7 +4499,7 @@ error:
 	return NULL;
 }
 
-/* Internal data structure used by isl_ast_build_ast_from_schedule.
+/* Internal data structure used by isl_ast_build_node_from_schedule_map.
  * internal, executed and build are the inputs to generate_code.
  * list collects the output.
  */
@@ -3811,7 +4557,8 @@ static __isl_give isl_union_map *internal_executed(
  * It is equal to the space of "set" if build->domain is parametric.
  * Otherwise, it is equal to the range of the wrapped space of "set".
  *
- * If the build space is not parametric and if isl_ast_build_ast_from_schedule
+ * If the build space is not parametric and
+ * if isl_ast_build_node_from_schedule_map
  * was called from an outside user (data->internal not set), then
  * the (inverse) schedule refers to the external build domain and needs to
  * be transformed to refer to the internal build domain.
@@ -4012,7 +4759,7 @@ error:
  * the schedule domain in the domain and the elements to be executed
  * in the range) called "executed".
  */
-__isl_give isl_ast_node *isl_ast_build_ast_from_schedule(
+__isl_give isl_ast_node *isl_ast_build_node_from_schedule_map(
 	__isl_keep isl_ast_build *build, __isl_take isl_union_map *schedule)
 {
 	isl_ast_graft_list *list;
@@ -4029,4 +4776,464 @@ __isl_give isl_ast_node *isl_ast_build_ast_from_schedule(
 	isl_ast_build_free(build);
 
 	return node;
+}
+
+/* The old name for isl_ast_build_node_from_schedule_map.
+ * It is being kept for backward compatibility, but
+ * it will be removed in the future.
+ */
+__isl_give isl_ast_node *isl_ast_build_ast_from_schedule(
+	__isl_keep isl_ast_build *build, __isl_take isl_union_map *schedule)
+{
+	return isl_ast_build_node_from_schedule_map(build, schedule);
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the band node "node" and its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * If the band is empty, we continue with its descendants.
+ * Otherwise, we extend the build and the inverse schedule with
+ * the additional space/partial schedule and continue generating
+ * an AST in generate_next_level.
+ * As soon as we have extended the inverse schedule with the additional
+ * partial schedule, we look for equalities that may exists between
+ * the old and the new part.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_band(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_space *space;
+	isl_multi_union_pw_aff *extra;
+	isl_union_map *extra_umap;
+	isl_ast_graft_list *list;
+	unsigned n1, n2;
+
+	if (!build || !node || !executed)
+		goto error;
+
+	if (isl_schedule_node_band_n_member(node) == 0)
+		return build_ast_from_child(build, node, executed);
+
+	extra = isl_schedule_node_band_get_partial_schedule(node);
+	extra = isl_multi_union_pw_aff_align_params(extra,
+				isl_ast_build_get_space(build, 1));
+	space = isl_multi_union_pw_aff_get_space(extra);
+
+	extra_umap = isl_union_map_from_multi_union_pw_aff(extra);
+	extra_umap = isl_union_map_reverse(extra_umap);
+
+	executed = isl_union_map_domain_product(executed, extra_umap);
+	executed = isl_union_map_detect_equalities(executed);
+
+	n1 = isl_ast_build_dim(build, isl_dim_param);
+	build = isl_ast_build_product(build, space);
+	n2 = isl_ast_build_dim(build, isl_dim_param);
+	if (n2 > n1)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_invalid,
+			"band node is not allowed to introduce new parameters",
+			build = isl_ast_build_free(build));
+	build = isl_ast_build_set_schedule_node(build, node);
+
+	list = generate_next_level(executed, build);
+
+	list = isl_ast_graft_list_unembed(list, 1);
+
+	return list;
+error:
+	isl_schedule_node_free(node);
+	isl_union_map_free(executed);
+	isl_ast_build_free(build);
+	return NULL;
+}
+
+/* Hoist a list of grafts (in practice containing a single graft)
+ * from "sub_build" (which includes extra context information)
+ * to "build".
+ *
+ * In particular, project out all additional parameters introduced
+ * by the context node from the enforced constraints and the guard
+ * of the single graft.
+ */
+static __isl_give isl_ast_graft_list *hoist_out_of_context(
+	__isl_take isl_ast_graft_list *list, __isl_keep isl_ast_build *build,
+	__isl_keep isl_ast_build *sub_build)
+{
+	isl_ast_graft *graft;
+	isl_basic_set *enforced;
+	isl_set *guard;
+	unsigned n_param, extra_param;
+
+	if (!build || !sub_build)
+		return isl_ast_graft_list_free(list);
+
+	n_param = isl_ast_build_dim(build, isl_dim_param);
+	extra_param = isl_ast_build_dim(sub_build, isl_dim_param);
+
+	if (extra_param == n_param)
+		return list;
+
+	extra_param -= n_param;
+	enforced = isl_ast_graft_list_extract_shared_enforced(list, sub_build);
+	enforced = isl_basic_set_project_out(enforced, isl_dim_param,
+							n_param, extra_param);
+	enforced = isl_basic_set_remove_unknown_divs(enforced);
+	guard = isl_ast_graft_list_extract_hoistable_guard(list, sub_build);
+	guard = isl_set_remove_divs_involving_dims(guard, isl_dim_param,
+							n_param, extra_param);
+	guard = isl_set_project_out(guard, isl_dim_param, n_param, extra_param);
+	guard = isl_set_compute_divs(guard);
+	graft = isl_ast_graft_alloc_from_children(list, guard, enforced,
+							build, sub_build);
+	list = isl_ast_graft_list_from_ast_graft(graft);
+
+	return list;
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the context node "node"
+ * and its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * The context node may introduce additional parameters as well as
+ * constraints on the outer schedule dimenions or original parameters.
+ *
+ * We add the extra parameters to a new build and the context
+ * constraints to both the build and (as a single disjunct)
+ * to the domain of "executed".  Since the context constraints
+ * are specified in terms of the input schedule, we first need
+ * to map them to the internal schedule domain.
+ *
+ * After constructing the AST from the descendants of "node",
+ * we combine the list of grafts into a single graft within
+ * the new build, in order to be able to exploit the additional
+ * context constraints during this combination.
+ *
+ * Additionally, if the current node is the outermost node in
+ * the schedule tree (apart from the root domain node), we generate
+ * all pending guards, again to be able to exploit the additional
+ * context constraints.  We currently do not do this for internal
+ * context nodes since we may still want to hoist conditions
+ * to outer AST nodes.
+ *
+ * If the context node introduced any new parameters, then they
+ * are removed from the set of enforced constraints and guard
+ * in hoist_out_of_context.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_context(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_set *context;
+	isl_space *space;
+	isl_multi_aff *internal2input;
+	isl_ast_build *sub_build;
+	isl_ast_graft_list *list;
+	int n, depth;
+
+	depth = isl_schedule_node_get_tree_depth(node);
+	space = isl_ast_build_get_space(build, 1);
+	context = isl_schedule_node_context_get_context(node);
+	context = isl_set_align_params(context, space);
+	sub_build = isl_ast_build_copy(build);
+	space = isl_set_get_space(context);
+	sub_build = isl_ast_build_align_params(sub_build, space);
+	internal2input = isl_ast_build_get_internal2input(sub_build);
+	context = isl_set_preimage_multi_aff(context, internal2input);
+	sub_build = isl_ast_build_restrict_generated(sub_build,
+					isl_set_copy(context));
+	context = isl_set_from_basic_set(isl_set_simple_hull(context));
+	executed = isl_union_map_intersect_domain(executed,
+					isl_union_set_from_set(context));
+
+	list = build_ast_from_child(isl_ast_build_copy(sub_build),
+						node, executed);
+	n = isl_ast_graft_list_n_ast_graft(list);
+	if (n < 0)
+		list = isl_ast_graft_list_free(list);
+
+	list = isl_ast_graft_list_fuse(list, sub_build);
+	if (depth == 1)
+		list = isl_ast_graft_list_insert_pending_guard_nodes(list,
+								sub_build);
+	if (n >= 1)
+		list = hoist_out_of_context(list, build, sub_build);
+
+	isl_ast_build_free(build);
+	isl_ast_build_free(sub_build);
+
+	return list;
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the filter node "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * We simply intersect the iteration domain (i.e., the range of "executed")
+ * with the filter and continue with the descendants of the node,
+ * unless the resulting inverse schedule is empty, in which
+ * case we return an empty list.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_filter(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_ctx *ctx;
+	isl_union_set *filter;
+	isl_ast_graft_list *list;
+	int empty;
+	unsigned n1, n2;
+
+	if (!build || !node || !executed)
+		goto error;
+
+	filter = isl_schedule_node_filter_get_filter(node);
+	filter = isl_union_set_align_params(filter,
+				isl_union_map_get_space(executed));
+	n1 = isl_union_map_dim(executed, isl_dim_param);
+	executed = isl_union_map_intersect_range(executed, filter);
+	n2 = isl_union_map_dim(executed, isl_dim_param);
+	if (n2 > n1)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_invalid,
+			"filter node is not allowed to introduce "
+			"new parameters", goto error);
+
+	empty = isl_union_map_is_empty(executed);
+	if (empty < 0)
+		goto error;
+	if (!empty)
+		return build_ast_from_child(build, node, executed);
+
+	ctx = isl_ast_build_get_ctx(build);
+	list = isl_ast_graft_list_alloc(ctx, 0);
+	isl_ast_build_free(build);
+	isl_schedule_node_free(node);
+	isl_union_map_free(executed);
+	return list;
+error:
+	isl_ast_build_free(build);
+	isl_schedule_node_free(node);
+	isl_union_map_free(executed);
+	return NULL;
+}
+
+static __isl_give isl_ast_graft_list *build_ast_from_schedule_node(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed);
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the sequence (or set) node "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * We simply generate an AST for each of the children and concatenate
+ * the results.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_sequence(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	int i, n;
+	isl_ctx *ctx;
+	isl_ast_graft_list *list;
+
+	ctx = isl_ast_build_get_ctx(build);
+	list = isl_ast_graft_list_alloc(ctx, 0);
+
+	n = isl_schedule_node_n_children(node);
+	for (i = 0; i < n; ++i) {
+		isl_schedule_node *child;
+		isl_ast_graft_list *list_i;
+
+		child = isl_schedule_node_get_child(node, i);
+		list_i = build_ast_from_schedule_node(isl_ast_build_copy(build),
+					child, isl_union_map_copy(executed));
+		list = isl_ast_graft_list_concat(list, list_i);
+	}
+	isl_ast_build_free(build);
+	isl_schedule_node_free(node);
+	isl_union_map_free(executed);
+
+	return list;
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the node "node" and its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * If the node is a leaf, then we pass control to generate_inner_level.
+ * Note that the current build does not refer to any band node, so
+ * that generate_inner_level will not try to visit the child of
+ * the leaf node.
+ *
+ * The other node types are handled in separate functions.
+ * Set nodes are currently treated in the same way as sequence nodes.
+ * The children of a set node may be executed in any order,
+ * including the order of the children.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_schedule_node(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	enum isl_schedule_node_type type;
+
+	type = isl_schedule_node_get_type(node);
+
+	switch (type) {
+	case isl_schedule_node_error:
+		goto error;
+	case isl_schedule_node_leaf:
+		isl_schedule_node_free(node);
+		return generate_inner_level(executed, build);
+	case isl_schedule_node_band:
+		return build_ast_from_band(build, node, executed);
+	case isl_schedule_node_context:
+		return build_ast_from_context(build, node, executed);
+	case isl_schedule_node_domain:
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_unsupported,
+			"unexpected internal domain node", goto error);
+	case isl_schedule_node_filter:
+		return build_ast_from_filter(build, node, executed);
+	case isl_schedule_node_sequence:
+	case isl_schedule_node_set:
+		return build_ast_from_sequence(build, node, executed);
+	}
+
+	isl_die(isl_ast_build_get_ctx(build), isl_error_internal,
+		"unhandled type", goto error);
+error:
+	isl_union_map_free(executed);
+	isl_schedule_node_free(node);
+	isl_ast_build_free(build);
+
+	return NULL;
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the (single) child of "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * This function is never called on a leaf, set or sequence node,
+ * so the node always has exactly one child.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_child(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	node = isl_schedule_node_child(node, 0);
+	return build_ast_from_schedule_node(build, node, executed);
+}
+
+/* Generate an AST that visits the elements in the domain of the domain
+ * node "node" in the relative order specified by its descendants.
+ *
+ * An initial inverse schedule is created that maps a zero-dimensional
+ * schedule space to the node domain.
+ * The input "build" is assumed to have a parametric domain and
+ * is replaced by the same zero-dimensional schedule space.
+ *
+ * We also add some of the parameter constraints in the build domain
+ * to the executed relation.  Adding these constraints
+ * allows for an earlier detection of conflicts in some cases.
+ * However, we do not want to divide the executed relation into
+ * more disjuncts than necessary.  We therefore approximate
+ * the constraints on the parameters by a single disjunct set.
+ */
+static __isl_give isl_ast_node *build_ast_from_domain(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node)
+{
+	isl_ctx *ctx;
+	isl_union_set *domain, *schedule_domain;
+	isl_union_map *executed;
+	isl_space *space;
+	isl_set *set;
+	isl_ast_graft_list *list;
+	isl_ast_node *ast;
+	int is_params;
+
+	if (!build)
+		goto error;
+
+	ctx = isl_ast_build_get_ctx(build);
+	space = isl_ast_build_get_space(build, 1);
+	is_params = isl_space_is_params(space);
+	isl_space_free(space);
+	if (is_params < 0)
+		goto error;
+	if (!is_params)
+		isl_die(ctx, isl_error_unsupported,
+			"expecting parametric initial context", goto error);
+
+	domain = isl_schedule_node_domain_get_domain(node);
+	domain = isl_union_set_coalesce(domain);
+
+	space = isl_union_set_get_space(domain);
+	space = isl_space_set_from_params(space);
+	build = isl_ast_build_product(build, space);
+
+	set = isl_ast_build_get_domain(build);
+	set = isl_set_from_basic_set(isl_set_simple_hull(set));
+	schedule_domain = isl_union_set_from_set(set);
+
+	executed = isl_union_map_from_domain_and_range(schedule_domain, domain);
+	list = build_ast_from_child(isl_ast_build_copy(build), node, executed);
+	ast = isl_ast_node_from_graft_list(list, build);
+	isl_ast_build_free(build);
+
+	return ast;
+error:
+	isl_schedule_node_free(node);
+	isl_ast_build_free(build);
+	return NULL;
+}
+
+/* Generate an AST that visits the elements in the domain of "schedule"
+ * in the relative order specified by the schedule tree.
+ *
+ * "build" is an isl_ast_build that has been created using
+ * isl_ast_build_alloc or isl_ast_build_from_context based
+ * on a parametric set.
+ *
+ * The construction starts at the root node of the schedule,
+ * which is assumed to be a domain node.
+ */
+__isl_give isl_ast_node *isl_ast_build_node_from_schedule(
+	__isl_keep isl_ast_build *build, __isl_take isl_schedule *schedule)
+{
+	isl_ctx *ctx;
+	isl_schedule_node *node;
+
+	if (!build || !schedule)
+		goto error;
+
+	ctx = isl_ast_build_get_ctx(build);
+
+	node = isl_schedule_get_root(schedule);
+	isl_schedule_free(schedule);
+
+	build = isl_ast_build_copy(build);
+	build = isl_ast_build_set_single_valued(build, 0);
+	if (isl_schedule_node_get_type(node) != isl_schedule_node_domain)
+		isl_die(ctx, isl_error_unsupported,
+			"expecting root domain node",
+			build = isl_ast_build_free(build));
+	return build_ast_from_domain(build, node);
+error:
+	isl_schedule_free(schedule);
+	return NULL;
 }

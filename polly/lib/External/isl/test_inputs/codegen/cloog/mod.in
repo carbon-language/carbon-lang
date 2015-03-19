@@ -1,3 +1,0 @@
-{ S1[i0] -> [i0, 0] : exists (e0 = [(1 + i0)/3]: i0 >= 0 and i0 <= 3 and 3e0 <= i0 and 3e0 >= -1 + i0) }
-{  :  }
-{ [i, j] -> separate[o0] }

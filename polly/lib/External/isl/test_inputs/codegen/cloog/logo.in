@@ -1,3 +1,0 @@
-[M] -> { S2[i0, i1] -> [i0, i1, 1] : i0 >= 2 and i0 <= 6 and i1 >= 0 and i1 <= 4; S1[i0, i1] -> [i0, i1, 0] : i0 >= 1 and i1 <= 7 and i1 >= -1 + i0 }
-[M] -> {  :  }
-[M] -> { [i, j, k] -> separate[o0] }

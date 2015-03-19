@@ -114,7 +114,11 @@ static int equal_independent_guards(__isl_keep isl_ast_graft_list *list,
 		return -1;
 
 	depth = isl_ast_build_get_depth(build);
-	skip = isl_set_involves_dims(graft_0->guard, isl_dim_set, depth, 1);
+	if (isl_set_dim(graft_0->guard, isl_dim_set) <= depth)
+		skip = 0;
+	else
+		skip = isl_set_involves_dims(graft_0->guard,
+						isl_dim_set, depth, 1);
 	if (skip < 0 || skip) {
 		isl_ast_graft_free(graft_0);
 		return skip < 0 ? -1 : 0;
@@ -647,6 +651,42 @@ static __isl_give isl_ast_graft_list *insert_pending_guard_nodes(
 	clear_if_nodes(if_node, 0, n_if);
 	free(if_node);
 	return res;
+}
+
+/* For each graft in "list",
+ * insert an if node around graft->node testing the condition encoded
+ * in graft->guard, assuming graft->guard involves any conditions.
+ * Subsequently remove the guards from the grafts.
+ */
+__isl_give isl_ast_graft_list *isl_ast_graft_list_insert_pending_guard_nodes(
+	__isl_take isl_ast_graft_list *list, __isl_keep isl_ast_build *build)
+{
+	int i, n;
+	isl_set *universe;
+
+	list = insert_pending_guard_nodes(list, build);
+	if (!list)
+		return NULL;
+
+	universe = isl_set_universe(isl_ast_build_get_space(build, 1));
+	n = isl_ast_graft_list_n_ast_graft(list);
+	for (i = 0; i < n; ++i) {
+		isl_ast_graft *graft;
+
+		graft = isl_ast_graft_list_get_ast_graft(list, i);
+		if (!graft)
+			break;
+		isl_set_free(graft->guard);
+		graft->guard = isl_set_copy(universe);
+		if (!graft->guard)
+			graft = isl_ast_graft_free(graft);
+		list = isl_ast_graft_list_set_ast_graft(list, i, graft);
+	}
+	isl_set_free(universe);
+	if (i < n)
+		return isl_ast_graft_list_free(list);
+
+	return list;
 }
 
 /* Collect the nodes contained in the grafts in "list" in a node list.

@@ -1,3 +1,0 @@
-[t] -> { S1[i0, t] -> [i0, t, 0] : exists (e0 = [(t - i0)/16]: 16e0 = t - i0 and i0 >= 0 and i0 <= 99 and t >= 0 and t <= 15) }
-[t] -> {  :  }
-[t] -> { [i, j, k] -> separate[o0] }

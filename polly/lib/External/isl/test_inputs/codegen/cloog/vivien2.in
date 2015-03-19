@@ -1,3 +1,0 @@
-[n] -> { S6[i0, i1] -> [2i0 + 2i1, 2 - i0, 0] : i0 >= 1 and i0 <= n and i1 >= 1 + i0 and i1 <= n; S2[i0, i1] -> [1 + 2i0 + 2i1, i1, 0] : 29i1 >= 1 - i0 and i0 <= n and i1 >= 1 and i1 <= -1 + i0; S1[i0] -> [2 + 2i0, 0, 0] : i0 >= 1 - 27n and i0 <= 28 + n; S4[i0, i1] -> [2i0 + 2i1, -i0, 0] : i0 >= 1 and i0 <= n and i1 >= 1 + i0 and i1 <= n; S3[i0] -> [1 + 4i0, 0, 0] : i0 >= 1 and i0 <= n; S5[i0, i1, i2] -> [2i0 + 2i1, 1 - i0, i2] : i0 >= 1 and i0 <= n and i1 >= 1 + i0 and i1 <= n and i2 >= 1 and i2 <= -1 + i0 }
-[n] -> {  : n >= 30 }
-[n] -> { [i, j, k] -> separate[o0] }

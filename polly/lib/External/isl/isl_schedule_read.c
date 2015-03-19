@@ -12,9 +12,11 @@ enum isl_schedule_key {
 	isl_schedule_key_error = -1,
 	isl_schedule_key_child,
 	isl_schedule_key_coincident,
+	isl_schedule_key_context,
 	isl_schedule_key_domain,
 	isl_schedule_key_filter,
 	isl_schedule_key_leaf,
+	isl_schedule_key_options,
 	isl_schedule_key_permutable,
 	isl_schedule_key_schedule,
 	isl_schedule_key_sequence,
@@ -44,12 +46,16 @@ static enum isl_schedule_key extract_key(__isl_keep isl_stream *s,
 		key = isl_schedule_key_child;
 	else if (!strcmp(name, "coincident"))
 		key = isl_schedule_key_coincident;
+	else if (!strcmp(name, "context"))
+		key = isl_schedule_key_context;
 	else if (!strcmp(name, "domain"))
 		key = isl_schedule_key_domain;
 	else if (!strcmp(name, "filter"))
 		key = isl_schedule_key_filter;
 	else if (!strcmp(name, "leaf"))
 		key = isl_schedule_key_leaf;
+	else if (!strcmp(name, "options"))
+		key = isl_schedule_key_options;
 	else if (!strcmp(name, "schedule"))
 		key = isl_schedule_key_schedule;
 	else if (!strcmp(name, "sequence"))
@@ -83,6 +89,57 @@ static enum isl_schedule_key get_key(__isl_keep isl_stream *s)
 
 static __isl_give isl_schedule_tree *isl_stream_read_schedule_tree(
 	__isl_keep isl_stream *s);
+
+/* Read a subtree with context root node from "s".
+ */
+static __isl_give isl_schedule_tree *read_context(__isl_keep isl_stream *s)
+{
+	isl_set *context = NULL;
+	isl_schedule_tree *tree;
+	isl_ctx *ctx;
+	struct isl_token *tok;
+	enum isl_schedule_key key;
+	char *str;
+	int more;
+
+	ctx = isl_stream_get_ctx(s);
+
+	key = get_key(s);
+
+	if (isl_stream_yaml_next(s) < 0)
+		return NULL;
+
+	tok = isl_stream_next_token(s);
+	if (!tok) {
+		isl_stream_error(s, NULL, "unexpected EOF");
+		return NULL;
+	}
+	str = isl_token_get_str(ctx, tok);
+	context = isl_set_read_from_str(ctx, str);
+	free(str);
+	isl_token_free(tok);
+
+	more = isl_stream_yaml_next(s);
+	if (more < 0)
+		goto error;
+	if (!more) {
+		tree = isl_schedule_tree_from_context(context);
+	} else {
+		key = get_key(s);
+		if (key != isl_schedule_key_child)
+			isl_die(ctx, isl_error_invalid, "expecting child",
+				goto error);
+		if (isl_stream_yaml_next(s) < 0)
+			goto error;
+		tree = isl_stream_read_schedule_tree(s);
+		tree = isl_schedule_tree_insert_context(tree, context);
+	}
+
+	return tree;
+error:
+	isl_set_free(context);
+	return NULL;
+}
 
 /* Read a subtree with domain root node from "s".
  */
@@ -247,6 +304,7 @@ static __isl_give isl_schedule_tree *read_band(isl_stream *s)
 	isl_multi_union_pw_aff *schedule = NULL;
 	isl_schedule_tree *tree = NULL;
 	isl_val_list *coincident = NULL;
+	isl_union_set *options = NULL;
 	isl_ctx *ctx;
 	isl_schedule_band *band;
 	int permutable = 0;
@@ -290,6 +348,16 @@ static __isl_give isl_schedule_tree *read_band(isl_stream *s)
 			permutable = !isl_val_is_zero(v);
 			isl_val_free(v);
 			break;
+		case isl_schedule_key_options:
+			isl_union_set_free(options);
+			tok = isl_stream_next_token(s);
+			str = isl_token_get_str(ctx, tok);
+			options = isl_union_set_read_from_str(ctx, str);
+			free(str);
+			isl_token_free(tok);
+			if (!options)
+				goto error;
+			break;
 		case isl_schedule_key_child:
 			isl_schedule_tree_free(tree);
 			tree = isl_stream_read_schedule_tree(s);
@@ -312,6 +380,8 @@ static __isl_give isl_schedule_tree *read_band(isl_stream *s)
 	band = isl_schedule_band_set_permutable(band, permutable);
 	if (coincident)
 		band = set_coincident(band, coincident);
+	if (options)
+		band = isl_schedule_band_set_ast_build_options(band, options);
 	if (tree)
 		tree = isl_schedule_tree_insert_band(tree, band);
 	else
@@ -320,6 +390,7 @@ static __isl_give isl_schedule_tree *read_band(isl_stream *s)
 	return tree;
 error:
 	isl_val_list_free(coincident);
+	isl_union_set_free(options);
 	isl_schedule_tree_free(tree);
 	isl_multi_union_pw_aff_free(schedule);
 	return NULL;
@@ -403,6 +474,9 @@ static __isl_give isl_schedule_tree *isl_stream_read_schedule_tree(
 	if (key < 0)
 		return NULL;
 	switch (key) {
+	case isl_schedule_key_context:
+		tree = read_context(s);
+		break;
 	case isl_schedule_key_domain:
 		tree = read_domain(s);
 		break;
@@ -421,6 +495,7 @@ static __isl_give isl_schedule_tree *isl_stream_read_schedule_tree(
 		break;
 	case isl_schedule_key_schedule:
 	case isl_schedule_key_coincident:
+	case isl_schedule_key_options:
 	case isl_schedule_key_permutable:
 		tree = read_band(s);
 		break;

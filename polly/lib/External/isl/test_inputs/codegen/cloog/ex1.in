@@ -1,3 +1,0 @@
-[n] -> { S2[i0, i1] -> [i0, i1, 1] : i0 >= 15 and i0 <= n and i1 >= 10 and i1 <= n; S1[i0, i1] -> [i0, i1, 0] : i0 >= 0 and i0 <= n and i1 >= 0 and i1 <= -15 + n }
-[n] -> {  : n >= 25 }
-[n] -> { [i, j, k] -> separate[o0] }

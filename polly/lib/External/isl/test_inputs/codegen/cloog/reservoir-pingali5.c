@@ -1,10 +1,10 @@
-for (int c1 = 3; c1 < 2 * M; c1 += 1) {
-  for (int c3 = c1 / 2 + 2; c3 <= M; c3 += 1)
-    for (int c7 = c1 / 2 + 1; c7 < min(c1, c3); c7 += 1)
-      S1(c7, c1 - c7, c3);
-  for (int c3 = max(1, -M + c1); c3 < (c1 + 1) / 2; c3 += 1)
-    S2(c1 - c3, c3);
-  for (int c3 = c1 / 2 + 2; c3 <= M; c3 += 1)
-    for (int c7 = c1 / 2 + 1; c7 < min(c1, c3); c7 += 1)
-      S3(c7, c1 - c7, c3);
+for (int c0 = 3; c0 < 2 * M; c0 += 1) {
+  for (int c1 = c0 / 2 + 2; c1 <= M; c1 += 1)
+    for (int c3 = c0 / 2 + 1; c3 < min(c0, c1); c3 += 1)
+      S1(c3, c0 - c3, c1);
+  for (int c1 = max(1, -M + c0); c1 < (c0 + 1) / 2; c1 += 1)
+    S2(c0 - c1, c1);
+  for (int c1 = c0 / 2 + 2; c1 <= M; c1 += 1)
+    for (int c3 = c0 / 2 + 1; c3 < min(c0, c1); c3 += 1)
+      S3(c3, c0 - c3, c1);
 }

@@ -6,12 +6,7 @@
 #include <isl/ast_build.h>
 #include <isl/set.h>
 #include <isl/list.h>
-
-enum isl_ast_build_domain_type {
-	atomic,
-	unroll,
-	separate
-};
+#include <isl/schedule_node.h>
 
 /* An isl_ast_build represents the context in which AST is being
  * generated.  That is, it (mostly) contains information about outer
@@ -89,6 +84,17 @@ enum isl_ast_build_domain_type {
  * domain.  It may be NULL if it hasn't been computed yet.
  * See isl_ast_build_get_schedule_map_multi_aff.
  *
+ * "internal2input" maps the internal schedule domain to the original
+ * input schedule domain.  In case of a schedule tree input, the original
+ * input schedule domain consist of the flat product of all outer
+ * band node spaces, including the current band node.
+ * It may be NULL if there no longer is such a uniform mapping
+ * (because different iterations have been rescheduled differently).
+ *
+ * "options" contains the AST build options in case we are generating
+ * an AST from a flat schedule map.  When creating an AST from a schedule
+ * tree, this field is ignored.
+ *
  * The "create_leaf" callback is called for every leaf in the generated AST.
  * The callback is responsible for creating the node to be placed at those
  * leaves.  If this callback is not set, then isl will generated user
@@ -116,6 +122,19 @@ enum isl_ast_build_domain_type {
  * is extended to a single valued inverse schedule.  This is mainly used
  * to avoid an infinite recursion when we fail to detect later on that
  * the extended inverse schedule is single valued.
+ *
+ * "node" points to the current band node in case we are generating
+ * an AST from a schedule tree.  It may be NULL if we are not generating
+ * an AST from a schedule tree or if we are not inside a band node.
+ *
+ * "loop_type" originally constains loop AST generation types for
+ * the "n" members of "node" and it is updated (along with "n") when
+ * a schedule dimension is inserted.
+ * It is NULL if "node" is NULL.
+ *
+ * "isolated" is the piece of the schedule domain isolated by the isolate
+ * option on the current band.  This set may be NULL if we have not checked
+ * for the isolate option yet.
  */
 struct isl_ast_build {
 	int ref;
@@ -136,6 +155,7 @@ struct isl_ast_build {
 	isl_multi_aff *offsets;
 
 	isl_multi_aff *schedule_map;
+	isl_multi_aff *internal2input;
 
 	isl_union_map *options;
 
@@ -158,6 +178,11 @@ struct isl_ast_build {
 
 	isl_union_map *executed;
 	int single_valued;
+
+	isl_schedule_node *node;
+	int n;
+	enum isl_ast_loop_type *loop_type;
+	isl_set *isolated;
 };
 
 __isl_give isl_ast_build *isl_ast_build_clear_local_info(
@@ -191,6 +216,8 @@ __isl_give isl_ast_build *isl_ast_build_set_executed(
 	__isl_take isl_union_map *executed);
 __isl_give isl_ast_build *isl_ast_build_set_single_valued(
 	__isl_take isl_ast_build *build, int sv);
+__isl_give isl_multi_aff *isl_ast_build_get_internal2input(
+	__isl_keep isl_ast_build *build);
 __isl_give isl_set *isl_ast_build_get_domain(
 	__isl_keep isl_ast_build *build);
 __isl_give isl_set *isl_ast_build_get_pending(
@@ -213,6 +240,21 @@ int isl_ast_build_has_affine_value(__isl_keep isl_ast_build *build, int pos);
 int isl_ast_build_has_value(__isl_keep isl_ast_build *build);
 __isl_give isl_id *isl_ast_build_get_iterator_id(
 	__isl_keep isl_ast_build *build, int pos);
+
+int isl_ast_build_has_schedule_node(__isl_keep isl_ast_build *build);
+__isl_give isl_schedule_node *isl_ast_build_get_schedule_node(
+	__isl_keep isl_ast_build *build);
+__isl_give isl_ast_build *isl_ast_build_set_schedule_node(
+	__isl_take isl_ast_build *build,
+	__isl_take isl_schedule_node *node);
+__isl_give isl_ast_build *isl_ast_build_reset_schedule_node(
+	__isl_take isl_ast_build *build);
+
+__isl_give isl_ast_build *isl_ast_build_extract_isolated(
+	__isl_take isl_ast_build *build);
+int isl_ast_build_has_isolated(__isl_keep isl_ast_build *build);
+__isl_give isl_set *isl_ast_build_get_isolated(
+	__isl_keep isl_ast_build *build);
 
 __isl_give isl_basic_set *isl_ast_build_compute_gist_basic_set(
 	__isl_keep isl_ast_build *build, __isl_take isl_basic_set *bset);
@@ -248,8 +290,7 @@ __isl_give isl_multi_aff *isl_ast_build_get_stride_expansion(
 void isl_ast_build_dump(__isl_keep isl_ast_build *build);
 
 __isl_give isl_set *isl_ast_build_get_option_domain(
-	__isl_keep isl_ast_build *build,
-	enum isl_ast_build_domain_type type);
+	__isl_keep isl_ast_build *build, enum isl_ast_loop_type type);
 __isl_give isl_map *isl_ast_build_get_separation_class(
 	__isl_keep isl_ast_build *build);
 __isl_give isl_set *isl_ast_build_eliminate(
@@ -258,6 +299,9 @@ __isl_give isl_set *isl_ast_build_eliminate_inner(
 	__isl_keep isl_ast_build *build, __isl_take isl_set *set);
 __isl_give isl_set *isl_ast_build_eliminate_divs(
 	__isl_keep isl_ast_build *build, __isl_take isl_set *set);
+
+enum isl_ast_loop_type isl_ast_build_get_loop_type(
+	__isl_keep isl_ast_build *build, int isolated);
 
 __isl_give isl_map *isl_ast_build_map_to_iterator(
 	__isl_keep isl_ast_build *build, __isl_take isl_set *set);

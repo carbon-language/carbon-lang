@@ -1,3 +1,0 @@
-[M, N] -> { S1[i0] -> [i0, 0] : (i0 >= 1 and i0 <= N and i0 <= 2M) or (i0 >= 1 and i0 <= N and i0 >= M); S2[i0] -> [i0, 1] : i0 >= 1 + N and i0 <= 2N }
-[M, N] -> {  :  }
-[M, N] -> { [i, j] -> separate[o0] }

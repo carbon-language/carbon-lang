@@ -1,3 +1,0 @@
-[n] -> { S1[i] -> [i, 0] : i >= n and i <= 1 + n and n <= 9 and i >= 0 }
-[n] -> {  :  }
-[n] -> { [i, j] -> unroll[o0] }

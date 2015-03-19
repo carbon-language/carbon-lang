@@ -1,23 +1,23 @@
 {
   S1();
   S2();
-  for (int c1 = 0; c1 < N; c1 += 1)
-    for (int c3 = 0; c3 < N; c3 += 1) {
-      S4(c1, c3);
-      S5(c1, c3);
+  for (int c0 = 0; c0 < N; c0 += 1)
+    for (int c1 = 0; c1 < N; c1 += 1) {
+      S4(c0, c1);
+      S5(c0, c1);
     }
-  for (int c1 = 0; c1 < N; c1 += 1)
-    for (int c3 = 0; c3 < N; c3 += 1)
-      for (int c5 = 0; c5 <= (N - 1) / 32; c5 += 1) {
-        S7(c1, c3, c5, 32 * c5);
-        for (int c7 = 32 * c5 + 1; c7 <= min(N - 1, 32 * c5 + 31); c7 += 1) {
-          S6(c1, c3, c5, c7 - 1);
-          S7(c1, c3, c5, c7);
+  for (int c0 = 0; c0 < N; c0 += 1)
+    for (int c1 = 0; c1 < N; c1 += 1)
+      for (int c2 = 0; c2 <= (N - 1) / 32; c2 += 1) {
+        S7(c0, c1, c2, 32 * c2);
+        for (int c3 = 32 * c2 + 1; c3 <= min(N - 1, 32 * c2 + 31); c3 += 1) {
+          S6(c0, c1, c2, c3 - 1);
+          S7(c0, c1, c2, c3);
         }
-        if (32 * c5 + 31 >= N) {
-          S6(c1, c3, c5, N - 1);
+        if (32 * c2 + 31 >= N) {
+          S6(c0, c1, c2, N - 1);
         } else
-          S6(c1, c3, c5, 32 * c5 + 31);
+          S6(c0, c1, c2, 32 * c2 + 31);
       }
   S8();
 }

@@ -58,6 +58,14 @@ enum isl_ast_node_type {
 	isl_ast_node_user
 };
 
+enum isl_ast_loop_type {
+	isl_ast_loop_error = -1,
+	isl_ast_loop_default = 0,
+	isl_ast_loop_atomic,
+	isl_ast_loop_unroll,
+	isl_ast_loop_separate
+};
+
 struct isl_ast_print_options;
 typedef struct isl_ast_print_options isl_ast_print_options;
 

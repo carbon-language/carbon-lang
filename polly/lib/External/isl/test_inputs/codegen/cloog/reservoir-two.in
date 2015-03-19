@@ -1,3 +1,0 @@
-{ S1[i0, i1, i2] -> [i0, j, k, 0] : 2i1 = 3 - i0 and 2j = 3 - i0 and 2k = 9 + i0 and 2i2 = 9 + i0 and i0 >= 0 and i0 <= 1 }
-{  :  }
-{ [i, j, k, l] -> separate[o0] }

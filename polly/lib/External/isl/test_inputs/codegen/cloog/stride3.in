@@ -1,3 +1,0 @@
-[m, n] -> { S1[i0] -> [50i0, 0] : i0 >= 1 and i0 <= n and i0 >= m }
-[m, n] -> {  :  }
-[m, n] -> { [i, j] -> separate[o0] }

@@ -1,3 +1,0 @@
-[M, N] -> { S1[i0] -> [0, i0, 0, 0, 0] : i0 >= 1 and i0 <= M; S2[i0, i1] -> [1, i0, 1, i1, 0] : i0 >= 1 and i0 <= M and i1 >= 2 and i1 <= N; S3[i0, i1] -> [2, i0, 2, i1, 0] : i0 >= 1 and i0 <= M and i1 >= 1 and i1 <= -1 + N }
-[M, N] -> {  : M >= 1 and N >= 1 }
-[M, N] -> { [i, j, k, l, m] -> separate[o0] }

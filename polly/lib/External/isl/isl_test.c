@@ -4791,7 +4791,7 @@ static int test_ast_gen1(isl_ctx *ctx)
 			&before_for, &data);
 	build = isl_ast_build_set_after_each_for(build,
 			&after_for, &data);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 	if (!tree)
 		return -1;
@@ -4825,7 +4825,7 @@ static int test_ast_gen2(isl_ctx *ctx)
 	str = "{ [i,j] -> atomic[1] : i + j = 1; [i,j] -> unroll[1] : i = j }";
 	options = isl_union_map_read_from_str(ctx, str);
 	build = isl_ast_build_set_options(build, options);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 	if (!tree)
 		return -1;
@@ -4871,7 +4871,7 @@ static int test_ast_gen3(isl_ctx *ctx)
 	build = isl_ast_build_set_options(build, options);
 	build = isl_ast_build_set_at_each_domain(build,
 			&count_domains, &n_domain);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 	if (!tree)
 		return -1;
@@ -4907,7 +4907,7 @@ static int test_ast_gen4(isl_ctx *ctx)
 	schedule = isl_union_map_read_from_str(ctx, str);
 	set = isl_set_universe(isl_space_params_alloc(ctx, 0));
 	build = isl_ast_build_from_context(set);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 	if (!tree)
 		return -1;
@@ -4924,7 +4924,7 @@ static int test_ast_gen4(isl_ctx *ctx)
 	schedule = isl_union_map_read_from_str(ctx, str);
 	set = isl_set_universe(isl_space_params_alloc(ctx, 0));
 	build = isl_ast_build_from_context(set);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 	if (!tree)
 		return -1;
@@ -4959,7 +4959,7 @@ static __isl_give isl_ast_node *create_leaf(__isl_take isl_ast_build *build,
 	extra = isl_union_map_copy(schedule);
 	extra = isl_union_map_from_domain(isl_union_map_domain(extra));
 	schedule = isl_union_map_range_product(schedule, extra);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 
 	if (!tree)
@@ -5002,7 +5002,7 @@ static int test_ast_gen5(isl_ctx *ctx)
 	build = isl_ast_build_from_context(set);
 	build = isl_ast_build_set_options(build, options);
         build = isl_ast_build_set_create_leaf(build, &create_leaf, NULL);
-	tree = isl_ast_build_ast_from_schedule(build, schedule);
+	tree = isl_ast_build_node_from_schedule_map(build, schedule);
 	isl_ast_build_free(build);
 	isl_ast_node_free(tree);
 	if (!tree)

@@ -7,6 +7,7 @@
 #include <isl/aff_type.h>
 #include <isl/band.h>
 #include <isl/space.h>
+#include <isl/set_type.h>
 #include <isl/list.h>
 
 #if defined(__cplusplus)
@@ -98,6 +99,8 @@ __isl_give isl_schedule *isl_schedule_map_schedule_node(
 	__isl_give isl_schedule_node *(*fn)(
 		__isl_take isl_schedule_node *node, void *user), void *user);
 
+__isl_give isl_schedule *isl_schedule_insert_context(
+	__isl_take isl_schedule *schedule, __isl_take isl_set *context);
 __isl_give isl_schedule *isl_schedule_insert_partial_schedule(
 	__isl_take isl_schedule *schedule,
 	__isl_take isl_multi_union_pw_aff *partial);

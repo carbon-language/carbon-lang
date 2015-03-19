@@ -155,7 +155,7 @@ int isl_tab_extend_vars(struct isl_tab *tab, unsigned n_new)
 		if (!var)
 			return -1;
 		tab->var = var;
-		tab->max_var += n_new;
+		tab->max_var = tab->n_var + n_new;
 	}
 
 	if (tab->mat->n_col < off + tab->n_col + n_new) {
