@@ -236,7 +236,7 @@ typedef _VSTD::unique_ptr<__locale_struct, decltype(&uselocale)> __locale_raii;
 // locale.  Linux, not so much.  The following functions avoid the locale when
 // that's possible and otherwise do the wrong thing.  FIXME.
 #if defined(__linux__) || defined(__EMSCRIPTEN__) || defined(_AIX) || \
-    defined(_NEWLIB_VERSION)
+    defined(_NEWLIB_VERSION) || defined(__GLIBC__)
 
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
 decltype(MB_CUR_MAX_L(_VSTD::declval<locale_t>()))
