@@ -289,7 +289,7 @@ void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
   unwrap(cg)->addMustPreserveSymbol(symbol);
 }
 
-static void maybeParseOptions() {
+static void maybeParseOptions(lto_code_gen_t cg) {
   if (!parsedOptions) {
     unwrap(cg)->parseCodeGenDebugOptions();
     lto_add_attrs(cg);
@@ -298,31 +298,31 @@ static void maybeParseOptions() {
 }
 
 bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
-  maybeParseOptions();
+  maybeParseOptions(cg);
   return !unwrap(cg)->writeMergedModules(path, sLastErrorString);
 }
 
 const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
-  maybeParseOptions();
+  maybeParseOptions(cg);
   return unwrap(cg)->compile(length, DisableInline,
                              DisableGVNLoadPRE, DisableLTOVectorization,
                              sLastErrorString);
 }
 
 bool lto_codegen_optimize(lto_code_gen_t cg) {
-  maybeParseOptions();
+  maybeParseOptions(cg);
   return !unwrap(cg)->optimize(DisableInline,
                                DisableGVNLoadPRE, DisableLTOVectorization,
                                sLastErrorString);
 }
 
 const void *lto_codegen_compile_optimized(lto_code_gen_t cg, size_t *length) {
-  maybeParseOptions();
+  maybeParseOptions(cg);
   return unwrap(cg)->compileOptimized(length, sLastErrorString);
 }
 
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
-  maybeParseOptions();
+  maybeParseOptions(cg);
   return !unwrap(cg)->compile_to_file(
       name, DisableInline, DisableGVNLoadPRE,
       DisableLTOVectorization, sLastErrorString);
