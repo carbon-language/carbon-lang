@@ -158,6 +158,27 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V) {
   return Call;
 }
 
+/// Emit the computation of the sign bit for a floating point value. Returns
+/// the i1 sign bit value.
+static Value *EmitSignBit(CodeGenFunction &CGF, Value *V) {
+  LLVMContext &C = CGF.CGM.getLLVMContext();
+
+  llvm::Type *Ty = V->getType();
+  int Width = Ty->getPrimitiveSizeInBits();
+  llvm::Type *IntTy = llvm::IntegerType::get(C, Width);
+  V = CGF.Builder.CreateBitCast(V, IntTy);
+  if (Ty->isPPC_FP128Ty()) {
+    // The higher-order double comes first, and so we need to truncate the
+    // pair to extract the overall sign. The order of the pair is the same
+    // in both little- and big-Endian modes.
+    Width >>= 1;
+    IntTy = llvm::IntegerType::get(C, Width);
+    V = CGF.Builder.CreateTrunc(V, IntTy);
+  }
+  Value *Zero = llvm::Constant::getNullValue(IntTy);
+  return CGF.Builder.CreateICmpSLT(V, Zero);
+}
+
 static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *Fn,
                               const CallExpr *E, llvm::Value *calleeValue) {
   return CGF.EmitCall(E->getCallee()->getType(), calleeValue, E,
@@ -558,8 +579,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType())));
   }
 
-  // TODO: BI__builtin_isinf_sign
-  //   isinf_sign(x) -> isinf(x) ? (signbit(x) ? -1 : 1) : 0
+  case Builtin::BI__builtin_isinf_sign: {
+    // isinf_sign(x) -> fabs(x) == infinity ? (signbit(x) ? -1 : 1) : 0
+    Value *Arg = EmitScalarExpr(E->getArg(0));
+    Value *AbsArg = EmitFAbs(*this, Arg);
+    Value *IsInf = Builder.CreateFCmpOEQ(
+        AbsArg, ConstantFP::getInfinity(Arg->getType()), "isinf");
+    Value *IsNeg = EmitSignBit(*this, Arg);
+
+    llvm::Type *IntTy = ConvertType(E->getType());
+    Value *Zero = Constant::getNullValue(IntTy);
+    Value *One = ConstantInt::get(IntTy, 1);
+    Value *NegativeOne = ConstantInt::get(IntTy, -1);
+    Value *SignResult = Builder.CreateSelect(IsNeg, NegativeOne, One);
+    Value *Result = Builder.CreateSelect(IsInf, SignResult, Zero);
+    return RValue::get(Result);
+  }
 
   case Builtin::BI__builtin_isnormal: {
     // isnormal(x) --> x == x && fabsf(x) < infinity && fabsf(x) >= float_min
@@ -1398,24 +1433,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_signbit:
   case Builtin::BI__builtin_signbitf:
   case Builtin::BI__builtin_signbitl: {
-    LLVMContext &C = CGM.getLLVMContext();
-
-    Value *Arg = EmitScalarExpr(E->getArg(0));
-    llvm::Type *ArgTy = Arg->getType();
-    int ArgWidth = ArgTy->getPrimitiveSizeInBits();
-    llvm::Type *ArgIntTy = llvm::IntegerType::get(C, ArgWidth);
-    Value *BCArg = Builder.CreateBitCast(Arg, ArgIntTy);
-    if (ArgTy->isPPC_FP128Ty()) {
-      // The higher-order double comes first, and so we need to truncate the
-      // pair to extract the overall sign. The order of the pair is the same
-      // in both little- and big-Endian modes.
-      ArgWidth >>= 1;
-      ArgIntTy = llvm::IntegerType::get(C, ArgWidth);
-      BCArg = Builder.CreateTrunc(BCArg, ArgIntTy);
-    }
-    Value *ZeroCmp = llvm::Constant::getNullValue(ArgIntTy);
-    Value *Result = Builder.CreateICmpSLT(BCArg, ZeroCmp);
-    return RValue::get(Builder.CreateZExt(Result, ConvertType(E->getType())));
+    return RValue::get(
+        Builder.CreateZExt(EmitSignBit(*this, EmitScalarExpr(E->getArg(0))),
+                           ConvertType(E->getType())));
   }
   case Builtin::BI__builtin_annotation: {
     llvm::Value *AnnVal = EmitScalarExpr(E->getArg(0));

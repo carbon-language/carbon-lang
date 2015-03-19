@@ -42,8 +42,6 @@ int main() {
   P(fpclassify, (0, 1, 2, 3, 4, 1.0));
   P(fpclassify, (0, 1, 2, 3, 4, 1.0f));
   P(fpclassify, (0, 1, 2, 3, 4, 1.0l));
-  // FIXME:
-  //  P(isinf_sign, (1.0));
 
   Q(nan, (""));
   Q(nanf, (""));
@@ -61,6 +59,8 @@ int main() {
   P(islessgreater, (1., 2.));
   P(isunordered, (1., 2.));
 
+  P(isinf, (1.));
+  P(isinf_sign, (1.));
   P(isnan, (1.));
 
   // Bitwise & Numeric Functions
@@ -177,11 +177,35 @@ void test_float_builtins(float F, double D, long double LD) {
   res = __builtin_isinf(D);
   // CHECK:  call double @llvm.fabs.f64(double
   // CHECK:  fcmp oeq double {{.*}}, 0x7FF0000000000000
-  
+
   res = __builtin_isinf(LD);
   // CHECK:  call x86_fp80 @llvm.fabs.f80(x86_fp80
   // CHECK:  fcmp oeq x86_fp80 {{.*}}, 0xK7FFF8000000000000000
-  
+
+  res = __builtin_isinf_sign(F);
+  // CHECK:  %[[ABS:.*]] = call float @llvm.fabs.f32(float %[[ARG:.*]])
+  // CHECK:  %[[ISINF:.*]] = fcmp oeq float %[[ABS]], 0x7FF0000000000000
+  // CHECK:  %[[BITCAST:.*]] = bitcast float %[[ARG]] to i32
+  // CHECK:  %[[ISNEG:.*]] = icmp slt i32 %[[BITCAST]], 0
+  // CHECK:  %[[SIGN:.*]] = select i1 %[[ISNEG]], i32 -1, i32 1
+  // CHECK:  select i1 %[[ISINF]], i32 %[[SIGN]], i32 0
+
+  res = __builtin_isinf_sign(D);
+  // CHECK:  %[[ABS:.*]] = call double @llvm.fabs.f64(double %[[ARG:.*]])
+  // CHECK:  %[[ISINF:.*]] = fcmp oeq double %[[ABS]], 0x7FF0000000000000
+  // CHECK:  %[[BITCAST:.*]] = bitcast double %[[ARG]] to i64
+  // CHECK:  %[[ISNEG:.*]] = icmp slt i64 %[[BITCAST]], 0
+  // CHECK:  %[[SIGN:.*]] = select i1 %[[ISNEG]], i32 -1, i32 1
+  // CHECK:  select i1 %[[ISINF]], i32 %[[SIGN]], i32 0
+
+  res = __builtin_isinf_sign(LD);
+  // CHECK:  %[[ABS:.*]] = call x86_fp80 @llvm.fabs.f80(x86_fp80 %[[ARG:.*]])
+  // CHECK:  %[[ISINF:.*]] = fcmp oeq x86_fp80 %[[ABS]], 0xK7FFF8000000000000000
+  // CHECK:  %[[BITCAST:.*]] = bitcast x86_fp80 %[[ARG]] to i80
+  // CHECK:  %[[ISNEG:.*]] = icmp slt i80 %[[BITCAST]], 0
+  // CHECK:  %[[SIGN:.*]] = select i1 %[[ISNEG]], i32 -1, i32 1
+  // CHECK:  select i1 %[[ISINF]], i32 %[[SIGN]], i32 0
+
   res = __builtin_isfinite(F);
   // CHECK: fcmp oeq float 
   // CHECK: call float @llvm.fabs.f32(float
