@@ -65,6 +65,8 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_26:
   case LLD_R_MIPS_GLOBAL_26:
     return {4, 0x3ffffff, 2, false};
+  case R_MIPS_PC21_S2:
+    return {4, 0x1fffff, 2, false};
   case R_MIPS_HI16:
   case R_MIPS_LO16:
   case R_MIPS_GPREL16:
@@ -219,6 +221,14 @@ static uint32_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
   return result;
 }
 
+/// \brief R_MIPS_PC21_S2
+static uint32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
+  A = llvm::SignExtend32<23>(A);
+  // FIXME (simon): Check that S + A has 4-byte alignment
+  int32_t result = S + A - P;
+  return result >> 2;
+}
+
 /// \brief R_MICROMIPS_PC7_S1
 static uint32_t relocPc7(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<8>(A);
@@ -351,6 +361,8 @@ static ErrorOr<uint64_t> calculateRelocation(const Reference &ref,
     return relocGOT(tgtAddr, gpAddr);
   case R_MIPS_GOT_OFST:
     return relocGOTOfst(tgtAddr, ref.addend());
+  case R_MIPS_PC21_S2:
+    return relocPc21(relAddr, tgtAddr, ref.addend());
   case R_MICROMIPS_PC7_S1:
     return relocPc7(relAddr, tgtAddr, ref.addend());
   case R_MICROMIPS_PC10_S1:
