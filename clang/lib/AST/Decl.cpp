@@ -2734,7 +2734,8 @@ bool FunctionDecl::isMSExternInline() const {
   if (!Context.getLangOpts().MSVCCompat && !hasAttr<DLLExportAttr>())
     return false;
 
-  for (const FunctionDecl *FD = this; FD; FD = FD->getPreviousDecl())
+  for (const FunctionDecl *FD = getMostRecentDecl(); FD;
+       FD = FD->getPreviousDecl())
     if (FD->getStorageClass() == SC_Extern)
       return true;
 
