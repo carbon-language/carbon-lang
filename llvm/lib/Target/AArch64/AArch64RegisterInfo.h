@@ -72,7 +72,7 @@ public:
   bool requiresFrameIndexScavenging(const MachineFunction &MF) const override;
 
   bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const override;
-  bool isFrameOffsetLegal(const MachineInstr *MI,
+  bool isFrameOffsetLegal(const MachineInstr *MI, unsigned BaseReg,
                           int64_t Offset) const override;
   void materializeFrameBaseRegister(MachineBasicBlock *MBB, unsigned BaseReg,
                                     int FrameIdx,

@@ -94,7 +94,7 @@ public:
                                     int64_t Offset) const override;
   void resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
                          int64_t Offset) const override;
-  bool isFrameOffsetLegal(const MachineInstr *MI,
+  bool isFrameOffsetLegal(const MachineInstr *MI, unsigned BaseReg,
                           int64_t Offset) const override;
 
   // Debug information queries.

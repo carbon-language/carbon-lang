@@ -799,9 +799,9 @@ public:
     llvm_unreachable("resolveFrameIndex does not exist on this target");
   }
 
-  /// isFrameOffsetLegal - Determine whether a given offset immediate is
-  /// encodable to resolve a frame index.
-  virtual bool isFrameOffsetLegal(const MachineInstr *MI,
+  /// isFrameOffsetLegal - Determine whether a given base register plus offset
+  /// immediate is encodable to resolve a frame index.
+  virtual bool isFrameOffsetLegal(const MachineInstr *MI, unsigned BaseReg,
                                   int64_t Offset) const {
     llvm_unreachable("isFrameOffsetLegal does not exist on this target");
   }

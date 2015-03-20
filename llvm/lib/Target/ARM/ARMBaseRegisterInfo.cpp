@@ -536,9 +536,8 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   // on whether there are any local variables that would trigger it.
   unsigned StackAlign = TFI->getStackAlignment();
   if (TFI->hasFP(MF) && 
-      (MI->getDesc().TSFlags & ARMII::AddrModeMask) != ARMII::AddrModeT1_s &&
       !((MFI->getLocalFrameMaxAlign() > StackAlign) && canRealignStack(MF))) {
-    if (isFrameOffsetLegal(MI, FPOffset))
+    if (isFrameOffsetLegal(MI, getFrameRegister(MF), FPOffset))
       return false;
   }
   // If we can reference via the stack pointer, try that.
@@ -546,7 +545,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   //        to only disallow SP relative references in the live range of
   //        the VLA(s). In practice, it's unclear how much difference that
   //        would make, but it may be worth doing.
-  if (!MFI->hasVarSizedObjects() && isFrameOffsetLegal(MI, Offset))
+  if (!MFI->hasVarSizedObjects() && isFrameOffsetLegal(MI, ARM::SP, Offset))
     return false;
 
   // The offset likely isn't legal, we want to allocate a virtual base register.
@@ -609,7 +608,7 @@ void ARMBaseRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
   (void)Done;
 }
 
-bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
+bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI, unsigned BaseReg,
                                              int64_t Offset) const {
   const MCInstrDesc &Desc = MI->getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
@@ -653,7 +652,7 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
     NumBits = 8;
     break;
   case ARMII::AddrModeT1_s:
-    NumBits = 8;
+    NumBits = (BaseReg == ARM::SP ? 8 : 5);
     Scale = 4;
     isSigned = false;
     break;

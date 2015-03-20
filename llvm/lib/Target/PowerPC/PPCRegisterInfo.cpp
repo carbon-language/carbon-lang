@@ -993,7 +993,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
 
   // The frame pointer will point to the end of the stack, so estimate the
   // offset as the difference between the object offset and the FP location.
-  return !isFrameOffsetLegal(MI, Offset);
+  return !isFrameOffsetLegal(MI, getBaseRegister(MF), Offset);
 }
 
 /// Insert defining instruction(s) for BaseReg to
@@ -1045,6 +1045,7 @@ void PPCRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
 }
 
 bool PPCRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
+                                         unsigned BaseReg,
                                          int64_t Offset) const {
   unsigned FIOperandNum = 0;
   while (!MI->getOperand(FIOperandNum).isFI()) {

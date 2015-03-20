@@ -271,7 +271,7 @@ bool AArch64RegisterInfo::needsFrameBaseReg(MachineInstr *MI,
   // The FP is only available if there is no dynamic realignment. We
   // don't know for sure yet whether we'll need that, so we guess based
   // on whether there are any local variables that would trigger it.
-  if (TFI->hasFP(MF) && isFrameOffsetLegal(MI, FPOffset))
+  if (TFI->hasFP(MF) && isFrameOffsetLegal(MI, AArch64::FP, FPOffset))
     return false;
 
   // If we can reference via the stack pointer or base pointer, try that.
@@ -279,7 +279,7 @@ bool AArch64RegisterInfo::needsFrameBaseReg(MachineInstr *MI,
   //        to only disallow SP relative references in the live range of
   //        the VLA(s). In practice, it's unclear how much difference that
   //        would make, but it may be worth doing.
-  if (isFrameOffsetLegal(MI, Offset))
+  if (isFrameOffsetLegal(MI, AArch64::SP, Offset))
     return false;
 
   // The offset likely isn't legal; we want to allocate a virtual base register.
@@ -287,6 +287,7 @@ bool AArch64RegisterInfo::needsFrameBaseReg(MachineInstr *MI,
 }
 
 bool AArch64RegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
+                                             unsigned BaseReg,
                                              int64_t Offset) const {
   assert(Offset <= INT_MAX && "Offset too big to fit in int.");
   assert(MI && "Unable to get the legal offset for nil instruction.");
