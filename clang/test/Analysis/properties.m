@@ -356,6 +356,9 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 @property (strong) id ownedProp;
 @property (unsafe_unretained) id unownedProp;
 @property (nonatomic, strong) id manualProp;
+@property (readonly) id readonlyProp;
+@property (nonatomic, readwrite/*, assign */) id implicitManualProp; // expected-warning {{'assign' is assumed}} expected-warning {{'assign' not appropriate}}
+@property (nonatomic, readwrite/*, assign */) id implicitSynthProp; // expected-warning {{'assign' is assumed}} expected-warning {{'assign' not appropriate}}
 @property CFTypeRef cfProp;
 @end
 
@@ -366,6 +369,8 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (id)manualProp {
   return _manualProp;
 }
+
+- (void)setImplicitManualProp:(id)newValue {}
 
 - (void)testOverreleaseOwnedIvar {
   [_ownedProp retain];
@@ -385,6 +390,26 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ivarOnly release];
   [_ivarOnly release];
   [_ivarOnly release]; // expected-warning{{used after it is released}}
+}
+
+- (void)testOverreleaseReadonlyIvar {
+  [_readonlyProp retain];
+  [_readonlyProp release];
+  [_readonlyProp release];
+  [_readonlyProp release]; // expected-warning{{used after it is released}}
+}
+
+- (void)testOverreleaseImplicitManualIvar {
+  [_implicitManualProp retain];
+  [_implicitManualProp release];
+  [_implicitManualProp release];
+  [_implicitManualProp release]; // expected-warning{{used after it is released}}
+}
+
+- (void)testOverreleaseImplicitSynthIvar {
+  [_implicitSynthProp retain];
+  [_implicitSynthProp release];
+  [_implicitSynthProp release]; // expected-warning{{not owned at this point by the caller}}
 }
 
 - (void)testOverreleaseCF {
@@ -501,6 +526,48 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   clang_analyzer_eval(owned == fromIvar); // expected-warning{{TRUE}}
 }
 
+- (void)testPropertyAccessThenReleaseReadonly {
+  id prop = [self.readonlyProp retain];
+  [prop release];
+  [_readonlyProp release]; // no-warning
+}
+
+- (void)testPropertyAccessThenReleaseReadonly2 {
+  id fromIvar = _readonlyProp;
+  id prop = [self.readonlyProp retain];
+  [prop release];
+  clang_analyzer_eval(prop == fromIvar); // expected-warning{{TRUE}}
+  [fromIvar release]; // no-warning
+}
+
+- (void)testPropertyAccessThenReleaseImplicitManual {
+  id prop = [self.implicitManualProp retain];
+  [prop release];
+  [_implicitManualProp release]; // no-warning
+}
+
+- (void)testPropertyAccessThenReleaseImplicitManual2 {
+  id fromIvar = _implicitManualProp;
+  id prop = [self.implicitManualProp retain];
+  [prop release];
+  clang_analyzer_eval(prop == fromIvar); // expected-warning{{TRUE}}
+  [fromIvar release]; // no-warning
+}
+
+- (void)testPropertyAccessThenReleaseImplicitSynth {
+  id prop = [self.implicitSynthProp retain];
+  [prop release];
+  [_implicitSynthProp release]; // expected-warning{{not owned}}
+}
+
+- (void)testPropertyAccessThenReleaseImplicitSynth2 {
+  id fromIvar = _implicitSynthProp;
+  id prop = [self.implicitSynthProp retain];
+  [prop release];
+  clang_analyzer_eval(prop == fromIvar); // expected-warning{{TRUE}}
+  [fromIvar release]; // expected-warning{{not owned}}
+}
+
 - (id)getUnownedFromProperty {
   [_ownedProp retain];
   [_ownedProp autorelease];
@@ -539,6 +606,21 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   CFRelease(_cfProp); // FIXME: no-warning{{not owned}}
 }
 
+- (void)testAssignReadonly:(id)newValue {
+  _readonlyProp = newValue;
+  [_readonlyProp release]; // FIXME: no-warning{{not owned}}
+}
+
+- (void)testAssignImplicitManual:(id)newValue {
+  _implicitManualProp = newValue;
+  [_implicitManualProp release]; // FIXME: no-warning{{not owned}}
+}
+
+- (void)testAssignImplicitSynth:(id)newValue {
+  _implicitSynthProp = newValue;
+  [_implicitSynthProp release]; // FIXME: no-warning{{not owned}}
+}
+
 - (void)testAssignOwnedOkay:(id)newValue {
   _ownedProp = [newValue retain];
   [_ownedProp release]; // no-warning
@@ -557,6 +639,21 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (void)testAssignCFOkay:(CFTypeRef)newValue {
   _cfProp = CFRetain(newValue);
   CFRelease(_cfProp); // no-warning
+}
+
+- (void)testAssignReadonlyOkay:(id)newValue {
+  _readonlyProp = [newValue retain];
+  [_readonlyProp release]; // FIXME: no-warning{{not owned}}
+}
+
+- (void)testAssignImplicitManualOkay:(id)newValue {
+  _implicitManualProp = [newValue retain];
+  [_implicitManualProp release]; // FIXME: no-warning{{not owned}}
+}
+
+- (void)testAssignImplicitSynthOkay:(id)newValue {
+  _implicitSynthProp = [newValue retain];
+  [_implicitSynthProp release]; // FIXME: no-warning{{not owned}}
 }
 
 // rdar://problem/19862648

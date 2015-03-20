@@ -2844,6 +2844,40 @@ static const ObjCPropertyDecl *findPropForIvar(const ObjCIvarDecl *Ivar) {
   return nullptr;
 }
 
+namespace {
+  enum Retaining_t {
+    NonRetaining,
+    Retaining
+  };
+}
+
+static Optional<Retaining_t> getRetainSemantics(const ObjCPropertyDecl *Prop) {
+  assert(Prop->getPropertyIvarDecl() &&
+         "should only be used for properties with synthesized implementations");
+
+  if (!Prop->hasWrittenStorageAttribute()) {
+    // Don't assume anything about the retain semantics of readonly properties.
+    if (Prop->isReadOnly())
+      return None;
+
+    // Don't assume anything about readwrite properties with manually-supplied
+    // setters.
+    const ObjCMethodDecl *Setter = Prop->getSetterMethodDecl();
+    bool HasManualSetter = std::any_of(Setter->redecls_begin(),
+                                       Setter->redecls_end(),
+                                       [](const Decl *SetterRedecl) -> bool {
+      return cast<ObjCMethodDecl>(SetterRedecl)->hasBody();
+    });
+    if (HasManualSetter)
+      return None;
+
+    // If the setter /is/ synthesized, we're already relying on the retain
+    // semantics of the property. Continue as normal.
+  }
+
+  return Prop->isRetaining() ? Retaining : NonRetaining;
+}
+
 void RetainCountChecker::checkPostStmt(const ObjCIvarRefExpr *IRE,
                                        CheckerContext &C) const {
   Optional<Loc> IVarLoc = C.getSVal(IRE).getAs<Loc>();
@@ -2884,8 +2918,9 @@ void RetainCountChecker::checkPostStmt(const ObjCIvarRefExpr *IRE,
     // there's no outstanding retain count for the value.
     if (Kind == RetEffect::ObjC)
       if (const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl()))
-        if (!Prop->isRetaining())
-          return;
+        if (auto retainSemantics = getRetainSemantics(Prop))
+          if (retainSemantics.getValue() == NonRetaining)
+            return;
 
     // Note that this value has been loaded from an ivar.
     C.addTransition(setRefBinding(State, Sym, RV->withIvarAccess()));
@@ -2900,17 +2935,22 @@ void RetainCountChecker::checkPostStmt(const ObjCIvarRefExpr *IRE,
     return;
   }
 
-  // Try to find the property associated with this ivar.
-  if (Kind != RetEffect::ObjC) {
-    State = setRefBinding(State, Sym, PlusZero.withIvarAccess());
-  } else {
-    const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl());
-
-    if (Prop && !Prop->isRetaining())
-      State = setRefBinding(State, Sym, PlusZero);
-    else
-      State = setRefBinding(State, Sym, PlusZero.withIvarAccess());
+  bool didUpdateState = false;
+  if (Kind == RetEffect::ObjC) {
+    // Check if the ivar is known to be unretained. If so, we know that
+    // there's no outstanding retain count for the value.
+    if (const ObjCPropertyDecl *Prop = findPropForIvar(IRE->getDecl())) {
+      if (auto retainSemantics = getRetainSemantics(Prop)) {
+        if (retainSemantics.getValue() == NonRetaining) {
+          State = setRefBinding(State, Sym, PlusZero);
+          didUpdateState = true;
+        }
+      }
+    }
   }
+
+  if (!didUpdateState)
+    State = setRefBinding(State, Sym, PlusZero.withIvarAccess());
 
   C.addTransition(State);
 }
