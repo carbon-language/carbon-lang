@@ -8,17 +8,17 @@
 // Also check compatibility with older profiles.
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/c-general.profdata.v1 | FileCheck -check-prefix=PGOUSE %s
 
-// PGOGEN: @[[SLC:__llvm_profile_counters_simple_loops]] = hidden global [4 x i64] zeroinitializer
-// PGOGEN: @[[IFC:__llvm_profile_counters_conditionals]] = hidden global [11 x i64] zeroinitializer
-// PGOGEN: @[[EEC:__llvm_profile_counters_early_exits]] = hidden global [9 x i64] zeroinitializer
-// PGOGEN: @[[JMC:__llvm_profile_counters_jumps]] = hidden global [22 x i64] zeroinitializer
-// PGOGEN: @[[SWC:__llvm_profile_counters_switches]] = hidden global [19 x i64] zeroinitializer
-// PGOGEN: @[[BSC:__llvm_profile_counters_big_switch]] = hidden global [17 x i64] zeroinitializer
-// PGOGEN: @[[BOC:__llvm_profile_counters_boolean_operators]] = hidden global [8 x i64] zeroinitializer
-// PGOGEN: @[[BLC:__llvm_profile_counters_boolop_loops]] = hidden global [9 x i64] zeroinitializer
-// PGOGEN: @[[COC:__llvm_profile_counters_conditional_operator]] = hidden global [3 x i64] zeroinitializer
-// PGOGEN: @[[MAC:__llvm_profile_counters_main]] = hidden global [1 x i64] zeroinitializer
-// PGOGEN: @[[STC:"__llvm_profile_counters_c-general.c:static_func"]] = internal global [2 x i64] zeroinitializer
+// PGOGEN: @[[SLC:__llvm_profile_counters_simple_loops]] = private global [4 x i64] zeroinitializer
+// PGOGEN: @[[IFC:__llvm_profile_counters_conditionals]] = private global [11 x i64] zeroinitializer
+// PGOGEN: @[[EEC:__llvm_profile_counters_early_exits]] = private global [9 x i64] zeroinitializer
+// PGOGEN: @[[JMC:__llvm_profile_counters_jumps]] = private global [22 x i64] zeroinitializer
+// PGOGEN: @[[SWC:__llvm_profile_counters_switches]] = private global [19 x i64] zeroinitializer
+// PGOGEN: @[[BSC:__llvm_profile_counters_big_switch]] = private global [17 x i64] zeroinitializer
+// PGOGEN: @[[BOC:__llvm_profile_counters_boolean_operators]] = private global [8 x i64] zeroinitializer
+// PGOGEN: @[[BLC:__llvm_profile_counters_boolop_loops]] = private global [9 x i64] zeroinitializer
+// PGOGEN: @[[COC:__llvm_profile_counters_conditional_operator]] = private global [3 x i64] zeroinitializer
+// PGOGEN: @[[MAC:__llvm_profile_counters_main]] = private global [1 x i64] zeroinitializer
+// PGOGEN: @[[STC:"__llvm_profile_counters_c-general.c:static_func"]] = private global [2 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @simple_loops()
 // PGOUSE-LABEL: @simple_loops()

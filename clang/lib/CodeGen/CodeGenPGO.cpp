@@ -58,12 +58,16 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
 }
 
 void CodeGenPGO::createFuncNameVar(llvm::GlobalValue::LinkageTypes Linkage) {
-  // Usually, we want to match the function's linkage, but
-  // available_externally and extern_weak both have the wrong semantics.
+  // We generally want to match the function's linkage, but available_externally
+  // and extern_weak both have the wrong semantics, and anything that doesn't
+  // need to link across compilation units doesn't need to be visible at all.
   if (Linkage == llvm::GlobalValue::ExternalWeakLinkage)
     Linkage = llvm::GlobalValue::LinkOnceAnyLinkage;
   else if (Linkage == llvm::GlobalValue::AvailableExternallyLinkage)
     Linkage = llvm::GlobalValue::LinkOnceODRLinkage;
+  else if (Linkage == llvm::GlobalValue::InternalLinkage ||
+           Linkage == llvm::GlobalValue::ExternalLinkage)
+    Linkage = llvm::GlobalValue::PrivateLinkage;
 
   auto *Value =
       llvm::ConstantDataArray::getString(CGM.getLLVMContext(), FuncName, false);
