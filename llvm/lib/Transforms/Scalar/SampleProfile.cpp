@@ -217,6 +217,9 @@ void SampleProfileLoader::printBlockWeight(raw_ostream &OS, BasicBlock *BB) {
 /// \returns The profiled weight of I.
 unsigned SampleProfileLoader::getInstWeight(Instruction &Inst) {
   DebugLoc DLoc = Inst.getDebugLoc();
+  if (DLoc.isUnknown())
+    return 0;
+
   unsigned Lineno = DLoc.getLine();
   if (Lineno < HeaderLineno)
     return 0;
