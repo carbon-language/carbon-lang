@@ -54,6 +54,13 @@ StreamFile::StreamFile (const char *path) :
 {
 }
 
+StreamFile::StreamFile (const char *path,
+                        uint32_t options,
+                        uint32_t permissions) :
+    Stream(),
+    m_file(path, options, permissions)
+{
+}
 
 StreamFile::~StreamFile()
 {

@@ -1331,7 +1331,12 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
             log_stream_sp = pos->second.lock();
         if (!log_stream_sp)
         {
-            log_stream_sp.reset (new StreamFile (log_file));
+            uint32_t options = File::eOpenOptionWrite | File::eOpenOptionCanCreate
+                                | File::eOpenOptionCloseOnExec | File::eOpenOptionAppend;
+            if (! (log_options & LLDB_LOG_OPTION_APPEND))
+                options |= File::eOpenOptionTruncate;
+
+            log_stream_sp.reset (new StreamFile (log_file, options));
             m_log_streams[log_file] = log_stream_sp;
         }
     }
