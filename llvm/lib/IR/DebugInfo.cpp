@@ -674,6 +674,8 @@ void DebugInfoFinder::processModule(const Module &M) {
       DIArray Imports = CU.getImportedEntities();
       for (unsigned i = 0, e = Imports.getNumElements(); i != e; ++i) {
         DIImportedEntity Import = DIImportedEntity(Imports.getElement(i));
+        if (!Import)
+          continue;
         DIDescriptor Entity = Import.getEntity().resolve(TypeIdentifierMap);
         if (Entity.isType())
           processType(DIType(Entity));
