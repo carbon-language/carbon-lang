@@ -10550,16 +10550,29 @@ SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
     }
 
     if (EltVT == MVT::f32) {
-      // Bits [7:6] of the constant are the source select.  This will always be
-      //  zero here.  The DAG Combiner may combine an extract_elt index into
-      //  these
-      //  bits.  For example (insert (extract, 3), 2) could be matched by
-      //  putting
-      //  the '3' into bits [7:6] of X86ISD::INSERTPS.
-      // Bits [5:4] of the constant are the destination select.  This is the
-      //  value of the incoming immediate.
-      // Bits [3:0] of the constant are the zero mask.  The DAG Combiner may
+      // Bits [7:6] of the constant are the source select. This will always be
+      //   zero here. The DAG Combiner may combine an extract_elt index into
+      //   these bits. For example (insert (extract, 3), 2) could be matched by
+      //   putting the '3' into bits [7:6] of X86ISD::INSERTPS.
+      // Bits [5:4] of the constant are the destination select. This is the
+      //   value of the incoming immediate.
+      // Bits [3:0] of the constant are the zero mask. The DAG Combiner may
       //   combine either bitwise AND or insert of float 0.0 to set these bits.
+
+      const Function *F = DAG.getMachineFunction().getFunction();
+      bool MinSize = F->hasFnAttribute(Attribute::MinSize);
+      if (IdxVal == 0 && (!MinSize || !MayFoldLoad(N1))) {
+        // If this is an insertion of 32-bits into the low 32-bits of
+        // a vector, we prefer to generate a blend with immediate rather
+        // than an insertps. Blends are simpler operations in hardware and so
+        // will always have equal or better performance than insertps.
+        // But if optimizing for size and there's a load folding opportunity,
+        // generate insertps because blendps does not have a 32-bit memory
+        // operand form.
+        N2 = DAG.getIntPtrConstant(1);
+        N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4f32, N1);
+        return DAG.getNode(X86ISD::BLENDI, dl, VT, N0, N1, N2);
+      }
       N2 = DAG.getIntPtrConstant(IdxVal << 4);
       // Create this as a scalar to vector..
       N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4f32, N1);

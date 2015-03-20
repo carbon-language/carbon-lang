@@ -199,28 +199,51 @@ define <4 x float> @insertps_1(<4 x float> %t1, <4 x float> %t2) nounwind {
 
 declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i32) nounwind readnone
 
-define <4 x float> @insertps_2(<4 x float> %t1, float %t2) nounwind {
-; X32-LABEL: insertps_2:
+; When optimizing for speed, prefer blendps over insertps even if it means we have to
+; generate a separate movss to load the scalar operand.
+define <4 x float> @blendps_not_insertps_1(<4 x float> %t1, float %t2) nounwind {
+; X32-LABEL: blendps_not_insertps_1:
 ; X32:       ## BB#0:
-; X32-NEXT:    insertps {{.*#+}} xmm0 = mem[0],xmm0[1,2,3]
+; X32-NEXT:    movss   {{.*#+}} xmm1
+; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: insertps_2:
+; X64-LABEL: blendps_not_insertps_1:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; X64-NEXT:    retq
   %tmp1 = insertelement <4 x float> %t1, float %t2, i32 0
   ret <4 x float> %tmp1
 }
-define <4 x float> @insertps_3(<4 x float> %t1, <4 x float> %t2) nounwind {
-; X32-LABEL: insertps_3:
+
+; When optimizing for size, generate an insertps if there's a load fold opportunity.
+; The difference between i386 and x86-64 ABIs for the float operand means we should
+; generate an insertps for X32 but not for X64!
+define <4 x float> @insertps_or_blendps(<4 x float> %t1, float %t2) minsize nounwind {
+; X32-LABEL: insertps_or_blendps:
 ; X32:       ## BB#0:
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X32-NEXT:    insertps {{.*#+}} xmm0 = mem[0],xmm0[1,2,3]
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: insertps_3:
+; X64-LABEL: insertps_or_blendps:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X64-NEXT:    retq
+  %tmp1 = insertelement <4 x float> %t1, float %t2, i32 0
+  ret <4 x float> %tmp1
+}
+
+; An insert into the low 32-bits of a vector from the low 32-bits of another vector
+; is always just a blendps because blendps is never more expensive than insertps.
+define <4 x float> @blendps_not_insertps_2(<4 x float> %t1, <4 x float> %t2) nounwind {
+; X32-LABEL: blendps_not_insertps_2:
+; X32:       ## BB#0:
+; X32-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X32-NEXT:    retl
+;
+; X64-LABEL: blendps_not_insertps_2:
+; X64:       ## BB#0:
+; X64-NEXT:    blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
 ; X64-NEXT:    retq
   %tmp2 = extractelement <4 x float> %t2, i32 0
   %tmp1 = insertelement <4 x float> %t1, float %tmp2, i32 0
