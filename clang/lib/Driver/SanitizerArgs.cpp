@@ -44,7 +44,7 @@ enum SanitizeKind : uint64_t {
   NotAllowedWithTrap = Vptr,
   RequiresPIE = Memory | DataFlow,
   NeedsUnwindTables = Address | Thread | Memory | DataFlow,
-  SupportsCoverage = Address | Memory | Leak | Undefined | Integer,
+  SupportsCoverage = Address | Memory | Leak | Undefined | Integer | DataFlow,
   RecoverableByDefault = Undefined | Integer,
   Unrecoverable = Address | Unreachable | Return,
   LegacyFsanitizeRecoverMask = Undefined | Integer,
