@@ -197,6 +197,57 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   return nullptr;
 }
 
+/// The shuffle mask for a perm2*128 selects any two halves of two 256-bit
+/// source vectors, unless a zero bit is set. If a zero bit is set,
+/// then ignore that half of the mask and clear that half of the vector.
+static Value *SimplifyX86vperm2(const IntrinsicInst &II,
+                                InstCombiner::BuilderTy &Builder) {
+  if (auto CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
+    VectorType *VecTy = cast<VectorType>(II.getType());
+    uint8_t Imm = CInt->getZExtValue();
+
+    // The immediate permute control byte looks like this:
+    //    [1:0] - select 128 bits from sources for low half of destination
+    //    [2]   - ignore
+    //    [3]   - zero low half of destination
+    //    [5:4] - select 128 bits from sources for high half of destination
+    //    [6]   - ignore
+    //    [7]   - zero high half of destination
+    
+    if ((Imm & 0x88) == 0x88) {
+      // If both zero mask bits are set, this was just a weird way to
+      // generate a zero vector.
+      return ConstantAggregateZero::get(VecTy);
+    }
+
+    // TODO: If a single zero bit is set, replace one of the source operands
+    // with a zero vector and use the same mask generation logic as below.
+
+    if ((Imm & 0x88) == 0x00) {
+      // If neither zero mask bit is set, this is a simple shuffle.
+      unsigned NumElts = VecTy->getNumElements();
+      unsigned HalfSize = NumElts / 2;
+      unsigned HalfBegin;
+      SmallVector<int, 8> ShuffleMask(NumElts);
+
+      // Permute low half of result.
+      HalfBegin = (Imm & 0x3) * HalfSize;
+      for (unsigned i = 0; i != HalfSize; ++i)
+        ShuffleMask[i] = HalfBegin + i;
+    
+      // Permute high half of result.
+      HalfBegin = ((Imm >> 4) & 0x3) * HalfSize;
+      for (unsigned i = HalfSize; i != NumElts; ++i)
+        ShuffleMask[i] = HalfBegin + i - HalfSize;
+
+      Value *Op0 = II.getArgOperand(0);
+      Value *Op1 = II.getArgOperand(1);
+      return Builder.CreateShuffleVector(Op0, Op1, ShuffleMask);
+    }
+  }
+  return nullptr;
+}
+
 /// visitCallInst - CallInst simplification.  This mostly only handles folding
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
 /// the heavy lifting.
@@ -903,6 +954,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     auto Shuffle = Builder->CreateShuffleVector(V1, V2, NewC);
     return ReplaceInstUsesWith(CI, Shuffle);
   }
+
+  case Intrinsic::x86_avx_vperm2f128_pd_256:
+  case Intrinsic::x86_avx_vperm2f128_ps_256:
+  case Intrinsic::x86_avx_vperm2f128_si_256:
+    // TODO: Add the AVX2 version of this instruction.
+    if (Value *V = SimplifyX86vperm2(*II, *Builder))
+      return ReplaceInstUsesWith(*II, V);
+    break;
 
   case Intrinsic::ppc_altivec_vperm:
     // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
