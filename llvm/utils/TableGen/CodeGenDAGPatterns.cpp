@@ -1196,8 +1196,16 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
   if (Operator->isSubClassOf("Instruction")) {
     CodeGenInstruction &InstInfo = CDP.getTargetInfo().getInstruction(Operator);
 
-    // FIXME: Should allow access to all the results here.
-    unsigned NumDefsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
+    unsigned NumDefsToAdd = InstInfo.Operands.NumDefs;
+
+    // Subtract any defaulted outputs.
+    for (unsigned i = 0; i != InstInfo.Operands.NumDefs; ++i) {
+      Record *OperandNode = InstInfo.Operands[i].Rec;
+
+      if (OperandNode->isSubClassOf("OperandWithDefaultOps") &&
+          !CDP.getDefaultOperand(OperandNode).DefaultOps.empty())
+        --NumDefsToAdd;
+    }
 
     // Add on one implicit def if it has a resolvable type.
     if (InstInfo.HasOneImplicitDefWithKnownVT(CDP.getTargetInfo()) !=MVT::Other)
@@ -1774,8 +1782,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
     // Apply the result types to the node, these come from the things in the
     // (outs) list of the instruction.
-    // FIXME: Cap at one result so far.
-    unsigned NumResultsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
+    unsigned NumResultsToAdd = std::min(InstInfo.Operands.NumDefs,
+                                        Inst.getNumResults());
     for (unsigned ResNo = 0; ResNo != NumResultsToAdd; ++ResNo)
       MadeChange |= UpdateNodeTypeFromInst(ResNo, Inst.getResult(ResNo), TP);
 
@@ -2941,7 +2949,7 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
 
   // Check that all of the results occur first in the list.
   std::vector<Record*> Results;
-  TreePatternNode *Res0Node = nullptr;
+  SmallVector<TreePatternNode *, 2> ResNodes;
   for (unsigned i = 0; i != NumResults; ++i) {
     if (i == CGI.Operands.size())
       I->error("'" + InstResults.begin()->first +
@@ -2953,8 +2961,8 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
     if (!RNode)
       I->error("Operand $" + OpName + " does not exist in operand list!");
 
-    if (i == 0)
-      Res0Node = RNode;
+    ResNodes.push_back(RNode);
+
     Record *R = cast<DefInit>(RNode->getLeafValue())->getDef();
     if (!R)
       I->error("Operand $" + OpName + " should be a set destination: all "
@@ -3029,9 +3037,11 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
   TreePatternNode *ResultPattern =
     new TreePatternNode(I->getRecord(), ResultNodeOperands,
                         GetNumNodeResults(I->getRecord(), *this));
-  // Copy fully inferred output node type to instruction result pattern.
-  for (unsigned i = 0; i != NumResults; ++i)
-    ResultPattern->setType(i, Res0Node->getExtType(i));
+  // Copy fully inferred output node types to instruction result pattern.
+  for (unsigned i = 0; i != NumResults; ++i) {
+    assert(ResNodes[i]->getNumTypes() == 1 && "FIXME: Unhandled");
+    ResultPattern->setType(i, ResNodes[i]->getExtType(0));
+  }
 
   // Create and insert the instruction.
   // FIXME: InstImpResults should not be part of DAGInstruction.
@@ -3075,18 +3085,13 @@ void CodeGenDAGPatterns::ParseInstructions() {
       CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
 
       if (InstInfo.Operands.size() != 0) {
-        if (InstInfo.Operands.NumDefs == 0) {
-          // These produce no results
-          for (unsigned j = 0, e = InstInfo.Operands.size(); j < e; ++j)
-            Operands.push_back(InstInfo.Operands[j].Rec);
-        } else {
-          // Assume the first operand is the result.
-          Results.push_back(InstInfo.Operands[0].Rec);
+        for (unsigned j = 0, e = InstInfo.Operands.NumDefs; j < e; ++j)
+          Results.push_back(InstInfo.Operands[j].Rec);
 
-          // The rest are inputs.
-          for (unsigned j = 1, e = InstInfo.Operands.size(); j < e; ++j)
-            Operands.push_back(InstInfo.Operands[j].Rec);
-        }
+        // The rest are inputs.
+        for (unsigned j = InstInfo.Operands.NumDefs,
+               e = InstInfo.Operands.size(); j < e; ++j)
+          Operands.push_back(InstInfo.Operands[j].Rec);
       }
 
       // Create and insert the instruction.

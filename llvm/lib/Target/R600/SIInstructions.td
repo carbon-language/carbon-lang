@@ -3179,26 +3179,26 @@ multiclass SI_INDIRECT_Pattern <ValueType vt, ValueType eltvt, SI_INDIRECT_DST I
 
   // 1. Extract with offset
   def : Pat<
-    (vector_extract vt:$vec, (add i32:$idx, imm:$off)),
-    (eltvt (SI_INDIRECT_SRC (IMPLICIT_DEF), $vec, $idx, imm:$off))
+    (eltvt (vector_extract vt:$vec, (add i32:$idx, imm:$off))),
+    (SI_INDIRECT_SRC $vec, $idx, imm:$off)
   >;
 
   // 2. Extract without offset
   def : Pat<
-    (vector_extract vt:$vec, i32:$idx),
-    (eltvt (SI_INDIRECT_SRC (IMPLICIT_DEF), $vec, $idx, 0))
+    (eltvt (vector_extract vt:$vec, i32:$idx)),
+    (SI_INDIRECT_SRC $vec, $idx, 0)
   >;
 
   // 3. Insert with offset
   def : Pat<
     (vector_insert vt:$vec, eltvt:$val, (add i32:$idx, imm:$off)),
-    (IndDst (IMPLICIT_DEF), $vec, $idx, imm:$off, $val)
+    (IndDst $vec, $idx, imm:$off, $val)
   >;
 
   // 4. Insert without offset
   def : Pat<
     (vector_insert vt:$vec, eltvt:$val, i32:$idx),
-    (IndDst (IMPLICIT_DEF), $vec, $idx, 0, $val)
+    (IndDst $vec, $idx, 0, $val)
   >;
 }
 
