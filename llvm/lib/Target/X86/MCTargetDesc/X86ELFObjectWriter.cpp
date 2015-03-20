@@ -73,8 +73,8 @@ static X86_64RelType getType64(unsigned Kind,
   }
 }
 
-unsigned getRelocType64(MCSymbolRefExpr::VariantKind Modifier,
-                        X86_64RelType Type, bool IsPCRel) {
+static unsigned getRelocType64(MCSymbolRefExpr::VariantKind Modifier,
+                               X86_64RelType Type, bool IsPCRel) {
   switch (Modifier) {
   default:
     llvm_unreachable("Unimplemented");
@@ -176,8 +176,8 @@ static X86_32RelType getType32(X86_64RelType T) {
   }
 }
 
-unsigned getRelocType32(MCSymbolRefExpr::VariantKind Modifier,
-                        X86_32RelType Type, bool IsPCRel) {
+static unsigned getRelocType32(MCSymbolRefExpr::VariantKind Modifier,
+                               X86_32RelType Type, bool IsPCRel) {
   switch (Modifier) {
   default:
     llvm_unreachable("Unimplemented");
