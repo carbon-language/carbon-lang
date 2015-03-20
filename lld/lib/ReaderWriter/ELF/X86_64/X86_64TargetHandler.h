@@ -24,6 +24,11 @@ class X86_64TargetLayout : public TargetLayout<X86_64ELFType> {
 public:
   X86_64TargetLayout(X86_64LinkingContext &context)
       : TargetLayout(context) {}
+
+  void finalizeOutputSectionLayout() override {
+    sortOutputSectionByPriority(".init_array", ".init_array");
+    sortOutputSectionByPriority(".fini_array", ".fini_array");
+  }
 };
 
 class X86_64TargetHandler

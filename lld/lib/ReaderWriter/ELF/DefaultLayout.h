@@ -316,12 +316,24 @@ public:
     return _copiedDynSymNames.count(sla->name());
   }
 
+  /// \brief Handle SORT_BY_PRIORITY.
+  void sortOutputSectionByPriority(StringRef outputSectionName,
+                                   StringRef prefix);
+
 protected:
+  /// \brief TargetLayouts may use these functions to reorder the input sections
+  /// in a order defined by their ABI.
+  virtual void finalizeOutputSectionLayout() {}
+
   /// \brief Allocate a new section.
   virtual AtomSection<ELFT> *createSection(
       StringRef name, int32_t contentType,
       DefinedAtom::ContentPermissions contentPermissions,
       SectionOrder sectionOrder);
+
+private:
+  /// Helper function that returns the priority value from an input section.
+  uint32_t getPriorityFromSectionName(StringRef sectionName) const;
 
 protected:
   llvm::BumpPtrAllocator _allocator;
@@ -657,13 +669,56 @@ template <class ELFT> void DefaultLayout<ELFT>::createOutputSections() {
   }
 }
 
+template <class ELFT>
+uint32_t
+DefaultLayout<ELFT>::getPriorityFromSectionName(StringRef sectionName) const {
+  StringRef priority = sectionName.drop_front().rsplit('.').second;
+  uint32_t prio;
+  if (priority.getAsInteger(10, prio))
+    return std::numeric_limits<uint32_t>::max();
+  return prio;
+}
+
+template <class ELFT>
+void DefaultLayout<ELFT>::sortOutputSectionByPriority(
+    StringRef outputSectionName, StringRef prefix) {
+  OutputSection<ELFT> *outputSection = findOutputSection(outputSectionName);
+  if (!outputSection)
+    return;
+
+  auto sections = outputSection->sections();
+
+  std::sort(sections.begin(), sections.end(),
+            [&](Chunk<ELFT> *lhs, Chunk<ELFT> *rhs) {
+              Section<ELFT> *lhsSection = dyn_cast<Section<ELFT>>(lhs);
+              Section<ELFT> *rhsSection = dyn_cast<Section<ELFT>>(rhs);
+              if (!lhsSection || !rhsSection)
+                return false;
+              StringRef lhsSectionName = lhsSection->inputSectionName();
+              StringRef rhsSectionName = rhsSection->inputSectionName();
+
+              if (!prefix.empty()) {
+                if (!lhsSectionName.startswith(prefix) ||
+                    !rhsSectionName.startswith(prefix))
+                  return false;
+              }
+              return getPriorityFromSectionName(lhsSectionName) <
+                     getPriorityFromSectionName(rhsSectionName);
+            });
+};
+
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
   ELFLinkingContext::OutputMagic outputMagic = _context.getOutputMagic();
   // sort the sections by their order as defined by the layout
   sortInputSections();
+
   // Create output sections.
   createOutputSections();
+
+  // Finalize output section layout.
+  finalizeOutputSectionLayout();
+
   // Set the ordinal after sorting the sections
   int ordinal = 1;
   for (auto osi : _outputSections) {

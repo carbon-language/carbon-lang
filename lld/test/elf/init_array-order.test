@@ -1,6 +1,7 @@
 #RUN: yaml2obj -format=elf %s > %t
 #RUN: lld -flavor gnu -target x86_64-linux %t --noinhibit-exec \
-#RUN:   --output-filetype=yaml | FileCheck %s
+#RUN:   -o %t1.out
+#RUN: llvm-objdump -s %t1.out | FileCheck %s
 
 !ELF
 FileHeader:
@@ -62,12 +63,5 @@ Symbols:
     Type: STT_SECTION
     Section: .init_array
 
-#CHECK: defined-atoms:
-#CHECK:   content: [ 01,
-#CHECK:   section-name: .init_array.1
-#CHECK:   content: [ 02,
-#CHECK:   section-name: .init_array.2
-#CHECK:   content: [ 03,
-#CHECK:   section-name: .init_array.3
-#CHECK:   content: [ 99,
-#CHECK:   section-name: .init_array
+#CHECK:  {{[0xa-f0-9]+}} 01000000 00000000 02000000 00000000
+#CHECK:  {{[0xa-f0-9]+}} 03000000 00000000 99000000 00000000
