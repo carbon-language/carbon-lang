@@ -5,7 +5,7 @@
 ; Bugpoint should keep the call's metadata attached to the call.
 
 ; CHECK: call void @foo(), !dbg ![[LOC:[0-9]+]], !attach ![[CALL:[0-9]+]]
-; CHECK: ![[LOC]] = !MDLocation(line: 104, column: 105, scope: ![[SCOPE:[0-9]+]], inlinedAt: ![[SCOPE]])
+; CHECK: ![[LOC]] = !MDLocation(line: 104, column: 105, scope: ![[SCOPE:[0-9]+]])
 ; CHECK: ![[SCOPE]] = !MDCompileUnit(language: 0, file: ![[FILE:[0-9]+]], producer: "me", isOptimized: true, runtimeVersion: 0, emissionKind: 0, enums: ![[LIST:[0-9]+]], retainedTypes: ![[LIST]])
 ; CHECK: ![[FILE]] = !MDFile(filename: "source.c", directory: "/dir")
 ; CHECK: ![[LIST]] = !{i32 0}
@@ -32,11 +32,11 @@ declare void @foo()
 !4 = !{!"filler"}
 
 !9 = !MDCompileUnit(language: 0, producer: "me", isOptimized: true, emissionKind: 0, file: !15, enums: !16, retainedTypes: !16)
-!10 = !MDLocation(line: 100, column: 101, scope: !9, inlinedAt: !9)
-!11 = !MDLocation(line: 102, column: 103, scope: !9, inlinedAt: !9)
-!12 = !MDLocation(line: 104, column: 105, scope: !9, inlinedAt: !9)
-!13 = !MDLocation(line: 106, column: 107, scope: !9, inlinedAt: !9)
-!14 = !MDLocation(line: 108, column: 109, scope: !9, inlinedAt: !9)
+!10 = !MDLocation(line: 100, column: 101, scope: !9)
+!11 = !MDLocation(line: 102, column: 103, scope: !9)
+!12 = !MDLocation(line: 104, column: 105, scope: !9)
+!13 = !MDLocation(line: 106, column: 107, scope: !9)
+!14 = !MDLocation(line: 108, column: 109, scope: !9)
 !15 = !MDFile(filename: "source.c", directory: "/dir")
 !16 = !{i32 0}
 !17 = !{i32 1, !"Debug Info Version", i32 3}
