@@ -381,7 +381,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
                                                       Opts.CPU);
     Triple T(Opts.Triple);
     Str.reset(TheTarget->createMCObjectStreamer(T, Ctx, *MAB, *Out, CE, *STI,
-                                                Opts.RelaxAll));
+                                                Opts.RelaxAll,
+                                                /*DWARFMustBeAtTheEnd*/ true));
     Str.get()->InitSections(Opts.NoExecStack);
   }
 
