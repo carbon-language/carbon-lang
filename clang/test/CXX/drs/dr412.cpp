@@ -15,7 +15,7 @@ inline void* operator new(size_t) BAD_ALLOC; // expected-error {{cannot be decla
 inline void* operator new[](size_t) BAD_ALLOC; // expected-error {{cannot be declared 'inline'}}
 inline void operator delete(void*) NOEXCEPT; // expected-error {{cannot be declared 'inline'}}
 inline void operator delete[](void*) NOEXCEPT; // expected-error {{cannot be declared 'inline'}}
-#if __cplusplus >= 201402L
+#ifdef __cpp_sized_deallocation
 inline void operator delete(void*, size_t) NOEXCEPT; // expected-error {{cannot be declared 'inline'}}
 inline void operator delete[](void*, size_t) NOEXCEPT; // expected-error {{cannot be declared 'inline'}}
 #endif

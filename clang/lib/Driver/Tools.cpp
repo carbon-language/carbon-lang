@@ -4250,6 +4250,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_assume_sane_operator_new))
     CmdArgs.push_back("-fno-assume-sane-operator-new");
 
+  // -fsized-deallocation is off by default, as it is an ABI-breaking change for
+  // most platforms.
+  if (Args.hasFlag(options::OPT_fsized_deallocation,
+                   options::OPT_fno_sized_deallocation, false))
+    CmdArgs.push_back("-fsized-deallocation");
+
   // -fconstant-cfstrings is default, and may be subject to argument translation
   // on Darwin.
   if (!Args.hasFlag(options::OPT_fconstant_cfstrings,

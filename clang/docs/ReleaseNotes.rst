@@ -62,6 +62,11 @@ about them. The improvements since the 3.5 release include:
 New Compiler Flags
 ------------------
 
+The sized deallocation feature of C++14 is now controlled by the
+``-fsized-deallocation`` flag. This feature relies on library support that
+isn't yet widely deployed, so the user must supply an extra flag to get the
+extra functionality.
+
 The option ....
 
 

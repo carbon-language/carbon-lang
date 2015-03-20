@@ -830,6 +830,9 @@ def fapplication_extension : Flag<["-"], "fapplication-extension">,
   HelpText<"Restrict code to those available for App Extensions">;
 def fno_application_extension : Flag<["-"], "fno-application-extension">,
   Group<f_Group>;
+def fsized_deallocation : Flag<["-"], "fsized-deallocation">, Flags<[CC1Option]>,
+  HelpText<"Enable C++14 sized global deallocation functions">, Group<f_Group>;
+def fno_sized_deallocation: Flag<["-"], "fno-sized-deallocation">, Group<f_Group>;
 
 def fobjc_gc_only : Flag<["-"], "fobjc-gc-only">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Use GC exclusively for Objective-C related memory management">;
