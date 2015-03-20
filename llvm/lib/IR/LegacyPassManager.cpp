@@ -652,7 +652,7 @@ void PMTopLevelManager::schedulePass(Pass *P) {
           // are already checked are still available.
           checkAnalysis = true;
         } else
-          // Do not schedule this analysis. Lower level analsyis
+          // Do not schedule this analysis. Lower level analysis
           // passes are run on the fly.
           delete AnalysisPass;
       }
