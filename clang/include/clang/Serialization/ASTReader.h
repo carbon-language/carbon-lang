@@ -948,6 +948,11 @@ private:
   llvm::MapVector<IdentifierInfo *, SmallVector<uint32_t, 4> >
     PendingIdentifierInfos;
 
+  /// \brief The set of lookup results that we have faked in order to support
+  /// merging of partially deserialized decls but that we have not yet removed.
+  llvm::MapVector<IdentifierInfo *, SmallVector<NamedDecl*, 2> >
+    PendingFakeLookupResults;
+
   /// \brief The generation number of each identifier, which keeps track of
   /// the last time we loaded information about this identifier.
   llvm::DenseMap<IdentifierInfo *, unsigned> IdentifierGeneration;

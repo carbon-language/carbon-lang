@@ -8627,7 +8627,15 @@ void ASTReader::FinishedDeserializing() {
 }
 
 void ASTReader::pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name) {
-  D = D->getMostRecentDecl();
+  if (IdentifierInfo *II = Name.getAsIdentifierInfo()) {
+    // Remove any fake results before adding any real ones.
+    auto It = PendingFakeLookupResults.find(II);
+    if (It != PendingFakeLookupResults.end()) {
+      for (auto *ND : PendingFakeLookupResults[II])
+        SemaObj->IdResolver.RemoveDecl(ND);
+      PendingFakeLookupResults.erase(It);
+    }
+  }
 
   if (SemaObj->IdResolver.tryAddTopLevelDecl(D, Name) && SemaObj->TUScope) {
     SemaObj->TUScope->AddDecl(D);
