@@ -2344,14 +2344,12 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
 
   // Update successor info. Add one edge to each unique successor.
   BitVector SuccsHandled(CR.CaseBB->getParent()->getNumBlockIDs());
-  for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(),
-         E = DestBBs.end(); I != E; ++I) {
-    if (!SuccsHandled[(*I)->getNumber()]) {
-      SuccsHandled[(*I)->getNumber()] = true;
-      DenseMap<MachineBasicBlock*, uint32_t>::iterator Itr =
-          DestWeights.find(*I);
-      addSuccessorWithWeight(JumpTableBB, *I,
-                             Itr != DestWeights.end() ? Itr->second : 0);
+  for (MachineBasicBlock *DestBB : DestBBs) {
+    if (!SuccsHandled[DestBB->getNumber()]) {
+      SuccsHandled[DestBB->getNumber()] = true;
+      auto I = DestWeights.find(DestBB);
+      addSuccessorWithWeight(JumpTableBB, DestBB,
+                             I != DestWeights.end() ? I->second : 0);
     }
   }
 
