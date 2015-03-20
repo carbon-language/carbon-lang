@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_FILE_H
 
 #include "Atoms.h"
+#include <llvm/ADT/MapVector.h>
 #include <map>
 #include <unordered_map>
 
@@ -408,7 +409,7 @@ protected:
 
   /// \brief the section and the symbols that are contained within it to create
   /// used to create atoms
-  std::map<const Elf_Shdr *, std::vector<Elf_Sym_Iter>> _sectionSymbols;
+  llvm::MapVector<const Elf_Shdr *, std::vector<Elf_Sym_Iter>> _sectionSymbols;
 
   /// \brief Sections that have merge string property
   std::vector<const Elf_Shdr *> _mergeStringSections;
