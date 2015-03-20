@@ -1,10 +1,13 @@
+// RUN: %clang_cc1 -fms-extensions -DDECLARE_SETJMP -triple i686-windows-msvc   -emit-llvm %s -o - | FileCheck --check-prefix=I386 %s
+// RUN: %clang_cc1 -fms-extensions -DDECLARE_SETJMP -triple x86_64-windows-msvc -emit-llvm %s -o - | FileCheck --check-prefix=X64 %s
 // RUN: %clang_cc1 -fms-extensions -triple i686-windows-msvc   -emit-llvm %s -o - | FileCheck --check-prefix=I386 %s
 // RUN: %clang_cc1 -fms-extensions -triple x86_64-windows-msvc -emit-llvm %s -o - | FileCheck --check-prefix=X64 %s
-
 typedef char jmp_buf[1];
 
+#ifdef DECLARE_SETJMP
 int _setjmp(jmp_buf env);
 int _setjmpex(jmp_buf env);
+#endif
 
 jmp_buf jb;
 
