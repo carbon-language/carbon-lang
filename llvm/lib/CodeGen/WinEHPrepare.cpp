@@ -691,8 +691,26 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   SmallVector<ReturnInst *, 8> Returns;
   ClonedCodeInfo OutlinedFunctionInfo;
 
+  // If the start block contains PHI nodes, we need to map them.
+  BasicBlock::iterator II = StartBB->begin();
+  while (auto *PN = dyn_cast<PHINode>(II)) {
+    bool Mapped = false;
+    // Look for PHI values that we have already mapped (such as the selector).
+    for (Value *Val : PN->incoming_values()) {
+      if (VMap.count(Val)) {
+        VMap[PN] = VMap[Val];
+        Mapped = true;
+      }
+    }
+    // If we didn't find a match for this value, map it as an undef.
+    if (!Mapped) {
+      VMap[PN] = UndefValue::get(PN->getType());
+    }
+    ++II;
+  }
+
   // Skip over PHIs and, if applicable, landingpad instructions.
-  BasicBlock::iterator II = StartBB->getFirstInsertionPt();
+  II = StartBB->getFirstInsertionPt();
 
   CloneAndPruneIntoFromInst(Handler, SrcFn, II, VMap,
                             /*ModuleLevelChanges=*/false, Returns, "",
