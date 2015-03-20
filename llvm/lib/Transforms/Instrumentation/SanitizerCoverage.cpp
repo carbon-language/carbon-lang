@@ -329,8 +329,9 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   }
 
   bool IsEntryBB = &BB == &F.getEntryBlock();
-  DebugLoc EntryLoc =
-      IsEntryBB ? IP->getDebugLoc().getFnDebugLoc(*C) : IP->getDebugLoc();
+  DebugLoc EntryLoc = IsEntryBB && !IP->getDebugLoc().isUnknown()
+                          ? IP->getDebugLoc().getFnDebugLoc(*C)
+                          : IP->getDebugLoc();
   IRBuilder<> IRB(IP);
   IRB.SetCurrentDebugLocation(EntryLoc);
   SmallVector<Value *, 1> Indices;
