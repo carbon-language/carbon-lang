@@ -18,7 +18,6 @@
 namespace clang {
 namespace driver {
 
-class Driver;
 class ToolChain;
 
 class SanitizerArgs {
@@ -58,7 +57,6 @@ class SanitizerArgs {
 
  private:
   void clear();
-  bool getDefaultBlacklist(const Driver &D, std::string &BLPath);
 };
 
 }  // namespace driver

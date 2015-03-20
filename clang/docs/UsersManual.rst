@@ -1062,8 +1062,8 @@ are listed below.
 
    It is not possible to combine more than one of the ``-fsanitize=address``,
    ``-fsanitize=thread``, and ``-fsanitize=memory`` checkers in the same
-   program. The ``-fsanitize=undefined`` checks can be combined with other
-   sanitizers.
+   program. The ``-fsanitize=undefined`` checks can only be combined with
+   ``-fsanitize=address``.
 
 **-f[no-]sanitize-recover=check1,check2,...**
 

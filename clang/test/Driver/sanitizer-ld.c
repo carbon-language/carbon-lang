@@ -280,19 +280,6 @@
 // CHECK-LSAN-LINUX: "-lpthread"
 // CHECK-LSAN-LINUX: "-ldl"
 
-// RUN: %clang -fsanitize=leak,undefined %s -### -o %t.o 2>&1 \
-// RUN:     -target x86_64-unknown-linux \
-// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
-// RUN:   | FileCheck --check-prefix=CHECK-LSAN-UBSAN-LINUX %s
-// CHECK-LSAN-UBSAN-LINUX: "{{.*}}ld{{(.exe)?}}"
-// CHECK-LSAN-UBSAN-LINUX-NOT: libclang_rt.san
-// CHECK-LSAN-UBSAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.lsan-x86_64.a" "-no-whole-archive"
-// CHECK-LSAN-UBSAN-LINUX-NOT: libclang_rt.san
-// CHECK-LSAN-UBSAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.ubsan-x86_64.a" "-no-whole-archive"
-// CHECK-LSAN-UBSAN-LINUX-NOT: libclang_rt.ubsan_cxx
-// CHECK-LSAN-UBSAN-LINUX-NOT: "-lstdc++"
-// CHECK-LSAN-UBSAN-LINUX: "-lpthread"
-
 // RUN: %clang -fsanitize=leak,address %s -### -o %t.o 2>&1 \
 // RUN:     -target x86_64-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \

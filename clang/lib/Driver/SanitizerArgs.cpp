@@ -137,6 +137,27 @@ static uint64_t getToolchainUnsupportedKinds(const ToolChain &TC) {
   return Unsupported;
 }
 
+static bool getDefaultBlacklist(const Driver &D, uint64_t Kinds,
+                                std::string &BLPath) {
+  const char *BlacklistFile = nullptr;
+  if (Kinds & SanitizeKind::Address)
+    BlacklistFile = "asan_blacklist.txt";
+  else if (Kinds & SanitizeKind::Memory)
+    BlacklistFile = "msan_blacklist.txt";
+  else if (Kinds & SanitizeKind::Thread)
+    BlacklistFile = "tsan_blacklist.txt";
+  else if (Kinds & SanitizeKind::DataFlow)
+    BlacklistFile = "dfsan_abilist.txt";
+
+  if (BlacklistFile) {
+    clang::SmallString<64> Path(D.ResourceDir);
+    llvm::sys::path::append(Path, BlacklistFile);
+    BLPath = Path.str();
+    return true;
+  }
+  return false;
+}
+
 bool SanitizerArgs::needsUbsanRt() const {
   return !UbsanTrapOnError && hasOneOf(Sanitizers, NeedsUbsanRt);
 }
@@ -236,16 +257,50 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       AllRemove |= expandGroups(Remove);
     }
   }
-  addAllOf(Sanitizers, Kinds);
 
   // We disable the vptr sanitizer if it was enabled by group expansion but RTTI
   // is disabled.
-  if (Sanitizers.has(SanitizerKind::Vptr) &&
+  if ((Kinds & SanitizeKind::Vptr) &&
       (RTTIMode == ToolChain::RM_DisabledImplicitly ||
        RTTIMode == ToolChain::RM_DisabledExplicitly)) {
     Kinds &= ~SanitizeKind::Vptr;
-    Sanitizers.set(SanitizerKind::Vptr, 0);
   }
+
+  // Warn about undefined sanitizer options that require runtime support.
+  UbsanTrapOnError =
+    Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
+                 options::OPT_fno_sanitize_undefined_trap_on_error, false);
+  if (UbsanTrapOnError && (Kinds & SanitizeKind::NotAllowedWithTrap)) {
+    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << lastArgumentForMask(D, Args, NotAllowedWithTrap)
+        << "-fsanitize-undefined-trap-on-error";
+    Kinds &= ~SanitizeKind::NotAllowedWithTrap;
+  }
+
+  // Warn about incompatible groups of sanitizers.
+  std::pair<uint64_t, uint64_t> IncompatibleGroups[] = {
+      std::make_pair(SanitizeKind::Address, SanitizeKind::Thread),
+      std::make_pair(SanitizeKind::Address, SanitizeKind::Memory),
+      std::make_pair(SanitizeKind::Thread, SanitizeKind::Memory),
+      std::make_pair(SanitizeKind::Leak, SanitizeKind::Thread),
+      std::make_pair(SanitizeKind::Leak, SanitizeKind::Memory),
+      std::make_pair(SanitizeKind::NeedsUbsanRt, SanitizeKind::Thread),
+      std::make_pair(SanitizeKind::NeedsUbsanRt, SanitizeKind::Memory)};
+  for (auto G : IncompatibleGroups) {
+    uint64_t Group = G.first;
+    if (Kinds & Group) {
+      if (uint64_t Incompatible = Kinds & G.second) {
+        D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+            << lastArgumentForMask(D, Args, Group)
+            << lastArgumentForMask(D, Args, Incompatible);
+        Kinds &= ~Incompatible;
+      }
+    }
+  }
+  // FIXME: Currently -fsanitize=leak is silently ignored in the presence of
+  // -fsanitize=address. Perhaps it should print an error, or perhaps
+  // -f(-no)sanitize=leak should change whether leak detection is enabled by
+  // default in ASan?
 
   // Parse -f(no-)?sanitize-recover flags.
   uint64_t RecoverableKinds = RecoverableByDefault;
@@ -285,54 +340,12 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
   RecoverableKinds &= Kinds;
   RecoverableKinds &= ~Unrecoverable;
-  addAllOf(RecoverableSanitizers, RecoverableKinds);
-
-  UbsanTrapOnError =
-    Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
-                 options::OPT_fno_sanitize_undefined_trap_on_error, false);
-
-  // Warn about undefined sanitizer options that require runtime support.
-  if (UbsanTrapOnError && hasOneOf(Sanitizers, NotAllowedWithTrap)) {
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForMask(D, Args, NotAllowedWithTrap)
-      << "-fsanitize-undefined-trap-on-error";
-  }
-
-  // Check for incompatible sanitizers.
-  bool NeedsAsan = Sanitizers.has(SanitizerKind::Address);
-  bool NeedsTsan = Sanitizers.has(SanitizerKind::Thread);
-  bool NeedsMsan = Sanitizers.has(SanitizerKind::Memory);
-  bool NeedsLsan = Sanitizers.has(SanitizerKind::Leak);
-  if (NeedsAsan && NeedsTsan)
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForKind(D, Args, SanitizerKind::Address)
-      << lastArgumentForKind(D, Args, SanitizerKind::Thread);
-  if (NeedsAsan && NeedsMsan)
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForKind(D, Args, SanitizerKind::Address)
-      << lastArgumentForKind(D, Args, SanitizerKind::Memory);
-  if (NeedsTsan && NeedsMsan)
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForKind(D, Args, SanitizerKind::Thread)
-      << lastArgumentForKind(D, Args, SanitizerKind::Memory);
-  if (NeedsLsan && NeedsTsan)
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForKind(D, Args, SanitizerKind::Leak)
-      << lastArgumentForKind(D, Args, SanitizerKind::Thread);
-  if (NeedsLsan && NeedsMsan)
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-      << lastArgumentForKind(D, Args, SanitizerKind::Leak)
-      << lastArgumentForKind(D, Args, SanitizerKind::Memory);
-  // FIXME: Currently -fsanitize=leak is silently ignored in the presence of
-  // -fsanitize=address. Perhaps it should print an error, or perhaps
-  // -f(-no)sanitize=leak should change whether leak detection is enabled by
-  // default in ASan?
 
   // Setup blacklist files.
   // Add default blacklist from resource directory.
   {
     std::string BLPath;
-    if (getDefaultBlacklist(D, BLPath) && llvm::sys::fs::exists(BLPath))
+    if (getDefaultBlacklist(D, Kinds, BLPath) && llvm::sys::fs::exists(BLPath))
       BlacklistFiles.push_back(BLPath);
   }
   // Parse -f(no-)sanitize-blacklist options.
@@ -359,7 +372,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   // Parse -f[no-]sanitize-memory-track-origins[=level] options.
-  if (NeedsMsan) {
+  if (Kinds & SanitizeKind::Memory) {
     if (Arg *A =
             Args.getLastArg(options::OPT_fsanitize_memory_track_origins_EQ,
                             options::OPT_fsanitize_memory_track_origins,
@@ -380,7 +393,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   // Parse -fsanitize-coverage=N. Currently one of asan/msan/lsan is required.
-  if (hasOneOf(Sanitizers, SupportsCoverage)) {
+  if (Kinds & SanitizeKind::SupportsCoverage) {
     if (Arg *A = Args.getLastArg(options::OPT_fsanitize_coverage)) {
       StringRef S = A->getValue();
       // Legal values are 0..4.
@@ -390,7 +403,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     }
   }
 
-  if (NeedsAsan) {
+  if (Kinds & SanitizeKind::Address) {
     AsanSharedRuntime =
         Args.hasArg(options::OPT_shared_libasan) ||
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);
@@ -425,6 +438,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   // Parse -link-cxx-sanitizer flag.
   LinkCXXRuntimes =
       Args.hasArg(options::OPT_fsanitize_link_cxx_runtime) || D.CCCIsCXX();
+
+  // Finally, initialize the set of available and recoverable sanitizers.
+  addAllOf(Sanitizers, Kinds);
+  addAllOf(RecoverableSanitizers, RecoverableKinds);
 }
 
 static std::string toString(const clang::SanitizerSet &Sanitizers) {
@@ -475,26 +492,6 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (Sanitizers.has(SanitizerKind::Memory) ||
       Sanitizers.has(SanitizerKind::Address))
     CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
-}
-
-bool SanitizerArgs::getDefaultBlacklist(const Driver &D, std::string &BLPath) {
-  const char *BlacklistFile = nullptr;
-  if (Sanitizers.has(SanitizerKind::Address))
-    BlacklistFile = "asan_blacklist.txt";
-  else if (Sanitizers.has(SanitizerKind::Memory))
-    BlacklistFile = "msan_blacklist.txt";
-  else if (Sanitizers.has(SanitizerKind::Thread))
-    BlacklistFile = "tsan_blacklist.txt";
-  else if (Sanitizers.has(SanitizerKind::DataFlow))
-    BlacklistFile = "dfsan_abilist.txt";
-
-  if (BlacklistFile) {
-    SmallString<64> Path(D.ResourceDir);
-    llvm::sys::path::append(Path, BlacklistFile);
-    BLPath = Path.str();
-    return true;
-  }
-  return false;
 }
 
 uint64_t parseValue(const char *Value) {
