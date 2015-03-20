@@ -105,20 +105,20 @@
 
 # RAW: Disassembly of section .text:
 # RAW: glob:
-# RAW-NEXT:   12c:  18 80 84 8f  lw      $4, -32744($gp)
-# RAW-NEXT:   130:  00 20 84 24  addiu   $4, $4, 8192
-# RAW-NEXT:   134:  1c 80 84 8f  lw      $4, -32740($gp)
-# RAW-NEXT:   138:  00 22 84 24  addiu   $4, $4, 8704
-# RAW-NEXT:   13c:  20 80 84 8f  lw      $4, -32736($gp)
-# RAW-NEXT:   140:  24 80 84 8f  lw      $4, -32732($gp)
-# RAW-NEXT:   144:  28 80 84 8f  lw      $4, -32728($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  18 80 84 8f  lw      $4, -32744($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  00 20 84 24  addiu   $4, $4, 8192
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  1c 80 84 8f  lw      $4, -32740($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  00 22 84 24  addiu   $4, $4, 8704
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  20 80 84 8f  lw      $4, -32736($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  24 80 84 8f  lw      $4, -32732($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  28 80 84 8f  lw      $4, -32728($gp)
 
 # RAW: SYMBOL TABLE:
-# RAW: 00000000       *UND*  00000000
-# RAW: 00002000 l     .data  00000000 str1
-# RAW: 00012200 l     .data  00000005 str2
-# RAW: 0000012c g   F .text  0000001c glob
-# RAW: 00012205 g     .data  00000004 hidden
+# RAW: {{[0x0-9a-f]+}}       *UND*  00000000
+# RAW: {{[0x0-9a-f]+}} l     .data  00000000 str1
+# RAW: {{[0x0-9a-f]+}} l     .data  00000005 str2
+# RAW: {{[0x0-9a-f]+}} g   F .text  0000001c glob
+# RAW: {{[0x0-9a-f]+}} g     .data  00000004 hidden
 
 ---
 FileHeader:

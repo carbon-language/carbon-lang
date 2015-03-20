@@ -799,7 +799,7 @@ public:
 
   StringRef name() const override { return "_GLOBAL_OFFSET_TABLE_"; }
 
-  Scope scope() const override { return scopeGlobal; }
+  Scope scope() const override { return scopeLinkageUnit; }
 
   SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 

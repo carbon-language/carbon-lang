@@ -51,7 +51,7 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms()) {
         const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom->_atom);
-        if (da && (da->scope() != DefinedAtom::scopeTranslationUnit))
+        if (da && (da->scope() == DefinedAtom::scopeGlobal))
           this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
                                                atom->_virtualAddr, atom);
       }

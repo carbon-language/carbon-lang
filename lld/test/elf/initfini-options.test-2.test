@@ -6,12 +6,12 @@
 # RUN: llvm-readobj -symbols -dynamic-table %t.so | FileCheck %s
 
 # CHECK:      Name: _init (8)
-# CHECK-NEXT: Value: 0x4001E4
+# CHECK-NEXT: Value: {{[0x0-9a-f]+}}
 # CHECK:      Name: _fini (14)
-# CHECK-NEXT: Value: 0x4001EB
+# CHECK-NEXT: Value: {{[0x0-9a-f]+}}
 #
-# CHECK: 0x000000000000000C INIT 0x4001E4
-# CHECK: 0x000000000000000D FINI 0x4001EB
+# CHECK: 0x000000000000000C INIT {{[0x0-9a-f]+}}
+# CHECK: 0x000000000000000D FINI {{[0x0-9a-f]+}}
 
 ---
 FileHeader:

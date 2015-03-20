@@ -105,21 +105,21 @@
 
 # RAW: Disassembly of section .text:
 # RAW: main:
-# RAW-NEXT:   164:  5c fc 18 80   lw      $2, -32744($gp)
-# RAW-NEXT:   168:  42 30 40 10   addiu   $2, $2, 4160
-# RAW-NEXT:   16c:  5c fc 1c 80   lw      $2, -32740($gp)
-# RAW-NEXT:   170:  42 30 60 20   addiu   $2, $2, 8288
-# RAW-NEXT:   174:  5c fc 20 80   lw      $2, -32736($gp)
-# RAW-NEXT:   178:  5c fc 24 80   lw      $2, -32732($gp)
-# RAW-NEXT:   17c:  5c fc 28 80   lw      $2, -32728($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  5c fc 18 80   lw      $2, -32744($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  42 30 40 10   addiu   $2, $2, 4160
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  5c fc 1c 80   lw      $2, -32740($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  42 30 60 20   addiu   $2, $2, 8288
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  5c fc 20 80   lw      $2, -32736($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  5c fc 24 80   lw      $2, -32732($gp)
+# RAW-NEXT:   {{[0x0-9a-f]+}}:  5c fc 28 80   lw      $2, -32728($gp)
 
 # RAW: SYMBOL TABLE:
-# RAW: 00000000       *UND*  00000000
-# RAW: 00001040 l     .data  00000000 data_1
-# RAW: 00002060 l     .data  00000001 data_2
-# RAW: 00000160 g   F .text  00000004 bar
-# RAW: 00000164 g   F .text  0000001c main
-# RAW: 00002061 g     .data  00000001 data_h
+# RAW: {{[0x0-9a-f]+}}       *UND*  00000000
+# RAW: {{[0x0-9a-f]+}} l     .data  00000000 data_1
+# RAW: {{[0x0-9a-f]+}} l     .data  00000001 data_2
+# RAW: {{[0x0-9a-f]+}} g   F .text  00000004 bar
+# RAW: {{[0x0-9a-f]+}} g   F .text  0000001c main
+# RAW: {{[0x0-9a-f]+}} g     .data  00000001 data_h
 
         .data
         .type   data_1, @object
