@@ -29,7 +29,7 @@ struct D {
   static constexpr int function(); // expected-note {{here}}
 };
 typedef D::A DB;
-constexpr int D_test(bool b) { return b ? D::variable : D::function(); } // expected-note {{subexpression}} expected-note {{undefined}}
+constexpr int D_test(bool b) { return b ? D::variable : D::function(); } // expected-note {{undefined}}
 #endif
 
 @import redecl_add_after_load;
@@ -54,6 +54,6 @@ constexpr int merged_struct_variable_test = D_test(true);
 constexpr int merged_struct_function_test = D_test(false);
 #ifndef IMPORT_DECLS
 // expected-error@-4 {{incomplete}}
-// expected-error@-4 {{constant}} expected-note@-4 {{in call to}}
+// @-4: definition of D::variable must be emitted, so it gets imported eagerly
 // expected-error@-4 {{constant}} expected-note@-4 {{in call to}}
 #endif

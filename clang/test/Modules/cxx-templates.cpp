@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
 // RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
 // RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump | FileCheck %s --check-prefix=CHECK-DUMP
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-filter SomeTemplate | FileCheck %s --check-prefix=CHECK-DUMP
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11 -DEARLY_IMPORT
 
@@ -125,9 +125,10 @@ void g() {
 static_assert(Outer<int>::Inner<int>::f() == 1, "");
 static_assert(Outer<int>::Inner<int>::g() == 2, "");
 
-#ifndef EARLY_IMPORT
-// FIXME: The textual inclusion above shouldn't cause this to fail!
-static_assert(MergeTemplateDefinitions<int>::f() == 1, "");
+// FIXME: We're too lazy in merging class definitions to find the definition
+// of this function.
+static_assert(MergeTemplateDefinitions<int>::f() == 1, ""); // expected-error {{constant expression}} expected-note {{undefined}}
+// expected-note@cxx-templates-c.h:10 {{here}}
 static_assert(MergeTemplateDefinitions<int>::g() == 2, "");
 
 RedeclaredAsFriend<int> raf1;
@@ -140,7 +141,6 @@ MergeSpecializations<int[]>::partially_specialized_in_c spec_in_c_1;
 MergeSpecializations<char>::explicitly_specialized_in_a spec_in_a_2;
 MergeSpecializations<double>::explicitly_specialized_in_b spec_in_b_2;
 MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
-#endif
 
 MergeAnonUnionMember<> maum_main;
 typedef DontWalkPreviousDeclAfterMerging<int> dwpdam_typedef_2;
