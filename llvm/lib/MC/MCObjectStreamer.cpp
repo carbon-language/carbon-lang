@@ -182,10 +182,16 @@ void MCObjectStreamer::EmitWeakReference(MCSymbol *Alias,
 
 void MCObjectStreamer::ChangeSection(const MCSection *Section,
                                      const MCExpr *Subsection) {
+  changeSectionImpl(Section, Subsection);
+}
+
+bool MCObjectStreamer::changeSectionImpl(const MCSection *Section,
+                                         const MCExpr *Subsection) {
   assert(Section && "Cannot switch to a null section!");
   flushPendingLabels(nullptr);
 
-  CurSectionData = &getAssembler().getOrCreateSectionData(*Section);
+  bool Created;
+  CurSectionData = &getAssembler().getOrCreateSectionData(*Section, &Created);
 
   int64_t IntSubsection = 0;
   if (Subsection &&
@@ -195,6 +201,7 @@ void MCObjectStreamer::ChangeSection(const MCSection *Section,
     report_fatal_error("Subsection number out of range");
   CurInsertionPoint =
     CurSectionData->getSubsectionInsertionPoint(unsigned(IntSubsection));
+  return Created;
 }
 
 void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {

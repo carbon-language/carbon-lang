@@ -2,11 +2,6 @@
 ; RUN: llc -mtriple=thumbv7m-none-macho -O0 %s -o - -relocation-model=pic -disable-fp-elim | FileCheck %s
 ; RUN: llc -mtriple=thumbv7m-none-macho -filetype=obj %s -o /dev/null
 
-  ; Bare-metal should probably "declare" segments just like normal MachO
-; CHECK: __picsymbolstub4
-; CHECK: __StaticInit
-; CHECK: __text
-
 @var = external global i32
 
 define i32 @test_litpool() minsize {

@@ -131,8 +131,10 @@ static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
 
 static MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                        raw_ostream &OS, MCCodeEmitter *Emitter,
-                                       bool RelaxAll) {
+                                       bool RelaxAll,
+                                       bool DWARFMustBeAtTheEnd) {
   return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll,
+                             DWARFMustBeAtTheEnd,
                              /*LabelSections*/ true);
 }
 

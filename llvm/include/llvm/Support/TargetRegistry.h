@@ -65,7 +65,8 @@ namespace llvm {
                                 bool RelaxAll);
   MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                   raw_ostream &OS, MCCodeEmitter *CE,
-                                  bool RelaxAll, bool LabelSections = false);
+                                  bool RelaxAll, bool DWARFMustBeAtTheEnd,
+                                  bool LabelSections = false);
 
   MCRelocationInfo *createMCRelocationInfo(StringRef TT, MCContext &Ctx);
 
@@ -138,11 +139,9 @@ namespace llvm {
                                              MCAsmBackend &TAB, raw_ostream &OS,
                                              MCCodeEmitter *Emitter,
                                              bool RelaxAll);
-    typedef MCStreamer *(*MachOStreamerCtorTy)(MCContext &Ctx,
-                                               MCAsmBackend &TAB,
-                                               raw_ostream &OS,
-                                               MCCodeEmitter *Emitter,
-                                               bool RelaxAll);
+    typedef MCStreamer *(*MachOStreamerCtorTy)(
+        MCContext &Ctx, MCAsmBackend &TAB, raw_ostream &OS,
+        MCCodeEmitter *Emitter, bool RelaxAll, bool DWARFMustBeAtTheEnd);
     typedef MCStreamer *(*COFFStreamerCtorTy)(MCContext &Ctx, MCAsmBackend &TAB,
                                               raw_ostream &OS,
                                               MCCodeEmitter *Emitter,
@@ -444,7 +443,8 @@ namespace llvm {
                                        MCAsmBackend &TAB, raw_ostream &OS,
                                        MCCodeEmitter *Emitter,
                                        const MCSubtargetInfo &STI,
-                                       bool RelaxAll) const {
+                                       bool RelaxAll,
+                                       bool DWARFMustBeAtTheEnd) const {
       MCStreamer *S;
       switch (T.getObjectFormat()) {
       default:
@@ -455,9 +455,11 @@ namespace llvm {
         break;
       case Triple::MachO:
         if (MachOStreamerCtorFn)
-          S = MachOStreamerCtorFn(Ctx, TAB, OS, Emitter, RelaxAll);
+          S = MachOStreamerCtorFn(Ctx, TAB, OS, Emitter, RelaxAll,
+                                  DWARFMustBeAtTheEnd);
         else
-          S = createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+          S = createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll,
+                                  DWARFMustBeAtTheEnd);
         break;
       case Triple::ELF:
         if (ELFStreamerCtorFn)

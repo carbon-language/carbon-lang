@@ -307,9 +307,9 @@ static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
 
 static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
                                           raw_ostream &OS,
-                                          MCCodeEmitter *Emitter,
-                                          bool RelaxAll) {
-  return createMachOStreamer(Ctx, MAB, OS, Emitter, false);
+                                          MCCodeEmitter *Emitter, bool RelaxAll,
+                                          bool DWARFMustBeAtTheEnd) {
+  return createMachOStreamer(Ctx, MAB, OS, Emitter, false, DWARFMustBeAtTheEnd);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
