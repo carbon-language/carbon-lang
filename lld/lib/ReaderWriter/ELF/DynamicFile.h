@@ -64,6 +64,11 @@ protected:
       if ((ec = name.getError()))
         return ec;
 
+      // Dont add local symbols to dynamic entries. The first symbol in the
+      // dynamic symbol table is a local symbol.
+      if (i->getBinding() == llvm::ELF::STB_LOCAL)
+        continue;
+
       // TODO: Add absolute symbols
       if (i->st_shndx == llvm::ELF::SHN_ABS)
         continue;
