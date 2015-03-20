@@ -87,9 +87,10 @@ struct VerifierSupport {
 
   /// \brief Track the brokenness of the module while recursively visiting.
   bool Broken;
+  bool EverBroken;
 
   explicit VerifierSupport(raw_ostream &OS)
-      : OS(OS), M(nullptr), Broken(false) {}
+      : OS(OS), M(nullptr), Broken(false), EverBroken(false) {}
 
 private:
   void Write(const Value *V) {
@@ -137,7 +138,7 @@ public:
   /// something is not correct.
   void CheckFailed(const Twine &Message) {
     OS << Message << '\n';
-    Broken = true;
+    EverBroken = Broken = true;
   }
 
   /// \brief A check failed (with values to print).
@@ -260,6 +261,9 @@ public:
     visitModuleFlags(M);
     visitModuleIdents(M);
 
+    // Verify debug info last.
+    verifyDebugInfo();
+
     return !Broken;
   }
 
@@ -358,18 +362,8 @@ private:
   void VerifyConstantExprBitcastType(const ConstantExpr *CE);
   void VerifyStatepoint(ImmutableCallSite CS);
   void verifyFrameRecoverIndices();
-};
-class DebugInfoVerifier : public VerifierSupport {
-public:
-  explicit DebugInfoVerifier(raw_ostream &OS = dbgs()) : VerifierSupport(OS) {}
 
-  bool verify(const Module &M) {
-    this->M = &M;
-    verifyDebugInfo();
-    return !Broken;
-  }
-
-private:
+  // Module-level debug info verification...
   void verifyDebugInfo();
   void processInstructions(DebugInfoFinder &Finder);
   void processCallInst(DebugInfoFinder &Finder, const CallInst &CI);
@@ -3031,8 +3025,10 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
          DII.getRawExpression());
 }
 
-void DebugInfoVerifier::verifyDebugInfo() {
-  if (!VerifyDebugInfo)
+void Verifier::verifyDebugInfo() {
+  // Run the debug info verifier only if the regular verifier succeeds, since
+  // sometimes checks that have already failed will cause crashes here.
+  if (EverBroken || !VerifyDebugInfo)
     return;
 
   DebugInfoFinder Finder;
@@ -3059,7 +3055,7 @@ void DebugInfoVerifier::verifyDebugInfo() {
   }
 }
 
-void DebugInfoVerifier::processInstructions(DebugInfoFinder &Finder) {
+void Verifier::processInstructions(DebugInfoFinder &Finder) {
   for (const Function &F : *M)
     for (auto I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
       if (MDNode *MD = I->getMetadata(LLVMContext::MD_dbg))
@@ -3069,8 +3065,7 @@ void DebugInfoVerifier::processInstructions(DebugInfoFinder &Finder) {
     }
 }
 
-void DebugInfoVerifier::processCallInst(DebugInfoFinder &Finder,
-                                        const CallInst &CI) {
+void Verifier::processCallInst(DebugInfoFinder &Finder, const CallInst &CI) {
   if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       switch (ID) {
@@ -3112,13 +3107,7 @@ bool llvm::verifyModule(const Module &M, raw_ostream *OS) {
 
   // Note that this function's return value is inverted from what you would
   // expect of a function called "verify".
-  if (!V.verify(M) || Broken)
-    return true;
-
-  // Run the debug info verifier only if the regular verifier succeeds, since
-  // sometimes checks that have already failed will cause crashes here.
-  DebugInfoVerifier DIV(OS ? *OS : NullStr);
-  return !DIV.verify(M);
+  return !V.verify(M) || Broken;
 }
 
 namespace {
@@ -3145,9 +3134,6 @@ struct VerifierLegacyPass : public FunctionPass {
 
   bool doFinalization(Module &M) override {
     if (!V.verify(M) && FatalErrors)
-      report_fatal_error("Broken module found, compilation aborted!");
-
-    if (!DebugInfoVerifier(dbgs()).verify(M) && FatalErrors)
       report_fatal_error("Broken module found, compilation aborted!");
 
     return false;
