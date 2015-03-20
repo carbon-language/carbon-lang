@@ -2337,15 +2337,10 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
 
   // Calculate weight for each unique destination in CR.
   DenseMap<MachineBasicBlock*, uint32_t> DestWeights;
-  if (FuncInfo.BPI)
-    for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I) {
-      DenseMap<MachineBasicBlock*, uint32_t>::iterator Itr =
-          DestWeights.find(I->BB);
-      if (Itr != DestWeights.end())
-        Itr->second += I->ExtraWeight;
-      else
-        DestWeights[I->BB] = I->ExtraWeight;
-    }
+  if (FuncInfo.BPI) {
+    for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I)
+      DestWeights[I->BB] += I->ExtraWeight;
+  }
 
   // Update successor info. Add one edge to each unique successor.
   BitVector SuccsHandled(CR.CaseBB->getParent()->getNumBlockIDs());
