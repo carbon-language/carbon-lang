@@ -66,6 +66,8 @@
 // Relocation 29 (zed@PLT) is of type R_386_PLT32 and uses the symbol
 // CHECK-NEXT:     0xA9         R_386_PLT32      zed 0x0
 // CHECK-NEXT:     0xAF         R_386_PC32       tr_start 0x0
+// CHECK-NEXT:     0xB3         R_386_16         foo      0x0
+// CHECK-NEXT:     0xB5         R_386_8          foo      0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -136,6 +138,9 @@ bar2:
 
         .code64
         jmpq *tr_start(%rip)
+
+        .word foo
+        .byte foo
 
         .section        zedsec,"awT",@progbits
 zed:

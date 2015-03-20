@@ -41,6 +41,8 @@ bar:
          movl    blah@SIZE + 32, %eax             # R_X86_64_SIZE32
          movl    blah@SIZE - 32, %eax             # R_X86_64_SIZE32
 
+        .long   foo@gotpcrel
+        .long foo@plt
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
@@ -75,6 +77,8 @@ bar:
 // CHECK-NEXT:       0xC6 R_X86_64_SIZE32 blah 0x0
 // CHECK-NEXT:       0xCD R_X86_64_SIZE32 blah 0x20
 // CHECK-NEXT:       0xD4 R_X86_64_SIZE32 blah 0xFFFFFFFFFFFFFFE0
+// CHECK-NEXT:       0xD8 R_X86_64_GOTPCREL foo 0x0
+// CHECK-NEXT:       0xDC R_X86_64_PLT32 foo 0x0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 
