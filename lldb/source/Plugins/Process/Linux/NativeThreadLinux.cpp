@@ -44,6 +44,18 @@ namespace
     {
         switch (stop_info.reason)
         {
+            case eStopReasonNone:
+                log.Printf ("%s: %s no stop reason", __FUNCTION__, header);
+                return;
+            case eStopReasonTrace:
+                log.Printf ("%s: %s trace, stopping signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
+                return;
+            case eStopReasonBreakpoint:
+                log.Printf ("%s: %s breakpoint, stopping signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
+                return;
+            case eStopReasonWatchpoint:
+                log.Printf ("%s: %s watchpoint, stopping signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
+                return;
             case eStopReasonSignal:
                 log.Printf ("%s: %s signal 0x%02" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
                 return;
@@ -52,6 +64,15 @@ namespace
                 return;
             case eStopReasonExec:
                 log.Printf ("%s: %s exec, stopping signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
+                return;
+            case eStopReasonPlanComplete:
+                log.Printf ("%s: %s plan complete", __FUNCTION__, header);
+                return;
+            case eStopReasonThreadExiting:
+                log.Printf ("%s: %s thread exiting", __FUNCTION__, header);
+                return;
+            case eStopReasonInstrumentation:
+                log.Printf ("%s: %s instrumentation", __FUNCTION__, header);
                 return;
             default:
                 log.Printf ("%s: %s invalid stop reason %" PRIu32, __FUNCTION__, header, static_cast<uint32_t> (stop_info.reason));
