@@ -139,10 +139,10 @@ public:
 
   class AdditionalSegmentHashKey {
   public:
-    int64_t operator() (int64_t segmentType, int64_t segmentFlag) const {
+    int64_t operator()(const AdditionalSegmentKey &k) const {
       // k.first = SegmentName
       // k.second = SegmentFlags
-      return llvm::hash_combine(segmentType, segmentFlag);
+      return llvm::hash_combine(k.first, k.second);
     }
   };
 
@@ -154,7 +154,8 @@ public:
 
   typedef std::unordered_map<SectionKey, AtomSection<ELFT> *, SectionKeyHash,
                              SectionKeyEq> SectionMapT;
-  typedef std::map<AdditionalSegmentKey, Segment<ELFT> *> AdditionalSegmentMapT;
+  typedef std::unordered_map<AdditionalSegmentKey, Segment<ELFT> *,
+                             AdditionalSegmentHashKey> AdditionalSegmentMapT;
   typedef std::unordered_map<SegmentKey, Segment<ELFT> *, SegmentHashKey>
   SegmentMapT;
 
