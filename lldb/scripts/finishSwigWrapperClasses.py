@@ -100,11 +100,9 @@ Usage:\n\
 def program_exit_success( vnResult, vMsg ):
     strMsg = "";
 
-    if vMsg.__len__() == 0:
-        strMsg = "%s (%d)" % (strExitMsgSuccess, vnResult);
-    else:
+    if vMsg.__len__() != 0:
         strMsg = "%s: %s (%d)" % (strExitMsgSuccess, vMsg, vnResult);
-    print strMsg;
+        print strMsg;
 
     sys.exit( vnResult );
 
