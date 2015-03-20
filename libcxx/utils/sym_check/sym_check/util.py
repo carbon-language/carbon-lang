@@ -98,5 +98,5 @@ def demangle_symbol(symbol):
 def extract_or_load(filename):
     import sym_check.extract
     if filename.endswith('.so') or filename.endswith('.dylib'):
-        return extract.extract_symbols(filename)
+        return sym_check.extract.extract_symbols(filename)
     return read_syms_from_file(filename)
