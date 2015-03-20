@@ -174,7 +174,8 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         break;
       }
     }
-  } else if (getEMachine() == ELF::EM_386) {
+  } else {
+    assert(getEMachine() == ELF::EM_386 && "Unsupported ELF machine type.");
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
       default:
@@ -286,8 +287,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         break;
       }
     }
-  } else
-    llvm_unreachable("Unsupported ELF machine type.");
+  }
 
   return Type;
 }
