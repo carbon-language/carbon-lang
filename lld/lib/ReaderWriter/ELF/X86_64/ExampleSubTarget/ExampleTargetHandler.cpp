@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ExampleTargetHandler.h"
-#include "../X86_64ExecutableWriter.h"
+#include "X86_64ExecutableWriter.h"
 #include "ExampleLinkingContext.h"
 
 using namespace lld;
