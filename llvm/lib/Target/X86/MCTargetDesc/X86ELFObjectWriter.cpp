@@ -44,7 +44,6 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
   // determine the type of the relocation
 
   MCSymbolRefExpr::VariantKind Modifier = Target.getAccessVariant();
-  unsigned Type;
   if (getEMachine() == ELF::EM_X86_64) {
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
@@ -52,22 +51,16 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         llvm_unreachable("invalid fixup kind!");
 
       case FK_Data_8:
-        Type = ELF::R_X86_64_PC64;
-        break;
+        return ELF::R_X86_64_PC64;
       case FK_Data_4:
-        Type = ELF::R_X86_64_PC32;
-        break;
+        return ELF::R_X86_64_PC32;
       case FK_Data_2:
-        Type = ELF::R_X86_64_PC16;
-        break;
+        return ELF::R_X86_64_PC16;
       case FK_Data_1:
-        Type = ELF::R_X86_64_PC8;
-        break;
-
+        return ELF::R_X86_64_PC8;
       case FK_PCRel_8:
         assert(Modifier == MCSymbolRefExpr::VK_None);
-        Type = ELF::R_X86_64_PC64;
-        break;
+        return ELF::R_X86_64_PC64;
       case X86::reloc_signed_4byte:
       case X86::reloc_riprel_4byte_movq_load:
       case X86::reloc_riprel_4byte:
@@ -76,66 +69,50 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_X86_64_PC32;
-          break;
+          return ELF::R_X86_64_PC32;
         case MCSymbolRefExpr::VK_PLT:
-          Type = ELF::R_X86_64_PLT32;
-          break;
+          return ELF::R_X86_64_PLT32;
         case MCSymbolRefExpr::VK_GOTPCREL:
-          Type = ELF::R_X86_64_GOTPCREL;
-          break;
+          return ELF::R_X86_64_GOTPCREL;
         case MCSymbolRefExpr::VK_GOTTPOFF:
-          Type = ELF::R_X86_64_GOTTPOFF;
-          break;
+          return ELF::R_X86_64_GOTTPOFF;
         case MCSymbolRefExpr::VK_TLSGD:
-          Type = ELF::R_X86_64_TLSGD;
-          break;
+          return ELF::R_X86_64_TLSGD;
         case MCSymbolRefExpr::VK_TLSLD:
-          Type = ELF::R_X86_64_TLSLD;
-          break;
+          return ELF::R_X86_64_TLSLD;
         }
         break;
       case FK_PCRel_2:
         assert(Modifier == MCSymbolRefExpr::VK_None);
-        Type = ELF::R_X86_64_PC16;
-        break;
+        return ELF::R_X86_64_PC16;
       case FK_PCRel_1:
         assert(Modifier == MCSymbolRefExpr::VK_None);
-        Type = ELF::R_X86_64_PC8;
-        break;
+        return ELF::R_X86_64_PC8;
       }
     } else {
       switch ((unsigned)Fixup.getKind()) {
       default:
         llvm_unreachable("invalid fixup kind!");
       case X86::reloc_global_offset_table8:
-        Type = ELF::R_X86_64_GOTPC64;
-        break;
+        return ELF::R_X86_64_GOTPC64;
       case X86::reloc_global_offset_table:
-        Type = ELF::R_X86_64_GOTPC32;
-        break;
+        return ELF::R_X86_64_GOTPC32;
       case FK_Data_8:
         switch (Modifier) {
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_X86_64_64;
-          break;
+          return ELF::R_X86_64_64;
         case MCSymbolRefExpr::VK_GOT:
-          Type = ELF::R_X86_64_GOT64;
-          break;
+          return ELF::R_X86_64_GOT64;
         case MCSymbolRefExpr::VK_GOTOFF:
-          Type = ELF::R_X86_64_GOTOFF64;
-          break;
+          return ELF::R_X86_64_GOTOFF64;
         case MCSymbolRefExpr::VK_TPOFF:
-          Type = ELF::R_X86_64_TPOFF64;
-          break;
+          return ELF::R_X86_64_TPOFF64;
         case MCSymbolRefExpr::VK_DTPOFF:
-          Type = ELF::R_X86_64_DTPOFF64;
-          break;
+          return ELF::R_X86_64_DTPOFF64;
         case MCSymbolRefExpr::VK_SIZE:
-          Type = ELF::R_X86_64_SIZE64;
-          break;
+          return ELF::R_X86_64_SIZE64;
         }
         break;
       case X86::reloc_signed_4byte:
@@ -143,35 +120,26 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_X86_64_32S;
-          break;
+          return ELF::R_X86_64_32S;
         case MCSymbolRefExpr::VK_GOT:
-          Type = ELF::R_X86_64_GOT32;
-          break;
+          return ELF::R_X86_64_GOT32;
         case MCSymbolRefExpr::VK_GOTPCREL:
-          Type = ELF::R_X86_64_GOTPCREL;
-          break;
+          return ELF::R_X86_64_GOTPCREL;
         case MCSymbolRefExpr::VK_TPOFF:
-          Type = ELF::R_X86_64_TPOFF32;
-          break;
+          return ELF::R_X86_64_TPOFF32;
         case MCSymbolRefExpr::VK_DTPOFF:
-          Type = ELF::R_X86_64_DTPOFF32;
-          break;
+          return ELF::R_X86_64_DTPOFF32;
         case MCSymbolRefExpr::VK_SIZE:
-          Type = ELF::R_X86_64_SIZE32;
-          break;
+          return ELF::R_X86_64_SIZE32;
         }
         break;
       case FK_Data_4:
-        Type = ELF::R_X86_64_32;
-        break;
+        return ELF::R_X86_64_32;
       case FK_Data_2:
-        Type = ELF::R_X86_64_16;
-        break;
+        return ELF::R_X86_64_16;
       case FK_PCRel_1:
       case FK_Data_1:
-        Type = ELF::R_X86_64_8;
-        break;
+        return ELF::R_X86_64_8;
       }
     }
   } else {
@@ -182,17 +150,14 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         llvm_unreachable("invalid fixup kind!");
 
       case X86::reloc_global_offset_table:
-        Type = ELF::R_386_GOTPC;
-        break;
-
+        return ELF::R_386_GOTPC;
       case FK_PCRel_1:
       case FK_Data_1:
         switch (Modifier) {
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_386_PC8;
-          break;
+          return ELF::R_386_PC8;
         }
         break;
 
@@ -202,8 +167,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_386_PC16;
-          break;
+          return ELF::R_386_PC16;
         }
         break;
 
@@ -215,11 +179,9 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_386_PC32;
-          break;
+          return ELF::R_386_PC32;
         case MCSymbolRefExpr::VK_PLT:
-          Type = ELF::R_386_PLT32;
-          break;
+          return ELF::R_386_PLT32;
         }
         break;
       }
@@ -229,7 +191,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         llvm_unreachable("invalid fixup kind!");
 
       case X86::reloc_global_offset_table:
-        Type = ELF::R_386_GOTPC;
+        return ELF::R_386_GOTPC;
         break;
 
       // FIXME: Should we avoid selecting reloc_signed_4byte in 32 bit mode
@@ -241,55 +203,39 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         default:
           llvm_unreachable("Unimplemented");
         case MCSymbolRefExpr::VK_None:
-          Type = ELF::R_386_32;
-          break;
+          return  ELF::R_386_32;
         case MCSymbolRefExpr::VK_GOT:
-          Type = ELF::R_386_GOT32;
-          break;
+          return ELF::R_386_GOT32;
         case MCSymbolRefExpr::VK_PLT:
-          Type = ELF::R_386_PLT32;
-          break;
+          return ELF::R_386_PLT32;
         case MCSymbolRefExpr::VK_GOTOFF:
-          Type = ELF::R_386_GOTOFF;
-          break;
+          return ELF::R_386_GOTOFF;
         case MCSymbolRefExpr::VK_TLSGD:
-          Type = ELF::R_386_TLS_GD;
-          break;
+          return ELF::R_386_TLS_GD;
         case MCSymbolRefExpr::VK_TPOFF:
-          Type = ELF::R_386_TLS_LE_32;
-          break;
+          return ELF::R_386_TLS_LE_32;
         case MCSymbolRefExpr::VK_INDNTPOFF:
-          Type = ELF::R_386_TLS_IE;
-          break;
+          return ELF::R_386_TLS_IE;
         case MCSymbolRefExpr::VK_NTPOFF:
-          Type = ELF::R_386_TLS_LE;
-          break;
+          return ELF::R_386_TLS_LE;
         case MCSymbolRefExpr::VK_GOTNTPOFF:
-          Type = ELF::R_386_TLS_GOTIE;
-          break;
+          return  ELF::R_386_TLS_GOTIE;
         case MCSymbolRefExpr::VK_TLSLDM:
-          Type = ELF::R_386_TLS_LDM;
-          break;
+          return ELF::R_386_TLS_LDM;
         case MCSymbolRefExpr::VK_DTPOFF:
-          Type = ELF::R_386_TLS_LDO_32;
-          break;
+          return ELF::R_386_TLS_LDO_32;
         case MCSymbolRefExpr::VK_GOTTPOFF:
-          Type = ELF::R_386_TLS_IE_32;
-          break;
+          return ELF::R_386_TLS_IE_32;
         }
         break;
       case FK_Data_2:
-        Type = ELF::R_386_16;
-        break;
+        return ELF::R_386_16;
       case FK_PCRel_1:
       case FK_Data_1:
-        Type = ELF::R_386_8;
-        break;
+        return ELF::R_386_8;
       }
     }
   }
-
-  return Type;
 }
 
 MCObjectWriter *llvm::createX86ELFObjectWriter(raw_ostream &OS,
