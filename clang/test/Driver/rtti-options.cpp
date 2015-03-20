@@ -3,10 +3,12 @@
 // No warnings/errors should be emitted for unknown, except if combining
 // the vptr sanitizer with -fno-rtti
 
-// Special case: -fcxx-exceptions in C code should warn about unused arguments
-// RUN: %clang -x c -### -c -fcxx-exceptions %s 2>&1 | FileCheck -check-prefix=CHECK-UNUSED %s
-// CHECK-UNUSED: warning: argument unused during compilation: '-fcxx-exceptions'
+// Special cases: -fcxx-exceptions in C code should warn about unused arguments
+// We should also not have any rtti-related arguments
+// RUN: %clang -x c -### -target x86_64-scei-ps4 -c -fcxx-exceptions %s 2>&1 | FileCheck -check-prefix=CHECK-UNUSED -check-prefix=CHECK-RTTI -check-prefix=CHECK-NO-RTTI %s
+// RUN: %clang -x c -### -target x86_64-unknown-unknown -c -fcxx-exceptions %s 2>&1 | FileCheck -check-prefix=CHECK-UNUSED -check-prefix=CHECK-RTTI -check-prefix=CHECK-NO-RTTI %s
 
+// Make sure we keep the last -frtti/-fno-rtti argument
 // RUN: %clang -### -c -fno-rtti -frtti %s 2>&1 | FileCheck -check-prefix=CHECK-RTTI %s
 // RUN: %clang -### -c -frtti -fno-rtti %s 2>&1 | FileCheck -check-prefix=CHECK-NO-RTTI %s
 
@@ -48,6 +50,7 @@
 // RUN: %clang -### -c -target x86_64-unknown-unknown -fno-rtti %s 2>&1 | FileCheck -check-prefix=CHECK-NO-RTTI %s
 // RUN: %clang -### -c -target x86_64-unknown-unknown %s 2>&1 | FileCheck -check-prefix=CHECK-RTTI %s
 
+// CHECK-UNUSED: warning: argument unused during compilation: '-fcxx-exceptions'
 // CHECK-SAN-WARN: implicitly disabling vptr sanitizer because rtti wasn't enabled
 // CHECK-SAN-ERROR: invalid argument '-fsanitize=vptr' not allowed with '-fno-rtti'
 // CHECK-EXC-WARN: implicitly enabling rtti for exception handling
