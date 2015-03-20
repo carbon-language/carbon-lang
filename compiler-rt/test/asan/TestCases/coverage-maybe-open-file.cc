@@ -15,6 +15,7 @@
 
 #include <sanitizer/coverage_interface.h>
 
+// FIXME: the code below might not work on Windows.
 int main(int argc, char **argv) {
   int fd = __sanitizer_maybe_open_cov_file("test");
   if (fd > 0) {
