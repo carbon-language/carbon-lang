@@ -1102,13 +1102,14 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
     return getTruncateOrZeroExtend(SZ->getOperand(), Ty);
 
   // trunc(x1+x2+...+xN) --> trunc(x1)+trunc(x2)+...+trunc(xN) if we can
-  // eliminate all the truncates.
+  // eliminate all the truncates, or we replace extensions with truncates.
   if (const SCEVAddExpr *SA = dyn_cast<SCEVAddExpr>(Op)) {
     SmallVector<const SCEV *, 4> Operands;
     bool hasTrunc = false;
     for (unsigned i = 0, e = SA->getNumOperands(); i != e && !hasTrunc; ++i) {
       const SCEV *S = getTruncateExpr(SA->getOperand(i), Ty);
-      hasTrunc = isa<SCEVTruncateExpr>(S);
+      if (!isa<SCEVCastExpr>(SA->getOperand(i)))
+        hasTrunc = isa<SCEVTruncateExpr>(S);
       Operands.push_back(S);
     }
     if (!hasTrunc)
@@ -1117,13 +1118,14 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
   }
 
   // trunc(x1*x2*...*xN) --> trunc(x1)*trunc(x2)*...*trunc(xN) if we can
-  // eliminate all the truncates.
+  // eliminate all the truncates, or we replace other casts with truncates.
   if (const SCEVMulExpr *SM = dyn_cast<SCEVMulExpr>(Op)) {
     SmallVector<const SCEV *, 4> Operands;
     bool hasTrunc = false;
     for (unsigned i = 0, e = SM->getNumOperands(); i != e && !hasTrunc; ++i) {
       const SCEV *S = getTruncateExpr(SM->getOperand(i), Ty);
-      hasTrunc = isa<SCEVTruncateExpr>(S);
+      if (!isa<SCEVCastExpr>(SM->getOperand(i)))
+        hasTrunc = isa<SCEVTruncateExpr>(S);
       Operands.push_back(S);
     }
     if (!hasTrunc)

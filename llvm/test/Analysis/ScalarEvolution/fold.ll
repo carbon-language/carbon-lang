@@ -86,3 +86,15 @@ define void @test6(i8 %x) {
 ; CHECK: -->  (2048 * ((zext i8 %x to i16) /u 8))
   ret void
 }
+
+; PR22960
+define void @test7(i32 %A) {
+; CHECK-LABEL: @test7
+  %B = sext i32 %A to i64
+  %C = zext i32 %A to i64
+  %D = sub i64 %B, %C
+  %E = trunc i64 %D to i16
+; CHECK: %E
+; CHECK-NEXT: -->  0
+  ret void
+}
