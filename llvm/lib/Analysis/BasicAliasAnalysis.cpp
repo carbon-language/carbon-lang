@@ -1526,6 +1526,9 @@ bool BasicAliasAnalysis::isValueEqualInPotentialCycles(const Value *V,
   if (!Inst)
     return true;
 
+  if (VisitedPhiBBs.empty())
+    return true;
+
   if (VisitedPhiBBs.size() > MaxNumPhiBBsValueReachabilityCheck)
     return false;
 
