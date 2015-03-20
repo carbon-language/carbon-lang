@@ -190,21 +190,15 @@ private:
 
   typedef std::vector<CaseRec> CaseRecVector;
 
-  /// The comparison function for sorting the switch case values in the vector.
-  /// WARNING: Case ranges should be disjoint!
-  struct CaseCmp {
-    bool operator()(const Case &C1, const Case &C2) {
-      return C1.Low->getValue().slt(C2.High->getValue());
-    }
-  };
-
   struct CaseBitsCmp {
     bool operator()(const CaseBits &C1, const CaseBits &C2) {
       return C1.Bits > C2.Bits;
     }
   };
 
-  void Clusterify(CaseVector &Cases, const SwitchInst &SI);
+  /// Populate Cases with the cases in SI, clustering adjacent cases with the
+  /// same destination together.
+  void Clusterify(CaseVector &Cases, const SwitchInst *SI);
 
   /// CaseBlock - This structure is used to communicate between
   /// SelectionDAGBuilder and SDISel for the code generation of additional basic

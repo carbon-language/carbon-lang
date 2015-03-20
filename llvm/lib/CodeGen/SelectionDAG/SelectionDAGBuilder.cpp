@@ -2646,44 +2646,41 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
   return true;
 }
 
-/// Clusterify - Transform simple list of Cases into list of CaseRange's
-void SelectionDAGBuilder::Clusterify(CaseVector& Cases,
-                                     const SwitchInst& SI) {
+void SelectionDAGBuilder::Clusterify(CaseVector &Cases, const SwitchInst *SI) {
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
-  // Start with "simple" cases.
-  for (SwitchInst::ConstCaseIt i : SI.cases()) {
-    const BasicBlock *SuccBB = i.getCaseSuccessor();
-    MachineBasicBlock *SMBB = FuncInfo.MBBMap[SuccBB];
 
-    uint32_t ExtraWeight =
-      BPI ? BPI->getEdgeWeight(SI.getParent(), i.getSuccessorIndex()) : 0;
+  // Extract cases from the switch and sort them.
+  typedef std::pair<const ConstantInt*, unsigned> CasePair;
+  std::vector<CasePair> Sorted;
+  Sorted.reserve(SI->getNumCases());
+  for (auto I : SI->cases())
+    Sorted.push_back(std::make_pair(I.getCaseValue(), I.getSuccessorIndex()));
+  std::sort(Sorted.begin(), Sorted.end(), [](CasePair a, CasePair b) {
+    return a.first->getValue().slt(b.first->getValue());
+  });
 
-    Cases.push_back(Case(i.getCaseValue(), i.getCaseValue(),
-                         SMBB, ExtraWeight));
-  }
-  std::sort(Cases.begin(), Cases.end(), CaseCmp());
+  // Merge adjacent cases with the same destination, build Cases vector.
+  assert(Cases.empty() && "Cases should be empty before Clusterify;");
+  Cases.reserve(SI->getNumCases());
+  MachineBasicBlock *PreviousSucc = nullptr;
+  for (CasePair &CP : Sorted) {
+    const ConstantInt *CaseVal = CP.first;
+    unsigned SuccIndex = CP.second;
+    MachineBasicBlock *Succ = FuncInfo.MBBMap[SI->getSuccessor(SuccIndex)];
+    uint32_t Weight = BPI ? BPI->getEdgeWeight(SI->getParent(), SuccIndex) : 0;
 
-  // Merge case into clusters
-  if (Cases.size() >= 2)
-    // Must recompute end() each iteration because it may be
-    // invalidated by erase if we hold on to it
-    for (CaseItr I = Cases.begin(), J = std::next(Cases.begin());
-         J != Cases.end(); ) {
-      const APInt& nextValue = J->Low->getValue();
-      const APInt& currentValue = I->High->getValue();
-      MachineBasicBlock* nextBB = J->BB;
-      MachineBasicBlock* currentBB = I->BB;
-
-      // If the two neighboring cases go to the same destination, merge them
-      // into a single case.
-      if ((nextValue - currentValue == 1) && (currentBB == nextBB)) {
-        I->High = J->High;
-        I->ExtraWeight += J->ExtraWeight;
-        J = Cases.erase(J);
-      } else {
-        I = J++;
-      }
+    if (PreviousSucc == Succ &&
+        (CaseVal->getValue() - Cases.back().High->getValue()) == 1) {
+      // If this case has the same successor and is a neighbour, merge it into
+      // the previous cluster.
+      Cases.back().High = CaseVal;
+      Cases.back().ExtraWeight += Weight;
+    } else {
+      Cases.push_back(Case(CaseVal, CaseVal, Succ, Weight));
     }
+
+    PreviousSucc = Succ;
+  }
 
   DEBUG({
       size_t numCmps = 0;
@@ -2715,7 +2712,7 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   // Create a vector of Cases, sorted so that we can efficiently create a binary
   // search tree from them.
   CaseVector Cases;
-  Clusterify(Cases, SI);
+  Clusterify(Cases, &SI);
 
   // Get the default destination MBB.
   MachineBasicBlock *Default = FuncInfo.MBBMap[SI.getDefaultDest()];
