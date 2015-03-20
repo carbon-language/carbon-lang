@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ExampleLinkingContext.h"
-
 #include "ExampleTargetHandler.h"
 
 using namespace lld;
