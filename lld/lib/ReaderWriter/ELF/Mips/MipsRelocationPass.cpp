@@ -78,6 +78,14 @@ static const uint8_t micromipsPltAtomContent[] = {
   0x02, 0x0f              // move $24, $2
 };
 
+// R6 PLT entry
+static const uint8_t mipsR6PltAAtomContent[] = {
+  0x00, 0x00, 0x0f, 0x3c, // lui   $15, %hi(.got.plt entry)
+  0x00, 0x00, 0xf9, 0x8d, // l[wd] $25, %lo(.got.plt entry)($15)
+  0x09, 0x00, 0x20, 0x03, // jr    $25
+  0x00, 0x00, 0xf8, 0x25  // addiu $24, $15, %lo(.got.plt entry)
+};
+
 // LA25 stub entry
 static const uint8_t mipsLA25AtomContent[] = {
   0x00, 0x00, 0x19, 0x3c, // lui   $25, %hi(func)
@@ -211,6 +219,15 @@ public:
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsPltAAtomContent);
+  }
+};
+
+class PLTR6Atom : public PLTAAtom {
+public:
+  PLTR6Atom(const GOTPLTAtom *got, const File &f) : PLTAAtom(got, f) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(mipsR6PltAAtomContent);
   }
 };
 
@@ -388,6 +405,8 @@ private:
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                       Reference::KindValue refKind) const;
   bool hasPLTEntry(const Atom *atom) const;
+
+  bool isR6Target() const;
 };
 
 template <typename ELFT>
@@ -636,6 +655,16 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
 template <typename ELFT>
 bool RelocationPass<ELFT>::hasPLTEntry(const Atom *atom) const {
   return _pltRegMap.count(atom) || _pltMicroMap.count(atom);
+}
+
+template <typename ELFT> bool RelocationPass<ELFT>::isR6Target() const {
+  switch (_ctx.getMergedELFFlags() & EF_MIPS_ARCH) {
+  case EF_MIPS_ARCH_32R6:
+  case EF_MIPS_ARCH_64R6:
+    return true;
+  default:
+    return false;
+  }
 }
 
 template <typename ELFT>
@@ -938,7 +967,9 @@ const PLTAtom *RelocationPass<ELFT>::getPLTRegEntry(const Atom *a) {
   if (plt != _pltRegMap.end())
     return plt->second;
 
-  auto pa = new (_file._alloc) PLTAAtom(getGOTPLTEntry(a), _file);
+  PLTAAtom *pa = isR6Target()
+                     ? new (_file._alloc) PLTR6Atom(getGOTPLTEntry(a), _file)
+                     : new (_file._alloc) PLTAAtom(getGOTPLTEntry(a), _file);
   _pltRegMap[a] = pa;
   _pltRegVector.push_back(pa);
 
