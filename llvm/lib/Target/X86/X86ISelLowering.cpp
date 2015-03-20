@@ -3951,25 +3951,25 @@ static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
   unsigned Factor = VT.getSizeInBits()/vectorWidth;
   EVT ResultVT = EVT::getVectorVT(*DAG.getContext(), ElVT,
                                   VT.getVectorNumElements()/Factor);
-  
+
   // Extract from UNDEF is UNDEF.
   if (Vec.getOpcode() == ISD::UNDEF)
     return DAG.getUNDEF(ResultVT);
-  
+
   // Extract the relevant vectorWidth bits.  Generate an EXTRACT_SUBVECTOR
   unsigned ElemsPerChunk = vectorWidth / ElVT.getSizeInBits();
-  
+
   // This is the index of the first element of the vectorWidth-bit chunk
   // we want.
   unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / vectorWidth)
                                * ElemsPerChunk);
-  
+
   // If the input is a buildvector just emit a smaller one.
   if (Vec.getOpcode() == ISD::BUILD_VECTOR)
     return DAG.getNode(ISD::BUILD_VECTOR, dl, ResultVT,
                        makeArrayRef(Vec->op_begin() + NormalizedIdxVal,
                                     ElemsPerChunk));
-  
+
   SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
   return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec, VecIdx);
 }
@@ -4005,15 +4005,15 @@ static SDValue InsertSubVector(SDValue Result, SDValue Vec,
   EVT VT = Vec.getValueType();
   EVT ElVT = VT.getVectorElementType();
   EVT ResultVT = Result.getValueType();
-  
+
   // Insert the relevant vectorWidth bits.
   unsigned ElemsPerChunk = vectorWidth/ElVT.getSizeInBits();
-  
+
   // This is the index of the first element of the vectorWidth-bit chunk
   // we want.
   unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits())/vectorWidth)
                                * ElemsPerChunk);
-  
+
   SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
   return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec, VecIdx);
 }
@@ -4027,7 +4027,7 @@ static SDValue InsertSubVector(SDValue Result, SDValue Vec,
 static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
                                   SelectionDAG &DAG, SDLoc dl) {
   assert(Vec.getValueType().is128BitVector() && "Unexpected vector size!");
-  
+
   // For insertion into the zero index (low half) of a 256-bit vector, it is
   // more efficient to generate a blend with immediate instead of an insert*128.
   // We are still creating an INSERT_SUBVECTOR below with an undef node to
@@ -4040,7 +4040,7 @@ static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
     SDValue Undef = DAG.getUNDEF(ResultVT);
     SDValue Vec256 = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Undef,
                                  Vec, ZeroIndex);
-    
+
     // The blend instruction, and therefore its mask, depend on the data type.
     MVT ScalarType = ResultVT.getScalarType().getSimpleVT();
     if (ScalarType.isFloatingPoint()) {
@@ -4051,25 +4051,25 @@ static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
       SDValue Mask = DAG.getConstant(MaskVal, MVT::i8);
       return DAG.getNode(X86ISD::BLENDI, dl, ResultVT, Result, Vec256, Mask);
     }
-    
+
     const X86Subtarget &Subtarget =
     static_cast<const X86Subtarget &>(DAG.getSubtarget());
-    
+
     // AVX2 is needed for 256-bit integer blend support.
     // Integers must be cast to 32-bit because there is only vpblendd;
     // vpblendw can't be used for this because it has a handicapped mask.
-    
+
     // If we don't have AVX2, then cast to float. Using a wrong domain blend
     // is still more efficient than using the wrong domain vinsertf128 that
     // will be created by InsertSubVector().
     MVT CastVT = Subtarget.hasAVX2() ? MVT::v8i32 : MVT::v8f32;
-    
+
     SDValue Mask = DAG.getConstant(0x0f, MVT::i8);
     Vec256 = DAG.getNode(ISD::BITCAST, dl, CastVT, Vec256);
     Vec256 = DAG.getNode(X86ISD::BLENDI, dl, CastVT, Result, Vec256, Mask);
     return DAG.getNode(ISD::BITCAST, dl, ResultVT, Vec256);
   }
-  
+
   return InsertSubVector(Result, Vec, IdxVal, DAG, dl, 128);
 }
 
