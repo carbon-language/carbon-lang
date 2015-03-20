@@ -48,7 +48,7 @@ static ToolChain::RTTIMode CalculateRTTIMode(const ArgList &Args,
 
   // On the PS4, turning on c++ exceptions turns on rtti.
   // We're assuming that, if we see -fexceptions, rtti gets turned on.
-  Arg *Exceptions = Args.getLastArg(
+  Arg *Exceptions = Args.getLastArgNoClaim(
       options::OPT_fcxx_exceptions, options::OPT_fno_cxx_exceptions,
       options::OPT_fexceptions, options::OPT_fno_exceptions);
   if (Exceptions &&

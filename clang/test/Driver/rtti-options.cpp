@@ -3,6 +3,10 @@
 // No warnings/errors should be emitted for unknown, except if combining
 // the vptr sanitizer with -fno-rtti
 
+// Special case: -fcxx-exceptions in C code should warn about unused arguments
+// RUN: %clang -x c -### -c -fcxx-exceptions %s 2>&1 | FileCheck -check-prefix=CHECK-UNUSED %s
+// CHECK-UNUSED: warning: argument unused during compilation: '-fcxx-exceptions'
+
 // RUN: %clang -### -c -fno-rtti -frtti %s 2>&1 | FileCheck -check-prefix=CHECK-RTTI %s
 // RUN: %clang -### -c -frtti -fno-rtti %s 2>&1 | FileCheck -check-prefix=CHECK-NO-RTTI %s
 
