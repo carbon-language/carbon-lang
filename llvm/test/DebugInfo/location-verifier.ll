@@ -29,5 +29,5 @@ attributes #0 = { nounwind ssp uwtable }
 !11 = !{i32 1, !"PIC Level", i32 2}
 !12 = !{!"clang version 3.7.0 "}
 ; An old-style MDLocation should not pass verify.
-; CHECK: DISubprogram does not Verify
+; CHECK: invalid !dbg metadata attachment
 !13 = !{i32 2, i32 2, !4, null}
