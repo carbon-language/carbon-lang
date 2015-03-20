@@ -29,6 +29,7 @@ USEDLIBS = lldbAPI.a \
 	lldbDataFormatters.a \
 	lldbExpression.a \
 	lldbHostCommon.a \
+	lldbInitialize.a \
 	lldbInitAndLog.a \
 	lldbInterpreter.a \
 	lldbPluginABIMacOSX_arm.a \
