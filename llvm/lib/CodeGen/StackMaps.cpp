@@ -19,8 +19,6 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -76,10 +74,21 @@ StackMaps::StackMaps(AsmPrinter &AP) : AP(AP) {
     llvm_unreachable("Unsupported stackmap version!");
 }
 
+/// Go up the super-register chain until we hit a valid dwarf register number.
+static unsigned getDwarfRegNum(unsigned Reg, const TargetRegisterInfo *TRI) {
+  int RegNo = TRI->getDwarfRegNum(Reg, false);
+  for (MCSuperRegIterator SR(Reg, TRI); SR.isValid() && RegNo < 0; ++SR)
+    RegNo = TRI->getDwarfRegNum(*SR, false);
+
+  assert(RegNo >= 0 && "Invalid Dwarf register number.");
+  return (unsigned) RegNo;
+}
+
 MachineInstr::const_mop_iterator
 StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
                         MachineInstr::const_mop_iterator MOE,
                         LocationVec &Locs, LiveOutVec &LiveOuts) const {
+  const TargetRegisterInfo *TRI = AP.MF->getSubtarget().getRegisterInfo();
   if (MOI->isImm()) {
     switch (MOI->getImm()) {
     default: llvm_unreachable("Unrecognized operand type.");
@@ -89,7 +98,8 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
       Size /= 8;
       unsigned Reg = (++MOI)->getReg();
       int64_t Imm = (++MOI)->getImm();
-      Locs.push_back(Location(StackMaps::Location::Direct, Size, Reg, Imm));
+      Locs.push_back(Location(StackMaps::Location::Direct, Size,
+                              getDwarfRegNum(Reg, TRI), Imm));
       break;
     }
     case StackMaps::IndirectMemRefOp: {
@@ -97,7 +107,8 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
       assert(Size > 0 && "Need a valid size for indirect memory locations.");
       unsigned Reg = (++MOI)->getReg();
       int64_t Imm = (++MOI)->getImm();
-      Locs.push_back(Location(StackMaps::Location::Indirect, Size, Reg, Imm));
+      Locs.push_back(Location(StackMaps::Location::Indirect, Size,
+                              getDwarfRegNum(Reg, TRI), Imm));
       break;
     }
     case StackMaps::ConstantOp: {
@@ -122,12 +133,18 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
 
     assert(TargetRegisterInfo::isPhysicalRegister(MOI->getReg()) &&
            "Virtreg operands should have been rewritten before now.");
-    const TargetRegisterClass *RC =
-        AP.MF->getSubtarget().getRegisterInfo()->getMinimalPhysRegClass(
-            MOI->getReg());
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(MOI->getReg());
     assert(!MOI->getSubReg() && "Physical subreg still around.");
+
+    unsigned Offset = 0;
+    unsigned RegNo = getDwarfRegNum(MOI->getReg(), TRI);
+    unsigned LLVMRegNo = TRI->getLLVMRegNum(RegNo, false);
+    unsigned SubRegIdx = TRI->getSubRegIndex(LLVMRegNo, MOI->getReg());
+    if (SubRegIdx)
+      Offset = TRI->getSubRegIdxOffset(SubRegIdx);
+
     Locs.push_back(
-      Location(Location::Register, RC->getSize(), MOI->getReg(), 0));
+      Location(Location::Register, RC->getSize(), RegNo, Offset));
     return ++MOI;
   }
 
@@ -137,14 +154,74 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
   return ++MOI;
 }
 
-/// Go up the super-register chain until we hit a valid dwarf register number.
-static unsigned getDwarfRegNum(unsigned Reg, const TargetRegisterInfo *TRI) {
-  int RegNo = TRI->getDwarfRegNum(Reg, false);
-  for (MCSuperRegIterator SR(Reg, TRI); SR.isValid() && RegNo < 0; ++SR)
-    RegNo = TRI->getDwarfRegNum(*SR, false);
+void StackMaps::print(raw_ostream &OS) {
+  const TargetRegisterInfo *TRI =
+      AP.MF ? AP.MF->getSubtarget().getRegisterInfo() : nullptr;
+  OS << WSMP << "callsites:\n";
+  for (const auto &CSI : CSInfos) {
+    const LocationVec &CSLocs = CSI.Locations;
+    const LiveOutVec &LiveOuts = CSI.LiveOuts;
 
-  assert(RegNo >= 0 && "Invalid Dwarf register number.");
-  return (unsigned) RegNo;
+    OS << WSMP << "callsite " << CSI.ID << "\n";
+    OS << WSMP << "  has " << CSLocs.size() << " locations\n";
+
+    unsigned OperIdx = 0;
+    for (const auto &Loc : CSLocs) {
+      OS << WSMP << "  Loc " << OperIdx << ": ";
+      switch (Loc.LocType) {
+      case Location::Unprocessed:
+        OS << "<Unprocessed operand>";
+        break;
+      case Location::Register:
+        OS << "Register ";
+	if (TRI)
+	  OS << TRI->getName(Loc.Reg);
+	else
+	  OS << Loc.Reg;
+        break;
+      case Location::Direct:
+        OS << "Direct ";
+        if (TRI)
+          OS << TRI->getName(Loc.Reg);
+        else
+          OS << Loc.Reg;
+        if (Loc.Offset)
+          OS << " + " << Loc.Offset;
+        break;
+      case Location::Indirect:
+        OS << "Indirect ";
+        if (TRI)
+          OS << TRI->getName(Loc.Reg);
+        else
+          OS << Loc.Reg;
+        OS << "+" << Loc.Offset;
+        break;
+      case Location::Constant:
+        OS << "Constant " << Loc.Offset;
+        break;
+      case Location::ConstantIndex:
+        OS << "Constant Index " << Loc.Offset;
+        break;
+      }
+      OS << "     [encoding: .byte " << Loc.LocType << ", .byte " << Loc.Size
+         << ", .short " << Loc.Reg << ", .int " << Loc.Offset << "]\n";
+      OperIdx++;
+    }
+
+    OS << WSMP << "  has " << LiveOuts.size() << " live-out registers\n";
+
+    OperIdx = 0;
+    for (const auto &LO : LiveOuts) {
+      OS << WSMP << "  LO " << OperIdx << ": ";
+      if (TRI)
+        OS << TRI->getName(LO.Reg);
+      else
+        OS << LO.Reg;
+      OS << "      [encoding: .short " << LO.RegNo << ", .byte 0, .byte "
+         << LO.Size << "]\n";
+      OperIdx++;
+    }
+  }
 }
 
 /// Create a live-out register record for the given register Reg.
@@ -385,13 +462,11 @@ void StackMaps::emitConstantPoolEntries(MCStreamer &OS) {
 ///   0x5, ConstIndex, Constants[Offset] (large constant)
 void StackMaps::emitCallsiteEntries(MCStreamer &OS,
                                     const TargetRegisterInfo *TRI) {
+  DEBUG(print(dbgs()));
   // Callsite entries.
-  DEBUG(dbgs() << WSMP << "callsites:\n");
   for (const auto &CSI : CSInfos) {
     const LocationVec &CSLocs = CSI.Locations;
     const LiveOutVec &LiveOuts = CSI.LiveOuts;
-
-    DEBUG(dbgs() << WSMP << "callsite " << CSI.ID << "\n");
 
     // Verify stack map entry. It's better to communicate a problem to the
     // runtime than crash in case of in-process compilation. Currently, we do
@@ -413,83 +488,20 @@ void StackMaps::emitCallsiteEntries(MCStreamer &OS,
 
     // Reserved for flags.
     OS.EmitIntValue(0, 2);
-
-    DEBUG(dbgs() << WSMP << "  has " << CSLocs.size() << " locations\n");
-
     OS.EmitIntValue(CSLocs.size(), 2);
 
-    unsigned OperIdx = 0;
     for (const auto &Loc : CSLocs) {
-      unsigned RegNo = 0;
-      int Offset = Loc.Offset;
-      if(Loc.Reg) {
-        RegNo = getDwarfRegNum(Loc.Reg, TRI);
-
-        // If this is a register location, put the subregister byte offset in
-        // the location offset.
-        if (Loc.LocType == Location::Register) {
-          assert(!Loc.Offset && "Register location should have zero offset");
-          unsigned LLVMRegNo = TRI->getLLVMRegNum(RegNo, false);
-          unsigned SubRegIdx = TRI->getSubRegIndex(LLVMRegNo, Loc.Reg);
-          if (SubRegIdx)
-            Offset = TRI->getSubRegIdxOffset(SubRegIdx);
-        }
-      }
-      else {
-        assert(Loc.LocType != Location::Register &&
-               "Missing location register");
-      }
-
-      DEBUG(dbgs() << WSMP << "  Loc " << OperIdx << ": ";
-            switch (Loc.LocType) {
-            case Location::Unprocessed:
-              dbgs() << "<Unprocessed operand>";
-              break;
-            case Location::Register:
-              dbgs() << "Register " << TRI->getName(Loc.Reg);
-              break;
-            case Location::Direct:
-              dbgs() << "Direct " << TRI->getName(Loc.Reg);
-              if (Loc.Offset)
-              dbgs() << " + " << Loc.Offset;
-              break;
-            case Location::Indirect:
-              dbgs() << "Indirect " << TRI->getName(Loc.Reg)
-              << " + " << Loc.Offset;
-              break;
-            case Location::Constant:
-              dbgs() << "Constant " << Loc.Offset;
-              break;
-            case Location::ConstantIndex:
-              dbgs() << "Constant Index " << Loc.Offset;
-              break;
-              }
-            dbgs() << "     [encoding: .byte " << Loc.LocType
-            << ", .byte " << Loc.Size
-            << ", .short " << RegNo
-            << ", .int " << Offset << "]\n";
-            );
-
       OS.EmitIntValue(Loc.LocType, 1);
       OS.EmitIntValue(Loc.Size, 1);
-      OS.EmitIntValue(RegNo, 2);
-      OS.EmitIntValue(Offset, 4);
-      OperIdx++;
+      OS.EmitIntValue(Loc.Reg, 2);
+      OS.EmitIntValue(Loc.Offset, 4);
     }
-
-    DEBUG(dbgs() << WSMP << "  has " << LiveOuts.size()
-                         << " live-out registers\n");
 
     // Num live-out registers and padding to align to 4 byte.
     OS.EmitIntValue(0, 2);
     OS.EmitIntValue(LiveOuts.size(), 2);
 
-    OperIdx = 0;
     for (const auto &LO : LiveOuts) {
-      DEBUG(dbgs() << WSMP << "  LO " << OperIdx << ": "
-                           << TRI->getName(LO.Reg)
-                           << "     [encoding: .short " << LO.RegNo
-                           << ", .byte 0, .byte " << LO.Size << "]\n");
       OS.EmitIntValue(LO.RegNo, 2);
       OS.EmitIntValue(0, 1);
       OS.EmitIntValue(LO.Size, 1);

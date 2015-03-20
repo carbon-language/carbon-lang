@@ -14,6 +14,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Support/Debug.h"
 #include <map>
 #include <vector>
 
@@ -246,6 +247,9 @@ private:
 
   /// \brief Emit the callsite info for each stackmap/patchpoint intrinsic call.
   void emitCallsiteEntries(MCStreamer &OS, const TargetRegisterInfo *TRI);
+
+  void print(raw_ostream &OS);
+  void debug() { print(dbgs()); }
 };
 
 }
