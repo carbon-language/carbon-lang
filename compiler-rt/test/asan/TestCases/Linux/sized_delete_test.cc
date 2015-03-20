@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -Xclang -fdefine-sized-deallocation -Xclang -fsized-deallocation -O0 %s -o %t
+// RUN: %clangxx_asan -fsized-deallocation -O0 %s -o %t
 // RUN:                                         not %run %t scalar 2>&1 | FileCheck %s -check-prefix=SCALAR
 // RUN: ASAN_OPTIONS=new_delete_type_mismatch=1 not %run %t scalar 2>&1 | FileCheck %s -check-prefix=SCALAR
 // RUN:                                         not %run %t array  2>&1 | FileCheck %s -check-prefix=ARRAY
@@ -6,6 +6,7 @@
 // RUN: ASAN_OPTIONS=new_delete_type_mismatch=0     %run %t scalar
 // RUN: ASAN_OPTIONS=new_delete_type_mismatch=0     %run %t array
 
+// FIXME: the following two lines are not true after r232788.
 // Sized-delete is implemented with a weak delete() definition.
 // Weak symbols are kind of broken on Android.
 // XFAIL: android, asan-dynamic-runtime
