@@ -621,7 +621,7 @@ bool CallAnalyzer::visitBinaryOperator(BinaryOperator &I) {
 bool CallAnalyzer::visitLoad(LoadInst &I) {
   Value *SROAArg;
   DenseMap<Value *, int>::iterator CostIt;
-  if (lookupSROAArgAndCost(I.getOperand(0), SROAArg, CostIt)) {
+  if (lookupSROAArgAndCost(I.getPointerOperand(), SROAArg, CostIt)) {
     if (I.isSimple()) {
       accumulateSROACost(CostIt, InlineConstants::InstrCost);
       return true;
@@ -636,7 +636,7 @@ bool CallAnalyzer::visitLoad(LoadInst &I) {
 bool CallAnalyzer::visitStore(StoreInst &I) {
   Value *SROAArg;
   DenseMap<Value *, int>::iterator CostIt;
-  if (lookupSROAArgAndCost(I.getOperand(0), SROAArg, CostIt)) {
+  if (lookupSROAArgAndCost(I.getPointerOperand(), SROAArg, CostIt)) {
     if (I.isSimple()) {
       accumulateSROACost(CostIt, InlineConstants::InstrCost);
       return true;
