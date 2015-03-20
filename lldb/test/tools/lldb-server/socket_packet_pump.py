@@ -3,6 +3,7 @@ import re
 import select
 import threading
 import traceback
+import codecs
 
 def _handle_output_packet_string(packet_contents):
     if (not packet_contents) or (len(packet_contents) < 1):
@@ -16,7 +17,7 @@ def _handle_output_packet_string(packet_contents):
 
 def _dump_queue(the_queue):
     while not the_queue.empty():
-        print the_queue.get(True)
+        print codecs.encode(the_queue.get(True), "string_escape")
         print "\n"
 
 class SocketPacketPump(object):
