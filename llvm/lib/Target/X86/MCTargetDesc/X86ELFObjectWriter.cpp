@@ -48,12 +48,21 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
   if (getEMachine() == ELF::EM_X86_64) {
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
-      default: llvm_unreachable("invalid fixup kind!");
+      default:
+        llvm_unreachable("invalid fixup kind!");
 
-      case FK_Data_8: Type = ELF::R_X86_64_PC64; break;
-      case FK_Data_4: Type = ELF::R_X86_64_PC32; break;
-      case FK_Data_2: Type = ELF::R_X86_64_PC16; break;
-      case FK_Data_1: Type = ELF::R_X86_64_PC8; break;
+      case FK_Data_8:
+        Type = ELF::R_X86_64_PC64;
+        break;
+      case FK_Data_4:
+        Type = ELF::R_X86_64_PC32;
+        break;
+      case FK_Data_2:
+        Type = ELF::R_X86_64_PC16;
+        break;
+      case FK_Data_1:
+        Type = ELF::R_X86_64_PC8;
+        break;
 
       case FK_PCRel_8:
         assert(Modifier == MCSymbolRefExpr::VK_None);
@@ -97,7 +106,8 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       }
     } else {
       switch ((unsigned)Fixup.getKind()) {
-      default: llvm_unreachable("invalid fixup kind!");
+      default:
+        llvm_unreachable("invalid fixup kind!");
       case X86::reloc_global_offset_table8:
         Type = ELF::R_X86_64_GOTPC64;
         break;
@@ -155,15 +165,20 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       case FK_Data_4:
         Type = ELF::R_X86_64_32;
         break;
-      case FK_Data_2: Type = ELF::R_X86_64_16; break;
+      case FK_Data_2:
+        Type = ELF::R_X86_64_16;
+        break;
       case FK_PCRel_1:
-      case FK_Data_1: Type = ELF::R_X86_64_8; break;
+      case FK_Data_1:
+        Type = ELF::R_X86_64_8;
+        break;
       }
     }
   } else if (getEMachine() == ELF::EM_386) {
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
-      default: llvm_unreachable("invalid fixup kind!");
+      default:
+        llvm_unreachable("invalid fixup kind!");
 
       case X86::reloc_global_offset_table:
         Type = ELF::R_386_GOTPC;
@@ -209,7 +224,8 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       }
     } else {
       switch ((unsigned)Fixup.getKind()) {
-      default: llvm_unreachable("invalid fixup kind!");
+      default:
+        llvm_unreachable("invalid fixup kind!");
 
       case X86::reloc_global_offset_table:
         Type = ELF::R_386_GOTPC;
@@ -261,9 +277,13 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
           break;
         }
         break;
-      case FK_Data_2: Type = ELF::R_386_16; break;
+      case FK_Data_2:
+        Type = ELF::R_386_16;
+        break;
       case FK_PCRel_1:
-      case FK_Data_1: Type = ELF::R_386_8; break;
+      case FK_Data_1:
+        Type = ELF::R_386_8;
+        break;
       }
     }
   } else
