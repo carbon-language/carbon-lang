@@ -266,23 +266,26 @@ public:
   void replaceAllUsesWith(MDNode *D);
 };
 
-#define RETURN_FROM_RAW(VALID, DEFAULT)                                        \
+#define RETURN_FROM_RAW(VALID, UNUSED)                                         \
   do {                                                                         \
-    if (auto *N = getRaw())                                                    \
-      return VALID;                                                            \
-    return DEFAULT;                                                            \
+    assert(this->DbgNode && "Expected non-null in accessor");                  \
+    auto *N = getRaw();                                                        \
+    assert(N && "Expected correct subclass in accessor");                      \
+    return VALID;                                                              \
   } while (false)
 #define RETURN_DESCRIPTOR_FROM_RAW(DESC, VALID)                                \
   do {                                                                         \
-    if (auto *N = getRaw())                                                    \
-      return DESC(dyn_cast_or_null<MDNode>(VALID));                            \
-    return DESC(static_cast<const MDNode *>(nullptr));                         \
+    assert(this->DbgNode && "Expected non-null in accessor");                  \
+    auto *N = getRaw();                                                        \
+    assert(N && "Expected correct subclass in accessor");                      \
+    return DESC(dyn_cast_or_null<MDNode>(VALID));                              \
   } while (false)
 #define RETURN_REF_FROM_RAW(REF, VALID)                                        \
   do {                                                                         \
-    if (auto *N = getRaw())                                                    \
-      return REF::get(VALID);                                                  \
-    return REF::get(nullptr);                                                  \
+    assert(this->DbgNode && "Expected non-null in accessor");                  \
+    auto *N = getRaw();                                                        \
+    assert(N && "Expected correct subclass in accessor");                      \
+    return REF::get(VALID);                                                    \
   } while (false)
 
 /// \brief This is used to represent ranges, for array bounds.
