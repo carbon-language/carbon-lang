@@ -1004,6 +1004,11 @@ void AsmPrinter::emitGlobalGOTEquivs() {
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
+  // Set the MachineFunction to nullptr so that we can catch attempted
+  // accesses to MF specific features at the module level and so that
+  // we can conditionalize accesses based on whether or not it is nullptr.
+  MF = nullptr;
+
   // Gather all GOT equivalent globals in the module. We really need two
   // passes over the globals: one to compute and another to avoid its emission
   // in EmitGlobalVariable, otherwise we would not be able to handle cases
