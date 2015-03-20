@@ -246,7 +246,7 @@ private:
   void emitConstantPoolEntries(MCStreamer &OS);
 
   /// \brief Emit the callsite info for each stackmap/patchpoint intrinsic call.
-  void emitCallsiteEntries(MCStreamer &OS, const TargetRegisterInfo *TRI);
+  void emitCallsiteEntries(MCStreamer &OS);
 
   void print(raw_ostream &OS);
   void debug() { print(dbgs()); }

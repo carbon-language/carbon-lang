@@ -460,8 +460,7 @@ void StackMaps::emitConstantPoolEntries(MCStreamer &OS) {
 ///   0x3, Indirect, [Reg + Offset]      (spilled value)
 ///   0x4, Constant, Offset              (small constant)
 ///   0x5, ConstIndex, Constants[Offset] (large constant)
-void StackMaps::emitCallsiteEntries(MCStreamer &OS,
-                                    const TargetRegisterInfo *TRI) {
+void StackMaps::emitCallsiteEntries(MCStreamer &OS) {
   DEBUG(print(dbgs()));
   // Callsite entries.
   for (const auto &CSI : CSInfos) {
@@ -524,7 +523,6 @@ void StackMaps::serializeToStackMapSection() {
 
   MCContext &OutContext = AP.OutStreamer.getContext();
   MCStreamer &OS = AP.OutStreamer;
-  const TargetRegisterInfo *TRI = AP.TM.getSubtargetImpl()->getRegisterInfo();
 
   // Create the section.
   const MCSection *StackMapSection =
@@ -539,7 +537,7 @@ void StackMaps::serializeToStackMapSection() {
   emitStackmapHeader(OS);
   emitFunctionFrameRecords(OS);
   emitConstantPoolEntries(OS);
-  emitCallsiteEntries(OS, TRI);
+  emitCallsiteEntries(OS);
   OS.AddBlankLine();
 
   // Clean up.
