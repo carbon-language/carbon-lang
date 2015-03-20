@@ -95,8 +95,34 @@ def demangle_symbol(symbol):
     return out
 
 
+def is_elf(filename):
+    with open(filename, 'r') as f:
+        magic_bytes = f.read(4)
+    return magic_bytes == '\x7fELF'
+
+
+def is_mach_o(filename):
+    with open(filename, 'r') as f:
+        magic_bytes = f.read(4)
+    return magic_bytes in [
+        '\xfe\xed\xfa\xce',  # MH_MAGIC
+        '\xce\xfa\xed\xfe',  # MH_CIGAM
+        '\xfe\xed\xfa\xcf',  # MH_MAGIC_64
+        '\xcf\xfa\xed\xfe',  # MH_CIGAM_64
+        '\xca\xfe\xba\xbe',  # FAT_MAGIC
+        '\xbe\xba\xfe\xca'   # FAT_CIGAM
+    ]
+
+
+def is_library_file(filename):
+    if sys.platform == 'darwin':
+        return is_mach_o(filename)
+    else:
+        return is_elf(filename)
+
+
 def extract_or_load(filename):
     import sym_check.extract
-    if filename.endswith('.so') or filename.endswith('.dylib'):
+    if is_library_file(filename):
         return sym_check.extract.extract_symbols(filename)
     return read_syms_from_file(filename)
