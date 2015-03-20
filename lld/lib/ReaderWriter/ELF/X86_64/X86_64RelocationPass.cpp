@@ -30,22 +30,21 @@ using namespace lld;
 using namespace lld::elf;
 using namespace llvm::ELF;
 
-namespace {
 // .got values
-const uint8_t x86_64GotAtomContent[8] = { 0 };
+static const uint8_t x86_64GotAtomContent[8] = {0};
 
 // .plt value (entry 0)
-const uint8_t x86_64Plt0AtomContent[16] = {
-  0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
-  0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
-  0x90, 0x90, 0x90, 0x90              // nopnopnop
+static const uint8_t x86_64Plt0AtomContent[16] = {
+    0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
+    0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
+    0x90, 0x90, 0x90, 0x90              // nopnopnop
 };
 
 // .plt values (other entries)
-const uint8_t x86_64PltAtomContent[16] = {
-  0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *gotatom(%rip)
-  0x68, 0x00, 0x00, 0x00, 0x00,       // pushq reloc-index
-  0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[-1]
+static const uint8_t x86_64PltAtomContent[16] = {
+    0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *gotatom(%rip)
+    0x68, 0x00, 0x00, 0x00, 0x00,       // pushq reloc-index
+    0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[-1]
 };
 
 // TLS GD Entry
@@ -54,6 +53,7 @@ static const uint8_t x86_64GotTlsGdAtomContent[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
+namespace {
 /// \brief Atoms that are used by X86_64 dynamic linking
 class X86_64GOTAtom : public GOTAtom {
 public:
