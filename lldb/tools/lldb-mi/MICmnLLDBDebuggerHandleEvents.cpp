@@ -28,6 +28,7 @@
 #include "MICmnLLDBDebuggerHandleEvents.h"
 #include "MICmnResources.h"
 #include "MICmnLog.h"
+#include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
@@ -145,6 +146,11 @@ CMICmnLLDBDebuggerHandleEvents::HandleEvent(const lldb::SBEvent &vEvent, bool &v
     {
         vrbHandledEvent = true;
         bOk = HandleEventSBTarget(vEvent);
+    }
+    else if (lldb::SBCommandInterpreter::EventIsCommandInterpreterEvent(vEvent))
+    {
+        vrbHandledEvent = true;
+        bOk = HandleEventSBCommandInterpreter(vEvent);
     }
 
     return bOk;
@@ -756,8 +762,12 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBCommandInterpreter(const lldb::SBEv
             pEventType = "eBroadcastBitResetPrompt";
             break;
         case lldb::SBCommandInterpreter::eBroadcastBitQuitCommandReceived:
+        {
             pEventType = "eBroadcastBitQuitCommandReceived";
+            const bool bForceExit = true;
+            CMICmnLLDBDebugger::Instance().GetDriver().SetExitApplicationFlag(bForceExit);
             break;
+        }
         case lldb::SBCommandInterpreter::eBroadcastBitAsynchronousOutputData:
             pEventType = "eBroadcastBitAsynchronousOutputData";
             break;

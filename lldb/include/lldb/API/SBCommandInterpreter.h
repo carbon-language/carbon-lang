@@ -94,6 +94,9 @@ public:
     
     static const char *
     GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type);
+
+    static bool
+    EventIsCommandInterpreterEvent (const lldb::SBEvent &event);
     
     bool
     IsValid() const;

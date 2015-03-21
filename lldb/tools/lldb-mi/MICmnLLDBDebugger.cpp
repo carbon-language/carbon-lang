@@ -296,7 +296,7 @@ CMICmnLLDBDebugger::InitSBListener(void)
     eventMask = lldb::SBCommandInterpreter::eBroadcastBitQuitCommandReceived | lldb::SBCommandInterpreter::eBroadcastBitThreadShouldExit |
                 lldb::SBCommandInterpreter::eBroadcastBitAsynchronousOutputData |
                 lldb::SBCommandInterpreter::eBroadcastBitAsynchronousErrorData;
-    bOk = bOk && RegisterForEvent(strDbgId, CMIUtilString(lldb::SBCommandInterpreter::GetBroadcasterClass()), eventMask);
+    bOk = bOk && RegisterForEvent(strDbgId, m_lldbDebugger.GetCommandInterpreter().GetBroadcaster(), eventMask);
 
     return bOk;
 }

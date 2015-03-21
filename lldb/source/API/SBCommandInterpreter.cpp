@@ -20,6 +20,7 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBEvent.h"
 #include "lldb/API/SBExecutionContext.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBTarget.h"
@@ -545,6 +546,12 @@ const char *
 SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type)
 {
     return CommandObject::GetArgumentDescriptionAsCString (arg_type);
+}
+
+bool
+SBCommandInterpreter::EventIsCommandInterpreterEvent (const lldb::SBEvent &event)
+{
+    return strcmp (event.GetBroadcasterClass(), SBCommandInterpreter::GetBroadcasterClass()) == 0;
 }
 
 bool
