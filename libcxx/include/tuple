@@ -846,8 +846,6 @@ struct __ignore_t
 
 namespace { const __ignore_t<unsigned char> ignore = __ignore_t<unsigned char>(); }
 
-template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY reference_wrapper;
-
 template <class _Tp>
 struct __make_tuple_return_impl
 {
