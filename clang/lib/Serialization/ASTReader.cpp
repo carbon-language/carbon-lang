@@ -1,4 +1,4 @@
-//===--- ASTReader.cpp - AST File Reader ----------------------------------===//
+//===-- ASTReader.cpp - AST File Reader ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8617,6 +8617,13 @@ void ASTReader::FinishedDeserializing() {
   --NumCurrentElementsDeserializing;
 
   if (NumCurrentElementsDeserializing == 0) {
+    // Propagate exception specification updates along redeclaration chains.
+    for (auto Update : PendingExceptionSpecUpdates) {
+      auto *FPT = Update.second->getType()->castAs<FunctionProtoType>();
+      SemaObj->UpdateExceptionSpec(Update.second,
+                                   FPT->getExtProtoInfo().ExceptionSpec);
+    }
+
     diagnoseOdrViolations();
 
     // We are not in recursive loading, so it's safe to pass the "interesting"
