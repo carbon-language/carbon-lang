@@ -59,6 +59,7 @@ static const char *const kSanCovWithCheckName = "__sanitizer_cov_with_check";
 static const char *const kSanCovIndirCallName = "__sanitizer_cov_indir_call16";
 static const char *const kSanCovTraceEnter = "__sanitizer_cov_trace_func_enter";
 static const char *const kSanCovTraceBB = "__sanitizer_cov_trace_basic_block";
+static const char *const kSanCovTraceCmp = "__sanitizer_cov_trace_cmp";
 static const char *const kSanCovModuleCtorName = "sancov.module_ctor";
 static const uint64_t    kSanCtorAndDtorPriority = 2;
 
@@ -79,6 +80,12 @@ static cl::opt<bool>
                           cl::desc("Experimental basic-block tracing: insert "
                                    "callbacks at every basic block"),
                           cl::Hidden, cl::init(false));
+
+static cl::opt<bool>
+    ClExperimentalCMPTracing("sanitizer-coverage-experimental-trace-compares",
+                             cl::desc("Experimental tracing of CMP and similar "
+                                      "instructions"),
+                             cl::Hidden, cl::init(false));
 
 // Experimental 8-bit counters used as an additional search heuristic during
 // coverage-guided fuzzing.
@@ -107,8 +114,8 @@ class SanitizerCoverageModule : public ModulePass {
  private:
   void InjectCoverageForIndirectCalls(Function &F,
                                       ArrayRef<Instruction *> IndirCalls);
-  bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks,
-                      ArrayRef<Instruction *> IndirCalls);
+  void InjectTraceForCmp(Function &F, ArrayRef<Instruction *> CmpTraceTargets);
+  bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks);
   void SetNoSanitizeMetada(Instruction *I);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB, bool UseCalls);
   unsigned NumberOfInstrumentedBlocks() {
@@ -119,9 +126,11 @@ class SanitizerCoverageModule : public ModulePass {
   Function *SanCovIndirCallFunction;
   Function *SanCovModuleInit;
   Function *SanCovTraceEnter, *SanCovTraceBB;
+  Function *SanCovTraceCmpFunction;
   InlineAsm *EmptyAsm;
-  Type *IntptrTy;
+  Type *IntptrTy, *Int64Ty;
   LLVMContext *C;
+  const DataLayout *DL;
 
   GlobalVariable *GuardArray;
   GlobalVariable *EightBitCounterArray;
@@ -144,12 +153,13 @@ static Function *checkInterfaceFunction(Constant *FuncOrBitcast) {
 bool SanitizerCoverageModule::runOnModule(Module &M) {
   if (!CoverageLevel) return false;
   C = &(M.getContext());
-  auto &DL = M.getDataLayout();
-  IntptrTy = Type::getIntNTy(*C, DL.getPointerSizeInBits());
+  DL = &M.getDataLayout();
+  IntptrTy = Type::getIntNTy(*C, DL->getPointerSizeInBits());
   Type *VoidTy = Type::getVoidTy(*C);
   IRBuilder<> IRB(*C);
   Type *Int8PtrTy = PointerType::getUnqual(IRB.getInt8Ty());
   Type *Int32PtrTy = PointerType::getUnqual(IRB.getInt32Ty());
+  Int64Ty = IRB.getInt64Ty();
 
   Function *CtorFunc =
       Function::Create(FunctionType::get(VoidTy, false),
@@ -163,6 +173,9 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
       M.getOrInsertFunction(kSanCovWithCheckName, VoidTy, Int32PtrTy, nullptr));
   SanCovIndirCallFunction = checkInterfaceFunction(M.getOrInsertFunction(
       kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
+  SanCovTraceCmpFunction = checkInterfaceFunction(M.getOrInsertFunction(
+      kSanCovTraceCmp, VoidTy, Int64Ty, Int64Ty, Int64Ty, nullptr));
+
   SanCovModuleInit = checkInterfaceFunction(M.getOrInsertFunction(
       kSanCovModuleInitName, Type::getVoidTy(*C), Int32PtrTy, IntptrTy,
       Int8PtrTy, Int8PtrTy, nullptr));
@@ -252,23 +265,28 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
     SplitAllCriticalEdges(F);
   SmallVector<Instruction*, 8> IndirCalls;
   SmallVector<BasicBlock*, 16> AllBlocks;
+  SmallVector<Instruction*, 8> CmpTraceTargets;
   for (auto &BB : F) {
     AllBlocks.push_back(&BB);
-    if (CoverageLevel >= 4)
-      for (auto &Inst : BB) {
+    for (auto &Inst : BB) {
+      if (CoverageLevel >= 4) {
         CallSite CS(&Inst);
         if (CS && !CS.getCalledFunction())
           IndirCalls.push_back(&Inst);
       }
+      if (ClExperimentalCMPTracing)
+        if (isa<ICmpInst>(&Inst))
+          CmpTraceTargets.push_back(&Inst);
+    }
   }
-  InjectCoverage(F, AllBlocks, IndirCalls);
+  InjectCoverage(F, AllBlocks);
+  InjectCoverageForIndirectCalls(F, IndirCalls);
+  InjectTraceForCmp(F, CmpTraceTargets);
   return true;
 }
 
-bool
-SanitizerCoverageModule::InjectCoverage(Function &F,
-                                        ArrayRef<BasicBlock *> AllBlocks,
-                                        ArrayRef<Instruction *> IndirCalls) {
+bool SanitizerCoverageModule::InjectCoverage(Function &F,
+                                             ArrayRef<BasicBlock *> AllBlocks) {
   if (!CoverageLevel) return false;
 
   if (CoverageLevel == 1) {
@@ -278,7 +296,6 @@ SanitizerCoverageModule::InjectCoverage(Function &F,
       InjectCoverageAtBlock(F, *BB,
                             ClCoverageBlockThreshold < AllBlocks.size());
   }
-  InjectCoverageForIndirectCalls(F, IndirCalls);
   return true;
 }
 
@@ -307,6 +324,26 @@ void SanitizerCoverageModule::InjectCoverageForIndirectCalls(
     IRB.CreateCall2(SanCovIndirCallFunction,
                     IRB.CreatePointerCast(Callee, IntptrTy),
                     IRB.CreatePointerCast(CalleeCache, IntptrTy));
+  }
+}
+
+void SanitizerCoverageModule::InjectTraceForCmp(
+    Function &F, ArrayRef<Instruction *> CmpTraceTargets) {
+  if (!ClExperimentalCMPTracing) return;
+  for (auto I : CmpTraceTargets) {
+    if (ICmpInst *ICMP = dyn_cast<ICmpInst>(I)) {
+      IRBuilder<> IRB(ICMP);
+      Value *A0 = ICMP->getOperand(0);
+      Value *A1 = ICMP->getOperand(1);
+      if (!A0->getType()->isIntegerTy()) continue;
+      uint64_t TypeSize = DL->getTypeStoreSizeInBits(A0->getType());
+      // __sanitizer_cov_indir_call((type_size << 32) | predicate, A0, A1);
+      IRB.CreateCall3(
+          SanCovTraceCmpFunction,
+          ConstantInt::get(Int64Ty, (TypeSize << 32) | ICMP->getPredicate()),
+          IRB.CreateIntCast(A0, Int64Ty, true),
+          IRB.CreateIntCast(A1, Int64Ty, true));
+    }
   }
 }
 
