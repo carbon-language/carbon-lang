@@ -22,20 +22,13 @@ namespace llvm {
 
 class formatted_raw_ostream;
 
-class CPPSubtarget : public TargetSubtargetInfo {
-};
-
 struct CPPTargetMachine : public TargetMachine {
   CPPTargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
                    const TargetOptions &Options, Reloc::Model RM,
                    CodeModel::Model CM, CodeGenOpt::Level OL)
-      : TargetMachine(T, "", TT, CPU, FS, Options), Subtarget() {}
-
-private:
-  CPPSubtarget Subtarget;
+      : TargetMachine(T, "", TT, CPU, FS, Options) {}
 
 public:
-  const CPPSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   bool addPassesToEmitFile(PassManagerBase &PM, formatted_raw_ostream &Out,
                            CodeGenFileType FileType, bool DisableVerify,
                            AnalysisID StartAfter,

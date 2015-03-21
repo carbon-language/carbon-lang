@@ -46,7 +46,7 @@ public:
 
   TargetIRAnalysis getTargetIRAnalysis() override;
 
-  const MipsSubtarget *getSubtargetImpl() const override {
+  const MipsSubtarget *getSubtargetImpl() const {
     if (Subtarget)
       return Subtarget;
     return &DefaultSubtarget;

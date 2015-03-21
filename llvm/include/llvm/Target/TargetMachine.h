@@ -108,11 +108,8 @@ public:
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtargetInfo-derived member variable.
-  virtual const TargetSubtargetInfo *getSubtargetImpl() const {
-    return nullptr;
-  }
   virtual const TargetSubtargetInfo *getSubtargetImpl(const Function &) const {
-    return getSubtargetImpl();
+    return nullptr;
   }
   virtual TargetLoweringObjectFile *getObjFileLowering() const {
     return nullptr;
@@ -121,9 +118,6 @@ public:
   /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtargetInfo.  In debug builds, it verifies that the object being
   /// returned is of the correct type.
-  template<typename STC> const STC &getSubtarget() const {
-    return *static_cast<const STC*>(getSubtargetImpl());
-  }
   template <typename STC> const STC &getSubtarget(const Function &F) const {
     return *static_cast<const STC*>(getSubtargetImpl(F));
   }

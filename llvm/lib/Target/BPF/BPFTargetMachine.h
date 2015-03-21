@@ -27,7 +27,10 @@ public:
                    const TargetOptions &Options, Reloc::Model RM,
                    CodeModel::Model CM, CodeGenOpt::Level OL);
 
-  const BPFSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const BPFSubtarget *getSubtargetImpl() const { return &Subtarget; }
+  const BPFSubtarget *getSubtargetImpl(const Function &) const override {
+    return &Subtarget;
+  }
 
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 

@@ -32,7 +32,7 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
   ~HexagonTargetMachine() override;
-  const HexagonSubtarget *getSubtargetImpl() const override {
+  const HexagonSubtarget *getSubtargetImpl(const Function &) const override {
     return &Subtarget;
   }
   static unsigned getModuleMatchQuality(const Module &M);

@@ -33,7 +33,8 @@ public:
                        CodeGenOpt::Level OL);
   ~SystemZTargetMachine() override;
 
-  const SystemZSubtarget *getSubtargetImpl() const override {
+  const SystemZSubtarget *getSubtargetImpl() const { return &Subtarget; }
+  const SystemZSubtarget *getSubtargetImpl(const Function &) const override {
     return &Subtarget;
   }
   // Override LLVMTargetMachine

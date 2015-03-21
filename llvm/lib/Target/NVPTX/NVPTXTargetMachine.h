@@ -39,7 +39,10 @@ public:
                      CodeModel::Model CM, CodeGenOpt::Level OP, bool is64bit);
 
   ~NVPTXTargetMachine() override;
-  const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const NVPTXSubtarget *getSubtargetImpl(const Function &) const override {
+    return &Subtarget;
+  }
+  const NVPTXSubtarget *getSubtargetImpl() const { return &Subtarget; }
   bool is64Bit() const { return is64bit; }
   NVPTX::DrvInterface getDrvInterface() const { return drvInterface; }
   ManagedStringPool *getManagedStrPool() const {

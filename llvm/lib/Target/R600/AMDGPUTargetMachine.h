@@ -42,7 +42,8 @@ public:
                       CodeModel::Model CM, CodeGenOpt::Level OL);
   ~AMDGPUTargetMachine();
 
-  const AMDGPUSubtarget *getSubtargetImpl() const override {
+  const AMDGPUSubtarget *getSubtargetImpl() const { return &Subtarget; }
+  const AMDGPUSubtarget *getSubtargetImpl(const Function &) const override {
     return &Subtarget;
   }
   const AMDGPUIntrinsicInfo *getIntrinsicInfo() const override {

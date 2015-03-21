@@ -44,7 +44,7 @@ public:
                        bool isLittle);
   ~ARMBaseTargetMachine() override;
 
-  const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const ARMSubtarget *getSubtargetImpl() const { return &Subtarget; }
   const ARMSubtarget *getSubtargetImpl(const Function &F) const override;
   bool isLittleEndian() const { return isLittle; }
 

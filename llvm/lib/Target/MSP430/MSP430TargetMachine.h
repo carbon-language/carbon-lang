@@ -34,7 +34,7 @@ public:
                       CodeGenOpt::Level OL);
   ~MSP430TargetMachine() override;
 
-  const MSP430Subtarget *getSubtargetImpl() const override {
+  const MSP430Subtarget *getSubtargetImpl(const Function &F) const override {
     return &Subtarget;
   }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

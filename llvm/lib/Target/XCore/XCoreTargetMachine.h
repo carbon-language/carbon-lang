@@ -29,7 +29,10 @@ public:
                      CodeGenOpt::Level OL);
   ~XCoreTargetMachine() override;
 
-  const XCoreSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const XCoreSubtarget *getSubtargetImpl() const { return &Subtarget; }
+  const XCoreSubtarget *getSubtargetImpl(const Function &) const override {
+    return &Subtarget;
+  }
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
