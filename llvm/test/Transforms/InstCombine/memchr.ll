@@ -9,6 +9,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 @newlines = constant [3 x i8] c"\0D\0A\00"
 @single = constant [2 x i8] c"\1F\00"
 @spaces = constant [4 x i8] c" \0D\0A\00"
+@negative = constant [3 x i8] c"\FF\FE\00"
 @chp = global i8* zeroinitializer
 
 declare i8* @memchr(i8*, i32, i32)
@@ -183,6 +184,17 @@ define i1 @test14(i32 %C) {
 ; CHECK-NEXT: ret
 
   %dst = call i8* @memchr(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @single, i64 0, i64 0), i32 %C, i32 1)
+  %cmp = icmp ne i8* %dst, null
+  ret i1 %cmp
+}
+
+define i1 @test15(i32 %C) {
+; CHECK-LABEL: @test15
+; CHECK-NEXT: %dst = call i8* @memchr(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @negative, i32 0, i32 0), i32 %C, i32 3)
+; CHECK-NEXT: %cmp = icmp ne i8* %dst, null
+; CHECK-NEXT: ret i1 %cmp
+
+  %dst = call i8* @memchr(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @negative, i64 0, i64 0), i32 %C, i32 3)
   %cmp = icmp ne i8* %dst, null
   ret i1 %cmp
 }

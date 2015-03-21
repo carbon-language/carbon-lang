@@ -782,7 +782,9 @@ Value *LibCallSimplifier::optimizeMemChr(CallInst *CI, IRBuilder<> &B) {
   // memchr("\r\n", C, 2) != nullptr -> (C & ((1 << '\r') | (1 << '\n'))) != 0
   //   after bounds check.
   if (!CharC && !Str.empty() && isOnlyUsedInZeroEqualityComparison(CI)) {
-    unsigned char Max = *std::max_element(Str.begin(), Str.end());
+    unsigned char Max =
+        *std::max_element(reinterpret_cast<const unsigned char *>(Str.begin()),
+                          reinterpret_cast<const unsigned char *>(Str.end()));
 
     // Make sure the bit field we're about to create fits in a register on the
     // target.
