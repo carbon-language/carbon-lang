@@ -23,28 +23,6 @@ define void @test1() {
   ret void
 }
 
-; DSE across seq_cst load (allowed)
-define i32 @test2() {
-; CHECK-LABEL: test2
-; CHECK-NOT: store i32 0
-; CHECK: store i32 1
-  store i32 0, i32* @x
-  %x = load atomic i32, i32* @y seq_cst, align 4
-  store i32 1, i32* @x
-  ret i32 %x
-}
-
-; DSE across seq_cst store (allowed)
-define void @test3() {
-; CHECK-LABEL: test3
-; CHECK-NOT: store i32 0
-; CHECK: store atomic i32 2
-  store i32 0, i32* @x
-  store atomic i32 2, i32* @y seq_cst, align 4
-  store i32 1, i32* @x
-  ret void
-}
-
 ; DSE remove unordered store (allowed)
 define void @test4() {
 ; CHECK-LABEL: test4
@@ -139,30 +117,6 @@ define void @test12() {
   store atomic i32 42, i32* @y monotonic, align 4
   store atomic i32 1, i32* @x monotonic, align 4
   ret void
-}
-
-; DSE is allowed across a pair of an atomic read and then write.
-define i32 @test13() {
-; CHECK-LABEL: test13
-; CHECK-NOT: store i32 0
-; CHECK: store i32 1
-  store i32 0, i32* @x
-  %x = load atomic i32, i32* @y seq_cst, align 4
-  store atomic i32 %x, i32* @y seq_cst, align 4
-  store i32 1, i32* @x
-  ret i32 %x
-}
-
-; Same if it is acquire-release instead of seq_cst/seq_cst
-define i32 @test14() {
-; CHECK-LABEL: test14
-; CHECK-NOT: store i32 0
-; CHECK: store i32 1
-  store i32 0, i32* @x
-  %x = load atomic i32, i32* @y acquire, align 4
-  store atomic i32 %x, i32* @y release, align 4
-  store i32 1, i32* @x
-  ret i32 %x
 }
 
 ; But DSE is not allowed across a release-acquire pair.

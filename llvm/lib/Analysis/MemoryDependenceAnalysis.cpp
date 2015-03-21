@@ -407,7 +407,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
   // by every program that can detect any optimisation of that kind: either
   // it is racy (undefined) or there is a release followed by an acquire
   // between the pair of accesses under consideration.
-  bool HasSeenAcquire = false;
 
   if (isLoad && QueryInst) {
     LoadInst *LI = dyn_cast<LoadInst>(QueryInst);
@@ -468,11 +467,11 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       
       // Atomic loads have complications involved.
       // A Monotonic (or higher) load is OK if the query inst is itself not atomic.
-      // An Acquire (or higher) load sets the HasSeenAcquire flag, so that any
-      //   release store will know to return getClobber.
       // FIXME: This is overly conservative.
       if (LI->isAtomic() && LI->getOrdering() > Unordered) {
         if (!QueryInst)
+          return MemDepResult::getClobber(LI);
+        if (LI->getOrdering() != Monotonic)
           return MemDepResult::getClobber(LI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst)) {
           if (!QueryLI->isSimple())
@@ -483,9 +482,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         } else if (QueryInst->mayReadOrWriteMemory()) {
           return MemDepResult::getClobber(LI);
         }
-
-        if (isAtLeastAcquire(LI->getOrdering()))
-          HasSeenAcquire = true;
       }
 
       AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
@@ -545,11 +541,11 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // Atomic stores have complications involved.
       // A Monotonic store is OK if the query inst is itself not atomic.
-      // A Release (or higher) store further requires that no acquire load
-      //   has been seen.
       // FIXME: This is overly conservative.
       if (!SI->isUnordered()) {
         if (!QueryInst)
+          return MemDepResult::getClobber(SI);
+        if (SI->getOrdering() != Monotonic)
           return MemDepResult::getClobber(SI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst)) {
           if (!QueryLI->isSimple())
@@ -560,9 +556,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         } else if (QueryInst->mayReadOrWriteMemory()) {
           return MemDepResult::getClobber(SI);
         }
-
-        if (HasSeenAcquire && isAtLeastRelease(SI->getOrdering()))
-          return MemDepResult::getClobber(SI);
       }
 
       // FIXME: this is overly conservative.
