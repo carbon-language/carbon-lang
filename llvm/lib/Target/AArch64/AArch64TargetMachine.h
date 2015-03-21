@@ -24,7 +24,6 @@ namespace llvm {
 class AArch64TargetMachine : public LLVMTargetMachine {
 protected:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
-  AArch64Subtarget Subtarget;
   mutable StringMap<std::unique_ptr<AArch64Subtarget>> SubtargetMap;
 
 public:
@@ -34,10 +33,6 @@ public:
                        CodeGenOpt::Level OL, bool IsLittleEndian);
 
   ~AArch64TargetMachine() override;
-
-  const AArch64Subtarget *getSubtargetImpl() const override {
-    return &Subtarget;
-  }
   const AArch64Subtarget *getSubtargetImpl(const Function &F) const override;
 
   // Pass Pipeline Configuration
