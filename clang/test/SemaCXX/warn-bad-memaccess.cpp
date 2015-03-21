@@ -21,7 +21,7 @@ public:
   void foo() {}
 } c1;
 
-struct X1 { virtual void f(); } x1;
+struct X1 { virtual void f(); } x1, x1arr[2];
 struct X2 : virtual S1 {} x2;
 
 struct ContainsDynamic { X1 dynamic; } contains_dynamic;
@@ -33,6 +33,10 @@ void test_warn() {
   memset(&x1, 0, sizeof x1); // \
       // expected-warning {{destination for this 'memset' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
+  memset(x1arr, 0, sizeof x1arr); // \
+      // expected-warning {{destination for this 'memset' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  memset((void*)x1arr, 0, sizeof x1arr);
   memset(&x2, 0, sizeof x2); // \
       // expected-warning {{destination for this 'memset' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}

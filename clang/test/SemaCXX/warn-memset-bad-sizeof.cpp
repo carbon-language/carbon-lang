@@ -95,9 +95,11 @@ void f(Mat m, const Foo& const_foo, char *buffer) {
 
   int iarr[14];
   memset(&iarr[0], 0, sizeof iarr);
+  memset(iarr, 0, sizeof iarr);
 
   int* iparr[14];
   memset(&iparr[0], 0, sizeof iparr);
+  memset(iparr, 0, sizeof iparr);
 
   memset(m, 0, sizeof(Mat));
 

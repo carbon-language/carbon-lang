@@ -4788,6 +4788,8 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           break;
         }
       }
+    } else if (DestTy->isArrayType()) {
+      PointeeTy = DestTy;
     }
 
     if (PointeeTy == QualType())
