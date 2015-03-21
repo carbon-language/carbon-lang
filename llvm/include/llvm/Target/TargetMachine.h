@@ -124,8 +124,8 @@ public:
   template<typename STC> const STC &getSubtarget() const {
     return *static_cast<const STC*>(getSubtargetImpl());
   }
-  template <typename STC> const STC &getSubtarget(const Function &) const {
-    return *static_cast<const STC*>(getSubtargetImpl());
+  template <typename STC> const STC &getSubtarget(const Function &F) const {
+    return *static_cast<const STC*>(getSubtargetImpl(F));
   }
 
   /// getDataLayout - This method returns a pointer to the DataLayout for
