@@ -745,6 +745,44 @@ Value *LibCallSimplifier::optimizeStrStr(CallInst *CI, IRBuilder<> &B) {
   return nullptr;
 }
 
+Value *LibCallSimplifier::optimizeMemChr(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+  FunctionType *FT = Callee->getFunctionType();
+  if (FT->getNumParams() != 3 || !FT->getParamType(0)->isPointerTy() ||
+      !FT->getParamType(1)->isIntegerTy(32) ||
+      !FT->getParamType(2)->isIntegerTy() ||
+      !FT->getReturnType()->isPointerTy())
+    return nullptr;
+
+  Value *SrcStr = CI->getArgOperand(0);
+  ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
+  ConstantInt *LenC = dyn_cast<ConstantInt>(CI->getArgOperand(2));
+
+  // memchr(x, y, 0) -> null
+  if (LenC && LenC->isNullValue())
+    return Constant::getNullValue(CI->getType());
+
+  // Check if all arguments are constants.  If so, we can constant fold.
+  StringRef Str;
+  if (!CharC || !LenC ||
+      !getConstantStringInfo(SrcStr, Str, /*Offset=*/0,
+                             /*TrimAtNul=*/false))
+    return nullptr;
+
+  // Truncate the string to LenC. If Str is smaller than LenC we will still only
+  // scan the string, as reading past the end of it is undefined and we can just
+  // return null if we don't find the char.
+  Str = Str.substr(0, LenC->getZExtValue());
+
+  // Compute the offset.
+  size_t I = Str.find(CharC->getSExtValue() & 0xFF);
+  if (I == StringRef::npos) // Didn't find the char.  memchr returns null.
+    return Constant::getNullValue(CI->getType());
+
+  // memchr(s+n,c,l) -> gep(s+n+i,c)
+  return B.CreateGEP(SrcStr, B.getInt64(I), "memchr");
+}
+
 Value *LibCallSimplifier::optimizeMemCmp(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   FunctionType *FT = Callee->getFunctionType();
@@ -1852,6 +1890,8 @@ Value *LibCallSimplifier::optimizeStringMemoryLibCall(CallInst *CI,
       return optimizeStrCSpn(CI, Builder);
     case LibFunc::strstr:
       return optimizeStrStr(CI, Builder);
+    case LibFunc::memchr:
+      return optimizeMemChr(CI, Builder);
     case LibFunc::memcmp:
       return optimizeMemCmp(CI, Builder);
     case LibFunc::memcpy:
