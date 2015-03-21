@@ -222,12 +222,10 @@ HostInfoLinux::GetProgramFileSpec()
 }
 
 bool
-HostInfoLinux::ComputeSharedLibraryDirectory(FileSpec &file_spec)
+HostInfoLinux::ComputeSupportExeDirectory(FileSpec &file_spec)
 {
-    if (HostInfoPosix::ComputeSharedLibraryDirectory(file_spec))
-        return true;
     file_spec.GetDirectory() = GetProgramFileSpec().GetDirectory();
-    return (bool)file_spec.GetDirectory();
+    return static_cast<bool>(file_spec.GetDirectory());
 }
 
 bool

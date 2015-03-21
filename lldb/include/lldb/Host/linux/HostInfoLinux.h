@@ -40,7 +40,7 @@ class HostInfoLinux : public HostInfoPosix
     static FileSpec GetProgramFileSpec();
 
   protected:
-    static bool ComputeSharedLibraryDirectory(FileSpec &file_spec);
+    static bool ComputeSupportExeDirectory(FileSpec &file_spec);
     static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);
     static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
