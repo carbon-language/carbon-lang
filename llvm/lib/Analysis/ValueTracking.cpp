@@ -2592,7 +2592,7 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
   // Look through bitcast instructions and geps.
   V = V->stripPointerCasts();
 
-  // If the value is a GEP instructionor  constant expression, treat it as an
+  // If the value is a GEP instruction or constant expression, treat it as an
   // offset.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
     // Make sure the GEP has exactly three arguments.
@@ -2619,7 +2619,8 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
       StartIdx = CI->getZExtValue();
     else
       return false;
-    return getConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset);
+    return getConstantStringInfo(GEP->getOperand(0), Str, StartIdx + Offset,
+                                 TrimAtNul);
   }
 
   // The GEP instruction, constant or instruction, must reference a global
