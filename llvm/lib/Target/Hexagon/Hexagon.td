@@ -28,10 +28,10 @@ def ArchV5:  SubtargetFeature<"v5",  "HexagonArchVersion", "V5",  "Hexagon V5">;
 //===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasV5T                      : Predicate<"HST.hasV5TOps()">;
-def NoV5T                       : Predicate<"!HST.hasV5TOps()">;
-def UseMEMOP                    : Predicate<"HST.useMemOps()">;
-def IEEERndNearV5T              : Predicate<"HST.modeIEEERndNear()">;
+def HasV5T                      : Predicate<"HST->hasV5TOps()">;
+def NoV5T                       : Predicate<"!HST->hasV5TOps()">;
+def UseMEMOP                    : Predicate<"HST->useMemOps()">;
+def IEEERndNearV5T              : Predicate<"HST->modeIEEERndNear()">;
 
 //===----------------------------------------------------------------------===//
 // Classes used for relation maps.
