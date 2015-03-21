@@ -186,8 +186,7 @@ void NVPTXPassConfig::addIRPasses() {
 }
 
 bool NVPTXPassConfig::addInstSelector() {
-  const NVPTXSubtarget &ST =
-    getTM<NVPTXTargetMachine>().getSubtarget<NVPTXSubtarget>();
+  const NVPTXSubtarget &ST = *getTM<NVPTXTargetMachine>().getSubtargetImpl();
 
   addPass(createLowerAggrCopies());
   addPass(createAllocaHoisting());
