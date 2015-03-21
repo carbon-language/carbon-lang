@@ -1356,7 +1356,10 @@ class OMPLinearClause : public OMPVarListClause<OMPLinearClause> {
   SourceLocation ColonLoc;
 
   /// \brief Sets the linear step for clause.
-  void setStep(Expr *Step) { *varlist_end() = Step; }
+  void setStep(Expr *Step) { *(getFinals().end()) = Step; }
+
+  /// \brief Sets the expression to calculate linear step for clause.
+  void setCalcStep(Expr *CalcStep) { *(getFinals().end() + 1) = CalcStep; }
 
   /// \brief Build 'linear' clause with given number of variables \a NumVars.
   ///
@@ -1383,6 +1386,46 @@ class OMPLinearClause : public OMPVarListClause<OMPLinearClause> {
                                           NumVars),
         ColonLoc(SourceLocation()) {}
 
+  /// \brief Gets the list of initial values for linear variables.
+  ///
+  /// There are NumVars expressions with initial values allocated after the
+  /// varlist, they are followed by NumVars update expressions (used to update
+  /// the linear variable's value on current iteration) and they are followed by
+  /// NumVars final expressions (used to calculate the linear variable's
+  /// value after the loop body). After these lists, there are 2 helper
+  /// expressions - linear step and a helper to calculate it before the
+  /// loop body (used when the linear step is not constant):
+  ///
+  /// { Vars[] /* in OMPVarListClause */; Inits[]; Updates[]; Finals[];
+  ///   Step; CalcStep; }
+  ///
+  MutableArrayRef<Expr *> getInits() {
+    return MutableArrayRef<Expr *>(varlist_end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getInits() const {
+    return llvm::makeArrayRef(varlist_end(), varlist_size());
+  }
+
+  /// \brief Sets the list of update expressions for linear variables.
+  MutableArrayRef<Expr *> getUpdates() {
+    return MutableArrayRef<Expr *>(getInits().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getUpdates() const {
+    return llvm::makeArrayRef(getInits().end(), varlist_size());
+  }
+
+  /// \brief Sets the list of final update expressions for linear variables.
+  MutableArrayRef<Expr *> getFinals() {
+    return MutableArrayRef<Expr *>(getUpdates().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getFinals() const {
+    return llvm::makeArrayRef(getUpdates().end(), varlist_size());
+  }
+
+  /// \brief Sets the list of the initial values for linear variables.
+  /// \param IL List of expressions.
+  void setInits(ArrayRef<Expr *> IL);
+
 public:
   /// \brief Creates clause with a list of variables \a VL and a linear step
   /// \a Step.
@@ -1393,11 +1436,14 @@ public:
   /// \param ColonLoc Location of ':'.
   /// \param EndLoc Ending location of the clause.
   /// \param VL List of references to the variables.
+  /// \param IL List of initial values for the variables.
   /// \param Step Linear step.
+  /// \param CalcStep Calculation of the linear step.
   static OMPLinearClause *Create(const ASTContext &C, SourceLocation StartLoc,
                                  SourceLocation LParenLoc,
                                  SourceLocation ColonLoc, SourceLocation EndLoc,
-                                 ArrayRef<Expr *> VL, Expr *Step);
+                                 ArrayRef<Expr *> VL, ArrayRef<Expr *> IL,
+                                 Expr *Step, Expr *CalcStep);
 
   /// \brief Creates an empty clause with the place for \a NumVars variables.
   ///
@@ -1412,13 +1458,61 @@ public:
   SourceLocation getColonLoc() const { return ColonLoc; }
 
   /// \brief Returns linear step.
-  Expr *getStep() { return *varlist_end(); }
+  Expr *getStep() { return *(getFinals().end()); }
   /// \brief Returns linear step.
-  const Expr *getStep() const { return *varlist_end(); }
+  const Expr *getStep() const { return *(getFinals().end()); }
+  /// \brief Returns expression to calculate linear step.
+  Expr *getCalcStep() { return *(getFinals().end() + 1); }
+  /// \brief Returns expression to calculate linear step.
+  const Expr *getCalcStep() const { return *(getFinals().end() + 1); }
+
+  /// \brief Sets the list of update expressions for linear variables.
+  /// \param UL List of expressions.
+  void setUpdates(ArrayRef<Expr *> UL);
+
+  /// \brief Sets the list of final update expressions for linear variables.
+  /// \param FL List of expressions.
+  void setFinals(ArrayRef<Expr *> FL);
+
+  typedef MutableArrayRef<Expr *>::iterator inits_iterator;
+  typedef ArrayRef<const Expr *>::iterator inits_const_iterator;
+  typedef llvm::iterator_range<inits_iterator> inits_range;
+  typedef llvm::iterator_range<inits_const_iterator> inits_const_range;
+
+  inits_range inits() {
+    return inits_range(getInits().begin(), getInits().end());
+  }
+  inits_const_range inits() const {
+    return inits_const_range(getInits().begin(), getInits().end());
+  }
+
+  typedef MutableArrayRef<Expr *>::iterator updates_iterator;
+  typedef ArrayRef<const Expr *>::iterator updates_const_iterator;
+  typedef llvm::iterator_range<updates_iterator> updates_range;
+  typedef llvm::iterator_range<updates_const_iterator> updates_const_range;
+
+  updates_range updates() {
+    return updates_range(getUpdates().begin(), getUpdates().end());
+  }
+  updates_const_range updates() const {
+    return updates_const_range(getUpdates().begin(), getUpdates().end());
+  }
+
+  typedef MutableArrayRef<Expr *>::iterator finals_iterator;
+  typedef ArrayRef<const Expr *>::iterator finals_const_iterator;
+  typedef llvm::iterator_range<finals_iterator> finals_range;
+  typedef llvm::iterator_range<finals_const_iterator> finals_const_range;
+
+  finals_range finals() {
+    return finals_range(getFinals().begin(), getFinals().end());
+  }
+  finals_const_range finals() const {
+    return finals_const_range(getFinals().begin(), getFinals().end());
+  }
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end() + 1));
+                     reinterpret_cast<Stmt **>(getFinals().end() + 2));
   }
 
   static bool classof(const OMPClause *T) {

@@ -266,6 +266,13 @@ void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &S,
   for (auto I : S.updates()) {
     EmitIgnoredExpr(I);
   }
+  // Update the linear variables.
+  for (auto C : OMPExecutableDirective::linear_filter(S.clauses())) {
+    for (auto U : C->updates()) {
+      EmitIgnoredExpr(U);
+    }
+  }
+
   // On a continue in the body, jump to the end.
   auto Continue = getJumpDestInCurrentScope("omp.body.continue");
   BreakContinueStack.push_back(BreakContinue(JumpDest(), Continue));
@@ -336,6 +343,12 @@ void CodeGenFunction::EmitOMPSimdFinal(const OMPLoopDirective &S) {
     }
     ++IC;
   }
+  // Emit the final values of the linear variables.
+  for (auto C : OMPExecutableDirective::linear_filter(S.clauses())) {
+    for (auto F : C->finals()) {
+      EmitIgnoredExpr(F);
+    }
+  }
 }
 
 static void EmitOMPAlignedClause(CodeGenFunction &CGF, CodeGenModule &CGM,
@@ -378,6 +391,25 @@ static void EmitPrivateLoopCounters(CodeGenFunction &CGF,
     assert(IsRegistered && "counter already registered as private");
     // Silence the warning about unused variable.
     (void)IsRegistered;
+  }
+}
+
+static void
+EmitPrivateLinearVars(CodeGenFunction &CGF, const OMPExecutableDirective &D,
+                      CodeGenFunction::OMPPrivateScope &PrivateScope) {
+  for (auto Clause : OMPExecutableDirective::linear_filter(D.clauses())) {
+    for (auto *E : Clause->varlists()) {
+      auto VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+      bool IsRegistered = PrivateScope.addPrivate(VD, [&]()->llvm::Value * {
+        // Emit var without initialization.
+        auto VarEmission = CGF.EmitAutoVarAlloca(*VD);
+        CGF.EmitAutoVarCleanups(VarEmission);
+        return VarEmission.getAllocatedAddress();
+      });
+      assert(IsRegistered && "linear var already registered as private");
+      // Silence the warning about unused variable.
+      (void)IsRegistered;
+    }
   }
 }
 
@@ -428,6 +460,14 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
 
   InlinedOpenMPRegionScopeRAII Region(*this, S);
 
+  // Emit inits for the linear variables.
+  for (auto C : OMPExecutableDirective::linear_filter(S.clauses())) {
+    for (auto Init : C->inits()) {
+      auto *D = cast<VarDecl>(cast<DeclRefExpr>(Init)->getDecl());
+      EmitVarDecl(*D);
+    }
+  }
+
   // Emit the loop iteration variable.
   const Expr *IVExpr = S.getIterationVariable();
   const VarDecl *IVDecl = cast<VarDecl>(cast<DeclRefExpr>(IVExpr)->getDecl());
@@ -443,6 +483,17 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     EmitIgnoredExpr(S.getCalcLastIteration());
   }
 
+  // Emit the linear steps for the linear clauses.
+  // If a step is not constant, it is pre-calculated before the loop.
+  for (auto C : OMPExecutableDirective::linear_filter(S.clauses())) {
+    if (auto CS = cast_or_null<BinaryOperator>(C->getCalcStep()))
+      if (auto SaveRef = cast<DeclRefExpr>(CS->getLHS())) {
+        EmitVarDecl(*cast<VarDecl>(SaveRef->getDecl()));
+        // Emit calculation of the linear step.
+        EmitIgnoredExpr(CS);
+      }
+  }
+
   if (SeparateIter) {
     // Emit: if (LastIteration > 0) - begin.
     RegionCounter Cnt = getPGORegionCounter(&S);
@@ -455,6 +506,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
+      EmitPrivateLinearVars(*this, S, LoopScope);
       EmitOMPPrivateClause(S, LoopScope);
       (void)LoopScope.Privatize();
       EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
@@ -473,6 +525,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
+      EmitPrivateLinearVars(*this, S, LoopScope);
       EmitOMPPrivateClause(S, LoopScope);
       (void)LoopScope.Privatize();
       EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),

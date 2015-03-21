@@ -7,6 +7,9 @@
 #ifndef HEADER
 #define HEADER
 
+long long get_val() { return 0; }
+double *g_ptr;
+
 // CHECK-LABEL: define {{.*void}} @{{.*}}simple{{.*}}(float* {{.+}}, float* {{.+}}, float* {{.+}}, float* {{.+}})
 void simple(float *a, float *b, float *c, float *d) {
   #pragma omp simd
@@ -33,7 +36,13 @@ void simple(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[SIMPLE_LOOP1_END]]
 
-  #pragma omp simd
+  long long k = get_val();
+
+  #pragma omp simd linear(k : 3)
+// CHECK: [[K0:%.+]] = call {{.*}}i64 @{{.*}}get_val
+// CHECK-NEXT: store i64 [[K0]], i64* [[K_VAR:%[^,]+]]
+// CHECK: [[K0LOAD:%.+]] = load i64, i64* [[K_VAR]]
+// CHECK-NEXT: store i64 [[K0LOAD]], i64* [[LIN0:%[^,]+]]
 // CHECK: store i32 0, i32* [[OMP_IV2:%[^,]+]]
 
 // CHECK: [[IV2:%.+]] = load i32, i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID:[0-9]+]]
@@ -47,16 +56,44 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[IV2_1:%.+]] = mul nsw i32 [[IV2_0]], 1
 // CHECK-NEXT: [[LC_I_1:%.+]] = sub nsw i32 10, [[IV2_1]]
 // CHECK-NEXT: store i32 [[LC_I_1]], i32* {{.+}}, !llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
-    a[i]++;
+//
+// CHECK-NEXT: [[LIN0_1:%.+]] = load i64, i64* [[LIN0]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
+// CHECK-NEXT: [[IV2_2:%.+]] = load i32, i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
+// CHECK-NEXT: [[LIN_MUL1:%.+]] = mul nsw i32 [[IV2_2]], 3
+// CHECK-NEXT: [[LIN_EXT1:%.+]] = sext i32 [[LIN_MUL1]] to i64
+// CHECK-NEXT: [[LIN_ADD1:%.+]] = add nsw i64 [[LIN0_1]], [[LIN_EXT1]]
+// Update of the privatized version of linear variable!
+// CHECK-NEXT: store i64 [[LIN_ADD1]], i64* [[K_PRIVATIZED:%[^,]+]]
+    a[k]++;
+    k = k + 3;
 // CHECK: [[IV2_2:%.+]] = load i32, i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
 // CHECK-NEXT: [[ADD2_2:%.+]] = add nsw i32 [[IV2_2]], 1
 // CHECK-NEXT: store i32 [[ADD2_2]], i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
 // br label {{.+}}, !llvm.loop ![[SIMPLE_LOOP2_ID]]
   }
 // CHECK: [[SIMPLE_LOOP2_END]]
+//
+// Update linear vars after loop, as the loop was operating on a private version.
+// CHECK: [[LIN0_2:%.+]] = load i64, i64* [[LIN0]]
+// CHECK-NEXT: [[LIN_ADD2:%.+]] = add nsw i64 [[LIN0_2]], 27
+// CHECK-NEXT: store i64 [[LIN_ADD2]], i64* [[K_VAR]]
+//
 
-  #pragma omp simd
+  int lin = 12;
+  #pragma omp simd linear(lin : get_val()), linear(g_ptr)
+
+// Init linear private var.
+// CHECK: store i32 12, i32* [[LIN_VAR:%[^,]+]]
+// CHECK: [[LIN_LOAD:%.+]] = load i32, i32* [[LIN_VAR]]
+// CHECK-NEXT: store i32 [[LIN_LOAD]], i32* [[LIN_START:%[^,]+]]
+// CHECK: [[GLIN_LOAD:%.+]] = load double*, double** [[GLIN_VAR:@[^,]+]]
+// CHECK-NEXT: store double* [[GLIN_LOAD]], double** [[GLIN_START:%[^,]+]]
+
 // CHECK: store i64 0, i64* [[OMP_IV3:%[^,]+]]
+
+// Remember linear step.
+// CHECK: [[CALL_VAL:%.+]] = invoke
+// CHECK: store i64 [[CALL_VAL]], i64* [[LIN_STEP:%[^,]+]]
 
 // CHECK: [[IV3:%.+]] = load i64, i64* [[OMP_IV3]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID:[0-9]+]]
 // CHECK-NEXT: [[CMP3:%.+]] = icmp ult i64 [[IV3]], 4
@@ -68,12 +105,34 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[LC_IT_1:%.+]] = mul i64 [[IV3_0]], 400
 // CHECK-NEXT: [[LC_IT_2:%.+]] = sub i64 2000, [[LC_IT_1]]
 // CHECK-NEXT: store i64 [[LC_IT_2]], i64* {{.+}}, !llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
-    a[it]++;
+//
+// Linear start and step are used to calculate current value of the linear variable.
+// CHECK: [[LINSTART:.+]] = load i32, i32* [[LIN_START]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+// CHECK: [[LINSTEP:.+]] = load i64, i64* [[LIN_STEP]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+// CHECK-NOT: store i32 {{.+}}, i32* [[LIN_VAR]],{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+// CHECK: [[GLINSTART:.+]] = load double*, double** [[GLIN_START]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+// CHECK-NEXT: [[IV3_1:%.+]] = load i64, i64* [[OMP_IV3]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+// CHECK-NEXT: [[MUL:%.+]] = mul i64 [[IV3_1]], 1
+// CHECK-NEXT: [[GEP:%.+]] = getelementptr{{.*}}[[GLINSTART]]{{.*}}[[MUL]]
+// CHECK-NEXT: store double* [[GEP]], double** [[G_PTR_CUR:%[^,]+]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+    *g_ptr++ = 0.0;
+// CHECK: [[GEP_VAL:%.+]] = load double{{.*}}[[G_PTR_CUR]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+// CHECK: store double{{.*}}[[GEP_VAL]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
+    a[it + lin]++;
+// CHECK: [[FLT_INC:%.+]] = fadd float
+// CHECK-NEXT: store float [[FLT_INC]],{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
 // CHECK: [[IV3_2:%.+]] = load i64, i64* [[OMP_IV3]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
 // CHECK-NEXT: [[ADD3_2:%.+]] = add i64 [[IV3_2]], 1
 // CHECK-NEXT: store i64 [[ADD3_2]], i64* [[OMP_IV3]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
   }
 // CHECK: [[SIMPLE_LOOP3_END]]
+//
+// Linear start and step are used to calculate final value of the linear variables.
+// CHECK: [[LINSTART:.+]] = load i32, i32* [[LIN_START]]
+// CHECK: [[LINSTEP:.+]] = load i64, i64* [[LIN_STEP]]
+// CHECK: store i32 {{.+}}, i32* [[LIN_VAR]],
+// CHECK: [[GLINSTART:.+]] = load double*, double** [[GLIN_START]]
+// CHECK: store double* {{.*}}[[GLIN_VAR]]
 
   #pragma omp simd
 // CHECK: store i32 0, i32* [[OMP_IV4:%[^,]+]]

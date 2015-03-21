@@ -95,6 +95,7 @@ public:
   /// This iterator visits only those declarations that meet some run-time
   /// criteria.
   template <class FilterPredicate> class filtered_clause_iterator {
+  protected:
     ArrayRef<OMPClause *>::const_iterator Current;
     ArrayRef<OMPClause *>::const_iterator End;
     FilterPredicate Pred;
@@ -126,6 +127,27 @@ public:
 
     bool operator!() { return Current == End; }
     operator bool() { return Current != End; }
+    bool empty() const { return Current == End; }
+  };
+
+  /// \brief A filter to iterate over 'linear' clauses using a C++ range
+  /// for loop.
+  struct linear_filter : public filtered_clause_iterator<
+                             std::function<bool(const OMPClause *)> > {
+    linear_filter(ArrayRef<OMPClause *> Arr)
+        : filtered_clause_iterator(Arr, [](const OMPClause *C)->bool {
+            return C->getClauseKind() == OMPC_linear;
+          }) {}
+    const OMPLinearClause *operator*() const {
+      return cast<OMPLinearClause>(*Current);
+    }
+    const OMPLinearClause *operator->() const {
+      return cast<OMPLinearClause>(*Current);
+    }
+    friend linear_filter begin(const linear_filter &range) { return range; }
+    friend linear_filter end(const linear_filter &range) {
+      return linear_filter(ArrayRef<OMPClause *>(range.End, range.End));
+    }
   };
 
   /// \brief Gets a single clause of the specified kind \a K associated with the
@@ -410,6 +432,8 @@ public:
     Expr *IterationVarRef;
     /// \brief Loop last iteration number.
     Expr *LastIteration;
+    /// \brief Loop number of iterations.
+    Expr *NumIterations;
     /// \brief Calculation of last iteration.
     Expr *CalcLastIteration;
     /// \brief Loop pre-condition.
@@ -447,8 +471,9 @@ public:
     /// worksharing ones).
     bool builtAll() {
       return IterationVarRef != nullptr && LastIteration != nullptr &&
-             PreCond != nullptr && Cond != nullptr &&
-             SeparatedCond != nullptr && Init != nullptr && Inc != nullptr;
+             NumIterations != nullptr && PreCond != nullptr &&
+             Cond != nullptr && SeparatedCond != nullptr && Init != nullptr &&
+             Inc != nullptr;
     }
 
     /// \brief Initialize all the fields to null.

@@ -1820,9 +1820,20 @@ void OMPClauseWriter::VisitOMPLinearClause(OMPLinearClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
   Writer->Writer.AddSourceLocation(C->getColonLoc(), Record);
-  for (auto *VE : C->varlists())
+  for (auto *VE : C->varlists()) {
     Writer->Writer.AddStmt(VE);
+  }
+  for (auto *VE : C->inits()) {
+    Writer->Writer.AddStmt(VE);
+  }
+  for (auto *VE : C->updates()) {
+    Writer->Writer.AddStmt(VE);
+  }
+  for (auto *VE : C->finals()) {
+    Writer->Writer.AddStmt(VE);
+  }
   Writer->Writer.AddStmt(C->getStep());
+  Writer->Writer.AddStmt(C->getCalcStep());
 }
 
 void OMPClauseWriter::VisitOMPAlignedClause(OMPAlignedClause *C) {

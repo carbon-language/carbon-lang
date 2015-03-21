@@ -1291,27 +1291,56 @@ OMPSharedClause *OMPSharedClause::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPSharedClause(N);
 }
 
-OMPLinearClause *OMPLinearClause::Create(const ASTContext &C,
-                                         SourceLocation StartLoc,
-                                         SourceLocation LParenLoc,
-                                         SourceLocation ColonLoc,
-                                         SourceLocation EndLoc,
-                                         ArrayRef<Expr *> VL, Expr *Step) {
+void OMPLinearClause::setInits(ArrayRef<Expr *> IL) {
+  assert(IL.size() == varlist_size() &&
+         "Number of inits is not the same as the preallocated buffer");
+  std::copy(IL.begin(), IL.end(), varlist_end());
+}
+
+void OMPLinearClause::setUpdates(ArrayRef<Expr *> UL) {
+  assert(UL.size() == varlist_size() &&
+         "Number of updates is not the same as the preallocated buffer");
+  std::copy(UL.begin(), UL.end(), getInits().end());
+}
+
+void OMPLinearClause::setFinals(ArrayRef<Expr *> FL) {
+  assert(FL.size() == varlist_size() &&
+         "Number of final updates is not the same as the preallocated buffer");
+  std::copy(FL.begin(), FL.end(), getUpdates().end());
+}
+
+OMPLinearClause *
+OMPLinearClause::Create(const ASTContext &C, SourceLocation StartLoc,
+                        SourceLocation LParenLoc, SourceLocation ColonLoc,
+                        SourceLocation EndLoc, ArrayRef<Expr *> VL,
+                        ArrayRef<Expr *> IL, Expr *Step, Expr *CalcStep) {
+  // Allocate space for 4 lists (Vars, Inits, Updates, Finals) and 2 expressions
+  // (Step and CalcStep).
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPLinearClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * (VL.size() + 1));
+                         (4 * VL.size() + 2) * sizeof(Expr *));
   OMPLinearClause *Clause = new (Mem)
       OMPLinearClause(StartLoc, LParenLoc, ColonLoc, EndLoc, VL.size());
   Clause->setVarRefs(VL);
+  Clause->setInits(IL);
+  // Fill update and final expressions with zeroes, they are provided later,
+  // after the directive construction.
+  std::fill(Clause->getInits().end(), Clause->getInits().end() + VL.size(),
+            nullptr);
+  std::fill(Clause->getUpdates().end(), Clause->getUpdates().end() + VL.size(),
+            nullptr);
   Clause->setStep(Step);
+  Clause->setCalcStep(CalcStep);
   return Clause;
 }
 
 OMPLinearClause *OMPLinearClause::CreateEmpty(const ASTContext &C,
                                               unsigned NumVars) {
+  // Allocate space for 4 lists (Vars, Inits, Updates, Finals) and 2 expressions
+  // (Step and CalcStep).
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPLinearClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * (NumVars + 1));
+                         (4 * NumVars + 2) * sizeof(Expr *));
   return new (Mem) OMPLinearClause(NumVars);
 }
 

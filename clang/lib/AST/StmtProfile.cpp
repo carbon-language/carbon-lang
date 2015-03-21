@@ -359,7 +359,17 @@ void OMPClauseProfiler::VisitOMPReductionClause(
 }
 void OMPClauseProfiler::VisitOMPLinearClause(const OMPLinearClause *C) {
   VisitOMPClauseList(C);
+  for (auto *E : C->inits()) {
+    Profiler->VisitStmt(E);
+  }
+  for (auto *E : C->updates()) {
+    Profiler->VisitStmt(E);
+  }
+  for (auto *E : C->finals()) {
+    Profiler->VisitStmt(E);
+  }
   Profiler->VisitStmt(C->getStep());
+  Profiler->VisitStmt(C->getCalcStep());
 }
 void OMPClauseProfiler::VisitOMPAlignedClause(const OMPAlignedClause *C) {
   VisitOMPClauseList(C);

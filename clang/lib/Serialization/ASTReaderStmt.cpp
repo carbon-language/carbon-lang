@@ -1928,7 +1928,20 @@ void OMPClauseReader::VisitOMPLinearClause(OMPLinearClause *C) {
   for (unsigned i = 0; i != NumVars; ++i)
     Vars.push_back(Reader->Reader.ReadSubExpr());
   C->setVarRefs(Vars);
+  Vars.clear();
+  for (unsigned i = 0; i != NumVars; ++i)
+    Vars.push_back(Reader->Reader.ReadSubExpr());
+  C->setInits(Vars);
+  Vars.clear();
+  for (unsigned i = 0; i != NumVars; ++i)
+    Vars.push_back(Reader->Reader.ReadSubExpr());
+  C->setUpdates(Vars);
+  Vars.clear();
+  for (unsigned i = 0; i != NumVars; ++i)
+    Vars.push_back(Reader->Reader.ReadSubExpr());
+  C->setFinals(Vars);
   C->setStep(Reader->Reader.ReadSubExpr());
+  C->setCalcStep(Reader->Reader.ReadSubExpr());
 }
 
 void OMPClauseReader::VisitOMPAlignedClause(OMPAlignedClause *C) {
