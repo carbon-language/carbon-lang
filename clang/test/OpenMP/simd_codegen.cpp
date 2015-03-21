@@ -113,7 +113,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[GLINSTART:.+]] = load double*, double** [[GLIN_START]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
 // CHECK-NEXT: [[IV3_1:%.+]] = load i64, i64* [[OMP_IV3]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
 // CHECK-NEXT: [[MUL:%.+]] = mul i64 [[IV3_1]], 1
-// CHECK-NEXT: [[GEP:%.+]] = getelementptr{{.*}}[[GLINSTART]]{{.*}}[[MUL]]
+// CHECK: [[GEP:%.+]] = getelementptr{{.*}}[[GLINSTART]]
 // CHECK-NEXT: store double* [[GEP]], double** [[G_PTR_CUR:%[^,]+]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
     *g_ptr++ = 0.0;
 // CHECK: [[GEP_VAL:%.+]] = load double{{.*}}[[G_PTR_CUR]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID]]
