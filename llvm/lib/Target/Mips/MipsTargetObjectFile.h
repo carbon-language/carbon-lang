@@ -13,11 +13,11 @@
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 namespace llvm {
-
+class MipsTargetMachine;
   class MipsTargetObjectFile : public TargetLoweringObjectFileELF {
     const MCSection *SmallDataSection;
     const MCSection *SmallBSSSection;
-    const TargetMachine *TM;
+    const MipsTargetMachine *TM;
   public:
 
     void Initialize(MCContext &Ctx, const TargetMachine &TM) override;

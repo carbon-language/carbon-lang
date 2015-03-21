@@ -9,6 +9,7 @@
 
 #include "MipsTargetObjectFile.h"
 #include "MipsSubtarget.h"
+#include "MipsTargetMachine.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -44,7 +45,7 @@ void MipsTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
 
   SmallBSSSection = getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
                                                ELF::SHF_WRITE | ELF::SHF_ALLOC);
-  this->TM = &TM;
+  this->TM = &static_cast<const MipsTargetMachine &>(TM);
 }
 
 // A address must be loaded from a small section if its size is less than the
@@ -84,7 +85,8 @@ IsGlobalInSmallSection(const GlobalValue *GV, const TargetMachine &TM,
 bool MipsTargetObjectFile::
 IsGlobalInSmallSectionImpl(const GlobalValue *GV,
                            const TargetMachine &TM) const {
-  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
+  const MipsSubtarget &Subtarget =
+      *static_cast<const MipsTargetMachine &>(TM).getSubtargetImpl();
 
   // Return if small section is not available.
   if (!Subtarget.useSmallSection())
@@ -127,9 +129,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 /// Return true if this constant should be placed into small data section.
 bool MipsTargetObjectFile::
 IsConstantInSmallSection(const Constant *CN, const TargetMachine &TM) const {
-  return (
-      TM.getSubtarget<MipsSubtarget>().useSmallSection() && LocalSData &&
-      IsInSmallSection(TM.getDataLayout()->getTypeAllocSize(CN->getType())));
+  return (static_cast<const MipsTargetMachine &>(TM)
+              .getSubtargetImpl()
+              ->useSmallSection() &&
+          LocalSData && IsInSmallSection(TM.getDataLayout()->getTypeAllocSize(
+                            CN->getType())));
 }
 
 const MCSection *MipsTargetObjectFile::
