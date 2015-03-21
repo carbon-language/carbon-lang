@@ -1361,9 +1361,8 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
   if (SP.isOptimized())
     addFlag(SPDie, dwarf::DW_AT_APPLE_optimized);
 
-  if (unsigned isa = Asm->getISAEncoding(SP.getFunction())) {
+  if (unsigned isa = Asm->getISAEncoding())
     addUInt(SPDie, dwarf::DW_AT_APPLE_isa, dwarf::DW_FORM_flag, isa);
-  }
 
   if (SP.isLValueReference())
     addFlag(SPDie, dwarf::DW_AT_reference);
