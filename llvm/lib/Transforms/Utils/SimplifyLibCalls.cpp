@@ -762,17 +762,63 @@ Value *LibCallSimplifier::optimizeMemChr(CallInst *CI, IRBuilder<> &B) {
   if (LenC && LenC->isNullValue())
     return Constant::getNullValue(CI->getType());
 
-  // Check if all arguments are constants.  If so, we can constant fold.
+  // From now on we need at least constant length and string.
   StringRef Str;
-  if (!CharC || !LenC ||
-      !getConstantStringInfo(SrcStr, Str, /*Offset=*/0,
-                             /*TrimAtNul=*/false))
+  if (!LenC || !getConstantStringInfo(SrcStr, Str, 0, /*TrimAtNul=*/false))
     return nullptr;
 
   // Truncate the string to LenC. If Str is smaller than LenC we will still only
   // scan the string, as reading past the end of it is undefined and we can just
   // return null if we don't find the char.
   Str = Str.substr(0, LenC->getZExtValue());
+
+  // If the char is variable but the input str and length are not we can turn
+  // this memchr call into a simple bit field test. Of course this only works
+  // when the return value is only checked against null.
+  //
+  // It would be really nice to reuse switch lowering here but we can't change
+  // the CFG at this point.
+  //
+  // memchr("\r\n", C, 2) != nullptr -> (C & ((1 << '\r') | (1 << '\n'))) != 0
+  //   after bounds check.
+  if (!CharC && !Str.empty() && isOnlyUsedInZeroEqualityComparison(CI)) {
+    unsigned char Max = *std::max_element(Str.begin(), Str.end());
+
+    // Make sure the bit field we're about to create fits in a register on the
+    // target.
+    // FIXME: On a 64 bit architecture this prevents us from using the
+    // interesting range of alpha ascii chars. We could do better by emitting
+    // two bitfields or shifting the range by 64 if no lower chars are used.
+    if (!DL.fitsInLegalInteger(Max + 1))
+      return nullptr;
+
+    // For the bit field use a power-of-2 type with at least 8 bits to avoid
+    // creating unnecessary illegal types.
+    unsigned char Width = NextPowerOf2(std::max((unsigned char)7, Max));
+
+    // Now build the bit field.
+    APInt Bitfield(Width, 0);
+    for (char C : Str)
+      Bitfield.setBit((unsigned char)C);
+    Value *BitfieldC = B.getInt(Bitfield);
+
+    // First check that the bit field access is within bounds.
+    Value *C = B.CreateZExtOrTrunc(CI->getArgOperand(1), BitfieldC->getType());
+    Value *Bounds = B.CreateICmp(ICmpInst::ICMP_ULT, C, B.getIntN(Width, Width),
+                                 "memchr.bounds");
+
+    // Create code that checks if the given bit is set in the field.
+    Value *Shl = B.CreateShl(B.getIntN(Width, 1ULL), C);
+    Value *Bits = B.CreateIsNotNull(B.CreateAnd(Shl, BitfieldC), "memchr.bits");
+
+    // Finally merge both checks and cast to pointer type. The inttoptr
+    // implicitly zexts the i1 to intptr type.
+    return B.CreateIntToPtr(B.CreateAnd(Bounds, Bits, "memchr"), CI->getType());
+  }
+
+  // Check if all arguments are constants.  If so, we can constant fold.
+  if (!CharC)
+    return nullptr;
 
   // Compute the offset.
   size_t I = Str.find(CharC->getSExtValue() & 0xFF);

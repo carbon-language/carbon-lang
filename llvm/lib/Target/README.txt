@@ -1268,7 +1268,8 @@ int foo (void) {
 ..
   else if (strchr ("<>", *intel_parser.op_string)
 
-Those should be turned into a switch.
+Those should be turned into a switch.  SimplifyLibCalls only gets the second
+case.
 
 //===---------------------------------------------------------------------===//
 
