@@ -252,6 +252,7 @@ void MipsAsmPrinter::printSavedRegsBitmask() {
 
   // Set the CPU and FPU Bitmasks
   const MachineFrameInfo *MFI = MF->getFrameInfo();
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   // size of stack area to which FP callee-saved regs are saved.
   unsigned CPURegSize = Mips::GPR32RegClass.getSize();
@@ -267,8 +268,7 @@ void MipsAsmPrinter::printSavedRegsBitmask() {
     if (Mips::GPR32RegClass.contains(Reg))
       break;
 
-    unsigned RegNum =
-        TM.getSubtargetImpl()->getRegisterInfo()->getEncodingValue(Reg);
+    unsigned RegNum = TRI->getEncodingValue(Reg);
     if (Mips::AFGR64RegClass.contains(Reg)) {
       FPUBitmask |= (3 << RegNum);
       CSFPRegsSize += AFGR64RegSize;
@@ -283,8 +283,7 @@ void MipsAsmPrinter::printSavedRegsBitmask() {
   // Set CPU Bitmask.
   for (; i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    unsigned RegNum =
-        TM.getSubtargetImpl()->getRegisterInfo()->getEncodingValue(Reg);
+    unsigned RegNum = TRI->getEncodingValue(Reg);
     CPUBitmask |= (1 << RegNum);
   }
 
@@ -309,7 +308,7 @@ void MipsAsmPrinter::printSavedRegsBitmask() {
 
 /// Frame Directive
 void MipsAsmPrinter::emitFrameDirective() {
-  const TargetRegisterInfo &RI = *TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo &RI = *MF->getSubtarget().getRegisterInfo();
 
   unsigned stackReg  = RI.getFrameRegister(*MF);
   unsigned returnReg = RI.getRARegister();
