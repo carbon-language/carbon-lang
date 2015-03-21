@@ -1001,7 +1001,7 @@ SBProcess::GetProcessFromEvent (const SBEvent &event)
 bool
 SBProcess::EventIsProcessEvent (const SBEvent &event)
 {
-    return strcmp (event.GetBroadcasterClass(), SBProcess::GetBroadcasterClass()) == 0;
+    return event.GetBroadcasterClass() == SBProcess::GetBroadcasterClass();
 }
 
 SBBroadcaster

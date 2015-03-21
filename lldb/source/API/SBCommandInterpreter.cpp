@@ -551,7 +551,7 @@ SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgume
 bool
 SBCommandInterpreter::EventIsCommandInterpreterEvent (const lldb::SBEvent &event)
 {
-    return strcmp (event.GetBroadcasterClass(), SBCommandInterpreter::GetBroadcasterClass()) == 0;
+    return event.GetBroadcasterClass() == SBCommandInterpreter::GetBroadcasterClass();
 }
 
 bool
