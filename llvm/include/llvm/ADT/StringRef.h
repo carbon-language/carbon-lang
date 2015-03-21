@@ -238,12 +238,9 @@ namespace llvm {
     /// \returns The index of the first occurrence of \p C, or npos if not
     /// found.
     size_t find(char C, size_t From = 0) const {
-      if (Length != 0) {
-        size_t FindBegin = std::min(From, Length);
-        if (const void *Found =
-                std::memchr(Data + FindBegin, C, Length - FindBegin))
-          return static_cast<const char *>(Found) - Data;
-      }
+      for (size_t i = std::min(From, Length), e = Length; i != e; ++i)
+        if (Data[i] == C)
+          return i;
       return npos;
     }
 
