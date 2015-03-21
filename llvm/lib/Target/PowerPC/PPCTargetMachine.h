@@ -29,8 +29,6 @@ public:
 private:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   PPCABI TargetABI;
-  PPCSubtarget Subtarget;
-
   mutable StringMap<std::unique_ptr<PPCSubtarget>> SubtargetMap;
 
 public:
@@ -40,7 +38,6 @@ public:
 
   ~PPCTargetMachine() override;
 
-  const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const PPCSubtarget *getSubtargetImpl(const Function &F) const override;
 
   // Pass Pipeline Configuration

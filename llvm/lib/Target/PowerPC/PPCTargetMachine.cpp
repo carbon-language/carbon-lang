@@ -163,8 +163,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
     : LLVMTargetMachine(T, getDataLayoutString(Triple(TT)), TT, CPU,
                         computeFSAdditions(FS, OL, TT), Options, RM, CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
-      TargetABI(computeTargetABI(Triple(TT), Options)),
-      Subtarget(TT, CPU, TargetFS, *this) {
+      TargetABI(computeTargetABI(Triple(TT), Options)) {
   initAsmInfo();
 }
 

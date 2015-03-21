@@ -1,0 +1,43 @@
+; RUN: llc -mcpu=pwr7 < %s | FileCheck %s
+target datalayout = "E-m:e-i64:64-n32:64"
+target triple = "powerpc64-unknown-linux-gnu"
+
+; Function Attrs: nounwind readnone
+define signext i32 @crbitsoff(i32 signext %v1, i32 signext %v2) #0 {
+entry:
+  %tobool = icmp ne i32 %v1, 0
+  %lnot = icmp eq i32 %v2, 0
+  %and3 = and i1 %tobool, %lnot
+  %and = zext i1 %and3 to i32
+  ret i32 %and
+
+; CHECK-LABEL: @crbitsoff
+; CHECK-DAG: cmplwi {{[0-9]+}}, 3, 0
+; CHECK-DAG: li [[REG2:[0-9]+]], 1
+; CHECK-DAG: cntlzw [[REG3:[0-9]+]],
+; CHECK: isel 3, 0, [[REG2]]
+; CHECK: and 3, 3, [[REG3]]
+; CHECK: blr
+}
+
+define signext i32 @crbitson(i32 signext %v1, i32 signext %v2) #1 {
+entry:
+  %tobool = icmp ne i32 %v1, 0
+  %lnot = icmp eq i32 %v2, 0
+  %and3 = and i1 %tobool, %lnot
+  %and = zext i1 %and3 to i32
+  ret i32 %and
+
+; CHECK-LABEL: @crbitson
+; CHECK-DAG: cmpwi {{[0-9]+}}, 3, 0
+; CHECK-DAG: cmpwi {{[0-9]+}}, 4, 0
+; CHECK-DAG: li [[REG2:[0-9]+]], 1
+; CHECK-DAG: crorc [[REG3:[0-9]+]],
+; CHECK: isel 3, 0, [[REG2]], [[REG3]]
+; CHECK: blr
+}
+
+
+attributes #0 = { nounwind readnone "target-features"="-crbits" }
+attributes #1 = { nounwind readnone }
+
