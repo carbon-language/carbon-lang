@@ -7187,8 +7187,9 @@ static SDValue performConcatVectorsCombine(SDNode *N,
   //   (v4i16 (concat_vectors (v2i16 (truncate (v2i64))),
   //                          (v2i16 (truncate (v2i64)))))
   // ->
-  //   (v4i16 (truncate (v4i32 (concat_vectors (v2i32 (truncate (v2i64))),
-  //                                           (v2i32 (truncate (v2i64)))))))
+  //   (v4i16 (truncate (vector_shuffle (v4i32 (bitcast (v2i64))),
+  //                                    (v4i32 (bitcast (v2i64))),
+  //                                    <0, 2, 4, 6>)))
   // This isn't really target-specific, but ISD::TRUNCATE legality isn't keyed
   // on both input and result type, so we might generate worse code.
   // On AArch64 we know it's fine for v2i64->v4i16 and v4i32->v8i8.
@@ -7202,20 +7203,15 @@ static SDValue performConcatVectorsCombine(SDNode *N,
     if (N00VT == N10.getValueType() &&
         (N00VT == MVT::v2i64 || N00VT == MVT::v4i32) &&
         N00VT.getScalarSizeInBits() == 4 * VT.getScalarSizeInBits()) {
-      MVT MidVT = (N00VT == MVT::v2i64 ? MVT::v2i32 : MVT::v4i16);
-#if defined(__GNUC__)
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 7 && __GNUC_PATCHLEVEL__ == 2
-      // FIXME: g++-4.7.2 might miscompile PerformDAGCombine().
-      asm volatile("":::"memory");
-#endif
-#endif
-      MVT ConcatMidVT = MVT::getVectorVT(MidVT.getVectorElementType(),
-                                         MidVT.getVectorNumElements() * 2);
-      return DAG.getNode(
-          ISD::TRUNCATE, dl, VT,
-          DAG.getNode(ISD::CONCAT_VECTORS, dl, ConcatMidVT,
-                      DAG.getNode(ISD::TRUNCATE, dl, MidVT, N00),
-                      DAG.getNode(ISD::TRUNCATE, dl, MidVT, N10)));
+      MVT MidVT = (N00VT == MVT::v2i64 ? MVT::v4i32 : MVT::v8i16);
+      SmallVector<int, 8> Mask(MidVT.getVectorNumElements());
+      for (size_t i = 0; i < Mask.size(); ++i)
+        Mask[i] = i * 2;
+      return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                         DAG.getVectorShuffle(
+                             MidVT, dl,
+                             DAG.getNode(ISD::BITCAST, dl, MidVT, N00),
+                             DAG.getNode(ISD::BITCAST, dl, MidVT, N10), Mask));
     }
   }
 
