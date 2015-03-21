@@ -33,7 +33,6 @@ public:
                    const TargetOptions &Options, Reloc::Model RM,
                    CodeModel::Model CM, CodeGenOpt::Level OL);
   ~X86TargetMachine() override;
-  const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
   const X86Subtarget *getSubtargetImpl(const Function &F) const override;
 
   TargetIRAnalysis getTargetIRAnalysis() override;
