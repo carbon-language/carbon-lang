@@ -1498,11 +1498,12 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
 
 namespace {
 // Filter to remove Multilibs that don't exist as a suffix to Path
-class FilterNonExistent : public MultilibSet::FilterCallback {
-  std::string Base;
+class FilterNonExistent {
+  StringRef Base;
+
 public:
-  FilterNonExistent(std::string Base) : Base(Base) {}
-  bool operator()(const Multilib &M) const override {
+  FilterNonExistent(StringRef Base) : Base(Base) {}
+  bool operator()(const Multilib &M) {
     return !llvm::sys::fs::exists(Base + M.gccSuffix() + "/crtbegin.o");
   }
 };
@@ -3171,7 +3172,7 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 
   // Add include directories specific to the selected multilib set and multilib.
   if (GCCInstallation.isValid()) {
-    auto Callback = Multilibs.includeDirsCallback();
+    const auto &Callback = Multilibs.includeDirsCallback();
     if (Callback) {
       const auto IncludePaths = Callback(GCCInstallation.getInstallPath(),
                                          GCCInstallation.getTriple().str(),

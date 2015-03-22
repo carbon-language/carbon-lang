@@ -11,6 +11,7 @@
 #define LLVM_CLANG_DRIVER_MULTILIB_H
 
 #include "clang/Basic/LLVM.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Option/Option.h"
 #include <functional>
@@ -102,11 +103,7 @@ public:
       StringRef InstallDir, StringRef Triple, const Multilib &M)>
   IncludeDirsFunc;
 
-  struct FilterCallback {
-    virtual ~FilterCallback() {};
-    /// \return true iff the filter should remove the Multilib from the set
-    virtual bool operator()(const Multilib &M) const = 0;
-  };
+  typedef llvm::function_ref<bool(const Multilib &)> FilterCallback;
 
 private:
   multilib_list Multilibs;
@@ -127,12 +124,12 @@ public:
   MultilibSet &Either(const Multilib &M1, const Multilib &M2,
                       const Multilib &M3, const Multilib &M4,
                       const Multilib &M5);
-  MultilibSet &Either(const std::vector<Multilib> &Ms);
+  MultilibSet &Either(ArrayRef<Multilib> Ms);
 
   /// Filter out some subset of the Multilibs using a user defined callback
-  MultilibSet &FilterOut(const FilterCallback &F);
+  MultilibSet &FilterOut(FilterCallback F);
   /// Filter out those Multilibs whose gccSuffix matches the given expression
-  MultilibSet &FilterOut(std::string Regex);
+  MultilibSet &FilterOut(const char *Regex);
 
   /// Add a completed Multilib to the set
   void push_back(const Multilib &M);
@@ -157,18 +154,17 @@ public:
   void print(raw_ostream &OS) const;
 
   MultilibSet &setIncludeDirsCallback(IncludeDirsFunc F) {
-    IncludeCallback = F;
+    IncludeCallback = std::move(F);
     return *this;
   }
-  IncludeDirsFunc includeDirsCallback() const { return IncludeCallback; }
+  const IncludeDirsFunc &includeDirsCallback() const { return IncludeCallback; }
 
 private:
   /// Apply the filter to Multilibs and return the subset that remains
-  static multilib_list filterCopy(const FilterCallback &F,
-                                  const multilib_list &Ms);
+  static multilib_list filterCopy(FilterCallback F, const multilib_list &Ms);
 
   /// Apply the filter to the multilib_list, removing those that don't match
-  static void filterInPlace(const FilterCallback &F, multilib_list &Ms);
+  static void filterInPlace(FilterCallback F, multilib_list &Ms);
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const MultilibSet &MS);
