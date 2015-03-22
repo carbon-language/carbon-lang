@@ -1,4 +1,4 @@
-//===-- ASTReader.cpp - AST File Reader ----------------------------------===//
+//===--- ASTReader.cpp - AST File Reader ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8618,13 +8618,6 @@ void ASTReader::FinishedDeserializing() {
   --NumCurrentElementsDeserializing;
 
   if (NumCurrentElementsDeserializing == 0) {
-    // Propagate exception specification updates along redeclaration chains.
-    for (auto Update : PendingExceptionSpecUpdates) {
-      auto *FPT = Update.second->getType()->castAs<FunctionProtoType>();
-      SemaObj->UpdateExceptionSpec(Update.second,
-                                   FPT->getExtProtoInfo().ExceptionSpec);
-    }
-
     diagnoseOdrViolations();
 
     // We are not in recursive loading, so it's safe to pass the "interesting"
@@ -8635,15 +8628,7 @@ void ASTReader::FinishedDeserializing() {
 }
 
 void ASTReader::pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name) {
-  if (IdentifierInfo *II = Name.getAsIdentifierInfo()) {
-    // Remove any fake results before adding any real ones.
-    auto It = PendingFakeLookupResults.find(II);
-    if (It != PendingFakeLookupResults.end()) {
-      for (auto *ND : PendingFakeLookupResults[II])
-        SemaObj->IdResolver.RemoveDecl(ND);
-      PendingFakeLookupResults.erase(It);
-    }
-  }
+  D = D->getMostRecentDecl();
 
   if (SemaObj->IdResolver.tryAddTopLevelDecl(D, Name) && SemaObj->TUScope) {
     SemaObj->TUScope->AddDecl(D);

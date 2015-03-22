@@ -5804,36 +5804,37 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
 }
 
 void ASTWriter::ResolvedExceptionSpec(const FunctionDecl *FD) {
-  assert(!DoneWritingDeclsAndTypes && "Already done writing updates!");
-  if (!Chain) return;
-  Chain->forEachFormerlyCanonicalImportedDecl(FD, [&](const Decl *D) {
-    // If we don't already know the exception specification for this redecl
-    // chain, add an update record for it.
-    if (isUnresolvedExceptionSpec(cast<FunctionDecl>(D)
-                                      ->getType()
-                                      ->castAs<FunctionProtoType>()
-                                      ->getExceptionSpecType()))
-      DeclUpdates[D].push_back(UPD_CXX_RESOLVED_EXCEPTION_SPEC);
-  });
+  assert(!WritingAST && "Already writing the AST!");
+  FD = FD->getCanonicalDecl();
+  if (!FD->isFromASTFile())
+    return; // Not a function declared in PCH and defined outside.
+
+  DeclUpdates[FD].push_back(UPD_CXX_RESOLVED_EXCEPTION_SPEC);
 }
 
 void ASTWriter::DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) {
   assert(!WritingAST && "Already writing the AST!");
-  if (!Chain) return;
-  Chain->forEachFormerlyCanonicalImportedDecl(FD, [&](const Decl *D) {
-    DeclUpdates[D].push_back(
-        DeclUpdate(UPD_CXX_DEDUCED_RETURN_TYPE, ReturnType));
-  });
+  FD = FD->getCanonicalDecl();
+  if (!FD->isFromASTFile())
+    return; // Not a function declared in PCH and defined outside.
+
+  DeclUpdates[FD].push_back(DeclUpdate(UPD_CXX_DEDUCED_RETURN_TYPE, ReturnType));
 }
 
 void ASTWriter::ResolvedOperatorDelete(const CXXDestructorDecl *DD,
                                        const FunctionDecl *Delete) {
   assert(!WritingAST && "Already writing the AST!");
   assert(Delete && "Not given an operator delete");
-  if (!Chain) return;
-  Chain->forEachFormerlyCanonicalImportedDecl(DD, [&](const Decl *D) {
-    DeclUpdates[D].push_back(DeclUpdate(UPD_CXX_RESOLVED_DTOR_DELETE, Delete));
-  });
+  for (auto *D : DD->redecls()) {
+    if (D->isFromASTFile()) {
+      // We added an operator delete that some imported destructor didn't
+      // know about. Add an update record to let importers of us and that
+      // declaration know about it.
+      DeclUpdates[DD].push_back(
+          DeclUpdate(UPD_CXX_RESOLVED_DTOR_DELETE, Delete));
+      return;
+    }
+  }
 }
 
 void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
@@ -5850,7 +5851,8 @@ void ASTWriter::FunctionDefinitionInstantiated(const FunctionDecl *D) {
   if (!D->isFromASTFile())
     return;
 
-  DeclUpdates[D].push_back(DeclUpdate(UPD_CXX_ADDED_FUNCTION_DEFINITION));
+  DeclUpdates[D].push_back(
+      DeclUpdate(UPD_CXX_ADDED_FUNCTION_DEFINITION));
 }
 
 void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
