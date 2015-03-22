@@ -164,7 +164,8 @@ enum X86_32RelType { RT32_32, RT32_16, RT32_8 };
 
 static X86_32RelType getType32(X86_64RelType T) {
   switch (T) {
-  case RT64_64:
+  default:
+  //case RT64_64:
     llvm_unreachable("Unimplemented");
   case RT64_32:
   case RT64_32S:
