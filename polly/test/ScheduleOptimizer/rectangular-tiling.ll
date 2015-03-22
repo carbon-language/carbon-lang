@@ -2,9 +2,9 @@
 
 ; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 256)
 ; CHECK:   for (int c1 = 0; c1 <= 511; c1 += 16)
-; CHECK:     for (int c2 = c0; c2 <= c0 + 255; c2 += 1)
-; CHECK:       for (int c3 = c1; c3 <= c1 + 15; c3 += 1)
-; CHECK:         Stmt_for_body3(c2, c3);
+; CHECK:     for (int c2 = 0; c2 <= 255; c2 += 1)
+; CHECK:       for (int c3 = 0; c3 <= 15; c3 += 1)
+; CHECK:         Stmt_for_body3(c0 + c2, c1 + c3);
 
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
