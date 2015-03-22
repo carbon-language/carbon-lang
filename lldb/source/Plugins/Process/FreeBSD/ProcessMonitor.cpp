@@ -964,7 +964,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     lldb_utility::PseudoTerminal terminal;
     const size_t err_len = 1024;
     char err_str[err_len];
-    lldb::pid_t pid;
+    ::pid_t pid;
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
