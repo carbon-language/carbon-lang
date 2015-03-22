@@ -30,6 +30,13 @@ HostInfoAndroid::ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arc
     }
 }
 
+bool
+HostInfoAndroid::ComputeSupportExeDirectory(FileSpec &file_spec)
+{
+    file_spec.GetDirectory() = HostInfoLinux::GetProgramFileSpec().GetDirectory();
+    return (bool)file_spec.GetDirectory();
+}
+
 FileSpec
 HostInfoAndroid::GetDefaultShell()
 {
