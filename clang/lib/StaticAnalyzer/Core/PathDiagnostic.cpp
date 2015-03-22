@@ -456,7 +456,7 @@ void PathDiagnosticConsumer::FlushDiagnostics(
 }
 
 PathDiagnosticConsumer::FilesMade::~FilesMade() {
-  for (PDFileEntry &Entry : *this)
+  for (PDFileEntry &Entry : Set)
     Entry.~PDFileEntry();
 }
 
@@ -466,11 +466,11 @@ void PathDiagnosticConsumer::FilesMade::addDiagnostic(const PathDiagnostic &PD,
   llvm::FoldingSetNodeID NodeID;
   NodeID.Add(PD);
   void *InsertPos;
-  PDFileEntry *Entry = FindNodeOrInsertPos(NodeID, InsertPos);
+  PDFileEntry *Entry = Set.FindNodeOrInsertPos(NodeID, InsertPos);
   if (!Entry) {
     Entry = Alloc.Allocate<PDFileEntry>();
     Entry = new (Entry) PDFileEntry(NodeID);
-    InsertNode(Entry, InsertPos);
+    Set.InsertNode(Entry, InsertPos);
   }
   
   // Allocate persistent storage for the file name.
@@ -487,7 +487,7 @@ PathDiagnosticConsumer::FilesMade::getFiles(const PathDiagnostic &PD) {
   llvm::FoldingSetNodeID NodeID;
   NodeID.Add(PD);
   void *InsertPos;
-  PDFileEntry *Entry = FindNodeOrInsertPos(NodeID, InsertPos);
+  PDFileEntry *Entry = Set.FindNodeOrInsertPos(NodeID, InsertPos);
   if (!Entry)
     return nullptr;
   return &Entry->files;

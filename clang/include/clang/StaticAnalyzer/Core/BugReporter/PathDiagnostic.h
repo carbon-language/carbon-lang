@@ -70,10 +70,14 @@ public:
     void Profile(llvm::FoldingSetNodeID &ID) { ID = NodeID; }
   };
   
-  struct FilesMade : public llvm::FoldingSet<PDFileEntry> {
+  class FilesMade {
     llvm::BumpPtrAllocator Alloc;
+    llvm::FoldingSet<PDFileEntry> Set;
 
+  public:
     ~FilesMade();
+
+    bool empty() const { return Set.empty(); }
 
     void addDiagnostic(const PathDiagnostic &PD,
                        StringRef ConsumerName,
