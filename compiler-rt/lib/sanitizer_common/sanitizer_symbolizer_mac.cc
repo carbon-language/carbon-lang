@@ -31,7 +31,8 @@ bool DlAddrSymbolizer::SymbolizePC(uptr addr, SymbolizedStack *stack) {
   Dl_info info;
   int result = dladdr((const void *)addr, &info);
   if (!result) return false;
-  stack->info.function = internal_strdup(info.dli_sname);
+  const char *demangled = DemangleCXXABI(info.dli_sname);
+  stack->info.function = internal_strdup(demangled);
   return true;
 }
 
