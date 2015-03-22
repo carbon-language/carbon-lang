@@ -2,7 +2,7 @@
 
 !0 = !{}
 
-; CHECK-NOT: error
+; CHECK-NOT: error:
 !1 = !MDLocation(column: 65535, scope: !0)
 
 ; CHECK: <stdin>:[[@LINE+1]]:26: error: value for 'column' too large, limit is 65535

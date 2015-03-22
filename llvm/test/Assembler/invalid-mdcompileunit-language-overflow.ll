@@ -1,6 +1,6 @@
 ; RUN: not llvm-as < %s -disable-output 2>&1 | FileCheck %s
 
-; CHECK-NOT: error
+; CHECK-NOT: error:
 !0 = !MDCompileUnit(language: 65535,
                     file: !MDFile(filename: "a", directory: "b"))
 
