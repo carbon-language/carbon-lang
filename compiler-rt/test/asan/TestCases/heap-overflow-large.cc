@@ -15,9 +15,9 @@ int main(int argc, char *argv[]) {
   int *x = new int[5];
   memset(x, 0, sizeof(x[0]) * 5);
   int index = atoi(argv[1]);
-  int res = x[index];
+  unsigned res = x[index];
   // CHECK: main
   // CHECK-NOT: CHECK failed
   delete[] x;
-  return res ? res : 1;
+  return (res % 10) + 1;
 }
