@@ -2483,24 +2483,17 @@ static void addDashXForInput(const ArgList &Args, const InputInfo &Input,
     CmdArgs.push_back(types::getTypeName(Input.getType()));
 }
 
-static std::string getMSCompatibilityVersion(const char *VersionStr) {
-  unsigned Version;
-  if (StringRef(VersionStr).getAsInteger(10, Version))
-    return "0";
-
+static VersionTuple getMSCompatibilityVersion(unsigned Version) {
   if (Version < 100)
-    return llvm::utostr_32(Version) + ".0";
+    return VersionTuple(Version);
 
   if (Version < 10000)
-    return llvm::utostr_32(Version / 100) + "." +
-        llvm::utostr_32(Version % 100);
+    return VersionTuple(Version / 100, Version % 100);
 
   unsigned Build = 0, Factor = 1;
   for ( ; Version > 10000; Version = Version / 10, Factor = Factor * 10)
     Build = Build + (Version % 10) * Factor;
-  return llvm::utostr_32(Version / 100) + "." +
-      llvm::utostr_32(Version % 100) + "." +
-      llvm::utostr_32(Build);
+  return VersionTuple(Version / 100, Version % 100, Build);
 }
 
 // Claim options we don't want to warn if they are unused. We do this for
@@ -4067,11 +4060,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     isSignedCharDefault(getToolChain().getTriple())))
     CmdArgs.push_back("-fno-signed-char");
 
-  // -fthreadsafe-static is default.
-  if (!Args.hasFlag(options::OPT_fthreadsafe_statics,
-                    options::OPT_fno_threadsafe_statics))
-    CmdArgs.push_back("-fno-threadsafe-statics");
-
   // -fuse-cxa-atexit is default.
   if (!Args.hasFlag(options::OPT_fuse_cxa_atexit,
                     options::OPT_fno_use_cxa_atexit,
@@ -4099,9 +4087,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                                   true))))
     CmdArgs.push_back("-fms-compatibility");
 
-  // -fms-compatibility-version=17.00 is default.
+  // -fms-compatibility-version=18.00 is default.
+  VersionTuple MSVT;
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
-                   IsWindowsMSVC) || Args.hasArg(options::OPT_fmsc_version) ||
+                   IsWindowsMSVC) ||
+      Args.hasArg(options::OPT_fmsc_version) ||
       Args.hasArg(options::OPT_fms_compatibility_version)) {
     const Arg *MSCVersion = Args.getLastArg(options::OPT_fmsc_version);
     const Arg *MSCompatibilityVersion =
@@ -4112,22 +4102,36 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           << MSCVersion->getAsString(Args)
           << MSCompatibilityVersion->getAsString(Args);
 
-    std::string Ver;
-    if (MSCompatibilityVersion)
-      Ver = Args.getLastArgValue(options::OPT_fms_compatibility_version);
-    else if (MSCVersion)
-      Ver = getMSCompatibilityVersion(MSCVersion->getValue());
+    if (MSCompatibilityVersion) {
+      if (MSVT.tryParse(MSCompatibilityVersion->getValue()))
+        D.Diag(diag::err_drv_invalid_value)
+            << MSCompatibilityVersion->getAsString(Args)
+            << MSCompatibilityVersion->getValue();
+    } else if (MSCVersion) {
+      unsigned Version = 0;
+      if (StringRef(MSCVersion->getValue()).getAsInteger(10, Version))
+        D.Diag(diag::err_drv_invalid_value) << MSCVersion->getAsString(Args)
+                                            << MSCVersion->getValue();
+      MSVT = getMSCompatibilityVersion(Version);
+    } else {
+      MSVT = VersionTuple(18);
+    }
 
-    if (Ver.empty())
-      CmdArgs.push_back("-fms-compatibility-version=18.00");
-    else
-      CmdArgs.push_back(Args.MakeArgString("-fms-compatibility-version=" + Ver));
+    CmdArgs.push_back(
+        Args.MakeArgString("-fms-compatibility-version=" + MSVT.getAsString()));
   }
 
   // -fno-borland-extensions is default.
   if (Args.hasFlag(options::OPT_fborland_extensions,
                    options::OPT_fno_borland_extensions, false))
     CmdArgs.push_back("-fborland-extensions");
+
+  // -fthreadsafe-static is default, except for MSVC compatibility versions less
+  // than 19.
+  if (!Args.hasFlag(options::OPT_fthreadsafe_statics,
+                    options::OPT_fno_threadsafe_statics,
+                    !IsWindowsMSVC || MSVT.getMajor() >= 19))
+    CmdArgs.push_back("-fno-threadsafe-statics");
 
   // -fno-delayed-template-parsing is default, except for Windows where MSVC STL
   // needs it.

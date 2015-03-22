@@ -317,6 +317,14 @@
 // RTTI-NOT: "-fno-rtti-data"
 // RTTI-NOT: "-fno-rtti"
 
+// thread safe statics are off for versions < 19.
+// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=NoThreadSafeStatics %s
+// RUN: %clang_cl /Zc:threadSafeInit /Zc:threadSafeInit- /c -### -- %s 2>&1 | FileCheck -check-prefix=NoThreadSafeStatics %s
+// NoThreadSafeStatics: "-fno-threadsafe-statics"
+
+// RUN: %clang_cl /Zc:threadSafeInit /c -### -- %s 2>&1 | FileCheck -check-prefix=ThreadSafeStatics %s
+// ThreadSafeStatics-NOT: "-fno-threadsafe-statics"
+
 // Accept "core" clang options.
 // (/Zs is for syntax-only)
 // RUN: %clang_cl \

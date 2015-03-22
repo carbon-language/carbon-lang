@@ -137,6 +137,12 @@ def _SLASH_vd : CLJoined<"vd">, HelpText<"Control vtordisp placement">,
 def _SLASH_Zc_strictStrings : CLFlag<"Zc:strictStrings">,
   HelpText<"Treat string literals as const">, Alias<W_Joined>,
   AliasArgs<["error=c++11-compat-deprecated-writable-strings"]>;
+def _SLASH_Zc_threadSafeInit : CLFlag<"Zc:threadSafeInit">,
+  HelpText<"Enable thread-safe initialization of static variables">,
+  Alias<fthreadsafe_statics>;
+def _SLASH_Zc_threadSafeInit_ : CLFlag<"Zc:threadSafeInit-">,
+  HelpText<"Disable thread-safe initialization of static variables">,
+  Alias<fno_threadsafe_statics>;
 def _SLASH_Zc_trigraphs : CLFlag<"Zc:trigraphs">,
   HelpText<"Enable trigraphs">, Alias<ftrigraphs>;
 def _SLASH_Zc_trigraphs_off : CLFlag<"Zc:trigraphs-">,

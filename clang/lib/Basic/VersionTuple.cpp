@@ -32,6 +32,8 @@ raw_ostream& clang::operator<<(raw_ostream &Out,
     Out << (V.usesUnderscores() ? '_' : '.') << *Minor;
   if (Optional<unsigned> Subminor = V.getSubminor())
     Out << (V.usesUnderscores() ? '_' : '.') << *Subminor;
+  if (Optional<unsigned> Build = V.getBuild())
+    Out << (V.usesUnderscores() ? '_' : '.') << *Build;
   return Out;
 }
 
@@ -55,7 +57,7 @@ static bool parseInt(StringRef &input, unsigned &value) {
 }
 
 bool VersionTuple::tryParse(StringRef input) {
-  unsigned major = 0, minor = 0, micro = 0;
+  unsigned major = 0, minor = 0, micro = 0, build = 0;
 
   // Parse the major version, [0-9]+
   if (parseInt(input, major)) return true;
@@ -80,9 +82,19 @@ bool VersionTuple::tryParse(StringRef input) {
   input = input.substr(1);
   if (parseInt(input, micro)) return true;
 
+  if (input.empty()) {
+    *this = VersionTuple(major, minor, micro);
+    return false;
+  }
+
+  // If we're not done, parse the micro version, \.[0-9]+
+  if (input[0] != '.') return true;
+  input = input.substr(1);
+  if (parseInt(input, build)) return true;
+
   // If we have characters left over, it's an error.
   if (!input.empty()) return true;
 
-  *this = VersionTuple(major, minor, micro);
+  *this = VersionTuple(major, minor, micro, build);
   return false;
 }

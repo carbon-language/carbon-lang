@@ -1282,43 +1282,6 @@ static Visibility parseVisibility(Arg *arg, ArgList &args,
   return DefaultVisibility;
 }
 
-static unsigned parseMSCVersion(ArgList &Args, DiagnosticsEngine &Diags) {
-  auto Arg = Args.getLastArg(OPT_fms_compatibility_version);
-  if (!Arg)
-    return 0;
-
-  // The MSC versioning scheme involves four versioning components:
-  //  - Major
-  //  - Minor
-  //  - Build
-  //  - Patch
-  //
-  // We accept either the old style (_MSC_VER) value, or a _MSC_FULL_VER value.
-  // Additionally, the value may be provided in the form of a more readable
-  // MM.mm.bbbbb.pp version.
-  //
-  // Unfortunately, due to the bit-width limitations, we cannot currently encode
-  // the value for the patch level.
-
-  unsigned VC[4] = {0};
-  StringRef Value = Arg->getValue();
-  SmallVector<StringRef, 4> Components;
-
-  Value.split(Components, ".", llvm::array_lengthof(VC));
-  for (unsigned CI = 0,
-                CE = std::min(Components.size(), llvm::array_lengthof(VC));
-       CI < CE; ++CI) {
-    if (Components[CI].getAsInteger(10, VC[CI])) {
-      Diags.Report(diag::err_drv_invalid_value)
-        << Arg->getAsString(Args) << Value;
-      return 0;
-    }
-  }
-
-  // FIXME we cannot encode the patch level
-  return VC[0] * 10000000 + VC[1] * 100000 + VC[2];
-}
-
 static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                           DiagnosticsEngine &Diags) {
   // FIXME: Cleanup per-file based stuff.
@@ -1489,7 +1452,16 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MSVCCompat = Args.hasArg(OPT_fms_compatibility);
   Opts.MicrosoftExt = Opts.MSVCCompat || Args.hasArg(OPT_fms_extensions);
   Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks) || Opts.MicrosoftExt;
-  Opts.MSCompatibilityVersion = parseMSCVersion(Args, Diags);
+  Opts.MSCompatibilityVersion = 0;
+  if (const Arg *A = Args.getLastArg(OPT_fms_compatibility_version)) {
+    VersionTuple VT;
+    if (VT.tryParse(A->getValue()))
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args)
+                                                << A->getValue();
+    Opts.MSCompatibilityVersion = VT.getMajor() * 10000000 +
+                                  VT.getMinor().getValueOr(0) * 100000 +
+                                  VT.getSubminor().getValueOr(0);
+  }
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.

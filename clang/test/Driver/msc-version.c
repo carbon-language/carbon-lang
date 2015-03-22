@@ -54,7 +54,7 @@
 // RUN: %clang -### -target i686-windows -fms-compatibility -fmsc-version=17 -E - </dev/null -o /dev/null 2>&1 | FileCheck %s -check-prefix CHECK-MSC-17
 
 // CHECK-MSC-17-NOT: "-fmsc-version=1700"
-// CHECK-MSC-17: "-fms-compatibility-version=17.0"
+// CHECK-MSC-17: "-fms-compatibility-version=17"
 
 // RUN: %clang -### -target i686-windows -fms-compatibility -fmsc-version=1600 -E - </dev/null -o /dev/null 2>&1 | FileCheck %s -check-prefix CHECK-MSC-16
 
