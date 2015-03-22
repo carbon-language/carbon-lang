@@ -28,8 +28,8 @@ class MipsTargetLayout final : public TargetLayout<ELFType> {
 public:
   MipsTargetLayout(MipsLinkingContext &ctx)
       : TargetLayout<ELFType>(ctx),
-        _gotSection(new (_alloc) MipsGOTSection<ELFType>(ctx)),
-        _pltSection(new (_alloc) MipsPLTSection<ELFType>(ctx)) {}
+        _gotSection(new (this->_allocator) MipsGOTSection<ELFType>(ctx)),
+        _pltSection(new (this->_allocator) MipsPLTSection<ELFType>(ctx)) {}
 
   const MipsGOTSection<ELFType> &getGOTSection() const { return *_gotSection; }
   const MipsPLTSection<ELFType> &getPLTSection() const { return *_pltSection; }
@@ -78,7 +78,6 @@ public:
   }
 
 private:
-  llvm::BumpPtrAllocator _alloc;
   MipsGOTSection<ELFType> *_gotSection;
   MipsPLTSection<ELFType> *_pltSection;
   llvm::Optional<AtomLayout *> _gpAtom;
