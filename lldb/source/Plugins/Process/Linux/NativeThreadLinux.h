@@ -14,6 +14,7 @@
 #include "lldb/Host/common/NativeThreadProtocol.h"
 
 #include <map>
+#include <string>
 
 namespace lldb_private
 {
