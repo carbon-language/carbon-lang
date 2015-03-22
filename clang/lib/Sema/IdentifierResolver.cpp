@@ -98,7 +98,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S,
                                        bool AllowInlineNamespace) const {
   Ctx = Ctx->getRedeclContext();
 
-  if (Ctx->isFunctionOrMethod() || (S && S->isFunctionPrototypeScope())) {
+  if (Ctx->isFunctionOrMethod() || S->isFunctionPrototypeScope()) {
     // Ignore the scopes associated within transparent declaration contexts.
     while (S->getEntity() && S->getEntity()->isTransparentContext())
       S = S->getParent();

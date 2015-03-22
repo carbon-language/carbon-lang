@@ -3021,45 +3021,17 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
   if (Visited.visitedContext(Ctx->getPrimaryContext()))
     return;
 
-  // Outside C++, lookup results for the TU live on identifiers.
-  if (isa<TranslationUnitDecl>(Ctx) &&
-      !Result.getSema().getLangOpts().CPlusPlus) {
-    auto &S = Result.getSema();
-    auto &Idents = S.Context.Idents;
-
-    // Ensure all external identifiers are in the identifier table.
-    if (IdentifierInfoLookup *External = Idents.getExternalIdentifierLookup()) {
-      std::unique_ptr<IdentifierIterator> Iter(External->getIdentifiers());
-      for (StringRef Name = Iter->Next(); !Name.empty(); Name = Iter->Next())
-        Idents.get(Name);
-    }
-
-    // Walk all lookup results in the TU for each identifier.
-    for (const auto &Ident : Idents) {
-      for (auto I = S.IdResolver.begin(Ident.getValue()),
-                E = S.IdResolver.end();
-           I != E; ++I) {
-        if (S.IdResolver.isDeclInScope(*I, Ctx)) {
-          if (NamedDecl *ND = Result.getAcceptableDecl(*I)) {
-            Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
-            Visited.add(ND);
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
   if (CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(Ctx))
     Result.getSema().ForceDeclarationOfImplicitMembers(Class);
 
   // Enumerate all of the results in this context.
   for (const auto &R : Ctx->lookups()) {
-    for (auto *D : R) {
-      if (auto *ND = Result.getAcceptableDecl(D)) {
-        Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
-        Visited.add(ND);
+    for (auto *I : R) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(I)) {
+        if ((ND = Result.getAcceptableDecl(ND))) {
+          Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
+          Visited.add(ND);
+        }
       }
     }
   }

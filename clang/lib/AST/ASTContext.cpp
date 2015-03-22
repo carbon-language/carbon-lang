@@ -7946,7 +7946,7 @@ static GVALinkage basicGVALinkageForVariable(const ASTContext &Context,
     while (LexicalContext && !isa<FunctionDecl>(LexicalContext))
       LexicalContext = LexicalContext->getLexicalParent();
 
-    // Let the static local variable inherit its linkage from the nearest
+    // Let the static local variable inherit it's linkage from the nearest
     // enclosing function.
     if (LexicalContext)
       StaticLocalLinkage =
