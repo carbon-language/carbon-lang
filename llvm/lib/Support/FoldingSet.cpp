@@ -223,6 +223,8 @@ static void **AllocateBuckets(unsigned NumBuckets) {
 //===----------------------------------------------------------------------===//
 // FoldingSetImpl Implementation
 
+void FoldingSetImpl::anchor() {}
+
 FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) {
   assert(5 < Log2InitSize && Log2InitSize < 32 &&
          "Initial hash table size out of range");

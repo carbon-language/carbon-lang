@@ -110,6 +110,8 @@ class FoldingSetNodeID;
 /// back to the bucket to facilitate node removal.
 ///
 class FoldingSetImpl {
+  virtual void anchor(); // Out of line virtual method.
+
 protected:
   /// Buckets - Array of bucket chains.
   ///
@@ -123,10 +125,11 @@ protected:
   /// is greater than twice the number of buckets.
   unsigned NumNodes;
 
-public:
-  explicit FoldingSetImpl(unsigned Log2InitSize = 6);
-  virtual ~FoldingSetImpl();
+  ~FoldingSetImpl();
 
+  explicit FoldingSetImpl(unsigned Log2InitSize = 6);
+
+public:
   //===--------------------------------------------------------------------===//
   /// Node - This class is used to maintain the singly linked bucket list in
   /// a folding set.
@@ -393,7 +396,7 @@ DefaultContextualFoldingSetTrait<T, Ctx>::ComputeHash(T &X,
 /// implementation of the folding set to the node class T.  T must be a
 /// subclass of FoldingSetNode and implement a Profile function.
 ///
-template<class T> class FoldingSet : public FoldingSetImpl {
+template <class T> class FoldingSet final : public FoldingSetImpl {
 private:
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
   /// way to convert nodes into a unique specifier.
@@ -463,7 +466,7 @@ public:
 /// function with signature
 ///   void Profile(llvm::FoldingSetNodeID &, Ctx);
 template <class T, class Ctx>
-class ContextualFoldingSet : public FoldingSetImpl {
+class ContextualFoldingSet final : public FoldingSetImpl {
   // Unfortunately, this can't derive from FoldingSet<T> because the
   // construction vtable for FoldingSet<T> requires
   // FoldingSet<T>::GetNodeProfile to be instantiated, which in turn
