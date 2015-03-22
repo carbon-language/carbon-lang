@@ -2294,6 +2294,11 @@ LLVM_DUMP_METHOD void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
   P.dumpStmt(this);
 }
 
+LLVM_DUMP_METHOD void Stmt::dump(raw_ostream &OS) const {
+  ASTDumper P(OS, nullptr, nullptr);
+  P.dumpStmt(this);
+}
+
 LLVM_DUMP_METHOD void Stmt::dump() const {
   ASTDumper P(llvm::errs(), nullptr, nullptr);
   P.dumpStmt(this);
