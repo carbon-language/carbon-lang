@@ -1340,17 +1340,17 @@ multiclass VOPCX <vopc op, string opName, VOPProfile P,
                   PatLeaf cond = COND_NULL>
   : VOPCInst <op, opName, P, cond, 1>;
 
-multiclass VOPCX_F32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
-  VOPCX <op, opName, VOP_F32_F32_F32, cond>;
+multiclass VOPCX_F32 <vopc op, string opName> :
+  VOPCX <op, opName, VOP_F32_F32_F32, COND_NULL>;
 
-multiclass VOPCX_F64 <vopc op, string opName, PatLeaf cond = COND_NULL> :
-  VOPCX <op, opName, VOP_F64_F64_F64, cond>;
+multiclass VOPCX_F64 <vopc op, string opName> :
+  VOPCX <op, opName, VOP_F64_F64_F64, COND_NULL>;
 
-multiclass VOPCX_I32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
-  VOPCX <op, opName, VOP_I32_I32_I32, cond>;
+multiclass VOPCX_I32 <vopc op, string opName> :
+  VOPCX <op, opName, VOP_I32_I32_I32, COND_NULL>;
 
-multiclass VOPCX_I64 <vopc op, string opName, PatLeaf cond = COND_NULL> :
-  VOPCX <op, opName, VOP_I64_I64_I64, cond>;
+multiclass VOPCX_I64 <vopc op, string opName> :
+  VOPCX <op, opName, VOP_I64_I64_I64, COND_NULL>;
 
 multiclass VOP3_Helper <vop3 op, string opName, dag outs, dag ins, string asm,
                         list<dag> pat, int NumSrcArgs, bit HasMods> : VOP3_m <
