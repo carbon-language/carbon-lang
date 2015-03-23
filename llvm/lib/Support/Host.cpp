@@ -357,13 +357,13 @@ StringRef sys::getHostCPUName() {
       case 63:
       case 69:
       case 70:
-        // Not all Haswell processors support AVX too (such as the Pentium
+        // Not all Haswell processors support AVX2 (such as the Pentium
         // versions instead of the i7 versions).
         return HasAVX2 ? "core-avx2" : "corei7";
 
       // Broadwell:
       case 61:
-        // Not all Broadwell processors support AVX too (such as the Pentium
+        // Not all Broadwell processors support AVX2 (such as the Pentium
         // versions instead of the i7 versions).
         return HasAVX2 ? "broadwell" : "corei7";
 
