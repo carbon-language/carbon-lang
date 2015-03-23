@@ -26,10 +26,10 @@
 
 #include "ObjCARC.h"
 #include "ARCRuntimeEntryPoints.h"
+#include "BlotMapVector.h"
 #include "DependencyAnalysis.h"
 #include "ObjCARCAliasAnalysis.h"
 #include "ProvenanceAnalysis.h"
-#include "BlotMapVector.h"
 #include "PtrState.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"

@@ -8,12 +8,10 @@
 /// \file
 //==-----------------------------------------------------------------------===//
 
-#include <deque>
-
 #include "AMDGPU.h"
 #include "AMDGPUInstrInfo.h"
-#include "R600InstrInfo.h"
 #include "AMDGPUSubtarget.h"
+#include "R600InstrInfo.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
@@ -32,6 +30,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include <deque>
 
 using namespace llvm;
 

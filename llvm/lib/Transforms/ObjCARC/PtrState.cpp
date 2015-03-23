@@ -7,14 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "objc-arc-ptr-state"
-#include "llvm/Support/Debug.h"
 #include "PtrState.h"
-#include "ObjCARC.h"
 #include "DependencyAnalysis.h"
+#include "ObjCARC.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;
+
+#define DEBUG_TYPE "objc-arc-ptr-state"
 
 //===----------------------------------------------------------------------===//
 //                                  Utility
