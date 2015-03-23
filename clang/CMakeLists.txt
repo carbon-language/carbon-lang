@@ -402,6 +402,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     FILES_MATCHING
     PATTERN "CMakeFiles" EXCLUDE
     PATTERN "*.inc"
+    PATTERN "*.h"
     )
 endif()
 
