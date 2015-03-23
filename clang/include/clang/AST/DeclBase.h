@@ -1096,14 +1096,21 @@ class DeclContext {
   /// another lookup.
   mutable bool NeedToReconcileExternalVisibleStorage : 1;
 
+  /// \brief If \c true, this context may have local lexical declarations
+  /// that are missing from the lookup table.
+  mutable bool HasLazyLocalLexicalLookups : 1;
+
+  /// \brief If \c true, the external source may have lexical declarations
+  /// that are missing from the lookup table.
+  mutable bool HasLazyExternalLexicalLookups : 1;
+
   /// \brief Pointer to the data structure used to lookup declarations
   /// within this context (or a DependentStoredDeclsMap if this is a
-  /// dependent context), and a bool indicating whether we have lazily
-  /// omitted any declarations from the map. We maintain the invariant
-  /// that, if the map contains an entry for a DeclarationName (and we
-  /// haven't lazily omitted anything), then it contains all relevant
-  /// entries for that name.
-  mutable llvm::PointerIntPair<StoredDeclsMap*, 1, bool> LookupPtr;
+  /// dependent context). We maintain the invariant that, if the map
+  /// contains an entry for a DeclarationName (and we haven't lazily
+  /// omitted anything), then it contains all relevant entries for that
+  /// name (modulo the hasExternalDecls() flag).
+  mutable StoredDeclsMap *LookupPtr;
 
 protected:
   /// FirstDecl - The first declaration stored within this declaration
@@ -1129,8 +1136,9 @@ protected:
   DeclContext(Decl::Kind K)
       : DeclKind(K), ExternalLexicalStorage(false),
         ExternalVisibleStorage(false),
-        NeedToReconcileExternalVisibleStorage(false), LookupPtr(nullptr, false),
-        FirstDecl(nullptr), LastDecl(nullptr) {}
+        NeedToReconcileExternalVisibleStorage(false),
+        HasLazyLocalLexicalLookups(false), HasLazyExternalLexicalLookups(false),
+        LookupPtr(nullptr), FirstDecl(nullptr), LastDecl(nullptr) {}
 
 public:
   ~DeclContext();
@@ -1656,17 +1664,22 @@ public:
   inline ddiag_range ddiags() const;
 
   // Low-level accessors
-    
-  /// \brief Mark the lookup table as needing to be built.  This should be
-  /// used only if setHasExternalLexicalStorage() has been called on any
-  /// decl context for which this is the primary context.
+
+  /// \brief Mark that there are external lexical declarations that we need
+  /// to include in our lookup table (and that are not available as external
+  /// visible lookups). These extra lookup results will be found by walking
+  /// the lexical declarations of this context. This should be used only if
+  /// setHasExternalLexicalStorage() has been called on any decl context for
+  /// which this is the primary context.
   void setMustBuildLookupTable() {
-    LookupPtr.setInt(true);
+    assert(this == getPrimaryContext() &&
+           "should only be called on primary context");
+    HasLazyExternalLexicalLookups = true;
   }
 
   /// \brief Retrieve the internal representation of the lookup structure.
   /// This may omit some names if we are lazily building the structure.
-  StoredDeclsMap *getLookupPtr() const { return LookupPtr.getPointer(); }
+  StoredDeclsMap *getLookupPtr() const { return LookupPtr; }
 
   /// \brief Ensure the lookup structure is fully-built and return it.
   StoredDeclsMap *buildLookup();
@@ -1689,7 +1702,7 @@ public:
   /// declarations visible in this context.
   void setHasExternalVisibleStorage(bool ES = true) {
     ExternalVisibleStorage = ES;
-    if (ES && LookupPtr.getPointer())
+    if (ES && LookupPtr)
       NeedToReconcileExternalVisibleStorage = true;
   }
 
@@ -1722,8 +1735,6 @@ private:
   friend class DependentDiagnostic;
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
 
-  template<decl_iterator (DeclContext::*Begin)() const,
-           decl_iterator (DeclContext::*End)() const>
   void buildLookupImpl(DeclContext *DCtx, bool Internal);
   void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal,
                                          bool Rediscoverable);

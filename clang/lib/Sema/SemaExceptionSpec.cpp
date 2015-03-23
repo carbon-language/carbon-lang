@@ -167,13 +167,13 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
 void
 Sema::UpdateExceptionSpec(FunctionDecl *FD,
                           const FunctionProtoType::ExceptionSpecInfo &ESI) {
-  for (auto *Redecl : FD->redecls())
-    Context.adjustExceptionSpec(cast<FunctionDecl>(Redecl), ESI);
-
   // If we've fully resolved the exception specification, notify listeners.
   if (!isUnresolvedExceptionSpec(ESI.Type))
     if (auto *Listener = getASTMutationListener())
       Listener->ResolvedExceptionSpec(FD);
+
+  for (auto *Redecl : FD->redecls())
+    Context.adjustExceptionSpec(cast<FunctionDecl>(Redecl), ESI);
 }
 
 /// Determine whether a function has an implicitly-generated exception
