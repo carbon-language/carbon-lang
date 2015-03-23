@@ -36,6 +36,7 @@ common/step.cl
 geometric/cross.cl
 geometric/distance.cl
 geometric/dot.cl
+geometric/fast_length.cl
 geometric/length.cl
 geometric/normalize.cl
 integer/abs.cl
