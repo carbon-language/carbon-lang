@@ -1430,7 +1430,7 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
 
   /* Determine if the operation on the absolute values is effectively
      an addition or subtraction.  */
-  subtract ^= (sign ^ rhs.sign) ? true : false;
+  subtract ^= sign ^ rhs.sign;
 
   /* Are we bigger exponent-wise than the RHS?  */
   bits = exponent - rhs.exponent;
