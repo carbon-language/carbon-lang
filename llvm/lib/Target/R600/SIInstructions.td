@@ -642,26 +642,26 @@ defm V_CMPS_NEQ_F64 : VOPC_F64 <vopc<0x6d>, "v_cmps_neq_f64">;
 defm V_CMPS_NLT_F64 : VOPC_F64 <vopc<0x6e>, "v_cmps_nlt_f64">;
 defm V_CMPS_TRU_F64 : VOPC_F64 <vopc<0x6f>, "v_cmps_tru_f64">;
 
-let hasSideEffects = 1, Defs = [EXEC] in {
+let hasSideEffects = 1 in {
 
-defm V_CMPSX_F_F64 : VOPC_F64 <vopc<0x70>, "v_cmpsx_f_f64">;
-defm V_CMPSX_LT_F64 : VOPC_F64 <vopc<0x71>, "v_cmpsx_lt_f64">;
-defm V_CMPSX_EQ_F64 : VOPC_F64 <vopc<0x72>, "v_cmpsx_eq_f64">;
-defm V_CMPSX_LE_F64 : VOPC_F64 <vopc<0x73>, "v_cmpsx_le_f64">;
-defm V_CMPSX_GT_F64 : VOPC_F64 <vopc<0x74>, "v_cmpsx_gt_f64">;
-defm V_CMPSX_LG_F64 : VOPC_F64 <vopc<0x75>, "v_cmpsx_lg_f64">;
-defm V_CMPSX_GE_F64 : VOPC_F64 <vopc<0x76>, "v_cmpsx_ge_f64">;
-defm V_CMPSX_O_F64 : VOPC_F64 <vopc<0x77>, "v_cmpsx_o_f64">;
-defm V_CMPSX_U_F64 : VOPC_F64 <vopc<0x78>, "v_cmpsx_u_f64">;
-defm V_CMPSX_NGE_F64 : VOPC_F64 <vopc<0x79>, "v_cmpsx_nge_f64">;
-defm V_CMPSX_NLG_F64 : VOPC_F64 <vopc<0x7a>, "v_cmpsx_nlg_f64">;
-defm V_CMPSX_NGT_F64 : VOPC_F64 <vopc<0x7b>, "v_cmpsx_ngt_f64">;
-defm V_CMPSX_NLE_F64 : VOPC_F64 <vopc<0x7c>, "v_cmpsx_nle_f64">;
-defm V_CMPSX_NEQ_F64 : VOPC_F64 <vopc<0x7d>, "v_cmpsx_neq_f64">;
-defm V_CMPSX_NLT_F64 : VOPC_F64 <vopc<0x7e>, "v_cmpsx_nlt_f64">;
-defm V_CMPSX_TRU_F64 : VOPC_F64 <vopc<0x7f>, "v_cmpsx_tru_f64">;
+defm V_CMPSX_F_F64 : VOPCX_F64 <vopc<0x70>, "v_cmpsx_f_f64">;
+defm V_CMPSX_LT_F64 : VOPCX_F64 <vopc<0x71>, "v_cmpsx_lt_f64">;
+defm V_CMPSX_EQ_F64 : VOPCX_F64 <vopc<0x72>, "v_cmpsx_eq_f64">;
+defm V_CMPSX_LE_F64 : VOPCX_F64 <vopc<0x73>, "v_cmpsx_le_f64">;
+defm V_CMPSX_GT_F64 : VOPCX_F64 <vopc<0x74>, "v_cmpsx_gt_f64">;
+defm V_CMPSX_LG_F64 : VOPCX_F64 <vopc<0x75>, "v_cmpsx_lg_f64">;
+defm V_CMPSX_GE_F64 : VOPCX_F64 <vopc<0x76>, "v_cmpsx_ge_f64">;
+defm V_CMPSX_O_F64 : VOPCX_F64 <vopc<0x77>, "v_cmpsx_o_f64">;
+defm V_CMPSX_U_F64 : VOPCX_F64 <vopc<0x78>, "v_cmpsx_u_f64">;
+defm V_CMPSX_NGE_F64 : VOPCX_F64 <vopc<0x79>, "v_cmpsx_nge_f64">;
+defm V_CMPSX_NLG_F64 : VOPCX_F64 <vopc<0x7a>, "v_cmpsx_nlg_f64">;
+defm V_CMPSX_NGT_F64 : VOPCX_F64 <vopc<0x7b>, "v_cmpsx_ngt_f64">;
+defm V_CMPSX_NLE_F64 : VOPCX_F64 <vopc<0x7c>, "v_cmpsx_nle_f64">;
+defm V_CMPSX_NEQ_F64 : VOPCX_F64 <vopc<0x7d>, "v_cmpsx_neq_f64">;
+defm V_CMPSX_NLT_F64 : VOPCX_F64 <vopc<0x7e>, "v_cmpsx_nlt_f64">;
+defm V_CMPSX_TRU_F64 : VOPCX_F64 <vopc<0x7f>, "v_cmpsx_tru_f64">;
 
-} // End hasSideEffects = 1, Defs = [EXEC]
+} // End hasSideEffects = 1
 
 } // End SubtargetPredicate = isSICI
 
