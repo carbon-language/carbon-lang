@@ -366,6 +366,8 @@ public:
   /// Create the default sections and set the initial one.
   virtual void InitSections(bool NoExecStack);
 
+  MCSymbol *endSection(const MCSection *Section);
+
   /// AssignSection - Sets the symbol's section.
   ///
   /// Each emitted symbol will be tracked in the ordering table,

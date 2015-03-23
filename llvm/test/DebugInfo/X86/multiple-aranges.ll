@@ -1,7 +1,6 @@
 ; RUN: llc -generate-arange-section < %s | FileCheck %s
 
-; CHECK: .Ldebug_end0:
-; CHECK-NEXT: .section .debug_aranges,"",@progbits
+; CHECK: .section .debug_aranges,"",@progbits
 
 ; First CU
 ; CHECK-NEXT: .long   44                      # Length of ARange Set
@@ -23,7 +22,7 @@
 ; CHECK-NEXT: .byte   0                       # Segment Size (in bytes)
 ; CHECK-NEXT: .zero   4,255
 ; CHECK-NEXT: .quad   rainbows
-; CHECK-NEXT: .quad   .Ldebug_end0-rainbows
+; CHECK-NEXT: .quad   .Lsec_end0-rainbows
 ; CHECK-NEXT: .quad   0                       # ARange terminator
 ; CHECK-NEXT: .quad   0
 

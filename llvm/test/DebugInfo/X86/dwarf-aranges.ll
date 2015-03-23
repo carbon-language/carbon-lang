@@ -11,11 +11,11 @@
 
 ; <data section> - it should have made one span covering all vars in this CU.
 ; CHECK-NEXT: .quad some_data
-; CHECK-NEXT: .quad .Ldebug_end0-some_data
+; CHECK-NEXT: .quad .Lsec_end0-some_data
 
 ; <other sections> - it should have made one span covering all vars in this CU.
 ; CHECK-NEXT: .quad some_other
-; CHECK-NEXT: .quad .Ldebug_end1-some_other
+; CHECK-NEXT: .quad .Lsec_end1-some_other
 
 ; <common symbols> - it should have made one span for each symbol.
 ; CHECK-NEXT: .quad some_bss
@@ -23,7 +23,7 @@
 
 ; <text section> - it should have made one span covering all functions in this CU.
 ; CHECK-NEXT: .quad .Lfunc_begin0
-; CHECK-NEXT: .quad .Ldebug_end2-.Lfunc_begin0
+; CHECK-NEXT: .quad .Lsec_end2-.Lfunc_begin0
 
 ; -- finish --
 ; CHECK-NEXT: # ARange terminator

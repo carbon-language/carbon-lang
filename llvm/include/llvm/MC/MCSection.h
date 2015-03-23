@@ -20,6 +20,7 @@
 
 namespace llvm {
 class MCAsmInfo;
+class MCContext;
 class MCExpr;
 class MCSymbol;
 class raw_ostream;
@@ -35,10 +36,11 @@ private:
   void operator=(const MCSection &) = delete;
 
   MCSymbol *Begin;
+  mutable MCSymbol *End;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-      : Begin(Begin), Variant(V), Kind(K) {}
+      : Begin(Begin), End(nullptr), Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
 
@@ -50,6 +52,8 @@ public:
   SectionVariant getVariant() const { return Variant; }
 
   MCSymbol *getBeginSymbol() const { return Begin; }
+  MCSymbol *getEndSymbol(MCContext &Ctx) const;
+  bool hasEnded() const;
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;
