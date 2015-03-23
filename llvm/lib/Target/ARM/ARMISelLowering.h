@@ -65,11 +65,6 @@ namespace llvm {
 
       RBIT,         // ARM bitreverse instruction
 
-      FTOSI,        // FP to sint within a FP register.
-      FTOUI,        // FP to uint within a FP register.
-      SITOF,        // sint to FP within a FP register.
-      UITOF,        // uint to FP within a FP register.
-
       SRL_FLAG,     // V,Flag = srl_flag X -> srl X, 1 + save carry out.
       SRA_FLAG,     // V,Flag = sra_flag X -> sra X, 1 + save carry out.
       RRX,          // V = RRX X, Flag     -> srl X, 1 + shift in carry flag.

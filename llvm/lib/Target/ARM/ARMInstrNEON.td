@@ -6158,6 +6158,21 @@ class N3VSMulOpPat<SDNode MulNode, SDNode OpNode, NeonI Inst>
                  (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
                  SPR:$b, ssub_0)), DPR_VFP2)), ssub_0)>;
 
+class NVCVTIFPat<SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(f32 (OpNode GPR:$a)),
+              (f32 (EXTRACT_SUBREG
+                     (v2f32 (Inst
+                       (INSERT_SUBREG
+                         (v2f32 (IMPLICIT_DEF)),
+                         (i32 (COPY_TO_REGCLASS GPR:$a, SPR)), ssub_0))),
+                     ssub_0))>;
+class NVCVTFIPat<SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(i32 (OpNode SPR:$a)),
+              (i32 (EXTRACT_SUBREG
+                     (v2f32 (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                                 SPR:$a, ssub_0))),
+                     ssub_0))>;
+
 def : N3VSPat<fadd, VADDfd>;
 def : N3VSPat<fsub, VSUBfd>;
 def : N3VSPat<fmul, VMULfd>;
@@ -6173,10 +6188,22 @@ def : N2VSPat<fabs, VABSfd>;
 def : N2VSPat<fneg, VNEGfd>;
 def : N3VSPat<NEONfmax, VMAXfd>;
 def : N3VSPat<NEONfmin, VMINfd>;
-def : N2VSPat<arm_ftosi, VCVTf2sd>;
-def : N2VSPat<arm_ftoui, VCVTf2ud>;
-def : N2VSPat<arm_sitof, VCVTs2fd>;
-def : N2VSPat<arm_uitof, VCVTu2fd>;
+def : NVCVTFIPat<fp_to_sint, VCVTf2sd>;
+def : NVCVTFIPat<fp_to_uint, VCVTf2ud>;
+def : NVCVTIFPat<sint_to_fp, VCVTs2fd>;
+def : NVCVTIFPat<uint_to_fp, VCVTu2fd>;
+
+// NEON doesn't have any f64 conversions, so provide patterns to make
+// sure the VFP conversions match when extracting from a vector.
+def : VFPPat<(f64 (sint_to_fp (extractelt (v2i32 DPR:$src), imm:$lane))),
+             (VSITOD (EXTRACT_SUBREG DPR:$src, (SSubReg_f32_reg imm:$lane)))>;
+def : VFPPat<(f64 (sint_to_fp (extractelt (v4i32 QPR:$src), imm:$lane))),
+             (VSITOD (EXTRACT_SUBREG QPR:$src, (SSubReg_f32_reg imm:$lane)))>;
+def : VFPPat<(f64 (uint_to_fp (extractelt (v2i32 DPR:$src), imm:$lane))),
+             (VUITOD (EXTRACT_SUBREG DPR:$src, (SSubReg_f32_reg imm:$lane)))>;
+def : VFPPat<(f64 (uint_to_fp (extractelt (v4i32 QPR:$src), imm:$lane))),
+             (VUITOD (EXTRACT_SUBREG QPR:$src, (SSubReg_f32_reg imm:$lane)))>;
+
 
 // Prefer VMOVDRR for i32 -> f32 bitcasts, it can write all DPR registers.
 def : Pat<(f32 (bitconvert GPR:$a)),

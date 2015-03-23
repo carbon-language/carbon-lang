@@ -983,7 +983,12 @@ class ARMV5MOPat<dag pattern, dag result> : Pat<pattern, result> {
 class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM, HasV6];
 }
-
+class VFPPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [HasVFP2];
+}
+class VFPNoNEONPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [HasVFP2, DontUseNEONForFP];
+}
 //===----------------------------------------------------------------------===//
 // Thumb Instruction Format Definitions.
 //
