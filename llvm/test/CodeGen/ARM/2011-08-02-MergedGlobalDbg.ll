@@ -1,4 +1,4 @@
-; RUN: llc -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -O3 -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 
 ; Check debug info output for merged global.
 ; DW_AT_location

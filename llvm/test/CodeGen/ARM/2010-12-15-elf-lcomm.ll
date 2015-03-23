@@ -1,6 +1,6 @@
-; RUN: llc  %s -mtriple=armv7-linux-gnueabi -filetype=obj -o - | \
+; RUN: llc  %s -mtriple=armv7-linux-gnueabi -O3 -filetype=obj -o - | \
 ; RUN:    llvm-readobj -s -t | FileCheck  -check-prefix=OBJ %s
-; RUN: llc  %s -mtriple=armv7-linux-gnueabi -o - | \
+; RUN: llc  %s -mtriple=armv7-linux-gnueabi -O3 -o - | \
 ; RUN:    FileCheck  -check-prefix=ASM %s
 
 

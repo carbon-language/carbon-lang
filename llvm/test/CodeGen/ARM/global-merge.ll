@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -global-merge-on-const=true | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -O3 -global-merge-on-const=true | FileCheck %s
 ; Test the ARMGlobalMerge pass.  Use -march=thumb because it has a small
 ; value for the maximum offset (127).
 

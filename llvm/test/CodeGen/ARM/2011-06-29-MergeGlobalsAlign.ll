@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 -O3 | FileCheck %s
 ; CHECK: .zerofill __DATA,__bss,__MergedGlobals,16,2
 
 @prev = external global [0 x i16]

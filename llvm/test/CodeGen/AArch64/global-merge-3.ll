@@ -1,6 +1,6 @@
-; RUN: llc %s -mtriple=aarch64-none-linux-gnu -enable-global-merge -global-merge-on-external -o - | FileCheck %s
-; RUN: llc %s -mtriple=aarch64-linux-gnuabi -enable-global-merge -global-merge-on-external -o - | FileCheck %s
-; RUN: llc %s -mtriple=aarch64-apple-ios -enable-global-merge -global-merge-on-external -o - | FileCheck %s --check-prefix=CHECK-APPLE-IOS
+; RUN: llc %s -mtriple=aarch64-none-linux-gnu -O3 -enable-global-merge -global-merge-on-external -o - | FileCheck %s
+; RUN: llc %s -mtriple=aarch64-linux-gnuabi -O3 -enable-global-merge -global-merge-on-external -o - | FileCheck %s
+; RUN: llc %s -mtriple=aarch64-apple-ios -O3 -enable-global-merge -global-merge-on-external -o - | FileCheck %s --check-prefix=CHECK-APPLE-IOS
 
 @x = global [1000 x i32] zeroinitializer, align 1
 @y = global [1000 x i32] zeroinitializer, align 1
