@@ -82,8 +82,6 @@ static cl::opt<polly::VectorizerChoice, true> Vectorizer(
                    "Polly internal vectorizer"),
         clEnumValN(polly::VECTORIZER_STRIPMINE, "stripmine",
                    "Strip-mine outer loops for the loop-vectorizer to trigger"),
-        clEnumValN(polly::VECTORIZER_UNROLL_ONLY, "unroll-only",
-                   "Only grouped unroll the vectorize candidate loops"),
         clEnumValEnd),
     cl::location(PollyVectorizerChoice), cl::init(polly::VECTORIZER_NONE),
     cl::ZeroOrMore, cl::cat(PollyCategory));

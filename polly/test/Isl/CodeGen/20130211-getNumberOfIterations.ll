@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl -polly-vectorizer=polly < %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl -polly-vectorizer=unroll-only < %s
 
 ; This test case checks that the polly vectorizer does not crash when
 ; calculating the number of iterations.
