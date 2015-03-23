@@ -1750,7 +1750,7 @@ public:
   /// \param DstExprs List of helper expressions for proper generation of
   /// assignment operation required for copyprivate clause. This list represents
   /// destinations.
-  /// \param AsignmentOps List of helper expressions that represents assignment
+  /// \param AssignmentOps List of helper expressions that represents assignment
   /// operation:
   /// \code
   /// DstExprs = SrcExprs;
