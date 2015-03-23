@@ -38,7 +38,7 @@ ForwardPortWithAdb (uint16_t port, std::string& device_id)
         return error;
 
     if (connect_devices.size () != 1)
-        return Error ("Expected a single connected device, got instead %" PRIu64, connect_devices.size ());
+        return Error ("Expected a single connected device, got instead %zu", connect_devices.size ());
 
     device_id = connect_devices.front ();
     if (log)
