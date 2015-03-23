@@ -144,7 +144,12 @@ void UseOverrideCheck::check(const MatchFinder::MatchResult &Result) {
       InsertLoc = Method->getBody()->getLocStart();
 
     if (!InsertLoc.isValid()) {
-      if (Tokens.size() > 2 && GetText(Tokens.back(), Sources) == "0" &&
+      // For declarations marked with "= 0" or "= [default|delete]", the end
+      // location will point until after those markings. Therefore, the override
+      // keyword shouldn't be inserted at the end, but before the '='.
+      if (Tokens.size() > 2 && (GetText(Tokens.back(), Sources) == "0" ||
+                                Tokens.back().is(tok::kw_default) ||
+                                Tokens.back().is(tok::kw_delete)) &&
           GetText(Tokens[Tokens.size() - 2], Sources) == "=") {
         InsertLoc = Tokens[Tokens.size() - 2].getLocation();
       } else if (GetText(Tokens.back(), Sources) == "ABSTRACT") {
