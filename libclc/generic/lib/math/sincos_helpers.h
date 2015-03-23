@@ -20,6 +20,6 @@
  * THE SOFTWARE.
  */
 
-float sinf_piby4(float x, float y);
-float cosf_piby4(float x, float y);
-int argReductionS(float *r, float *rr, float x);
+_CLC_DECL float __clc_sinf_piby4(float x, float y);
+_CLC_DECL float __clc_cosf_piby4(float x, float y);
+_CLC_DECL int __clc_argReductionS(float *r, float *rr, float x);

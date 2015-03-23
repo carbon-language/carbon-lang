@@ -25,13 +25,10 @@
 #include "math.h"
 #include "sincos_helpers.h"
 
-uint bitalign(uint hi, uint lo, uint shift)
-{
-        return (hi << (32 - shift)) | (lo >> shift);
-}
+#define bitalign(hi, lo, shift) \
+  ((hi) << (32 - (shift))) | ((lo) >> (shift));
 
-float sinf_piby4(float x, float y)
-{
+_CLC_DEF float __clc_sinf_piby4(float x, float y) {
     // Taylor series for sin(x) is x - x^3/3! + x^5/5! - x^7/7! ...
     // = x * (1 - x^2/3! + x^4/5! - x^6/7! ...
     // = x * f(w)
@@ -54,8 +51,7 @@ float sinf_piby4(float x, float y)
     return ret;
 }
 
-float cosf_piby4(float x, float y)
-{
+_CLC_DEF float __clc_cosf_piby4(float x, float y) {
     // Taylor series for cos(x) is 1 - x^2/2! + x^4/4! - x^6/6! ...
     // = f(w)
     // where w = x*x and f(w) = (1 - w/2! + w^2/4! - w^3/6! ...
@@ -90,7 +86,7 @@ float cosf_piby4(float x, float y)
     return ret;
 }
 
-void fullMulS(float *hi, float *lo, float a, float b, float bh, float bt)
+_CLC_DEF void __clc_fullMulS(float *hi, float *lo, float a, float b, float bh, float bt)
 {
     if (HAVE_HW_FMA32()) {
         float ph = a * b;
@@ -106,7 +102,7 @@ void fullMulS(float *hi, float *lo, float a, float b, float bh, float bt)
     }
 }
 
-float removePi2S(float *hi, float *lo, float x)
+_CLC_DEF float __clc_removePi2S(float *hi, float *lo, float x)
 {
     // 72 bits of pi/2
     const float fpiby2_1 = (float) 0xC90FDA / 0x1.0p+23f;
@@ -127,17 +123,17 @@ float removePi2S(float *hi, float *lo, float x)
 
     // subtract n * pi/2 from x
     float rhead, rtail;
-    fullMulS(&rhead, &rtail, fnpi2, fpiby2_1, fpiby2_1_h, fpiby2_1_t);
+    __clc_fullMulS(&rhead, &rtail, fnpi2, fpiby2_1, fpiby2_1_h, fpiby2_1_t);
     float v = x - rhead;
     float rem = v + (((x - v) - rhead) - rtail);
 
     float rhead2, rtail2;
-    fullMulS(&rhead2, &rtail2, fnpi2, fpiby2_2, fpiby2_2_h, fpiby2_2_t);
+    __clc_fullMulS(&rhead2, &rtail2, fnpi2, fpiby2_2, fpiby2_2_h, fpiby2_2_t);
     v = rem - rhead2;
     rem = v + (((rem - v) - rhead2) - rtail2);
 
     float rhead3, rtail3;
-    fullMulS(&rhead3, &rtail3, fnpi2, fpiby2_3, fpiby2_3_h, fpiby2_3_t);
+    __clc_fullMulS(&rhead3, &rtail3, fnpi2, fpiby2_3, fpiby2_3_h, fpiby2_3_t);
     v = rem - rhead3;
 
     *hi = v + ((rem - v) - rhead3);
@@ -145,9 +141,9 @@ float removePi2S(float *hi, float *lo, float x)
     return fnpi2;
 }
 
-int argReductionSmallS(float *r, float *rr, float x)
+_CLC_DEF int __clc_argReductionSmallS(float *r, float *rr, float x)
 {
-    float fnpi2 = removePi2S(r, rr, x);
+    float fnpi2 = __clc_removePi2S(r, rr, x);
     return (int)fnpi2 & 0x3;
 }
 
@@ -160,7 +156,7 @@ int argReductionSmallS(float *r, float *rr, float x)
     HI = mul_hi(A, B); \
     HI += LO < C
 
-int argReductionLargeS(float *r, float *rr, float x)
+_CLC_DEF int __clc_argReductionLargeS(float *r, float *rr, float x)
 {
     int xe = (int)(as_uint(x) >> 23) - 127;
     uint xm = 0x00800000U | (as_uint(x) & 0x7fffffU);
@@ -298,11 +294,11 @@ int argReductionLargeS(float *r, float *rr, float x)
     return ((i >> 1) + (i & 1)) & 0x3;
 }
 
-int argReductionS(float *r, float *rr, float x)
+_CLC_DEF int __clc_argReductionS(float *r, float *rr, float x)
 {
     if (x < 0x1.0p+23f)
-        return argReductionSmallS(r, rr, x);
+        return __clc_argReductionSmallS(r, rr, x);
     else
-        return argReductionLargeS(r, rr, x);
+        return __clc_argReductionLargeS(r, rr, x);
 }
 

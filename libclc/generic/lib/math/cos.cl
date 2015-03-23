@@ -33,10 +33,10 @@ _CLC_OVERLOAD _CLC_DEF float cos(float x)
     float dx = as_float(ax);
 
     float r0, r1;
-    int regn = argReductionS(&r0, &r1, dx);
+    int regn = __clc_argReductionS(&r0, &r1, dx);
 
-    float ss = -sinf_piby4(r0, r1);
-    float cc =  cosf_piby4(r0, r1);
+    float ss = -__clc_sinf_piby4(r0, r1);
+    float cc =  __clc_cosf_piby4(r0, r1);
 
     float c =  (regn & 1) != 0 ? ss : cc;
     c = as_float(as_int(c) ^ ((regn > 1) << 31));
