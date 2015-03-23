@@ -54,6 +54,7 @@ const char *const CommonOptionsParser::HelpMessage =
     "\tsuffix of a path in the compile command database.\n"
     "\n";
 
+namespace {
 class ArgumentsAdjustingCompilations : public CompilationDatabase {
 public:
   ArgumentsAdjustingCompilations(
@@ -89,6 +90,7 @@ private:
     return Commands;
   }
 };
+} // namespace
 
 CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv,
                                          cl::OptionCategory &Category,
