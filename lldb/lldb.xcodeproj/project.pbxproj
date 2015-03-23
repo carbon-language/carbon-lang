@@ -100,6 +100,8 @@
 		254FBBA51A91670E00BD6378 /* SBAttachInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */; };
 		257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 257E47151AA56C2000A62F81 /* ModuleCache.cpp */; };
 		257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 257E47161AA56C2000A62F81 /* ModuleCache.h */; };
+		25EF23781AC09B3700908DF0 /* AdbClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25EF23751AC09AD800908DF0 /* AdbClient.cpp */; };
+		25EF23791AC09B4200908DF0 /* AdbClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 25EF23761AC09AD800908DF0 /* AdbClient.h */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		260157C81885F53100F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		2606EDDF184E68A10034641B /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
@@ -1221,6 +1223,8 @@
 		254FBBA61A91672800BD6378 /* SBAttachInfo.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBAttachInfo.i; sourceTree = "<group>"; };
 		257E47151AA56C2000A62F81 /* ModuleCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleCache.cpp; path = source/Utility/ModuleCache.cpp; sourceTree = "<group>"; };
 		257E47161AA56C2000A62F81 /* ModuleCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ModuleCache.h; path = source/Utility/ModuleCache.h; sourceTree = "<group>"; };
+		25EF23751AC09AD800908DF0 /* AdbClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdbClient.cpp; sourceTree = "<group>"; };
+		25EF23761AC09AD800908DF0 /* AdbClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdbClient.h; sourceTree = "<group>"; };
 		260157C41885F4FF00F875CF /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = /usr/lib/libpanel.dylib; sourceTree = "<absolute>"; };
 		260223E7115F06D500A601A2 /* SBCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommunication.h; path = include/lldb/API/SBCommunication.h; sourceTree = "<group>"; };
 		260223E8115F06E500A601A2 /* SBCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommunication.cpp; path = source/API/SBCommunication.cpp; sourceTree = "<group>"; };
@@ -4971,6 +4975,8 @@
 		6D55BAE61A8CD08C00A70529 /* Android */ = {
 			isa = PBXGroup;
 			children = (
+				25EF23751AC09AD800908DF0 /* AdbClient.cpp */,
+				25EF23761AC09AD800908DF0 /* AdbClient.h */,
 				6D55BAE91A8CD08C00A70529 /* PlatformAndroid.cpp */,
 				6D55BAEA1A8CD08C00A70529 /* PlatformAndroid.h */,
 				6D55BAEB1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.cpp */,
@@ -5306,6 +5312,7 @@
 				26CFDCA11861638D000E63E5 /* Editline.h in Headers */,
 				26BC17B018C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h in Headers */,
 				6D55BAF01A8CD0BD00A70529 /* PlatformAndroidRemoteGDBServer.h in Headers */,
+				25EF23791AC09B4200908DF0 /* AdbClient.h in Headers */,
 				AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */,
 				26474CB518D0CB180073DEBA /* RegisterContextLinux_x86_64.h in Headers */,
 				26D1804716CEE12C00EDFB5B /* TimeSpecTimeout.h in Headers */,
@@ -6086,6 +6093,7 @@
 				268900C113353E5F00698AC0 /* DWARFDebugPubnames.cpp in Sources */,
 				268900C213353E5F00698AC0 /* DWARFDebugPubnamesSet.cpp in Sources */,
 				268900C313353E5F00698AC0 /* DWARFDebugRanges.cpp in Sources */,
+				25EF23781AC09B3700908DF0 /* AdbClient.cpp in Sources */,
 				94380B8219940B0A00BFE4A8 /* StringLexer.cpp in Sources */,
 				268900C413353E5F00698AC0 /* DWARFDefines.cpp in Sources */,
 				94D0B10C16D5535900EA9C70 /* LibCxx.cpp in Sources */,

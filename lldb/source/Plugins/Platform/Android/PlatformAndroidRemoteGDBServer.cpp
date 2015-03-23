@@ -9,10 +9,12 @@
 
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "llvm/ADT/StringRef.h"
 
 // Project includes
+#include "AdbClient.h"
 #include "PlatformAndroidRemoteGDBServer.h"
 #include "Utility/UriParser.h"
 
@@ -20,130 +22,37 @@ using namespace lldb;
 using namespace lldb_private;
 
 static const lldb::pid_t g_remote_platform_pid = 0; // Alias for the process id of lldb-platform
-static const uint32_t g_adb_timeout = 10000; // 10 ms
-
-static void
-SendMessageToAdb (Connection& conn, const std::string& packet, Error& error)
-{
-    ConnectionStatus status;
-
-    char length_buffer[5];
-    snprintf (length_buffer, sizeof (length_buffer), "%04zx", packet.size());
-
-    conn.Write (length_buffer, 4, status, &error);
-    if (error.Fail ())
-        return;
-
-    conn.Write (packet.c_str(), packet.size(), status, &error);
-}
-
-static std::string
-ReadMessageFromAdb (Connection& conn, bool has_okay, Error& error)
-{
-    ConnectionStatus status;
-
-    char buffer[5];
-    buffer[4] = 0;
-
-    if (has_okay)
-    {
-        conn.Read (buffer, 4, g_adb_timeout, status, &error);
-        if (error.Fail ())
-            return "";
-
-        if (strncmp (buffer, "OKAY", 4) != 0)
-        {
-            error.SetErrorStringWithFormat ("\"OKAY\" expected from adb, received: \"%s\"", buffer);
-            return "";
-        }
-    }
-
-    conn.Read (buffer, 4, g_adb_timeout, status, &error);
-    if (error.Fail())
-        return "";
-
-    size_t packet_len = 0;
-    sscanf(buffer, "%zx", &packet_len);
-    std::string result(packet_len, 0);
-    conn.Read (&result[0], packet_len, g_adb_timeout, status, &error);
-    if (error.Fail ())
-        return "";
-
-    return result;
-}
 
 static Error
 ForwardPortWithAdb (uint16_t port, std::string& device_id)
 {
-    Error error;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
 
-    {
-        // Fetch the device list from ADB and if only 1 device found then use that device
-        // TODO: Handle the case when more device is available
-        std::unique_ptr<ConnectionFileDescriptor> conn (new ConnectionFileDescriptor ());
-        if (conn->Connect ("connect://localhost:5037", &error) != eConnectionStatusSuccess)
-            return error;
+    // Fetch the device list from ADB and if only 1 device found then use that device
+    // TODO: Handle the case when more device is available
+    AdbClient adb;
 
-        SendMessageToAdb (*conn, "host:devices", error);
-        if (error.Fail ())
-            return error;
-        std::string in_buffer = ReadMessageFromAdb (*conn, true, error);
+    AdbClient::DeviceIDList connect_devices;
+    auto error = adb.GetDevices (connect_devices);
+    if (error.Fail ())
+        return error;
 
-        llvm::StringRef deviceList(in_buffer);
-        std::pair<llvm::StringRef, llvm::StringRef> devices = deviceList.split ('\n');
-        if (devices.first.size () == 0 || devices.second.size () > 0)
-        {
-            error.SetErrorString ("Wrong number of devices returned from ADB");
-            return error;
-        }
+    if (connect_devices.size () != 1)
+        return Error ("Expected a single connected device, got instead %" PRIu64, connect_devices.size ());
 
-        device_id = devices.first.split ('\t').first;
-    }
+    device_id = connect_devices.front ();
+    if (log)
+        log->Printf("Connected to Android device \"%s\"", device_id.c_str ());
 
-    {
-        // Forward the port to the (only) connected device
-        std::unique_ptr<ConnectionFileDescriptor> conn (new ConnectionFileDescriptor ());
-        if (conn->Connect ("connect://localhost:5037", &error) != eConnectionStatusSuccess)
-            return error;
-
-        char port_buffer[32];
-        snprintf (port_buffer, sizeof (port_buffer), "tcp:%d;tcp:%d", port, port);
-
-        std::string out_buffer = "host-serial:" + device_id + ":forward:" + port_buffer;
-        SendMessageToAdb (*conn, out_buffer, error);
-        if (error.Fail ())
-            return error;
-
-        std::string in_buffer = ReadMessageFromAdb (*conn, false, error);
-        if (in_buffer != "OKAY")
-            error.SetErrorString (in_buffer.c_str ());
-    }
-
-    return error;
+    adb.SetDeviceID (device_id);
+    return adb.SetPortForwarding (port);
 }
 
 static Error
 DeleteForwardPortWithAdb (uint16_t port, const std::string& device_id)
 {
-    Error error;
-
-    std::unique_ptr<ConnectionFileDescriptor> conn (new ConnectionFileDescriptor ());
-    if (conn->Connect ("connect://localhost:5037", &error) != eConnectionStatusSuccess)
-        return error;
-
-    char port_buffer[16];
-    snprintf (port_buffer, sizeof (port_buffer), "tcp:%d", port);
-
-    std::string out_buffer = "host-serial:" + device_id + ":killforward:" + port_buffer;
-    SendMessageToAdb (*conn, out_buffer, error);
-    if (error.Fail ())
-        return error;
-
-    std::string in_buffer = ReadMessageFromAdb (*conn, true, error);
-    if (in_buffer != "OKAY")
-        error.SetErrorString (in_buffer.c_str ());
-
-    return error;
+    AdbClient adb (device_id);
+    return adb.DeletePortForwarding (port);
 }
 
 PlatformAndroidRemoteGDBServer::PlatformAndroidRemoteGDBServer ()
