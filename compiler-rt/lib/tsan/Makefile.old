@@ -4,6 +4,7 @@ CXXFLAGS = -std=c++11 -fPIE -fno-rtti -g -Wall -Werror \
 					 -DGTEST_HAS_RTTI=0 -DSANITIZER_DEBUG=$(DEBUG)
 CLANG=clang
 FILECHECK=FileCheck
+CXXFLAGS += -Wno-maybe-uninitialized
 # Silence warnings that Clang produces for gtest code.
 # Use -Wno-attributes so that gcc doesn't complain about unknown warning types.
 CXXFLAGS += -Wno-attributes
