@@ -7303,15 +7303,20 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb: {
-    StringRef MArch = getToolChain().getArchName();
-    if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
+    const llvm::Triple &Triple = getToolChain().getTriple();
+    switch (Triple.getSubArch()) {
+    case llvm::Triple::ARMSubArch_v7:
       CmdArgs.push_back("-mfpu=neon");
-    if (MArch == "armv8" || MArch == "armv8a" || MArch == "armv8-a" ||
-        MArch == "armebv8" || MArch == "armebv8a" || MArch == "armebv8-a")
+      break;
+    case llvm::Triple::ARMSubArch_v8:
       CmdArgs.push_back("-mfpu=crypto-neon-fp-armv8");
+      break;
+    default:
+      break;
+    }
 
     StringRef ARMFloatABI = tools::arm::getARMFloatABI(
-        getToolChain().getDriver(), Args, getToolChain().getTriple());
+        getToolChain().getDriver(), Args, Triple);
     CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=" + ARMFloatABI));
 
     Args.AddLastArg(CmdArgs, options::OPT_march_EQ);
