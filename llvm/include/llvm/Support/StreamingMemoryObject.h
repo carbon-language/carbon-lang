@@ -14,7 +14,6 @@
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryObject.h"
-#include <cassert>
 #include <memory>
 #include <vector>
 

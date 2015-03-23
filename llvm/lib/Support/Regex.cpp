@@ -14,8 +14,7 @@
 #include "llvm/Support/Regex.h"
 #include "regex_impl.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 using namespace llvm;
 

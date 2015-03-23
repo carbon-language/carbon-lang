@@ -23,7 +23,6 @@
 #include "llvm/Support/Program.h"
 #include <cassert>
 #include <cerrno>
-#include <cstdio>
 #include <cstring>
 #include <new>
 #include <sys/types.h>

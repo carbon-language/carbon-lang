@@ -38,19 +38,18 @@
 #ifndef LLVM_SUPPORT_YAMLPARSER_H
 #define LLVM_SUPPORT_YAMLPARSER_H
 
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SMLoc.h"
 #include <limits>
 #include <map>
 #include <utility>
 
 namespace llvm {
+class MemoryBufferRef;
 class SourceMgr;
-class raw_ostream;
 class Twine;
+class raw_ostream;
 
 namespace yaml {
 

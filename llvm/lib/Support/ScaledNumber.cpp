@@ -14,6 +14,7 @@
 #include "llvm/Support/ScaledNumber.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::ScaledNumbers;

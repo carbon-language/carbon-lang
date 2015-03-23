@@ -28,9 +28,8 @@
 #ifndef LLVM_SUPPORT_DEBUG_H
 #define LLVM_SUPPORT_DEBUG_H
 
-#include "llvm/Support/raw_ostream.h"
-
 namespace llvm {
+class raw_ostream;
 
 #ifndef NDEBUG
 /// DebugFlag - This boolean is set to true if the '-debug' command line option

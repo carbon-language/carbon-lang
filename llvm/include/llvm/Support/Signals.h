@@ -15,11 +15,11 @@
 #ifndef LLVM_SUPPORT_SIGNALS_H
 #define LLVM_SUPPORT_SIGNALS_H
 
-#include "llvm/Support/Path.h"
-#include <cstdio>
+#include <string>
 
 namespace llvm {
-  class raw_ostream;
+class StringRef;
+class raw_ostream;
 
 namespace sys {
 

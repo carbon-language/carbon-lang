@@ -17,7 +17,6 @@
 #ifndef LLVM_SUPPORT_REGEX_H
 #define LLVM_SUPPORT_REGEX_H
 
-#include "llvm/Support/Compiler.h"
 #include <string>
 
 struct llvm_regex;

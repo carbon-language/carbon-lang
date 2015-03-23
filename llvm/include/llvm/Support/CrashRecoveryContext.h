@@ -14,8 +14,6 @@
 #include <string>
 
 namespace llvm {
-class StringRef;
-
 class CrashRecoveryContextCleanup;
 
 /// \brief Crash recovery helper object.

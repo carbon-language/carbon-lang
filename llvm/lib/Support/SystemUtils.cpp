@@ -13,8 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/Support/Process.h"
-#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 

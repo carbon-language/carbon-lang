@@ -23,9 +23,6 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-  class APFloat;
-  class APInt;
-
 /// This folding set used for two purposes:
 ///   1. Given information about a node we want to create, look up the unique
 ///      instance of the node in the set.  If the node already exists, return

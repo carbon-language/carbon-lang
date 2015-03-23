@@ -19,9 +19,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include <cctype>
-#include <cstdio>
 #include <cstring>
-#include <fcntl.h>
 
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>

@@ -30,9 +30,7 @@
 #define LLVM_SUPPORT_STRINGPOOL_H
 
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
-#include <new>
 
 namespace llvm {
 

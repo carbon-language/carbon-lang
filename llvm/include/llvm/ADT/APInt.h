@@ -25,9 +25,7 @@
 #include <string>
 
 namespace llvm {
-class Deserializer;
 class FoldingSetNodeID;
-class Serializer;
 class StringRef;
 class hash_code;
 class raw_ostream;

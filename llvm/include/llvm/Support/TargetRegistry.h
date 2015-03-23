@@ -28,8 +28,6 @@
 
 namespace llvm {
   class AsmPrinter;
-  class Module;
-  class MCAssembler;
   class MCAsmBackend;
   class MCAsmInfo;
   class MCAsmParser;

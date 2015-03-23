@@ -24,10 +24,9 @@
 #define LLVM_SUPPORT_GRAPHWRITER_H
 
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/DOTGraphTraits.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cassert>
 #include <vector>
 
 namespace llvm {

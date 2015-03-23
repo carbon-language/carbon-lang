@@ -8,13 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CrashRecoveryContext.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/ThreadLocal.h"
-#include <cstdio>
 #include <setjmp.h>
 using namespace llvm;
 

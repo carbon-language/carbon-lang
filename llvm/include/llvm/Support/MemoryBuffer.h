@@ -17,11 +17,9 @@
 #include "llvm-c/Support.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CBindingWrapping.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorOr.h"
 #include <memory>
-#include <system_error>
 
 namespace llvm {
 class MemoryBufferRef;

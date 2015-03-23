@@ -15,8 +15,6 @@
 #ifndef LLVM_SUPPORT_SYSTEMUTILS_H
 #define LLVM_SUPPORT_SYSTEMUTILS_H
 
-#include <string>
-
 namespace llvm {
   class raw_ostream;
 

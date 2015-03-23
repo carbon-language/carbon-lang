@@ -9,6 +9,7 @@
 
 #include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"

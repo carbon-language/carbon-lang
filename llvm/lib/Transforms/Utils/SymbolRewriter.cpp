@@ -60,6 +60,7 @@
 #define DEBUG_TYPE "symbol-rewriter"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

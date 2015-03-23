@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Program.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
 #include <system_error>
 using namespace llvm;

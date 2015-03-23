@@ -8,12 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/StreamingMemoryObject.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
 #include <cstring>
-
-
 using namespace llvm;
 
 namespace {

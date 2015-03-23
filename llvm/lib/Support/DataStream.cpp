@@ -18,8 +18,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"
-#include <cerrno>
-#include <cstdio>
 #include <string>
 #include <system_error>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
