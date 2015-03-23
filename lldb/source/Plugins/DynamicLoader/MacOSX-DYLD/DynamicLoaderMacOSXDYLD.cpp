@@ -890,24 +890,6 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
     
     if (loaded_module_list.GetSize() > 0)
     {
-        // FIXME: This should really be in the Runtime handlers class, which should get
-        // called by the target's ModulesDidLoad, but we're doing it all locally for now 
-        // to save time.
-        // Also, I'm assuming there can be only one libobjc dylib loaded...
-        
-        ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime(true);
-        if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
-        {
-            size_t num_modules = loaded_module_list.GetSize();
-            for (size_t i = 0; i < num_modules; i++)
-            {
-                if (objc_runtime->IsModuleObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
-                {
-                    objc_runtime->ReadObjCLibrary (loaded_module_list.GetModuleAtIndex (i));
-                    break;
-                }
-            }
-        }
         if (log)
             loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidLoad");
         m_process->GetTarget().ModulesDidLoad (loaded_module_list);

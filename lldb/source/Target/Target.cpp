@@ -1259,6 +1259,24 @@ Target::ModulesDidLoad (ModuleList &module_list)
         if (m_process_sp)
         {
             m_process_sp->ModulesDidLoad (module_list);
+
+            // This assumes there can only be one libobjc loaded.
+            ObjCLanguageRuntime *objc_runtime = m_process_sp->GetObjCLanguageRuntime ();
+            if (objc_runtime && !objc_runtime->HasReadObjCLibrary ())
+            {
+                Mutex::Locker locker (module_list.GetMutex ());
+
+                size_t num_modules = module_list.GetSize();
+                for (size_t i = 0; i < num_modules; i++)
+                {
+                    auto mod = module_list.GetModuleAtIndex (i);
+                    if (objc_runtime->IsModuleObjCLibrary (mod))
+                    {
+                        objc_runtime->ReadObjCLibrary (mod);
+                        break;
+                    }
+                }
+            }
         }
         BroadcastEvent (eBroadcastBitModulesLoaded, new TargetEventData (this->shared_from_this(), module_list));
     }
