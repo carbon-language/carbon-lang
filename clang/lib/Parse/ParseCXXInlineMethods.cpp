@@ -71,17 +71,24 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
 
     bool Delete = false;
     SourceLocation KWLoc;
+    SourceLocation KWEndLoc = Tok.getEndLoc().getLocWithOffset(-1);
     if (TryConsumeToken(tok::kw_delete, KWLoc)) {
       Diag(KWLoc, getLangOpts().CPlusPlus11
                       ? diag::warn_cxx98_compat_deleted_function
                       : diag::ext_deleted_function);
       Actions.SetDeclDeleted(FnD, KWLoc);
       Delete = true;
+      if (auto *DeclAsFunction = dyn_cast<FunctionDecl>(FnD)) {
+        DeclAsFunction->setRangeEnd(KWEndLoc);
+      }
     } else if (TryConsumeToken(tok::kw_default, KWLoc)) {
       Diag(KWLoc, getLangOpts().CPlusPlus11
                       ? diag::warn_cxx98_compat_defaulted_function
                       : diag::ext_defaulted_function);
       Actions.SetDeclDefaulted(FnD, KWLoc);
+      if (auto *DeclAsFunction = dyn_cast<FunctionDecl>(FnD)) {
+        DeclAsFunction->setRangeEnd(KWEndLoc);
+      }
     } else {
       llvm_unreachable("function definition after = not 'delete' or 'default'");
     }

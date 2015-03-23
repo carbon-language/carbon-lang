@@ -139,7 +139,6 @@ class TestCXXDestructorDecl {
 // CHECK-NEXT:   CompoundStmt
 
 // Test that the range of a defaulted members is computed correctly.
-// FIXME: This should include the "= default".
 class TestMemberRanges {
 public:
   TestMemberRanges() = default;
@@ -156,12 +155,12 @@ void SomeFunction() {
   A = static_cast<TestMemberRanges &&>(B);
   TestMemberRanges C(static_cast<TestMemberRanges &&>(A));
 }
-// CHECK:      CXXConstructorDecl{{.*}} <line:{{.*}}:3, col:20>
-// CHECK:      CXXConstructorDecl{{.*}} <line:{{.*}}:3, col:49>
-// CHECK:      CXXConstructorDecl{{.*}} <line:{{.*}}:3, col:44>
-// CHECK:      CXXDestructorDecl{{.*}} <line:{{.*}}:3, col:21>
-// CHECK:      CXXMethodDecl{{.*}} <line:{{.*}}:3, col:60>
-// CHECK:      CXXMethodDecl{{.*}} <line:{{.*}}:3, col:55>
+// CHECK:      CXXConstructorDecl{{.*}} <line:{{.*}}:3, col:30>
+// CHECK:      CXXConstructorDecl{{.*}} <line:{{.*}}:3, col:59>
+// CHECK:      CXXConstructorDecl{{.*}} <line:{{.*}}:3, col:54>
+// CHECK:      CXXDestructorDecl{{.*}} <line:{{.*}}:3, col:31>
+// CHECK:      CXXMethodDecl{{.*}} <line:{{.*}}:3, col:70>
+// CHECK:      CXXMethodDecl{{.*}} <line:{{.*}}:3, col:65>
 
 class TestCXXConversionDecl {
   operator int() { return 0; }
