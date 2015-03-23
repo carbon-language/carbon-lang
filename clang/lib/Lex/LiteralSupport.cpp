@@ -144,7 +144,7 @@ static unsigned ProcessCharEscape(const char *ThisTokBegin,
       int CharVal = llvm::hexDigitValue(ThisTokBuf[0]);
       if (CharVal == -1) break;
       // About to shift out a digit?
-      Overflow |= (ResultChar & 0xF0000000) ? true : false;
+      Overflow |= ResultChar & 0xF0000000;
       ResultChar <<= 4;
       ResultChar |= CharVal;
     }
