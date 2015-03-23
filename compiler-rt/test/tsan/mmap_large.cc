@@ -4,6 +4,13 @@
 #include <errno.h>
 #include <sys/mman.h>
 
+#if defined(__FreeBSD__)
+// The MAP_NORESERVE define has been removed in FreeBSD 11.x, and even before
+// that, it was never implemented.  So just define it to zero.
+#undef  MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
+
 int main() {
 #ifdef __x86_64__
   const size_t kLog2Size = 39;
