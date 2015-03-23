@@ -829,11 +829,6 @@ class VOP2_REV <string revOp, bit isOrig> {
   bit IsOrig = isOrig;
 }
 
-class VOPC_REV <string revOp, bit isOrig> {
-  string RevOp = revOp;
-  bit IsOrig = isOrig;
-}
-
 class AtomicNoRet <string noRetOp, bit isRet> {
   string NoRetOp = noRetOp;
   bit IsRet = isRet;
@@ -1077,7 +1072,7 @@ multiclass VOP3_C_m <vop op, dag outs, dag ins, string asm,
                      bit HasMods, bit defExec, string revOp> {
 
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>,
-           VOPC_REV<revOp#"_e64", !eq(revOp, opName)>;
+           VOP2_REV<revOp#"_e64", !eq(revOp, opName)>;
 
   def _si : VOP3_Real_si <op.SI3, outs, ins, asm, opName>,
             VOP3DisableFields<1, 0, HasMods> {
@@ -2246,7 +2241,7 @@ def getCommuteRev : InstrMapping {
 }
 
 def getCommuteCmpOrig : InstrMapping {
-  let FilterClass = "VOPC_REV";
+  let FilterClass = "VOP2_REV";
   let RowFields = ["RevOp"];
   let ColFields = ["IsOrig"];
   let KeyCol = ["0"];
@@ -2255,7 +2250,7 @@ def getCommuteCmpOrig : InstrMapping {
 
 // Maps an original opcode to its commuted version
 def getCommuteCmpRev : InstrMapping {
-  let FilterClass = "VOPC_REV";
+  let FilterClass = "VOP2_REV";
   let RowFields = ["RevOp"];
   let ColFields = ["IsOrig"];
   let KeyCol = ["1"];
