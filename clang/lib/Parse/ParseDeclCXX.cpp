@@ -2347,6 +2347,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
           DefinitionKind = FDK_Deleted;
       }
     }
+    DeclaratorInfo.setFunctionDefinitionKind(DefinitionKind);
 
     // C++11 [dcl.attr.grammar] p4: If an attribute-specifier-seq appertains 
     // to a friend declaration, that declaration shall be a definition.
@@ -2379,7 +2380,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
       Decl *FunDecl =
         ParseCXXInlineMethodDef(AS, AccessAttrs, DeclaratorInfo, TemplateInfo,
-                                VS, DefinitionKind, Init);
+                                VS, Init);
 
       if (FunDecl) {
         for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {

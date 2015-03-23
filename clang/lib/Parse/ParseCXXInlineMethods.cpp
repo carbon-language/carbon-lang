@@ -26,8 +26,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
                                       AttributeList *AccessAttrs,
                                       ParsingDeclarator &D,
                                       const ParsedTemplateInfo &TemplateInfo,
-                                      const VirtSpecifiers& VS, 
-                                      FunctionDefinitionKind DefinitionKind,
+                                      const VirtSpecifiers& VS,
                                       ExprResult& Init) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try) ||
@@ -40,7 +39,6 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
       TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->size() : 0);
 
   NamedDecl *FnD;
-  D.setFunctionDefinitionKind(DefinitionKind);
   if (D.getDeclSpec().isFriendSpecified())
     FnD = Actions.ActOnFriendFunctionDecl(getCurScope(), D,
                                           TemplateParams);
@@ -104,12 +102,12 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
 
     return FnD;
   }
-  
+
   // In delayed template parsing mode, if we are within a class template
   // or if we are about to parse function member template then consume
   // the tokens and store them for parsing at the end of the translation unit.
   if (getLangOpts().DelayedTemplateParsing &&
-      DefinitionKind == FDK_Definition &&
+      D.getFunctionDefinitionKind() == FDK_Definition &&
       !D.getDeclSpec().isConstexprSpecified() &&
       !(FnD && FnD->getAsFunction() &&
         FnD->getAsFunction()->getReturnType()->getContainedAutoType()) &&
