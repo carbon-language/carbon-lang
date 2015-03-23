@@ -528,7 +528,7 @@ defm V_CMP_NLT_F32 : VOPC_F32 <vopc<0xe, 0x4e>, "v_cmp_nlt_f32", COND_UGE>;
 defm V_CMP_TRU_F32 : VOPC_F32 <vopc<0xf, 0x4f>, "v_cmp_tru_f32">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPX_F_F32 : VOPCX_F32 <vopc<0x10, 0x50>, "v_cmpx_f_f32">;
 defm V_CMPX_LT_F32 : VOPCX_F32 <vopc<0x11, 0x51>, "v_cmpx_lt_f32", "v_cmpx_gt_f32">;
@@ -547,7 +547,7 @@ defm V_CMPX_NEQ_F32 : VOPCX_F32 <vopc<0x1d, 0x5d>, "v_cmpx_neq_f32">;
 defm V_CMPX_NLT_F32 : VOPCX_F32 <vopc<0x1e, 0x5e>, "v_cmpx_nlt_f32">;
 defm V_CMPX_TRU_F32 : VOPCX_F32 <vopc<0x1f, 0x5f>, "v_cmpx_tru_f32">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 let isCommutable = 1 in {
 defm V_CMP_F_F64 : VOPC_F64 <vopc<0x20, 0x60>, "v_cmp_f_f64">;
@@ -568,7 +568,7 @@ defm V_CMP_NLT_F64 : VOPC_F64 <vopc<0x2e, 0x6e>, "v_cmp_nlt_f64", COND_UGE>;
 defm V_CMP_TRU_F64 : VOPC_F64 <vopc<0x2f, 0x6f>, "v_cmp_tru_f64">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPX_F_F64 : VOPCX_F64 <vopc<0x30, 0x70>, "v_cmpx_f_f64">;
 defm V_CMPX_LT_F64 : VOPCX_F64 <vopc<0x31, 0x71>, "v_cmpx_lt_f64", "v_cmpx_gt_f64">;
@@ -587,7 +587,7 @@ defm V_CMPX_NEQ_F64 : VOPCX_F64 <vopc<0x3d, 0x7d>, "v_cmpx_neq_f64">;
 defm V_CMPX_NLT_F64 : VOPCX_F64 <vopc<0x3e, 0x7e>, "v_cmpx_nlt_f64">;
 defm V_CMPX_TRU_F64 : VOPCX_F64 <vopc<0x3f, 0x7f>, "v_cmpx_tru_f64">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 let SubtargetPredicate = isSICI in {
 
@@ -610,7 +610,7 @@ defm V_CMPS_NLT_F32 : VOPC_F32 <vopc<0x4e>, "v_cmps_nlt_f32">;
 defm V_CMPS_TRU_F32 : VOPC_F32 <vopc<0x4f>, "v_cmps_tru_f32">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPSX_F_F32 : VOPCX_F32 <vopc<0x50>, "v_cmpsx_f_f32">;
 defm V_CMPSX_LT_F32 : VOPCX_F32 <vopc<0x51>, "v_cmpsx_lt_f32", "v_cmpsx_gt_f32">;
@@ -629,7 +629,7 @@ defm V_CMPSX_NEQ_F32 : VOPCX_F32 <vopc<0x5d>, "v_cmpsx_neq_f32">;
 defm V_CMPSX_NLT_F32 : VOPCX_F32 <vopc<0x5e>, "v_cmpsx_nlt_f32">;
 defm V_CMPSX_TRU_F32 : VOPCX_F32 <vopc<0x5f>, "v_cmpsx_tru_f32">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 let isCommutable = 1 in {
 defm V_CMPS_F_F64 : VOPC_F64 <vopc<0x60>, "v_cmps_f_f64">;
@@ -650,7 +650,7 @@ defm V_CMPS_NLT_F64 : VOPC_F64 <vopc<0x6e>, "v_cmps_nlt_f64">;
 defm V_CMPS_TRU_F64 : VOPC_F64 <vopc<0x6f>, "v_cmps_tru_f64">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPSX_F_F64 : VOPCX_F64 <vopc<0x70>, "v_cmpsx_f_f64">;
 defm V_CMPSX_LT_F64 : VOPCX_F64 <vopc<0x71>, "v_cmpsx_lt_f64", "v_cmpsx_gt_f64">;
@@ -669,7 +669,7 @@ defm V_CMPSX_NEQ_F64 : VOPCX_F64 <vopc<0x7d>, "v_cmpsx_neq_f64">;
 defm V_CMPSX_NLT_F64 : VOPCX_F64 <vopc<0x7e>, "v_cmpsx_nlt_f64">;
 defm V_CMPSX_TRU_F64 : VOPCX_F64 <vopc<0x7f>, "v_cmpsx_tru_f64">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 } // End SubtargetPredicate = isSICI
 
@@ -684,7 +684,7 @@ defm V_CMP_GE_I32 : VOPC_I32 <vopc<0x86, 0xc6>, "v_cmp_ge_i32", COND_SGE>;
 defm V_CMP_T_I32 : VOPC_I32 <vopc<0x87, 0xc7>, "v_cmp_t_i32">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPX_F_I32 : VOPCX_I32 <vopc<0x90, 0xd0>, "v_cmpx_f_i32">;
 defm V_CMPX_LT_I32 : VOPCX_I32 <vopc<0x91, 0xd1>, "v_cmpx_lt_i32", "v_cmpx_gt_i32">;
@@ -695,7 +695,7 @@ defm V_CMPX_NE_I32 : VOPCX_I32 <vopc<0x95, 0xd5>, "v_cmpx_ne_i32">;
 defm V_CMPX_GE_I32 : VOPCX_I32 <vopc<0x96, 0xd6>, "v_cmpx_ge_i32">;
 defm V_CMPX_T_I32 : VOPCX_I32 <vopc<0x97, 0xd7>, "v_cmpx_t_i32">;
 
-} // End hasSideEffects = 1
+} // End isCommutable = 1
 
 let isCommutable = 1 in {
 defm V_CMP_F_I64 : VOPC_I64 <vopc<0xa0, 0xe0>, "v_cmp_f_i64">;
@@ -708,7 +708,7 @@ defm V_CMP_GE_I64 : VOPC_I64 <vopc<0xa6, 0xe6>, "v_cmp_ge_i64", COND_SGE>;
 defm V_CMP_T_I64 : VOPC_I64 <vopc<0xa7, 0xe7>, "v_cmp_t_i64">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPX_F_I64 : VOPCX_I64 <vopc<0xb0, 0xf0>, "v_cmpx_f_i64">;
 defm V_CMPX_LT_I64 : VOPCX_I64 <vopc<0xb1, 0xf1>, "v_cmpx_lt_i64", "v_cmpx_gt_i64">;
@@ -719,7 +719,7 @@ defm V_CMPX_NE_I64 : VOPCX_I64 <vopc<0xb5, 0xf5>, "v_cmpx_ne_i64">;
 defm V_CMPX_GE_I64 : VOPCX_I64 <vopc<0xb6, 0xf6>, "v_cmpx_ge_i64">;
 defm V_CMPX_T_I64 : VOPCX_I64 <vopc<0xb7, 0xf7>, "v_cmpx_t_i64">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 let isCommutable = 1 in {
 defm V_CMP_F_U32 : VOPC_I32 <vopc<0xc0, 0xc8>, "v_cmp_f_u32">;
@@ -732,7 +732,7 @@ defm V_CMP_GE_U32 : VOPC_I32 <vopc<0xc6, 0xce>, "v_cmp_ge_u32", COND_UGE>;
 defm V_CMP_T_U32 : VOPC_I32 <vopc<0xc7, 0xcf>, "v_cmp_t_u32">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPX_F_U32 : VOPCX_I32 <vopc<0xd0, 0xd8>, "v_cmpx_f_u32">;
 defm V_CMPX_LT_U32 : VOPCX_I32 <vopc<0xd1, 0xd9>, "v_cmpx_lt_u32", "v_cmpx_gt_u32">;
@@ -743,7 +743,7 @@ defm V_CMPX_NE_U32 : VOPCX_I32 <vopc<0xd5, 0xdd>, "v_cmpx_ne_u32">;
 defm V_CMPX_GE_U32 : VOPCX_I32 <vopc<0xd6, 0xde>, "v_cmpx_ge_u32">;
 defm V_CMPX_T_U32 : VOPCX_I32 <vopc<0xd7, 0xdf>, "v_cmpx_t_u32">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 let isCommutable = 1 in {
 defm V_CMP_F_U64 : VOPC_I64 <vopc<0xe0, 0xe8>, "v_cmp_f_u64">;
@@ -756,7 +756,7 @@ defm V_CMP_GE_U64 : VOPC_I64 <vopc<0xe6, 0xee>, "v_cmp_ge_u64", COND_UGE>;
 defm V_CMP_T_U64 : VOPC_I64 <vopc<0xe7, 0xef>, "v_cmp_t_u64">;
 } // End isCommutable = 1
 
-let hasSideEffects = 1, isCommutable = 1 in {
+let isCommutable = 1 in {
 
 defm V_CMPX_F_U64 : VOPCX_I64 <vopc<0xf0, 0xf8>, "v_cmpx_f_u64">;
 defm V_CMPX_LT_U64 : VOPCX_I64 <vopc<0xf1, 0xf9>, "v_cmpx_lt_u64", "v_cmpx_gt_u64">;
@@ -767,19 +767,13 @@ defm V_CMPX_NE_U64 : VOPCX_I64 <vopc<0xf5, 0xfd>, "v_cmpx_ne_u64">;
 defm V_CMPX_GE_U64 : VOPCX_I64 <vopc<0xf6, 0xfe>, "v_cmpx_ge_u64">;
 defm V_CMPX_T_U64 : VOPCX_I64 <vopc<0xf7, 0xff>, "v_cmpx_t_u64">;
 
-} // End hasSideEffects = 1, isCommutable = 1
+} // End isCommutable = 1
 
 defm V_CMP_CLASS_F32 : VOPC_CLASS_F32 <vopc<0x88, 0x10>, "v_cmp_class_f32">;
-
-let hasSideEffects = 1 in {
 defm V_CMPX_CLASS_F32 : VOPCX_CLASS_F32 <vopc<0x98, 0x11>, "v_cmpx_class_f32">;
-} // End hasSideEffects = 1
-
 defm V_CMP_CLASS_F64 : VOPC_CLASS_F64 <vopc<0xa8, 0x12>, "v_cmp_class_f64">;
-
-let hasSideEffects = 1 in {
 defm V_CMPX_CLASS_F64 : VOPCX_CLASS_F64 <vopc<0xb8, 0x13>, "v_cmpx_class_f64">;
-} // End hasSideEffects = 1
+
 
 } // End isCompare = 1
 

@@ -1269,11 +1269,13 @@ multiclass VOPC_m <vopc op, dag outs, dag ins, string asm, list<dag> pattern,
   def _si : VOPC<op.SI, ins, asm, []>,
             SIMCInstr <opName#"_e32", SISubtarget.SI> {
     let Defs = !if(DefExec, [EXEC], []);
+    let hasSideEffects = DefExec;
   }
 
   def _vi : VOPC<op.VI, ins, asm, []>,
             SIMCInstr <opName#"_e32", SISubtarget.VI> {
     let Defs = !if(DefExec, [EXEC], []);
+    let hasSideEffects = DefExec;
   }
 }
 
