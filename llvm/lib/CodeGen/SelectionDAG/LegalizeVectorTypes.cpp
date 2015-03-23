@@ -2553,6 +2553,16 @@ SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {
   assert(InVT.isVector() && "can not widen non-vector type");
   EVT WidenInVT = EVT::getVectorVT(*DAG.getContext(),
                                    InVT.getVectorElementType(), WidenNumElts);
+
+  // The input and output types often differ here, and it could be that while
+  // we'd prefer to widen the result type, the input operands have been split.
+  // In this case, we also need to split the result of this node as well.
+  if (getTypeAction(InVT) == TargetLowering::TypeSplitVector) {
+    SDValue SplitVSetCC = SplitVecOp_VSETCC(N);
+    SDValue Res = ModifyToType(SplitVSetCC, WidenVT);
+    return Res;
+  }
+
   InOp1 = GetWidenedVector(InOp1);
   SDValue InOp2 = GetWidenedVector(N->getOperand(1));
 
