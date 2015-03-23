@@ -627,6 +627,14 @@ def : Pat<(f16_to_fp GPR:$a),
 def : Pat<(f64 (f16_to_fp GPR:$a)),
           (VCVTBHD (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
+def : Pat<(f64 (fextend (f16_to_fp GPR:$a))),
+          (VCVTBHD (COPY_TO_REGCLASS GPR:$a, SPR))>,
+          Requires<[HasFPARMv8, HasDPVFP]>;
+
+def : Pat<(fp_to_f16 (fround (f64 DPR:$a))),
+          (i32 (COPY_TO_REGCLASS (VCVTBDH DPR:$a), GPR))>,
+          Requires<[HasFPARMv8, HasDPVFP]>;
+
 multiclass vcvt_inst<string opc, bits<2> rm,
                      SDPatternOperator node = null_frag> {
   let PostEncoderMethod = "", DecoderNamespace = "VFPV8" in {
