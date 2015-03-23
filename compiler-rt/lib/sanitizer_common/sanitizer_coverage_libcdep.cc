@@ -127,7 +127,7 @@ class CoverageData {
   InternalMmapVectorNoCtor<s32*> guard_array_vec;
 
   struct NamedPcRange {
-    const char *name;
+    const char *copied_module_name;
     uptr beg, end; // elements [beg,end) in pc_array.
   };
 
@@ -337,8 +337,10 @@ void CoverageData::UpdateModuleNameVec(uptr caller_pc, uptr range_beg,
     return;
   const char *module_name = sym->GetModuleNameForPc(caller_pc);
   if (!module_name) return;
-  if (module_name_vec.empty() || module_name_vec.back().name != module_name)
-    module_name_vec.push_back({module_name, range_beg, range_end});
+  if (module_name_vec.empty() ||
+      internal_strcmp(module_name_vec.back().copied_module_name, module_name))
+    module_name_vec.push_back(
+        {internal_strdup(module_name), range_beg, range_end});
   else
     module_name_vec.back().end = range_end;
 }
@@ -602,7 +604,7 @@ void CoverageData::DumpTrace() {
   if (fd < 0) return;
   out.clear();
   for (uptr i = 0; i < comp_unit_name_vec.size(); i++)
-    out.append("%s\n", comp_unit_name_vec[i].name);
+    out.append("%s\n", comp_unit_name_vec[i].copied_module_name);
   internal_write(fd, out.data(), out.length());
   internal_close(fd);
 
@@ -688,10 +690,10 @@ void CoverageData::DumpCounters() {
 
   for (uptr m = 0; m < module_name_vec.size(); m++) {
     auto r = module_name_vec[m];
-    CHECK(r.name);
+    CHECK(r.copied_module_name);
     CHECK_LE(r.beg, r.end);
     CHECK_LE(r.end, size());
-    const char *base_name = StripModuleName(r.name);
+    const char *base_name = StripModuleName(r.copied_module_name);
     int fd =
         CovOpenFile(&path, /* packed */ false, base_name, "counters-sancov");
     if (fd < 0) return;
@@ -710,7 +712,7 @@ void CoverageData::DumpAsBitSet() {
   for (uptr m = 0; m < module_name_vec.size(); m++) {
     uptr n_set_bits = 0;
     auto r = module_name_vec[m];
-    CHECK(r.name);
+    CHECK(r.copied_module_name);
     CHECK_LE(r.beg, r.end);
     CHECK_LE(r.end, size());
     for (uptr i = r.beg; i < r.end; i++) {
@@ -719,7 +721,7 @@ void CoverageData::DumpAsBitSet() {
       if (pc)
         n_set_bits++;
     }
-    const char *base_name = StripModuleName(r.name);
+    const char *base_name = StripModuleName(r.copied_module_name);
     int fd = CovOpenFile(&path, /* packed */ false, base_name, "bitset-sancov");
     if (fd < 0) return;
     internal_write(fd, out.data() + r.beg, r.end - r.beg);
@@ -742,7 +744,7 @@ void CoverageData::DumpOffsets() {
     for (uptr i = 0; i < num_words_for_magic; i++)
       offsets.push_back(0);
     auto r = module_name_vec[m];
-    CHECK(r.name);
+    CHECK(r.copied_module_name);
     CHECK_LE(r.beg, r.end);
     CHECK_LE(r.end, size());
     const char *module_name = "<unknown>";
@@ -767,7 +769,7 @@ void CoverageData::DumpOffsets() {
     // if all the offsets are small enough.
     *magic_p = SANITIZER_WORDSIZE == 64 ? kMagic64 : kMagic32;
 
-    module_name = StripModuleName(r.name);
+    module_name = StripModuleName(r.copied_module_name);
     if (cov_sandboxed) {
       if (cov_fd >= 0) {
         CovWritePacked(internal_getpid(), module_name, offsets.data(),
