@@ -310,11 +310,8 @@ static bool isPrefixAtLocation(struct InternalInstruction* insn,
                                uint8_t prefix,
                                uint64_t location)
 {
-  if (insn->prefixPresent[prefix] == 1 &&
-     insn->prefixLocations[prefix] == location)
-    return true;
-  else
-    return false;
+  return insn->prefixPresent[prefix] == 1 &&
+     insn->prefixLocations[prefix] == location;
 }
 
 /*
