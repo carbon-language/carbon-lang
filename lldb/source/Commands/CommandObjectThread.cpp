@@ -581,7 +581,7 @@ protected:
         {
             StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
 
-            if (frame->HasDebugInformation ())
+            if (frame && frame->HasDebugInformation ())
             {
                 new_plan_sp = thread->QueueThreadPlanForStepInRange (abort_other_plans,
                                                                 frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
