@@ -574,8 +574,8 @@ public:
 
   uint64_t addString(StringRef symname);
 
-  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-                     llvm::FileOutputBuffer &buffer);
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override;
 
   void setNumEntries(int64_t numEntries) { _stringMap.resize(numEntries); }
 
@@ -677,7 +677,7 @@ public:
     return STN_UNDEF;
   }
 
-  virtual void finalize() { finalize(true); }
+  void finalize() override { finalize(true); }
 
   virtual void sortSymbols() {
     std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
@@ -698,8 +698,8 @@ public:
 
   virtual void finalize(bool sort);
 
-  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-                     llvm::FileOutputBuffer &buffer);
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override;
 
   void setStringSection(StringTable<ELFT> *s) { _stringSection = s; }
 
@@ -931,7 +931,7 @@ public:
     }
   }
 
-  virtual void finalize() {
+  void finalize() override {
     // Defined symbols which have been added into the dynamic symbol table
     // don't have their addresses known until addresses have been assigned
     // so let's update the symbol values after they have got assigned
@@ -1008,14 +1008,14 @@ public:
     return false;
   }
 
-  virtual void finalize() {
+  void finalize() override {
     this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
     if (this->_outputSection)
       this->_outputSection->setLink(this->_link);
   }
 
-  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-                     llvm::FileOutputBuffer &buffer) {
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     for (const auto &rel : _relocs) {
@@ -1100,7 +1100,7 @@ public:
   }
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-             llvm::FileOutputBuffer &buffer) {
+             llvm::FileOutputBuffer &buffer) override {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     // Add the null entry.
@@ -1154,7 +1154,7 @@ public:
     }
   }
 
-  virtual void doPreFlight() {
+  void doPreFlight() override {
     Elf_Dyn dyn;
     dyn.d_un.d_val = 0;
     auto initArray = _layout.findOutputSection(".init_array");
@@ -1185,7 +1185,7 @@ public:
   /// Usually but not always targets use DT_PLTGOT for that.
   virtual int64_t getGotPltTag() { return DT_PLTGOT; }
 
-  virtual void finalize() {
+  void finalize() override {
     StringTable<ELFT> *dynamicStringTable =
         _dynamicSymbolTable->getStringTable();
     this->_link = dynamicStringTable->ordinal();
@@ -1374,7 +1374,7 @@ public:
   // may be properly assigned. Let's calculate the buckets and the chains
   // and fill the chains and the buckets hash table used by the dynamic
   // linker and update the filesize and memory size accordingly
-  virtual void doPreFlight() {
+  void doPreFlight() override {
     // The number of buckets to use for a certain number of symbols.
     // If there are less than 3 symbols, 1 bucket will be used. If
     // there are less than 17 symbols, 3 buckets will be used, and so
@@ -1410,14 +1410,14 @@ public:
     this->_msize = this->_fsize;
   }
 
-  virtual void finalize() {
+  void finalize() override {
     this->_link = _symbolTable ? _symbolTable->ordinal() : 0;
     if (this->_outputSection)
       this->_outputSection->setLink(this->_link);
   }
 
-  virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-                     llvm::FileOutputBuffer &buffer) {
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     uint32_t bucketChainCounts[2];
