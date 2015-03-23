@@ -2529,44 +2529,38 @@ bool CastInst::isCastable(Type *SrcTy, Type *DestTy) {
 
   // Run through the possibilities ...
   if (DestTy->isIntegerTy()) {               // Casting to integral
-    if (SrcTy->isIntegerTy()) {                // Casting from integral
+    if (SrcTy->isIntegerTy())                // Casting from integral
         return true;
-    } else if (SrcTy->isFloatingPointTy()) {   // Casting from floating pt
+    if (SrcTy->isFloatingPointTy())   // Casting from floating pt
       return true;
-    } else if (SrcTy->isVectorTy()) {          // Casting from vector
+    if (SrcTy->isVectorTy())          // Casting from vector
       return DestBits == SrcBits;
-    } else {                                   // Casting from something else
-      return SrcTy->isPointerTy();
-    }
-  } else if (DestTy->isFloatingPointTy()) {  // Casting to floating pt
-    if (SrcTy->isIntegerTy()) {                // Casting from integral
+                                      // Casting from something else
+    return SrcTy->isPointerTy();
+  } 
+  if (DestTy->isFloatingPointTy()) {  // Casting to floating pt
+    if (SrcTy->isIntegerTy())                // Casting from integral
       return true;
-    } else if (SrcTy->isFloatingPointTy()) {   // Casting from floating pt
+    if (SrcTy->isFloatingPointTy())   // Casting from floating pt
       return true;
-    } else if (SrcTy->isVectorTy()) {          // Casting from vector
+    if (SrcTy->isVectorTy())          // Casting from vector
       return DestBits == SrcBits;
-    } else {                                   // Casting from something else
-      return false;
-    }
-  } else if (DestTy->isVectorTy()) {         // Casting to vector
-    return DestBits == SrcBits;
-  } else if (DestTy->isPointerTy()) {        // Casting to pointer
-    if (SrcTy->isPointerTy()) {                // Casting from pointer
-      return true;
-    } else if (SrcTy->isIntegerTy()) {         // Casting from integral
-      return true;
-    } else {                                   // Casting from something else
-      return false;
-    }
-  } else if (DestTy->isX86_MMXTy()) {
-    if (SrcTy->isVectorTy()) {
-      return DestBits == SrcBits;       // 64-bit vector to MMX
-    } else {
-      return false;
-    }
-  } else {                                   // Casting to something else
+                                    // Casting from something else
     return false;
   }
+  if (DestTy->isVectorTy())         // Casting to vector
+    return DestBits == SrcBits;
+  if (DestTy->isPointerTy()) {        // Casting to pointer
+    if (SrcTy->isPointerTy())                // Casting from pointer
+      return true;
+    return SrcTy->isIntegerTy();             // Casting from integral
+  } 
+  if (DestTy->isX86_MMXTy()) {
+    if (SrcTy->isVectorTy())
+      return DestBits == SrcBits;       // 64-bit vector to MMX
+    return false;
+  }                                    // Casting to something else
+  return false;
 }
 
 bool CastInst::isBitCastable(Type *SrcTy, Type *DestTy) {
