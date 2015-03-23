@@ -117,6 +117,7 @@
 
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
+#include <clc/geometric/distance.h>
 #include <clc/geometric/dot.h>
 #include <clc/geometric/length.h>
 #include <clc/geometric/normalize.h>

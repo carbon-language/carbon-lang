@@ -34,6 +34,7 @@ common/sign.cl
 common/smoothstep.cl
 common/step.cl
 geometric/cross.cl
+geometric/distance.cl
 geometric/dot.cl
 geometric/length.cl
 geometric/normalize.cl
