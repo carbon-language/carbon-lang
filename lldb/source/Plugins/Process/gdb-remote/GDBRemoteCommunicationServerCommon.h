@@ -35,7 +35,7 @@ public:
     virtual
     ~GDBRemoteCommunicationServerCommon();
 
-    virtual bool
+    bool
     GetThreadSuffixSupported () override
     {
         return true;

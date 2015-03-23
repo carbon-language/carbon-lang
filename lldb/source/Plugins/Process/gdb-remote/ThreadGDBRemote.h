@@ -27,32 +27,32 @@ public:
     virtual
     ~ThreadGDBRemote ();
 
-    virtual void
-    WillResume (lldb::StateType resume_state);
+    void
+    WillResume (lldb::StateType resume_state) override;
 
-    virtual void
-    RefreshStateAfterStop();
+    void
+    RefreshStateAfterStop() override;
 
-    virtual const char *
-    GetName ();
+    const char *
+    GetName () override;
 
-    virtual const char *
-    GetQueueName ();
+    const char *
+    GetQueueName () override;
 
-    virtual lldb::queue_id_t
-    GetQueueID ();
+    lldb::queue_id_t
+    GetQueueID () override;
 
-    virtual lldb::QueueSP
-    GetQueue ();
+    lldb::QueueSP
+    GetQueue () override;
 
     lldb::addr_t
-    GetQueueLibdispatchQueueAddress ();
+    GetQueueLibdispatchQueueAddress () override;
 
-    virtual lldb::RegisterContextSP
-    GetRegisterContext ();
+    lldb::RegisterContextSP
+    GetRegisterContext () override;
 
-    virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    lldb::RegisterContextSP
+    CreateRegisterContextForFrame (lldb_private::StackFrame *frame) override;
 
     void
     Dump (lldb_private::Log *log, uint32_t index);
@@ -67,7 +67,7 @@ public:
     GetBasicInfoAsString ();
 
     void
-    SetName (const char *name)
+    SetName (const char *name) override
     {
         if (name && name[0])
             m_thread_name.assign (name);
@@ -88,7 +88,7 @@ public:
     }
 
     lldb_private::StructuredData::ObjectSP
-    FetchThreadExtendedInfo ();
+    FetchThreadExtendedInfo () override;
 
 protected:
     
@@ -111,8 +111,8 @@ protected:
     void
     SetStopInfoFromPacket (StringExtractor &stop_packet, uint32_t stop_id);
 
-    virtual bool
-    CalculateStopInfo ();
+    bool
+    CalculateStopInfo () override;
 
 
 };

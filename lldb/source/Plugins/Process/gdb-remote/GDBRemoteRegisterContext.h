@@ -64,41 +64,41 @@ public:
     //------------------------------------------------------------------
     // Subclasses must override these functions
     //------------------------------------------------------------------
-    virtual void
-    InvalidateAllRegisters ();
+    void
+    InvalidateAllRegisters () override;
 
-    virtual size_t
-    GetRegisterCount ();
+    size_t
+    GetRegisterCount () override;
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex (size_t reg);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoAtIndex (size_t reg) override;
 
-    virtual size_t
-    GetRegisterSetCount ();
+    size_t
+    GetRegisterSetCount () override;
 
-    virtual const lldb_private::RegisterSet *
-    GetRegisterSet (size_t reg_set);
+    const lldb_private::RegisterSet *
+    GetRegisterSet (size_t reg_set) override;
 
-    virtual bool
-    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
+    bool
+    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value) override;
 
-    virtual bool
-    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+    bool
+    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value) override;
     
-    virtual bool
-    ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
+    bool
+    ReadAllRegisterValues (lldb::DataBufferSP &data_sp) override;
 
-    virtual bool
-    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
+    bool
+    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
 
-    virtual bool
-    ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint);
+    bool
+    ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint) override;
 
-    virtual bool
-    WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint);
+    bool
+    WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint) override;
 
-    virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
+    uint32_t
+    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num) override;
 
 protected:
     friend class ThreadGDBRemote;

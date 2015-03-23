@@ -3416,7 +3416,7 @@ public:
     }
     
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc == 0)
@@ -3456,7 +3456,7 @@ public:
     }
     
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc == 0)
@@ -3504,7 +3504,7 @@ public:
     }
     
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc == 0)
@@ -3562,7 +3562,7 @@ public:
     }
     
     bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         if (command == NULL || command[0] == '\0')
         {

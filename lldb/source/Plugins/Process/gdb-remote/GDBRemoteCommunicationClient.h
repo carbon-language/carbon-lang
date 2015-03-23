@@ -77,7 +77,7 @@ public:
                                           StringExtractorGDBRemote &response);
 
     bool
-    GetThreadSuffixSupported ();
+    GetThreadSuffixSupported () override;
 
     // This packet is usually sent first and the boolean return value
     // indicates if the packet was send and any response was received
