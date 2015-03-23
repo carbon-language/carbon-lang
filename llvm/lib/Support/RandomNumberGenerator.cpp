@@ -13,12 +13,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "rng"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/RandomNumberGenerator.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "rng"
 
 // Tracking BUG: 19665
 // http://llvm.org/bugs/show_bug.cgi?id=19665
