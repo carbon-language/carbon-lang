@@ -42,6 +42,10 @@ protected:
 
   void processUndefinedSymbol(StringRef symName,
                               RuntimeFile<ELFT> &file) const override;
+
+  // Setup the ELF header.
+  std::error_code setELFHeader() override;
+
 private:
   ARMLinkingContext &_context;
   ARMTargetLayout<ELFT> &_armLayout;
@@ -93,6 +97,22 @@ void ARMExecutableWriter<ELFT>::processUndefinedSymbol(
     file.addAbsoluteAtom("__exidx_start");
     file.addAbsoluteAtom("__exidx_end");
   }
+}
+
+template <class ELFT>
+std::error_code ARMExecutableWriter<ELFT>::setELFHeader() {
+  if (std::error_code ec = ExecutableWriter<ELFT>::setELFHeader())
+    return ec;
+
+  // Fixup entry point for Thumb code.
+  StringRef entryName = _context.entrySymbolName();
+  if (const AtomLayout *al = _armLayout.findAtomLayoutByName(entryName)) {
+    const auto *ea = dyn_cast<DefinedAtom>(al->_atom);
+    if (ea && ea->codeModel() == DefinedAtom::codeARMThumb)
+      this->_elfHeader->e_entry(al->_virtualAddr | 0x1);
+  }
+
+  return std::error_code();
 }
 
 } // namespace elf
