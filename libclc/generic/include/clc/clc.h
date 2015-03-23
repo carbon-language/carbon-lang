@@ -50,6 +50,7 @@
 #include <clc/math/fmax.h>
 #include <clc/math/fmin.h>
 #include <clc/math/fmod.h>
+#include <clc/math/half_sqrt.h>
 #include <clc/math/hypot.h>
 #include <clc/math/log.h>
 #include <clc/math/log10.h>

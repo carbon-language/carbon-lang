@@ -70,6 +70,7 @@ math/exp10.cl
 math/fmax.cl
 math/fmin.cl
 math/fmod.cl
+math/half_sqrt.cl
 math/hypot.cl
 math/log10.cl
 math/log1p.cl
