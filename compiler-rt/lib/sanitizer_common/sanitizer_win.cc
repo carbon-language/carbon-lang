@@ -381,7 +381,7 @@ uptr internal_open(const char *filename, int flags, u32 mode) {
   UNIMPLEMENTED();
 }
 
-uptr OpenFile(const char *filename, bool write) {
+uptr OpenFile(const char *filename, FileAccessMode mode) {
   UNIMPLEMENTED();
 }
 

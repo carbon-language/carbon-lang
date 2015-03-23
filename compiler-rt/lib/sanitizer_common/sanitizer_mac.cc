@@ -71,11 +71,6 @@ uptr internal_open(const char *filename, int flags, u32 mode) {
   return open(filename, flags, mode);
 }
 
-uptr OpenFile(const char *filename, bool write) {
-  return internal_open(filename,
-      write ? O_WRONLY | O_CREAT : O_RDONLY, 0660);
-}
-
 uptr internal_read(fd_t fd, void *buf, uptr count) {
   return read(fd, buf, count);
 }

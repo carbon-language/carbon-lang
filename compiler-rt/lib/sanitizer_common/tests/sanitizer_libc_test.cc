@@ -78,14 +78,14 @@ TEST(SanitizerCommon, FileOps) {
 
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile), "sanitizer_common.fileops.tmp.");
-  uptr openrv = OpenFile(tmpfile, true);
+  uptr openrv = OpenFile(tmpfile, WrOnly);
   EXPECT_FALSE(internal_iserror(openrv));
   fd_t fd = openrv;
   EXPECT_EQ(len1, internal_write(fd, str1, len1));
   EXPECT_EQ(len2, internal_write(fd, str2, len2));
   internal_close(fd);
 
-  openrv = OpenFile(tmpfile, false);
+  openrv = OpenFile(tmpfile, WrOnly);
   EXPECT_FALSE(internal_iserror(openrv));
   fd = openrv;
   uptr fsize = internal_filesize(fd);
@@ -134,7 +134,7 @@ TEST(SanitizerCommon, InternalMmapWithOffset) {
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile),
                  "sanitizer_common.internalmmapwithoffset.tmp.");
-  uptr res = OpenFile(tmpfile, true);
+  uptr res = OpenFile(tmpfile, WrOnly);
   ASSERT_FALSE(internal_iserror(res));
   fd_t fd = res;
 

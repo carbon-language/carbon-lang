@@ -58,7 +58,7 @@ void ReportFile::ReopenIfNecessary() {
   }
 
   internal_snprintf(full_path, kMaxPathLength, "%s.%zu", path_prefix, pid);
-  uptr openrv = OpenFile(full_path, true);
+  uptr openrv = OpenFile(full_path, WrOnly);
   if (internal_iserror(openrv)) {
     const char *ErrorMsgPrefix = "ERROR: Can't open file: ";
     internal_write(kStderrFd, ErrorMsgPrefix, internal_strlen(ErrorMsgPrefix));
@@ -144,7 +144,7 @@ uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
-    uptr openrv = OpenFile(file_name, /*write*/ false);
+    uptr openrv = OpenFile(file_name, RdOnly);
     if (internal_iserror(openrv, errno_p)) return 0;
     fd_t fd = openrv;
     UnmapOrDie(*buff, *buff_size);

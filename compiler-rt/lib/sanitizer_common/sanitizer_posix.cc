@@ -20,6 +20,7 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/mman.h>
 
@@ -204,8 +205,18 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                                MAP_NORESERVE, -1, 0);
 }
 
+uptr OpenFile(const char *filename, FileAccessMode mode) {
+  int flags;
+  switch (mode) {
+    case RdOnly: flags = O_RDONLY; break;
+    case WrOnly: flags = O_WRONLY | O_CREAT; break;
+    case RdWr: flags = O_RDWR | O_CREAT; break;
+  }
+  return internal_open(filename, flags, 0660);
+}
+
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
-  uptr openrv = OpenFile(file_name, false);
+  uptr openrv = OpenFile(file_name, RdOnly);
   CHECK(!internal_iserror(openrv));
   fd_t fd = openrv;
   uptr fsize = internal_filesize(fd);
@@ -220,9 +231,10 @@ void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset) {
   uptr flags = MAP_SHARED;
   if (addr) flags |= MAP_FIXED;
   uptr p = internal_mmap(addr, size, PROT_READ | PROT_WRITE, flags, fd, offset);
-  if (internal_iserror(p)) {
-    Printf("could not map writable file (%zd, %zu, %zu): %zd\n", fd, offset,
-           size, p);
+  int mmap_errno = 0;
+  if (internal_iserror(p, &mmap_errno)) {
+    Printf("could not map writable file (%zd, %zu, %zu): %zd, errno: %d\n",
+           fd, offset, size, p, mmap_errno);
     return 0;
   }
   return (void *)p;

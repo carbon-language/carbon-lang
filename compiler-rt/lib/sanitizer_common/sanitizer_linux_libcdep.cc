@@ -488,7 +488,7 @@ static uptr GetRSSFromGetrusage() {
 uptr GetRSS() {
   if (!common_flags()->can_use_proc_maps_statm)
     return GetRSSFromGetrusage();
-  uptr fd = OpenFile("/proc/self/statm", false);
+  uptr fd = OpenFile("/proc/self/statm", RdOnly);
   if ((sptr)fd < 0)
     return GetRSSFromGetrusage();
   char buf[64];
