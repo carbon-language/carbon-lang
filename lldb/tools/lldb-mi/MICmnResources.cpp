@@ -243,6 +243,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_SET_NEW_DRIVER_STATE, "Command '%s'. Command tried to set new MI Driver running state and failed. %s"},
     {IDS_CMD_ERR_INFO_PRINTFN_NOT_FOUND, "The request '%s' was not recogised, not implemented"},
     {IDS_CMD_ERR_INFO_PRINTFN_FAILED, "The request '%s' failed."},
+    {IDS_CMD_ERR_GDBSET_OPT_TARGETASYNC, "'target-async' expects \"on\" or \"off\""},
     {IDS_CMD_ERR_GDBSET_OPT_SOLIBSEARCHPATH, "'solib-search-path' requires at least one argument"}};
 
 //++ ------------------------------------------------------------------------------------

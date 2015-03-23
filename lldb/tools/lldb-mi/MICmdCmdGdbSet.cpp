@@ -20,7 +20,7 @@
 
 // Instantiations:
 const CMICmdCmdGdbSet::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbSet::ms_mapGdbOptionNameToFnGdbOptionPtr = {
-    // { "target-async", &CMICmdCmdGdbSet::OptionFnTargetAsync },       // Example code if need to implement GDB set other options
+    {"target-async", &CMICmdCmdGdbSet::OptionFnTargetAsync},
     // { "auto-solib-add", &CMICmdCmdGdbSet::OptionFnAutoSolibAdd },    // Example code if need to implement GDB set other options
     {"solib-search-path", &CMICmdCmdGdbSet::OptionFnSolibSearchPath},
     {"fallback", &CMICmdCmdGdbSet::OptionFnFallback}};
@@ -207,6 +207,50 @@ CMICmdCmdGdbSet::GetOptionFn(const CMIUtilString &vrPrintFnName, FnGdbOptionPtr 
     }
 
     return false;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Carry out work to complete the GDB set option 'target-async' to prepare
+//          and send back information asked for.
+// Type:    Method.
+// Args:    vrWords - (R) List of additional parameters used by this option.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdGdbSet::OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords)
+{
+    bool bAsyncMode;
+    bool bOk = true;
+
+    if (vrWords.size() > 1)
+        // Too many arguments.
+        bOk = false;
+    else if (vrWords.size() == 0)
+        // If no arguments, default is "on".
+        bAsyncMode = true;
+    else if (CMIUtilString::Compare(vrWords[0], "on"))
+        bAsyncMode = true;
+    else if (CMIUtilString::Compare(vrWords[0], "off"))
+        bAsyncMode = false;
+    else
+        // Unrecognized argument.
+        bOk = false;
+
+    if (!bOk)
+    {
+        // Report error.
+        m_bGbbOptionFnHasError = true;
+        m_strGdbOptionFnError = MIRSRC(IDS_CMD_ERR_GDBSET_OPT_TARGETASYNC);
+        return MIstatus::failure;
+    }
+
+    // Turn async mode on/off.
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    rSessionInfo.GetDebugger().SetAsync(bAsyncMode);
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
