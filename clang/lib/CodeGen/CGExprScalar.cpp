@@ -751,20 +751,29 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   llvm::Type *DstTy = ConvertType(DstType);
 
-  // Cast from storage-only half FP using the special intrinsic.
-  if (SrcType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType &&
-      !CGF.getContext().getLangOpts().HalfArgsAndReturns) {
-    if (DstTy->isFloatingPointTy())
-      return Builder.CreateCall(
-          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16, DstTy), Src);
-
-    // If this isn't an FP->FP conversion, go through float.
-    Src = Builder.CreateCall(
-        CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
-                             CGF.CGM.FloatTy),
-        Src);
-    SrcType = CGF.getContext().FloatTy;
-    SrcTy = CGF.FloatTy;
+  // Cast from half through float if half isn't a native type.
+  if (SrcType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType) {
+    // Cast to FP using the intrinsic if the half type itself isn't supported.
+    if (DstTy->isFloatingPointTy()) {
+      if (!CGF.getContext().getLangOpts().HalfArgsAndReturns)
+        return Builder.CreateCall(
+            CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16, DstTy),
+            Src);
+    } else {
+      // Cast to other types through float, using either the intrinsic or FPExt,
+      // depending on whether the half type itself is supported
+      // (as opposed to operations on half, available with NativeHalfType).
+      if (!CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+        Src = Builder.CreateCall(
+            CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
+                                 CGF.CGM.FloatTy),
+            Src);
+      } else {
+        Src = Builder.CreateFPExt(Src, CGF.CGM.FloatTy, "conv");
+      }
+      SrcType = CGF.getContext().FloatTy;
+      SrcTy = CGF.FloatTy;
+    }
   }
 
   // Ignore conversions like int -> uint.
@@ -823,12 +832,18 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     EmitFloatConversionCheck(OrigSrc, OrigSrcType, Src, SrcType, DstType,
                              DstTy);
 
-  // Cast to half using the intrinsic if from FP type, through float otherwise.
-  if (DstType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType &&
-      !CGF.getContext().getLangOpts().HalfArgsAndReturns) {
-    if (SrcTy->isFloatingPointTy())
-      return Builder.CreateCall(
-          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16, SrcTy), Src);
+  // Cast to half through float if half isn't a native type.
+  if (DstType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType) {
+    // Make sure we cast in a single step if from another FP type.
+    if (SrcTy->isFloatingPointTy()) {
+      // Use the intrinsic if the half type itself isn't supported
+      // (as opposed to operations on half, available with NativeHalfType).
+      if (!CGF.getContext().getLangOpts().HalfArgsAndReturns)
+        return Builder.CreateCall(
+            CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16, SrcTy), Src);
+      // If the half type is supported, just use an fptrunc.
+      return Builder.CreateFPTrunc(Src, DstTy);
+    }
     DstTy = CGF.FloatTy;
   }
 
@@ -856,10 +871,14 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   }
 
   if (DstTy != ResTy) {
-    assert(ResTy->isIntegerTy(16) && "Only half FP requires extra conversion");
-    Res = Builder.CreateCall(
+    if (!CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+      assert(ResTy->isIntegerTy(16) && "Only half FP requires extra conversion");
+      Res = Builder.CreateCall(
         CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16, CGF.CGM.FloatTy),
         Res);
+    } else {
+      Res = Builder.CreateFPTrunc(Res, ResTy, "conv");
+    }
   }
 
   return Res;
@@ -1762,13 +1781,16 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     // Add the inc/dec to the real part.
     llvm::Value *amt;
 
-    if (type->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType &&
-        !CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+    if (type->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType) {
       // Another special case: half FP increment should be done via float
-      value = Builder.CreateCall(
-          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
-                               CGF.CGM.FloatTy),
-          input);
+      if (!CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+        value = Builder.CreateCall(
+            CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
+                                 CGF.CGM.FloatTy),
+            input, "incdec.conv");
+      } else {
+        value = Builder.CreateFPExt(input, CGF.CGM.FloatTy, "incdec.conv");
+      }
     }
 
     if (value->getType()->isFloatTy())
@@ -1786,12 +1808,16 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     }
     value = Builder.CreateFAdd(value, amt, isInc ? "inc" : "dec");
 
-    if (type->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType &&
-        !CGF.getContext().getLangOpts().HalfArgsAndReturns)
-      value = Builder.CreateCall(
-          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16,
-                               CGF.CGM.FloatTy),
-          value);
+    if (type->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType) {
+      if (!CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+        value = Builder.CreateCall(
+            CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16,
+                                 CGF.CGM.FloatTy),
+            value, "incdec.conv");
+      } else {
+        value = Builder.CreateFPTrunc(value, input->getType(), "incdec.conv");
+      }
+    }
 
   // Objective-C pointer types.
   } else {
