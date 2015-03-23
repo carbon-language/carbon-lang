@@ -546,8 +546,8 @@ int main (int argc, const char * argv[])
 	    NSURL *nsurl2 = [NSURL URLWithString:@"page.html" relativeToURL:nsurl];
 	    NSURL *nsurl3 = [NSURL URLWithString:@"?whatever" relativeToURL:nsurl2];
     
-		NSDate *date1 = [NSDate dateWithNaturalLanguageString:@"6pm April 10, 1985"];
-		NSDate *date2 = [NSDate dateWithNaturalLanguageString:@"12am January 1, 2011"];
+		NSDate *date1 = [NSDate dateWithNaturalLanguageString:@"6pm April 10, 1985 UTC"];
+		NSDate *date2 = [NSDate dateWithNaturalLanguageString:@"12am January 1, 2011 UTC"];
 		NSDate *date3 = [NSDate date];
 		NSDate *date4 = [NSDate dateWithTimeIntervalSince1970:24*60*60];
 
