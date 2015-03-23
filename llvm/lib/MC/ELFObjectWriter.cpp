@@ -190,6 +190,20 @@ class ELFObjectWriter : public MCObjectWriter {
         : MCObjectWriter(OS, IsLittleEndian), FWriter(IsLittleEndian),
           TargetObjectWriter(MOTW), NeedsGOT(false) {}
 
+    void reset() override {
+      UsedInReloc.clear();
+      WeakrefUsedInReloc.clear();
+      Renames.clear();
+      Relocations.clear();
+      ShStrTabBuilder.clear();
+      StrTabBuilder.clear();
+      FileSymbolData.clear();
+      LocalSymbolData.clear();
+      ExternalSymbolData.clear();
+      UndefinedSymbolData.clear();
+      MCObjectWriter::reset();
+    }
+
     virtual ~ELFObjectWriter();
 
     void WriteWord(uint64_t W) {
