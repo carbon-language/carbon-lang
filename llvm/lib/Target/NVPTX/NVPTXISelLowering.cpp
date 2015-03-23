@@ -930,7 +930,7 @@ NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
     }
     first = false;
 
-    if (Outs[OIdx].Flags.isByVal() == false) {
+    if (!Outs[OIdx].Flags.isByVal()) {
       if (Ty->isAggregateType() || Ty->isVectorTy()) {
         unsigned align = 0;
         const CallInst *CallI = cast<CallInst>(CS->getInstruction());
@@ -1075,7 +1075,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     EVT VT = Outs[OIdx].VT;
     Type *Ty = Args[i].Ty;
 
-    if (Outs[OIdx].Flags.isByVal() == false) {
+    if (!Outs[OIdx].Flags.isByVal()) {
       if (Ty->isAggregateType()) {
         // aggregate
         SmallVector<EVT, 16> vtparts;
@@ -1459,7 +1459,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                                       ObjectVT) == NumElts &&
              "Vector was not scalarized");
       unsigned sz = EltVT.getSizeInBits();
-      bool needTruncate = sz < 8 ? true : false;
+      bool needTruncate = sz < 8;
 
       if (NumElts == 1) {
         // Just a simple load
@@ -1577,7 +1577,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
         unsigned sz = VTs[i].getSizeInBits();
         unsigned AlignI = GreatestCommonDivisor64(RetAlign, Offsets[i]);
-        bool needTruncate = sz < 8 ? true : false;
+        bool needTruncate = sz < 8;
         if (VTs[i].isInteger() && (sz < 8))
           sz = 8;
 
@@ -2116,7 +2116,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
     // to newly created nodes. The SDNodes for params have to
     // appear in the same order as their order of appearance
     // in the original function. "idx+1" holds that order.
-    if (PAL.hasAttribute(i + 1, Attribute::ByVal) == false) {
+    if (!PAL.hasAttribute(i + 1, Attribute::ByVal)) {
       if (Ty->isAggregateType()) {
         SmallVector<EVT, 16> vtparts;
         SmallVector<uint64_t, 16> offsets;

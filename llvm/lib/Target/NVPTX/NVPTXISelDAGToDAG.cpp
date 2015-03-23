@@ -78,10 +78,7 @@ bool NVPTXDAGToDAGISel::usePrecSqrtF32() const {
     return UsePrecSqrtF32;
   } else {
     // Otherwise, use sqrt.approx if fast math is enabled
-    if (TM.Options.UnsafeFPMath)
-      return false;
-    else
-      return true;
+    return !TM.Options.UnsafeFPMath;
   }
 }
 

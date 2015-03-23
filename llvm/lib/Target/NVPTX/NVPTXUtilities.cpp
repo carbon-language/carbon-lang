@@ -293,12 +293,9 @@ bool llvm::isKernelFunction(const Function &F) {
   unsigned x = 0;
   bool retval = llvm::findOneNVVMAnnotation(
       &F, llvm::PropertyAnnotationNames[llvm::PROPERTY_ISKERNEL_FUNCTION], x);
-  if (retval == false) {
+  if (!retval) {
     // There is no NVVM metadata, check the calling convention
-    if (F.getCallingConv() == llvm::CallingConv::PTX_Kernel)
-      return true;
-    else
-      return false;
+    return F.getCallingConv() == llvm::CallingConv::PTX_Kernel;
   }
   return (x == 1);
 }
@@ -307,7 +304,7 @@ bool llvm::getAlign(const Function &F, unsigned index, unsigned &align) {
   std::vector<unsigned> Vs;
   bool retval = llvm::findAllNVVMAnnotation(
       &F, llvm::PropertyAnnotationNames[llvm::PROPERTY_ALIGN], Vs);
-  if (retval == false)
+  if (!retval)
     return false;
   for (int i = 0, e = Vs.size(); i < e; i++) {
     unsigned v = Vs[i];
