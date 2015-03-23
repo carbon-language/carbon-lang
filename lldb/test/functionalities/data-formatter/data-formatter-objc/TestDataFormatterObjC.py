@@ -472,7 +472,7 @@ class ObjCDataFormatterTestCase(TestBase):
 
     def nsdate_data_formatter_commands(self):
         self.expect('frame variable date1 date2',
-                    substrs = ['1985-04','2011-01'])
+                    patterns = ['(1985-04-10|1985-04-11)','(2011-01-01|2010-12-31)'])
 
         # this test might fail if we hit the breakpoint late on December 31st of some given year
         # and midnight comes between hitting the breakpoint and running this line of code
