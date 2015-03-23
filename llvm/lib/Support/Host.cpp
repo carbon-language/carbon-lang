@@ -361,6 +361,12 @@ StringRef sys::getHostCPUName() {
         // versions instead of the i7 versions).
         return HasAVX2 ? "core-avx2" : "corei7";
 
+      // Broadwell:
+      case 61:
+        // Not all Broadwell processors support AVX too (such as the Pentium
+        // versions instead of the i7 versions).
+        return HasAVX2 ? "broadwell" : "corei7";
+
       case 28: // Most 45 nm Intel Atom processors
       case 38: // 45 nm Atom Lincroft
       case 39: // 32 nm Atom Medfield
