@@ -18,13 +18,13 @@ declare <16 x double> @llvm.floor.v16f64(<16 x double>) nounwind readnone
 ; SI: s_lshr_b64
 ; SI: s_not_b64
 ; SI: s_and_b64
-; SI: cmp_lt_i32
-; SI: cndmask_b32
-; SI: cndmask_b32
 ; SI: cmp_gt_i32
 ; SI: cndmask_b32
 ; SI: cndmask_b32
-; SI-DAG: v_cmp_lt_f64
+; SI: cmp_lt_i32
+; SI: cndmask_b32
+; SI: cndmask_b32
+; SI-DAG: v_cmp_gt_f64
 ; SI-DAG: v_cmp_lg_f64
 ; SI-DAG: s_and_b64
 ; SI-DAG: v_cndmask_b32

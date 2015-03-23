@@ -42,8 +42,8 @@ end:
 }
 
 ; SI-LABEL: @simple_test_v_if
-; SI: v_cmp_ne_i32_e64 [[BR_SREG:s\[[0-9]+:[0-9]+\]]], v{{[0-9]+}}, 0
-; SI: s_and_saveexec_b64 [[BR_SREG]], [[BR_SREG]]
+; SI: v_cmp_ne_i32_e32 vcc, 0, v{{[0-9]+}}
+; SI: s_and_saveexec_b64 [[BR_SREG:s\[[0-9]+:[0-9]+\]]], vcc
 ; SI: s_xor_b64 [[BR_SREG]], exec, [[BR_SREG]]
 
 ; SI: ; BB#1
@@ -68,8 +68,8 @@ exit:
 }
 
 ; SI-LABEL: @simple_test_v_loop
-; SI: v_cmp_ne_i32_e64 [[BR_SREG:s\[[0-9]+:[0-9]+\]]], v{{[0-9]+}}, 0
-; SI: s_and_saveexec_b64 [[BR_SREG]], [[BR_SREG]]
+; SI: v_cmp_ne_i32_e32 vcc, 0, v{{[0-9]+}}
+; SI: s_and_saveexec_b64 [[BR_SREG:s\[[0-9]+:[0-9]+\]]], vcc
 ; SI: s_xor_b64 [[BR_SREG]], exec, [[BR_SREG]]
 ; SI: s_cbranch_execz BB2_2
 
@@ -111,8 +111,8 @@ exit:
 ; Branch to exit if uniformly not taken
 ; SI: ; BB#0:
 ; SI: buffer_load_dword [[VBOUND:v[0-9]+]]
-; SI: v_cmp_gt_i32_e64 [[OUTER_CMP_SREG:s\[[0-9]+:[0-9]+\]]]
-; SI: s_and_saveexec_b64 [[OUTER_CMP_SREG]], [[OUTER_CMP_SREG]]
+; SI: v_cmp_lt_i32_e32 vcc
+; SI: s_and_saveexec_b64 [[OUTER_CMP_SREG:s\[[0-9]+:[0-9]+\]]], vcc
 ; SI: s_xor_b64 [[OUTER_CMP_SREG]], exec, [[OUTER_CMP_SREG]]
 ; SI: s_cbranch_execz BB3_2
 
@@ -125,8 +125,8 @@ exit:
 ; SI: BB3_3:
 ; SI: buffer_load_dword [[B:v[0-9]+]]
 ; SI: buffer_load_dword [[A:v[0-9]+]]
-; SI-DAG: v_cmp_ne_i32_e64 [[NEG1_CHECK_0:s\[[0-9]+:[0-9]+\]]], [[A]], -1
-; SI-DAG: v_cmp_ne_i32_e64 [[NEG1_CHECK_1:s\[[0-9]+:[0-9]+\]]], [[B]], -1
+; SI-DAG: v_cmp_ne_i32_e64 [[NEG1_CHECK_0:s\[[0-9]+:[0-9]+\]]], -1, [[A]]
+; SI-DAG: v_cmp_ne_i32_e32 [[NEG1_CHECK_1:vcc]], -1, [[B]]
 ; SI: s_and_b64 [[ORNEG1:s\[[0-9]+:[0-9]+\]]], [[NEG1_CHECK_1]], [[NEG1_CHECK_0]]
 ; SI: s_and_saveexec_b64 [[ORNEG1]], [[ORNEG1]]
 ; SI: s_xor_b64 [[ORNEG1]], exec, [[ORNEG1]]

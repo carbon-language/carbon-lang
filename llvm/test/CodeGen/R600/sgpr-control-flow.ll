@@ -64,15 +64,15 @@ endif:
 
 ; SI-LABEL: {{^}}sgpr_if_else_valu_cmp_phi_br:
 ; SI: buffer_load_dword [[AVAL:v[0-9]+]]
-; SI: v_cmp_lt_i32_e64 [[CMP_IF:s\[[0-9]+:[0-9]+\]]], [[AVAL]], 0
+; SI: v_cmp_gt_i32_e32 [[CMP_IF:vcc]], 0, [[AVAL]]
 ; SI: v_cndmask_b32_e64 [[V_CMP:v[0-9]+]], 0, -1, [[CMP_IF]]
 
 ; SI: BB2_1:
 ; SI: buffer_load_dword [[AVAL:v[0-9]+]]
-; SI: v_cmp_eq_i32_e64 [[CMP_ELSE:s\[[0-9]+:[0-9]+\]]], [[AVAL]], 0
+; SI: v_cmp_eq_i32_e32 [[CMP_ELSE:vcc]], 0, [[AVAL]]
 ; SI: v_cndmask_b32_e64 [[V_CMP]], 0, -1, [[CMP_ELSE]]
 
-; SI: v_cmp_ne_i32_e64 [[CMP_CMP:s\[[0-9]+:[0-9]+\]]], [[V_CMP]], 0
+; SI: v_cmp_ne_i32_e32 [[CMP_CMP:vcc]], 0, [[V_CMP]]
 ; SI: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, -1, [[CMP_CMP]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @sgpr_if_else_valu_cmp_phi_br(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 addrspace(1)* %b) {

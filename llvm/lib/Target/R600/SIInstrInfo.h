@@ -114,7 +114,7 @@ public:
   // register.  If there is no hardware instruction that can store to \p
   // DstRC, then AMDGPU::COPY is returned.
   unsigned getMovOpcode(const TargetRegisterClass *DstRC) const;
-  unsigned commuteOpcode(unsigned Opcode) const;
+  unsigned commuteOpcode(const MachineInstr &MI) const;
 
   MachineInstr *commuteInstruction(MachineInstr *MI,
                                    bool NewMI = false) const override;
@@ -349,6 +349,10 @@ namespace AMDGPU {
   int getVOPe32(uint16_t Opcode);
   int getCommuteRev(uint16_t Opcode);
   int getCommuteOrig(uint16_t Opcode);
+
+  int getCommuteCmpRev(uint16_t Opcode);
+  int getCommuteCmpOrig(uint16_t Opcode);
+
   int getAddr64Inst(uint16_t Opcode);
   int getAtomicRetOp(uint16_t Opcode);
   int getAtomicNoRetOp(uint16_t Opcode);

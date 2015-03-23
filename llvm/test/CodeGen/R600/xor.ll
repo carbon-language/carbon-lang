@@ -40,8 +40,8 @@ define void @xor_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in
 ; FUNC-LABEL: {{^}}xor_i1:
 ; EG: XOR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
 
-; SI-DAG: v_cmp_ge_f32_e64 [[CMP0:s\[[0-9]+:[0-9]+\]]], {{v[0-9]+}}, 0
-; SI-DAG: v_cmp_ge_f32_e64 [[CMP1:s\[[0-9]+:[0-9]+\]]], {{v[0-9]+}}, 1.0
+; SI-DAG: v_cmp_le_f32_e32 [[CMP0:vcc]], 0, {{v[0-9]+}}
+; SI-DAG: v_cmp_le_f32_e64 [[CMP1:s\[[0-9]+:[0-9]+\]]], 1.0, {{v[0-9]+}}
 ; SI: s_xor_b64 [[XOR:s\[[0-9]+:[0-9]+\]]], [[CMP0]], [[CMP1]]
 ; SI: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], {{v[0-9]+}}, {{v[0-9]+}}, [[XOR]]
 ; SI: buffer_store_dword [[RESULT]]

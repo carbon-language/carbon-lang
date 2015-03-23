@@ -426,7 +426,29 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 }
 
-unsigned SIInstrInfo::commuteOpcode(unsigned Opcode) const {
+static unsigned commuteCompareOpcode(unsigned Opcode) {
+  // Compares have arbitrarily selected that < is the "original" and > is the
+  // "reverse"
+
+  int NewOpc;
+
+  NewOpc = AMDGPU::getCommuteCmpRev(Opcode);
+  if (NewOpc != -1)
+    return NewOpc;
+
+  NewOpc = AMDGPU::getCommuteCmpOrig(Opcode);
+  if (NewOpc != -1)
+    return NewOpc;
+
+  return Opcode;
+}
+
+unsigned SIInstrInfo::commuteOpcode(const MachineInstr &MI) const {
+  const unsigned Opcode = MI.getOpcode();
+
+  if (MI.isCompare())
+    return commuteCompareOpcode(Opcode);
+
   int NewOpc;
 
   // Try to map original to commuted opcode
@@ -797,7 +819,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   }
 
   if (MI)
-    MI->setDesc(get(commuteOpcode(MI->getOpcode())));
+    MI->setDesc(get(commuteOpcode(*MI)));
 
   return MI;
 }

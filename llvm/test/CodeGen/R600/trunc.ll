@@ -73,8 +73,8 @@ define void @sgpr_trunc_i32_to_i1(i32 addrspace(1)* %out, i32 %a) {
 ; SI-LABEL: {{^}}s_trunc_i64_to_i1:
 ; SI: s_load_dwordx2 s{{\[}}[[SLO:[0-9]+]]:{{[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: v_and_b32_e64 [[MASKED:v[0-9]+]], 1, s[[SLO]]
-; SI: v_cmp_eq_i32_e64 [[CMP:s\[[0-9]+:[0-9]+\]]], [[MASKED]], 1
-; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, [[CMP]]
+; SI: v_cmp_eq_i32_e32 vcc, 1, [[MASKED]]
+; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, vcc
 define void @s_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 %x) {
   %trunc = trunc i64 %x to i1
   %sel = select i1 %trunc, i32 63, i32 -12
@@ -85,8 +85,8 @@ define void @s_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 %x) {
 ; SI-LABEL: {{^}}v_trunc_i64_to_i1:
 ; SI: buffer_load_dwordx2 v{{\[}}[[VLO:[0-9]+]]:{{[0-9]+\]}}
 ; SI: v_and_b32_e32 [[MASKED:v[0-9]+]], 1, v[[VLO]]
-; SI: v_cmp_eq_i32_e64 [[CMP:s\[[0-9]+:[0-9]+\]]], [[MASKED]], 1
-; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, [[CMP]]
+; SI: v_cmp_eq_i32_e32 vcc, 1, [[MASKED]]
+; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, vcc
 define void @v_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep = getelementptr i64, i64 addrspace(1)* %in, i32 %tid
