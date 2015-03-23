@@ -309,6 +309,12 @@ public:
     GetVersion (uint32_t *versions, 
                 uint32_t num_versions);
 
+    lldb::SBFileSpec
+    GetSymbolFileSpec() const;
+
+    lldb::SBAddress
+    GetObjectFileHeaderAddress() const;
+
     bool
     operator == (const lldb::SBModule &rhs) const;
              

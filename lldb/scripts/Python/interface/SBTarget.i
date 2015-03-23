@@ -81,6 +81,18 @@ public:
     bool
     IsValid() const;
 
+    static bool
+    EventIsTargetEvent (const lldb::SBEvent &event);
+
+    static lldb::SBTarget
+    GetTargetFromEvent (const lldb::SBEvent &event);
+
+    static uint32_t
+    GetNumModulesFromEvent (const lldb::SBEvent &event);
+
+    static lldb::SBModule
+    GetModuleAtIndexFromEvent (const uint32_t idx, const lldb::SBEvent &event);
+
     lldb::SBProcess
     GetProcess ();
 
@@ -713,6 +725,12 @@ public:
     
     lldb::addr_t
     GetStackRedZoneSize();
+
+    lldb::SBLaunchInfo
+    GetLaunchInfo () const;
+
+    void
+    SetLaunchInfo (const lldb::SBLaunchInfo &launch_info);
 
     bool
     operator == (const lldb::SBTarget &rhs) const;
