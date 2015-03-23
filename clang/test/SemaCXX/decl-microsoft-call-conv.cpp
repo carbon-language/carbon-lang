@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple i686-pc-win32 -fms-extensions -verify %s
-// RUN: %clang_cc1 -triple i686-pc-mingw32 -verify %s
-// RUN: %clang_cc1 -triple i686-pc-mingw32 -fms-extensions -verify %s
+// RUN: %clang_cc1 -std=c++14 -triple i686-pc-win32 -fms-extensions -verify %s
+// RUN: %clang_cc1 -std=c++14 -triple i686-pc-mingw32 -verify %s
+// RUN: %clang_cc1 -std=c++14 -triple i686-pc-mingw32 -fms-extensions -verify %s
 
 typedef void void_fun_t();
 typedef void __cdecl cdecl_fun_t();
@@ -240,5 +240,21 @@ namespace test8 {
   template<> void __cdecl S<void*>::f(void*); // expected-error {{function declared 'cdecl' here was previously declared without calling convention}}
   void g(S<void*> s, void* p) {
     s.f(p); // expected-note {{in instantiation of member function 'test8::S<void *>::f' requested here}}
+  }
+}
+
+namespace test9 {
+  // Used to fail when we forgot to make lambda call operators use __thiscall.
+  template <typename F>
+  decltype(auto) deduce(F f) {
+    return &decltype(f)::operator();
+  }
+  template <typename C, typename R, typename A>
+  decltype(auto) signaturehelper(R (C::*f)(A) const) {
+    return R();
+  }
+  void f() {
+    auto l = [](int x) { return x * 2; };
+    decltype(signaturehelper(deduce(l))) p;
   }
 }
