@@ -1,4 +1,4 @@
-; RUN: %lli -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s > /dev/null
+; RUN: %lli -use-orcmcjit -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s > /dev/null
 
 define i32 @bar() nounwind {
 	ret i32 0

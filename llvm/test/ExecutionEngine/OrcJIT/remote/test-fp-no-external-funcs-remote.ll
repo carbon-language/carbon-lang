@@ -1,4 +1,4 @@
-; RUN: %lli -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s > /dev/null
+; RUN: %lli -use-orcmcjit -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s > /dev/null
 
 define double @test(double* %DP, double %Arg) nounwind {
 	%D = load double, double* %DP		; <double> [#uses=1]

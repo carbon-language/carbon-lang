@@ -1,6 +1,6 @@
 ; This testcase should return with an exit code of 1.
 ;
-; RUN: not %lli %s
+; RUN: not %lli -use-orcmcjit %s
 
 @test = global i64 0		; <i64*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: %lli -remote-mcjit -disable-lazy-compilation=false -mcjit-remote-process=lli-child-target%exeext %s
+; RUN: %lli -use-orcmcjit -remote-mcjit -disable-lazy-compilation=false -mcjit-remote-process=lli-child-target%exeext %s
 ; XFAIL: *
 ; This test should fail until remote symbol resolution is supported.
 

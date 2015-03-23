@@ -1,4 +1,4 @@
-; RUN: %lli -remote-mcjit -O0 -disable-lazy-compilation=false -mcjit-remote-process=lli-child-target%exeext %s
+; RUN: %lli -use-orcmcjit -remote-mcjit -O0 -disable-lazy-compilation=false -mcjit-remote-process=lli-child-target%exeext %s
 
 ; The intention of this test is to verify that symbols mapped to COMMON in ELF
 ; work as expected.

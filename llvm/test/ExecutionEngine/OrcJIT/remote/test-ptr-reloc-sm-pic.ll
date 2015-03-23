@@ -1,4 +1,4 @@
-; RUN: %lli -remote-mcjit -O0 -relocation-model=pic -code-model=small %s
+; RUN: %lli -use-orcmcjit -remote-mcjit -O0 -relocation-model=pic -code-model=small %s
 ; XFAIL: mips, aarch64, arm, i686, i386
 
 @.str = private unnamed_addr constant [6 x i8] c"data1\00", align 1

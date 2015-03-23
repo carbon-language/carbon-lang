@@ -1,4 +1,4 @@
-; RUN:  %lli -remote-mcjit -O0 -mcjit-remote-process=lli-child-target%exeext %s
+; RUN:  %lli -use-orcmcjit -remote-mcjit -O0 -mcjit-remote-process=lli-child-target%exeext %s
 
 ; Check that a variable is always aligned as specified.
 
