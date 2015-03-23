@@ -625,6 +625,9 @@ public:
     bool
     GetPromptOnQuit () const;
 
+    void
+    SetPromptOnQuit (bool b);
+
     bool
     GetStopCmdSourceOnError () const;
 

@@ -150,6 +150,12 @@ public:
     GetIOHandlerControlSequence(char ch);
 
     bool
+    GetPromptOnQuit();
+
+    void
+    SetPromptOnQuit(bool b);
+
+    bool
     CommandExists (const char *cmd);
 
     bool

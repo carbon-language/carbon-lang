@@ -447,6 +447,21 @@ SBCommandInterpreter::GetDebugger ()
     return sb_debugger;
 }
 
+bool
+SBCommandInterpreter::GetPromptOnQuit()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetPromptOnQuit();
+    return false;
+}
+
+void
+SBCommandInterpreter::SetPromptOnQuit (bool b)
+{
+    if (m_opaque_ptr)
+        m_opaque_ptr->SetPromptOnQuit(b);
+}
+
 CommandInterpreter *
 SBCommandInterpreter::get ()
 {
@@ -850,4 +865,3 @@ SBCommand::AddCommand (const char* name, lldb::SBCommandPluginInterface *impl, c
         return lldb::SBCommand(new_command_sp);
     return lldb::SBCommand();
 }
-

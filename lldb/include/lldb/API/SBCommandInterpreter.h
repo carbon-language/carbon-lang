@@ -219,6 +219,12 @@ public:
     const char *
     GetIOHandlerControlSequence(char ch);
 
+    bool
+    GetPromptOnQuit();
+
+    void
+    SetPromptOnQuit(bool b);
+
 protected:
 
     lldb_private::CommandInterpreter &

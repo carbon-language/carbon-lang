@@ -149,6 +149,13 @@ CommandInterpreter::GetPromptOnQuit () const
     return m_collection_sp->GetPropertyAtIndexAsBoolean (nullptr, idx, g_properties[idx].default_uint_value != 0);
 }
 
+void
+CommandInterpreter::SetPromptOnQuit (bool b)
+{
+    const uint32_t idx = ePropertyPromptOnQuit;
+    m_collection_sp->SetPropertyAtIndexAsBoolean (nullptr, idx, b);
+}
+
 bool
 CommandInterpreter::GetStopCmdSourceOnError () const
 {

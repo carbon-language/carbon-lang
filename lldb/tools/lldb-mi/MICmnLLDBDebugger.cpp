@@ -233,11 +233,15 @@ bool
 CMICmnLLDBDebugger::InitSBDebugger(void)
 {
     m_lldbDebugger = lldb::SBDebugger::Create(false);
-    if (m_lldbDebugger.IsValid())
-        return MIstatus::success;
+    if (!m_lldbDebugger.IsValid())
+    {
+        SetErrorDescription(MIRSRC(IDS_LLDBDEBUGGER_ERR_INVALIDDEBUGGER));
+        return MIstatus::failure;
+    }
 
-    SetErrorDescription(MIRSRC(IDS_LLDBDEBUGGER_ERR_INVALIDDEBUGGER));
-    return MIstatus::failure;
+    m_lldbDebugger.GetCommandInterpreter().SetPromptOnQuit(false);
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
