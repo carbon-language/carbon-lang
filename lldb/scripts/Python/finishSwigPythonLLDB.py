@@ -370,10 +370,10 @@ def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName
             strLibFileExtn = ".dll";
             strSrc = "bin/liblldb%s" % strLibFileExtn;
         else:
-            if eOSType == utilsOsType.EnumOsType.Linux:
-                strLibFileExtn = ".so";
-            elif eOSType == utilsOsType.EnumOsType.Darwin:
+            if eOSType == utilsOsType.EnumOsType.Darwin:
                 strLibFileExtn = ".dylib";
+            else:
+                strLibFileExtn = ".so";
             strSrc = "lib/liblldb%s" % strLibFileExtn;
 
     bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
