@@ -1657,7 +1657,7 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
             frm_nxt = frm;
             return frm_nxt == frm_end ? ok : partial;
         }
-        if (n == 0)
+        if (n == (size_t)-1)
             return error;
         to_nxt += n;
         if (to_nxt == to_end)
