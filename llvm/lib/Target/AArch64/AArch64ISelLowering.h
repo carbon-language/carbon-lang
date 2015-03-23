@@ -475,8 +475,12 @@ private:
 
   unsigned getInlineAsmMemConstraint(
       const std::string &ConstraintCode) const override {
-    // FIXME: Map different constraints differently.
-    return InlineAsm::Constraint_m;
+    if (ConstraintCode == "Q")
+      return InlineAsm::Constraint_Q;
+    // FIXME: clang has code for 'Ump', 'Utf', 'Usa', and 'Ush' but these are
+    //        followed by llvm_unreachable so we'll leave them unimplemented in
+    //        the backend for now.
+    return TargetLowering::getInlineAsmMemConstraint(ConstraintCode);
   }
 
   bool isUsedByReturnOnly(SDNode *N, SDValue &Chain) const override;

@@ -212,13 +212,19 @@ static bool isOpcWithIntImmediate(const SDNode *N, unsigned Opc,
 
 bool AArch64DAGToDAGISel::SelectInlineAsmMemoryOperand(
     const SDValue &Op, unsigned ConstraintID, std::vector<SDValue> &OutOps) {
-  assert(ConstraintID == InlineAsm::Constraint_m &&
-         "unexpected asm memory constraint");
-  // Require the address to be in a register.  That is safe for all AArch64
-  // variants and it is hard to do anything much smarter without knowing
-  // how the operand is used.
-  OutOps.push_back(Op);
-  return false;
+  switch(ConstraintID) {
+  default:
+    llvm_unreachable("Unexpected asm memory constraint");
+  case InlineAsm::Constraint_i:
+  case InlineAsm::Constraint_m:
+  case InlineAsm::Constraint_Q:
+    // Require the address to be in a register.  That is safe for all AArch64
+    // variants and it is hard to do anything much smarter without knowing
+    // how the operand is used.
+    OutOps.push_back(Op);
+    return false;
+  }
+  return true;
 }
 
 /// SelectArithImmed - Select an immediate value that can be represented as
