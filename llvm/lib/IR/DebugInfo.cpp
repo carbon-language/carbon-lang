@@ -260,7 +260,7 @@ static bool isDescriptorRef(const Metadata *MD) {
 #endif
 
 bool DIType::Verify() const {
-  auto *N = getRaw();
+  auto *N = dyn_cast_or_null<MDType>(DbgNode);
   if (!N)
     return false;
   if (!isScopeRef(N->getScope()))
@@ -294,10 +294,12 @@ bool DIType::Verify() const {
   return false;
 }
 
-bool DIBasicType::Verify() const { return getRaw(); }
+bool DIBasicType::Verify() const {
+  return dyn_cast_or_null<MDBasicType>(DbgNode);
+}
 
 bool DIDerivedType::Verify() const {
-  auto *N = getRaw();
+  auto *N = dyn_cast_or_null<MDDerivedTypeBase>(DbgNode);
   if (!N)
     return false;
   if (getTag() == dwarf::DW_TAG_ptr_to_member_type) {
@@ -311,13 +313,13 @@ bool DIDerivedType::Verify() const {
 }
 
 bool DICompositeType::Verify() const {
-  auto *N = getRaw();
+  auto *N = dyn_cast_or_null<MDCompositeTypeBase>(DbgNode);
   return N && isTypeRef(N->getBaseType()) && isTypeRef(N->getVTableHolder()) &&
          !(isLValueReference() && isRValueReference());
 }
 
 bool DISubprogram::Verify() const {
-  auto *N = getRaw();
+  auto *N = dyn_cast_or_null<MDSubprogram>(DbgNode);
   if (!N)
     return false;
 
@@ -370,7 +372,7 @@ bool DISubprogram::Verify() const {
 }
 
 bool DIGlobalVariable::Verify() const {
-  auto *N = getRaw();
+  auto *N = dyn_cast_or_null<MDGlobalVariable>(DbgNode);
 
   if (!N)
     return false;
@@ -390,7 +392,7 @@ bool DIGlobalVariable::Verify() const {
 }
 
 bool DIVariable::Verify() const {
-  auto *N = getRaw();
+  auto *N = dyn_cast_or_null<MDLocalVariable>(DbgNode);
 
   if (!N)
     return false;
@@ -402,19 +404,37 @@ bool DIVariable::Verify() const {
   return isTypeRef(N->getType());
 }
 
-bool DILocation::Verify() const { return getRaw(); }
-bool DINameSpace::Verify() const { return getRaw(); }
-bool DIFile::Verify() const { return getRaw(); }
-bool DIEnumerator::Verify() const { return getRaw(); }
-bool DISubrange::Verify() const { return getRaw(); }
-bool DILexicalBlock::Verify() const { return getRaw(); }
-bool DILexicalBlockFile::Verify() const { return getRaw(); }
-bool DITemplateTypeParameter::Verify() const { return getRaw(); }
-bool DITemplateValueParameter::Verify() const { return getRaw(); }
-bool DIImportedEntity::Verify() const { return getRaw(); }
+bool DILocation::Verify() const {
+  return dyn_cast_or_null<MDLocation>(DbgNode);
+}
+bool DINameSpace::Verify() const {
+  return dyn_cast_or_null<MDNamespace>(DbgNode);
+}
+bool DIFile::Verify() const { return dyn_cast_or_null<MDFile>(DbgNode); }
+bool DIEnumerator::Verify() const {
+  return dyn_cast_or_null<MDEnumerator>(DbgNode);
+}
+bool DISubrange::Verify() const {
+  return dyn_cast_or_null<MDSubrange>(DbgNode);
+}
+bool DILexicalBlock::Verify() const {
+  return dyn_cast_or_null<MDLexicalBlock>(DbgNode);
+}
+bool DILexicalBlockFile::Verify() const {
+  return dyn_cast_or_null<MDLexicalBlockFile>(DbgNode);
+}
+bool DITemplateTypeParameter::Verify() const {
+  return dyn_cast_or_null<MDTemplateTypeParameter>(DbgNode);
+}
+bool DITemplateValueParameter::Verify() const {
+  return dyn_cast_or_null<MDTemplateValueParameter>(DbgNode);
+}
+bool DIImportedEntity::Verify() const {
+  return dyn_cast_or_null<MDImportedEntity>(DbgNode);
+}
 
 void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
-  TypedTrackingMDRef<MDCompositeTypeBase> N(getRaw());
+  TypedTrackingMDRef<MDCompositeTypeBase> N(get());
   if (Elements)
     N->replaceElements(cast<MDTuple>(Elements));
   if (TParams)
@@ -432,7 +452,7 @@ DIScopeRef DIScope::getRef() const {
 }
 
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
-  TypedTrackingMDRef<MDCompositeTypeBase> N(getRaw());
+  TypedTrackingMDRef<MDCompositeTypeBase> N(get());
   N->replaceVTableHolder(ContainingType.getRef());
   DbgNode = N;
 }
@@ -447,7 +467,7 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
 }
 
 Function *DISubprogram::getFunction() const {
-  if (auto *N = getRaw())
+  if (auto *N = get())
     if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(N->getFunction()))
       return dyn_cast<Function>(C->getValue());
   return nullptr;
@@ -504,26 +524,25 @@ StringRef DIScope::getName() const {
 }
 
 StringRef DIScope::getFilename() const {
-  if (auto *N = getRaw())
+  if (auto *N = get())
     return ::getStringField(dyn_cast_or_null<MDNode>(N->getFile()), 0);
   return "";
 }
 
 StringRef DIScope::getDirectory() const {
-  if (auto *N = getRaw())
+  if (auto *N = get())
     return ::getStringField(dyn_cast_or_null<MDNode>(N->getFile()), 1);
   return "";
 }
 
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
   assert(Verify() && "Expected compile unit");
-  getRaw()->replaceSubprograms(cast_or_null<MDTuple>(Subprograms.get()));
+  get()->replaceSubprograms(cast_or_null<MDTuple>(Subprograms.get()));
 }
 
 void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
   assert(Verify() && "Expected compile unit");
-  getRaw()->replaceGlobalVariables(
-      cast_or_null<MDTuple>(GlobalVariables.get()));
+  get()->replaceGlobalVariables(cast_or_null<MDTuple>(GlobalVariables.get()));
 }
 
 DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
