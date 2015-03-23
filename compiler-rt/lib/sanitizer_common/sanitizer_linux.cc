@@ -164,7 +164,8 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
 
 uptr internal_ftruncate(fd_t fd, uptr size) {
   sptr res;
-  HANDLE_EINTR(res, (sptr)internal_syscall(SYSCALL(ftruncate), fd, size));
+  HANDLE_EINTR(res, (sptr)internal_syscall(SYSCALL(ftruncate), fd,
+               (OFF_T)size));
   return res;
 }
 
