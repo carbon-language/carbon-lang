@@ -1,4 +1,4 @@
-//===-- MICmdCmdGdbSet.h -------------      ---------------------*- C++ -*-===//
+//===-- MICmdCmdGdbSet.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,7 +9,7 @@
 
 // Overview:    CMICmdCmdGdbSet interface.
 //
-//              To implement new MI commands derive a new command class from the command base
+//              To implement new MI commands, derive a new command class from the command base
 //              class. To enable the new command for interpretation add the new command class
 //              to the command factory. The files of relevance are:
 //                  MICmdCommands.cpp
