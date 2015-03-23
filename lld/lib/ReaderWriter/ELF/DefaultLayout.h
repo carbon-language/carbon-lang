@@ -705,7 +705,7 @@ void DefaultLayout<ELFT>::sortOutputSectionByPriority(
               return getPriorityFromSectionName(lhsSectionName) <
                      getPriorityFromSectionName(rhsSectionName);
             });
-};
+}
 
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
