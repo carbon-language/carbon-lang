@@ -189,18 +189,18 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, const MCSection *Section,
   // correct place.
   MCOS->SwitchSection(Section);
 
-  MCContext &context = MCOS->getContext();
+  MCContext &Ctx = MCOS->getContext();
   // Create a symbol at the end of the section.
-  MCSymbol *SectionEnd = context.CreateTempSymbol();
+  MCSymbol *SectionEnd = Ctx.CreateTempSymbol();
   // Set the value of the symbol, as we are at the end of the section.
   MCOS->EmitLabel(SectionEnd);
 
   // Switch back the dwarf line section.
-  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
+  MCOS->SwitchSection(Ctx.getObjectFileInfo()->getDwarfLineSection());
 
-  const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
+  const MCAsmInfo *AsmInfo = Ctx.getAsmInfo();
   MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, SectionEnd,
-                                 asmInfo->getPointerSize());
+                                 AsmInfo->getPointerSize());
 }
 
 //
