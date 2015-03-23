@@ -623,7 +623,7 @@ DebugLoc AMDGPUCFGStructurizer::getLastDebugLocInBB(MachineBasicBlock *MBB) {
   for (MachineBasicBlock::iterator It = MBB->begin(); It != MBB->end();
       ++It) {
     MachineInstr *instr = &(*It);
-    if (instr->getDebugLoc().isUnknown() == false)
+    if (!instr->getDebugLoc().isUnknown())
       DL = instr->getDebugLoc();
   }
   return DL;
@@ -1611,7 +1611,7 @@ void AMDGPUCFGStructurizer::settleLoopcontBlock(MachineBasicBlock *ContingMBB,
 
     bool UseContinueLogical = ((&*ContingMBB->rbegin()) == MI);
 
-    if (UseContinueLogical == false) {
+    if (!UseContinueLogical) {
       int BranchOpcode =
           TrueBranch == ContMBB ? getBranchNzeroOpcode(OldOpcode) :
           getBranchZeroOpcode(OldOpcode);
