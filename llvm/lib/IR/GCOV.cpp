@@ -445,6 +445,7 @@ static uint32_t branchDiv(uint64_t Numerator, uint64_t Divisor) {
   return Res;
 }
 
+namespace {
 struct formatBranchInfo {
   formatBranchInfo(const GCOVOptions &Options, uint64_t Count, uint64_t Total)
       : Options(Options), Count(Count), Total(Total) {}
@@ -468,7 +469,6 @@ static raw_ostream &operator<<(raw_ostream &OS, const formatBranchInfo &FBI) {
   return OS;
 }
 
-namespace {
 class LineConsumer {
   std::unique_ptr<MemoryBuffer> Buffer;
   StringRef Remaining;
