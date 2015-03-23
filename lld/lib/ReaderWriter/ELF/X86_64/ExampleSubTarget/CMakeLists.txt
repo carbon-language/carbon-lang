@@ -3,4 +3,9 @@ add_llvm_library(lldExampleSubTarget
   ExampleTargetHandler.cpp
   LINK_LIBS
     lldX86_64ELFTarget
+    lldELF
+    lldReaderWriter
+    lldCore
+    LLVMObject
+    LLVMSupport
   )

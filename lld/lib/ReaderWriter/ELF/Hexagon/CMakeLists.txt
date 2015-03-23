@@ -3,8 +3,9 @@ add_llvm_library(lldHexagonELFTarget
   HexagonRelocationHandler.cpp
   HexagonTargetHandler.cpp
   LINK_LIBS
-    lldCore
     lldELF
+    lldReaderWriter
+    lldCore
     LLVMObject
     LLVMSupport
   )

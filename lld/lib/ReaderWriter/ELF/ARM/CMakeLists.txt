@@ -4,8 +4,9 @@ add_llvm_library(lldARMELFTarget
   ARMRelocationHandler.cpp
   ARMRelocationPass.cpp
   LINK_LIBS
-    lldCore
     lldELF
+    lldReaderWriter
+    lldCore
     LLVMObject
     LLVMSupport
   )

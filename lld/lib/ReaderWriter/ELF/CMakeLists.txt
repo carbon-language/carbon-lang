@@ -3,6 +3,7 @@ add_llvm_library(lldELF
   Reader.cpp
   Writer.cpp
   LINK_LIBS
+    lldReaderWriter
     lldCore
     lldYAML
     LLVMSupport
