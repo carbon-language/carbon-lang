@@ -2837,13 +2837,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         break;
       case ISD::UINT_TO_FP:
       case ISD::SINT_TO_FP: {
+        // Let the above scalar folding handle the folding of each element.
         SmallVector<SDValue, 8> Ops;
         for (int i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
           SDValue OpN = BV->getOperand(i);
-          // Let the above scalar folding handle the conversion of each
-          // element.
-          OpN = getNode(ISD::SINT_TO_FP, DL, VT.getVectorElementType(),
-                        OpN);
+          OpN = getNode(Opcode, DL, VT.getVectorElementType(), OpN);
           Ops.push_back(OpN);
         }
         return getNode(ISD::BUILD_VECTOR, DL, VT, Ops);

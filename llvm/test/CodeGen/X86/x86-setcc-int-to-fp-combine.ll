@@ -72,3 +72,18 @@ define <4 x float> @foo3(<4 x float> %val, <4 x float> %test) nounwind {
   %result = sitofp <4 x i32> %and to <4 x float>
   ret <4 x float> %result
 }
+
+; Test the general purpose constant folding of uint->fp.
+define void @foo4(<4 x float>* noalias %result) nounwind {
+; CHECK-LABEL: LCPI4_0:
+; CHECK-NEXT: .long 1065353216              ## float 1.000000e+00
+; CHECK-NEXT: .long 1123942400              ## float 1.270000e+02
+; CHECK-NEXT: .long 1124073472              ## float 1.280000e+02
+; CHECK-NEXT: .long 1132396544              ## float 2.550000e+02
+; CHECK-LABEL: foo4:
+; CHECK:  movaps LCPI4_0(%rip), %xmm0
+
+  %val = uitofp <4 x i8> <i8 1, i8 127, i8 -128, i8 -1> to <4 x float>
+  store <4 x float> %val, <4 x float>* %result
+  ret void
+}
