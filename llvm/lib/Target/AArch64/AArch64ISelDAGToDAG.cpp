@@ -1143,6 +1143,7 @@ SDNode *AArch64DAGToDAGISel::SelectPostStore(SDNode *N, unsigned NumVecs,
   return St;
 }
 
+namespace {
 /// WidenVector - Given a value in the V64 register class, produce the
 /// equivalent value in the V128 register class.
 class WidenVector {
@@ -1163,6 +1164,7 @@ public:
     return DAG.getTargetInsertSubreg(AArch64::dsub, DL, WideTy, Undef, V64Reg);
   }
 };
+} // namespace
 
 /// NarrowVector - Given a value in the V128 register class, produce the
 /// equivalent value in the V64 register class.

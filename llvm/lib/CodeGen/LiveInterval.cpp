@@ -32,6 +32,7 @@
 #include <algorithm>
 using namespace llvm;
 
+namespace {
 //===----------------------------------------------------------------------===//
 // Implementation of various methods necessary for calculation of live ranges.
 // The implementation of the methods abstracts from the concrete type of the
@@ -293,6 +294,7 @@ private:
     return I;
   }
 };
+} // namespace
 
 //===----------------------------------------------------------------------===//
 //   LiveRange methods

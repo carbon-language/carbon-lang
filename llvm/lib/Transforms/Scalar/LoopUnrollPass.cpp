@@ -259,6 +259,7 @@ static bool isLoadFromConstantInitializer(Value *V) {
   return false;
 }
 
+namespace {
 struct FindConstantPointers {
   bool LoadCanBeConstantFolded;
   bool IndexIsConstant;
@@ -541,6 +542,7 @@ public:
     return NumberOfOptimizedInstructions;
   }
 };
+} // namespace
 
 // Complete loop unrolling can make some loads constant, and we need to know if
 // that would expose any further optimization opportunities.
