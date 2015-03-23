@@ -96,6 +96,10 @@ class CGOpenMPRuntime {
     // Call to kmp_int32 __kmpc_omp_task(ident_t *, kmp_int32 gtid, kmp_task_t *
     // new_task);
     OMPRTL__kmpc_omp_task,
+    // Call to void __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid,
+    // kmp_int32 cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
+    // kmp_int32 didit);
+    OMPRTL__kmpc_copyprivate,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -348,7 +352,11 @@ public:
   /// single region.
   virtual void emitSingleRegion(CodeGenFunction &CGF,
                                 const std::function<void()> &SingleOpGen,
-                                SourceLocation Loc);
+                                SourceLocation Loc,
+                                ArrayRef<const Expr *> CopyprivateVars,
+                                ArrayRef<const Expr *> SrcExprs,
+                                ArrayRef<const Expr *> DstExprs,
+                                ArrayRef<const Expr *> AssignmentOps);
 
   /// \brief Emits explicit barrier for OpenMP threads.
   /// \param IsExplicit true, if it is explicitly specified barrier.

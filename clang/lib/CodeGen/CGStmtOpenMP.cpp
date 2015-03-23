@@ -882,7 +882,7 @@ void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
       InlinedOpenMPRegionScopeRAII Region(*this, S);
       EmitStmt(Stmt);
       EnsureInsertPoint();
-    }, S.getLocStart());
+    }, S.getLocStart(), llvm::None, llvm::None, llvm::None, llvm::None);
   }
 
   // Emit an implicit barrier at the end.
@@ -898,11 +898,38 @@ void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &S) {
 }
 
 void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
+  llvm::SmallVector<const Expr *, 8> CopyprivateVars;
+  llvm::SmallVector<const Expr *, 8> SrcExprs;
+  llvm::SmallVector<const Expr *, 8> DstExprs;
+  llvm::SmallVector<const Expr *, 8> AssignmentOps;
+  // Check if there are any 'copyprivate' clauses associated with this 'single'
+  // construct.
+  auto CopyprivateFilter = [](const OMPClause *C) -> bool {
+    return C->getClauseKind() == OMPC_copyprivate;
+  };
+  // Build a list of copyprivate variables along with helper expressions
+  // (<source>, <destination>, <destination>=<source> expressions)
+  typedef OMPExecutableDirective::filtered_clause_iterator<decltype(
+      CopyprivateFilter)> CopyprivateIter;
+  for (CopyprivateIter I(S.clauses(), CopyprivateFilter); I; ++I) {
+    auto *C = cast<OMPCopyprivateClause>(*I);
+    CopyprivateVars.append(C->varlists().begin(), C->varlists().end());
+    SrcExprs.append(C->source_exprs().begin(), C->source_exprs().end());
+    DstExprs.append(C->destination_exprs().begin(),
+                    C->destination_exprs().end());
+    AssignmentOps.append(C->assignment_ops().begin(),
+                         C->assignment_ops().end());
+  }
+  // Emit code for 'single' region along with 'copyprivate' clauses
   CGM.getOpenMPRuntime().emitSingleRegion(*this, [&]() -> void {
     InlinedOpenMPRegionScopeRAII Region(*this, S);
     EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     EnsureInsertPoint();
-  }, S.getLocStart());
+  }, S.getLocStart(), CopyprivateVars, SrcExprs, DstExprs, AssignmentOps);
+  // Emit an implicit barrier at the end.
+  if (!S.getSingleClause(OMPC_nowait))
+    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
+                                           /*IsExplicit=*/false);
 }
 
 void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {

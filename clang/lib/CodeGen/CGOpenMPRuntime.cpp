@@ -580,6 +580,21 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_omp_task");
     break;
   }
+  case OMPRTL__kmpc_copyprivate: {
+    // Build void __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid,
+    // kmp_int32 cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
+    // kmp_int32 didit);
+    llvm::Type *CpyTypeParams[] = {CGM.VoidPtrTy, CGM.VoidPtrTy};
+    auto *CpyFnTy =
+        llvm::FunctionType::get(CGM.VoidTy, CpyTypeParams, /*isVarArg=*/false);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.Int32Ty,
+                                CGM.VoidPtrTy, CpyFnTy->getPointerTo(),
+                                CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_copyprivate");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -965,19 +980,107 @@ void CGOpenMPRuntime::emitTaskyieldCall(CodeGenFunction &CGF,
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_omp_taskyield), Args);
 }
 
+static llvm::Value *emitCopyprivateCopyFunction(
+    CodeGenModule &CGM, llvm::Type *ArgsType, ArrayRef<const Expr *> SrcExprs,
+    ArrayRef<const Expr *> DstExprs, ArrayRef<const Expr *> AssignmentOps) {
+  auto &C = CGM.getContext();
+  // void copy_func(void *LHSArg, void *RHSArg);
+  FunctionArgList Args;
+  ImplicitParamDecl LHSArg(C, /*DC=*/nullptr, SourceLocation(), /*Id=*/nullptr,
+                           C.VoidPtrTy);
+  ImplicitParamDecl RHSArg(C, /*DC=*/nullptr, SourceLocation(), /*Id=*/nullptr,
+                           C.VoidPtrTy);
+  Args.push_back(&LHSArg);
+  Args.push_back(&RHSArg);
+  FunctionType::ExtInfo EI;
+  auto &CGFI = CGM.getTypes().arrangeFreeFunctionDeclaration(
+      C.VoidTy, Args, EI, /*isVariadic=*/false);
+  auto *Fn = llvm::Function::Create(
+      CGM.getTypes().GetFunctionType(CGFI), llvm::GlobalValue::InternalLinkage,
+      ".omp.copyprivate.copy_func", &CGM.getModule());
+  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, CGFI, Fn);
+  CodeGenFunction CGF(CGM);
+  CGF.StartFunction(GlobalDecl(), C.VoidTy, Fn, CGFI, Args);
+  // Dst = (void*[n])(LHSArg);
+  // Src = (void*[n])(RHSArg);
+  auto *LHS = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+      CGF.Builder.CreateAlignedLoad(CGF.GetAddrOfLocalVar(&LHSArg),
+                                    CGF.PointerAlignInBytes),
+      ArgsType);
+  auto *RHS = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+      CGF.Builder.CreateAlignedLoad(CGF.GetAddrOfLocalVar(&RHSArg),
+                                    CGF.PointerAlignInBytes),
+      ArgsType);
+  // *(Type0*)Dst[0] = *(Type0*)Src[0];
+  // *(Type1*)Dst[1] = *(Type1*)Src[1];
+  // ...
+  // *(Typen*)Dst[n] = *(Typen*)Src[n];
+  CodeGenFunction::OMPPrivateScope Scope(CGF);
+  for (unsigned I = 0, E = AssignmentOps.size(); I < E; ++I) {
+    Scope.addPrivate(
+        cast<VarDecl>(cast<DeclRefExpr>(SrcExprs[I])->getDecl()),
+        [&]() -> llvm::Value *{
+          return CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+              CGF.Builder.CreateAlignedLoad(CGF.Builder.CreateStructGEP(RHS, I),
+                                            CGM.PointerAlignInBytes),
+              CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
+        });
+    Scope.addPrivate(
+        cast<VarDecl>(cast<DeclRefExpr>(DstExprs[I])->getDecl()),
+        [&]() -> llvm::Value *{
+          return CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+              CGF.Builder.CreateAlignedLoad(CGF.Builder.CreateStructGEP(LHS, I),
+                                            CGM.PointerAlignInBytes),
+              CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
+        });
+  }
+  Scope.Privatize();
+  for (auto *E : AssignmentOps) {
+    CGF.EmitIgnoredExpr(E);
+  }
+  Scope.ForceCleanup();
+  CGF.FinishFunction();
+  return Fn;
+}
+
 void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
                                        const std::function<void()> &SingleOpGen,
-                                       SourceLocation Loc) {
+                                       SourceLocation Loc,
+                                       ArrayRef<const Expr *> CopyprivateVars,
+                                       ArrayRef<const Expr *> SrcExprs,
+                                       ArrayRef<const Expr *> DstExprs,
+                                       ArrayRef<const Expr *> AssignmentOps) {
+  assert(CopyprivateVars.size() == SrcExprs.size() &&
+         CopyprivateVars.size() == DstExprs.size() &&
+         CopyprivateVars.size() == AssignmentOps.size());
+  auto &C = CGM.getContext();
+  // int32 did_it = 0;
   // if(__kmpc_single(ident_t *, gtid)) {
   //   SingleOpGen();
   //   __kmpc_end_single(ident_t *, gtid);
+  //   did_it = 1;
   // }
+  // call __kmpc_copyprivate(ident_t *, gtid, <buf_size>, <copyprivate list>,
+  // <copy_func>, did_it);
+
+  llvm::AllocaInst *DidIt = nullptr;
+  if (!CopyprivateVars.empty()) {
+    // int32 did_it = 0;
+    auto KmpInt32Ty = C.getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1);
+    DidIt = CGF.CreateMemTemp(KmpInt32Ty, ".omp.copyprivate.did_it");
+    CGF.InitTempAlloca(DidIt, CGF.Builder.getInt32(0));
+  }
   // Prepare arguments and build a call to __kmpc_single
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
   auto *IsSingle =
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_single), Args);
   emitIfStmt(CGF, IsSingle, [&]() -> void {
     SingleOpGen();
+    if (DidIt) {
+      // did_it = 1;
+      CGF.Builder.CreateAlignedStore(CGF.Builder.getInt32(1), DidIt,
+                                     DidIt->getAlignment());
+    }
     // Build a call to __kmpc_end_single.
     // OpenMP [1.2.2 OpenMP Language Terminology]
     // For C/C++, an executable statement, possibly compound, with a single
@@ -994,6 +1097,44 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     // fallthrough rather than pushing a normal cleanup for it.
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_single), Args);
   });
+  // call __kmpc_copyprivate(ident_t *, gtid, <buf_size>, <copyprivate list>,
+  // <copy_func>, did_it);
+  if (DidIt) {
+    llvm::APInt ArraySize(/*unsigned int numBits=*/32, CopyprivateVars.size());
+    auto CopyprivateArrayTy =
+        C.getConstantArrayType(C.VoidPtrTy, ArraySize, ArrayType::Normal,
+                               /*IndexTypeQuals=*/0);
+    // Create a list of all private variables for copyprivate.
+    auto *CopyprivateList =
+        CGF.CreateMemTemp(CopyprivateArrayTy, ".omp.copyprivate.cpr_list");
+    for (unsigned I = 0, E = CopyprivateVars.size(); I < E; ++I) {
+      auto *Elem = CGF.Builder.CreateStructGEP(CopyprivateList, I);
+      CGF.Builder.CreateAlignedStore(
+          CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+              CGF.EmitLValue(CopyprivateVars[I]).getAddress(), CGF.VoidPtrTy),
+          Elem, CGM.PointerAlignInBytes);
+    }
+    // Build function that copies private values from single region to all other
+    // threads in the corresponding parallel region.
+    auto *CpyFn = emitCopyprivateCopyFunction(
+        CGM, CGF.ConvertTypeForMem(CopyprivateArrayTy)->getPointerTo(),
+        SrcExprs, DstExprs, AssignmentOps);
+    auto *BufSize = CGF.Builder.getInt32(
+        C.getTypeSizeInChars(CopyprivateArrayTy).getQuantity());
+    auto *CL = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(CopyprivateList,
+                                                               CGF.VoidPtrTy);
+    auto *DidItVal =
+        CGF.Builder.CreateAlignedLoad(DidIt, CGF.PointerAlignInBytes);
+    llvm::Value *Args[] = {
+        emitUpdateLocation(CGF, Loc), // ident_t *<loc>
+        getThreadID(CGF, Loc),        // i32 <gtid>
+        BufSize,                      // i32 <buf_size>
+        CL,                           // void *<copyprivate list>
+        CpyFn,                        // void (*) (void *, void *) <copy_func>
+        DidItVal                      // i32 did_it
+    };
+    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_copyprivate), Args);
+  }
 }
 
 void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,

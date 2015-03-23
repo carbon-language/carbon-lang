@@ -1674,6 +1674,7 @@ public:
 /// with the variables 'a' and 'b'.
 ///
 class OMPCopyprivateClause : public OMPVarListClause<OMPCopyprivateClause> {
+  friend class OMPClauseReader;
   /// \brief Build clause with number of variables \a N.
   ///
   /// \param StartLoc Starting location of the clause.
@@ -1695,6 +1696,46 @@ class OMPCopyprivateClause : public OMPVarListClause<OMPCopyprivateClause> {
             OMPC_copyprivate, SourceLocation(), SourceLocation(),
             SourceLocation(), N) {}
 
+  /// \brief Set list of helper expressions, required for proper codegen of the
+  /// clause. These expressions represent source expression in the final
+  /// assignment statement performed by the copyprivate clause.
+  void setSourceExprs(ArrayRef<Expr *> SrcExprs);
+
+  /// \brief Get the list of helper source expressions.
+  MutableArrayRef<Expr *> getSourceExprs() {
+    return MutableArrayRef<Expr *>(varlist_end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getSourceExprs() const {
+    return llvm::makeArrayRef(varlist_end(), varlist_size());
+  }
+
+  /// \brief Set list of helper expressions, required for proper codegen of the
+  /// clause. These expressions represent destination expression in the final
+  /// assignment statement performed by the copyprivate clause.
+  void setDestinationExprs(ArrayRef<Expr *> DstExprs);
+
+  /// \brief Get the list of helper destination expressions.
+  MutableArrayRef<Expr *> getDestinationExprs() {
+    return MutableArrayRef<Expr *>(getSourceExprs().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getDestinationExprs() const {
+    return llvm::makeArrayRef(getSourceExprs().end(), varlist_size());
+  }
+
+  /// \brief Set list of helper assignment expressions, required for proper
+  /// codegen of the clause. These expressions are assignment expressions that
+  /// assign source helper expressions to destination helper expressions
+  /// correspondingly.
+  void setAssignmentOps(ArrayRef<Expr *> AssignmentOps);
+
+  /// \brief Get the list of helper assignment expressions.
+  MutableArrayRef<Expr *> getAssignmentOps() {
+    return MutableArrayRef<Expr *>(getDestinationExprs().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getAssignmentOps() const {
+    return llvm::makeArrayRef(getDestinationExprs().end(), varlist_size());
+  }
+
 public:
   /// \brief Creates clause with a list of variables \a VL.
   ///
@@ -1703,16 +1744,60 @@ public:
   /// \param LParenLoc Location of '('.
   /// \param EndLoc Ending location of the clause.
   /// \param VL List of references to the variables.
+  /// \param SrcExprs List of helper expressions for proper generation of
+  /// assignment operation required for copyprivate clause. This list represents
+  /// sources.
+  /// \param DstExprs List of helper expressions for proper generation of
+  /// assignment operation required for copyprivate clause. This list represents
+  /// destinations.
+  /// \param AsignmentOps List of helper expressions that represents assignment
+  /// operation:
+  /// \code
+  /// DstExprs = SrcExprs;
+  /// \endcode
+  /// Required for proper codegen of final assignment performed by the
+  /// copyprivate clause.
   ///
   static OMPCopyprivateClause *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
-         SourceLocation EndLoc, ArrayRef<Expr *> VL);
+         SourceLocation EndLoc, ArrayRef<Expr *> VL, ArrayRef<Expr *> SrcExprs,
+         ArrayRef<Expr *> DstExprs, ArrayRef<Expr *> AssignmentOps);
   /// \brief Creates an empty clause with \a N variables.
   ///
   /// \param C AST context.
   /// \param N The number of variables.
   ///
   static OMPCopyprivateClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  typedef MutableArrayRef<Expr *>::iterator helper_expr_iterator;
+  typedef ArrayRef<const Expr *>::iterator helper_expr_const_iterator;
+  typedef llvm::iterator_range<helper_expr_iterator> helper_expr_range;
+  typedef llvm::iterator_range<helper_expr_const_iterator>
+      helper_expr_const_range;
+
+  helper_expr_const_range source_exprs() const {
+    return helper_expr_const_range(getSourceExprs().begin(),
+                                   getSourceExprs().end());
+  }
+  helper_expr_range source_exprs() {
+    return helper_expr_range(getSourceExprs().begin(), getSourceExprs().end());
+  }
+  helper_expr_const_range destination_exprs() const {
+    return helper_expr_const_range(getDestinationExprs().begin(),
+                                   getDestinationExprs().end());
+  }
+  helper_expr_range destination_exprs() {
+    return helper_expr_range(getDestinationExprs().begin(),
+                             getDestinationExprs().end());
+  }
+  helper_expr_const_range assignment_ops() const {
+    return helper_expr_const_range(getAssignmentOps().begin(),
+                                   getAssignmentOps().end());
+  }
+  helper_expr_range assignment_ops() {
+    return helper_expr_range(getAssignmentOps().begin(),
+                             getAssignmentOps().end());
+  }
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),

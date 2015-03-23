@@ -604,7 +604,10 @@ public:
     }
 
     /// \brief Exit scope - all the mapped variables are restored.
-    ~OMPPrivateScope() { ForceCleanup(); }
+    ~OMPPrivateScope() {
+      if (PerformCleanup)
+        ForceCleanup();
+    }
   };
 
   /// \brief Takes the old cleanup stack size and emits the cleanup blocks
