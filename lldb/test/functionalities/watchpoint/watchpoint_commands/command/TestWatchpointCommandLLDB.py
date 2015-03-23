@@ -22,7 +22,7 @@ class WatchpointLLDBCommandTestCase(TestBase):
         # And the watchpoint variable declaration line number.
         self.decl = line_number(self.source, '// Watchpoint variable declaration.')
         # Build dictionary to have unique executable names for each test method.
-        self.exe_name = self.testMethodName
+        self.exe_name = 'a%d.out' % self.test_number
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
