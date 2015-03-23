@@ -183,6 +183,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   PlatformMinVersion = VersionTuple(Maj, Min, Rev);
 }
 
+namespace {
 // CloudABI Target
 template <typename Target>
 class CloudABITargetInfo : public OSTargetInfo<Target> {
@@ -205,7 +206,6 @@ public:
   }
 };
 
-namespace {
 template<typename Target>
 class DarwinTargetInfo : public OSTargetInfo<Target> {
 protected:
@@ -727,13 +727,11 @@ public:
     }
   }
 };
-} // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
 // Specific target implementations.
 //===----------------------------------------------------------------------===//
 
-namespace {
 // PPC abstract base class
 class PPCTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
@@ -1342,9 +1340,7 @@ void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
   Aliases = GCCRegAliases;
   NumAliases = llvm::array_lengthof(GCCRegAliases);
 }
-} // end anonymous namespace.
 
-namespace {
 class PPC32TargetInfo : public PPCTargetInfo {
 public:
   PPC32TargetInfo(const llvm::Triple &Triple) : PPCTargetInfo(Triple) {
@@ -1376,11 +1372,9 @@ public:
     return TargetInfo::PowerABIBuiltinVaList;
   }
 };
-} // end anonymous namespace.
 
 // Note: ABI differences may eventually require us to have a separate
 // TargetInfo for little endian.
-namespace {
 class PPC64TargetInfo : public PPCTargetInfo {
 public:
   PPC64TargetInfo(const llvm::Triple &Triple) : PPCTargetInfo(Triple) {
@@ -1424,10 +1418,7 @@ public:
     return false;
   }
 };
-} // end anonymous namespace.
 
-
-namespace {
 class DarwinPPC32TargetInfo :
   public DarwinTargetInfo<PPC32TargetInfo> {
 public:
@@ -1455,9 +1446,7 @@ public:
     DescriptionString = "E-m:o-i64:64-n32:64";
   }
 };
-} // end anonymous namespace.
 
-namespace {
   static const unsigned NVPTXAddrSpaceMap[] = {
     1,    // opencl_global
     3,    // opencl_local
@@ -1608,9 +1597,6 @@ namespace {
       DescriptionString = "e-i64:64-v16:16-v32:32-n16:32:64";
   }
   };
-}
-
-namespace {
 
 static const unsigned R600AddrSpaceMap[] = {
   1,    // opencl_global
@@ -1797,9 +1783,6 @@ const Builtin::Info R600TargetInfo::BuiltinInfo[] = {
 #include "clang/Basic/BuiltinsR600.def"
 };
 
-} // end anonymous namespace
-
-namespace {
 // Namespace for x86 abstract base class
 const Builtin::Info BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
@@ -3328,9 +3311,7 @@ X86TargetInfo::convertConstraint(const char *&Constraint) const {
     return std::string(1, *Constraint);
   }
 }
-} // end anonymous namespace
 
-namespace {
 // X86-32 generic target
 class X86_32TargetInfo : public X86TargetInfo {
 public:
@@ -3385,9 +3366,7 @@ public:
     return X86TargetInfo::validateOperandSize(Constraint, Size);
   }
 };
-} // end anonymous namespace
 
-namespace {
 class NetBSDI386TargetInfo : public NetBSDTargetInfo<X86_32TargetInfo> {
 public:
   NetBSDI386TargetInfo(const llvm::Triple &Triple)
@@ -3403,9 +3382,7 @@ public:
     return 1;
   }
 };
-} // end anonymous namespace
 
-namespace {
 class OpenBSDI386TargetInfo : public OpenBSDTargetInfo<X86_32TargetInfo> {
 public:
   OpenBSDI386TargetInfo(const llvm::Triple &Triple)
@@ -3415,9 +3392,7 @@ public:
     PtrDiffType = SignedLong;
   }
 };
-} // end anonymous namespace
 
-namespace {
 class BitrigI386TargetInfo : public BitrigTargetInfo<X86_32TargetInfo> {
 public:
   BitrigI386TargetInfo(const llvm::Triple &Triple)
@@ -3427,9 +3402,7 @@ public:
     PtrDiffType = SignedLong;
   }
 };
-} // end anonymous namespace
 
-namespace {
 class DarwinI386TargetInfo : public DarwinTargetInfo<X86_32TargetInfo> {
 public:
   DarwinI386TargetInfo(const llvm::Triple &Triple)
@@ -3445,9 +3418,7 @@ public:
   }
 
 };
-} // end anonymous namespace
 
-namespace {
 // x86-32 Windows target
 class WindowsX86_32TargetInfo : public WindowsTargetInfo<X86_32TargetInfo> {
 public:
@@ -3525,9 +3496,7 @@ public:
     addMinGWDefines(Opts, Builder);
   }
 };
-} // end anonymous namespace
 
-namespace {
 // x86-32 Cygwin target
 class CygwinX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -3549,9 +3518,7 @@ public:
       Builder.defineMacro("_GNU_SOURCE");
   }
 };
-} // end anonymous namespace
 
-namespace {
 // x86-32 Haiku target
 class HaikuX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -3570,7 +3537,6 @@ public:
     Builder.defineMacro("__HAIKU__");
   }
 };
-} // end anonymous namespace
 
 // RTEMS Target
 template<typename Target>
@@ -3607,7 +3573,6 @@ public:
   }
 };
 
-namespace {
 // x86-32 RTEMS target
 class RTEMSX86_32TargetInfo : public X86_32TargetInfo {
 public:
@@ -3624,9 +3589,7 @@ public:
     Builder.defineMacro("__rtems__");
   }
 };
-} // end anonymous namespace
 
-namespace {
 // x86-64 generic target
 class X86_64TargetInfo : public X86TargetInfo {
 public:
@@ -3687,9 +3650,7 @@ public:
   // for x32 we need it here explicitly
   bool hasInt128Type() const override { return true; }
 };
-} // end anonymous namespace
 
-namespace {
 // x86-64 Windows target
 class WindowsX86_64TargetInfo : public WindowsTargetInfo<X86_64TargetInfo> {
 public:
@@ -3732,9 +3693,7 @@ public:
     }
   }
 };
-} // end anonymous namespace
 
-namespace {
 // x86-64 Windows Visual Studio target
 class MicrosoftX86_64TargetInfo : public WindowsX86_64TargetInfo {
 public:
@@ -3751,9 +3710,7 @@ public:
     Builder.defineMacro("_M_AMD64");
   }
 };
-} // end anonymous namespace
 
-namespace {
 // x86-64 MinGW target
 class MinGWX86_64TargetInfo : public WindowsX86_64TargetInfo {
 public:
@@ -3771,9 +3728,7 @@ public:
       Builder.defineMacro("__SEH__");
   }
 };
-} // end anonymous namespace
 
-namespace {
 class DarwinX86_64TargetInfo : public DarwinTargetInfo<X86_64TargetInfo> {
 public:
   DarwinX86_64TargetInfo(const llvm::Triple &Triple)
@@ -3787,9 +3742,7 @@ public:
     DescriptionString = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
   }
 };
-} // end anonymous namespace
 
-namespace {
 class OpenBSDX86_64TargetInfo : public OpenBSDTargetInfo<X86_64TargetInfo> {
 public:
   OpenBSDX86_64TargetInfo(const llvm::Triple &Triple)
@@ -3798,9 +3751,7 @@ public:
     Int64Type = SignedLongLong;
   }
 };
-} // end anonymous namespace
 
-namespace {
 class BitrigX86_64TargetInfo : public BitrigTargetInfo<X86_64TargetInfo> {
 public:
   BitrigX86_64TargetInfo(const llvm::Triple &Triple)
@@ -3809,10 +3760,7 @@ public:
     Int64Type = SignedLongLong;
   }
 };
-}
 
-
-namespace {
 class ARMTargetInfo : public TargetInfo {
   // Possible FPU choices.
   enum FPUMode {
@@ -4624,9 +4572,7 @@ public:
     ARMTargetInfo::getTargetDefines(Opts, Builder);
   }
 };
-} // end anonymous namespace.
 
-namespace {
 class WindowsARMTargetInfo : public WindowsTargetInfo<ARMleTargetInfo> {
   const llvm::Triple Triple;
 public:
@@ -4692,10 +4638,7 @@ public:
     WindowsARMTargetInfo::getVisualStudioDefines(Opts, Builder);
   }
 };
-}
 
-
-namespace {
 class DarwinARMTargetInfo :
   public DarwinTargetInfo<ARMleTargetInfo> {
 protected:
@@ -4717,10 +4660,7 @@ public:
     TheCXXABI.set(TargetCXXABI::iOS);
   }
 };
-} // end anonymous namespace.
 
-
-namespace {
 class AArch64TargetInfo : public TargetInfo {
   virtual void setDescriptionString() = 0;
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
@@ -5077,9 +5017,7 @@ public:
     AArch64TargetInfo::getTargetDefines(Opts, Builder);
   }
 };
-} // end anonymous namespace.
 
-namespace {
 class DarwinAArch64TargetInfo : public DarwinTargetInfo<AArch64leTargetInfo> {
 protected:
   void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
@@ -5112,9 +5050,7 @@ public:
     return TargetInfo::CharPtrBuiltinVaList;
   }
 };
-} // end anonymous namespace
 
-namespace {
 // Hexagon abstract base class
 class HexagonTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
@@ -5263,10 +5199,7 @@ const Builtin::Info HexagonTargetInfo::BuiltinInfo[] = {
                                               ALL_LANGUAGES },
 #include "clang/Basic/BuiltinsHexagon.def"
 };
-}
 
-
-namespace {
 // Shared base class for SPARC v8 (32-bit) and SPARC v9 (64-bit).
 class SparcTargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
@@ -5453,9 +5386,6 @@ public:
   }
 };
 
-} // end anonymous namespace.
-
-namespace {
 class SolarisSparcV8TargetInfo : public SolarisTargetInfo<SparcV8TargetInfo> {
 public:
   SolarisSparcV8TargetInfo(const llvm::Triple &Triple)
@@ -5464,9 +5394,7 @@ public:
     PtrDiffType = SignedInt;
   }
 };
-} // end anonymous namespace.
 
-namespace {
 class SystemZTargetInfo : public TargetInfo {
   static const char *const GCCRegNames[];
 
@@ -5568,9 +5496,7 @@ validateAsmConstraint(const char *&Name,
     return true;
   }
 }
-}
 
-namespace {
   class MSP430TargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
   public:
@@ -5645,9 +5571,6 @@ namespace {
     Names = GCCRegNames;
     NumNames = llvm::array_lengthof(GCCRegNames);
   }
-}
-
-namespace {
 
   // LLVM and Clang cannot be used directly to output native binaries for
   // target, but is used to compile C code to llvm bitcode with correct
@@ -5725,9 +5648,7 @@ namespace {
     void getGCCRegAliases(const GCCRegAlias *&Aliases,
                           unsigned &NumAliases) const override {}
   };
-}
 
-namespace {
 class MipsTargetInfoBase : public TargetInfo {
   virtual void setDescriptionString() = 0;
 
@@ -6307,9 +6228,7 @@ public:
     Mips64TargetInfoBase::getTargetDefines(Opts, Builder);
   }
 };
-} // end anonymous namespace.
 
-namespace {
 class PNaClTargetInfo : public TargetInfo {
 public:
   PNaClTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
@@ -6374,9 +6293,7 @@ void PNaClTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
   Aliases = nullptr;
   NumAliases = 0;
 }
-} // end anonymous namespace.
 
-namespace {
 class Le64TargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
 
@@ -6523,9 +6440,7 @@ namespace {
       DefineStd(Builder, "SPIR64", Opts);
     }
   };
-}
 
-namespace {
 class XCoreTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
 public:

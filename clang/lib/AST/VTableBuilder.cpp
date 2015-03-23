@@ -2631,8 +2631,6 @@ public:
   void dumpLayout(raw_ostream &);
 };
 
-} // end namespace
-
 /// InitialOverriddenDefinitionCollector - Finds the set of least derived bases
 /// that define the given method.
 struct InitialOverriddenDefinitionCollector {
@@ -2646,6 +2644,8 @@ struct InitialOverriddenDefinitionCollector {
     return VisitedOverriddenMethods.insert(OverriddenMD).second;
   }
 };
+
+} // end namespace
 
 static bool BaseInSet(const CXXBaseSpecifier *Specifier,
                       CXXBasePath &Path, void *BasesSet) {

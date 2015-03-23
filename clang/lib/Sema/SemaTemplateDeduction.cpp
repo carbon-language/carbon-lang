@@ -576,6 +576,7 @@ struct clang::DeducedPack {
   DeducedPack *Outer;
 };
 
+namespace {
 /// A scope in which we're performing pack deduction.
 class PackDeductionScope {
 public:
@@ -730,6 +731,7 @@ private:
 
   SmallVector<DeducedPack, 2> Packs;
 };
+} // namespace
 
 /// \brief Deduce the template arguments by comparing the list of parameter
 /// types to the list of argument types, as in the parameter-type-lists of
