@@ -288,7 +288,7 @@ CoverageChecker::collectUmbrellaHeaderHeaders(StringRef UmbrellaHeaderName) {
   int HadErrors = Tool.run(new CoverageCheckerFrontendActionFactory(*this));
 
   // If we had errors, exit early.
-  return HadErrors ? false : true;
+  return !HadErrors;
 }
 
 // Called from CoverageCheckerCallbacks to track a header included
