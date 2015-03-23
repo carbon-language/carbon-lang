@@ -9,10 +9,6 @@
 					Also give help information on arguments required by the
 					program.
 									
-	Environment:	OS:			Windows/LINUX/OSX
-					IDE: 	    Visual Studio 2013 Plugin Python Tools (PTVS)
-					Script:		Python 2.6 x64 
-
 	Gotchas:		None.
 
 	Copyright:		None.

@@ -15,11 +15,6 @@
                     language stuff fully functional.  Any such post-processing
                     is handled through the Python scripts called here.
 
-    Environment:    OS:         Windows Vista or newer,LINUX,OSX.
-                    IDE:        Visual Studio 2013 Plugin Python Tools (PTVS)
-                    Script:     Python 2.6/2.7.5 x64
-                    Other:      None.
-
     Gotchas:        None.
 
     Copyright:      None.

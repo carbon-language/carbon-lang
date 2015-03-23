@@ -22,11 +22,6 @@
                     appropriate place, and copies the lldb.py (and
                     embedded_interpreter.py) file to the correct directory.
 
-    Environment:    OS:         Windows Vista or newer, LINUX, OSX.
-                    IDE:        Visual Studio 2013 Plugin Python Tools (PTVS)
-                    Script:     Python 2.6/2.7.5 x64
-                    Other:      None.
-
     Gotchas:        Python debug complied pythonXX_d.lib is required for SWIG
                     to build correct LLDBWrapperPython.cpp in order for Visual
                     Studio to compile successfully. The release version of the

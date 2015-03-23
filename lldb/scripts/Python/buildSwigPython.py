@@ -6,11 +6,6 @@
 	Overview: 		Creates SWIG Python C++ Script Bridge wrapper code. This
 					script is called by build-swig-wrapper-classes.py in turn.
 					
-	Environment:	OS:			Windows Vista or newer, LINUX, OSX.
-					IDE: 	    Visual Studio 2013 Plugin Python Tools (PTVS)
-					Script:		Python 2.6/2.7.5 x64
-					Other:		SWIG 2.0.11
-
 	Gotchas:		Python debug complied pythonXX_d.lib is required for SWIG
 					to build correct LLDBWrapperPython.cpp in order for Visual
 					Studio to compile successfully. The release version of the 

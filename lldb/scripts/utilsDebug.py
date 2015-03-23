@@ -6,10 +6,6 @@
 	Overview: 		Python module to supply functions to help debug Python
 					scripts.
 									
-	Environment:	OS:			Windows/LINUX/OSX
-					IDE: 	    Visual Studio 2013 Plugin Python Tools (PTVS)
-					Script:		Python 2.6 x64 
-
 	Gotchas:		None.
 
 	Copyright:		None.
