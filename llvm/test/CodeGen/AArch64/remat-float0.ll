@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -verify-machineinstrs
+; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -verify-machineinstrs | FileCheck %s
 
 ; Check that float 0 gets rematerialized with an fmov of zero reg instead
 ; of spilled/filled.
