@@ -333,7 +333,7 @@ static void InitializeFlags() {
 
 static void dfsan_fini() {
   if (internal_strcmp(flags().dump_labels_at_exit, "") != 0) {
-    fd_t fd = OpenFile(flags().dump_labels_at_exit, true /* write */);
+    fd_t fd = OpenFile(flags().dump_labels_at_exit, WrOnly);
     if (fd == kInvalidFd) {
       Report("WARNING: DataFlowSanitizer: unable to open output file %s\n",
              flags().dump_labels_at_exit);
