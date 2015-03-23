@@ -32,13 +32,6 @@
 
 namespace Modularize {
 
-/// Subclass TargetOptions so we can construct it inline with
-/// the minimal option, the triple.
-class ModuleMapTargetOptions : public clang::TargetOptions {
-public:
-  ModuleMapTargetOptions() { Triple = llvm::sys::getDefaultTargetTriple(); }
-};
-
 /// Module map checker class.
 /// This is the heart of the checker.
 /// The doChecks function does the main work.

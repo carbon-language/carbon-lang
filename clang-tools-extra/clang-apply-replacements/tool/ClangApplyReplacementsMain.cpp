@@ -66,6 +66,7 @@ static cl::opt<std::string>
 FormatStyleOpt("style", cl::desc(format::StyleOptionHelpDescription),
                cl::init("LLVM"), cl::cat(FormattingCategory));
 
+namespace {
 // Helper object to remove the TUReplacement files (triggered by
 // "remove-change-desc-files" command line option) when exiting current scope.
 class ScopedFileRemover {
@@ -82,8 +83,9 @@ private:
   const TUReplacementFiles &TURFiles;
   clang::DiagnosticsEngine &Diag;
 };
+} // namespace
 
-void printVersion() {
+static void printVersion() {
   outs() << "clang-apply-replacements version " CLANG_VERSION_STRING << "\n";
 }
 
@@ -134,9 +136,9 @@ getRewrittenData(const std::vector<tooling::Replacement> &Replacements,
 ///
 /// \returns \li true if all replacements applied successfully.
 ///          \li false if at least one replacement failed to apply.
-bool applyReplacements(const std::vector<tooling::Replacement> &Replacements,
-                       std::string &Result,
-                       DiagnosticsEngine &Diagnostics) {
+static bool
+applyReplacements(const std::vector<tooling::Replacement> &Replacements,
+                  std::string &Result, DiagnosticsEngine &Diagnostics) {
   FileManager Files((FileSystemOptions()));
   SourceManager SM(Diagnostics, Files);
   Rewriter Rewrites(SM, LangOptions());
@@ -161,11 +163,11 @@ bool applyReplacements(const std::vector<tooling::Replacement> &Replacements,
 /// \returns \li true if reformatting replacements were all successfully
 ///          applied.
 ///          \li false if at least one reformatting replacement failed to apply.
-bool applyFormatting(const std::vector<tooling::Replacement> &Replacements,
-                     const StringRef FileData,
-                     std::string &FormattedFileData,
-                     const format::FormatStyle &FormatStyle,
-                     DiagnosticsEngine &Diagnostics) {
+static bool
+applyFormatting(const std::vector<tooling::Replacement> &Replacements,
+                const StringRef FileData, std::string &FormattedFileData,
+                const format::FormatStyle &FormatStyle,
+                DiagnosticsEngine &Diagnostics) {
   assert(!Replacements.empty() && "Need at least one replacement");
 
   RangeVector Ranges = calculateChangedRanges(Replacements);

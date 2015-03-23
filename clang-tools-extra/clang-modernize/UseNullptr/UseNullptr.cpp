@@ -56,6 +56,7 @@ int UseNullptrTransform::apply(const CompilationDatabase &Database,
   return 0;
 }
 
+namespace {
 struct UseNullptrFactory : TransformFactory {
   UseNullptrFactory() {
     Since.Clang = Version(3, 0);
@@ -68,6 +69,7 @@ struct UseNullptrFactory : TransformFactory {
     return new UseNullptrTransform(Opts);
   }
 };
+} // namespace
 
 // Register the factory using this statically initialized variable.
 static TransformFactoryRegistry::Add<UseNullptrFactory>

@@ -29,12 +29,14 @@ using namespace clang;
 using namespace llvm;
 using namespace Modularize;
 
+namespace {
 // Subclass TargetOptions so we can construct it inline with
 // the minimal option, the triple.
 class ModuleMapTargetOptions : public clang::TargetOptions {
 public:
   ModuleMapTargetOptions() { Triple = llvm::sys::getDefaultTargetTriple(); }
 };
+} // namespace
 
 // ModularizeUtilities class implementation.
 
@@ -344,7 +346,7 @@ bool ModularizeUtilities::collectUmbrellaHeaders(StringRef UmbrellaDirName,
 
 // Replace .. embedded in path for purposes of having
 // a canonical path.
-std::string replaceDotDot(StringRef Path) {
+static std::string replaceDotDot(StringRef Path) {
   SmallString<128> Buffer;
   llvm::sys::path::const_iterator B = llvm::sys::path::begin(Path),
     E = llvm::sys::path::end(Path);

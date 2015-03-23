@@ -53,6 +53,7 @@ bool PassByValueTransform::handleBeginSource(CompilerInstance &CI,
   return Transform::handleBeginSource(CI, Filename);
 }
 
+namespace {
 struct PassByValueFactory : TransformFactory {
   PassByValueFactory() {
     // Based on the Replace Auto-Ptr Transform that is also using std::move().
@@ -66,6 +67,7 @@ struct PassByValueFactory : TransformFactory {
     return new PassByValueTransform(Opts);
   }
 };
+} // namespace
 
 // Register the factory using this statically initialized variable.
 static TransformFactoryRegistry::Add<PassByValueFactory>

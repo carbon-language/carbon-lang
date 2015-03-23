@@ -82,27 +82,28 @@ using namespace llvm::opt;
 // Options:
 
 // Collect the source files.
-cl::list<std::string> SourcePaths(cl::Positional,
-                                  cl::desc("<source0> [... <sourceN>]"),
-                                  cl::OneOrMore);
+static cl::list<std::string> SourcePaths(cl::Positional,
+                                         cl::desc("<source0> [... <sourceN>]"),
+                                         cl::OneOrMore);
 
 // Option to specify a list or one or more callback names to ignore.
-cl::opt<std::string> IgnoreCallbacks(
+static cl::opt<std::string> IgnoreCallbacks(
     "ignore", cl::init(""),
     cl::desc("Ignore callbacks, i.e. \"Callback1, Callback2...\"."));
 
 // Option to specify the trace output file name.
-cl::opt<std::string> OutputFileName(
+static cl::opt<std::string> OutputFileName(
     "output", cl::init(""),
     cl::desc("Output trace to the given file name or '-' for stdout."));
 
 // Collect all other arguments, which will be passed to the front end.
-cl::list<std::string>
-CC1Arguments(cl::ConsumeAfter,
-             cl::desc("<arguments to be passed to front end>..."));
+static cl::list<std::string>
+    CC1Arguments(cl::ConsumeAfter,
+                 cl::desc("<arguments to be passed to front end>..."));
 
 // Frontend action stuff:
 
+namespace {
 // Consumer is responsible for setting up the callbacks.
 class PPTraceConsumer : public ASTConsumer {
 public:
@@ -146,10 +147,11 @@ private:
   SmallSet<std::string, 4> &Ignore;
   std::vector<CallbackCall> &CallbackCalls;
 };
+} // namespace
 
 // Output the trace given its data structure and a stream.
-int outputPPTrace(std::vector<CallbackCall> &CallbackCalls,
-                  llvm::raw_ostream &OS) {
+static int outputPPTrace(std::vector<CallbackCall> &CallbackCalls,
+                         llvm::raw_ostream &OS) {
   // Mark start of document.
   OS << "---\n";
 

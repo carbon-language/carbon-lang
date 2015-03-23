@@ -215,7 +215,7 @@ static void printProfileData(const ProfileData &Profile,
   OS.flush();
 }
 
-std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider() {
+static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider() {
   ClangTidyGlobalOptions GlobalOptions;
   if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
@@ -261,7 +261,7 @@ std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider() {
                                                 OverrideOptions);
 }
 
-int clangTidyMain(int argc, const char **argv) {
+static int clangTidyMain(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
   auto OptionsProvider = createOptionsProvider();

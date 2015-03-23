@@ -37,13 +37,14 @@ void NamespaceCommentCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(namespaceDecl().bind("namespace"), this);
 }
 
-bool locationsInSameFile(const SourceManager &Sources, SourceLocation Loc1,
-                         SourceLocation Loc2) {
+static bool locationsInSameFile(const SourceManager &Sources,
+                                SourceLocation Loc1, SourceLocation Loc2) {
   return Loc1.isFileID() && Loc2.isFileID() &&
          Sources.getFileID(Loc1) == Sources.getFileID(Loc2);
 }
 
-std::string getNamespaceComment(const NamespaceDecl *ND, bool InsertLineBreak) {
+static std::string getNamespaceComment(const NamespaceDecl *ND,
+                                       bool InsertLineBreak) {
   std::string Fix = "// namespace";
   if (!ND->isAnonymousNamespace())
     Fix.append(" ").append(ND->getNameAsString());

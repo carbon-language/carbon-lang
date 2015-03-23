@@ -46,6 +46,7 @@ int UseAutoTransform::apply(const clang::tooling::CompilationDatabase &Database,
   return 0;
 }
 
+namespace {
 struct UseAutoFactory : TransformFactory {
   UseAutoFactory() {
     Since.Clang = Version(2, 9);
@@ -58,6 +59,7 @@ struct UseAutoFactory : TransformFactory {
     return new UseAutoTransform(Opts);
   }
 };
+} // namespace
 
 // Register the factory using this statically initialized variable.
 static TransformFactoryRegistry::Add<UseAutoFactory>

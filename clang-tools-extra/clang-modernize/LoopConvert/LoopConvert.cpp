@@ -69,6 +69,7 @@ LoopConvertTransform::handleBeginSource(clang::CompilerInstance &CI,
   return Transform::handleBeginSource(CI, Filename);
 }
 
+namespace {
 struct LoopConvertFactory : TransformFactory {
   LoopConvertFactory() {
     Since.Clang = Version(3, 0);
@@ -81,6 +82,7 @@ struct LoopConvertFactory : TransformFactory {
     return new LoopConvertTransform(Opts);
   }
 };
+} // namespace
 
 // Register the factory using this statically initialized variable.
 static TransformFactoryRegistry::Add<LoopConvertFactory>

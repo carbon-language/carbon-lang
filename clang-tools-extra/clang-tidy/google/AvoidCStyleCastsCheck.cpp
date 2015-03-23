@@ -33,7 +33,7 @@ AvoidCStyleCastsCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
       this);
 }
 
-bool needsConstCast(QualType SourceType, QualType DestType) {
+static bool needsConstCast(QualType SourceType, QualType DestType) {
   SourceType = SourceType.getNonReferenceType();
   DestType = DestType.getNonReferenceType();
   while (SourceType->isPointerType() && DestType->isPointerType()) {
@@ -45,7 +45,7 @@ bool needsConstCast(QualType SourceType, QualType DestType) {
   return false;
 }
 
-bool pointedTypesAreEqual(QualType SourceType, QualType DestType) {
+static bool pointedTypesAreEqual(QualType SourceType, QualType DestType) {
   SourceType = SourceType.getNonReferenceType();
   DestType = DestType.getNonReferenceType();
   while (SourceType->isPointerType() && DestType->isPointerType()) {

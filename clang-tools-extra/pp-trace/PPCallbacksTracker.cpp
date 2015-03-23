@@ -78,10 +78,8 @@ static const char *PragmaMessageKindStrings[] = { "PMK_Message", "PMK_Warning",
                                                   "PMK_Error" };
 
 // ConditionValueKind strings.
-const char *
-ConditionValueKindStrings[] = {
-  "CVK_NotEvaluated", "CVK_False", "CVK_True"
-};
+static const char *ConditionValueKindStrings[] = {"CVK_NotEvaluated",
+                                                  "CVK_False", "CVK_True"};
 
 // Mapping strings.
 static const char *MappingStrings[] = { "0",          "MAP_IGNORE",
