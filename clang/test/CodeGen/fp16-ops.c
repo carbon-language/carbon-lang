@@ -5,6 +5,7 @@ typedef unsigned cond_t;
 volatile cond_t test;
 volatile __fp16 h0 = 0.0, h1 = 1.0, h2;
 volatile float f0, f1, f2;
+volatile double d0;
 
 void foo(void) {
   // CHECK-LABEL: define void @foo()
@@ -52,7 +53,7 @@ void foo(void) {
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fmul float
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
-  h1 = h0 * (__fp16) -2.0;
+  h1 = h0 * (__fp16) -2.0f;
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fmul float
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
@@ -71,7 +72,7 @@ void foo(void) {
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fdiv float
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
-  h1 = (h0 / (__fp16) -2.0);
+  h1 = (h0 / (__fp16) -2.0f);
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fdiv float
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
@@ -109,7 +110,7 @@ void foo(void) {
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fsub float
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
-  h1 = ((__fp16)-2.0 - h0);
+  h1 = ((__fp16)-2.0f - h0);
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fsub float
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
@@ -218,7 +219,7 @@ void foo(void) {
   // Check assignments (inc. compound)
   h0 = h1;
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
-  h0 = (__fp16)-2.0;
+  h0 = (__fp16)-2.0f;
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
   h0 = f0;
 
@@ -231,7 +232,7 @@ void foo(void) {
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fadd
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
-  h0 += (__fp16)1.0;
+  h0 += (__fp16)1.0f;
   // CHECK: call float @llvm.convert.from.fp16.f32(
   // CHECK: fadd
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
@@ -281,4 +282,19 @@ void foo(void) {
   // CHECK: fdiv
   // CHECK: call i16 @llvm.convert.to.fp16.f32(
   h0 /= f2;
+
+  // Check conversions to/from double
+  // CHECK: call i16 @llvm.convert.to.fp16.f64(
+  h0 = d0;
+
+  // CHECK: [[MID:%.*]] = fptrunc double {{%.*}} to float
+  // CHECK: call i16 @llvm.convert.to.fp16.f32(float [[MID]])
+  h0 = (float)d0;
+
+  // CHECK: call double @llvm.convert.from.fp16.f64(
+  d0 = h0;
+
+  // CHECK: [[MID:%.*]] = call float @llvm.convert.from.fp16.f32(
+  // CHECK: fpext float [[MID]] to double
+  d0 = (float)h0;
 }

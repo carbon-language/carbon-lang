@@ -745,9 +745,20 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   QualType OrigSrcType = SrcType;
   llvm::Type *SrcTy = Src->getType();
 
-  // If casting to/from storage-only half FP, use special intrinsics.
+  // Handle conversions to bool first, they are special: comparisons against 0.
+  if (DstType->isBooleanType())
+    return EmitConversionToBool(Src, SrcType);
+
+  llvm::Type *DstTy = ConvertType(DstType);
+
+  // Cast from storage-only half FP using the special intrinsic.
   if (SrcType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType &&
       !CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+    if (DstTy->isFloatingPointTy())
+      return Builder.CreateCall(
+          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16, DstTy), Src);
+
+    // If this isn't an FP->FP conversion, go through float.
     Src = Builder.CreateCall(
         CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
                              CGF.CGM.FloatTy),
@@ -755,12 +766,6 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     SrcType = CGF.getContext().FloatTy;
     SrcTy = CGF.FloatTy;
   }
-
-  // Handle conversions to bool first, they are special: comparisons against 0.
-  if (DstType->isBooleanType())
-    return EmitConversionToBool(Src, SrcType);
-
-  llvm::Type *DstTy = ConvertType(DstType);
 
   // Ignore conversions like int -> uint.
   if (SrcTy == DstTy)
@@ -818,10 +823,14 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     EmitFloatConversionCheck(OrigSrc, OrigSrcType, Src, SrcType, DstType,
                              DstTy);
 
-  // Cast to half via float
+  // Cast to half using the intrinsic if from FP type, through float otherwise.
   if (DstType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType &&
-      !CGF.getContext().getLangOpts().HalfArgsAndReturns)
+      !CGF.getContext().getLangOpts().HalfArgsAndReturns) {
+    if (SrcTy->isFloatingPointTy())
+      return Builder.CreateCall(
+          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16, SrcTy), Src);
     DstTy = CGF.FloatTy;
+  }
 
   if (isa<llvm::IntegerType>(SrcTy)) {
     bool InputSigned = SrcType->isSignedIntegerOrEnumerationType();
