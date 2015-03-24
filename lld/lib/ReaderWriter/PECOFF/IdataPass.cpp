@@ -69,6 +69,7 @@ static std::vector<ImportTableEntryAtom *>
 createImportTableAtoms(IdataContext &context,
                        const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
                        bool shouldAddReference, StringRef sectionName,
+                       std::map<StringRef, HintNameAtom *> &hintNameCache,
                        llvm::BumpPtrAllocator &alloc) {
   std::vector<ImportTableEntryAtom *> ret;
   for (COFFSharedLibraryAtom *atom : sharedAtoms) {
@@ -81,9 +82,16 @@ createImportTableAtoms(IdataContext &context,
     } else {
       // Import by name
       entry = new (alloc) ImportTableEntryAtom(context, 0, sectionName);
-      HintNameAtom *hintName =
-          new (alloc) HintNameAtom(context, atom->hint(), atom->importName());
-      addDir32NBReloc(entry, hintName, context.ctx.getMachineType(), 0);
+      HintNameAtom *hintNameAtom;
+      auto it = hintNameCache.find(atom->importName());
+      if (it == hintNameCache.end()) {
+        hintNameAtom = new (alloc) HintNameAtom(
+            context, atom->hint(), atom->importName());
+        hintNameCache[atom->importName()] = hintNameAtom;
+      } else {
+        hintNameAtom = it->second;
+      }
+      addDir32NBReloc(entry, hintNameAtom, context.ctx.getMachineType(), 0);
     }
     ret.push_back(entry);
     if (shouldAddReference)
@@ -104,10 +112,13 @@ void ImportDirectoryAtom::addRelocations(
   // same. The PE/COFF loader overwrites the import address tables with the
   // pointers to the referenced items after loading the executable into
   // memory.
+  std::map<StringRef, HintNameAtom *> hintNameCache;
   std::vector<ImportTableEntryAtom *> importLookupTables =
-      createImportTableAtoms(context, sharedAtoms, false, ".idata.t", _alloc);
+      createImportTableAtoms(context, sharedAtoms, false, ".idata.t",
+                             hintNameCache, _alloc);
   std::vector<ImportTableEntryAtom *> importAddressTables =
-      createImportTableAtoms(context, sharedAtoms, true, ".idata.a", _alloc);
+      createImportTableAtoms(context, sharedAtoms, true, ".idata.a",
+                             hintNameCache, _alloc);
 
   addDir32NBReloc(this, importLookupTables[0], context.ctx.getMachineType(),
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
@@ -157,8 +168,10 @@ void DelayImportDirectoryAtom::addRelocations(
   // as (non-delay) import table's Import Lookup Table. Contains
   // imported function names. This is a parallel array of AddressTable
   // field.
+  std::map<StringRef, HintNameAtom *> hintNameCache;
   std::vector<ImportTableEntryAtom *> nameTable =
-      createImportTableAtoms(context, sharedAtoms, false, ".didat", _alloc);
+      createImportTableAtoms(
+          context, sharedAtoms, false, ".didat", hintNameCache, _alloc);
   addDir32NBReloc(
       this, nameTable[0], context.ctx.getMachineType(),
       offsetof(delay_import_directory_table_entry, DelayImportNameTable));
