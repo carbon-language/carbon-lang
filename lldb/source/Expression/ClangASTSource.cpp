@@ -1548,11 +1548,12 @@ ImportOffsetMap(llvm::DenseMap<const D *, O> &destination_map, llvm::DenseMap<co
     // map, as the order will be non-deterministic.  Instead we have to sort by the offset
     // and then insert in sorted order.
     typedef llvm::DenseMap<const D *, O> MapType;
-    std::vector<typename MapType::value_type> sorted_items;
+    typedef typename MapType::value_type PairType;
+    std::vector<PairType> sorted_items;
     sorted_items.reserve(source_map.size());
     sorted_items.assign(source_map.begin(), source_map.end());
     std::sort(sorted_items.begin(), sorted_items.end(),
-              [](const MapType::value_type &lhs, const MapType::value_type &rhs)
+              [](const PairType &lhs, const PairType &rhs)
               {
                   return lhs.second < rhs.second;
               });
