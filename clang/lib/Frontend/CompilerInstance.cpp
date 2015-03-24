@@ -1239,9 +1239,10 @@ void CompilerInstance::createModuleManager() {
     if (!hasASTContext())
       createASTContext();
 
-    // If we're not recursively building a module, check whether we
-    // need to prune the module cache.
-    if (getSourceManager().getModuleBuildStack().empty() &&
+    // If we're implicitly building modules but not currently recursively
+    // building a module, check whether we need to prune the module cache.
+    if (getLangOpts().ImplicitModules &&
+        getSourceManager().getModuleBuildStack().empty() &&
         getHeaderSearchOpts().ModuleCachePruneInterval > 0 &&
         getHeaderSearchOpts().ModuleCachePruneAfter > 0) {
       pruneModuleCache(getHeaderSearchOpts());
