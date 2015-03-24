@@ -76,7 +76,7 @@ define <4 x double> @perm2pd_0x02(<4 x double> %a0, <4 x double> %a1) {
   ret <4 x double> %res
 
 ; CHECK-LABEL: @perm2pd_0x02
-; CHECK-NEXT:  %1 = shufflevector <4 x double> %a0, <4 x double> %a1, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
+; CHECK-NEXT:  %1 = shufflevector <4 x double> %a1, <4 x double> %a0, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
 ; CHECK-NEXT:  ret <4 x double> %1
 }
 
@@ -85,7 +85,7 @@ define <4 x double> @perm2pd_0x03(<4 x double> %a0, <4 x double> %a1) {
   ret <4 x double> %res
 
 ; CHECK-LABEL: @perm2pd_0x03
-; CHECK-NEXT:  %1 = shufflevector <4 x double> %a0, <4 x double> %a1, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+; CHECK-NEXT:  %1 = shufflevector <4 x double> %a1, <4 x double> %a0, <4 x i32> <i32 2, i32 3, i32 4, i32 5>
 ; CHECK-NEXT:  ret <4 x double> %1
 }
 
@@ -111,7 +111,7 @@ define <4 x double> @perm2pd_0x12(<4 x double> %a0, <4 x double> %a1) {
   ret <4 x double> %res
 
 ; CHECK-LABEL: @perm2pd_0x12
-; CHECK-NEXT:  %1 = shufflevector <4 x double> %a0, <4 x double> %a1, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+; CHECK-NEXT:  %1 = shufflevector <4 x double> %a1, <4 x double> %a0, <4 x i32> <i32 0, i32 1, i32 6, i32 7>
 ; CHECK-NEXT:  ret <4 x double> %1
 }
 
@@ -120,7 +120,7 @@ define <4 x double> @perm2pd_0x13(<4 x double> %a0, <4 x double> %a1) {
   ret <4 x double> %res
 
 ; CHECK-LABEL: @perm2pd_0x13
-; CHECK-NEXT:  %1 = shufflevector <4 x double> %a0, <4 x double> %a1, <4 x i32> <i32 6, i32 7, i32 2, i32 3>
+; CHECK-NEXT:  %1 = shufflevector <4 x double> %a1, <4 x double> %a0, <4 x i32> <i32 2, i32 3, i32 6, i32 7>
 ; CHECK-NEXT:  ret <4 x double> %1
 }
 
@@ -207,26 +207,41 @@ define <8 x float> @perm2ps_0x31(<8 x float> %a0, <8 x float> %a1) {
 }
 
 
-; Confirm that when a single zero mask bit is set, we do nothing.
+; Confirm that when a single zero mask bit is set, we replace a source vector with zeros.
+
+define <4 x double> @perm2pd_0x81(<4 x double> %a0, <4 x double> %a1) {
+  %res = call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 129)
+  ret <4 x double> %res
+
+; CHECK-LABEL: @perm2pd_0x81
+; CHECK-NEXT:  shufflevector <4 x double> %a0, <4 x double> <double 0.0{{.*}}<4 x i32> <i32 2, i32 3, i32 4, i32 5>
+; CHECK-NEXT:  ret <4 x double>
+}
 
 define <4 x double> @perm2pd_0x83(<4 x double> %a0, <4 x double> %a1) {
   %res = call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 131)
   ret <4 x double> %res
 
 ; CHECK-LABEL: @perm2pd_0x83
-; CHECK-NEXT:  call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 -125)
+; CHECK-NEXT:  shufflevector <4 x double> %a1, <4 x double> <double 0.0{{.*}}, <4 x i32> <i32 2, i32 3, i32 4, i32 5>
 ; CHECK-NEXT:  ret <4 x double>
 }
 
-
-; Confirm that when the other zero mask bit is set, we do nothing. Also confirm that an ignored bit has no effect.
-
-define <4 x double> @perm2pd_0x48(<4 x double> %a0, <4 x double> %a1) {
-  %res = call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 72)
+define <4 x double> @perm2pd_0x28(<4 x double> %a0, <4 x double> %a1) {
+  %res = call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 40)
   ret <4 x double> %res
 
-; CHECK-LABEL: @perm2pd_0x48
-; CHECK-NEXT:  call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 72)
+; CHECK-LABEL: @perm2pd_0x28
+; CHECK-NEXT:  shufflevector <4 x double> <double 0.0{{.*}}, <4 x double> %a1, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+; CHECK-NEXT:  ret <4 x double>
+}
+
+define <4 x double> @perm2pd_0x08(<4 x double> %a0, <4 x double> %a1) {
+  %res = call <4 x double> @llvm.x86.avx.vperm2f128.pd.256(<4 x double> %a0, <4 x double> %a1, i8 8)
+  ret <4 x double> %res
+
+; CHECK-LABEL: @perm2pd_0x08
+; CHECK-NEXT:  shufflevector <4 x double> <double 0.0{{.*}}, <4 x double> %a0, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
 ; CHECK-NEXT:  ret <4 x double>
 }
 
