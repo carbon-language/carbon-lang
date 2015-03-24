@@ -308,7 +308,8 @@ defm S_ASHR_I64 : SOP2_64_32 <sop2<0x23, 0x21>, "s_ashr_i64",
 >;
 } // End Defs = [SCC]
 
-defm S_BFM_B32 : SOP2_32 <sop2<0x24, 0x22>, "s_bfm_b32", []>;
+defm S_BFM_B32 : SOP2_32 <sop2<0x24, 0x22>, "s_bfm_b32",
+  [(set i32:$dst, (AMDGPUbfm i32:$src0, i32:$src1))]>;
 defm S_BFM_B64 : SOP2_64 <sop2<0x25, 0x23>, "s_bfm_b64", []>;
 defm S_MUL_I32 : SOP2_32 <sop2<0x26, 0x24>, "s_mul_i32",
   [(set i32:$dst, (mul i32:$src0, i32:$src1))]
@@ -1613,8 +1614,8 @@ defm V_MAC_LEGACY_F32 : VOP2_VI3_Inst <vop23<0x6, 0x28e>, "v_mac_legacy_f32",
 >;
 } // End isCommutable = 1
 
-defm V_BFM_B32 : VOP2_VI3_Inst <vop23<0x1e, 0x293>, "v_bfm_b32", VOP_I32_I32_I32,
-  AMDGPUbfm
+defm V_BFM_B32 : VOP2_VI3_Inst <vop23<0x1e, 0x293>, "v_bfm_b32",
+  VOP_I32_I32_I32
 >;
 defm V_BCNT_U32_B32 : VOP2_VI3_Inst <vop23<0x22, 0x28b>, "v_bcnt_u32_b32",
   VOP_I32_I32_I32
@@ -3322,6 +3323,21 @@ def : Pat <
   (f32 (select i1:$src2, f32:$src1, f32:$src0)),
   (V_CNDMASK_B32_e64 $src0, $src1, $src2)
 >;
+
+multiclass BFMPatterns <ValueType vt, InstSI BFM, InstSI MOV> {
+  def : Pat <
+    (vt (shl (vt (add (vt (shl 1, vt:$a)), -1)), vt:$b)),
+    (BFM $a, $b)
+  >;
+
+  def : Pat <
+    (vt (add (vt (shl 1, vt:$a)), -1)),
+    (BFM $a, (MOV 0))
+  >;
+}
+
+defm : BFMPatterns <i32, S_BFM_B32, S_MOV_B32>;
+// FIXME: defm : BFMPatterns <i64, S_BFM_B64, S_MOV_B64>;
 
 //===----------------------------------------------------------------------===//
 // Fract Patterns
