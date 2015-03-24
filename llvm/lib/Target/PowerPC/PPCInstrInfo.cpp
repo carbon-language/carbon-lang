@@ -113,9 +113,8 @@ int PPCInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
   unsigned Reg = DefMO.getReg();
 
-  const TargetRegisterInfo *TRI = &getRegisterInfo();
   bool IsRegCR;
-  if (TRI->isVirtualRegister(Reg)) {
+  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
     const MachineRegisterInfo *MRI =
       &DefMI->getParent()->getParent()->getRegInfo();
     IsRegCR = MRI->getRegClass(Reg)->hasSuperClassEq(&PPC::CRRCRegClass) ||
