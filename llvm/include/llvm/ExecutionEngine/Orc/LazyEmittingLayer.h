@@ -48,10 +48,10 @@ private:
         if (auto GV = searchGVs(Name, ExportedSymbolsOnly)) {
           // Create a std::string version of Name to capture here - the argument
           // (a StringRef) may go away before the lambda is executed.
-          // FIXME: Use capture-init when we move to C++14. 
+          // FIXME: Use capture-init when we move to C++14.
           std::string PName = Name;
           JITSymbolFlags Flags = JITSymbolBase::flagsFromGlobalValue(*GV);
-          auto GetAddress = 
+          auto GetAddress =
             [this, ExportedSymbolsOnly, PName, &B]() -> TargetAddress {
               if (this->EmitState == Emitting)
                 return 0;
