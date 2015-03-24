@@ -287,6 +287,9 @@ namespace lldb_private
         virtual void
         Terminate ();
 
+        virtual Error
+        GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) = 0;
+
     protected:
         lldb::pid_t m_pid;
 

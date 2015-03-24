@@ -693,6 +693,7 @@ PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file,
 
 Error
 PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
+                                    Process* process,
                                     ModuleSP &module_sp,
                                     const FileSpecList *module_search_paths_ptr,
                                     ModuleSP *old_module_sp_ptr,

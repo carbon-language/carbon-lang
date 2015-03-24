@@ -207,58 +207,12 @@ PlatformRemoteGDBServer::GetModuleSpec (const FileSpec& module_file_spec,
 
     const auto module_path = module_file_spec.GetPath ();
 
-    StringExtractorGDBRemote response;
-    if (!m_gdb_client.GetModuleInfo (module_path.c_str (), arch, response))
+    if (!m_gdb_client.GetModuleInfo (module_file_spec, arch, module_spec))
     {
         if (log)
             log->Printf ("PlatformRemoteGDBServer::%s - failed to get module info for %s:%s",
                          __FUNCTION__, module_path.c_str (), arch.GetTriple ().getTriple ().c_str ());
         return false;
-    }
-
-    std::string name;
-    std::string value;
-    bool success;
-    StringExtractor extractor;
-
-    module_spec.Clear ();
-    module_spec.GetFileSpec () = module_file_spec;
-
-    while (response.GetNameColonValue (name, value))
-    {
-        if (name == "uuid" || name == "md5")
-        {
-            extractor.GetStringRef ().swap (value);
-            extractor.SetFilePos (0);
-            extractor.GetHexByteString (value);
-            module_spec.GetUUID().SetFromCString (value.c_str(), value.size() / 2);
-        }
-        else if (name == "triple")
-        {
-            extractor.GetStringRef ().swap (value);
-            extractor.SetFilePos (0);
-            extractor.GetHexByteString (value);
-            module_spec.GetArchitecture().SetTriple (value.c_str ());
-        }
-        else if (name == "file_offset")
-        {
-            const auto ival = StringConvert::ToUInt64 (value.c_str (), 0, 16, &success);
-            if (success)
-                module_spec.SetObjectOffset (ival);
-        }
-        else if (name == "file_size")
-        {
-            const auto ival = StringConvert::ToUInt64 (value.c_str (), 0, 16, &success);
-            if (success)
-                module_spec.SetObjectSize (ival);
-        }
-        else if (name == "file_path")
-        {
-            extractor.GetStringRef ().swap (value);
-            extractor.SetFilePos (0);
-            extractor.GetHexByteString (value);
-            module_spec.GetFileSpec () = FileSpec (value.c_str(), false);
-        }
     }
 
     if (log)

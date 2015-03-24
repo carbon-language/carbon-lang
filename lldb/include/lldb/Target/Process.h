@@ -2970,7 +2970,6 @@ public:
     ProcessRunLock &
     GetRunLock ();
 
-public:
     virtual Error
     SendEventData(const char *data)
     {
@@ -2983,6 +2982,29 @@ public:
 
     lldb::InstrumentationRuntimeSP
     GetInstrumentationRuntime(lldb::InstrumentationRuntimeType type);
+
+    //------------------------------------------------------------------
+    /// Try to fetch the module specification for a module with the
+    /// given file name and architecture. Process sub-classes have to
+    /// override this method if they support platforms where the
+    /// Platform object can't get the module spec for all module.
+    ///
+    /// @param[in] module_file_spec
+    ///     The file name of the module to get specification for.
+    ///
+    /// @param[in] arch
+    ///     The architecture of the module to get specification for.
+    ///
+    /// @param[out] module_spec
+    ///     The fetched module specification if the return value is
+    ///     \b true, unchanged otherwise.
+    ///
+    /// @return
+    ///     Returns \b true if the module spec fetched successfully,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
+    virtual bool
+    GetModuleSpec(const FileSpec& module_file_spec, const ArchSpec& arch, ModuleSpec &module_spec);
 
 protected:
 

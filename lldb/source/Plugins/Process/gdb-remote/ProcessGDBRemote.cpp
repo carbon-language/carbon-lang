@@ -3398,6 +3398,34 @@ ProcessGDBRemote::SetUserSpecifiedMaxMemoryTransferSize (uint64_t user_specified
     }
 }
 
+bool
+ProcessGDBRemote::GetModuleSpec(const FileSpec& module_file_spec,
+                                const ArchSpec& arch,
+                                ModuleSpec &module_spec)
+{
+    Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
+
+    if (!m_gdb_comm.GetModuleInfo (module_file_spec, arch, module_spec))
+    {
+        if (log)
+            log->Printf ("ProcessGDBRemote::%s - failed to get module info for %s:%s",
+                         __FUNCTION__, module_file_spec.GetPath ().c_str (),
+                         arch.GetTriple ().getTriple ().c_str ());
+        return false;
+    }
+
+    if (log)
+    {
+        StreamString stream;
+        module_spec.Dump (stream);
+        log->Printf ("ProcessGDBRemote::%s - got module info for (%s:%s) : %s",
+                     __FUNCTION__, module_file_spec.GetPath ().c_str (),
+                     arch.GetTriple ().getTriple ().c_str (), stream.GetString ().c_str ());
+    }
+
+    return true;
+}
+
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
 private:

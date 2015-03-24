@@ -152,10 +152,11 @@ public:
 
     lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,
+                     lldb_private::Process* process,
                      lldb::ModuleSP &module_sp,
                      const lldb_private::FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,
-                     bool *did_create_ptr);
+                     bool *did_create_ptr) override;
 
     virtual bool
     GetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);

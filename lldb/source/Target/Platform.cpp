@@ -247,6 +247,7 @@ Platform::LocateExecutableScriptingResources (Target *target, Module &module, St
 
 Error
 Platform::GetSharedModule (const ModuleSpec &module_spec,
+                           Process* process,
                            ModuleSP &module_sp,
                            const FileSpecList *module_search_paths_ptr,
                            ModuleSP *old_module_sp_ptr,
@@ -255,7 +256,7 @@ Platform::GetSharedModule (const ModuleSpec &module_spec,
     if (!IsHost () && GetGlobalPlatformProperties ()->GetUseModuleCache ())
     {
         // Use caching only when talking to a remote platform.
-        if (GetCachedSharedModule (module_spec, module_sp))
+        if (GetCachedSharedModule (module_spec, process, module_sp))
         {
             if (did_create_ptr)
                 *did_create_ptr = true;
@@ -1780,7 +1781,7 @@ Platform::LoadCachedExecutable (const ModuleSpec &module_spec,
 {
     if (GetGlobalPlatformProperties ()->GetUseModuleCache ())
     {
-        if (GetCachedSharedModule (module_spec, module_sp))
+        if (GetCachedSharedModule (module_spec, nullptr, module_sp))
             return Error ();
     }
 
@@ -1791,21 +1792,36 @@ Platform::LoadCachedExecutable (const ModuleSpec &module_spec,
 
 bool
 Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
+                                 Process* process,
                                  lldb::ModuleSP &module_sp)
 {
-    return (m_module_cache && GetModuleFromLocalCache (module_spec, module_sp));
+    return (m_module_cache && GetModuleFromLocalCache (module_spec, process, module_sp));
 }
 
 bool
 Platform::GetModuleFromLocalCache (const ModuleSpec& module_spec,
+                                   Process* process,
                                    lldb::ModuleSP &module_sp)
 {
     Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
 
-    // Get module information from a target.
+    
     ModuleSpec resolved_module_spec;
-    if (!GetModuleSpec (module_spec.GetFileSpec (), module_spec.GetArchitecture (), resolved_module_spec))
-        return false;
+    bool got_module_spec = false;
+
+    if (process)
+    {
+        // Try to get module information from the process
+        if (process->GetModuleSpec (module_spec.GetFileSpec (), module_spec.GetArchitecture (), resolved_module_spec))
+            got_module_spec = true;
+    }
+
+    if (!got_module_spec)
+    {
+        // Get module information from a target.
+        if (!GetModuleSpec (module_spec.GetFileSpec (), module_spec.GetArchitecture (), resolved_module_spec))
+            return false;
+    }
 
     // Check local cache for a module.
     auto error = m_module_cache->Get (GetModuleCacheRoot (),

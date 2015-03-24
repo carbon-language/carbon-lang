@@ -613,6 +613,7 @@ PlatformFreeBSD::GetFileWithUUID (const FileSpec &platform_file,
 
 Error
 PlatformFreeBSD::GetSharedModule (const ModuleSpec &module_spec,
+                                  Process* process,
                                   ModuleSP &module_sp,
                                   const FileSpecList *module_search_paths_ptr,
                                   ModuleSP *old_module_sp_ptr,
@@ -628,6 +629,7 @@ PlatformFreeBSD::GetSharedModule (const ModuleSpec &module_spec,
         if (m_remote_platform_sp)
         {
             error = m_remote_platform_sp->GetSharedModule (module_spec,
+                                                           process,
                                                            module_sp,
                                                            module_search_paths_ptr,
                                                            old_module_sp_ptr,
@@ -639,6 +641,7 @@ PlatformFreeBSD::GetSharedModule (const ModuleSpec &module_spec,
     {
         // Fall back to the local platform and find the file locally
         error = Platform::GetSharedModule (module_spec,
+                                           process,
                                            module_sp,
                                            module_search_paths_ptr,
                                            old_module_sp_ptr,

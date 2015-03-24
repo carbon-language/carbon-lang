@@ -369,9 +369,10 @@ class ModuleCache;
         LocateExecutableScriptingResources (Target *target,
                                             Module &module,
                                             Stream* feedback_stream);
-        
+
         virtual Error
-        GetSharedModule (const ModuleSpec &module_spec, 
+        GetSharedModule (const ModuleSpec &module_spec,
+                         Process* process,
                          lldb::ModuleSP &module_sp,
                          const FileSpecList *module_search_paths_ptr,
                          lldb::ModuleSP *old_module_sp_ptr,
@@ -1131,6 +1132,7 @@ class ModuleCache;
 
         bool
         GetCachedSharedModule (const ModuleSpec &module_spec,
+                               Process* process,
                                lldb::ModuleSP &module_sp);
 
         Error
@@ -1141,6 +1143,7 @@ class ModuleCache;
 
         bool
         GetModuleFromLocalCache (const ModuleSpec& module_spec,
+                                 Process* process,
                                  lldb::ModuleSP &module_sp);
 
         FileSpec GetModuleCacheRoot ();

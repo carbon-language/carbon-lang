@@ -35,26 +35,6 @@ public:
     virtual
     ~GDBRemoteCommunicationServerCommon();
 
-    bool
-    GetThreadSuffixSupported () override
-    {
-        return true;
-    }
-
-    //------------------------------------------------------------------
-    /// Launch a process with the current launch settings.
-    ///
-    /// This method supports running an lldb-gdbserver or similar
-    /// server in a situation where the startup code has been provided
-    /// with all the information for a child process to be launched.
-    ///
-    /// @return
-    ///     An Error object indicating the success or failure of the
-    ///     launch.
-    //------------------------------------------------------------------
-    virtual lldb_private::Error
-    LaunchProcess () = 0;
-
 protected:
     std::set<lldb::pid_t> m_spawned_pids;
     lldb_private::Mutex m_spawned_pids_mutex;
@@ -195,6 +175,29 @@ protected:
                                   return (static_cast<T*>(this)->*handler) (packet);
                               });
     }
+
+    bool
+    GetThreadSuffixSupported () override
+    {
+        return true;
+    }
+
+    //------------------------------------------------------------------
+    /// Launch a process with the current launch settings.
+    ///
+    /// This method supports running an lldb-gdbserver or similar
+    /// server in a situation where the startup code has been provided
+    /// with all the information for a child process to be launched.
+    ///
+    /// @return
+    ///     An Error object indicating the success or failure of the
+    ///     launch.
+    //------------------------------------------------------------------
+    virtual lldb_private::Error
+    LaunchProcess () = 0;
+
+    virtual lldb_private::FileSpec
+    FindModuleFile (const std::string& module_path, const lldb_private::ArchSpec& arch);
 };
 
 #endif  // liblldb_GDBRemoteCommunicationServerCommon_h_

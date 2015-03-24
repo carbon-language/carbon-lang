@@ -2735,3 +2735,20 @@ GDBRemoteCommunicationServerLLGS::ClearProcessSpecificData ()
     m_active_auxv_buffer_sp.reset ();
 #endif
 }
+
+FileSpec
+GDBRemoteCommunicationServerLLGS::FindModuleFile(const std::string& module_path,
+                                                 const ArchSpec& arch)
+{
+    if (m_debugged_process_sp)
+    {
+        FileSpec file_spec;
+        if (m_debugged_process_sp->GetLoadedModuleFileSpec(module_path.c_str(), file_spec).Success())
+        {
+            if (file_spec.Exists())
+                return file_spec;
+        }
+    }
+
+    return GDBRemoteCommunicationServerCommon::FindModuleFile(module_path, arch);
+}

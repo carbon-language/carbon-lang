@@ -157,7 +157,10 @@ namespace lldb_private
         /// For instance, the extended floating-point register set.
         Error
         WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
-        
+
+        Error
+        GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) override;
+
     protected:
         // ---------------------------------------------------------------------
         // NativeProcessProtocol protected interface

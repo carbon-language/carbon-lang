@@ -234,11 +234,11 @@ PlatformDarwin::ResolveExecutable (const ModuleSpec &module_spec,
         if (resolved_module_spec.GetArchitecture().IsValid())
         {
             error = ModuleList::GetSharedModule (resolved_module_spec,
-                                                 exe_module_sp, 
+                                                 exe_module_sp,
                                                  module_search_paths_ptr,
-                                                 NULL, 
+                                                 NULL,
                                                  NULL);
-        
+
             if (error.Fail() || exe_module_sp.get() == NULL || exe_module_sp->GetObjectFile() == NULL)
             {
                 exe_module_sp.reset();
@@ -256,11 +256,12 @@ PlatformDarwin::ResolveExecutable (const ModuleSpec &module_spec,
             for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, resolved_module_spec.GetArchitecture()); ++idx)
             {
                 error = GetSharedModule (resolved_module_spec,
-                                         exe_module_sp, 
+                                         NULL,
+                                         exe_module_sp,
                                          module_search_paths_ptr,
-                                         NULL, 
+                                         NULL,
                                          NULL);
-                // Did we find an executable using one of the 
+                // Did we find an executable using one of the
                 if (error.Success())
                 {
                     if (exe_module_sp && exe_module_sp->GetObjectFile())
@@ -467,6 +468,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
 
 Error
 PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
+                                 Process* process,
                                  ModuleSP &module_sp,
                                  const FileSpecList *module_search_paths_ptr,
                                  ModuleSP *old_module_sp_ptr,
@@ -482,6 +484,7 @@ PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
         if (m_remote_platform_sp)
         {
             error = m_remote_platform_sp->GetSharedModule (module_spec,
+                                                           process,
                                                            module_sp,
                                                            module_search_paths_ptr,
                                                            old_module_sp_ptr,
@@ -493,6 +496,7 @@ PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
     {
         // Fall back to the local platform and find the file locally
         error = Platform::GetSharedModule (module_spec,
+                                           process,
                                            module_sp,
                                            module_search_paths_ptr,
                                            old_module_sp_ptr,
@@ -513,6 +517,7 @@ PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
                     if (Host::ResolveExecutableInBundle (new_module_spec.GetFileSpec()))
                     {
                         Error new_error (Platform::GetSharedModule (new_module_spec,
+                                                                    process,
                                                                     module_sp,
                                                                     NULL,
                                                                     old_module_sp_ptr,
@@ -542,6 +547,7 @@ PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
                                 ModuleSpec new_module_spec (module_spec);
                                 new_module_spec.GetFileSpec() = new_file_spec;
                                 Error new_error (Platform::GetSharedModule (new_module_spec,
+                                                                            process,
                                                                             module_sp,
                                                                             NULL,
                                                                             old_module_sp_ptr,

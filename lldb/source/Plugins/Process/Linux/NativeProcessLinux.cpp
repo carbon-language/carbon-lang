@@ -136,12 +136,13 @@
     PtraceWrapper((req), (pid), (addr), (data), (data_size), (error))
 #endif
 
+using namespace lldb;
+using namespace lldb_private;
+using namespace llvm;
+
 // Private bits we only need internally.
 namespace
 {
-    using namespace lldb;
-    using namespace lldb_private;
-
     static void * const EXIT_OPERATION = nullptr;
 
     const UnixSignals&
@@ -1050,8 +1051,6 @@ namespace
     }
 
 }
-
-using namespace lldb_private;
 
 // Simple helper function to ensure flags are enabled on the given file
 // descriptor.
@@ -3978,4 +3977,43 @@ NativeProcessLinux::RequestThreadStop (const lldb::pid_t pid, const lldb::tid_t 
     }
 
     return err;
+}
+
+Error
+NativeProcessLinux::GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec)
+{
+    char maps_file_name[32];
+    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%" PRIu64 "/maps", GetID());
+
+    FileSpec maps_file_spec(maps_file_name, false);
+    if (!maps_file_spec.Exists()) {
+        file_spec.Clear();
+        return Error("/proc/%" PRIu64 "/maps file doesn't exists!", GetID());
+    }
+
+    FileSpec module_file_spec(module_path, true);
+
+    std::ifstream maps_file(maps_file_name);
+    std::string maps_data_str((std::istreambuf_iterator<char>(maps_file)), std::istreambuf_iterator<char>());
+    StringRef maps_data(maps_data_str.c_str());
+
+    while (!maps_data.empty())
+    {
+        StringRef maps_row;
+        std::tie(maps_row, maps_data) = maps_data.split('\n');
+
+        SmallVector<StringRef, 16> maps_columns;
+        maps_row.split(maps_columns, StringRef(" "), -1, false);
+
+        if (maps_columns.size() >= 6)
+        {
+            file_spec.SetFile(maps_columns[5].str().c_str(), false);
+            if (file_spec.GetFilename() == module_file_spec.GetFilename())
+                return Error();
+        }
+    }
+
+    file_spec.Clear();
+    return Error("Module file (%s) not found in /proc/%" PRIu64 "/maps file!",
+                 module_file_spec.GetFilename().AsCString(), GetID());
 }

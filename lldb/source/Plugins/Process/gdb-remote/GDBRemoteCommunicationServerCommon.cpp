@@ -1144,12 +1144,7 @@ GDBRemoteCommunicationServerCommon::Handle_qModuleInfo (StringExtractorGDBRemote
     packet.GetHexByteString(triple);
     ArchSpec arch(triple.c_str());
 
-#ifdef __ANDROID__
-    const FileSpec module_path_spec = HostInfoAndroid::ResolveLibraryPath(module_path, arch);
-#else
-    const FileSpec module_path_spec(module_path.c_str(), true);
-#endif
-
+    const FileSpec module_path_spec = FindModuleFile(module_path, arch);
     const ModuleSpec module_spec(module_path_spec, arch);
 
     ModuleSpecList module_specs;
@@ -1292,4 +1287,15 @@ GDBRemoteCommunicationServerCommon::CreateProcessInfoResponse_DebugServerStyle (
         else if (proc_triple.isArch16Bit ())
             response.PutCString ("ptrsize:2;");
     }
+}
+
+FileSpec
+GDBRemoteCommunicationServerCommon::FindModuleFile(const std::string& module_path,
+                                                   const ArchSpec& arch)
+{
+#ifdef __ANDROID__
+    return HostInfoAndroid::ResolveLibraryPath(module_path, arch);
+#else
+    return FileSpec(module_path.c_str(), true);
+#endif
 }

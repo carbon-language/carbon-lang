@@ -236,6 +236,11 @@ public:
     void
     SetUserSpecifiedMaxMemoryTransferSize (uint64_t user_specified_max);
 
+    bool
+    GetModuleSpec(const lldb_private::FileSpec& module_file_spec,
+                  const lldb_private::ArchSpec& arch,
+                  lldb_private::ModuleSpec &module_spec) override;
+
 protected:
     friend class ThreadGDBRemote;
     friend class GDBRemoteCommunicationClient;

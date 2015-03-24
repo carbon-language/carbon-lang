@@ -252,6 +252,9 @@ protected:
     static void
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
 
+    lldb_private::FileSpec
+    FindModuleFile (const std::string& module_path, const lldb_private::ArchSpec& arch) override;
+
 private:
     bool
     DebuggedProcessReaped (lldb::pid_t pid);

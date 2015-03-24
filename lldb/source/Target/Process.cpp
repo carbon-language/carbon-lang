@@ -16,6 +16,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
@@ -6474,4 +6475,13 @@ Process::GetInstrumentationRuntime(lldb::InstrumentationRuntimeType type)
     }
     else
         return (*pos).second;
+}
+
+bool
+Process::GetModuleSpec(const FileSpec& module_file_spec,
+                       const ArchSpec& arch,
+                       ModuleSpec& module_spec)
+{
+    module_spec.Clear();
+    return false;
 }

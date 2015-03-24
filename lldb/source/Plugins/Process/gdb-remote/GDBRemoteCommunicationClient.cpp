@@ -21,6 +21,7 @@
 #include "llvm/ADT/Triple.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamGDBRemote.h"
 #include "lldb/Core/StreamString.h"
@@ -3705,20 +3706,72 @@ GDBRemoteCommunicationClient::RestoreRegisterState (lldb::tid_t tid, uint32_t sa
 }
 
 bool
-GDBRemoteCommunicationClient::GetModuleInfo (const char* module_path,
+GDBRemoteCommunicationClient::GetModuleInfo (const FileSpec& module_file_spec,
                                              const lldb_private::ArchSpec& arch_spec,
-                                             StringExtractorGDBRemote &response)
+                                             ModuleSpec &module_spec)
 {
-    if (!(module_path && module_path[0]))
+    std::string module_path = module_file_spec.GetPath ();
+    if (module_path.empty ())
         return false;
 
     StreamString packet;
     packet.PutCString("qModuleInfo:");
-    packet.PutBytesAsRawHex8(module_path, strlen(module_path));
+    packet.PutCStringAsRawHex8(module_path.c_str());
     packet.PutCString(";");
     const auto& tripple = arch_spec.GetTriple().getTriple();
     packet.PutBytesAsRawHex8(tripple.c_str(), tripple.size());
 
-    return SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success &&
-        !response.IsErrorResponse ();
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) != PacketResult::Success)
+        return false;
+
+    if (response.IsErrorResponse ())
+        return false;
+
+    std::string name;
+    std::string value;
+    bool success;
+    StringExtractor extractor;
+
+    module_spec.Clear ();
+    module_spec.GetFileSpec () = module_file_spec;
+
+    while (response.GetNameColonValue (name, value))
+    {
+        if (name == "uuid" || name == "md5")
+        {
+            extractor.GetStringRef ().swap (value);
+            extractor.SetFilePos (0);
+            extractor.GetHexByteString (value);
+            module_spec.GetUUID().SetFromCString (value.c_str(), value.size() / 2);
+        }
+        else if (name == "triple")
+        {
+            extractor.GetStringRef ().swap (value);
+            extractor.SetFilePos (0);
+            extractor.GetHexByteString (value);
+            module_spec.GetArchitecture().SetTriple (value.c_str ());
+        }
+        else if (name == "file_offset")
+        {
+            const auto ival = StringConvert::ToUInt64 (value.c_str (), 0, 16, &success);
+            if (success)
+                module_spec.SetObjectOffset (ival);
+        }
+        else if (name == "file_size")
+        {
+            const auto ival = StringConvert::ToUInt64 (value.c_str (), 0, 16, &success);
+            if (success)
+                module_spec.SetObjectSize (ival);
+        }
+        else if (name == "file_path")
+        {
+            extractor.GetStringRef ().swap (value);
+            extractor.SetFilePos (0);
+            extractor.GetHexByteString (value);
+            module_spec.GetFileSpec () = FileSpec (value.c_str(), false);
+        }
+    }
+
+    return true;
 }

@@ -324,6 +324,7 @@ PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 
 lldb_private::Error
 PlatformMacOSX::GetSharedModule (const lldb_private::ModuleSpec &module_spec,
+                                 Process* process,
                                  lldb::ModuleSP &module_sp,
                                  const lldb_private::FileSpecList *module_search_paths_ptr,
                                  lldb::ModuleSP *old_module_sp_ptr,
