@@ -378,9 +378,7 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
                                              const MCSubtargetInfo &STI)
     : MipsTargetStreamer(S), MicroMipsEnabled(false), STI(STI) {
   MCAssembler &MCA = getStreamer().getAssembler();
-  Pic = (MCA.getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_)
-            ? true
-            : false;
+  Pic = MCA.getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_;
 
   const FeatureBitset &Features = STI.getFeatureBits();
 
