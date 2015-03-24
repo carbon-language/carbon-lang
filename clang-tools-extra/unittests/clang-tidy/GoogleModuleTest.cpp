@@ -101,6 +101,10 @@ TEST_F(GlobalNamesInHeadersCheckTest, UsingDirectives) {
   EXPECT_FALSE(runCheckOnCode("SOME_MACRO(namespace std);", "foo.h"));
 }
 
+TEST_F(GlobalNamesInHeadersCheckTest, RegressionAnonymousNamespace) {
+  EXPECT_FALSE(runCheckOnCode("namespace {}", "foo.h"));
+}
+
 } // namespace test
 } // namespace tidy
 } // namespace clang
