@@ -2694,6 +2694,29 @@ void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag,
     Stream.EmitRecord(DIAG_PRAGMA_MAPPINGS, Record);
 }
 
+void ASTWriter::WriteCXXCtorInitializersOffsets() {
+  if (CXXCtorInitializersOffsets.empty())
+    return;
+
+  RecordData Record;
+
+  // Create a blob abbreviation for the C++ ctor initializer offsets.
+  using namespace llvm;
+
+  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(CXX_CTOR_INITIALIZERS_OFFSETS));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // size
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned CtorInitializersOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+
+  // Write the base specifier offsets table.
+  Record.clear();
+  Record.push_back(CXX_CTOR_INITIALIZERS_OFFSETS);
+  Record.push_back(CXXCtorInitializersOffsets.size());
+  Stream.EmitRecordWithBlob(CtorInitializersOffsetAbbrev, Record,
+                            data(CXXCtorInitializersOffsets));
+}
+
 void ASTWriter::WriteCXXBaseSpecifiersOffsets() {
   if (CXXBaseSpecifiersOffsets.empty())
     return;
@@ -4154,7 +4177,8 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
       FirstSelectorID(NUM_PREDEF_SELECTOR_IDS), NextSelectorID(FirstSelectorID),
       CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
       NumLexicalDeclContexts(0), NumVisibleDeclContexts(0),
-      NextCXXBaseSpecifiersID(1), TypeExtQualAbbrev(0),
+      NextCXXBaseSpecifiersID(1), NextCXXCtorInitializersID(1),
+      TypeExtQualAbbrev(0),
       TypeFunctionProtoAbbrev(0), DeclParmVarAbbrev(0),
       DeclContextLexicalAbbrev(0), DeclContextVisibleLookupAbbrev(0),
       UpdateVisibleAbbrev(0), DeclRecordAbbrev(0), DeclTypedefAbbrev(0),
@@ -4559,6 +4583,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   if (!DeclUpdatesOffsetsRecord.empty())
     Stream.EmitRecord(DECL_UPDATE_OFFSETS, DeclUpdatesOffsetsRecord);
   WriteCXXBaseSpecifiersOffsets();
+  WriteCXXCtorInitializersOffsets();
   WriteFileDeclIDsMap();
   WriteSourceManagerBlock(Context.getSourceManager(), PP);
 
@@ -4818,11 +4843,7 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
 
     Stream.EmitRecord(DECL_UPDATES, Record);
 
-    // Flush any statements that were written as part of this update record.
-    FlushStmts();
-
-    // Flush C++ base specifiers, if there are any.
-    FlushCXXBaseSpecifiers();
+    FlushPendingAfterDecl();
   }
 }
 
@@ -4934,8 +4955,16 @@ void ASTWriter::AddCXXTemporary(const CXXTemporary *Temp, RecordDataImpl &Record
   AddDeclRef(Temp->getDestructor(), Record);
 }
 
+void ASTWriter::AddCXXCtorInitializersRef(ArrayRef<CXXCtorInitializer *> Inits,
+                                          RecordDataImpl &Record) {
+  assert(!Inits.empty() && "Empty ctor initializer sets are not recorded");
+  CXXCtorInitializersToWrite.push_back(
+      QueuedCXXCtorInitializers(NextCXXCtorInitializersID, Inits));
+  Record.push_back(NextCXXCtorInitializersID++);
+}
+
 void ASTWriter::AddCXXBaseSpecifiersRef(CXXBaseSpecifier const *Bases,
-                                      CXXBaseSpecifier const *BasesEnd,
+                                        CXXBaseSpecifier const *BasesEnd,
                                         RecordDataImpl &Record) {
   assert(Bases != BasesEnd && "Empty base-specifier sets are not recorded");
   CXXBaseSpecifiersToWrite.push_back(
@@ -5496,7 +5525,8 @@ void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
 
 void ASTWriter::FlushCXXBaseSpecifiers() {
   RecordData Record;
-  for (unsigned I = 0, N = CXXBaseSpecifiersToWrite.size(); I != N; ++I) {
+  unsigned N = CXXBaseSpecifiersToWrite.size();
+  for (unsigned I = 0; I != N; ++I) {
     Record.clear();
     
     // Record the offset of this base-specifier set.
@@ -5520,6 +5550,8 @@ void ASTWriter::FlushCXXBaseSpecifiers() {
     FlushStmts();
   }
 
+  assert(N == CXXBaseSpecifiersToWrite.size() &&
+         "added more base specifiers while writing base specifiers");
   CXXBaseSpecifiersToWrite.clear();
 }
 
@@ -5559,6 +5591,35 @@ void ASTWriter::AddCXXCtorInitializers(
         AddDeclRef(Init->getArrayIndex(i), Record);
     }
   }
+}
+
+void ASTWriter::FlushCXXCtorInitializers() {
+  RecordData Record;
+
+  unsigned N = CXXCtorInitializersToWrite.size();
+  for (auto &Init : CXXCtorInitializersToWrite) {
+    Record.clear();
+
+    // Record the offset of this mem-initializer list.
+    unsigned Index = Init.ID - 1;
+    if (Index == CXXCtorInitializersOffsets.size())
+      CXXCtorInitializersOffsets.push_back(Stream.GetCurrentBitNo());
+    else {
+      if (Index > CXXCtorInitializersOffsets.size())
+        CXXCtorInitializersOffsets.resize(Index + 1);
+      CXXCtorInitializersOffsets[Index] = Stream.GetCurrentBitNo();
+    }
+
+    AddCXXCtorInitializers(Init.Inits.data(), Init.Inits.size(), Record);
+    Stream.EmitRecord(serialization::DECL_CXX_CTOR_INITIALIZERS, Record);
+
+    // Flush any expressions that were written as part of the initializers.
+    FlushStmts();
+  }
+
+  assert(N == CXXCtorInitializersToWrite.size() &&
+         "added more ctor initializers while writing ctor initializers");
+  CXXCtorInitializersToWrite.clear();
 }
 
 void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record) {

@@ -22,6 +22,7 @@ namespace clang {
 
 class ASTConsumer;
 class CXXBaseSpecifier;
+class CXXCtorInitializer;
 class DeclarationName;
 class ExternalSemaSource; // layering violation required for downcasting
 class FieldDecl;
@@ -120,6 +121,12 @@ public:
   ///
   /// The default implementation of this method is a no-op.
   virtual Stmt *GetExternalDeclStmt(uint64_t Offset);
+
+  /// \brief Resolve the offset of a set of C++ constructor initializers in
+  /// the decl stream into an array of initializers.
+  ///
+  /// The default implementation of this method is a no-op.
+  virtual CXXCtorInitializer **GetExternalCXXCtorInitializers(uint64_t Offset);
 
   /// \brief Resolve the offset of a set of C++ base specifiers in the decl
   /// stream into an array of specifiers.
@@ -553,8 +560,13 @@ typedef LazyOffsetPtr<Stmt, uint64_t, &ExternalASTSource::GetExternalDeclStmt>
 typedef LazyOffsetPtr<Decl, uint32_t, &ExternalASTSource::GetExternalDecl>
   LazyDeclPtr;
 
+/// \brief A lazy pointer to a set of CXXCtorInitializers.
+typedef LazyOffsetPtr<CXXCtorInitializer *, uint64_t,
+                      &ExternalASTSource::GetExternalCXXCtorInitializers>
+  LazyCXXCtorInitializersPtr;
+
 /// \brief A lazy pointer to a set of CXXBaseSpecifiers.
-typedef LazyOffsetPtr<CXXBaseSpecifier, uint64_t, 
+typedef LazyOffsetPtr<CXXBaseSpecifier, uint64_t,
                       &ExternalASTSource::GetExternalCXXBaseSpecifiers>
   LazyCXXBaseSpecifiersPtr;
 

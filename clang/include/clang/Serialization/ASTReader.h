@@ -943,9 +943,6 @@ private:
   /// passing decls to consumer.
   bool PassingDeclsToConsumer;
 
-  /// Number of CXX base specifiers currently loaded
-  unsigned NumCXXBaseSpecifiersLoaded;
-
   /// \brief The set of identifiers that were read while the AST reader was
   /// (recursively) loading declarations.
   ///
@@ -1583,11 +1580,6 @@ public:
     return Result;
   }
 
-  /// \brief Returns the number of C++ base specifiers found in the chain.
-  unsigned getTotalNumCXXBaseSpecifiers() const {
-    return NumCXXBaseSpecifiersLoaded;
-  }
-
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
@@ -1993,9 +1985,17 @@ public:
                                         const RecordData &Record,unsigned &Idx);
 
   /// \brief Read a CXXCtorInitializer array.
-  std::pair<CXXCtorInitializer **, unsigned>
+  CXXCtorInitializer **
   ReadCXXCtorInitializers(ModuleFile &F, const RecordData &Record,
                           unsigned &Idx);
+
+  /// \brief Read a CXXCtorInitializers ID from the given record and
+  /// return its global bit offset.
+  uint64_t ReadCXXCtorInitializersRef(ModuleFile &M, const RecordData &Record,
+                                      unsigned &Idx);
+
+  /// \brief Read the contents of a CXXCtorInitializer array.
+  CXXCtorInitializer **GetExternalCXXCtorInitializers(uint64_t Offset) override;
 
   /// \brief Read a source location from raw form.
   SourceLocation ReadSourceLocation(ModuleFile &ModuleFile, unsigned Raw) const {

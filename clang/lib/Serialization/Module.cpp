@@ -38,6 +38,7 @@ ModuleFile::ModuleFile(ModuleKind Kind, unsigned Generation)
     SelectorLookupTableData(nullptr), SelectorLookupTable(nullptr),
     LocalNumDecls(0), DeclOffsets(nullptr), BaseDeclID(0),
     LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(nullptr),
+    LocalNumCXXCtorInitializers(0), CXXCtorInitializersOffsets(nullptr),
     FileSortedDecls(nullptr), NumFileSortedDecls(0),
     RedeclarationsMap(nullptr), LocalNumRedeclarationsInMap(0),
     ObjCCategoriesMap(nullptr), LocalNumObjCCategoriesInMap(0),

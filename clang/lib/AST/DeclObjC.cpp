@@ -1820,6 +1820,11 @@ void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
   }
 }
 
+ObjCImplementationDecl::init_const_iterator
+ObjCImplementationDecl::init_begin() const {
+  return IvarInitializers.get(getASTContext().getExternalSource());
+}
+
 raw_ostream &clang::operator<<(raw_ostream &OS,
                                const ObjCImplementationDecl &ID) {
   OS << ID.getName();

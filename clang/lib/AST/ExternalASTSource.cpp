@@ -66,6 +66,11 @@ Stmt *ExternalASTSource::GetExternalDeclStmt(uint64_t Offset) {
   return nullptr;
 }
 
+CXXCtorInitializer **
+ExternalASTSource::GetExternalCXXCtorInitializers(uint64_t Offset) {
+  return nullptr;
+}
+
 CXXBaseSpecifier *
 ExternalASTSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   return nullptr;

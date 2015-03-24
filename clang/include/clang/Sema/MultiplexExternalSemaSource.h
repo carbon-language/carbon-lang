@@ -86,10 +86,14 @@ public:
   /// stream into an array of specifiers.
   CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset) override;
 
+  /// \brief Resolve a handle to a list of ctor initializers into the list of
+  /// initializers themselves.
+  CXXCtorInitializer **GetExternalCXXCtorInitializers(uint64_t Offset) override;
+
   /// \brief Find all declarations with the given name in the
   /// given context.
-  bool
-  FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name) override;
+  bool FindExternalVisibleDeclsByName(const DeclContext *DC,
+                                      DeclarationName Name) override;
 
   /// \brief Ensures that the table of all visible declarations inside this
   /// context is up to date.

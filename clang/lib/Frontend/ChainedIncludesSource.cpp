@@ -43,6 +43,7 @@ protected:
   Selector GetExternalSelector(uint32_t ID) override;
   uint32_t GetNumExternalSelectors() override;
   Stmt *GetExternalDeclStmt(uint64_t Offset) override;
+  CXXCtorInitializer **GetExternalCXXCtorInitializers(uint64_t Offset) override;
   CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset) override;
   bool FindExternalVisibleDeclsByName(const DeclContext *DC,
                                       DeclarationName Name) override;
@@ -231,6 +232,10 @@ Stmt *ChainedIncludesSource::GetExternalDeclStmt(uint64_t Offset) {
 CXXBaseSpecifier *
 ChainedIncludesSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   return getFinalReader().GetExternalCXXBaseSpecifiers(Offset);
+}
+CXXCtorInitializer **
+ChainedIncludesSource::GetExternalCXXCtorInitializers(uint64_t Offset) {
+  return getFinalReader().GetExternalCXXCtorInitializers(Offset);
 }
 bool
 ChainedIncludesSource::FindExternalVisibleDeclsByName(const DeclContext *DC,

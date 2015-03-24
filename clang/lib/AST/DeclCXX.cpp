@@ -1739,6 +1739,10 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                         isImplicitlyDeclared, isConstexpr);
 }
 
+CXXConstructorDecl::init_const_iterator CXXConstructorDecl::init_begin() const {
+  return CtorInitializers.get(getASTContext().getExternalSource());
+}
+
 CXXConstructorDecl *CXXConstructorDecl::getTargetConstructor() const {
   assert(isDelegatingConstructor() && "Not a delegating constructor!");
   Expr *E = (*init_begin())->getInit()->IgnoreImplicit();

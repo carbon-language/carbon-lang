@@ -3204,16 +3204,26 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     case OBJC_CATEGORIES:
       F.ObjCCategories.swap(Record);
       break;
-        
+
     case CXX_BASE_SPECIFIER_OFFSETS: {
       if (F.LocalNumCXXBaseSpecifiers != 0) {
         Error("duplicate CXX_BASE_SPECIFIER_OFFSETS record in AST file");
         return Failure;
       }
-      
+
       F.LocalNumCXXBaseSpecifiers = Record[0];
       F.CXXBaseSpecifiersOffsets = (const uint32_t *)Blob.data();
-      NumCXXBaseSpecifiersLoaded += F.LocalNumCXXBaseSpecifiers;
+      break;
+    }
+
+    case CXX_CTOR_INITIALIZERS_OFFSETS: {
+      if (F.LocalNumCXXCtorInitializers != 0) {
+        Error("duplicate CXX_CTOR_INITIALIZERS_OFFSETS record in AST file");
+        return Failure;
+      }
+
+      F.LocalNumCXXCtorInitializers = Record[0];
+      F.CXXCtorInitializersOffsets = (const uint32_t *)Blob.data();
       break;
     }
 
@@ -6187,6 +6197,38 @@ void ASTReader::CompleteRedeclChain(const Decl *D) {
   }
 }
 
+uint64_t ASTReader::ReadCXXCtorInitializersRef(ModuleFile &M,
+                                               const RecordData &Record,
+                                               unsigned &Idx) {
+  if (Idx >= Record.size() || Record[Idx] > M.LocalNumCXXCtorInitializers) {
+    Error("malformed AST file: missing C++ ctor initializers");
+    return 0;
+  }
+
+  unsigned LocalID = Record[Idx++];
+  return getGlobalBitOffset(M, M.CXXCtorInitializersOffsets[LocalID - 1]);
+}
+
+CXXCtorInitializer **
+ASTReader::GetExternalCXXCtorInitializers(uint64_t Offset) {
+  RecordLocation Loc = getLocalBitOffset(Offset);
+  BitstreamCursor &Cursor = Loc.F->DeclsCursor;
+  SavedStreamPosition SavedPosition(Cursor);
+  Cursor.JumpToBit(Loc.Offset);
+  ReadingKindTracker ReadingKind(Read_Decl, *this);
+
+  RecordData Record;
+  unsigned Code = Cursor.ReadCode();
+  unsigned RecCode = Cursor.readRecord(Code, Record);
+  if (RecCode != DECL_CXX_CTOR_INITIALIZERS) {
+    Error("malformed AST file: missing C++ ctor initializers");
+    return nullptr;
+  }
+
+  unsigned Idx = 0;
+  return ReadCXXCtorInitializers(*Loc.F, Record, Idx);
+}
+
 uint64_t ASTReader::readCXXBaseSpecifiers(ModuleFile &M,
                                           const RecordData &Record,
                                           unsigned &Idx) {
@@ -7918,92 +7960,89 @@ ASTReader::ReadCXXBaseSpecifier(ModuleFile &F,
   return Result;
 }
 
-std::pair<CXXCtorInitializer **, unsigned>
+CXXCtorInitializer **
 ASTReader::ReadCXXCtorInitializers(ModuleFile &F, const RecordData &Record,
                                    unsigned &Idx) {
-  CXXCtorInitializer **CtorInitializers = nullptr;
   unsigned NumInitializers = Record[Idx++];
-  if (NumInitializers) {
-    CtorInitializers
-        = new (Context) CXXCtorInitializer*[NumInitializers];
-    for (unsigned i=0; i != NumInitializers; ++i) {
-      TypeSourceInfo *TInfo = nullptr;
-      bool IsBaseVirtual = false;
-      FieldDecl *Member = nullptr;
-      IndirectFieldDecl *IndirectMember = nullptr;
+  assert(NumInitializers && "wrote ctor initializers but have no inits");
+  auto **CtorInitializers = new (Context) CXXCtorInitializer*[NumInitializers];
+  for (unsigned i = 0; i != NumInitializers; ++i) {
+    TypeSourceInfo *TInfo = nullptr;
+    bool IsBaseVirtual = false;
+    FieldDecl *Member = nullptr;
+    IndirectFieldDecl *IndirectMember = nullptr;
 
-      CtorInitializerType Type = (CtorInitializerType)Record[Idx++];
-      switch (Type) {
-      case CTOR_INITIALIZER_BASE:
-        TInfo = GetTypeSourceInfo(F, Record, Idx);
-        IsBaseVirtual = Record[Idx++];
-        break;
-          
-      case CTOR_INITIALIZER_DELEGATING:
-        TInfo = GetTypeSourceInfo(F, Record, Idx);
-        break;
+    CtorInitializerType Type = (CtorInitializerType)Record[Idx++];
+    switch (Type) {
+    case CTOR_INITIALIZER_BASE:
+      TInfo = GetTypeSourceInfo(F, Record, Idx);
+      IsBaseVirtual = Record[Idx++];
+      break;
 
-       case CTOR_INITIALIZER_MEMBER:
-        Member = ReadDeclAs<FieldDecl>(F, Record, Idx);
-        break;
+    case CTOR_INITIALIZER_DELEGATING:
+      TInfo = GetTypeSourceInfo(F, Record, Idx);
+      break;
 
-       case CTOR_INITIALIZER_INDIRECT_MEMBER:
-        IndirectMember = ReadDeclAs<IndirectFieldDecl>(F, Record, Idx);
-        break;
-      }
+     case CTOR_INITIALIZER_MEMBER:
+      Member = ReadDeclAs<FieldDecl>(F, Record, Idx);
+      break;
 
-      SourceLocation MemberOrEllipsisLoc = ReadSourceLocation(F, Record, Idx);
-      Expr *Init = ReadExpr(F);
-      SourceLocation LParenLoc = ReadSourceLocation(F, Record, Idx);
-      SourceLocation RParenLoc = ReadSourceLocation(F, Record, Idx);
-      bool IsWritten = Record[Idx++];
-      unsigned SourceOrderOrNumArrayIndices;
-      SmallVector<VarDecl *, 8> Indices;
-      if (IsWritten) {
-        SourceOrderOrNumArrayIndices = Record[Idx++];
-      } else {
-        SourceOrderOrNumArrayIndices = Record[Idx++];
-        Indices.reserve(SourceOrderOrNumArrayIndices);
-        for (unsigned i=0; i != SourceOrderOrNumArrayIndices; ++i)
-          Indices.push_back(ReadDeclAs<VarDecl>(F, Record, Idx));
-      }
-
-      CXXCtorInitializer *BOMInit;
-      if (Type == CTOR_INITIALIZER_BASE) {
-        BOMInit = new (Context) CXXCtorInitializer(Context, TInfo, IsBaseVirtual,
-                                             LParenLoc, Init, RParenLoc,
-                                             MemberOrEllipsisLoc);
-      } else if (Type == CTOR_INITIALIZER_DELEGATING) {
-        BOMInit = new (Context) CXXCtorInitializer(Context, TInfo, LParenLoc,
-                                                   Init, RParenLoc);
-      } else if (IsWritten) {
-        if (Member)
-          BOMInit = new (Context) CXXCtorInitializer(Context, Member, MemberOrEllipsisLoc,
-                                               LParenLoc, Init, RParenLoc);
-        else 
-          BOMInit = new (Context) CXXCtorInitializer(Context, IndirectMember,
-                                               MemberOrEllipsisLoc, LParenLoc,
-                                               Init, RParenLoc);
-      } else {
-        if (IndirectMember) {
-          assert(Indices.empty() && "Indirect field improperly initialized");
-          BOMInit = new (Context) CXXCtorInitializer(Context, IndirectMember,
-                                                     MemberOrEllipsisLoc, LParenLoc,
-                                                     Init, RParenLoc);
-        } else {
-          BOMInit = CXXCtorInitializer::Create(Context, Member, MemberOrEllipsisLoc,
-                                               LParenLoc, Init, RParenLoc,
-                                               Indices.data(), Indices.size());
-        }
-      }
-
-      if (IsWritten)
-        BOMInit->setSourceOrder(SourceOrderOrNumArrayIndices);
-      CtorInitializers[i] = BOMInit;
+     case CTOR_INITIALIZER_INDIRECT_MEMBER:
+      IndirectMember = ReadDeclAs<IndirectFieldDecl>(F, Record, Idx);
+      break;
     }
+
+    SourceLocation MemberOrEllipsisLoc = ReadSourceLocation(F, Record, Idx);
+    Expr *Init = ReadExpr(F);
+    SourceLocation LParenLoc = ReadSourceLocation(F, Record, Idx);
+    SourceLocation RParenLoc = ReadSourceLocation(F, Record, Idx);
+    bool IsWritten = Record[Idx++];
+    unsigned SourceOrderOrNumArrayIndices;
+    SmallVector<VarDecl *, 8> Indices;
+    if (IsWritten) {
+      SourceOrderOrNumArrayIndices = Record[Idx++];
+    } else {
+      SourceOrderOrNumArrayIndices = Record[Idx++];
+      Indices.reserve(SourceOrderOrNumArrayIndices);
+      for (unsigned i=0; i != SourceOrderOrNumArrayIndices; ++i)
+        Indices.push_back(ReadDeclAs<VarDecl>(F, Record, Idx));
+    }
+
+    CXXCtorInitializer *BOMInit;
+    if (Type == CTOR_INITIALIZER_BASE) {
+      BOMInit = new (Context)
+          CXXCtorInitializer(Context, TInfo, IsBaseVirtual, LParenLoc, Init,
+                             RParenLoc, MemberOrEllipsisLoc);
+    } else if (Type == CTOR_INITIALIZER_DELEGATING) {
+      BOMInit = new (Context)
+          CXXCtorInitializer(Context, TInfo, LParenLoc, Init, RParenLoc);
+    } else if (IsWritten) {
+      if (Member)
+        BOMInit = new (Context) CXXCtorInitializer(
+            Context, Member, MemberOrEllipsisLoc, LParenLoc, Init, RParenLoc);
+      else
+        BOMInit = new (Context)
+            CXXCtorInitializer(Context, IndirectMember, MemberOrEllipsisLoc,
+                               LParenLoc, Init, RParenLoc);
+    } else {
+      if (IndirectMember) {
+        assert(Indices.empty() && "Indirect field improperly initialized");
+        BOMInit = new (Context)
+            CXXCtorInitializer(Context, IndirectMember, MemberOrEllipsisLoc,
+                               LParenLoc, Init, RParenLoc);
+      } else {
+        BOMInit = CXXCtorInitializer::Create(
+            Context, Member, MemberOrEllipsisLoc, LParenLoc, Init, RParenLoc,
+            Indices.data(), Indices.size());
+      }
+    }
+
+    if (IsWritten)
+      BOMInit->setSourceOrder(SourceOrderOrNumArrayIndices);
+    CtorInitializers[i] = BOMInit;
   }
 
-  return std::make_pair(CtorInitializers, NumInitializers);
+  return CtorInitializers;
 }
 
 NestedNameSpecifier *
@@ -8680,8 +8719,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot,
       NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
       NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
       TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
-      PassingDeclsToConsumer(false), NumCXXBaseSpecifiersLoaded(0),
-      ReadingKind(Read_None) {
+      PassingDeclsToConsumer(false), ReadingKind(Read_None) {
   SourceMgr.setExternalSLocEntrySource(this);
 }
 

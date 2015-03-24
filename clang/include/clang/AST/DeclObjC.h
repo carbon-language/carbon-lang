@@ -2002,8 +2002,8 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   SourceLocation IvarRBraceLoc;
   
   /// Support for ivar initialization.
-  /// IvarInitializers - The arguments used to initialize the ivars
-  CXXCtorInitializer **IvarInitializers;
+  /// \brief The arguments used to initialize the ivars
+  LazyCXXCtorInitializersPtr IvarInitializers;
   unsigned NumIvarInitializers;
 
   /// Do the ivars of this class require initialization other than
@@ -2052,17 +2052,20 @@ public:
   }
 
   /// init_begin() - Retrieve an iterator to the first initializer.
-  init_iterator       init_begin()       { return IvarInitializers; }
+  init_iterator init_begin() {
+    const auto *ConstThis = this;
+    return const_cast<init_iterator>(ConstThis->init_begin());
+  }
   /// begin() - Retrieve an iterator to the first initializer.
-  init_const_iterator init_begin() const { return IvarInitializers; }
+  init_const_iterator init_begin() const;
 
   /// init_end() - Retrieve an iterator past the last initializer.
   init_iterator       init_end()       {
-    return IvarInitializers + NumIvarInitializers;
+    return init_begin() + NumIvarInitializers;
   }
   /// end() - Retrieve an iterator past the last initializer.
   init_const_iterator init_end() const {
-    return IvarInitializers + NumIvarInitializers;
+    return init_begin() + NumIvarInitializers;
   }
   /// getNumArgs - Number of ivars which must be initialized.
   unsigned getNumIvarInitializers() const {

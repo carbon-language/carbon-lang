@@ -404,6 +404,13 @@ public:
   /// indexed by the C++ base specifier set ID (-1).
   const uint32_t *CXXBaseSpecifiersOffsets;
 
+  /// \brief The number of C++ ctor initializer lists in this AST file.
+  unsigned LocalNumCXXCtorInitializers;
+
+  /// \brief Offset of each C++ ctor initializer list within the bitstream,
+  /// indexed by the C++ ctor initializer list ID minus 1.
+  const uint32_t *CXXCtorInitializersOffsets;
+
   typedef llvm::DenseMap<const DeclContext *, DeclContextInfo>
   DeclContextInfosMap;
 

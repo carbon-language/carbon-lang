@@ -86,6 +86,14 @@ CXXBaseSpecifier *MultiplexExternalSemaSource::GetExternalCXXBaseSpecifiers(
   return nullptr;
 }
 
+CXXCtorInitializer **
+MultiplexExternalSemaSource::GetExternalCXXCtorInitializers(uint64_t Offset) {
+  for (auto *S : Sources)
+    if (auto *R = S->GetExternalCXXCtorInitializers(Offset))
+      return R;
+  return nullptr;
+}
+
 bool MultiplexExternalSemaSource::
 FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name) {
   bool AnyDeclsFound = false;
