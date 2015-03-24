@@ -1389,8 +1389,6 @@ DeclContext::lookup_result
 DeclContext::noload_lookup(DeclarationName Name) {
   assert(DeclKind != Decl::LinkageSpec &&
          "Should not perform lookups into linkage specs!");
-  if (!hasExternalVisibleStorage())
-    return lookup(Name);
 
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
