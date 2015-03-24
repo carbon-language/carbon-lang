@@ -1872,14 +1872,14 @@ void RecordLayoutBuilder::UpdateAlignment(CharUnits NewAlignment,
     return;
 
   if (NewAlignment > Alignment) {
-    assert(llvm::isPowerOf2_32(NewAlignment.getQuantity() && 
-           "Alignment not a power of 2"));
+    assert(llvm::isPowerOf2_64(NewAlignment.getQuantity()) &&
+           "Alignment not a power of 2");
     Alignment = NewAlignment;
   }
 
   if (UnpackedNewAlignment > UnpackedAlignment) {
-    assert(llvm::isPowerOf2_32(UnpackedNewAlignment.getQuantity() &&
-           "Alignment not a power of 2"));
+    assert(llvm::isPowerOf2_64(UnpackedNewAlignment.getQuantity()) &&
+           "Alignment not a power of 2");
     UnpackedAlignment = UnpackedNewAlignment;
   }
 }
