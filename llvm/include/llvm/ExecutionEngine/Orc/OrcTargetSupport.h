@@ -32,8 +32,6 @@ public:
   /// @brief Get a label name from the given index.
   typedef std::function<std::string(unsigned)> LabelNameFtor;
 
-  static const unsigned CallSize = 6;
-
   /// @brief Insert the requested number of trampolines into the given module.
   /// @param M Module to insert the call block into.
   /// @param NumCalls Number of calls to create in the call block.

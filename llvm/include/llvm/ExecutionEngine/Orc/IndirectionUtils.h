@@ -56,7 +56,7 @@ public:
     // Moving the trampoline ID back to the available list first means there's at
     // least one available trampoline if the compile action triggers a request for
     // a new one.
-    AvailableTrampolines.push_back(I->first - TargetT::CallSize);
+    AvailableTrampolines.push_back(I->first);
     auto CallbackHandler = std::move(I->second);
     ActiveTrampolines.erase(I);
 
@@ -140,7 +140,7 @@ public:
   CompileCallbackInfo getCompileCallback(FunctionType &FT) {
     TargetAddress TrampolineAddr = getAvailableTrampolineAddr(FT.getContext());
     auto &CallbackHandler =
-      this->ActiveTrampolines[TrampolineAddr + TargetT::CallSize];
+      this->ActiveTrampolines[TrampolineAddr];
     Constant *AddrIntVal =
       ConstantInt::get(Type::getInt64Ty(FT.getContext()), TrampolineAddr);
     Constant *AddrPtrVal =
