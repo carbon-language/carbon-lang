@@ -28,6 +28,8 @@ def SendMsgImm : Operand<i32> {
 
 def isGCN : Predicate<"Subtarget->getGeneration() "
                       ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">;
+def isSI : Predicate<"Subtarget->getGeneration() "
+                      "== AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 def isSICI : Predicate<
   "Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS ||"
   "Subtarget->getGeneration() == AMDGPUSubtarget::SEA_ISLANDS"
@@ -1874,6 +1876,11 @@ defm V_ASHRREV_I64 : VOP3Inst <vop3<0, 0x291>, "v_ashrrev_i64",
 //===----------------------------------------------------------------------===//
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
+// For use in patterns
+def V_CNDMASK_B64_PSEUDO : VOP3Common <(outs VReg_64:$dst),
+  (ins VSrc_64:$src0, VSrc_64:$src1, SSrc_64:$src2), "", []
+>;
+
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 // 64-bit vector move instruction.  This is mainly used by the SIFoldOperands
 // pass to enable folding of inline immediates.
@@ -3319,6 +3326,50 @@ def : Pat <
 //===----------------------------------------------------------------------===//
 // Fract Patterns
 //===----------------------------------------------------------------------===//
+
+let Predicates = [isSI] in {
+
+// V_FRACT is buggy on SI, so the F32 version is never used and (x-floor(x)) is
+// used instead. However, SI doesn't have V_FLOOR_F64, so the most efficient
+// way to implement it is using V_FRACT_F64.
+// The workaround for the V_FRACT bug is:
+//    fract(x) = isnan(x) ? x : min(V_FRACT(x), 0.99999999999999999)
+
+// Convert (x + (-floor(x)) to fract(x)
+def : Pat <
+  (f64 (fadd (f64 (VOP3Mods f64:$x, i32:$mods)),
+             (f64 (fneg (f64 (ffloor (f64 (VOP3Mods f64:$x, i32:$mods)))))))),
+  (V_CNDMASK_B64_PSEUDO
+      $x,
+      (V_MIN_F64
+          SRCMODS.NONE,
+          (V_FRACT_F64_e64 $mods, $x, DSTCLAMP.NONE, DSTOMOD.NONE),
+          SRCMODS.NONE,
+          (V_MOV_B64_PSEUDO 0x3fefffffffffffff),
+          DSTCLAMP.NONE, DSTOMOD.NONE),
+      (V_CMP_CLASS_F64_e64 SRCMODS.NONE, $x, 3/*NaN*/))
+>;
+
+// Convert floor(x) to (x - fract(x))
+def : Pat <
+  (f64 (ffloor (f64 (VOP3Mods f64:$x, i32:$mods)))),
+  (V_ADD_F64
+      $mods,
+      $x,
+      SRCMODS.NEG,
+      (V_CNDMASK_B64_PSEUDO
+         $x,
+         (V_MIN_F64
+             SRCMODS.NONE,
+             (V_FRACT_F64_e64 $mods, $x, DSTCLAMP.NONE, DSTOMOD.NONE),
+             SRCMODS.NONE,
+             (V_MOV_B64_PSEUDO 0x3fefffffffffffff),
+             DSTCLAMP.NONE, DSTOMOD.NONE),
+         (V_CMP_CLASS_F64_e64 SRCMODS.NONE, $x, 3/*NaN*/)),
+      DSTCLAMP.NONE, DSTOMOD.NONE)
+>;
+
+} // End Predicates = [isSI]
 
 let Predicates = [isCI] in {
 

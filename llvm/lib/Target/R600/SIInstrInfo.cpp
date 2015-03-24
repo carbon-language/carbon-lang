@@ -727,6 +727,26 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     MI->eraseFromParent();
     break;
   }
+
+  case AMDGPU::V_CNDMASK_B64_PSEUDO: {
+    unsigned Dst = MI->getOperand(0).getReg();
+    unsigned DstLo = RI.getSubReg(Dst, AMDGPU::sub0);
+    unsigned DstHi = RI.getSubReg(Dst, AMDGPU::sub1);
+    unsigned Src0 = MI->getOperand(1).getReg();
+    unsigned Src1 = MI->getOperand(2).getReg();
+    const MachineOperand &SrcCond = MI->getOperand(3);
+
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstLo)
+        .addReg(RI.getSubReg(Src0, AMDGPU::sub0))
+        .addReg(RI.getSubReg(Src1, AMDGPU::sub0))
+        .addOperand(SrcCond);
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstHi)
+        .addReg(RI.getSubReg(Src0, AMDGPU::sub1))
+        .addReg(RI.getSubReg(Src1, AMDGPU::sub1))
+        .addOperand(SrcCond);
+    MI->eraseFromParent();
+    break;
+  }
   }
   return true;
 }

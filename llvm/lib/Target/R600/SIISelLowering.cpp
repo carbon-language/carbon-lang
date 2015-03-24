@@ -202,10 +202,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   if (Subtarget->getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS) {
     setOperationAction(ISD::FTRUNC, MVT::f64, Legal);
     setOperationAction(ISD::FCEIL, MVT::f64, Legal);
-    setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
     setOperationAction(ISD::FRINT, MVT::f64, Legal);
   }
 
+  setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
   setOperationAction(ISD::FDIV, MVT::f32, Custom);
   setOperationAction(ISD::FDIV, MVT::f64, Custom);
 

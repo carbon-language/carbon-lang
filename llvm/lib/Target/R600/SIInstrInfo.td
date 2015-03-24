@@ -320,6 +320,7 @@ def SIOperand {
 
 def SRCMODS {
   int NONE = 0;
+  int NEG = 1;
 }
 
 def DSTCLAMP {
