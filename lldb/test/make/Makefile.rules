@@ -14,7 +14,7 @@
 #
 # Also might be of interest:
 # FRAMEWORK_INCLUDES (Darwin only) :=
-# CFLAGS_EXTRAS :=
+# CFLAGS_EXTRAS +=
 # LD_EXTRAS :=
 # SPLIT_DEBUG_SYMBOLS := YES
 #

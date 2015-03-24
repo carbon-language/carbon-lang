@@ -6,7 +6,7 @@ CXXFLAGS += -std=c++11
 # targets.  Other targets do not, which causes this test to fail.
 # This flag enables FullDebugInfo for all targets.
 ifneq (,$(findstring clang,$(CC)))
-  CFLAGS_EXTRAS := -fno-limit-debug-info
+  CFLAGS_EXTRAS += -fno-limit-debug-info
 endif
 
 include $(LEVEL)/Makefile.rules
