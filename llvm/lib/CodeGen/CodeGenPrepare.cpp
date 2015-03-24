@@ -600,8 +600,8 @@ simplifyRelocatesOffABase(IntrinsicInst *RelocatedBase,
     // Create a Builder and replace the target callsite with a gep
     IRBuilder<> Builder(ToReplace);
     Builder.SetCurrentDebugLocation(ToReplace->getDebugLoc());
-    Value *Replacement =
-        Builder.CreateGEP(RelocatedBase, makeArrayRef(OffsetV));
+    Value *Replacement = Builder.CreateGEP(
+        Derived->getSourceElementType(), RelocatedBase, makeArrayRef(OffsetV));
     Instruction *ReplacementInst = cast<Instruction>(Replacement);
     ReplacementInst->removeFromParent();
     ReplacementInst->insertAfter(RelocatedBase);

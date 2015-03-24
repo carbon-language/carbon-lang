@@ -450,7 +450,7 @@ bool Scalarizer::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     Indices.resize(NumIndices);
     for (unsigned J = 0; J < NumIndices; ++J)
       Indices[J] = Ops[J][I];
-    Res[I] = Builder.CreateGEP(Base[I], Indices,
+    Res[I] = Builder.CreateGEP(GEPI.getSourceElementType(), Base[I], Indices,
                                GEPI.getName() + ".i" + Twine(I));
     if (GEPI.isInBounds())
       if (GetElementPtrInst *NewGEPI = dyn_cast<GetElementPtrInst>(Res[I]))

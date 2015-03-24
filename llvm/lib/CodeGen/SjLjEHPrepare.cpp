@@ -128,7 +128,8 @@ void SjLjEHPrepare::insertCallSiteStore(Instruction *I, int Number) {
   Value *Zero = ConstantInt::get(Int32Ty, 0);
   Value *One = ConstantInt::get(Int32Ty, 1);
   Value *Idxs[2] = { Zero, One };
-  Value *CallSite = Builder.CreateGEP(FuncCtx, Idxs, "call_site");
+  Value *CallSite =
+      Builder.CreateGEP(FunctionContextTy, FuncCtx, Idxs, "call_site");
 
   // Insert a store of the call-site number
   ConstantInt *CallSiteNoC =
