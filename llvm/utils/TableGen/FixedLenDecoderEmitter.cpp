@@ -848,7 +848,7 @@ emitPredicateFunction(formatted_raw_ostream &OS, PredicateSet &Predicates,
   // The predicate function is just a big switch statement based on the
   // input predicate index.
   OS.indent(Indentation) << "static bool checkDecoderPredicate(unsigned Idx, "
-    << "uint64_t Bits) {\n";
+    << "const FeatureBitset& Bits) {\n";
   Indentation += 2;
   if (!Predicates.empty()) {
     OS.indent(Indentation) << "switch (Idx) {\n";
@@ -1102,10 +1102,10 @@ unsigned FilterChooser::getDecoderIndex(DecoderSet &Decoders,
 static void emitSinglePredicateMatch(raw_ostream &o, StringRef str,
                                      const std::string &PredicateNamespace) {
   if (str[0] == '!')
-    o << "!(Bits & " << PredicateNamespace << "::"
-      << str.slice(1,str.size()) << ")";
+    o << "!Bits[" << PredicateNamespace << "::"
+      << str.slice(1,str.size()) << "]";
   else
-    o << "(Bits & " << PredicateNamespace << "::" << str << ")";
+    o << "Bits[" << PredicateNamespace << "::" << str << "]";
 }
 
 bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
@@ -2010,7 +2010,7 @@ static void emitDecodeInstruction(formatted_raw_ostream &OS) {
      << "                                      InsnType insn, uint64_t Address,\n"
      << "                                      const void *DisAsm,\n"
      << "                                      const MCSubtargetInfo &STI) {\n"
-     << "  uint64_t Bits = STI.getFeatureBits();\n"
+     << "  const FeatureBitset& Bits = STI.getFeatureBits();\n"
      << "\n"
      << "  const uint8_t *Ptr = DecodeTable;\n"
      << "  uint32_t CurFieldValue = 0;\n"

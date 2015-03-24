@@ -355,7 +355,7 @@ DecodeStatus PPCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   uint32_t Inst =
       (Bytes[0] << 24) | (Bytes[1] << 16) | (Bytes[2] << 8) | (Bytes[3] << 0);
 
-  if ((STI.getFeatureBits() & PPC::FeatureQPX) != 0) {
+  if (STI.getFeatureBits()[PPC::FeatureQPX]) {
     DecodeStatus result =
       decodeInstruction(DecoderTableQPX32, MI, Inst, Address, this, STI);
     if (result != MCDisassembler::Fail)

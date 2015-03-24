@@ -90,7 +90,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     case 3: O << "\twfi"; break;
     case 4: O << "\tsev"; break;
     case 5:
-      if ((getAvailableFeatures() & ARM::HasV8Ops)) {
+      if (getAvailableFeatures()[ARM::HasV8Ops]) {
         O << "\tsevl";
         break;
       } // Fallthrough for non-v8
@@ -299,7 +299,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     if (MI->getNumOperands() == 3 &&
         MI->getOperand(0).isImm() &&
         MI->getOperand(0).getImm() == 0 &&
-        (getAvailableFeatures() & ARM::FeatureVirtualization)) {
+        getAvailableFeatures()[ARM::FeatureVirtualization]) {
       O << "\teret";
       printPredicateOperand(MI, 1, O);
       printAnnotation(O, Annot);
@@ -698,7 +698,7 @@ void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
 void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
                                      raw_ostream &O) {
   unsigned val = MI->getOperand(OpNum).getImm();
-  O << ARM_MB::MemBOptToString(val, (getAvailableFeatures() & ARM::HasV8Ops));
+  O << ARM_MB::MemBOptToString(val, getAvailableFeatures()[ARM::HasV8Ops]);
 }
 
 void ARMInstPrinter::printInstSyncBOption(const MCInst *MI, unsigned OpNum,
@@ -796,14 +796,14 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
   const MCOperand &Op = MI->getOperand(OpNum);
   unsigned SpecRegRBit = Op.getImm() >> 4;
   unsigned Mask = Op.getImm() & 0xf;
-  uint64_t FeatureBits = getAvailableFeatures();
+  const FeatureBitset &FeatureBits = getAvailableFeatures();
 
-  if (FeatureBits & ARM::FeatureMClass) {
+  if (FeatureBits[ARM::FeatureMClass]) {
     unsigned SYSm = Op.getImm();
     unsigned Opcode = MI->getOpcode();
 
     // For writes, handle extended mask bits if the DSP extension is present.
-    if (Opcode == ARM::t2MSR_M && (FeatureBits & ARM::FeatureDSPThumb2)) {
+    if (Opcode == ARM::t2MSR_M && FeatureBits[ARM::FeatureDSPThumb2]) {
       switch (SYSm) {
       case 0x400: O << "apsr_g"; return;
       case 0xc00: O << "apsr_nzcvqg"; return;
@@ -819,7 +819,7 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
     // Handle the basic 8-bit mask.
     SYSm &= 0xff;
 
-    if (Opcode == ARM::t2MSR_M && (FeatureBits & ARM::HasV7Ops)) {
+    if (Opcode == ARM::t2MSR_M && FeatureBits [ARM::HasV7Ops]) {
       // ARMv7-M deprecates using MSR APSR without a _<bits> qualifier as an
       // alias for MSR APSR_nzcvq.
       switch (SYSm) {

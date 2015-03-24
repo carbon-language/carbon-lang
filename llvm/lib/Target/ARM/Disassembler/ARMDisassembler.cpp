@@ -431,7 +431,7 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                              raw_ostream &CS) const {
   CommentStream = &CS;
 
-  assert(!(STI.getFeatureBits() & ARM::ModeThumb) &&
+  assert(!STI.getFeatureBits()[ARM::ModeThumb] &&
          "Asked to disassemble an ARM instruction but Subtarget is in Thumb "
          "mode!");
 
@@ -696,7 +696,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                raw_ostream &CS) const {
   CommentStream = &CS;
 
-  assert((STI.getFeatureBits() & ARM::ModeThumb) &&
+  assert(STI.getFeatureBits()[ARM::ModeThumb] &&
          "Asked to disassemble in Thumb mode but Subtarget is in ARM mode!");
 
   // We want to read exactly 2 bytes of data.
@@ -1022,9 +1022,10 @@ static const uint16_t DPRDecoderTable[] = {
 
 static DecodeStatus DecodeDPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder) {
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  bool hasD16 = featureBits & ARM::FeatureD16;
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  bool hasD16 = featureBits[ARM::FeatureD16];
 
   if (RegNo > 31 || (hasD16 && RegNo > 15))
     return MCDisassembler::Fail;
@@ -1369,9 +1370,9 @@ static DecodeStatus DecodeCopMemInstruction(MCInst &Inst, unsigned Insn,
       break;
   }
 
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  if ((featureBits & ARM::HasV8Ops) && (coproc != 14))
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+  if (featureBits[ARM::HasV8Ops] && (coproc != 14))
     return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::CreateImm(coproc));
@@ -3267,10 +3268,11 @@ static DecodeStatus DecodeT2LoadShift(MCInst &Inst, unsigned Insn,
   unsigned Rt = fieldFromInstruction(Insn, 12, 4);
   unsigned Rn = fieldFromInstruction(Insn, 16, 4);
 
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  bool hasMP = featureBits & ARM::FeatureMP;
-  bool hasV7Ops = featureBits & ARM::HasV7Ops;
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  bool hasMP = featureBits[ARM::FeatureMP];
+  bool hasV7Ops = featureBits[ARM::HasV7Ops];
 
   if (Rn == 15) {
     switch (Inst.getOpcode()) {
@@ -3353,10 +3355,11 @@ static DecodeStatus DecodeT2LoadImm8(MCInst &Inst, unsigned Insn,
   imm |= (Rn << 9);
   unsigned add = fieldFromInstruction(Insn, 9, 1);
 
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  bool hasMP = featureBits & ARM::FeatureMP;
-  bool hasV7Ops = featureBits & ARM::HasV7Ops;
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  bool hasMP = featureBits[ARM::FeatureMP];
+  bool hasV7Ops = featureBits[ARM::HasV7Ops];
 
   if (Rn == 15) {
     switch (Inst.getOpcode()) {
@@ -3433,10 +3436,11 @@ static DecodeStatus DecodeT2LoadImm12(MCInst &Inst, unsigned Insn,
   unsigned imm = fieldFromInstruction(Insn, 0, 12);
   imm |= (Rn << 13);
 
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  bool hasMP = (featureBits & ARM::FeatureMP);
-  bool hasV7Ops = (featureBits & ARM::HasV7Ops);
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  bool hasMP = featureBits[ARM::FeatureMP];
+  bool hasV7Ops = featureBits[ARM::HasV7Ops];
 
   if (Rn == 15) {
     switch (Inst.getOpcode()) {
@@ -3550,9 +3554,10 @@ static DecodeStatus DecodeT2LoadLabel(MCInst &Inst, unsigned Insn,
   unsigned U = fieldFromInstruction(Insn, 23, 1);
   int imm = fieldFromInstruction(Insn, 0, 12);
 
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  bool hasV7Ops = (featureBits & ARM::HasV7Ops);
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  bool hasV7Ops = featureBits[ARM::HasV7Ops];
 
   if (Rt == 15) {
     switch (Inst.getOpcode()) {
@@ -3873,9 +3878,10 @@ static DecodeStatus DecodeCoprocessor(MCInst &Inst, unsigned Val,
   if (Val == 0xA || Val == 0xB)
     return MCDisassembler::Fail;
 
-  uint64_t featureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  if ((featureBits & ARM::HasV8Ops) && !(Val == 14 || Val == 15))
+  const FeatureBitset &featureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  if (featureBits[ARM::HasV8Ops] && !(Val == 14 || Val == 15))
     return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::CreateImm(Val));
@@ -4025,9 +4031,10 @@ static DecodeStatus DecodeInstSyncBarrierOption(MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
                           uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
-  uint64_t FeatureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
-                                                          .getFeatureBits();
-  if (FeatureBits & ARM::FeatureMClass) {
+  const FeatureBitset &FeatureBits =
+    ((const MCDisassembler*)Decoder)->getSubtargetInfo().getFeatureBits();
+
+  if (FeatureBits[ARM::FeatureMClass]) {
     unsigned ValLow = Val & 0xff;
 
     // Validate the SYSm value first.
@@ -4047,7 +4054,7 @@ static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
     case 17: // basepri
     case 18: // basepri_max
     case 19: // faultmask
-      if (!(FeatureBits & ARM::HasV7Ops))
+      if (!(FeatureBits[ARM::HasV7Ops]))
         // Values basepri, basepri_max and faultmask are only valid for v7m.
         return MCDisassembler::Fail;
       break;
@@ -4057,7 +4064,7 @@ static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
 
     if (Inst.getOpcode() == ARM::t2MSR_M) {
       unsigned Mask = fieldFromInstruction(Val, 10, 2);
-      if (!(FeatureBits & ARM::HasV7Ops)) {
+      if (!(FeatureBits[ARM::HasV7Ops])) {
         // The ARMv6-M MSR bits {11-10} can be only 0b10, other values are
         // unpredictable.
         if (Mask != 2)
@@ -4071,7 +4078,7 @@ static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
         // indicates the move for the GE{3:0} bits, the mask{0} bit can be set
         // only if the processor includes the DSP extension.
         if (Mask == 0 || (Mask != 2 && ValLow > 3) ||
-            (!(FeatureBits & ARM::FeatureDSPThumb2) && (Mask & 1)))
+            (!(FeatureBits[ARM::FeatureDSPThumb2]) && (Mask & 1)))
           S = MCDisassembler::SoftFail;
       }
     }

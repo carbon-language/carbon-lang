@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCINSTPRINTER_H
 #define LLVM_MC_MCINSTPRINTER_H
 
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Format.h"
 
@@ -41,7 +42,7 @@ protected:
   const MCRegisterInfo &MRI;
 
   /// The current set of available features.
-  uint64_t AvailableFeatures;
+  FeatureBitset AvailableFeatures;
 
   /// True if we are printing marked up assembly.
   bool UseMarkup;
@@ -58,7 +59,7 @@ public:
   MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
                 const MCRegisterInfo &mri)
     : CommentStream(nullptr), MAI(mai), MII(mii), MRI(mri),
-      AvailableFeatures(0), UseMarkup(0), PrintImmHex(0),
+      AvailableFeatures(), UseMarkup(0), PrintImmHex(0),
       PrintHexStyle(HexStyle::C) {}
 
   virtual ~MCInstPrinter();
@@ -78,8 +79,8 @@ public:
   /// printRegName - Print the assembler register name.
   virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
 
-  uint64_t getAvailableFeatures() const { return AvailableFeatures; }
-  void setAvailableFeatures(uint64_t Value) { AvailableFeatures = Value; }
+  const FeatureBitset& getAvailableFeatures() const { return AvailableFeatures; }
+  void setAvailableFeatures(const FeatureBitset& Value) { AvailableFeatures = Value; }
 
   bool getUseMarkup() const { return UseMarkup; }
   void setUseMarkup(bool Value) { UseMarkup = Value; }

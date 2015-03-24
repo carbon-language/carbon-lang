@@ -80,20 +80,19 @@ X86GenericDisassembler::X86GenericDisassembler(
                                          MCContext &Ctx,
                                          std::unique_ptr<const MCInstrInfo> MII)
   : MCDisassembler(STI, Ctx), MII(std::move(MII)) {
-  switch (STI.getFeatureBits() &
-          (X86::Mode16Bit | X86::Mode32Bit | X86::Mode64Bit)) {
-  case X86::Mode16Bit:
+  const FeatureBitset &FB = STI.getFeatureBits();
+  if (FB[X86::Mode16Bit]) {
     fMode = MODE_16BIT;
-    break;
-  case X86::Mode32Bit:
+    return;
+  } else if (FB[X86::Mode32Bit]) {
     fMode = MODE_32BIT;
-    break;
-  case X86::Mode64Bit:
+    return;
+  } else if (FB[X86::Mode64Bit]) {
     fMode = MODE_64BIT;
-    break;
-  default:
-    llvm_unreachable("Invalid CPU mode");
+    return;
   }
+
+  llvm_unreachable("Invalid CPU mode");
 }
 
 struct Region {

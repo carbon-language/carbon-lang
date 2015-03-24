@@ -729,23 +729,24 @@ private:
 
   bool is64BitMode() const {
     // FIXME: Can tablegen auto-generate this?
-    return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
+    return STI.getFeatureBits()[X86::Mode64Bit];
   }
   bool is32BitMode() const {
     // FIXME: Can tablegen auto-generate this?
-    return (STI.getFeatureBits() & X86::Mode32Bit) != 0;
+    return STI.getFeatureBits()[X86::Mode32Bit];
   }
   bool is16BitMode() const {
     // FIXME: Can tablegen auto-generate this?
-    return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
+    return STI.getFeatureBits()[X86::Mode16Bit];
   }
-  void SwitchMode(uint64_t mode) {
-    uint64_t oldMode = STI.getFeatureBits() &
-        (X86::Mode64Bit | X86::Mode32Bit | X86::Mode16Bit);
-    unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(oldMode | mode));
+  void SwitchMode(unsigned mode) {
+    FeatureBitset AllModes({X86::Mode64Bit, X86::Mode32Bit, X86::Mode16Bit});
+    FeatureBitset OldMode = STI.getFeatureBits() & AllModes;
+    unsigned FB = ComputeAvailableFeatures(
+      STI.ToggleFeature(OldMode.flip(mode)));
     setAvailableFeatures(FB);
-    assert(mode == (STI.getFeatureBits() &
-                    (X86::Mode64Bit | X86::Mode32Bit | X86::Mode16Bit)));
+    
+    assert(FeatureBitset({mode}) == (STI.getFeatureBits() & AllModes));
   }
 
   unsigned getPointerWidth() {
@@ -1688,7 +1689,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
   }
 
   // rounding mode token
-  if (STI.getFeatureBits() & X86::FeatureAVX512 &&
+  if (STI.getFeatureBits()[X86::FeatureAVX512] &&
       getLexer().is(AsmToken::LCurly))
     return ParseRoundingModeOp(Start, End);
 
@@ -1746,7 +1747,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseATTOperand() {
   }
   case AsmToken::LCurly:{
     SMLoc Start = Parser.getTok().getLoc(), End;
-    if (STI.getFeatureBits() & X86::FeatureAVX512)
+    if (STI.getFeatureBits()[X86::FeatureAVX512])
       return ParseRoundingModeOp(Start, End);
     return ErrorOperand(Start, "unknown token in expression");
   }
@@ -1756,7 +1757,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseATTOperand() {
 bool X86AsmParser::HandleAVX512Operand(OperandVector &Operands,
                                        const MCParsedAsmOperand &Op) {
   MCAsmParser &Parser = getParser();
-  if(STI.getFeatureBits() & X86::FeatureAVX512) {
+  if(STI.getFeatureBits()[X86::FeatureAVX512]) {
     if (getLexer().is(AsmToken::LCurly)) {
       // Eat "{" and mark the current place.
       const SMLoc consumedToken = consumeToken();

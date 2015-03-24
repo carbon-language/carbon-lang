@@ -549,15 +549,15 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   CodeGenTarget &Target = CDP.getTargetInfo();
   if (Inst.HasComplexDeprecationPredicate)
     // Emit a function pointer to the complex predicate method.
-    OS << ",0"
+    OS << ", { } "
        << ",&get" << Inst.DeprecatedReason << "DeprecationInfo";
   else if (!Inst.DeprecatedReason.empty())
     // Emit the Subtarget feature.
-    OS << "," << Target.getInstNamespace() << "::" << Inst.DeprecatedReason
-       << ",nullptr";
+    OS << ", { " << Target.getInstNamespace() << "::" << Inst.DeprecatedReason
+       << "} ,nullptr";
   else
     // Instruction isn't deprecated.
-    OS << ",0,nullptr";
+    OS << ", { } ,nullptr";
 
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }

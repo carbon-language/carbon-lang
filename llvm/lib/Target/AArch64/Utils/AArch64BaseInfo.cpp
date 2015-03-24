@@ -14,6 +14,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/Regex.h"
 
 using namespace llvm;
@@ -245,7 +246,7 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MRSMapper::MRSPairs[] = {
   {"ich_elsr_el2", ICH_ELSR_EL2}
 };
 
-AArch64SysReg::MRSMapper::MRSMapper(uint64_t FeatureBits)
+AArch64SysReg::MRSMapper::MRSMapper(const FeatureBitset &FeatureBits)
   : SysRegMapper(FeatureBits) {
     InstPairs = &MRSPairs[0];
     NumInstPairs = llvm::array_lengthof(MRSPairs);
@@ -269,7 +270,7 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MSRMapper::MSRPairs[] = {
   {"icc_sgi0r_el1", ICC_SGI0R_EL1}
 };
 
-AArch64SysReg::MSRMapper::MSRMapper(uint64_t FeatureBits)
+AArch64SysReg::MSRMapper::MSRMapper(const FeatureBitset &FeatureBits)
   : SysRegMapper(FeatureBits) {
     InstPairs = &MSRPairs[0];
     NumInstPairs = llvm::array_lengthof(MSRPairs);
@@ -773,7 +774,7 @@ AArch64SysReg::SysRegMapper::fromString(StringRef Name, bool &Valid) const {
   }
 
   // Next search for target specific registers
-  if (FeatureBits & AArch64::ProcCyclone) {
+  if (FeatureBits[AArch64::ProcCyclone]) {
     for (unsigned i = 0; i < array_lengthof(CycloneSysRegPairs); ++i) {
       if (CycloneSysRegPairs[i].Name == NameLower) {
         Valid = true;
@@ -823,7 +824,7 @@ AArch64SysReg::SysRegMapper::toString(uint32_t Bits) const {
   }
 
   // Next search for target specific registers
-  if (FeatureBits & AArch64::ProcCyclone) {
+  if (FeatureBits[AArch64::ProcCyclone]) {
     for (unsigned i = 0; i < array_lengthof(CycloneSysRegPairs); ++i) {
       if (CycloneSysRegPairs[i].Value == Bits) {
         return CycloneSysRegPairs[i].Name;
