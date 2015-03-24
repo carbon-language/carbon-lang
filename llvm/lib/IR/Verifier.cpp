@@ -111,6 +111,13 @@ private:
     OS << '\n';
   }
 
+  void Write(const NamedMDNode *NMD) {
+    if (!NMD)
+      return;
+    NMD->print(OS);
+    OS << '\n';
+  }
+
   void Write(Type *T) {
     if (!T)
       return;
@@ -561,6 +568,10 @@ void Verifier::visitNamedMDNode(const NamedMDNode &NMD) {
     MDNode *MD = NMD.getOperand(i);
     if (!MD)
       continue;
+
+    if (NMD.getName() == "llvm.dbg.cu") {
+      Assert(isa<MDCompileUnit>(MD), "invalid compile unit", &NMD, MD);
+    }
 
     visitMDNode(*MD);
   }
