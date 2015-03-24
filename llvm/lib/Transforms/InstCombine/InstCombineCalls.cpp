@@ -972,7 +972,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_vperm2f128_pd_256:
   case Intrinsic::x86_avx_vperm2f128_ps_256:
   case Intrinsic::x86_avx_vperm2f128_si_256:
-    // TODO: Add the AVX2 version of this instruction.
+  case Intrinsic::x86_avx2_vperm2i128:
     if (Value *V = SimplifyX86vperm2(*II, *Builder))
       return ReplaceInstUsesWith(*II, V);
     break;
