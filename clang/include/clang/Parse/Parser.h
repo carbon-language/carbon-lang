@@ -2293,6 +2293,8 @@ private:
                                                  VirtSpecifiers &VS,
                                                  ExprResult &BitfieldSize,
                                                  LateParsedAttrList &LateAttrs);
+  void MaybeParseAndDiagnoseDeclSpecAfterCXX11VirtSpecifierSeq(Declarator &D,
+                                                               VirtSpecifiers &VS);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS, AttributeList *Attr,
                   const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                   ParsingDeclRAIIObject *DiagsFromTParams = nullptr);
