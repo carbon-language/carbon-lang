@@ -2567,11 +2567,9 @@ void Verifier::visitInstruction(Instruction &I) {
            &I);
   }
 
-  // Don't recurse into !dbg attachments (leave that for verifyDebugInfo()),
-  // but at least check that it's a legal type.
   if (MDNode *N = I.getDebugLoc().getAsMDNode()) {
-    Assert(isa<MDLocation>(N),
-           "invalid !dbg metadata attachment", &I, N);
+    Assert(isa<MDLocation>(N), "invalid !dbg metadata attachment", &I, N);
+    visitMDNode(*N);
   }
 
   InstsInThisBlock.insert(&I);
