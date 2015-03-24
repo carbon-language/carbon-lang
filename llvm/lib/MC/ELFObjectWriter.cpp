@@ -803,6 +803,10 @@ static const MCSymbol *getWeakRef(const MCSymbolRefExpr &Ref) {
   return nullptr;
 }
 
+static bool isWeak(const MCSymbolData &D) {
+  return D.getFlags() & ELF_STB_Weak || MCELF::GetType(D) == ELF::STT_GNU_IFUNC;
+}
+
 void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
                                        const MCAsmLayout &Layout,
                                        const MCFragment *Fragment,
@@ -843,6 +847,10 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
           Fixup.getLoc(), "Cannot represent a difference across sections");
 
     const MCSymbolData &SymBD = Asm.getSymbolData(SymB);
+    if (isWeak(SymBD))
+      Asm.getContext().FatalError(
+          Fixup.getLoc(), "Cannot represent a subtraction with a weak symbol");
+
     uint64_t SymBOffset = Layout.getSymbolOffset(&SymBD);
     uint64_t K = SymBOffset - FixupOffset;
     IsPCRel = true;
@@ -1809,7 +1817,7 @@ ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                       const MCFragment &FB,
                                                       bool InSet,
                                                       bool IsPCRel) const {
-  if (DataA.getFlags() & ELF_STB_Weak || MCELF::GetType(DataA) == ELF::STT_GNU_IFUNC)
+  if (isWeak(DataA))
     return false;
   return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
                                                  Asm, DataA, FB,InSet, IsPCRel);
