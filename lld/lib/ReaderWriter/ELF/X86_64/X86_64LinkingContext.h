@@ -49,6 +49,7 @@ public:
     case llvm::ELF::R_X86_64_COPY:
     case llvm::ELF::R_X86_64_DTPMOD64:
     case llvm::ELF::R_X86_64_DTPOFF64:
+    case llvm::ELF::R_X86_64_TPOFF64:
       return true;
     default:
       return false;
