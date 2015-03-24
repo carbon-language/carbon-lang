@@ -343,6 +343,7 @@ Value *GenericToNVVM::remapConstantExpr(Module *M, Function *F, ConstantExpr *C,
     // GetElementPtrConstantExpr
     return cast<GEPOperator>(C)->isInBounds()
                ? Builder.CreateGEP(
+                     cast<GEPOperator>(C)->getSourceElementType(),
                      NewOperands[0],
                      makeArrayRef(&NewOperands[1], NumOperands - 1))
                : Builder.CreateInBoundsGEP(

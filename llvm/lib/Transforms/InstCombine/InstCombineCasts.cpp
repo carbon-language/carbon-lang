@@ -1473,9 +1473,11 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         // If we were able to index down into an element, create the GEP
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.
-        Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
-          Builder->CreateInBoundsGEP(OrigBase, NewIndices) :
-          Builder->CreateGEP(OrigBase, NewIndices);
+        Value *NGEP = cast<GEPOperator>(GEP)->isInBounds()
+                          ? Builder->CreateInBoundsGEP(OrigBase, NewIndices)
+                          : Builder->CreateGEP(
+                                OrigBase->getType()->getPointerElementType(),
+                                OrigBase, NewIndices);
         NGEP->takeName(GEP);
 
         if (isa<BitCastInst>(CI))

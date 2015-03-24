@@ -295,9 +295,9 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   DEBUG(dbgs() << "Promoting alloca to local memory\n");
   LocalMemAvailable -= AllocaSize;
 
+  Type *GVTy = ArrayType::get(I.getAllocatedType(), 256);
   GlobalVariable *GV = new GlobalVariable(
-      *Mod, ArrayType::get(I.getAllocatedType(), 256), false,
-      GlobalValue::ExternalLinkage, 0, I.getName(), 0,
+      *Mod, GVTy, false, GlobalValue::ExternalLinkage, 0, I.getName(), 0,
       GlobalVariable::NotThreadLocal, AMDGPUAS::LOCAL_ADDRESS);
 
   FunctionType *FTy = FunctionType::get(
@@ -333,7 +333,7 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   Indices.push_back(Constant::getNullValue(Type::getInt32Ty(Mod->getContext())));
   Indices.push_back(TID);
 
-  Value *Offset = Builder.CreateGEP(GV, Indices);
+  Value *Offset = Builder.CreateGEP(GVTy, GV, Indices);
   I.mutateType(Offset->getType());
   I.replaceAllUsesWith(Offset);
   I.eraseFromParent();
