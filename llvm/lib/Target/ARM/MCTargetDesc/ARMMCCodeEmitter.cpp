@@ -51,10 +51,10 @@ public:
   ~ARMMCCodeEmitter() {}
 
   bool isThumb(const MCSubtargetInfo &STI) const {
-    return STI.getFeatureBits()[ARM::ModeThumb];
+    return (STI.getFeatureBits() & ARM::ModeThumb) != 0;
   }
   bool isThumb2(const MCSubtargetInfo &STI) const {
-    return isThumb(STI) && STI.getFeatureBits()[ARM::FeatureThumb2];
+    return isThumb(STI) && (STI.getFeatureBits() & ARM::FeatureThumb2) != 0;
   }
   bool isTargetMachO(const MCSubtargetInfo &STI) const {
     Triple TT(STI.getTargetTriple());

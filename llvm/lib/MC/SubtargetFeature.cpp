@@ -150,12 +150,12 @@ std::string SubtargetFeatures::getString() const {
 /// feature, set it.
 ///
 static
-void SetImpliedBits(FeatureBitset &Bits, const SubtargetFeatureKV *FeatureEntry,
+void SetImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
                     ArrayRef<SubtargetFeatureKV> FeatureTable) {
   for (auto &FE : FeatureTable) {
     if (FeatureEntry->Value == FE.Value) continue;
 
-    if ((FeatureEntry->Implies & FE.Value).any()) {
+    if (FeatureEntry->Implies & FE.Value) {
       Bits |= FE.Value;
       SetImpliedBits(Bits, &FE, FeatureTable);
     }
@@ -166,13 +166,12 @@ void SetImpliedBits(FeatureBitset &Bits, const SubtargetFeatureKV *FeatureEntry,
 /// feature, clear it.
 ///
 static
-void ClearImpliedBits(FeatureBitset &Bits, 
-                      const SubtargetFeatureKV *FeatureEntry,
+void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
                       ArrayRef<SubtargetFeatureKV> FeatureTable) {
   for (auto &FE : FeatureTable) {
     if (FeatureEntry->Value == FE.Value) continue;
 
-    if ((FE.Implies & FeatureEntry->Value).any()) {
+    if (FE.Implies & FeatureEntry->Value) {
       Bits &= ~FE.Value;
       ClearImpliedBits(Bits, &FE, FeatureTable);
     }
@@ -181,8 +180,8 @@ void ClearImpliedBits(FeatureBitset &Bits,
 
 /// ToggleFeature - Toggle a feature and returns the newly updated feature
 /// bits.
-FeatureBitset
-SubtargetFeatures::ToggleFeature(FeatureBitset Bits, StringRef Feature,
+uint64_t
+SubtargetFeatures::ToggleFeature(uint64_t Bits, StringRef Feature,
                                  ArrayRef<SubtargetFeatureKV> FeatureTable) {
 
   // Find feature in table.
@@ -192,6 +191,7 @@ SubtargetFeatures::ToggleFeature(FeatureBitset Bits, StringRef Feature,
   if (FeatureEntry) {
     if ((Bits & FeatureEntry->Value) == FeatureEntry->Value) {
       Bits &= ~FeatureEntry->Value;
+
       // For each feature that implies this, clear it.
       ClearImpliedBits(Bits, FeatureEntry, FeatureTable);
     } else {
@@ -212,13 +212,13 @@ SubtargetFeatures::ToggleFeature(FeatureBitset Bits, StringRef Feature,
 
 /// getFeatureBits - Get feature bits a CPU.
 ///
-FeatureBitset
+uint64_t
 SubtargetFeatures::getFeatureBits(StringRef CPU,
                                   ArrayRef<SubtargetFeatureKV> CPUTable,
                                   ArrayRef<SubtargetFeatureKV> FeatureTable) {
 
   if (CPUTable.empty() || FeatureTable.empty())
-    return FeatureBitset();
+    return 0;
 
 #ifndef NDEBUG
   for (size_t i = 1, e = CPUTable.size(); i != e; ++i) {
@@ -230,8 +230,7 @@ SubtargetFeatures::getFeatureBits(StringRef CPU,
           "CPU features table is not sorted");
   }
 #endif
-  // Resulting bits
-  FeatureBitset Bits;
+  uint64_t Bits = 0;                    // Resulting bits
 
   // Check if help is needed
   if (CPU == "help")
@@ -248,7 +247,7 @@ SubtargetFeatures::getFeatureBits(StringRef CPU,
 
       // Set the feature implied by this CPU feature, if any.
       for (auto &FE : FeatureTable) {
-        if ((CPUEntry->Value & FE.Value).any())
+        if (CPUEntry->Value & FE.Value)
           SetImpliedBits(Bits, &FE, FeatureTable);
       }
     } else {

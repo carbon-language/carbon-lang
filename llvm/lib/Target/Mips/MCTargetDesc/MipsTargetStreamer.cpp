@@ -380,7 +380,7 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   MCAssembler &MCA = getStreamer().getAssembler();
   Pic = MCA.getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_;
 
-  const FeatureBitset &Features = STI.getFeatureBits();
+  uint64_t Features = STI.getFeatureBits();
 
   // Set the header flags that we can in the constructor.
   // FIXME: This is a fairly terrible hack. We set the rest
@@ -396,35 +396,35 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   unsigned EFlags = MCA.getELFHeaderEFlags();
 
   // Architecture
-  if (Features[Mips::FeatureMips64r6])
+  if (Features & Mips::FeatureMips64r6)
     EFlags |= ELF::EF_MIPS_ARCH_64R6;
-  else if (Features[Mips::FeatureMips64r2] ||
-           Features[Mips::FeatureMips64r3] ||
-           Features[Mips::FeatureMips64r5])
+  else if (Features & Mips::FeatureMips64r2 ||
+           Features & Mips::FeatureMips64r3 ||
+           Features & Mips::FeatureMips64r5)
     EFlags |= ELF::EF_MIPS_ARCH_64R2;
-  else if (Features[Mips::FeatureMips64])
+  else if (Features & Mips::FeatureMips64)
     EFlags |= ELF::EF_MIPS_ARCH_64;
-  else if (Features[Mips::FeatureMips5])
+  else if (Features & Mips::FeatureMips5)
     EFlags |= ELF::EF_MIPS_ARCH_5;
-  else if (Features[Mips::FeatureMips4])
+  else if (Features & Mips::FeatureMips4)
     EFlags |= ELF::EF_MIPS_ARCH_4;
-  else if (Features[Mips::FeatureMips3])
+  else if (Features & Mips::FeatureMips3)
     EFlags |= ELF::EF_MIPS_ARCH_3;
-  else if (Features[Mips::FeatureMips32r6])
+  else if (Features & Mips::FeatureMips32r6)
     EFlags |= ELF::EF_MIPS_ARCH_32R6;
-  else if (Features[Mips::FeatureMips32r2] ||
-           Features[Mips::FeatureMips32r3] ||
-           Features[Mips::FeatureMips32r5])
+  else if (Features & Mips::FeatureMips32r2 ||
+           Features & Mips::FeatureMips32r3 ||
+           Features & Mips::FeatureMips32r5)
     EFlags |= ELF::EF_MIPS_ARCH_32R2;
-  else if (Features[Mips::FeatureMips32])
+  else if (Features & Mips::FeatureMips32)
     EFlags |= ELF::EF_MIPS_ARCH_32;
-  else if (Features[Mips::FeatureMips2])
+  else if (Features & Mips::FeatureMips2)
     EFlags |= ELF::EF_MIPS_ARCH_2;
   else
     EFlags |= ELF::EF_MIPS_ARCH_1;
 
   // Other options.
-  if (Features[Mips::FeatureNaN2008])
+  if (Features & Mips::FeatureNaN2008)
     EFlags |= ELF::EF_MIPS_NAN2008;
 
   // -mabicalls and -mplt are not implemented but we should act as if they were
@@ -464,7 +464,7 @@ void MipsTargetELFStreamer::finish() {
   DataSectionData.setAlignment(std::max(16u, DataSectionData.getAlignment()));
   BSSSectionData.setAlignment(std::max(16u, BSSSectionData.getAlignment()));
 
-  const FeatureBitset &Features = STI.getFeatureBits();
+  uint64_t Features = STI.getFeatureBits();
 
   // Update e_header flags. See the FIXME and comment above in
   // the constructor for a full rundown on this.
@@ -477,10 +477,10 @@ void MipsTargetELFStreamer::finish() {
   else if (getABI().IsN32())
     EFlags |= ELF::EF_MIPS_ABI2;
 
-  if (Features[Mips::FeatureGP64Bit]) {
+  if (Features & Mips::FeatureGP64Bit) {
     if (getABI().IsO32())
       EFlags |= ELF::EF_MIPS_32BITMODE; /* Compatibility Mode */
-  } else if (Features[Mips::FeatureMips64r2] || Features[Mips::FeatureMips64])
+  } else if (Features & Mips::FeatureMips64r2 || Features & Mips::FeatureMips64)
     EFlags |= ELF::EF_MIPS_32BITMODE;
 
   // If we've set the cpic eflag and we're n64, go ahead and set the pic

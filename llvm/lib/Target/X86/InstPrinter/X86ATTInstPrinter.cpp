@@ -60,7 +60,7 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   // InstrInfo.td as soon as Requires clause is supported properly
   // for InstAlias.
   if (MI->getOpcode() == X86::CALLpcrel32 &&
-      getAvailableFeatures()[X86::Mode64Bit]) {
+      (getAvailableFeatures() & X86::Mode64Bit) != 0) {
     OS << "\tcallq\t";
     printPCRelImm(MI, 0, OS);
   }

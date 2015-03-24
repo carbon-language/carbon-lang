@@ -112,7 +112,7 @@ static void LowerDextDins(MCInst& InstIn) {
 }
 
 bool MipsMCCodeEmitter::isMicroMips(const MCSubtargetInfo &STI) const {
-  return STI.getFeatureBits()[Mips::FeatureMicroMips];
+  return STI.getFeatureBits() & Mips::FeatureMicroMips;
 }
 
 void MipsMCCodeEmitter::EmitByte(unsigned char C, raw_ostream &OS) const {
@@ -175,7 +175,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       (Opcode != Mips::SLL_MM) && !Binary)
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
 
-  if (STI.getFeatureBits()[Mips::FeatureMicroMips]) {
+  if (STI.getFeatureBits() & Mips::FeatureMicroMips) {
     int NewOpcode = Mips::Std2MicroMips (Opcode, Mips::Arch_micromips);
     if (NewOpcode != -1) {
       if (Fixups.size() > N)
