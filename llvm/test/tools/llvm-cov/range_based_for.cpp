@@ -9,7 +9,7 @@
 // RUN: cd %t
 // RUN: cp %s %p/Inputs/range_based_for.gc* .
 
-// RUN: llvm-cov range_based_for.cpp | FileCheck %s --check-prefix=STDOUT
+// RUN: llvm-cov gcov range_based_for.cpp | FileCheck %s --check-prefix=STDOUT
 // STDOUT: File 'range_based_for.cpp'
 // STDOUT: Lines executed:100.00% of 5
 // STDOUT: range_based_for.cpp:creating 'range_based_for.cpp.gcov'

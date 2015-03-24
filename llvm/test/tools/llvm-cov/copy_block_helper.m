@@ -9,7 +9,7 @@
 // RUN: cd %t
 // RUN: cp %s %p/Inputs/copy_block_helper.gc* .
 
-// RUN: llvm-cov copy_block_helper.m | FileCheck %s --check-prefix=STDOUT
+// RUN: llvm-cov gcov copy_block_helper.m | FileCheck %s --check-prefix=STDOUT
 // STDOUT: File 'copy_block_helper.m'
 // STDOUT: Lines executed:100.00% of 5
 // STDOUT: copy_block_helper.m:creating 'copy_block_helper.m.gcov'

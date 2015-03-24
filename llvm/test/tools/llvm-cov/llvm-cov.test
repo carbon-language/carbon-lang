@@ -11,70 +11,70 @@ RUN: cd %t
 RUN: cp %p/Inputs/test* .
 
 # Basic behaviour with no flags
-RUN: llvm-cov test.c | diff -u test_no_options.output -
+RUN: llvm-cov gcov test.c | diff -u test_no_options.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_options.h.gcov test.h.gcov
 
 # Same, but specifying the object directory
 RUN: mkdir -p %t/objdir
 RUN: cp test.gcno test.gcda %t/objdir
-RUN: llvm-cov -o objdir test.c | diff -u test_no_options.output -
+RUN: llvm-cov gcov -o objdir test.c | diff -u test_no_options.output -
 RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_objdir.h.gcov test.h.gcov
 
 # Specifying an object file
-RUN: llvm-cov -o objdir/test.o test.c | diff -u test_no_options.output -
+RUN: llvm-cov gcov -o objdir/test.o test.c | diff -u test_no_options.output -
 RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_objdir.h.gcov test.h.gcov
 
 # Specifying an object file that could be ambiguous with a directory
-RUN: llvm-cov -o objdir/test test.c | diff -u test_no_options.output -
+RUN: llvm-cov gcov -o objdir/test test.c | diff -u test_no_options.output -
 RUN: diff -aub test_objdir.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_objdir.h.gcov test.h.gcov
 
 # With gcov output disabled
-RUN: llvm-cov -n test.c | diff -u test_no_output.output -
+RUN: llvm-cov gcov -n test.c | diff -u test_no_output.output -
 
 # Missing source files. This test is fragile, as it depends on being
 # run before we copy some sources into place in the next test.
-RUN: llvm-cov test_paths.cpp 2>/dev/null | diff -u test_missing.output -
+RUN: llvm-cov gcov test_paths.cpp 2>/dev/null | diff -u test_missing.output -
 RUN: diff -aub test_missing.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_missing.h.gcov test.h.gcov
 
 # Preserve paths. This mangles the output filenames.
 RUN: mkdir -p %t/srcdir/nested_dir
 RUN: cp test.cpp test.h %t/srcdir
-RUN: llvm-cov -p test_paths.cpp | diff -u test_preserve_paths.output -
+RUN: llvm-cov gcov -p test_paths.cpp | diff -u test_preserve_paths.output -
 RUN: diff -aub test_paths.cpp.gcov srcdir#nested_dir#^#test.cpp.gcov
 RUN: diff -aub test_paths.h.gcov srcdir#nested_dir#^#test.h.gcov
 
 # Don't preserve paths. Same results as preserve paths, but no mangling.
-RUN: llvm-cov test_paths.cpp | diff -u test_no_preserve_paths.output -
+RUN: llvm-cov gcov test_paths.cpp | diff -u test_no_preserve_paths.output -
 RUN: diff -aub test_paths.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_paths.h.gcov test.h.gcov
 
 # Long file names.
-RUN: llvm-cov -l test_paths.cpp | diff -u test_long_file_names.output -
+RUN: llvm-cov gcov -l test_paths.cpp | diff -u test_long_file_names.output -
 RUN: diff -aub test_paths.cpp.gcov test_paths.cpp##test.cpp.gcov
 RUN: diff -aub test_paths.h.gcov test_paths.cpp##test.h.gcov
 
 # Long file names and preserve paths.
-RUN: llvm-cov -lp -gcno test_paths.gcno -gcda test_paths.gcda srcdir/../test_paths.cpp | diff -u test_long_paths.output -
+RUN: llvm-cov gcov -lp -gcno test_paths.gcno -gcda test_paths.gcda srcdir/../test_paths.cpp | diff -u test_long_paths.output -
 RUN: diff -aub test_paths.cpp.gcov srcdir#^#test_paths.cpp##srcdir#nested_dir#^#test.cpp.gcov
 RUN: diff -aub test_paths.h.gcov srcdir#^#test_paths.cpp##srcdir#nested_dir#^#test.h.gcov
 
 # Function summaries. This changes stdout, but not the gcov files.
-RUN: llvm-cov test.c -f | diff -u test_-f.output -
+RUN: llvm-cov gcov test.c -f | diff -u test_-f.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_options.h.gcov test.h.gcov
 
 # All blocks. This doesn't affect stdout, only the gcov files.
-RUN: llvm-cov test.c -a | diff -u test_no_options.output -
+RUN: llvm-cov gcov test.c -a | diff -u test_no_options.output -
 RUN: diff -aub test_-a.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a.h.gcov test.h.gcov
 
 # Branch probabilities.
-RUN: llvm-cov test.c -a -b | diff -u test_-b.output -
+RUN: llvm-cov gcov test.c -a -b | diff -u test_-b.output -
 RUN: diff -aub test_-a_-b.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b.h.gcov test.h.gcov
 
@@ -83,36 +83,36 @@ RUN: diff -aub test_-a_-b.h.gcov test.h.gcov
 # FIXME: We don't correctly handle calls when -b and -f are used
 # together, so our output differs from gcov. Remove the 'not' from
 # this test once this is fixed.
-RUN: llvm-cov test.c -a -b -f | not diff -u test_-b_-f.output - >/dev/null
+RUN: llvm-cov gcov test.c -a -b -f | not diff -u test_-b_-f.output - >/dev/null
 RUN: diff -aub test_-a_-b.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b.h.gcov test.h.gcov
 
 # Summarize unconditional branches too.
-RUN: llvm-cov test.c -a -b -u | diff -u test_-b.output -
+RUN: llvm-cov gcov test.c -a -b -u | diff -u test_-b.output -
 RUN: diff -aub test_-a_-b_-u.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b_-u.h.gcov test.h.gcov
 
 # Absolute counts for branches.
-RUN: llvm-cov test.c -a -b -c -u | diff -u test_-b.output -
+RUN: llvm-cov gcov test.c -a -b -c -u | diff -u test_-b.output -
 RUN: diff -aub test_-a_-b_-c_-u.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_-a_-b_-c_-u.h.gcov test.h.gcov
 
 # Missing gcda file just gives 0 counts.
-RUN: llvm-cov test.c -gcda=no_such_gcda_file | diff -u test_no_gcda.output -
+RUN: llvm-cov gcov test.c -gcda=no_such_gcda_file | diff -u test_no_gcda.output -
 RUN: diff -aub test_no_gcda.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_no_gcda.h.gcov test.h.gcov
 
 # Invalid gcno file.
-RUN: llvm-cov test.c -gcno=test_read_fail.gcno
+RUN: llvm-cov gcov test.c -gcno=test_read_fail.gcno
 
 # Bad file checksum on gcda.
-RUN: llvm-cov test.c -gcda=test_file_checksum_fail.gcda
+RUN: llvm-cov gcov test.c -gcda=test_file_checksum_fail.gcda
 
 # Bad function checksum on gcda
-RUN: llvm-cov test.c -gcda=test_func_checksum_fail.gcda
+RUN: llvm-cov gcov test.c -gcda=test_func_checksum_fail.gcda
 
 # Has arcs from exit blocks
-RUN: llvm-cov test_exit_block_arcs.c 2>&1 | FileCheck %s -check-prefix=EXIT_BLOCK_ARCS
+RUN: llvm-cov gcov test_exit_block_arcs.c 2>&1 | FileCheck %s -check-prefix=EXIT_BLOCK_ARCS
 EXIT_BLOCK_ARCS: (main) has arcs from exit block.
 
 XFAIL: powerpc64-, s390x, mips-, mips64-, sparc
