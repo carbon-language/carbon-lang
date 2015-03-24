@@ -999,11 +999,13 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
 namespace {
   class FrameEmitterImpl {
     int CFAOffset;
+    int InitialCFAOffset;
     bool IsEH;
     const MCSymbol *SectionStart;
   public:
     FrameEmitterImpl(bool isEH)
-        : CFAOffset(0), IsEH(isEH), SectionStart(nullptr) {}
+        : CFAOffset(0), InitialCFAOffset(0), IsEH(isEH), SectionStart(nullptr) {
+    }
 
     void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
@@ -1345,6 +1347,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
     EmitCFIInstructions(streamer, Instructions, nullptr);
   }
 
+  InitialCFAOffset = CFAOffset;
+
   // Padding
   streamer.EmitValueToAlignment(IsEH ? 4 : MAI->getPointerSize());
 
@@ -1359,6 +1363,8 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
+
+  CFAOffset = InitialCFAOffset;
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
