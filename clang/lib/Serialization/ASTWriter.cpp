@@ -1160,12 +1160,17 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Stream.EmitRecordWithBlob(MetadataAbbrevCode, Record,
                             getClangFullRepositoryVersion());
 
-  // Signature
-  Record.clear();
-  Record.push_back(getSignature());
-  Stream.EmitRecord(SIGNATURE, Record);
-
   if (WritingModule) {
+    // For implicit modules we output a signature that we can use to ensure
+    // duplicate module builds don't collide in the cache as their output order
+    // is non-deterministic.
+    // FIXME: Remove this when output is deterministic.
+    if (Context.getLangOpts().ImplicitModules) {
+      Record.clear();
+      Record.push_back(getSignature());
+      Stream.EmitRecord(SIGNATURE, Record);
+    }
+
     // Module name
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(MODULE_NAME));
@@ -3507,14 +3512,12 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
     // Create the on-disk hash table representation. We only store offsets
     // for identifiers that appear here for the first time.
     IdentifierOffsets.resize(NextIdentID - FirstIdentID);
-    for (llvm::DenseMap<const IdentifierInfo *, IdentID>::iterator
-           ID = IdentifierIDs.begin(), IDEnd = IdentifierIDs.end();
-         ID != IDEnd; ++ID) {
-      assert(ID->first && "NULL identifier in identifier table");
-      if (!Chain || !ID->first->isFromAST() || 
-          ID->first->hasChangedSinceDeserialization())
-        Generator.insert(const_cast<IdentifierInfo *>(ID->first), ID->second,
-                         Trait);
+    for (auto IdentIDPair : IdentifierIDs) {
+      IdentifierInfo *II = const_cast<IdentifierInfo *>(IdentIDPair.first);
+      IdentID ID = IdentIDPair.second;
+      assert(II && "NULL identifier in identifier table");
+      if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization())
+        Generator.insert(II, ID, Trait);
     }
 
     // Create the on-disk hash table in a buffer.

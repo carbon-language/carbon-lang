@@ -225,7 +225,7 @@ private:
   /// The ID numbers for identifiers are consecutive (in order of
   /// discovery), starting at 1. An ID of zero refers to a NULL
   /// IdentifierInfo.
-  llvm::DenseMap<const IdentifierInfo *, serialization::IdentID> IdentifierIDs;
+  llvm::MapVector<const IdentifierInfo *, serialization::IdentID> IdentifierIDs;
 
   /// \brief The first ID number we can use for our own macros.
   serialization::MacroID FirstMacroID;
