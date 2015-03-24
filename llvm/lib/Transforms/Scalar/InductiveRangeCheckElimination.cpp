@@ -707,30 +707,40 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
     }
   }
 
-  auto IsInductionVar = [&SE](const SCEVAddRecExpr *AR, bool &IsIncreasing) {
-    if (!AR->isAffine())
-      return false;
+  auto HasNoSignedWrap = [&](const SCEVAddRecExpr *AR) {
+    if (AR->getNoWrapFlags(SCEV::FlagNSW))
+      return true;
 
     IntegerType *Ty = cast<IntegerType>(AR->getType());
     IntegerType *WideTy =
         IntegerType::get(Ty->getContext(), Ty->getBitWidth() * 2);
 
+    const SCEVAddRecExpr *ExtendAfterOp =
+        dyn_cast<SCEVAddRecExpr>(SE.getSignExtendExpr(AR, WideTy));
+    if (ExtendAfterOp) {
+      const SCEV *ExtendedStart = SE.getSignExtendExpr(AR->getStart(), WideTy);
+      const SCEV *ExtendedStep =
+          SE.getSignExtendExpr(AR->getStepRecurrence(SE), WideTy);
+
+      bool NoSignedWrap = ExtendAfterOp->getStart() == ExtendedStart &&
+                          ExtendAfterOp->getStepRecurrence(SE) == ExtendedStep;
+
+      if (NoSignedWrap)
+        return true;
+    }
+
+    // We may have proved this when computing the sign extension above.
+    return AR->getNoWrapFlags(SCEV::FlagNSW) != SCEV::FlagAnyWrap;
+  };
+
+  auto IsInductionVar = [&](const SCEVAddRecExpr *AR, bool &IsIncreasing) {
+    if (!AR->isAffine())
+      return false;
+
     // Currently we only work with induction variables that have been proved to
     // not wrap.  This restriction can potentially be lifted in the future.
 
-    const SCEVAddRecExpr *ExtendAfterOp =
-        dyn_cast<SCEVAddRecExpr>(SE.getSignExtendExpr(AR, WideTy));
-    if (!ExtendAfterOp)
-      return false;
-
-    const SCEV *ExtendedStart = SE.getSignExtendExpr(AR->getStart(), WideTy);
-    const SCEV *ExtendedStep =
-        SE.getSignExtendExpr(AR->getStepRecurrence(SE), WideTy);
-
-    bool NoSignedWrap = ExtendAfterOp->getStart() == ExtendedStart &&
-                        ExtendAfterOp->getStepRecurrence(SE) == ExtendedStep;
-
-    if (!NoSignedWrap)
+    if (!HasNoSignedWrap(AR))
       return false;
 
     if (const SCEVConstant *StepExpr =
