@@ -158,14 +158,3 @@ namespace MisplacedParameterPack {
   template <int... N...> // expected-error {{'...' must immediately precede declared identifier}}
   void redundantEllipsisInNonTypeTemplateParameter();
 }
-
-namespace MisplacedDeclSpecAfterVirtSpec {
-  struct B {
-    virtual void f();
-    virtual void f() volatile const;
-  };
-  struct D : B {
-    virtual void f() override;
-    virtual void f() override final const volatile; // expected-error {{'const' qualifier may not appear after the virtual specifier 'final'}} expected-error {{'volatile' qualifier may not appear after the virtual specifier 'final'}}
-  };
-}
