@@ -97,7 +97,6 @@ class CMIDriver : public CMICmnBase,
     virtual bool DoInitialize(void);
     virtual bool DoShutdown(void);
     virtual bool DoMainLoop(void);
-    virtual void DoResizeWindow(const uint32_t vWindowSizeWsCol);
     virtual lldb::SBError DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting);
     virtual CMIUtilString GetError(void) const;
     virtual const CMIUtilString &GetName(void) const;

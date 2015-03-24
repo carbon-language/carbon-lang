@@ -33,7 +33,6 @@
 // In house headers:
 #include "MICmnConfig.h"
 #include "Platform.h" // Define signals - CODETAG_IOR_SIGNALS
-#include "Driver.h"
 #include "MIDriverMgr.h"
 #include "MIDriver.h"
 #include "MICmnResources.h"

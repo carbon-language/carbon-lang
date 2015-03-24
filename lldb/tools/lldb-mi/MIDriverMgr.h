@@ -59,7 +59,6 @@ class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
         virtual bool DoInitialize(void) = 0;
         virtual bool DoShutdown(void) = 0;
         virtual bool DoMainLoop(void) = 0;
-        virtual void DoResizeWindow(const uint32_t vWindowSizeWsCol) = 0;
         virtual lldb::SBError DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting) = 0;
         virtual CMIUtilString GetError(void) const = 0;
         virtual const CMIUtilString &GetName(void) const = 0;
@@ -90,7 +89,6 @@ class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
     //
     // MI Proxy fn to current specified working driver
     bool DriverMainLoop(void);
-    void DriverResizeWindow(const uint32_t vWindowSizeWsCol);
     bool DriverParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting);
     CMIUtilString DriverGetError(void) const;
     CMIUtilString DriverGetName(void) const;

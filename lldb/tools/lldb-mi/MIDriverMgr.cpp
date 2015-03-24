@@ -16,7 +16,6 @@
 #include "MICmnLog.h"
 #include "MICmnLogMediumFile.h"
 #include "MIDriver.h"
-#include "MIUtilTermios.h"
 #include "MICmnStreamStdout.h"
 #include "MIUtilSingletonHelper.h"
 
@@ -70,11 +69,6 @@ CMIDriverMgr::Initialize(void)
     MI::ModuleInit<CMICmnLog>(IDS_MI_INIT_ERR_LOG, bOk, errMsg);
     MI::ModuleInit<CMICmnResources>(IDS_MI_INIT_ERR_RESOURCES, bOk, errMsg);
 
-    if (bOk)
-    {
-        MIUtilTermios::StdinTermiosSet();
-    }
-
     m_bInitialized = bOk;
 
     if (!bOk)
@@ -116,7 +110,6 @@ CMIDriverMgr::Shutdown(void)
 
     // Tidy up
     UnregisterDriverAll();
-    MIUtilTermios::StdinTermiosReset();
 
     // Note shutdown order is important here
     MI::ModuleShutdown<CMICmnResources>(IDE_MI_SHTDWN_ERR_RESOURCES, bOk, errMsg);
@@ -313,26 +306,6 @@ CMIDriverMgr::DriverMainLoop(void)
     }
 
     return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Call *this driver to resize the console window.
-// Type:    Method.
-// Args:    vWindowSizeWsCol  - (R) New window column size.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-void
-CMIDriverMgr::DriverResizeWindow(const uint32_t vWindowSizeWsCol)
-{
-    if (m_pDriverCurrent != nullptr)
-        return m_pDriverCurrent->DoResizeWindow(vWindowSizeWsCol);
-    else
-    {
-        const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_CURRENT_NOT_SET)));
-        CMICmnStreamStdout::Instance().Write(errMsg, true);
-    }
 }
 
 //++ ------------------------------------------------------------------------------------

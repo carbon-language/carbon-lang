@@ -13,7 +13,6 @@
 #include "lldb/API/SBError.h"
 
 // In-house headers:
-#include "Driver.h"
 #include "MIDriver.h"
 #include "MICmnResources.h"
 #include "MICmnLog.h"
@@ -309,20 +308,6 @@ CMIUtilString
 CMIDriver::GetError(void) const
 {
     return GetErrorDescription();
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Call *this driver to resize the console window.
-// Type:    Overridden.
-// Args:    vTermWidth - (R) New window column size.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-void
-CMIDriver::DoResizeWindow(const uint32_t vTermWidth)
-{
-    GetTheDebugger().SetTerminalWidth(vTermWidth);
 }
 
 //++ ------------------------------------------------------------------------------------
