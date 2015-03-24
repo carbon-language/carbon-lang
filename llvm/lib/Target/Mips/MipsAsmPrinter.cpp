@@ -437,7 +437,7 @@ bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock*
 
 // Print out an operand for an inline asm expression.
 bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
-                                     unsigned AsmVariant,const char *ExtraCode,
+                                     unsigned AsmVariant, const char *ExtraCode,
                                      raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
@@ -539,18 +539,24 @@ bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                            unsigned OpNum, unsigned AsmVariant,
                                            const char *ExtraCode,
                                            raw_ostream &O) {
-  int Offset = 0;
+  assert(OpNum + 1 < MI->getNumOperands() && "Insufficient operands");
+  const MachineOperand &BaseMO = MI->getOperand(OpNum);
+  const MachineOperand &OffsetMO = MI->getOperand(OpNum + 1);
+  assert(BaseMO.isReg() && "Unexpected base pointer for inline asm memory operand.");
+  assert(OffsetMO.isImm() && "Unexpected offset for inline asm memory operand.");
+  int Offset = OffsetMO.getImm();
+
   // Currently we are expecting either no ExtraCode or 'D'
   if (ExtraCode) {
     if (ExtraCode[0] == 'D')
-      Offset = 4;
+      Offset += 4;
     else
       return true; // Unknown modifier.
+    // FIXME: M = high order bits
+    // FIXME: L = low order bits
   }
 
-  const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isReg() && "unexpected inline asm memory operand");
-  O << Offset << "($" << MipsInstPrinter::getRegisterName(MO.getReg()) << ")";
+  O << Offset << "($" << MipsInstPrinter::getRegisterName(BaseMO.getReg()) << ")";
 
   return false;
 }

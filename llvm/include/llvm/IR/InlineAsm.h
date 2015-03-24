@@ -249,6 +249,7 @@ public:
     Constraint_S,
     Constraint_T,
     Constraint_Z,
+    Constraint_ZC,
     Constraint_Zy,
     Constraints_Max = Constraint_Zy,
     Constraints_ShiftAmount = 16,

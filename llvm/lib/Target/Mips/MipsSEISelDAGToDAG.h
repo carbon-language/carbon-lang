@@ -56,10 +56,16 @@ private:
   bool selectIntAddr(SDValue Addr, SDValue &Base,
                      SDValue &Offset) const override;
 
+  bool selectAddrRegImm9(SDValue Addr, SDValue &Base,
+                         SDValue &Offset) const;
+
   bool selectAddrRegImm10(SDValue Addr, SDValue &Base,
                           SDValue &Offset) const;
 
   bool selectAddrRegImm12(SDValue Addr, SDValue &Base,
+                          SDValue &Offset) const;
+
+  bool selectAddrRegImm16(SDValue Addr, SDValue &Base,
                           SDValue &Offset) const;
 
   bool selectIntAddrMM(SDValue Addr, SDValue &Base,
@@ -111,6 +117,10 @@ private:
   // Insert instructions to initialize the global base register in the
   // first MBB of the function.
   void initGlobalBaseReg(MachineFunction &MF);
+
+  bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                    unsigned ConstraintID,
+                                    std::vector<SDValue> &OutOps) override;
 };
 
 FunctionPass *createMipsSEISelDag(MipsTargetMachine &TM);
