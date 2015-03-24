@@ -27,6 +27,7 @@
 #include "MICmdCmdFile.h"
 #include "MICmdCmdGdbInfo.h"
 #include "MICmdCmdGdbSet.h"
+#include "MICmdCmdGdbShow.h"
 #include "MICmdCmdGdbThread.h"
 #include "MICmdCmdMiscellanous.h"
 #include "MICmdCmdStack.h"
@@ -103,6 +104,7 @@ MICmnCommands::RegisterAll(void)
     bOk &= Register<CMICmdCmdGdbExit>();
     bOk &= Register<CMICmdCmdGdbInfo>();
     bOk &= Register<CMICmdCmdGdbSet>();
+    bOk &= Register<CMICmdCmdGdbShow>();
     bOk &= Register<CMICmdCmdGdbThread>();
     bOk &= Register<CMICmdCmdInferiorTtySet>();
     bOk &= Register<CMICmdCmdInterpreterExec>();

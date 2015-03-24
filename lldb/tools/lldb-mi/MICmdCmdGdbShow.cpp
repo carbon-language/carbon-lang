@@ -1,4 +1,4 @@
-//===-- MICmdCmdGdbSet.cpp --------------------------------------*- C++ -*-===//
+//===-- MICmdCmdGdbShow.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Overview:    CMICmdCmdGdbSet implementation.
+// Overview:    CMICmdCmdGdbShow implementation.
 
 // In-house headers:
-#include "MICmdCmdGdbSet.h"
+#include "MICmdCmdGdbShow.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
 #include "MICmdArgValString.h"
@@ -19,20 +19,18 @@
 #include "MICmnLLDBDebugSessionInfo.h"
 
 // Instantiations:
-const CMICmdCmdGdbSet::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbSet::ms_mapGdbOptionNameToFnGdbOptionPtr = {
-    {"target-async", &CMICmdCmdGdbSet::OptionFnTargetAsync},
-    // { "auto-solib-add", &CMICmdCmdGdbSet::OptionFnAutoSolibAdd },    // Example code if need to implement GDB set other options
-    {"solib-search-path", &CMICmdCmdGdbSet::OptionFnSolibSearchPath},
-    {"fallback", &CMICmdCmdGdbSet::OptionFnFallback}};
+const CMICmdCmdGdbShow::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbShow::ms_mapGdbOptionNameToFnGdbOptionPtr = {
+    {"target-async", &CMICmdCmdGdbShow::OptionFnTargetAsync},
+    {"fallback", &CMICmdCmdGdbShow::OptionFnFallback}};
 
 //++ ------------------------------------------------------------------------------------
-// Details: CMICmdCmdGdbSet constructor.
+// Details: CMICmdCmdGdbShow constructor.
 // Type:    Method.
 // Args:    None.
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdGdbSet::CMICmdCmdGdbSet(void)
+CMICmdCmdGdbShow::CMICmdCmdGdbShow(void)
     : m_constStrArgNamedThreadGrp("thread-group")
     , m_constStrArgNamedGdbOption("option")
     , m_bGdbOptionRecognised(true)
@@ -41,20 +39,20 @@ CMICmdCmdGdbSet::CMICmdCmdGdbSet(void)
     , m_strGdbOptionFnError(MIRSRC(IDS_WORD_ERR_MSG_NOT_IMPLEMENTED_BRKTS))
 {
     // Command factory matches this name with that received from the stdin stream
-    m_strMiCmd = "gdb-set";
+    m_strMiCmd = "gdb-show";
 
     // Required by the CMICmdFactory when registering *this command
-    m_pSelfCreatorFn = &CMICmdCmdGdbSet::CreateSelf;
+    m_pSelfCreatorFn = &CMICmdCmdGdbShow::CreateSelf;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: CMICmdCmdGdbSet destructor.
+// Details: CMICmdCmdGdbShow destructor.
 // Type:    Overrideable.
 // Args:    None.
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdGdbSet::~CMICmdCmdGdbSet(void)
+CMICmdCmdGdbShow::~CMICmdCmdGdbShow(void)
 {
 }
 
@@ -63,12 +61,12 @@ CMICmdCmdGdbSet::~CMICmdCmdGdbSet(void)
 //          arguments to extract values for each of those arguments.
 // Type:    Overridden.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::ParseArgs(void)
+CMICmdCmdGdbShow::ParseArgs(void)
 {
     bool bOk = m_setCmdArgs.Add(
         *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
@@ -80,20 +78,19 @@ CMICmdCmdGdbSet::ParseArgs(void)
 
 //++ ------------------------------------------------------------------------------------
 // Details: The invoker requires this function. The command is executed in this function.
-//          The command is likely to communicate with the LLDB SBDebugger in here.
 // Type:    Overridden.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::Execute(void)
+CMICmdCmdGdbShow::Execute(void)
 {
     CMICMDBASE_GETOPTION(pArgGdbOption, ListOfN, m_constStrArgNamedGdbOption);
     const CMICmdArgValListBase::VecArgObjPtr_t &rVecWords(pArgGdbOption->GetExpectedOptions());
 
-    // Get the gdb-set option to carry out. This option will be used as an action
+    // Get the gdb-show option to carry out. This option will be used as an action
     // which should be done. Further arguments will be used as parameters for it.
     CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecWords.begin();
     const CMICmdArgValString *pOption = static_cast<const CMICmdArgValString *>(*it);
@@ -114,7 +111,7 @@ CMICmdCmdGdbSet::Execute(void)
     FnGdbOptionPtr pPrintRequestFn = nullptr;
     if (!GetOptionFn(strOption, pPrintRequestFn))
     {
-        // For unimplemented option handlers, fallback on a generic handler
+        // For unimplemented option handlers, fallback to a generic handler
         // ToDo: Remove this when ALL options have been implemented
         if (!GetOptionFn("fallback", pPrintRequestFn))
         {
@@ -136,12 +133,12 @@ CMICmdCmdGdbSet::Execute(void)
 //          for the work carried out in the Execute() method.
 // Type:    Overridden.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::Acknowledge(void)
+CMICmdCmdGdbShow::Acknowledge(void)
 {
     // Print error if option isn't recognized:
     // ^error,msg="The request '%s' was not recognized, not implemented"
@@ -156,8 +153,17 @@ CMICmdCmdGdbSet::Acknowledge(void)
     }
 
     // ^done,value="%s"
-    if (m_bGdbOptionFnSuccessful)
+    if (m_bGdbOptionFnSuccessful && !m_strValue.empty())
     {
+        const CMICmnMIValueConst miValueConst(m_strValue);
+        const CMICmnMIValueResult miValueResult("value", miValueConst);
+        const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult);
+        m_miResultRecord = miRecordResult;
+        return MIstatus::success;
+    }
+    else if (m_bGdbOptionFnSuccessful)
+    {
+        // Ignore empty value (for fallback)
         const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
         m_miResultRecord = miRecordResult;
         return MIstatus::success;
@@ -182,9 +188,9 @@ CMICmdCmdGdbSet::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdGdbSet::CreateSelf(void)
+CMICmdCmdGdbShow::CreateSelf(void)
 {
-    return new CMICmdCmdGdbSet();
+    return new CMICmdCmdGdbShow();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -196,7 +202,7 @@ CMICmdCmdGdbSet::CreateSelf(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::GetOptionFn(const CMIUtilString &vrPrintFnName, FnGdbOptionPtr &vrwpFn) const
+CMICmdCmdGdbShow::GetOptionFn(const CMIUtilString &vrPrintFnName, FnGdbOptionPtr &vrwpFn) const
 {
     vrwpFn = nullptr;
 
@@ -211,8 +217,8 @@ CMICmdCmdGdbSet::GetOptionFn(const CMIUtilString &vrPrintFnName, FnGdbOptionPtr 
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Carry out work to complete the GDB set option 'target-async' to prepare
-//          and send back information asked for.
+// Details: Carry out work to complete the GDB show option 'target-async' to prepare
+//          and send back the requested information.
 // Type:    Method.
 // Args:    vrWords - (R) List of additional parameters used by this option.
 // Return:  MIstatus::success - Function succeeded.
@@ -220,89 +226,34 @@ CMICmdCmdGdbSet::GetOptionFn(const CMIUtilString &vrPrintFnName, FnGdbOptionPtr 
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords)
+CMICmdCmdGdbShow::OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords)
 {
-    bool bAsyncMode;
-    bool bOk = true;
+    MIunused(vrWords);
 
-    if (vrWords.size() > 1)
-        // Too many arguments.
-        bOk = false;
-    else if (vrWords.size() == 0)
-        // If no arguments, default is "on".
-        bAsyncMode = true;
-    else if (CMIUtilString::Compare(vrWords[0], "on"))
-        bAsyncMode = true;
-    else if (CMIUtilString::Compare(vrWords[0], "off"))
-        bAsyncMode = false;
-    else
-        // Unrecognized argument.
-        bOk = false;
-
-    if (!bOk)
-    {
-        // Report error.
-        m_bGbbOptionFnHasError = true;
-        m_strGdbOptionFnError = MIRSRC(IDS_CMD_ERR_GDBSET_OPT_TARGETASYNC);
-        return MIstatus::failure;
-    }
-
-    // Turn async mode on/off.
+    // Get async mode
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    rSessionInfo.GetDebugger().SetAsync(bAsyncMode);
+    const bool bAsyncMode = rSessionInfo.GetDebugger().GetAsync();
 
+    m_strValue = bAsyncMode ? "on" : "off";
     return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Carry out work to complete the GDB set option 'solib-search-path' to prepare
-//          and send back information asked for.
-// Type:    Method.
-// Args:    vrWords - (R) List of additional parameters used by this option.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmdCmdGdbSet::OptionFnSolibSearchPath(const CMIUtilString::VecString_t &vrWords)
-{
-    // Check we have at least one argument
-    if (vrWords.size() < 1)
-    {
-        m_bGbbOptionFnHasError = true;
-        m_strGdbOptionFnError = MIRSRC(IDS_CMD_ERR_GDBSET_OPT_SOLIBSEARCHPATH);
-        return MIstatus::failure;
-    }
-    const CMIUtilString &rStrValSolibPath(vrWords[0]);
-
-    // Add 'solib-search-path' to the shared data list
-    const CMIUtilString &rStrKeySolibPath(m_rLLDBDebugSessionInfo.m_constStrSharedDataSolibPath);
-    if (!m_rLLDBDebugSessionInfo.SharedDataAdd<CMIUtilString>(rStrKeySolibPath, rStrValSolibPath))
-    {
-        m_bGbbOptionFnHasError = false;
-        SetError(CMIUtilString::Format(MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_ADD), m_cmdData.strMiCmd.c_str(), rStrKeySolibPath.c_str()));
-        return MIstatus::failure;
-    }
-
-    return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Carry out work to complete the GDB set option to prepare and send back the
+// Details: Carry out work to complete the GDB show option to prepare and send back the
 //          requested information.
 // Type:    Method.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::OptionFnFallback(const CMIUtilString::VecString_t &vrWords)
+CMICmdCmdGdbShow::OptionFnFallback(const CMIUtilString::VecString_t &vrWords)
 {
     MIunused(vrWords);
 
     // Do nothing - intentional. This is a fallback function to do nothing.
-    // This allows the search for gdb-set options to always succeed when the option is not
+    // This allows the search for gdb-show options to always succeed when the option is not
     // found (implemented).
 
     return MIstatus::success;

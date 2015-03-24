@@ -23,6 +23,7 @@ set(LLDB_MI_SOURCES
   MICmdCmdFile.cpp
   MICmdCmdGdbInfo.cpp
   MICmdCmdGdbSet.cpp
+  MICmdCmdGdbShow.cpp
   MICmdCmdGdbThread.cpp
   MICmdCmdMiscellanous.cpp
   MICmdCmdStack.cpp
