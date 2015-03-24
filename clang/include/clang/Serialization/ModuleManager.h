@@ -165,6 +165,8 @@ public:
     OutOfDate
   };
 
+  typedef ASTFileSignature(*ASTFileSignatureReader)(llvm::BitstreamReader &);
+
   /// \brief Attempts to create a new module and add it to the list of known
   /// modules.
   ///
@@ -204,8 +206,7 @@ public:
                             ModuleFile *ImportedBy, unsigned Generation,
                             off_t ExpectedSize, time_t ExpectedModTime,
                             ASTFileSignature ExpectedSignature,
-                            std::function<ASTFileSignature(llvm::BitstreamReader &)>
-                                ReadSignature,
+                            ASTFileSignatureReader ReadSignature,
                             ModuleFile *&Module,
                             std::string &ErrorStr);
 

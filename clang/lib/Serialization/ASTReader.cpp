@@ -3807,6 +3807,14 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 
 static ASTFileSignature readASTFileSignature(llvm::BitstreamReader &StreamFile);
 
+/// \brief Whether \p Stream starts with the AST/PCH file magic number 'CPCH'.
+static bool startsWithASTFileMagic(BitstreamCursor &Stream) {
+  return Stream.Read(8) == 'C' &&
+         Stream.Read(8) == 'P' &&
+         Stream.Read(8) == 'C' &&
+         Stream.Read(8) == 'H';
+}
+
 ASTReader::ASTReadResult
 ASTReader::ReadASTCore(StringRef FileName,
                        ModuleKind Type,
@@ -3876,10 +3884,7 @@ ASTReader::ReadASTCore(StringRef FileName,
   F.SizeInBits = F.Buffer->getBufferSize() * 8;
   
   // Sniff for the signature.
-  if (Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'P' ||
-      Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H') {
+  if (!startsWithASTFileMagic(Stream)) {
     Diag(diag::err_not_a_pch_file) << FileName;
     return Failure;
   }
@@ -4119,14 +4124,12 @@ static bool SkipCursorToBlock(BitstreamCursor &Cursor, unsigned BlockID) {
   }
 }
 
+/// \brief Reads and return the signature record from \p StreamFile's control
+/// block, or else returns 0.
 static ASTFileSignature readASTFileSignature(llvm::BitstreamReader &StreamFile){
   BitstreamCursor Stream(StreamFile);
-  if (Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'P' ||
-      Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H') {
+  if (!startsWithASTFileMagic(Stream))
     return 0;
-  }
 
   // Scan for the CONTROL_BLOCK_ID block.
   if (SkipCursorToBlock(Stream, CONTROL_BLOCK_ID))
@@ -4168,10 +4171,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
   BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.
-  if (Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'P' ||
-      Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H') {
+  if (!startsWithASTFileMagic(Stream)) {
     Diags.Report(diag::err_fe_not_a_pch_file) << ASTFileName;
     return std::string();
   }
@@ -4267,12 +4267,8 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
   BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.
-  if (Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'P' ||
-      Stream.Read(8) != 'C' ||
-      Stream.Read(8) != 'H') {
+  if (!startsWithASTFileMagic(Stream))
     return true;
-  }
 
   // Scan for the CONTROL_BLOCK_ID block.
   if (SkipCursorToBlock(Stream, CONTROL_BLOCK_ID))
