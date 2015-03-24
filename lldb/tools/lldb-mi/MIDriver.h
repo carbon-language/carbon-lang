@@ -129,6 +129,7 @@ class CMIDriver : public CMICmnBase,
     bool DoAppQuit(void);
     bool InterpretCommand(const CMIUtilString &vTextLine);
     bool InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbCmdYesValid);
+    CMIUtilString WrapCLICommandIntoMICommand(const CMIUtilString &vTextLine) const;
     bool InterpretCommandFallThruDriver(const CMIUtilString &vTextLine, bool &vwbCmdYesValid);
     bool ExecuteCommand(const SMICmdData &vCmdData);
     bool StartWorkerThreads(void);

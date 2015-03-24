@@ -806,6 +806,79 @@ CMIDriver::InterpretCommand(const CMIUtilString &vTextLine)
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: Helper function for CMIDriver::InterpretCommandThisDriver.
+//          Convert a CLI command to MI command (just wrap any CLI command
+//          into "<tokens>-interpreter-exec command \"<CLI command>\"").
+// Type:    Method.
+// Args:    vTextLine   - (R) Text data representing a possible command.
+// Return:  CMIUtilString   - The original MI command or converted CLI command.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+CMIUtilString
+CMIDriver::WrapCLICommandIntoMICommand(const CMIUtilString &vTextLine) const
+{
+    // Tokens contain following digits
+    static const CMIUtilString digits("0123456789");
+
+    // Consider an algorithm on the following example:
+    // 001-file-exec-and-symbols "/path/to/file"
+    //
+    // 1. Skip a command token
+    // For example:
+    // 001-file-exec-and-symbols "/path/to/file"
+    // 001target create "/path/to/file"
+    //    ^ -- command starts here (in both cases)
+    // Also possible case when command not found:
+    // 001
+    //    ^ -- i.e. only tokens are present (or empty string at all)
+    const MIuint nCommandOffset = vTextLine.find_first_not_of(digits);
+
+    // 2. Check if command is empty
+    // For example:
+    // 001-file-exec-and-symbols "/path/to/file"
+    // 001target create "/path/to/file"
+    //    ^ -- command not empty (in both cases)
+    // or:
+    // 001
+    //    ^ -- command wasn't found
+    const bool bIsEmptyCommand = (nCommandOffset == (MIuint)CMIUtilString::npos);
+
+    // 3. Check and exit if it isn't a CLI command
+    // For example:
+    // 001-file-exec-and-symbols "/path/to/file"
+    // 001
+    //    ^ -- it isn't CLI command (in both cases)
+    // or:
+    // 001target create "/path/to/file"
+    //    ^ -- it's CLI command
+    const bool bIsCliCommand = !bIsEmptyCommand && (vTextLine.at(nCommandOffset) != '-');
+    if (!bIsCliCommand)
+        return vTextLine;
+
+   // 4. Wrap CLI command to make it MI-compatible
+   //
+   // 001target create "/path/to/file"
+   // ^^^ -- token
+   const std::string vToken(vTextLine.begin(), vTextLine.begin() + nCommandOffset);
+   // 001target create "/path/to/file"
+   //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -- CLI command
+   const CMIUtilString vCliCommand(std::string(vTextLine, nCommandOffset).c_str());
+
+   // 5. Escape special characters and embed the command in a string
+   // Result: it looks like -- target create \"/path/to/file\".
+   const std::string vShieldedCliCommand(vCliCommand.AddSlashes());
+
+   // 6. Turn the CLI command into an MI command, as in:
+   // 001-interpreter-exec command "target create \"/path/to/file\""
+   // ^^^ -- token
+   //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^                               ^ -- wrapper
+   //                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -- shielded CLI command
+   return CMIUtilString::Format("%s-interpreter-exec command \"%s\"",
+                                vToken.c_str(), vShieldedCliCommand.c_str());
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: Interpret the text data and match against current commands to see if there
 //          is a match. If a match then the command is issued and actioned on. If a
 //          command cannot be found to match then vwbCmdYesValid is set to false and
@@ -813,7 +886,7 @@ CMIDriver::InterpretCommand(const CMIUtilString &vTextLine)
 //          This function is used by the application's main thread.
 // Type:    Method.
 // Args:    vTextLine           - (R) Text data representing a possible command.
-//          vwbCmdYesValid      - (W) True = Command invalid, false = command acted on.
+//          vwbCmdYesValid      - (W) True = Command valid, false = command not handled.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.
@@ -821,12 +894,14 @@ CMIDriver::InterpretCommand(const CMIUtilString &vTextLine)
 bool
 CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbCmdYesValid)
 {
-    vwbCmdYesValid = false;
+    // Convert any CLI commands into MI commands
+    CMIUtilString vMITextLine(WrapCLICommandIntoMICommand(vTextLine));
 
+    vwbCmdYesValid = false;
     bool bCmdNotInCmdFactor = false;
     SMICmdData cmdData;
     CMICmdMgr &rCmdMgr = CMICmdMgr::Instance();
-    if (!rCmdMgr.CmdInterpret(vTextLine, vwbCmdYesValid, bCmdNotInCmdFactor, cmdData))
+    if (!rCmdMgr.CmdInterpret(vMITextLine, vwbCmdYesValid, bCmdNotInCmdFactor, cmdData))
         return MIstatus::failure;
 
     if (vwbCmdYesValid)
@@ -840,12 +915,12 @@ CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbC
     // Check for escape character, may be cursor control characters
     // This code is not necessary for application operation, just want to keep tabs on what
     // is been given to the driver to try and intepret.
-    if (vTextLine.at(0) == 27)
+    if (vMITextLine.at(0) == 27)
     {
         CMIUtilString logInput(MIRSRC(IDS_STDIN_INPUT_CTRL_CHARS));
-        for (MIuint i = 0; i < vTextLine.length(); i++)
+        for (MIuint i = 0; i < vMITextLine.length(); i++)
         {
-            logInput += CMIUtilString::Format("%d ", vTextLine.at(i));
+            logInput += CMIUtilString::Format("%d ", vMITextLine.at(i));
         }
         m_pLog->WriteLog(logInput);
         return MIstatus::success;
@@ -858,7 +933,7 @@ CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbC
         strNotInCmdFactory = CMIUtilString::Format(MIRSRC(IDS_DRIVER_CMD_NOT_IN_FACTORY), cmdData.strMiCmd.c_str());
     const CMIUtilString strNot(CMIUtilString::Format("%s ", MIRSRC(IDS_WORD_NOT)));
     const CMIUtilString msg(
-        CMIUtilString::Format(MIRSRC(IDS_DRIVER_CMD_RECEIVED), vTextLine.c_str(), strNot.c_str(), strNotInCmdFactory.c_str()));
+        CMIUtilString::Format(MIRSRC(IDS_DRIVER_CMD_RECEIVED), vMITextLine.c_str(), strNot.c_str(), strNotInCmdFactory.c_str()));
     const CMICmnMIValueConst vconst = CMICmnMIValueConst(msg);
     const CMICmnMIValueResult valueResult("msg", vconst);
     const CMICmnMIResultRecord miResultRecord(cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, valueResult);
