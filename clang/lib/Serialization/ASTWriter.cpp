@@ -5597,6 +5597,7 @@ void ASTWriter::FlushCXXCtorInitializers() {
   RecordData Record;
 
   unsigned N = CXXCtorInitializersToWrite.size();
+  (void)N; // Silence unused warning in non-assert builds.
   for (auto &Init : CXXCtorInitializersToWrite) {
     Record.clear();
 
