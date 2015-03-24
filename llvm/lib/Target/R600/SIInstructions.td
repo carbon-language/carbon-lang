@@ -3339,6 +3339,8 @@ multiclass BFMPatterns <ValueType vt, InstSI BFM, InstSI MOV> {
 defm : BFMPatterns <i32, S_BFM_B32, S_MOV_B32>;
 // FIXME: defm : BFMPatterns <i64, S_BFM_B64, S_MOV_B64>;
 
+def : BFEPattern <V_BFE_U32, S_MOV_B32>;
+
 //===----------------------------------------------------------------------===//
 // Fract Patterns
 //===----------------------------------------------------------------------===//

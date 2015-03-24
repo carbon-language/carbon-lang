@@ -578,21 +578,19 @@ class SHA256MaPattern <Instruction BFI_INT, Instruction XOR> : Pat <
 
 // Bitfield extract patterns
 
-/*
+def IMMZeroBasedBitfieldMask : PatLeaf <(imm), [{
+  return isMask_32(N->getZExtValue());
+}]>;
 
-XXX: The BFE pattern is not working correctly because the XForm is not being
-applied.
+def IMMPopCount : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(countPopulation(N->getZExtValue()),
+                                   MVT::i32);
+}]>;
 
-def legalshift32 : ImmLeaf <i32, [{return Imm >=0 && Imm < 32;}]>;
-def bfemask : PatLeaf <(imm), [{return isMask_32(N->getZExtValue());}],
-                            SDNodeXForm<imm, [{ return CurDAG->getTargetConstant(countTrailingOnes(N->getZExtValue()), MVT::i32);}]>>;
-
-class BFEPattern <Instruction BFE> : Pat <
-  (and (srl i32:$x, legalshift32:$y), bfemask:$z),
-  (BFE $x, $y, $z)
+class BFEPattern <Instruction BFE, Instruction MOV> : Pat <
+  (i32 (and (i32 (srl i32:$src, i32:$rshift)), IMMZeroBasedBitfieldMask:$mask)),
+  (BFE $src, $rshift, (MOV (i32 (IMMPopCount $mask))))
 >;
-
-*/
 
 // rotr pattern
 class ROTRPattern <Instruction BIT_ALIGN> : Pat <

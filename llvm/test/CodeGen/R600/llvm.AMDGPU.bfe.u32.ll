@@ -586,6 +586,16 @@ define void @lshr_and(i32 addrspace(1)* %out, i32 %a) nounwind {
   ret void
 }
 
+; FUNC-LABEL: {{^}}v_lshr_and:
+; SI: v_bfe_u32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}, 3
+; SI: buffer_store_dword
+define void @v_lshr_and(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
+  %c = lshr i32 %a, %b
+  %d = and i32 %c, 7
+  store i32 %d, i32 addrspace(1)* %out, align 8
+  ret void
+}
+
 ; FUNC-LABEL: {{^}}and_lshr:
 ; SI: s_bfe_u32 {{s[0-9]+}}, {{s[0-9]+}}, 0x30006
 ; SI: buffer_store_dword
