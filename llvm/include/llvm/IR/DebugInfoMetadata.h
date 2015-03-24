@@ -894,11 +894,31 @@ public:
   }
 };
 
+/// \brief A scope for locals.
+///
+/// A legal scope for lexical blocks, local variables, and debug info
+/// locations.  Subclasses are \a MDSubprogram, \a MDLexicalBlock, and \a
+/// MDLexicalBlockFile.
+class MDLocalScope : public MDScope {
+protected:
+  MDLocalScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
+               ArrayRef<Metadata *> Ops)
+      : MDScope(C, ID, Storage, Tag, Ops) {}
+  ~MDLocalScope() {}
+
+public:
+  static bool classof(const Metadata *MD) {
+    return MD->getMetadataID() == MDSubprogramKind ||
+           MD->getMetadataID() == MDLexicalBlockKind ||
+           MD->getMetadataID() == MDLexicalBlockFileKind;
+  }
+};
+
 /// \brief Subprogram description.
 ///
 /// TODO: Remove DisplayName.  It's always equal to Name.
 /// TODO: Split up flags.
-class MDSubprogram : public MDScope {
+class MDSubprogram : public MDLocalScope {
   friend class LLVMContextImpl;
   friend class MDNode;
 
@@ -915,7 +935,8 @@ class MDSubprogram : public MDScope {
                unsigned ScopeLine, unsigned Virtuality, unsigned VirtualIndex,
                unsigned Flags, bool IsLocalToUnit, bool IsDefinition,
                bool IsOptimized, ArrayRef<Metadata *> Ops)
-      : MDScope(C, MDSubprogramKind, Storage, dwarf::DW_TAG_subprogram, Ops),
+      : MDLocalScope(C, MDSubprogramKind, Storage, dwarf::DW_TAG_subprogram,
+                     Ops),
         Line(Line), ScopeLine(ScopeLine), Virtuality(Virtuality),
         VirtualIndex(VirtualIndex), Flags(Flags), IsLocalToUnit(IsLocalToUnit),
         IsDefinition(IsDefinition), IsOptimized(IsOptimized) {}
@@ -1023,11 +1044,11 @@ public:
   }
 };
 
-class MDLexicalBlockBase : public MDScope {
+class MDLexicalBlockBase : public MDLocalScope {
 protected:
   MDLexicalBlockBase(LLVMContext &C, unsigned ID, StorageType Storage,
                      ArrayRef<Metadata *> Ops)
-      : MDScope(C, ID, Storage, dwarf::DW_TAG_lexical_block, Ops) {}
+      : MDLocalScope(C, ID, Storage, dwarf::DW_TAG_lexical_block, Ops) {}
   ~MDLexicalBlockBase() {}
 
 public:
