@@ -948,8 +948,16 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
     llvm_unreachable("Unexpected asm memory constraint");
   // All memory constraints can at least accept raw pointers.
   case InlineAsm::Constraint_i:
-  case InlineAsm::Constraint_m:
   case InlineAsm::Constraint_R:
+    OutOps.push_back(Op);
+    OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
+    return false;
+  case InlineAsm::Constraint_m:
+    if (selectAddrRegImm16(Op, Base, Offset)) {
+      OutOps.push_back(Base);
+      OutOps.push_back(Offset);
+      return false;
+    }
     OutOps.push_back(Op);
     OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
     return false;
