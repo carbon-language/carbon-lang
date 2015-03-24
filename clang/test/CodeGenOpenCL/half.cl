@@ -13,3 +13,11 @@ half test()
    return z;
 // CHECK: half 0xH3260
 }
+
+// CHECK-LABEL: @test_inc(half %x)
+// CHECK: [[INC:%.*]] = fadd half %x, 0xH3C00
+// CHECK: ret half [[INC]]
+half test_inc(half x)
+{
+  return ++x;
+}

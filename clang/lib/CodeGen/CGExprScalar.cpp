@@ -1800,9 +1800,14 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
       amt = llvm::ConstantFP::get(VMContext,
                                   llvm::APFloat(static_cast<double>(amount)));
     else {
+      // Remaining types are either Half or LongDouble.  Convert from float.
       llvm::APFloat F(static_cast<float>(amount));
       bool ignored;
-      F.convert(CGF.getTarget().getLongDoubleFormat(),
+      // Don't use getFloatTypeSemantics because Half isn't
+      // necessarily represented using the "half" LLVM type.
+      F.convert(value->getType()->isHalfTy()
+                    ? CGF.getTarget().getHalfFormat()
+                    : CGF.getTarget().getLongDoubleFormat(),
                 llvm::APFloat::rmTowardZero, &ignored);
       amt = llvm::ConstantFP::get(VMContext, F);
     }
