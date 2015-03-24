@@ -9055,33 +9055,48 @@ static SDValue lowerV2X128VectorShuffle(SDLoc DL, MVT VT, SDValue V1,
                                         SDValue V2, ArrayRef<int> Mask,
                                         const X86Subtarget *Subtarget,
                                         SelectionDAG &DAG) {
+  // TODO: If minimizing size and one of the inputs is a zero vector and the
+  // the zero vector has only one use, we could use a VPERM2X128 to save the
+  // instruction bytes needed to explicitly generate the zero vector.
+
   // Blends are faster and handle all the non-lane-crossing cases.
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, VT, V1, V2, Mask,
                                                 Subtarget, DAG))
     return Blend;
 
-  MVT SubVT = MVT::getVectorVT(VT.getVectorElementType(),
-                               VT.getVectorNumElements() / 2);
-  // Check for patterns which can be matched with a single insert of a 128-bit
-  // subvector.
-  bool OnlyUsesV1 = isShuffleEquivalent(V1, V2, Mask, {0, 1, 0, 1});
-  if (OnlyUsesV1 || isShuffleEquivalent(V1, V2, Mask, {0, 1, 4, 5})) {
-    SDValue LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V1,
-                              DAG.getIntPtrConstant(0));
-    SDValue HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
-                              OnlyUsesV1 ? V1 : V2, DAG.getIntPtrConstant(0));
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LoV, HiV);
-  }
-  if (isShuffleEquivalent(V1, V2, Mask, {0, 1, 6, 7})) {
-    SDValue LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V1,
-                              DAG.getIntPtrConstant(0));
-    SDValue HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V2,
-                              DAG.getIntPtrConstant(2));
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LoV, HiV);
+  bool IsV1Zero = ISD::isBuildVectorAllZeros(V1.getNode());
+  bool IsV2Zero = ISD::isBuildVectorAllZeros(V2.getNode());
+
+  // If either input operand is a zero vector, use VPERM2X128 because its mask
+  // allows us to replace the zero input with an implicit zero.
+  if (!IsV1Zero && !IsV2Zero) {
+    // Check for patterns which can be matched with a single insert of a 128-bit
+    // subvector.
+    bool OnlyUsesV1 = isShuffleEquivalent(V1, V2, Mask, {0, 1, 0, 1});
+    if (OnlyUsesV1 || isShuffleEquivalent(V1, V2, Mask, {0, 1, 4, 5})) {
+      MVT SubVT = MVT::getVectorVT(VT.getVectorElementType(),
+                                   VT.getVectorNumElements() / 2);
+      SDValue LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V1,
+                                DAG.getIntPtrConstant(0));
+      SDValue HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
+                                OnlyUsesV1 ? V1 : V2, DAG.getIntPtrConstant(0));
+      return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LoV, HiV);
+    }
   }
 
-  // Otherwise form a 128-bit permutation.
-  // FIXME: Detect zero-vector inputs and use the VPERM2X128 to zero that half.
+  // Otherwise form a 128-bit permutation. After accounting for undefs,
+  // convert the 64-bit shuffle mask selection values into 128-bit
+  // selection bits by dividing the indexes by 2 and shifting into positions
+  // defined by a vperm2*128 instruction's immediate control byte.
+
+  // The immediate permute control byte looks like this:
+  //    [1:0] - select 128 bits from sources for low half of destination
+  //    [2]   - ignore
+  //    [3]   - zero low half of destination
+  //    [5:4] - select 128 bits from sources for high half of destination
+  //    [6]   - ignore
+  //    [7]   - zero high half of destination
+
   int MaskLO = Mask[0];
   if (MaskLO == SM_SentinelUndef)
     MaskLO = Mask[1] == SM_SentinelUndef ? 0 : Mask[1];
@@ -9091,6 +9106,27 @@ static SDValue lowerV2X128VectorShuffle(SDLoc DL, MVT VT, SDValue V1,
     MaskHI = Mask[3] == SM_SentinelUndef ? 0 : Mask[3];
 
   unsigned PermMask = MaskLO / 2 | (MaskHI / 2) << 4;
+
+  // If either input is a zero vector, replace it with an undef input.
+  // Shuffle mask values <  4 are selecting elements of V1.
+  // Shuffle mask values >= 4 are selecting elements of V2.
+  // Adjust each half of the permute mask by clearing the half that was
+  // selecting the zero vector and setting the zero mask bit.
+  if (IsV1Zero) {
+    V1 = DAG.getUNDEF(VT);
+    if (MaskLO < 4)
+      PermMask = (PermMask & 0xf0) | 0x08;
+    if (MaskHI < 4)
+      PermMask = (PermMask & 0x0f) | 0x80;
+  }
+  if (IsV2Zero) {
+    V2 = DAG.getUNDEF(VT);
+    if (MaskLO >= 4)
+      PermMask = (PermMask & 0xf0) | 0x08;
+    if (MaskHI >= 4)
+      PermMask = (PermMask & 0x0f) | 0x80;
+  }
+
   return DAG.getNode(X86ISD::VPERM2X128, DL, VT, V1, V2,
                      DAG.getConstant(PermMask, MVT::i8));
 }

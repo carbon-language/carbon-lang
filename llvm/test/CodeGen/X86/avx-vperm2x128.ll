@@ -261,3 +261,94 @@ entry:
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 undef, i32 undef, i32 6, i32 7, i32 undef, i32 12, i32 undef, i32 15>
   ret <8 x float> %shuffle
 }
+
+;; Test zero mask generation. 
+;; PR22984: https://llvm.org/bugs/show_bug.cgi?id=22984
+;; Prefer xor+vblendpd over vperm2f128 because that has better performance.
+
+define <4 x double> @vperm2z_0x08(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x08:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 $40, %ymm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x18(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x18:
+; ALL:       # BB#0:
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd $12, %ymm0, %ymm1, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x28(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x28:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 $40, %ymm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x38(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x38:
+; ALL:       # BB#0:
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd $12, %ymm0, %ymm1, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 0, i32 1, i32 6, i32 7>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x80(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x80:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 $128, %ymm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x81(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x81:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 $129, %ymm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> %a, <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x i32> <i32 2, i32 3, i32 4, i32 5>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x82(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x82:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 $128, %ymm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
+  ret <4 x double> %s
+}
+
+define <4 x double> @vperm2z_0x83(<4 x double> %a) {
+; ALL-LABEL: vperm2z_0x83:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 $129, %ymm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %s = shufflevector <4 x double> <double 0.0, double 0.0, double undef, double undef>, <4 x double> %a, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+  ret <4 x double> %s
+}
+
+;; With AVX2 select the integer version of the instruction. Use an add to force the domain selection.
+
+define <4 x i64> @vperm2z_int_0x83(<4 x i64> %a, <4 x i64> %b) {
+; ALL-LABEL: vperm2z_int_0x83:
+; ALL:       # BB#0:
+; AVX1:    vperm2f128 $129, %ymm0, %ymm0, %ymm0
+; AVX2:    vperm2i128 $129, %ymm0, %ymm0, %ymm0
+  %s = shufflevector <4 x i64> <i64 0, i64 0, i64 undef, i64 undef>, <4 x i64> %a, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+  %c = add <4 x i64> %b, %s
+  ret <4 x i64> %c
+}
+
