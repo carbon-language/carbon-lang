@@ -263,9 +263,9 @@ define void @v_sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* 
 }
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i1_in_i32_other_amount:
-; SI-NOT: {{[^@]}}bfe
-; SI: s_lshl_b32 [[REG:s[0-9]+]], {{s[0-9]+}}, 6
-; SI: s_ashr_i32 {{s[0-9]+}}, [[REG]], 7
+; SI-NOT: s_lshl
+; SI-NOT: s_ashr
+; SI: s_bfe_i32 {{s[0-9]+}}, {{s[0-9]+}}, 0x190001
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
 ; EG-NOT: BFE
@@ -282,10 +282,10 @@ define void @sext_in_reg_i1_in_i32_other_amount(i32 addrspace(1)* %out, i32 %a, 
 }
 
 ; FUNC-LABEL: {{^}}sext_in_reg_v2i1_in_v2i32_other_amount:
-; SI-DAG: s_lshl_b32 [[REG0:s[0-9]+]], {{s[0-9]}}, 6
-; SI-DAG: s_ashr_i32 {{s[0-9]+}}, [[REG0]], 7
-; SI-DAG: s_lshl_b32 [[REG1:s[0-9]+]], {{s[0-9]}}, 6
-; SI-DAG: s_ashr_i32 {{s[0-9]+}}, [[REG1]], 7
+; SI-NOT: s_lshl
+; SI-NOT: s_ashr
+; SI-DAG: s_bfe_i32 {{s[0-9]+}}, {{s[0-9]+}}, 0x190001
+; SI-DAG: s_bfe_i32 {{s[0-9]+}}, {{s[0-9]+}}, 0x190001
 ; SI: s_endpgm
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
@@ -599,8 +599,9 @@ define void @sext_in_reg_i1_bfe_offset_1(i32 addrspace(1)* %out, i32 addrspace(1
 
 ; FUNC-LABEL: {{^}}sext_in_reg_i2_bfe_offset_1:
 ; SI: buffer_load_dword
-; SI: v_lshlrev_b32_e32 v{{[0-9]+}}, 30, v{{[0-9]+}}
-; SI: v_ashrrev_i32_e32 v{{[0-9]+}}, 30, v{{[0-9]+}}
+; SI-NOT: v_lshl
+; SI-NOT: v_ashr
+; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 2
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 1, 2
 ; SI: s_endpgm
 define void @sext_in_reg_i2_bfe_offset_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {

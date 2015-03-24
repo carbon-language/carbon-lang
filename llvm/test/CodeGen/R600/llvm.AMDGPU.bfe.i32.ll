@@ -96,7 +96,6 @@ define void @bfe_i32_test_7(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounw
   ret void
 }
 
-; FIXME: The shifts should be 1 BFE
 ; FUNC-LABEL: {{^}}bfe_i32_test_8:
 ; SI: buffer_load_dword
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 1
@@ -407,16 +406,12 @@ define void @bfe_i32_constant_fold_test_18(i32 addrspace(1)* %out) nounwind {
   ret void
 }
 
-; XXX - This should really be a single BFE, but the sext_inreg of the
-; extended type i24 is never custom lowered.
 ; FUNC-LABEL: {{^}}bfe_sext_in_reg_i24:
 ; SI: buffer_load_dword [[LOAD:v[0-9]+]],
-; SI: v_lshlrev_b32_e32 {{v[0-9]+}}, 8, {{v[0-9]+}}
-; SI: v_ashrrev_i32_e32 {{v[0-9]+}}, 8, {{v[0-9]+}}
-; XSI: v_bfe_i32 [[BFE:v[0-9]+]], [[LOAD]], 0, 8
-; XSI-NOT: SHL
-; XSI-NOT: SHR
-; XSI: buffer_store_dword [[BFE]],
+; SI-NOT: v_lshl
+; SI-NOT: v_ashr
+; SI: v_bfe_i32 [[BFE:v[0-9]+]], [[LOAD]], 0, 24
+; SI: buffer_store_dword [[BFE]],
 define void @bfe_sext_in_reg_i24(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
   %x = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %x, i32 0, i32 24)

@@ -439,7 +439,7 @@ define void @bfe_u32_constant_fold_test_8(i32 addrspace(1)* %out) nounwind {
 ; SI: v_mov_b32_e32 [[VREG:v[0-9]+]], 1
 ; SI: buffer_store_dword [[VREG]],
 ; SI: s_endpgm
-; EG-NOT: BFEfppppppppppppp
+; EG-NOT: BFE
 define void @bfe_u32_constant_fold_test_9(i32 addrspace(1)* %out) nounwind {
   %bfe_u32 = call i32 @llvm.AMDGPU.bfe.u32(i32 65536, i32 16, i32 8) nounwind readnone
   store i32 %bfe_u32, i32 addrspace(1)* %out, align 4
@@ -573,5 +573,45 @@ define void @simplify_bfe_u32_multi_use_arg(i32 addrspace(1)* %out0,
   %bfe_u32 = call i32 @llvm.AMDGPU.bfe.u32(i32 %and, i32 2, i32 2) nounwind readnone
   store i32 %bfe_u32, i32 addrspace(1)* %out0, align 4
   store i32 %and, i32 addrspace(1)* %out1, align 4
+  ret void
+}
+
+; FUNC-LABEL: {{^}}lshr_and:
+; SI: s_bfe_u32 {{s[0-9]+}}, {{s[0-9]+}}, 0x30006
+; SI: buffer_store_dword
+define void @lshr_and(i32 addrspace(1)* %out, i32 %a) nounwind {
+  %b = lshr i32 %a, 6
+  %c = and i32 %b, 7
+  store i32 %c, i32 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}and_lshr:
+; SI: s_bfe_u32 {{s[0-9]+}}, {{s[0-9]+}}, 0x30006
+; SI: buffer_store_dword
+define void @and_lshr(i32 addrspace(1)* %out, i32 %a) nounwind {
+  %b = and i32 %a, 448
+  %c = lshr i32 %b, 6
+  store i32 %c, i32 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}and_lshr2:
+; SI: s_bfe_u32 {{s[0-9]+}}, {{s[0-9]+}}, 0x30006
+; SI: buffer_store_dword
+define void @and_lshr2(i32 addrspace(1)* %out, i32 %a) nounwind {
+  %b = and i32 %a, 511
+  %c = lshr i32 %b, 6
+  store i32 %c, i32 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FUNC-LABEL: {{^}}shl_lshr:
+; SI: s_bfe_u32 {{s[0-9]+}}, {{s[0-9]+}}, 0x150002
+; SI: buffer_store_dword
+define void @shl_lshr(i32 addrspace(1)* %out, i32 %a) nounwind {
+  %b = shl i32 %a, 9
+  %c = lshr i32 %b, 11
+  store i32 %c, i32 addrspace(1)* %out, align 8
   ret void
 }
