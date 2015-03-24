@@ -7,7 +7,7 @@
 # RUN: not lld -flavor gnu -target mipsel -shared -o %t.so \
 # RUN:         %t-32r2.o %t-32r6.o 2>&1 | FileCheck %s
 
-# CHECK: Linking modules with icompatible ISA
+# CHECK: Linking modules with incompatible ISA
 
 # 32r2.o
 ---

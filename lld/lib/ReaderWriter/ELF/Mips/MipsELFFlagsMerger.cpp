@@ -135,7 +135,7 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   if (!matchMipsISA(newArch, oldArch)) {
     if (!matchMipsISA(oldArch, newArch))
       return make_dynamic_error_code(
-          Twine("Linking modules with icompatible ISA"));
+          Twine("Linking modules with incompatible ISA"));
     _flags &= ~EF_MIPS_ARCH;
     _flags |= newArch;
   }
