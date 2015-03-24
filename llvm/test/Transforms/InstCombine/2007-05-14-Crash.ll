@@ -15,4 +15,10 @@ entry:
         ret i8* %tmp35
 }
 
-
+define i32* @bar(%struct.abc* %abc) {
+entry:
+        %tmp1 = bitcast %struct.abc* %abc to %struct.def*
+        %tmp3 = getelementptr %struct.def, %struct.def* %tmp1, i32 0, i32 1
+        %tmp35 = bitcast %struct.abc* %tmp3 to i32*
+        ret i32* %tmp35
+}

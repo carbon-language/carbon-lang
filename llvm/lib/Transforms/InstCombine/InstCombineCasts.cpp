@@ -1455,35 +1455,20 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     // GEP computes a constant offset, see if we can convert these three
     // instructions into fewer.  This typically happens with unions and other
     // non-type-safe code.
-    unsigned AS = GEP->getPointerAddressSpace();
-    unsigned OffsetBits = DL.getPointerSizeInBits(AS);
-    APInt Offset(OffsetBits, 0);
+    // Looks like this never actually fires due to bitcast+gep folding happening
+    // in InstCombiner::visitGetElementPtrInst where the bitcast operand to a
+    // gep is folded into the gep if possible, before we consider whether that
+    // gep is used in a bitcast as well.
+    // Let's assert that this wouldn't fire just to be sure.
+#ifndef NDEBUG
+    APInt Offset(DL.getPointerSizeInBits(GEP->getPointerAddressSpace()), 0);
     BitCastInst *BCI = dyn_cast<BitCastInst>(GEP->getOperand(0));
-    if (GEP->hasOneUse() && BCI && GEP->accumulateConstantOffset(DL, Offset)) {
-      // FIXME: This is insufficiently tested - just a no-crash test
-      // (test/Transforms/InstCombine/2007-05-14-Crash.ll)
-      //
-      // Get the base pointer input of the bitcast, and the type it points to.
-      Value *OrigBase = BCI->getOperand(0);
-      SmallVector<Value*, 8> NewIndices;
-      if (FindElementAtOffset(OrigBase->getType(), Offset.getSExtValue(),
-                              NewIndices)) {
-        // FIXME: This codepath is completely untested - could be unreachable
-        // for all I know.
-        // If we were able to index down into an element, create the GEP
-        // and bitcast the result.  This eliminates one bitcast, potentially
-        // two.
-        Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
-          Builder->CreateInBoundsGEP(OrigBase, NewIndices) :
-          Builder->CreateGEP(OrigBase, NewIndices);
-        NGEP->takeName(GEP);
-
-        if (isa<BitCastInst>(CI))
-          return new BitCastInst(NGEP, CI.getType());
-        assert(isa<PtrToIntInst>(CI));
-        return new PtrToIntInst(NGEP, CI.getType());
-      }
-    }
+    SmallVector<Value *, 8> NewIndices;
+    assert(!BCI || !GEP->hasOneUse() ||
+           !GEP->accumulateConstantOffset(DL, Offset) ||
+           !FindElementAtOffset(BCI->getOperand(0)->getType(),
+                                Offset.getSExtValue(), NewIndices));
+#endif
   }
 
   return commonCastTransforms(CI);
