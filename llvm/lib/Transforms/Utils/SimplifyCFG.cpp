@@ -4349,6 +4349,82 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
   return Changed;
 }
 
+/// Given an block with only a single landing pad and a unconditional branch
+/// try to find another basic block which this one can be merged with.  This
+/// handles cases where we have multiple invokes with unique landing pads, but
+/// a shared handler.
+///
+/// We specifically choose to not worry about merging non-empty blocks
+/// here.  That is a PRE/scheduling problem and is best solved elsewhere.  In
+/// practice, the optimizer produces empty landing pad blocks quite frequently
+/// when dealing with exception dense code.  (see: instcombine, gvn, if-else
+/// sinking in this file)
+///
+/// This is primarily a code size optimization.  We need to avoid performing
+/// any transform which might inhibit optimization (such as our ability to
+/// specialize a particular handler via tail commoning).  We do this by not
+/// merging any blocks which require us to introduce a phi.  Since the same
+/// values are flowing through both blocks, we don't loose any ability to
+/// specialize.  If anything, we make such specialization more likely.
+///
+/// TODO - This transformation could remove entries from a phi in the target
+/// block when the inputs in the phi are the same for the two blocks being
+/// merged.  In some cases, this could result in removal of the PHI entirely.
+static bool TryToMergeLandingPad(LandingPadInst *LPad, BranchInst *BI,
+                                 BasicBlock *BB) {
+  auto Succ = BB->getUniqueSuccessor();
+  assert(Succ);
+  // If there's a phi in the successor block, we'd likely have to introduce
+  // a phi into the merged landing pad block.
+  if (isa<PHINode>(*Succ->begin()))
+    return false;
+
+  for (BasicBlock *OtherPred : predecessors(Succ)) {
+    if (BB == OtherPred)
+      continue;
+    BasicBlock::iterator I = OtherPred->begin();
+    LandingPadInst *LPad2 = dyn_cast<LandingPadInst>(I);
+    if (!LPad2 || !LPad2->isIdenticalTo(LPad))
+      continue;
+    for (++I; isa<DbgInfoIntrinsic>(I); ++I) {}
+    BranchInst *BI2 = dyn_cast<BranchInst>(I);
+    if (!BI2 || !BI2->isIdenticalTo(BI))
+      continue;
+
+    // We've found an identical block.  Update our predeccessors to take that
+    // path instead and make ourselves dead.
+    SmallSet<BasicBlock *, 16> Preds;
+    Preds.insert(pred_begin(BB), pred_end(BB));
+    for (BasicBlock *Pred : Preds) {
+      InvokeInst *II = cast<InvokeInst>(Pred->getTerminator());
+      assert(II->getNormalDest() != BB &&
+             II->getUnwindDest() == BB && "unexpected successor");
+      II->setUnwindDest(OtherPred);
+    }
+
+    // The debug info in OtherPred doesn't cover the merged control flow that
+    // used to go through BB.  We need to delete it or update it.
+    for (auto I = OtherPred->begin(), E = OtherPred->end();
+         I != E;) {
+      Instruction &Inst = *I; I++;
+      if (isa<DbgInfoIntrinsic>(Inst))
+        Inst.eraseFromParent();
+    }
+
+    SmallSet<BasicBlock *, 16> Succs;
+    Succs.insert(succ_begin(BB), succ_end(BB));
+    for (BasicBlock *Succ : Succs) {
+      Succ->removePredecessor(BB);
+    }
+
+    IRBuilder<> Builder(BI);
+    Builder.CreateUnreachable();
+    BI->eraseFromParent();
+    return true;
+  }
+  return false;
+}
+
 bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
   BasicBlock *BB = BI->getParent();
 
@@ -4372,6 +4448,15 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
                                                 BonusInstThreshold, AC))
         return true;
     }
+
+  // See if we can merge an empty landing pad block with another which is
+  // equivalent.
+  if (LandingPadInst *LPad = dyn_cast<LandingPadInst>(I)) {
+    for (++I; isa<DbgInfoIntrinsic>(I); ++I) {}
+    if (I->isTerminator() &&
+        TryToMergeLandingPad(LPad, BI, BB))
+      return true;
+  }
 
   // If this basic block is ONLY a compare and a branch, and if a predecessor
   // branches to us and our successor, fold the comparison into the
