@@ -2074,7 +2074,7 @@ SymbolFileDWARF::ParseChildMembers
                                                                                                                              accessibility,
                                                                                                                              anon_field_info.bit_size);
 
-                                            layout_info.field_offsets.push_back(
+                                            layout_info.field_offsets.insert(
                                                 std::make_pair(unnamed_bitfield_decl, anon_field_info.bit_offset));
                                         }
                                     }
@@ -2126,7 +2126,7 @@ SymbolFileDWARF::ParseChildMembers
                                 
                                 GetClangASTContext().SetMetadataAsUserID (field_decl, MakeUserID(die->GetOffset()));
 
-                                layout_info.field_offsets.push_back(std::make_pair(field_decl, field_bit_offset));
+                                layout_info.field_offsets.insert(std::make_pair(field_decl, field_bit_offset));
                             }
                             else
                             {
@@ -2287,7 +2287,7 @@ SymbolFileDWARF::ParseChildMembers
                         }
                         else
                         {
-                            layout_info.base_offsets.push_back(
+                            layout_info.base_offsets.insert(
                                 std::make_pair(base_class_clang_type.GetAsCXXRecordDecl(),
                                                clang::CharUnits::fromQuantity(member_byte_offset)));
                         }
@@ -2670,36 +2670,46 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
                                                                   static_cast<uint32_t>(layout_info.base_offsets.size()),
                                                                   static_cast<uint32_t>(layout_info.vbase_offsets.size()));
 
-                        for (const auto &entry : layout_info.field_offsets)
+                        uint32_t idx;
+                        {
+                            llvm::DenseMap<const clang::FieldDecl *, uint64_t>::const_iterator pos,
+                                end = layout_info.field_offsets.end();
+                            for (idx = 0, pos = layout_info.field_offsets.begin(); pos != end; ++pos, ++idx)
                         {
                             GetObjectFile()->GetModule()->LogMessage(
                                 log, "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) field[%u] = "
                                      "{ bit_offset=%u, name='%s' }",
-                                static_cast<void *>(clang_type.GetOpaqueQualType()), entry.first->getFieldIndex(),
-                                static_cast<uint32_t>(entry.second), entry.first->getNameAsString().c_str());
-                        }
-
-                        uint32_t idx = 0;
-                        for (const auto &entry : layout_info.base_offsets)
-                        {
-                            GetObjectFile()->GetModule()->LogMessage(
-                                log, "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) base[%u] = { "
-                                     "byte_offset=%u, name='%s' }",
-                                clang_type.GetOpaqueQualType(), idx, (uint32_t)entry.second.getQuantity(),
-                                entry.first->getNameAsString().c_str());
-                            ++idx;
-                        }
-
-                        idx = 0;
-                        for (const auto &entry : layout_info.vbase_offsets)
-                        {
-                            GetObjectFile()->GetModule()->LogMessage(
-                                log, "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) vbase[%u] = "
-                                     "{ byte_offset=%u, name='%s' }",
                                 static_cast<void *>(clang_type.GetOpaqueQualType()), idx,
-                                static_cast<uint32_t>(entry.second.getQuantity()),
-                                entry.first->getNameAsString().c_str());
-                            ++idx;
+                                static_cast<uint32_t>(pos->second), pos->first->getNameAsString().c_str());
+                        }
+                        }
+
+                        {
+                            llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits>::const_iterator base_pos,
+                                base_end = layout_info.base_offsets.end();
+                            for (idx = 0, base_pos = layout_info.base_offsets.begin(); base_pos != base_end;
+                                 ++base_pos, ++idx)
+                            {
+                                GetObjectFile()->GetModule()->LogMessage(
+                                    log, "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) base[%u] "
+                                         "= { byte_offset=%u, name='%s' }",
+                                    clang_type.GetOpaqueQualType(), idx, (uint32_t)base_pos->second.getQuantity(),
+                                    base_pos->first->getNameAsString().c_str());
+                            }
+                        }
+                        {
+                            llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits>::const_iterator vbase_pos,
+                                vbase_end = layout_info.vbase_offsets.end();
+                            for (idx = 0, vbase_pos = layout_info.vbase_offsets.begin(); vbase_pos != vbase_end;
+                                 ++vbase_pos, ++idx)
+                            {
+                                GetObjectFile()->GetModule()->LogMessage(
+                                    log, "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) "
+                                         "vbase[%u] = { byte_offset=%u, name='%s' }",
+                                    static_cast<void *>(clang_type.GetOpaqueQualType()), idx,
+                                    static_cast<uint32_t>(vbase_pos->second.getQuantity()),
+                                    vbase_pos->first->getNameAsString().c_str());
+                            }
                         }
                     }
                     m_record_decl_to_layout_map.insert(std::make_pair(record_decl, layout_info));
@@ -7933,9 +7943,9 @@ SymbolFileDWARF::FindExternalVisibleDeclsByName (void *baton,
 bool
 SymbolFileDWARF::LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size,
                                   uint64_t &alignment,
-                                  std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &field_offsets,
-                                  std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &base_offsets,
-                                  std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &vbase_offsets)
+                                  llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
+                                  llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                                  llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
 {
     SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
     return symbol_file_dwarf->LayoutRecordType (record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets);
@@ -7943,9 +7953,9 @@ SymbolFileDWARF::LayoutRecordType(void *baton, const clang::RecordDecl *record_d
 
 bool
 SymbolFileDWARF::LayoutRecordType(const clang::RecordDecl *record_decl, uint64_t &bit_size, uint64_t &alignment,
-                                  std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &field_offsets,
-                                  std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &base_offsets,
-                                  std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &vbase_offsets)
+                                  llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
+                                  llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                                  llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
 {
     Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
     RecordDeclToLayoutMap::iterator pos = m_record_decl_to_layout_map.find (record_decl);

@@ -26,6 +26,7 @@ class BitfieldsTestCase(TestBase):
         self.bitfields_variable_python()
 
     @dwarf_test
+    @unittest2.skipIf(sys.platform.startswith("win32"), "BitFields exhibit crashes in record layout on Windows (http://llvm.org/pr21800)")
     def test_with_dwarf_and_run_command(self):
         """Test 'frame variable ...' on a variable with bitfields."""
         self.buildDwarf()
@@ -33,6 +34,7 @@ class BitfieldsTestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @unittest2.skipIf(sys.platform.startswith("win32"), "BitFields exhibit crashes in record layout on Windows (http://llvm.org/pr21800)")
     @expectedFailureGcc # GCC (4.6/4.7) generates incorrect code with unnamed bitfields.
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to inspect a bitfields variable."""

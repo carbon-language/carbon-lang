@@ -36,9 +36,9 @@ public:
     typedef void (*FindExternalVisibleDeclsByNameCallback)(void *baton, const clang::DeclContext *DC, clang::DeclarationName Name, llvm::SmallVectorImpl <clang::NamedDecl *> *results);
     typedef bool (*LayoutRecordTypeCallback)(
         void *baton, const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
-        std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
-        std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
-        std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets);
+        llvm::DenseMap<const clang::FieldDecl *, uint64_t> &FieldOffsets,
+        llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+        llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
 
     ClangExternalASTSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                      CompleteObjCInterfaceDeclCallback objc_decl_callback,
@@ -57,39 +57,39 @@ public:
     // clang::ExternalASTSource
     //------------------------------------------------------------------
 
-    virtual clang::Decl *
-    GetExternalDecl (uint32_t ID)
+    clang::Decl *
+    GetExternalDecl(uint32_t ID) override
     {
         // This method only needs to be implemented if the AST source ever
         // passes back decl sets as VisibleDeclaration objects.
         return 0; 
     }
-    
-    virtual clang::Stmt *
-    GetExternalDeclStmt (uint64_t Offset)
+
+    clang::Stmt *
+    GetExternalDeclStmt(uint64_t Offset) override
     {
         // This operation is meant to be used via a LazyOffsetPtr.  It only
         // needs to be implemented if the AST source uses methods like
         // FunctionDecl::setLazyBody when building decls.
         return 0; 
     }
-	
-    virtual clang::Selector 
-    GetExternalSelector (uint32_t ID)
+
+    clang::Selector
+    GetExternalSelector(uint32_t ID) override
     {
         // This operation only needs to be implemented if the AST source
         // returns non-zero for GetNumKnownSelectors().
         return clang::Selector();
     }
 
-	virtual uint32_t
-    GetNumExternalSelectors()
+    uint32_t
+    GetNumExternalSelectors() override
     {
         return 0;
     }
-    
-    virtual clang::CXXBaseSpecifier *
-    GetExternalCXXBaseSpecifiers(uint64_t Offset)
+
+    clang::CXXBaseSpecifier *
+    GetExternalCXXBaseSpecifiers(uint64_t Offset) override
     {
         return NULL; 
     }
@@ -99,31 +99,27 @@ public:
     {
         return;
     }
-	
-	virtual clang::ExternalLoadResult 
-    FindExternalLexicalDecls (const clang::DeclContext *decl_ctx,
-                              bool (*isKindWeWant)(clang::Decl::Kind),
-                              llvm::SmallVectorImpl<clang::Decl*> &decls)
+
+    virtual clang::ExternalLoadResult
+    FindExternalLexicalDecls(const clang::DeclContext *decl_ctx, bool (*isKindWeWant)(clang::Decl::Kind),
+                             llvm::SmallVectorImpl<clang::Decl *> &decls) override
     {
         // This is used to support iterating through an entire lexical context,
         // which isn't something the debugger should ever need to do.
         return clang::ELR_Failure;
     }
-    
-    virtual bool
-    FindExternalVisibleDeclsByName (const clang::DeclContext *decl_ctx,
-                                    clang::DeclarationName decl_name);
-    
-    virtual void
-    CompleteType (clang::TagDecl *tag_decl);
-    
-    virtual void
-    CompleteType (clang::ObjCInterfaceDecl *objc_decl);
+
+    virtual bool FindExternalVisibleDeclsByName(const clang::DeclContext *decl_ctx,
+                                                clang::DeclarationName decl_name) override;
+
+    virtual void CompleteType(clang::TagDecl *tag_decl) override;
+
+    virtual void CompleteType(clang::ObjCInterfaceDecl *objc_decl) override;
 
     bool layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
-                          std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
-                          std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
-                          std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets);
+                          llvm::DenseMap<const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                          llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                          llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets) override;
     void
     SetExternalSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                 CompleteObjCInterfaceDeclCallback objc_decl_callback,

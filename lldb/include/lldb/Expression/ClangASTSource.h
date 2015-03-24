@@ -11,7 +11,6 @@
 #define liblldb_ClangASTSource_h_
 
 #include <set>
-#include <vector>
 
 #include "clang/Basic/IdentifierTable.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
@@ -20,12 +19,6 @@
 #include "lldb/Target/Target.h"
 
 #include "llvm/ADT/SmallSet.h"
-
-namespace clang
-{
-class CharUnits;
-class FieldDecl;
-}
 
 namespace lldb_private {
     
@@ -108,10 +101,8 @@ public:
     /// @return
     ///     Whatever SetExternalVisibleDeclsForName returns.
     //------------------------------------------------------------------
-    bool
-    FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
-                                    clang::DeclarationName Name);
-    
+    bool FindExternalVisibleDeclsByName(const clang::DeclContext *DC, clang::DeclarationName Name) override;
+
     //------------------------------------------------------------------
     /// Enumerate all Decls in a given lexical context.
     ///
@@ -125,13 +116,9 @@ public:
     /// @param[in] Decls
     ///     A vector that is filled in with matching Decls.
     //------------------------------------------------------------------
-    clang::ExternalLoadResult 
-    FindExternalLexicalDecls (const clang::DeclContext *DC,
-                              bool (*isKindWeWant)(clang::Decl::Kind),
-                              llvm::SmallVectorImpl<clang::Decl*> &Decls);
-
-    typedef std::vector<std::pair<const clang::FieldDecl *, uint64_t>> FieldOffsetList;
-    typedef std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> BaseOffsetList;
+    clang::ExternalLoadResult FindExternalLexicalDecls(const clang::DeclContext *DC,
+                                                       bool (*isKindWeWant)(clang::Decl::Kind),
+                                                       llvm::SmallVectorImpl<clang::Decl *> &Decls) override;
 
     //------------------------------------------------------------------
     /// Specify the layout of the contents of a RecordDecl.
@@ -167,8 +154,9 @@ public:
     ///     True <=> the layout is valid.
     //-----------------------------------------------------------------
     bool layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
-                          FieldOffsetList &FieldOffsets, BaseOffsetList &BaseOffsets,
-                          BaseOffsetList &VirtualBaseOffsets);
+                          llvm::DenseMap<const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                          llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                          llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets) override;
 
     //------------------------------------------------------------------
     /// Complete a TagDecl.
@@ -176,18 +164,16 @@ public:
     /// @param[in] Tag
     ///     The Decl to be completed in place.
     //------------------------------------------------------------------
-    virtual void
-    CompleteType (clang::TagDecl *Tag);
-    
+    void CompleteType(clang::TagDecl *Tag) override;
+
     //------------------------------------------------------------------
     /// Complete an ObjCInterfaceDecl.
     ///
     /// @param[in] Class
     ///     The Decl to be completed in place.
     //------------------------------------------------------------------
-    virtual void 
-    CompleteType (clang::ObjCInterfaceDecl *Class);
-    
+    void CompleteType(clang::ObjCInterfaceDecl *Class) override;
+
     //------------------------------------------------------------------
     /// Called on entering a translation unit.  Tells Clang by calling
     /// setHasExternalVisibleStorage() and setHasExternalLexicalStorage()
@@ -196,8 +182,8 @@ public:
     /// @param[in] ASTConsumer
     ///     Unused.
     //------------------------------------------------------------------
-    void StartTranslationUnit (clang::ASTConsumer *Consumer);
-    
+    void StartTranslationUnit(clang::ASTConsumer *Consumer) override;
+
     //
     // APIs for NamespaceMapCompleter
     //
@@ -216,10 +202,9 @@ public:
     ///     The map for the namespace's parent namespace, if there is
     ///     one.
     //------------------------------------------------------------------
-    void CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespace_map,
-                               const ConstString &name,
-                               ClangASTImporter::NamespaceMapSP &parent_map) const;
-    
+    void CompleteNamespaceMap(ClangASTImporter::NamespaceMapSP &namespace_map, const ConstString &name,
+                              ClangASTImporter::NamespaceMapSP &parent_map) const override;
+
     //
     // Helper APIs
     //
@@ -256,37 +241,37 @@ public:
             m_original(original)
         {
         }
-        
+
         bool
-        FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
-                                        clang::DeclarationName Name)
+        FindExternalVisibleDeclsByName(const clang::DeclContext *DC, clang::DeclarationName Name) override
         {
             return m_original.FindExternalVisibleDeclsByName(DC, Name);
         }
-        
-        clang::ExternalLoadResult 
-        FindExternalLexicalDecls (const clang::DeclContext *DC,
-                                  bool (*isKindWeWant)(clang::Decl::Kind),
-                                  llvm::SmallVectorImpl<clang::Decl*> &Decls)
+
+        clang::ExternalLoadResult
+        FindExternalLexicalDecls(const clang::DeclContext *DC, bool (*isKindWeWant)(clang::Decl::Kind),
+                                 llvm::SmallVectorImpl<clang::Decl *> &Decls) override
         {
             return m_original.FindExternalLexicalDecls(DC, isKindWeWant, Decls);
         }
-        
+
         void
-        CompleteType (clang::TagDecl *Tag)
+        CompleteType(clang::TagDecl *Tag) override
         {
             return m_original.CompleteType(Tag);
         }
-        
-        void 
-        CompleteType (clang::ObjCInterfaceDecl *Class)
+
+        void
+        CompleteType(clang::ObjCInterfaceDecl *Class) override
         {
             return m_original.CompleteType(Class);
         }
 
         bool
         layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
-                         FieldOffsetList &FieldOffsets, BaseOffsetList &BaseOffsets, BaseOffsetList &VirtualBaseOffsets)
+                         llvm::DenseMap<const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                         llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                         llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets) override
         {
             return m_original.layoutRecordType(Record,
                                                Size, 
@@ -296,7 +281,8 @@ public:
                                                VirtualBaseOffsets);
         }
 
-        void StartTranslationUnit (clang::ASTConsumer *Consumer)
+        void
+        StartTranslationUnit(clang::ASTConsumer *Consumer) override
         {
             return m_original.StartTranslationUnit(Consumer);
         }

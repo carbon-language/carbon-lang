@@ -31,8 +31,7 @@ public:
     }
 
     bool
-    FindExternalVisibleDeclsByName (const clang::DeclContext *decl_ctx,
-                                    clang::DeclarationName name)
+    FindExternalVisibleDeclsByName(const clang::DeclContext *decl_ctx, clang::DeclarationName name) override
     {
         static unsigned int invocation_id = 0;
         unsigned int current_id = invocation_id++;
@@ -71,15 +70,14 @@ public:
     }
 
     clang::ExternalLoadResult
-    FindExternalLexicalDecls (const clang::DeclContext *DC,
-                              bool (*isKindWeWant)(clang::Decl::Kind),
-                              llvm::SmallVectorImpl<clang::Decl*> &Decls)
+    FindExternalLexicalDecls(const clang::DeclContext *DC, bool (*isKindWeWant)(clang::Decl::Kind),
+                             llvm::SmallVectorImpl<clang::Decl *> &Decls) override
     {
         return clang::ELR_Success;
     }
 
     void
-    CompleteType (clang::TagDecl *tag_decl)
+    CompleteType(clang::TagDecl *tag_decl) override
     {
         static unsigned int invocation_id = 0;
         unsigned int current_id = invocation_id++;
@@ -109,7 +107,7 @@ public:
     }
 
     void
-    CompleteType (clang::ObjCInterfaceDecl *interface_decl)
+    CompleteType(clang::ObjCInterfaceDecl *interface_decl) override
     {
         static unsigned int invocation_id = 0;
         unsigned int current_id = invocation_id++;
@@ -142,14 +140,15 @@ public:
 
     bool
     layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
-                     std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
-                     std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
-                     std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets)
+                     llvm::DenseMap<const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                     llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                     llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets) override
     {
         return false;
     }
 
-    void StartTranslationUnit (clang::ASTConsumer *Consumer)
+    void
+    StartTranslationUnit(clang::ASTConsumer *Consumer) override
     {
         clang::TranslationUnitDecl *translation_unit_decl = m_decl_vendor.m_ast_ctx.getASTContext()->getTranslationUnitDecl();
         translation_unit_decl->setHasExternalVisibleStorage();

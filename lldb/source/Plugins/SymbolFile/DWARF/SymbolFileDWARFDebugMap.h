@@ -103,11 +103,10 @@ public:
     static void
     CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
 
-    static bool
-    LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size, uint64_t &alignment,
-                     std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
-                     std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
-                     std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets);
+    static bool LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size, uint64_t &alignment,
+                                 llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
+                                 llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                                 llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
