@@ -448,6 +448,7 @@ private:
       nref.kindValue = ref->kindValue();
       nref.targetIndex = this->getTargetIndex(ref->target());
       nref.addend = ref->addend();
+      nref.tag = ref->tag();
       _referencesV2.push_back(nref);
     }
     refsCount = _referencesV2.size() - startRefSize;

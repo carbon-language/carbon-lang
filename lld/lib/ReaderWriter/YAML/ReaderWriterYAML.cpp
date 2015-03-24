@@ -729,13 +729,14 @@ template <> struct MappingTraits<const lld::Reference *> {
     NormalizedReference(IO &io)
         : lld::Reference(lld::Reference::KindNamespace::all,
                          lld::Reference::KindArch::all, 0),
-          _target(nullptr), _targetName(), _offset(0), _addend(0) {}
+          _target(nullptr), _targetName(), _offset(0), _addend(0), _tag(0) {}
 
     NormalizedReference(IO &io, const lld::Reference *ref)
         : lld::Reference(ref->kindNamespace(), ref->kindArch(),
                          ref->kindValue()),
           _target(nullptr), _targetName(targetName(io, ref)),
-          _offset(ref->offsetInAtom()), _addend(ref->addend()) {
+          _offset(ref->offsetInAtom()), _addend(ref->addend()),
+          _tag(ref->tag()) {
       _mappedKind.ns = ref->kindNamespace();
       _mappedKind.arch = ref->kindArch();
       _mappedKind.value = ref->kindValue();
@@ -772,6 +773,7 @@ template <> struct MappingTraits<const lld::Reference *> {
     uint32_t         _offset;
     Addend           _addend;
     RefKind          _mappedKind;
+    uint32_t         _tag;
   };
 
   static void mapping(IO &io, const lld::Reference *&ref) {
@@ -782,6 +784,7 @@ template <> struct MappingTraits<const lld::Reference *> {
     io.mapOptional("offset", keys->_offset);
     io.mapOptional("target", keys->_targetName);
     io.mapOptional("addend", keys->_addend, (lld::Reference::Addend)0);
+    io.mapOptional("tag",    keys->_tag, 0u);
   }
 };
 

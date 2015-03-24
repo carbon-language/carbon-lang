@@ -1019,54 +1019,55 @@ public:
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     for (const auto &rel : _relocs) {
-      if (this->_context.isRelaOutputFormat())
-        writeRela(writer, *reinterpret_cast<Elf_Rela *>(dest), *rel.first,
-                  *rel.second);
-      else
-        writeRel(writer, *reinterpret_cast<Elf_Rel *>(dest), *rel.first,
-                 *rel.second);
+      if (this->_context.isRelaOutputFormat()) {
+        auto &r = *reinterpret_cast<Elf_Rela *>(dest);
+        writeRela(writer, r, *rel.first, *rel.second);
+        DEBUG_WITH_TYPE("ELFRelocationTable",
+                        llvm::dbgs()
+                            << rel.second->kindValue() << " relocation at "
+                            << rel.first->name() << "@" << r.r_offset << " to "
+                            << rel.second->target()->name() << "@" << r.r_addend
+                            << "\n";);
+      } else {
+        auto &r = *reinterpret_cast<Elf_Rel *>(dest);
+        writeRel(writer, r, *rel.first, *rel.second);
+        DEBUG_WITH_TYPE("ELFRelocationTable",
+                        llvm::dbgs() << rel.second->kindValue()
+                                     << " relocation at " << rel.first->name()
+                                     << "@" << r.r_offset << " to "
+                                     << rel.second->target()->name() << "\n";);
+      }
       dest += this->_entSize;
     }
   }
 
-private:
-  std::vector<std::pair<const DefinedAtom *, const Reference *> > _relocs;
+protected:
   const DynamicSymbolTable<ELFT> *_symbolTable;
 
-  bool isMips64ELOutput() const {
-    return this->_context.getTriple().getArch() == llvm::Triple::mips64el;
-  }
-
-  void writeRela(ELFWriter *writer, Elf_Rela &r, const DefinedAtom &atom,
-                 const Reference &ref) {
-    uint32_t index =
-        _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
-                     : (uint32_t)STN_UNDEF;
-    r.setSymbolAndType(index, ref.kindValue(), isMips64ELOutput());
+  virtual void writeRela(ELFWriter *writer, Elf_Rela &r,
+                         const DefinedAtom &atom, const Reference &ref) {
+    r.setSymbolAndType(getSymbolIndex(ref.target()), ref.kindValue(), false);
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
-    r.r_addend = 0;
     // The addend is used only by relative relocations
     if (this->_context.isRelativeReloc(ref))
       r.r_addend = writer->addressOfAtom(ref.target()) + ref.addend();
-    DEBUG_WITH_TYPE("ELFRelocationTable",
-                    llvm::dbgs() << ref.kindValue() << " relocation at "
-                                 << atom.name() << "@" << r.r_offset << " to "
-                                 << ref.target()->name() << "@" << r.r_addend
-                                 << "\n";);
+    else
+      r.r_addend = 0;
   }
 
-  void writeRel(ELFWriter *writer, Elf_Rel &r, const DefinedAtom &atom,
-                const Reference &ref) {
-    uint32_t index =
-        _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
-                     : (uint32_t)STN_UNDEF;
-    r.setSymbolAndType(index, ref.kindValue(), isMips64ELOutput());
+  virtual void writeRel(ELFWriter *writer, Elf_Rel &r, const DefinedAtom &atom,
+                        const Reference &ref) {
+    r.setSymbolAndType(getSymbolIndex(ref.target()), ref.kindValue(), false);
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
-    DEBUG_WITH_TYPE("ELFRelocationTable",
-                    llvm::dbgs() << ref.kindValue() << " relocation at "
-                                 << atom.name() << "@" << r.r_offset << " to "
-                                 << ref.target()->name() << "\n";);
   }
+
+  uint32_t getSymbolIndex(const Atom *a) {
+    return _symbolTable ? _symbolTable->getSymbolTableIndex(a)
+                        : (uint32_t)STN_UNDEF;
+  }
+
+private:
+  std::vector<std::pair<const DefinedAtom *, const Reference *> > _relocs;
 };
 
 template <class ELFT> class HashSection;

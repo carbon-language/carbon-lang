@@ -89,6 +89,33 @@ public:
   }
 };
 
+template <class ELFT> class MipsELFReference : public ELFReference<ELFT> {
+  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+  typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
+
+  static const bool _isMips64EL =
+      ELFT::Is64Bits && ELFT::TargetEndianness == llvm::support::little;
+
+public:
+  MipsELFReference(uint64_t symValue, const Elf_Rela &rel)
+      : ELFReference<ELFT>(
+            &rel, rel.r_offset - symValue, Reference::KindArch::Mips,
+            rel.getType(_isMips64EL) & 0xff, rel.getSymbol(_isMips64EL)),
+        _tag(rel.getType(_isMips64EL) >> 8) {}
+
+  MipsELFReference(uint64_t symValue, const Elf_Rel &rel)
+      : ELFReference<ELFT>(rel.r_offset - symValue, Reference::KindArch::Mips,
+                           rel.getType(_isMips64EL) & 0xff,
+                           rel.getSymbol(_isMips64EL)),
+        _tag(rel.getType(_isMips64EL) >> 8) {}
+
+  uint32_t tag() const override { return _tag; }
+  void setTag(uint32_t tag) { _tag = tag; }
+
+private:
+  uint32_t _tag;
+};
+
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {
 public:
   MipsELFFile(std::unique_ptr<MemoryBuffer> mb, MipsLinkingContext &ctx)
@@ -125,8 +152,12 @@ private:
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter Elf_Rel_Iter;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela_Iter Elf_Rela_Iter;
 
   enum { TP_OFFSET = 0x7000, DTP_OFFSET = 0x8000 };
+
+  static const bool _isMips64EL =
+      ELFT::Is64Bits && ELFT::TargetEndianness == llvm::support::little;
 
   llvm::Optional<int64_t> _gp0;
   llvm::Optional<uint64_t> _tpOff;
@@ -200,19 +231,30 @@ private:
   }
 
   void createRelocationReferences(const Elf_Sym *symbol,
+                                  ArrayRef<uint8_t> content,
+                                  range<Elf_Rela_Iter> rels) override {
+    const auto value = this->getSymbolValue(symbol);
+    for (const auto &rel : rels) {
+      if (rel.r_offset < value || value + content.size() <= rel.r_offset)
+        continue;
+      auto r = new (this->_readerStorage) MipsELFReference<ELFT>(value, rel);
+      this->addReferenceToSymbol(r, symbol);
+      this->_references.push_back(r);
+    }
+  }
+
+  void createRelocationReferences(const Elf_Sym *symbol,
                                   ArrayRef<uint8_t> symContent,
                                   ArrayRef<uint8_t> secContent,
                                   range<Elf_Rel_Iter> rels) override {
+    const auto value = this->getSymbolValue(symbol);
     for (Elf_Rel_Iter rit = rels.begin(), eit = rels.end(); rit != eit; ++rit) {
-      if (rit->r_offset < symbol->st_value ||
-          symbol->st_value + symContent.size() <= rit->r_offset)
+      if (rit->r_offset < value || value + symContent.size() <= rit->r_offset)
         continue;
 
-      auto elfReference = new (this->_readerStorage) ELFReference<ELFT>(
-          rit->r_offset - symbol->st_value, this->kindArch(),
-          rit->getType(isMips64EL()), rit->getSymbol(isMips64EL()));
-      ELFFile<ELFT>::addReferenceToSymbol(elfReference, symbol);
-      this->_references.push_back(elfReference);
+      auto r = new (this->_readerStorage) MipsELFReference<ELFT>(value, *rit);
+      this->addReferenceToSymbol(r, symbol);
+      this->_references.push_back(r);
 
       auto addend = readAddend(*rit, secContent);
       auto pairRelType = getPairRelocation(*rit);
@@ -234,11 +276,11 @@ private:
     const auto &rh =
         this->_ctx.template getTargetHandler<ELFT>().getRelocationHandler();
     return static_cast<const MipsRelocationHandler &>(rh)
-        .readAddend(ri.getType(isMips64EL()), content.data() + ri.r_offset);
+        .readAddend(getPrimaryType(ri), content.data() + ri.r_offset);
   }
 
   uint32_t getPairRelocation(const Elf_Rel &rel) const {
-    switch (rel.getType(isMips64EL())) {
+    switch (getPrimaryType(rel)) {
     case llvm::ELF::R_MIPS_HI16:
       return llvm::ELF::R_MIPS_LO16;
     case llvm::ELF::R_MIPS_PCHI16:
@@ -263,14 +305,16 @@ private:
   Elf_Rel_Iter findMatchingRelocation(uint32_t pairRelType, Elf_Rel_Iter rit,
                                       Elf_Rel_Iter eit) const {
     return std::find_if(rit, eit, [&](const Elf_Rel &rel) {
-      return rel.getType(isMips64EL()) == pairRelType &&
-             rel.getSymbol(isMips64EL()) == rit->getSymbol(isMips64EL());
+      return getPrimaryType(rel) == pairRelType &&
+             rel.getSymbol(_isMips64EL) == rit->getSymbol(_isMips64EL);
     });
   }
 
-  bool isMips64EL() const { return this->_objFile->isMips64EL(); }
+  static uint8_t getPrimaryType(const Elf_Rel &rel) {
+    return rel.getType(_isMips64EL) & 0xff;
+  }
   bool isLocalBinding(const Elf_Rel &rel) const {
-    return this->_objFile->getSymbol(rel.getSymbol(isMips64EL()))
+    return this->_objFile->getSymbol(rel.getSymbol(_isMips64EL))
                ->getBinding() == llvm::ELF::STB_LOCAL;
   }
 };

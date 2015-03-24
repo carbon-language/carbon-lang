@@ -282,8 +282,8 @@ public:
   /// table are processed at startup.
   RelocationTable<ELFT> *getDynamicRelocationTable() {
     if (!_dynamicRelocationTable) {
-      _dynamicRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _context, _context.isRelaOutputFormat() ? ".rela.dyn" : ".rel.dyn",
+      _dynamicRelocationTable = std::move(createRelocationTable(
+          _context.isRelaOutputFormat() ? ".rela.dyn" : ".rel.dyn",
           ORDER_DYNAMIC_RELOCS));
       addSection(_dynamicRelocationTable.get());
     }
@@ -293,8 +293,8 @@ public:
   /// \brief Get or create the PLT relocation table. Referenced by DT_JMPREL.
   RelocationTable<ELFT> *getPLTRelocationTable() {
     if (!_pltRelocationTable) {
-      _pltRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _context, _context.isRelaOutputFormat() ? ".rela.plt" : ".rel.plt",
+      _pltRelocationTable = std::move(createRelocationTable(
+          _context.isRelaOutputFormat() ? ".rela.plt" : ".rel.plt",
           ORDER_DYNAMIC_PLT_RELOCS));
       addSection(_pltRelocationTable.get());
     }
@@ -330,6 +330,13 @@ protected:
       StringRef name, int32_t contentType,
       DefinedAtom::ContentPermissions contentPermissions,
       SectionOrder sectionOrder);
+
+  /// \brief Create a new relocation table.
+  virtual unique_bump_ptr<RelocationTable<ELFT>>
+  createRelocationTable(StringRef name, int32_t order) {
+    return unique_bump_ptr<RelocationTable<ELFT>>(
+        new (_allocator) RelocationTable<ELFT>(_context, name, order));
+  }
 
 private:
   /// Helper function that returns the priority value from an input section.

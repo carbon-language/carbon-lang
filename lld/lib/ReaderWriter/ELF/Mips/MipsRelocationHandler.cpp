@@ -230,18 +230,16 @@ static uint32_t relocGOTOfst(uint64_t S, int64_t A) {
 /// \brief R_MIPS_GPREL16
 /// local: sign-extend(A) + S + GP0 - GP
 /// external: sign-extend(A) + S - GP
-static uint32_t relocGPRel16(uint64_t S, int64_t A, uint64_t GP) {
+static uint64_t relocGPRel16(uint64_t S, int64_t A, uint64_t GP) {
   // We added GP0 to addendum for a local symbol during a Relocation pass.
-  int32_t result = llvm::SignExtend32<16>(A) + S - GP;
-  return result;
+  return llvm::SignExtend32<16>(A) + S - GP;
 }
 
 /// \brief R_MIPS_GPREL32
 /// local: rel32 A + S + GP0 - GP (truncate)
-static uint32_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
+static uint64_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
   // We added GP0 to addendum for a local symbol during a Relocation pass.
-  int32_t result = A + S - GP;
-  return result;
+  return A + S - GP;
 }
 
 /// \brief R_MIPS_PC18_S3
@@ -556,7 +554,17 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
   if (auto ec = res.getError())
     return ec;
 
-  auto params = getRelocationParams(ref.kindValue());
+  Reference::KindValue op = ref.kindValue();
+
+  // FIXME (simon): Handle r_ssym value.
+  for (auto tag = (ref.tag() & 0xffff); tag & 0xff; tag >>= 8) {
+    op = tag & 0xff;
+    res = calculateRelocation(op, *res, 0, relAddr, gpAddr, isGpDisp, jumpMode);
+    if (auto ec = res.getError())
+      return ec;
+  }
+
+  auto params = getRelocationParams(op);
   uint64_t ins = relocRead<ELFT>(params, location);
 
   if (auto ec = adjustJumpOpCode(ins, tgtAddr, jumpMode))

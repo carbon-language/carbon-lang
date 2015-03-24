@@ -435,6 +435,8 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
     if (!isDynamic(ref->target()) || hasPLTEntry(ref->target()))
       continue;
     ref->setKindValue(R_MIPS_REL32);
+    if (ELFT::Is64Bits)
+      static_cast<MipsELFReference<ELFT> *>(ref)->setTag(R_MIPS_64);
     if (!isLocalCall(ref->target()))
       getGlobalGOTEntry(ref->target());
   }

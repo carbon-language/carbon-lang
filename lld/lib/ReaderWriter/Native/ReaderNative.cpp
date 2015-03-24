@@ -241,6 +241,7 @@ public:
   Addend addend() const override;
   void setTarget(const Atom* newAtom) override;
   void setAddend(Addend a) override;
+  uint32_t tag() const override;
 
 private:
   const File                    *_file;
@@ -977,6 +978,8 @@ inline void NativeReferenceV2::setAddend(Addend a) {
     return;
   llvm_unreachable("setAddend() not supported");
 }
+
+uint32_t NativeReferenceV2::tag() const { return _ivarData->tag; }
 
 } // end namespace native
 

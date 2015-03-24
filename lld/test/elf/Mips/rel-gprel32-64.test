@@ -1,0 +1,70 @@
+# Check R_MIPS_GPREL32/R_MIPS_64 relocations handling.
+
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t.o
+# RUN: llvm-objdump -s %t.exe | FileCheck %s
+
+# CHECK:      Contents of section .text:
+# CHECK-NEXT:  1200001a0 c871ffff ffffffff c871ffff c871ffff  .q.......q...q..
+# CHECK-NEXT:  1200001b0 c871ffff ffffffff 00000000 00000000  .q..............
+
+---
+FileHeader:
+  Class:   ELFCLASS64
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_64]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    16
+    Size:            32
+
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Link:            .symtab
+    AddressAlign:    8
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          LT1
+        Type:            R_MIPS_GPREL16
+        Type2:           R_MIPS_64
+        Type3:           R_MIPS_NONE
+      - Offset:          0x08
+        Symbol:          LT1
+        Type:            R_MIPS_GPREL16
+        Type2:           R_MIPS_64
+        Type3:           R_MIPS_NONE
+      - Offset:          0x0C
+        Symbol:          LT1
+        Type:            R_MIPS_GPREL32
+        Type2:           R_MIPS_64
+        Type3:           R_MIPS_NONE
+      - Offset:          0x10
+        Symbol:          LT1
+        Type:            R_MIPS_GPREL32
+        Type2:           R_MIPS_64
+        Type3:           R_MIPS_NONE
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+
+  Global:
+    - Name:            LT1
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x18
+      Size:            0x8
+    - Name:            T0
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x0
+      Size:            0x18
+...

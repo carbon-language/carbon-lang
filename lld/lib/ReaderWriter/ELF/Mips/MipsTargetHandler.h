@@ -74,6 +74,14 @@ public:
                                                 contentPermissions);
   }
 
+protected:
+  unique_bump_ptr<RelocationTable<ELFT>>
+  createRelocationTable(StringRef name, int32_t order) override {
+    return unique_bump_ptr<RelocationTable<ELFT>>(
+        new (this->_allocator)
+            MipsRelocationTable<ELFT>(this->_context, name, order));
+  }
+
 private:
   MipsGOTSection<ELFT> *_gotSection;
   MipsPLTSection<ELFT> *_pltSection;

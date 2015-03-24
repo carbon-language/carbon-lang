@@ -225,6 +225,7 @@ struct NativeReferenceIvarsV2 {
   uint8_t   kindNamespace;
   uint8_t   kindArch;
   uint32_t  targetIndex;
+  uint32_t  tag;
 };
 
 

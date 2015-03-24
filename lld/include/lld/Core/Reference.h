@@ -101,6 +101,9 @@ public:
   /// During linking, some optimzations may change addend value.
   virtual void setAddend(Addend) = 0;
 
+  /// Returns target specific attributes of the reference.
+  virtual uint32_t tag() const { return 0; }
+
 protected:
   /// Reference is an abstract base class.  Only subclasses can use constructor.
   Reference(KindNamespace ns, KindArch a, KindValue value)

@@ -1,0 +1,134 @@
+# Check handling MIPS N64 ABI relocation "chains".
+
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
+# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t-so.o
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
+# RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t-o.o %t.so
+# RUN: llvm-objdump -s %t.exe | FileCheck %s
+
+# CHECK:      Contents of section .text:
+# CHECK-NEXT:  1200001d0 01000000 00000000 208e0000 00000000 ........ .......
+# CHECK-NEXT:  1200001e0 20800000 f8010000 28800000 00000000 .......(.......
+# CHECK:      Contents of section .pdr:
+# CHECK-NEXT:  0000 d0010020 e0010020 ... ...
+
+---
+FileHeader:
+  Class:   ELFCLASS64
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_64]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    16
+    Size:            8
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+
+  Global:
+    - Name:            T1
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0
+      Size:            8
+
+---
+FileHeader:
+  Class:   ELFCLASS64
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_64]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    16
+    Size:            32
+
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Link:            .symtab
+    AddressAlign:    8
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          LT1
+        Type:            R_MIPS_GPREL16
+        Type2:           R_MIPS_SUB
+        Type3:           R_MIPS_HI16
+      - Offset:          0x08
+        Symbol:          LT1
+        Type:            R_MIPS_GPREL16
+        Type2:           R_MIPS_SUB
+        Type3:           R_MIPS_LO16
+      - Offset:          0x10
+        Symbol:          .rodata
+        Type:            R_MIPS_GOT_PAGE
+        Addend:          8
+      - Offset:          0x14
+        Symbol:          .rodata
+        Type:            R_MIPS_GOT_OFST
+        Addend:          8
+      - Offset:          0x18
+        Symbol:          T1
+        Type:            R_MIPS_CALL16
+
+  - Name:            .pdr
+    Type:            SHT_PROGBITS
+    AddressAlign:    4
+    Size:            8
+
+  - Name:            .rela.pdr
+    Type:            SHT_RELA
+    Link:            .symtab
+    AddressAlign:    8
+    Info:            .pdr
+    Relocations:
+      - Offset:          0x00
+        Symbol:          LT1
+        Type:            R_MIPS_32
+      - Offset:          0x04
+        Symbol:          T0
+        Type:            R_MIPS_32
+
+  - Name:            .rodata
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC ]
+    AddressAlign:    16
+    Size:            16
+
+Symbols:
+  Local:
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+    - Name:            .rodata
+      Type:            STT_SECTION
+      Section:         .rodata
+    - Name:            .pdr
+      Type:            STT_SECTION
+      Section:         .pdr
+
+  Global:
+    - Name:            LT1
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x00
+      Size:            0x10
+    - Name:            T0
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x10
+      Size:            0x10
+    - Name:            T1
+...

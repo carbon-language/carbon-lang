@@ -131,6 +131,37 @@ private:
   std::unordered_map<const Atom *, const AtomLayout *> _pltLayoutMap;
 };
 
+template <class ELFT> class MipsRelocationTable : public RelocationTable<ELFT> {
+  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+  typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
+
+  static const bool _isMips64EL =
+      ELFT::Is64Bits && ELFT::TargetEndianness == llvm::support::little;
+
+public:
+  using RelocationTable<ELFT>::RelocationTable;
+
+protected:
+  void writeRela(ELFWriter *writer, Elf_Rela &r, const DefinedAtom &atom,
+                 const Reference &ref) override {
+    uint32_t rType = ref.kindValue() | (ref.tag() << 8);
+    r.setSymbolAndType(this->getSymbolIndex(ref.target()), rType, _isMips64EL);
+    r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
+    // The addend is used only by relative relocations
+    if (this->_context.isRelativeReloc(ref))
+      r.r_addend = writer->addressOfAtom(ref.target()) + ref.addend();
+    else
+      r.r_addend = 0;
+  }
+
+  void writeRel(ELFWriter *writer, Elf_Rel &r, const DefinedAtom &atom,
+                const Reference &ref) override {
+    uint32_t rType = ref.kindValue() | (ref.tag() << 8);
+    r.setSymbolAndType(this->getSymbolIndex(ref.target()), rType, _isMips64EL);
+    r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
+  }
+};
+
 } // elf
 } // lld
 
