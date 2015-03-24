@@ -65,5 +65,55 @@ bb2:
   ret i32 %res
 }
 
+; Checks that we return the mustalias store as a def
+; so that it contributes to value forwarding.  Note
+; that we could and should remove the store too.
+define i32 @test5(i1 %cnd, i32* %p) {
+; CHECK-LABEL: test5
+; CHECK-LABEL: entry:
+; CHECK-NEXT: store i32 5, i32* %p
+; CHECK-NEXT: ret i32 5
+entry:
+  %v1 = load i32, i32* %p, !invariant.load !0
+  store i32 5, i32* %p ;; must alias store, want to exploit
+  %v2 = load i32, i32* %p, !invariant.load !0
+  ret i32 %v2
+}
+
+
+declare void @foo()
+
+; Clobbering (mayalias) stores, even in function calls, can be ignored
+define i32 @test6(i1 %cnd, i32* %p) {
+; CHECK-LABEL: test6
+; CHECK-LABEL: entry:
+; CHECK-NEXT: @foo
+; CHECK-NEXT: ret i32 0
+entry:
+  %v1 = load i32, i32* %p, !invariant.load !0
+  call void @foo()
+  %v2 = load i32, i32* %p, !invariant.load !0
+  %res = sub i32 %v1, %v2
+  ret i32 %res
+}
+
+declare noalias i32* @bar(...) 
+
+; Same as previous, but a function with a noalias result (since they're handled
+; differently in MDA)
+define i32 @test7(i1 %cnd, i32* %p) {
+; CHECK-LABEL: test7
+; CHECK-LABEL: entry:
+; CHECK-NEXT: @bar
+; CHECK-NEXT: ret i32 0
+entry:
+  %v1 = load i32, i32* %p, !invariant.load !0
+  call i32* (...)* @bar(i32* %p)
+  %v2 = load i32, i32* %p, !invariant.load !0
+  %res = sub i32 %v1, %v2
+  ret i32 %res
+}
+
+
 !0 = !{ }
 

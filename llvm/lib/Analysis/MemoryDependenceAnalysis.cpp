@@ -408,6 +408,10 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
   // it is racy (undefined) or there is a release followed by an acquire
   // between the pair of accesses under consideration.
 
+  // If the load is invariant, we "know" that it doesn't alias *any* write. We
+  // do want to respect mustalias results since defs are useful for value
+  // forwarding, but any mayalias write can be assumed to be noalias.
+  // Arguably, this logic should be pushed inside AliasAnalysis itself.
   if (isLoad && QueryInst) {
     LoadInst *LI = dyn_cast<LoadInst>(QueryInst);
     if (LI && LI->getMetadata(LLVMContext::MD_invariant_load) != nullptr)
@@ -601,6 +605,8 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
       if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
+      if (isInvariantLoad)
+        continue;
       // Be conservative if the accessed pointer may alias the allocation.
       if (AA->alias(Inst, AccessPtr) != AliasAnalysis::NoAlias)
         return MemDepResult::getClobber(Inst);
@@ -610,6 +616,9 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
           isMallocLikeFn(Inst, TLI) || isCallocLikeFn(Inst, TLI))
         continue;
     }
+
+    if (isInvariantLoad)
+       continue;
 
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
     AliasAnalysis::ModRefResult MR = AA->getModRefInfo(Inst, MemLoc);
