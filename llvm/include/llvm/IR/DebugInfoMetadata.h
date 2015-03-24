@@ -41,53 +41,6 @@
 
 namespace llvm {
 
-/// \brief Debug location.
-///
-/// A debug location in source code, used for debug info and otherwise.
-class MDLocation : public MDNode {
-  friend class LLVMContextImpl;
-  friend class MDNode;
-
-  MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
-             unsigned Column, ArrayRef<Metadata *> MDs);
-  ~MDLocation() { dropAllReferences(); }
-
-  static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
-                             unsigned Column, Metadata *Scope,
-                             Metadata *InlinedAt, StorageType Storage,
-                             bool ShouldCreate = true);
-
-  TempMDLocation cloneImpl() const {
-    return getTemporary(getContext(), getLine(), getColumn(), getScope(),
-                        getInlinedAt());
-  }
-
-  // Disallow replacing operands.
-  void replaceOperandWith(unsigned I, Metadata *New) = delete;
-
-public:
-  DEFINE_MDNODE_GET(MDLocation,
-                    (unsigned Line, unsigned Column, Metadata *Scope,
-                     Metadata *InlinedAt = nullptr),
-                    (Line, Column, Scope, InlinedAt))
-
-  /// \brief Return a (temporary) clone of this.
-  TempMDLocation clone() const { return cloneImpl(); }
-
-  unsigned getLine() const { return SubclassData32; }
-  unsigned getColumn() const { return SubclassData16; }
-  Metadata *getScope() const { return getOperand(0); }
-  Metadata *getInlinedAt() const {
-    if (getNumOperands() == 2)
-      return getOperand(1);
-    return nullptr;
-  }
-
-  static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLocationKind;
-  }
-};
-
 /// \brief Tagged DWARF-like metadata node.
 ///
 /// A metadata node with a DWARF tag (i.e., a constant named \c DW_TAG_*,
@@ -356,6 +309,52 @@ public:
     case MDNamespaceKind:
       return true;
     }
+  }
+};
+
+/// \brief File.
+///
+/// TODO: Merge with directory/file node (including users).
+/// TODO: Canonicalize paths on creation.
+class MDFile : public MDScope {
+  friend class LLVMContextImpl;
+  friend class MDNode;
+
+  MDFile(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Ops)
+      : MDScope(C, MDFileKind, Storage, dwarf::DW_TAG_file_type, Ops) {}
+  ~MDFile() {}
+
+  static MDFile *getImpl(LLVMContext &Context, StringRef Filename,
+                         StringRef Directory, StorageType Storage,
+                         bool ShouldCreate = true) {
+    return getImpl(Context, getCanonicalMDString(Context, Filename),
+                   getCanonicalMDString(Context, Directory), Storage,
+                   ShouldCreate);
+  }
+  static MDFile *getImpl(LLVMContext &Context, MDString *Filename,
+                         MDString *Directory, StorageType Storage,
+                         bool ShouldCreate = true);
+
+  TempMDFile cloneImpl() const {
+    return getTemporary(getContext(), getFilename(), getDirectory());
+  }
+
+public:
+  DEFINE_MDNODE_GET(MDFile, (StringRef Filename, StringRef Directory),
+                    (Filename, Directory))
+  DEFINE_MDNODE_GET(MDFile, (MDString * Filename, MDString *Directory),
+                    (Filename, Directory))
+
+  TempMDFile clone() const { return cloneImpl(); }
+
+  StringRef getFilename() const { return getStringOperand(0); }
+  StringRef getDirectory() const { return getStringOperand(1); }
+
+  MDString *getRawFilename() const { return getOperandAs<MDString>(0); }
+  MDString *getRawDirectory() const { return getOperandAs<MDString>(1); }
+
+  static bool classof(const Metadata *MD) {
+    return MD->getMetadataID() == MDFileKind;
   }
 };
 
@@ -738,52 +737,6 @@ public:
   }
 };
 
-/// \brief File.
-///
-/// TODO: Merge with directory/file node (including users).
-/// TODO: Canonicalize paths on creation.
-class MDFile : public MDScope {
-  friend class LLVMContextImpl;
-  friend class MDNode;
-
-  MDFile(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Ops)
-      : MDScope(C, MDFileKind, Storage, dwarf::DW_TAG_file_type, Ops) {}
-  ~MDFile() {}
-
-  static MDFile *getImpl(LLVMContext &Context, StringRef Filename,
-                         StringRef Directory, StorageType Storage,
-                         bool ShouldCreate = true) {
-    return getImpl(Context, getCanonicalMDString(Context, Filename),
-                   getCanonicalMDString(Context, Directory), Storage,
-                   ShouldCreate);
-  }
-  static MDFile *getImpl(LLVMContext &Context, MDString *Filename,
-                         MDString *Directory, StorageType Storage,
-                         bool ShouldCreate = true);
-
-  TempMDFile cloneImpl() const {
-    return getTemporary(getContext(), getFilename(), getDirectory());
-  }
-
-public:
-  DEFINE_MDNODE_GET(MDFile, (StringRef Filename, StringRef Directory),
-                    (Filename, Directory))
-  DEFINE_MDNODE_GET(MDFile, (MDString * Filename, MDString *Directory),
-                    (Filename, Directory))
-
-  TempMDFile clone() const { return cloneImpl(); }
-
-  StringRef getFilename() const { return getStringOperand(0); }
-  StringRef getDirectory() const { return getStringOperand(1); }
-
-  MDString *getRawFilename() const { return getOperandAs<MDString>(0); }
-  MDString *getRawDirectory() const { return getOperandAs<MDString>(1); }
-
-  static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDFileKind;
-  }
-};
-
 /// \brief Compile unit.
 class MDCompileUnit : public MDScope {
   friend class LLVMContextImpl;
@@ -911,6 +864,53 @@ public:
     return MD->getMetadataID() == MDSubprogramKind ||
            MD->getMetadataID() == MDLexicalBlockKind ||
            MD->getMetadataID() == MDLexicalBlockFileKind;
+  }
+};
+
+/// \brief Debug location.
+///
+/// A debug location in source code, used for debug info and otherwise.
+class MDLocation : public MDNode {
+  friend class LLVMContextImpl;
+  friend class MDNode;
+
+  MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
+             unsigned Column, ArrayRef<Metadata *> MDs);
+  ~MDLocation() { dropAllReferences(); }
+
+  static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
+                             unsigned Column, Metadata *Scope,
+                             Metadata *InlinedAt, StorageType Storage,
+                             bool ShouldCreate = true);
+
+  TempMDLocation cloneImpl() const {
+    return getTemporary(getContext(), getLine(), getColumn(), getScope(),
+                        getInlinedAt());
+  }
+
+  // Disallow replacing operands.
+  void replaceOperandWith(unsigned I, Metadata *New) = delete;
+
+public:
+  DEFINE_MDNODE_GET(MDLocation,
+                    (unsigned Line, unsigned Column, Metadata *Scope,
+                     Metadata *InlinedAt = nullptr),
+                    (Line, Column, Scope, InlinedAt))
+
+  /// \brief Return a (temporary) clone of this.
+  TempMDLocation clone() const { return cloneImpl(); }
+
+  unsigned getLine() const { return SubclassData32; }
+  unsigned getColumn() const { return SubclassData16; }
+  Metadata *getScope() const { return getOperand(0); }
+  Metadata *getInlinedAt() const {
+    if (getNumOperands() == 2)
+      return getOperand(1);
+    return nullptr;
+  }
+
+  static bool classof(const Metadata *MD) {
+    return MD->getMetadataID() == MDLocationKind;
   }
 };
 
