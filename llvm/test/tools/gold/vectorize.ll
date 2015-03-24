@@ -1,6 +1,6 @@
 ; RUN: llvm-as %s -o %t.o
 
-; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -m elf_x86_64 -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=save-temps \
 ; RUN:    -shared %t.o -o %t2.o
 ; RUN: llvm-dis %t2.o.opt.bc -o - | FileCheck %s
