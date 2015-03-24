@@ -53,7 +53,8 @@ __m256d test_mm256_permute2f128_pd(__m256d a, __m256d b) {
 }
 
 __m256 test_mm256_permute2f128_ps(__m256 a, __m256 b) {
-  // FIXME: Check if the mask is correct
+  // Check if the mask is correct
+  // CHECK: shufflevector{{.*}}<i32 4, i32 5, i32 6, i32 7, i32 12, i32 13, i32 14, i32 15>
   return _mm256_permute2f128_ps(a, b, 0x13);
 }
 
