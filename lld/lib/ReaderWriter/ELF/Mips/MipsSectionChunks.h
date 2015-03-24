@@ -139,7 +139,9 @@ template <class ELFT> class MipsRelocationTable : public RelocationTable<ELFT> {
       ELFT::Is64Bits && ELFT::TargetEndianness == llvm::support::little;
 
 public:
-  using RelocationTable<ELFT>::RelocationTable;
+  MipsRelocationTable(const ELFLinkingContext &context, StringRef str,
+                      int32_t order)
+      : RelocationTable<ELFT>(context, str, order) {}
 
 protected:
   void writeRela(ELFWriter *writer, Elf_Rela &r, const DefinedAtom &atom,
