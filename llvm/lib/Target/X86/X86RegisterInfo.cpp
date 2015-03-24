@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86RegisterInfo.h"
+#include "X86FrameLowering.h"
 #include "X86InstrBuilder.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
@@ -507,15 +508,14 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // offset is from the SP at the end of the prologue, not the FP location. This
   // matches the behavior of llvm.frameaddress.
   if (Opc == TargetOpcode::FRAME_ALLOC) {
-    assert(TFI->hasFP(MF) && "frame alloc requires FP");
     MachineOperand &FI = MI.getOperand(FIOperandNum);
-    const MachineFrameInfo *MFI = MF.getFrameInfo();
-    int Offset = MFI->getObjectOffset(FrameIndex) - TFI->getOffsetOfLocalArea();
     bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
+    int Offset;
     if (IsWinEH)
-      Offset += MFI->getStackSize();
+      Offset = static_cast<const X86FrameLowering *>(TFI)
+                     ->getFrameIndexOffsetFromSP(MF, FrameIndex);
     else
-      Offset += SlotSize;
+      Offset = TFI->getFrameIndexOffset(MF, FrameIndex);
     FI.ChangeToImmediate(Offset);
     return;
   }
