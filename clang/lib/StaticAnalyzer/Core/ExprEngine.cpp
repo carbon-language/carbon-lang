@@ -2648,17 +2648,6 @@ struct DOTGraphTraits<ExplodedNode*> :
 } // end llvm namespace
 #endif
 
-#ifndef NDEBUG
-template <typename ITERATOR>
-ExplodedNode *GetGraphNode(ITERATOR I) { return *I; }
-
-template <> ExplodedNode*
-GetGraphNode<llvm::DenseMap<ExplodedNode*, Expr*>::iterator>
-  (llvm::DenseMap<ExplodedNode*, Expr*>::iterator I) {
-  return I->first;
-}
-#endif
-
 void ExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG
   if (trim) {
