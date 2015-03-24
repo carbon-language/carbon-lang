@@ -109,6 +109,38 @@ TEST(MemberExpr, ImplicitMemberRange) {
                              memberExpr()));
 }
 
+class MemberExprArrowLocVerifier : public RangeVerifier<MemberExpr> {
+protected:
+  virtual SourceRange getRange(const MemberExpr &Node) {
+     return Node.getOperatorLoc();
+  }
+};
+
+TEST(MemberExpr, ArrowRange) {
+  MemberExprArrowLocVerifier Verifier;
+  Verifier.expectRange(2, 19, 2, 19);
+  EXPECT_TRUE(Verifier.match("struct S { int x; };\n"
+                             "void foo(S *s) { s->x = 0; }",
+                             memberExpr()));
+}
+
+TEST(MemberExpr, MacroArrowRange) {
+  MemberExprArrowLocVerifier Verifier;
+  Verifier.expectRange(1, 24, 1, 24);
+  EXPECT_TRUE(Verifier.match("#define MEMBER(a, b) (a->b)\n"
+                             "struct S { int x; };\n"
+                             "void foo(S *s) { MEMBER(s, x) = 0; }",
+                             memberExpr()));
+}
+
+TEST(MemberExpr, ImplicitArrowRange) {
+  MemberExprArrowLocVerifier Verifier;
+  Verifier.expectRange(0, 0, 0, 0);
+  EXPECT_TRUE(Verifier.match("struct S { int x; void Test(); };\n"
+                             "void S::Test() { x = 1; }",
+                             memberExpr()));
+}
+
 TEST(VarDecl, VMTypeFixedVarDeclRange) {
   RangeVerifier<VarDecl> Verifier;
   Verifier.expectRange(1, 1, 1, 23);

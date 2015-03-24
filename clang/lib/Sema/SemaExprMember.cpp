@@ -732,8 +732,8 @@ Sema::BuildMemberReferenceExpr(Expr *Base, QualType BaseType,
 
 static ExprResult
 BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
-                        const CXXScopeSpec &SS, FieldDecl *Field,
-                        DeclAccessPair FoundDecl,
+                        SourceLocation OpLoc, const CXXScopeSpec &SS,
+                        FieldDecl *Field, DeclAccessPair FoundDecl,
                         const DeclarationNameInfo &MemberNameInfo);
 
 ExprResult
@@ -820,10 +820,10 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     
     // Make a nameInfo that properly uses the anonymous name.
     DeclarationNameInfo memberNameInfo(field->getDeclName(), loc);
-    
+
     result = BuildFieldReferenceExpr(*this, result, baseObjectIsPointer,
-                                     EmptySS, field, foundDecl,
-                                     memberNameInfo).get();
+                                     SourceLocation(), EmptySS, field,
+                                     foundDecl, memberNameInfo).get();
     if (!result)
       return ExprError();
 
@@ -841,9 +841,10 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     DeclAccessPair fakeFoundDecl =
         DeclAccessPair::make(field, field->getAccess());
 
-    result = BuildFieldReferenceExpr(*this, result, /*isarrow*/ false,
-                                     (FI == FEnd? SS : EmptySS), field,
-                                     fakeFoundDecl, memberNameInfo).get();
+    result =
+        BuildFieldReferenceExpr(*this, result, /*isarrow*/ false,
+                                SourceLocation(), (FI == FEnd ? SS : EmptySS),
+                                field, fakeFoundDecl, memberNameInfo).get();
   }
   
   return result;
@@ -863,18 +864,16 @@ BuildMSPropertyRefExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
 }
 
 /// \brief Build a MemberExpr AST node.
-static MemberExpr *
-BuildMemberExpr(Sema &SemaRef, ASTContext &C, Expr *Base, bool isArrow,
-                const CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
-                ValueDecl *Member, DeclAccessPair FoundDecl,
-                const DeclarationNameInfo &MemberNameInfo, QualType Ty,
-                ExprValueKind VK, ExprObjectKind OK,
-                const TemplateArgumentListInfo *TemplateArgs = nullptr) {
+static MemberExpr *BuildMemberExpr(
+    Sema &SemaRef, ASTContext &C, Expr *Base, bool isArrow,
+    SourceLocation OpLoc, const CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
+    ValueDecl *Member, DeclAccessPair FoundDecl,
+    const DeclarationNameInfo &MemberNameInfo, QualType Ty, ExprValueKind VK,
+    ExprObjectKind OK, const TemplateArgumentListInfo *TemplateArgs = nullptr) {
   assert((!isArrow || Base->isRValue()) && "-> base must be a pointer rvalue");
-  MemberExpr *E =
-      MemberExpr::Create(C, Base, isArrow, SS.getWithLocInContext(C),
-                         TemplateKWLoc, Member, FoundDecl, MemberNameInfo,
-                         TemplateArgs, Ty, VK, OK);
+  MemberExpr *E = MemberExpr::Create(
+      C, Base, isArrow, OpLoc, SS.getWithLocInContext(C), TemplateKWLoc, Member,
+      FoundDecl, MemberNameInfo, TemplateArgs, Ty, VK, OK);
   SemaRef.MarkMemberReferenced(E);
   return E;
 }
@@ -1057,8 +1056,8 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     return ExprError();
 
   if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl))
-    return BuildFieldReferenceExpr(*this, BaseExpr, IsArrow,
-                                   SS, FD, FoundDecl, MemberNameInfo);
+    return BuildFieldReferenceExpr(*this, BaseExpr, IsArrow, OpLoc, SS, FD,
+                                   FoundDecl, MemberNameInfo);
 
   if (MSPropertyDecl *PD = dyn_cast<MSPropertyDecl>(MemberDecl))
     return BuildMSPropertyRefExpr(*this, BaseExpr, IsArrow, SS, PD,
@@ -1072,8 +1071,8 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
                                                     OpLoc);
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
-    return BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS, TemplateKWLoc,
-                           Var, FoundDecl, MemberNameInfo,
+    return BuildMemberExpr(*this, Context, BaseExpr, IsArrow, OpLoc, SS,
+                           TemplateKWLoc, Var, FoundDecl, MemberNameInfo,
                            Var->getType().getNonReferenceType(), VK_LValue,
                            OK_Ordinary);
   }
@@ -1089,16 +1088,16 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
       type = MemberFn->getType();
     }
 
-    return BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS, TemplateKWLoc,
-                           MemberFn, FoundDecl, MemberNameInfo, type, valueKind,
-                           OK_Ordinary);
+    return BuildMemberExpr(*this, Context, BaseExpr, IsArrow, OpLoc, SS,
+                           TemplateKWLoc, MemberFn, FoundDecl, MemberNameInfo,
+                           type, valueKind, OK_Ordinary);
   }
   assert(!isa<FunctionDecl>(MemberDecl) && "member function not C++ method?");
 
   if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
-    return BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS, TemplateKWLoc,
-                           Enum, FoundDecl, MemberNameInfo, Enum->getType(),
-                           VK_RValue, OK_Ordinary);
+    return BuildMemberExpr(*this, Context, BaseExpr, IsArrow, OpLoc, SS,
+                           TemplateKWLoc, Enum, FoundDecl, MemberNameInfo,
+                           Enum->getType(), VK_RValue, OK_Ordinary);
   }
 
   // We found something that we didn't expect. Complain.
@@ -1643,8 +1642,8 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
 
 static ExprResult
 BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
-                        const CXXScopeSpec &SS, FieldDecl *Field,
-                        DeclAccessPair FoundDecl,
+                        SourceLocation OpLoc, const CXXScopeSpec &SS,
+                        FieldDecl *Field, DeclAccessPair FoundDecl,
                         const DeclarationNameInfo &MemberNameInfo) {
   // x.a is an l-value if 'a' has a reference type. Otherwise:
   // x.a is an l-value/x-value/pr-value if the base is (and note
@@ -1697,7 +1696,7 @@ BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
                                   FoundDecl, Field);
   if (Base.isInvalid())
     return ExprError();
-  return BuildMemberExpr(S, S.Context, Base.get(), IsArrow, SS,
+  return BuildMemberExpr(S, S.Context, Base.get(), IsArrow, OpLoc, SS,
                          /*TemplateKWLoc=*/SourceLocation(), Field, FoundDecl,
                          MemberNameInfo, MemberType, VK, OK);
 }

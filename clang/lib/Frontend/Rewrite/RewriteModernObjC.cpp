@@ -889,9 +889,9 @@ RewriteModernObjC::getIvarAccessString(ObjCIvarDecl *D) {
                                         IvarT, nullptr,
                                         /*BitWidth=*/nullptr, /*Mutable=*/true,
                                         ICIS_NoInit);
-      MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
-                                                FD->getType(), VK_LValue,
-                                                OK_Ordinary);
+      MemberExpr *ME = new (Context)
+          MemberExpr(PE, true, SourceLocation(), FD, SourceLocation(),
+                     FD->getType(), VK_LValue, OK_Ordinary);
       IvarT = Context->getDecltypeType(ME, ME->getType());
     }
   }
@@ -2767,11 +2767,9 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
                                     Context->getPointerType(Context->VoidPtrTy),
                                     nullptr, /*BitWidth=*/nullptr,
                                     /*Mutable=*/true, ICIS_NoInit);
-  MemberExpr *ArrayLiteralME = 
-    new (Context) MemberExpr(NSArrayCallExpr, false, ARRFD, 
-                             SourceLocation(),
-                             ARRFD->getType(), VK_LValue,
-                             OK_Ordinary);
+  MemberExpr *ArrayLiteralME = new (Context)
+      MemberExpr(NSArrayCallExpr, false, SourceLocation(), ARRFD,
+                 SourceLocation(), ARRFD->getType(), VK_LValue, OK_Ordinary);
   QualType ConstIdT = Context->getObjCIdType().withConst();
   CStyleCastExpr * ArrayLiteralObjects = 
     NoTypeInfoCStyleCastExpr(Context, 
@@ -2904,11 +2902,9 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
                                        Context->getPointerType(Context->VoidPtrTy),
                                        nullptr, /*BitWidth=*/nullptr,
                                        /*Mutable=*/true, ICIS_NoInit);
-  MemberExpr *DictLiteralValueME = 
-    new (Context) MemberExpr(NSValueCallExpr, false, ARRFD, 
-                             SourceLocation(),
-                             ARRFD->getType(), VK_LValue,
-                             OK_Ordinary);
+  MemberExpr *DictLiteralValueME = new (Context)
+      MemberExpr(NSValueCallExpr, false, SourceLocation(), ARRFD,
+                 SourceLocation(), ARRFD->getType(), VK_LValue, OK_Ordinary);
   QualType ConstIdT = Context->getObjCIdType().withConst();
   CStyleCastExpr * DictValueObjects = 
     NoTypeInfoCStyleCastExpr(Context, 
@@ -2919,13 +2915,11 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
   Expr *NSKeyCallExpr = 
     new (Context) CallExpr(*Context, NSDictDRE, KeyExprs,
                            NSDictFType, VK_LValue, SourceLocation());
-  
-  MemberExpr *DictLiteralKeyME = 
-    new (Context) MemberExpr(NSKeyCallExpr, false, ARRFD, 
-                             SourceLocation(),
-                             ARRFD->getType(), VK_LValue,
-                             OK_Ordinary);
-  
+
+  MemberExpr *DictLiteralKeyME = new (Context)
+      MemberExpr(NSKeyCallExpr, false, SourceLocation(), ARRFD,
+                 SourceLocation(), ARRFD->getType(), VK_LValue, OK_Ordinary);
+
   CStyleCastExpr * DictKeyObjects = 
     NoTypeInfoCStyleCastExpr(Context, 
                              Context->getPointerType(ConstIdT),
@@ -3234,9 +3228,9 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
                                     returnType, nullptr,
                                     /*BitWidth=*/nullptr,
                                     /*Mutable=*/true, ICIS_NoInit);
-  MemberExpr *ME = new (Context) MemberExpr(STCE, false, FieldD, SourceLocation(),
-                                            FieldD->getType(), VK_LValue,
-                                            OK_Ordinary);
+  MemberExpr *ME = new (Context)
+      MemberExpr(STCE, false, SourceLocation(), FieldD, SourceLocation(),
+                 FieldD->getType(), VK_LValue, OK_Ordinary);
 
   return ME;
 }
@@ -4732,11 +4726,10 @@ Stmt *RewriteModernObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp
                                     Context->VoidPtrTy, nullptr,
                                     /*BitWidth=*/nullptr, /*Mutable=*/true,
                                     ICIS_NoInit);
-  MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
-                                            FD->getType(), VK_LValue,
-                                            OK_Ordinary);
+  MemberExpr *ME =
+      new (Context) MemberExpr(PE, true, SourceLocation(), FD, SourceLocation(),
+                               FD->getType(), VK_LValue, OK_Ordinary);
 
-  
   CastExpr *FunkCast = NoTypeInfoCStyleCastExpr(Context, PtrToFuncCastType,
                                                 CK_BitCast, ME);
   PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), FunkCast);
@@ -4781,10 +4774,9 @@ Stmt *RewriteModernObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
                                     Context->VoidPtrTy, nullptr,
                                     /*BitWidth=*/nullptr, /*Mutable=*/true,
                                     ICIS_NoInit);
-  MemberExpr *ME = new (Context) MemberExpr(DeclRefExp, isArrow,
-                                            FD, SourceLocation(),
-                                            FD->getType(), VK_LValue,
-                                            OK_Ordinary);
+  MemberExpr *ME = new (Context)
+      MemberExpr(DeclRefExp, isArrow, SourceLocation(), FD, SourceLocation(),
+                 FD->getType(), VK_LValue, OK_Ordinary);
 
   StringRef Name = VD->getName();
   FD = FieldDecl::Create(*Context, nullptr, SourceLocation(), SourceLocation(),
@@ -4792,11 +4784,10 @@ Stmt *RewriteModernObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
                          Context->VoidPtrTy, nullptr,
                          /*BitWidth=*/nullptr, /*Mutable=*/true,
                          ICIS_NoInit);
-  ME = new (Context) MemberExpr(ME, true, FD, SourceLocation(),
-                                DeclRefExp->getType(), VK_LValue, OK_Ordinary);
-  
-  
-  
+  ME =
+      new (Context) MemberExpr(ME, true, SourceLocation(), FD, SourceLocation(),
+                               DeclRefExp->getType(), VK_LValue, OK_Ordinary);
+
   // Need parens to enforce precedence.
   ParenExpr *PE = new (Context) ParenExpr(DeclRefExp->getExprLoc(), 
                                           DeclRefExp->getExprLoc(), 
@@ -7694,9 +7685,9 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                             IvarT, nullptr,
                                             /*BitWidth=*/nullptr,
                                             /*Mutable=*/true, ICIS_NoInit);
-          MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
-                                                    FD->getType(), VK_LValue,
-                                                    OK_Ordinary);
+          MemberExpr *ME = new (Context)
+              MemberExpr(PE, true, SourceLocation(), FD, SourceLocation(),
+                         FD->getType(), VK_LValue, OK_Ordinary);
           IvarT = Context->getDecltypeType(ME, ME->getType());
         }
       }
@@ -7723,9 +7714,9 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                           D->getType(), nullptr,
                                           /*BitWidth=*/D->getBitWidth(),
                                           /*Mutable=*/true, ICIS_NoInit);
-        MemberExpr *ME = new (Context) MemberExpr(PE, /*isArrow*/false, FD, SourceLocation(),
-                                                  FD->getType(), VK_LValue,
-                                                  OK_Ordinary);
+        MemberExpr *ME = new (Context)
+            MemberExpr(PE, /*isArrow*/ false, SourceLocation(), FD,
+                       SourceLocation(), FD->getType(), VK_LValue, OK_Ordinary);
         Replacement = ME;
 
       }

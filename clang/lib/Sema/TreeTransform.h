@@ -1870,11 +1870,9 @@ public:
         return ExprError();
       Base = BaseResult.get();
       ExprValueKind VK = isArrow ? VK_LValue : Base->getValueKind();
-      MemberExpr *ME =
-        new (getSema().Context) MemberExpr(Base, isArrow,
-                                           Member, MemberNameInfo,
-                                           cast<FieldDecl>(Member)->getType(),
-                                           VK, OK_Ordinary);
+      MemberExpr *ME = new (getSema().Context)
+          MemberExpr(Base, isArrow, OpLoc, Member, MemberNameInfo,
+                     cast<FieldDecl>(Member)->getType(), VK, OK_Ordinary);
       return ME;
     }
 
