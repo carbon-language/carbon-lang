@@ -82,7 +82,8 @@ Error
 ModuleCache::Get (const FileSpec &root_dir_spec,
                   const char *hostname,
                   const ModuleSpec &module_spec,
-                  ModuleSP &cached_module_sp)
+                  ModuleSP &cached_module_sp,
+                  bool *did_create_ptr)
 {
     const auto find_it = m_loaded_modules.find (module_spec.GetUUID ().GetAsString());
     if (find_it != m_loaded_modules.end ())
@@ -109,6 +110,8 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
     cached_module_spec.GetFileSpec () = module_file_path;
     cached_module_spec.GetPlatformFileSpec () = module_spec.GetFileSpec ();
     cached_module_sp.reset (new Module (cached_module_spec));
+    if (did_create_ptr)
+        *did_create_ptr = true;
 
     m_loaded_modules.insert (std::make_pair (module_spec.GetUUID ().GetAsString (), cached_module_sp));
 

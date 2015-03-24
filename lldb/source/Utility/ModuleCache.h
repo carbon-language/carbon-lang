@@ -54,7 +54,8 @@ public:
     Get (const FileSpec &root_dir_spec,
          const char *hostname,
          const ModuleSpec &module_spec,
-         lldb::ModuleSP &cached_module_sp);
+         lldb::ModuleSP &cached_module_sp,
+         bool *did_create_ptr);
 
 private:
     static FileSpec

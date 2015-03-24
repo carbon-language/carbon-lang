@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -1130,30 +1131,35 @@ class ModuleCache;
                              const FileSpecList *module_search_paths_ptr,
                              Platform &remote_platform);
 
-        bool
-        GetCachedSharedModule (const ModuleSpec &module_spec,
-                               Process* process,
-                               lldb::ModuleSP &module_sp);
-
         Error
         DownloadModuleSlice (const FileSpec& src_file_spec,
                              const uint64_t src_offset,
                              const uint64_t src_size,
                              const FileSpec& dst_file_spec);
 
-        bool
-        GetModuleFromLocalCache (const ModuleSpec& module_spec,
-                                 Process* process,
-                                 lldb::ModuleSP &module_sp);
-
-        FileSpec GetModuleCacheRoot ();
-
     private:
+        typedef std::function<Error (const ModuleSpec &)> ModuleResolver;
+
+        Error
+        GetRemoteSharedModule (const ModuleSpec &module_spec,
+                               Process* process,
+                               lldb::ModuleSP &module_sp,
+                               const ModuleResolver &module_resolver,
+                               bool *did_create_ptr);
+
+        bool
+        GetCachedSharedModule (const ModuleSpec& module_spec,
+                               lldb::ModuleSP &module_sp,
+                               bool *did_create_ptr);
+
         Error
         LoadCachedExecutable (const ModuleSpec &module_spec,
                               lldb::ModuleSP &module_sp,
                               const FileSpecList *module_search_paths_ptr,
                               Platform &remote_platform);
+
+        FileSpec
+        GetModuleCacheRoot ();
 
         DISALLOW_COPY_AND_ASSIGN (Platform);
     };
