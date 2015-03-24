@@ -122,8 +122,9 @@ class InductiveRangeCheck {
   BranchInst *Branch;
   RangeCheckKind Kind;
 
-  static RangeCheckKind parseRangeCheckICmp(ICmpInst *ICI, ScalarEvolution &SE,
-                                            Value *&Index, Value *&Length);
+  static RangeCheckKind parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
+                                            ScalarEvolution &SE, Value *&Index,
+                                            Value *&Length);
 
   static InductiveRangeCheck::RangeCheckKind
   parseRangeCheck(Loop *L, ScalarEvolution &SE, Value *Condition,
@@ -255,8 +256,18 @@ const char *InductiveRangeCheck::rangeCheckKindToStr(
 /// RANGE_CHECK_UPPER.
 ///
 InductiveRangeCheck::RangeCheckKind
-InductiveRangeCheck::parseRangeCheckICmp(ICmpInst *ICI, ScalarEvolution &SE,
-                                         Value *&Index, Value *&Length) {
+InductiveRangeCheck::parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
+                                         ScalarEvolution &SE, Value *&Index,
+                                         Value *&Length) {
+
+  auto IsNonNegativeAndNotLoopVarying = [&SE, L](Value *V) {
+    const SCEV *S = SE.getSCEV(V);
+    if (isa<SCEVCouldNotCompute>(S))
+      return false;
+
+    return SE.getLoopDisposition(S, L) == ScalarEvolution::LoopInvariant &&
+           SE.isKnownNonNegative(S);
+  };
 
   using namespace llvm::PatternMatch;
 
@@ -287,7 +298,7 @@ InductiveRangeCheck::parseRangeCheckICmp(ICmpInst *ICI, ScalarEvolution &SE,
       return RANGE_CHECK_LOWER;
     }
 
-    if (SE.isKnownNonNegative(SE.getSCEV(LHS))) {
+    if (IsNonNegativeAndNotLoopVarying(LHS)) {
       Index = RHS;
       Length = LHS;
       return RANGE_CHECK_UPPER;
@@ -298,7 +309,7 @@ InductiveRangeCheck::parseRangeCheckICmp(ICmpInst *ICI, ScalarEvolution &SE,
     std::swap(LHS, RHS);
   // fallthrough
   case ICmpInst::ICMP_UGT:
-    if (SE.isKnownNonNegative(SE.getSCEV(LHS))) {
+    if (IsNonNegativeAndNotLoopVarying(LHS)) {
       Index = RHS;
       Length = LHS;
       return RANGE_CHECK_BOTH;
@@ -328,8 +339,8 @@ InductiveRangeCheck::parseRangeCheck(Loop *L, ScalarEvolution &SE,
     if (!ICmpA || !ICmpB)
       return InductiveRangeCheck::RANGE_CHECK_UNKNOWN;
 
-    auto RCKindA = parseRangeCheckICmp(ICmpA, SE, IndexA, LengthA);
-    auto RCKindB = parseRangeCheckICmp(ICmpB, SE, IndexB, LengthB);
+    auto RCKindA = parseRangeCheckICmp(L, ICmpA, SE, IndexA, LengthA);
+    auto RCKindB = parseRangeCheckICmp(L, ICmpB, SE, IndexB, LengthB);
 
     if (RCKindA == InductiveRangeCheck::RANGE_CHECK_UNKNOWN ||
         RCKindB == InductiveRangeCheck::RANGE_CHECK_UNKNOWN)
@@ -353,7 +364,7 @@ InductiveRangeCheck::parseRangeCheck(Loop *L, ScalarEvolution &SE,
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(Condition)) {
     Value *IndexVal = nullptr;
 
-    auto RCKind = parseRangeCheckICmp(ICI, SE, IndexVal, Length);
+    auto RCKind = parseRangeCheckICmp(L, ICI, SE, IndexVal, Length);
 
     if (RCKind == InductiveRangeCheck::RANGE_CHECK_UNKNOWN)
       return InductiveRangeCheck::RANGE_CHECK_UNKNOWN;
