@@ -46,7 +46,7 @@ public:
     /// @param[in] declMap
     ///     A reference to the LLDB object that handles entity lookup.
     //------------------------------------------------------------------
-	ClangASTSource (const lldb::TargetSP &target) :
+    ClangASTSource (const lldb::TargetSP &target) :
         m_import_in_progress (false),
         m_lookups_enabled (false),
         m_target (target),
@@ -55,30 +55,30 @@ public:
     {
         m_ast_importer = m_target->GetClangASTImporter();
     }
-    
+  
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-	~ClangASTSource();
-	
+    ~ClangASTSource();
+    
     //------------------------------------------------------------------
     /// Interface stubs.
     //------------------------------------------------------------------
-    clang::Decl *GetExternalDecl (uint32_t)         {   return NULL;                }
-    clang::Stmt *GetExternalDeclStmt (uint64_t)     {   return NULL;                }
-	clang::Selector GetExternalSelector (uint32_t)  {   return clang::Selector();   }
-    uint32_t GetNumExternalSelectors ()             {   return 0;                   }
-    clang::CXXBaseSpecifier *GetExternalCXXBaseSpecifiers (uint64_t Offset)
+    clang::Decl *GetExternalDecl (uint32_t) override {   return NULL;                }
+    clang::Stmt *GetExternalDeclStmt (uint64_t) override {   return NULL;                }
+    clang::Selector GetExternalSelector (uint32_t) override {   return clang::Selector();   }
+    uint32_t GetNumExternalSelectors () override {   return 0;                   }
+    clang::CXXBaseSpecifier *GetExternalCXXBaseSpecifiers (uint64_t Offset) override
                                                     {   return NULL;                }
     void MaterializeVisibleDecls (const clang::DeclContext *DC)
                                                     {   return;                     }
-	
+      
     void InstallASTContext (clang::ASTContext *ast_context)
     {
         m_ast_context = ast_context;
         m_ast_importer->InstallMapCompleter(ast_context, *this);
     }
-    
+  
     //
     // APIs for ExternalASTSource
     //
@@ -402,7 +402,7 @@ protected:
     bool                    m_lookups_enabled;
 
     const lldb::TargetSP                m_target;           ///< The target to use in finding variables and types.
-	clang::ASTContext                  *m_ast_context;      ///< The AST context requests are coming in for.
+    clang::ASTContext                  *m_ast_context;      ///< The AST context requests are coming in for.
     ClangASTImporter                   *m_ast_importer;     ///< The target's AST importer.
     std::set<const char *>              m_active_lookups;
 };

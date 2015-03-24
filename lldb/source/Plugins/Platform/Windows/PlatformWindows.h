@@ -47,11 +47,11 @@ public:
     static const char *
     GetPluginDescriptionStatic(bool is_host);
 
-    virtual lldb_private::ConstString
-    GetPluginName(void);
+    lldb_private::ConstString
+    GetPluginName(void) override;
 
-    virtual uint32_t
-    GetPluginVersion(void)
+    uint32_t
+    GetPluginVersion(void) override
     {
         return 1;
     }
@@ -59,77 +59,77 @@ public:
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
-    virtual bool
+    bool
     GetModuleSpec (const lldb_private::FileSpec& module_file_spec,
                    const lldb_private::ArchSpec& arch,
-                   lldb_private::ModuleSpec &module_spec);
+                   lldb_private::ModuleSpec &module_spec) override;
 
-    virtual Error
+    Error
     ResolveExecutable(const lldb_private::ModuleSpec &module_spec,
                       lldb::ModuleSP &module_sp,
-                      const FileSpecList *module_search_paths_ptr);
+                      const FileSpecList *module_search_paths_ptr) override;
 
-    virtual const char *
-    GetDescription(void)
+    const char *
+    GetDescription(void) override
     {
         return GetPluginDescriptionStatic(IsHost());
     }
 
-    virtual size_t
+    size_t
     GetSoftwareBreakpointTrapOpcode(lldb_private::Target &target,
-                                    lldb_private::BreakpointSite *bp_site);
+                                    lldb_private::BreakpointSite *bp_site) override;
 
-    virtual bool
-    GetRemoteOSVersion(void);
+    bool
+    GetRemoteOSVersion(void) override;
 
-    virtual bool
-    GetRemoteOSBuildString(std::string &s);
+    bool
+    GetRemoteOSBuildString(std::string &s) override;
 
-    virtual bool
-    GetRemoteOSKernelDescription(std::string &s);
+    bool
+    GetRemoteOSKernelDescription(std::string &s) override;
 
     // Remote Platform subclasses need to override this function
-    virtual lldb_private::ArchSpec
-    GetRemoteSystemArchitecture(void);
+    lldb_private::ArchSpec
+    GetRemoteSystemArchitecture(void) override;
 
-    virtual bool
-    IsConnected(void) const;
+    bool
+    IsConnected(void) const override;
 
-    virtual lldb_private::Error
-    ConnectRemote(lldb_private::Args& args);
+    lldb_private::Error
+    ConnectRemote(lldb_private::Args& args) override;
 
-    virtual lldb_private::Error
-    DisconnectRemote( void );
+    lldb_private::Error
+    DisconnectRemote( void ) override;
 
-    virtual const char *
-    GetHostname( void );
+    const char *
+    GetHostname( void ) override;
 
-    virtual const char *
-    GetUserName(uint32_t uid);
+    const char *
+    GetUserName(uint32_t uid) override;
 
-    virtual const char *
-    GetGroupName(uint32_t gid);
+    const char *
+    GetGroupName(uint32_t gid) override;
 
-    virtual bool
+    bool
     GetProcessInfo(lldb::pid_t pid,
-                   lldb_private::ProcessInstanceInfo &proc_info);
+                   lldb_private::ProcessInstanceInfo &proc_info) override;
 
-    virtual uint32_t
+    uint32_t
     FindProcesses(const lldb_private::ProcessInstanceInfoMatch &match_info,
-                  lldb_private::ProcessInstanceInfoList &process_infos);
+                  lldb_private::ProcessInstanceInfoList &process_infos) override;
 
-    virtual lldb_private::Error
-    LaunchProcess(lldb_private::ProcessLaunchInfo &launch_info);
+    lldb_private::Error
+    LaunchProcess(lldb_private::ProcessLaunchInfo &launch_info) override;
 
-    virtual lldb::ProcessSP
+    lldb::ProcessSP
     Attach(lldb_private::ProcessAttachInfo &attach_info,
            lldb_private::Debugger &debugger,
            lldb_private::Target *target,
-           lldb_private::Error &error);
+           lldb_private::Error &error) override;
 
-    virtual lldb_private::Error
+    lldb_private::Error
     GetFileWithUUID(const lldb_private::FileSpec &platform_file,
-                    const lldb_private::UUID* uuid, lldb_private::FileSpec &local_file);
+                    const lldb_private::UUID* uuid, lldb_private::FileSpec &local_file) override;
 
     lldb_private::Error
     GetSharedModule(const lldb_private::ModuleSpec &module_spec,
@@ -139,22 +139,22 @@ public:
                     lldb::ModuleSP *old_module_sp_ptr,
                     bool *did_create_ptr) override;
 
-    virtual bool
-    GetSupportedArchitectureAtIndex(uint32_t idx, lldb_private::ArchSpec &arch);
+    bool
+    GetSupportedArchitectureAtIndex(uint32_t idx, lldb_private::ArchSpec &arch) override;
 
-    virtual void
-    GetStatus(lldb_private::Stream &strm);
+    void
+    GetStatus(lldb_private::Stream &strm) override;
 
     // Local debugging not yet supported
-    virtual bool
-    CanDebugProcess(void)
+    bool
+    CanDebugProcess(void) override
     {
         return false;
     }
 
     // FIXME not sure what the _sigtramp equivalent would be on this platform
-    virtual void
-    CalculateTrapHandlerSymbolNames ()
+    void
+    CalculateTrapHandlerSymbolNames () override
     {
     }
 
