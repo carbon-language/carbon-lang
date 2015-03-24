@@ -25,7 +25,6 @@ class HostInfoAndroid : public HostInfoLinux
 
   protected:
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
-    static bool ComputeSupportExeDirectory(FileSpec &file_spec);
 };
 
 } // end of namespace lldb_private

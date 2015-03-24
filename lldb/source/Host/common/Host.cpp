@@ -487,8 +487,6 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
         if (info.dli_fname)
             module_filespec.SetFile(info.dli_fname, true);
     }
-#else
-    assert(false && "dladdr() not supported on Android");
 #endif
     return module_filespec;
 }
