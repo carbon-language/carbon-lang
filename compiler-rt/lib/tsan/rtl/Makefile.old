@@ -15,6 +15,7 @@ CXXFLAGS+=$(CFLAGS)
 ifeq ($(DEBUG), 0)
   CXXFLAGS+=-fomit-frame-pointer
 ifeq ($(CXX), g++)
+  CXXFLAGS+=-Wno-maybe-uninitialized
   CXXFLAGS+=-Wframe-larger-than=512
 endif  # CXX=g++
 endif  # DEBUG=0
