@@ -2100,13 +2100,13 @@ void Parser::MaybeParseAndDiagnoseDeclSpecAfterCXX11VirtSpecifierSeq(
   ParseTypeQualifierListOpt(DS, AR_NoAttributesParsed, false);
   D.ExtendWithDeclSpec(DS);
 
-  auto &Function = D.getFunctionTypeInfo();
   if (DS.getTypeQualifiers() != DeclSpec::TQ_unspecified) {
     auto DeclSpecCheck = [&] (DeclSpec::TQ TypeQual,
                               const char *FixItName,
                               SourceLocation SpecLoc,
                               unsigned* QualifierLoc) {
       FixItHint Insertion;
+      auto &Function = D.getFunctionTypeInfo();
       if (DS.getTypeQualifiers() & TypeQual) {
         if (!(Function.TypeQuals & TypeQual)) {
           std::string Name(FixItName);
@@ -2122,29 +2122,13 @@ void Parser::MaybeParseAndDiagnoseDeclSpecAfterCXX11VirtSpecifierSeq(
           << Insertion;
       }
     };
+    auto &Function = D.getFunctionTypeInfo();
     DeclSpecCheck(DeclSpec::TQ_const, "const", DS.getConstSpecLoc(),
                   &Function.ConstQualifierLoc);
     DeclSpecCheck(DeclSpec::TQ_volatile, "volatile", DS.getVolatileSpecLoc(),
                   &Function.VolatileQualifierLoc);
     DeclSpecCheck(DeclSpec::TQ_restrict, "restrict", DS.getRestrictSpecLoc(),
                   &Function.RestrictQualifierLoc);
-  }
-
-  // Parse ref-qualifiers.
-  bool RefQualifierIsLValueRef = true;
-  SourceLocation RefQualifierLoc;
-  if (ParseRefQualifier(RefQualifierIsLValueRef, RefQualifierLoc)) {
-    const char *Name = (RefQualifierIsLValueRef ? "& " : "&& ");
-    FixItHint Insertion = FixItHint::CreateInsertion(VS.getFirstLocation(), Name);
-    Function.RefQualifierIsLValueRef = RefQualifierIsLValueRef;
-    Function.RefQualifierLoc = RefQualifierLoc.getRawEncoding();
-
-    Diag(RefQualifierLoc, diag::err_declspec_after_virtspec)
-      << (RefQualifierIsLValueRef ? "&" : "&&")
-      << VirtSpecifiers::getSpecifierName(VS.getLastSpecifier())
-      << FixItHint::CreateRemoval(RefQualifierLoc)
-      << Insertion;
-    D.SetRangeEnd(RefQualifierLoc);
   }
 }
 

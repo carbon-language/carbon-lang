@@ -5342,8 +5342,15 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       }
 
       // Parse ref-qualifier[opt].
-      if (ParseRefQualifier(RefQualifierIsLValueRef, RefQualifierLoc))
+      if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
+        Diag(Tok, getLangOpts().CPlusPlus11 ?
+             diag::warn_cxx98_compat_ref_qualifier :
+             diag::ext_ref_qualifier);
+
+        RefQualifierIsLValueRef = Tok.is(tok::amp);
+        RefQualifierLoc = ConsumeToken();
         EndLoc = RefQualifierLoc;
+      }
 
       // C++11 [expr.prim.general]p3:
       //   If a declaration declares a member function or member function
@@ -5437,22 +5444,6 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              StartLoc, LocalEndLoc, D,
                                              TrailingReturnType),
                 FnAttrs, EndLoc);
-}
-
-/// ParseRefQualifier - Parses a member function ref-qualifier. Returns
-/// true if a ref-qualifier is found.
-bool Parser::ParseRefQualifier(bool &RefQualifierIsLValueRef,
-                               SourceLocation &RefQualifierLoc) {
-  if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
-    Diag(Tok, getLangOpts().CPlusPlus11 ?
-         diag::warn_cxx98_compat_ref_qualifier :
-         diag::ext_ref_qualifier);
-
-    RefQualifierIsLValueRef = Tok.is(tok::amp);
-    RefQualifierLoc = ConsumeToken();
-    return true;
-  }
-  return false;
 }
 
 /// isFunctionDeclaratorIdentifierList - This parameter list may have an

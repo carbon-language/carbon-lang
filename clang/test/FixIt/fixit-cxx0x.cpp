@@ -159,7 +159,7 @@ namespace MisplacedParameterPack {
   void redundantEllipsisInNonTypeTemplateParameter();
 }
 
-namespace MisplacedDeclAndRefSpecAfterVirtSpec {
+namespace MisplacedDeclSpecAfterVirtSpec {
   struct B {
     virtual void f();
     virtual void f() volatile const;
@@ -167,13 +167,5 @@ namespace MisplacedDeclAndRefSpecAfterVirtSpec {
   struct D : B {
     virtual void f() override;
     virtual void f() override final const volatile; // expected-error {{'const' qualifier may not appear after the virtual specifier 'final'}} expected-error {{'volatile' qualifier may not appear after the virtual specifier 'final'}}
-  };
-  struct B2 {
-    virtual void f() &;
-    virtual void f() volatile const &&;
-  };
-  struct D2 : B2 {
-    virtual void f() override &; // expected-error {{'&' qualifier may not appear after the virtual specifier 'override'}}
-    virtual void f() override final const volatile &&; //  expected-error {{'const' qualifier may not appear after the virtual specifier 'final'}} expected-error {{'volatile' qualifier may not appear after the virtual specifier 'final'}} expected-error {{'&&' qualifier may not appear after the virtual specifier 'final'}}
   };
 }
