@@ -1474,14 +1474,12 @@ SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInte
     }
 }
 
-bool 
-SymbolFileDWARFDebugMap::LayoutRecordType (void *baton, 
-                                           const clang::RecordDecl *record_decl,
-                                           uint64_t &size, 
-                                           uint64_t &alignment,
-                                           llvm::DenseMap <const clang::FieldDecl *, uint64_t> &field_offsets,
-                                           llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                                           llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
+bool
+SymbolFileDWARFDebugMap::LayoutRecordType(
+    void *baton, const clang::RecordDecl *record_decl, uint64_t &size, uint64_t &alignment,
+    std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &field_offsets,
+    std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &base_offsets,
+    std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &vbase_offsets)
 {
     SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
     SymbolFileDWARF *oso_dwarf;

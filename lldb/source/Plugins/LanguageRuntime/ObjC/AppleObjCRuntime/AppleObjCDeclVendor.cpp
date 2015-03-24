@@ -141,12 +141,10 @@ public:
     }
 
     bool
-    layoutRecordType(const clang::RecordDecl *Record,
-                     uint64_t &Size,
-                     uint64_t &Alignment,
-                     llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
-                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
-                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets)
+    layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+                     std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
+                     std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
+                     std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets)
     {
         return false;
     }

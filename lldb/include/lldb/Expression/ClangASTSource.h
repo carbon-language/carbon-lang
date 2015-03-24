@@ -11,6 +11,7 @@
 #define liblldb_ClangASTSource_h_
 
 #include <set>
+#include <vector>
 
 #include "clang/Basic/IdentifierTable.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
@@ -19,6 +20,12 @@
 #include "lldb/Target/Target.h"
 
 #include "llvm/ADT/SmallSet.h"
+
+namespace clang
+{
+class CharUnits;
+class FieldDecl;
+}
 
 namespace lldb_private {
     
@@ -122,7 +129,10 @@ public:
     FindExternalLexicalDecls (const clang::DeclContext *DC,
                               bool (*isKindWeWant)(clang::Decl::Kind),
                               llvm::SmallVectorImpl<clang::Decl*> &Decls);
-    
+
+    typedef std::vector<std::pair<const clang::FieldDecl *, uint64_t>> FieldOffsetList;
+    typedef std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> BaseOffsetList;
+
     //------------------------------------------------------------------
     /// Specify the layout of the contents of a RecordDecl.
     ///
@@ -155,15 +165,11 @@ public:
     ///
     /// @return
     ///     True <=> the layout is valid.
-    //-----------------------------------------------------------------    
-    bool 
-    layoutRecordType(const clang::RecordDecl *Record,
-                     uint64_t &Size, 
-                     uint64_t &Alignment,
-                     llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
-                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
-                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
-    
+    //-----------------------------------------------------------------
+    bool layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+                          FieldOffsetList &FieldOffsets, BaseOffsetList &BaseOffsets,
+                          BaseOffsetList &VirtualBaseOffsets);
+
     //------------------------------------------------------------------
     /// Complete a TagDecl.
     ///
@@ -277,14 +283,10 @@ public:
         {
             return m_original.CompleteType(Class);
         }
-        
-        bool 
-        layoutRecordType(const clang::RecordDecl *Record,
-                         uint64_t &Size, 
-                         uint64_t &Alignment,
-                         llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
-                         llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
-                         llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets)
+
+        bool
+        layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+                         FieldOffsetList &FieldOffsets, BaseOffsetList &BaseOffsets, BaseOffsetList &VirtualBaseOffsets)
         {
             return m_original.layoutRecordType(Record,
                                                Size, 

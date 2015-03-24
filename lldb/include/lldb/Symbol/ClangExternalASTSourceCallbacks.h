@@ -34,13 +34,11 @@ public:
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);
     typedef void (*CompleteObjCInterfaceDeclCallback)(void *baton, clang::ObjCInterfaceDecl *);
     typedef void (*FindExternalVisibleDeclsByNameCallback)(void *baton, const clang::DeclContext *DC, clang::DeclarationName Name, llvm::SmallVectorImpl <clang::NamedDecl *> *results);
-    typedef bool (*LayoutRecordTypeCallback)(void *baton, 
-                                             const clang::RecordDecl *Record,
-                                             uint64_t &Size, 
-                                             uint64_t &Alignment,
-                                             llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
-                                             llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
-                                             llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
+    typedef bool (*LayoutRecordTypeCallback)(
+        void *baton, const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+        std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
+        std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
+        std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets);
 
     ClangExternalASTSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                      CompleteObjCInterfaceDeclCallback objc_decl_callback,
@@ -121,14 +119,11 @@ public:
     
     virtual void
     CompleteType (clang::ObjCInterfaceDecl *objc_decl);
-    
-    bool 
-    layoutRecordType(const clang::RecordDecl *Record,
-                     uint64_t &Size, 
-                     uint64_t &Alignment,
-                     llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
-                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
-                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
+
+    bool layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+                          std::vector<std::pair<const clang::FieldDecl *, uint64_t>> &FieldOffsets,
+                          std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &BaseOffsets,
+                          std::vector<std::pair<const clang::CXXRecordDecl *, clang::CharUnits>> &VirtualBaseOffsets);
     void
     SetExternalSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                 CompleteObjCInterfaceDeclCallback objc_decl_callback,
