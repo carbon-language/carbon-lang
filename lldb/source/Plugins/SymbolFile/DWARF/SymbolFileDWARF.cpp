@@ -7396,6 +7396,24 @@ SymbolFileDWARF::ParseVariableDIE
             dw_tag_t parent_tag = sc_parent_die ? sc_parent_die->Tag() : 0;
             SymbolContextScope * symbol_context_scope = NULL;
 
+            if (!mangled)
+            {
+                // LLDB relies on the mangled name (DW_TAG_linkage_name or DW_AT_MIPS_linkage_name) to
+                // generate fully qualified names of global variables with commands like "frame var j".
+                // For example, if j were an int variable holding a value 4 and declared in a namespace
+                // B which in turn is contained in a namespace A, the command "frame var j" returns
+                // "(int) A::B::j = 4". If the compiler does not emit a linkage name, we should be able
+                // to generate a fully qualified name from the declaration context.
+                if (die->GetParent()->Tag() == DW_TAG_compile_unit &&
+                    LanguageRuntime::LanguageIsCPlusPlus(dwarf_cu->GetLanguageType()))
+                {
+                    DWARFDeclContext decl_ctx;
+
+                    die->GetDWARFDeclContext(this, dwarf_cu, decl_ctx);
+                    mangled = decl_ctx.GetQualifiedNameAsConstString().GetCString();
+                }
+            }
+
             // DWARF doesn't specify if a DW_TAG_variable is a local, global
             // or static variable, so we have to do a little digging by
             // looking at the location of a variable to see if it contains

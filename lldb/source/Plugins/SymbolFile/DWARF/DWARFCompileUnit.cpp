@@ -51,6 +51,7 @@ DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
     m_producer_version_major (0),
     m_producer_version_minor (0),
     m_producer_version_update (0),
+    m_language_type (eLanguageTypeUnknown),
     m_is_dwarf64    (false)
 {
 }
@@ -68,6 +69,7 @@ DWARFCompileUnit::Clear()
     m_func_aranges_ap.reset();
     m_user_data     = NULL;
     m_producer      = eProducerInvalid;
+    m_language_type = eLanguageTypeUnknown;
     m_is_dwarf64    = false;
 }
 
@@ -1040,6 +1042,19 @@ DWARFCompileUnit::GetProducerVersionUpdate()
     if (m_producer_version_update == 0)
         ParseProducerInfo ();
     return m_producer_version_update;
+}
+
+LanguageType
+DWARFCompileUnit::GetLanguageType()
+{
+    if (m_language_type != eLanguageTypeUnknown)
+        return m_language_type;
+
+    const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+    if (die)
+        m_language_type = static_cast<LanguageType>(
+            die->GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_language, eLanguageTypeUnknown));
+    return m_language_type;
 }
 
 bool

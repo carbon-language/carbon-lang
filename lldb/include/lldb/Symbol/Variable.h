@@ -29,7 +29,7 @@ public:
     //------------------------------------------------------------------
     Variable (lldb::user_id_t uid,
               const char *name, 
-              const char *mangled,   // The mangled variable name for variables in namespaces
+              const char *mangled,  // The mangled or fully qualified name of the variable.
               const lldb::SymbolFileTypeSP &symfile_type_sp,
               lldb::ValueType scope,
               SymbolContextScope *owner_scope,

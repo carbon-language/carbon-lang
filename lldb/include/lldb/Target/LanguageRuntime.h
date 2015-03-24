@@ -90,6 +90,9 @@ public:
     
     static const char *
     GetNameForLanguageType (lldb::LanguageType language);
+
+    static bool
+    LanguageIsCPlusPlus (lldb::LanguageType language);
     
     Process *
     GetProcess()

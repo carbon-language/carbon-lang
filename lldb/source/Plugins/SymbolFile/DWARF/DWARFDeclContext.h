@@ -100,6 +100,14 @@ public:
     const char *
     GetQualifiedName () const;
 
+    // Same as GetQaulifiedName, but the life time of the returned string will
+    // be that of the LLDB session.
+    lldb_private::ConstString
+    GetQualifiedNameAsConstString () const
+    {
+        return lldb_private::ConstString (GetQualifiedName ());
+    }
+
 protected:
     typedef std::vector<Entry> collection;
     collection m_entries;

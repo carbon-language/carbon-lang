@@ -367,6 +367,21 @@ LanguageRuntime::GetNameForLanguageType (LanguageType language)
         return language_names[eLanguageTypeUnknown].name;
 }
 
+bool
+LanguageRuntime::LanguageIsCPlusPlus (LanguageType language)
+{
+    switch (language)
+    {
+        case eLanguageTypeC_plus_plus:
+        case eLanguageTypeC_plus_plus_03:
+        case eLanguageTypeC_plus_plus_11:
+        case eLanguageTypeC_plus_plus_14:
+            return true;
+        default:
+            return false;
+    }
+}
+
 lldb::SearchFilterSP
 LanguageRuntime::CreateExceptionSearchFilter ()
 {
