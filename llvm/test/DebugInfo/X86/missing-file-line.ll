@@ -1,9 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc -mtriple=x86_64-linux-gnu -filetype=obj %s -o - | llvm-dwarfdump -debug-dump=all - > %t
-; RUN: FileCheck --check-prefix=CHECK1 %s < %t
-; RUN: FileCheck --check-prefix=CHECK2 %s < %t
-; RUN: FileCheck --check-prefix=CHECK3 %s < %t
+; RUN: llc -mtriple=x86_64-linux-gnu -filetype=obj %s -o - | llvm-dwarfdump -debug-dump=all - | FileCheck %s
 
 ; Test that we accept and generate DWARF entities for DW_TAG_structure_type,
 ; DW_TAG_member and DW_TAG_typedef with no source location. These can come up
@@ -16,20 +13,19 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @f() {
   %x = alloca %struct.S, align 8
-  ; CHECK1: DW_TAG_structure_type
-  ; CHECK1-NOT: DW_AT_decl_file
-  ; CHECK1-NOT: DW_AT_decl_line
-  ; CHECK1: {{DW_TAG|NULL}}
+  ; CHECK: DW_TAG_typedef
+  ; CHECK-NOT: DW_AT_decl_file
+  ; CHECK-NOT: DW_AT_decl_line
 
-  ; CHECK2: DW_TAG_member
-  ; CHECK2-NOT: DW_AT_decl_file
-  ; CHECK2-NOT: DW_AT_decl_line
-  ; CHECK2: {{DW_TAG|NULL}}
+  ; CHECK: DW_TAG_structure_type
+  ; CHECK-NOT: DW_AT_decl_file
+  ; CHECK-NOT: DW_AT_decl_line
 
-  ; CHECK3: DW_TAG_typedef
-  ; CHECK3-NOT: DW_AT_decl_file
-  ; CHECK3-NOT: DW_AT_decl_line
-  ; CHECK3: {{DW_TAG|NULL}}
+  ; CHECK: DW_TAG_member
+  ; CHECK-NOT: DW_AT_decl_file
+  ; CHECK-NOT: DW_AT_decl_line
+
+  ; CHECK: {{DW_TAG|NULL}}
   call void @llvm.dbg.declare(metadata %struct.S* %x, metadata !10, metadata !16), !dbg !17
   ret void, !dbg !18
 }
