@@ -438,7 +438,7 @@ public:
           m_error(error), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::addr_t m_addr;
@@ -468,7 +468,7 @@ public:
           m_error(error), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::addr_t m_addr;
@@ -499,7 +499,7 @@ public:
           m_value(value), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -584,7 +584,7 @@ public:
           m_value(value), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -669,7 +669,7 @@ public:
         : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -709,7 +709,7 @@ public:
         : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -749,7 +749,7 @@ public:
         : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -778,7 +778,7 @@ public:
         : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -818,7 +818,7 @@ public:
         : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -858,7 +858,7 @@ public:
         : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -887,7 +887,7 @@ public:
         : m_tid(tid), m_addr(addr), m_result(result)
         { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -971,7 +971,7 @@ public:
     ResumeOperation(lldb::tid_t tid, uint32_t signo, bool &result) :
         m_tid(tid), m_signo(signo), m_result(result) { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -1008,7 +1008,7 @@ public:
     SingleStepOperation(lldb::tid_t tid, uint32_t signo, bool &result)
         : m_tid(tid), m_signo(signo), m_result(result) { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -1039,7 +1039,7 @@ public:
     SiginfoOperation(lldb::tid_t tid, void *info, bool &result, int &ptrace_err)
         : m_tid(tid), m_info(info), m_result(result), m_err(ptrace_err) { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -1068,7 +1068,7 @@ public:
     EventMessageOperation(lldb::tid_t tid, unsigned long *message, bool &result)
         : m_tid(tid), m_message(message), m_result(result) { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;
@@ -1093,7 +1093,7 @@ class DetachOperation : public Operation
 public:
     DetachOperation(lldb::tid_t tid, Error &result) : m_tid(tid), m_error(result) { }
 
-    void Execute(ProcessMonitor *monitor);
+    void Execute(ProcessMonitor *monitor) override;
 
 private:
     lldb::tid_t m_tid;

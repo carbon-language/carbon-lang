@@ -24,8 +24,8 @@ class HostThreadPosix : public HostNativeThreadBase
     HostThreadPosix(lldb::thread_t thread);
     virtual ~HostThreadPosix();
 
-    virtual Error Join(lldb::thread_result_t *result);
-    virtual Error Cancel();
+    Error Join(lldb::thread_result_t *result) override;
+    Error Cancel() override;
 
     Error Detach();
 };

@@ -35,32 +35,32 @@ public:
     virtual ~POSIXThread();
 
     void
-    RefreshStateAfterStop();
-
-    virtual void
-    WillResume(lldb::StateType resume_state);
-
-    // This notifies the thread when a private stop occurs.
-    virtual void
-    DidStop ();
-
-    const char *
-    GetInfo();
+    RefreshStateAfterStop() override;
 
     void
-    SetName (const char *name);
+    WillResume(lldb::StateType resume_state) override;
+
+    // This notifies the thread when a private stop occurs.
+    void
+    DidStop () override;
 
     const char *
-    GetName ();
+    GetInfo() override;
 
-    virtual lldb::RegisterContextSP
-    GetRegisterContext();
+    void
+    SetName (const char *name) override;
 
-    virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    const char *
+    GetName () override;
 
-    virtual lldb::addr_t
-    GetThreadPointer ();
+    lldb::RegisterContextSP
+    GetRegisterContext() override;
+
+    lldb::RegisterContextSP
+    CreateRegisterContextForFrame (lldb_private::StackFrame *frame) override;
+
+    lldb::addr_t
+    GetThreadPointer () override;
 
     //--------------------------------------------------------------------------
     // These functions provide a mapping from the register offset
@@ -114,8 +114,8 @@ protected:
     ProcessMonitor &
     GetMonitor();
 
-    virtual bool
-    CalculateStopInfo();
+    bool
+    CalculateStopInfo() override;
 
     void BreakNotify(const ProcessMessage &message);
     void WatchNotify(const ProcessMessage &message);
@@ -129,7 +129,7 @@ protected:
     void ExecNotify(const ProcessMessage &message);
 
     lldb_private::Unwind *
-    GetUnwinder();
+    GetUnwinder() override;
 };
 
 #endif // #ifndef liblldb_POSIXThread_H_

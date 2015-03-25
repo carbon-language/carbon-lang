@@ -53,23 +53,23 @@ public:
                  lldb_private::Listener &listener,
                  lldb_private::FileSpec *core_file);
 
-    virtual lldb_private::Error
-    DoDetach(bool keep_stopped);
+    lldb_private::Error
+    DoDetach(bool keep_stopped) override;
 
-    virtual bool
-    DetachRequiresHalt() { return true; }
+    bool
+    DetachRequiresHalt() override { return true; }
 
-    virtual bool
-    UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list);
+    bool
+    UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
     virtual void
     GetPluginCommandHelp(const char *command, lldb_private::Stream *strm);
@@ -82,17 +82,17 @@ public:
     EnablePluginLogging(lldb_private::Stream *strm,
                         lldb_private::Args &command);
 
-    virtual bool
-    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name);
+    bool
+    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
 
     //------------------------------------------------------------------
     // ProcessPOSIX overrides
     //------------------------------------------------------------------
-    virtual void
-    StopAllThreads(lldb::tid_t stop_tid);
+    void
+    StopAllThreads(lldb::tid_t stop_tid) override;
 
-    virtual POSIXThread *
-    CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid);
+    POSIXThread *
+    CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid) override;
 
 private:
 

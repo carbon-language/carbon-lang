@@ -18,7 +18,7 @@ namespace lldb_private
 class ProcessLauncherPosix : public ProcessLauncher
 {
   public:
-    virtual HostProcess LaunchProcess(const ProcessLaunchInfo &launch_info, Error &error);
+    HostProcess LaunchProcess(const ProcessLaunchInfo &launch_info, Error &error) override;
 };
 }
 

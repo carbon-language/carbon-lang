@@ -32,8 +32,8 @@ public:
     // LinuxThread internal API.
 
     // POSIXThread override
-    virtual void
-    RefreshStateAfterStop();
+    void
+    RefreshStateAfterStop() override;
 };
 
 #endif // #ifndef liblldb_LinuxThread_H_

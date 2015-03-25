@@ -601,7 +601,7 @@ namespace
               m_value(value)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -683,7 +683,7 @@ namespace
               m_value(value)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -754,7 +754,7 @@ namespace
             : m_tid(tid), m_buf(buf), m_buf_size(buf_size)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -789,7 +789,7 @@ namespace
               m_buf_size(buf_size)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -822,7 +822,7 @@ namespace
             : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -847,7 +847,7 @@ namespace
             : m_tid(tid), m_buf(buf), m_buf_size(buf_size)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -880,7 +880,7 @@ namespace
             : m_tid(tid), m_buf(buf), m_buf_size(buf_size)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -913,7 +913,7 @@ namespace
             : m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset)
             { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -937,7 +937,7 @@ namespace
         ResumeOperation(lldb::tid_t tid, uint32_t signo) :
             m_tid(tid), m_signo(signo) { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -971,7 +971,7 @@ namespace
         SingleStepOperation(lldb::tid_t tid, uint32_t signo)
             : m_tid(tid), m_signo(signo) { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -998,7 +998,7 @@ namespace
         SiginfoOperation(lldb::tid_t tid, void *info)
             : m_tid(tid), m_info(info) { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -1020,7 +1020,7 @@ namespace
         EventMessageOperation(lldb::tid_t tid, unsigned long *message)
             : m_tid(tid), m_message(message) { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
@@ -1038,7 +1038,7 @@ namespace
     public:
         DetachOperation(lldb::tid_t tid) : m_tid(tid) { }
 
-        void Execute(NativeProcessLinux *monitor);
+        void Execute(NativeProcessLinux *monitor) override;
 
     private:
         lldb::tid_t m_tid;
