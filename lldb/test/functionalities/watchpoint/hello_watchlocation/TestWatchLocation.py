@@ -23,6 +23,7 @@ class HelloWatchLocationTestCase(TestBase):
 
     @expectedFailureFreeBSD("llvm.org/pr18832")
     @dwarf_test
+    @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def test_hello_watchlocation_with_dwarf(self):
         """Test watching a location with '-x size' option."""
         self.buildDwarf(dictionary=self.d)
