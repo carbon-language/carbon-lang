@@ -2106,6 +2106,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     // which is the one that matters and mark the real previous DeclID to be
     // loaded & attached later on.
     D->RedeclLink = Redeclarable<T>::PreviousDeclLink(FirstDecl);
+    D->First = FirstDecl->getCanonicalDecl();
   }    
   
   // Note that this declaration has been deserialized.
@@ -2209,6 +2210,7 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase, T *Existing,
     // of the existing declaration, so that this declaration has the
     // appropriate canonical declaration.
     D->RedeclLink = Redeclarable<T>::PreviousDeclLink(ExistingCanon);
+    D->First = ExistingCanon;
 
     // When we merge a namespace, update its pointer to the first namespace.
     // We cannot have loaded any redeclarations of this declaration yet, so
@@ -2828,6 +2830,7 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
                                            Redeclarable<DeclT> *D,
                                            Decl *Previous, Decl *Canon) {
   D->RedeclLink.setPrevious(cast<DeclT>(Previous));
+  D->First = cast<DeclT>(Previous)->First;
 }
 namespace clang {
 template<>
@@ -2838,6 +2841,7 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
   FunctionDecl *PrevFD = cast<FunctionDecl>(Previous);
 
   FD->RedeclLink.setPrevious(PrevFD);
+  FD->First = PrevFD->First;
 
   // If the previous declaration is an inline function declaration, then this
   // declaration is too.

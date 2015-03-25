@@ -3738,8 +3738,6 @@ void Redeclarable<decl_type>::setPreviousDecl(decl_type *PrevDecl) {
   assert(RedeclLink.NextIsLatest() &&
          "setPreviousDecl on a decl already in a redeclaration chain");
 
-  decl_type *First;
-
   if (PrevDecl) {
     // Point to previous. Make sure that this is actually the most recent
     // redeclaration, or we can build invalid chains. If the most recent

@@ -121,14 +121,15 @@ protected:
   ///
   /// If there is only one declaration, it is <pointer to self, true>
   DeclLink RedeclLink;
+  decl_type *First;
 
   decl_type *getNextRedeclaration() const {
     return RedeclLink.getNext(static_cast<const decl_type *>(this));
   }
 
 public:
-  Redeclarable(const ASTContext &Ctx)
-      : RedeclLink(LatestDeclLink(Ctx)) {}
+ Redeclarable(const ASTContext &Ctx)
+     : RedeclLink(LatestDeclLink(Ctx)), First(static_cast<decl_type *>(this)) {}
 
   /// \brief Return the previous declaration of this declaration or NULL if this
   /// is the first declaration.
@@ -144,21 +145,11 @@ public:
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
-  decl_type *getFirstDecl() {
-    decl_type *D = static_cast<decl_type*>(this);
-    while (D->getPreviousDecl())
-      D = D->getPreviousDecl();
-    return D;
-  }
+  decl_type *getFirstDecl() { return First; }
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
-  const decl_type *getFirstDecl() const {
-    const decl_type *D = static_cast<const decl_type*>(this);
-    while (D->getPreviousDecl())
-      D = D->getPreviousDecl();
-    return D;
-  }
+  const decl_type *getFirstDecl() const { return First; }
 
   /// \brief True if this is the first declaration in its redeclaration chain.
   bool isFirstDecl() const { return RedeclLink.NextIsLatest(); }
