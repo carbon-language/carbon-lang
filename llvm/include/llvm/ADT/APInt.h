@@ -407,6 +407,13 @@ public:
                                                             : getZExtValue();
   }
 
+  /// \brief Check if the APInt consists of a repeated bit pattern.
+  ///
+  /// e.g. 0x01010101 satisfies isSplat(8).
+  /// \param SplatSizeInBits The size of the pattern in bits. Must divide bit
+  /// width without remainder.
+  bool isSplat(unsigned SplatSizeInBits) const;
+
   /// @}
   /// \name Value Generators
   /// @{

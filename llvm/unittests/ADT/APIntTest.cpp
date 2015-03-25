@@ -678,6 +678,46 @@ TEST(APIntTest, nearestLogBase2) {
   EXPECT_EQ(A9.nearestLogBase2(), UINT32_MAX);
 }
 
+TEST(APIntTest, IsSplat) {
+  APInt A(32, 0x01010101);
+  EXPECT_FALSE(A.isSplat(1));
+  EXPECT_FALSE(A.isSplat(2));
+  EXPECT_FALSE(A.isSplat(4));
+  EXPECT_TRUE(A.isSplat(8));
+  EXPECT_TRUE(A.isSplat(16));
+  EXPECT_TRUE(A.isSplat(32));
+
+  APInt B(24, 0xAAAAAA);
+  EXPECT_FALSE(B.isSplat(1));
+  EXPECT_TRUE(B.isSplat(2));
+  EXPECT_TRUE(B.isSplat(4));
+  EXPECT_TRUE(B.isSplat(8));
+  EXPECT_TRUE(B.isSplat(24));
+
+  APInt C(24, 0xABAAAB);
+  EXPECT_FALSE(C.isSplat(1));
+  EXPECT_FALSE(C.isSplat(2));
+  EXPECT_FALSE(C.isSplat(4));
+  EXPECT_FALSE(C.isSplat(8));
+  EXPECT_TRUE(C.isSplat(24));
+
+  APInt D(32, 0xABBAABBA);
+  EXPECT_FALSE(D.isSplat(1));
+  EXPECT_FALSE(D.isSplat(2));
+  EXPECT_FALSE(D.isSplat(4));
+  EXPECT_FALSE(D.isSplat(8));
+  EXPECT_TRUE(D.isSplat(16));
+  EXPECT_TRUE(D.isSplat(32));
+
+  APInt E(32, 0);
+  EXPECT_TRUE(E.isSplat(1));
+  EXPECT_TRUE(E.isSplat(2));
+  EXPECT_TRUE(E.isSplat(4));
+  EXPECT_TRUE(E.isSplat(8));
+  EXPECT_TRUE(E.isSplat(16));
+  EXPECT_TRUE(E.isSplat(32));
+}
+
 #if defined(__clang__)
 // Disable the pragma warning from versions of Clang without -Wself-move
 #pragma clang diagnostic push

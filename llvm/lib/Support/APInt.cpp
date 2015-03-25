@@ -672,6 +672,14 @@ hash_code llvm::hash_value(const APInt &Arg) {
   return hash_combine_range(Arg.pVal, Arg.pVal + Arg.getNumWords());
 }
 
+bool APInt::isSplat(unsigned SplatSizeInBits) const {
+  assert(getBitWidth() % SplatSizeInBits == 0 &&
+         "SplatSizeInBits must divide width!");
+  // We can check that all parts of an integer are equal by making use of a
+  // little trick: rotate and check if it's still the same value.
+  return *this == rotl(SplatSizeInBits);
+}
+
 /// HiBits - This function returns the high "numBits" bits of this APInt.
 APInt APInt::getHiBits(unsigned numBits) const {
   return APIntOps::lshr(*this, BitWidth - numBits);

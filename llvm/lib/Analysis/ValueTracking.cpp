@@ -2348,9 +2348,7 @@ Value *llvm::isBytewiseValue(Value *V) {
     if (CI->getBitWidth() % 8 == 0) {
       assert(CI->getBitWidth() > 8 && "8 bits should be handled above!");
 
-      // We can check that all bytes of an integer are equal by making use of a
-      // little trick: rotate by 8 and check if it's still the same value.
-      if (CI->getValue() != CI->getValue().rotl(8))
+      if (!CI->getValue().isSplat(8))
         return nullptr;
       return ConstantInt::get(V->getContext(), CI->getValue().trunc(8));
     }
