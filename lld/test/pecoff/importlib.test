@@ -9,6 +9,7 @@
 # RUN:   -- %t.obj %p/Inputs/vars.lib
 # RUN: llvm-objdump -d %t1.exe | FileCheck -check-prefix=TEXT %s
 # RUN: llvm-readobj -coff-imports %t1.exe | FileCheck -check-prefix=IMPORT %s
+# RUN: llvm-readobj -sections %t1.exe | FileCheck -check-prefix=SIZE %s
 #
 # RUN: lld -flavor link /out:%t2.exe /subsystem:console /entry:main /opt:noref \
 # RUN:   /libpath:%p/Inputs -- %t.obj vars.lib
@@ -53,3 +54,8 @@ IMPORT-NEXT:   Symbol: _name_with_underscore (0)
 IMPORT-NEXT:   Symbol: fn (1)
 IMPORT-NEXT:   Symbol:  (1)
 IMPORT-NEXT: }
+
+SIZE:      Section {
+SIZE-NEXT:   Number: 1
+SIZE-NEXT:   Name: .idata (2E 69 64 61 74 61 00 00)
+SIZE-NEXT:   VirtualSize: 0x27
