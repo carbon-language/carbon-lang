@@ -9,6 +9,10 @@
 // SSE4: #define __SSE__ 1
 // SSE4: #define __SSSE3__ 1
 
+// RUN: %clang -target i386-unknown-unknown -march=core2 -msse4.1 -mno-sse4 -x c -E -dM -o - %s | FileCheck --check-prefix=NOSSE4 %s
+
+// NOSSE4-NOT: #define __SSE4_1__ 1
+
 // RUN: %clang -target i386-unknown-unknown -march=core2 -msse4 -mno-sse2 -x c -E -dM -o - %s | FileCheck --check-prefix=SSE %s
 
 // SSE-NOT: #define __SSE2_MATH__ 1
