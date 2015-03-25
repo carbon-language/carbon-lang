@@ -321,7 +321,7 @@ private:
   };
 
   typedef SmallVector<DeclUpdate, 1> UpdateRecord;
-  typedef llvm::DenseMap<const Decl *, UpdateRecord> DeclUpdateMap;
+  typedef llvm::MapVector<const Decl *, UpdateRecord> DeclUpdateMap;
   /// \brief Mapping from declarations that came from a chained PCH to the
   /// record containing modifications to them.
   DeclUpdateMap DeclUpdates;
