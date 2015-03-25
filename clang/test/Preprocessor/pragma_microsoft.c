@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -fms-extensions
+// REQUIRES: non-ps4-sdk
 
 // rdar://6495941
 
