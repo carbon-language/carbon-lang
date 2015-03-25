@@ -95,7 +95,6 @@ class CoverageData {
   void InitializeGuardArray(s32 *guards);
   void InitializeGuards(s32 *guards, uptr n, const char *module_name,
                         uptr caller_pc);
-  void UpdateModuleNameVec(uptr caller_pc, uptr range_beg, uptr range_end);
   void InitializeCounters(u8 *counters, uptr n);
   void ReinitializeGuards();
   uptr GetNumberOf8bitCounters();
@@ -105,6 +104,9 @@ class CoverageData {
   uptr size();
 
  private:
+  void DirectOpen();
+  void UpdateModuleNameVec(uptr caller_pc, uptr range_beg, uptr range_end);
+
   // Maximal size pc array may ever grow.
   // We MmapNoReserve this space to ensure that the array is contiguous.
   static const uptr kPcArrayMaxSize = FIRST_32_SECOND_64(1 << 26, 1 << 27);
@@ -163,8 +165,6 @@ class CoverageData {
   static const uptr kTrPcArrayMaxSize    = FIRST_32_SECOND_64(1 << 22, 1 << 27);
 
   StaticSpinMutex mu;
-
-  void DirectOpen();
 };
 
 static CoverageData coverage_data;
@@ -747,13 +747,13 @@ void CoverageData::DumpOffsets() {
     CHECK(r.copied_module_name);
     CHECK_LE(r.beg, r.end);
     CHECK_LE(r.end, size());
-    const char *module_name = "<unknown>";
     for (uptr i = r.beg; i < r.end; i++) {
       uptr pc = UnbundlePc(pc_array[i]);
       uptr counter = UnbundleCounter(pc_array[i]);
       if (!pc) continue; // Not visited.
+      const char *unused;
       uptr offset = 0;
-      sym->GetModuleNameAndOffsetForPC(pc, &module_name, &offset);
+      sym->GetModuleNameAndOffsetForPC(pc, &unused, &offset);
       offsets.push_back(BundlePcAndCounter(offset, counter));
     }
 
@@ -769,7 +769,7 @@ void CoverageData::DumpOffsets() {
     // if all the offsets are small enough.
     *magic_p = SANITIZER_WORDSIZE == 64 ? kMagic64 : kMagic32;
 
-    module_name = StripModuleName(r.copied_module_name);
+    const char *module_name = StripModuleName(r.copied_module_name);
     if (cov_sandboxed) {
       if (cov_fd >= 0) {
         CovWritePacked(internal_getpid(), module_name, offsets.data(),
