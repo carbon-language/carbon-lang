@@ -10551,6 +10551,20 @@ SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
   // If the vector is wider than 128 bits, extract the 128-bit subvector, insert
   // into that, and then insert the subvector back into the result.
   if (VT.is256BitVector() || VT.is512BitVector()) {
+    // With a 256-bit vector, we can insert into the zero element efficiently
+    // using a blend if we have AVX or AVX2 and the right data type.
+    if (VT.is256BitVector() && IdxVal == 0) {
+      // TODO: It is worthwhile to cast integer to floating point and back
+      // and incur a domain crossing penalty if that's what we'll end up
+      // doing anyway after extracting to a 128-bit vector.
+      if ((Subtarget->hasAVX() && (EltVT == MVT::f64 || EltVT == MVT::f32)) ||
+          (Subtarget->hasAVX2() && EltVT == MVT::i32)) {
+        SDValue N1Vec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, N1);
+        N2 = DAG.getIntPtrConstant(1);
+        return DAG.getNode(X86ISD::BLENDI, dl, VT, N0, N1Vec, N2);
+      }
+    }
+    
     // Get the desired 128-bit vector chunk.
     SDValue V = Extract128BitVector(N0, IdxVal, DAG, dl);
 
