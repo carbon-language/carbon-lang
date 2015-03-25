@@ -193,8 +193,8 @@ public:
   ///        below this one.
   JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
                          bool ExportedSymbolsOnly) {
-    BaseLayerModuleSetHandleListT &BaseLayerHandles = H->second;
-    for (auto &BH : BaseLayerHandles) {
+
+    for (auto &BH : H->BaseLayerModuleSetHandles) {
       if (auto Symbol = BaseLayer.findSymbolIn(BH, Name, ExportedSymbolsOnly))
         return Symbol;
     }

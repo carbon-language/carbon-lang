@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/LLVMContext.h"
+#include "OrcLazyJIT.h"
 #include "RemoteMemoryManager.h"
 #include "RemoteTarget.h"
 #include "RemoteTargetExternal.h"
@@ -66,6 +67,9 @@ using namespace llvm;
 #define DEBUG_TYPE "lli"
 
 namespace {
+
+  enum class JITKind { MCJIT, OrcMCJITReplacement, OrcLazy };
+
   cl::opt<std::string>
   InputFile(cl::desc("<input bitcode>"), cl::Positional, cl::init("-"));
 
@@ -76,12 +80,19 @@ namespace {
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
 
-  cl::opt<bool> UseOrcMCJITReplacement("use-orcmcjit",
-                                       cl::desc("Use the experimental "
-                                                "OrcMCJITReplacement as a "
-                                                "drop-in replacement for "
-                                                "MCJIT."),
-                                       cl::init(false));
+  cl::opt<JITKind> UseJITKind("jit-kind",
+                              cl::desc("Choose underlying JIT kind."),
+                              cl::init(JITKind::MCJIT),
+                              cl::values(
+                                clEnumValN(JITKind::MCJIT, "mcjit",
+                                           "MCJIT"),
+                                clEnumValN(JITKind::OrcMCJITReplacement,
+                                           "orc-mcjit",
+                                           "Orc-based MCJIT replacement"),
+                                clEnumValN(JITKind::OrcLazy,
+                                           "orc-lazy",
+                                           "Orc-based lazy JIT."),
+                                clEnumValEnd));
 
   // The MCJIT supports building for a target address space separate from
   // the JIT compilation process. Use a forked process and a copying
@@ -404,6 +415,9 @@ int main(int argc, char **argv, char * const *envp) {
     return 1;
   }
 
+  if (UseJITKind == JITKind::OrcLazy)
+    return runOrcLazyJIT(std::move(Owner), argc, argv);
+
   if (EnableCacheManager) {
     std::string CacheName("file:");
     CacheName.append(InputFile);
@@ -430,7 +444,7 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
-  builder.setUseOrcMCJITReplacement(UseOrcMCJITReplacement);
+  builder.setUseOrcMCJITReplacement(UseJITKind == JITKind::OrcMCJITReplacement);
 
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
