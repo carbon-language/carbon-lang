@@ -26,6 +26,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
+#include <sstream>
 
 using namespace clang;
 using namespace CodeGen;
@@ -6370,6 +6371,7 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, "");
   }
+
   // P8 Crypto builtins
   case PPC::BI__builtin_altivec_crypto_vshasigmaw:
   case PPC::BI__builtin_altivec_crypto_vshasigmad:
@@ -6399,6 +6401,89 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, "");
   }
+
+  // HTM builtins
+  case PPC::BI__builtin_tbegin:
+  case PPC::BI__builtin_tend:
+  case PPC::BI__builtin_tsr: {
+    unsigned int MaxValue;
+    // The HTM instructions only accept one argument and with limited range.
+    ConstantInt *CI = dyn_cast<ConstantInt>(Ops[0]);
+    assert(CI);
+    switch (BuiltinID) {
+    case PPC::BI__builtin_tbegin:
+      ID = Intrinsic::ppc_tbegin;
+      MaxValue = 1;
+      break;
+    case PPC::BI__builtin_tend:
+      ID = Intrinsic::ppc_tend;
+      MaxValue = 1;
+      break;
+    case PPC::BI__builtin_tsr:
+      ID = Intrinsic::ppc_tsr;
+      MaxValue = 7;
+      break;
+    }
+    if (CI->getZExtValue() > MaxValue) {
+      std::stringstream ss;
+      ss << "argument out of range (should be 0 or " << MaxValue << ")";
+      CGM.Error(E->getArg(0)->getExprLoc(), ss.str());
+      return llvm::UndefValue::get(Ops[0]->getType());
+    }
+
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, Ops, "");
+  }
+  case PPC::BI__builtin_tabortdc:
+  case PPC::BI__builtin_tabortwc: {
+    // For wd and dc variant of tabort first argument must be a 5-bit constant
+    // integer
+    ConstantInt *CI = dyn_cast<ConstantInt>(Ops[0]);
+    assert(CI);
+    if (CI->getZExtValue() > 31) {
+      CGM.ErrorUnsupported(E->getArg(0), "argument out of range (should be 0-31)");
+      return llvm::UndefValue::get(Ops[0]->getType());
+    }
+    switch (BuiltinID) {
+    case PPC::BI__builtin_tabortdc:
+      ID = Intrinsic::ppc_tabortdc;
+      break;
+    case PPC::BI__builtin_tabortwc:
+      ID = Intrinsic::ppc_tabortwc;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, Ops, "");
+  }
+  case PPC::BI__builtin_tabortdci:
+  case PPC::BI__builtin_tabortwci: {
+    // For wd and dc variant of tabort first and third argument must be a
+    // 5-bit constant integer
+    ConstantInt *CI = dyn_cast<ConstantInt>(Ops[0]);
+    assert(CI);
+    if (CI->getZExtValue() > 31) {
+      CGM.ErrorUnsupported(E->getArg(0), "argument out of range (should be 0-31)");
+      return llvm::UndefValue::get(Ops[0]->getType());
+    }
+    CI = dyn_cast<ConstantInt>(Ops[2]);
+    assert(CI);
+    if (CI->getZExtValue() > 31) {
+      CGM.ErrorUnsupported(E->getArg(2), "argument out of range (should be 0-31)");
+      return llvm::UndefValue::get(Ops[2]->getType());
+    }
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported htm intrinsic!");
+    case PPC::BI__builtin_tabortdci:
+      ID = Intrinsic::ppc_tabortdci;
+      break;
+    case PPC::BI__builtin_tabortwci:
+      ID = Intrinsic::ppc_tabortwci;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, Ops, "");
+  }
+
   }
 }
 

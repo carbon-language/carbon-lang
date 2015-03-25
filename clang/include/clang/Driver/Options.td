@@ -1263,6 +1263,8 @@ def mpower8_crypto : Flag<["-"], "mcrypto">,
     Group<m_ppc_Features_Group>;
 def mnopower8_crypto : Flag<["-"], "mno-crypto">,
     Group<m_ppc_Features_Group>;
+def mhtm : Flag<["-"], "mhtm">, Group<m_ppc_Features_Group>;
+def mno_htm : Flag<["-"], "mno-htm">, Group<m_ppc_Features_Group>;
 def mfprnd : Flag<["-"], "mfprnd">, Group<m_ppc_Features_Group>;
 def mno_fprnd : Flag<["-"], "mno-fprnd">, Group<m_ppc_Features_Group>;
 def mcmpb : Flag<["-"], "mcmpb">, Group<m_ppc_Features_Group>;

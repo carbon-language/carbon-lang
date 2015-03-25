@@ -252,6 +252,37 @@ BUILTIN(__builtin_vsx_xsmindp, "ddd", "")
 BUILTIN(__builtin_vsx_xvdivdp, "V2dV2dV2d", "")
 BUILTIN(__builtin_vsx_xvdivsp, "V4fV4fV4f", "")
 
+// HTM builtins
+BUILTIN(__builtin_tbegin, "UiUIi", "")
+BUILTIN(__builtin_tend, "UiUIi", "")
+
+BUILTIN(__builtin_tabort, "UiUi", "")
+BUILTIN(__builtin_tabortdc, "UiUiUiUi", "")
+BUILTIN(__builtin_tabortdci, "UiUiUii", "")
+BUILTIN(__builtin_tabortwc, "UiUiUiUi", "")
+BUILTIN(__builtin_tabortwci, "UiUiUii", "")
+
+BUILTIN(__builtin_tcheck, "Ui", "")
+BUILTIN(__builtin_treclaim, "UiUi", "")
+BUILTIN(__builtin_trechkpt, "Ui", "")
+BUILTIN(__builtin_tsr, "UiUi", "")
+
+BUILTIN(__builtin_tendall, "Ui", "")
+BUILTIN(__builtin_tresume, "Ui", "")
+BUILTIN(__builtin_tsuspend, "Ui", "")
+
+BUILTIN(__builtin_get_texasr, "LUi", "c")
+BUILTIN(__builtin_get_texasru, "LUi", "c")
+BUILTIN(__builtin_get_tfhar, "LUi", "c")
+BUILTIN(__builtin_get_tfiar, "LUi", "c")
+
+BUILTIN(__builtin_set_texasr, "vLUi", "c")
+BUILTIN(__builtin_set_texasru, "vLUi", "c")
+BUILTIN(__builtin_set_tfhar, "vLUi", "c")
+BUILTIN(__builtin_set_tfiar, "vLUi", "c")
+
+BUILTIN(__builtin_ttest, "LUi", "")
+
 // FIXME: Obviously incomplete.
 
 #undef BUILTIN
