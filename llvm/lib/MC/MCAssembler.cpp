@@ -1056,6 +1056,7 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
   int64_t AddrDelta;
   bool Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, Layout);
   assert(Abs && "We created a line delta with an invalid expression");
+  (void) Abs;
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
   SmallString<8> &Data = DF.getContents();
@@ -1073,6 +1074,7 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
   int64_t AddrDelta;
   bool Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, Layout);
   assert(Abs && "We created call frame with an invalid expression");
+  (void) Abs;
   SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
