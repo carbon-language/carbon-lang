@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
 // C++ Includes
 
@@ -30,6 +31,7 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostGetOpt.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Host/Socket.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerPlatform.h"
@@ -44,19 +46,19 @@ using namespace lldb_private;
 
 static int g_debug = 0;
 static int g_verbose = 0;
-static int g_stay_alive = 0;
+static int g_server = 0;
 
 static struct option g_long_options[] =
 {
     { "debug",              no_argument,        &g_debug,           1   },
     { "verbose",            no_argument,        &g_verbose,         1   },
-    { "stay-alive",         no_argument,        &g_stay_alive,      1   },
     { "listen",             required_argument,  NULL,               'L' },
     { "port-offset",        required_argument,  NULL,               'p' },
     { "gdbserver-port",     required_argument,  NULL,               'P' },
     { "min-gdbserver-port", required_argument,  NULL,               'm' },
     { "max-gdbserver-port", required_argument,  NULL,               'M' },
     { "lldb-command",       required_argument,  NULL,               'c' },
+    { "server",             no_argument,        &g_server,          1   },
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -125,6 +127,7 @@ main_platform (int argc, char *argv[])
     std::vector<std::string> lldb_commands;
     bool show_usage = false;
     int option_error = 0;
+    int socket_error = -1;
     
     std::string short_options(OptionParser::GetShortOptionString(g_long_options));
                             
@@ -246,6 +249,17 @@ main_platform (int argc, char *argv[])
             puts(output);
     }
 
+    std::unique_ptr<Socket> listening_socket_up;
+    Socket *socket = nullptr;
+    printf ("Listening for a connection from %s...\n", listen_host_port.c_str());
+    const bool children_inherit_listen_socket = false;
+    error = Socket::TcpListen(listen_host_port.c_str(), children_inherit_listen_socket, socket, NULL);
+    if (error.Fail())
+    {
+        printf("error: %s\n", error.AsCString());
+        exit(socket_error);
+    }
+    listening_socket_up.reset(socket);
 
     do {
         GDBRemoteCommunicationServerPlatform platform;
@@ -258,51 +272,64 @@ main_platform (int argc, char *argv[])
             platform.SetPortMap(std::move(gdbserver_portmap));
         }
 
-        if (!listen_host_port.empty())
+        const bool children_inherit_accept_socket = true;
+        socket = nullptr;
+        error = listening_socket_up->BlockingAccept(listen_host_port.c_str(), children_inherit_accept_socket, socket);
+        if (error.Fail())
         {
-            std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
-            if (conn_ap.get())
+            printf ("error: %s\n", error.AsCString());
+            exit(socket_error);
+        }
+        printf ("Connection established.\n");
+        if (g_server)
+        {
+            // Collect child zombie processes.
+            while (waitpid(-1, nullptr, WNOHANG) > 0);
+            if (fork())
             {
-                std::string connect_url ("listen://");
-                connect_url.append(listen_host_port.c_str());
-
-                printf ("Listening for a connection from %s...\n", listen_host_port.c_str());
-                if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
-                {
-                    printf ("Connection established.\n");
-                    platform.SetConnection (conn_ap.release());
-                }
-                else
-                {
-                    printf ("error: %s\n", error.AsCString());
-                }
+                // Parent will continue to listen for new connections.
+                continue;
             }
-
-            if (platform.IsConnected())
+            else
             {
-                // After we connected, we need to get an initial ack from...
-                if (platform.HandshakeWithClient(&error))
-                {
-                    bool interrupt = false;
-                    bool done = false;
-                    while (!interrupt && !done)
-                    {
-                        if (platform.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done) != GDBRemoteCommunication::PacketResult::Success)
-                            break;
-                    }
-                    
-                    if (error.Fail())
-                    {
-                        fprintf(stderr, "error: %s\n", error.AsCString());
-                    }
-                }
-                else
-                {
-                    fprintf(stderr, "error: handshake with client failed\n");
-                }
+                // Child process will handle the connection and exit.
+                g_server = 0;
+                // Listening socket is owned by parent process.
+                listening_socket_up.release();
             }
         }
-    } while (g_stay_alive);
+        else
+        {
+            // If not running as a server, this process will not accept
+            // connections while a connection is active.
+            listening_socket_up.reset();
+        }
+        platform.SetConnection (new ConnectionFileDescriptor(socket));
+
+        if (platform.IsConnected())
+        {
+            // After we connected, we need to get an initial ack from...
+            if (platform.HandshakeWithClient(&error))
+            {
+                bool interrupt = false;
+                bool done = false;
+                while (!interrupt && !done)
+                {
+                    if (platform.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done) != GDBRemoteCommunication::PacketResult::Success)
+                        break;
+                }
+
+                if (error.Fail())
+                {
+                    fprintf(stderr, "error: %s\n", error.AsCString());
+                }
+            }
+            else
+            {
+                fprintf(stderr, "error: handshake with client failed\n");
+            }
+        }
+    } while (g_server);
 
     fprintf(stderr, "lldb-server exiting...\n");
 

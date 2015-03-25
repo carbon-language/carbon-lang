@@ -81,6 +81,17 @@ ConnectionFileDescriptor::ConnectionFileDescriptor(int fd, bool owns_fd)
     OpenCommandPipe();
 }
 
+ConnectionFileDescriptor::ConnectionFileDescriptor(Socket* socket)
+    : Connection()
+    , m_pipe()
+    , m_mutex(Mutex::eMutexTypeRecursive)
+    , m_shutting_down(false)
+    , m_waiting_for_accept(false)
+    , m_child_processes_inherit(false)
+{
+    InitializeSocket(socket);
+}
+
 ConnectionFileDescriptor::~ConnectionFileDescriptor()
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_CONNECTION | LIBLLDB_LOG_OBJECT));
@@ -758,15 +769,7 @@ ConnectionFileDescriptor::SocketListenAndAccept(const char *s, Error *error_ptr)
     if (error.Fail())
         return eConnectionStatusError;
 
-    m_write_sp.reset(socket);
-    m_read_sp = m_write_sp;
-    if (error.Fail())
-    {
-        return eConnectionStatusError;
-    }
-    StreamString strm;
-    strm.Printf("connect://%s:%u",socket->GetRemoteIPAddress().c_str(), socket->GetRemotePortNumber());
-    m_uri.swap(strm.GetString());
+    InitializeSocket(socket);
     return eConnectionStatusSuccess;
 }
 
@@ -830,4 +833,14 @@ void
 ConnectionFileDescriptor::SetChildProcessesInherit(bool child_processes_inherit)
 {
     m_child_processes_inherit = child_processes_inherit;
+}
+
+void
+ConnectionFileDescriptor::InitializeSocket(Socket* socket)
+{
+    m_write_sp.reset(socket);
+    m_read_sp = m_write_sp;
+    StreamString strm;
+    strm.Printf("connect://%s:%u",socket->GetRemoteIPAddress().c_str(), socket->GetRemotePortNumber());
+    m_uri.swap(strm.GetString());
 }

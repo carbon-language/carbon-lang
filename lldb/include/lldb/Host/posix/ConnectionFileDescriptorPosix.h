@@ -38,6 +38,8 @@ class ConnectionFileDescriptor : public Connection
 
     ConnectionFileDescriptor(int fd, bool owns_fd);
 
+    ConnectionFileDescriptor(Socket* socket);
+
     virtual ~ConnectionFileDescriptor();
 
     bool IsConnected() const override;
@@ -104,6 +106,8 @@ class ConnectionFileDescriptor : public Connection
     std::string m_uri;
 
   private:
+    void InitializeSocket(Socket* socket);
+
     DISALLOW_COPY_AND_ASSIGN(ConnectionFileDescriptor);
 };
 
