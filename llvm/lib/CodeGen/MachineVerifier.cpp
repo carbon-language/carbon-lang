@@ -1650,40 +1650,35 @@ void MachineVerifier::verifyLiveRange(const LiveRange &LR, unsigned Reg,
 }
 
 void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
-  verifyLiveRange(LI, LI.reg);
-
   unsigned Reg = LI.reg;
-  if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-    unsigned Mask = 0;
-    unsigned MaxMask = MRI->getMaxLaneMaskForVReg(Reg);
-    for (const LiveInterval::SubRange &SR : LI.subranges()) {
-      if ((Mask & SR.LaneMask) != 0)
-        report("Lane masks of sub ranges overlap in live interval", MF, LI);
-      if ((SR.LaneMask & ~MaxMask) != 0)
-        report("Subrange lanemask is invalid", MF, LI);
-      Mask |= SR.LaneMask;
-      verifyLiveRange(SR, LI.reg, SR.LaneMask);
-      if (!LI.covers(SR))
-        report("A Subrange is not covered by the main range", MF, LI);
-    }
-  } else if (LI.hasSubRanges()) {
-    report("subregister liveness only allowed for virtual registers", MF, LI);
+  assert(TargetRegisterInfo::isVirtualRegister(Reg));
+  verifyLiveRange(LI, Reg);
+
+  unsigned Mask = 0;
+  unsigned MaxMask = MRI->getMaxLaneMaskForVReg(Reg);
+  for (const LiveInterval::SubRange &SR : LI.subranges()) {
+    if ((Mask & SR.LaneMask) != 0)
+      report("Lane masks of sub ranges overlap in live interval", MF, LI);
+    if ((SR.LaneMask & ~MaxMask) != 0)
+      report("Subrange lanemask is invalid", MF, LI);
+    Mask |= SR.LaneMask;
+    verifyLiveRange(SR, LI.reg, SR.LaneMask);
+    if (!LI.covers(SR))
+      report("A Subrange is not covered by the main range", MF, LI);
   }
 
   // Check the LI only has one connected component.
-  if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
-    ConnectedVNInfoEqClasses ConEQ(*LiveInts);
-    unsigned NumComp = ConEQ.Classify(&LI);
-    if (NumComp > 1) {
-      report("Multiple connected components in live interval", MF, LI);
-      for (unsigned comp = 0; comp != NumComp; ++comp) {
-        errs() << comp << ": valnos";
-        for (LiveInterval::const_vni_iterator I = LI.vni_begin(),
-             E = LI.vni_end(); I!=E; ++I)
-          if (comp == ConEQ.getEqClass(*I))
-            errs() << ' ' << (*I)->id;
-        errs() << '\n';
-      }
+  ConnectedVNInfoEqClasses ConEQ(*LiveInts);
+  unsigned NumComp = ConEQ.Classify(&LI);
+  if (NumComp > 1) {
+    report("Multiple connected components in live interval", MF, LI);
+    for (unsigned comp = 0; comp != NumComp; ++comp) {
+      errs() << comp << ": valnos";
+      for (LiveInterval::const_vni_iterator I = LI.vni_begin(),
+           E = LI.vni_end(); I!=E; ++I)
+        if (comp == ConEQ.getEqClass(*I))
+          errs() << ' ' << (*I)->id;
+      errs() << '\n';
     }
   }
 }
