@@ -2214,6 +2214,8 @@ private:
                                BalancedDelimiterTracker &Tracker,
                                bool IsAmbiguous,
                                bool RequiresArg = false);
+  bool ParseRefQualifier(bool &RefQualifierIsLValueRef,
+                         SourceLocation &RefQualifierLoc);
   bool isFunctionDeclaratorIdentifierList();
   void ParseFunctionDeclaratorIdentifierList(
          Declarator &D,
