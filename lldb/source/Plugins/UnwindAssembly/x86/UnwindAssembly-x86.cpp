@@ -148,6 +148,7 @@ private:
     bool mov_rsp_rbp_pattern_p ();
     bool sub_rsp_pattern_p (int& amount);
     bool add_rsp_pattern_p (int& amount);
+    bool lea_rsp_pattern_p (int& amount);
     bool push_reg_p (int& regno);
     bool pop_reg_p (int& regno);
     bool push_imm_pattern_p ();
@@ -407,6 +408,36 @@ AssemblyParse_x86::add_rsp_pattern_p (int& amount)
         amount = (int32_t) extract_4 (p + 2);
         return true;
     }
+    return false;
+}
+
+// lea esp, [esp - 0x28]
+// lea esp, [esp + 0x28]
+bool
+AssemblyParse_x86::lea_rsp_pattern_p (int& amount)
+{
+    uint8_t *p = m_cur_insn_bytes;
+    if (m_wordsize == 8 && *p == 0x48)
+        p++;
+
+    // Check opcode
+    if (*p != 0x8d)
+        return false;
+
+    // 8 bit displacement
+    if (*(p + 1) == 0x64 && (*(p + 2) & 0x3f) == 0x24)
+    {
+        amount = (int8_t) *(p + 3);
+        return true;
+    }
+
+    // 32 bit displacement
+    if (*(p + 1) == 0xa4 && (*(p + 2) & 0x3f) == 0x24)
+    {
+        amount = (int32_t) extract_4 (p + 3);
+        return true;
+    }
+
     return false;
 }
 
@@ -808,6 +839,18 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             in_epilogue = true;
         }
 
+        else if (lea_rsp_pattern_p (stack_offset))
+        {
+            current_sp_bytes_offset_from_cfa -= stack_offset;
+            if (row->GetCFAValue().GetRegisterNumber() == m_lldb_sp_regnum)
+            {
+                row->GetCFAValue().SetOffset (current_sp_bytes_offset_from_cfa);
+                row_updated = true;
+            }
+            if (stack_offset > 0)
+                in_epilogue = true;
+        }
+
         else if (ret_pattern_p () && prologue_completed_row.get())
         {
             // Reinstate the saved prologue setup for any instructions
@@ -1068,6 +1111,19 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
                 unwind_plan_updated = true;
                 continue;
             }
+
+            // lea %rsp, [%rsp + $offset]
+            if (lea_rsp_pattern_p (amount))
+            {
+                row->SetOffset (offset);
+                row->GetCFAValue().IncOffset (-amount);
+
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
+                continue;
+            }
+
             if (ret_pattern_p ())
             {
                 reinstate_unwind_state = true;
@@ -1234,7 +1290,8 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
         }
 
         if (push_rbp_pattern_p () || mov_rsp_rbp_pattern_p () || sub_rsp_pattern_p (offset)
-            || push_reg_p (regno) || mov_reg_to_local_stack_frame_p (regno, offset))
+            || push_reg_p (regno) || mov_reg_to_local_stack_frame_p (regno, offset)
+            || (lea_rsp_pattern_p (offset) && offset < 0))
         {
             m_cur_insn.SetOffset (m_cur_insn.GetOffset() + insn_len);
             continue;
