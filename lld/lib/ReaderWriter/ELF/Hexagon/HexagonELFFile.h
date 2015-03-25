@@ -24,14 +24,9 @@ class HexagonELFDefinedAtom : public ELFDefinedAtom<ELFT> {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  HexagonELFDefinedAtom(const HexagonELFFile<ELFT> &file, StringRef symbolName,
-                        StringRef sectionName, const Elf_Sym *symbol,
-                        const Elf_Shdr *section, ArrayRef<uint8_t> contentData,
-                        unsigned int referenceStart, unsigned int referenceEnd,
-                        std::vector<ELFReference<ELFT> *> &referenceList)
-      : ELFDefinedAtom<ELFT>(file, symbolName, sectionName, symbol, section,
-                             contentData, referenceStart, referenceEnd,
-                             referenceList) {}
+  template<typename... T>
+  HexagonELFDefinedAtom(T&&... args)
+      : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
 
   virtual DefinedAtom::ContentType contentType() const {
     if (this->_contentType != DefinedAtom::typeUnknown)

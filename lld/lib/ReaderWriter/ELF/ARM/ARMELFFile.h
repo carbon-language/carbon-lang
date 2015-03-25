@@ -22,14 +22,9 @@ template <class ELFT> class ARMELFDefinedAtom : public ELFDefinedAtom<ELFT> {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  ARMELFDefinedAtom(const ELFFile<ELFT> &file, StringRef symbolName,
-                 StringRef sectionName, const Elf_Sym *symbol,
-                 const Elf_Shdr *section, ArrayRef<uint8_t> contentData,
-                 unsigned int referenceStart, unsigned int referenceEnd,
-                 std::vector<ELFReference<ELFT> *> &referenceList)
-      : ELFDefinedAtom<ELFT>(file, symbolName, sectionName, symbol, section,
-                             contentData, referenceStart, referenceEnd,
-                             referenceList) {}
+  template<typename... T>
+  ARMELFDefinedAtom(T&&... args)
+      : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
 
   bool isThumbFunc(const Elf_Sym *symbol) const {
     return symbol->getType() == llvm::ELF::STT_FUNC &&
