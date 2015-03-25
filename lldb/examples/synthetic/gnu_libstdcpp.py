@@ -233,8 +233,9 @@ class StdVectorSynthProvider:
 				return None
 			byte_offset = index / 8
 			bit_offset = index % 8
-			data = self.start_p.GetPointeeData()
-			bit = data.GetUnsignedInt8(lldb.SBError(), byte_offset) & (1 << bit_offset)
+			element_size = self.start_p.GetType().GetPointeeType().GetByteSize()
+			data = self.start_p.GetPointeeData(byte_offset / element_size)
+			bit = data.GetUnsignedInt8(lldb.SBError(), byte_offset % element_size) & (1 << bit_offset)
 			if bit != 0:
 				value_expr = "(bool)true"
 			else:

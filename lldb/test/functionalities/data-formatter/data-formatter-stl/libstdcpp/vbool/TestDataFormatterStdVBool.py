@@ -24,7 +24,6 @@ class StdVBoolDataFormatterTestCase(TestBase):
     @dwarf_test
     @skipIfWindows # http://llvm.org/pr21800
     @skipIfDarwin
-    @expectedFailurei386 #xfail to get buildbot green, failing config: i386 binary running on ubuntu 14.04 x86_64
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
