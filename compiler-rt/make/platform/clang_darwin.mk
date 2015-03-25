@@ -178,29 +178,27 @@ CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 SANITIZER_MACOSX_DEPLOYMENT_ARGS := -mmacosx-version-min=10.7
 SANITIZER_IOSSIM_DEPLOYMENT_ARGS := -mios-simulator-version-min=7.0 \
   -isysroot $(IOSSIM_SDK)
-SANITIZER_CFLAGS := -fno-builtin -gline-tables-only
+SANITIZER_CFLAGS := -fno-builtin -gline-tables-only -stdlib=libc++
 
 CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) $(SANITIZER_MACOSX_DEPLOYMENT_ARGS) \
 	$(SANITIZER_CFLAGS) \
-	-stdlib=libc++ \
 	-DMAC_INTERPOSE_FUNCTIONS=1 \
 	-DASAN_DYNAMIC=1
 
 CFLAGS.asan_iossim_dynamic := \
 	$(CFLAGS) $(SANITIZER_IOSSIM_DEPLOYMENT_ARGS) \
-  $(SANITIZER_CFLAGS) \
+	$(SANITIZER_CFLAGS) \
 	-DMAC_INTERPOSE_FUNCTIONS=1 \
 	-DASAN_DYNAMIC=1
 
 CFLAGS.ubsan_osx_dynamic := \
 	$(CFLAGS) $(SANITIZER_MACOSX_DEPLOYMENT_ARGS) \
-	$(SANITIZER_CFLAGS) \
-	-stdlib=libc++
+	$(SANITIZER_CFLAGS)
 
 CFLAGS.ubsan_iossim_dynamic := \
 	$(CFLAGS) $(SANITIZER_IOSSIM_DEPLOYMENT_ARGS) \
-  $(SANITIZER_CFLAGS)
+	$(SANITIZER_CFLAGS)
 
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
@@ -232,10 +230,10 @@ CFLAGS.profile_ios.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.arm64  := $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 
-SANITIZER_LDFLAGS := -undefined dynamic_lookup
+SANITIZER_LDFLAGS := -stdlib=libc++ -lc++
 
 SHARED_LIBRARY.asan_osx_dynamic := 1
-LDFLAGS.asan_osx_dynamic := -lc++ $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib \
+LDFLAGS.asan_osx_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib \
   $(SANITIZER_MACOSX_DEPLOYMENT_ARGS)
 
 SHARED_LIBRARY.asan_iossim_dynamic := 1
@@ -243,11 +241,11 @@ LDFLAGS.asan_iossim_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclan
   -Wl,-ios_simulator_version_min,7.0.0 $(SANITIZER_IOSSIM_DEPLOYMENT_ARGS)
 
 SHARED_LIBRARY.ubsan_osx_dynamic := 1
-LDFLAGS.ubsan_osx_dynamic := -lc++ $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.ubsan_osx_dynamic.dylib \
+LDFLAGS.ubsan_osx_dynamic := $(SANITIZER_LDFLAGS) -lc++abi -install_name @rpath/libclang_rt.ubsan_osx_dynamic.dylib \
   $(SANITIZER_MACOSX_DEPLOYMENT_ARGS)
 
 SHARED_LIBRARY.ubsan_iossim_dynamic := 1
-LDFLAGS.ubsan_iossim_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.ubsan_iossim_dynamic.dylib \
+LDFLAGS.ubsan_iossim_dynamic := $(SANITIZER_LDFLAGS) -lc++abi -install_name @rpath/libclang_rt.ubsan_iossim_dynamic.dylib \
   -Wl,-ios_simulator_version_min,7.0.0 $(SANITIZER_IOSSIM_DEPLOYMENT_ARGS)
 
 ifneq ($(OSX_SDK),)
