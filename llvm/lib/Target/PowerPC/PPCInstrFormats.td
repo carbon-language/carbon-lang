@@ -693,6 +693,60 @@ class XForm_16b<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let A = 0;
 }
 
+class XForm_htm0<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+                 string asmstr, InstrItinClass itin, list<dag> pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bit R;
+
+  bit RC = 1;
+
+  let Inst{6-9}   = 0;
+  let Inst{10}    = R;
+  let Inst{11-20} = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
+class XForm_htm1<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+                 string asmstr, InstrItinClass itin, list<dag> pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bit A;
+
+  bit RC = 1;
+
+  let Inst{6}     = A;
+  let Inst{7-20}  = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
+class XForm_htm2<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bit L;
+
+  bit RC = 0;    // set by isDOT
+
+  let Inst{7-9}   = 0;
+  let Inst{10}    = L;
+  let Inst{11-20} = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
+class XForm_htm3<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<3> BF;
+
+  bit RC = 0;
+
+  let Inst{6-8}   = BF;
+  let Inst{9-20}  = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
 // XX*-Form (VSX)
 class XX1Form<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr, 
               InstrItinClass itin, list<dag> pattern>

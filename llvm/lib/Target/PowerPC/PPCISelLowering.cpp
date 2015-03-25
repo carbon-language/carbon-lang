@@ -8782,6 +8782,12 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY),
             MI->getOperand(0).getReg())
       .addReg(isEQ ? PPC::CR0EQ : PPC::CR0GT);
+  } else if (MI->getOpcode() == PPC::TCHECK_RET) {
+    DebugLoc Dl = MI->getDebugLoc();
+    MachineRegisterInfo &RegInfo = F->getRegInfo();
+    unsigned CRReg = RegInfo.createVirtualRegister(&PPC::CRRCRegClass);
+    BuildMI(*BB, MI, Dl, TII->get(PPC::TCHECK), CRReg);
+    return BB;
   } else {
     llvm_unreachable("Unexpected instr type to insert");
   }

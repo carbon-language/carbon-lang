@@ -696,6 +696,33 @@ void PPCInstrInfo::insertSelect(MachineBasicBlock &MBB,
     .addReg(Cond[1].getReg(), 0, SubIdx);
 }
 
+static unsigned getCRBitValue(unsigned CRBit) {
+  unsigned Ret = 4;
+  if (CRBit == PPC::CR0LT || CRBit == PPC::CR1LT ||
+      CRBit == PPC::CR2LT || CRBit == PPC::CR3LT ||
+      CRBit == PPC::CR4LT || CRBit == PPC::CR5LT ||
+      CRBit == PPC::CR6LT || CRBit == PPC::CR7LT)
+    Ret = 3;
+  if (CRBit == PPC::CR0GT || CRBit == PPC::CR1GT ||
+      CRBit == PPC::CR2GT || CRBit == PPC::CR3GT ||
+      CRBit == PPC::CR4GT || CRBit == PPC::CR5GT ||
+      CRBit == PPC::CR6GT || CRBit == PPC::CR7GT)
+    Ret = 2;
+  if (CRBit == PPC::CR0EQ || CRBit == PPC::CR1EQ ||
+      CRBit == PPC::CR2EQ || CRBit == PPC::CR3EQ ||
+      CRBit == PPC::CR4EQ || CRBit == PPC::CR5EQ ||
+      CRBit == PPC::CR6EQ || CRBit == PPC::CR7EQ)
+    Ret = 1;
+  if (CRBit == PPC::CR0UN || CRBit == PPC::CR1UN ||
+      CRBit == PPC::CR2UN || CRBit == PPC::CR3UN ||
+      CRBit == PPC::CR4UN || CRBit == PPC::CR5UN ||
+      CRBit == PPC::CR6UN || CRBit == PPC::CR7UN)
+    Ret = 0;
+
+  assert(Ret != 4 && "Invalid CR bit register");
+  return Ret;
+}
+
 void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I, DebugLoc DL,
                                unsigned DestReg, unsigned SrcReg,
@@ -740,6 +767,32 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
     SrcReg = SuperReg;
   }
+
+  // Different class register copy
+  if (PPC::CRBITRCRegClass.contains(SrcReg) &&
+      PPC::GPRCRegClass.contains(DestReg)) {
+    unsigned CRReg = getCRFromCRBit(SrcReg);
+    BuildMI(MBB, I, DL, get(PPC::MFOCRF), DestReg)
+       .addReg(CRReg), getKillRegState(KillSrc);
+    // Rotate the CR bit in the CR fields to be the least significant bit and
+    // then mask with 0x1 (MB = ME = 31).
+    BuildMI(MBB, I, DL, get(PPC::RLWINM), DestReg)
+       .addReg(DestReg, RegState::Kill)
+       .addImm(TRI->getEncodingValue(CRReg) * 4 + (4 - getCRBitValue(SrcReg)))
+       .addImm(31)
+       .addImm(31);
+    return;
+  } else if (PPC::CRRCRegClass.contains(SrcReg) &&
+      PPC::G8RCRegClass.contains(DestReg)) {
+    BuildMI(MBB, I, DL, get(PPC::MFOCRF8), DestReg)
+       .addReg(SrcReg), getKillRegState(KillSrc);
+    return;
+  } else if (PPC::CRRCRegClass.contains(SrcReg) &&
+      PPC::GPRCRegClass.contains(DestReg)) {
+    BuildMI(MBB, I, DL, get(PPC::MFOCRF), DestReg)
+       .addReg(SrcReg), getKillRegState(KillSrc);
+    return;
+   }
 
   unsigned Opc;
   if (PPC::GPRCRegClass.contains(DestReg, SrcReg))

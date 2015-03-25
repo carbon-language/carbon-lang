@@ -97,6 +97,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasInvariantFunctionDescriptors = false;
   HasPartwordAtomics = false;
   IsQPXStackUnaligned = false;
+  HasHTM = false;
 }
 
 void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {

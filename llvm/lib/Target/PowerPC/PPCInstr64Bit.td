@@ -329,6 +329,12 @@ let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
                           Requires<[In64BitMode]>;
 }
 
+def MFSPR8 : XFXForm_1<31, 339, (outs g8rc:$RT), (ins i32imm:$SPR),
+                       "mfspr $RT, $SPR", IIC_SprMFSPR>;
+def MTSPR8 : XFXForm_1<31, 467, (outs), (ins i32imm:$SPR, g8rc:$RT),
+                       "mtspr $SPR, $RT", IIC_SprMTSPR>;
+
+
 //===----------------------------------------------------------------------===//
 // 64-bit SPR manipulation instrs.
 

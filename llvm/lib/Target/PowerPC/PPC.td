@@ -125,6 +125,8 @@ def FeatureInvariantFunctionDescriptors :
   SubtargetFeature<"invariant-function-descriptors",
                    "HasInvariantFunctionDescriptors", "true",
                    "Assume function descriptors are invariant">;
+def FeatureHTM : SubtargetFeature<"htm", "HasHTM", "true",
+                                  "Enable Hardware Transactional Memory instructions">;
 
 def DeprecatedMFTB   : SubtargetFeature<"", "DeprecatedMFTB", "true",
                                         "Treat mftb as deprecated">;
@@ -261,7 +263,7 @@ def ProcessorFeatures {
         [DirectivePwr8, FeatureAltivec, FeatureP8Altivec, FeatureVSX, 
         FeatureP8Vector, FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, 
         FeatureFRE, FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
-        FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+        FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX, FeatureHTM,
         FeatureFPRND, FeatureFPCVT, FeatureISEL,
         FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX, FeatureP8Crypto,
         Feature64Bit /*, Feature64BitRegs */, FeatureICBT,

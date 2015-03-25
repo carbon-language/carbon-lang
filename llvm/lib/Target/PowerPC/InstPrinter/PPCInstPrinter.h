@@ -45,6 +45,7 @@ public:
 
   void printU1ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printU2ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU3ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printU4ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printS5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printU5ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);

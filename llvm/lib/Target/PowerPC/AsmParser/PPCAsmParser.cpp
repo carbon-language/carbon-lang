@@ -427,6 +427,7 @@ public:
   bool isImm() const override { return Kind == Immediate || Kind == Expression; }
   bool isU1Imm() const { return Kind == Immediate && isUInt<1>(getImm()); }
   bool isU2Imm() const { return Kind == Immediate && isUInt<2>(getImm()); }
+  bool isU3Imm() const { return Kind == Immediate && isUInt<3>(getImm()); }
   bool isU4Imm() const { return Kind == Immediate && isUInt<4>(getImm()); }
   bool isU5Imm() const { return Kind == Immediate && isUInt<5>(getImm()); }
   bool isS5Imm() const { return Kind == Immediate && isInt<5>(getImm()); }

@@ -432,6 +432,9 @@ def PPCRegCRRCAsmOperand : AsmOperandClass {
 def crrc : RegisterOperand<CRRC> {
   let ParserMatchClass = PPCRegCRRCAsmOperand;
 }
+def crrc0 : RegisterOperand<CRRC0> {
+  let ParserMatchClass = PPCRegCRRCAsmOperand;
+}
 
 def PPCU1ImmAsmOperand : AsmOperandClass {
   let Name = "U1Imm"; let PredicateMethod = "isU1Imm";
@@ -449,6 +452,15 @@ def PPCU2ImmAsmOperand : AsmOperandClass {
 def u2imm   : Operand<i32> {
   let PrintMethod = "printU2ImmOperand";
   let ParserMatchClass = PPCU2ImmAsmOperand;
+}
+
+def PPCU3ImmAsmOperand : AsmOperandClass {
+  let Name = "U3Imm"; let PredicateMethod = "isU3Imm";
+  let RenderMethod = "addImmOperands";
+}
+def u3imm   : Operand<i32> {
+  let PrintMethod = "printU3ImmOperand";
+  let ParserMatchClass = PPCU3ImmAsmOperand;
 }
 
 def PPCU4ImmAsmOperand : AsmOperandClass {
@@ -2708,6 +2720,7 @@ include "PPCInstrSPE.td"
 include "PPCInstr64Bit.td"
 include "PPCInstrVSX.td"
 include "PPCInstrQPX.td"
+include "PPCInstrHTM.td"
 
 def crnot : OutPatFrag<(ops node:$in),
                        (CRNOR $in, $in)>;
