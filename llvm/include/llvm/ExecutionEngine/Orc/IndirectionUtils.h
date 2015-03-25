@@ -70,7 +70,7 @@ public:
   /// @brief Execute the callback for the given trampoline id. Called by the JIT
   ///        to compile functions on demand.
   TargetAddress executeCompileCallback(TargetAddress TrampolineID) {
-    typename TrampolineMapT::iterator I = ActiveTrampolines.find(TrampolineID);
+    TrampolineMapT::iterator I = ActiveTrampolines.find(TrampolineID);
     // FIXME: Also raise an error in the Orc error-handler when we finally have
     //        one.
     if (I == ActiveTrampolines.end())
