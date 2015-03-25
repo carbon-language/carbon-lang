@@ -21,32 +21,32 @@ def Usage():
 
 def CheckBits(bits):
   if bits != 32 and bits != 64:
-    raise Exception("Wrond bitness: %d" % bits)
+    raise Exception("Wrong bitness: %d" % bits)
 
 def TypeCodeForBits(bits):
   CheckBits(bits)
   return 'L' if bits == 64 else 'I'
 
-kMagic64 = 0xC0BFFFFFFFFFFF64
-kMagic32 = 0xC0BFFFFFFFFFFF32
 kMagic32SecondHalf = 0xFFFFFF32;
 kMagic64SecondHalf = 0xFFFFFF64;
 kMagicFirstHalf    = 0xC0BFFFFF;
 
 def MagicForBits(bits):
   CheckBits(bits)
-  # Little endian.
-  return [kMagic64SecondHalf if bits == 64 else kMagic32SecondHalf, kMagicFirstHalf]
+  if sys.byteorder == 'little':
+    return [kMagic64SecondHalf if bits == 64 else kMagic32SecondHalf, kMagicFirstHalf]
+  else:
+    return [kMagicFirstHalf, kMagic64SecondHalf if bits == 64 else kMagic32SecondHalf]
 
 def ReadMagicAndReturnBitness(f, path):
   magic_bytes = f.read(8)
   magic_words = struct.unpack('II', magic_bytes);
   bits = 0
-  # Assuming little endian.
-  if magic_words[1] == kMagicFirstHalf:
-    if magic_words[0] == kMagic64SecondHalf:
+  idx = 1 if sys.byteorder == 'little' else 0
+  if magic_words[idx] == kMagicFirstHalf:
+    if magic_words[1-idx] == kMagic64SecondHalf:
       bits = 64
-    elif magic_words[0] == kMagic32SecondHalf:
+    elif magic_words[1-idx] == kMagic32SecondHalf:
       bits = 32
   if bits == 0:
     raise Exception('Bad magic word in %s' % path)
