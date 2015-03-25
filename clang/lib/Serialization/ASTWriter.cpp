@@ -3761,34 +3761,15 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
          !DC->HasLazyExternalLexicalLookups &&
          "must call buildLookups first");
 
-  // Create the on-disk hash table representation.
   llvm::OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait>
       Generator;
   ASTDeclContextNameLookupTrait Trait(*this);
 
-  // Store the sortable lookup results -- IE, those with meaningful names. We
-  // will sort them by the DeclarationName in order to stabilize the ordering
-  // of the hash table. We can't do this for constructors or conversion
-  // functions which are handled separately.
-  SmallVector<std::pair<DeclarationName, DeclContext::lookup_result>, 16>
-      NamedResults;
-
-  // We can't directly construct a nonce constructor or conversion name without
-  // tripping asserts, so we just recall the first one we see. Only the kind
-  // will actually be serialized.
+  // Create the on-disk hash table representation.
   DeclarationName ConstructorName;
   DeclarationName ConversionName;
-  // Retain a mapping from each actual declaration name to the results
-  // associated with it. We use a map here because the order in which we
-  // discover these lookup results isn't ordered. We have to re-establish
-  // a stable ordering which we do by walking the children of the decl context,
-  // and emitting these in the order in which their names first appeared. Note
-  // that the names' first appearance may not be one of the results or a result
-  // at all. We just use this to establish an ordering.
-  llvm::SmallDenseMap<DeclarationName, DeclContext::lookup_result, 8>
-      ConstructorResults;
-  llvm::SmallDenseMap<DeclarationName, DeclContext::lookup_result, 4>
-      ConversionResults;
+  SmallVector<NamedDecl *, 8> ConstructorDecls;
+  SmallVector<NamedDecl *, 4> ConversionDecls;
 
   visitLocalLookupResults(DC, [&](DeclarationName Name,
                                   DeclContext::lookup_result Result) {
@@ -3805,90 +3786,34 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
       // has the DeclarationName of the inherited constructors.
       if (!ConstructorName)
         ConstructorName = Name;
-      ConstructorResults.insert(std::make_pair(Name, Result));
+      ConstructorDecls.append(Result.begin(), Result.end());
       return;
 
     case DeclarationName::CXXConversionFunctionName:
       if (!ConversionName)
         ConversionName = Name;
-      ConversionResults.insert(std::make_pair(Name, Result));
+      ConversionDecls.append(Result.begin(), Result.end());
       return;
 
     default:
-      NamedResults.push_back(std::make_pair(Name, Result));
+      break;
     }
 
+    Generator.insert(Name, Result, Trait);
   });
 
-  // Sort and emit the named results first. This is the easy case.
-  std::sort(
-      NamedResults.begin(), NamedResults.end(),
-      [](const std::pair<DeclarationName, DeclContext::lookup_result> &LHS,
-         const std::pair<DeclarationName, DeclContext::lookup_result> &RHS) {
-        return LHS.first < RHS.first;
-      });
-  for (auto Results : NamedResults)
-    Generator.insert(Results.first, Results.second, Trait);
-
-  // We have to specially handle the constructor and conversion function
-  // declarations found.
-  if (ConstructorResults.size() == 1) {
-    // A special case that is easy is when we have just one constructor
-    // declaration name.
+  // Add the constructors.
+  if (!ConstructorDecls.empty()) {
     Generator.insert(ConstructorName,
-                     ConstructorResults.lookup(ConstructorName), Trait);
-    ConstructorResults.clear();
-  }
-  if (ConversionResults.size() == 1) {
-    // A special case that is easy is when we have just one conversion function
-    // declaration name.
-    Generator.insert(ConversionName, ConversionResults.lookup(ConversionName),
+                     DeclContext::lookup_result(ConstructorDecls),
                      Trait);
-    ConversionResults.clear();
   }
-  if (!ConstructorResults.empty() || !ConversionResults.empty()) {
-    SmallVector<NamedDecl *, 8> ConstructorDecls;
-    SmallVector<NamedDecl *, 8> ConversionDecls;
 
-    // Walk the decls in the context and collapse the results in that order. We
-    // handle both constructors and conversion functions in a single walk as
-    // the walk is a relative cache-hostile linked list walk.
-    for (Decl *ChildD : DC->decls())
-      if (auto *ChildND = dyn_cast<NamedDecl>(ChildD)) {
-        auto ConstructorResultsIt =
-            ConstructorResults.find(ChildND->getDeclName());
-        if (ConstructorResultsIt != ConstructorResults.end()) {
-          ConstructorDecls.append(ConstructorResultsIt->second.begin(),
-                                  ConstructorResultsIt->second.end());
-          ConstructorResults.erase(ConstructorResultsIt);
-        }
-
-        auto ConversionResultsIt =
-            ConversionResults.find(ChildND->getDeclName());
-        if (ConversionResultsIt != ConversionResults.end()) {
-          ConversionDecls.append(ConversionResultsIt->second.begin(),
-                                 ConversionResultsIt->second.end());
-          ConversionResults.erase(ConversionResultsIt);
-        }
-
-        // If we handle all of the results, we're done.
-        if (ConstructorResults.empty() && ConversionResults.empty())
-          break;
-      }
-    assert(ConstructorResults.empty() && "Have constructor lookup results not "
-                                         "associated with a declaration name "
-                                         "within the context!");
-    assert(ConversionResults.empty() && "Have conversion function lookup "
-                                        "results not associated with a "
-                                        "declaration name within the context!");
-
-    if (!ConstructorDecls.empty())
-      Generator.insert(ConstructorName,
-                       DeclContext::lookup_result(ConstructorDecls), Trait);
-
-    if (!ConversionDecls.empty())
-      Generator.insert(ConversionName,
-                       DeclContext::lookup_result(ConversionDecls), Trait);
+  // Add the conversion functions.
+  if (!ConversionDecls.empty()) {
+    Generator.insert(ConversionName,
+                     DeclContext::lookup_result(ConversionDecls),
+                     Trait);
   }
 
   // Create the on-disk hash table in a buffer.
