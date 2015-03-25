@@ -432,8 +432,8 @@ bool MCExpr::evaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
     return true;
   }
 
-  bool IsRelocatable = EvaluateAsRelocatableImpl(
-      Value, Asm, Layout, nullptr, Addrs, InSet, /*ForceVarExpansion*/ true);
+  bool IsRelocatable =
+      EvaluateAsRelocatableImpl(Value, Asm, Layout, nullptr, Addrs, InSet);
 
   // Record the current value.
   Res = Value.getConstant();
@@ -586,21 +586,21 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    const MCFixup *Fixup) const {
   MCAssembler *Assembler = Layout ? &Layout->getAssembler() : nullptr;
   return EvaluateAsRelocatableImpl(Res, Assembler, Layout, Fixup, nullptr,
-                                   false, /*ForceVarExpansion*/ false);
+                                   false);
 }
 
-bool MCExpr::EvaluateAsValue(MCValue &Res, const MCAsmLayout *Layout,
-                             const MCFixup *Fixup) const {
-  MCAssembler *Assembler = Layout ? &Layout->getAssembler() : nullptr;
-  return EvaluateAsRelocatableImpl(Res, Assembler, Layout, Fixup, nullptr,
-                                   false, /*ForceVarExpansion*/ true);
+static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm) {
+  if (!Asm)
+    return false;
+  const MCSymbolData &SD = Asm->getSymbolData(Sym);
+  return !Asm->getWriter().isWeak(SD);
 }
 
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
                                        const MCAsmLayout *Layout,
                                        const MCFixup *Fixup,
-                                       const SectionAddrMap *Addrs, bool InSet,
-                                       bool ForceVarExpansion) const {
+                                       const SectionAddrMap *Addrs,
+                                       bool InSet) const {
   ++stats::MCExprEvaluate;
 
   switch (getKind()) {
@@ -617,28 +617,23 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     const MCSymbol &Sym = SRE->getSymbol();
 
     // Evaluate recursively if this is a variable.
-    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None) {
+    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None &&
+        canExpand(Sym, Asm)) {
       if (Sym.getVariableValue()->EvaluateAsRelocatableImpl(
-              Res, Asm, Layout, Fixup, Addrs, true, ForceVarExpansion)) {
+              Res, Asm, Layout, Fixup, Addrs, true)) {
+        if (!SRE->hasSubsectionsViaSymbols())
+          return true;
+
         const MCSymbolRefExpr *A = Res.getSymA();
         const MCSymbolRefExpr *B = Res.getSymB();
-
-        if (SRE->hasSubsectionsViaSymbols()) {
-          // FIXME: This is small hack. Given
-          // a = b + 4
-          // .long a
-          // the OS X assembler will completely drop the 4. We should probably
-          // include it in the relocation or produce an error if that is not
-          // possible.
-          if (!A && !B)
-            return true;
-        } else {
-          if (ForceVarExpansion)
-            return true;
-          bool IsSymbol = A && A->getSymbol().isDefined();
-          if (!IsSymbol)
-            return true;
-        }
+        // FIXME: This is small hack. Given
+        // a = b + 4
+        // .long a
+        // the OS X assembler will completely drop the 4. We should probably
+        // include it in the relocation or produce an error if that is not
+        // possible.
+        if (!A && !B)
+          return true;
       }
     }
 
@@ -650,9 +645,8 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     const MCUnaryExpr *AUE = cast<MCUnaryExpr>(this);
     MCValue Value;
 
-    if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Asm, Layout,
-                                                      Fixup, Addrs, InSet,
-                                                      ForceVarExpansion))
+    if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Asm, Layout, Fixup,
+                                                      Addrs, InSet))
       return false;
 
     switch (AUE->getOpcode()) {
@@ -685,12 +679,10 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     const MCBinaryExpr *ABE = cast<MCBinaryExpr>(this);
     MCValue LHSValue, RHSValue;
 
-    if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Asm, Layout,
-                                                  Fixup, Addrs, InSet,
-                                                  ForceVarExpansion) ||
-        !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Asm, Layout,
-                                                  Fixup, Addrs, InSet,
-                                                  ForceVarExpansion))
+    if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Asm, Layout, Fixup,
+                                                  Addrs, InSet) ||
+        !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Asm, Layout, Fixup,
+                                                  Addrs, InSet))
       return false;
 
     // We only support a few operations on non-constant expressions, handle

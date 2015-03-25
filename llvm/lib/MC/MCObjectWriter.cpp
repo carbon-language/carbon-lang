@@ -54,3 +54,5 @@ MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
   // On ELF and COFF  A - B is absolute if A and B are in the same section.
   return &SecA == &SecB;
 }
+
+bool MCObjectWriter::isWeak(const MCSymbolData &SD) const { return false; }

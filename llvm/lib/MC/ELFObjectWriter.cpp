@@ -312,6 +312,8 @@ class ELFObjectWriter : public MCObjectWriter {
                                            bool InSet,
                                            bool IsPCRel) const override;
 
+    bool isWeak(const MCSymbolData &SD) const override;
+
     void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
     void writeSection(MCAssembler &Asm,
                       const SectionIndexMapTy &SectionIndexMap,
@@ -847,7 +849,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
           Fixup.getLoc(), "Cannot represent a difference across sections");
 
     const MCSymbolData &SymBD = Asm.getSymbolData(SymB);
-    if (isWeak(SymBD))
+    if (::isWeak(SymBD))
       Asm.getContext().FatalError(
           Fixup.getLoc(), "Cannot represent a subtraction with a weak symbol");
 
@@ -1817,10 +1819,14 @@ ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                       const MCFragment &FB,
                                                       bool InSet,
                                                       bool IsPCRel) const {
-  if (isWeak(DataA))
+  if (::isWeak(DataA))
     return false;
   return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
                                                  Asm, DataA, FB,InSet, IsPCRel);
+}
+
+bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {
+  return ::isWeak(SD);
 }
 
 MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,

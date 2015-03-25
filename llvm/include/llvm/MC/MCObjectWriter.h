@@ -99,6 +99,11 @@ public:
                                          bool InSet,
                                          bool IsPCRel) const;
 
+  /// \brief True if this symbol (which is a variable) is weak. This is not
+  /// just STB_WEAK, but more generally whether or not we can evaluate
+  /// past it.
+  virtual bool isWeak(const MCSymbolData &SD) const;
+
   /// \brief Write the object file.
   ///
   /// This routine is called by the assembler after layout and relaxation is
