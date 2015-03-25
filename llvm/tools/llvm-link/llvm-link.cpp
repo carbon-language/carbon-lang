@@ -112,6 +112,12 @@ int main(int argc, char **argv) {
       return 1;
     }
 
+    if (verifyModule(*M)) {
+      errs() << argv[0] << ": input module '" << InputFilenames[i]
+             << "' is broken!\n";
+      return 1;
+    }
+
     if (Verbose) errs() << "Linking in '" << InputFilenames[i] << "'\n";
 
     if (L.linkInModule(M.get()))
