@@ -94,7 +94,7 @@ public:
   bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const;
   bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
 
-  int64_t evaluateKnownAbsolute(const MCAsmLayout &Layout) const;
+  bool evaluateKnownAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).

@@ -406,13 +406,10 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const {
   return EvaluateAsAbsolute(Res, &Asm, nullptr, nullptr);
 }
 
-int64_t MCExpr::evaluateKnownAbsolute(const MCAsmLayout &Layout) const {
-  int64_t Res;
-  bool Abs =
-      evaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, nullptr, true);
-  (void)Abs;
-  assert(Abs && "Not actually absolute");
-  return Res;
+bool MCExpr::evaluateKnownAbsolute(int64_t &Res,
+                                   const MCAsmLayout &Layout) const {
+  return evaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, nullptr,
+                            true);
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
