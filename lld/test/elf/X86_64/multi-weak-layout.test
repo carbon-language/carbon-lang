@@ -6,7 +6,7 @@ RUN: --noinhibit-exec -static --output-filetype=yaml -o %t
 RUN: FileCheck %s -check-prefix=WEAKSYMS < %t
 
 WEAKSYMS:  - type:            data
-WEAKSYMS:    alignment:       2^3
+WEAKSYMS:    alignment:       8
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            layout-after
 WEAKSYMS:        offset:          0
@@ -15,7 +15,7 @@ WEAKSYMS:  - name:            myfn2
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    merge:           as-weak
-WEAKSYMS:    alignment:       2^3
+WEAKSYMS:    alignment:       8
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            layout-after
 WEAKSYMS:        offset:          0
@@ -24,7 +24,7 @@ WEAKSYMS:  - ref-name:        [[L001]]
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-WEAKSYMS:    alignment:       2^3
+WEAKSYMS:    alignment:       8
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            R_X86_64_64
 WEAKSYMS:        offset:          0
@@ -36,7 +36,7 @@ WEAKSYMS:  - name:            myfn1
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    merge:           as-weak
-WEAKSYMS:    alignment:       2^3
+WEAKSYMS:    alignment:       8
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            layout-after
 WEAKSYMS:        offset:          0
@@ -45,7 +45,7 @@ WEAKSYMS:  - ref-name:        [[L003]]
 WEAKSYMS:    scope:           global
 WEAKSYMS:    type:            data
 WEAKSYMS:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
-WEAKSYMS:    alignment:       2^3
+WEAKSYMS:    alignment:       8
 WEAKSYMS:    references:
 WEAKSYMS:      - kind:            R_X86_64_64
 WEAKSYMS:        offset:          0

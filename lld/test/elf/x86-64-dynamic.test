@@ -24,7 +24,7 @@ CHECK:        addend:          -4
 CHECK:    type:            stub
 CHECK:    content:         [ FF, 35, 00, 00, 00, 00, FF, 25, 00, 00, 00, 00,
 CHECK:                       90, 90, 90, 90 ]
-CHECK:    alignment:       2^4
+CHECK:    alignment:       16
 CHECK:    section-choice:  custom-required
 CHECK:    section-name:    .plt
 CHECK:    references:
@@ -40,7 +40,7 @@ CHECK:        addend:          -4
 CHECK:    type:            stub
 CHECK:    content:         [ FF, 25, 00, 00, 00, 00, 68, 00, 00, 00, 00, E9,
 CHECK:                       00, 00, 00, 00 ]
-CHECK:    alignment:       2^4
+CHECK:    alignment:       16
 CHECK:    section-choice:  custom-required
 CHECK:    section-name:    .plt
 CHECK:    references:

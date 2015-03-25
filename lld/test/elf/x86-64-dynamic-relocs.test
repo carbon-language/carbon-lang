@@ -6,7 +6,7 @@ defined-atoms:
   - name:            main
     scope:           global
     content:         [ E8, 00, 00, 00, 00, C3 ]
-    alignment:       2^4
+    alignment:       16
     section-choice:  custom-required
     section-name:    .text
     references:
@@ -17,7 +17,7 @@ defined-atoms:
   - name:            foo
     scope:           global
     content:         [ C3 ]
-    alignment:       6 mod 2^4
+    alignment:       6 mod 16
     section-choice:  custom-required
     section-name:    .text
 

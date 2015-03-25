@@ -7,7 +7,7 @@ ELF-i386:     type:            constant
 ELF-i386:     content:         [ 68, 65, 6C, 6C, 6F, 20, 77, 6F, 72, 6C, 64, 00 ]
 ELF-i386:     merge:           by-content
 ELF-i386:   - ref-name:        [[STRNAMEB:[-a-zA-Z0-9_]+]]
-ELF-i386:     alignment:       2^4
+ELF-i386:     alignment:       16
 ELF-i386:     section-choice:  custom-required
 ELF-i386:     section-name:    .text.startup
 ELF-i386:     references:
@@ -19,7 +19,7 @@ ELF-i386:     scope:           global
 ELF-i386:     content:         [ 55, 89, E5, 83, E4, F0, 83, EC, 10, C7, 04, 24,
 ELF-i386:                        00, 00, 00, 00, E8, FC, FF, FF, FF, 31, C0, C9,
 ELF-i386:                        C3 ]
-ELF-i386:     alignment:       2^4
+ELF-i386:     alignment:       16
 ELF-i386:     section-choice:  custom-required
 ELF-i386:     section-name:    .text.startup
 ELF-i386:     references:

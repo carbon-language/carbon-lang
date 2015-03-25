@@ -8,7 +8,7 @@ defined-atoms:
   - name:            main
     scope:           global
     content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00, 00, C3 ]
-    alignment:       2^4
+    alignment:       16
     section-choice:  custom-required
     section-name:    .text
 

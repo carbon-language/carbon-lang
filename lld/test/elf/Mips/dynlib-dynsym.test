@@ -64,20 +64,20 @@
 
 # CHECK-GOT:   - type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
 # CHECK-GOT:   - type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 80 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
 # CHECK-GOT:   - ref-name:        L000
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
@@ -88,7 +88,7 @@
 # CHECK-GOT:   - ref-name:        L002
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
@@ -99,7 +99,7 @@
 # CHECK-GOT:   - ref-name:        L004
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
@@ -110,7 +110,7 @@
 # CHECK-GOT:   - ref-name:        L005
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
@@ -121,7 +121,7 @@
 # CHECK-GOT:   - ref-name:        L006
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     alignment:       4
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-

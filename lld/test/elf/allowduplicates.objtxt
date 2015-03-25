@@ -10,41 +10,41 @@
 ---
 defined-atoms:
   - name:            .text
-    alignment:       2^4
+    alignment:       16
     section-choice:  custom-required
     section-name:    .text
   - name:            main
     scope:           global
     content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00,
                        00, C3 ]
-    alignment:       2^4
+    alignment:       16
     section-choice:  custom-required
     section-name:    .text
 ---
 defined-atoms:
   - name:            .text
-    alignment:       2^4
+    alignment:       16
     section-choice:  custom-required
     section-name:    .text
   - name:            main
     scope:           global
     content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00,
                        00, C3 ]
-    alignment:       2^4
+    alignment:       16
     section-choice:  custom-required
     section-name:    .text
 ---
 
 # CHECK: defined-atoms:
 # CHECK:   - name:            .text
-# CHECK:     alignment:       2^4
+# CHECK:     alignment:       16
 # CHECK:     section-choice:  custom-required
 # CHECK:     section-name:    .text
 # CHECK:   - name:            main
 # CHECK:     scope:           global
 # CHECK:     content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00,
 # CHECK:                        00, C3 ]
-# CHECK:     alignment:       2^4
+# CHECK:     alignment:       16
 # CHECK:     section-choice:  custom-required
 # CHECK:     section-name:    .text
 

@@ -15,13 +15,13 @@
 # GOT header
 # GOT:   - type:            got
 # GOT:     content:         [ 00, 00, 00, 00 ]
-# GOT:     alignment:       2^2
+# GOT:     alignment:       4
 # GOT:     section-choice:  custom-required
 # GOT:     section-name:    .got
 # GOT:     permissions:     rw-
 # GOT:   - type:            got
 # GOT:     content:         [ 00, 00, 00, 80 ]
-# GOT:     alignment:       2^2
+# GOT:     alignment:       4
 # GOT:     section-choice:  custom-required
 # GOT:     section-name:    .got
 # GOT:     permissions:     rw-
@@ -29,7 +29,7 @@
 # GOT:   - ref-name:        L000
 # GOT:     type:            got
 # GOT:     content:         [ 00, 00, 00, 00 ]
-# GOT:     alignment:       2^2
+# GOT:     alignment:       4
 # GOT:     section-choice:  custom-required
 # GOT:     section-name:    .got
 # GOT:     permissions:     rw-
@@ -41,7 +41,7 @@
 # GOT:   - ref-name:        L001
 # GOT:     type:            got
 # GOT:     content:         [ 00, 00, 00, 00 ]
-# GOT:     alignment:       2^2
+# GOT:     alignment:       4
 # GOT:     section-choice:  custom-required
 # GOT:     section-name:    .got
 # GOT:     permissions:     rw-

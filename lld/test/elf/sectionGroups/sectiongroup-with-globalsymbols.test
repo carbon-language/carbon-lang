@@ -42,7 +42,7 @@
 #CHECKGROUP:  - name:            g1
 #CHECKGROUP:    scope:           global
 #CHECKGROUP:    content:         [ 55, 48, 89, E5, 31, C0, 5D, C3 ]
-#CHECKGROUP:    alignment:       2^4
+#CHECKGROUP:    alignment:       16
 #CHECKGROUP:    section-name:    .text
 #CHECKGROUPSECTIONS:    Name: .text
 #CHECKGROUPSECTIONS:    Type: SHT_PROGBITS

@@ -16,7 +16,7 @@
 # YAML:        content:      [ 5C, FC, 00, 00, 42, 30, 00, 00, 5C, FC, 00, 00,
 # YAML:                        42, 30, 00, 00, 5C, FC, 00, 00, 5C, FC, 00, 00,
 # YAML:                        5C, FC, 00, 00 ]
-# YAML:        alignment:    4 mod 2^4
+# YAML:        alignment:    4 mod 16
 # YAML:        code-model:   mips-micro
 # YAML:        references:
 # YAML-NEXT:     - kind:         R_MICROMIPS_GOT16
@@ -45,7 +45,7 @@
 # YAML:       - ref-name:        L000
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
-# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    alignment:       4
 # YAML-NEXT:    section-choice:  custom-required
 # YAML-NEXT:    section-name:    .got
 # YAML-NEXT:    permissions:     rw-
@@ -56,7 +56,7 @@
 # YAML-NEXT:  - ref-name:        L001
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
-# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    alignment:       4
 # YAML-NEXT:    section-choice:  custom-required
 # YAML-NEXT:    section-name:    .got
 # YAML-NEXT:    permissions:     rw-
@@ -67,7 +67,7 @@
 # YAML-NEXT:  - ref-name:        L002
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
-# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    alignment:       4
 # YAML-NEXT:    section-choice:  custom-required
 # YAML-NEXT:    section-name:    .got
 # YAML-NEXT:    permissions:     rw-
@@ -80,7 +80,7 @@
 # YAML-NEXT:  - ref-name:        L003
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
-# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    alignment:       4
 # YAML-NEXT:    section-choice:  custom-required
 # YAML-NEXT:    section-name:    .got
 # YAML-NEXT:    permissions:     rw-
@@ -94,7 +94,7 @@
 # YAML-NEXT:  - ref-name:        L004
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
-# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    alignment:       4
 # YAML-NEXT:    section-choice:  custom-required
 # YAML-NEXT:    section-name:    .got
 # YAML-NEXT:    permissions:     rw-

@@ -33,13 +33,13 @@ local-symbols:
 
 # CHECK: defined-atoms:
 # CHECK:   - content:         [ 90, 90, 90 ]
-# CHECK:     alignment:       2^4
+# CHECK:     alignment:       16
 # CHECK:   - name:            _f1
 # CHECK:     content:         [ C3 ]
-# CHECK:     alignment:       3 mod 2^4
+# CHECK:     alignment:       3 mod 16
 # CHECK:   - name:            _f2
 # CHECK:     content:         [ C3 ]
-# CHECK:     alignment:       4 mod 2^4
+# CHECK:     alignment:       4 mod 16
 # CHECK:   - name:            _f3
 # CHECK:     content:         [ C3 ]
-# CHECK:     alignment:       5 mod 2^4
+# CHECK:     alignment:       5 mod 16

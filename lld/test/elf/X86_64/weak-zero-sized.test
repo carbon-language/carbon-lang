@@ -8,14 +8,14 @@ RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
 WEAKORDER: 004001a4 T _start
 
-WEAKATOMSORDER:    alignment:       2^2
+WEAKATOMSORDER:    alignment:       4
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          [[TARGETC:[-a-zA-Z0-9_]+]]
 WEAKATOMSORDER:  - name:        [[TARGETA:[-a-zA-Z0-9_]+]]
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    merge:           as-weak
-WEAKATOMSORDER:    alignment:       2^2
+WEAKATOMSORDER:    alignment:       4
 WEAKATOMSORDER:    references:
 WEAKATOMSORDER:      - kind:            layout-after
 WEAKATOMSORDER:        offset:          0
@@ -23,4 +23,4 @@ WEAKATOMSORDER:        target:          [[TARGETC]]
 WEAKATOMSORDER:  - ref-name:        [[TARGETC]]
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ C3 ]
-WEAKATOMSORDER:    alignment:       2^2
+WEAKATOMSORDER:    alignment:       4

@@ -478,15 +478,15 @@ struct ScalarEnumerationTraits<lld::SharedLibraryAtom::Type> {
 
 /// This is a custom formatter for lld::DefinedAtom::Alignment.  Values look
 /// like:
-///     2^3          # 8-byte aligned
-///     7 mod 2^4    # 16-byte aligned plus 7 bytes
+///     8           # 8-byte aligned
+///     7 mod 16    # 16-byte aligned plus 7 bytes
 template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
   static void output(const lld::DefinedAtom::Alignment &value, void *ctxt,
                      raw_ostream &out) {
     if (value.modulus == 0) {
-      out << llvm::format("2^%d", value.powerOf2);
+      out << llvm::format("%d", 1U << value.powerOf2);
     } else {
-      out << llvm::format("%d mod 2^%d", value.modulus, value.powerOf2);
+      out << llvm::format("%d mod %d", value.modulus, 1U << value.powerOf2);
     }
   }
 
@@ -505,16 +505,12 @@ template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
       scalar = scalar.drop_front(modStart + 3);
       scalar = scalar.ltrim();
     }
-    if (!scalar.startswith("2^")) {
-      return "malformed alignment";
-    }
-    StringRef powerStr = scalar.drop_front(2);
     unsigned int power;
-    if (powerStr.getAsInteger(0, power)) {
+    if (scalar.getAsInteger(0, power)) {
       return "malformed alignment power";
     }
-    value.powerOf2 = power;
-    if (value.modulus > (1 << value.powerOf2)) {
+    value.powerOf2 = llvm::Log2_64(power);
+    if (value.modulus >= power) {
       return "malformed alignment, modulus too large for power";
     }
     return StringRef(); // returning empty string means success

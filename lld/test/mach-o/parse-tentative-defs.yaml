@@ -57,32 +57,32 @@ undefined-symbols:
 # CHECK:        type:            zero-fill
 # CHECK:        size:            4
 # CHECK:        merge:           as-tentative
-# CHECK:        alignment:       2^2
+# CHECK:        alignment:       4
 
 # CHECK:       name:             _tent4_16
 # CHECK:        scope:           global
 # CHECK:        type:            zero-fill
 # CHECK:        size:            4
 # CHECK:        merge:           as-tentative
-# CHECK:        alignment:       2^4
+# CHECK:        alignment:       16
 
 # CHECK:       name:             _tent64_32
 # CHECK:        scope:           global
 # CHECK:        type:            zero-fill
 # CHECK:        size:            64
 # CHECK:        merge:           as-tentative
-# CHECK:        alignment:       2^5
+# CHECK:        alignment:       32
 
 # CHECK:       name:             _tent8
 # CHECK:        scope:           global
 # CHECK:        type:            zero-fill
 # CHECK:        size:            8
 # CHECK:        merge:           as-tentative
-# CHECK:        alignment:       2^3
+# CHECK:        alignment:       8
 
 # CHECK:       name:             _tentHidden
 # CHECK:        scope:           hidden
 # CHECK:        type:            zero-fill
 # CHECK:        size:            4
 # CHECK:        merge:           as-tentative
-# CHECK:        alignment:       2^2
+# CHECK:        alignment:       4
