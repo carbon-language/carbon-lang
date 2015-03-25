@@ -1871,7 +1871,7 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
                            SelectCC.getOperand(0), // LHS
                            SelectCC.getOperand(1), // RHS
                            DAG.getConstant(-1, MVT::i32), // True
-                           DAG.getConstant(0, MVT::i32),  // Flase
+                           DAG.getConstant(0, MVT::i32),  // False
                            SelectCC.getOperand(4)); // CC
 
     break;
