@@ -442,13 +442,10 @@ bool MCExpr::evaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
 }
 
 /// \brief Helper method for \see EvaluateSymbolAdd().
-static void AttemptToFoldSymbolOffsetDifference(const MCAssembler *Asm,
-                                                const MCAsmLayout *Layout,
-                                                const SectionAddrMap *Addrs,
-                                                bool InSet,
-                                                const MCSymbolRefExpr *&A,
-                                                const MCSymbolRefExpr *&B,
-                                                int64_t &Addend) {
+static void AttemptToFoldSymbolOffsetDifference(
+    const MCAssembler *Asm, const MCAsmLayout *Layout,
+    const SectionAddrMap *Addrs, bool InSet, const MCSymbolRefExpr *&A,
+    const MCSymbolRefExpr *&B, int64_t &Addend) {
   if (!A || !B)
     return;
 
@@ -522,13 +519,11 @@ static void AttemptToFoldSymbolOffsetDifference(const MCAssembler *Asm,
 /// They might look redundant, but this function can be used before layout
 /// is done (see the object streamer for example) and having the Asm argument
 /// lets us avoid relaxations early.
-static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
-                                const MCAsmLayout *Layout,
-                                const SectionAddrMap *Addrs,
-                                bool InSet,
-                                const MCValue &LHS,const MCSymbolRefExpr *RHS_A,
-                                const MCSymbolRefExpr *RHS_B, int64_t RHS_Cst,
-                                MCValue &Res) {
+static bool
+EvaluateSymbolicAdd(const MCAssembler *Asm, const MCAsmLayout *Layout,
+                    const SectionAddrMap *Addrs, bool InSet, const MCValue &LHS,
+                    const MCSymbolRefExpr *RHS_A, const MCSymbolRefExpr *RHS_B,
+                    int64_t RHS_Cst, MCValue &Res) {
   // FIXME: This routine (and other evaluation parts) are *incredibly* sloppy
   // about dealing with modifiers. This will ultimately bite us, one day.
   const MCSymbolRefExpr *LHS_A = LHS.getSymA();
@@ -695,14 +690,12 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
         // Negate RHS and add.
         return EvaluateSymbolicAdd(Asm, Layout, Addrs, InSet, LHSValue,
                                    RHSValue.getSymB(), RHSValue.getSymA(),
-                                   -RHSValue.getConstant(),
-                                   Res);
+                                   -RHSValue.getConstant(), Res);
 
       case MCBinaryExpr::Add:
         return EvaluateSymbolicAdd(Asm, Layout, Addrs, InSet, LHSValue,
                                    RHSValue.getSymA(), RHSValue.getSymB(),
-                                   RHSValue.getConstant(),
-                                   Res);
+                                   RHSValue.getConstant(), Res);
       }
     }
 

@@ -86,11 +86,10 @@ public:
   ///
   /// Clients are not required to answer precisely and may conservatively return
   /// false, even when a difference is fully resolved.
-  bool
-  IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
-                                     const MCSymbolRefExpr *A,
-                                     const MCSymbolRefExpr *B,
-                                     bool InSet) const;
+  bool IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+                                          const MCSymbolRefExpr *A,
+                                          const MCSymbolRefExpr *B,
+                                          bool InSet) const;
 
   virtual bool
   IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,

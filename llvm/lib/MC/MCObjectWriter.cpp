@@ -17,11 +17,9 @@ using namespace llvm;
 MCObjectWriter::~MCObjectWriter() {
 }
 
-bool
-MCObjectWriter::IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
-                                                   const MCSymbolRefExpr *A,
-                                                   const MCSymbolRefExpr *B,
-                                                   bool InSet) const {
+bool MCObjectWriter::IsSymbolRefDifferenceFullyResolved(
+    const MCAssembler &Asm, const MCSymbolRefExpr *A, const MCSymbolRefExpr *B,
+    bool InSet) const {
   // Modified symbol references cannot be resolved.
   if (A->getKind() != MCSymbolRefExpr::VK_None ||
       B->getKind() != MCSymbolRefExpr::VK_None)
