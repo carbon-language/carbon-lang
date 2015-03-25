@@ -1758,6 +1758,9 @@ public:
   void eraseInstrs(SmallPtrSetImpl<MachineInstr*> &ErasedInstrs,
                    SmallVectorImpl<unsigned> &ShrinkRegs);
 
+  /// Remove liverange defs at places where implicit defs will be removed.
+  void removeImplicitDefs();
+
   /// Get the value assignments suitable for passing to LiveInterval::join.
   const int *getAssignments() const { return Assignments.data(); }
 };
@@ -1858,7 +1861,11 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
     assert(DefMI != nullptr);
     if (SubRangeJoin) {
       // We don't care about the lanes when joining subregister ranges.
-      V.ValidLanes = V.WriteLanes = 1;
+      V.WriteLanes = V.ValidLanes = 1;
+      if (DefMI->isImplicitDef()) {
+        V.ValidLanes = 0;
+        V.ErasableImplicitDef = true;
+      }
     } else {
       bool Redef = false;
       V.ValidLanes = V.WriteLanes = computeWriteLanes(DefMI, Redef);
@@ -2341,6 +2348,18 @@ void JoinVals::pruneSubRegValues(LiveInterval &LI, unsigned &ShrinkMask)
     LI.removeEmptySubRanges();
 }
 
+void JoinVals::removeImplicitDefs() {
+  for (unsigned i = 0, e = LR.getNumValNums(); i != e; ++i) {
+    Val &V = Vals[i];
+    if (V.Resolution != CR_Keep || !V.ErasableImplicitDef || !V.Pruned)
+      continue;
+
+    VNInfo *VNI = LR.getValNumInfo(i);
+    VNI->markUnused();
+    LR.removeValNo(VNI);
+  }
+}
+
 void JoinVals::eraseInstrs(SmallPtrSetImpl<MachineInstr*> &ErasedInstrs,
                            SmallVectorImpl<unsigned> &ShrinkRegs) {
   for (unsigned i = 0, e = LR.getNumValNums(); i != e; ++i) {
@@ -2415,6 +2434,9 @@ bool RegisterCoalescer::joinSubRegRanges(LiveRange &LRange, LiveRange &RRange,
   SmallVector<SlotIndex, 8> EndPoints;
   LHSVals.pruneValues(RHSVals, EndPoints, false);
   RHSVals.pruneValues(LHSVals, EndPoints, false);
+
+  LHSVals.removeImplicitDefs();
+  RHSVals.removeImplicitDefs();
 
   LRange.verify();
   RRange.verify();
