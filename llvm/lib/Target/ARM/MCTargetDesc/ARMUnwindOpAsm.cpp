@@ -72,14 +72,10 @@ void UnwindOpcodeAssembler::EmitRegSave(uint32_t RegSave) {
     // opcode when r4 is not in .save directive.
 
     // Compute the consecutive registers from r4 to r11.
-    uint32_t Range = 0;
-    uint32_t Mask = (1u << 4);
-    for (uint32_t Bit = (1u << 5); Bit < (1u << 12); Bit <<= 1) {
-      if ((RegSave & Bit) == 0u)
-        break;
-      ++Range;
-      Mask |= Bit;
-    }
+    uint32_t Mask = RegSave & 0xff0u;
+    uint32_t Range = countTrailingOnes(Mask >> 5); // Exclude r4.
+    // Mask off non-consecutive registers. Keep r4.
+    Mask &= ~(0xffffffe0u << Range);
 
     // Emit this opcode when the mask covers every registers.
     uint32_t UnmaskedReg = RegSave & 0xfff0u & (~Mask);
@@ -105,50 +101,24 @@ void UnwindOpcodeAssembler::EmitRegSave(uint32_t RegSave) {
 
 /// Emit unwind opcodes for .vsave directives
 void UnwindOpcodeAssembler::EmitVFPRegSave(uint32_t VFPRegSave) {
-  size_t i = 32;
+  // We only have 4 bits to save the offset in the opcode so look at the lower
+  // and upper 16 bits separately.
+  for (uint32_t Regs : {VFPRegSave & 0xffff0000u, VFPRegSave & 0x0000ffffu}) {
+    while (Regs) {
+      // Now look for a run of set bits. Remember the MSB and LSB of the run.
+      auto RangeMSB = 32 - countLeadingZeros(Regs);
+      auto RangeLen = countLeadingOnes(Regs << (32 - RangeMSB));
+      auto RangeLSB = RangeMSB - RangeLen;
 
-  while (i > 16) {
-    uint32_t Bit = 1u << (i - 1);
-    if ((VFPRegSave & Bit) == 0u) {
-      --i;
-      continue;
+      int Opcode = RangeLSB >= 16
+                       ? ARM::EHABI::UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD_D16
+                       : ARM::EHABI::UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD;
+
+      EmitInt16(Opcode | ((RangeLSB % 16) << 4) | (RangeLen - 1));
+
+      // Zero out bits we're done with.
+      Regs &= ~(-1u << RangeLSB);
     }
-
-    uint32_t Range = 0;
-
-    --i;
-    Bit >>= 1;
-
-    while (i > 16 && (VFPRegSave & Bit)) {
-      --i;
-      ++Range;
-      Bit >>= 1;
-    }
-
-    EmitInt16(ARM::EHABI::UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD_D16 |
-              ((i - 16) << 4) | Range);
-  }
-
-  while (i > 0) {
-    uint32_t Bit = 1u << (i - 1);
-    if ((VFPRegSave & Bit) == 0u) {
-      --i;
-      continue;
-    }
-
-    uint32_t Range = 0;
-
-    --i;
-    Bit >>= 1;
-
-    while (i > 0 && (VFPRegSave & Bit)) {
-      --i;
-      ++Range;
-      Bit >>= 1;
-    }
-
-    EmitInt16(ARM::EHABI::UNWIND_OPCODE_POP_VFP_REG_RANGE_FSTMFDD | (i << 4) |
-              Range);
   }
 }
 
