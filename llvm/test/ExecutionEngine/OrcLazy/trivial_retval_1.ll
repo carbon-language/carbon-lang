@@ -1,4 +1,5 @@
-; RUN: lli -jit-kind=orc-lazy %s; [ $? -eq 30 ]
+; RUN: sh -c 'lli -jit-kind=orc-lazy %s; echo $?' | FileCheck %s
+; CHECK: {{^30$}}
 define i32 @baz() {
 entry:
   ret i32 2
