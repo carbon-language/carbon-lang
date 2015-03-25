@@ -100,3 +100,20 @@ __device__ float *func5() {
 }
 // CHECK: define float* @_Z5func5v()
 // CHECK: ret float* addrspacecast (float addrspace(3)* @b to float*)
+
+struct StructWithCtor {
+  __device__ StructWithCtor(): data(1) {}
+  __device__ StructWithCtor(const StructWithCtor &second): data(second.data) {}
+  __device__ int getData() { return data; }
+  int data;
+};
+
+__device__ int construct_shared_struct() {
+// CHECK-LABEL: define i32 @_Z23construct_shared_structv()
+  __shared__ StructWithCtor s;
+// CHECK: call void @_ZN14StructWithCtorC1Ev(%struct.StructWithCtor* addrspacecast (%struct.StructWithCtor addrspace(3)* @_ZZ23construct_shared_structvE1s to %struct.StructWithCtor*))
+  __shared__ StructWithCtor t(s);
+// CHECK: call void @_ZN14StructWithCtorC1ERKS_(%struct.StructWithCtor* addrspacecast (%struct.StructWithCtor addrspace(3)* @_ZZ23construct_shared_structvE1t to %struct.StructWithCtor*), %struct.StructWithCtor* dereferenceable(4) addrspacecast (%struct.StructWithCtor addrspace(3)* @_ZZ23construct_shared_structvE1s to %struct.StructWithCtor*))
+  return t.getData();
+// CHECK: call i32 @_ZN14StructWithCtor7getDataEv(%struct.StructWithCtor* addrspacecast (%struct.StructWithCtor addrspace(3)* @_ZZ23construct_shared_structvE1t to %struct.StructWithCtor*))
+}

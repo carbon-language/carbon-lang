@@ -139,6 +139,29 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   const Expr *Init = D.getInit();
   QualType T = D.getType();
 
+  // The address space of a static local variable (DeclPtr) may be different
+  // from the address space of the "this" argument of the constructor. In that
+  // case, we need an addrspacecast before calling the constructor.
+  //
+  // struct StructWithCtor {
+  //   __device__ StructWithCtor() {...}
+  // };
+  // __device__ void foo() {
+  //   __shared__ StructWithCtor s;
+  //   ...
+  // }
+  //
+  // For example, in the above CUDA code, the static local variable s has a
+  // "shared" address space qualifier, but the constructor of StructWithCtor
+  // expects "this" in the "generic" address space.
+  unsigned ExpectedAddrSpace = getContext().getTargetAddressSpace(T);
+  unsigned ActualAddrSpace = DeclPtr->getType()->getPointerAddressSpace();
+  if (ActualAddrSpace != ExpectedAddrSpace) {
+    llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(T);
+    llvm::PointerType *PTy = llvm::PointerType::get(LTy, ExpectedAddrSpace);
+    DeclPtr = llvm::ConstantExpr::getAddrSpaceCast(DeclPtr, PTy);
+  }
+
   if (!T->isReferenceType()) {
     if (getLangOpts().OpenMP && D.hasAttr<OMPThreadPrivateDeclAttr>())
       (void)CGM.getOpenMPRuntime().emitThreadPrivateVarDefinition(
