@@ -145,14 +145,14 @@ entry:
 
 ; DWLW-LABEL: file_names[{{ *}}1]{{.*}} bar.c
 ; DWLW:       [[BARLOW]]  0 0 1 0 0 is_stmt
-; DWLW:       [[BARLOW]]  2 0 1 0 0 is_stmt prologue_end
+; DWLW:                   2 0 1 0 0 is_stmt prologue_end
 ; DWLW-LABEL: file_names[{{ *}}1]{{.*}} foo.c
 ; DWLW:       [[FOOLOW]]  0 0 1 0 0 is_stmt
-; DWLW:       [[FOOLOW]] 52 0 1 0 0 is_stmt prologue_end
+; DWLW:                  52 0 1 0 0 is_stmt prologue_end
 
 ; DWWL-LABEL: file_names[{{ *}}1]{{.*}} foo.c
 ; DWWL:       [[FOOLOW]]  0 0 1 0 0 is_stmt
-; DWWL:       [[FOOLOW]] 52 0 1 0 0 is_stmt prologue_end
+; DWWL:                  52 0 1 0 0 is_stmt prologue_end
 ; DWWL-LABEL: file_names[{{ *}}1]{{.*}} bar.c
 ; DWWL:       [[BARLOW]]  0 0 1 0 0 is_stmt
-; DWWL:       [[BARLOW]]  2 0 1 0 0 is_stmt prologue_end
+; DWWL:                   2 0 1 0 0 is_stmt prologue_end
