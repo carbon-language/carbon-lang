@@ -1137,10 +1137,7 @@ SDNode *HexagonDAGToDAGISel::SelectBitOp(SDNode *N) {
       return SelectCode(N);
 
     // Get the bit position.
-    while (!(Val & 1)) {
-      Val >>= 1;
-      ++bitpos;
-    }
+    bitpos = countTrailingZeros(uint64_t(Val));
   } else {
     // For fabs and fneg, it's always the 31st bit.
     bitpos = 31;
