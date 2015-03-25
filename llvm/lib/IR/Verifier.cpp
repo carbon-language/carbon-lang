@@ -2908,6 +2908,13 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
 
+  case Intrinsic::eh_unwindhelp: {
+    auto *AI = dyn_cast<AllocaInst>(CI.getArgOperand(0)->stripPointerCasts());
+    Assert(AI && AI->isStaticAlloca(),
+           "llvm.eh.unwindhelp requires a static alloca", &CI);
+    break;
+  }
+
   case Intrinsic::experimental_gc_statepoint:
     Assert(!CI.isInlineAsm(),
            "gc.statepoint support for inline assembly unimplemented", &CI);

@@ -33,10 +33,13 @@ $"\01??_R0H@8" = comdat any
 
 ; CHECK-LABEL: define void @"\01?test@@YAXXZ"() #0 {
 ; CHECK: entry:
+; CHECK:   [[UNWIND_HELP:\%.+]] = alloca i64
 ; CHECK:   [[OBJ_PTR:\%.+]] = alloca %class.SomeClass
 ; CHECK:   [[TMP0:\%.+]] = alloca i32, align 4
 ; CHECK:   [[TMP1:\%.+]] = alloca i32, align 4
 ; CHECK:   call void (...)* @llvm.frameescape(i32* [[TMP1]], %class.SomeClass* [[OBJ_PTR]], i32* [[TMP0]])
+; CHECK:   [[UNWIND_HELP_i8:\%.+]] = bitcast i64* [[UNWIND_HELP]] to i8*
+; CHECK:   call void @llvm.eh.unwindhelp(i8* [[UNWIND_HELP_i8]])
 ; CHECK:   %call = invoke %class.SomeClass* @"\01??0SomeClass@@QEAA@XZ"(%class.SomeClass* %obj)
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
 
