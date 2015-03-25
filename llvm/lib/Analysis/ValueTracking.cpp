@@ -1914,8 +1914,9 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout &DL, unsigned Depth,
 
   case Instruction::SRem: {
     const APInt *Denominator;
-    // srem X, C -> we know that the result is within 0..C-1 when C is a
-    // positive constant and the sign bits are at most TypeBits - log2(C).
+    // srem X, C -> we know that the result is within [-C+1,C) when C is a
+    // positive constant.  This let us put a lower bound on the number of sign
+    // bits.
     if (match(U->getOperand(1), m_APInt(Denominator))) {
 
       // Ignore non-positive denominator.
@@ -1928,11 +1929,19 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout &DL, unsigned Depth,
           ComputeNumSignBits(U->getOperand(0), DL, Depth + 1, Q);
 
       // Calculate the leading sign bit constraints by examining the
-      // denominator. The remainder is in the range 0..C-1, which is
-      // calculated by the log2(denominator). The sign bits are the bit-width
-      // minus this value. The result of this subtraction has to be positive.
-      unsigned ResBits = TyBits - Denominator->logBase2();
+      // denominator.  Given that the denominator is positive, there are two
+      // cases:
+      //
+      //  1. the numerator is positive.  The result range is [0,C) and [0,C) u<
+      //     (1 << ceilLogBase2(C)).
+      //
+      //  2. the numerator is negative.  Then the result range is (-C,0] and
+      //     integers in (-C,0] are either 0 or >u (-1 << ceilLogBase2(C)).
+      //
+      // Thus a lower bound on the number of sign bits is `TyBits -
+      // ceilLogBase2(C)`.
 
+      unsigned ResBits = TyBits - Denominator->ceilLogBase2();
       return std::max(NumrBits, ResBits);
     }
     break;
