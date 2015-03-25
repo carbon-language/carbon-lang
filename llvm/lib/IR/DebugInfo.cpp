@@ -283,7 +283,9 @@ bool DIType::Verify() const {
         Tag != dwarf::DW_TAG_restrict_type && Tag != dwarf::DW_TAG_array_type &&
         Tag != dwarf::DW_TAG_enumeration_type &&
         Tag != dwarf::DW_TAG_subroutine_type &&
-        Tag != dwarf::DW_TAG_inheritance && Tag != dwarf::DW_TAG_friend)
+        Tag != dwarf::DW_TAG_inheritance && Tag != dwarf::DW_TAG_friend &&
+        Tag != dwarf::DW_TAG_structure_type && Tag != dwarf::DW_TAG_member &&
+        Tag != dwarf::DW_TAG_typedef)
       return false;
   }
 
