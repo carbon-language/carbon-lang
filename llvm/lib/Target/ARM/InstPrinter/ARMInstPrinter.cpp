@@ -637,12 +637,12 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
   printRegName(O, MO1.getReg());
 
   unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm());
-  unsigned Op = ARM_AM::getAM5Op(MO2.getImm());
+  ARM_AM::AddrOpc Op = ARM_AM::getAM5Op(MO2.getImm());
   if (AlwaysPrintImm0 || ImmOffs || Op == ARM_AM::sub) {
     O << ", "
       << markup("<imm:")
       << "#"
-      << ARM_AM::getAddrOpcStr(ARM_AM::getAM5Op(MO2.getImm()))
+      << ARM_AM::getAddrOpcStr(Op)
       << ImmOffs * 4
       << markup(">");
   }
