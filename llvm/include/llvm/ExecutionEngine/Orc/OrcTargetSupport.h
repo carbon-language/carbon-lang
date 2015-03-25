@@ -25,9 +25,8 @@ public:
 
   /// @brief Insert module-level inline callback asm into module M for the
   /// symbols managed by JITResolveCallbackHandler J.
-  static void insertResolverBlock(
-                                 Module &M,
-                                 JITCompileCallbackManagerBase<OrcX86_64> &JCBM);
+  static void insertResolverBlock(Module &M,
+                                  JITCompileCallbackManagerBase &JCBM);
 
   /// @brief Get a label name from the given index.
   typedef std::function<std::string(unsigned)> LabelNameFtor;

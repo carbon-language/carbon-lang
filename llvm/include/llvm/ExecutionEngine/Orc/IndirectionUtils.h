@@ -26,9 +26,33 @@ namespace orc {
 
 /// @brief Base class for JITLayer independent aspects of
 ///        JITCompileCallbackManager.
-template <typename TargetT>
 class JITCompileCallbackManagerBase {
 public:
+
+  typedef std::function<TargetAddress()> CompileFtor;
+  typedef std::function<void(TargetAddress)> UpdateFtor;
+
+  /// @brief Handle to a newly created compile callback. Can be used to get an
+  ///        IR constant representing the address of the trampoline, and to set
+  ///        the compile and update actions for the callback.
+  class CompileCallbackInfo {
+  public:
+    CompileCallbackInfo(Constant *Addr, CompileFtor &Compile,
+                        UpdateFtor &Update)
+      : Addr(Addr), Compile(Compile), Update(Update) {}
+
+    Constant* getAddress() const { return Addr; }
+    void setCompileAction(CompileFtor Compile) {
+      this->Compile = std::move(Compile);
+    }
+    void setUpdateAction(UpdateFtor Update) {
+      this->Update = std::move(Update);
+    }
+  private:
+    Constant *Addr;
+    CompileFtor &Compile;
+    UpdateFtor &Update;
+  };
 
   /// @brief Construct a JITCompileCallbackManagerBase.
   /// @param ErrorHandlerAddress The address of an error handler in the target
@@ -40,6 +64,8 @@ public:
                                 unsigned NumTrampolinesPerBlock)
     : ErrorHandlerAddress(ErrorHandlerAddress),
       NumTrampolinesPerBlock(NumTrampolinesPerBlock) {}
+
+  virtual ~JITCompileCallbackManagerBase() {}
 
   /// @brief Execute the callback for the given trampoline id. Called by the JIT
   ///        to compile functions on demand.
@@ -67,14 +93,14 @@ public:
     return ErrorHandlerAddress;
   }
 
+  /// @brief Get/create a compile callback with the given signature.
+  virtual CompileCallbackInfo getCompileCallback(FunctionType &FT) = 0;
+
 protected:
 
-  typedef std::function<TargetAddress()> CompileFtorT;
-  typedef std::function<void(TargetAddress)> UpdateFtorT;
-
   struct CallbackHandler {
-    CompileFtorT Compile;
-    UpdateFtorT Update;
+    CompileFtor Compile;
+    UpdateFtor Update;
   };
 
   TargetAddress ErrorHandlerAddress;
@@ -87,14 +113,8 @@ protected:
 
 /// @brief Manage compile callbacks.
 template <typename JITLayerT, typename TargetT>
-class JITCompileCallbackManager :
-    public JITCompileCallbackManagerBase<TargetT> {
+class JITCompileCallbackManager : public JITCompileCallbackManagerBase {
 public:
-
-  typedef typename JITCompileCallbackManagerBase<TargetT>::CompileFtorT
-    CompileFtorT;
-  typedef typename JITCompileCallbackManagerBase<TargetT>::UpdateFtorT
-    UpdateFtorT;
 
   /// @brief Construct a JITCompileCallbackManager.
   /// @param JIT JIT layer to emit callback trampolines, etc. into.
@@ -108,36 +128,14 @@ public:
   JITCompileCallbackManager(JITLayerT &JIT, LLVMContext &Context,
                             TargetAddress ErrorHandlerAddress,
                             unsigned NumTrampolinesPerBlock)
-    : JITCompileCallbackManagerBase<TargetT>(ErrorHandlerAddress,
-                                             NumTrampolinesPerBlock),
+    : JITCompileCallbackManagerBase(ErrorHandlerAddress,
+                                    NumTrampolinesPerBlock),
       JIT(JIT) {
     emitResolverBlock(Context);
   }
 
-  /// @brief Handle to a newly created compile callback. Can be used to get an
-  ///        IR constant representing the address of the trampoline, and to set
-  ///        the compile and update actions for the callback.
-  class CompileCallbackInfo {
-  public:
-    CompileCallbackInfo(Constant *Addr, CompileFtorT &Compile,
-                        UpdateFtorT &Update)
-      : Addr(Addr), Compile(Compile), Update(Update) {}
-
-    Constant* getAddress() const { return Addr; }
-    void setCompileAction(CompileFtorT Compile) {
-      this->Compile = std::move(Compile);
-    }
-    void setUpdateAction(UpdateFtorT Update) {
-      this->Update = std::move(Update);
-    }
-  private:
-    Constant *Addr;
-    CompileFtorT &Compile;
-    UpdateFtorT &Update;
-  };
-
   /// @brief Get/create a compile callback with the given signature.
-  CompileCallbackInfo getCompileCallback(FunctionType &FT) {
+  CompileCallbackInfo getCompileCallback(FunctionType &FT) final {
     TargetAddress TrampolineAddr = getAvailableTrampolineAddr(FT.getContext());
     auto &CallbackHandler =
       this->ActiveTrampolines[TrampolineAddr];
@@ -149,19 +147,6 @@ public:
 
     return CompileCallbackInfo(AddrPtrVal, CallbackHandler.Compile,
                                CallbackHandler.Update);
-  }
-
-  /// @brief Get a functor for updating the value of a named function pointer.
-  UpdateFtorT getLocalFPUpdater(typename JITLayerT::ModuleSetHandleT H,
-                                std::string Name) {
-    // FIXME: Move-capture Name once we can use C++14.
-    return [=](TargetAddress Addr) {
-      auto FPSym = JIT.findSymbolIn(H, Name, true);
-      assert(FPSym && "Cannot find function pointer to update.");
-      void *FPAddr = reinterpret_cast<void*>(
-                       static_cast<uintptr_t>(FPSym.getAddress()));
-      memcpy(FPAddr, &Addr, sizeof(uintptr_t));
-    };
   }
 
 private:
@@ -215,6 +200,22 @@ private:
   JITLayerT &JIT;
   TargetAddress ResolverBlockAddr;
 };
+
+/// @brief Get an update functor for updating the value of a named function
+///        pointer.
+template <typename JITLayerT>
+JITCompileCallbackManagerBase::UpdateFtor
+getLocalFPUpdater(JITLayerT &JIT, typename JITLayerT::ModuleSetHandleT H,
+                  std::string Name) {
+    // FIXME: Move-capture Name once we can use C++14.
+    return [=,&JIT](TargetAddress Addr) {
+      auto FPSym = JIT.findSymbolIn(H, Name, true);
+      assert(FPSym && "Cannot find function pointer to update.");
+      void *FPAddr = reinterpret_cast<void*>(
+                       static_cast<uintptr_t>(FPSym.getAddress()));
+      memcpy(FPAddr, &Addr, sizeof(uintptr_t));
+    };
+  }
 
 GlobalVariable* createImplPointer(Function &F, const Twine &Name,
                                   Constant *Initializer);
