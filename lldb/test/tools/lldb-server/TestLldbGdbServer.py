@@ -475,10 +475,10 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.qRegisterInfo_contains_at_least_one_register_set()
 
     def targetHasAVX(self):
-        # TODO we should be asking for targetGetSystem() 
-        # instead of platform.system()
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+
         # TODO other platforms, please implement this function
-        if platform.system() in ['Linux']:
+        if not re.match(".*-.*-linux", triple):
             return True
 
         # Need to do something different for non-Linux/Android targets
