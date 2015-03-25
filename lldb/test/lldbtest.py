@@ -523,7 +523,7 @@ def not_remote_testsuite_ready(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         try:
-            if lldb.lldbtest_remote_sandbox:
+            if lldb.lldbtest_remote_sandbox or lldb.remote_platform:
                 self.skipTest("not ready for remote testsuite")
         except AttributeError:
             pass
