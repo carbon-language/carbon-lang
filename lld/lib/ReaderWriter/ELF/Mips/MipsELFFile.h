@@ -101,19 +101,23 @@ public:
       : ELFReference<ELFT>(
             &rel, rel.r_offset - symValue, Reference::KindArch::Mips,
             rel.getType(_isMips64EL) & 0xff, rel.getSymbol(_isMips64EL)),
-        _tag(uint32_t(rel.getType(_isMips64EL)) >> 8) {}
+        _tag(extractTag(rel)) {}
 
   MipsELFReference(uint64_t symValue, const Elf_Rel &rel)
       : ELFReference<ELFT>(rel.r_offset - symValue, Reference::KindArch::Mips,
                            rel.getType(_isMips64EL) & 0xff,
                            rel.getSymbol(_isMips64EL)),
-        _tag(uint32_t(rel.getType(_isMips64EL)) >> 8) {}
+        _tag(extractTag(rel)) {}
 
   uint32_t tag() const override { return _tag; }
   void setTag(uint32_t tag) { _tag = tag; }
 
 private:
   uint32_t _tag;
+
+  template <class R> static uint32_t extractTag(const R &rel) {
+    return (rel.getType(_isMips64EL) & 0xffffff00) >> 8;
+  }
 };
 
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {
