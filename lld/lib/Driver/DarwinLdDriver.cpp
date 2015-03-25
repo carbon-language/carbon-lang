@@ -480,7 +480,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
       return false;
     }
     uint8_t align2 = llvm::countTrailingZeros(alignValue);
-    if ( (unsigned long)(1 << align2) != alignValue ) {
+    if (!llvm::isPowerOf2_64(alignValue)) {
       diagnostics << "warning: alignment for '-sectalign "
                   << segName << " " << sectName
                   << llvm::format(" 0x%llX", alignValue)
