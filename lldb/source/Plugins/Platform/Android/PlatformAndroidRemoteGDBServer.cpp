@@ -10,8 +10,6 @@
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Host/ConnectionFileDescriptor.h"
-#include "llvm/ADT/StringRef.h"
 
 // Project includes
 #include "AdbClient.h"
@@ -31,20 +29,13 @@ ForwardPortWithAdb (uint16_t port, std::string& device_id)
     // Fetch the device list from ADB and if only 1 device found then use that device
     // TODO: Handle the case when more device is available
     AdbClient adb;
-
-    AdbClient::DeviceIDList connect_devices;
-    auto error = adb.GetDevices (connect_devices);
+    auto error = AdbClient::CreateByDeviceID (nullptr, adb);
     if (error.Fail ())
         return error;
 
-    if (connect_devices.size () != 1)
-        return Error ("Expected a single connected device, got instead %zu", connect_devices.size ());
-
-    device_id = connect_devices.front ();
     if (log)
-        log->Printf("Connected to Android device \"%s\"", device_id.c_str ());
+        log->Printf("Connected to Android device \"%s\"", adb.GetDeviceID ().c_str ());
 
-    adb.SetDeviceID (device_id);
     return adb.SetPortForwarding (port);
 }
 

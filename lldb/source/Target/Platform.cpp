@@ -1838,7 +1838,7 @@ Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
 
     // Check local cache for a module.
     auto error = m_module_cache->Get (GetModuleCacheRoot (),
-                                      GetHostname (),
+                                      GetCacheHostname (),
                                       module_spec,
                                       module_sp,
                                       did_create_ptr);
@@ -1880,7 +1880,7 @@ Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
 
     // Put downloaded file into local module cache.
     error = m_module_cache->Put (GetModuleCacheRoot (),
-                                 GetHostname (),
+                                 GetCacheHostname (),
                                  module_spec,
                                  tmp_download_file_spec);
     if (error.Fail ())
@@ -1893,7 +1893,7 @@ Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
     }
 
     error = m_module_cache->Get (GetModuleCacheRoot (),
-                                 GetHostname (),
+                                 GetCacheHostname (),
                                  module_spec,
                                  module_sp,
                                  did_create_ptr);
@@ -1957,4 +1957,10 @@ Platform::GetModuleCacheRoot ()
     auto dir_spec = GetGlobalPlatformProperties ()->GetModuleCacheDirectory ();
     dir_spec.AppendPathComponent (GetName ().AsCString ());
     return dir_spec;
+}
+
+const char *
+Platform::GetCacheHostname ()
+{
+    return GetHostname ();
 }

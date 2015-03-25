@@ -15,6 +15,7 @@
 #include "lldb/Host/HostInfo.h"
 
 // Project includes
+#include "AdbClient.h"
 #include "PlatformAndroid.h"
 #include "PlatformAndroidRemoteGDBServer.h"
 
@@ -171,6 +172,8 @@ PlatformAndroid::GetPluginName()
 Error
 PlatformAndroid::ConnectRemote (Args& args)
 {
+    m_device_id.clear ();
+
     if (IsHost())
     {
         return Error ("can't connect to the host platform '%s', always connected", GetPluginName().GetCString());
@@ -178,5 +181,24 @@ PlatformAndroid::ConnectRemote (Args& args)
 
     if (!m_remote_platform_sp)
         m_remote_platform_sp = PlatformSP(new PlatformAndroidRemoteGDBServer());
-    return PlatformLinux::ConnectRemote (args);
+
+    auto error = PlatformLinux::ConnectRemote (args);
+    if (error.Success ())
+    {
+        // Fetch the device list from ADB and if only 1 device found then use that device
+        // TODO: Handle the case when more device is available
+        AdbClient adb;
+        error = AdbClient::CreateByDeviceID (nullptr, adb);
+        if (error.Fail ())
+            return error;
+
+        m_device_id = adb.GetDeviceID ();
+    }
+    return error;
+}
+
+const char *
+PlatformAndroid::GetCacheHostname ()
+{
+    return m_device_id.c_str ();
 }

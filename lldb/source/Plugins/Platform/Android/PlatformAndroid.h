@@ -12,6 +12,9 @@
 
 // C Includes
 // C++ Includes
+
+#include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "Plugins/Platform/Linux/PlatformLinux.h"
@@ -60,7 +63,12 @@ namespace lldb_private {
         lldb_private::Error
         ConnectRemote (lldb_private::Args& args) override;
 
+    protected:
+        const char *
+        GetCacheHostname () override;
+
     private:
+        std::string m_device_id;
         DISALLOW_COPY_AND_ASSIGN (PlatformAndroid);
     };
 } // namespace lldb_private

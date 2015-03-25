@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 // Other libraries and framework includes
-#include "lldb/Host/ConnectionFileDescriptor.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -16,6 +15,7 @@
 // Project includes
 #include "AdbClient.h"
 
+#include <algorithm>
 #include <sstream>
 
 using namespace lldb;
@@ -29,6 +29,32 @@ const char * kFAIL = "FAIL";
 
 }  // namespace
 
+Error
+AdbClient::CreateByDeviceID (const char* device_id, AdbClient &adb)
+{
+    DeviceIDList connect_devices;
+    auto error = adb.GetDevices (connect_devices);
+    if (error.Fail ())
+        return error;
+
+    if (device_id)
+    {
+        auto find_it = std::find(connect_devices.begin (), connect_devices.end (), device_id);
+        if (find_it == connect_devices.end ())
+            return Error ("Device \"%s\" not found", device_id);
+
+        adb.SetDeviceID (*find_it);
+    }
+    else
+    {
+        if (connect_devices.size () != 1)
+            return Error ("Expected a single connected device, got instead %zu", connect_devices.size ());
+
+        adb.SetDeviceID (connect_devices.front ());
+    }
+    return error;
+}
+
 AdbClient::AdbClient (const std::string &device_id)
     : m_device_id (device_id)
 {
@@ -38,6 +64,12 @@ void
 AdbClient::SetDeviceID (const std::string& device_id)
 {
     m_device_id = device_id;
+}
+
+const std::string&
+AdbClient::GetDeviceID() const
+{
+    return m_device_id;
 }
 
 Error

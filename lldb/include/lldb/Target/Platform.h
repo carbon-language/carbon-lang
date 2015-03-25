@@ -1137,6 +1137,9 @@ class ModuleCache;
                              const uint64_t src_size,
                              const FileSpec& dst_file_spec);
 
+        virtual const char *
+        GetCacheHostname ();
+
     private:
         typedef std::function<Error (const ModuleSpec &)> ModuleResolver;
 

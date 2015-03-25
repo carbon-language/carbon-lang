@@ -21,6 +21,7 @@
 // Project includes
 
 #include "lldb/Core/Error.h"
+#include "lldb/Host/ConnectionFileDescriptor.h"
 
 namespace lldb_private {
 
@@ -29,11 +30,14 @@ class AdbClient
 public:
     using DeviceIDList = std::list<std::string>;
 
+    static Error
+    CreateByDeviceID (const char* device_id, AdbClient &adb);
+
     AdbClient () = default;
     explicit AdbClient (const std::string &device_id);
 
-    void
-    SetDeviceID (const std::string& device_id);
+    const std::string&
+    GetDeviceID() const;
 
     Error
     GetDevices (DeviceIDList &device_list);
@@ -47,6 +51,9 @@ public:
 private:
     Error
     Connect ();
+
+    void
+    SetDeviceID (const std::string& device_id);
 
     Error
     SendMessage (const std::string &packet);
