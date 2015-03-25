@@ -106,12 +106,8 @@ else()
     set(ASAN_COMMON_RUNTIME_OBJECTS
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
-    if(NOT WIN32)
-      # We can't build Leak Sanitizer on Windows yet.
-      list(APPEND ASAN_COMMON_RUNTIME_OBJECTS
-           $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
-    endif()
+      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+      $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
 
     add_compiler_rt_runtime(clang_rt.asan-${arch} ${arch} STATIC
       SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
