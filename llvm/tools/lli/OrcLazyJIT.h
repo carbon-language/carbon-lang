@@ -34,7 +34,7 @@ public:
   typedef orc::LazyEmittingLayer<CompileLayerT> LazyEmitLayerT;
   typedef orc::CompileOnDemandLayer<LazyEmitLayerT,
                                     CompileCallbackMgr> CODLayerT;
-  typedef typename CODLayerT::ModuleSetHandleT ModuleHandleT;
+  typedef CODLayerT::ModuleSetHandleT ModuleHandleT;
 
   OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context)
     : Error(false), TM(std::move(TM)),
