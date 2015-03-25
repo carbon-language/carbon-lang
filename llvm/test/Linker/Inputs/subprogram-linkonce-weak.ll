@@ -10,7 +10,7 @@ declare i32 @fastadd(i32, i32)
 !0 = !{i32 2, !"Debug Info Version", i32 3}
 
 !llvm.dbg.cu = !{!1}
-!1 = !MDCompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3}, emissionKind: 2)
+!1 = !MDCompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3}, emissionKind: 1)
 !2 = !MDFile(filename: "foo.c", directory: "/path/to/dir")
 !3 = !MDSubprogram(file: !2, scope: !2, line: 51, name: "foo", function: i32 (i32, i32)* @foo, type: !4)
 !4 = !MDSubroutineType(types: !{})
