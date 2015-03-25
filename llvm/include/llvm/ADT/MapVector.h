@@ -67,6 +67,11 @@ public:
     Vector.clear();
   }
 
+  void swap(MapVector &RHS) {
+    std::swap(Map, RHS.Map);
+    std::swap(Vector, RHS.Vector);
+  }
+
   ValueT &operator[](const KeyT &Key) {
     std::pair<KeyT, unsigned> Pair = std::make_pair(Key, 0);
     std::pair<typename MapType::iterator, bool> Result = Map.insert(Pair);

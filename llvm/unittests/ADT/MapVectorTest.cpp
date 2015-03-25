@@ -14,6 +14,31 @@
 
 using namespace llvm;
 
+TEST(MapVectorTest, swap) {
+  MapVector<int, int> MV1, MV2;
+  std::pair<MapVector<int, int>::iterator, bool> R;
+
+  R = MV1.insert(std::make_pair(1, 2));
+  ASSERT_EQ(R.first, MV1.begin());
+  EXPECT_EQ(R.first->first, 1);
+  EXPECT_EQ(R.first->second, 2);
+  EXPECT_TRUE(R.second);
+
+  EXPECT_FALSE(MV1.empty());
+  EXPECT_TRUE(MV2.empty());
+  MV2.swap(MV1);
+  EXPECT_TRUE(MV1.empty());
+  EXPECT_FALSE(MV2.empty());
+
+  auto I = MV1.find(1);
+  ASSERT_EQ(MV1.end(), I);
+
+  I = MV2.find(1);
+  ASSERT_EQ(I, MV2.begin());
+  EXPECT_EQ(I->first, 1);
+  EXPECT_EQ(I->second, 2);
+}
+
 TEST(MapVectorTest, insert_pop) {
   MapVector<int, int> MV;
   std::pair<MapVector<int, int>::iterator, bool> R;
