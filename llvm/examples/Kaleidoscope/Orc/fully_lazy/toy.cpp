@@ -1290,7 +1290,7 @@ private:
       return findUnmangledSymbolIn(H, Fn->Proto->Name).getAddress();
     });
     CallbackInfo.setUpdateAction(
-      CompileCallbacks.getLocalFPUpdater(H, mangle(BodyPtrName)));
+        getLocalFPUpdater(LazyEmitLayer, H, mangle(BodyPtrName)));
 
     return H;
   }
