@@ -42,3 +42,15 @@ entry:
   store <8 x double> %1, <8 x double>* %out, align 1
   ret void
 }
+
+define <2 x double> @fpext_fromconst() {
+; CHECK-LABEL: fpext_fromconst:
+; AVX-LABEL: fpext_fromconst:
+entry:
+; CHECK: movaps {{.*#+}} xmm0 = [1.000000e+00,-2.000000e+00]
+; AVX: vmovaps {{.*#+}} xmm0 = [1.000000e+00,-2.000000e+00]
+  %0  = insertelement <2 x float> undef, float 1.0, i32 0
+  %1  = insertelement <2 x float> %0, float -2.0, i32 1
+  %2  = fpext <2 x float> %1 to <2 x double>
+  ret <2 x double> %2
+}

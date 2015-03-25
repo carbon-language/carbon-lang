@@ -94,6 +94,10 @@ namespace ISD {
   /// all ConstantSDNode or undef.
   bool isBuildVectorOfConstantSDNodes(const SDNode *N);
 
+  /// \brief Return true if the specified node is a BUILD_VECTOR node of
+  /// all ConstantFPSDNode or undef.
+  bool isBuildVectorOfConstantFPSDNodes(const SDNode *N);
+
   /// Return true if the specified node is a
   /// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
   /// element is not an undef.

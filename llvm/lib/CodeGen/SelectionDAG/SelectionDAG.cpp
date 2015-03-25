@@ -196,6 +196,22 @@ bool ISD::isBuildVectorOfConstantSDNodes(const SDNode *N) {
   return true;
 }
 
+/// \brief Return true if the specified node is a BUILD_VECTOR node of
+/// all ConstantFPSDNode or undef.
+bool ISD::isBuildVectorOfConstantFPSDNodes(const SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
+
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    SDValue Op = N->getOperand(i);
+    if (Op.getOpcode() == ISD::UNDEF)
+      continue;
+    if (!isa<ConstantFPSDNode>(Op))
+      return false;
+  }
+  return true;
+}
+
 /// isScalarToVector - Return true if the specified node is a
 /// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
 /// element is not an undef.
@@ -2827,7 +2843,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     }
   }
 
-  // Constant fold unary operations with a vector integer operand.
+  // Constant fold unary operations with a vector integer or float operand.
   if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Operand.getNode())) {
     if (BV->isConstant()) {
       switch (Opcode) {
@@ -2835,6 +2851,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         // FIXME: Entirely reasonable to perform folding of other unary
         // operations here as the need arises.
         break;
+      case ISD::FNEG:
+      case ISD::FABS:
+      case ISD::FP_EXTEND:
+      case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
       case ISD::SINT_TO_FP: {
         // Let the above scalar folding handle the folding of each element.
@@ -2842,9 +2862,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         for (int i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
           SDValue OpN = BV->getOperand(i);
           OpN = getNode(Opcode, DL, VT.getVectorElementType(), OpN);
+          if (OpN.getOpcode() != ISD::UNDEF &&
+              OpN.getOpcode() != ISD::Constant &&
+              OpN.getOpcode() != ISD::ConstantFP)
+            break;
           Ops.push_back(OpN);
         }
-        return getNode(ISD::BUILD_VECTOR, DL, VT, Ops);
+        if (Ops.size() == VT.getVectorNumElements())
+          return getNode(ISD::BUILD_VECTOR, DL, VT, Ops);
       }
       }
     }

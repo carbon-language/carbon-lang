@@ -221,3 +221,20 @@ entry:
   %1 = bitcast <8 x i8> %0 to i64
   ret i64 %1
 }
+
+define <16 x i8> @trunc16i64_const() {
+; SSE-LABEL:  trunc16i64_const
+; SSE:        # BB#0: # %entry
+; SSE-NEXT:   xorps %xmm0, %xmm0
+; SSE-NEXT:   retq
+;
+; AVX-LABEL:  trunc16i64_const
+; AVX:        # BB#0: # %entry
+; AVX-NEXT:   vxorps %xmm0, %xmm0, %xmm0
+; AVX-NEXT:   retq
+
+entry:
+  %0 = trunc <16 x i64> zeroinitializer to <16 x i8>
+  %1 = shufflevector <16 x i8> %0, <16 x i8> %0, <16 x i32> <i32 28, i32 30, i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 undef, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26>
+  ret <16 x i8> %1
+}
