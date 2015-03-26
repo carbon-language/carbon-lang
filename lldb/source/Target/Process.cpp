@@ -822,32 +822,8 @@ Process::GetGlobalProperties()
 void
 Process::Finalize()
 {
-    switch (GetPrivateState())
-    {
-        case eStateConnected:
-        case eStateAttaching:
-        case eStateLaunching:
-        case eStateStopped:
-        case eStateRunning:
-        case eStateStepping:
-        case eStateCrashed:
-        case eStateSuspended:
-            if (GetShouldDetach())
-            {
-                // FIXME: This will have to be a process setting:
-                bool keep_stopped = false;
-                Detach(keep_stopped);
-            }
-            else
-                Destroy();
-            break;
-            
-        case eStateInvalid:
-        case eStateUnloaded:
-        case eStateDetached:
-        case eStateExited:
-            break;
-    }
+    // Destroy this process
+    Destroy();
 
     // Clear our broadcaster before we proceed with destroying
     Broadcaster::Clear();
@@ -3952,6 +3928,13 @@ Process::Destroy ()
     // that might hinder the destruction.  Remember to set this back to false when we are done.  That way if the attempt
     // failed and the process stays around for some reason it won't be in a confused state.
     
+    if (GetShouldDetach())
+    {
+        // FIXME: This will have to be a process setting:
+        bool keep_stopped = false;
+        Detach(keep_stopped);
+    }
+
     m_destroy_in_process = true;
 
     Error error (WillDestroy());

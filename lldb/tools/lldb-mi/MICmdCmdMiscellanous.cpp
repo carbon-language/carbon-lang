@@ -74,7 +74,7 @@ bool
 CMICmdCmdGdbExit::Execute(void)
 {
     CMICmnLLDBDebugger::Instance().GetDriver().SetExitApplicationFlag(true);
-    const lldb::SBError sbErr = m_rLLDBDebugSessionInfo.GetProcess().Detach();
+    const lldb::SBError sbErr = m_rLLDBDebugSessionInfo.GetProcess().Destroy();
     // Do not check for sbErr.Fail() here, m_lldbProcess is likely !IsValid()
 
     return MIstatus::success;
