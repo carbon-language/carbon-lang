@@ -399,6 +399,10 @@ public:
   /// \brief The top-level headers associated with this module.
   ArrayRef<const FileEntry *> getTopHeaders(FileManager &FileMgr);
 
+  /// \brief Determine whether this module has declared its intention to
+  /// directly use another module.
+  bool directlyUses(const Module *Requested) const;
+
   /// \brief Add the given feature requirement to the list of features
   /// required by this module.
   ///

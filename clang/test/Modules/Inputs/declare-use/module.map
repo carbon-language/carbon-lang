@@ -3,7 +3,7 @@ module XA {
 }
 
 module XB {
-  header "b.h"
+  module B { header "b.h" }
 }
 
 module XC {
@@ -43,7 +43,7 @@ module XG {
 }
 
 module XH {
-  header "h.h"
+  module H { header "h.h" }
   header "h1.h"
   header "s.h"
   use XC

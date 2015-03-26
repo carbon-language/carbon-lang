@@ -158,6 +158,19 @@ ArrayRef<const FileEntry *> Module::getTopHeaders(FileManager &FileMgr) {
   return llvm::makeArrayRef(TopHeaders.begin(), TopHeaders.end());
 }
 
+bool Module::directlyUses(const Module *Requested) const {
+  auto *Top = getTopLevelModule();
+
+  // A top-level module implicitly uses itself.
+  if (Requested->isSubModuleOf(Top))
+    return true;
+
+  for (auto *Use : Top->DirectUses)
+    if (Requested->isSubModuleOf(Use))
+      return true;
+  return false;
+}
+
 void Module::addRequirement(StringRef Feature, bool RequiredState,
                             const LangOptions &LangOpts,
                             const TargetInfo &Target) {

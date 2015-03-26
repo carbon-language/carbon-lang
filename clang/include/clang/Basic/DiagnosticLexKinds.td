@@ -579,7 +579,9 @@ def err_mmap_module_id : Error<
 def err_mmap_expected_library_name : Error<
   "expected %select{library|framework}0 name as a string">;
 def err_mmap_config_macro_submodule : Error<
-  "configuration macros are only allowed on top-level modules">;
+  "configuration macros are only allowed in top-level modules">;
+def err_mmap_use_decl_submodule : Error<
+  "use declarations are only allowed in top-level modules">;
 def err_mmap_expected_config_macro : Error<
   "expected configuration macro name after ','">;
 def err_mmap_expected_conflicts_comma : Error<

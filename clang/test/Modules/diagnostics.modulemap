@@ -1,12 +1,14 @@
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -fmodule-map-file=%s -fsyntax-only -x c++ /dev/null 2>&1
-//
-// RUN: cp %s %t-duplicate.modulemap
-// RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -fmodule-map-file=%s -fmodule-map-file=%t-duplicate.modulemap -fsyntax-only -x c++ /dev/null 2>&1 | FileCheck --check-prefix=CHECK-DUPLICATE %s
+// RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -fmodule-map-file=%S/Inputs/diagnostics-aux.modulemap -fmodule-map-file=%s -fsyntax-only -x c++ /dev/null 2>&1 | FileCheck %s
 
 // PR22299: Ensure we can produce diagnostics for duplicate modules from -fmodule-map-file=.
 //
-// CHECK-DUPLICATE: duplicate.modulemap:[[@LINE+2]]:8: error: redefinition of module 'foo'
-// CHECK-DUPLICATE: diagnostics.modulemap:[[@LINE+1]]:8: note: previously defined here
+// CHECK: diagnostics.modulemap:[[@LINE+2]]:8: error: redefinition of module 'foo'
+// CHECK: diagnostics-aux.modulemap:1:8: note: previously defined here
 module foo {}
 
 //* Check that we accept BCPL comments properly, not just as an extension. */
+
+module bad_use {
+  // CHECK: diagnostics.modulemap:[[@LINE+1]]:22: error: use declarations are only allowed in top-level modules
+  module submodule { use foo }
+}

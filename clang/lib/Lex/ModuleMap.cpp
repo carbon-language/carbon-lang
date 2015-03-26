@@ -205,16 +205,6 @@ ModuleMap::findHeaderInUmbrellaDirs(const FileEntry *File,
   return KnownHeader();
 }
 
-// Returns true if RequestingModule directly uses RequestedModule.
-static bool directlyUses(const Module *RequestingModule,
-                         const Module *RequestedModule) {
-  for (const Module* DirectUse : RequestingModule->DirectUses) {
-    if (RequestedModule->isSubModuleOf(DirectUse))
-      return true;
-  }
-  return false;
-}
-
 static bool violatesPrivateInclude(Module *RequestingModule,
                                    const FileEntry *IncFileEnt,
                                    ModuleMap::ModuleHeaderRole Role,
@@ -238,6 +228,9 @@ static bool violatesPrivateInclude(Module *RequestingModule,
   }
 #endif
   return IsPrivateRole &&
+         // FIXME: Should we map RequestingModule to its top-level module here
+         //        too? This check is redundant with the isSubModuleOf check in
+         //        diagnoseHeaderInclusion.
          RequestedModule->getTopLevelModule() != RequestingModule;
 }
 
@@ -279,7 +272,7 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
       // If uses need to be specified explicitly, we are only allowed to return
       // modules that are explicitly used by the requesting module.
       if (RequestingModule && LangOpts.ModulesDeclUse &&
-          !directlyUses(RequestingModule, Header.getModule())) {
+          !RequestingModule->directlyUses(Header.getModule())) {
         NotUsed = Header.getModule();
         continue;
       }
@@ -368,7 +361,7 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       // If uses need to be specified explicitly, we are only allowed to return
       // modules that are explicitly used by the requesting module.
       if (RequestingModule && LangOpts.ModulesDeclUse &&
-          !directlyUses(RequestingModule, I->getModule()))
+          !RequestingModule->directlyUses(I->getModule()))
         continue;
 
       if (!Result || isBetterKnownHeader(*I, Result))
@@ -1918,18 +1911,21 @@ void ModuleMapParser::parseExportDecl() {
   ActiveModule->UnresolvedExports.push_back(Unresolved);
 }
 
-/// \brief Parse a module uses declaration.
+/// \brief Parse a module use declaration.
 ///
-///   uses-declaration:
-///     'uses' wildcard-module-id
+///   use-declaration:
+///     'use' wildcard-module-id
 void ModuleMapParser::parseUseDecl() {
   assert(Tok.is(MMToken::UseKeyword));
-  consumeToken();
+  auto KWLoc = consumeToken();
   // Parse the module-id.
   ModuleId ParsedModuleId;
   parseModuleId(ParsedModuleId);
 
-  ActiveModule->UnresolvedDirectUses.push_back(ParsedModuleId);
+  if (ActiveModule->Parent)
+    Diags.Report(KWLoc, diag::err_mmap_use_decl_submodule);
+  else
+    ActiveModule->UnresolvedDirectUses.push_back(ParsedModuleId);
 }
 
 /// \brief Parse a link declaration.
