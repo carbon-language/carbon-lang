@@ -190,11 +190,16 @@ public:
   // Attributes describe a code model used by the atom.
   enum CodeModel {
     codeNA,           // no specific code model
+    // MIPS code models
     codeMipsPIC,      // PIC function in a PIC / non-PIC mixed file
     codeMipsMicro,    // microMIPS instruction encoding
     codeMipsMicroPIC, // microMIPS instruction encoding + PIC
     codeMips16,       // MIPS-16 instruction encoding
+    // ARM code models
     codeARMThumb,     // ARM Thumb instruction set
+    codeARM_a,        // $a-like mapping symbol (for ARM code)
+    codeARM_d,        // $d-like mapping symbol (for data)
+    codeARM_t,        // $t-like mapping symbol (for Thumb code)
   };
 
   struct Alignment {

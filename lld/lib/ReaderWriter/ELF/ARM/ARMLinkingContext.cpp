@@ -32,3 +32,20 @@ void elf::ARMLinkingContext::addPasses(PassManager &pm) {
     pm.add(std::move(pass));
   ELFLinkingContext::addPasses(pm);
 }
+
+bool elf::isARMCode(const DefinedAtom *atom) {
+  return isARMCode(atom->codeModel());
+}
+
+bool elf::isARMCode(DefinedAtom::CodeModel codeModel) {
+  return !isThumbCode(codeModel);
+}
+
+bool elf::isThumbCode(const DefinedAtom *atom) {
+  return isThumbCode(atom->codeModel());
+}
+
+bool elf::isThumbCode(DefinedAtom::CodeModel codeModel) {
+  return codeModel == DefinedAtom::codeARMThumb ||
+         codeModel == DefinedAtom::codeARM_t;
+}

@@ -30,6 +30,13 @@ public:
     return _baseAddress;
   }
 };
+
+// Special methods to check code model of atoms.
+bool isARMCode(const DefinedAtom *atom);
+bool isARMCode(DefinedAtom::CodeModel codeModel);
+bool isThumbCode(const DefinedAtom *atom);
+bool isThumbCode(DefinedAtom::CodeModel codeModel);
+
 } // end namespace elf
 } // end namespace lld
 

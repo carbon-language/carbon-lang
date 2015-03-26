@@ -432,7 +432,7 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   bool addressesThumb = false;
 
   if (const auto *definedAtom = dyn_cast<DefinedAtom>(ref.target())) {
-    addressesThumb = (DefinedAtom::codeARMThumb == definedAtom->codeModel());
+    addressesThumb = isThumbCode(definedAtom);
   }
 
   switch (ref.kindValue()) {

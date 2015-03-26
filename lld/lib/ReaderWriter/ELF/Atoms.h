@@ -293,7 +293,7 @@ public:
       return 1;
 
     // Obtain proper value of st_value field.
-    const auto symValue = getSymbolValue(_symbol);
+    const auto symValue = getSymbolValue();
 
     // Unallocated common symbols specify their alignment constraints in
     // st_value.
@@ -429,8 +429,8 @@ public:
 protected:
   /// Returns correct st_value for the symbol depending on the architecture.
   /// For most architectures it's just a regular st_value with no changes.
-  virtual uint64_t getSymbolValue(const Elf_Sym *symbol) const {
-    return symbol->st_value;
+  virtual uint64_t getSymbolValue() const {
+    return _symbol->st_value;
   }
 
 protected:

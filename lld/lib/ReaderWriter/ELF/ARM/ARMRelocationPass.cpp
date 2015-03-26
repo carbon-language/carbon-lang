@@ -155,7 +155,7 @@ protected:
     // Target symbol and relocated place should have different
     // instruction sets in order a veneer to be generated in between.
     const auto *target = dyn_cast<DefinedAtom>(ref.target());
-    if (!target || target->codeModel() == atom.codeModel())
+    if (!target || isThumbCode(target) == isThumbCode(&atom))
       return std::error_code();
 
     // TODO: For unconditional jump instructions (R_ARM_CALL and R_ARM_THM_CALL)

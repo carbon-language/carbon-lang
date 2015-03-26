@@ -35,9 +35,18 @@ void ARMSymbolTable<ELFT>::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
                                           int64_t addr) {
   SymbolTable<ELFT>::addDefinedAtom(sym, da, addr);
 
-  // Set zero bit to distinguish symbols addressing Thumb instructions
+  // Set zero bit to distinguish real symbols addressing Thumb instructions.
+  // Don't care about mapping symbols like $t and others.
   if (DefinedAtom::codeARMThumb == da->codeModel())
     sym.st_value = static_cast<int64_t>(sym.st_value) | 0x1;
+
+  // Mapping symbols should have special values of binding, type and size set.
+  if ((DefinedAtom::codeARM_a == da->codeModel()) ||
+      (DefinedAtom::codeARM_d == da->codeModel()) ||
+      (DefinedAtom::codeARM_t == da->codeModel())) {
+    sym.setBindingAndType(llvm::ELF::STB_LOCAL, llvm::ELF::STT_NOTYPE);
+    sym.st_size = 0;
+  }
 }
 
 } // elf
