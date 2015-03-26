@@ -1,5 +1,7 @@
 ; RUN: opt < %s -slsr -gvn -dce -S | FileCheck %s
 
+target datalayout = "e-i64:64-v16:16-v32:32-n16:32:64"
+
 declare i32 @foo(i32 %a)
 
 define i32 @slsr1(i32 %b, i32 %s) {
