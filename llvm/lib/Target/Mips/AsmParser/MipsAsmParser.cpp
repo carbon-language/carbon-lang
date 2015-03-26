@@ -54,7 +54,13 @@ public:
   }
 
   unsigned getATRegNum() const { return ATReg; }
-  bool setATReg(unsigned Reg);
+  bool setATReg(unsigned Reg) {
+    if (Reg > 31)
+      return false;
+
+    ATReg = Reg;
+    return true;
+  }
 
   bool isReorder() const { return Reorder; }
   void setReorder() { Reorder = true; }
@@ -2375,14 +2381,6 @@ int MipsAsmParser::matchMSA128CtrlRegisterName(StringRef Name) {
            .Default(-1);
 
   return CC;
-}
-
-bool MipsAssemblerOptions::setATReg(unsigned Reg) {
-  if (Reg > 31)
-    return false;
-
-  ATReg = Reg;
-  return true;
 }
 
 int MipsAsmParser::getATReg(SMLoc Loc) {
