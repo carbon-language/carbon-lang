@@ -12,6 +12,7 @@
 #include "MICmnStreamStdout.h"
 #include "MICmnResources.h"
 #include "MICmnLog.h"
+#include "MIDriver.h"
 #include "MIUtilSingletonHelper.h"
 #include <string.h> // For std::strerror()
 
@@ -205,7 +206,12 @@ CMICmnStreamStdin::ReadLine(CMIUtilString &vwErrMsg)
     const MIchar *pText = ::fgets(&m_pCmdBuffer[0], m_constBufferSize, stdin);
     if (pText == nullptr)
     {
-        if (::ferror(stdin) != 0)
+        if (::feof(stdin))
+        {
+            const bool bForceExit = true;
+            CMIDriver::Instance().SetExitApplicationFlag(bForceExit);
+        }
+        else if (::ferror(stdin) != 0)
             vwErrMsg = ::strerror(errno);
         return nullptr;
     }
