@@ -1612,14 +1612,10 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStderr(void)
 bool
 CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
 {
-    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     if (!sbProcess.IsValid())
         return MIstatus::success;
-    lldb::SBTarget sbTarget = CMICmnLLDBDebugSessionInfo::Instance().GetTarget();
-    if (!sbTarget.IsValid())
-        return MIstatus::success;
-
-    bool bOk = MIstatus::success;
 
     // Check for created threads
     const MIuint nThread = sbProcess.GetNumThreads();
@@ -1631,33 +1627,20 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
         if (!thread.IsValid())
             continue;
 
-        CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::const_iterator it =
-            CMICmnLLDBDebugSessionInfo::Instance().m_vecActiveThreadId.begin();
-        bool bFound = false;
-        while (it != CMICmnLLDBDebugSessionInfo::Instance().m_vecActiveThreadId.end())
-        {
-            const MIuint nThreadId = *it;
-            if (nThreadId == i)
-            {
-                bFound = true;
-                break;
-            }
-
-            // Next
-            ++it;
-        }
+        const MIuint threadIndexID = thread.GetIndexID();
+        const bool bFound = std::find(rSessionInfo.m_vecActiveThreadId.begin(), rSessionInfo.m_vecActiveThreadId.end(), threadIndexID) != rSessionInfo.m_vecActiveThreadId.end();
         if (!bFound)
         {
-            CMICmnLLDBDebugSessionInfo::Instance().m_vecActiveThreadId.push_back(i);
+            rSessionInfo.m_vecActiveThreadId.push_back(threadIndexID);
 
             // Form MI "=thread-created,id=\"%d\",group-id=\"i1\""
-            const CMIUtilString strValue(CMIUtilString::Format("%d", thread.GetIndexID()));
+            const CMIUtilString strValue(CMIUtilString::Format("%d", threadIndexID));
             const CMICmnMIValueConst miValueConst(strValue);
             const CMICmnMIValueResult miValueResult("id", miValueConst);
             CMICmnMIOutOfBandRecord miOutOfBand(CMICmnMIOutOfBandRecord::eOutOfBand_ThreadCreated, miValueResult);
             const CMICmnMIValueConst miValueConst2("i1");
             const CMICmnMIValueResult miValueResult2("group-id", miValueConst2);
-            bOk = miOutOfBand.Add(miValueResult2);
+            bool bOk = miOutOfBand.Add(miValueResult2);
             bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBand);
             if (!bOk)
                 return MIstatus::failure;
@@ -1667,13 +1650,13 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
     lldb::SBThread currentThread = sbProcess.GetSelectedThread();
     if (currentThread.IsValid())
     {
-        const MIuint threadId = currentThread.GetIndexID();
-        if (CMICmnLLDBDebugSessionInfo::Instance().m_currentSelectedThread != threadId)
+        const MIuint currentThreadIndexID = currentThread.GetIndexID();
+        if (rSessionInfo.m_currentSelectedThread != currentThreadIndexID)
         {
-            CMICmnLLDBDebugSessionInfo::Instance().m_currentSelectedThread = threadId;
+            rSessionInfo.m_currentSelectedThread = currentThreadIndexID;
 
             // Form MI "=thread-selected,id=\"%d\""
-            const CMIUtilString strValue(CMIUtilString::Format("%d", currentThread.GetIndexID()));
+            const CMIUtilString strValue(CMIUtilString::Format("%d", currentThreadIndexID));
             const CMICmnMIValueConst miValueConst(strValue);
             const CMICmnMIValueResult miValueResult("id", miValueConst);
             CMICmnMIOutOfBandRecord miOutOfBand(CMICmnMIOutOfBandRecord::eOutOfBand_ThreadSelected, miValueResult);
@@ -1683,28 +1666,31 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
     }
 
     // Check for invalid (removed) threads
-    CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::const_iterator it = CMICmnLLDBDebugSessionInfo::Instance().m_vecActiveThreadId.begin();
-    while (it != CMICmnLLDBDebugSessionInfo::Instance().m_vecActiveThreadId.end())
+    CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::const_iterator it = rSessionInfo.m_vecActiveThreadId.begin();
+    while (it != rSessionInfo.m_vecActiveThreadId.end())
     {
-        const MIuint nThreadId = *it;
-        lldb::SBThread thread = sbProcess.GetThreadAtIndex(nThreadId);
+        const MIuint threadIndexID = *it;
+        lldb::SBThread thread = sbProcess.GetThreadByIndexID(threadIndexID);
         if (!thread.IsValid())
         {
             // Form MI "=thread-exited,id=\"%ld\",group-id=\"i1\""
-            const CMIUtilString strValue(CMIUtilString::Format("%ld", thread.GetIndexID()));
+            const CMIUtilString strValue(CMIUtilString::Format("%ld", threadIndexID));
             const CMICmnMIValueConst miValueConst(strValue);
             const CMICmnMIValueResult miValueResult("id", miValueConst);
             CMICmnMIOutOfBandRecord miOutOfBand(CMICmnMIOutOfBandRecord::eOutOfBand_ThreadExited, miValueResult);
             const CMICmnMIValueConst miValueConst2("i1");
             const CMICmnMIValueResult miValueResult2("group-id", miValueConst2);
-            bOk = miOutOfBand.Add(miValueResult2);
+            bool bOk = miOutOfBand.Add(miValueResult2);
             bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBand);
             if (!bOk)
                 return MIstatus::failure;
-        }
 
-        // Next
-        ++it;
+            // Remove current thread from cache and get next
+            it = rSessionInfo.m_vecActiveThreadId.erase(it);
+        }
+        else
+            // Next
+            ++it;
     }
 
     return TextToStdout("(gdb)");
