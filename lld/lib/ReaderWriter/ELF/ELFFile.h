@@ -316,6 +316,13 @@ protected:
     return symbol->st_value;
   }
 
+  /// Returns initial addend
+  virtual Reference::Addend getInitialAddend(ArrayRef<uint8_t> symContent,
+                                  uint64_t symbolValue,
+                                  const Elf_Rel& reference) const {
+    return *(symContent.data() + reference.r_offset - symbolValue);
+  }
+
   /// Process the common symbol and create an atom for it.
   virtual ErrorOr<ELFCommonAtom<ELFT> *>
   handleCommonSymbol(StringRef symName, const Elf_Sym *sym) {
@@ -1030,7 +1037,7 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
     auto elfRelocation = new (_readerStorage)
         ELFReference<ELFT>(rel.r_offset - symValue, kindArch(),
                            rel.getType(isMips64EL), rel.getSymbol(isMips64EL));
-    int32_t addend = *(symContent.data() + rel.r_offset - symValue);
+    Reference::Addend addend = getInitialAddend(symContent, symValue, rel);
     elfRelocation->setAddend(addend);
     addReferenceToSymbol(elfRelocation, symbol);
     _references.push_back(elfRelocation);

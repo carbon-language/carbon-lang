@@ -22,12 +22,27 @@ public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   ARMLinkingContext(llvm::Triple);
 
+  bool isRelaOutputFormat() const override { return false; }
+
   void addPasses(PassManager &) override;
 
   uint64_t getBaseAddress() const override {
     if (_baseAddress == 0)
       return 0x400000;
     return _baseAddress;
+  }
+
+  bool isPLTRelocation(const Reference &r) const override {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::ARM);
+    switch (r.kindValue()) {
+    case llvm::ELF::R_ARM_JUMP_SLOT:
+    case llvm::ELF::R_ARM_IRELATIVE:
+      return true;
+    default:
+      return false;
+    }
   }
 };
 

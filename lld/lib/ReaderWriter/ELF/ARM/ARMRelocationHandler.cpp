@@ -412,6 +412,75 @@ static void relocR_ARM_TLS_LE32(uint8_t *location, uint64_t P, uint64_t S,
   applyArmReloc(location, result);
 }
 
+template <uint32_t lshift>
+static void relocR_ARM_ALU_PC_GN_NC(uint8_t *location, uint32_t result) {
+  static_assert(lshift < 32 && lshift % 2 == 0,
+                "lshift must be even and less than word size");
+
+  const uint32_t rshift = 32 - lshift;
+  result = ((result >> lshift) & 0xFF) | ((rshift / 2) << 8);
+
+  applyArmReloc(location, result, 0xFFF);
+}
+
+/// \brief R_ARM_ALU_PC_G0_NC - ((S + A) | T) - P => S + A - P
+static void relocR_ARM_ALU_PC_G0_NC(uint8_t *location, uint64_t P, uint64_t S,
+                                    int64_t A) {
+  int32_t result = (int32_t)((S + A) - P);
+
+  if (result < 0)
+    llvm_unreachable(
+        "Negative offsets for group relocations has not been implemented");
+
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result) << "\n");
+
+  relocR_ARM_ALU_PC_GN_NC<20>(location, (uint32_t)result);
+}
+
+/// \brief R_ARM_ALU_PC_G1_NC - ((S + A) | T) - P => S + A - P
+static void relocR_ARM_ALU_PC_G1_NC(uint8_t *location, uint64_t P, uint64_t S,
+                                    int64_t A) {
+  int32_t result = (int32_t)((S + A) - P);
+
+  if (result < 0)
+    llvm_unreachable(
+        "Negative offsets for group relocations has not been implemented");
+
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result) << "\n");
+
+  relocR_ARM_ALU_PC_GN_NC<12>(location, (uint32_t)result);
+}
+
+/// \brief R_ARM_LDR_PC_G2 - S + A - P
+static void relocR_ARM_LDR_PC_G2(uint8_t *location, uint64_t P, uint64_t S,
+                                 int64_t A) {
+  int32_t result = (int32_t)((S + A) - P);
+
+  if (result < 0)
+    llvm_unreachable(
+        "Negative offsets for group relocations has not been implemented");
+
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result) << "\n");
+
+  const uint32_t mask = 0xFFF;
+  applyArmReloc(location, (uint32_t)result & mask, mask);
+}
+
 std::error_code ARMTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
@@ -426,7 +495,7 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
 
   // Calculate proper initial addend for the relocation
   const Reference::Addend addend =
-      readAddend(location, ref.kindValue());
+      readAddend(location, ref.kindValue()) + ref.addend();
 
   // Flags that the relocation addresses Thumb instruction
   bool addressesThumb = false;
@@ -491,6 +560,18 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   case R_ARM_TLS_LE32:
     relocR_ARM_TLS_LE32(location, relocVAddress, targetVAddress, addend,
                         _armLayout.getTPOffset());
+    break;
+  case R_ARM_ALU_PC_G0_NC:
+    relocR_ARM_ALU_PC_G0_NC(location, relocVAddress, targetVAddress, addend);
+    break;
+  case R_ARM_ALU_PC_G1_NC:
+    relocR_ARM_ALU_PC_G1_NC(location, relocVAddress, targetVAddress, addend);
+    break;
+  case R_ARM_LDR_PC_G2:
+    relocR_ARM_LDR_PC_G2(location, relocVAddress, targetVAddress, addend);
+    break;
+  case R_ARM_IRELATIVE:
+    // Runtime only relocations. Ignore here.
     break;
   default:
     return make_unhandled_reloc_error();

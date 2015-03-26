@@ -54,6 +54,8 @@ public:
 };
 
 template <class ELFT> class ARMELFFile : public ELFFile<ELFT> {
+  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+
 public:
   ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx)
       : ELFFile<ELFT>(std::move(mb), ctx) {}
@@ -62,6 +64,15 @@ public:
   create(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx) {
     return std::unique_ptr<ARMELFFile<ELFT>>(
         new ARMELFFile<ELFT>(std::move(mb), ctx));
+  }
+
+protected:
+  /// Returns initial addend; for ARM it is 0, because it is read
+  /// during the relocations applying
+  Reference::Addend getInitialAddend(ArrayRef<uint8_t>,
+                                     uint64_t,
+                                     const Elf_Rel&) const override {
+    return 0;
   }
 
 private:

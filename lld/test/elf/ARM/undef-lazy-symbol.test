@@ -5,7 +5,7 @@
 # RUN: --noinhibit-exec %t-got.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=GOT %s
 
-# GOT:   Name: _GLOBAL_OFFSET_TABLE_ (185)
+# GOT:   Name: _GLOBAL_OFFSET_TABLE_ (183)
 # GOT-NEXT:   Value: {{[0-9]+}}
 # GOT-NEXT:   Size: 0
 # GOT-NEXT:   Binding: Global (0x1)
@@ -20,7 +20,7 @@
 # RUN: --defsym=main=fn --noinhibit-exec %t-exidx.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=EXIDX %s
 
-# EXIDX:   Name: __exidx_start (188)
+# EXIDX:   Name: __exidx_start (186)
 # EXIDX-NEXT:   Value: {{[0-9]+}}
 # EXIDX-NEXT:   Size: 0
 # EXIDX-NEXT:   Binding: Global (0x1)
@@ -28,7 +28,7 @@
 # EXIDX-NEXT:   Other: 0
 # EXIDX-NEXT:   Section: Absolute (0xFFF1)
 #
-# EXIDX:   Name: __exidx_end (202)
+# EXIDX:   Name: __exidx_end (200)
 # EXIDX-NEXT:   Value: {{[0-9]+}}
 # EXIDX-NEXT:   Size: 0
 # EXIDX-NEXT:   Binding: Global (0x1)
@@ -44,7 +44,7 @@
 # RUN: --noinhibit-exec %t-got.o %t-exidx.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=SYMS %s
 
-# SYMS:   Name: _GLOBAL_OFFSET_TABLE_ (188)
+# SYMS:   Name: _GLOBAL_OFFSET_TABLE_ (186)
 # SYMS-NEXT:   Value: {{[0-9]+}}
 # SYMS-NEXT:   Size: 0
 # SYMS-NEXT:   Binding: Global (0x1)
@@ -52,7 +52,7 @@
 # SYMS-NEXT:   Other: 0
 # SYMS-NEXT:   Section: Absolute (0xFFF1)
 #
-# SYMS:   Name: __exidx_start (210)
+# SYMS:   Name: __exidx_start (208)
 # SYMS-NEXT:   Value: {{[0-9]+}}
 # SYMS-NEXT:   Size: 0
 # SYMS-NEXT:   Binding: Global (0x1)
@@ -60,7 +60,7 @@
 # SYMS-NEXT:   Other: 0
 # SYMS-NEXT:   Section: Absolute (0xFFF1)
 #
-# SYMS:   Name: __exidx_end (224)
+# SYMS:   Name: __exidx_end (222)
 # SYMS-NEXT:   Value: {{[0-9]+}}
 # SYMS-NEXT:   Size: 0
 # SYMS-NEXT:   Binding: Global (0x1)
