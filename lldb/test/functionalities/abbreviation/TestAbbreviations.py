@@ -137,7 +137,6 @@ class AbbreviationsTestCase(TestBase):
         # The test framework relies on detecting either "run" or "process launch"
         # command to automatically kill the inferior upon tear down.
         # But we'll be using "pro la" command to launch the inferior.
-        self.addTearDownHook(lambda: self.runCmd("process kill"))
         self.expect("pro la",
                     patterns = [ "Process .* launched: "])
 

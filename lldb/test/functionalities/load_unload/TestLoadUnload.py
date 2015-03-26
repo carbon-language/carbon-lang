@@ -58,10 +58,6 @@ class LoadUnloadTestCase(TestBase):
         #    patterns = ["%s-[^-]*-[^-]*" % self.getArchitecture()])
         # Add an image search path substitution pair.
         self.runCmd("target modules search-paths add %s %s" % (os.getcwd(), new_dir))
-        # Add teardown hook to clear image-search-paths after the test.
-        # rdar://problem/10501020
-        # Uncomment the following to reproduce 10501020.
-        self.addTearDownHook(lambda: self.runCmd("target modules search-paths clear"))
 
         self.expect("target modules search-paths list",
             substrs = [os.getcwd(), new_dir])
