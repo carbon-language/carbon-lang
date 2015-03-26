@@ -548,6 +548,7 @@ uptr InternalBinarySearch(const Container &v, uptr first, uptr last,
 // executable or a shared object).
 class LoadedModule {
  public:
+  LoadedModule() : full_name_(nullptr), base_address_(0) {}
   LoadedModule(const char *module_name, uptr base_address);
   void clear();
   void addAddressRange(uptr beg, uptr end, bool executable);

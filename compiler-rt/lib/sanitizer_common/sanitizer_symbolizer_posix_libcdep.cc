@@ -352,7 +352,7 @@ class InternalSymbolizer : public SymbolizerTool {
 class POSIXSymbolizer : public Symbolizer {
  public:
   explicit POSIXSymbolizer(IntrusiveList<SymbolizerTool> tools)
-      : Symbolizer(tools) {}
+      : Symbolizer(tools), n_modules_(0), modules_fresh_(false) {}
 
  private:
   const char *PlatformDemangle(const char *name) override {
@@ -368,10 +368,9 @@ class POSIXSymbolizer : public Symbolizer {
 
   LoadedModule *FindModuleForAddress(uptr address) {
     bool modules_were_reloaded = false;
-    if (modules_ == 0 || !modules_fresh_) {
-      modules_ = (LoadedModule*)(symbolizer_allocator_.Allocate(
-          kMaxNumberOfModuleContexts * sizeof(LoadedModule)));
-      CHECK(modules_);
+    if (!modules_fresh_) {
+      for (uptr i = 0; i < n_modules_; i++)
+        modules_[i].clear();
       n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts,
                                     /* filter */ 0);
       CHECK_GT(n_modules_, 0);
@@ -408,7 +407,7 @@ class POSIXSymbolizer : public Symbolizer {
 
   // 16K loaded modules should be enough for everyone.
   static const uptr kMaxNumberOfModuleContexts = 1 << 14;
-  LoadedModule *modules_;  // Array of module descriptions is leaked.
+  LoadedModule modules_[kMaxNumberOfModuleContexts];
   uptr n_modules_;
   // If stale, need to reload the modules before looking up addresses.
   bool modules_fresh_;
