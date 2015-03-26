@@ -7105,16 +7105,20 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
 
   // Load an immediate to varEnd.
   unsigned varEnd = MRI.createVirtualRegister(TRC);
-  if (IsThumb2) {
+  if (Subtarget->useMovt(*MF)) {
     unsigned Vtmp = varEnd;
     if ((LoopSize & 0xFFFF0000) != 0)
       Vtmp = MRI.createVirtualRegister(TRC);
-    AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVi16), Vtmp)
-                       .addImm(LoopSize & 0xFFFF));
+    AddDefaultPred(BuildMI(BB, dl,
+                           TII->get(IsThumb2 ? ARM::t2MOVi16 : ARM::MOVi16),
+                           Vtmp).addImm(LoopSize & 0xFFFF));
 
     if ((LoopSize & 0xFFFF0000) != 0)
-      AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVTi16), varEnd)
-                         .addReg(Vtmp).addImm(LoopSize >> 16));
+      AddDefaultPred(BuildMI(BB, dl,
+                             TII->get(IsThumb2 ? ARM::t2MOVTi16 : ARM::MOVTi16),
+                             varEnd)
+                         .addReg(Vtmp)
+                         .addImm(LoopSize >> 16));
   } else {
     MachineConstantPool *ConstantPool = MF->getConstantPool();
     Type *Int32Ty = Type::getInt32Ty(MF->getFunction()->getContext());

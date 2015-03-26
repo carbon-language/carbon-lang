@@ -1,5 +1,9 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios6.0 | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios6.0 | FileCheck %s -check-prefix=THUMB
+; RUN: llc < %s -mtriple=armv7-unknown-nacl-gnueabi | FileCheck %s -check-prefix=NACL
+; RUN: llc < %s -mtriple=armv5-none-linux-gnueabi | FileCheck %s -check-prefix=NOMOVT
+
+; NOMOVT-NOT: movt
 
 ; rdar://9877866
 %struct.SmallStruct = type { i32, [8 x i32], [37 x i8] }
@@ -33,6 +37,14 @@ entry:
 ; THUMB: sub
 ; THUMB: str
 ; THUMB: bne
+; NACL-LABEL: g:
+; Ensure that use movw instead of constpool for the loop trip count. But don't
+; match the __stack_chk_guard movw
+; NACL: movw r{{[1-9]}}, #
+; NACL: ldr
+; NACL: sub
+; NACL: str
+; NACL: bne
   %st = alloca %struct.LargeStruct, align 4
   %call = call i32 @e2(%struct.LargeStruct* byval %st)
   ret i32 0
@@ -51,6 +63,11 @@ entry:
 ; THUMB: sub
 ; THUMB: vst1
 ; THUMB: bne
+; NACL: movw r{{[1-9]}}, #
+; NACL: vld1
+; NACL: sub
+; NACL: vst1
+; NACL: bne
   %st = alloca %struct.LargeStruct, align 16
   %call = call i32 @e3(%struct.LargeStruct* byval align 16 %st)
   ret i32 0
