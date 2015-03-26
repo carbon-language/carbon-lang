@@ -29,8 +29,8 @@ void ARMTargetHandler::registerRelocationNames(Registry &registry) {
 std::unique_ptr<Writer> ARMTargetHandler::getWriter() {
   switch (this->_context.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(
-        new ARMExecutableWriter<ARMELFType>(_context, *_armTargetLayout.get()));
+    return llvm::make_unique<ARMExecutableWriter<ARMELFType>>(
+        _context, *_armTargetLayout.get());
   default:
     llvm_unreachable("unsupported output type");
   }

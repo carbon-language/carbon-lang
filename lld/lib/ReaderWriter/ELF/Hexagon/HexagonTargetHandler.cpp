@@ -28,13 +28,11 @@ HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
 std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
   switch (_hexagonLinkingContext.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(
-        new elf::HexagonExecutableWriter<HexagonELFType>(
-            _hexagonLinkingContext, *_hexagonTargetLayout.get()));
+    return llvm::make_unique<HexagonExecutableWriter<HexagonELFType>>(
+        _hexagonLinkingContext, *_hexagonTargetLayout.get());
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Writer>(
-        new elf::HexagonDynamicLibraryWriter<HexagonELFType>(
-            _hexagonLinkingContext, *_hexagonTargetLayout.get()));
+    return llvm::make_unique<HexagonDynamicLibraryWriter<HexagonELFType>>(
+        _hexagonLinkingContext, *_hexagonTargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

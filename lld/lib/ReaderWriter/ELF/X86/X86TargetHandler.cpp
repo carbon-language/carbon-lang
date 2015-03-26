@@ -21,11 +21,11 @@ using namespace llvm::ELF;
 std::unique_ptr<Writer> X86TargetHandler::getWriter() {
   switch (_x86LinkingContext.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(new X86ExecutableWriter<X86ELFType>(
-        _x86LinkingContext, *_x86TargetLayout.get()));
+    return llvm::make_unique<X86ExecutableWriter<X86ELFType>>(
+        _x86LinkingContext, *_x86TargetLayout.get());
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Writer>(new X86DynamicLibraryWriter<X86ELFType>(
-        _x86LinkingContext, *_x86TargetLayout.get()));
+    return llvm::make_unique<X86DynamicLibraryWriter<X86ELFType>>(
+        _x86LinkingContext, *_x86TargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

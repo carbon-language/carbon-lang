@@ -116,11 +116,11 @@ public:
   MipsTargetLayout<ELFT> &getTargetLayout() override { return *_targetLayout; }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new MipsELFObjectReader<ELFT>(_ctx));
+    return llvm::make_unique<MipsELFObjectReader<ELFT>>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new MipsELFDSOReader<ELFT>(_ctx));
+    return llvm::make_unique<MipsELFDSOReader<ELFT>>(_ctx);
   }
 
   const TargetRelocationHandler &getRelocationHandler() const override {
@@ -130,11 +130,11 @@ public:
   std::unique_ptr<Writer> getWriter() override {
     switch (_ctx.getOutputELFType()) {
     case llvm::ELF::ET_EXEC:
-      return std::unique_ptr<Writer>(
-          new MipsExecutableWriter<ELFT>(_ctx, *_targetLayout));
+      return llvm::make_unique<MipsExecutableWriter<ELFT>>(
+          _ctx, *_targetLayout);
     case llvm::ELF::ET_DYN:
-      return std::unique_ptr<Writer>(
-          new MipsDynamicLibraryWriter<ELFT>(_ctx, *_targetLayout));
+      return llvm::make_unique<MipsDynamicLibraryWriter<ELFT>>(
+          _ctx, *_targetLayout);
     case llvm::ELF::ET_REL:
       llvm_unreachable("TODO: support -r mode");
     default:

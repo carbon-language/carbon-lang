@@ -29,12 +29,11 @@ void AArch64TargetHandler::registerRelocationNames(Registry &registry) {
 std::unique_ptr<Writer> AArch64TargetHandler::getWriter() {
   switch (this->_context.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(new AArch64ExecutableWriter<AArch64ELFType>(
-        _context, *_AArch64TargetLayout.get()));
+    return llvm::make_unique<AArch64ExecutableWriter<AArch64ELFType>>(
+        _context, *_AArch64TargetLayout.get());
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Writer>(
-        new AArch64DynamicLibraryWriter<AArch64ELFType>(
-            _context, *_AArch64TargetLayout.get()));
+    return llvm::make_unique<AArch64DynamicLibraryWriter<AArch64ELFType>>(
+        _context, *_AArch64TargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

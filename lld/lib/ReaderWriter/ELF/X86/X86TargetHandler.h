@@ -42,11 +42,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new X86ELFObjectReader(_x86LinkingContext));
+    return llvm::make_unique<X86ELFObjectReader>(_x86LinkingContext);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new X86ELFDSOReader(_x86LinkingContext));
+    return llvm::make_unique<X86ELFDSOReader>(_x86LinkingContext);
   }
 
   std::unique_ptr<Writer> getWriter() override;

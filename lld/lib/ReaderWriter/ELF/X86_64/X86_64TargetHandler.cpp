@@ -29,11 +29,11 @@ void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
 std::unique_ptr<Writer> X86_64TargetHandler::getWriter() {
   switch (this->_context.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(
-        new X86_64ExecutableWriter(_context, *_x86_64TargetLayout.get()));
+    return llvm::make_unique<X86_64ExecutableWriter>(
+        _context, *_x86_64TargetLayout.get());
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Writer>(
-        new X86_64DynamicLibraryWriter(_context, *_x86_64TargetLayout.get()));
+    return llvm::make_unique<X86_64DynamicLibraryWriter>(
+        _context, *_x86_64TargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:
