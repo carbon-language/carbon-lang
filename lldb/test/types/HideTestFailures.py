@@ -31,13 +31,13 @@ class DebugIntegerTypesFailures(TestBase):
             pass
 
     def tearDown(self):
-        # Call super's tearDown().
-        TestBase.tearDown(self)
         # If we're lucky, test_long_type_with_dsym fails.
         # Let's turn off logging just for that.
         if "test_long_type_with_dsym" in self.id():
             self.runCmd("log disable lldb")
             self.runCmd("log disable gdb-remote")
+        # Call super's tearDown().
+        TestBase.tearDown(self)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_char_type_with_dsym(self):

@@ -33,10 +33,10 @@ class GenericTester(TestBase):
 
     def tearDown(self):
         """Cleanup the test byproducts."""
-        TestBase.tearDown(self)
         #print "Removing golden-output.txt..."
         if os.path.exists(self.golden_filename):
             os.remove(self.golden_filename)
+        TestBase.tearDown(self)
 
     #==========================================================================#
     # Functions build_and_run() and build_and_run_expr() are generic functions #
@@ -176,6 +176,7 @@ class GenericTester(TestBase):
             nv = ("%s = '%s'" if quotedDisplay else "%s = %s") % (var, val)
             self.expect(output, Msg(var, val, True), exe=False,
                 substrs = [nv])
+        pass
 
     def generic_type_expr_tester(self, exe_name, atoms, quotedDisplay=False, blockCaptured=False):
         """Test that variable expressions with basic types are evaluated correctly."""
@@ -259,3 +260,4 @@ class GenericTester(TestBase):
             valPart = ("'%s'" if quotedDisplay else "%s") % val
             self.expect(output, Msg(var, val, False), exe=False,
                 substrs = [valPart])
+        pass

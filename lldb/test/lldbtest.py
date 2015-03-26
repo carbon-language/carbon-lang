@@ -339,41 +339,41 @@ def system(commands, **kwargs):
     # Assign the sender object to variable 'test' and remove it from kwargs.
     test = kwargs.pop('sender', None)
 
-    separator = None
-    separator = " && " if os.name == "nt" else "; "
     # [['make', 'clean', 'foo'], ['make', 'foo']] -> ['make clean foo', 'make foo']
     commandList = [' '.join(x) for x in commands]
-    # ['make clean foo', 'make foo'] -> 'make clean foo; make foo'
-    shellCommand = separator.join(commandList)
+    output = ""
+    error = ""
+    for shellCommand in commandList:
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        if 'shell' in kwargs and kwargs['shell']==False:
+            raise ValueError('shell=False not allowed')
+        process = Popen(shellCommand, stdout=PIPE, stderr=PIPE, shell=True, **kwargs)
+        pid = process.pid
+        this_output, this_error = process.communicate()
+        retcode = process.poll()
 
-    if 'stdout' in kwargs:
-        raise ValueError('stdout argument not allowed, it will be overridden.')
-    if 'shell' in kwargs and kwargs['shell']==False:
-        raise ValueError('shell=False not allowed')
-    process = Popen(shellCommand, stdout=PIPE, stderr=PIPE, shell=True, **kwargs)
-    pid = process.pid
-    output, error = process.communicate()
-    retcode = process.poll()
+        # Enable trace on failure return while tracking down FreeBSD buildbot issues
+        trace = traceAlways
+        if not trace and retcode and sys.platform.startswith("freebsd"):
+            trace = True
 
-    # Enable trace on failure return while tracking down FreeBSD buildbot issues
-    trace = traceAlways
-    if not trace and retcode and sys.platform.startswith("freebsd"):
-        trace = True
+        with recording(test, trace) as sbuf:
+            print >> sbuf
+            print >> sbuf, "os command:", shellCommand
+            print >> sbuf, "with pid:", pid
+            print >> sbuf, "stdout:", output
+            print >> sbuf, "stderr:", error
+            print >> sbuf, "retcode:", retcode
+            print >> sbuf
 
-    with recording(test, trace) as sbuf:
-        print >> sbuf
-        print >> sbuf, "os command:", shellCommand
-        print >> sbuf, "with pid:", pid
-        print >> sbuf, "stdout:", output
-        print >> sbuf, "stderr:", error
-        print >> sbuf, "retcode:", retcode
-        print >> sbuf
-
-    if retcode:
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = shellCommand
-        raise CalledProcessError(retcode, cmd)
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = shellCommand
+            raise CalledProcessError(retcode, cmd)
+        output = output + this_output
+        error = error + this_error
     return (output, error)
 
 def getsource_if_available(obj):
@@ -1899,8 +1899,6 @@ class TestBase(Base):
         #import traceback
         #traceback.print_stack()
 
-        Base.tearDown(self)
-
         # Delete the target(s) from the debugger as a general cleanup step.
         # This includes terminating the process for each target, if any.
         # We'd like to reuse the debugger for our next test without incurring
@@ -1921,6 +1919,9 @@ class TestBase(Base):
             lldb.post_flight(self)
 
         del self.dbg
+
+        # Do this last, to make sure it's in reverse order from how we setup.
+        Base.tearDown(self)
 
     def switch_to_thread_with_stop_reason(self, stop_reason):
         """

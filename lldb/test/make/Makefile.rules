@@ -472,10 +472,9 @@ ifneq "$(DSYM)" ""
 	$(RM) -r "$(DSYM)"
 endif
 ifeq "$(OS)" "Windows_NT"
-	$(RM) "$(EXE).manifest" $(wildcard *.pdb *.ilk)
+	$(RM) $(wildcard *.manifest *.pdb *.ilk)
   ifneq "$(DYLIB_NAME)" ""
-	  $(RM) $(DYLIB_FILENAME).manifest
-	  $(RM) $(DYLIB_NAME).lib $(DYLIB_NAME).exp
+	$(RM) $(DYLIB_NAME).lib $(DYLIB_NAME).exp
   endif
 endif
 
