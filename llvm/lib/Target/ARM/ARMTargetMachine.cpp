@@ -37,6 +37,11 @@ EnableAtomicTidy("arm-atomic-cfg-tidy", cl::Hidden,
                           " to make use of cmpxchg flow-based information"),
                  cl::init(true));
 
+static cl::opt<bool>
+EnableARMLoadStoreOpt("arm-load-store-opt", cl::Hidden,
+                      cl::desc("Enable ARM load/store optimization pass"),
+                      cl::init(true));
+
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMLETargetMachine> X(TheARMLETarget);
@@ -348,18 +353,22 @@ bool ARMPassConfig::addInstSelector() {
 }
 
 void ARMPassConfig::addPreRegAlloc() {
-  if (getOptLevel() != CodeGenOpt::None)
-    addPass(createARMLoadStoreOptimizationPass(true));
-  if (getOptLevel() != CodeGenOpt::None)
+  if (getOptLevel() != CodeGenOpt::None) {
     addPass(createMLxExpansionPass());
-  if (getOptLevel() != CodeGenOpt::None && !DisableA15SDOptimization) {
-    addPass(createA15SDOptimizerPass());
+
+    if (EnableARMLoadStoreOpt)
+      addPass(createARMLoadStoreOptimizationPass(/* pre-register alloc */ true));
+
+    if (!DisableA15SDOptimization)
+      addPass(createA15SDOptimizerPass());
   }
 }
 
 void ARMPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None) {
-    addPass(createARMLoadStoreOptimizationPass());
+    if (EnableARMLoadStoreOpt)
+      addPass(createARMLoadStoreOptimizationPass());
+
     addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
   }
 
@@ -373,7 +382,7 @@ void ARMPassConfig::addPreSched2() {
       addPass(createThumb2SizeReductionPass());
     if (!getARMSubtarget().isThumb1Only())
       addPass(&IfConverterID);
-   }
+  }
   addPass(createThumb2ITBlockPass());
 }
 
