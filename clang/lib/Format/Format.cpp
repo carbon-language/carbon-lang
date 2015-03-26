@@ -862,6 +862,8 @@ private:
     String->OriginalColumn = Macro->OriginalColumn;
     String->ColumnWidth = encoding::columnWidthWithTabs(
         String->TokenText, String->OriginalColumn, Style.TabWidth, Encoding);
+    String->NewlinesBefore = Macro->NewlinesBefore;
+    String->HasUnescapedNewline = Macro->HasUnescapedNewline;
 
     Tokens.pop_back();
     Tokens.pop_back();
