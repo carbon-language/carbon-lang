@@ -61,7 +61,7 @@ struct ScalarTraits<lld::PowerOf2> {
   static StringRef input(StringRef scalar, void*, lld::PowerOf2 &result) {
     uint32_t value;
     scalar.getAsInteger(10, value);
-    result = lld::PowerOf2(value);
+    result = lld::PowerOf2::create(value);
     return StringRef();
   }
   static bool mustQuote(StringRef) { return false; }
@@ -290,7 +290,7 @@ struct MappingTraits<Section> {
     io.mapRequired("section",         sect.sectionName);
     io.mapRequired("type",            sect.type);
     io.mapOptional("attributes",      sect.attributes);
-    io.mapOptional("alignment",       sect.alignment, lld::PowerOf2(0));
+    io.mapOptional("alignment",       sect.alignment, lld::PowerOf2::create(0));
     io.mapRequired("address",         sect.address);
     if (sect.type == llvm::MachO::S_ZEROFILL) {
       // S_ZEROFILL sections use "size:" instead of "content:"

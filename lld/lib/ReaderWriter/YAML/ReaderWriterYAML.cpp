@@ -509,7 +509,7 @@ template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
     if (scalar.getAsInteger(0, power)) {
       return "malformed alignment power";
     }
-    value.powerOf2 = PowerOf2(llvm::Log2_64(power));
+    value.powerOf2 = PowerOf2::create(llvm::Log2_64(power));
     if (value.modulus >= power) {
       return "malformed alignment, modulus too large for power";
     }
