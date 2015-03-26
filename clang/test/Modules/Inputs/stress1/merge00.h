@@ -9,12 +9,17 @@
 //#pragma weak pragma_weak01 // expected-warning {{weak identifier 'pragma_weak01' never declared}}
 //#pragma weak pragma_weak04 // expected-warning {{weak identifier 'pragma_waek04' never declared}}
 
+#include "common.h"
 #include "m00.h"
 #include "m01.h"
 #include "m02.h"
 #include "m03.h"
 
 inline int g() { return N00::S00('a').method00('b') + (int)S00(42) + function00(42); }
+
+// Use implicit special memebers again for S01 to ensure that we merge them in
+// successfully from m01.
+inline N00::S01 h() { return N00::S01(); }
 
 #pragma weak pragma_weak02
 #pragma weak pragma_weak05

@@ -3786,34 +3786,48 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
   // Sort the names into a stable order.
   std::sort(Names.begin(), Names.end());
 
-  if (isa<CXXRecordDecl>(DC) &&
-      (!ConstructorNameSet.empty() || !ConversionNameSet.empty())) {
+  if (auto *D = dyn_cast<CXXRecordDecl>(DC)) {
     // We need to establish an ordering of constructor and conversion function
-    // names, and they don't have an intrinsic ordering. So when we have these,
-    // we walk all the names in the decl and add the constructors and
-    // conversion functions which are visible in the order they lexically occur
-    // within the context.
-    for (Decl *ChildD : DC->decls())
-      if (auto *ChildND = dyn_cast<NamedDecl>(ChildD)) {
-        auto Name = ChildND->getDeclName();
-        switch (Name.getNameKind()) {
-        default:
-          continue;
+    // names, and they don't have an intrinsic ordering.
 
-        case DeclarationName::CXXConstructorName:
-          if (ConstructorNameSet.erase(Name))
-            Names.push_back(Name);
-          break;
+    // First we try the easy case by forming the current context's constructor
+    // name and adding that name first. This is a very useful optimization to
+    // avoid walking the lexical declarations in many cases, and it also
+    // handles the only case where a constructor name can come from some other
+    // lexical context -- when that name is an implicit constructor merged from
+    // another declaration in the redecl chain. Any non-implicit constructor or
+    // conversion function which doesn't occur in all the lexical contexts
+    // would be an ODR violation.
+    auto ImplicitCtorName = Context->DeclarationNames.getCXXConstructorName(
+        Context->getCanonicalType(Context->getRecordType(D)));
+    if (ConstructorNameSet.erase(ImplicitCtorName))
+      Names.push_back(ImplicitCtorName);
 
-        case DeclarationName::CXXConversionFunctionName:
-          if (ConversionNameSet.erase(Name))
-            Names.push_back(Name);
-          break;
+    // If we still have constructors or conversion functions, we walk all the
+    // names in the decl and add the constructors and conversion functions
+    // which are visible in the order they lexically occur within the context.
+    if (!ConstructorNameSet.empty() || !ConversionNameSet.empty())
+      for (Decl *ChildD : cast<CXXRecordDecl>(DC)->decls())
+        if (auto *ChildND = dyn_cast<NamedDecl>(ChildD)) {
+          auto Name = ChildND->getDeclName();
+          switch (Name.getNameKind()) {
+          default:
+            continue;
+
+          case DeclarationName::CXXConstructorName:
+            if (ConstructorNameSet.erase(Name))
+              Names.push_back(Name);
+            break;
+
+          case DeclarationName::CXXConversionFunctionName:
+            if (ConversionNameSet.erase(Name))
+              Names.push_back(Name);
+            break;
+          }
+
+          if (ConstructorNameSet.empty() && ConversionNameSet.empty())
+            break;
         }
-
-        if (ConstructorNameSet.empty() && ConversionNameSet.empty())
-          break;
-      }
 
     assert(ConstructorNameSet.empty() && "Failed to find all of the visible "
                                          "constructors by walking all the "
