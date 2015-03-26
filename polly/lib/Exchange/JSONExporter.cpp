@@ -223,7 +223,7 @@ bool JSONImporter::runOnScop(Scop &S) {
   isl_set_free(OldContext);
   S.setContext(NewContext);
 
-  StatementToIslMapTy &NewScattering = *(new StatementToIslMapTy());
+  StatementToIslMapTy NewScattering;
 
   int index = 0;
 
