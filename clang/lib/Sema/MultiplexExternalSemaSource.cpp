@@ -276,7 +276,7 @@ void MultiplexExternalSemaSource::ReadPendingInstantiations(
 }
 
 void MultiplexExternalSemaSource::ReadLateParsedTemplates(
-    llvm::DenseMap<const FunctionDecl *, LateParsedTemplate *> &LPTMap) {
+    llvm::MapVector<const FunctionDecl *, LateParsedTemplate *> &LPTMap) {
   for (size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->ReadLateParsedTemplates(LPTMap);
 }

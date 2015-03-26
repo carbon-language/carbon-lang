@@ -4089,11 +4089,10 @@ void ASTWriter::WriteLateParsedTemplates(Sema &SemaRef) {
     return;
 
   RecordData Record;
-  for (Sema::LateParsedTemplateMapT::iterator It = LPTMap.begin(),
-                                              ItEnd = LPTMap.end();
-       It != ItEnd; ++It) {
-    LateParsedTemplate *LPT = It->second;
-    AddDeclRef(It->first, Record);
+  for (auto LPTMapEntry : LPTMap) {
+    const FunctionDecl *FD = LPTMapEntry.first;
+    LateParsedTemplate *LPT = LPTMapEntry.second;
+    AddDeclRef(FD, Record);
     AddDeclRef(LPT->D, Record);
     Record.push_back(LPT->Toks.size());
 
