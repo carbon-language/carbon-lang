@@ -45,9 +45,9 @@ entry:
 !1 = !MDFile(filename: "t1.cpp", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1")
 !2 = !{}
 
-; Extract out each compile unit's single subprogram.  The replaced subprogram's
-; function should drop to null in the first compile unit.
-; CHECK-DAG: ![[SPs1]] = !{![[SP1:[0-9]+]], ![[SP2r:[0-9]+]]}
+; Extract out each compile unit's single subprogram.  The replaced subprogram
+; should be dropped by the first compile unit.
+; CHECK-DAG: ![[SPs1]] = !{![[SP1:[0-9]+]]}
 ; CHECK-DAG: ![[SPs2]] = !{![[SP2:[0-9]+]]}
 !3 = !{!4, !7}
 !4 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 ()* @_Z3foov, variables: !2)
@@ -58,10 +58,6 @@ entry:
 ; subprogram is pointing at the correct function.
 ; CHECK-DAG: ![[SP1]] = !MDSubprogram({{.*}} function: i32 ()* @_Z3foov
 ; CHECK-DAG: ![[SP2]] = !MDSubprogram({{.*}} file: ![[FILE:[0-9]+]],{{.*}} function: i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv
-
-; We can't use CHECK-NOT/CHECK-SAME with a CHECK-DAG, so rely on field order to
-; prove that there's no function: here.
-; CHECK-DAG: ![[SP2r]] = {{.*}}!MDSubprogram({{.*}} isOptimized: false, variables:
 !7 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !8, scope: !9, type: !6, function: i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv, variables: !2)
 
 ; The new subprogram should be pointing at the new directory.
