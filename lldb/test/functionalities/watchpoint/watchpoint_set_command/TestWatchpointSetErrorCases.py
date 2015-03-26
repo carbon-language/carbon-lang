@@ -57,7 +57,7 @@ class WatchpointSetErrorTestCase(TestBase):
                        'variable'])
         self.runCmd("watchpoint set variable -w read_write", check=False)
 
-        # 'watchpoint set expression' with '-w' or '-x' specified now needs
+        # 'watchpoint set expression' with '-w' or '-s' specified now needs
         # an option terminator and a raw expression after that.
         self.expect("watchpoint set expression -w write --", error=True,
             startstr = 'error: ')
@@ -67,7 +67,7 @@ class WatchpointSetErrorTestCase(TestBase):
             startstr = 'error: expression did not evaluate to an address')
 
         # Wrong size parameter is an error.
-        self.expect("watchpoint set variable -x -128", error=True,
+        self.expect("watchpoint set variable -s -128", error=True,
             substrs = ['invalid enumeration value'])
 
 
