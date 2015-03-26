@@ -3318,13 +3318,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-generate-type-units");
   }
 
+  // CloudABI uses -ffunction-sections and -fdata-sections by default.
+  bool UseSeparateSections = Triple.getOS() == llvm::Triple::CloudABI;
+
   if (Args.hasFlag(options::OPT_ffunction_sections,
-                   options::OPT_fno_function_sections, false)) {
+                   options::OPT_fno_function_sections, UseSeparateSections)) {
     CmdArgs.push_back("-ffunction-sections");
   }
 
   if (Args.hasFlag(options::OPT_fdata_sections,
-                   options::OPT_fno_data_sections, false)) {
+                   options::OPT_fno_data_sections, UseSeparateSections)) {
     CmdArgs.push_back("-fdata-sections");
   }
 
