@@ -226,6 +226,8 @@ def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
                                  AssemblerPredicate<"FeatureCrypto", "crypto">;
 def HasCRC           : Predicate<"Subtarget->hasCRC()">,
                                  AssemblerPredicate<"FeatureCRC", "crc">;
+def HasV8_1a         : Predicate<"Subtarget->hasV8_1a()">,
+                                 AssemblerPredicate<"FeatureV8_1a", "v8.1a">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<"FeatureFP16","half-float">;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">,
