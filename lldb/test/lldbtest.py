@@ -584,22 +584,24 @@ def expectedFailurei386(bugnumber=None):
 def expectedFailurex86_64(bugnumber=None):
     if bugnumber: return expectedFailureArch('x86_64', bugnumber)
 
-def expectedFailureOS(os, bugnumber=None, compilers=None):
+def expectedFailureOS(oslist, bugnumber=None, compilers=None):
     def fn(self):
-        return os in sys.platform and self.expectedCompiler(compilers)
+        return (lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2] in oslist and
+                self.expectedCompiler(compilers))
     if bugnumber: return expectedFailure(fn, bugnumber)
 
 def expectedFailureDarwin(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS('darwin', bugnumber, compilers)
+    # For legacy reasons, we support both "darwin" and "macosx" as OS X triples.
+    if bugnumber: return expectedFailureOS(['darwin', 'macosx'], bugnumber, compilers)
 
 def expectedFailureFreeBSD(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS('freebsd', bugnumber, compilers)
+    if bugnumber: return expectedFailureOS(['freebsd'], bugnumber, compilers)
 
 def expectedFailureLinux(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS('linux', bugnumber, compilers)
+    if bugnumber: return expectedFailureOS(['linux'], bugnumber, compilers)
 
 def expectedFailureWindows(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS('win32', bugnumber, compilers)
+    if bugnumber: return expectedFailureOS(['windows'], bugnumber, compilers)
 
 def expectedFailureLLGS(bugnumber=None, compilers=None):
     def fn(self):
@@ -646,7 +648,7 @@ def skipIfFreeBSD(func):
     def wrapper(*args, **kwargs):
         from unittest2 import case
         self = args[0]
-        platform = sys.platform
+        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
         if "freebsd" in platform:
             self.skipTest("skip on FreeBSD")
         else:
@@ -661,7 +663,7 @@ def skipIfLinux(func):
     def wrapper(*args, **kwargs):
         from unittest2 import case
         self = args[0]
-        platform = sys.platform
+        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
         if "linux" in platform:
             self.skipTest("skip on linux")
         else:
@@ -695,8 +697,8 @@ def skipIfWindows(func):
     def wrapper(*args, **kwargs):
         from unittest2 import case
         self = args[0]
-        platform = sys.platform
-        if "win32" in platform:
+        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+        if "windows" in platform:
             self.skipTest("skip on Windows")
         else:
             func(*args, **kwargs)
@@ -710,8 +712,8 @@ def skipIfDarwin(func):
     def wrapper(*args, **kwargs):
         from unittest2 import case
         self = args[0]
-        platform = sys.platform
-        if "darwin" in platform:
+        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+        if "darwin" in platform or "macosx" in platform:
             self.skipTest("skip on darwin")
         else:
             func(*args, **kwargs)
