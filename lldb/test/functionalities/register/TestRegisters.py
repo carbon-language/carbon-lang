@@ -17,6 +17,10 @@ class RegisterCommandsTestCase(TestBase):
         TestBase.setUp(self)
         self.has_teardown = False
 
+    def tearDown(self):
+        self.dbg.GetSelectedTarget().GetProcess().Destroy()
+        TestBase.tearDown(self)
+
     def test_register_commands(self):
         """Test commands related to registers, in particular vector registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:

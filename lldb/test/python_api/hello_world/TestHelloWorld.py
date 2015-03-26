@@ -93,6 +93,12 @@ class HelloWorldTestCase(TestBase):
         self.line1 = line_number('main.c', '// Set break point at this line.')
         self.line2 = line_number('main.c', '// Waiting to be attached...')
 
+    def tearDown(self):
+        # Destroy process before TestBase.tearDown()
+        self.dbg.GetSelectedTarget().GetProcess().Destroy()
+        # Call super's tearDown().
+        TestBase.tearDown(self)
+
     def hello_world_python(self):
         """Create target, breakpoint, launch a process, and then kill it."""
 
