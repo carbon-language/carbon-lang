@@ -1918,10 +1918,12 @@ class TestBase(Base):
         if lldb.post_flight:
             lldb.post_flight(self)
 
-        del self.dbg
-
         # Do this last, to make sure it's in reverse order from how we setup.
         Base.tearDown(self)
+
+        # This must be the last statement, otherwise teardown hooks or other
+        # lines might depend on this still being active.
+        del self.dbg
 
     def switch_to_thread_with_stop_reason(self, stop_reason):
         """
