@@ -731,13 +731,13 @@ ArchHandler &MachOLinkingContext::archHandler() const {
 
 
 void MachOLinkingContext::addSectionAlignment(StringRef seg, StringRef sect,
-                                              PowerOf2 align2) {
+                                              uint16_t align2) {
   SectionAlign entry = { seg, sect, align2 };
   _sectAligns.push_back(entry);
 }
 
 bool MachOLinkingContext::sectionAligned(StringRef seg, StringRef sect,
-                                         PowerOf2 &align2) const {
+                                         uint16_t &align2) const {
   for (const SectionAlign &entry : _sectAligns) {
     if (seg.equals(entry.segmentName) && sect.equals(entry.sectionName)) {
       align2 = entry.align2;

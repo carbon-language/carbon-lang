@@ -58,7 +58,7 @@ struct SectionInfo {
   uint32_t                  attributes;
   uint64_t                  address;
   uint64_t                  size;
-  PowerOf2                  alignment;
+  uint16_t                  alignment;
   std::vector<AtomInfo>     atomsAndOffsets;
   uint32_t                  normalizedSectionIndex;
   uint32_t                  finalSectionIndex;
@@ -69,7 +69,7 @@ SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t,
  : segmentName(sg), sectionName(sct), type(t), attributes(attrs),
                  address(0), size(0), alignment(1),
                  normalizedSectionIndex(0), finalSectionIndex(0) {
-  PowerOf2 align = 1;
+  uint16_t align = 1;
   if (ctxt.sectionAligned(segmentName, sectionName, align)) {
     alignment = align;
   }
@@ -142,7 +142,6 @@ private:
   void         appendSection(SectionInfo *si, NormalizedFile &file);
   uint32_t     sectionIndexForAtom(const Atom *atom);
 
-  static uint64_t alignTo(uint64_t value, PowerOf2 align2);
   typedef llvm::DenseMap<const Atom*, uint32_t> AtomToIndex;
   struct AtomAndIndex { const Atom *atom; uint32_t index; SymbolScope scope; };
   struct AtomSorter {
@@ -453,15 +452,11 @@ void Util::organizeSections() {
 
 }
 
-uint64_t Util::alignTo(uint64_t value, PowerOf2 align2) {
-  return llvm::RoundUpToAlignment(value, align2);
-}
-
 
 void Util::layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr) {
   seg->address = addr;
   for (SectionInfo *sect : seg->sections) {
-    sect->address = alignTo(addr, sect->alignment);
+    sect->address = llvm::RoundUpToAlignment(addr, sect->alignment);
     addr = sect->address + sect->size;
   }
   seg->size = llvm::RoundUpToAlignment(addr - seg->address,_context.pageSize());
@@ -485,7 +480,7 @@ void Util::layoutSectionsInTextSegment(size_t hlcSize, SegmentInfo *seg,
   // Start assigning section address starting at padded offset.
   addr += (padding + hlcSize);
   for (SectionInfo *sect : seg->sections) {
-    sect->address = alignTo(addr, sect->alignment);
+    sect->address = llvm::RoundUpToAlignment(addr, sect->alignment);
     addr = sect->address + sect->size;
   }
   seg->size = llvm::RoundUpToAlignment(addr - seg->address,_context.pageSize());
@@ -528,7 +523,7 @@ void Util::assignAddressesToSections(const NormalizedFile &file) {
     );
   } else {
     for (SectionInfo *sect : _sectionInfos) {
-      sect->address = alignTo(address, sect->alignment);
+      sect->address = llvm::RoundUpToAlignment(address, sect->alignment);
       address = sect->address + sect->size;
     }
     DEBUG_WITH_TYPE("WriterMachO-norm",

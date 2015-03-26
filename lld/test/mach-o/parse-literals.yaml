@@ -14,7 +14,7 @@ sections:
     section:         __cstring
     type:            S_CSTRING_LITERALS
     attributes:      [  ]
-    alignment:       0
+    alignment:       1
     address:         0x0000000000000100
     content:         [ 0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0x74, 0x68, 
                        0x65, 0x72, 0x65, 0x00, 0x77, 0x6F, 0x72, 0x6C, 
@@ -23,7 +23,7 @@ sections:
     section:         __literal4
     type:            S_4BYTE_LITERALS
     attributes:      [  ]
-    alignment:       0
+    alignment:       1
     address:         0x0000000000000114
     content:         [ 0x01, 0x02, 0x03, 0x04, 0x11, 0x12, 0x13, 0x14,
                        0x28, 0x29, 0x2A, 0x2B ]
@@ -31,7 +31,7 @@ sections:
     section:         __literal8
     type:            S_8BYTE_LITERALS
     attributes:      [  ]
-    alignment:       0
+    alignment:       1
     address:         0x0000000000000120
     content:         [ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                        0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F ]
@@ -39,7 +39,7 @@ sections:
     section:         __literal16
     type:            S_16BYTE_LITERALS
     attributes:      [  ]
-    alignment:       0
+    alignment:       1
     address:         0x0000000000000130
     content:         [ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                        0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x00 ]
@@ -47,7 +47,7 @@ sections:
     section:         __ustring
     type:            S_REGULAR
     attributes:      [  ]
-    alignment:       0
+    alignment:       1
     address:         0x0000000000000100
     content:         [ 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 
                        0x6F, 0x00, 0x00, 0x00, 0x74, 0x00, 0x68, 0x00, 

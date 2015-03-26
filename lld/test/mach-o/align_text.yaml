@@ -13,7 +13,7 @@ sections:
     section:         __text
     type:            S_REGULAR
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    alignment:       4
+    alignment:       16
     address:         0x0000000000000000
     content:         [ 0x90, 0x90, 0x90, 0xC3, 0xC3, 0xC3 ]
 local-symbols:

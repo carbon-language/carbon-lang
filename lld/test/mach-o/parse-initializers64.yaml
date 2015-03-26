@@ -22,7 +22,7 @@ sections:
     section:         __mod_init_func
     type:            S_MOD_INIT_FUNC_POINTERS
     attributes:      [  ]
-    alignment:       0
+    alignment:       1
     address:         0x0000000000000100
     content:         [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]
@@ -43,7 +43,7 @@ sections:
     section:         __mod_term_func
     type:            S_MOD_TERM_FUNC_POINTERS
     attributes:      [  ]
-    alignment:       3
+    alignment:       8
     address:         0x0000000000000108
     content:         [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]
     relocations:
