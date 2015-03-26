@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ubsan_platform.h"
+#if CAN_SANITIZE_UB
 #include "ubsan_diag.h"
 #include "ubsan_init.h"
 #include "ubsan_flags.h"
@@ -61,3 +63,5 @@ class UbsanInitializer {
 };
 static UbsanInitializer ubsan_initializer;
 #endif  // SANITIZER_CAN_USE_PREINIT_ARRAY
+
+#endif  // CAN_SANITIZE_UB

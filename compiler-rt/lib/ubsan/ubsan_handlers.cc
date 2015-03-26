@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ubsan_platform.h"
+#if CAN_SANITIZE_UB
 #include "ubsan_handlers.h"
 #include "ubsan_diag.h"
 
@@ -419,3 +421,5 @@ void __ubsan::__ubsan_handle_nonnull_arg_abort(NonNullArgData *Data) {
   handleNonNullArg(Data, Opts);
   Die();
 }
+
+#endif  // CAN_SANITIZE_UB

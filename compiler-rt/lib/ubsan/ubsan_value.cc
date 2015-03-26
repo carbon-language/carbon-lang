@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ubsan_platform.h"
+#if CAN_SANITIZE_UB
 #include "ubsan_value.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -100,3 +102,5 @@ FloatMax Value::getFloatValue() const {
   }
   UNREACHABLE("unexpected floating point bit width");
 }
+
+#endif  // CAN_SANITIZE_UB

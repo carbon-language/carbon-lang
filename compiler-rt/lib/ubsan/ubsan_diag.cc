@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ubsan_platform.h"
+#if CAN_SANITIZE_UB
 #include "ubsan_diag.h"
 #include "ubsan_init.h"
 #include "ubsan_flags.h"
@@ -361,3 +363,5 @@ bool __ubsan::IsVptrCheckSuppressed(const char *TypeName) {
   Suppression *s;
   return suppression_ctx->Match(TypeName, kVptrCheck, &s);
 }
+
+#endif  // CAN_SANITIZE_UB

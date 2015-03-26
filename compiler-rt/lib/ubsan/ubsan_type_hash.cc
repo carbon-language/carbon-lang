@@ -13,6 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ubsan_platform.h"
+#if CAN_SANITIZE_UB
 #include "ubsan_type_hash.h"
 
 #include "sanitizer_common/sanitizer_common.h"
@@ -248,3 +250,5 @@ __ubsan::DynamicTypeInfo __ubsan::getDynamicTypeInfo(void *Object) {
   return DynamicTypeInfo(Vtable->TypeInfo->__type_name, -Vtable->Offset,
                          ObjectType ? ObjectType->__type_name : "<unknown>");
 }
+
+#endif  // CAN_SANITIZE_UB
