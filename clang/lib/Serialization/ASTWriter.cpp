@@ -4359,15 +4359,13 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   // entire table, since later PCH files in a PCH chain are only interested in
   // the results at the end of the chain.
   RecordData WeakUndeclaredIdentifiers;
-  if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
-    for (llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator
-         I = SemaRef.WeakUndeclaredIdentifiers.begin(),
-         E = SemaRef.WeakUndeclaredIdentifiers.end(); I != E; ++I) {
-      AddIdentifierRef(I->first, WeakUndeclaredIdentifiers);
-      AddIdentifierRef(I->second.getAlias(), WeakUndeclaredIdentifiers);
-      AddSourceLocation(I->second.getLocation(), WeakUndeclaredIdentifiers);
-      WeakUndeclaredIdentifiers.push_back(I->second.getUsed());
-    }
+  for (auto &WeakUndeclaredIdentifier : SemaRef.WeakUndeclaredIdentifiers) {
+    IdentifierInfo *II = WeakUndeclaredIdentifier.first;
+    WeakInfo &WI = WeakUndeclaredIdentifier.second;
+    AddIdentifierRef(II, WeakUndeclaredIdentifiers);
+    AddIdentifierRef(WI.getAlias(), WeakUndeclaredIdentifiers);
+    AddSourceLocation(WI.getLocation(), WeakUndeclaredIdentifiers);
+    WeakUndeclaredIdentifiers.push_back(WI.getUsed());
   }
 
   // Build a record containing all of the ext_vector declarations.

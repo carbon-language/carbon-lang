@@ -5019,8 +5019,7 @@ void Sema::ProcessPragmaWeak(Scope *S, Decl *D) {
         ND = FD;
     if (ND) {
       if (IdentifierInfo *Id = ND->getIdentifier()) {
-        llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
-          = WeakUndeclaredIdentifiers.find(Id);
+        auto I = WeakUndeclaredIdentifiers.find(Id);
         if (I != WeakUndeclaredIdentifiers.end()) {
           WeakInfo W = I->second;
           DeclApplyPragmaWeak(S, ND, W);

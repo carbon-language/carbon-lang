@@ -35,4 +35,18 @@ struct S01 {};
 struct S02 {};
 }
 
+#pragma weak pragma_weak00
+#pragma weak pragma_weak01
+#pragma weak pragma_weak02
+#pragma weak pragma_weak03
+#pragma weak pragma_weak04
+#pragma weak pragma_weak05
+
+extern "C" int pragma_weak00();
+extern "C" int pragma_weak01();
+extern "C" int pragma_weak02();
+extern "C" int pragma_weak03;
+extern "C" int pragma_weak04;
+extern "C" int pragma_weak05;
+
 #endif

@@ -524,14 +524,8 @@ void Sema::LoadExternalWeakUndeclaredIdentifiers() {
 
   SmallVector<std::pair<IdentifierInfo *, WeakInfo>, 4> WeakIDs;
   ExternalSource->ReadWeakUndeclaredIdentifiers(WeakIDs);
-  for (unsigned I = 0, N = WeakIDs.size(); I != N; ++I) {
-    llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator Pos
-      = WeakUndeclaredIdentifiers.find(WeakIDs[I].first);
-    if (Pos != WeakUndeclaredIdentifiers.end())
-      continue;
-
-    WeakUndeclaredIdentifiers.insert(WeakIDs[I]);
-  }
+  for (auto &WeakID : WeakIDs)
+    WeakUndeclaredIdentifiers.insert(WeakID);
 }
 
 
@@ -694,16 +688,13 @@ void Sema::ActOnEndOfTranslationUnit() {
   }
 
   // Check for #pragma weak identifiers that were never declared
-  // FIXME: This will cause diagnostics to be emitted in a non-determinstic
-  // order!  Iterating over a densemap like this is bad.
   LoadExternalWeakUndeclaredIdentifiers();
-  for (llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator
-       I = WeakUndeclaredIdentifiers.begin(),
-       E = WeakUndeclaredIdentifiers.end(); I != E; ++I) {
-    if (I->second.getUsed()) continue;
+  for (auto WeakID : WeakUndeclaredIdentifiers) {
+    if (WeakID.second.getUsed())
+      continue;
 
-    Diag(I->second.getLocation(), diag::warn_weak_identifier_undeclared)
-      << I->first;
+    Diag(WeakID.second.getLocation(), diag::warn_weak_identifier_undeclared)
+        << WeakID.first;
   }
 
   if (LangOpts.CPlusPlus11 &&

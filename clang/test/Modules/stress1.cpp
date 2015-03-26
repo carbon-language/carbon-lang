@@ -98,3 +98,8 @@
 #include "merge00.h"
 
 int f() { return N01::S00('a').method00('b') + (int)N00::S00(42) + function00(42) + g(); }
+
+int f2() {
+  return pragma_weak00() + pragma_weak01() + pragma_weak02() +
+         pragma_weak03 + pragma_weak04 + pragma_weak05;
+}
