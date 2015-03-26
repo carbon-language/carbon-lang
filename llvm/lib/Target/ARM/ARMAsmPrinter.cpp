@@ -607,7 +607,7 @@ void ARMAsmPrinter::emitAttributes() {
 
   std::string CPUString = STI.getCPUString();
 
-  if (CPUString != "generic") {
+  if (CPUString.find("generic") != 0) { //CPUString doesn't start with "generic"
     // FIXME: remove krait check when GNU tools support krait cpu
     if (STI.isKrait()) {
       ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, "cortex-a9");
@@ -661,7 +661,8 @@ void ARMAsmPrinter::emitAttributes() {
     // Emit Tag_Advanced_SIMD_arch for ARMv8 architecture
     if (STI.hasV8Ops())
       ATS.emitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                        ARMBuildAttrs::AllowNeonARMv8);
+                        STI.hasV8_1a() ? ARMBuildAttrs::AllowNeonARMv8_1a:
+                                         ARMBuildAttrs::AllowNeonARMv8);
   } else {
     if (STI.hasFPARMv8())
       // FPv5 and FP-ARMv8 have the same instructions, so are modeled as one

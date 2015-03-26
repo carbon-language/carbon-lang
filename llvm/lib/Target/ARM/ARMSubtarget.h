@@ -182,6 +182,9 @@ protected:
   /// HasCRC - if true, processor supports CRC instructions
   bool HasCRC;
 
+  /// HasV8_1a - if true, the processor has V8.1a: PAN and RDMA extensions
+  bool HasV8_1a;
+
   /// If true, the instructions "vmov.i32 d0, #0" and "vmov.i32 q0, #0" are
   /// particularly effective at zeroing a VFP register.
   bool HasZeroCycleZeroing;
@@ -310,6 +313,7 @@ public:
   bool hasNEON() const { return HasNEON;  }
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
+  bool hasV8_1a() const { return HasV8_1a; }
   bool hasVirtualization() const { return HasVirtualization; }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP;

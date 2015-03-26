@@ -106,7 +106,7 @@ enum CPUArch {
   v6_M     = 11,  // e.g. Cortex M1
   v6S_M    = 12,  // v6_M with the System extensions
   v7E_M    = 13,  // v7_M with DSP extensions
-  v8       = 14   // v8, AArch32
+  v8       = 14,  // v8,v8.1a AArch32
 };
 
 enum CPUArchProfile {               // (=7), uleb128
@@ -145,6 +145,7 @@ enum {
   AllowNeon = 1,      // SIMDv1 was permitted
   AllowNeon2 = 2,     // SIMDv2 was permitted (Half-precision FP, MAC operations)
   AllowNeonARMv8 = 3, // ARM v8-A SIMD was permitted
+  AllowNeonARMv8_1a = 4,// ARM v8.1-A SIMD was permitted (RDMA)
 
   // Tag_ABI_PCS_R9_use, (=14), uleb128
   R9IsGPR = 0,        // R9 used as v6 (just another callee-saved register)

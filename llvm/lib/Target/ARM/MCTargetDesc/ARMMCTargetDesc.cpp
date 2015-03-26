@@ -153,6 +153,17 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
       // Use CPU to figure out the exact features
       ARMArchFeature = "+v8";
     break;
+  case Triple::ARMSubArch_v8_1a:
+    if (NoCPU)
+      // v8.1a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
+      //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
+      //      FeatureT2XtPk, FeatureCrypto, FeatureCRC, FeatureV8_1a
+      ARMArchFeature = "+v8.1a,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
+                       "+trustzone,+t2xtpk,+crypto,+crc";
+    else
+      // Use CPU to figure out the exact features
+      ARMArchFeature = "+v8.1a";
+    break;
   case Triple::ARMSubArch_v7m:
     isThumb = true;
     if (NoCPU)

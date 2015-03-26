@@ -96,6 +96,9 @@
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a72 | FileCheck %s --check-prefix=CORTEX-A72
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a72  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-A72-FAST
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a72 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=armv8.1a-linux-gnueabi | FileCheck %s --check-prefix=GENERIC-ARMV8_1-A
+; RUN: llc < %s -mtriple=armv8.1a-linux-gnueabi  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=GENERIC-ARMV8_1-A-FAST
+; RUN: llc < %s -mtriple=armv8.1a-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 | FileCheck %s  --check-prefix=CORTEX-A7-CHECK
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s  --check-prefix=CORTEX-A7-CHECK-FAST
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -mattr=-vfp2,-vfp3,-vfp4,-neon | FileCheck %s --check-prefix=CORTEX-A7-NOFPU
@@ -112,6 +115,10 @@
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=PCS-R9-USE
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -arm-reserve-r9 | FileCheck %s --check-prefix=PCS-R9-RESERVE
 
+; ARMv8.1a (AArch32)
+; RUN: llc < %s -mtriple=armv8.1a-none-linux-gnueabi -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv8.1a-none-linux-gnueabi -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv8.1a-none-linux-gnueabi | FileCheck %s --check-prefix=NO-STRICT-ALIGN
 ; ARMv8a (AArch32)
 ; RUN: llc < %s -mtriple=armv8-none-linux-gnueabi -mcpu=cortex-a57 -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
 ; RUN: llc < %s -mtriple=armv8-none-linux-gnueabi -mcpu=cortex-a57 -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
@@ -1152,6 +1159,35 @@
 ; CORTEX-A72-FAST-NOT:  .eabi_attribute 21
 ; CORTEX-A72-FAST-NOT:  .eabi_attribute 22
 ; CORTEX-A72-FAST:  .eabi_attribute 23, 1
+
+; GENERIC-ARMV8_1-A:  .eabi_attribute 6, 14
+; GENERIC-ARMV8_1-A:  .eabi_attribute 7, 65
+; GENERIC-ARMV8_1-A:  .eabi_attribute 8, 1
+; GENERIC-ARMV8_1-A:  .eabi_attribute 9, 2
+; GENERIC-ARMV8_1-A:  .fpu crypto-neon-fp-armv8
+; GENERIC-ARMV8_1-A:  .eabi_attribute 12, 4
+; GENERIC-ARMV8_1-A-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; GENERIC-ARMV8_1-A:  .eabi_attribute 20, 1
+; GENERIC-ARMV8_1-A:  .eabi_attribute 21, 1
+; GENERIC-ARMV8_1-A-NOT:  .eabi_attribute 22
+; GENERIC-ARMV8_1-A:  .eabi_attribute 23, 3
+; GENERIC-ARMV8_1-A:  .eabi_attribute 24, 1
+; GENERIC-ARMV8_1-A:  .eabi_attribute 25, 1
+; GENERIC-ARMV8_1-A-NOT:  .eabi_attribute 27
+; GENERIC-ARMV8_1-A-NOT:  .eabi_attribute 28
+; GENERIC-ARMV8_1-A:  .eabi_attribute 36, 1
+; GENERIC-ARMV8_1-A:  .eabi_attribute 38, 1
+; GENERIC-ARMV8_1-A:  .eabi_attribute 42, 1
+; GENERIC-ARMV8_1-A-NOT:  .eabi_attribute 44
+; GENERIC-ARMV8_1-A:  .eabi_attribute 68, 3
+
+; GENERIC-ARMV8_1-A-FAST-NOT:   .eabi_attribute 19
+;; GENERIC-ARMV8_1-A has the ARMv8 FP unit, which always flushes preserving sign.
+; GENERIC-ARMV8_1-A-FAST:  .eabi_attribute 20, 2
+; GENERIC-ARMV8_1-A-FAST-NOT:  .eabi_attribute 21
+; GENERIC-ARMV8_1-A-FAST-NOT:  .eabi_attribute 22
+; GENERIC-ARMV8_1-A-FAST:  .eabi_attribute 23, 1
 
 ; RELOC-PIC:  .eabi_attribute 15, 1
 ; RELOC-PIC:  .eabi_attribute 16, 1
