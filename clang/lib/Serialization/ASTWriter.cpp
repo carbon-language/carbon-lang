@@ -3710,57 +3710,6 @@ bool ASTWriter::isLookupResultEntirelyExternal(StoredDeclsList &Result,
   return true;
 }
 
-template<typename Visitor>
-void ASTWriter::visitLocalLookupResults(const DeclContext *ConstDC,
-                                        Visitor AddLookupResult) {
-  // FIXME: We need to build the lookups table, which is logically const.
-  DeclContext *DC = const_cast<DeclContext*>(ConstDC);
-  assert(DC == DC->getPrimaryContext() && "only primary DC has lookup table");
-
-  SmallVector<DeclarationName, 16> ExternalNames;
-  for (auto &Lookup : *DC->buildLookup()) {
-    if (isLookupResultExternal(Lookup.second, DC)) {
-      // If there are no local declarations in our lookup result, we don't
-      // need to write an entry for the name at all unless we're rewriting
-      // the decl context. If we can't write out a lookup set without
-      // performing more deserialization, just skip this entry.
-      if (!isRewritten(cast<Decl>(DC)) &&
-          isLookupResultEntirelyExternal(Lookup.second, DC))
-        continue;
-
-      // We don't know for sure what declarations are found by this name,
-      // because the external source might have a different set from the set
-      // that are in the lookup map, and we can't update it now without
-      // risking invalidating our lookup iterator. So add it to a queue to
-      // deal with later.
-      ExternalNames.push_back(Lookup.first);
-      continue;
-    }
-
-    AddLookupResult(Lookup.first, Lookup.second.getLookupResult());
-  }
-
-  // Add the names we needed to defer. Note, this shouldn't add any new decls
-  // to the list we need to serialize: any new declarations we find here should
-  // be imported from an external source.
-  // FIXME: What if the external source isn't an ASTReader?
-  for (const auto &Name : ExternalNames)
-    AddLookupResult(Name, DC->lookup(Name));
-}
-
-void ASTWriter::AddUpdatedDeclContext(const DeclContext *DC) {
-  if (UpdatedDeclContexts.insert(DC).second && WritingAST) {
-    // Ensure we emit all the visible declarations.
-    // FIXME: This code is almost certainly wrong. It is at least failing to
-    // visit all the decls it should.
-    visitLocalLookupResults(DC, [&](DeclarationName Name,
-                                    DeclContext::lookup_result Result) {
-      for (auto *Decl : Result)
-        GetDeclRef(getDeclForLocalLookup(getLangOpts(), Decl));
-    });
-  }
-}
-
 uint32_t
 ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
                                    llvm::SmallVectorImpl<char> &LookupTable) {
@@ -4388,15 +4337,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
       getIdentifierRef(&Table.get(BuiltinNames[I]));
   }
 
-  // If we saw any DeclContext updates before we started writing the AST file,
-  // make sure all visible decls in those DeclContexts are written out.
-  if (!UpdatedDeclContexts.empty()) {
-    auto OldUpdatedDeclContexts = std::move(UpdatedDeclContexts);
-    UpdatedDeclContexts.clear();
-    for (auto *DC : OldUpdatedDeclContexts)
-      AddUpdatedDeclContext(DC);
-  }
-
   // Build a record containing all of the tentative definitions in this file, in
   // TentativeDefinitions order.  Generally, this record will be empty for
   // headers.
@@ -4861,7 +4801,7 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
 
       case UPD_CXX_INSTANTIATED_CLASS_DEFINITION: {
         auto *RD = cast<CXXRecordDecl>(D);
-        AddUpdatedDeclContext(RD->getPrimaryContext());
+        UpdatedDeclContexts.insert(RD->getPrimaryContext());
         AddCXXDefinitionData(RD, Record);
         Record.push_back(WriteDeclContextLexicalBlock(
             *Context, const_cast<CXXRecordDecl *>(RD)));
@@ -5923,7 +5863,7 @@ void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
 
   assert(!getDefinitiveDeclContext(DC) && "DeclContext not definitive!");
   assert(!WritingAST && "Already writing the AST!");
-  AddUpdatedDeclContext(DC);
+  UpdatedDeclContexts.insert(DC);
   UpdatingVisibleDecls.push_back(D);
 }
 

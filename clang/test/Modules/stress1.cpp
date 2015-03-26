@@ -60,7 +60,7 @@
 // RUN:   -emit-module -fmodule-name=merge00 -o %t/merge00_check.pcm \
 // RUN:   Inputs/stress1/module.modulemap
 //
-// FIXME: diff %t/merge00.pcm %t/merge00_check.pcm
+// RUN: diff %t/merge00.pcm %t/merge00_check.pcm
 //
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
