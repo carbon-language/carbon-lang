@@ -1762,8 +1762,8 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
     // We have already pre-calculated the promotion type, so this is trivial.
     if (ToType->isIntegerType() &&
         !RequireCompleteType(From->getLocStart(), FromType, 0))
-      return Context.hasSameUnqualifiedType(ToType,
-                                FromEnumType->getDecl()->getPromotionType());
+      return Context.hasSameUnqualifiedType(
+          ToType, FromEnumType->getDecl()->getPromotionType());
   }
 
   // C++0x [conv.prom]p2:
@@ -1811,13 +1811,12 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   // other value of that type for promotion purposes (C++ 4.5p3).
   // FIXME: We should delay checking of bit-fields until we actually perform the
   // conversion.
-  using llvm::APSInt;
-  if (From)
+  if (From) {
     if (FieldDecl *MemberDecl = From->getSourceBitField()) {
-      APSInt BitWidth;
+      llvm::APSInt BitWidth;
       if (FromType->isIntegralType(Context) &&
           MemberDecl->getBitWidth()->isIntegerConstantExpr(BitWidth, Context)) {
-        APSInt ToSize(BitWidth.getBitWidth(), BitWidth.isUnsigned());
+        llvm::APSInt ToSize(BitWidth.getBitWidth(), BitWidth.isUnsigned());
         ToSize = Context.getTypeSize(ToType);
 
         // Are we promoting to an int from a bitfield that fits in an int?
@@ -1835,6 +1834,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
         return false;
       }
     }
+  }
 
   // An rvalue of type bool can be converted to an rvalue of type int,
   // with false becoming zero and true becoming one (C++ 4.5p4).
