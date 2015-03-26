@@ -4871,7 +4871,8 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat("SomeMap[std::pair(aaaaaaaaaaaa, bbbbbbbbbbbbbbb)].insert(\n"
                "    ccccccccccccccccccccccc);");
   verifyFormat("aaaaa(aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
-               "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).aaaaa(aaaaa),\n"
+               "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "          .aaaaa(aaaaa),\n"
                "      aaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat("void f() {\n"
                "  aaaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -4905,9 +4906,9 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat("a->aaaaaa()->aaaaaaaaaaa(aaaaaaaa()->aaaaaa()->aaaaa() ||\n"
                "                         aaaaaaaaa()->aaaaaa()->aaaaa());");
 
-  // FIXME: Should we break before .a()?
   verifyFormat("aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
-               "      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).a();");
+               "      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "    .a();");
 
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackParameters = false;

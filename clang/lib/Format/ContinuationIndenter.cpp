@@ -221,8 +221,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
 
   if (startsSegmentOfBuilderTypeCall(Current) &&
       (State.Stack.back().CallContinuation != 0 ||
-       (State.Stack.back().BreakBeforeParameter &&
-        State.Stack.back().ContainsUnwrappedBuilder)))
+       State.Stack.back().BreakBeforeParameter))
     return true;
 
   // The following could be precomputed as they do not depend on the state.
@@ -323,6 +322,8 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   if (startsSegmentOfBuilderTypeCall(Current))
     State.Stack.back().ContainsUnwrappedBuilder = true;
 
+  if (Current.is(TT_LambdaArrow))
+    State.Stack.back().NoLineBreak = true;
   if (Current.isMemberAccess() && Previous.is(tok::r_paren) &&
       (Previous.MatchingParen &&
        (Previous.TotalLength - Previous.MatchingParen->TotalLength > 10))) {

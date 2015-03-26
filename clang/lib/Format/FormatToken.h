@@ -321,7 +321,8 @@ struct FormatToken {
   /// \brief Returns \c true if this is a "." or "->" accessing a member.
   bool isMemberAccess() const {
     return isOneOf(tok::arrow, tok::period, tok::arrowstar) &&
-           !isOneOf(TT_DesignatedInitializerPeriod, TT_TrailingReturnArrow);
+           !isOneOf(TT_DesignatedInitializerPeriod, TT_TrailingReturnArrow,
+                    TT_LambdaArrow);
   }
 
   bool isUnaryOperator() const {

@@ -1624,7 +1624,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(TT_ConditionalExpr))
     return prec::Conditional;
   prec::Level Level = Left.getPrecedence();
-
   if (Level != prec::Unknown)
     return Level;
 
@@ -2098,8 +2097,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   return Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
                       tok::kw_class, tok::kw_struct) ||
-         Right.isMemberAccess() || Right.is(TT_TrailingReturnArrow) ||
-         Right.isOneOf(tok::lessless, tok::colon, tok::l_square, tok::at) ||
+         Right.isMemberAccess() ||
+         Right.isOneOf(TT_TrailingReturnArrow, TT_LambdaArrow, tok::lessless,
+                       tok::colon, tok::l_square, tok::at) ||
          (Left.is(tok::r_paren) &&
           Right.isOneOf(tok::identifier, tok::kw_const)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
