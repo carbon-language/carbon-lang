@@ -601,10 +601,20 @@ public:
                              "Delete one or more targets by target index.",
                              NULL,
                              0),
-        m_option_group (interpreter),
-        m_cleanup_option (LLDB_OPT_SET_1, false, "clean", 'c', "Perform extra cleanup to minimize memory consumption after deleting the target.", false, false)
+        m_option_group(interpreter),
+        m_all_option(LLDB_OPT_SET_1, false, "all", 'a', "Delete all targets.", false, true),
+        m_cleanup_option(
+            LLDB_OPT_SET_1,
+            false,
+            "clean", 'c',
+            "Perform extra cleanup to minimize memory consumption after deleting the target.  "
+            "By default, LLDB will keep in memory any modules previously loaded by the target as well "
+            "as all of its debug info.  Specifying --clean will unload all of these shared modules and "
+            "cause them to be reparsed again the next time the target is run",
+            false, true)
     {
-        m_option_group.Append (&m_cleanup_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append(&m_all_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append(&m_cleanup_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
 
@@ -626,90 +636,89 @@ protected:
         const size_t argc = args.GetArgumentCount();
         std::vector<TargetSP> delete_target_list;
         TargetList &target_list = m_interpreter.GetDebugger().GetTargetList();
-        bool success = true;
         TargetSP target_sp;
-        if (argc > 0)
+
+        if (m_all_option.GetOptionValue())
+        {
+            for (uint32_t i = 0; i < target_list.GetNumTargets(); ++i)
+                delete_target_list.push_back(target_list.GetTargetAtIndex(i));
+        }
+        else if (argc > 0)
         {
             const uint32_t num_targets = target_list.GetNumTargets();
             // Bail out if don't have any targets.
             if (num_targets == 0) {
                 result.AppendError("no targets to delete");
                 result.SetStatus(eReturnStatusFailed);
-                success = false;
+                return false;
             }
 
-            for (uint32_t arg_idx = 0; success && arg_idx < argc; ++arg_idx)
+            for (uint32_t arg_idx = 0; arg_idx < argc; ++arg_idx)
             {
                 const char *target_idx_arg = args.GetArgumentAtIndex(arg_idx);
+                bool success = false;
                 uint32_t target_idx = StringConvert::ToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
-                if (success)
-                {
-                    if (target_idx < num_targets)
-                    {
-                        target_sp = target_list.GetTargetAtIndex (target_idx);
-                        if (target_sp)
-                        {
-                            delete_target_list.push_back (target_sp);
-                            continue;
-                        }
-                    }
-                    if (num_targets > 1)
-                        result.AppendErrorWithFormat ("target index %u is out of range, valid target indexes are 0 - %u\n",
-                                                      target_idx,
-                                                      num_targets - 1);
-                    else
-                        result.AppendErrorWithFormat("target index %u is out of range, the only valid index is 0\n",
-                                                    target_idx);
-
-                    result.SetStatus (eReturnStatusFailed);
-                    success = false;
-                }
-                else
+                if (!success)
                 {
                     result.AppendErrorWithFormat("invalid target index '%s'\n", target_idx_arg);
                     result.SetStatus (eReturnStatusFailed);
-                    success = false;
+                    return false;
                 }
+                if (target_idx < num_targets)
+                {
+                    target_sp = target_list.GetTargetAtIndex (target_idx);
+                    if (target_sp)
+                    {
+                        delete_target_list.push_back (target_sp);
+                        continue;
+                    }
+                }
+                if (num_targets > 1)
+                    result.AppendErrorWithFormat ("target index %u is out of range, valid target indexes are 0 - %u\n",
+                                                    target_idx,
+                                                    num_targets - 1);
+                else
+                    result.AppendErrorWithFormat("target index %u is out of range, the only valid index is 0\n",
+                                                target_idx);
+
+                result.SetStatus (eReturnStatusFailed);
+                return false;
             }
         }
         else
         {
             target_sp = target_list.GetSelectedTarget();
-            if (target_sp)
-            {
-                delete_target_list.push_back (target_sp);
-            }
-            else
+            if (!target_sp)
             {
                 result.AppendErrorWithFormat("no target is currently selected\n");
                 result.SetStatus (eReturnStatusFailed);
-                success = false;
+                return false;
             }
-        }
-        if (success)
-        {
-            const size_t num_targets_to_delete = delete_target_list.size();
-            for (size_t idx = 0; idx < num_targets_to_delete; ++idx)
-            {
-                target_sp = delete_target_list[idx];
-                target_list.DeleteTarget(target_sp);
-                target_sp->Destroy();
-            }
-            // If "--clean" was specified, prune any orphaned shared modules from
-            // the global shared module list
-            if (m_cleanup_option.GetOptionValue ())
-            {
-                const bool mandatory = true;
-                ModuleList::RemoveOrphanSharedModules(mandatory);
-            }
-            result.GetOutputStream().Printf("%u targets deleted.\n", (uint32_t)num_targets_to_delete);
-            result.SetStatus(eReturnStatusSuccessFinishResult);
+            delete_target_list.push_back (target_sp);
         }
 
-        return result.Succeeded();
+        const size_t num_targets_to_delete = delete_target_list.size();
+        for (size_t idx = 0; idx < num_targets_to_delete; ++idx)
+        {
+            target_sp = delete_target_list[idx];
+            target_list.DeleteTarget(target_sp);
+            target_sp->Destroy();
+        }
+        // If "--clean" was specified, prune any orphaned shared modules from
+        // the global shared module list
+        if (m_cleanup_option.GetOptionValue ())
+        {
+            const bool mandatory = true;
+            ModuleList::RemoveOrphanSharedModules(mandatory);
+        }
+        result.GetOutputStream().Printf("%u targets deleted.\n", (uint32_t)num_targets_to_delete);
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+
+        return true;
     }
 
     OptionGroupOptions m_option_group;
+    OptionGroupBoolean m_all_option;
     OptionGroupBoolean m_cleanup_option;
 };
 
