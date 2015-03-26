@@ -484,9 +484,9 @@ template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
   static void output(const lld::DefinedAtom::Alignment &value, void *ctxt,
                      raw_ostream &out) {
     if (value.modulus == 0) {
-      out << llvm::format("%d", 1U << value.powerOf2);
+      out << llvm::format("%d", value.powerOf2.get());
     } else {
-      out << llvm::format("%d mod %d", value.modulus, 1U << value.powerOf2);
+      out << llvm::format("%d mod %d", value.modulus, value.powerOf2.get());
     }
   }
 
@@ -509,7 +509,7 @@ template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
     if (scalar.getAsInteger(0, power)) {
       return "malformed alignment power";
     }
-    value.powerOf2 = llvm::Log2_64(power);
+    value.powerOf2 = PowerOf2(llvm::Log2_64(power));
     if (value.modulus >= power) {
       return "malformed alignment, modulus too large for power";
     }

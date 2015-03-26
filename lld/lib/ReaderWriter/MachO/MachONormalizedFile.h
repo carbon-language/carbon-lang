@@ -114,7 +114,7 @@ struct Section {
   StringRef       sectionName;
   SectionType     type;
   SectionAttr     attributes;
-  uint32_t        alignment;
+  PowerOf2        alignment;
   Hex64           address;
   ArrayRef<uint8_t> content;
   Relocations     relocations;

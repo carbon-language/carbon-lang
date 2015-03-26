@@ -213,7 +213,7 @@ TEST(ObjectFileYAML, oneSection) {
   EXPECT_EQ((uint32_t)(sect.type), (uint32_t)(llvm::MachO::S_REGULAR));
   EXPECT_EQ((uint32_t)(sect.attributes),
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS));
-  EXPECT_EQ(sect.alignment, 1U);
+  EXPECT_EQ(sect.alignment.get(), 2U);
   EXPECT_EQ((uint64_t)sect.address, 0x12345678ULL);
   EXPECT_EQ(sect.content.size(), 2UL);
   EXPECT_EQ((int)(sect.content[0]), 0x90);
@@ -286,7 +286,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
   EXPECT_EQ((uint32_t)(sect1.attributes),
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(sect1.alignment, 0U);
+  EXPECT_EQ(sect1.alignment.get(), 1U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 22UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x55);
@@ -316,7 +316,7 @@ TEST(ObjectFileYAML, hello_x86_64) {
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
-  EXPECT_EQ(sect2.alignment, 0U);
+  EXPECT_EQ(sect2.alignment.get(), 1U);
   EXPECT_EQ((uint64_t)sect2.address, 0x016ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
@@ -417,7 +417,7 @@ TEST(ObjectFileYAML, hello_x86) {
   EXPECT_EQ((uint32_t)(sect1.attributes),
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(sect1.alignment, 0U);
+  EXPECT_EQ(sect1.alignment.get(), 1U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 33UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x55);
@@ -454,7 +454,7 @@ TEST(ObjectFileYAML, hello_x86) {
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
-  EXPECT_EQ(sect2.alignment, 0U);
+  EXPECT_EQ(sect2.alignment.get(), 1U);
   EXPECT_EQ((uint64_t)sect2.address, 0x021ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
@@ -545,7 +545,7 @@ TEST(ObjectFileYAML, hello_armv6) {
   EXPECT_EQ((uint32_t)(sect1.attributes),
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(sect1.alignment, 2U);
+  EXPECT_EQ(sect1.alignment.get(), 4U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 32UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x80);
@@ -582,7 +582,7 @@ TEST(ObjectFileYAML, hello_armv6) {
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
-  EXPECT_EQ(sect2.alignment, 0U);
+  EXPECT_EQ(sect2.alignment.get(), 1U);
   EXPECT_EQ((uint64_t)sect2.address, 0x020ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);
@@ -687,7 +687,7 @@ TEST(ObjectFileYAML, hello_armv7) {
   EXPECT_EQ((uint32_t)(sect1.attributes),
                             (uint32_t)(llvm::MachO::S_ATTR_PURE_INSTRUCTIONS
                                      | llvm::MachO::S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(sect1.alignment, 1U);
+  EXPECT_EQ(sect1.alignment.get(), 2U);
   EXPECT_EQ((uint64_t)sect1.address, 0x0ULL);
   EXPECT_EQ(sect1.content.size(), 22UL);
   EXPECT_EQ((int)(sect1.content[0]), 0x80);
@@ -740,7 +740,7 @@ TEST(ObjectFileYAML, hello_armv7) {
   EXPECT_TRUE(sect2.sectionName.equals("__cstring"));
   EXPECT_EQ((uint32_t)(sect2.type), (uint32_t)(llvm::MachO::S_CSTRING_LITERALS));
   EXPECT_EQ((uint32_t)(sect2.attributes), 0U);
-  EXPECT_EQ(sect2.alignment, 0U);
+  EXPECT_EQ(sect2.alignment.get(), 1U);
   EXPECT_EQ((uint64_t)sect2.address, 0x016ULL);
   EXPECT_EQ(sect2.content.size(), 7UL);
   EXPECT_EQ((int)(sect2.content[0]), 0x68);

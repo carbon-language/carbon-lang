@@ -291,7 +291,7 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
     uint64_t offset = _startOfSectionsContent;
     for (const Section &sect : file.sections) {
       if (sect.type != llvm::MachO::S_ZEROFILL) {
-        offset = llvm::RoundUpToAlignment(offset, 1 << sect.alignment);
+        offset = llvm::RoundUpToAlignment(offset, sect.alignment.get());
         _sectInfo[&sect].fileOffset = offset;
         offset += sect.content.size();
       } else {
@@ -613,7 +613,7 @@ std::error_code MachOFileLayout::writeSingleSegmentLoadCommand(uint8_t *&lc) {
     sout->addr = sin.address;
     sout->size = sin.content.size();
     sout->offset = _sectInfo[&sin].fileOffset;
-    sout->align = sin.alignment;
+    sout->align = llvm::Log2_32(sin.alignment.get());
     sout->reloff = sin.relocations.empty() ? 0 : relOffset;
     sout->nreloc = sin.relocations.size();
     sout->flags = sin.type | sin.attributes;
@@ -661,7 +661,7 @@ std::error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
         sect->offset  = 0;
       else
         sect->offset  = section->address - seg.address + segInfo.fileOffset;
-      sect->align     = section->alignment;
+      sect->align     = llvm::Log2_32(section->alignment.get());
       sect->reloff    = 0;
       sect->nreloc    = 0;
       sect->flags     = section->type | section->attributes;
@@ -1343,4 +1343,3 @@ std::error_code writeBinary(const NormalizedFile &file, StringRef path) {
 } // namespace normalized
 } // namespace mach_o
 } // namespace lld
-

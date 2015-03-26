@@ -53,6 +53,20 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(DataInCode)
 namespace llvm {
 namespace yaml {
 
+template <>
+struct ScalarTraits<lld::PowerOf2> {
+  static void output(const lld::PowerOf2 &value, void*, raw_ostream &out) {
+    out << llvm::format("%d", value);
+  }
+  static StringRef input(StringRef scalar, void*, lld::PowerOf2 &result) {
+    uint32_t value;
+    scalar.getAsInteger(10, value);
+    result = lld::PowerOf2(value);
+    return StringRef();
+  }
+  static bool mustQuote(StringRef) { return false; }
+};
+
 // A vector of Sections is a sequence.
 template<>
 struct SequenceTraits< std::vector<Section> > {
@@ -276,7 +290,7 @@ struct MappingTraits<Section> {
     io.mapRequired("section",         sect.sectionName);
     io.mapRequired("type",            sect.type);
     io.mapOptional("attributes",      sect.attributes);
-    io.mapOptional("alignment",       sect.alignment, 0U);
+    io.mapOptional("alignment",       sect.alignment, lld::PowerOf2(0));
     io.mapRequired("address",         sect.address);
     if (sect.type == llvm::MachO::S_ZEROFILL) {
       // S_ZEROFILL sections use "size:" instead of "content:"
@@ -799,4 +813,3 @@ std::error_code writeYaml(const NormalizedFile &file, raw_ostream &out) {
 } // namespace normalized
 } // namespace mach_o
 } // namespace lld
-

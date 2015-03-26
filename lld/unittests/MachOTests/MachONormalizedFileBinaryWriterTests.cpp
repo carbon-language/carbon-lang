@@ -123,7 +123,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = 4;
+    text.alignment = lld::PowerOf2(4);
     text.address = 0;
     const uint8_t textBytes[] = {
       0xe8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8b, 0x05,
@@ -179,7 +179,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment, 4U);
+  EXPECT_EQ(text.alignment.get(), 16U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(48UL, text.content.size());
   const Relocation& call = text.relocations[0];
@@ -240,7 +240,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = 4;
+    text.alignment = lld::PowerOf2(4);
     text.address = 0;
     const uint8_t textBytes[] = {
        0xe8, 0xfb, 0xff, 0xff, 0xff, 0xa1, 0x00, 0x00,
@@ -290,7 +290,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment, 4U);
+  EXPECT_EQ(text.alignment.get(), 16U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(22UL, text.content.size());
   const Relocation& call = text.relocations[0];
@@ -350,7 +350,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = 2;
+    text.alignment = lld::PowerOf2(2);
     text.address = 0;
     const uint8_t textBytes[] = {
       0xff, 0xf7, 0xfe, 0xef, 0x40, 0xf2, 0x05, 0x01,
@@ -415,7 +415,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment, 2U);
+  EXPECT_EQ(text.alignment.get(), 4U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(18UL, text.content.size());
   const Relocation& blx = text.relocations[0];
@@ -479,7 +479,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = 2;
+    text.alignment = lld::PowerOf2(2);
     text.address = 0;
     const uint8_t textBytes[] = {
       0x48, 0x00, 0x00, 0x01, 0x40, 0x82, 0xff, 0xfc,
@@ -571,7 +571,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment, 2U);
+  EXPECT_EQ(text.alignment.get(), 4U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(44UL, text.content.size());
   const Relocation& br24 = text.relocations[0];
@@ -690,4 +690,3 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   std::error_code ec = llvm::sys::fs::remove(Twine(tmpFl));
   EXPECT_FALSE(ec);
 }
-

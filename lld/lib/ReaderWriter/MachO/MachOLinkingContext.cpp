@@ -732,10 +732,7 @@ ArchHandler &MachOLinkingContext::archHandler() const {
 
 void MachOLinkingContext::addSectionAlignment(StringRef seg, StringRef sect,
                                               PowerOf2 align2) {
-  SectionAlign entry;
-  entry.segmentName = seg;
-  entry.sectionName = sect;
-  entry.align2 = align2;
+  SectionAlign entry = { seg, sect, align2 };
   _sectAligns.push_back(entry);
 }
 

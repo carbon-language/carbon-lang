@@ -312,7 +312,7 @@ private:
   struct SectionAlign {
     StringRef segmentName;
     StringRef sectionName;
-    uint8_t   align2;
+    PowerOf2  align2;
   };
 
   struct OrderFileNode {

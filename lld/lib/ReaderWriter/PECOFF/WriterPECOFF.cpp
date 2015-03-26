@@ -849,10 +849,10 @@ uint64_t AtomChunk::memAlign() const {
   // the section. We restore that here.
   if (_atomLayouts.empty())
     return _ctx.getPageSize();
-  int align = _ctx.getPageSize();
+  unsigned align = _ctx.getPageSize();
   for (auto atomLayout : _atomLayouts) {
     auto *atom = cast<const DefinedAtom>(atomLayout->_atom);
-    align = std::max(align, 1 << atom->alignment().powerOf2);
+    align = std::max(align, (unsigned)atom->alignment().powerOf2.get());
   }
   return align;
 }
@@ -860,7 +860,7 @@ uint64_t AtomChunk::memAlign() const {
 void AtomChunk::appendAtom(const DefinedAtom *atom) {
   // Atom may have to be at a proper alignment boundary. If so, move the
   // pointer to make a room after the last atom before adding new one.
-  _size = llvm::RoundUpToAlignment(_size, 1 << atom->alignment().powerOf2);
+  _size = llvm::RoundUpToAlignment(_size, atom->alignment().powerOf2.get());
 
   // Create an AtomLayout and move the current pointer.
   auto *layout = new (_alloc) AtomLayout(atom, _size, _size);

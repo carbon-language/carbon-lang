@@ -297,7 +297,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           section.type = (SectionType)(read32(&sect->flags, isBig) &
                                        SECTION_TYPE);
           section.attributes  = read32(&sect->flags, isBig) & SECTION_ATTRIBUTES;
-          section.alignment   = read32(&sect->align, isBig);
+          section.alignment   = PowerOf2(read32(&sect->align, isBig));
           section.address     = read64(&sect->addr, isBig);
           const uint8_t *content =
             (const uint8_t *)start + read32(&sect->offset, isBig);
@@ -341,7 +341,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
                                        SECTION_TYPE);
           section.attributes =
               read32((const uint8_t *)&sect->flags, isBig) & SECTION_ATTRIBUTES;
-          section.alignment   = read32(&sect->align, isBig);
+          section.alignment   = PowerOf2(read32(&sect->align, isBig));
           section.address     = read32(&sect->addr, isBig);
           const uint8_t *content =
             (const uint8_t *)start + read32(&sect->offset, isBig);

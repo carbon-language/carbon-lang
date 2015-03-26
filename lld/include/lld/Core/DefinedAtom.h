@@ -30,8 +30,9 @@ class Reference;
 // Once the conversion is done, this class will be removed.
 class PowerOf2 {
 public:
-  PowerOf2(uint16_t v) : _v(v) {}
-  operator uint16_t() const { return _v; }
+  explicit PowerOf2(uint16_t v) : _v(v) {}
+  bool operator==(const PowerOf2 &other) const { return _v == other._v; }
+  uint16_t get() const { return 1 << _v; }
 private:
   uint16_t _v;
 };
@@ -218,12 +219,13 @@ public:
 
   struct Alignment {
     Alignment(int p2, int m = 0) : powerOf2(p2), modulus(m) {}
+    Alignment(PowerOf2 p2, int m = 0) : powerOf2(p2), modulus(m) {}
 
     PowerOf2 powerOf2;
     uint16_t modulus;
 
     bool operator==(const Alignment &rhs) const {
-      return (powerOf2 == rhs.powerOf2) && (modulus == rhs.modulus);
+      return (powerOf2.get() == rhs.powerOf2.get()) && (modulus == rhs.modulus);
     }
   };
 

@@ -44,7 +44,7 @@ public:
     }
     DefinedAtom::Alignment align(
         inSection->alignment,
-        sectionOffset % ((uint64_t)1 << inSection->alignment));
+        sectionOffset % inSection->alignment.get());
     MachODefinedAtom *atom =
         new (allocator()) MachODefinedAtom(*this, name, scope, type, merge,
                                            thumb, noDeadStrip, content, align);
@@ -67,7 +67,7 @@ public:
     }
     DefinedAtom::Alignment align(
         inSection->alignment,
-        sectionOffset % ((uint64_t)1 << inSection->alignment));
+        sectionOffset % inSection->alignment.get());
     MachODefinedCustomSectionAtom *atom =
         new (allocator()) MachODefinedCustomSectionAtom(*this, name, scope, type,
                                                         merge, thumb,
@@ -86,7 +86,7 @@ public:
     }
     DefinedAtom::Alignment align(
         inSection->alignment,
-        sectionOffset % ((uint64_t)1 << inSection->alignment));
+        sectionOffset % inSection->alignment.get());
     MachODefinedAtom *atom =
        new (allocator()) MachODefinedAtom(*this, name, scope, size, noDeadStrip,
                                           align);

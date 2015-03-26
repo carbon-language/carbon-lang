@@ -479,13 +479,13 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                   << alignStr << "' not a valid number\n";
       return false;
     }
-    PowerOf2 align2 = llvm::countTrailingZeros(alignValue);
+    PowerOf2 align2(llvm::countTrailingZeros(alignValue));
     if (!llvm::isPowerOf2_64(alignValue)) {
       diagnostics << "warning: alignment for '-sectalign "
                   << segName << " " << sectName
                   << llvm::format(" 0x%llX", alignValue)
                   << "' is not a power of two, using "
-                  << llvm::format("0x%08X", (1 << align2)) << "\n";
+                  << llvm::format("0x%08X", align2.get()) << "\n";
     }
     ctx.addSectionAlignment(segName, sectName, align2);
   }
