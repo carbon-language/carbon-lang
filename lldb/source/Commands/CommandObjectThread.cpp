@@ -580,8 +580,9 @@ protected:
         if (m_step_type == eStepTypeInto)
         {
             StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
+            assert(frame != nullptr);
 
-            if (frame && frame->HasDebugInformation ())
+            if (frame->HasDebugInformation ())
             {
                 new_plan_sp = thread->QueueThreadPlanForStepInRange (abort_other_plans,
                                                                 frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
