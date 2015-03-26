@@ -16,6 +16,7 @@
 #include "BugDriver.h"
 #include "ToolRunner.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/Pass.h"
@@ -89,6 +90,11 @@ std::unique_ptr<Module> llvm::parseInputFile(StringRef Filename,
   if (!Result) {
     Err.print("bugpoint", errs());
     return Result;
+  }
+
+  if (verifyModule(*Result, &errs())) {
+    errs() << "bugpoint: " << Filename << ": error: does not verify\n";
+    return std::unique_ptr<Module>();
   }
 
   // If we don't have an override triple, use the first one to configure
