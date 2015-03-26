@@ -424,7 +424,8 @@ ParseFreeBSDPrStatus(ThreadData &thread_data, DataExtractor &data,
                      ArchSpec &arch)
 {
     lldb::offset_t offset = 0;
-    bool lp64 = (arch.GetMachine() == llvm::Triple::mips64 ||
+    bool lp64 = (arch.GetMachine() == llvm::Triple::aarch64 ||
+                 arch.GetMachine() == llvm::Triple::mips64 ||
                  arch.GetMachine() == llvm::Triple::ppc64 ||
                  arch.GetMachine() == llvm::Triple::x86_64);
     int pr_version = data.GetU32(&offset);

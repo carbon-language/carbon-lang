@@ -14,6 +14,7 @@ add_lldb_library(lldbPluginProcessUtility
   RegisterContextDarwin_i386.cpp
   RegisterContextDarwin_x86_64.cpp
   RegisterContextDummy.cpp
+  RegisterContextFreeBSD_arm64.cpp
   RegisterContextFreeBSD_i386.cpp
   RegisterContextFreeBSD_mips64.cpp
   RegisterContextFreeBSD_powerpc.cpp
