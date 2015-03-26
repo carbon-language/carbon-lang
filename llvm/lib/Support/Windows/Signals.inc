@@ -174,6 +174,7 @@ static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
 // (such as CTRL/C) occurs.  This causes concurrency issues with the above
 // globals which this critical section addresses.
 static CRITICAL_SECTION CriticalSection;
+static bool CriticalSectionInitialized = false;
 
 static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
                                      HANDLE hThread, STACKFRAME64 &StackFrame,
@@ -290,6 +291,16 @@ extern "C" void HandleAbort(int Sig) {
   }
 }
 
+static void InitializeThreading() {
+  if (CriticalSectionInitialized)
+    return;
+
+  // Now's the time to create the critical section. This is the first time
+  // through here, and there's only one thread.
+  InitializeCriticalSection(&CriticalSection);
+  CriticalSectionInitialized = true;
+}
+
 static void RegisterHandler() {
 #if __MINGW32__ && !defined(__MINGW64_VERSION_MAJOR)
   // On MinGW.org, we need to load up the symbols explicitly, because the
@@ -308,9 +319,7 @@ static void RegisterHandler() {
     return;
   }
 
-  // Now's the time to create the critical section.  This is the first time
-  // through here, and there's only one thread.
-  InitializeCriticalSection(&CriticalSection);
+  InitializeThreading();
 
   // Enter it immediately.  Now if someone hits CTRL/C, the console handler
   // can't proceed until the globals are updated.
@@ -456,6 +465,11 @@ static void Cleanup() {
 }
 
 void llvm::sys::RunInterruptHandlers() {
+  // The interrupt handler may be called from an interrupt, but it may also be
+  // called manually (such as the case of report_fatal_error with no registered
+  // error handler). We must ensure that the critical section is properly
+  // initialized.
+  InitializeThreading();
   Cleanup();
 }
 
