@@ -1137,6 +1137,8 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
     default:
       return "strongarm";
     }
+  case llvm::Triple::NaCl:
+    return "cortex-a8";
   default:
     switch (getEnvironment()) {
     case llvm::Triple::EABIHF:
