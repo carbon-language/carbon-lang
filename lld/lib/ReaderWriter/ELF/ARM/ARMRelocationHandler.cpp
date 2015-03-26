@@ -498,3 +498,4 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
 
   return std::error_code();
 }
+
