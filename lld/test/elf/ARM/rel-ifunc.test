@@ -14,7 +14,6 @@
 # CHECK: Contents of section .got.plt:
 # CHECK: 401000 c4004000
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400080 l     F .plt	0000000c __plt_ifunc_myfunc
 # CHECK: 004000c4 g       .text	00000020 myfunc
 # CHECK: 00400074 g       *ABS*	00000000 __rel_iplt_start
 # CHECK: 0040007c g       *ABS*	00000000 __rel_iplt_end
