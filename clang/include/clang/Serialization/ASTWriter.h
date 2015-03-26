@@ -358,7 +358,7 @@ private:
   /// coming from another AST file.
   SmallVector<const Decl *, 16> UpdatingVisibleDecls;
 
-  typedef llvm::SmallPtrSet<const Decl *, 16> DeclsToRewriteTy;
+  typedef llvm::SmallSetVector<const Decl *, 16> DeclsToRewriteTy;
   /// \brief Decls that will be replaced in the current dependent AST file.
   DeclsToRewriteTy DeclsToRewrite;
 
