@@ -1628,7 +1628,7 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
             continue;
 
         const MIuint threadIndexID = thread.GetIndexID();
-        const bool bFound = std::find(rSessionInfo.m_vecActiveThreadId.begin(), rSessionInfo.m_vecActiveThreadId.end(), threadIndexID) != rSessionInfo.m_vecActiveThreadId.end();
+        const bool bFound = std::find(rSessionInfo.m_vecActiveThreadId.cbegin(), rSessionInfo.m_vecActiveThreadId.cend(), threadIndexID) != rSessionInfo.m_vecActiveThreadId.end();
         if (!bFound)
         {
             rSessionInfo.m_vecActiveThreadId.push_back(threadIndexID);
@@ -1666,8 +1666,8 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
     }
 
     // Check for invalid (removed) threads
-    CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::const_iterator it = rSessionInfo.m_vecActiveThreadId.begin();
-    while (it != rSessionInfo.m_vecActiveThreadId.end())
+    CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::const_iterator it = rSessionInfo.m_vecActiveThreadId.cbegin();
+    while (it != rSessionInfo.m_vecActiveThreadId.cend())
     {
         const MIuint threadIndexID = *it;
         lldb::SBThread thread = sbProcess.GetThreadByIndexID(threadIndexID);
