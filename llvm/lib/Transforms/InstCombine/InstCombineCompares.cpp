@@ -3553,6 +3553,21 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       }
     }
 
+    // (A << C) == (B << C) --> ((A^B) & (~0U >> C)) == 0
+    if (match(Op0, m_OneUse(m_Shl(m_Value(A), m_ConstantInt(Cst1)))) &&
+        match(Op1, m_OneUse(m_Shl(m_Value(B), m_Specific(Cst1))))) {
+      unsigned TypeBits = Cst1->getBitWidth();
+      unsigned ShAmt = (unsigned)Cst1->getLimitedValue(TypeBits);
+      if (ShAmt < TypeBits && ShAmt != 0) {
+        Value *Xor = Builder->CreateXor(A, B, I.getName() + ".unshifted");
+        APInt AndVal = APInt::getLowBitsSet(TypeBits, TypeBits - ShAmt);
+        Value *And = Builder->CreateAnd(Xor, Builder->getInt(AndVal),
+                                        I.getName() + ".mask");
+        return new ICmpInst(I.getPredicate(), And,
+                            Constant::getNullValue(Cst1->getType()));
+      }
+    }
+
     // Transform "icmp eq (trunc (lshr(X, cst1)), cst" to
     // "icmp (and X, mask), cst"
     uint64_t ShAmt = 0;
