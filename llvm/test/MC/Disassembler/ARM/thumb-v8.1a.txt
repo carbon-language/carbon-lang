@@ -1,5 +1,5 @@
-# RUN: llvm-mc -triple thumbv8 -mattr=+v8.1a  --disassemble < %s |& FileCheck %s --check-prefix=CHECK-V81a
-# RUN: not llvm-mc -triple thumbv8 -mattr=+v8 --disassemble < %s |& FileCheck %s --check-prefix=CHECK-V8
+# RUN: llvm-mc -triple thumbv8 -mattr=+v8.1a  --disassemble < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V81a
+# RUN: not llvm-mc -triple thumbv8 -mattr=+v8 --disassemble < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V8
 
 [0x11,0xff,0x12,0x0b]
 # CHECK-V81a: vqrdmlah.s16  d0, d1, d2

@@ -3,8 +3,8 @@
 //RUN: not llvm-mc -triple arm-none-linux-gnu -mattr=+v8.1a -mattr=neon -show-encoding < %s 2>%t | FileCheck %s --check-prefix=CHECK-V81aARM
 //RUN: FileCheck --check-prefix=CHECK-ERROR <%t %s
 
-//RUN: not llvm-mc -triple thumb-none-linux-gnu -mattr=+v8 -mattr=neon -show-encoding < %s 2>1 |& FileCheck %s --check-prefix=CHECK-V8
-//RUN: not llvm-mc -triple arm-none-linux-gnu -mattr=+v8 -mattr=neon -show-encoding < %s 2>1 |& FileCheck %s --check-prefix=CHECK-V8
+//RUN: not llvm-mc -triple thumb-none-linux-gnu -mattr=+v8 -mattr=neon -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V8
+//RUN: not llvm-mc -triple arm-none-linux-gnu -mattr=+v8 -mattr=neon -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V8
 
 
   .text
