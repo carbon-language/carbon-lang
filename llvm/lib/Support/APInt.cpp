@@ -1511,21 +1511,18 @@ static void KnuthDiv(unsigned *u, unsigned *v, unsigned *q, unsigned* r,
   assert(u && "Must provide dividend");
   assert(v && "Must provide divisor");
   assert(q && "Must provide quotient");
-  assert(u != v && u != q && v != q && "Must us different memory");
+  assert(u != v && u != q && v != q && "Must use different memory");
   assert(n>1 && "n must be > 1");
 
-  // Knuth uses the value b as the base of the number system. In our case b
-  // is 2^31 so we just set it to -1u.
-  uint64_t b = uint64_t(1) << 32;
+  // b denotes the base of the number system. In our case b is 2^32.
+  LLVM_CONSTEXPR uint64_t b = uint64_t(1) << 32;
 
-#if 0
   DEBUG(dbgs() << "KnuthDiv: m=" << m << " n=" << n << '\n');
   DEBUG(dbgs() << "KnuthDiv: original:");
   DEBUG(for (int i = m+n; i >=0; i--) dbgs() << " " << u[i]);
   DEBUG(dbgs() << " by");
   DEBUG(for (int i = n; i >0; i--) dbgs() << " " << v[i-1]);
   DEBUG(dbgs() << '\n');
-#endif
   // D1. [Normalize.] Set d = b / (v[n-1] + 1) and multiply all the digits of
   // u and v by d. Note that we have taken Knuth's advice here to use a power
   // of 2 value for d such that d * v[n-1] >= b/2 (b is the base). A power of
@@ -1550,13 +1547,12 @@ static void KnuthDiv(unsigned *u, unsigned *v, unsigned *q, unsigned* r,
     }
   }
   u[m+n] = u_carry;
-#if 0
+
   DEBUG(dbgs() << "KnuthDiv:   normal:");
   DEBUG(for (int i = m+n; i >=0; i--) dbgs() << " " << u[i]);
   DEBUG(dbgs() << " by");
   DEBUG(for (int i = n; i >0; i--) dbgs() << " " << v[i-1]);
   DEBUG(dbgs() << '\n');
-#endif
 
   // D2. [Initialize j.]  Set j to m. This is the loop counter over the places.
   int j = m;
@@ -1586,44 +1582,33 @@ static void KnuthDiv(unsigned *u, unsigned *v, unsigned *q, unsigned* r,
     // (u[j+n]u[j+n-1]..u[j]) - qp * (v[n-1]...v[1]v[0]). This computation
     // consists of a simple multiplication by a one-place number, combined with
     // a subtraction.
+    // The digits (u[j+n]...u[j]) should be kept positive; if the result of
+    // this step is actually negative, (u[j+n]...u[j]) should be left as the
+    // true value plus b**(n+1), namely as the b's complement of
+    // the true value, and a "borrow" to the left should be remembered.
     bool isNeg = false;
     for (unsigned i = 0; i < n; ++i) {
-      uint64_t u_tmp = uint64_t(u[j+i]) | (uint64_t(u[j+i+1]) << 32);
+      uint64_t u_tmp = (uint64_t(u[j+i+1]) << 32) | uint64_t(u[j+i]);
       uint64_t subtrahend = uint64_t(qp) * uint64_t(v[i]);
       bool borrow = subtrahend > u_tmp;
-      DEBUG(dbgs() << "KnuthDiv: u_tmp == " << u_tmp
-                   << ", subtrahend == " << subtrahend
+      DEBUG(dbgs() << "KnuthDiv: u_tmp = " << u_tmp
+                   << ", subtrahend = " << subtrahend
                    << ", borrow = " << borrow << '\n');
 
       uint64_t result = u_tmp - subtrahend;
       unsigned k = j + i;
-      u[k++] = (unsigned)(result & (b-1)); // subtract low word
-      u[k++] = (unsigned)(result >> 32);   // subtract high word
-      while (borrow && k <= m+n) { // deal with borrow to the left
+      u[k++] = (unsigned)result;         // subtraction low word
+      u[k++] = (unsigned)(result >> 32); // subtraction high word
+      while (borrow && k <= m+n) {       // deal with borrow to the left
         borrow = u[k] == 0;
         u[k]--;
         k++;
       }
       isNeg |= borrow;
-      DEBUG(dbgs() << "KnuthDiv: u[j+i] == " << u[j+i] << ",  u[j+i+1] == " <<
-                    u[j+i+1] << '\n');
+      DEBUG(dbgs() << "KnuthDiv: u[j+i] = " << u[j+i] 
+                   << ", u[j+i+1] = " << u[j+i+1] << '\n');
     }
     DEBUG(dbgs() << "KnuthDiv: after subtraction:");
-    DEBUG(for (int i = m+n; i >=0; i--) dbgs() << " " << u[i]);
-    DEBUG(dbgs() << '\n');
-    // The digits (u[j+n]...u[j]) should be kept positive; if the result of
-    // this step is actually negative, (u[j+n]...u[j]) should be left as the
-    // true value plus b**(n+1), namely as the b's complement of
-    // the true value, and a "borrow" to the left should be remembered.
-    //
-    if (isNeg) {
-      bool carry = true;  // true because b's complement is "complement + 1"
-      for (unsigned i = 0; i <= m+n; ++i) {
-        u[i] = ~u[i] + carry; // b's complement
-        carry = carry && u[i] == 0;
-      }
-    }
-    DEBUG(dbgs() << "KnuthDiv: after complement:");
     DEBUG(for (int i = m+n; i >=0; i--) dbgs() << " " << u[i]);
     DEBUG(dbgs() << '\n');
 
@@ -1647,7 +1632,7 @@ static void KnuthDiv(unsigned *u, unsigned *v, unsigned *q, unsigned* r,
       u[j+n] += carry;
     }
     DEBUG(dbgs() << "KnuthDiv: after correction:");
-    DEBUG(for (int i = m+n; i >=0; i--) dbgs() <<" " << u[i]);
+    DEBUG(for (int i = m+n; i >=0; i--) dbgs() << " " << u[i]);
     DEBUG(dbgs() << "\nKnuthDiv: digit result = " << q[j] << '\n');
 
   // D7. [Loop on j.]  Decrease j by one. Now if j >= 0, go back to D3.
@@ -1680,9 +1665,7 @@ static void KnuthDiv(unsigned *u, unsigned *v, unsigned *q, unsigned* r,
     }
     DEBUG(dbgs() << '\n');
   }
-#if 0
   DEBUG(dbgs() << '\n');
-#endif
 }
 
 void APInt::divide(const APInt LHS, unsigned lhsWords,
@@ -1806,6 +1789,8 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
 
     // The quotient is in Q. Reconstitute the quotient into Quotient's low
     // order words.
+    // This case is currently dead as all users of divide() handle trivial cases
+    // earlier.
     if (lhsWords == 1) {
       uint64_t tmp =
         uint64_t(Q[0]) | (uint64_t(Q[1]) << (APINT_BITS_PER_WORD / 2));
