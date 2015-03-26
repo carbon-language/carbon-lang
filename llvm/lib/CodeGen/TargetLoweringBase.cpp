@@ -829,19 +829,6 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::ConstantFP, MVT::f128, Expand);
 
   // These library functions default to expand.
-  setOperationAction(ISD::FLOG ,  MVT::f16, Expand);
-  setOperationAction(ISD::FLOG2,  MVT::f16, Expand);
-  setOperationAction(ISD::FLOG10, MVT::f16, Expand);
-  setOperationAction(ISD::FEXP ,  MVT::f16, Expand);
-  setOperationAction(ISD::FEXP2,  MVT::f16, Expand);
-  setOperationAction(ISD::FFLOOR, MVT::f16, Expand);
-  setOperationAction(ISD::FMINNUM, MVT::f16, Expand);
-  setOperationAction(ISD::FMAXNUM, MVT::f16, Expand);
-  setOperationAction(ISD::FNEARBYINT, MVT::f16, Expand);
-  setOperationAction(ISD::FCEIL,  MVT::f16, Expand);
-  setOperationAction(ISD::FRINT,  MVT::f16, Expand);
-  setOperationAction(ISD::FTRUNC, MVT::f16, Expand);
-  setOperationAction(ISD::FROUND, MVT::f16, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f32, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f32, Expand);
   setOperationAction(ISD::FLOG10, MVT::f32, Expand);
