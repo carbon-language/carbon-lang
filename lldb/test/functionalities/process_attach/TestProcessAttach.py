@@ -44,6 +44,13 @@ class ProcessAttachTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
 
+    def tearDown(self):
+        # Destroy process before TestBase.tearDown()
+        self.dbg.GetSelectedTarget().GetProcess().Destroy()
+
+        # Call super's tearDown().
+        TestBase.tearDown(self)
+
     def process_attach_by_id(self):
         """Test attach by process id"""
 
