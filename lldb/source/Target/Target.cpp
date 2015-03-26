@@ -3253,6 +3253,7 @@ TargetProperties::SetArg0 (const char *arg)
 {
     const uint32_t idx = ePropertyArg0;
     m_collection_sp->SetPropertyAtIndexAsString (NULL, idx, arg);
+    m_launch_info.SetArg0(arg);
 }
 
 bool
@@ -3267,6 +3268,7 @@ TargetProperties::SetRunArguments (const Args &args)
 {
     const uint32_t idx = ePropertyRunArgs;
     m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, args);
+    m_launch_info.GetArguments() = args;
 }
 
 size_t
@@ -3281,6 +3283,7 @@ TargetProperties::SetEnvironmentFromArgs (const Args &env)
 {
     const uint32_t idx = ePropertyEnvVars;
     m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, env);
+    m_launch_info.GetEnvironmentEntries() = env;
 }
 
 bool
