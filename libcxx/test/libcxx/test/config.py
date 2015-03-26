@@ -349,6 +349,8 @@ class Configuration(object):
         self.configure_compile_flags_exceptions()
         self.configure_compile_flags_rtti()
         self.configure_compile_flags_no_global_filesystem_namespace()
+        self.configure_compile_flags_no_stdin()
+        self.configure_compile_flags_no_stdout()
         enable_32bit = self.get_lit_bool('enable_32bit', False)
         if enable_32bit:
             self.cxx.flags += ['-m32']
@@ -405,6 +407,18 @@ class Configuration(object):
                 'libcpp-has-no-global-filesystem-namespace')
             self.cxx.compile_flags += [
                 '-D_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE']
+
+    def configure_compile_flags_no_stdin(self):
+        enable_stdin = self.get_lit_bool('enable_stdin', True)
+        if not enable_stdin:
+            self.config.available_features.add('libcpp-has-no-stdin')
+            self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_STDIN']
+
+    def configure_compile_flags_no_stdout(self):
+        enable_stdout = self.get_lit_bool('enable_stdout', True)
+        if not enable_stdout:
+            self.config.available_features.add('libcpp-has-no-stdout')
+            self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_STDOUT']
 
     def configure_compile_flags_no_threads(self):
         self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_THREADS']

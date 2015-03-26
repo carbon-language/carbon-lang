@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// XFAIL: libcpp-has-no-stdin
+
 // <iostream>
 
 // istream cin;
@@ -23,6 +25,10 @@ int main()
     std::cin >> i;
     std::cout << "The number is : " << i << '\n';
 #else  // 0
+#ifdef _LIBCPP_HAS_NO_STDOUT
+    assert(std::cin.tie() == NULL);
+#else
     assert(std::cin.tie() == &std::cout);
+#endif
 #endif
 }

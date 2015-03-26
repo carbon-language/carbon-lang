@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// XFAIL: libcpp-has-no-stdin
+
 // <iostream>
 
 // istream wcin;
@@ -23,6 +25,10 @@ int main()
     std::wcin >> i;
     std::wcout << L"The number is : " << i << L'\n';
 #else  // 0
+#ifdef _LIBCPP_HAS_NO_STDOUT
+    assert(std::wcin.tie() == NULL);
+#else
     assert(std::wcin.tie() == &std::wcout);
+#endif
 #endif
 }

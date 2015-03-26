@@ -88,31 +88,17 @@ int main()
     std::size_t s = 0;
     char* cp = 0;
     std::va_list va;
-#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
-    static_assert((std::is_same<decltype(std::remove("")), int>::value), "");
-    static_assert((std::is_same<decltype(std::rename("","")), int>::value), "");
-    static_assert((std::is_same<decltype(std::tmpfile()), std::FILE*>::value), "");
-    static_assert((std::is_same<decltype(std::tmpnam(cp)), char*>::value), "");
-#endif
     static_assert((std::is_same<decltype(std::fclose(fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::fflush(fp)), int>::value), "");
-#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
-    static_assert((std::is_same<decltype(std::fopen("", "")), std::FILE*>::value), "");
-    static_assert((std::is_same<decltype(std::freopen("", "", fp)), std::FILE*>::value), "");
-#endif
     static_assert((std::is_same<decltype(std::setbuf(fp,cp)), void>::value), "");
     static_assert((std::is_same<decltype(std::vfprintf(fp,"",va)), int>::value), "");
     static_assert((std::is_same<decltype(std::fprintf(fp," ")), int>::value), "");
     static_assert((std::is_same<decltype(std::fscanf(fp,"")), int>::value), "");
-    static_assert((std::is_same<decltype(std::printf(" ")), int>::value), "");
-    static_assert((std::is_same<decltype(std::scanf(" ")), int>::value), "");
     static_assert((std::is_same<decltype(std::snprintf(cp,0," ")), int>::value), "");
     static_assert((std::is_same<decltype(std::sprintf(cp," ")), int>::value), "");
     static_assert((std::is_same<decltype(std::sscanf("","")), int>::value), "");
     static_assert((std::is_same<decltype(std::vfprintf(fp,"",va)), int>::value), "");
     static_assert((std::is_same<decltype(std::vfscanf(fp,"",va)), int>::value), "");
-    static_assert((std::is_same<decltype(std::vprintf(" ",va)), int>::value), "");
-    static_assert((std::is_same<decltype(std::vscanf("",va)), int>::value), "");
     static_assert((std::is_same<decltype(std::vsnprintf(cp,0," ",va)), int>::value), "");
     static_assert((std::is_same<decltype(std::vsprintf(cp," ",va)), int>::value), "");
     static_assert((std::is_same<decltype(std::vsscanf("","",va)), int>::value), "");
@@ -121,13 +107,7 @@ int main()
     static_assert((std::is_same<decltype(std::fputc(0,fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::fputs("",fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::getc(fp)), int>::value), "");
-    static_assert((std::is_same<decltype(std::getchar()), int>::value), "");
-#if _LIBCPP_STD_VER <= 11
-    static_assert((std::is_same<decltype(std::gets(cp)), char*>::value), "");
-#endif
     static_assert((std::is_same<decltype(std::putc(0,fp)), int>::value), "");
-    static_assert((std::is_same<decltype(std::putchar(0)), int>::value), "");
-    static_assert((std::is_same<decltype(std::puts("")), int>::value), "");
     static_assert((std::is_same<decltype(std::ungetc(0,fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::fread((void*)0,0,0,fp)), std::size_t>::value), "");
     static_assert((std::is_same<decltype(std::fwrite((const void*)0,0,0,fp)), std::size_t>::value), "");
@@ -140,4 +120,29 @@ int main()
     static_assert((std::is_same<decltype(std::feof(fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::ferror(fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::perror("")), void>::value), "");
+
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
+    static_assert((std::is_same<decltype(std::fopen("", "")), std::FILE*>::value), "");
+    static_assert((std::is_same<decltype(std::freopen("", "", fp)), std::FILE*>::value), "");
+    static_assert((std::is_same<decltype(std::remove("")), int>::value), "");
+    static_assert((std::is_same<decltype(std::rename("","")), int>::value), "");
+    static_assert((std::is_same<decltype(std::tmpfile()), std::FILE*>::value), "");
+    static_assert((std::is_same<decltype(std::tmpnam(cp)), char*>::value), "");
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDIN
+    static_assert((std::is_same<decltype(std::getchar()), int>::value), "");
+#if _LIBCPP_STD_VER <= 11
+    static_assert((std::is_same<decltype(std::gets(cp)), char*>::value), "");
+#endif
+    static_assert((std::is_same<decltype(std::scanf(" ")), int>::value), "");
+    static_assert((std::is_same<decltype(std::vscanf("",va)), int>::value), "");
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDOUT
+    static_assert((std::is_same<decltype(std::printf(" ")), int>::value), "");
+    static_assert((std::is_same<decltype(std::putchar(0)), int>::value), "");
+    static_assert((std::is_same<decltype(std::puts("")), int>::value), "");
+    static_assert((std::is_same<decltype(std::vprintf(" ",va)), int>::value), "");
+#endif
 }

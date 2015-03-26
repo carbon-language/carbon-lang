@@ -144,34 +144,20 @@ using ::FILE;
 using ::fpos_t;
 using ::size_t;
 
-#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
-using ::remove;
-using ::rename;
-using ::tmpfile;
-using ::tmpnam;
-#endif
 using ::fclose;
 using ::fflush;
-#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
-using ::fopen;
-using ::freopen;
-#endif
 using ::setbuf;
 using ::setvbuf;
 using ::fprintf;
 using ::fscanf;
-using ::printf;
-using ::scanf;
 using ::snprintf;
 using ::sprintf;
 using ::sscanf;
 #ifndef _LIBCPP_MSVCRT
 using ::vfprintf;
 using ::vfscanf;
-using ::vscanf;
 using ::vsscanf;
 #endif // _LIBCPP_MSVCRT
-using ::vprintf;
 using ::vsnprintf;
 using ::vsprintf;
 using ::fgetc;
@@ -179,13 +165,7 @@ using ::fgets;
 using ::fputc;
 using ::fputs;
 using ::getc;
-using ::getchar;
-#if _LIBCPP_STD_VER <= 11
-using ::gets;
-#endif
 using ::putc;
-using ::putchar;
-using ::puts;
 using ::ungetc;
 using ::fread;
 using ::fwrite;
@@ -198,6 +178,31 @@ using ::clearerr;
 using ::feof;
 using ::ferror;
 using ::perror;
+
+#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
+using ::fopen;
+using ::freopen;
+using ::remove;
+using ::rename;
+using ::tmpfile;
+using ::tmpnam;
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDIN
+using ::getchar;
+#if _LIBCPP_STD_VER <= 11
+using ::gets;
+#endif
+using ::scanf;
+using ::vscanf;
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDOUT
+using ::printf;
+using ::putchar;
+using ::puts;
+using ::vprintf;
+#endif
 
 _LIBCPP_END_NAMESPACE_STD
 

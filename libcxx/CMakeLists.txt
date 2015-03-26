@@ -55,6 +55,8 @@ option(LIBCXX_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBCXX_ENABLE_CXX1Y "Enable -std=c++1y and use of c++1y language features if the compiler supports it." OFF)
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 option(LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NAMESPACE "Build libc++ with support for the global filesystem namespace." ON)
+option(LIBCXX_ENABLE_STDIN "Build libc++ with support for stdin/std::cin." ON)
+option(LIBCXX_ENABLE_STDOUT "Build libc++ with support for stdout/std::cout." ON)
 option(LIBCXX_ENABLE_THREADS "Build libc++ with support for threads." ON)
 option(LIBCXX_BUILD_32_BITS "Build 32 bit libc++" OFF)
 option(LIBCXX_ENABLE_MONOTONIC_CLOCK
@@ -257,6 +259,16 @@ endif()
 # LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NAMESPACE configuration
 if (NOT LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NAMESPACE)
   add_definitions(-D_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
+endif()
+
+# LIBCXX_ENABLE_STDIN configuration
+if (NOT LIBCXX_ENABLE_STDIN)
+  add_definitions(-D_LIBCPP_HAS_NO_STDIN)
+endif()
+
+# LIBCXX_ENABLE_STDOUT configuration
+if (NOT LIBCXX_ENABLE_STDOUT)
+  add_definitions(-D_LIBCPP_HAS_NO_STDOUT)
 endif()
 
 # LIBCXX_ENABLE_THREADS configuration

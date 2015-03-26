@@ -740,6 +740,13 @@ extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 #endif
 
+// CloudABI is intended for running networked services. Processes do not
+// have standard input and output channels.
+#ifdef __CloudABI__
+#define _LIBCPP_HAS_NO_STDIN
+#define _LIBCPP_HAS_NO_STDOUT
+#endif
+
 #if defined(__ANDROID__) || defined(__CloudABI__)
 #define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 #endif

@@ -50,19 +50,13 @@ int main()
     static_assert((std::is_same<decltype(std::vfwscanf(fp, L"", va)), int>::value), "");
     static_assert((std::is_same<decltype(std::vswprintf(ws, s, L"", va)), int>::value), "");
     static_assert((std::is_same<decltype(std::vswscanf(L"", L"", va)), int>::value), "");
-    static_assert((std::is_same<decltype(std::vwprintf(L"", va)), int>::value), "");
-    static_assert((std::is_same<decltype(std::vwscanf(L"", va)), int>::value), "");
-    static_assert((std::is_same<decltype(std::wprintf(L"")), int>::value), "");
-    static_assert((std::is_same<decltype(std::wscanf(L"")), int>::value), "");
     static_assert((std::is_same<decltype(std::fgetwc(fp)), std::wint_t>::value), "");
     static_assert((std::is_same<decltype(std::fgetws(ws, 0, fp)), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(std::fputwc(L' ', fp)), std::wint_t>::value), "");
     static_assert((std::is_same<decltype(std::fputws(L"", fp)), int>::value), "");
     static_assert((std::is_same<decltype(std::fwide(fp, 0)), int>::value), "");
     static_assert((std::is_same<decltype(std::getwc(fp)), std::wint_t>::value), "");
-    static_assert((std::is_same<decltype(std::getwchar()), std::wint_t>::value), "");
     static_assert((std::is_same<decltype(std::putwc(L' ', fp)), std::wint_t>::value), "");
-    static_assert((std::is_same<decltype(std::putwchar(L' ')), std::wint_t>::value), "");
     static_assert((std::is_same<decltype(std::ungetwc(L' ', fp)), std::wint_t>::value), "");
     static_assert((std::is_same<decltype(std::wcstod(L"", (wchar_t**)0)), double>::value), "");
     static_assert((std::is_same<decltype(std::wcstof(L"", (wchar_t**)0)), float>::value), "");
@@ -106,4 +100,16 @@ int main()
     static_assert((std::is_same<decltype(std::wcrtomb(ns, L' ', &mb)), std::size_t>::value), "");
     static_assert((std::is_same<decltype(std::mbsrtowcs(ws, (const char**)0, s, &mb)), std::size_t>::value), "");
     static_assert((std::is_same<decltype(std::wcsrtombs(ns, (const wchar_t**)0, s, &mb)), std::size_t>::value), "");
+
+#ifndef _LIBCPP_HAS_NO_STDIN
+    static_assert((std::is_same<decltype(std::getwchar()), std::wint_t>::value), "");
+    static_assert((std::is_same<decltype(std::vwscanf(L"", va)), int>::value), "");
+    static_assert((std::is_same<decltype(std::wscanf(L"")), int>::value), "");
+#endif
+
+#ifndef _LIBCPP_HAS_NO_STDOUT
+    static_assert((std::is_same<decltype(std::putwchar(L' ')), std::wint_t>::value), "");
+    static_assert((std::is_same<decltype(std::vwprintf(L"", va)), int>::value), "");
+    static_assert((std::is_same<decltype(std::wprintf(L"")), int>::value), "");
+#endif
 }
