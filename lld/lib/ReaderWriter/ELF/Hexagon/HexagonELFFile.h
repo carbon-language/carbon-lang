@@ -93,8 +93,8 @@ public:
 
   virtual DefinedAtom::Alignment alignment() const {
     if (isSmallCommonSymbol())
-      return DefinedAtom::Alignment(llvm::Log2_64(this->_symbol->st_value));
-    return ELFCommonAtom<ELFT>::alignment();
+      return DefinedAtom::Alignment(this->_symbol->st_value);
+    return 1;
   }
 
   virtual DefinedAtom::ContentPermissions permissions() const {

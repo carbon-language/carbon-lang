@@ -52,7 +52,7 @@ public:
   StringRef name() const override { return _name; }
   Interposable interposable() const override { return interposeNo; }
   Merge merge() const override { return mergeNo; }
-  Alignment alignment() const override { return Alignment(0); }
+  Alignment alignment() const override { return 1; }
   StringRef customSectionName() const override { return ""; }
   DeadStripKind deadStrip() const override { return deadStripNormal; }
 
@@ -102,7 +102,7 @@ public:
                       uint64_t ordinal)
       : COFFBaseDefinedAtom(file, name, Kind::File), _sectionName(sectionName),
         _sectionSize(sectionSize), _scope(scope), _contentType(contentType),
-        _permissions(perms), _ordinal(ordinal), _alignment(0) {}
+        _permissions(perms), _ordinal(ordinal), _alignment(1) {}
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
@@ -189,7 +189,7 @@ public:
   SectionChoice sectionChoice() const override { return sectionBasedOnContent; }
   uint64_t ordinal() const override { return _ordinal; }
   Scope scope() const override { return scopeGlobal; }
-  Alignment alignment() const override { return Alignment(0); }
+  Alignment alignment() const override { return 1; }
   uint64_t size() const override { return _data.size(); }
   ArrayRef<uint8_t> rawContent() const override { return _data; }
 

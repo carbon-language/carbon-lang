@@ -67,7 +67,8 @@ public:
   }
 
   DefinedAtom::Alignment alignment() const override {
-    return DefinedAtom::Alignment(attributes().align2, attributes().alignModulus);
+    return DefinedAtom::Alignment(1 << attributes().align2,
+                                  attributes().alignModulus);
   }
 
   DefinedAtom::SectionChoice sectionChoice() const override {

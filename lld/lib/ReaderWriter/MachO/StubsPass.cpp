@@ -44,7 +44,7 @@ public:
   }
 
   Alignment alignment() const override {
-    return Alignment(_is64 ? 3 : 2);
+    return _is64 ? 8 : 4;
   }
 
   uint64_t size() const override {
@@ -79,7 +79,7 @@ public:
   }
 
   Alignment alignment() const override {
-    return Alignment(_is64 ? 3 : 2);
+    return _is64 ? 8 : 4;
   }
 
   uint64_t size() const override {
@@ -115,7 +115,7 @@ public:
   }
 
   Alignment alignment() const override {
-    return Alignment(_stubInfo.codeAlignment);
+    return 1 << _stubInfo.codeAlignment;
   }
 
   uint64_t size() const override {
@@ -148,7 +148,7 @@ public:
   }
 
   Alignment alignment() const override {
-    return Alignment(_stubInfo.codeAlignment);
+    return 1 << _stubInfo.codeAlignment;
   }
 
   uint64_t size() const override {
@@ -182,7 +182,7 @@ public:
   }
 
   Alignment alignment() const override {
-    return Alignment(_stubInfo.codeAlignment);
+    return 1 << _stubInfo.codeAlignment;
   }
 
   uint64_t size() const override {

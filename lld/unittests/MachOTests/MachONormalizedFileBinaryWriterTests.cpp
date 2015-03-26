@@ -179,7 +179,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment.get(), 16U);
+  EXPECT_EQ((uint16_t)text.alignment, 16U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(48UL, text.content.size());
   const Relocation& call = text.relocations[0];
@@ -290,7 +290,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment.get(), 16U);
+  EXPECT_EQ((uint16_t)text.alignment, 16U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(22UL, text.content.size());
   const Relocation& call = text.relocations[0];
@@ -415,7 +415,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment.get(), 4U);
+  EXPECT_EQ((uint16_t)text.alignment, 4U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(18UL, text.content.size());
   const Relocation& blx = text.relocations[0];
@@ -571,7 +571,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
   EXPECT_EQ(S_REGULAR, text.type);
   EXPECT_EQ(text.attributes,SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS));
-  EXPECT_EQ(text.alignment.get(), 4U);
+  EXPECT_EQ((uint16_t)text.alignment, 4U);
   EXPECT_EQ(text.address, Hex64(0x0));
   EXPECT_EQ(44UL, text.content.size());
   const Relocation& br24 = text.relocations[0];

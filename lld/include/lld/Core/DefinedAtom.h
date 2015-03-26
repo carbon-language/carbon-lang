@@ -32,7 +32,7 @@ class PowerOf2 {
 public:
   PowerOf2(uint16_t v) : _v(v) {}
   bool operator==(const PowerOf2 &other) const { return _v == other._v; }
-  uint16_t get() const { return _v; }
+  operator uint16_t() const { return _v; }
 private:
   uint16_t _v;
 };
@@ -218,14 +218,13 @@ public:
   };
 
   struct Alignment {
-    Alignment(int p2, int m = 0) : powerOf2(1 << p2), modulus(m) {}
-    Alignment(PowerOf2 p2, int m = 0) : powerOf2(p2), modulus(m) {}
+    Alignment(int v, int m = 0) : value(v), modulus(m) {}
 
-    PowerOf2 powerOf2;
+    PowerOf2 value;
     uint16_t modulus;
 
     bool operator==(const Alignment &rhs) const {
-      return (powerOf2.get() == rhs.powerOf2.get()) && (modulus == rhs.modulus);
+      return (value == rhs.value) && (modulus == rhs.modulus);
     }
   };
 

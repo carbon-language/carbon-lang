@@ -759,7 +759,8 @@ normalizedObjectToAtoms(MachOFile *file,
       file->addUndefinedAtom(sym.name, copyRefs);
     } else {
       file->addTentativeDefAtom(sym.name, atomScope(sym.scope), sym.value,
-                               DefinedAtom::Alignment(sym.desc >> 8), copyRefs);
+                                DefinedAtom::Alignment(1 << (sym.desc >> 8)),
+                                copyRefs);
     }
   }
 

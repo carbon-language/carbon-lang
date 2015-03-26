@@ -73,7 +73,7 @@ public:
 
   ContentPermissions permissions() const override { return permR_X; }
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return 4; }
 
   StringRef name() const override { return _name; }
   std::string _name;
@@ -116,7 +116,7 @@ public:
     return llvm::makeArrayRef(ARMGotAtomContent);
   }
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return 4; }
 };
 
 class ELFPassFile : public SimpleFile {

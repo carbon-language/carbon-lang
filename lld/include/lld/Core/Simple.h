@@ -224,7 +224,7 @@ public:
 
   Merge merge() const override { return DefinedAtom::mergeNo; }
 
-  Alignment alignment() const override { return Alignment(0, 0); }
+  Alignment alignment() const override { return 1; }
 
   SectionChoice sectionChoice() const override {
     return DefinedAtom::sectionBasedOnContent;

@@ -1433,9 +1433,7 @@ public:
     return DefinedAtom::typeCode;
   }
 
-  Alignment alignment() const override {
-    return Alignment(2);
-  }
+  Alignment alignment() const override { return 4; }
 
   uint64_t size() const override {
     return 12;
@@ -1479,9 +1477,7 @@ public:
     return DefinedAtom::typeCode;
   }
 
-  Alignment alignment() const override {
-    return Alignment(2);
-  }
+  Alignment alignment() const override { return 4; }
 
   uint64_t size() const override {
     return 16;

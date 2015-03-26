@@ -328,7 +328,7 @@ void Util::appendAtom(SectionInfo *sect, const DefinedAtom *atom) {
   // Figure out offset for atom in this section given alignment constraints.
   uint64_t offset = sect->size;
   DefinedAtom::Alignment atomAlign = atom->alignment();
-  uint64_t align2 = atomAlign.powerOf2.get();
+  uint64_t align2 = atomAlign.value;
   uint64_t requiredModulus = atomAlign.modulus;
   uint64_t currentModulus = (offset % align2);
   if ( currentModulus != requiredModulus ) {
@@ -338,8 +338,8 @@ void Util::appendAtom(SectionInfo *sect, const DefinedAtom *atom) {
       offset += align2+requiredModulus-currentModulus;
   }
   // Record max alignment of any atom in this section.
-  if (align2 > sect->alignment.get())
-    sect->alignment = atomAlign.powerOf2;
+  if (align2 > sect->alignment)
+    sect->alignment = atomAlign.value;
   // Assign atom to this section with this offset.
   AtomInfo ai = {atom, offset};
   sect->atomsAndOffsets.push_back(ai);
@@ -454,7 +454,7 @@ void Util::organizeSections() {
 }
 
 uint64_t Util::alignTo(uint64_t value, PowerOf2 align2) {
-  return llvm::RoundUpToAlignment(value, align2.get());
+  return llvm::RoundUpToAlignment(value, align2);
 }
 
 
@@ -477,7 +477,7 @@ void Util::layoutSectionsInTextSegment(size_t hlcSize, SegmentInfo *seg,
   for (auto it = seg->sections.rbegin(); it != seg->sections.rend(); ++it) {
     SectionInfo *sect = *it;
     taddr -= sect->size;
-    taddr = taddr & (0 - sect->alignment.get());
+    taddr = taddr & (0 - sect->alignment);
   }
   int64_t padding = taddr - hlcSize;
   while (padding < 0)

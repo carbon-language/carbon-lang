@@ -109,7 +109,7 @@ class MipsGOTAtom : public GOTAtom {
 public:
   MipsGOTAtom(const File &f) : GOTAtom(f, ".got") {}
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return 4; }
 };
 
 /// \brief MIPS GOT entry initialized by zero.
@@ -173,7 +173,7 @@ public:
     addReferenceELF_Mips(R_MIPS_32, 0, plt0, 0);
   }
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return 4; }
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsGot0AtomContent).slice(4);
@@ -238,7 +238,7 @@ public:
     addReferenceELF_Mips(R_MICROMIPS_PC23_S2, 0, got, 0);
   }
 
-  Alignment alignment() const override { return Alignment(1); }
+  Alignment alignment() const override { return 2; }
   CodeModel codeModel() const override { return codeMipsMicro; }
 
   ArrayRef<uint8_t> rawContent() const override {

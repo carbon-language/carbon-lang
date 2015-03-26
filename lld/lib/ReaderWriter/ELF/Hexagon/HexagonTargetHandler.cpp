@@ -77,7 +77,7 @@ public:
     return makeArrayRef(hexagonGotAtomContent);
   }
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return 4; }
 };
 
 class HexagonGOTPLTAtom : public GOTAtom {
@@ -88,7 +88,7 @@ public:
     return makeArrayRef(hexagonGotPltAtomContent);
   }
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return 4; }
 };
 
 class HexagonGOTPLT0Atom : public GOTAtom {
@@ -99,7 +99,7 @@ public:
     return makeArrayRef(hexagonGotPlt0AtomContent);
   }
 
-  Alignment alignment() const override { return Alignment(3); }
+  Alignment alignment() const override { return 8; }
 };
 
 class HexagonPLT0Atom : public PLT0Atom {

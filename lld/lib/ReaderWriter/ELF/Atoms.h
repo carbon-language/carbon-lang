@@ -290,7 +290,7 @@ public:
 
   Alignment alignment() const override {
     if (!_symbol)
-      return Alignment(0);
+      return 1;
 
     // Obtain proper value of st_value field.
     const auto symValue = getSymbolValue(_symbol);
@@ -299,13 +299,13 @@ public:
     // st_value.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
-      return Alignment(llvm::Log2_64(symValue));
+      return symValue;
     }
     if (_section->sh_addralign == 0) {
       // sh_addralign of 0 means no alignment
-      return Alignment(0, symValue);
+      return Alignment(1, symValue);
     }
-    return Alignment(llvm::Log2_64(_section->sh_addralign),
+    return Alignment(_section->sh_addralign,
                      symValue % _section->sh_addralign);
   }
 
@@ -485,7 +485,7 @@ public:
   ContentType contentType() const override { return typeConstant; }
 
   Alignment alignment() const override {
-    return Alignment(llvm::Log2_64(_section->sh_addralign));
+    return Alignment(_section->sh_addralign);
   }
 
   SectionChoice sectionChoice() const override { return sectionCustomRequired; }
@@ -561,9 +561,7 @@ public:
 
   ContentType contentType() const override { return typeZeroFill; }
 
-  Alignment alignment() const override {
-    return Alignment(llvm::Log2_64(_symbol->st_value));
-  }
+  Alignment alignment() const override { return Alignment(_symbol->st_value); }
 
   SectionChoice sectionChoice() const override { return sectionBasedOnContent; }
 
@@ -710,10 +708,7 @@ public:
 
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
-  Alignment alignment() const override {
-    // The alignment should be 8 byte aligned
-    return Alignment(3);
-  }
+  Alignment alignment() const override { return 8; }
 
   StringRef name() const override { return _name; }
 
@@ -740,10 +735,7 @@ public:
 
   ContentPermissions permissions() const override { return permRW_; }
 
-  Alignment alignment() const override {
-    // The alignment should be 8 byte aligned
-    return Alignment(3);
-  }
+  Alignment alignment() const override { return 8; }
 
 #ifndef NDEBUG
   StringRef name() const override { return _name; }
@@ -772,9 +764,7 @@ public:
 
   ContentPermissions permissions() const override { return permR_X; }
 
-  Alignment alignment() const override {
-    return Alignment(4); // 16
-  }
+  Alignment alignment() const override { return 16; }
 
 #ifndef NDEBUG
   StringRef name() const override { return _name; }
@@ -811,10 +801,7 @@ public:
 
   ContentPermissions permissions() const override { return permRW_; }
 
-  Alignment alignment() const override {
-    // Needs 8 byte alignment
-    return Alignment(3);
-  }
+  Alignment alignment() const override { return 8; }
 
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
@@ -839,7 +826,7 @@ public:
 
   ContentPermissions permissions() const override { return permRW_; }
 
-  Alignment alignment() const override { return Alignment(0); }
+  Alignment alignment() const override { return 1; }
 
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };

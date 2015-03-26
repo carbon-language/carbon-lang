@@ -163,7 +163,7 @@ class DelayImportAddressAtom : public IdataAtom {
 public:
   explicit DelayImportAddressAtom(IdataContext &context)
       : IdataAtom(context, createContent(context.ctx)),
-        _align(Alignment(context.ctx.is64Bit() ? 3 : 2)) {}
+        _align(context.ctx.is64Bit() ? 8 : 4) {}
   StringRef customSectionName() const override { return ".data"; }
   ContentPermissions permissions() const override { return permRW_; }
   Alignment alignment() const override { return _align; }
@@ -183,7 +183,7 @@ public:
                   const Atom *descAtom, const Atom *delayLoadHelperAtom);
   StringRef customSectionName() const override { return ".text"; }
   ContentPermissions permissions() const override { return permR_X; }
-  Alignment alignment() const override { return Alignment(0); }
+  Alignment alignment() const override { return 1; }
 
 private:
   std::vector<uint8_t> createContent(MachineTypes machine) const;

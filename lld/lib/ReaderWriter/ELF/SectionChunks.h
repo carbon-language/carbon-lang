@@ -310,7 +310,7 @@ template <class ELFT>
 uint64_t AtomSection<ELFT>::alignOffset(uint64_t offset,
                                         DefinedAtom::Alignment &atomAlign) {
   uint64_t requiredModulus = atomAlign.modulus;
-  uint64_t alignment = atomAlign.powerOf2.get();
+  uint64_t alignment = atomAlign.value;
   uint64_t currentModulus = (offset % alignment);
   uint64_t retOffset = offset;
   if (currentModulus != requiredModulus) {
@@ -330,7 +330,7 @@ const lld::AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
-  uint64_t alignment = atomAlign.powerOf2.get();
+  uint64_t alignment = atomAlign.value;
   // Align the atom to the required modulus/ align the file offset and the
   // memory offset separately this is required so that BSS symbols are handled
   // properly as the BSS symbols only occupy memory size and not file size

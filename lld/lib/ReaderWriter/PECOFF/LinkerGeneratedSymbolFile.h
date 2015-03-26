@@ -35,7 +35,7 @@ public:
   uint64_t ordinal() const override { return _ordinal; }
   Scope scope() const override { return scopeGlobal; }
   ContentType contentType() const override { return typeData; }
-  Alignment alignment() const override { return Alignment(4); }
+  Alignment alignment() const override { return 16; }
   ContentPermissions permissions() const override { return permR__; }
 
 private:

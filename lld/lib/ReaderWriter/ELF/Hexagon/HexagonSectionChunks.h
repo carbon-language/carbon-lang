@@ -38,7 +38,7 @@ public:
   const lld::AtomLayout *appendAtom(const Atom *atom) {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
-    uint64_t alignment = atomAlign.powerOf2.get();
+    uint64_t alignment = atomAlign.value;
     this->_atoms.push_back(new (this->_alloc) lld::AtomLayout(atom, 0, 0));
     // Set the section alignment to the largest alignment
     // std::max doesn't support uint64_t
@@ -57,8 +57,8 @@ void SDataSection<HexagonELFType>::doPreFlight() {
                                                 const lld::AtomLayout * B) {
     const DefinedAtom *definedAtomA = cast<DefinedAtom>(A->_atom);
     const DefinedAtom *definedAtomB = cast<DefinedAtom>(B->_atom);
-    int64_t alignmentA = definedAtomA->alignment().powerOf2.get();
-    int64_t alignmentB = definedAtomB->alignment().powerOf2.get();
+    int64_t alignmentA = definedAtomA->alignment().value;
+    int64_t alignmentB = definedAtomB->alignment().value;
     if (alignmentA == alignmentB) {
       if (definedAtomA->merge() == DefinedAtom::mergeAsTentative)
         return false;

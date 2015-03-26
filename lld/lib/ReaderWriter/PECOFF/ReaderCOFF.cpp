@@ -242,7 +242,7 @@ DefinedAtom::ContentPermissions getPermissions(const coff_section *section) {
 /// aligned by this value in the resulting executable/DLL.
 DefinedAtom::Alignment getAlignment(const coff_section *section) {
   if (section->Characteristics & llvm::COFF::IMAGE_SCN_TYPE_NO_PAD)
-    return DefinedAtom::Alignment(0);
+    return 1;
 
   // Bit [20:24] contains section alignment information. We need to decrease
   // the value stored by 1 in order to get the real exponent (e.g, ALIGN_1BYTE
@@ -254,10 +254,10 @@ DefinedAtom::Alignment getAlignment(const coff_section *section) {
   // in characteristics[20:24], and its output is intended to be copied to .rsrc
   // section with no padding, so I think doing this is the right thing.
   if (characteristics == 0)
-    return DefinedAtom::Alignment(0);
+    return 1;
 
   uint32_t powerOf2 = characteristics - 1;
-  return DefinedAtom::Alignment(powerOf2);
+  return 1 << powerOf2;
 }
 
 DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
@@ -543,9 +543,7 @@ FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
       // Common symbols should be aligned on natural boundaries with the maximum
       // of 32 byte. It's not documented anywhere, but it's what MSVC link.exe
       // seems to be doing.
-      uint64_t alignment = std::min((uint64_t)32, llvm::NextPowerOf2(size));
-      atom->setAlignment(
-          DefinedAtom::Alignment(llvm::countTrailingZeros(alignment)));
+      atom->setAlignment(std::min((uint64_t)32, llvm::NextPowerOf2(size)));
       result.push_back(atom);
       continue;
     }

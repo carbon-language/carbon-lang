@@ -216,7 +216,7 @@ public:
   uint64_t ordinal() const override { return 0; }
   Scope scope() const override { return scopeGlobal; }
   ContentType contentType() const override { return typeCode; }
-  Alignment alignment() const override { return Alignment(1); }
+  Alignment alignment() const override { return 2; }
   ContentPermissions permissions() const override { return permR_X; }
 
 private:

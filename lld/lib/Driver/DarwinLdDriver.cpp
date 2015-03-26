@@ -485,7 +485,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                   << segName << " " << sectName
                   << llvm::format(" 0x%llX", alignValue)
                   << "' is not a power of two, using "
-                  << llvm::format("0x%08X", align2.get()) << "\n";
+                  << llvm::format("0x%08X", align2) << "\n";
     }
     ctx.addSectionAlignment(segName, sectName, align2);
   }

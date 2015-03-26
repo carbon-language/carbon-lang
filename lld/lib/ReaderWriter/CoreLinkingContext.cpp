@@ -43,7 +43,7 @@ public:
 
   ContentType contentType() const override { return DefinedAtom::typeStub; }
 
-  Alignment alignment() const override { return Alignment(0, 0); }
+  Alignment alignment() const override { return 1; }
 
   SectionChoice sectionChoice() const override {
     return DefinedAtom::sectionBasedOnContent;
@@ -104,7 +104,7 @@ public:
 
   ContentType contentType() const override { return DefinedAtom::typeGOT; }
 
-  Alignment alignment() const override { return Alignment(3, 0); }
+  Alignment alignment() const override { return 8; }
 
   SectionChoice sectionChoice() const override {
     return DefinedAtom::sectionBasedOnContent;
