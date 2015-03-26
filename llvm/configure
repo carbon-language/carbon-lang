@@ -1426,6 +1426,9 @@ Optional Features:
   --enable-expensive-checks
                           Compile with expensive debug checks enabled (default
                           is NO)
+  --enable-abi-breaking-checks
+                          Compile with abi-breaking asserts support (default
+                          is with-asserts)
   --enable-debug-runtime  Build runtime libs with debug symbols (default is
                           NO)
   --enable-debug-symbols  Build compiler with debug symbols (default is NO if
@@ -4980,9 +4983,11 @@ fi
 if test ${enableval} = "yes" ; then
   DISABLE_ASSERTIONS=
 
+  assertions_enabled="yes"
 else
   DISABLE_ASSERTIONS=DISABLE_ASSERTIONS=1
 
+  assertions_enabled="no"
 fi
 
 # Check whether --enable-werror was given.
@@ -5022,6 +5027,32 @@ else
   EXPENSIVE_CHECKS=no
 
 fi
+
+# Check whether --enable-abi-breaking-checks was given.
+if test "${enable_abi_breaking_checks+set}" = set; then
+  enableval=$enable_abi_breaking_checks;
+else
+  enableval="with-asserts"
+fi
+
+case "$enableval" in
+  with-asserts)  if test ${assertions_enabled} = "yes" ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define LLVM_ENABLE_ABI_BREAKING_CHECKS 1
+_ACEOF
+
+		 fi ;;
+  yes)
+cat >>confdefs.h <<\_ACEOF
+#define LLVM_ENABLE_ABI_BREAKING_CHECKS 1
+_ACEOF
+ ;;
+  no) ;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-abi-breaking-checks.  Use \"with-asserts\", \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-abi-breaking-checks.  Use \"with-asserts\", \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; }
+esac
 
 # Check whether --enable-debug-runtime was given.
 if test "${enable_debug_runtime+set}" = set; then

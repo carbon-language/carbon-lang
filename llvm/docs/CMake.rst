@@ -270,6 +270,15 @@ LLVM-specific variables
 **LLVM_ENABLE_WERROR**:BOOL
   Stop and fail build, if a compiler warning is triggered. Defaults to OFF.
 
+**LLVM_ABI_BREAKING_CHECKS**:STRING
+  Used to decide if LLVM should be built with ABI breaking checks or
+  not.  Allowed values are `WITH_ASSERTS` (default), `FORCE_ON` and
+  `FORCE_OFF`.  `WITH_ASSERTS` turns on ABI breaking checks in an
+  assertion enabled build.  `FORCE_ON` (`FORCE_OFF`) turns them on
+  (off) irrespective of whether normal (`NDEBUG` based) assertions are
+  enabled or not.  A version of LLVM built with ABI breaking checks
+  is not ABI compatible with a version built without it.
+
 **LLVM_BUILD_32_BITS**:BOOL
   Build 32-bits executables and libraries on 64-bits systems. This option is
   available only on some 64-bits unix systems. Defaults to OFF.

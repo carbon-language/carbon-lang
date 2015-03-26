@@ -78,6 +78,20 @@ if( LLVM_ENABLE_ASSERTIONS )
   endif()
 endif()
 
+string(TOUPPER "${LLVM_ABI_BREAKING_CHECKS}" uppercase_LLVM_ABI_BREAKING_CHECKS)
+
+if( uppercase_LLVM_ABI_BREAKING_CHECKS STREQUAL "WITH_ASSERTS" )
+  if( LLVM_ENABLE_ASSERTIONS )
+    set( LLVM_ENABLE_ABI_BREAKING_CHECKS 1 )
+  endif()
+elseif( uppercase_LLVM_ABI_BREAKING_CHECKS STREQUAL "FORCE_ON" )
+  set( LLVM_ENABLE_ABI_BREAKING_CHECKS 1 )
+elseif( uppercase_LLVM_ABI_BREAKING_CHECKS STREQUAL "FORCE_OFF" )
+  # We don't need to do anything special to turn off ABI breaking checks.
+else()
+  message(FATAL_ERROR "Unknown value for LLVM_ABI_BREAKING_CHECKS: \"${LLVM_ABI_BREAKING_CHECKS}\"!")
+endif()
+
 if(WIN32)
   set(LLVM_HAVE_LINK_VERSION_SCRIPT 0)
   if(CYGWIN)

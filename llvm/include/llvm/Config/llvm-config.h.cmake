@@ -101,4 +101,8 @@
 /* Define if we link Polly to the tools */
 #cmakedefine LINK_POLLY_INTO_TOOLS
 
+/* Define if LLVM is built with asserts and checks that change the layout of
+   client-visible data structures.  */
+#cmakedefine LLVM_ENABLE_ABI_BREAKING_CHECKS
+
 #endif

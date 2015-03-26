@@ -701,8 +701,10 @@ AC_ARG_ENABLE(assertions,AS_HELP_STRING(
   --enable-assertions,[Compile with assertion checks enabled (default is YES)]),, enableval="yes")
 if test ${enableval} = "yes" ; then
   AC_SUBST(DISABLE_ASSERTIONS,[[]])
+  assertions_enabled="yes"
 else
   AC_SUBST(DISABLE_ASSERTIONS,[[DISABLE_ASSERTIONS=1]])
+  assertions_enabled="no"
 fi
 
 dnl --enable-werror : check whether we want Werror on by default
@@ -725,6 +727,20 @@ else
   AC_SUBST(ENABLE_EXPENSIVE_CHECKS,[[]])
   AC_SUBST(EXPENSIVE_CHECKS,[[no]])
 fi
+
+dnl --enable-abi-breaking-checks : decide whether we should compile in asserts and
+dnl checks that make the build ABI incompatible with an llvm built without these
+dnl checks enabled.
+AC_ARG_ENABLE(abi-breaking-checks,AS_HELP_STRING(
+  --enable-abi-breaking-checks,[Compile with abi-breaking asserts support (default is with-asserts)]),, enableval="with-asserts")
+case "$enableval" in
+  with-asserts)  if test ${assertions_enabled} = "yes" ; then
+                   AC_DEFINE([LLVM_ENABLE_ABI_BREAKING_CHECKS],[1],[Define to enable checks that alter the LLVM C++ ABI])
+		 fi ;;
+  yes) AC_DEFINE([LLVM_ENABLE_ABI_BREAKING_CHECKS],[1],[Define to enable checks that alter the LLVM C++ ABI]) ;;
+  no) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-abi-breaking-checks.  Use "with-asserts", "yes" or "no"])
+esac
 
 dnl --enable-debug-runtime : should runtime libraries have debug symbols?
 AC_ARG_ENABLE(debug-runtime,
