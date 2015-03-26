@@ -93,36 +93,6 @@ The pattern isel got this one right.
 
 //===---------------------------------------------------------------------===//
 
-SSE should implement 'select_cc' using 'emulated conditional moves' that use
-pcmp/pand/pandn/por to do a selection instead of a conditional branch:
-
-double %X(double %Y, double %Z, double %A, double %B) {
-        %C = setlt double %A, %B
-        %z = fadd double %Z, 0.0    ;; select operand is not a load
-        %D = select bool %C, double %Y, double %z
-        ret double %D
-}
-
-We currently emit:
-
-_X:
-        subl $12, %esp
-        xorpd %xmm0, %xmm0
-        addsd 24(%esp), %xmm0
-        movsd 32(%esp), %xmm1
-        movsd 16(%esp), %xmm2
-        ucomisd 40(%esp), %xmm1
-        jb LBB_X_2
-LBB_X_1:
-        movsd %xmm0, %xmm2
-LBB_X_2:
-        movsd %xmm2, (%esp)
-        fldl (%esp)
-        addl $12, %esp
-        ret
-
-//===---------------------------------------------------------------------===//
-
 Lower memcpy / memset to a series of SSE 128 bit move instructions when it's
 feasible.
 
@@ -787,25 +757,6 @@ cheaper to do fld1 than load from a constant pool for example, so
 
 //===---------------------------------------------------------------------===//
 
-The X86 backend should be able to if-convert SSE comparisons like "ucomisd" to
-"cmpsd".  For example, this code:
-
-double d1(double x) { return x == x ? x : x + x; }
-
-Compiles into:
-
-_d1:
-	ucomisd	%xmm0, %xmm0
-	jnp	LBB1_2
-	addsd	%xmm0, %xmm0
-	ret
-LBB1_2:
-	ret
-
-Also, the 'ret's should be shared.  This is PR6032.
-
-//===---------------------------------------------------------------------===//
-
 These should compile into the same code (PR6214): Perhaps instcombine should
 canonicalize the former into the later?
 
@@ -855,35 +806,6 @@ _test:                                  ## @test
 
 This would be better kept in the SSE unit by treating XMM0 as a 4xfloat and
 doing a shuffle from v[1] to v[0] then a float store.
-
-//===---------------------------------------------------------------------===//
-
-On SSE4 machines, we compile this code:
-
-define <2 x float> @test2(<2 x float> %Q, <2 x float> %R,
-       <2 x float> *%P) nounwind {
-  %Z = fadd <2 x float> %Q, %R
-
-  store <2 x float> %Z, <2 x float> *%P
-  ret <2 x float> %Z
-}
-
-into:
-
-_test2:                                 ## @test2
-## BB#0:
-	insertps	$0, %xmm2, %xmm2
-	insertps	$16, %xmm3, %xmm2
-	insertps	$0, %xmm0, %xmm3
-	insertps	$16, %xmm1, %xmm3
-	addps	%xmm2, %xmm3
-	movq	%xmm3, (%rdi)
-	movaps	%xmm3, %xmm0
-	pshufd	$1, %xmm3, %xmm1
-                                        ## kill: XMM1<def> XMM1<kill>
-	ret
-
-The insertps's of $0 are pointless complex copies.
 
 //===---------------------------------------------------------------------===//
 
