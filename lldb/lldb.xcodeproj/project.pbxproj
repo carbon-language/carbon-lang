@@ -922,6 +922,10 @@
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
 		B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */; };
 		B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */; };
+		B560F88A1AC462CB0028B293 /* RegisterContextFreeBSD_arm64.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = B560F8881AC462CA0028B293 /* RegisterContextFreeBSD_arm64.cpp */; };
+		B560F88B1AC462CB0028B293 /* RegisterContextFreeBSD_arm64.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = B560F8891AC462CA0028B293 /* RegisterContextFreeBSD_arm64.h */; };
+		B560F88E1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = B560F88C1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.cpp */; };
+		B560F88F1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = B560F88D1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.h */; };
 		E769331C1A94D15400C73337 /* lldb-gdbserver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */; };
 		E769331E1A94D18100C73337 /* lldb-server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E769331D1A94D18100C73337 /* lldb-server.cpp */; };
 		ED88244E15114A9200BC98B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
@@ -1127,8 +1131,12 @@
 			files = (
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 				33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */,
+				B560F88F1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.h in CopyFiles */,
+				B560F88B1AC462CB0028B293 /* RegisterContextFreeBSD_arm64.h in CopyFiles */,
+				B560F88E1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.cpp in CopyFiles */,
 				33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */,
 				33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */,
+				B560F88A1AC462CB0028B293 /* RegisterContextFreeBSD_arm64.cpp in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -2672,6 +2680,10 @@
 		B2B7CCED15D1BFB700EEFB57 /* WatchpointOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WatchpointOptions.h; path = include/lldb/Breakpoint/WatchpointOptions.h; sourceTree = "<group>"; };
 		B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointOptions.cpp; path = source/Breakpoint/WatchpointOptions.cpp; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
+		B560F8881AC462CA0028B293 /* RegisterContextFreeBSD_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextFreeBSD_arm64.cpp; path = source/Plugins/Process/Utility/RegisterContextFreeBSD_arm64.cpp; sourceTree = "<group>"; };
+		B560F8891AC462CA0028B293 /* RegisterContextFreeBSD_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextFreeBSD_arm64.h; path = source/Plugins/Process/Utility/RegisterContextFreeBSD_arm64.h; sourceTree = "<group>"; };
+		B560F88C1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextPOSIXCore_arm64.cpp; path = "source/Plugins/Process/elf-core/RegisterContextPOSIXCore_arm64.cpp"; sourceTree = "<group>"; };
+		B560F88D1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIXCore_arm64.h; path = "source/Plugins/Process/elf-core/RegisterContextPOSIXCore_arm64.h"; sourceTree = "<group>"; };
 		E769331D1A94D18100C73337 /* lldb-server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-server.cpp"; path = "tools/lldb-server/lldb-server.cpp"; sourceTree = "<group>"; };
 		ED88244F15114CA200BC98B9 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherRootXPCService.mm; sourceTree = "<group>"; };
@@ -3461,6 +3473,10 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				B560F88C1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.cpp */,
+				B560F88D1AC462E90028B293 /* RegisterContextPOSIXCore_arm64.h */,
+				B560F8881AC462CA0028B293 /* RegisterContextFreeBSD_arm64.cpp */,
+				B560F8891AC462CA0028B293 /* RegisterContextFreeBSD_arm64.h */,
 				257E47151AA56C2000A62F81 /* ModuleCache.cpp */,
 				257E47161AA56C2000A62F81 /* ModuleCache.h */,
 				33064C9B1A5C7A490033D415 /* UriParser.h */,
