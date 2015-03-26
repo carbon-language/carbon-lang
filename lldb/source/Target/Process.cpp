@@ -822,8 +822,26 @@ Process::GetGlobalProperties()
 void
 Process::Finalize()
 {
-    // Destroy this process
-    Destroy();
+    // Destroy this process if needed
+    switch (GetPrivateState())
+    {
+        case eStateConnected:
+        case eStateAttaching:
+        case eStateLaunching:
+        case eStateStopped:
+        case eStateRunning:
+        case eStateStepping:
+        case eStateCrashed:
+        case eStateSuspended:
+            Destroy();
+            break;
+            
+        case eStateInvalid:
+        case eStateUnloaded:
+        case eStateDetached:
+        case eStateExited:
+            break;
+    }
 
     // Clear our broadcaster before we proceed with destroying
     Broadcaster::Clear();
