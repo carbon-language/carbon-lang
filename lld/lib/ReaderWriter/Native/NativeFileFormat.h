@@ -145,7 +145,7 @@ struct NativeDefinedAtomIvarsV1 {
 //
 struct NativeAtomAttributesV1 {
   uint32_t  sectionNameOffset;
-  uint16_t  align2;
+  uint16_t  align;
   uint16_t  alignModulus;
   uint8_t   scope;
   uint8_t   interposable;

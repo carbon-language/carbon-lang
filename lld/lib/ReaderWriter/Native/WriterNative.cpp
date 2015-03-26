@@ -416,7 +416,7 @@ private:
   NativeAtomAttributesV1 computeAttributesV1(const DefinedAtom& atom) {
     NativeAtomAttributesV1 attrs;
     attrs.sectionNameOffset = sectionNameOffset(atom);
-    attrs.align2            = llvm::Log2_32(atom.alignment().value);
+    attrs.align             = atom.alignment().value;
     attrs.alignModulus      = atom.alignment().modulus;
     attrs.scope             = atom.scope();
     attrs.interposable      = atom.interposable();
