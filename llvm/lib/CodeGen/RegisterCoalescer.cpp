@@ -58,6 +58,10 @@ EnableJoining("join-liveintervals",
               cl::desc("Coalesce copies (default=true)"),
               cl::init(true));
 
+static cl::opt<bool> UseTerminalRule("terminal-rule",
+                                     cl::desc("Apply the terminal rule"),
+                                     cl::init(false));
+
 /// Temporary flag to test critical edge unsplitting.
 static cl::opt<bool>
 EnableJoinSplits("join-splitedges",
@@ -205,6 +209,20 @@ namespace {
     /// Handle copies of undef values.
     /// Returns true if @p CopyMI was a copy of an undef value and eliminated.
     bool eliminateUndefCopy(MachineInstr *CopyMI);
+
+    /// Check whether or not we should apply the terminal rule on the
+    /// destination (Dst) of \p Copy.
+    /// When the terminal rule applies, Copy is not profitable to
+    /// coalesce.
+    /// Dst is terminal if it has exactly one affinity (Dst, Src) and
+    /// at least one interference (Dst, Dst2). If Dst is terminal, the
+    /// terminal rule consists in checking that at least one of
+    /// interfering node, say Dst2, has an affinity of equal or greater
+    /// weight with Src.
+    /// In that case, Dst2 and Dst will not be able to be both coalesced
+    /// with Src. Since Dst2 exposes more coalescing opportunities than
+    /// Dst, we can drop \p Copy.
+    bool applyTerminalRule(const MachineInstr &Copy) const;
 
   public:
     static char ID; ///< Class identification, replacement for typeinfo
@@ -2697,6 +2715,58 @@ copyCoalesceWorkList(MutableArrayRef<MachineInstr*> CurrList) {
   return Progress;
 }
 
+/// Check if DstReg is a terminal node.
+/// I.e., it does not have any affinity other than \p Copy.
+static bool isTerminalReg(unsigned DstReg, const MachineInstr &Copy,
+                          const MachineRegisterInfo *MRI) {
+  assert(Copy.isCopyLike());
+  // Check if the destination of this copy as any other affinity.
+  for (const MachineInstr &MI : MRI->reg_nodbg_instructions(DstReg))
+    if (&MI != &Copy && MI.isCopyLike())
+      return false;
+  return true;
+}
+
+bool RegisterCoalescer::applyTerminalRule(const MachineInstr &Copy) const {
+  assert(Copy.isCopyLike());
+  if (!UseTerminalRule)
+    return false;
+  // Check if the destination of this copy has any other affinity.
+  unsigned DstReg = Copy.getOperand(0).getReg();
+  if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
+      !isTerminalReg(DstReg, Copy, MRI))
+    return false;
+
+  // DstReg is a terminal node. Check if it inteferes with any other
+  // copy involving SrcReg.
+  unsigned SrcReg = Copy.getOperand(1).getReg();
+  const MachineBasicBlock *OrigBB = Copy.getParent();
+  const LiveInterval &DstLI = LIS->getInterval(DstReg);
+  for (const MachineInstr &MI : MRI->reg_nodbg_instructions(SrcReg)) {
+    // Technically we should check if the weight of the new copy is
+    // interesting compared to the other one and update the weight
+    // of the copies accordingly. However, this would only work if
+    // we would gather all the copies first then coalesce, whereas
+    // right now we interleave both actions.
+    // For now, just consider the copies that are in the same block.
+    if (&MI == &Copy || !MI.isCopyLike() || MI.getParent() != OrigBB)
+      continue;
+    unsigned OtherReg = MI.getOperand(0).getReg();
+    if (OtherReg == SrcReg)
+      OtherReg = MI.getOperand(1).getReg();
+    // Check if OtherReg is a non-terminal.
+    if (TargetRegisterInfo::isPhysicalRegister(OtherReg) ||
+        isTerminalReg(OtherReg, MI, MRI))
+      continue;
+    // Check that OtherReg interfere with DstReg.
+    if (LIS->getInterval(OtherReg).overlaps(DstLI)) {
+      DEBUG(dbgs() << "Apply terminal rule for: " << PrintReg(DstReg) << '\n');
+      return true;
+    }
+  }
+  return false;
+}
+
 void
 RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
@@ -2711,7 +2781,7 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
     // cmp+jmp macro fusion.
     for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
          MII != E; ++MII) {
-      if (!MII->isCopyLike())
+      if (!MII->isCopyLike() || applyTerminalRule(*MII))
         continue;
       if (isLocalCopy(&(*MII), LIS))
         LocalWorkList.push_back(&(*MII));
@@ -2722,7 +2792,7 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
   else {
      for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
           MII != E; ++MII)
-       if (MII->isCopyLike())
+       if (MII->isCopyLike() && !applyTerminalRule(*MII))
          WorkList.push_back(MII);
   }
   // Try coalescing the collected copies immediately, and remove the nulls.
