@@ -3696,6 +3696,20 @@ public:
 };
 } // end anonymous namespace
 
+bool ASTWriter::isLookupResultExternal(StoredDeclsList &Result,
+                                       DeclContext *DC) {
+  return Result.hasExternalDecls() && DC->NeedToReconcileExternalVisibleStorage;
+}
+
+bool ASTWriter::isLookupResultEntirelyExternal(StoredDeclsList &Result,
+                                               DeclContext *DC) {
+  for (auto *D : Result.getLookupResult())
+    if (!getDeclForLocalLookup(getLangOpts(), D)->isFromASTFile())
+      return false;
+
+  return true;
+}
+
 template<typename Visitor>
 void ASTWriter::visitLocalLookupResults(const DeclContext *ConstDC,
                                         Visitor AddLookupResult) {
@@ -3705,23 +3719,14 @@ void ASTWriter::visitLocalLookupResults(const DeclContext *ConstDC,
 
   SmallVector<DeclarationName, 16> ExternalNames;
   for (auto &Lookup : *DC->buildLookup()) {
-    if (Lookup.second.hasExternalDecls() ||
-        DC->NeedToReconcileExternalVisibleStorage) {
+    if (isLookupResultExternal(Lookup.second, DC)) {
       // If there are no local declarations in our lookup result, we don't
       // need to write an entry for the name at all unless we're rewriting
       // the decl context. If we can't write out a lookup set without
       // performing more deserialization, just skip this entry.
-      if (!isRewritten(cast<Decl>(DC))) {
-        bool AllFromASTFile = true;
-        for (auto *D : Lookup.second.getLookupResult()) {
-          AllFromASTFile &=
-              getDeclForLocalLookup(getLangOpts(), D)->isFromASTFile();
-          if (!AllFromASTFile)
-            break;
-        }
-        if (AllFromASTFile)
-          continue;
-      }
+      if (!isRewritten(cast<Decl>(DC)) &&
+          isLookupResultEntirelyExternal(Lookup.second, DC))
+        continue;
 
       // We don't know for sure what declarations are found by this name,
       // because the external source might have a different set from the set
@@ -3746,6 +3751,8 @@ void ASTWriter::visitLocalLookupResults(const DeclContext *ConstDC,
 void ASTWriter::AddUpdatedDeclContext(const DeclContext *DC) {
   if (UpdatedDeclContexts.insert(DC).second && WritingAST) {
     // Ensure we emit all the visible declarations.
+    // FIXME: This code is almost certainly wrong. It is at least failing to
+    // visit all the decls it should.
     visitLocalLookupResults(DC, [&](DeclarationName Name,
                                     DeclContext::lookup_result Result) {
       for (auto *Decl : Result)
@@ -3755,66 +3762,161 @@ void ASTWriter::AddUpdatedDeclContext(const DeclContext *DC) {
 }
 
 uint32_t
-ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
+ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
                                    llvm::SmallVectorImpl<char> &LookupTable) {
-  assert(!DC->HasLazyLocalLexicalLookups &&
-         !DC->HasLazyExternalLexicalLookups &&
+  assert(!ConstDC->HasLazyLocalLexicalLookups &&
+         !ConstDC->HasLazyExternalLexicalLookups &&
          "must call buildLookups first");
 
+  // FIXME: We need to build the lookups table, which is logically const.
+  DeclContext *DC = const_cast<DeclContext*>(ConstDC);
+  assert(DC == DC->getPrimaryContext() && "only primary DC has lookup table");
+
+  // Create the on-disk hash table representation.
   llvm::OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait>
       Generator;
   ASTDeclContextNameLookupTrait Trait(*this);
 
-  // Create the on-disk hash table representation.
-  DeclarationName ConstructorName;
-  DeclarationName ConversionName;
-  SmallVector<NamedDecl *, 8> ConstructorDecls;
-  SmallVector<NamedDecl *, 4> ConversionDecls;
+  // The first step is to collect the declaration names which we need to
+  // serialize into the name lookup table, and to collect them in a stable
+  // order.
+  SmallVector<DeclarationName, 16> Names;
 
-  visitLocalLookupResults(DC, [&](DeclarationName Name,
-                                  DeclContext::lookup_result Result) {
-    if (Result.empty())
-      return;
+  // We also build up small sets of the constructor and conversion function
+  // names which are visible.
+  llvm::SmallSet<DeclarationName, 8> ConstructorNameSet, ConversionNameSet;
 
-    // Different DeclarationName values of certain kinds are mapped to
-    // identical serialized keys, because we don't want to use type
-    // identifiers in the keys (since type ids are local to the module).
-    switch (Name.getNameKind()) {
+  for (auto &Lookup : *DC->buildLookup()) {
+    auto &Name = Lookup.first;
+    auto &Result = Lookup.second;
+
+    // If there are no local declarations in our lookup result, we don't
+    // need to write an entry for the name at all unless we're rewriting
+    // the decl context. If we can't write out a lookup set without
+    // performing more deserialization, just skip this entry.
+    if (isLookupResultExternal(Result, DC) && !isRewritten(cast<Decl>(DC)) &&
+        isLookupResultEntirelyExternal(Result, DC))
+      continue;
+
+    // We also skip empty results. If any of the results could be external and
+    // the currently available results are empty, then all of the results are
+    // external and we skip it above. So the only way we get here with an empty
+    // results is when no results could have been external *and* we have
+    // external results.
+    //
+    // FIXME: While we might want to start emitting on-disk entries for negative
+    // lookups into a decl context as an optimization, today we *have* to skip
+    // them because there are names with empty lookup results in decl contexts
+    // which we can't emit in any stable ordering: we lookup constructors and
+    // conversion functions in the enclosing namespace scope creating empty
+    // results for them. This in almost certainly a bug in Clang's name lookup,
+    // but that is likely to be hard or impossible to fix and so we tolerate it
+    // here by omitting lookups with empty results.
+    if (Lookup.second.getLookupResult().empty())
+      continue;
+
+    switch (Lookup.first.getNameKind()) {
+    default:
+      Names.push_back(Lookup.first);
+      break;
+
     case DeclarationName::CXXConstructorName:
-      // There may be different CXXConstructorName DeclarationName values
-      // in a DeclContext because a UsingDecl that inherits constructors
-      // has the DeclarationName of the inherited constructors.
-      if (!ConstructorName)
-        ConstructorName = Name;
-      ConstructorDecls.append(Result.begin(), Result.end());
-      return;
+      assert(isa<CXXRecordDecl>(DC) &&
+             "Cannot have a constructor name outside of a class!");
+      ConstructorNameSet.insert(Name);
+      break;
 
     case DeclarationName::CXXConversionFunctionName:
-      if (!ConversionName)
-        ConversionName = Name;
-      ConversionDecls.append(Result.begin(), Result.end());
-      return;
-
-    default:
+      assert(isa<CXXRecordDecl>(DC) &&
+             "Cannot have a conversion function name outside of a class!");
+      ConversionNameSet.insert(Name);
       break;
     }
-
-    Generator.insert(Name, Result, Trait);
-  });
-
-  // Add the constructors.
-  if (!ConstructorDecls.empty()) {
-    Generator.insert(ConstructorName,
-                     DeclContext::lookup_result(ConstructorDecls),
-                     Trait);
   }
 
-  // Add the conversion functions.
-  if (!ConversionDecls.empty()) {
-    Generator.insert(ConversionName,
-                     DeclContext::lookup_result(ConversionDecls),
-                     Trait);
+  // Sort the names into a stable order.
+  std::sort(Names.begin(), Names.end());
+
+  if (isa<CXXRecordDecl>(DC) &&
+      (!ConstructorNameSet.empty() || !ConversionNameSet.empty())) {
+    // We need to establish an ordering of constructor and conversion function
+    // names, and they don't have an intrinsic ordering. So when we have these,
+    // we walk all the names in the decl and add the constructors and
+    // conversion functions which are visible in the order they lexically occur
+    // within the context.
+    for (Decl *ChildD : DC->decls())
+      if (auto *ChildND = dyn_cast<NamedDecl>(ChildD)) {
+        auto Name = ChildND->getDeclName();
+        switch (Name.getNameKind()) {
+        default:
+          continue;
+
+        case DeclarationName::CXXConstructorName:
+          if (ConstructorNameSet.erase(Name))
+            Names.push_back(Name);
+          break;
+
+        case DeclarationName::CXXConversionFunctionName:
+          if (ConversionNameSet.erase(Name))
+            Names.push_back(Name);
+          break;
+        }
+
+        if (ConstructorNameSet.empty() && ConversionNameSet.empty())
+          break;
+      }
+
+    assert(ConstructorNameSet.empty() && "Failed to find all of the visible "
+                                         "constructors by walking all the "
+                                         "lexical members of the context.");
+    assert(ConversionNameSet.empty() && "Failed to find all of the visible "
+                                        "conversion functions by walking all "
+                                        "the lexical members of the context.");
   }
+
+  // Next we need to do a lookup with each name into this decl context to fully
+  // populate any results from external sources. We don't actually use the
+  // results of these lookups because we only want to use the results after all
+  // results have been loaded and the pointers into them will be stable.
+  for (auto &Name : Names)
+    DC->lookup(Name);
+
+  // Now we need to insert the results for each name into the hash table. For
+  // constructor names and conversion function names, we actually need to merge
+  // all of the results for them into one list of results each and insert
+  // those.
+  SmallVector<NamedDecl *, 8> ConstructorDecls;
+  SmallVector<NamedDecl *, 8> ConversionDecls;
+
+  // Now loop over the names, either inserting them or appending for the two
+  // special cases.
+  for (auto &Name : Names) {
+    DeclContext::lookup_result Result = DC->noload_lookup(Name);
+
+    switch (Name.getNameKind()) {
+    default:
+      Generator.insert(Name, Result, Trait);
+      break;
+
+    case DeclarationName::CXXConstructorName:
+      ConstructorDecls.append(Result.begin(), Result.end());
+      break;
+
+    case DeclarationName::CXXConversionFunctionName:
+      ConversionDecls.append(Result.begin(), Result.end());
+      break;
+    }
+  }
+
+  // Handle our two special cases if we ended up having any. We arbitrarily use
+  // the first declaration's name here because the name itself isn't part of
+  // the key, only the kind of name is used.
+  if (!ConstructorDecls.empty())
+    Generator.insert(ConstructorDecls.front()->getDeclName(),
+                     DeclContext::lookup_result(ConstructorDecls), Trait);
+  if (!ConversionDecls.empty())
+    Generator.insert(ConversionDecls.front()->getDeclName(),
+                     DeclContext::lookup_result(ConversionDecls), Trait);
 
   // Create the on-disk hash table in a buffer.
   llvm::raw_svector_ostream Out(LookupTable);
@@ -3834,9 +3936,8 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (DC->getPrimaryContext() != DC)
     return 0;
 
-  // Since there is no name lookup into functions or methods, don't bother to
-  // build a visible-declarations table for these entities.
-  if (DC->isFunctionOrMethod())
+  // Skip contexts which don't support name lookup.
+  if (!DC->isLookupContext())
     return 0;
 
   // If not in C++, we perform name lookup for the translation unit via the

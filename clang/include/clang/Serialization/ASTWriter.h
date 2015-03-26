@@ -61,6 +61,7 @@ class PreprocessingRecord;
 class Preprocessor;
 class Sema;
 class SourceManager;
+struct StoredDeclsList;
 class SwitchCase;
 class TargetInfo;
 class Token;
@@ -504,6 +505,9 @@ private:
   unsigned TypeFunctionProtoAbbrev;
   void WriteTypeAbbrevs();
   void WriteType(QualType T);
+
+  bool isLookupResultExternal(StoredDeclsList &Result, DeclContext *DC);
+  bool isLookupResultEntirelyExternal(StoredDeclsList &Result, DeclContext *DC);
 
   template<typename Visitor>
   void visitLocalLookupResults(const DeclContext *DC, Visitor AddLookupResult);
