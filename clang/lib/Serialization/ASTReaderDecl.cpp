@@ -1628,7 +1628,7 @@ void ASTDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 
   if (auto *CD = ReadDeclAs<CXXConstructorDecl>(Record, Idx))
     if (D->isCanonicalDecl())
-      D->setInheritedConstructor(CD);
+      D->setInheritedConstructor(CD->getCanonicalDecl());
   D->IsExplicitSpecified = Record[Idx++];
 }
 
