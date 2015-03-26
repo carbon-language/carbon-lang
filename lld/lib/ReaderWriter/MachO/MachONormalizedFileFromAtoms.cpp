@@ -58,7 +58,7 @@ struct SectionInfo {
   uint32_t                  attributes;
   uint64_t                  address;
   uint64_t                  size;
-  uint32_t                  alignment;
+  PowerOf2                  alignment;
   std::vector<AtomInfo>     atomsAndOffsets;
   uint32_t                  normalizedSectionIndex;
   uint32_t                  finalSectionIndex;
@@ -69,7 +69,7 @@ SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t,
  : segmentName(sg), sectionName(sct), type(t), attributes(attrs),
                  address(0), size(0), alignment(0),
                  normalizedSectionIndex(0), finalSectionIndex(0) {
-  uint8_t align;
+  PowerOf2 align(0);
   if (ctxt.sectionAligned(segmentName, sectionName, align)) {
     alignment = align;
   }
@@ -142,7 +142,7 @@ private:
   void         appendSection(SectionInfo *si, NormalizedFile &file);
   uint32_t     sectionIndexForAtom(const Atom *atom);
 
-  static uint64_t alignTo(uint64_t value, uint8_t align2);
+  static uint64_t alignTo(uint64_t value, PowerOf2 align2);
   typedef llvm::DenseMap<const Atom*, uint32_t> AtomToIndex;
   struct AtomAndIndex { const Atom *atom; uint32_t index; SymbolScope scope; };
   struct AtomSorter {
@@ -453,7 +453,7 @@ void Util::organizeSections() {
 
 }
 
-uint64_t Util::alignTo(uint64_t value, uint8_t align2) {
+uint64_t Util::alignTo(uint64_t value, PowerOf2 align2) {
   return llvm::RoundUpToAlignment(value, 1 << align2);
 }
 
@@ -1235,4 +1235,3 @@ normalizedFromAtoms(const lld::File &atomFile,
 } // namespace normalized
 } // namespace mach_o
 } // namespace lld
-

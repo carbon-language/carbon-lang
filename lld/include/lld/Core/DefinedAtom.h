@@ -17,6 +17,25 @@ namespace lld {
 class File;
 class Reference;
 
+// This class represents exponents of power-of-two numbers.
+// Used to represent alignments.
+//
+// Currently we represent alignments both in log2 of a value or a
+// value itself. That is confusing. We aim to use only real values
+// only. Conversion is not easy, since both types are just arithmetic
+// types, and thus the compiler doesn't help us find places we mix
+// them. This class is to make all places where exponents are used
+// explicit.
+//
+// Once the conversion is done, this class will be removed.
+class PowerOf2 {
+public:
+  PowerOf2(uint16_t v) : _v(v) {}
+  operator uint16_t() const { return _v; }
+private:
+  uint16_t _v;
+};
+
 /// \brief The fundamental unit of linking.
 ///
 /// A C function or global variable is an atom.  An atom has content and
@@ -198,11 +217,9 @@ public:
   };
 
   struct Alignment {
-    Alignment(int p2, int m = 0)
-      : powerOf2(p2)
-      , modulus(m) {}
+    Alignment(int p2, int m = 0) : powerOf2(p2), modulus(m) {}
 
-    uint16_t powerOf2;
+    PowerOf2 powerOf2;
     uint16_t modulus;
 
     bool operator==(const Alignment &rhs) const {

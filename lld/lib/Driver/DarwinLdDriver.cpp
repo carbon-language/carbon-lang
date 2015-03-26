@@ -479,7 +479,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                   << alignStr << "' not a valid number\n";
       return false;
     }
-    uint8_t align2 = llvm::countTrailingZeros(alignValue);
+    PowerOf2 align2 = llvm::countTrailingZeros(alignValue);
     if (!llvm::isPowerOf2_64(alignValue)) {
       diagnostics << "warning: alignment for '-sectalign "
                   << segName << " " << sectName

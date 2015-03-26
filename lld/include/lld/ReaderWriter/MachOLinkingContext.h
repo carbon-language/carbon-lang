@@ -228,10 +228,10 @@ public:
   const StringRefVector &rpaths() const { return _rpaths; }
 
   /// Add section alignment constraint on final layout.
-  void addSectionAlignment(StringRef seg, StringRef sect, uint8_t align2);
+  void addSectionAlignment(StringRef seg, StringRef sect, PowerOf2 align2);
 
   /// Returns true if specified section had alignment constraints.
-  bool sectionAligned(StringRef seg, StringRef sect, uint8_t &align2) const;
+  bool sectionAligned(StringRef seg, StringRef sect, PowerOf2 &align2) const;
 
   StringRef dyldPath() const { return "/usr/lib/dyld"; }
 
