@@ -327,17 +327,17 @@ void Util::appendAtom(SectionInfo *sect, const DefinedAtom *atom) {
   // Figure out offset for atom in this section given alignment constraints.
   uint64_t offset = sect->size;
   DefinedAtom::Alignment atomAlign = atom->alignment();
-  uint64_t align2 = atomAlign.value;
+  uint64_t align = atomAlign.value;
   uint64_t requiredModulus = atomAlign.modulus;
-  uint64_t currentModulus = (offset % align2);
+  uint64_t currentModulus = (offset % align);
   if ( currentModulus != requiredModulus ) {
     if ( requiredModulus > currentModulus )
       offset += requiredModulus-currentModulus;
     else
-      offset += align2+requiredModulus-currentModulus;
+      offset += align+requiredModulus-currentModulus;
   }
   // Record max alignment of any atom in this section.
-  if (align2 > sect->alignment)
+  if (align > sect->alignment)
     sect->alignment = atomAlign.value;
   // Assign atom to this section with this offset.
   AtomInfo ai = {atom, offset};

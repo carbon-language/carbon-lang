@@ -228,10 +228,10 @@ public:
   const StringRefVector &rpaths() const { return _rpaths; }
 
   /// Add section alignment constraint on final layout.
-  void addSectionAlignment(StringRef seg, StringRef sect, uint16_t align2);
+  void addSectionAlignment(StringRef seg, StringRef sect, uint16_t align);
 
   /// Returns true if specified section had alignment constraints.
-  bool sectionAligned(StringRef seg, StringRef sect, uint16_t &align2) const;
+  bool sectionAligned(StringRef seg, StringRef sect, uint16_t &align) const;
 
   StringRef dyldPath() const { return "/usr/lib/dyld"; }
 
@@ -312,7 +312,7 @@ private:
   struct SectionAlign {
     StringRef segmentName;
     StringRef sectionName;
-    uint16_t  align2;
+    uint16_t  align;
   };
 
   struct OrderFileNode {
