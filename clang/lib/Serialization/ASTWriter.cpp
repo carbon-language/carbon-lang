@@ -4335,21 +4335,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   if (Context.ExternCContext)
     DeclIDs[Context.ExternCContext] = PREDEF_DECL_EXTERN_C_CONTEXT_ID;
 
-  if (!Chain) {
-    // Make sure that we emit IdentifierInfos (and any attached
-    // declarations) for builtins. We don't need to do this when we're
-    // emitting chained PCH files, because all of the builtins will be
-    // in the original PCH file.
-    // FIXME: Modules won't like this at all.
-    IdentifierTable &Table = PP.getIdentifierTable();
-    SmallVector<const char *, 32> BuiltinNames;
-    if (!Context.getLangOpts().NoBuiltin) {
-      Context.BuiltinInfo.GetBuiltinNames(BuiltinNames);
-    }
-    for (unsigned I = 0, N = BuiltinNames.size(); I != N; ++I)
-      getIdentifierRef(&Table.get(BuiltinNames[I]));
-  }
-
   // Build a record containing all of the tentative definitions in this file, in
   // TentativeDefinitions order.  Generally, this record will be empty for
   // headers.
