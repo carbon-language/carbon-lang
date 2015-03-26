@@ -10,3 +10,9 @@ a:
         d = a
         .weak d
         .long d + (b - c)
+
+
+a2:
+        .weak b2
+        b2 = a2
+        c2 = b2 - a2

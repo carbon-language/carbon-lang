@@ -188,7 +188,7 @@ const MCSymbol *MCAsmLayout::getBaseSymbol(const MCSymbol &Symbol) const {
 
   const MCExpr *Expr = Symbol.getVariableValue();
   MCValue Value;
-  if (!Expr->EvaluateAsRelocatable(Value, this, nullptr))
+  if (!Expr->evaluateAsValue(Value, *this))
     llvm_unreachable("Invalid Expression");
 
   const MCSymbolRefExpr *RefB = Value.getSymB();

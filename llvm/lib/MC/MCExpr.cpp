@@ -584,7 +584,15 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    false);
 }
 
-static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm) {
+bool MCExpr::evaluateAsValue(MCValue &Res, const MCAsmLayout &Layout) const {
+  MCAssembler *Assembler = &Layout.getAssembler();
+  return EvaluateAsRelocatableImpl(Res, Assembler, &Layout, nullptr, nullptr,
+                                   true);
+}
+
+static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm, bool InSet) {
+  if (InSet)
+    return true;
   if (!Asm)
     return false;
   const MCSymbolData &SD = Asm->getSymbolData(Sym);
@@ -613,10 +621,11 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None &&
-        canExpand(Sym, Asm)) {
+        canExpand(Sym, Asm, InSet)) {
+      bool IsMachO = SRE->hasSubsectionsViaSymbols();
       if (Sym.getVariableValue()->EvaluateAsRelocatableImpl(
-              Res, Asm, Layout, Fixup, Addrs, true)) {
-        if (!SRE->hasSubsectionsViaSymbols())
+              Res, Asm, Layout, Fixup, Addrs, InSet || IsMachO)) {
+        if (!IsMachO)
           return true;
 
         const MCSymbolRefExpr *A = Res.getSymA();

@@ -175,6 +175,8 @@ public:
                                               const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
+  bool isWeak(const MCSymbolData &SD) const override;
+
   void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, bool &IsPCRel,
@@ -659,6 +661,12 @@ bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
     return false;
   return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(Asm, DataA, FB,
                                                                 InSet, IsPCRel);
+}
+
+bool WinCOFFObjectWriter::isWeak(const MCSymbolData &SD) const {
+  // FIXME: this is for PR23025. Write a good description on
+  // why this is needed.
+  return SD.isExternal();
 }
 
 void WinCOFFObjectWriter::RecordRelocation(
