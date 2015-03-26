@@ -153,12 +153,6 @@ public:
   }
 };
 
-template <class ELFT> class HexagonDynamicFile : public DynamicFile<ELFT> {
-public:
-  HexagonDynamicFile(const HexagonLinkingContext &context, StringRef name)
-      : DynamicFile<ELFT>(context, name) {}
-};
-
 } // elf
 } // lld
 

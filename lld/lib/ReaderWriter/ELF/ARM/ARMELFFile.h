@@ -121,12 +121,6 @@ private:
   }
 };
 
-template <class ELFT> class ARMDynamicFile : public DynamicFile<ELFT> {
-public:
-  ARMDynamicFile(const ARMLinkingContext &context, StringRef name)
-      : DynamicFile<ELFT>(context, name) {}
-};
-
 } // elf
 } // lld
 

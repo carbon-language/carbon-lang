@@ -29,12 +29,6 @@ public:
   }
 };
 
-template <class ELFT> class X86_64DynamicFile : public DynamicFile<ELFT> {
-public:
-  X86_64DynamicFile(const X86_64LinkingContext &context, StringRef name)
-      : DynamicFile<ELFT>(context, name) {}
-};
-
 } // elf
 } // lld
 

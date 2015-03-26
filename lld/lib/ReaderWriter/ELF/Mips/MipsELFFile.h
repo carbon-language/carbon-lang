@@ -323,12 +323,6 @@ private:
   }
 };
 
-template <class ELFT> class MipsDynamicFile : public DynamicFile<ELFT> {
-public:
-  MipsDynamicFile(const MipsLinkingContext &context, StringRef name)
-      : DynamicFile<ELFT>(context, name) {}
-};
-
 } // elf
 } // lld
 

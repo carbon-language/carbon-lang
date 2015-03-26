@@ -18,16 +18,6 @@ namespace elf {
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 
-struct HexagonDynamicFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
-
-  template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            HexagonLinkingContext &ctx) {
-    return lld::elf::HexagonDynamicFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
 struct HexagonELFFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
@@ -48,11 +38,10 @@ public:
 };
 
 class HexagonELFDSOReader
-    : public ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits,
-                          HexagonLinkingContext> {
+    : public ELFDSOReader<HexagonELFType, HexagonLinkingContext> {
 public:
   HexagonELFDSOReader(HexagonLinkingContext &ctx)
-      : ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits,
+      : ELFDSOReader<HexagonELFType,
                      HexagonLinkingContext>(ctx, llvm::ELF::EM_HEXAGON) {}
 };
 

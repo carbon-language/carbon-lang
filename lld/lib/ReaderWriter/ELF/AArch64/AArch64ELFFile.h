@@ -29,12 +29,6 @@ public:
   }
 };
 
-template <class ELFT> class AArch64DynamicFile : public DynamicFile<ELFT> {
-public:
-  AArch64DynamicFile(const AArch64LinkingContext &context, StringRef name)
-      : DynamicFile<ELFT>(context, name) {}
-};
-
 } // elf
 } // lld
 

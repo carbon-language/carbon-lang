@@ -57,7 +57,17 @@ protected:
   uint64_t _machine;
 };
 
-template <typename ELFT, typename ELFTraitsT, typename ContextT>
+struct DynamicFileCreateELFTraits {
+  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
+
+  template<typename ELFT, typename ContextT>
+  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
+                            ContextT &ctx) {
+    return DynamicFile<ELFT>::create(std::move(mb), ctx);
+  }
+};
+
+template <typename ELFT, typename ContextT>
 class ELFDSOReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
@@ -76,9 +86,9 @@ public:
            std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f =
-        createELF<ELFTraitsT>(llvm::object::getElfArchType(mb->getBuffer()),
-                              maxAlignment, std::move(mb), _ctx);
+    auto f = createELF<DynamicFileCreateELFTraits>(
+        llvm::object::getElfArchType(mb->getBuffer()),
+        maxAlignment, std::move(mb), _ctx);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));

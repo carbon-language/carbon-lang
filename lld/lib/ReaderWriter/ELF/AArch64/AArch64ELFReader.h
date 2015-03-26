@@ -18,16 +18,6 @@ namespace elf {
 
 typedef llvm::object::ELFType<llvm::support::little, 2, true> AArch64ELFType;
 
-struct AArch64DynamicFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
-
-  template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            AArch64LinkingContext &ctx) {
-    return lld::elf::AArch64DynamicFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
 struct AArch64ELFFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
@@ -48,11 +38,10 @@ public:
 };
 
 class AArch64ELFDSOReader
-    : public ELFDSOReader<AArch64ELFType, AArch64DynamicFileCreateELFTraits,
-                          AArch64LinkingContext> {
+    : public ELFDSOReader<AArch64ELFType, AArch64LinkingContext> {
 public:
   AArch64ELFDSOReader(AArch64LinkingContext &ctx)
-      : ELFDSOReader<AArch64ELFType, AArch64DynamicFileCreateELFTraits,
+      : ELFDSOReader<AArch64ELFType,
                      AArch64LinkingContext>(ctx, llvm::ELF::EM_AARCH64) {}
 };
 

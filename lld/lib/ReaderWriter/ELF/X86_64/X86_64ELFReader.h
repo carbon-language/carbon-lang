@@ -18,16 +18,6 @@ namespace elf {
 
 typedef llvm::object::ELFType<llvm::support::little, 2, true> X86_64ELFType;
 
-struct X86_64DynamicFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
-
-  template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            X86_64LinkingContext &ctx) {
-    return lld::elf::X86_64DynamicFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
 struct X86_64ELFFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
@@ -48,11 +38,10 @@ public:
 };
 
 class X86_64ELFDSOReader
-    : public ELFDSOReader<X86_64ELFType, X86_64DynamicFileCreateELFTraits,
-                          X86_64LinkingContext> {
+    : public ELFDSOReader<X86_64ELFType, X86_64LinkingContext> {
 public:
   X86_64ELFDSOReader(X86_64LinkingContext &ctx)
-      : ELFDSOReader<X86_64ELFType, X86_64DynamicFileCreateELFTraits,
+      : ELFDSOReader<X86_64ELFType,
                      X86_64LinkingContext>(ctx, llvm::ELF::EM_X86_64) {}
 };
 

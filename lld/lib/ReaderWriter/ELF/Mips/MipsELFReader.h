@@ -27,16 +27,6 @@ struct MipsELFFileCreateTraits {
   }
 };
 
-struct MipsDynamicFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
-
-  template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            MipsLinkingContext &ctx) {
-    return lld::elf::MipsDynamicFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
 template <class ELFT>
 class MipsELFObjectReader
     : public ELFObjectReader<ELFT, MipsELFFileCreateTraits,
@@ -63,11 +53,8 @@ private:
 };
 
 template <class ELFT>
-class MipsELFDSOReader
-    : public ELFDSOReader<ELFT, MipsDynamicFileCreateELFTraits,
-                          MipsLinkingContext> {
-  typedef ELFDSOReader<ELFT, MipsDynamicFileCreateELFTraits, MipsLinkingContext>
-      BaseReaderType;
+class MipsELFDSOReader : public ELFDSOReader<ELFT, MipsLinkingContext> {
+  typedef ELFDSOReader<ELFT, MipsLinkingContext> BaseReaderType;
 
 public:
   MipsELFDSOReader(MipsLinkingContext &ctx)
