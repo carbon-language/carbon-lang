@@ -84,7 +84,7 @@ private:
   bool X86FastEmitCompare(const Value *LHS, const Value *RHS, EVT VT, DebugLoc DL);
 
   bool X86FastEmitLoad(EVT VT, const X86AddressMode &AM, MachineMemOperand *MMO,
-                       unsigned &ResultReg);
+                       unsigned &ResultReg, unsigned Alignment = 1);
 
   bool X86FastEmitStore(EVT VT, const Value *Val, const X86AddressMode &AM,
                         MachineMemOperand *MMO = nullptr, bool Aligned = false);
@@ -327,7 +327,8 @@ bool X86FastISel::isTypeLegal(Type *Ty, MVT &VT, bool AllowI1) {
 /// The address is either pre-computed, i.e. Ptr, or a GlobalAddress, i.e. GV.
 /// Return true and the result register by reference if it is possible.
 bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
-                                  MachineMemOperand *MMO, unsigned &ResultReg) {
+                                  MachineMemOperand *MMO, unsigned &ResultReg,
+                                  unsigned Alignment) {
   // Get opcode and regclass of the output for the given load instruction.
   unsigned Opc = 0;
   const TargetRegisterClass *RC = nullptr;
@@ -372,6 +373,30 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
   case MVT::f80:
     // No f80 support yet.
     return false;
+  case MVT::v4f32:
+    if (Alignment >= 16)
+      Opc = Subtarget->hasAVX() ? X86::VMOVAPSrm : X86::MOVAPSrm;
+    else
+      Opc = Subtarget->hasAVX() ? X86::VMOVUPSrm : X86::MOVUPSrm;
+    RC  = &X86::VR128RegClass;
+    break;
+  case MVT::v2f64:
+    if (Alignment >= 16)
+      Opc = Subtarget->hasAVX() ? X86::VMOVAPDrm : X86::MOVAPDrm;
+    else
+      Opc = Subtarget->hasAVX() ? X86::VMOVUPDrm : X86::MOVUPDrm;
+    RC  = &X86::VR128RegClass;
+    break;
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v8i16:
+  case MVT::v16i8:
+    if (Alignment >= 16)
+      Opc = Subtarget->hasAVX() ? X86::VMOVDQArm : X86::MOVDQArm;
+    else
+      Opc = Subtarget->hasAVX() ? X86::VMOVDQUrm : X86::MOVDQUrm;
+    RC  = &X86::VR128RegClass;
+    break;
   }
 
   ResultReg = createResultReg(RC);
@@ -1068,8 +1093,14 @@ bool X86FastISel::X86SelectLoad(const Instruction *I) {
   if (!X86SelectAddress(Ptr, AM))
     return false;
 
+  unsigned Alignment = LI->getAlignment();
+  unsigned ABIAlignment = DL.getABITypeAlignment(LI->getType());
+  if (Alignment == 0) // Ensure that codegen never sees alignment 0
+    Alignment = ABIAlignment;
+
   unsigned ResultReg = 0;
-  if (!X86FastEmitLoad(VT, AM, createMachineMemOperandFor(LI), ResultReg))
+  if (!X86FastEmitLoad(VT, AM, createMachineMemOperandFor(LI), ResultReg,
+                       Alignment))
     return false;
 
   updateValueMap(I, ResultReg);
