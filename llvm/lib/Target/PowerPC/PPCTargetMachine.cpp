@@ -207,7 +207,15 @@ PPCTargetMachine::getSubtargetImpl(const Function &F) const {
     // creation will depend on the TM and the code generation flags on the
     // function that reside in TargetOptions.
     resetTargetOptions(F);
-    I = llvm::make_unique<PPCSubtarget>(TargetTriple, CPU, FS, *this);
+    I = llvm::make_unique<PPCSubtarget>(
+        TargetTriple, CPU,
+        // FIXME: It would be good to have the subtarget additions here
+        // not necessary. Anything that turns them on/off (overrides) ends
+        // up being put at the end of the feature string, but the defaults
+        // shouldn't require adding them. Fixing this means pulling Feature64Bit
+        // out of most of the target cpus in the .td file and making it set only
+        // as part of initialization via the TargetTriple.
+        computeFSAdditions(FS, getOptLevel(), getTargetTriple()), *this);
   }
   return I.get();
 }
