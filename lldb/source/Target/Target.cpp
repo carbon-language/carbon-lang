@@ -2596,26 +2596,23 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
         {
             EventSP event_sp;
             ListenerSP hijack_listener_sp (launch_info.GetHijackListener());
+            if (!hijack_listener_sp)
+            {
+                hijack_listener_sp.reset(new Listener("lldb.Target.Launch.hijack"));
+                launch_info.SetHijackListener(hijack_listener_sp);
+                m_process_sp->HijackProcessEvents(hijack_listener_sp.get());
+            }
 
             StateType state = m_process_sp->WaitForProcessToStop (NULL, &event_sp, false, hijack_listener_sp.get(), NULL);
             
             if (state == eStateStopped)
             {
-                if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
+                if (!launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
                 {
-                    if (!synchronous_execution)
-                        m_process_sp->RestoreProcessEvents ();
-
-                    error = m_process_sp->PrivateResume();
-
-                    if (error.Success())
+                    if (synchronous_execution)
                     {
-                        // there is a race condition where this thread will return up the call stack to the main command
-                        // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
-                        // a chance to call PushProcessIOHandler()
-                        m_process_sp->SyncIOHandler(2000);
-
-                        if (synchronous_execution)
+                        error = m_process_sp->PrivateResume();
+                        if (error.Success())
                         {
                             state = m_process_sp->WaitForProcessToStop (NULL, NULL, true, hijack_listener_sp.get(), stream);
                             const bool must_be_alive = false; // eStateExited is ok, so this must be false
@@ -2627,6 +2624,18 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
                     }
                     else
                     {
+                        m_process_sp->RestoreProcessEvents();
+                        error = m_process_sp->PrivateResume();
+                        if (error.Success())
+                        {
+                            // there is a race condition where this thread will return up the call stack to the main command
+                            // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
+                            // a chance to call PushProcessIOHandler()
+                            m_process_sp->SyncIOHandler(2000);
+                        }
+                    }
+                    if (!error.Success())
+                    {
                         Error error2;
                         error2.SetErrorStringWithFormat("process resume at entry point failed: %s", error.AsCString());
                         error = error2;
@@ -2634,7 +2643,7 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
                 }
                 else
                 {
-                    assert(synchronous_execution && launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == true);
+                    assert(synchronous_execution && launch_info.GetFlags().Test(eLaunchFlagStopAtEntry));
 
                     // Target was stopped at entry as was intended. Need to notify the listeners about it.
                     m_process_sp->RestoreProcessEvents();
