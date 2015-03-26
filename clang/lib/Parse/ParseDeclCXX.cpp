@@ -1550,6 +1550,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   TypeResult TypeResult = true; // invalid
 
   bool Owned = false;
+  bool SkipBody = false;
   if (TemplateId) {
     // Explicit specialization, class template partial specialization,
     // or explicit instantiation.
@@ -1695,7 +1696,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                        TParams, Owned, IsDependent,
                                        SourceLocation(), false,
                                        clang::TypeResult(),
-                                       DSC == DSC_type_specifier);
+                                       DSC == DSC_type_specifier,
+                                       &SkipBody);
 
     // If ActOnTag said the type was dependent, try again with the
     // less common call.
@@ -1711,7 +1713,10 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     assert(Tok.is(tok::l_brace) ||
            (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
            isCXX11FinalKeyword());
-    if (getLangOpts().CPlusPlus)
+    if (SkipBody)
+      SkipCXXMemberSpecification(StartLoc, AttrFixitLoc, TagType,
+                                 TagOrTempResult.get());
+    else if (getLangOpts().CPlusPlus)
       ParseCXXMemberSpecification(StartLoc, AttrFixitLoc, attrs, TagType,
                                   TagOrTempResult.get());
     else
@@ -2686,6 +2691,55 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
     return ExprError();
   }
   return ParseInitializer();
+}
+
+void Parser::SkipCXXMemberSpecification(SourceLocation RecordLoc,
+                                        SourceLocation AttrFixitLoc,
+                                        unsigned TagType, Decl *TagDecl) {
+  // Skip the optional 'final' keyword.
+  if (getLangOpts().CPlusPlus && Tok.is(tok::identifier)) {
+    assert(isCXX11FinalKeyword() && "not a class definition");
+    ConsumeToken();
+
+    // Diagnose any C++11 attributes after 'final' keyword.
+    // We deliberately discard these attributes.
+    ParsedAttributesWithRange Attrs(AttrFactory);
+    CheckMisplacedCXX11Attribute(Attrs, AttrFixitLoc);
+
+    // This can only happen if we had malformed misplaced attributes;
+    // we only get called if there is a colon or left-brace after the
+    // attributes.
+    if (Tok.isNot(tok::colon) && Tok.isNot(tok::l_brace))
+      return;
+  }
+
+  // Skip the base clauses. This requires actually parsing them, because
+  // otherwise we can't be sure where they end (a left brace may appear
+  // within a template argument).
+  if (Tok.is(tok::colon)) {
+    // Enter the scope of the class so that we can correctly parse its bases.
+    ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
+    ParsingClassDefinition ParsingDef(*this, TagDecl, /*NonNestedClass*/ true,
+                                      TagType == DeclSpec::TST_interface);
+    Actions.ActOnTagStartSkippedDefinition(getCurScope(), TagDecl);
+
+    // Parse the bases but don't attach them to the class.
+    ParseBaseClause(nullptr);
+
+    Actions.ActOnTagFinishSkippedDefinition();
+
+    if (!Tok.is(tok::l_brace)) {
+      Diag(PP.getLocForEndOfToken(PrevTokLocation),
+           diag::err_expected_lbrace_after_base_specifiers);
+      return;
+    }
+  }
+
+  // Skip the body.
+  assert(Tok.is(tok::l_brace));
+  BalancedDelimiterTracker T(*this, tok::l_brace);
+  T.consumeOpen();
+  T.skipToEnd();
 }
 
 /// ParseCXXMemberSpecification - Parse the class definition.

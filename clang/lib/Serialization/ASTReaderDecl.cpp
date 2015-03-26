@@ -3793,9 +3793,23 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_STATIC_LOCAL_NUMBER:
       Reader.Context.setStaticLocalNumber(cast<VarDecl>(D), Record[Idx++]);
       break;
+
     case UPD_DECL_MARKED_OPENMP_THREADPRIVATE:
       D->addAttr(OMPThreadPrivateDeclAttr::CreateImplicit(
           Reader.Context, ReadSourceRange(Record, Idx)));
+      break;
+
+    case UPD_DECL_EXPORTED:
+      unsigned SubmoduleID = readSubmoduleID(Record, Idx);
+      Module *Owner = SubmoduleID ? Reader.getSubmodule(SubmoduleID) : nullptr;
+      if (Owner && Owner->NameVisibility != Module::AllVisible) {
+        // If Owner is made visible at some later point, make this declaration
+        // visible too.
+        Reader.HiddenNamesMap[Owner].HiddenDecls.push_back(D);
+      } else {
+        // The declaration is now visible.
+        D->Hidden = false;
+      }
       break;
     }
   }

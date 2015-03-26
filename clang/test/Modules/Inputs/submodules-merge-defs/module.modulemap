@@ -1,0 +1,11 @@
+module "stuff" {
+  textual header "defs.h"
+  module "empty" { header "empty.h" }
+  module "use" { header "use-defs.h" }
+}
+
+module "redef" {
+  header "import-and-redefine.h"
+  // Do not re-export stuff.use
+  use "stuff"
+}

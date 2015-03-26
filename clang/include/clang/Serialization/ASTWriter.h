@@ -861,6 +861,8 @@ public:
                                     const ObjCCategoryDecl *ClassExt) override;
   void DeclarationMarkedUsed(const Decl *D) override;
   void DeclarationMarkedOpenMPThreadPrivate(const Decl *D) override;
+  void RedefinedHiddenDefinition(const NamedDecl *D,
+                                 SourceLocation Loc) override;
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

@@ -218,6 +218,7 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
   // Fixed enum types are complete, but they aren't valid as scopes
   // until we see a definition, so awkwardly pull out this special
   // case.
+  // FIXME: The definition might not be visible; complain if it is not.
   const EnumType *enumType = dyn_cast_or_null<EnumType>(tagType);
   if (!enumType || enumType->getDecl()->isCompleteDefinition())
     return false;
