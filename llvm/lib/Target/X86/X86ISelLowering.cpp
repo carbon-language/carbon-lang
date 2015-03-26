@@ -6989,8 +6989,8 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
                                             "a sorted mask where the broadcast "
                                             "comes from V1.");
 
-  // Go up the chain of (vector) values to try and find a scalar load that
-  // we can combine with the broadcast.
+  // Go up the chain of (vector) values to find a scalar load that we can
+  // combine with the broadcast.
   for (;;) {
     switch (V.getOpcode()) {
     case ISD::CONCAT_VECTORS: {
@@ -7027,12 +7027,12 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
       (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
     V = V.getOperand(BroadcastIdx);
 
-    // If the scalar isn't a load we can't broadcast from it in AVX1, only with
-    // AVX2.
+    // If the scalar isn't a load, we can't broadcast from it in AVX1.
+    // Only AVX2 has register broadcasts.
     if (!Subtarget->hasAVX2() && !isShuffleFoldableLoad(V))
       return SDValue();
   } else if (BroadcastIdx != 0 || !Subtarget->hasAVX2()) {
-    // We can't broadcast from a vector register w/o AVX2, and we can only
+    // We can't broadcast from a vector register without AVX2, and we can only
     // broadcast from the zero-element of a vector register.
     return SDValue();
   }

@@ -11972,6 +11972,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
       // Canonicalize any other splat as a build_vector.
       const SDValue &Splatted = V->getOperand(SVN->getSplatIndex());
+      if (isa<ConstantSDNode>(Splatted) || isa<ConstantFPSDNode>(Splatted)) {
       SmallVector<SDValue, 8> Ops(NumElts, Splatted);
       SDValue NewBV = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N),
                                   V->getValueType(0), Ops);
@@ -11981,6 +11982,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       if (V->getValueType(0) != VT)
         NewBV = DAG.getNode(ISD::BITCAST, SDLoc(N), VT, NewBV);
       return NewBV;
+      }
     }
   }
 
