@@ -3504,10 +3504,16 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
     // table to enable checking of the predefines buffer in the case
     // where the user adds new macro definitions when building the AST
     // file.
+    SmallVector<const IdentifierInfo *, 128> IIs;
     for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
                                 IDEnd = PP.getIdentifierTable().end();
          ID != IDEnd; ++ID)
-      getIdentifierRef(ID->second);
+      IIs.push_back(ID->second);
+    // Sort the identifiers lexicographically before getting them references so
+    // that their order is stable.
+    std::sort(IIs.begin(), IIs.end(), llvm::less_ptr<IdentifierInfo>());
+    for (const IdentifierInfo *II : IIs)
+      getIdentifierRef(II);
 
     // Create the on-disk hash table representation. We only store offsets
     // for identifiers that appear here for the first time.
@@ -4504,15 +4510,17 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   // Make sure all decls associated with an identifier are registered for
   // serialization.
-  llvm::SmallVector<const IdentifierInfo*, 256> IIsToVisit;
+  llvm::SmallVector<const IdentifierInfo*, 256> IIs;
   for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
                               IDEnd = PP.getIdentifierTable().end();
        ID != IDEnd; ++ID) {
     const IdentifierInfo *II = ID->second;
     if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization())
-      IIsToVisit.push_back(II);
+      IIs.push_back(II);
   }
-  for (const IdentifierInfo *II : IIsToVisit) {
+  // Sort the identifiers to visit based on their name.
+  std::sort(IIs.begin(), IIs.end(), llvm::less_ptr<IdentifierInfo>());
+  for (const IdentifierInfo *II : IIs) {
     for (IdentifierResolver::iterator D = SemaRef.IdResolver.begin(II),
                                    DEnd = SemaRef.IdResolver.end();
          D != DEnd; ++D) {

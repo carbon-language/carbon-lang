@@ -308,7 +308,12 @@ public:
     else
       RecomputeNeedsHandleIdentifier();
   }
-  
+
+  /// \brief Provide less than operator for lexicographical sorting.
+  bool operator<(const IdentifierInfo &RHS) const {
+    return getName() < RHS.getName();
+  }
+
 private:
   /// The Preprocessor::HandleIdentifier does several special (but rare)
   /// things to identifiers of various sorts.  For example, it changes the
