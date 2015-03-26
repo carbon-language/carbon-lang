@@ -7,6 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifdef _MSC_VER
+// Disable warnings about alignment-based structure padding.
+// This must be above the includes to suppress warnings in included templates.
+#pragma warning(disable:4324)
+#endif
+
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include "gtest/gtest.h"
