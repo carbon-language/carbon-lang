@@ -512,6 +512,31 @@ public:
                              llvm::opt::ArgStringList &CC1Args) const override;
 };
 
+class LLVM_LIBRARY_VISIBILITY CloudABI : public Generic_ELF {
+public:
+  CloudABI(const Driver &D, const llvm::Triple &Triple,
+           const llvm::opt::ArgList &Args);
+  bool HasNativeLLVMSupport() const override { return true; }
+
+  bool IsMathErrnoDefault() const override { return false; }
+  bool IsObjCNonFragileABIDefault() const override { return true; }
+
+  CXXStdlibType GetCXXStdlibType(const llvm::opt::ArgList &Args)
+      const override {
+    return ToolChain::CST_Libcxx;
+  }
+  void AddClangCXXStdlibIncludeArgs(
+      const llvm::opt::ArgList &DriverArgs,
+      llvm::opt::ArgStringList &CC1Args) const override;
+  void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
+                           llvm::opt::ArgStringList &CmdArgs) const override;
+
+  bool isPIEDefault() const override { return false; }
+
+protected:
+  Tool *buildLinker() const override;
+};
+
 class LLVM_LIBRARY_VISIBILITY Solaris : public Generic_GCC {
 public:
   Solaris(const Driver &D, const llvm::Triple &Triple,
