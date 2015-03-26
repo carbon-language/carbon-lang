@@ -14,7 +14,7 @@
 #include "m02.h"
 #include "m03.h"
 
-inline int g() { return N00::S00('a').method00('b') + (int)N00::S00(42) + function00(42); }
+inline int g() { return N00::S00('a').method00('b') + (int)S00(42) + function00(42); }
 
 #pragma weak pragma_weak02
 #pragma weak pragma_weak05
