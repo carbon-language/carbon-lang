@@ -123,7 +123,7 @@ TEST(BinaryWriterTest, obj_relocs_x86_64) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = lld::PowerOf2::create(4);
+    text.alignment = 16;
     text.address = 0;
     const uint8_t textBytes[] = {
       0xe8, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8b, 0x05,
@@ -240,7 +240,7 @@ TEST(BinaryWriterTest, obj_relocs_x86) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = lld::PowerOf2::create(4);
+    text.alignment = 16;
     text.address = 0;
     const uint8_t textBytes[] = {
        0xe8, 0xfb, 0xff, 0xff, 0xff, 0xa1, 0x00, 0x00,
@@ -350,7 +350,7 @@ TEST(BinaryWriterTest, obj_relocs_armv7) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = lld::PowerOf2::create(2);
+    text.alignment = 4;
     text.address = 0;
     const uint8_t textBytes[] = {
       0xff, 0xf7, 0xfe, 0xef, 0x40, 0xf2, 0x05, 0x01,
@@ -479,7 +479,7 @@ TEST(BinaryWriterTest, obj_relocs_ppc) {
     text.type = S_REGULAR;
     text.attributes = SectionAttr(S_ATTR_PURE_INSTRUCTIONS
                                       | S_ATTR_SOME_INSTRUCTIONS);
-    text.alignment = lld::PowerOf2::create(2);
+    text.alignment = 4;
     text.address = 0;
     const uint8_t textBytes[] = {
       0x48, 0x00, 0x00, 0x01, 0x40, 0x82, 0xff, 0xfc,

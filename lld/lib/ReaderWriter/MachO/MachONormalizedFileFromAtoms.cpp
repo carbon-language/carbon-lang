@@ -67,9 +67,9 @@ struct SectionInfo {
 SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t,
                          const MachOLinkingContext &ctxt, uint32_t attrs)
  : segmentName(sg), sectionName(sct), type(t), attributes(attrs),
-                 address(0), size(0), alignment(PowerOf2::create(0)),
+                 address(0), size(0), alignment(1),
                  normalizedSectionIndex(0), finalSectionIndex(0) {
-  PowerOf2 align = PowerOf2::create(0);
+  PowerOf2 align = 1;
   if (ctxt.sectionAligned(segmentName, sectionName, align)) {
     alignment = align;
   }
