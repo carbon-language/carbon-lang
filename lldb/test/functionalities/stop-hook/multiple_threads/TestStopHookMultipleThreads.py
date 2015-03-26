@@ -71,7 +71,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
 
         # Continue and expect to find the output emitted by the firing of our stop hook.
         child.sendline('continue')
-        child.expect_exact('(uint32_t) g_val = ')
+        child.expect_exact('(uint32_t) ::g_val = ')
 
 
 if __name__ == '__main__':
