@@ -1666,8 +1666,8 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
     }
 
     // Check for invalid (removed) threads
-    CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::const_iterator it = rSessionInfo.m_vecActiveThreadId.cbegin();
-    while (it != rSessionInfo.m_vecActiveThreadId.cend())
+    CMICmnLLDBDebugSessionInfo::VecActiveThreadId_t::iterator it = rSessionInfo.m_vecActiveThreadId.begin();
+    while (it != rSessionInfo.m_vecActiveThreadId.end())
     {
         const MIuint threadIndexID = *it;
         lldb::SBThread thread = sbProcess.GetThreadByIndexID(threadIndexID);
