@@ -7769,7 +7769,7 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
   llvm::APSInt Right;
   // Check right/shifter operand
   if (RHS.get()->isValueDependent() ||
-      !RHS.get()->isIntegerConstantExpr(Right, S.Context))
+      !RHS.get()->EvaluateAsInt(Right, S.Context))
     return;
 
   if (Right.isNegative()) {
