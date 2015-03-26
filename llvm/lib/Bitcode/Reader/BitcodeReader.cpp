@@ -1691,14 +1691,15 @@ std::error_code BitcodeReader::ParseMetadata() {
       if (Record.size() != 5)
         return Error("Invalid record");
 
-      auto get = Record[0] ? MDLocation::getDistinct : MDLocation::get;
       unsigned Line = Record[1];
       unsigned Column = Record[2];
       MDNode *Scope = cast<MDNode>(MDValueList.getValueFwdRef(Record[3]));
       Metadata *InlinedAt =
           Record[4] ? MDValueList.getValueFwdRef(Record[4] - 1) : nullptr;
-      MDValueList.AssignValue(get(Context, Line, Column, Scope, InlinedAt),
-                              NextMDValueNo++);
+      MDValueList.AssignValue(
+          GET_OR_DISTINCT(MDLocation, Record[0],
+                          (Context, Line, Column, Scope, InlinedAt)),
+          NextMDValueNo++);
       break;
     }
     case bitc::METADATA_GENERIC_DEBUG: {

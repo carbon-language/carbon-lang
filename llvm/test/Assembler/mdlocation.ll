@@ -4,8 +4,8 @@
 ; CHECK: !named = !{!0, !1, !1, !2, !2, !3, !3, !4}
 !named = !{!0, !1, !2, !3, !4, !5, !6, !7}
 
-; CHECK: !0 = !{}
-!0 = !{}
+; CHECK: !0 = !MDSubprogram(
+!0 = !MDSubprogram()
 
 ; CHECK-NEXT: !1 = !MDLocation(line: 3, column: 7, scope: !0)
 !1 = !MDLocation(line: 3, column: 7, scope: !0)

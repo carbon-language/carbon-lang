@@ -3348,8 +3348,8 @@ bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
-  auto get = (IsDistinct ? MDLocation::getDistinct : MDLocation::get);
-  Result = get(Context, line.Val, column.Val, scope.Val, inlinedAt.Val);
+  Result = GET_OR_DISTINCT(
+      MDLocation, (Context, line.Val, column.Val, scope.Val, inlinedAt.Val));
   return false;
 }
 

@@ -882,6 +882,13 @@ class MDLocation : public MDNode {
                              unsigned Column, Metadata *Scope,
                              Metadata *InlinedAt, StorageType Storage,
                              bool ShouldCreate = true);
+  static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
+                             unsigned Column, MDLocalScope *Scope,
+                             MDLocation *InlinedAt, StorageType Storage,
+                             bool ShouldCreate = true) {
+    return getImpl(Context, Line, Column, static_cast<Metadata *>(Scope),
+                   static_cast<Metadata *>(InlinedAt), Storage, ShouldCreate);
+  }
 
   TempMDLocation cloneImpl() const {
     return getTemporary(getContext(), getLine(), getColumn(), getScope(),
@@ -896,14 +903,25 @@ public:
                     (unsigned Line, unsigned Column, Metadata *Scope,
                      Metadata *InlinedAt = nullptr),
                     (Line, Column, Scope, InlinedAt))
+  DEFINE_MDNODE_GET(MDLocation,
+                    (unsigned Line, unsigned Column, MDLocalScope *Scope,
+                     MDLocation *InlinedAt = nullptr),
+                    (Line, Column, Scope, InlinedAt))
 
   /// \brief Return a (temporary) clone of this.
   TempMDLocation clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return SubclassData32; }
   unsigned getColumn() const { return SubclassData16; }
-  Metadata *getScope() const { return getOperand(0); }
-  Metadata *getInlinedAt() const {
+  MDLocalScope *getScope() const {
+    return cast_or_null<MDLocalScope>(getRawScope());
+  }
+  MDLocation *getInlinedAt() const {
+    return cast_or_null<MDLocation>(getRawInlinedAt());
+  }
+
+  Metadata *getRawScope() const { return getOperand(0); }
+  Metadata *getRawInlinedAt() const {
     if (getNumOperands() == 2)
       return getOperand(1);
     return nullptr;

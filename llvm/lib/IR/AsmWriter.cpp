@@ -1419,11 +1419,10 @@ static void writeMDLocation(raw_ostream &Out, const MDLocation *DL,
   if (DL->getColumn())
     Out << FS << "column: " << DL->getColumn();
   Out << FS << "scope: ";
-  WriteAsOperandInternal(Out, DL->getScope(), TypePrinter, Machine, Context);
-  if (DL->getInlinedAt()) {
+  WriteAsOperandInternal(Out, DL->getRawScope(), TypePrinter, Machine, Context);
+  if (auto *IA = DL->getRawInlinedAt()) {
     Out << FS << "inlinedAt: ";
-    WriteAsOperandInternal(Out, DL->getInlinedAt(), TypePrinter, Machine,
-                           Context);
+    WriteAsOperandInternal(Out, IA, TypePrinter, Machine, Context);
   }
   Out << ")";
 }

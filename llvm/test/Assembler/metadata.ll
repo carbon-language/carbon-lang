@@ -12,7 +12,7 @@ define void @test() {
 }
 
 !0 = !MDLocation(line: 662302, column: 26, scope: !1)
-!1 = !{i32 4, !"foo"}
+!1 = !MDSubprogram(name: "foo")
 
 declare void @llvm.dbg.func.start(metadata) nounwind readnone
 

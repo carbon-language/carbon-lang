@@ -240,12 +240,12 @@ template <> struct MDNodeKeyImpl<MDLocation> {
       : Line(Line), Column(Column), Scope(Scope), InlinedAt(InlinedAt) {}
 
   MDNodeKeyImpl(const MDLocation *L)
-      : Line(L->getLine()), Column(L->getColumn()), Scope(L->getScope()),
-        InlinedAt(L->getInlinedAt()) {}
+      : Line(L->getLine()), Column(L->getColumn()), Scope(L->getRawScope()),
+        InlinedAt(L->getRawInlinedAt()) {}
 
   bool isKeyOf(const MDLocation *RHS) const {
     return Line == RHS->getLine() && Column == RHS->getColumn() &&
-           Scope == RHS->getScope() && InlinedAt == RHS->getInlinedAt();
+           Scope == RHS->getRawScope() && InlinedAt == RHS->getRawInlinedAt();
   }
   unsigned getHashValue() const {
     return hash_combine(Line, Column, Scope, InlinedAt);

@@ -69,6 +69,12 @@ protected:
     Metadata *MDs[] = {MD1, MD2};
     return MDNode::get(Context, MDs);
   }
+
+  MDSubprogram *getSubprogram() {
+    return MDSubprogram::getDistinct(Context, nullptr, "", "", nullptr, 0,
+                                     nullptr, false, false, 0, nullptr, 0, 0, 0,
+                                     0);
+  }
 };
 typedef MetadataTest MDStringTest;
 
@@ -671,7 +677,7 @@ TEST_F(MDNodeTest, deleteTemporaryWithTrackingRef) {
 typedef MetadataTest MDLocationTest;
 
 TEST_F(MDLocationTest, Overflow) {
-  MDNode *N = MDNode::get(Context, None);
+  MDSubprogram *N = getSubprogram();
   {
     MDLocation *L = MDLocation::get(Context, 2, 7, N);
     EXPECT_EQ(2u, L->getLine());
@@ -696,7 +702,7 @@ TEST_F(MDLocationTest, Overflow) {
 }
 
 TEST_F(MDLocationTest, getDistinct) {
-  MDNode *N = MDNode::get(Context, None);
+  MDNode *N = getSubprogram();
   MDLocation *L0 = MDLocation::getDistinct(Context, 2, 7, N);
   EXPECT_TRUE(L0->isDistinct());
   MDLocation *L1 = MDLocation::get(Context, 2, 7, N);
