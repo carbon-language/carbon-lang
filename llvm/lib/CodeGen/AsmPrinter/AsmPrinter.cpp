@@ -2302,7 +2302,7 @@ MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
 MCSymbol *AsmPrinter::GetExternalSymbolSymbol(StringRef Sym) const {
   SmallString<60> NameStr;
   Mang->getNameWithPrefix(NameStr, Sym);
-  return OutContext.GetOrCreateSymbol(NameStr.str());
+  return OutContext.GetOrCreateSymbol(NameStr);
 }
 
 

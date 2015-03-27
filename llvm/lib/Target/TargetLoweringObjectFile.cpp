@@ -110,7 +110,7 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
   NameStr += DL->getPrivateGlobalPrefix();
   TM.getNameWithPrefix(NameStr, GV, Mang);
   NameStr.append(Suffix.begin(), Suffix.end());
-  return Ctx->GetOrCreateSymbol(NameStr.str());
+  return Ctx->GetOrCreateSymbol(NameStr);
 }
 
 MCSymbol *TargetLoweringObjectFile::getCFIPersonalitySymbol(

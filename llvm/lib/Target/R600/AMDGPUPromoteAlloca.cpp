@@ -366,8 +366,8 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
       Function *F = Call->getCalledFunction();
       FunctionType *NewType = FunctionType::get(Call->getType(), ArgTypes,
                                                 F->isVarArg());
-      Constant *C = Mod->getOrInsertFunction(StringRef(F->getName().str() + ".local"), NewType,
-                                             F->getAttributes());
+      Constant *C = Mod->getOrInsertFunction((F->getName() + ".local").str(),
+                                             NewType, F->getAttributes());
       Function *NewF = cast<Function>(C);
       Call->setCalledFunction(NewF);
       continue;

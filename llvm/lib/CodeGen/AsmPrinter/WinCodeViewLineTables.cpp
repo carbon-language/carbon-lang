@@ -40,7 +40,7 @@ StringRef WinCodeViewLineTables::getFullFilepath(const MDNode *S) {
   if (Filename.find(':') == 1)
     Filepath = Filename;
   else
-    Filepath = (Dir + Twine("\\") + Filename).str();
+    Filepath = (Dir + "\\" + Filename).str();
 
   // Canonicalize the path.  We have to do it textually because we may no longer
   // have access the file in the filesystem.

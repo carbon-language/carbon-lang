@@ -77,7 +77,7 @@ namespace {
     }
 
     bool runOnFunction(Function &F) override {
-      std::string Filename = "cfg." + F.getName().str() + ".dot";
+      std::string Filename = ("cfg." + F.getName() + ".dot").str();
       errs() << "Writing '" << Filename << "'...";
 
       std::error_code EC;
@@ -111,7 +111,7 @@ namespace {
     }
 
     bool runOnFunction(Function &F) override {
-      std::string Filename = "cfg." + F.getName().str() + ".dot";
+      std::string Filename = ("cfg." + F.getName() + ".dot").str();
       errs() << "Writing '" << Filename << "'...";
 
       std::error_code EC;

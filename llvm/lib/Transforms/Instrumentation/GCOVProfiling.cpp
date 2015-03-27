@@ -442,7 +442,7 @@ std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
   StringRef FName = sys::path::filename(Filename);
   SmallString<128> CurPath;
   if (sys::fs::current_path(CurPath)) return FName;
-  sys::path::append(CurPath, FName.str());
+  sys::path::append(CurPath, FName);
   return CurPath.str();
 }
 

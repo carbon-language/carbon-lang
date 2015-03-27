@@ -250,7 +250,7 @@ std::string MachineBasicBlock::getFullName() const {
   if (getBasicBlock())
     Name += getBasicBlock()->getName();
   else
-    Name += (Twine("BB") + Twine(getNumber())).str();
+    Name += ("BB" + Twine(getNumber())).str();
   return Name;
 }
 

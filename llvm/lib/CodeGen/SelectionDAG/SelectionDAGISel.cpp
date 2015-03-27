@@ -670,8 +670,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 #endif
   {
     BlockNumber = FuncInfo->MBB->getNumber();
-    BlockName = MF->getName().str() + ":" +
-                FuncInfo->MBB->getBasicBlock()->getName().str();
+    BlockName =
+        (MF->getName() + ":" + FuncInfo->MBB->getBasicBlock()->getName()).str();
   }
   DEBUG(dbgs() << "Initial selection DAG: BB#" << BlockNumber
         << " '" << BlockName << "'\n"; CurDAG->dump());
