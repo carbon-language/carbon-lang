@@ -316,7 +316,7 @@ private:
   bool ShouldChangeType(Type *From, Type *To) const;
   Value *dyn_castNegVal(Value *V) const;
   Value *dyn_castFNegVal(Value *V, bool NoSignedZero = false) const;
-  Type *FindElementAtOffset(Type *PtrTy, int64_t Offset,
+  Type *FindElementAtOffset(PointerType *PtrTy, int64_t Offset,
                             SmallVectorImpl<Value *> &NewIndices);
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
 

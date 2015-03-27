@@ -869,11 +869,9 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 /// whether or not there is a sequence of GEP indices into the pointed type that
 /// will land us at the specified offset.  If so, fill them into NewIndices and
 /// return the resultant element type, otherwise return null.
-Type *InstCombiner::FindElementAtOffset(Type *PtrTy, int64_t Offset,
+Type *InstCombiner::FindElementAtOffset(PointerType *PtrTy, int64_t Offset,
                                         SmallVectorImpl<Value *> &NewIndices) {
-  assert(PtrTy->isPtrOrPtrVectorTy());
-
-  Type *Ty = PtrTy->getPointerElementType();
+  Type *Ty = PtrTy->getElementType();
   if (!Ty->isSized())
     return nullptr;
 
