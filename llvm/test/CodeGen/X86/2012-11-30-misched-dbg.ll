@@ -93,7 +93,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 ; Test DebugValue uses visited by RegisterPressureTracker findUseBetween().
 ;
 ; CHECK: @main
-; CHECK: DEBUG_VALUE: X
+; CHECK: DEBUG_VALUE: main:X
 ; CHECK: call
 
 %"class.__gnu_cxx::hash_map" = type { %"class.__gnu_cxx::hashtable" }
@@ -135,7 +135,7 @@ declare void @_Znwm()
 !llvm.dbg.cu = !{!30}
 
 !30 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 169129) (llvm/trunk 169135)", isOptimized: true, emissionKind: 0, file: !34, enums: !2, retainedTypes: !2, subprograms: !36)
-!31 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "X", line: 29, scope: null, type: !32)
+!31 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "X", line: 29, scope: !37, type: !32)
 !32 = !MDDerivedType(tag: DW_TAG_typedef, name: "HM", line: 28, file: !34, baseType: null)
 !33 = !MDFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")
 !34 = !MDFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")

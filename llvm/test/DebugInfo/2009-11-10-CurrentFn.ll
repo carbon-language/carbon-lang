@@ -21,7 +21,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !7 = !MDSubroutineType(types: !8)
 !8 = !{null}
 !9 = !{!11}
-!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 3, arg: 1, scope: !17, file: !5, type: !12)
+!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 3, arg: 1, scope: !5, file: !17, type: !12)
 !12 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !13 = !MDLocation(line: 3, column: 14, scope: !5)
 !14 = !MDLocation(line: 4, column: 3, scope: !15)

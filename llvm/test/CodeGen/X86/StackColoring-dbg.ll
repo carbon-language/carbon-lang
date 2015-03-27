@@ -30,6 +30,6 @@ declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 !0 = !MDCompileUnit(language: DW_LANG_C89, producer: "clang", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2)
 !1 = !MDFile(filename: "t.c", directory: "")
 !16 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
-!2 = !{i32 0}
-!22 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 16, scope: null, file: !2, type: !16)
+!2 = !MDSubprogram()
+!22 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 16, scope: !2, file: !1, type: !16)
 !23 = !{i32 1, !"Debug Info Version", i32 3}
