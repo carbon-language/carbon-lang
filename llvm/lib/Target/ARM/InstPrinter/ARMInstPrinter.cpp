@@ -74,7 +74,7 @@ void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 }
 
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                               StringRef Annot) {
+                               StringRef Annot, const MCSubtargetInfo &STI) {
   unsigned Opcode = MI->getOpcode();
 
   switch(Opcode) {

@@ -20,7 +20,7 @@
 using namespace llvm;
 
 void AMDGPUInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
-                             StringRef Annot) {
+                                  StringRef Annot, const MCSubtargetInfo &STI) {
   OS.flush();
   printInstruction(MI, OS);
 

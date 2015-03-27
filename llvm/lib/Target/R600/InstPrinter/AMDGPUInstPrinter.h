@@ -29,7 +29,8 @@ public:
   void printInstruction(const MCInst *MI, raw_ostream &O);
   static const char *getRegisterName(unsigned RegNo);
 
-  void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot) override;
+  void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
+                 const MCSubtargetInfo &STI) override;
 
 private:
   void printU8ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);

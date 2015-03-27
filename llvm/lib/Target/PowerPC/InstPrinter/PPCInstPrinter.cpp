@@ -51,7 +51,7 @@ void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 }
 
 void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                               StringRef Annot) {
+                               StringRef Annot, const MCSubtargetInfo &STI) {
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
     unsigned char SH = MI->getOperand(2).getImm();

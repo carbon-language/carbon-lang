@@ -77,7 +77,7 @@ void MipsInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 }
 
 void MipsInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                                StringRef Annot) {
+                                StringRef Annot, const MCSubtargetInfo &STI) {
   switch (MI->getOpcode()) {
   default:
     break;

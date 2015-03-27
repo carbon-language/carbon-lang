@@ -39,7 +39,8 @@ public:
 
   // Override MCInstPrinter.
   void printRegName(raw_ostream &O, unsigned RegNo) const override;
-  void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot) override;
+  void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
+                 const MCSubtargetInfo &STI) override;
 
 private:
   // Print various types of operand.

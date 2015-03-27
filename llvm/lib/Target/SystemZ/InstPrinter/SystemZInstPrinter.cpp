@@ -43,7 +43,8 @@ void SystemZInstPrinter::printOperand(const MCOperand &MO, raw_ostream &O) {
 }
 
 void SystemZInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                                   StringRef Annot) {
+                                   StringRef Annot,
+                                   const MCSubtargetInfo &STI) {
   printInstruction(MI, O);
   printAnnotation(O, Annot);
 }

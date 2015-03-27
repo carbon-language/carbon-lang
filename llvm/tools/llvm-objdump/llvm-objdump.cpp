@@ -401,7 +401,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
             outs() << "\t";
             DumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, Size));
           }
-          IP->printInst(&Inst, outs(), "");
+          IP->printInst(&Inst, outs(), "", *STI);
           outs() << CommentStream.str();
           Comments.clear();
           outs() << "\n";

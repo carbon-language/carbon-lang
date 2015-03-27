@@ -44,8 +44,7 @@ void SparcInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
 }
 
 void SparcInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                               StringRef Annot)
-{
+                                 StringRef Annot, const MCSubtargetInfo &STI) {
   if (!printAliasInstr(MI, O) && !printSparcAliasInstr(MI, O))
     printInstruction(MI, O);
   printAnnotation(O, Annot);

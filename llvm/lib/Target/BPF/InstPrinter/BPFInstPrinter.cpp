@@ -27,7 +27,7 @@ using namespace llvm;
 #include "BPFGenAsmWriter.inc"
 
 void BPFInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                               StringRef Annot) {
+                               StringRef Annot, const MCSubtargetInfo &STI) {
   printInstruction(MI, O);
   printAnnotation(O, Annot);
 }

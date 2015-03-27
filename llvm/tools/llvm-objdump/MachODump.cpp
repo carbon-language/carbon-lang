@@ -3347,9 +3347,9 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
           Annotations.flush();
           StringRef AnnotationsStr = Annotations.str();
           if (isThumb)
-            ThumbIP->printInst(&Inst, FormattedOS, AnnotationsStr);
+            ThumbIP->printInst(&Inst, FormattedOS, AnnotationsStr, *ThumbSTI);
           else
-            IP->printInst(&Inst, FormattedOS, AnnotationsStr);
+            IP->printInst(&Inst, FormattedOS, AnnotationsStr, *ThumbSTI);
           emitComments(CommentStream, CommentsToEmit, FormattedOS, *AsmInfo);
 
           // Print debug info.
@@ -3408,7 +3408,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
             outs() << "\t";
             DumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, InstSize));
           }
-          IP->printInst(&Inst, outs(), "");
+          IP->printInst(&Inst, outs(), "", *ThumbSTI);
           outs() << "\n";
         } else {
           unsigned int Arch = MachOOF->getArch();

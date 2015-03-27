@@ -123,12 +123,14 @@ def AppleAsmParserVariant : AsmParserVariant {
 // AsmWriter bits get associated with the correct class.
 def GenericAsmWriter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
+  int PassSubtarget = 1;
   int Variant = 0;
   bit isMCAsmWriter = 1;
 }
 
 def AppleAsmWriter : AsmWriter {
   let AsmWriterClassName = "AppleInstPrinter";
+  int PassSubtarget = 1;
   int Variant = 1;
   int isMCAsmWriter = 1;
 }

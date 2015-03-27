@@ -33,7 +33,8 @@ void X86IntelInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 }
 
 void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
-                                    StringRef Annot) {
+                                    StringRef Annot,
+                                    const MCSubtargetInfo &STI) {
   const MCInstrDesc &Desc = MII.get(MI->getOpcode());
   uint64_t TSFlags = Desc.TSFlags;
 

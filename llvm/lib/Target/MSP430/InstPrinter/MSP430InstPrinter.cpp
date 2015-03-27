@@ -27,7 +27,7 @@ using namespace llvm;
 #include "MSP430GenAsmWriter.inc"
 
 void MSP430InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                                  StringRef Annot) {
+                                  StringRef Annot, const MCSubtargetInfo &STI) {
   printInstruction(MI, O);
   printAnnotation(O, Annot);
 }

@@ -72,7 +72,7 @@ void NVPTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 }
 
 void NVPTXInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
-                                 StringRef Annot) {
+                                 StringRef Annot, const MCSubtargetInfo &STI) {
   printInstruction(MI, OS);
 
   // Next always print the annotation.

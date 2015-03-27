@@ -1015,6 +1015,11 @@ class AsmWriter {
   // name.
   string AsmWriterClassName  = "InstPrinter";
 
+  // PassSubtarget - Determines whether MCSubtargetInfo should be passed to
+  // the various print methods.
+  // FIXME: Remove after all ports are updated.
+  int PassSubtarget = 0;
+
   // Variant - AsmWriters can be of multiple different variants.  Variants are
   // used to support targets that need to emit assembly code in ways that are
   // mostly the same for different targets, but have minor differences in

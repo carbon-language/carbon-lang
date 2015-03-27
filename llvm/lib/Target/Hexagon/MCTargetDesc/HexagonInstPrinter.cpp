@@ -78,7 +78,8 @@ StringRef HexagonInstPrinter::getRegName(unsigned RegNo) const {
 }
 
 void HexagonInstPrinter::printInst(MCInst const *MI, raw_ostream &O,
-                                   StringRef Annot) {
+                                   StringRef Annot,
+                                   const MCSubtargetInfo &STI) {
   const char startPacket = '{',
              endPacket = '}';
   // TODO: add outer HW loop when it's supported too.
@@ -94,7 +95,7 @@ void HexagonInstPrinter::printInst(MCInst const *MI, raw_ostream &O,
 
       Nop.setOpcode (Hexagon::A2_nop);
       HexagonMCInstrInfo::setPacketBegin (Nop, HexagonMCInstrInfo::isPacketBegin(*MI));
-      printInst (&Nop, O, NoAnnot);
+      printInst (&Nop, O, NoAnnot, STI);
     }
 
     // Close the packet.
