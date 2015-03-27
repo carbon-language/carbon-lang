@@ -554,12 +554,10 @@ std::error_code OutputELFWriter<ELFT>::writeOutput(const File &file,
                                                    StringRef path) {
   std::unique_ptr<FileOutputBuffer> buffer;
   ScopedTask createOutputTask(getDefaultDomain(), "ELF Writer Create Output");
-  std::error_code ec = FileOutputBuffer::create(path, outputFileSize(), buffer,
-                                                FileOutputBuffer::F_executable);
-  createOutputTask.end();
-
-  if (ec)
+  if (std::error_code ec = FileOutputBuffer::create(
+          path, outputFileSize(), buffer, FileOutputBuffer::F_executable))
     return ec;
+  createOutputTask.end();
 
   ScopedTask writeTask(getDefaultDomain(), "ELF Writer write to memory");
 
@@ -587,14 +585,10 @@ std::error_code OutputELFWriter<ELFT>::writeOutput(const File &file,
 template <class ELFT>
 std::error_code OutputELFWriter<ELFT>::writeFile(const File &file,
                                                  StringRef path) {
-  std::error_code ec = buildOutput(file);
-  if (ec)
+  if (std::error_code ec = buildOutput(file))
     return ec;
-
-  ec = setELFHeader();
-  if (ec)
+  if (std::error_code ec = setELFHeader())
     return ec;
-
   return writeOutput(file, path);
 }
 } // namespace elf
