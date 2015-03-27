@@ -379,8 +379,8 @@ SDValue VectorLegalizer::Promote(SDValue Op) {
 
   // There are currently two cases of vector promotion:
   // 1) Bitcasting a vector of integers to a different type to a vector of the
-  //    same overall length. For example, x86 promotes ISD::AND on v2i32 to v1i64.
-  // 2) Extending a vector of floats to a vector of the same number oflarger
+  //    same overall length. For example, x86 promotes ISD::AND v2i32 to v1i64.
+  // 2) Extending a vector of floats to a vector of the same number of larger
   //    floats. For example, AArch64 promotes ISD::FADD on v4f16 to v4f32.
   MVT VT = Op.getSimpleValueType();
   assert(Op.getNode()->getNumValues() == 1 &&
