@@ -285,6 +285,7 @@ public:
   int getContentType() const override {
     return Chunk<ELFT>::ContentType::Unknown;
   }
+
   void write(ELFWriter *, TargetLayout<ELFT> &,
              llvm::FileOutputBuffer &) override {}
 

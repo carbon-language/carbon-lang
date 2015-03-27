@@ -43,19 +43,20 @@ public:
   void e_shentsize(uint16_t shentsize) { _eh.e_shentsize = shentsize; }
   void e_shnum(uint16_t shnum)         { _eh.e_shnum = shnum; }
   void e_shstrndx(uint16_t shstrndx)   { _eh.e_shstrndx = shstrndx; }
-  uint64_t fileSize() const { return sizeof(Elf_Ehdr); }
+  uint64_t fileSize() const override { return sizeof(Elf_Ehdr); }
 
   static bool classof(const Chunk<ELFT> *c) {
     return c->Kind() == Chunk<ELFT>::Kind::ELFHeader;
   }
 
-  int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
+  int getContentType() const override {
+    return Chunk<ELFT>::ContentType::Header;
+  }
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-             llvm::FileOutputBuffer &buffer);
+             llvm::FileOutputBuffer &buffer) override;
 
-
-  void finalize() {
+  void finalize() override {
     _eh.e_ident[llvm::ELF::EI_CLASS] =
         (ELFT::Is64Bits) ? llvm::ELF::ELFCLASS64 : llvm::ELF::ELFCLASS32;
     _eh.e_ident[llvm::ELF::EI_DATA] =
@@ -133,14 +134,14 @@ public:
 
   void resetProgramHeaders() { _phi = _ph.begin(); }
 
-  uint64_t fileSize() const { return sizeof(Elf_Phdr) * _ph.size(); }
+  uint64_t fileSize() const override { return sizeof(Elf_Phdr) * _ph.size(); }
 
   static bool classof(const Chunk<ELFT> *c) {
     return c->Kind() == Chunk<ELFT>::Kind::ProgramHeader;
   }
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-             llvm::FileOutputBuffer &buffer);
+             llvm::FileOutputBuffer &buffer) override;
 
   /// \brief find a program header entry in the list of program headers
   ReversePhIterT
@@ -149,27 +150,18 @@ public:
                         FindPhdr(type, flags, flagClear));
   }
 
-  PhIterT begin() {
-    return _ph.begin();
-  }
-
-  PhIterT end() {
-    return _ph.end();
-  }
-
+  PhIterT begin() { return _ph.begin(); }
+  PhIterT end() { return _ph.end(); }
   ReversePhIterT rbegin() { return _ph.rbegin(); }
-
   ReversePhIterT rend() { return _ph.rend(); }
-
-
 
   int64_t entsize() { return sizeof(Elf_Phdr); }
 
-  int64_t numHeaders() {
-    return _ph.size();
-  }
+  int64_t numHeaders() { return _ph.size();  }
 
-  int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
+  int getContentType() const override {
+    return Chunk<ELFT>::ContentType::Header;
+  }
 
 private:
   Elf_Phdr *allocateProgramHeader(bool &allocatedNew) {
@@ -276,15 +268,17 @@ public:
   }
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-             llvm::FileOutputBuffer &buffer);
+             llvm::FileOutputBuffer &buffer) override;
 
-
-
-  uint64_t fileSize() const { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
+  uint64_t fileSize() const override {
+    return sizeof(Elf_Shdr) * _sectionInfo.size();
+  }
 
   uint64_t entsize() { return sizeof(Elf_Shdr); }
 
-  int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
+  int getContentType() const override {
+    return Chunk<ELFT>::ContentType::Header;
+  }
 
   uint64_t numHeaders() { return _sectionInfo.size(); }
 

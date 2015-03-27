@@ -80,7 +80,7 @@ public:
   uint64_t memSize() const { return _msize; }
   void setMemSize(uint64_t msize) { _msize = msize; }
 
-  // Whats the contentType of the chunk?
+  // Returns the ContentType of the chunk
   virtual int getContentType() const = 0;
 
   // Writer the chunk
