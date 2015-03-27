@@ -88,10 +88,10 @@ public:
                      llvm::FileOutputBuffer &buffer) = 0;
 
   // Finalize the chunk before assigning offsets/virtual addresses
-  virtual void doPreFlight() = 0;
+  virtual void doPreFlight() {}
 
   // Finalize the chunk before writing
-  virtual void finalize() = 0;
+  virtual void finalize() {}
 
 protected:
   StringRef _name;

@@ -49,10 +49,8 @@ public:
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
-  void doPreFlight() override {}
 
   /// \brief Finalize the section contents before writing
-  void finalize() override {}
 
   /// \brief Does this section have an output segment.
   virtual bool hasOutputSegment() {

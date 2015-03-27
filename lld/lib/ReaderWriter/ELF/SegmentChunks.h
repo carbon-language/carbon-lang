@@ -154,7 +154,6 @@ public:
   }
 
   /// Finalize the segment before assigning File Offsets / Virtual addresses
-  void doPreFlight() {}
 
   /// Finalize the segment, before we want to write the segment header
   /// information
@@ -288,8 +287,6 @@ public:
   }
   void write(ELFWriter *, TargetLayout<ELFT> &,
              llvm::FileOutputBuffer &) override {}
-  void doPreFlight() override {}
-  void finalize() override {}
 
   std::error_code evalExpr(uint64_t &curPos) {
     return _linkerScriptSema.evalExpr(_expr, curPos);

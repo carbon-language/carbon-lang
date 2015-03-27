@@ -54,7 +54,6 @@ public:
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
              llvm::FileOutputBuffer &buffer);
 
-  virtual void doPreFlight() {}
 
   void finalize() {
     _eh.e_ident[llvm::ELF::EI_CLASS] =
@@ -162,9 +161,7 @@ public:
 
   ReversePhIterT rend() { return _ph.rend(); }
 
-  virtual void doPreFlight() {}
 
-  void finalize() {}
 
   int64_t entsize() { return sizeof(Elf_Phdr); }
 
@@ -281,9 +278,7 @@ public:
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
              llvm::FileOutputBuffer &buffer);
 
-  virtual void doPreFlight() {}
 
-  void finalize() {}
 
   uint64_t fileSize() const { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
 
