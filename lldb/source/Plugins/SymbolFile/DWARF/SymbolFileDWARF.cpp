@@ -1095,7 +1095,54 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
             Mangled func_name;
             if (mangled)
                 func_name.SetValue(ConstString(mangled), true);
-            else if (name)
+            else if (die->GetParent()->Tag() == DW_TAG_compile_unit &&
+                     LanguageRuntime::LanguageIsCPlusPlus(dwarf_cu->GetLanguageType()) &&
+                     strcmp(name, "main") != 0)
+            {
+                // If the mangled name is not present in the DWARF, generate the demangled name
+                // using the decl context. We skip if the function is "main" as its name is
+                // never mangled.
+                bool is_static = false;
+                bool is_variadic = false;
+                unsigned type_quals = 0;
+                std::vector<ClangASTType> param_types;
+                std::vector<clang::ParmVarDecl*> param_decls;
+                const DWARFDebugInfoEntry *decl_ctx_die = NULL;
+                DWARFDeclContext decl_ctx;
+                StreamString sstr;
+
+                die->GetDWARFDeclContext(this, dwarf_cu, decl_ctx);
+                sstr << decl_ctx.GetQualifiedName();
+
+                clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE(dwarf_cu,
+                                                                                           die,
+                                                                                           &decl_ctx_die);
+                ParseChildParameters(sc,
+                                     containing_decl_ctx,
+                                     dwarf_cu,
+                                     die,
+                                     true,
+                                     is_static,
+                                     is_variadic,
+                                     param_types,
+                                     param_decls,
+                                     type_quals);
+                sstr << "(";
+                for (size_t i = 0; i < param_types.size(); i++)
+                {
+                    if (i > 0)
+                        sstr << ", ";
+                    sstr << param_types[i].GetTypeName();
+                }
+                if (is_variadic)
+                    sstr << ", ...";
+                sstr << ")";
+                if (type_quals & clang::Qualifiers::Const)
+                    sstr << " const";
+
+                func_name.SetValue(ConstString(sstr.GetData()), false);
+            }
+            else
                 func_name.SetValue(ConstString(name), false);
 
             FunctionSP func_sp;

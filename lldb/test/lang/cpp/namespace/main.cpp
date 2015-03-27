@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cstdarg>
+
 namespace {
     typedef unsigned int my_uint_t;
     int i; // Find the line number for anonymous namespace variable i.
@@ -14,6 +16,20 @@ namespace {
     int myanonfunc (int a)
     {
         return a + a;
+    }
+
+    int
+    variadic_sum (int arg_count...)
+    {
+        int sum = 0;
+        va_list args;
+        va_start(args, arg_count);
+
+        for (int i = 0; i < arg_count; i++)
+            sum += va_arg(args, int);
+
+        va_end(args);
+        return sum;
     }
 }
 
@@ -67,6 +83,7 @@ int Foo::myfunc(int a)
     j = 4;
     printf("::i=%d\n", ::i);
     printf("A::B::j=%d\n", A::B::j);
+    printf("variadic_sum=%d\n", variadic_sum(3, 1, 2, 3));
     myanonfunc(3);
     return myfunc2(3) + j + i + a + 2 + anon_uint + a_uint + b_uint + y_uint; // Set break point at this line.
 }
