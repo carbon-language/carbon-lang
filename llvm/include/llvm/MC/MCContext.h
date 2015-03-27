@@ -162,12 +162,38 @@ namespace llvm {
     /// The Compile Unit ID that we are currently processing.
     unsigned DwarfCompileUnitID;
 
-    typedef std::pair<std::string, std::string> SectionGroupPair;
-    typedef std::tuple<std::string, std::string, int> SectionGroupTriple;
+    struct ELFSectionKey {
+      std::string SectionName;
+      std::string GroupName;
+      ELFSectionKey(StringRef SectionName, StringRef GroupName)
+          : SectionName(SectionName), GroupName(GroupName) {}
+      bool operator<(const ELFSectionKey &Other) const {
+        if (SectionName < Other.SectionName)
+          return true;
+        return GroupName < Other.GroupName;
+      }
+    };
+
+    struct COFFSectionKey {
+      std::string SectionName;
+      std::string GroupName;
+      int SelectionKey;
+      COFFSectionKey(StringRef SectionName, StringRef GroupName,
+                     int SelectionKey)
+          : SectionName(SectionName), GroupName(GroupName),
+            SelectionKey(SelectionKey) {}
+      bool operator<(const COFFSectionKey &Other) const {
+        if (SectionName < Other.SectionName)
+          return true;
+        if (GroupName < Other.GroupName)
+          return GroupName < Other.GroupName;
+        return SelectionKey < Other.SelectionKey;
+      }
+    };
 
     StringMap<const MCSectionMachO*> MachOUniquingMap;
-    std::map<SectionGroupPair, const MCSectionELF *> ELFUniquingMap;
-    std::map<SectionGroupTriple, const MCSectionCOFF *> COFFUniquingMap;
+    std::map<ELFSectionKey, const MCSectionELF *> ELFUniquingMap;
+    std::map<COFFSectionKey, const MCSectionCOFF *> COFFUniquingMap;
 
     /// Do automatic reset in destructor
     bool AutoReset;
