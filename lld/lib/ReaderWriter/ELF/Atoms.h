@@ -656,35 +656,33 @@ public:
   SimpleELFDefinedAtom(const File &f) : SimpleDefinedAtom(f) {}
 
   void addReferenceELF(Reference::KindArch arch, Reference::KindValue kindValue,
-                       uint64_t off, const Atom *target,
-                       Reference::Addend addend) {
-    this->addReference(Reference::KindNamespace::ELF, arch, kindValue, off,
-                       target, addend);
+                       uint64_t off, const Atom *t, Reference::Addend a) {
+    addReference(Reference::KindNamespace::ELF, arch, kindValue, off, t, a);
   }
 
   void addReferenceELF_Hexagon(Reference::KindValue relocType, uint64_t off,
                                const Atom *t, Reference::Addend a) {
-    this->addReferenceELF(Reference::KindArch::Hexagon, relocType, off, t, a);
+    addReferenceELF(Reference::KindArch::Hexagon, relocType, off, t, a);
   }
 
   void addReferenceELF_x86_64(Reference::KindValue relocType, uint64_t off,
                               const Atom *t, Reference::Addend a) {
-    this->addReferenceELF(Reference::KindArch::x86_64, relocType, off, t, a);
+    addReferenceELF(Reference::KindArch::x86_64, relocType, off, t, a);
   }
 
   void addReferenceELF_Mips(Reference::KindValue relocType, uint64_t off,
                             const Atom *t, Reference::Addend a) {
-    this->addReferenceELF(Reference::KindArch::Mips, relocType, off, t, a);
+    addReferenceELF(Reference::KindArch::Mips, relocType, off, t, a);
   }
 
   void addReferenceELF_AArch64(Reference::KindValue relocType, uint64_t off,
                                const Atom *t, Reference::Addend a) {
-    this->addReferenceELF(Reference::KindArch::AArch64, relocType, off, t, a);
+    addReferenceELF(Reference::KindArch::AArch64, relocType, off, t, a);
   }
 
   void addReferenceELF_ARM(Reference::KindValue relocType, uint64_t off,
                            const Atom *t, Reference::Addend a) {
-    this->addReferenceELF(Reference::KindArch::ARM, relocType, off, t, a);
+    addReferenceELF(Reference::KindArch::ARM, relocType, off, t, a);
   }
 };
 
