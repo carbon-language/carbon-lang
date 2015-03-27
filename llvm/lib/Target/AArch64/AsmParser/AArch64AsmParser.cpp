@@ -2638,13 +2638,15 @@ AArch64AsmParser::tryParseSysReg(OperandVector &Operands) {
     return MatchOperand_NoMatch;
 
   bool IsKnown;
-  auto MRSMapper = AArch64SysReg::MRSMapper(STI.getFeatureBits());
-  uint32_t MRSReg = MRSMapper.fromString(Tok.getString(), IsKnown);
+  auto MRSMapper = AArch64SysReg::MRSMapper();
+  uint32_t MRSReg = MRSMapper.fromString(Tok.getString(), STI.getFeatureBits(),
+                                         IsKnown);
   assert(IsKnown == (MRSReg != -1U) &&
          "register should be -1 if and only if it's unknown");
 
-  auto MSRMapper = AArch64SysReg::MSRMapper(STI.getFeatureBits());
-  uint32_t MSRReg = MSRMapper.fromString(Tok.getString(), IsKnown);
+  auto MSRMapper = AArch64SysReg::MSRMapper();
+  uint32_t MSRReg = MSRMapper.fromString(Tok.getString(), STI.getFeatureBits(),
+                                         IsKnown);
   assert(IsKnown == (MSRReg != -1U) &&
          "register should be -1 if and only if it's unknown");
 

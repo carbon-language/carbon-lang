@@ -245,8 +245,7 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MRSMapper::MRSMappings[] = {
   {"ich_elsr_el2", ICH_ELSR_EL2}
 };
 
-AArch64SysReg::MRSMapper::MRSMapper(uint64_t FeatureBits)
-  : SysRegMapper(FeatureBits) {
+AArch64SysReg::MRSMapper::MRSMapper() {
     InstMappings = &MRSMappings[0];
     NumInstMappings = llvm::array_lengthof(MRSMappings);
 }
@@ -269,8 +268,7 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MSRMapper::MSRMappings[] = {
   {"icc_sgi0r_el1", ICC_SGI0R_EL1}
 };
 
-AArch64SysReg::MSRMapper::MSRMapper(uint64_t FeatureBits)
-  : SysRegMapper(FeatureBits) {
+AArch64SysReg::MSRMapper::MSRMapper() {
     InstMappings = &MSRMappings[0];
     NumInstMappings = llvm::array_lengthof(MSRMappings);
 }
@@ -761,7 +759,8 @@ AArch64SysReg::SysRegMapper::CycloneSysRegMappings[] = {
 };
 
 uint32_t
-AArch64SysReg::SysRegMapper::fromString(StringRef Name, bool &Valid) const {
+AArch64SysReg::SysRegMapper::fromString(StringRef Name, uint64_t FeatureBits, 
+                                        bool &Valid) const {
   std::string NameLower = Name.lower();
 
   // First search the registers shared by all
@@ -814,7 +813,7 @@ AArch64SysReg::SysRegMapper::fromString(StringRef Name, bool &Valid) const {
 }
 
 std::string
-AArch64SysReg::SysRegMapper::toString(uint32_t Bits) const {
+AArch64SysReg::SysRegMapper::toString(uint32_t Bits, uint64_t FeatureBits) const {
   // First search the registers shared by all
   for (unsigned i = 0; i < array_lengthof(SysRegMappings); ++i) {
     if (SysRegMappings[i].Value == Bits) {

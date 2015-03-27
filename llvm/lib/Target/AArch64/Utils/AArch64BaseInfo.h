@@ -1139,21 +1139,20 @@ namespace AArch64SysReg {
 
     const AArch64NamedImmMapper::Mapping *InstMappings;
     size_t NumInstMappings;
-    uint64_t FeatureBits;
 
-    SysRegMapper(uint64_t FeatureBits) : FeatureBits(FeatureBits) { }
-    uint32_t fromString(StringRef Name, bool &Valid) const;
-    std::string toString(uint32_t Bits) const;
+    SysRegMapper() { }
+    uint32_t fromString(StringRef Name, uint64_t FeatureBits, bool &Valid) const;
+    std::string toString(uint32_t Bits, uint64_t FeatureBits) const;
   };
 
   struct MSRMapper : SysRegMapper {
     static const AArch64NamedImmMapper::Mapping MSRMappings[];
-    MSRMapper(uint64_t FeatureBits);
+    MSRMapper();
   };
 
   struct MRSMapper : SysRegMapper {
     static const AArch64NamedImmMapper::Mapping MRSMappings[];
-    MRSMapper(uint64_t FeatureBits);
+    MRSMapper();
   };
 
   uint32_t ParseGenericRegister(StringRef Name, bool &Valid);

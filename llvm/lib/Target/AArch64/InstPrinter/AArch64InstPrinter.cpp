@@ -1276,8 +1276,8 @@ void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
                                                 raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
 
-  auto Mapper = AArch64SysReg::MRSMapper(getAvailableFeatures());
-  std::string Name = Mapper.toString(Val);
+  auto Mapper = AArch64SysReg::MRSMapper();
+  std::string Name = Mapper.toString(Val, getAvailableFeatures());
 
   O << StringRef(Name).upper();
 }
@@ -1286,8 +1286,8 @@ void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
                                                 raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
 
-  auto Mapper = AArch64SysReg::MSRMapper(getAvailableFeatures());
-  std::string Name = Mapper.toString(Val);
+  auto Mapper = AArch64SysReg::MSRMapper();
+  std::string Name = Mapper.toString(Val, getAvailableFeatures());
 
   O << StringRef(Name).upper();
 }
