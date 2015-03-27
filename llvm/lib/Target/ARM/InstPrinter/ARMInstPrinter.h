@@ -34,7 +34,6 @@ public:
   void printInstruction(const MCInst *MI, raw_ostream &O);
   static const char *getRegisterName(unsigned RegNo);
 
-
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
   void printSORegRegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
@@ -58,7 +57,7 @@ public:
                                raw_ostream &O);
   void printPostIdxRegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPostIdxImm8s4Operand(const MCInst *MI, unsigned OpNum,
-                               raw_ostream &O);
+                                 raw_ostream &O);
 
   void printLdStmModeOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   template <bool AlwaysPrintImm0>
@@ -95,17 +94,17 @@ public:
                                    raw_ostream &O);
 
   void printT2SOOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  template<bool AlwaysPrintImm0>
+  template <bool AlwaysPrintImm0>
   void printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
                                  raw_ostream &O);
-  template<bool AlwaysPrintImm0>
+  template <bool AlwaysPrintImm0>
   void printT2AddrModeImm8Operand(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
-  template<bool AlwaysPrintImm0>
+  template <bool AlwaysPrintImm0>
   void printT2AddrModeImm8s4Operand(const MCInst *MI, unsigned OpNum,
                                     raw_ostream &O);
   void printT2AddrModeImm0_1020s4Operand(const MCInst *MI, unsigned OpNum,
-                                    raw_ostream &O);
+                                         raw_ostream &O);
   void printT2AddrModeImm8OffsetOperand(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O);
   void printT2AddrModeImm8s4OffsetOperand(const MCInst *MI, unsigned OpNum,
@@ -144,7 +143,7 @@ public:
   void printVectorListOne(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListTwo(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
-                               raw_ostream &O);
+                                raw_ostream &O);
   void printVectorListThree(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListFour(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListOneAllLanes(const MCInst *MI, unsigned OpNum,
@@ -164,7 +163,7 @@ public:
   void printVectorListThreeSpaced(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
   void printVectorListFourSpaced(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O);
+                                 raw_ostream &O);
 };
 
 } // end namespace llvm
