@@ -32,25 +32,7 @@ namespace lld {
 
 class PECOFFLinkingContext : public LinkingContext {
 public:
-  PECOFFLinkingContext()
-      : _mutex(), _allocMutex(), _hasEntry(true),
-        _baseAddress(invalidBaseAddress), _stackReserve(1024 * 1024),
-        _stackCommit(4096), _heapReserve(1024 * 1024), _heapCommit(4096),
-        _noDefaultLibAll(false), _sectionDefaultAlignment(4096),
-        _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
-        _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
-        _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
-        _allowBind(true), _allowIsolation(true), _swapRunFromCD(false),
-        _swapRunFromNet(false), _baseRelocationEnabled(true),
-        _terminalServerAware(true), _dynamicBaseEnabled(true),
-        _createManifest(true), _embedManifest(false), _manifestId(1),
-        _manifestUAC(true), _manifestLevel("'asInvoker'"),
-        _manifestUiAccess("'false'"), _isDll(false), _highEntropyVA(true),
-        _requireSEH(false), _noSEH(false), _implib(""), _debug(false),
-        _pdbFilePath(""), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)),
-        _parseDirectives(nullptr) {
-    setDeadStripping(true);
-  }
+  PECOFFLinkingContext() { setDeadStripping(true); }
 
   struct Version {
     Version(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -360,60 +342,59 @@ private:
   std::string _entry;
 
   // False if /noentry option is given.
-  bool _hasEntry;
+  bool _hasEntry = true;
 
   // The start address for the program. The default value for the executable is
   // 0x400000, but can be altered using /base command line option.
-  uint64_t _baseAddress;
-
-  uint64_t _stackReserve;
-  uint64_t _stackCommit;
-  uint64_t _heapReserve;
-  uint64_t _heapCommit;
-  bool _noDefaultLibAll;
-  uint32_t _sectionDefaultAlignment;
-  WindowsSubsystem _subsystem;
-  MachineTypes _machineType;
-  Version _imageVersion;
-  Version _minOSVersion;
-  bool _nxCompat;
-  bool _largeAddressAware;
-  bool _allowBind;
-  bool _allowIsolation;
-  bool _swapRunFromCD;
-  bool _swapRunFromNet;
-  bool _baseRelocationEnabled;
-  bool _terminalServerAware;
-  bool _dynamicBaseEnabled;
-  bool _createManifest;
+  uint64_t _baseAddress = invalidBaseAddress;
+  uint64_t _stackReserve = 1024 * 1024;
+  uint64_t _stackCommit = 4096;
+  uint64_t _heapReserve = 1024 * 1024;
+  uint64_t _heapCommit = 4096;
+  bool _noDefaultLibAll = false;
+  uint32_t _sectionDefaultAlignment = 4096;
+  WindowsSubsystem _subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
+  MachineTypes _machineType = llvm::COFF::IMAGE_FILE_MACHINE_I386;
+  Version _imageVersion = {0, 0};
+  Version _minOSVersion = {6, 0};
+  bool _nxCompat = true;
+  bool _largeAddressAware = false;
+  bool _allowBind = true;
+  bool _allowIsolation = true;
+  bool _swapRunFromCD = false;
+  bool _swapRunFromNet = false;
+  bool _baseRelocationEnabled = true;
+  bool _terminalServerAware = true;
+  bool _dynamicBaseEnabled = true;
+  bool _createManifest = true;
   std::string _manifestOutputPath;
-  bool _embedManifest;
-  int _manifestId;
-  bool _manifestUAC;
-  std::string _manifestLevel;
-  std::string _manifestUiAccess;
+  bool _embedManifest = false;
+  int _manifestId = 1;
+  bool _manifestUAC = true;
+  std::string _manifestLevel = "'asInvoker'";
+  std::string _manifestUiAccess = "'false'";
   std::string _manifestDependency;
-  bool _isDll;
-  bool _highEntropyVA;
+  bool _isDll = false;
+  bool _highEntropyVA = true;
 
   // True if /SAFESEH option is specified. Valid only for x86. If true, LLD will
   // produce an image with SEH table. If any modules were not compatible with
   // SEH, LLD will exit with an error.
-  bool _requireSEH;
+  bool _requireSEH = false;
 
   // True if /SAFESEH:no option is specified. Valid only for x86. If true, LLD
   // will not produce an image with SEH table even if all input object files are
   // compatible with SEH.
-  bool _noSEH;
+  bool _noSEH = false;
 
   // /IMPLIB command line option.
-  std::string _implib;
+  std::string _implib = "";
 
   // True if /DEBUG is given.
-  bool _debug;
+  bool _debug = false;
 
   // PDB file output path. NB: this is dummy -- LLD just creates the empty file.
-  std::string _pdbFilePath;
+  std::string _pdbFilePath = "";
 
   // /DELAYLOAD option.
   std::set<std::string> _delayLoadDLLs;
@@ -446,7 +427,7 @@ private:
   // Windows loader do not really care about DOS stub contents, but it's usually
   // a small DOS program that prints out a message "This program requires
   // Microsoft Windows." This feature was somewhat useful before Windows 95.
-  ArrayRef<uint8_t> _dosStub;
+  ArrayRef<uint8_t> _dosStub = llvm::makeArrayRef(DEFAULT_DOS_STUB);
 
   // Name of the temporary file for lib.exe subcommand. For debugging
   // only.
@@ -455,7 +436,7 @@ private:
   std::set<std::string> _definedSyms;
   std::set<Node *> _seen;
 
-  ParseDirectives _parseDirectives;
+  ParseDirectives _parseDirectives = nullptr;
 };
 
 } // end namespace lld
