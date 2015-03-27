@@ -36,23 +36,13 @@ template<class ELFT>
 class SymbolFile : public RuntimeFile<ELFT> {
 public:
   SymbolFile(ELFLinkingContext &ctx)
-      : RuntimeFile<ELFT>(ctx, "Dynamic absolute symbols"), _atomsAdded(false) {
-  }
-
-  Atom *addAbsoluteAtom(StringRef symbolName) override {
-    auto *a = RuntimeFile<ELFT>::addAbsoluteAtom(symbolName);
-    if (a) _atomsAdded = true;
-    return a;
-  }
+      : RuntimeFile<ELFT>(ctx, "Dynamic absolute symbols") {}
 
   Atom *addUndefinedAtom(StringRef) override {
     llvm_unreachable("Cannot add undefined atoms to resolve undefined symbols");
   }
 
-  bool hasAtoms() const { return _atomsAdded; }
-
-private:
-  bool _atomsAdded;
+  bool hasAtoms() const { return this->absolute().size(); }
 };
 
 template<class ELFT>
