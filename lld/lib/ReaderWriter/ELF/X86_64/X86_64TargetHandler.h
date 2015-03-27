@@ -22,8 +22,7 @@ namespace lld {
 namespace elf {
 class X86_64TargetLayout : public TargetLayout<X86_64ELFType> {
 public:
-  X86_64TargetLayout(X86_64LinkingContext &context)
-      : TargetLayout(context) {}
+  X86_64TargetLayout(X86_64LinkingContext &ctx) : TargetLayout(ctx) {}
 
   void finalizeOutputSectionLayout() override {
     sortOutputSectionByPriority(".init_array", ".init_array");
@@ -34,7 +33,7 @@ public:
 class X86_64TargetHandler
     : public DefaultTargetHandler<X86_64ELFType> {
 public:
-  X86_64TargetHandler(X86_64LinkingContext &context);
+  X86_64TargetHandler(X86_64LinkingContext &ctx);
 
   X86_64TargetLayout &getTargetLayout() override {
     return *(_x86_64TargetLayout.get());
@@ -47,18 +46,18 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<X86_64ELFObjectReader>(_context);
+    return llvm::make_unique<X86_64ELFObjectReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<X86_64ELFDSOReader>(_context);
+    return llvm::make_unique<X86_64ELFDSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 protected:
   static const Registry::KindStrings kindStrings[];
-  X86_64LinkingContext &_context;
+  X86_64LinkingContext &_ctx;
   std::unique_ptr<X86_64TargetLayout> _x86_64TargetLayout;
   std::unique_ptr<X86_64TargetRelocationHandler> _x86_64RelocationHandler;
 };

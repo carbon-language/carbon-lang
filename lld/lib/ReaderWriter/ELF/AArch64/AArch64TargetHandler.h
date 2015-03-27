@@ -23,13 +23,12 @@ class AArch64LinkingContext;
 
 template <class ELFT> class AArch64TargetLayout : public TargetLayout<ELFT> {
 public:
-  AArch64TargetLayout(AArch64LinkingContext &context)
-      : TargetLayout<ELFT>(context) {}
+  AArch64TargetLayout(AArch64LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
 };
 
 class AArch64TargetHandler final : public DefaultTargetHandler<AArch64ELFType> {
 public:
-  AArch64TargetHandler(AArch64LinkingContext &context);
+  AArch64TargetHandler(AArch64LinkingContext &ctx);
 
   AArch64TargetLayout<AArch64ELFType> &getTargetLayout() override {
     return *(_AArch64TargetLayout.get());
@@ -42,18 +41,18 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new AArch64ELFObjectReader(_context));
+    return std::unique_ptr<Reader>(new AArch64ELFObjectReader(_ctx));
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new AArch64ELFDSOReader(_context));
+    return std::unique_ptr<Reader>(new AArch64ELFDSOReader(_ctx));
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 private:
   static const Registry::KindStrings kindStrings[];
-  AArch64LinkingContext &_context;
+  AArch64LinkingContext &_ctx;
   std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _AArch64TargetLayout;
   std::unique_ptr<AArch64TargetRelocationHandler> _AArch64RelocationHandler;
 };

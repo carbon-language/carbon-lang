@@ -45,9 +45,9 @@ public:
   /// \brief the ContentType of the chunk
   enum ContentType : uint8_t{ Unknown, Header, Code, Data, Note, TLS };
 
-  Chunk(StringRef name, Kind kind, const ELFLinkingContext &context)
-      : _name(name), _kind(kind), _fsize(0), _msize(0), _alignment(0), _order(0),
-        _ordinal(1), _start(0), _fileoffset(0), _context(context) {}
+  Chunk(StringRef name, Kind kind, const ELFLinkingContext &ctx)
+      : _name(name), _kind(kind), _fsize(0), _msize(0), _alignment(0),
+        _order(0), _ordinal(1), _start(0), _fileoffset(0), _ctx(ctx) {}
   virtual ~Chunk() {}
   // The name of the chunk
   StringRef name() const { return _name; }
@@ -93,7 +93,7 @@ protected:
   uint64_t _ordinal;
   uint64_t _start;
   uint64_t _fileoffset;
-  const ELFLinkingContext &_context;
+  const ELFLinkingContext &_ctx;
 };
 
 } // end namespace elf

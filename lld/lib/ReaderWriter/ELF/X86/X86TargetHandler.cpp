@@ -19,13 +19,13 @@ using namespace elf;
 using namespace llvm::ELF;
 
 std::unique_ptr<Writer> X86TargetHandler::getWriter() {
-  switch (_x86LinkingContext.getOutputELFType()) {
+  switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return llvm::make_unique<X86ExecutableWriter<X86ELFType>>(
-        _x86LinkingContext, *_x86TargetLayout.get());
+        _ctx, *_x86TargetLayout.get());
   case llvm::ELF::ET_DYN:
     return llvm::make_unique<X86DynamicLibraryWriter<X86ELFType>>(
-        _x86LinkingContext, *_x86TargetLayout.get());
+        _ctx, *_x86TargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:
@@ -47,7 +47,6 @@ void X86TargetHandler::registerRelocationNames(Registry &registry) {
                         kindStrings);
 }
 
-X86TargetHandler::X86TargetHandler(X86LinkingContext &context)
-    : _x86LinkingContext(context),
-      _x86TargetLayout(new X86TargetLayout<X86ELFType>(context)),
+X86TargetHandler::X86TargetHandler(X86LinkingContext &ctx)
+    : _ctx(ctx), _x86TargetLayout(new X86TargetLayout<X86ELFType>(ctx)),
       _x86RelocationHandler(new X86TargetRelocationHandler()) {}

@@ -20,9 +20,9 @@ template <class ELFT> class HexagonTargetLayout;
 
 template <typename ELFT> class HexagonELFWriter {
 public:
-  HexagonELFWriter(HexagonLinkingContext &context,
+  HexagonELFWriter(HexagonLinkingContext &ctx,
                    HexagonTargetLayout<ELFT> &targetLayout)
-      : _hexagonLinkingContext(context), _hexagonTargetLayout(targetLayout) {}
+      : _ctx(ctx), _hexagonTargetLayout(targetLayout) {}
 
 protected:
   bool setELFHeader(ELFHeader<ELFT> &elfHeader) {
@@ -34,7 +34,7 @@ protected:
   }
 
   void finalizeHexagonRuntimeAtomValues() {
-    if (_hexagonLinkingContext.isDynamic()) {
+    if (_ctx.isDynamic()) {
       auto gotAtomIter =
           _hexagonTargetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       auto gotpltSection = _hexagonTargetLayout.findOutputSection(".got.plt");
@@ -52,7 +52,7 @@ protected:
   }
 
 private:
-  HexagonLinkingContext &_hexagonLinkingContext;
+  HexagonLinkingContext &_ctx;
   HexagonTargetLayout<ELFT> &_hexagonTargetLayout;
 };
 

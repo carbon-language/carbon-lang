@@ -74,16 +74,16 @@ void MipsDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
 template <class ELFT>
 unique_bump_ptr<SymbolTable<ELFT>>
     MipsDynamicLibraryWriter<ELFT>::createSymbolTable() {
-  return unique_bump_ptr<SymbolTable<ELFT>>(new (
-      this->_alloc) MipsSymbolTable<ELFT>(this->_context));
+  return unique_bump_ptr<SymbolTable<ELFT>>(
+      new (this->_alloc) MipsSymbolTable<ELFT>(this->_ctx));
 }
 
 /// \brief create dynamic table
 template <class ELFT>
 unique_bump_ptr<DynamicTable<ELFT>>
     MipsDynamicLibraryWriter<ELFT>::createDynamicTable() {
-  return unique_bump_ptr<DynamicTable<ELFT>>(new (
-      this->_alloc) MipsDynamicTable<ELFT>(this->_context, _mipsTargetLayout));
+  return unique_bump_ptr<DynamicTable<ELFT>>(
+      new (this->_alloc) MipsDynamicTable<ELFT>(this->_ctx, _mipsTargetLayout));
 }
 
 /// \brief create dynamic symbol table
@@ -91,8 +91,8 @@ template <class ELFT>
 unique_bump_ptr<DynamicSymbolTable<ELFT>>
     MipsDynamicLibraryWriter<ELFT>::createDynamicSymbolTable() {
   return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
-      new (this->_alloc) MipsDynamicSymbolTable<ELFT>(
-          this->_context, _mipsTargetLayout));
+      new (this->_alloc)
+          MipsDynamicSymbolTable<ELFT>(this->_ctx, _mipsTargetLayout));
 }
 
 } // namespace elf

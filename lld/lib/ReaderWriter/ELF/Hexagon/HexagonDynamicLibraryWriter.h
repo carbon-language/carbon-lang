@@ -22,7 +22,7 @@ template <class ELFT>
 class HexagonDynamicLibraryWriter : public DynamicLibraryWriter<ELFT>,
                                     public HexagonELFWriter<ELFT> {
 public:
-  HexagonDynamicLibraryWriter(HexagonLinkingContext &context,
+  HexagonDynamicLibraryWriter(HexagonLinkingContext &ctx,
                               HexagonTargetLayout<ELFT> &layout);
 
 protected:
@@ -43,18 +43,18 @@ private:
     _hexagonRuntimeFile->addAbsoluteAtom("_DYNAMIC");
   }
 
-  HexagonLinkingContext &_hexagonLinkingContext;
+  HexagonLinkingContext &_ctx;
   HexagonTargetLayout<ELFT> &_hexagonTargetLayout;
   std::unique_ptr<HexagonRuntimeFile<ELFT>> _hexagonRuntimeFile;
 };
 
 template <class ELFT>
 HexagonDynamicLibraryWriter<ELFT>::HexagonDynamicLibraryWriter(
-    HexagonLinkingContext &context, HexagonTargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(context, layout),
-      HexagonELFWriter<ELFT>(context, layout), _hexagonLinkingContext(context),
+    HexagonLinkingContext &ctx, HexagonTargetLayout<ELFT> &layout)
+    : DynamicLibraryWriter<ELFT>(ctx, layout),
+      HexagonELFWriter<ELFT>(ctx, layout), _ctx(ctx),
       _hexagonTargetLayout(layout),
-      _hexagonRuntimeFile(new HexagonRuntimeFile<ELFT>(context)) {}
+      _hexagonRuntimeFile(new HexagonRuntimeFile<ELFT>(ctx)) {}
 
 template <class ELFT>
 bool HexagonDynamicLibraryWriter<ELFT>::createImplicitFiles(

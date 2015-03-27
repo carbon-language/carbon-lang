@@ -20,8 +20,8 @@ class HexagonLinkingContext;
 template <class HexagonELFType> class HexagonRuntimeFile
   : public RuntimeFile<HexagonELFType> {
 public:
-  HexagonRuntimeFile(HexagonLinkingContext &context)
-      : RuntimeFile<HexagonELFType>(context, "Hexagon runtime file") {}
+  HexagonRuntimeFile(HexagonLinkingContext &ctx)
+      : RuntimeFile<HexagonELFType>(ctx, "Hexagon runtime file") {}
 };
 } // elf
 } // lld

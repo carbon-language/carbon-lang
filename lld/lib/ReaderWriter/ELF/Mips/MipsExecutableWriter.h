@@ -56,7 +56,7 @@ std::error_code MipsExecutableWriter<ELFT>::setELFHeader() {
   if (ec)
     return ec;
 
-  StringRef entryName = this->_context.entrySymbolName();
+  StringRef entryName = this->_ctx.entrySymbolName();
   if (const AtomLayout *al = this->_layout.findAtomLayoutByName(entryName)) {
     const auto *ea = cast<DefinedAtom>(al->_atom);
     if (ea->codeModel() == DefinedAtom::codeMipsMicro ||
@@ -87,8 +87,8 @@ void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
           continue;
 
         if (da->dynamicExport() != DefinedAtom::dynamicExportAlways &&
-            !this->_context.isDynamicallyExportedSymbol(da->name()) &&
-            !(this->_context.shouldExportDynamic() &&
+            !this->_ctx.isDynamicallyExportedSymbol(da->name()) &&
+            !(this->_ctx.shouldExportDynamic() &&
               da->scope() == Atom::Scope::scopeGlobal))
           continue;
 
@@ -127,16 +127,16 @@ void MipsExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 template <class ELFT>
 unique_bump_ptr<SymbolTable<ELFT>>
     MipsExecutableWriter<ELFT>::createSymbolTable() {
-  return unique_bump_ptr<SymbolTable<ELFT>>(new (
-      this->_alloc) MipsSymbolTable<ELFT>(this->_context));
+  return unique_bump_ptr<SymbolTable<ELFT>>(
+      new (this->_alloc) MipsSymbolTable<ELFT>(this->_ctx));
 }
 
 /// \brief create dynamic table
 template <class ELFT>
 unique_bump_ptr<DynamicTable<ELFT>>
     MipsExecutableWriter<ELFT>::createDynamicTable() {
-  return unique_bump_ptr<DynamicTable<ELFT>>(new (
-      this->_alloc) MipsDynamicTable<ELFT>(this->_context, _mipsTargetLayout));
+  return unique_bump_ptr<DynamicTable<ELFT>>(
+      new (this->_alloc) MipsDynamicTable<ELFT>(this->_ctx, _mipsTargetLayout));
 }
 
 /// \brief create dynamic symbol table
@@ -144,8 +144,8 @@ template <class ELFT>
 unique_bump_ptr<DynamicSymbolTable<ELFT>>
     MipsExecutableWriter<ELFT>::createDynamicSymbolTable() {
   return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
-      new (this->_alloc) MipsDynamicSymbolTable<ELFT>(
-          this->_context, _mipsTargetLayout));
+      new (this->_alloc)
+          MipsDynamicSymbolTable<ELFT>(this->_ctx, _mipsTargetLayout));
 }
 
 } // namespace elf

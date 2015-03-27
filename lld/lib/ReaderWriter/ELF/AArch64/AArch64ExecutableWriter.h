@@ -18,7 +18,7 @@ namespace elf {
 template <class ELFT>
 class AArch64ExecutableWriter : public ExecutableWriter<ELFT> {
 public:
-  AArch64ExecutableWriter(AArch64LinkingContext &context,
+  AArch64ExecutableWriter(AArch64LinkingContext &ctx,
                           AArch64TargetLayout<ELFT> &layout);
 
 protected:
@@ -41,22 +41,22 @@ private:
   };
 
   std::unique_ptr<GOTFile> _gotFile;
-  AArch64LinkingContext &_context;
+  AArch64LinkingContext &_ctx;
   AArch64TargetLayout<ELFT> &_AArch64Layout;
 };
 
 template <class ELFT>
 AArch64ExecutableWriter<ELFT>::AArch64ExecutableWriter(
-    AArch64LinkingContext &context, AArch64TargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(context, layout), _gotFile(new GOTFile(context)),
-      _context(context), _AArch64Layout(layout) {}
+    AArch64LinkingContext &ctx, AArch64TargetLayout<ELFT> &layout)
+    : ExecutableWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)),
+      _ctx(ctx), _AArch64Layout(layout) {}
 
 template <class ELFT>
 bool AArch64ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
   _gotFile->addAtom(*new (_gotFile->_alloc) GLOBAL_OFFSET_TABLEAtom(*_gotFile));
-  if (_context.isDynamic())
+  if (_ctx.isDynamic())
     _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
   result.push_back(std::move(_gotFile));
   return true;

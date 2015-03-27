@@ -139,9 +139,9 @@ template <class ELFT> class MipsRelocationTable : public RelocationTable<ELFT> {
       ELFT::Is64Bits && ELFT::TargetEndianness == llvm::support::little;
 
 public:
-  MipsRelocationTable(const ELFLinkingContext &context, StringRef str,
+  MipsRelocationTable(const ELFLinkingContext &ctx, StringRef str,
                       int32_t order)
-      : RelocationTable<ELFT>(context, str, order) {}
+      : RelocationTable<ELFT>(ctx, str, order) {}
 
 protected:
   void writeRela(ELFWriter *writer, Elf_Rela &r, const DefinedAtom &atom,
@@ -150,7 +150,7 @@ protected:
     r.setSymbolAndType(this->getSymbolIndex(ref.target()), rType, _isMips64EL);
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
     // The addend is used only by relative relocations
-    if (this->_context.isRelativeReloc(ref))
+    if (this->_ctx.isRelativeReloc(ref))
       r.r_addend = writer->addressOfAtom(ref.target()) + ref.addend();
     else
       r.r_addend = 0;

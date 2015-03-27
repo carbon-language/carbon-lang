@@ -23,7 +23,7 @@ template <class ELFT>
 class HexagonExecutableWriter : public ExecutableWriter<ELFT>,
                                 public HexagonELFWriter<ELFT> {
 public:
-  HexagonExecutableWriter(HexagonLinkingContext &context,
+  HexagonExecutableWriter(HexagonLinkingContext &ctx,
                           HexagonTargetLayout<ELFT> &layout);
 
 protected:
@@ -41,24 +41,23 @@ protected:
 private:
   void addDefaultAtoms() {
     _hexagonRuntimeFile->addAbsoluteAtom("_SDA_BASE_");
-    if (this->_context.isDynamic()) {
+    if (this->_ctx.isDynamic()) {
       _hexagonRuntimeFile->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       _hexagonRuntimeFile->addAbsoluteAtom("_DYNAMIC");
     }
   }
 
-  HexagonLinkingContext &_hexagonLinkingContext;
+  HexagonLinkingContext &_ctx;
   HexagonTargetLayout<ELFT> &_hexagonTargetLayout;
   std::unique_ptr<HexagonRuntimeFile<ELFT>> _hexagonRuntimeFile;
 };
 
 template <class ELFT>
 HexagonExecutableWriter<ELFT>::HexagonExecutableWriter(
-    HexagonLinkingContext &context, HexagonTargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(context, layout),
-      HexagonELFWriter<ELFT>(context, layout), _hexagonLinkingContext(context),
-      _hexagonTargetLayout(layout),
-      _hexagonRuntimeFile(new HexagonRuntimeFile<ELFT>(context)) {}
+    HexagonLinkingContext &ctx, HexagonTargetLayout<ELFT> &layout)
+    : ExecutableWriter<ELFT>(ctx, layout), HexagonELFWriter<ELFT>(ctx, layout),
+      _ctx(ctx), _hexagonTargetLayout(layout),
+      _hexagonRuntimeFile(new HexagonRuntimeFile<ELFT>(ctx)) {}
 
 template <class ELFT>
 bool HexagonExecutableWriter<ELFT>::createImplicitFiles(

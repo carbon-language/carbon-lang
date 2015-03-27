@@ -18,21 +18,21 @@ using namespace llvm::ELF;
 
 using llvm::makeArrayRef;
 
-HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
-    : _hexagonLinkingContext(context),
-      _hexagonRuntimeFile(new HexagonRuntimeFile<HexagonELFType>(context)),
-      _hexagonTargetLayout(new HexagonTargetLayout<HexagonELFType>(context)),
-      _hexagonRelocationHandler(new HexagonTargetRelocationHandler(
-          *_hexagonTargetLayout.get())) {}
+HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &ctx)
+    : _ctx(ctx),
+      _hexagonRuntimeFile(new HexagonRuntimeFile<HexagonELFType>(ctx)),
+      _hexagonTargetLayout(new HexagonTargetLayout<HexagonELFType>(ctx)),
+      _hexagonRelocationHandler(
+          new HexagonTargetRelocationHandler(*_hexagonTargetLayout.get())) {}
 
 std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
-  switch (_hexagonLinkingContext.getOutputELFType()) {
+  switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return llvm::make_unique<HexagonExecutableWriter<HexagonELFType>>(
-        _hexagonLinkingContext, *_hexagonTargetLayout.get());
+        _ctx, *_hexagonTargetLayout.get());
   case llvm::ELF::ET_DYN:
     return llvm::make_unique<HexagonDynamicLibraryWriter<HexagonELFType>>(
-        _hexagonLinkingContext, *_hexagonTargetLayout.get());
+        _ctx, *_hexagonTargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

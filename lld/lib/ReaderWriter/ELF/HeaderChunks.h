@@ -63,8 +63,8 @@ public:
         (ELFT::TargetEndianness == llvm::support::little)
             ? llvm::ELF::ELFDATA2LSB
             : llvm::ELF::ELFDATA2MSB;
-    _eh.e_type = this->_context.getOutputELFType();
-    _eh.e_machine = this->_context.getOutputMachine();
+    _eh.e_type = this->_ctx.getOutputELFType();
+    _eh.e_machine = this->_ctx.getOutputMachine();
   }
 
 private:
@@ -72,8 +72,8 @@ private:
 };
 
 template <class ELFT>
-ELFHeader<ELFT>::ELFHeader(const ELFLinkingContext &context)
-    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::Kind::ELFHeader, context) {
+ELFHeader<ELFT>::ELFHeader(const ELFLinkingContext &ctx)
+    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::Kind::ELFHeader, ctx) {
   this->_alignment = ELFT::Is64Bits ? 8 : 4;
   this->_fsize = sizeof(Elf_Ehdr);
   this->_msize = sizeof(Elf_Ehdr);
@@ -124,8 +124,8 @@ public:
     uint64_t _flagsClear;
   };
 
-  ProgramHeader(const ELFLinkingContext &context)
-      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::Kind::ProgramHeader, context) {
+  ProgramHeader(const ELFLinkingContext &ctx)
+      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::Kind::ProgramHeader, ctx) {
     this->_alignment = ELFT::Is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
@@ -197,7 +197,7 @@ private:
 template <class ELFT>
 bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   bool allocatedNew = false;
-  ELFLinkingContext::OutputMagic outputMagic = this->_context.getOutputMagic();
+  ELFLinkingContext::OutputMagic outputMagic = this->_ctx.getOutputMagic();
   // For segments that are not a loadable segment, we
   // just pick the values directly from the segment as there
   // wouldnt be any slices within that
@@ -300,9 +300,8 @@ private:
 };
 
 template <class ELFT>
-SectionHeader<ELFT>::SectionHeader(const ELFLinkingContext &context,
-                                   int32_t order)
-    : Chunk<ELFT>("shdr", Chunk<ELFT>::Kind::SectionHeader, context) {
+SectionHeader<ELFT>::SectionHeader(const ELFLinkingContext &ctx, int32_t order)
+    : Chunk<ELFT>("shdr", Chunk<ELFT>::Kind::SectionHeader, ctx) {
   this->_fsize = 0;
   this->_alignment = 8;
   this->setOrder(order);

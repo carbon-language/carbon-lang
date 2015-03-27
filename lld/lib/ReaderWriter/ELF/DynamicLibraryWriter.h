@@ -25,9 +25,9 @@ class DynamicLibraryWriter;
 template<class ELFT>
 class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
-  DynamicLibraryWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout)
-      : OutputELFWriter<ELFT>(context, layout),
-        _runtimeFile(new RuntimeFile<ELFT>(context, "C runtime")) {}
+  DynamicLibraryWriter(ELFLinkingContext &ctx, TargetLayout<ELFT> &layout)
+      : OutputELFWriter<ELFT>(ctx, layout),
+        _runtimeFile(new RuntimeFile<ELFT>(ctx, "C runtime")) {}
 
 protected:
   virtual void buildDynamicSymbolTable(const File &file);

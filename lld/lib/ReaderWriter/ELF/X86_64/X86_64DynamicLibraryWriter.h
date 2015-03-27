@@ -19,7 +19,7 @@ namespace elf {
 
 class X86_64DynamicLibraryWriter : public DynamicLibraryWriter<X86_64ELFType> {
 public:
-  X86_64DynamicLibraryWriter(X86_64LinkingContext &context,
+  X86_64DynamicLibraryWriter(X86_64LinkingContext &ctx,
                              X86_64TargetLayout &layout);
 
 protected:
@@ -45,8 +45,8 @@ private:
 };
 
 X86_64DynamicLibraryWriter::X86_64DynamicLibraryWriter(
-    X86_64LinkingContext &context, X86_64TargetLayout &layout)
-    : DynamicLibraryWriter(context, layout), _gotFile(new GOTFile(context)) {}
+    X86_64LinkingContext &ctx, X86_64TargetLayout &layout)
+    : DynamicLibraryWriter(ctx, layout), _gotFile(new GOTFile(ctx)) {}
 
 bool X86_64DynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {

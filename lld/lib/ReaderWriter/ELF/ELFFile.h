@@ -445,8 +445,8 @@ protected:
 template <class ELFT> class RuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  RuntimeFile(ELFLinkingContext &context, StringRef name)
-      : ELFFile<ELFT>(name, context) {}
+  RuntimeFile(ELFLinkingContext &ctx, StringRef name)
+      : ELFFile<ELFT>(name, ctx) {}
 
   /// \brief add a global absolute atom
   virtual Atom *addAbsoluteAtom(StringRef symbolName) {

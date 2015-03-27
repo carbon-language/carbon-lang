@@ -25,9 +25,9 @@ class ExecutableWriter;
 template<class ELFT>
 class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
-  ExecutableWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout)
-      : OutputELFWriter<ELFT>(context, layout),
-        _runtimeFile(new RuntimeFile<ELFT>(context, "C runtime")) {}
+  ExecutableWriter(ELFLinkingContext &ctx, TargetLayout<ELFT> &layout)
+      : OutputELFWriter<ELFT>(ctx, layout),
+        _runtimeFile(new RuntimeFile<ELFT>(ctx, "C runtime")) {}
 
 protected:
   virtual void buildDynamicSymbolTable(const File &file);
@@ -56,8 +56,8 @@ void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
         if (!da)
           continue;
         if (da->dynamicExport() != DefinedAtom::dynamicExportAlways &&
-            !this->_context.isDynamicallyExportedSymbol(da->name()) &&
-            !(this->_context.shouldExportDynamic() &&
+            !this->_ctx.isDynamicallyExportedSymbol(da->name()) &&
+            !(this->_ctx.shouldExportDynamic() &&
               da->scope() == Atom::Scope::scopeGlobal))
           continue;
         this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
@@ -65,7 +65,7 @@ void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
       }
 
   // Put weak symbols in the dynamic symbol table.
-  if (this->_context.isDynamic()) {
+  if (this->_ctx.isDynamic()) {
     for (const UndefinedAtom *a : file.undefined()) {
       if (this->_layout.isReferencedByDefinedAtom(a) &&
           a->canBeNull() != UndefinedAtom::canBeNullNever)
@@ -81,7 +81,7 @@ void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 template<class ELFT>
 void ExecutableWriter<ELFT>::addDefaultAtoms() {
   OutputELFWriter<ELFT>::addDefaultAtoms();
-  _runtimeFile->addUndefinedAtom(this->_context.entrySymbolName());
+  _runtimeFile->addUndefinedAtom(this->_ctx.entrySymbolName());
   _runtimeFile->addAbsoluteAtom("__bss_start");
   _runtimeFile->addAbsoluteAtom("__bss_end");
   _runtimeFile->addAbsoluteAtom("_end");
@@ -90,7 +90,7 @@ void ExecutableWriter<ELFT>::addDefaultAtoms() {
   _runtimeFile->addAbsoluteAtom("__preinit_array_end");
   _runtimeFile->addAbsoluteAtom("__init_array_start");
   _runtimeFile->addAbsoluteAtom("__init_array_end");
-  if (this->_context.isRelaOutputFormat()) {
+  if (this->_ctx.isRelaOutputFormat()) {
     _runtimeFile->addAbsoluteAtom("__rela_iplt_start");
     _runtimeFile->addAbsoluteAtom("__rela_iplt_end");
   } else {
@@ -114,10 +114,10 @@ bool ExecutableWriter<ELFT>::createImplicitFiles(
 
 template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
   OutputELFWriter<ELFT>::createDefaultSections();
-  if (this->_context.isDynamic()) {
+  if (this->_ctx.isDynamic()) {
     _interpSection.reset(new (this->_alloc) InterpSection<ELFT>(
-        this->_context, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
-        this->_context.getInterpreter()));
+        this->_ctx, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
+        this->_ctx.getInterpreter()));
     this->_layout.addSection(_interpSection.get());
   }
 }
@@ -148,7 +148,7 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 
   startEnd("preinit_array", ".preinit_array");
   startEnd("init_array", ".init_array");
-  if (this->_context.isRelaOutputFormat())
+  if (this->_ctx.isRelaOutputFormat())
     startEnd("rela_iplt", ".rela.plt");
   else
     startEnd("rel_iplt", ".rel.plt");

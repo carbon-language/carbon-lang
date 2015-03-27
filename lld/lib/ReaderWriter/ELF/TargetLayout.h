@@ -20,7 +20,7 @@ namespace elf {
 /// be changed in the final layout
 template <class ELFT> class TargetLayout : public DefaultLayout<ELFT> {
 public:
-  TargetLayout(ELFLinkingContext &context) : DefaultLayout<ELFT>(context) {}
+  TargetLayout(ELFLinkingContext &ctx) : DefaultLayout<ELFT>(ctx) {}
 };
 } // end namespace elf
 } // end namespace lld

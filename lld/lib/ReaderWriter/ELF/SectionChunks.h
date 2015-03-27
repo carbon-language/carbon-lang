@@ -39,10 +39,10 @@ template <class ELFT> class Segment;
 /// \brief An ELF section.
 template <class ELFT> class Section : public Chunk<ELFT> {
 public:
-  Section(const ELFLinkingContext &context, StringRef sectionName,
+  Section(const ELFLinkingContext &ctx, StringRef sectionName,
           StringRef chunkName,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
-      : Chunk<ELFT>(chunkName, k, context), _outputSection(nullptr), _flags(0),
+      : Chunk<ELFT>(chunkName, k, ctx), _outputSection(nullptr), _flags(0),
         _entSize(0), _type(0), _link(0), _info(0),
         _isFirstSectionInOutputSection(false), _segmentType(SHT_NULL),
         _inputSectionName(sectionName), _outputSectionName(sectionName) {}
@@ -159,9 +159,9 @@ protected:
 /// \brief A section containing atoms.
 template <class ELFT> class AtomSection : public Section<ELFT> {
 public:
-  AtomSection(const ELFLinkingContext &context, StringRef sectionName,
+  AtomSection(const ELFLinkingContext &ctx, StringRef sectionName,
               int32_t contentType, int32_t permissions, int32_t order)
-      : Section<ELFT>(context, sectionName, "AtomSection",
+      : Section<ELFT>(ctx, sectionName, "AtomSection",
                       Chunk<ELFT>::Kind::AtomSection),
         _contentType(contentType), _contentPermissions(permissions),
         _isLoadedInMemory(true) {
@@ -283,10 +283,8 @@ protected:
   void printError(const std::string &errorStr, const AtomLayout &atom,
                   const Reference &ref) const {
     StringRef kindValStr;
-    if (!this->_context.registry().referenceKindToString(ref.kindNamespace(),
-                                                         ref.kindArch(),
-                                                         ref.kindValue(),
-                                                         kindValStr)) {
+    if (!this->_ctx.registry().referenceKindToString(
+            ref.kindNamespace(), ref.kindArch(), ref.kindValue(), kindValStr)) {
       kindValStr = "unknown";
     }
 
@@ -429,7 +427,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
     uint8_t *atomContent = chunkBuffer + ai->_fileOffset;
     std::memcpy(atomContent, content.data(), contentSize);
     const TargetRelocationHandler &relHandler =
-        this->_context.template getTargetHandler<ELFT>().getRelocationHandler();
+        this->_ctx.template getTargetHandler<ELFT>().getRelocationHandler();
     for (const auto ref : *definedAtom) {
       if (std::error_code ec = relHandler.applyRelocation(*writer, buffer,
                                                           *ai, *ref)) {
@@ -599,9 +597,9 @@ private:
 };
 
 template <class ELFT>
-StringTable<ELFT>::StringTable(const ELFLinkingContext &context,
-                               const char *str, int32_t order, bool dynamic)
-    : Section<ELFT>(context, str, "StringTable") {
+StringTable<ELFT>::StringTable(const ELFLinkingContext &ctx, const char *str,
+                               int32_t order, bool dynamic)
+    : Section<ELFT>(ctx, str, "StringTable") {
   // the string table has a NULL entry for which
   // add an empty string
   _strings.push_back("");
@@ -653,7 +651,7 @@ class SymbolTable : public Section<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  SymbolTable(const ELFLinkingContext &context, const char *str, int32_t order);
+  SymbolTable(const ELFLinkingContext &ctx, const char *str, int32_t order);
 
   /// \brief set the number of entries that would exist in the symbol
   /// table for the current link
@@ -723,9 +721,9 @@ protected:
 
 /// ELF Symbol Table
 template <class ELFT>
-SymbolTable<ELFT>::SymbolTable(const ELFLinkingContext &context,
-                               const char *str, int32_t order)
-    : Section<ELFT>(context, str, "SymbolTable") {
+SymbolTable<ELFT>::SymbolTable(const ELFLinkingContext &ctx, const char *str,
+                               int32_t order)
+    : Section<ELFT>(ctx, str, "SymbolTable") {
   this->setOrder(order);
   Elf_Sym symbol;
   std::memset(&symbol, 0, sizeof(Elf_Sym));
@@ -907,9 +905,9 @@ template <class ELFT> class HashSection;
 
 template <class ELFT> class DynamicSymbolTable : public SymbolTable<ELFT> {
 public:
-  DynamicSymbolTable(const ELFLinkingContext &context,
-                     TargetLayout<ELFT> &layout, const char *str, int32_t order)
-      : SymbolTable<ELFT>(context, str, order), _hashTable(nullptr),
+  DynamicSymbolTable(const ELFLinkingContext &ctx, TargetLayout<ELFT> &layout,
+                     const char *str, int32_t order)
+      : SymbolTable<ELFT>(ctx, str, order), _hashTable(nullptr),
         _layout(layout) {
     this->_type = SHT_DYNSYM;
     this->_flags = SHF_ALLOC;
@@ -956,14 +954,13 @@ public:
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
-  RelocationTable(const ELFLinkingContext &context, StringRef str,
-                  int32_t order)
-      : Section<ELFT>(context, str, "RelocationTable"), _symbolTable(nullptr) {
+  RelocationTable(const ELFLinkingContext &ctx, StringRef str, int32_t order)
+      : Section<ELFT>(ctx, str, "RelocationTable"), _symbolTable(nullptr) {
     this->setOrder(order);
     this->_flags = SHF_ALLOC;
     // Set the alignment properly depending on the target architecture
     this->_alignment = ELFT::Is64Bits ? 8 : 4;
-    if (context.isRelaOutputFormat()) {
+    if (ctx.isRelaOutputFormat()) {
       this->_entSize = sizeof(Elf_Rela);
       this->_type = SHT_RELA;
     } else {
@@ -1019,7 +1016,7 @@ public:
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     for (const auto &rel : _relocs) {
-      if (this->_context.isRelaOutputFormat()) {
+      if (this->_ctx.isRelaOutputFormat()) {
         auto &r = *reinterpret_cast<Elf_Rela *>(dest);
         writeRela(writer, r, *rel.first, *rel.second);
         DEBUG_WITH_TYPE("ELFRelocationTable",
@@ -1049,7 +1046,7 @@ protected:
     r.setSymbolAndType(getSymbolIndex(ref.target()), ref.kindValue(), false);
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
     // The addend is used only by relative relocations
-    if (this->_context.isRelativeReloc(ref))
+    if (this->_ctx.isRelativeReloc(ref))
       r.r_addend = writer->addressOfAtom(ref.target()) + ref.addend();
     else
       r.r_addend = 0;
@@ -1077,9 +1074,9 @@ public:
   typedef llvm::object::Elf_Dyn_Impl<ELFT> Elf_Dyn;
   typedef std::vector<Elf_Dyn> EntriesT;
 
-  DynamicTable(const ELFLinkingContext &context, TargetLayout<ELFT> &layout,
+  DynamicTable(const ELFLinkingContext &ctx, TargetLayout<ELFT> &layout,
                StringRef str, int32_t order)
-      : Section<ELFT>(context, str, "DynamicSection"), _layout(layout) {
+      : Section<ELFT>(ctx, str, "DynamicSection"), _layout(layout) {
     this->setOrder(order);
     this->_entSize = sizeof(Elf_Dyn);
     this->_alignment = ELFT::Is64Bits ? 8 : 4;
@@ -1113,7 +1110,7 @@ public:
   }
 
   virtual void createDefaultEntries() {
-    bool isRela = this->_context.isRelaOutputFormat();
+    bool isRela = this->_ctx.isRelaOutputFormat();
 
     Elf_Dyn dyn;
     dyn.d_un.d_val = 0;
@@ -1280,14 +1277,14 @@ private:
   HashSection<ELFT> *_hashTable;
 
   const AtomLayout *getInitAtomLayout() {
-    auto al = _layout.findAtomLayoutByName(this->_context.initFunction());
+    auto al = _layout.findAtomLayoutByName(this->_ctx.initFunction());
     if (al && isa<DefinedAtom>(al->_atom))
       return al;
     return nullptr;
   }
 
   const AtomLayout *getFiniAtomLayout() {
-    auto al = _layout.findAtomLayoutByName(this->_context.finiFunction());
+    auto al = _layout.findAtomLayoutByName(this->_ctx.finiFunction());
     if (al && isa<DefinedAtom>(al->_atom))
       return al;
     return nullptr;
@@ -1296,9 +1293,9 @@ private:
 
 template <class ELFT> class InterpSection : public Section<ELFT> {
 public:
-  InterpSection(const ELFLinkingContext &context, StringRef str, int32_t order,
+  InterpSection(const ELFLinkingContext &ctx, StringRef str, int32_t order,
                 StringRef interp)
-      : Section<ELFT>(context, str, "Dynamic:Interp"), _interp(interp) {
+      : Section<ELFT>(ctx, str, "Dynamic:Interp"), _interp(interp) {
     this->setOrder(order);
     this->_alignment = 1;
     // + 1 for null term.
@@ -1346,8 +1343,8 @@ template <class ELFT> class HashSection : public Section<ELFT> {
   };
 
 public:
-  HashSection(const ELFLinkingContext &context, StringRef name, int32_t order)
-      : Section<ELFT>(context, name, "Dynamic:Hash"), _symbolTable(nullptr) {
+  HashSection(const ELFLinkingContext &ctx, StringRef name, int32_t order)
+      : Section<ELFT>(ctx, name, "Dynamic:Hash"), _symbolTable(nullptr) {
     this->setOrder(order);
     this->_entSize = 4;
     this->_type = SHT_HASH;
@@ -1449,9 +1446,9 @@ private:
 
 template <class ELFT> class EHFrameHeader : public Section<ELFT> {
 public:
-  EHFrameHeader(const ELFLinkingContext &context, StringRef name,
+  EHFrameHeader(const ELFLinkingContext &ctx, StringRef name,
                 TargetLayout<ELFT> &layout, int32_t order)
-      : Section<ELFT>(context, name, "EHFrameHeader"), _ehFrameOffset(0),
+      : Section<ELFT>(ctx, name, "EHFrameHeader"), _ehFrameOffset(0),
         _layout(layout) {
     this->setOrder(order);
     this->_entSize = 0;

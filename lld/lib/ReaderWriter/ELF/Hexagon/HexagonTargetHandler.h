@@ -118,13 +118,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(
-        new HexagonELFObjectReader(_hexagonLinkingContext));
+    return std::unique_ptr<Reader>(new HexagonELFObjectReader(_ctx));
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(
-        new HexagonELFDSOReader(_hexagonLinkingContext));
+    return std::unique_ptr<Reader>(new HexagonELFDSOReader(_ctx));
   }
 
   std::unique_ptr<Writer> getWriter() override;
@@ -132,7 +130,7 @@ public:
 private:
   llvm::BumpPtrAllocator _alloc;
   static const Registry::KindStrings kindStrings[];
-  HexagonLinkingContext &_hexagonLinkingContext;
+  HexagonLinkingContext &_ctx;
   std::unique_ptr<HexagonRuntimeFile<HexagonELFType> > _hexagonRuntimeFile;
   std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _hexagonTargetLayout;
   std::unique_ptr<HexagonTargetRelocationHandler> _hexagonRelocationHandler;

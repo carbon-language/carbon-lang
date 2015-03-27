@@ -27,8 +27,7 @@ class ARMLinkingContext;
 
 template <class ELFT> class ARMTargetLayout : public TargetLayout<ELFT> {
 public:
-  ARMTargetLayout(ARMLinkingContext &context)
-      : TargetLayout<ELFT>(context) {}
+  ARMTargetLayout(ARMLinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
 
   uint64_t getTPOffset() {
     if (_tpOff.hasValue())
@@ -53,7 +52,7 @@ private:
 
 class ARMTargetHandler final : public DefaultTargetHandler<ARMELFType> {
 public:
-  ARMTargetHandler(ARMLinkingContext &context);
+  ARMTargetHandler(ARMLinkingContext &ctx);
 
   ARMTargetLayout<ARMELFType> &getTargetLayout() override {
     return *(_armTargetLayout.get());
@@ -66,18 +65,18 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new ARMELFObjectReader(_context));
+    return std::unique_ptr<Reader>(new ARMELFObjectReader(_ctx));
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new ARMELFDSOReader(_context));
+    return std::unique_ptr<Reader>(new ARMELFDSOReader(_ctx));
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 private:
   static const Registry::KindStrings kindStrings[];
-  ARMLinkingContext &_context;
+  ARMLinkingContext &_ctx;
   std::unique_ptr<ARMTargetLayout<ARMELFType>> _armTargetLayout;
   std::unique_ptr<ARMTargetRelocationHandler> _armRelocationHandler;
 };

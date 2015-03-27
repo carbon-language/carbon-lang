@@ -15,11 +15,10 @@
 using namespace lld;
 using namespace elf;
 
-ARMTargetHandler::ARMTargetHandler(ARMLinkingContext &context)
-    : _context(context), _armTargetLayout(
-          new ARMTargetLayout<ARMELFType>(context)),
-      _armRelocationHandler(new ARMTargetRelocationHandler(
-          *_armTargetLayout.get())) {}
+ARMTargetHandler::ARMTargetHandler(ARMLinkingContext &ctx)
+    : _ctx(ctx), _armTargetLayout(new ARMTargetLayout<ARMELFType>(ctx)),
+      _armRelocationHandler(
+          new ARMTargetRelocationHandler(*_armTargetLayout.get())) {}
 
 void ARMTargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::ARM,
@@ -27,10 +26,10 @@ void ARMTargetHandler::registerRelocationNames(Registry &registry) {
 }
 
 std::unique_ptr<Writer> ARMTargetHandler::getWriter() {
-  switch (this->_context.getOutputELFType()) {
+  switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return llvm::make_unique<ARMExecutableWriter<ARMELFType>>(
-        _context, *_armTargetLayout.get());
+        _ctx, *_armTargetLayout.get());
   default:
     llvm_unreachable("unsupported output type");
   }

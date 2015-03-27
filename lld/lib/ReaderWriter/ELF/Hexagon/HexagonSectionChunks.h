@@ -20,9 +20,9 @@ class HexagonLinkingContext;
 template <class HexagonELFType>
 class SDataSection : public AtomSection<HexagonELFType> {
 public:
-  SDataSection(const HexagonLinkingContext &context)
+  SDataSection(const HexagonLinkingContext &ctx)
       : AtomSection<HexagonELFType>(
-            context, ".sdata", DefinedAtom::typeDataFast, 0,
+            ctx, ".sdata", DefinedAtom::typeDataFast, 0,
             HexagonTargetLayout<HexagonELFType>::ORDER_SDATA) {
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC | SHF_WRITE;

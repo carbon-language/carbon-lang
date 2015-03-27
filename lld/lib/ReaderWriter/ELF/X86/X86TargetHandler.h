@@ -23,13 +23,13 @@ class X86LinkingContext;
 
 template <class ELFT> class X86TargetLayout : public TargetLayout<ELFT> {
 public:
-  X86TargetLayout(X86LinkingContext &context) : TargetLayout<ELFT>(context) {}
+  X86TargetLayout(X86LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
 };
 
 class X86TargetHandler final
     : public DefaultTargetHandler<X86ELFType> {
 public:
-  X86TargetHandler(X86LinkingContext &context);
+  X86TargetHandler(X86LinkingContext &ctx);
 
   X86TargetLayout<X86ELFType> &getTargetLayout() override {
     return *(_x86TargetLayout.get());
@@ -42,18 +42,18 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<X86ELFObjectReader>(_x86LinkingContext);
+    return llvm::make_unique<X86ELFObjectReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<X86ELFDSOReader>(_x86LinkingContext);
+    return llvm::make_unique<X86ELFDSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 protected:
   static const Registry::KindStrings kindStrings[];
-  X86LinkingContext &_x86LinkingContext;
+  X86LinkingContext &_ctx;
   std::unique_ptr<X86TargetLayout<X86ELFType>> _x86TargetLayout;
   std::unique_ptr<X86TargetRelocationHandler> _x86RelocationHandler;
 };

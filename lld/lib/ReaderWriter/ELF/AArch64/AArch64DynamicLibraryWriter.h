@@ -19,7 +19,7 @@ namespace elf {
 template <class ELFT>
 class AArch64DynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
 public:
-  AArch64DynamicLibraryWriter(AArch64LinkingContext &context,
+  AArch64DynamicLibraryWriter(AArch64LinkingContext &ctx,
                               AArch64TargetLayout<ELFT> &layout);
 
 protected:
@@ -42,16 +42,15 @@ private:
   };
 
   std::unique_ptr<GOTFile> _gotFile;
-  AArch64LinkingContext &_context;
+  AArch64LinkingContext &_ctx;
   AArch64TargetLayout<ELFT> &_AArch64Layout;
 };
 
 template <class ELFT>
 AArch64DynamicLibraryWriter<ELFT>::AArch64DynamicLibraryWriter(
-    AArch64LinkingContext &context, AArch64TargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(context, layout),
-      _gotFile(new GOTFile(context)), _context(context),
-      _AArch64Layout(layout) {}
+    AArch64LinkingContext &ctx, AArch64TargetLayout<ELFT> &layout)
+    : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)),
+      _ctx(ctx), _AArch64Layout(layout) {}
 
 template <class ELFT>
 bool AArch64DynamicLibraryWriter<ELFT>::createImplicitFiles(

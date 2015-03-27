@@ -16,8 +16,8 @@
 using namespace lld;
 using namespace elf;
 
-X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &context)
-    : _context(context), _x86_64TargetLayout(new X86_64TargetLayout(context)),
+X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &ctx)
+    : _ctx(ctx), _x86_64TargetLayout(new X86_64TargetLayout(ctx)),
       _x86_64RelocationHandler(
           new X86_64TargetRelocationHandler(*_x86_64TargetLayout.get())) {}
 
@@ -27,13 +27,13 @@ void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
 }
 
 std::unique_ptr<Writer> X86_64TargetHandler::getWriter() {
-  switch (this->_context.getOutputELFType()) {
+  switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return llvm::make_unique<X86_64ExecutableWriter>(
-        _context, *_x86_64TargetLayout.get());
+        _ctx, *_x86_64TargetLayout.get());
   case llvm::ELF::ET_DYN:
     return llvm::make_unique<X86_64DynamicLibraryWriter>(
-        _context, *_x86_64TargetLayout.get());
+        _ctx, *_x86_64TargetLayout.get());
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

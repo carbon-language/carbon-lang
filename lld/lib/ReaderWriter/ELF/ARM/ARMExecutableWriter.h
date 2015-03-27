@@ -24,8 +24,7 @@ namespace elf {
 template <class ELFT>
 class ARMExecutableWriter : public ExecutableWriter<ELFT> {
 public:
-  ARMExecutableWriter(ARMLinkingContext &context,
-                      ARMTargetLayout<ELFT> &layout);
+  ARMExecutableWriter(ARMLinkingContext &ctx, ARMTargetLayout<ELFT> &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
@@ -47,15 +46,14 @@ protected:
   std::error_code setELFHeader() override;
 
 private:
-  ARMLinkingContext &_context;
+  ARMLinkingContext &_ctx;
   ARMTargetLayout<ELFT> &_armLayout;
 };
 
 template <class ELFT>
-ARMExecutableWriter<ELFT>::ARMExecutableWriter(ARMLinkingContext &context,
+ARMExecutableWriter<ELFT>::ARMExecutableWriter(ARMLinkingContext &ctx,
                                                ARMTargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(context, layout), _context(context),
-      _armLayout(layout) {}
+    : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _armLayout(layout) {}
 
 template <class ELFT>
 bool ARMExecutableWriter<ELFT>::createImplicitFiles(
@@ -85,7 +83,7 @@ template <class ELFT>
 unique_bump_ptr<SymbolTable<ELFT>>
     ARMExecutableWriter<ELFT>::createSymbolTable() {
   return unique_bump_ptr<SymbolTable<ELFT>>(
-      new (this->_alloc) ARMSymbolTable<ELFT>(this->_context));
+      new (this->_alloc) ARMSymbolTable<ELFT>(this->_ctx));
 }
 
 template <class ELFT>
@@ -105,7 +103,7 @@ std::error_code ARMExecutableWriter<ELFT>::setELFHeader() {
     return ec;
 
   // Fixup entry point for Thumb code.
-  StringRef entryName = _context.entrySymbolName();
+  StringRef entryName = _ctx.entrySymbolName();
   if (const AtomLayout *al = _armLayout.findAtomLayoutByName(entryName)) {
     const auto *ea = dyn_cast<DefinedAtom>(al->_atom);
     if (ea && ea->codeModel() == DefinedAtom::codeARMThumb)

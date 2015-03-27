@@ -35,9 +35,9 @@ namespace {
 template<class ELFT>
 class SymbolFile : public RuntimeFile<ELFT> {
 public:
-  SymbolFile(ELFLinkingContext &context)
-      : RuntimeFile<ELFT>(context, "Dynamic absolute symbols"),
-        _atomsAdded(false) {}
+  SymbolFile(ELFLinkingContext &ctx)
+      : RuntimeFile<ELFT>(ctx, "Dynamic absolute symbols"), _atomsAdded(false) {
+  }
 
   Atom *addAbsoluteAtom(StringRef symbolName) override {
     auto *a = RuntimeFile<ELFT>::addAbsoluteAtom(symbolName);
@@ -59,13 +59,13 @@ template<class ELFT>
 class DynamicSymbolFile : public SimpleArchiveLibraryFile {
   typedef std::function<void(StringRef, RuntimeFile<ELFT> &)> Resolver;
 public:
-  DynamicSymbolFile(ELFLinkingContext &context, Resolver resolver)
+  DynamicSymbolFile(ELFLinkingContext &ctx, Resolver resolver)
       : SimpleArchiveLibraryFile("Dynamically added runtime symbols"),
-        _context(context), _resolver(resolver) {}
+        _ctx(ctx), _resolver(resolver) {}
 
   File *find(StringRef sym, bool dataSymbolOnly) override {
     if (!_file)
-      _file.reset(new (_alloc) SymbolFile<ELFT>(_context));
+      _file.reset(new (_alloc) SymbolFile<ELFT>(_ctx));
 
     assert(!_file->hasAtoms() && "The file shouldn't have atoms yet");
     _resolver(sym, *_file);
@@ -74,7 +74,7 @@ public:
   }
 
 private:
-  ELFLinkingContext &_context;
+  ELFLinkingContext &_ctx;
   Resolver _resolver;
 
   // The allocator should go before bump pointers because of
@@ -99,7 +99,7 @@ public:
   typedef Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef Elf_Dyn_Impl<ELFT> Elf_Dyn;
 
-  OutputELFWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout);
+  OutputELFWriter(ELFLinkingContext &ctx, TargetLayout<ELFT> &layout);
 
 protected:
   // build the sections that need to be created
@@ -184,7 +184,7 @@ protected:
 
   llvm::BumpPtrAllocator _alloc;
 
-  ELFLinkingContext &_context;
+  ELFLinkingContext &_ctx;
   TargetHandler<ELFT> &_targetHandler;
 
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
@@ -215,11 +215,10 @@ private:
 //  OutputELFWriter
 //===----------------------------------------------------------------------===//
 template <class ELFT>
-OutputELFWriter<ELFT>::OutputELFWriter(ELFLinkingContext &context,
+OutputELFWriter<ELFT>::OutputELFWriter(ELFLinkingContext &ctx,
                                        TargetLayout<ELFT> &layout)
-    : _context(context), _targetHandler(context.getTargetHandler<ELFT>()),
-      _layout(layout),
-      _scriptFile(new RuntimeFile<ELFT>(context, "Linker script runtime")) {}
+    : _ctx(ctx), _targetHandler(ctx.getTargetHandler<ELFT>()), _layout(layout),
+      _scriptFile(new RuntimeFile<ELFT>(ctx, "Linker script runtime")) {}
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildChunks(const File &file) {
@@ -274,20 +273,20 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     if (isNeededTagRequired(sla))
       _soNeeded.insert(sla->loadName());
   }
-  for (const std::unique_ptr<Node> &node : _context.getNodes()) {
+  for (const std::unique_ptr<Node> &node : _ctx.getNodes()) {
     StringRef soname = maybeGetSOName(node.get());
     if (!soname.empty())
       _soNeeded.insert(soname);
   }
   // Never mark the dynamic linker as DT_NEEDED
-  _soNeeded.erase(sys::path::filename(_context.getInterpreter()));
+  _soNeeded.erase(sys::path::filename(_ctx.getInterpreter()));
   for (const auto &loadName : _soNeeded) {
     Elf_Dyn dyn;
     dyn.d_tag = DT_NEEDED;
     dyn.d_un.d_val = _dynamicStringTable->addString(loadName.getKey());
     _dynamicTable->addEntry(dyn);
   }
-  const auto &rpathList = _context.getRpathList();
+  const auto &rpathList = _ctx.getRpathList();
   if (!rpathList.empty()) {
     auto rpath = new (_alloc) std::string(join(rpathList.begin(),
       rpathList.end(), ":"));
@@ -296,8 +295,8 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     dyn.d_un.d_val = _dynamicStringTable->addString(*rpath);
     _dynamicTable->addEntry(dyn);
   }
-  StringRef soname = _context.sharedObjectName();
-  if (!soname.empty() && _context.getOutputELFType() == llvm::ELF::ET_DYN) {
+  StringRef soname = _ctx.sharedObjectName();
+  if (!soname.empty() && _ctx.getOutputELFType() == llvm::ELF::ET_DYN) {
     Elf_Dyn dyn;
     dyn.d_tag = DT_SONAME;
     dyn.d_un.d_val = _dynamicStringTable->addString(soname);
@@ -367,7 +366,7 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
 
 template <class ELFT> void OutputELFWriter<ELFT>::addDefaultAtoms() {
   const llvm::StringSet<> &symbols =
-      _context.linkerScriptSema().getScriptDefinedSymbols();
+      _ctx.linkerScriptSema().getScriptDefinedSymbols();
   for (auto &sym : symbols)
     _scriptFile->addAbsoluteAtom(sym.getKey());
 }
@@ -380,7 +379,7 @@ bool OutputELFWriter<ELFT>::createImplicitFiles(
   auto callback = [this](StringRef sym, RuntimeFile<ELFT> &file) {
     processUndefinedSymbol(sym, file);
   };
-  auto &ctx = const_cast<ELFLinkingContext &>(_context);
+  auto &ctx = const_cast<ELFLinkingContext &>(_ctx);
   ctx.setUndefinesResolver(
       llvm::make_unique<DynamicSymbolFile<ELFT>>(ctx, std::move(callback)));
   // Add script defined symbols
@@ -391,28 +390,28 @@ bool OutputELFWriter<ELFT>::createImplicitFiles(
 template <class ELFT>
 void OutputELFWriter<ELFT>::finalizeDefaultAtomValues() {
   const llvm::StringSet<> &symbols =
-      _context.linkerScriptSema().getScriptDefinedSymbols();
+      _ctx.linkerScriptSema().getScriptDefinedSymbols();
   for (auto &sym : symbols) {
     uint64_t res =
-        _context.linkerScriptSema().getLinkerScriptExprValue(sym.getKey());
+        _ctx.linkerScriptSema().getLinkerScriptExprValue(sym.getKey());
     auto a = _layout.findAbsoluteAtom(sym.getKey());
     (*a)->_virtualAddr = res;
   }
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
-  _elfHeader.reset(new (_alloc) ELFHeader<ELFT>(_context));
-  _programHeader.reset(new (_alloc) ProgramHeader<ELFT>(_context));
+  _elfHeader.reset(new (_alloc) ELFHeader<ELFT>(_ctx));
+  _programHeader.reset(new (_alloc) ProgramHeader<ELFT>(_ctx));
   _layout.setHeader(_elfHeader.get());
   _layout.setProgramHeader(_programHeader.get());
 
   _symtab = std::move(this->createSymbolTable());
   _strtab.reset(new (_alloc) StringTable<ELFT>(
-      _context, ".strtab", DefaultLayout<ELFT>::ORDER_STRING_TABLE));
+      _ctx, ".strtab", DefaultLayout<ELFT>::ORDER_STRING_TABLE));
   _shstrtab.reset(new (_alloc) StringTable<ELFT>(
-      _context, ".shstrtab", DefaultLayout<ELFT>::ORDER_SECTION_STRINGS));
+      _ctx, ".shstrtab", DefaultLayout<ELFT>::ORDER_SECTION_STRINGS));
   _shdrtab.reset(new (_alloc) SectionHeader<ELFT>(
-      _context, DefaultLayout<ELFT>::ORDER_SECTION_HEADERS));
+      _ctx, DefaultLayout<ELFT>::ORDER_SECTION_HEADERS));
   _layout.addSection(_symtab.get());
   _layout.addSection(_strtab.get());
   _layout.addSection(_shstrtab.get());
@@ -426,19 +425,19 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
     if (!section || section->outputSectionName() != ".eh_frame")
       continue;
     _ehFrameHeader.reset(new (_alloc) EHFrameHeader<ELFT>(
-        _context, ".eh_frame_hdr", _layout,
+        _ctx, ".eh_frame_hdr", _layout,
         DefaultLayout<ELFT>::ORDER_EH_FRAMEHDR));
     _layout.addSection(_ehFrameHeader.get());
     break;
   }
 
-  if (_context.isDynamic()) {
+  if (_ctx.isDynamic()) {
     _dynamicTable = std::move(createDynamicTable());
     _dynamicStringTable.reset(new (_alloc) StringTable<ELFT>(
-        _context, ".dynstr", DefaultLayout<ELFT>::ORDER_DYNAMIC_STRINGS, true));
+        _ctx, ".dynstr", DefaultLayout<ELFT>::ORDER_DYNAMIC_STRINGS, true));
     _dynamicSymbolTable = std::move(createDynamicSymbolTable());
     _hashTable.reset(new (_alloc) HashSection<ELFT>(
-        _context, ".hash", DefaultLayout<ELFT>::ORDER_HASH));
+        _ctx, ".hash", DefaultLayout<ELFT>::ORDER_HASH));
     // Set the hash table in the dynamic symbol table so that the entries in the
     // hash table can be created
     _dynamicSymbolTable->setHashTable(_hashTable.get());
@@ -463,16 +462,15 @@ template <class ELFT>
 unique_bump_ptr<SymbolTable<ELFT>>
     OutputELFWriter<ELFT>::createSymbolTable() {
   return unique_bump_ptr<SymbolTable<ELFT>>(new (_alloc) SymbolTable<ELFT>(
-      this->_context, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
+      this->_ctx, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
 }
 
 /// \brief create dynamic table
 template <class ELFT>
 unique_bump_ptr<DynamicTable<ELFT>>
     OutputELFWriter<ELFT>::createDynamicTable() {
-  return unique_bump_ptr<DynamicTable<ELFT>>(
-    new (_alloc) DynamicTable<ELFT>(
-      this->_context, _layout, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
+  return unique_bump_ptr<DynamicTable<ELFT>>(new (_alloc) DynamicTable<ELFT>(
+      this->_ctx, _layout, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
 }
 
 /// \brief create dynamic symbol table
@@ -480,9 +478,9 @@ template <class ELFT>
 unique_bump_ptr<DynamicSymbolTable<ELFT>>
     OutputELFWriter<ELFT>::createDynamicSymbolTable() {
   return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
-    new (_alloc) DynamicSymbolTable<ELFT>(
-      this->_context, _layout, ".dynsym",
-      DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
+      new (_alloc)
+          DynamicSymbolTable<ELFT>(this->_ctx, _layout, ".dynsym",
+                                   DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
 }
 
 template <class ELFT>
@@ -498,7 +496,7 @@ std::error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   _layout.assignSectionsToSegments();
 
   // Create the dynamic table entries
-  if (_context.isDynamic()) {
+  if (_ctx.isDynamic()) {
     _dynamicTable->createDefaultEntries();
     buildDynamicSymbolTable(file);
   }
@@ -517,7 +515,7 @@ std::error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
 
   // Create symbol table and section string table
   // Do it only if -s is not specified.
-  if (!_context.stripSymbols())
+  if (!_ctx.stripSymbols())
     buildStaticSymbolTable(file);
 
   // Finalize the layout by calling the finalize() functions
@@ -530,15 +528,15 @@ std::error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
   // for sections with no segments
   assignSectionsWithNoSegments();
 
-  if (_context.isDynamic())
+  if (_ctx.isDynamic())
     _dynamicTable->updateDynamicTable();
 
   return std::error_code();
 }
 
 template <class ELFT> std::error_code OutputELFWriter<ELFT>::setELFHeader() {
-  _elfHeader->e_type(_context.getOutputELFType());
-  _elfHeader->e_machine(_context.getOutputMachine());
+  _elfHeader->e_type(_ctx.getOutputELFType());
+  _elfHeader->e_machine(_ctx.getOutputMachine());
   _elfHeader->e_ident(ELF::EI_VERSION, 1);
   _elfHeader->e_ident(ELF::EI_OSABI, 0);
   _elfHeader->e_version(1);
@@ -549,7 +547,7 @@ template <class ELFT> std::error_code OutputELFWriter<ELFT>::setELFHeader() {
   _elfHeader->e_shentsize(_shdrtab->entsize());
   _elfHeader->e_shnum(_shdrtab->numHeaders());
   _elfHeader->e_shstrndx(_shstrtab->ordinal());
-  if (const auto *al = _layout.findAtomLayoutByName(_context.entrySymbolName()))
+  if (const auto *al = _layout.findAtomLayoutByName(_ctx.entrySymbolName()))
     _elfHeader->e_entry(al->_virtualAddr);
   else
     _elfHeader->e_entry(0);

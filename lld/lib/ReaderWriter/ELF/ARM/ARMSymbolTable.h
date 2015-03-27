@@ -19,15 +19,15 @@ class ARMSymbolTable : public SymbolTable<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  ARMSymbolTable(const ELFLinkingContext &context);
+  ARMSymbolTable(const ELFLinkingContext &ctx);
 
   void addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
                       int64_t addr) override;
 };
 
 template <class ELFT>
-ARMSymbolTable<ELFT>::ARMSymbolTable(const ELFLinkingContext &context)
-    : SymbolTable<ELFT>(context, ".symtab",
+ARMSymbolTable<ELFT>::ARMSymbolTable(const ELFLinkingContext &ctx)
+    : SymbolTable<ELFT>(ctx, ".symtab",
                         DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
 
 template <class ELFT>
