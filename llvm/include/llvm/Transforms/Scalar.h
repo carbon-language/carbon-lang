@@ -446,12 +446,6 @@ ModulePass *createPlaceSafepointsPass();
 //
 FunctionPass *createRewriteStatepointsForGCPass();
 
-//===----------------------------------------------------------------------===//
-//
-// Float2Int - Demote floats to ints where possible.
-//
-FunctionPass *createFloat2IntPass();
-
 } // End llvm namespace
 
 #endif

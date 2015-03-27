@@ -169,7 +169,6 @@ namespace {
       (void) llvm::createRewriteSymbolsPass();
       (void) llvm::createStraightLineStrengthReducePass();
       (void) llvm::createMemDerefPrinter();
-      (void) llvm::createFloat2IntPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ScalarEvolution();
