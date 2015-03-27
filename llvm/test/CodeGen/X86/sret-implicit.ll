@@ -1,5 +1,7 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin8 < %s | FileCheck %s
 ; RUN: llc -mtriple=x86_64-pc-linux < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin8 -terminal-rule < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux -terminal-rule < %s | FileCheck %s
 
 ; CHECK-LABEL: return32
 ; CHECK-DAG: movq	$0, (%rdi)

@@ -2733,13 +2733,17 @@ bool RegisterCoalescer::applyTerminalRule(const MachineInstr &Copy) const {
     return false;
   // Check if the destination of this copy has any other affinity.
   unsigned DstReg = Copy.getOperand(0).getReg();
+  unsigned SrcReg = Copy.getOperand(1).getReg();
   if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
+      // If SrcReg is a physical register, the copy won't be coalesced.
+      // Ignoring it may have other side effect (like missing
+      // rematerialization). So keep it.
+      TargetRegisterInfo::isPhysicalRegister(SrcReg) ||
       !isTerminalReg(DstReg, Copy, MRI))
     return false;
 
   // DstReg is a terminal node. Check if it inteferes with any other
   // copy involving SrcReg.
-  unsigned SrcReg = Copy.getOperand(1).getReg();
   const MachineBasicBlock *OrigBB = Copy.getParent();
   const LiveInterval &DstLI = LIS->getInterval(DstReg);
   for (const MachineInstr &MI : MRI->reg_nodbg_instructions(SrcReg)) {
@@ -2775,25 +2779,45 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
   // yet, it might invalidate the iterator.
   const unsigned PrevSize = WorkList.size();
   if (JoinGlobalCopies) {
+    SmallVector<MachineInstr*, 2> LocalTerminals;
+    SmallVector<MachineInstr*, 2> GlobalTerminals;
     // Coalesce copies bottom-up to coalesce local defs before local uses. They
     // are not inherently easier to resolve, but slightly preferable until we
     // have local live range splitting. In particular this is required by
     // cmp+jmp macro fusion.
     for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
          MII != E; ++MII) {
-      if (!MII->isCopyLike() || applyTerminalRule(*MII))
+      if (!MII->isCopyLike())
         continue;
-      if (isLocalCopy(&(*MII), LIS))
-        LocalWorkList.push_back(&(*MII));
-      else
-        WorkList.push_back(&(*MII));
+      bool ApplyTerminalRule = applyTerminalRule(*MII);
+      if (isLocalCopy(&(*MII), LIS)) {
+        if (ApplyTerminalRule)
+          LocalTerminals.push_back(&(*MII));
+        else
+          LocalWorkList.push_back(&(*MII));
+      } else {
+        if (ApplyTerminalRule)
+          GlobalTerminals.push_back(&(*MII));
+        else
+          WorkList.push_back(&(*MII));
+      }
     }
+    // Append the copies evicted by the terminal rule at the end of the list.
+    LocalWorkList.append(LocalTerminals.begin(), LocalTerminals.end());
+    WorkList.append(GlobalTerminals.begin(), GlobalTerminals.end());
   }
   else {
+    SmallVector<MachineInstr*, 2> Terminals;
      for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
           MII != E; ++MII)
-       if (MII->isCopyLike() && !applyTerminalRule(*MII))
-         WorkList.push_back(MII);
+       if (MII->isCopyLike()) {
+        if (applyTerminalRule(*MII))
+          Terminals.push_back(&(*MII));
+        else
+          WorkList.push_back(MII);
+       }
+     // Append the copies evicted by the terminal rule at the end of the list.
+     WorkList.append(Terminals.begin(), Terminals.end());
   }
   // Try coalescing the collected copies immediately, and remove the nulls.
   // This prevents the WorkList from getting too large since most copies are
