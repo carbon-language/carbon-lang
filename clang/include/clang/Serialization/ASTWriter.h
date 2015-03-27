@@ -352,7 +352,7 @@ private:
   /// if its primary namespace comes from the chain. If it does, we add the
   /// primary to this set, so that we can write out lexical content updates for
   /// it.
-  llvm::SmallPtrSet<const DeclContext *, 16> UpdatedDeclContexts;
+  llvm::SmallSetVector<const DeclContext *, 16> UpdatedDeclContexts;
 
   /// \brief Keeps track of visible decls that were added in DeclContexts
   /// coming from another AST file.
