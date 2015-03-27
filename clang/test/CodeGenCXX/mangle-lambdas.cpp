@@ -1,10 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -triple x86_64-apple-macosx10.7.0 -emit-llvm -o - %s -w | FileCheck %s
 
-// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd1_NKUlvE_clEvE1n = linkonce_odr global i32 0
-// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd0_NKUlvE_clEvE1n = linkonce_odr global i32 0
-// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd_NKUlvE_clEvE1n = linkonce_odr global i32 0
-// CHECK: @_ZZNK7PR12917IJiiEE1nMUlvE_clEvE1n = linkonce_odr global i32 0
-
 // CHECK-LABEL: define linkonce_odr void @_Z11inline_funci
 inline void inline_func(int n) {
   // CHECK: call i32 @_ZZ11inline_funciENKUlvE_clEv
@@ -163,23 +158,6 @@ void use_func_template() {
   // CHECK: call i32 @"_ZZ13func_templateIiEvT_ENK3$_3clEv"
   func_template<int>();
 }
-
-
-template<typename...T> struct PR12917 {
-  PR12917(T ...t = []{ static int n = 0; return ++n; }());
-
-  static int n[3];
-};
-template<typename...T> int PR12917<T...>::n[3] = {
-  []{ static int n = 0; return ++n; }()
-};
-
-// CHECK: call i32 @_ZZN7PR12917IJicdEEC1EicdEd1_NKUlvE_clEv(
-// CHECK: call i32 @_ZZN7PR12917IJicdEEC1EicdEd0_NKUlvE_clEv(
-// CHECK: call i32 @_ZZN7PR12917IJicdEEC1EicdEd_NKUlvE_clEv(
-// CHECK: call void @_ZN7PR12917IJicdEEC1Eicd(
-PR12917<int, char, double> pr12917;
-int *pr12917_p = PR12917<int, int>::n;
 
 namespace std {
   struct type_info;
