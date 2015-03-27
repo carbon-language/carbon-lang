@@ -22,7 +22,7 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     std::shared_timed_mutex m;
-    m.lock();
+    m.lock_shared();
     std::shared_lock<std::shared_timed_mutex> lk(m, std::adopt_lock);
     assert(lk.mutex() == &m);
     assert(lk.owns_lock() == true);
