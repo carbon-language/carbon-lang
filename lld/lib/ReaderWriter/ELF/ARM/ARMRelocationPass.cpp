@@ -178,6 +178,11 @@ template <class Derived> class ARMRelocationPass : public Pass {
     case R_ARM_TLS_IE32:
       static_cast<Derived *>(this)->handleTLSIE32(ref);
       break;
+    case R_ARM_GOT_BREL:
+      static_cast<Derived *>(this)->handleGOT(ref);
+      break;
+    default:
+      break;
     }
   }
 
@@ -314,8 +319,35 @@ protected:
     return std::error_code();
   }
 
+  /// \brief Create a GOT entry containing 0.
+  const GOTAtom *getNullGOT() {
+    if (!_null) {
+      _null = new (_file._alloc) ARMGOTAtom(_file, ".got.plt");
+#ifndef NDEBUG
+      _null->_name = "__got_null";
+#endif
+    }
+    return _null;
+  }
+
+  const GOTAtom *getGOT(const DefinedAtom *da) {
+    auto got = _gotMap.find(da);
+    if (got != _gotMap.end())
+      return got->second;
+    auto g = new (_file._alloc) ARMGOTAtom(_file, ".got");
+    g->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
+#ifndef NDEBUG
+    g->_name = "__got_";
+    g->_name += da->name();
+#endif
+    _gotMap[da] = g;
+    _gotVector.push_back(g);
+    return g;
+  }
+
 public:
-  ARMRelocationPass(const ELFLinkingContext &ctx) : _file(ctx), _ctx(ctx) {}
+  ARMRelocationPass(const ELFLinkingContext &ctx)
+      : _file(ctx), _ctx(ctx), _null(nullptr) {}
 
   /// \brief Do the pass.
   ///
@@ -361,13 +393,17 @@ public:
 
     // Add all created atoms to the link.
     uint64_t ordinal = 0;
-    for (auto &got : _gotVector) {
-      got->setOrdinal(ordinal++);
-      mf->addAtom(*got);
-    }
     for (auto &plt : _pltVector) {
       plt->setOrdinal(ordinal++);
       mf->addAtom(*plt);
+    }
+    if (_null) {
+      _null->setOrdinal(ordinal++);
+      mf->addAtom(*_null);
+    }
+    for (auto &got : _gotVector) {
+      got->setOrdinal(ordinal++);
+      mf->addAtom(*got);
     }
     for (auto &veneer : _veneerVector) {
       veneer->setOrdinal(ordinal++);
@@ -395,6 +431,9 @@ protected:
 
   /// \brief the list of veneer atoms.
   std::vector<VeneerAtom *> _veneerVector;
+
+  /// \brief GOT entry that is always 0. Used for undefined weaks.
+  GOTAtom *_null;
 };
 
 /// This implements the static relocation model. Meaning GOT and PLT entries are
@@ -450,6 +489,14 @@ public:
   /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
   const GOTAtom *getTLSTPOFF32(const DefinedAtom *da) {
     return getGOTTLSEntry<R_ARM_TLS_LE32>(da);
+  }
+
+  std::error_code handleGOT(const Reference &ref) {
+    if (isa<UndefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getNullGOT());
+    else if (const auto *da = dyn_cast<DefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getGOT(da));
+    return std::error_code();
   }
 };
 

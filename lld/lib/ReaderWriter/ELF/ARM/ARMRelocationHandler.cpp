@@ -82,6 +82,8 @@ static Reference::Addend readAddend(const uint8_t *location,
   switch (kindValue) {
   case R_ARM_ABS32:
   case R_ARM_REL32:
+  case R_ARM_GOT_BREL:
+  case R_ARM_BASE_PREL:
   case R_ARM_TLS_IE32:
   case R_ARM_TLS_LE32:
     return (int32_t)read32le(location);
@@ -255,6 +257,32 @@ static void relocR_ARM_THM_JUMP11(uint8_t *location, uint64_t P, uint64_t S,
   result = (result & 0x0FFE) >> 1;
 
   applyThumb16Reloc(location, result, 0x7FF);
+}
+
+/// \brief R_ARM_BASE_PREL - B(S) + A - P => S + A - P
+static void relocR_ARM_BASE_PREL(uint8_t *location, uint64_t P, uint64_t S,
+                                 int64_t A) {
+  uint32_t result = (uint32_t)(S + A - P);
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  applyArmReloc(location, result);
+}
+
+/// \brief R_ARM_GOT_BREL - GOT(S) + A - GOT_ORG => S + A - GOT_ORG
+static void relocR_ARM_GOT_BREL(uint8_t *location, uint64_t P, uint64_t S,
+                                int64_t A, uint64_t GOT_ORG) {
+  uint32_t result = (uint32_t)(S + A - GOT_ORG);
+  DEBUG_WITH_TYPE(
+      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  applyArmReloc(location, result);
 }
 
 /// \brief R_ARM_CALL - ((S + A) | T) - P
@@ -560,6 +588,20 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   case R_ARM_TLS_LE32:
     relocR_ARM_TLS_LE32(location, relocVAddress, targetVAddress, addend,
                         _armLayout.getTPOffset());
+    break;
+  case R_ARM_GOT_BREL:
+    relocR_ARM_GOT_BREL(location, relocVAddress, targetVAddress, addend,
+                        _armLayout.getGOTSymAddr());
+    break;
+  case R_ARM_BASE_PREL:
+    // GOT origin is used for NULL symbol and when explicitly specified
+    if (!targetVAddress ||
+        ref.target()->name().equals("_GLOBAL_OFFSET_TABLE_")) {
+      targetVAddress = _armLayout.getGOTSymAddr();
+    } else {
+      llvm_unreachable("Segment-base relative addressing is not supported");
+    }
+    relocR_ARM_BASE_PREL(location, relocVAddress, targetVAddress, addend);
     break;
   case R_ARM_ALU_PC_G0_NC:
     relocR_ARM_ALU_PC_G0_NC(location, relocVAddress, targetVAddress, addend);
