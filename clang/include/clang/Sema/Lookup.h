@@ -291,9 +291,6 @@ public:
     if (!D->isHidden())
       return true;
 
-    if (SemaRef.ActiveTemplateInstantiations.empty())
-      return false;
-
     // During template instantiation, we can refer to hidden declarations, if
     // they were visible in any module along the path of instantiation.
     return isVisibleSlow(SemaRef, D);

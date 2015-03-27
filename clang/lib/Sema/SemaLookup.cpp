@@ -1217,10 +1217,26 @@ llvm::DenseSet<Module*> &Sema::getLookupModules() {
 /// path (by instantiating a template, you allow it to see the declarations that
 /// your module can see, including those later on in your module).
 bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
-  assert(D->isHidden() && !SemaRef.ActiveTemplateInstantiations.empty() &&
-         "should not call this: not in slow case");
+  assert(D->isHidden() && "should not call this: not in slow case");
   Module *DeclModule = D->getOwningModule();
   assert(DeclModule && "hidden decl not from a module");
+
+  // If this declaration is not at namespace scope nor module-private,
+  // then it is visible if its lexical parent has a visible definition.
+  DeclContext *DC = D->getLexicalDeclContext();
+  if (!D->isModulePrivate() &&
+      DC && !DC->isFileContext() && !isa<LinkageSpecDecl>(DC)) {
+    NamedDecl *Hidden;
+    if (SemaRef.hasVisibleDefinition(cast<NamedDecl>(DC), &Hidden)) {
+      if (SemaRef.ActiveTemplateInstantiations.empty()) {
+        // Cache the fact that this declaration is implicitly visible because
+        // its parent has a visible definition.
+        D->setHidden(false);
+      }
+      return true;
+    }
+    return false;
+  }
 
   // Find the extra places where we need to look.
   llvm::DenseSet<Module*> &LookupModules = SemaRef.getLookupModules();
