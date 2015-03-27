@@ -19,7 +19,7 @@ endif:
 }
 
 ; CHECK-LABEL: {{^}}fold_imm:
-; CHECK v_or_i32_e32 v{{[0-9]+}}, 5
+; CHECK: v_or_b32_e32 v{{[0-9]+}}, 5
 define void @fold_imm(i32 addrspace(1)* %out, i32 %cmp) {
 entry:
   %fold = add i32 3, 2
