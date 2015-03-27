@@ -159,13 +159,6 @@ public:
   typedef std::unordered_map<SegmentKey, Segment<ELFT> *, SegmentHashKey>
   SegmentMapT;
 
-  /// \brief find a absolute atom pair given a absolute atom name
-  struct FindByName {
-    const std::string _name;
-    FindByName(StringRef name) : _name(name) {}
-    bool operator()(const lld::AtomLayout *j) { return j->_atom->name() == _name; }
-  };
-
   typedef typename std::vector<lld::AtomLayout *>::iterator AbsoluteAtomIterT;
 
   typedef llvm::DenseSet<const Atom *> AtomSetT;
@@ -212,8 +205,9 @@ public:
 
   /// \brief find a absolute atom given a name
   AbsoluteAtomIterT findAbsoluteAtom(StringRef name) {
-    return std::find_if(_absoluteAtoms.begin(), _absoluteAtoms.end(),
-                        FindByName(name));
+    return std::find_if(
+        _absoluteAtoms.begin(), _absoluteAtoms.end(),
+        [=](const AtomLayout *a) { return a->_atom->name() == name; });
   }
 
   // Output sections with the same name into a OutputSection
