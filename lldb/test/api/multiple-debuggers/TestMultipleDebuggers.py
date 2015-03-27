@@ -14,6 +14,7 @@ class TestMultipleSimultaneousDebuggers(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
+        self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
 
     @skipIfi386
     @skipIfNoSBHeaders

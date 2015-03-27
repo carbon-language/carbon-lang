@@ -15,6 +15,7 @@ class SBDirCheckerCase(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
+        self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
         self.template = 'main.cpp.template'
         self.source = 'main.cpp'
         self.exe_name = 'a.out'

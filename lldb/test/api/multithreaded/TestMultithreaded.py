@@ -13,6 +13,7 @@ class SBBreakpointCallbackCase(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
+        self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
         self.inferior = 'inferior_program'
         if self.getArchitecture() != "i386":
           self.buildProgram('inferior.cpp', self.inferior)

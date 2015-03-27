@@ -1008,9 +1008,13 @@ def setupSysPath():
     
     if lldbHere:
         os.environ["LLDB_HERE"] = lldbHere
-        os.environ["LLDB_LIB_DIR"] = os.path.split(lldbHere)[0]
+        lldbLibDir = os.path.split(lldbHere)[0]  # confusingly, this is the "bin" directory
+        os.environ["LLDB_LIB_DIR"] = lldbLibDir
+        lldbImpLibDir = os.path.join(lldbLibDir, '..', 'lib') if sys.platform.startswith('win32') else lldbLibDir
+        os.environ["LLDB_IMPLIB_DIR"] = lldbImpLibDir
         if not noHeaders:
             print "LLDB library dir:", os.environ["LLDB_LIB_DIR"]
+            print "LLDB import library dir:", os.environ["LLDB_IMPLIB_DIR"]
             os.system('%s -v' % lldbHere)
 
     if not lldbExec:

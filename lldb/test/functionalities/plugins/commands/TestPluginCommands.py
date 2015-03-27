@@ -18,6 +18,7 @@ class PluginCommandTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
+        self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
 
     @expectedFailureFreeBSD('llvm.org/pr17430')
     @skipIfi386 # This test links against liblldb.so. Thus, the test requires a 32-bit liblldb.so.
