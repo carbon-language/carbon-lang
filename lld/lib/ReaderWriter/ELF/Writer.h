@@ -19,9 +19,6 @@ namespace elf {
 ///        various kinds of ELF files.
 class ELFWriter : public Writer {
 public:
-  ELFWriter() {}
-
-public:
   /// \brief builds the chunks that needs to be written to the output
   ///        ELF file
   virtual void buildChunks(const File &file) = 0;

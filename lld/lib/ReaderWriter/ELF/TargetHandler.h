@@ -42,8 +42,6 @@ template <class ELFT> class TargetLayout;
 
 class TargetRelocationHandler {
 public:
-  /// Constructor
-  TargetRelocationHandler() {}
   virtual ~TargetRelocationHandler() {}
 
   virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,

@@ -38,8 +38,6 @@ class SegmentSlice {
 public:
   typedef typename std::vector<Chunk<ELFT> *>::iterator SectionIter;
 
-  SegmentSlice() { }
-
   /// Set the start of the slice.
   void setStart(int32_t s) { _startSection = s; }
 
@@ -49,12 +47,10 @@ public:
 
   // Return the fileOffset of the slice
   uint64_t fileOffset() const { return _offset; }
-
   void setFileOffset(uint64_t offset) { _offset = offset; }
 
   // Return the size of the slice
   uint64_t fileSize() const { return _fsize; }
-
   void setFileSize(uint64_t filesz) { _fsize = filesz; }
 
   // Return the start of the slice
@@ -313,7 +309,6 @@ public:
     this->_fsize = this->_sections.back()->fileSize();
     this->_msize = this->_sections.back()->memSize();
   }
-
 };
 
 template <class ELFT>

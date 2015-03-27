@@ -33,26 +33,27 @@ public:
   typedef uint32_t SegmentType;
   typedef uint32_t Flags;
 
-public:
+  virtual ~Layout() {}
+
   /// Return the order the section would appear in the output file
   virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
                                        int32_t contentPerm) = 0;
+
   /// \brief Append the Atom to the layout and create appropriate sections.
   /// \returns A reference to the atom layout or an error. The atom layout will
   /// be updated as linking progresses.
   virtual ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom) = 0;
+
   /// find the Atom in the current layout
   virtual const AtomLayout *findAtomLayoutByName(StringRef name) const = 0;
+
   /// associates a section to a segment
   virtual void assignSectionsToSegments() = 0;
+
   /// associates a virtual address to the segment, section, and the atom
   virtual void assignVirtualAddress() = 0;
-
-public:
-  Layout() {}
-
-  virtual ~Layout() { }
 };
+
 } // end namespace elf
 } // end namespace lld
 
