@@ -289,7 +289,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # (and that --frame is optional)
         self.runCmd("-exec-step --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\".*s_MyFunction.*\"")
 
         # Test that -exec-step steps into g_MyFunction from inside
         # s_MyFunction (and that both --thread and --frame are optional)
@@ -411,7 +411,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # s_MyFunction (and that --frame is optional)
         self.runCmd("-exec-finish --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\".*s_MyFunction.*\"")
 
         # Test that -exec-finish returns from s_MyFunction
         # (and that both --thread and --frame are optional)
