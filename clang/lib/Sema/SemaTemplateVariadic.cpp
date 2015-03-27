@@ -251,15 +251,10 @@ Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
       Locations.push_back(Unexpanded[I].second);
   }
 
-  DiagnosticBuilder DB
-    = Names.size() == 0? Diag(Loc, diag::err_unexpanded_parameter_pack_0)
-                           << (int)UPPC
-    : Names.size() == 1? Diag(Loc, diag::err_unexpanded_parameter_pack_1)
-                           << (int)UPPC << Names[0]
-    : Names.size() == 2? Diag(Loc, diag::err_unexpanded_parameter_pack_2)
-                           << (int)UPPC << Names[0] << Names[1]
-    : Diag(Loc, diag::err_unexpanded_parameter_pack_3_or_more)
-        << (int)UPPC << Names[0] << Names[1];
+  DiagnosticBuilder DB = Diag(Loc, diag::err_unexpanded_parameter_pack)
+                         << (int)UPPC << (int)Names.size();
+  for (size_t I = 0, E = std::min(Names.size(), (size_t)2); I != E; ++I)
+    DB << Names[I];
 
   for (unsigned I = 0, N = Locations.size(); I != N; ++I)
     DB << SourceRange(Locations[I]);
