@@ -549,59 +549,60 @@ def expectedFailure(expected_fn, bugnumber=None):
             if expected_fn(self):
                 raise case._UnexpectedSuccess(sys.exc_info(), bugnumber)
         return wrapper
-    if bugnumber: 
-        if callable(bugnumber):
-            return expectedFailure_impl(bugnumber)
-        else:
-            return expectedFailure_impl
+    # if bugnumber is not-callable(incluing None), that means decorator function is called with optional arguments
+    # return decorator in this case, so it will be used to decorating original method
+    if callable(bugnumber):
+        return expectedFailure_impl(bugnumber)
+    else:
+        return expectedFailure_impl
 
 def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
     if compiler_version is None:
         compiler_version=['=', None]
     def fn(self):
         return compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version)
-    if bugnumber: return expectedFailure(fn, bugnumber)
+    return expectedFailure(fn, bugnumber)
 
 # to XFAIL a specific clang versions, try this
 # @expectedFailureClang('bugnumber', ['<=', '3.4'])
 def expectedFailureClang(bugnumber=None, compiler_version=None):
-    if bugnumber: return expectedFailureCompiler('clang', compiler_version, bugnumber)
+    return expectedFailureCompiler('clang', compiler_version, bugnumber)
 
 def expectedFailureGcc(bugnumber=None, compiler_version=None):
-    if bugnumber: return expectedFailureCompiler('gcc', compiler_version, bugnumber)
+    return expectedFailureCompiler('gcc', compiler_version, bugnumber)
 
 def expectedFailureIcc(bugnumber=None):
-    if bugnumber: return expectedFailureCompiler('icc', None, bugnumber)
+    return expectedFailureCompiler('icc', None, bugnumber)
 
 def expectedFailureArch(arch, bugnumber=None):
     def fn(self):
         return arch in self.getArchitecture()
-    if bugnumber: return expectedFailure(fn, bugnumber)
+    return expectedFailure(fn, bugnumber)
 
 def expectedFailurei386(bugnumber=None):
-    if bugnumber: return expectedFailureArch('i386', bugnumber)
+    return expectedFailureArch('i386', bugnumber)
 
 def expectedFailurex86_64(bugnumber=None):
-    if bugnumber: return expectedFailureArch('x86_64', bugnumber)
+    return expectedFailureArch('x86_64', bugnumber)
 
 def expectedFailureOS(oslist, bugnumber=None, compilers=None):
     def fn(self):
         return (lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2] in oslist and
                 self.expectedCompiler(compilers))
-    if bugnumber: return expectedFailure(fn, bugnumber)
+    return expectedFailure(fn, bugnumber)
 
 def expectedFailureDarwin(bugnumber=None, compilers=None):
     # For legacy reasons, we support both "darwin" and "macosx" as OS X triples.
-    if bugnumber: return expectedFailureOS(['darwin', 'macosx'], bugnumber, compilers)
+    return expectedFailureOS(['darwin', 'macosx'], bugnumber, compilers)
 
 def expectedFailureFreeBSD(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS(['freebsd'], bugnumber, compilers)
+    return expectedFailureOS(['freebsd'], bugnumber, compilers)
 
 def expectedFailureLinux(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS(['linux'], bugnumber, compilers)
+    return expectedFailureOS(['linux'], bugnumber, compilers)
 
 def expectedFailureWindows(bugnumber=None, compilers=None):
-    if bugnumber: return expectedFailureOS(['windows'], bugnumber, compilers)
+    return expectedFailureOS(['windows'], bugnumber, compilers)
 
 def expectedFailureLLGS(bugnumber=None, compilers=None):
     def fn(self):
@@ -610,7 +611,7 @@ def expectedFailureLLGS(bugnumber=None, compilers=None):
             return False
         self.runCmd('settings show platform.plugin.linux.use-llgs-for-local')
         return 'true' in self.res.GetOutput() and self.expectedCompiler(compilers)
-    if bugnumber: return expectedFailure(fn, bugnumber)
+    return expectedFailure(fn, bugnumber)
 
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
