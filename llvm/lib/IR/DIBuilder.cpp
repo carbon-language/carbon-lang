@@ -121,10 +121,10 @@ void DIBuilder::finalize() {
 }
 
 /// If N is compile unit return NULL otherwise return N.
-static MDNode *getNonCompileUnitScope(MDNode *N) {
-  if (DIDescriptor(N).isCompileUnit())
+static MDScope *getNonCompileUnitScope(MDNode *N) {
+  if (!N || isa<MDCompileUnit>(N))
     return nullptr;
-  return N;
+  return cast<MDScope>(N);
 }
 
 DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
@@ -304,7 +304,7 @@ DIDerivedType DIBuilder::createMemberType(DIDescriptor Scope, StringRef Name,
       AlignInBits, OffsetInBits, Flags);
 }
 
-static Metadata *getConstantOrNull(Constant *C) {
+static ConstantAsMetadata *getConstantOrNull(Constant *C) {
   if (C)
     return ConstantAsMetadata::get(C);
   return nullptr;
