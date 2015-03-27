@@ -299,12 +299,6 @@ analyzeParsePointLiveness(DominatorTree &DT, const CallSite &CS,
   result.liveset = liveset;
 }
 
-/// True iff this value is the null pointer constant (of any pointer type)
-static bool LLVM_ATTRIBUTE_UNUSED isNullConstant(Value *V) {
-  return isa<Constant>(V) && isa<PointerType>(V->getType()) &&
-         cast<Constant>(V)->isNullValue();
-}
-
 /// Helper function for findBasePointer - Will return a value which either a)
 /// defines the base pointer for the input or b) blocks the simple search
 /// (i.e. a PHI or Select of two derived pointers)
@@ -346,9 +340,8 @@ static Value *findBaseDefiningValue(Value *I) {
     // off a potentially null value and have proven it null.  We also use
     // null pointers in dead paths of relocation phis (which we might later
     // want to find a base pointer for).
-    assert(Con->getType()->isPointerTy() &&
-           "Base for pointer must be another pointer");
-    assert(Con->isNullValue() && "null is the only case which makes sense");
+    assert(isa<ConstantPointerNull>(Con) &&
+           "null is the only case which makes sense");
     return Con;
   }
 
@@ -941,10 +934,10 @@ static void findBasePointers(const StatepointLiveSetTy &live,
     // If you see this trip and like to live really dangerously, the code should
     // be correct, just with idioms the verifier can't handle.  You can try
     // disabling the verifier at your own substaintial risk.
-    assert(!isNullConstant(base) && "the relocation code needs adjustment to "
-                                    "handle the relocation of a null pointer "
-                                    "constant without causing false positives "
-                                    "in the safepoint ir verifier.");
+    assert(!isa<ConstantPointerNull>(base) && 
+           "the relocation code needs adjustment to handle the relocation of "
+           "a null pointer constant without causing false positives in the "
+           "safepoint ir verifier.");
   }
 }
 
@@ -1547,7 +1540,7 @@ static void relocationViaAlloca(
       }
     } else {
       assert((isa<Argument>(def) || isa<GlobalVariable>(def) ||
-              (isa<Constant>(def) && cast<Constant>(def)->isNullValue())) &&
+              isa<ConstantPointerNull>(def)) &&
              "Must be argument or global");
       store->insertAfter(cast<Instruction>(alloca));
     }
