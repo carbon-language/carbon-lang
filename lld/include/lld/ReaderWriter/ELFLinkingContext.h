@@ -262,10 +262,7 @@ public:
   }
 
   // add search path to list.
-  virtual bool addSearchPath(StringRef ref) {
-    _inputSearchPaths.push_back(ref);
-    return true;
-  }
+  void addSearchPath(StringRef ref) { _inputSearchPaths.push_back(ref); }
 
   // Retrieve search path list.
   StringRefVector getSearchPaths() { return _inputSearchPaths; };
