@@ -229,3 +229,11 @@
 // RUN: %clang_cl -fsanitize=address -c -MDd -MD -### -- %s 2>&1 | FileCheck %s -check-prefix=CHECK-ASAN-RELEASERTL
 // RUN: %clang_cl -fsanitize=address -c -LDd -LD -### -- %s 2>&1 | FileCheck %s -check-prefix=CHECK-ASAN-RELEASERTL
 // CHECK-ASAN-RELEASERTL-NOT: error: invalid argument
+
+// RUN: %clang_cl -fsanitize=address -fsanitize-coverage=1 -c -### -- %s 2>&1 | FileCheck %s -check-prefix=CLANG-CL-COVERAGE
+// CLANG-CL-COVERAGE-NOT: error:
+// CLANG-CL-COVERAGE-NOT: warning:
+// CLANG-CL-COVERAGE-NOT: argument unused
+// CLANG-CL-COVERAGE-NOT: unknown argument
+// CLANG-CL-COVERAGE: -fsanitize=address
+// CLANG-CL-COVERAGE: -fsanitize-coverage=1
