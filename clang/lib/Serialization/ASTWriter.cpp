@@ -2857,15 +2857,18 @@ void ASTWriter::WriteFileDeclIDsMap() {
   using namespace llvm;
   RecordData Record;
 
+  SmallVector<std::pair<FileID, DeclIDInFileInfo *>, 64> SortedFileDeclIDs(
+      FileDeclIDs.begin(), FileDeclIDs.end());
+  std::sort(SortedFileDeclIDs.begin(), SortedFileDeclIDs.end(),
+            llvm::less_first());
+
   // Join the vectors of DeclIDs from all files.
-  SmallVector<DeclID, 256> FileSortedIDs;
-  for (FileDeclIDsTy::iterator
-         FI = FileDeclIDs.begin(), FE = FileDeclIDs.end(); FI != FE; ++FI) {
-    DeclIDInFileInfo &Info = *FI->second;
-    Info.FirstDeclIndex = FileSortedIDs.size();
-    for (LocDeclIDsTy::iterator
-           DI = Info.DeclIDs.begin(), DE = Info.DeclIDs.end(); DI != DE; ++DI)
-      FileSortedIDs.push_back(DI->second);
+  SmallVector<DeclID, 256> FileGroupedDeclIDs;
+  for (auto &FileDeclEntry : SortedFileDeclIDs) {
+    DeclIDInFileInfo &Info = *FileDeclEntry.second;
+    Info.FirstDeclIndex = FileGroupedDeclIDs.size();
+    for (auto &LocDeclEntry : Info.DeclIDs)
+      FileGroupedDeclIDs.push_back(LocDeclEntry.second);
   }
 
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
@@ -2874,8 +2877,8 @@ void ASTWriter::WriteFileDeclIDsMap() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
   Record.push_back(FILE_SORTED_DECLS);
-  Record.push_back(FileSortedIDs.size());
-  Stream.EmitRecordWithBlob(AbbrevCode, Record, data(FileSortedIDs));
+  Record.push_back(FileGroupedDeclIDs.size());
+  Stream.EmitRecordWithBlob(AbbrevCode, Record, data(FileGroupedDeclIDs));
 }
 
 void ASTWriter::WriteComments() {
