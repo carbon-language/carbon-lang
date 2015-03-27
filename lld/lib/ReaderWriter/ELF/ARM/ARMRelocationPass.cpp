@@ -289,27 +289,17 @@ protected:
     ga->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
     ga->addReferenceELF_ARM(R_ARM_IRELATIVE, 0, da, 0);
     auto pa = createPLTforGOT(ga);
-
 #ifndef NDEBUG
     ga->_name = "__got_ifunc_";
     ga->_name += da->name();
     pa->_name = "__plt_ifunc_";
     pa->_name += da->name();
 #endif
-
     _gotMap[da] = ga;
     _pltMap[da] = pa;
     _gotVector.push_back(ga);
     _pltVector.push_back(pa);
     return pa;
-  }
-
-  /// \brief Handle adding of PLT entry by marking the reference
-  /// as requiring veneer generation.
-  std::error_code handlePLTEntry(Reference &ref, const PLTAtom *pa) {
-    ref.setTarget(pa);
-
-    return std::error_code();
   }
 
   /// \brief Redirect the call to the PLT stub for the target IFUNC.
@@ -319,8 +309,7 @@ protected:
   std::error_code handleIFUNC(const Reference &ref) {
     auto target = dyn_cast<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver) {
-      return handlePLTEntry(const_cast<Reference &>(ref),
-                            getIFUNCPLTEntry(target));
+      const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
     }
     return std::error_code();
   }
