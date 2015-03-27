@@ -193,3 +193,8 @@ void f() {
   TimeTicks::now();  // expected-error {{no member named 'now' in 'PR22297::TimeTicks'; did you mean 'Now'?}}
 }
 }
+
+namespace PR23005 {
+void f() { int a = Unknown::b(c); }  // expected-error {{use of undeclared identifier 'Unknown'}}
+// expected-error@-1 {{use of undeclared identifier 'c'}}
+}
