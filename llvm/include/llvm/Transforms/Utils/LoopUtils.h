@@ -122,6 +122,10 @@ bool promoteLoopAccessesToScalars(AliasSet &, SmallVectorImpl<BasicBlock*> &,
 /// Updates safety information in LICMSafetyInfo argument.
 void computeLICMSafetyInfo(LICMSafetyInfo *, Loop *);
 
+/// \brief Checks if the given PHINode in a loop header is an induction
+/// variable. Returns true if this is an induction PHI along with the step
+/// value.
+bool isInductionPHI(PHINode *, ScalarEvolution *, ConstantInt *&);
 }
 
 #endif

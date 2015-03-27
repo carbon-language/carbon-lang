@@ -93,6 +93,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/VectorUtils.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 #include <algorithm>
 #include <map>
 #include <tuple>
@@ -4307,32 +4308,31 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
   }
 }
 
-LoopVectorizationLegality::InductionKind
-LoopVectorizationLegality::isInductionVariable(PHINode *Phi,
-                                               ConstantInt *&StepValue) {
+bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
+                          ConstantInt *&StepValue) {
   Type *PhiTy = Phi->getType();
   // We only handle integer and pointer inductions variables.
   if (!PhiTy->isIntegerTy() && !PhiTy->isPointerTy())
-    return IK_NoInduction;
+    return false;
 
   // Check that the PHI is consecutive.
   const SCEV *PhiScev = SE->getSCEV(Phi);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
   if (!AR) {
     DEBUG(dbgs() << "LV: PHI is not a poly recurrence.\n");
-    return IK_NoInduction;
+    return false;
   }
 
   const SCEV *Step = AR->getStepRecurrence(*SE);
   // Calculate the pointer stride and check if it is consecutive.
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
   if (!C)
-    return IK_NoInduction;
+    return false;
 
   ConstantInt *CV = C->getValue();
   if (PhiTy->isIntegerTy()) {
     StepValue = CV;
-    return IK_IntInduction;
+    return true;
   }
 
   assert(PhiTy->isPointerTy() && "The PHI must be a pointer");
@@ -4340,14 +4340,28 @@ LoopVectorizationLegality::isInductionVariable(PHINode *Phi,
   // The pointer stride cannot be determined if the pointer element type is not
   // sized.
   if (!PointerElementType->isSized())
-    return IK_NoInduction;
+    return false;
 
   const DataLayout &DL = Phi->getModule()->getDataLayout();
   int64_t Size = static_cast<int64_t>(DL.getTypeAllocSize(PointerElementType));
   int64_t CVSize = CV->getSExtValue();
   if (CVSize % Size)
-    return IK_NoInduction;
+    return false;
   StepValue = ConstantInt::getSigned(CV->getType(), CVSize / Size);
+  return true;
+}
+
+LoopVectorizationLegality::InductionKind
+LoopVectorizationLegality::isInductionVariable(PHINode *Phi,
+                                               ConstantInt *&StepValue) {
+  if (!isInductionPHI(Phi, SE, StepValue))
+    return IK_NoInduction;
+
+  Type *PhiTy = Phi->getType();
+  // Found an Integer induction variable.
+  if (PhiTy->isIntegerTy())
+    return IK_IntInduction;
+  // Found an Pointer induction variable.
   return IK_PtrInduction;
 }
 
