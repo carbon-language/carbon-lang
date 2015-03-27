@@ -103,27 +103,6 @@ public:
   typedef typename std::vector<Elf_Phdr *>::iterator PhIterT;
   typedef typename std::reverse_iterator<PhIterT> ReversePhIterT;
 
-  /// \brief Find a program header entry, given the type of entry that
-  /// we are looking for
-  class FindPhdr {
-  public:
-    FindPhdr(uint64_t type, uint64_t flags, uint64_t flagsClear)
-             : _type(type)
-             , _flags(flags)
-             , _flagsClear(flagsClear) {
-    }
-
-    bool operator()(const llvm::object::Elf_Phdr_Impl<ELFT> *j) const {
-      return ((j->p_type == _type) &&
-              ((j->p_flags & _flags) == _flags) &&
-              (!(j->p_flags & _flagsClear)));
-    }
-  private:
-    uint64_t _type;
-    uint64_t _flags;
-    uint64_t _flagsClear;
-  };
-
   ProgramHeader(const ELFLinkingContext &ctx)
       : Chunk<ELFT>("elfphdr", Chunk<ELFT>::Kind::ProgramHeader, ctx) {
     this->_alignment = ELFT::Is64Bits ? 8 : 4;
@@ -142,13 +121,6 @@ public:
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
              llvm::FileOutputBuffer &buffer) override;
-
-  /// \brief find a program header entry in the list of program headers
-  ReversePhIterT
-  findProgramHeader(uint64_t type, uint64_t flags, uint64_t flagClear) {
-    return std::find_if(_ph.rbegin(), _ph.rend(),
-                        FindPhdr(type, flags, flagClear));
-  }
 
   PhIterT begin() { return _ph.begin(); }
   PhIterT end() { return _ph.end(); }
