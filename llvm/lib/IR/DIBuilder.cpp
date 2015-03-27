@@ -509,7 +509,10 @@ DIType DIBuilder::createObjectPointerType(DIType Ty) {
   return createTypeWithFlags(VMContext, Ty, Flags);
 }
 
-void DIBuilder::retainType(DIType T) { AllRetainTypes.emplace_back(T); }
+void DIBuilder::retainType(DIType T) {
+  assert(T.get() && "Expected non-null type");
+  AllRetainTypes.emplace_back(T);
+}
 
 DIBasicType DIBuilder::createUnspecifiedParameter() {
   return DIBasicType();
