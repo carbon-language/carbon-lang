@@ -518,7 +518,8 @@ DisassemblerLLVMC::LLVMCDisassembler::PrintMCInst (llvm::MCInst &mc_inst,
     llvm::StringRef unused_annotations;
     llvm::SmallString<64> inst_string;
     llvm::raw_svector_ostream inst_stream(inst_string);
-    m_instr_printer_ap->printInst (&mc_inst, inst_stream, unused_annotations);
+    m_instr_printer_ap->printInst (&mc_inst, inst_stream, unused_annotations,
+                                   *m_subtarget_info_ap);
     inst_stream.flush();
     const size_t output_size = std::min(dst_len - 1, inst_string.size());
     std::memcpy(dst, inst_string.data(), output_size);
