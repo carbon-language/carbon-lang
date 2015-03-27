@@ -432,15 +432,15 @@ static Value *findBaseDefiningValue(Value *I) {
 }
 
 /// Returns the base defining value for this value.
-static Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &cache) {
-  Value *&Cached = cache[I];
+static Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &Cache) {
+  Value *&Cached = Cache[I];
   if (!Cached) {
     Cached = findBaseDefiningValue(I);
   }
-  assert(cache[I] != nullptr);
+  assert(Cache[I] != nullptr);
 
   if (TraceLSP) {
-    errs() << "fBDV-cached: " << I->getName() << " -> " << Cached->getName()
+    dbgs() << "fBDV-cached: " << I->getName() << " -> " << Cached->getName()
            << "\n";
   }
   return Cached;
@@ -448,25 +448,26 @@ static Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &cache) {
 
 /// Return a base pointer for this value if known.  Otherwise, return it's
 /// base defining value.
-static Value *findBaseOrBDV(Value *I, DefiningValueMapTy &cache) {
-  Value *def = findBaseDefiningValueCached(I, cache);
-  auto Found = cache.find(def);
-  if (Found != cache.end()) {
+static Value *findBaseOrBDV(Value *I, DefiningValueMapTy &Cache) {
+  Value *Def = findBaseDefiningValueCached(I, Cache);
+  auto Found = Cache.find(Def);
+  if (Found != Cache.end()) {
     // Either a base-of relation, or a self reference.  Caller must check.
     return Found->second;
   }
   // Only a BDV available
-  return def;
+  return Def;
 }
 
 /// Given the result of a call to findBaseDefiningValue, or findBaseOrBDV,
 /// is it known to be a base pointer?  Or do we need to continue searching.
-static bool isKnownBaseResult(Value *v) {
-  if (!isa<PHINode>(v) && !isa<SelectInst>(v)) {
+static bool isKnownBaseResult(Value *V) {
+  if (!isa<PHINode>(V) && !isa<SelectInst>(V)) {
     // no recursion possible
     return true;
   }
-  if (cast<Instruction>(v)->getMetadata("is_base_value")) {
+  if (isa<Instruction>(V) &&
+      cast<Instruction>(V)->getMetadata("is_base_value")) {
     // This is a previously inserted base phi or select.  We know
     // that this is a base value.
     return true;
