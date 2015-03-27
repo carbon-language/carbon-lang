@@ -1226,8 +1226,7 @@ bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
   DeclContext *DC = D->getLexicalDeclContext();
   if (!D->isModulePrivate() &&
       DC && !DC->isFileContext() && !isa<LinkageSpecDecl>(DC)) {
-    NamedDecl *Hidden;
-    if (SemaRef.hasVisibleDefinition(cast<NamedDecl>(DC), &Hidden)) {
+    if (SemaRef.hasVisibleDefinition(cast<NamedDecl>(DC))) {
       if (SemaRef.ActiveTemplateInstantiations.empty()) {
         // Cache the fact that this declaration is implicitly visible because
         // its parent has a visible definition.

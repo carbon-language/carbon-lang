@@ -10282,6 +10282,15 @@ Sema::CheckForFunctionRedefinition(FunctionDecl *FD,
   if (canRedefineFunction(Definition, getLangOpts()))
     return;
 
+  // If we don't have a visible definition of the function, and it's inline,
+  // it's OK to form another definition of it.
+  //
+  // FIXME: Should we skip the body of the function and use the old definition
+  // in this case? That may be necessary for functions that return local types
+  // through a deduced return type, or instantiate templates with local types.
+  if (!hasVisibleDefinition(Definition) && Definition->isInlineSpecified())
+    return;
+
   if (getLangOpts().GNUMode && Definition->isInlineSpecified() &&
       Definition->getStorageClass() == SC_Extern)
     Diag(FD->getLocation(), diag::err_redefinition_extern_inline)

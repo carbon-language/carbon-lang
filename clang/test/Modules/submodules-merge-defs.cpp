@@ -5,7 +5,9 @@
 #include "empty.h"
 
 A pre_a; // expected-error {{must be imported}} expected-error {{must use 'struct'}}
-// expected-note@defs.h:1 {{here}}
+// expected-note@defs.h:1 +{{here}}
+// FIXME: We should warn that use_a is being used without being imported.
+int pre_use_a = use_a(pre_a); // expected-error {{'A' must be imported}}
 
 B::Inner2 pre_bi; // expected-error +{{must be imported}}
 // expected-note@defs.h:4 +{{here}}
@@ -21,13 +23,17 @@ C2 pre_c2; // expected-error +{{must be imported}} expected-error {{must use 'st
 D::X pre_dx; // expected-error +{{must be imported}}
 // expected-note@defs.h:18 +{{here}}
 // expected-note@defs.h:19 +{{here}}
+// FIXME: We should warn that use_dx is being used without being imported.
+int pre_use_dx = use_dx(pre_dx);
 
 // Make definitions from second module visible.
 #include "import-and-redefine.h"
 
 A post_a;
+int post_use_a = use_a(post_a);
 B::Inner2 post_bi;
 C_Base<1> post_cb1;
 C1 c1;
 C2 c2;
 D::X post_dx;
+int post_use_dx = use_dx(post_dx);

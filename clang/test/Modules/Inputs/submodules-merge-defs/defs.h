@@ -1,5 +1,5 @@
 struct A { int a_member; };
-namespace { inline int use_a(A a) { return a.a_member; } }
+inline int use_a(A a) { return a.a_member; }
 
 class B {
   struct Inner1 {};
@@ -17,4 +17,4 @@ struct C2 : C_Base<C_Const<0>::D{} extern c2;
 
 typedef struct { int a; void f(); struct X; } D;
 struct D::X { int dx; } extern dx;
-namespace { inline int use_dx(D::X dx) { return dx.dx; } }
+inline int use_dx(D::X dx) { return dx.dx; }
