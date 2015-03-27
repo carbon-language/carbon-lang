@@ -401,12 +401,12 @@ struct AddressSanitizer : public FunctionPass {
     return SizeInBytes;
   }
   /// Check if we want (and can) handle this alloca.
-  bool isInterestingAlloca(AllocaInst &AI) const;
+  bool isInterestingAlloca(AllocaInst &AI);
   /// If it is an interesting memory access, return the PointerOperand
   /// and set IsWrite/Alignment. Otherwise return nullptr.
   Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
                                    uint64_t *TypeSize,
-                                   unsigned *Alignment) const;
+                                   unsigned *Alignment);
   void instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis, Instruction *I,
                      bool UseCalls, const DataLayout &DL);
   void instrumentPointerComparisonOrSubtraction(Instruction *I);
@@ -458,6 +458,7 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanMemmove, *AsanMemcpy, *AsanMemset;
   InlineAsm *EmptyAsm;
   GlobalsMetadata GlobalsMD;
+  DenseMap<AllocaInst *, bool> ProcessedAllocas;
 
   friend struct FunctionStackPoisoner;
 };
@@ -804,13 +805,21 @@ void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
 }
 
 /// Check if we want (and can) handle this alloca.
-bool AddressSanitizer::isInterestingAlloca(AllocaInst &AI) const {
-  return (AI.getAllocatedType()->isSized() &&
-          // alloca() may be called with 0 size, ignore it.
-          getAllocaSizeInBytes(&AI) > 0 &&
-          // We are only interested in allocas not promotable to registers.
-          // Promotable allocas are common under -O0.
-          (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI)));
+bool AddressSanitizer::isInterestingAlloca(AllocaInst &AI) {
+  auto PreviouslySeenAllocaInfo = ProcessedAllocas.find(&AI);
+
+  if (PreviouslySeenAllocaInfo != ProcessedAllocas.end())
+    return PreviouslySeenAllocaInfo->getSecond();
+
+  bool IsInteresting = (AI.getAllocatedType()->isSized() &&
+    // alloca() may be called with 0 size, ignore it.
+    getAllocaSizeInBytes(&AI) > 0 &&
+    // We are only interested in allocas not promotable to registers.
+    // Promotable allocas are common under -O0.
+    (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI)));
+
+  ProcessedAllocas[&AI] = IsInteresting;
+  return IsInteresting;
 }
 
 /// If I is an interesting memory access, return the PointerOperand
@@ -818,7 +827,7 @@ bool AddressSanitizer::isInterestingAlloca(AllocaInst &AI) const {
 Value *AddressSanitizer::isInterestingMemoryAccess(Instruction *I,
                                                    bool *IsWrite,
                                                    uint64_t *TypeSize,
-                                                   unsigned *Alignment) const {
+                                                   unsigned *Alignment) {
   // Skip memory accesses inserted by another instrumentation.
   if (I->getMetadata("nosanitize")) return nullptr;
 
