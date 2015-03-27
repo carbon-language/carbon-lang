@@ -53,7 +53,7 @@ public:
   /// \brief Finalize the section contents before writing
 
   /// \brief Does this section have an output segment.
-  virtual bool hasOutputSegment() { return false; }
+  virtual bool hasOutputSegment() const { return false; }
 
   /// Return if the section is a loadable section that occupies memory
   virtual bool isLoadableSection() const { return false; }

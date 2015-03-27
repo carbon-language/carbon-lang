@@ -30,12 +30,12 @@ public:
   }
 
   /// \brief Finalize the section contents before writing
-  virtual void doPreFlight();
+  void doPreFlight() override;
 
   /// \brief Does this section have an output segment.
-  virtual bool hasOutputSegment() { return true; }
+  bool hasOutputSegment() const override { return true; }
 
-  const lld::AtomLayout *appendAtom(const Atom *atom) {
+  const lld::AtomLayout *appendAtom(const Atom *atom) override {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
     uint64_t alignment = atomAlign.value;
