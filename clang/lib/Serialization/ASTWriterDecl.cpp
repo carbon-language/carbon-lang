@@ -980,15 +980,29 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     NamespaceDecl *NS = D->getOriginalNamespace();
     Writer.UpdatedDeclContexts.insert(NS);
 
-    // Make sure all visible decls are written. They will be recorded later.
-    if (StoredDeclsMap *Map = NS->buildLookup()) {
-      for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
-           D != DEnd; ++D) {
-        DeclContext::lookup_result R = D->second.getLookupResult();
-        for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
-             ++I)
-          Writer.GetDeclRef(*I);
-      }
+    // Make sure all visible decls are written. They will be recorded later. We
+    // do this using a side data structure so we can sort the names into
+    // a deterministic order.
+    StoredDeclsMap *Map = NS->buildLookup();
+    SmallVector<std::pair<DeclarationName, DeclContext::lookup_result>, 16>
+        LookupResults;
+    LookupResults.reserve(Map->size());
+    for (auto &Entry : *Map)
+      LookupResults.push_back(
+          std::make_pair(Entry.first, Entry.second.getLookupResult()));
+
+    std::sort(LookupResults.begin(), LookupResults.end(), llvm::less_first());
+    for (auto &NameAndResult : LookupResults) {
+      DeclarationName Name = NameAndResult.first;
+      (void)Name;
+      assert(Name.getNameKind() != DeclarationName::CXXConstructorName &&
+             "Cannot have a constructor name in a namespace!");
+      assert(Name.getNameKind() != DeclarationName::CXXConversionFunctionName &&
+             "Cannot have a conversion function name in a namespace!");
+
+      DeclContext::lookup_result Result = NameAndResult.second;
+      for (NamedDecl *ND : Result)
+        Writer.GetDeclRef(ND);
     }
   }
 
