@@ -163,12 +163,15 @@ template <class Derived> class ARMRelocationPass : public Pass {
     case R_ARM_ABS32:
     case R_ARM_REL32:
     case R_ARM_TARGET1:
+    case R_ARM_MOVW_ABS_NC:
+    case R_ARM_MOVT_ABS:
     case R_ARM_THM_MOVW_ABS_NC:
     case R_ARM_THM_MOVT_ABS:
     case R_ARM_THM_CALL:
     case R_ARM_CALL:
     case R_ARM_JUMP24:
     case R_ARM_THM_JUMP24:
+    case R_ARM_THM_JUMP11:
       static_cast<Derived *>(this)->handleIFUNC(ref);
       static_cast<Derived *>(this)->handleVeneer(atom, ref);
       break;
