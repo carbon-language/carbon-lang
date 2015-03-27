@@ -102,7 +102,7 @@ public:
   /// \brief Does the linker allow dynamic libraries to be linked with?
   /// This is true when the output mode of the executable is set to be
   /// having NMAGIC/OMAGIC
-  virtual bool allowLinkWithDynamicLibraries() const {
+  bool allowLinkWithDynamicLibraries() const {
     if (_outputMagic == OutputMagic::NMAGIC ||
         _outputMagic == OutputMagic::OMAGIC || _noAllowDynamicLibraries)
       return false;
@@ -127,19 +127,17 @@ public:
   }
 
   /// \brief The dynamic linker path set by the --dynamic-linker option
-  virtual StringRef getInterpreter() const {
+  StringRef getInterpreter() const {
     if (_dynamicLinkerArg)
       return _dynamicLinkerPath;
     return getDefaultInterpreter();
   }
 
   /// \brief Does the output have dynamic sections.
-  virtual bool isDynamic() const;
+  bool isDynamic() const;
 
   /// \brief Are we creating a shared library?
-  virtual bool isDynamicLibrary() const {
-    return _outputELFType == llvm::ELF::ET_DYN;
-  }
+  bool isDynamicLibrary() const { return _outputELFType == llvm::ELF::ET_DYN; }
 
   /// \brief Is the relocation a relative relocation
   virtual bool isRelativeReloc(const Reference &r) const;
@@ -177,10 +175,10 @@ public:
   /// or -n in the command line
   /// Set OMAGIC output kind when the linker specifies --omagic
   /// or -N in the command line
-  virtual void setOutputMagic(OutputMagic magic) { _outputMagic = magic; }
+  void setOutputMagic(OutputMagic magic) { _outputMagic = magic; }
 
   /// \brief Disallow dynamic libraries during linking
-  virtual void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
+  void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
 
   /// Searches directories for a match on the input File
   ErrorOr<StringRef> searchLibrary(StringRef libName) const;
