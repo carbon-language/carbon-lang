@@ -697,16 +697,16 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
       break;
   }
 
-  // C++ [dcl.fct.default]p4:
-  //   In a given function declaration, all parameters
-  //   subsequent to a parameter with a default argument shall
-  //   have default arguments supplied in this or previous
-  //   declarations. A default argument shall not be redefined
-  //   by a later declaration (not even to the same value).
+  // C++11 [dcl.fct.default]p4:
+  //   In a given function declaration, each parameter subsequent to a parameter
+  //   with a default argument shall have a default argument supplied in this or
+  //   a previous declaration or shall be a function parameter pack. A default
+  //   argument shall not be redefined by a later declaration (not even to the
+  //   same value).
   unsigned LastMissingDefaultArg = 0;
   for (; p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
-    if (!Param->hasDefaultArg()) {
+    if (!Param->hasDefaultArg() && !Param->isParameterPack()) {
       if (Param->isInvalidDecl())
         /* We already complained about this parameter. */;
       else if (Param->getIdentifier())
