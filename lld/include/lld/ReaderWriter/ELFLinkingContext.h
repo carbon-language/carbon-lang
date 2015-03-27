@@ -64,16 +64,8 @@ public:
 
   llvm::Triple getTriple() const { return _triple; }
 
-  // Page size.
-  virtual uint64_t getPageSize() const {
-    if (_maxPageSize)
-      return *_maxPageSize;
-    return 0x1000;
-  }
-
-  virtual void setMaxPageSize(uint64_t pagesize) {
-    _maxPageSize = pagesize;
-  }
+  uint64_t getPageSize() const { return _maxPageSize; }
+  void setMaxPageSize(uint64_t v) { _maxPageSize = v; }
 
   OutputMagic getOutputMagic() const { return _outputMagic; }
   uint16_t getOutputELFType() const { return _outputELFType; }
@@ -335,7 +327,7 @@ protected:
   bool _stripSymbols = false;
   bool _alignSegments = true;
   bool _collectStats = false;
-  llvm::Optional<uint64_t> _maxPageSize;
+  uint64_t _maxPageSize = 0x1000;
 
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
