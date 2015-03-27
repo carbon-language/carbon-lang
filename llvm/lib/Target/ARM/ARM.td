@@ -480,7 +480,15 @@ def ARMInstrInfo : InstrInfo;
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
 
+def ARMAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  int PassSubtarget = 1;
+  int Variant = 0;
+  bit isMCAsmWriter = 1;
+}
+
 def ARM : Target {
   // Pull in Instruction Info:
   let InstructionSet = ARMInstrInfo;
+  let AssemblyWriters = [ARMAsmWriter];
 }

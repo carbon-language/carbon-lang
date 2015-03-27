@@ -61,10 +61,7 @@ static void printRegImmShift(raw_ostream &O, ARM_AM::ShiftOpc ShOpc,
 ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
                                const MCRegisterInfo &MRI,
                                const MCSubtargetInfo &STI)
-    : MCInstPrinter(MAI, MII, MRI) {
-  // Initialize the set of available features.
-  setAvailableFeatures(STI.getFeatureBits());
-}
+    : MCInstPrinter(MAI, MII, MRI) {}
 
 void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << markup("<reg:") << getRegisterName(RegNo) << markup(">");
@@ -97,17 +94,17 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       O << "\tsev";
       break;
     case 5:
-      if ((getAvailableFeatures() & ARM::HasV8Ops)) {
+      if ((STI.getFeatureBits() & ARM::HasV8Ops)) {
         O << "\tsevl";
         break;
       } // Fallthrough for non-v8
     default:
       // Anything else should just print normally.
-      printInstruction(MI, O);
+      printInstruction(MI, STI, O);
       printAnnotation(O, Annot);
       return;
     }
-    printPredicateOperand(MI, 1, O);
+    printPredicateOperand(MI, 1, STI, O);
     if (Opcode == ARM::t2HINT)
       O << ".w";
     printAnnotation(O, Annot);
@@ -122,8 +119,8 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     const MCOperand &MO3 = MI->getOperand(3);
 
     O << '\t' << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO3.getImm()));
-    printSBitModifierOperand(MI, 6, O);
-    printPredicateOperand(MI, 4, O);
+    printSBitModifierOperand(MI, 6, STI, O);
+    printPredicateOperand(MI, 4, STI, O);
 
     O << '\t';
     printRegName(O, Dst.getReg());
@@ -144,8 +141,8 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     const MCOperand &MO2 = MI->getOperand(2);
 
     O << '\t' << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO2.getImm()));
-    printSBitModifierOperand(MI, 5, O);
-    printPredicateOperand(MI, 3, O);
+    printSBitModifierOperand(MI, 5, STI, O);
+    printPredicateOperand(MI, 3, STI, O);
 
     O << '\t';
     printRegName(O, Dst.getReg());
@@ -169,11 +166,11 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     if (MI->getOperand(0).getReg() == ARM::SP && MI->getNumOperands() > 5) {
       // Should only print PUSH if there are at least two registers in the list.
       O << '\t' << "push";
-      printPredicateOperand(MI, 2, O);
+      printPredicateOperand(MI, 2, STI, O);
       if (Opcode == ARM::t2STMDB_UPD)
         O << ".w";
       O << '\t';
-      printRegisterList(MI, 4, O);
+      printRegisterList(MI, 4, STI, O);
       printAnnotation(O, Annot);
       return;
     } else
@@ -183,7 +180,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     if (MI->getOperand(2).getReg() == ARM::SP &&
         MI->getOperand(3).getImm() == -4) {
       O << '\t' << "push";
-      printPredicateOperand(MI, 4, O);
+      printPredicateOperand(MI, 4, STI, O);
       O << "\t{";
       printRegName(O, MI->getOperand(1).getReg());
       O << "}";
@@ -198,11 +195,11 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     if (MI->getOperand(0).getReg() == ARM::SP && MI->getNumOperands() > 5) {
       // Should only print POP if there are at least two registers in the list.
       O << '\t' << "pop";
-      printPredicateOperand(MI, 2, O);
+      printPredicateOperand(MI, 2, STI, O);
       if (Opcode == ARM::t2LDMIA_UPD)
         O << ".w";
       O << '\t';
-      printRegisterList(MI, 4, O);
+      printRegisterList(MI, 4, STI, O);
       printAnnotation(O, Annot);
       return;
     } else
@@ -212,7 +209,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     if (MI->getOperand(2).getReg() == ARM::SP &&
         MI->getOperand(4).getImm() == 4) {
       O << '\t' << "pop";
-      printPredicateOperand(MI, 5, O);
+      printPredicateOperand(MI, 5, STI, O);
       O << "\t{";
       printRegName(O, MI->getOperand(0).getReg());
       O << "}";
@@ -226,9 +223,9 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   case ARM::VSTMDDB_UPD:
     if (MI->getOperand(0).getReg() == ARM::SP) {
       O << '\t' << "vpush";
-      printPredicateOperand(MI, 2, O);
+      printPredicateOperand(MI, 2, STI, O);
       O << '\t';
-      printRegisterList(MI, 4, O);
+      printRegisterList(MI, 4, STI, O);
       printAnnotation(O, Annot);
       return;
     } else
@@ -239,9 +236,9 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   case ARM::VLDMDIA_UPD:
     if (MI->getOperand(0).getReg() == ARM::SP) {
       O << '\t' << "vpop";
-      printPredicateOperand(MI, 2, O);
+      printPredicateOperand(MI, 2, STI, O);
       O << '\t';
-      printRegisterList(MI, 4, O);
+      printRegisterList(MI, 4, STI, O);
       printAnnotation(O, Annot);
       return;
     } else
@@ -257,13 +254,13 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
     O << "\tldm";
 
-    printPredicateOperand(MI, 1, O);
+    printPredicateOperand(MI, 1, STI, O);
     O << '\t';
     printRegName(O, BaseReg);
     if (Writeback)
       O << "!";
     O << ", ";
-    printRegisterList(MI, 3, O);
+    printRegisterList(MI, 3, STI, O);
     printAnnotation(O, Annot);
     return;
   }
@@ -295,7 +292,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       // Copy the rest operands into NewMI.
       for (unsigned i = isStore ? 3 : 2; i < MI->getNumOperands(); ++i)
         NewMI.addOperand(MI->getOperand(i));
-      printInstruction(&NewMI, O);
+      printInstruction(&NewMI, STI, O);
       return;
     }
     break;
@@ -306,9 +303,9 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   case ARM::t2SUBS_PC_LR: {
     if (MI->getNumOperands() == 3 && MI->getOperand(0).isImm() &&
         MI->getOperand(0).getImm() == 0 &&
-        (getAvailableFeatures() & ARM::FeatureVirtualization)) {
+        (STI.getFeatureBits() & ARM::FeatureVirtualization)) {
       O << "\teret";
-      printPredicateOperand(MI, 1, O);
+      printPredicateOperand(MI, 1, STI, O);
       printAnnotation(O, Annot);
       return;
     }
@@ -316,12 +313,12 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   }
   }
 
-  printInstruction(MI, O);
+  printInstruction(MI, STI, O);
   printAnnotation(O, Annot);
 }
 
 void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                  raw_ostream &O) {
+                                  const MCSubtargetInfo &STI, raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     unsigned Reg = Op.getReg();
@@ -359,6 +356,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 }
 
 void ARMInstPrinter::printThumbLdrLabelOperand(const MCInst *MI, unsigned OpNum,
+                                               const MCSubtargetInfo &STI,
                                                raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   if (MO1.isExpr()) {
@@ -388,6 +386,7 @@ void ARMInstPrinter::printThumbLdrLabelOperand(const MCInst *MI, unsigned OpNum,
 //    REG REG 0,SH_OPC    - e.g. R5, ROR R3
 //    REG 0   IMM,SH_OPC  - e.g. R5, LSL #3
 void ARMInstPrinter::printSORegRegOperand(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -407,6 +406,7 @@ void ARMInstPrinter::printSORegRegOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printSORegImmOperand(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -423,6 +423,7 @@ void ARMInstPrinter::printSORegImmOperand(const MCInst *MI, unsigned OpNum,
 //===--------------------------------------------------------------------===//
 
 void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
+                                                const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op + 1);
@@ -451,6 +452,7 @@ void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
 }
 
 void ARMInstPrinter::printAddrModeTBB(const MCInst *MI, unsigned Op,
+                                      const MCSubtargetInfo &STI,
                                       raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op + 1);
@@ -462,6 +464,7 @@ void ARMInstPrinter::printAddrModeTBB(const MCInst *MI, unsigned Op,
 }
 
 void ARMInstPrinter::printAddrModeTBH(const MCInst *MI, unsigned Op,
+                                      const MCSubtargetInfo &STI,
                                       raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op + 1);
@@ -473,11 +476,12 @@ void ARMInstPrinter::printAddrModeTBH(const MCInst *MI, unsigned Op,
 }
 
 void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
 
   if (!MO1.isReg()) { // FIXME: This is for CP entries, but isn't right.
-    printOperand(MI, Op, O);
+    printOperand(MI, Op, STI, O);
     return;
   }
 
@@ -487,11 +491,12 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
   assert(IdxMode != ARMII::IndexModePost && "Should be pre or offset index op");
 #endif
 
-  printAM2PreOrOffsetIndexOp(MI, Op, O);
+  printAM2PreOrOffsetIndexOp(MI, Op, STI, O);
 }
 
 void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
                                                  unsigned OpNum,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -545,10 +550,11 @@ void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
 
 template <bool AlwaysPrintImm0>
 void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned Op,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   if (!MO1.isReg()) { //  For label symbolic references.
-    printOperand(MI, Op, O);
+    printOperand(MI, Op, STI, O);
     return;
   }
 
@@ -560,6 +566,7 @@ void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned Op,
 
 void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
                                                  unsigned OpNum,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -577,6 +584,7 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
 }
 
 void ARMInstPrinter::printPostIdxImm8Operand(const MCInst *MI, unsigned OpNum,
+                                             const MCSubtargetInfo &STI,
                                              raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   unsigned Imm = MO.getImm();
@@ -585,6 +593,7 @@ void ARMInstPrinter::printPostIdxImm8Operand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printPostIdxRegOperand(const MCInst *MI, unsigned OpNum,
+                                            const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -594,6 +603,7 @@ void ARMInstPrinter::printPostIdxRegOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printPostIdxImm8s4Operand(const MCInst *MI, unsigned OpNum,
+                                               const MCSubtargetInfo &STI,
                                                raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   unsigned Imm = MO.getImm();
@@ -602,6 +612,7 @@ void ARMInstPrinter::printPostIdxImm8s4Operand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printLdStmModeOperand(const MCInst *MI, unsigned OpNum,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   ARM_AM::AMSubMode Mode =
       ARM_AM::getAM4SubMode(MI->getOperand(OpNum).getImm());
@@ -610,12 +621,13 @@ void ARMInstPrinter::printLdStmModeOperand(const MCInst *MI, unsigned OpNum,
 
 template <bool AlwaysPrintImm0>
 void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
 
   if (!MO1.isReg()) { // FIXME: This is for CP entries, but isn't right.
-    printOperand(MI, OpNum, O);
+    printOperand(MI, OpNum, STI, O);
     return;
   }
 
@@ -632,6 +644,7 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -645,6 +658,7 @@ void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printAddrMode7Operand(const MCInst *MI, unsigned OpNum,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   O << markup("<mem:") << "[";
@@ -654,6 +668,7 @@ void ARMInstPrinter::printAddrMode7Operand(const MCInst *MI, unsigned OpNum,
 
 void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
                                                  unsigned OpNum,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   if (MO.getReg() == 0)
@@ -666,6 +681,7 @@ void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
 
 void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
                                                     unsigned OpNum,
+                                                    const MCSubtargetInfo &STI,
                                                     raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   uint32_t v = ~MO.getImm();
@@ -677,18 +693,21 @@ void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
 }
 
 void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
+                                     const MCSubtargetInfo &STI,
                                      raw_ostream &O) {
   unsigned val = MI->getOperand(OpNum).getImm();
-  O << ARM_MB::MemBOptToString(val, (getAvailableFeatures() & ARM::HasV8Ops));
+  O << ARM_MB::MemBOptToString(val, (STI.getFeatureBits() & ARM::HasV8Ops));
 }
 
 void ARMInstPrinter::printInstSyncBOption(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   unsigned val = MI->getOperand(OpNum).getImm();
   O << ARM_ISB::InstSyncBOptToString(val);
 }
 
 void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   unsigned ShiftOp = MI->getOperand(OpNum).getImm();
   bool isASR = (ShiftOp & (1 << 5)) != 0;
@@ -702,6 +721,7 @@ void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printPKHLSLShiftImm(const MCInst *MI, unsigned OpNum,
+                                         const MCSubtargetInfo &STI,
                                          raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
   if (Imm == 0)
@@ -711,6 +731,7 @@ void ARMInstPrinter::printPKHLSLShiftImm(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printPKHASRShiftImm(const MCInst *MI, unsigned OpNum,
+                                         const MCSubtargetInfo &STI,
                                          raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
   // A shift amount of 32 is encoded as 0.
@@ -721,6 +742,7 @@ void ARMInstPrinter::printPKHASRShiftImm(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
+                                       const MCSubtargetInfo &STI,
                                        raw_ostream &O) {
   O << "{";
   for (unsigned i = OpNum, e = MI->getNumOperands(); i != e; ++i) {
@@ -732,6 +754,7 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printGPRPairOperand(const MCInst *MI, unsigned OpNum,
+                                         const MCSubtargetInfo &STI,
                                          raw_ostream &O) {
   unsigned Reg = MI->getOperand(OpNum).getReg();
   printRegName(O, MRI.getSubReg(Reg, ARM::gsub_0));
@@ -740,6 +763,7 @@ void ARMInstPrinter::printGPRPairOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printSetendOperand(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
   if (Op.getImm())
@@ -749,13 +773,13 @@ void ARMInstPrinter::printSetendOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printCPSIMod(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O) {
+                                  const MCSubtargetInfo &STI, raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
   O << ARM_PROC::IModToString(Op.getImm());
 }
 
 void ARMInstPrinter::printCPSIFlag(const MCInst *MI, unsigned OpNum,
-                                   raw_ostream &O) {
+                                   const MCSubtargetInfo &STI, raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
   unsigned IFlags = Op.getImm();
   for (int i = 2; i >= 0; --i)
@@ -767,11 +791,12 @@ void ARMInstPrinter::printCPSIFlag(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
+                                         const MCSubtargetInfo &STI,
                                          raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
   unsigned SpecRegRBit = Op.getImm() >> 4;
   unsigned Mask = Op.getImm() & 0xf;
-  uint64_t FeatureBits = getAvailableFeatures();
+  uint64_t FeatureBits = STI.getFeatureBits();
 
   if (FeatureBits & ARM::FeatureMClass) {
     unsigned SYSm = Op.getImm();
@@ -915,6 +940,7 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printBankedRegOperand(const MCInst *MI, unsigned OpNum,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   uint32_t Banked = MI->getOperand(OpNum).getImm();
   uint32_t R = (Banked & 0x20) >> 5;
@@ -966,6 +992,7 @@ void ARMInstPrinter::printBankedRegOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum,
+                                           const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
   // Handle the undefined 15 CC value here for printing so we don't abort().
@@ -977,12 +1004,14 @@ void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum,
 
 void ARMInstPrinter::printMandatoryPredicateOperand(const MCInst *MI,
                                                     unsigned OpNum,
+                                                    const MCSubtargetInfo &STI,
                                                     raw_ostream &O) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
   O << ARMCondCodeToString(CC);
 }
 
 void ARMInstPrinter::printSBitModifierOperand(const MCInst *MI, unsigned OpNum,
+                                              const MCSubtargetInfo &STI,
                                               raw_ostream &O) {
   if (MI->getOperand(OpNum).getReg()) {
     assert(MI->getOperand(OpNum).getReg() == ARM::CPSR &&
@@ -992,32 +1021,37 @@ void ARMInstPrinter::printSBitModifierOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printNoHashImmediate(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   O << MI->getOperand(OpNum).getImm();
 }
 
 void ARMInstPrinter::printPImmediate(const MCInst *MI, unsigned OpNum,
+                                     const MCSubtargetInfo &STI,
                                      raw_ostream &O) {
   O << "p" << MI->getOperand(OpNum).getImm();
 }
 
 void ARMInstPrinter::printCImmediate(const MCInst *MI, unsigned OpNum,
+                                     const MCSubtargetInfo &STI,
                                      raw_ostream &O) {
   O << "c" << MI->getOperand(OpNum).getImm();
 }
 
 void ARMInstPrinter::printCoprocOptionImm(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   O << "{" << MI->getOperand(OpNum).getImm() << "}";
 }
 
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O) {
+                                  const MCSubtargetInfo &STI, raw_ostream &O) {
   llvm_unreachable("Unhandled PC-relative pseudo-instruction!");
 }
 
 template <unsigned scale>
 void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
 
@@ -1039,12 +1073,14 @@ void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum,
+                                            const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
   O << markup("<imm:") << "#" << formatImm(MI->getOperand(OpNum).getImm() * 4)
     << markup(">");
 }
 
 void ARMInstPrinter::printThumbSRImm(const MCInst *MI, unsigned OpNum,
+                                     const MCSubtargetInfo &STI,
                                      raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
   O << markup("<imm:") << "#" << formatImm((Imm == 0 ? 32 : Imm))
@@ -1052,6 +1088,7 @@ void ARMInstPrinter::printThumbSRImm(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,
+                                      const MCSubtargetInfo &STI,
                                       raw_ostream &O) {
   // (3 - the number of trailing zeros) is the number of then / else.
   unsigned Mask = MI->getOperand(OpNum).getImm();
@@ -1069,12 +1106,13 @@ void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printThumbAddrModeRROperand(const MCInst *MI, unsigned Op,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op + 1);
 
   if (!MO1.isReg()) { // FIXME: This is for CP entries, but isn't right.
-    printOperand(MI, Op, O);
+    printOperand(MI, Op, STI, O);
     return;
   }
 
@@ -1088,13 +1126,15 @@ void ARMInstPrinter::printThumbAddrModeRROperand(const MCInst *MI, unsigned Op,
 }
 
 void ARMInstPrinter::printThumbAddrModeImm5SOperand(const MCInst *MI,
-                                                    unsigned Op, raw_ostream &O,
+                                                    unsigned Op,
+                                                    const MCSubtargetInfo &STI,
+                                                    raw_ostream &O,
                                                     unsigned Scale) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op + 1);
 
   if (!MO1.isReg()) { // FIXME: This is for CP entries, but isn't right.
-    printOperand(MI, Op, O);
+    printOperand(MI, Op, STI, O);
     return;
   }
 
@@ -1109,25 +1149,29 @@ void ARMInstPrinter::printThumbAddrModeImm5SOperand(const MCInst *MI,
 
 void ARMInstPrinter::printThumbAddrModeImm5S1Operand(const MCInst *MI,
                                                      unsigned Op,
+                                                     const MCSubtargetInfo &STI,
                                                      raw_ostream &O) {
-  printThumbAddrModeImm5SOperand(MI, Op, O, 1);
+  printThumbAddrModeImm5SOperand(MI, Op, STI, O, 1);
 }
 
 void ARMInstPrinter::printThumbAddrModeImm5S2Operand(const MCInst *MI,
                                                      unsigned Op,
+                                                     const MCSubtargetInfo &STI,
                                                      raw_ostream &O) {
-  printThumbAddrModeImm5SOperand(MI, Op, O, 2);
+  printThumbAddrModeImm5SOperand(MI, Op, STI, O, 2);
 }
 
 void ARMInstPrinter::printThumbAddrModeImm5S4Operand(const MCInst *MI,
                                                      unsigned Op,
+                                                     const MCSubtargetInfo &STI,
                                                      raw_ostream &O) {
-  printThumbAddrModeImm5SOperand(MI, Op, O, 4);
+  printThumbAddrModeImm5SOperand(MI, Op, STI, O, 4);
 }
 
 void ARMInstPrinter::printThumbAddrModeSPOperand(const MCInst *MI, unsigned Op,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
-  printThumbAddrModeImm5SOperand(MI, Op, O, 4);
+  printThumbAddrModeImm5SOperand(MI, Op, STI, O, 4);
 }
 
 // Constant shifts t2_so_reg is a 2-operand unit corresponding to the Thumb2
@@ -1135,6 +1179,7 @@ void ARMInstPrinter::printThumbAddrModeSPOperand(const MCInst *MI, unsigned Op,
 // REG 0   0           - e.g. R5
 // REG IMM, SH_OPC     - e.g. R5, LSL #3
 void ARMInstPrinter::printT2SOOperand(const MCInst *MI, unsigned OpNum,
+                                      const MCSubtargetInfo &STI,
                                       raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -1150,12 +1195,13 @@ void ARMInstPrinter::printT2SOOperand(const MCInst *MI, unsigned OpNum,
 
 template <bool AlwaysPrintImm0>
 void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
+                                               const MCSubtargetInfo &STI,
                                                raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
 
   if (!MO1.isReg()) { // FIXME: This is for CP entries, but isn't right.
-    printOperand(MI, OpNum, O);
+    printOperand(MI, OpNum, STI, O);
     return;
   }
 
@@ -1178,6 +1224,7 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
 template <bool AlwaysPrintImm0>
 void ARMInstPrinter::printT2AddrModeImm8Operand(const MCInst *MI,
                                                 unsigned OpNum,
+                                                const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -1201,12 +1248,13 @@ void ARMInstPrinter::printT2AddrModeImm8Operand(const MCInst *MI,
 template <bool AlwaysPrintImm0>
 void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
                                                   unsigned OpNum,
+                                                  const MCSubtargetInfo &STI,
                                                   raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
 
   if (!MO1.isReg()) { //  For label symbolic references.
-    printOperand(MI, OpNum, O);
+    printOperand(MI, OpNum, STI, O);
     return;
   }
 
@@ -1229,9 +1277,9 @@ void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
   O << "]" << markup(">");
 }
 
-void ARMInstPrinter::printT2AddrModeImm0_1020s4Operand(const MCInst *MI,
-                                                       unsigned OpNum,
-                                                       raw_ostream &O) {
+void ARMInstPrinter::printT2AddrModeImm0_1020s4Operand(
+    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
+    raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
 
@@ -1244,9 +1292,9 @@ void ARMInstPrinter::printT2AddrModeImm0_1020s4Operand(const MCInst *MI,
   O << "]" << markup(">");
 }
 
-void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(const MCInst *MI,
-                                                      unsigned OpNum,
-                                                      raw_ostream &O) {
+void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(
+    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
+    raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   int32_t OffImm = (int32_t)MO1.getImm();
   O << ", " << markup("<imm:");
@@ -1259,9 +1307,9 @@ void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(const MCInst *MI,
   O << markup(">");
 }
 
-void ARMInstPrinter::printT2AddrModeImm8s4OffsetOperand(const MCInst *MI,
-                                                        unsigned OpNum,
-                                                        raw_ostream &O) {
+void ARMInstPrinter::printT2AddrModeImm8s4OffsetOperand(
+    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
+    raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   int32_t OffImm = (int32_t)MO1.getImm();
 
@@ -1279,6 +1327,7 @@ void ARMInstPrinter::printT2AddrModeImm8s4OffsetOperand(const MCInst *MI,
 
 void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
                                                  unsigned OpNum,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum + 1);
@@ -1300,6 +1349,7 @@ void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
 }
 
 void ARMInstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
+                                       const MCSubtargetInfo &STI,
                                        raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   O << markup("<imm:") << '#' << ARM_AM::getFPImmFloat(MO.getImm())
@@ -1307,6 +1357,7 @@ void ARMInstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
+                                            const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
   unsigned EncodedImm = MI->getOperand(OpNum).getImm();
   unsigned EltBits;
@@ -1317,12 +1368,14 @@ void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printImmPlusOneOperand(const MCInst *MI, unsigned OpNum,
+                                            const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
   O << markup("<imm:") << "#" << formatImm(Imm + 1) << markup(">");
 }
 
 void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
   if (Imm == 0)
@@ -1345,12 +1398,13 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printModImmOperand(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   MCOperand Op = MI->getOperand(OpNum);
 
   // Support for fixups (MCFixup)
   if (Op.isExpr())
-    return printOperand(MI, OpNum, O);
+    return printOperand(MI, OpNum, STI, O);
 
   unsigned Bits = Op.getImm() & 0xFF;
   unsigned Rot = (Op.getImm() & 0xF00) >> 7;
@@ -1385,23 +1439,25 @@ void ARMInstPrinter::printModImmOperand(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printFBits16(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O) {
+                                  const MCSubtargetInfo &STI, raw_ostream &O) {
   O << markup("<imm:") << "#" << 16 - MI->getOperand(OpNum).getImm()
     << markup(">");
 }
 
 void ARMInstPrinter::printFBits32(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O) {
+                                  const MCSubtargetInfo &STI, raw_ostream &O) {
   O << markup("<imm:") << "#" << 32 - MI->getOperand(OpNum).getImm()
     << markup(">");
 }
 
 void ARMInstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
+                                      const MCSubtargetInfo &STI,
                                       raw_ostream &O) {
   O << "[" << MI->getOperand(OpNum).getImm() << "]";
 }
 
 void ARMInstPrinter::printVectorListOne(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   O << "{";
   printRegName(O, MI->getOperand(OpNum).getReg());
@@ -1409,6 +1465,7 @@ void ARMInstPrinter::printVectorListOne(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printVectorListTwo(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   unsigned Reg = MI->getOperand(OpNum).getReg();
   unsigned Reg0 = MRI.getSubReg(Reg, ARM::dsub_0);
@@ -1421,6 +1478,7 @@ void ARMInstPrinter::printVectorListTwo(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
+                                              const MCSubtargetInfo &STI,
                                               raw_ostream &O) {
   unsigned Reg = MI->getOperand(OpNum).getReg();
   unsigned Reg0 = MRI.getSubReg(Reg, ARM::dsub_0);
@@ -1433,6 +1491,7 @@ void ARMInstPrinter::printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printVectorListThree(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
                                           raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
@@ -1447,6 +1506,7 @@ void ARMInstPrinter::printVectorListThree(const MCInst *MI, unsigned OpNum,
 }
 
 void ARMInstPrinter::printVectorListFour(const MCInst *MI, unsigned OpNum,
+                                         const MCSubtargetInfo &STI,
                                          raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
@@ -1464,6 +1524,7 @@ void ARMInstPrinter::printVectorListFour(const MCInst *MI, unsigned OpNum,
 
 void ARMInstPrinter::printVectorListOneAllLanes(const MCInst *MI,
                                                 unsigned OpNum,
+                                                const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
   O << "{";
   printRegName(O, MI->getOperand(OpNum).getReg());
@@ -1472,6 +1533,7 @@ void ARMInstPrinter::printVectorListOneAllLanes(const MCInst *MI,
 
 void ARMInstPrinter::printVectorListTwoAllLanes(const MCInst *MI,
                                                 unsigned OpNum,
+                                                const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
   unsigned Reg = MI->getOperand(OpNum).getReg();
   unsigned Reg0 = MRI.getSubReg(Reg, ARM::dsub_0);
@@ -1485,6 +1547,7 @@ void ARMInstPrinter::printVectorListTwoAllLanes(const MCInst *MI,
 
 void ARMInstPrinter::printVectorListThreeAllLanes(const MCInst *MI,
                                                   unsigned OpNum,
+                                                  const MCSubtargetInfo &STI,
                                                   raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
@@ -1500,6 +1563,7 @@ void ARMInstPrinter::printVectorListThreeAllLanes(const MCInst *MI,
 
 void ARMInstPrinter::printVectorListFourAllLanes(const MCInst *MI,
                                                  unsigned OpNum,
+                                                 const MCSubtargetInfo &STI,
                                                  raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
@@ -1515,9 +1579,9 @@ void ARMInstPrinter::printVectorListFourAllLanes(const MCInst *MI,
   O << "[]}";
 }
 
-void ARMInstPrinter::printVectorListTwoSpacedAllLanes(const MCInst *MI,
-                                                      unsigned OpNum,
-                                                      raw_ostream &O) {
+void ARMInstPrinter::printVectorListTwoSpacedAllLanes(
+    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
+    raw_ostream &O) {
   unsigned Reg = MI->getOperand(OpNum).getReg();
   unsigned Reg0 = MRI.getSubReg(Reg, ARM::dsub_0);
   unsigned Reg1 = MRI.getSubReg(Reg, ARM::dsub_2);
@@ -1528,9 +1592,9 @@ void ARMInstPrinter::printVectorListTwoSpacedAllLanes(const MCInst *MI,
   O << "[]}";
 }
 
-void ARMInstPrinter::printVectorListThreeSpacedAllLanes(const MCInst *MI,
-                                                        unsigned OpNum,
-                                                        raw_ostream &O) {
+void ARMInstPrinter::printVectorListThreeSpacedAllLanes(
+    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
+    raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
   // sort order is guaranteed because they're all of the form D<n>.
@@ -1543,9 +1607,9 @@ void ARMInstPrinter::printVectorListThreeSpacedAllLanes(const MCInst *MI,
   O << "[]}";
 }
 
-void ARMInstPrinter::printVectorListFourSpacedAllLanes(const MCInst *MI,
-                                                       unsigned OpNum,
-                                                       raw_ostream &O) {
+void ARMInstPrinter::printVectorListFourSpacedAllLanes(
+    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
+    raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
   // sort order is guaranteed because they're all of the form D<n>.
@@ -1562,6 +1626,7 @@ void ARMInstPrinter::printVectorListFourSpacedAllLanes(const MCInst *MI,
 
 void ARMInstPrinter::printVectorListThreeSpaced(const MCInst *MI,
                                                 unsigned OpNum,
+                                                const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
@@ -1576,6 +1641,7 @@ void ARMInstPrinter::printVectorListThreeSpaced(const MCInst *MI,
 }
 
 void ARMInstPrinter::printVectorListFourSpaced(const MCInst *MI, unsigned OpNum,
+                                               const MCSubtargetInfo &STI,
                                                raw_ostream &O) {
   // Normally, it's not safe to use register enum values directly with
   // addition to get the next register, but for VFP registers, the
