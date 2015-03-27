@@ -16,7 +16,7 @@ class NMExtractor(object):
     @staticmethod
     def find_tool():
         """
-        Search for the nm executable and return the path and type.
+        Search for the nm executable and return the path.
         """
         return distutils.spawn.find_executable('nm')
 
@@ -93,20 +93,20 @@ class NMExtractor(object):
 
 class ReadElfExtractor(object):
     """
-    NMExtractor - Extract symbol lists from libraries using nm.
+    ReadElfExtractor - Extract symbol lists from libraries using readelf.
     """
 
     @staticmethod
     def find_tool():
         """
-        Search for the nm executable and return the path and type.
+        Search for the readelf executable and return the path.
         """
         return distutils.spawn.find_executable('readelf')
 
     def __init__(self):
         """
-        Initialize the nm executable and flags that will be used to extract
-        symbols from shared libraries.
+        Initialize the readelf executable and flags that will be used to
+        extract symbols from shared libraries.
         """
         self.tool = self.find_tool()
         if self.tool is None:
