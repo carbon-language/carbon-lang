@@ -78,6 +78,6 @@ attributes #2 = { nounwind readnone }
 
 !17 = !MDDerivedType(tag: DW_TAG_reference_type, baseType: null)
 !45 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
-!62 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "arg", line: 4, arg: 2, scope: null, type: !17)
+!62 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "arg", line: 4, arg: 2, scope: !MDSubprogram(), type: !17)
 !64 = !{%struct.Flibble* undef}
-!65 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 13, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: null, type: !45)
+!65 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 13, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !MDSubprogram(), type: !45)

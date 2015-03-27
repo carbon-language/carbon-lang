@@ -44,6 +44,7 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
   // Fixup column.
   adjustColumn(Column);
 
+  assert(Scope && "Expected scope");
   if (Storage == Uniqued) {
     if (auto *N =
             getUniqued(Context.pImpl->MDLocations,
@@ -345,6 +346,7 @@ MDLocalVariable *MDLocalVariable::getImpl(
   // it matches historical behaviour for now.
   Arg &= (1u << 8) - 1;
 
+  assert(Scope && "Expected scope");
   assert(isCanonical(Name) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(MDLocalVariable, (Tag, Scope, getString(Name), File,
                                           Line, Type, Arg, Flags, InlinedAt));
