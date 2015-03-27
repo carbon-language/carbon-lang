@@ -33,9 +33,9 @@ public:
   void e_type(uint16_t type)           { _eh.e_type = type; }
   void e_machine(uint16_t machine)     { _eh.e_machine = machine; }
   void e_version(uint32_t version)     { _eh.e_version = version; }
-  void e_entry(int64_t entry)         { _eh.e_entry = entry; }
-  void e_phoff(int64_t phoff)         { _eh.e_phoff = phoff; }
-  void e_shoff(int64_t shoff)         { _eh.e_shoff = shoff; }
+  void e_entry(int64_t entry)          { _eh.e_entry = entry; }
+  void e_phoff(int64_t phoff)          { _eh.e_phoff = phoff; }
+  void e_shoff(int64_t shoff)          { _eh.e_shoff = shoff; }
   void e_flags(uint32_t flags)         { _eh.e_flags = flags; }
   void e_ehsize(uint16_t ehsize)       { _eh.e_ehsize = ehsize; }
   void e_phentsize(uint16_t phentsize) { _eh.e_phentsize = phentsize; }

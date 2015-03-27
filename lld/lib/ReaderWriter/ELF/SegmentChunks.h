@@ -214,25 +214,18 @@ public:
 
   int64_t atomflags() const {
     switch (_atomflags) {
-
     case DefinedAtom::permUnknown:
       return permUnknown;
-
     case DefinedAtom::permRWX:
       return permRWX;
-
     case DefinedAtom::permR_X:
       return permRX;
-
     case DefinedAtom::permR__:
       return permR;
-
     case DefinedAtom::permRW_L:
       return permRWL;
-
     case DefinedAtom::permRW_:
       return permRW;
-
     case DefinedAtom::perm___:
     default:
       return permNonAccess;

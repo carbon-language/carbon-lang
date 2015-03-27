@@ -19,7 +19,7 @@ namespace elf {
 ///        various kinds of ELF files.
 class ELFWriter : public Writer {
 public:
-  ELFWriter() { }
+  ELFWriter() {}
 
 public:
   /// \brief builds the chunks that needs to be written to the output
