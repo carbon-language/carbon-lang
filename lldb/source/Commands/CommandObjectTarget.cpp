@@ -640,7 +640,7 @@ protected:
 
         if (m_all_option.GetOptionValue())
         {
-            for (uint32_t i = 0; i < target_list.GetNumTargets(); ++i)
+            for (int i = 0; i < target_list.GetNumTargets(); ++i)
                 delete_target_list.push_back(target_list.GetTargetAtIndex(i));
         }
         else if (argc > 0)
