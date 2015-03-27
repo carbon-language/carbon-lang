@@ -37,18 +37,6 @@ public:
   }
 };
 
-ELFLinkingContext::ELFLinkingContext(
-    llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
-    : _outputELFType(llvm::ELF::ET_EXEC), _triple(triple),
-      _targetHandler(std::move(targetHandler)), _baseAddress(0),
-      _isStaticExecutable(false), _noInhibitExec(false), _exportDynamic(false),
-      _mergeCommonStrings(false), _useShlibUndefines(true),
-      _dynamicLinkerArg(false), _noAllowDynamicLibraries(false),
-      _mergeRODataToTextSegment(true), _demangle(true),
-      _stripSymbols(false), _alignSegments(true), _collectStats(false),
-      _outputMagic(OutputMagic::DEFAULT), _initFunction("_init"),
-      _finiFunction("_fini"), _sysrootPath(""), _linkerScriptSema() {}
-
 void ELFLinkingContext::addPasses(PassManager &pm) {
   pm.add(llvm::make_unique<elf::OrderPass>());
 }

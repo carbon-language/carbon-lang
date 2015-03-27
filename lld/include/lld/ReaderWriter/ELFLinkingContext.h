@@ -312,38 +312,40 @@ private:
   ELFLinkingContext() = delete;
 
 protected:
-  ELFLinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
+  ELFLinkingContext(llvm::Triple triple,
+                    std::unique_ptr<TargetHandlerBase> targetHandler)
+      : _triple(triple), _targetHandler(std::move(targetHandler)) {}
 
   Writer &writer() const override;
 
   /// Method to create a internal file for an undefined symbol
   std::unique_ptr<File> createUndefinedSymbolFile() const override;
 
-  uint16_t _outputELFType; // e.g ET_EXEC
+  uint16_t _outputELFType = llvm::ELF::ET_EXEC;
   llvm::Triple _triple;
   std::unique_ptr<TargetHandlerBase> _targetHandler;
-  uint64_t _baseAddress;
-  bool _isStaticExecutable;
-  bool _noInhibitExec;
-  bool _exportDynamic;
-  bool _mergeCommonStrings;
-  bool _useShlibUndefines;
-  bool _dynamicLinkerArg;
-  bool _noAllowDynamicLibraries;
-  bool _mergeRODataToTextSegment;
-  bool _demangle;
-  bool _stripSymbols;
-  bool _alignSegments;
-  bool _collectStats;
+  uint64_t _baseAddress = 0;
+  bool _isStaticExecutable = false;
+  bool _noInhibitExec = false;
+  bool _exportDynamic = false;
+  bool _mergeCommonStrings = false;
+  bool _useShlibUndefines = true;
+  bool _dynamicLinkerArg = false;
+  bool _noAllowDynamicLibraries = false;
+  bool _mergeRODataToTextSegment = true;
+  bool _demangle = true;
+  bool _stripSymbols = false;
+  bool _alignSegments = true;
+  bool _collectStats = false;
   llvm::Optional<uint64_t> _maxPageSize;
 
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
   StringRef _dynamicLinkerPath;
-  StringRef _initFunction;
-  StringRef _finiFunction;
-  StringRef _sysrootPath;
+  StringRef _initFunction = "_init";
+  StringRef _finiFunction = "_fini";
+  StringRef _sysrootPath = "";
   StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
