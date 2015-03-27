@@ -69,6 +69,12 @@ loadFile(const char *argv0, const std::string &FN, LLVMContext &Context) {
   if (!Result)
     Err.print(argv0, errs());
 
+  // Fixme (pr23045). We would like to upgrade the metadata with something like
+  //  Result->materializeMetadata();
+  //  UpgradeDebugInfo(*Result);
+  // but that fails to drop old debug info from function bodies.
+  Result->materializeAllPermanently();
+
   return Result;
 }
 
