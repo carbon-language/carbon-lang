@@ -1539,16 +1539,16 @@ static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printTag(N);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("scope", N->getScope());
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope());
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
-  Printer.printMetadata("baseType", N->getBaseType(),
+  Printer.printMetadata("baseType", N->getRawBaseType(),
                         /* ShouldSkipNull */ false);
   Printer.printInt("size", N->getSizeInBits());
   Printer.printInt("align", N->getAlignInBits());
   Printer.printInt("offset", N->getOffsetInBits());
   Printer.printDIFlags("flags", N->getFlags());
-  Printer.printMetadata("extraData", N->getExtraData());
+  Printer.printMetadata("extraData", N->getRawExtraData());
   Out << ")";
 }
 
@@ -1559,19 +1559,19 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printTag(N);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("scope", N->getScope());
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope());
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
-  Printer.printMetadata("baseType", N->getBaseType());
+  Printer.printMetadata("baseType", N->getRawBaseType());
   Printer.printInt("size", N->getSizeInBits());
   Printer.printInt("align", N->getAlignInBits());
   Printer.printInt("offset", N->getOffsetInBits());
   Printer.printDIFlags("flags", N->getFlags());
-  Printer.printMetadata("elements", N->getElements());
+  Printer.printMetadata("elements", N->getRawElements());
   Printer.printDwarfEnum("runtimeLang", N->getRuntimeLang(),
                          dwarf::LanguageString);
-  Printer.printMetadata("vtableHolder", N->getVTableHolder());
-  Printer.printMetadata("templateParams", N->getTemplateParams());
+  Printer.printMetadata("vtableHolder", N->getRawVTableHolder());
+  Printer.printMetadata("templateParams", N->getRawTemplateParams());
   Printer.printString("identifier", N->getIdentifier());
   Out << ")";
 }
@@ -1582,7 +1582,8 @@ static void writeMDSubroutineType(raw_ostream &Out, const MDSubroutineType *N,
   Out << "!MDSubroutineType(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printDIFlags("flags", N->getFlags());
-  Printer.printMetadata("types", N->getTypeArray(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("types", N->getRawTypeArray(),
+                        /* ShouldSkipNull */ false);
   Out << ")";
 }
 
@@ -1604,7 +1605,7 @@ static void writeMDCompileUnit(raw_ostream &Out, const MDCompileUnit *N,
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printDwarfEnum("language", N->getSourceLanguage(),
                          dwarf::LanguageString, /* ShouldSkipZero */ false);
-  Printer.printMetadata("file", N->getFile(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("file", N->getRawFile(), /* ShouldSkipNull */ false);
   Printer.printString("producer", N->getProducer());
   Printer.printBool("isOptimized", N->isOptimized());
   Printer.printString("flags", N->getFlags());
@@ -1613,11 +1614,11 @@ static void writeMDCompileUnit(raw_ostream &Out, const MDCompileUnit *N,
   Printer.printString("splitDebugFilename", N->getSplitDebugFilename());
   Printer.printInt("emissionKind", N->getEmissionKind(),
                    /* ShouldSkipZero */ false);
-  Printer.printMetadata("enums", N->getEnumTypes());
-  Printer.printMetadata("retainedTypes", N->getRetainedTypes());
-  Printer.printMetadata("subprograms", N->getSubprograms());
-  Printer.printMetadata("globals", N->getGlobalVariables());
-  Printer.printMetadata("imports", N->getImportedEntities());
+  Printer.printMetadata("enums", N->getRawEnumTypes());
+  Printer.printMetadata("retainedTypes", N->getRawRetainedTypes());
+  Printer.printMetadata("subprograms", N->getRawSubprograms());
+  Printer.printMetadata("globals", N->getRawGlobalVariables());
+  Printer.printMetadata("imports", N->getRawImportedEntities());
   Out << ")";
 }
 

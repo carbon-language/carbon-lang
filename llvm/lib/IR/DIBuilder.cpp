@@ -269,8 +269,8 @@ DIDerivedType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
 
 DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
                                        unsigned LineNo, DIDescriptor Context) {
-  return MDDerivedType::get(VMContext, dwarf::DW_TAG_typedef, Name,
-                            File.getFileNode(), LineNo,
+  return MDDerivedType::get(VMContext, dwarf::DW_TAG_typedef, Name, File,
+                            LineNo,
                             DIScope(getNonCompileUnitScope(Context)).getRef(),
                             Ty.getRef(), 0, 0, 0, 0);
 }

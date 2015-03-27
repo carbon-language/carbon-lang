@@ -347,20 +347,20 @@ template <> struct MDNodeKeyImpl<MDDerivedType> {
         BaseType(BaseType), SizeInBits(SizeInBits), AlignInBits(AlignInBits),
         OffsetInBits(OffsetInBits), Flags(Flags), ExtraData(ExtraData) {}
   MDNodeKeyImpl(const MDDerivedType *N)
-      : Tag(N->getTag()), Name(N->getName()), File(N->getFile()),
-        Line(N->getLine()), Scope(N->getScope()), BaseType(N->getBaseType()),
-        SizeInBits(N->getSizeInBits()), AlignInBits(N->getAlignInBits()),
-        OffsetInBits(N->getOffsetInBits()), Flags(N->getFlags()),
-        ExtraData(N->getExtraData()) {}
+      : Tag(N->getTag()), Name(N->getName()), File(N->getRawFile()),
+        Line(N->getLine()), Scope(N->getRawScope()),
+        BaseType(N->getRawBaseType()), SizeInBits(N->getSizeInBits()),
+        AlignInBits(N->getAlignInBits()), OffsetInBits(N->getOffsetInBits()),
+        Flags(N->getFlags()), ExtraData(N->getRawExtraData()) {}
 
   bool isKeyOf(const MDDerivedType *RHS) const {
     return Tag == RHS->getTag() && Name == RHS->getName() &&
-           File == RHS->getFile() && Line == RHS->getLine() &&
-           Scope == RHS->getScope() && BaseType == RHS->getBaseType() &&
+           File == RHS->getRawFile() && Line == RHS->getLine() &&
+           Scope == RHS->getRawScope() && BaseType == RHS->getRawBaseType() &&
            SizeInBits == RHS->getSizeInBits() &&
            AlignInBits == RHS->getAlignInBits() &&
            OffsetInBits == RHS->getOffsetInBits() && Flags == RHS->getFlags() &&
-           ExtraData == RHS->getExtraData();
+           ExtraData == RHS->getRawExtraData();
   }
   unsigned getHashValue() const {
     return hash_combine(Tag, Name, File, Line, Scope, BaseType, SizeInBits,
@@ -397,26 +397,26 @@ template <> struct MDNodeKeyImpl<MDCompositeType> {
         RuntimeLang(RuntimeLang), VTableHolder(VTableHolder),
         TemplateParams(TemplateParams), Identifier(Identifier) {}
   MDNodeKeyImpl(const MDCompositeType *N)
-      : Tag(N->getTag()), Name(N->getName()), File(N->getFile()),
-        Line(N->getLine()), Scope(N->getScope()), BaseType(N->getBaseType()),
-        SizeInBits(N->getSizeInBits()), AlignInBits(N->getAlignInBits()),
-        OffsetInBits(N->getOffsetInBits()), Flags(N->getFlags()),
-        Elements(N->getElements()), RuntimeLang(N->getRuntimeLang()),
-        VTableHolder(N->getVTableHolder()),
-        TemplateParams(N->getTemplateParams()), Identifier(N->getIdentifier()) {
-  }
+      : Tag(N->getTag()), Name(N->getName()), File(N->getRawFile()),
+        Line(N->getLine()), Scope(N->getRawScope()),
+        BaseType(N->getRawBaseType()), SizeInBits(N->getSizeInBits()),
+        AlignInBits(N->getAlignInBits()), OffsetInBits(N->getOffsetInBits()),
+        Flags(N->getFlags()), Elements(N->getRawElements()),
+        RuntimeLang(N->getRuntimeLang()), VTableHolder(N->getRawVTableHolder()),
+        TemplateParams(N->getRawTemplateParams()),
+        Identifier(N->getIdentifier()) {}
 
   bool isKeyOf(const MDCompositeType *RHS) const {
     return Tag == RHS->getTag() && Name == RHS->getName() &&
-           File == RHS->getFile() && Line == RHS->getLine() &&
-           Scope == RHS->getScope() && BaseType == RHS->getBaseType() &&
+           File == RHS->getRawFile() && Line == RHS->getLine() &&
+           Scope == RHS->getRawScope() && BaseType == RHS->getRawBaseType() &&
            SizeInBits == RHS->getSizeInBits() &&
            AlignInBits == RHS->getAlignInBits() &&
            OffsetInBits == RHS->getOffsetInBits() && Flags == RHS->getFlags() &&
-           Elements == RHS->getElements() &&
+           Elements == RHS->getRawElements() &&
            RuntimeLang == RHS->getRuntimeLang() &&
-           VTableHolder == RHS->getVTableHolder() &&
-           TemplateParams == RHS->getTemplateParams() &&
+           VTableHolder == RHS->getRawVTableHolder() &&
+           TemplateParams == RHS->getRawTemplateParams() &&
            Identifier == RHS->getIdentifier();
   }
   unsigned getHashValue() const {
@@ -433,10 +433,10 @@ template <> struct MDNodeKeyImpl<MDSubroutineType> {
   MDNodeKeyImpl(int64_t Flags, Metadata *TypeArray)
       : Flags(Flags), TypeArray(TypeArray) {}
   MDNodeKeyImpl(const MDSubroutineType *N)
-      : Flags(N->getFlags()), TypeArray(N->getTypeArray()) {}
+      : Flags(N->getFlags()), TypeArray(N->getRawTypeArray()) {}
 
   bool isKeyOf(const MDSubroutineType *RHS) const {
-    return Flags == RHS->getFlags() && TypeArray == RHS->getTypeArray();
+    return Flags == RHS->getFlags() && TypeArray == RHS->getRawTypeArray();
   }
   unsigned getHashValue() const { return hash_combine(Flags, TypeArray); }
 };
@@ -484,27 +484,28 @@ template <> struct MDNodeKeyImpl<MDCompileUnit> {
         Subprograms(Subprograms), GlobalVariables(GlobalVariables),
         ImportedEntities(ImportedEntities) {}
   MDNodeKeyImpl(const MDCompileUnit *N)
-      : SourceLanguage(N->getSourceLanguage()), File(N->getFile()),
+      : SourceLanguage(N->getSourceLanguage()), File(N->getRawFile()),
         Producer(N->getProducer()), IsOptimized(N->isOptimized()),
         Flags(N->getFlags()), RuntimeVersion(N->getRuntimeVersion()),
         SplitDebugFilename(N->getSplitDebugFilename()),
-        EmissionKind(N->getEmissionKind()), EnumTypes(N->getEnumTypes()),
-        RetainedTypes(N->getRetainedTypes()), Subprograms(N->getSubprograms()),
-        GlobalVariables(N->getGlobalVariables()),
-        ImportedEntities(N->getImportedEntities()) {}
+        EmissionKind(N->getEmissionKind()), EnumTypes(N->getRawEnumTypes()),
+        RetainedTypes(N->getRawRetainedTypes()),
+        Subprograms(N->getRawSubprograms()),
+        GlobalVariables(N->getRawGlobalVariables()),
+        ImportedEntities(N->getRawImportedEntities()) {}
 
   bool isKeyOf(const MDCompileUnit *RHS) const {
     return SourceLanguage == RHS->getSourceLanguage() &&
-           File == RHS->getFile() && Producer == RHS->getProducer() &&
+           File == RHS->getRawFile() && Producer == RHS->getProducer() &&
            IsOptimized == RHS->isOptimized() && Flags == RHS->getFlags() &&
            RuntimeVersion == RHS->getRuntimeVersion() &&
            SplitDebugFilename == RHS->getSplitDebugFilename() &&
            EmissionKind == RHS->getEmissionKind() &&
-           EnumTypes == RHS->getEnumTypes() &&
-           RetainedTypes == RHS->getRetainedTypes() &&
-           Subprograms == RHS->getSubprograms() &&
-           GlobalVariables == RHS->getGlobalVariables() &&
-           ImportedEntities == RHS->getImportedEntities();
+           EnumTypes == RHS->getRawEnumTypes() &&
+           RetainedTypes == RHS->getRawRetainedTypes() &&
+           Subprograms == RHS->getRawSubprograms() &&
+           GlobalVariables == RHS->getRawGlobalVariables() &&
+           ImportedEntities == RHS->getRawImportedEntities();
   }
   unsigned getHashValue() const {
     return hash_combine(SourceLanguage, File, Producer, IsOptimized, Flags,

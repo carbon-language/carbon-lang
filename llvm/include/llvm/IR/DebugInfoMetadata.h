@@ -282,13 +282,16 @@ protected:
   ~MDScope() {}
 
 public:
-  /// \brief Return the underlying file.
+  // FIXME: Downcast to MDFile once we've verified all subclasses.
+  Metadata *getFile() const { return getRawFile(); }
+
+  /// \brief Return the raw underlying file.
   ///
   /// An \a MDFile is an \a MDScope, but it doesn't point at a separate file
   /// (it\em is the file).  If \c this is an \a MDFile, we need to return \c
   /// this.  Otherwise, return the first operand, which is where all other
   /// subclasses store their file pointer.
-  Metadata *getFile() const {
+  Metadata *getRawFile() const {
     return isa<MDFile>(this) ? const_cast<MDScope *>(this)
                              : static_cast<Metadata *>(getOperand(0));
   }
@@ -390,9 +393,14 @@ public:
   uint64_t getOffsetInBits() const { return OffsetInBits; }
   unsigned getFlags() const { return Flags; }
 
-  Metadata *getScope() const { return getOperand(1); }
+  // FIXME: Remove this once MDScope::getFile() does the same.
+  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
+
+  Metadata *getScope() const { return getRawScope(); }
   StringRef getName() const { return getStringOperand(2); }
 
+
+  Metadata *getRawScope() const { return getOperand(1); }
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
 
   void setFlags(unsigned NewFlags) {
@@ -483,7 +491,8 @@ protected:
   ~MDDerivedTypeBase() {}
 
 public:
-  Metadata *getBaseType() const { return getOperand(3); }
+  Metadata *getBaseType() const { return getRawBaseType(); }
+  Metadata *getRawBaseType() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDDerivedTypeKind ||
@@ -510,7 +519,7 @@ class MDDerivedType : public MDDerivedTypeBase {
   ~MDDerivedType() {}
 
   static MDDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
-                                StringRef Name, Metadata *File, unsigned Line,
+                                StringRef Name, MDFile *File, unsigned Line,
                                 Metadata *Scope, Metadata *BaseType,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
@@ -545,7 +554,7 @@ public:
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
   DEFINE_MDNODE_GET(MDDerivedType,
-                    (unsigned Tag, StringRef Name, Metadata *File,
+                    (unsigned Tag, StringRef Name, MDFile *File,
                      unsigned Line, Metadata *Scope, Metadata *BaseType,
                      uint64_t SizeInBits, uint64_t AlignInBits,
                      uint64_t OffsetInBits, unsigned Flags,
@@ -562,7 +571,8 @@ public:
   ///
   /// TODO: Separate out types that need this extra operand: pointer-to-member
   /// types and member fields (static members and ivars).
-  Metadata *getExtraData() const { return getOperand(4); }
+  Metadata *getExtraData() const { return getRawExtraData(); }
+  Metadata *getRawExtraData() const { return getOperand(4); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDDerivedTypeKind;
@@ -587,12 +597,19 @@ protected:
   ~MDCompositeTypeBase() {}
 
 public:
-  Metadata *getElements() const { return getOperand(4); }
-  Metadata *getVTableHolder() const { return getOperand(5); }
-  Metadata *getTemplateParams() const { return getOperand(6); }
+  MDTuple *getElements() const {
+    return cast_or_null<MDTuple>(getRawElements());
+  }
+  Metadata *getVTableHolder() const { return getRawVTableHolder(); }
+  MDTuple *getTemplateParams() const {
+    return cast_or_null<MDTuple>(getRawTemplateParams());
+  }
   StringRef getIdentifier() const { return getStringOperand(7); }
   unsigned getRuntimeLang() const { return RuntimeLang; }
 
+  Metadata *getRawElements() const { return getOperand(4); }
+  Metadata *getRawVTableHolder() const { return getOperand(5); }
+  Metadata *getRawTemplateParams() const { return getOperand(6); }
   MDString *getRawIdentifier() const { return getOperandAs<MDString>(7); }
 
   /// \brief Replace operands.
@@ -730,7 +747,8 @@ public:
 
   TempMDSubroutineType clone() const { return cloneImpl(); }
 
-  Metadata *getTypeArray() const { return getElements(); }
+  MDTuple *getTypeArray() const { return getElements(); }
+  Metadata *getRawTypeArray() const { return getRawElements(); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDSubroutineTypeKind;
@@ -756,12 +774,12 @@ class MDCompileUnit : public MDScope {
   ~MDCompileUnit() {}
 
   static MDCompileUnit *
-  getImpl(LLVMContext &Context, unsigned SourceLanguage, Metadata *File,
+  getImpl(LLVMContext &Context, unsigned SourceLanguage, MDFile *File,
           StringRef Producer, bool IsOptimized, StringRef Flags,
           unsigned RuntimeVersion, StringRef SplitDebugFilename,
-          unsigned EmissionKind, Metadata *EnumTypes, Metadata *RetainedTypes,
-          Metadata *Subprograms, Metadata *GlobalVariables,
-          Metadata *ImportedEntities, StorageType Storage,
+          unsigned EmissionKind, MDTuple *EnumTypes, MDTuple *RetainedTypes,
+          MDTuple *Subprograms, MDTuple *GlobalVariables,
+          MDTuple *ImportedEntities, StorageType Storage,
           bool ShouldCreate = true) {
     return getImpl(Context, SourceLanguage, File,
                    getCanonicalMDString(Context, Producer), IsOptimized,
@@ -789,12 +807,12 @@ class MDCompileUnit : public MDScope {
 
 public:
   DEFINE_MDNODE_GET(MDCompileUnit,
-                    (unsigned SourceLanguage, Metadata *File,
-                     StringRef Producer, bool IsOptimized, StringRef Flags,
-                     unsigned RuntimeVersion, StringRef SplitDebugFilename,
-                     unsigned EmissionKind, Metadata *EnumTypes,
-                     Metadata *RetainedTypes, Metadata *Subprograms,
-                     Metadata *GlobalVariables, Metadata *ImportedEntities),
+                    (unsigned SourceLanguage, MDFile *File, StringRef Producer,
+                     bool IsOptimized, StringRef Flags, unsigned RuntimeVersion,
+                     StringRef SplitDebugFilename, unsigned EmissionKind,
+                     MDTuple *EnumTypes, MDTuple *RetainedTypes,
+                     MDTuple *Subprograms, MDTuple *GlobalVariables,
+                     MDTuple *ImportedEntities),
                     (SourceLanguage, File, Producer, IsOptimized, Flags,
                      RuntimeVersion, SplitDebugFilename, EmissionKind,
                      EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
@@ -813,6 +831,9 @@ public:
 
   TempMDCompileUnit clone() const { return cloneImpl(); }
 
+  // FIXME: Remove this once MDScope::getFile() does the same.
+  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
+
   unsigned getSourceLanguage() const { return SourceLanguage; }
   bool isOptimized() const { return IsOptimized; }
   unsigned getRuntimeVersion() const { return RuntimeVersion; }
@@ -820,17 +841,32 @@ public:
   StringRef getProducer() const { return getStringOperand(1); }
   StringRef getFlags() const { return getStringOperand(2); }
   StringRef getSplitDebugFilename() const { return getStringOperand(3); }
-  Metadata *getEnumTypes() const { return getOperand(4); }
-  Metadata *getRetainedTypes() const { return getOperand(5); }
-  Metadata *getSubprograms() const { return getOperand(6); }
-  Metadata *getGlobalVariables() const { return getOperand(7); }
-  Metadata *getImportedEntities() const { return getOperand(8); }
+  MDTuple *getEnumTypes() const {
+    return cast_or_null<MDTuple>(getRawEnumTypes());
+  }
+  MDTuple *getRetainedTypes() const {
+    return cast_or_null<MDTuple>(getRawRetainedTypes());
+  }
+  MDTuple *getSubprograms() const {
+    return cast_or_null<MDTuple>(getRawSubprograms());
+  }
+  MDTuple *getGlobalVariables() const {
+    return cast_or_null<MDTuple>(getRawGlobalVariables());
+  }
+  MDTuple *getImportedEntities() const {
+    return cast_or_null<MDTuple>(getRawImportedEntities());
+  }
 
   MDString *getRawProducer() const { return getOperandAs<MDString>(1); }
   MDString *getRawFlags() const { return getOperandAs<MDString>(2); }
   MDString *getRawSplitDebugFilename() const {
     return getOperandAs<MDString>(3);
   }
+  Metadata *getRawEnumTypes() const { return getOperand(4); }
+  Metadata *getRawRetainedTypes() const { return getOperand(5); }
+  Metadata *getRawSubprograms() const { return getOperand(6); }
+  Metadata *getRawGlobalVariables() const { return getOperand(7); }
+  Metadata *getRawImportedEntities() const { return getOperand(8); }
 
   /// \brief Replace arrays.
   ///
