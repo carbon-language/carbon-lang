@@ -8,29 +8,28 @@ import sys
 from sym_check import util
 
 
-class Extractor(object):
+class NMExtractor(object):
     """
-    Extractor - Extract symbol lists from libraries using nm.
+    NMExtractor - Extract symbol lists from libraries using nm.
     """
 
     @staticmethod
-    def find_nm():
+    def find_tool():
         """
         Search for the nm executable and return the path and type.
         """
-        nm_exe = distutils.spawn.find_executable('nm')
-        if nm_exe is not None:
-            return nm_exe
-        # ERROR no NM found
-        print("ERROR: Could not find nm")
-        sys.exit(1)
+        return distutils.spawn.find_executable('nm')
 
     def __init__(self):
         """
         Initialize the nm executable and flags that will be used to extract
         symbols from shared libraries.
         """
-        self.nm_exe = Extractor.find_nm()
+        self.nm_exe = self.find_tool()
+        if self.nm_exe is None:
+            # ERROR no NM found
+            print("ERROR: Could not find nm")
+            sys.exit(1)
         self.flags = ['-P', '-g']
 
     def extract(self, lib):
@@ -60,6 +59,7 @@ class Extractor(object):
             'name': bits[0],
             'type': bits[1]
         }
+        new_sym['name'] = new_sym['name'].replace('@@', '@')
         new_sym = self._transform_sym_type(new_sym)
         # NM types which we want to save the size for.
         if new_sym['type'] == 'OBJECT' and len(bits) > 3:
@@ -74,7 +74,8 @@ class Extractor(object):
         if sym is None or len(sym) < 2:
             return False
         bad_types = ['t', 'b', 'r', 'd', 'w']
-        return sym['type'] not in bad_types
+        return (sym['type'] not in bad_types
+                and sym['name'] not in ['__bss_start', '_end', '_edata'])
 
     @staticmethod
     def _transform_sym_type(sym):
@@ -90,6 +91,78 @@ class Extractor(object):
             sym['type'] = 'OBJECT'
         return sym
 
+class ReadElfExtractor(object):
+    """
+    NMExtractor - Extract symbol lists from libraries using nm.
+    """
+
+    @staticmethod
+    def find_tool():
+        """
+        Search for the nm executable and return the path and type.
+        """
+        return distutils.spawn.find_executable('readelf')
+
+    def __init__(self):
+        """
+        Initialize the nm executable and flags that will be used to extract
+        symbols from shared libraries.
+        """
+        self.tool = self.find_tool()
+        if self.tool is None:
+            # ERROR no NM found
+            print("ERROR: Could not find readelf")
+            sys.exit(1)
+        self.flags = ['--wide', '--symbols']
+
+    def extract(self, lib):
+        """
+        Extract symbols from a library and return the results as a dict of
+        parsed symbols.
+        """
+        cmd = [self.tool] + self.flags + [lib]
+        out, _, exit_code = util.execute_command_verbose(cmd)
+        if exit_code != 0:
+            raise RuntimeError('Failed to run %s on %s' % (self.nm_exe, lib))
+        dyn_syms = self.get_dynsym_table(out)
+        return self.process_syms(dyn_syms)
+
+    def process_syms(self, sym_list):
+        new_syms = []
+        for s in sym_list:
+            parts = s.split()
+            if not parts:
+                continue
+            assert len(parts) == 7 or len(parts) == 8 or len(parts) == 9
+            if len(parts) == 7:
+                continue
+            new_sym = {
+                'name': parts[7],
+                'size': int(parts[2]),
+                'type': parts[3],
+            }
+            assert new_sym['type'] in ['OBJECT', 'FUNC', 'NOTYPE']
+            if new_sym['type'] == 'NOTYPE':
+                continue
+            if new_sym['type'] == 'FUNC':
+                del new_sym['size']
+            new_syms += [new_sym]
+        return new_syms
+
+    def get_dynsym_table(self, out):
+        lines = out.splitlines()
+        start = -1
+        end = -1
+        for i in range(len(lines)):
+            if lines[i].startswith("Symbol table '.dynsym'"):
+                start = i + 2
+            if start != -1 and end == -1 and not lines[i].strip():
+                end = i + 1
+        assert start != -1
+        if end == -1:
+            end = len(lines)
+        return lines[start:end]
+
 
 def extract_symbols(lib_file):
     """
@@ -97,5 +170,8 @@ def extract_symbols(lib_file):
     The symbols are extracted using NM. They are then filtered and formated.
     Finally they symbols are made unique.
     """
-    extractor = Extractor()
+    if ReadElfExtractor.find_tool():
+        extractor = ReadElfExtractor()
+    else:
+        extractor = NMExtractor()
     return extractor.extract(lib_file)
