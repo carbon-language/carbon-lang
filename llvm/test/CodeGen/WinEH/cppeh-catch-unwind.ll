@@ -180,6 +180,9 @@ eh.resume:                                        ; preds = %catch.dispatch7
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
 ; CHECK: entry:
+; CHECK:   [[PARENTFRAME:\%.+]] = alloca i8*
+; CHECK:   store volatile i8* %1, i8** [[PARENTFRAME]]
+; CHECK:   call void @llvm.eh.parentframe(i8** [[PARENTFRAME]])
 ; CHECK:   [[RECOVER_TMP1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[TMP1_PTR:\%.+]] = bitcast i8* [[RECOVER_TMP1]] to i32*
 ; CHECK:   call void @"\01?handle_exception@@YAXXZ"()
@@ -196,6 +199,9 @@ eh.resume:                                        ; preds = %catch.dispatch7
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*) {
 ; CHECK: entry:
+; CHECK:   [[PARENTFRAME:\%.+]] = alloca i8*
+; CHECK:   store volatile i8* %1, i8** [[PARENTFRAME]]
+; CHECK:   call void @llvm.eh.parentframe(i8** [[PARENTFRAME]])
 ; CHECK:   [[RECOVER_TMP0:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
 ; CHECK:   [[TMP0_PTR:\%.+]] = bitcast i8* [[RECOVER_TMP0]] to i32*
 ; CHECK:   invoke void @"\01?handle_exception@@YAXXZ"()

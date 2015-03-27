@@ -5446,13 +5446,23 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_begincatch:
   case Intrinsic::eh_endcatch:
     llvm_unreachable("begin/end catch intrinsics not lowered in codegen");
+  case Intrinsic::eh_parentframe: {
+    AllocaInst *Slot =
+        cast<AllocaInst>(I.getArgOperand(0)->stripPointerCasts());
+    assert(FuncInfo.StaticAllocaMap.count(Slot) &&
+           "can only use static allocas with llvm.eh.parentframe");
+    int FI = FuncInfo.StaticAllocaMap[Slot];
+    // TODO: Save this in the not-yet-existent WinEHFuncInfo struct.
+    (void)FI;
+    return nullptr;
+  }
   case Intrinsic::eh_unwindhelp: {
     AllocaInst *Slot =
         cast<AllocaInst>(I.getArgOperand(0)->stripPointerCasts());
     assert(FuncInfo.StaticAllocaMap.count(Slot) &&
            "can only use static allocas with llvm.eh.unwindhelp");
     int FI = FuncInfo.StaticAllocaMap[Slot];
-    // TODO: Save this in the not-yet-existant WinEHFuncInfo struct.
+    // TODO: Save this in the not-yet-existent WinEHFuncInfo struct.
     (void)FI;
     return nullptr;
   }
