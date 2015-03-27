@@ -334,7 +334,6 @@ protected:
   bool _demangle;
   bool _stripSymbols;
   bool _alignSegments;
-  bool _nostdlib;
   bool _collectStats;
   llvm::Optional<uint64_t> _maxPageSize;
 
