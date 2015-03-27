@@ -3029,13 +3029,12 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
     // Create the on-disk hash table representation. We walk through every
     // selector we've seen and look it up in the method pool.
     SelectorOffsets.resize(NextSelectorID - FirstSelectorID);
-    for (llvm::DenseMap<Selector, SelectorID>::iterator
-             I = SelectorIDs.begin(), E = SelectorIDs.end();
-         I != E; ++I) {
-      Selector S = I->first;
+    for (auto &SelectorAndID : SelectorIDs) {
+      Selector S = SelectorAndID.first;
+      SelectorID ID = SelectorAndID.second;
       Sema::GlobalMethodPool::iterator F = SemaRef.MethodPool.find(S);
       ASTMethodPoolTrait::data_type Data = {
-        I->second,
+        ID,
         ObjCMethodList(),
         ObjCMethodList()
       };
@@ -3045,7 +3044,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
       }
       // Only write this selector if it's not in an existing AST or something
       // changed.
-      if (Chain && I->second < FirstSelectorID) {
+      if (Chain && ID < FirstSelectorID) {
         // Selector already exists. Did it change?
         bool changed = false;
         for (ObjCMethodList *M = &Data.Instance;

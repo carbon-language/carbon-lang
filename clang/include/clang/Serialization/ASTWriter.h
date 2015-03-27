@@ -276,7 +276,7 @@ private:
   serialization::SelectorID NextSelectorID;
 
   /// \brief Map that provides the ID numbers of each Selector.
-  llvm::DenseMap<Selector, serialization::SelectorID> SelectorIDs;
+  llvm::MapVector<Selector, serialization::SelectorID> SelectorIDs;
 
   /// \brief Offset of each selector within the method pool/selector
   /// table, indexed by the Selector ID (-1).
