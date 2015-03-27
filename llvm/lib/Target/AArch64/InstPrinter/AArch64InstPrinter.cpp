@@ -36,10 +36,7 @@ AArch64InstPrinter::AArch64InstPrinter(const MCAsmInfo &MAI,
                                        const MCInstrInfo &MII,
                                        const MCRegisterInfo &MRI,
                                        const MCSubtargetInfo &STI)
-    : MCInstPrinter(MAI, MII, MRI) {
-  // Initialize the set of available features.
-  setAvailableFeatures(STI.getFeatureBits());
-}
+    : MCInstPrinter(MAI, MII, MRI) {}
 
 AArch64AppleInstPrinter::AArch64AppleInstPrinter(const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
@@ -1305,7 +1302,7 @@ void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   auto Mapper = AArch64SysReg::MRSMapper();
-  std::string Name = Mapper.toString(Val, getAvailableFeatures());
+  std::string Name = Mapper.toString(Val, STI.getFeatureBits());
 
   O << StringRef(Name).upper();
 }
@@ -1316,7 +1313,7 @@ void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   auto Mapper = AArch64SysReg::MSRMapper();
-  std::string Name = Mapper.toString(Val, getAvailableFeatures());
+  std::string Name = Mapper.toString(Val, STI.getFeatureBits());
 
   O << StringRef(Name).upper();
 }
