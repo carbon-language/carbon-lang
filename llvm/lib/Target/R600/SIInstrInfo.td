@@ -883,7 +883,7 @@ class VOP2_Real_si <string opName, vop2 op, dag outs, dag ins, string asm> :
   SIMCInstr <opName#"_e32", SISubtarget.SI>;
 
 class VOP2_Real_vi <string opName, vop2 op, dag outs, dag ins, string asm> :
-  VOP2 <op.SI, outs, ins, opName#asm, []>,
+  VOP2 <op.VI, outs, ins, opName#asm, []>,
   SIMCInstr <opName#"_e32", SISubtarget.VI>;
 
 multiclass VOP2SI_m <vop2 op, dag outs, dag ins, string asm, list<dag> pattern,
