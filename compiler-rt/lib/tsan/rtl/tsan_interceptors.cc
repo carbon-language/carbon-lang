@@ -156,6 +156,9 @@ const int SA_SIGINFO = 4;
 const int SIG_SETMASK = 2;
 #endif
 
+#define COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED \
+  (!cur_thread()->is_inited)
+
 namespace std {
 struct nothrow_t {};
 }  // namespace std
@@ -663,14 +666,17 @@ TSAN_INTERCEPTOR(uptr, strlen, const char *s) {
 }
 
 TSAN_INTERCEPTOR(void*, memset, void *dst, int v, uptr size) {
-  SCOPED_TSAN_INTERCEPTOR(memset, dst, v, size);
-  MemoryAccessRange(thr, pc, (uptr)dst, size, true);
+  // On FreeBSD we get here from libthr internals on thread initialization.
+  if (!COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED) {
+    SCOPED_TSAN_INTERCEPTOR(memset, dst, v, size);
+    MemoryAccessRange(thr, pc, (uptr)dst, size, true);
+  }
   return internal_memset(dst, v, size);
 }
 
 TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
   // On FreeBSD we get here from libthr internals on thread initialization.
-  if (cur_thread()->is_inited) {
+  if (!COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED) {
     SCOPED_TSAN_INTERCEPTOR(memcpy, dst, src, size);
     MemoryAccessRange(thr, pc, (uptr)dst, size, true);
     MemoryAccessRange(thr, pc, (uptr)src, size, false);
