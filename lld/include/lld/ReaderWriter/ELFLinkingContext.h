@@ -95,9 +95,7 @@ public:
   ///
   /// If this is a copy relocation, its target must be an ObjectAtom. We must
   /// include in DT_NEEDED the name of the library where this object came from.
-  virtual bool isCopyRelocation(const Reference &) const {
-    return false;
-  }
+  virtual bool isCopyRelocation(const Reference &) const { return false; }
 
   bool validateImpl(raw_ostream &diagnostics) override;
 
@@ -216,34 +214,17 @@ public:
     _absoluteSymbols[name] = addr;
   }
 
-  void setSharedObjectName(StringRef soname) {
-    _soname = soname;
-  }
-
   StringRef sharedObjectName() const { return _soname; }
+  void setSharedObjectName(StringRef soname) { _soname = soname; }
 
   StringRef getSysroot() const { return _sysrootPath; }
+  void setSysroot(StringRef path) { _sysrootPath = path; }
 
-  /// \brief Set path to the system root
-  void setSysroot(StringRef path) {
-    _sysrootPath = path;
-  }
+  void addRpath(StringRef path) { _rpathList.push_back(path); }
+  range<const StringRef *> getRpathList() const { return _rpathList; }
 
-  void addRpath(StringRef path) {
-   _rpathList.push_back(path);
-  }
-
-  range<const StringRef *> getRpathList() const {
-    return _rpathList;
-  }
-
-  void addRpathLink(StringRef path) {
-   _rpathLinkList.push_back(path);
-  }
-
-  range<const StringRef *> getRpathLinkList() const {
-    return _rpathLinkList;
-  }
+  void addRpathLink(StringRef path) { _rpathLinkList.push_back(path); }
+  range<const StringRef *> getRpathLinkList() const { return _rpathLinkList; }
 
   const std::map<std::string, uint64_t> &getAbsoluteSymbols() const {
     return _absoluteSymbols;
