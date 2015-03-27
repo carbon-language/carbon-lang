@@ -36,6 +36,7 @@ bb5:
 ; LINUX-SECTIONS-SHORT: .section        .text,"axG",@progbits,F1,comdat
 ; LINUX-SECTIONS-SHORT: .size   F1,
 ; LINUX-SECTIONS-SHORT-NEXT: .cfi_endproc
+; LINUX-SECTIONS-SHORT-NEXT: .Lsec_end0:
 ; LINUX-SECTIONS-SHORT-NEXT: .section        .rodata,"aG",@progbits,F1,comdat
 
 $G16 = comdat any
