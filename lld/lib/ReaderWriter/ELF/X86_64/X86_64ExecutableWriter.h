@@ -27,9 +27,9 @@ protected:
   createImplicitFiles(std::vector<std::unique_ptr<File>> &result) {
     ExecutableWriter::createImplicitFiles(result);
     _gotFile->addAtom(*new (_gotFile->_alloc)
-                      GLOBAL_OFFSET_TABLEAtom(*_gotFile));
+                      GlobalOffsetTableAtom(*_gotFile));
     if (_ctx.isDynamic())
-      _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
+      _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
     result.push_back(std::move(_gotFile));
     return true;
   }

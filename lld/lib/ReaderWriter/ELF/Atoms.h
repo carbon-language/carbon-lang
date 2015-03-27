@@ -781,9 +781,9 @@ public:
   }
 };
 
-class GLOBAL_OFFSET_TABLEAtom : public SimpleELFDefinedAtom {
+class GlobalOffsetTableAtom : public SimpleELFDefinedAtom {
 public:
-  GLOBAL_OFFSET_TABLEAtom(const File &f) : SimpleELFDefinedAtom(f) {}
+  GlobalOffsetTableAtom(const File &f) : SimpleELFDefinedAtom(f) {}
 
   StringRef name() const override { return "_GLOBAL_OFFSET_TABLE_"; }
 
@@ -804,9 +804,9 @@ public:
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
 
-class DYNAMICAtom : public SimpleELFDefinedAtom {
+class DynamicAtom : public SimpleELFDefinedAtom {
 public:
-  DYNAMICAtom(const File &f) : SimpleELFDefinedAtom(f) {}
+  DynamicAtom(const File &f) : SimpleELFDefinedAtom(f) {}
 
   StringRef name() const override { return "_DYNAMIC"; }
 
