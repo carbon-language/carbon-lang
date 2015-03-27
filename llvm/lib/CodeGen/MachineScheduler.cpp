@@ -1036,8 +1036,6 @@ void ScheduleDAGMILive::schedule() {
 
     scheduleMI(SU, IsTopNode);
 
-    updateQueues(SU, IsTopNode);
-
     if (DFSResult) {
       unsigned SubtreeID = DFSResult->getSubtreeID(SU);
       if (!ScheduledTrees.test(SubtreeID)) {
@@ -1049,6 +1047,8 @@ void ScheduleDAGMILive::schedule() {
 
     // Notify the scheduling strategy after updating the DAG.
     SchedImpl->schedNode(SU, IsTopNode);
+
+    updateQueues(SU, IsTopNode);
   }
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 

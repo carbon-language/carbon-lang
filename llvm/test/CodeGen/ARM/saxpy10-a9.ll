@@ -14,14 +14,11 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 ; CHECK: vldr
 ; CHECK: vldr
 ; CHECK: vldr
-; CHECK: vldr
-; CHECK-NEXT: vadd
-; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
-; CHECK-NEXT: vldr
-; CHECK-NEXT: vldr
-; CHECK-NEXT: vadd
 ; CHECK-NEXT: vmul
+; CHECK-NEXT: vadd
+; CHECK-NEXT: vadd
+; CHECK-NEXT: vldr
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vadd
@@ -31,6 +28,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
+; CHECK-NEXT: vldr
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vadd
@@ -46,6 +44,8 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul
+; CHECK-NEXT: vadd
+; CHECK-NEXT: vldr
 ; CHECK-NEXT: vadd
 ; CHECK-NEXT: vldr
 ; CHECK-NEXT: vmul

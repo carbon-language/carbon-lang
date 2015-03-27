@@ -98,9 +98,9 @@ entry:
 ; re-ordering the instructions.
 ; CHECK-DAG: xsmaddadp [[F1]], 2, 3
 
-; CHECK-DAG: xsmaddmdp 2, 3, 4
+; CHECK-DAG: xsmaddmdp 3, 2, 4
 ; CHECK-DAG: stxsdx [[F1]], 0, 8
-; CHECK-DAG: stxsdx 2, 8, [[C1]]
+; CHECK-DAG: stxsdx 3, 8, [[C1]]
 ; CHECK-DAG: stxsdx 1, 8, [[C2]]
 ; CHECK-DAG: stxsdx 4, 8, [[C3]]
 ; CHECK: blr
@@ -269,10 +269,10 @@ entry:
 ; re-ordering the instructions.
 ; CHECK-DAG: xvmaddadp [[V1]], 35, 36
 
-; CHECK-DAG: xvmaddmdp 35, 36, 37
+; CHECK-DAG: xvmaddmdp 36, 35, 37
 ; CHECK-DAG: xvmaddadp 34, 35, 38
 ; CHECK-DAG: stxvd2x 32, 0, 3
-; CHECK-DAG: stxvd2x 35, 3, [[C1]]
+; CHECK-DAG: stxvd2x 36, 3, [[C1]]
 ; CHECK-DAG: stxvd2x 34, 3, [[C2]]
 ; CHECK-DAG: stxvd2x 37, 3, [[C3]]
 ; CHECK: blr
