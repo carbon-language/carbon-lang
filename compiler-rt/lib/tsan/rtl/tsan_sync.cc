@@ -88,11 +88,13 @@ bool MetaMap::FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz) {
     end++;
   for (; meta < end; meta++) {
     u32 idx = *meta;
+    if (idx == 0) {
+      // Note: don't write to meta in this case -- the block can be huge.
+      continue;
+    }
     *meta = 0;
-    for (;;) {
-      if (idx == 0)
-        break;
-      has_something = true;
+    has_something = true;
+    while (idx != 0) {
       if (idx & kFlagBlock) {
         block_alloc_.Free(&thr->block_cache, idx & ~kFlagMask);
         break;
