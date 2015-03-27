@@ -2579,6 +2579,10 @@ public:
   TypedefNameDecl *getCanonicalDecl() override { return getFirstDecl(); }
   const TypedefNameDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
+  /// Retrieves the tag declaration for which this is the typedef name for
+  /// linkage purposes, if any.
+  TagDecl *getAnonDeclWithTypedefName() const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {

@@ -18,6 +18,10 @@ C1 pre_c1; // expected-error +{{must be imported}} expected-error {{must use 'st
 C2 pre_c2; // expected-error +{{must be imported}} expected-error {{must use 'struct'}}
 // expected-note@defs.h:16 +{{here}}
 
+D::X pre_dx; // expected-error +{{must be imported}}
+// expected-note@defs.h:18 +{{here}}
+// expected-note@defs.h:19 +{{here}}
+
 // Make definitions from second module visible.
 #include "import-and-redefine.h"
 
@@ -26,3 +30,4 @@ B::Inner2 post_bi;
 C_Base<1> post_cb1;
 C1 c1;
 C2 c2;
+D::X post_dx;

@@ -2652,12 +2652,11 @@ static NamedDecl *getDeclForMerging(NamedDecl *Found,
   // If we found a typedef declaration that gives a name to some other
   // declaration, then we want that inner declaration. Declarations from
   // AST files are handled via ImportedTypedefNamesForLinkage.
-  if (Found->isFromASTFile()) return 0;
-  if (auto *TND = dyn_cast<TypedefNameDecl>(Found)) {
-    if (auto *TT = TND->getTypeSourceInfo()->getType()->getAs<TagType>())
-      if (TT->getDecl()->getTypedefNameForAnonDecl() == TND)
-        return TT->getDecl();
-  }
+  if (Found->isFromASTFile())
+    return 0;
+
+  if (auto *TND = dyn_cast<TypedefNameDecl>(Found))
+    return TND->getAnonDeclWithTypedefName();
 
   return 0;
 }

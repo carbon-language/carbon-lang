@@ -3919,6 +3919,14 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 
 void TypedefNameDecl::anchor() { }
 
+TagDecl *TypedefNameDecl::getAnonDeclWithTypedefName() const {
+  if (auto *TT = getTypeSourceInfo()->getType()->getAs<TagType>())
+    if (TT->getDecl()->getTypedefNameForAnonDecl() == this)
+      return TT->getDecl();
+
+  return nullptr;
+}
+
 TypedefDecl *TypedefDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (C, ID) TypedefDecl(C, nullptr, SourceLocation(), SourceLocation(),
                                  nullptr, nullptr);

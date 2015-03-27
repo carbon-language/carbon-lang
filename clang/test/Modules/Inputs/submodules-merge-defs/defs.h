@@ -14,3 +14,7 @@ template<int N> struct C_Base { struct D { constexpr operator int() const { retu
 const int C_Const = 0;
 struct C1 : C_Base<C_Base<0>::D{}> {} extern c1;
 struct C2 : C_Base<C_Const<0>::D{} extern c2;
+
+typedef struct { int a; void f(); struct X; } D;
+struct D::X { int dx; } extern dx;
+namespace { inline int use_dx(D::X dx) { return dx.dx; } }
