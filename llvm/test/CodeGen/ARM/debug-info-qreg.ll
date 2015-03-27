@@ -40,11 +40,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !0 = !MDSubprogram(name: "test0001", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !54, scope: !1, type: !3, function: <4 x float> (float)* @test0001, variables: !51)
 !1 = !MDFile(filename: "build2.c", directory: "/private/tmp")
-!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 129915)", isOptimized: true, emissionKind: 1, file: !54, enums: !17, retainedTypes: !17, subprograms: !50, imports:  null)
+!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 129915)", isOptimized: true, emissionKind: 1, file: !54, enums: !{}, retainedTypes: !{}, subprograms: !50, imports:  null)
 !3 = !MDSubroutineType(types: !4)
 !4 = !{!5}
 !5 = !MDDerivedType(tag: DW_TAG_typedef, name: "v4f32", line: 14, file: !54, scope: !2, baseType: !6)
-!6 = !MDCompositeType(tag: DW_TAG_array_type, size: 128, align: 128, file: !2, baseType: !7, elements: !8)
+!6 = !MDCompositeType(tag: DW_TAG_array_type, size: 128, align: 128, file: !1, baseType: !7, elements: !8)
 !7 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
 !8 = !{!9}
 !9 = !MDSubrange(count: 4)

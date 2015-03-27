@@ -24,7 +24,7 @@ entry:
 !llvm.dbg.sp = !{!1}
 !llvm.dbg.gv = !{!5}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 ()", isOptimized: true, emissionKind: 0, file: !9, enums: !4, retainedTypes: !4, subprograms: !10)
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 ()", isOptimized: true, emissionKind: 0, file: !9, enums: !{}, retainedTypes: !{}, subprograms: !10)
 !1 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !9, scope: !2, type: !3, function: void ()* @foo)
 !2 = !MDFile(filename: "/tmp/one.c", directory: "/Volumes/Lalgate/Slate/D")
 !3 = !MDSubroutineType(types: !4)

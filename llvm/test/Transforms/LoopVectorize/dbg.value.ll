@@ -45,7 +45,7 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!26}
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang", isOptimized: true, emissionKind: 0, file: !25, enums: !1, retainedTypes: !1, subprograms: !2, globals: !11)
-!1 = !{i32 0}
+!1 = !{}
 !2 = !{!3}
 !3 = !MDSubprogram(name: "test", linkageName: "test", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !25, scope: !4, type: !5, function: i32 ()* @test, variables: !8)
 !4 = !MDFile(filename: "test", directory: "/path/to/somewhere")

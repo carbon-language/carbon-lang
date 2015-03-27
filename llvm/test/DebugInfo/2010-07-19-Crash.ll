@@ -26,5 +26,5 @@ entry:
 !11 = !MDSubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: true, isDefinition: false, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3)
 !12 = !MDFile(filename: "one.c", directory: "/private/tmp")
 !13 = !{!0}
-!14 = !{i32 0}
+!14 = !{}
 !15 = !{i32 1, !"Debug Info Version", i32 3}

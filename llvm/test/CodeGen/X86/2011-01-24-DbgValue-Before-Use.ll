@@ -110,5 +110,5 @@ declare i32 @puts(i8* nocapture) nounwind
 !29 = !{!10, !11, !12}
 !30 = !{!14, !17}
 !31 = !MDFile(filename: "rem_small.c", directory: "/private/tmp")
-!32 = !{i32 0}
+!32 = !{}
 !33 = !{i32 1, !"Debug Info Version", i32 3}

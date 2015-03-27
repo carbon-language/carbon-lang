@@ -36,5 +36,5 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !12 = !MDLocation(line: 5, column: 3, scope: !7)
 !13 = !{!0}
 !14 = !MDFile(filename: "array.c", directory: "/private/tmp")
-!15 = !{i32 0}
+!15 = !{}
 !16 = !{i32 1, !"Debug Info Version", i32 3}

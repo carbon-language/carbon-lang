@@ -125,5 +125,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !44 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "k", line: 26, scope: !39, file: !2, type: !13)
 !45 = !MDLocation(line: 27, scope: !39)
 !47 = !MDFile(filename: "small.cc", directory: "/Users/manav/R8248330")
-!48 = !{i32 0}
+!48 = !{}
 !49 = !{i32 1, !"Debug Info Version", i32 3}

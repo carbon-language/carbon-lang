@@ -108,5 +108,5 @@ entry:
 !35 = !MDLocation(line: 7, column: 19, scope: !36)
 !36 = distinct !MDLexicalBlock(line: 7, column: 17, file: !38, scope: !23)
 !38 = !MDFile(filename: "one.cc", directory: "/tmp")
-!39 = !{i32 0}
+!39 = !{}
 !40 = !{i32 1, !"Debug Info Version", i32 3}

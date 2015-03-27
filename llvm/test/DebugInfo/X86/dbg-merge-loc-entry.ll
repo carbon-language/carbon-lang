@@ -71,5 +71,5 @@ declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 !28 = !{!0, !9}
 !29 = !MDFile(filename: "foobar.c", directory: "/tmp")
 !30 = !MDFile(filename: "foobar.h", directory: "/tmp")
-!31 = !{i32 0}
+!31 = !{}
 !32 = !{i32 1, !"Debug Info Version", i32 3}

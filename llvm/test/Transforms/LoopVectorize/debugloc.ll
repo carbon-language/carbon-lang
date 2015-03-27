@@ -65,7 +65,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 185038) (llvm/trunk 185097)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
 !1 = !MDFile(filename: "-", directory: "/Volumes/Data/backedup/dev/os/llvm/debug")
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!4}
 !4 = !MDSubprogram(name: "f", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, function: i32 (i32*, i32)* @f, variables: !12)
 !5 = !MDFile(filename: "<stdin>", directory: "/Volumes/Data/backedup/dev/os/llvm/debug")

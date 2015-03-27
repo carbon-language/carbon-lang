@@ -74,5 +74,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !26 = !MDLocation(line: 24, scope: !25)
 !27 = !MDLocation(line: 26, scope: !25)
 !28 = !MDFile(filename: "tail.c", directory: "/Users/echeng/LLVM/radars/r7927803/")
-!29 = !{i32 0}
+!29 = !{}
 !30 = !{i32 1, !"Debug Info Version", i32 3}

@@ -65,11 +65,11 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!22, !23}
 !llvm.ident = !{!24}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !{}, retainedTypes: !{}, subprograms: !3, globals: !{}, imports: !{})
 !1 = !MDFile(filename: "sroasplit-1.c", directory: "")
 !2 = !MDExpression()
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (%struct.Outer*)* @foo, variables: !2)
+!4 = !MDSubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (%struct.Outer*)* @foo, variables: !{})
 !5 = !MDFile(filename: "sroasplit-1.c", directory: "")
 !6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !9}

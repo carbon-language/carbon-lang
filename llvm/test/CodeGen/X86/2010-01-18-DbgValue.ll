@@ -51,5 +51,5 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !17 = distinct !MDLexicalBlock(line: 11, column: 0, file: !19, scope: !1)
 !18 = !{!1}
 !19 = !MDFile(filename: "b2.c", directory: "/tmp/")
-!20 = !{i32 0}
+!20 = !{}
 !21 = !{i32 1, !"Debug Info Version", i32 3}

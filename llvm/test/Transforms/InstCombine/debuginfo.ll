@@ -55,5 +55,5 @@ entry:
 !26 = !MDFile(filename: "bits.c", directory: "Game")
 !27 = !MDFile(filename: "string.h", directory: "Game")
 !28 = !MDFile(filename: "bits.c", directory: "Game")
-!29 = !{i32 0}
+!29 = !{}
 !30 = !{i32 1, !"Debug Info Version", i32 3}

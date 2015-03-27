@@ -95,7 +95,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!162}
 
-!0 = !MDCompileUnit(language: DW_LANG_ObjC, producer: "Apple clang version 2.1", isOptimized: false, runtimeVersion: 2, emissionKind: 1, file: !153, enums: !147, retainedTypes: !26, subprograms: !148)
+!0 = !MDCompileUnit(language: DW_LANG_ObjC, producer: "Apple clang version 2.1", isOptimized: false, runtimeVersion: 2, emissionKind: 1, file: !153, enums: !147, retainedTypes: !{}, subprograms: !148)
 !1 = !MDCompositeType(tag: DW_TAG_enumeration_type, line: 248, size: 32, align: 32, file: !160, scope: !0, elements: !3)
 !2 = !MDFile(filename: "header.h", directory: "/Volumes/Sandbox/llvm")
 !3 = !{!4}
@@ -158,7 +158,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !60 = !MDCompositeType(tag: DW_TAG_structure_type, name: "UIMydata", line: 26, size: 128, align: 32, runtimeLang: DW_LANG_ObjC, file: !154, scope: !24, elements: !62)
 !61 = !MDFile(filename: "header11.h", directory: "/Volumes/Sandbox/llvm")
 !62 = !{!63, !71, !75, !79}
-!63 = !MDDerivedType(tag: DW_TAG_inheritance, file: !60, baseType: !64)
+!63 = !MDDerivedType(tag: DW_TAG_inheritance, file: !61, baseType: !64)
 !64 = !MDCompositeType(tag: DW_TAG_structure_type, name: "NSO", line: 66, size: 32, align: 32, runtimeLang: DW_LANG_ObjC, file: !155, scope: !40, elements: !66)
 !65 = !MDFile(filename: "NSO.h", directory: "/Volumes/Sandbox/llvm")
 !66 = !{!67}
@@ -192,7 +192,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !94 = !MDCompositeType(tag: DW_TAG_structure_type, name: "twork", line: 43, size: 32, align: 32, runtimeLang: DW_LANG_ObjC, file: !157, scope: !40, elements: !96)
 !95 = !MDFile(filename: "header13.h", directory: "/Volumes/Sandbox/llvm")
 !96 = !{!97}
-!97 = !MDDerivedType(tag: DW_TAG_inheritance, file: !94, baseType: !64)
+!97 = !MDDerivedType(tag: DW_TAG_inheritance, file: !95, baseType: !64)
 !98 = !MDDerivedType(tag: DW_TAG_member, name: "_itemID", line: 38, size: 64, align: 32, offset: 32, flags: DIFlagPrivate, file: !152, scope: !24, baseType: !99, extraData: !"")
 !99 = !MDDerivedType(tag: DW_TAG_typedef, name: "uint64_t", line: 55, file: !153, scope: !0, baseType: !100)
 !100 = !MDBasicType(tag: DW_TAG_base_type, name: "long long unsigned int", size: 64, align: 32, encoding: DW_ATE_unsigned)
@@ -201,7 +201,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !103 = !MDCompositeType(tag: DW_TAG_structure_type, name: "MyLibrary2", line: 22, size: 32, align: 32, runtimeLang: DW_LANG_ObjC, file: !158, scope: !40, elements: !105)
 !104 = !MDFile(filename: "header14.h", directory: "/Volumes/Sandbox/llvm")
 !105 = !{!106}
-!106 = !MDDerivedType(tag: DW_TAG_inheritance, file: !103, baseType: !64)
+!106 = !MDDerivedType(tag: DW_TAG_inheritance, file: !104, baseType: !64)
 !107 = !MDDerivedType(tag: DW_TAG_member, name: "_bounds", line: 40, size: 128, align: 32, offset: 128, flags: DIFlagPrivate, file: !152, scope: !24, baseType: !108, extraData: !"")
 !108 = !MDDerivedType(tag: DW_TAG_typedef, name: "CR", line: 33, file: !153, scope: !0, baseType: !109)
 !109 = !MDCompositeType(tag: DW_TAG_structure_type, name: "CR", line: 29, size: 128, align: 32, file: !156, scope: !0, elements: !110)

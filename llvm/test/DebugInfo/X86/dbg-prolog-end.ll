@@ -55,5 +55,5 @@ entry:
 !16 = !MDLocation(line: 8, column: 2, scope: !17)
 !17 = distinct !MDLexicalBlock(line: 7, column: 12, file: !19, scope: !6)
 !19 = !MDFile(filename: "/tmp/a.c", directory: "/private/tmp")
-!20 = !{i32 0}
+!20 = !{}
 !21 = !{i32 1, !"Debug Info Version", i32 3}

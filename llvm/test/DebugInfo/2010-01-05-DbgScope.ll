@@ -20,6 +20,6 @@ entry:
 !6 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !10 = !MDLocation(line: 588, column: 1, scope: !2)
 !11 = !MDFile(filename: "hashtab.c", directory: "/usr/src/gnu/usr.bin/cc/cc_tools/../../../../contrib/gcclibs/libiberty")
-!12 = !{i32 0}
+!12 = !{}
 !13 = !{!2}
 !14 = !{i32 1, !"Debug Info Version", i32 3}

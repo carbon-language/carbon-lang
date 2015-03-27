@@ -36,7 +36,7 @@ entry:
 !9 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "gid", line: 3, scope: !10, file: !1, type: !6)
 !10 = distinct !MDLexicalBlock(line: 2, column: 1, file: !19, scope: !0)
 !11 = !MDLocation(line: 3, column: 41, scope: !10)
-!12 = !{i32 0}
+!12 = !{}
 !13 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "idx", line: 4, scope: !10, file: !1, type: !6)
 !14 = !MDLocation(line: 4, column: 20, scope: !10)
 !15 = !MDLocation(line: 5, column: 15, scope: !10)

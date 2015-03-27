@@ -31,5 +31,5 @@ entry:
 !13 = !{!0, !6}
 !14 = !MDFile(filename: "", directory: "/private/tmp")
 !15 = !MDFile(filename: "bug.c", directory: "/private/tmp")
-!16 = !{i32 0}
+!16 = !{}
 !17 = !{i32 1, !"Debug Info Version", i32 3}

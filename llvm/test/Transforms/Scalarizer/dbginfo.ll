@@ -59,7 +59,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 194134) (llvm/trunk 194126)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
 !1 = !MDFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!4}
 !4 = !MDSubprogram(name: "f1", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void (<4 x i32>*, <4 x i32>*, <4 x i32>*)* @f1, variables: !14)
 !5 = !MDFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")

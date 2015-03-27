@@ -13,7 +13,7 @@ define void @foo() nounwind ssp {
 
 !0 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !8, scope: !1, type: !3, function: void ()* @foo)
 !1 = !MDFile(filename: "foo.c", directory: "/private/tmp")
-!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-206.1) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 0, file: !8, enums: !4, retainedTypes: !4, subprograms: !9)
+!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-206.1) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 0, file: !8, enums: !{}, retainedTypes: !{}, subprograms: !9)
 !3 = !MDSubroutineType(types: !4)
 !4 = !{null}
 !5 = !MDLocation(line: 4, column: 2, scope: !6)

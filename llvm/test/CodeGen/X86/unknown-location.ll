@@ -32,5 +32,5 @@ entry:
 !8 = !MDLocation(line: 4, column: 3, scope: !7)
 !9 = !{!1}
 !10 = !MDFile(filename: "test.c", directory: "/dir")
-!11 = !{i32 0}
+!11 = !{}
 !12 = !{i32 1, !"Debug Info Version", i32 3}

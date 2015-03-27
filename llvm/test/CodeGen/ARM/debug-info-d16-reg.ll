@@ -106,5 +106,5 @@ declare i32 @puts(i8* nocapture) nounwind
 !44 = !{!19, !20, !21}
 !45 = !{!22, !23, !24}
 !46 = !MDFile(filename: "a.c", directory: "/tmp/")
-!47 = !{i32 0}
+!47 = !{}
 !48 = !{i32 1, !"Debug Info Version", i32 3}

@@ -66,5 +66,5 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !24 = !{!3, !12}
 !25 = !MDFile(filename: "one.cc", directory: "/tmp/")
 !26 = !MDFile(filename: "one.h", directory: "/tmp/")
-!27 = !{i32 0}
+!27 = !{}
 !28 = !{i32 1, !"Debug Info Version", i32 3}

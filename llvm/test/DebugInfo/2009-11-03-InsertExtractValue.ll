@@ -9,7 +9,7 @@
 !2 = !MDSubroutineType(types: !3)
 !3 = !{null}
 !4 = !MDFile(filename: "/foo", directory: "bar.cpp")
-!5 = !MDCompileUnit(language: DW_LANG_C99, isOptimized: true, emissionKind: 0, file: !4, enums: !3, retainedTypes: !3)
+!5 = !MDCompileUnit(language: DW_LANG_C99, isOptimized: true, emissionKind: 0, file: !4, enums: !{}, retainedTypes: !{})
 
 define <{i32, i32}> @f1() {
 ; CHECK: !dbgx ![[NUMBER:[0-9]+]]

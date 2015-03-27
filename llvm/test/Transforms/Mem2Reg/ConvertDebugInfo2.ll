@@ -53,5 +53,5 @@ return:                                           ; preds = %entry
 !18 = !MDLocation(line: 5, scope: !10, inlinedAt: !8)
 !19 = !MDLocation(line: 10, scope: !1)
 !20 = !MDFile(filename: "bar.c", directory: "/tmp/")
-!21 = !{i32 0}
+!21 = !{}
 !22 = !{i32 1, !"Debug Info Version", i32 3}

@@ -68,7 +68,7 @@ declare void @uuid_LtoB(i8*, i8*)
 !15 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "base", line: 92, arg: 0, scope: !16, file: !10, type: !17)
 !16 = !MDSubprogram(name: "OSReadSwapInt64", linkageName: "OSReadSwapInt64", line: 95, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !38, scope: null, type: !5)
 !17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !39, scope: !3, baseType: null)
-!18 = !{i32 0}
+!18 = !{}
 !19 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "byteOffset", line: 94, arg: 0, scope: !16, file: !10, type: !20)
 !20 = !MDDerivedType(tag: DW_TAG_typedef, name: "uintptr_t", line: 114, file: !37, scope: !3, baseType: !22)
 !21 = !MDFile(filename: "types.h", directory: "/usr/include/ppc")

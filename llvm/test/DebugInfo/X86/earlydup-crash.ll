@@ -90,5 +90,5 @@ declare void @foobar(i32)
 !43 = !MDFile(filename: "stddef.h", directory: "/Users/espindola/llvm/build-llvm-gcc/./prev-gcc/include")
 !44 = !MDFile(filename: "darwin-c.c", directory: "/Users/espindola/llvm/build-llvm-gcc/gcc/../../llvm-gcc-4.2/gcc/config")
 !45 = !{!2}
-!46 = !{i32 0}
+!46 = !{}
 !47 = !{i32 1, !"Debug Info Version", i32 3}

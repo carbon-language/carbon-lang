@@ -20,7 +20,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !16, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !1 = !{!2}
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!5}
 !5 = !MDSubprogram(name: "bar", linkageName: "_Z3barN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scope: !6, type: !7, function: void ()* @_Z3barN2N11AE)
 !6 = !MDFile(filename: "n2.c", directory: "/private/tmp")

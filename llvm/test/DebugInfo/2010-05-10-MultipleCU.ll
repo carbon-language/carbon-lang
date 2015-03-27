@@ -39,6 +39,6 @@ return:
 !14 = !{!15}
 !15 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !18 = !MDFile(filename: "a.c", directory: "/tmp/")
-!19 = !{i32 0}
+!19 = !{}
 !20 = !MDFile(filename: "b.c", directory: "/tmp/")
 !21 = !{i32 1, !"Debug Info Version", i32 3}

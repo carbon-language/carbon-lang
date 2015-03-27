@@ -27,6 +27,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !9 = !MDLocation(line: 95, scope: !10)
 !10 = distinct !MDLexicalBlock(line: 94, column: 0, file: !12, scope: !1)
 !11 = !MDLocation(line: 100, scope: !10)
-!13 = !{i32 0}
+!13 = !{}
 !14 = !{!1}
 !15 = !{i32 1, !"Debug Info Version", i32 3}

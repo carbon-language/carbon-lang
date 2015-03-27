@@ -34,7 +34,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.module.flags = !{!17}
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 169314)", isOptimized: true, emissionKind: 0, file: !16, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1)
-!1 = !{i32 0}
+!1 = !{}
 !3 = !{!5}
 !5 = !MDSubprogram(name: "zzz", linkageName: "_Z3zzzi", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !16, scope: !6, type: !7, function: i32 (i32)* @_Z3zzzi, variables: !1)
 !6 = !MDFile(filename: "a.cc", directory: "/usr/local/google/llvm_cmake_clang/tmp/debuginfo")

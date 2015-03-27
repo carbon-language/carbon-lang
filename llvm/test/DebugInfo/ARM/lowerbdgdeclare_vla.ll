@@ -69,7 +69,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 ", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
 !1 = !MDFile(filename: "<unknown>", directory: "/Volumes/Data/radar/15464571")
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!4}
 !4 = !MDSubprogram(name: "run", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !5, scope: !6, type: !7, function: void (float)* @run, variables: !10)
 !5 = !MDFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")

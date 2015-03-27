@@ -69,7 +69,7 @@ declare i32 @printf(i8*, ...)
 !16 = !{!10}
 !17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "main_arr", line: 19, scope: !18, file: !6, type: !19)
 !18 = distinct !MDLexicalBlock(line: 18, column: 16, file: !29, scope: !14)
-!19 = !MDCompositeType(tag: DW_TAG_array_type, size: 3200, align: 32, baseType: !10, elements: !20)
+!19 = !MDCompositeType(tag: DW_TAG_array_type, size: 3200, align: 32, baseType: !10, elements: !{!20})
 !20 = !MDSubrange(count: 99)
 !22 = !MDLocation(line: 19, column: 7, scope: !18)
 !23 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "val", line: 20, scope: !18, file: !6, type: !10)

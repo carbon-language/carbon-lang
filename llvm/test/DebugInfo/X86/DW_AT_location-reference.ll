@@ -104,7 +104,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !0 = !MDSubprogram(name: "f", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !23, scope: !1, type: !3, function: void ()* @f, variables: !22)
 !1 = !MDFile(filename: "simple.c", directory: "/home/rengol01/temp/tests/dwarf/relocation")
-!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk)", isOptimized: true, emissionKind: 1, file: !23, enums: !4, retainedTypes: !4, subprograms: !21, imports:  null)
+!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk)", isOptimized: true, emissionKind: 1, file: !23, enums: !{}, retainedTypes: !{}, subprograms: !21, imports:  null)
 !3 = !MDSubroutineType(types: !4)
 !4 = !{null}
 !5 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 5, scope: !6, file: !1, type: !7)

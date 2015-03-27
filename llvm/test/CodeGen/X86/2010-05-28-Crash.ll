@@ -44,7 +44,7 @@ entry:
 !16 = !{!7}
 !17 = !{!1, !8}
 !18 = !MDFile(filename: "f.c", directory: "/tmp")
-!19 = !{i32 0}
+!19 = !{}
 
 ;CHECK: DEBUG_VALUE: bar:x <- E
 ;CHECK: Ltmp

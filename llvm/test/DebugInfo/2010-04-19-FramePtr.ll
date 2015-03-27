@@ -33,5 +33,5 @@ return:                                           ; preds = %entry
 !7 = !MDLocation(line: 2, scope: !8)
 !8 = distinct !MDLexicalBlock(line: 2, column: 0, file: !10, scope: !1)
 !10 = !MDFile(filename: "a.c", directory: "/tmp")
-!11 = !{i32 0}
+!11 = !{}
 !12 = !{i32 1, !"Debug Info Version", i32 3}

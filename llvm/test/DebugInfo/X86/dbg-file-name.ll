@@ -20,5 +20,5 @@ define i32 @main() nounwind {
 !8 = !{!5}
 !9 = !{!6}
 !10 = !MDFile(filename: "simple.c", directory: "/Users/manav/one/two")
-!11 = !{i32 0}
+!11 = !{}
 !12 = !{i32 1, !"Debug Info Version", i32 3}

@@ -18,7 +18,7 @@ entry:
 !8 = !MDLocation(line: 3, column: 13, scope: !9)
 !9 = distinct !MDLexicalBlock(line: 3, column: 11, file: !10, scope: !0)
 !10 = !MDFile(filename: "/tmp/a.c", directory: "/Volumes/Lalgate/clean/D.CW")
-!11 = !{i32 0}
+!11 = !{}
 !12 = !{!0}
 !13 = !{!6}
 !14 = !{i32 1, !"Debug Info Version", i32 3}

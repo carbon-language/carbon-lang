@@ -35,5 +35,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !11 = !{!1}
 !12 = !{!6}
 !13 = !MDFile(filename: "a.c", directory: "/private/tmp")
-!14 = !{i32 0}
+!14 = !{}
 !15 = !{i32 1, !"Debug Info Version", i32 3}

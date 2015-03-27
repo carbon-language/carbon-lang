@@ -247,5 +247,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !44 = !{!1}
 !45 = !MDFile(filename: "libgcc2.c", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
 !46 = !MDFile(filename: "libgcc2.h", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
-!47 = !{i32 0}
+!47 = !{}
 !48 = !{i32 1, !"Debug Info Version", i32 3}

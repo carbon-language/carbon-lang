@@ -26,6 +26,6 @@ define i32 @foo() nounwind ssp {
 !6 = !MDLocation(line: 2, column: 13, scope: !7)
 !7 = distinct !MDLexicalBlock(line: 2, column: 11, file: !8, scope: !1)
 !8 = !MDFile(filename: "a.c", directory: "/private/tmp")
-!9 = !{i32 0}
+!9 = !{}
 !10 = !{!1}
 !11 = !{i32 1, !"Debug Info Version", i32 3}

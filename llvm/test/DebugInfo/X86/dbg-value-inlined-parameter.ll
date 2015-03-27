@@ -76,7 +76,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !0 = !MDSubprogram(name: "foo", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !1, scope: !1, type: !3, function: i32 (%struct.S1*, i32)* @foo, variables: !41)
 !1 = !MDFile(filename: "nm2.c", directory: "/private/tmp")
-!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 125693)", isOptimized: true, emissionKind: 1, file: !42, enums: !8, retainedTypes: !8, subprograms: !39, globals: !40, imports:  !44)
+!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 125693)", isOptimized: true, emissionKind: 1, file: !42, enums: !{}, retainedTypes: !{}, subprograms: !39, globals: !40, imports:  !44)
 !3 = !MDSubroutineType(types: !4)
 !4 = !{!5}
 !5 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

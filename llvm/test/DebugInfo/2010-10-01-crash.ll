@@ -22,5 +22,5 @@ declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, 
 !23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "rect", line: 53, arg: 0, scope: !0, file: !1, type: !5)
 !24 = !MDLocation(line: 53, column: 33, scope: !0)
 !25 = !MDFile(filename: "GSFusedSilica.m", directory: "/Volumes/Data/Users/sabre/Desktop")
-!26 = !{i32 0}
+!26 = !{}
 !27 = !{i32 1, !"Debug Info Version", i32 3}

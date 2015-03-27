@@ -39,7 +39,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !6 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !2, baseType: !7)
 !7 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !8 = !MDLocation(line: 2, column: 18, scope: !0)
-!9 = !{i32 0}
+!9 = !{}
 !10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 3, scope: !11, file: !1, type: !13)
 !11 = distinct !MDLexicalBlock(line: 3, column: 3, file: !18, scope: !12)
 !12 = distinct !MDLexicalBlock(line: 2, column: 21, file: !18, scope: !0)

@@ -150,6 +150,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !97 = !MDLocation(line: 227, scope: !94, inlinedAt: !96)
 !98 = !MDLocation(line: 52, scope: !1)
 !101 = !MDFile(filename: "ggEdgeDiscrepancy.cc", directory: "/Volumes/Home/grosbaj/sources/llvm-externals/speccpu2000/benchspec/CINT2000/252.eon/src")
-!102 = !{i32 0}
+!102 = !{}
 !103 = !{!3, !77}
 !104 = !{i32 1, !"Debug Info Version", i32 3}

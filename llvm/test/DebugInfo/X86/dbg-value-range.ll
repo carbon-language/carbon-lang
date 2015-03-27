@@ -40,7 +40,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !20 = !{!0}
 !21 = !{!6, !11}
 !22 = !MDFile(filename: "bar.c", directory: "/private/tmp")
-!23 = !{i32 0}
+!23 = !{}
 
 ; Check that variable bar:b value range is appropriately truncated in debug info.
 ; The variable is in %rdi which is clobbered by 'movl %ebx, %edi'

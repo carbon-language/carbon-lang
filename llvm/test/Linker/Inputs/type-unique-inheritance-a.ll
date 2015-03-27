@@ -68,7 +68,7 @@ attributes #1 = { nounwind readnone }
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (http://llvm.org/git/clang.git f54e02f969d02d640103db73efc30c45439fceab) (http://llvm.org/git/llvm.git 284353b55896cb1babfaa7add7c0a363245342d2)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !14, globals: !2, imports: !2)
 !1 = !MDFile(filename: "foo.cpp", directory: "/Users/mren/c_testing/type_unique_air/inher")
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!4, !8}
 !4 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 3, size: 64, align: 32, file: !5, elements: !6, identifier: "_ZTS1A")
 !5 = !MDFile(filename: "./a.hpp", directory: "/Users/mren/c_testing/type_unique_air/inher")

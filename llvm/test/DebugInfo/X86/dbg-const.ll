@@ -47,5 +47,5 @@ declare i32 @bar() nounwind readnone
 !13 = !{!0}
 !14 = !{!6}
 !15 = !MDFile(filename: "mu.c", directory: "/private/tmp")
-!16 = !{i32 0}
+!16 = !{}
 !17 = !{i32 1, !"Debug Info Version", i32 3}

@@ -142,7 +142,7 @@ attributes #2 = { nounwind }
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
 !1 = !MDFile(filename: "<unknown>", directory: "")
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!4, !10}
 !4 = !MDSubprogram(name: "test", linkageName: "_Z4testi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !6, type: !7, function: i32 (i32)* @_Z4testi, variables: !2)
 !5 = !MDFile(filename: "test.cpp", directory: "")

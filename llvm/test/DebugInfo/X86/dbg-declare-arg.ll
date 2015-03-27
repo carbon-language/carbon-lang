@@ -74,7 +74,7 @@ entry:
 
 !0 = !MDSubprogram(name: "~A", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !1, type: !11)
 !1 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 2, size: 128, align: 32, file: !51, scope: !2, elements: !4)
-!2 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 130127)", isOptimized: false, emissionKind: 1, file: !51, enums: !24, retainedTypes: !24, subprograms: !50)
+!2 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 130127)", isOptimized: false, emissionKind: 1, file: !51, enums: !{}, retainedTypes: !{}, subprograms: !50)
 !3 = !MDFile(filename: "a.cc", directory: "/private/tmp")
 !4 = !{!5, !7, !8, !9, !0, !10, !14}
 !5 = !MDDerivedType(tag: DW_TAG_member, name: "x", line: 2, size: 32, align: 32, file: !51, scope: !3, baseType: !6)
@@ -85,12 +85,12 @@ entry:
 !10 = !MDSubprogram(name: "A", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, file: !51, scope: !1, type: !11)
 !11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13}
-!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !2, baseType: !1)
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !3, baseType: !1)
 !14 = !MDSubprogram(name: "A", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, file: !51, scope: !1, type: !15)
 !15 = !MDSubroutineType(types: !16)
 !16 = !{null, !13, !17}
 !17 = !MDDerivedType(tag: DW_TAG_reference_type, scope: !2, baseType: !18)
-!18 = !MDDerivedType(tag: DW_TAG_const_type, file: !2, baseType: !1)
+!18 = !MDDerivedType(tag: DW_TAG_const_type, file: !3, baseType: !1)
 !19 = !MDSubprogram(name: "foo", linkageName: "_Z3fooi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !20, function: void (%class.A*, i32)* @_Z3fooi)
 !20 = !MDSubroutineType(types: !21)
 !21 = !{!1}
@@ -110,7 +110,7 @@ entry:
 !35 = !MDLocation(line: 8, column: 3, scope: !34)
 !36 = !MDLocation(line: 9, column: 9, scope: !29)
 !37 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "my_a", line: 9, scope: !29, file: !3, type: !38)
-!38 = !MDDerivedType(tag: DW_TAG_reference_type, file: !2, baseType: !1)
+!38 = !MDDerivedType(tag: DW_TAG_reference_type, file: !3, baseType: !1)
 !39 = !MDLocation(line: 9, column: 5, scope: !29)
 !40 = !MDLocation(line: 10, column: 3, scope: !29)
 !41 = !MDLocation(line: 11, column: 3, scope: !29)

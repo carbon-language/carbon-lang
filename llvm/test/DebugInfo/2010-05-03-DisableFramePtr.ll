@@ -35,6 +35,6 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !14 = !MDLocation(line: 8, scope: !15)
 !15 = distinct !MDLexicalBlock(line: 7, column: 0, file: !16, scope: !1)
 !16 = !MDFile(filename: "t.c", directory: "/Users/echeng/LLVM/radars/r7937664/")
-!17 = !{i32 0}
+!17 = !{}
 !18 = !{!1}
 !19 = !{i32 1, !"Debug Info Version", i32 3}

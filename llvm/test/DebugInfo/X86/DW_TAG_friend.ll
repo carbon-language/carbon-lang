@@ -43,6 +43,6 @@
 !24 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, baseType: !18)
 !25 = !{!26}
 !26 = !{} ; previously: invalid DW_TAG_base_type
-!27 = !MDDerivedType(tag: DW_TAG_friend, file: !18, baseType: !7)
+!27 = !MDDerivedType(tag: DW_TAG_friend, file: !28, baseType: !7)
 !28 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo/tmp")
 !29 = !{i32 1, !"Debug Info Version", i32 3}

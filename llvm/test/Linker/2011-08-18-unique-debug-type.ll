@@ -14,7 +14,7 @@ entry:
 
 !0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !12, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !1 = !{!2}
-!2 = !{i32 0}
+!2 = !{}
 !3 = !{!5}
 !5 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !6, type: !7, function: i32 ()* @foo)
 !6 = !MDFile(filename: "one.c", directory: "/private/tmp")

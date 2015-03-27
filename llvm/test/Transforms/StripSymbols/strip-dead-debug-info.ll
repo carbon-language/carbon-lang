@@ -30,7 +30,7 @@ attributes #2 = { nounwind readonly ssp }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!25}
 
-!0 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !23, globals: !24)
+!0 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !1, enums: !{}, retainedTypes: !{}, subprograms: !23, globals: !24)
 !1 = !MDFile(filename: "g.c", directory: "/tmp/")
 !2 = !{null}
 !3 = !MDSubprogram(name: "bar", line: 5, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: null, type: !4)
