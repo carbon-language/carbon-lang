@@ -14,3 +14,6 @@ struct X0 {
   
   void mem8(int (*fp)(int) = (int (*)(int = 17))0); // expected-error{{default arguments can only be specified for parameters in a function declaration}}  
 };
+
+template <typename... Ts>
+void defaultpack(Ts... = 0) {} // expected-error{{parameter pack cannot have a default argument}}
