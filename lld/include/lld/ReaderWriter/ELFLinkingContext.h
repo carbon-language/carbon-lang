@@ -128,8 +128,8 @@ public:
 
   /// \brief The dynamic linker path set by the --dynamic-linker option
   StringRef getInterpreter() const {
-    if (_dynamicLinkerArg)
-      return _dynamicLinkerPath;
+    if (_dynamicLinkerPath.hasValue())
+      return _dynamicLinkerPath.getValue();
     return getDefaultInterpreter();
   }
 
@@ -166,10 +166,7 @@ public:
   void finalizeInputFiles() override;
 
   /// \brief Set the dynamic linker path
-  void setInterpreter(StringRef dynamicLinker) {
-    _dynamicLinkerArg = true;
-    _dynamicLinkerPath = dynamicLinker;
-  }
+  void setInterpreter(StringRef s) { _dynamicLinkerPath = s; }
 
   /// \brief Set NMAGIC output kind when the linker specifies --nmagic
   /// or -n in the command line
@@ -311,7 +308,7 @@ protected:
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
-  StringRef _dynamicLinkerPath;
+  llvm::Optional<StringRef> _dynamicLinkerPath;
   StringRef _initFunction = "_init";
   StringRef _finiFunction = "_fini";
   StringRef _sysrootPath = "";
