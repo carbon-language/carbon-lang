@@ -994,13 +994,16 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     std::sort(LookupResults.begin(), LookupResults.end(), llvm::less_first());
     for (auto &NameAndResult : LookupResults) {
       DeclarationName Name = NameAndResult.first;
-      (void)Name;
-      assert(Name.getNameKind() != DeclarationName::CXXConstructorName &&
-             "Cannot have a constructor name in a namespace!");
-      assert(Name.getNameKind() != DeclarationName::CXXConversionFunctionName &&
-             "Cannot have a conversion function name in a namespace!");
-
       DeclContext::lookup_result Result = NameAndResult.second;
+      if (Name.getNameKind() == DeclarationName::CXXConstructorName ||
+          Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
+        // We have to work around a name lookup bug here where negative lookup
+        // results for these names get cached in namespace lookup tables.
+        assert(Result.empty() && "Cannot have a constructor or conversion "
+                                 "function name in a namespace!");
+        continue;
+      }
+
       for (NamedDecl *ND : Result)
         Writer.GetDeclRef(ND);
     }
