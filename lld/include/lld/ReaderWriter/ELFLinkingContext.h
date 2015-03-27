@@ -27,7 +27,6 @@
 #include <set>
 
 namespace lld {
-class DefinedAtom;
 class Reference;
 class File;
 
