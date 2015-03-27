@@ -9,7 +9,7 @@ declare zeroext i1 @return_i1()
 
 @globalstr = global [6 x i8] c"hello\00"
 
-define void @test(i32 addrspace(1)* dereferenceable(8) %dparam) {
+define void @test(i32 addrspace(1)* dereferenceable(8) %dparam) gc "statepoint-example" {
 ; CHECK: The following are dereferenceable:
 ; CHECK: %globalptr
 ; CHECK: %alloca

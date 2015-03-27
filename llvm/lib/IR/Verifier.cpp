@@ -2926,6 +2926,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::experimental_gc_statepoint:
     Assert(!CI.isInlineAsm(),
            "gc.statepoint support for inline assembly unimplemented", &CI);
+    Assert(CI.getParent()->getParent()->hasGC(),
+           "Enclosing function does not use GC.", &CI);
 
     VerifyStatepoint(ImmutableCallSite(&CI));
     break;
@@ -2933,6 +2935,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::experimental_gc_result_float:
   case Intrinsic::experimental_gc_result_ptr:
   case Intrinsic::experimental_gc_result: {
+    Assert(CI.getParent()->getParent()->hasGC(),
+           "Enclosing function does not use GC.", &CI);
     // Are we tied to a statepoint properly?
     CallSite StatepointCS(CI.getArgOperand(0));
     const Function *StatepointFn =

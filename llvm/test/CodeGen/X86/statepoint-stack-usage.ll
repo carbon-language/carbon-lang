@@ -8,7 +8,7 @@ target triple = "x86_64-pc-linux-gnu"
 ; of GC arguments differ, niave lowering code would insert loads and 
 ; stores to rearrange items on the stack.  We need to make sure (for
 ; performance) that this doesn't happen.
-define i32 @back_to_back_calls(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrspace(1)* %c) #1 {
+define i32 @back_to_back_calls(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrspace(1)* %c) #1 gc "statepoint-example" {
 ; CHECK-LABEL: back_to_back_calls
 ; The exact stores don't matter, but there need to be three stack slots created
 ; CHECK: movq	%rdx, 16(%rsp)
@@ -31,7 +31,7 @@ define i32 @back_to_back_calls(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 a
 
 ; This test simply checks that minor changes in vm state don't prevent slots
 ; being reused for gc values.  
-define i32 @reserve_first(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrspace(1)* %c) #1 {
+define i32 @reserve_first(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrspace(1)* %c) #1 gc "statepoint-example" {
 ; CHECK-LABEL: reserve_first
 ; The exact stores don't matter, but there need to be three stack slots created
 ; CHECK: movq	%rdx, 16(%rsp)

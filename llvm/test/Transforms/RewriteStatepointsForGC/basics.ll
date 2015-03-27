@@ -75,7 +75,7 @@ merge:
 }
 
 ; When run over a function which doesn't opt in, should do nothing!
-define i8 addrspace(1)* @test5(i8 addrspace(1)* %obj) {
+define i8 addrspace(1)* @test5(i8 addrspace(1)* %obj) gc "ocaml" {
 ; CHECK-LABEL: @test5
 ; CHECK-LABEL: entry:
 ; CHECK-NEXT: gc.statepoint

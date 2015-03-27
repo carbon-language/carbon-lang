@@ -442,27 +442,25 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // heap.  This is basically just here to help catch errors during statepoint
   // insertion. TODO: This should actually be in the Verifier, but we can't get
   // to the GCStrategy from there (yet).
-  if (Builder.GFI) {
-    GCStrategy &S = Builder.GFI->getStrategy();
-    for (const Value *V : Bases) {
-      auto Opt = S.isGCManagedPointer(V);
-      if (Opt.hasValue()) {
-        assert(Opt.getValue() &&
-               "non gc managed base pointer found in statepoint");
-      }
+  GCStrategy &S = Builder.GFI->getStrategy();
+  for (const Value *V : Bases) {
+    auto Opt = S.isGCManagedPointer(V);
+    if (Opt.hasValue()) {
+      assert(Opt.getValue() &&
+             "non gc managed base pointer found in statepoint");
     }
-    for (const Value *V : Ptrs) {
-      auto Opt = S.isGCManagedPointer(V);
-      if (Opt.hasValue()) {
-        assert(Opt.getValue() &&
-               "non gc managed derived pointer found in statepoint");
-      }
+  }
+  for (const Value *V : Ptrs) {
+    auto Opt = S.isGCManagedPointer(V);
+    if (Opt.hasValue()) {
+      assert(Opt.getValue() &&
+             "non gc managed derived pointer found in statepoint");
     }
-    for (const Value *V : Relocations) {
-      auto Opt = S.isGCManagedPointer(V);
-      if (Opt.hasValue()) {
-        assert(Opt.getValue() && "non gc managed pointer relocated");
-      }
+  }
+  for (const Value *V : Relocations) {
+    auto Opt = S.isGCManagedPointer(V);
+    if (Opt.hasValue()) {
+      assert(Opt.getValue() && "non gc managed pointer relocated");
     }
   }
 #endif
@@ -581,10 +579,8 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
   // TODO: This if should become an assert.  For now, we allow the GCStrategy
   // to be optional for backwards compatibility.  This will only last a short
   // period (i.e. a couple of weeks).
-  if (GFI) {
-    assert(GFI->getStrategy().useStatepoints() &&
-           "GCStrategy does not expect to encounter statepoints");
-  }
+  assert(GFI->getStrategy().useStatepoints() &&
+         "GCStrategy does not expect to encounter statepoints");
 #endif
 
   // Lower statepoint vmstate and gcstate arguments

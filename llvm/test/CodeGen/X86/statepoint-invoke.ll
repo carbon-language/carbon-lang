@@ -6,7 +6,9 @@ declare i64 addrspace(1)* @"some_other_call"(i64 addrspace(1)*)
 
 declare i32 @"personality_function"()
 
-define i64 addrspace(1)* @test_result(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) {
+define i64 addrspace(1)* @test_result(i64 addrspace(1)* %obj, 
+                                      i64 addrspace(1)* %obj1)
+  gc "statepoint-example" {
 entry:
   ; CHECK: .Ltmp{{[0-9]+}}:
   ; CHECK: callq some_other_call
