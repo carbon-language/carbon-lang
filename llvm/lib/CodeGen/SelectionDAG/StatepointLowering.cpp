@@ -397,10 +397,11 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
         Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
     Ops.push_back(Builder.DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
   } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Incoming)) {
-    // This handles allocas as arguments to the statepoint
-    const TargetLowering &TLI = Builder.DAG.getTargetLoweringInfo();
-    Ops.push_back(
-        Builder.DAG.getTargetFrameIndex(FI->getIndex(), TLI.getPointerTy()));
+    // This handles allocas as arguments to the statepoint (this is only
+    // really meaningful for a deopt value.  For GC, we'd be trying to
+    // relocate the address of the alloca itself?)
+    Ops.push_back(Builder.DAG.getTargetFrameIndex(FI->getIndex(), 
+                                                  Incoming.getValueType()));
   } else {
     // Otherwise, locate a spill slot and explicitly spill it so it
     // can be found by the runtime later.  We currently do not support
@@ -522,6 +523,21 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
     const Value *V = i % 2 ? Bases[i / 2] : Ptrs[i / 2];
     SDValue Incoming = Builder.getValue(V);
     lowerIncomingStatepointValue(Incoming, Ops, Builder);
+  }
+
+  // If there are any explicit spill slots passed to the statepoint, record 
+  // them, but otherwise do not do anything special.  These are user provided
+  // allocas and give control over placement to the consumer.  In this case, 
+  // it is the contents of the slot which may get updated, not the pointer to
+  // the alloca
+  for (Value *V : StatepointSite.gc_args()) {
+    SDValue Incoming = Builder.getValue(V);
+    if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Incoming)) {
+      // This handles allocas as arguments to the statepoint
+      Ops.push_back(Builder.DAG.getTargetFrameIndex(FI->getIndex(), 
+                                                    Incoming.getValueType()));
+
+    }
   }
 }
 
