@@ -109,13 +109,13 @@ entry:
 ; DWLW-NOT:     DW_AT_low_pc
 ; DWLW-NOT:     DW_AT_high_pc
 ; DWLW:         DW_AT_name {{.*}}foo
-; DWLW:         DW_AT_decl_file {{.*}}"/path/to/dir/bar.c"
+; DWLW:         DW_AT_decl_file {{.*}}"/path/to/dir{{/|\\}}bar.c"
 ; DWLW:         DW_AT_decl_line {{.*}}(1)
 ; DWLW:       DW_TAG_subprogram
 ; DWLW:         DW_AT_low_pc
 ; DWLW:         DW_AT_high_pc
 ; DWLW:         DW_AT_name {{.*}}bar
-; DWLW:         DW_AT_decl_file {{.*}}"/path/to/dir/bar.c"
+; DWLW:         DW_AT_decl_file {{.*}}"/path/to/dir{{/|\\}}bar.c"
 ; DWLW:         DW_AT_decl_line {{.*}}(11)
 
 ; DWLW:         DW_TAG_inlined_subroutine
@@ -126,7 +126,7 @@ entry:
 ; DWLW:         DW_AT_low_pc
 ; DWLW:         DW_AT_high_pc
 ; DWLW:         DW_AT_name {{.*}}foo
-; DWLW:         DW_AT_decl_file {{.*}}"/path/to/dir/foo.c"
+; DWLW:         DW_AT_decl_file {{.*}}"/path/to/dir{{/|\\}}foo.c"
 ; DWLW:         DW_AT_decl_line {{.*}}(51)
 
 ; The DWARF output is already symmetric (just reordered).
@@ -136,7 +136,7 @@ entry:
 ; DWWL:         DW_AT_low_pc
 ; DWWL:         DW_AT_high_pc
 ; DWWL:         DW_AT_name {{.*}}foo
-; DWWL:         DW_AT_decl_file {{.*}}"/path/to/dir/foo.c"
+; DWWL:         DW_AT_decl_file {{.*}}"/path/to/dir{{/|\\}}foo.c"
 ; DWWL:         DW_AT_decl_line {{.*}}(51)
 ; DWWL:     DW_TAG_compile_unit
 ; DWWL:       DW_AT_name {{.*}}"bar.c"
@@ -144,13 +144,13 @@ entry:
 ; DWWL-NOT:     DW_AT_low_pc
 ; DWWL-NOT:     DW_AT_high_pc
 ; DWWL:         DW_AT_name {{.*}}foo
-; DWWL:         DW_AT_decl_file {{.*}}"/path/to/dir/bar.c"
+; DWWL:         DW_AT_decl_file {{.*}}"/path/to/dir{{/|\\}}bar.c"
 ; DWWL:         DW_AT_decl_line {{.*}}(1)
 ; DWWL:       DW_TAG_subprogram
 ; DWWL:         DW_AT_low_pc
 ; DWWL:         DW_AT_high_pc
 ; DWWL:         DW_AT_name {{.*}}bar
-; DWWL:         DW_AT_decl_file {{.*}}"/path/to/dir/bar.c"
+; DWWL:         DW_AT_decl_file {{.*}}"/path/to/dir{{/|\\}}bar.c"
 ; DWWL:         DW_AT_decl_line {{.*}}(11)
 ; DWWL:         DW_TAG_inlined_subroutine
 ; DWWL:           DW_AT_abstract_origin
