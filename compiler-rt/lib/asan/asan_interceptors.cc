@@ -290,7 +290,7 @@ static void ClearShadowMemoryForContextStack(uptr stack, uptr ssize) {
   ssize += stack - bottom;
   ssize = RoundUpTo(ssize, PageSize);
   static const uptr kMaxSaneContextStackSize = 1 << 22;  // 4 Mb
-  if (ssize && ssize <= kMaxSaneContextStackSize) {
+  if (AddrIsInMem(bottom) && ssize && ssize <= kMaxSaneContextStackSize) {
     PoisonShadow(bottom, ssize, 0);
   }
 }
