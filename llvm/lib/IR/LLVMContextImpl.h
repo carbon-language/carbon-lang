@@ -699,21 +699,22 @@ template <> struct MDNodeKeyImpl<MDGlobalVariable> {
         IsDefinition(IsDefinition), Variable(Variable),
         StaticDataMemberDeclaration(StaticDataMemberDeclaration) {}
   MDNodeKeyImpl(const MDGlobalVariable *N)
-      : Scope(N->getScope()), Name(N->getName()),
-        LinkageName(N->getLinkageName()), File(N->getFile()),
-        Line(N->getLine()), Type(N->getType()),
+      : Scope(N->getRawScope()), Name(N->getName()),
+        LinkageName(N->getLinkageName()), File(N->getRawFile()),
+        Line(N->getLine()), Type(N->getRawType()),
         IsLocalToUnit(N->isLocalToUnit()), IsDefinition(N->isDefinition()),
-        Variable(N->getVariable()),
-        StaticDataMemberDeclaration(N->getStaticDataMemberDeclaration()) {}
+        Variable(N->getRawVariable()),
+        StaticDataMemberDeclaration(N->getRawStaticDataMemberDeclaration()) {}
 
   bool isKeyOf(const MDGlobalVariable *RHS) const {
-    return Scope == RHS->getScope() && Name == RHS->getName() &&
-           LinkageName == RHS->getLinkageName() && File == RHS->getFile() &&
-           Line == RHS->getLine() && Type == RHS->getType() &&
+    return Scope == RHS->getRawScope() && Name == RHS->getName() &&
+           LinkageName == RHS->getLinkageName() && File == RHS->getRawFile() &&
+           Line == RHS->getLine() && Type == RHS->getRawType() &&
            IsLocalToUnit == RHS->isLocalToUnit() &&
            IsDefinition == RHS->isDefinition() &&
-           Variable == RHS->getVariable() &&
-           StaticDataMemberDeclaration == RHS->getStaticDataMemberDeclaration();
+           Variable == RHS->getRawVariable() &&
+           StaticDataMemberDeclaration ==
+               RHS->getRawStaticDataMemberDeclaration();
   }
   unsigned getHashValue() const {
     return hash_combine(Scope, Name, LinkageName, File, Line, Type,
@@ -739,16 +740,17 @@ template <> struct MDNodeKeyImpl<MDLocalVariable> {
       : Tag(Tag), Scope(Scope), Name(Name), File(File), Line(Line), Type(Type),
         Arg(Arg), Flags(Flags), InlinedAt(InlinedAt) {}
   MDNodeKeyImpl(const MDLocalVariable *N)
-      : Tag(N->getTag()), Scope(N->getScope()), Name(N->getName()),
-        File(N->getFile()), Line(N->getLine()), Type(N->getType()),
-        Arg(N->getArg()), Flags(N->getFlags()), InlinedAt(N->getInlinedAt()) {}
+      : Tag(N->getTag()), Scope(N->getRawScope()), Name(N->getName()),
+        File(N->getRawFile()), Line(N->getLine()), Type(N->getRawType()),
+        Arg(N->getArg()), Flags(N->getFlags()),
+        InlinedAt(N->getRawInlinedAt()) {}
 
   bool isKeyOf(const MDLocalVariable *RHS) const {
-    return Tag == RHS->getTag() && Scope == RHS->getScope() &&
-           Name == RHS->getName() && File == RHS->getFile() &&
-           Line == RHS->getLine() && Type == RHS->getType() &&
+    return Tag == RHS->getTag() && Scope == RHS->getRawScope() &&
+           Name == RHS->getName() && File == RHS->getRawFile() &&
+           Line == RHS->getLine() && Type == RHS->getRawType() &&
            Arg == RHS->getArg() && Flags == RHS->getFlags() &&
-           InlinedAt == RHS->getInlinedAt();
+           InlinedAt == RHS->getRawInlinedAt();
   }
   unsigned getHashValue() const {
     return hash_combine(Tag, Scope, Name, File, Line, Type, Arg, Flags,

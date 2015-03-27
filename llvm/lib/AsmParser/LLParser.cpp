@@ -3035,8 +3035,8 @@ struct MDField : public MDFieldImpl<Metadata *> {
 struct MDConstant : public MDFieldImpl<ConstantAsMetadata *> {
   MDConstant() : ImplTy(nullptr) {}
 };
-struct MDStringField : public MDFieldImpl<std::string> {
-  MDStringField() : ImplTy(std::string()) {}
+struct MDStringField : public MDFieldImpl<MDString *> {
+  MDStringField() : ImplTy(nullptr) {}
 };
 struct MDFieldList : public MDFieldImpl<SmallVector<Metadata *, 4>> {
   MDFieldList() : ImplTy(SmallVector<Metadata *, 4>()) {}
@@ -3250,7 +3250,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result) {
   if (ParseStringConstant(S))
     return true;
 
-  Result.assign(std::move(S));
+  Result.assign(S.empty() ? nullptr : MDString::get(Context, S));
   return false;
 }
 
@@ -3675,7 +3675,7 @@ bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
 bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   REQUIRED(tag, DwarfTagField, );                                              \
-  OPTIONAL(scope, MDField, );                                                  \
+  REQUIRED(scope, MDField, );                                                  \
   OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \

@@ -61,8 +61,13 @@ TEST(ContextAndReplaceableUsesTest, takeReplaceableUses) {
 }
 
 class MetadataTest : public testing::Test {
+public:
+  MetadataTest() : Counter(0) {}
+
 protected:
   LLVMContext Context;
+  int Counter;
+
   MDNode *getNode() { return MDNode::get(Context, None); }
   MDNode *getNode(Metadata *MD) { return MDNode::get(Context, MD); }
   MDNode *getNode(Metadata *MD1, Metadata *MD2) {
@@ -74,6 +79,21 @@ protected:
     return MDSubprogram::getDistinct(Context, nullptr, "", "", nullptr, 0,
                                      nullptr, false, false, 0, nullptr, 0, 0, 0,
                                      0);
+  }
+  MDFile *getFile() {
+    return MDFile::getDistinct(Context, "file.c", "/path/to/dir");
+  }
+  MDBasicType *getBasicType(StringRef Name) {
+    return MDBasicType::get(Context, dwarf::DW_TAG_unspecified_type, Name);
+  }
+  MDDerivedType *getDerivedType() {
+    return MDDerivedType::getDistinct(Context, dwarf::DW_TAG_pointer_type, "",
+                                      nullptr, 0, nullptr,
+                                      getBasicType("basictype"), 1, 2, 0, 0);
+  }
+  ConstantAsMetadata *getConstantAsMetadata() {
+    return ConstantAsMetadata::get(
+        ConstantInt::get(Type::getInt32Ty(Context), Counter++));
   }
 };
 typedef MetadataTest MDStringTest;
@@ -1646,16 +1666,16 @@ TEST_F(MDTemplateValueParameterTest, get) {
 typedef MetadataTest MDGlobalVariableTest;
 
 TEST_F(MDGlobalVariableTest, get) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  MDScope *Scope = getSubprogram();
   StringRef Name = "name";
   StringRef LinkageName = "linkage";
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDFile *File = getFile();
   unsigned Line = 5;
   Metadata *Type = MDTuple::getDistinct(Context, None);
   bool IsLocalToUnit = false;
   bool IsDefinition = true;
-  Metadata *Variable = MDTuple::getDistinct(Context, None);
-  Metadata *StaticDataMemberDeclaration = MDTuple::getDistinct(Context, None);
+  ConstantAsMetadata *Variable = getConstantAsMetadata();
+  MDDerivedType *StaticDataMemberDeclaration = getDerivedType();
 
   auto *N = MDGlobalVariable::get(Context, Scope, Name, LinkageName, File, Line,
                                   Type, IsLocalToUnit, IsDefinition, Variable,
@@ -1675,18 +1695,20 @@ TEST_F(MDGlobalVariableTest, get) {
                                      Line, Type, IsLocalToUnit, IsDefinition,
                                      Variable, StaticDataMemberDeclaration));
 
-  EXPECT_NE(N, MDGlobalVariable::get(Context, File, Name, LinkageName, File,
-                                     Line, Type, IsLocalToUnit, IsDefinition,
-                                     Variable, StaticDataMemberDeclaration));
+  EXPECT_NE(N,
+            MDGlobalVariable::get(Context, getSubprogram(), Name, LinkageName,
+                                  File, Line, Type, IsLocalToUnit, IsDefinition,
+                                  Variable, StaticDataMemberDeclaration));
   EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, "other", LinkageName, File,
                                      Line, Type, IsLocalToUnit, IsDefinition,
                                      Variable, StaticDataMemberDeclaration));
   EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, Name, "other", File, Line,
                                      Type, IsLocalToUnit, IsDefinition,
                                      Variable, StaticDataMemberDeclaration));
-  EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, Name, LinkageName, Scope,
-                                     Line, Type, IsLocalToUnit, IsDefinition,
-                                     Variable, StaticDataMemberDeclaration));
+  EXPECT_NE(N,
+            MDGlobalVariable::get(Context, Scope, Name, LinkageName, getFile(),
+                                  Line, Type, IsLocalToUnit, IsDefinition,
+                                  Variable, StaticDataMemberDeclaration));
   EXPECT_NE(N,
             MDGlobalVariable::get(Context, Scope, Name, LinkageName, File,
                                   Line + 1, Type, IsLocalToUnit, IsDefinition,
@@ -1702,10 +1724,11 @@ TEST_F(MDGlobalVariableTest, get) {
                                      Variable, StaticDataMemberDeclaration));
   EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, Name, LinkageName, File,
                                      Line, Type, IsLocalToUnit, IsDefinition,
-                                     Type, StaticDataMemberDeclaration));
+                                     getConstantAsMetadata(),
+                                     StaticDataMemberDeclaration));
   EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, Name, LinkageName, File,
                                      Line, Type, IsLocalToUnit, IsDefinition,
-                                     Variable, Type));
+                                     Variable, getDerivedType()));
 
   TempMDGlobalVariable Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -1715,16 +1738,15 @@ typedef MetadataTest MDLocalVariableTest;
 
 TEST_F(MDLocalVariableTest, get) {
   unsigned Tag = dwarf::DW_TAG_arg_variable;
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  MDLocalScope *Scope = getSubprogram();
   StringRef Name = "name";
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDFile *File = getFile();
   unsigned Line = 5;
   Metadata *Type = MDTuple::getDistinct(Context, None);
   unsigned Arg = 6;
   unsigned Flags = 7;
-  Metadata *InlinedAtScope = MDTuple::getDistinct(Context, None);
-  Metadata *InlinedAt =
-      MDLocation::getDistinct(Context, 10, 20, InlinedAtScope);
+  MDLocation *InlinedAt =
+      MDLocation::getDistinct(Context, 10, 20, getSubprogram());
 
   auto *N = MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
                                  Arg, Flags, InlinedAt);
@@ -1743,11 +1765,11 @@ TEST_F(MDLocalVariableTest, get) {
   EXPECT_NE(N, MDLocalVariable::get(Context, dwarf::DW_TAG_auto_variable, Scope,
                                     Name, File, Line, Type, Arg, Flags,
                                     InlinedAt));
-  EXPECT_NE(N, MDLocalVariable::get(Context, Tag, File, Name, File, Line,
-                                    Type, Arg, Flags, InlinedAt));
+  EXPECT_NE(N, MDLocalVariable::get(Context, Tag, getSubprogram(), Name, File,
+                                    Line, Type, Arg, Flags, InlinedAt));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, "other", File, Line,
                                     Type, Arg, Flags, InlinedAt));
-  EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, Scope, Line,
+  EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, getFile(), Line,
                                     Type, Arg, Flags, InlinedAt));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line + 1,
                                     Type, Arg, Flags, InlinedAt));
@@ -1757,8 +1779,9 @@ TEST_F(MDLocalVariableTest, get) {
                                     Arg + 1, Flags, InlinedAt));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
                                     Arg, ~Flags, InlinedAt));
-  EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                    Arg, Flags, Scope));
+  EXPECT_NE(N, MDLocalVariable::get(
+                   Context, Tag, Scope, Name, File, Line, Type, Arg, Flags,
+                   MDLocation::getDistinct(Context, 10, 20, getSubprogram())));
 
   TempMDLocalVariable Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));

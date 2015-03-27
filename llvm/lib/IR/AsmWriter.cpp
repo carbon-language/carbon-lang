@@ -1720,14 +1720,14 @@ static void writeMDGlobalVariable(raw_ostream &Out, const MDGlobalVariable *N,
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printString("name", N->getName());
   Printer.printString("linkageName", N->getLinkageName());
-  Printer.printMetadata("scope", N->getScope(), /* ShouldSkipNull */ false);
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
-  Printer.printMetadata("type", N->getType());
+  Printer.printMetadata("type", N->getRawType());
   Printer.printBool("isLocal", N->isLocalToUnit());
   Printer.printBool("isDefinition", N->isDefinition());
-  Printer.printMetadata("variable", N->getVariable());
-  Printer.printMetadata("declaration", N->getStaticDataMemberDeclaration());
+  Printer.printMetadata("variable", N->getRawVariable());
+  Printer.printMetadata("declaration", N->getRawStaticDataMemberDeclaration());
   Out << ")";
 }
 
@@ -1741,12 +1741,12 @@ static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
   Printer.printInt("arg", N->getArg(),
                    /* ShouldSkipZero */
                    N->getTag() == dwarf::DW_TAG_auto_variable);
-  Printer.printMetadata("scope", N->getScope(), /* ShouldSkipNull */ false);
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
-  Printer.printMetadata("type", N->getType());
+  Printer.printMetadata("type", N->getRawType());
   Printer.printDIFlags("flags", N->getFlags());
-  Printer.printMetadata("inlinedAt", N->getInlinedAt());
+  Printer.printMetadata("inlinedAt", N->getRawInlinedAt());
   Out << ")";
 }
 

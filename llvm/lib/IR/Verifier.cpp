@@ -298,6 +298,7 @@ private:
 
 #define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS) void visit##CLASS(const CLASS &N);
 #include "llvm/IR/Metadata.def"
+  void visitMDVariable(const MDVariable &N);
 
   // InstVisitor overrides...
   using InstVisitor<Verifier>::visit;
@@ -658,6 +659,15 @@ void Verifier::visitMetadataAsValue(const MetadataAsValue &MDV, Function *F) {
     visitValueAsMetadata(*V, F);
 }
 
+/// \brief Check if a value can be a reference to a type.
+static bool isTypeRef(const Metadata *MD) {
+  if (!MD)
+    return true;
+  if (auto *S = dyn_cast<MDString>(MD))
+    return !S->getString().empty();
+  return isa<MDType>(MD);
+}
+
 void Verifier::visitMDLocation(const MDLocation &N) {
   Assert(N.getRawScope() && isa<MDLocalScope>(N.getRawScope()),
          "location requires a valid scope", &N, N.getRawScope());
@@ -749,14 +759,42 @@ void Verifier::visitMDTemplateValueParameter(
          "invalid tag", &N);
 }
 
+void Verifier::visitMDVariable(const MDVariable &N) {
+  if (auto *S = N.getRawScope())
+    Assert(isa<MDScope>(S), "invalid scope", &N, S);
+  Assert(isTypeRef(N.getRawType()), "invalid type ref", &N, N.getRawType());
+  if (auto *F = N.getRawFile())
+    Assert(isa<MDFile>(F), "invalid file", &N, F);
+}
+
 void Verifier::visitMDGlobalVariable(const MDGlobalVariable &N) {
+  // Checks common to all variables.
+  visitMDVariable(N);
+
   Assert(N.getTag() == dwarf::DW_TAG_variable, "invalid tag", &N);
+  if (auto *V = N.getRawVariable()) {
+    Assert(isa<ConstantAsMetadata>(V) &&
+               !isa<Function>(cast<ConstantAsMetadata>(V)->getValue()),
+           "invalid global varaible ref", &N, V);
+  }
+  if (auto *Member = N.getRawStaticDataMemberDeclaration()) {
+    Assert(isa<MDDerivedType>(Member), "invalid static data member declaration",
+           &N, Member);
+  }
 }
 
 void Verifier::visitMDLocalVariable(const MDLocalVariable &N) {
+  // Checks common to all variables.
+  visitMDVariable(N);
+
   Assert(N.getTag() == dwarf::DW_TAG_auto_variable ||
              N.getTag() == dwarf::DW_TAG_arg_variable,
          "invalid tag", &N);
+  Assert(N.getRawScope() && isa<MDLocalScope>(N.getRawScope()),
+         "local variable requires a valid scope", &N, N.getRawScope());
+  if (auto *IA = N.getRawInlinedAt())
+    Assert(isa<MDLocation>(IA), "local variable requires a valid scope", &N,
+           IA);
 }
 
 void Verifier::visitMDExpression(const MDExpression &N) {
