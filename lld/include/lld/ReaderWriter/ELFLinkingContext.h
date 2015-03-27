@@ -52,11 +52,14 @@ public:
   /// \brief The type of ELF executable that the linker
   /// creates.
   enum class OutputMagic : uint8_t {
-    DEFAULT, // The default mode, no specific magic set
-    NMAGIC,  // Disallow shared libraries and don't align sections
-             // PageAlign Data, Mark Text Segment/Data segment RW
-    OMAGIC   // Disallow shared libraries and don't align sections,
-             // Mark Text Segment/Data segment RW
+    // The default mode, no specific magic set
+    DEFAULT,
+    // Disallow shared libraries and don't align sections
+    // PageAlign Data, Mark Text Segment/Data segment RW
+    NMAGIC,
+    // Disallow shared libraries and don't align sections,
+    // Mark Text Segment/Data segment RW
+    OMAGIC,
   };
 
   llvm::Triple getTriple() const { return _triple; }
@@ -67,9 +70,11 @@ public:
       return *_maxPageSize;
     return 0x1000;
   }
+
   virtual void setMaxPageSize(uint64_t pagesize) {
     _maxPageSize = pagesize;
   }
+
   OutputMagic getOutputMagic() const { return _outputMagic; }
   uint16_t getOutputELFType() const { return _outputELFType; }
   uint16_t getOutputMachine() const;
@@ -85,7 +90,6 @@ public:
   /// created for every undefined symbol that are present in the dynamic table
   /// in the shared library
   bool useShlibUndefines() const { return _useShlibUndefines; }
-  /// @}
 
   /// \brief Does this relocation belong in the dynamic relocation table?
   ///
