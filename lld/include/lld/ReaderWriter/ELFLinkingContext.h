@@ -308,9 +308,6 @@ public:
   script::Sema &linkerScriptSema() { return _linkerScriptSema; }
   const script::Sema &linkerScriptSema() const { return _linkerScriptSema; }
 
-private:
-  ELFLinkingContext() = delete;
-
 protected:
   ELFLinkingContext(llvm::Triple triple,
                     std::unique_ptr<TargetHandlerBase> targetHandler)
