@@ -899,7 +899,7 @@ public:
 
   /// Method selectors used in a \@selector expression. Used for implementation
   /// of -Wselector.
-  llvm::DenseMap<Selector, SourceLocation> ReferencedSelectors;
+  llvm::MapVector<Selector, SourceLocation> ReferencedSelectors;
 
   /// Kinds of C++ special members.
   enum CXXSpecialMember {

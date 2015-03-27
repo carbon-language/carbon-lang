@@ -3122,11 +3122,9 @@ void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
   // Note: this writes out all references even for a dependent AST. But it is
   // very tricky to fix, and given that @selector shouldn't really appear in
   // headers, probably not worth it. It's not a correctness issue.
-  for (DenseMap<Selector, SourceLocation>::iterator S =
-       SemaRef.ReferencedSelectors.begin(),
-       E = SemaRef.ReferencedSelectors.end(); S != E; ++S) {
-    Selector Sel = (*S).first;
-    SourceLocation Loc = (*S).second;
+  for (auto &SelectorAndLocation : SemaRef.ReferencedSelectors) {
+    Selector Sel = SelectorAndLocation.first;
+    SourceLocation Loc = SelectorAndLocation.second;
     AddSelectorRef(Sel, Record);
     AddSourceLocation(Loc, Record);
   }

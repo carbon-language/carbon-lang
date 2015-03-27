@@ -1061,15 +1061,11 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   } else
     DiagnoseMismatchedSelectors(*this, AtLoc, Method, LParenLoc, RParenLoc,
                                 WarnMultipleSelectors);
-  
+
   if (Method &&
       Method->getImplementationControl() != ObjCMethodDecl::Optional &&
-      !getSourceManager().isInSystemHeader(Method->getLocation())) {
-    llvm::DenseMap<Selector, SourceLocation>::iterator Pos
-      = ReferencedSelectors.find(Sel);
-    if (Pos == ReferencedSelectors.end())
-      ReferencedSelectors.insert(std::make_pair(Sel, AtLoc));
-  }
+      !getSourceManager().isInSystemHeader(Method->getLocation()))
+    ReferencedSelectors.insert(std::make_pair(Sel, AtLoc));
 
   // In ARC, forbid the user from using @selector for 
   // retain/release/autorelease/dealloc/retainCount.
@@ -2743,8 +2739,7 @@ static void RemoveSelectorFromWarningCache(Sema &S, Expr* Arg) {
       dyn_cast<ObjCSelectorExpr>(Arg->IgnoreParenCasts())) {
     Selector Sel = OSE->getSelector();
     SourceLocation Loc = OSE->getAtLoc();
-    llvm::DenseMap<Selector, SourceLocation>::iterator Pos
-    = S.ReferencedSelectors.find(Sel);
+    auto Pos = S.ReferencedSelectors.find(Sel);
     if (Pos != S.ReferencedSelectors.end() && Pos->second == Loc)
       S.ReferencedSelectors.erase(Pos);
   }

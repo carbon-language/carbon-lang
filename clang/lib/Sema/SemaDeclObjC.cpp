@@ -3490,12 +3490,11 @@ void Sema::DiagnoseUseOfUnimplementedSelectors() {
   if (ReferencedSelectors.empty() || 
       !Context.AnyObjCImplementation())
     return;
-  for (llvm::DenseMap<Selector, SourceLocation>::iterator S = 
-        ReferencedSelectors.begin(),
-       E = ReferencedSelectors.end(); S != E; ++S) {
-    Selector Sel = (*S).first;
+  for (auto &SelectorAndLocation : ReferencedSelectors) {
+    Selector Sel = SelectorAndLocation.first;
+    SourceLocation Loc = SelectorAndLocation.second;
     if (!LookupImplementedMethodInGlobalPool(Sel))
-      Diag((*S).second, diag::warn_unimplemented_selector) << Sel;
+      Diag(Loc, diag::warn_unimplemented_selector) << Sel;
   }
   return;
 }
