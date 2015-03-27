@@ -1391,14 +1391,13 @@ static void relocationViaAlloca(
     Function &F, DominatorTree &DT, ArrayRef<Value *> live,
     ArrayRef<struct PartiallyConstructedSafepointRecord> records) {
 #ifndef NDEBUG
-  int initialAllocaNum = 0;
-
-  // record initial number of allocas
-  for (inst_iterator itr = inst_begin(F), end = inst_end(F); itr != end;
-       itr++) {
-    if (isa<AllocaInst>(*itr))
-      initialAllocaNum++;
-  }
+  // record initial number of (static) allocas; we'll check we have the same
+  // number when we get done.
+  int InitialAllocaNum = 0;
+  for (auto I = F.getEntryBlock().begin(), E = F.getEntryBlock().end(); 
+       I != E; I++)
+    if (isa<AllocaInst>(*I))
+      InitialAllocaNum++;
 #endif
 
   // TODO-PERF: change data structures, reserve
@@ -1554,12 +1553,11 @@ static void relocationViaAlloca(
   }
 
 #ifndef NDEBUG
-  for (inst_iterator itr = inst_begin(F), end = inst_end(F); itr != end;
-       itr++) {
-    if (isa<AllocaInst>(*itr))
-      initialAllocaNum--;
-  }
-  assert(initialAllocaNum == 0 && "We must not introduce any extra allocas");
+  for (auto I = F.getEntryBlock().begin(), E = F.getEntryBlock().end(); 
+       I != E; I++)
+    if (isa<AllocaInst>(*I))
+      InitialAllocaNum--;
+  assert(InitialAllocaNum == 0 && "We must not introduce any extra allocas");
 #endif
 }
 
