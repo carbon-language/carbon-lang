@@ -1,4 +1,5 @@
 // RUN: rm -rf %t
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -DTEXTUAL
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery
 
 // Trigger import of definitions, but don't make them visible.
@@ -27,7 +28,11 @@ D::X pre_dx; // expected-error +{{must be imported}}
 int pre_use_dx = use_dx(pre_dx);
 
 // Make definitions from second module visible.
+#ifdef TEXTUAL
 #include "import-and-redefine.h"
+#else
+#include "merged-defs.h"
+#endif
 
 A post_a;
 int post_use_a = use_a(post_a);

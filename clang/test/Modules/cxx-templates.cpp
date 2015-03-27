@@ -125,10 +125,7 @@ void g() {
 static_assert(Outer<int>::Inner<int>::f() == 1, "");
 static_assert(Outer<int>::Inner<int>::g() == 2, "");
 
-// FIXME: We're too lazy in merging class definitions to find the definition
-// of this function.
-static_assert(MergeTemplateDefinitions<int>::f() == 1, ""); // expected-error {{constant expression}} expected-note {{undefined}}
-// expected-note@cxx-templates-c.h:10 {{here}}
+static_assert(MergeTemplateDefinitions<int>::f() == 1, "");
 static_assert(MergeTemplateDefinitions<int>::g() == 2, "");
 
 RedeclaredAsFriend<int> raf1;

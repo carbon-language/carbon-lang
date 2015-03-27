@@ -1385,6 +1385,29 @@ void ASTDeclReader::MergeDefinitionData(
          "merging class definition into non-definition");
   auto &DD = *D->DefinitionData.getNotUpdated();
 
+  // If the new definition has new special members, let the name lookup
+  // code know that it needs to look in the new definition too.
+  //
+  // FIXME: We only need to do this if the merged definition declares members
+  // that this definition did not declare, or if it defines members that this
+  // definition did not define.
+  if (DD.Definition != MergeDD.Definition) {
+    Reader.MergedLookups[DD.Definition].push_back(MergeDD.Definition);
+    DD.Definition->setHasExternalVisibleStorage();
+
+    if (DD.Definition->isHidden()) {
+      // If MergeDD is visible or becomes visible, make the definition visible.
+      if (!MergeDD.Definition->isHidden())
+        DD.Definition->Hidden = false;
+      else {
+        auto SubmoduleID = MergeDD.Definition->getOwningModuleID();
+        assert(SubmoduleID && "hidden definition in no module");
+        Reader.HiddenNamesMap[Reader.getSubmodule(SubmoduleID)]
+              .HiddenDecls.push_back(DD.Definition);
+      }
+    }
+  }
+
   auto PFDI = Reader.PendingFakeDefinitionData.find(&DD);
   if (PFDI != Reader.PendingFakeDefinitionData.end() &&
       PFDI->second == ASTReader::PendingFakeDefinitionKind::Fake) {
@@ -1399,17 +1422,6 @@ void ASTDeclReader::MergeDefinitionData(
     DD = std::move(MergeDD);
     DD.Definition = Def;
     return;
-  }
-
-  // If the new definition has new special members, let the name lookup
-  // code know that it needs to look in the new definition too.
-  //
-  // FIXME: We only need to do this if the merged definition declares members
-  // that this definition did not declare, or if it defines members that this
-  // definition did not define.
-  if (MergeDD.DeclaredSpecialMembers && DD.Definition != MergeDD.Definition) {
-    Reader.MergedLookups[DD.Definition].push_back(MergeDD.Definition);
-    DD.Definition->setHasExternalVisibleStorage();
   }
 
   // FIXME: Move this out into a .def file?

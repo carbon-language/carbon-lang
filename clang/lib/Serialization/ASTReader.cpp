@@ -6730,20 +6730,14 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   // individually, because finding an entity in one of them doesn't imply that
   // we can't find a different entity in another one.
   if (isa<CXXRecordDecl>(DC)) {
-    auto Kind = Name.getNameKind();
-    if (Kind == DeclarationName::CXXConstructorName ||
-        Kind == DeclarationName::CXXDestructorName ||
-        (Kind == DeclarationName::CXXOperatorName &&
-         Name.getCXXOverloadedOperator() == OO_Equal)) {
-      auto Merged = MergedLookups.find(DC);
-      if (Merged != MergedLookups.end()) {
-        for (unsigned I = 0; I != Merged->second.size(); ++I) {
-          const DeclContext *Context = Merged->second[I];
-          LookUpInContexts(Context);
-          // We might have just added some more merged lookups. If so, our
-          // iterator is now invalid, so grab a fresh one before continuing.
-          Merged = MergedLookups.find(DC);
-        }
+    auto Merged = MergedLookups.find(DC);
+    if (Merged != MergedLookups.end()) {
+      for (unsigned I = 0; I != Merged->second.size(); ++I) {
+        const DeclContext *Context = Merged->second[I];
+        LookUpInContexts(Context);
+        // We might have just added some more merged lookups. If so, our
+        // iterator is now invalid, so grab a fresh one before continuing.
+        Merged = MergedLookups.find(DC);
       }
     }
   }

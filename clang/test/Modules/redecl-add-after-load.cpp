@@ -2,8 +2,9 @@
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11 -DIMPORT_DECLS
 
-#ifdef IMPORT_DECLS
 // expected-no-diagnostics
+
+#ifdef IMPORT_DECLS
 @import redecl_add_after_load_decls;
 #else
 typedef struct A B;
@@ -24,12 +25,12 @@ typedef C::A CB;
 constexpr int C_test(bool b) { return b ? C::variable : C::function(); }
 
 struct D {
-  struct A; // expected-note {{forward}}
+  struct A;
   static const int variable;
-  static constexpr int function(); // expected-note {{here}}
+  static constexpr int function();
 };
 typedef D::A DB;
-constexpr int D_test(bool b) { return b ? D::variable : D::function(); } // expected-note {{undefined}}
+constexpr int D_test(bool b) { return b ? D::variable : D::function(); }
 #endif
 
 @import redecl_add_after_load;
@@ -46,14 +47,6 @@ CB struct_struct_test;
 constexpr int struct_variable_test = C_test(true);
 constexpr int struct_function_test = C_test(false);
 
-// FIXME: We should accept this, but we're currently too lazy when merging class
-// definitions to determine that the definitions in redecl_add_after_load are
-// definitions of these entities.
 DB merged_struct_struct_test;
 constexpr int merged_struct_variable_test = D_test(true);
 constexpr int merged_struct_function_test = D_test(false);
-#ifndef IMPORT_DECLS
-// expected-error@-4 {{incomplete}}
-// @-4: definition of D::variable must be emitted, so it gets imported eagerly
-// expected-error@-4 {{constant}} expected-note@-4 {{in call to}}
-#endif
