@@ -9,7 +9,7 @@ Call2Invoke:            ; preds = %entry
         br label %exit
 
 LongJmpBlkPre:          ; preds = %Call2Invoke, %entry
-        %i.3 = phi i32 [ 0, %entry ], [ 0, %Call2Invoke ]               ; <i32> [#uses=0]
+        %i.3 = phi i32 [ 0, %entry ]
         %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
                  cleanup
         br label %exit

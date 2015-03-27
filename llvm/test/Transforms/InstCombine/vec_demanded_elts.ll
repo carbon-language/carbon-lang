@@ -350,19 +350,19 @@ define <8 x float> @test_vpermilvar_ps_256(<8 x float> %v) {
   ret <8 x float> %a
 }
 
-declare <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double>, <2 x i32>)
+declare <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double>, <2 x i64>)
 define <2 x double> @test_vpermilvar_pd(<2 x double> %v) {
 ; CHECK-LABEL: @test_vpermilvar_pd(
 ; CHECK: shufflevector <2 x double> %v, <2 x double> undef, <2 x i32> <i32 1, i32 0>
-  %a = tail call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> %v, <2 x i32> <i32 2, i32 0>)
+  %a = tail call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> %v, <2 x i64> <i64 2, i64 0>)
   ret <2 x double> %a
 }
 
-declare <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double>, <4 x i32>)
+declare <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double>, <4 x i64>)
 define <4 x double> @test_vpermilvar_pd_256(<4 x double> %v) {
 ; CHECK-LABEL: @test_vpermilvar_pd_256(
 ; CHECK: shufflevector <4 x double> %v, <4 x double> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
-  %a = tail call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> %v, <4 x i32> <i32 3, i32 1, i32 2, i32 0>)
+  %a = tail call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> %v, <4 x i64> <i64 3, i64 1, i64 2, i64 0>)
   ret <4 x double> %a
 }
 
@@ -383,14 +383,14 @@ define <8 x float> @test_vpermilvar_ps_256_zero(<8 x float> %v) {
 define <2 x double> @test_vpermilvar_pd_zero(<2 x double> %v) {
 ; CHECK-LABEL: @test_vpermilvar_pd_zero(
 ; CHECK: shufflevector <2 x double> %v, <2 x double> undef, <2 x i32> zeroinitializer
-  %a = tail call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> %v, <2 x i32> zeroinitializer)
+  %a = tail call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> %v, <2 x i64> zeroinitializer)
   ret <2 x double> %a
 }
 
 define <4 x double> @test_vpermilvar_pd_256_zero(<4 x double> %v) {
 ; CHECK-LABEL: @test_vpermilvar_pd_256_zero(
 ; CHECK: shufflevector <4 x double> %v, <4 x double> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
-  %a = tail call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> %v, <4 x i32> zeroinitializer)
+  %a = tail call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> %v, <4 x i64> zeroinitializer)
   ret <4 x double> %a
 }
 

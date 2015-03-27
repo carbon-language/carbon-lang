@@ -22,10 +22,14 @@ entry:
         invoke void @test2( )
                         to label %N unwind label %U
 U:
+  %res = landingpad { i8* } personality i32 (...)* @__gxx_personality_v0
+          cleanup
         unreachable
 N:
         ret void
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 define i32 @test3(i32 %v) {
 ; CHECK-LABEL: @test3(

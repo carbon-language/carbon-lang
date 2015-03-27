@@ -25,6 +25,7 @@
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassNameParser.h"
@@ -345,6 +346,18 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // Strip debug info before running the verifier.
+  if (StripDebug)
+    StripDebugInfo(*M);
+
+  // Immediately run the verifier to catch any problems before starting up the
+  // pass pipelines.  Otherwise we can crash on broken code during
+  // doInitialization().
+  if (!NoVerify && verifyModule(*M, &errs())) {
+    errs() << argv[0] << ": " << InputFilename << ": error: does not verify\n";
+    return 1;
+  }
+
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
     M->setTargetTriple(Triple::normalize(TargetTriple));
@@ -448,10 +461,6 @@ int main(int argc, char **argv) {
     Passes.add(createBreakpointPrinter(Out->os()));
     NoOutput = true;
   }
-
-  // If the -strip-debug command line option was specified, add it.
-  if (StripDebug)
-    addPass(Passes, createStripSymbolsPass(true));
 
   // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < PassList.size(); ++i) {

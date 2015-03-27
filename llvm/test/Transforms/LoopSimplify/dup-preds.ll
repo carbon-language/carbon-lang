@@ -28,7 +28,7 @@ for.body305:                                      ; preds = %for.body305, %if.th
   br label %for.body305
 
 for.body344:                                      ; preds = %for.body344, %for.body276.lr.ph, %for.body276.lr.ph
-  %indvar = phi i64 [ %indvar.next, %for.body344 ], [ 0, %for.body276.lr.ph ]
+  %indvar = phi i64 [ %indvar.next, %for.body344 ], [ 0, %for.body276.lr.ph ], [ 0, %for.body276.lr.ph ]
   %indvars.iv552 = phi i64 [ %indvars.iv.next553, %for.body344 ], [ 0, %for.body276.lr.ph ], [ 0, %for.body276.lr.ph ]
   %indvars.iv.next553 = add nuw nsw i64 %indvars.iv552, 1
   %indvar.next = add i64 %indvar, 1

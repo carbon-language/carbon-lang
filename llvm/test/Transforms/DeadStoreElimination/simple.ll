@@ -3,7 +3,7 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
-declare i8* @llvm.init.trampoline(i8*, i8*, i8*)
+declare void @llvm.init.trampoline(i8*, i8*, i8*)
 
 define void @test1(i32* %Q, i32* %P) {
         %DEAD = load i32, i32* %Q
@@ -132,7 +132,7 @@ define void @test11() {
 	%storage = alloca [10 x i8], align 16		; <[10 x i8]*> [#uses=1]
 ; CHECK-NOT: alloca
 	%cast = getelementptr [10 x i8], [10 x i8]* %storage, i32 0, i32 0		; <i8*> [#uses=1]
-	%tramp = call i8* @llvm.init.trampoline( i8* %cast, i8* bitcast (void ()* @test11f to i8*), i8* null )		; <i8*> [#uses=1]
+	call void @llvm.init.trampoline( i8* %cast, i8* bitcast (void ()* @test11f to i8*), i8* null )		; <i8*> [#uses=1]
 ; CHECK-NOT: trampoline
 	ret void
 ; CHECK: ret void

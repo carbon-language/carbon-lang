@@ -25,6 +25,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Pass.h"
@@ -222,6 +223,14 @@ static int compileModule(char **argv, LLVMContext &Context) {
     M = parseIRFile(InputFilename, Err, Context);
     if (!M) {
       Err.print(argv[0], errs());
+      return 1;
+    }
+
+    // Verify module immediately to catch problems before doInitialization() is
+    // called on any passes.
+    if (!NoVerify && verifyModule(*M, &errs())) {
+      errs() << argv[0] << ": " << InputFilename
+             << ": error: does not verify\n";
       return 1;
     }
 

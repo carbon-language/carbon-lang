@@ -9,7 +9,7 @@ LongJmpBlkPost:
         ret i32 0
 
 LongJmpBlkPre:
-        %i.3 = phi i32 [ 0, %entry ], [ 0, %entry ]             ; <i32> [#uses=0]
+        %i.3 = phi i32 [ 0, %entry ]
         %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
                  cleanup
         ret i32 0

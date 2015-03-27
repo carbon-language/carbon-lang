@@ -99,9 +99,9 @@ bb81:                                             ; preds = %bb, %bb76
   %tmp10.1 = phi %0* [ %tmp10.0, %bb76 ], [ null, %bb ]
   %tmp83 = bitcast %0* %tmp10.1 to i8*
   %tmp84 = call i8* @objc_retain(i8* %tmp83) nounwind
-  %tmp88 = bitcast i8* %tmp87 to %0*
   call void @objc_release(i8* %tmp23) nounwind
   %tmp87 = call i8* @objc_autorelease(i8* %tmp84) nounwind
+  %tmp88 = bitcast i8* %tmp87 to %0*
   %tmp92 = bitcast %0* %tmp10.1 to i8*
   call void @objc_release(i8* %tmp92) nounwind
   ret %0* %tmp88

@@ -31,7 +31,8 @@ loop:
   br i1 %cmp, label %loop, label %exit
 
 exit:
-  ret i8 %snext
+  %ret = phi i8 [0, %loopguard], [%snext, %loop]
+  ret i8 %ret
 }
 
 ; CHECK-LABEL: @testptrptr(
@@ -56,7 +57,8 @@ loop:
   br i1 %cmp, label %loop, label %exit
 
 exit:
-  ret i8 %snext
+  %ret = phi i8 [0, %loopguard], [%snext, %loop]
+  ret i8 %ret
 }
 
 ; CHECK-LABEL: @testnullptrint(
@@ -86,7 +88,8 @@ loop:
   br i1 %cmp, label %loop, label %exit
 
 exit:
-  ret i8 %snext
+  %ret = phi i8 [0, %loopguard], [%snext, %loop]
+  ret i8 %ret
 }
 
 ; CHECK-LABEL: @testptrint(
@@ -116,7 +119,8 @@ loop:
   br i1 %cmp, label %loop, label %exit
 
 exit:
-  ret i8 %snext
+  %ret = phi i8 [0, %loopguard], [%snext, %loop]
+  ret i8 %ret
 }
 
 ; IV and BECount have two different pointer types here.

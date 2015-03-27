@@ -423,11 +423,11 @@ jump:
   %c = or i1 false, false
   br label %ret 
 ret:
-  %a = phi i1 [true, %jump], [%c, %entry]
-  %b = select i1 %a, i32 10, i32 20
+  %a = phi i1 [true, %entry], [%c, %jump]
+  %b = select i1 %a, i32 20, i32 10
   ret i32 %b
 ; CHECK-LABEL: @test26(
-; CHECK: %a = phi i32 [ 10, %jump ], [ 20, %entry ]
+; CHECK: %a = phi i32 [ 20, %entry ], [ 10, %jump ]
 ; CHECK-NEXT: ret i32 %a
 }
 
