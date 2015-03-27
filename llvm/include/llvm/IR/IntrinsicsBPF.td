@@ -19,4 +19,6 @@ let TargetPrefix = "bpf" in {  // All intrinsics start with "llvm.bpf."
               Intrinsic<[llvm_i64_ty], [llvm_ptr_ty, llvm_i64_ty], [IntrReadMem]>;
   def int_bpf_load_word : GCCBuiltin<"__builtin_bpf_load_word">,
               Intrinsic<[llvm_i64_ty], [llvm_ptr_ty, llvm_i64_ty], [IntrReadMem]>;
+  def int_bpf_pseudo : GCCBuiltin<"__builtin_bpf_pseudo">,
+              Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty]>;
 }

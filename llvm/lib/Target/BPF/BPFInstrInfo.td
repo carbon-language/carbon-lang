@@ -257,6 +257,29 @@ class LD_IMM64<bits<4> Pseudo, string OpcodeStr>
 }
 def LD_imm64 : LD_IMM64<0, "ld_64">;
 
+def LD_pseudo
+    : InstBPF<(outs GPR:$dst), (ins i64imm:$pseudo, u64imm:$imm),
+              "ld_pseudo\t$dst, $pseudo, $imm",
+              [(set GPR:$dst, (int_bpf_pseudo imm:$pseudo, imm:$imm))]> {
+
+  bits<3> mode;
+  bits<2> size;
+  bits<4> dst;
+  bits<64> imm;
+  bits<4> pseudo;
+
+  let Inst{63-61} = mode;
+  let Inst{60-59} = size;
+  let Inst{51-48} = dst;
+  let Inst{55-52} = pseudo;
+  let Inst{47-32} = 0;
+  let Inst{31-0} = imm{31-0};
+
+  let mode = 0;     // BPF_IMM
+  let size = 3;     // BPF_DW
+  let BPFClass = 0; // BPF_LD
+}
+
 // STORE instructions
 class STORE<bits<2> SizeOp, string OpcodeStr, list<dag> Pattern>
     : InstBPF<(outs), (ins GPR:$src, MEMri:$addr),
