@@ -1246,20 +1246,13 @@ void TargetLoweringBase::computeRegisterProperties(
     ValueTypeActions.setTypeAction(MVT::f64, TypeSoftenFloat);
   }
 
-  // Decide how to handle f32. If the target does not have native support for
-  // f32, promote it to f64 if it is legal. Otherwise, expand it to i32.
+  // Decide how to handle f32. If the target does not have native f32 support,
+  // expand it to i32 and we will be generating soft float library calls.
   if (!isTypeLegal(MVT::f32)) {
-    if (isTypeLegal(MVT::f64)) {
-      NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::f64];
-      RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::f64];
-      TransformToType[MVT::f32] = MVT::f64;
-      ValueTypeActions.setTypeAction(MVT::f32, TypePromoteInteger);
-    } else {
-      NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
-      RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::i32];
-      TransformToType[MVT::f32] = MVT::i32;
-      ValueTypeActions.setTypeAction(MVT::f32, TypeSoftenFloat);
-    }
+    NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
+    RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::i32];
+    TransformToType[MVT::f32] = MVT::i32;
+    ValueTypeActions.setTypeAction(MVT::f32, TypeSoftenFloat);
   }
 
   if (!isTypeLegal(MVT::f16)) {
