@@ -635,14 +635,13 @@ DefaultLayout<ELFT>::addAtom(const Atom *atom) {
     }
     return section->appendAtom(atom);
   }
-  if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
-    // Absolute atoms are not part of any section, they are global for the whole
-    // link
-    _absoluteAtoms.push_back(new (_allocator)
-        lld::AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
-    return _absoluteAtoms.back();
-  }
-  llvm_unreachable("Only absolute / defined atoms can be added here");
+
+  const AbsoluteAtom *absoluteAtom = cast<AbsoluteAtom>(atom);
+  // Absolute atoms are not part of any section, they are global for the whole
+  // link
+  _absoluteAtoms.push_back(
+      new (_allocator) lld::AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
+  return _absoluteAtoms.back();
 }
 
 /// Output sections with the same name into a OutputSection
