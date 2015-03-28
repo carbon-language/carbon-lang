@@ -4887,7 +4887,7 @@ struct string_pair
 
 struct Db
 {
-    typedef String String;
+    typedef ::String String;
     typedef Vector<string_pair> sub_type;
     typedef Vector<sub_type> template_param_type;
     Vector<string_pair> names;
