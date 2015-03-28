@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
 
 ; CHECK: %1 = zext i32 %n to i64
 ; CHECK-NEST: %2 = icmp sge i64 %1, 1
