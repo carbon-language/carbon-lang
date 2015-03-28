@@ -3,7 +3,7 @@
 ; Check that we cast the different pointer types correctly before we compare
 ; them in the RTC's. We use i8* as max pointer type.
 ;
-; CHECK: entry:
+; CHECK:   polly.split_new_and_old:
 ; CHECK:   %polly.access.B = getelementptr float*, float** %B, i64 1024
 ; CHECK:   %polly.access.A = getelementptr double*, double** %A, i64 0
 ; CHECK:   %[[paBb:[._a-zA-Z0-9]]] = bitcast float** %polly.access.B to i8*
@@ -16,7 +16,6 @@
 ; CHECK:   %[[A1LeB2:[._a-zA-Z0-9]]] = icmp ule i8* %[[paA1b]], %[[paB2b]]
 ; CHECK:   %[[le1OrLe2:[._a-zA-Z0-9]]] = or i1 %[[ALeB]], %[[A1LeB2]]
 ; CHECK:   %[[orAndTrue:[._a-zA-Z0-9]]] = and i1 true, %[[le1OrLe2]]
-; CHECK:   br label %polly.split_new_and_old
 ;
 ;    void jd(double **A, float **B) {
 ;      for (int i = 0; i < 1024; i++)

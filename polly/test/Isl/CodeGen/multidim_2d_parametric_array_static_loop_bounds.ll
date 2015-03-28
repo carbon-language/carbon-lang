@@ -11,8 +11,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; }
 ;
 ; CHECK: entry:
-; CHECK: %0 = icmp sge i64 %m, 150
 ; CHECK: polly.split_new_and_old:
+; CHECK: %0 = icmp sge i64 %m, 150
 ; CHECK: br i1 %0, label %polly.start, label %for.i
 
 define void @foo(i64 %n, i64 %m, double* %A) {

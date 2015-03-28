@@ -977,10 +977,20 @@ public:
     PollyIRBuilder Builder = createPollyIRBuilder(EnteringBB, Annotator);
 
     IslNodeBuilder NodeBuilder(Builder, Annotator, this, *DL, *LI, *SE, *DT, S);
-    NodeBuilder.addParameters(S.getContext());
 
+    // Only build the run-time condition and parameters _after_ having
+    // introduced the conditional branch. This is important as the conditional
+    // branch will guard the original scop from new induction variables that
+    // the SCEVExpander may introduce while code generating the parameters and
+    // which may introduce scalar dependences that prevent us from correctly
+    // code generating this scop.
+    BasicBlock *StartBlock =
+        executeScopConditionally(S, this, Builder.getTrue());
+    auto SplitBlock = StartBlock->getSinglePredecessor();
+    Builder.SetInsertPoint(SplitBlock->getTerminator());
+    NodeBuilder.addParameters(S.getContext());
     Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
-    BasicBlock *StartBlock = executeScopConditionally(S, this, RTC);
+    SplitBlock->getTerminator()->setOperand(0, RTC);
     Builder.SetInsertPoint(StartBlock->begin());
 
     NodeBuilder.create(AstRoot);
