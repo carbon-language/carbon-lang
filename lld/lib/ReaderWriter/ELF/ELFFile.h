@@ -40,6 +40,7 @@ template <class ELFT> class ELFFile : public File {
     const Elf_Shdr *_shdr;
     int64_t _offset;
   };
+
   struct MergeSectionEq {
     int64_t operator()(const MergeSectionKey &k) const {
       return llvm::hash_combine((int64_t)(k._shdr->sh_name),
@@ -71,23 +72,15 @@ template <class ELFT> class ELFFile : public File {
   // offset
   typedef std::vector<ELFMergeAtom<ELFT> *> MergeAtomsT;
 
-  /// \brief find a mergeAtom given a start offset
-  struct FindByOffset {
-    const Elf_Shdr *_shdr;
-    int64_t _offset;
-    FindByOffset(const Elf_Shdr *shdr, int64_t offset)
-        : _shdr(shdr), _offset(offset) {}
-    bool operator()(const ELFMergeAtom<ELFT> *a) {
-      int64_t off = a->offset();
-      return (_shdr->sh_name == a->section()) &&
-             ((_offset >= off) && (_offset <= off + (int64_t)a->size()));
-    }
-  };
-
   /// \brief find a merge atom given a offset
-  ELFMergeAtom<ELFT> *findMergeAtom(const Elf_Shdr *shdr, uint64_t offset) {
+  ELFMergeAtom<ELFT> *findMergeAtom(const Elf_Shdr *shdr, int64_t offset) {
     auto it = std::find_if(_mergeAtoms.begin(), _mergeAtoms.end(),
-                           FindByOffset(shdr, offset));
+                           [=](const ELFMergeAtom<ELFT> *a) {
+                             int64_t off = a->offset();
+                             return shdr->sh_name == a->section() &&
+                                    offset >= off &&
+                                    offset <= off + (int64_t)a->size();
+                           });
     assert(it != _mergeAtoms.end());
     return *it;
   }
