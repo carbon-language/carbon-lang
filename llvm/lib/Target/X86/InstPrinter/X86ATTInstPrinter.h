@@ -25,10 +25,7 @@ class X86ATTInstPrinter final : public MCInstPrinter {
 public:
   X86ATTInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
                     const MCRegisterInfo &MRI, const MCSubtargetInfo &STI)
-      : MCInstPrinter(MAI, MII, MRI) {
-    // Initialize the set of available features.
-    setAvailableFeatures(STI.getFeatureBits());
-  }
+      : MCInstPrinter(MAI, MII, MRI) {}
 
   void printRegName(raw_ostream &OS, unsigned RegNo) const override;
   void printInst(const MCInst *MI, raw_ostream &OS, StringRef Annot,
