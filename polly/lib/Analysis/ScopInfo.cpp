@@ -68,6 +68,11 @@ static cl::opt<unsigned> RunTimeChecksMaxParameters(
     cl::desc("The maximal number of parameters allowed in RTCs."), cl::Hidden,
     cl::ZeroOrMore, cl::init(8), cl::cat(PollyCategory));
 
+static cl::opt<unsigned> RunTimeChecksMaxArraysPerGroup(
+    "polly-rtc-max-arrays-per-group",
+    cl::desc("The maximal number of arrays to compare in each alias group."),
+    cl::Hidden, cl::ZeroOrMore, cl::init(20), cl::cat(PollyCategory));
+
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
 public:
@@ -1558,6 +1563,13 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     if (!Valid)
       return false;
   }
+
+  // Bail out if the number of values we need to compare is too large.
+  // This is important as the number of comparisions grows quadratically with
+  // the number of values we need to compare.
+  for (const auto *Values : MinMaxAliasGroups)
+    if (Values->size() > RunTimeChecksMaxArraysPerGroup)
+      return false;
 
   return true;
 }
