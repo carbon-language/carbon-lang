@@ -6,17 +6,17 @@ declare void @_Z3foov()
 ; CHECK: !named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9}
 !named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9}
 
-!0 = distinct !{}
-!1 = distinct !{}
+!0 = !{null}
+!1 = distinct !MDCompositeType(tag: DW_TAG_structure_type)
 !2 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
-!3 = distinct !{}
-!4 = distinct !{}
+!3 = !MDSubroutineType(types: !0)
+!4 = distinct !MDCompositeType(tag: DW_TAG_structure_type)
 !5 = distinct !{}
-!6 = distinct !{}
+!6 = distinct !MDSubprogram(isDefinition: false)
 !7 = distinct !{}
 
-; CHECK: !8 = !MDSubprogram(name: "foo", linkageName: "_Zfoov", scope: !0, file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, scopeLine: 8, containingType: !4, virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov, templateParams: !5, declaration: !6, variables: !7)
-!8 = !MDSubprogram(name: "foo", linkageName: "_Zfoov", scope: !0,
+; CHECK: !8 = !MDSubprogram(name: "foo", linkageName: "_Zfoov", scope: !1, file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, scopeLine: 8, containingType: !4, virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov, templateParams: !5, declaration: !6, variables: !7)
+!8 = !MDSubprogram(name: "foo", linkageName: "_Zfoov", scope: !1,
                    file: !2, line: 7, type: !3, isLocal: true,
                    isDefinition: false, scopeLine: 8, containingType: !4,
                    virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10,

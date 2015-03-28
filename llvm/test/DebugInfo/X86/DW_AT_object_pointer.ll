@@ -66,9 +66,7 @@ entry:
 !14 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 1, size: 32, align: 32, file: !37, elements: !15)
 !15 = !{!16, !17}
 !16 = !MDDerivedType(tag: DW_TAG_member, name: "m_a", line: 4, size: 32, align: 32, file: !37, scope: !14, baseType: !9)
-!17 = !MDSubprogram(name: "A", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !14, type: !11, variables: !18)
-!18 = !{!19}
-!19 = !{} ; previously: invalid DW_TAG_base_type
+!17 = !MDSubprogram(name: "A", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !14, type: !11)
 !20 = !MDSubprogram(name: "A", linkageName: "_ZN1AC2Ev", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: null, type: !11, function: void (%class.A*)* @_ZN1AC2Ev, declaration: !17, variables: !1)
 !21 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 8, scope: !22, file: !6, type: !14)
 !22 = distinct !MDLexicalBlock(line: 7, column: 11, file: !6, scope: !5)

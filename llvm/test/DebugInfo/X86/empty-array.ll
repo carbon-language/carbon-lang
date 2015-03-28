@@ -39,11 +39,9 @@
 !11 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{!13}
 !13 = !MDSubrange(count: -1)
-!14 = !MDSubprogram(name: "A", line: 1, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !6, scope: !7, type: !15, variables: !18)
+!14 = !MDSubprogram(name: "A", line: 1, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !6, scope: !7, type: !15)
 !15 = !MDSubroutineType(types: !16)
 !16 = !{null, !17}
 !17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !7)
-!18 = !{!19}
-!19 = !{} ; previously: invalid DW_TAG_base_type
 !20 = !MDFile(filename: "t.cpp", directory: "/Volumes/Sandbox/llvm")
 !21 = !{i32 1, !"Debug Info Version", i32 3}

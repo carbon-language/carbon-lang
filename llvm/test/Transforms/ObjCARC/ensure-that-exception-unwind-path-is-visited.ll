@@ -116,12 +116,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !0 = !MDCompileUnit(language: DW_LANG_ObjC, producer: "clang version 3.3 ", isOptimized: true, runtimeVersion: 2, emissionKind: 0, file: !60, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1)
 !1 = !{}
 !3 = !{!5, !27}
-!5 = !MDSubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 10, file: !60, scope: !6, type: !7, function: i32 ()* @main, variables: !10)
+!5 = !MDSubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 10, file: !60, scope: !6, type: !7, function: i32 ()* @main, variables: !11)
 !6 = !MDFile(filename: "test.m", directory: "/Volumes/Files/gottesmmcab/Radar/12906997")
 !7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
 !9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !{!11}
 !11 = !{!12, !21, !25}
 !12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "obj", line: 11, scope: !13, file: !6, type: !14)
 !13 = distinct !MDLexicalBlock(line: 10, column: 0, file: !60, scope: !5)
@@ -138,10 +137,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !24 = !MDBasicType(tag: DW_TAG_base_type, name: "signed char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !25 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "obj2", line: 15, scope: !26, file: !6, type: !14)
 !26 = distinct !MDLexicalBlock(line: 14, column: 0, file: !60, scope: !22)
-!27 = !MDSubprogram(name: "ThrowFunc", line: 4, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !60, scope: !6, type: !28, function: void (i8*)* @ThrowFunc, variables: !30)
+!27 = !MDSubprogram(name: "ThrowFunc", line: 4, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !60, scope: !6, type: !28, function: void (i8*)* @ThrowFunc, variables: !31)
 !28 = !MDSubroutineType(types: !29)
 !29 = !{null, !14}
-!30 = !{!31}
 !31 = !{!32}
 !32 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "obj", line: 4, arg: 1, scope: !27, file: !6, type: !14)
 !33 = !{i32 1, !"Objective-C Version", i32 2}

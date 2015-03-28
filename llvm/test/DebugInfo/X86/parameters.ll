@@ -92,13 +92,12 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !7 = !{!8, !8}
 !8 = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo", line: 2, size: 8, align: 8, file: !1, scope: !5, elements: !9)
 !9 = !{!10}
-!10 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !8, type: !11, variables: !16)
+!10 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !8, type: !11)
 !11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13, !14}
 !13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !8)
 !14 = !MDDerivedType(tag: DW_TAG_reference_type, baseType: !15)
 !15 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !8)
-!16 = !{i32 786468}
 !17 = !MDSubprogram(name: "func2", linkageName: "_ZN7pr147635func2EbNS_3fooE", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 12, file: !1, scope: !5, type: !18, function: void (i1, %"struct.pr14763::foo"*)* @_ZN7pr147635func2EbNS_3fooE, variables: !2)
 !18 = !MDSubroutineType(types: !19)
 !19 = !{null, !20, !8}

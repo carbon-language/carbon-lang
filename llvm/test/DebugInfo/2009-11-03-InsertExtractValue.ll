@@ -4,7 +4,7 @@
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!6}
 
-!0 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagProtected | DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !4, scope: !1, type: !2, variables: !1)
+!0 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagProtected | DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !4, scope: !1, type: !2)
 !1 = !MDFile(filename: "/foo", directory: "bar.cpp")
 !2 = !MDSubroutineType(types: !3)
 !3 = !{null}

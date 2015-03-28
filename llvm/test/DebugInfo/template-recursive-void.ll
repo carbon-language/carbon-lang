@@ -39,27 +39,23 @@
 !11 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !9, baseType: !12)
 !12 = !MDCompositeType(tag: DW_TAG_class_type, name: "base", line: 3, size: 8, align: 8, file: !1, elements: !13)
 !13 = !{!14}
-!14 = !MDSubprogram(name: "base", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !12, type: !15, variables: !18)
+!14 = !MDSubprogram(name: "base", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !12, type: !15)
 !15 = !MDSubroutineType(types: !16)
 !16 = !{null, !17}
 !17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !12)
-!18 = !{i32 786468}
-!19 = !MDSubprogram(name: "operator=", linkageName: "_ZN3fooIvEaSES0_", line: 6, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrivate | DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !9, type: !20, variables: !24)
+!19 = !MDSubprogram(name: "operator=", linkageName: "_ZN3fooIvEaSES0_", line: 6, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrivate | DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !9, type: !20)
 !20 = !MDSubroutineType(types: !21)
 !21 = !{null, !22, !23}
 !22 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !9)
 !23 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !9)
-!24 = !{i32 786468}
-!25 = !MDSubprogram(name: "foo", line: 5, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !9, type: !26, variables: !28)
+!25 = !MDSubprogram(name: "foo", line: 5, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !9, type: !26)
 !26 = !MDSubroutineType(types: !27)
 !27 = !{null, !22}
-!28 = !{i32 786468}
 !29 = !{!30}
 !30 = !MDTemplateTypeParameter(name: "T", type: null)
-!31 = !MDSubprogram(name: "bar", line: 9, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !6, type: !32, variables: !35)
+!31 = !MDSubprogram(name: "bar", line: 9, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !6, type: !32)
 !32 = !MDSubroutineType(types: !33)
 !33 = !{null, !34}
 !34 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !6)
-!35 = !{i32 786468}
 !36 = !{i32 2, !"Dwarf Version", i32 3}
 !37 = !{i32 1, !"Debug Info Version", i32 3}

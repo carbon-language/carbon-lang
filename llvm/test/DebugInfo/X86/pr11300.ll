@@ -48,14 +48,10 @@ entry:
 !9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
 !10 = !MDCompositeType(tag: DW_TAG_class_type, name: "foo", line: 1, size: 8, align: 8, file: !32, elements: !11)
 !11 = !{!12}
-!12 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !6, scope: !10, type: !13, variables: !16)
+!12 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !6, scope: !10, type: !13)
 !13 = !MDSubroutineType(types: !14)
 !14 = !{null, !15}
 !15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, baseType: !10)
-!16 = !{!17}
-!17 = !{} ; previously: invalid DW_TAG_base_type
-!18 = !{!19}
-!19 = !{} ; previously: invalid DW_TAG_base_type
 !20 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !6, scope: null, type: !13, function: void (%struct.foo*)* @_ZN3foo3barEv, declaration: !12)
 !23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 4, arg: 1, scope: !5, file: !6, type: !9)
 !24 = !MDLocation(line: 4, column: 15, scope: !5)

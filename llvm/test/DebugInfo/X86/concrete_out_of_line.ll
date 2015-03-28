@@ -98,7 +98,7 @@ declare void @_Z8moz_freePv(i8*)
 !23 = !MDSubprogram(name: "~nsAutoRefCnt", linkageName: "_ZN17nsAutoRefCntD1Ev", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !6, scope: null, type: !16, function: void ()* @_ZN17nsAutoRefCntD1Ev, declaration: !15, variables: !24)
 !24 = !{!26}
 !26 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 18, arg: 1, flags: DIFlagArtificial, scope: !23, file: !6, type: !10)
-!27 = !MDSubprogram(name: "~nsAutoRefCnt", linkageName: "_ZN17nsAutoRefCntD2Ev", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !6, scope: null, type: !16, function: i32* null, declaration: !15, variables: !28)
+!27 = !MDSubprogram(name: "~nsAutoRefCnt", linkageName: "_ZN17nsAutoRefCntD2Ev", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !6, scope: null, type: !16, function: i32 ()* null, declaration: !15, variables: !28)
 !28 = !{!30}
 !30 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 18, arg: 1, flags: DIFlagArtificial, scope: !27, file: !6, type: !10)
 !31 = !MDSubprogram(name: "operator=", linkageName: "_ZN12nsAutoRefCntaSEi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !6, scope: null, type: !32, declaration: !36, variables: !43)

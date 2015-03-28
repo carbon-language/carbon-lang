@@ -38,10 +38,9 @@ declare void @test(i32, i8**)
 !llvm.module.flags = !{!21}
 
 !0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 173515)", isOptimized: true, emissionKind: 0, file: !20, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
-!1 = !{!2}
 !2 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !20, scope: null, type: !7, function: i32 (i32, i8**)* @main, variables: !1)
+!5 = !MDSubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !20, scope: null, type: !7, function: i32 (i32, i8**)* @main, variables: !2)
 !6 = !MDFile(filename: "main.cpp", directory: "/private/tmp")
 !7 = !MDSubroutineType(types: !8)
 !8 = !{!9, !9, !10}
