@@ -168,8 +168,8 @@ namespace llvm {
       ELFSectionKey(StringRef SectionName, StringRef GroupName)
           : SectionName(SectionName), GroupName(GroupName) {}
       bool operator<(const ELFSectionKey &Other) const {
-        if (SectionName < Other.SectionName)
-          return true;
+        if (SectionName != Other.SectionName)
+          return SectionName < Other.SectionName;
         return GroupName < Other.GroupName;
       }
     };
@@ -183,9 +183,9 @@ namespace llvm {
           : SectionName(SectionName), GroupName(GroupName),
             SelectionKey(SelectionKey) {}
       bool operator<(const COFFSectionKey &Other) const {
-        if (SectionName < Other.SectionName)
-          return true;
-        if (GroupName < Other.GroupName)
+        if (SectionName != Other.SectionName)
+          return SectionName < Other.SectionName;
+        if (GroupName != Other.GroupName)
           return GroupName < Other.GroupName;
         return SelectionKey < Other.SelectionKey;
       }
