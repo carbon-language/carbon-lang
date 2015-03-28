@@ -329,7 +329,8 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
 
   PP->setPreprocessedOutput(getPreprocessorOutputOpts().ShowCPP);
 
-  PP->getHeaderSearchInfo().setModuleCachePath(getSpecificModuleCachePath());
+  if (PP->getLangOpts().Modules)
+    PP->getHeaderSearchInfo().setModuleCachePath(getSpecificModuleCachePath());
 
   // Handle generating dependencies, if requested.
   const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();
