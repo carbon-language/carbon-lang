@@ -25,7 +25,7 @@ class X86ATTInstPrinter final : public MCInstPrinter {
 public:
   X86ATTInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
                     const MCRegisterInfo &MRI, const MCSubtargetInfo &STI)
-    : MCInstPrinter(MAI, MII, MRI) {
+      : MCInstPrinter(MAI, MII, MRI) {
     // Initialize the set of available features.
     setAvailableFeatures(STI.getFeatureBits());
   }
@@ -143,7 +143,6 @@ public:
 private:
   bool HasCustomInstComment;
 };
-
 }
 
 #endif
