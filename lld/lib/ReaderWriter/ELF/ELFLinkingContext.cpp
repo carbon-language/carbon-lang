@@ -25,6 +25,9 @@
 #include <cxxabi.h>
 #endif
 
+using llvm::sys::fs::exists;
+using llvm::sys::path::is_absolute;
+
 namespace lld {
 
 class CommandLineUndefinedAtom : public SimpleUndefinedAtom {
@@ -122,7 +125,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
       llvm::sys::path::append(path, hasColonPrefix
                                         ? libName.drop_front()
                                         : Twine("lib", libName) + ".so");
-      if (llvm::sys::fs::exists(path.str()))
+      if (exists(path.str()))
         return StringRef(*new (_allocator) std::string(path.str()));
     }
     // Search for static libraries too
@@ -130,10 +133,10 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
     llvm::sys::path::append(path, hasColonPrefix
                                       ? libName.drop_front()
                                       : Twine("lib", libName) + ".a");
-    if (llvm::sys::fs::exists(path.str()))
+    if (exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
   }
-  if (hasColonPrefix && llvm::sys::fs::exists(libName.drop_front()))
+  if (hasColonPrefix && exists(libName.drop_front()))
       return libName.drop_front();
 
   return make_error_code(llvm::errc::no_such_file_or_directory);
@@ -142,21 +145,22 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
 ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
                                                  bool isSysRooted) const {
   SmallString<128> path;
-  if (llvm::sys::path::is_absolute(fileName) && isSysRooted) {
+  if (is_absolute(fileName) && isSysRooted) {
     path.assign(_sysrootPath);
     path.append(fileName);
-    if (llvm::sys::fs::exists(path.str()))
+    if (exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
-  } else if (llvm::sys::fs::exists(fileName))
+  } else if (exists(fileName)) {
     return fileName;
+  }
 
-  if (llvm::sys::path::is_absolute(fileName))
+  if (is_absolute(fileName))
     return make_error_code(llvm::errc::no_such_file_or_directory);
 
   for (StringRef dir : _inputSearchPaths) {
     buildSearchPath(path, dir, _sysrootPath);
     llvm::sys::path::append(path, fileName);
-    if (llvm::sys::fs::exists(path.str()))
+    if (exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
   }
   return make_error_code(llvm::errc::no_such_file_or_directory);
