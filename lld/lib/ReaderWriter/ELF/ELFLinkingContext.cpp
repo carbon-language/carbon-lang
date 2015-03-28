@@ -107,11 +107,13 @@ Writer &ELFLinkingContext::writer() const { return *_writer; }
 
 static void buildSearchPath(SmallString<128> &path, StringRef dir,
                             StringRef sysRoot) {
-  if (!dir.startswith("=/"))
-    path.assign(dir);
-  else {
+  if (dir.startswith("=/")) {
+    // If a search directory begins with "=", "=" is replaced
+    // with the sysroot path.
     path.assign(sysRoot);
     path.append(dir.substr(1));
+  } else {
+    path.assign(dir);
   }
 }
 
