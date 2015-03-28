@@ -42,10 +42,8 @@ public:
   Section(const ELFLinkingContext &ctx, StringRef sectionName,
           StringRef chunkName,
           typename Chunk<ELFT>::Kind k = Chunk<ELFT>::Kind::ELFSection)
-      : Chunk<ELFT>(chunkName, k, ctx), _outputSection(nullptr), _flags(0),
-        _entSize(0), _type(0), _link(0), _info(0),
-        _isFirstSectionInOutputSection(false), _segmentType(SHT_NULL),
-        _inputSectionName(sectionName), _outputSectionName(sectionName) {}
+      : Chunk<ELFT>(chunkName, k, ctx), _inputSectionName(sectionName),
+        _outputSectionName(sectionName) {}
 
   /// \brief Modify the section contents before assigning virtual addresses
   //  or assigning file offsets
@@ -129,21 +127,21 @@ public:
 
 protected:
   /// \brief OutputSection this Section is a member of, or nullptr.
-  OutputSection<ELFT> *_outputSection;
+  OutputSection<ELFT> *_outputSection = nullptr;
   /// \brief ELF SHF_* flags.
-  uint64_t _flags;
+  uint64_t _flags = 0;
   /// \brief The size of each entity.
-  uint64_t _entSize;
+  uint64_t _entSize = 0;
   /// \brief ELF SHT_* type.
-  uint32_t _type;
+  uint32_t _type = 0;
   /// \brief sh_link field.
-  uint32_t _link;
+  uint32_t _link = 0;
   /// \brief the sh_info field.
-  uint32_t _info;
+  uint32_t _info = 0;
   /// \brief Is this the first section in the output section.
-  bool _isFirstSectionInOutputSection;
+  bool _isFirstSectionInOutputSection = false;
   /// \brief the output ELF segment type of this section.
-  Layout::SegmentType _segmentType;
+  Layout::SegmentType _segmentType = SHT_NULL;
   /// \brief Input section name.
   StringRef _inputSectionName;
   /// \brief Output section name.
@@ -159,8 +157,7 @@ public:
               int32_t contentType, int32_t permissions, int32_t order)
       : Section<ELFT>(ctx, sectionName, "AtomSection",
                       Chunk<ELFT>::Kind::AtomSection),
-        _contentType(contentType), _contentPermissions(permissions),
-        _isLoadedInMemory(true) {
+        _contentType(contentType), _contentPermissions(permissions) {
     this->setOrder(order);
 
     switch (contentType) {
@@ -272,7 +269,7 @@ protected:
   llvm::BumpPtrAllocator _alloc;
   int32_t _contentType;
   int32_t _contentPermissions;
-  bool _isLoadedInMemory;
+  bool _isLoadedInMemory = true;
   std::vector<lld::AtomLayout *> _atoms;
   mutable std::mutex _outputMutex;
 
@@ -444,7 +441,7 @@ public:
   // Iterators
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
 
-  OutputSection(StringRef name);
+  OutputSection(StringRef name) : _name(name) {}
 
   // Appends a section into the list of sections that are part of this Output
   // Section
@@ -518,29 +515,22 @@ public:
 
 private:
   StringRef _name;
-  bool _hasSegment;
-  uint64_t _ordinal;
-  uint64_t _flags;
-  uint64_t _size;
-  uint64_t _memSize;
-  uint64_t _fileOffset;
-  uint64_t _virtualAddr;
-  int64_t _shInfo;
-  int64_t _entSize;
-  int64_t _link;
-  uint64_t _alignment;
-  int64_t _kind;
-  int64_t _type;
-  bool _isLoadableSection;
+  bool _hasSegment = false;
+  uint64_t _ordinal = 0;
+  uint64_t _flags = 0;
+  uint64_t _size = 0;
+  uint64_t _memSize = 0;
+  uint64_t _fileOffset = 0;
+  uint64_t _virtualAddr = 0;
+  int64_t _shInfo = 0;
+  int64_t _entSize = 0;
+  int64_t _link = 0;
+  uint64_t _alignment = 0;
+  int64_t _kind = 0;
+  int64_t _type = 0;
+  bool _isLoadableSection = false;
   std::vector<Chunk<ELFT> *> _sections;
 };
-
-/// OutputSection
-template <class ELFT>
-OutputSection<ELFT>::OutputSection(StringRef name)
-    : _name(name), _hasSegment(false), _ordinal(0), _flags(0), _size(0),
-      _memSize(0), _fileOffset(0), _virtualAddr(0), _shInfo(0), _entSize(0),
-      _link(0), _alignment(0), _kind(0), _type(0), _isLoadableSection(false) {}
 
 template <class ELFT> void OutputSection<ELFT>::appendSection(Chunk<ELFT> *c) {
   if (c->alignment() > _alignment)
@@ -903,8 +893,7 @@ template <class ELFT> class DynamicSymbolTable : public SymbolTable<ELFT> {
 public:
   DynamicSymbolTable(const ELFLinkingContext &ctx, TargetLayout<ELFT> &layout,
                      const char *str, int32_t order)
-      : SymbolTable<ELFT>(ctx, str, order), _hashTable(nullptr),
-        _layout(layout) {
+      : SymbolTable<ELFT>(ctx, str, order), _layout(layout) {
     this->_type = SHT_DYNSYM;
     this->_flags = SHF_ALLOC;
     this->_msize = this->_fsize;
@@ -941,7 +930,7 @@ public:
   }
 
 protected:
-  HashSection<ELFT> *_hashTable;
+  HashSection<ELFT> *_hashTable = nullptr;
   TargetLayout<ELFT> &_layout;
 };
 
@@ -951,7 +940,7 @@ public:
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
   RelocationTable(const ELFLinkingContext &ctx, StringRef str, int32_t order)
-      : Section<ELFT>(ctx, str, "RelocationTable"), _symbolTable(nullptr) {
+      : Section<ELFT>(ctx, str, "RelocationTable") {
     this->setOrder(order);
     this->_flags = SHF_ALLOC;
     // Set the alignment properly depending on the target architecture
@@ -1035,7 +1024,7 @@ public:
   }
 
 protected:
-  const DynamicSymbolTable<ELFT> *_symbolTable;
+  const DynamicSymbolTable<ELFT> *_symbolTable = nullptr;
 
   virtual void writeRela(ELFWriter *writer, Elf_Rela &r,
                          const DefinedAtom &atom, const Reference &ref) {
@@ -1340,7 +1329,7 @@ template <class ELFT> class HashSection : public Section<ELFT> {
 
 public:
   HashSection(const ELFLinkingContext &ctx, StringRef name, int32_t order)
-      : Section<ELFT>(ctx, name, "Dynamic:Hash"), _symbolTable(nullptr) {
+      : Section<ELFT>(ctx, name, "Dynamic:Hash") {
     this->setOrder(order);
     this->_entSize = 4;
     this->_type = SHT_HASH;
@@ -1437,15 +1426,14 @@ private:
   std::vector<SymbolTableEntry> _entries;
   std::vector<uint32_t> _buckets;
   std::vector<uint32_t> _chains;
-  const DynamicSymbolTable<ELFT> *_symbolTable;
+  const DynamicSymbolTable<ELFT> *_symbolTable = nullptr;
 };
 
 template <class ELFT> class EHFrameHeader : public Section<ELFT> {
 public:
   EHFrameHeader(const ELFLinkingContext &ctx, StringRef name,
                 TargetLayout<ELFT> &layout, int32_t order)
-      : Section<ELFT>(ctx, name, "EHFrameHeader"), _ehFrameOffset(0),
-        _layout(layout) {
+      : Section<ELFT>(ctx, name, "EHFrameHeader"), _layout(layout) {
     this->setOrder(order);
     this->_entSize = 0;
     this->_type = SHT_PROGBITS;
@@ -1482,7 +1470,7 @@ public:
   }
 
 private:
-  int32_t _ehFrameOffset;
+  int32_t _ehFrameOffset = 0;
   TargetLayout<ELFT> &_layout;
 };
 } // end namespace elf

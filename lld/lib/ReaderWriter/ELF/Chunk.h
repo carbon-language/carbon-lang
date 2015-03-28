@@ -45,8 +45,7 @@ public:
   enum ContentType : uint8_t { Unknown, Header, Code, Data, Note, TLS };
 
   Chunk(StringRef name, Kind kind, const ELFLinkingContext &ctx)
-      : _name(name), _kind(kind), _fsize(0), _msize(0), _alignment(0),
-        _order(0), _ordinal(1), _start(0), _fileoffset(0), _ctx(ctx) {}
+      : _name(name), _kind(kind), _ctx(ctx) {}
 
   virtual ~Chunk() {}
 
@@ -96,14 +95,14 @@ public:
 protected:
   StringRef _name;
   Kind _kind;
-  uint64_t _fsize;
-  uint64_t _msize;
-  uint64_t _alignment;
-  uint32_t _order;
-  uint64_t _ordinal;
-  uint64_t _start;
-  uint64_t _fileoffset;
   const ELFLinkingContext &_ctx;
+  uint64_t _fsize = 0;
+  uint64_t _msize = 0;
+  uint64_t _alignment = 0;
+  uint32_t _order = 0;
+  uint64_t _ordinal = 1;
+  uint64_t _start = 0;
+  uint64_t _fileoffset = 0;
 };
 
 } // end namespace elf
