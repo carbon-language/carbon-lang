@@ -4,16 +4,18 @@
 # RUN: yaml2obj -format=elf %s > %t-o.o
 # RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: -e plt_func %t-o.o -o %t
-# RUN: llvm-objdump -s -t %t -disassemble | FileCheck %s
+# RUN: llvm-objdump -s -t %t | FileCheck %s
 
-# CHECK: Disassembly of section .text:
-# CHECK: plt_func:
-# CHECK:   400074:	00 c6 8f e2                                  	add	r12, pc, #0, #12
-#                         ^ after execution: r12=0x40007c
-# CHECK:   400078:	00 ca 8c e2                                  	add	r12, r12, #0, #20
-#                         ^ after execution: r12=0x40007C
-# CHECK:   40007c:	84 ff bc e5                                  	ldr	pc, [r12, #3972]!
-#                         ^ referenced address is 0x401000, after execution pc=0x400074
+# CHECK: Contents of section .text:
+# CHECK: 400074 00c68fe2 00ca8ce2 84ffbce5
+# Disassembly of section .text:
+# plt_func:
+#   400074:	00 c6 8f e2                                  	add	r12, pc, #0, #12
+#                  ^ after execution: r12=0x40007c
+#   400078:	00 ca 8c e2                                  	add	r12, r12, #0, #20
+#                  ^ after execution: r12=0x40007C
+#   40007c:	84 ff bc e5                                  	ldr	pc, [r12, #3972]!
+#                  ^ referenced address is 0x401000, after execution pc=0x400074
 # CHECK: Contents of section .data:
 # CHECK:  401000 74004000
 #                  ^ this value is written to pc after execution of comand 0x40007c
