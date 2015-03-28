@@ -3726,6 +3726,19 @@ def : InstAlias<"rotld. $rA, $rS, $rB", (RLDCLo g8rc:$rA, g8rc:$rS, gprc:$rB, 0)
 def : InstAlias<"clrldi $rA, $rS, $n", (RLDICL g8rc:$rA, g8rc:$rS, 0, u6imm:$n)>;
 def : InstAlias<"clrldi. $rA, $rS, $n", (RLDICLo g8rc:$rA, g8rc:$rS, 0, u6imm:$n)>;
 
+def RLWINMbm : PPCAsmPseudo<"rlwinm $rA, $rS, $n, $b",
+                            (ins g8rc:$rA, g8rc:$rS, u5imm:$n, i32imm:$b)>;
+def RLWINMobm : PPCAsmPseudo<"rlwinm. $rA, $rS, $n, $b",
+                            (ins g8rc:$rA, g8rc:$rS, u5imm:$n, i32imm:$b)>;
+def RLWIMIbm : PPCAsmPseudo<"rlwimi $rA, $rS, $n, $b",
+                           (ins g8rc:$rA, g8rc:$rS, u5imm:$n, i32imm:$b)>;
+def RLWIMIobm : PPCAsmPseudo<"rlwimi. $rA, $rS, $n, $b",
+                            (ins g8rc:$rA, g8rc:$rS, u5imm:$n, i32imm:$b)>;
+def RLWNMbm : PPCAsmPseudo<"rlwnm $rA, $rS, $n, $b",
+                          (ins g8rc:$rA, g8rc:$rS, u5imm:$n, i32imm:$b)>;
+def RLWNMobm : PPCAsmPseudo<"rlwnm. $rA, $rS, $n, $b",
+                           (ins g8rc:$rA, g8rc:$rS, u5imm:$n, i32imm:$b)>;
+
 // These generic branch instruction forms are used for the assembler parser only.
 // Defs and Uses are conservative, since we don't know the BO value.
 let PPC970_Unit = 7 in {

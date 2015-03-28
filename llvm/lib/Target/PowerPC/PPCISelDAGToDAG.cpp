@@ -105,13 +105,6 @@ namespace {
       return CurDAG->getTargetConstant(Imm, PPCLowering->getPointerTy());
     }
 
-    /// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s
-    /// with any number of 0s on either side.  The 1s are allowed to wrap from
-    /// LSB to MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.
-    /// 0x0F0F0000 is not, since all 1s are not contiguous.
-    static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME);
-
-
     /// isRotateAndMask - Returns true if Mask and Shift can be folded into a
     /// rotate and mask opcode and mask operation.
     static bool isRotateAndMask(SDNode *N, unsigned Mask, bool isShiftMask,
@@ -416,30 +409,6 @@ SDNode *PPCDAGToDAGISel::getFrameIndex(SDNode *SN, SDNode *N, unsigned Offset) {
                                 getSmallIPtrImm(Offset));
   return CurDAG->getMachineNode(Opc, dl, N->getValueType(0), TFI,
                                 getSmallIPtrImm(Offset));
-}
-
-bool PPCDAGToDAGISel::isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
-  if (!Val)
-    return false;
-
-  if (isShiftedMask_32(Val)) {
-    // look for the first non-zero bit
-    MB = countLeadingZeros(Val);
-    // look for the first zero bit after the run of ones
-    ME = countLeadingZeros((Val - 1) ^ Val);
-    return true;
-  } else {
-    Val = ~Val; // invert mask
-    if (isShiftedMask_32(Val)) {
-      // effectively look for the first zero bit
-      ME = countLeadingZeros(Val) - 1;
-      // effectively look for the first one bit after the run of zeros
-      MB = countLeadingZeros((Val - 1) ^ Val) + 1;
-      return true;
-    }
-  }
-  // no run present
-  return false;
 }
 
 bool PPCDAGToDAGISel::isRotateAndMask(SDNode *N, unsigned Mask,

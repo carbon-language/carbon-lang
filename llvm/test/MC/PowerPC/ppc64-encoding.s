@@ -703,6 +703,33 @@
 # CHECK-LE: rldimi. 2, 3, 4, 5              # encoding: [0x4d,0x21,0x62,0x78]
             rldimi. 2, 3, 4, 5
 
+# Aliases that take bit masks...
+
+# CHECK-BE: rlwinm  0, 0, 30, 31, 31        # encoding: [0x54,0x00,0xf7,0xfe]
+            rlwinm  0, 0, 30, 1
+# CHECK-BE: rlwinm. 0, 0, 30, 31, 31        # encoding: [0x54,0x00,0xf7,0xff]
+            rlwinm. 0, 0, 30, 1
+# CHECK-BE: rlwinm  0, 0, 30, 31, 0         # encoding: [0x54,0x00,0xf7,0xc0]
+            rlwinm  0, 0, 30, 2147483649
+# CHECK-BE: rlwinm. 0, 0, 30, 31, 0         # encoding: [0x54,0x00,0xf7,0xc1]
+            rlwinm. 0, 0, 30, 2147483649
+# CHECK-BE: rlwimi  0, 0, 30, 31, 31        # encoding: [0x50,0x00,0xf7,0xfe]
+            rlwimi  0, 0, 30, 1
+# CHECK-BE: rlwimi. 0, 0, 30, 31, 31        # encoding: [0x50,0x00,0xf7,0xff]
+            rlwimi. 0, 0, 30, 1
+# CHECK-BE: rlwimi  0, 0, 30, 31, 0         # encoding: [0x50,0x00,0xf7,0xc0]
+            rlwimi  0, 0, 30, 2147483649
+# CHECK-BE: rlwimi. 0, 0, 30, 31, 0         # encoding: [0x50,0x00,0xf7,0xc1]
+            rlwimi. 0, 0, 30, 2147483649
+# CHECK-BE: rlwnm   0, 0, 30, 31, 31        # encoding: [0x5c,0x00,0xf7,0xfe]
+            rlwnm  0, 0, 30, 1
+# CHECK-BE: rlwnm.  0, 0, 30, 31, 31        # encoding: [0x5c,0x00,0xf7,0xff]
+            rlwnm. 0, 0, 30, 1
+# CHECK-BE: rlwnm   0, 0, 30, 31, 0         # encoding: [0x5c,0x00,0xf7,0xc0]
+            rlwnm  0, 0, 30, 2147483649
+# CHECK-BE: rlwnm.  0, 0, 30, 31, 0         # encoding: [0x5c,0x00,0xf7,0xc1]
+            rlwnm. 0, 0, 30, 2147483649
+
 # CHECK-BE: slw 2, 3, 4                     # encoding: [0x7c,0x62,0x20,0x30]
 # CHECK-LE: slw 2, 3, 4                     # encoding: [0x30,0x20,0x62,0x7c]
             slw 2, 3, 4

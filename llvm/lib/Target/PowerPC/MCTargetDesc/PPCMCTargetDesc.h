@@ -18,6 +18,7 @@
 #undef PPC
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 
 namespace llvm {
 class MCAsmBackend;
@@ -51,6 +52,35 @@ MCObjectWriter *createPPCELFObjectWriter(raw_ostream &OS,
 MCObjectWriter *createPPCMachObjectWriter(raw_ostream &OS, bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
+
+/// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
+/// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
+/// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+/// not, since all 1s are not contiguous.
+static inline bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  if (!Val)
+    return false;
+
+  if (isShiftedMask_32(Val)) {
+    // look for the first non-zero bit
+    MB = countLeadingZeros(Val);
+    // look for the first zero bit after the run of ones
+    ME = countLeadingZeros((Val - 1) ^ Val);
+    return true;
+  } else {
+    Val = ~Val; // invert mask
+    if (isShiftedMask_32(Val)) {
+      // effectively look for the first zero bit
+      ME = countLeadingZeros(Val) - 1;
+      // effectively look for the first one bit after the run of zeros
+      MB = countLeadingZeros((Val - 1) ^ Val) + 1;
+      return true;
+    }
+  }
+  // no run present
+  return false;
+}
+
 } // End llvm namespace
 
 // Generated files will use "namespace PPC". To avoid symbol clash,
