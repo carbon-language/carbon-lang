@@ -16,17 +16,28 @@
 #include "clang/Tooling/Tooling.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "llvm/Option/Option.h"
 
 using namespace clang;
 
 extern "C" void TestOneInput(uint8_t *data, size_t size) {
   std::string s((const char *)data, size);
+  llvm::opt::ArgStringList CC1Args;
+  CC1Args.push_back("-cc1");
+  CC1Args.push_back("test.cc");
   llvm::IntrusiveRefCntPtr<FileManager> Files(
       new FileManager(FileSystemOptions()));
-  tooling::ToolInvocation Invocation({"clang", "-c", "test.cc"},
-                                     new clang::SyntaxOnlyAction, Files.get());
   IgnoringDiagConsumer Diags;
-  Invocation.setDiagnosticConsumer(&Diags);
-  Invocation.mapVirtualFile("test.cc", s);
-  Invocation.run();
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+  DiagnosticsEngine Diagnostics(
+      IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
+      &Diags, false);
+  std::unique_ptr<clang::CompilerInvocation> Invocation(
+      tooling::newInvocation(&Diagnostics, CC1Args));
+  std::unique_ptr<llvm::MemoryBuffer> Input =
+      llvm::MemoryBuffer::getMemBuffer(s);
+  Invocation->getPreprocessorOpts().addRemappedFile("test.cc", Input.release());
+  std::unique_ptr<tooling::ToolAction> action(
+      tooling::newFrontendActionFactory<clang::SyntaxOnlyAction>());
+  action->runInvocation(Invocation.release(), Files.get(), &Diags);
 }

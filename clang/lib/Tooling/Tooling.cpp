@@ -90,7 +90,7 @@ static const llvm::opt::ArgStringList *getCC1Arguments(
 }
 
 /// \brief Returns a clang build invocation initialized from the CC1 flags.
-static clang::CompilerInvocation *newInvocation(
+clang::CompilerInvocation *newInvocation(
     clang::DiagnosticsEngine *Diagnostics,
     const llvm::opt::ArgStringList &CC1Args) {
   assert(!CC1Args.empty() && "Must at least contain the program name!");

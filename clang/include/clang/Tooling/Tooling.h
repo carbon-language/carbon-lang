@@ -40,6 +40,7 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Option/Option.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -382,6 +383,11 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
 ///
 /// \param File Either an absolute or relative path.
 std::string getAbsolutePath(StringRef File);
+
+/// \brief Creates a \c CompilerInvocation.
+clang::CompilerInvocation *newInvocation(
+    clang::DiagnosticsEngine *Diagnostics,
+    const llvm::opt::ArgStringList &CC1Args);
 
 } // end namespace tooling
 } // end namespace clang
