@@ -92,8 +92,15 @@ def : Proc<"niagara4",        [FeatureV9, FeatureV8Deprecated, UsePopc,
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
 
+def SparcAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  int PassSubtarget = 1;
+  int Variant = 0;
+}
+
 def Sparc : Target {
   // Pull in Instruction Info:
   let InstructionSet = SparcInstrInfo;
   let AssemblyParsers  = [SparcAsmParser];
+  let AssemblyWriters = [SparcAsmWriter];
 }

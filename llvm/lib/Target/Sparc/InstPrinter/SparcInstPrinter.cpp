@@ -34,7 +34,7 @@ namespace Sparc {
 #define PRINT_ALIAS_INSTR
 #include "SparcGenAsmWriter.inc"
 
-bool SparcInstPrinter::isV9() const {
+bool SparcInstPrinter::isV9(const MCSubtargetInfo &STI) const {
   return (STI.getFeatureBits() & Sparc::FeatureV9) != 0;
 }
 
@@ -45,13 +45,14 @@ void SparcInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
 
 void SparcInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                  StringRef Annot, const MCSubtargetInfo &STI) {
-  if (!printAliasInstr(MI, O) && !printSparcAliasInstr(MI, O))
-    printInstruction(MI, O);
+  if (!printAliasInstr(MI, STI, O) && !printSparcAliasInstr(MI, STI, O))
+    printInstruction(MI, STI, O);
   printAnnotation(O, Annot);
 }
 
-bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
-{
+bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI,
+                                            const MCSubtargetInfo &STI,
+                                            raw_ostream &O) {
   switch (MI->getOpcode()) {
   default: return false;
   case SP::JMPLrr:
@@ -71,16 +72,16 @@ bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
         case SP::O7: O << "\tretl"; return true;
         }
       }
-      O << "\tjmp "; printMemOperand(MI, 1, O);
+      O << "\tjmp "; printMemOperand(MI, 1, STI, O);
       return true;
     case SP::O7: // call $addr
-      O << "\tcall "; printMemOperand(MI, 1, O);
+      O << "\tcall "; printMemOperand(MI, 1, STI, O);
       return true;
     }
   }
   case SP::V9FCMPS:  case SP::V9FCMPD:  case SP::V9FCMPQ:
   case SP::V9FCMPES: case SP::V9FCMPED: case SP::V9FCMPEQ: {
-    if (isV9()
+    if (isV9(STI)
         || (MI->getNumOperands() != 3)
         || (!MI->getOperand(0).isReg())
         || (MI->getOperand(0).getReg() != SP::FCC0))
@@ -95,17 +96,17 @@ bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
     case SP::V9FCMPED: O << "\tfcmped "; break;
     case SP::V9FCMPEQ: O << "\tfcmpeq "; break;
     }
-    printOperand(MI, 1, O);
+    printOperand(MI, 1, STI, O);
     O << ", ";
-    printOperand(MI, 2, O);
+    printOperand(MI, 2, STI, O);
     return true;
   }
   }
 }
 
 void SparcInstPrinter::printOperand(const MCInst *MI, int opNum,
-                                    raw_ostream &O)
-{
+                                    const MCSubtargetInfo &STI,
+                                    raw_ostream &O) {
   const MCOperand &MO = MI->getOperand (opNum);
 
   if (MO.isReg()) {
@@ -123,14 +124,14 @@ void SparcInstPrinter::printOperand(const MCInst *MI, int opNum,
 }
 
 void SparcInstPrinter::printMemOperand(const MCInst *MI, int opNum,
-                                      raw_ostream &O, const char *Modifier)
-{
-  printOperand(MI, opNum, O);
+                                       const MCSubtargetInfo &STI,
+                                       raw_ostream &O, const char *Modifier) {
+  printOperand(MI, opNum, STI, O);
 
   // If this is an ADD operand, emit it like normal operands.
   if (Modifier && !strcmp(Modifier, "arith")) {
     O << ", ";
-    printOperand(MI, opNum+1, O);
+    printOperand(MI, opNum+1, STI, O);
     return;
   }
   const MCOperand &MO = MI->getOperand(opNum+1);
@@ -142,12 +143,12 @@ void SparcInstPrinter::printMemOperand(const MCInst *MI, int opNum,
 
   O << "+";
 
-  printOperand(MI, opNum+1, O);
+  printOperand(MI, opNum+1, STI, O);
 }
 
 void SparcInstPrinter::printCCOperand(const MCInst *MI, int opNum,
-                                     raw_ostream &O)
-{
+                                      const MCSubtargetInfo &STI,
+                                      raw_ostream &O) {
   int CC = (int)MI->getOperand(opNum).getImm();
   switch (MI->getOpcode()) {
   default: break;
@@ -170,8 +171,8 @@ void SparcInstPrinter::printCCOperand(const MCInst *MI, int opNum,
 }
 
 bool SparcInstPrinter::printGetPCX(const MCInst *MI, unsigned opNum,
-                                  raw_ostream &O)
-{
+                                   const MCSubtargetInfo &STI,
+                                   raw_ostream &O) {
   llvm_unreachable("FIXME: Implement SparcInstPrinter::printGetPCX.");
   return true;
 }
