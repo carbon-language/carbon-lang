@@ -758,12 +758,11 @@ void Verifier::visitMDCompositeType(const MDCompositeType &N) {
 
 void Verifier::visitMDSubroutineType(const MDSubroutineType &N) {
   Assert(N.getTag() == dwarf::DW_TAG_subroutine_type, "invalid tag", &N);
-  Assert(N.getRawElements() && isa<MDTuple>(N.getRawElements()),
-         "invalid composite elements", &N, N.getRawElements());
-
-  for (Metadata *Ty : N.getTypeArray()->operands()) {
-    Assert(isTypeRef(Ty), "invalid subroutine type ref", &N, N.getTypeArray(),
-           Ty);
+  if (auto *Types = N.getRawTypeArray()) {
+    Assert(isa<MDTuple>(Types), "invalid composite elements", &N, Types);
+    for (Metadata *Ty : N.getTypeArray()->operands()) {
+      Assert(isTypeRef(Ty), "invalid subroutine type ref", &N, Types, Ty);
+    }
   }
 }
 
