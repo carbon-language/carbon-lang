@@ -82,7 +82,7 @@ static std::string Join(const std::vector<std::string> &V) {
 
 /// Adding features.
 void SubtargetFeatures::AddFeature(StringRef String) {
-  // Don't add empty features or features we already have.
+  // Don't add empty features.
   if (!String.empty())
     // Convert to lowercase, prepend flag if we don't already have a flag.
     Features.push_back(hasFlag(String) ? String.str() : "+" + String.lower());
