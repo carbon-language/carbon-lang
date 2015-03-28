@@ -219,6 +219,7 @@ void ELFLinkingContext::notifySymbolTableCoalesce(const Atom *existingAtom,
 }
 
 std::string ELFLinkingContext::demangle(StringRef symbolName) const {
+#if defined(HAVE_CXXABI_H)
   if (!demangleSymbols())
     return symbolName;
 
@@ -226,21 +227,20 @@ std::string ELFLinkingContext::demangle(StringRef symbolName) const {
   if (!symbolName.startswith("_Z"))
     return symbolName;
 
-#if defined(HAVE_CXXABI_H)
   SmallString<256> symBuff;
   StringRef nullTermSym = Twine(symbolName).toNullTerminatedStringRef(symBuff);
   const char *cstr = nullTermSym.data();
   int status;
   char *demangled = abi::__cxa_demangle(cstr, nullptr, nullptr, &status);
-  if (demangled != NULL) {
-    std::string result(demangled);
-    // __cxa_demangle() always uses a malloc'ed buffer to return the result.
-    free(demangled);
-    return result;
-  }
-#endif
-
+  if (demangled == NULL)
+    return symbolName;
+  std::string result(demangled);
+  // __cxa_demangle() always uses a malloc'ed buffer to return the result.
+  free(demangled);
+  return result;
+#else
   return symbolName;
+#endif
 }
 
 void ELFLinkingContext::setUndefinesResolver(std::unique_ptr<File> resolver) {
