@@ -1534,7 +1534,6 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     AG.clear();
   }
 
-  bool Valid = true;
   for (AliasGroupTy &AG : AliasGroups) {
     if (AG.empty())
       continue;
@@ -1551,16 +1550,16 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     Locations = isl_union_set_intersect_params(Locations, getAssumedContext());
     Locations = isl_union_set_coalesce(Locations);
     Locations = isl_union_set_detect_equalities(Locations);
-    Valid = (0 == isl_union_set_foreach_set(Locations, buildMinMaxAccess,
-                                            MinMaxAccesses));
+    bool Valid = (0 == isl_union_set_foreach_set(Locations, buildMinMaxAccess,
+                                                 MinMaxAccesses));
     isl_union_set_free(Locations);
     MinMaxAliasGroups.push_back(MinMaxAccesses);
 
     if (!Valid)
-      break;
+      return false;
   }
 
-  return Valid;
+  return true;
 }
 
 static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI) {
