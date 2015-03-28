@@ -1752,11 +1752,13 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
       return false;
 
     // We can perform an integral promotion to the underlying type of the enum,
-    // even if that's not the promoted type.
+    // even if that's not the promoted type. Note that the check for promoting
+    // the underlying type is based on the type alone, and does not consider
+    // the bitfield-ness of the actual source expression.
     if (FromEnumType->getDecl()->isFixed()) {
       QualType Underlying = FromEnumType->getDecl()->getIntegerType();
       return Context.hasSameUnqualifiedType(Underlying, ToType) ||
-             IsIntegralPromotion(From, Underlying, ToType);
+             IsIntegralPromotion(nullptr, Underlying, ToType);
     }
 
     // We have already pre-calculated the promotion type, so this is trivial.

@@ -28,3 +28,11 @@ struct D {
   A::B : C;
 };
 }
+
+enum WithUnderlying : unsigned { wu_value };
+struct WithUnderlyingBitfield {
+  WithUnderlying wu : 3;
+} wu = { wu_value };
+int want_unsigned(unsigned);
+int want_unsigned(int) = delete;
+int check_enum_bitfield_promotes_correctly = want_unsigned(wu.wu);
