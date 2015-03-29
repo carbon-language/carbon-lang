@@ -51,6 +51,15 @@ std::vector<const llvm::SCEV *>
 getParamsInAffineExpr(const llvm::Region *R, const llvm::SCEV *Expression,
                       llvm::ScalarEvolution &SE,
                       const llvm::Value *BaseAddress = 0);
+
+/// @brief Extract the constant factors from the multiplication @p M.
+///
+/// @param M  A potential SCEV multiplication.
+/// @param SE The ScalarEvolution analysis to create new SCEVs.
+///
+/// @returns The constant factor in @p M and the rest of @p M.
+std::pair<const llvm::SCEV *, const llvm::SCEV *>
+extractConstantFactor(const llvm::SCEV *M, llvm::ScalarEvolution &SE);
 }
 
 #endif

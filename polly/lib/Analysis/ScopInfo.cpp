@@ -194,22 +194,15 @@ __isl_give isl_pw_aff *SCEVAffinator::visitAddExpr(const SCEVAddExpr *Expr) {
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::visitMulExpr(const SCEVMulExpr *Expr) {
-  isl_pw_aff *Product = visit(Expr->getOperand(0));
-
-  for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
-    isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
-
-    if (!isl_pw_aff_is_cst(Product) && !isl_pw_aff_is_cst(NextOperand)) {
-      isl_pw_aff_free(Product);
-      isl_pw_aff_free(NextOperand);
-      return nullptr;
-    }
-
-    Product = isl_pw_aff_mul(Product, NextOperand);
-  }
-
-  // TODO: Check for NSW and NUW.
-  return Product;
+  // Divide Expr into a constant part and the rest. Then visit both and multiply
+  // the result to obtain the representation for Expr. While the second part of
+  // ConstantAndLeftOverPair might still be a SCEVMulExpr we will not get to
+  // this point again. The reason is that if it is a multiplication it consists
+  // only of parameters and we will stop in the visit(const SCEV *) function and
+  // return the isl_pw_aff for that parameter.
+  auto ConstantAndLeftOverPair = extractConstantFactor(Expr, *S->getSE());
+  return isl_pw_aff_mul(visit(ConstantAndLeftOverPair.first),
+                        visit(ConstantAndLeftOverPair.second));
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::visitUDivExpr(const SCEVUDivExpr *Expr) {
@@ -1246,6 +1239,7 @@ void Scop::setContext(__isl_take isl_set *NewContext) {
 
 void Scop::addParams(std::vector<const SCEV *> NewParameters) {
   for (const SCEV *Parameter : NewParameters) {
+    Parameter = extractConstantFactor(Parameter, *SE).second;
     if (ParameterIds.find(Parameter) != ParameterIds.end())
       continue;
 
