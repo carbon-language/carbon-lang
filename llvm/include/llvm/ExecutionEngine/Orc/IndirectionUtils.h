@@ -196,7 +196,7 @@ private:
   TargetAddress ResolverBlockAddr;
 };
 
-Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr) {
+inline Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr) {
   Constant *AddrIntVal =
     ConstantInt::get(Type::getInt64Ty(FT.getContext()), Addr);
   Constant *AddrPtrVal =
