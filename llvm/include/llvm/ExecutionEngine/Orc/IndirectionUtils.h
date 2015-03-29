@@ -37,11 +37,11 @@ public:
   ///        the compile and update actions for the callback.
   class CompileCallbackInfo {
   public:
-    CompileCallbackInfo(Constant *Addr, CompileFtor &Compile,
+    CompileCallbackInfo(TargetAddress Addr, CompileFtor &Compile,
                         UpdateFtor &Update)
       : Addr(Addr), Compile(Compile), Update(Update) {}
 
-    Constant* getAddress() const { return Addr; }
+    TargetAddress getAddress() const { return Addr; }
     void setCompileAction(CompileFtor Compile) {
       this->Compile = std::move(Compile);
     }
@@ -49,7 +49,7 @@ public:
       this->Update = std::move(Update);
     }
   private:
-    Constant *Addr;
+    TargetAddress Addr;
     CompileFtor &Compile;
     UpdateFtor &Update;
   };
@@ -139,13 +139,8 @@ public:
     TargetAddress TrampolineAddr = getAvailableTrampolineAddr(FT.getContext());
     auto &CallbackHandler =
       this->ActiveTrampolines[TrampolineAddr];
-    Constant *AddrIntVal =
-      ConstantInt::get(Type::getInt64Ty(FT.getContext()), TrampolineAddr);
-    Constant *AddrPtrVal =
-      ConstantExpr::getCast(Instruction::IntToPtr, AddrIntVal,
-                            PointerType::get(&FT, 0));
 
-    return CompileCallbackInfo(AddrPtrVal, CallbackHandler.Compile,
+    return CompileCallbackInfo(TrampolineAddr, CallbackHandler.Compile,
                                CallbackHandler.Update);
   }
 
@@ -200,6 +195,15 @@ private:
   JITLayerT &JIT;
   TargetAddress ResolverBlockAddr;
 };
+
+Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr) {
+  Constant *AddrIntVal =
+    ConstantInt::get(Type::getInt64Ty(FT.getContext()), Addr);
+  Constant *AddrPtrVal =
+    ConstantExpr::getCast(Instruction::IntToPtr, AddrIntVal,
+                          PointerType::get(&FT, 0));
+  return AddrPtrVal;
+}
 
 /// @brief Get an update functor for updating the value of a named function
 ///        pointer.
