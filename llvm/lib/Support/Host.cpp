@@ -182,19 +182,21 @@ static bool GetX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
 #endif
 }
 
-static bool OSHasAVXSupport() {
+static bool GetX86XCR0(unsigned *rEAX, unsigned *rEDX) {
 #if defined(__GNUC__)
   // Check xgetbv; this uses a .byte sequence instead of the instruction
   // directly because older assemblers do not include support for xgetbv and
   // there is no easy way to conditionally compile based on the assembler used.
-  int rEAX, rEDX;
-  __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a" (rEAX), "=d" (rEDX) : "c" (0));
+  __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a" (*rEAX), "=d" (*rEDX) : "c" (0));
+  return false;
 #elif defined(_MSC_FULL_VER) && defined(_XCR_XFEATURE_ENABLED_MASK)
-  unsigned long long rEAX = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+  unsigned long long Result = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+  *rEAX = Value;
+  *rEDX = Value >> 32;
+  return false;
 #else
-  int rEAX = 0; // Ensures we return false
+  return true;
 #endif
-  return (rEAX & 6) == 6;
 }
 
 static void DetectX86FamilyModel(unsigned EAX, unsigned &Family,
@@ -232,7 +234,8 @@ StringRef sys::getHostCPUName() {
   // indicates that the AVX registers will be saved and restored on context
   // switch, then we have full AVX support.
   const unsigned AVXBits = (1 << 27) | (1 << 28);
-  bool HasAVX = ((ECX & AVXBits) == AVXBits) && OSHasAVXSupport();
+  bool HasAVX = ((ECX & AVXBits) == AVXBits) && !GetX86XCR0(&EAX, &EDX) &&
+                ((EAX & 0x6) == 0x6);
   bool HasAVX2 = HasAVX && MaxLeaf >= 0x7 &&
                  !GetX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX) &&
                  (EBX & 0x20);
@@ -681,7 +684,89 @@ StringRef sys::getHostCPUName() {
 }
 #endif
 
-#if defined(__linux__) && (defined(__arm__) || defined(__aarch64__))
+#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)\
+ || defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
+bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
+  unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
+  unsigned MaxLevel;
+  union {
+    unsigned u[3];
+    char     c[12];
+  } text;
+
+  if (GetX86CpuIDAndInfo(0, &MaxLevel, text.u+0, text.u+2, text.u+1) ||
+      MaxLevel < 1)
+    return false;
+
+  GetX86CpuIDAndInfo(1, &EAX, &EBX, &ECX, &EDX);
+
+  Features["cmov"]   = (EDX >> 15) & 1;
+  Features["mmx"]    = (EDX >> 23) & 1;
+  Features["sse"]    = (EDX >> 25) & 1;
+  Features["sse2"]   = (EDX >> 26) & 1;
+  Features["sse3"]   = (ECX >>  0) & 1;
+  Features["ssse3"]  = (ECX >>  9) & 1;
+  Features["sse4.1"] = (ECX >> 19) & 1;
+  Features["sse4.2"] = (ECX >> 20) & 1;
+
+  Features["pclmul"] = (ECX >>  1) & 1;
+  Features["fma"]    = (ECX >> 12) & 1;
+  Features["cx16"]   = (ECX >> 13) & 1;
+  Features["movbe"]  = (ECX >> 22) & 1;
+  Features["popcnt"] = (ECX >> 23) & 1;
+  Features["aes"]    = (ECX >> 25) & 1;
+  Features["f16c"]   = (ECX >> 29) & 1;
+  Features["rdrnd"]  = (ECX >> 30) & 1;
+
+  // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV
+  // indicates that the AVX registers will be saved and restored on context
+  // switch, then we have full AVX support.
+  bool HasAVX = ((ECX >> 27) & 1) && ((ECX >> 28) & 1) &&
+                !GetX86XCR0(&EAX, &EDX) && ((EAX & 0x6) == 0x6);
+  Features["avx"]    = HasAVX;
+
+  // AVX512 requires additional context to be saved by the OS.
+  bool HasAVX512Save = HasAVX && ((EAX & 0xe0) == 0xe0);
+
+  unsigned MaxExtLevel;
+  GetX86CpuIDAndInfo(0x80000000, &MaxExtLevel, &EBX, &ECX, &EDX);
+
+  bool HasExtLeaf1 = MaxExtLevel >= 0x80000001 &&
+                     !GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+  Features["lzcnt"]  = HasExtLeaf1 && ((ECX >>  5) & 1);
+  Features["sse4a"]  = HasExtLeaf1 && ((ECX >>  6) & 1);
+  Features["prfchw"] = HasExtLeaf1 && ((ECX >>  8) & 1);
+  Features["xop"]    = HasExtLeaf1 && ((ECX >> 11) & 1);
+  Features["fma4"]   = HasExtLeaf1 && ((ECX >> 16) & 1);
+  Features["tbm"]    = HasExtLeaf1 && ((ECX >> 21) & 1);
+
+  bool HasLeaf7 = MaxLevel >= 7 &&
+                  !GetX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
+
+  // AVX2 is only supported if we have the OS save support from AVX.
+  Features["avx2"]     = HasAVX && HasLeaf7 && (EBX >>  5) & 1;
+
+  Features["fsgsbase"] = HasLeaf7 && ((EBX >>  0) & 1);
+  Features["bmi"]      = HasLeaf7 && ((EBX >>  3) & 1);
+  Features["hle"]      = HasLeaf7 && ((EBX >>  4) & 1);
+  Features["bmi2"]     = HasLeaf7 && ((EBX >>  8) & 1);
+  Features["rtm"]      = HasLeaf7 && ((EBX >> 11) & 1);
+  Features["rdseed"]   = HasLeaf7 && ((EBX >> 18) & 1);
+  Features["adx"]      = HasLeaf7 && ((EBX >> 19) & 1);
+  Features["sha"]      = HasLeaf7 && ((EBX >> 29) & 1);
+
+  // AVX512 is only supported if the OS supports the context save for it.
+  Features["avx512f"]  = HasLeaf7 && ((EBX >> 16) & 1) && HasAVX512Save;
+  Features["avx512dq"] = HasLeaf7 && ((EBX >> 17) & 1) && HasAVX512Save;
+  Features["avx512pf"] = HasLeaf7 && ((EBX >> 26) & 1) && HasAVX512Save;
+  Features["avx512er"] = HasLeaf7 && ((EBX >> 27) & 1) && HasAVX512Save;
+  Features["avx512cd"] = HasLeaf7 && ((EBX >> 28) & 1) && HasAVX512Save;
+  Features["avx512bw"] = HasLeaf7 && ((EBX >> 30) & 1) && HasAVX512Save;
+  Features["avx512vl"] = HasLeaf7 && ((EBX >> 31) & 1) && HasAVX512Save;
+
+  return true;
+}
+#elif defined(__linux__) && (defined(__arm__) || defined(__aarch64__))
 bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   // Read 1024 bytes from /proc/cpuinfo, which should contain the Features line
   // in all cases.
