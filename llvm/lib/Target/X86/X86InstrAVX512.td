@@ -3208,7 +3208,7 @@ defm VPOR : avx512_binop_rm_vl_dq<0xEB, 0xEB, "vpor", or,
 defm VPXOR : avx512_binop_rm_vl_dq<0xEF, 0xEF, "vpxor", xor,
                                   SSE_INTALU_ITINS_P, HasAVX512, 1>;
 defm VPANDN : avx512_binop_rm_vl_dq<0xDF, 0xDF, "vpandn", X86andnp,
-                                  SSE_INTALU_ITINS_P, HasAVX512, 1>;
+                                  SSE_INTALU_ITINS_P, HasAVX512, 0>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512  FP arithmetic
