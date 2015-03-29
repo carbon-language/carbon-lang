@@ -295,9 +295,11 @@ static void adjustRemoval(const SourceManager &SM, const LangOptions &LangOpts,
   }
 
   if (buffer[end] == ' ') {
+    assert((end + 1 != buffer.size() || buffer.data()[end + 1] == 0) &&
+           "buffer not zero-terminated!");
     if (canRemoveWhitespace(/*left=*/buffer[begin-1],
                             /*beforeWSpace=*/buffer[end-1],
-                            /*right=*/buffer[end+1],
+                            /*right=*/buffer.data()[end + 1], // zero-terminated
                             LangOpts))
       ++len;
     return;
