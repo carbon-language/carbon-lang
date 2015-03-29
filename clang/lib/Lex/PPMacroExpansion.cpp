@@ -1073,6 +1073,9 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   // These expressions are only allowed within a preprocessor directive.
   if (!PP.isParsingIfOrElifDirective()) {
     PP.Diag(LParenLoc, diag::err_pp_directive_required) << II->getName();
+    // Return a valid identifier token.
+    assert(Tok.is(tok::identifier));
+    Tok.setIdentifierInfo(II);
     return false;
   }
 
