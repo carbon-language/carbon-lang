@@ -83,7 +83,7 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
       else
         break;
 
-    if (R->getEntry() == destBB && R->contains(srcBB))
+    if (R && R->getEntry() == destBB && R->contains(srcBB))
       return "constraint=false";
 
     return "";
