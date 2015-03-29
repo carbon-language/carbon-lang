@@ -1415,7 +1415,8 @@ struct DeclaratorChunk {
   static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,
                                     SourceLocation ConstQualLoc,
                                     SourceLocation VolatileQualLoc,
-                                    SourceLocation RestrictQualLoc) {
+                                    SourceLocation RestrictQualLoc,
+                                    SourceLocation AtomicQualLoc) {
     DeclaratorChunk I;
     I.Kind                = Pointer;
     I.Loc                 = Loc;
@@ -1423,6 +1424,7 @@ struct DeclaratorChunk {
     I.Ptr.ConstQualLoc    = ConstQualLoc.getRawEncoding();
     I.Ptr.VolatileQualLoc = VolatileQualLoc.getRawEncoding();
     I.Ptr.RestrictQualLoc = RestrictQualLoc.getRawEncoding();
+    I.Ptr.AtomicQualLoc   = AtomicQualLoc.getRawEncoding();
     I.Ptr.AttrList        = nullptr;
     return I;
   }

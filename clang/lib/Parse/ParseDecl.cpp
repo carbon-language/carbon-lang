@@ -4782,7 +4782,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
       D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc,
                                                 DS.getConstSpecLoc(),
                                                 DS.getVolatileSpecLoc(),
-                                                DS.getRestrictSpecLoc()),
+                                                DS.getRestrictSpecLoc(),
+                                                DS.getAtomicSpecLoc()),
                     DS.getAttributes(),
                     SourceLocation());
     else

@@ -36,3 +36,5 @@ typedef _Atomic(int __attribute__((vector_size(16)))) atomic_vector_int;
 
 struct S
 _Atomic atomic_s_no_missing_semicolon;
+
+int *const _Atomic atomic_return_type();
