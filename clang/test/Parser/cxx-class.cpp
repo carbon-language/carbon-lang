@@ -159,6 +159,7 @@ namespace DtorErrors {
   ~D::D() throw(X) {} // expected-error {{'~' in destructor name should be after nested name specifier}}
 
   ~Undeclared::Undeclared() {} // expected-error {{use of undeclared identifier 'Undeclared'}} expected-error {{'~' in destructor name should be after nested name specifier}}
+  ~Undeclared:: {} // expected-error {{expected identifier}} expected-error {{'~' in destructor name should be after nested name specifier}}
 
   struct S {
     // For another struct's destructor, emit the same diagnostic like for
