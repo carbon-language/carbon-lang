@@ -191,8 +191,8 @@ static bool GetX86XCR0(unsigned *rEAX, unsigned *rEDX) {
   return false;
 #elif defined(_MSC_FULL_VER) && defined(_XCR_XFEATURE_ENABLED_MASK)
   unsigned long long Result = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
-  *rEAX = Value;
-  *rEDX = Value >> 32;
+  *rEAX = Result;
+  *rEDX = Result >> 32;
   return false;
 #else
   return true;
