@@ -45,7 +45,7 @@ public:
       : CGCXXABI(CGM), BaseClassDescriptorType(nullptr),
         ClassHierarchyDescriptorType(nullptr),
         CompleteObjectLocatorType(nullptr), CatchableTypeType(nullptr),
-        ThrowInfoType(nullptr), HandlerMapEntryType(nullptr) {}
+        ThrowInfoType(nullptr), CatchHandlerTypeType(nullptr) {}
 
   bool HasThisReturn(GlobalDecl GD) const override;
   bool hasMostDerivedReturn(GlobalDecl GD) const override;
@@ -85,7 +85,7 @@ public:
 
   llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) override;
   llvm::Constant *
-  getAddrOfCXXHandlerMapEntry(QualType Ty, QualType CatchHandlerType) override;
+  getAddrOfCXXCatchHandlerType(QualType Ty, QualType CatchHandlerType) override;
 
   bool shouldTypeidBeNullChecked(bool IsDeref, QualType SrcRecordTy) override;
   void EmitBadTypeidCall(CodeGenFunction &CGF) override;
@@ -573,16 +573,16 @@ public:
 
   void emitCXXStructor(const CXXMethodDecl *MD, StructorType Type) override;
 
-  llvm::StructType *getHandlerMapEntryType() {
-    if (!HandlerMapEntryType) {
+  llvm::StructType *getCatchHandlerTypeType() {
+    if (!CatchHandlerTypeType) {
       llvm::Type *FieldTypes[] = {
-        CGM.IntTy,                           // Flags
-        getImageRelativeType(CGM.Int8PtrTy), // TypeDescriptor
+          CGM.IntTy,     // Flags
+          CGM.Int8PtrTy, // TypeDescriptor
       };
-      HandlerMapEntryType = llvm::StructType::create(
-          CGM.getLLVMContext(), FieldTypes, "eh.HandlerMapEntry");
+      CatchHandlerTypeType = llvm::StructType::create(
+          CGM.getLLVMContext(), FieldTypes, "eh.CatchHandlerType");
     }
-    return HandlerMapEntryType;
+    return CatchHandlerTypeType;
   }
 
   llvm::StructType *getCatchableTypeType() {
@@ -698,7 +698,7 @@ private:
   llvm::StructType *CatchableTypeType;
   llvm::DenseMap<uint32_t, llvm::StructType *> CatchableTypeArrayTypeMap;
   llvm::StructType *ThrowInfoType;
-  llvm::StructType *HandlerMapEntryType;
+  llvm::StructType *CatchHandlerTypeType;
 };
 
 }
@@ -3193,8 +3193,8 @@ static QualType decomposeTypeForEH(ASTContext &Context, QualType T,
 }
 
 llvm::Constant *
-MicrosoftCXXABI::getAddrOfCXXHandlerMapEntry(QualType Type,
-                                             QualType CatchHandlerType) {
+MicrosoftCXXABI::getAddrOfCXXCatchHandlerType(QualType Type,
+                                              QualType CatchHandlerType) {
   // TypeDescriptors for exceptions never have qualified pointer types,
   // qualifiers are stored seperately in order to support qualification
   // conversions.
@@ -3202,16 +3202,6 @@ MicrosoftCXXABI::getAddrOfCXXHandlerMapEntry(QualType Type,
   Type = decomposeTypeForEH(getContext(), Type, IsConst, IsVolatile);
 
   bool IsReference = CatchHandlerType->isReferenceType();
-
-  SmallString<256> MangledName;
-  {
-    llvm::raw_svector_ostream Out(MangledName);
-    getMangleContext().mangleCXXHandlerMapEntry(Type, IsConst, IsVolatile,
-                                                IsReference, Out);
-  }
-
-  if (llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(MangledName))
-    return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
 
   uint32_t Flags = 0;
   if (IsConst)
@@ -3221,15 +3211,24 @@ MicrosoftCXXABI::getAddrOfCXXHandlerMapEntry(QualType Type,
   if (IsReference)
     Flags |= 8;
 
+  SmallString<256> MangledName;
+  {
+    llvm::raw_svector_ostream Out(MangledName);
+    getMangleContext().mangleCXXCatchHandlerType(Type, Flags, Out);
+  }
+
+  if (llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(MangledName))
+    return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
+
   llvm::Constant *Fields[] = {
-      llvm::ConstantInt::get(CGM.IntTy, Flags),                // Flags
-      getImageRelativeConstant(getAddrOfRTTIDescriptor(Type)), // TypeDescriptor
+      llvm::ConstantInt::get(CGM.IntTy, Flags), // Flags
+      getAddrOfRTTIDescriptor(Type),            // TypeDescriptor
   };
-  llvm::StructType *HandlerMapEntryType = getHandlerMapEntryType();
+  llvm::StructType *CatchHandlerTypeType = getCatchHandlerTypeType();
   auto *Var = new llvm::GlobalVariable(
-      CGM.getModule(), HandlerMapEntryType, /*Constant=*/true,
+      CGM.getModule(), CatchHandlerTypeType, /*Constant=*/true,
       llvm::GlobalValue::PrivateLinkage,
-      llvm::ConstantStruct::get(HandlerMapEntryType, Fields),
+      llvm::ConstantStruct::get(CatchHandlerTypeType, Fields),
       StringRef(MangledName));
   Var->setUnnamedAddr(true);
   Var->setSection("llvm.metadata");
