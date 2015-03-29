@@ -167,7 +167,8 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
         // Note that operand #n has a matching input.
         scInfo.MatchingInput = ConstraintsSoFar.size();
       } else {
-        if (ConstraintsSoFar[N].hasMatchingInput())
+        if (ConstraintsSoFar[N].hasMatchingInput() &&
+            ConstraintsSoFar[N].MatchingInput != ConstraintsSoFar.size())
           return true;
         // Note that operand #n has a matching input.
         ConstraintsSoFar[N].MatchingInput = ConstraintsSoFar.size();
