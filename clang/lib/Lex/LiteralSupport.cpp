@@ -597,7 +597,8 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
       if (isFloat) break;               // LF invalid.
 
       // Check for long long.  The L's need to be adjacent and the same case.
-      if (s+1 != ThisTokEnd && s[1] == s[0]) {
+      if (s[1] == s[0]) {
+        assert(s + 1 < ThisTokEnd && "didn't maximally munch?");
         if (isFPConstant) break;        // long long invalid for floats.
         isLongLong = true;
         ++s;  // Eat both of them.
@@ -611,54 +612,45 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
         if (isLong || isLongLong || MicrosoftInteger)
           break;
 
-        // Allow i8, i16, i32, i64, and i128.
-        if (s + 1 != ThisTokEnd) {
+        if (!isFPConstant) {
+          // Allow i8, i16, i32, i64, and i128.
           switch (s[1]) {
-            case '8':
-              if (isFPConstant) break;
-              s += 2; // i8 suffix
-              MicrosoftInteger = 8;
-              break;
-            case '1':
-              if (isFPConstant) break;
-              if (s + 2 == ThisTokEnd) break;
-              if (s[2] == '6') {
-                s += 3; // i16 suffix
-                MicrosoftInteger = 16;
-              }
-              else if (s[2] == '2') {
-                if (s + 3 == ThisTokEnd) break;
-                if (s[3] == '8') {
-                  s += 4; // i128 suffix
-                  MicrosoftInteger = 128;
-                }
-              }
-              break;
-            case '3':
-              if (isFPConstant) break;
-              if (s + 2 == ThisTokEnd) break;
-              if (s[2] == '2') {
-                s += 3; // i32 suffix
-                MicrosoftInteger = 32;
-              }
-              break;
-            case '6':
-              if (isFPConstant) break;
-              if (s + 2 == ThisTokEnd) break;
-              if (s[2] == '4') {
-                s += 3; // i64 suffix
-                MicrosoftInteger = 64;
-              }
-              break;
-            default:
-              break;
-          }
-          if (MicrosoftInteger)
+          case '8':
+            s += 2; // i8 suffix
+            MicrosoftInteger = 8;
             break;
+          case '1':
+            if (s[2] == '6') {
+              s += 3; // i16 suffix
+              MicrosoftInteger = 16;
+            } else if (s[2] == '2' && s[3] == '8') {
+              s += 4; // i128 suffix
+              MicrosoftInteger = 128;
+            }
+            break;
+          case '3':
+            if (s[2] == '2') {
+              s += 3; // i32 suffix
+              MicrosoftInteger = 32;
+            }
+            break;
+          case '6':
+            if (s[2] == '4') {
+              s += 3; // i64 suffix
+              MicrosoftInteger = 64;
+            }
+            break;
+          default:
+            break;
+          }
+        }
+        if (MicrosoftInteger) {
+          assert(s <= ThisTokEnd && "didn't maximally munch?");
+          break;
         }
       }
       // "i", "if", and "il" are user-defined suffixes in C++1y.
-      if (PP.getLangOpts().CPlusPlus14 && *s == 'i')
+      if (*s == 'i' && PP.getLangOpts().CPlusPlus14)
         break;
       // fall through.
     case 'j':
