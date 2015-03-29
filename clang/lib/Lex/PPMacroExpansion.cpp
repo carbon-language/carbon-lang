@@ -1461,9 +1461,11 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Value = EvaluateHasInclude(Tok, II, *this);
     else
       Value = EvaluateHasIncludeNext(Tok, II, *this);
+
+    if (Tok.isNot(tok::r_paren))
+      return;
     OS << (int)Value;
-    if (Tok.is(tok::r_paren))
-      Tok.setKind(tok::numeric_constant);
+    Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__has_warning) {
     // The argument should be a parenthesized string literal.
     // The argument to these builtins should be a parenthesized identifier.

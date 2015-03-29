@@ -163,6 +163,18 @@ __has_include
 #if __has_include
 #endif
 
+// expected-error@+1 {{missing '(' after '__has_include'}}
+#if __has_include'x'
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}}
+#if __has_include('x'
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME}} expected-error@+1 {{expected end of line in preprocessor expression}}
+#if __has_include('x')
+#endif
+
 // expected-error@+1 {{missing ')' after '__has_include'}}  // expected-error@+1 {{expected value in expression}}  // expected-note@+1 {{to match this '('}}
 #if __has_include(<stdint.h>
 #endif
