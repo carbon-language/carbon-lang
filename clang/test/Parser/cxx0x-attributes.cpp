@@ -346,3 +346,10 @@ namespace {
 deprecated
 ]] void bad();
 }
+
+#define attr_name bitand
+#define attr_name_2(x) x
+#define attr_name_3(x, y) x##y
+[[attr_name, attr_name_2(bitor), attr_name_3(com, pl)]] int macro_attrs; // expected-warning {{unknown attribute 'compl' ignored}} \
+   expected-warning {{unknown attribute 'bitor' ignored}} \
+   expected-warning {{unknown attribute 'bitand' ignored}}
