@@ -59,7 +59,7 @@ class NoreturnUnwind(TestBase):
         # I'm going to assume that abort() ends up calling/invoking another
         # function before halting the process.  In which case if abort_frame_number
         # equals 0, we didn't find abort() in the backtrace.
-        if abort_frame_number == 0:
+        if abort_frame_number == len(thread.frames):
             self.fail("Unable to find abort() in backtrace.")
 
         func_c_frame_number = abort_frame_number + 1
