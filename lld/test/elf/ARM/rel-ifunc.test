@@ -19,13 +19,13 @@
 # CHECK: 0040007c g       *ABS*	00000000 __rel_iplt_end
 
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_ARM
   Flags:           [ EF_ARM_EABI_VER5 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -36,7 +36,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x0000000000000040
         Symbol:          myfunc1
         Type:            R_ARM_MOVW_ABS_NC
@@ -58,8 +58,8 @@ Sections:
       - Offset:          0x000000000000012C
         Symbol:          myfunc
         Type:            R_ARM_CALL
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
@@ -75,7 +75,7 @@ Symbols:
       Section:         .text
       Value:           0x0000000000000080
       Size:            0x00000000000000A0
-  Global:          
+  Global:
     - Name:            myfunc1
       Type:            STT_FUNC
       Section:         .text
@@ -95,7 +95,7 @@ Symbols:
       Section:         .text
       Value:           0x0000000000000120
       Size:            0x000000000000001C
-  Weak:            
+  Weak:
     - Name:            __rel_iplt_start
     - Name:            __rel_iplt_end
 ...
