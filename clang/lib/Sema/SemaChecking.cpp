@@ -551,6 +551,12 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
         if (CheckX86BuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;
+      case llvm::Triple::ppc:
+      case llvm::Triple::ppc64:
+      case llvm::Triple::ppc64le:
+        if (CheckPPCBuiltinFunctionCall(BuiltinID, TheCall))
+          return ExprError();
+        break;
       default:
         break;
     }
@@ -892,6 +898,27 @@ bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Mips::BI__builtin_mips_prepend: i = 2; l = 0; u = 31; break;
   }
 
+  return SemaBuiltinConstantArgRange(TheCall, i, l, u);
+}
+
+bool Sema::CheckPPCBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
+  unsigned i = 0, l = 0, u = 0;
+  switch (BuiltinID) {
+  default: return false;
+  case PPC::BI__builtin_altivec_crypto_vshasigmaw:
+  case PPC::BI__builtin_altivec_crypto_vshasigmad:
+    return SemaBuiltinConstantArgRange(TheCall, 1, 0, 1) ||
+           SemaBuiltinConstantArgRange(TheCall, 2, 0, 15);
+  case PPC::BI__builtin_tbegin:
+  case PPC::BI__builtin_tend: i = 0; l = 0; u = 1; break;
+  case PPC::BI__builtin_tsr: i = 0; l = 0; u = 7; break;
+  case PPC::BI__builtin_tabortwc:
+  case PPC::BI__builtin_tabortdc: i = 0; l = 0; u = 31; break;
+  case PPC::BI__builtin_tabortwci:
+  case PPC::BI__builtin_tabortdci:
+    return SemaBuiltinConstantArgRange(TheCall, 0, 0, 31) ||
+           SemaBuiltinConstantArgRange(TheCall, 2, 0, 31);
+  }
   return SemaBuiltinConstantArgRange(TheCall, i, l, u);
 }
 
