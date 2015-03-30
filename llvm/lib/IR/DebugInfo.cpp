@@ -343,24 +343,19 @@ bool DISubprogram::Verify() const {
   if (auto *F = getFunction()) {
     for (auto &BB : *F) {
       for (auto &I : BB) {
-        DebugLoc DL = I.getDebugLoc();
-        if (DL.isUnknown())
+        MDLocation *DL =
+            cast_or_null<MDLocation>(I.getDebugLoc().getAsMDNode());
+        if (!DL)
           continue;
 
-        MDNode *Scope = nullptr;
-        MDNode *IA = nullptr;
         // walk the inlined-at scopes
-        while ((IA = DL.getInlinedAt()))
-          DL = DebugLoc::getFromDILocation(IA);
-        DL.getScopeAndInlinedAt(Scope, IA);
+        while (MDLocation *IA = DL->getInlinedAt())
+          DL = IA;
+        MDScope *Scope = DL->getScope();
         if (!Scope)
           return false;
-        assert(!IA);
-        while (!DIDescriptor(Scope).isSubprogram()) {
-          DILexicalBlockFile D(Scope);
-          Scope = D.isLexicalBlockFile()
-                      ? D.getScope()
-                      : DebugLoc::getFromDILexicalBlock(Scope).getScope();
+        while (!isa<MDSubprogram>(Scope)) {
+          Scope = cast<MDLexicalBlockBase>(Scope)->getScope();
           if (!Scope)
             return false;
         }
