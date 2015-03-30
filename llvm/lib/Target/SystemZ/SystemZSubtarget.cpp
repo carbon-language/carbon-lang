@@ -10,7 +10,6 @@
 #include "SystemZSubtarget.h"
 #include "MCTargetDesc/SystemZMCTargetDesc.h"
 #include "llvm/IR/GlobalValue.h"
-#include "llvm/Support/Host.h"
 
 using namespace llvm;
 
@@ -28,10 +27,6 @@ SystemZSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "generic";
-#if defined(__linux__) && defined(__s390x__)
-  if (CPUName == "generic")
-    CPUName = sys::getHostCPUName();
-#endif
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
   return *this;
