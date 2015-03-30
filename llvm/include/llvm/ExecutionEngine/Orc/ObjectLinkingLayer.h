@@ -15,6 +15,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_OBJECTLINKINGLAYER_H
 
 #include "JITSymbol.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include <list>
