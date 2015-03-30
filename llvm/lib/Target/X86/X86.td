@@ -273,17 +273,15 @@ def : SilvermontProc<"silvermont">;
 def : SilvermontProc<"slm">; // Legacy alias.
 
 // "Arrandale" along with corei3 and corei5
-class NehalemProc<string Name, list<SubtargetFeature> AdditionalFeatures>
-    : ProcessorModel<Name, SandyBridgeModel, !listconcat([
-                                                           FeatureSSE42,
-                                                           FeatureCMPXCHG16B,
-                                                           FeatureSlowBTMem,
-                                                           FeatureFastUAMem,
-                                                           FeaturePOPCNT
-                                                         ],
-                                                         AdditionalFeatures)>;
-def : NehalemProc<"nehalem", []>;
-def : NehalemProc<"corei7", [FeatureAES]>;
+class NehalemProc<string Name> : ProcessorModel<Name, SandyBridgeModel, [
+                                   FeatureSSE42,
+                                   FeatureCMPXCHG16B,
+                                   FeatureSlowBTMem,
+                                   FeatureFastUAMem,
+                                   FeaturePOPCNT
+                                 ]>;
+def : NehalemProc<"nehalem">;
+def : NehalemProc<"corei7">;
 
 // Westmere is a similar machine to nehalem with some additional features.
 // Westmere is the corei3/i5/i7 path from nehalem to sandybridge
