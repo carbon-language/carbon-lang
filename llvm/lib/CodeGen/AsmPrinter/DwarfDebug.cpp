@@ -704,7 +704,8 @@ void DwarfDebug::ensureAbstractVariableIsCreated(const DIVariable &DV,
   if (getExistingAbstractVariable(DV, Cleansed))
     return;
 
-  createAbstractVariable(Cleansed, LScopes.getOrCreateAbstractScope(ScopeNode));
+  createAbstractVariable(Cleansed, LScopes.getOrCreateAbstractScope(
+                                       cast<MDLocalScope>(ScopeNode)));
 }
 
 void
@@ -714,7 +715,8 @@ DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(const DIVariable &DV,
   if (getExistingAbstractVariable(DV, Cleansed))
     return;
 
-  if (LexicalScope *Scope = LScopes.findAbstractScope(ScopeNode))
+  if (LexicalScope *Scope =
+          LScopes.findAbstractScope(cast_or_null<MDLocalScope>(ScopeNode)))
     createAbstractVariable(Cleansed, Scope);
 }
 
@@ -901,10 +903,10 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
       continue;
 
     LexicalScope *Scope = nullptr;
-    if (MDNode *IA = DV.getInlinedAt())
-      Scope = LScopes.findInlinedScope(DV.getContext(), IA);
+    if (MDLocation *IA = DV.get()->getInlinedAt())
+      Scope = LScopes.findInlinedScope(DV.get()->getScope(), IA);
     else
-      Scope = LScopes.findLexicalScope(DV.getContext());
+      Scope = LScopes.findLexicalScope(DV.get()->getScope());
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
@@ -943,7 +945,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
     assert(DV.isVariable());
     if (!Processed.insert(DV).second)
       continue;
-    if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext())) {
+    if (LexicalScope *Scope = LScopes.findLexicalScope(DV.get()->getScope())) {
       ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
       DIExpression NoExpr;
       ConcreteVariables.push_back(make_unique<DbgVariable>(DV, NoExpr, this));
