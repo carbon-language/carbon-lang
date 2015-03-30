@@ -889,21 +889,24 @@ void DIDescriptor::print(raw_ostream &OS) const {
 
 static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
                           const LLVMContext &Ctx) {
-  if (!DL.isUnknown()) { // Print source line info.
-    DIScope Scope(DL.getScope(Ctx));
-    assert(Scope.isScope() && "Scope of a DebugLoc should be a DIScope.");
-    // Omit the directory, because it's likely to be long and uninteresting.
-    CommentOS << Scope.getFilename();
-    CommentOS << ':' << DL.getLine();
-    if (DL.getCol() != 0)
-      CommentOS << ':' << DL.getCol();
-    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(DL.getInlinedAt(Ctx));
-    if (!InlinedAtDL.isUnknown()) {
-      CommentOS << " @[ ";
-      printDebugLoc(InlinedAtDL, CommentOS, Ctx);
-      CommentOS << " ]";
-    }
-  }
+  if (DL.isUnknown())
+    return;
+
+  DIScope Scope(DL.getScope(Ctx));
+  assert(Scope.isScope() && "Scope of a DebugLoc should be a DIScope.");
+  // Omit the directory, because it's likely to be long and uninteresting.
+  CommentOS << Scope.getFilename();
+  CommentOS << ':' << DL.getLine();
+  if (DL.getCol() != 0)
+    CommentOS << ':' << DL.getCol();
+
+  DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(DL.getInlinedAt(Ctx));
+  if (InlinedAtDL.isUnknown())
+    return;
+
+  CommentOS << " @[ ";
+  printDebugLoc(InlinedAtDL, CommentOS, Ctx);
+  CommentOS << " ]";
 }
 
 void DIVariable::printExtendedName(raw_ostream &OS) const {
