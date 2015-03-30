@@ -178,7 +178,7 @@ eh.resume:                                        ; preds = %catch.dispatch7
 ; CHECK: }
 }
 
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[PARENTFRAME:\%.+]] = alloca i8*
 ; CHECK:   store volatile i8* %1, i8** [[PARENTFRAME]]
@@ -189,15 +189,15 @@ eh.resume:                                        ; preds = %catch.dispatch7
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont15)
 ; CHECK: }
 
-; CHECK-LABEL: define internal void @"\01?test@@YAXXZ.cleanup"(i8*, i8*) {
+; CHECK-LABEL: define internal void @"\01?test@@YAXXZ.cleanup"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_OBJ:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[OBJ_PTR:\%.+]] = bitcast i8* %obj.i8 to %class.SomeClass*
-; CHECK:   call void @"\01??1SomeClass@@QEAA@XZ"(%class.SomeClass* [[OBJ_PTR]]) #3
+; CHECK:   call void @"\01??1SomeClass@@QEAA@XZ"(%class.SomeClass* [[OBJ_PTR]])
 ; CHECK:   ret void
 ; CHECK: }
 
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*) {
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[PARENTFRAME:\%.+]] = alloca i8*
 ; CHECK:   store volatile i8* %1, i8** [[PARENTFRAME]]

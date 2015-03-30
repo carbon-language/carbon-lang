@@ -21,7 +21,7 @@ target triple = "x86_64-pc-windows-msvc"
 @_ZTIi = external constant i8*
 
 ; The function entry will be rewritten like this.
-; CHECK: define void @_Z4testv() #0 {
+; CHECK: define void @_Z4testv()
 ; CHECK: entry:
 ; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   call void (...)* @llvm.frameescape(i32* [[I_PTR]])
@@ -94,7 +94,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: }
 }
 
-; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
+; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
 ; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*

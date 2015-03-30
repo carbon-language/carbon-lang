@@ -80,13 +80,15 @@ protected:
   /// `false' otherwise.
   bool callToNoUnwindFunction(const MachineInstr *MI);
 
+  void computePadMap(const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
+                     RangeMapType &PadMap);
+
   /// Compute the call-site table.  The entry for an invoke has a try-range
   /// containing the call, a non-zero landing pad and an appropriate action.
   /// The entry for an ordinary call has a try-range containing the call and
   /// zero for the landing pad and the action.  Calls marked 'nounwind' have
   /// no entry and must not be contained in the try-range of any entry - they
   /// form gaps in the table.  Entries must be ordered by try-range address.
-
   void computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
                             const SmallVectorImpl<const LandingPadInfo *> &LPs,
                             const SmallVectorImpl<unsigned> &FirstActions);

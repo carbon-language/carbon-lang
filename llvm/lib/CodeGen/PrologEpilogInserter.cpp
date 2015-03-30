@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/StackProtector.h"
+#include "llvm/CodeGen/WinEHFuncInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/LLVMContext.h"
@@ -751,6 +752,25 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
 void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
   if (!TFI.needsFrameIndexResolution(Fn)) return;
+
+  MachineModuleInfo &MMI = Fn.getMMI();
+  const Function *F = Fn.getFunction();
+  const Function *ParentF = MMI.getWinEHParent(F);
+  unsigned FrameReg;
+  if (F == ParentF) {
+    WinEHFuncInfo &FuncInfo = MMI.getWinEHFuncInfo(Fn.getFunction());
+    // FIXME: This should be unconditional but we have bugs in the preparation
+    // pass.
+    if (FuncInfo.UnwindHelpFrameIdx != INT_MAX)
+      FuncInfo.UnwindHelpFrameOffset = TFI.getFrameIndexReferenceFromSP(
+          Fn, FuncInfo.UnwindHelpFrameIdx, FrameReg);
+  } else if (MMI.hasWinEHFuncInfo(F)) {
+    WinEHFuncInfo &FuncInfo = MMI.getWinEHFuncInfo(Fn.getFunction());
+    auto I = FuncInfo.CatchHandlerParentFrameObjIdx.find(F);
+    if (I != FuncInfo.CatchHandlerParentFrameObjIdx.end())
+      FuncInfo.CatchHandlerParentFrameObjOffset[F] =
+          TFI.getFrameIndexReferenceFromSP(Fn, I->second, FrameReg);
+  }
 
   // Store SPAdj at exit of a basic block.
   SmallVector<int, 8> SPState;

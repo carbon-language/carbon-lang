@@ -58,22 +58,25 @@ class MachineFunction;
 class Module;
 class PointerType;
 class StructType;
+struct WinEHFuncInfo;
 
 //===----------------------------------------------------------------------===//
 /// LandingPadInfo - This structure is used to retain landing pad info for
 /// the current function.
 ///
 struct LandingPadInfo {
-  MachineBasicBlock *LandingPadBlock;    // Landing pad block.
-  SmallVector<MCSymbol*, 1> BeginLabels; // Labels prior to invoke.
-  SmallVector<MCSymbol*, 1> EndLabels;   // Labels after invoke.
-  SmallVector<MCSymbol*, 1> ClauseLabels; // Labels for each clause.
-  MCSymbol *LandingPadLabel;             // Label at beginning of landing pad.
-  const Function *Personality;           // Personality function.
-  std::vector<int> TypeIds;              // List of type ids (filters negative)
+  MachineBasicBlock *LandingPadBlock;      // Landing pad block.
+  SmallVector<MCSymbol *, 1> BeginLabels;  // Labels prior to invoke.
+  SmallVector<MCSymbol *, 1> EndLabels;    // Labels after invoke.
+  SmallVector<MCSymbol *, 1> ClauseLabels; // Labels for each clause.
+  MCSymbol *LandingPadLabel;               // Label at beginning of landing pad.
+  const Function *Personality;             // Personality function.
+  std::vector<int> TypeIds;               // List of type ids (filters negative).
+  int WinEHState;                         // WinEH specific state number.
 
   explicit LandingPadInfo(MachineBasicBlock *MBB)
-    : LandingPadBlock(MBB), LandingPadLabel(nullptr), Personality(nullptr) {}
+      : LandingPadBlock(MBB), LandingPadLabel(nullptr), Personality(nullptr),
+        WinEHState(-1) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -172,6 +175,8 @@ class MachineModuleInfo : public ImmutablePass {
 
   EHPersonality PersonalityTypeCache;
 
+  DenseMap<const Function *, std::unique_ptr<WinEHFuncInfo>> FuncInfoMap;
+
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -206,6 +211,12 @@ public:
 
   void setModule(const Module *M) { TheModule = M; }
   const Module *getModule() const { return TheModule; }
+
+  const Function *getWinEHParent(const Function *F) const;
+  WinEHFuncInfo &getWinEHFuncInfo(const Function *F);
+  bool hasWinEHFuncInfo(const Function *F) const {
+    return FuncInfoMap.count(getWinEHParent(F)) > 0;
+  }
 
   /// getInfo - Keep track of various per-function pieces of information for
   /// backends that would like to do so.
@@ -303,6 +314,8 @@ public:
   /// information.
   void addPersonality(MachineBasicBlock *LandingPad,
                       const Function *Personality);
+
+  void addWinEHState(MachineBasicBlock *LandingPad, int State);
 
   /// getPersonalityIndex - Get index of the current personality function inside
   /// Personalitites array

@@ -35,6 +35,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/CodeGen/WinEHFuncInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -5360,6 +5361,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::clear_cache:
     return TLI.getClearCacheBuiltinName();
+  case Intrinsic::eh_actions:
+    setValue(&I, DAG.getUNDEF(TLI.getPointerTy()));
+    return nullptr;
   case Intrinsic::donothing:
     // ignore
     return nullptr;
@@ -5452,8 +5456,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     assert(FuncInfo.StaticAllocaMap.count(Slot) &&
            "can only use static allocas with llvm.eh.parentframe");
     int FI = FuncInfo.StaticAllocaMap[Slot];
-    // TODO: Save this in the not-yet-existent WinEHFuncInfo struct.
-    (void)FI;
+    MachineFunction &MF = DAG.getMachineFunction();
+    const Function *F = MF.getFunction();
+    MachineModuleInfo &MMI = MF.getMMI();
+    MMI.getWinEHFuncInfo(F).CatchHandlerParentFrameObjIdx[F] = FI;
     return nullptr;
   }
   case Intrinsic::eh_unwindhelp: {
@@ -5462,8 +5468,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     assert(FuncInfo.StaticAllocaMap.count(Slot) &&
            "can only use static allocas with llvm.eh.unwindhelp");
     int FI = FuncInfo.StaticAllocaMap[Slot];
-    // TODO: Save this in the not-yet-existent WinEHFuncInfo struct.
-    (void)FI;
+    MachineFunction &MF = DAG.getMachineFunction();
+    MachineModuleInfo &MMI = MF.getMMI();
+    MMI.getWinEHFuncInfo(MF.getFunction()).UnwindHelpFrameIdx = FI;
     return nullptr;
   }
   }

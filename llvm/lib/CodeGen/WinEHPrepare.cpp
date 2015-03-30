@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/LibCallSemantics.h"
+#include "llvm/CodeGen/WinEHFuncInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
@@ -51,12 +52,7 @@ typedef MapVector<Value *, TinyPtrVector<AllocaInst *>> FrameVarInfoMap;
 
 typedef SmallSet<BasicBlock *, 4> VisitedBlockSet;
 
-enum ActionType { Catch, Cleanup };
-
 class LandingPadActions;
-class ActionHandler;
-class CatchHandler;
-class CleanupHandler;
 class LandingPadMap;
 
 typedef DenseMap<const BasicBlock *, CatchHandler *> CatchHandlerMapTy;
@@ -242,66 +238,6 @@ public:
                              BasicBlock *NewBB) override;
 };
 
-class ActionHandler {
-public:
-  ActionHandler(BasicBlock *BB, ActionType Type)
-      : StartBB(BB), Type(Type), HandlerBlockOrFunc(nullptr) {}
-
-  ActionType getType() const { return Type; }
-  BasicBlock *getStartBlock() const { return StartBB; }
-
-  bool hasBeenProcessed() { return HandlerBlockOrFunc != nullptr; }
-
-  void setHandlerBlockOrFunc(Constant *F) { HandlerBlockOrFunc = F; }
-  Constant *getHandlerBlockOrFunc() { return HandlerBlockOrFunc; }
-
-private:
-  BasicBlock *StartBB;
-  ActionType Type;
-
-  // Can be either a BlockAddress or a Function depending on the EH personality.
-  Constant *HandlerBlockOrFunc;
-};
-
-class CatchHandler : public ActionHandler {
-public:
-  CatchHandler(BasicBlock *BB, Constant *Selector, BasicBlock *NextBB)
-      : ActionHandler(BB, ActionType::Catch), Selector(Selector),
-        NextBB(NextBB), ExceptionObjectVar(nullptr) {}
-
-  // Method for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ActionHandler *H) {
-    return H->getType() == ActionType::Catch;
-  }
-
-  Constant *getSelector() const { return Selector; }
-  BasicBlock *getNextBB() const { return NextBB; }
-
-  const Value *getExceptionVar() { return ExceptionObjectVar; }
-  TinyPtrVector<BasicBlock *> &getReturnTargets() { return ReturnTargets; }
-
-  void setExceptionVar(const Value *Val) { ExceptionObjectVar = Val; }
-  void setReturnTargets(TinyPtrVector<BasicBlock *> &Targets) {
-    ReturnTargets = Targets;
-  }
-
-private:
-  Constant *Selector;
-  BasicBlock *NextBB;
-  const Value *ExceptionObjectVar;
-  TinyPtrVector<BasicBlock *> ReturnTargets;
-};
-
-class CleanupHandler : public ActionHandler {
-public:
-  CleanupHandler(BasicBlock *BB) : ActionHandler(BB, ActionType::Cleanup) {}
-
-  // Method for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ActionHandler *H) {
-    return H->getType() == ActionType::Cleanup;
-  }
-};
-
 class LandingPadActions {
 public:
   LandingPadActions() : HasCleanupHandlers(false) {}
@@ -314,6 +250,7 @@ public:
 
   bool includesCleanup() const { return HasCleanupHandlers; }
 
+  SmallVectorImpl<ActionHandler *> &actions() { return Actions; }
   SmallVectorImpl<ActionHandler *>::iterator begin() { return Actions.begin(); }
   SmallVectorImpl<ActionHandler *>::iterator end() { return Actions.end(); }
 
@@ -454,7 +391,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
     // Replace the landing pad with a new llvm.eh.action based landing pad.
     BasicBlock *NewLPadBB = BasicBlock::Create(Context, "lpad", &F, LPadBB);
     assert(!isa<PHINode>(LPadBB->begin()));
-    Instruction *NewLPad = LPad->clone();
+    auto *NewLPad = cast<LandingPadInst>(LPad->clone());
     NewLPadBB->getInstList().push_back(NewLPad);
     while (!pred_empty(LPadBB)) {
       auto *pred = *pred_begin(LPadBB);
@@ -502,6 +439,8 @@ bool WinEHPrepare::prepareExceptionHandlers(
   // If nothing got outlined, there is no more processing to be done.
   if (!HandlersOutlined)
     return false;
+
+  F.addFnAttr("wineh-parent", F.getName());
 
   // Delete any blocks that were only used by handlers that were outlined above.
   removeUnreachableBlocks(F);
@@ -609,7 +548,8 @@ bool WinEHPrepare::prepareExceptionHandlers(
   Type *UnwindHelpTy = Type::getInt64Ty(Context);
   AllocaInst *UnwindHelp =
       new AllocaInst(UnwindHelpTy, "unwindhelp", &F.getEntryBlock().front());
-  Builder.CreateStore(llvm::ConstantInt::get(UnwindHelpTy, -2), UnwindHelp);
+  Builder.CreateStore(llvm::ConstantInt::get(UnwindHelpTy, -2), UnwindHelp,
+                      /*isVolatile=*/true);
   Function *UnwindHelpFn =
       Intrinsic::getDeclaration(M, Intrinsic::eh_unwindhelp);
   Builder.CreateCall(UnwindHelpFn,
@@ -680,6 +620,8 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
     Handler = Function::Create(FnType, GlobalVariable::InternalLinkage,
                                SrcFn->getName() + ".cleanup", M);
   }
+
+  Handler->addFnAttr("wineh-parent", SrcFn->getName());
 
   // Generate a standard prolog to setup the frame recovery structure.
   IRBuilder<> Builder(Context);

@@ -31,7 +31,7 @@ $"\01??_R0H@8" = comdat any
 @"\01??_R0M@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".M\00" }, comdat
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
 
-; CHECK: define void @"\01?test@@YAXXZ"() #0 {
+; CHECK: define void @"\01?test@@YAXXZ"()
 ; CHECK: entry:
 ; CHECK:   %i = alloca i32, align 4
 ; CHECK:   %f = alloca float, align 4
@@ -135,7 +135,7 @@ eh.resume:                                        ; %catch.dispatch3
 ; CHECK: }
 }
 
-; CHECK: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
+; CHECK: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[I_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
@@ -158,7 +158,7 @@ eh.resume:                                        ; %catch.dispatch3
 ;
 ; CHECK: }
 
-; CHECK: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*) {
+; CHECK: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_F1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[F_PTR1:\%.+]] = bitcast i8* [[RECOVER_F1]] to float*

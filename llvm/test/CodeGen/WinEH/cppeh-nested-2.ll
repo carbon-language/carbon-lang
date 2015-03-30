@@ -38,7 +38,7 @@ target triple = "x86_64-pc-windows-msvc"
 @_ZTIi = external constant i8*
 
 ; The function entry should be rewritten like this.
-; CHECK: define void @_Z4testv() #0 {
+; CHECK: define void @_Z4testv()
 ; CHECK: entry:
 ; CHECK:   %outer = alloca %class.Outer, align 1
 ; CHECK:   %inner = alloca %class.Inner, align 1
@@ -241,7 +241,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 }
 
 ; This catch handler should be outlined.
-; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
+; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
 ; CHECK:   [[F_PTR:\%.+]] = bitcast i8* [[RECOVER_F]] to float*
@@ -251,7 +251,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; CHECK: }
 
 ; This catch handler should be outlined.
-; CHECK: define internal i8* @_Z4testv.catch1(i8*, i8*) {
+; CHECK: define internal i8* @_Z4testv.catch1(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 1)
 ; CHECK:   [[I_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
@@ -268,7 +268,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; CHECK: }
 
 ; This cleanup handler should be outlined.
-; CHECK: define internal void @_Z4testv.cleanup(i8*, i8*) {
+; CHECK: define internal void @_Z4testv.cleanup(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_OUTER:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 2)
 ; CHECK:   [[OUTER_PTR:\%.+]] = bitcast i8* [[RECOVER_OUTER]] to %class.Outer*
@@ -277,7 +277,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; CHECK: }
 
 ; This cleanup handler should be outlined.
-; CHECK: define internal void @_Z4testv.cleanup2(i8*, i8*) {
+; CHECK: define internal void @_Z4testv.cleanup2(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_INNER:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 3)
 ; CHECK:   [[INNER_PTR:\%.+]] = bitcast i8* [[RECOVER_INNER]] to %class.Inner*

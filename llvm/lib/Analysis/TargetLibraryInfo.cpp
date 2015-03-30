@@ -409,9 +409,7 @@ static StringRef sanitizeFunctionName(StringRef funcName) {
 
   // Check for \01 prefix that is used to mangle __asm declarations and
   // strip it if present.
-  if (funcName.front() == '\01')
-    funcName = funcName.substr(1);
-  return funcName;
+  return GlobalValue::getRealLinkageName(funcName);
 }
 
 bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,

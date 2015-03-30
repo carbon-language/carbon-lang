@@ -47,7 +47,7 @@ $"\01??_R0H@8" = comdat any
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
 
 ; The function entry should be rewritten like this.
-; CHECK: define void @"\01?test@@YAXXZ"() #0 {
+; CHECK: define void @"\01?test@@YAXXZ"()
 ; CHECK: entry:
 ; CHECK:   [[NUMEXCEPTIONS_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   [[EXCEPTIONVAL_PTR:\%.+]] = alloca [10 x i32], align 16
@@ -196,7 +196,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 }
 
 ; The following catch handler should be outlined.
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_E:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[E_PTR1:\%.+]] = bitcast i8* [[RECOVER_E]] to i32*

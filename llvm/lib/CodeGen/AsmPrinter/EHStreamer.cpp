@@ -188,6 +188,23 @@ bool EHStreamer::callToNoUnwindFunction(const MachineInstr *MI) {
   return MarkedNoUnwind;
 }
 
+void EHStreamer::computePadMap(
+    const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
+    RangeMapType &PadMap) {
+  // Invokes and nounwind calls have entries in PadMap (due to being bracketed
+  // by try-range labels when lowered).  Ordinary calls do not, so appropriate
+  // try-ranges for them need be deduced so we can put them in the LSDA.
+  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+    const LandingPadInfo *LandingPad = LandingPads[i];
+    for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
+      MCSymbol *BeginLabel = LandingPad->BeginLabels[j];
+      assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
+      PadRange P = { i, j };
+      PadMap[BeginLabel] = P;
+    }
+  }
+}
+
 /// Compute the call-site table.  The entry for an invoke has a try-range
 /// containing the call, a non-zero landing pad, and an appropriate action.  The
 /// entry for an ordinary call has a try-range containing the call and zero for
@@ -198,19 +215,8 @@ void EHStreamer::
 computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
                      const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      const SmallVectorImpl<unsigned> &FirstActions) {
-  // Invokes and nounwind calls have entries in PadMap (due to being bracketed
-  // by try-range labels when lowered).  Ordinary calls do not, so appropriate
-  // try-ranges for them need be deduced so we can put them in the LSDA.
   RangeMapType PadMap;
-  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-    const LandingPadInfo *LandingPad = LandingPads[i];
-    for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
-      MCSymbol *BeginLabel = LandingPad->BeginLabels[j];
-      assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
-      PadRange P = { i, j };
-      PadMap[BeginLabel] = P;
-    }
-  }
+  computePadMap(LandingPads, PadMap);
 
   // The end label of the previous invoke or nounwind try-range.
   MCSymbol *LastLabel = nullptr;

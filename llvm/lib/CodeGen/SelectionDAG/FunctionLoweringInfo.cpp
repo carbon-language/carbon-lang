@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/WinEHFuncInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -79,12 +80,34 @@ static ISD::NodeType getPreferredExtendForValue(const Value *V) {
   return ExtendKind;
 }
 
+namespace {
+struct WinEHNumbering {
+  WinEHNumbering(WinEHFuncInfo &FuncInfo) : FuncInfo(FuncInfo), NextState(0) {}
+
+  WinEHFuncInfo &FuncInfo;
+  int NextState;
+
+  SmallVector<ActionHandler *, 4> HandlerStack;
+
+  int currentEHNumber() const {
+    return HandlerStack.empty() ? -1 : HandlerStack.back()->getEHState();
+  }
+
+  void parseEHActions(const IntrinsicInst *II,
+                      SmallVectorImpl<ActionHandler *> &Actions);
+  void createUnwindMapEntry(int ToState, ActionHandler *AH);
+  void proccessCallSite(ArrayRef<ActionHandler *> Actions, ImmutableCallSite CS);
+  void calculateStateNumbers(const Function &F);
+};
+}
+
 void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
                                SelectionDAG *DAG) {
   Fn = &fn;
   MF = &mf;
   TLI = MF->getSubtarget().getTargetLowering();
   RegInfo = &MF->getRegInfo();
+  MachineModuleInfo &MMI = MF->getMMI();
 
   // Check whether the function can return without sret-demotion.
   SmallVector<ISD::OutputArg, 4> Outs;
@@ -178,7 +201,6 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       // during the initial isel pass through the IR so that it is done
       // in a predictable order.
       if (const DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(I)) {
-        MachineModuleInfo &MMI = MF->getMMI();
         DIVariable DIVar(DI->getVariable());
         assert((!DIVar || DIVar.isVariable()) &&
           "Variable in DbgDeclareInst should be either null or a DIVariable.");
@@ -250,8 +272,127 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
   // Mark landing pad blocks.
   for (BB = Fn->begin(); BB != EB; ++BB)
-    if (const InvokeInst *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
+    if (const auto *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
       MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
+
+  // Calculate EH numbers for WinEH.
+  if (fn.getFnAttribute("wineh-parent").getValueAsString() == fn.getName())
+    WinEHNumbering(MMI.getWinEHFuncInfo(&fn)).calculateStateNumbers(fn);
+}
+
+void WinEHNumbering::parseEHActions(const IntrinsicInst *II,
+                                    SmallVectorImpl<ActionHandler *> &Actions) {
+  for (unsigned I = 0, E = II->getNumArgOperands(); I != E;) {
+    uint64_t ActionKind =
+        cast<ConstantInt>(II->getArgOperand(I))->getZExtValue();
+    if (ActionKind == /*catch=*/1) {
+      auto *Selector = cast<Constant>(II->getArgOperand(I + 1));
+      Value *CatchObject = II->getArgOperand(I + 2);
+      Constant *Handler = cast<Constant>(II->getArgOperand(I + 3));
+      I += 4;
+      auto *CH = new CatchHandler(/*BB=*/nullptr, Selector, /*NextBB=*/nullptr);
+      CH->setExceptionVar(CatchObject);
+      CH->setHandlerBlockOrFunc(Handler);
+      Actions.push_back(CH);
+    } else {
+      assert(ActionKind == 0 && "expected a cleanup or a catch action!");
+      Constant *Handler = cast<Constant>(II->getArgOperand(I + 1));
+      I += 2;
+      auto *CH = new CleanupHandler(/*BB=*/nullptr);
+      CH->setHandlerBlockOrFunc(Handler);
+      Actions.push_back(CH);
+    }
+  }
+  std::reverse(Actions.begin(), Actions.end());
+}
+
+void WinEHNumbering::createUnwindMapEntry(int ToState, ActionHandler *AH) {
+  WinEHUnwindMapEntry UME;
+  UME.ToState = ToState;
+  if (auto *CH = dyn_cast<CleanupHandler>(AH))
+    UME.Cleanup = cast<Function>(CH->getHandlerBlockOrFunc());
+  else
+    UME.Cleanup = nullptr;
+  FuncInfo.UnwindMap.push_back(UME);
+}
+
+static void print_name(const Value *V) {
+  if (!V) {
+    DEBUG(dbgs() << "null");
+    return;
+  }
+
+  if (const auto *F = dyn_cast<Function>(V))
+    DEBUG(dbgs() << F->getName());
+  else
+    DEBUG(V->dump());
+}
+
+void WinEHNumbering::proccessCallSite(ArrayRef<ActionHandler *> Actions,
+                                      ImmutableCallSite CS) {
+  // float, int
+  // float, double, int
+  int FirstMismatch = 0;
+  for (int E = std::min(HandlerStack.size(), Actions.size()); FirstMismatch < E;
+       ++FirstMismatch) {
+    if (HandlerStack[FirstMismatch]->getHandlerBlockOrFunc() !=
+        Actions[FirstMismatch]->getHandlerBlockOrFunc())
+      break;
+    delete Actions[FirstMismatch];
+  }
+
+  // Don't recurse while we are looping over the handler stack.  Instead, defer
+  // the numbering of the catch handlers until we are done popping.
+  SmallVector<const Function *, 4> UnnumberedHandlers;
+  for (int I = HandlerStack.size() - 1; I >= FirstMismatch; --I) {
+    if (auto *CH = dyn_cast<CatchHandler>(HandlerStack.back()))
+      if (const auto *F = dyn_cast<Function>(CH->getHandlerBlockOrFunc()))
+        UnnumberedHandlers.push_back(F);
+    // Pop the handlers off of the stack.
+    delete HandlerStack.back();
+    HandlerStack.pop_back();
+  }
+
+  for (const Function *F : UnnumberedHandlers)
+    calculateStateNumbers(*F);
+
+  for (size_t I = FirstMismatch; I != Actions.size(); ++I) {
+    createUnwindMapEntry(currentEHNumber(), Actions[I]);
+    Actions[I]->setEHState(NextState++);
+    DEBUG(dbgs() << "Creating unwind map entry for: (");
+    print_name(Actions[I]->getHandlerBlockOrFunc());
+    DEBUG(dbgs() << ", " << currentEHNumber() << ")\n");
+    HandlerStack.push_back(Actions[I]);
+  }
+
+  DEBUG(dbgs() << "In EHState " << currentEHNumber() << " for CallSite: ");
+  print_name(CS ? CS.getCalledValue() : nullptr);
+  DEBUG(dbgs() << '\n');
+}
+
+void WinEHNumbering::calculateStateNumbers(const Function &F) {
+  DEBUG(dbgs() << "Calculating state numbers for: " << F.getName() << '\n');
+  SmallVector<ActionHandler *, 4> ActionList;
+  for (const BasicBlock &BB : F) {
+    for (const Instruction &I : BB) {
+      const auto *CI = dyn_cast<CallInst>(&I);
+      if (!CI || CI->doesNotThrow())
+        continue;
+      proccessCallSite(None, CI);
+    }
+    const auto *II = dyn_cast<InvokeInst>(BB.getTerminator());
+    if (!II)
+      continue;
+    const LandingPadInst *LPI = II->getLandingPadInst();
+    if (auto *ActionsCall = dyn_cast<IntrinsicInst>(LPI->getNextNode())) {
+      assert(ActionsCall->getIntrinsicID() == Intrinsic::eh_actions);
+      parseEHActions(ActionsCall, ActionList);
+      proccessCallSite(ActionList, II);
+      ActionList.clear();
+      FuncInfo.LandingPadStateMap[LPI] = currentEHNumber();
+    }
+  }
+  proccessCallSite(None, ImmutableCallSite());
 }
 
 /// clear - Clear out all the function-specific state. This returns this

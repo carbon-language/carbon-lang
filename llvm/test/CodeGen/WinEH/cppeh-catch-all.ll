@@ -19,7 +19,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
 ; The function entry in this case remains unchanged.
-; CHECK: define void @_Z4testv() #0 {
+; CHECK: define void @_Z4testv()
 ; CHECK: entry:
 ; CHECK:   invoke void @_Z9may_throwv()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
@@ -70,7 +70,7 @@ try.cont:                                         ; preds = %invoke.cont2, %invo
 ; CHECK: }
 }
 
-; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
+; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   call void @_Z16handle_exceptionv()
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
