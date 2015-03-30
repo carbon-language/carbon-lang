@@ -115,9 +115,9 @@ static MCInstPrinter *createAArch64MCInstPrinter(unsigned SyntaxVariant,
                                                  const MCRegisterInfo &MRI,
                                                  const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
-    return new AArch64InstPrinter(MAI, MII, MRI, STI);
+    return new AArch64InstPrinter(MAI, MII, MRI);
   if (SyntaxVariant == 1)
-    return new AArch64AppleInstPrinter(MAI, MII, MRI, STI);
+    return new AArch64AppleInstPrinter(MAI, MII, MRI);
 
   return nullptr;
 }

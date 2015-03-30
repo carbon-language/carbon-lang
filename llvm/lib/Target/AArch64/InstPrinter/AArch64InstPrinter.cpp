@@ -34,15 +34,13 @@ using namespace llvm;
 
 AArch64InstPrinter::AArch64InstPrinter(const MCAsmInfo &MAI,
                                        const MCInstrInfo &MII,
-                                       const MCRegisterInfo &MRI,
-                                       const MCSubtargetInfo &STI)
+                                       const MCRegisterInfo &MRI)
     : MCInstPrinter(MAI, MII, MRI) {}
 
 AArch64AppleInstPrinter::AArch64AppleInstPrinter(const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
-                                                 const MCRegisterInfo &MRI,
-                                                 const MCSubtargetInfo &STI)
-    : AArch64InstPrinter(MAI, MII, MRI, STI) {}
+                                                 const MCRegisterInfo &MRI)
+    : AArch64InstPrinter(MAI, MII, MRI) {}
 
 void AArch64InstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   // This is for .cfi directives.

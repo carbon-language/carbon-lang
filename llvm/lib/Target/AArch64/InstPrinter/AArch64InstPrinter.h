@@ -26,7 +26,7 @@ class MCOperand;
 class AArch64InstPrinter : public MCInstPrinter {
 public:
   AArch64InstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                     const MCRegisterInfo &MRI, const MCSubtargetInfo &STI);
+                     const MCRegisterInfo &MRI);
 
   void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
                  const MCSubtargetInfo &STI) override;
@@ -158,8 +158,7 @@ protected:
 class AArch64AppleInstPrinter : public AArch64InstPrinter {
 public:
   AArch64AppleInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                          const MCRegisterInfo &MRI,
-                          const MCSubtargetInfo &STI);
+                          const MCRegisterInfo &MRI);
 
   void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
                  const MCSubtargetInfo &STI) override;
