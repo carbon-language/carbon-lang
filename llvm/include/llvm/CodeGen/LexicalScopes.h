@@ -158,16 +158,16 @@ public:
   /// getMachineBasicBlocks - Populate given set using machine basic blocks
   /// which have machine instructions that belong to lexical scope identified by
   /// DebugLoc.
-  void getMachineBasicBlocks(DebugLoc DL,
+  void getMachineBasicBlocks(const MDLocation *DL,
                              SmallPtrSetImpl<const MachineBasicBlock *> &MBBs);
 
   /// dominates - Return true if DebugLoc's lexical scope dominates at least one
   /// machine instruction's lexical scope in a given machine basic block.
-  bool dominates(DebugLoc DL, MachineBasicBlock *MBB);
+  bool dominates(const MDLocation *DL, MachineBasicBlock *MBB);
 
   /// findLexicalScope - Find lexical scope, either regular or inlined, for the
   /// given DebugLoc. Return NULL if not found.
-  LexicalScope *findLexicalScope(DebugLoc DL);
+  LexicalScope *findLexicalScope(const MDLocation *DL);
 
   /// getAbstractScopesList - Return a reference to list of abstract scopes.
   ArrayRef<LexicalScope *> getAbstractScopesList() const {
@@ -201,7 +201,7 @@ public:
 private:
   /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
   /// not available then create new lexical scope.
-  LexicalScope *getOrCreateLexicalScope(DebugLoc DL);
+  LexicalScope *getOrCreateLexicalScope(const MDLocation *DL);
 
   /// getOrCreateRegularScope - Find or create a regular lexical scope.
   LexicalScope *getOrCreateRegularScope(MDNode *Scope);

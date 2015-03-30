@@ -106,18 +106,17 @@ void LexicalScopes::extractLexicalScopes(
 
 /// findLexicalScope - Find lexical scope, either regular or inlined, for the
 /// given DebugLoc. Return NULL if not found.
-LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
-  auto *Scope = DL.getScope();
+LexicalScope *LexicalScopes::findLexicalScope(const MDLocation *DL) {
+  MDLocalScope *Scope = DL->getScope();
   if (!Scope)
     return nullptr;
 
   // The scope that we were created with could have an extra file - which
   // isn't what we care about in this case.
-  DIDescriptor D = DIDescriptor(Scope);
-  if (D.isLexicalBlockFile())
-    Scope = DILexicalBlockFile(Scope).getScope();
+  if (auto *File = dyn_cast<MDLexicalBlockFile>(Scope))
+    Scope = File->getScope();
 
-  if (auto *IA = DL.getInlinedAt()) {
+  if (auto *IA = DL->getInlinedAt()) {
     auto I = InlinedLexicalScopeMap.find(std::make_pair(Scope, IA));
     return I != InlinedLexicalScopeMap.end() ? &I->second : nullptr;
   }
@@ -126,12 +125,11 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
 /// not available then create new lexical scope.
-LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
+LexicalScope *LexicalScopes::getOrCreateLexicalScope(const MDLocation *DL) {
   if (!DL)
     return nullptr;
-
-  MDNode *Scope = DL.getScope();
-  if (auto *InlinedAt = DL.getInlinedAt()) {
+  MDScope *Scope = DL->getScope();
+  if (auto *InlinedAt = DL->getInlinedAt()) {
     // Create an abstract scope for inlined function.
     getOrCreateAbstractScope(Scope);
     // Create an inlined scope for inlined function.
@@ -276,7 +274,7 @@ void LexicalScopes::assignInstructionRanges(
 /// have machine instructions that belong to lexical scope identified by
 /// DebugLoc.
 void LexicalScopes::getMachineBasicBlocks(
-    DebugLoc DL, SmallPtrSetImpl<const MachineBasicBlock *> &MBBs) {
+    const MDLocation *DL, SmallPtrSetImpl<const MachineBasicBlock *> &MBBs) {
   MBBs.clear();
   LexicalScope *Scope = getOrCreateLexicalScope(DL);
   if (!Scope)
@@ -299,7 +297,7 @@ void LexicalScopes::getMachineBasicBlocks(
 
 /// dominates - Return true if DebugLoc's lexical scope dominates at least one
 /// machine instruction's lexical scope in a given machine basic block.
-bool LexicalScopes::dominates(DebugLoc DL, MachineBasicBlock *MBB) {
+bool LexicalScopes::dominates(const MDLocation *DL, MachineBasicBlock *MBB) {
   LexicalScope *Scope = getOrCreateLexicalScope(DL);
   if (!Scope)
     return false;
