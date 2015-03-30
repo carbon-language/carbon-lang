@@ -301,6 +301,8 @@ StringRef sys::getHostCPUName() {
       case  9: // Intel Pentium M processor, Intel Celeron M processor model 09.
       case 13: // Intel Pentium M processor, Intel Celeron M processor, model
                // 0Dh. All processors are manufactured using the 90 nm process.
+      case 21: // Intel EP80579 Integrated Processor and Intel EP80579
+               // Integrated Processor with Intel QuickAssist Technology
         return "pentium-m";
 
       case 14: // Intel Core Duo processor, Intel Core Solo processor, model
