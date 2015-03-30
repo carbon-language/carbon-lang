@@ -1376,6 +1376,7 @@ DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);
 /// metadata for debugging. We also remove debug locations for instructions.
 /// Return true if module is modified.
 bool StripDebugInfo(Module &M);
+bool stripDebugInfo(Function &F);
 
 /// \brief Return Debug Info Metadata Version by checking module flags.
 unsigned getDebugMetadataVersionFromModule(const Module &M);

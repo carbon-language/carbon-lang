@@ -25,6 +25,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/GVMaterializer.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/Debug.h"
@@ -945,6 +946,19 @@ template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
   return DITypeRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
 }
 
+bool llvm::stripDebugInfo(Function &F) {
+  bool Changed = false;
+  for (BasicBlock &BB : F) {
+    for (Instruction &I : BB) {
+      if (I.getDebugLoc()) {
+        Changed = true;
+        I.setDebugLoc(DebugLoc());
+      }
+    }
+  }
+  return Changed;
+}
+
 bool llvm::StripDebugInfo(Module &M) {
   bool Changed = false;
 
@@ -978,16 +992,11 @@ bool llvm::StripDebugInfo(Module &M) {
     }
   }
 
-  for (Function &F : M) {
-    for (BasicBlock &BB : F) {
-      for (Instruction &I : BB) {
-        if (I.getDebugLoc()) {
-          Changed = true;
-          I.setDebugLoc(DebugLoc());
-        }
-      }
-    }
-  }
+  for (Function &F : M)
+    Changed |= stripDebugInfo(F);
+
+  if ( GVMaterializer *Materializer = M.getMaterializer())
+    Materializer->setStripDebugInfo();
 
   return Changed;
 }

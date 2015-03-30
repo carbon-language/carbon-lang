@@ -20,6 +20,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
@@ -602,11 +603,8 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
 
   Module &M = Obj.getModule();
 
-  // Fixme (pr23045). We would like to upgrade the metadata with something like
-  //  Result->materializeMetadata();
-  //  UpgradeDebugInfo(*Result);
-  // but that fails to drop old debug info from function bodies.
-  M.materializeAllPermanently();
+  M.materializeMetadata();
+  UpgradeDebugInfo(M);
 
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(M, Used, /*CompilerUsed*/ false);
