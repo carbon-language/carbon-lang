@@ -709,12 +709,10 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   Features["sse4.2"] = (ECX >> 20) & 1;
 
   Features["pclmul"] = (ECX >>  1) & 1;
-  Features["fma"]    = (ECX >> 12) & 1;
   Features["cx16"]   = (ECX >> 13) & 1;
   Features["movbe"]  = (ECX >> 22) & 1;
   Features["popcnt"] = (ECX >> 23) & 1;
   Features["aes"]    = (ECX >> 25) & 1;
-  Features["f16c"]   = (ECX >> 29) & 1;
   Features["rdrnd"]  = (ECX >> 30) & 1;
 
   // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV
@@ -723,6 +721,8 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   bool HasAVX = ((ECX >> 27) & 1) && ((ECX >> 28) & 1) &&
                 !GetX86XCR0(&EAX, &EDX) && ((EAX & 0x6) == 0x6);
   Features["avx"]    = HasAVX;
+  Features["fma"]    = HasAVX && (ECX >> 12) & 1;
+  Features["f16c"]   = HasAVX && (ECX >> 29) & 1;
 
   // AVX512 requires additional context to be saved by the OS.
   bool HasAVX512Save = HasAVX && ((EAX & 0xe0) == 0xe0);
@@ -735,8 +735,8 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   Features["lzcnt"]  = HasExtLeaf1 && ((ECX >>  5) & 1);
   Features["sse4a"]  = HasExtLeaf1 && ((ECX >>  6) & 1);
   Features["prfchw"] = HasExtLeaf1 && ((ECX >>  8) & 1);
-  Features["xop"]    = HasExtLeaf1 && ((ECX >> 11) & 1);
-  Features["fma4"]   = HasExtLeaf1 && ((ECX >> 16) & 1);
+  Features["xop"]    = HasAVX && HasExtLeaf1 && ((ECX >> 11) & 1);
+  Features["fma4"]   = HasAVX && HasExtLeaf1 && ((ECX >> 16) & 1);
   Features["tbm"]    = HasExtLeaf1 && ((ECX >> 21) & 1);
 
   bool HasLeaf7 = MaxLevel >= 7 &&
