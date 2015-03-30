@@ -840,7 +840,9 @@ void IslNodeBuilder::createBlock(__isl_take isl_ast_node *Block) {
 void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
   switch (isl_ast_node_get_type(Node)) {
   case isl_ast_node_error:
-    llvm_unreachable("code  generation error");
+    llvm_unreachable("code generation error");
+  case isl_ast_node_mark:
+    llvm_unreachable("Mark node unexpected");
   case isl_ast_node_for:
     createFor(Node);
     return;

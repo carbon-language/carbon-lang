@@ -2926,6 +2926,84 @@ static int test_padded_schedule(isl_ctx *ctx)
 	return 0;
 }
 
+/* Check that conditional validity constraints are also taken into
+ * account across bands.
+ * In particular, try to make sure that live ranges D[1,0]->C[2,1] and
+ * D[2,0]->C[3,0] are not local in the outer band of the generated schedule
+ * and then check that the adjacent order constraint C[2,1]->D[2,0]
+ * is enforced by the rest of the schedule.
+ */
+static int test_special_conditional_schedule_constraints(isl_ctx *ctx)
+{
+	const char *str;
+	isl_union_set *domain;
+	isl_union_map *validity, *proximity, *condition;
+	isl_union_map *sink, *source, *dep;
+	isl_schedule_constraints *sc;
+	isl_schedule *schedule;
+	isl_union_access_info *access;
+	isl_union_flow *flow;
+	int empty;
+
+	str = "[n] -> { C[k, i] : k <= -1 + n and i >= 0 and i <= -1 + k; "
+	    "A[k] : k >= 1 and k <= -1 + n; "
+	    "B[k, i] : k <= -1 + n and i >= 0 and i <= -1 + k; "
+	    "D[k, i] : k <= -1 + n and i >= 0 and i <= -1 + k }";
+	domain = isl_union_set_read_from_str(ctx, str);
+	sc = isl_schedule_constraints_on_domain(domain);
+	str = "[n] -> { D[k, i] -> C[1 + k, k - i] : "
+		"k <= -2 + n and i >= 1 and i <= -1 + k; "
+		"D[k, i] -> C[1 + k, i] : "
+		"k <= -2 + n and i >= 1 and i <= -1 + k; "
+		"D[k, 0] -> C[1 + k, k] : k >= 1 and k <= -2 + n; "
+		"D[k, 0] -> C[1 + k, 0] : k >= 1 and k <= -2 + n }";
+	validity = isl_union_map_read_from_str(ctx, str);
+	sc = isl_schedule_constraints_set_validity(sc, validity);
+	str = "[n] -> { C[k, i] -> D[k, i] : "
+		"0 <= i <= -1 + k and k <= -1 + n }";
+	proximity = isl_union_map_read_from_str(ctx, str);
+	sc = isl_schedule_constraints_set_proximity(sc, proximity);
+	str = "[n] -> { [D[k, i] -> a[]] -> [C[1 + k, k - i] -> b[]] : "
+		"i <= -1 + k and i >= 1 and k <= -2 + n; "
+		"[B[k, i] -> c[]] -> [B[k, 1 + i] -> c[]] : "
+		"k <= -1 + n and i >= 0 and i <= -2 + k }";
+	condition = isl_union_map_read_from_str(ctx, str);
+	str = "[n] -> { [B[k, i] -> e[]] -> [D[k, i] -> a[]] : "
+		"i >= 0 and i <= -1 + k and k <= -1 + n; "
+		"[C[k, i] -> b[]] -> [D[k', -1 + k - i] -> a[]] : "
+		"i >= 0 and i <= -1 + k and k <= -1 + n and "
+		"k' <= -1 + n and k' >= k - i and k' >= 1 + k; "
+		"[C[k, i] -> b[]] -> [D[k, -1 + k - i] -> a[]] : "
+		"i >= 0 and i <= -1 + k and k <= -1 + n; "
+		"[B[k, i] -> c[]] -> [A[k'] -> d[]] : "
+		"k <= -1 + n and i >= 0 and i <= -1 + k and "
+		"k' >= 1 and k' <= -1 + n and k' >= 1 + k }";
+	validity = isl_union_map_read_from_str(ctx, str);
+	sc = isl_schedule_constraints_set_conditional_validity(sc, condition,
+								validity);
+	schedule = isl_schedule_constraints_compute_schedule(sc);
+	str = "{ D[2,0] -> [] }";
+	sink = isl_union_map_read_from_str(ctx, str);
+	access = isl_union_access_info_from_sink(sink);
+	str = "{ C[2,1] -> [] }";
+	source = isl_union_map_read_from_str(ctx, str);
+	access = isl_union_access_info_set_must_source(access, source);
+	access = isl_union_access_info_set_schedule(access, schedule);
+	flow = isl_union_access_info_compute_flow(access);
+	dep = isl_union_flow_get_must_dependence(flow);
+	isl_union_flow_free(flow);
+	empty = isl_union_map_is_empty(dep);
+	isl_union_map_free(dep);
+
+	if (empty < 0)
+		return -1;
+	if (empty)
+		isl_die(ctx, isl_error_unknown,
+			"conditional validity not respected", return -1);
+
+	return 0;
+}
+
 /* Input for testing of schedule construction based on
  * conditional constraints.
  *
@@ -3027,6 +3105,9 @@ static int test_conditional_schedule_constraints(isl_ctx *ctx)
 	isl_schedule *schedule;
 	isl_schedule_node *node;
 	int n_member;
+
+	if (test_special_conditional_schedule_constraints(ctx) < 0)
+		return -1;
 
 	for (i = 0; i < ARRAY_SIZE(live_range_tests); ++i) {
 		domain = isl_union_set_read_from_str(ctx,
@@ -5183,6 +5264,174 @@ static int test_compute_divs(isl_ctx *ctx)
 	return 0;
 }
 
+/* Check that the reaching domain elements and the prefix schedule
+ * at a leaf node are the same before and after grouping.
+ */
+static int test_schedule_tree_group_1(isl_ctx *ctx)
+{
+	int equal;
+	const char *str;
+	isl_id *id;
+	isl_union_set *uset;
+	isl_multi_union_pw_aff *mupa;
+	isl_union_pw_multi_aff *upma1, *upma2;
+	isl_union_set *domain1, *domain2;
+	isl_union_map *umap1, *umap2;
+	isl_schedule_node *node;
+
+	str = "{ S1[i,j] : 0 <= i,j < 10; S2[i,j] : 0 <= i,j < 10 }";
+	uset = isl_union_set_read_from_str(ctx, str);
+	node = isl_schedule_node_from_domain(uset);
+	node = isl_schedule_node_child(node, 0);
+	str = "[{ S1[i,j] -> [i]; S2[i,j] -> [9 - i] }]";
+	mupa = isl_multi_union_pw_aff_read_from_str(ctx, str);
+	node = isl_schedule_node_insert_partial_schedule(node, mupa);
+	node = isl_schedule_node_child(node, 0);
+	str = "[{ S1[i,j] -> [j]; S2[i,j] -> [j] }]";
+	mupa = isl_multi_union_pw_aff_read_from_str(ctx, str);
+	node = isl_schedule_node_insert_partial_schedule(node, mupa);
+	node = isl_schedule_node_child(node, 0);
+	umap1 = isl_schedule_node_get_prefix_schedule_union_map(node);
+	upma1 = isl_schedule_node_get_prefix_schedule_union_pw_multi_aff(node);
+	domain1 = isl_schedule_node_get_domain(node);
+	id = isl_id_alloc(ctx, "group", NULL);
+	node = isl_schedule_node_parent(node);
+	node = isl_schedule_node_group(node, id);
+	node = isl_schedule_node_child(node, 0);
+	umap2 = isl_schedule_node_get_prefix_schedule_union_map(node);
+	upma2 = isl_schedule_node_get_prefix_schedule_union_pw_multi_aff(node);
+	domain2 = isl_schedule_node_get_domain(node);
+	equal = isl_union_pw_multi_aff_plain_is_equal(upma1, upma2);
+	if (equal >= 0 && equal)
+		equal = isl_union_set_is_equal(domain1, domain2);
+	if (equal >= 0 && equal)
+		equal = isl_union_map_is_equal(umap1, umap2);
+	isl_union_map_free(umap1);
+	isl_union_map_free(umap2);
+	isl_union_set_free(domain1);
+	isl_union_set_free(domain2);
+	isl_union_pw_multi_aff_free(upma1);
+	isl_union_pw_multi_aff_free(upma2);
+	isl_schedule_node_free(node);
+
+	if (equal < 0)
+		return -1;
+	if (!equal)
+		isl_die(ctx, isl_error_unknown,
+			"expressions not equal", return -1);
+
+	return 0;
+}
+
+/* Check that we can have nested groupings and that the union map
+ * schedule representation is the same before and after the grouping.
+ * Note that after the grouping, the union map representation contains
+ * the domain constraints from the ranges of the expansion nodes,
+ * while they are missing from the union map representation of
+ * the tree without expansion nodes.
+ *
+ * Also check that the global expansion is as expected.
+ */
+static int test_schedule_tree_group_2(isl_ctx *ctx)
+{
+	int equal, equal_expansion;
+	const char *str;
+	isl_id *id;
+	isl_union_set *uset;
+	isl_union_map *umap1, *umap2;
+	isl_union_map *expansion1, *expansion2;
+	isl_union_set_list *filters;
+	isl_multi_union_pw_aff *mupa;
+	isl_schedule *schedule;
+	isl_schedule_node *node;
+
+	str = "{ S1[i,j] : 0 <= i,j < 10; S2[i,j] : 0 <= i,j < 10; "
+		"S3[i,j] : 0 <= i,j < 10 }";
+	uset = isl_union_set_read_from_str(ctx, str);
+	node = isl_schedule_node_from_domain(uset);
+	node = isl_schedule_node_child(node, 0);
+	str = "[{ S1[i,j] -> [i]; S2[i,j] -> [i]; S3[i,j] -> [i] }]";
+	mupa = isl_multi_union_pw_aff_read_from_str(ctx, str);
+	node = isl_schedule_node_insert_partial_schedule(node, mupa);
+	node = isl_schedule_node_child(node, 0);
+	str = "{ S1[i,j] }";
+	uset = isl_union_set_read_from_str(ctx, str);
+	filters = isl_union_set_list_from_union_set(uset);
+	str = "{ S2[i,j]; S3[i,j] }";
+	uset = isl_union_set_read_from_str(ctx, str);
+	filters = isl_union_set_list_add(filters, uset);
+	node = isl_schedule_node_insert_sequence(node, filters);
+	node = isl_schedule_node_child(node, 1);
+	node = isl_schedule_node_child(node, 0);
+	str = "{ S2[i,j] }";
+	uset = isl_union_set_read_from_str(ctx, str);
+	filters = isl_union_set_list_from_union_set(uset);
+	str = "{ S3[i,j] }";
+	uset = isl_union_set_read_from_str(ctx, str);
+	filters = isl_union_set_list_add(filters, uset);
+	node = isl_schedule_node_insert_sequence(node, filters);
+
+	schedule = isl_schedule_node_get_schedule(node);
+	umap1 = isl_schedule_get_map(schedule);
+	uset = isl_schedule_get_domain(schedule);
+	umap1 = isl_union_map_intersect_domain(umap1, uset);
+	isl_schedule_free(schedule);
+
+	node = isl_schedule_node_parent(node);
+	node = isl_schedule_node_parent(node);
+	id = isl_id_alloc(ctx, "group1", NULL);
+	node = isl_schedule_node_group(node, id);
+	node = isl_schedule_node_child(node, 1);
+	node = isl_schedule_node_child(node, 0);
+	id = isl_id_alloc(ctx, "group2", NULL);
+	node = isl_schedule_node_group(node, id);
+
+	schedule = isl_schedule_node_get_schedule(node);
+	umap2 = isl_schedule_get_map(schedule);
+	isl_schedule_free(schedule);
+
+	node = isl_schedule_node_root(node);
+	node = isl_schedule_node_child(node, 0);
+	expansion1 = isl_schedule_node_get_subtree_expansion(node);
+	isl_schedule_node_free(node);
+
+	str = "{ group1[i] -> S1[i,j] : 0 <= i,j < 10; "
+		"group1[i] -> S2[i,j] : 0 <= i,j < 10; "
+		"group1[i] -> S3[i,j] : 0 <= i,j < 10 }";
+
+	expansion2 = isl_union_map_read_from_str(ctx, str);
+
+	equal = isl_union_map_is_equal(umap1, umap2);
+	equal_expansion = isl_union_map_is_equal(expansion1, expansion2);
+
+	isl_union_map_free(umap1);
+	isl_union_map_free(umap2);
+	isl_union_map_free(expansion1);
+	isl_union_map_free(expansion2);
+
+	if (equal < 0 || equal_expansion < 0)
+		return -1;
+	if (!equal)
+		isl_die(ctx, isl_error_unknown,
+			"expressions not equal", return -1);
+	if (!equal_expansion)
+		isl_die(ctx, isl_error_unknown,
+			"unexpected expansion", return -1);
+
+	return 0;
+}
+
+/* Some tests for the isl_schedule_node_group function.
+ */
+static int test_schedule_tree_group(isl_ctx *ctx)
+{
+	if (test_schedule_tree_group_1(ctx) < 0)
+		return -1;
+	if (test_schedule_tree_group_2(ctx) < 0)
+		return -1;
+	return 0;
+}
+
 struct {
 	const char *set;
 	const char *dual;
@@ -5394,6 +5643,7 @@ struct {
 	{ "affine", &test_aff },
 	{ "injective", &test_injective },
 	{ "schedule", &test_schedule },
+	{ "schedule tree grouping", &test_schedule_tree_group },
 	{ "tile", &test_tile },
 	{ "union_pw", &test_union_pw },
 	{ "parse", &test_parse },

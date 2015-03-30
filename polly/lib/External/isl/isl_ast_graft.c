@@ -960,6 +960,25 @@ error:
 	return NULL;
 }
 
+/* Insert a mark governing the current graft->node.
+ */
+__isl_give isl_ast_graft *isl_ast_graft_insert_mark(
+	__isl_take isl_ast_graft *graft, __isl_take isl_id *mark)
+{
+	if (!graft)
+		goto error;
+
+	graft->node = isl_ast_node_alloc_mark(mark, graft->node);
+	if (!graft->node)
+		return isl_ast_graft_free(graft);
+
+	return graft;
+error:
+	isl_id_free(mark);
+	isl_ast_graft_free(graft);
+	return NULL;
+}
+
 /* Represent the graft list as an AST node.
  * This operation drops the information about guards in the grafts, so
  * if there are any pending guards, then they are materialized as if nodes.

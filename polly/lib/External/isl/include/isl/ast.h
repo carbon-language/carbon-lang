@@ -118,6 +118,10 @@ __isl_give isl_ast_node *isl_ast_node_if_get_else(
 __isl_give isl_ast_node_list *isl_ast_node_block_get_children(
 	__isl_keep isl_ast_node *node);
 
+__isl_give isl_id *isl_ast_node_mark_get_id(__isl_keep isl_ast_node *node);
+__isl_give isl_ast_node *isl_ast_node_mark_get_node(
+	__isl_keep isl_ast_node *node);
+
 __isl_give isl_ast_expr *isl_ast_node_user_get_expr(
 	__isl_keep isl_ast_node *node);
 

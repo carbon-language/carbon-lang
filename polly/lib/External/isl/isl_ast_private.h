@@ -45,9 +45,10 @@ __isl_give isl_ast_expr *isl_ast_expr_alloc_binary(enum isl_ast_op_type type,
 
 #include <isl_list_templ.h>
 
-/* A node is either a block, an if, a for or a user node.
+/* A node is either a block, an if, a for, a user node or a mark node.
  * "else_node" is NULL if the if node does not have an else branch.
  * "cond" and "inc" are NULL for degenerate for nodes.
+ * In case of a mark node, "mark" is the mark and "node" is the marked node.
  */
 struct isl_ast_node {
 	int ref;
@@ -75,6 +76,10 @@ struct isl_ast_node {
 		struct {
 			isl_ast_expr *expr;
 		} e;
+		struct {
+			isl_id *mark;
+			isl_ast_node *node;
+		} m;
 	} u;
 
 	isl_id *annotation;
@@ -86,6 +91,8 @@ __isl_give isl_ast_node *isl_ast_node_for_mark_degenerate(
 __isl_give isl_ast_node *isl_ast_node_alloc_if(__isl_take isl_ast_expr *guard);
 __isl_give isl_ast_node *isl_ast_node_alloc_block(
 	__isl_take isl_ast_node_list *list);
+__isl_give isl_ast_node *isl_ast_node_alloc_mark(__isl_take isl_id *id,
+	__isl_take isl_ast_node *node);
 __isl_give isl_ast_node *isl_ast_node_from_ast_node_list(
 	__isl_take isl_ast_node_list *list);
 __isl_give isl_ast_node *isl_ast_node_for_set_body(

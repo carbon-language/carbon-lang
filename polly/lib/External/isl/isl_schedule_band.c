@@ -309,12 +309,53 @@ __isl_give isl_space *isl_schedule_band_get_space(
 	return isl_multi_union_pw_aff_get_space(band->mupa);
 }
 
+/* Intersect the domain of the band schedule of "band" with "domain".
+ */
+__isl_give isl_schedule_band *isl_schedule_band_intersect_domain(
+	__isl_take isl_schedule_band *band, __isl_take isl_union_set *domain)
+{
+	band = isl_schedule_band_cow(band);
+	if (!band || !domain)
+		goto error;
+
+	band->mupa = isl_multi_union_pw_aff_intersect_domain(band->mupa,
+								domain);
+	if (!band->mupa)
+		return isl_schedule_band_free(band);
+
+	return band;
+error:
+	isl_schedule_band_free(band);
+	isl_union_set_free(domain);
+	return NULL;
+}
+
 /* Return the schedule of the band in isolation.
  */
 __isl_give isl_multi_union_pw_aff *isl_schedule_band_get_partial_schedule(
 	__isl_keep isl_schedule_band *band)
 {
 	return band ? isl_multi_union_pw_aff_copy(band->mupa) : NULL;
+}
+
+/* Replace the schedule of "band" by "schedule".
+ */
+__isl_give isl_schedule_band *isl_schedule_band_set_partial_schedule(
+	__isl_take isl_schedule_band *band,
+	__isl_take isl_multi_union_pw_aff *schedule)
+{
+	band = isl_schedule_band_cow(band);
+	if (!band || !schedule)
+		goto error;
+
+	isl_multi_union_pw_aff_free(band->mupa);
+	band->mupa = schedule;
+
+	return band;
+error:
+	isl_schedule_band_free(band);
+	isl_multi_union_pw_aff_free(schedule);
+	return NULL;
 }
 
 /* Return the loop AST generation type for the band member of "band"

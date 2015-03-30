@@ -110,6 +110,12 @@
  * The "after_each_for" callback is called on each for node after
  * its children have been created.
  *
+ * The "before_each_mark" callback is called before we handle the subtree
+ * of an isl_schedule_node_mark node.
+ *
+ * The "after_each_mark" callback is called after we have handled the subtree
+ * of an isl_schedule_node_mark node.
+ *
  * "executed" contains the inverse schedule at this point
  * of the AST generation.
  * It is currently only used in isl_ast_build_get_schedule, which is
@@ -171,6 +177,14 @@ struct isl_ast_build {
 		__isl_take isl_ast_node *node,
 		__isl_keep isl_ast_build *context, void *user);
 	void *after_each_for_user;
+
+	int (*before_each_mark)(__isl_keep isl_id *mark,
+		__isl_keep isl_ast_build *build, void *user);
+	void *before_each_mark_user;
+	__isl_give isl_ast_node *(*after_each_mark)(
+		__isl_take isl_ast_node *node,
+		__isl_keep isl_ast_build *context, void *user);
+	void *after_each_mark_user;
 
 	__isl_give isl_ast_node *(*create_leaf)(
 		__isl_take isl_ast_build *build, void *user);

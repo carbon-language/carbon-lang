@@ -95,9 +95,31 @@ __isl_take isl_schedule_tree *isl_schedule_tree_dup(
 		if (!dup->domain)
 			return isl_schedule_tree_free(dup);
 		break;
+	case isl_schedule_node_expansion:
+		dup->contraction =
+			isl_union_pw_multi_aff_copy(tree->contraction);
+		dup->expansion = isl_union_map_copy(tree->expansion);
+		if (!dup->contraction || !dup->expansion)
+			return isl_schedule_tree_free(dup);
+		break;
+	case isl_schedule_node_extension:
+		dup->extension = isl_union_map_copy(tree->extension);
+		if (!dup->extension)
+			return isl_schedule_tree_free(dup);
+		break;
 	case isl_schedule_node_filter:
 		dup->filter = isl_union_set_copy(tree->filter);
 		if (!dup->filter)
+			return isl_schedule_tree_free(dup);
+		break;
+	case isl_schedule_node_guard:
+		dup->guard = isl_set_copy(tree->guard);
+		if (!dup->guard)
+			return isl_schedule_tree_free(dup);
+		break;
+	case isl_schedule_node_mark:
+		dup->mark = isl_id_copy(tree->mark);
+		if (!dup->mark)
 			return isl_schedule_tree_free(dup);
 		break;
 	case isl_schedule_node_leaf:
@@ -180,8 +202,21 @@ __isl_null isl_schedule_tree *isl_schedule_tree_free(
 	case isl_schedule_node_domain:
 		isl_union_set_free(tree->domain);
 		break;
+	case isl_schedule_node_expansion:
+		isl_union_pw_multi_aff_free(tree->contraction);
+		isl_union_map_free(tree->expansion);
+		break;
+	case isl_schedule_node_extension:
+		isl_union_map_free(tree->extension);
+		break;
 	case isl_schedule_node_filter:
 		isl_union_set_free(tree->filter);
+		break;
+	case isl_schedule_node_guard:
+		isl_set_free(tree->guard);
+		break;
+	case isl_schedule_node_mark:
+		isl_id_free(tree->mark);
 		break;
 	case isl_schedule_node_sequence:
 	case isl_schedule_node_set:
@@ -280,6 +315,62 @@ error:
 	return NULL;
 }
 
+/* Create a new expansion schedule tree with the given contraction and
+ * expansion and no children.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_from_expansion(
+	__isl_take isl_union_pw_multi_aff *contraction,
+	__isl_take isl_union_map *expansion)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+
+	if (!contraction || !expansion)
+		goto error;
+
+	ctx = isl_union_map_get_ctx(expansion);
+	tree = isl_schedule_tree_alloc(ctx, isl_schedule_node_expansion);
+	if (!tree)
+		goto error;
+
+	tree->contraction = contraction;
+	tree->expansion = expansion;
+
+	return tree;
+error:
+	isl_union_pw_multi_aff_free(contraction);
+	isl_union_map_free(expansion);
+	return NULL;
+}
+
+/* Create a new extension schedule tree with the given extension and
+ * no children.
+ * Since the domain of the extension refers to the outer schedule dimension,
+ * the tree is anchored.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_from_extension(
+	__isl_take isl_union_map *extension)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+
+	if (!extension)
+		return NULL;
+
+	ctx = isl_union_map_get_ctx(extension);
+	tree = isl_schedule_tree_alloc(ctx, isl_schedule_node_extension);
+	if (!tree)
+		goto error;
+
+	tree->extension = extension;
+	tree->anchored = 1;
+
+	return tree;
+error:
+	isl_union_map_free(extension);
+	return NULL;
+}
+
 /* Create a new filter schedule tree with the given filter and no children.
  */
 __isl_give isl_schedule_tree *isl_schedule_tree_from_filter(
@@ -304,6 +395,58 @@ error:
 	return NULL;
 }
 
+/* Create a new guard schedule tree with the given guard and no children.
+ * Since the guard references the outer schedule dimension,
+ * the tree is anchored.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_from_guard(
+	__isl_take isl_set *guard)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+
+	if (!guard)
+		return NULL;
+
+	ctx = isl_set_get_ctx(guard);
+	tree = isl_schedule_tree_alloc(ctx, isl_schedule_node_guard);
+	if (!tree)
+		goto error;
+
+	tree->guard = guard;
+	tree->anchored = 1;
+
+	return tree;
+error:
+	isl_set_free(guard);
+	return NULL;
+}
+
+/* Create a new mark schedule tree with the given mark identifier and
+ * no children.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_from_mark(
+	__isl_take isl_id *mark)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+
+	if (!mark)
+		return NULL;
+
+	ctx = isl_id_get_ctx(mark);
+	tree = isl_schedule_tree_alloc(ctx, isl_schedule_node_mark);
+	if (!tree)
+		goto error;
+
+	tree->mark = mark;
+
+	return tree;
+error:
+	isl_id_free(mark);
+	return NULL;
+}
+
 /* Does "tree" have any node that depends on its position
  * in the complete schedule tree?
  */
@@ -315,7 +458,7 @@ int isl_schedule_tree_is_subtree_anchored(__isl_keep isl_schedule_tree *tree)
 /* Does the root node of "tree" depend on its position in the complete
  * schedule tree?
  * Band nodes may be anchored depending on the associated AST build options.
- * Context nodes are always anchored.
+ * Context, extension and guard nodes are always anchored.
  */
 int isl_schedule_tree_is_anchored(__isl_keep isl_schedule_tree *tree)
 {
@@ -328,10 +471,14 @@ int isl_schedule_tree_is_anchored(__isl_keep isl_schedule_tree *tree)
 	case isl_schedule_node_band:
 		return isl_schedule_band_is_anchored(tree->band);
 	case isl_schedule_node_context:
+	case isl_schedule_node_extension:
+	case isl_schedule_node_guard:
 		return 1;
 	case isl_schedule_node_domain:
+	case isl_schedule_node_expansion:
 	case isl_schedule_node_filter:
 	case isl_schedule_node_leaf:
+	case isl_schedule_node_mark:
 	case isl_schedule_node_sequence:
 	case isl_schedule_node_set:
 		return 0;
@@ -444,6 +591,19 @@ error:
 	return NULL;
 }
 
+/* Construct a tree with a sequence root node and as children
+ * "tree1" and "tree2".
+ * If the root of one (or both) of the input trees is itself a sequence,
+ * then the tree is replaced by its children.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_sequence_pair(
+	__isl_take isl_schedule_tree *tree1,
+	__isl_take isl_schedule_tree *tree2)
+{
+	return isl_schedule_tree_from_pair(isl_schedule_node_sequence,
+						tree1, tree2);
+}
+
 /* Return the isl_ctx to which "tree" belongs.
  */
 isl_ctx *isl_schedule_tree_get_ctx(__isl_keep isl_schedule_tree *tree)
@@ -486,8 +646,25 @@ int isl_schedule_tree_plain_is_equal(__isl_keep isl_schedule_tree *tree1,
 	case isl_schedule_node_domain:
 		equal = isl_union_set_is_equal(tree1->domain, tree2->domain);
 		break;
+	case isl_schedule_node_expansion:
+		equal = isl_union_map_is_equal(tree1->expansion,
+						tree2->expansion);
+		if (equal >= 0 && equal)
+			equal = isl_union_pw_multi_aff_plain_is_equal(
+				    tree1->contraction, tree2->contraction);
+		break;
+	case isl_schedule_node_extension:
+		equal = isl_union_map_is_equal(tree1->extension,
+						tree2->extension);
+		break;
 	case isl_schedule_node_filter:
 		equal = isl_union_set_is_equal(tree1->filter, tree2->filter);
+		break;
+	case isl_schedule_node_guard:
+		equal = isl_set_is_equal(tree1->guard, tree2->guard);
+		break;
+	case isl_schedule_node_mark:
+		equal = tree1->mark == tree2->mark;
 		break;
 	case isl_schedule_node_leaf:
 	case isl_schedule_node_sequence:
@@ -710,6 +887,32 @@ __isl_give isl_schedule_tree *isl_schedule_tree_insert_domain(
 	return isl_schedule_tree_replace_child(res, 0, tree);
 }
 
+/* Create a new expansion schedule tree with the given contraction and
+ * expansion and with "tree" as single child.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_insert_expansion(
+	__isl_take isl_schedule_tree *tree,
+	__isl_take isl_union_pw_multi_aff *contraction,
+	__isl_take isl_union_map *expansion)
+{
+	isl_schedule_tree *res;
+
+	res = isl_schedule_tree_from_expansion(contraction, expansion);
+	return isl_schedule_tree_replace_child(res, 0, tree);
+}
+
+/* Create a new extension schedule tree with the given extension and
+ * with "tree" as single child.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_insert_extension(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_map *extension)
+{
+	isl_schedule_tree *res;
+
+	res = isl_schedule_tree_from_extension(extension);
+	return isl_schedule_tree_replace_child(res, 0, tree);
+}
+
 /* Create a new filter schedule tree with the given filter and single child.
  *
  * If the root of "tree" is itself a filter node, then the two
@@ -760,6 +963,30 @@ error:
 	isl_union_set_free(filter);
 	isl_schedule_tree_free(tree);
 	return NULL;
+}
+
+/* Create a new guard schedule tree with the given guard and
+ * with "tree" as single child.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_insert_guard(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_set *guard)
+{
+	isl_schedule_tree *res;
+
+	res = isl_schedule_tree_from_guard(guard);
+	return isl_schedule_tree_replace_child(res, 0, tree);
+}
+
+/* Create a new mark schedule tree with the given mark identifier and
+ * single child.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_insert_mark(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_id *mark)
+{
+	isl_schedule_tree *res;
+
+	res = isl_schedule_tree_from_mark(mark);
+	return isl_schedule_tree_replace_child(res, 0, tree);
 }
 
 /* Return the number of members in the band tree root.
@@ -868,6 +1095,30 @@ __isl_give isl_space *isl_schedule_tree_band_get_space(
 	return isl_schedule_band_get_space(tree->band);
 }
 
+/* Intersect the domain of the band schedule of the band tree root
+ * with "domain".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_band_intersect_domain(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *domain)
+{
+	if (!tree || !domain)
+		goto error;
+
+	if (tree->type != isl_schedule_node_band)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a band node", goto error);
+
+	tree->band = isl_schedule_band_intersect_domain(tree->band, domain);
+	if (!tree->band)
+		return isl_schedule_tree_free(tree);
+
+	return tree;
+error:
+	isl_schedule_tree_free(tree);
+	isl_union_set_free(domain);
+	return NULL;
+}
+
 /* Return the schedule of the band tree root in isolation.
  */
 __isl_give isl_multi_union_pw_aff *isl_schedule_tree_band_get_partial_schedule(
@@ -881,6 +1132,29 @@ __isl_give isl_multi_union_pw_aff *isl_schedule_tree_band_get_partial_schedule(
 			"not a band node", return NULL);
 
 	return isl_schedule_band_get_partial_schedule(tree->band);
+}
+
+/* Replace the schedule of the band tree root by "schedule".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_band_set_partial_schedule(
+	__isl_take isl_schedule_tree *tree,
+	__isl_take isl_multi_union_pw_aff *schedule)
+{
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree || !schedule)
+		goto error;
+
+	if (tree->type != isl_schedule_node_band)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a band node", return NULL);
+	tree->band = isl_schedule_band_set_partial_schedule(tree->band,
+								schedule);
+
+	return tree;
+error:
+	isl_schedule_tree_free(tree);
+	isl_multi_union_pw_aff_free(schedule);
+	return NULL;
 }
 
 /* Return the loop AST generation type for the band member
@@ -1063,6 +1337,103 @@ error:
 	return NULL;
 }
 
+/* Return the contraction of the expansion tree root.
+ */
+__isl_give isl_union_pw_multi_aff *isl_schedule_tree_expansion_get_contraction(
+	__isl_keep isl_schedule_tree *tree)
+{
+	if (!tree)
+		return NULL;
+
+	if (tree->type != isl_schedule_node_expansion)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not an expansion node", return NULL);
+
+	return isl_union_pw_multi_aff_copy(tree->contraction);
+}
+
+/* Return the expansion of the expansion tree root.
+ */
+__isl_give isl_union_map *isl_schedule_tree_expansion_get_expansion(
+	__isl_keep isl_schedule_tree *tree)
+{
+	if (!tree)
+		return NULL;
+
+	if (tree->type != isl_schedule_node_expansion)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not an expansion node", return NULL);
+
+	return isl_union_map_copy(tree->expansion);
+}
+
+/* Replace the contraction and the expansion of the expansion tree root "tree"
+ * by "contraction" and "expansion".
+ */
+__isl_give isl_schedule_tree *
+isl_schedule_tree_expansion_set_contraction_and_expansion(
+	__isl_take isl_schedule_tree *tree,
+	__isl_take isl_union_pw_multi_aff *contraction,
+	__isl_take isl_union_map *expansion)
+{
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree || !contraction || !expansion)
+		goto error;
+
+	if (tree->type != isl_schedule_node_expansion)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not an expansion node", return NULL);
+
+	isl_union_pw_multi_aff_free(tree->contraction);
+	tree->contraction = contraction;
+	isl_union_map_free(tree->expansion);
+	tree->expansion = expansion;
+
+	return tree;
+error:
+	isl_schedule_tree_free(tree);
+	isl_union_pw_multi_aff_free(contraction);
+	isl_union_map_free(expansion);
+	return NULL;
+}
+
+/* Return the extension of the extension tree root.
+ */
+__isl_give isl_union_map *isl_schedule_tree_extension_get_extension(
+	__isl_take isl_schedule_tree *tree)
+{
+	if (!tree)
+		return NULL;
+
+	if (tree->type != isl_schedule_node_extension)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not an extension node", return NULL);
+
+	return isl_union_map_copy(tree->extension);
+}
+
+/* Replace the extension of extension tree root "tree" by "extension".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_extension_set_extension(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_map *extension)
+{
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree || !extension)
+		goto error;
+
+	if (tree->type != isl_schedule_node_extension)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not an extension node", return NULL);
+	isl_union_map_free(tree->extension);
+	tree->extension = extension;
+
+	return tree;
+error:
+	isl_schedule_tree_free(tree);
+	isl_union_map_free(extension);
+	return NULL;
+}
+
 /* Return the filter of the filter tree root.
  */
 __isl_give isl_union_set *isl_schedule_tree_filter_get_filter(
@@ -1099,6 +1470,36 @@ error:
 	isl_schedule_tree_free(tree);
 	isl_union_set_free(filter);
 	return NULL;
+}
+
+/* Return the guard of the guard tree root.
+ */
+__isl_give isl_set *isl_schedule_tree_guard_get_guard(
+	__isl_take isl_schedule_tree *tree)
+{
+	if (!tree)
+		return NULL;
+
+	if (tree->type != isl_schedule_node_guard)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a guard node", return NULL);
+
+	return isl_set_copy(tree->guard);
+}
+
+/* Return the mark identifier of the mark tree root "tree".
+ */
+__isl_give isl_id *isl_schedule_tree_mark_get_id(
+	__isl_keep isl_schedule_tree *tree)
+{
+	if (!tree)
+		return NULL;
+
+	if (tree->type != isl_schedule_node_mark)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a mark node", return NULL);
+
+	return isl_id_copy(tree->mark);
 }
 
 /* Set dim to the range dimension of "map" and abort the search.
@@ -1168,6 +1569,9 @@ static __isl_give isl_union_map *append_range(__isl_take isl_union_map *umap,
  *
  * We do not want to skip leaf or error nodes because there is
  * no point in looking any deeper from these nodes.
+ * We can only extract partial iteration domain information
+ * from an extension node, but extension nodes are not supported
+ * by the caller and it will error out on them.
  */
 static int domain_less(__isl_keep isl_schedule_tree *tree)
 {
@@ -1178,10 +1582,14 @@ static int domain_less(__isl_keep isl_schedule_tree *tree)
 	case isl_schedule_node_band:
 		return isl_schedule_tree_band_n_member(tree) == 0;
 	case isl_schedule_node_context:
+	case isl_schedule_node_guard:
+	case isl_schedule_node_mark:
 		return 1;
 	case isl_schedule_node_leaf:
 	case isl_schedule_node_error:
 	case isl_schedule_node_domain:
+	case isl_schedule_node_expansion:
+	case isl_schedule_node_extension:
 	case isl_schedule_node_filter:
 	case isl_schedule_node_set:
 	case isl_schedule_node_sequence:
@@ -1370,6 +1778,8 @@ static __isl_give isl_union_map *subtree_schedule_extend_from_children(
  * Otherwise, we extend the schedule map with the partial schedule
  * corresponding to the root of the tree and then continue with
  * the single child of this root.
+ * In the special case of an expansion, the schedule map is "extended"
+ * by applying the expansion to the domain of the schedule map.
  */
 static __isl_give isl_union_map *subtree_schedule_extend(
 	__isl_keep isl_schedule_tree *tree, __isl_take isl_union_map *outer)
@@ -1384,7 +1794,14 @@ static __isl_give isl_union_map *subtree_schedule_extend(
 	switch (tree->type) {
 	case isl_schedule_node_error:
 		return isl_union_map_free(outer);
+	case isl_schedule_node_extension:
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"cannot construct subtree schedule of tree "
+			"with extension nodes",
+			return isl_union_map_free(outer));
 	case isl_schedule_node_context:
+	case isl_schedule_node_guard:
+	case isl_schedule_node_mark:
 		return subtree_schedule_extend_child(tree, outer);
 	case isl_schedule_node_band:
 		if (isl_schedule_tree_band_n_member(tree) == 0)
@@ -1398,6 +1815,11 @@ static __isl_give isl_union_map *subtree_schedule_extend(
 		domain = isl_schedule_tree_domain_get_domain(tree);
 		umap = isl_union_map_from_domain(domain);
 		outer = isl_union_map_flat_range_product(outer, umap);
+		umap = subtree_schedule_extend_child(tree, outer);
+		break;
+	case isl_schedule_node_expansion:
+		umap = isl_schedule_tree_expansion_get_expansion(tree);
+		outer = isl_union_map_apply_domain(outer, umap);
 		umap = subtree_schedule_extend_child(tree, outer);
 		break;
 	case isl_schedule_node_filter:
@@ -1466,6 +1888,7 @@ static __isl_give isl_union_set *initial_domain(
 {
 	isl_multi_union_pw_aff *mupa;
 	isl_union_set *domain;
+	isl_union_map *exp;
 
 	if (!tree)
 		return NULL;
@@ -1477,6 +1900,18 @@ static __isl_give isl_union_set *initial_domain(
 		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_internal,
 			"context node should be handled by caller",
 			return NULL);
+	case isl_schedule_node_guard:
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_internal,
+			"guard node should be handled by caller",
+			return NULL);
+	case isl_schedule_node_mark:
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_internal,
+			"mark node should be handled by caller",
+			return NULL);
+	case isl_schedule_node_extension:
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"cannot construct subtree schedule of tree "
+			"with extension nodes", return NULL);
 	case isl_schedule_node_band:
 		if (isl_schedule_tree_band_n_member(tree) == 0)
 			isl_die(isl_schedule_tree_get_ctx(tree),
@@ -1490,6 +1925,11 @@ static __isl_give isl_union_set *initial_domain(
 	case isl_schedule_node_domain:
 		domain = isl_schedule_tree_domain_get_domain(tree);
 		domain = isl_union_set_universe(domain);
+		break;
+	case isl_schedule_node_expansion:
+		exp = isl_schedule_tree_expansion_get_expansion(tree);
+		exp = isl_union_map_universe(exp);
+		domain = isl_union_map_domain(exp);
 		break;
 	case isl_schedule_node_filter:
 		domain = isl_schedule_tree_filter_get_filter(tree);
@@ -1510,6 +1950,10 @@ static __isl_give isl_union_set *initial_domain(
 /* Return the subtree schedule of a node that contains some schedule
  * information, i.e., a node that would not be skipped by
  * isl_schedule_tree_first_schedule_descendant and that is not a leaf.
+ *
+ * If the tree contains any expansions, then the returned subtree
+ * schedule is formulated in terms of the expanded domains.
+ * The tree is not allowed to contain any extension nodes.
  *
  * We start with an initial zero-dimensional subtree schedule based
  * on the domain information in the root node and then extend it
@@ -1577,6 +2021,48 @@ __isl_give isl_schedule_tree *isl_schedule_tree_band_scale_down(
 error:
 	isl_schedule_tree_free(tree);
 	isl_multi_val_free(mv);
+	return NULL;
+}
+
+/* Given two trees with sequence roots, replace the child at position
+ * "pos" of "tree" with the children of "child".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_sequence_splice(
+	__isl_take isl_schedule_tree *tree, int pos,
+	__isl_take isl_schedule_tree *child)
+{
+	int n;
+	isl_schedule_tree_list *list1, *list2;
+
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree || !child)
+		goto error;
+	if (isl_schedule_tree_get_type(tree) != isl_schedule_node_sequence)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a sequence node", goto error);
+	n = isl_schedule_tree_n_children(tree);
+	if (pos < 0 || pos >= n)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"position out of bounds", goto error);
+	if (isl_schedule_tree_get_type(child) != isl_schedule_node_sequence)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a sequence node", goto error);
+
+	list1 = isl_schedule_tree_list_copy(tree->children);
+	list1 = isl_schedule_tree_list_drop(list1, pos, n - pos);
+	list2 = isl_schedule_tree_list_copy(tree->children);
+	list2 = isl_schedule_tree_list_drop(list2, 0, pos + 1);
+	list1 = isl_schedule_tree_list_concat(list1,
+				isl_schedule_tree_list_copy(child->children));
+	list1 = isl_schedule_tree_list_concat(list1, list2);
+
+	isl_schedule_tree_free(tree);
+	isl_schedule_tree_free(child);
+	return isl_schedule_tree_from_children(isl_schedule_node_sequence,
+						list1);
+error:
+	isl_schedule_tree_free(tree);
+	isl_schedule_tree_free(child);
 	return NULL;
 }
 
@@ -1732,12 +2218,30 @@ __isl_give isl_schedule_tree *isl_schedule_tree_reset_user(
 		if (!tree->domain)
 			return isl_schedule_tree_free(tree);
 		break;
+	case isl_schedule_node_expansion:
+		tree->contraction =
+			isl_union_pw_multi_aff_reset_user(tree->contraction);
+		tree->expansion = isl_union_map_reset_user(tree->expansion);
+		if (!tree->contraction || !tree->expansion)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_extension:
+		tree->extension = isl_union_map_reset_user(tree->extension);
+		if (!tree->extension)
+			return isl_schedule_tree_free(tree);
+		break;
 	case isl_schedule_node_filter:
 		tree->filter = isl_union_set_reset_user(tree->filter);
 		if (!tree->filter)
 			return isl_schedule_tree_free(tree);
 		break;
+	case isl_schedule_node_guard:
+		tree->guard = isl_set_reset_user(tree->guard);
+		if (!tree->guard)
+			return isl_schedule_tree_free(tree);
+		break;
 	case isl_schedule_node_leaf:
+	case isl_schedule_node_mark:
 	case isl_schedule_node_sequence:
 	case isl_schedule_node_set:
 		break;
@@ -1781,12 +2285,33 @@ __isl_give isl_schedule_tree *isl_schedule_tree_align_params(
 		if (!tree->domain)
 			return isl_schedule_tree_free(tree);
 		break;
+	case isl_schedule_node_expansion:
+		tree->contraction =
+			isl_union_pw_multi_aff_align_params(tree->contraction,
+							isl_space_copy(space));
+		tree->expansion = isl_union_map_align_params(tree->expansion,
+								space);
+		if (!tree->contraction || !tree->expansion)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_extension:
+		tree->extension = isl_union_map_align_params(tree->extension,
+								space);
+		if (!tree->extension)
+			return isl_schedule_tree_free(tree);
+		break;
 	case isl_schedule_node_filter:
 		tree->filter = isl_union_set_align_params(tree->filter, space);
 		if (!tree->filter)
 			return isl_schedule_tree_free(tree);
 		break;
+	case isl_schedule_node_guard:
+		tree->guard = isl_set_align_params(tree->guard, space);
+		if (!tree->guard)
+			return isl_schedule_tree_free(tree);
+		break;
 	case isl_schedule_node_leaf:
+	case isl_schedule_node_mark:
 	case isl_schedule_node_sequence:
 	case isl_schedule_node_set:
 		isl_space_free(space);
@@ -1814,10 +2339,14 @@ static int involves_iteration_domain(__isl_keep isl_schedule_tree *tree)
 		return -1;
 	case isl_schedule_node_band:
 	case isl_schedule_node_domain:
+	case isl_schedule_node_expansion:
+	case isl_schedule_node_extension:
 	case isl_schedule_node_filter:
 		return 1;
 	case isl_schedule_node_context:
 	case isl_schedule_node_leaf:
+	case isl_schedule_node_guard:
+	case isl_schedule_node_mark:
 	case isl_schedule_node_sequence:
 	case isl_schedule_node_set:
 		return 0;
@@ -1828,6 +2357,7 @@ static int involves_iteration_domain(__isl_keep isl_schedule_tree *tree)
  * represented by "upma".
  * In other words, plug in "upma" in the iteration domains of
  * the root node of "tree".
+ * We currently do not handle expansion nodes.
  *
  * We first check if the root node involves any iteration domains.
  * If so, we handle the specific cases.
@@ -1863,6 +2393,15 @@ __isl_give isl_schedule_tree *isl_schedule_tree_pullback_union_pw_multi_aff(
 			isl_union_set_preimage_union_pw_multi_aff(tree->domain,
 									upma);
 		if (!tree->domain)
+			return isl_schedule_tree_free(tree);
+	} else if (tree->type == isl_schedule_node_expansion) {
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_unsupported,
+			"cannot pullback expansion node", goto error);
+	} else if (tree->type == isl_schedule_node_extension) {
+		tree->extension =
+			isl_union_map_preimage_range_union_pw_multi_aff(
+			    tree->extension, upma);
+		if (!tree->extension)
 			return isl_schedule_tree_free(tree);
 	} else if (tree->type == isl_schedule_node_filter) {
 		tree->filter =
@@ -2032,11 +2571,45 @@ __isl_give isl_printer *isl_printer_print_schedule_tree_mark(
 		p = isl_printer_print_union_set(p, tree->domain);
 		p = isl_printer_print_str(p, "\"");
 		break;
+	case isl_schedule_node_expansion:
+		p = isl_printer_print_str(p, "contraction");
+		p = isl_printer_yaml_next(p);
+		p = isl_printer_print_str(p, "\"");
+		p = isl_printer_print_union_pw_multi_aff(p, tree->contraction);
+		p = isl_printer_print_str(p, "\"");
+		p = isl_printer_yaml_next(p);
+		p = isl_printer_print_str(p, "expansion");
+		p = isl_printer_yaml_next(p);
+		p = isl_printer_print_str(p, "\"");
+		p = isl_printer_print_union_map(p, tree->expansion);
+		p = isl_printer_print_str(p, "\"");
+		break;
+	case isl_schedule_node_extension:
+		p = isl_printer_print_str(p, "extension");
+		p = isl_printer_yaml_next(p);
+		p = isl_printer_print_str(p, "\"");
+		p = isl_printer_print_union_map(p, tree->extension);
+		p = isl_printer_print_str(p, "\"");
+		break;
 	case isl_schedule_node_filter:
 		p = isl_printer_print_str(p, "filter");
 		p = isl_printer_yaml_next(p);
 		p = isl_printer_print_str(p, "\"");
 		p = isl_printer_print_union_set(p, tree->filter);
+		p = isl_printer_print_str(p, "\"");
+		break;
+	case isl_schedule_node_guard:
+		p = isl_printer_print_str(p, "guard");
+		p = isl_printer_yaml_next(p);
+		p = isl_printer_print_str(p, "\"");
+		p = isl_printer_print_set(p, tree->guard);
+		p = isl_printer_print_str(p, "\"");
+		break;
+	case isl_schedule_node_mark:
+		p = isl_printer_print_str(p, "mark");
+		p = isl_printer_yaml_next(p);
+		p = isl_printer_print_str(p, "\"");
+		p = isl_printer_print_str(p, isl_id_get_name(tree->mark));
 		p = isl_printer_print_str(p, "\"");
 		break;
 	case isl_schedule_node_band:

@@ -7235,7 +7235,8 @@ two domain elements is determined by the node that is closest
 to the root that refers to both elements and that orders them apart.
 Each node in the tree is of one of several types.
 The root node is always of type C<isl_schedule_node_domain>
-and it describes the domain elements to which the schedule applies.
+(or C<isl_schedule_node_extension>)
+and it describes the (extra) domain elements to which the schedule applies.
 The other types of nodes are as follows.
 
 =over
@@ -7249,6 +7250,15 @@ schedule dimensions in the same band assign them the same value,
 then the two domain elements are ordered according to these two
 different values.
 
+=item C<isl_schedule_node_expansion>
+
+An expansion node maps each of the domain elements that reach the node
+to one or more domain elements.  The image of this mapping forms
+the set of domain elements that reach the child of the expansion node.
+The function that maps each of the expanded domain elements
+to the original domain element from which it was expanded
+is called the contraction.
+
 =item C<isl_schedule_node_filter>
 
 A filter node does not impose any ordering, but rather intersects
@@ -7261,6 +7271,11 @@ set node.
 =item C<isl_schedule_node_leaf>
 
 A leaf of the schedule tree.  Leaf nodes do not impose any ordering.
+
+=item C<isl_schedule_node_mark>
+
+A mark node can be used to attach any kind of information to a subtree
+of the schedule tree.
 
 =item C<isl_schedule_node_sequence>
 
@@ -7280,7 +7295,7 @@ is therefore also immaterial.
 
 =back
 
-The following node type is only supported by the AST generator.
+The following node types are only supported by the AST generator.
 
 =over
 
@@ -7295,6 +7310,40 @@ band nodes.  In particular, if there are no outer band nodes, then
 this space is the unnamed zero-dimensional space.
 Since a context node references the outer band nodes, any tree
 containing a context node is considered to be anchored.
+
+=item C<isl_schedule_node_extension>
+
+An extension node instructs the AST generator to add additional
+domain elements that need to be scheduled.
+The additional domain elements are described by the range of
+the extension map in terms of the outer schedule dimensions,
+i.e., the flat product of the outer band nodes.
+Note that domain elements are added whenever the AST generator
+reaches the extension node, meaning that there are still some
+active domain elements for which an AST needs to be generated.
+The conditions under which some domain elements are still active
+may however not be completely described by the outer AST nodes
+generated at that point.
+
+An extension node may also appear as the root of a schedule tree,
+when it is intended to be inserted into another tree
+using C<isl_schedule_node_graft_before> or C<isl_schedule_node_graft_after>.
+In this case, the domain of the extension node should
+correspond to the flat product of the outer band nodes
+in this other schedule tree at the point where the extension tree
+will be inserted.
+
+=item C<isl_schedule_node_guard>
+
+The guard describes constraints on the parameters and
+the schedule dimensions of outer
+bands that need to be enforced by the outer nodes
+in the generated AST.
+The space of the guard is that of the flat product of the outer
+band nodes.  In particular, if there are no outer band nodes, then
+this space is the unnamed zero-dimensional space.
+Since a guard node references the outer band nodes, any tree
+containing a guard node is considered to be anchored.
 
 =back
 
@@ -7357,6 +7406,14 @@ be introduced into the schedule using the following function.
 		__isl_take isl_schedule *schedule,
 		__isl_take isl_set *context)
 
+A top-level guard node (right underneath the domain node) can
+be introduced into the schedule using the following function.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *isl_schedule_insert_guard(
+		__isl_take isl_schedule *schedule,
+		__isl_take isl_set *guard)
+
 A schedule that combines two schedules either in the given
 order or in an arbitrary order, i.e., with an C<isl_schedule_node_sequence>
 or an C<isl_schedule_node_set> node,
@@ -7373,7 +7430,7 @@ can be created using the following functions.
 The domains of the two input schedules need to be disjoint.
 
 The following function can be used to restrict the domain
-of a schedule to be a subset of the given union set.
+of a schedule with a domain node as root to be a subset of the given union set.
 This operation may remove nodes in the tree that have become
 redundant.
 
@@ -7398,7 +7455,8 @@ in the given schedule to the given space.
 		__isl_take isl_space *space);
 
 The following function allows the user to plug in a given function
-in the iteration domains.
+in the iteration domains.  The input schedule is not allowed to contain
+any expansion nodes.
 
 	#include <isl/schedule.h>
 	__isl_give isl_schedule *
@@ -7417,6 +7475,8 @@ The resulting relation encodes the same relative ordering as
 the schedule by mapping the domain elements to a common schedule space.
 If the schedule_separate_components option is set, then the order
 of the children of a set node is explicitly encoded in the result.
+If the tree contains any expansion nodes, then the relation
+is formulated in terms of the expanded domain elements.
 
 Schedules can be read from input using the following functions.
 
@@ -7448,12 +7508,18 @@ The root of the schedule tree can be obtained using the following function.
 		__isl_keep isl_schedule *schedule);
 
 A pointer to a newly created schedule tree with a single domain
-node can be created using the following function.
+node can be created using the following functions.
 
 	#include <isl/schedule_node.h>
 	__isl_give isl_schedule_node *
 	isl_schedule_node_from_domain(
 		__isl_take isl_union_set *domain);
+	__isl_give isl_schedule_node *
+	isl_schedule_node_from_extension(
+		__isl_take isl_union_map *extension);
+
+C<isl_schedule_node_from_extension> creates a tree with an extension
+node as root.
 
 Schedule nodes can be copied and freed using the following functions.
 
@@ -7743,14 +7809,39 @@ See L</"AST Generation Options (Schedule Tree)">.
 		__isl_keep isl_schedule_node *node);
 
 	#include <isl/schedule_node.h>
+	__isl_give isl_union_map *
+	isl_schedule_node_expansion_get_expansion(
+		__isl_keep isl_schedule_node *node);
+	__isl_give isl_union_pw_multi_aff *
+	isl_schedule_node_expansion_get_contraction(
+		__isl_keep isl_schedule_node *node);
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_union_map *
+	isl_schedule_node_extension_get_extension(
+		__isl_keep isl_schedule_node *node);
+
+	#include <isl/schedule_node.h>
 	__isl_give isl_union_set *
 	isl_schedule_node_filter_get_filter(
 		__isl_keep isl_schedule_node *node);
 
-The following functions can be used to obtain an C<isl_union_pw_multi_aff>
-or C<isl_union_map> representation of partial schedules related to the node.
+	#include <isl/schedule_node.h>
+	__isl_give isl_set *isl_schedule_node_guard_get_guard(
+		__isl_keep isl_schedule_node *node);
 
 	#include <isl/schedule_node.h>
+	__isl_give isl_id *isl_schedule_node_mark_get_id(
+		__isl_keep isl_schedule_node *node);
+
+The following functions can be used to obtain an C<isl_multi_union_pw_aff>,
+an C<isl_union_pw_multi_aff> or C<isl_union_map> representation of
+partial schedules related to the node.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_multi_union_pw_aff *
+	isl_schedule_node_get_prefix_schedule_multi_union_pw_aff(
+		__isl_keep isl_schedule_node *node);
 	__isl_give isl_union_pw_multi_aff *
 	isl_schedule_node_get_prefix_schedule_union_pw_multi_aff(
 		__isl_keep isl_schedule_node *node);
@@ -7758,17 +7849,46 @@ or C<isl_union_map> representation of partial schedules related to the node.
 	isl_schedule_node_get_prefix_schedule_union_map(
 		__isl_keep isl_schedule_node *node);
 	__isl_give isl_union_map *
+	isl_schedule_node_get_prefix_schedule_relation(
+		__isl_keep isl_schedule_node *node);
+	__isl_give isl_union_map *
 	isl_schedule_node_get_subtree_schedule_union_map(
 		__isl_keep isl_schedule_node *node);
 
 In particular, the functions
+C<isl_schedule_node_get_prefix_schedule_multi_union_pw_aff>,
 C<isl_schedule_node_get_prefix_schedule_union_pw_multi_aff>
 and C<isl_schedule_node_get_prefix_schedule_union_map>
 return a relative ordering on the domain elements that reach the given
 node determined by its ancestors.
+The function C<isl_schedule_node_get_prefix_schedule_relation>
+additionally includes the domain constraints in the result.
 The function C<isl_schedule_node_get_subtree_schedule_union_map>
 returns a representation of the partial schedule defined by the
 subtree rooted at the given node.
+If the tree contains any expansion nodes, then the subtree schedule
+is formulated in terms of the expanded domain elements.
+The tree passed to functions returning a prefix schedule
+may only contain extension nodes if these would not affect
+the result of these functions.  That is, if one of the ancestors
+is an extension node, then all of the domain elements that were
+added by the extension node need to have been filtered out
+by filter nodes between the extension node and the input node.
+The tree passed to C<isl_schedule_node_get_subtree_schedule_union_map>
+may not contain in extension nodes in the selected subtree.
+
+The expansion/contraction defined by an entire subtree, combining
+the expansions/contractions
+on the expansion nodes in the subtree, can be obtained using
+the following functions.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_union_map *
+	isl_schedule_node_get_subtree_expansion(
+		__isl_keep isl_schedule_node *node);
+	__isl_give isl_union_pw_multi_aff *
+	isl_schedule_node_get_subtree_contraction(
+		__isl_keep isl_schedule_node *node);
 
 The total number of outer band members of given node, i.e.,
 the shared output dimension of the maps in the result
@@ -7789,6 +7909,13 @@ or the union of universes in the spaces that contain these elements.
 	__isl_give isl_union_set *
 	isl_schedule_node_get_universe_domain(
 		__isl_keep isl_schedule_node *node);
+
+The input tree of C<isl_schedule_node_get_domain>
+may only contain extension nodes if these would not affect
+the result of this function.  That is, if one of the ancestors
+is an extension node, then all of the domain elements that were
+added by the extension node need to have been filtered out
+by filter nodes between the extension node and the input node.
 
 The following functions can be used to introduce additional nodes
 in the schedule tree.  The new node is introduced at the point
@@ -7826,6 +7953,22 @@ two filter nodes are merged into one.
 
 	#include <isl/schedule_node.h>
 	__isl_give isl_schedule_node *
+	isl_schedule_node_insert_guard(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_set *guard);
+
+This function inserts a new guard node with the given guard constraints.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *
+	isl_schedule_node_insert_mark(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_id *mark);
+
+This function inserts a new mark node with the give mark identifier.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *
 	isl_schedule_node_insert_sequence(
 		__isl_take isl_schedule_node *node,
 		__isl_take isl_union_set_list *filters);
@@ -7836,6 +7979,23 @@ two filter nodes are merged into one.
 
 These functions insert a new sequence or set node with the given
 filters as children.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *isl_schedule_node_group(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_id *group_id);
+
+This function introduces an expansion node in between the current
+node and its parent that expands instances of a space with tuple
+identifier C<group_id> to the original domain elements that reach
+the node.  The group instances are identified by the prefix schedule
+of those domain elements.  The ancestors of the node are adjusted
+to refer to the group instances instead of the original domain
+elements.  The return value points to the same node in the updated
+schedule tree as the input node, i.e., to the child of the newly
+introduced expansion node.  Grouping instances of different statements
+ensures that they will be treated as a single statement by the
+AST generator up to the point of the expansion node.
 
 The partial schedule of a band node can be scaled (down) using
 the following functions.
@@ -7901,6 +8061,62 @@ The subtree rooted at the given node is assumed not to have
 any anchored nodes.
 The result points to the node in the resulting tree that is in the same
 position as the node pointed to by C<node> in the original tree.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *
+	isl_schedule_node_order_after(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_union_set *filter);
+
+This function splits the domain elements that reach C<node>
+into those that satisfy C<filter> and those that do not and
+arranges for the elements that do satisfy the filter to be
+executed after those that do not.  The order is imposed by
+a sequence node, possibly reusing the grandparent of C<node>
+on two copies of the subtree attached to the original C<node>.
+Both copies are simplified with respect to their filter.
+
+Return a pointer to the copy of the subtree that does not
+satisfy C<filter>.  If there is no such copy (because all
+reaching domain elements satisfy the filter), then return
+the original pointer.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *
+	isl_schedule_node_graft_before(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_schedule_node *graft);
+	__isl_give isl_schedule_node *
+	isl_schedule_node_graft_after(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_schedule_node *graft);
+
+This function inserts the C<graft> tree into the tree containing C<node>
+such that it is executed before (in case of C<isl_schedule_node_graft_before>)
+or after (in case of C<isl_schedule_node_graft_after>) C<node>.
+The root node of C<graft>
+should be an extension node where the domain of the extension
+is the flat product of all outer band nodes of C<node>.
+The root node may also be a domain node.
+The elements of the domain or the range of the extension may not
+intersect with the domain elements that reach "node".
+The schedule tree of C<graft> may not be anchored.
+
+The schedule tree of C<node> is modified to include an extension node
+corresponding to the root node of C<graft> as a child of the original
+parent of C<node>.  The original node that C<node> points to and the
+child of the root node of C<graft> are attached to this extension node
+through a sequence, with appropriate filters and with the child
+of C<graft> appearing before or after the original C<node>.
+
+If C<node> already appears inside a sequence that is the child of
+an extension node and if the spaces of the new domain elements
+do not overlap with those of the original domain elements,
+then that extension node is extended with the new extension
+rather than introducing a new segment of extension and sequence nodes.
+
+Return a pointer to the same node in the modified tree that
+C<node> pointed to in the original tree.
 
 A representation of the schedule node can be printed using
 
@@ -8471,11 +8687,13 @@ The basic properties of an AST node can be obtained as follows.
 The type of an AST node is one of
 C<isl_ast_node_for>,
 C<isl_ast_node_if>,
-C<isl_ast_node_block> or
+C<isl_ast_node_block>,
+C<isl_ast_node_mark> or
 C<isl_ast_node_user>.
 An C<isl_ast_node_for> represents a for node.
 An C<isl_ast_node_if> represents an if node.
 An C<isl_ast_node_block> represents a compound node.
+An C<isl_ast_node_mark> introduces a mark in the AST.
 An C<isl_ast_node_user> represents an expression statement.
 An expression statement typically corresponds to a domain element, i.e.,
 one of the elements that is visited by the AST.
@@ -8513,6 +8731,15 @@ exactly once.
 	isl_ast_node_block_get_children(
 		__isl_keep isl_ast_node *node);
 
+	__isl_give isl_id *isl_ast_node_mark_get_id(
+		__isl_keep isl_ast_node *node);
+	__isl_give isl_ast_node *isl_ast_node_mark_get_node(
+		__isl_keep isl_ast_node *node);
+
+C<isl_ast_node_mark_get_id> returns the identifier of the mark.
+C<isl_ast_node_mark_get_node> returns the child node that is being marked.
+
+	#include <isl/ast.h>
 	__isl_give isl_ast_expr *isl_ast_node_user_get_expr(
 		__isl_keep isl_ast_node *node);
 
@@ -9571,6 +9798,19 @@ user defined node created using the following function.
 			__isl_take isl_ast_node *node,
 			__isl_keep isl_ast_build *build,
 			void *user), void *user);
+	__isl_give isl_ast_build *
+	isl_ast_build_set_before_each_mark(
+		__isl_take isl_ast_build *build,
+		int (*fn)(__isl_keep isl_id *mark,
+			__isl_keep isl_ast_build *build,
+			void *user), void *user);
+	__isl_give isl_ast_build *
+	isl_ast_build_set_after_each_mark(
+		__isl_take isl_ast_build *build,
+		__isl_give isl_ast_node *(*fn)(
+			__isl_take isl_ast_node *node,
+			__isl_keep isl_ast_build *build,
+			void *user), void *user);
 
 The callback set by C<isl_ast_build_set_at_each_domain> will
 be called for each domain AST node.
@@ -9585,7 +9825,15 @@ C<isl_ast_node_set_annotation>) to the constructed for node.
 In particular, if the user has also specified an C<after_each_for>
 callback, then the annotation can be retrieved from the node passed to
 that callback using C<isl_ast_node_get_annotation>.
-All callbacks should C<NULL> on failure.
+The callbacks set by C<isl_ast_build_set_before_each_mark>
+and C<isl_ast_build_set_after_each_mark> will be called for each
+mark AST node that is created, i.e., for each mark schedule node
+in the input schedule tree.  The first will be called in depth-first
+pre-order, while the second will be called in depth-first post-order.
+Since the callback set by C<isl_ast_build_set_before_each_mark>
+is called before the mark AST node is actually constructed, it is passed
+the identifier of the mark node.
+All callbacks should C<NULL> (or -1) on failure.
 The given C<isl_ast_build> can be used to create new
 C<isl_ast_expr> objects using C<isl_ast_build_expr_from_pw_aff>
 or C<isl_ast_build_call_from_pw_multi_aff>.

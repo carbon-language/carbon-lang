@@ -76,6 +76,14 @@ __isl_give isl_ast_build *isl_ast_build_set_after_each_for(
 	__isl_take isl_ast_build *build,
 	__isl_give isl_ast_node *(*fn)(__isl_take isl_ast_node *node,
 		__isl_keep isl_ast_build *build, void *user), void *user);
+__isl_give isl_ast_build *isl_ast_build_set_before_each_mark(
+	__isl_take isl_ast_build *build,
+	int (*fn)(__isl_keep isl_id *mark, __isl_keep isl_ast_build *build,
+		void *user), void *user);
+__isl_give isl_ast_build *isl_ast_build_set_after_each_mark(
+	__isl_take isl_ast_build *build,
+	__isl_give isl_ast_node *(*fn)(__isl_take isl_ast_node *node,
+		__isl_keep isl_ast_build *build, void *user), void *user);
 __isl_give isl_ast_build *isl_ast_build_set_create_leaf(
 	__isl_take isl_ast_build *build,
 	__isl_give isl_ast_node *(*fn)(__isl_take isl_ast_build *build,

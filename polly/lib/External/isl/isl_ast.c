@@ -853,6 +853,32 @@ error:
 	return NULL;
 }
 
+/* Create a mark node, marking "node" with "id".
+ */
+__isl_give isl_ast_node *isl_ast_node_alloc_mark(__isl_take isl_id *id,
+	__isl_take isl_ast_node *node)
+{
+	isl_ctx *ctx;
+	isl_ast_node *mark;
+
+	if (!id || !node)
+		goto error;
+
+	ctx = isl_id_get_ctx(id);
+	mark = isl_ast_node_alloc(ctx, isl_ast_node_mark);
+	if (!mark)
+		goto error;
+
+	mark->u.m.mark = id;
+	mark->u.m.node = node;
+
+	return mark;
+error:
+	isl_id_free(id);
+	isl_ast_node_free(node);
+	return NULL;
+}
+
 /* Create a user node evaluating "expr".
  */
 __isl_give isl_ast_node *isl_ast_node_alloc_user(__isl_take isl_ast_expr *expr)
@@ -962,6 +988,12 @@ __isl_give isl_ast_node *isl_ast_node_dup(__isl_keep isl_ast_node *node)
 		if (!dup->u.b.children)
 			return isl_ast_node_free(dup);
 		break;
+	case isl_ast_node_mark:
+		dup->u.m.mark = isl_id_copy(node->u.m.mark);
+		dup->u.m.node = isl_ast_node_copy(node->u.m.node);
+		if (!dup->u.m.mark || !dup->u.m.node)
+			return isl_ast_node_free(dup);
+		break;
 	case isl_ast_node_user:
 		dup->u.e.expr = isl_ast_expr_copy(node->u.e.expr);
 		if (!dup->u.e.expr)
@@ -1008,6 +1040,10 @@ __isl_null isl_ast_node *isl_ast_node_free(__isl_take isl_ast_node *node)
 		break;
 	case isl_ast_node_block:
 		isl_ast_node_list_free(node->u.b.children);
+		break;
+	case isl_ast_node_mark:
+		isl_id_free(node->u.m.mark);
+		isl_ast_node_free(node->u.m.node);
 		break;
 	case isl_ast_node_user:
 		isl_ast_expr_free(node->u.e.expr);
@@ -1228,6 +1264,33 @@ __isl_give isl_ast_expr *isl_ast_node_user_get_expr(
 			"not a user node", return NULL);
 
 	return isl_ast_expr_copy(node->u.e.expr);
+}
+
+/* Return the mark identifier of the mark node "node".
+ */
+__isl_give isl_id *isl_ast_node_mark_get_id(__isl_keep isl_ast_node *node)
+{
+	if (!node)
+		return NULL;
+	if (node->type != isl_ast_node_mark)
+		isl_die(isl_ast_node_get_ctx(node), isl_error_invalid,
+			"not a mark node", return NULL);
+
+	return isl_id_copy(node->u.m.mark);
+}
+
+/* Return the node marked by mark node "node".
+ */
+__isl_give isl_ast_node *isl_ast_node_mark_get_node(
+	__isl_keep isl_ast_node *node)
+{
+	if (!node)
+		return NULL;
+	if (node->type != isl_ast_node_mark)
+		isl_die(isl_ast_node_get_ctx(node), isl_error_invalid,
+			"not a mark node", return NULL);
+
+	return isl_ast_node_copy(node->u.m.node);
 }
 
 __isl_give isl_id *isl_ast_node_get_annotation(__isl_keep isl_ast_node *node)
@@ -1589,6 +1652,11 @@ static __isl_give isl_printer *print_ast_node_isl(__isl_take isl_printer *p,
 			p = isl_printer_print_ast_node(p, node->u.f.body);
 		}
 		break;
+	case isl_ast_node_mark:
+		p = isl_printer_print_str(p, "mark: ");
+		p = isl_printer_print_id(p, node->u.m.mark);
+		p = isl_printer_print_str(p, "node: ");
+		p = isl_printer_print_ast_node(p, node->u.m.node);
 	case isl_ast_node_user:
 		p = isl_printer_print_ast_expr(p, node->u.e.expr);
 		break;
@@ -1609,7 +1677,7 @@ static __isl_give isl_printer *print_ast_node_isl(__isl_take isl_printer *p,
 	case isl_ast_node_block:
 		p = isl_printer_print_ast_node_list(p, node->u.b.children);
 		break;
-	default:
+	case isl_ast_node_error:
 		break;
 	}
 	p = isl_printer_print_str(p, ")");
@@ -1624,6 +1692,10 @@ static __isl_give isl_printer *print_ast_node_isl(__isl_take isl_printer *p,
  * as well.
  * If the node is an if node with an else, then we print a block
  * to avoid spurious dangling else warnings emitted by some compilers.
+ * If the node is a mark, then in principle, we would have to check
+ * the child of the mark node.  However, even if the child would not
+ * require us to print a block, for readability it is probably best
+ * to print a block anyway.
  * If the ast_always_print_block option has been set, then we print a block.
  */
 static int need_block(__isl_keep isl_ast_node *node)
@@ -1635,6 +1707,8 @@ static int need_block(__isl_keep isl_ast_node *node)
 	if (node->type == isl_ast_node_for && node->u.f.degenerate)
 		return 1;
 	if (node->type == isl_ast_node_if && node->u.i.else_node)
+		return 1;
+	if (node->type == isl_ast_node_mark)
 		return 1;
 
 	ctx = isl_ast_node_get_ctx(node);
@@ -1842,6 +1916,13 @@ static __isl_give isl_printer *print_ast_node_c(__isl_take isl_printer *p,
 		if (!in_block)
 			p = end_block(p);
 		break;
+	case isl_ast_node_mark:
+		p = isl_printer_start_line(p);
+		p = isl_printer_print_str(p, "// ");
+		p = isl_printer_print_str(p, isl_id_get_name(node->u.m.mark));
+		p = isl_printer_end_line(p);
+		p = print_ast_node_c(p, node->u.m.node, options, 0, in_list);
+		break;
 	case isl_ast_node_user:
 		if (options->print_user)
 			return options->print_user(p,
@@ -2023,6 +2104,9 @@ static int ast_node_required_macros(__isl_keep isl_ast_node *node, int macros)
 	case isl_ast_node_block:
 		macros = ast_node_list_required_macros(node->u.b.children,
 							macros);
+		break;
+	case isl_ast_node_mark:
+		macros = ast_node_required_macros(node->u.m.node, macros);
 		break;
 	case isl_ast_node_user:
 		macros = ast_expr_required_macros(node->u.e.expr, macros);

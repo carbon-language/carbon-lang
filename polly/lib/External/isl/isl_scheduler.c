@@ -1,6 +1,7 @@
 /*
  * Copyright 2011      INRIA Saclay
  * Copyright 2012-2014 Ecole Normale Superieure
+ * Copyright 2015      Sven Verdoolaege
  *
  * Use of this software is governed by the MIT license
  *
@@ -2462,6 +2463,7 @@ static __isl_give isl_union_map *intersect_domains(
 static int update_edge(struct isl_sched_graph *graph,
 	struct isl_sched_edge *edge)
 {
+	int empty;
 	isl_map *id;
 
 	id = specializer(edge->src, edge->dst);
@@ -2482,28 +2484,190 @@ static int update_edge(struct isl_sched_graph *graph,
 			goto error;
 	}
 
-	isl_map_free(id);
-	if (isl_map_plain_is_empty(edge->map))
+	empty = isl_map_plain_is_empty(edge->map);
+	if (empty < 0)
+		goto error;
+	if (empty)
 		graph_remove_edge(graph, edge);
 
+	isl_map_free(id);
 	return 0;
 error:
 	isl_map_free(id);
 	return -1;
 }
 
-/* Update the dependence relations of all edges based on the current schedule.
+/* Does the domain of "umap" intersect "uset"?
+ */
+static int domain_intersects(__isl_keep isl_union_map *umap,
+	__isl_keep isl_union_set *uset)
+{
+	int empty;
+
+	umap = isl_union_map_copy(umap);
+	umap = isl_union_map_intersect_domain(umap, isl_union_set_copy(uset));
+	empty = isl_union_map_is_empty(umap);
+	isl_union_map_free(umap);
+
+	return empty < 0 ? -1 : !empty;
+}
+
+/* Does the range of "umap" intersect "uset"?
+ */
+static int range_intersects(__isl_keep isl_union_map *umap,
+	__isl_keep isl_union_set *uset)
+{
+	int empty;
+
+	umap = isl_union_map_copy(umap);
+	umap = isl_union_map_intersect_range(umap, isl_union_set_copy(uset));
+	empty = isl_union_map_is_empty(umap);
+	isl_union_map_free(umap);
+
+	return empty < 0 ? -1 : !empty;
+}
+
+/* Are the condition dependences of "edge" local with respect to
+ * the current schedule?
+ *
+ * That is, are domain and range of the condition dependences mapped
+ * to the same point?
+ *
+ * In other words, is the condition false?
+ */
+static int is_condition_false(struct isl_sched_edge *edge)
+{
+	isl_union_map *umap;
+	isl_map *map, *sched, *test;
+	int empty, local;
+
+	empty = isl_union_map_is_empty(edge->tagged_condition);
+	if (empty < 0 || empty)
+		return empty;
+
+	umap = isl_union_map_copy(edge->tagged_condition);
+	umap = isl_union_map_zip(umap);
+	umap = isl_union_set_unwrap(isl_union_map_domain(umap));
+	map = isl_map_from_union_map(umap);
+
+	sched = node_extract_schedule(edge->src);
+	map = isl_map_apply_domain(map, sched);
+	sched = node_extract_schedule(edge->dst);
+	map = isl_map_apply_range(map, sched);
+
+	test = isl_map_identity(isl_map_get_space(map));
+	local = isl_map_is_subset(map, test);
+	isl_map_free(map);
+	isl_map_free(test);
+
+	return local;
+}
+
+/* For each conditional validity constraint that is adjacent
+ * to a condition with domain in condition_source or range in condition_sink,
+ * turn it into an unconditional validity constraint.
+ */
+static int unconditionalize_adjacent_validity(struct isl_sched_graph *graph,
+	__isl_take isl_union_set *condition_source,
+	__isl_take isl_union_set *condition_sink)
+{
+	int i;
+
+	condition_source = isl_union_set_coalesce(condition_source);
+	condition_sink = isl_union_set_coalesce(condition_sink);
+
+	for (i = 0; i < graph->n_edge; ++i) {
+		int adjacent;
+		isl_union_map *validity;
+
+		if (!graph->edge[i].conditional_validity)
+			continue;
+		if (graph->edge[i].validity)
+			continue;
+
+		validity = graph->edge[i].tagged_validity;
+		adjacent = domain_intersects(validity, condition_sink);
+		if (adjacent >= 0 && !adjacent)
+			adjacent = range_intersects(validity, condition_source);
+		if (adjacent < 0)
+			goto error;
+		if (!adjacent)
+			continue;
+
+		graph->edge[i].validity = 1;
+	}
+
+	isl_union_set_free(condition_source);
+	isl_union_set_free(condition_sink);
+	return 0;
+error:
+	isl_union_set_free(condition_source);
+	isl_union_set_free(condition_sink);
+	return -1;
+}
+
+/* Update the dependence relations of all edges based on the current schedule
+ * and enforce conditional validity constraints that are adjacent
+ * to satisfied condition constraints.
+ *
+ * First check if any of the condition constraints are satisfied
+ * (i.e., not local to the outer schedule) and keep track of
+ * their domain and range.
+ * Then update all dependence relations (which removes the non-local
+ * constraints).
+ * Finally, if any condition constraints turned out to be satisfied,
+ * then turn all adjacent conditional validity constraints into
+ * unconditional validity constraints.
  */
 static int update_edges(isl_ctx *ctx, struct isl_sched_graph *graph)
 {
 	int i;
+	int any = 0;
+	isl_union_set *source, *sink;
+
+	source = isl_union_set_empty(isl_space_params_alloc(ctx, 0));
+	sink = isl_union_set_empty(isl_space_params_alloc(ctx, 0));
+	for (i = 0; i < graph->n_edge; ++i) {
+		int local;
+		isl_union_set *uset;
+		isl_union_map *umap;
+
+		if (!graph->edge[i].condition)
+			continue;
+		if (graph->edge[i].local)
+			continue;
+		local = is_condition_false(&graph->edge[i]);
+		if (local < 0)
+			goto error;
+		if (local)
+			continue;
+
+		any = 1;
+
+		umap = isl_union_map_copy(graph->edge[i].tagged_condition);
+		uset = isl_union_map_domain(umap);
+		source = isl_union_set_union(source, uset);
+
+		umap = isl_union_map_copy(graph->edge[i].tagged_condition);
+		uset = isl_union_map_range(umap);
+		sink = isl_union_set_union(sink, uset);
+	}
 
 	for (i = graph->n_edge - 1; i >= 0; --i) {
 		if (update_edge(graph, &graph->edge[i]) < 0)
-			return -1;
+			goto error;
 	}
 
+	if (any)
+		return unconditionalize_adjacent_validity(graph, source, sink);
+
+	isl_union_set_free(source);
+	isl_union_set_free(sink);
 	return 0;
+error:
+	isl_union_set_free(source);
+	isl_union_set_free(sink);
+	return -1;
 }
 
 static void next_band(struct isl_sched_graph *graph)
@@ -3706,68 +3870,6 @@ static int is_violated(struct isl_sched_graph *graph, int edge_index)
 		return -1;
 
 	return !empty;
-}
-
-/* Does the domain of "umap" intersect "uset"?
- */
-static int domain_intersects(__isl_keep isl_union_map *umap,
-	__isl_keep isl_union_set *uset)
-{
-	int empty;
-
-	umap = isl_union_map_copy(umap);
-	umap = isl_union_map_intersect_domain(umap, isl_union_set_copy(uset));
-	empty = isl_union_map_is_empty(umap);
-	isl_union_map_free(umap);
-
-	return empty < 0 ? -1 : !empty;
-}
-
-/* Does the range of "umap" intersect "uset"?
- */
-static int range_intersects(__isl_keep isl_union_map *umap,
-	__isl_keep isl_union_set *uset)
-{
-	int empty;
-
-	umap = isl_union_map_copy(umap);
-	umap = isl_union_map_intersect_range(umap, isl_union_set_copy(uset));
-	empty = isl_union_map_is_empty(umap);
-	isl_union_map_free(umap);
-
-	return empty < 0 ? -1 : !empty;
-}
-
-/* Are the condition dependences of "edge" local with respect to
- * the current schedule?
- *
- * That is, are domain and range of the condition dependences mapped
- * to the same point?
- *
- * In other words, is the condition false?
- */
-static int is_condition_false(struct isl_sched_edge *edge)
-{
-	isl_union_map *umap;
-	isl_map *map, *sched, *test;
-	int local;
-
-	umap = isl_union_map_copy(edge->tagged_condition);
-	umap = isl_union_map_zip(umap);
-	umap = isl_union_set_unwrap(isl_union_map_domain(umap));
-	map = isl_map_from_union_map(umap);
-
-	sched = node_extract_schedule(edge->src);
-	map = isl_map_apply_domain(map, sched);
-	sched = node_extract_schedule(edge->dst);
-	map = isl_map_apply_range(map, sched);
-
-	test = isl_map_identity(isl_map_get_space(map));
-	local = isl_map_is_subset(map, test);
-	isl_map_free(map);
-	isl_map_free(test);
-
-	return local;
 }
 
 /* Does "graph" have any satisfied condition edges that

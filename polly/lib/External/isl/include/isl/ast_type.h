@@ -55,6 +55,7 @@ enum isl_ast_node_type {
 	isl_ast_node_for = 1,
 	isl_ast_node_if,
 	isl_ast_node_block,
+	isl_ast_node_mark,
 	isl_ast_node_user
 };
 

@@ -4092,6 +4092,45 @@ static int after_in_context(__isl_keep isl_union_map *umap,
 
 /* Is any domain element of "umap" scheduled after any of
  * the corresponding image elements by the tree rooted at
+ * the expansion node "node"?
+ *
+ * We apply the expansion to domain and range of "umap" and
+ * continue with its child.
+ */
+static int after_in_expansion(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	isl_union_map *expansion;
+	int after;
+
+	expansion = isl_schedule_node_expansion_get_expansion(node);
+	umap = isl_union_map_copy(umap);
+	umap = isl_union_map_apply_domain(umap, isl_union_map_copy(expansion));
+	umap = isl_union_map_apply_range(umap, expansion);
+
+	after = after_in_child(umap, node);
+
+	isl_union_map_free(umap);
+
+	return after;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
+ * the extension node "node"?
+ *
+ * Since the extension node may add statement instances before or
+ * after the pairs of statement instances in "umap", we return 1
+ * to ensure that these pairs are not broken up.
+ */
+static int after_in_extension(__isl_keep isl_union_map *umap,
+	__isl_keep isl_schedule_node *node)
+{
+	return 1;
+}
+
+/* Is any domain element of "umap" scheduled after any of
+ * the corresponding image elements by the tree rooted at
  * the filter node "node"?
  *
  * We intersect domain and range of "umap" with the filter and
@@ -4258,8 +4297,15 @@ static int after_in_tree(__isl_keep isl_union_map *umap,
 			"unexpected internal domain node", return -1);
 	case isl_schedule_node_context:
 		return after_in_context(umap, node);
+	case isl_schedule_node_expansion:
+		return after_in_expansion(umap, node);
+	case isl_schedule_node_extension:
+		return after_in_extension(umap, node);
 	case isl_schedule_node_filter:
 		return after_in_filter(umap, node);
+	case isl_schedule_node_guard:
+	case isl_schedule_node_mark:
+		return after_in_child(umap, node);
 	case isl_schedule_node_set:
 		return after_in_set(umap, node);
 	case isl_schedule_node_sequence:
@@ -4971,6 +5017,78 @@ static __isl_give isl_ast_graft_list *build_ast_from_context(
 }
 
 /* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the expansion node "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * We expand the domain elements by the expansion and
+ * continue with the descendants of the node.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_expansion(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_union_map *expansion;
+	unsigned n1, n2;
+
+	expansion = isl_schedule_node_expansion_get_expansion(node);
+	expansion = isl_union_map_align_params(expansion,
+				isl_union_map_get_space(executed));
+
+	n1 = isl_union_map_dim(executed, isl_dim_param);
+	executed = isl_union_map_apply_range(executed, expansion);
+	n2 = isl_union_map_dim(executed, isl_dim_param);
+	if (n2 > n1)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_invalid,
+			"expansion node is not allowed to introduce "
+			"new parameters", goto error);
+
+	return build_ast_from_child(build, node, executed);
+error:
+	isl_ast_build_free(build);
+	isl_schedule_node_free(node);
+	isl_union_map_free(executed);
+	return NULL;
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the extension node "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * Extend the inverse schedule with the extension applied to current
+ * set of generated constraints.  Since the extension if formulated
+ * in terms of the input schedule, it first needs to be transformed
+ * to refer to the internal schedule.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_extension(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_union_set *schedule_domain;
+	isl_union_map *extension;
+	isl_set *set;
+
+	set = isl_ast_build_get_generated(build);
+	schedule_domain = isl_union_set_from_set(set);
+
+	extension = isl_schedule_node_extension_get_extension(node);
+
+	extension = isl_union_map_preimage_domain_multi_aff(extension,
+			isl_multi_aff_copy(build->internal2input));
+	extension = isl_union_map_intersect_domain(extension, schedule_domain);
+	extension = isl_ast_build_substitute_values_union_map_domain(build,
+								    extension);
+	executed = isl_union_map_union(executed, extension);
+
+	return build_ast_from_child(build, node, executed);
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
  * in the relative order specified by the filter node "node" and
  * its descendants.
  *
@@ -5023,6 +5141,153 @@ error:
 	isl_schedule_node_free(node);
 	isl_union_map_free(executed);
 	return NULL;
+}
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the guard node "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+ *
+ * Ensure that the associated guard is enforced by the outer AST
+ * constructs by adding it to the guard of the graft.
+ * Since we know that we will enforce the guard, we can also include it
+ * in the generated constraints used to construct an AST for
+ * the descendant nodes.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_guard(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_space *space;
+	isl_set *guard, *hoisted;
+	isl_basic_set *enforced;
+	isl_ast_build *sub_build;
+	isl_ast_graft *graft;
+	isl_ast_graft_list *list;
+	unsigned n1, n2;
+
+	space = isl_ast_build_get_space(build, 1);
+	guard = isl_schedule_node_guard_get_guard(node);
+	n1 = isl_space_dim(space, isl_dim_param);
+	guard = isl_set_align_params(guard, space);
+	n2 = isl_set_dim(guard, isl_dim_param);
+	if (n2 > n1)
+		isl_die(isl_ast_build_get_ctx(build), isl_error_invalid,
+			"guard node is not allowed to introduce "
+			"new parameters", guard = isl_set_free(guard));
+	guard = isl_set_preimage_multi_aff(guard,
+			isl_multi_aff_copy(build->internal2input));
+	guard = isl_ast_build_specialize(build, guard);
+	guard = isl_set_gist(guard, isl_set_copy(build->generated));
+
+	sub_build = isl_ast_build_copy(build);
+	sub_build = isl_ast_build_restrict_generated(sub_build,
+							isl_set_copy(guard));
+
+	list = build_ast_from_child(isl_ast_build_copy(sub_build),
+							node, executed);
+
+	hoisted = isl_ast_graft_list_extract_hoistable_guard(list, sub_build);
+	if (isl_set_n_basic_set(hoisted) > 1)
+		list = isl_ast_graft_list_gist_guards(list,
+						    isl_set_copy(hoisted));
+	guard = isl_set_intersect(guard, hoisted);
+	enforced = extract_shared_enforced(list, build);
+	graft = isl_ast_graft_alloc_from_children(list, guard, enforced,
+						    build, sub_build);
+
+	isl_ast_build_free(sub_build);
+	isl_ast_build_free(build);
+	return isl_ast_graft_list_from_ast_graft(graft);
+}
+
+/* Call the before_each_mark callback, if requested by the user.
+ *
+ * Return 0 on success and -1 on error.
+ *
+ * The caller is responsible for recording the current inverse schedule
+ * in "build".
+ */
+static int before_each_mark(__isl_keep isl_id *mark,
+	__isl_keep isl_ast_build *build)
+{
+	if (!build)
+		return -1;
+	if (!build->before_each_mark)
+		return 0;
+	return build->before_each_mark(mark, build,
+					build->before_each_mark_user);
+}
+
+/* Call the after_each_mark callback, if requested by the user.
+ *
+ * Return 0 on success and -1 on error.
+ *
+ * The caller is responsible for recording the current inverse schedule
+ * in "build".
+ */
+static __isl_give isl_ast_graft *after_each_mark(
+	__isl_take isl_ast_graft *graft, __isl_keep isl_ast_build *build)
+{
+	if (!graft || !build)
+		return isl_ast_graft_free(graft);
+	if (!build->after_each_mark)
+		return graft;
+	graft->node = build->after_each_mark(graft->node, build,
+						build->after_each_mark_user);
+	if (!graft->node)
+		return isl_ast_graft_free(graft);
+	return graft;
+}
+
+
+/* Generate an AST that visits the elements in the domain of "executed"
+ * in the relative order specified by the mark node "node" and
+ * its descendants.
+ *
+ * The relation "executed" maps the outer generated loop iterators
+ * to the domain elements executed by those iterations.
+
+ * Since we may be calling before_each_mark and after_each_mark
+ * callbacks, we record the current inverse schedule in the build.
+ *
+ * We generate an AST for the child of the mark node, combine
+ * the graft list into a single graft and then insert the mark
+ * in the AST of that single graft.
+ */
+static __isl_give isl_ast_graft_list *build_ast_from_mark(
+	__isl_take isl_ast_build *build, __isl_take isl_schedule_node *node,
+	__isl_take isl_union_map *executed)
+{
+	isl_id *mark;
+	isl_ast_graft *graft;
+	isl_ast_graft_list *list;
+	int n;
+
+	build = isl_ast_build_set_executed(build, isl_union_map_copy(executed));
+
+	mark = isl_schedule_node_mark_get_id(node);
+	if (before_each_mark(mark, build) < 0)
+		node = isl_schedule_node_free(node);
+
+	list = build_ast_from_child(isl_ast_build_copy(build), node, executed);
+	list = isl_ast_graft_list_fuse(list, build);
+	n = isl_ast_graft_list_n_ast_graft(list);
+	if (n < 0)
+		list = isl_ast_graft_list_free(list);
+	if (n == 0) {
+		isl_id_free(mark);
+	} else {
+		graft = isl_ast_graft_list_get_ast_graft(list, 0);
+		graft = isl_ast_graft_insert_mark(graft, mark);
+		graft = after_each_mark(graft, build);
+		list = isl_ast_graft_list_set_ast_graft(list, 0, graft);
+	}
+	isl_ast_build_free(build);
+
+	return list;
 }
 
 static __isl_give isl_ast_graft_list *build_ast_from_schedule_node(
@@ -5104,8 +5369,16 @@ static __isl_give isl_ast_graft_list *build_ast_from_schedule_node(
 	case isl_schedule_node_domain:
 		isl_die(isl_schedule_node_get_ctx(node), isl_error_unsupported,
 			"unexpected internal domain node", goto error);
+	case isl_schedule_node_expansion:
+		return build_ast_from_expansion(build, node, executed);
+	case isl_schedule_node_extension:
+		return build_ast_from_extension(build, node, executed);
 	case isl_schedule_node_filter:
 		return build_ast_from_filter(build, node, executed);
+	case isl_schedule_node_guard:
+		return build_ast_from_guard(build, node, executed);
+	case isl_schedule_node_mark:
+		return build_ast_from_mark(build, node, executed);
 	case isl_schedule_node_sequence:
 	case isl_schedule_node_set:
 		return build_ast_from_sequence(build, node, executed);
