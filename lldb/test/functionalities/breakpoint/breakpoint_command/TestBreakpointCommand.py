@@ -18,7 +18,7 @@ class BreakpointCommandTestCase(TestBase):
         cls.RemoveTempFile("output.txt")
         cls.RemoveTempFile("output2.txt")
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test a sequence of breakpoint command add, list, and delete."""

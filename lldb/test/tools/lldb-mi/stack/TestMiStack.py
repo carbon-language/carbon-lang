@@ -238,7 +238,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_lldbmi_stack_info_frame(self):
         """Test that 'lldb-mi --interpreter' can show information about current frame."""
 

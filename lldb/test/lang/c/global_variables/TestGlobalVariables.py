@@ -10,7 +10,7 @@ class GlobalVariablesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test 'frame variable --scope --no-args' which omits args and shows scopes."""

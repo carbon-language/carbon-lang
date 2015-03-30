@@ -19,7 +19,7 @@ class ExprCommandThatRestartsTestCase(TestBase):
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     @skipIfDarwin # llvm.org/pr19246: intermittent failure
     def test_with_dsym(self):

@@ -10,7 +10,7 @@ class TestObjCIvarsInBlocks(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     # This test requires the 2.0 runtime, so it will fail on i386.
     @expectedFailurei386
     @python_api_test
@@ -20,7 +20,7 @@ class TestObjCIvarsInBlocks(TestBase):
         self.buildDsym()
         self.ivars_in_blocks()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     # This test requires the 2.0 runtime, so it will fail on i386.
     @expectedFailurei386

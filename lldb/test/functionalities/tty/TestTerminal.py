@@ -15,7 +15,7 @@ class LaunchInTerminalTestCase(TestBase):
     # Darwin is the only platform that I know of that supports optionally launching
     # a program in a separate terminal window. It would be great if other platforms
     # added support for this.
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
 
 
     # If the test is being run under sudo, the spawned terminal won't retain that elevated

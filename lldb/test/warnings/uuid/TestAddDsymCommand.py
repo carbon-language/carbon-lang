@@ -5,7 +5,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-@unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+@skipUnlessDarwin
 class AddDsymCommandCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)

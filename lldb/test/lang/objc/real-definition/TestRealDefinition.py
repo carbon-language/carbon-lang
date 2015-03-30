@@ -10,7 +10,7 @@ class TestRealDefinition(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_frame_var_after_stop_at_interface_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
@@ -19,7 +19,7 @@ class TestRealDefinition(TestBase):
         self.buildDsym()
         self.stop_at_interface()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_frame_var_after_stop_at_interface_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
@@ -28,7 +28,7 @@ class TestRealDefinition(TestBase):
         self.buildDwarf()
         self.stop_at_interface()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_frame_var_after_stop_at_implementation_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
@@ -37,7 +37,7 @@ class TestRealDefinition(TestBase):
         self.buildDsym()
         self.stop_at_implementation()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_frame_var_after_stop_at_implementation_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""

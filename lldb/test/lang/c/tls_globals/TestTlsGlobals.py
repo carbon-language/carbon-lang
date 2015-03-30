@@ -10,7 +10,7 @@ class TlsGlobalTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     @unittest2.expectedFailure("rdar://7796742")
     def test_with_dsym(self):

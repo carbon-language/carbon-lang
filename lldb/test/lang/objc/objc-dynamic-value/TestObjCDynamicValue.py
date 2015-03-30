@@ -12,7 +12,7 @@ class ObjCDynamicValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
@@ -24,7 +24,7 @@ class ObjCDynamicValueTestCase(TestBase):
         self.buildDsym()
         self.do_get_dynamic_vals()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dwarf_test
     @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")

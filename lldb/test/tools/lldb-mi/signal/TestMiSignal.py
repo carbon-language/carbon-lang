@@ -80,7 +80,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_lldbmi_stopped_when_stopatentry_remote(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped on entry (remote)."""
 
@@ -156,7 +156,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_lldbmi_stopped_when_segfault_remote(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped when segfault occurred (remote)."""
 

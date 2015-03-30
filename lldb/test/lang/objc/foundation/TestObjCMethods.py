@@ -11,7 +11,7 @@ from lldbtest import *
 import lldbutil
 
 file_index = 0
-@unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+@skipUnlessDarwin
 class FoundationTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)

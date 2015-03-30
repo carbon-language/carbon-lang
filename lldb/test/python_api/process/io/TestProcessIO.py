@@ -10,7 +10,7 @@ class ProcessIOTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "dsym requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_stdin_by_api_with_dsym(self):
@@ -18,7 +18,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDsym()
         self.do_stdin_by_api()
 
-    @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
+    @skipIfWindows # stdio manipulation unsupported on Windows
     @python_api_test
     @dwarf_test
     def test_stdin_by_api_with_dwarf(self):
@@ -26,7 +26,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDwarf()
         self.do_stdin_by_api()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "dsym requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_stdin_redirection_with_dsym(self):
@@ -34,7 +34,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDsym()
         self.do_stdin_redirection()
 
-    @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
+    @skipIfWindows # stdio manipulation unsupported on Windows
     @python_api_test
     @dwarf_test
     def test_stdin_redirection_with_dwarf(self):
@@ -42,7 +42,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDwarf()
         self.do_stdin_redirection()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "dsym requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_stdout_redirection_with_dsym(self):
@@ -50,7 +50,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDsym()
         self.do_stdout_redirection()
 
-    @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
+    @skipIfWindows # stdio manipulation unsupported on Windows
     @python_api_test
     @dwarf_test
     def test_stdout_redirection_with_dwarf(self):
@@ -58,7 +58,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDwarf()
         self.do_stdout_redirection()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "dsym requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_stderr_redirection_with_dsym(self):
@@ -66,7 +66,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDsym()
         self.do_stderr_redirection()
 
-    @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
+    @skipIfWindows # stdio manipulation unsupported on Windows
     @python_api_test
     @dwarf_test
     def test_stderr_redirection_with_dwarf(self):
@@ -74,7 +74,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDwarf()
         self.do_stderr_redirection()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "dsym requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_stdout_stderr_redirection_with_dsym(self):
@@ -82,7 +82,7 @@ class ProcessIOTestCase(TestBase):
         self.buildDsym()
         self.do_stdout_stderr_redirection()
 
-    @unittest2.skipIf(sys.platform.startswith("win32"), "stdio manipulation unsupported on Windows")
+    @skipIfWindows # stdio manipulation unsupported on Windows
     @python_api_test
     @dwarf_test
     def test_stdout_stderr_redirection_with_dwarf(self):

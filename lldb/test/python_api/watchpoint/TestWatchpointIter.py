@@ -20,7 +20,7 @@ class WatchpointIteratorTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_watch_iter_with_dsym(self):

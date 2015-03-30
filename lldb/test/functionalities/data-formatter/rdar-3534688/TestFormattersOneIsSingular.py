@@ -13,14 +13,14 @@ class DataFormatterOneIsSingularTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_one_is_singular_with_dsym_and_run_command(self):
         """Test that 1 item is not as reported as 1 items."""
         self.buildDsym()
         self.oneness_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_one_is_singular_with_dwarf_and_run_command(self):
         """Test that 1 item is not as reported as 1 items."""

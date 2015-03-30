@@ -20,7 +20,7 @@ class AsanTestReportDataCase(TestBase):
     @dsym_test
     @skipIfRemote
     @skipUnlessCompilerRt
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_with_dsym (self):
         compiler = self.findBuiltClang ()
         self.buildDsym (None, compiler)

@@ -10,7 +10,7 @@ class ForwardDeclarationTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Display *bar_ptr when stopped on a function with forward declaration of struct bar."""

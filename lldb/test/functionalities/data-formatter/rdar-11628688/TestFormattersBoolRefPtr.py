@@ -13,14 +13,14 @@ class DataFormatterOSTypeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_ostype_with_dsym_and_run_command(self):
         """Test the formatters we use for OSType."""
         self.buildDsym()
         self.ostype_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_ostype_with_dwarf_and_run_command(self):
         """Test the formatters we use for OSType."""

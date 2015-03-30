@@ -9,7 +9,7 @@ class AssertingInferiorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_dsym(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
@@ -24,7 +24,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_asserting()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_asserting_registers_dsym(self):
         """Test that lldb reliably reads registers from the inferior after asserting (command)."""
         self.buildDsym()
@@ -52,7 +52,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDefault()
         self.inferior_asserting_python()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_expr_dsym(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
@@ -67,7 +67,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_asserting_expr()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_step_dsym(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""

@@ -6,7 +6,7 @@ import AbstractBase
 import unittest2
 import lldb
 import sys
-from lldbtest import dsym_test, dwarf_test
+from lldbtest import *
 
 class FloatTypesExprTestCase(AbstractBase.GenericTester):
 
@@ -22,13 +22,13 @@ class FloatTypesExprTestCase(AbstractBase.GenericTester):
         self.runCmd("settings set auto-confirm true")
         self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_float_type_with_dsym(self):
         """Test that float-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('float.cpp', set(['float']))
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_float_type_from_block_with_dsym(self):
         """Test that float-type variables are displayed correctly from a block."""
@@ -39,13 +39,13 @@ class FloatTypesExprTestCase(AbstractBase.GenericTester):
         """Test that float-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('float.cpp', set(['float']), dsym=False)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_double_type_with_dsym(self):
         """Test that double-type variable expressions are evaluated correctly."""
         self.build_and_run_expr('double.cpp', set(['double']))
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_double_type_from_block_with_dsym(self):
         """Test that double-type variables are displayed correctly from a block."""

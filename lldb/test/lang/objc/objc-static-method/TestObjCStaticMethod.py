@@ -10,7 +10,7 @@ class TestObjCStaticMethod(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     #<rdar://problem/9745789> "expression" can't call functions in class methods
     @dsym_test
@@ -19,7 +19,7 @@ class TestObjCStaticMethod(TestBase):
         self.buildDsym()
         self.objc_static_method()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     #<rdar://problem/9745789> "expression" can't call functions in class methods
     @dwarf_test

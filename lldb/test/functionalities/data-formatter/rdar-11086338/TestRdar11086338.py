@@ -13,14 +13,14 @@ class DataFormatterRdar11086338TestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rdar11086338_with_dsym_and_run_command(self):
         """Test that NSArray reports its synthetic children properly."""
         self.buildDsym()
         self.rdar11086338_tester()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_rdar11086338_with_dwarf_and_run_command(self):
         """Test that NSArray reports its synthetic children properly."""

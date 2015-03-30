@@ -17,8 +17,8 @@ class UniversalTestCase(TestBase):
         self.line = line_number('main.c', '// Set break point at this line.')
 
     @python_api_test
-    @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4] in ['i386', 'x86_64'],
-                          "requires Darwin & i386")
+    @skipUnlessDarwin
+    @unittest2.skipUnless(os.uname()[4] in ['i386', 'x86_64'], "requires i386 or x86_64")
     def test_sbdebugger_create_target_with_file_and_target_triple(self):
         """Test the SBDebugger.CreateTargetWithFileAndTargetTriple() API."""
         # Invoke the default build rule.
@@ -35,8 +35,8 @@ class UniversalTestCase(TestBase):
         process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(process, PROCESS_IS_VALID)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4] in ['i386', 'x86_64'],
-                          "requires Darwin & i386")
+    @skipUnlessDarwin
+    @unittest2.skipUnless(os.uname()[4] in ['i386', 'x86_64'], "requires i386 or x86_64")
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
         from lldbutil import print_registers

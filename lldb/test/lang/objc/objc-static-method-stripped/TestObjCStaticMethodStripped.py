@@ -10,7 +10,7 @@ class TestObjCStaticMethodStripped(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     #<rdar://problem/12042992>
     @dsym_test

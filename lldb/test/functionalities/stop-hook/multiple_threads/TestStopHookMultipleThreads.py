@@ -11,7 +11,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_stop_hook_multiple_threads_with_dsym(self):
         """Test that lldb stop-hook works for multiple threads."""

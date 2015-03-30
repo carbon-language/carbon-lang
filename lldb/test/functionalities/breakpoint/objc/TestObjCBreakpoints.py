@@ -11,7 +11,7 @@ import lldbutil
 import shutil
 import subprocess
 
-@unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+@skipUnlessDarwin
 class TestObjCBreakpoints(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)

@@ -13,7 +13,7 @@ class ThreadSteppingTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_step_out_with_dsym_and_run_command(self):
         """Exercise thread step-out and frame select followed by thread step-out."""

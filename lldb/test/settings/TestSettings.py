@@ -199,7 +199,7 @@ class SettingsCommandTestCase(TestBase):
         self.expect("disassemble -n numberfn",
             substrs = ["5ah"])
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_run_args_and_env_vars_with_dsym(self):
         """Test that run-args and env-vars are passed to the launched process."""

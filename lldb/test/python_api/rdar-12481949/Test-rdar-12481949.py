@@ -13,7 +13,7 @@ class Radar12481949DataFormatterTestCase(TestBase):
     # test for rdar://problem/12481949
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Check that SBValue.GetValueAsSigned() does the right thing for a 32-bit -1."""

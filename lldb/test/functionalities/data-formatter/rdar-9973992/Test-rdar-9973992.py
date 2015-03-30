@@ -13,7 +13,7 @@ class Radar9973992DataFormatterTestCase(TestBase):
     # test for rdar://problem/9973992 (What should we do for "${var}" in summaries of aggregate types?)
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""

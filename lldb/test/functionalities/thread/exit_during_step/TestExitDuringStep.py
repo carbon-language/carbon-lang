@@ -12,7 +12,7 @@ class ExitDuringStepTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_thread_state_is_stopped_with_dsym(self):
@@ -29,21 +29,21 @@ class ExitDuringStepTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.thread_state_is_stopped()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test thread exit during step handling."""
         self.buildDsym(dictionary=self.getBuildFlags())
         self.exit_during_step_inst_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_step_over_with_dsym(self):
         """Test thread exit during step-over handling."""
         self.buildDsym(dictionary=self.getBuildFlags())
         self.exit_during_step_over_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_step_in_with_dsym(self):
         """Test thread exit during step-in handling."""

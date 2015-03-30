@@ -10,13 +10,13 @@ class ForwardDeclTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()

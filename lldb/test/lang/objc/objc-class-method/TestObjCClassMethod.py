@@ -10,7 +10,7 @@ class TestObjCClassMethod(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
 
     @expectedFailurei386
@@ -20,7 +20,7 @@ class TestObjCClassMethod(TestBase):
         self.buildDsym()
         self.objc_class_method()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailurei386
     @python_api_test
     @dwarf_test

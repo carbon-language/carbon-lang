@@ -141,7 +141,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_has_valid_thread_names(self.THREAD_COUNT, "a.out")
 
-    @unittest2.skipUnless(sys.platform.startswith("linux"), "test requires OS with set, equal thread names by default")
+    @skipUnlessPlatform(["linux"]) # test requires OS with set, equal thread names by default.
     @llgs_test
     @dwarf_test
     def test_qThreadStopInfo_has_valid_thread_names_llgs_dwarf(self):

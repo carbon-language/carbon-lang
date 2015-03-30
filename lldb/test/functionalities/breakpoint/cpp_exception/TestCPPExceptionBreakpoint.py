@@ -14,7 +14,7 @@ class TestCPPExceptionBreakpoint (TestBase):
     mydir = TestBase.compute_mydir(__file__)
     my_var = 10
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_cpp_exception_breakpoint (self):

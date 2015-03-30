@@ -13,7 +13,7 @@ class Char1632TestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test that the C++11 support for char16_t and char32_t works correctly."""

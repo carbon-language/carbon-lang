@@ -20,7 +20,7 @@ class LogTestCase(TestBase):
         cls.RemoveTempFile(cls.truncate_log_file)
         cls.RemoveTempFile(cls.append_log_file)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym (self):
         self.buildDsym ()

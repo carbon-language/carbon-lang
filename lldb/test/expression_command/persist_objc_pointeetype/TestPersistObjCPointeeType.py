@@ -17,14 +17,14 @@ class PersistObjCPointeeType(TestBase):
         # Find the line number to break for main.cpp.
         self.line = line_number('main.m','// break here')
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test that we can p *objcObject"""
         self.buildDsym()
         self.do_my_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin due to ObjC test case")
+    @skipUnlessDarwin
     @dwarf_test
     def test_with_dwarf(self):
         """Test that we can p *objcObject"""

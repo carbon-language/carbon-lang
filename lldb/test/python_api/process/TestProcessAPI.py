@@ -12,7 +12,7 @@ class ProcessAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_read_memory_with_dsym(self):
@@ -27,7 +27,7 @@ class ProcessAPITestCase(TestBase):
         self.buildDwarf()
         self.read_memory()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_write_memory_with_dsym(self):
@@ -42,7 +42,7 @@ class ProcessAPITestCase(TestBase):
         self.buildDwarf()
         self.write_memory()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_access_my_int_with_dsym(self):

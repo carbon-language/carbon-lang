@@ -39,7 +39,7 @@ class DebugIntegerTypesFailures(TestBase):
         # Call super's tearDown().
         TestBase.tearDown(self)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_char_type_with_dsym(self):
         """Test that char-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'char.cpp'}
@@ -54,7 +54,7 @@ class DebugIntegerTypesFailures(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.char_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_short_type_with_dsym(self):
         """Test that short-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'short.cpp'}
@@ -69,7 +69,7 @@ class DebugIntegerTypesFailures(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.short_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_int_type_with_dsym(self):
         """Test that int-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'int.cpp'}
@@ -84,7 +84,7 @@ class DebugIntegerTypesFailures(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.int_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_long_type_with_dsym(self):
         """Test that long-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'long.cpp'}
@@ -100,7 +100,7 @@ class DebugIntegerTypesFailures(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.long_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_long_long_type_with_dsym(self):
         """Test that 'long long'-type variables are displayed correctly."""
         d = {'CXX_SOURCES': 'long_long.cpp'}

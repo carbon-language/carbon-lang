@@ -19,7 +19,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test calling std::String member function."""

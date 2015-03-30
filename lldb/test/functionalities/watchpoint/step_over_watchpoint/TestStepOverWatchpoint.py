@@ -13,7 +13,7 @@ class TestStepOverWatchpoint(TestBase):
     def getCategories(self):
         return ['basic_process']
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test stepping over watchpoints."""

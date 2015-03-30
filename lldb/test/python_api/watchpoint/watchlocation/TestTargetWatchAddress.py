@@ -22,7 +22,7 @@ class TargetWatchAddressAPITestCase(TestBase):
         # This is for verifying that watch location works.
         self.violating_func = "do_bad_thing_with_location";
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_watch_address_with_dsym(self):
@@ -38,7 +38,7 @@ class TargetWatchAddressAPITestCase(TestBase):
         self.buildDwarf()
         self.do_set_watchaddress()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_watch_address_with_invalid_watch_size_with_dsym(self):

@@ -15,7 +15,7 @@ class DriverBatchModeTest (TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @unittest2.expectedFailure("<rdar://problem/18684124>, lldb doesn't reliably print the prompt when run under pexpect")
     @dsym_test
     def test_driver_batch_mode_with_dsym(self):

@@ -13,7 +13,7 @@ class FormatPropagationTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     # rdar://problem/14035604
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Check if changing Format on an SBValue correctly propagates that new format to children as it should"""

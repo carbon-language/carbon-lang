@@ -10,7 +10,7 @@ class ChangedInferiorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_dsym(self):
         """Test lldb reloads the inferior after it was changed during the session."""
         self.buildDsym()

@@ -12,7 +12,7 @@ class EventAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_listen_for_and_print_event_with_dsym(self):
@@ -20,9 +20,7 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_listen_for_and_print_event()
 
-    @unittest2.skipUnless((sys.platform.startswith("darwin") or
-                           sys.platform.startswith("freebsd")),
-                          "requires Darwin or FreeBSD")
+    @skipUnlessPlatform(["darwin", "macosx", "freebsd"])
     @python_api_test
     @dwarf_test
     def test_listen_for_and_print_event_with_dwarf(self):
@@ -30,7 +28,7 @@ class EventAPITestCase(TestBase):
         self.buildDwarf()
         self.do_listen_for_and_print_event()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_wait_for_event_with_dsym(self):
@@ -46,7 +44,7 @@ class EventAPITestCase(TestBase):
         self.buildDwarf()
         self.do_wait_for_event()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_add_listener_to_broadcaster_with_dsym(self):

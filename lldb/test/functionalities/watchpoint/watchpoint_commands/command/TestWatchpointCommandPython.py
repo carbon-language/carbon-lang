@@ -25,7 +25,7 @@ class WatchpointPythonCommandTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_watchpoint_command_with_dsym(self):
         """Test 'watchpoint command'."""

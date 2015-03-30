@@ -34,7 +34,7 @@ class TestPaths(TestBase):
         # file path if it doesn't exist in the current directory.
         self.assertTrue (file_only.GetDirectory() == None)
 
-    @unittest2.skipUnless(sys.platform.startswith("win32"), "Test for windows only")
+    @skipUnlessPlatform(["windows"])
     def test_windows_double_slash (self):
         '''Test to check the path with double slash is handled correctly '''
         # Create a path and see if lldb gets the directory and file right

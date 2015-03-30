@@ -587,7 +587,7 @@ def expectedFailurex86_64(bugnumber=None):
 
 def expectedFailureOS(oslist, bugnumber=None, compilers=None):
     def fn(self):
-        return (lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2] in oslist and
+        return (self.getPlatform() in oslist and
                 self.expectedCompiler(compilers))
     return expectedFailure(fn, bugnumber)
 
@@ -641,36 +641,6 @@ def skipIfRemoteDueToDeadlock(func):
             func(*args, **kwargs)
     return wrapper
 
-def skipIfFreeBSD(func):
-    """Decorate the item to skip tests that should be skipped on FreeBSD."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfFreeBSD can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
-        if "freebsd" in platform:
-            self.skipTest("skip on FreeBSD")
-        else:
-            func(*args, **kwargs)
-    return wrapper
-
-def skipIfLinux(func):
-    """Decorate the item to skip tests that should be skipped on Linux."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfLinux can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
-        if "linux" in platform:
-            self.skipTest("skip on linux")
-        else:
-            func(*args, **kwargs)
-    return wrapper
-
 def skipIfNoSBHeaders(func):
     """Decorate the item to mark tests that should be skipped when LLDB is built with no SB API headers."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -690,36 +660,53 @@ def skipIfNoSBHeaders(func):
             func(*args, **kwargs)
     return wrapper
 
-def skipIfWindows(func):
-    """Decorate the item to skip tests that should be skipped on Windows."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfWindows can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
-        if "windows" in platform:
-            self.skipTest("skip on Windows")
-        else:
-            func(*args, **kwargs)
-    return wrapper
+def skipIfFreeBSD(func):
+    """Decorate the item to skip tests that should be skipped on FreeBSD."""
+    return skipIfPlatform(["freebsd"])(func)
 
 def skipIfDarwin(func):
     """Decorate the item to skip tests that should be skipped on Darwin."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfDarwin can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
-        if "darwin" in platform or "macosx" in platform:
-            self.skipTest("skip on darwin")
-        else:
-            func(*args, **kwargs)
-    return wrapper
+    return skipIfPlatform(["darwin", "macosx"])(func)
 
+def skipIfLinux(func):
+    """Decorate the item to skip tests that should be skipped on Linux."""
+    return skipIfPlatform(["linux"])(func)
+
+def skipIfWindows(func):
+    """Decorate the item to skip tests that should be skipped on Windows."""
+    return skipIfPlatform(["windows"])(func)
+
+def skipUnlessDarwin(func):
+    """Decorate the item to skip tests that should be skipped on any non Darwin platform."""
+    return skipUnlessPlatform(["darwin", "macosx"])(func)
+
+def skipIfPlatform(oslist):
+    """Decorate the item to skip tests if running on one of the listed platforms."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            if self.getPlatform() in oslist:
+                self.skipTest("skip on %s" % (", ".join(oslist)))
+            else:
+                func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def skipUnlessPlatform(oslist):
+    """Decorate the item to skip tests unless running on one of the listed platforms."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            if not (self.getPlatform() in oslist):
+                self.skipTest("requires one of %s" % (", ".join(oslist)))
+            else:
+                func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 def skipIfLinuxClang(func):
     """Decorate the item to skip tests that should be skipped if building on 
@@ -1399,6 +1386,10 @@ class Base(unittest2.TestCase):
             if m:
                 version = m.group(1)
         return version
+
+    def getPlatform(self):
+        """Returns the platform the test suite is running on."""
+        return lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
 
     def isIntelCompiler(self):
         """ Returns true if using an Intel (ICC) compiler, false otherwise. """

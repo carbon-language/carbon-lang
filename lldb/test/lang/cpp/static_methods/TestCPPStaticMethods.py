@@ -10,7 +10,7 @@ class CPPStaticMethodsTestCase(TestBase):
     
     mydir = TestBase.compute_mydir(__file__)
     
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that static methods are properly distinguished from regular methods"""

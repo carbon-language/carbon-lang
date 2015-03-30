@@ -14,14 +14,14 @@ class ObjCDataFormatterTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_plain_objc_with_dsym_and_run_command(self):
         """Test basic ObjC formatting behavior."""
         self.buildDsym()
         self.plain_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_plain_objc_with_dwarf_and_run_command(self):
         """Test basic ObjC formatting behavior."""
@@ -33,186 +33,186 @@ class ObjCDataFormatterTestCase(TestBase):
         self.appkit_common_data_formatters_command()
         commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsnumber_with_dsym_and_run_command(self):
         """Test formatters for NSNumber."""
         self.appkit_tester_impl(self.buildDsym,self.nsnumber_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsnumber_with_dwarf_and_run_command(self):
         """Test formatters for NSNumber."""
         self.appkit_tester_impl(self.buildDwarf,self.nsnumber_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsstring_with_dsym_and_run_command(self):
         """Test formatters for NSString."""
         self.appkit_tester_impl(self.buildDsym,self.nsstring_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsstring_with_dwarf_and_run_command(self):
         """Test formatters for NSString."""
         self.appkit_tester_impl(self.buildDwarf,self.nsstring_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nscontainers_with_dsym_and_run_command(self):
         """Test formatters for NS container classes."""
         self.appkit_tester_impl(self.buildDsym,self.nscontainers_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nscontainers_with_dwarf_and_run_command(self):
         """Test formatters for  NS container classes."""
         self.appkit_tester_impl(self.buildDwarf,self.nscontainers_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsdata_with_dsym_and_run_command(self):
         """Test formatters for NSData."""
         self.appkit_tester_impl(self.buildDsym,self.nsdata_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsdata_with_dwarf_and_run_command(self):
         """Test formatters for  NSData."""
         self.appkit_tester_impl(self.buildDwarf,self.nsdata_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsurl_with_dsym_and_run_command(self):
         """Test formatters for NSURL."""
         self.appkit_tester_impl(self.buildDsym,self.nsurl_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsurl_with_dwarf_and_run_command(self):
         """Test formatters for NSURL."""
         self.appkit_tester_impl(self.buildDwarf,self.nsurl_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nserror_with_dsym_and_run_command(self):
         """Test formatters for NSError."""
         self.appkit_tester_impl(self.buildDsym,self.nserror_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nserror_with_dwarf_and_run_command(self):
         """Test formatters for NSError."""
         self.appkit_tester_impl(self.buildDwarf,self.nserror_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsbundle_with_dsym_and_run_command(self):
         """Test formatters for NSBundle."""
         self.appkit_tester_impl(self.buildDsym,self.nsbundle_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsbundle_with_dwarf_and_run_command(self):
         """Test formatters for NSBundle."""
         self.appkit_tester_impl(self.buildDwarf,self.nsbundle_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsexception_with_dsym_and_run_command(self):
         """Test formatters for NSException."""
         self.appkit_tester_impl(self.buildDsym,self.nsexception_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsexception_with_dwarf_and_run_command(self):
         """Test formatters for NSException."""
         self.appkit_tester_impl(self.buildDwarf,self.nsexception_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsmisc_with_dsym_and_run_command(self):
         """Test formatters for misc NS classes."""
         self.appkit_tester_impl(self.buildDsym,self.nsmisc_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsmisc_with_dwarf_and_run_command(self):
         """Test formatters for misc NS classes."""
         self.appkit_tester_impl(self.buildDwarf,self.nsmisc_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_nsdate_with_dsym_and_run_command(self):
         """Test formatters for NSDate."""
         self.appkit_tester_impl(self.buildDsym,self.nsdate_data_formatter_commands)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_nsdate_with_dwarf_and_run_command(self):
         """Test formatters for NSDate."""
         self.appkit_tester_impl(self.buildDwarf,self.nsdate_data_formatter_commands)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_coreframeworks_with_dsym_and_run_command(self):
         """Test formatters for Core OSX frameworks."""
         self.buildDsym()
         self.cf_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_coreframeworks_with_dwarf_and_run_command(self):
         """Test formatters for Core OSX frameworks."""
         self.buildDwarf()
         self.cf_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_kvo_with_dsym_and_run_command(self):
         """Test the behavior of formatters when KVO is in use."""
         self.buildDsym()
         self.kvo_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_kvo_with_dwarf_and_run_command(self):
         """Test the behavior of formatters when KVO is in use."""
         self.buildDwarf()
         self.kvo_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rdar11106605_with_dsym_and_run_command(self):
         """Check that Unicode characters come out of CFString summary correctly."""
         self.buildDsym()
         self.rdar11106605_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_rdar11106605_with_dwarf_and_run_command(self):
         """Check that Unicode characters come out of CFString summary correctly."""
         self.buildDwarf()
         self.rdar11106605_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr_with_dsym_and_run_command(self):
         """Test common cases of expression parser <--> formatters interaction."""
         self.buildDsym()
         self.expr_objc_data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_expr_with_dwarf_and_run_command(self):
         """Test common cases of expression parser <--> formatters interaction."""

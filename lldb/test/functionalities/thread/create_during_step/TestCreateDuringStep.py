@@ -12,7 +12,7 @@ class CreateDuringStepTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_step_inst_with_dsym(self):
@@ -20,7 +20,7 @@ class CreateDuringStepTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.create_during_step_inst_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_step_over_with_dsym(self):
@@ -28,7 +28,7 @@ class CreateDuringStepTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.create_during_step_over_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_step_in_with_dsym(self):

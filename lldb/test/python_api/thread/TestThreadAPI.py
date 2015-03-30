@@ -12,7 +12,7 @@ class ThreadAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_get_process_with_dsym(self):
@@ -27,7 +27,7 @@ class ThreadAPITestCase(TestBase):
         self.buildDwarf()
         self.get_process()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_get_stop_description_with_dsym(self):
@@ -42,7 +42,7 @@ class ThreadAPITestCase(TestBase):
         self.buildDwarf()
         self.get_stop_description()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_run_to_address_with_dsym(self):
@@ -63,7 +63,7 @@ class ThreadAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.run_to_address(self.exe_name)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_step_out_of_malloc_into_function_b_with_dsym(self):
@@ -86,7 +86,7 @@ class ThreadAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.step_out_of_malloc_into_function_b(self.exe_name)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_step_over_3_times_with_dsym(self):

@@ -19,14 +19,14 @@ class ExprCommandWithThrowTestCase(TestBase):
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test calling a function that throws and ObjC exception."""
         self.buildDsym()
         self.call_function()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin due to ObjC test case")
+    @skipUnlessDarwin
     @dwarf_test
     def test_with_dwarf(self):
         """Test calling a function that throws and ObjC exception."""

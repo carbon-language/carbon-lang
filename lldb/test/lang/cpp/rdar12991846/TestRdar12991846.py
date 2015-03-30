@@ -27,7 +27,7 @@ class Rdar12991846TestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.expectedFailure("rdar://18684408")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr1_with_dsym(self):
         """Test that the expression parser returns proper Unicode strings."""
@@ -42,7 +42,7 @@ class Rdar12991846TestCase(TestBase):
         self.rdar12991846(expr=1)
 
     @unittest2.expectedFailure("rdar://18684408")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr2_with_dsym(self):
         """Test that the expression parser returns proper Unicode strings."""
@@ -57,7 +57,7 @@ class Rdar12991846TestCase(TestBase):
         self.rdar12991846(expr=2)
 
     @unittest2.expectedFailure("rdar://18684408")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr3_with_dsym(self):
         """Test that the expression parser returns proper Unicode strings."""

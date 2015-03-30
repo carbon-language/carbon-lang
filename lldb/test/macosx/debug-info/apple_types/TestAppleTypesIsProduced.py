@@ -13,7 +13,7 @@ class AppleTypesTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     #rdar://problem/11166975
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_debug_info_for_apple_types(self):
         """Test that __apple_types section does get produced by clang."""
 
@@ -23,7 +23,7 @@ class AppleTypesTestCase(TestBase):
         self.buildDefault()
         self.apple_types(dot_o=True)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_debug_info_for_apple_types_dsym(self):
         """Test that __apple_types section does get produced by dsymutil.
            This is supposed to succeed even with rdar://problem/11166975."""

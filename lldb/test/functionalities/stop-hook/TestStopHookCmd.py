@@ -18,7 +18,7 @@ class StopHookCmdTestCase(TestBase):
         """target stop-hook list should not crash if no target has been set."""
         self.runCmd("target stop-hook list", check=False)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test a sequence of target stop-hook commands."""

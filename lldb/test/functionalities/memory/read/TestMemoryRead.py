@@ -13,7 +13,7 @@ class MemoryReadTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_memory_read_with_dsym(self):
         """Test the 'memory read' command with plain and vector formats."""

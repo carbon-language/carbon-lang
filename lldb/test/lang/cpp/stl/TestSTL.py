@@ -14,7 +14,7 @@ class STLTestCase(TestBase):
 
     # rdar://problem/10400981
     @unittest2.expectedFailure
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym(self):
         """Test some expressions involving STL data types."""

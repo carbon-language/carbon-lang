@@ -26,7 +26,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'C_SOURCES': self.source, 'EXE': self.exe_name}
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rw_watchpoint_with_dsym(self):
         """Test read_write watchpoint and expect to stop two times."""
@@ -41,7 +41,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.normal_read_write_watchpoint()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rw_watchpoint_delete_with_dsym(self):
         """Test delete watchpoint and expect not to stop for watchpoint."""
@@ -56,7 +56,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.delete_read_write_watchpoint()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rw_watchpoint_set_ignore_count_with_dsym(self):
         """Test watchpoint ignore count and expect to not to stop at all."""
@@ -71,7 +71,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.ignore_read_write_watchpoint()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rw_disable_after_first_stop_with_dsym(self):
         """Test read_write watchpoint but disable it after the first stop."""
@@ -86,7 +86,7 @@ class WatchpointCommandsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.read_write_watchpoint_disable_after_first_stop()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_rw_disable_then_enable_with_dsym(self):
         """Test read_write watchpoint, disable initially, then enable it."""

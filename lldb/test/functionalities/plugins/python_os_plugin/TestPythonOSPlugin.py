@@ -13,7 +13,7 @@ class PluginPythonOSPlugin(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_python_os_plugin_dsym(self):
         """Test that the Python operating system plugin works correctly"""

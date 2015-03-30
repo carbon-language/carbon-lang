@@ -9,7 +9,7 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-@unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+@skipUnlessDarwin
 class ConstStringTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)

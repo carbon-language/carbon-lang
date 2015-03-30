@@ -114,7 +114,7 @@ class InlineTest(TestBase):
         makefile.close()
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def __test_with_dsym(self):
         self.using_dsym = True
         self.BuildMakefile()

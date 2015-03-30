@@ -13,7 +13,7 @@ class StaticVariableTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
     failing_compilers = ['clang', 'gcc']
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that file and class static variables display correctly."""
@@ -26,7 +26,7 @@ class StaticVariableTestCase(TestBase):
         self.buildDwarf()
         self.static_variable_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailureClang(9980907)
     @expectedFailureGcc(9980907)
     @python_api_test

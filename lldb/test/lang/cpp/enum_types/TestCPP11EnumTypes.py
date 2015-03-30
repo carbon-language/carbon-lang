@@ -10,56 +10,56 @@ class CPP11EnumTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_int8_t(self):
         """Test C++11 enumeration class types as int8_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=int8_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_int16_t(self):
         """Test C++11 enumeration class types as int16_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=int16_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_int32_t(self):
         """Test C++11 enumeration class types as int32_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=int32_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_int64_t(self):
         """Test C++11 enumeration class types as int64_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=int64_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_uint8_t(self):
         """Test C++11 enumeration class types as uint8_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=uint8_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_uint16_t(self):
         """Test C++11 enumeration class types as uint16_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=uint16_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_uint32_t(self):
         """Test C++11 enumeration class types as uint32_t types."""
         self.buildDsym(dictionary={'CFLAGS_EXTRAS': '"-DTEST_BLOCK_CAPTURED_VARS=uint32_t"'})
         self.image_lookup_for_enum_type()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_uint64_t(self):
         """Test C++11 enumeration class types as uint64_t types."""

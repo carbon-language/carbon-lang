@@ -18,7 +18,7 @@ class ProcessLaunchTestCase(TestBase):
         self.runCmd("settings set auto-confirm true")
         self.addTearDownHook(lambda: self.runCmd("settings clear auto-confirm"))
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_io_with_dsym (self):
         """Test that process launch I/O redirection flags work properly."""
@@ -117,7 +117,7 @@ class ProcessLaunchTestCase(TestBase):
 
     d = {'CXX_SOURCES' : 'print_cwd.cpp'}
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     @expectedFailureDarwin("llvm.org/pr20265")
     def test_set_working_dir_with_dsym (self):

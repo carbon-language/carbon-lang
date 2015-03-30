@@ -12,7 +12,7 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_watchlocation_with_dsym_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -s size' option."""

@@ -12,7 +12,7 @@ class ThreadStateTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     @expectedFailureDarwin("rdar://15367566")
     def test_state_after_breakpoint_with_dsym(self):
@@ -29,7 +29,7 @@ class ThreadStateTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_breakpoint_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_state_after_continue_with_dsym(self):
         """Test thread state after continue."""
@@ -42,7 +42,7 @@ class ThreadStateTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_continue_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_state_after_expression_with_dsym(self):
         """Test thread state after expression."""
@@ -55,7 +55,7 @@ class ThreadStateTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_continue_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     @unittest2.expectedFailure("llvm.org/pr16172") # thread states not properly maintained
     def test_process_interrupt_with_dsym(self):
@@ -70,7 +70,7 @@ class ThreadStateTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
         self.process_interrupt_test()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
     def test_process_state_with_dsym(self):

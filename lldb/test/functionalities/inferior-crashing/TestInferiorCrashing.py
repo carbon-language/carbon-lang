@@ -9,7 +9,7 @@ class CrashingInferiorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_dsym(self):
         """Test that lldb reliably catches the inferior crashing (command)."""
         self.buildDsym()
@@ -20,7 +20,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_crashing()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_registers_dsym(self):
         """Test that lldb reliably reads registers from the inferior after crashing (command)."""
         self.buildDsym()
@@ -37,7 +37,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDefault()
         self.inferior_crashing_python()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_expr_dsym(self):
         """Test that the lldb expression interpreter can read from the inferior after crashing (command)."""
         self.buildDsym()
@@ -48,7 +48,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_crashing_expr()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_step_dsym(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDsym()
@@ -59,7 +59,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_crashing_step()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_step_after_break_dsym(self):
         """Test that stepping after a crash behaves correctly."""
         self.buildDsym()
@@ -72,7 +72,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_crashing_step_after_break()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     def test_inferior_crashing_expr_step_and_expr_dsym(self):
         """Test that lldb expressions work before and after stepping after a crash."""
         self.buildDsym()

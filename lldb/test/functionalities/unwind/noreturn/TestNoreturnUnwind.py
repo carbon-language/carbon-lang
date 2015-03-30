@@ -11,7 +11,7 @@ import lldbutil
 class NoreturnUnwind(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym (self):
         """Test that we can backtrace correctly with 'noreturn' functions on the stack"""

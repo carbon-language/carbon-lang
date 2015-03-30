@@ -22,7 +22,7 @@ class SetWatchlocationAPITestCase(TestBase):
         # This is for verifying that watch location works.
         self.violating_func = "do_bad_thing_with_location";
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_watch_location_with_dsym(self):

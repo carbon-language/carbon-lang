@@ -12,7 +12,7 @@ class UserFormatVSSummaryTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that the user can input a format but it will not prevail over summary format's choices."""

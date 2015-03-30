@@ -148,7 +148,7 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         self.assertEquals(unexpected_key_set, set(), "the listed keys were present but unexpected in qProcessInfo result")
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @debugserver_test
     @dsym_test
     def test_qProcessInfo_contains_cputype_cpusubtype_debugserver_darwin(self):
@@ -156,7 +156,7 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.buildDsym()
         self.qProcessInfo_contains_keys(set(['cputype', 'cpusubtype']))
 
-    @unittest2.skipUnless(sys.platform.startswith("linux"), "requires Linux")
+    @skipUnlessPlatform(["linux"])
     @llgs_test
     @dwarf_test
     def test_qProcessInfo_contains_triple_llgs_linux(self):
@@ -164,7 +164,7 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.buildDwarf()
         self.qProcessInfo_contains_keys(set(['triple']))
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @debugserver_test
     @dsym_test
     def test_qProcessInfo_does_not_contain_triple_debugserver_darwin(self):
@@ -175,7 +175,7 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         # for the remote Host and Process.
         self.qProcessInfo_does_not_contain_keys(set(['triple']))
 
-    @unittest2.skipUnless(sys.platform.startswith("linux"), "requires Linux")
+    @skipUnlessPlatform(["linux"])
     @llgs_test
     @dwarf_test
     def test_qProcessInfo_does_not_contain_cputype_cpusubtype_llgs_linux(self):

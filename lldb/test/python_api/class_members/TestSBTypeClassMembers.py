@@ -12,7 +12,7 @@ class SBTypeMemberFunctionsTest(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_with_dsym(self):
@@ -22,7 +22,7 @@ class SBTypeMemberFunctionsTest(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.type_api(self.exe_name)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dwarf_test
     def test_with_dwarf(self):

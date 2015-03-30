@@ -10,7 +10,7 @@ class TestObjCSuperMethod(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailurei386
     @python_api_test
     @dsym_test
@@ -19,7 +19,7 @@ class TestObjCSuperMethod(TestBase):
         self.buildDsym()
         self.objc_super()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @expectedFailurei386
     @python_api_test
     @dwarf_test

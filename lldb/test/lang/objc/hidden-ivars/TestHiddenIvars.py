@@ -11,7 +11,7 @@ class HiddenIvarsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr_with_dsym(self):
         if self.getArchitecture() == 'i386':
@@ -20,7 +20,7 @@ class HiddenIvarsTestCase(TestBase):
             self.buildDsym()
             self.expr(False)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_expr_stripped_with_dsym(self):
         if self.getArchitecture() == 'i386':
@@ -29,7 +29,7 @@ class HiddenIvarsTestCase(TestBase):
             self.buildDsym()
             self.expr(True)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_expr_with_dwarf(self):
         if self.getArchitecture() == 'i386':
@@ -38,7 +38,7 @@ class HiddenIvarsTestCase(TestBase):
             self.buildDwarf()
             self.expr(False)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_frame_variable_with_dsym(self):
         if self.getArchitecture() == 'i386':
@@ -47,7 +47,7 @@ class HiddenIvarsTestCase(TestBase):
             self.buildDsym()
             self.frame_var(False)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_frame_variable_stripped_with_dsym(self):
         if self.getArchitecture() == 'i386':
@@ -56,7 +56,7 @@ class HiddenIvarsTestCase(TestBase):
             self.buildDsym()
             self.frame_var(True)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_frame_variable_with_dwarf(self):
         if self.getArchitecture() == 'i386':
@@ -66,7 +66,7 @@ class HiddenIvarsTestCase(TestBase):
             self.frame_var(False)
 
     @unittest2.expectedFailure("rdar://18683637")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_frame_variable_across_modules_with_dsym(self):
         if self.getArchitecture() == 'i386':
@@ -76,7 +76,7 @@ class HiddenIvarsTestCase(TestBase):
             self.frame_var_type_access_across_module()
 
     @unittest2.expectedFailure("rdar://18683637")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_frame_variable_across_modules_with_dwarf(self):
         if self.getArchitecture() == 'i386':

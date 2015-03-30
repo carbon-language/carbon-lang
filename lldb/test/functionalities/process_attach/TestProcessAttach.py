@@ -14,7 +14,7 @@ class ProcessAttachTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_attach_to_process_by_id_with_dsym(self):
         """Test attach by process id"""
@@ -27,7 +27,7 @@ class ProcessAttachTestCase(TestBase):
         self.buildDwarf()
         self.process_attach_by_id()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_attach_to_process_by_name_with_dsym(self):
         """Test attach by process name"""

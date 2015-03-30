@@ -11,14 +11,14 @@ class NoSuchArchTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
         
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym (self):
         self.buildDsym()
         self.do_test ()
 
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf()

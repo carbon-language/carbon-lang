@@ -13,7 +13,7 @@ class SigtrampUnwind(TestBase):
 
     # On different platforms the "_sigtramp" and "__kill" frames are likely to be different.
     # This test could probably be adapted to run on linux/*bsd easily enough.
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dsym_test
     def test_with_dsym (self):
         """Test that we can backtrace correctly with _sigtramp on the stack"""
@@ -21,7 +21,7 @@ class SigtrampUnwind(TestBase):
         self.setTearDownCleanup()
         self.sigtramp_unwind_tests()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @dwarf_test
     def test_with_dwarf (self):
         """Test that we can backtrace correctly with _sigtramp on the stack"""

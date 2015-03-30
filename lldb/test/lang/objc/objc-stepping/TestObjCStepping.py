@@ -13,7 +13,7 @@ class TestObjCStepping(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dsym_test
     def test_with_dsym_and_python_api(self):
@@ -21,7 +21,7 @@ class TestObjCStepping(TestBase):
         self.buildDsym()
         self.objc_stepping()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipUnlessDarwin
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):
