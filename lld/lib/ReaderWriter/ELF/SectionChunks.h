@@ -480,7 +480,7 @@ public:
 
   void setFlag(uint64_t flags) { _flags = flags; }
 
-  void setType(int16_t type) { _type = type; }
+  void setType(int64_t type) { _type = type; }
 
   range<ChunkIter> sections() { return _sections; }
 
