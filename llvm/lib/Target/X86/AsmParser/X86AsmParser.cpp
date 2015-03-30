@@ -2571,7 +2571,7 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
   SmallString<16> Tmp;
   Tmp += Base;
   Tmp += ' ';
-  Op.setTokenValue(Tmp.str());
+  Op.setTokenValue(Tmp);
 
   // If this instruction starts with an 'f', then it is a floating point stack
   // instruction.  These come in up to three forms for 32-bit, 64-bit, and

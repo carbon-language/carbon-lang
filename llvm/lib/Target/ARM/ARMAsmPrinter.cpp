@@ -207,7 +207,7 @@ GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << uid << '_' << uid2;
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return OutContext.GetOrCreateSymbol(Name);
 }
 
 
@@ -216,7 +216,7 @@ MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "SJLJEH"
     << getFunctionNumber();
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return OutContext.GetOrCreateSymbol(Name);
 }
 
 bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
@@ -597,7 +597,7 @@ void ARMAsmPrinter::emitAttributes() {
   std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPU);
   if (!FS.empty()) {
     if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS.str();
+      ArchFS = (Twine(ArchFS) + "," + FS).str();
     else
       ArchFS = FS;
   }

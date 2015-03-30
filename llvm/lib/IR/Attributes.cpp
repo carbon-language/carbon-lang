@@ -298,12 +298,12 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
   //
   if (isStringAttribute()) {
     std::string Result;
-    Result += '\"' + getKindAsString().str() + '"';
+    Result += (Twine('"') + getKindAsString() + Twine('"')).str();
 
     StringRef Val = pImpl->getValueAsString();
     if (Val.empty()) return Result;
 
-    Result += "=\"" + Val.str() + '"';
+    Result += ("=\"" + Val + Twine('"')).str();
     return Result;
   }
 

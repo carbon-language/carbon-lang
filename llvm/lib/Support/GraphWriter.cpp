@@ -92,7 +92,7 @@ static bool ExecGraphViewer(StringRef ExecPath, std::vector<const char *> &args,
     errs() << " done. \n";
   } else {
     sys::ExecuteNoWait(ExecPath, args.data(), nullptr, nullptr, 0, &ErrMsg);
-    errs() << "Remember to erase graph file: " << Filename.str() << "\n";
+    errs() << "Remember to erase graph file: " << Filename << "\n";
   }
   return false;
 }

@@ -313,7 +313,7 @@ static Option *LookupNearestOption(StringRef Arg,
         if (RHS.empty() || !PermitValue)
           NearestString = OptionNames[i];
         else
-          NearestString = std::string(OptionNames[i]) + "=" + RHS.str();
+          NearestString = (Twine(OptionNames[i]) + "=" + RHS).str();
       }
     }
   }

@@ -2571,7 +2571,7 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
   if (Tok.isNot(AsmToken::Identifier))
     return true;
 
-  std::string Str = Tok.getIdentifier().str();
+  std::string Str = Tok.getIdentifier();
 
   Parser.Lex(); // Eat the identifier.
   // Now make an expression from the rest of the operand.

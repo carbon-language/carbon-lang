@@ -255,7 +255,7 @@ MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
   std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPU);
   if (!FS.empty()) {
     if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS.str();
+      ArchFS = (Twine(ArchFS) + "," + FS).str();
     else
       ArchFS = FS;
   }

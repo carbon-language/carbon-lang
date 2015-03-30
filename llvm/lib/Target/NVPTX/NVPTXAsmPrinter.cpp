@@ -145,20 +145,20 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   SmallString<128> FullPathName = dirName;
   if (!dirName.empty() && !sys::path::is_absolute(fileName)) {
     sys::path::append(FullPathName, fileName);
-    fileName = FullPathName.str();
+    fileName = FullPathName;
   }
 
-  if (filenameMap.find(fileName.str()) == filenameMap.end())
+  if (filenameMap.find(fileName) == filenameMap.end())
     return;
 
   // Emit the line from the source file.
   if (InterleaveSrc)
-    this->emitSrcInText(fileName.str(), curLoc.getLine());
+    this->emitSrcInText(fileName, curLoc.getLine());
 
   std::stringstream temp;
-  temp << "\t.loc " << filenameMap[fileName.str()] << " " << curLoc.getLine()
+  temp << "\t.loc " << filenameMap[fileName] << " " << curLoc.getLine()
        << " " << curLoc.getCol();
-  OutStreamer.EmitRawText(Twine(temp.str().c_str()));
+  OutStreamer.EmitRawText(temp.str());
 }
 
 void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -641,7 +641,7 @@ static bool usedInGlobalVarDef(const Constant *C) {
     return false;
 
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-    if (GV->getName().str() == "llvm.used")
+    if (GV->getName() == "llvm.used")
       return false;
     return true;
   }
@@ -656,7 +656,7 @@ static bool usedInGlobalVarDef(const Constant *C) {
 
 static bool usedInOneFunc(const User *U, Function const *&oneFunc) {
   if (const GlobalVariable *othergv = dyn_cast<GlobalVariable>(U)) {
-    if (othergv->getName().str() == "llvm.used")
+    if (othergv->getName() == "llvm.used")
       return true;
   }
 
@@ -786,12 +786,12 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
     SmallString<128> FullPathName = Dirname;
     if (!Dirname.empty() && !sys::path::is_absolute(Filename)) {
       sys::path::append(FullPathName, Filename);
-      Filename = FullPathName.str();
+      Filename = FullPathName;
     }
-    if (filenameMap.find(Filename.str()) != filenameMap.end())
+    if (filenameMap.find(Filename) != filenameMap.end())
       continue;
-    filenameMap[Filename.str()] = i;
-    OutStreamer.EmitDwarfFileDirective(i, "", Filename.str());
+    filenameMap[Filename] = i;
+    OutStreamer.EmitDwarfFileDirective(i, "", Filename);
     ++i;
   }
 
@@ -801,11 +801,11 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
     SmallString<128> FullPathName = Dirname;
     if (!Dirname.empty() && !sys::path::is_absolute(Filename)) {
       sys::path::append(FullPathName, Filename);
-      Filename = FullPathName.str();
+      Filename = FullPathName;
     }
-    if (filenameMap.find(Filename.str()) != filenameMap.end())
+    if (filenameMap.find(Filename) != filenameMap.end())
       continue;
-    filenameMap[Filename.str()] = i;
+    filenameMap[Filename] = i;
     ++i;
   }
 }
@@ -1011,7 +1011,7 @@ void NVPTXAsmPrinter::emitLinkageDirective(const GlobalValue *V,
       msg.append("Error: ");
       msg.append("Symbol ");
       if (V->hasName())
-        msg.append(V->getName().str());
+        msg.append(V->getName());
       msg.append("has unsupported appending linkage type");
       llvm_unreachable(msg.c_str());
     } else if (!V->hasInternalLinkage() &&
@@ -1147,7 +1147,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
 
   const Function *demotedFunc = nullptr;
   if (!processDemoted && canDemoteGlobalVar(GVar, demotedFunc)) {
-    O << "// " << GVar->getName().str() << " has been demoted\n";
+    O << "// " << GVar->getName() << " has been demoted\n";
     if (localDecls.find(demotedFunc) != localDecls.end())
       localDecls[demotedFunc].push_back(GVar);
     else {
@@ -1195,9 +1195,10 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
         // The frontend adds zero-initializer to variables that don't have an
         // initial value, so skip warning for this case.
         if (!GVar->getInitializer()->isNullValue()) {
-          std::string warnMsg = "initial value of '" + GVar->getName().str() +
-              "' is not allowed in addrspace(" +
-              llvm::utostr_32(PTy->getAddressSpace()) + ")";
+          std::string warnMsg =
+              ("initial value of '" + GVar->getName() +
+               "' is not allowed in addrspace(" +
+               Twine(llvm::utostr_32(PTy->getAddressSpace())) + ")").str();
           report_fatal_error(warnMsg.c_str());
         }
       }
@@ -2086,7 +2087,7 @@ void NVPTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 
 void NVPTXAsmPrinter::emitSrcInText(StringRef filename, unsigned line) {
   std::stringstream temp;
-  LineReader *reader = this->getReader(filename.str());
+  LineReader *reader = this->getReader(filename);
   temp << "\n//";
   temp << filename.str();
   temp << ":";
@@ -2094,7 +2095,7 @@ void NVPTXAsmPrinter::emitSrcInText(StringRef filename, unsigned line) {
   temp << " ";
   temp << reader->readLine(line);
   temp << "\n";
-  this->OutStreamer.EmitRawText(Twine(temp.str()));
+  this->OutStreamer.EmitRawText(temp.str());
 }
 
 LineReader *NVPTXAsmPrinter::getReader(std::string filename) {

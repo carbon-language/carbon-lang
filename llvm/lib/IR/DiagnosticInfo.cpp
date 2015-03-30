@@ -147,7 +147,7 @@ const std::string DiagnosticInfoOptimizationBase::getLocationStr() const {
   unsigned Column = 0;
   if (isLocationAvailable())
     getLocation(&Filename, &Line, &Column);
-  return Twine(Filename + ":" + Twine(Line) + ":" + Twine(Column)).str();
+  return (Filename + ":" + Twine(Line) + ":" + Twine(Column)).str();
 }
 
 void DiagnosticInfoOptimizationBase::print(DiagnosticPrinter &DP) const {

@@ -190,7 +190,7 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       ARM_MC::ParseARMTriple(TargetTriple.getTriple(), CPUString);
   if (!FS.empty()) {
     if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS.str();
+      ArchFS = (Twine(ArchFS) + "," + FS).str();
     else
       ArchFS = FS;
   }

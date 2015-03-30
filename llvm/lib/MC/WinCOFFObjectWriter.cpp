@@ -382,9 +382,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
       coff_symbol->Other = GetOrCreateCOFFSymbol(&SymRef->getSymbol());
     } else {
-      std::string WeakName = std::string(".weak.")
-                           +  Symbol.getName().str()
-                           + ".default";
+      std::string WeakName = (".weak." + Symbol.getName() + ".default").str();
       COFFSymbol *WeakDefault = createSymbol(WeakName);
       WeakDefault->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
       WeakDefault->Data.StorageClass  = COFF::IMAGE_SYM_CLASS_EXTERNAL;

@@ -1537,7 +1537,7 @@ bool ExportEntry::operator==(const ExportEntry &Other) const {
   if (Stack.size() != Other.Stack.size())
     return false;
   // Not equal if different cumulative strings.
-  if (!CumulativeString.str().equals(Other.CumulativeString.str()))
+  if (!CumulativeString.equals(Other.CumulativeString))
     return false;
   // Equal if all nodes in both stacks match.
   for (unsigned i=0; i < Stack.size(); ++i) {
@@ -1559,7 +1559,7 @@ uint64_t ExportEntry::readULEB128(const uint8_t *&Ptr) {
 }
 
 StringRef ExportEntry::name() const {
-  return CumulativeString.str();
+  return CumulativeString;
 }
 
 uint64_t ExportEntry::flags() const {
