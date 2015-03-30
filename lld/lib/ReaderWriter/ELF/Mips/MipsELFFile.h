@@ -136,11 +136,11 @@ public:
   }
 
   /// \brief gp register value stored in the .reginfo section.
-  int64_t getGP0() const { return _gp0 ? *_gp0 : 0; }
+  int64_t getGP0() const { return _gp0; }
 
   /// \brief .tdata section address plus fixed offset.
-  uint64_t getTPOffset() const { return *_tpOff; }
-  uint64_t getDTPOffset() const { return *_dtpOff; }
+  uint64_t getTPOffset() const { return _tpOff; }
+  uint64_t getDTPOffset() const { return _dtpOff; }
 
 protected:
   std::error_code doParse() override {
@@ -163,9 +163,9 @@ private:
   static const bool _isMips64EL =
       ELFT::Is64Bits && ELFT::TargetEndianness == llvm::support::little;
 
-  llvm::Optional<int64_t> _gp0;
-  llvm::Optional<uint64_t> _tpOff;
-  llvm::Optional<uint64_t> _dtpOff;
+  int64_t _gp0 = 0;
+  uint64_t _tpOff = 0;
+  uint64_t _dtpOff = 0;
 
   ErrorOr<ELFDefinedAtom<ELFT> *> handleDefinedSymbol(
       StringRef symName, StringRef sectionName, const Elf_Sym *sym,
