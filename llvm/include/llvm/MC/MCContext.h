@@ -194,6 +194,7 @@ namespace llvm {
     StringMap<const MCSectionMachO*> MachOUniquingMap;
     std::map<ELFSectionKey, const MCSectionELF *> ELFUniquingMap;
     std::map<COFFSectionKey, const MCSectionCOFF *> COFFUniquingMap;
+    StringMap<bool> ELFRelSecNames;
 
     /// Do automatic reset in destructor
     bool AutoReset;
@@ -303,6 +304,10 @@ namespace llvm {
                                       unsigned Flags, unsigned EntrySize,
                                       StringRef Group, bool Unique,
                                       const char *BeginSymName = nullptr);
+
+    const MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
+                                            unsigned Flags, unsigned EntrySize,
+                                            const MCSymbol *Group);
 
     void renameELFSection(const MCSectionELF *Section, StringRef Name);
 

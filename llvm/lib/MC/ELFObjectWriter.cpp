@@ -1167,15 +1167,12 @@ ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
     EntrySize = is64Bit() ? sizeof(ELF::Elf64_Rel) : sizeof(ELF::Elf32_Rel);
 
   unsigned Flags = 0;
-  StringRef Group = "";
-  if (Section.getFlags() & ELF::SHF_GROUP) {
+  if (Section.getFlags() & ELF::SHF_GROUP)
     Flags = ELF::SHF_GROUP;
-    Group = Section.getGroup()->getName();
-  }
 
-  const MCSectionELF *RelaSection = Ctx.getELFSection(
+  const MCSectionELF *RelaSection = Ctx.createELFRelSection(
       RelaSectionName, hasRelocationAddend() ? ELF::SHT_RELA : ELF::SHT_REL,
-      Flags, EntrySize, Group, true);
+      Flags, EntrySize, Section.getGroup());
   return &Asm.getOrCreateSectionData(*RelaSection);
 }
 

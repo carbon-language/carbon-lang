@@ -275,6 +275,18 @@ void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
   const_cast<MCSectionELF*>(Section)->setSectionName(CachedName);
 }
 
+const MCSectionELF *
+MCContext::createELFRelSection(StringRef Name, unsigned Type, unsigned Flags,
+                               unsigned EntrySize, const MCSymbol *Group) {
+  StringMap<bool>::iterator I;
+  bool Inserted;
+  std::tie(I, Inserted) = ELFRelSecNames.insert(std::make_pair(Name, true));
+
+  return new (*this)
+      MCSectionELF(I->getKey(), Type, Flags, SectionKind::getReadOnly(),
+                   EntrySize, Group, true, nullptr);
+}
+
 const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                              unsigned Flags, unsigned EntrySize,
                                              StringRef Group, bool Unique,
