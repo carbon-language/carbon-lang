@@ -889,6 +889,12 @@ protected:
   ~MDLocalScope() {}
 
 public:
+  /// \brief Get the subprogram for this scope.
+  ///
+  /// Return this if it's an \a MDSubprogram; otherwise, look up the scope
+  /// chain.
+  MDSubprogram *getSubprogram() const;
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDSubprogramKind ||
            MD->getMetadataID() == MDLexicalBlockKind ||

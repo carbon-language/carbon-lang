@@ -238,6 +238,12 @@ MDCompileUnit *MDCompileUnit::getImpl(
       (SourceLanguage, IsOptimized, RuntimeVersion, EmissionKind), Ops);
 }
 
+MDSubprogram *MDLocalScope::getSubprogram() const {
+  if (auto *Block = dyn_cast<MDLexicalBlockBase>(this))
+    return Block->getScope()->getSubprogram();
+  return const_cast<MDSubprogram *>(cast<MDSubprogram>(this));
+}
+
 MDSubprogram *MDSubprogram::getImpl(
     LLVMContext &Context, Metadata *Scope, MDString *Name,
     MDString *LinkageName, Metadata *File, unsigned Line, Metadata *Type,
