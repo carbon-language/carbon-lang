@@ -1129,7 +1129,12 @@ protected:
   ~MDLexicalBlockBase() {}
 
 public:
-  Metadata *getScope() const { return getOperand(1); }
+  // FIXME: Remove this once MDScope::getFile() does the same.
+  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
+
+  MDLocalScope *getScope() const { return cast<MDLocalScope>(getRawScope()); }
+
+  Metadata *getRawScope() const { return getOperand(1); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDLexicalBlockKind ||
@@ -1150,6 +1155,15 @@ class MDLexicalBlock : public MDLexicalBlockBase {
         Column(Column) {}
   ~MDLexicalBlock() {}
 
+  static MDLexicalBlock *getImpl(LLVMContext &Context, MDLocalScope *Scope,
+                                 MDFile *File, unsigned Line, unsigned Column,
+                                 StorageType Storage,
+                                 bool ShouldCreate = true) {
+    return getImpl(Context, static_cast<Metadata *>(Scope),
+                   static_cast<Metadata *>(File), Line, Column, Storage,
+                   ShouldCreate);
+  }
+
   static MDLexicalBlock *getImpl(LLVMContext &Context, Metadata *Scope,
                                  Metadata *File, unsigned Line, unsigned Column,
                                  StorageType Storage, bool ShouldCreate = true);
@@ -1160,6 +1174,9 @@ class MDLexicalBlock : public MDLexicalBlockBase {
   }
 
 public:
+  DEFINE_MDNODE_GET(MDLexicalBlock, (MDLocalScope * Scope, MDFile *File,
+                                     unsigned Line, unsigned Column),
+                    (Scope, File, Line, Column))
   DEFINE_MDNODE_GET(MDLexicalBlock, (Metadata * Scope, Metadata *File,
                                      unsigned Line, unsigned Column),
                     (Scope, File, Line, Column))
@@ -1186,6 +1203,15 @@ class MDLexicalBlockFile : public MDLexicalBlockBase {
         Discriminator(Discriminator) {}
   ~MDLexicalBlockFile() {}
 
+  static MDLexicalBlockFile *getImpl(LLVMContext &Context, MDLocalScope *Scope,
+                                     MDFile *File, unsigned Discriminator,
+                                     StorageType Storage,
+                                     bool ShouldCreate = true) {
+    return getImpl(Context, static_cast<Metadata *>(Scope),
+                   static_cast<Metadata *>(File), Discriminator, Storage,
+                   ShouldCreate);
+  }
+
   static MDLexicalBlockFile *getImpl(LLVMContext &Context, Metadata *Scope,
                                      Metadata *File, unsigned Discriminator,
                                      StorageType Storage,
@@ -1197,6 +1223,9 @@ class MDLexicalBlockFile : public MDLexicalBlockBase {
   }
 
 public:
+  DEFINE_MDNODE_GET(MDLexicalBlockFile, (MDLocalScope * Scope, MDFile *File,
+                                         unsigned Discriminator),
+                    (Scope, File, Discriminator))
   DEFINE_MDNODE_GET(MDLexicalBlockFile,
                     (Metadata * Scope, Metadata *File, unsigned Discriminator),
                     (Scope, File, Discriminator))

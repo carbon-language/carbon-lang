@@ -302,6 +302,7 @@ private:
   void visitMDScope(const MDScope &N);
   void visitMDDerivedTypeBase(const MDDerivedTypeBase &N);
   void visitMDVariable(const MDVariable &N);
+  void visitMDLexicalBlockBase(const MDLexicalBlockBase &N);
 
   // InstVisitor overrides...
   using InstVisitor<Verifier>::visit;
@@ -871,12 +872,21 @@ void Verifier::visitMDSubprogram(const MDSubprogram &N) {
   }
 }
 
-void Verifier::visitMDLexicalBlock(const MDLexicalBlock &N) {
+void Verifier::visitMDLexicalBlockBase(const MDLexicalBlockBase &N) {
   Assert(N.getTag() == dwarf::DW_TAG_lexical_block, "invalid tag", &N);
+  Assert(N.getRawScope() && isa<MDLocalScope>(N.getRawScope()),
+         "invalid local scope", &N, N.getRawScope());
+}
+
+void Verifier::visitMDLexicalBlock(const MDLexicalBlock &N) {
+  visitMDLexicalBlockBase(N);
+
+  Assert(N.getLine() || !N.getColumn(),
+         "cannot have column info without line info", &N);
 }
 
 void Verifier::visitMDLexicalBlockFile(const MDLexicalBlockFile &N) {
-  Assert(N.getTag() == dwarf::DW_TAG_lexical_block, "invalid tag", &N);
+  visitMDLexicalBlockBase(N);
 }
 
 void Verifier::visitMDNamespace(const MDNamespace &N) {

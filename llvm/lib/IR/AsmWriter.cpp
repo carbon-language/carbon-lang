@@ -1654,8 +1654,8 @@ static void writeMDLexicalBlock(raw_ostream &Out, const MDLexicalBlock *N,
                               const Module *Context) {
   Out << "!MDLexicalBlock(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
-  Printer.printMetadata("scope", N->getScope(), /* ShouldSkipNull */ false);
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
   Printer.printInt("column", N->getColumn());
   Out << ")";
@@ -1668,8 +1668,8 @@ static void writeMDLexicalBlockFile(raw_ostream &Out,
                                     const Module *Context) {
   Out << "!MDLexicalBlockFile(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
-  Printer.printMetadata("scope", N->getScope(), /* ShouldSkipNull */ false);
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("discriminator", N->getDiscriminator(),
                    /* ShouldSkipZero */ false);
   Out << ")";

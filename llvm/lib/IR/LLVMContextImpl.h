@@ -594,11 +594,11 @@ template <> struct MDNodeKeyImpl<MDLexicalBlock> {
   MDNodeKeyImpl(Metadata *Scope, Metadata *File, unsigned Line, unsigned Column)
       : Scope(Scope), File(File), Line(Line), Column(Column) {}
   MDNodeKeyImpl(const MDLexicalBlock *N)
-      : Scope(N->getScope()), File(N->getFile()), Line(N->getLine()),
+      : Scope(N->getRawScope()), File(N->getRawFile()), Line(N->getLine()),
         Column(N->getColumn()) {}
 
   bool isKeyOf(const MDLexicalBlock *RHS) const {
-    return Scope == RHS->getScope() && File == RHS->getFile() &&
+    return Scope == RHS->getRawScope() && File == RHS->getRawFile() &&
            Line == RHS->getLine() && Column == RHS->getColumn();
   }
   unsigned getHashValue() const {
@@ -614,11 +614,11 @@ template <> struct MDNodeKeyImpl<MDLexicalBlockFile> {
   MDNodeKeyImpl(Metadata *Scope, Metadata *File, unsigned Discriminator)
       : Scope(Scope), File(File), Discriminator(Discriminator) {}
   MDNodeKeyImpl(const MDLexicalBlockFile *N)
-      : Scope(N->getScope()), File(N->getFile()),
+      : Scope(N->getRawScope()), File(N->getRawFile()),
         Discriminator(N->getDiscriminator()) {}
 
   bool isKeyOf(const MDLexicalBlockFile *RHS) const {
-    return Scope == RHS->getScope() && File == RHS->getFile() &&
+    return Scope == RHS->getRawScope() && File == RHS->getRawFile() &&
            Discriminator == RHS->getDiscriminator();
   }
   unsigned getHashValue() const {

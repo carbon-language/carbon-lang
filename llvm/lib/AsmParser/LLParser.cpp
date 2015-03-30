@@ -3571,7 +3571,7 @@ bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
 ///   ::= !MDLexicalBlock(scope: !0, file: !2, line: 7, column: 9)
 bool LLParser::ParseMDLexicalBlock(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(scope, MDField, );                                                  \
+  REQUIRED(scope, MDField, (/* AllowNull */ false));                           \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \
   OPTIONAL(column, ColumnField, );
@@ -3587,7 +3587,7 @@ bool LLParser::ParseMDLexicalBlock(MDNode *&Result, bool IsDistinct) {
 ///   ::= !MDLexicalBlockFile(scope: !0, file: !2, discriminator: 9)
 bool LLParser::ParseMDLexicalBlockFile(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(scope, MDField, );                                                  \
+  REQUIRED(scope, MDField, (/* AllowNull */ false));                           \
   OPTIONAL(file, MDField, );                                                   \
   REQUIRED(discriminator, MDUnsignedField, (0, UINT32_MAX));
   PARSE_MD_FIELDS();

@@ -1555,8 +1555,8 @@ TEST_F(MDSubprogramTest, replaceFunction) {
 typedef MetadataTest MDLexicalBlockTest;
 
 TEST_F(MDLexicalBlockTest, get) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDLocalScope *Scope = getSubprogram();
+  MDFile *File = getFile();
   unsigned Line = 5;
   unsigned Column = 8;
 
@@ -1569,8 +1569,9 @@ TEST_F(MDLexicalBlockTest, get) {
   EXPECT_EQ(Column, N->getColumn());
   EXPECT_EQ(N, MDLexicalBlock::get(Context, Scope, File, Line, Column));
 
-  EXPECT_NE(N, MDLexicalBlock::get(Context, File, File, Line, Column));
-  EXPECT_NE(N, MDLexicalBlock::get(Context, Scope, Scope, Line, Column));
+  EXPECT_NE(N,
+            MDLexicalBlock::get(Context, getSubprogram(), File, Line, Column));
+  EXPECT_NE(N, MDLexicalBlock::get(Context, Scope, getFile(), Line, Column));
   EXPECT_NE(N, MDLexicalBlock::get(Context, Scope, File, Line + 1, Column));
   EXPECT_NE(N, MDLexicalBlock::get(Context, Scope, File, Line, Column + 1));
 
@@ -1581,8 +1582,8 @@ TEST_F(MDLexicalBlockTest, get) {
 typedef MetadataTest MDLexicalBlockFileTest;
 
 TEST_F(MDLexicalBlockFileTest, get) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDLocalScope *Scope = getSubprogram();
+  MDFile *File = getFile();
   unsigned Discriminator = 5;
 
   auto *N = MDLexicalBlockFile::get(Context, Scope, File, Discriminator);
@@ -1593,8 +1594,10 @@ TEST_F(MDLexicalBlockFileTest, get) {
   EXPECT_EQ(Discriminator, N->getDiscriminator());
   EXPECT_EQ(N, MDLexicalBlockFile::get(Context, Scope, File, Discriminator));
 
-  EXPECT_NE(N, MDLexicalBlockFile::get(Context, File, File, Discriminator));
-  EXPECT_NE(N, MDLexicalBlockFile::get(Context, Scope, Scope, Discriminator));
+  EXPECT_NE(N, MDLexicalBlockFile::get(Context, getSubprogram(), File,
+                                       Discriminator));
+  EXPECT_NE(N,
+            MDLexicalBlockFile::get(Context, Scope, getFile(), Discriminator));
   EXPECT_NE(N,
             MDLexicalBlockFile::get(Context, Scope, File, Discriminator + 1));
 

@@ -272,6 +272,7 @@ MDLexicalBlock *MDLexicalBlock::getImpl(LLVMContext &Context, Metadata *Scope,
                                         Metadata *File, unsigned Line,
                                         unsigned Column, StorageType Storage,
                                         bool ShouldCreate) {
+  assert(Scope && "Expected scope");
   DEFINE_GETIMPL_LOOKUP(MDLexicalBlock, (Scope, File, Line, Column));
   Metadata *Ops[] = {File, Scope};
   DEFINE_GETIMPL_STORE(MDLexicalBlock, (Line, Column), Ops);
@@ -282,6 +283,7 @@ MDLexicalBlockFile *MDLexicalBlockFile::getImpl(LLVMContext &Context,
                                                 unsigned Discriminator,
                                                 StorageType Storage,
                                                 bool ShouldCreate) {
+  assert(Scope && "Expected scope");
   DEFINE_GETIMPL_LOOKUP(MDLexicalBlockFile, (Scope, File, Discriminator));
   Metadata *Ops[] = {File, Scope};
   DEFINE_GETIMPL_STORE(MDLexicalBlockFile, (Discriminator), Ops);
