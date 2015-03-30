@@ -192,6 +192,7 @@ size_t Fuzzer::MutateAndTestOne(Unit *U) {
   for (int i = 0; i < Options.MutateDepth; i++) {
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
       return NewUnits;
+    MutateWithDFSan(U);
     Mutate(U, Options.MaxLen);
     size_t NewCoverage = RunOne(*U);
     if (NewCoverage) {

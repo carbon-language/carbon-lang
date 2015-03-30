@@ -1,0 +1,12 @@
+# Replaces __sanitizer_cov_trace_cmp with __dfsw___sanitizer_cov_trace_cmp
+fun:__sanitizer_cov_trace_cmp=custom
+fun:__sanitizer_cov_trace_cmp=uninstrumented
+
+# Ignores coverage callbacks.
+fun:__sanitizer_cov=uninstrumented
+fun:__sanitizer_cov=discard
+fun:__sanitizer_cov_module_init=uninstrumented
+fun:__sanitizer_cov_module_init=discard
+
+# Don't add extra parameters to the Fuzzer callback.
+fun:TestOneInput=uninstrumented

@@ -44,3 +44,5 @@ FUZZER_FLAG(int, jobs, 0, "Number of jobs to run. If jobs >= 1 we spawn"
                           " with stdout/stderr redirected to fuzz-JOB.log.")
 FUZZER_FLAG(int, workers, 0,
             "Number of simultaneous worker processes to run the jobs.")
+FUZZER_FLAG(int, dfsan, 1, "Use DFSan for taint-guided mutations. No-op unless "
+                           "the DFSan instrumentation was compiled in.")

@@ -161,6 +161,7 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   Options.UseCounters = Flags.use_counters;
   Options.UseFullCoverageSet = Flags.use_full_coverage_set;
   Options.UseCoveragePairs = Flags.use_coverage_pairs;
+  Options.UseDFSan = Flags.dfsan;
   Options.PreferSmallDuringInitialShuffle =
       Flags.prefer_small_during_initial_shuffle;
   if (Flags.runs >= 0)
