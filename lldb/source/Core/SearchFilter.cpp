@@ -816,7 +816,7 @@ SearchFilterByModuleListAndCU::GetDescription (Stream *s)
     }
     else if (num_modules > 0)
     {
-        s->Printf (", modules(%zd) = ", num_modules);
+        s->Printf (", modules(%" PRIu64 ") = ", static_cast<uint64_t>(num_modules));
         for (size_t i = 0; i < num_modules; i++)
         {
             if (s->GetVerbose())
