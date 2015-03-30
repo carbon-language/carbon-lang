@@ -3,7 +3,6 @@ set(POLLY_TEST_DIRECTORIES
   "ScopInfo"
   "ScheduleOptimizer"
   "CodeGen"
-  "Cloog"
   "OpenMP"
   "polybench"
   "vect")

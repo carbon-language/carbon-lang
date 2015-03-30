@@ -13,7 +13,6 @@
 #ifndef POLLY_CONFIG_H
 #define POLLY_CONFIG_H
 
-#cmakedefine CLOOG_FOUND
 #cmakedefine CUDALIB_FOUND
 #cmakedefine GPU_CODEGEN
 
