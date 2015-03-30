@@ -848,7 +848,16 @@ template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS_ONLY is_convertible
 
 namespace __is_convertible_imp
 {
-template <class _Tp> char  __test(_Tp);
+template <class _Tp> void  __test_convert(_Tp);
+
+template <class _From, class _To, class = void>
+struct __is_convertible_test : public false_type {};
+
+template <class _From, class _To>
+struct __is_convertible_test<_From, _To,
+    decltype(__test_convert<_To>(_VSTD::declval<_From>()))> : public true_type
+{};
+
 template <class _Tp> __two __test(...);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> _Tp&& __source();
@@ -883,10 +892,8 @@ template <class _T1, class _T2,
     unsigned _T2_is_array_function_or_void = __is_convertible_imp::__is_array_function_or_void<_T2>::value>
 struct __is_convertible
     : public integral_constant<bool,
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-        sizeof(__is_convertible_imp::__test<_T2>(__is_convertible_imp::__source<_T1>())) == 1
-#else
-        sizeof(__is_convertible_imp::__test<_T2>(__is_convertible_imp::__source<_T1>())) == 1
+        __is_convertible_imp::__is_convertible_test<_T1, _T2>::value
+#if defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
          && !(!is_function<_T1>::value && !is_reference<_T1>::value && is_reference<_T2>::value
               && (!is_const<typename remove_reference<_T2>::type>::value
                   || is_volatile<typename remove_reference<_T2>::type>::value)

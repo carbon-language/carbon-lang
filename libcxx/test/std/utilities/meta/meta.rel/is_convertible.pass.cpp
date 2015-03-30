@@ -186,4 +186,10 @@ int main()
     static_assert((std::is_convertible<volatile NonCopyable&, const volatile NonCopyable&>::value), "");
     static_assert((std::is_convertible<const volatile NonCopyable&, const volatile NonCopyable&>::value), "");
     static_assert((!std::is_convertible<const NonCopyable&, NonCopyable&>::value), "");
+// This test requires Access control SFINAE which we only have in C++11 or when
+// we are using the compiler builtin for is_convertible.
+#if __cplusplus >= 201103L || !defined(_LIBCPP_USE_IS_CONVERTIBLE_FALLBACK)
+    test_is_not_convertible<NonCopyable&, NonCopyable>();
+#endif
+
 }
