@@ -5857,7 +5857,28 @@ public:
     case 'R': // An address that can be used in a non-macro load or store
       Info.setAllowsMemory();
       return true;
+    case 'Z':
+      if (Name[1] == 'C') { // An address usable by ll, and sc.
+        Info.setAllowsMemory();
+        Name++; // Skip over 'Z'.
+        return true;
+      }
+      return false;
     }
+  }
+
+  std::string convertConstraint(const char *&Constraint) const override {
+    std::string R;
+    switch (*Constraint) {
+    case 'Z': // Two-character constraint; add "^" hint for later parsing.
+      if (Constraint[1] == 'C') {
+        R = std::string("^") + std::string(Constraint, 2);
+        Constraint++;
+        return R;
+      }
+      break;
+    }
+    return TargetInfo::convertConstraint(Constraint);
   }
 
   const char *getClobbers() const override {
