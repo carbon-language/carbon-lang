@@ -28,11 +28,9 @@ using namespace llvm;
 
 #include "NVPTXGenAsmWriter.inc"
 
-
 NVPTXInstPrinter::NVPTXInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                                   const MCRegisterInfo &MRI,
-                                   const MCSubtargetInfo &STI)
-  : MCInstPrinter(MAI, MII, MRI) {}
+                                   const MCRegisterInfo &MRI)
+    : MCInstPrinter(MAI, MII, MRI) {}
 
 void NVPTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   // Decode the virtual register

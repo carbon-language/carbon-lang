@@ -25,7 +25,7 @@ class MCSubtargetInfo;
 class NVPTXInstPrinter : public MCInstPrinter {
 public:
   NVPTXInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                   const MCRegisterInfo &MRI, const MCSubtargetInfo &STI);
+                   const MCRegisterInfo &MRI);
 
   void printRegName(raw_ostream &OS, unsigned RegNo) const override;
   void printInst(const MCInst *MI, raw_ostream &OS, StringRef Annot,
