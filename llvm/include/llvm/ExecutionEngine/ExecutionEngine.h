@@ -15,6 +15,7 @@
 #ifndef LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
 #define LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
 
+#include "RuntimeDyld.h"
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -42,6 +43,7 @@ class GlobalVariable;
 class GlobalValue;
 class JITEventListener;
 class MachineCodeInfo;
+class MCJITMemoryManager;
 class MutexGuard;
 class ObjectCache;
 class RTDyldMemoryManager;
@@ -139,15 +141,17 @@ protected:
   virtual char *getMemoryForGV(const GlobalVariable *GV);
 
   static ExecutionEngine *(*MCJITCtor)(
-                                     std::unique_ptr<Module> M,
-                                     std::string *ErrorStr,
-                                     std::unique_ptr<RTDyldMemoryManager> MCJMM,
-                                     std::unique_ptr<TargetMachine> TM);
+                                std::unique_ptr<Module> M,
+                                std::string *ErrorStr,
+                                std::shared_ptr<MCJITMemoryManager> MM,
+                                std::shared_ptr<RuntimeDyld::SymbolResolver> SR,
+                                std::unique_ptr<TargetMachine> TM);
 
   static ExecutionEngine *(*OrcMCJITReplacementCtor)(
-                                    std::string *ErrorStr,
-                                    std::unique_ptr<RTDyldMemoryManager> OrcJMM,
-                                    std::unique_ptr<TargetMachine> TM);
+                                std::string *ErrorStr,
+                                std::shared_ptr<MCJITMemoryManager> MM,
+                                std::shared_ptr<RuntimeDyld::SymbolResolver> SR,
+                                std::unique_ptr<TargetMachine> TM);
 
   static ExecutionEngine *(*InterpCtor)(std::unique_ptr<Module> M,
                                         std::string *ErrorStr);
@@ -500,7 +504,8 @@ private:
   EngineKind::Kind WhichEngine;
   std::string *ErrorStr;
   CodeGenOpt::Level OptLevel;
-  std::unique_ptr<RTDyldMemoryManager> MCJMM;
+  std::shared_ptr<MCJITMemoryManager> MemMgr;
+  std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver;
   TargetOptions Options;
   Reloc::Model RelocModel;
   CodeModel::Model CMModel;
@@ -534,6 +539,12 @@ public:
   /// is called and is successful, the created engine takes ownership of the
   /// memory manager. This option defaults to NULL.
   EngineBuilder &setMCJITMemoryManager(std::unique_ptr<RTDyldMemoryManager> mcjmm);
+
+  EngineBuilder&
+  setMemoryManager(std::unique_ptr<MCJITMemoryManager> MM);
+
+  EngineBuilder&
+  setSymbolResolver(std::unique_ptr<RuntimeDyld::SymbolResolver> SR);
 
   /// setErrorStr - Set the error string to write to on error.  This option
   /// defaults to NULL.

@@ -18,6 +18,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -45,11 +46,13 @@ STATISTIC(NumGlobals  , "Number of global vars initialized");
 
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
     std::unique_ptr<Module> M, std::string *ErrorStr,
-    std::unique_ptr<RTDyldMemoryManager> MCJMM,
+    std::shared_ptr<MCJITMemoryManager> MemMgr,
+    std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver,
     std::unique_ptr<TargetMachine> TM) = nullptr;
 
 ExecutionEngine *(*ExecutionEngine::OrcMCJITReplacementCtor)(
-  std::string *ErrorStr, std::unique_ptr<RTDyldMemoryManager> OrcJMM,
+  std::string *ErrorStr, std::shared_ptr<MCJITMemoryManager> MemMgr,
+  std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver,
   std::unique_ptr<TargetMachine> TM) = nullptr;
 
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
@@ -404,8 +407,9 @@ EngineBuilder::EngineBuilder() : EngineBuilder(nullptr) {}
 
 EngineBuilder::EngineBuilder(std::unique_ptr<Module> M)
     : M(std::move(M)), WhichEngine(EngineKind::Either), ErrorStr(nullptr),
-      OptLevel(CodeGenOpt::Default), MCJMM(nullptr), RelocModel(Reloc::Default),
-      CMModel(CodeModel::JITDefault), UseOrcMCJITReplacement(false) {
+      OptLevel(CodeGenOpt::Default), MemMgr(nullptr), Resolver(nullptr),
+      RelocModel(Reloc::Default), CMModel(CodeModel::JITDefault),
+      UseOrcMCJITReplacement(false) {
 // IR module verification is enabled by default in debug builds, and disabled
 // by default in release builds.
 #ifndef NDEBUG
@@ -419,7 +423,21 @@ EngineBuilder::~EngineBuilder() = default;
 
 EngineBuilder &EngineBuilder::setMCJITMemoryManager(
                                    std::unique_ptr<RTDyldMemoryManager> mcjmm) {
-  MCJMM = std::move(mcjmm);
+  auto SharedMM = std::shared_ptr<RTDyldMemoryManager>(std::move(mcjmm));
+  MemMgr = SharedMM;
+  Resolver = SharedMM;
+  return *this;
+}
+
+EngineBuilder&
+EngineBuilder::setMemoryManager(std::unique_ptr<MCJITMemoryManager> MM) {
+  MemMgr = std::shared_ptr<MCJITMemoryManager>(std::move(MM));
+  return *this;
+}
+
+EngineBuilder&
+EngineBuilder::setSymbolResolver(std::unique_ptr<RuntimeDyld::SymbolResolver> SR) {
+  Resolver = std::shared_ptr<RuntimeDyld::SymbolResolver>(std::move(SR));
   return *this;
 }
 
@@ -434,7 +452,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
   // If the user specified a memory manager but didn't specify which engine to
   // create, we assume they only want the JIT, and we fail if they only want
   // the interpreter.
-  if (MCJMM) {
+  if (MemMgr) {
     if (WhichEngine & EngineKind::JIT)
       WhichEngine = EngineKind::JIT;
     else {
@@ -456,12 +474,13 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
 
     ExecutionEngine *EE = nullptr;
     if (ExecutionEngine::OrcMCJITReplacementCtor && UseOrcMCJITReplacement) {
-      EE = ExecutionEngine::OrcMCJITReplacementCtor(ErrorStr, std::move(MCJMM),
+      EE = ExecutionEngine::OrcMCJITReplacementCtor(ErrorStr, std::move(MemMgr),
+                                                    std::move(Resolver),
                                                     std::move(TheTM));
       EE->addModule(std::move(M));
     } else if (ExecutionEngine::MCJITCtor)
-      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr, std::move(MCJMM),
-                                      std::move(TheTM));
+      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr, std::move(MemMgr),
+                                      std::move(Resolver), std::move(TheTM));
 
     if (EE) {
       EE->setVerifyModules(VerifyModules);

@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo/DWARF/DIContext.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/ExecutionEngine/RuntimeDyldChecker.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -196,7 +197,7 @@ static int printLineInfoForInput() {
   for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
     // Instantiate a dynamic linker.
     TrivialMemoryManager MemMgr;
-    RuntimeDyld Dyld(&MemMgr);
+    RuntimeDyld Dyld(MemMgr, MemMgr);
 
     // Load the input memory buffer.
 
@@ -264,7 +265,7 @@ static int executeInput() {
 
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
-  RuntimeDyld Dyld(&MemMgr);
+  RuntimeDyld Dyld(MemMgr, MemMgr);
 
   // If we don't have any input files, read from stdin.
   if (!InputFileList.size())
@@ -513,7 +514,7 @@ static int linkAndVerify() {
 
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
-  RuntimeDyld Dyld(&MemMgr);
+  RuntimeDyld Dyld(MemMgr, MemMgr);
   Dyld.setProcessAllSections(true);
   RuntimeDyldChecker Checker(Dyld, Disassembler.get(), InstPrinter.get(),
                              llvm::dbgs());

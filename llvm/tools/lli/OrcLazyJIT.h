@@ -39,7 +39,7 @@ public:
   OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context)
     : Error(false), TM(std::move(TM)),
       Mang(this->TM->getDataLayout()),
-      ObjectLayer([](){ return llvm::make_unique<SectionMemoryManager>(); }),
+      ObjectLayer(),
       CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
       LazyEmitLayer(CompileLayer),
       CCMgr(createCallbackMgr(Triple(this->TM->getTargetTriple()), Context)),
@@ -82,6 +82,7 @@ private:
   bool Error;
   std::unique_ptr<TargetMachine> TM;
   Mangler Mang;
+  SectionMemoryManager CCMgrMemMgr;
 
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;

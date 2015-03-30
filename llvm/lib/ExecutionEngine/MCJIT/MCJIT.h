@@ -16,6 +16,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/ExecutionEngine/ObjectMemoryBuffer.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/IR/Module.h"
 
@@ -26,59 +27,23 @@ class MCJIT;
 // functions across modules that it owns.  It aggregates the memory manager
 // that is passed in to the MCJIT constructor and defers most functionality
 // to that object.
-class LinkingMemoryManager : public RTDyldMemoryManager {
+class LinkingSymbolResolver : public RuntimeDyld::SymbolResolver {
 public:
-  LinkingMemoryManager(MCJIT *Parent,
-                       std::unique_ptr<RTDyldMemoryManager> MM)
-    : ParentEngine(Parent), ClientMM(std::move(MM)) {}
+  LinkingSymbolResolver(MCJIT &Parent,
+                        std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver)
+    : ParentEngine(Parent), ClientResolver(std::move(Resolver)) {}
 
-  uint64_t getSymbolAddress(const std::string &Name) override;
+  RuntimeDyld::SymbolInfo findSymbol(const std::string &Name) override;
 
-  // Functions deferred to client memory manager
-  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID,
-                               StringRef SectionName) override {
-    return ClientMM->allocateCodeSection(Size, Alignment, SectionID, SectionName);
-  }
-
-  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID, StringRef SectionName,
-                               bool IsReadOnly) override {
-    return ClientMM->allocateDataSection(Size, Alignment,
-                                         SectionID, SectionName, IsReadOnly);
-  }
-
-  void reserveAllocationSpace(uintptr_t CodeSize, uintptr_t DataSizeRO,
-                              uintptr_t DataSizeRW) override {
-    return ClientMM->reserveAllocationSpace(CodeSize, DataSizeRO, DataSizeRW);
-  }
-
-  bool needsToReserveAllocationSpace() override {
-    return ClientMM->needsToReserveAllocationSpace();
-  }
-
-  void notifyObjectLoaded(ExecutionEngine *EE,
-                          const object::ObjectFile &Obj) override {
-    ClientMM->notifyObjectLoaded(EE, Obj);
-  }
-
-  void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr,
-                        size_t Size) override {
-    ClientMM->registerEHFrames(Addr, LoadAddr, Size);
-  }
-
-  void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr,
-                          size_t Size) override {
-    ClientMM->deregisterEHFrames(Addr, LoadAddr, Size);
-  }
-
-  bool finalizeMemory(std::string *ErrMsg = nullptr) override {
-    return ClientMM->finalizeMemory(ErrMsg);
+  // MCJIT doesn't support logical dylibs.
+  RuntimeDyld::SymbolInfo
+  findSymbolInLogicalDylib(const std::string &Name) override {
+    return nullptr;
   }
 
 private:
-  MCJIT *ParentEngine;
-  std::unique_ptr<RTDyldMemoryManager> ClientMM;
+  MCJIT &ParentEngine;
+  std::shared_ptr<RuntimeDyld::SymbolResolver> ClientResolver;
 };
 
 // About Module states: added->loaded->finalized.
@@ -103,7 +68,8 @@ private:
 
 class MCJIT : public ExecutionEngine {
   MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
-        std::unique_ptr<RTDyldMemoryManager> MemMgr);
+        std::shared_ptr<MCJITMemoryManager> MemMgr,
+        std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver);
 
   typedef llvm::SmallPtrSet<Module *, 4> ModulePtrSet;
 
@@ -214,7 +180,8 @@ class MCJIT : public ExecutionEngine {
 
   std::unique_ptr<TargetMachine> TM;
   MCContext *Ctx;
-  LinkingMemoryManager MemMgr;
+  std::shared_ptr<MCJITMemoryManager> MemMgr;
+  LinkingSymbolResolver Resolver;
   RuntimeDyld Dyld;
   std::vector<JITEventListener*> EventListeners;
 
@@ -324,17 +291,22 @@ public:
     MCJITCtor = createJIT;
   }
 
-  static ExecutionEngine *createJIT(std::unique_ptr<Module> M,
-                                    std::string *ErrorStr,
-                                    std::unique_ptr<RTDyldMemoryManager> MemMgr,
-                                    std::unique_ptr<TargetMachine> TM);
+  static ExecutionEngine*
+  createJIT(std::unique_ptr<Module> M,
+            std::string *ErrorStr,
+            std::shared_ptr<MCJITMemoryManager> MemMgr,
+            std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver,
+            std::unique_ptr<TargetMachine> TM);
 
   // @}
 
+  RuntimeDyld::SymbolInfo findSymbol(const std::string &Name,
+                                     bool CheckFunctionsOnly);
+  // DEPRECATED - Please use findSymbol instead.
   // This is not directly exposed via the ExecutionEngine API, but it is
   // used by the LinkingMemoryManager.
   uint64_t getSymbolAddress(const std::string &Name,
-                          bool CheckFunctionsOnly);
+                            bool CheckFunctionsOnly);
 
 protected:
   /// emitObject -- Generate a JITed object in memory from the specified module
@@ -348,7 +320,7 @@ protected:
                            const RuntimeDyld::LoadedObjectInfo &L);
   void NotifyFreeingObject(const object::ObjectFile& Obj);
 
-  uint64_t getExistingSymbolAddress(const std::string &Name);
+  RuntimeDyld::SymbolInfo findExistingSymbol(const std::string &Name);
   Module *findModuleForSymbol(const std::string &Name,
                               bool CheckFunctionsOnly);
 };

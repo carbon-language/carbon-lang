@@ -22,8 +22,9 @@ public:
 
   typedef uint64_t TargetPtrT;
 
-  RuntimeDyldMachOX86_64(RTDyldMemoryManager *MM)
-      : RuntimeDyldMachOCRTPBase(MM) {}
+  RuntimeDyldMachOX86_64(RuntimeDyld::MemoryManager &MM,
+                         RuntimeDyld::SymbolResolver &Resolver)
+      : RuntimeDyldMachOCRTPBase(MM, Resolver) {}
 
   unsigned getMaxStubSize() override { return 8; }
 

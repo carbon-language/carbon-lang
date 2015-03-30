@@ -98,7 +98,8 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   SmallVector<SID, 2> RegisteredEHFrameSections;
 
 public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm);
+  RuntimeDyldELF(RuntimeDyld::MemoryManager &MemMgr,
+                 RuntimeDyld::SymbolResolver &Resolver);
   virtual ~RuntimeDyldELF();
 
   std::unique_ptr<RuntimeDyld::LoadedObjectInfo>

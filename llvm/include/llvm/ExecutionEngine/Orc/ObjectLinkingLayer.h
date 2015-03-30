@@ -15,7 +15,6 @@
 #define LLVM_EXECUTIONENGINE_ORC_OBJECTLINKINGLAYER_H
 
 #include "JITSymbol.h"
-#include "LookasideRTDyldMM.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include <list>
@@ -38,13 +37,12 @@ protected:
     LinkedObjectSet(const LinkedObjectSet&) = delete;
     void operator=(const LinkedObjectSet&) = delete;
   public:
-    LinkedObjectSet(std::unique_ptr<RTDyldMemoryManager> MM)
-        : MM(std::move(MM)), RTDyld(llvm::make_unique<RuntimeDyld>(&*this->MM)),
+    LinkedObjectSet(RuntimeDyld::MemoryManager &MemMgr,
+                    RuntimeDyld::SymbolResolver &Resolver)
+        : RTDyld(llvm::make_unique<RuntimeDyld>(MemMgr, Resolver)),
           State(Raw) {}
 
-    // MSVC 2012 cannot infer a move constructor, so write it out longhand.
-    LinkedObjectSet(LinkedObjectSet &&O)
-        : MM(std::move(O.MM)), RTDyld(std::move(O.RTDyld)), State(O.State) {}
+    virtual ~LinkedObjectSet() {}
 
     std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
     addObject(const object::ObjectFile &Obj) {
@@ -57,14 +55,7 @@ protected:
 
     bool NeedsFinalization() const { return (State == Raw); }
 
-    void Finalize() {
-      State = Finalizing;
-      RTDyld->resolveRelocations();
-      RTDyld->registerEHFrames();
-      MM->finalizeMemory();
-      OwnedBuffers.clear();
-      State = Finalized;
-    }
+    virtual void Finalize() = 0;
 
     void mapSectionAddress(const void *LocalAddress, TargetAddress TargetAddr) {
       assert((State != Finalized) &&
@@ -76,8 +67,7 @@ protected:
       OwnedBuffers.push_back(std::move(B));
     }
 
-  private:
-    std::unique_ptr<RTDyldMemoryManager> MM;
+  protected:
     std::unique_ptr<RuntimeDyld> RTDyld;
     enum { Raw, Finalizing, Finalized } State;
 
@@ -87,7 +77,7 @@ protected:
     std::vector<std::unique_ptr<MemoryBuffer>> OwnedBuffers;
   };
 
-  typedef std::list<LinkedObjectSet> LinkedObjectSetListT;
+  typedef std::list<std::unique_ptr<LinkedObjectSet>> LinkedObjectSetListT;
 
 public:
   /// @brief Handle to a set of loaded objects.
@@ -99,7 +89,7 @@ public:
   template <typename OwningMBSet>
   void takeOwnershipOfBuffers(ObjSetHandleT H, OwningMBSet MBs) {
     for (auto &MB : MBs)
-      H->takeOwnershipOfBuffer(std::move(MB));
+      (*H)->takeOwnershipOfBuffer(std::move(MB));
   }
 
 };
@@ -120,6 +110,37 @@ public:
 /// symbols.
 template <typename NotifyLoadedFtor = DoNothingOnNotifyLoaded>
 class ObjectLinkingLayer : public ObjectLinkingLayerBase {
+private:
+
+  template <typename MemoryManagerPtrT, typename SymbolResolverPtrT>
+  class ConcreteLinkedObjectSet : public LinkedObjectSet {
+  public:
+    ConcreteLinkedObjectSet(MemoryManagerPtrT MemMgr,
+                            SymbolResolverPtrT Resolver)
+      : LinkedObjectSet(*MemMgr, *Resolver), MemMgr(std::move(MemMgr)),
+        Resolver(std::move(Resolver)) { }
+
+    void Finalize() override {
+      State = Finalizing;
+      RTDyld->resolveRelocations();
+      RTDyld->registerEHFrames();
+      MemMgr->finalizeMemory();
+      OwnedBuffers.clear();
+      State = Finalized;
+    }
+
+  private:
+    MemoryManagerPtrT MemMgr;
+    SymbolResolverPtrT Resolver;
+  };
+
+  template <typename MemoryManagerPtrT, typename SymbolResolverPtrT>
+  std::unique_ptr<LinkedObjectSet>
+  createLinkedObjectSet(MemoryManagerPtrT MemMgr, SymbolResolverPtrT Resolver) {
+    typedef ConcreteLinkedObjectSet<MemoryManagerPtrT, SymbolResolverPtrT> LOS;
+    return llvm::make_unique<LOS>(std::move(MemMgr), std::move(Resolver));
+  }
+
 public:
 
   /// @brief LoadedObjectInfo list. Contains a list of owning pointers to
@@ -127,21 +148,16 @@ public:
   typedef std::vector<std::unique_ptr<RuntimeDyld::LoadedObjectInfo>>
       LoadedObjInfoList;
 
-  /// @brief Functor to create RTDyldMemoryManager instances.
-  typedef std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateRTDyldMMFtor;
-
   /// @brief Functor for receiving finalization notifications.
   typedef std::function<void(ObjSetHandleT)> NotifyFinalizedFtor;
 
   /// @brief Construct an ObjectLinkingLayer with the given NotifyLoaded,
-  ///        NotifyFinalized and CreateMemoryManager functors.
+  ///        and NotifyFinalized functors.
   ObjectLinkingLayer(
-      CreateRTDyldMMFtor CreateMemoryManager = CreateRTDyldMMFtor(),
       NotifyLoadedFtor NotifyLoaded = NotifyLoadedFtor(),
       NotifyFinalizedFtor NotifyFinalized = NotifyFinalizedFtor())
       : NotifyLoaded(std::move(NotifyLoaded)),
-        NotifyFinalized(std::move(NotifyFinalized)),
-        CreateMemoryManager(std::move(CreateMemoryManager)) {}
+        NotifyFinalized(std::move(NotifyFinalized)) {}
 
   /// @brief Add a set of objects (or archives) that will be treated as a unit
   ///        for the purposes of symbol lookup and memory management.
@@ -154,19 +170,18 @@ public:
   ///   This version of this method allows the client to pass in an
   /// RTDyldMemoryManager instance that will be used to allocate memory and look
   /// up external symbol addresses for the given objects.
-  template <typename ObjSetT>
+  template <typename ObjSetT,
+            typename MemoryManagerPtrT,
+            typename SymbolResolverPtrT>
   ObjSetHandleT addObjectSet(const ObjSetT &Objects,
-                             std::unique_ptr<RTDyldMemoryManager> MM) {
+                             MemoryManagerPtrT MemMgr,
+                             SymbolResolverPtrT Resolver) {
+    ObjSetHandleT Handle =
+      LinkedObjSetList.insert(
+        LinkedObjSetList.end(),
+        createLinkedObjectSet(std::move(MemMgr), std::move(Resolver)));
 
-    if (!MM) {
-      assert(CreateMemoryManager &&
-             "No memory manager or memory manager creator provided.");
-      MM = CreateMemoryManager();
-    }
-
-    ObjSetHandleT Handle = LinkedObjSetList.insert(
-        LinkedObjSetList.end(), LinkedObjectSet(std::move(MM)));
-    LinkedObjectSet &LOS = *Handle;
+    LinkedObjectSet &LOS = **Handle;
     LoadedObjInfoList LoadedObjInfos;
 
     for (auto &Obj : Objects)
@@ -212,11 +227,11 @@ public:
   ///         given object set.
   JITSymbol findSymbolIn(ObjSetHandleT H, StringRef Name,
                          bool ExportedSymbolsOnly) {
-    if (auto Sym = H->getSymbol(Name)) {
+    if (auto Sym = (*H)->getSymbol(Name)) {
       if (Sym.isExported() || !ExportedSymbolsOnly) {
         auto Addr = Sym.getAddress();
         auto Flags = Sym.getFlags();
-        if (!H->NeedsFinalization()) {
+        if (!(*H)->NeedsFinalization()) {
           // If this instance has already been finalized then we can just return
           // the address.
           return JITSymbol(Addr, Flags);
@@ -225,10 +240,10 @@ public:
           // it. The functor still needs to double-check whether finalization is
           // required, in case someone else finalizes this set before the
           // functor is called.
-          auto GetAddress = 
+          auto GetAddress =
             [this, Addr, H]() {
-              if (H->NeedsFinalization()) {
-                H->Finalize();
+              if ((*H)->NeedsFinalization()) {
+                (*H)->Finalize();
                 if (NotifyFinalized)
                   NotifyFinalized(H);
               }
@@ -244,14 +259,14 @@ public:
   /// @brief Map section addresses for the objects associated with the handle H.
   void mapSectionAddress(ObjSetHandleT H, const void *LocalAddress,
                          TargetAddress TargetAddr) {
-    H->mapSectionAddress(LocalAddress, TargetAddr);
+    (*H)->mapSectionAddress(LocalAddress, TargetAddr);
   }
 
   /// @brief Immediately emit and finalize the object set represented by the
   ///        given handle.
   /// @param H Handle for object set to emit/finalize.
   void emitAndFinalize(ObjSetHandleT H) {
-    H->Finalize();
+    (*H)->Finalize();
     if (NotifyFinalized)
       NotifyFinalized(H);
   }
@@ -260,7 +275,6 @@ private:
   LinkedObjectSetListT LinkedObjSetList;
   NotifyLoadedFtor NotifyLoaded;
   NotifyFinalizedFtor NotifyFinalized;
-  CreateRTDyldMMFtor CreateMemoryManager;
 };
 
 } // End namespace orc.

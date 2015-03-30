@@ -16,7 +16,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_COMPILEONDEMANDLAYER_H
 
 #include "IndirectionUtils.h"
-#include "LookasideRTDyldMM.h"
+#include "LambdaResolver.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include <list>
@@ -139,7 +139,7 @@ public:
   typedef typename ModuleSetInfoListT::iterator ModuleSetHandleT;
 
   // @brief Fallback lookup functor.
-  typedef std::function<uint64_t(const std::string &)> LookupFtor;
+  typedef std::function<RuntimeDyld::SymbolInfo(const std::string &)> LookupFtor;
 
   /// @brief Construct a compile-on-demand layer instance.
   CompileOnDemandLayer(BaseLayerT &BaseLayer, CompileCallbackMgrT &CallbackMgr)
@@ -153,9 +153,13 @@ public:
     // If the user didn't supply a fallback lookup then just use
     // getSymbolAddress.
     if (!FallbackLookup)
-      FallbackLookup = [=](const std::string &Name) {
-                         return findSymbol(Name, true).getAddress();
-                       };
+      FallbackLookup =
+        [=](const std::string &Name) -> RuntimeDyld::SymbolInfo {
+          if (auto Symbol = findSymbol(Name, true))
+            return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
+                                           Symbol.getFlags());
+          return nullptr;
+        };
 
     // Create a lookup context and ModuleSetInfo for this module set.
     // For the purposes of symbol resolution the set Ms will be treated as if
@@ -255,7 +259,7 @@ private:
         Function *Proto = StubsModule->getFunction(Name);
         assert(Proto && "Failed to clone function decl into stubs module.");
         auto CallbackInfo =
-          CompileCallbackMgr.getCompileCallback(*Proto->getFunctionType());
+          CompileCallbackMgr.getCompileCallback(Proto->getContext());
         GlobalVariable *FunctionBodyPointer =
           createImplPointer(*Proto, Name + AddrSuffix,
                             createIRTypedAddress(*Proto->getFunctionType(),
@@ -314,19 +318,25 @@ private:
     MSet.push_back(std::move(M));
 
     auto DylibLookup = MSI.Lookup;
-    auto MM =
-      createLookasideRTDyldMM<SectionMemoryManager>(
+    auto Resolver =
+      createLambdaResolver(
         [=](const std::string &Name) {
           if (auto Symbol = DylibLookup->findSymbol(LogicalModule, Name))
-            return Symbol.getAddress();
+            return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
+                                           Symbol.getFlags());
           return FallbackLookup(Name);
         },
-        [=](const std::string &Name) {
-          return DylibLookup->findSymbol(LogicalModule, Name).getAddress();
+        [=](const std::string &Name) -> RuntimeDyld::SymbolInfo {
+          if (auto Symbol = DylibLookup->findSymbol(LogicalModule, Name))
+            return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
+                                           Symbol.getFlags());
+          return nullptr;
         });
 
     BaseLayerModuleSetHandleT H =
-      BaseLayer.addModuleSet(std::move(MSet), std::move(MM));
+      BaseLayer.addModuleSet(std::move(MSet),
+                             make_unique<SectionMemoryManager>(),
+                             std::move(Resolver));
     // Add this module to the logical module lookup.
     DylibLookup->addToLogicalModule(LogicalModule, H);
     MSI.BaseLayerModuleSetHandles.push_back(H);

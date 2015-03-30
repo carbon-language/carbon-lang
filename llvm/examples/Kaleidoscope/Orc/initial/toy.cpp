@@ -1,6 +1,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+#include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/LazyEmittingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/IR/DataLayout.h"
@@ -1175,13 +1176,18 @@ public:
     // We need a memory manager to allocate memory and resolve symbols for this
     // new module. Create one that resolves symbols by looking back into the
     // JIT.
-    auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
-                [&](const std::string &Name) {
-                  return findSymbol(Name).getAddress();
-                },
-                [](const std::string &S) { return 0; } );
-
-    return CompileLayer.addModuleSet(singletonSet(std::move(M)), std::move(MM));
+    auto Resolver = createLambdaResolver(
+                      [&](const std::string &Name) {
+                        if (auto Sym = findSymbol(Name))
+                          return RuntimeDyld::SymbolInfo(Sym.getAddress(),
+                                                         Sym.getFlags());
+                        return RuntimeDyld::SymbolInfo(nullptr);
+                      },
+                      [](const std::string &S) { return nullptr; }
+                    );
+    return CompileLayer.addModuleSet(singletonSet(std::move(M)),
+                                     make_unique<SectionMemoryManager>(),
+                                     std::move(Resolver));
   }
 
   void removeModule(ModuleHandleT H) { CompileLayer.removeModuleSet(H); }

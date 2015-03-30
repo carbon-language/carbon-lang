@@ -57,9 +57,11 @@ public:
   //         manager MM.
   ///
   /// @return A handle for the added modules.
-  template <typename ModuleSetT>
+  template <typename ModuleSetT, typename MemoryManagerPtrT,
+            typename SymbolResolverPtrT>
   ModuleSetHandleT addModuleSet(ModuleSetT Ms,
-                                std::unique_ptr<RTDyldMemoryManager> MM) {
+                                MemoryManagerPtrT MemMgr,
+                                SymbolResolverPtrT Resolver) {
     OwningObjectVec Objects;
     OwningBufferVec Buffers;
 
@@ -81,7 +83,7 @@ public:
     }
 
     ModuleSetHandleT H =
-      BaseLayer.addObjectSet(Objects, std::move(MM));
+      BaseLayer.addObjectSet(Objects, std::move(MemMgr), std::move(Resolver));
 
     BaseLayer.takeOwnershipOfBuffers(H, std::move(Buffers));
 

@@ -49,7 +49,9 @@ protected:
   // EH frame sections with the memory manager.
   SmallVector<EHFrameRelatedSections, 2> UnregisteredEHFrameSections;
 
-  RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
+  RuntimeDyldMachO(RuntimeDyld::MemoryManager &MemMgr,
+                   RuntimeDyld::SymbolResolver &Resolver)
+      : RuntimeDyldImpl(MemMgr, Resolver) {}
 
   /// This convenience method uses memcpy to extract a contiguous addend (the
   /// addend size and offset are taken from the corresponding fields of the RE).
@@ -114,8 +116,10 @@ protected:
 public:
 
   /// Create a RuntimeDyldMachO instance for the given target architecture.
-  static std::unique_ptr<RuntimeDyldMachO> create(Triple::ArchType Arch,
-                                                  RTDyldMemoryManager *mm);
+  static std::unique_ptr<RuntimeDyldMachO>
+  create(Triple::ArchType Arch,
+         RuntimeDyld::MemoryManager &MemMgr,
+         RuntimeDyld::SymbolResolver &Resolver);
 
   std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
   loadObject(const object::ObjectFile &O) override;
@@ -142,7 +146,9 @@ private:
                             int64_t DeltaForEH);
 
 public:
-  RuntimeDyldMachOCRTPBase(RTDyldMemoryManager *mm) : RuntimeDyldMachO(mm) {}
+  RuntimeDyldMachOCRTPBase(RuntimeDyld::MemoryManager &MemMgr,
+                           RuntimeDyld::SymbolResolver &Resolver)
+    : RuntimeDyldMachO(MemMgr, Resolver) {}
 
   void finalizeLoad(const ObjectFile &Obj,
                     ObjSectionToIDMap &SectionMap) override;

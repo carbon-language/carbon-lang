@@ -183,32 +183,30 @@ LoadedELFObjectInfo::getObjectForDebug(const ObjectFile &Obj) const {
 
 namespace llvm {
 
-RuntimeDyldELF::RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
+RuntimeDyldELF::RuntimeDyldELF(RuntimeDyld::MemoryManager &MemMgr,
+                               RuntimeDyld::SymbolResolver &Resolver)
+    : RuntimeDyldImpl(MemMgr, Resolver) {}
 RuntimeDyldELF::~RuntimeDyldELF() {}
 
 void RuntimeDyldELF::registerEHFrames() {
-  if (!MemMgr)
-    return;
   for (int i = 0, e = UnregisteredEHFrameSections.size(); i != e; ++i) {
     SID EHFrameSID = UnregisteredEHFrameSections[i];
     uint8_t *EHFrameAddr = Sections[EHFrameSID].Address;
     uint64_t EHFrameLoadAddr = Sections[EHFrameSID].LoadAddress;
     size_t EHFrameSize = Sections[EHFrameSID].Size;
-    MemMgr->registerEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
+    MemMgr.registerEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
     RegisteredEHFrameSections.push_back(EHFrameSID);
   }
   UnregisteredEHFrameSections.clear();
 }
 
 void RuntimeDyldELF::deregisterEHFrames() {
-  if (!MemMgr)
-    return;
   for (int i = 0, e = RegisteredEHFrameSections.size(); i != e; ++i) {
     SID EHFrameSID = RegisteredEHFrameSections[i];
     uint8_t *EHFrameAddr = Sections[EHFrameSID].Address;
     uint64_t EHFrameLoadAddr = Sections[EHFrameSID].LoadAddress;
     size_t EHFrameSize = Sections[EHFrameSID].Size;
-    MemMgr->deregisterEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
+    MemMgr.deregisterEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
   }
   RegisteredEHFrameSections.clear();
 }
@@ -1457,26 +1455,21 @@ uint64_t RuntimeDyldELF::findGOTEntry(uint64_t LoadAddress, uint64_t Offset) {
 void RuntimeDyldELF::finalizeLoad(const ObjectFile &Obj,
                                   ObjSectionToIDMap &SectionMap) {
   // If necessary, allocate the global offset table
-  if (MemMgr) {
-    // Allocate the GOT if necessary
-    size_t numGOTEntries = GOTEntries.size();
-    if (numGOTEntries != 0) {
-      // Allocate memory for the section
-      unsigned SectionID = Sections.size();
-      size_t TotalSize = numGOTEntries * getGOTEntrySize();
-      uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, getGOTEntrySize(),
-                                                  SectionID, ".got", false);
-      if (!Addr)
-        report_fatal_error("Unable to allocate memory for GOT!");
+  size_t numGOTEntries = GOTEntries.size();
+  if (numGOTEntries != 0) {
+    // Allocate memory for the section
+    unsigned SectionID = Sections.size();
+    size_t TotalSize = numGOTEntries * getGOTEntrySize();
+    uint8_t *Addr = MemMgr.allocateDataSection(TotalSize, getGOTEntrySize(),
+                                               SectionID, ".got", false);
+    if (!Addr)
+      report_fatal_error("Unable to allocate memory for GOT!");
 
-      GOTs.push_back(std::make_pair(SectionID, GOTEntries));
-      Sections.push_back(SectionEntry(".got", Addr, TotalSize, 0));
-      // For now, initialize all GOT entries to zero.  We'll fill them in as
-      // needed when GOT-based relocations are applied.
-      memset(Addr, 0, TotalSize);
-    }
-  } else {
-    report_fatal_error("Unable to allocate memory for GOT!");
+    GOTs.push_back(std::make_pair(SectionID, GOTEntries));
+    Sections.push_back(SectionEntry(".got", Addr, TotalSize, 0));
+    // For now, initialize all GOT entries to zero.  We'll fill them in as
+    // needed when GOT-based relocations are applied.
+    memset(Addr, 0, TotalSize);
   }
 
   // Look for and record the EH frame section.

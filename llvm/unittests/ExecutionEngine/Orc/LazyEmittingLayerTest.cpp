@@ -14,9 +14,11 @@ namespace {
 
 struct MockBaseLayer {
   typedef int ModuleSetHandleT;
-  ModuleSetHandleT addModuleSet(std::list<std::unique_ptr<llvm::Module>>,
-                                std::unique_ptr<llvm::RTDyldMemoryManager> x) {
-    EXPECT_FALSE(x);
+  ModuleSetHandleT addModuleSet(
+                  std::list<std::unique_ptr<llvm::Module>>,
+                  std::unique_ptr<llvm::RuntimeDyld::MemoryManager> MemMgr,
+                  std::unique_ptr<llvm::RuntimeDyld::SymbolResolver> Resolver) {
+    EXPECT_FALSE(MemMgr);
     return 42;
   }
 };
@@ -24,7 +26,7 @@ struct MockBaseLayer {
 TEST(LazyEmittingLayerTest, Empty) {
   MockBaseLayer M;
   llvm::orc::LazyEmittingLayer<MockBaseLayer> L(M);
-  L.addModuleSet(std::list<std::unique_ptr<llvm::Module>>(), nullptr);
+  L.addModuleSet(std::list<std::unique_ptr<llvm::Module>>(), nullptr, nullptr);
 }
 
 }

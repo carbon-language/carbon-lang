@@ -16,7 +16,6 @@
 
 #include "JITSymbolFlags.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/Support/Memory.h"
 #include <memory>
 
@@ -29,19 +28,13 @@ namespace object {
 
 class RuntimeDyldImpl;
 class RuntimeDyldCheckerImpl;
- 
+
 class RuntimeDyld {
   friend class RuntimeDyldCheckerImpl;
 
   RuntimeDyld(const RuntimeDyld &) = delete;
   void operator=(const RuntimeDyld &) = delete;
 
-  // RuntimeDyldImpl is the actual class. RuntimeDyld is just the public
-  // interface.
-  std::unique_ptr<RuntimeDyldImpl> Dyld;
-  RTDyldMemoryManager *MM;
-  bool ProcessAllSections;
-  RuntimeDyldCheckerImpl *Checker;
 protected:
   // Change the address associated with a section when resolving relocations.
   // Any relocations already associated with the symbol will be re-resolved.
@@ -82,7 +75,101 @@ public:
     unsigned BeginIdx, EndIdx;
   };
 
-  RuntimeDyld(RTDyldMemoryManager *);
+  /// \brief Memory Management.
+  class MemoryManager {
+  public:
+    virtual ~MemoryManager() {};
+
+    /// Allocate a memory block of (at least) the given size suitable for
+    /// executable code. The SectionID is a unique identifier assigned by the
+    /// RuntimeDyld instance, and optionally recorded by the memory manager to
+    /// access a loaded section.
+    virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                                         unsigned SectionID,
+                                         StringRef SectionName) = 0;
+
+    /// Allocate a memory block of (at least) the given size suitable for data.
+    /// The SectionID is a unique identifier assigned by the JIT engine, and
+    /// optionally recorded by the memory manager to access a loaded section.
+    virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                                         unsigned SectionID,
+                                         StringRef SectionName,
+                                         bool IsReadOnly) = 0;
+
+    /// Inform the memory manager about the total amount of memory required to
+    /// allocate all sections to be loaded:
+    /// \p CodeSize - the total size of all code sections
+    /// \p DataSizeRO - the total size of all read-only data sections
+    /// \p DataSizeRW - the total size of all read-write data sections
+    ///
+    /// Note that by default the callback is disabled. To enable it
+    /// redefine the method needsToReserveAllocationSpace to return true.
+    virtual void reserveAllocationSpace(uintptr_t CodeSize,
+                                        uintptr_t DataSizeRO,
+                                        uintptr_t DataSizeRW) {}
+
+    /// Override to return true to enable the reserveAllocationSpace callback.
+    virtual bool needsToReserveAllocationSpace() { return false; }
+
+    /// Register the EH frames with the runtime so that c++ exceptions work.
+    ///
+    /// \p Addr parameter provides the local address of the EH frame section
+    /// data, while \p LoadAddr provides the address of the data in the target
+    /// address space.  If the section has not been remapped (which will usually
+    /// be the case for local execution) these two values will be the same.
+    virtual void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr,
+                                  size_t Size) = 0;
+    virtual void deregisterEHFrames(uint8_t *addr, uint64_t LoadAddr,
+                                    size_t Size) = 0;
+
+    /// This method is called when object loading is complete and section page
+    /// permissions can be applied.  It is up to the memory manager implementation
+    /// to decide whether or not to act on this method.  The memory manager will
+    /// typically allocate all sections as read-write and then apply specific
+    /// permissions when this method is called.  Code sections cannot be executed
+    /// until this function has been called.  In addition, any cache coherency
+    /// operations needed to reliably use the memory are also performed.
+    ///
+    /// Returns true if an error occurred, false otherwise.
+    virtual bool finalizeMemory(std::string *ErrMsg = nullptr) = 0;
+
+  private:
+    virtual void anchor();
+  };
+
+  /// \brief Symbol resolution.
+  class SymbolResolver {
+  public:
+    virtual ~SymbolResolver() {};
+
+    /// This method returns the address of the specified function or variable.
+    /// It is used to resolve symbols during module linking.
+    virtual SymbolInfo findSymbol(const std::string &Name) = 0;
+
+    /// This method returns the address of the specified symbol if it exists
+    /// within the logical dynamic library represented by this
+    /// RTDyldMemoryManager. Unlike getSymbolAddress, queries through this
+    /// interface should return addresses for hidden symbols.
+    ///
+    /// This is of particular importance for the Orc JIT APIs, which support lazy
+    /// compilation by breaking up modules: Each of those broken out modules
+    /// must be able to resolve hidden symbols provided by the others. Clients
+    /// writing memory managers for MCJIT can usually ignore this method.
+    ///
+    /// This method will be queried by RuntimeDyld when checking for previous
+    /// definitions of common symbols. It will *not* be queried by default when
+    /// resolving external symbols (this minimises the link-time overhead for
+    /// MCJIT clients who don't care about Orc features). If you are writing a
+    /// RTDyldMemoryManager for Orc and want "external" symbol resolution to
+    /// search the logical dylib, you should override your getSymbolAddress
+    /// method call this method directly.
+    virtual SymbolInfo findSymbolInLogicalDylib(const std::string &Name) = 0;
+  private:
+    virtual void anchor();
+  };
+
+  /// \brief Construct a RuntimeDyld instance.
+  RuntimeDyld(MemoryManager &MemMgr, SymbolResolver &Resolver);
   ~RuntimeDyld();
 
   /// Add the referenced object file to the list of objects to be loaded and
@@ -131,6 +218,15 @@ public:
     assert(!Dyld && "setProcessAllSections must be called before loadObject.");
     this->ProcessAllSections = ProcessAllSections;
   }
+
+private:
+  // RuntimeDyldImpl is the actual class. RuntimeDyld is just the public
+  // interface.
+  std::unique_ptr<RuntimeDyldImpl> Dyld;
+  MemoryManager &MemMgr;
+  SymbolResolver &Resolver;
+  bool ProcessAllSections;
+  RuntimeDyldCheckerImpl *Checker;
 };
 
 } // end namespace llvm

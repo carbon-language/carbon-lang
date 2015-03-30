@@ -40,13 +40,15 @@ public:
 namespace llvm {
 
 std::unique_ptr<RuntimeDyldCOFF>
-llvm::RuntimeDyldCOFF::create(Triple::ArchType Arch, RTDyldMemoryManager *MM) {
+llvm::RuntimeDyldCOFF::create(Triple::ArchType Arch,
+                              RuntimeDyld::MemoryManager &MemMgr,
+                              RuntimeDyld::SymbolResolver &Resolver) {
   switch (Arch) {
   default:
     llvm_unreachable("Unsupported target for RuntimeDyldCOFF.");
     break;
   case Triple::x86_64:
-    return make_unique<RuntimeDyldCOFFX86_64>(MM);
+    return make_unique<RuntimeDyldCOFFX86_64>(MemMgr, Resolver);
   }
 }
 

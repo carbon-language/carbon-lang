@@ -15,11 +15,11 @@
 #define LLVM_EXECUTIONENGINE_ORC_LAZYEMITTINGLAYER_H
 
 #include "JITSymbol.h"
-#include "LookasideRTDyldMM.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include <list>
 
@@ -94,10 +94,11 @@ private:
       BaseLayer.emitAndFinalize(Handle);
     }
 
-    template <typename ModuleSetT>
+    template <typename ModuleSetT, typename MemoryManagerPtrT,
+              typename SymbolResolverPtrT>
     static std::unique_ptr<EmissionDeferredSet>
-    create(BaseLayerT &B, ModuleSetT Ms,
-           std::unique_ptr<RTDyldMemoryManager> MM);
+    create(BaseLayerT &B, ModuleSetT Ms, MemoryManagerPtrT MemMgr,
+           SymbolResolverPtrT Resolver);
 
   protected:
     virtual const GlobalValue* searchGVs(StringRef Name,
@@ -109,12 +110,15 @@ private:
     BaseLayerHandleT Handle;
   };
 
-  template <typename ModuleSetT>
+  template <typename ModuleSetT, typename MemoryManagerPtrT,
+            typename SymbolResolverPtrT>
   class EmissionDeferredSetImpl : public EmissionDeferredSet {
   public:
     EmissionDeferredSetImpl(ModuleSetT Ms,
-                            std::unique_ptr<RTDyldMemoryManager> MM)
-        : Ms(std::move(Ms)), MM(std::move(MM)) {}
+                            MemoryManagerPtrT MemMgr,
+                            SymbolResolverPtrT Resolver)
+        : Ms(std::move(Ms)), MemMgr(std::move(MemMgr)),
+          Resolver(std::move(Resolver)) {}
 
   protected:
 
@@ -145,7 +149,8 @@ private:
       // We don't need the mangled names set any more: Once we've emitted this
       // to the base layer we'll just look for symbols there.
       MangledSymbols.reset();
-      return BaseLayer.addModuleSet(std::move(Ms), std::move(MM));
+      return BaseLayer.addModuleSet(std::move(Ms), std::move(MemMgr),
+                                    std::move(Resolver));
     }
 
   private:
@@ -206,7 +211,8 @@ private:
     }
 
     ModuleSetT Ms;
-    std::unique_ptr<RTDyldMemoryManager> MM;
+    MemoryManagerPtrT MemMgr;
+    SymbolResolverPtrT Resolver;
     mutable std::unique_ptr<StringMap<const GlobalValue*>> MangledSymbols;
   };
 
@@ -223,12 +229,15 @@ public:
   LazyEmittingLayer(BaseLayerT &BaseLayer) : BaseLayer(BaseLayer) {}
 
   /// @brief Add the given set of modules to the lazy emitting layer.
-  template <typename ModuleSetT>
+  template <typename ModuleSetT, typename MemoryManagerPtrT,
+            typename SymbolResolverPtrT>
   ModuleSetHandleT addModuleSet(ModuleSetT Ms,
-                                std::unique_ptr<RTDyldMemoryManager> MM) {
+                                MemoryManagerPtrT MemMgr,
+                                SymbolResolverPtrT Resolver) {
     return ModuleSetList.insert(
         ModuleSetList.end(),
-        EmissionDeferredSet::create(BaseLayer, std::move(Ms), std::move(MM)));
+        EmissionDeferredSet::create(BaseLayer, std::move(Ms), std::move(MemMgr),
+                                    std::move(Resolver)));
   }
 
   /// @brief Remove the module set represented by the given handle.
@@ -277,12 +286,16 @@ public:
 };
 
 template <typename BaseLayerT>
-template <typename ModuleSetT>
+template <typename ModuleSetT, typename MemoryManagerPtrT,
+          typename SymbolResolverPtrT>
 std::unique_ptr<typename LazyEmittingLayer<BaseLayerT>::EmissionDeferredSet>
 LazyEmittingLayer<BaseLayerT>::EmissionDeferredSet::create(
-    BaseLayerT &B, ModuleSetT Ms, std::unique_ptr<RTDyldMemoryManager> MM) {
-  return llvm::make_unique<EmissionDeferredSetImpl<ModuleSetT>>(std::move(Ms),
-                                                                std::move(MM));
+    BaseLayerT &B, ModuleSetT Ms, MemoryManagerPtrT MemMgr,
+    SymbolResolverPtrT Resolver) {
+  typedef EmissionDeferredSetImpl<ModuleSetT, MemoryManagerPtrT, SymbolResolverPtrT>
+    EDS;
+  return llvm::make_unique<EDS>(std::move(Ms), std::move(MemMgr),
+                                std::move(Resolver));
 }
 
 } // End namespace orc.

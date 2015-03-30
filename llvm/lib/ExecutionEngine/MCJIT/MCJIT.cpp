@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCJIT.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
@@ -41,26 +42,35 @@ static struct RegisterJIT {
 extern "C" void LLVMLinkInMCJIT() {
 }
 
-ExecutionEngine *MCJIT::createJIT(std::unique_ptr<Module> M,
-                                  std::string *ErrorStr,
-                                  std::unique_ptr<RTDyldMemoryManager> MemMgr,
-                                  std::unique_ptr<TargetMachine> TM) {
+ExecutionEngine*
+MCJIT::createJIT(std::unique_ptr<Module> M,
+                 std::string *ErrorStr,
+                 std::shared_ptr<MCJITMemoryManager> MemMgr,
+                 std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver,
+                 std::unique_ptr<TargetMachine> TM) {
   // Try to register the program as a source of symbols to resolve against.
   //
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(nullptr, nullptr);
 
-  std::unique_ptr<RTDyldMemoryManager> MM = std::move(MemMgr);
-  if (!MM)
-    MM = std::unique_ptr<SectionMemoryManager>(new SectionMemoryManager());
+  if (!MemMgr || !Resolver) {
+    auto RTDyldMM = std::make_shared<SectionMemoryManager>();
+    if (!MemMgr)
+      MemMgr = RTDyldMM;
+    if (!Resolver)
+      Resolver = RTDyldMM;
+  }
 
-  return new MCJIT(std::move(M), std::move(TM), std::move(MM));
+  return new MCJIT(std::move(M), std::move(TM), std::move(MemMgr),
+                   std::move(Resolver));
 }
 
 MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
-             std::unique_ptr<RTDyldMemoryManager> MM)
+             std::shared_ptr<MCJITMemoryManager> MemMgr,
+             std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver)
     : ExecutionEngine(std::move(M)), TM(std::move(tm)), Ctx(nullptr),
-      MemMgr(this, std::move(MM)), Dyld(&MemMgr), ObjCache(nullptr) {
+      MemMgr(std::move(MemMgr)), Resolver(*this, std::move(Resolver)),
+      Dyld(*this->MemMgr, this->Resolver), ObjCache(nullptr) {
   // FIXME: We are managing our modules, so we do not want the base class
   // ExecutionEngine to manage them as well. To avoid double destruction
   // of the first (and only) module added in ExecutionEngine constructor
@@ -221,7 +231,7 @@ void MCJIT::finalizeLoadedModules() {
   Dyld.registerEHFrames();
 
   // Set page permissions.
-  MemMgr.finalizeMemory();
+  MemMgr->finalizeMemory();
 }
 
 // FIXME: Rename this.
@@ -253,11 +263,11 @@ void MCJIT::finalizeModule(Module *M) {
   finalizeLoadedModules();
 }
 
-uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
+RuntimeDyld::SymbolInfo MCJIT::findExistingSymbol(const std::string &Name) {
   Mangler Mang(TM->getDataLayout());
   SmallString<128> FullName;
   Mang.getNameWithPrefix(FullName, Name);
-  return Dyld.getSymbol(FullName).getAddress();
+  return Dyld.getSymbol(FullName);
 }
 
 Module *MCJIT::findModuleForSymbol(const std::string &Name,
@@ -284,14 +294,17 @@ Module *MCJIT::findModuleForSymbol(const std::string &Name,
 }
 
 uint64_t MCJIT::getSymbolAddress(const std::string &Name,
-                                 bool CheckFunctionsOnly)
-{
+                                 bool CheckFunctionsOnly) {
+  return findSymbol(Name, CheckFunctionsOnly).getAddress();
+}
+
+RuntimeDyld::SymbolInfo MCJIT::findSymbol(const std::string &Name,
+                                          bool CheckFunctionsOnly) {
   MutexGuard locked(lock);
 
   // First, check to see if we already have this symbol.
-  uint64_t Addr = getExistingSymbolAddress(Name);
-  if (Addr)
-    return Addr;
+  if (auto Sym = findExistingSymbol(Name))
+    return Sym;
 
   for (object::OwningBinary<object::Archive> &OB : Archives) {
     object::Archive *A = OB.getBinary();
@@ -310,9 +323,8 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
         // This causes the object file to be loaded.
         addObjectFile(std::move(OF));
         // The address should be here now.
-        Addr = getExistingSymbolAddress(Name);
-        if (Addr)
-          return Addr;
+        if (auto Sym = findExistingSymbol(Name))
+          return Sym;
       }
     }
   }
@@ -323,15 +335,18 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
     generateCodeForModule(M);
 
     // Check the RuntimeDyld table again, it should be there now.
-    return getExistingSymbolAddress(Name);
+    return findExistingSymbol(Name);
   }
 
   // If a LazyFunctionCreator is installed, use it to get/create the function.
   // FIXME: Should we instead have a LazySymbolCreator callback?
-  if (LazyFunctionCreator)
-    Addr = (uint64_t)LazyFunctionCreator(Name);
+  if (LazyFunctionCreator) {
+    auto Addr = static_cast<uint64_t>(
+                  reinterpret_cast<uintptr_t>(LazyFunctionCreator(Name)));
+    return RuntimeDyld::SymbolInfo(Addr, JITSymbolFlags::Exported);
+  }
 
-  return Addr;
+  return nullptr;
 }
 
 uint64_t MCJIT::getGlobalValueAddress(const std::string &Name) {
@@ -528,7 +543,9 @@ GenericValue MCJIT::runFunction(Function *F,
 
 void *MCJIT::getPointerToNamedFunction(StringRef Name, bool AbortOnFailure) {
   if (!isSymbolSearchingDisabled()) {
-    void *ptr = MemMgr.getPointerToNamedFunction(Name, false);
+    void *ptr =
+      reinterpret_cast<void*>(
+        static_cast<uintptr_t>(Resolver.findSymbol(Name).getAddress()));
     if (ptr)
       return ptr;
   }
@@ -566,7 +583,7 @@ void MCJIT::UnregisterJITEventListener(JITEventListener *L) {
 void MCJIT::NotifyObjectEmitted(const object::ObjectFile& Obj,
                                 const RuntimeDyld::LoadedObjectInfo &L) {
   MutexGuard locked(lock);
-  MemMgr.notifyObjectLoaded(this, Obj);
+  MemMgr->notifyObjectLoaded(this, Obj);
   for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
     EventListeners[I]->NotifyObjectEmitted(Obj, L);
   }
@@ -578,15 +595,16 @@ void MCJIT::NotifyFreeingObject(const object::ObjectFile& Obj) {
     L->NotifyFreeingObject(Obj);
 }
 
-uint64_t LinkingMemoryManager::getSymbolAddress(const std::string &Name) {
-  uint64_t Result = ParentEngine->getSymbolAddress(Name, false);
+RuntimeDyld::SymbolInfo
+LinkingSymbolResolver::findSymbol(const std::string &Name) {
+  auto Result = ParentEngine.findSymbol(Name, false);
   // If the symbols wasn't found and it begins with an underscore, try again
   // without the underscore.
   if (!Result && Name[0] == '_')
-    Result = ParentEngine->getSymbolAddress(Name.substr(1), false);
+    Result = ParentEngine.findSymbol(Name.substr(1), false);
   if (Result)
     return Result;
-  if (ParentEngine->isSymbolSearchingDisabled())
-    return 0;
-  return ClientMM->getSymbolAddress(Name);
+  if (ParentEngine.isSymbolSearchingDisabled())
+    return nullptr;
+  return ClientResolver->findSymbol(Name);
 }

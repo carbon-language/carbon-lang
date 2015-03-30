@@ -23,7 +23,7 @@ OrcLazyJIT::createCallbackMgr(Triple T, LLVMContext &Context) {
     case Triple::x86_64: {
       typedef orc::JITCompileCallbackManager<CompileLayerT,
                                              orc::OrcX86_64> CCMgrT;
-      return make_unique<CCMgrT>(CompileLayer, Context, 0, 64);
+      return make_unique<CCMgrT>(CompileLayer, CCMgrMemMgr, Context, 0, 64);
     }
   }
 }

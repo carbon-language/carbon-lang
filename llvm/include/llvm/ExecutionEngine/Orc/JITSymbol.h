@@ -27,7 +27,7 @@ typedef uint64_t TargetAddress;
 
 /// @brief Represents a symbol in the JIT.
 class JITSymbol : public JITSymbolBase {
-public:  
+public:
 
   typedef std::function<TargetAddress()> GetAddressFtor;
 

@@ -247,8 +247,6 @@ static int64_t computeDelta(SectionEntry *A, SectionEntry *B) {
 template <typename Impl>
 void RuntimeDyldMachOCRTPBase<Impl>::registerEHFrames() {
 
-  if (!MemMgr)
-    return;
   for (int i = 0, e = UnregisteredEHFrameSections.size(); i != e; ++i) {
     EHFrameRelatedSections &SectionInfo = UnregisteredEHFrameSections[i];
     if (SectionInfo.EHFrameSID == RTDYLD_INVALID_SECTION_ID ||
@@ -271,22 +269,28 @@ void RuntimeDyldMachOCRTPBase<Impl>::registerEHFrames() {
       P = processFDE(P, DeltaForText, DeltaForEH);
     } while (P != End);
 
-    MemMgr->registerEHFrames(EHFrame->Address, EHFrame->LoadAddress,
-                             EHFrame->Size);
+    MemMgr.registerEHFrames(EHFrame->Address, EHFrame->LoadAddress,
+                            EHFrame->Size);
   }
   UnregisteredEHFrameSections.clear();
 }
 
 std::unique_ptr<RuntimeDyldMachO>
-RuntimeDyldMachO::create(Triple::ArchType Arch, RTDyldMemoryManager *MM) {
+RuntimeDyldMachO::create(Triple::ArchType Arch,
+                         RuntimeDyld::MemoryManager &MemMgr,
+                         RuntimeDyld::SymbolResolver &Resolver) {
   switch (Arch) {
   default:
     llvm_unreachable("Unsupported target for RuntimeDyldMachO.");
     break;
-  case Triple::arm: return make_unique<RuntimeDyldMachOARM>(MM);
-  case Triple::aarch64: return make_unique<RuntimeDyldMachOAArch64>(MM);
-  case Triple::x86: return make_unique<RuntimeDyldMachOI386>(MM);
-  case Triple::x86_64: return make_unique<RuntimeDyldMachOX86_64>(MM);
+  case Triple::arm:
+    return make_unique<RuntimeDyldMachOARM>(MemMgr, Resolver);
+  case Triple::aarch64:
+    return make_unique<RuntimeDyldMachOAArch64>(MemMgr, Resolver);
+  case Triple::x86:
+    return make_unique<RuntimeDyldMachOI386>(MemMgr, Resolver);
+  case Triple::x86_64:
+    return make_unique<RuntimeDyldMachOX86_64>(MemMgr, Resolver);
   }
 }
 

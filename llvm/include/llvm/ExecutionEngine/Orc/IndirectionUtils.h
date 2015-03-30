@@ -16,6 +16,7 @@
 
 #include "JITSymbol.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
@@ -94,7 +95,7 @@ public:
   }
 
   /// @brief Get/create a compile callback with the given signature.
-  virtual CompileCallbackInfo getCompileCallback(FunctionType &FT) = 0;
+  virtual CompileCallbackInfo getCompileCallback(LLVMContext &Context) = 0;
 
 protected:
 
@@ -125,18 +126,19 @@ public:
   ///                               there is no existing callback trampoline.
   ///                               (Trampolines are allocated in blocks for
   ///                               efficiency.)
-  JITCompileCallbackManager(JITLayerT &JIT, LLVMContext &Context,
+  JITCompileCallbackManager(JITLayerT &JIT, RuntimeDyld::MemoryManager &MemMgr,
+                            LLVMContext &Context,
                             TargetAddress ErrorHandlerAddress,
                             unsigned NumTrampolinesPerBlock)
     : JITCompileCallbackManagerBase(ErrorHandlerAddress,
                                     NumTrampolinesPerBlock),
-      JIT(JIT) {
+      JIT(JIT), MemMgr(MemMgr) {
     emitResolverBlock(Context);
   }
 
   /// @brief Get/create a compile callback with the given signature.
-  CompileCallbackInfo getCompileCallback(FunctionType &FT) final {
-    TargetAddress TrampolineAddr = getAvailableTrampolineAddr(FT.getContext());
+  CompileCallbackInfo getCompileCallback(LLVMContext &Context) final {
+    TargetAddress TrampolineAddr = getAvailableTrampolineAddr(Context);
     auto &CallbackHandler =
       this->ActiveTrampolines[TrampolineAddr];
 
@@ -157,7 +159,9 @@ private:
     std::unique_ptr<Module> M(new Module("resolver_block_module",
                                          Context));
     TargetT::insertResolverBlock(*M, *this);
-    auto H = JIT.addModuleSet(SingletonSet(std::move(M)), nullptr);
+    auto H = JIT.addModuleSet(SingletonSet(std::move(M)), &MemMgr,
+                              static_cast<RuntimeDyld::SymbolResolver*>(
+                                  nullptr));
     JIT.emitAndFinalize(H);
     auto ResolverBlockSymbol =
       JIT.findSymbolIn(H, TargetT::ResolverBlockName, false);
@@ -182,7 +186,9 @@ private:
       TargetT::insertCompileCallbackTrampolines(*M, ResolverBlockAddr,
                                                 this->NumTrampolinesPerBlock,
                                                 this->ActiveTrampolines.size());
-    auto H = JIT.addModuleSet(SingletonSet(std::move(M)), nullptr);
+    auto H = JIT.addModuleSet(SingletonSet(std::move(M)), &MemMgr,
+                              static_cast<RuntimeDyld::SymbolResolver*>(
+                                  nullptr));
     JIT.emitAndFinalize(H);
     for (unsigned I = 0; I < this->NumTrampolinesPerBlock; ++I) {
       std::string Name = GetLabelName(I);
@@ -193,6 +199,7 @@ private:
   }
 
   JITLayerT &JIT;
+  RuntimeDyld::MemoryManager &MemMgr;
   TargetAddress ResolverBlockAddr;
 };
 

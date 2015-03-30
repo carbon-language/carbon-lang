@@ -151,10 +151,10 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
 
   // Compute the memory size required to load all sections to be loaded
   // and pass this information to the memory manager
-  if (MemMgr->needsToReserveAllocationSpace()) {
+  if (MemMgr.needsToReserveAllocationSpace()) {
     uint64_t CodeSize = 0, DataSizeRO = 0, DataSizeRW = 0;
     computeTotalAllocSize(Obj, CodeSize, DataSizeRO, DataSizeRW);
-    MemMgr->reserveAllocationSpace(CodeSize, DataSizeRO, DataSizeRW);
+    MemMgr.reserveAllocationSpace(CodeSize, DataSizeRO, DataSizeRW);
   }
 
   // Used sections from the object file
@@ -485,7 +485,7 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
 
     // Skip common symbols already elsewhere.
     if (GlobalSymbolTable.count(Name) ||
-        MemMgr->getSymbolAddressInLogicalDylib(Name)) {
+        Resolver.findSymbolInLogicalDylib(Name)) {
       DEBUG(dbgs() << "\tSkipping already emitted common symbol '" << Name
                    << "'\n");
       continue;
@@ -502,8 +502,8 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
 
   // Allocate memory for the section
   unsigned SectionID = Sections.size();
-  uint8_t *Addr = MemMgr->allocateDataSection(CommonSize, sizeof(void *),
-                                              SectionID, StringRef(), false);
+  uint8_t *Addr = MemMgr.allocateDataSection(CommonSize, sizeof(void *),
+                                             SectionID, StringRef(), false);
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
@@ -577,10 +577,10 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
   if (IsRequired) {
     Check(Section.getContents(data));
     Allocate = DataSize + PaddingSize + StubBufSize;
-    Addr = IsCode ? MemMgr->allocateCodeSection(Allocate, Alignment, SectionID,
-                                                Name)
-                  : MemMgr->allocateDataSection(Allocate, Alignment, SectionID,
-                                                Name, IsReadOnly);
+    Addr = IsCode ? MemMgr.allocateCodeSection(Allocate, Alignment, SectionID,
+                                               Name)
+                  : MemMgr.allocateDataSection(Allocate, Alignment, SectionID,
+                                               Name, IsReadOnly);
     if (!Addr)
       report_fatal_error("Unable to allocate section memory!");
 
@@ -787,9 +787,9 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
       uint64_t Addr = 0;
       RTDyldSymbolTable::const_iterator Loc = GlobalSymbolTable.find(Name);
       if (Loc == GlobalSymbolTable.end()) {
-        // This is an external symbol, try to get its address from
-        // MemoryManager.
-        Addr = MemMgr->getSymbolAddress(Name.data());
+        // This is an external symbol, try to get its address from the symbol
+        // resolver.
+        Addr = Resolver.findSymbol(Name.data()).getAddress();
         // The call to getSymbolAddress may have caused additional modules to
         // be loaded, which may have added new entries to the
         // ExternalSymbolRelocations map.  Consquently, we need to update our
@@ -835,7 +835,12 @@ uint64_t RuntimeDyld::LoadedObjectInfo::getSectionLoadAddress(
   return 0;
 }
 
-RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
+void RuntimeDyld::MemoryManager::anchor() {}
+void RuntimeDyld::SymbolResolver::anchor() {}
+
+RuntimeDyld::RuntimeDyld(RuntimeDyld::MemoryManager &MemMgr,
+                         RuntimeDyld::SymbolResolver &Resolver)
+    : MemMgr(MemMgr), Resolver(Resolver) {
   // FIXME: There's a potential issue lurking here if a single instance of
   // RuntimeDyld is used to load multiple objects.  The current implementation
   // associates a single memory manager with a RuntimeDyld instance.  Even
@@ -843,7 +848,6 @@ RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
   // they share a single memory manager.  This can become a problem when page
   // permissions are applied.
   Dyld = nullptr;
-  MM = mm;
   ProcessAllSections = false;
   Checker = nullptr;
 }
@@ -851,27 +855,33 @@ RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
 RuntimeDyld::~RuntimeDyld() {}
 
 static std::unique_ptr<RuntimeDyldCOFF>
-createRuntimeDyldCOFF(Triple::ArchType Arch, RTDyldMemoryManager *MM,
+createRuntimeDyldCOFF(Triple::ArchType Arch, RuntimeDyld::MemoryManager &MM,
+                      RuntimeDyld::SymbolResolver &Resolver,
                       bool ProcessAllSections, RuntimeDyldCheckerImpl *Checker) {
-  std::unique_ptr<RuntimeDyldCOFF> Dyld(RuntimeDyldCOFF::create(Arch, MM));
+  std::unique_ptr<RuntimeDyldCOFF> Dyld =
+    RuntimeDyldCOFF::create(Arch, MM, Resolver);
   Dyld->setProcessAllSections(ProcessAllSections);
   Dyld->setRuntimeDyldChecker(Checker);
   return Dyld;
 }
 
 static std::unique_ptr<RuntimeDyldELF>
-createRuntimeDyldELF(RTDyldMemoryManager *MM, bool ProcessAllSections,
-                     RuntimeDyldCheckerImpl *Checker) {
-  std::unique_ptr<RuntimeDyldELF> Dyld(new RuntimeDyldELF(MM));
+createRuntimeDyldELF(RuntimeDyld::MemoryManager &MM,
+                     RuntimeDyld::SymbolResolver &Resolver,
+                     bool ProcessAllSections, RuntimeDyldCheckerImpl *Checker) {
+  std::unique_ptr<RuntimeDyldELF> Dyld(new RuntimeDyldELF(MM, Resolver));
   Dyld->setProcessAllSections(ProcessAllSections);
   Dyld->setRuntimeDyldChecker(Checker);
   return Dyld;
 }
 
 static std::unique_ptr<RuntimeDyldMachO>
-createRuntimeDyldMachO(Triple::ArchType Arch, RTDyldMemoryManager *MM,
-                       bool ProcessAllSections, RuntimeDyldCheckerImpl *Checker) {
-  std::unique_ptr<RuntimeDyldMachO> Dyld(RuntimeDyldMachO::create(Arch, MM));
+createRuntimeDyldMachO(Triple::ArchType Arch, RuntimeDyld::MemoryManager &MM,
+                       RuntimeDyld::SymbolResolver &Resolver,
+                       bool ProcessAllSections,
+                       RuntimeDyldCheckerImpl *Checker) {
+  std::unique_ptr<RuntimeDyldMachO> Dyld =
+    RuntimeDyldMachO::create(Arch, MM, Resolver);
   Dyld->setProcessAllSections(ProcessAllSections);
   Dyld->setRuntimeDyldChecker(Checker);
   return Dyld;
@@ -881,14 +891,14 @@ std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
 RuntimeDyld::loadObject(const ObjectFile &Obj) {
   if (!Dyld) {
     if (Obj.isELF())
-      Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker);
+      Dyld = createRuntimeDyldELF(MemMgr, Resolver, ProcessAllSections, Checker);
     else if (Obj.isMachO())
       Dyld = createRuntimeDyldMachO(
-               static_cast<Triple::ArchType>(Obj.getArch()), MM,
+               static_cast<Triple::ArchType>(Obj.getArch()), MemMgr, Resolver,
                ProcessAllSections, Checker);
     else if (Obj.isCOFF())
       Dyld = createRuntimeDyldCOFF(
-               static_cast<Triple::ArchType>(Obj.getArch()), MM,
+               static_cast<Triple::ArchType>(Obj.getArch()), MemMgr, Resolver,
                ProcessAllSections, Checker);
     else
       report_fatal_error("Incompatible object format!");

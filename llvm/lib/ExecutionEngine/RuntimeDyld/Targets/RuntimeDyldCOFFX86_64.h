@@ -32,7 +32,9 @@ private:
   SmallVector<SID, 2> RegisteredEHFrameSections;
 
 public:
-  RuntimeDyldCOFFX86_64(RTDyldMemoryManager *MM) : RuntimeDyldCOFF(MM) {}
+  RuntimeDyldCOFFX86_64(RuntimeDyld::MemoryManager &MM,
+                        RuntimeDyld::SymbolResolver &Resolver)
+    : RuntimeDyldCOFF(MM, Resolver) {}
 
   unsigned getMaxStubSize() override {
     return 6; // 2-byte jmp instruction + 32-bit relative address
@@ -177,13 +179,11 @@ public:
 
   unsigned getStubAlignment() override { return 1; }
   void registerEHFrames() override {
-    if (!MemMgr)
-      return;
     for (auto const &EHFrameSID : UnregisteredEHFrameSections) {
       uint8_t *EHFrameAddr = Sections[EHFrameSID].Address;
       uint64_t EHFrameLoadAddr = Sections[EHFrameSID].LoadAddress;
       size_t EHFrameSize = Sections[EHFrameSID].Size;
-      MemMgr->registerEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
+      MemMgr.registerEHFrames(EHFrameAddr, EHFrameLoadAddr, EHFrameSize);
       RegisteredEHFrameSections.push_back(EHFrameSID);
     }
     UnregisteredEHFrameSections.clear();
