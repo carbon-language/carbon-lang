@@ -376,7 +376,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ownedProp retain];
   [_ownedProp release];
   [_ownedProp release];
-  [_ownedProp release]; // expected-warning{{used after it is released}}
+  [_ownedProp release]; // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseUnownedIvar {
@@ -389,21 +389,21 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ivarOnly retain];
   [_ivarOnly release];
   [_ivarOnly release];
-  [_ivarOnly release]; // expected-warning{{used after it is released}}
+  [_ivarOnly release]; // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseReadonlyIvar {
   [_readonlyProp retain];
   [_readonlyProp release];
   [_readonlyProp release];
-  [_readonlyProp release]; // expected-warning{{used after it is released}}
+  [_readonlyProp release]; // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseImplicitManualIvar {
   [_implicitManualProp retain];
   [_implicitManualProp release];
   [_implicitManualProp release];
-  [_implicitManualProp release]; // expected-warning{{used after it is released}}
+  [_implicitManualProp release]; // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseImplicitSynthIvar {
@@ -416,21 +416,21 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   CFRetain(_cfProp);
   CFRelease(_cfProp);
   CFRelease(_cfProp);
-  CFRelease(_cfProp); // expected-warning{{used after it is released}}
+  CFRelease(_cfProp); // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseOwnedIvarUse {
   [_ownedProp retain];
   [_ownedProp release];
   [_ownedProp release];
-  [_ownedProp myMethod]; // expected-warning{{used after it is released}}
+  [_ownedProp myMethod]; // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseIvarOnlyUse {
   [_ivarOnly retain];
   [_ivarOnly release];
   [_ivarOnly release];
-  [_ivarOnly myMethod]; // expected-warning{{used after it is released}}
+  [_ivarOnly myMethod]; // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseCFUse {
@@ -439,7 +439,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   CFRelease(_cfProp);
 
   extern void CFUse(CFTypeRef);
-  CFUse(_cfProp); // expected-warning{{used after it is released}}
+  CFUse(_cfProp); // FIXME-warning{{used after it is released}}
 }
 
 - (void)testOverreleaseOwnedIvarAutoreleaseOkay {
@@ -459,14 +459,14 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ownedProp release];
   [_ownedProp autorelease];
   [_ownedProp autorelease];
-} // expected-warning{{Object autoreleased too many times}}
+} // FIXME-warning{{Object autoreleased too many times}}
 
 - (void)testOverreleaseIvarOnlyAutorelease {
   [_ivarOnly retain];
   [_ivarOnly release];
   [_ivarOnly autorelease];
   [_ivarOnly autorelease];
-} // expected-warning{{Object autoreleased too many times}}
+} // FIXME-warning{{Object autoreleased too many times}}
 
 - (void)testPropertyAccessThenReleaseOwned {
   id owned = [self.ownedProp retain];
