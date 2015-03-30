@@ -2731,9 +2731,9 @@ bool RegisterCoalescer::applyTerminalRule(const MachineInstr &Copy) const {
   assert(Copy.isCopyLike());
   if (!UseTerminalRule)
     return false;
+  unsigned DstReg, DstSubReg, SrcReg, SrcSubReg;
+  isMoveInstr(*TRI, &Copy, SrcReg, DstReg, SrcSubReg, DstSubReg);
   // Check if the destination of this copy has any other affinity.
-  unsigned DstReg = Copy.getOperand(0).getReg();
-  unsigned SrcReg = Copy.getOperand(1).getReg();
   if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
       // If SrcReg is a physical register, the copy won't be coalesced.
       // Ignoring it may have other side effect (like missing
@@ -2755,9 +2755,11 @@ bool RegisterCoalescer::applyTerminalRule(const MachineInstr &Copy) const {
     // For now, just consider the copies that are in the same block.
     if (&MI == &Copy || !MI.isCopyLike() || MI.getParent() != OrigBB)
       continue;
-    unsigned OtherReg = MI.getOperand(0).getReg();
+    unsigned OtherReg, OtherSubReg, OtherSrcReg, OtherSrcSubReg;
+    isMoveInstr(*TRI, &Copy, OtherSrcReg, OtherReg, OtherSrcSubReg,
+                OtherSubReg);
     if (OtherReg == SrcReg)
-      OtherReg = MI.getOperand(1).getReg();
+      OtherReg = OtherSrcReg;
     // Check if OtherReg is a non-terminal.
     if (TargetRegisterInfo::isPhysicalRegister(OtherReg) ||
         isTerminalReg(OtherReg, MI, MRI))
