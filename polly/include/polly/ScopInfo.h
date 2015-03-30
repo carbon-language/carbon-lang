@@ -172,7 +172,7 @@ private:
   Value *BaseAddr;
 
   std::string BaseName;
-  isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
+  __isl_give isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
   ScopStmt *Statement;
 
   /// @brief Reduction type for reduction like accesses, RT_NONE otherwise
@@ -215,13 +215,13 @@ private:
   void computeBoundsOnAccessRelation(unsigned ElementSize);
 
   /// @brief Get the original access function as read from IR.
-  isl_map *getOriginalAccessRelation() const;
+  __isl_give isl_map *getOriginalAccessRelation() const;
 
   /// @brief Return the space in which the access relation lives in.
   __isl_give isl_space *getOriginalAccessRelationSpace() const;
 
   /// @brief Get the new access function imported or set by a pass
-  isl_map *getNewAccessRelation() const;
+  __isl_give isl_map *getNewAccessRelation() const;
 
 public:
   /// @brief Create a memory access from an access in LLVM-IR.
@@ -273,7 +273,7 @@ public:
 
   /// @brief Return the access relation after the schedule was applied.
   __isl_give isl_pw_multi_aff *
-  applyScheduleToAccessRelation(__isl_keep isl_union_map *Schedule) const;
+  applyScheduleToAccessRelation(__isl_take isl_union_map *Schedule) const;
 
   /// @brief Get an isl string representing the access function read from IR.
   std::string getOriginalAccessRelationStr() const;
@@ -301,7 +301,7 @@ public:
   /// Get the stride of this memory access in the specified Schedule. Schedule
   /// is a map from the statement to a schedule where the innermost dimension is
   /// the dimension of the innermost loop containing the statement.
-  isl_set *getStride(__isl_take const isl_map *Schedule) const;
+  __isl_give isl_set *getStride(__isl_take const isl_map *Schedule) const;
 
   /// Is the stride of the access equal to a certain width? Schedule is a map
   /// from the statement to a schedule where the innermost dimension is the
@@ -545,7 +545,7 @@ public:
   /// @brief Get the id of the iteration domain space
   ///
   /// @return The id of the iteration domain space
-  isl_id *getDomainId() const;
+  __isl_give isl_id *getDomainId() const;
 
   /// @brief Get an isl string representing this domain.
   std::string getDomainStr() const;
@@ -554,7 +554,7 @@ public:
   ///
   /// @return The scattering function of this ScopStmt.
   __isl_give isl_map *getScattering() const;
-  void setScattering(isl_map *scattering);
+  void setScattering(__isl_take isl_map *scattering);
 
   /// @brief Get an isl string representing this scattering.
   std::string getScatteringStr() const;

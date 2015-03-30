@@ -437,12 +437,12 @@ const ScopArrayInfo *MemoryAccess::getScopArrayInfo() const {
   return SAI;
 }
 
-isl_id *MemoryAccess::getArrayId() const {
+__isl_give isl_id *MemoryAccess::getArrayId() const {
   return isl_map_get_tuple_id(AccessRelation, isl_dim_out);
 }
 
-isl_pw_multi_aff *
-MemoryAccess::applyScheduleToAccessRelation(isl_union_map *USchedule) const {
+__isl_give isl_pw_multi_aff *MemoryAccess::applyScheduleToAccessRelation(
+    __isl_take isl_union_map *USchedule) const {
   isl_map *Schedule, *ScheduledAccRel;
   isl_union_set *UDomain;
 
@@ -453,7 +453,7 @@ MemoryAccess::applyScheduleToAccessRelation(isl_union_map *USchedule) const {
   return isl_pw_multi_aff_from_map(ScheduledAccRel);
 }
 
-isl_map *MemoryAccess::getOriginalAccessRelation() const {
+__isl_give isl_map *MemoryAccess::getOriginalAccessRelation() const {
   return isl_map_copy(AccessRelation);
 }
 
@@ -465,11 +465,12 @@ __isl_give isl_space *MemoryAccess::getOriginalAccessRelationSpace() const {
   return isl_map_get_space(AccessRelation);
 }
 
-isl_map *MemoryAccess::getNewAccessRelation() const {
+__isl_give isl_map *MemoryAccess::getNewAccessRelation() const {
   return isl_map_copy(newAccessRelation);
 }
 
-isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
+__isl_give isl_basic_map *
+MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
   isl_space *Space = isl_space_set_alloc(Statement->getIslCtx(), 0, 1);
   Space = isl_space_align_params(Space, Statement->getDomainSpace());
 
@@ -709,7 +710,8 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
   return Map;
 }
 
-isl_set *MemoryAccess::getStride(__isl_take const isl_map *Schedule) const {
+__isl_give isl_set *
+MemoryAccess::getStride(__isl_take const isl_map *Schedule) const {
   isl_map *S = const_cast<isl_map *>(Schedule);
   isl_map *AccessRelation = getAccessRelation();
   isl_space *Space = isl_space_range(isl_map_get_space(S));
@@ -772,7 +774,7 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
   Scattering = isl_map_intersect_domain(Scattering, isl_set_copy(Domain));
 }
 
-void ScopStmt::setScattering(isl_map *NewScattering) {
+void ScopStmt::setScattering(__isl_take isl_map *NewScattering) {
   assert(NewScattering && "New scattering is nullptr");
   isl_map_free(Scattering);
   Scattering = NewScattering;
@@ -1189,13 +1191,15 @@ const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
 
 isl_ctx *ScopStmt::getIslCtx() const { return Parent.getIslCtx(); }
 
-isl_set *ScopStmt::getDomain() const { return isl_set_copy(Domain); }
+__isl_give isl_set *ScopStmt::getDomain() const { return isl_set_copy(Domain); }
 
-isl_space *ScopStmt::getDomainSpace() const {
+_isl_give isl_space *ScopStmt::getDomainSpace() const {
   return isl_set_get_space(Domain);
 }
 
-isl_id *ScopStmt::getDomainId() const { return isl_set_get_tuple_id(Domain); }
+__isl_give isl_id *ScopStmt::getDomainId() const {
+  return isl_set_get_tuple_id(Domain);
+}
 
 ScopStmt::~ScopStmt() {
   while (!MemAccs.empty()) {
