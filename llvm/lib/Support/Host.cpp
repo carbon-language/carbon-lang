@@ -318,10 +318,6 @@ StringRef sys::getHostCPUName() {
                // manufactured using the 65 nm process
         return "core2";
 
-      case 21: // Intel EP80579 Integrated Processor and Intel EP80579
-               // Integrated Processor with Intel QuickAssist Technology
-        return "i686"; // FIXME: ???
-
       case 23: // Intel Core 2 Extreme processor, Intel Xeon processor, model
                // 17h. All processors are manufactured using the 45 nm process.
                //
@@ -335,12 +331,13 @@ StringRef sys::getHostCPUName() {
                // processors are manufactured using the 45 nm process.
       case 30: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
                // As found in a Summer 2010 model iMac.
+      case 46: // Nehalem EX
+        return "nehalem";
       case 37: // Intel Core i7, laptop version.
       case 44: // Intel Core i7 processor and Intel Xeon processor. All
                // processors are manufactured using the 32 nm process.
-      case 46: // Nehalem EX
       case 47: // Westmere EX
-        return "corei7";
+        return "westmere";
 
       // SandyBridge:
       case 42: // Intel Core i7 processor. All processors are manufactured
@@ -348,14 +345,14 @@ StringRef sys::getHostCPUName() {
       case 45:
         // Not all Sandy Bridge processors support AVX (such as the Pentium
         // versions instead of the i7 versions).
-        return HasAVX ? "corei7-avx" : "corei7";
+        return HasAVX ? "sandybridge" : "nehalem";
 
       // Ivy Bridge:
       case 58:
       case 62: // Ivy Bridge EP
         // Not all Ivy Bridge processors support AVX (such as the Pentium
         // versions instead of the i7 versions).
-        return HasAVX ? "core-avx-i" : "corei7";
+        return HasAVX ? "ivybridge" : "nehalem";
 
       // Haswell:
       case 60:
@@ -364,26 +361,26 @@ StringRef sys::getHostCPUName() {
       case 70:
         // Not all Haswell processors support AVX2 (such as the Pentium
         // versions instead of the i7 versions).
-        return HasAVX2 ? "core-avx2" : "corei7";
+        return HasAVX2 ? "haswell" : "nehalem";
 
       // Broadwell:
       case 61:
         // Not all Broadwell processors support AVX2 (such as the Pentium
         // versions instead of the i7 versions).
-        return HasAVX2 ? "broadwell" : "corei7";
+        return HasAVX2 ? "broadwell" : "nehalem";
 
       case 28: // Most 45 nm Intel Atom processors
       case 38: // 45 nm Atom Lincroft
       case 39: // 32 nm Atom Medfield
       case 53: // 32 nm Atom Midview
       case 54: // 32 nm Atom Midview
-        return "atom";
+        return "bonnell";
 
       // Atom Silvermont codes from the Intel software optimization guide.
       case 55:
       case 74:
       case 77:
-        return "slm";
+        return "silvermont";
 
       default: return (Em64T) ? "x86-64" : "i686";
       }
