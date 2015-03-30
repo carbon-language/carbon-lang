@@ -238,8 +238,7 @@ createObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
   return new PPCTargetMachOStreamer(S);
 }
 
-static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
-                                             unsigned SyntaxVariant,
+static MCInstPrinter *createPPCMCInstPrinter(unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
                                              const MCRegisterInfo &MRI,

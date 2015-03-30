@@ -75,8 +75,7 @@ static MCCodeGenInfo *createHexagonMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   X->InitMCCodeGenInfo(Reloc::Static, CM, OL);
   return X;
 }
-static MCInstPrinter *createHexagonMCInstPrinter(const Target &T,
-                                                 unsigned SyntaxVariant,
+static MCInstPrinter *createHexagonMCInstPrinter(unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
                                                  const MCRegisterInfo &MRI,

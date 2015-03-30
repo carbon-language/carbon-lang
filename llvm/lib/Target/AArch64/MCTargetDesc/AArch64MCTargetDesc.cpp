@@ -109,8 +109,7 @@ static MCCodeGenInfo *createAArch64MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createAArch64MCInstPrinter(const Target &T,
-                                                 unsigned SyntaxVariant,
+static MCInstPrinter *createAArch64MCInstPrinter(unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
                                                  const MCRegisterInfo &MRI,

@@ -81,8 +81,7 @@ static MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createXCoreMCInstPrinter(const Target &T,
-                                               unsigned SyntaxVariant,
+static MCInstPrinter *createXCoreMCInstPrinter(unsigned SyntaxVariant,
                                                const MCAsmInfo &MAI,
                                                const MCInstrInfo &MII,
                                                const MCRegisterInfo &MRI,

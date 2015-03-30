@@ -207,8 +207,7 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createX86MCInstPrinter(const Target &T,
-                                             unsigned SyntaxVariant,
+static MCInstPrinter *createX86MCInstPrinter(unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
                                              const MCRegisterInfo &MRI,

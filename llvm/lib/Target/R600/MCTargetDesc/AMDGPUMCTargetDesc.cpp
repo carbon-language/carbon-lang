@@ -64,8 +64,7 @@ static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
-                                                unsigned SyntaxVariant,
+static MCInstPrinter *createAMDGPUMCInstPrinter(unsigned SyntaxVariant,
                                                 const MCAsmInfo &MAI,
                                                 const MCInstrInfo &MII,
                                                 const MCRegisterInfo &MRI,

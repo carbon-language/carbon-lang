@@ -134,12 +134,11 @@ static MCTargetStreamer *createTargetAsmStreamer(MCStreamer &S,
   return new SparcTargetAsmStreamer(S, OS);
 }
 
-static MCInstPrinter *createSparcMCInstPrinter(const Target &T,
-                                              unsigned SyntaxVariant,
-                                              const MCAsmInfo &MAI,
-                                              const MCInstrInfo &MII,
-                                              const MCRegisterInfo &MRI,
-                                              const MCSubtargetInfo &STI) {
+static MCInstPrinter *createSparcMCInstPrinter(unsigned SyntaxVariant,
+                                               const MCAsmInfo &MAI,
+                                               const MCInstrInfo &MII,
+                                               const MCRegisterInfo &MRI,
+                                               const MCSubtargetInfo &STI) {
   return new SparcInstPrinter(MAI, MII, MRI, STI);
 }
 

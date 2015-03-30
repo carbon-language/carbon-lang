@@ -58,8 +58,7 @@ static MCCodeGenInfo *createNVPTXMCCodeGenInfo(
   return X;
 }
 
-static MCInstPrinter *createNVPTXMCInstPrinter(const Target &T,
-                                               unsigned SyntaxVariant,
+static MCInstPrinter *createNVPTXMCInstPrinter(unsigned SyntaxVariant,
                                                const MCAsmInfo &MAI,
                                                const MCInstrInfo &MII,
                                                const MCRegisterInfo &MRI,

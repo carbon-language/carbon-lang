@@ -222,8 +222,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   return;
 }
 
-static MCInstPrinter *createHexagonMCInstPrinter(const Target &T,
-                                                 unsigned SyntaxVariant,
+static MCInstPrinter *createHexagonMCInstPrinter(unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
                                                  const MCRegisterInfo &MRI,
