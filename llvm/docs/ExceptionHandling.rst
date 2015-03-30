@@ -552,7 +552,7 @@ where xdata unwind information is used. It is typically an 8 byte chunk of
 memory treated as two 32-bit integers.
 
 ``llvm.eh.parentframe``
-----------------------
+-----------------------
 
 .. code-block:: llvm
 
