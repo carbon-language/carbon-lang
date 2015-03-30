@@ -60,7 +60,10 @@ class GdbRemoteTestCaseBase(TestBase):
         self.named_pipe = None
         self.named_pipe_fd = None
         self.stub_sends_two_stop_notifications_on_kill = False
-        self.stub_hostname = "localhost"
+        if lldb.platfrom_url:
+            self.stub_hostname = re.match(".*://(.*):[0-9]+", lldb.platfrom_url).group(1)
+        else:
+            self.stub_hostname = "localhost"
 
     def get_next_port(self):
         return 12000 + random.randint(0,3999)
@@ -184,6 +187,13 @@ class GdbRemoteTestCaseBase(TestBase):
         sock = socket.socket()
         logger = self.logger
 
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        if re.match(".*-.*-.*-android", triple):
+            self.forward_adb_port(self.port, self.port, "forward")
+
+        connect_info = (self.stub_hostname, self.port)
+        sock.connect(connect_info)
+
         def shutdown_socket():
             if sock:
                 try:
@@ -199,14 +209,6 @@ class GdbRemoteTestCaseBase(TestBase):
 
         self.addTearDownHook(shutdown_socket)
 
-        triple = self.dbg.GetSelectedPlatform().GetTriple()
-        if re.match(".*-.*-.*-android", triple):
-            self.forward_adb_port(self.port, self.port, "forward")
-
-        connect_info = (self.stub_hostname, self.port)
-        # print "connecting to stub on {}:{}".format(connect_info[0], connect_info[1])
-        sock.connect(connect_info)
-
         return sock
 
     def set_inferior_startup_launch(self):
@@ -219,7 +221,11 @@ class GdbRemoteTestCaseBase(TestBase):
         self._inferior_startup = self._STARTUP_ATTACH_MANUALLY
 
     def get_debug_monitor_command_line_args(self, attach_pid=None):
-        commandline_args = self.debug_monitor_extra_args + ["localhost:{}".format(self.port)]
+        if lldb.remote_platform:
+            commandline_args = self.debug_monitor_extra_args + ["*:{}".format(self.port)]
+        else:
+            commandline_args = self.debug_monitor_extra_args + ["localhost:{}".format(self.port)]
+
         if attach_pid:
             commandline_args += ["--attach=%d" % attach_pid]
         if self.named_pipe_path:
@@ -284,16 +290,23 @@ class GdbRemoteTestCaseBase(TestBase):
                     logger.warning("failed to terminate server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
             self.addTearDownHook(shutdown_debug_monitor)
 
-            # Create a socket to talk to the server
-            try:
-                self.sock = self.create_socket()
-                return server
-            except socket.error as serr:
-                # We're only trying to handle connection refused.
-                if serr.errno != errno.ECONNREFUSED:
-                    raise serr
-                # We should close the server here to be safe.
-                server.terminate()
+            connect_attemps = 0
+            MAX_CONNECT_ATTEMPTS = 10
+
+            while connect_attemps < MAX_CONNECT_ATTEMPTS:
+                # Create a socket to talk to the server
+                try:
+                    self.sock = self.create_socket()
+                    return server
+                except socket.error as serr:
+                    # We're only trying to handle connection refused.
+                    if serr.errno != errno.ECONNREFUSED:
+                        raise serr
+                time.sleep(0.5)
+                connect_attemps += 1
+
+            # We should close the server here to be safe.
+            server.terminate()
 
             # Increment attempts.
             print("connect to debug monitor on port %d failed, attempt #%d of %d" % (self.port, attempts + 1, MAX_ATTEMPTS))
