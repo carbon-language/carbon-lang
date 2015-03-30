@@ -23,11 +23,9 @@ class MCOperand;
 
 class SparcInstPrinter : public MCInstPrinter {
 public:
- SparcInstPrinter(const MCAsmInfo &MAI,
-                  const MCInstrInfo &MII,
-                  const MCRegisterInfo &MRI,
-                  const MCSubtargetInfo &sti)
-   : MCInstPrinter(MAI, MII, MRI) {}
+  SparcInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
+                   const MCRegisterInfo &MRI)
+      : MCInstPrinter(MAI, MII, MRI) {}
 
   void printRegName(raw_ostream &OS, unsigned RegNo) const override;
   void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
