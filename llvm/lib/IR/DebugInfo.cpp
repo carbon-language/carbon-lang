@@ -978,16 +978,16 @@ bool llvm::StripDebugInfo(Module &M) {
     }
   }
 
-  for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
-    for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
-         ++FI)
-      for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
-           ++BI) {
-        if (BI->getDebugLoc()) {
+  for (Function &F : M) {
+    for (BasicBlock &BB : F) {
+      for (Instruction &I : BB) {
+        if (I.getDebugLoc()) {
           Changed = true;
-          BI->setDebugLoc(DebugLoc());
+          I.setDebugLoc(DebugLoc());
         }
       }
+    }
+  }
 
   return Changed;
 }
