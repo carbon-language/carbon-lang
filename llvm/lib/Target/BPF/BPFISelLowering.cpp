@@ -137,7 +137,6 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
   setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
 
-  setOperationAction(ISD::BSWAP, MVT::i64, Expand);
   setOperationAction(ISD::CTTZ, MVT::i64, Custom);
   setOperationAction(ISD::CTLZ, MVT::i64, Custom);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Custom);
