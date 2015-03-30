@@ -622,6 +622,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
       isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
 
   assumeNoOutOfBound(Access);
+  AccessRelation = isl_map_gist_domain(AccessRelation, Statement->getDomain());
   isl_space_free(Space);
 }
 
