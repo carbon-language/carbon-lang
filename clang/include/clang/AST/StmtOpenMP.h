@@ -1582,8 +1582,17 @@ public:
 ///
 class OMPAtomicDirective : public OMPExecutableDirective {
   friend class ASTStmtReader;
-  /// \brief Binary operator for update and capture constructs.
-  BinaryOperatorKind OpKind;
+  /// \brief Used for 'atomic update' or 'atomic capture' constructs. They may
+  /// have atomic expressions of forms
+  /// \code
+  /// x = x binop expr;
+  /// x = expr binop x;
+  /// \endcode
+  /// This field is true for the first form of the expression and false for the
+  /// second. Required for correct codegen of non-associative operations (like
+  /// << or >>).
+  bool IsXLHSInRHSPart;
+
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1593,7 +1602,8 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   OMPAtomicDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                      unsigned NumClauses)
       : OMPExecutableDirective(this, OMPAtomicDirectiveClass, OMPD_atomic,
-                               StartLoc, EndLoc, NumClauses, 5) {}
+                               StartLoc, EndLoc, NumClauses, 5),
+        IsXLHSInRHSPart(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -1602,15 +1612,15 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   explicit OMPAtomicDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPAtomicDirectiveClass, OMPD_atomic,
                                SourceLocation(), SourceLocation(), NumClauses,
-                               5) {}
+                               5),
+        IsXLHSInRHSPart(false) {}
 
-  /// \brief Set operator kind for update and capture atomic constructs.
-  void setOpKind(const BinaryOperatorKind BOK) { OpKind = BOK; }
   /// \brief Set 'x' part of the associated expression/statement.
   void setX(Expr *X) { *std::next(child_begin()) = X; }
-  /// \brief Set 'x' rvalue used in update and capture atomic constructs for
-  /// proper update expression generation.
-  void setXRVal(Expr *XRVal) { *std::next(child_begin(), 2) = XRVal; }
+  /// \brief Set helper expression of the form
+  /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
+  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+  void setUpdateExpr(Expr *UE) { *std::next(child_begin(), 2) = UE; }
   /// \brief Set 'v' part of the associated expression/statement.
   void setV(Expr *V) { *std::next(child_begin(), 3) = V; }
   /// \brief Set 'expr' part of the associated expression/statement.
@@ -1626,19 +1636,18 @@ public:
   /// \param EndLoc Ending Location of the directive.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
-  /// \param OpKind Binary operator used for updating of 'x' part of the
-  /// expression in update and capture atomic constructs.
   /// \param X 'x' part of the associated expression/statement.
-  /// \param XRVal 'x' rvalue expression used in update and capture constructs
-  /// for proper update expression generation. Used to read original value of
-  /// the 'x' part of the expression.
   /// \param V 'v' part of the associated expression/statement.
   /// \param E 'expr' part of the associated expression/statement.
-  ///
+  /// \param UE Helper expression of the form
+  /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
+  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+  /// \param IsXLHSInRHSPart true if \a UE has the first form and false if the
+  /// second.
   static OMPAtomicDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt,
-         BinaryOperatorKind OpKind, Expr *X, Expr *XRVal, Expr *V, Expr *E);
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, Expr *X, Expr *V,
+         Expr *E, Expr *UE, bool IsXLHSInRHSPart);
 
   /// \brief Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -1649,19 +1658,24 @@ public:
   static OMPAtomicDirective *CreateEmpty(const ASTContext &C,
                                          unsigned NumClauses, EmptyShell);
 
-  /// \brief Get binary operation for update or capture atomic constructs.
-  BinaryOperatorKind getOpKind() const { return OpKind; }
   /// \brief Get 'x' part of the associated expression/statement.
   Expr *getX() { return cast_or_null<Expr>(*std::next(child_begin())); }
   const Expr *getX() const {
     return cast_or_null<Expr>(*std::next(child_begin()));
   }
-  /// \brief Get 'x' rvalue used in update and capture atomic constructs for
-  /// proper update expression generation.
-  Expr *getXRVal() { return cast_or_null<Expr>(*std::next(child_begin(), 2)); }
-  const Expr *getXRVal() const {
+  /// \brief Get helper expression of the form
+  /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
+  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+  Expr *getUpdateExpr() {
     return cast_or_null<Expr>(*std::next(child_begin(), 2));
   }
+  const Expr *getUpdateExpr() const {
+    return cast_or_null<Expr>(*std::next(child_begin(), 2));
+  }
+  /// \brief Return true if helper update expression has form
+  /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' and false if it has form
+  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+  bool isXLHSInRHSPart() const { return IsXLHSInRHSPart; }
   /// \brief Get 'v' part of the associated expression/statement.
   Expr *getV() { return cast_or_null<Expr>(*std::next(child_begin(), 3)); }
   const Expr *getV() const {

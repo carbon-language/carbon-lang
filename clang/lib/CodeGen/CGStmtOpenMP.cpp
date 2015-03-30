@@ -1119,9 +1119,136 @@ static void EmitOMPAtomicWriteExpr(CodeGenFunction &CGF, bool IsSeqCst,
     CGF.CGM.getOpenMPRuntime().emitFlush(CGF, llvm::None, Loc);
 }
 
+static Optional<llvm::AtomicRMWInst::BinOp>
+getCompatibleAtomicRMWBinOp(ASTContext &Context, BinaryOperatorKind Op,
+                            bool IsXLHSInRHSPart, LValue XLValue,
+                            RValue ExprRValue) {
+  Optional<llvm::AtomicRMWInst::BinOp> RMWOp;
+  // Allow atomicrmw only if 'x' and 'expr' are integer values, lvalue for 'x'
+  // expression is simple and atomic is allowed for the given type for the
+  // target platform.
+  if (ExprRValue.isScalar() &&
+      ExprRValue.getScalarVal()->getType()->isIntegerTy() &&
+      XLValue.isSimple() &&
+      (isa<llvm::ConstantInt>(ExprRValue.getScalarVal()) ||
+       (ExprRValue.getScalarVal()->getType() ==
+        XLValue.getAddress()->getType()->getPointerElementType())) &&
+      Context.getTargetInfo().hasBuiltinAtomic(
+          Context.getTypeSize(XLValue.getType()),
+          Context.toBits(XLValue.getAlignment()))) {
+    switch (Op) {
+    case BO_Add:
+      RMWOp = llvm::AtomicRMWInst::Add;
+      break;
+    case BO_Sub:
+      if (IsXLHSInRHSPart) {
+        RMWOp = llvm::AtomicRMWInst::Sub;
+      }
+      break;
+    case BO_And:
+      RMWOp = llvm::AtomicRMWInst::And;
+      break;
+    case BO_Or:
+      RMWOp = llvm::AtomicRMWInst::Or;
+      break;
+    case BO_Xor:
+      RMWOp = llvm::AtomicRMWInst::Xor;
+      break;
+    case BO_Mul:
+    case BO_Div:
+    case BO_Rem:
+    case BO_Shl:
+    case BO_Shr:
+      break;
+    case BO_PtrMemD:
+    case BO_PtrMemI:
+    case BO_LT:
+    case BO_GT:
+    case BO_LE:
+    case BO_GE:
+    case BO_EQ:
+    case BO_NE:
+    case BO_LAnd:
+    case BO_LOr:
+    case BO_Assign:
+    case BO_MulAssign:
+    case BO_DivAssign:
+    case BO_RemAssign:
+    case BO_AddAssign:
+    case BO_SubAssign:
+    case BO_ShlAssign:
+    case BO_ShrAssign:
+    case BO_AndAssign:
+    case BO_XorAssign:
+    case BO_OrAssign:
+    case BO_Comma:
+      llvm_unreachable("Unexpected binary operation in 'atomic update'.");
+    }
+  }
+  return std::move(RMWOp);
+}
+
+static void EmitOMPAtomicUpdateExpr(CodeGenFunction &CGF, bool IsSeqCst,
+                                    const Expr *X, const Expr *E,
+                                    const Expr *UE, bool IsXLHSInRHSPart,
+                                    SourceLocation Loc) {
+  assert(isa<BinaryOperator>(UE->IgnoreImpCasts()) &&
+         "Update expr in 'atomic update' must be a binary operator.");
+  auto *BOUE = cast<BinaryOperator>(UE->IgnoreImpCasts());
+  // Update expressions are allowed to have the following forms:
+  // x binop= expr; -> xrval + expr;
+  // x++, ++x -> xrval + 1;
+  // x--, --x -> xrval - 1;
+  // x = x binop expr; -> xrval binop expr
+  // x = expr Op x; - > expr binop xrval;
+  assert(X->isLValue() && "X of 'omp atomic write' is not lvalue");
+  LValue XLValue = CGF.EmitLValue(X);
+  RValue ExprRValue = CGF.EmitAnyExpr(E);
+  const auto &Op =
+      getCompatibleAtomicRMWBinOp(CGF.CGM.getContext(), BOUE->getOpcode(),
+                                  IsXLHSInRHSPart, XLValue, ExprRValue);
+  auto AO = IsSeqCst ? llvm::SequentiallyConsistent : llvm::Monotonic;
+  if (Op) {
+    auto *ExprVal = ExprRValue.getScalarVal();
+    if (auto *IC = dyn_cast<llvm::ConstantInt>(ExprVal)) {
+      ExprVal = CGF.Builder.CreateIntCast(
+          IC, XLValue.getAddress()->getType()->getPointerElementType(),
+          XLValue.getType()->hasSignedIntegerRepresentation());
+    }
+    CGF.Builder.CreateAtomicRMW(*Op, XLValue.getAddress(), ExprVal, AO);
+  } else {
+    auto *LHS = cast<OpaqueValueExpr>(BOUE->getLHS()->IgnoreImpCasts());
+    auto *RHS = cast<OpaqueValueExpr>(BOUE->getRHS()->IgnoreImpCasts());
+    CodeGenFunction::OpaqueValueMapping MapExpr(
+        CGF, IsXLHSInRHSPart ? RHS : LHS, ExprRValue);
+    auto *XRValExpr = IsXLHSInRHSPart ? LHS : RHS;
+    if (XLValue.isGlobalReg()) {
+      // Emit an update expression: 'xrval' binop 'expr' or 'expr' binop
+      // 'xrval'.
+      CodeGenFunction::OpaqueValueMapping MapX(
+          CGF, XRValExpr, CGF.EmitLoadOfLValue(XLValue, Loc));
+      CGF.EmitStoreThroughLValue(CGF.EmitAnyExpr(UE), XLValue);
+    } else {
+      // Perform compare-and-swap procedure.
+      CGF.EmitAtomicUpdate(
+          XLValue, AO, [&CGF, &UE, &XRValExpr](RValue XRVal) -> RValue {
+            CodeGenFunction::OpaqueValueMapping MapX(CGF, XRValExpr, XRVal);
+            return CGF.EmitAnyExpr(UE);
+          }, /*IsVolatile=*/false);
+    }
+  }
+  // OpenMP, 2.12.6, atomic Construct
+  // Any atomic construct with a seq_cst clause forces the atomically
+  // performed operation to include an implicit flush operation without a
+  // list.
+  if (IsSeqCst)
+    CGF.CGM.getOpenMPRuntime().emitFlush(CGF, llvm::None, Loc);
+}
+
 static void EmitOMPAtomicExpr(CodeGenFunction &CGF, OpenMPClauseKind Kind,
                               bool IsSeqCst, const Expr *X, const Expr *V,
-                              const Expr *E, SourceLocation Loc) {
+                              const Expr *E, const Expr *UE,
+                              bool IsXLHSInRHSPart, SourceLocation Loc) {
   switch (Kind) {
   case OMPC_read:
     EmitOMPAtomicReadExpr(CGF, IsSeqCst, X, V, Loc);
@@ -1129,7 +1256,10 @@ static void EmitOMPAtomicExpr(CodeGenFunction &CGF, OpenMPClauseKind Kind,
   case OMPC_write:
     EmitOMPAtomicWriteExpr(CGF, IsSeqCst, X, E, Loc);
     break;
+  case OMPC_unknown:
   case OMPC_update:
+    EmitOMPAtomicUpdateExpr(CGF, IsSeqCst, X, E, UE, IsXLHSInRHSPart, Loc);
+    break;
   case OMPC_capture:
     llvm_unreachable("CodeGen for 'omp atomic clause' is not supported yet.");
   case OMPC_if:
@@ -1156,7 +1286,6 @@ static void EmitOMPAtomicExpr(CodeGenFunction &CGF, OpenMPClauseKind Kind,
   case OMPC_untied:
   case OMPC_threadprivate:
   case OMPC_mergeable:
-  case OMPC_unknown:
     llvm_unreachable("Clause is not allowed in 'omp atomic'.");
   }
 }
@@ -1179,7 +1308,7 @@ void CodeGenFunction::EmitOMPAtomicDirective(const OMPAtomicDirective &S) {
   InlinedOpenMPRegionScopeRAII Region(*this, S);
 
   EmitOMPAtomicExpr(*this, Kind, IsSeqCst, S.getX(), S.getV(), S.getExpr(),
-                    S.getLocStart());
+                    S.getUpdateExpr(), S.isXLHSInRHSPart(), S.getLocStart());
 }
 
 void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &) {

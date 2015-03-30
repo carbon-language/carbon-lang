@@ -2010,21 +2010,21 @@ OMPOrderedDirective *OMPOrderedDirective::CreateEmpty(const ASTContext &C,
 OMPAtomicDirective *
 OMPAtomicDirective::Create(const ASTContext &C, SourceLocation StartLoc,
                            SourceLocation EndLoc, ArrayRef<OMPClause *> Clauses,
-                           Stmt *AssociatedStmt, BinaryOperatorKind OpKind,
-                           Expr *X, Expr *XRVal, Expr *V, Expr *E) {
+                           Stmt *AssociatedStmt, Expr *X, Expr *V, Expr *E,
+                           Expr *UE, bool IsXLHSInRHSPart) {
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPAtomicDirective),
                                            llvm::alignOf<OMPClause *>());
   void *Mem = C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() +
                          5 * sizeof(Stmt *));
   OMPAtomicDirective *Dir =
       new (Mem) OMPAtomicDirective(StartLoc, EndLoc, Clauses.size());
-  Dir->setOpKind(OpKind);
   Dir->setClauses(Clauses);
   Dir->setAssociatedStmt(AssociatedStmt);
   Dir->setX(X);
-  Dir->setXRVal(X);
   Dir->setV(V);
   Dir->setExpr(E);
+  Dir->setUpdateExpr(UE);
+  Dir->IsXLHSInRHSPart = IsXLHSInRHSPart;
   return Dir;
 }
 

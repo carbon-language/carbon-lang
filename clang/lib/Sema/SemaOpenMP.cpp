@@ -3282,21 +3282,24 @@ class OpenMPAtomicUpdateChecker {
   Sema &SemaRef;
   /// \brief A location for note diagnostics (when error is found).
   SourceLocation NoteLoc;
-  /// \brief Atomic operation supposed to be performed on source expression.
-  BinaryOperatorKind OpKind;
   /// \brief 'x' lvalue part of the source atomic expression.
   Expr *X;
-  /// \brief 'x' rvalue part of the source atomic expression, used in the right
-  /// hand side of the expression. We need this to properly generate RHS part of
-  /// the source expression (x = x'rval' binop expr or x = expr binop x'rval').
-  Expr *XRVal;
   /// \brief 'expr' rvalue part of the source atomic expression.
   Expr *E;
+  /// \brief Helper expression of the form
+  /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
+  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+  Expr *UpdateExpr;
+  /// \brief Is 'x' a LHS in a RHS part of full update expression. It is
+  /// important for non-associative operations.
+  bool IsXLHSInRHSPart;
+  BinaryOperatorKind Op;
+  SourceLocation OpLoc;
 
 public:
   OpenMPAtomicUpdateChecker(Sema &SemaRef)
-      : SemaRef(SemaRef), OpKind(BO_PtrMemD), X(nullptr), XRVal(nullptr),
-        E(nullptr) {}
+      : SemaRef(SemaRef), X(nullptr), E(nullptr), UpdateExpr(nullptr),
+        IsXLHSInRHSPart(false), Op(BO_PtrMemD) {}
   /// \brief Check specified statement that it is suitable for 'atomic update'
   /// constructs and extract 'x', 'expr' and Operation from the original
   /// expression.
@@ -3306,13 +3309,16 @@ public:
   bool checkStatement(Stmt *S, unsigned DiagId, unsigned NoteId);
   /// \brief Return the 'x' lvalue part of the source atomic expression.
   Expr *getX() const { return X; }
-  /// \brief Return the 'x' rvalue part of the source atomic expression, used in
-  /// the RHS part of the source expression.
-  Expr *getXRVal() const { return XRVal; }
   /// \brief Return the 'expr' rvalue part of the source atomic expression.
   Expr *getExpr() const { return E; }
-  /// \brief Return required atomic operation.
-  BinaryOperatorKind getOpKind() const {return OpKind;}
+  /// \brief Return the update expression used in calculation of the updated
+  /// value. Always has form 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' or
+  /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
+  Expr *getUpdateExpr() const { return UpdateExpr; }
+  /// \brief Return true if 'x' is LHS in RHS part of full update expression,
+  /// false otherwise.
+  bool isXLHSInRHSPart() const { return IsXLHSInRHSPart; }
+
 private:
   bool checkBinaryOperation(BinaryOperator *AtomicBinOp, unsigned DiagId,
                             unsigned NoteId);
@@ -3334,7 +3340,8 @@ bool OpenMPAtomicUpdateChecker::checkBinaryOperation(
       if (AtomicInnerBinOp->isMultiplicativeOp() ||
           AtomicInnerBinOp->isAdditiveOp() || AtomicInnerBinOp->isShiftOp() ||
           AtomicInnerBinOp->isBitwiseOp()) {
-        OpKind = AtomicInnerBinOp->getOpcode();
+        Op = AtomicInnerBinOp->getOpcode();
+        OpLoc = AtomicInnerBinOp->getOperatorLoc();
         auto *LHS = AtomicInnerBinOp->getLHS();
         auto *RHS = AtomicInnerBinOp->getRHS();
         llvm::FoldingSetNodeID XId, LHSId, RHSId;
@@ -3346,10 +3353,10 @@ bool OpenMPAtomicUpdateChecker::checkBinaryOperation(
                                             /*Canonical=*/true);
         if (XId == LHSId) {
           E = RHS;
-          XRVal = LHS;
+          IsXLHSInRHSPart = true;
         } else if (XId == RHSId) {
           E = LHS;
-          XRVal = RHS;
+          IsXLHSInRHSPart = false;
         } else {
           ErrorLoc = AtomicInnerBinOp->getExprLoc();
           ErrorRange = AtomicInnerBinOp->getSourceRange();
@@ -3381,7 +3388,7 @@ bool OpenMPAtomicUpdateChecker::checkBinaryOperation(
     SemaRef.Diag(NoteLoc, NoteId) << ErrorFound << NoteRange;
     return true;
   } else if (SemaRef.CurContext->isDependentContext())
-    E = X = XRVal = nullptr;
+    E = X = UpdateExpr = nullptr;
   return false;
 }
 
@@ -3405,26 +3412,26 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
       if (auto *AtomicCompAssignOp = dyn_cast<CompoundAssignOperator>(
               AtomicBody->IgnoreParenImpCasts())) {
         // Check for Compound Assignment Operation
-        OpKind = BinaryOperator::getOpForCompoundAssignment(
+        Op = BinaryOperator::getOpForCompoundAssignment(
             AtomicCompAssignOp->getOpcode());
-        X = AtomicCompAssignOp->getLHS();
-        XRVal = SemaRef.PerformImplicitConversion(
-                            X, AtomicCompAssignOp->getComputationLHSType(),
-                            Sema::AA_Casting, /*AllowExplicit=*/true).get();
+        OpLoc = AtomicCompAssignOp->getOperatorLoc();
         E = AtomicCompAssignOp->getRHS();
+        X = AtomicCompAssignOp->getLHS();
+        IsXLHSInRHSPart = true;
       } else if (auto *AtomicBinOp = dyn_cast<BinaryOperator>(
                      AtomicBody->IgnoreParenImpCasts())) {
         // Check for Binary Operation
-        return checkBinaryOperation(AtomicBinOp, DiagId, NoteId);
+        if(checkBinaryOperation(AtomicBinOp, DiagId, NoteId))
+          return true;
       } else if (auto *AtomicUnaryOp =
-                     // Check for Binary Operation
                  dyn_cast<UnaryOperator>(AtomicBody->IgnoreParenImpCasts())) {
         // Check for Unary Operation
         if (AtomicUnaryOp->isIncrementDecrementOp()) {
-          OpKind = AtomicUnaryOp->isIncrementOp() ? BO_Add : BO_Sub;
-          XRVal = X = AtomicUnaryOp->getSubExpr();
-          E = SemaRef.ActOnIntegerConstant(AtomicUnaryOp->getOperatorLoc(), 1)
-                  .get();
+          Op = AtomicUnaryOp->isIncrementOp() ? BO_Add : BO_Sub;
+          OpLoc = AtomicUnaryOp->getOperatorLoc();
+          X = AtomicUnaryOp->getSubExpr();
+          E = SemaRef.ActOnIntegerConstant(OpLoc, /*uint64_t Val=*/1).get();
+          IsXLHSInRHSPart = true;
         } else {
           ErrorFound = NotAnUnaryIncDecExpression;
           ErrorLoc = AtomicUnaryOp->getExprLoc();
@@ -3452,7 +3459,26 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
     SemaRef.Diag(NoteLoc, NoteId) << ErrorFound << NoteRange;
     return true;
   } else if (SemaRef.CurContext->isDependentContext())
-    E = X = XRVal = nullptr;
+    E = X = UpdateExpr = nullptr;
+  if (E && X) {
+    // Build an update expression of form 'OpaqueValueExpr(x) binop
+    // OpaqueValueExpr(expr)' or 'OpaqueValueExpr(expr) binop
+    // OpaqueValueExpr(x)' and then cast it to the type of the 'x' expression.
+    auto *OVEX = new (SemaRef.getASTContext())
+        OpaqueValueExpr(X->getExprLoc(), X->getType(), VK_RValue);
+    auto *OVEExpr = new (SemaRef.getASTContext())
+        OpaqueValueExpr(E->getExprLoc(), E->getType(), VK_RValue);
+    auto Update =
+        SemaRef.CreateBuiltinBinOp(OpLoc, Op, IsXLHSInRHSPart ? OVEX : OVEExpr,
+                                   IsXLHSInRHSPart ? OVEExpr : OVEX);
+    if (Update.isInvalid())
+      return true;
+    Update = SemaRef.PerformImplicitConversion(Update.get(), X->getType(),
+                                               Sema::AA_Casting);
+    if (Update.isInvalid())
+      return true;
+    UpdateExpr = Update.get();
+  }
   return false;
 }
 
@@ -3490,11 +3516,11 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   if (auto *EWC = dyn_cast<ExprWithCleanups>(Body))
     Body = EWC->getSubExpr();
 
-  BinaryOperatorKind OpKind = BO_PtrMemD;
   Expr *X = nullptr;
-  Expr *XRVal = nullptr;
   Expr *V = nullptr;
   Expr *E = nullptr;
+  Expr *UE = nullptr;
+  bool IsXLHSInRHSPart = false;
   // OpenMP [2.12.6, atomic Construct]
   // In the next expressions:
   // * x and v (as applicable) are both l-value expressions with scalar type.
@@ -3652,8 +3678,8 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
     if (!CurContext->isDependentContext()) {
       E = Checker.getExpr();
       X = Checker.getX();
-      XRVal = Checker.getXRVal();
-      OpKind = Checker.getOpKind();
+      UE = Checker.getUpdateExpr();
+      IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
     }
   } else if (AtomicKind == OMPC_capture) {
     if (isa<Expr>(Body) && !isa<BinaryOperator>(Body)) {
@@ -3670,7 +3696,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   getCurFunction()->setHasBranchProtectedScope();
 
   return OMPAtomicDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt,
-                                    OpKind, X, XRVal, V, E);
+                                    X, V, E, UE, IsXLHSInRHSPart);
 }
 
 StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,
