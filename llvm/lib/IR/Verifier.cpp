@@ -2344,7 +2344,7 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   Type *ElTy =
-    GetElementPtrInst::getIndexedType(GEP.getPointerOperandType(), Idxs);
+      GetElementPtrInst::getIndexedType(GEP.getSourceElementType(), Idxs);
   Assert(ElTy, "Invalid indices for GEP pointer type!", &GEP);
 
   Assert(GEP.getType()->getScalarType()->isPointerTy() &&

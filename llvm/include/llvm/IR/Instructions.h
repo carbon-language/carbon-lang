@@ -882,9 +882,9 @@ public:
   /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
-  static Type *getIndexedType(Type *Ptr, ArrayRef<Value *> IdxList);
-  static Type *getIndexedType(Type *Ptr, ArrayRef<Constant *> IdxList);
-  static Type *getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList);
+  static Type *getIndexedType(Type *Ty, ArrayRef<Value *> IdxList);
+  static Type *getIndexedType(Type *Ty, ArrayRef<Constant *> IdxList);
+  static Type *getIndexedType(Type *Ty, ArrayRef<uint64_t> IdxList);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
@@ -915,9 +915,12 @@ public:
   /// GetGEPReturnType - Returns the pointer type returned by the GEP
   /// instruction, which may be a vector of pointers.
   static Type *getGEPReturnType(Value *Ptr, ArrayRef<Value *> IdxList) {
-    Type *PtrTy = PointerType::get(checkGEPType(
-                                   getIndexedType(Ptr->getType(), IdxList)),
-                                   Ptr->getType()->getPointerAddressSpace());
+    Type *PtrTy =
+        PointerType::get(checkGEPType(getIndexedType(
+                             cast<PointerType>(Ptr->getType()->getScalarType())
+                                 ->getElementType(),
+                             IdxList)),
+                         Ptr->getType()->getPointerAddressSpace());
     // Vector GEP
     if (Ptr->getType()->isVectorTy()) {
       unsigned NumElem = cast<VectorType>(Ptr->getType())->getNumElements();

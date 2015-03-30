@@ -1258,11 +1258,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 /// pointer type.
 ///
 template <typename IndexTy>
-static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
-  PointerType *PTy = dyn_cast<PointerType>(Ptr->getScalarType());
-  if (!PTy) return nullptr;   // Type isn't a pointer type!
-  Type *Agg = PTy->getElementType();
-
+static Type *getIndexedTypeInternal(Type *Agg, ArrayRef<IndexTy> IdxList) {
   // Handle the special case of the empty set index set, which is always valid.
   if (IdxList.empty())
     return Agg;
@@ -1283,17 +1279,17 @@ static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
   return CurIdx == IdxList.size() ? Agg : nullptr;
 }
 
-Type *GetElementPtrInst::getIndexedType(Type *Ptr, ArrayRef<Value *> IdxList) {
-  return getIndexedTypeInternal(Ptr, IdxList);
+Type *GetElementPtrInst::getIndexedType(Type *Ty, ArrayRef<Value *> IdxList) {
+  return getIndexedTypeInternal(Ty, IdxList);
 }
 
-Type *GetElementPtrInst::getIndexedType(Type *Ptr,
+Type *GetElementPtrInst::getIndexedType(Type *Ty,
                                         ArrayRef<Constant *> IdxList) {
-  return getIndexedTypeInternal(Ptr, IdxList);
+  return getIndexedTypeInternal(Ty, IdxList);
 }
 
-Type *GetElementPtrInst::getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList) {
-  return getIndexedTypeInternal(Ptr, IdxList);
+Type *GetElementPtrInst::getIndexedType(Type *Ty, ArrayRef<uint64_t> IdxList) {
+  return getIndexedTypeInternal(Ty, IdxList);
 }
 
 /// hasAllZeroIndices - Return true if all of the indices of this GEP are

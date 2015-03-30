@@ -3251,7 +3251,8 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
     return Ops[0];
 
   // Compute the (pointer) type returned by the GEP instruction.
-  Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.slice(1));
+  Type *LastType =
+      GetElementPtrInst::getIndexedType(PtrTy->getElementType(), Ops.slice(1));
   Type *GEPTy = PointerType::get(LastType, AS);
   if (VectorType *VT = dyn_cast<VectorType>(Ops[0]->getType()))
     GEPTy = VectorType::get(GEPTy, VT->getNumElements());

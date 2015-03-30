@@ -2831,7 +2831,10 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
           !BasePointerType->getElementType()->isSized(&Visited))
         return Error(ID.Loc, "base element of getelementptr must be sized");
 
-      if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(), Indices))
+      if (!GetElementPtrInst::getIndexedType(
+              cast<PointerType>(Elts[0]->getType()->getScalarType())
+                  ->getElementType(),
+              Indices))
         return Error(ID.Loc, "invalid getelementptr indices");
       ID.ConstantVal = ConstantExpr::getGetElementPtr(Elts[0], Indices,
                                                       InBounds);
@@ -5523,7 +5526,9 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
       !BasePointerType->getElementType()->isSized(&Visited))
     return Error(Loc, "base element of getelementptr must be sized");
 
-  if (!GetElementPtrInst::getIndexedType(BaseType, Indices))
+  if (!GetElementPtrInst::getIndexedType(
+          cast<PointerType>(BaseType->getScalarType())->getElementType(),
+          Indices))
     return Error(Loc, "invalid getelementptr indices");
   Inst = GetElementPtrInst::Create(Ty, Ptr, Indices);
   if (InBounds)

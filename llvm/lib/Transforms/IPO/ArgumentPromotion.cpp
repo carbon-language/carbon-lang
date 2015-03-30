@@ -674,8 +674,9 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       for (ScalarizeTable::iterator SI = ArgIndices.begin(),
              E = ArgIndices.end(); SI != E; ++SI) {
         // not allowed to dereference ->begin() if size() is 0
-        Params.push_back(
-            GetElementPtrInst::getIndexedType(I->getType(), SI->second));
+        Params.push_back(GetElementPtrInst::getIndexedType(
+            cast<PointerType>(I->getType()->getScalarType())->getElementType(),
+            SI->second));
         assert(Params.back());
       }
 

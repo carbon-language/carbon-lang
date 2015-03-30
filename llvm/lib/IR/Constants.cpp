@@ -2010,7 +2010,8 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, ArrayRef<Value *> Idxs,
     return FC;          // Fold a few common cases.
 
   // Get the result type of the getelementptr!
-  Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), Idxs);
+  Type *Ty = GetElementPtrInst::getIndexedType(
+      cast<PointerType>(C->getType()->getScalarType())->getElementType(), Idxs);
   assert(Ty && "GEP indices invalid!");
   unsigned AS = C->getType()->getPointerAddressSpace();
   Type *ReqTy = Ty->getPointerTo(AS);
