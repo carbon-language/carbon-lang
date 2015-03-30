@@ -96,11 +96,23 @@ void Fuzzer::ShuffleAndMinimize() {
 size_t Fuzzer::RunOne(const Unit &U) {
   UnitStartTime = system_clock::now();
   TotalNumberOfRuns++;
+  size_t Res = 0;
   if (Options.UseFullCoverageSet)
-    return RunOneMaximizeFullCoverageSet(U);
-  if (Options.UseCoveragePairs)
-    return RunOneMaximizeCoveragePairs(U);
-  return RunOneMaximizeTotalCoverage(U);
+    Res = RunOneMaximizeFullCoverageSet(U);
+  else if (Options.UseCoveragePairs)
+    Res = RunOneMaximizeCoveragePairs(U);
+  else
+    Res = RunOneMaximizeTotalCoverage(U);
+  auto UnitStopTime = system_clock::now();
+  auto TimeOfUnit =
+      duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
+  if (TimeOfUnit > TimeOfLongestUnitInSeconds) {
+    TimeOfLongestUnitInSeconds = TimeOfUnit;
+    std::cerr << "Longest unit: " << TimeOfLongestUnitInSeconds
+              << " s:\n";
+    Print(U, "\n");
+  }
+  return Res;
 }
 
 static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {

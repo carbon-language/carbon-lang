@@ -114,6 +114,7 @@ class Fuzzer {
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
   static system_clock::time_point UnitStartTime;
+  long TimeOfLongestUnitInSeconds = 0;
 };
 
 };  // namespace fuzzer
