@@ -57,7 +57,8 @@ static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
   unsigned BytesRemaining = S.Size;
 
   if (StartPadding) {
-    dbgs() << "\n" << format("0x%016" PRIx64, LoadAddr & ~(ColsPerRow - 1)) << ":";
+    dbgs() << "\n" << format("0x%016" PRIx64,
+                             LoadAddr & ~(uint64_t)(ColsPerRow - 1)) << ":";
     while (StartPadding--)
       dbgs() << "   ";
   }
@@ -92,7 +93,7 @@ void RuntimeDyldImpl::resolveRelocations() {
     // entry provides the section to which the relocation will be applied.
     uint64_t Addr = Sections[i].LoadAddress;
     DEBUG(dbgs() << "Resolving relocations Section #" << i << "\t"
-                 << format("0x%x", Addr) << "\n");
+                 << format("%p", (uintptr_t)Addr) << "\n");
     DEBUG(dumpSectionMemory(Sections[i], "before relocations"));
     resolveRelocationList(Relocations[i], Addr);
     DEBUG(dumpSectionMemory(Sections[i], "after relocations"));
