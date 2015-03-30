@@ -466,7 +466,8 @@ static bool functionHasLines(Function *F) {
       if (isa<DbgInfoIntrinsic>(I)) continue;
 
       const DebugLoc &Loc = I->getDebugLoc();
-      if (Loc.isUnknown()) continue;
+      if (!Loc)
+        continue;
 
       // Artificial lines such as calls to the global constructors.
       if (Loc.getLine() == 0) continue;
@@ -536,14 +537,16 @@ void GCOVProfiler::emitProfileNotes() {
           if (isa<DbgInfoIntrinsic>(I)) continue;
 
           const DebugLoc &Loc = I->getDebugLoc();
-          if (Loc.isUnknown()) continue;
+          if (!Loc)
+            continue;
 
           // Artificial lines such as calls to the global constructors.
           if (Loc.getLine() == 0) continue;
 
           if (Line == Loc.getLine()) continue;
           Line = Loc.getLine();
-          if (SP != getDISubprogram(Loc.getScope(*Ctx))) continue;
+          if (SP != getDISubprogram(Loc.getScope()))
+            continue;
 
           GCOVLines &Lines = Block.getFile(SP.getFilename());
           Lines.addLine(Loc.getLine());

@@ -464,23 +464,20 @@ public:
   /// cannot find a terminating instruction with location information,
   /// it returns an unknown location.
   DebugLoc getStartLoc() const {
-    DebugLoc StartLoc;
     BasicBlock *HeadBB;
 
     // Try the pre-header first.
-    if ((HeadBB = getLoopPreheader()) != nullptr) {
-      StartLoc = HeadBB->getTerminator()->getDebugLoc();
-      if (!StartLoc.isUnknown())
-        return StartLoc;
-    }
+    if ((HeadBB = getLoopPreheader()) != nullptr)
+      if (DebugLoc DL = HeadBB->getTerminator()->getDebugLoc())
+        return DL;
 
     // If we have no pre-header or there are no instructions with debug
     // info in it, try the header.
     HeadBB = getHeader();
     if (HeadBB)
-      StartLoc = HeadBB->getTerminator()->getDebugLoc();
+      return HeadBB->getTerminator()->getDebugLoc();
 
-    return StartLoc;
+    return DebugLoc();
   }
 
 private:

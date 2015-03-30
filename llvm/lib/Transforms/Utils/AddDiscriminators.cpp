@@ -174,16 +174,16 @@ bool AddDiscriminators::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *B = I;
     TerminatorInst *Last = B->getTerminator();
-    DebugLoc LastLoc = Last->getDebugLoc();
-    if (LastLoc.isUnknown()) continue;
-    DILocation LastDIL(LastLoc.getAsMDNode(Ctx));
+    DILocation LastDIL = Last->getDebugLoc().get();
+    if (!LastDIL)
+      continue;
 
     for (unsigned I = 0; I < Last->getNumSuccessors(); ++I) {
       BasicBlock *Succ = Last->getSuccessor(I);
       Instruction *First = Succ->getFirstNonPHIOrDbgOrLifetime();
-      DebugLoc FirstLoc = First->getDebugLoc();
-      if (FirstLoc.isUnknown()) continue;
-      DILocation FirstDIL(FirstLoc.getAsMDNode(Ctx));
+      DILocation FirstDIL = First->getDebugLoc().get();
+      if (!FirstDIL)
+        continue;
 
       // If the first instruction (First) of Succ is at the same file
       // location as B's last instruction (Last), add a new
@@ -199,13 +199,14 @@ bool AddDiscriminators::runOnFunction(Function &F) {
         DILexicalBlockFile NewScope =
             Builder.createLexicalBlockFile(Scope, File, Discriminator);
         DILocation NewDIL = FirstDIL.copyWithNewScope(Ctx, NewScope);
-        DebugLoc newDebugLoc = DebugLoc::getFromDILocation(NewDIL);
+        DebugLoc newDebugLoc = NewDIL.get();
 
         // Attach this new debug location to First and every
         // instruction following First that shares the same location.
         for (BasicBlock::iterator I1(*First), E1 = Succ->end(); I1 != E1;
              ++I1) {
-          if (I1->getDebugLoc() != FirstLoc) break;
+          if (I1->getDebugLoc().get() != FirstDIL)
+            break;
           I1->setDebugLoc(newDebugLoc);
           DEBUG(dbgs() << NewDIL.getFilename() << ":" << NewDIL.getLineNumber()
                        << ":" << NewDIL.getColumnNumber() << ":"

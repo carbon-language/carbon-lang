@@ -835,11 +835,10 @@ updateInlinedAtInfo(DebugLoc DL, MDLocation *InlinedAtNode,
                     DenseMap<const MDLocation *, MDLocation *> &IANodes) {
   SmallVector<MDLocation*, 3> InlinedAtLocations;
   MDLocation *Last = InlinedAtNode;
-  DebugLoc CurInlinedAt = DL;
+  MDLocation *CurInlinedAt = DL;
 
   // Gather all the inlined-at nodes
-  while (MDLocation *IA =
-             cast_or_null<MDLocation>(CurInlinedAt.getInlinedAt(Ctx))) {
+  while (MDLocation *IA = CurInlinedAt->getInlinedAt()) {
     // Skip any we've already built nodes for
     if (MDLocation *Found = IANodes[IA]) {
       Last = Found;
@@ -847,7 +846,7 @@ updateInlinedAtInfo(DebugLoc DL, MDLocation *InlinedAtNode,
     }
 
     InlinedAtLocations.push_back(IA);
-    CurInlinedAt = DebugLoc::getFromDILocation(IA);
+    CurInlinedAt = IA;
   }
 
   // Starting from the top, rebuild the nodes to point to the new inlined-at
@@ -862,7 +861,7 @@ updateInlinedAtInfo(DebugLoc DL, MDLocation *InlinedAtNode,
 
   // And finally create the normal location for this instruction, referring to
   // the new inlined-at chain.
-  return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(Ctx), Last);
+  return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(), Last);
 }
 
 /// Update inlined instructions' line numbers to
@@ -870,11 +869,11 @@ updateInlinedAtInfo(DebugLoc DL, MDLocation *InlinedAtNode,
 static void fixupLineNumbers(Function *Fn, Function::iterator FI,
                              Instruction *TheCall) {
   DebugLoc TheCallDL = TheCall->getDebugLoc();
-  if (TheCallDL.isUnknown())
+  if (!TheCallDL)
     return;
 
   auto &Ctx = Fn->getContext();
-  auto *InlinedAtNode = cast<MDLocation>(TheCallDL.getAsMDNode(Ctx));
+  MDLocation *InlinedAtNode = TheCallDL;
 
   // Create a unique call site, not to be confused with any other call from the
   // same location.
@@ -891,7 +890,7 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
          BI != BE; ++BI) {
       DebugLoc DL = BI->getDebugLoc();
-      if (DL.isUnknown()) {
+      if (!DL) {
         // If the inlined instruction has no line number, make it look as if it
         // originates from the call location. This is important for
         // ((__always_inline__, __nodebug__)) functions which must use caller
@@ -907,13 +906,13 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
         BI->setDebugLoc(updateInlinedAtInfo(DL, InlinedAtNode, BI->getContext(), IANodes));
         if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(BI)) {
           LLVMContext &Ctx = BI->getContext();
-          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt(Ctx);
+          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt();
           DVI->setOperand(2, MetadataAsValue::get(
                                  Ctx, createInlinedVariable(DVI->getVariable(),
                                                             InlinedAt, Ctx)));
         } else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI)) {
           LLVMContext &Ctx = BI->getContext();
-          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt(Ctx);
+          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt();
           DDI->setOperand(1, MetadataAsValue::get(
                                  Ctx, createInlinedVariable(DDI->getVariable(),
                                                             InlinedAt, Ctx)));

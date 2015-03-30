@@ -504,8 +504,7 @@ static std::string getDebugLocString(const Loop *L) {
   std::string Result;
   if (L) {
     raw_string_ostream OS(Result);
-    const DebugLoc LoopDbgLoc = L->getStartLoc();
-    if (!LoopDbgLoc.isUnknown())
+    if (const DebugLoc LoopDbgLoc = L->getStartLoc())
       LoopDbgLoc.print(OS);
     else
       // Just print the module name.
