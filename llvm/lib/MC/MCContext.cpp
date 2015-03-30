@@ -291,16 +291,18 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                              unsigned Flags, unsigned EntrySize,
                                              StringRef Group, bool Unique,
                                              const char *BeginSymName) {
+  MCSymbol *GroupSym = nullptr;
+  if (!Group.empty()) {
+    GroupSym = GetOrCreateSymbol(Group);
+    Group = GroupSym->getName();
+  }
+
   // Do the lookup, if we have a hit, return it.
   auto IterBool = ELFUniquingMap.insert(
       std::make_pair(ELFSectionKey{Section, Group}, nullptr));
   auto &Entry = *IterBool.first;
   if (!IterBool.second && !Unique)
     return Entry.second;
-
-  MCSymbol *GroupSym = nullptr;
-  if (!Group.empty())
-    GroupSym = GetOrCreateSymbol(Group);
 
   StringRef CachedName = Entry.first.SectionName;
 
@@ -340,17 +342,18 @@ const MCSectionCOFF *
 MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
                           SectionKind Kind, StringRef COMDATSymName,
                           int Selection, const char *BeginSymName) {
-  // Do the lookup, if we have a hit, return it.
+  MCSymbol *COMDATSymbol = nullptr;
+  if (!COMDATSymName.empty()) {
+    COMDATSymbol = GetOrCreateSymbol(COMDATSymName);
+    COMDATSymName = COMDATSymbol->getName();
+  }
 
+  // Do the lookup, if we have a hit, return it.
   COFFSectionKey T{Section, COMDATSymName, Selection};
   auto IterBool = COFFUniquingMap.insert(std::make_pair(T, nullptr));
   auto Iter = IterBool.first;
   if (!IterBool.second)
     return Iter->second;
-
-  MCSymbol *COMDATSymbol = nullptr;
-  if (!COMDATSymName.empty())
-    COMDATSymbol = GetOrCreateSymbol(COMDATSymName);
 
   MCSymbol *Begin = nullptr;
   if (BeginSymName)

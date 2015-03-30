@@ -164,7 +164,7 @@ namespace llvm {
 
     struct ELFSectionKey {
       std::string SectionName;
-      std::string GroupName;
+      StringRef GroupName;
       ELFSectionKey(StringRef SectionName, StringRef GroupName)
           : SectionName(SectionName), GroupName(GroupName) {}
       bool operator<(const ELFSectionKey &Other) const {
@@ -176,7 +176,7 @@ namespace llvm {
 
     struct COFFSectionKey {
       std::string SectionName;
-      std::string GroupName;
+      StringRef GroupName;
       int SelectionKey;
       COFFSectionKey(StringRef SectionName, StringRef GroupName,
                      int SelectionKey)
