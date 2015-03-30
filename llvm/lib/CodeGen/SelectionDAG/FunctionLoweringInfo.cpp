@@ -317,6 +317,7 @@ void WinEHNumbering::createUnwindMapEntry(int ToState, ActionHandler *AH) {
 }
 
 static void print_name(const Value *V) {
+#ifndef NDEBUG
   if (!V) {
     DEBUG(dbgs() << "null");
     return;
@@ -326,6 +327,7 @@ static void print_name(const Value *V) {
     DEBUG(dbgs() << F->getName());
   else
     DEBUG(V->dump());
+#endif
 }
 
 void WinEHNumbering::proccessCallSite(ArrayRef<ActionHandler *> Actions,
