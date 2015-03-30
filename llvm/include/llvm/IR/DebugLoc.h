@@ -58,10 +58,23 @@ namespace llvm {
     /// IR.
     explicit DebugLoc(MDNode *N);
 
+    /// \brief Get the underlying \a MDLocation.
+    ///
+    /// \pre !*this or \c isa<MDLocation>(getAsMDNode()).
+    /// @{
     MDLocation *get() const;
     operator MDLocation *() const { return get(); }
     MDLocation *operator->() const { return get(); }
     MDLocation &operator*() const { return *get(); }
+    /// @}
+
+    /// \brief Check for null.
+    ///
+    /// Check for null in a way that is safe with broken debug info.  Unlike
+    /// the conversion to \c MDLocation, this doesn't require that \c Loc is of
+    /// the right type.  Important for cases like \a llvm::StripDebugInfo() and
+    /// \a Instruction::hasMetadata().
+    explicit operator bool() const { return Loc; }
 
     /// \brief Check whether this has a trivial destructor.
     bool hasTrivialDestructor() const { return Loc.hasTrivialDestructor(); }

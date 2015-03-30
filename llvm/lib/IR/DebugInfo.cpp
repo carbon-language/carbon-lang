@@ -343,8 +343,7 @@ bool DISubprogram::Verify() const {
   if (auto *F = getFunction()) {
     for (auto &BB : *F) {
       for (auto &I : BB) {
-        MDLocation *DL =
-            cast_or_null<MDLocation>(I.getDebugLoc().getAsMDNode());
+        MDLocation *DL = I.getDebugLoc();
         if (!DL)
           continue;
 
@@ -585,12 +584,12 @@ DISubprogram llvm::getDISubprogram(const Function *F) {
   // We look for the first instr that has a debug annotation leading back to F.
   for (auto &BB : *F) {
     auto Inst = std::find_if(BB.begin(), BB.end(), [](const Instruction &Inst) {
-      return !Inst.getDebugLoc().isUnknown();
+      return Inst.getDebugLoc();
     });
     if (Inst == BB.end())
       continue;
     DebugLoc DLoc = Inst->getDebugLoc();
-    const MDNode *Scope = DLoc.getScopeNode();
+    const MDNode *Scope = DLoc.getInlinedAtScope();
     DISubprogram Subprogram = getDISubprogram(Scope);
     return Subprogram.describes(F) ? Subprogram : DISubprogram();
   }
@@ -889,10 +888,10 @@ void DIDescriptor::print(raw_ostream &OS) const {
 
 static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
                           const LLVMContext &Ctx) {
-  if (DL.isUnknown())
+  if (!DL)
     return;
 
-  DIScope Scope(DL.getScope(Ctx));
+  DIScope Scope(DL.getScope());
   assert(Scope.isScope() && "Scope of a DebugLoc should be a DIScope.");
   // Omit the directory, because it's likely to be long and uninteresting.
   CommentOS << Scope.getFilename();
@@ -900,8 +899,8 @@ static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
   if (DL.getCol() != 0)
     CommentOS << ':' << DL.getCol();
 
-  DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(DL.getInlinedAt(Ctx));
-  if (InlinedAtDL.isUnknown())
+  DebugLoc InlinedAtDL = DL.getInlinedAt();
+  if (!InlinedAtDL)
     return;
 
   CommentOS << " @[ ";
@@ -914,9 +913,8 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
   StringRef Res = getName();
   if (!Res.empty())
     OS << Res << "," << getLineNumber();
-  if (MDNode *InlinedAt = getInlinedAt()) {
-    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(InlinedAt);
-    if (!InlinedAtDL.isUnknown()) {
+  if (auto *InlinedAt = get()->getInlinedAt()) {
+    if (DebugLoc InlinedAtDL = InlinedAt) {
       OS << " @[";
       printDebugLoc(InlinedAtDL, OS, Ctx);
       OS << "]";
@@ -985,7 +983,7 @@ bool llvm::StripDebugInfo(Module &M) {
          ++FI)
       for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
            ++BI) {
-        if (!BI->getDebugLoc().isUnknown()) {
+        if (BI->getDebugLoc()) {
           Changed = true;
           BI->setDebugLoc(DebugLoc());
         }

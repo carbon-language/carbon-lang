@@ -1035,7 +1035,7 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
 
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg) {
-    DbgLoc = DebugLoc::getFromDILocation(Node);
+    DbgLoc = DebugLoc(Node);
     return;
   }
   
@@ -1114,7 +1114,7 @@ void Instruction::getAllMetadataImpl(
   Result.clear();
   
   // Handle 'dbg' as a special case since it is not stored in the hash table.
-  if (!DbgLoc.isUnknown()) {
+  if (DbgLoc) {
     Result.push_back(
         std::make_pair((unsigned)LLVMContext::MD_dbg, DbgLoc.getAsMDNode()));
     if (!hasMetadataHashEntry()) return;

@@ -373,12 +373,10 @@ ValueEnumerator::ValueEnumerator(const Module &M)
         for (unsigned i = 0, e = MDs.size(); i != e; ++i)
           EnumerateMetadata(MDs[i].second);
 
-        if (!I.getDebugLoc().isUnknown()) {
-          MDNode *Scope, *IA;
-          I.getDebugLoc().getScopeAndInlinedAt(Scope, IA, I.getContext());
-          if (Scope) EnumerateMetadata(Scope);
-          if (IA) EnumerateMetadata(IA);
-        }
+        // Don't enumerate the location directly -- it has a special record
+        // type -- but enumerate its operands.
+        if (MDLocation *L = I.getDebugLoc())
+          EnumerateMDNodeOperands(L);
       }
   }
 

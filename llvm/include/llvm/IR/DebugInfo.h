@@ -1207,6 +1207,7 @@ public:
 class DILocation : public DIDescriptor {
 public:
   explicit DILocation(const MDNode *N) : DIDescriptor(N) {}
+  DILocation(const MDLocation *N) : DIDescriptor(N) {}
 
   MDLocation *get() const {
     return cast_or_null<MDLocation>(DIDescriptor::get());

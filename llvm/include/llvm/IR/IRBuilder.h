@@ -123,7 +123,7 @@ public:
   /// \brief If this builder has a current debug location, set it on the
   /// specified instruction.
   void SetInstDebugLocation(Instruction *I) const {
-    if (!CurDbgLocation.isUnknown())
+    if (CurDbgLocation)
       I->setDebugLoc(CurDbgLocation);
   }
 

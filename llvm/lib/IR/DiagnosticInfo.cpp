@@ -129,13 +129,14 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
 }
 
 bool DiagnosticInfoOptimizationBase::isLocationAvailable() const {
-  return !getDebugLoc().isUnknown();
+  return getDebugLoc();
 }
 
 void DiagnosticInfoOptimizationBase::getLocation(StringRef *Filename,
                                                  unsigned *Line,
                                                  unsigned *Column) const {
-  DILocation DIL(getDebugLoc().getAsMDNode(getFunction().getContext()));
+  MDLocation *L = getDebugLoc();
+  DILocation DIL = L;
   *Filename = DIL.getFilename();
   *Line = DIL.getLineNumber();
   *Column = DIL.getColumnNumber();

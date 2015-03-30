@@ -134,9 +134,7 @@ public:
 
   /// hasMetadata() - Return true if this instruction has any metadata attached
   /// to it.
-  bool hasMetadata() const {
-    return !DbgLoc.isUnknown() || hasMetadataHashEntry();
-  }
+  bool hasMetadata() const { return DbgLoc || hasMetadataHashEntry(); }
 
   /// hasMetadataOtherThanDebugLoc - Return true if this instruction has
   /// metadata attached to it other than a debug location.
