@@ -46,10 +46,6 @@ def SM53 : SubtargetFeature<"sm_53", "SmVersion", "53",
                             "Target SM 5.3">;
 
 // PTX Versions
-def PTX30 : SubtargetFeature<"ptx30", "PTXVersion", "30",
-                             "Use PTX version 3.0">;
-def PTX31 : SubtargetFeature<"ptx31", "PTXVersion", "31",
-                             "Use PTX version 3.1">;
 def PTX32 : SubtargetFeature<"ptx32", "PTXVersion", "32",
                              "Use PTX version 3.2">;
 def PTX40 : SubtargetFeature<"ptx40", "PTXVersion", "40",
@@ -69,12 +65,12 @@ class Proc<string Name, list<SubtargetFeature> Features>
 def : Proc<"sm_20", [SM20]>;
 def : Proc<"sm_21", [SM21]>;
 def : Proc<"sm_30", [SM30]>;
-def : Proc<"sm_32", [SM32]>;
+def : Proc<"sm_32", [SM32, PTX40]>;
 def : Proc<"sm_35", [SM35]>;
-def : Proc<"sm_37", [SM37]>;
-def : Proc<"sm_50", [SM50]>;
-def : Proc<"sm_52", [SM52]>;
-def : Proc<"sm_53", [SM53]>;
+def : Proc<"sm_37", [SM37, PTX41]>;
+def : Proc<"sm_50", [SM50, PTX40]>;
+def : Proc<"sm_52", [SM52, PTX41]>;
+def : Proc<"sm_53", [SM53, PTX42]>;
 
 
 def NVPTXInstrInfo : InstrInfo {
