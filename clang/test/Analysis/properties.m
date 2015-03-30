@@ -671,6 +671,14 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   }
 }
 
+// rdar://problem/20335433
+- (void)retainIvarAndInvalidateSelf {
+  extern void invalidate(id);
+  [_unownedProp retain];
+  invalidate(self);
+  [_unownedProp release]; // no-warning
+}
+
 @end
 #endif // non-ARC
 
