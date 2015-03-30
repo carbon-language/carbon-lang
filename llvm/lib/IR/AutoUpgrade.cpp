@@ -745,7 +745,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
   }
 
-  llvm::StringRef Name = CI->getName();
+  std::string Name = CI->getName();
   if (!Name.empty())
     CI->setName(Name + ".old");
 
