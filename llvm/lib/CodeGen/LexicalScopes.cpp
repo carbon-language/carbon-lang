@@ -59,10 +59,10 @@ void LexicalScopes::extractLexicalScopes(
   for (const auto &MBB : *MF) {
     const MachineInstr *RangeBeginMI = nullptr;
     const MachineInstr *PrevMI = nullptr;
-    DebugLoc PrevDL;
+    const MDLocation *PrevDL = nullptr;
     for (const auto &MInsn : MBB) {
       // Check if instruction has valid location information.
-      const DebugLoc &MIDL = MInsn.getDebugLoc();
+      const MDLocation *MIDL = MInsn.getDebugLoc();
       if (!MIDL) {
         PrevMI = &MInsn;
         continue;
@@ -314,12 +314,10 @@ bool LexicalScopes::dominates(const MDLocation *DL, MachineBasicBlock *MBB) {
   bool Result = false;
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
        ++I) {
-    DebugLoc IDL = I->getDebugLoc();
-    if (!IDL)
-      continue;
-    if (LexicalScope *IScope = getOrCreateLexicalScope(IDL))
-      if (Scope->dominates(IScope))
-        return true;
+    if (const MDLocation *IDL = I->getDebugLoc())
+      if (LexicalScope *IScope = getOrCreateLexicalScope(IDL))
+        if (Scope->dominates(IScope))
+          return true;
   }
   return Result;
 }
