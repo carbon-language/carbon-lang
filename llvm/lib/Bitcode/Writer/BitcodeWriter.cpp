@@ -2106,24 +2106,27 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
       // If the instruction has a debug location, emit it.
       DebugLoc DL = I->getDebugLoc();
       if (DL.isUnknown()) {
-        // nothing todo.
-      } else if (DL == LastDL) {
+        continue;
+      }
+
+      if (DL == LastDL) {
         // Just repeat the same debug loc as last time.
         Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC_AGAIN, Vals);
-      } else {
-        MDNode *Scope, *IA;
-        DL.getScopeAndInlinedAt(Scope, IA, I->getContext());
-        assert(Scope && "Expected valid scope");
-
-        Vals.push_back(DL.getLine());
-        Vals.push_back(DL.getCol());
-        Vals.push_back(VE.getMetadataOrNullID(Scope));
-        Vals.push_back(VE.getMetadataOrNullID(IA));
-        Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC, Vals);
-        Vals.clear();
-
-        LastDL = DL;
+        continue;
       }
+
+      MDNode *Scope, *IA;
+      DL.getScopeAndInlinedAt(Scope, IA, I->getContext());
+      assert(Scope && "Expected valid scope");
+
+      Vals.push_back(DL.getLine());
+      Vals.push_back(DL.getCol());
+      Vals.push_back(VE.getMetadataOrNullID(Scope));
+      Vals.push_back(VE.getMetadataOrNullID(IA));
+      Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC, Vals);
+      Vals.clear();
+
+      LastDL = DL;
     }
 
   // Emit names for all the instructions etc.
