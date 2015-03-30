@@ -30,13 +30,13 @@ public:
         _runtimeFile(new RuntimeFile<ELFT>(ctx, "C runtime")) {}
 
 protected:
-  virtual void buildDynamicSymbolTable(const File &file);
-  virtual void addDefaultAtoms();
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
-  virtual void finalizeDefaultAtomValues();
-  virtual void createDefaultSections();
+  void buildDynamicSymbolTable(const File &file) override;
+  void addDefaultAtoms() override;
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void finalizeDefaultAtomValues() override;
+  void createDefaultSections() override;
 
-  virtual bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
+  bool isNeededTagRequired(const SharedLibraryAtom *sla) const override {
     return this->_layout.isCopied(sla);
   }
 
