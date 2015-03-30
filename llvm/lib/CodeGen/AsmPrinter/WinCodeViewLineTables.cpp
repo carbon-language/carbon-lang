@@ -81,7 +81,7 @@ StringRef WinCodeViewLineTables::getFullFilepath(const MDNode *S) {
 
 void WinCodeViewLineTables::maybeRecordLocation(DebugLoc DL,
                                                 const MachineFunction *MF) {
-  const MDNode *Scope = DL.getScope(MF->getFunction()->getContext());
+  const MDNode *Scope = DL.getScope();
   if (!Scope)
     return;
   StringRef Filename = getFullFilepath(Scope);
@@ -330,7 +330,7 @@ void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
   DebugLoc PrologEndLoc;
   bool EmptyPrologue = true;
   for (const auto &MBB : *MF) {
-    if (!PrologEndLoc.isUnknown())
+    if (PrologEndLoc)
       break;
     for (const auto &MI : MBB) {
       if (MI.isDebugValue())
@@ -339,8 +339,7 @@ void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
       // First known non-DBG_VALUE and non-frame setup location marks
       // the beginning of the function body.
       // FIXME: do we need the first subcondition?
-      if (!MI.getFlag(MachineInstr::FrameSetup) &&
-          (!MI.getDebugLoc().isUnknown())) {
+      if (!MI.getFlag(MachineInstr::FrameSetup) && MI.getDebugLoc()) {
         PrologEndLoc = MI.getDebugLoc();
         break;
       }
@@ -348,9 +347,8 @@ void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
     }
   }
   // Record beginning of function if we have a non-empty prologue.
-  if (!PrologEndLoc.isUnknown() && !EmptyPrologue) {
-    DebugLoc FnStartDL =
-        PrologEndLoc.getFnDebugLoc(MF->getFunction()->getContext());
+  if (PrologEndLoc && !EmptyPrologue) {
+    DebugLoc FnStartDL = PrologEndLoc.getFnDebugLoc();
     maybeRecordLocation(FnStartDL, MF);
   }
 }
@@ -377,7 +375,7 @@ void WinCodeViewLineTables::beginInstruction(const MachineInstr *MI) {
   if (!Asm || MI->isDebugValue() || MI->getFlag(MachineInstr::FrameSetup))
     return;
   DebugLoc DL = MI->getDebugLoc();
-  if (DL == PrevInstLoc || DL.isUnknown())
+  if (DL == PrevInstLoc || !DL)
     return;
   maybeRecordLocation(DL, Asm->MF);
 }

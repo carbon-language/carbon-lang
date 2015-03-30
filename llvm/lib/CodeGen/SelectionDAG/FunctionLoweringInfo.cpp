@@ -182,9 +182,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
         DIVariable DIVar(DI->getVariable());
         assert((!DIVar || DIVar.isVariable()) &&
           "Variable in DbgDeclareInst should be either null or a DIVariable.");
-        if (MMI.hasDebugInfo() &&
-            DIVar &&
-            !DI->getDebugLoc().isUnknown()) {
+        if (MMI.hasDebugInfo() && DIVar && DI->getDebugLoc()) {
           // Don't handle byval struct arguments or VLAs, for example.
           // Non-byval arguments are handled here (they refer to the stack
           // temporary alloca at this point).

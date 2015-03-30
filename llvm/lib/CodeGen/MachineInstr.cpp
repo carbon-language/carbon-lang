@@ -881,8 +881,8 @@ bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
   }
   // If DebugLoc does not match then two dbg.values are not identical.
   if (isDebugValue())
-    if (!getDebugLoc().isUnknown() && !Other->getDebugLoc().isUnknown()
-        && getDebugLoc() != Other->getDebugLoc())
+    if (getDebugLoc() && Other->getDebugLoc() &&
+        getDebugLoc() != Other->getDebugLoc())
       return false;
   return true;
 }
@@ -1715,9 +1715,9 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
     if (!HaveSemi) OS << ";";
     DIVariable DV(getOperand(e - 1).getMetadata());
     OS << " line no:" <<  DV.getLineNumber();
-    if (MDNode *InlinedAt = DV.getInlinedAt()) {
-      DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(InlinedAt);
-      if (!InlinedAtDL.isUnknown() && MF) {
+    if (auto *InlinedAt = DV.getInlinedAt()) {
+      DebugLoc InlinedAtDL(InlinedAt);
+      if (InlinedAtDL && MF) {
         OS << " inlined @[ ";
 	InlinedAtDL.print(OS);
         OS << " ]";
@@ -1725,7 +1725,7 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
     }
     if (isIndirectDebugValue())
       OS << " indirect";
-  } else if (!debugLoc.isUnknown() && MF) {
+  } else if (debugLoc && MF) {
     if (!HaveSemi) OS << ";";
     OS << " dbg:";
     debugLoc.print(OS);

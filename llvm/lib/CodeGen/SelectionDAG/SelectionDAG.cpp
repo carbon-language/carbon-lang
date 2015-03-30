@@ -5574,8 +5574,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
 /// For IROrder, we keep the smaller of the two
 SDNode *SelectionDAG::UpdadeSDLocOnMergedSDNode(SDNode *N, SDLoc OLoc) {
   DebugLoc NLoc = N->getDebugLoc();
-  if (!(NLoc.isUnknown()) && (OptLevel == CodeGenOpt::None) &&
-    (OLoc.getDebugLoc() != NLoc)) {
+  if (NLoc && OptLevel == CodeGenOpt::None && OLoc.getDebugLoc() != NLoc) {
     N->setDebugLoc(DebugLoc());
   }
   unsigned Order = std::min(N->getIROrder(), OLoc.getIROrder());

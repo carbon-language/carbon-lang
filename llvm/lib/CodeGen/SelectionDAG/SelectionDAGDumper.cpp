@@ -523,22 +523,16 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   if (!G)
     return;
 
-  DebugLoc dl = getDebugLoc();
-  if (dl.isUnknown())
+  MDLocation *L = getDebugLoc();
+  if (!L)
     return;
 
-  DIScope Scope(
-      dl.getScope(G->getMachineFunction().getFunction()->getContext()));
-  OS << " dbg:";
-  assert((!Scope || Scope.isScope()) &&
-         "Scope of a DebugLoc should be null or a DIScope.");
-  // Omit the directory, since it's usually long and uninteresting.
-  if (Scope)
+  if (DIScope Scope = L->getScope())
     OS << Scope.getFilename();
   else
     OS << "<unknown>";
-  OS << ':' << dl.getLine();
-  if (unsigned C = dl.getCol())
+  OS << ':' << L->getLine();
+  if (unsigned C = L->getColumn())
     OS << ':' << C;
 }
 

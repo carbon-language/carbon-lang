@@ -62,8 +62,8 @@ void LexicalScopes::extractLexicalScopes(
     DebugLoc PrevDL;
     for (const auto &MInsn : MBB) {
       // Check if instruction has valid location information.
-      const DebugLoc MIDL = MInsn.getDebugLoc();
-      if (MIDL.isUnknown()) {
+      const DebugLoc &MIDL = MInsn.getDebugLoc();
+      if (!MIDL) {
         PrevMI = &MInsn;
         continue;
       }
@@ -96,7 +96,7 @@ void LexicalScopes::extractLexicalScopes(
     }
 
     // Create last instruction range.
-    if (RangeBeginMI && PrevMI && !PrevDL.isUnknown()) {
+    if (RangeBeginMI && PrevMI && PrevDL) {
       InsnRange R(RangeBeginMI, PrevMI);
       MIRanges.push_back(R);
       MI2ScopeMap[RangeBeginMI] = getOrCreateLexicalScope(PrevDL);
@@ -107,9 +107,7 @@ void LexicalScopes::extractLexicalScopes(
 /// findLexicalScope - Find lexical scope, either regular or inlined, for the
 /// given DebugLoc. Return NULL if not found.
 LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
-  MDNode *Scope = nullptr;
-  MDNode *IA = nullptr;
-  DL.getScopeAndInlinedAt(Scope, IA, MF->getFunction()->getContext());
+  auto *Scope = DL.getScope();
   if (!Scope)
     return nullptr;
 
@@ -119,7 +117,7 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
   if (D.isLexicalBlockFile())
     Scope = DILexicalBlockFile(Scope).getScope();
 
-  if (IA) {
+  if (auto *IA = DL.getInlinedAt()) {
     auto I = InlinedLexicalScopeMap.find(std::make_pair(Scope, IA));
     return I != InlinedLexicalScopeMap.end() ? &I->second : nullptr;
   }
@@ -129,13 +127,11 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
 /// not available then create new lexical scope.
 LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
-  if (DL.isUnknown())
+  if (!DL)
     return nullptr;
-  MDNode *Scope = nullptr;
-  MDNode *InlinedAt = nullptr;
-  DL.getScopeAndInlinedAt(Scope, InlinedAt, MF->getFunction()->getContext());
 
-  if (InlinedAt) {
+  MDNode *Scope = DL.getScope();
+  if (auto *InlinedAt = DL.getInlinedAt()) {
     // Create an abstract scope for inlined function.
     getOrCreateAbstractScope(Scope);
     // Create an inlined scope for inlined function.
@@ -186,7 +182,7 @@ LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *ScopeNode,
   LexicalScope *Parent;
   DILexicalBlock Scope(ScopeNode);
   if (Scope.isSubprogram())
-    Parent = getOrCreateLexicalScope(DebugLoc::getFromDILocation(InlinedAt));
+    Parent = getOrCreateLexicalScope(DebugLoc(InlinedAt));
   else
     Parent = getOrCreateInlinedScope(Scope.getContext(), InlinedAt);
 
@@ -316,7 +312,7 @@ bool LexicalScopes::dominates(DebugLoc DL, MachineBasicBlock *MBB) {
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
        ++I) {
     DebugLoc IDL = I->getDebugLoc();
-    if (IDL.isUnknown())
+    if (!IDL)
       continue;
     if (LexicalScope *IScope = getOrCreateLexicalScope(IDL))
       if (Scope->dominates(IScope))

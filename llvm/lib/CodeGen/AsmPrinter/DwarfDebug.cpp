@@ -972,7 +972,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   if (!MI->isDebugValue()) {
     DebugLoc DL = MI->getDebugLoc();
     if (DL != PrevInstLoc) {
-      if (!DL.isUnknown()) {
+      if (DL) {
         unsigned Flags = 0;
         PrevInstLoc = DL;
         if (DL == PrologEndLoc) {
@@ -984,7 +984,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
             Asm->OutStreamer.getContext().getCurrentDwarfLoc().getLine())
           Flags |= DWARF2_FLAG_IS_STMT;
 
-        const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
+        const MDNode *Scope = DL.getScope();
         recordSourceLine(DL.getLine(), DL.getCol(), Scope, Flags);
       } else if (UnknownLocations) {
         PrevInstLoc = DL;
@@ -1072,7 +1072,7 @@ static DebugLoc findPrologueEndLoc(const MachineFunction *MF) {
   for (const auto &MBB : *MF)
     for (const auto &MI : MBB)
       if (!MI.isDebugValue() && !MI.getFlag(MachineInstr::FrameSetup) &&
-          !MI.getDebugLoc().isUnknown()) {
+          MI.getDebugLoc()) {
         // Did the target forget to set the FrameSetup flag for CFI insns?
         assert(!MI.isCFIInstruction() &&
                "First non-frame-setup instruction is a CFI instruction.");
@@ -1168,15 +1168,13 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   // Record beginning of function.
   PrologEndLoc = findPrologueEndLoc(MF);
-  if (!PrologEndLoc.isUnknown()) {
-    DebugLoc FnStartDL =
-        PrologEndLoc.getFnDebugLoc(MF->getFunction()->getContext());
+  if (PrologEndLoc) {
+    DebugLoc FnStartDL = PrologEndLoc.getFnDebugLoc();
 
     // We'd like to list the prologue as "not statements" but GDB behaves
     // poorly if we do that. Revisit this with caution/GDB (7.5+) testing.
     recordSourceLine(FnStartDL.getLine(), FnStartDL.getCol(),
-                     FnStartDL.getScope(MF->getFunction()->getContext()),
-                     DWARF2_FLAG_IS_STMT);
+                     FnStartDL.getScope(), DWARF2_FLAG_IS_STMT);
   }
 }
 

@@ -118,7 +118,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
 
   DebugLoc curLoc = MI.getDebugLoc();
 
-  if (prevDebugLoc.isUnknown() && curLoc.isUnknown())
+  if (!prevDebugLoc && !curLoc)
     return;
 
   if (prevDebugLoc == curLoc)
@@ -126,14 +126,10 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
 
   prevDebugLoc = curLoc;
 
-  if (curLoc.isUnknown())
+  if (!curLoc)
     return;
 
-  const MachineFunction *MF = MI.getParent()->getParent();
-  //const TargetMachine &TM = MF->getTarget();
-
-  const LLVMContext &ctx = MF->getFunction()->getContext();
-  DIScope Scope(curLoc.getScope(ctx));
+  DIScope Scope(curLoc.getScope());
 
   assert((!Scope || Scope.isScope()) &&
     "Scope of a DebugLoc should be null or a DIScope.");
