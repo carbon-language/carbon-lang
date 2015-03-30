@@ -44,6 +44,11 @@ static cl::opt<bool>
     PollyEnabled("polly", cl::desc("Enable the polly optimizer (only at -O3)"),
                  cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+static cl::opt<bool> PollyDetectOnly(
+    "polly-only-scop-detection",
+    cl::desc("Only run scop detection, but no other optimizations"),
+    cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 enum OptimizerChoice {
   OPTIMIZER_NONE,
 #ifdef PLUTO_FOUND
@@ -183,6 +188,11 @@ void initializePollyPasses(PassRegistry &Registry) {
 /// Polly supports the isl internal code generator.
 void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
   registerCanonicalicationPasses(PM);
+
+  PM.add(polly::createScopDetectionPass());
+
+  if (PollyDetectOnly)
+    return;
 
   PM.add(polly::createScopInfoPass());
 
