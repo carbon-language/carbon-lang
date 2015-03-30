@@ -113,12 +113,3 @@ void DebugLoc::print(raw_ostream &OS) const {
     OS << " ]";
   }
 }
-
-// FIXME: Remove this old API once callers have been updated.
-MDNode *DebugLoc::getInlinedAt(const LLVMContext &) const {
-  return getInlinedAt();
-}
-void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA) const {
-  Scope = getScope();
-  IA = getInlinedAt();
-}
