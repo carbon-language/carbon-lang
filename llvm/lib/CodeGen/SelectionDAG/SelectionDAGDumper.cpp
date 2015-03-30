@@ -520,22 +520,26 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   if (getNodeId() != -1)
     OS << " [ID=" << getNodeId() << ']';
 
+  if (!G)
+    return;
+
   DebugLoc dl = getDebugLoc();
-  if (G && !dl.isUnknown()) {
-    DIScope
-      Scope(dl.getScope(G->getMachineFunction().getFunction()->getContext()));
-    OS << " dbg:";
-    assert((!Scope || Scope.isScope()) &&
-      "Scope of a DebugLoc should be null or a DIScope.");
-    // Omit the directory, since it's usually long and uninteresting.
-    if (Scope)
-      OS << Scope.getFilename();
-    else
-      OS << "<unknown>";
-    OS << ':' << dl.getLine();
-    if (dl.getCol() != 0)
-      OS << ':' << dl.getCol();
-  }
+  if (dl.isUnknown())
+    return;
+
+  DIScope Scope(
+      dl.getScope(G->getMachineFunction().getFunction()->getContext()));
+  OS << " dbg:";
+  assert((!Scope || Scope.isScope()) &&
+         "Scope of a DebugLoc should be null or a DIScope.");
+  // Omit the directory, since it's usually long and uninteresting.
+  if (Scope)
+    OS << Scope.getFilename();
+  else
+    OS << "<unknown>";
+  OS << ':' << dl.getLine();
+  if (unsigned C = dl.getCol())
+    OS << ':' << C;
 }
 
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
