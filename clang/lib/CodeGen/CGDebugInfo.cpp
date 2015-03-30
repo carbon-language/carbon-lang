@@ -92,7 +92,7 @@ ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc)
     : CGF(CGF) {
   if (CGF.getDebugInfo()) {
     OriginalLocation = CGF.Builder.getCurrentDebugLocation();
-    if (!Loc.isUnknown())
+    if (Loc)
       CGF.Builder.SetCurrentDebugLocation(std::move(Loc));
   }
 }

@@ -2380,7 +2380,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     Ret = Builder.CreateRetVoid();
   }
 
-  if (!RetDbgLoc.isUnknown())
+  if (RetDbgLoc)
     Ret->setDebugLoc(std::move(RetDbgLoc));
 }
 
