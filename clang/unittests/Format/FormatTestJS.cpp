@@ -167,6 +167,11 @@ TEST_F(FormatTestJS, GoogScopes) {
                "var x = a.b;\n"
                "var y = c.d;\n"
                "});  // goog.scope");
+  verifyFormat("goog.scope(function() {\n"
+               "// test\n"
+               "var x = 0;\n"
+               "// test\n"
+               "});");
 }
 
 TEST_F(FormatTestJS, GoogModules) {

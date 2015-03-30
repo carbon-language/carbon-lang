@@ -420,7 +420,7 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
   Line->Level = InitialLevel;
 }
 
-static bool IsGoogScope(const UnwrappedLine &Line) {
+static bool isGoogScope(const UnwrappedLine &Line) {
   // FIXME: Closure-library specific stuff should not be hard-coded but be
   // configurable.
   if (Line.Tokens.size() < 4)
@@ -456,12 +456,13 @@ void UnwrappedLineParser::parseChildBlock() {
   nextToken();
   {
     bool GoogScope =
-        Style.Language == FormatStyle::LK_JavaScript && IsGoogScope(*Line);
+        Style.Language == FormatStyle::LK_JavaScript && isGoogScope(*Line);
     ScopedLineState LineState(*this);
     ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
                                             /*MustBeDeclaration=*/false);
     Line->Level += GoogScope ? 0 : 1;
     parseLevel(/*HasOpeningBrace=*/true);
+    flushComments(isOnNewLine(*FormatTok));
     Line->Level -= GoogScope ? 0 : 1;
   }
   nextToken();
