@@ -9,33 +9,32 @@
 
 // <vector>
 
-// void assign(initializer_list<value_type> il);
+// void assign(size_type n, const_reference v);
 
 #include <vector>
+#include <algorithm>
 #include <cassert>
 
 #include "min_allocator.h"
 #include "asan_testing.h"
 
+bool is6(int x) { return x == 6; }
+
 template <typename Vec>
 void test ( Vec &v )
 {
-    v.assign({3, 4, 5, 6});
-    assert(v.size() == 4);
+    v.assign(5, 6);
+    assert(v.size() == 5);
     assert(is_contiguous_container_asan_correct(v)); 
-    assert(v[0] == 3);
-    assert(v[1] == 4);
-    assert(v[2] == 5);
-    assert(v[3] == 6);
+    assert(std::all_of(v.begin(), v.end(), is6));
 }
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
     typedef std::vector<int> V;
     V d1;
-    V d2(10); // no reallocation during assign.
+    V d2(10);  // no reallocation during assign.
     test(d1);
     test(d2);
     }
@@ -44,10 +43,9 @@ int main()
     {
     typedef std::vector<int, min_allocator<int>> V;
     V d1;
-    V d2(10); // no reallocation during assign.
+    V d2(10);  // no reallocation during assign.
     test(d1);
     test(d2);
     }
 #endif
-#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }
