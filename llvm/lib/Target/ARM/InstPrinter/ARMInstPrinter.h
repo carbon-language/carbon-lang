@@ -24,7 +24,7 @@ class MCOperand;
 class ARMInstPrinter : public MCInstPrinter {
 public:
   ARMInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                 const MCRegisterInfo &MRI, const MCSubtargetInfo &STI);
+                 const MCRegisterInfo &MRI);
 
   void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot,
                  const MCSubtargetInfo &STI) override;

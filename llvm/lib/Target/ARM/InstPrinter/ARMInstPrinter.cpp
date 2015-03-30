@@ -59,8 +59,7 @@ static void printRegImmShift(raw_ostream &O, ARM_AM::ShiftOpc ShOpc,
 }
 
 ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                               const MCRegisterInfo &MRI,
-                               const MCSubtargetInfo &STI)
+                               const MCRegisterInfo &MRI)
     : MCInstPrinter(MAI, MII, MRI) {}
 
 void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
