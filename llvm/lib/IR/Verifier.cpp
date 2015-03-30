@@ -846,9 +846,8 @@ void Verifier::visitMDSubprogram(const MDSubprogram &N) {
     auto *FMD = dyn_cast<ConstantAsMetadata>(RawF);
     auto *F = FMD ? FMD->getValue() : nullptr;
     auto *FT = F ? dyn_cast<PointerType>(F->getType()) : nullptr;
-    Assert(F && (isa<Function>(F) || isa<ConstantPointerNull>(F)) && FT &&
-               isa<FunctionType>(FT->getElementType()),
-           "invalid function", &N, F);
+    Assert(F && FT && isa<FunctionType>(FT->getElementType()),
+           "invalid function", &N, F, FT);
   }
   if (N.getRawTemplateParams()) {
     auto *Params = dyn_cast<MDTuple>(N.getRawTemplateParams());
