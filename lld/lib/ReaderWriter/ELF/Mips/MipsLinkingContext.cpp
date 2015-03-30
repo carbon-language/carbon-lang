@@ -113,3 +113,17 @@ bool MipsLinkingContext::isPLTRelocation(const Reference &r) const {
     return false;
   }
 }
+
+bool MipsLinkingContext::isRelativeReloc(const Reference &r) const {
+  if (r.kindNamespace() != Reference::KindNamespace::ELF)
+    return false;
+  assert(r.kindArch() == Reference::KindArch::Mips);
+  switch (r.kindValue()) {
+  case llvm::ELF::R_MIPS_REL32:
+  case llvm::ELF::R_MIPS_GPREL16:
+  case llvm::ELF::R_MIPS_GPREL32:
+    return true;
+  default:
+    return false;
+  }
+}

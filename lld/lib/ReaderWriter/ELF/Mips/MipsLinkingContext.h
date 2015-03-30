@@ -57,6 +57,7 @@ public:
   bool isDynamicRelocation(const Reference &r) const override;
   bool isCopyRelocation(const Reference &r) const override;
   bool isPLTRelocation(const Reference &r) const override;
+  bool isRelativeReloc(const Reference &r) const override;
 
 private:
   MipsELFFlagsMerger _flagsMerger;

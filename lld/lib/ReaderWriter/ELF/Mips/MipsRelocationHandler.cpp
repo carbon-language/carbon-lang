@@ -124,6 +124,7 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MICROMIPS_JALR:
     return {4, 0x0, 0, true};
   case R_MIPS_REL32:
+    return {4, 0xffffffff, 0, false};
   case R_MIPS_JUMP_SLOT:
   case R_MIPS_COPY:
   case R_MIPS_TLS_DTPMOD32:
@@ -553,6 +554,13 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
                           gpAddr, isGpDisp, jumpMode);
   if (auto ec = res.getError())
     return ec;
+
+  // If output relocation format is REL and the input one is RELA, the only
+  // method to transfer the relocation addend from the input relocation
+  // to the output dynamic relocation is to save this addend to the location
+  // modified by R_MIPS_REL32.
+  if (ref.kindValue() == R_MIPS_REL32 && !_ctx.isRelaOutputFormat())
+    res = ref.addend();
 
   Reference::KindValue op = ref.kindValue();
 
