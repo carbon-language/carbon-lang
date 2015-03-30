@@ -11,17 +11,17 @@ target triple = "x86_64-unknown-linux-gnu"
 ; }
 
 ; CHECK:   Assumed Context:
-; CHECK:   [m, o] -> {  : m >= 150 and o >= 200 }
-; CHECK:   p0: %m
-; CHECK:   p1: %o
+; CHECK:   [o, m] -> {  : m >= 150 and o >= 200 }
+; CHECK:   p0: %o
+; CHECK:   p1: %m
 ; CHECK:   Statements {
 ; CHECK:     Stmt_for_k
 ; CHECK:           Domain :=
-; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= 149 and i2 >= 0 and i2 <= 199 };
+; CHECK:               [o, m] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= 149 and i2 >= 0 and i2 <= 199 };
 ; CHECK:           Scattering :=
-; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
+; CHECK:               [o, m] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
 ; CHECK:           MustWriteAccess := [Reduction Type: NONE]
-; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
+; CHECK:               [o, m] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A) {
 entry:

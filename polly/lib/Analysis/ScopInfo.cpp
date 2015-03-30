@@ -567,6 +567,57 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
   AccessRelation = isl_map_intersect_range(AccessRelation, AccessRange);
 }
 
+__isl_give isl_map *MemoryAccess::foldAccess(const IRAccess &Access,
+                                             __isl_take isl_map *AccessRelation,
+                                             ScopStmt *Statement) {
+  int Size = Access.Subscripts.size();
+
+  for (int i = Size - 2; i >= 0; --i) {
+    isl_space *Space;
+    isl_map *MapOne, *MapTwo;
+    isl_pw_aff *DimSize = SCEVAffinator::getPwAff(Statement, Access.Sizes[i]);
+
+    isl_space *SpaceSize = isl_pw_aff_get_space(DimSize);
+    isl_pw_aff_free(DimSize);
+    isl_id *ParamId = isl_space_get_dim_id(SpaceSize, isl_dim_param, 0);
+
+    Space = isl_map_get_space(AccessRelation);
+    Space = isl_space_map_from_set(isl_space_range(Space));
+    Space = isl_space_align_params(Space, SpaceSize);
+
+    int ParamLocation = isl_space_find_dim_by_id(Space, isl_dim_param, ParamId);
+    isl_id_free(ParamId);
+
+    MapOne = isl_map_universe(isl_space_copy(Space));
+    for (int j = 0; j < Size; ++j)
+      MapOne = isl_map_equate(MapOne, isl_dim_in, j, isl_dim_out, j);
+    MapOne = isl_map_lower_bound_si(MapOne, isl_dim_in, i + 1, 0);
+
+    MapTwo = isl_map_universe(isl_space_copy(Space));
+    for (int j = 0; j < Size; ++j)
+      if (j < i || j > i + 1)
+        MapTwo = isl_map_equate(MapTwo, isl_dim_in, j, isl_dim_out, j);
+
+    isl_local_space *LS = isl_local_space_from_space(Space);
+    isl_constraint *C;
+    C = isl_equality_alloc(isl_local_space_copy(LS));
+    C = isl_constraint_set_constant_si(C, -1);
+    C = isl_constraint_set_coefficient_si(C, isl_dim_in, i, 1);
+    C = isl_constraint_set_coefficient_si(C, isl_dim_out, i, -1);
+    MapTwo = isl_map_add_constraint(MapTwo, C);
+    C = isl_equality_alloc(LS);
+    C = isl_constraint_set_coefficient_si(C, isl_dim_in, i + 1, 1);
+    C = isl_constraint_set_coefficient_si(C, isl_dim_out, i + 1, -1);
+    C = isl_constraint_set_coefficient_si(C, isl_dim_param, ParamLocation, 1);
+    MapTwo = isl_map_add_constraint(MapTwo, C);
+    MapTwo = isl_map_upper_bound_si(MapTwo, isl_dim_in, i + 1, -1);
+
+    MapOne = isl_map_union(MapOne, MapTwo);
+    AccessRelation = isl_map_apply_range(AccessRelation, MapOne);
+  }
+  return AccessRelation;
+}
+
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            ScopStmt *Statement, const ScopArrayInfo *SAI)
     : AccType(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
@@ -615,6 +666,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
 
     AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
   }
+
+  AccessRelation = foldAccess(Access, AccessRelation, Statement);
 
   Space = Statement->getDomainSpace();
   AccessRelation = isl_map_set_tuple_id(

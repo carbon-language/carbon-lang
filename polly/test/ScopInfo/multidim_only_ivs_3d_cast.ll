@@ -14,14 +14,14 @@
 
 ; CHECK: Assumed Context:
 ; CHECK:  [n, m, o, p_3, p_4] -> { :
-; CHECK-DAG: p_4 >= o
-; CHECK-DAG: p_3 >= m
+; CHECK-DAG: p_3 >= o
+; CHECK-DAG: p_4 >= m
 ; CHECK:  }
 ; CHECK: p0: %n
 ; CHECK: p1: %m
 ; CHECK: p2: %o
-; CHECK: p3: (zext i32 %m to i64)
-; CHECK: p4: (zext i32 %o to i64)
+; CHECK: p3: (zext i32 %o to i64)
+; CHECK: p4: (zext i32 %m to i64)
 ; CHECK-NOT: p5
 
 ; CHECK: Domain

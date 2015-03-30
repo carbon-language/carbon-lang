@@ -19,9 +19,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; cause any code to be executed are not generated.
 
 ; CHECK: if (
-; CHECK: ({{(q == 100 && o <= 0|o <= 0 && q == 100)}})
+; CHECK: (o >= 1 && q <= 0 && m + q >= 0)
 ; CHECK: ||
-; CHECK: ({{(q == 0 && o >= 1)|(o >= 1 && q == 0)}})
+; CHECK; (o <= 0 && m + q >= 100 && q <= 100)
 ; CHECK: )
 
 ; CHECK:     if (o >= 1) {

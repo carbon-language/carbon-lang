@@ -223,6 +223,38 @@ private:
   /// @brief Get the new access function imported or set by a pass
   __isl_give isl_map *getNewAccessRelation() const;
 
+  /// @brief Fold the memory access to consider parameteric offsets
+  ///
+  /// To recover memory accesses with array size parameters in the subscript
+  /// expression we post-process the delinearization results.
+  ///
+  /// We would normally recover from an access A[exp0(i) * N + exp1(i)] into an
+  /// array A[][N] the 2D access A[exp0(i)][exp1(i)]. However, another valid
+  /// delinearization is A[exp0(i) - 1][exp1(i) + N] which - depending on the
+  /// range of exp1(i) - may be preferrable. Specifically, for cases where we
+  /// know exp1(i) is negative, we want to choose the latter expression.
+  ///
+  /// As we commonly do not have any information about the range of exp1(i),
+  /// we do not choose one of the two options, but instead create a piecewise
+  /// access function that adds the (-1, N) offsets as soon as exp1(i) becomes
+  /// negative. For a 2D array such an access function is created by applying
+  /// the piecewise map:
+  ///
+  /// [i,j] -> [i, j] :      j >= 0
+  /// [i,j] -> [i-1, j+N] :  j <  0
+  ///
+  /// We can generalize this mapping to arbitrary dimensions by applying this
+  /// piecewise mapping pairwise from the rightmost to the leftmost access
+  /// dimension. It would also be possible to cover a wider range by introducing
+  /// more cases and adding multiple of Ns to these cases. However, this has
+  /// not yet been necessary.
+  /// The introduction of different cases necessarily complicates the memory
+  /// access function, but cases that can be statically proven to not happen
+  /// will be eliminated later on.
+  __isl_give isl_map *foldAccess(const IRAccess &Access,
+                                 __isl_take isl_map *AccessRelation,
+                                 ScopStmt *Statement);
+
 public:
   /// @brief Create a memory access from an access in LLVM-IR.
   ///
