@@ -358,11 +358,12 @@ public:
                                 ArrayRef<const Expr *> DstExprs,
                                 ArrayRef<const Expr *> AssignmentOps);
 
-  /// \brief Emits explicit barrier for OpenMP threads.
-  /// \param IsExplicit true, if it is explicitly specified barrier.
+  /// \brief Emit an implicit/explicit barrier for OpenMP threads.
+  /// \param Kind Directive for which this implicit barrier call must be
+  /// generated. Must be OMPD_barrier for explicit barrier generation.
   ///
   virtual void emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
-                               bool IsExplicit = true);
+                               OpenMPDirectiveKind Kind);
 
   /// \brief Check if the specified \a ScheduleKind is static non-chunked.
   /// This kind of worksharing directive is emitted without outer loop.

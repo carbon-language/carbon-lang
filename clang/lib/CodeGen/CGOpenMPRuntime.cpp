@@ -179,7 +179,7 @@ void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, const Stmt *S) {
   if (PrivateScope.Privatize())
     // Emit implicit barrier to synchronize threads and avoid data races.
     CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, Directive.getLocStart(),
-                                               /*IsExplicit=*/false);
+                                               OMPD_unknown);
   CGCapturedStmtInfo::EmitBody(CGF, S);
 }
 
@@ -1138,11 +1138,23 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
 }
 
 void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                      bool IsExplicit) {
+                                      OpenMPDirectiveKind Kind) {
   // Build call __kmpc_cancel_barrier(loc, thread_id);
-  auto Flags = static_cast<OpenMPLocationFlags>(
-      OMP_IDENT_KMPC |
-      (IsExplicit ? OMP_IDENT_BARRIER_EXPL : OMP_IDENT_BARRIER_IMPL));
+  OpenMPLocationFlags Flags = OMP_IDENT_KMPC;
+  if (Kind == OMPD_for) {
+    Flags =
+        static_cast<OpenMPLocationFlags>(Flags | OMP_IDENT_BARRIER_IMPL_FOR);
+  } else if (Kind == OMPD_sections) {
+    Flags = static_cast<OpenMPLocationFlags>(Flags |
+                                             OMP_IDENT_BARRIER_IMPL_SECTIONS);
+  } else if (Kind == OMPD_single) {
+    Flags =
+        static_cast<OpenMPLocationFlags>(Flags | OMP_IDENT_BARRIER_IMPL_SINGLE);
+  } else if (Kind == OMPD_barrier) {
+    Flags = static_cast<OpenMPLocationFlags>(Flags | OMP_IDENT_BARRIER_EXPL);
+  } else {
+    Flags = static_cast<OpenMPLocationFlags>(Flags | OMP_IDENT_BARRIER_IMPL);
+  }
   // Build call __kmpc_cancel_barrier(loc, thread_id);
   // Replace __kmpc_barrier() function by __kmpc_cancel_barrier() because this
   // one provides the same functionality and adds initial support for

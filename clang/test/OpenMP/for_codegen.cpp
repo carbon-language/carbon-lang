@@ -8,10 +8,11 @@
 #define HEADER
 
 // CHECK: [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
+// CHECK: [[IMPLICIT_BARRIER_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 66, i32 0, i32 0, i8*
 // CHECK-LABEL: define {{.*void}} @{{.*}}without_schedule_clause{{.*}}(float* {{.+}}, float* {{.+}}, float* {{.+}}, float* {{.+}})
 void without_schedule_clause(float *a, float *b, float *c, float *d) {
 // CHECK: [[GTID:%.+]] = call i32 @__kmpc_global_thread_num([[IDENT_T_TY]]* [[DEFAULT_LOC:[@%].+]])
-  #pragma omp for
+  #pragma omp for nowait
 // CHECK: call void @__kmpc_for_static_init_4([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32 34, i32* [[IS_LAST:%[^,]+]], i32* [[OMP_LB:%[^,]+]], i32* [[OMP_UB:%[^,]+]], i32* [[OMP_ST:%[^,]+]], i32 1, i32 1)
 // UB = min(UB, GlobalUB)
 // CHECK-NEXT: [[UB:%.+]] = load i32, i32* [[OMP_UB]]
@@ -44,7 +45,7 @@ void without_schedule_clause(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK-NOT: __kmpc_cancel_barrier
 // CHECK: ret void
 }
 
@@ -84,7 +85,7 @@ void static_not_chunked(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -143,7 +144,7 @@ void static_chunked(float *a, float *b, float *c, float *d) {
 
 // CHECK: [[O_LOOP1_END]]
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -184,7 +185,7 @@ void dynamic1(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -225,7 +226,7 @@ void guided7(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -269,7 +270,7 @@ void test_auto(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -310,7 +311,7 @@ void runtime(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_LOC]], i32 [[GTID]])
 // CHECK: ret void
 }
 

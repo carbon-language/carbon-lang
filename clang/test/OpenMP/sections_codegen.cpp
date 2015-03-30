@@ -5,7 +5,8 @@
 
 #ifndef HEADER
 #define HEADER
-
+// CHECK: [[IMPLICIT_BARRIER_SECTIONS_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 194, i32 0, i32 0, i8*
+// CHECK: [[IMPLICIT_BARRIER_SINGLE_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 322, i32 0, i32 0, i8*
 // CHECK-LABEL: foo
 void foo() {};
 // CHECK-LABEL: bar
@@ -26,7 +27,7 @@ int main() {
   float l = 0.0; // Used as a base point in checks.
 // CHECK: [[GTID:%.+]] = call{{.*}} i32 @__kmpc_global_thread_num({{.*}})
 // CHECK: store float
-#pragma omp sections nowait
+#pragma omp sections
   {
 // CHECK:      store i32 0, i32* [[LB_PTR:%.+]],
 // CHECK:      store i32 1, i32* [[UB_PTR:%.+]],
@@ -71,6 +72,13 @@ int main() {
 // CHECK:      [[INNER_LOOP_END]]
   }
 // CHECK:      call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
+// CHECK:      call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SECTIONS_LOC]],
+#pragma omp sections nowait
+  {
+    foo();
+#pragma omp section
+    bar();
+  }
 // CHECK-NOT:  __kmpc_cancel_barrier
   return tmain<int>();
 }
@@ -87,7 +95,7 @@ int main() {
 // CHECK:       call void @__kmpc_end_single(
 // CHECK-NEXT:  br label %[[END]]
 // CHECK:       [[END]]
-// CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(
+// CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SINGLE_LOC]],
 // CHECK-NEXT:  ret
 // CHECK:       [[TERM_LPAD]]
 // CHECK:       call void @__clang_call_terminate(i8*

@@ -785,8 +785,9 @@ void CodeGenFunction::EmitOMPForDirective(const OMPForDirective &S) {
   EmitOMPWorksharingLoop(S);
 
   // Emit an implicit barrier at the end.
-  CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
-                                         /*IsExplicit*/ false);
+  if (!S.getSingleClause(OMPC_nowait)) {
+    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), OMPD_for);
+  }
 }
 
 void CodeGenFunction::EmitOMPForSimdDirective(const OMPForSimdDirective &) {
@@ -886,9 +887,11 @@ void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
   }
 
   // Emit an implicit barrier at the end.
-  if (!S.getSingleClause(OMPC_nowait))
-    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
-                                           /*IsExplicit=*/false);
+  if (!S.getSingleClause(OMPC_nowait)) {
+    CGM.getOpenMPRuntime().emitBarrierCall(
+        *this, S.getLocStart(),
+        (CS && CS->size() > 1) ? OMPD_sections : OMPD_single);
+  }
 }
 
 void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &S) {
@@ -927,9 +930,9 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
     EnsureInsertPoint();
   }, S.getLocStart(), CopyprivateVars, SrcExprs, DstExprs, AssignmentOps);
   // Emit an implicit barrier at the end.
-  if (!S.getSingleClause(OMPC_nowait))
-    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
-                                           /*IsExplicit=*/false);
+  if (!S.getSingleClause(OMPC_nowait)) {
+    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), OMPD_single);
+  }
 }
 
 void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {
@@ -1001,7 +1004,7 @@ void CodeGenFunction::EmitOMPTaskyieldDirective(
 }
 
 void CodeGenFunction::EmitOMPBarrierDirective(const OMPBarrierDirective &S) {
-  CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart());
+  CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), OMPD_barrier);
 }
 
 void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &) {

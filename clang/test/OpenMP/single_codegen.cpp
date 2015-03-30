@@ -18,6 +18,7 @@ public:
 
 // CHECK-DAG:   [[TEST_CLASS_TY:%.+]] = type { i{{[0-9]+}} }
 // CHECK:       [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
+// CHECK:       [[IMPLICIT_BARRIER_SINGLE_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 322, i32 0, i32 0, i8*
 
 // CHECK:       define void [[FOO:@.+]]()
 
@@ -47,6 +48,7 @@ int main() {
 // CHECK-NEXT:  call void @__kmpc_end_single([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // CHECK-NEXT:  br label {{%?}}[[EXIT]]
 // CHECK:       [[EXIT]]
+// CHECK-NOT:   __kmpc_cancel_barrier
 #pragma omp single nowait
   a = 2;
 // CHECK:       [[RES:%.+]] = call i32 @__kmpc_single([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
@@ -73,7 +75,7 @@ int main() {
 // CHECK:       [[COPY_LIST_VOID_PTR:%.+]] = bitcast [3 x i8*]* [[COPY_LIST]] to i8*
 // CHECK:       [[DID_IT_VAL:%.+]] = load i32, i32* [[DID_IT]],
 // CHECK:       call void @__kmpc_copyprivate([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32 24, i8* [[COPY_LIST_VOID_PTR]], void (i8*, i8*)* [[COPY_FUNC:@.+]], i32 [[DID_IT_VAL]])
-// CHECK:       call{{.*}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* {{@.+}}, i32 [[GTID]])
+// CHECK:       call{{.*}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_SINGLE_LOC]], i32 [[GTID]])
 #pragma omp single copyprivate(a, c, tc)
   foo();
 // CHECK-NOT:   call i32 @__kmpc_single
