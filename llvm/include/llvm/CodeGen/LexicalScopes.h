@@ -200,9 +200,14 @@ public:
   LexicalScope *getOrCreateAbstractScope(const MDLocalScope *Scope);
 
 private:
-  /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
+  /// getOrCreateLexicalScope - Find lexical scope for the given Scope/IA. If
   /// not available then create new lexical scope.
-  LexicalScope *getOrCreateLexicalScope(const MDLocation *DL);
+  LexicalScope *getOrCreateLexicalScope(const MDLocalScope *Scope,
+                                        const MDLocation *IA = nullptr);
+  LexicalScope *getOrCreateLexicalScope(const MDLocation *DL) {
+    return DL ? getOrCreateLexicalScope(DL->getScope(), DL->getInlinedAt())
+              : nullptr;
+  }
 
   /// getOrCreateRegularScope - Find or create a regular lexical scope.
   LexicalScope *getOrCreateRegularScope(const MDLocalScope *Scope);

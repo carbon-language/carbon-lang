@@ -66,15 +66,6 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
   return MDLocation::get(Scope->getContext(), Line, Col, Scope, InlinedAt);
 }
 
-/// getFromDILexicalBlock - Translate the DILexicalBlock into a DebugLoc.
-DebugLoc DebugLoc::getFromDILexicalBlock(MDNode *N) {
-  DILexicalBlock LexBlock(N);
-  MDNode *Scope = LexBlock.getContext();
-  if (!Scope) return DebugLoc();
-  return get(LexBlock.getLineNumber(), LexBlock.getColumnNumber(), Scope,
-             nullptr);
-}
-
 void DebugLoc::dump() const {
 #ifndef NDEBUG
   if (!Loc)

@@ -90,12 +90,6 @@ namespace llvm {
     static DebugLoc get(unsigned Line, unsigned Col, MDNode *Scope,
                         MDNode *InlinedAt = nullptr);
 
-    /// \brief Translate the DILexicalBlock into a DebugLoc.
-    ///
-    /// FIXME: Remove this.  It has only one user, and the user just wants to
-    /// pass an \a MDScope around.
-    static DebugLoc getFromDILexicalBlock(MDNode *N);
-
     unsigned getLine() const;
     unsigned getCol() const;
     MDNode *getScope() const;
