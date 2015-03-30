@@ -90,6 +90,7 @@ class Fuzzer {
   void WriteToOutputCorpus(const Unit &U);
   static void WriteToCrash(const Unit &U, const char *Prefix);
   bool MutateWithDFSan(Unit *U);
+  void PrintStats(const char *Where, size_t Cov, const char *End = "\n");
 
   void SetDeathCallback();
   static void DeathCallback();
