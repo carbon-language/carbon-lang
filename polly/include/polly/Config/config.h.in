@@ -23,6 +23,3 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* Define if pluto found */
-#undef PLUTO_FOUND

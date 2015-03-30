@@ -49,21 +49,11 @@ static cl::opt<bool> PollyDetectOnly(
     cl::desc("Only run scop detection, but no other optimizations"),
     cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-enum OptimizerChoice {
-  OPTIMIZER_NONE,
-#ifdef PLUTO_FOUND
-  OPTIMIZER_PLUTO,
-#endif
-  OPTIMIZER_ISL
-};
+enum OptimizerChoice { OPTIMIZER_NONE, OPTIMIZER_ISL };
 
 static cl::opt<OptimizerChoice> Optimizer(
     "polly-optimizer", cl::desc("Select the scheduling optimizer"),
     cl::values(clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
-#ifdef PLUTO_FOUND
-               clEnumValN(OPTIMIZER_PLUTO, "pluto",
-                          "The Pluto scheduling optimizer"),
-#endif
                clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
                clEnumValEnd),
     cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore,
@@ -177,10 +167,8 @@ void initializePollyPasses(PassRegistry &Registry) {
 ///
 /// For certain parts of the Polly optimizer, several alternatives are provided:
 ///
-/// As scheduling optimizer we support PLUTO
-/// (http://pluto-compiler.sourceforge.net) as well as the isl scheduling
-/// optimizer (http://freecode.com/projects/isl). The isl optimizer is the
-/// default optimizer.
+/// As scheduling optimizer we support the isl scheduling optimizer
+/// (http://freecode.com/projects/isl).
 /// It is also possible to run Polly with no optimizer. This mode is mainly
 /// provided to analyze the run and compile time changes caused by the
 /// scheduling optimizer.
@@ -214,12 +202,6 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
   switch (Optimizer) {
   case OPTIMIZER_NONE:
     break; /* Do nothing */
-
-#ifdef PLUTO_FOUND
-  case OPTIMIZER_PLUTO:
-    PM.add(polly::createPlutoOptimizerPass());
-    break;
-#endif
 
   case OPTIMIZER_ISL:
     PM.add(polly::createIslScheduleOptimizerPass());

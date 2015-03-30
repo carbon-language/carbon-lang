@@ -73,14 +73,6 @@ dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 
-dnl Check that we have libpluto.
-saved_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS"
-find_lib_and_headers([pluto], [pluto/libpluto.h], [pluto])
-CXXFLAGS=$saved_CXXFLAGS
-AS_IF([test "x$pluto_found" = "xyes"],
-  [AC_DEFINE([PLUTO_FOUND],[1],[Define if pluto found])])
-
 dnl Check if CUDA lib there
 dnl Disable the build of polly, even if it is checked out into tools/polly.
 AC_ARG_ENABLE(polly_gpu_codegen,

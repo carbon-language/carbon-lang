@@ -1,9 +1,5 @@
 set(LLVM_NO_RTTI 1)
 
-if (PLUTO_FOUND)
-  set(POLLY_PLUTO_FILES Transform/Pluto.cpp)
-endif (PLUTO_FOUND)
-
 set(POLLY_JSON_FILES
     JSON/json_reader.cpp
     JSON/json_value.cpp
@@ -129,7 +125,6 @@ add_polly_library(Polly
   Transform/DeadCodeElimination.cpp
   Transform/IndependentBlocks.cpp
   Transform/ScheduleOptimizer.cpp
-  ${POLLY_PLUTO_FILES}
   ${ISL_FILES}
   )
 
