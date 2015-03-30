@@ -51,14 +51,5 @@ entry:
 ; CHECK: #NO_APP	
   tail call i32 asm sideeffect "addiu $0,$1,$2", "=r,r,P"(i32 7, i32 65535) nounwind
 
-; Now R Which takes the address of c
-  %c = alloca i32, align 4
-  store i32 -4469539, i32* %c, align 4
-  %8 = call i32 asm sideeffect "lw $0, 1 + $1\0A\09lw $0, 2 + $1\0A\09", "=r,*R"(i32* %c) #1
-; CHECK: #APP
-; CHECK: lw ${{[0-9]+}}, 1 + 0(${{[0-9]+}})
-; CHECK: lw ${{[0-9]+}}, 2 + 0(${{[0-9]+}})
-; CHECK: #NO_APP	
-
   ret i32 0
 }

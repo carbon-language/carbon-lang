@@ -948,12 +948,25 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
     llvm_unreachable("Unexpected asm memory constraint");
   // All memory constraints can at least accept raw pointers.
   case InlineAsm::Constraint_i:
-  case InlineAsm::Constraint_R:
     OutOps.push_back(Op);
     OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
     return false;
   case InlineAsm::Constraint_m:
     if (selectAddrRegImm16(Op, Base, Offset)) {
+      OutOps.push_back(Base);
+      OutOps.push_back(Offset);
+      return false;
+    }
+    OutOps.push_back(Op);
+    OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
+    return false;
+  case InlineAsm::Constraint_R:
+    // The 'R' constraint is supposed to be much more complicated than this.
+    // However, it's becoming less useful due to architectural changes and
+    // ought to be replaced by other constraints such as 'ZC'.
+    // For now, support 9-bit signed offsets which is supportable by all
+    // subtargets for all instructions.
+    if (selectAddrRegImm9(Op, Base, Offset)) {
       OutOps.push_back(Base);
       OutOps.push_back(Offset);
       return false;
