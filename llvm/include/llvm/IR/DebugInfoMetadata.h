@@ -282,8 +282,7 @@ protected:
   ~MDScope() {}
 
 public:
-  // FIXME: Downcast to MDFile once we've verified all subclasses.
-  Metadata *getFile() const { return getRawFile(); }
+  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
 
   /// \brief Return the raw underlying file.
   ///
@@ -392,9 +391,6 @@ public:
   uint64_t getAlignInBits() const { return AlignInBits; }
   uint64_t getOffsetInBits() const { return OffsetInBits; }
   unsigned getFlags() const { return Flags; }
-
-  // FIXME: Remove this once MDScope::getFile() does the same.
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
 
   Metadata *getScope() const { return getRawScope(); }
   StringRef getName() const { return getStringOperand(2); }
@@ -831,9 +827,6 @@ public:
 
   TempMDCompileUnit clone() const { return cloneImpl(); }
 
-  // FIXME: Remove this once MDScope::getFile() does the same.
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
-
   unsigned getSourceLanguage() const { return SourceLanguage; }
   bool isOptimized() const { return IsOptimized; }
   unsigned getRuntimeVersion() const { return RuntimeVersion; }
@@ -1067,9 +1060,6 @@ public:
   bool isDefinition() const { return IsDefinition; }
   bool isOptimized() const { return IsOptimized; }
 
-  // FIXME: Remove this once MDScope::getFile() does the same.
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
-
   Metadata *getScope() const { return getRawScope(); }
 
   StringRef getName() const { return getStringOperand(2); }
@@ -1129,9 +1119,6 @@ protected:
   ~MDLexicalBlockBase() {}
 
 public:
-  // FIXME: Remove this once MDScope::getFile() does the same.
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
-
   MDLocalScope *getScope() const { return cast<MDLocalScope>(getRawScope()); }
 
   Metadata *getRawScope() const { return getOperand(1); }
@@ -1252,8 +1239,8 @@ class MDNamespace : public MDScope {
         Line(Line) {}
   ~MDNamespace() {}
 
-  static MDNamespace *getImpl(LLVMContext &Context, Metadata *Scope,
-                              Metadata *File, StringRef Name, unsigned Line,
+  static MDNamespace *getImpl(LLVMContext &Context, MDScope *Scope,
+                              MDFile *File, StringRef Name, unsigned Line,
                               StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Scope, File, getCanonicalMDString(Context, Name),
                    Line, Storage, ShouldCreate);
@@ -1268,8 +1255,8 @@ class MDNamespace : public MDScope {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDNamespace, (Metadata * Scope, Metadata *File,
-                                  StringRef Name, unsigned Line),
+  DEFINE_MDNODE_GET(MDNamespace, (MDScope * Scope, MDFile *File, StringRef Name,
+                                  unsigned Line),
                     (Scope, File, Name, Line))
   DEFINE_MDNODE_GET(MDNamespace, (Metadata * Scope, Metadata *File,
                                   MDString *Name, unsigned Line),
@@ -1278,9 +1265,10 @@ public:
   TempMDNamespace clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
-  Metadata *getScope() const { return getOperand(1); }
+  MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
   StringRef getName() const { return getStringOperand(2); }
 
+  Metadata *getRawScope() const { return getOperand(1); }
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
 
   static bool classof(const Metadata *MD) {
@@ -1730,9 +1718,9 @@ class MDObjCProperty : public DebugNode {
   ~MDObjCProperty() {}
 
   static MDObjCProperty *
-  getImpl(LLVMContext &Context, StringRef Name, Metadata *File, unsigned Line,
+  getImpl(LLVMContext &Context, StringRef Name, MDFile *File, unsigned Line,
           StringRef GetterName, StringRef SetterName, unsigned Attributes,
-          Metadata *Type, StorageType Storage, bool ShouldCreate = true) {
+          MDType *Type, StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, getCanonicalMDString(Context, Name), File, Line,
                    getCanonicalMDString(Context, GetterName),
                    getCanonicalMDString(Context, SetterName), Attributes, Type,
@@ -1752,9 +1740,9 @@ class MDObjCProperty : public DebugNode {
 
 public:
   DEFINE_MDNODE_GET(MDObjCProperty,
-                    (StringRef Name, Metadata *File, unsigned Line,
+                    (StringRef Name, MDFile *File, unsigned Line,
                      StringRef GetterName, StringRef SetterName,
-                     unsigned Attributes, Metadata *Type),
+                     unsigned Attributes, MDType *Type),
                     (Name, File, Line, GetterName, SetterName, Attributes,
                      Type))
   DEFINE_MDNODE_GET(MDObjCProperty,
@@ -1769,14 +1757,16 @@ public:
   unsigned getLine() const { return Line; }
   unsigned getAttributes() const { return Attributes; }
   StringRef getName() const { return getStringOperand(0); }
-  Metadata *getFile() const { return getOperand(1); }
+  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
   StringRef getGetterName() const { return getStringOperand(2); }
   StringRef getSetterName() const { return getStringOperand(3); }
-  Metadata *getType() const { return getOperand(4); }
+  MDType *getType() const { return cast_or_null<MDType>(getRawType()); }
 
   MDString *getRawName() const { return getOperandAs<MDString>(0); }
+  Metadata *getRawFile() const { return getOperand(1); }
   MDString *getRawGetterName() const { return getOperandAs<MDString>(2); }
   MDString *getRawSetterName() const { return getOperandAs<MDString>(3); }
+  Metadata *getRawType() const { return getOperand(4); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDObjCPropertyKind;
@@ -1795,7 +1785,7 @@ class MDImportedEntity : public DebugNode {
   ~MDImportedEntity() {}
 
   static MDImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
-                                   Metadata *Scope, Metadata *Entity,
+                                   MDScope *Scope, Metadata *Entity,
                                    unsigned Line, StringRef Name,
                                    StorageType Storage,
                                    bool ShouldCreate = true) {
@@ -1815,7 +1805,7 @@ class MDImportedEntity : public DebugNode {
 
 public:
   DEFINE_MDNODE_GET(MDImportedEntity,
-                    (unsigned Tag, Metadata *Scope, Metadata *Entity,
+                    (unsigned Tag, MDScope *Scope, Metadata *Entity,
                      unsigned Line, StringRef Name = ""),
                     (Tag, Scope, Entity, Line, Name))
   DEFINE_MDNODE_GET(MDImportedEntity,
@@ -1826,10 +1816,12 @@ public:
   TempMDImportedEntity clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
-  Metadata *getScope() const { return getOperand(0); }
-  Metadata *getEntity() const { return getOperand(1); }
+  MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
+  Metadata *getEntity() const { return getRawEntity(); }
   StringRef getName() const { return getStringOperand(2); }
 
+  Metadata *getRawScope() const { return getOperand(0); }
+  Metadata *getRawEntity() const { return getOperand(1); }
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
 
   static bool classof(const Metadata *MD) {

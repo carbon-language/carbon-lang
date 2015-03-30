@@ -734,7 +734,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
 DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
                                        DIFile File, unsigned LineNo) {
   DINameSpace R = MDNamespace::get(VMContext, getNonCompileUnitScope(Scope),
-                                   File.getFileNode(), Name, LineNo);
+                                   File, Name, LineNo);
   assert(R.Verify() &&
          "createNameSpace should return a verifiable DINameSpace");
   return R;

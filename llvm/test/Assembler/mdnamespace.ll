@@ -4,7 +4,7 @@
 ; CHECK: !named = !{!0, !1, !2, !3, !4, !4}
 !named = !{!0, !1, !2, !3, !4, !5}
 
-!0 = distinct !{}
+!0 = !MDFile(filename: "file.cpp", directory: "/path/to/dir")
 !1 = distinct !{}
 !2 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 

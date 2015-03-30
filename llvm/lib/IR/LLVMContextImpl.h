@@ -635,11 +635,11 @@ template <> struct MDNodeKeyImpl<MDNamespace> {
   MDNodeKeyImpl(Metadata *Scope, Metadata *File, StringRef Name, unsigned Line)
       : Scope(Scope), File(File), Name(Name), Line(Line) {}
   MDNodeKeyImpl(const MDNamespace *N)
-      : Scope(N->getScope()), File(N->getFile()), Name(N->getName()),
+      : Scope(N->getRawScope()), File(N->getRawFile()), Name(N->getName()),
         Line(N->getLine()) {}
 
   bool isKeyOf(const MDNamespace *RHS) const {
-    return Scope == RHS->getScope() && File == RHS->getFile() &&
+    return Scope == RHS->getRawScope() && File == RHS->getRawFile() &&
            Name == RHS->getName() && Line == RHS->getLine();
   }
   unsigned getHashValue() const {
@@ -789,15 +789,15 @@ template <> struct MDNodeKeyImpl<MDObjCProperty> {
       : Name(Name), File(File), Line(Line), GetterName(GetterName),
         SetterName(SetterName), Attributes(Attributes), Type(Type) {}
   MDNodeKeyImpl(const MDObjCProperty *N)
-      : Name(N->getName()), File(N->getFile()), Line(N->getLine()),
+      : Name(N->getName()), File(N->getRawFile()), Line(N->getLine()),
         GetterName(N->getGetterName()), SetterName(N->getSetterName()),
-        Attributes(N->getAttributes()), Type(N->getType()) {}
+        Attributes(N->getAttributes()), Type(N->getRawType()) {}
 
   bool isKeyOf(const MDObjCProperty *RHS) const {
-    return Name == RHS->getName() && File == RHS->getFile() &&
+    return Name == RHS->getName() && File == RHS->getRawFile() &&
            Line == RHS->getLine() && GetterName == RHS->getGetterName() &&
            SetterName == RHS->getSetterName() &&
-           Attributes == RHS->getAttributes() && Type == RHS->getType();
+           Attributes == RHS->getAttributes() && Type == RHS->getRawType();
   }
   unsigned getHashValue() const {
     return hash_combine(Name, File, Line, GetterName, SetterName, Attributes,
@@ -816,12 +816,12 @@ template <> struct MDNodeKeyImpl<MDImportedEntity> {
                 StringRef Name)
       : Tag(Tag), Scope(Scope), Entity(Entity), Line(Line), Name(Name) {}
   MDNodeKeyImpl(const MDImportedEntity *N)
-      : Tag(N->getTag()), Scope(N->getScope()), Entity(N->getEntity()),
+      : Tag(N->getTag()), Scope(N->getRawScope()), Entity(N->getRawEntity()),
         Line(N->getLine()), Name(N->getName()) {}
 
   bool isKeyOf(const MDImportedEntity *RHS) const {
-    return Tag == RHS->getTag() && Scope == RHS->getScope() &&
-           Entity == RHS->getEntity() && Line == RHS->getLine() &&
+    return Tag == RHS->getTag() && Scope == RHS->getRawScope() &&
+           Entity == RHS->getRawEntity() && Line == RHS->getLine() &&
            Name == RHS->getName();
   }
   unsigned getHashValue() const {

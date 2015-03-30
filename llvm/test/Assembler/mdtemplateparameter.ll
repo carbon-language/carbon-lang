@@ -5,8 +5,8 @@
 !named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
 
 !0 = distinct !{}
-!1 = distinct !{}
-; CHECK: !1 = distinct !{}
+!1 = !MDBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+; CHECK: !1 = !MDBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 
 ; CHECK-NEXT: !2 = !MDTemplateTypeParameter(name: "Ty", type: !1)
 ; CHECK-NEXT: !3 = !MDTemplateTypeParameter(type: !1)

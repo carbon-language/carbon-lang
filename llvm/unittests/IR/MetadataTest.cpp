@@ -1608,8 +1608,8 @@ TEST_F(MDLexicalBlockFileTest, get) {
 typedef MetadataTest MDNamespaceTest;
 
 TEST_F(MDNamespaceTest, get) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDScope *Scope = getFile();
+  MDFile *File = getFile();
   StringRef Name = "namespace";
   unsigned Line = 5;
 
@@ -1622,8 +1622,8 @@ TEST_F(MDNamespaceTest, get) {
   EXPECT_EQ(Line, N->getLine());
   EXPECT_EQ(N, MDNamespace::get(Context, Scope, File, Name, Line));
 
-  EXPECT_NE(N, MDNamespace::get(Context, File, File, Name, Line));
-  EXPECT_NE(N, MDNamespace::get(Context, Scope, Scope, Name, Line));
+  EXPECT_NE(N, MDNamespace::get(Context, getFile(), File, Name, Line));
+  EXPECT_NE(N, MDNamespace::get(Context, Scope, getFile(), Name, Line));
   EXPECT_NE(N, MDNamespace::get(Context, Scope, File, "other", Line));
   EXPECT_NE(N, MDNamespace::get(Context, Scope, File, Name, Line + 1));
 
@@ -1635,8 +1635,7 @@ typedef MetadataTest MDTemplateTypeParameterTest;
 
 TEST_F(MDTemplateTypeParameterTest, get) {
   StringRef Name = "template";
-  Metadata *Type = MDTuple::getDistinct(Context, None);
-  Metadata *Other = MDTuple::getDistinct(Context, None);
+  MDType *Type = getBasicType("basic");
 
   auto *N = MDTemplateTypeParameter::get(Context, Name, Type);
 
@@ -1646,7 +1645,8 @@ TEST_F(MDTemplateTypeParameterTest, get) {
   EXPECT_EQ(N, MDTemplateTypeParameter::get(Context, Name, Type));
 
   EXPECT_NE(N, MDTemplateTypeParameter::get(Context, "other", Type));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Name, Other));
+  EXPECT_NE(N,
+            MDTemplateTypeParameter::get(Context, Name, getBasicType("other")));
 
   TempMDTemplateTypeParameter Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -1657,9 +1657,8 @@ typedef MetadataTest MDTemplateValueParameterTest;
 TEST_F(MDTemplateValueParameterTest, get) {
   unsigned Tag = dwarf::DW_TAG_template_value_parameter;
   StringRef Name = "template";
-  Metadata *Type = MDTuple::getDistinct(Context, None);
-  Metadata *Value = MDTuple::getDistinct(Context, None);
-  Metadata *Other = MDTuple::getDistinct(Context, None);
+  MDType *Type = getBasicType("basic");
+  Metadata *Value = getConstantAsMetadata();
 
   auto *N = MDTemplateValueParameter::get(Context, Tag, Name, Type, Value);
   EXPECT_EQ(Tag, N->getTag());
@@ -1673,9 +1672,10 @@ TEST_F(MDTemplateValueParameterTest, get) {
                    Type, Value));
   EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag,  "other", Type,
                                              Value));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag,  Name, Other,
-                                             Value));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Name, Type, Other));
+  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Name,
+                                             getBasicType("other"), Value));
+  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Name, Type,
+                                             getConstantAsMetadata()));
 
   TempMDTemplateValueParameter Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -1877,12 +1877,12 @@ typedef MetadataTest MDObjCPropertyTest;
 
 TEST_F(MDObjCPropertyTest, get) {
   StringRef Name = "name";
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDFile *File = getFile();
   unsigned Line = 5;
   StringRef GetterName = "getter";
   StringRef SetterName = "setter";
   unsigned Attributes = 7;
-  Metadata *Type = MDTuple::getDistinct(Context, None);
+  MDType *Type = getBasicType("basic");
 
   auto *N = MDObjCProperty::get(Context, Name, File, Line, GetterName,
                                 SetterName, Attributes, Type);
@@ -1900,7 +1900,7 @@ TEST_F(MDObjCPropertyTest, get) {
 
   EXPECT_NE(N, MDObjCProperty::get(Context, "other", File, Line, GetterName,
                                    SetterName, Attributes, Type));
-  EXPECT_NE(N, MDObjCProperty::get(Context, Name, Type, Line, GetterName,
+  EXPECT_NE(N, MDObjCProperty::get(Context, Name, getFile(), Line, GetterName,
                                    SetterName, Attributes, Type));
   EXPECT_NE(N, MDObjCProperty::get(Context, Name, File, Line + 1, GetterName,
                                    SetterName, Attributes, Type));
@@ -1910,8 +1910,9 @@ TEST_F(MDObjCPropertyTest, get) {
                                    "other", Attributes, Type));
   EXPECT_NE(N, MDObjCProperty::get(Context, Name, File, Line, GetterName,
                                    SetterName, Attributes + 1, Type));
-  EXPECT_NE(N, MDObjCProperty::get(Context, Name, File, Line, GetterName,
-                                   SetterName, Attributes, File));
+  EXPECT_NE(N,
+            MDObjCProperty::get(Context, Name, File, Line, GetterName,
+                                SetterName, Attributes, getBasicType("other")));
 
   TempMDObjCProperty Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -1921,8 +1922,8 @@ typedef MetadataTest MDImportedEntityTest;
 
 TEST_F(MDImportedEntityTest, get) {
   unsigned Tag = dwarf::DW_TAG_imported_module;
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
-  Metadata *Entity = MDTuple::getDistinct(Context, None);
+  MDScope *Scope = getSubprogram();
+  DebugNode *Entity = getCompositeType();
   unsigned Line = 5;
   StringRef Name = "name";
 
@@ -1938,8 +1939,10 @@ TEST_F(MDImportedEntityTest, get) {
   EXPECT_NE(N,
             MDImportedEntity::get(Context, dwarf::DW_TAG_imported_declaration,
                                   Scope, Entity, Line, Name));
-  EXPECT_NE(N, MDImportedEntity::get(Context, Tag, Entity, Entity, Line, Name));
-  EXPECT_NE(N, MDImportedEntity::get(Context, Tag, Scope, Scope, Line, Name));
+  EXPECT_NE(N, MDImportedEntity::get(Context, Tag, getSubprogram(), Entity,
+                                     Line, Name));
+  EXPECT_NE(N, MDImportedEntity::get(Context, Tag, Scope, getCompositeType(),
+                                     Line, Name));
   EXPECT_NE(N,
             MDImportedEntity::get(Context, Tag, Scope, Entity, Line + 1, Name));
   EXPECT_NE(N,

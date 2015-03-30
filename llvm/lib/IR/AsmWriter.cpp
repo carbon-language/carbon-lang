@@ -1681,8 +1681,8 @@ static void writeMDNamespace(raw_ostream &Out, const MDNamespace *N,
   Out << "!MDNamespace(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("scope", N->getScope(), /* ShouldSkipNull */ false);
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
   Out << ")";
 }
@@ -1778,12 +1778,12 @@ static void writeMDObjCProperty(raw_ostream &Out, const MDObjCProperty *N,
   Out << "!MDObjCProperty(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("file", N->getFile());
+  Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());
   Printer.printString("setter", N->getSetterName());
   Printer.printString("getter", N->getGetterName());
   Printer.printInt("attributes", N->getAttributes());
-  Printer.printMetadata("type", N->getType());
+  Printer.printMetadata("type", N->getRawType());
   Out << ")";
 }
 
@@ -1794,8 +1794,8 @@ static void writeMDImportedEntity(raw_ostream &Out, const MDImportedEntity *N,
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printTag(N);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("scope", N->getScope(), /* ShouldSkipNull */ false);
-  Printer.printMetadata("entity", N->getEntity());
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("entity", N->getRawEntity());
   Printer.printInt("line", N->getLine());
   Out << ")";
 }
