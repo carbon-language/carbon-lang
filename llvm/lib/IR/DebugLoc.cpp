@@ -33,9 +33,7 @@ void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA) const {
 }
 
 MDNode *DebugLoc::getScopeNode() const {
-  if (MDNode *InlinedAt = getInlinedAt())
-    return DebugLoc::getFromDILocation(InlinedAt).getScopeNode();
-  return getScope();
+  return cast<MDLocation>(Loc)->getInlinedAtScope();
 }
 
 DebugLoc DebugLoc::getFnDebugLoc() const {

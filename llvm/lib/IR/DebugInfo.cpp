@@ -349,9 +349,7 @@ bool DISubprogram::Verify() const {
           continue;
 
         // walk the inlined-at scopes
-        while (MDLocation *IA = DL->getInlinedAt())
-          DL = IA;
-        MDScope *Scope = DL->getScope();
+        MDScope *Scope = DL->getInlinedAtScope();
         if (!Scope)
           return false;
         while (!isa<MDSubprogram>(Scope)) {
