@@ -16,28 +16,40 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // DebugLoc Implementation
 //===----------------------------------------------------------------------===//
+DebugLoc::DebugLoc(MDLocation *L) : Loc(L) {}
+DebugLoc::DebugLoc(MDNode *L) : Loc(L) {}
 
-unsigned DebugLoc::getLine() const { return DILocation(Loc).getLineNumber(); }
-unsigned DebugLoc::getCol() const { return DILocation(Loc).getColumnNumber(); }
-
-MDNode *DebugLoc::getScope() const { return DILocation(Loc).getScope(); }
-
-MDNode *DebugLoc::getInlinedAt() const {
-  return DILocation(Loc).getOrigLocation();
+MDLocation *DebugLoc::get() const {
+  return cast_or_null<MDLocation>(Loc.get());
 }
 
-/// Return both the Scope and the InlinedAt values.
-void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA) const {
-  Scope = getScope();
-  IA = getInlinedAt();
+unsigned DebugLoc::getLine() const {
+  assert(get() && "Expected valid DebugLoc");
+  return get()->getLine();
 }
 
-MDNode *DebugLoc::getScopeNode() const {
+unsigned DebugLoc::getCol() const {
+  assert(get() && "Expected valid DebugLoc");
+  return get()->getColumn();
+}
+
+MDNode *DebugLoc::getScope() const {
+  assert(get() && "Expected valid DebugLoc");
+  return get()->getScope();
+}
+
+MDLocation *DebugLoc::getInlinedAt() const {
+  assert(get() && "Expected valid DebugLoc");
+  return get()->getInlinedAt();
+}
+
+MDNode *DebugLoc::getInlinedAtScope() const {
   return cast<MDLocation>(Loc)->getInlinedAtScope();
 }
 
 DebugLoc DebugLoc::getFnDebugLoc() const {
-  const MDNode *Scope = getScopeNode();
+  // FIXME: Add a method on \a MDLocation that does this work.
+  const MDNode *Scope = getInlinedAtScope();
   DISubprogram SP = getDISubprogram(Scope);
   if (SP.isSubprogram())
     return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
@@ -51,19 +63,7 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
   if (!Scope)
     return DebugLoc();
 
-  return getFromDILocation(
-      MDLocation::get(Scope->getContext(), Line, Col, Scope, InlinedAt));
-}
-
-/// getAsMDNode - This method converts the compressed DebugLoc node into a
-/// DILocation-compatible MDNode.
-MDNode *DebugLoc::getAsMDNode() const { return Loc; }
-
-/// getFromDILocation - Translate the DILocation quad into a DebugLoc.
-DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
-  DebugLoc Loc;
-  Loc.Loc.reset(N);
-  return Loc;
+  return MDLocation::get(Scope->getContext(), Line, Col, Scope, InlinedAt);
 }
 
 /// getFromDILexicalBlock - Translate the DILexicalBlock into a DebugLoc.
@@ -77,38 +77,48 @@ DebugLoc DebugLoc::getFromDILexicalBlock(MDNode *N) {
 
 void DebugLoc::dump() const {
 #ifndef NDEBUG
-  if (!isUnknown()) {
-    dbgs() << getLine();
-    if (getCol() != 0)
-      dbgs() << ',' << getCol();
-    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(getInlinedAt());
-    if (!InlinedAtDL.isUnknown()) {
-      dbgs() << " @ ";
-      InlinedAtDL.dump();
-    } else
-      dbgs() << "\n";
-  }
+  if (!Loc)
+    return;
+
+  dbgs() << getLine();
+  if (getCol() != 0)
+    dbgs() << ',' << getCol();
+  if (DebugLoc InlinedAtDL = DebugLoc(getInlinedAt())) {
+    dbgs() << " @ ";
+    InlinedAtDL.dump();
+  } else
+    dbgs() << "\n";
 #endif
 }
 
 void DebugLoc::print(raw_ostream &OS) const {
-  if (!isUnknown()) {
-    // Print source line info.
-    DIScope Scope(getScope());
-    assert((!Scope || Scope.isScope()) &&
-           "Scope of a DebugLoc should be null or a DIScope.");
-    if (Scope)
-      OS << Scope.getFilename();
-    else
-      OS << "<unknown>";
-    OS << ':' << getLine();
-    if (getCol() != 0)
-      OS << ':' << getCol();
-    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(getInlinedAt());
-    if (!InlinedAtDL.isUnknown()) {
-      OS << " @[ ";
-      InlinedAtDL.print(OS);
-      OS << " ]";
-    }
+  if (!Loc)
+    return;
+
+  // Print source line info.
+  DIScope Scope(getScope());
+  assert((!Scope || Scope.isScope()) &&
+         "Scope of a DebugLoc should be null or a DIScope.");
+  if (Scope)
+    OS << Scope.getFilename();
+  else
+    OS << "<unknown>";
+  OS << ':' << getLine();
+  if (getCol() != 0)
+    OS << ':' << getCol();
+
+  if (DebugLoc InlinedAtDL = getInlinedAt()) {
+    OS << " @[ ";
+    InlinedAtDL.print(OS);
+    OS << " ]";
   }
+}
+
+// FIXME: Remove this old API once callers have been updated.
+MDNode *DebugLoc::getInlinedAt(const LLVMContext &) const {
+  return getInlinedAt();
+}
+void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA) const {
+  Scope = getScope();
+  IA = getInlinedAt();
 }
