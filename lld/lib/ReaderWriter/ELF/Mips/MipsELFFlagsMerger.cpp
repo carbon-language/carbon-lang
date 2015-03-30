@@ -64,7 +64,8 @@ MipsELFFlagsMerger::MipsELFFlagsMerger(bool is64Bits)
 
 uint32_t MipsELFFlagsMerger::getMergedELFFlags() const { return _flags; }
 
-std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
+std::error_code MipsELFFlagsMerger::mergeHeaderFlags(uint8_t newClass,
+                                                     uint32_t newFlags) {
   // Check bitness.
   if (_is64Bit != (newClass == ELFCLASS64))
     return make_dynamic_error_code(
