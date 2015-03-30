@@ -382,7 +382,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (void)testOverreleaseUnownedIvar {
   [_unownedProp retain];
   [_unownedProp release];
-  [_unownedProp release]; // expected-warning{{not owned at this point by the caller}}
+  [_unownedProp release]; // FIXME-warning{{not owned at this point by the caller}}
 }
 
 - (void)testOverreleaseIvarOnly {
@@ -409,7 +409,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (void)testOverreleaseImplicitSynthIvar {
   [_implicitSynthProp retain];
   [_implicitSynthProp release];
-  [_implicitSynthProp release]; // expected-warning{{not owned at this point by the caller}}
+  [_implicitSynthProp release]; // FIXME-warning{{not owned at this point by the caller}}
 }
 
 - (void)testOverreleaseCF {
@@ -486,7 +486,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (void)testPropertyAccessThenReleaseUnowned {
   id unowned = [self.unownedProp retain];
   [unowned release];
-  [_unownedProp release]; // expected-warning{{not owned}}
+  [_unownedProp release]; // FIXME-warning{{not owned}}
 }
 
 - (void)testPropertyAccessThenReleaseUnowned2 {
@@ -494,7 +494,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   id unowned = [self.unownedProp retain];
   [unowned release];
   clang_analyzer_eval(unowned == fromIvar); // expected-warning{{TRUE}}
-  [fromIvar release]; // expected-warning{{not owned}}
+  [fromIvar release]; // FIXME-warning{{not owned}}
 }
 
 - (void)testPropertyAccessThenReleaseManual {
@@ -557,7 +557,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
 - (void)testPropertyAccessThenReleaseImplicitSynth {
   id prop = [self.implicitSynthProp retain];
   [prop release];
-  [_implicitSynthProp release]; // expected-warning{{not owned}}
+  [_implicitSynthProp release]; // FIXME-warning{{not owned}}
 }
 
 - (void)testPropertyAccessThenReleaseImplicitSynth2 {
@@ -565,7 +565,7 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   id prop = [self.implicitSynthProp retain];
   [prop release];
   clang_analyzer_eval(prop == fromIvar); // expected-warning{{TRUE}}
-  [fromIvar release]; // expected-warning{{not owned}}
+  [fromIvar release]; // FIXME-warning{{not owned}}
 }
 
 - (id)getUnownedFromProperty {
