@@ -62,10 +62,11 @@ TEST(ContextAndReplaceableUsesTest, takeReplaceableUses) {
 
 class MetadataTest : public testing::Test {
 public:
-  MetadataTest() : Counter(0) {}
+  MetadataTest() : M("test", Context), Counter(0) {}
 
 protected:
   LLVMContext Context;
+  Module M;
   int Counter;
 
   MDNode *getNode() { return MDNode::get(Context, None); }
@@ -76,6 +77,9 @@ protected:
   }
 
   MDTuple *getTuple() { return MDTuple::getDistinct(Context, None); }
+  MDSubroutineType *getSubroutineType() {
+    return MDSubroutineType::getDistinct(Context, 0, getNode(nullptr));
+  }
   MDSubprogram *getSubprogram() {
     return MDSubprogram::getDistinct(Context, nullptr, "", "", nullptr, 0,
                                      nullptr, false, false, 0, nullptr, 0, 0, 0,
@@ -100,6 +104,10 @@ protected:
     return MDCompositeType::getDistinct(
         Context, dwarf::DW_TAG_structure_type, "", nullptr, 0, nullptr, nullptr,
         32, 32, 0, 0, nullptr, 0, nullptr, nullptr, "");
+  }
+  ConstantAsMetadata *getFunctionAsMetadata(StringRef Name) {
+    return ConstantAsMetadata::get(M.getOrInsertFunction(
+        Name, FunctionType::get(Type::getVoidTy(Context), None, false)));
   }
 };
 typedef MetadataTest MDStringTest;
@@ -1363,24 +1371,24 @@ TEST_F(MDCompileUnitTest, replaceArrays) {
 typedef MetadataTest MDSubprogramTest;
 
 TEST_F(MDSubprogramTest, get) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  MDScope *Scope = getCompositeType();
   StringRef Name = "name";
   StringRef LinkageName = "linkage";
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDFile *File = getFile();
   unsigned Line = 2;
-  Metadata *Type = MDTuple::getDistinct(Context, None);
+  MDSubroutineType *Type = getSubroutineType();
   bool IsLocalToUnit = false;
   bool IsDefinition = true;
   unsigned ScopeLine = 3;
-  Metadata *ContainingType = MDTuple::getDistinct(Context, None);
+  MDType *ContainingType = getCompositeType();
   unsigned Virtuality = 4;
   unsigned VirtualIndex = 5;
   unsigned Flags = 6;
   bool IsOptimized = false;
-  Metadata *Function = MDTuple::getDistinct(Context, None);
-  Metadata *TemplateParams = MDTuple::getDistinct(Context, None);
-  Metadata *Declaration = MDTuple::getDistinct(Context, None);
-  Metadata *Variables = MDTuple::getDistinct(Context, None);
+  ConstantAsMetadata *Function = getFunctionAsMetadata("foo");
+  MDTuple *TemplateParams = getTuple();
+  MDSubprogram *Declaration = getSubprogram();
+  MDTuple *Variables = getTuple();
 
   auto *N = MDSubprogram::get(
       Context, Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
@@ -1412,11 +1420,11 @@ TEST_F(MDSubprogramTest, get) {
                                  Flags, IsOptimized, Function, TemplateParams,
                                  Declaration, Variables));
 
-  EXPECT_NE(N, MDSubprogram::get(Context, File, Name, LinkageName, File, Line,
-                                 Type, IsLocalToUnit, IsDefinition, ScopeLine,
-                                 ContainingType, Virtuality, VirtualIndex,
-                                 Flags, IsOptimized, Function, TemplateParams,
-                                 Declaration, Variables));
+  EXPECT_NE(N, MDSubprogram::get(Context, getCompositeType(), Name, LinkageName,
+                                 File, Line, Type, IsLocalToUnit, IsDefinition,
+                                 ScopeLine, ContainingType, Virtuality,
+                                 VirtualIndex, Flags, IsOptimized, Function,
+                                 TemplateParams, Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, "other", LinkageName, File,
                                  Line, Type, IsLocalToUnit, IsDefinition,
                                  ScopeLine, ContainingType, Virtuality,
@@ -1427,21 +1435,21 @@ TEST_F(MDSubprogramTest, get) {
                                  ContainingType, Virtuality, VirtualIndex,
                                  Flags, IsOptimized, Function, TemplateParams,
                                  Declaration, Variables));
-  EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, Scope, Line,
-                                 Type, IsLocalToUnit, IsDefinition, ScopeLine,
-                                 ContainingType, Virtuality, VirtualIndex,
-                                 Flags, IsOptimized, Function, TemplateParams,
-                                 Declaration, Variables));
+  EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, getFile(),
+                                 Line, Type, IsLocalToUnit, IsDefinition,
+                                 ScopeLine, ContainingType, Virtuality,
+                                 VirtualIndex, Flags, IsOptimized, Function,
+                                 TemplateParams, Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File,
                                  Line + 1, Type, IsLocalToUnit, IsDefinition,
                                  ScopeLine, ContainingType, Virtuality,
                                  VirtualIndex, Flags, IsOptimized, Function,
                                  TemplateParams, Declaration, Variables));
-  EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
-                                 Scope, IsLocalToUnit, IsDefinition, ScopeLine,
-                                 ContainingType, Virtuality, VirtualIndex,
-                                 Flags, IsOptimized, Function, TemplateParams,
-                                 Declaration, Variables));
+  EXPECT_NE(N, MDSubprogram::get(
+                   Context, Scope, Name, LinkageName, File, Line,
+                   getSubroutineType(), IsLocalToUnit, IsDefinition, ScopeLine,
+                   ContainingType, Virtuality, VirtualIndex, Flags, IsOptimized,
+                   Function, TemplateParams, Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, !IsLocalToUnit, IsDefinition, ScopeLine,
                                  ContainingType, Virtuality, VirtualIndex,
@@ -1459,8 +1467,8 @@ TEST_F(MDSubprogramTest, get) {
                                  TemplateParams, Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
-                                 Type, Virtuality, VirtualIndex, Flags,
-                                 IsOptimized, Function, TemplateParams,
+                                 getCompositeType(), Virtuality, VirtualIndex,
+                                 Flags, IsOptimized, Function, TemplateParams,
                                  Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
@@ -1482,49 +1490,50 @@ TEST_F(MDSubprogramTest, get) {
                                  ContainingType, Virtuality, VirtualIndex,
                                  Flags, !IsOptimized, Function, TemplateParams,
                                  Declaration, Variables));
+  EXPECT_NE(N,
+            MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
+                              Type, IsLocalToUnit, IsDefinition, ScopeLine,
+                              ContainingType, Virtuality, VirtualIndex, Flags,
+                              IsOptimized, getFunctionAsMetadata("bar"),
+                              TemplateParams, Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
                                  ContainingType, Virtuality, VirtualIndex,
-                                 Flags, IsOptimized, Type, TemplateParams,
-                                 Declaration, Variables));
-  EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
-                                 Type, IsLocalToUnit, IsDefinition, ScopeLine,
-                                 ContainingType, Virtuality, VirtualIndex,
-                                 Flags, IsOptimized, Function, Type,
+                                 Flags, IsOptimized, Function, getTuple(),
                                  Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
                                  ContainingType, Virtuality, VirtualIndex,
                                  Flags, IsOptimized, Function, TemplateParams,
-                                 Type, Variables));
+                                 getSubprogram(), Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
                                  ContainingType, Virtuality, VirtualIndex,
                                  Flags, IsOptimized, Function, TemplateParams,
-                                 Declaration, Type));
+                                 Declaration, getTuple()));
 
   TempMDSubprogram Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
 TEST_F(MDSubprogramTest, replaceFunction) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  MDScope *Scope = getCompositeType();
   StringRef Name = "name";
   StringRef LinkageName = "linkage";
-  Metadata *File = MDTuple::getDistinct(Context, None);
+  MDFile *File = getFile();
   unsigned Line = 2;
-  Metadata *Type = MDTuple::getDistinct(Context, None);
+  MDSubroutineType *Type = getSubroutineType();
   bool IsLocalToUnit = false;
   bool IsDefinition = true;
   unsigned ScopeLine = 3;
-  Metadata *ContainingType = MDTuple::getDistinct(Context, None);
+  MDCompositeType *ContainingType = getCompositeType();
   unsigned Virtuality = 4;
   unsigned VirtualIndex = 5;
   unsigned Flags = 6;
   bool IsOptimized = false;
-  Metadata *TemplateParams = MDTuple::getDistinct(Context, None);
-  Metadata *Declaration = MDTuple::getDistinct(Context, None);
-  Metadata *Variables = MDTuple::getDistinct(Context, None);
+  MDTuple *TemplateParams = getTuple();
+  MDSubprogram *Declaration = getSubprogram();
+  MDTuple *Variables = getTuple();
 
   auto *N = MDSubprogram::get(
       Context, Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,

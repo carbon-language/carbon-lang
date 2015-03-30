@@ -550,31 +550,32 @@ template <> struct MDNodeKeyImpl<MDSubprogram> {
         Function(Function), TemplateParams(TemplateParams),
         Declaration(Declaration), Variables(Variables) {}
   MDNodeKeyImpl(const MDSubprogram *N)
-      : Scope(N->getScope()), Name(N->getName()),
-        LinkageName(N->getLinkageName()), File(N->getFile()),
-        Line(N->getLine()), Type(N->getType()),
+      : Scope(N->getRawScope()), Name(N->getName()),
+        LinkageName(N->getLinkageName()), File(N->getRawFile()),
+        Line(N->getLine()), Type(N->getRawType()),
         IsLocalToUnit(N->isLocalToUnit()), IsDefinition(N->isDefinition()),
-        ScopeLine(N->getScopeLine()), ContainingType(N->getContainingType()),
+        ScopeLine(N->getScopeLine()), ContainingType(N->getRawContainingType()),
         Virtuality(N->getVirtuality()), VirtualIndex(N->getVirtualIndex()),
         Flags(N->getFlags()), IsOptimized(N->isOptimized()),
-        Function(N->getFunction()), TemplateParams(N->getTemplateParams()),
-        Declaration(N->getDeclaration()), Variables(N->getVariables()) {}
+        Function(N->getRawFunction()),
+        TemplateParams(N->getRawTemplateParams()),
+        Declaration(N->getRawDeclaration()), Variables(N->getRawVariables()) {}
 
   bool isKeyOf(const MDSubprogram *RHS) const {
-    return Scope == RHS->getScope() && Name == RHS->getName() &&
-           LinkageName == RHS->getLinkageName() && File == RHS->getFile() &&
-           Line == RHS->getLine() && Type == RHS->getType() &&
+    return Scope == RHS->getRawScope() && Name == RHS->getName() &&
+           LinkageName == RHS->getLinkageName() && File == RHS->getRawFile() &&
+           Line == RHS->getLine() && Type == RHS->getRawType() &&
            IsLocalToUnit == RHS->isLocalToUnit() &&
            IsDefinition == RHS->isDefinition() &&
            ScopeLine == RHS->getScopeLine() &&
-           ContainingType == RHS->getContainingType() &&
+           ContainingType == RHS->getRawContainingType() &&
            Virtuality == RHS->getVirtuality() &&
            VirtualIndex == RHS->getVirtualIndex() && Flags == RHS->getFlags() &&
            IsOptimized == RHS->isOptimized() &&
-           Function == RHS->getFunction() &&
-           TemplateParams == RHS->getTemplateParams() &&
-           Declaration == RHS->getDeclaration() &&
-           Variables == RHS->getVariables();
+           Function == RHS->getRawFunction() &&
+           TemplateParams == RHS->getRawTemplateParams() &&
+           Declaration == RHS->getRawDeclaration() &&
+           Variables == RHS->getRawVariables();
   }
   unsigned getHashValue() const {
     return hash_combine(Scope, Name, LinkageName, File, Line, Type,

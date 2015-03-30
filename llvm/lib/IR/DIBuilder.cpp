@@ -674,9 +674,11 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context, StringRef Name,
          "function types should be subroutines");
   auto *Node = MDSubprogram::get(
       VMContext, DIScope(getNonCompileUnitScope(Context)).getRef(), Name,
-      LinkageName, File.getFileNode(), LineNo, Ty, isLocalToUnit, isDefinition,
-      ScopeLine, nullptr, 0, 0, Flags, isOptimized, getConstantOrNull(Fn),
-      TParams, Decl, MDNode::getTemporary(VMContext, None).release());
+      LinkageName, File.get(), LineNo, cast_or_null<MDSubroutineType>(Ty.get()),
+      isLocalToUnit, isDefinition, ScopeLine, nullptr, 0, 0, Flags, isOptimized,
+      getConstantOrNull(Fn), cast_or_null<MDTuple>(TParams),
+      cast_or_null<MDSubprogram>(Decl),
+      MDTuple::getTemporary(VMContext, None).release());
 
   if (isDefinition)
     AllSubprograms.push_back(Node);
@@ -694,9 +696,11 @@ DIBuilder::createTempFunctionFwdDecl(DIDescriptor Context, StringRef Name,
                                      MDNode *TParams, MDNode *Decl) {
   return MDSubprogram::getTemporary(
              VMContext, DIScope(getNonCompileUnitScope(Context)).getRef(), Name,
-             LinkageName, File.getFileNode(), LineNo, Ty, isLocalToUnit,
+             LinkageName, File.get(), LineNo,
+             cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit,
              isDefinition, ScopeLine, nullptr, 0, 0, Flags, isOptimized,
-             getConstantOrNull(Fn), TParams, Decl, nullptr).release();
+             getConstantOrNull(Fn), cast_or_null<MDTuple>(TParams),
+             cast_or_null<MDSubprogram>(Decl), nullptr).release();
 }
 
 DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
@@ -714,10 +718,10 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
          "the compile unit.");
   // FIXME: Do we want to use different scope/lines?
   auto *Node = MDSubprogram::get(
-      VMContext, DIScope(Context).getRef(), Name, LinkageName, F.getFileNode(),
-      LineNo, Ty, isLocalToUnit, isDefinition, LineNo, VTableHolder.getRef(),
-      VK, VIndex, Flags, isOptimized, getConstantOrNull(Fn), TParam, nullptr,
-      nullptr);
+      VMContext, DIScope(Context).getRef(), Name, LinkageName, F.get(), LineNo,
+      cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit, isDefinition,
+      LineNo, VTableHolder.getRef(), VK, VIndex, Flags, isOptimized,
+      getConstantOrNull(Fn), cast_or_null<MDTuple>(TParam), nullptr, nullptr);
 
   if (isDefinition)
     AllSubprograms.push_back(Node);

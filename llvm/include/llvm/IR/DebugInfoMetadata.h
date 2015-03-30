@@ -998,12 +998,13 @@ class MDSubprogram : public MDLocalScope {
 
   static MDSubprogram *
   getImpl(LLVMContext &Context, Metadata *Scope, StringRef Name,
-          StringRef LinkageName, Metadata *File, unsigned Line, Metadata *Type,
-          bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
-          Metadata *ContainingType, unsigned Virtuality, unsigned VirtualIndex,
-          unsigned Flags, bool IsOptimized, Metadata *Function,
-          Metadata *TemplateParams, Metadata *Declaration, Metadata *Variables,
-          StorageType Storage, bool ShouldCreate = true) {
+          StringRef LinkageName, MDFile *File, unsigned Line,
+          MDSubroutineType *Type, bool IsLocalToUnit, bool IsDefinition,
+          unsigned ScopeLine, Metadata *ContainingType, unsigned Virtuality,
+          unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
+          ConstantAsMetadata *Function, MDTuple *TemplateParams,
+          MDSubprogram *Declaration, MDTuple *Variables, StorageType Storage,
+          bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
                    IsLocalToUnit, IsDefinition, ScopeLine, ContainingType,
@@ -1032,12 +1033,13 @@ class MDSubprogram : public MDLocalScope {
 public:
   DEFINE_MDNODE_GET(
       MDSubprogram,
-      (Metadata * Scope, StringRef Name, StringRef LinkageName, Metadata *File,
-       unsigned Line, Metadata *Type, bool IsLocalToUnit, bool IsDefinition,
-       unsigned ScopeLine, Metadata *ContainingType, unsigned Virtuality,
-       unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
-       Metadata *Function = nullptr, Metadata *TemplateParams = nullptr,
-       Metadata *Declaration = nullptr, Metadata *Variables = nullptr),
+      (Metadata * Scope, StringRef Name, StringRef LinkageName, MDFile *File,
+       unsigned Line, MDSubroutineType *Type, bool IsLocalToUnit,
+       bool IsDefinition, unsigned ScopeLine, Metadata *ContainingType,
+       unsigned Virtuality, unsigned VirtualIndex, unsigned Flags,
+       bool IsOptimized, ConstantAsMetadata *Function = nullptr,
+       MDTuple *TemplateParams = nullptr, MDSubprogram *Declaration = nullptr,
+       MDTuple *Variables = nullptr),
       (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit, IsDefinition,
        ScopeLine, ContainingType, Virtuality, VirtualIndex, Flags, IsOptimized,
        Function, TemplateParams, Declaration, Variables))
@@ -1065,7 +1067,10 @@ public:
   bool isDefinition() const { return IsDefinition; }
   bool isOptimized() const { return IsOptimized; }
 
-  Metadata *getScope() const { return getOperand(1); }
+  // FIXME: Remove this once MDScope::getFile() does the same.
+  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
+
+  Metadata *getScope() const { return getRawScope(); }
 
   StringRef getName() const { return getStringOperand(2); }
   StringRef getDisplayName() const { return getStringOperand(3); }
@@ -1074,13 +1079,31 @@ public:
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
   MDString *getRawLinkageName() const { return getOperandAs<MDString>(4); }
 
-  Metadata *getType() const { return getOperand(5); }
-  Metadata *getContainingType() const { return getOperand(6); }
+  MDSubroutineType *getType() const {
+    return cast_or_null<MDSubroutineType>(getRawType());
+  }
+  Metadata *getContainingType() const { return getRawContainingType(); }
 
-  Metadata *getFunction() const { return getOperand(7); }
-  Metadata *getTemplateParams() const { return getOperand(8); }
-  Metadata *getDeclaration() const { return getOperand(9); }
-  Metadata *getVariables() const { return getOperand(10); }
+  ConstantAsMetadata *getFunction() const {
+    return cast_or_null<ConstantAsMetadata>(getRawFunction());
+  }
+  MDTuple *getTemplateParams() const {
+    return cast_or_null<MDTuple>(getRawTemplateParams());
+  }
+  MDSubprogram *getDeclaration() const {
+    return cast_or_null<MDSubprogram>(getRawDeclaration());
+  }
+  MDTuple *getVariables() const {
+    return cast_or_null<MDTuple>(getRawVariables());
+  }
+
+  Metadata *getRawScope() const { return getOperand(1); }
+  Metadata *getRawType() const { return getOperand(5); }
+  Metadata *getRawContainingType() const { return getOperand(6); }
+  Metadata *getRawFunction() const { return getOperand(7); }
+  Metadata *getRawTemplateParams() const { return getOperand(8); }
+  Metadata *getRawDeclaration() const { return getOperand(9); }
+  Metadata *getRawVariables() const { return getOperand(10); }
 
   /// \brief Replace the function.
   ///
