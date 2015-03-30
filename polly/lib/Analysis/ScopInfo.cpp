@@ -1193,7 +1193,7 @@ isl_ctx *ScopStmt::getIslCtx() const { return Parent.getIslCtx(); }
 
 __isl_give isl_set *ScopStmt::getDomain() const { return isl_set_copy(Domain); }
 
-_isl_give isl_space *ScopStmt::getDomainSpace() const {
+__isl_give isl_space *ScopStmt::getDomainSpace() const {
   return isl_set_get_space(Domain);
 }
 
