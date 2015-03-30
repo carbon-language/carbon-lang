@@ -35,7 +35,8 @@ int main()
     {
     typedef std::vector<int> V;
     V d1;
-    V d2(10); // no reallocation during assign.
+    V d2;
+    d2.reserve(10);  // no reallocation during assign.
     test(d1);
     test(d2);
     }
@@ -44,7 +45,8 @@ int main()
     {
     typedef std::vector<int, min_allocator<int>> V;
     V d1;
-    V d2(10); // no reallocation during assign.
+    V d2;
+    d2.reserve(10);  // no reallocation during assign.
     test(d1);
     test(d2);
     }
