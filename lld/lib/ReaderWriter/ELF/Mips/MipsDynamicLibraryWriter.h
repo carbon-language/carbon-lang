@@ -41,9 +41,7 @@ protected:
 
   unique_bump_ptr<SymbolTable<ELFT>> createSymbolTable() override;
   unique_bump_ptr<DynamicTable<ELFT>> createDynamicTable() override;
-
-  unique_bump_ptr<DynamicSymbolTable<ELFT>>
-      createDynamicSymbolTable() override;
+  unique_bump_ptr<DynamicSymbolTable<ELFT>> createDynamicSymbolTable() override;
 
 private:
   MipsELFWriter<ELFT> _writeHelper;
