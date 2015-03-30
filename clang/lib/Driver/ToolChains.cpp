@@ -2084,7 +2084,8 @@ void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
       getTriple().getArch() == llvm::Triple::aarch64_be ||
       (getTriple().getOS() == llvm::Triple::Linux &&
        (!V.isOlderThan(4, 7, 0) ||
-        getTriple().getEnvironment() == llvm::Triple::Android));
+        getTriple().getEnvironment() == llvm::Triple::Android)) ||
+      getTriple().getOS() == llvm::Triple::NaCl;
 
   if (DriverArgs.hasFlag(options::OPT_fuse_init_array,
                          options::OPT_fno_use_init_array,
@@ -2306,6 +2307,159 @@ StringRef Hexagon_TC::GetTargetCPU(const ArgList &Args)
   }
 }
 // End Hexagon
+
+/// NaCl Toolchain
+NaCl_TC::NaCl_TC(const Driver &D, const llvm::Triple &Triple,
+                 const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
+
+  // Remove paths added by Generic_GCC. NaCl Toolchain cannot use the
+  // default paths, and must instead only use the paths provided
+  // with this toolchain based on architecture.
+  path_list& file_paths = getFilePaths();
+  path_list& prog_paths = getProgramPaths();
+
+  file_paths.clear();
+  prog_paths.clear();
+
+  // Path for library files (libc.a, ...)
+  std::string FilePath(getDriver().Dir + "/../");
+
+  // Path for tools (clang, ld, etc..)
+  std::string ProgPath(getDriver().Dir + "/../");
+
+  // Path for toolchain libraries (libgcc.a, ...)
+  std::string ToolPath(getDriver().ResourceDir + "/lib/");
+
+  switch(Triple.getArch()) {
+    case llvm::Triple::x86: {
+      file_paths.push_back(FilePath + "x86_64-nacl/lib32");
+      file_paths.push_back(FilePath + "x86_64-nacl/usr/lib32");
+      prog_paths.push_back(ProgPath + "x86_64-nacl/bin");
+      file_paths.push_back(ToolPath + "i686-nacl");
+      break;
+    }
+    case llvm::Triple::x86_64: {
+      file_paths.push_back(FilePath + "x86_64-nacl/lib");
+      file_paths.push_back(FilePath + "x86_64-nacl/usr/lib");
+      prog_paths.push_back(ProgPath + "x86_64-nacl/bin");
+      file_paths.push_back(ToolPath + "x86_64-nacl");
+      break;
+    }
+    case llvm::Triple::arm: {
+      file_paths.push_back(FilePath + "arm-nacl/lib");
+      file_paths.push_back(FilePath + "arm-nacl/usr/lib");
+      prog_paths.push_back(ProgPath + "arm-nacl/bin");
+      file_paths.push_back(ToolPath + "arm-nacl");
+      break;
+    }
+    default:
+      break;
+  }
+
+  // Use provided linker, not system linker
+  Linker = GetProgramPath("ld");
+  NaClArmMacrosPath = GetFilePath("nacl-arm-macros.s");
+}
+
+void NaCl_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
+                                        ArgStringList &CC1Args) const {
+  const Driver &D = getDriver();
+  if (DriverArgs.hasArg(options::OPT_nostdinc))
+    return;
+
+  if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
+    SmallString<128> P(D.ResourceDir);
+    llvm::sys::path::append(P, "include");
+    addSystemInclude(DriverArgs, CC1Args, P.str());
+  }
+
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc))
+    return;
+
+  SmallString<128> P(D.Dir + "/../");
+  if (getTriple().getArch() == llvm::Triple::arm) {
+    llvm::sys::path::append(P, "arm-nacl/usr/include");
+  } else if (getTriple().getArch() == llvm::Triple::x86) {
+    llvm::sys::path::append(P, "x86_64-nacl/usr/include");
+  } else if (getTriple().getArch() == llvm::Triple::x86_64) {
+    llvm::sys::path::append(P, "x86_64-nacl/usr/include");
+  } else {
+    return;
+  }
+
+  addSystemInclude(DriverArgs, CC1Args, P.str());
+  llvm::sys::path::remove_filename(P);
+  llvm::sys::path::remove_filename(P);
+  llvm::sys::path::append(P, "include");
+  addSystemInclude(DriverArgs, CC1Args, P.str());
+}
+
+void NaCl_TC::AddCXXStdlibLibArgs(const ArgList &Args,
+                                  ArgStringList &CmdArgs) const {
+  // Check for -stdlib= flags. We only support libc++ but this consumes the arg
+  // if the value is libc++, and emits an error for other values.
+  GetCXXStdlibType(Args);
+  CmdArgs.push_back("-lc++");
+}
+
+void NaCl_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                           ArgStringList &CC1Args) const {
+  const Driver &D = getDriver();
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  // Check for -stdlib= flags. We only support libc++ but this consumes the arg
+  // if the value is libc++, and emits an error for other values.
+  GetCXXStdlibType(DriverArgs);
+
+  if (getTriple().getArch() == llvm::Triple::arm) {
+    SmallString<128> P(D.Dir + "/../");
+    llvm::sys::path::append(P, "arm-nacl/include/c++/v1");
+    addSystemInclude(DriverArgs, CC1Args, P.str());
+  } else if (getTriple().getArch() == llvm::Triple::x86) {
+    SmallString<128> P(D.Dir + "/../");
+    llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
+    addSystemInclude(DriverArgs, CC1Args, P.str());
+  } else if (getTriple().getArch() == llvm::Triple::x86_64) {
+    SmallString<128> P(D.Dir + "/../");
+    llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
+    addSystemInclude(DriverArgs, CC1Args, P.str());
+  }
+}
+
+ToolChain::CXXStdlibType NaCl_TC::GetCXXStdlibType(const ArgList &Args) const {
+  if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
+    StringRef Value = A->getValue();
+    if (Value == "libc++")
+      return ToolChain::CST_Libcxx;
+    getDriver().Diag(diag::err_drv_invalid_stdlib_name)
+      << A->getAsString(Args);
+  }
+
+  return ToolChain::CST_Libcxx;
+}
+
+std::string NaCl_TC::ComputeEffectiveClangTriple(
+    const ArgList &Args, types::ID InputType) const {
+  llvm::Triple TheTriple(ComputeLLVMTriple(Args, InputType));
+  if (TheTriple.getArch() == llvm::Triple::arm &&
+      TheTriple.getEnvironment() == llvm::Triple::UnknownEnvironment)
+    TheTriple.setEnvironment(llvm::Triple::GNUEABIHF);
+  return TheTriple.getTriple();
+}
+
+Tool *NaCl_TC::buildLinker() const {
+  return new tools::nacltools::Link(*this);
+}
+
+Tool *NaCl_TC::buildAssembler() const {
+  if (getTriple().getArch() == llvm::Triple::arm)
+    return new tools::nacltools::AssembleARM(*this);
+  return new tools::gnutools::Assemble(*this);
+}
+// End NaCl
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
