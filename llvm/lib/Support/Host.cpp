@@ -324,13 +324,13 @@ StringRef sys::getHostCPUName() {
                // 17h. All processors are manufactured using the 45 nm process.
                //
                // 45nm: Penryn , Wolfdale, Yorkfield (XE)
+      case 29: // Intel Xeon processor MP. All processors are manufactured using
+               // the 45 nm process.
         // Not all Penryn processors support SSE 4.1 (such as the Pentium brand)
         return HasSSE41 ? "penryn" : "core2";
 
       case 26: // Intel Core i7 processor and Intel Xeon processor. All
                // processors are manufactured using the 45 nm process.
-      case 29: // Intel Xeon processor MP. All processors are manufactured using
-               // the 45 nm process.
       case 30: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
                // As found in a Summer 2010 model iMac.
       case 37: // Intel Core i7, laptop version.
