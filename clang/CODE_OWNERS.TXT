@@ -23,7 +23,7 @@ D: Debug Information, autotools/configure/make build, inline assembly
 
 N: Doug Gregor
 E: dgregor@apple.com
-D: All parts of Clang not covered by someone else
+D: Emeritus owner
 
 N: Reid Kleckner
 E: rnk@google.com
@@ -47,4 +47,4 @@ D: Compiler driver
 
 N: Richard Smith
 E: richard@metafoo.co.uk
-D: Clang Semantic Analysis (tools/clang/lib/Sema/* tools/clang/include/clang/Sema/*)
+D: All parts of Clang not covered by someone else
