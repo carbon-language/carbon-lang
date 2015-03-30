@@ -6641,21 +6641,21 @@
 // S390X:#define __INT32_FMTi__ "i"
 // S390X:#define __INT32_MAX__ 2147483647
 // S390X:#define __INT32_TYPE__ int
-// S390X:#define __INT64_C_SUFFIX__ LL
-// S390X:#define __INT64_FMTd__ "lld"
-// S390X:#define __INT64_FMTi__ "lli"
-// S390X:#define __INT64_MAX__ 9223372036854775807LL
-// S390X:#define __INT64_TYPE__ long long int
+// S390X:#define __INT64_C_SUFFIX__ L
+// S390X:#define __INT64_FMTd__ "ld"
+// S390X:#define __INT64_FMTi__ "li"
+// S390X:#define __INT64_MAX__ 9223372036854775807L
+// S390X:#define __INT64_TYPE__ long int
 // S390X:#define __INT8_C_SUFFIX__ {{$}}
 // S390X:#define __INT8_FMTd__ "hhd"
 // S390X:#define __INT8_FMTi__ "hhi"
 // S390X:#define __INT8_MAX__ 127
 // S390X:#define __INT8_TYPE__ signed char
-// S390X:#define __INTMAX_C_SUFFIX__ LL
-// S390X:#define __INTMAX_FMTd__ "lld"
-// S390X:#define __INTMAX_FMTi__ "lli"
-// S390X:#define __INTMAX_MAX__ 9223372036854775807LL
-// S390X:#define __INTMAX_TYPE__ long long int
+// S390X:#define __INTMAX_C_SUFFIX__ L
+// S390X:#define __INTMAX_FMTd__ "ld"
+// S390X:#define __INTMAX_FMTi__ "li"
+// S390X:#define __INTMAX_MAX__ 9223372036854775807L
+// S390X:#define __INTMAX_TYPE__ long int
 // S390X:#define __INTMAX_WIDTH__ 64
 // S390X:#define __INTPTR_FMTd__ "ld"
 // S390X:#define __INTPTR_FMTi__ "li"
@@ -6738,15 +6738,15 @@
 // S390X:#define __UINT32_C_SUFFIX__ U
 // S390X:#define __UINT32_MAX__ 4294967295U
 // S390X:#define __UINT32_TYPE__ unsigned int
-// S390X:#define __UINT64_C_SUFFIX__ ULL
-// S390X:#define __UINT64_MAX__ 18446744073709551615ULL
-// S390X:#define __UINT64_TYPE__ long long unsigned int
+// S390X:#define __UINT64_C_SUFFIX__ UL
+// S390X:#define __UINT64_MAX__ 18446744073709551615UL
+// S390X:#define __UINT64_TYPE__ long unsigned int
 // S390X:#define __UINT8_C_SUFFIX__ {{$}}
 // S390X:#define __UINT8_MAX__ 255
 // S390X:#define __UINT8_TYPE__ unsigned char
-// S390X:#define __UINTMAX_C_SUFFIX__ ULL
-// S390X:#define __UINTMAX_MAX__ 18446744073709551615ULL
-// S390X:#define __UINTMAX_TYPE__ long long unsigned int
+// S390X:#define __UINTMAX_C_SUFFIX__ UL
+// S390X:#define __UINTMAX_MAX__ 18446744073709551615UL
+// S390X:#define __UINTMAX_TYPE__ long unsigned int
 // S390X:#define __UINTMAX_WIDTH__ 64
 // S390X:#define __UINTPTR_MAX__ 18446744073709551615UL
 // S390X:#define __UINTPTR_TYPE__ long unsigned int

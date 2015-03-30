@@ -5404,6 +5404,8 @@ class SystemZTargetInfo : public TargetInfo {
 
 public:
   SystemZTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    IntMaxType = SignedLong;
+    Int64Type = SignedLong;
     TLSSupported = true;
     IntWidth = IntAlign = 32;
     LongWidth = LongLongWidth = LongAlign = LongLongAlign = 64;
