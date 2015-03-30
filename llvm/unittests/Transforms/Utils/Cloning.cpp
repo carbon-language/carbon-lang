@@ -346,10 +346,10 @@ TEST_F(CloneFunc, InstructionOwnership) {
       // Verify that the debug location data is the same
       EXPECT_EQ(OldDL.getLine(), NewDL.getLine());
       EXPECT_EQ(OldDL.getCol(), NewDL.getCol());
-      
+
       // But that they belong to different functions
-      DISubprogram OldSubprogram(OldDL.getScope(C));
-      DISubprogram NewSubprogram(NewDL.getScope(C));
+      DISubprogram OldSubprogram(OldDL.getScope());
+      DISubprogram NewSubprogram(NewDL.getScope());
       EXPECT_TRUE(OldSubprogram.Verify());
       EXPECT_TRUE(NewSubprogram.Verify());
       EXPECT_EQ(OldFunc, OldSubprogram.getFunction());
