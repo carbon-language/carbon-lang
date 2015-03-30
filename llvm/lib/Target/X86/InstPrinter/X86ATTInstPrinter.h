@@ -24,7 +24,7 @@ class MCOperand;
 class X86ATTInstPrinter final : public MCInstPrinter {
 public:
   X86ATTInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                    const MCRegisterInfo &MRI, const MCSubtargetInfo &STI)
+                    const MCRegisterInfo &MRI)
       : MCInstPrinter(MAI, MII, MRI) {}
 
   void printRegName(raw_ostream &OS, unsigned RegNo) const override;
