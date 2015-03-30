@@ -36,16 +36,23 @@ public:
                                     CompileCallbackMgr> CODLayerT;
   typedef CODLayerT::ModuleSetHandleT ModuleHandleT;
 
-  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context)
-    : Error(false), TM(std::move(TM)),
+  typedef std::function<
+            std::unique_ptr<CompileCallbackMgr>(CompileLayerT&,
+                                                RuntimeDyld::MemoryManager&,
+                                                LLVMContext&)>
+    CallbackManagerBuilder;
+
+  static CallbackManagerBuilder createCallbackManagerBuilder(Triple T);
+
+  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context,
+             CallbackManagerBuilder &BuildCallbackMgr)
+    : TM(std::move(TM)),
       Mang(this->TM->getDataLayout()),
       ObjectLayer(),
       CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
       LazyEmitLayer(CompileLayer),
-      CCMgr(createCallbackMgr(Triple(this->TM->getTargetTriple()), Context)),
+      CCMgr(BuildCallbackMgr(CompileLayer, CCMgrMemMgr, Context)),
       CODLayer(LazyEmitLayer, *CCMgr) { }
-
-  bool Ok() const { return !Error; }
 
   ModuleHandleT addModule(std::unique_ptr<Module> M) {
     // Attach a data-layout if one isn't already present.
@@ -67,9 +74,6 @@ public:
 
 private:
 
-  std::unique_ptr<CompileCallbackMgr>
-  createCallbackMgr(Triple T, LLVMContext &Context);
-
   std::string mangle(const std::string &Name) {
     std::string MangledName;
     {
@@ -79,7 +83,6 @@ private:
     return MangledName;
   }
 
-  bool Error;
   std::unique_ptr<TargetMachine> TM;
   Mangler Mang;
   SectionMemoryManager CCMgrMemMgr;
