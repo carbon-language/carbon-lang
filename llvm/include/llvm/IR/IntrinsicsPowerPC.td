@@ -563,11 +563,12 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
               Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
                          llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
 
-// These need diagnostics for invalid arguments so don't inherit from GCCBuiltin
 def int_ppc_altivec_crypto_vshasigmad :
+            GCCBuiltin<"__builtin_altivec_crypto_vshasigmad">,
             Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty,
                        llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_ppc_altivec_crypto_vshasigmaw :
+            GCCBuiltin<"__builtin_altivec_crypto_vshasigmaw">,
             Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty,
                        llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 }
@@ -801,20 +802,20 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 
-def int_ppc_tbegin :
+def int_ppc_tbegin : GCCBuiltin<"__builtin_tbegin">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty], []>;
-def int_ppc_tend :
+def int_ppc_tend : GCCBuiltin<"__builtin_tend">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty], []>;
 
 def int_ppc_tabort : GCCBuiltin<"__builtin_tabort">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty], []>;
-def int_ppc_tabortwc :
+def int_ppc_tabortwc : GCCBuiltin<"__builtin_tabortwc">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
-def int_ppc_tabortwci :
+def int_ppc_tabortwci : GCCBuiltin<"__builtin_tabortwci">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
-def int_ppc_tabortdc :
+def int_ppc_tabortdc : GCCBuiltin<"__builtin_tabortdc">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
-def int_ppc_tabortdci :
+def int_ppc_tabortdci : GCCBuiltin<"__builtin_tabortdci">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
 
 def int_ppc_tcheck : GCCBuiltin<"__builtin_tcheck">,
@@ -823,7 +824,7 @@ def int_ppc_treclaim : GCCBuiltin<"__builtin_treclaim">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty], []>;
 def int_ppc_trechkpt : GCCBuiltin<"__builtin_trechkpt">,
       Intrinsic<[llvm_i32_ty], [], []>;
-def int_ppc_tsr :
+def int_ppc_tsr : GCCBuiltin<"__builtin_tsr">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty], []>;
 
 def int_ppc_get_texasr : GCCBuiltin<"__builtin_get_texasr">,
