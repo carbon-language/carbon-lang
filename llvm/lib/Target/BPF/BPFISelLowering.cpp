@@ -63,8 +63,8 @@ public:
     std::string Str;
     raw_string_ostream OS(Str);
 
-    if (DLoc.isUnknown() == false) {
-      DILocation DIL(DLoc.getAsMDNode(Fn.getContext()));
+    if (DLoc) {
+      DILocation DIL(DLoc.getAsMDNode());
       StringRef Filename = DIL.getFilename();
       unsigned Line = DIL.getLineNumber();
       unsigned Column = DIL.getColumnNumber();
