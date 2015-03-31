@@ -30,8 +30,7 @@ public:
   };
 
   HexagonTargetLayout(HexagonLinkingContext &hti)
-      : TargetLayout<HexagonELFType>(hti), _sdataSection(nullptr),
-        _gotSymAtom(nullptr), _cachedGotSymAtom(false) {
+      : TargetLayout<HexagonELFType>(hti), _sdataSection() {
     _sdataSection = new (_alloc) SDataSection<HexagonELFType>(hti);
   }
 
@@ -84,21 +83,19 @@ public:
   }
 
   uint64_t getGOTSymAddr() {
-    if (!_cachedGotSymAtom) {
-      auto gotAtomIter = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _gotSymAtom = (*gotAtomIter);
-      _cachedGotSymAtom = true;
+    if (!_gotSymAtom.hasValue()) {
+      auto iter = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+      _gotSymAtom = (iter == this->absoluteAtoms().end()) ? nullptr : *iter;
     }
-    if (_gotSymAtom)
-      return _gotSymAtom->_virtualAddr;
+    if (*_gotSymAtom)
+      return (*_gotSymAtom)->_virtualAddr;
     return 0;
   }
 
 private:
   llvm::BumpPtrAllocator _alloc;
-  SDataSection<HexagonELFType> *_sdataSection;
-  AtomLayout *_gotSymAtom;
-  bool _cachedGotSymAtom;
+  SDataSection<HexagonELFType> *_sdataSection = nullptr;
+  llvm::Optional<AtomLayout *> _gotSymAtom;
 };
 
 /// \brief TargetHandler for Hexagon
