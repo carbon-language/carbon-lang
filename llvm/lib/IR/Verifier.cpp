@@ -87,10 +87,9 @@ struct VerifierSupport {
 
   /// \brief Track the brokenness of the module while recursively visiting.
   bool Broken;
-  bool EverBroken;
 
   explicit VerifierSupport(raw_ostream &OS)
-      : OS(OS), M(nullptr), Broken(false), EverBroken(false) {}
+      : OS(OS), M(nullptr), Broken(false) {}
 
 private:
   void Write(const Value *V) {
@@ -145,7 +144,7 @@ public:
   /// something is not correct.
   void CheckFailed(const Twine &Message) {
     OS << Message << '\n';
-    EverBroken = Broken = true;
+    Broken = true;
   }
 
   /// \brief A check failed (with values to print).
@@ -3387,11 +3386,6 @@ void Verifier::visitUnresolvedTypeRef(const MDString *S, const MDNode *N) {
 }
 
 void Verifier::verifyTypeRefs() {
-  // Run the debug info verifier only if the regular verifier succeeds, since
-  // sometimes checks that have already failed will cause crashes here.
-  if (EverBroken || !VerifyDebugInfo)
-    return;
-
   auto *CUs = M->getNamedMetadata("llvm.dbg.cu");
   if (!CUs)
     return;
