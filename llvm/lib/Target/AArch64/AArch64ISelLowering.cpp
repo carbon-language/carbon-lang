@@ -481,6 +481,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
 
   // Enable TBZ/TBNZ
   MaskAndBranchFoldingIsLegal = true;
+  EnableExtLdPromotion = true;
 
   setMinFunctionAlignment(2);
 
@@ -6552,6 +6553,59 @@ bool AArch64TargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
   return (VT1.isSimple() && !VT1.isVector() && VT1.isInteger() &&
           VT2.isSimple() && !VT2.isVector() && VT2.isInteger() &&
           VT1.getSizeInBits() <= 32);
+}
+
+bool AArch64TargetLowering::isExtFreeImpl(const Instruction *Ext) const {
+  if (isa<FPExtInst>(Ext))
+    return false;
+
+  // Vector types are next free.
+  if (Ext->getType()->isVectorTy())
+    return false;
+
+  for (const Use &U : Ext->uses()) {
+    // The extension is free if we can fold it with a left shift in an
+    // addressing mode or an arithmetic operation: add, sub, and cmp.
+
+    // Is there a shift?
+    const Instruction *Instr = cast<Instruction>(U.getUser());
+
+    // Is this a constant shift?
+    switch (Instr->getOpcode()) {
+    case Instruction::Shl:
+      if (!isa<ConstantInt>(Instr->getOperand(1)))
+        return false;
+      break;
+    case Instruction::GetElementPtr: {
+      gep_type_iterator GTI = gep_type_begin(Instr);
+      std::advance(GTI, U.getOperandNo());
+      Type *IdxTy = *GTI;
+      // This extension will end up with a shift because of the scaling factor.
+      // 8-bit sized types have a scaling factor of 1, thus a shift amount of 0.
+      // Get the shift amount based on the scaling factor:
+      // log2(sizeof(IdxTy)) - log2(8).
+      uint64_t ShiftAmt =
+        countTrailingZeros(getDataLayout()->getTypeStoreSizeInBits(IdxTy)) - 3;
+      // Is the constant foldable in the shift of the addressing mode?
+      // I.e., shift amount is between 1 and 4 inclusive.
+      if (ShiftAmt == 0 || ShiftAmt > 4)
+        return false;
+      break;
+    }
+    case Instruction::Trunc:
+      // Check if this is a noop.
+      // trunc(sext ty1 to ty2) to ty1.
+      if (Instr->getType() == Ext->getOperand(0)->getType())
+        continue;
+    // FALL THROUGH.
+    default:
+      return false;
+    }
+
+    // At this point we can use the bfm family, so this extension is free
+    // for that use.
+  }
+  return true;
 }
 
 bool AArch64TargetLowering::hasPairedLoad(Type *LoadedType,
