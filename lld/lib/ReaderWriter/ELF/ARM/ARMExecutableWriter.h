@@ -66,9 +66,8 @@ template <class ELFT>
 void ARMExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
-  auto gotAtomIter = _armLayout.findAbsoluteAtom(gotSymbol);
-  if (gotAtomIter != _armLayout.absoluteAtoms().end()) {
-    auto *gotAtom = *gotAtomIter;
+  AtomLayout *gotAtom = _armLayout.findAbsoluteAtom(gotSymbol);
+  if (gotAtom) {
     if (auto gotpltSection = _armLayout.findOutputSection(".got.plt"))
       gotAtom->_virtualAddr = gotpltSection->virtualAddr();
     else if (auto gotSection = _armLayout.findOutputSection(".got"))

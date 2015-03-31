@@ -126,23 +126,26 @@ template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
 /// created
 template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   OutputELFWriter<ELFT>::finalizeDefaultAtomValues();
-  auto bssStartAtomIter = this->_layout.findAbsoluteAtom("__bss_start");
-  auto bssEndAtomIter = this->_layout.findAbsoluteAtom("__bss_end");
-  auto underScoreEndAtomIter = this->_layout.findAbsoluteAtom("_end");
-  auto endAtomIter = this->_layout.findAbsoluteAtom("end");
+  AtomLayout *bssStartAtom = this->_layout.findAbsoluteAtom("__bss_start");
+  AtomLayout *bssEndAtom = this->_layout.findAbsoluteAtom("__bss_end");
+  AtomLayout *underScoreEndAtom = this->_layout.findAbsoluteAtom("_end");
+  AtomLayout *endAtom = this->_layout.findAbsoluteAtom("end");
+
+  assert((bssStartAtom || bssEndAtom || underScoreEndAtom || endAtom) &&
+         "Unable to find the absolute atoms that have been added by lld");
 
   auto startEnd = [&](StringRef sym, StringRef sec) -> void {
     std::string start = ("__" + sym + "_start").str();
     std::string end = ("__" + sym + "_end").str();
-    auto s = this->_layout.findAbsoluteAtom(start);
-    auto e = this->_layout.findAbsoluteAtom(end);
-    auto section = this->_layout.findOutputSection(sec);
+    AtomLayout *s = this->_layout.findAbsoluteAtom(start);
+    AtomLayout *e = this->_layout.findAbsoluteAtom(end);
+    OutputSection<ELFT> *section = this->_layout.findOutputSection(sec);
     if (section) {
-      (*s)->_virtualAddr = section->virtualAddr();
-      (*e)->_virtualAddr = section->virtualAddr() + section->memSize();
+      s->_virtualAddr = section->virtualAddr();
+      e->_virtualAddr = section->virtualAddr() + section->memSize();
     } else {
-      (*s)->_virtualAddr = 0;
-      (*e)->_virtualAddr = 0;
+      s->_virtualAddr = 0;
+      e->_virtualAddr = 0;
     }
   };
 
@@ -154,25 +157,19 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
     startEnd("rel_iplt", ".rel.plt");
   startEnd("fini_array", ".fini_array");
 
-  assert(!(bssStartAtomIter == this->_layout.absoluteAtoms().end() ||
-           bssEndAtomIter == this->_layout.absoluteAtoms().end() ||
-           underScoreEndAtomIter == this->_layout.absoluteAtoms().end() ||
-           endAtomIter == this->_layout.absoluteAtoms().end()) &&
-         "Unable to find the absolute atoms that have been added by lld");
-
   auto bssSection = this->_layout.findOutputSection(".bss");
 
   // If we don't find a bss section, then don't set these values
   if (bssSection) {
-    (*bssStartAtomIter)->_virtualAddr = bssSection->virtualAddr();
-    (*bssEndAtomIter)->_virtualAddr =
+    bssStartAtom->_virtualAddr = bssSection->virtualAddr();
+    bssEndAtom->_virtualAddr =
         bssSection->virtualAddr() + bssSection->memSize();
-    (*underScoreEndAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
-    (*endAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
+    underScoreEndAtom->_virtualAddr = bssEndAtom->_virtualAddr;
+    endAtom->_virtualAddr = bssEndAtom->_virtualAddr;
   } else if (auto dataSection = this->_layout.findOutputSection(".data")) {
-    (*underScoreEndAtomIter)->_virtualAddr =
+    underScoreEndAtom->_virtualAddr =
         dataSection->virtualAddr() + dataSection->memSize();
-    (*endAtomIter)->_virtualAddr = (*underScoreEndAtomIter)->_virtualAddr;
+    endAtom->_virtualAddr = underScoreEndAtom->_virtualAddr;
   }
 }
 

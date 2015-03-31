@@ -79,13 +79,14 @@ bool DynamicLibraryWriter<ELFT>::createImplicitFiles(
 
 template <class ELFT>
 void DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
-  auto underScoreEndAtomIter = this->_layout.findAbsoluteAtom("_end");
+  lld::AtomLayout *underScoreEndAtom = this->_layout.findAbsoluteAtom("_end");
+  assert(underScoreEndAtom);
 
   if (auto bssSection = this->_layout.findOutputSection(".bss")) {
-    (*underScoreEndAtomIter)->_virtualAddr =
+    underScoreEndAtom->_virtualAddr =
         bssSection->virtualAddr() + bssSection->memSize();
   } else if (auto dataSection = this->_layout.findOutputSection(".data")) {
-    (*underScoreEndAtomIter)->_virtualAddr =
+    underScoreEndAtom->_virtualAddr =
         dataSection->virtualAddr() + dataSection->memSize();
   }
 }

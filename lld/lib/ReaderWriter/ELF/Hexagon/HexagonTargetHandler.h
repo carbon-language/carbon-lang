@@ -83,10 +83,8 @@ public:
   }
 
   uint64_t getGOTSymAddr() {
-    if (!_gotSymAtom.hasValue()) {
-      auto iter = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _gotSymAtom = (iter == this->absoluteAtoms().end()) ? nullptr : *iter;
-    }
+    if (!_gotSymAtom.hasValue())
+      _gotSymAtom = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
     if (*_gotSymAtom)
       return (*_gotSymAtom)->_virtualAddr;
     return 0;
@@ -131,18 +129,18 @@ private:
 
 template <class ELFT>
 void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout<ELFT> &layout) {
-  auto gotAtomIter = layout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-  auto gotpltSection = layout.findOutputSection(".got.plt");
+  AtomLayout *gotAtom = layout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+  OutputSection<ELFT> *gotpltSection = layout.findOutputSection(".got.plt");
   if (gotpltSection)
-    (*gotAtomIter)->_virtualAddr = gotpltSection->virtualAddr();
+    gotAtom->_virtualAddr = gotpltSection->virtualAddr();
   else
-    (*gotAtomIter)->_virtualAddr = 0;
-  auto dynamicAtomIter = layout.findAbsoluteAtom("_DYNAMIC");
-  auto dynamicSection = layout.findOutputSection(".dynamic");
+    gotAtom->_virtualAddr = 0;
+  AtomLayout *dynamicAtom = layout.findAbsoluteAtom("_DYNAMIC");
+  OutputSection<ELFT> *dynamicSection = layout.findOutputSection(".dynamic");
   if (dynamicSection)
-    (*dynamicAtomIter)->_virtualAddr = dynamicSection->virtualAddr();
+    dynamicAtom->_virtualAddr = dynamicSection->virtualAddr();
   else
-    (*dynamicAtomIter)->_virtualAddr = 0;
+    dynamicAtom->_virtualAddr = 0;
 }
 
 } // end namespace elf

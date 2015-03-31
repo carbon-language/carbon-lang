@@ -68,9 +68,9 @@ private:
   MipsTargetLayout<ELFT> &_targetLayout;
 
   void setAtomValue(StringRef name, uint64_t value) {
-    auto atom = _targetLayout.findAbsoluteAtom(name);
-    assert(atom != _targetLayout.absoluteAtoms().end());
-    (*atom)->_virtualAddr = value;
+    AtomLayout *atom = _targetLayout.findAbsoluteAtom(name);
+    assert(atom);
+    atom->_virtualAddr = value;
   }
 };
 

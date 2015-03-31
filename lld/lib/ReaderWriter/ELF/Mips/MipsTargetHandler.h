@@ -48,19 +48,15 @@ public:
 
   /// \brief Get '_gp' symbol atom layout.
   AtomLayout *getGP() {
-    if (!_gpAtom.hasValue()) {
-      auto atom = this->findAbsoluteAtom("_gp");
-      _gpAtom = atom != this->absoluteAtoms().end() ? *atom : nullptr;
-    }
+    if (!_gpAtom.hasValue())
+      _gpAtom = this->findAbsoluteAtom("_gp");
     return *_gpAtom;
   }
 
   /// \brief Get '_gp_disp' symbol atom layout.
   AtomLayout *getGPDisp() {
-    if (!_gpDispAtom.hasValue()) {
-      auto atom = this->findAbsoluteAtom("_gp_disp");
-      _gpDispAtom = atom != this->absoluteAtoms().end() ? *atom : nullptr;
-    }
+    if (!_gpDispAtom.hasValue())
+      _gpDispAtom = this->findAbsoluteAtom("_gp_disp");
     return *_gpDispAtom;
   }
 

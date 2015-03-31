@@ -70,9 +70,8 @@ template <class ELFT>
 void HexagonExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
-  auto sdabaseAtomIter = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
-  (*sdabaseAtomIter)->_virtualAddr =
-      _targetLayout.getSDataSection()->virtualAddr();
+  AtomLayout *sdabaseAtom = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
+  sdabaseAtom->_virtualAddr = _targetLayout.getSDataSection()->virtualAddr();
   if (_ctx.isDynamic())
     finalizeHexagonRuntimeAtomValues(_targetLayout);
 }

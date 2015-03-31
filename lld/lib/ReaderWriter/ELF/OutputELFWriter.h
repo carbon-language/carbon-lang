@@ -384,8 +384,9 @@ void OutputELFWriter<ELFT>::finalizeDefaultAtomValues() {
   for (auto &sym : symbols) {
     uint64_t res =
         _ctx.linkerScriptSema().getLinkerScriptExprValue(sym.getKey());
-    auto a = _layout.findAbsoluteAtom(sym.getKey());
-    (*a)->_virtualAddr = res;
+    AtomLayout *a = _layout.findAbsoluteAtom(sym.getKey());
+    assert(a);
+    a->_virtualAddr = res;
   }
 }
 

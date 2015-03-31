@@ -204,10 +204,13 @@ public:
   }
 
   /// \brief find a absolute atom given a name
-  AbsoluteAtomIterT findAbsoluteAtom(StringRef name) {
-    return std::find_if(
+  lld::AtomLayout *findAbsoluteAtom(StringRef name) {
+    auto iter = std::find_if(
         _absoluteAtoms.begin(), _absoluteAtoms.end(),
         [=](const AtomLayout *a) { return a->_atom->name() == name; });
+    if (iter == _absoluteAtoms.end())
+      return nullptr;
+    return *iter;
   }
 
   // Output sections with the same name into a OutputSection

@@ -27,10 +27,8 @@ public:
 
   uint64_t getGOTSymAddr() {
     if (!_gotSymAddr.hasValue()) {
-      auto gotAtomIter = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _gotSymAddr = (gotAtomIter != this->absoluteAtoms().end())
-                        ? (*gotAtomIter)->_virtualAddr
-                        : 0;
+      AtomLayout *gotAtom = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+      _gotSymAddr = gotAtom ? gotAtom->_virtualAddr : 0;
     }
     return *_gotSymAddr;
   }
