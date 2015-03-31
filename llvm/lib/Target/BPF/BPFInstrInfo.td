@@ -231,8 +231,6 @@ class MOV_RI<string OpcodeStr>
   let BPFSrc = 0;   // BPF_K
   let BPFClass = 7; // BPF_ALU64
 }
-def MOV_rr : MOV_RR<"mov">;
-def MOV_ri : MOV_RI<"mov">;
 
 class LD_IMM64<bits<4> Pseudo, string OpcodeStr>
     : InstBPF<(outs GPR:$dst), (ins u64imm:$imm),
@@ -255,7 +253,12 @@ class LD_IMM64<bits<4> Pseudo, string OpcodeStr>
   let size = 3;     // BPF_DW
   let BPFClass = 0; // BPF_LD
 }
+
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 def LD_imm64 : LD_IMM64<0, "ld_64">;
+def MOV_rr : MOV_RR<"mov">;
+def MOV_ri : MOV_RI<"mov">;
+}
 
 def LD_pseudo
     : InstBPF<(outs GPR:$dst), (ins i64imm:$pseudo, u64imm:$imm),
