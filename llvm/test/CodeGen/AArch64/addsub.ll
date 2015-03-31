@@ -24,6 +24,34 @@ define void @add_small() {
   ret void
 }
 
+; Make sure we grab the imm variant when the register operand
+; can be implicitly zero-extend.
+; We used to generate something horrible like this:
+; wA = ldrb
+; xB = ldimm 12
+; xC = add xB, wA, uxtb
+; whereas this can be achieved with:
+; wA = ldrb
+; xC = add xA, #12 ; <- xA implicitly zero extend wA.
+define void @add_small_imm(i8* %p, i64* %q, i32 %b, i32* %addr) {
+; CHECK-LABEL: add_small_imm:
+entry:
+
+; CHECK: ldrb w[[LOAD32:[0-9]+]], [x0]
+  %t = load i8, i8* %p
+  %promoted = zext i8 %t to i64
+  %zextt = zext i8 %t to i32
+  %add = add nuw i32 %zextt, %b
+
+; CHECK: add [[ADD2:x[0-9]+]], x[[LOAD32]], #12
+  %add2 = add nuw i64 %promoted, 12
+  store i32 %add, i32* %addr
+
+; CHECK: str [[ADD2]], [x1]
+  store i64 %add2, i64* %q
+  ret void
+}
+
 ; Add 12-bit immediates, shifted left by 12 bits
 define void @add_med() {
 ; CHECK-LABEL: add_med:
