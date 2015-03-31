@@ -60,6 +60,8 @@ public:
   unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
                          Type *Ty);
 
+  TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);
+
   /// @}
 };
 

@@ -1382,6 +1382,13 @@ let Defs = [CC] in {
 def : Pat<(ctlz GR64:$src),
           (EXTRACT_SUBREG (FLOGR GR64:$src), subreg_h64)>;
 
+// Population count.  Counts bits set per byte.
+let Predicates = [FeaturePopulationCount], Defs = [CC] in {
+  def POPCNT : InstRRE<0xB9E1, (outs GR64:$R1), (ins GR64:$R2),
+                       "popcnt\t$R1, $R2",
+                       [(set GR64:$R1, (z_popcnt GR64:$R2))]>;
+}
+
 // Use subregs to populate the "don't care" bits in a 32-bit to 64-bit anyext.
 def : Pat<(i64 (anyext GR32:$src)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_l32)>;

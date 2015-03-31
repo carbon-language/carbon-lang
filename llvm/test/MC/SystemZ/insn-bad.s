@@ -2666,6 +2666,11 @@
 	pfdrl	1, 1
 	pfdrl	1, 0x100000000
 
+#CHECK: error: {{(instruction requires: population-count)?}}
+#CHECK: popcnt	%r0, %r0
+
+	popcnt	%r0, %r0
+
 #CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand

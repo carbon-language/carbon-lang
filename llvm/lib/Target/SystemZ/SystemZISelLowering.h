@@ -87,6 +87,9 @@ enum {
   // the number of the register.
   EXTRACT_ACCESS,
 
+  // Count number of bits set in operand 0 per byte.
+  POPCNT,
+
   // Wrappers around the ISD opcodes of the same name.  The output and
   // first input operands are GR128s.  The trailing numbers are the
   // widths of the second operand in bits.
@@ -304,6 +307,7 @@ private:
   SDValue lowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerBITCAST(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerOR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerCTPOP(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerATOMIC_LOAD_OP(SDValue Op, SelectionDAG &DAG,

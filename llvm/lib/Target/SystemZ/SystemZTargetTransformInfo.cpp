@@ -229,3 +229,12 @@ unsigned SystemZTTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
   }
   return SystemZTTIImpl::getIntImmCost(Imm, Ty);
 }
+
+TargetTransformInfo::PopcntSupportKind
+SystemZTTIImpl::getPopcntSupport(unsigned TyWidth) {
+  assert(isPowerOf2_32(TyWidth) && "Type width must be power of 2");
+  if (ST->hasPopulationCount() && TyWidth <= 64)
+    return TTI::PSK_FastHardware;
+  return TTI::PSK_Software;
+}
+

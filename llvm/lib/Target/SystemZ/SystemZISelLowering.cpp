@@ -163,8 +163,13 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
       // available, or if the operand is constant.
       setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
 
+      // Use POPCNT on z196 and above.
+      if (Subtarget.hasPopulationCount())
+        setOperationAction(ISD::CTPOP, VT, Custom);
+      else
+        setOperationAction(ISD::CTPOP, VT, Expand);
+
       // No special instructions for these.
-      setOperationAction(ISD::CTPOP,           VT, Expand);
       setOperationAction(ISD::CTTZ,            VT, Expand);
       setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Expand);
       setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Expand);
@@ -2304,6 +2309,45 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
                                    MVT::i64, HighOp, Low32);
 }
 
+SDValue SystemZTargetLowering::lowerCTPOP(SDValue Op,
+                                          SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  int64_t OrigBitSize = VT.getSizeInBits();
+  SDLoc DL(Op);
+
+  // Get the known-zero mask for the operand.
+  Op = Op.getOperand(0);
+  APInt KnownZero, KnownOne;
+  DAG.computeKnownBits(Op, KnownZero, KnownOne);
+  uint64_t Mask = ~KnownZero.getZExtValue();
+
+  // Skip known-zero high parts of the operand.
+  int64_t BitSize = OrigBitSize;
+  while ((Mask & ((((uint64_t)1 << (BitSize / 2)) - 1) << (BitSize / 2))) == 0)
+    BitSize = BitSize / 2;
+
+  // The POPCNT instruction counts the number of bits in each byte.
+  Op = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op);
+  Op = DAG.getNode(SystemZISD::POPCNT, DL, MVT::i64, Op);
+  Op = DAG.getNode(ISD::TRUNCATE, DL, VT, Op);
+
+  // Add up per-byte counts in a binary tree.  All bits of Op at
+  // position larger than BitSize remain zero throughout.
+  for (int64_t I = BitSize / 2; I >= 8; I = I / 2) {
+    SDValue Tmp = DAG.getNode(ISD::SHL, DL, VT, Op, DAG.getConstant(I, VT));
+    if (BitSize != OrigBitSize)
+      Tmp = DAG.getNode(ISD::AND, DL, VT, Tmp,
+                        DAG.getConstant(((uint64_t)1 << BitSize) - 1, VT));
+    Op = DAG.getNode(ISD::ADD, DL, VT, Op, Tmp);
+  }
+
+  // Extract overall result from high byte.
+  if (BitSize > 8)
+    Op = DAG.getNode(ISD::SRL, DL, VT, Op, DAG.getConstant(BitSize - 8, VT));
+
+  return Op;
+}
+
 // Op is an atomic load.  Lower it into a normal volatile load.
 SDValue SystemZTargetLowering::lowerATOMIC_LOAD(SDValue Op,
                                                 SelectionDAG &DAG) const {
@@ -2554,6 +2598,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerUDIVREM(Op, DAG);
   case ISD::OR:
     return lowerOR(Op, DAG);
+  case ISD::CTPOP:
+    return lowerCTPOP(Op, DAG);
   case ISD::ATOMIC_SWAP:
     return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_SWAPW);
   case ISD::ATOMIC_STORE:

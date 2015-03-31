@@ -1021,6 +1021,16 @@
 	ork	%r15,%r0,%r0
 	ork	%r7,%r8,%r9
 
+#CHECK: popcnt	%r0, %r0                # encoding: [0xb9,0xe1,0x00,0x00]
+#CHECK: popcnt	%r0, %r15               # encoding: [0xb9,0xe1,0x00,0x0f]
+#CHECK: popcnt	%r15, %r0               # encoding: [0xb9,0xe1,0x00,0xf0]
+#CHECK: popcnt	%r7, %r8                # encoding: [0xb9,0xe1,0x00,0x78]
+
+	popcnt	%r0,%r0
+	popcnt	%r0,%r15
+	popcnt	%r15,%r0
+	popcnt	%r7,%r8
+
 #CHECK: risbhg	%r0, %r0, 0, 0, 0       # encoding: [0xec,0x00,0x00,0x00,0x00,0x5d]
 #CHECK: risbhg	%r0, %r0, 0, 0, 63      # encoding: [0xec,0x00,0x00,0x00,0x3f,0x5d]
 #CHECK: risbhg	%r0, %r0, 0, 255, 0     # encoding: [0xec,0x00,0x00,0xff,0x00,0x5d]

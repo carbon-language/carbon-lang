@@ -38,6 +38,7 @@ protected:
   bool HasLoadStoreOnCond;
   bool HasHighWord;
   bool HasFPExtension;
+  bool HasPopulationCount;
   bool HasFastSerialization;
   bool HasInterlockedAccess1;
 
@@ -85,6 +86,9 @@ public:
 
   // Return true if the target has the floating-point extension facility.
   bool hasFPExtension() const { return HasFPExtension; }
+
+  // Return true if the target has the population-count facility.
+  bool hasPopulationCount() const { return HasPopulationCount; }
 
   // Return true if the target has the fast-serialization facility.
   bool hasFastSerialization() const { return HasFastSerialization; }
