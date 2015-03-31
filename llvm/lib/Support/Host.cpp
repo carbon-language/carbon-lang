@@ -225,20 +225,30 @@ StringRef sys::getHostCPUName() {
     char     c[12];
   } text;
 
-  GetX86CpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1);
+  unsigned MaxLeaf;
+  GetX86CpuIDAndInfo(0, &MaxLeaf, text.u+0, text.u+2, text.u+1);
 
-  unsigned MaxLeaf = EAX;
-  bool HasSSE3 = (ECX & 0x1);
-  bool HasSSE41 = (ECX & 0x80000);
-  // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV 
+  bool HasMMX   = (EDX >> 23) & 1;
+  bool HasSSE   = (EDX >> 25) & 1;
+  bool HasSSE2  = (EDX >> 26) & 1;
+  bool HasSSE3  = (ECX >>  0) & 1;
+  bool HasSSSE3 = (ECX >>  9) & 1;
+  bool HasSSE41 = (ECX >> 19) & 1;
+  bool HasSSE42 = (ECX >> 20) & 1;
+  bool HasMOVBE = (ECX >> 22) & 1;
+  // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV
   // indicates that the AVX registers will be saved and restored on context
   // switch, then we have full AVX support.
   const unsigned AVXBits = (1 << 27) | (1 << 28);
   bool HasAVX = ((ECX & AVXBits) == AVXBits) && !GetX86XCR0(&EAX, &EDX) &&
                 ((EAX & 0x6) == 0x6);
-  bool HasAVX2 = HasAVX && MaxLeaf >= 0x7 &&
-                 !GetX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX) &&
-                 (EBX & 0x20);
+  bool HasAVX512Save = HasAVX && ((EAX & 0xe0) == 0xe0);
+  bool HasLeaf7 = MaxLeaf >= 0x7 &&
+                  !GetX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
+  bool HasADX = HasLeaf7 && ((EBX >> 19) & 1);
+  bool HasAVX2 = HasAVX && HasLeaf7 && (EBX & 0x20);
+  bool HasAVX512 = HasLeaf7 && HasAVX512Save && ((EBX >> 16) & 1);
+
   GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
   bool HasTBM = (ECX >> 21) & 0x1;
@@ -382,7 +392,30 @@ StringRef sys::getHostCPUName() {
       case 77:
         return "silvermont";
 
-      default: return (Em64T) ? "x86-64" : "i686";
+      default: // Unknown family 6 CPU, try to guess.
+        if (HasAVX512)
+          return "knl";
+        if (HasADX)
+          return "broadwell";
+        if (HasAVX2)
+          return "haswell";
+        if (HasAVX)
+          return "sandybridge";
+        if (HasSSE42)
+          return HasMOVBE ? "silvermont" : "nehalem";
+        if (HasSSE41)
+          return "penryn";
+        if (HasSSSE3)
+          return HasMOVBE ? "bonnell" : "core2";
+        if (Em64T)
+          return "x86-64";
+        if (HasSSE2)
+          return "pentium-m";
+        if (HasSSE)
+          return "pentium3";
+        if (HasMMX)
+          return "pentium2";
+        return "pentiumpro";
       }
     case 15: {
       switch (Model) {
