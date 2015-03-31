@@ -27,11 +27,15 @@
 using namespace llvm;
 
 static cl:: opt<bool> DisableHardwareLoops("disable-hexagon-hwloops",
-      cl::Hidden, cl::desc("Disable Hardware Loops for Hexagon target"));
+  cl::Hidden, cl::desc("Disable Hardware Loops for Hexagon target"));
 
 static cl::opt<bool> DisableHexagonCFGOpt("disable-hexagon-cfgopt",
-      cl::Hidden, cl::ZeroOrMore, cl::init(false),
-      cl::desc("Disable Hexagon CFG Optimization"));
+  cl::Hidden, cl::ZeroOrMore, cl::init(false),
+  cl::desc("Disable Hexagon CFG Optimization"));
+
+static cl::opt<bool> EnableExpandCondsets("hexagon-expand-condsets",
+  cl::init(true), cl::Hidden, cl::ZeroOrMore,
+  cl::desc("Early expansion of MUX"));
 
 
 /// HexagonTargetMachineModule - Note that this is used on hosts that
@@ -54,6 +58,10 @@ static ScheduleDAGInstrs *createVLIWMachineSched(MachineSchedContext *C) {
 static MachineSchedRegistry
 SchedCustomRegistry("hexagon", "Run Hexagon's custom scheduler",
                     createVLIWMachineSched);
+
+namespace llvm {
+  FunctionPass *createHexagonExpandCondsets();
+}
 
 /// HexagonTargetMachine ctor - Create an ILP32 architecture model.
 ///
@@ -79,7 +87,15 @@ namespace {
 class HexagonPassConfig : public TargetPassConfig {
 public:
   HexagonPassConfig(HexagonTargetMachine *TM, PassManagerBase &PM)
-      : TargetPassConfig(TM, PM) {}
+    : TargetPassConfig(TM, PM) {
+    bool NoOpt = (TM->getOptLevel() == CodeGenOpt::None);
+    if (!NoOpt) {
+      if (EnableExpandCondsets) {
+        Pass *Exp = createHexagonExpandCondsets();
+        insertPass(&RegisterCoalescerID, IdentifyingPassPtr(Exp));
+      }
+    }
+  }
 
   HexagonTargetMachine &getHexagonTargetMachine() const {
     return getTM<HexagonTargetMachine>();
