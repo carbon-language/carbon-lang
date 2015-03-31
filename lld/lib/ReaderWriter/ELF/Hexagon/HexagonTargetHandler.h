@@ -110,11 +110,11 @@ public:
   void registerRelocationNames(Registry &registry) override;
 
   const HexagonTargetRelocationHandler &getRelocationHandler() const override {
-    return *(_hexagonRelocationHandler.get());
+    return *_hexagonRelocationHandler;
   }
 
   HexagonTargetLayout<HexagonELFType> &getTargetLayout() override {
-    return *(_hexagonTargetLayout.get());
+    return *_hexagonTargetLayout;
   }
 
   std::unique_ptr<Reader> getObjReader() override {
