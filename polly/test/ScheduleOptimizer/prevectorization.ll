@@ -56,23 +56,23 @@ for.end30:                                        ; preds = %for.inc28
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
 ; CHECK: #pragma known-parallel
-; CHECK: for (int c1 = 0; c1 <= 1535; c1 += 32)
-; CHECK:   for (int c2 = 0; c2 <= 1535; c2 += 32)
+; CHECK: for (int c1 = 0; c1 <= 47; c1 += 1)
+; CHECK:   for (int c2 = 0; c2 <= 47; c2 += 1)
 ; CHECK:     for (int c3 = 0; c3 <= 31; c3 += 1)
 ; CHECK:       for (int c4 = 0; c4 <= 31; c4 += 4)
 ; CHECK:         #pragma simd
 ; CHECK:         for (int c5 = c4; c5 <= c4 + 3; c5 += 1)
-; CHECK:           Stmt_for_body3(c1 + c3, c2 + c5);
+; CHECK:           Stmt_for_body3(32 * c1 + c3, 32 * c2 + c5);
 ; CHECK: #pragma known-parallel
-; CHECK: for (int c1 = 0; c1 <= 1535; c1 += 32)
-; CHECK:   for (int c2 = 0; c2 <= 1535; c2 += 32)
-; CHECK:     for (int c3 = 0; c3 <= 1535; c3 += 32)
+; CHECK: for (int c1 = 0; c1 <= 47; c1 += 1)
+; CHECK:   for (int c2 = 0; c2 <= 47; c2 += 1)
+; CHECK:     for (int c3 = 0; c3 <= 47; c3 += 1)
 ; CHECK:       for (int c4 = 0; c4 <= 31; c4 += 1)
 ; CHECK:         for (int c5 = 0; c5 <= 31; c5 += 4)
 ; CHECK:           for (int c6 = 0; c6 <= 31; c6 += 1)
 ; CHECK:             #pragma simd
 ; CHECK:             for (int c7 = c5; c7 <= c5 + 3; c7 += 1)
-; CHECK:               Stmt_for_body8(c1 + c4, c2 + c7, c3 + c6);
+; CHECK:               Stmt_for_body8(32 * c1 + c4, 32 * c2 + c7, 32 * c3 + c6);
 
 !llvm.ident = !{!0}
 

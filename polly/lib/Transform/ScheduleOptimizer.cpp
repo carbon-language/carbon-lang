@@ -431,6 +431,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), MaxConstantTerm);
   isl_options_set_schedule_max_coefficient(S.getIslCtx(), MaxCoefficient);
+  isl_options_set_tile_scale_tile_loops(S.getIslCtx(), 0);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
 

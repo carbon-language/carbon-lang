@@ -1,10 +1,10 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=256,16 < %s | FileCheck %s
 
-; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 256)
-; CHECK:   for (int c1 = 0; c1 <= 511; c1 += 16)
+; CHECK: for (int c0 = 0; c0 <= 3; c0 += 1)
+; CHECK:   for (int c1 = 0; c1 <= 31; c1 += 1)
 ; CHECK:     for (int c2 = 0; c2 <= 255; c2 += 1)
 ; CHECK:       for (int c3 = 0; c3 <= 15; c3 += 1)
-; CHECK:         Stmt_for_body3(c0 + c2, c1 + c3);
+; CHECK:         Stmt_for_body3(256 * c0 + c2, 16 * c1 + c3);
 
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
