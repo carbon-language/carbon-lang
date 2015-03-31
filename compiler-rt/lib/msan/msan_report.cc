@@ -103,7 +103,7 @@ void ReportUMR(StackTrace *stack, u32 origin) {
 
   Decorator d;
   Printf("%s", d.Warning());
-  Report(" WARNING: MemorySanitizer: use-of-uninitialized-value\n");
+  Report("WARNING: MemorySanitizer: use-of-uninitialized-value\n");
   Printf("%s", d.End());
   stack->Print();
   if (origin) {
@@ -115,7 +115,7 @@ void ReportUMR(StackTrace *stack, u32 origin) {
 void ReportExpectedUMRNotFound(StackTrace *stack) {
   SpinMutexLock l(&CommonSanitizerReportMutex);
 
-  Printf(" WARNING: Expected use of uninitialized value not found\n");
+  Printf("WARNING: Expected use of uninitialized value not found\n");
   stack->Print();
 }
 

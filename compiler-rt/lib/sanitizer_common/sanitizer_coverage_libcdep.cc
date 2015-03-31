@@ -177,7 +177,7 @@ void CoverageData::DirectOpen() {
                     coverage_dir, internal_getpid());
   pc_fd = OpenFile(path.data(), RdWr);
   if (internal_iserror(pc_fd)) {
-    Report(" Coverage: failed to open %s for reading/writing\n", path.data());
+    Report("Coverage: failed to open %s for reading/writing\n", path.data());
     Die();
   }
 
@@ -572,7 +572,7 @@ static int CovOpenFile(InternalScopedString *path, bool packed,
   }
   uptr fd = OpenFile(path->data(), WrOnly);
   if (internal_iserror(fd)) {
-    Report(" SanitizerCoverage: failed to open %s for writing\n", path->data());
+    Report("SanitizerCoverage: failed to open %s for writing\n", path->data());
     return -1;
   }
   return fd;
