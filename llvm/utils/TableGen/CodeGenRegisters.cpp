@@ -711,6 +711,10 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   CopyCost = R->getValueAsInt("CopyCost");
   Allocatable = R->getValueAsBit("isAllocatable");
   AltOrderSelect = R->getValueAsString("AltOrderSelect");
+  int AllocationPriority = R->getValueAsInt("AllocationPriority");
+  if (AllocationPriority < 0 || AllocationPriority > 63)
+    PrintFatalError(R->getLoc(), "AllocationPriority out of range [0,63]");
+  this->AllocationPriority = AllocationPriority;
 }
 
 // Create an inferred register class that was missing from the .td files.

@@ -306,6 +306,7 @@ namespace llvm {
     int CopyCost;
     bool Allocatable;
     std::string AltOrderSelect;
+    uint8_t AllocationPriority;
     /// Contains the combination of the lane masks of all subregisters.
     unsigned LaneMask;
     /// True if there are at least 2 subregisters which do not interfere.

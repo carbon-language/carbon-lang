@@ -207,6 +207,12 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // The function should return 0 to select the default order defined by
   // MemberList, 1 to select the first AltOrders entry and so on.
   code AltOrderSelect = [{}];
+
+  // Specify allocation priority for register allocators using a greedy
+  // heuristic. Classes with high priority are assigned first. It is sometimes
+  // beneficial to assign registers to highly constrained classes first.
+  // The priority has to be in the range [0,63].
+  int AllocationPriority = 0;
 }
 
 // The memberList in a RegisterClass is a dag of set operations. TableGen
