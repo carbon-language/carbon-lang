@@ -1566,6 +1566,17 @@ static void AddGoldPlugin(const ToolChain &ToolChain, const ArgList &Args,
 static void getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features) {
+  // If -march=native, autodetect the feature list.
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    if (StringRef(A->getValue()) == "native") {
+      llvm::StringMap<bool> HostFeatures;
+      if (llvm::sys::getHostCPUFeatures(HostFeatures))
+        for (auto &F : HostFeatures)
+          Features.push_back(Args.MakeArgString((F.second ? "+" : "-") +
+                                                F.first()));
+    }
+  }
+
   if (Triple.getArchName() == "x86_64h") {
     // x86_64h implies quite a few of the more modern subtarget features
     // for Haswell class CPUs, but not all of them. Opt-out of a few.
