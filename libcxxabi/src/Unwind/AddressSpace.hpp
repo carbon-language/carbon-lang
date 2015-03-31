@@ -57,7 +57,7 @@ extern EHTEntry __exidx_end;
 #endif // !defined(_LIBUNWIND_IS_BAREMETAL)
 #endif  // LIBCXXABI_ARM_EHABI
 
-#if defined(__linux__)
+#if defined(__CloudABI__) || defined(__linux__)
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND && _LIBUNWIND_SUPPORT_DWARF_INDEX
 #include <link.h>
 #include "EHHeaderParser.hpp"
