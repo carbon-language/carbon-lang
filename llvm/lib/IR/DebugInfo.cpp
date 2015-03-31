@@ -256,39 +256,7 @@ bool DIType::Verify() const { return isType(); }
 bool DIBasicType::Verify() const { return isBasicType(); }
 bool DIDerivedType::Verify() const { return isDerivedType(); }
 bool DICompositeType::Verify() const { return isCompositeType(); }
-
-bool DISubprogram::Verify() const {
-  auto *N = dyn_cast_or_null<MDSubprogram>(DbgNode);
-  if (!N)
-    return false;
-
-  // If a DISubprogram has an llvm::Function*, then scope chains from all
-  // instructions within the function should lead to this DISubprogram.
-  if (auto *F = getFunction()) {
-    for (auto &BB : *F) {
-      for (auto &I : BB) {
-        MDLocation *DL = I.getDebugLoc();
-        if (!DL)
-          continue;
-
-        // walk the inlined-at scopes
-        MDScope *Scope = DL->getInlinedAtScope();
-        if (!Scope)
-          return false;
-        while (!isa<MDSubprogram>(Scope)) {
-          Scope = cast<MDLexicalBlockBase>(Scope)->getScope();
-          if (!Scope)
-            return false;
-        }
-        if (!DISubprogram(Scope).describes(F))
-          return false;
-      }
-    }
-  }
-
-  return true;
-}
-
+bool DISubprogram::Verify() const { return isSubprogram(); }
 bool DIGlobalVariable::Verify() const { return isGlobalVariable(); }
 bool DIVariable::Verify() const { return isVariable(); }
 

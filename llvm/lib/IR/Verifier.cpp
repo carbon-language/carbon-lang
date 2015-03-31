@@ -921,6 +921,45 @@ void Verifier::visitMDSubprogram(const MDSubprogram &N) {
   }
   Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
          &N);
+
+  if (!N.getFunction())
+    return;
+
+  // FIXME: Should this be looking through bitcasts?
+  auto *F = dyn_cast<Function>(N.getFunction()->getValue());
+  if (!F)
+    return;
+
+  // Check that all !dbg attachments lead to back to N (or, at least, another
+  // subprogram that describes the same function).
+  //
+  // FIXME: Check this incrementally while visiting !dbg attachments.
+  // FIXME: Only check when N is the canonical subprogram for F.
+  SmallPtrSet<const MDNode *, 32> Seen;
+  for (auto &BB : *F)
+    for (auto &I : BB) {
+      // Be careful about using MDLocation here since we might be dealing with
+      // broken code (this is the Verifier after all).
+      MDLocation *DL =
+          dyn_cast_or_null<MDLocation>(I.getDebugLoc().getAsMDNode());
+      if (!DL)
+        continue;
+      if (!Seen.insert(DL).second)
+        continue;
+
+      MDLocalScope *Scope = DL->getInlinedAtScope();
+      if (Scope && !Seen.insert(Scope).second)
+        continue;
+
+      MDSubprogram *SP = Scope ? Scope->getSubprogram() : nullptr;
+      if (SP && !Seen.insert(SP).second)
+        continue;
+
+      // FIXME: Once N is canonical, check "SP == &N".
+      Assert(DISubprogram(SP).describes(F),
+             "!dbg attachment points at wrong subprogram for function", &N, F,
+             &I, DL, Scope, SP);
+    }
 }
 
 void Verifier::visitMDLexicalBlockBase(const MDLexicalBlockBase &N) {

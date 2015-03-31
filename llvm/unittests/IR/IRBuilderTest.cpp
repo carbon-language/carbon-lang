@@ -17,6 +17,7 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/NoFolder.h"
+#include "llvm/IR/Verifier.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -303,8 +304,8 @@ TEST_F(IRBuilderTest, DIBuilder) {
                                   0, true, nullptr);
   auto BadScope = DIB.createLexicalBlockFile(BarSP, File, 0);
   I->setDebugLoc(DebugLoc::get(2, 0, BadScope));
-  EXPECT_FALSE(SP.Verify());
   DIB.finalize();
+  EXPECT_TRUE(verifyModule(*M));
 }
 
 
