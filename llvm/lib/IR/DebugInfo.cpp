@@ -223,6 +223,7 @@ void DIDescriptor::replaceAllUsesWith(MDNode *D) {
 bool DICompileUnit::Verify() const { return isCompileUnit(); }
 bool DIObjCProperty::Verify() const { return isObjCProperty(); }
 
+#ifndef NDEBUG
 /// \brief Check if a value can be a reference to a type.
 static bool isTypeRef(const Metadata *MD) {
   if (!MD)
@@ -241,7 +242,6 @@ static bool isScopeRef(const Metadata *MD) {
   return isa<MDScope>(MD);
 }
 
-#ifndef NDEBUG
 /// \brief Check if a value can be a DescriptorRef.
 static bool isDescriptorRef(const Metadata *MD) {
   if (!MD)
