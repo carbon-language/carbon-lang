@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
 
+#include "OutputELFWriter.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -62,6 +63,13 @@ public:
     }
   }
 };
+
+template <class ELFT> void setHexagonELFHeader(ELFHeader<ELFT> &elfHeader) {
+  elfHeader.e_ident(llvm::ELF::EI_VERSION, 1);
+  elfHeader.e_ident(llvm::ELF::EI_OSABI, 0);
+  elfHeader.e_version(1);
+  elfHeader.e_flags(0x3);
+}
 
 } // elf
 } // lld

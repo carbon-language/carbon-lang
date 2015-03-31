@@ -10,7 +10,6 @@
 #define HEXAGON_EXECUTABLE_WRITER_H
 
 #include "ExecutableWriter.h"
-#include "HexagonELFWriters.h"
 #include "HexagonExecutableAtoms.h"
 #include "HexagonLinkingContext.h"
 
@@ -20,8 +19,7 @@ namespace elf {
 template <typename ELFT> class HexagonTargetLayout;
 
 template <class ELFT>
-class HexagonExecutableWriter : public ExecutableWriter<ELFT>,
-                                public HexagonELFWriter<ELFT> {
+class HexagonExecutableWriter : public ExecutableWriter<ELFT> {
 public:
   HexagonExecutableWriter(HexagonLinkingContext &ctx,
                           HexagonTargetLayout<ELFT> &layout);
@@ -34,7 +32,7 @@ protected:
 
   virtual std::error_code setELFHeader() {
     ExecutableWriter<ELFT>::setELFHeader();
-    HexagonELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
+    setHexagonELFHeader(*this->_elfHeader);
     return std::error_code();
   }
 
@@ -55,8 +53,8 @@ private:
 template <class ELFT>
 HexagonExecutableWriter<ELFT>::HexagonExecutableWriter(
     HexagonLinkingContext &ctx, HexagonTargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout), HexagonELFWriter<ELFT>(ctx, layout),
-      _ctx(ctx), _hexagonTargetLayout(layout),
+    : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx),
+      _hexagonTargetLayout(layout),
       _hexagonRuntimeFile(new HexagonRuntimeFile<ELFT>(ctx)) {}
 
 template <class ELFT>
@@ -76,7 +74,8 @@ void HexagonExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   auto sdabaseAtomIter = _hexagonTargetLayout.findAbsoluteAtom("_SDA_BASE_");
   (*sdabaseAtomIter)->_virtualAddr =
       _hexagonTargetLayout.getSDataSection()->virtualAddr();
-  HexagonELFWriter<ELFT>::finalizeHexagonRuntimeAtomValues();
+  if (_ctx.isDynamic())
+    finalizeHexagonRuntimeAtomValues(_hexagonTargetLayout);
 }
 
 } // namespace elf

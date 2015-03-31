@@ -135,6 +135,23 @@ private:
   std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _hexagonTargetLayout;
   std::unique_ptr<HexagonTargetRelocationHandler> _hexagonRelocationHandler;
 };
+
+template <class ELFT>
+void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout<ELFT> &layout) {
+  auto gotAtomIter = layout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+  auto gotpltSection = layout.findOutputSection(".got.plt");
+  if (gotpltSection)
+    (*gotAtomIter)->_virtualAddr = gotpltSection->virtualAddr();
+  else
+    (*gotAtomIter)->_virtualAddr = 0;
+  auto dynamicAtomIter = layout.findAbsoluteAtom("_DYNAMIC");
+  auto dynamicSection = layout.findOutputSection(".dynamic");
+  if (dynamicSection)
+    (*dynamicAtomIter)->_virtualAddr = dynamicSection->virtualAddr();
+  else
+    (*dynamicAtomIter)->_virtualAddr = 0;
+}
+
 } // end namespace elf
 } // end namespace lld
 

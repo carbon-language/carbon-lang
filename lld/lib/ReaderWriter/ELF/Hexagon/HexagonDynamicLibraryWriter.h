@@ -19,8 +19,7 @@ namespace elf {
 template <typename ELFT> class HexagonTargetLayout;
 
 template <class ELFT>
-class HexagonDynamicLibraryWriter : public DynamicLibraryWriter<ELFT>,
-                                    public HexagonELFWriter<ELFT> {
+class HexagonDynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
 public:
   HexagonDynamicLibraryWriter(HexagonLinkingContext &ctx,
                               HexagonTargetLayout<ELFT> &layout);
@@ -33,7 +32,7 @@ protected:
 
   virtual std::error_code setELFHeader() {
     DynamicLibraryWriter<ELFT>::setELFHeader();
-    HexagonELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
+    setHexagonELFHeader(*this->_elfHeader);
     return std::error_code();
   }
 
@@ -51,8 +50,7 @@ private:
 template <class ELFT>
 HexagonDynamicLibraryWriter<ELFT>::HexagonDynamicLibraryWriter(
     HexagonLinkingContext &ctx, HexagonTargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(ctx, layout),
-      HexagonELFWriter<ELFT>(ctx, layout), _ctx(ctx),
+    : DynamicLibraryWriter<ELFT>(ctx, layout), _ctx(ctx),
       _hexagonTargetLayout(layout),
       _hexagonRuntimeFile(new HexagonRuntimeFile<ELFT>(ctx)) {}
 
@@ -70,7 +68,8 @@ template <class ELFT>
 void HexagonDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
-  HexagonELFWriter<ELFT>::finalizeHexagonRuntimeAtomValues();
+  if (_ctx.isDynamic())
+    finalizeHexagonRuntimeAtomValues(_hexagonTargetLayout);
 }
 
 } // namespace elf
