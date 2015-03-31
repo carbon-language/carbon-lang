@@ -20,7 +20,7 @@ std::unique_ptr<ELFLinkingContext>
 MipsLinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::mipsel ||
       triple.getArch() == llvm::Triple::mips64el)
-    return std::unique_ptr<ELFLinkingContext>(new MipsLinkingContext(triple));
+    return llvm::make_unique<MipsLinkingContext>(triple);
   return nullptr;
 }
 

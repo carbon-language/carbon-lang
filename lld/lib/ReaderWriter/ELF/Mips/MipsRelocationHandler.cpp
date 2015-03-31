@@ -599,15 +599,13 @@ namespace elf {
 template <>
 std::unique_ptr<TargetRelocationHandler>
 createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx) {
-  return std::unique_ptr<TargetRelocationHandler>(
-      new RelocationHandler<Mips32ELType>(ctx));
+  return llvm::make_unique<RelocationHandler<Mips32ELType>>(ctx);
 }
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
 createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx) {
-  return std::unique_ptr<TargetRelocationHandler>(
-      new RelocationHandler<Mips64ELType>(ctx));
+  return llvm::make_unique<RelocationHandler<Mips64ELType>>(ctx);
 }
 
 } // elf

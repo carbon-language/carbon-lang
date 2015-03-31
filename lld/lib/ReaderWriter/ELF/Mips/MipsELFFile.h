@@ -13,6 +13,7 @@
 #include "MipsLinkingContext.h"
 #include "MipsReginfo.h"
 #include "MipsRelocationHandler.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace lld {
 namespace elf {
@@ -92,8 +93,7 @@ public:
 
   static ErrorOr<std::unique_ptr<MipsELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, MipsLinkingContext &ctx) {
-    return std::unique_ptr<MipsELFFile<ELFT>>(
-        new MipsELFFile<ELFT>(std::move(mb), ctx));
+    return llvm::make_unique<MipsELFFile<ELFT>>(std::move(mb), ctx);
   }
 
   bool isPIC() const {
