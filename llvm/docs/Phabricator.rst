@@ -64,7 +64,9 @@ To upload a new patch:
 * Paste the text diff or upload the patch file.
   Note that TODO
 * Leave the drop down on *Create a new Revision...* and click *Continue*.
-* Enter a descriptive title and summary; add reviewers and mailing
+* Enter a descriptive title and summary.  The title and summary are usually
+  in the form of a :ref:`commit message <commit messages>`.
+* Add reviewers and mailing
   lists that you want to be included in the review. If your patch is
   for LLVM, add llvm-commits as a subscriber; if your patch is for Clang,
   add cfe-commits.
