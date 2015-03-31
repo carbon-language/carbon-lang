@@ -269,25 +269,6 @@ public:
   void replaceAllUsesWith(MDNode *D);
 };
 
-#define RETURN_FROM_RAW(VALID, UNUSED)                                         \
-  do {                                                                         \
-    auto *N = get();                                                           \
-    assert(N && "Expected non-null in accessor");                              \
-    return VALID;                                                              \
-  } while (false)
-#define RETURN_DESCRIPTOR_FROM_RAW(DESC, VALID)                                \
-  do {                                                                         \
-    auto *N = get();                                                           \
-    assert(N && "Expected non-null in accessor");                              \
-    return DESC(dyn_cast_or_null<MDNode>(VALID));                              \
-  } while (false)
-#define RETURN_REF_FROM_RAW(REF, VALID)                                        \
-  do {                                                                         \
-    auto *N = get();                                                           \
-    assert(N && "Expected non-null in accessor");                              \
-    return REF::get(VALID);                                                    \
-  } while (false)
-
 /// \brief This is used to represent ranges, for array bounds.
 class DISubrange : public DIDescriptor {
 public:
@@ -304,8 +285,8 @@ public:
     return *get();
   }
 
-  int64_t getLo() const { RETURN_FROM_RAW(N->getLo(), 0); }
-  int64_t getCount() const { RETURN_FROM_RAW(N->getCount(), 0); }
+  int64_t getLo() const { return get()->getLo(); }
+  int64_t getCount() const { return get()->getCount(); }
   bool Verify() const;
 };
 
@@ -340,8 +321,8 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  int64_t getEnumValue() const { RETURN_FROM_RAW(N->getValue(), 0); }
+  StringRef getName() const { return get()->getName(); }
+  int64_t getEnumValue() const { return get()->getValue(); }
   bool Verify() const;
 };
 
@@ -484,17 +465,15 @@ public:
 
   bool Verify() const;
 
-  DIScopeRef getContext() const {
-    RETURN_REF_FROM_RAW(DIScopeRef, N->getScope());
-  }
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
-  uint64_t getSizeInBits() const { RETURN_FROM_RAW(N->getSizeInBits(), 0); }
-  uint64_t getAlignInBits() const { RETURN_FROM_RAW(N->getAlignInBits(), 0); }
+  DIScopeRef getContext() const { return DIScopeRef::get(get()->getScope()); }
+  StringRef getName() const { return get()->getName(); }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  uint64_t getSizeInBits() const { return get()->getSizeInBits(); }
+  uint64_t getAlignInBits() const { return get()->getAlignInBits(); }
   // FIXME: Offset is only used for DW_TAG_member nodes.  Making every type
   // carry this is just plain insane.
-  uint64_t getOffsetInBits() const { RETURN_FROM_RAW(N->getOffsetInBits(), 0); }
-  unsigned getFlags() const { RETURN_FROM_RAW(N->getFlags(), 0); }
+  uint64_t getOffsetInBits() const { return get()->getOffsetInBits(); }
+  unsigned getFlags() const { return get()->getFlags(); }
   bool isPrivate() const {
     return (getFlags() & FlagAccessibility) == FlagPrivate;
   }
@@ -544,7 +523,7 @@ public:
     return *get();
   }
 
-  unsigned getEncoding() const { RETURN_FROM_RAW(N->getEncoding(), 0); }
+  unsigned getEncoding() const { return get()->getEncoding(); }
 
   bool Verify() const;
 };
@@ -569,7 +548,7 @@ public:
   }
 
   DITypeRef getTypeDerivedFrom() const {
-    RETURN_REF_FROM_RAW(DITypeRef, N->getBaseType());
+    return DITypeRef::get(get()->getBaseType());
   }
 
   /// \brief Return property node, if this ivar is associated with one.
@@ -629,7 +608,7 @@ public:
 
   DIArray getElements() const {
     assert(!isSubroutineType() && "no elements for DISubroutineType");
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getElements());
+    return DIArray(get()->getElements());
   }
 
 private:
@@ -643,9 +622,9 @@ private:
   }
 
 public:
-  unsigned getRunTimeLang() const { RETURN_FROM_RAW(N->getRuntimeLang(), 0); }
+  unsigned getRunTimeLang() const { return get()->getRuntimeLang(); }
   DITypeRef getContainingType() const {
-    RETURN_REF_FROM_RAW(DITypeRef, N->getVTableHolder());
+    return DITypeRef::get(get()->getVTableHolder());
   }
 
 private:
@@ -654,11 +633,9 @@ private:
 
 public:
   DIArray getTemplateParams() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getTemplateParams());
+    return DIArray(get()->getTemplateParams());
   }
-  MDString *getIdentifier() const {
-    RETURN_FROM_RAW(N->getRawIdentifier(), nullptr);
-  }
+  MDString *getIdentifier() const { return get()->getRawIdentifier(); }
 
   bool Verify() const;
 };
@@ -679,7 +656,7 @@ public:
   }
 
   DITypedArray<DITypeRef> getTypeArray() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DITypedArray<DITypeRef>, N->getTypeArray());
+    return DITypedArray<DITypeRef>(get()->getTypeArray());
   }
 };
 
@@ -719,39 +696,32 @@ public:
   }
 
   dwarf::SourceLanguage getLanguage() const {
-    RETURN_FROM_RAW(static_cast<dwarf::SourceLanguage>(N->getSourceLanguage()),
-                    static_cast<dwarf::SourceLanguage>(0));
+    return static_cast<dwarf::SourceLanguage>(get()->getSourceLanguage());
   }
-  StringRef getProducer() const { RETURN_FROM_RAW(N->getProducer(), ""); }
-  bool isOptimized() const { RETURN_FROM_RAW(N->isOptimized(), false); }
-  StringRef getFlags() const { RETURN_FROM_RAW(N->getFlags(), ""); }
-  unsigned getRunTimeVersion() const {
-    RETURN_FROM_RAW(N->getRuntimeVersion(), 0);
-  }
+  StringRef getProducer() const { return get()->getProducer(); }
+  bool isOptimized() const { return get()->isOptimized(); }
+  StringRef getFlags() const { return get()->getFlags(); }
+  unsigned getRunTimeVersion() const { return get()->getRuntimeVersion(); }
 
-  DIArray getEnumTypes() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getEnumTypes());
-  }
+  DIArray getEnumTypes() const { return DIArray(get()->getEnumTypes()); }
   DIArray getRetainedTypes() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getRetainedTypes());
+    return DIArray(get()->getRetainedTypes());
   }
-  DIArray getSubprograms() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getSubprograms());
-  }
+  DIArray getSubprograms() const { return DIArray(get()->getSubprograms()); }
   DIArray getGlobalVariables() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getGlobalVariables());
+    return DIArray(get()->getGlobalVariables());
   }
   DIArray getImportedEntities() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getImportedEntities());
+    return DIArray(get()->getImportedEntities());
   }
 
   void replaceSubprograms(DIArray Subprograms);
   void replaceGlobalVariables(DIArray GlobalVariables);
 
   StringRef getSplitDebugFilename() const {
-    RETURN_FROM_RAW(N->getSplitDebugFilename(), "");
+    return get()->getSplitDebugFilename();
   }
-  unsigned getEmissionKind() const { RETURN_FROM_RAW(N->getEmissionKind(), 0); }
+  unsigned getEmissionKind() const { return get()->getEmissionKind(); }
 
   bool Verify() const;
 };
@@ -772,34 +742,32 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  StringRef getDisplayName() const { RETURN_FROM_RAW(N->getDisplayName(), ""); }
-  StringRef getLinkageName() const { RETURN_FROM_RAW(N->getLinkageName(), ""); }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  StringRef getName() const { return get()->getName(); }
+  StringRef getDisplayName() const { return get()->getDisplayName(); }
+  StringRef getLinkageName() const { return get()->getLinkageName(); }
+  unsigned getLineNumber() const { return get()->getLine(); }
 
   /// \brief Check if this is local (like 'static' in C).
-  unsigned isLocalToUnit() const { RETURN_FROM_RAW(N->isLocalToUnit(), 0); }
-  unsigned isDefinition() const { RETURN_FROM_RAW(N->isDefinition(), 0); }
+  unsigned isLocalToUnit() const { return get()->isLocalToUnit(); }
+  unsigned isDefinition() const { return get()->isDefinition(); }
 
-  unsigned getVirtuality() const { RETURN_FROM_RAW(N->getVirtuality(), 0); }
-  unsigned getVirtualIndex() const { RETURN_FROM_RAW(N->getVirtualIndex(), 0); }
+  unsigned getVirtuality() const { return get()->getVirtuality(); }
+  unsigned getVirtualIndex() const { return get()->getVirtualIndex(); }
 
-  unsigned getFlags() const { RETURN_FROM_RAW(N->getFlags(), 0); }
+  unsigned getFlags() const { return get()->getFlags(); }
 
-  unsigned isOptimized() const { RETURN_FROM_RAW(N->isOptimized(), 0); }
+  unsigned isOptimized() const { return get()->isOptimized(); }
 
   /// \brief Get the beginning of the scope of the function (not the name).
-  unsigned getScopeLineNumber() const { RETURN_FROM_RAW(N->getScopeLine(), 0); }
+  unsigned getScopeLineNumber() const { return get()->getScopeLine(); }
 
-  DIScopeRef getContext() const {
-    RETURN_REF_FROM_RAW(DIScopeRef, N->getScope());
-  }
+  DIScopeRef getContext() const { return DIScopeRef::get(get()->getScope()); }
   DISubroutineType getType() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DISubroutineType, N->getType());
+    return DISubroutineType(get()->getType());
   }
 
   DITypeRef getContainingType() const {
-    RETURN_REF_FROM_RAW(DITypeRef, N->getContainingType());
+    return DITypeRef::get(get()->getContainingType());
   }
 
   bool Verify() const;
@@ -814,15 +782,13 @@ public:
       N->replaceFunction(F);
   }
   DIArray getTemplateParams() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getTemplateParams());
+    return DIArray(get()->getTemplateParams());
   }
   DISubprogram getFunctionDeclaration() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DISubprogram, N->getDeclaration());
+    return DISubprogram(get()->getDeclaration());
   }
   MDNode *getVariablesNodes() const { return getVariables(); }
-  DIArray getVariables() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getVariables());
-  }
+  DIArray getVariables() const { return DIArray(get()->getVariables()); }
 
   unsigned isArtificial() const { return (getFlags() & FlagArtificial) != 0; }
   /// \brief Check for the "private" access specifier.
@@ -875,9 +841,7 @@ public:
     return *get();
   }
 
-  DIScope getContext() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
-  }
+  DIScope getContext() const { return DIScope(get()->getScope()); }
   unsigned getLineNumber() const {
     if (auto *N = dyn_cast<MDLexicalBlock>(get()))
       return N->getLine();
@@ -910,12 +874,8 @@ public:
   DIScope getContext() const { return getScope(); }
   unsigned getLineNumber() const { return getScope().getLineNumber(); }
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
-  DILexicalBlock getScope() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DILexicalBlock, N->getScope());
-  }
-  unsigned getDiscriminator() const {
-    RETURN_FROM_RAW(N->getDiscriminator(), 0);
-  }
+  DILexicalBlock getScope() const { return DILexicalBlock(get()->getScope()); }
+  unsigned getDiscriminator() const { return get()->getDiscriminator(); }
   bool Verify() const;
 };
 
@@ -935,11 +895,9 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
-  DIScope getContext() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
-  }
+  StringRef getName() const { return get()->getName(); }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  DIScope getContext() const { return DIScope(get()->getScope()); }
   bool Verify() const;
 };
 
@@ -960,9 +918,9 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  StringRef getName() const { return get()->getName(); }
 
-  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
+  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
   bool Verify() const;
 };
 
@@ -984,15 +942,15 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
-  Metadata *getValue() const { RETURN_FROM_RAW(N->getValue(), nullptr); }
+  StringRef getName() const { return get()->getName(); }
+  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
+  Metadata *getValue() const { return get()->getValue(); }
   bool Verify() const;
 };
 
 /// \brief This is a wrapper for a global variable.
 class DIGlobalVariable : public DIDescriptor {
-  DIFile getFile() const { RETURN_DESCRIPTOR_FROM_RAW(DIFile, N->getFile()); }
+  DIFile getFile() const { return DIFile(get()->getFile()); }
 
 public:
   explicit DIGlobalVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
@@ -1008,19 +966,17 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  StringRef getDisplayName() const { RETURN_FROM_RAW(N->getDisplayName(), ""); }
-  StringRef getLinkageName() const { RETURN_FROM_RAW(N->getLinkageName(), ""); }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
-  unsigned isLocalToUnit() const { RETURN_FROM_RAW(N->isLocalToUnit(), 0); }
-  unsigned isDefinition() const { RETURN_FROM_RAW(N->isDefinition(), 0); }
+  StringRef getName() const { return get()->getName(); }
+  StringRef getDisplayName() const { return get()->getDisplayName(); }
+  StringRef getLinkageName() const { return get()->getLinkageName(); }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  unsigned isLocalToUnit() const { return get()->isLocalToUnit(); }
+  unsigned isDefinition() const { return get()->isDefinition(); }
 
-  DIScope getContext() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
-  }
+  DIScope getContext() const { return DIScope(get()->getScope()); }
   StringRef getFilename() const { return getFile().getFilename(); }
   StringRef getDirectory() const { return getFile().getDirectory(); }
-  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
+  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
 
   GlobalVariable *getGlobal() const;
   Constant *getConstant() const {
@@ -1030,8 +986,7 @@ public:
     return nullptr;
   }
   DIDerivedType getStaticDataMemberDeclaration() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIDerivedType,
-                               N->getStaticDataMemberDeclaration());
+    return DIDerivedType(get()->getStaticDataMemberDeclaration());
   }
 
   bool Verify() const;
@@ -1039,7 +994,7 @@ public:
 
 /// \brief This is a wrapper for a variable (e.g. parameter, local, global etc).
 class DIVariable : public DIDescriptor {
-  unsigned getFlags() const { RETURN_FROM_RAW(N->getFlags(), 0); }
+  unsigned getFlags() const { return get()->getFlags(); }
 
 public:
   explicit DIVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
@@ -1055,15 +1010,13 @@ public:
     return *get();
   }
 
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
-  unsigned getArgNumber() const { RETURN_FROM_RAW(N->getArg(), 0); }
+  StringRef getName() const { return get()->getName(); }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  unsigned getArgNumber() const { return get()->getArg(); }
 
-  DIScope getContext() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
-  }
-  DIFile getFile() const { RETURN_DESCRIPTOR_FROM_RAW(DIFile, N->getFile()); }
-  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
+  DIScope getContext() const { return DIScope(get()->getScope()); }
+  DIFile getFile() const { return DIFile(get()->getFile()); }
+  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
 
   /// \brief Return true if this variable is marked as "artificial".
   bool isArtificial() const {
@@ -1075,9 +1028,7 @@ public:
   }
 
   /// \brief If this variable is inlined then return inline location.
-  MDNode *getInlinedAt() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIDescriptor, N->getInlinedAt());
-  }
+  MDNode *getInlinedAt() const { return DIDescriptor(get()->getInlinedAt()); }
 
   bool Verify() const;
 
@@ -1212,13 +1163,11 @@ public:
     return *get();
   }
 
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
-  unsigned getColumnNumber() const { RETURN_FROM_RAW(N->getColumn(), 0); }
-  DIScope getScope() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
-  }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  unsigned getColumnNumber() const { return get()->getColumn(); }
+  DIScope getScope() const { return DIScope(get()->getScope()); }
   DILocation getOrigLocation() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DILocation, N->getInlinedAt());
+    return DILocation(get()->getInlinedAt());
   }
   StringRef getFilename() const { return getScope().getFilename(); }
   StringRef getDirectory() const { return getScope().getDirectory(); }
@@ -1268,17 +1217,13 @@ public:
     return *get();
   }
 
-  StringRef getObjCPropertyName() const { RETURN_FROM_RAW(N->getName(), ""); }
-  DIFile getFile() const { RETURN_DESCRIPTOR_FROM_RAW(DIFile, N->getFile()); }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  StringRef getObjCPropertyName() const { return get()->getName(); }
+  DIFile getFile() const { return DIFile(get()->getFile()); }
+  unsigned getLineNumber() const { return get()->getLine(); }
 
-  StringRef getObjCPropertyGetterName() const {
-    RETURN_FROM_RAW(N->getGetterName(), "");
-  }
-  StringRef getObjCPropertySetterName() const {
-    RETURN_FROM_RAW(N->getSetterName(), "");
-  }
-  unsigned getAttributes() const { RETURN_FROM_RAW(N->getAttributes(), 0); }
+  StringRef getObjCPropertyGetterName() const { return get()->getGetterName(); }
+  StringRef getObjCPropertySetterName() const { return get()->getSetterName(); }
+  unsigned getAttributes() const { return get()->getAttributes(); }
   bool isReadOnlyObjCProperty() const {
     return (getAttributes() & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
   }
@@ -1302,7 +1247,7 @@ public:
   ///
   /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
   /// the type as a DITypeRef here.
-  DIType getType() const { RETURN_DESCRIPTOR_FROM_RAW(DIType, N->getType()); }
+  DIType getType() const { return DIType(get()->getType()); }
 
   bool Verify() const;
 };
@@ -1324,20 +1269,14 @@ public:
     return *get();
   }
 
-  DIScope getContext() const {
-    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
-  }
+  DIScope getContext() const { return DIScope(get()->getScope()); }
   DIDescriptorRef getEntity() const {
-    RETURN_REF_FROM_RAW(DIDescriptorRef, N->getEntity());
+    return DIDescriptorRef::get(get()->getEntity());
   }
-  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
-  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  StringRef getName() const { return get()->getName(); }
   bool Verify() const;
 };
-
-#undef RETURN_FROM_RAW
-#undef RETURN_DESCRIPTOR_FROM_RAW
-#undef RETURN_REF_FROM_RAW
 
 /// \brief Find subprogram that is enclosing this scope.
 DISubprogram getDISubprogram(const MDNode *Scope);
