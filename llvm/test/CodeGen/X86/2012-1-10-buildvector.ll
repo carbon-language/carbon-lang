@@ -17,7 +17,7 @@ entry:
 ; CHECK-LABEL: bad_insert:
 define void @bad_insert(i32 %t) {
 entry:
-; CHECK:      vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK:      vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; CHECK-NEXT: vmovaps %ymm0 
 ; CHECK:      ret
 

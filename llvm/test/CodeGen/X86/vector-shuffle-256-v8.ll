@@ -2090,3 +2090,20 @@ entry:
   %res = shufflevector <4 x float> %tmp76, <4 x float> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x float> %res
 }
+
+define <8 x i32> @insert_mem_and_zero_v8i32(i32* %ptr) {
+; AVX1-LABEL: insert_mem_and_zero_v8i32:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_mem_and_zero_v8i32:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX2-NEXT:    retq
+  %a = load i32, i32* %ptr
+  %v = insertelement <8 x i32> undef, i32 %a, i32 0
+  %shuffle = shufflevector <8 x i32> %v, <8 x i32> zeroinitializer, <8 x i32> <i32 0, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <8 x i32> %shuffle
+}
+
