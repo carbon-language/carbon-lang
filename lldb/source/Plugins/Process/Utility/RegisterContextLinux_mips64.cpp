@@ -17,8 +17,9 @@
 #include "Plugins/Process/Linux/NativeRegisterContextLinux_mips64.h"
 #include "RegisterContext_mips64.h"
 
-using namespace lldb_private;
 using namespace lldb;
+using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 // GP registers
 typedef struct _GPR

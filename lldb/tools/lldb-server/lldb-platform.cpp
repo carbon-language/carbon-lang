@@ -39,6 +39,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 //----------------------------------------------------------------------
 // option descriptors for getopt_long_only()

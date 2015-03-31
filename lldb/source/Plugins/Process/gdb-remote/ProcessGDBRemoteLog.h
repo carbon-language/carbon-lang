@@ -32,29 +32,35 @@
 #define GDBR_LOG_ALL                      (UINT32_MAX)
 #define GDBR_LOG_DEFAULT                  GDBR_LOG_PACKETS
 
+namespace lldb_private {
+namespace process_gdb_remote {
+
 class ProcessGDBRemoteLog
 {
 public:
     static void
     Initialize();
 
-    static lldb_private::Log *
+    static Log *
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
     
-    static lldb_private::Log *
+    static Log *
     GetLogIfAnyCategoryIsSet (uint32_t mask);
 
     static void
-    DisableLog (const char **categories, lldb_private::Stream *feedback_strm);
+    DisableLog (const char **categories, Stream *feedback_strm);
 
-    static lldb_private::Log *
-    EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, const char **categories, lldb_private::Stream *feedback_strm);
+    static Log *
+    EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, const char **categories, Stream *feedback_strm);
 
     static void
-    ListLogCategories (lldb_private::Stream *strm);
+    ListLogCategories (Stream *strm);
 
     static void
     LogIf (uint32_t mask, const char *format, ...);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // liblldb_ProcessGDBRemoteLog_h_

@@ -12,6 +12,9 @@
 
 #include "GDBRemoteCommunicationServerCommon.h"
 
+namespace lldb_private {
+namespace process_gdb_remote {
+
 class GDBRemoteCommunicationServerPlatform :
     public GDBRemoteCommunicationServerCommon
 {
@@ -23,7 +26,7 @@ public:
     virtual
     ~GDBRemoteCommunicationServerPlatform();
 
-    lldb_private::Error
+    Error
     LaunchProcess () override;
 
     // Set both ports to zero to let the platform automatically bind to 
@@ -92,5 +95,8 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunicationServerPlatform);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // liblldb_GDBRemoteCommunicationServerPlatform_h_

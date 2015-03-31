@@ -44,6 +44,8 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::platform_linux;
+using namespace lldb_private::process_linux;
 
 static uint32_t g_initialize_count = 0;
 
@@ -58,56 +60,66 @@ namespace
         ePropertyUseLlgsForLocal = 0,
     };
 
-    const PropertyDefinition*
-    GetStaticPropertyDefinitions ()
+    class PlatformLinuxProperties : public Properties
     {
-        static PropertyDefinition
-        g_properties[] =
-        {
-            { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, true, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
-            {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
-        };
+    public:
+        static ConstString&
+        GetSettingName ();
 
-        // Allow environment variable to disable llgs-local.
-        if (getenv("PLATFORM_LINUX_DISABLE_LLGS_LOCAL"))
-            g_properties[ePropertyUseLlgsForLocal].default_uint_value = false;
+        PlatformLinuxProperties();
 
-        return g_properties;
-    }
+        virtual
+        ~PlatformLinuxProperties() = default;
+
+        bool
+        GetUseLlgsForLocal() const;
+
+    private:
+        static const PropertyDefinition*
+        GetStaticPropertyDefinitions();
+    };
+
+    typedef std::shared_ptr<PlatformLinuxProperties> PlatformLinuxPropertiesSP;
+
+} // anonymous namespace
+
+PlatformLinuxProperties::PlatformLinuxProperties() :
+    Properties ()
+{
+    m_collection_sp.reset (new OptionValueProperties(GetSettingName ()));
+    m_collection_sp->Initialize (GetStaticPropertyDefinitions ());
 }
 
-class PlatformLinuxProperties : public Properties
+ConstString&
+PlatformLinuxProperties::GetSettingName ()
 {
-public:
+    static ConstString g_setting_name("linux");
+    return g_setting_name;
+}
 
-    static ConstString &
-    GetSettingName ()
+bool
+PlatformLinuxProperties::GetUseLlgsForLocal() const
+{
+    const uint32_t idx = ePropertyUseLlgsForLocal;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, GetStaticPropertyDefinitions()[idx].default_uint_value != 0);
+}
+
+const PropertyDefinition*
+PlatformLinuxProperties::GetStaticPropertyDefinitions()
+{
+    static PropertyDefinition
+    g_properties[] =
     {
-        static ConstString g_setting_name("linux");
-        return g_setting_name;
-    }
+        { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, true, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
+        {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
+    };
 
-    PlatformLinuxProperties() :
-    Properties ()
-    {
-        m_collection_sp.reset (new OptionValueProperties(GetSettingName ()));
-        m_collection_sp->Initialize (GetStaticPropertyDefinitions ());
-    }
+    // Allow environment variable to disable llgs-local.
+    if (getenv("PLATFORM_LINUX_DISABLE_LLGS_LOCAL"))
+        g_properties[ePropertyUseLlgsForLocal].default_uint_value = false;
 
-    virtual
-    ~PlatformLinuxProperties()
-    {
-    }
-
-    bool
-    GetUseLlgsForLocal() const
-    {
-        const uint32_t idx = ePropertyUseLlgsForLocal;
-        return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, GetStaticPropertyDefinitions()[idx].default_uint_value != 0);
-    }
-};
-
-typedef std::shared_ptr<PlatformLinuxProperties> PlatformLinuxPropertiesSP;
+    return g_properties;
+}
 
 static const PlatformLinuxPropertiesSP &
 GetGlobalProperties()
@@ -119,7 +131,7 @@ GetGlobalProperties()
 }
 
 void
-PlatformLinux::DebuggerInitialize (lldb_private::Debugger &debugger)
+PlatformLinux::DebuggerInitialize (Debugger &debugger)
 {
     if (!PluginManager::GetSettingForPlatformPlugin (debugger, PlatformLinuxProperties::GetSettingName()))
     {
@@ -137,7 +149,7 @@ PlatformLinux::DebuggerInitialize (lldb_private::Debugger &debugger)
 PlatformSP
 PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
     if (log)
     {
         const char *arch_name;
@@ -209,7 +221,7 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
 }
 
 
-lldb_private::ConstString
+ConstString
 PlatformLinux::GetPluginNameStatic (bool is_host)
 {
     if (is_host)
@@ -233,7 +245,7 @@ PlatformLinux::GetPluginDescriptionStatic (bool is_host)
         return "Remote Linux user platform plug-in.";
 }
 
-lldb_private::ConstString
+ConstString
 PlatformLinux::GetPluginName()
 {
     return GetPluginNameStatic(IsHost());
@@ -673,7 +685,7 @@ PlatformLinux::DebugProcess (ProcessLaunchInfo &launch_info,
                              Target *target,       // Can be NULL, if NULL create a new target, else use existing one
                              Error &error)
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
     if (log)
         log->Printf ("PlatformLinux::%s entered (target %p)", __FUNCTION__, static_cast<void*>(target));
 
@@ -844,10 +856,9 @@ PlatformLinux::CalculateTrapHandlerSymbolNames ()
 }
 
 Error
-PlatformLinux::LaunchNativeProcess (
-    ProcessLaunchInfo &launch_info,
-    lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
-    NativeProcessProtocolSP &process_sp)
+PlatformLinux::LaunchNativeProcess (ProcessLaunchInfo &launch_info,
+                                    NativeProcessProtocol::NativeDelegate &native_delegate,
+                                    NativeProcessProtocolSP &process_sp)
 {
 #if !defined(__linux__)
     return Error("Only implemented on Linux hosts");
@@ -883,7 +894,7 @@ PlatformLinux::LaunchNativeProcess (
 
 Error
 PlatformLinux::AttachNativeProcess (lldb::pid_t pid,
-                                    lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
+                                    NativeProcessProtocol::NativeDelegate &native_delegate,
                                     NativeProcessProtocolSP &process_sp)
 {
 #if !defined(__linux__)

@@ -19,7 +19,10 @@
 #include "lldb/Target/Platform.h"
 #include "../../Process/gdb-remote/GDBRemoteCommunicationClient.h"
 
-class PlatformRemoteGDBServer : public lldb_private::Platform
+namespace lldb_private {
+namespace platform_gdb_server {
+
+class PlatformRemoteGDBServer : public Platform
 {
 public:
 
@@ -30,9 +33,9 @@ public:
     Terminate ();
     
     static lldb::PlatformSP
-    CreateInstance (bool force, const lldb_private::ArchSpec *arch);
+    CreateInstance (bool force, const ArchSpec *arch);
 
-    static lldb_private::ConstString
+    static ConstString
     GetPluginNameStatic();
 
     static const char *
@@ -47,7 +50,7 @@ public:
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
-    lldb_private::ConstString
+    ConstString
     GetPluginName() override
     {
         return GetPluginNameStatic();
@@ -63,56 +66,54 @@ public:
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
-    lldb_private::Error
-    ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
+    Error
+    ResolveExecutable (const ModuleSpec &module_spec,
                        lldb::ModuleSP &module_sp,
-                       const lldb_private::FileSpecList *module_search_paths_ptr) override;
+                       const FileSpecList *module_search_paths_ptr) override;
 
     bool
-    GetModuleSpec (const lldb_private::FileSpec& module_file_spec,
-                   const lldb_private::ArchSpec& arch,
-                   lldb_private::ModuleSpec &module_spec) override;
+    GetModuleSpec (const FileSpec& module_file_spec,
+                   const ArchSpec& arch,
+                   ModuleSpec &module_spec) override;
 
     const char *
     GetDescription () override;
 
-    lldb_private::Error
-    GetFileWithUUID (const lldb_private::FileSpec &platform_file, 
-                     const lldb_private::UUID *uuid_ptr,
-                     lldb_private::FileSpec &local_file) override;
+    Error
+    GetFileWithUUID (const FileSpec &platform_file, 
+                     const UUID *uuid_ptr,
+                     FileSpec &local_file) override;
 
     bool
-    GetProcessInfo (lldb::pid_t pid, 
-                    lldb_private::ProcessInstanceInfo &proc_info) override;
+    GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info) override;
     
     uint32_t
-    FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
-                   lldb_private::ProcessInstanceInfoList &process_infos) override;
+    FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                   ProcessInstanceInfoList &process_infos) override;
 
-    lldb_private::Error
-    LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info) override;
+    Error
+    LaunchProcess (ProcessLaunchInfo &launch_info) override;
 
-    lldb_private::Error
+    Error
     KillProcess (const lldb::pid_t pid) override;
 
     lldb::ProcessSP
-    DebugProcess (lldb_private::ProcessLaunchInfo &launch_info,
-                  lldb_private::Debugger &debugger,
-                  lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-                  lldb_private::Error &error) override;
+    DebugProcess (ProcessLaunchInfo &launch_info,
+                  Debugger &debugger,
+                  Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                  Error &error) override;
 
     lldb::ProcessSP
-    Attach (lldb_private::ProcessAttachInfo &attach_info,
-            lldb_private::Debugger &debugger,
-            lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-            lldb_private::Error &error) override;
+    Attach (ProcessAttachInfo &attach_info,
+            Debugger &debugger,
+            Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+            Error &error) override;
 
     bool
-    GetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch) override;
+    GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch) override;
 
     size_t
-    GetSoftwareBreakpointTrapOpcode (lldb_private::Target &target, 
-                                     lldb_private::BreakpointSite *bp_site) override;
+    GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site) override;
 
     bool
     GetRemoteOSVersion () override;
@@ -124,14 +125,14 @@ public:
     GetRemoteOSKernelDescription (std::string &s) override;
 
     // Remote Platform subclasses need to override this function
-    lldb_private::ArchSpec
+    ArchSpec
     GetRemoteSystemArchitecture () override;
 
-    lldb_private::ConstString
+    ConstString
     GetRemoteWorkingDirectory() override;
     
     bool
-    SetRemoteWorkingDirectory(const lldb_private::ConstString &path) override;
+    SetRemoteWorkingDirectory(const ConstString &path) override;
 
     // Remote subclasses should override this and return a valid instance
     // name if connected.
@@ -147,65 +148,61 @@ public:
     bool
     IsConnected () const override;
 
-    lldb_private::Error
-    ConnectRemote (lldb_private::Args& args) override;
+    Error
+    ConnectRemote (Args& args) override;
 
-    lldb_private::Error
+    Error
     DisconnectRemote () override;
     
-    lldb_private::Error
+    Error
     MakeDirectory (const char *path, uint32_t file_permissions) override;
     
-    lldb_private::Error
+    Error
     GetFilePermissions (const char *path, uint32_t &file_permissions) override;
     
-    lldb_private::Error
+    Error
     SetFilePermissions (const char *path, uint32_t file_permissions) override;
     
 
     lldb::user_id_t
-    OpenFile (const lldb_private::FileSpec& file_spec,
-              uint32_t flags,
-              uint32_t mode,
-              lldb_private::Error &error) override;
+    OpenFile (const FileSpec& file_spec, uint32_t flags, uint32_t mode, Error &error) override;
     
     bool
-    CloseFile (lldb::user_id_t fd,
-               lldb_private::Error &error) override;
+    CloseFile (lldb::user_id_t fd, Error &error) override;
     
     uint64_t
     ReadFile (lldb::user_id_t fd,
               uint64_t offset,
               void *data_ptr,
               uint64_t len,
-              lldb_private::Error &error) override;
+              Error &error) override;
     
     uint64_t
     WriteFile (lldb::user_id_t fd,
                uint64_t offset,
                const void* data,
                uint64_t len,
-               lldb_private::Error &error) override;
+               Error &error) override;
 
     lldb::user_id_t
-    GetFileSize (const lldb_private::FileSpec& file_spec) override;
+    GetFileSize (const FileSpec& file_spec) override;
 
-    lldb_private::Error
-    PutFile (const lldb_private::FileSpec& source,
-             const lldb_private::FileSpec& destination,
+    Error
+    PutFile (const FileSpec& source,
+             const FileSpec& destination,
              uint32_t uid = UINT32_MAX,
              uint32_t gid = UINT32_MAX) override;
     
-    lldb_private::Error
+    Error
     CreateSymlink (const char *src, const char *dst) override;
 
     bool
-    GetFileExists (const lldb_private::FileSpec& file_spec) override;
+    GetFileExists (const FileSpec& file_spec) override;
 
-    lldb_private::Error
+    Error
     Unlink (const char *path) override;
 
-    lldb_private::Error
+    Error
     RunShellCommand (const char *command,            // Shouldn't be NULL
                      const char *working_dir,        // Pass NULL to use the current working directory
                      int *status_ptr,                // Pass NULL if you don't want the process exit status
@@ -217,7 +214,7 @@ public:
     CalculateTrapHandlerSymbolNames () override;
 
 protected:
-    GDBRemoteCommunicationClient m_gdb_client;
+    process_gdb_remote::GDBRemoteCommunicationClient m_gdb_client;
     std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to
     std::string m_platform_hostname;
 
@@ -234,5 +231,8 @@ private:
     DISALLOW_COPY_AND_ASSIGN (PlatformRemoteGDBServer);
 
 };
+
+} // namespace platform_gdb_server
+} // namespace lldb_private
 
 #endif  // liblldb_PlatformRemoteGDBServer_h_

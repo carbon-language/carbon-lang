@@ -20,14 +20,20 @@
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Mutex.h"
 
-namespace lldb_private
-{
+namespace lldb_private {
+
 class Error;
 class Module;
 class Scalar;
-} // End lldb_private namespace.
+
+namespace process_linux {
 
 class ProcessLinux;
+
+} // namespace process_linux
+
+} // namespace lldb_private
+
 class Operation;
 
 /// @class ProcessMonitor
@@ -75,7 +81,7 @@ public:
     GetPID() const { return m_pid; }
 
     /// Returns the process associated with this ProcessMonitor.
-    ProcessLinux &
+    lldb_private::process_linux::ProcessLinux &
     GetProcess() { return *m_process; }
 
     /// Returns a file descriptor to the controlling terminal of the inferior
@@ -195,7 +201,7 @@ public:
     WaitForInitialTIDStop(lldb::tid_t tid);
 
 private:
-    ProcessLinux *m_process;
+    lldb_private::process_linux::ProcessLinux *m_process;
 
     lldb_private::HostThread m_operation_thread;
     lldb_private::HostThread m_monitor_thread;

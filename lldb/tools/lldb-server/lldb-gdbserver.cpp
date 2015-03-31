@@ -50,6 +50,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 // lldb-gdbserver state
 

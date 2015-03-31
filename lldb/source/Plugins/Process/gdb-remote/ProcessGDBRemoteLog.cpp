@@ -18,6 +18,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 
 // We want to avoid global constructors where code needs to be run so here we

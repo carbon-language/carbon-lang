@@ -92,6 +92,7 @@
     syscall(SYS_tgkill, static_cast<::pid_t>(pid), static_cast<::pid_t>(tid), sig)
 
 using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 static Operation* EXIT_OPERATION = nullptr;
 

@@ -16,8 +16,8 @@
 // Project includes
 #include "lldb/Target/UnixSignals.h"
 
-namespace process_linux
-{
+namespace lldb_private {
+namespace process_linux {
 
     /// Linux specific set of Unix signals.
     class LinuxSignals
@@ -30,6 +30,8 @@ namespace process_linux
         void
         Reset();
     };
-}
+
+} // namespace lldb_private
+} // namespace process_linux
 
 #endif

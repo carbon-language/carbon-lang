@@ -21,6 +21,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 // ARM64 general purpose registers.
 static const uint32_t g_gpr_regnums_arm64[] =
@@ -115,7 +116,7 @@ namespace {
 }
 
 // Register sets for ARM64.
-static const lldb_private::RegisterSet
+static const RegisterSet
 g_reg_sets_arm64[k_num_register_sets] =
 {
     { "General Purpose Registers",  "gpr", k_num_gpr_registers_arm64, g_gpr_regnums_arm64 },
@@ -156,7 +157,7 @@ NativeRegisterContextLinux_arm64::GetRegisterSetCount () const
     return k_num_register_sets;
 }
 
-const lldb_private::RegisterSet *
+const RegisterSet *
 NativeRegisterContextLinux_arm64::GetRegisterSet (uint32_t set_index) const
 {
     if (set_index < k_num_register_sets)
@@ -165,7 +166,7 @@ NativeRegisterContextLinux_arm64::GetRegisterSet (uint32_t set_index) const
     return nullptr;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_arm64::ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value)
 {
     Error error;
@@ -236,7 +237,7 @@ NativeRegisterContextLinux_arm64::ReadRegister (const RegisterInfo *reg_info, Re
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_arm64::WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value)
 {
     if (!reg_info)
@@ -281,12 +282,12 @@ NativeRegisterContextLinux_arm64::WriteRegister (const RegisterInfo *reg_info, c
     return Error ("failed - register wasn't recognized to be a GPR or an FPR, write strategy unknown");
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_arm64::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
     Error error;
 
-    data_sp.reset (new lldb_private::DataBufferHeap (REG_CONTEXT_SIZE, 0));
+    data_sp.reset (new DataBufferHeap (REG_CONTEXT_SIZE, 0));
     if (!data_sp)
         return Error ("failed to allocate DataBufferHeap instance of size %" PRIu64, REG_CONTEXT_SIZE);
 
@@ -316,7 +317,7 @@ NativeRegisterContextLinux_arm64::ReadAllRegisterValues (lldb::DataBufferSP &dat
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_arm64::WriteAllRegisterValues (const lldb::DataBufferSP &data_sp)
 {
     Error error;
@@ -360,7 +361,7 @@ NativeRegisterContextLinux_arm64::WriteAllRegisterValues (const lldb::DataBuffer
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_arm64::WriteRegisterRaw (uint32_t reg_index, const RegisterValue &reg_value)
 {
     Error error;
@@ -430,7 +431,7 @@ NativeRegisterContextLinux_arm64::WriteRegisterRaw (uint32_t reg_index, const Re
                                          value_to_write);
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_arm64::ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value)
 {
     Error error;

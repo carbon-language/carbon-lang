@@ -20,16 +20,19 @@
 #include "lldb/lldb-private-forward.h"
 #include "GDBRemoteCommunication.h"
 
-class ProcessGDBRemote;
 class StringExtractorGDBRemote;
 
-class GDBRemoteCommunicationServer :
-    public GDBRemoteCommunication
+namespace lldb_private {
+namespace process_gdb_remote {
+
+class ProcessGDBRemote;
+
+class GDBRemoteCommunicationServer : public GDBRemoteCommunication
 {
 public:
     using PortMap = std::map<uint16_t, lldb::pid_t>;
     using PacketHandler = std::function<PacketResult(StringExtractorGDBRemote &packet,
-                                                     lldb_private::Error &error,
+                                                     Error &error,
                                                      bool &interrupt,
                                                      bool &quit)>;
 
@@ -44,14 +47,14 @@ public:
 
     PacketResult
     GetPacketAndSendResponse (uint32_t timeout_usec,
-                              lldb_private::Error &error,
+                              Error &error,
                               bool &interrupt, 
                               bool &quit);
 
     // After connecting, do a little handshake with the client to make sure
     // we are at least communicating
     bool
-    HandshakeWithClient (lldb_private::Error *error_ptr);
+    HandshakeWithClient (Error *error_ptr);
 
 protected:
     std::map<StringExtractorGDBRemote::ServerPacketType, PacketHandler> m_packet_handlers;
@@ -75,5 +78,8 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunicationServer);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // liblldb_GDBRemoteCommunicationServer_h_

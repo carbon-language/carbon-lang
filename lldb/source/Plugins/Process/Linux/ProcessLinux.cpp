@@ -29,6 +29,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 namespace
 {
@@ -224,7 +225,7 @@ ProcessLinux::CanDebug(Target &target, bool plugin_specified_by_name)
 
     // If we're using llgs for local debugging, we must not say that this process
     // is used for debugging.
-    if (PlatformLinux::UseLlgsForLocalDebugging ())
+    if (platform_linux::PlatformLinux::UseLlgsForLocalDebugging ())
         return false;
 
     return ProcessPOSIX::CanDebug(target, plugin_specified_by_name);

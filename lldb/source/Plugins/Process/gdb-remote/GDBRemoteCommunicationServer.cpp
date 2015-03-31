@@ -23,6 +23,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(const char *comm_name,
                                                            const char *listener_name) :

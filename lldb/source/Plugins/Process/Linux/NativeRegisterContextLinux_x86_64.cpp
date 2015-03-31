@@ -19,6 +19,7 @@
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
 
 using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 // ----------------------------------------------------------------------------
 // Private namespace.
@@ -415,14 +416,14 @@ NativeRegisterContextLinux_x86_64::GetUserRegisterCount() const
     uint32_t count = 0;
     for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index)
     {
-        const lldb_private::RegisterSet* set = GetRegisterSet(set_index);
+        const RegisterSet* set = GetRegisterSet(set_index);
         if (set)
             count += set->num_registers;
     }
     return count;
 }
 
-const lldb_private::RegisterSet *
+const RegisterSet *
 NativeRegisterContextLinux_x86_64::GetRegisterSet (uint32_t set_index) const
 {
     if (!IsRegisterSetAvailable (set_index))
@@ -442,7 +443,7 @@ NativeRegisterContextLinux_x86_64::GetRegisterSet (uint32_t set_index) const
     return nullptr;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_x86_64::ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value)
 {
     Error error;
@@ -468,7 +469,7 @@ NativeRegisterContextLinux_x86_64::ReadRegisterRaw (uint32_t reg_index, Register
                                         reg_value);
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_x86_64::ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value)
 {
     Error error;
@@ -579,7 +580,7 @@ NativeRegisterContextLinux_x86_64::ReadRegister (const RegisterInfo *reg_info, R
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_x86_64::WriteRegister(const uint32_t reg,
                                                  const RegisterValue &value)
 {
@@ -651,7 +652,7 @@ NativeRegisterContextLinux_x86_64::WriteRegister(const uint32_t reg,
                                          value_to_write);
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_x86_64::WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value)
 {
     assert (reg_info && "reg_info is null");
@@ -722,7 +723,7 @@ NativeRegisterContextLinux_x86_64::WriteRegister (const RegisterInfo *reg_info, 
     return Error ("failed - register wasn't recognized to be a GPR or an FPR, write strategy unknown");
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_x86_64::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
     Error error;
@@ -783,7 +784,7 @@ NativeRegisterContextLinux_x86_64::ReadAllRegisterValues (lldb::DataBufferSP &da
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_x86_64::WriteAllRegisterValues (const lldb::DataBufferSP &data_sp)
 {
     Error error;

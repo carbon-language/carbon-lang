@@ -43,6 +43,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 GDBRemoteCommunication::History::History (uint32_t size) :
     m_packets(),
@@ -93,7 +94,7 @@ GDBRemoteCommunication::History::AddPacket (const std::string &src,
 }
 
 void
-GDBRemoteCommunication::History::Dump (lldb_private::Stream &strm) const
+GDBRemoteCommunication::History::Dump (Stream &strm) const
 {
     const uint32_t size = GetNumPacketsInHistory ();
     const uint32_t first_idx = GetFirstSavedPacketIndex ();
@@ -114,7 +115,7 @@ GDBRemoteCommunication::History::Dump (lldb_private::Stream &strm) const
 }
 
 void
-GDBRemoteCommunication::History::Dump (lldb_private::Log *log) const
+GDBRemoteCommunication::History::Dump (Log *log) const
 {
     if (log && !m_dumped_to_log)
     {
@@ -679,7 +680,7 @@ GDBRemoteCommunication::ListenThread (lldb::thread_arg_t arg)
 Error
 GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                                                  uint16_t in_port,
-                                                 lldb_private::ProcessLaunchInfo &launch_info,
+                                                 ProcessLaunchInfo &launch_info,
                                                  uint16_t &out_port)
 {
     Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));

@@ -27,6 +27,9 @@
 
 #include "Utility/StringExtractorGDBRemote.h"
 
+namespace lldb_private {
+namespace process_gdb_remote {
+
 typedef enum
 {
     eStoppointInvalid = -1,
@@ -39,7 +42,7 @@ typedef enum
 
 class ProcessGDBRemote;
 
-class GDBRemoteCommunication : public lldb_private::Communication
+class GDBRemoteCommunication : public Communication
 {
 public:
     enum
@@ -96,7 +99,7 @@ public:
                         size_t payload_length);
 
     bool
-    GetSequenceMutex (lldb_private::Mutex::Locker& locker, const char *failure_message = NULL);
+    GetSequenceMutex (Mutex::Locker& locker, const char *failure_message = NULL);
 
     bool
     CheckForPacket (const uint8_t *src, 
@@ -139,20 +142,20 @@ public:
     uint32_t
     GetPacketTimeoutInMicroSeconds () const
     {
-        return m_packet_timeout * lldb_private::TimeValue::MicroSecPerSec;
+        return m_packet_timeout * TimeValue::MicroSecPerSec;
     }
     //------------------------------------------------------------------
     // Start a debugserver instance on the current host using the
     // supplied connection URL.
     //------------------------------------------------------------------
-    lldb_private::Error
+    Error
     StartDebugserverProcess (const char *hostname,
                              uint16_t in_port, // If set to zero, then out_port will contain the bound port on exit
-                             lldb_private::ProcessLaunchInfo &launch_info,
+                             ProcessLaunchInfo &launch_info,
                              uint16_t &out_port);
 
     void
-    DumpHistory(lldb_private::Stream &strm);
+    DumpHistory(Stream &strm);
     
 protected:
 
@@ -209,10 +212,10 @@ protected:
                    uint32_t bytes_transmitted);
         
         void
-        Dump (lldb_private::Stream &strm) const;
+        Dump (Stream &strm) const;
 
         void
-        Dump (lldb_private::Log *log) const;
+        Dump (Log *log) const;
 
         bool
         DidDumpToLog () const
@@ -274,19 +277,19 @@ protected:
                                                 uint32_t timeout_usec);
 
     bool
-    WaitForNotRunningPrivate (const lldb_private::TimeValue *timeout_ptr);
+    WaitForNotRunningPrivate (const TimeValue *timeout_ptr);
 
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
     uint32_t m_packet_timeout;
 #ifdef ENABLE_MUTEX_ERROR_CHECKING
-    lldb_private::TrackingMutex m_sequence_mutex;
+    TrackingMutex m_sequence_mutex;
 #else
-    lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
+    Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
 #endif
-    lldb_private::Predicate<bool> m_public_is_running;
-    lldb_private::Predicate<bool> m_private_is_running;
+    Predicate<bool> m_public_is_running;
+    Predicate<bool> m_private_is_running;
     History m_history;
     bool m_send_acks;
     bool m_is_platform; // Set to true if this class represents a platform,
@@ -294,9 +297,8 @@ protected:
                         // a single process
     
 
-    lldb_private::Error
-    StartListenThread (const char *hostname = "127.0.0.1",
-                       uint16_t port = 0);
+    Error
+    StartListenThread (const char *hostname = "127.0.0.1", uint16_t port = 0);
 
     bool
     JoinListenThread ();
@@ -305,7 +307,7 @@ protected:
     ListenThread (lldb::thread_arg_t arg);
 
 private:
-    lldb_private::HostThread m_listen_thread;
+    HostThread m_listen_thread;
     std::string m_listen_url;
 
     //------------------------------------------------------------------
@@ -313,5 +315,8 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunication);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // liblldb_GDBRemoteCommunication_h_

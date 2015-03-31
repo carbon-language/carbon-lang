@@ -24,6 +24,7 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 
 namespace lldb_private {
+namespace platform_android {
 
 class AdbClient
 {
@@ -71,6 +72,7 @@ private:
     ConnectionFileDescriptor m_conn;
 };
 
+} // namespace platform_android
 } // namespace lldb_private
 
 #endif  // liblldb_AdbClient_h_

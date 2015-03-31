@@ -53,6 +53,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 //----------------------------------------------------------------------
 // GDBRemote Errors
@@ -189,32 +190,32 @@ GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
                           });
 }
 
-lldb_private::Error
+Error
 GDBRemoteCommunicationServerLLGS::SetLaunchArguments (const char *const args[], int argc)
 {
     if ((argc < 1) || !args || !args[0] || !args[0][0])
-        return lldb_private::Error ("%s: no process command line specified to launch", __FUNCTION__);
+        return Error ("%s: no process command line specified to launch", __FUNCTION__);
 
     m_process_launch_info.SetArguments (const_cast<const char**> (args), true);
-    return lldb_private::Error ();
+    return Error ();
 }
 
-lldb_private::Error
+Error
 GDBRemoteCommunicationServerLLGS::SetLaunchFlags (unsigned int launch_flags)
 {
     m_process_launch_info.GetFlags ().Set (launch_flags);
-    return lldb_private::Error ();
+    return Error ();
 }
 
-lldb_private::Error
+Error
 GDBRemoteCommunicationServerLLGS::LaunchProcess ()
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     if (!m_process_launch_info.GetArguments ().GetArgumentCount ())
-        return lldb_private::Error ("%s: no process command line specified to launch", __FUNCTION__);
+        return Error ("%s: no process command line specified to launch", __FUNCTION__);
 
-    lldb_private::Error error;
+    Error error;
     {
         Mutex::Locker locker (m_debugged_process_mutex);
         assert (!m_debugged_process_sp && "lldb-gdbserver creating debugged process but one already exists");
@@ -286,7 +287,7 @@ GDBRemoteCommunicationServerLLGS::LaunchProcess ()
     return error;
 }
 
-lldb_private::Error
+Error
 GDBRemoteCommunicationServerLLGS::AttachToProcess (lldb::pid_t pid)
 {
     Error error;
@@ -340,7 +341,7 @@ GDBRemoteCommunicationServerLLGS::AttachToProcess (lldb::pid_t pid)
 }
 
 void
-GDBRemoteCommunicationServerLLGS::InitializeDelegate (lldb_private::NativeProcessProtocol *process)
+GDBRemoteCommunicationServerLLGS::InitializeDelegate (NativeProcessProtocol *process)
 {
     assert (process && "process cannot be NULL");
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -354,7 +355,7 @@ GDBRemoteCommunicationServerLLGS::InitializeDelegate (lldb_private::NativeProces
 }
 
 GDBRemoteCommunication::PacketResult
-GDBRemoteCommunicationServerLLGS::SendWResponse (lldb_private::NativeProcessProtocol *process)
+GDBRemoteCommunicationServerLLGS::SendWResponse (NativeProcessProtocol *process)
 {
     assert (process && "process cannot be NULL");
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -653,7 +654,7 @@ GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
 }
 
 void
-GDBRemoteCommunicationServerLLGS::HandleInferiorState_Exited (lldb_private::NativeProcessProtocol *process)
+GDBRemoteCommunicationServerLLGS::HandleInferiorState_Exited (NativeProcessProtocol *process)
 {
     assert (process && "process cannot be NULL");
 
@@ -705,7 +706,7 @@ GDBRemoteCommunicationServerLLGS::HandleInferiorState_Exited (lldb_private::Nati
 }
 
 void
-GDBRemoteCommunicationServerLLGS::HandleInferiorState_Stopped (lldb_private::NativeProcessProtocol *process)
+GDBRemoteCommunicationServerLLGS::HandleInferiorState_Stopped (NativeProcessProtocol *process)
 {
     assert (process && "process cannot be NULL");
 
@@ -734,7 +735,7 @@ GDBRemoteCommunicationServerLLGS::HandleInferiorState_Stopped (lldb_private::Nat
 }
 
 void
-GDBRemoteCommunicationServerLLGS::ProcessStateChanged (lldb_private::NativeProcessProtocol *process, lldb::StateType state)
+GDBRemoteCommunicationServerLLGS::ProcessStateChanged (NativeProcessProtocol *process, lldb::StateType state)
 {
     assert (process && "process cannot be NULL");
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -793,7 +794,7 @@ GDBRemoteCommunicationServerLLGS::SendONotification (const char *buffer, uint32_
     return SendPacketNoLock (response.GetData (), response.GetSize ());
 }
 
-lldb_private::Error
+Error
 GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor (int fd)
 {
     Error error;
@@ -1002,7 +1003,7 @@ GDBRemoteCommunicationServerLLGS::Handle_C (StringExtractorGDBRemote &packet)
             return SendIllFormedResponse (packet, "unexpected content after $C{signal-number}");
     }
 
-    lldb_private::ResumeActionList resume_actions (StateType::eStateRunning, 0);
+    ResumeActionList resume_actions (StateType::eStateRunning, 0);
     Error error;
 
     // We have two branches: what to do if a continue thread is specified (in which case we target
@@ -1015,7 +1016,7 @@ GDBRemoteCommunicationServerLLGS::Handle_C (StringExtractorGDBRemote &packet)
     if (signal_tid != LLDB_INVALID_THREAD_ID)
     {
         // The resume action for the continue thread (or all threads if a continue thread is not set).
-        lldb_private::ResumeAction action = { GetContinueThreadID (), StateType::eStateRunning, static_cast<int> (signo) };
+        ResumeAction action = { GetContinueThreadID (), StateType::eStateRunning, static_cast<int> (signo) };
 
         // Add the action for the continue thread (or all threads when the continue thread isn't present).
         resume_actions.Append (action);
@@ -1080,7 +1081,7 @@ GDBRemoteCommunicationServerLLGS::Handle_c (StringExtractorGDBRemote &packet)
     }
 
     // Build the ResumeActionList
-    lldb_private::ResumeActionList actions (StateType::eStateRunning, 0);
+    ResumeActionList actions (StateType::eStateRunning, 0);
 
     Error error = m_debugged_process_sp->Resume (actions);
     if (error.Fail ())
@@ -1841,7 +1842,7 @@ GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
 
     // Retrieve the process memory.
     lldb::addr_t bytes_read = 0;
-    lldb_private::Error error = m_debugged_process_sp->ReadMemory (read_addr, &buf[0], byte_count, bytes_read);
+    Error error = m_debugged_process_sp->ReadMemory (read_addr, &buf[0], byte_count, bytes_read);
     if (error.Fail ())
     {
         if (log)
@@ -1921,7 +1922,7 @@ GDBRemoteCommunicationServerLLGS::Handle_M (StringExtractorGDBRemote &packet)
 
     // Write the process memory.
     lldb::addr_t bytes_written = 0;
-    lldb_private::Error error = m_debugged_process_sp->WriteMemory (write_addr, &buf[0], byte_count, bytes_written);
+    Error error = m_debugged_process_sp->WriteMemory (write_addr, &buf[0], byte_count, bytes_written);
     if (error.Fail ())
     {
         if (log)
@@ -2234,10 +2235,10 @@ GDBRemoteCommunicationServerLLGS::Handle_s (StringExtractorGDBRemote &packet)
         return SendErrorResponse (0x33);
 
     // Create the step action for the given thread.
-    lldb_private::ResumeAction action = { tid, eStateStepping, 0 };
+    ResumeAction action = { tid, eStateStepping, 0 };
 
     // Setup the actions list.
-    lldb_private::ResumeActionList actions;
+    ResumeActionList actions;
     actions.Append (action);
 
     // All other threads stop while we're single stepping a thread.
@@ -2642,7 +2643,7 @@ GDBRemoteCommunicationServerLLGS::MaybeCloseInferiorTerminalConnection ()
 }
 
 
-lldb_private::NativeThreadProtocolSP
+NativeThreadProtocolSP
 GDBRemoteCommunicationServerLLGS::GetThreadFromSuffix (StringExtractorGDBRemote &packet)
 {
     NativeThreadProtocolSP thread_sp;

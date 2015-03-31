@@ -42,6 +42,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 #if defined(LLDB_DISABLE_POSIX) && !defined(SIGSTOP)
 #define SIGSTOP 17

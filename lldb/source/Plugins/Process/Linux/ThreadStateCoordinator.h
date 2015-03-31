@@ -21,8 +21,9 @@
 
 #include "lldb/Core/Error.h"
 
-namespace lldb_private
-{
+namespace lldb_private {
+namespace process_linux {
+
     class ThreadStateCoordinator
     {
     public:
@@ -229,6 +230,8 @@ namespace lldb_private
 
         bool m_log_event_processing;
     };
-}
+
+} // namespace process_linux
+} // namespace lldb_private
 
 #endif

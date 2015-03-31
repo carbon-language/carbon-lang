@@ -130,7 +130,7 @@ InitializeForLLGSPrivate()
 
     llvm::install_fatal_error_handler(fatal_error_handler, 0);
 
-    ProcessGDBRemoteLog::Initialize();
+    process_gdb_remote::ProcessGDBRemoteLog::Initialize();
 
     // Initialize plug-ins
     ObjectContainerBSDArchive::Initialize();
@@ -138,10 +138,10 @@ InitializeForLLGSPrivate()
     ObjectFilePECOFF::Initialize();
     DynamicLoaderPOSIXDYLD::Initialize();
     PlatformFreeBSD::Initialize();
-    PlatformLinux::Initialize();
+    platform_linux::PlatformLinux::Initialize();
     PlatformWindows::Initialize();
     PlatformKalimba::Initialize();
-    PlatformAndroid::Initialize();
+    platform_android::PlatformAndroid::Initialize();
 
     //----------------------------------------------------------------------
     // Apple/Darwin hosted plugins
@@ -215,7 +215,7 @@ InitializePrivate()
     //----------------------------------------------------------------------
     // Linux hosted plugins
     //----------------------------------------------------------------------
-    ProcessLinux::Initialize();
+    process_linux::ProcessLinux::Initialize();
 #endif
 #if defined(_MSC_VER)
     DynamicLoaderWindows::Initialize();
@@ -232,9 +232,9 @@ InitializePrivate()
     //----------------------------------------------------------------------
     // Platform agnostic plugins
     //----------------------------------------------------------------------
-    PlatformRemoteGDBServer::Initialize();
+    platform_gdb_server::PlatformRemoteGDBServer::Initialize();
 
-    ProcessGDBRemote::Initialize();
+    process_gdb_remote::ProcessGDBRemote::Initialize();
     DynamicLoaderStatic::Initialize();
 
     // Scan for any system or user LLDB plug-ins
@@ -259,10 +259,10 @@ TerminateForLLGSPrivate()
     ObjectFilePECOFF::Terminate();
     DynamicLoaderPOSIXDYLD::Terminate();
     PlatformFreeBSD::Terminate();
-    PlatformLinux::Terminate();
+    platform_linux::PlatformLinux::Terminate();
     PlatformWindows::Terminate();
     PlatformKalimba::Terminate();
-    PlatformAndroid::Terminate();
+    platform_android::PlatformAndroid::Terminate();
     DynamicLoaderMacOSXDYLD::Terminate();
     ObjectContainerUniversalMachO::Terminate();
     PlatformMacOSX::Terminate();
@@ -329,7 +329,7 @@ TerminatePrivate()
 #endif
 
 #if defined(__linux__)
-    ProcessLinux::Terminate();
+    process_linux::ProcessLinux::Terminate();
 #endif
 
 #if defined(__FreeBSD__)
@@ -337,8 +337,8 @@ TerminatePrivate()
 #endif
     Debugger::SettingsTerminate();
 
-    PlatformRemoteGDBServer::Terminate();
-    ProcessGDBRemote::Terminate();
+    platform_gdb_server::PlatformRemoteGDBServer::Terminate();
+    process_gdb_remote::ProcessGDBRemote::Terminate();
     DynamicLoaderStatic::Terminate();
 
     TerminateForLLGSPrivate();

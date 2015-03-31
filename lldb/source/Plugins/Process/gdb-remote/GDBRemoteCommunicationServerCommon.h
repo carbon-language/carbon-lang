@@ -23,8 +23,12 @@
 #include "GDBRemoteCommunicationServer.h"
 #include "GDBRemoteCommunicationServerCommon.h"
 
-class ProcessGDBRemote;
 class StringExtractorGDBRemote;
+
+namespace lldb_private {
+namespace process_gdb_remote {
+
+class ProcessGDBRemote;
 
 class GDBRemoteCommunicationServerCommon :
     public GDBRemoteCommunicationServer
@@ -37,10 +41,10 @@ public:
 
 protected:
     std::set<lldb::pid_t> m_spawned_pids;
-    lldb_private::Mutex m_spawned_pids_mutex;
-    lldb_private::ProcessLaunchInfo m_process_launch_info;
-    lldb_private::Error m_process_launch_error;
-    lldb_private::ProcessInstanceInfoList m_proc_infos;
+    Mutex m_spawned_pids_mutex;
+    ProcessLaunchInfo m_process_launch_info;
+    Error m_process_launch_error;
+    ProcessInstanceInfoList m_proc_infos;
     uint32_t m_proc_infos_index;
     bool m_thread_suffix_supported;
     bool m_list_threads_in_stop_reply;
@@ -154,12 +158,12 @@ protected:
     KillSpawnedProcess (lldb::pid_t pid);
 
     static void
-    CreateProcessInfoResponse (const lldb_private::ProcessInstanceInfo &proc_info,
-                               lldb_private::StreamString &response);
+    CreateProcessInfoResponse (const ProcessInstanceInfo &proc_info,
+                               StreamString &response);
 
     static void
-    CreateProcessInfoResponse_DebugServerStyle (const lldb_private::ProcessInstanceInfo &proc_info,
-                                                lldb_private::StreamString &response);
+    CreateProcessInfoResponse_DebugServerStyle (const ProcessInstanceInfo &proc_info,
+                                                StreamString &response);
 
     template <typename T>
     void
@@ -168,7 +172,7 @@ protected:
     {
         RegisterPacketHandler(packet_type,
                               [this, handler] (StringExtractorGDBRemote packet,
-                                               lldb_private::Error &error,
+                                               Error &error,
                                                bool &interrupt,
                                                bool &quit)
                               {
@@ -193,11 +197,14 @@ protected:
     ///     An Error object indicating the success or failure of the
     ///     launch.
     //------------------------------------------------------------------
-    virtual lldb_private::Error
+    virtual Error
     LaunchProcess () = 0;
 
-    virtual lldb_private::FileSpec
-    FindModuleFile (const std::string& module_path, const lldb_private::ArchSpec& arch);
+    virtual FileSpec
+    FindModuleFile (const std::string& module_path, const ArchSpec& arch);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // liblldb_GDBRemoteCommunicationServerCommon_h_

@@ -45,6 +45,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 #ifdef __ANDROID__
     const static uint32_t g_default_packet_timeout_sec = 20; // seconds

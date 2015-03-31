@@ -21,6 +21,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::platform_android;
 
 static uint32_t g_initialize_count = 0;
 
@@ -59,7 +60,7 @@ PlatformAndroid::Terminate ()
 PlatformSP
 PlatformAndroid::CreateInstance (bool force, const ArchSpec *arch)
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
     if (log)
     {
         const char *arch_name;
@@ -139,7 +140,7 @@ PlatformAndroid::~PlatformAndroid()
 {
 }
 
-lldb_private::ConstString
+ConstString
 PlatformAndroid::GetPluginNameStatic (bool is_host)
 {
     if (is_host)
@@ -163,7 +164,7 @@ PlatformAndroid::GetPluginDescriptionStatic (bool is_host)
         return "Remote Android user platform plug-in.";
 }
 
-lldb_private::ConstString
+ConstString
 PlatformAndroid::GetPluginName()
 {
     return GetPluginNameStatic(IsHost());

@@ -37,6 +37,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 namespace
 {
@@ -157,7 +158,7 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info, std::string& descri
     llvm_unreachable("unhandled StateType!");
 }
 
-lldb_private::NativeRegisterContextSP
+NativeRegisterContextSP
 NativeThreadLinux::GetRegisterContext ()
 {
     // Return the register context if we already created it.

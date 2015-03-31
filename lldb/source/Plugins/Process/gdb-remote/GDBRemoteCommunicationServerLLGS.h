@@ -23,12 +23,16 @@
 // Project includes
 #include "GDBRemoteCommunicationServerCommon.h"
 
-class ProcessGDBRemote;
 class StringExtractorGDBRemote;
+
+namespace lldb_private {
+namespace process_gdb_remote {
+
+class ProcessGDBRemote;
 
 class GDBRemoteCommunicationServerLLGS :
     public GDBRemoteCommunicationServerCommon,
-    public lldb_private::NativeProcessProtocol::NativeDelegate
+    public NativeProcessProtocol::NativeDelegate
 {
 public:
     //------------------------------------------------------------------
@@ -53,7 +57,7 @@ public:
     ///     An Error object indicating the success or failure of making
     ///     the setting.
     //------------------------------------------------------------------
-    lldb_private::Error
+    Error
     SetLaunchArguments (const char *const args[], int argc);
 
     //------------------------------------------------------------------
@@ -66,7 +70,7 @@ public:
     ///     An Error object indicating the success or failure of making
     ///     the setting.
     //------------------------------------------------------------------
-    lldb_private::Error
+    Error
     SetLaunchFlags (unsigned int launch_flags);
 
     //------------------------------------------------------------------
@@ -80,7 +84,7 @@ public:
     ///     An Error object indicating the success or failure of the
     ///     launch.
     //------------------------------------------------------------------
-    lldb_private::Error
+    Error
     LaunchProcess () override;
 
     //------------------------------------------------------------------
@@ -93,33 +97,33 @@ public:
     ///     An Error object indicating the success or failure of the
     ///     attach operation.
     //------------------------------------------------------------------
-    lldb_private::Error
+    Error
     AttachToProcess (lldb::pid_t pid);
 
     //------------------------------------------------------------------
     // NativeProcessProtocol::NativeDelegate overrides
     //------------------------------------------------------------------
     void
-    InitializeDelegate (lldb_private::NativeProcessProtocol *process) override;
+    InitializeDelegate (NativeProcessProtocol *process) override;
 
     void
-    ProcessStateChanged (lldb_private::NativeProcessProtocol *process, lldb::StateType state) override;
+    ProcessStateChanged (NativeProcessProtocol *process, lldb::StateType state) override;
 
     void
-    DidExec (lldb_private::NativeProcessProtocol *process) override;
+    DidExec (NativeProcessProtocol *process) override;
 
 protected:
     lldb::PlatformSP m_platform_sp;
     lldb::thread_t m_async_thread;
     lldb::tid_t m_current_tid;
     lldb::tid_t m_continue_tid;
-    lldb_private::Mutex m_debugged_process_mutex;
-    lldb_private::NativeProcessProtocolSP m_debugged_process_sp;
+    Mutex m_debugged_process_mutex;
+    NativeProcessProtocolSP m_debugged_process_sp;
     lldb::DebuggerSP m_debugger_sp;
     Communication m_stdio_communication;
     lldb::StateType m_inferior_prev_state;
     lldb::DataBufferSP m_active_auxv_buffer_sp;
-    lldb_private::Mutex m_saved_registers_mutex;
+    Mutex m_saved_registers_mutex;
     std::unordered_map<uint32_t, lldb::DataBufferSP> m_saved_registers_map;
     uint32_t m_next_saved_registers_id;
 
@@ -127,7 +131,7 @@ protected:
     SendONotification (const char *buffer, uint32_t len);
 
     PacketResult
-    SendWResponse (lldb_private::NativeProcessProtocol *process);
+    SendWResponse (NativeProcessProtocol *process);
 
     PacketResult
     SendStopReplyPacketForThread (lldb::tid_t tid);
@@ -246,14 +250,14 @@ protected:
     lldb::tid_t
     GetContinueThreadID () const { return m_continue_tid; }
 
-    lldb_private::Error
+    Error
     SetSTDIOFileDescriptor (int fd);
 
     static void
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
 
-    lldb_private::FileSpec
-    FindModuleFile (const std::string& module_path, const lldb_private::ArchSpec& arch) override;
+    FileSpec
+    FindModuleFile (const std::string& module_path, const ArchSpec& arch) override;
 
 private:
     bool
@@ -267,15 +271,15 @@ private:
                          int status);
 
     void
-    HandleInferiorState_Exited (lldb_private::NativeProcessProtocol *process);
+    HandleInferiorState_Exited (NativeProcessProtocol *process);
 
     void
-    HandleInferiorState_Stopped (lldb_private::NativeProcessProtocol *process);
+    HandleInferiorState_Stopped (NativeProcessProtocol *process);
 
     void
     FlushInferiorOutput ();
 
-    lldb_private::NativeThreadProtocolSP
+    NativeThreadProtocolSP
     GetThreadFromSuffix (StringExtractorGDBRemote &packet);
 
     uint32_t
@@ -295,5 +299,8 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunicationServerLLGS);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // liblldb_GDBRemoteCommunicationServerLLGS_h_

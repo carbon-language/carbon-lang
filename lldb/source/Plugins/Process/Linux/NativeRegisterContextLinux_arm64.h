@@ -14,8 +14,9 @@
 #include "lldb/Host/common/NativeRegisterContextRegisterInfo.h"
 #include "Plugins/Process/Utility/lldb-arm64-register-enums.h"
 
-namespace lldb_private
-{
+namespace lldb_private {
+namespace process_linux {
+
     class NativeProcessLinux;
 
     class NativeRegisterContextLinux_arm64 : public NativeRegisterContextRegisterInfo
@@ -74,7 +75,7 @@ namespace lldb_private
             uint32_t    fpcr;
         };
 
-        uint64_t m_gpr_arm64[lldb_private::k_num_gpr_registers_arm64]; // 64-bit general purpose registers.
+        uint64_t m_gpr_arm64[k_num_gpr_registers_arm64]; // 64-bit general purpose registers.
         RegInfo  m_reg_info;
         FPU m_fpr; // floating-point registers including extended register sets.
 
@@ -96,10 +97,10 @@ namespace lldb_private
         bool
         WriteFPR ();
 
-        lldb_private::Error
+        Error
         ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value);
 
-        lldb_private::Error
+        Error
         WriteRegisterRaw (uint32_t reg_index, const RegisterValue &reg_value);
 
         lldb::ByteOrder
@@ -108,7 +109,9 @@ namespace lldb_private
         size_t
         GetGPRSize() const;
     };
-}
+
+} // namespace process_linux
+} // namespace lldb_private
 
 #endif // #ifndef lldb_NativeRegisterContextLinux_arm64_h
 

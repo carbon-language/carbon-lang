@@ -18,13 +18,14 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace platform_android;
 
 static const lldb::pid_t g_remote_platform_pid = 0; // Alias for the process id of lldb-platform
 
 static Error
 ForwardPortWithAdb (uint16_t port, std::string& device_id)
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
 
     // Fetch the device list from ADB and if only 1 device found then use that device
     // TODO: Handle the case when more device is available

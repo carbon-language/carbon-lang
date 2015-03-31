@@ -33,6 +33,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 //----------------------------------------------------------------------
 // GDBRemoteRegisterContext constructor
@@ -151,7 +152,7 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
 
 // Helper function for GDBRemoteRegisterContext::ReadRegisterBytes().
 bool
-GDBRemoteRegisterContext::GetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
+GDBRemoteRegisterContext::GetPrimordialRegister(const RegisterInfo *reg_info,
                                                 GDBRemoteCommunicationClient &gdb_comm)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
@@ -265,7 +266,7 @@ GDBRemoteRegisterContext::WriteRegister (const RegisterInfo *reg_info,
 
 // Helper function for GDBRemoteRegisterContext::WriteRegisterBytes().
 bool
-GDBRemoteRegisterContext::SetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
+GDBRemoteRegisterContext::SetPrimordialRegister(const RegisterInfo *reg_info,
                                                 GDBRemoteCommunicationClient &gdb_comm)
 {
     StreamString packet;
@@ -316,7 +317,7 @@ GDBRemoteRegisterContext::SyncThreadState(Process *process)
 }
 
 bool
-GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, DataExtractor &data, uint32_t data_offset)
+GDBRemoteRegisterContext::WriteRegisterBytes (const RegisterInfo *reg_info, DataExtractor &data, uint32_t data_offset)
 {
     ExecutionContext exe_ctx (CalculateThread());
 
@@ -460,7 +461,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
 }
 
 bool
-GDBRemoteRegisterContext::ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint)
+GDBRemoteRegisterContext::ReadAllRegisterValues (RegisterCheckpoint &reg_checkpoint)
 {
     ExecutionContext exe_ctx (CalculateThread());
     
@@ -486,7 +487,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb_private::RegisterCheckpoin
 }
 
 bool
-GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint)
+GDBRemoteRegisterContext::WriteAllRegisterValues (const RegisterCheckpoint &reg_checkpoint)
 {
     uint32_t save_id = reg_checkpoint.GetID();
     if (save_id != 0)

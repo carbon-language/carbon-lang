@@ -19,7 +19,10 @@
 // Project includes
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
 
-class PlatformAndroidRemoteGDBServer : public PlatformRemoteGDBServer
+namespace lldb_private {
+namespace platform_android {
+
+class PlatformAndroidRemoteGDBServer : public platform_gdb_server::PlatformRemoteGDBServer
 {
 public:
     PlatformAndroidRemoteGDBServer ();
@@ -27,10 +30,10 @@ public:
     virtual
     ~PlatformAndroidRemoteGDBServer ();
 
-    lldb_private::Error
-    ConnectRemote (lldb_private::Args& args) override;
+    Error
+    ConnectRemote (Args& args) override;
 
-    lldb_private::Error
+    Error
     DisconnectRemote () override;
 
 protected:
@@ -46,5 +49,8 @@ private:
     DISALLOW_COPY_AND_ASSIGN (PlatformAndroidRemoteGDBServer);
 
 };
+
+} // namespace platform_android
+} // namespace lldb_private
 
 #endif  // liblldb_PlatformAndroidRemoteGDBServer_h_

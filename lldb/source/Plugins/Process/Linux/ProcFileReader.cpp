@@ -23,8 +23,11 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 
+using namespace lldb_private;
+using namespace lldb_private::process_linux;
+
 lldb::DataBufferSP
-lldb_private::ProcFileReader::ReadIntoDataBuffer (lldb::pid_t pid, const char *name)
+ProcFileReader::ReadIntoDataBuffer (lldb::pid_t pid, const char *name)
 {
     int fd;
     char path[PATH_MAX];
@@ -73,10 +76,10 @@ lldb_private::ProcFileReader::ReadIntoDataBuffer (lldb::pid_t pid, const char *n
     return buf_sp;
 }
 
-lldb_private::Error
-lldb_private::ProcFileReader::ProcessLineByLine (lldb::pid_t pid, const char *name, std::function<bool (const std::string &line)> line_parser)
+Error
+ProcFileReader::ProcessLineByLine (lldb::pid_t pid, const char *name, std::function<bool (const std::string &line)> line_parser)
 {
-    lldb_private::Error error;
+    Error error;
 
     // Try to open the /proc/{pid}/maps entry.
     char filename [PATH_MAX];

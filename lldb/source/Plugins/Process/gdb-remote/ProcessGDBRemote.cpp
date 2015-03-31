@@ -73,6 +73,10 @@
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
 
+#define DEBUGSERVER_BASENAME    "debugserver"
+using namespace lldb;
+using namespace lldb_private;
+using namespace lldb_private::process_gdb_remote;
 
 namespace lldb
 {
@@ -85,17 +89,12 @@ namespace lldb
     void
     DumpProcessGDBRemotePacketHistory (void *p, const char *path)
     {
-        lldb_private::StreamFile strm;
-        lldb_private::Error error (strm.GetFile().Open(path, lldb_private::File::eOpenOptionWrite | lldb_private::File::eOpenOptionCanCreate));
+        StreamFile strm;
+        Error error (strm.GetFile().Open(path, File::eOpenOptionWrite | File::eOpenOptionCanCreate));
         if (error.Success())
             ((ProcessGDBRemote *)p)->GetGDBRemote().DumpHistory (strm);
     }
 }
-
-#define DEBUGSERVER_BASENAME    "debugserver"
-using namespace lldb;
-using namespace lldb_private;
-
 
 namespace {
 
@@ -199,7 +198,7 @@ get_random_port ()
 }
 #endif
 
-lldb_private::ConstString
+ConstString
 ProcessGDBRemote::GetPluginNameStatic()
 {
     static ConstString g_name("gdb-remote");
@@ -2240,7 +2239,7 @@ ProcessGDBRemote::DoDestroy ()
 void
 ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
 {
-    lldb_private::Mutex::Locker locker (m_last_stop_packet_mutex);
+    Mutex::Locker locker (m_last_stop_packet_mutex);
     const bool did_exec = response.GetStringRef().find(";reason:exec;") != std::string::npos;
     if (did_exec)
     {
@@ -2380,7 +2379,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
 lldb::addr_t
 ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &error)
 {
-    lldb_private::Log *log (lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS|LIBLLDB_LOG_EXPRESSIONS));
+    Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS|LIBLLDB_LOG_EXPRESSIONS));
     addr_t allocated_addr = LLDB_INVALID_ADDRESS;
     
     LazyBool supported = m_gdb_comm.SupportsAllocDeallocMemory();
@@ -2972,7 +2971,7 @@ ProcessGDBRemote::Initialize()
 }
 
 void
-ProcessGDBRemote::DebuggerInitialize (lldb_private::Debugger &debugger)
+ProcessGDBRemote::DebuggerInitialize (Debugger &debugger)
 {
     if (!PluginManager::GetSettingForProcessPlugin(debugger, PluginProperties::GetSettingName()))
     {
@@ -3191,13 +3190,13 @@ ProcessGDBRemote::AsyncThread (void *arg)
 //
 bool
 ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
-                             lldb_private::StoppointCallbackContext *context,
+                             StoppointCallbackContext *context,
                              lldb::user_id_t break_id,
                              lldb::user_id_t break_loc_id)
 {
     // I don't think I have to do anything here, just make sure I notice the new thread when it starts to 
     // run so I can stop it if that's what I want to do.
-    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
         log->Printf("Hit New Thread Notification breakpoint.");
     return false;
@@ -3207,7 +3206,7 @@ ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
 bool
 ProcessGDBRemote::StartNoticingNewThreads()
 {
-    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_thread_create_bp_sp)
     {
         if (log && log->GetVerbose())
@@ -3239,7 +3238,7 @@ ProcessGDBRemote::StartNoticingNewThreads()
 bool
 ProcessGDBRemote::StopNoticingNewThreads()
 {   
-    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log && log->GetVerbose())
         log->Printf ("Disabling new thread notification breakpoint.");
 
@@ -3249,7 +3248,7 @@ ProcessGDBRemote::StopNoticingNewThreads()
     return true;
 }
     
-lldb_private::DynamicLoader *
+DynamicLoader *
 ProcessGDBRemote::GetDynamicLoader ()
 {
     if (m_dyld_ap.get() == NULL)

@@ -18,6 +18,7 @@
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
 
 using namespace lldb_private;
+using namespace lldb_private::process_linux;
 
 // ----------------------------------------------------------------------------
 // Private namespace.
@@ -103,7 +104,7 @@ NativeRegisterContextLinux_mips64::GetRegisterSetCount () const
     return k_num_register_sets;
 }
 
-const lldb_private::RegisterSet *
+const RegisterSet *
 NativeRegisterContextLinux_mips64::GetRegisterSet (uint32_t set_index) const
 {
     if (set_index >= k_num_register_sets)
@@ -122,7 +123,7 @@ NativeRegisterContextLinux_mips64::GetRegisterSet (uint32_t set_index) const
     return nullptr;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_mips64::ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value)
 {
     Error error;
@@ -130,7 +131,7 @@ NativeRegisterContextLinux_mips64::ReadRegister (const RegisterInfo *reg_info, R
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_mips64::WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value)
 {
     Error error;
@@ -138,7 +139,7 @@ NativeRegisterContextLinux_mips64::WriteRegister (const RegisterInfo *reg_info, 
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_mips64::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
     Error error;
@@ -146,7 +147,7 @@ NativeRegisterContextLinux_mips64::ReadAllRegisterValues (lldb::DataBufferSP &da
     return error;
 }
 
-lldb_private::Error
+Error
 NativeRegisterContextLinux_mips64::WriteAllRegisterValues (const lldb::DataBufferSP &data_sp)
 {
     Error error;

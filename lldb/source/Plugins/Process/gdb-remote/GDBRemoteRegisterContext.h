@@ -25,9 +25,13 @@
 
 #include "GDBRemoteCommunicationClient.h"
 
+class StringExtractor;
+
+namespace lldb_private {
+namespace process_gdb_remote {
+
 class ThreadGDBRemote;
 class ProcessGDBRemote;
-class StringExtractor;
 
 class GDBRemoteDynamicRegisterInfo :
     public DynamicRegisterInfo
@@ -47,7 +51,7 @@ public:
 
 };
 
-class GDBRemoteRegisterContext : public lldb_private::RegisterContext
+class GDBRemoteRegisterContext : public RegisterContext
 {
 public:
     //------------------------------------------------------------------
@@ -70,20 +74,20 @@ public:
     size_t
     GetRegisterCount () override;
 
-    const lldb_private::RegisterInfo *
+    const RegisterInfo *
     GetRegisterInfoAtIndex (size_t reg) override;
 
     size_t
     GetRegisterSetCount () override;
 
-    const lldb_private::RegisterSet *
+    const RegisterSet *
     GetRegisterSet (size_t reg_set) override;
 
     bool
-    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value) override;
+    ReadRegister (const RegisterInfo *reg_info, RegisterValue &value) override;
 
     bool
-    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value) override;
+    WriteRegister (const RegisterInfo *reg_info, const RegisterValue &value) override;
     
     bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp) override;
@@ -92,10 +96,10 @@ public:
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
 
     bool
-    ReadAllRegisterValues (lldb_private::RegisterCheckpoint &reg_checkpoint) override;
+    ReadAllRegisterValues (RegisterCheckpoint &reg_checkpoint) override;
 
     bool
-    WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint) override;
+    WriteAllRegisterValues (const RegisterCheckpoint &reg_checkpoint) override;
 
     uint32_t
     ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num) override;
@@ -104,12 +108,12 @@ protected:
     friend class ThreadGDBRemote;
 
     bool
-    ReadRegisterBytes (const lldb_private::RegisterInfo *reg_info,
-                       lldb_private::DataExtractor &data);
+    ReadRegisterBytes (const RegisterInfo *reg_info,
+                       DataExtractor &data);
 
     bool
-    WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info,
-                        lldb_private::DataExtractor &data, 
+    WriteRegisterBytes (const RegisterInfo *reg_info,
+                        DataExtractor &data, 
                         uint32_t data_offset);
 
     bool
@@ -130,7 +134,7 @@ protected:
     }
 
     void
-    SetRegisterIsValid (const lldb_private::RegisterInfo *reg_info, bool valid)
+    SetRegisterIsValid (const RegisterInfo *reg_info, bool valid)
     {
         if (reg_info)
             return SetRegisterIsValid (reg_info->kinds[lldb::eRegisterKindLLDB], valid);
@@ -147,19 +151,19 @@ protected:
     }
 
     void
-    SyncThreadState(lldb_private::Process *process);  // Assumes the sequence mutex has already been acquired.
+    SyncThreadState(Process *process);  // Assumes the sequence mutex has already been acquired.
     
     GDBRemoteDynamicRegisterInfo &m_reg_info;
     std::vector<bool> m_reg_valid;
-    lldb_private::DataExtractor m_reg_data;
+    DataExtractor m_reg_data;
     bool m_read_all_at_once;
 
 private:
     // Helper function for ReadRegisterBytes().
-    bool GetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
+    bool GetPrimordialRegister(const RegisterInfo *reg_info,
                                GDBRemoteCommunicationClient &gdb_comm);
     // Helper function for WriteRegisterBytes().
-    bool SetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
+    bool SetPrimordialRegister(const RegisterInfo *reg_info,
                                GDBRemoteCommunicationClient &gdb_comm);
 
     //------------------------------------------------------------------
@@ -167,5 +171,8 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteRegisterContext);
 };
+
+} // namespace process_gdb_remote
+} // namespace lldb_private
 
 #endif  // lldb_GDBRemoteRegisterContext_h_

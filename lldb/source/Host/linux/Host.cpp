@@ -64,7 +64,7 @@ static bool
 ReadProcPseudoFileStat (lldb::pid_t pid, ProcessStatInfo& stat_info)
 {
     // Read the /proc/$PID/stat file.
-    lldb::DataBufferSP buf_sp = ProcFileReader::ReadIntoDataBuffer (pid, "stat");
+    lldb::DataBufferSP buf_sp = process_linux::ProcFileReader::ReadIntoDataBuffer (pid, "stat");
 
     // The filename of the executable is stored in parenthesis right after the pid. We look for the closing
     // parenthesis for the filename and work from there in case the name has something funky like ')' in it.
@@ -117,7 +117,7 @@ GetLinuxProcessUserAndGroup (lldb::pid_t pid, ProcessInstanceInfo &process_info,
     uint32_t eGid = UINT32_MAX;     // Effective Group ID
 
     // Read the /proc/$PID/status file and parse the Uid:, Gid:, and TracerPid: fields.
-    lldb::DataBufferSP buf_sp = ProcFileReader::ReadIntoDataBuffer (pid, "status");
+    lldb::DataBufferSP buf_sp = process_linux::ProcFileReader::ReadIntoDataBuffer (pid, "status");
 
     static const char uid_token[] = "Uid:";
     char *buf_uid = strstr ((char *)buf_sp->GetBytes(), uid_token);
@@ -157,13 +157,13 @@ GetLinuxProcessUserAndGroup (lldb::pid_t pid, ProcessInstanceInfo &process_info,
 lldb::DataBufferSP
 Host::GetAuxvData(lldb_private::Process *process)
 {
-    return ProcFileReader::ReadIntoDataBuffer (process->GetID(), "auxv");
+    return process_linux::ProcFileReader::ReadIntoDataBuffer (process->GetID(), "auxv");
 }
 
 lldb::DataBufferSP
 Host::GetAuxvData (lldb::pid_t pid)
 {
-    return ProcFileReader::ReadIntoDataBuffer (pid, "auxv");
+    return process_linux::ProcFileReader::ReadIntoDataBuffer (pid, "auxv");
 }
 
 static bool
@@ -328,7 +328,7 @@ GetProcessAndStatInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info, Proce
     lldb::DataBufferSP buf_sp;
 
     // Get the process environment.
-    buf_sp = ProcFileReader::ReadIntoDataBuffer(pid, "environ");
+    buf_sp = process_linux::ProcFileReader::ReadIntoDataBuffer(pid, "environ");
     Args &info_env = process_info.GetEnvironmentEntries();
     char *next_var = (char *)buf_sp->GetBytes();
     char *end_buf = next_var + buf_sp->GetByteSize();
@@ -339,7 +339,7 @@ GetProcessAndStatInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info, Proce
     }
 
     // Get the command line used to start the process.
-    buf_sp = ProcFileReader::ReadIntoDataBuffer(pid, "cmdline");
+    buf_sp = process_linux::ProcFileReader::ReadIntoDataBuffer(pid, "cmdline");
 
     // Grab Arg0 first, if there is one.
     char *cmd = (char *)buf_sp->GetBytes();
