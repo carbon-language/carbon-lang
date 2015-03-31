@@ -530,7 +530,7 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
       TheTarget->createMCAsmParser(*STI, *Parser, *MII, MCOptions));
 
   std::unique_ptr<llvm::MCInstPrinter> IP(
-      TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI));
+      TheTarget->createMCInstPrinter(llvm::Triple(TT), 1, *MAI, *MII, *MRI));
 
   // Change to the Intel dialect.
   Parser->setAssemblerDialect(1);
