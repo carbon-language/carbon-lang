@@ -14,6 +14,8 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
 
+#define DEBUG_TYPE "ARM"
+
 using namespace lld;
 using namespace lld::elf;
 using namespace llvm::support::endian;
@@ -135,13 +137,12 @@ static void relocR_ARM_ABS32(uint8_t *location, uint64_t P, uint64_t S,
   uint64_t T = addressesThumb;
   uint32_t result = (uint32_t)((S + A) | T);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, result);
 }
 
@@ -151,13 +152,12 @@ static void relocR_ARM_REL32(uint8_t *location, uint64_t P, uint64_t S,
   uint64_t T = addressesThumb;
   uint32_t result = (uint32_t)(((S + A) | T) - P);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, result);
 }
 
@@ -169,14 +169,13 @@ static void relocR_ARM_PREL31(uint8_t *location, uint64_t P, uint64_t S,
   const uint32_t mask = 0x7FFFFFFF;
   uint32_t rel31 = result & mask;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result);
-      llvm::dbgs() << " rel31: 0x" << Twine::utohexstr(rel31) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result);
+        llvm::dbgs() << " rel31: 0x" << Twine::utohexstr(rel31) << "\n");
 
   applyArmReloc(location, rel31, mask);
 }
@@ -211,13 +210,12 @@ static void relocR_ARM_THM_CALL(uint8_t *location, uint64_t P, uint64_t S,
 
   uint32_t result = (uint32_t)(((S + A) | T) - P);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   relocR_ARM_THM_B_L(location, result, useJs);
 
   if (switchMode) {
@@ -231,13 +229,12 @@ static void relocR_ARM_THM_JUMP24(uint8_t *location, uint64_t P, uint64_t S,
   uint64_t T = addressesThumb;
   uint32_t result = (uint32_t)(((S + A) | T) - P);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   relocR_ARM_THM_B_L(location, result, true);
 }
 
@@ -246,12 +243,11 @@ static void relocR_ARM_THM_JUMP11(uint8_t *location, uint64_t P, uint64_t S,
                                   int64_t A) {
   uint32_t result = (uint32_t)(S + A - P);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
 
   //we cut off first bit because it is always 1 according to p. 4.5.3
   result = (result & 0x0FFE) >> 1;
@@ -263,12 +259,11 @@ static void relocR_ARM_THM_JUMP11(uint8_t *location, uint64_t P, uint64_t S,
 static void relocR_ARM_BASE_PREL(uint8_t *location, uint64_t P, uint64_t S,
                                  int64_t A) {
   uint32_t result = (uint32_t)(S + A - P);
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, result);
 }
 
@@ -276,12 +271,11 @@ static void relocR_ARM_BASE_PREL(uint8_t *location, uint64_t P, uint64_t S,
 static void relocR_ARM_GOT_BREL(uint8_t *location, uint64_t P, uint64_t S,
                                 int64_t A, uint64_t GOT_ORG) {
   uint32_t result = (uint32_t)(S + A - GOT_ORG);
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, result);
 }
 
@@ -294,13 +288,12 @@ static void relocR_ARM_CALL(uint8_t *location, uint64_t P, uint64_t S,
   uint32_t result = (uint32_t)(((S + A) | T) - P);
   const uint32_t imm24 = (result & 0x03FFFFFC) >> 2;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, imm24, 0xFFFFFF);
 
   if (switchMode) {
@@ -316,13 +309,12 @@ static void relocR_ARM_JUMP24(uint8_t *location, uint64_t P, uint64_t S,
   uint32_t result = (uint32_t)(((S + A) | T) - P);
   const uint32_t imm24 = (result & 0x03FFFFFC) >> 2;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, imm24, 0xFFFFFF);
 }
 
@@ -341,13 +333,12 @@ static void relocR_ARM_MOVW_ABS_NC(uint8_t *location, uint64_t P, uint64_t S,
   uint32_t result = (uint32_t)((S + A) | T);
   const uint32_t arg = result & 0x0000FFFF;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   return relocR_ARM_MOV(location, arg);
 }
 
@@ -357,12 +348,11 @@ static void relocR_ARM_MOVT_ABS(uint8_t *location, uint64_t P, uint64_t S,
   uint32_t result = (uint32_t)(S + A);
   const uint32_t arg = (result & 0xFFFF0000) >> 16;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   return relocR_ARM_MOV(location, arg);
 }
 
@@ -387,13 +377,12 @@ static void relocR_ARM_THM_MOVW_ABS_NC(uint8_t *location, uint64_t P,
   uint32_t result = (uint32_t)((S + A) | T);
   const uint32_t arg = result & 0x0000FFFF;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " T: 0x" << Twine::utohexstr(T);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   return relocR_ARM_THM_MOV(location, arg);
 }
 
@@ -403,12 +392,11 @@ static void relocR_ARM_THM_MOVT_ABS(uint8_t *location, uint64_t P, uint64_t S,
   uint32_t result = (uint32_t)(S + A);
   const uint32_t arg = (result & 0xFFFF0000) >> 16;
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   return relocR_ARM_THM_MOV(location, arg);
 }
 
@@ -417,12 +405,11 @@ static void relocR_ARM_TLS_IE32(uint8_t *location, uint64_t P, uint64_t S,
                                 int64_t A) {
   uint32_t result = (uint32_t)(S + A - P);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, result);
 }
 
@@ -431,12 +418,11 @@ static void relocR_ARM_TLS_LE32(uint8_t *location, uint64_t P, uint64_t S,
                                 int64_t A, uint64_t tpoff) {
   uint32_t result = (uint32_t)(S + A + tpoff);
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   applyArmReloc(location, result);
 }
 
@@ -460,12 +446,12 @@ static void relocR_ARM_ALU_PC_G0_NC(uint8_t *location, uint64_t P, uint64_t S,
     llvm_unreachable(
         "Negative offsets for group relocations has not been implemented");
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result)
+                     << "\n");
 
   relocR_ARM_ALU_PC_GN_NC<20>(location, (uint32_t)result);
 }
@@ -479,12 +465,12 @@ static void relocR_ARM_ALU_PC_G1_NC(uint8_t *location, uint64_t P, uint64_t S,
     llvm_unreachable(
         "Negative offsets for group relocations has not been implemented");
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result)
+                     << "\n");
 
   relocR_ARM_ALU_PC_GN_NC<12>(location, (uint32_t)result);
 }
@@ -498,12 +484,12 @@ static void relocR_ARM_LDR_PC_G2(uint8_t *location, uint64_t P, uint64_t S,
     llvm_unreachable(
         "Negative offsets for group relocations has not been implemented");
 
-  DEBUG_WITH_TYPE(
-      "ARM", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-      llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result) << "\n");
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr((uint32_t)result)
+                     << "\n");
 
   const uint32_t mask = 0xFFF;
   applyArmReloc(location, (uint32_t)result & mask, mask);
