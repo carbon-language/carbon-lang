@@ -244,7 +244,7 @@ protected:
 
 public:
   RelocationPass(const ELFLinkingContext &ctx)
-      : _file(ctx), _ctx(ctx), _null(nullptr), _PLT0(nullptr), _got0(nullptr),
+      : _file(ctx), _ctx(ctx), _null(nullptr), _plt0(nullptr), _got0(nullptr),
         _got1(nullptr) {}
 
   /// \brief Do the pass.
@@ -264,9 +264,9 @@ public:
 
     // Add all created atoms to the link.
     uint64_t ordinal = 0;
-    if (_PLT0) {
-      _PLT0->setOrdinal(ordinal++);
-      mf->addAtom(*_PLT0);
+    if (_plt0) {
+      _plt0->setOrdinal(ordinal++);
+      mf->addAtom(*_plt0);
     }
     for (auto &plt : _pltVector) {
       plt->setOrdinal(ordinal++);
@@ -276,7 +276,7 @@ public:
       _null->setOrdinal(ordinal++);
       mf->addAtom(*_null);
     }
-    if (_PLT0) {
+    if (_plt0) {
       _got0->setOrdinal(ordinal++);
       _got1->setOrdinal(ordinal++);
       mf->addAtom(*_got0);
@@ -327,7 +327,7 @@ protected:
   /// \brief The got and plt entries for .PLT0. This is used to call into the
   /// dynamic linker for symbol resolution.
   /// @{
-  PLT0Atom *_PLT0;
+  PLT0Atom *_plt0;
   GOTAtom *_got0;
   GOTAtom *_got1;
   /// @}
@@ -379,20 +379,20 @@ public:
       : RelocationPass(ctx) {}
 
   const PLT0Atom *getPLT0() {
-    if (_PLT0)
-      return _PLT0;
+    if (_plt0)
+      return _plt0;
     // Fill in the null entry.
     getNullGOT();
-    _PLT0 = new (_file._alloc) X86_64PLT0Atom(_file);
+    _plt0 = new (_file._alloc) X86_64PLT0Atom(_file);
     _got0 = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
     _got1 = new (_file._alloc) X86_64GOTAtom(_file, ".got.plt");
-    _PLT0->addReferenceELF_x86_64(R_X86_64_PC32, 2, _got0, -4);
-    _PLT0->addReferenceELF_x86_64(R_X86_64_PC32, 8, _got1, -4);
+    _plt0->addReferenceELF_x86_64(R_X86_64_PC32, 2, _got0, -4);
+    _plt0->addReferenceELF_x86_64(R_X86_64_PC32, 8, _got1, -4);
 #ifndef NDEBUG
     _got0->_name = "__got0";
     _got1->_name = "__got1";
 #endif
-    return _PLT0;
+    return _plt0;
   }
 
   const PLTAtom *getPLTEntry(const Atom *a) {

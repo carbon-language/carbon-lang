@@ -164,7 +164,7 @@ protected:
 
 public:
   GOTPLTPass(const ELFLinkingContext &ctx)
-      : _file(ctx), _null(nullptr), _PLT0(nullptr), _got0(nullptr) {}
+      : _file(ctx), _null(nullptr), _plt0(nullptr), _got0(nullptr) {}
 
   /// \brief Do the pass.
   ///
@@ -182,9 +182,9 @@ public:
 
     // Add all created atoms to the link.
     uint64_t ordinal = 0;
-    if (_PLT0) {
-      _PLT0->setOrdinal(ordinal++);
-      mf->addAtom(*_PLT0);
+    if (_plt0) {
+      _plt0->setOrdinal(ordinal++);
+      mf->addAtom(*_plt0);
     }
     for (auto &plt : _pltVector) {
       plt->setOrdinal(ordinal++);
@@ -224,7 +224,7 @@ protected:
   /// \brief The got and plt entries for .PLT0. This is used to call into the
   /// dynamic linker for symbol resolution.
   /// @{
-  PLT0Atom *_PLT0;
+  PLT0Atom *_plt0;
   GOTAtom *_got0;
   /// @}
 };
@@ -239,14 +239,14 @@ public:
   }
 
   const PLT0Atom *getPLT0() {
-    if (_PLT0)
-      return _PLT0;
-    _PLT0 = new (_file._alloc) HexagonPLT0Atom(_file);
-    _PLT0->addReferenceELF_Hexagon(R_HEX_B32_PCREL_X, 0, _got0, 0);
-    _PLT0->addReferenceELF_Hexagon(R_HEX_6_PCREL_X, 4, _got0, 4);
+    if (_plt0)
+      return _plt0;
+    _plt0 = new (_file._alloc) HexagonPLT0Atom(_file);
+    _plt0->addReferenceELF_Hexagon(R_HEX_B32_PCREL_X, 0, _got0, 0);
+    _plt0->addReferenceELF_Hexagon(R_HEX_6_PCREL_X, 4, _got0, 4);
     DEBUG_WITH_TYPE("PLT", llvm::dbgs() << "[ PLT0/GOT0 ] "
                                         << "Adding plt0/got0 \n");
-    return _PLT0;
+    return _plt0;
   }
 
   const PLTAtom *getPLTEntry(const Atom *a) {
