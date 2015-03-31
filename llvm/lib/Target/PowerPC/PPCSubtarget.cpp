@@ -21,7 +21,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cstdlib>
@@ -110,11 +109,6 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
     else
       CPUName = "generic";
   }
-#if (defined(__APPLE__) || defined(__linux__)) && \
-    (defined(__ppc__) || defined(__powerpc__))
-  if (CPUName == "generic")
-    CPUName = sys::getHostCPUName();
-#endif
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
