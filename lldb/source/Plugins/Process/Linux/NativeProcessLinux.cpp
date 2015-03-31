@@ -657,6 +657,17 @@ namespace
                     m_error.SetErrorString("failed to get architecture");
             }
         }
+#elif defined (__mips__)
+        elf_gregset_t regs;
+        PTRACE(PTRACE_GETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
+        if (m_error.Success())
+        {
+            lldb_private::ArchSpec arch;
+            if (monitor->GetArchitecture(arch))
+                m_value.SetBytes((void *)(((unsigned char *)(regs)) + m_offset), 8, arch.GetByteOrder());
+            else
+                m_error.SetErrorString("failed to get architecture");
+        }
 #else
         Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
@@ -732,6 +743,14 @@ namespace
                 ::memcpy((void *)(((unsigned char *)(&regs)) + m_offset), m_value.GetBytes(), 8);
                 PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, sizeof regs, m_error);
             }
+        }
+#elif defined (__mips__)
+        elf_gregset_t regs;
+        PTRACE(PTRACE_GETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
+        if (m_error.Success())
+        {
+            ::memcpy((void *)(((unsigned char *)(&regs)) + m_offset), m_value.GetBytes(), 8);
+            PTRACE(PTRACE_SETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
         }
 #else
         void* buf;

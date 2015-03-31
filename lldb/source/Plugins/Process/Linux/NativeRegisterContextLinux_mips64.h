@@ -117,6 +117,14 @@ namespace process_linux {
 
         uint32_t
         NumSupportedHardwareWatchpoints () override;
+
+    private:
+
+        lldb_private::Error
+        WriteRegister(const uint32_t reg, const RegisterValue &value);
+
+        lldb_private::Error
+        ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value);
     };
 
 } // namespace process_linux
