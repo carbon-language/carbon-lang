@@ -1,68 +1,131 @@
-# REQUIRES: mips
-
 # Check handling of HI16 and LO16 relocations for regular symbol.
 #
 # R_MIPS_HI16: (AHL + S) - (short)(AHL + S)
 # R_MIPS_LO16: AHL + S
 #   where AHL = (AHI << 16) + ALO
-#
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -e glob1 -o %t-exe %t-obj
-# RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
 
-# CHECK: Disassembly of section .text:
-# CHECK: glob1:
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  71 01 08 85  lh	$8, 369($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  6f 01 08 85  lh	$8, 367($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  6f 03 08 85  lh	$8, 879($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 00 08 3c  lui	$8, 64
-# CHECK-NEXT: {{[0-9a-f]+}}:  71 ff 08 85  lh	$8, -143($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  42 00 08 3c  lui	$8, 66
-# CHECK-NEXT: {{[0-9a-f]+}}:  6f 01 08 85  lh	$8, 367($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  3e 00 08 3c  lui	$8, 62
-# CHECK-NEXT: {{[0-9a-f]+}}:  71 01 08 85  lh	$8, 369($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 02 08 3c  lui	$8, 576
-# CHECK-NEXT: {{[0-9a-f]+}}:  6f 01 08 85  lh	$8, 367($8)
-# CHECK-NEXT: {{[0-9a-f]+}}:  40 fe 08 3c  lui	$8, 65088
-# CHECK-NEXT: {{[0-9a-f]+}}:  71 01 08 85  lh	$8, 369($8)
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o
+# RUN: llvm-objdump -s -t %t.exe | FileCheck %s
+
+# CHECK: Contents of section .text:
+# CHECK-NEXT: 400110 4000083c 51010885 4000083c 4f010885
+# CHECK-NEXT: 400120 4000083c 4f030885 4000083c 51ff0885
+# CHECK-NEXT: 400130 4200083c 4f010885 3e00083c 51010885
+# CHECK-NEXT: 400140 4002083c 4f010885 40fe083c 51010885
+# CHECK-NEXT: 400150 00000000
 
 # CHECK: SYMBOL TABLE:
-# CHECK: {{[0-9a-f]+}}  g F .text  00000040 glob1
-# CHECK: {{[0-9a-f]+}}  g F .text  00000004 glob2
+# CHECK: 00400110 g F .text 00000020 T0
+# CHECK: 00400130 g F .text 00000020 T1
+# CHECK: 00400150 g F .text 00000004 T2
 
-    .global glob1
-    .ent    glob1
-glob1:
-    lui     $t0,%hi(glob2+0x1)
-    lh      $t0,%lo(glob2+0x1)($t0)
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2]
 
-    lui     $t0,%hi(glob2+(-0x1))
-    lh      $t0,%lo(glob2+(-0x1))($t0)
+Sections:
+- Name:         .text.1
+  Type:         SHT_PROGBITS
+  Content:      "0000083c010008850000083cffff08850000083cff0108850000083c01fe0885"
+#                ^ %hi(T2+1)     ^ %hi(T2-1)     ^ %hi(T2+0x1ff) ^ %hi(T2-0x1ff)
+#                        ^ %lo(T2+1)     ^ %lo(T2-1)     ^ %lo(T2+0x1ff) ^ %lo(T2-0x1ff)
+  AddressAlign: 16
+  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
 
-    lui     $t0,%hi(glob2+0x1ff)
-    lh      $t0,%lo(glob2+0x1ff)($t0)
+- Name:         .rel.text.1
+  Type:         SHT_REL
+  Info:         .text.1
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x0
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0x4
+      Symbol: T2
+      Type:   R_MIPS_LO16
+    - Offset: 0x8
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0xC
+      Symbol: T2
+      Type:   R_MIPS_LO16
+    - Offset: 0x10
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0x14
+      Symbol: T2
+      Type:   R_MIPS_LO16
+    - Offset: 0x18
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0x1C
+      Symbol: T2
+      Type:   R_MIPS_LO16
 
-    lui     $t0,%hi(glob2+(-0x1ff))
-    lh      $t0,%lo(glob2+(-0x1ff))($t0)
+- Name:         .text.2
+  Type:         SHT_PROGBITS
+  Content:      "0200083cffff0885feff083c010008850002083cffff088500fe083c01000885"
+#                ^ %hi(T2+0x1ffff)               ^ %hi(T2+0x1ffffff)
+#                        ^ %lo(T2+0x1ffff)               ^ %lo(T2+0x1ffffff)
+#                                ^ %hi(T2-0x1ffff)               ^ %hi(T2-0x1ffffff)
+#                                        ^ %lo(T2-0x1ffff)               ^ %lo(T2-0x1ffffff)
+  AddressAlign: 16
+  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
 
-    lui     $t0,%hi(glob2+0x1ffff)
-    lh      $t0,%lo(glob2+0x1ffff)($t0)
+- Name:         .rel.text.2
+  Type:         SHT_REL
+  Info:         .text.2
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x0
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0x4
+      Symbol: T2
+      Type:   R_MIPS_LO16
+    - Offset: 0x8
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0xC
+      Symbol: T2
+      Type:   R_MIPS_LO16
+    - Offset: 0x10
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0x14
+      Symbol: T2
+      Type:   R_MIPS_LO16
+    - Offset: 0x18
+      Symbol: T2
+      Type:   R_MIPS_HI16
+    - Offset: 0x1C
+      Symbol: T2
+      Type:   R_MIPS_LO16
 
-    lui     $t0,%hi(glob2+(-0x1ffff))
-    lh      $t0,%lo(glob2+(-0x1ffff))($t0)
+- Name:         .text.3
+  Type:         SHT_PROGBITS
+  Content:      "00000000"
+  AddressAlign: 16
+  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
 
-    lui     $t0,%hi(glob2+0x1ffffff)          # truncate
-    lh      $t0,%lo(glob2+0x1ffffff)($t0)
-
-    lui     $t0,%hi(glob2+(-0x1ffffff))       # truncate
-    lh      $t0,%lo(glob2+(-0x1ffffff))($t0)
-    .end    glob1
-
-    .global glob2
-    .ent    glob2
-glob2:
-    nop
-    .end    glob2
+Symbols:
+  Global:
+    - Name:    T0
+      Section: .text.1
+      Type:    STT_FUNC
+      Value:   0
+      Size:    64
+    - Name:    T1
+      Section: .text.2
+      Type:    STT_FUNC
+      Value:   0
+      Size:    64
+    - Name:    T2
+      Section: .text.3
+      Type:    STT_FUNC
+      Value:   0
+      Size:    4

@@ -1,68 +1,142 @@
-# REQUIRES: mips
-
 # Check calculation of AHL addendums for R_MICROMIPS_HI16 / R_MICROMIPS_LO16
 # relocations for the _gp_disp symbol.
 #
-# RUN: llvm-mc -triple=mipsel -mattr=micromips -filetype=obj -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
-# RUN: llvm-objdump -t -d -mattr=micromips %t-so | FileCheck %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
+# RUN: llvm-objdump -s -t %t.so | FileCheck %s
 
-# CHECK:      Disassembly of section .text:
-# CHECK-NEXT: glob1:
-# CHECK-NEXT:      130:   a8 41 01 00   lui   $8, 1
-# CHECK-NEXT:      134:   08 3d c0 9e   lh    $8, -24896($8)
-# CHECK-NEXT:      138:   a8 41 01 00   lui   $8, 1
-# CHECK-NEXT:      13c:   08 3d b6 1e   lh    $8, 7862($8)
-# CHECK-NEXT:      140:   a8 41 01 00   lui   $8, 1
-# CHECK-NEXT:      144:   08 3d 2f 1f   lh    $8, 7983($8)
-# CHECK-NEXT:      148:   a8 41 02 00   lui   $8, 2
-# CHECK-NEXT:      14c:   08 3d a7 1e   lh    $8, 7847($8)
-# CHECK-NEXT:      150:   a8 41 01 40   lui   $8, 16385
-# CHECK-NEXT:      154:   08 3d 9f 9e   lh    $8, -24929($8)
-
-# CHECK:      glob2:
-# CHECK-NEXT:      158:   a8 41 01 00   lui   $8, 1
-# CHECK-NEXT:      15c:   a8 41 01 00   lui   $8, 1
-# CHECK-NEXT:      160:   a8 41 02 00   lui   $8, 2
-# CHECK-NEXT:      164:   a8 41 03 00   lui   $8, 3
-# CHECK-NEXT:      168:   a8 41 01 40   lui   $8, 16385
-# CHECK-NEXT:      16c:   08 3d 87 9e   lh    $8, -24953($8)
+# CHECK:      Contents of section .text:
+# CHECK-NEXT:  0110 a8410100 083de08e a8410100 083dd60e
+# CHECK-NEXT:  0120 a8410200 a841cf8e 00000000 00000000
+# CHECK-NEXT:  0130 083d0200 a841bf8e 083d0080 a841b88e
+# CHECK-NEXT:  0140 a8410100 a8410100 a8410200 a8410300
+# CHECK-NEXT:  0150 a8410140 083d9f8e
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00000130 g F .text 00000028 glob1
-# CHECK: 00000158 g F .text 00000018 glob2
-# CHECK: 00009ff0 g   *ABS* 00000000 _gp_disp
+# CHECK: 00000110 g F .text 00000018 T0
+# CHECK: 00000130 g F .text 00000010 T1
+# CHECK: 00000140 g F .text 00000018 T2
+# CHECK: 00008ff0 g   *ABS* 00000000 _gp_disp
 
-    .globl glob1
-    .type  glob1, @function
-    .set   micromips
-    .ent   glob1
-glob1:
-    lui     $t0,%hi(_gp_disp+0x00000001)
-    lh      $t0,%lo(_gp_disp+0x00000001)($t0)
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2, EF_MIPS_MICROMIPS]
 
-    lui     $t0,%hi(_gp_disp+0x00007fff)
-    lh      $t0,%lo(_gp_disp+0x00007fff)($t0)
+Sections:
+- Name:         .text.1
+  Type:         SHT_PROGBITS
+  Content:      "A8410000083D0100A8410000083DFF7FA8410100A8410000"
+#                ^ %hi(gp+0x1)   ^ %hi(gp+0x7fff)        ^ %lo(gp+0x8080)
+#                        ^ %lo(gp+0x1)   ^ %lo(gp+0x7fff)
+#                                                ^ %hi(gp+0x8080)
+  AddressAlign: 16
+  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
 
-    lui     $t0,%hi(_gp_disp+0x00008080)
-    lh      $t0,%lo(_gp_disp+0x00008080)($t0)
+- Name:         .rel.text.1
+  Type:         SHT_REL
+  Info:         .text.1
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x0
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x4
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_LO16
+    - Offset: 0x8
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0xC
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_LO16
+    - Offset: 0x10
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x14
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_LO16
 
-    lui     $t0,%hi(_gp_disp+0x00018000)
-    lh      $t0,%lo(_gp_disp+0x00018000)($t0)
+- Name:         .text.2
+  Type:         SHT_PROGBITS
+  Content:      "083D0100A8410000083DFF7FA8410100"
+#                ^ %hi(gp+0x18000)       ^ %lo(gp+0x40000000)
+#                        ^ %lo(gp+0x18000)
+#                                ^ %hi(gp+0x40000000)
+  AddressAlign: 16
+  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
 
-    lui     $t0,%hi(_gp_disp+0x40000000)
-    lh      $t0,%lo(_gp_disp+0x40000000)($t0)
-    .end    glob1
+- Name:         .rel.text.2
+  Type:         SHT_REL
+  Info:         .text.2
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x0
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x4
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_LO16
+    - Offset: 0x8
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0xC
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_LO16
 
-    .globl glob2
-    .type  glob2, @function
-    .set   micromips
-    .ent   glob2
-glob2:
-    lui     $t0,%hi(_gp_disp+0x00000001)
-    lui     $t0,%hi(_gp_disp+0x00007fff)
-    lui     $t0,%hi(_gp_disp+0x00008080)
-    lui     $t0,%hi(_gp_disp+0x00018000)
-    lui     $t0,%hi(_gp_disp+0x40000000)
-    lh      $t0,%lo(_gp_disp+0x40000000)($t0)
-    .end    glob2
+- Name:         .text.3
+  Type:         SHT_PROGBITS
+  Content:      "A8410000A8410000A8410100A8410200A8410040083D0000"
+#                ^ %hi(gp+0x1)   ^ %hi(gp+0x8080)        ^ %lo(gp+0x40000000)
+#                        ^ %hi(gp+0x7fff)        ^ %hi(gp+0x40000000)
+#                                        ^ %hi(gp+0x18000)
+  AddressAlign: 16
+  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
+
+- Name:         .rel.text.3
+  Type:         SHT_REL
+  Info:         .text.3
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x0
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x4
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x8
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0xC
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x10
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_HI16
+    - Offset: 0x14
+      Symbol: _gp_disp
+      Type:   R_MICROMIPS_LO16
+
+Symbols:
+  Global:
+    - Name:    T0
+      Section: .text.1
+      Type:    STT_FUNC
+      Value:   0
+      Size:    24
+      Other:   [STO_MIPS_MICROMIPS]
+    - Name:    T1
+      Section: .text.2
+      Type:    STT_FUNC
+      Value:   0
+      Size:    16
+      Other:   [STO_MIPS_MICROMIPS]
+    - Name:    T2
+      Section: .text.3
+      Type:    STT_FUNC
+      Value:   0
+      Size:    24
+      Other:   [STO_MIPS_MICROMIPS]
+    - Name:    _gp_disp
