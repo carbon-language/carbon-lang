@@ -813,15 +813,11 @@ define <4 x i64> @insert_reg_and_zero_v4i64(i64 %a) {
 ; AVX1-LABEL: insert_reg_and_zero_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vmovq %rdi, %xmm0
-; AVX1-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
-; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: insert_reg_and_zero_v4i64:
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vmovq %rdi, %xmm0
-; AVX2-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3,4,5,6,7]
 ; AVX2-NEXT:    retq
   %v = insertelement <4 x i64> undef, i64 %a, i64 0
   %shuffle = shufflevector <4 x i64> %v, <4 x i64> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
@@ -831,16 +827,12 @@ define <4 x i64> @insert_reg_and_zero_v4i64(i64 %a) {
 define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 ; AVX1-LABEL: insert_mem_and_zero_v4i64:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX1-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
-; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
+; AVX1-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: insert_mem_and_zero_v4i64:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3,4,5,6,7]
+; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX2-NEXT:    retq
   %a = load i64, i64* %ptr
   %v = insertelement <4 x i64> undef, i64 %a, i64 0

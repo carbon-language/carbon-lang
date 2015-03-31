@@ -9281,15 +9281,6 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (isShuffleEquivalent(V1, V2, Mask, {5, 1, 7, 3}))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f64, V2, V1);
 
-  // If we have a single input to the zero element, insert that into V1 if we
-  // can do so cheaply.
-  int NumV2Elements =
-      std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
-  if (NumV2Elements == 1 && Mask[0] >= 4)
-    if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-            DL, MVT::v4f64, V1, V2, Mask, Subtarget, DAG))
-      return Insertion;
-
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4f64, V1, V2, Mask,
                                                 Subtarget, DAG))
     return Blend;
@@ -9431,15 +9422,6 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
-
-  // If we have a single input to the zero element, insert that into V1 if we
-  // can do so cheaply.
-  int NumV2Elements =
-      std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 8; });
-  if (NumV2Elements == 1 && Mask[0] >= 8)
-    if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-            DL, MVT::v8f32, V1, V2, Mask, Subtarget, DAG))
-      return Insertion;
 
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8f32, V1, V2, Mask,
                                                 Subtarget, DAG))
@@ -9810,6 +9792,18 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   SDLoc DL(Op);
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
+
+  // If we have a single input to the zero element, insert that into V1 if we
+  // can do so cheaply.
+  int NumElts = VT.getVectorNumElements();
+  int NumV2Elements = std::count_if(Mask.begin(), Mask.end(), [NumElts](int M) {
+    return M >= NumElts;
+  });
+  
+  if (NumV2Elements == 1 && Mask[0] >= NumElts)
+    if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
+                              DL, VT, V1, V2, Mask, Subtarget, DAG))
+      return Insertion;
 
   // There is a really nice hard cut-over between AVX1 and AVX2 that means we can
   // check for those subtargets here and avoid much of the subtarget querying in
