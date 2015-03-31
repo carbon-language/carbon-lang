@@ -175,6 +175,9 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// \brief Keep track of the metadata nodes that have been checked already.
   SmallPtrSet<const Metadata *, 32> MDNodes;
 
+  /// \brief Track string-based type references.
+  SmallDenseMap<const MDString *, const MDNode *, 32> TypeRefs;
+
   /// \brief The personality function referenced by the LandingPadInsts.
   /// All LandingPadInsts within the same function must use the same
   /// personality function.
@@ -268,8 +271,8 @@ public:
     visitModuleFlags(M);
     visitModuleIdents(M);
 
-    // Verify debug info last.
-    verifyDebugInfo();
+    // Verify type referneces last.
+    verifyTypeRefs();
 
     return !Broken;
   }
@@ -304,6 +307,27 @@ private:
   void visitMDVariable(const MDVariable &N);
   void visitMDLexicalBlockBase(const MDLexicalBlockBase &N);
   void visitMDTemplateParameter(const MDTemplateParameter &N);
+
+  /// \brief Check for a valid string-based type reference.
+  ///
+  /// Checks if \c MD is a string-based type reference.  If it is, keeps track
+  /// of it (and its user, \c N) for error messages later.
+  bool isValidUUID(const MDNode &N, const Metadata *MD);
+
+  /// \brief Check for a valid type reference.
+  ///
+  /// Checks for subclasses of \a MDType, or \a isValidUUID().
+  bool isTypeRef(const MDNode &N, const Metadata *MD);
+
+  /// \brief Check for a valid scope reference.
+  ///
+  /// Checks for subclasses of \a MDScope, or \a isValidUUID().
+  bool isScopeRef(const MDNode &N, const Metadata *MD);
+
+  /// \brief Check for a valid debug info reference.
+  ///
+  /// Checks for subclasses of \a DebugNode, or \a isValidUUID().
+  bool isDIRef(const MDNode &N, const Metadata *MD);
 
   // InstVisitor overrides...
   using InstVisitor<Verifier>::visit;
@@ -377,9 +401,8 @@ private:
   void verifyFrameRecoverIndices();
 
   // Module-level debug info verification...
-  void verifyDebugInfo();
-  void processInstructions(DebugInfoFinder &Finder);
-  void processCallInst(DebugInfoFinder &Finder, const CallInst &CI);
+  void verifyTypeRefs();
+  void visitUnresolvedTypeRef(const MDString *S, const MDNode *N);
 };
 } // End anonymous namespace
 
@@ -572,12 +595,13 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
 void Verifier::visitNamedMDNode(const NamedMDNode &NMD) {
   for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i) {
     MDNode *MD = NMD.getOperand(i);
-    if (!MD)
-      continue;
 
     if (NMD.getName() == "llvm.dbg.cu") {
-      Assert(isa<MDCompileUnit>(MD), "invalid compile unit", &NMD, MD);
+      Assert(MD && isa<MDCompileUnit>(MD), "invalid compile unit", &NMD, MD);
     }
+
+    if (!MD)
+      continue;
 
     visitMDNode(*MD);
   }
@@ -664,31 +688,32 @@ void Verifier::visitMetadataAsValue(const MetadataAsValue &MDV, Function *F) {
     visitValueAsMetadata(*V, F);
 }
 
+bool Verifier::isValidUUID(const MDNode &N, const Metadata *MD) {
+  auto *S = dyn_cast<MDString>(MD);
+  if (!S)
+    return false;
+  if (S->getString().empty())
+    return false;
+
+  // Keep track of names of types referenced via UUID so we can check that they
+  // actually exist.
+  TypeRefs.insert(std::make_pair(S, &N));
+  return true;
+}
+
 /// \brief Check if a value can be a reference to a type.
-static bool isTypeRef(const Metadata *MD) {
-  if (!MD)
-    return true;
-  if (auto *S = dyn_cast<MDString>(MD))
-    return !S->getString().empty();
-  return isa<MDType>(MD);
+bool Verifier::isTypeRef(const MDNode &N, const Metadata *MD) {
+  return !MD || isValidUUID(N, MD) || isa<MDType>(MD);
 }
 
 /// \brief Check if a value can be a ScopeRef.
-static bool isScopeRef(const Metadata *MD) {
-  if (!MD)
-    return true;
-  if (auto *S = dyn_cast<MDString>(MD))
-    return !S->getString().empty();
-  return isa<MDScope>(MD);
+bool Verifier::isScopeRef(const MDNode &N, const Metadata *MD) {
+  return !MD || isValidUUID(N, MD) || isa<MDScope>(MD);
 }
 
 /// \brief Check if a value can be a debug info ref.
-static bool isDIRef(const Metadata *MD) {
-  if (!MD)
-    return true;
-  if (auto *S = dyn_cast<MDString>(MD))
-    return !S->getString().empty();
-  return isa<DebugNode>(MD);
+bool Verifier::isDIRef(const MDNode &N, const Metadata *MD) {
+  return !MD || isValidUUID(N, MD) || isa<DebugNode>(MD);
 }
 
 template <class Ty>
@@ -750,8 +775,9 @@ void Verifier::visitMDDerivedTypeBase(const MDDerivedTypeBase &N) {
   // Common scope checks.
   visitMDScope(N);
 
-  Assert(isScopeRef(N.getScope()), "invalid scope", &N, N.getScope());
-  Assert(isTypeRef(N.getBaseType()), "invalid base type", &N, N.getBaseType());
+  Assert(isScopeRef(N, N.getScope()), "invalid scope", &N, N.getScope());
+  Assert(isTypeRef(N, N.getBaseType()), "invalid base type", &N,
+         N.getBaseType());
 
   // FIXME: Sink this into the subclass verifies.
   if (!N.getFile() || N.getFile()->getFilename().empty()) {
@@ -791,8 +817,8 @@ void Verifier::visitMDDerivedType(const MDDerivedType &N) {
              N.getTag() == dwarf::DW_TAG_friend,
          "invalid tag", &N);
   if (N.getTag() == dwarf::DW_TAG_ptr_to_member_type) {
-    Assert(isTypeRef(N.getExtraData()), "invalid pointer to member type",
-           &N, N.getExtraData());
+    Assert(isTypeRef(N, N.getExtraData()), "invalid pointer to member type", &N,
+           N.getExtraData());
   }
 }
 
@@ -815,7 +841,7 @@ void Verifier::visitMDCompositeType(const MDCompositeType &N) {
 
   Assert(!N.getRawElements() || isa<MDTuple>(N.getRawElements()),
          "invalid composite elements", &N, N.getRawElements());
-  Assert(isTypeRef(N.getRawVTableHolder()), "invalid vtable holder", &N,
+  Assert(isTypeRef(N, N.getRawVTableHolder()), "invalid vtable holder", &N,
          N.getRawVTableHolder());
   Assert(!N.getRawElements() || isa<MDTuple>(N.getRawElements()),
          "invalid composite elements", &N, N.getRawElements());
@@ -828,7 +854,7 @@ void Verifier::visitMDSubroutineType(const MDSubroutineType &N) {
   if (auto *Types = N.getRawTypeArray()) {
     Assert(isa<MDTuple>(Types), "invalid composite elements", &N, Types);
     for (Metadata *Ty : N.getTypeArray()->operands()) {
-      Assert(isTypeRef(Ty), "invalid subroutine type ref", &N, Types, Ty);
+      Assert(isTypeRef(N, Ty), "invalid subroutine type ref", &N, Types, Ty);
     }
   }
   Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
@@ -887,10 +913,10 @@ void Verifier::visitMDCompileUnit(const MDCompileUnit &N) {
 
 void Verifier::visitMDSubprogram(const MDSubprogram &N) {
   Assert(N.getTag() == dwarf::DW_TAG_subprogram, "invalid tag", &N);
-  Assert(isScopeRef(N.getRawScope()), "invalid scope", &N, N.getRawScope());
+  Assert(isScopeRef(N, N.getRawScope()), "invalid scope", &N, N.getRawScope());
   if (auto *T = N.getRawType())
     Assert(isa<MDSubroutineType>(T), "invalid subroutine type", &N, T);
-  Assert(isTypeRef(N.getRawContainingType()), "invalid containing type", &N,
+  Assert(isTypeRef(N, N.getRawContainingType()), "invalid containing type", &N,
          N.getRawContainingType());
   if (auto *RawF = N.getRawFunction()) {
     auto *FMD = dyn_cast<ConstantAsMetadata>(RawF);
@@ -986,7 +1012,7 @@ void Verifier::visitMDNamespace(const MDNamespace &N) {
 }
 
 void Verifier::visitMDTemplateParameter(const MDTemplateParameter &N) {
-  Assert(isTypeRef(N.getType()), "invalid type ref", &N, N.getType());
+  Assert(isTypeRef(N, N.getType()), "invalid type ref", &N, N.getType());
 }
 
 void Verifier::visitMDTemplateTypeParameter(const MDTemplateTypeParameter &N) {
@@ -1009,7 +1035,7 @@ void Verifier::visitMDTemplateValueParameter(
 void Verifier::visitMDVariable(const MDVariable &N) {
   if (auto *S = N.getRawScope())
     Assert(isa<MDScope>(S), "invalid scope", &N, S);
-  Assert(isTypeRef(N.getRawType()), "invalid type ref", &N, N.getRawType());
+  Assert(isTypeRef(N, N.getRawType()), "invalid type ref", &N, N.getRawType());
   if (auto *F = N.getRawFile())
     Assert(isa<MDFile>(F), "invalid file", &N, F);
 }
@@ -1063,7 +1089,8 @@ void Verifier::visitMDImportedEntity(const MDImportedEntity &N) {
          "invalid tag", &N);
   if (auto *S = N.getRawScope())
     Assert(isa<MDScope>(S), "invalid scope for imported entity", &N, S);
-  Assert(isDIRef(N.getEntity()), "invalid imported entity", &N, N.getEntity());
+  Assert(isDIRef(N, N.getEntity()), "invalid imported entity", &N,
+         N.getEntity());
 }
 
 void Verifier::visitComdat(const Comdat &C) {
@@ -3353,59 +3380,42 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
          DII.getRawExpression());
 }
 
-void Verifier::verifyDebugInfo() {
+void Verifier::visitUnresolvedTypeRef(const MDString *S, const MDNode *N) {
+  // This is in its own function so we get an error for each bad type ref (not
+  // just the first).
+  Assert(false, "unresolved type ref", S, N);
+}
+
+void Verifier::verifyTypeRefs() {
   // Run the debug info verifier only if the regular verifier succeeds, since
   // sometimes checks that have already failed will cause crashes here.
   if (EverBroken || !VerifyDebugInfo)
     return;
 
-  DebugInfoFinder Finder;
-  Finder.processModule(*M);
-  processInstructions(Finder);
+  auto *CUs = M->getNamedMetadata("llvm.dbg.cu");
+  if (!CUs)
+    return;
 
-  // Verify Debug Info.
-  //
-  // NOTE:  The loud braces are necessary for MSVC compatibility.
-  for (DICompileUnit CU : Finder.compile_units()) {
-    Assert(CU.Verify(), "DICompileUnit does not Verify!", CU);
-  }
-  for (DISubprogram S : Finder.subprograms()) {
-    Assert(S.Verify(), "DISubprogram does not Verify!", S);
-  }
-  for (DIGlobalVariable GV : Finder.global_variables()) {
-    Assert(GV.Verify(), "DIGlobalVariable does not Verify!", GV);
-  }
-  for (DIType T : Finder.types()) {
-    Assert(T.Verify(), "DIType does not Verify!", T);
-  }
-  for (DIScope S : Finder.scopes()) {
-    Assert(S.Verify(), "DIScope does not Verify!", S);
-  }
-}
+  // Visit all the compile units again to check the type references.
+  for (auto *CU : CUs->operands())
+    if (auto *Ts = cast<MDCompileUnit>(CU)->getRetainedTypes())
+      for (auto &Op : Ts->operands())
+        if (auto *T = dyn_cast<MDCompositeType>(Op))
+          TypeRefs.erase(T->getRawIdentifier());
+  if (TypeRefs.empty())
+    return;
 
-void Verifier::processInstructions(DebugInfoFinder &Finder) {
-  for (const Function &F : *M)
-    for (auto I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
-      if (MDNode *MD = I->getMetadata(LLVMContext::MD_dbg))
-        Finder.processLocation(*M, DILocation(MD));
-      if (const CallInst *CI = dyn_cast<CallInst>(&*I))
-        processCallInst(Finder, *CI);
-    }
-}
+  // Sort the unresolved references by name so the output is deterministic.
+  typedef std::pair<const MDString *, const MDNode *> TypeRef;
+  SmallVector<TypeRef, 32> Unresolved(TypeRefs.begin(), TypeRefs.end());
+  std::sort(Unresolved.begin(), Unresolved.end(),
+            [](const TypeRef &LHS, const TypeRef &RHS) {
+    return LHS.first->getString() < RHS.first->getString();
+  });
 
-void Verifier::processCallInst(DebugInfoFinder &Finder, const CallInst &CI) {
-  if (Function *F = CI.getCalledFunction())
-    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
-      switch (ID) {
-      case Intrinsic::dbg_declare:
-        Finder.processDeclare(*M, cast<DbgDeclareInst>(&CI));
-        break;
-      case Intrinsic::dbg_value:
-        Finder.processValue(*M, cast<DbgValueInst>(&CI));
-        break;
-      default:
-        break;
-      }
+  // Visit the unresolved refs (printing out the errors).
+  for (const TypeRef &TR : Unresolved)
+    visitUnresolvedTypeRef(TR.first, TR.second);
 }
 
 //===----------------------------------------------------------------------===//
