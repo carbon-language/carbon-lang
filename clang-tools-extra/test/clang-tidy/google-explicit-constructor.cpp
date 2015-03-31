@@ -49,8 +49,13 @@ struct A {
   // CHECK-FIXES: {{^  }}explicit A(int x1) {}
 
   A(double x2, double y = 3.14) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: constructors that are callable with a single argument must be marked explicit [google-explicit-constructor]
   // CHECK-FIXES: {{^  }}explicit A(double x2, double y = 3.14) {}
+
+  template <typename... T>
+  A(T&&... args);
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: constructors that are callable with a single argument
+  // CHECK-FIXES: {{^  }}explicit A(T&&... args);
 };
 
 struct B {
