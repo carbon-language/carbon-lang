@@ -552,7 +552,7 @@ void RAGreedy::enqueue(PQueue &CurQueue, LiveInterval *LI) {
         // Allocating bottom up may allow many short LRGs to be assigned first
         // to one of the cheap registers. This could be much faster for very
         // large blocks on targets with many physical registers.
-        Prio = Indexes->getZeroIndex().getInstrDistance(LI->beginIndex());
+        Prio = Indexes->getZeroIndex().getInstrDistance(LI->endIndex());
       }
     }
     else {
