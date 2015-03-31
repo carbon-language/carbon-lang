@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   ExecutionEngine
   MC
   MCJIT
+  RuntimeDyld
   Support
   nativecodegen
   )
