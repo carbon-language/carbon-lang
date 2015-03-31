@@ -143,6 +143,12 @@ public:
     return strchr(GetRecord(ID).Attributes, 't') != nullptr;
   }
 
+  /// \brief Determines whether this builtin has a result or any arguments which
+  /// are pointer types.
+  bool hasPtrArgsOrResult(unsigned ID) const {
+    return strchr(GetRecord(ID).Type, '*') != nullptr;
+  }
+
   /// \brief Completely forget that the given ID was ever considered a builtin,
   /// e.g., because the user provided a conflicting signature.
   void ForgetBuiltin(unsigned ID, IdentifierTable &Table);
