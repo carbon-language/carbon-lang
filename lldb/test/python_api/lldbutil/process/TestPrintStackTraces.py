@@ -18,7 +18,10 @@ class ThreadsStackTracesTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    @expectedFailureLinux # llvm.org/pr15415 -- partial stack trace in thread 1 (while stopped inside a read() call)
+    # llvm.org/pr23043 - leaving the next two lines in so it's easy to find this 
+    # test will appear when searching for expectedFailure(Linux|i386)
+    #@expectedFailureLinux
+    #@expectedFailurei386
     @python_api_test
     def test_stack_traces(self):
         """Test SBprocess and SBThread APIs with printing of the stack traces."""
@@ -27,6 +30,9 @@ class ThreadsStackTracesTestCase(TestBase):
 
     def break_and_print_stacktraces(self):
         """Break at main.cpp:68 and do a threads dump"""
+        if self.getArchitecture() in ['i386'] and "linux" in sys.platform:
+            self.skipTest("Skipping because this test is known to fail on i386 Linux")
+
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
