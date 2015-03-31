@@ -1293,7 +1293,9 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::EXTRACT_SUBVECTOR: Res = SplitVecOp_EXTRACT_SUBVECTOR(N); break;
     case ISD::EXTRACT_VECTOR_ELT:Res = SplitVecOp_EXTRACT_VECTOR_ELT(N); break;
     case ISD::CONCAT_VECTORS:    Res = SplitVecOp_CONCAT_VECTORS(N); break;
-    case ISD::TRUNCATE:          Res = SplitVecOp_TRUNCATE(N); break;
+    case ISD::TRUNCATE:
+      Res = SplitVecOp_TruncateHelper(N, ISD::TRUNCATE);
+      break;
     case ISD::FP_ROUND:          Res = SplitVecOp_FP_ROUND(N); break;
     case ISD::STORE:
       Res = SplitVecOp_STORE(cast<StoreSDNode>(N), OpNo);
@@ -1304,19 +1306,31 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::VSELECT:
       Res = SplitVecOp_VSELECT(N, OpNo);
       break;
+    case ISD::FP_TO_SINT:
+    case ISD::FP_TO_UINT:
+      if (N->getValueType(0).bitsLT(N->getOperand(0)->getValueType(0)))
+        Res = SplitVecOp_TruncateHelper(N, ISD::TRUNCATE);
+      else
+        Res = SplitVecOp_UnaryOp(N);
+      break;
+    case ISD::SINT_TO_FP:
+    case ISD::UINT_TO_FP:
+      if (N->getValueType(0).bitsLT(N->getOperand(0)->getValueType(0)))
+        Res = SplitVecOp_TruncateHelper(N, ISD::FTRUNC);
+      else
+        Res = SplitVecOp_UnaryOp(N);
+      break;
     case ISD::CTTZ:
     case ISD::CTLZ:
     case ISD::CTPOP:
     case ISD::FP_EXTEND:
-    case ISD::FP_TO_SINT:
-    case ISD::FP_TO_UINT:
-    case ISD::SINT_TO_FP:
-    case ISD::UINT_TO_FP:
-    case ISD::FTRUNC:
     case ISD::SIGN_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::ANY_EXTEND:
       Res = SplitVecOp_UnaryOp(N);
+      break;
+    case ISD::FTRUNC:
+      Res = SplitVecOp_TruncateHelper(N, ISD::FTRUNC);
       break;
     }
   }
@@ -1581,7 +1595,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_CONCAT_VECTORS(SDNode *N) {
   return DAG.getNode(ISD::BUILD_VECTOR, DL, N->getValueType(0), Elts);
 }
 
-SDValue DAGTypeLegalizer::SplitVecOp_TRUNCATE(SDNode *N) {
+SDValue DAGTypeLegalizer::SplitVecOp_TruncateHelper(SDNode *N,
+                                                    unsigned TruncateOp) {
   // The result type is legal, but the input type is illegal.  If splitting
   // ends up with the result type of each half still being legal, just
   // do that.  If, however, that would result in an illegal result type,
@@ -1624,8 +1639,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_TRUNCATE(SDNode *N) {
   EVT HalfElementVT = EVT::getIntegerVT(*DAG.getContext(), InElementSize/2);
   EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), HalfElementVT,
                                 NumElements/2);
-  SDValue HalfLo = DAG.getNode(ISD::TRUNCATE, DL, HalfVT, InLoVec);
-  SDValue HalfHi = DAG.getNode(ISD::TRUNCATE, DL, HalfVT, InHiVec);
+  SDValue HalfLo = DAG.getNode(N->getOpcode(), DL, HalfVT, InLoVec);
+  SDValue HalfHi = DAG.getNode(N->getOpcode(), DL, HalfVT, InHiVec);
   // Concatenate them to get the full intermediate truncation result.
   EVT InterVT = EVT::getVectorVT(*DAG.getContext(), HalfElementVT, NumElements);
   SDValue InterVec = DAG.getNode(ISD::CONCAT_VECTORS, DL, InterVT, HalfLo,
@@ -1634,7 +1649,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_TRUNCATE(SDNode *N) {
   // type. This should normally be something that ends up being legal directly,
   // but in theory if a target has very wide vectors and an annoyingly
   // restricted set of legal types, this split can chain to build things up.
-  return DAG.getNode(ISD::TRUNCATE, DL, OutVT, InterVec);
+  return DAG.getNode(TruncateOp, DL, OutVT, InterVec);
 }
 
 SDValue DAGTypeLegalizer::SplitVecOp_VSETCC(SDNode *N) {

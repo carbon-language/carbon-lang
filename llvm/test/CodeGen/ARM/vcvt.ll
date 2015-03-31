@@ -180,8 +180,8 @@ define <2 x i64> @fix_float_to_i64(<2 x float> %in) {
 
 define <4 x i16> @fix_double_to_i16(<4 x double> %in) {
 ; CHECK-LABEL: fix_double_to_i16:
-; CHECK: vcvt.s32.f64
-; CHECK: vcvt.s32.f64
+; CHECK: vcvt.u32.f64
+; CHECK: vcvt.u32.f64
 
   %scale = fmul <4 x double> %in, <double 2.0, double 2.0, double 2.0, double 2.0>
   %conv = fptoui <4 x double> %scale to <4 x i16>
