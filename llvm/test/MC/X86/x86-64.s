@@ -613,7 +613,7 @@ movq _foo@GOTPCREL(%rip), %r14
 movq 0x00(%r13,%rax,8),%r13
 
 // CHECK: testq	%rax, %rbx
-// CHECK:  encoding: [0x48,0x85,0xd8]
+// CHECK:  encoding: [0x48,0x85,0xc3]
 testq %rax, %rbx
 
 // CHECK: cmpq	%rbx, %r14

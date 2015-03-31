@@ -30,7 +30,7 @@
 # CHECK: movl %eax, -16(%ebp)
 0x67 0x66 0x89 0x45 0xf0
 
-# CHECK: testb %bl, %cl
+# CHECK: testb %cl, %bl
 0x84 0xcb
 
 # CHECK: cmpl %eax, %ebx

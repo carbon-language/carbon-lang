@@ -1216,10 +1216,10 @@ def X86testpat : PatFrag<(ops node:$lhs, node:$rhs),
 let isCompare = 1 in {
   let Defs = [EFLAGS] in {
     let isCommutable = 1 in {
-      def TEST8rr  : BinOpRR_F<0x84, "test", Xi8 , X86testpat, MRMSrcReg>;
-      def TEST16rr : BinOpRR_F<0x84, "test", Xi16, X86testpat, MRMSrcReg>;
-      def TEST32rr : BinOpRR_F<0x84, "test", Xi32, X86testpat, MRMSrcReg>;
-      def TEST64rr : BinOpRR_F<0x84, "test", Xi64, X86testpat, MRMSrcReg>;
+      def TEST8rr  : BinOpRR_F<0x84, "test", Xi8 , X86testpat>;
+      def TEST16rr : BinOpRR_F<0x84, "test", Xi16, X86testpat>;
+      def TEST32rr : BinOpRR_F<0x84, "test", Xi32, X86testpat>;
+      def TEST64rr : BinOpRR_F<0x84, "test", Xi64, X86testpat>;
     } // isCommutable
 
     def TEST8rm    : BinOpRM_F<0x84, "test", Xi8 , X86testpat>;
