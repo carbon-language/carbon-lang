@@ -845,7 +845,8 @@ bool HexagonInstrInfo::isNewValueStore(unsigned Opcode) const {
   return ((F >> HexagonII::NVStorePos) & HexagonII::NVStoreMask);
 }
 
-int HexagonInstrInfo::getCondOpcode(int Opc, bool invertPredicate) const {
+int HexagonInstrInfo::
+getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   enum Hexagon::PredSense inPredSense;
   inPredSense = invertPredicate ? Hexagon::PredSense_false :
                                   Hexagon::PredSense_true;
@@ -883,7 +884,7 @@ PredicateInstruction(MachineInstr *MI,
   // This will change MI's opcode to its predicate version.
   // However, its operand list is still the old one, i.e. the
   // non-predicate one.
-  MI->setDesc(get(getCondOpcode(Opc, invertJump)));
+  MI->setDesc(get(getMatchingCondBranchOpcode(Opc, invertJump)));
 
   int oper = -1;
   unsigned int GAIdx = 0;

@@ -216,7 +216,9 @@ public:
   short getNonExtOpcode(const MachineInstr *MI) const;
   bool PredOpcodeHasJMP_c(Opcode_t Opcode) const;
   bool PredOpcodeHasNot(Opcode_t Opcode) const;
-  int getCondOpcode(int Opc, bool sense) const;
+
+private:
+  int getMatchingCondBranchOpcode(int Opc, bool sense) const;
 
 };
 

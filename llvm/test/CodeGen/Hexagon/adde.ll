@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -hexagon-expand-condsets=0 < %s | FileCheck %s
+; RUN: llc -march=hexagon < %s | FileCheck %s
 
 ; CHECK: r{{[0-9]+:[0-9]+}} = #0
 ; CHECK: r{{[0-9]+:[0-9]+}} = #1
