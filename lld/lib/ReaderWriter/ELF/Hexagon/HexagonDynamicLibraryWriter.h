@@ -26,18 +26,18 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &);
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
-  virtual void finalizeDefaultAtomValues();
+  void finalizeDefaultAtomValues() override;
 
-  virtual std::error_code setELFHeader() {
+  std::error_code setELFHeader() override {
     DynamicLibraryWriter<ELFT>::setELFHeader();
     setHexagonELFHeader(*this->_elfHeader);
     return std::error_code();
   }
 
 private:
-  void addDefaultAtoms() {
+  void addDefaultAtoms() override {
     _hexagonRuntimeFile->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
     _hexagonRuntimeFile->addAbsoluteAtom("_DYNAMIC");
   }

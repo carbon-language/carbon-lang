@@ -28,7 +28,7 @@ public:
   HexagonELFDefinedAtom(T&&... args)
       : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
 
-  virtual DefinedAtom::ContentType contentType() const {
+  DefinedAtom::ContentType contentType() const override {
     if (this->_contentType != DefinedAtom::typeUnknown)
       return this->_contentType;
     else if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL) {
@@ -40,7 +40,7 @@ public:
     return ELFDefinedAtom<ELFT>::contentType();
   }
 
-  virtual DefinedAtom::ContentPermissions permissions() const {
+  DefinedAtom::ContentPermissions permissions() const override {
     if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
       return DefinedAtom::permRW_;
     return ELFDefinedAtom<ELFT>::permissions();
@@ -71,13 +71,13 @@ public:
     return false;
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     if (isSmallCommonSymbol())
       return this->_symbol->st_size;
     return ELFCommonAtom<ELFT>::size();
   }
 
-  virtual DefinedAtom::Merge merge() const {
+  DefinedAtom::Merge merge() const override {
     if (this->_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return DefinedAtom::mergeAsWeak;
     if (isSmallCommonSymbol())
@@ -85,19 +85,19 @@ public:
     return ELFCommonAtom<ELFT>::merge();
   }
 
-  virtual DefinedAtom::ContentType contentType() const {
+  DefinedAtom::ContentType contentType() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::typeZeroFillFast;
     return ELFCommonAtom<ELFT>::contentType();
   }
 
-  virtual DefinedAtom::Alignment alignment() const {
+  DefinedAtom::Alignment alignment() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::Alignment(this->_symbol->st_value);
     return 1;
   }
 
-  virtual DefinedAtom::ContentPermissions permissions() const {
+  DefinedAtom::ContentPermissions permissions() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::permRW_;
     return ELFCommonAtom<ELFT>::permissions();

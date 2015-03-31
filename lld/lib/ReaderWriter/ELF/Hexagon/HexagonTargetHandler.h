@@ -36,8 +36,8 @@ public:
   }
 
   /// \brief Return the section order for a input section
-  virtual Layout::SectionOrder getSectionOrder(
-      StringRef name, int32_t contentType, int32_t contentPermissions) {
+  Layout::SectionOrder getSectionOrder(
+      StringRef name, int32_t contentType, int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return ORDER_SDATA;
@@ -47,7 +47,7 @@ public:
   }
 
   /// \brief Return the appropriate input section name.
-  virtual StringRef getInputSectionName(const DefinedAtom *da) const {
+  StringRef getInputSectionName(const DefinedAtom *da) const override {
     switch (da->contentType()) {
     case DefinedAtom::typeDataFast:
     case DefinedAtom::typeZeroFillFast:
@@ -59,10 +59,10 @@ public:
   }
 
   /// \brief Gets or creates a section.
-  virtual AtomSection<HexagonELFType> *
+  AtomSection<HexagonELFType> *
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
-                Layout::SectionOrder sectionOrder) {
+                Layout::SectionOrder sectionOrder) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
@@ -71,8 +71,8 @@ public:
   }
 
   /// \brief get the segment type for the section thats defined by the target
-  virtual Layout::SegmentType
-  getSegmentType(Section<HexagonELFType> *section) const {
+  Layout::SegmentType
+  getSegmentType(Section<HexagonELFType> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
 
