@@ -3041,7 +3041,9 @@ struct MDConstant : public MDFieldImpl<ConstantAsMetadata *> {
   MDConstant() : ImplTy(nullptr) {}
 };
 struct MDStringField : public MDFieldImpl<MDString *> {
-  MDStringField() : ImplTy(nullptr) {}
+  bool AllowEmpty;
+  MDStringField(bool AllowEmpty = true)
+      : ImplTy(nullptr), AllowEmpty(AllowEmpty) {}
 };
 struct MDFieldList : public MDFieldImpl<SmallVector<Metadata *, 4>> {
   MDFieldList() : ImplTy(SmallVector<Metadata *, 4>()) {}
@@ -3253,9 +3255,13 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDConstant &Result) {
 
 template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result) {
+  LocTy ValueLoc = Lex.getLoc();
   std::string S;
   if (ParseStringConstant(S))
     return true;
+
+  if (!Result.AllowEmpty && S.empty())
+    return Error(ValueLoc, "'" + Name + "' cannot be empty");
 
   Result.assign(S.empty() ? nullptr : MDString::get(Context, S));
   return false;
@@ -3655,8 +3661,8 @@ bool LLParser::ParseMDTemplateValueParameter(MDNode *&Result, bool IsDistinct) {
 ///                         declaration: !3)
 bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(name, MDStringField, (/* AllowEmpty */ false));                     \
   OPTIONAL(scope, MDField, );                                                  \
-  OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(linkageName, MDStringField, );                                      \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \

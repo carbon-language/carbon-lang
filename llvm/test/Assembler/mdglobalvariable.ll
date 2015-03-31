@@ -17,8 +17,8 @@
                        file: !2, line: 7, type: !3, isLocal: true,
                        isDefinition: false, variable: i32* @foo)
 
-; CHECK: !6 = !MDGlobalVariable(scope: !0, isLocal: false, isDefinition: true)
-!6 = !MDGlobalVariable(scope: !0)
+; CHECK: !6 = !MDGlobalVariable(name: "foo", scope: !0, isLocal: false, isDefinition: true)
+!6 = !MDGlobalVariable(name: "foo", scope: !0)
 
 !7 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Class", size: 8, align: 8)
 !8 = !MDDerivedType(tag: DW_TAG_member, name: "mem", flags: DIFlagStaticMember, scope: !7, baseType: !3)

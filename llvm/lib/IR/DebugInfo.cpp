@@ -275,16 +275,6 @@ bool DISubprogram::Verify() const {
   if (!N)
     return false;
 
-  if (!isScopeRef(N->getScope()))
-    return false;
-
-  if (auto *Op = N->getType())
-    if (!isa<MDNode>(Op))
-      return false;
-
-  if (!isTypeRef(getContainingType()))
-    return false;
-
   if (isLValueReference() && isRValueReference())
     return false;
 
@@ -315,38 +305,8 @@ bool DISubprogram::Verify() const {
   return true;
 }
 
-bool DIGlobalVariable::Verify() const {
-  auto *N = dyn_cast_or_null<MDGlobalVariable>(DbgNode);
-
-  if (!N)
-    return false;
-
-  if (N->getDisplayName().empty())
-    return false;
-
-  if (auto *Op = N->getScope())
-    if (!isa<MDNode>(Op))
-      return false;
-
-  if (auto *Op = N->getStaticDataMemberDeclaration())
-    if (!isa<MDNode>(Op))
-      return false;
-
-  return isTypeRef(N->getType());
-}
-
-bool DIVariable::Verify() const {
-  auto *N = dyn_cast_or_null<MDLocalVariable>(DbgNode);
-
-  if (!N)
-    return false;
-
-  if (auto *Op = N->getScope())
-    if (!isa<MDNode>(Op))
-      return false;
-
-  return isTypeRef(N->getType());
-}
+bool DIGlobalVariable::Verify() const { return isGlobalVariable(); }
+bool DIVariable::Verify() const { return isVariable(); }
 
 bool DILocation::Verify() const {
   return dyn_cast_or_null<MDLocation>(DbgNode);

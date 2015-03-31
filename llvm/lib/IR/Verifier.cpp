@@ -969,6 +969,7 @@ void Verifier::visitMDGlobalVariable(const MDGlobalVariable &N) {
   visitMDVariable(N);
 
   Assert(N.getTag() == dwarf::DW_TAG_variable, "invalid tag", &N);
+  Assert(!N.getName().empty(), "missing global variable name", &N);
   if (auto *V = N.getRawVariable()) {
     Assert(isa<ConstantAsMetadata>(V) &&
                !isa<Function>(cast<ConstantAsMetadata>(V)->getValue()),
