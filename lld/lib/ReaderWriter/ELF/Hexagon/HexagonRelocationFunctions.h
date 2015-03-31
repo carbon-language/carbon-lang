@@ -6,8 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_FUNCTIONS_H
 #define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_FUNCTIONS_H
+
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Endian.h"
 
 namespace lld {
 namespace elf {
@@ -22,23 +26,16 @@ typedef struct {
 
 #include "HexagonEncodings.h"
 
-#define FINDV4BITMASK(INSN)                                                    \
-  findBitMask((uint32_t) * ((llvm::support::ulittle32_t *) INSN),              \
-              insn_encodings,                                                  \
-              sizeof(insn_encodings) / sizeof(Instruction))
-
 /// \brief finds the scatter Bits that need to be used to apply relocations
-inline uint32_t
-findBitMask(uint32_t insn, Instruction *encodings, int32_t numInsns) {
-  for (int32_t i = 0; i < numInsns; i++) {
-    if (((insn & 0xc000) == 0) && !(encodings[i].isDuplex))
+inline uint32_t findv4bitmask(uint8_t *location) {
+  uint32_t insn = llvm::support::endian::read32le(location);
+  for (int32_t i = 0, e = llvm::array_lengthof(insn_encodings); i < e; i++) {
+    if (((insn & 0xc000) == 0) && !(insn_encodings[i].isDuplex))
       continue;
-
-    if (((insn & 0xc000) != 0) && (encodings[i].isDuplex))
+    if (((insn & 0xc000) != 0) && (insn_encodings[i].isDuplex))
       continue;
-
-    if (((encodings[i].insnMask) & insn) == encodings[i].insnCmpMask)
-      return encodings[i].insnBitMask;
+    if (((insn_encodings[i].insnMask) & insn) == insn_encodings[i].insnCmpMask)
+      return insn_encodings[i].insnBitMask;
   }
   llvm_unreachable("found unknown instruction");
 }
