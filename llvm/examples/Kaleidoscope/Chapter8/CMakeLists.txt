@@ -9,6 +9,8 @@ set(LLVM_LINK_COMPONENTS
 
 set(LLVM_REQUIRES_RTTI 1)
 
+set(EXCLUDE_FROM_ALL ON)
+
 add_kaleidoscope_chapter(Kaleidoscope-Ch8
   toy.cpp
   )

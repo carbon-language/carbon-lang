@@ -12,6 +12,8 @@ set(LLVM_LINK_COMPONENTS
 set(LLVM_REQUIRES_EH 1)
 set(LLVM_REQUIRES_RTTI 1)
 
+set(EXCLUDE_FROM_ALL ON)
+
 add_llvm_example(ExceptionDemo
   ExceptionDemo.cpp
   )
