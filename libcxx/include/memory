@@ -1525,6 +1525,34 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
             __begin2 += _Np;
         }
 
+    template <class _Iter, class _Ptr>
+        _LIBCPP_INLINE_VISIBILITY
+        static
+        void
+        __construct_range_forward(allocator_type& __a, _Iter __begin1, _Iter __end1, _Ptr& __begin2)
+        {
+            for (; __begin1 != __end1; ++__begin1, (void) ++__begin2)
+                construct(__a, _VSTD::__to_raw_pointer(__begin2), *__begin1);
+        }
+
+    template <class _Tp>
+        _LIBCPP_INLINE_VISIBILITY
+        static
+        typename enable_if
+        <
+            (is_same<allocator_type, allocator<_Tp> >::value
+                || !__has_construct<allocator_type, _Tp*, _Tp>::value) &&
+             is_trivially_move_constructible<_Tp>::value,
+            void
+        >::type
+        __construct_range_forward(allocator_type& __a, _Tp* __begin1, _Tp* __end1, _Tp*& __begin2)
+        {
+            typedef typename remove_const<_Tp>::type _Vp;
+            ptrdiff_t _Np = __end1 - __begin1;
+            _VSTD::memcpy(const_cast<_Vp*>(__begin2), __begin1, _Np * sizeof(_Tp));
+            __begin2 += _Np;
+        }
+
     template <class _Ptr>
         _LIBCPP_INLINE_VISIBILITY
         static
