@@ -75,8 +75,28 @@ void Symbolizer::AddHooks(Symbolizer::StartSymbolizationHook start_hook,
   end_hook_ = end_hook;
 }
 
+const char *Symbolizer::ModuleNameOwner::GetOwnedCopy(const char *str) {
+  mu_->CheckLocked();
+
+  // 'str' will be the same string multiple times in a row, optimize this case.
+  if (last_match_ && !internal_strcmp(last_match_, str))
+    return last_match_;
+
+  // FIXME: this is linear search.
+  // We should optimize this further if this turns out to be a bottleneck later.
+  for (uptr i = 0; i < storage_.size(); ++i) {
+    if (!internal_strcmp(storage_[i], str)) {
+      last_match_ = storage_[i];
+      return last_match_;
+    }
+  }
+  last_match_ = internal_strdup(str);
+  storage_.push_back(last_match_);
+  return last_match_;
+}
+
 Symbolizer::Symbolizer(IntrusiveList<SymbolizerTool> tools)
-    : tools_(tools), start_hook_(0), end_hook_(0) {}
+    : module_names_(&mu_), tools_(tools), start_hook_(0), end_hook_(0) {}
 
 Symbolizer::SymbolizerScope::SymbolizerScope(const Symbolizer *sym)
     : sym_(sym) {
@@ -130,10 +150,16 @@ bool Symbolizer::SymbolizeData(uptr addr, DataInfo *info) {
 }
 
 bool Symbolizer::GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
-                                 uptr *module_address) {
+                                             uptr *module_address) {
   BlockingMutexLock l(&mu_);
-  return PlatformFindModuleNameAndOffsetForAddress(pc, module_name,
-                                                   module_address);
+  const char *internal_module_name = nullptr;
+  if (!PlatformFindModuleNameAndOffsetForAddress(pc, &internal_module_name,
+                                                 module_address))
+    return false;
+
+  if (module_name)
+    *module_name = module_names_.GetOwnedCopy(internal_module_name);
+  return true;
 }
 
 void Symbolizer::Flush() {

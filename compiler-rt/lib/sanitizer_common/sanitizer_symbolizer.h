@@ -84,15 +84,19 @@ class Symbolizer {
   // all inlined functions, if necessary).
   SymbolizedStack *SymbolizePC(uptr address);
   bool SymbolizeData(uptr address, DataInfo *info);
+
+  // The module names Symbolizer returns are stable and unique for every given
+  // module.  It is safe to store and compare them as pointers.
   bool GetModuleNameAndOffsetForPC(uptr pc, const char **module_name,
                                    uptr *module_address);
   const char *GetModuleNameForPc(uptr pc) {
-    const char *module_name = 0;
+    const char *module_name = nullptr;
     uptr unused;
     if (GetModuleNameAndOffsetForPC(pc, &module_name, &unused))
       return module_name;
     return nullptr;
   }
+
   // Release internal caches (if any).
   void Flush();
   // Attempts to demangle the provided C++ mangled name.
@@ -110,6 +114,26 @@ class Symbolizer {
                 EndSymbolizationHook end_hook);
 
  private:
+  // GetModuleNameAndOffsetForPC has to return a string to the caller.
+  // Since the corresponding module might get unloaded later, we should create
+  // our owned copies of the strings that we can safely return.
+  // ModuleNameOwner does not provide any synchronization, thus calls to
+  // its method should be protected by |mu_|.
+  class ModuleNameOwner {
+   public:
+    explicit ModuleNameOwner(BlockingMutex *synchronized_by)
+        : storage_(kInitialCapacity), last_match_(nullptr),
+          mu_(synchronized_by) {}
+    const char *GetOwnedCopy(const char *str);
+
+   private:
+    static const uptr kInitialCapacity = 1000;
+    InternalMmapVector<const char*> storage_;
+    const char *last_match_;
+
+    BlockingMutex *mu_;
+  } module_names_;
+
   /// Platform-specific function for creating a Symbolizer object.
   static Symbolizer *PlatformInit();
 

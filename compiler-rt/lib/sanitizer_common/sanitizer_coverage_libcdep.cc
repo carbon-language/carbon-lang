@@ -338,9 +338,8 @@ void CoverageData::UpdateModuleNameVec(uptr caller_pc, uptr range_beg,
   const char *module_name = sym->GetModuleNameForPc(caller_pc);
   if (!module_name) return;
   if (module_name_vec.empty() ||
-      internal_strcmp(module_name_vec.back().copied_module_name, module_name))
-    module_name_vec.push_back(
-        {internal_strdup(module_name), range_beg, range_end});
+      module_name_vec.back().copied_module_name != module_name)
+    module_name_vec.push_back({module_name, range_beg, range_end});
   else
     module_name_vec.back().end = range_end;
 }
@@ -751,9 +750,8 @@ void CoverageData::DumpOffsets() {
       uptr pc = UnbundlePc(pc_array[i]);
       uptr counter = UnbundleCounter(pc_array[i]);
       if (!pc) continue; // Not visited.
-      const char *unused;
       uptr offset = 0;
-      sym->GetModuleNameAndOffsetForPC(pc, &unused, &offset);
+      sym->GetModuleNameAndOffsetForPC(pc, nullptr, &offset);
       offsets.push_back(BundlePcAndCounter(offset, counter));
     }
 
