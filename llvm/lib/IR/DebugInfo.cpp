@@ -220,15 +220,7 @@ void DIDescriptor::replaceAllUsesWith(MDNode *D) {
   Node->replaceAllUsesWith(D);
 }
 
-bool DICompileUnit::Verify() const {
-  if (!isCompileUnit())
-    return false;
-
-  // Don't bother verifying the compilation directory or producer string
-  // as those could be empty.
-  return !getFilename().empty();
-}
-
+bool DICompileUnit::Verify() const { return isCompileUnit(); }
 bool DIObjCProperty::Verify() const { return isObjCProperty(); }
 
 /// \brief Check if a value can be a reference to a type.
@@ -264,61 +256,18 @@ bool DIType::Verify() const {
   auto *N = dyn_cast_or_null<MDType>(DbgNode);
   if (!N)
     return false;
-  if (!isScopeRef(N->getScope()))
-    return false;
-
-  // DIType is abstract, it should be a BasicType, a DerivedType or
-  // a CompositeType.
-  if (isBasicType())
-    return DIBasicType(DbgNode).Verify();
-
-  // FIXME: Sink this into the various subclass verifies.
-  if (getFilename().empty()) {
-    // Check whether the filename is allowed to be empty.
-    uint16_t Tag = getTag();
-    if (Tag != dwarf::DW_TAG_const_type && Tag != dwarf::DW_TAG_volatile_type &&
-        Tag != dwarf::DW_TAG_pointer_type &&
-        Tag != dwarf::DW_TAG_ptr_to_member_type &&
-        Tag != dwarf::DW_TAG_reference_type &&
-        Tag != dwarf::DW_TAG_rvalue_reference_type &&
-        Tag != dwarf::DW_TAG_restrict_type && Tag != dwarf::DW_TAG_array_type &&
-        Tag != dwarf::DW_TAG_enumeration_type &&
-        Tag != dwarf::DW_TAG_subroutine_type &&
-        Tag != dwarf::DW_TAG_inheritance && Tag != dwarf::DW_TAG_friend &&
-        Tag != dwarf::DW_TAG_structure_type && Tag != dwarf::DW_TAG_member &&
-        Tag != dwarf::DW_TAG_typedef)
-      return false;
-  }
 
   if (isCompositeType())
     return DICompositeType(DbgNode).Verify();
-  if (isDerivedType())
-    return DIDerivedType(DbgNode).Verify();
-  return false;
+  return true;
 }
 
-bool DIBasicType::Verify() const {
-  return dyn_cast_or_null<MDBasicType>(DbgNode);
-}
-
-bool DIDerivedType::Verify() const {
-  auto *N = dyn_cast_or_null<MDDerivedTypeBase>(DbgNode);
-  if (!N)
-    return false;
-  if (getTag() == dwarf::DW_TAG_ptr_to_member_type) {
-    auto *D = dyn_cast<MDDerivedType>(N);
-    if (!D)
-      return false;
-    if (!isTypeRef(D->getExtraData()))
-      return false;
-  }
-  return isTypeRef(N->getBaseType());
-}
+bool DIBasicType::Verify() const { return isBasicType(); }
+bool DIDerivedType::Verify() const { return isDerivedType(); }
 
 bool DICompositeType::Verify() const {
   auto *N = dyn_cast_or_null<MDCompositeTypeBase>(DbgNode);
-  return N && isTypeRef(N->getBaseType()) && isTypeRef(N->getVTableHolder()) &&
-         !(isLValueReference() && isRValueReference());
+  return N && !(isLValueReference() && isRValueReference());
 }
 
 bool DISubprogram::Verify() const {

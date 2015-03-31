@@ -752,6 +752,26 @@ void Verifier::visitMDDerivedTypeBase(const MDDerivedTypeBase &N) {
 
   Assert(isScopeRef(N.getScope()), "invalid scope", &N, N.getScope());
   Assert(isTypeRef(N.getBaseType()), "invalid base type", &N, N.getBaseType());
+
+  // FIXME: Sink this into the subclass verifies.
+  if (!N.getFile() || N.getFile()->getFilename().empty()) {
+    // Check whether the filename is allowed to be empty.
+    uint16_t Tag = N.getTag();
+    Assert(
+        Tag == dwarf::DW_TAG_const_type || Tag == dwarf::DW_TAG_volatile_type ||
+            Tag == dwarf::DW_TAG_pointer_type ||
+            Tag == dwarf::DW_TAG_ptr_to_member_type ||
+            Tag == dwarf::DW_TAG_reference_type ||
+            Tag == dwarf::DW_TAG_rvalue_reference_type ||
+            Tag == dwarf::DW_TAG_restrict_type ||
+            Tag == dwarf::DW_TAG_array_type ||
+            Tag == dwarf::DW_TAG_enumeration_type ||
+            Tag == dwarf::DW_TAG_subroutine_type ||
+            Tag == dwarf::DW_TAG_inheritance || Tag == dwarf::DW_TAG_friend ||
+            Tag == dwarf::DW_TAG_structure_type ||
+            Tag == dwarf::DW_TAG_member || Tag == dwarf::DW_TAG_typedef,
+        "derived/composite type requires a filename", &N, N.getFile());
+  }
 }
 
 void Verifier::visitMDDerivedType(const MDDerivedType &N) {
@@ -770,6 +790,10 @@ void Verifier::visitMDDerivedType(const MDDerivedType &N) {
              N.getTag() == dwarf::DW_TAG_inheritance ||
              N.getTag() == dwarf::DW_TAG_friend,
          "invalid tag", &N);
+  if (N.getTag() == dwarf::DW_TAG_ptr_to_member_type) {
+    Assert(isTypeRef(N.getExtraData()), "invalid pointer to member type",
+           &N, N.getExtraData());
+  }
 }
 
 void Verifier::visitMDCompositeType(const MDCompositeType &N) {
@@ -808,6 +832,13 @@ void Verifier::visitMDFile(const MDFile &N) {
 
 void Verifier::visitMDCompileUnit(const MDCompileUnit &N) {
   Assert(N.getTag() == dwarf::DW_TAG_compile_unit, "invalid tag", &N);
+
+  // Don't bother verifying the compilation directory or producer string
+  // as those could be empty.
+  Assert(N.getRawFile() && isa<MDFile>(N.getRawFile()),
+         "invalid file", &N, N.getRawFile());
+  Assert(!N.getFile()->getFilename().empty(), "invalid filename", &N,
+         N.getFile());
 
   if (auto *Array = N.getRawEnumTypes()) {
     Assert(isa<MDTuple>(Array), "invalid enum list", &N, Array);

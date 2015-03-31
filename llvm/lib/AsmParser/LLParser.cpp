@@ -3506,7 +3506,7 @@ bool LLParser::ParseMDFile(MDNode *&Result, bool IsDistinct) {
 bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   REQUIRED(language, DwarfLangField, );                                        \
-  REQUIRED(file, MDField, );                                                   \
+  REQUIRED(file, MDField, (/* AllowNull */ false));                            \
   OPTIONAL(producer, MDStringField, );                                         \
   OPTIONAL(isOptimized, MDBoolField, );                                        \
   OPTIONAL(flags, MDStringField, );                                            \
