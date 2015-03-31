@@ -627,7 +627,7 @@ TEST_F(MDNodeTest, replaceWithUniqued) {
   }
 }
 
-TEST_F(MDNodeTest, replaceWithUniquedUnresolved) {
+TEST_F(MDNodeTest, replaceWithUniquedResolvingOperand) {
   // temp !{}
   MDTuple *Op = MDTuple::getTemporary(Context, None).release();
   EXPECT_FALSE(Op->isResolved());
@@ -647,7 +647,7 @@ TEST_F(MDNodeTest, replaceWithUniquedUnresolved) {
   EXPECT_TRUE(N->isResolved());
 }
 
-TEST_F(MDNodeTest, replaceWithUniquedUnresolvedChangedOperand) {
+TEST_F(MDNodeTest, replaceWithUniquedChangingOperand) {
   // i1* @GV
   Type *Ty = Type::getInt1PtrTy(Context);
   std::unique_ptr<GlobalVariable> GV(
