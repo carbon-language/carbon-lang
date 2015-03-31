@@ -58,11 +58,11 @@ static MCCodeGenInfo *createMSP430MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createMSP430MCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createMSP430MCInstPrinter(const Triple &T,
+                                                unsigned SyntaxVariant,
                                                 const MCAsmInfo &MAI,
                                                 const MCInstrInfo &MII,
-                                                const MCRegisterInfo &MRI,
-                                                const MCSubtargetInfo &STI) {
+                                                const MCRegisterInfo &MRI) {
   if (SyntaxVariant == 0)
     return new MSP430InstPrinter(MAI, MII, MRI);
   return nullptr;

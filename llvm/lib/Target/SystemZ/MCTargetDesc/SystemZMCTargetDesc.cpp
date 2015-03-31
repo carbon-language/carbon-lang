@@ -172,11 +172,11 @@ static MCCodeGenInfo *createSystemZMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createSystemZMCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createSystemZMCInstPrinter(const Triple &T,
+                                                 unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
-                                                 const MCRegisterInfo &MRI,
-                                                 const MCSubtargetInfo &STI) {
+                                                 const MCRegisterInfo &MRI) {
   return new SystemZInstPrinter(MAI, MII, MRI);
 }
 

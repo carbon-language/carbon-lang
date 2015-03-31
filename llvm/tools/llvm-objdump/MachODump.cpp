@@ -3032,7 +3032,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
   }
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-      AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI, *STI));
+      Triple(TripleName), AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI));
   // Set the display preference for hex vs. decimal immediates.
   IP->setPrintImmHex(PrintImmHex);
   // Comment stream and backing vector.
@@ -3080,8 +3080,8 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     }
     int ThumbAsmPrinterVariant = ThumbAsmInfo->getAssemblerDialect();
     ThumbIP.reset(ThumbTarget->createMCInstPrinter(
-        ThumbAsmPrinterVariant, *ThumbAsmInfo, *ThumbInstrInfo, *ThumbMRI,
-        *ThumbSTI));
+        Triple(ThumbTripleName), ThumbAsmPrinterVariant, *ThumbAsmInfo,
+        *ThumbInstrInfo, *ThumbMRI));
     // Set the display preference for hex vs. decimal immediates.
     ThumbIP->setPrintImmHex(PrintImmHex);
   }

@@ -274,7 +274,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-      AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
+      Triple(TripleName), AsmPrinterVariant, *AsmInfo, *MII, *MRI));
   if (!IP) {
     errs() << "error: no instruction printer for target " << TripleName
       << '\n';

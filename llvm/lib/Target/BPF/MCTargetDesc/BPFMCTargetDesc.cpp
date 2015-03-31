@@ -68,11 +68,11 @@ static MCStreamer *createBPFMCStreamer(const Triple &T,
   return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 }
 
-static MCInstPrinter *createBPFMCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createBPFMCInstPrinter(const Triple &T,
+                                             unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
-                                             const MCRegisterInfo &MRI,
-                                             const MCSubtargetInfo &STI) {
+                                             const MCRegisterInfo &MRI) {
   if (SyntaxVariant == 0)
     return new BPFInstPrinter(MAI, MII, MRI);
   return 0;

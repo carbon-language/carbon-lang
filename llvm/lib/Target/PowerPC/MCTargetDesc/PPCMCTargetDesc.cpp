@@ -238,13 +238,12 @@ createObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
   return new PPCTargetMachOStreamer(S);
 }
 
-static MCInstPrinter *createPPCMCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createPPCMCInstPrinter(const Triple &T,
+                                             unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
-                                             const MCRegisterInfo &MRI,
-                                             const MCSubtargetInfo &STI) {
-  bool isDarwin = Triple(STI.getTargetTriple()).isOSDarwin();
-  return new PPCInstPrinter(MAI, MII, MRI, isDarwin);
+                                             const MCRegisterInfo &MRI) {
+  return new PPCInstPrinter(MAI, MII, MRI, T.isOSDarwin());
 }
 
 extern "C" void LLVMInitializePowerPCTargetMC() {

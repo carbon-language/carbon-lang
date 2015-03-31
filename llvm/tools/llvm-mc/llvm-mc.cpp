@@ -448,8 +448,8 @@ int main(int argc, char **argv) {
 
   MCInstPrinter *IP = nullptr;
   if (FileType == OFT_AssemblyFile) {
-    IP =
-      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MCII, *MRI, *STI);
+    IP = TheTarget->createMCInstPrinter(Triple(TripleName), OutputAsmVariant,
+                                        *MAI, *MCII, *MRI);
 
     // Set the display preference for hex vs. decimal immediates.
     IP->setPrintImmHex(PrintImmHex);

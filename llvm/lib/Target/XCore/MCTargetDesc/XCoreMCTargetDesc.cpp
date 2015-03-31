@@ -81,11 +81,11 @@ static MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCInstPrinter *createXCoreMCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createXCoreMCInstPrinter(const Triple &T,
+                                               unsigned SyntaxVariant,
                                                const MCAsmInfo &MAI,
                                                const MCInstrInfo &MII,
-                                               const MCRegisterInfo &MRI,
-                                               const MCSubtargetInfo &STI) {
+                                               const MCRegisterInfo &MRI) {
   return new XCoreInstPrinter(MAI, MII, MRI);
 }
 

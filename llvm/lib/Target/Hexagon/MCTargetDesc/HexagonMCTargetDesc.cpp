@@ -75,11 +75,11 @@ static MCCodeGenInfo *createHexagonMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   X->InitMCCodeGenInfo(Reloc::Static, CM, OL);
   return X;
 }
-static MCInstPrinter *createHexagonMCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createHexagonMCInstPrinter(const Triple &T,
+                                                 unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
-                                                 const MCRegisterInfo &MRI,
-                                                 const MCSubtargetInfo &STI) {
+                                                 const MCRegisterInfo &MRI) {
     return new HexagonInstPrinter(MAI, MII, MRI);
 }
 

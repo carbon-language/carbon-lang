@@ -323,11 +323,11 @@ static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
   return createMachOStreamer(Ctx, MAB, OS, Emitter, false, DWARFMustBeAtTheEnd);
 }
 
-static MCInstPrinter *createARMMCInstPrinter(unsigned SyntaxVariant,
+static MCInstPrinter *createARMMCInstPrinter(const Triple &T,
+                                             unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCInstrInfo &MII,
-                                             const MCRegisterInfo &MRI,
-                                             const MCSubtargetInfo &STI) {
+                                             const MCRegisterInfo &MRI) {
   if (SyntaxVariant == 0)
     return new ARMInstPrinter(MAI, MII, MRI);
   return nullptr;

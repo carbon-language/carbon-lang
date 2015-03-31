@@ -82,8 +82,8 @@ LLVMCreateDisasmCPUFeatures(const char *TT, const char *CPU,
 
   // Set up the instruction printer.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
-  MCInstPrinter *IP = TheTarget->createMCInstPrinter(AsmPrinterVariant,
-                                                     *MAI, *MII, *MRI, *STI);
+  MCInstPrinter *IP = TheTarget->createMCInstPrinter(
+      Triple(TT), AsmPrinterVariant, *MAI, *MII, *MRI);
   if (!IP)
     return nullptr;
 
@@ -311,11 +311,10 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
       const MCAsmInfo *MAI = DC->getAsmInfo();
       const MCInstrInfo *MII = DC->getInstrInfo();
       const MCRegisterInfo *MRI = DC->getRegisterInfo();
-      const MCSubtargetInfo *STI = DC->getSubtargetInfo();
       int AsmPrinterVariant = MAI->getAssemblerDialect();
       AsmPrinterVariant = AsmPrinterVariant == 0 ? 1 : 0;
       MCInstPrinter *IP = DC->getTarget()->createMCInstPrinter(
-          AsmPrinterVariant, *MAI, *MII, *MRI, *STI);
+          Triple(DC->getTripleName()), AsmPrinterVariant, *MAI, *MII, *MRI);
       if (IP) {
         DC->setIP(IP);
         DC->addOptions(LLVMDisassembler_Option_AsmPrinterVariant);
