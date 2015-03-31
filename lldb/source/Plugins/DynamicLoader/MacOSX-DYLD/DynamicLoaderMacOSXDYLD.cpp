@@ -1266,7 +1266,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
         // Iterate through the object file sections to find the
         // first section that starts of file offset zero and that
         // has bytes in the file...
-        if (dylib_info.segments[i].fileoff == 0 && dylib_info.segments[i].filesize > 0)
+        if ((dylib_info.segments[i].fileoff == 0 && dylib_info.segments[i].filesize > 0) || (dylib_info.segments[i].name == ConstString("__TEXT")))
         {
             dylib_info.slide = dylib_info.address - dylib_info.segments[i].vmaddr;
             // We have found the slide amount, so we can exit
