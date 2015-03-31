@@ -334,8 +334,7 @@ StringRef sys::getHostCPUName() {
                // 45nm: Penryn , Wolfdale, Yorkfield (XE)
       case 29: // Intel Xeon processor MP. All processors are manufactured using
                // the 45 nm process.
-        // Not all Penryn processors support SSE 4.1 (such as the Pentium brand)
-        return HasSSE41 ? "penryn" : "core2";
+        return "penryn";
 
       case 26: // Intel Core i7 processor and Intel Xeon processor. All
                // processors are manufactured using the 45 nm process.
@@ -353,31 +352,23 @@ StringRef sys::getHostCPUName() {
       case 42: // Intel Core i7 processor. All processors are manufactured
                // using the 32 nm process.
       case 45:
-        // Not all Sandy Bridge processors support AVX (such as the Pentium
-        // versions instead of the i7 versions).
-        return HasAVX ? "sandybridge" : "nehalem";
+        return "sandybridge";
 
       // Ivy Bridge:
       case 58:
       case 62: // Ivy Bridge EP
-        // Not all Ivy Bridge processors support AVX (such as the Pentium
-        // versions instead of the i7 versions).
-        return HasAVX ? "ivybridge" : "nehalem";
+        return "ivybridge";
 
       // Haswell:
       case 60:
       case 63:
       case 69:
       case 70:
-        // Not all Haswell processors support AVX2 (such as the Pentium
-        // versions instead of the i7 versions).
-        return HasAVX2 ? "haswell" : "nehalem";
+        return "haswell";
 
       // Broadwell:
       case 61:
-        // Not all Broadwell processors support AVX2 (such as the Pentium
-        // versions instead of the i7 versions).
-        return HasAVX2 ? "broadwell" : "nehalem";
+        return "broadwell";
 
       case 28: // Most 45 nm Intel Atom processors
       case 38: // 45 nm Atom Lincroft
