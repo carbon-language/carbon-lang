@@ -378,7 +378,6 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
   }
 
   bool EnteringScope = (int)Actions.size() > FirstMismatch;
-  bool ExitingScope = (int)HandlerStack.size() > FirstMismatch;
 
   // Don't recurse while we are looping over the handler stack.  Instead, defer
   // the numbering of the catch handlers until we are done popping.
@@ -396,7 +395,7 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
   // We need to create a new state number if we are exiting a try scope and we
   // will not push any more actions.
   int TryHigh = NextState - 1;
-  if (ExitingScope && !EnteringScope && !PoppedCatches.empty()) {
+  if (!EnteringScope && !PoppedCatches.empty()) {
     createUnwindMapEntry(currentEHNumber(), nullptr);
     ++NextState;
   }
