@@ -627,6 +627,48 @@ TEST_F(MDNodeTest, replaceWithUniqued) {
   }
 }
 
+TEST_F(MDNodeTest, replaceWithUniquedUnresolved) {
+  // temp !{}
+  MDTuple *Op = MDTuple::getTemporary(Context, None).release();
+  EXPECT_FALSE(Op->isResolved());
+
+  // temp !{temp !{}}
+  Metadata *Ops[] = {Op};
+  MDTuple *N = MDTuple::getTemporary(Context, Ops).release();
+  EXPECT_FALSE(N->isResolved());
+
+  // temp !{temp !{}} => !{temp !{}}
+  ASSERT_EQ(N, MDNode::replaceWithUniqued(TempMDTuple(N)));
+  EXPECT_FALSE(N->isResolved());
+
+  // !{temp !{}} => !{!{}}
+  ASSERT_EQ(Op, MDNode::replaceWithUniqued(TempMDTuple(Op)));
+  EXPECT_TRUE(Op->isResolved());
+  EXPECT_TRUE(N->isResolved());
+}
+
+TEST_F(MDNodeTest, replaceWithUniquedUnresolvedChangedOperand) {
+  // i1* @GV
+  Type *Ty = Type::getInt1PtrTy(Context);
+  std::unique_ptr<GlobalVariable> GV(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  ConstantAsMetadata *Op = ConstantAsMetadata::get(GV.get());
+
+  // temp !{i1* @GV}
+  Metadata *Ops[] = {Op};
+  MDTuple *N = MDTuple::getTemporary(Context, Ops).release();
+
+  // temp !{i1* @GV} => !{i1* @GV}
+  ASSERT_EQ(N, MDNode::replaceWithUniqued(TempMDTuple(N)));
+  ASSERT_TRUE(N->isUniqued());
+
+  // !{i1* @GV} => !{null}
+  GV.reset();
+  ASSERT_TRUE(N->isUniqued());
+  Metadata *NullOps[] = {nullptr};
+  ASSERT_EQ(N, MDTuple::get(Context, NullOps));
+}
+
 TEST_F(MDNodeTest, replaceWithDistinct) {
   {
     auto *Empty = MDTuple::get(Context, None);

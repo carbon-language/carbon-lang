@@ -761,6 +761,11 @@ protected:
   MDOperand *mutable_begin() { return mutable_end() - NumOperands; }
   MDOperand *mutable_end() { return reinterpret_cast<MDOperand *>(this); }
 
+  typedef iterator_range<MDOperand *> mutable_op_range;
+  mutable_op_range mutable_operands() {
+    return mutable_op_range(mutable_begin(), mutable_end());
+  }
+
 public:
   static inline MDTuple *get(LLVMContext &Context, ArrayRef<Metadata *> MDs);
   static inline MDTuple *getIfExists(LLVMContext &Context,

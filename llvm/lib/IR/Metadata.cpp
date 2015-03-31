@@ -446,6 +446,10 @@ void MDNode::makeUniqued() {
   assert(isTemporary() && "Expected this to be temporary");
   assert(!isResolved() && "Expected this to be unresolved");
 
+  // Enable uniquing callbacks.
+  for (auto &Op : mutable_operands())
+    Op.reset(Op.get(), this);
+
   // Make this 'uniqued'.
   Storage = Uniqued;
   if (!countUnresolvedOperands())
