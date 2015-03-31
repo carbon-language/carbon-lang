@@ -118,11 +118,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new HexagonELFObjectReader(_ctx));
+    return llvm::make_unique<HexagonELFObjectReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new HexagonELFDSOReader(_ctx));
+    return llvm::make_unique<HexagonELFDSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
