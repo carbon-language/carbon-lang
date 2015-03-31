@@ -1,3 +1,5 @@
 add_lldb_library(lldbInitialization
-  InitializeLLDB.cpp
+  SystemInitializerCommon.cpp
+  SystemInitializer.cpp
+  SystemLifetimeManager.cpp
   )

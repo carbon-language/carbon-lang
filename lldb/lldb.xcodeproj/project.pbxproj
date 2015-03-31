@@ -686,7 +686,10 @@
 		3F8160A61AB9F7DD001DA9DF /* Logging.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8160A51AB9F7DD001DA9DF /* Logging.cpp */; };
 		3F8169191ABA2419001DA9DF /* ConvertEnum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169171ABA2419001DA9DF /* ConvertEnum.cpp */; };
 		3F81691A1ABA2419001DA9DF /* NameMatches.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169181ABA2419001DA9DF /* NameMatches.cpp */; };
-		3F8169281ABB73D9001DA9DF /* InitializeLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169271ABB73D9001DA9DF /* InitializeLLDB.cpp */; };
+		3F81692C1ABB7A1E001DA9DF /* SystemInitializerFull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F81692A1ABB7A16001DA9DF /* SystemInitializerFull.cpp */; };
+		3F8169311ABB7A6D001DA9DF /* SystemInitializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F81692E1ABB7A6D001DA9DF /* SystemInitializer.cpp */; };
+		3F8169321ABB7A6D001DA9DF /* SystemInitializerCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F81692F1ABB7A6D001DA9DF /* SystemInitializerCommon.cpp */; };
+		3F8169331ABB7A6D001DA9DF /* SystemLifetimeManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169301ABB7A6D001DA9DF /* SystemLifetimeManager.cpp */; };
 		3FDFDDBD199C3A06009756A7 /* FileAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBC199C3A06009756A7 /* FileAction.cpp */; };
 		3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBE199D345E009756A7 /* FileCache.cpp */; };
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
@@ -2167,8 +2170,14 @@
 		3F8169181ABA2419001DA9DF /* NameMatches.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NameMatches.cpp; path = source/Utility/NameMatches.cpp; sourceTree = "<group>"; };
 		3F81691B1ABA242B001DA9DF /* ConvertEnum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ConvertEnum.h; path = include/lldb/Utility/ConvertEnum.h; sourceTree = "<group>"; };
 		3F81691C1ABA242B001DA9DF /* NameMatches.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NameMatches.h; path = include/lldb/Utility/NameMatches.h; sourceTree = "<group>"; };
-		3F8169271ABB73D9001DA9DF /* InitializeLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitializeLLDB.cpp; path = source/Initialization/InitializeLLDB.cpp; sourceTree = "<group>"; };
-		3F8169291ABB73E6001DA9DF /* InitializeLLDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InitializeLLDB.h; path = include/lldb/Initialization/InitializeLLDB.h; sourceTree = "<group>"; };
+		3F81692A1ABB7A16001DA9DF /* SystemInitializerFull.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemInitializerFull.cpp; path = source/API/SystemInitializerFull.cpp; sourceTree = "<group>"; };
+		3F81692D1ABB7A40001DA9DF /* SystemInitializerFull.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemInitializerFull.h; path = include/lldb/API/SystemInitializerFull.h; sourceTree = "<group>"; };
+		3F81692E1ABB7A6D001DA9DF /* SystemInitializer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemInitializer.cpp; path = source/Initialization/SystemInitializer.cpp; sourceTree = "<group>"; };
+		3F81692F1ABB7A6D001DA9DF /* SystemInitializerCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemInitializerCommon.cpp; path = source/Initialization/SystemInitializerCommon.cpp; sourceTree = "<group>"; };
+		3F8169301ABB7A6D001DA9DF /* SystemLifetimeManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemLifetimeManager.cpp; path = source/Initialization/SystemLifetimeManager.cpp; sourceTree = "<group>"; };
+		3F8169341ABB7A80001DA9DF /* SystemInitializer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemInitializer.h; path = include/lldb/Initialization/SystemInitializer.h; sourceTree = "<group>"; };
+		3F8169351ABB7A80001DA9DF /* SystemInitializerCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemInitializerCommon.h; path = include/lldb/Initialization/SystemInitializerCommon.h; sourceTree = "<group>"; };
+		3F8169361ABB7A80001DA9DF /* SystemLifetimeManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemLifetimeManager.h; path = include/lldb/Initialization/SystemLifetimeManager.h; sourceTree = "<group>"; };
 		3FDFD6C3199C396E009756A7 /* FileAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileAction.h; path = include/lldb/Target/FileAction.h; sourceTree = "<group>"; };
 		3FDFDDBC199C3A06009756A7 /* FileAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAction.cpp; path = source/Target/FileAction.cpp; sourceTree = "<group>"; };
 		3FDFDDBE199D345E009756A7 /* FileCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileCache.cpp; path = source/Host/common/FileCache.cpp; sourceTree = "<group>"; };
@@ -3326,6 +3335,8 @@
 				94235B9B1A8D5FF300EB2EED /* SBVariablesOptions.cpp */,
 				B2A58721143119810092BFBA /* SBWatchpoint.h */,
 				B2A58723143119D50092BFBA /* SBWatchpoint.cpp */,
+				3F81692D1ABB7A40001DA9DF /* SystemInitializerFull.h */,
+				3F81692A1ABB7A16001DA9DF /* SystemInitializerFull.cpp */,
 			);
 			name = API;
 			sourceTree = "<group>";
@@ -4783,8 +4794,12 @@
 		3F8169261ABB73C1001DA9DF /* Initialization */ = {
 			isa = PBXGroup;
 			children = (
-				3F8169291ABB73E6001DA9DF /* InitializeLLDB.h */,
-				3F8169271ABB73D9001DA9DF /* InitializeLLDB.cpp */,
+				3F8169341ABB7A80001DA9DF /* SystemInitializer.h */,
+				3F81692E1ABB7A6D001DA9DF /* SystemInitializer.cpp */,
+				3F8169351ABB7A80001DA9DF /* SystemInitializerCommon.h */,
+				3F81692F1ABB7A6D001DA9DF /* SystemInitializerCommon.cpp */,
+				3F8169361ABB7A80001DA9DF /* SystemLifetimeManager.h */,
+				3F8169301ABB7A6D001DA9DF /* SystemLifetimeManager.cpp */,
 			);
 			name = Initialization;
 			sourceTree = "<group>";
@@ -5810,6 +5825,7 @@
 				26680324116005D9008E1FE4 /* SBThread.cpp in Sources */,
 				26680326116005DB008E1FE4 /* SBTarget.cpp in Sources */,
 				26680327116005DC008E1FE4 /* SBSourceManager.cpp in Sources */,
+				3F81692C1ABB7A1E001DA9DF /* SystemInitializerFull.cpp in Sources */,
 				26680328116005DE008E1FE4 /* SBProcess.cpp in Sources */,
 				2668032A116005E0008E1FE4 /* SBListener.cpp in Sources */,
 				2668032C116005E2008E1FE4 /* SBFrame.cpp in Sources */,
@@ -5927,6 +5943,7 @@
 				2689002413353DDE00698AC0 /* CommandObjectSettings.cpp in Sources */,
 				2689002513353DDE00698AC0 /* CommandObjectSource.cpp in Sources */,
 				2689002613353DDE00698AC0 /* CommandObjectSyntax.cpp in Sources */,
+				3F8169331ABB7A6D001DA9DF /* SystemLifetimeManager.cpp in Sources */,
 				4959511F1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp in Sources */,
 				26BC179918C7F2B300D2196D /* JITLoader.cpp in Sources */,
 				2689002713353DDE00698AC0 /* CommandObjectTarget.cpp in Sources */,
@@ -5995,6 +6012,7 @@
 				8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */,
 				2689005613353E0400698AC0 /* Value.cpp in Sources */,
 				2689005713353E0400698AC0 /* ValueObject.cpp in Sources */,
+				3F8169321ABB7A6D001DA9DF /* SystemInitializerCommon.cpp in Sources */,
 				2689005813353E0400698AC0 /* ValueObjectChild.cpp in Sources */,
 				E7723D441AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.cpp in Sources */,
 				233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */,
@@ -6086,6 +6104,7 @@
 				268900B013353E5000698AC0 /* RegisterContextLLDB.cpp in Sources */,
 				3FDFE56C19AF9C44009756A7 /* HostProcessPosix.cpp in Sources */,
 				268900B413353E5000698AC0 /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
+				3F8169311ABB7A6D001DA9DF /* SystemInitializer.cpp in Sources */,
 				3FDFED2D19C257A0009756A7 /* HostProcess.cpp in Sources */,
 				268900B513353E5000698AC0 /* StopInfoMachException.cpp in Sources */,
 				268900B613353E5000698AC0 /* UnwindMacOSXFrameBackchain.cpp in Sources */,
@@ -6377,7 +6396,6 @@
 				94CB257216B0A4270059775D /* TypeSynthetic.cpp in Sources */,
 				94CB257416B1D3880059775D /* FormatCache.cpp in Sources */,
 				A36FF33C17D8E94600244D40 /* OptionParser.cpp in Sources */,
-				3F8169281ABB73D9001DA9DF /* InitializeLLDB.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

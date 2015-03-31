@@ -48,33 +48,34 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static ScriptInterpreterPython::SWIGInitCallback g_swig_init_callback = nullptr;
+static ScriptInterpreterPython::SWIGBreakpointCallbackFunction g_swig_breakpoint_callback = nullptr;
+static ScriptInterpreterPython::SWIGWatchpointCallbackFunction g_swig_watchpoint_callback = nullptr;
+static ScriptInterpreterPython::SWIGPythonTypeScriptCallbackFunction g_swig_typescript_callback = nullptr;
+static ScriptInterpreterPython::SWIGPythonCreateSyntheticProvider g_swig_synthetic_script = nullptr;
+static ScriptInterpreterPython::SWIGPythonCreateCommandObject g_swig_create_cmd = nullptr;
+static ScriptInterpreterPython::SWIGPythonCalculateNumChildren g_swig_calc_children = nullptr;
+static ScriptInterpreterPython::SWIGPythonGetChildAtIndex g_swig_get_child_index = nullptr;
+static ScriptInterpreterPython::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = nullptr;
+static ScriptInterpreterPython::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = nullptr;
+static ScriptInterpreterPython::SWIGPythonGetValueObjectSPFromSBValue g_swig_get_valobj_sp_from_sbvalue = nullptr;
+static ScriptInterpreterPython::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = nullptr;
+static ScriptInterpreterPython::SWIGPythonMightHaveChildrenSynthProviderInstance g_swig_mighthavechildren_provider = nullptr;
+static ScriptInterpreterPython::SWIGPythonGetValueSynthProviderInstance g_swig_getvalue_provider = nullptr;
+static ScriptInterpreterPython::SWIGPythonCallCommand g_swig_call_command = nullptr;
+static ScriptInterpreterPython::SWIGPythonCallCommandObject g_swig_call_command_object = nullptr;
+static ScriptInterpreterPython::SWIGPythonCallModuleInit g_swig_call_module_init = nullptr;
+static ScriptInterpreterPython::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = nullptr;
+static ScriptInterpreterPython::SWIGPythonScriptKeyword_Process g_swig_run_script_keyword_process = nullptr;
+static ScriptInterpreterPython::SWIGPythonScriptKeyword_Thread g_swig_run_script_keyword_thread = nullptr;
+static ScriptInterpreterPython::SWIGPythonScriptKeyword_Target g_swig_run_script_keyword_target = nullptr;
+static ScriptInterpreterPython::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = nullptr;
+static ScriptInterpreterPython::SWIGPythonScriptKeyword_Value g_swig_run_script_keyword_value = nullptr;
+static ScriptInterpreterPython::SWIGPython_GetDynamicSetting g_swig_plugin_get = nullptr;
+static ScriptInterpreterPython::SWIGPythonCreateScriptedThreadPlan g_swig_thread_plan_script = nullptr;
+static ScriptInterpreterPython::SWIGPythonCallThreadPlan g_swig_call_thread_plan = nullptr;
 
-static ScriptInterpreter::SWIGInitCallback g_swig_init_callback = nullptr;
-static ScriptInterpreter::SWIGBreakpointCallbackFunction g_swig_breakpoint_callback = nullptr;
-static ScriptInterpreter::SWIGWatchpointCallbackFunction g_swig_watchpoint_callback = nullptr;
-static ScriptInterpreter::SWIGPythonTypeScriptCallbackFunction g_swig_typescript_callback = nullptr;
-static ScriptInterpreter::SWIGPythonCreateSyntheticProvider g_swig_synthetic_script = nullptr;
-static ScriptInterpreter::SWIGPythonCreateCommandObject g_swig_create_cmd = nullptr;
-static ScriptInterpreter::SWIGPythonCalculateNumChildren g_swig_calc_children = nullptr;
-static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = nullptr;
-static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = nullptr;
-static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = nullptr;
-static ScriptInterpreter::SWIGPythonGetValueObjectSPFromSBValue g_swig_get_valobj_sp_from_sbvalue = nullptr;
-static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = nullptr;
-static ScriptInterpreter::SWIGPythonMightHaveChildrenSynthProviderInstance g_swig_mighthavechildren_provider = nullptr;
-static ScriptInterpreter::SWIGPythonGetValueSynthProviderInstance g_swig_getvalue_provider = nullptr;
-static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = nullptr;
-static ScriptInterpreter::SWIGPythonCallCommandObject g_swig_call_command_object = nullptr;
-static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = nullptr;
-static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = nullptr;
-static ScriptInterpreter::SWIGPythonScriptKeyword_Process g_swig_run_script_keyword_process = nullptr;
-static ScriptInterpreter::SWIGPythonScriptKeyword_Thread g_swig_run_script_keyword_thread = nullptr;
-static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keyword_target = nullptr;
-static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = nullptr;
-static ScriptInterpreter::SWIGPythonScriptKeyword_Value g_swig_run_script_keyword_value = nullptr;
-static ScriptInterpreter::SWIGPython_GetDynamicSetting g_swig_plugin_get = nullptr;
-static ScriptInterpreter::SWIGPythonCreateScriptedThreadPlan g_swig_thread_plan_script = nullptr;
-static ScriptInterpreter::SWIGPythonCallThreadPlan g_swig_call_thread_plan = nullptr;
+static bool g_initialized = false;
 
 static std::string
 ReadPythonBacktrace (PyObject* py_backtrace);
@@ -175,8 +176,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_lock_count (0),
     m_command_thread_state (nullptr)
 {
-
-    ScriptInterpreterPython::InitializePrivate ();
+    assert(g_initialized && "ScriptInterpreterPython created but initialize has not been called!");
 
     m_dictionary_name.append("_dict");
     StreamString run_string;
@@ -189,16 +189,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
 
     run_string.Clear();
 
-    // Importing 'lldb' module calls SBDebugger::Initialize, which calls Debugger::Initialize, which increments a
-    // global debugger ref-count; therefore we need to check the ref-count before and after importing lldb, and if the
-    // ref-count increased we need to call Debugger::Terminate here to decrement the ref-count so that when the final 
-    // call to Debugger::Terminate is made, the ref-count has the correct value. 
-    //
-    // Bonus question:  Why doesn't the ref-count always increase?  Because sometimes lldb has already been imported, in
-    // which case the code inside it, including the call to SBDebugger::Initialize(), does not get executed.
-    
-    int old_count = Debugger::TestDebuggerRefCount();
-    
     run_string.Printf ("run_one_line (%s, 'import copy, keyword, os, re, sys, uuid, lldb')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
 
@@ -208,11 +198,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     run_string.Printf ("run_one_line (%s, 'import lldb.formatters, lldb.formatters.cpp, pydoc')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
-
-    int new_count = Debugger::TestDebuggerRefCount();
-    
-    if (new_count > old_count)
-        Debugger::Terminate();
 
     run_string.Printf ("run_one_line (%s, 'import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
@@ -3029,11 +3014,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
 void
 ScriptInterpreterPython::InitializePrivate ()
 {
-    static int g_initialized = false;
-    
-    if (g_initialized)
-        return;
-    
+    assert(!g_initialized && "ScriptInterpreterPython::InitializePrivate() called more than once!");
     g_initialized = true;
 
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
@@ -3057,7 +3038,6 @@ ScriptInterpreterPython::InitializePrivate ()
     }
     Py_InitializeEx (0);
 
-    // Initialize SWIG after setting up python
     if (g_swig_init_callback)
         g_swig_init_callback ();
 
@@ -3095,19 +3075,7 @@ ScriptInterpreterPython::InitializePrivate ()
         }
     }
 
-    // Importing 'lldb' module calls SBDebugger::Initialize, which calls Debugger::Initialize, which increments a
-    // global debugger ref-count; therefore we need to check the ref-count before and after importing lldb, and if the
-    // ref-count increased we need to call Debugger::Terminate here to decrement the ref-count so that when the final 
-    // call to Debugger::Terminate is made, the ref-count has the correct value. 
-    
-    int old_count = Debugger::TestDebuggerRefCount ();
-
     PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line");
-
-    int new_count = Debugger::TestDebuggerRefCount ();
-    
-    if (new_count > old_count)
-        Debugger::Terminate ();
 
     if (threads_already_initialized) {
         if (log)

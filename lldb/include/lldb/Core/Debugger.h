@@ -65,10 +65,10 @@ public:
     FindTargetWithProcess (Process *process);
 
     static void
-    Initialize (LoadPluginCallbackType load_plugin_callback);
+    Initialize(LoadPluginCallbackType load_plugin_callback);
     
-    static int
-    Terminate ();
+    static void
+    Terminate();
     
     static void
     SettingsInitialize ();
@@ -247,9 +247,6 @@ public:
 
     void
     ClearIOHandlers ();
-
-    static int
-    TestDebuggerRefCount ();
 
     bool
     GetCloseInputOnEOF () const;

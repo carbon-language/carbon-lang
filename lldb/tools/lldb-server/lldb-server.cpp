@@ -8,10 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Debugger.h"
-#include "lldb/Initialization/InitializeLLDB.h"
+#include "lldb/Initialization/SystemLifetimeManager.h"
+#include "lldb/Initialization/SystemInitializerCommon.h"
+
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ManagedStatic.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+static llvm::ManagedStatic<lldb_private::SystemLifetimeManager> g_debugger_lifetime;
 
 static void
 display_usage (const char *progname)
@@ -30,13 +36,13 @@ int main_platform (int argc, char *argv[]);
 static void
 initialize ()
 {
-    lldb_private::InitializeForLLGS(nullptr);
+    g_debugger_lifetime->Initialize(llvm::make_unique<lldb_private::SystemInitializerCommon>(), nullptr);
 }
 
 static void
 terminate ()
 {
-    lldb_private::TerminateLLGS();
+    g_debugger_lifetime->Terminate();
 }
 
 //----------------------------------------------------------------------
