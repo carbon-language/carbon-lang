@@ -110,9 +110,7 @@ public:
   MipsTargetHandler(MipsLinkingContext &ctx)
       : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<ELFT>(ctx)),
         _targetLayout(new MipsTargetLayout<ELFT>(ctx)),
-        _relocationHandler(createMipsRelocationHandler<ELFT>(ctx)) {}
-
-  MipsTargetLayout<ELFT> &getTargetLayout() override { return *_targetLayout; }
+        _relocationHandler(createMipsRelocationHandler<ELFT>(ctx, *_targetLayout)) {}
 
   std::unique_ptr<Reader> getObjReader() override {
     return llvm::make_unique<MipsELFObjectReader<ELFT>>(_ctx);

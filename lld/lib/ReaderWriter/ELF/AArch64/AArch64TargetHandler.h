@@ -30,10 +30,6 @@ class AArch64TargetHandler final : public DefaultTargetHandler<AArch64ELFType> {
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 
-  AArch64TargetLayout<AArch64ELFType> &getTargetLayout() override {
-    return *_aarch64TargetLayout;
-  }
-
   void registerRelocationNames(Registry &registry) override;
 
   const AArch64TargetRelocationHandler &getRelocationHandler() const override {

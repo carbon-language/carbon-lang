@@ -54,9 +54,6 @@ public:
 /// of creating atoms and how the atoms are written to the output file.
 template <class ELFT> class TargetHandler : public TargetHandlerBase {
 public:
-  /// The layout determined completely by the Target.
-  virtual TargetLayout<ELFT> &getTargetLayout() = 0;
-
   /// Determine how relocations need to be applied.
   virtual const TargetRelocationHandler &getRelocationHandler() const = 0;
 

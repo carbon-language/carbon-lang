@@ -31,10 +31,6 @@ class X86TargetHandler final
 public:
   X86TargetHandler(X86LinkingContext &ctx);
 
-  X86TargetLayout<X86ELFType> &getTargetLayout() override {
-    return *_x86TargetLayout;
-  }
-
   void registerRelocationNames(Registry &registry) override;
 
   const X86TargetRelocationHandler &getRelocationHandler() const override {

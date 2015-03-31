@@ -15,6 +15,8 @@
 namespace lld {
 namespace elf {
 
+template<typename ELFT> class MipsTargetLayout;
+
 class MipsRelocationHandler : public TargetRelocationHandler {
 public:
   virtual Reference::Addend readAddend(Reference::KindValue kind,
@@ -23,7 +25,7 @@ public:
 
 template <class ELFT>
 std::unique_ptr<TargetRelocationHandler>
-createMipsRelocationHandler(MipsLinkingContext &ctx);
+createMipsRelocationHandler(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout);
 
 } // elf
 } // lld

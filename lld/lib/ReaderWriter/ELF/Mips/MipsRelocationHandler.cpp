@@ -32,7 +32,8 @@ struct MipsRelocationParams {
 
 template <class ELFT> class RelocationHandler : public MipsRelocationHandler {
 public:
-  RelocationHandler(MipsLinkingContext &ctx) : _ctx(ctx) {}
+  RelocationHandler(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout)
+    : _ctx(ctx), _targetLayout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &writer,
                                   llvm::FileOutputBuffer &buf,
@@ -44,6 +45,7 @@ public:
 
 private:
   MipsLinkingContext &_ctx;
+  MipsTargetLayout<ELFT> &_targetLayout;
 };
 }
 
@@ -530,13 +532,10 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Mips);
 
-  auto &targetLayout = static_cast<MipsTargetLayout<ELFT> &>(
-      _ctx.getTargetHandler<ELFT>().getTargetLayout());
-
-  AtomLayout *gpAtom = targetLayout.getGP();
+  AtomLayout *gpAtom = _targetLayout.getGP();
   uint64_t gpAddr = gpAtom ? gpAtom->_virtualAddr : 0;
 
-  AtomLayout *gpDispAtom = targetLayout.getGPDisp();
+  AtomLayout *gpDispAtom = _targetLayout.getGPDisp();
   bool isGpDisp = gpDispAtom && ref.target() == gpDispAtom->_atom;
 
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
@@ -598,14 +597,16 @@ namespace elf {
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
-createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx) {
-  return llvm::make_unique<RelocationHandler<Mips32ELType>>(ctx);
+createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx,
+                                          MipsTargetLayout<Mips32ELType> &layout) {
+  return llvm::make_unique<RelocationHandler<Mips32ELType>>(ctx, layout);
 }
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
-createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx) {
-  return llvm::make_unique<RelocationHandler<Mips64ELType>>(ctx);
+createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx,
+                                          MipsTargetLayout<Mips64ELType> &layout) {
+  return llvm::make_unique<RelocationHandler<Mips64ELType>>(ctx, layout);
 }
 
 } // elf

@@ -113,10 +113,6 @@ public:
     return *_relocationHandler;
   }
 
-  HexagonTargetLayout<HexagonELFType> &getTargetLayout() override {
-    return *_targetLayout;
-  }
-
   std::unique_ptr<Reader> getObjReader() override {
     return llvm::make_unique<HexagonELFObjectReader>(_ctx);
   }
