@@ -723,9 +723,12 @@ SystemZInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned Start, End;
     if (isRxSBGMask(Imm, And.RegSize, Start, End)) {
       unsigned NewOpcode;
-      if (And.RegSize == 64)
+      if (And.RegSize == 64) {
         NewOpcode = SystemZ::RISBG;
-      else {
+        // Prefer RISBGN if available, since it does not clobber CC.
+        if (STI.hasMiscellaneousExtensions())
+          NewOpcode = SystemZ::RISBGN;
+      } else {
         NewOpcode = SystemZ::RISBMux;
         Start &= 31;
         End &= 31;
@@ -1146,17 +1149,22 @@ unsigned SystemZInstrInfo::getOpcodeForOffset(unsigned Opcode,
 
 unsigned SystemZInstrInfo::getLoadAndTest(unsigned Opcode) const {
   switch (Opcode) {
-  case SystemZ::L:    return SystemZ::LT;
-  case SystemZ::LY:   return SystemZ::LT;
-  case SystemZ::LG:   return SystemZ::LTG;
-  case SystemZ::LGF:  return SystemZ::LTGF;
-  case SystemZ::LR:   return SystemZ::LTR;
-  case SystemZ::LGFR: return SystemZ::LTGFR;
-  case SystemZ::LGR:  return SystemZ::LTGR;
-  case SystemZ::LER:  return SystemZ::LTEBR;
-  case SystemZ::LDR:  return SystemZ::LTDBR;
-  case SystemZ::LXR:  return SystemZ::LTXBR;
-  default:            return 0;
+  case SystemZ::L:      return SystemZ::LT;
+  case SystemZ::LY:     return SystemZ::LT;
+  case SystemZ::LG:     return SystemZ::LTG;
+  case SystemZ::LGF:    return SystemZ::LTGF;
+  case SystemZ::LR:     return SystemZ::LTR;
+  case SystemZ::LGFR:   return SystemZ::LTGFR;
+  case SystemZ::LGR:    return SystemZ::LTGR;
+  case SystemZ::LER:    return SystemZ::LTEBR;
+  case SystemZ::LDR:    return SystemZ::LTDBR;
+  case SystemZ::LXR:    return SystemZ::LTXBR;
+  // On zEC12 we prefer to use RISBGN.  But if there is a chance to
+  // actually use the condition code, we may turn it back into RISGB.
+  // Note that RISBG is not really a "load-and-test" instruction,
+  // but sets the same condition code values, so is OK to use here.
+  case SystemZ::RISBGN: return SystemZ::RISBG;
+  default:              return 0;
   }
 }
 

@@ -55,6 +55,11 @@ def FeatureInterlockedAccess1 : SystemZFeature<
 >;
 def FeatureNoInterlockedAccess1 : SystemZMissingFeature<"InterlockedAccess1">;
 
+def FeatureMiscellaneousExtensions : SystemZFeature<
+  "miscellaneous-extensions", "MiscellaneousExtensions",
+  "Assume that the miscellaneous-extensions facility is installed"
+>;
+
 def : Processor<"generic", NoItineraries, []>;
 def : Processor<"z10", NoItineraries, []>;
 def : Processor<"z196", NoItineraries,
@@ -64,4 +69,5 @@ def : Processor<"z196", NoItineraries,
 def : Processor<"zEC12", NoItineraries,
                 [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord,
                  FeatureFPExtension, FeaturePopulationCount,
-                 FeatureFastSerialization, FeatureInterlockedAccess1]>;
+                 FeatureFastSerialization, FeatureInterlockedAccess1,
+                 FeatureMiscellaneousExtensions]>;

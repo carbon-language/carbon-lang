@@ -898,6 +898,9 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
   }  
 
   unsigned Opcode = SystemZ::RISBG;
+  // Prefer RISBGN if available, since it does not clobber CC.
+  if (Subtarget->hasMiscellaneousExtensions())
+    Opcode = SystemZ::RISBGN;
   EVT OpcodeVT = MVT::i64;
   if (VT == MVT::i32 && Subtarget->hasHighWord()) {
     Opcode = SystemZ::RISBMux;
@@ -945,9 +948,13 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
 
   // See whether we can avoid an AND in the first operand by converting
   // ROSBG to RISBG.
-  if (Opcode == SystemZ::ROSBG && detectOrAndInsertion(Op0, RxSBG[I].Mask))
+  if (Opcode == SystemZ::ROSBG && detectOrAndInsertion(Op0, RxSBG[I].Mask)) {
     Opcode = SystemZ::RISBG;
-           
+    // Prefer RISBGN if available, since it does not clobber CC.
+    if (Subtarget->hasMiscellaneousExtensions())
+      Opcode = SystemZ::RISBGN;
+  }
+
   EVT VT = N->getValueType(0);
   SDValue Ops[5] = {
     convertTo(SDLoc(N), MVT::i64, Op0),

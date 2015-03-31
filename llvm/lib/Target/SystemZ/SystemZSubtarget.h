@@ -41,6 +41,7 @@ protected:
   bool HasPopulationCount;
   bool HasFastSerialization;
   bool HasInterlockedAccess1;
+  bool HasMiscellaneousExtensions;
 
 private:
   Triple TargetTriple;
@@ -95,6 +96,11 @@ public:
 
   // Return true if the target has interlocked-access facility 1.
   bool hasInterlockedAccess1() const { return HasInterlockedAccess1; }
+
+  // Return true if the target has the miscellaneous-extensions facility.
+  bool hasMiscellaneousExtensions() const {
+    return HasMiscellaneousExtensions;
+  }
 
   // Return true if GV can be accessed using LARL for reloc model RM
   // and code model CM.

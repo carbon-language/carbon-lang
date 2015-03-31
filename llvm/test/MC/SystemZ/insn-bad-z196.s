@@ -546,6 +546,11 @@
 	locr	%r0,%r0,-1
 	locr	%r0,%r0,16
 
+#CHECK: error: {{(instruction requires: miscellaneous-extensions)?}}
+#CHECK: risbgn	%r1, %r2, 0, 0, 0
+
+	risbgn	%r1, %r2, 0, 0, 0
+
 #CHECK: error: invalid operand
 #CHECK: risbhg	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand

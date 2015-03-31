@@ -1061,6 +1061,10 @@ let Defs = [CC] in {
     def RISBG : RotateSelectRIEf<"risbg", 0xEC55, GR64, GR64>;
 }
 
+// On zEC12 we have a variant of RISBG that does not set CC.
+let Predicates = [FeatureMiscellaneousExtensions] in
+  def RISBGN : RotateSelectRIEf<"risbgn", 0xEC59, GR64, GR64>;
+
 // Forms of RISBG that only affect one word of the destination register.
 // They do not set CC.
 let Predicates = [FeatureHighWord] in {
