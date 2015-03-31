@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZTargetMachine.h"
+#include "SystemZTargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
@@ -107,4 +108,10 @@ void SystemZPassConfig::addPreEmitPass() {
 
 TargetPassConfig *SystemZTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new SystemZPassConfig(this, PM);
+}
+
+TargetIRAnalysis SystemZTargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis([this](Function &F) {
+    return TargetTransformInfo(SystemZTTIImpl(this, F));
+  });
 }

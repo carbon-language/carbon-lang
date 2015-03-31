@@ -29,6 +29,7 @@ add_llvm_target(SystemZCodeGen
   SystemZShortenInst.cpp
   SystemZSubtarget.cpp
   SystemZTargetMachine.cpp
+  SystemZTargetTransformInfo.cpp
   )
 
 add_subdirectory(AsmParser)

@@ -49,13 +49,24 @@ define double @f4(double %a, double %b, i64 %i1) {
   ret double %res
 }
 
-; Check the next value up, which must use a register comparison.
+; Check the next value up, which can use a shifted comparison
 define double @f5(double %a, double %b, i64 %i1) {
 ; CHECK-LABEL: f5:
-; CHECK: clgrjl %r2,
+; CHECK: srlg [[REG:%r[0-5]]], %r2, 32
+; CHECK: cgije [[REG]], 0
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp ult i64 %i1, 4294967296
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+; Check the next value up, which must use a register comparison.
+define double @f6(double %a, double %b, i64 %i1) {
+; CHECK-LABEL: f6:
+; CHECK: clgrjl %r2,
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %cond = icmp ult i64 %i1, 4294967297
   %res = select i1 %cond, double %a, double %b
   ret double %res
 }

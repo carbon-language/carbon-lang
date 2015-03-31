@@ -309,7 +309,8 @@ exit:
 define void @f17(i64 %a) {
 ; CHECK-LABEL: f17:
 ; CHECK-NOT: tmhh
-; CHECK: llihh {{%r[0-5]}}, 49151
+; CHECK: srlg [[REG:%r[0-5]]], %r2, 48
+; CHECK: cgfi [[REG]], 49151
 ; CHECK-NOT: tmhh
 ; CHECK: br %r14
 entry:

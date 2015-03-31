@@ -342,6 +342,16 @@ bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
   return Imm.isZero() || Imm.isNegZero();
 }
 
+bool SystemZTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  // We can use CGFI or CLGFI.
+  return isInt<32>(Imm) || isUInt<32>(Imm);
+}
+
+bool SystemZTargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  // We can use ALGFI or SLGFI.
+  return isUInt<32>(Imm) || isUInt<32>(-Imm);
+}
+
 bool SystemZTargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
                                                            unsigned,
                                                            unsigned,

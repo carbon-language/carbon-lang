@@ -1,0 +1,68 @@
+//===-- SystemZTargetTransformInfo.h - SystemZ-specific TTI ---------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZTARGETTRANSFORMINFO_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZTARGETTRANSFORMINFO_H
+
+#include "SystemZTargetMachine.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/BasicTTIImpl.h"
+
+namespace llvm {
+
+class SystemZTTIImpl : public BasicTTIImplBase<SystemZTTIImpl> {
+  typedef BasicTTIImplBase<SystemZTTIImpl> BaseT;
+  typedef TargetTransformInfo TTI;
+  friend BaseT;
+
+  const SystemZSubtarget *ST;
+  const SystemZTargetLowering *TLI;
+
+  const SystemZSubtarget *getST() const { return ST; }
+  const SystemZTargetLowering *getTLI() const { return TLI; }
+
+public:
+  explicit SystemZTTIImpl(const SystemZTargetMachine *TM, Function &F)
+    : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+
+  // Provide value semantics. MSVC requires that we spell all of these out.
+  SystemZTTIImpl(const SystemZTTIImpl &Arg)
+      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
+  SystemZTTIImpl(SystemZTTIImpl &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
+        TLI(std::move(Arg.TLI)) {}
+  SystemZTTIImpl &operator=(const SystemZTTIImpl &RHS) {
+    BaseT::operator=(static_cast<const BaseT &>(RHS));
+    ST = RHS.ST;
+    TLI = RHS.TLI;
+    return *this;
+  }
+  SystemZTTIImpl &operator=(SystemZTTIImpl &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    ST = std::move(RHS.ST);
+    TLI = std::move(RHS.TLI);
+    return *this;
+  }
+
+  /// \name Scalar TTI Implementations
+  /// @{
+
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty);
+
+  unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+                         Type *Ty);
+  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                         Type *Ty);
+
+  /// @}
+};
+
+} // end namespace llvm
+
+#endif
