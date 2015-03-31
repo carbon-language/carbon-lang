@@ -222,7 +222,7 @@ CMICmdCmdGdbSet::GetOptionFn(const CMIUtilString &vrPrintFnName, FnGdbOptionPtr 
 bool
 CMICmdCmdGdbSet::OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords)
 {
-    bool bAsyncMode;
+    bool bAsyncMode = false;
     bool bOk = true;
 
     if (vrWords.size() > 1)
