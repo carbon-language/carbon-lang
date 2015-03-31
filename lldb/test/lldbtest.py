@@ -1389,7 +1389,10 @@ class Base(unittest2.TestCase):
 
     def getPlatform(self):
         """Returns the platform the test suite is running on."""
-        return lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+        if platform.startswith('freebsd'):
+            platform = 'freebsd'
+        return platform
 
     def isIntelCompiler(self):
         """ Returns true if using an Intel (ICC) compiler, false otherwise. """
