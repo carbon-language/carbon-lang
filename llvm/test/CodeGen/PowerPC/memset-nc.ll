@@ -1,4 +1,5 @@
 ; RUN: llc < %s | FileCheck %s
+; RUN: llc -O0 < %s | FileCheck %s -check-prefix=CHECK-O0
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-v128:128:128-n32:64"
 target triple = "powerpc64-bgq-linux"
 
@@ -14,6 +15,10 @@ entry:
 ; CHECK: qvstfdx
 ; CHECK: qvstfdx
 ; CHECK: blr
+
+; CHECK-O0-LABEL: @test_qpx
+; CHECK-O0-NOT: qvstfdx
+; CHECK-O0: blr
 }
 
 ; Function Attrs: nounwind
@@ -31,6 +36,10 @@ entry:
 ; CHECK: stxvw4x
 ; CHECK: stxvw4x
 ; CHECK: blr
+
+; CHECK-O0-LABEL: @test_vsx
+; CHECK-O0-NOT: stxvw4x
+; CHECK-O0: blr
 }
 
 attributes #0 = { nounwind "target-cpu"="a2q" }

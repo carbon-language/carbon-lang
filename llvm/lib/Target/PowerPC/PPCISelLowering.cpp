@@ -11023,21 +11023,23 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
                                            bool IsMemset, bool ZeroMemset,
                                            bool MemcpyStrSrc,
                                            MachineFunction &MF) const {
-  const Function *F = MF.getFunction();
-  // When expanding a memset, require at least two QPX instructions to cover
-  // the cost of loading the value to be stored from the constant pool.
-  if (Subtarget.hasQPX() && Size >= 32 && (!IsMemset || Size >= 64) &&
-     (!SrcAlign || SrcAlign >= 32) && (!DstAlign || DstAlign >= 32) &&
-      !F->hasFnAttribute(Attribute::NoImplicitFloat)) {
-    return MVT::v4f64;
-  }
+  if (getTargetMachine().getOptLevel() != CodeGenOpt::None) {
+    const Function *F = MF.getFunction();
+    // When expanding a memset, require at least two QPX instructions to cover
+    // the cost of loading the value to be stored from the constant pool.
+    if (Subtarget.hasQPX() && Size >= 32 && (!IsMemset || Size >= 64) &&
+       (!SrcAlign || SrcAlign >= 32) && (!DstAlign || DstAlign >= 32) &&
+        !F->hasFnAttribute(Attribute::NoImplicitFloat)) {
+      return MVT::v4f64;
+    }
 
-  // We should use Altivec/VSX loads and stores when available. For unaligned
-  // addresses, unaligned VSX loads are only fast starting with the P8.
-  if (Subtarget.hasAltivec() && Size >= 16 &&
-      (((!SrcAlign || SrcAlign >= 16) && (!DstAlign || DstAlign >= 16)) ||
-       ((IsMemset && Subtarget.hasVSX()) || Subtarget.hasP8Vector())))
-    return MVT::v4i32;
+    // We should use Altivec/VSX loads and stores when available. For unaligned
+    // addresses, unaligned VSX loads are only fast starting with the P8.
+    if (Subtarget.hasAltivec() && Size >= 16 &&
+        (((!SrcAlign || SrcAlign >= 16) && (!DstAlign || DstAlign >= 16)) ||
+         ((IsMemset && Subtarget.hasVSX()) || Subtarget.hasP8Vector())))
+      return MVT::v4i32;
+  }
 
   if (Subtarget.isPPC64()) {
     return MVT::i64;
