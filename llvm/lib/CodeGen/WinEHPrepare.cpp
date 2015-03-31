@@ -638,16 +638,6 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   if (!LPadMap.isInitialized())
     LPadMap.mapLandingPad(LPad);
   if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
-    // Insert an alloca for the object which holds the address of the parent's
-    // frame pointer.  The stack offset of this object needs to be encoded in
-    // xdata.
-    AllocaInst *ParentFrame = new AllocaInst(Int8PtrType, "parentframe", Entry);
-    Builder.CreateStore(&Handler->getArgumentList().back(), ParentFrame,
-                        /*isStore=*/true);
-    Function *ParentFrameFn =
-        Intrinsic::getDeclaration(M, Intrinsic::eh_parentframe);
-    Builder.CreateCall(ParentFrameFn, ParentFrame);
-
     Constant *Sel = CatchAction->getSelector();
     Director.reset(new WinEHCatchDirector(Handler, Sel, VarInfo, LPadMap));
     LPadMap.remapSelector(VMap, ConstantInt::get(Type::getInt32Ty(Context), 1));

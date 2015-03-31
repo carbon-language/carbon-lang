@@ -139,6 +139,11 @@ MCSymbol *MCContext::getOrCreateFrameAllocSymbol(StringRef FuncName,
                            "$frame_escape_" + Twine(Idx));
 }
 
+MCSymbol *MCContext::getOrCreateParentFrameOffsetSymbol(StringRef FuncName) {
+  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + FuncName +
+                           "$parent_frame_offset");
+}
+
 MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
   // Determine whether this is an assembler temporary or normal label, if used.
   bool IsTemporary = false;

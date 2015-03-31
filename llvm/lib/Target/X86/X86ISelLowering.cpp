@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/WinEHFuncInfo.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -2266,6 +2267,12 @@ static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
   return makeArrayRef(std::begin(XMMArgRegs64Bit), std::end(XMMArgRegs64Bit));
 }
 
+static bool isOutlinedHandler(const MachineFunction &MF) {
+  const MachineModuleInfo &MMI = MF.getMMI();
+  const Function *F = MF.getFunction();
+  return MMI.getWinEHParent(F) != F;
+}
+
 SDValue
 X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                         CallingConv::ID CallConv,
@@ -2277,6 +2284,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                           const {
   MachineFunction &MF = DAG.getMachineFunction();
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  const TargetFrameLowering &TFI = *Subtarget->getFrameLowering();
 
   const Function* Fn = MF.getFunction();
   if (Fn->hasExternalLinkage() &&
@@ -2452,7 +2460,6 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
     }
 
     if (IsWin64) {
-      const TargetFrameLowering &TFI = *Subtarget->getFrameLowering();
       // Get to the caller-allocated home save location.  Add 8 to account
       // for the return address.
       int HomeOffset = TFI.getOffsetOfLocalArea() + 8;
@@ -2505,6 +2512,28 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
     if (!MemOps.empty())
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
+  } else if (IsWin64 && isOutlinedHandler(MF)) {
+    // Get to the caller-allocated home save location.  Add 8 to account
+    // for the return address.
+    int HomeOffset = TFI.getOffsetOfLocalArea() + 8;
+    FuncInfo->setRegSaveFrameIndex(MFI->CreateFixedObject(
+        /*Size=*/1, /*SPOffset=*/HomeOffset + 8, /*Immutable=*/false));
+
+    MachineModuleInfo &MMI = MF.getMMI();
+    MMI.getWinEHFuncInfo(Fn)
+        .CatchHandlerParentFrameObjIdx[const_cast<Function *>(Fn)] =
+        FuncInfo->getRegSaveFrameIndex();
+
+    // Store the second integer parameter (rdx) into rsp+16 relative to the
+    // stack pointer at the entry of the function.
+    SDValue RSFIN =
+        DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(), getPointerTy());
+    unsigned GPR = MF.addLiveIn(X86::RDX, &X86::GR64RegClass);
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, GPR, MVT::i64);
+    Chain = DAG.getStore(
+        Val.getValue(1), dl, Val, RSFIN,
+        MachinePointerInfo::getFixedStack(FuncInfo->getRegSaveFrameIndex()),
+        /*isVolatile=*/true, /*isNonTemporal=*/false, /*Alignment=*/0);
   }
 
   if (isVarArg && MFI->hasMustTailInVarArgFunc()) {

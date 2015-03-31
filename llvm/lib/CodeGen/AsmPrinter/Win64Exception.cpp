@@ -68,6 +68,27 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
   shouldEmitLSDA = shouldEmitPersonality &&
     LSDAEncoding != dwarf::DW_EH_PE_omit;
 
+
+  // If this was an outlined handler, we need to define the label corresponding
+  // to the offset of the parent frame relative to the stack pointer after the
+  // prologue.
+  const Function *F = MF->getFunction();
+  const Function *ParentF = MMI->getWinEHParent(F);
+  if (F != ParentF) {
+    WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(ParentF);
+    auto I = FuncInfo.CatchHandlerParentFrameObjOffset.find(F);
+    if (I != FuncInfo.CatchHandlerParentFrameObjOffset.end()) {
+      MCSymbol *HandlerTypeParentFrameOffset =
+          Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
+              GlobalValue::getRealLinkageName(F->getName()));
+
+      // Emit a symbol assignment.
+      Asm->OutStreamer.EmitAssignment(
+          HandlerTypeParentFrameOffset,
+          MCConstantExpr::Create(I->second, Asm->OutContext));
+    }
+  }
+
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 
@@ -253,6 +274,7 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
   const Function *ParentF = MMI->getWinEHParent(F);
   auto &OS = Asm->OutStreamer;
+  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(ParentF);
 
   StringRef ParentLinkageName =
       GlobalValue::getRealLinkageName(ParentF->getName());
@@ -278,8 +300,6 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   // Whether there is a potentially throwing instruction (currently this means
   // an ordinary call) between the end of the previous try-range and now.
   bool SawPotentiallyThrowing = false;
-
-  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(ParentF);
 
   int LastEHState = -2;
 
@@ -424,11 +444,17 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       // };
       OS.EmitLabel(HandlerMapXData);
       for (const WinEHHandlerType &HT : TBME.HandlerArray) {
+        MCSymbol *ParentFrameOffset =
+            Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
+                GlobalValue::getRealLinkageName(HT.Handler->getName()));
+        const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::Create(
+            ParentFrameOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
+
         OS.EmitIntValue(HT.Adjectives, 4);                    // Adjectives
         OS.EmitValue(createImageRel32(HT.TypeDescriptor), 4); // Type
-        OS.EmitIntValue(0, 4);                                // CatchObjOffset
+        OS.EmitIntValue(HT.CatchObjOffset, 4);                // CatchObjOffset
         OS.EmitValue(createImageRel32(HT.Handler), 4);        // Handler
-        OS.EmitIntValue(0, 4);                                // ParentFrameOffset
+        OS.EmitValue(ParentFrameOffsetRef, 4);                // ParentFrameOffset
       }
     }
   }

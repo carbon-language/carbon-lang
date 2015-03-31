@@ -103,7 +103,9 @@ struct WinEHUnwindMapEntry {
 
 struct WinEHHandlerType {
   int Adjectives;
-  GlobalValue *TypeDescriptor;
+  GlobalVariable *TypeDescriptor;
+  int CatchObjIdx;
+  int CatchObjOffset;
   Function *Handler;
 };
 
@@ -111,7 +113,7 @@ struct WinEHTryBlockMapEntry {
   int TryLow;
   int TryHigh;
   int CatchHigh;
-  SmallVector<WinEHHandlerType, 4> HandlerArray;
+  SmallVector<WinEHHandlerType, 1> HandlerArray;
 };
 
 struct WinEHFuncInfo {

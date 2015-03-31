@@ -27,7 +27,7 @@ $_TI1H = comdat any
 @_TI1H = linkonce_odr unnamed_addr constant %eh.ThrowInfo { i32 0, i32 0, i32 0, i32 trunc (i64 sub nuw nsw (i64 ptrtoint (%eh.CatchableTypeArray.1* @_CTA1H to i64), i64 ptrtoint (i8* @__ImageBase to i64)) to i32) }, section ".xdata", comdat
 
 
-; CHECK-LABEL: ?test1@@YAXXZ":
+; CHECK-LABEL: "?test1@@YAXXZ":
 ; CHECK:             .seh_handlerdata
 ; CHECK-NEXT:        .long   ("$cppxdata$?test1@@YAXXZ")@IMGREL
 ; CHECK-NEXT:"$cppxdata$?test1@@YAXXZ":
@@ -126,11 +126,11 @@ entry:
   %s1 = alloca %struct.S, align 1
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
-  call void @"\01?may_throw@@YAXXZ"()
-  call void (...)* @llvm.frameescape(%struct.S* %s, %struct.S* %s1)
-  store volatile i64 -2, i64* %unwindhelp
   %0 = bitcast i64* %unwindhelp to i8*
+  store volatile i64 -2, i64* %unwindhelp
+  call void (...)* @llvm.frameescape(%struct.S* %s, %struct.S* %s1)
   call void @llvm.eh.unwindhelp(i8* %0)
+  call void @"\01?may_throw@@YAXXZ"()
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont unwind label %lpad1
 

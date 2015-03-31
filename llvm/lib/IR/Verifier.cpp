@@ -3228,13 +3228,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
 
-  case Intrinsic::eh_parentframe: {
-    auto *AI = dyn_cast<AllocaInst>(CI.getArgOperand(0)->stripPointerCasts());
-    Assert(AI && AI->isStaticAlloca(),
-           "llvm.eh.parentframe requires a static alloca", &CI);
-    break;
-  }
-
   case Intrinsic::eh_unwindhelp: {
     auto *AI = dyn_cast<AllocaInst>(CI.getArgOperand(0)->stripPointerCasts());
     Assert(AI && AI->isStaticAlloca(),
