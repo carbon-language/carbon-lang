@@ -42,11 +42,12 @@ private:
 };
 
 template <typename T>
-std::string runCheckOnCode(StringRef Code,
-                           std::vector<ClangTidyError> *Errors = nullptr,
-                           const Twine &Filename = "input.cc",
-                           ArrayRef<std::string> ExtraArgs = None) {
-  ClangTidyOptions Options;
+std::string
+runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
+               const Twine &Filename = "input.cc",
+               ArrayRef<std::string> ExtraArgs = None,
+               const ClangTidyOptions &ExtraOptions = ClangTidyOptions()) {
+  ClangTidyOptions Options = ExtraOptions;
   Options.Checks = "*";
   ClangTidyContext Context(llvm::make_unique<DefaultOptionsProvider>(
       ClangTidyGlobalOptions(), Options));

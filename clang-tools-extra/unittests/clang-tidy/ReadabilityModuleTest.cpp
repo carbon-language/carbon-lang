@@ -235,6 +235,27 @@ TEST(BracesAroundStatementsCheck, If) {
                                                         "}"));
 }
 
+TEST(BracesAroundStatementsCheck, IfElseWithShortStatements) {
+  ClangTidyOptions Options;
+  Options.CheckOptions["test-check.ShortStatementLines"] = "1";
+
+  EXPECT_EQ("int main() {\n"
+            "  if (true) return 1;\n"
+            "  if (false) { return -1;\n"
+            "  } else if (1 == 2) { return -2;\n"
+            "  } else { return -3;\n"
+            "}\n"
+            "}",
+            runCheckOnCode<BracesAroundStatementsCheck>(
+                "int main() {\n"
+                "  if (true) return 1;\n"
+                "  if (false) return -1;\n"
+                "  else if (1 == 2) return -2;\n"
+                "  else return -3;\n"
+                "}",
+                nullptr, "input.cc", None, Options));
+}
+
 TEST(BracesAroundStatementsCheck, For) {
   EXPECT_NO_CHANGES(BracesAroundStatementsCheck, "int main() {\n"
                                                  "  for (;;) {\n"

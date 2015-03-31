@@ -43,9 +43,10 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
-  void checkStmt(const ast_matchers::MatchFinder::MatchResult &Result,
+  bool checkStmt(const ast_matchers::MatchFinder::MatchResult &Result,
                  const Stmt *S, SourceLocation StartLoc,
-                 SourceLocation EndLocHint = SourceLocation());
+                 SourceLocation EndLocHint = SourceLocation(),
+                 bool ForceBraces = false);
   template <typename IfOrWhileStmt>
   SourceLocation findRParenLoc(const IfOrWhileStmt *S, const SourceManager &SM,
                                const ASTContext *Context);

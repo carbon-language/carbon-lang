@@ -151,11 +151,11 @@ BracesAroundStatementsCheck::check(const MatchFinder::MatchResult &Result) {
     SourceLocation StartLoc = findRParenLoc(S, SM, Context);
     if (StartLoc.isInvalid())
       return;
-    checkStmt(Result, S->getThen(), StartLoc, S->getElseLoc());
+    bool BracedIf = checkStmt(Result, S->getThen(), StartLoc, S->getElseLoc());
     const Stmt *Else = S->getElse();
     if (Else && !isa<IfStmt>(Else)) {
       // Omit 'else if' statements here, they will be handled directly.
-      checkStmt(Result, Else, S->getElseLoc());
+      checkStmt(Result, Else, S->getElseLoc(), SourceLocation(), BracedIf);
     }
   } else {
     llvm_unreachable("Invalid match");
@@ -199,10 +199,11 @@ BracesAroundStatementsCheck::findRParenLoc(const IfOrWhileStmt *S,
   return RParenLoc;
 }
 
-void
-BracesAroundStatementsCheck::checkStmt(const MatchFinder::MatchResult &Result,
-                                       const Stmt *S, SourceLocation InitialLoc,
-                                       SourceLocation EndLocHint) {
+/// Determine if the statement needs braces around it, and add them if it does.
+/// Returns true if braces where added.
+bool BracesAroundStatementsCheck::checkStmt(
+    const MatchFinder::MatchResult &Result, const Stmt *S,
+    SourceLocation InitialLoc, SourceLocation EndLocHint, bool ForceBraces) {
   // 1) If there's a corresponding "else" or "while", the check inserts "} "
   // right before that token.
   // 2) If there's a multi-line block comment starting on the same line after
@@ -212,11 +213,11 @@ BracesAroundStatementsCheck::checkStmt(const MatchFinder::MatchResult &Result,
   // line comments) and inserts "\n}" right before that EOL.
   if (!S || isa<CompoundStmt>(S)) {
     // Already inside braces.
-    return;
+    return false;
   }
   // Skip macros.
   if (S->getLocStart().isMacroID())
-    return;
+    return false;
 
   const SourceManager &SM = *Result.SourceManager;
   const ASTContext *Context = Result.Context;
@@ -240,16 +241,17 @@ BracesAroundStatementsCheck::checkStmt(const MatchFinder::MatchResult &Result,
   assert(EndLoc.isValid());
   // Don't require braces for statements spanning less than certain number of
   // lines.
-  if (ShortStatementLines) {
+  if (ShortStatementLines && !ForceBraces) {
     unsigned StartLine = SM.getSpellingLineNumber(StartLoc);
     unsigned EndLine = SM.getSpellingLineNumber(EndLoc);
     if (EndLine - StartLine < ShortStatementLines)
-      return;
+      return false;
   }
 
   auto Diag = diag(StartLoc, "statement should be inside braces");
   Diag << FixItHint::CreateInsertion(StartLoc, " {")
        << FixItHint::CreateInsertion(EndLoc, ClosingInsertion);
+  return true;
 }
 
 } // namespace readability
