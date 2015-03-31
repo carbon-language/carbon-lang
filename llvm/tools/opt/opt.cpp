@@ -354,7 +354,8 @@ int main(int argc, char **argv) {
   // pass pipelines.  Otherwise we can crash on broken code during
   // doInitialization().
   if (!NoVerify && verifyModule(*M, &errs())) {
-    errs() << argv[0] << ": " << InputFilename << ": error: does not verify\n";
+    errs() << argv[0] << ": " << InputFilename
+           << ": error: input module is broken!\n";
     return 1;
   }
 

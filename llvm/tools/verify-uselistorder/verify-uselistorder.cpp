@@ -534,8 +534,11 @@ int main(int argc, char **argv) {
     Err.print(argv[0], errs());
     return 1;
   }
-  if (verifyModule(*M, &errs()))
-    report_fatal_error("verification failed");
+  if (verifyModule(*M, &errs())) {
+    errs() << argv[0] << ": " << InputFilename
+           << ": error: input module is broken!\n";
+    return 1;
+  }
 
   errs() << "*** verify-use-list-order ***\n";
   // Can't verify if order isn't preserved.

@@ -93,7 +93,7 @@ std::unique_ptr<Module> llvm::parseInputFile(StringRef Filename,
   }
 
   if (verifyModule(*Result, &errs())) {
-    errs() << "bugpoint: " << Filename << ": error: does not verify\n";
+    errs() << "bugpoint: " << Filename << ": error: input module is broken!\n";
     return std::unique_ptr<Module>();
   }
 

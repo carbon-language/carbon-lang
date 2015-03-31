@@ -116,9 +116,9 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (verifyModule(*M)) {
-      errs() << argv[0] << ": input module '" << InputFilenames[i]
-             << "' is broken!\n";
+    if (verifyModule(*M, &errs())) {
+      errs() << argv[0] << ": " << InputFilenames[i]
+             << ": error: input module is broken!\n";
       return 1;
     }
 
@@ -137,8 +137,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (verifyModule(*Composite)) {
-    errs() << argv[0] << ": linked module is broken!\n";
+  if (verifyModule(*Composite, &errs())) {
+    errs() << argv[0] << ": error: linked module is broken!\n";
     return 1;
   }
 

@@ -230,7 +230,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
     // called on any passes.
     if (!NoVerify && verifyModule(*M, &errs())) {
       errs() << argv[0] << ": " << InputFilename
-             << ": error: does not verify\n";
+             << ": error: input module is broken!\n";
       return 1;
     }
 
