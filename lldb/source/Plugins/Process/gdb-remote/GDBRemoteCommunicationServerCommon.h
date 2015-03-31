@@ -149,7 +149,10 @@ protected:
     Handle_qLaunchSuccess (StringExtractorGDBRemote &packet);
 
     PacketResult
-    Handle_QEnvironment  (StringExtractorGDBRemote &packet);
+    Handle_QEnvironment (StringExtractorGDBRemote &packet);
+
+    PacketResult
+    Handle_QEnvironmentHexEncoded (StringExtractorGDBRemote &packet);
 
     PacketResult
     Handle_QLaunchArch (StringExtractorGDBRemote &packet);

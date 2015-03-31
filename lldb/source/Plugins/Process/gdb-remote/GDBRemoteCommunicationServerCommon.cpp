@@ -71,6 +71,8 @@ GDBRemoteCommunicationServerCommon::GDBRemoteCommunicationServerCommon(const cha
                                   &GDBRemoteCommunicationServerCommon::Handle_A);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_QEnvironment,
                                   &GDBRemoteCommunicationServerCommon::Handle_QEnvironment);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_QEnvironmentHexEncoded,
+                                  &GDBRemoteCommunicationServerCommon::Handle_QEnvironmentHexEncoded);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qfProcessInfo,
                                   &GDBRemoteCommunicationServerCommon::Handle_qfProcessInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qGroupName,
@@ -1020,6 +1022,21 @@ GDBRemoteCommunicationServerCommon::Handle_QEnvironment (StringExtractorGDBRemot
         return SendOKResponse ();
     }
     return SendErrorResponse (12);
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerCommon::Handle_QEnvironmentHexEncoded (StringExtractorGDBRemote &packet)
+{
+    packet.SetFilePos(::strlen("QEnvironmentHexEncoded:"));
+    const uint32_t bytes_left = packet.GetBytesLeft();
+    if (bytes_left > 0)
+    {
+        std::string str;
+        packet.GetHexByteString(str);
+        m_process_launch_info.GetEnvironmentEntries().AppendArgument(str.c_str());
+        return SendOKResponse();
+    }
+    return SendErrorResponse(12);
 }
 
 GDBRemoteCommunication::PacketResult
