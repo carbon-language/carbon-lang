@@ -64,6 +64,9 @@ option(LIBCXX_ENABLE_MONOTONIC_CLOCK
    This option may only be used when LIBCXX_ENABLE_THREADS=OFF." ON)
 option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
+option(LIBCXX_GENERATE_COVERAGE "Enable generating code coverage." OFF)
+set(LIBCXX_COVERAGE_LIBRARY "" CACHE STRING
+       "The Profile-rt library used to build with code coverage")
 option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 set(LIBCXX_SYSROOT "" CACHE STRING "Use alternate sysroot.")
 set(LIBCXX_GCC_TOOLCHAIN "" CACHE STRING "Use alternate GCC toolchain.")
@@ -140,6 +143,11 @@ set(LIBCXX_LINK_FLAGS "")
 include(config-ix)
 # Configure ABI library
 include(HandleLibCXXABI)
+# Configure coverage options.
+if (LIBCXX_GENERATE_COVERAGE)
+  include(CodeCoverage)
+  set(CMAKE_BUILD_TYPE "COVERAGE" CACHE STRING "" FORCE)
+endif()
 
 #===============================================================================
 # Setup Compiler Flags
@@ -318,9 +326,14 @@ endif()
 
 append_if(LIBCXX_CXX_FLAGS LIBCXX_TARGET_TRIPLE
           "-target ${LIBCXX_TARGET_TRIPLE}")
+
 append_if(LIBCXX_CXX_FLAGS LIBCXX_SYSROOT "--sysroot ${LIBCXX_SYSROOT}")
 append_if(LIBCXX_CXX_FLAGS LIBCXX_GCC_TOOLCHAIN
           "-gcc-toolchain ${LIBCXX_GCC_TOOLCHAIN}")
+
+if (LLVM_USE_SANITIZER AND LIBCXX_GENERATE_COVERAGE)
+  message(FATAL_ERROR "LLVM_USE_SANITIZER cannot be used with LIBCXX_GENERATE_COVERAGE")
+endif()
 
 string(REPLACE ";" " " LIBCXX_CXX_FLAGS "${LIBCXX_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXX_CXX_FLAGS}")

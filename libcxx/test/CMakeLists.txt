@@ -47,6 +47,8 @@ if (LIT_EXECUTABLE)
   pythonize_bool(LIBCXX_ENABLE_STDOUT)
   pythonize_bool(LIBCXX_ENABLE_THREADS)
   pythonize_bool(LIBCXX_ENABLE_MONOTONIC_CLOCK)
+  pythonize_bool(LIBCXX_GENERATE_COVERAGE)
+
   # The tests shouldn't link to any ABI library when it has been linked into
   # libc++ statically.
   if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
@@ -71,6 +73,14 @@ if (LIT_EXECUTABLE)
     DEPENDS cxx
     COMMENT "Running libcxx tests"
     ${cmake_3_2_USES_TERMINAL})
+
+  if (LIBCXX_GENERATE_COVERAGE)
+    include(CodeCoverage)
+    set(output_dir "${CMAKE_CURRENT_BINARY_DIR}/coverage")
+    set(capture_dirs "${LIBCXX_LIB_CMAKEFILES_DIR}/cxx.dir/;${CMAKE_CURRENT_BINARY_DIR}")
+    set(extract_dirs "${LIBCXX_SOURCE_DIR}/include;${LIBCXX_SOURCE_DIR}/src")
+    setup_lcov_test_target_coverage("cxx" "${output_dir}" "${capture_dirs}" "${extract_dirs}")
+  endif()
 else()
   message(WARNING
           "LIT_EXECUTABLE not set, no check-libcxx target will be available!")

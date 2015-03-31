@@ -98,6 +98,7 @@ class Configuration(object):
         self.configure_debug_mode()
         self.configure_warnings()
         self.configure_sanitizer()
+        self.configure_coverage()
         self.configure_substitutions()
         self.configure_features()
 
@@ -593,6 +594,12 @@ class Configuration(object):
             else:
                 self.lit_config.fatal('unsupported value for '
                                       'use_sanitizer: {0}'.format(san))
+
+    def configure_coverage(self):
+        self.generate_coverage = self.get_lit_bool('generate_coverage', False)
+        if self.generate_coverage:
+            self.cxx.flags += ['-g', '--coverage']
+            self.cxx.compile_flags += ['-O0']
 
     def configure_substitutions(self):
         sub = self.config.substitutions

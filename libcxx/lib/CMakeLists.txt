@@ -1,3 +1,5 @@
+set(LIBCXX_LIB_CMAKEFILES_DIR "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}"  PARENT_SCOPE)
+
 # Get sources
 file(GLOB LIBCXX_SOURCES ../src/*.cpp)
 if(WIN32)
@@ -61,7 +63,11 @@ append_if(libraries LIBCXX_HAS_M_LIB m)
 append_if(libraries LIBCXX_HAS_RT_LIB rt)
 append_if(libraries LIBCXX_HAS_GCC_S_LIB gcc_s)
 
+if (LIBCXX_COVERAGE_LIBRARY)
+  target_link_libraries(cxx ${LIBCXX_COVERAGE_LIBRARY})
+endif()
 target_link_libraries(cxx ${libraries})
+
 
 # Setup flags.
 append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_FPIC_FLAG -fPIC)
