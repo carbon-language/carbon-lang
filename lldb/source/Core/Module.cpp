@@ -1469,9 +1469,11 @@ Module::FindSymbolsMatchingRegExAndType (const RegularExpression &regex, SymbolT
 void
 Module::SetSymbolFileFileSpec (const FileSpec &file)
 {
-    // Remove any sections in the unified section list that come from the current symbol vendor.
+    if (!file.Exists())
+        return;
     if (m_symfile_ap)
     {
+        // Remove any sections in the unified section list that come from the current symbol vendor.
         SectionList *section_list = GetSectionList();
         SymbolFile *symbol_file = m_symfile_ap->GetSymbolFile();
         if (section_list && symbol_file)
@@ -1479,21 +1481,49 @@ Module::SetSymbolFileFileSpec (const FileSpec &file)
             ObjectFile *obj_file = symbol_file->GetObjectFile();
             // Make sure we have an object file and that the symbol vendor's objfile isn't
             // the same as the module's objfile before we remove any sections for it...
-            if (obj_file && obj_file != m_objfile_sp.get())
+            if (obj_file)
             {
-                size_t num_sections = section_list->GetNumSections (0);
-                for (size_t idx = num_sections; idx > 0; --idx)
+                // Check to make sure we aren't trying to specify the file we already have
+                if (obj_file->GetFileSpec() == file)
                 {
-                    lldb::SectionSP section_sp (section_list->GetSectionAtIndex (idx - 1));
-                    if (section_sp->GetObjectFile() == obj_file)
+                    // We are being told to add the exact same file that we already have
+                    // we don't have to do anything.
+                    return;
+                }
+
+                // The symbol file might be a directory bundle ("/tmp/a.out.dSYM") instead
+                // of a full path to the symbol file within the bundle
+                // ("/tmp/a.out.dSYM/Contents/Resources/DWARF/a.out"). So we need to check this
+
+                if (file.IsDirectory())
+                {
+                    std::string new_path(file.GetPath());
+                    std::string old_path(obj_file->GetFileSpec().GetPath());
+                    if (old_path.find(new_path) == 0)
                     {
-                        section_list->DeleteSection (idx - 1);
+                        // We specified the same bundle as the symbol file that we already have
+                        return;
+                    }
+                }
+
+                if (obj_file != m_objfile_sp.get())
+                {
+                    size_t num_sections = section_list->GetNumSections (0);
+                    for (size_t idx = num_sections; idx > 0; --idx)
+                    {
+                        lldb::SectionSP section_sp (section_list->GetSectionAtIndex (idx - 1));
+                        if (section_sp->GetObjectFile() == obj_file)
+                        {
+                            section_list->DeleteSection (idx - 1);
+                        }
                     }
                 }
             }
         }
+        // Keep all old symbol files around in case there are any lingering type references in
+        // any SBValue objects that might have been handed out.
+        m_old_symfiles.push_back(std::move(m_symfile_ap));
     }
-
     m_symfile_spec = file;
     m_symfile_ap.reset();
     m_did_load_symbol_vendor = false;
