@@ -127,14 +127,13 @@ class DIDescriptor {
   template <typename T> friend class DIRef;
 
 public:
-  /// \brief Accessibility flags.
+  /// \brief Duplicated debug info flags.
   ///
-  /// The three accessibility flags are mutually exclusive and rolled together
-  /// in the first two bits.
+  /// \see DebugNode::DIFlags.
   enum {
-#define HANDLE_DI_FLAG(ID, NAME) Flag##NAME = ID,
+#define HANDLE_DI_FLAG(ID, NAME) Flag##NAME = DebugNode::Flag##NAME,
 #include "llvm/IR/DebugInfoFlags.def"
-    FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic
+    FlagAccessibility = DebugNode::FlagAccessibility
   };
 
   static unsigned getFlag(StringRef Flag);

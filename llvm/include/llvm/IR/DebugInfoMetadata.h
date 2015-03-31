@@ -78,6 +78,16 @@ protected:
 public:
   unsigned getTag() const { return SubclassData16; }
 
+  /// \brief Debug info flags.
+  ///
+  /// The three accessibility flags are mutually exclusive and rolled together
+  /// in the first two bits.
+  enum DIFlags {
+#define HANDLE_DI_FLAG(ID, NAME) Flag##NAME = ID,
+#include "llvm/IR/DebugInfoFlags.def"
+    FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic
+  };
+
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:
