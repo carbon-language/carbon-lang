@@ -209,9 +209,9 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   code AltOrderSelect = [{}];
 
   // Specify allocation priority for register allocators using a greedy
-  // heuristic. Classes with high priority are assigned first. It is sometimes
-  // beneficial to assign registers to highly constrained classes first.
-  // The priority has to be in the range [0,63].
+  // heuristic. Classes with higher priority values are assigned first. This is
+  // useful as it is sometimes beneficial to assign registers to highly
+  // constrained classes first. The value has to be in the range [0,63].
   int AllocationPriority = 0;
 }
 

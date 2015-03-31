@@ -46,8 +46,8 @@ public:
   const uint32_t *SubClassMask;
   const uint16_t *SuperRegIndices;
   const unsigned LaneMask;
-  /// Classes with high priority should be assigned first by register allocators
-  /// with a greedy heuristic. The priority is a value in the range [0,63].
+  /// Classes with a higher priority value are assigned first by register
+  /// allocators using a greedy heuristic. The value is in the range [0,63].
   const uint8_t AllocationPriority;
   /// Whether the class supports two (or more) disjunct subregister indices.
   const bool HasDisjunctSubRegs;
