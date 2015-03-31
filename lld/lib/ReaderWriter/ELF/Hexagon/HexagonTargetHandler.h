@@ -110,11 +110,11 @@ public:
   void registerRelocationNames(Registry &registry) override;
 
   const HexagonTargetRelocationHandler &getRelocationHandler() const override {
-    return *_hexagonRelocationHandler;
+    return *_relocationHandler;
   }
 
   HexagonTargetLayout<HexagonELFType> &getTargetLayout() override {
-    return *_hexagonTargetLayout;
+    return *_targetLayout;
   }
 
   std::unique_ptr<Reader> getObjReader() override {
@@ -131,9 +131,9 @@ private:
   llvm::BumpPtrAllocator _alloc;
   static const Registry::KindStrings kindStrings[];
   HexagonLinkingContext &_ctx;
-  std::unique_ptr<HexagonRuntimeFile<HexagonELFType> > _hexagonRuntimeFile;
-  std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _hexagonTargetLayout;
-  std::unique_ptr<HexagonTargetRelocationHandler> _hexagonRelocationHandler;
+  std::unique_ptr<HexagonRuntimeFile<HexagonELFType>> _runtimeFile;
+  std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _targetLayout;
+  std::unique_ptr<HexagonTargetRelocationHandler> _relocationHandler;
 };
 
 template <class ELFT>
