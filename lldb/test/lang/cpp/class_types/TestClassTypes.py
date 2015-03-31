@@ -10,7 +10,6 @@ import lldbutil
 class ClassTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
-    failing_compilers = ['clang', 'gcc']
 
     @skipUnlessDarwin
     @dsym_test
@@ -74,7 +73,6 @@ class ClassTypesTestCase(TestBase):
     # test/class_types test failures: runCmd: expr this->m_c_int
     @dwarf_test
     @expectedFailureFreeBSD('llvm.org/pr14540')
-    @expectedFailureLinux('llvm.org/pr14540', failing_compilers)
     @expectedFailureDarwin(16362674)
     def test_with_dwarf_and_constructor_name (self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""

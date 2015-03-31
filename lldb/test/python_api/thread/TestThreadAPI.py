@@ -75,7 +75,7 @@ class ThreadAPITestCase(TestBase):
         self.step_out_of_malloc_into_function_b(self.exe_name)
 
     @expectedFailureFreeBSD # llvm.org/pr20476
-    @expectedFailureLinux # llvm.org/pr14416
+    @expectedFailureLinux # need to 'thread step-out' twice to get out of malloc
     @python_api_test
     @dwarf_test
     def test_step_out_of_malloc_into_function_b_with_dwarf(self):

@@ -21,7 +21,7 @@ class DynamicValueChildCountTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.do_get_dynamic_vals()
 
-    @expectedFailureLinux # FIXME: This needs to be root-caused.  It looks like the DWARF info is anticipating the derived class assignment.
+    @expectedFailureLinux("llvm.org/pr23039")
     @expectedFailureFreeBSD("llvm.org/pr19311") # continue at a breakpoint does not work
     @python_api_test
     @dwarf_test
