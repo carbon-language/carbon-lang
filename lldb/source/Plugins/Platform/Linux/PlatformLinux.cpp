@@ -45,7 +45,6 @@
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::platform_linux;
-using namespace lldb_private::process_linux;
 
 static uint32_t g_initialize_count = 0;
 
@@ -882,7 +881,7 @@ PlatformLinux::LaunchNativeProcess (ProcessLaunchInfo &launch_info,
         return Error("exe_module_sp could not be resolved for %s", launch_info.GetExecutableFile ().GetPath ().c_str ());
 
     // Launch it for debugging
-    error = NativeProcessLinux::LaunchProcess (
+    error = process_linux::NativeProcessLinux::LaunchProcess (
         exe_module_sp.get (),
         launch_info,
         native_delegate,
@@ -904,6 +903,6 @@ PlatformLinux::AttachNativeProcess (lldb::pid_t pid,
         return Error("PlatformLinux::%s (): cannot attach to a debug process when not the host", __FUNCTION__);
 
     // Launch it for debugging
-    return NativeProcessLinux::AttachToProcess (pid, native_delegate, process_sp);
+    return process_linux::NativeProcessLinux::AttachToProcess (pid, native_delegate, process_sp);
 #endif
 }
