@@ -287,6 +287,10 @@ main_platform (int argc, char *argv[])
             while (waitpid(-1, nullptr, WNOHANG) > 0);
             if (fork())
             {
+                // Parent doesn't need a connection to the lldb client
+                delete socket;
+                socket = nullptr;
+
                 // Parent will continue to listen for new connections.
                 continue;
             }
