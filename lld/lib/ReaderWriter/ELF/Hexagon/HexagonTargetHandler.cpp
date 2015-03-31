@@ -163,8 +163,7 @@ protected:
   }
 
 public:
-  GOTPLTPass(const ELFLinkingContext &ctx)
-      : _file(ctx), _null(nullptr), _plt0(nullptr), _got0(nullptr) {}
+  GOTPLTPass(const ELFLinkingContext &ctx) : _file(ctx) {}
 
   /// \brief Do the pass.
   ///
@@ -219,13 +218,13 @@ protected:
   std::vector<PLTAtom *> _pltVector;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
-  GOTAtom *_null;
+  GOTAtom *_null = nullptr;
 
   /// \brief The got and plt entries for .PLT0. This is used to call into the
   /// dynamic linker for symbol resolution.
   /// @{
-  PLT0Atom *_plt0;
-  GOTAtom *_got0;
+  PLT0Atom *_plt0 = nullptr;
+  GOTAtom *_got0 = nullptr;
   /// @}
 };
 
