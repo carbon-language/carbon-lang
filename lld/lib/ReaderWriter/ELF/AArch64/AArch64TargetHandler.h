@@ -31,13 +31,13 @@ public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 
   AArch64TargetLayout<AArch64ELFType> &getTargetLayout() override {
-    return *(_AArch64TargetLayout.get());
+    return *(_aarch64TargetLayout.get());
   }
 
   void registerRelocationNames(Registry &registry) override;
 
   const AArch64TargetRelocationHandler &getRelocationHandler() const override {
-    return *(_AArch64RelocationHandler.get());
+    return *(_aarch64RelocationHandler.get());
   }
 
   std::unique_ptr<Reader> getObjReader() override {
@@ -53,8 +53,8 @@ public:
 private:
   static const Registry::KindStrings kindStrings[];
   AArch64LinkingContext &_ctx;
-  std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _AArch64TargetLayout;
-  std::unique_ptr<AArch64TargetRelocationHandler> _AArch64RelocationHandler;
+  std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _aarch64TargetLayout;
+  std::unique_ptr<AArch64TargetRelocationHandler> _aarch64RelocationHandler;
 };
 
 } // end namespace elf

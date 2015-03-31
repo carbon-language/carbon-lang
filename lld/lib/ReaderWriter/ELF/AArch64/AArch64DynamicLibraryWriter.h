@@ -43,14 +43,14 @@ private:
 
   std::unique_ptr<GOTFile> _gotFile;
   AArch64LinkingContext &_ctx;
-  AArch64TargetLayout<ELFT> &_AArch64Layout;
+  AArch64TargetLayout<ELFT> &_aarch64Layout;
 };
 
 template <class ELFT>
 AArch64DynamicLibraryWriter<ELFT>::AArch64DynamicLibraryWriter(
     AArch64LinkingContext &ctx, AArch64TargetLayout<ELFT> &layout)
     : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)),
-      _ctx(ctx), _AArch64Layout(layout) {}
+      _ctx(ctx), _aarch64Layout(layout) {}
 
 template <class ELFT>
 bool AArch64DynamicLibraryWriter<ELFT>::createImplicitFiles(
