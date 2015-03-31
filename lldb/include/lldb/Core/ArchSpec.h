@@ -418,8 +418,18 @@ public:
     GetDefaultEndian () const;
 
     //------------------------------------------------------------------
-    /// Compare an ArchSpec to another ArchSpec, requiring an exact cpu 
-    /// type match between them.  
+    /// Returns true if 'char' is a signed type by defualt in the 
+    /// architecture false otherwise
+    ///
+    /// @return True if 'char' is a signed type by default on the
+    ///         architecture and false otherwise.
+    //------------------------------------------------------------------
+    bool
+    CharIsSignedByDefault () const;
+
+    //------------------------------------------------------------------
+    /// Compare an ArchSpec to another ArchSpec, requiring an exact cpu
+    /// type match between them.
     /// e.g. armv7s is not an exact match with armv7 - this would return false
     ///
     /// @return true if the two ArchSpecs match.

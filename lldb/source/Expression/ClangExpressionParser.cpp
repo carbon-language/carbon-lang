@@ -228,6 +228,9 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     if (expr.DesiredResultType() == ClangExpression::eResultTypeId)
         m_compiler->getLangOpts().DebuggerCastResultToId = true;
 
+    m_compiler->getLangOpts().CharIsSigned =
+            ArchSpec(m_compiler->getTargetOpts().Triple.c_str()).CharIsSignedByDefault();
+
     // Spell checking is a nice feature, but it ends up completing a
     // lot of types that we didn't strictly speaking need to complete.
     // As a result, we spend a long time parsing and importing debug

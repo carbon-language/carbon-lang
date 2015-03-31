@@ -577,6 +577,32 @@ ArchSpec::GetDefaultEndian () const
     return eByteOrderInvalid;
 }
 
+bool
+ArchSpec::CharIsSignedByDefault () const
+{
+    switch (m_triple.getArch()) {
+    default:
+        return true;
+
+    case llvm::Triple::aarch64:
+    case llvm::Triple::aarch64_be:
+    case llvm::Triple::arm:
+    case llvm::Triple::armeb:
+    case llvm::Triple::thumb:
+    case llvm::Triple::thumbeb:
+        return m_triple.isOSDarwin() || m_triple.isOSWindows();
+
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
+        return m_triple.isOSDarwin();
+
+    case llvm::Triple::ppc64le:
+    case llvm::Triple::systemz:
+    case llvm::Triple::xcore:
+        return false;
+    }
+}
+
 lldb::ByteOrder
 ArchSpec::GetByteOrder () const
 {
