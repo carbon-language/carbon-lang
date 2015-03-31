@@ -263,7 +263,7 @@ SystemInitializerFull::Initialize()
     //----------------------------------------------------------------------
     // Linux hosted plugins
     //----------------------------------------------------------------------
-    ProcessLinux::Initialize();
+    process_linux::ProcessLinux::Initialize();
 #endif
 #if defined(_MSC_VER)
     DynamicLoaderWindows::Initialize();
@@ -372,7 +372,7 @@ SystemInitializerFull::Terminate()
 #endif
 
 #if defined(__linux__)
-    ProcessLinux::Terminate();
+    process_linux::ProcessLinux::Terminate();
 #endif
 
 #if defined(__FreeBSD__)
