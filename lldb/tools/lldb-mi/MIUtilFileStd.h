@@ -36,7 +36,7 @@ class CMIUtilFileStd : public CMICmnBase
     bool IsOk(void) const;
     bool IsFileExist(const CMIUtilString &vFileNamePath) const;
     const CMIUtilString &GetLineReturn(void) const;
-    CMIUtilString StripOffFileName(const CMIUtilString &vDirectoryPath) const;
+    static CMIUtilString StripOffFileName(const CMIUtilString &vDirectoryPath);
 
     // Overridden:
   public:

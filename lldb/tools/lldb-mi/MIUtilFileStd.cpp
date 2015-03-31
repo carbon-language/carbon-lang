@@ -254,7 +254,7 @@ CMIUtilFileStd::GetLineReturn(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilFileStd::StripOffFileName(const CMIUtilString &vDirectoryPath) const
+CMIUtilFileStd::StripOffFileName(const CMIUtilString &vDirectoryPath)
 {
     const MIint nPos = vDirectoryPath.rfind('\\');
     MIint nPos2 = vDirectoryPath.rfind('/');

@@ -216,7 +216,7 @@ CMICmnLogMediumFile::FileFormFileNamePath(void)
     CMIUtilString strPathName;
     if (CMIUtilSystem().GetLogFilesPath(strPathName))
     {
-        const CMIUtilString strPath = CMIUtilFileStd().StripOffFileName(strPathName);
+        const CMIUtilString strPath = CMIUtilFileStd::StripOffFileName(strPathName);
 
 // ToDo: Review this LINUX log file quick fix so not hidden
 // AD:

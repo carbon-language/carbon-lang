@@ -114,7 +114,7 @@ CMICmdCmdFileExecAndSymbols::Execute(void)
     const CMIUtilString &rStrKeyWkDir(rSessionInfo.m_constStrSharedDataKeyWkDir);
     if (!rSessionInfo.SharedDataRetrieve<CMIUtilString>(rStrKeyWkDir, strWkDir))
     {
-        strWkDir = CMIUtilFileStd().StripOffFileName(strExeFilePath);
+        strWkDir = CMIUtilFileStd::StripOffFileName(strExeFilePath);
         if (!rSessionInfo.SharedDataAdd<CMIUtilString>(rStrKeyWkDir, strWkDir))
         {
             SetError(CMIUtilString::Format(MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_ADD), m_cmdData.strMiCmd.c_str(), rStrKeyWkDir.c_str()));
