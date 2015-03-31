@@ -252,30 +252,14 @@ static bool isDescriptorRef(const Metadata *MD) {
 }
 #endif
 
-bool DIType::Verify() const {
-  auto *N = dyn_cast_or_null<MDType>(DbgNode);
-  if (!N)
-    return false;
-
-  if (isCompositeType())
-    return DICompositeType(DbgNode).Verify();
-  return true;
-}
-
+bool DIType::Verify() const { return isType(); }
 bool DIBasicType::Verify() const { return isBasicType(); }
 bool DIDerivedType::Verify() const { return isDerivedType(); }
-
-bool DICompositeType::Verify() const {
-  auto *N = dyn_cast_or_null<MDCompositeTypeBase>(DbgNode);
-  return N && !(isLValueReference() && isRValueReference());
-}
+bool DICompositeType::Verify() const { return isCompositeType(); }
 
 bool DISubprogram::Verify() const {
   auto *N = dyn_cast_or_null<MDSubprogram>(DbgNode);
   if (!N)
-    return false;
-
-  if (isLValueReference() && isRValueReference())
     return false;
 
   // If a DISubprogram has an llvm::Function*, then scope chains from all

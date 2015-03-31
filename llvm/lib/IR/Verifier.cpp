@@ -796,6 +796,11 @@ void Verifier::visitMDDerivedType(const MDDerivedType &N) {
   }
 }
 
+static bool hasConflictingReferenceFlags(unsigned Flags) {
+  return (Flags & DebugNode::FlagLValueReference) &&
+         (Flags & DebugNode::FlagRValueReference);
+}
+
 void Verifier::visitMDCompositeType(const MDCompositeType &N) {
   // Common derived type checks.
   visitMDDerivedTypeBase(N);
@@ -814,6 +819,8 @@ void Verifier::visitMDCompositeType(const MDCompositeType &N) {
          N.getRawVTableHolder());
   Assert(!N.getRawElements() || isa<MDTuple>(N.getRawElements()),
          "invalid composite elements", &N, N.getRawElements());
+  Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
+         &N);
 }
 
 void Verifier::visitMDSubroutineType(const MDSubroutineType &N) {
@@ -824,6 +831,8 @@ void Verifier::visitMDSubroutineType(const MDSubroutineType &N) {
       Assert(isTypeRef(Ty), "invalid subroutine type ref", &N, Types, Ty);
     }
   }
+  Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
+         &N);
 }
 
 void Verifier::visitMDFile(const MDFile &N) {
@@ -910,6 +919,8 @@ void Verifier::visitMDSubprogram(const MDSubprogram &N) {
              Op);
     }
   }
+  Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
+         &N);
 }
 
 void Verifier::visitMDLexicalBlockBase(const MDLexicalBlockBase &N) {
