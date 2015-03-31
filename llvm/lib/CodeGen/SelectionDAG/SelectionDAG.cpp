@@ -3791,12 +3791,27 @@ static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
     return DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(VT), Val), VT);
   }
 
-  Value = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Value);
+  assert(Value.getValueType() == MVT::i8 && "memset with non-byte fill value?");
+  EVT IntVT = VT.getScalarType();
+  if (!IntVT.isInteger())
+    IntVT = EVT::getIntegerVT(*DAG.getContext(), IntVT.getSizeInBits());
+
+  Value = DAG.getNode(ISD::ZERO_EXTEND, dl, IntVT, Value);
   if (NumBits > 8) {
     // Use a multiplication with 0x010101... to extend the input to the
     // required length.
     APInt Magic = APInt::getSplat(NumBits, APInt(8, 0x01));
-    Value = DAG.getNode(ISD::MUL, dl, VT, Value, DAG.getConstant(Magic, VT));
+    Value = DAG.getNode(ISD::MUL, dl, IntVT, Value,
+                        DAG.getConstant(Magic, IntVT));
+  }
+
+  if (VT != Value.getValueType() && !VT.isInteger())
+    Value = DAG.getNode(ISD::BITCAST, dl, VT.getScalarType(), Value);
+  if (VT != Value.getValueType()) {
+    assert(VT.getVectorElementType() == Value.getValueType() &&
+           "value type should be one vector element here");
+    SmallVector<SDValue, 8> BVOps(VT.getVectorNumElements(), Value);
+    Value = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, BVOps);
   }
 
   return Value;
