@@ -336,7 +336,7 @@ for the 'then' block.
           let phi = build_phi incoming "iftmp" builder in
 
 The first two lines here are now familiar: the first adds the "merge"
-block to the Function object. The second block changes the insertion
+block to the Function object. The second changes the insertion
 point so that newly created code will go into the "merge" block. Once
 that is done, we need to create the PHI node and set up the block/value
 pairs for the PHI.
