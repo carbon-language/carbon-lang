@@ -9,7 +9,6 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_HANDLER_H
 
-#include "DefaultTargetHandler.h"
 #include "MipsDynamicLibraryWriter.h"
 #include "MipsELFReader.h"
 #include "MipsExecutableWriter.h"
@@ -101,7 +100,7 @@ public:
 
 /// \brief TargetHandler for Mips
 template <class ELFT>
-class MipsTargetHandler final : public DefaultTargetHandler<ELFT> {
+class MipsTargetHandler final : public TargetHandler<ELFT> {
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)
       : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<ELFT>(ctx)),

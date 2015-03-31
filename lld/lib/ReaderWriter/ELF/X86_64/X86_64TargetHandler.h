@@ -10,7 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_X86_64_X86_64_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_X86_64_X86_64_TARGET_HANDLER_H
 
-#include "DefaultTargetHandler.h"
 #include "TargetLayout.h"
 #include "X86_64ELFFile.h"
 #include "X86_64ELFReader.h"
@@ -30,8 +29,7 @@ public:
   }
 };
 
-class X86_64TargetHandler
-    : public DefaultTargetHandler<X86_64ELFType> {
+class X86_64TargetHandler : public TargetHandler<X86_64ELFType> {
 public:
   X86_64TargetHandler(X86_64LinkingContext &ctx);
 

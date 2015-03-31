@@ -13,7 +13,6 @@
 #include "AArch64ELFFile.h"
 #include "AArch64ELFReader.h"
 #include "AArch64RelocationHandler.h"
-#include "DefaultTargetHandler.h"
 #include "TargetLayout.h"
 #include "lld/Core/Simple.h"
 
@@ -26,7 +25,7 @@ public:
   AArch64TargetLayout(AArch64LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
 };
 
-class AArch64TargetHandler final : public DefaultTargetHandler<AArch64ELFType> {
+class AArch64TargetHandler final : public TargetHandler<AArch64ELFType> {
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 

@@ -10,7 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_X86_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_X86_TARGET_HANDLER_H
 
-#include "DefaultTargetHandler.h"
 #include "TargetLayout.h"
 #include "X86ELFFile.h"
 #include "X86ELFReader.h"
@@ -26,8 +25,7 @@ public:
   X86TargetLayout(X86LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
 };
 
-class X86TargetHandler final
-    : public DefaultTargetHandler<X86ELFType> {
+class X86TargetHandler final : public TargetHandler<X86ELFType> {
 public:
   X86TargetHandler(X86LinkingContext &ctx);
 

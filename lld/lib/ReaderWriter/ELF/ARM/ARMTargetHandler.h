@@ -13,7 +13,6 @@
 #include "ARMELFFile.h"
 #include "ARMELFReader.h"
 #include "ARMRelocationHandler.h"
-#include "DefaultTargetHandler.h"
 #include "TargetLayout.h"
 #include "llvm/ADT/Optional.h"
 
@@ -58,7 +57,7 @@ private:
   llvm::Optional<uint64_t> _tpOff;
 };
 
-class ARMTargetHandler final : public DefaultTargetHandler<ARMELFType> {
+class ARMTargetHandler final : public TargetHandler<ARMELFType> {
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
 

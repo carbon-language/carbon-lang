@@ -17,6 +17,7 @@
 
 using namespace lld;
 using namespace lld::elf;
+using namespace llvm;
 using namespace llvm::support::endian;
 
 #define PAGE(X) ((X) & ~0x0FFFL)

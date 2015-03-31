@@ -10,7 +10,6 @@
 #ifndef HEXAGON_TARGET_HANDLER_H
 #define HEXAGON_TARGET_HANDLER_H
 
-#include "DefaultTargetHandler.h"
 #include "HexagonELFReader.h"
 #include "HexagonExecutableAtoms.h"
 #include "HexagonRelocationHandler.h"
@@ -97,8 +96,7 @@ private:
 };
 
 /// \brief TargetHandler for Hexagon
-class HexagonTargetHandler final :
-    public DefaultTargetHandler<HexagonELFType> {
+class HexagonTargetHandler final : public TargetHandler<HexagonELFType> {
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
