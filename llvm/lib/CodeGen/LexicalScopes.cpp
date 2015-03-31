@@ -104,15 +104,6 @@ void LexicalScopes::extractLexicalScopes(
   }
 }
 
-static MDLocalScope *getScopeOfScope(const MDLexicalBlockFile *File) {
-  // FIXME: Why double-walk the scope list?  Are these just being encoded
-  // awkwardly?
-  auto *Scope = File->getScope();
-  if (auto *Block = dyn_cast<MDLexicalBlockBase>(Scope))
-    return Block->getScope();
-  return Scope;
-}
-
 /// findLexicalScope - Find lexical scope, either regular or inlined, for the
 /// given DebugLoc. Return NULL if not found.
 LexicalScope *LexicalScopes::findLexicalScope(const MDLocation *DL) {
@@ -123,7 +114,7 @@ LexicalScope *LexicalScopes::findLexicalScope(const MDLocation *DL) {
   // The scope that we were created with could have an extra file - which
   // isn't what we care about in this case.
   if (auto *File = dyn_cast<MDLexicalBlockFile>(Scope))
-    Scope = getScopeOfScope(File);
+    Scope = File->getScope();
 
   if (auto *IA = DL->getInlinedAt()) {
     auto I = InlinedLexicalScopeMap.find(std::make_pair(Scope, IA));
@@ -150,7 +141,7 @@ LexicalScope *LexicalScopes::getOrCreateLexicalScope(const MDLocalScope *Scope,
 LexicalScope *
 LexicalScopes::getOrCreateRegularScope(const MDLocalScope *Scope) {
   if (auto *File = dyn_cast<MDLexicalBlockFile>(Scope))
-    Scope = getScopeOfScope(File);
+    Scope = File->getScope();
 
   auto I = LexicalScopeMap.find(Scope);
   if (I != LexicalScopeMap.end())
@@ -204,7 +195,7 @@ LexicalScopes::getOrCreateAbstractScope(const MDLocalScope *Scope) {
   assert(Scope && "Invalid Scope encoding!");
 
   if (auto *File = dyn_cast<MDLexicalBlockFile>(Scope))
-    Scope = getScopeOfScope(File);
+    Scope = File->getScope();
   auto I = AbstractScopeMap.find(Scope);
   if (I != AbstractScopeMap.end())
     return &I->second;

@@ -908,13 +908,7 @@ public:
     return *get();
   }
 
-  DIScope getContext() const {
-    // FIXME: This logic is horrible.  getScope() returns a DILexicalBlock, but
-    // then we check if it's a subprogram?  WHAT?!?
-    if (getScope().isSubprogram())
-      return getScope();
-    return getScope().getContext();
-  }
+  DIScope getContext() const { return getScope(); }
   unsigned getLineNumber() const { return getScope().getLineNumber(); }
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
   DILexicalBlock getScope() const {
