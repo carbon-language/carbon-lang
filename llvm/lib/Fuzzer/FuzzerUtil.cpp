@@ -43,7 +43,7 @@ std::string Hash(const Unit &in) {
 }
 
 static void AlarmHandler(int, siginfo_t *, void *) {
-  Fuzzer::AlarmCallback();
+  Fuzzer::StaticAlarmCallback();
 }
 
 void SetTimer(int Seconds) {

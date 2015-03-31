@@ -6,43 +6,48 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// Flags. FUZZER_FLAG macro should be defined at the point of inclusion.
-// We are not using any flag parsing library for better portability and
-// independence.
+// Flags. FUZZER_FLAG_INT/FUZZER_FLAG_STRING macros should be defined at the
+// point of inclusion. We are not using any flag parsing library for better
+// portability and independence.
 //===----------------------------------------------------------------------===//
-FUZZER_FLAG(int, verbosity, 1, "Verbosity level.")
-FUZZER_FLAG(int, seed, 0, "Random seed. If 0, seed is generated.")
-FUZZER_FLAG(int, iterations, -1,
+FUZZER_FLAG_INT(verbosity, 1, "Verbosity level.")
+FUZZER_FLAG_INT(seed, 0, "Random seed. If 0, seed is generated.")
+FUZZER_FLAG_INT(iterations, -1,
             "Number of iterations of the fuzzer internal loop"
             " (-1 for infinite iterations).")
-FUZZER_FLAG(int, runs, -1,
+FUZZER_FLAG_INT(runs, -1,
             "Number of individual test runs (-1 for infinite runs).")
-FUZZER_FLAG(int, max_len, 64, "Maximal length of the test input.")
-FUZZER_FLAG(int, cross_over, 1, "If 1, cross over inputs.")
-FUZZER_FLAG(int, mutate_depth, 5,
+FUZZER_FLAG_INT(max_len, 64, "Maximal length of the test input.")
+FUZZER_FLAG_INT(cross_over, 1, "If 1, cross over inputs.")
+FUZZER_FLAG_INT(mutate_depth, 5,
             "Apply this number of consecutive mutations to each input.")
-FUZZER_FLAG(
-    int, prefer_small_during_initial_shuffle, -1,
+FUZZER_FLAG_INT(
+    prefer_small_during_initial_shuffle, -1,
     "If 1, always prefer smaller inputs during the initial corpus shuffle."
     " If 0, never do that. If -1, do it sometimes.")
-FUZZER_FLAG(int, exit_on_first, 0,
+FUZZER_FLAG_INT(exit_on_first, 0,
             "If 1, exit after the first new interesting input is found.")
-FUZZER_FLAG(int, timeout, -1, "Timeout in seconds (if positive).")
-FUZZER_FLAG(int, help, 0, "Print help.")
-FUZZER_FLAG(
-    int, save_minimized_corpus, 0,
+FUZZER_FLAG_INT(timeout, -1, "Timeout in seconds (if positive).")
+FUZZER_FLAG_INT(help, 0, "Print help.")
+FUZZER_FLAG_INT(
+    save_minimized_corpus, 0,
     "If 1, the minimized corpus is saved into the first input directory")
-FUZZER_FLAG(int, use_counters, 0, "Use coverage counters")
-FUZZER_FLAG(int, use_full_coverage_set, 0,
+FUZZER_FLAG_INT(use_counters, 0, "Use coverage counters")
+FUZZER_FLAG_INT(use_full_coverage_set, 0,
             "Experimental: Maximize the number of different full"
             " coverage sets as opposed to maximizing the total coverage."
             " This is potentially MUCH slower, but may discover more paths.")
-FUZZER_FLAG(int, use_coverage_pairs, 0,
+FUZZER_FLAG_INT(use_coverage_pairs, 0,
             "Experimental: Maximize the number of different coverage pairs.")
-FUZZER_FLAG(int, jobs, 0, "Number of jobs to run. If jobs >= 1 we spawn"
+FUZZER_FLAG_INT(jobs, 0, "Number of jobs to run. If jobs >= 1 we spawn"
                           " this number of jobs in separate worker processes"
                           " with stdout/stderr redirected to fuzz-JOB.log.")
-FUZZER_FLAG(int, workers, 0,
+FUZZER_FLAG_INT(workers, 0,
             "Number of simultaneous worker processes to run the jobs.")
-FUZZER_FLAG(int, dfsan, 1, "Use DFSan for taint-guided mutations. No-op unless "
+FUZZER_FLAG_INT(dfsan, 1, "Use DFSan for taint-guided mutations. No-op unless "
                            "the DFSan instrumentation was compiled in.")
+
+FUZZER_FLAG_STRING(tokens, "Use the file with tokens (one token per line) to"
+                           " fuzz a token based input language.")
+FUZZER_FLAG_STRING(apply_tokens, "Read the given input file, substitute bytes "
+                                 " with tokens and write the result to stdout.")

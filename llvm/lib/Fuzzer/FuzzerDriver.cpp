@@ -18,6 +18,10 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iterator>
 
 namespace fuzzer {
 
@@ -26,19 +30,26 @@ struct FlagDescription {
   const char *Name;
   const char *Description;
   int   Default;
-  int   *Flag;
+  int   *IntFlag;
+  const char **StrFlag;
 };
 
 struct {
-#define FUZZER_FLAG(Type, Name, Default, Description) Type Name;
+#define FUZZER_FLAG_INT(Name, Default, Description) int Name;
+#define FUZZER_FLAG_STRING(Name, Description) const char *Name;
 #include "FuzzerFlags.def"
-#undef FUZZER_FLAG
+#undef FUZZER_FLAG_INT
+#undef FUZZER_FLAG_STRING
 } Flags;
 
 static FlagDescription FlagDescriptions [] {
-#define FUZZER_FLAG(Type, Name, Default, Description) {#Name, Description, Default, &Flags.Name},
+#define FUZZER_FLAG_INT(Name, Default, Description)                            \
+  { #Name, Description, Default, &Flags.Name, nullptr},
+#define FUZZER_FLAG_STRING(Name, Description)                                  \
+  { #Name, Description, 0, nullptr, &Flags.Name },
 #include "FuzzerFlags.def"
-#undef FUZZER_FLAG
+#undef FUZZER_FLAG_INT
+#undef FUZZER_FLAG_STRING
 };
 
 static const size_t kNumFlags =
@@ -79,11 +90,18 @@ static bool ParseOneFlag(const char *Param) {
     const char *Name = FlagDescriptions[F].Name;
     const char *Str = FlagValue(Param, Name);
     if (Str)  {
-      int Val = std::stol(Str);
-      *FlagDescriptions[F].Flag = Val;
-      if (Flags.verbosity >= 2)
-        std::cerr << "Flag: " << Name << " " << Val << "\n";
-      return true;
+      if (FlagDescriptions[F].IntFlag) {
+        int Val = std::stol(Str);
+        *FlagDescriptions[F].IntFlag = Val;
+        if (Flags.verbosity >= 2)
+          std::cerr << "Flag: " << Name << " " << Val << "\n";
+        return true;
+      } else if (FlagDescriptions[F].StrFlag) {
+        *FlagDescriptions[F].StrFlag = Str;
+        if (Flags.verbosity >= 2)
+          std::cerr << "Flag: " << Name << " " << Str << "\n";
+        return true;
+      }
     }
   }
   PrintHelp();
@@ -92,8 +110,12 @@ static bool ParseOneFlag(const char *Param) {
 
 // We don't use any library to minimize dependencies.
 static void ParseFlags(int argc, char **argv) {
-  for (size_t F = 0; F < kNumFlags; F++)
-    *FlagDescriptions[F].Flag = FlagDescriptions[F].Default;
+  for (size_t F = 0; F < kNumFlags; F++) {
+    if (FlagDescriptions[F].IntFlag)
+      *FlagDescriptions[F].IntFlag = FlagDescriptions[F].Default;
+    if (FlagDescriptions[F].StrFlag)
+      *FlagDescriptions[F].StrFlag = nullptr;
+  }
   for (int A = 1; A < argc; A++) {
     if (ParseOneFlag(argv[A])) continue;
     inputs.push_back(argv[A]);
@@ -139,6 +161,26 @@ static int RunInMultipleProcesses(int argc, char **argv, int NumWorkers,
   return HasErrors ? 1 : 0;
 }
 
+std::vector<std::string> ReadTokensFile(const char *TokensFilePath) {
+  if (!TokensFilePath) return {};
+  std::string TokensFileContents = FileToString(TokensFilePath);
+  std::istringstream ISS(TokensFileContents);
+  std::vector<std::string> Res = {std::istream_iterator<std::string>{ISS},
+                                  std::istream_iterator<std::string>{}};
+  Res.push_back(" ");
+  Res.push_back("\t");
+  Res.push_back("\n");
+  return Res;
+}
+
+int ApplyTokens(const Fuzzer &F, const char *InputFilePath) {
+  Unit U = FileToVector(InputFilePath);
+  auto T = F.SubstituteTokens(U);
+  T.push_back(0);
+  std::cout << T.data();
+  return 0;
+}
+
 int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   using namespace fuzzer;
 
@@ -164,6 +206,7 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   Options.UseDFSan = Flags.dfsan;
   Options.PreferSmallDuringInitialShuffle =
       Flags.prefer_small_during_initial_shuffle;
+  Options.Tokens = ReadTokensFile(Flags.tokens);
   if (Flags.runs >= 0)
     Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())
@@ -181,6 +224,16 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   // Timer
   if (Flags.timeout > 0)
     SetTimer(Flags.timeout);
+
+  if (Flags.verbosity >= 2) {
+    std::cerr << "Tokens: {";
+    for (auto &T : Options.Tokens)
+      std::cerr << T << ",";
+    std::cerr << "}\n";
+  }
+
+  if (Flags.apply_tokens)
+    return ApplyTokens(F, Flags.apply_tokens);
 
   for (auto &inp : inputs)
     F.ReadDir(inp);

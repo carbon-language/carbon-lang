@@ -33,6 +33,12 @@ Unit FileToVector(const std::string &Path) {
               std::istreambuf_iterator<char>());
 }
 
+std::string FileToString(const std::string &Path) {
+  std::ifstream T(Path);
+  return std::string((std::istreambuf_iterator<char>(T)),
+                     std::istreambuf_iterator<char>());
+}
+
 void CopyFileToErr(const std::string &Path) {
   std::ifstream T(Path);
   std::copy(std::istreambuf_iterator<char>(T), std::istreambuf_iterator<char>(),

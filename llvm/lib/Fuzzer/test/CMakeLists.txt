@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${LIBFUZZER_FLAGS_BASE} -O0 -fsanitize-coverage=4")
 
 set(Tests
   CounterTest
+  CxxTokensTest
   FourIndependentBranchesTest
   FullCoverageSetTest
   InfiniteTest

@@ -16,19 +16,47 @@
 
 namespace fuzzer {
 
-// static
-Unit Fuzzer::CurrentUnit;
-system_clock::time_point Fuzzer::UnitStartTime;
+// Only one Fuzzer per process.
+static Fuzzer *F;
+
+Fuzzer::Fuzzer(UserCallback Callback, FuzzingOptions Options)
+    : Callback(Callback), Options(Options) {
+  SetDeathCallback();
+  InitializeDFSan();
+  assert(!F);
+  F = this;
+}
 
 void Fuzzer::SetDeathCallback() {
-  __sanitizer_set_death_callback(DeathCallback);
+  __sanitizer_set_death_callback(StaticDeathCallback);
+}
+
+void Fuzzer::PrintUnitInASCIIOrTokens(const Unit &U, const char *PrintAfter) {
+  if (Options.Tokens.empty()) {
+    PrintASCII(U, PrintAfter);
+  } else {
+    auto T = SubstituteTokens(U);
+    T.push_back(0);
+    std::cerr << T.data();
+    std::cerr << PrintAfter;
+  }
+}
+
+void Fuzzer::StaticDeathCallback() {
+  assert(F);
+  F->DeathCallback();
 }
 
 void Fuzzer::DeathCallback() {
   std::cerr << "DEATH: " <<  std::endl;
   Print(CurrentUnit, "\n");
-  PrintASCII(CurrentUnit, "\n");
+  PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
   WriteToCrash(CurrentUnit, "crash-");
+}
+
+void Fuzzer::StaticAlarmCallback() {
+  assert(F);
+  F->AlarmCallback();
 }
 
 void Fuzzer::AlarmCallback() {
@@ -38,7 +66,7 @@ void Fuzzer::AlarmCallback() {
             << std::endl;
   if (Seconds >= 3) {
     Print(CurrentUnit, "\n");
-    PrintASCII(CurrentUnit, "\n");
+    PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
     WriteToCrash(CurrentUnit, "timeout-");
   }
   exit(1);
@@ -123,12 +151,35 @@ static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {
   return Res;
 }
 
+Unit Fuzzer::SubstituteTokens(const Unit &U) const {
+  Unit Res;
+  for (auto Idx : U) {
+    if (Idx < Options.Tokens.size()) {
+      std::string Token = Options.Tokens[Idx];
+      Res.insert(Res.end(), Token.begin(), Token.end());
+    } else {
+      Res.push_back(' ');
+    }
+  }
+  // FIXME: Apply DFSan labels.
+  return Res;
+}
+
+void Fuzzer::ExecuteCallback(const Unit &U) {
+  if (Options.Tokens.empty()) {
+    Callback(U.data(), U.size());
+  } else {
+    auto T = SubstituteTokens(U);
+    Callback(T.data(), T.size());
+  }
+}
+
 // Experimental. Does not yet scale.
 // Fuly reset the current coverage state, run a single unit,
 // collect all coverage pairs and return non-zero if a new pair is observed.
 size_t Fuzzer::RunOneMaximizeCoveragePairs(const Unit &U) {
   __sanitizer_reset_coverage();
-  Callback(U.data(), U.size());
+  ExecuteCallback(U);
   uintptr_t *PCs;
   uintptr_t NumPCs = __sanitizer_get_coverage_guards(&PCs);
   bool HasNewPairs = false;
@@ -153,7 +204,7 @@ size_t Fuzzer::RunOneMaximizeCoveragePairs(const Unit &U) {
 // e.g. test/FullCoverageSetTest.cpp. FIXME: make it scale.
 size_t Fuzzer::RunOneMaximizeFullCoverageSet(const Unit &U) {
   __sanitizer_reset_coverage();
-  Callback(U.data(), U.size());
+  ExecuteCallback(U);
   uintptr_t *PCs;
   uintptr_t NumPCs =__sanitizer_get_coverage_guards(&PCs);
   if (FullCoverageSets.insert(HashOfArrayOfPCs(PCs, NumPCs)).second)
@@ -168,7 +219,7 @@ size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {
     __sanitizer_update_counter_bitset_and_clear_counters(0);
   }
   size_t OldCoverage = __sanitizer_get_total_unique_coverage();
-  Callback(U.data(), U.size());
+  ExecuteCallback(U);
   size_t NewCoverage = __sanitizer_get_total_unique_coverage();
   size_t NumNewBits = 0;
   if (Options.UseCounters)
@@ -222,8 +273,7 @@ size_t Fuzzer::MutateAndTestOne(Unit *U) {
         std::cerr << " L: " << U->size();
         if (U->size() < 30) {
           std::cerr << " ";
-          PrintASCII(*U);
-          std::cerr << "\t";
+          PrintUnitInASCIIOrTokens(*U, "\t");
           Print(*U);
         }
         std::cerr << "\n";

@@ -23,3 +23,6 @@ CounterTest: BINGO
 
 RUN: not ./LLVMFuzzer-DFSanSimpleCmpTest -seed=1 -timeout=15 2>&1 | FileCheck %s --check-prefix=DFSanSimpleCmpTest
 DFSanSimpleCmpTest: Found the target:
+
+RUN: not ./LLVMFuzzer-CxxTokensTest -seed=1 -timeout=15 -tokens=%S/../cxx_fuzzer_tokens.txt 2>&1 | FileCheck %s --check-prefix=CxxTokensTest
+CxxTokensTest: Found the target, exiting
