@@ -461,17 +461,9 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
 }
 
 DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
-  DIDescriptor D(Scope);
-  if (D.isSubprogram())
-    return DISubprogram(Scope);
-
-  if (D.isLexicalBlockFile())
-    return getDISubprogram(DILexicalBlockFile(Scope).getContext());
-
-  if (D.isLexicalBlock())
-    return getDISubprogram(DILexicalBlock(Scope).getContext());
-
-  return DISubprogram();
+  if (auto *LocalScope = dyn_cast_or_null<MDLocalScope>(Scope))
+    return LocalScope->getSubprogram();
+  return nullptr;
 }
 
 DISubprogram llvm::getDISubprogram(const Function *F) {
