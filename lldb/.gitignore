@@ -35,6 +35,7 @@ xcshareddata/
 test/20*
 
 # We should ignore Xcode-style embedding of llvm/ at lldb root dir.
-/llvm/
-/DerivedData/
-/lldb.xcworkspace/xcshareddata/
+# Do not add trailing '/'s, they skip symlinks.
+/llvm
+/DerivedData
+/lldb.xcworkspace/xcshareddata
