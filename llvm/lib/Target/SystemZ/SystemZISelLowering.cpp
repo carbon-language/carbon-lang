@@ -2319,12 +2319,13 @@ SDValue SystemZTargetLowering::lowerCTPOP(SDValue Op,
   Op = Op.getOperand(0);
   APInt KnownZero, KnownOne;
   DAG.computeKnownBits(Op, KnownZero, KnownOne);
-  uint64_t Mask = ~KnownZero.getZExtValue();
+  unsigned NumSignificantBits = (~KnownZero).getActiveBits();
+  if (NumSignificantBits == 0)
+    return DAG.getConstant(0, VT);
 
   // Skip known-zero high parts of the operand.
-  int64_t BitSize = OrigBitSize;
-  while ((Mask & ((((uint64_t)1 << (BitSize / 2)) - 1) << (BitSize / 2))) == 0)
-    BitSize = BitSize / 2;
+  int64_t BitSize = (int64_t)1 << Log2_32_Ceil(NumSignificantBits);
+  BitSize = std::min(BitSize, OrigBitSize);
 
   // The POPCNT instruction counts the number of bits in each byte.
   Op = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op);
