@@ -15,6 +15,7 @@ add_llvm_target(HexagonCodeGen
   HexagonAsmPrinter.cpp
   HexagonCFGOptimizer.cpp
   HexagonCopyToCombine.cpp
+  HexagonExpandCondsets.cpp
   HexagonExpandPredSpillCode.cpp
   HexagonFixupHwLoops.cpp
   HexagonFrameLowering.cpp
