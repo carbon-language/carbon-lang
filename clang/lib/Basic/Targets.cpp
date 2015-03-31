@@ -1476,6 +1476,7 @@ public:
     GK_SM21,
     GK_SM30,
     GK_SM35,
+    GK_SM37,
   } GPU;
 
   public:
@@ -1510,6 +1511,9 @@ public:
           break;
         case GK_SM35:
           CUDAArchCode = "350";
+          break;
+        case GK_SM37:
+          CUDAArchCode = "370";
           break;
         default:
           llvm_unreachable("Unhandled target CPU");
@@ -1563,6 +1567,7 @@ public:
                 .Case("sm_21", GK_SM21)
                 .Case("sm_30", GK_SM30)
                 .Case("sm_35", GK_SM35)
+                .Case("sm_37", GK_SM37)
                 .Default(GK_NONE);
 
       return GPU != GK_NONE;
