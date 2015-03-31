@@ -93,6 +93,9 @@ void *MmapOrDie(uptr size, const char *mem_type) {
 }
 
 void UnmapOrDie(void *addr, uptr size) {
+  if (!size || !addr)
+    return;
+
   if (VirtualFree(addr, size, MEM_DECOMMIT) == 0) {
     Report("ERROR: %s failed to "
            "deallocate 0x%zx (%zd) bytes at address %p (error code: %d)\n",
