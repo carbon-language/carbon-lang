@@ -54,6 +54,7 @@ TEST_F(ExecutionEngineTest, ForwardGlobalMapping) {
   int32_t Mem1 = 3;
   Engine->addGlobalMapping(G1, &Mem1);
   EXPECT_EQ(&Mem1, Engine->getPointerToGlobalIfAvailable(G1));
+  EXPECT_EQ(&Mem1, Engine->getPointerToGlobalIfAvailable("Global1"));
   int32_t Mem2 = 4;
   Engine->updateGlobalMapping(G1, &Mem2);
   EXPECT_EQ(&Mem2, Engine->getPointerToGlobalIfAvailable(G1));

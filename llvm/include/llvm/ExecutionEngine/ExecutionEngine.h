@@ -59,46 +59,34 @@ namespace object {
 /// table.  Access to this class should be serialized under a mutex.
 class ExecutionEngineState {
 public:
-  struct AddressMapConfig : public ValueMapConfig<const GlobalValue*> {
-    typedef ExecutionEngineState *ExtraData;
-    static sys::Mutex *getMutex(ExecutionEngineState *EES);
-    static void onDelete(ExecutionEngineState *EES, const GlobalValue *Old);
-    static void onRAUW(ExecutionEngineState *, const GlobalValue *,
-                       const GlobalValue *);
-  };
-
-  typedef ValueMap<const GlobalValue *, void *, AddressMapConfig>
-      GlobalAddressMapTy;
+  typedef StringMap<uint64_t> GlobalAddressMapTy;
 
 private:
-  ExecutionEngine &EE;
 
-  /// GlobalAddressMap - A mapping between LLVM global values and their
-  /// actualized version...
+  /// GlobalAddressMap - A mapping between LLVM global symbol names values and
+  /// their actualized version...
   GlobalAddressMapTy GlobalAddressMap;
 
   /// GlobalAddressReverseMap - This is the reverse mapping of GlobalAddressMap,
   /// used to convert raw addresses into the LLVM global value that is emitted
   /// at the address.  This map is not computed unless getGlobalValueAtAddress
   /// is called at some point.
-  std::map<void *, AssertingVH<const GlobalValue> > GlobalAddressReverseMap;
+  std::map<uint64_t, std::string> GlobalAddressReverseMap;
 
 public:
-  ExecutionEngineState(ExecutionEngine &EE);
 
   GlobalAddressMapTy &getGlobalAddressMap() {
     return GlobalAddressMap;
   }
 
-  std::map<void*, AssertingVH<const GlobalValue> > &
-  getGlobalAddressReverseMap() {
+  std::map<uint64_t, std::string> &getGlobalAddressReverseMap() {
     return GlobalAddressReverseMap;
   }
 
   /// \brief Erase an entry from the mapping table.
   ///
   /// \returns The address that \p ToUnmap was happed to.
-  void *RemoveMapping(const GlobalValue *ToUnmap);
+  uint64_t RemoveMapping(StringRef Name);
 };
 
 /// \brief Abstract interface for implementation execution of LLVM modules,
@@ -160,6 +148,9 @@ protected:
   /// pointer is invoked to create it.  If this returns null, the JIT will
   /// abort.
   void *(*LazyFunctionCreator)(const std::string &);
+
+  /// getMangledName - Get mangled name.
+  std::string getMangledName(const GlobalValue *GV);
 
 public:
   /// lock - This lock protects the ExecutionEngine and MCJIT classes. It must
@@ -232,7 +223,8 @@ public:
   /// Map the address of a JIT section as returned from the memory manager
   /// to the address in the target process as the running code will see it.
   /// This is the address which will be used for relocation resolution.
-  virtual void mapSectionAddress(const void *LocalAddress, uint64_t TargetAddress) {
+  virtual void mapSectionAddress(const void *LocalAddress,
+                                 uint64_t TargetAddress) {
     llvm_unreachable("Re-mapping of section addresses not supported with this "
                      "EE!");
   }
@@ -290,6 +282,7 @@ public:
   /// existing data in memory.  Mappings are automatically removed when their
   /// GlobalValue is destroyed.
   void addGlobalMapping(const GlobalValue *GV, void *Addr);
+  void addGlobalMapping(StringRef Name, uint64_t Addr);
 
   /// clearAllGlobalMappings - Clear all global mappings and start over again,
   /// for use in dynamic compilation scenarios to move globals.
@@ -303,14 +296,17 @@ public:
   /// address.  This updates both maps as required.  If "Addr" is null, the
   /// entry for the global is removed from the mappings.  This returns the old
   /// value of the pointer, or null if it was not in the map.
-  void *updateGlobalMapping(const GlobalValue *GV, void *Addr);
+  uint64_t updateGlobalMapping(const GlobalValue *GV, void *Addr);
+  uint64_t updateGlobalMapping(StringRef Name, uint64_t Addr);
+
+  /// getAddressToGlobalIfAvailable - This returns the address of the specified
+  /// global symbol.
+  uint64_t getAddressToGlobalIfAvailable(StringRef S);
 
   /// getPointerToGlobalIfAvailable - This returns the address of the specified
   /// global value if it is has already been codegen'd, otherwise it returns
   /// null.
-  ///
-  /// This function is deprecated for the MCJIT execution engine.  It doesn't
-  /// seem to be needed in that case, but an equivalent can be added if it is.
+  void *getPointerToGlobalIfAvailable(StringRef S);
   void *getPointerToGlobalIfAvailable(const GlobalValue *GV);
 
   /// getPointerToGlobal - This returns the address of the specified global
@@ -474,7 +470,7 @@ public:
   }
 
 protected:
-  ExecutionEngine() : EEState(*this) {}
+  ExecutionEngine() {}
   explicit ExecutionEngine(std::unique_ptr<Module> M);
 
   void emitGlobals();
