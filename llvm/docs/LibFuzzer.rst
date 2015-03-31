@@ -1,5 +1,12 @@
+========================================================
 LibFuzzer -- a library for coverage-guided fuzz testing.
 ========================================================
+.. contents::
+   :local:
+   :depth: 4
+
+Introduction
+============
 
 This library is intended primarily for in-process coverage-guided fuzz testing
 (fuzzing) of other libraries. The typical workflow looks like this:
@@ -29,20 +36,136 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   in parallel. For run-time options run the Fuzzer binary with '-help=1'.
 
 
-The Fuzzer is similar in concept to AFL (http://lcamtuf.coredump.cx/afl/),
+The Fuzzer is similar in concept to AFL_,
 but uses in-process Fuzzing, which is more fragile, more restrictive, but
 potentially much faster as it has no overhead for process start-up.
-It uses LLVM's "Sanitizer Coverage" instrumentation to get in-process
-coverage-feedback https://code.google.com/p/address-sanitizer/wiki/AsanCoverage
+It uses LLVM's SanitizerCoverage_ instrumentation to get in-process
+coverage-feedback
 
-The code resides in the LLVM repository and is (or will be) used by various
-parts of LLVM, but the Fuzzer itself does not (and should not) depend on any
-part of LLVM and can be used for other projects. Ideally, the Fuzzer's code
-should not have any external dependencies. Right now it uses STL, which may need
-to be fixed later. See also FAQ below.
+The code resides in the LLVM repository, requires the fresh Clang compiler to build
+and is used to fuzz various parts of LLVM,
+but the Fuzzer itself does not (and should not) depend on any
+part of LLVM and can be used for other projects w/o requiring the rest of LLVM.
 
-Examples of usage in LLVM
-=========================
+Usage examples
+==============
+
+Toy example
+-----------
+
+A simple function that does something interesting if it receives the input "HI!"::
+
+  cat << EOF >> test_fuzzer.cc
+  extern "C" void TestOneInput(const unsigned char *data, unsigned long size) {
+    if (size > 0 && data[0] == 'H')
+      if (size > 1 && data[1] == 'I')
+         if (size > 2 && data[2] == '!')
+         __builtin_trap();
+  }
+  EOF
+  # Get lib/Fuzzer. Assuming that you already have fresh clang in PATH.
+  svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
+  # Build lib/Fuzzer files.
+  clang -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
+  # Build test_fuzzer.cc with asan and link against lib/Fuzzer.
+  clang++ -fsanitize=address -fsanitize-coverage=3 test_fuzzer.cc Fuzzer*.o
+  # Run the fuzzer with no corpus.
+  ./a.out
+
+You should get ``Illegal instruction (core dumped)`` pretty quickly.
+
+PCRE2
+-----
+
+Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
+
+  COV_FLAGS=" -fsanitize-coverage=4 -mllvm -sanitizer-coverage-8bit-counters=1"
+  # Get PCRE2
+  svn co svn://vcs.exim.org/pcre2/code/trunk pcre
+  # Get lib/Fuzzer. Assuming that you already have fresh clang in PATH.
+  svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
+  # Build PCRE2 with AddressSanitizer and coverage.
+  (cd pcre; ./autogen.sh; CC="clang -fsanitize=address $COV_FLAGS" ./configure --prefix=`pwd`/../inst && make -j && make install)
+  # Build lib/Fuzzer files.
+  clang -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
+  # Build the the actual function that does something interesting with PCRE2.
+  cat << EOF > pcre_fuzzer.cc
+  #include <string.h>
+  #include "pcre2posix.h"
+  extern "C" void TestOneInput(const unsigned char *data, size_t size) {
+    if (size < 1) return;
+    char *str = new char[size+1];
+    memcpy(str, data, size);
+    str[size] = 0;
+    regex_t preg;
+    if (0 == regcomp(&preg, str, 0)) {
+      regexec(&preg, str, 0, 0, 0);
+      regfree(&preg);
+    }
+    delete [] str;
+  }
+  EOF
+  clang++ -g -fsanitize=address $COV_FLAGS -c -std=c++11  -I inst/include/ pcre_fuzzer.cc
+  # Link.
+  clang++ -g -fsanitize=address -Wl,--whole-archive inst/lib/*.a -Wl,-no-whole-archive Fuzzer*.o pcre_fuzzer.o -o pcre_fuzzer
+
+This will give you a binary of the fuzzer, called ``pcre_fuzzer``.
+Now, create a directory that will hold the test corpus::
+
+  mkdir -p CORPUS
+
+For simple input languages like regular expressions this is all you need.
+For more complicated inputs populate the directory with some input samples.
+Now run the fuzzer with the corpus dir as the only parameter::
+
+  ./pcre_fuzzer ./CORPUS
+
+You will see output like this::
+
+  Seed: 1876794929
+  #0      READ   cov 0 bits 0 units 1 exec/s 0
+  #1      pulse  cov 3 bits 0 units 1 exec/s 0
+  #1      INITED cov 3 bits 0 units 1 exec/s 0
+  #2      pulse  cov 208 bits 0 units 1 exec/s 0
+  #2      NEW    cov 208 bits 0 units 2 exec/s 0 L: 64
+  #3      NEW    cov 217 bits 0 units 3 exec/s 0 L: 63
+  #4      pulse  cov 217 bits 0 units 3 exec/s 0
+
+* The ``Seed:`` line shows you the current random seed (you can change it with ``-seed=N`` flag).
+* The ``READ``  line shows you how many input files were read (since you passed an empty dir there were inputs, but one dummy input was synthesised).
+* The ``INITED`` line shows you that how many inputs will be fuzzed.
+* The ``NEW`` lines appear with the fuzzer finds a new interesting input, which is saved to the CORPUS dir. If multiple corpus dirs are given, the first one is used.
+* The ``pulse`` lines appear periodically to show the current status.
+
+Now, interrupt the fuzzer and run it again the same way. You will see::
+
+  Seed: 1879995378
+  #0      READ   cov 0 bits 0 units 564 exec/s 0
+  #1      pulse  cov 502 bits 0 units 564 exec/s 0
+  ...
+  #512    pulse  cov 2933 bits 0 units 564 exec/s 512
+  #564    INITED cov 2991 bits 0 units 344 exec/s 564
+  #1024   pulse  cov 2991 bits 0 units 344 exec/s 1024
+  #1455   NEW    cov 2995 bits 0 units 345 exec/s 1455 L: 49
+
+This time you were running the fuzzer with a non-empty input corpus (564 items).
+As the first step, the fuzzer minimized the set to produce 344 interesting items (the ``INITED`` line)
+
+You may run ``N`` independent fuzzer jobs in parallel on ``M`` CPUs::
+
+  N=100; M=4; ./pcre_fuzzer ./CORPUS -jobs=$N -workers=$M
+
+This is useful when you already have an exhaustive test corpus.
+If you've just started fuzzing with no good corpus running independent
+jobs will create a corpus with too many duplicates.
+One way to avoid this and still use all of your CPUs is to use the flag ``-exit_on_first=1``
+which will cause the fuzzer to exit on the first new synthesised input::
+
+  N=100; M=4; ./pcre_fuzzer ./CORPUS -jobs=$N -workers=$M -exit_on_first=1
+
+
+Fuzzing components of LLVM
+==========================
 
 clang-format-fuzzer
 -------------------
@@ -59,16 +182,14 @@ Optionally build other kinds of binaries (asan+Debug, msan, ubsan, etc).
 
 TODO: commit the pre-fuzzed corpus to svn (?).
 
-Toy example
--------------------
+Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=23052
 
-See lib/Fuzzer/test/SimpleTest.cpp.
-A simple function that does something interesting if it receives bytes "Hi!"::
+clang-fuzzer
+------------
 
-  # Build the Fuzzer with asan:
-  clang++ -std=c++11 -fsanitize=address -fsanitize-coverage=3 -O1 -g Fuzzer*.cpp test/SimpleTest.cpp
-  # Run the fuzzer with no corpus (assuming on empty input)
-  ./a.out
+The default behavior is very similar to ``clang-format-fuzzer``.
+
+Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=23057
 
 FAQ
 =========================
@@ -126,3 +247,8 @@ small inputs, each input takes < 1ms to run, and the library code is not expecte
 to crash on invalid inputs.
 Examples: regular expression matchers, text or binary format parsers.
 
+.. _pcre2: http://www.pcre.org/
+
+.. _AFL: http://lcamtuf.coredump.cx/afl/
+
+.. _SanitizerCoverage: https://code.google.com/p/address-sanitizer/wiki/AsanCoverage
