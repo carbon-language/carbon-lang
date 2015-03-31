@@ -31,13 +31,13 @@ public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 
   AArch64TargetLayout<AArch64ELFType> &getTargetLayout() override {
-    return *(_aarch64TargetLayout.get());
+    return *_aarch64TargetLayout;
   }
 
   void registerRelocationNames(Registry &registry) override;
 
   const AArch64TargetRelocationHandler &getRelocationHandler() const override {
-    return *(_aarch64RelocationHandler.get());
+    return *_aarch64RelocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {

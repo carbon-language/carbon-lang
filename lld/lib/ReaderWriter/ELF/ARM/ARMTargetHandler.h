@@ -65,13 +65,13 @@ public:
   ARMTargetHandler(ARMLinkingContext &ctx);
 
   ARMTargetLayout<ARMELFType> &getTargetLayout() override {
-    return *(_armTargetLayout.get());
+    return *_armTargetLayout;
   }
 
   void registerRelocationNames(Registry &registry) override;
 
   const ARMTargetRelocationHandler &getRelocationHandler() const override {
-    return *(_armRelocationHandler.get());
+    return *_armRelocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {

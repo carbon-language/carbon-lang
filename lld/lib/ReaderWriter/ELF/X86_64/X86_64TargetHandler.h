@@ -36,13 +36,13 @@ public:
   X86_64TargetHandler(X86_64LinkingContext &ctx);
 
   X86_64TargetLayout &getTargetLayout() override {
-    return *(_x86_64TargetLayout.get());
+    return *_x86_64TargetLayout;
   }
 
   void registerRelocationNames(Registry &registry) override;
 
   const X86_64TargetRelocationHandler &getRelocationHandler() const override {
-    return *(_x86_64RelocationHandler.get());
+    return *_x86_64RelocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {

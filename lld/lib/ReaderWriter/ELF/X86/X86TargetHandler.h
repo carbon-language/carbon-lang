@@ -32,13 +32,13 @@ public:
   X86TargetHandler(X86LinkingContext &ctx);
 
   X86TargetLayout<X86ELFType> &getTargetLayout() override {
-    return *(_x86TargetLayout.get());
+    return *_x86TargetLayout;
   }
 
   void registerRelocationNames(Registry &registry) override;
 
   const X86TargetRelocationHandler &getRelocationHandler() const override {
-    return *(_x86RelocationHandler.get());
+    return *_x86RelocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {
