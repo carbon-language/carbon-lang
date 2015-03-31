@@ -81,11 +81,12 @@ static std::string Join(const std::vector<std::string> &V) {
 }
 
 /// Adding features.
-void SubtargetFeatures::AddFeature(StringRef String) {
+void SubtargetFeatures::AddFeature(StringRef String, bool Enable) {
   // Don't add empty features.
   if (!String.empty())
     // Convert to lowercase, prepend flag if we don't already have a flag.
-    Features.push_back(hasFlag(String) ? String.lower() : "+" + String.lower());
+    Features.push_back(hasFlag(String) ? String.lower()
+                                       : (Enable ? "+" : "-") + String.lower());
 }
 
 /// Find KV in array using binary search.

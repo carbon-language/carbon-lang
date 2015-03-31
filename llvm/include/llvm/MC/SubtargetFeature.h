@@ -78,7 +78,7 @@ public:
   std::string getString() const;
 
   /// Adding Features.
-  void AddFeature(StringRef String);
+  void AddFeature(StringRef String, bool Enable = true);
 
   /// ToggleFeature - Toggle a feature and returns the newly updated feature
   /// bits.

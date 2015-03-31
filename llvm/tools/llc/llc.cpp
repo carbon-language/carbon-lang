@@ -212,12 +212,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
   bool SkipModule = MCPU == "help" ||
                     (!MAttrs.empty() && MAttrs.front() == "help");
 
-  // If user asked for the 'native' CPU, autodetect here. If autodection fails,
-  // this will set the CPU to an empty string which tells the target to
-  // pick a basic default.
-  if (MCPU == "native")
-    MCPU = sys::getHostCPUName();
-
   // If user just wants to list available options, skip module loading
   if (!SkipModule) {
     M = parseIRFile(InputFilename, Err, Context);
@@ -256,12 +250,30 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
-  if (MAttrs.size()) {
+  if (!MAttrs.empty() || MCPU == "native") {
     SubtargetFeatures Features;
+
+    // If user asked for the 'native' CPU, we need to autodetect features.
+    // This is necessary for x86 where the CPU might not support all the
+    // features the autodetected CPU name lists in the target. For example,
+    // not all Sandybridge processors support AVX.
+    if (MCPU == "native") {
+      StringMap<bool> HostFeatures;
+      if (sys::getHostCPUFeatures(HostFeatures))
+        for (auto &F : HostFeatures)
+          Features.AddFeature(F.first(), F.second);
+    }
+
     for (unsigned i = 0; i != MAttrs.size(); ++i)
       Features.AddFeature(MAttrs[i]);
     FeaturesStr = Features.getString();
   }
+
+  // If user asked for the 'native' CPU, autodetect here. If autodection fails,
+  // this will set the CPU to an empty string which tells the target to
+  // pick a basic default.
+  if (MCPU == "native")
+    MCPU = sys::getHostCPUName();
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
