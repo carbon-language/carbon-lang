@@ -222,7 +222,8 @@ class Configuration(object):
         self.execute_external = not use_lit_shell
 
     def configure_ccache(self):
-        use_ccache = self.get_lit_bool('use_ccache', False)
+        use_ccache_default = os.environ.get('LIBCXX_USE_CCACHE') is not None
+        use_ccache = self.get_lit_bool('use_ccache', use_ccache_default)
         if use_ccache:
             self.cxx.use_ccache = True
             self.lit_config.note('enabling ccache')
