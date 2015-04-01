@@ -736,9 +736,17 @@ AC_ARG_ENABLE(abi-breaking-checks,AS_HELP_STRING(
 case "$enableval" in
   with-asserts)  if test ${assertions_enabled} = "yes" ; then
                    AC_DEFINE([LLVM_ENABLE_ABI_BREAKING_CHECKS],[1],[Define to enable checks that alter the LLVM C++ ABI])
+                   AC_SUBST(ENABLE_ABI_BREAKING_CHECKS,[1])
+                 else
+                   AC_SUBST(ENABLE_ABI_BREAKING_CHECKS,[0])
 		 fi ;;
-  yes) AC_DEFINE([LLVM_ENABLE_ABI_BREAKING_CHECKS],[1],[Define to enable checks that alter the LLVM C++ ABI]) ;;
-  no) ;;
+  yes)
+                 AC_DEFINE([LLVM_ENABLE_ABI_BREAKING_CHECKS],[1],[Define to enable checks that alter the LLVM C++ ABI])
+                 AC_SUBST(ENABLE_ABI_BREAKING_CHECKS,[1])
+                 ;;
+  no)
+                 AC_SUBST(ENABLE_ABI_BREAKING_CHECKS,[0])
+                 ;;
   *) AC_MSG_ERROR([Invalid setting for --enable-abi-breaking-checks.  Use "with-asserts", "yes" or "no"])
 esac
 

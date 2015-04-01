@@ -697,6 +697,7 @@ DISABLE_ASSERTIONS
 ENABLE_WERROR
 ENABLE_EXPENSIVE_CHECKS
 EXPENSIVE_CHECKS
+ENABLE_ABI_BREAKING_CHECKS
 DEBUG_RUNTIME
 DEBUG_SYMBOLS
 KEEP_SYMBOLS
@@ -5042,13 +5043,25 @@ cat >>confdefs.h <<\_ACEOF
 #define LLVM_ENABLE_ABI_BREAKING_CHECKS 1
 _ACEOF
 
+                   ENABLE_ABI_BREAKING_CHECKS=1
+
+                 else
+                   ENABLE_ABI_BREAKING_CHECKS=0
+
 		 fi ;;
   yes)
+
 cat >>confdefs.h <<\_ACEOF
 #define LLVM_ENABLE_ABI_BREAKING_CHECKS 1
 _ACEOF
- ;;
-  no) ;;
+
+                 ENABLE_ABI_BREAKING_CHECKS=1
+
+                 ;;
+  no)
+                 ENABLE_ABI_BREAKING_CHECKS=0
+
+                 ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-abi-breaking-checks.  Use \"with-asserts\", \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-abi-breaking-checks.  Use \"with-asserts\", \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; }
@@ -18835,8 +18848,8 @@ DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
 ENABLE_WERROR!$ENABLE_WERROR$ac_delim
 ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
+ENABLE_ABI_BREAKING_CHECKS!$ENABLE_ABI_BREAKING_CHECKS$ac_delim
 DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
-DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -18878,6 +18891,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
 TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
@@ -18974,7 +18988,6 @@ HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
 MMAP_FILE!$MMAP_FILE$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
 LLVM_PREFIX!$LLVM_PREFIX$ac_delim
-LLVM_BINDIR!$LLVM_BINDIR$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -19016,6 +19029,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+LLVM_BINDIR!$LLVM_BINDIR$ac_delim
 LLVM_DATADIR!$LLVM_DATADIR$ac_delim
 LLVM_DOCSDIR!$LLVM_DOCSDIR$ac_delim
 LLVM_ETCDIR!$LLVM_ETCDIR$ac_delim
@@ -19035,7 +19049,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 17; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 18; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

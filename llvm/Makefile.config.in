@@ -293,6 +293,11 @@ ENABLE_TERMINFO = @ENABLE_TERMINFO@
 #ENABLE_EXPENSIVE_CHECKS = 0
 @ENABLE_EXPENSIVE_CHECKS@
 
+# --enable-abi-breaking-checks : decide whether we should compile in asserts and
+# checks that make the build ABI incompatible with an llvm built without these
+# checks enabled.
+ENABLE_ABI_BREAKING_CHECKS = @ENABLE_ABI_BREAKING_CHECKS@
+
 # When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
 # symbols.
 #DEBUG_RUNTIME = 1
