@@ -820,6 +820,7 @@ if __name__ == '__main__':
     # Create a new debugger instance
     lldb.debugger = lldb.SBDebugger.Create()
     SymbolicateCrashLogs (sys.argv[1:])
+    lldb.SBDebugger.Destroy (lldb.debugger)
 elif getattr(lldb, 'debugger', None):
     lldb.debugger.HandleCommand('command script add -f lldb.macosx.crashlog.Symbolicate crashlog')
     lldb.debugger.HandleCommand('command script add -f lldb.macosx.crashlog.save_crashlog save_crashlog')
