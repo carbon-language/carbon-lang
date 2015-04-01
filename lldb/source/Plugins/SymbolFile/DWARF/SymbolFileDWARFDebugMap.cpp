@@ -1301,6 +1301,7 @@ SymbolFileDWARFDebugMap::FindTypes
     {
         ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
             oso_dwarf->FindTypes (sc, name, namespace_decl, append, max_matches, types);
+            return false;
         });
     }
 
