@@ -1444,6 +1444,9 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   else if (!isTypeLegal(RetTy, RetVT) && RetVT != MVT::i16 &&
            RetVT != MVT::i8)
     return false;
+  else if (RetVT == MVT::i1 && PPCSubTarget->useCRBits())
+    // We can't handle boolean returns when CR bits are in use.
+    return false;
 
   // FIXME: No multi-register return values yet.
   if (RetVT != MVT::isVoid && RetVT != MVT::i8 && RetVT != MVT::i16 &&
