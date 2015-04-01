@@ -230,7 +230,7 @@ CFLAGS.profile_ios.armv7k := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_ios.arm64  := $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 
-SANITIZER_LDFLAGS := -stdlib=libc++ -lc++
+SANITIZER_LDFLAGS := -stdlib=libc++ -lc++ -lc++abi
 
 SHARED_LIBRARY.asan_osx_dynamic := 1
 LDFLAGS.asan_osx_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib \
@@ -241,11 +241,11 @@ LDFLAGS.asan_iossim_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclan
   -Wl,-ios_simulator_version_min,7.0.0 $(SANITIZER_IOSSIM_DEPLOYMENT_ARGS)
 
 SHARED_LIBRARY.ubsan_osx_dynamic := 1
-LDFLAGS.ubsan_osx_dynamic := $(SANITIZER_LDFLAGS) -lc++abi -install_name @rpath/libclang_rt.ubsan_osx_dynamic.dylib \
+LDFLAGS.ubsan_osx_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.ubsan_osx_dynamic.dylib \
   $(SANITIZER_MACOSX_DEPLOYMENT_ARGS)
 
 SHARED_LIBRARY.ubsan_iossim_dynamic := 1
-LDFLAGS.ubsan_iossim_dynamic := $(SANITIZER_LDFLAGS) -lc++abi -install_name @rpath/libclang_rt.ubsan_iossim_dynamic.dylib \
+LDFLAGS.ubsan_iossim_dynamic := $(SANITIZER_LDFLAGS) -install_name @rpath/libclang_rt.ubsan_iossim_dynamic.dylib \
   -Wl,-ios_simulator_version_min,7.0.0 $(SANITIZER_IOSSIM_DEPLOYMENT_ARGS)
 
 ifneq ($(OSX_SDK),)
@@ -275,18 +275,22 @@ FUNCTIONS.profile_ios := $(FUNCTIONS.profile_osx)
 FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(AsanCXXFunctions) \
                               $(InterceptionFunctions) \
                               $(SanitizerCommonFunctions) \
-                              $(AsanDynamicFunctions)
+                              $(AsanDynamicFunctions) \
+                              $(UbsanFunctions) $(UbsanCXXFunctions)
 
 FUNCTIONS.asan_iossim_dynamic := $(AsanFunctions) $(AsanCXXFunctions) \
                                  $(InterceptionFunctions) \
                                  $(SanitizerCommonFunctions) \
-                                 $(AsanDynamicFunctions)
+                                 $(AsanDynamicFunctions) \
+                                 $(UbsanFunctions) $(UbsanCXXFunctions)
 
 FUNCTIONS.ubsan_osx_dynamic := $(UbsanFunctions) $(UbsanCXXFunctions) \
-                               $(SanitizerCommonFunctions)
+                               $(SanitizerCommonFunctions) \
+                               $(UbsanStandaloneFunctions)
 
 FUNCTIONS.ubsan_iossim_dynamic := $(UbsanFunctions) $(UbsanCXXFunctions) \
-                                  $(SanitizerCommonFunctions)
+                                  $(SanitizerCommonFunctions) \
+                                  $(UbsanStandaloneFunctions)
 
 CCKEXT_PROFILE_FUNCTIONS := \
 	InstrProfiling \

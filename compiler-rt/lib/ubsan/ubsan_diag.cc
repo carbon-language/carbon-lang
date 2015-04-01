@@ -27,7 +27,7 @@
 using namespace __ubsan;
 
 static void MaybePrintStackTrace(uptr pc, uptr bp) {
-  // We assume that flags are already parsed: InitIfNecessary
+  // We assume that flags are already parsed, as UBSan runtime
   // will definitely be called when we print the first diagnostics message.
   if (!flags()->print_stacktrace)
     return;
@@ -76,7 +76,7 @@ class Decorator : public SanitizerCommonDecorator {
 }
 
 SymbolizedStack *__ubsan::getSymbolizedLocation(uptr PC) {
-  InitIfNecessary();
+  InitAsStandaloneIfNecessary();
   return Symbolizer::GetOrInit()->SymbolizePC(PC);
 }
 
@@ -330,7 +330,7 @@ Diag::~Diag() {
 
 ScopedReport::ScopedReport(ReportOptions Opts, Location SummaryLoc)
     : Opts(Opts), SummaryLoc(SummaryLoc) {
-  InitIfNecessary();
+  InitAsStandaloneIfNecessary();
   CommonSanitizerReportMutex.Lock();
 }
 
@@ -355,10 +355,7 @@ void __ubsan::InitializeSuppressions() {
 }
 
 bool __ubsan::IsVptrCheckSuppressed(const char *TypeName) {
-  // If .preinit_array is not used, it is possible that the UBSan runtime is not
-  // initialized.
-  if (!SANITIZER_CAN_USE_PREINIT_ARRAY)
-    InitIfNecessary();
+  InitAsStandaloneIfNecessary();
   CHECK(suppression_ctx);
   Suppression *s;
   return suppression_ctx->Match(TypeName, kVptrCheck, &s);

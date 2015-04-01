@@ -15,9 +15,16 @@
 
 namespace __ubsan {
 
-// NOTE: This function might take a lock (if .preinit_array initialization is
-// not used). It's generally a bad idea to call it on a fast path.
-void InitIfNecessary();
+// Initialize UBSan as a standalone tool. Typically should be called early
+// during initialization.
+void InitAsStandalone();
+
+// Initialize UBSan as a standalone tool, if it hasn't been initialized before.
+void InitAsStandaloneIfNecessary();
+
+// Initializes UBSan as a plugin tool. This function should be called once
+// from "parent tool" (e.g. ASan) initialization.
+void InitAsPlugin();
 
 }  // namespace __ubsan
 

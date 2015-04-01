@@ -20,7 +20,6 @@
 # define CAN_SANITIZE_UB 1
 #else
 # define CAN_SANITIZE_UB 0
-# error "UBSan not supported for this platform!"
 #endif
 
 #endif

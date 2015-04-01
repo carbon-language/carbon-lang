@@ -214,18 +214,18 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
       $<TARGET_OBJECTS:RTAsan.osx>
       $<TARGET_OBJECTS:RTInterception.osx>
       $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-      $<TARGET_OBJECTS:RTLSanCommon.osx>)
+      $<TARGET_OBJECTS:RTLSanCommon.osx>
+      $<TARGET_OBJECTS:RTUbsan.osx>)
   else()
     set(ASAN_TEST_RUNTIME_OBJECTS
       $<TARGET_OBJECTS:RTAsan.${arch}>
       $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
-    if(NOT WIN32)
-      list(APPEND ASAN_TEST_RUNTIME_OBJECTS
-           $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
-    endif()
+      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+      $<TARGET_OBJECTS:RTLSanCommon.${arch}>
+      $<TARGET_OBJECTS:RTUbsan.${arch}>
+      $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>)
   endif()
   add_library(${ASAN_TEST_RUNTIME} STATIC ${ASAN_TEST_RUNTIME_OBJECTS})
   set_target_properties(${ASAN_TEST_RUNTIME} PROPERTIES

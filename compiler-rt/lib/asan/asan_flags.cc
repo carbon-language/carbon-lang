@@ -20,6 +20,8 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_flag_parser.h"
+#include "ubsan/ubsan_flags.h"
+#include "ubsan/ubsan_platform.h"
 
 namespace __asan {
 
@@ -72,8 +74,8 @@ void InitializeFlags() {
   RegisterAsanFlags(&asan_parser, f);
   RegisterCommonFlags(&asan_parser);
 
-  // Set the default values and prepare for parsing LSan flags (which can also
-  // overwrite common flags).
+  // Set the default values and prepare for parsing LSan and UBSan flags
+  // (which can also overwrite common flags).
 #if CAN_SANITIZE_LEAKS
   __lsan::Flags *lf = __lsan::flags();
   lf->SetDefaults();
@@ -83,6 +85,15 @@ void InitializeFlags() {
   RegisterCommonFlags(&lsan_parser);
 #endif
 
+#if CAN_SANITIZE_UB
+  __ubsan::Flags *uf = __ubsan::flags();
+  uf->SetDefaults();
+
+  FlagParser ubsan_parser;
+  __ubsan::RegisterUbsanFlags(&ubsan_parser, uf);
+  RegisterCommonFlags(&ubsan_parser);
+#endif
+
   // Override from ASan compile definition.
   const char *asan_compile_def = MaybeUseAsanDefaultOptionsCompileDefinition();
   asan_parser.ParseString(asan_compile_def);
@@ -90,11 +101,18 @@ void InitializeFlags() {
   // Override from user-specified string.
   const char *asan_default_options = MaybeCallAsanDefaultOptions();
   asan_parser.ParseString(asan_default_options);
+#if CAN_SANITIZE_UB
+  const char *ubsan_default_options = __ubsan::MaybeCallUbsanDefaultOptions();
+  ubsan_parser.ParseString(ubsan_default_options);
+#endif
 
   // Override from command line.
   asan_parser.ParseString(GetEnv("ASAN_OPTIONS"));
 #if CAN_SANITIZE_LEAKS
   lsan_parser.ParseString(GetEnv("LSAN_OPTIONS"));
+#endif
+#if CAN_SANITIZE_UB
+  ubsan_parser.ParseString(GetEnv("UBSAN_OPTIONS"));
 #endif
 
   // Let activation flags override current settings. On Android they come

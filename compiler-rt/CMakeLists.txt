@@ -305,9 +305,9 @@ if(APPLE)
     -stdlib=libc++
     -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
   set(DARWIN_osx_LINKFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
-    -stdlib=libc++ -lc++)
+    -stdlib=libc++ -lc++ -lc++abi)
   set(DARWIN_iossim_LINKFLAGS
-    -stdlib=libc++ -lc++
+    -stdlib=libc++ -lc++ -lc++abi
     -Wl,-ios_simulator_version_min,7.0.0
     -mios-simulator-version-min=7.0
     -isysroot ${IOSSIM_SDK_DIR})

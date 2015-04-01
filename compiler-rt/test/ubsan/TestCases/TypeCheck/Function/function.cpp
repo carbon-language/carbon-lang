@@ -1,7 +1,7 @@
 // RUN: %clangxx -fsanitize=function %s -O3 -g -o %t
 // RUN: %run %t 2>&1 | FileCheck %s
 // Verify that we can disable symbolization if needed:
-// RUN: UBSAN_OPTIONS=symbolize=0 ASAN_OPTIONS=symbolize=0 %run %t 2>&1 | FileCheck %s --check-prefix=NOSYM
+// RUN: UBSAN_OPTIONS=symbolize=0 %run %t 2>&1 | FileCheck %s --check-prefix=NOSYM
 
 // -fsanitize=function is unsupported on Darwin yet.
 // XFAIL: darwin

@@ -23,45 +23,54 @@
 
 using namespace __ubsan;
 
-static bool ubsan_inited;
+static enum {
+  UBSAN_MODE_UNKNOWN = 0,
+  UBSAN_MODE_STANDALONE,
+  UBSAN_MODE_PLUGIN
+} ubsan_mode;
+static StaticSpinMutex ubsan_init_mu;
 
-void __ubsan::InitIfNecessary() {
-#if !SANITIZER_CAN_USE_PREINIT_ARRAY
-  // No need to lock mutex if we're initializing from preinit array.
-  static StaticSpinMutex init_mu;
-  SpinMutexLock l(&init_mu);
-#endif
-  if (LIKELY(ubsan_inited))
-   return;
-  bool standalone = false;
-  if (0 == internal_strcmp(SanitizerToolName, "SanitizerTool")) {
-    // WARNING: If this condition holds, then either UBSan runs in a standalone
-    // mode, or initializer for another sanitizer hasn't run yet. In a latter
-    // case, another sanitizer will overwrite "SanitizerToolName" and reparse
-    // common flags. It means, that we are not allowed to *use* common flags
-    // in this function.
-    SanitizerToolName = "UndefinedBehaviorSanitizer";
-    standalone = true;
-  }
-  // Initialize UBSan-specific flags.
-  InitializeFlags(standalone);
+static void CommonInit() {
   InitializeSuppressions();
-  InitializeCoverage(common_flags()->coverage, common_flags()->coverage_dir);
-  ubsan_inited = true;
 }
 
-#if SANITIZER_CAN_USE_PREINIT_ARRAY
-__attribute__((section(".preinit_array"), used))
-void (*__local_ubsan_preinit)(void) = __ubsan::InitIfNecessary;
-#else
-// Use a dynamic initializer.
-class UbsanInitializer {
- public:
-  UbsanInitializer() {
-    InitIfNecessary();
+static void CommonStandaloneInit() {
+  SanitizerToolName = "UndefinedBehaviorSanitizer";
+  InitializeFlags();
+  InitializeCoverage(common_flags()->coverage, common_flags()->coverage_dir);
+  CommonInit();
+  ubsan_mode = UBSAN_MODE_STANDALONE;
+}
+
+void __ubsan::InitAsStandalone() {
+  if (SANITIZER_CAN_USE_PREINIT_ARRAY) {
+    CHECK_EQ(UBSAN_MODE_UNKNOWN, ubsan_mode);
+    CommonStandaloneInit();
+    return;
   }
-};
-static UbsanInitializer ubsan_initializer;
-#endif  // SANITIZER_CAN_USE_PREINIT_ARRAY
+  SpinMutexLock l(&ubsan_init_mu);
+  CHECK_NE(UBSAN_MODE_PLUGIN, ubsan_mode);
+  if (ubsan_mode == UBSAN_MODE_UNKNOWN)
+    CommonStandaloneInit();
+}
+
+void __ubsan::InitAsStandaloneIfNecessary() {
+  if (SANITIZER_CAN_USE_PREINIT_ARRAY) {
+    CHECK_NE(UBSAN_MODE_UNKNOWN, ubsan_mode);
+    return;
+  }
+  SpinMutexLock l(&ubsan_init_mu);
+  if (ubsan_mode == UBSAN_MODE_UNKNOWN)
+    CommonStandaloneInit();
+}
+
+void __ubsan::InitAsPlugin() {
+#if !SANITIZER_CAN_USE_PREINIT_ARRAY
+  SpinMutexLock l(&ubsan_init_mu);
+#endif
+  CHECK_EQ(UBSAN_MODE_UNKNOWN, ubsan_mode);
+  CommonInit();
+  ubsan_mode = UBSAN_MODE_PLUGIN;
+}
 
 #endif  // CAN_SANITIZE_UB
