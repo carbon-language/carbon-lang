@@ -335,14 +335,19 @@ void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
   assert(TBME.CatchHigh > TBME.TryHigh);
   for (CatchHandler *CH : Handlers) {
     WinEHHandlerType HT;
-    auto *GV = cast<GlobalVariable>(CH->getSelector()->stripPointerCasts());
-    // Selectors are always pointers to GlobalVariables with 'struct' type.
-    // The struct has two fields, adjectives and a type descriptor.
-    auto *CS = cast<ConstantStruct>(GV->getInitializer());
-    HT.Adjectives =
-        cast<ConstantInt>(CS->getAggregateElement(0U))->getZExtValue();
-    HT.TypeDescriptor = cast<GlobalVariable>(
-        CS->getAggregateElement(1)->stripPointerCasts());
+    if (CH->getSelector()->isNullValue()) {
+      HT.Adjectives = 0x40;
+      HT.TypeDescriptor = nullptr;
+    } else {
+      auto *GV = cast<GlobalVariable>(CH->getSelector()->stripPointerCasts());
+      // Selectors are always pointers to GlobalVariables with 'struct' type.
+      // The struct has two fields, adjectives and a type descriptor.
+      auto *CS = cast<ConstantStruct>(GV->getInitializer());
+      HT.Adjectives =
+          cast<ConstantInt>(CS->getAggregateElement(0U))->getZExtValue();
+      HT.TypeDescriptor =
+          cast<GlobalVariable>(CS->getAggregateElement(1)->stripPointerCasts());
+    }
     HT.Handler = cast<Function>(CH->getHandlerBlockOrFunc());
     // FIXME: We don't support catching objects yet!
     HT.CatchObjIdx = INT_MAX;
