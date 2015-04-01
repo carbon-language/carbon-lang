@@ -633,3 +633,112 @@ __mmask8 test_mm512_mask_cmp_epu64_mask(__mmask8 __u, __m512i __a, __m512i __b) 
   // CHECK: @llvm.x86.avx512.mask.ucmp.q.512(<8 x i64> {{.*}}, <8 x i64> {{.*}}, i8 3, i8 {{.*}})
   return (__mmask8)_mm512_mask_cmp_epu64_mask(__u, __a, __b, 3);
 }
+
+__m512i test_mm512_mask_and_epi32(__m512i __src,__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_mask_and_epi32
+  // CHECK: @llvm.x86.avx512.mask.pand.d.512
+  return _mm512_mask_and_epi32(__src, __k,__a, __b);
+}
+
+__m512i test_mm512_maskz_and_epi32(__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_maskz_and_epi32
+  // CHECK: @llvm.x86.avx512.mask.pand.d.512
+  return _mm512_maskz_and_epi32(__k,__a, __b);
+}
+
+__m512i test_mm512_mask_and_epi64(__m512i __src,__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_mask_and_epi64
+  // CHECK: @llvm.x86.avx512.mask.pand.q.512
+  return _mm512_mask_and_epi64(__src, __k,__a, __b);
+}
+
+__m512i test_mm512_maskz_and_epi64(__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_maskz_and_epi64
+  // CHECK: @llvm.x86.avx512.mask.pand.q.512
+  return _mm512_maskz_and_epi64(__k,__a, __b);
+}
+
+__m512i test_mm512_mask_or_epi32(__m512i __src,__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_mask_or_epi32
+  // CHECK: @llvm.x86.avx512.mask.por.d.512
+  return _mm512_mask_or_epi32(__src, __k,__a, __b);
+}
+
+__m512i test_mm512_maskz_or_epi32(__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_maskz_or_epi32
+  // CHECK: @llvm.x86.avx512.mask.por.d.512
+  return _mm512_maskz_or_epi32(__k,__a, __b);
+}
+
+__m512i test_mm512_mask_or_epi64(__m512i __src,__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_mask_or_epi64
+  // CHECK: @llvm.x86.avx512.mask.por.q.512
+  return _mm512_mask_or_epi64(__src, __k,__a, __b);
+}
+
+__m512i test_mm512_maskz_or_epi64(__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_maskz_or_epi64
+  // CHECK: @llvm.x86.avx512.mask.por.q.512
+  return _mm512_maskz_or_epi64(__k,__a, __b);
+}
+
+__m512i test_mm512_mask_xor_epi32(__m512i __src,__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_mask_xor_epi32
+  // CHECK: @llvm.x86.avx512.mask.pxor.d.512
+  return _mm512_mask_xor_epi32(__src, __k,__a, __b);
+}
+
+__m512i test_mm512_maskz_xor_epi32(__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_maskz_xor_epi32
+  // CHECK: @llvm.x86.avx512.mask.pxor.d.512
+  return _mm512_maskz_xor_epi32(__k,__a, __b);
+}
+
+__m512i test_mm512_mask_xor_epi64(__m512i __src,__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_mask_xor_epi64
+  // CHECK: @llvm.x86.avx512.mask.pxor.q.512
+  return _mm512_mask_xor_epi64(__src, __k,__a, __b);
+}
+
+__m512i test_mm512_maskz_xor_epi64(__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_maskz_xor_epi64
+  // CHECK: @llvm.x86.avx512.mask.pxor.q.512
+  return _mm512_maskz_xor_epi64(__k,__a, __b);
+}
+
+__m512i test_mm512_and_epi32(__m512i __src,__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_and_epi32
+  // CHECK: and <8 x i64>
+  return _mm512_and_epi32(__a, __b);
+}
+
+__m512i test_mm512_and_epi64(__m512i __src,__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_and_epi64
+  // CHECK: and <8 x i64>
+  return _mm512_and_epi64(__a, __b);
+}
+
+__m512i test_mm512_or_epi32(__m512i __src,__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_or_epi32
+  // CHECK: or <8 x i64>
+  return _mm512_or_epi32(__a, __b);
+}
+
+__m512i test_mm512_or_epi64(__m512i __src,__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_or_epi64
+  // CHECK: or <8 x i64>
+  return _mm512_or_epi64(__a, __b);
+}
+
+__m512i test_mm512_xor_epi32(__m512i __src,__mmask16 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_xor_epi32
+  // CHECK: xor <8 x i64>
+  return _mm512_xor_epi32(__a, __b);
+}
+
+__m512i test_mm512_xor_epi64(__m512i __src,__mmask8 __k, __m512i __a, __m512i __b) {
+  // CHECK-LABEL: @test_mm512_xor_epi64
+  // CHECK: xor <8 x i64>
+  return _mm512_xor_epi64(__a, __b);
+}
+
