@@ -101,12 +101,22 @@ std::error_code ARMExecutableWriter<ELFT>::setELFHeader() {
   if (std::error_code ec = ExecutableWriter<ELFT>::setELFHeader())
     return ec;
 
-  // Fixup entry point for Thumb code.
   StringRef entryName = _ctx.entrySymbolName();
   if (const AtomLayout *al = _armLayout.findAtomLayoutByName(entryName)) {
-    const auto *ea = dyn_cast<DefinedAtom>(al->_atom);
-    if (ea && ea->codeModel() == DefinedAtom::codeARMThumb)
-      this->_elfHeader->e_entry(al->_virtualAddr | 0x1);
+    if (const auto *ea = dyn_cast<DefinedAtom>(al->_atom)) {
+      switch (ea->codeModel()) {
+      case DefinedAtom::codeNA:
+        if (al->_virtualAddr & 0x3)
+          llvm_unreachable("Two least bits must be zero for ARM entry point");
+      break;
+      case DefinedAtom::codeARMThumb:
+        // Fixup entry point for Thumb code.
+        this->_elfHeader->e_entry(al->_virtualAddr | 0x1);
+      break;
+      default:
+        llvm_unreachable("Wrong code model of entry point atom");
+      }
+    }
   }
 
   return std::error_code();
