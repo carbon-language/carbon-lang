@@ -3834,6 +3834,9 @@ static void printObjc2_64bit_MetaData(MachOObjectFile *O, bool verbose) {
     info.S = II;
     print_image_info64(II, &info);
   }
+
+  if (info.bindtable != nullptr)
+    delete info.bindtable;
 }
 
 static void printObjc2_32bit_MetaData(MachOObjectFile *O, bool verbose) {
