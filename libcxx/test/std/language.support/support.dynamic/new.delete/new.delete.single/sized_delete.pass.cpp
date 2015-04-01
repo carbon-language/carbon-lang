@@ -23,7 +23,6 @@ int delete_nothrow_called = 0;
 void operator delete(void* p) throw()
 {
     ++delete_called;
-    delete_nothrow_called;
     std::free(p);
 }
 
