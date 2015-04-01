@@ -21,6 +21,7 @@
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/CodeGen/WinEHFuncInfo.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
@@ -34,6 +35,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include <memory>
 
 using namespace llvm;
@@ -62,7 +64,7 @@ class WinEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID) {}
+      : FunctionPass(ID), DT(nullptr) {}
 
   bool runOnFunction(Function &Fn) override;
 
@@ -77,6 +79,7 @@ public:
 private:
   bool prepareExceptionHandlers(Function &F,
                                 SmallVectorImpl<LandingPadInst *> &LPads);
+  void promoteLandingPadValues(LandingPadInst *LPad);
   bool outlineHandler(ActionHandler *Action, Function *SrcFn,
                       LandingPadInst *LPad, BasicBlock *StartBB,
                       FrameVarInfoMap &VarInfo);
@@ -89,10 +92,11 @@ private:
   void processSEHCatchHandler(CatchHandler *Handler, BasicBlock *StartBB);
 
   // All fields are reset by runOnFunction.
+  DominatorTree *DT;
   EHPersonality Personality;
   CatchHandlerMapTy CatchHandlerMap;
   CleanupHandlerMapTy CleanupHandlerMap;
-  DenseMap<const LandingPadInst *, LandingPadMap>  LPadMaps;
+  DenseMap<const LandingPadInst *, LandingPadMap> LPadMaps;
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
@@ -115,37 +119,18 @@ public:
 
   bool isInitialized() { return OriginLPad != nullptr; }
 
-  bool mapIfEHPtrLoad(const LoadInst *Load) {
-    return mapIfEHLoad(Load, EHPtrStores, EHPtrStoreAddrs);
-  }
-  bool mapIfSelectorLoad(const LoadInst *Load) {
-    return mapIfEHLoad(Load, SelectorStores, SelectorStoreAddrs);
-  }
-
   bool isOriginLandingPadBlock(const BasicBlock *BB) const;
   bool isLandingPadSpecificInst(const Instruction *Inst) const;
 
-  void remapSelector(ValueToValueMapTy &VMap, Value *MappedValue) const;
+  void remapEHValues(ValueToValueMapTy &VMap, Value *EHPtrValue,
+                     Value *SelectorValue) const;
 
 private:
-  bool mapIfEHLoad(const LoadInst *Load,
-                   SmallVectorImpl<const StoreInst *> &Stores,
-                   SmallVectorImpl<const Value *> &StoreAddrs);
-
   const LandingPadInst *OriginLPad;
   // We will normally only see one of each of these instructions, but
   // if more than one occurs for some reason we can handle that.
   TinyPtrVector<const ExtractValueInst *> ExtractedEHPtrs;
   TinyPtrVector<const ExtractValueInst *> ExtractedSelectors;
-
-  // In optimized code, there will typically be at most one instance of
-  // each of the following, but in unoptimized IR it is not uncommon
-  // for the values to be stored, loaded and then stored again.  In that
-  // case we will create a second entry for each store and store address.
-  SmallVector<const StoreInst *, 2> EHPtrStores;
-  SmallVector<const StoreInst *, 2> SelectorStores;
-  SmallVector<const Value *, 2> EHPtrStoreAddrs;
-  SmallVector<const Value *, 2> SelectorStoreAddrs;
 };
 
 class WinEHCloningDirectorBase : public CloningDirector {
@@ -298,6 +283,8 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   if (!isMSVCEHPersonality(Personality))
     return false;
 
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
   if (isAsynchronousEHPersonality(Personality) && !SEHPrepare) {
     // Replace all resume instructions with unreachable.
     // FIXME: Remove this once the backend can handle the prepared IR.
@@ -317,7 +304,9 @@ bool WinEHPrepare::doFinalization(Module &M) {
   return false;
 }
 
-void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {}
+void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<DominatorTreeWrapperPass>();
+}
 
 bool WinEHPrepare::prepareExceptionHandlers(
     Function &F, SmallVectorImpl<LandingPadInst *> &LPads) {
@@ -359,6 +348,10 @@ bool WinEHPrepare::prepareExceptionHandlers(
     // there's nothing more to do here.
     if (LPadHasActionList)
       continue;
+
+    // If either of the values in the aggregate returned by the landing pad is
+    // extracted and stored to memory, promote the stored value to a register.
+    promoteLandingPadValues(LPad);
 
     LandingPadActions Actions;
     mapLandingPadBlocks(LPad, Actions);
@@ -564,6 +557,38 @@ bool WinEHPrepare::prepareExceptionHandlers(
   return HandlersOutlined;
 }
 
+void WinEHPrepare::promoteLandingPadValues(LandingPadInst *LPad) {
+  // If the return values of the landing pad instruction are extracted and
+  // stored to memory, we want to promote the store locations to reg values.
+  SmallVector<AllocaInst *, 2> EHAllocas;
+
+  // The landingpad instruction returns an aggregate value.  Typically, its
+  // value will be passed to a pair of extract value instructions and the
+  // results of those extracts are often passed to store instructions.
+  // In unoptimized code the stored value will often be loaded and then stored
+  // again.
+  for (auto *U : LPad->users()) {
+    ExtractValueInst *Extract = dyn_cast<ExtractValueInst>(U);
+    if (!Extract)
+      continue;
+
+    for (auto *EU : Extract->users()) {
+      if (auto *Store = dyn_cast<StoreInst>(EU)) {
+        auto *AV = cast<AllocaInst>(Store->getPointerOperand());
+        EHAllocas.push_back(AV);
+      }
+    }
+  }
+
+  // We can't do this without a dominator tree.
+  assert(DT);
+
+  if (!EHAllocas.empty()) {
+    PromoteMemToReg(EHAllocas, *DT);
+    EHAllocas.clear();
+  }
+}
+
 // This function examines a block to determine whether the block ends with a
 // conditional branch to a catch handler based on a selector comparison.
 // This function is used both by the WinEHPrepare::findSelectorComparison() and
@@ -640,9 +665,12 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
     Constant *Sel = CatchAction->getSelector();
     Director.reset(new WinEHCatchDirector(Handler, Sel, VarInfo, LPadMap));
-    LPadMap.remapSelector(VMap, ConstantInt::get(Type::getInt32Ty(Context), 1));
+    LPadMap.remapEHValues(VMap, UndefValue::get(Int8PtrType),
+                          ConstantInt::get(Type::getInt32Ty(Context), 1));
   } else {
     Director.reset(new WinEHCleanupDirector(Handler, VarInfo, LPadMap));
+    LPadMap.remapEHValues(VMap, UndefValue::get(Int8PtrType),
+                          UndefValue::get(Type::getInt32Ty(Context)));
   }
 
   SmallVector<ReturnInst *, 8> Returns;
@@ -730,9 +758,8 @@ void LandingPadMap::mapLandingPad(const LandingPadInst *LPad) {
 
   // The landingpad instruction returns an aggregate value.  Typically, its
   // value will be passed to a pair of extract value instructions and the
-  // results of those extracts are often passed to store instructions.
-  // In unoptimized code the stored value will often be loaded and then stored
-  // again.
+  // results of those extracts will have been promoted to reg values before
+  // this routine is called.
   for (auto *U : LPad->users()) {
     const ExtractValueInst *Extract = dyn_cast<ExtractValueInst>(U);
     if (!Extract)
@@ -743,32 +770,9 @@ void LandingPadMap::mapLandingPad(const LandingPadInst *LPad) {
     assert((Idx == 0 || Idx == 1) &&
            "Unexpected operation: extracting an unknown landing pad element");
     if (Idx == 0) {
-      // Element 0 doesn't directly corresponds to anything in the WinEH
-      // scheme.
-      // It will be stored to a memory location, then later loaded and finally
-      // the loaded value will be used as the argument to an
-      // llvm.eh.begincatch
-      // call.  We're tracking it here so that we can skip the store and load.
       ExtractedEHPtrs.push_back(Extract);
     } else if (Idx == 1) {
-      // Element 1 corresponds to the filter selector.  We'll map it to 1 for
-      // matching purposes, but it will also probably be stored to memory and
-      // reloaded, so we need to track the instuction so that we can map the
-      // loaded value too.
       ExtractedSelectors.push_back(Extract);
-    }
-
-    // Look for stores of the extracted values.
-    for (auto *EU : Extract->users()) {
-      if (auto *Store = dyn_cast<StoreInst>(EU)) {
-        if (Idx == 1) {
-          SelectorStores.push_back(Store);
-          SelectorStoreAddrs.push_back(Store->getPointerOperand());
-        } else {
-          EHPtrStores.push_back(Store);
-          EHPtrStoreAddrs.push_back(Store->getPointerOperand());
-        }
-      }
     }
   }
 }
@@ -788,47 +792,16 @@ bool LandingPadMap::isLandingPadSpecificInst(const Instruction *Inst) const {
     if (Inst == Extract)
       return true;
   }
-  for (auto *Store : EHPtrStores) {
-    if (Inst == Store)
-      return true;
-  }
-  for (auto *Store : SelectorStores) {
-    if (Inst == Store)
-      return true;
-  }
-
   return false;
 }
 
-void LandingPadMap::remapSelector(ValueToValueMapTy &VMap,
-                                     Value *MappedValue) const {
-  // Remap all selector extract instructions to the specified value.
+void LandingPadMap::remapEHValues(ValueToValueMapTy &VMap, Value *EHPtrValue,
+                                  Value *SelectorValue) const {
+  // Remap all landing pad extract instructions to the specified values.
+  for (auto *Extract : ExtractedEHPtrs)
+    VMap[Extract] = EHPtrValue;
   for (auto *Extract : ExtractedSelectors)
-    VMap[Extract] = MappedValue;
-}
-
-bool LandingPadMap::mapIfEHLoad(const LoadInst *Load,
-                                   SmallVectorImpl<const StoreInst *> &Stores,
-                                   SmallVectorImpl<const Value *> &StoreAddrs) {
-  // This makes the assumption that a store we've previously seen dominates
-  // this load instruction.  That might seem like a rather huge assumption,
-  // but given the way that landingpads are constructed its fairly safe.
-  // FIXME: Add debug/assert code that verifies this.
-  const Value *LoadAddr = Load->getPointerOperand();
-  for (auto *StoreAddr : StoreAddrs) {
-    if (LoadAddr == StoreAddr) {
-      // Handle the common debug scenario where this loaded value is stored
-      // to a different location.
-      for (auto *U : Load->users()) {
-        if (auto *Store = dyn_cast<StoreInst>(U)) {
-          Stores.push_back(Store);
-          StoreAddrs.push_back(Store->getPointerOperand());
-        }
-      }
-      return true;
-    }
-  }
-  return false;
+    VMap[Extract] = SelectorValue;
 }
 
 CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
@@ -837,25 +810,6 @@ CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
   // The instruction will have already been remapped in VMap.
   if (LPadMap.isLandingPadSpecificInst(Inst))
     return CloningDirector::SkipInstruction;
-
-  if (auto *Load = dyn_cast<LoadInst>(Inst)) {
-    // Look for loads of (previously suppressed) landingpad values.
-    // The EHPtr load can be mapped to an undef value as it should only be used
-    // as an argument to llvm.eh.begincatch, but the selector value needs to be
-    // mapped to a constant value of 1.  This value will be used to simplify the
-    // branching to always flow to the current handler.
-    if (LPadMap.mapIfSelectorLoad(Load)) {
-      VMap[Inst] = ConstantInt::get(SelectorIDType, 1);
-      return CloningDirector::SkipInstruction;
-    }
-    if (LPadMap.mapIfEHPtrLoad(Load)) {
-      VMap[Inst] = UndefValue::get(Int8PtrType);
-      return CloningDirector::SkipInstruction;
-    }
-
-    // Any other loads just get cloned.
-    return CloningDirector::CloneInstruction;
-  }
 
   // Nested landing pads will be cloned as stubs, with just the
   // landingpad instruction and an unreachable instruction. When
@@ -926,20 +880,24 @@ WinEHCatchDirector::handleEndCatch(ValueToValueMapTy &VMap,
   if (ParentBB->isLandingPad() && !LPadMap.isOriginLandingPadBlock(ParentBB))
     return CloningDirector::SkipInstruction;
 
-  // If an end catch occurs anywhere else the next instruction should be an
-  // unconditional branch instruction that we want to replace with a return
-  // to the the address of the branch target.
-  const BasicBlock *EndCatchBB = IntrinCall->getParent();
-  const TerminatorInst *Terminator = EndCatchBB->getTerminator();
-  const BranchInst *Branch = dyn_cast<BranchInst>(Terminator);
-  assert(Branch && Branch->isUnconditional());
-  assert(std::next(BasicBlock::const_iterator(IntrinCall)) ==
-         BasicBlock::const_iterator(Branch));
+  // If an end catch occurs anywhere else we want to terminate the handler
+  // with a return to the code that follows the endcatch call.  If the
+  // next instruction is not an unconditional branch, we need to split the
+  // block to provide a clear target for the return instruction.
+  BasicBlock *ContinueBB;
+  auto Next = std::next(BasicBlock::const_iterator(IntrinCall));
+  const BranchInst *Branch = dyn_cast<BranchInst>(Next);
+  if (!Branch || !Branch->isUnconditional()) {
+    // We're interrupting the cloning process at this location, so the
+    // const_cast we're doing here will not cause a problem.
+    ContinueBB = SplitBlock(const_cast<BasicBlock *>(ParentBB),
+                            const_cast<Instruction *>(cast<Instruction>(Next)));
+  } else {
+    ContinueBB = Branch->getSuccessor(0);
+  }
 
-  BasicBlock *ContinueLabel = Branch->getSuccessor(0);
-  ReturnInst::Create(NewBB->getContext(), BlockAddress::get(ContinueLabel),
-                     NewBB);
-  ReturnTargets.push_back(ContinueLabel);
+  ReturnInst::Create(NewBB->getContext(), BlockAddress::get(ContinueBB), NewBB);
+  ReturnTargets.push_back(ContinueBB);
 
   // We just added a terminator to the cloned block.
   // Tell the caller to stop processing the current basic block so that
@@ -1338,10 +1296,8 @@ CleanupHandler *WinEHPrepare::findCleanupHandler(BasicBlock *StartBB,
     }
 
     // Look for the bare resume pattern:
-    //   %exn2 = load i8** %exn.slot
-    //   %sel2 = load i32* %ehselector.slot
-    //   %lpad.val1 = insertvalue { i8*, i32 } undef, i8* %exn2, 0
-    //   %lpad.val2 = insertvalue { i8*, i32 } %lpad.val1, i32 %sel2, 1
+    //   %lpad.val1 = insertvalue { i8*, i32 } undef, i8* %exn, 0
+    //   %lpad.val2 = insertvalue { i8*, i32 } %lpad.val1, i32 %sel, 1
     //   resume { i8*, i32 } %lpad.val2
     if (auto *Resume = dyn_cast<ResumeInst>(Terminator)) {
       InsertValueInst *Insert1 = nullptr;
@@ -1375,62 +1331,53 @@ CleanupHandler *WinEHPrepare::findCleanupHandler(BasicBlock *StartBB,
     }
 
     BranchInst *Branch = dyn_cast<BranchInst>(Terminator);
-    if (Branch) {
-      if (Branch->isConditional()) {
-        // Look for the selector dispatch.
-        //   %sel = load i32* %ehselector.slot
-        //   %2 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIf to i8*))
-        //   %matches = icmp eq i32 %sel12, %2
-        //   br i1 %matches, label %catch14, label %eh.resume
-        CmpInst *Compare = dyn_cast<CmpInst>(Branch->getCondition());
-        if (!Compare || !Compare->isEquality())
-          return createCleanupHandler(CleanupHandlerMap, BB);
-        for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(),
-                                  IE = BB->end();
-             II != IE; ++II) {
-          Instruction *Inst = II;
-          if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
-            continue;
-          if (Inst == Compare || Inst == Branch)
-            continue;
-          if (!Inst->hasOneUse() || (Inst->user_back() != Compare))
-            return createCleanupHandler(CleanupHandlerMap, BB);
-          if (match(Inst, m_Intrinsic<Intrinsic::eh_typeid_for>()))
-            continue;
-          if (!isa<LoadInst>(Inst))
-            return createCleanupHandler(CleanupHandlerMap, BB);
-        }
-        // The selector dispatch block should always terminate our search.
-        assert(BB == EndBB);
-        return nullptr;
-      } else {
-        // Look for empty blocks with unconditional branches.
-        for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(),
-                                  IE = BB->end();
-             II != IE; ++II) {
-          Instruction *Inst = II;
-          if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
-            continue;
-          if (Inst == Branch)
-            continue;
-          // This can happen with a catch-all handler.
-          if (match(Inst, m_Intrinsic<Intrinsic::eh_begincatch>()))
-            return nullptr;
-          if (match(Inst, m_Intrinsic<Intrinsic::eh_endcatch>()))
-            continue;
-          // Anything else makes this interesting cleanup code.
-          return createCleanupHandler(CleanupHandlerMap, BB);
-        }
-        if (BB == EndBB)
-          return nullptr;
-        // The branch was unconditional.
-        BB = Branch->getSuccessor(0);
-        continue;
-      } // End else of if branch was conditional
-    }   // End if Branch
+    if (Branch && Branch->isConditional()) {
+      // Look for the selector dispatch.
+      //   %2 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIf to i8*))
+      //   %matches = icmp eq i32 %sel, %2
+      //   br i1 %matches, label %catch14, label %eh.resume
+      CmpInst *Compare = dyn_cast<CmpInst>(Branch->getCondition());
+      if (!Compare || !Compare->isEquality())
+        return createCleanupHandler(CleanupHandlerMap, BB);
+      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(),
+        IE = BB->end();
+        II != IE; ++II) {
+        Instruction *Inst = II;
+        if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
+          continue;
+        if (Inst == Compare || Inst == Branch)
+          continue;
+        if (match(Inst, m_Intrinsic<Intrinsic::eh_typeid_for>()))
+          continue;
+        return createCleanupHandler(CleanupHandlerMap, BB);
+      }
+      // The selector dispatch block should always terminate our search.
+      assert(BB == EndBB);
+      return nullptr;
+    }
 
-    // Anything else makes this interesting cleanup code.
-    return createCleanupHandler(CleanupHandlerMap, BB);
+    // Anything else is either a catch block or interesting cleanup code.
+    for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(),
+      IE = BB->end();
+      II != IE; ++II) {
+      Instruction *Inst = II;
+      if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
+        continue;
+      // Unconditional branches fall through to this loop.
+      if (Inst == Branch)
+        continue;
+      // If this is a catch block, there is no cleanup code to be found.
+      if (match(Inst, m_Intrinsic<Intrinsic::eh_begincatch>()))
+        return nullptr;
+      // Anything else makes this interesting cleanup code.
+      return createCleanupHandler(CleanupHandlerMap, BB);
+    }
+
+    // Only unconditional branches in empty blocks should get this far.
+    assert(Branch && Branch->isUnconditional());
+    if (BB == EndBB)
+      return nullptr;
+    BB = Branch->getSuccessor(0);
   }
   return nullptr;
 }
