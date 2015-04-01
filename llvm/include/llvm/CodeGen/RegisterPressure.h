@@ -35,21 +35,6 @@ struct RegisterPressure {
   SmallVector<unsigned,8> LiveInRegs;
   SmallVector<unsigned,8> LiveOutRegs;
 
-  /// Increase register pressure for each pressure set impacted by this register
-  /// class. Normally called by RegPressureTracker, but may be called manually
-  /// to account for live through (global liveness).
-  ///
-  /// \param Reg is either a virtual register number or register unit number.
-  void increase(unsigned Reg, const TargetRegisterInfo *TRI,
-                const MachineRegisterInfo *MRI);
-
-  /// Decrease register pressure for each pressure set impacted by this register
-  /// class. This is only useful to account for spilling or rematerialization.
-  ///
-  /// \param Reg is either a virtual register number or register unit number.
-  void decrease(unsigned Reg, const TargetRegisterInfo *TRI,
-                const MachineRegisterInfo *MRI);
-
   void dump(const TargetRegisterInfo *TRI) const;
 };
 
