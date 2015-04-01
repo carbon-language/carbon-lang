@@ -16,7 +16,7 @@ using namespace llvm::object;
 
 namespace lld {
 
-std::unique_ptr<Writer> createWriterELF(TargetHandlerBase *handler) {
+std::unique_ptr<Writer> createWriterELF(TargetHandler *handler) {
   return std::move(handler->getWriter());
 }
 

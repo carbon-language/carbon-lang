@@ -29,7 +29,7 @@ public:
   }
 };
 
-class X86_64TargetHandler : public TargetHandler<X86_64ELFType> {
+class X86_64TargetHandler : public TargetHandler {
 public:
   X86_64TargetHandler(X86_64LinkingContext &ctx);
 

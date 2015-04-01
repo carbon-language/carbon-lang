@@ -21,5 +21,5 @@ HexagonLinkingContext::create(llvm::Triple triple) {
 }
 
 HexagonLinkingContext::HexagonLinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+    : ELFLinkingContext(triple, std::unique_ptr<TargetHandler>(
                                     new HexagonTargetHandler(*this))) {}

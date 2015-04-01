@@ -26,7 +26,8 @@ enum {
 
 class X86_64LinkingContext : public ELFLinkingContext {
 protected:
-  X86_64LinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
+  X86_64LinkingContext(llvm::Triple, std::unique_ptr<TargetHandler>);
+
 public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   X86_64LinkingContext(llvm::Triple);

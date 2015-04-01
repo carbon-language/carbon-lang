@@ -24,5 +24,6 @@ elf::X86LinkingContext::create(llvm::Triple triple) {
 }
 
 elf::X86LinkingContext::X86LinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new X86TargetHandler(*this))) {}
+    : ELFLinkingContext(
+          triple, std::unique_ptr<TargetHandler>(new X86TargetHandler(*this))) {
+}

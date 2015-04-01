@@ -29,15 +29,15 @@ namespace lld {
 void Registry::addSupportELFObjects(ELFLinkingContext &ctx) {
 
   // Tell registry about the ELF object file parser.
-  add(std::move(ctx.targetHandler()->getObjReader()));
+  add(std::move(ctx.getTargetHandler().getObjReader()));
 
   // Tell registry about the relocation name to number mapping for this arch.
-  ctx.targetHandler()->registerRelocationNames(*this);
+  ctx.getTargetHandler().registerRelocationNames(*this);
 }
 
 void Registry::addSupportELFDynamicSharedObjects(ELFLinkingContext &ctx) {
   // Tell registry about the ELF dynamic shared library file parser.
-  add(ctx.targetHandler()->getDSOReader());
+  add(ctx.getTargetHandler().getDSOReader());
 }
 
 } // end namespace lld

@@ -26,23 +26,47 @@
 #include <memory>
 #include <set>
 
-namespace lld {
-class Reference;
-class File;
-
-namespace elf {
-template <typename ELFT> class TargetHandler;
+namespace llvm {
+class FileOutputBuffer;
 }
 
-class TargetHandlerBase {
+namespace lld {
+struct AtomLayout;
+class File;
+class Reference;
+
+namespace elf {
+class ELFWriter;
+
+class TargetRelocationHandler {
 public:
-  virtual ~TargetHandlerBase() {}
+  virtual ~TargetRelocationHandler() {}
+
+  virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                          const lld::AtomLayout &,
+                                          const Reference &) const = 0;
+};
+
+} // namespace elf
+
+/// \brief TargetHandler contains all the information responsible to handle a
+/// a particular target on ELF. A target might wish to override implementation
+/// of creating atoms and how the atoms are written to the output file.
+class TargetHandler {
+public:
+  virtual ~TargetHandler() {}
   virtual void registerRelocationNames(Registry &) = 0;
 
+  /// Determine how relocations need to be applied.
+  virtual const elf::TargetRelocationHandler &getRelocationHandler() const = 0;
+
+  /// How does the target deal with reading input files.
   virtual std::unique_ptr<Reader> getObjReader() = 0;
 
+  /// How does the target deal with reading dynamic libraries.
   virtual std::unique_ptr<Reader> getDSOReader() = 0;
 
+  /// How does the target deal with writing ELF output.
   virtual std::unique_ptr<Writer> getWriter() = 0;
 };
 
@@ -141,13 +165,11 @@ public:
   /// \brief Is the relocation a relative relocation
   virtual bool isRelativeReloc(const Reference &r) const;
 
-  template <typename ELFT>
-  lld::elf::TargetHandler<ELFT> &getTargetHandler() const {
+  TargetHandler &getTargetHandler() const {
     assert(_targetHandler && "Got null TargetHandler!");
-    return static_cast<lld::elf::TargetHandler<ELFT> &>(*_targetHandler.get());
+    return *_targetHandler;
   }
 
-  TargetHandlerBase *targetHandler() const { return _targetHandler.get(); }
   void addPasses(PassManager &pm) override;
 
   void setTriple(llvm::Triple trip) { _triple = trip; }
@@ -277,9 +299,8 @@ public:
   const script::Sema &linkerScriptSema() const { return _linkerScriptSema; }
 
 protected:
-  ELFLinkingContext(llvm::Triple triple,
-                    std::unique_ptr<TargetHandlerBase> targetHandler)
-      : _triple(triple), _targetHandler(std::move(targetHandler)) {}
+  ELFLinkingContext(llvm::Triple triple, std::unique_ptr<TargetHandler> handler)
+      : _triple(triple), _targetHandler(std::move(handler)) {}
 
   Writer &writer() const override;
 
@@ -288,7 +309,7 @@ protected:
 
   uint16_t _outputELFType = llvm::ELF::ET_EXEC;
   llvm::Triple _triple;
-  std::unique_ptr<TargetHandlerBase> _targetHandler;
+  std::unique_ptr<TargetHandler> _targetHandler;
   uint64_t _baseAddress = 0;
   bool _isStaticExecutable = false;
   bool _noInhibitExec = false;

@@ -23,8 +23,9 @@ elf::ARMLinkingContext::create(llvm::Triple triple) {
 }
 
 elf::ARMLinkingContext::ARMLinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new ARMTargetHandler(*this))) {}
+    : ELFLinkingContext(
+          triple, std::unique_ptr<TargetHandler>(new ARMTargetHandler(*this))) {
+}
 
 void elf::ARMLinkingContext::addPasses(PassManager &pm) {
   auto pass = createARMRelocationPass(*this);

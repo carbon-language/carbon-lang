@@ -242,8 +242,7 @@ private:
 
   Reference::Addend readAddend(const Elf_Rel &ri,
                                const ArrayRef<uint8_t> content) const {
-    const auto &rh =
-        this->_ctx.template getTargetHandler<ELFT>().getRelocationHandler();
+    const auto &rh = this->_ctx.getTargetHandler().getRelocationHandler();
     return static_cast<const MipsRelocationHandler &>(rh)
         .readAddend(getPrimaryType(ri), content.data() + ri.r_offset);
   }

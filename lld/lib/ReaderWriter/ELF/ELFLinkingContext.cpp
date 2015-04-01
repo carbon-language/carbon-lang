@@ -79,7 +79,7 @@ bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     llvm_unreachable("Unimplemented");
     break;
   default:
-    _writer = createWriterELF(this->targetHandler());
+    _writer = createWriterELF(&this->getTargetHandler());
     break;
   }
 

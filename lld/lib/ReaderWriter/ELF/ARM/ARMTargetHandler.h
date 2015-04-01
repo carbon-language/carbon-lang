@@ -57,7 +57,7 @@ private:
   llvm::Optional<uint64_t> _tpOff;
 };
 
-class ARMTargetHandler final : public TargetHandler<ARMELFType> {
+class ARMTargetHandler final : public TargetHandler {
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
 

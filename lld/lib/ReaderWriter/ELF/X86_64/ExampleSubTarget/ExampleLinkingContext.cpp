@@ -21,7 +21,7 @@ ExampleLinkingContext::create(llvm::Triple triple) {
 }
 
 ExampleLinkingContext::ExampleLinkingContext(llvm::Triple triple)
-    : X86_64LinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+    : X86_64LinkingContext(triple, std::unique_ptr<TargetHandler>(
                                        new ExampleTargetHandler(*this))) {
   _outputELFType = llvm::ELF::ET_LOPROC;
 }

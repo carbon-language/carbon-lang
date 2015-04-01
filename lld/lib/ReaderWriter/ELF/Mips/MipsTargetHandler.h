@@ -99,8 +99,7 @@ public:
 };
 
 /// \brief TargetHandler for Mips
-template <class ELFT>
-class MipsTargetHandler final : public TargetHandler<ELFT> {
+template <class ELFT> class MipsTargetHandler final : public TargetHandler {
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)
       : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<ELFT>(ctx)),

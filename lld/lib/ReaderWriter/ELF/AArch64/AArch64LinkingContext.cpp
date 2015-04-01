@@ -22,8 +22,8 @@ elf::AArch64LinkingContext::create(llvm::Triple triple) {
 }
 
 elf::AArch64LinkingContext::AArch64LinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new AArch64TargetHandler(*this))) {}
+    : ELFLinkingContext(triple, std::unique_ptr<TargetHandler>(
+                                    new AArch64TargetHandler(*this))) {}
 
 void elf::AArch64LinkingContext::addPasses(PassManager &pm) {
   auto pass = createAArch64RelocationPass(*this);

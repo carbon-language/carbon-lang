@@ -15,7 +15,7 @@ using namespace lld;
 using namespace elf;
 
 X86_64LinkingContext::X86_64LinkingContext(
-    llvm::Triple triple, std::unique_ptr<TargetHandlerBase> handler)
+    llvm::Triple triple, std::unique_ptr<TargetHandler> handler)
     : ELFLinkingContext(triple, std::move(handler)) {}
 
 X86_64LinkingContext::X86_64LinkingContext(llvm::Triple triple)

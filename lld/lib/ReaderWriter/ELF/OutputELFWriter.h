@@ -175,7 +175,7 @@ protected:
   llvm::BumpPtrAllocator _alloc;
 
   ELFLinkingContext &_ctx;
-  TargetHandler<ELFT> &_targetHandler;
+  TargetHandler &_targetHandler;
 
   typedef llvm::DenseMap<const Atom *, uint64_t> AtomToAddress;
   AtomToAddress _atomToAddressMap;
@@ -207,7 +207,7 @@ private:
 template <class ELFT>
 OutputELFWriter<ELFT>::OutputELFWriter(ELFLinkingContext &ctx,
                                        TargetLayout<ELFT> &layout)
-    : _ctx(ctx), _targetHandler(ctx.getTargetHandler<ELFT>()), _layout(layout),
+    : _ctx(ctx), _targetHandler(ctx.getTargetHandler()), _layout(layout),
       _scriptFile(new RuntimeFile<ELFT>(ctx, "Linker script runtime")) {}
 
 template <class ELFT>

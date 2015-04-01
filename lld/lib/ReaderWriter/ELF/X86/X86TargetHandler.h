@@ -25,7 +25,7 @@ public:
   X86TargetLayout(X86LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
 };
 
-class X86TargetHandler final : public TargetHandler<X86ELFType> {
+class X86TargetHandler final : public TargetHandler {
 public:
   X86TargetHandler(X86LinkingContext &ctx);
 

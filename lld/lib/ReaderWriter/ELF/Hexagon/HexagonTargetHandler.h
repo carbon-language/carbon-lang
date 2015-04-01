@@ -96,7 +96,7 @@ private:
 };
 
 /// \brief TargetHandler for Hexagon
-class HexagonTargetHandler final : public TargetHandler<HexagonELFType> {
+class HexagonTargetHandler final : public TargetHandler {
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 

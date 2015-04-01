@@ -31,7 +31,6 @@ class ELFLinkingContext;
 class File;
 class LinkingContext;
 class PECOFFLinkingContext;
-class TargetHandlerBase;
 class MachOLinkingContext;
 
 /// \brief An abstract class for reading object files, library files, and
