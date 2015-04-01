@@ -32,9 +32,6 @@ def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
 def FeatureCRC : SubtargetFeature<"crc", "HasCRC", "true",
   "Enable ARMv8 CRC-32 checksum instructions">;
 
-def FeatureV8_1a : SubtargetFeature<"v8.1a", "HasV8_1a", "true",
-  "Enable ARMv8.1a extensions", [FeatureCRC]>;
-
 /// Cyclone has register move instructions which are "free".
 def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
                                         "Has zero-cycle register moves">;
@@ -42,6 +39,13 @@ def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
 /// Cyclone has instructions which zero registers for "free".
 def FeatureZCZeroing : SubtargetFeature<"zcz", "HasZeroCycleZeroing", "true",
                                         "Has zero-cycle zeroing instructions">;
+
+//===----------------------------------------------------------------------===//
+// Architectures.
+//
+
+def HasV8_1aOps : SubtargetFeature<"v8.1a", "HasV8_1aOps", "true",
+  "Support ARM v8.1a instructions", [FeatureCRC]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -91,10 +95,6 @@ def ProcCyclone : SubtargetFeature<"cyclone", "ARMProcFamily", "Cyclone",
 def : ProcessorModel<"generic", NoSchedModel, [FeatureFPARMv8,
                                               FeatureNEON,
                                               FeatureCRC]>;
-
-def : ProcessorModel<"generic-armv8.1-a", NoSchedModel, [FeatureV8_1a,
-                                                         FeatureNEON,
-                                                         FeatureCrypto]>;
 
 def : ProcessorModel<"cortex-a53", CortexA53Model, [ProcA53]>;
 def : ProcessorModel<"cortex-a57", CortexA57Model, [ProcA57]>;

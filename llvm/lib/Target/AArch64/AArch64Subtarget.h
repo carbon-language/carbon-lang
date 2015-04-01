@@ -37,11 +37,12 @@ protected:
   /// ARMProcFamily - ARM processor family: Cortex-A53, Cortex-A57, and others.
   ARMProcFamilyEnum ARMProcFamily;
 
+  bool HasV8_1aOps;
+
   bool HasFPARMv8;
   bool HasNEON;
   bool HasCrypto;
   bool HasCRC;
-  bool HasV8_1a;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
   bool HasZeroCycleRegMove;
@@ -93,6 +94,8 @@ public:
     return isCortexA53() || isCortexA57();
   }
 
+  bool hasV8_1aOps() const { return HasV8_1aOps; }
+
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }
 
   bool hasZeroCycleZeroing() const { return HasZeroCycleZeroing; }
@@ -101,7 +104,6 @@ public:
   bool hasNEON() const { return HasNEON; }
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
-  bool hasV8_1a() const { return HasV8_1a; }
 
   bool isLittleEndian() const { return IsLittle; }
 
