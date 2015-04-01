@@ -1,0 +1,206 @@
+# RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.64bit.exe.macho-x86_64 | FileCheck %s -check-prefix=OBJC2_64BIT_EXE
+# RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.64bit.obj.macho-x86_64 | FileCheck %s -check-prefix=OBJC2_64BIT_OBJ
+
+OBJC2_64BIT_EXE: Contents of (__DATA,__objc_classlist) section
+OBJC2_64BIT_EXE: 0000000100002028 0x1000029f0
+OBJC2_64BIT_EXE:            isa 0x100002a18
+OBJC2_64BIT_EXE:     superclass 0x0
+OBJC2_64BIT_EXE:          cache 0x0
+OBJC2_64BIT_EXE:         vtable 0x0
+OBJC2_64BIT_EXE:           data 0x1000020d0 (struct class_ro_t *)
+OBJC2_64BIT_EXE:                     flags 0x80
+OBJC2_64BIT_EXE:             instanceStart 100
+OBJC2_64BIT_EXE:              instanceSize 100
+OBJC2_64BIT_EXE:                  reserved 0x0
+OBJC2_64BIT_EXE:                ivarLayout 0x0
+OBJC2_64BIT_EXE:                      name 0x100001b0e ViewController
+OBJC2_64BIT_EXE:               baseMethods 0x100002098 (struct method_list_t *)
+OBJC2_64BIT_EXE: 		   entsize 24
+OBJC2_64BIT_EXE: 		     count 2
+OBJC2_64BIT_EXE: 		      name 0x1000014ee viewDidLoad
+OBJC2_64BIT_EXE: 		     types 0x100001b48 v16@0:8
+OBJC2_64BIT_EXE: 		       imp 0x100001350 
+OBJC2_64BIT_EXE: 		      name 0x1000014fa setRepresentedObject:
+OBJC2_64BIT_EXE: 		     types 0x100001b50 v24@0:8@16
+OBJC2_64BIT_EXE: 		       imp 0x100001390 
+OBJC2_64BIT_EXE:             baseProtocols 0x0
+OBJC2_64BIT_EXE:                     ivars 0x0
+OBJC2_64BIT_EXE:            weakIvarLayout 0x0
+OBJC2_64BIT_EXE:            baseProperties 0x0
+OBJC2_64BIT_EXE: Meta Class
+OBJC2_64BIT_EXE:            isa 0x0
+OBJC2_64BIT_EXE:     superclass 0x0
+OBJC2_64BIT_EXE:          cache 0x0
+OBJC2_64BIT_EXE:         vtable 0x0
+OBJC2_64BIT_EXE:           data 0x100002050 (struct class_ro_t *)
+OBJC2_64BIT_EXE:                     flags 0x81 RO_META
+OBJC2_64BIT_EXE:             instanceStart 40
+OBJC2_64BIT_EXE:              instanceSize 40
+OBJC2_64BIT_EXE:                  reserved 0x0
+OBJC2_64BIT_EXE:                ivarLayout 0x0
+OBJC2_64BIT_EXE:                      name 0x100001b0e ViewController
+OBJC2_64BIT_EXE:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_EXE:             baseProtocols 0x0
+OBJC2_64BIT_EXE:                     ivars 0x0
+OBJC2_64BIT_EXE:            weakIvarLayout 0x0
+OBJC2_64BIT_EXE:            baseProperties 0x0
+OBJC2_64BIT_EXE: 0000000100002030 0x100002a68
+OBJC2_64BIT_EXE:            isa 0x100002a40
+OBJC2_64BIT_EXE:     superclass 0x0
+OBJC2_64BIT_EXE:          cache 0x0
+OBJC2_64BIT_EXE:         vtable 0x0
+OBJC2_64BIT_EXE:           data 0x100002990 (struct class_ro_t *)
+OBJC2_64BIT_EXE:                     flags 0x80
+OBJC2_64BIT_EXE:             instanceStart 8
+OBJC2_64BIT_EXE:              instanceSize 8
+OBJC2_64BIT_EXE:                  reserved 0x0
+OBJC2_64BIT_EXE:                ivarLayout 0x0
+OBJC2_64BIT_EXE:                      name 0x100001b1d AppDelegate
+OBJC2_64BIT_EXE:               baseMethods 0x100002910 (struct method_list_t *)
+OBJC2_64BIT_EXE: 		   entsize 24
+OBJC2_64BIT_EXE: 		     count 2
+OBJC2_64BIT_EXE: 		      name 0x100001885 applicationDidFinishLaunching:
+OBJC2_64BIT_EXE: 		     types 0x100001b50 v24@0:8@16
+OBJC2_64BIT_EXE: 		       imp 0x100001430 
+OBJC2_64BIT_EXE: 		      name 0x100001999 applicationWillTerminate:
+OBJC2_64BIT_EXE: 		     types 0x100001b50 v24@0:8@16
+OBJC2_64BIT_EXE: 		       imp 0x100001470 
+OBJC2_64BIT_EXE:             baseProtocols 0x1000028b0
+OBJC2_64BIT_EXE:                       count 1
+OBJC2_64BIT_EXE: 		      list[0] 0x100002ae0 (struct protocol_t *)
+OBJC2_64BIT_EXE: 			      isa 0x0
+OBJC2_64BIT_EXE: 			     name 0x100001b29 NSApplicationDelegate
+OBJC2_64BIT_EXE: 			protocols 0x1000023f0
+OBJC2_64BIT_EXE: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_EXE: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_EXE: 	  optionalInstanceMethods 0x100002408
+OBJC2_64BIT_EXE: 	     optionalClassMethods 0x0
+OBJC2_64BIT_EXE: 	       instanceProperties 0x0
+OBJC2_64BIT_EXE:                     ivars 0x0
+OBJC2_64BIT_EXE:            weakIvarLayout 0x0
+OBJC2_64BIT_EXE:            baseProperties 0x100002948
+OBJC2_64BIT_EXE:                     entsize 16
+OBJC2_64BIT_EXE:                       count 4
+OBJC2_64BIT_EXE: 			     name 0x100001f25 hash
+OBJC2_64BIT_EXE: 			attributes 0x100001f2a TQ,R
+OBJC2_64BIT_EXE: 			     name 0x100001f2f superclass
+OBJC2_64BIT_EXE: 			attributes 0x100001f3a T#,R
+OBJC2_64BIT_EXE: 			     name 0x100001f3f description
+OBJC2_64BIT_EXE: 			attributes 0x100001f4b T@"NSString",R,C
+OBJC2_64BIT_EXE: 			     name 0x100001f5c debugDescription
+OBJC2_64BIT_EXE: 			attributes 0x100001f4b T@"NSString",R,C
+OBJC2_64BIT_EXE: Meta Class
+OBJC2_64BIT_EXE:            isa 0x0
+OBJC2_64BIT_EXE:     superclass 0x0
+OBJC2_64BIT_EXE:          cache 0x0
+OBJC2_64BIT_EXE:         vtable 0x0
+OBJC2_64BIT_EXE:           data 0x1000028c8 (struct class_ro_t *)
+OBJC2_64BIT_EXE:                     flags 0x81 RO_META
+OBJC2_64BIT_EXE:             instanceStart 40
+OBJC2_64BIT_EXE:              instanceSize 40
+OBJC2_64BIT_EXE:                  reserved 0x0
+OBJC2_64BIT_EXE:                ivarLayout 0x0
+OBJC2_64BIT_EXE:                      name 0x100001b1d AppDelegate
+OBJC2_64BIT_EXE:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_EXE:             baseProtocols 0x1000028b0
+OBJC2_64BIT_EXE:                       count 1
+OBJC2_64BIT_EXE: 		      list[0] 0x100002ae0 (struct protocol_t *)
+OBJC2_64BIT_EXE: 			      isa 0x0
+OBJC2_64BIT_EXE: 			     name 0x100001b29 NSApplicationDelegate
+OBJC2_64BIT_EXE: 			protocols 0x1000023f0
+OBJC2_64BIT_EXE: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_EXE: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_EXE: 	  optionalInstanceMethods 0x100002408
+OBJC2_64BIT_EXE: 	     optionalClassMethods 0x0
+OBJC2_64BIT_EXE: 	       instanceProperties 0x0
+OBJC2_64BIT_EXE:                     ivars 0x0
+OBJC2_64BIT_EXE:            weakIvarLayout 0x0
+OBJC2_64BIT_EXE:            baseProperties 0x0
+OBJC2_64BIT_EXE: Contents of (__DATA,__objc_superrefs) section
+OBJC2_64BIT_EXE: 00000001000029e8 0x1000029f0
+OBJC2_64BIT_EXE: Contents of (__DATA,__objc_protolist) section
+OBJC2_64BIT_EXE: 0000000100002038 0x100002a90
+OBJC2_64BIT_EXE: 0000000100002040 0x100002ae0
+OBJC2_64BIT_EXE: Contents of (__DATA,__objc_imageinfo) section
+OBJC2_64BIT_EXE:   version 0
+OBJC2_64BIT_EXE:     flags 0x0
+
+OBJC2_64BIT_OBJ: Contents of (__DATA,__objc_classlist) section
+OBJC2_64BIT_OBJ: 0000000000001b00 0x1ad8 _OBJC_CLASS_$_AppDelegate
+OBJC2_64BIT_OBJ:            isa 0x0 _OBJC_METACLASS_$_AppDelegate
+OBJC2_64BIT_OBJ:     superclass 0x0 _OBJC_CLASS_$_NSObject
+OBJC2_64BIT_OBJ:          cache 0x0 __objc_empty_cache
+OBJC2_64BIT_OBJ:         vtable 0x0
+OBJC2_64BIT_OBJ:           data l_OBJC_CLASS_RO_$_AppDelegate (struct class_ro_t *)
+OBJC2_64BIT_OBJ:                     flags 0x80
+OBJC2_64BIT_OBJ:             instanceStart 8
+OBJC2_64BIT_OBJ:              instanceSize 8
+OBJC2_64BIT_OBJ:                  reserved 0x0
+OBJC2_64BIT_OBJ:                ivarLayout 0x0
+OBJC2_64BIT_OBJ:                      name 0x6f8 AppDelegate
+OBJC2_64BIT_OBJ:               baseMethods l_OBJC_$_INSTANCE_METHODS_AppDelegate (struct method_list_t *)
+OBJC2_64BIT_OBJ: 		   entsize 24
+OBJC2_64BIT_OBJ: 		     count 2
+OBJC2_64BIT_OBJ: 		      name 0xa98 applicationDidFinishLaunching:
+OBJC2_64BIT_OBJ: 		     types 0x102e v24@0:8@16
+OBJC2_64BIT_OBJ: 		       imp -[AppDelegate applicationDidFinishLaunching:]
+OBJC2_64BIT_OBJ: 		      name 0xbac applicationWillTerminate:
+OBJC2_64BIT_OBJ: 		     types 0x102e v24@0:8@16
+OBJC2_64BIT_OBJ: 		       imp -[AppDelegate applicationWillTerminate:]
+OBJC2_64BIT_OBJ:             baseProtocols l_OBJC_CLASS_PROTOCOLS_$_AppDelegate
+OBJC2_64BIT_OBJ:                       count 1
+OBJC2_64BIT_OBJ: 		      list[0] l_OBJC_PROTOCOL_$_NSApplicationDelegate (struct protocol_t *)
+OBJC2_64BIT_OBJ: 			      isa 0x0
+OBJC2_64BIT_OBJ: 			     name 0x704 NSApplicationDelegate
+OBJC2_64BIT_OBJ: 			protocols 0x0
+OBJC2_64BIT_OBJ: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_OBJ: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_OBJ: 	  optionalInstanceMethods 0x0
+OBJC2_64BIT_OBJ: 	     optionalClassMethods 0x0
+OBJC2_64BIT_OBJ: 	       instanceProperties 0x0
+OBJC2_64BIT_OBJ:                     ivars 0x0
+OBJC2_64BIT_OBJ:            weakIvarLayout 0x0
+OBJC2_64BIT_OBJ:            baseProperties l_OBJC_$_PROP_LIST_AppDelegate
+OBJC2_64BIT_OBJ:                     entsize 16
+OBJC2_64BIT_OBJ:                       count 4
+OBJC2_64BIT_OBJ: 			     name 0x19b8 hash
+OBJC2_64BIT_OBJ: 			attributes 0x19bd TQ,R
+OBJC2_64BIT_OBJ: 			     name 0x19c2 superclass
+OBJC2_64BIT_OBJ: 			attributes 0x19cd T#,R
+OBJC2_64BIT_OBJ: 			     name 0x19d2 description
+OBJC2_64BIT_OBJ: 			attributes 0x19de T@"NSString",R,C
+OBJC2_64BIT_OBJ: 			     name 0x19ef debugDescription
+OBJC2_64BIT_OBJ: 			attributes 0x19de T@"NSString",R,C
+OBJC2_64BIT_OBJ: Meta Class
+OBJC2_64BIT_OBJ:            isa 0x0 _OBJC_METACLASS_$_NSObject
+OBJC2_64BIT_OBJ:     superclass 0x0 _OBJC_METACLASS_$_NSObject
+OBJC2_64BIT_OBJ:          cache 0x0 __objc_empty_cache
+OBJC2_64BIT_OBJ:         vtable 0x0
+OBJC2_64BIT_OBJ:           data l_OBJC_METACLASS_RO_$_AppDelegate (struct class_ro_t *)
+OBJC2_64BIT_OBJ:                     flags 0x81 RO_META
+OBJC2_64BIT_OBJ:             instanceStart 40
+OBJC2_64BIT_OBJ:              instanceSize 40
+OBJC2_64BIT_OBJ:                  reserved 0x0
+OBJC2_64BIT_OBJ:                ivarLayout 0x0
+OBJC2_64BIT_OBJ:                      name 0x6f8 AppDelegate
+OBJC2_64BIT_OBJ:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_OBJ:             baseProtocols l_OBJC_CLASS_PROTOCOLS_$_AppDelegate
+OBJC2_64BIT_OBJ:                       count 1
+OBJC2_64BIT_OBJ: 		      list[0] l_OBJC_PROTOCOL_$_NSApplicationDelegate (struct protocol_t *)
+OBJC2_64BIT_OBJ: 			      isa 0x0
+OBJC2_64BIT_OBJ: 			     name 0x704 NSApplicationDelegate
+OBJC2_64BIT_OBJ: 			protocols 0x0
+OBJC2_64BIT_OBJ: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_OBJ: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_64BIT_OBJ: 	  optionalInstanceMethods 0x0
+OBJC2_64BIT_OBJ: 	     optionalClassMethods 0x0
+OBJC2_64BIT_OBJ: 	       instanceProperties 0x0
+OBJC2_64BIT_OBJ:                     ivars 0x0
+OBJC2_64BIT_OBJ:            weakIvarLayout 0x0
+OBJC2_64BIT_OBJ:            baseProperties 0x0
+OBJC2_64BIT_OBJ: Contents of (__DATA,__objc_protolist) section
+OBJC2_64BIT_OBJ: 0000000000001aa0 0x1a00 l_OBJC_PROTOCOL_$_NSObject
+OBJC2_64BIT_OBJ: 0000000000001aa8 0x1a50 l_OBJC_PROTOCOL_$_NSApplicationDelegate
+OBJC2_64BIT_OBJ: Contents of (__DATA,__objc_imageinfo) section
+OBJC2_64BIT_OBJ:   version 0
+OBJC2_64BIT_OBJ:     flags 0x0

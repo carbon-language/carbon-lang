@@ -896,6 +896,7 @@ int main(int argc, char **argv) {
       && !(InfoPlist && MachOOpt)
       && !(DylibsUsed && MachOOpt)
       && !(DylibId && MachOOpt)
+      && !(ObjcMetaData && MachOOpt)
       && !(DumpSections.size() != 0 && MachOOpt)) {
     cl::PrintHelpMessage();
     return 2;

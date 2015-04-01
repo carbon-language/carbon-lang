@@ -1,4 +1,3 @@
-//===-- llvm-objdump.h ----------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -44,6 +43,7 @@ extern cl::opt<bool> LinkOptHints;
 extern cl::opt<bool> InfoPlist;
 extern cl::opt<bool> DylibsUsed;
 extern cl::opt<bool> DylibId;
+extern cl::opt<bool> ObjcMetaData;
 extern cl::opt<std::string> DisSymName;
 extern cl::opt<bool> NonVerbose;
 extern cl::opt<bool> Relocations;
