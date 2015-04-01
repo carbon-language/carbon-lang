@@ -256,6 +256,10 @@ namespace llvm {
     /// Mark predicate values currently being processed by isImpliedCond.
     DenseSet<Value*> PendingLoopPredicates;
 
+    /// Set to true by isLoopBackedgeGuardedByCond when we're walking the set of
+    /// conditions dominating the backedge of a loop.
+    bool WalkingBEDominatingConds;
+
     /// ExitLimit - Information about the number of loop iterations for which a
     /// loop exit's branch condition evaluates to the not-taken path.  This is a
     /// temporary pair of exact and max expressions that are eventually
