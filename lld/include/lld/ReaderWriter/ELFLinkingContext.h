@@ -57,16 +57,16 @@ public:
   virtual ~TargetHandler() {}
   virtual void registerRelocationNames(Registry &) = 0;
 
-  /// Determine how relocations need to be applied.
+  /// Determines how relocations need to be applied.
   virtual const elf::TargetRelocationHandler &getRelocationHandler() const = 0;
 
-  /// How does the target deal with reading input files.
+  /// Returns a reader for object files.
   virtual std::unique_ptr<Reader> getObjReader() = 0;
 
-  /// How does the target deal with reading dynamic libraries.
+  /// Returns a reader for .so files.
   virtual std::unique_ptr<Reader> getDSOReader() = 0;
 
-  /// How does the target deal with writing ELF output.
+  /// Returns a writer to write an ELF file.
   virtual std::unique_ptr<Writer> getWriter() = 0;
 };
 
@@ -106,7 +106,8 @@ public:
   /// in the shared library
   bool useShlibUndefines() const { return _useShlibUndefines; }
 
-  /// \brief Does this relocation belong in the dynamic relocation table?
+  /// \brief Returns true if a given relocation should be added to the
+  /// dynamic relocation table.
   ///
   /// This table is evaluated at loadtime by the dynamic loader and is
   /// referenced by the DT_RELA{,ENT,SZ} entries in the dynamic table.
@@ -114,7 +115,7 @@ public:
   /// table.
   virtual bool isDynamicRelocation(const Reference &) const { return false; }
 
-  /// \brief Is this a copy relocation?
+  /// \brief Returns true if a given reference is a copy relocation.
   ///
   /// If this is a copy relocation, its target must be an ObjectAtom. We must
   /// include in DT_NEEDED the name of the library where this object came from.
@@ -122,7 +123,9 @@ public:
 
   bool validateImpl(raw_ostream &diagnostics) override;
 
-  /// \brief Does the linker allow dynamic libraries to be linked with?
+  /// \brief Returns true if the linker allows dynamic libraries to be
+  /// linked with.
+  ///
   /// This is true when the output mode of the executable is set to be
   /// having NMAGIC/OMAGIC
   bool allowLinkWithDynamicLibraries() const {
@@ -135,7 +138,7 @@ public:
   /// \brief Use Elf_Rela format to output relocation tables.
   virtual bool isRelaOutputFormat() const { return true; }
 
-  /// \brief Does this relocation belong in the dynamic plt relocation table?
+  /// \brief Returns true if a given relocation should be added to PLT.
   ///
   /// This table holds all of the relocations used for delayed symbol binding.
   /// It will be evaluated at load time if LD_BIND_NOW is set. It is referenced
@@ -156,13 +159,13 @@ public:
     return getDefaultInterpreter();
   }
 
-  /// \brief Does the output have dynamic sections.
+  /// \brief Returns true if the output have dynamic sections.
   bool isDynamic() const;
 
-  /// \brief Are we creating a shared library?
+  /// \brief Returns true if we are creating a shared library.
   bool isDynamicLibrary() const { return _outputELFType == llvm::ELF::ET_DYN; }
 
-  /// \brief Is the relocation a relative relocation
+  /// \brief Returns true if a given relocation is a relative relocation.
   virtual bool isRelativeReloc(const Reference &r) const;
 
   TargetHandler &getTargetHandler() const {
