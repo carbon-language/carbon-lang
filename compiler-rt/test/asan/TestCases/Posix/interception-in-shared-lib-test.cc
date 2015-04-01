@@ -1,13 +1,8 @@
 // Check that memset() call from a shared library gets intercepted.
-// Please always keep this file in sync with
-// ../Linux/interception-in-shared-lib-test.cc.
 
 // RUN: %clangxx_asan -O0 %s -DSHARED_LIB \
-// RUN:     -shared -o %t-so.so \
-// RUN:     -fPIC -install_name @rpath/interception-in-shared-lib-test.cc.tmp-so.so
-// TODO(glider): figure out how to set rpath in a more portable way and unite
-// this test with ../Linux/interception-in-shared-lib-test.cc.
-// RUN: %clangxx_asan -O0 %s -o %t -Wl,-rpath,@executable_path %t-so.so && \
+// RUN:     -shared -o %dynamiclib -fPIC %ld_flags_rpath_so
+// RUN: %clangxx_asan -O0 %s -o %t %ld_flags_rpath_exe && \
 // RUN:     not %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
@@ -26,7 +21,7 @@ int main(int argc, char *argv[]) {
   my_memset(buf, 11);
   // CHECK: {{.*ERROR: AddressSanitizer: stack-buffer-overflow}}
   // CHECK: {{WRITE of size 11 at 0x.* thread T0}}
-  // CHECK: {{0x.* in my_memset .*interception-in-shared-lib-test.cc:19}}
+  // CHECK: {{0x.* in my_memset .*interception-in-shared-lib-test.cc:}}[[@LINE-10]]
   return 0;
 }
 #endif
