@@ -718,9 +718,6 @@ void IrreducibleGraph::addEdges(const BlockNode &Node,
 ///
 /// It has some known flaws.
 ///
-///   - Loop scale is limited to 4096 per loop (2^12) to avoid exhausting
-///     BlockFrequency's 64-bit integer precision.
-///
 ///   - The model of irreducible control flow is a rough approximation.
 ///
 ///     Modelling irreducible control flow exactly involves setting up and
