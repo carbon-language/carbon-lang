@@ -146,6 +146,15 @@ enum {
   // Perform a serialization operation.  (BCR 15,0 or BCR 14,0.)
   SERIALIZE,
 
+  // Transaction begin.  The first operand is the chain, the second
+  // the TDB pointer, and the third the immediate control field.
+  // Returns chain and glue.
+  TBEGIN,
+  TBEGIN_NOFLOAT,
+
+  // Transaction end.  Just the chain operand.  Returns chain and glue.
+  TEND,
+
   // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
   // ATOMIC_LOAD_<op>.
   //
@@ -318,6 +327,7 @@ private:
   SDValue lowerSTACKSAVE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerPREFETCH(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
 
   // If the last instruction before MBBI in MBB was some form of COMPARE,
   // try to replace it with a COMPARE AND BRANCH just before MBBI.
@@ -355,6 +365,10 @@ private:
   MachineBasicBlock *emitStringWrapper(MachineInstr *MI,
                                        MachineBasicBlock *BB,
                                        unsigned Opcode) const;
+  MachineBasicBlock *emitTransactionBegin(MachineInstr *MI,
+                                          MachineBasicBlock *MBB,
+                                          unsigned Opcode,
+                                          bool NoFloat) const;
 };
 } // end namespace llvm
 

@@ -473,6 +473,17 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{15-0}  = BD2;
 }
 
+class InstS<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<4, outs, ins, asmstr, pattern> {
+  field bits<32> Inst;
+  field bits<32> SoftFail = 0;
+
+  bits<16> BD2;
+
+  let Inst{31-16} = op;
+  let Inst{15-0}  = BD2;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definitions with semantics
 //===----------------------------------------------------------------------===//

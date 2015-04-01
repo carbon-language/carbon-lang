@@ -1362,6 +1362,60 @@ let Defs = [CC] in {
 }
 
 //===----------------------------------------------------------------------===//
+// Transactional execution
+//===----------------------------------------------------------------------===//
+
+let Predicates = [FeatureTransactionalExecution] in {
+  // Transaction Begin
+  let hasSideEffects = 1, mayStore = 1,
+      usesCustomInserter = 1, Defs = [CC] in {
+    def TBEGIN : InstSIL<0xE560,
+                         (outs), (ins bdaddr12only:$BD1, imm32zx16:$I2),
+                         "tbegin\t$BD1, $I2",
+                         [(z_tbegin bdaddr12only:$BD1, imm32zx16:$I2)]>;
+    def TBEGIN_nofloat : Pseudo<(outs), (ins bdaddr12only:$BD1, imm32zx16:$I2),
+                                [(z_tbegin_nofloat bdaddr12only:$BD1,
+                                                   imm32zx16:$I2)]>;
+    def TBEGINC : InstSIL<0xE561,
+                          (outs), (ins bdaddr12only:$BD1, imm32zx16:$I2),
+                          "tbeginc\t$BD1, $I2",
+                          [(int_s390_tbeginc bdaddr12only:$BD1,
+                                             imm32zx16:$I2)]>;
+  }
+
+  // Transaction End
+  let hasSideEffects = 1, Defs = [CC], BD2 = 0 in
+    def TEND : InstS<0xB2F8, (outs), (ins), "tend", [(z_tend)]>;
+
+  // Transaction Abort
+  let hasSideEffects = 1, isTerminator = 1, isBarrier = 1 in
+    def TABORT : InstS<0xB2FC, (outs), (ins bdaddr12only:$BD2),
+                       "tabort\t$BD2",
+                       [(int_s390_tabort bdaddr12only:$BD2)]>;
+
+  // Nontransactional Store
+  let hasSideEffects = 1 in
+    def NTSTG : StoreRXY<"ntstg", 0xE325, int_s390_ntstg, GR64, 8>;
+
+  // Extract Transaction Nesting Depth
+  let hasSideEffects = 1 in
+    def ETND : InherentRRE<"etnd", 0xB2EC, GR32, (int_s390_etnd)>;
+}
+
+//===----------------------------------------------------------------------===//
+// Processor assist
+//===----------------------------------------------------------------------===//
+
+let Predicates = [FeatureProcessorAssist] in {
+  let hasSideEffects = 1, R4 = 0 in
+    def PPA : InstRRF<0xB2E8, (outs), (ins GR64:$R1, GR64:$R2, imm32zx4:$R3),
+                      "ppa\t$R1, $R2, $R3", []>;
+  def : Pat<(int_s390_ppa_txassist GR32:$src),
+            (PPA (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_l32),
+                 0, 1)>;
+}
+
+//===----------------------------------------------------------------------===//
 // Miscellaneous Instructions.
 //===----------------------------------------------------------------------===//
 

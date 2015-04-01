@@ -68,6 +68,18 @@ const unsigned CCMASK_TM_MSB_0       = CCMASK_0 | CCMASK_1;
 const unsigned CCMASK_TM_MSB_1       = CCMASK_2 | CCMASK_3;
 const unsigned CCMASK_TM             = CCMASK_ANY;
 
+// Condition-code mask assignments for TRANSACTION_BEGIN.
+const unsigned CCMASK_TBEGIN_STARTED       = CCMASK_0;
+const unsigned CCMASK_TBEGIN_INDETERMINATE = CCMASK_1;
+const unsigned CCMASK_TBEGIN_TRANSIENT     = CCMASK_2;
+const unsigned CCMASK_TBEGIN_PERSISTENT    = CCMASK_3;
+const unsigned CCMASK_TBEGIN               = CCMASK_ANY;
+
+// Condition-code mask assignments for TRANSACTION_END.
+const unsigned CCMASK_TEND_TX   = CCMASK_0;
+const unsigned CCMASK_TEND_NOTX = CCMASK_2;
+const unsigned CCMASK_TEND      = CCMASK_TEND_TX | CCMASK_TEND_NOTX;
+
 // The position of the low CC bit in an IPM result.
 const unsigned IPM_CC = 28;
 

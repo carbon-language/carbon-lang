@@ -79,6 +79,9 @@ def SDT_ZI32Intrinsic       : SDTypeProfile<1, 0, [SDTCisVT<0, i32>]>;
 def SDT_ZPrefetch           : SDTypeProfile<0, 2,
                                             [SDTCisVT<0, i32>,
                                              SDTCisPtrTy<1>]>;
+def SDT_ZTBegin             : SDTypeProfile<0, 2,
+                                            [SDTCisPtrTy<0>,
+                                             SDTCisVT<1, i32>]>;
 
 //===----------------------------------------------------------------------===//
 // Node definitions
@@ -179,6 +182,15 @@ def z_ipm               : SDNode<"SystemZISD::IPM", SDT_ZI32Intrinsic,
 def z_prefetch          : SDNode<"SystemZISD::PREFETCH", SDT_ZPrefetch,
                                  [SDNPHasChain, SDNPMayLoad, SDNPMayStore,
                                   SDNPMemOperand]>;
+
+def z_tbegin            : SDNode<"SystemZISD::TBEGIN", SDT_ZTBegin,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPMayStore,
+                                  SDNPSideEffect]>;
+def z_tbegin_nofloat    : SDNode<"SystemZISD::TBEGIN_NOFLOAT", SDT_ZTBegin,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPMayStore,
+                                  SDNPSideEffect]>;
+def z_tend              : SDNode<"SystemZISD::TEND", SDTNone,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPSideEffect]>;
 
 //===----------------------------------------------------------------------===//
 // Pattern fragments

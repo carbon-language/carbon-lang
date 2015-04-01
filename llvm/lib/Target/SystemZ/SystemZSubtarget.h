@@ -42,6 +42,8 @@ protected:
   bool HasFastSerialization;
   bool HasInterlockedAccess1;
   bool HasMiscellaneousExtensions;
+  bool HasTransactionalExecution;
+  bool HasProcessorAssist;
 
 private:
   Triple TargetTriple;
@@ -101,6 +103,12 @@ public:
   bool hasMiscellaneousExtensions() const {
     return HasMiscellaneousExtensions;
   }
+
+  // Return true if the target has the transactional-execution facility.
+  bool hasTransactionalExecution() const { return HasTransactionalExecution; }
+
+  // Return true if the target has the processor-assist facility.
+  bool hasProcessorAssist() const { return HasProcessorAssist; }
 
   // Return true if GV can be accessed using LARL for reloc model RM
   // and code model CM.

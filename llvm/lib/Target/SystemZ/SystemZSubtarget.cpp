@@ -40,6 +40,7 @@ SystemZSubtarget::SystemZSubtarget(const std::string &TT,
       HasLoadStoreOnCond(false), HasHighWord(false), HasFPExtension(false),
       HasPopulationCount(false), HasFastSerialization(false),
       HasInterlockedAccess1(false), HasMiscellaneousExtensions(false),
+      HasTransactionalExecution(false), HasProcessorAssist(false),
       TargetTriple(TT), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
       TLInfo(TM, *this), TSInfo(*TM.getDataLayout()), FrameLowering() {}
 

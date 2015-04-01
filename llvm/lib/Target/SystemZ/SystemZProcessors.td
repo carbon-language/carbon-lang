@@ -60,6 +60,16 @@ def FeatureMiscellaneousExtensions : SystemZFeature<
   "Assume that the miscellaneous-extensions facility is installed"
 >;
 
+def FeatureTransactionalExecution : SystemZFeature<
+  "transactional-execution", "TransactionalExecution",
+  "Assume that the transactional-execution facility is installed"
+>;
+
+def FeatureProcessorAssist : SystemZFeature<
+  "processor-assist", "ProcessorAssist",
+  "Assume that the processor-assist facility is installed"
+>;
+
 def : Processor<"generic", NoItineraries, []>;
 def : Processor<"z10", NoItineraries, []>;
 def : Processor<"z196", NoItineraries,
@@ -70,4 +80,5 @@ def : Processor<"zEC12", NoItineraries,
                 [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord,
                  FeatureFPExtension, FeaturePopulationCount,
                  FeatureFastSerialization, FeatureInterlockedAccess1,
-                 FeatureMiscellaneousExtensions]>;
+                 FeatureMiscellaneousExtensions,
+                 FeatureTransactionalExecution, FeatureProcessorAssist]>;

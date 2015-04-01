@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/IR/Intrinsics.h"
 #include <cctype>
 
 using namespace llvm;
@@ -303,6 +304,9 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
 
   // Codes for which we want to perform some z-specific combinations.
   setTargetDAGCombine(ISD::SIGN_EXTEND);
+
+  // Handle intrinsics.
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
   // We want to use MVC in preference to even a single load/store pair.
   MaxStoresPerMemcpy = 0;
@@ -1031,6 +1035,53 @@ prepareVolatileOrAtomicLoad(SDValue Chain, SDLoc DL, SelectionDAG &DAG) const {
   return DAG.getNode(SystemZISD::SERIALIZE, DL, MVT::Other, Chain);
 }
 
+// Return true if Op is an intrinsic node with chain that returns the CC value
+// as its only (other) argument.  Provide the associated SystemZISD opcode and
+// the mask of valid CC values if so.
+static bool isIntrinsicWithCCAndChain(SDValue Op, unsigned &Opcode,
+                                      unsigned &CCValid) {
+  unsigned Id = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  switch (Id) {
+  case Intrinsic::s390_tbegin:
+    Opcode = SystemZISD::TBEGIN;
+    CCValid = SystemZ::CCMASK_TBEGIN;
+    return true;
+
+  case Intrinsic::s390_tbegin_nofloat:
+    Opcode = SystemZISD::TBEGIN_NOFLOAT;
+    CCValid = SystemZ::CCMASK_TBEGIN;
+    return true;
+
+  case Intrinsic::s390_tend:
+    Opcode = SystemZISD::TEND;
+    CCValid = SystemZ::CCMASK_TEND;
+    return true;
+
+  default:
+    return false;
+  }
+}
+
+// Emit an intrinsic with chain with a glued value instead of its CC result.
+static SDValue emitIntrinsicWithChainAndGlue(SelectionDAG &DAG, SDValue Op,
+                                             unsigned Opcode) {
+  // Copy all operands except the intrinsic ID.
+  unsigned NumOps = Op.getNumOperands();
+  SmallVector<SDValue, 6> Ops;
+  Ops.reserve(NumOps - 1);
+  Ops.push_back(Op.getOperand(0));
+  for (unsigned I = 2; I < NumOps; ++I)
+    Ops.push_back(Op.getOperand(I));
+
+  assert(Op->getNumValues() == 2 && "Expected only CC result and chain");
+  SDVTList RawVTs = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDValue Intr = DAG.getNode(Opcode, SDLoc(Op), RawVTs, Ops);
+  SDValue OldChain = SDValue(Op.getNode(), 1);
+  SDValue NewChain = SDValue(Intr.getNode(), 0);
+  DAG.ReplaceAllUsesOfValueWith(OldChain, NewChain);
+  return Intr;
+}
+
 // CC is a comparison that will be implemented using an integer or
 // floating-point comparison.  Return the condition code mask for
 // a branch on true.  In the integer case, CCMASK_CMP_UO is set for
@@ -1588,9 +1639,53 @@ static void adjustForTestUnderMask(SelectionDAG &DAG, Comparison &C) {
   C.CCMask = NewCCMask;
 }
 
+// Return a Comparison that tests the condition-code result of intrinsic
+// node Call against constant integer CC using comparison code Cond.
+// Opcode is the opcode of the SystemZISD operation for the intrinsic
+// and CCValid is the set of possible condition-code results.
+static Comparison getIntrinsicCmp(SelectionDAG &DAG, unsigned Opcode,
+                                  SDValue Call, unsigned CCValid, uint64_t CC,
+                                  ISD::CondCode Cond) {
+  Comparison C(Call, SDValue());
+  C.Opcode = Opcode;
+  C.CCValid = CCValid;
+  if (Cond == ISD::SETEQ)
+    // bit 3 for CC==0, bit 0 for CC==3, always false for CC>3.
+    C.CCMask = CC < 4 ? 1 << (3 - CC) : 0;
+  else if (Cond == ISD::SETNE)
+    // ...and the inverse of that.
+    C.CCMask = CC < 4 ? ~(1 << (3 - CC)) : -1;
+  else if (Cond == ISD::SETLT || Cond == ISD::SETULT)
+    // bits above bit 3 for CC==0 (always false), bits above bit 0 for CC==3,
+    // always true for CC>3.
+    C.CCMask = CC < 4 ? -1 << (4 - CC) : -1;
+  else if (Cond == ISD::SETGE || Cond == ISD::SETUGE)
+    // ...and the inverse of that.
+    C.CCMask = CC < 4 ? ~(-1 << (4 - CC)) : 0;
+  else if (Cond == ISD::SETLE || Cond == ISD::SETULE)
+    // bit 3 and above for CC==0, bit 0 and above for CC==3 (always true),
+    // always true for CC>3.
+    C.CCMask = CC < 4 ? -1 << (3 - CC) : -1;
+  else if (Cond == ISD::SETGT || Cond == ISD::SETUGT)
+    // ...and the inverse of that.
+    C.CCMask = CC < 4 ? ~(-1 << (3 - CC)) : 0;
+  else
+    llvm_unreachable("Unexpected integer comparison type");
+  C.CCMask &= CCValid;
+  return C;
+}
+
 // Decide how to implement a comparison of type Cond between CmpOp0 with CmpOp1.
 static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
                          ISD::CondCode Cond) {
+  if (CmpOp1.getOpcode() == ISD::Constant) {
+    uint64_t Constant = cast<ConstantSDNode>(CmpOp1)->getZExtValue();
+    unsigned Opcode, CCValid;
+    if (CmpOp0.getOpcode() == ISD::INTRINSIC_W_CHAIN &&
+        CmpOp0.getResNo() == 0 && CmpOp0->hasNUsesOfValue(1, 0) &&
+        isIntrinsicWithCCAndChain(CmpOp0, Opcode, CCValid))
+      return getIntrinsicCmp(DAG, Opcode, CmpOp0, CCValid, Constant, Cond);
+  }
   Comparison C(CmpOp0, CmpOp1);
   C.CCMask = CCMaskForCondCode(Cond);
   if (C.Op0.getValueType().isFloatingPoint()) {
@@ -1632,6 +1727,17 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
 
 // Emit the comparison instruction described by C.
 static SDValue emitCmp(SelectionDAG &DAG, SDLoc DL, Comparison &C) {
+  if (!C.Op1.getNode()) {
+    SDValue Op;
+    switch (C.Op0.getOpcode()) {
+    case ISD::INTRINSIC_W_CHAIN:
+      Op = emitIntrinsicWithChainAndGlue(DAG, C.Op0, C.Opcode);
+      break;
+    default:
+      llvm_unreachable("Invalid comparison operands");
+    }
+    return SDValue(Op.getNode(), Op->getNumValues() - 1);
+  }
   if (C.Opcode == SystemZISD::ICMP)
     return DAG.getNode(SystemZISD::ICMP, DL, MVT::Glue, C.Op0, C.Op1,
                        DAG.getConstant(C.ICmpType, MVT::i32));
@@ -1713,7 +1819,6 @@ SDValue SystemZTargetLowering::lowerSETCC(SDValue Op,
 }
 
 SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Chain    = Op.getOperand(0);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
   SDValue CmpOp0   = Op.getOperand(2);
   SDValue CmpOp1   = Op.getOperand(3);
@@ -1723,7 +1828,7 @@ SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   Comparison C(getCmp(DAG, CmpOp0, CmpOp1, CC));
   SDValue Glue = emitCmp(DAG, DL, C);
   return DAG.getNode(SystemZISD::BR_CCMASK, DL, Op.getValueType(),
-                     Chain, DAG.getConstant(C.CCValid, MVT::i32),
+                     Op.getOperand(0), DAG.getConstant(C.CCValid, MVT::i32),
                      DAG.getConstant(C.CCMask, MVT::i32), Dest, Glue);
 }
 
@@ -2562,6 +2667,30 @@ SDValue SystemZTargetLowering::lowerPREFETCH(SDValue Op,
                                  Node->getMemoryVT(), Node->getMemOperand());
 }
 
+// Return an i32 that contains the value of CC immediately after After,
+// whose final operand must be MVT::Glue.
+static SDValue getCCResult(SelectionDAG &DAG, SDNode *After) {
+  SDValue Glue = SDValue(After, After->getNumValues() - 1);
+  SDValue IPM = DAG.getNode(SystemZISD::IPM, SDLoc(After), MVT::i32, Glue);
+  return DAG.getNode(ISD::SRL, SDLoc(After), MVT::i32, IPM,
+                     DAG.getConstant(SystemZ::IPM_CC, MVT::i32));
+}
+
+SDValue
+SystemZTargetLowering::lowerINTRINSIC_W_CHAIN(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  unsigned Opcode, CCValid;
+  if (isIntrinsicWithCCAndChain(Op, Opcode, CCValid)) {
+    assert(Op->getNumValues() == 2 && "Expected only CC result and chain");
+    SDValue Glued = emitIntrinsicWithChainAndGlue(DAG, Op, Opcode);
+    SDValue CC = getCCResult(DAG, Glued.getNode());
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Op.getNode(), 0), CC);
+    return SDValue();
+  }
+
+  return SDValue();
+}
+
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
                                               SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
@@ -2635,6 +2764,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerSTACKRESTORE(Op, DAG);
   case ISD::PREFETCH:
     return lowerPREFETCH(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN:
+    return lowerINTRINSIC_W_CHAIN(Op, DAG);
   default:
     llvm_unreachable("Unexpected node to lower");
   }
@@ -2675,6 +2806,9 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(SEARCH_STRING);
     OPCODE(IPM);
     OPCODE(SERIALIZE);
+    OPCODE(TBEGIN);
+    OPCODE(TBEGIN_NOFLOAT);
+    OPCODE(TEND);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);
@@ -3502,6 +3636,50 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
   return DoneMBB;
 }
 
+// Update TBEGIN instruction with final opcode and register clobbers.
+MachineBasicBlock *
+SystemZTargetLowering::emitTransactionBegin(MachineInstr *MI,
+                                            MachineBasicBlock *MBB,
+                                            unsigned Opcode,
+                                            bool NoFloat) const {
+  MachineFunction &MF = *MBB->getParent();
+  const TargetFrameLowering *TFI = Subtarget.getFrameLowering();
+  const SystemZInstrInfo *TII = Subtarget.getInstrInfo();
+
+  // Update opcode.
+  MI->setDesc(TII->get(Opcode));
+
+  // We cannot handle a TBEGIN that clobbers the stack or frame pointer.
+  // Make sure to add the corresponding GRSM bits if they are missing.
+  uint64_t Control = MI->getOperand(2).getImm();
+  static const unsigned GPRControlBit[16] = {
+    0x8000, 0x8000, 0x4000, 0x4000, 0x2000, 0x2000, 0x1000, 0x1000,
+    0x0800, 0x0800, 0x0400, 0x0400, 0x0200, 0x0200, 0x0100, 0x0100
+  };
+  Control |= GPRControlBit[15];
+  if (TFI->hasFP(MF))
+    Control |= GPRControlBit[11];
+  MI->getOperand(2).setImm(Control);
+
+  // Add GPR clobbers.
+  for (int I = 0; I < 16; I++) {
+    if ((Control & GPRControlBit[I]) == 0) {
+      unsigned Reg = SystemZMC::GR64Regs[I];
+      MI->addOperand(MachineOperand::CreateReg(Reg, true, true));
+    }
+  }
+
+  // Add FPR clobbers.
+  if (!NoFloat && (Control & 4) != 0) {
+    for (int I = 0; I < 16; I++) {
+      unsigned Reg = SystemZMC::FP64Regs[I];
+      MI->addOperand(MachineOperand::CreateReg(Reg, true, true));
+    }
+  }
+
+  return MBB;
+}
+
 MachineBasicBlock *SystemZTargetLowering::
 EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   switch (MI->getOpcode()) {
@@ -3743,6 +3921,12 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitStringWrapper(MI, MBB, SystemZ::MVST);
   case SystemZ::SRSTLoop:
     return emitStringWrapper(MI, MBB, SystemZ::SRST);
+  case SystemZ::TBEGIN:
+    return emitTransactionBegin(MI, MBB, SystemZ::TBEGIN, false);
+  case SystemZ::TBEGIN_nofloat:
+    return emitTransactionBegin(MI, MBB, SystemZ::TBEGIN, true);
+  case SystemZ::TBEGINC:
+    return emitTransactionBegin(MI, MBB, SystemZ::TBEGINC, true);
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }
