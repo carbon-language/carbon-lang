@@ -4,10 +4,11 @@
 # We need to merge these integers into a set and then
 # either print them (as hex) or dump them into another file.
 import array
+import bisect
+import glob
+import os.path
 import struct
 import sys
-import bisect
-import os.path
 
 prog_name = ""
 
@@ -181,13 +182,19 @@ if __name__ == '__main__':
   if len(sys.argv) <= 2:
     Usage();
 
+  file_list = []
+  for f in sys.argv[2:]:
+    file_list += glob.glob(f)
+  if not file_list:
+    Usage()
+
   if sys.argv[1] == "print":
-    PrintFiles(sys.argv[2:])
+    PrintFiles(file_list)
   elif sys.argv[1] == "merge":
-    MergeAndPrint(sys.argv[2:])
+    MergeAndPrint(file_list)
   elif sys.argv[1] == "unpack":
-    Unpack(sys.argv[2:])
+    Unpack(file_list)
   elif sys.argv[1] == "rawunpack":
-    RawUnpack(sys.argv[2:])
+    RawUnpack(file_list)
   else:
     Usage()
