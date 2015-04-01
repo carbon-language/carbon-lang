@@ -36,11 +36,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new AArch64ELFObjectReader(_ctx));
+    return llvm::make_unique<AArch64ELFObjectReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new AArch64ELFDSOReader(_ctx));
+    return llvm::make_unique<AArch64ELFDSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;

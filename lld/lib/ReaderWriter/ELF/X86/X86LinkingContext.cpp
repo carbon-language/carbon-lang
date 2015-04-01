@@ -18,12 +18,9 @@ using namespace lld;
 std::unique_ptr<ELFLinkingContext>
 elf::X86LinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::x86)
-    return std::unique_ptr<ELFLinkingContext>(
-             new elf::X86LinkingContext(triple));
+    return llvm::make_unique<elf::X86LinkingContext>(triple);
   return nullptr;
 }
 
 elf::X86LinkingContext::X86LinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(
-          triple, std::unique_ptr<TargetHandler>(new X86TargetHandler(*this))) {
-}
+    : ELFLinkingContext(triple, llvm::make_unique<X86TargetHandler>(*this)) {}

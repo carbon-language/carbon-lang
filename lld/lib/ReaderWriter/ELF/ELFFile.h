@@ -11,7 +11,8 @@
 #define LLD_READER_WRITER_ELF_FILE_H
 
 #include "Atoms.h"
-#include <llvm/ADT/MapVector.h>
+#include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include <map>
 #include <unordered_map>
 
@@ -481,8 +482,7 @@ template <class ELFT>
 ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
 ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb,
                       ELFLinkingContext &ctx) {
-  std::unique_ptr<ELFFile<ELFT>> file(new ELFFile<ELFT>(std::move(mb), ctx));
-  return std::move(file);
+  return llvm::make_unique<ELFFile<ELFT>>(std::move(mb), ctx);
 }
 
 template <class ELFT>

@@ -16,8 +16,7 @@ using namespace lld;
 std::unique_ptr<ELFLinkingContext>
 elf::AArch64LinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::aarch64)
-    return std::unique_ptr<ELFLinkingContext>(
-             new elf::AArch64LinkingContext(triple));
+    return llvm::make_unique<elf::AArch64LinkingContext>(triple);
   return nullptr;
 }
 

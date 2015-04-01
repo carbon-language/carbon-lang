@@ -68,11 +68,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return std::unique_ptr<Reader>(new ARMELFObjectReader(_ctx));
+    return llvm::make_unique<ARMELFObjectReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return std::unique_ptr<Reader>(new ARMELFDSOReader(_ctx));
+    return llvm::make_unique<ARMELFDSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;

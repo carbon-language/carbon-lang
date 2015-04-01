@@ -17,15 +17,12 @@ using namespace lld::elf;
 std::unique_ptr<ELFLinkingContext>
 elf::ARMLinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::arm)
-    return std::unique_ptr<ELFLinkingContext>(
-             new elf::ARMLinkingContext(triple));
+    return llvm::make_unique<elf::ARMLinkingContext>(triple);
   return nullptr;
 }
 
 elf::ARMLinkingContext::ARMLinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(
-          triple, std::unique_ptr<TargetHandler>(new ARMTargetHandler(*this))) {
-}
+    : ELFLinkingContext(triple, llvm::make_unique<ARMTargetHandler>(*this)) {}
 
 void elf::ARMLinkingContext::addPasses(PassManager &pm) {
   auto pass = createARMRelocationPass(*this);

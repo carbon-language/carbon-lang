@@ -15,8 +15,7 @@ using namespace lld::elf;
 std::unique_ptr<lld::ELFLinkingContext>
 HexagonLinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::hexagon)
-    return std::unique_ptr<lld::ELFLinkingContext>(
-             new HexagonLinkingContext(triple));
+    return llvm::make_unique<HexagonLinkingContext>(triple);
   return nullptr;
 }
 
