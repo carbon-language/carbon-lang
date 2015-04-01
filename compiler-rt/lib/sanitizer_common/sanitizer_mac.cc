@@ -220,11 +220,6 @@ void ReExec() {
   UNIMPLEMENTED();
 }
 
-void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
-  (void)args;
-  // Nothing here for now.
-}
-
 uptr GetPageSize() {
   return sysconf(_SC_PAGESIZE);
 }

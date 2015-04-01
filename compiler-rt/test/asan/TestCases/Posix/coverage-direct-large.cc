@@ -2,18 +2,18 @@
 // Current implementation maps output file in chunks of 64K. This test overflows
 // 1 chunk.
 
-// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 -DSHARED %s -shared -o %T/libcoverage_direct_large_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 -DSO_DIR=\"%T\" %s %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 -DSHARED %s -shared -o %dynamiclib -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 %s %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct-large
 
 // RUN: mkdir -p %T/coverage-direct-large/normal && cd %T/coverage-direct-large/normal
-// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=0:verbosity=1 %run %t
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=0:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
 
 // RUN: mkdir -p %T/coverage-direct-large/direct && cd %T/coverage-direct-large/direct
-// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=1:verbosity=1 %run %t
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=1:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov rawunpack *.sancov.raw
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
@@ -49,11 +49,11 @@ extern "C" void so_entry() {
 
 #include <assert.h>
 #include <dlfcn.h>
-int main(void) {
+#include <stdio.h>
+int main(int argc, char **argv) {
   F4(CALL, f)
-
-  void *handle1 =
-      dlopen(SO_DIR "/libcoverage_direct_large_test_1.so", RTLD_LAZY);
+  assert(argc > 1);
+  void *handle1 = dlopen(argv[1], RTLD_LAZY);  // %dynamiclib
   assert(handle1);
   void (*so_entry)() = (void (*)())dlsym(handle1, "so_entry");
   assert(so_entry);

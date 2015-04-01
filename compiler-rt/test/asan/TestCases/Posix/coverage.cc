@@ -1,21 +1,21 @@
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_test.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s   -o %t -Wl,-R,\$ORIGIN -L%T -lcoverage_test
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %dynamiclib -fPIC %ld_flags_rpath_so
+// RUN: %clangxx_asan -fsanitize-coverage=1 %s %ld_flags_rpath_exe -o %t
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
 // RUN: rm -rf %T/coverage && mkdir -p %T/coverage && cd %T/coverage
 // RUN: %run %t 2>&1         | FileCheck %s --check-prefix=CHECK-main
-// RUN: %sancov print coverage.*sancov 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV1
+// RUN: %sancov print `ls coverage.*sancov | grep -v '.so'` 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV1
 // RUN: %run %t foo 2>&1     | FileCheck %s --check-prefix=CHECK-foo
-// RUN: %sancov print coverage.*sancov 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
+// RUN: %sancov print `ls coverage.*sancov | grep -v '.so'` 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
 // RUN: %run %t bar 2>&1     | FileCheck %s --check-prefix=CHECK-bar
-// RUN: %sancov print coverage.*sancov 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
+// RUN: %sancov print `ls *coverage.*sancov | grep -v '.so'` 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
 // RUN: %run %t foo bar 2>&1 | FileCheck %s --check-prefix=CHECK-foo-bar
-// RUN: %sancov print coverage.*sancov 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
-// RUN: %sancov print libcoverage_test.*sancov 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV1
-// RUN: %sancov merge coverage.*sancov > merged-cov
+// RUN: %sancov print `ls *coverage.*sancov | grep -v '.so'` 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
+// RUN: %sancov print `ls *coverage.*sancov | grep '.so'` 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV1
+// RUN: %sancov merge `ls *coverage.*sancov | grep -v '.so'` > merged-cov
 // RUN: %sancov print merged-cov 2>&1 | FileCheck %s --check-prefix=CHECK-SANCOV2
 // RUN: not %run %t foo bar 4    2>&1 | FileCheck %s --check-prefix=CHECK-report
 // RUN: not %run %t foo bar 4 5  2>&1 | FileCheck %s --check-prefix=CHECK-segv
-// RUN: cd .. && rm coverage -r
+// RUN: rm -r %T/coverage
 //
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
 // XFAIL: android

@@ -1,13 +1,13 @@
 // Check that unloading a module doesn't break coverage dumping for remaining
 // modules.
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_module_unloaded_test_2.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%T\" %s %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %dynamiclib1 -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %dynamiclib2 -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 %s %libdl -o %t
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
 // RUN: mkdir -p %T/coverage-module-unloaded && cd %T/coverage-module-unloaded
-// RUN: %run %t 2>&1         | FileCheck %s
-// RUN: %run %t foo 2>&1         | FileCheck %s
-// RUN: cd .. && rm coverage-module-unloaded -r
+// RUN: %run %t %dynamiclib1 %dynamiclib2 2>&1        | FileCheck %s
+// RUN: %run %t %dynamiclib1 %dynamiclib2 foo 2>&1    | FileCheck %s
+// RUN: rm -r %T/coverage-module-unloaded
 //
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
 // XFAIL: android
@@ -25,14 +25,13 @@ void bar() { printf("bar\n"); }
 
 int main(int argc, char **argv) {
   fprintf(stderr, "PID: %d\n", getpid());
-  void *handle1 =
-      dlopen(SO_DIR "/libcoverage_module_unloaded_test_1.so", RTLD_LAZY);
+  assert(argc > 2);
+  void *handle1 = dlopen(argv[1], RTLD_LAZY);  // %dynamiclib1
   assert(handle1);
   void (*bar1)() = (void (*)())dlsym(handle1, "bar");
   assert(bar1);
   bar1();
-  void *handle2 =
-      dlopen(SO_DIR "/libcoverage_module_unloaded_test_2.so", RTLD_LAZY);
+  void *handle2 = dlopen(argv[2], RTLD_LAZY);  // %dynamiclib2
   assert(handle2);
   void (*bar2)() = (void (*)())dlsym(handle2, "bar");
   assert(bar2);
@@ -50,7 +49,7 @@ int main(int argc, char **argv) {
 
 // CHECK: PID: [[PID:[0-9]+]]
 // CHECK: [[PID]].sancov: 1 PCs written
-// CHECK: test_1.so.[[PID]]
-// CHECK: test_2.so.[[PID]]
+// CHECK: coverage-module-unloaded{{.*}}1.[[PID]]
+// CHECK: coverage-module-unloaded{{.*}}2.[[PID]]
 // Even though we've unloaded one of the libs we still dump the coverage file
-// for that lib (although the data will be inaccurate, it at all useful)
+// for that lib (although the data will be inaccurate, if at all useful)

@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED %s -shared -o %T/libcoverage_sandboxing_test.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s   -o %t -Wl,-R,\$ORIGIN -L%T -lcoverage_sandboxing_test
+// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED %s -shared -o %dynamiclib -fPIC %ld_flags_rpath_so
+// RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %t %ld_flags_rpath_exe
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
 // RUN: rm -rf %T/coverage_sandboxing_test
 // RUN: mkdir %T/coverage_sandboxing_test && cd %T/coverage_sandboxing_test
@@ -12,12 +12,12 @@
 // RUN: %run %t a b 2>&1     | FileCheck %s --check-prefix=CHECK-sandbox
 // RUN: %sancov unpack coverage_sandboxing_test.sancov.packed 
 // RUN: cd ..
-// RUN: %sancov print vanilla/libcoverage_sandboxing_test.so.*.sancov > vanilla.txt
-// RUN: %sancov print sandbox1/libcoverage_sandboxing_test.so.*.sancov > sandbox1.txt
-// RUN: %sancov print sandbox2/libcoverage_sandboxing_test.so.*.sancov > sandbox2.txt
+// RUN: %sancov print vanilla/`basename %dynamiclib`*.sancov > vanilla.txt
+// RUN: %sancov print sandbox1/`basename %dynamiclib`*.sancov > sandbox1.txt
+// RUN: %sancov print sandbox2/`basename %dynamiclib`*.sancov > sandbox2.txt
 // RUN: diff vanilla.txt sandbox1.txt
 // RUN: diff vanilla.txt sandbox2.txt
-// RUN: cd ../ && rm coverage_sandboxing_test -r
+// RUN: rm -r %T/coverage_sandboxing_test
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
 // XFAIL: android
 
