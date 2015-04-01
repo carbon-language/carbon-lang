@@ -1304,6 +1304,15 @@ static QualType adjustFunctionTypeForInstantiation(ASTContext &Context,
                                  NewFunc->getParamTypes(), NewEPI);
 }
 
+/// Return true if any redeclaration of FD was inline specified. Useful for
+/// propagating the 'inline' specifier onto function template instantiations.
+static bool isAnyRedeclInlineSpecified(const FunctionDecl *FD) {
+  for (const auto *R : FD->redecls())
+    if (R->isInlineSpecified())
+      return true;
+  return false;
+}
+
 /// Normal class members are of more specific types and therefore
 /// don't make it here.  This function serves two purposes:
 ///   1) instantiating function templates
@@ -1372,7 +1381,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       FunctionDecl::Create(SemaRef.Context, DC, D->getInnerLocStart(),
                            D->getNameInfo(), T, TInfo,
                            D->getCanonicalDecl()->getStorageClass(),
-                           D->isInlineSpecified(), D->hasWrittenPrototype(),
+                           isAnyRedeclInlineSpecified(D),
+                           D->hasWrittenPrototype(),
                            D->isConstexpr());
   Function->setRangeEnd(D->getSourceRange().getEnd());
 
@@ -1669,7 +1679,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     Method = CXXConstructorDecl::Create(SemaRef.Context, Record,
                                         StartLoc, NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
-                                        Constructor->isInlineSpecified(),
+                                        isAnyRedeclInlineSpecified(Constructor),
                                         false, Constructor->isConstexpr());
 
     // Claim that the instantiation of a constructor or constructor template
@@ -1704,12 +1714,12 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
-                                       Destructor->isInlineSpecified(),
+                                       isAnyRedeclInlineSpecified(Destructor),
                                        false);
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
-                                       Conversion->isInlineSpecified(),
+                                       isAnyRedeclInlineSpecified(Conversion),
                                        Conversion->isExplicit(),
                                        Conversion->isConstexpr(),
                                        Conversion->getLocEnd());
@@ -1717,7 +1727,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     StorageClass SC = D->isStatic() ? SC_Static : SC_None;
     Method = CXXMethodDecl::Create(SemaRef.Context, Record,
                                    StartLoc, NameInfo, T, TInfo,
-                                   SC, D->isInlineSpecified(),
+                                   SC, isAnyRedeclInlineSpecified(D),
                                    D->isConstexpr(), D->getLocEnd());
   }
 
