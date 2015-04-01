@@ -169,6 +169,19 @@ module _Builtin_intrinsics [system] [extern_c] {
       header "__wmmintrin_pclmul.h"
     }
   }
+
+  explicit module systemz {
+    requires systemz
+    export *
+
+    header "s390intrin.h"
+
+    explicit module htm {
+      requires htm
+      header "htmintrin.h"
+      header "htmxlintrin.h"
+    }
+  }
 }
 
 module _Builtin_stddef_max_align_t [system] [extern_c] {

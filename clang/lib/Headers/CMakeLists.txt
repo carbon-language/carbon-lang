@@ -18,6 +18,8 @@ set(files
   float.h
   fma4intrin.h
   fmaintrin.h
+  htmintrin.h
+  htmxlintrin.h
   ia32intrin.h
   immintrin.h
   Intrin.h
@@ -34,6 +36,7 @@ set(files
   prfchwintrin.h
   rdseedintrin.h
   rtmintrin.h
+  s390intrin.h
   shaintrin.h
   smmintrin.h
   stdalign.h

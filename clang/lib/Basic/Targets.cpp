@@ -5487,7 +5487,8 @@ public:
 
   bool hasFeature(StringRef Feature) const override {
     return llvm::StringSwitch<bool>(Feature)
-        .Case("transactional-execution", HasTransactionalExecution)
+        .Case("systemz", true)
+        .Case("htm", HasTransactionalExecution)
         .Default(false);
   }
 };
