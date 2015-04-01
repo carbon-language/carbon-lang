@@ -904,7 +904,8 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                 if (type_name)
                 {
                     if (streq(type_name, "wchar_t") &&
-                        QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy))
+                        QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy) &&
+                        TargetInfo::isTypeSigned (getTargetInfo()->getWCharType()))
                         return ClangASTType (ast, ast->WCharTy.getAsOpaquePtr());
                     if (streq(type_name, "void") &&
                         QualTypeMatchesBitSize (bit_size, ast, ast->VoidTy))
@@ -961,6 +962,14 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
             case DW_ATE_unsigned:
                 if (type_name)
                 {
+                    if (streq(type_name, "wchar_t"))
+                    {
+                        if (QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy))
+                        {
+                            if (!TargetInfo::isTypeSigned (getTargetInfo()->getWCharType()))
+                                return ClangASTType (ast, ast->WCharTy.getAsOpaquePtr());
+                        }
+                    }
                     if (strstr(type_name, "long long"))
                     {
                         if (QualTypeMatchesBitSize (bit_size, ast, ast->UnsignedLongLongTy))
