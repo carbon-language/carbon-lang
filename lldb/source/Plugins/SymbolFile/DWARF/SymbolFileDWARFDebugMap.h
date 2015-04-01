@@ -226,6 +226,23 @@ protected:
 
     SymbolFileDWARF *
     GetSymbolFileByOSOIndex (uint32_t oso_idx);
+    
+    // If closure returns "false", iteration continues.  If it returns
+    // "true", iteration terminates.
+    void
+    ForEachSymbolFile (std::function<bool (SymbolFileDWARF *)> closure)
+    {
+        for (uint32_t oso_idx = 0, num_oso_idxs = m_compile_unit_infos.size();
+             oso_idx < num_oso_idxs;
+             ++oso_idx)
+        {
+            if (SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx))
+            {
+                if (closure(oso_dwarf))
+                    return;
+            }
+        }
+    }
 
     CompileUnitInfo *
     GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_idx, uint32_t *oso_idx_ptr);
