@@ -1,0 +1,27 @@
+//===-- BuiltinsSystemZ.def - SystemZ Builtin function database -*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the SystemZ-specific builtin function database.  Users of
+// this file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+
+// Transactional-memory intrinsics
+BUILTIN(__builtin_tbegin, "iv*", "j")
+BUILTIN(__builtin_tbegin_nofloat, "iv*", "j")
+BUILTIN(__builtin_tbeginc, "v", "nj")
+BUILTIN(__builtin_tabort, "vi", "r")
+BUILTIN(__builtin_tend, "i", "n")
+BUILTIN(__builtin_tx_nesting_depth, "i", "nc")
+BUILTIN(__builtin_tx_assist, "vi", "n")
+BUILTIN(__builtin_non_tx_store, "vULi*ULi", "")
+
+#undef BUILTIN

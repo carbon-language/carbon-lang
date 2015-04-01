@@ -1675,3 +1675,30 @@
 //
 // CHECK_PPC_CRYPTO_M64: #define __CRYPTO__
 //
+
+// Begin SystemZ/GCC/Linux tests ----------------
+//
+// RUN: %clang -march=z10 -E -dM %s -o - 2>&1 \
+// RUN:     -target s390x-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SYSTEMZ_Z10
+//
+// CHECK_SYSTEMZ_Z10: #define __LONG_DOUBLE_128__ 1
+// CHECK_SYSTEMZ_Z10: #define __s390__ 1
+// CHECK_SYSTEMZ_Z10: #define __s390x__ 1
+// CHECK_SYSTEMZ_Z10: #define __zarch__ 1
+//
+// RUN: %clang -march=zEC12 -E -dM %s -o - 2>&1 \
+// RUN:     -target s390x-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SYSTEMZ_ZEC12
+//
+// CHECK_SYSTEMZ_ZEC12: #define __HTM__ 1
+// CHECK_SYSTEMZ_ZEC12: #define __LONG_DOUBLE_128__ 1
+// CHECK_SYSTEMZ_ZEC12: #define __s390__ 1
+// CHECK_SYSTEMZ_ZEC12: #define __s390x__ 1
+// CHECK_SYSTEMZ_ZEC12: #define __zarch__ 1
+//
+// RUN: %clang -mhtm -E -dM %s -o - 2>&1 \
+// RUN:     -target s390x-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SYSTEMZ_HTM
+//
+// CHECK_SYSTEMZ_HTM: #define __HTM__ 1

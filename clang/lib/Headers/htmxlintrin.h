@@ -212,4 +212,152 @@ __TM_failure_code(void* const TM_buff)
 
 #endif /* __powerpc__ */
 
+#ifdef __s390__
+
+#include <stdint.h>
+
+/* These intrinsics are being made available for compatibility with
+   the IBM XL compiler.  For documentation please see the "z/OS XL
+   C/C++ Programming Guide" publically available on the web.  */
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_simple_begin ()
+{
+  return __builtin_tbegin_nofloat (0);
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_begin (void* const tdb)
+{
+  return __builtin_tbegin_nofloat (tdb);
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_end ()
+{
+  return __builtin_tend ();
+}
+
+static __inline void __attribute__((__always_inline__))
+__TM_abort ()
+{
+  return __builtin_tabort (_HTM_FIRST_USER_ABORT_CODE);
+}
+
+static __inline void __attribute__((__always_inline__, __nodebug__))
+__TM_named_abort (unsigned char const code)
+{
+  return __builtin_tabort ((int)_HTM_FIRST_USER_ABORT_CODE + code);
+}
+
+static __inline void __attribute__((__always_inline__, __nodebug__))
+__TM_non_transactional_store (void* const addr, long long const value)
+{
+  __builtin_non_tx_store ((uint64_t*)addr, (uint64_t)value);
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_nesting_depth (void* const tdb_ptr)
+{
+  int depth = __builtin_tx_nesting_depth ();
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  if (depth != 0)
+    return depth;
+
+  if (tdb->format != 1)
+    return 0;
+  return tdb->nesting_depth;
+}
+
+/* Transaction failure diagnostics */
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_user_abort (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  if (tdb->format != 1)
+    return 0;
+
+  return !!(tdb->abort_code >= _HTM_FIRST_USER_ABORT_CODE);
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_named_user_abort (void* const tdb_ptr, unsigned char* code)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  if (tdb->format != 1)
+    return 0;
+
+  if (tdb->abort_code >= _HTM_FIRST_USER_ABORT_CODE)
+    {
+      *code = tdb->abort_code - _HTM_FIRST_USER_ABORT_CODE;
+      return 1;
+    }
+  return 0;
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_illegal (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  return (tdb->format == 1
+	  && (tdb->abort_code == 4 /* unfiltered program interruption */
+	      || tdb->abort_code == 11 /* restricted instruction */));
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_footprint_exceeded (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  return (tdb->format == 1
+	  && (tdb->abort_code == 7 /* fetch overflow */
+	      || tdb->abort_code == 8 /* store overflow */));
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_nested_too_deep (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  return tdb->format == 1 && tdb->abort_code == 13; /* depth exceeded */
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_conflict (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  return (tdb->format == 1
+	  && (tdb->abort_code == 9 /* fetch conflict */
+	      || tdb->abort_code == 10 /* store conflict */));
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_is_failure_persistent (long const result)
+{
+  return result == _HTM_TBEGIN_PERSISTENT;
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_failure_address (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+  return tdb->atia;
+}
+
+static __inline long __attribute__((__always_inline__, __nodebug__))
+__TM_failure_code (void* const tdb_ptr)
+{
+  struct __htm_tdb *tdb = (struct __htm_tdb*)tdb_ptr;
+
+  return tdb->abort_code;
+}
+
+#endif /* __s390__ */
+
 #endif /* __HTMXLINTRIN_H  */

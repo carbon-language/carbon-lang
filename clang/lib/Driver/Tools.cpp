@@ -1418,6 +1418,18 @@ static const char *getSystemZTargetCPU(const ArgList &Args) {
   return "z10";
 }
 
+static void getSystemZTargetFeatures(const ArgList &Args,
+                                     std::vector<const char *> &Features) {
+  // -m(no-)htm overrides use of the transactional-execution facility.
+  if (Arg *A = Args.getLastArg(options::OPT_mhtm,
+                               options::OPT_mno_htm)) {
+    if (A->getOption().matches(options::OPT_mhtm))
+      Features.push_back("+transactional-execution");
+    else
+      Features.push_back("-transactional-execution");
+  }
+}
+
 static const char *getX86TargetCPU(const ArgList &Args,
                                    const llvm::Triple &Triple) {
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
@@ -1895,6 +1907,9 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   case llvm::Triple::sparc:
   case llvm::Triple::sparcv9:
     getSparcTargetFeatures(Args, Features);
+    break;
+  case llvm::Triple::systemz:
+    getSystemZTargetFeatures(Args, Features);
     break;
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:

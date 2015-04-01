@@ -5407,10 +5407,14 @@ public:
 };
 
 class SystemZTargetInfo : public TargetInfo {
+  static const Builtin::Info BuiltinInfo[];
   static const char *const GCCRegNames[];
+  std::string CPU;
+  bool HasTransactionalExecution;
 
 public:
-  SystemZTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+  SystemZTargetInfo(const llvm::Triple &Triple)
+    : TargetInfo(Triple), CPU("z10"), HasTransactionalExecution(false) {
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
     TLSSupported = true;
@@ -5430,12 +5434,13 @@ public:
     Builder.defineMacro("__s390x__");
     Builder.defineMacro("__zarch__");
     Builder.defineMacro("__LONG_DOUBLE_128__");
+    if (HasTransactionalExecution)
+      Builder.defineMacro("__HTM__");
   }
   void getTargetBuiltins(const Builtin::Info *&Records,
                          unsigned &NumRecords) const override {
-    // FIXME: Implement.
-    Records = nullptr;
-    NumRecords = 0;
+    Records = BuiltinInfo;
+    NumRecords = clang::SystemZ::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
 
   void getGCCRegNames(const char *const *&Names,
@@ -5456,16 +5461,41 @@ public:
     return TargetInfo::SystemZBuiltinVaList;
   }
   bool setCPU(const std::string &Name) override {
+    CPU = Name;
     bool CPUKnown = llvm::StringSwitch<bool>(Name)
       .Case("z10", true)
       .Case("z196", true)
       .Case("zEC12", true)
       .Default(false);
 
-    // No need to store the CPU yet.  There aren't any CPU-specific
-    // macros to define.
     return CPUKnown;
   }
+  void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
+    if (CPU == "zEC12")
+      Features["transactional-execution"] = true;
+  }
+
+  bool handleTargetFeatures(std::vector<std::string> &Features,
+                            DiagnosticsEngine &Diags) override {
+    HasTransactionalExecution = false;
+    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
+      if (Features[i] == "+transactional-execution")
+        HasTransactionalExecution = true;
+    }
+    return true;
+  }
+
+  bool hasFeature(StringRef Feature) const override {
+    return llvm::StringSwitch<bool>(Feature)
+        .Case("transactional-execution", HasTransactionalExecution)
+        .Default(false);
+  }
+};
+
+const Builtin::Info SystemZTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS)                                               \
+  { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsSystemZ.def"
 };
 
 const char *const SystemZTargetInfo::GCCRegNames[] = {
