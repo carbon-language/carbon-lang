@@ -25,6 +25,15 @@ multiclass dashEq<string opt1, string opt2, string help> {
       Alias<!cast<Option>(opt1)>;
 }
 
+// Support --<option>,--<option>=
+multiclass mDashEq<string opt1, string help> {
+  // Option
+  def "" : Separate<["--"], opt1>, HelpText<help>;
+  // Compatibility aliases
+  def opt2_eq : Joined<["--"], opt1#"=">,
+      Alias<!cast<Option>(opt1)>;
+}
+
 //===----------------------------------------------------------------------===//
 /// LLVM and Target options
 //===----------------------------------------------------------------------===//
@@ -211,9 +220,11 @@ def use_shlib_undefs: Flag<["--"], "use-shlib-undefines">,
 def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
     HelpText<"Allow multiple definitions">,
     Group<grp_resolveropt>;
-def defsym : Joined<["--"], "defsym=">,
-     HelpText<"Create a defined symbol">,
-     Group<grp_resolveropt>;
+defm defsym : mDashEq<"defsym",
+           "Create a global symbol in the output file "
+           "containing the absolute address given by expression">,
+           MetaVarName<"symbol=<expression>">,
+           Group<grp_resolveropt>;
 
 //===----------------------------------------------------------------------===//
 /// Custom Options
