@@ -2614,9 +2614,7 @@ std::error_code BitcodeReader::materializeMetadata() {
   return std::error_code();
 }
 
-void BitcodeReader::setStripDebugInfo() {
-  StripDebugInfo = true;
-}
+void BitcodeReader::setStripDebugInfo() { StripDebugInfo = true; }
 
 /// RememberAndSkipFunctionBody - When we see the block for a function body,
 /// remember where it is and then skip it.  This lets us lazily deserialize the

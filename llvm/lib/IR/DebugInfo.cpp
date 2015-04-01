@@ -848,7 +848,7 @@ bool llvm::StripDebugInfo(Module &M) {
   for (Function &F : M)
     Changed |= stripDebugInfo(F);
 
-  if ( GVMaterializer *Materializer = M.getMaterializer())
+  if (GVMaterializer *Materializer = M.getMaterializer())
     Materializer->setStripDebugInfo();
 
   return Changed;
