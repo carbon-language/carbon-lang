@@ -21,6 +21,14 @@ X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &ctx)
       _x86_64RelocationHandler(
           new X86_64TargetRelocationHandler(*_x86_64TargetLayout.get())) {}
 
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/x86_64.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_ENTRY(LLD_R_X86_64_GOTRELINDEX),
+  LLD_KIND_STRING_END
+};
+
 void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,
                         Reference::KindArch::x86_64, kindStrings);
@@ -40,13 +48,3 @@ std::unique_ptr<Writer> X86_64TargetHandler::getWriter() {
     llvm_unreachable("unsupported output type");
   }
 }
-
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-
-const Registry::KindStrings X86_64TargetHandler::kindStrings[] = {
-#include "llvm/Support/ELFRelocs/x86_64.def"
-  LLD_KIND_STRING_ENTRY(LLD_R_X86_64_GOTRELINDEX),
-  LLD_KIND_STRING_END
-};
-
-#undef ELF_RELOC

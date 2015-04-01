@@ -78,7 +78,6 @@ public:
   std::unique_ptr<Writer> getWriter() override;
 
 private:
-  static const Registry::KindStrings kindStrings[];
   ARMLinkingContext &_ctx;
   std::unique_ptr<ARMTargetLayout<ARMELFType>> _armTargetLayout;
   std::unique_ptr<ARMTargetRelocationHandler> _armRelocationHandler;

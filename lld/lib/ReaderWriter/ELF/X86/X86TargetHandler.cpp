@@ -33,14 +33,12 @@ std::unique_ptr<Writer> X86TargetHandler::getWriter() {
   }
 }
 
+static const Registry::KindStrings kindStrings[] = {
 #define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-
-const Registry::KindStrings X86TargetHandler::kindStrings[] = {
 #include "llvm/Support/ELFRelocs/i386.def"
+#undef ELF_RELOC
   LLD_KIND_STRING_END
 };
-
-#undef ELF_RELOC
 
 void X86TargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::x86,

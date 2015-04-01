@@ -21,6 +21,13 @@ AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
       _aarch64TargetLayout(new AArch64TargetLayout<AArch64ELFType>(ctx)),
       _aarch64RelocationHandler(new AArch64TargetRelocationHandler()) {}
 
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/AArch64.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_END
+};
+
 void AArch64TargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,
                         Reference::KindArch::AArch64, kindStrings);
@@ -40,12 +47,3 @@ std::unique_ptr<Writer> AArch64TargetHandler::getWriter() {
     llvm_unreachable("unsupported output type");
   }
 }
-
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-
-const Registry::KindStrings AArch64TargetHandler::kindStrings[] = {
-#include "llvm/Support/ELFRelocs/AArch64.def"
-    LLD_KIND_STRING_END
-};
-
-#undef ELF_RELOC

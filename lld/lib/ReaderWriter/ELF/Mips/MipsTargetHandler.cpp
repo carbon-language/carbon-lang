@@ -12,15 +12,10 @@
 using namespace lld;
 using namespace elf;
 
-void MipsRelocationStringTable::registerTable(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF,
-                        Reference::KindArch::Mips, kindStrings);
-}
-
+const Registry::KindStrings kindStrings[] = {
 #define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-
-const Registry::KindStrings MipsRelocationStringTable::kindStrings[] = {
 #include "llvm/Support/ELFRelocs/Mips.def"
+#undef ELF_RELOC
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_GLOBAL_GOT),
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_32_HI16),
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_64_HI16),
@@ -32,4 +27,7 @@ const Registry::KindStrings MipsRelocationStringTable::kindStrings[] = {
   LLD_KIND_STRING_END
 };
 
-#undef ELF_RELOC
+void MipsRelocationStringTable::registerTable(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF,
+                        Reference::KindArch::Mips, kindStrings);
+}

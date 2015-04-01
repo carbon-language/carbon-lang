@@ -92,8 +92,6 @@ public:
 
 /// \brief Auxiliary class holds relocation's names table.
 class MipsRelocationStringTable {
-  static const Registry::KindStrings kindStrings[];
-
 public:
   static void registerTable(Registry &registry);
 };

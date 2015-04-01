@@ -46,7 +46,6 @@ public:
   std::unique_ptr<Writer> getWriter() override;
 
 private:
-  static const Registry::KindStrings kindStrings[];
   AArch64LinkingContext &_ctx;
   std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _aarch64TargetLayout;
   std::unique_ptr<AArch64TargetRelocationHandler> _aarch64RelocationHandler;

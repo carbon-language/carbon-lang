@@ -20,6 +20,13 @@ ARMTargetHandler::ARMTargetHandler(ARMLinkingContext &ctx)
       _armRelocationHandler(
           new ARMTargetRelocationHandler(*_armTargetLayout.get())) {}
 
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/ARM.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_END
+};
+
 void ARMTargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::ARM,
                         kindStrings);
@@ -34,10 +41,3 @@ std::unique_ptr<Writer> ARMTargetHandler::getWriter() {
     llvm_unreachable("unsupported output type");
   }
 }
-
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-
-const Registry::KindStrings ARMTargetHandler::kindStrings[] = {
-#include "llvm/Support/ELFRelocs/ARM.def"
-    LLD_KIND_STRING_END
-};

@@ -117,7 +117,6 @@ public:
   std::unique_ptr<Writer> getWriter() override;
 
 private:
-  static const Registry::KindStrings kindStrings[];
   HexagonLinkingContext &_ctx;
   std::unique_ptr<HexagonRuntimeFile<HexagonELFType>> _runtimeFile;
   std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _targetLayout;

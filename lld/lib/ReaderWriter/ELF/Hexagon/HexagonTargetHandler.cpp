@@ -314,16 +314,14 @@ void elf::HexagonLinkingContext::addPasses(PassManager &pm) {
   ELFLinkingContext::addPasses(pm);
 }
 
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/Hexagon.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_END
+};
+
 void HexagonTargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,
                         Reference::KindArch::Hexagon, kindStrings);
 }
-
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-
-const Registry::KindStrings HexagonTargetHandler::kindStrings[] = {
-#include "llvm/Support/ELFRelocs/Hexagon.def"
-  LLD_KIND_STRING_END
-};
-
-#undef ELF_RELOC

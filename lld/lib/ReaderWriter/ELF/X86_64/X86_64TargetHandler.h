@@ -50,7 +50,6 @@ public:
   std::unique_ptr<Writer> getWriter() override;
 
 protected:
-  static const Registry::KindStrings kindStrings[];
   X86_64LinkingContext &_ctx;
   std::unique_ptr<X86_64TargetLayout> _x86_64TargetLayout;
   std::unique_ptr<X86_64TargetRelocationHandler> _x86_64RelocationHandler;
