@@ -19,15 +19,18 @@
 namespace fuzzer {
 
 void Print(const Unit &v, const char *PrintAfter) {
-  std::cerr << v.size() << ": ";
   for (auto x : v)
-    std::cerr << (unsigned) x << " ";
+    std::cerr << "0x" << std::hex << (unsigned) x << std::dec << ",";
   std::cerr << PrintAfter;
 }
 
 void PrintASCII(const Unit &U, const char *PrintAfter) {
-  for (auto X : U)
-    std::cerr << (char)((isascii(X) && X >= ' ') ? X : '?');
+  for (auto X : U) {
+    if (isprint(X))
+      std::cerr << X;
+    else
+      std::cerr << "\\x" << std::hex << (int)(unsigned)X << std::dec;
+  }
   std::cerr << PrintAfter;
 }
 

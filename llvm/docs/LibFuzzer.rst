@@ -163,6 +163,27 @@ which will cause the fuzzer to exit on the first new synthesised input::
 
   N=100; M=4; ./pcre_fuzzer ./CORPUS -jobs=$N -workers=$M -exit_on_first=1
 
+Advanced features
+=================
+
+Tokens
+------
+
+By default, the fuzzer is not aware of complexities of the input language
+and when fuzzing e.g. a C++ parser it will mostly stress the lexer.
+It is very hard for the fuzzer to come up with something like ``reinterpret_cast<int>``
+from a test corpus that doesn't have it.
+See a detailed discussion of this topic at
+http://lcamtuf.blogspot.com/2015/01/afl-fuzz-making-up-grammar-with.html.
+
+lib/Fuzzer implements a simple technique that allows to fuzz input languages with
+long tokens. All you need is to prepare a text file containing up to 253 tokens, one token per line,
+and pass it to the fuzzer as ``-tokens=TOKENS_FILE.txt``.
+Three implicit tokens are added: ``" "``, ``"\t"``, and ``"\n"``.
+The fuzzer itself will still be mutating a string of bytes
+but before passing this input to the target library it will replace every byte ``b`` with the ``b``-th token.
+If there are less than ``b`` tokens, a space will be added instead.
+
 
 Fuzzing components of LLVM
 ==========================
@@ -188,6 +209,7 @@ clang-fuzzer
 ------------
 
 The default behavior is very similar to ``clang-format-fuzzer``.
+Clang can also be fuzzed with Tokens_ using ``-tokens=$LLVM/lib/Fuzzer/cxx_fuzzer_tokens.txt`` option.
 
 Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=23057
 
