@@ -117,7 +117,6 @@ public:
   std::unique_ptr<Writer> getWriter() override;
 
 private:
-  llvm::BumpPtrAllocator _alloc;
   static const Registry::KindStrings kindStrings[];
   HexagonLinkingContext &_ctx;
   std::unique_ptr<HexagonRuntimeFile<HexagonELFType>> _runtimeFile;
