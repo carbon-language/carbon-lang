@@ -13,6 +13,7 @@
 #include "ARMLinkingContext.h"
 #include "ARMTargetHandler.h"
 #include "ARMSymbolTable.h"
+#include "llvm/Support/ELF.h"
 
 namespace {
 const char *gotSymbol = "_GLOBAL_OFFSET_TABLE_";
@@ -100,6 +101,10 @@ template <class ELFT>
 std::error_code ARMExecutableWriter<ELFT>::setELFHeader() {
   if (std::error_code ec = ExecutableWriter<ELFT>::setELFHeader())
     return ec;
+
+  // Set ARM-specific flags.
+  this->_elfHeader->e_flags(llvm::ELF::EF_ARM_EABI_VER5 |
+                            llvm::ELF::EF_ARM_VFP_FLOAT);
 
   StringRef entryName = _ctx.entrySymbolName();
   if (const AtomLayout *al = _armLayout.findAtomLayoutByName(entryName)) {
