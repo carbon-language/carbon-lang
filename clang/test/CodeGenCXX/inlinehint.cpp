@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple %itanium_abi_triple %s -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-apple-macosx %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-linux %s -emit-llvm -o - | FileCheck %s
 
 inline void InlineFunc() {}
 // CHECK: define linkonce_odr void @_Z10InlineFuncv() #[[INLINEHINTATTR:[0-9]+]]
