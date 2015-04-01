@@ -49,7 +49,7 @@ class ChangedInferiorTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
-        if sys.platform.startswith("darwin"):
+        if self.getPlatform() == "darwin":
             stop_reason = 'stop reason = EXC_BAD_ACCESS'
         else:
             stop_reason = 'stop reason = invalid address'
@@ -73,7 +73,7 @@ class ChangedInferiorTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("process status")
 
-        if sys.platform.startswith("darwin"):
+        if self.getPlatform() == "darwin":
             stop_reason = 'EXC_BAD_ACCESS'
         else:
             stop_reason = 'invalid address'

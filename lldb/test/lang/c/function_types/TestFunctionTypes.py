@@ -86,7 +86,7 @@ class FunctionTypesTestCase(TestBase):
         self.expect("expr string_not_empty",
                     substrs = ['(int (*)(const char *)) $0 = ', '(a.out`'])
 
-        if sys.platform.startswith("darwin"):
+        if self.getPlatform() == "darwin":
             regexps = ['lib.*\.dylib`printf']
         else:
             regexps = ['printf']

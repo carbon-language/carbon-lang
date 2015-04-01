@@ -73,7 +73,7 @@ class StaticVariableTestCase(TestBase):
 
         # On Mac OS X, gcc 4.2 emits the wrong debug info for A::g_points.
         # A::g_points is an array of two elements.
-        if sys.platform.startswith("darwin") or sys.platform.startswith("linux"):
+        if self.getPlatform() == "darwin" or self.getPlatform() == "linux":
             self.expect("target variable A::g_points[1].x", VARIABLES_DISPLAYED_CORRECTLY,
                 startstr = "(int) A::g_points[1].x = 11")
 
