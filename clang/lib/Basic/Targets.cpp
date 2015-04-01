@@ -1595,20 +1595,22 @@ public:
   public:
     NVPTX32TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
       PointerWidth = PointerAlign = 32;
-      SizeType     = PtrDiffType = TargetInfo::UnsignedInt;
+      SizeType = TargetInfo::UnsignedInt;
+      PtrDiffType = TargetInfo::SignedInt;
       IntPtrType = TargetInfo::SignedInt;
       DescriptionString = "e-p:32:32-i64:64-v16:16-v32:32-n16:32:64";
-  }
+    }
   };
 
   class NVPTX64TargetInfo : public NVPTXTargetInfo {
   public:
     NVPTX64TargetInfo(const llvm::Triple &Triple) : NVPTXTargetInfo(Triple) {
       PointerWidth = PointerAlign = 64;
-      SizeType     = PtrDiffType = TargetInfo::UnsignedLong;
+      SizeType = TargetInfo::UnsignedLong;
+      PtrDiffType = TargetInfo::SignedLong;
       IntPtrType = TargetInfo::SignedLong;
       DescriptionString = "e-i64:64-v16:16-v32:32-n16:32:64";
-  }
+    }
   };
 
 static const unsigned R600AddrSpaceMap[] = {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -E -dM -x assembler-with-cpp < /dev/null | FileCheck -check-prefix ASM %s
+/PtrDiffType / RUN: %clang_cc1 -E -dM -x assembler-with-cpp < /dev/null | FileCheck -check-prefix ASM %s
 //
 // ASM:#define __ASSEMBLER__ 1
 //
@@ -4769,7 +4769,7 @@
 // NVPTX32:#define __NVPTX__ 1
 // NVPTX32:#define __POINTER_WIDTH__ 32
 // NVPTX32:#define __PRAGMA_REDEFINE_EXTNAME 1
-// NVPTX32:#define __PTRDIFF_TYPE__ unsigned int
+// NVPTX32:#define __PTRDIFF_TYPE__ int
 // NVPTX32:#define __PTRDIFF_WIDTH__ 32
 // NVPTX32:#define __PTX__ 1
 // NVPTX32:#define __SCHAR_MAX__ 127
@@ -4956,7 +4956,7 @@
 // NVPTX64:#define __NVPTX__ 1
 // NVPTX64:#define __POINTER_WIDTH__ 64
 // NVPTX64:#define __PRAGMA_REDEFINE_EXTNAME 1
-// NVPTX64:#define __PTRDIFF_TYPE__ long unsigned int
+// NVPTX64:#define __PTRDIFF_TYPE__ long int
 // NVPTX64:#define __PTRDIFF_WIDTH__ 64
 // NVPTX64:#define __PTX__ 1
 // NVPTX64:#define __SCHAR_MAX__ 127
