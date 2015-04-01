@@ -35,7 +35,7 @@ if(APPLE)
       SOURCES ${UBSAN_SOURCES} ${UBSAN_CXX_SOURCES}
       CFLAGS ${UBSAN_CXXFLAGS})
 
-    if(UBSAN_SUPPORTED_ARCH)
+    if(COMPILER_RT_HAS_UBSAN)
       # Initializer of standalone UBSan runtime.
       add_compiler_rt_darwin_object_library(RTUbsan_standalone ${os}
         ARCH ${UBSAN_SUPPORTED_ARCH}
@@ -61,33 +61,35 @@ else()
       SOURCES ${UBSAN_CXX_SOURCES} CFLAGS ${UBSAN_CXXFLAGS})
   endforeach()
 
-  foreach(arch ${UBSAN_SUPPORTED_ARCH})
-    # Initializer of standalone UBSan runtime.
-    add_compiler_rt_object_library(RTUbsan_standalone ${arch}
-      SOURCES ${UBSAN_STANDALONE_SOURCES} CFLAGS ${UBSAN_STANDALONE_CFLAGS})
+  if(COMPILER_RT_HAS_UBSAN)
+    foreach(arch ${UBSAN_SUPPORTED_ARCH})
+      # Initializer of standalone UBSan runtime.
+      add_compiler_rt_object_library(RTUbsan_standalone ${arch}
+        SOURCES ${UBSAN_STANDALONE_SOURCES} CFLAGS ${UBSAN_STANDALONE_CFLAGS})
 
-    # Standalone UBSan runtimes.
-    add_compiler_rt_runtime(clang_rt.ubsan_standalone-${arch} ${arch} STATIC
-      SOURCES $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-              $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-              $<TARGET_OBJECTS:RTUbsan.${arch}>
-              $<TARGET_OBJECTS:RTUbsan_standalone.${arch}>
-      CFLAGS ${UBSAN_CFLAGS})
-    add_compiler_rt_runtime(clang_rt.ubsan_standalone_cxx-${arch} ${arch} STATIC
-      SOURCES $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
-      CFLAGS ${UBSAN_CXXFLAGS})
+      # Standalone UBSan runtimes.
+      add_compiler_rt_runtime(clang_rt.ubsan_standalone-${arch} ${arch} STATIC
+        SOURCES $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+                $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+                $<TARGET_OBJECTS:RTUbsan.${arch}>
+                $<TARGET_OBJECTS:RTUbsan_standalone.${arch}>
+        CFLAGS ${UBSAN_CFLAGS})
+      add_compiler_rt_runtime(clang_rt.ubsan_standalone_cxx-${arch} ${arch} STATIC
+        SOURCES $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
+        CFLAGS ${UBSAN_CXXFLAGS})
 
-    add_dependencies(ubsan
-      clang_rt.ubsan_standalone-${arch}
-      clang_rt.ubsan_standalone_cxx-${arch})
-    if (UNIX AND NOT ${arch} MATCHES "i386|i686")
-      add_sanitizer_rt_symbols(clang_rt.ubsan_standalone-${arch} ubsan.syms.extra)
-      add_sanitizer_rt_symbols(clang_rt.ubsan_standalone_cxx-${arch} ubsan.syms.extra)
       add_dependencies(ubsan
-        clang_rt.ubsan_standalone-${arch}-symbols
-        clang_rt.ubsan_standalone_cxx-${arch}-symbols)
-    endif()
-  endforeach()
+        clang_rt.ubsan_standalone-${arch}
+        clang_rt.ubsan_standalone_cxx-${arch})
+      if (UNIX AND NOT ${arch} MATCHES "i386|i686")
+        add_sanitizer_rt_symbols(clang_rt.ubsan_standalone-${arch} ubsan.syms.extra)
+        add_sanitizer_rt_symbols(clang_rt.ubsan_standalone_cxx-${arch} ubsan.syms.extra)
+        add_dependencies(ubsan
+          clang_rt.ubsan_standalone-${arch}-symbols
+          clang_rt.ubsan_standalone_cxx-${arch}-symbols)
+      endif()
+    endforeach()
+  endif()
 endif()
 
 add_dependencies(compiler-rt ubsan)
