@@ -99,3 +99,26 @@ define i64 @test11(i64 %x) nounwind {
 ; CHECK: xorq $-65536
 ; CHECK: shlq $33
 }
+
+; PR23098
+define i32 @test12(i32 %x, i32* %y) nounwind {
+  %and = shl i32 %x, 1
+  %shl = and i32 %and, 255
+  store i32 %shl, i32* %y
+  ret i32 %shl
+; CHECK-LABEL: test12:
+; CHECK: andl $127
+; CHECK-NEXT: addl
+; CHECK-NOT: shl
+}
+
+define i64 @test13(i64 %x, i64* %y) nounwind {
+  %and = shl i64 %x, 1
+  %shl = and i64 %and, 255
+  store i64 %shl, i64* %y
+  ret i64 %shl
+; CHECK-LABEL: test13:
+; CHECK: andq $127
+; CHECK-NEXT: addq
+; CHECK-NOT: shl
+}
