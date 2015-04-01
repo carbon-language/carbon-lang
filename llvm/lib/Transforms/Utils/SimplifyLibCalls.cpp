@@ -2322,8 +2322,18 @@ Value *FortifiedLibCallSimplifier::optimizeStrpNCpyChk(CallInst *CI,
 }
 
 Value *FortifiedLibCallSimplifier::optimizeCall(CallInst *CI) {
-  if (CI->isNoBuiltin())
-    return nullptr;
+  // FIXME: We shouldn't be changing "nobuiltin" or TLI unavailable calls here.
+  // Some clang users checked for _chk libcall availability using:
+  //   __has_builtin(__builtin___memcpy_chk)
+  // When compiling with -fno-builtin, this is always true.
+  // When passing -ffreestanding/-mkernel, which both imply -fno-builtin, we
+  // end up with fortified libcalls, which isn't acceptable in a freestanding
+  // environment which only provides their non-fortified counterparts.
+  //
+  // Until we change clang and/or teach external users to check for availability
+  // differently, disregard the "nobuiltin" attribute and TLI::has.
+  //
+  // PR23093.
 
   LibFunc::Func Func;
   Function *Callee = CI->getCalledFunction();
@@ -2332,7 +2342,7 @@ Value *FortifiedLibCallSimplifier::optimizeCall(CallInst *CI) {
   bool isCallingConvC = CI->getCallingConv() == llvm::CallingConv::C;
 
   // First, check that this is a known library functions.
-  if (!TLI->getLibFunc(FuncName, Func) || !TLI->has(Func))
+  if (!TLI->getLibFunc(FuncName, Func))
     return nullptr;
 
   // We never change the calling convention.
