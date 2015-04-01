@@ -46,19 +46,21 @@ typedef struct _GPR
     uint64_t ss;
 } GPR;
 
-struct dbreg {
-       uint64_t  dr[16];  /* debug registers */
-                          /* Index 0-3: debug address registers */
-                          /* Index 4-5: reserved */
-                          /* Index 6: debug status */
-                          /* Index 7: debug control */
-                          /* Index 8-15: reserved */
+struct DBG {
+    uint64_t  dr[16];  /* debug registers */
+                       /* Index 0-3: debug address registers */
+                       /* Index 4-5: reserved */
+                       /* Index 6: debug status */
+                       /* Index 7: debug control */
+                       /* Index 8-15: reserved */
 };
 
-#define DR_SIZE sizeof(uint64_t)
-#define DR_OFFSET(reg_index) \
-    (LLVM_EXTENSION offsetof(dbreg, dr[reg_index]))
-
+struct UserArea
+{
+    GPR gpr;
+    FPR fpr;
+    DBG dbg;
+};
 
 //---------------------------------------------------------------------------
 // Include RegisterInfos_x86_64 to declare our g_register_infos_x86_64 structure.

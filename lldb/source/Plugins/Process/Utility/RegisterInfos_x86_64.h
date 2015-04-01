@@ -16,12 +16,20 @@
 
 // Computes the offset of the given FPR in the extended data area.
 #define FPR_OFFSET(regname) \
-    (LLVM_EXTENSION offsetof(FPR, xstate) + \
+    (LLVM_EXTENSION offsetof(UserArea, fpr) + \
+     LLVM_EXTENSION offsetof(FPR, xstate) + \
      LLVM_EXTENSION offsetof(FXSAVE, regname))
 
 // Computes the offset of the YMM register assembled from register halves.
-#define YMM_OFFSET(regname) \
-    (LLVM_EXTENSION offsetof(YMM, regname))
+#define YMM_OFFSET(reg_index) \
+    (LLVM_EXTENSION offsetof(UserArea, fpr) + \
+     LLVM_EXTENSION offsetof(FPR, xstate) + \
+     LLVM_EXTENSION offsetof(XSAVE, ymmh[reg_index]) + \
+     (32 * reg_index))
+
+#define DR_OFFSET(reg_index) \
+    (LLVM_EXTENSION offsetof(UserArea, dbg) + \
+     LLVM_EXTENSION offsetof(DBG, dr[reg_index]))
 
 #ifdef DECLARE_REGISTER_INFOS_X86_64_STRUCT
 
@@ -36,6 +44,8 @@
 
 // Number of bytes needed to represent a YMM register.
 #define YMM_SIZE sizeof(YMMReg)
+
+#define DR_SIZE sizeof(((DBG*)NULL)->dr[0])
 
 // RegisterKind: GCC, DWARF, Generic, GDB, LLDB
 
@@ -67,7 +77,7 @@
       NULL, NULL }
 
 #define DEFINE_YMM(reg, i)                                                          \
-    { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(reg[i]),                    \
+    { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(i),                         \
       eEncodingVector, eFormatVectorOfUInt8,                                        \
       { gcc_dwarf_##reg##i##h_x86_64, gcc_dwarf_##reg##i##h_x86_64, LLDB_INVALID_REGNUM, gdb_##reg##i##h_x86_64, lldb_##reg##i##_x86_64 }, \
       NULL, NULL }
@@ -298,7 +308,7 @@ do {                                                                            
 
 #define UPDATE_YMM_INFO(reg, i)                                                 \
 do {                                                                            \
-    g_register_infos[lldb_##reg##i##_i386].byte_offset = YMM_OFFSET(reg[i]);     \
+    g_register_infos[lldb_##reg##i##_i386].byte_offset = YMM_OFFSET(i);         \
 } while(false);
 
 #define UPDATE_DR_INFO(reg_index)                                               \

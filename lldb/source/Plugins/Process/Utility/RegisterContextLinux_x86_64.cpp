@@ -46,12 +46,16 @@ typedef struct _GPR
     uint64_t gs;
 } GPR;
 
+struct DBG {
+    uint64_t dr[8];
+};
+
 struct UserArea
 {
     GPR      gpr;           // General purpose registers.
     int32_t  fpvalid;       // True if FPU is being used.
     int32_t  pad0;
-    FXSAVE   i387;          // General purpose floating point registers (see FPR for extended register sets).
+    FXSAVE   fpr;           // General purpose floating point registers (see FPR for extended register sets).
     uint64_t tsize;         // Text segment size.
     uint64_t dsize;         // Data segment size.
     uint64_t ssize;         // Stack segment size.
@@ -64,14 +68,10 @@ struct UserArea
     FXSAVE*  fpstate;       // Location of FPR's.
     uint64_t magic;         // Identifier for core dumps.
     char     u_comm[32];    // Command causing core dump.
-    uint64_t u_debugreg[8]; // Debug registers (DR0 - DR7).
+    DBG      dbg;           // Debug registers.
     uint64_t error_code;    // CPU error code.
     uint64_t fault_address; // Control register CR3.
 };
-
-#define DR_SIZE sizeof(((UserArea*)NULL)->u_debugreg[0])
-#define DR_OFFSET(reg_index) \
-    (LLVM_EXTENSION offsetof(UserArea, u_debugreg[reg_index]))
 
 //---------------------------------------------------------------------------
 // Include RegisterInfos_x86_64 to declare our g_register_infos_x86_64 structure.
