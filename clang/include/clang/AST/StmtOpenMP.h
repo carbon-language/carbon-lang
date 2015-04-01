@@ -1592,6 +1592,15 @@ class OMPAtomicDirective : public OMPExecutableDirective {
   /// second. Required for correct codegen of non-associative operations (like
   /// << or >>).
   bool IsXLHSInRHSPart;
+  /// \brief Used for 'atomic update' or 'atomic capture' constructs. They may
+  /// have atomic expressions of forms
+  /// \code
+  /// v = x; <update x>;
+  /// <update x>; v = x;
+  /// \endcode
+  /// This field is true for the first(postfix) form of the expression and false
+  /// otherwise.
+  bool IsPostfixUpdate;
 
   /// \brief Build directive with the given start and end location.
   ///
@@ -1603,7 +1612,7 @@ class OMPAtomicDirective : public OMPExecutableDirective {
                      unsigned NumClauses)
       : OMPExecutableDirective(this, OMPAtomicDirectiveClass, OMPD_atomic,
                                StartLoc, EndLoc, NumClauses, 5),
-        IsXLHSInRHSPart(false) {}
+        IsXLHSInRHSPart(false), IsPostfixUpdate(false) {}
 
   /// \brief Build an empty directive.
   ///
@@ -1613,7 +1622,7 @@ class OMPAtomicDirective : public OMPExecutableDirective {
       : OMPExecutableDirective(this, OMPAtomicDirectiveClass, OMPD_atomic,
                                SourceLocation(), SourceLocation(), NumClauses,
                                5),
-        IsXLHSInRHSPart(false) {}
+        IsXLHSInRHSPart(false), IsPostfixUpdate(false) {}
 
   /// \brief Set 'x' part of the associated expression/statement.
   void setX(Expr *X) { *std::next(child_begin()) = X; }
@@ -1644,10 +1653,12 @@ public:
   /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
   /// \param IsXLHSInRHSPart true if \a UE has the first form and false if the
   /// second.
+  /// \param IsPostfixUpdate true if original value of 'x' must be stored in
+  /// 'v', not an updated one.
   static OMPAtomicDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
          ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, Expr *X, Expr *V,
-         Expr *E, Expr *UE, bool IsXLHSInRHSPart);
+         Expr *E, Expr *UE, bool IsXLHSInRHSPart, bool IsPostfixUpdate);
 
   /// \brief Creates an empty directive with the place for \a NumClauses
   /// clauses.
@@ -1676,6 +1687,9 @@ public:
   /// 'OpaqueValueExpr(x) binop OpaqueValueExpr(expr)' and false if it has form
   /// 'OpaqueValueExpr(expr) binop OpaqueValueExpr(x)'.
   bool isXLHSInRHSPart() const { return IsXLHSInRHSPart; }
+  /// \brief Return true if 'v' expression must be updated to original value of
+  /// 'x', false if 'v' must be updated to the new value of 'x'.
+  bool isPostfixUpdate() const { return IsPostfixUpdate; }
   /// \brief Get 'v' part of the associated expression/statement.
   Expr *getV() { return cast_or_null<Expr>(*std::next(child_begin(), 3)); }
   const Expr *getV() const {

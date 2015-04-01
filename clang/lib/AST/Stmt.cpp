@@ -2007,11 +2007,10 @@ OMPOrderedDirective *OMPOrderedDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPOrderedDirective();
 }
 
-OMPAtomicDirective *
-OMPAtomicDirective::Create(const ASTContext &C, SourceLocation StartLoc,
-                           SourceLocation EndLoc, ArrayRef<OMPClause *> Clauses,
-                           Stmt *AssociatedStmt, Expr *X, Expr *V, Expr *E,
-                           Expr *UE, bool IsXLHSInRHSPart) {
+OMPAtomicDirective *OMPAtomicDirective::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+    ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt, Expr *X, Expr *V,
+    Expr *E, Expr *UE, bool IsXLHSInRHSPart, bool IsPostfixUpdate) {
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPAtomicDirective),
                                            llvm::alignOf<OMPClause *>());
   void *Mem = C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() +
@@ -2025,6 +2024,7 @@ OMPAtomicDirective::Create(const ASTContext &C, SourceLocation StartLoc,
   Dir->setExpr(E);
   Dir->setUpdateExpr(UE);
   Dir->IsXLHSInRHSPart = IsXLHSInRHSPart;
+  Dir->IsPostfixUpdate = IsPostfixUpdate;
   return Dir;
 }
 

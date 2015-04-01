@@ -193,3 +193,175 @@ int updateint() {
   return 0;
 }
 
+int captureint() {
+  int a = 0, b = 0, c = 0;
+// Test for atomic capture
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be a compound statement of form '{v = x; x binop= expr;}', '{x binop= expr; v = x;}', '{v = x; x = x binop expr;}', '{v = x; x = expr binop x;}', '{x = x binop expr; v = x;}', '{x = expr binop x; v = x;}' or '{v = x; x = expr;}', '{v = x; x++;}', '{v = x; ++x;}', '{++x; v = x;}', '{x++; v = x;}', '{v = x; x--;}', '{v = x; --x;}', '{--x; v = x;}', '{x--; v = x;}' where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected compound statement}}
+  ;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected assignment expression}}
+  foo();
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected built-in binary or unary operator}}
+  a = b;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected assignment expression}}
+  a = b || a;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected one of '+', '*', '-', '/', '&', '^', '|', '<<', or '>>' built-in operations}}
+  b = a = a && b;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected assignment expression}}
+  a = (float)a + b;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected assignment expression}}
+  a = 2 * b;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected assignment expression}}
+  a = b + *&a;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be a compound statement of form '{v = x; x binop= expr;}', '{x binop= expr; v = x;}', '{v = x; x = x binop expr;}', '{v = x; x = expr binop x;}', '{x = x binop expr; v = x;}', '{x = expr binop x; v = x;}' or '{v = x; x = expr;}', '{v = x; x++;}', '{v = x; ++x;}', '{++x; v = x;}', '{x++; v = x;}', '{v = x; x--;}', '{v = x; --x;}', '{--x; v = x;}', '{x--; v = x;}' where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected exactly two expression statements}}
+  { a = b; }
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be a compound statement of form '{v = x; x binop= expr;}', '{x binop= expr; v = x;}', '{v = x; x = x binop expr;}', '{v = x; x = expr binop x;}', '{x = x binop expr; v = x;}', '{x = expr binop x; v = x;}' or '{v = x; x = expr;}', '{v = x; x++;}', '{v = x; ++x;}', '{++x; v = x;}', '{x++; v = x;}', '{v = x; x--;}', '{v = x; --x;}', '{--x; v = x;}', '{x--; v = x;}' where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected exactly two expression statements}}
+  {}
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be a compound statement of form '{v = x; x binop= expr;}', '{x binop= expr; v = x;}', '{v = x; x = x binop expr;}', '{v = x; x = expr binop x;}', '{x = x binop expr; v = x;}', '{x = expr binop x; v = x;}' or '{v = x; x = expr;}', '{v = x; x++;}', '{v = x; ++x;}', '{++x; v = x;}', '{x++; v = x;}', '{v = x; x--;}', '{v = x; --x;}', '{--x; v = x;}', '{x--; v = x;}' where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of the first expression}}
+  {a = b;a = b;}
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be a compound statement of form '{v = x; x binop= expr;}', '{x binop= expr; v = x;}', '{v = x; x = x binop expr;}', '{v = x; x = expr binop x;}', '{x = x binop expr; v = x;}', '{x = expr binop x; v = x;}' or '{v = x; x = expr;}', '{v = x; x++;}', '{v = x; ++x;}', '{++x; v = x;}', '{x++; v = x;}', '{v = x; x--;}', '{v = x; --x;}', '{--x; v = x;}', '{x--; v = x;}' where x is an l-value expression with scalar type}}
+  // expected-note@+1 {{expected in right hand side of the first expression}}
+  {a = b; a = b || a;}
+#pragma omp atomic capture
+  {b = a; a = a && b;}
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  b = a = (float)a + b;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  b = a = 2 * b;
+#pragma omp atomic capture
+  // expected-error@+2 {{the statement for 'atomic capture' must be an expression statement of form 'v = ++x;', 'v = --x;', 'v = x++;', 'v = x--;', 'v = x binop= expr;', 'v = x = x binop expr' or 'v = x = expr binop x', where x and v are both l-value expressions with scalar type}}
+  // expected-note@+1 {{expected in right hand side of expression}}
+  b = a = b + *&a;
+#pragma omp atomic capture
+  c = *&a = *&a +  2;
+#pragma omp atomic capture
+  c = a++;
+#pragma omp atomic capture
+  c = ++a;
+#pragma omp atomic capture
+  c = a--;
+#pragma omp atomic capture
+  c = --a;
+#pragma omp atomic capture
+  c = a += b;
+#pragma omp atomic capture
+  c = a %= b;
+#pragma omp atomic capture
+  c = a *= b;
+#pragma omp atomic capture
+  c = a -= b;
+#pragma omp atomic capture
+  c = a /= b;
+#pragma omp atomic capture
+  c = a &= b;
+#pragma omp atomic capture
+  c = a ^= b;
+#pragma omp atomic capture
+  c = a |= b;
+#pragma omp atomic capture
+  c = a <<= b;
+#pragma omp atomic capture
+  c = a >>= b;
+#pragma omp atomic capture
+  c = a = b + a;
+#pragma omp atomic capture
+  c = a = a * b;
+#pragma omp atomic capture
+  c = a = b - a;
+#pragma omp atomic capture
+  c = a = a / b;
+#pragma omp atomic capture
+  c = a = b & a;
+#pragma omp atomic capture
+  c = a = a ^ b;
+#pragma omp atomic capture
+  c = a = b | a;
+#pragma omp atomic capture
+  c = a = a << b;
+#pragma omp atomic capture
+  c = a = b >> a;
+#pragma omp atomic capture
+  { c = *&a; *&a = *&a +  2;}
+#pragma omp atomic capture
+  { *&a = *&a +  2; c = *&a;}
+#pragma omp atomic capture
+  {c = a; a++;}
+#pragma omp atomic capture
+  {++a;c = a;}
+#pragma omp atomic capture
+  {c = a;a--;}
+#pragma omp atomic capture
+  {--a;c = a;}
+#pragma omp atomic capture
+  {c = a; a += b;}
+#pragma omp atomic capture
+  {a %= b; c = a;}
+#pragma omp atomic capture
+  {c = a; a *= b;}
+#pragma omp atomic capture
+  {a -= b;c = a;}
+#pragma omp atomic capture
+  {c = a; a /= b;}
+#pragma omp atomic capture
+  {a &= b; c = a;}
+#pragma omp atomic capture
+  {c = a; a ^= b;}
+#pragma omp atomic capture
+  {a |= b; c = a;}
+#pragma omp atomic capture
+  {c = a; a <<= b;}
+#pragma omp atomic capture
+  {a >>= b; c = a;}
+#pragma omp atomic capture
+  {c = a; a = b + a;}
+#pragma omp atomic capture
+  {a = a * b; c = a;}
+#pragma omp atomic capture
+  {c = a; a = b - a;}
+#pragma omp atomic capture
+  {a = a / b; c = a;}
+#pragma omp atomic capture
+  {c = a; a = b & a;}
+#pragma omp atomic capture
+  {a = a ^ b; c = a;}
+#pragma omp atomic capture
+  {c = a; a = b | a;}
+#pragma omp atomic capture
+  {a = a << b; c = a;}
+#pragma omp atomic capture
+  {c = a; a = b >> a;}
+#pragma omp atomic capture
+  {c = a; a = foo();}
+  // expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'capture' clause}}
+#pragma omp atomic capture capture
+  b = a /= b;
+
+  return 0;
+}
+

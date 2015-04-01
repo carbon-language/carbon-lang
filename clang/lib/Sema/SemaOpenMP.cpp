@@ -3295,18 +3295,22 @@ class OpenMPAtomicUpdateChecker {
   bool IsXLHSInRHSPart;
   BinaryOperatorKind Op;
   SourceLocation OpLoc;
+  /// \brief true if the source expression is a postfix unary operation, false
+  /// if it is a prefix unary operation.
+  bool IsPostfixUpdate;
 
 public:
   OpenMPAtomicUpdateChecker(Sema &SemaRef)
       : SemaRef(SemaRef), X(nullptr), E(nullptr), UpdateExpr(nullptr),
-        IsXLHSInRHSPart(false), Op(BO_PtrMemD) {}
+        IsXLHSInRHSPart(false), Op(BO_PtrMemD), IsPostfixUpdate(false) {}
   /// \brief Check specified statement that it is suitable for 'atomic update'
   /// constructs and extract 'x', 'expr' and Operation from the original
-  /// expression.
+  /// expression. If DiagId and NoteId == 0, then only check is performed
+  /// without error notification.
   /// \param DiagId Diagnostic which should be emitted if error is found.
   /// \param NoteId Diagnostic note for the main error message.
   /// \return true if statement is not an update expression, false otherwise.
-  bool checkStatement(Stmt *S, unsigned DiagId, unsigned NoteId);
+  bool checkStatement(Stmt *S, unsigned DiagId = 0, unsigned NoteId = 0);
   /// \brief Return the 'x' lvalue part of the source atomic expression.
   Expr *getX() const { return X; }
   /// \brief Return the 'expr' rvalue part of the source atomic expression.
@@ -3319,9 +3323,13 @@ public:
   /// false otherwise.
   bool isXLHSInRHSPart() const { return IsXLHSInRHSPart; }
 
+  /// \brief true if the source expression is a postfix unary operation, false
+  /// if it is a prefix unary operation.
+  bool isPostfixUpdate() const { return IsPostfixUpdate; }
+
 private:
-  bool checkBinaryOperation(BinaryOperator *AtomicBinOp, unsigned DiagId,
-                            unsigned NoteId);
+  bool checkBinaryOperation(BinaryOperator *AtomicBinOp, unsigned DiagId = 0,
+                            unsigned NoteId = 0);
 };
 } // namespace
 
@@ -3383,7 +3391,7 @@ bool OpenMPAtomicUpdateChecker::checkBinaryOperation(
     NoteRange = SourceRange(NoteLoc, NoteLoc);
     ErrorFound = NotAnAssignmentOp;
   }
-  if (ErrorFound != NoError) {
+  if (ErrorFound != NoError && DiagId != 0 && NoteId != 0) {
     SemaRef.Diag(ErrorLoc, DiagId) << ErrorRange;
     SemaRef.Diag(NoteLoc, NoteId) << ErrorFound << NoteRange;
     return true;
@@ -3427,6 +3435,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
                  dyn_cast<UnaryOperator>(AtomicBody->IgnoreParenImpCasts())) {
         // Check for Unary Operation
         if (AtomicUnaryOp->isIncrementDecrementOp()) {
+          IsPostfixUpdate = AtomicUnaryOp->isPostfix();
           Op = AtomicUnaryOp->isIncrementOp() ? BO_Add : BO_Sub;
           OpLoc = AtomicUnaryOp->getOperatorLoc();
           X = AtomicUnaryOp->getSubExpr();
@@ -3454,7 +3463,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
     NoteLoc = ErrorLoc = S->getLocStart();
     NoteRange = ErrorRange = SourceRange(NoteLoc, NoteLoc);
   }
-  if (ErrorFound != NoError) {
+  if (ErrorFound != NoError && DiagId != 0 && NoteId != 0) {
     SemaRef.Diag(ErrorLoc, DiagId) << ErrorRange;
     SemaRef.Diag(NoteLoc, NoteId) << ErrorFound << NoteRange;
     return true;
@@ -3493,7 +3502,6 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   // top and a single exit at the bottom.
   // The point of exit cannot be a branch out of the structured block.
   // longjmp() and throw() must not violate the entry/exit criteria.
-  // TODO further analysis of associated statements and clauses.
   OpenMPClauseKind AtomicKind = OMPC_unknown;
   SourceLocation AtomicKindLoc;
   for (auto *C : Clauses) {
@@ -3521,6 +3529,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   Expr *E = nullptr;
   Expr *UE = nullptr;
   bool IsXLHSInRHSPart = false;
+  bool IsPostfixUpdate = false;
   // OpenMP [2.12.6, atomic Construct]
   // In the next expressions:
   // * x and v (as applicable) are both l-value expressions with scalar type.
@@ -3543,14 +3552,14 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   // expr or subexpressions of expr.
   // * For forms that allow multiple occurrences of x, the number of times
   // that x is evaluated is unspecified.
-  enum {
-    NotAnExpression,
-    NotAnAssignmentOp,
-    NotAScalarType,
-    NotAnLValue,
-    NoError
-  } ErrorFound = NoError;
   if (AtomicKind == OMPC_read) {
+    enum {
+      NotAnExpression,
+      NotAnAssignmentOp,
+      NotAScalarType,
+      NotAnLValue,
+      NoError
+    } ErrorFound = NoError;
     SourceLocation ErrorLoc, NoteLoc;
     SourceRange ErrorRange, NoteRange;
     // If clause is read:
@@ -3606,6 +3615,13 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
     } else if (CurContext->isDependentContext())
       V = X = nullptr;
   } else if (AtomicKind == OMPC_write) {
+    enum {
+      NotAnExpression,
+      NotAnAssignmentOp,
+      NotAScalarType,
+      NotAnLValue,
+      NoError
+    } ErrorFound = NoError;
     SourceLocation ErrorLoc, NoteLoc;
     SourceRange ErrorRange, NoteRange;
     // If clause is write:
@@ -3682,21 +3698,218 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
       IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
     }
   } else if (AtomicKind == OMPC_capture) {
-    if (isa<Expr>(Body) && !isa<BinaryOperator>(Body)) {
-      Diag(Body->getLocStart(),
-           diag::err_omp_atomic_capture_not_expression_statement);
-      return StmtError();
-    } else if (!isa<Expr>(Body) && !isa<CompoundStmt>(Body)) {
-      Diag(Body->getLocStart(),
-           diag::err_omp_atomic_capture_not_compound_statement);
-      return StmtError();
+    enum {
+      NotAnAssignmentOp,
+      NotACompoundStatement,
+      NotTwoSubstatements,
+      NotASpecificExpression,
+      NoError
+    } ErrorFound = NoError;
+    SourceLocation ErrorLoc, NoteLoc;
+    SourceRange ErrorRange, NoteRange;
+    if (auto *AtomicBody = dyn_cast<Expr>(Body)) {
+      // If clause is a capture:
+      //  v = x++;
+      //  v = x--;
+      //  v = ++x;
+      //  v = --x;
+      //  v = x binop= expr;
+      //  v = x = x binop expr;
+      //  v = x = expr binop x;
+      auto *AtomicBinOp =
+          dyn_cast<BinaryOperator>(AtomicBody->IgnoreParenImpCasts());
+      if (AtomicBinOp && AtomicBinOp->getOpcode() == BO_Assign) {
+        V = AtomicBinOp->getLHS();
+        Body = AtomicBinOp->getRHS()->IgnoreParenImpCasts();
+        OpenMPAtomicUpdateChecker Checker(*this);
+        if (Checker.checkStatement(
+                Body, diag::err_omp_atomic_capture_not_expression_statement,
+                diag::note_omp_atomic_update))
+          return StmtError();
+        E = Checker.getExpr();
+        X = Checker.getX();
+        UE = Checker.getUpdateExpr();
+        IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
+        IsPostfixUpdate = Checker.isPostfixUpdate();
+      } else {
+        ErrorLoc = AtomicBody->getExprLoc();
+        ErrorRange = AtomicBody->getSourceRange();
+        NoteLoc = AtomicBinOp ? AtomicBinOp->getOperatorLoc()
+                              : AtomicBody->getExprLoc();
+        NoteRange = AtomicBinOp ? AtomicBinOp->getSourceRange()
+                                : AtomicBody->getSourceRange();
+        ErrorFound = NotAnAssignmentOp;
+      }
+      if (ErrorFound != NoError) {
+        Diag(ErrorLoc, diag::err_omp_atomic_capture_not_expression_statement)
+            << ErrorRange;
+        Diag(NoteLoc, diag::note_omp_atomic_capture) << ErrorFound << NoteRange;
+        return StmtError();
+      } else if (CurContext->isDependentContext()) {
+        UE = V = E = X = nullptr;
+      }
+    } else {
+      // If clause is a capture:
+      //  { v = x; x = expr; }
+      //  { v = x; x++; }
+      //  { v = x; x--; }
+      //  { v = x; ++x; }
+      //  { v = x; --x; }
+      //  { v = x; x binop= expr; }
+      //  { v = x; x = x binop expr; }
+      //  { v = x; x = expr binop x; }
+      //  { x++; v = x; }
+      //  { x--; v = x; }
+      //  { ++x; v = x; }
+      //  { --x; v = x; }
+      //  { x binop= expr; v = x; }
+      //  { x = x binop expr; v = x; }
+      //  { x = expr binop x; v = x; }
+      if (auto *CS = dyn_cast<CompoundStmt>(Body)) {
+        // Check that this is { expr1; expr2; }
+        if (CS->size() == 2) {
+          auto *First = CS->body_front();
+          auto *Second = CS->body_back();
+          if (auto *EWC = dyn_cast<ExprWithCleanups>(First))
+            First = EWC->getSubExpr()->IgnoreParenImpCasts();
+          if (auto *EWC = dyn_cast<ExprWithCleanups>(Second))
+            Second = EWC->getSubExpr()->IgnoreParenImpCasts();
+          // Need to find what subexpression is 'v' and what is 'x'.
+          OpenMPAtomicUpdateChecker Checker(*this);
+          bool IsUpdateExprFound = !Checker.checkStatement(Second);
+          BinaryOperator *BinOp = nullptr;
+          if (IsUpdateExprFound) {
+            BinOp = dyn_cast<BinaryOperator>(First);
+            IsUpdateExprFound = BinOp && BinOp->getOpcode() == BO_Assign;
+          }
+          if (IsUpdateExprFound && !CurContext->isDependentContext()) {
+            //  { v = x; x++; }
+            //  { v = x; x--; }
+            //  { v = x; ++x; }
+            //  { v = x; --x; }
+            //  { v = x; x binop= expr; }
+            //  { v = x; x = x binop expr; }
+            //  { v = x; x = expr binop x; }
+            // Check that the first expression has form v = x.
+            auto *PossibleX = BinOp->getRHS()->IgnoreParenImpCasts();
+            llvm::FoldingSetNodeID XId, PossibleXId;
+            Checker.getX()->Profile(XId, Context, /*Canonical=*/true);
+            PossibleX->Profile(PossibleXId, Context, /*Canonical=*/true);
+            IsUpdateExprFound = XId == PossibleXId;
+            if (IsUpdateExprFound) {
+              V = BinOp->getLHS();
+              X = Checker.getX();
+              E = Checker.getExpr();
+              UE = Checker.getUpdateExpr();
+              IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
+              IsPostfixUpdate = Checker.isPostfixUpdate();
+            }
+          }
+          if (!IsUpdateExprFound) {
+            IsUpdateExprFound = !Checker.checkStatement(First);
+            BinOp = nullptr;
+            if (IsUpdateExprFound) {
+              BinOp = dyn_cast<BinaryOperator>(Second);
+              IsUpdateExprFound = BinOp && BinOp->getOpcode() == BO_Assign;
+            }
+            if (IsUpdateExprFound && !CurContext->isDependentContext()) {
+              //  { x++; v = x; }
+              //  { x--; v = x; }
+              //  { ++x; v = x; }
+              //  { --x; v = x; }
+              //  { x binop= expr; v = x; }
+              //  { x = x binop expr; v = x; }
+              //  { x = expr binop x; v = x; }
+              // Check that the second expression has form v = x.
+              auto *PossibleX = BinOp->getRHS()->IgnoreParenImpCasts();
+              llvm::FoldingSetNodeID XId, PossibleXId;
+              Checker.getX()->Profile(XId, Context, /*Canonical=*/true);
+              PossibleX->Profile(PossibleXId, Context, /*Canonical=*/true);
+              IsUpdateExprFound = XId == PossibleXId;
+              if (IsUpdateExprFound) {
+                V = BinOp->getLHS();
+                X = Checker.getX();
+                E = Checker.getExpr();
+                UE = Checker.getUpdateExpr();
+                IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
+                IsPostfixUpdate = Checker.isPostfixUpdate();
+              }
+            }
+          }
+          if (!IsUpdateExprFound) {
+            //  { v = x; x = expr; }
+            auto *FirstBinOp = dyn_cast<BinaryOperator>(First);
+            if (!FirstBinOp || FirstBinOp->getOpcode() != BO_Assign) {
+              ErrorFound = NotAnAssignmentOp;
+              NoteLoc = ErrorLoc = FirstBinOp ? FirstBinOp->getOperatorLoc()
+                                              : First->getLocStart();
+              NoteRange = ErrorRange = FirstBinOp
+                                           ? FirstBinOp->getSourceRange()
+                                           : SourceRange(ErrorLoc, ErrorLoc);
+            } else {
+              auto *SecondBinOp = dyn_cast<BinaryOperator>(Second);
+              if (!SecondBinOp || SecondBinOp->getOpcode() != BO_Assign) {
+                ErrorFound = NotAnAssignmentOp;
+                NoteLoc = ErrorLoc = SecondBinOp ? SecondBinOp->getOperatorLoc()
+                                                 : Second->getLocStart();
+                NoteRange = ErrorRange = SecondBinOp
+                                             ? SecondBinOp->getSourceRange()
+                                             : SourceRange(ErrorLoc, ErrorLoc);
+              } else {
+                auto *PossibleXRHSInFirst =
+                    FirstBinOp->getRHS()->IgnoreParenImpCasts();
+                auto *PossibleXLHSInSecond =
+                    SecondBinOp->getLHS()->IgnoreParenImpCasts();
+                llvm::FoldingSetNodeID X1Id, X2Id;
+                PossibleXRHSInFirst->Profile(X1Id, Context, /*Canonical=*/true);
+                PossibleXLHSInSecond->Profile(X2Id, Context,
+                                              /*Canonical=*/true);
+                IsUpdateExprFound = X1Id == X2Id;
+                if (IsUpdateExprFound) {
+                  V = FirstBinOp->getLHS();
+                  X = SecondBinOp->getLHS();
+                  E = SecondBinOp->getRHS();
+                  UE = nullptr;
+                  IsXLHSInRHSPart = false;
+                  IsPostfixUpdate = true;
+                } else {
+                  ErrorFound = NotASpecificExpression;
+                  ErrorLoc = FirstBinOp->getExprLoc();
+                  ErrorRange = FirstBinOp->getSourceRange();
+                  NoteLoc = SecondBinOp->getLHS()->getExprLoc();
+                  NoteRange = SecondBinOp->getRHS()->getSourceRange();
+                }
+              }
+            }
+          }
+        } else {
+          NoteLoc = ErrorLoc = Body->getLocStart();
+          NoteRange = ErrorRange =
+              SourceRange(Body->getLocStart(), Body->getLocStart());
+          ErrorFound = NotTwoSubstatements;
+        }
+      } else {
+        NoteLoc = ErrorLoc = Body->getLocStart();
+        NoteRange = ErrorRange =
+            SourceRange(Body->getLocStart(), Body->getLocStart());
+        ErrorFound = NotACompoundStatement;
+      }
+      if (ErrorFound != NoError) {
+        Diag(ErrorLoc, diag::err_omp_atomic_capture_not_compound_statement)
+            << ErrorRange;
+        Diag(NoteLoc, diag::note_omp_atomic_capture) << ErrorFound << NoteRange;
+        return StmtError();
+      } else if (CurContext->isDependentContext()) {
+        UE = V = E = X = nullptr;
+      }
     }
   }
 
   getCurFunction()->setHasBranchProtectedScope();
 
   return OMPAtomicDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt,
-                                    X, V, E, UE, IsXLHSInRHSPart);
+                                    X, V, E, UE, IsXLHSInRHSPart,
+                                    IsPostfixUpdate);
 }
 
 StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,

@@ -2162,6 +2162,7 @@ void ASTStmtReader::VisitOMPAtomicDirective(OMPAtomicDirective *D) {
   D->setExpr(Reader.ReadSubExpr());
   D->setUpdateExpr(Reader.ReadSubExpr());
   D->IsXLHSInRHSPart = Record[Idx++] != 0;
+  D->IsPostfixUpdate = Record[Idx++] != 0;
 }
 
 void ASTStmtReader::VisitOMPTargetDirective(OMPTargetDirective *D) {
