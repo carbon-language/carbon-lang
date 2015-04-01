@@ -346,8 +346,7 @@ protected:
   }
 
 public:
-  ARMRelocationPass(const ELFLinkingContext &ctx)
-      : _file(ctx), _ctx(ctx), _null(nullptr) {}
+  ARMRelocationPass(const ELFLinkingContext &ctx) : _file(ctx), _ctx(ctx) {}
 
   /// \brief Do the pass.
   ///
@@ -433,7 +432,7 @@ protected:
   std::vector<VeneerAtom *> _veneerVector;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
-  GOTAtom *_null;
+  GOTAtom *_null = nullptr;
 };
 
 /// This implements the static relocation model. Meaning GOT and PLT entries are

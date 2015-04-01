@@ -244,9 +244,7 @@ protected:
   }
 
 public:
-  AArch64RelocationPass(const ELFLinkingContext &ctx)
-      : _file(ctx), _ctx(ctx), _null(nullptr), _plt0(nullptr), _got0(nullptr),
-        _got1(nullptr) {}
+  AArch64RelocationPass(const ELFLinkingContext &ctx) : _file(ctx), _ctx(ctx) {}
 
   /// \brief Do the pass.
   ///
@@ -337,14 +335,14 @@ protected:
   std::vector<ObjectAtom *> _objectVector;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
-  GOTAtom *_null;
+  GOTAtom *_null = nullptr;
 
   /// \brief The got and plt entries for .PLT0. This is used to call into the
   /// dynamic linker for symbol resolution.
   /// @{
-  PLT0Atom *_plt0;
-  GOTAtom *_got0;
-  GOTAtom *_got1;
+  PLT0Atom *_plt0 = nullptr;
+  GOTAtom *_got0 = nullptr;
+  GOTAtom *_got1 = nullptr;
   /// @}
 };
 

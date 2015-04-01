@@ -41,19 +41,16 @@ public:
   ELFReference(const Elf_Rela *rela, uint64_t off, Reference::KindArch arch,
                Reference::KindValue relocType, uint32_t idx)
       : Reference(Reference::KindNamespace::ELF, arch, relocType),
-        _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
-        _addend(rela->r_addend) {}
+        _targetSymbolIndex(idx), _offsetInAtom(off), _addend(rela->r_addend) {}
 
   ELFReference(uint64_t off, Reference::KindArch arch,
                Reference::KindValue relocType, uint32_t idx)
       : Reference(Reference::KindNamespace::ELF, arch, relocType),
-        _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
-        _addend(0) {}
+        _targetSymbolIndex(idx), _offsetInAtom(off) {}
 
   ELFReference(uint32_t edgeKind)
       : Reference(Reference::KindNamespace::all, Reference::KindArch::all,
-                  edgeKind),
-        _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0) {}
+                  edgeKind) {}
 
   uint64_t offsetInAtom() const override { return _offsetInAtom; }
 
@@ -73,10 +70,10 @@ public:
   void setTarget(const Atom *newAtom) override { _target = newAtom; }
 
 private:
-  const Atom *_target;
-  uint64_t _targetSymbolIndex;
-  uint64_t _offsetInAtom;
-  Addend _addend;
+  const Atom *_target = nullptr;
+  uint64_t _targetSymbolIndex = 0;
+  uint64_t _offsetInAtom = 0;
+  Addend _addend = 0;
 };
 
 /// \brief These atoms store symbols that are fixed to a particular address.
@@ -88,8 +85,7 @@ template <class ELFT> class ELFAbsoluteAtom : public AbsoluteAtom {
 public:
   ELFAbsoluteAtom(const ELFFile<ELFT> &file, StringRef name,
                   const Elf_Sym *symbol, uint64_t value)
-      : _owningFile(file), _name(name), _symbol(symbol), _value(value) {
-  }
+      : _owningFile(file), _name(name), _symbol(symbol), _value(value) {}
 
   const ELFFile<ELFT> &file() const override { return _owningFile; }
 

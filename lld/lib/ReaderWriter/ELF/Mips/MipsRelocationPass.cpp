@@ -319,7 +319,7 @@ private:
   llvm::DenseMap<const Atom *, GOTAtom *> _gotTLSGdMap;
 
   /// \brief GOT entry for the R_xxxMIPS_TLS_LDM relocations.
-  GOTTLSGdAtom<ELFT> *_gotLDMEntry;
+  GOTTLSGdAtom<ELFT> *_gotLDMEntry = nullptr;
 
   /// \brief the list of local GOT atoms.
   std::vector<GOTAtom *> _localGotVector;
@@ -411,7 +411,7 @@ private:
 
 template <typename ELFT>
 RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
-    : _ctx(ctx), _file(ctx), _gotLDMEntry(nullptr) {
+    : _ctx(ctx), _file(ctx) {
   _localGotVector.push_back(new (_file._alloc) GOT0Atom<ELFT>(_file));
   _localGotVector.push_back(new (_file._alloc)
                                 GOTModulePointerAtom<ELFT>(_file));

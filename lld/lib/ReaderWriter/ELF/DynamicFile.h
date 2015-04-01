@@ -99,9 +99,8 @@ private:
   StringRef _soname;
 
   struct SymAtomPair {
-    SymAtomPair() : _symbol(nullptr), _atom(nullptr) {}
-    const typename llvm::object::ELFFile<ELFT>::Elf_Sym *_symbol;
-    const SharedLibraryAtom *_atom;
+    const typename llvm::object::ELFFile<ELFT>::Elf_Sym *_symbol = nullptr;
+    const SharedLibraryAtom *_atom = nullptr;
   };
 
   std::unique_ptr<MemoryBuffer> _mb;
