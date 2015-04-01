@@ -458,6 +458,10 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
       EHStack.pushTerminate();
     }
   } else if (EST == EST_Dynamic || EST == EST_DynamicNone) {
+    // TODO: Revisit exception specifications for the MS ABI.  There is a way to
+    // encode these in an object file but MSVC doesn't do anything with it.
+    if (getTarget().getCXXABI().isMicrosoft())
+      return;
     unsigned NumExceptions = Proto->getNumExceptions();
     EHFilterScope *Filter = EHStack.pushFilter(NumExceptions);
 
@@ -532,6 +536,10 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
       EHStack.popTerminate();
     }
   } else if (EST == EST_Dynamic || EST == EST_DynamicNone) {
+    // TODO: Revisit exception specifications for the MS ABI.  There is a way to
+    // encode these in an object file but MSVC doesn't do anything with it.
+    if (getTarget().getCXXABI().isMicrosoft())
+      return;
     EHFilterScope &filterScope = cast<EHFilterScope>(*EHStack.begin());
     emitFilterDispatchBlock(*this, filterScope);
     EHStack.popFilter();

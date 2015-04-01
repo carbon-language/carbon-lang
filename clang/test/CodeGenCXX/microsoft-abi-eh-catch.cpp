@@ -96,3 +96,11 @@ extern "C" void catch_a_ref() {
 // WIN64: %[[eptr_i8:[^ ]*]] = bitcast %struct.A* %[[eptr]] to i8*
 // WIN64: call void @handle_exception(i8* %[[eptr_i8]])
 // WIN64: call void @llvm.eh.endcatch()
+
+extern "C" void fn_with_exc_spec() throw(int) {
+  might_throw();
+}
+
+// WIN64-LABEL: define void @fn_with_exc_spec()
+// WIN64: call void @might_throw()
+// WIN64-NEXT: ret void
