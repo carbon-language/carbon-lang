@@ -24,7 +24,7 @@ public:
                    MipsTargetLayout<MipsELFType> &layout)
       : DynamicTable<MipsELFType>(ctx, layout, ".dynamic",
                                   DefaultLayout<MipsELFType>::ORDER_DYNAMIC),
-        _mipsTargetLayout(layout) {}
+        _targetLayout(layout) {}
 
   void createDefaultEntries() override {
     DynamicTable<MipsELFType>::createDefaultEntries();
@@ -73,19 +73,19 @@ public:
 
     // Assign the minimum segment address to the DT_MIPS_BASE_ADDRESS tag.
     auto baseAddr = std::numeric_limits<uint64_t>::max();
-    for (auto si : _mipsTargetLayout.segments())
+    for (auto si : _targetLayout.segments())
       if (si->segmentType() != llvm::ELF::PT_NULL)
         baseAddr = std::min(baseAddr, si->virtualAddr());
     this->_entries[_dt_baseaddr].d_un.d_val = baseAddr;
 
-    auto &got = _mipsTargetLayout.getGOTSection();
+    auto &got = _targetLayout.getGOTSection();
 
     this->_entries[_dt_symtabno].d_un.d_val = this->getSymbolTable()->size();
     this->_entries[_dt_gotsym].d_un.d_val =
        this-> getSymbolTable()->size() - got.getGlobalCount();
     this->_entries[_dt_localgot].d_un.d_val = got.getLocalCount();
     this->_entries[_dt_pltgot].d_un.d_ptr =
-        _mipsTargetLayout.findOutputSection(".got")->virtualAddr();
+        _targetLayout.findOutputSection(".got")->virtualAddr();
   }
 
   int64_t getGotPltTag() override { return DT_MIPS_PLTGOT; }
@@ -106,7 +106,7 @@ private:
   std::size_t _dt_gotsym;
   std::size_t _dt_pltgot;
   std::size_t _dt_baseaddr;
-  MipsTargetLayout<MipsELFType> &_mipsTargetLayout;
+  MipsTargetLayout<MipsELFType> &_targetLayout;
 };
 
 } // end namespace elf

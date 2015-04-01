@@ -39,14 +39,14 @@ protected:
 
 private:
   MipsELFWriter<ELFT> _writeHelper;
-  MipsTargetLayout<ELFT> &_mipsTargetLayout;
+  MipsTargetLayout<ELFT> &_targetLayout;
 };
 
 template <class ELFT>
 MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &ctx,
                                                  MipsTargetLayout<ELFT> &layout)
     : ExecutableWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
-      _mipsTargetLayout(layout) {}
+      _targetLayout(layout) {}
 
 template <class ELFT>
 std::error_code MipsExecutableWriter<ELFT>::setELFHeader() {
@@ -134,7 +134,7 @@ template <class ELFT>
 unique_bump_ptr<DynamicTable<ELFT>>
     MipsExecutableWriter<ELFT>::createDynamicTable() {
   return unique_bump_ptr<DynamicTable<ELFT>>(
-      new (this->_alloc) MipsDynamicTable<ELFT>(this->_ctx, _mipsTargetLayout));
+      new (this->_alloc) MipsDynamicTable<ELFT>(this->_ctx, _targetLayout));
 }
 
 /// \brief create dynamic symbol table
@@ -143,7 +143,7 @@ unique_bump_ptr<DynamicSymbolTable<ELFT>>
     MipsExecutableWriter<ELFT>::createDynamicSymbolTable() {
   return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
       new (this->_alloc)
-          MipsDynamicSymbolTable<ELFT>(this->_ctx, _mipsTargetLayout));
+          MipsDynamicSymbolTable<ELFT>(this->_ctx, _targetLayout));
 }
 
 } // namespace elf
