@@ -1340,22 +1340,27 @@ static void addBlockPointerConversion(Sema &S,
                                       SourceRange IntroducerRange,
                                       CXXRecordDecl *Class,
                                       CXXMethodDecl *CallOperator) {
-  const FunctionProtoType *Proto
-    = CallOperator->getType()->getAs<FunctionProtoType>(); 
-  QualType BlockPtrTy;
-  {
-    FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
-    ExtInfo.TypeQuals = 0;
-    QualType FunctionTy = S.Context.getFunctionType(
-        Proto->getReturnType(), Proto->getParamTypes(), ExtInfo);
-    BlockPtrTy = S.Context.getBlockPointerType(FunctionTy);
-  }
+  const FunctionProtoType *Proto =
+      CallOperator->getType()->getAs<FunctionProtoType>();
 
-  FunctionProtoType::ExtProtoInfo ExtInfo(S.Context.getDefaultCallingConvention(
-      /*IsVariadic=*/false, /*IsCXXMethod=*/true));
-  ExtInfo.TypeQuals = Qualifiers::Const;
-  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, None, ExtInfo);
-  
+  // The function type inside the block pointer type is the same as the call
+  // operator with some tweaks. The calling convention is the default free
+  // function convention, and the type qualifications are lost.
+  FunctionProtoType::ExtProtoInfo BlockEPI = Proto->getExtProtoInfo();
+  BlockEPI.ExtInfo =
+      BlockEPI.ExtInfo.withCallingConv(S.Context.getDefaultCallingConvention(
+          Proto->isVariadic(), /*IsCXXMethod=*/false));
+  BlockEPI.TypeQuals = 0;
+  QualType FunctionTy = S.Context.getFunctionType(
+      Proto->getReturnType(), Proto->getParamTypes(), BlockEPI);
+  QualType BlockPtrTy = S.Context.getBlockPointerType(FunctionTy);
+
+  FunctionProtoType::ExtProtoInfo ConversionEPI(
+      S.Context.getDefaultCallingConvention(
+          /*IsVariadic=*/false, /*IsCXXMethod=*/true));
+  ConversionEPI.TypeQuals = Qualifiers::Const;
+  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, None, ConversionEPI);
+
   SourceLocation Loc = IntroducerRange.getBegin();
   DeclarationName Name
     = S.Context.DeclarationNames.getCXXConversionFunctionName(

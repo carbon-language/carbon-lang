@@ -2483,6 +2483,10 @@ getCCForDeclaratorChunk(Sema &S, Declarator &D,
       // in a member pointer.
       IsCXXInstanceMethod =
           D.getTypeObject(I).Kind == DeclaratorChunk::MemberPointer;
+    } else if (D.getContext() == Declarator::LambdaExprContext) {
+      // This can only be a call operator for a lambda, which is an instance
+      // method.
+      IsCXXInstanceMethod = true;
     } else {
       // We're the innermost decl chunk, so must be a function declarator.
       assert(D.isFunctionDeclarator());
