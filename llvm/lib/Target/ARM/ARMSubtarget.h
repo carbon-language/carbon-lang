@@ -67,6 +67,7 @@ protected:
   bool HasV6T2Ops;
   bool HasV7Ops;
   bool HasV8Ops;
+  bool HasV8_1aOps;
 
   /// HasVFPv2, HasVFPv3, HasVFPv4, HasFPARMv8, HasNEON - Specify what
   /// floating point ISAs are supported.
@@ -182,9 +183,6 @@ protected:
   /// HasCRC - if true, processor supports CRC instructions
   bool HasCRC;
 
-  /// HasV8_1a - if true, the processor has V8.1a: PAN and RDMA extensions
-  bool HasV8_1a;
-
   /// If true, the instructions "vmov.i32 d0, #0" and "vmov.i32 q0, #0" are
   /// particularly effective at zeroing a VFP register.
   bool HasZeroCycleZeroing;
@@ -292,6 +290,7 @@ public:
   bool hasV6T2Ops() const { return HasV6T2Ops; }
   bool hasV7Ops()   const { return HasV7Ops;  }
   bool hasV8Ops()   const { return HasV8Ops;  }
+  bool hasV8_1aOps() const { return HasV8_1aOps; }
 
   bool isCortexA5() const { return ARMProcFamily == CortexA5; }
   bool isCortexA7() const { return ARMProcFamily == CortexA7; }
@@ -313,7 +312,6 @@ public:
   bool hasNEON() const { return HasNEON;  }
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
-  bool hasV8_1a() const { return HasV8_1a; }
   bool hasVirtualization() const { return HasVirtualization; }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP;

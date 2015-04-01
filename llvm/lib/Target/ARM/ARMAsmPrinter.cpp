@@ -661,8 +661,8 @@ void ARMAsmPrinter::emitAttributes() {
     // Emit Tag_Advanced_SIMD_arch for ARMv8 architecture
     if (STI.hasV8Ops())
       ATS.emitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                        STI.hasV8_1a() ? ARMBuildAttrs::AllowNeonARMv8_1a:
-                                         ARMBuildAttrs::AllowNeonARMv8);
+                        STI.hasV8_1aOps() ? ARMBuildAttrs::AllowNeonARMv8_1a:
+                                            ARMBuildAttrs::AllowNeonARMv8);
   } else {
     if (STI.hasFPARMv8())
       // FPv5 and FP-ARMv8 have the same instructions, so are modeled as one

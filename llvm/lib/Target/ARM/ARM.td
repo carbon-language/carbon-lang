@@ -175,7 +175,7 @@ def HasV8Ops    : SubtargetFeature<"v8", "HasV8Ops", "true",
                                    "Support ARM v8 instructions",
                                    [HasV7Ops, FeatureVirtualization,
                                     FeatureMP]>;
-def FeatureV8_1a : SubtargetFeature<"v8.1a", "HasV8_1a", "true",
+def HasV8_1aOps : SubtargetFeature<"v8.1a", "HasV8_1aOps", "true",
                                    "Support ARM v8.1a instructions",
                                    [HasV8Ops, FeatureAClass, FeatureCRC]>;
 
@@ -451,14 +451,6 @@ def : ProcessorModel<"cyclone",     SwiftModel,
                                      FeatureCrypto, FeatureFPARMv8,
                                      FeatureDB,FeatureDSPThumb2,
                                      FeatureHasRAS, FeatureZCZeroing]>;
-
-// V8.1 Processors
-def : ProcNoItin<"generic-armv8.1-a", [HasV8Ops, FeatureV8_1a,
-                                       FeatureDB, FeatureFPARMv8,
-                                       FeatureNEON, FeatureDSPThumb2,
-                                       FeatureHWDiv, FeatureHWDivARM,
-                                       FeatureTrustZone, FeatureT2XtPk,
-                                       FeatureCrypto]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
