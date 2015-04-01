@@ -321,10 +321,3 @@ if(NOT LIBCXXABI_ENABLE_SHARED)
 else()
   add_subdirectory(test)
 endif()
-
-install(DIRECTORY include/
-  DESTINATION include
-  FILES_MATCHING
-    PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
-)
