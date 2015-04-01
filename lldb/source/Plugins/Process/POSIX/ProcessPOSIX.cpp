@@ -36,39 +36,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 //------------------------------------------------------------------------------
-// Static functions.
-#if 0
-Process*
-ProcessPOSIX::CreateInstance(Target& target, Listener &listener)
-{
-    return new ProcessPOSIX(target, listener);
-}
-
-
-void
-ProcessPOSIX::Initialize()
-{
-    static bool g_initialized = false;
-
-    if (!g_initialized)
-    {
-        g_initialized = true;
-        PluginManager::RegisterPlugin(GetPluginNameStatic(),
-                                      GetPluginDescriptionStatic(),
-                                      CreateInstance);
-
-        Log::Callbacks log_callbacks = {
-            ProcessPOSIXLog::DisableLog,
-            ProcessPOSIXLog::EnableLog,
-            ProcessPOSIXLog::ListLogCategories
-        };
-        
-        Log::RegisterLogChannel (ProcessPOSIX::GetPluginNameStatic(), log_callbacks);
-    }
-}
-#endif
-
-//------------------------------------------------------------------------------
 // Constructors and destructors.
 
 ProcessPOSIX::ProcessPOSIX(Target& target, Listener &listener, UnixSignalsSP &unix_signals_sp)
