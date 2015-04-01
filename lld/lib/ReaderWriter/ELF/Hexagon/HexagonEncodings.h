@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 Instruction insn_encodings[] = {
+  // InsnMask   CompareMask BitMask IsDuplexInstruction
   { 0xffe00004, 0x40000000, 0x20f8, 0x0 },
   { 0xffe03080, 0x9ca03080, 0xf60, 0x0 },
   { 0xf9e00000, 0x48c00000, 0x61f20ff, 0x0 },

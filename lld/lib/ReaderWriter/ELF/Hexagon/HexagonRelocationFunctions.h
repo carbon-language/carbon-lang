@@ -16,12 +16,15 @@
 namespace lld {
 namespace elf {
 
-/// \brief HexagonInstruction which is used to store various values
+/// \brief Applying fixup on Hexagon requires the relocator to fetch the fixup
+/// mask from the instruction. To fetch the fixup encoding, the linker uses a
+/// static array that contains the instruction mask, the compare mask and the
+/// relocation mask.
 typedef struct {
-  uint32_t insnMask;
-  uint32_t insnCmpMask;
-  uint32_t insnBitMask;
-  bool isDuplex;
+  uint32_t insnMask;    // Instruction mask.
+  uint32_t insnCmpMask; // Compare mask.
+  uint32_t insnBitMask; // Relocation mask.
+  bool isDuplex;        // Indicates if the instruction is a duplex instruction.
 } Instruction;
 
 #include "HexagonEncodings.h"
@@ -37,7 +40,7 @@ inline uint32_t findv4bitmask(uint8_t *location) {
     if (((insn_encodings[i].insnMask) & insn) == insn_encodings[i].insnCmpMask)
       return insn_encodings[i].insnBitMask;
   }
-  llvm_unreachable("found unknown instruction");
+  llvm_unreachable("found unknown Hexagon instruction");
 }
 
 } // elf
