@@ -2307,18 +2307,10 @@ collectSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
     StaticRuntimes.push_back("msan");
   if (SanArgs.needsTsanRt())
     StaticRuntimes.push_back("tsan");
-  // WARNING: UBSan should always go last.
   if (SanArgs.needsUbsanRt()) {
-    // Check if UBSan is combined with another sanitizers.
-    if (StaticRuntimes.empty()) {
-      StaticRuntimes.push_back("ubsan_standalone");
-      if (SanArgs.linkCXXRuntimes())
-        StaticRuntimes.push_back("ubsan_standalone_cxx");
-    } else {
-      StaticRuntimes.push_back("ubsan");
-      if (SanArgs.linkCXXRuntimes())
-        StaticRuntimes.push_back("ubsan_cxx");
-    }
+    StaticRuntimes.push_back("ubsan_standalone");
+    if (SanArgs.linkCXXRuntimes())
+      StaticRuntimes.push_back("ubsan_standalone_cxx");
   }
 }
 

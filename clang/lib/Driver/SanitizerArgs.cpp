@@ -159,7 +159,8 @@ static bool getDefaultBlacklist(const Driver &D, uint64_t Kinds,
 }
 
 bool SanitizerArgs::needsUbsanRt() const {
-  return !UbsanTrapOnError && hasOneOf(Sanitizers, NeedsUbsanRt);
+  return !UbsanTrapOnError && hasOneOf(Sanitizers, NeedsUbsanRt) &&
+         !Sanitizers.has(SanitizerKind::Address);
 }
 
 bool SanitizerArgs::requiresPIE() const {

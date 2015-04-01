@@ -338,6 +338,9 @@ void DarwinClang::AddLinkSanitizerLibArgs(const ArgList &Args,
                                     OS + "_dynamic.dylib").str(),
                     /*AlwaysLink*/ true, /*IsEmbedded*/ false,
                     /*AddRPath*/ true);
+  // Add explicit dependcy on -lc++abi, as -lc++ doesn't re-export
+  // all RTTI-related symbols that UBSan uses.
+  CmdArgs.push_back("-lc++abi");
 }
 
 void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
@@ -401,9 +404,6 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
           << "-fsanitize=undefined";
     } else {
       AddLinkSanitizerLibArgs(Args, CmdArgs, "ubsan");
-      // Add explicit dependcy on -lc++abi, as -lc++ doesn't re-export
-      // all RTTI-related symbols that UBSan uses.
-      CmdArgs.push_back("-lc++abi");
     }
   }
 
