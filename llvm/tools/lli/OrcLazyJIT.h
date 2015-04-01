@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
 #include "llvm/ExecutionEngine/Orc/LazyEmittingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/LLVMContext.h"
 
 namespace llvm {
@@ -61,7 +62,13 @@ public:
 
     std::vector<std::unique_ptr<Module>> S;
     S.push_back(std::move(M));
-    return CODLayer.addModuleSet(std::move(S));
+    auto FallbackLookup =
+      [](const std::string &Name) {
+        if (auto Addr = RTDyldMemoryManager::getSymbolAddressInProcess(Name))
+          return RuntimeDyld::SymbolInfo(Addr, JITSymbolFlags::Exported);
+        return RuntimeDyld::SymbolInfo(nullptr);
+      };
+    return CODLayer.addModuleSet(std::move(S), std::move(FallbackLookup));
   }
 
   orc::JITSymbol findSymbol(const std::string &Name) {
