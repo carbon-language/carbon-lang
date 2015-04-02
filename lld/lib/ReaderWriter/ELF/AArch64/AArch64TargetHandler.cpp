@@ -17,7 +17,7 @@ using namespace lld;
 using namespace elf;
 
 AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
-    : _ctx(ctx), _targetLayout(new AArch64TargetLayout<AArch64ELFType>(ctx)),
+    : _ctx(ctx), _targetLayout(new TargetLayout<AArch64ELFType>(ctx)),
       _relocationHandler(new AArch64TargetRelocationHandler()) {}
 
 static const Registry::KindStrings kindStrings[] = {

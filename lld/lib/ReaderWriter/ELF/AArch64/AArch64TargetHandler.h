@@ -20,11 +20,6 @@ namespace lld {
 namespace elf {
 class AArch64LinkingContext;
 
-template <class ELFT> class AArch64TargetLayout : public TargetLayout<ELFT> {
-public:
-  AArch64TargetLayout(AArch64LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
-};
-
 class AArch64TargetHandler final : public TargetHandler {
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
@@ -47,7 +42,7 @@ public:
 
 private:
   AArch64LinkingContext &_ctx;
-  std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _targetLayout;
+  std::unique_ptr<TargetLayout<AArch64ELFType>> _targetLayout;
   std::unique_ptr<AArch64TargetRelocationHandler> _relocationHandler;
 };
 

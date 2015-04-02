@@ -46,5 +46,5 @@ void X86TargetHandler::registerRelocationNames(Registry &registry) {
 }
 
 X86TargetHandler::X86TargetHandler(X86LinkingContext &ctx)
-    : _ctx(ctx), _targetLayout(new X86TargetLayout<X86ELFType>(ctx)),
+    : _ctx(ctx), _targetLayout(new TargetLayout<X86ELFType>(ctx)),
       _relocationHandler(new X86TargetRelocationHandler()) {}

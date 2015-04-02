@@ -18,7 +18,7 @@ namespace elf {
 template <class ELFT>
 class X86ExecutableWriter : public ExecutableWriter<ELFT> {
 public:
-  X86ExecutableWriter(X86LinkingContext &ctx, X86TargetLayout<ELFT> &layout);
+  X86ExecutableWriter(X86LinkingContext &ctx, TargetLayout<ELFT> &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
@@ -34,12 +34,12 @@ protected:
 
 private:
   X86LinkingContext &_ctx;
-  X86TargetLayout<ELFT> &_layout;
+  TargetLayout<ELFT> &_layout;
 };
 
 template <class ELFT>
 X86ExecutableWriter<ELFT>::X86ExecutableWriter(X86LinkingContext &ctx,
-                                               X86TargetLayout<ELFT> &layout)
+                                               TargetLayout<ELFT> &layout)
     : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _layout(layout) {}
 
 template <class ELFT>

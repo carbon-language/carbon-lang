@@ -20,7 +20,7 @@ template <class ELFT>
 class AArch64DynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
 public:
   AArch64DynamicLibraryWriter(AArch64LinkingContext &ctx,
-                              AArch64TargetLayout<ELFT> &layout);
+                              TargetLayout<ELFT> &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
@@ -43,12 +43,12 @@ private:
 
   std::unique_ptr<GOTFile> _gotFile;
   AArch64LinkingContext &_ctx;
-  AArch64TargetLayout<ELFT> &_layout;
+  TargetLayout<ELFT> &_layout;
 };
 
 template <class ELFT>
 AArch64DynamicLibraryWriter<ELFT>::AArch64DynamicLibraryWriter(
-    AArch64LinkingContext &ctx, AArch64TargetLayout<ELFT> &layout)
+    AArch64LinkingContext &ctx, TargetLayout<ELFT> &layout)
     : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)),
       _ctx(ctx), _layout(layout) {}
 

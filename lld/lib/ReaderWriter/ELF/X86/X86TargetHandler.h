@@ -20,11 +20,6 @@ namespace elf {
 
 class X86LinkingContext;
 
-template <class ELFT> class X86TargetLayout : public TargetLayout<ELFT> {
-public:
-  X86TargetLayout(X86LinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
-};
-
 class X86TargetHandler final : public TargetHandler {
 public:
   X86TargetHandler(X86LinkingContext &ctx);
@@ -47,7 +42,7 @@ public:
 
 protected:
   X86LinkingContext &_ctx;
-  std::unique_ptr<X86TargetLayout<X86ELFType>> _targetLayout;
+  std::unique_ptr<TargetLayout<X86ELFType>> _targetLayout;
   std::unique_ptr<X86TargetRelocationHandler> _relocationHandler;
 };
 } // end namespace elf
