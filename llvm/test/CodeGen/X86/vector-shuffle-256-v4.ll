@@ -843,8 +843,9 @@ define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 define <4 x double> @insert_reg_and_zero_v4f64(double %a) {
 ; ALL-LABEL: insert_reg_and_zero_v4f64:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
+; ALL-NEXT:    # kill: XMM0<def> XMM0<kill> YMM0<def>
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; ALL-NEXT:    retq
   %v = insertelement <4 x double> undef, double %a, i32 0
   %shuffle = shufflevector <4 x double> %v, <4 x double> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>

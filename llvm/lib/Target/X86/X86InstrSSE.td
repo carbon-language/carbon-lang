@@ -7168,6 +7168,10 @@ let Predicates = [HasAVX2] in {
 }
 
 // Patterns
+// FIXME: Prefer a movss or movsd over a blendps when optimizing for size or
+// on targets where they have equal performance. These were changed to use
+// blends because blends have better throughput on SandyBridge and Haswell, but
+// movs[s/d] are 1-2 byte shorter instructions.
 let Predicates = [UseAVX] in {
   let AddedComplexity = 15 in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
@@ -7184,8 +7188,10 @@ let Predicates = [UseAVX] in {
   // Move low f32 and clear high bits.
   def : Pat<(v8f32 (X86vzmovl (v8f32 VR256:$src))),
             (VBLENDPSYrri (v8f32 (AVX_SET0)), VR256:$src, (i8 1))>;
-  def : Pat<(v8i32 (X86vzmovl (v8i32 VR256:$src))),
-            (VBLENDPSYrri (v8i32 (AVX_SET0)), VR256:$src, (i8 1))>;
+
+  // Move low f64 and clear high bits.
+  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
+            (VBLENDPDYrri (v4f64 (AVX_SET0)), VR256:$src, (i8 1))>;
   }
 
   def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
@@ -7199,14 +7205,19 @@ let Predicates = [UseAVX] in {
                            (v2f64 (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)),
                            sub_xmm)>;
 
-  // Move low f64 and clear high bits.
-  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
-            (VBLENDPDYrri (v4f64 (AVX_SET0)), VR256:$src, (i8 1))>;
-
+  // These will incur an FP/int domain crossing penalty, but it may be the only
+  // way without AVX2. Do not add any complexity because we may be able to match
+  // more optimal patterns defined earlier in this file.
+  def : Pat<(v8i32 (X86vzmovl (v8i32 VR256:$src))),
+            (VBLENDPSYrri (v8i32 (AVX_SET0)), VR256:$src, (i8 1))>;
   def : Pat<(v4i64 (X86vzmovl (v4i64 VR256:$src))),
             (VBLENDPDYrri (v4i64 (AVX_SET0)), VR256:$src, (i8 1))>;
 }
 
+// FIXME: Prefer a movss or movsd over a blendps when optimizing for size or
+// on targets where they have equal performance. These were changed to use
+// blends because blends have better throughput on SandyBridge and Haswell, but
+// movs[s/d] are 1-2 byte shorter instructions.
 let Predicates = [UseSSE41] in {
   // With SSE41 we can use blends for these patterns.
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
