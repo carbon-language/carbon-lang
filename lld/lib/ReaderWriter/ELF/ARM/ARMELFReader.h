@@ -19,11 +19,9 @@ namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 2, false> ARMELFType;
 
 struct ARMELFFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
-
   template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            ARMLinkingContext &ctx) {
+  static llvm::ErrorOr<std::unique_ptr<lld::File>>
+  create(std::unique_ptr<llvm::MemoryBuffer> mb, ARMLinkingContext &ctx) {
     return lld::elf::ARMELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };

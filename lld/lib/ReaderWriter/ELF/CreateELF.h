@@ -16,6 +16,7 @@
 #ifndef LLD_READER_WRITER_ELF_CREATE_ELF_H
 #define LLD_READER_WRITER_ELF_CREATE_ELF_H
 
+#include "lld/Core/File.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Compiler.h"
 
@@ -27,9 +28,8 @@ using llvm::object::ELFType;
 /// of an ELF file.
 ///
 /// \param Traits
-/// Traits::result_type must be a type convertable from what create returns.
 /// Traits::create must be a template function which takes an ELFType and
-/// returns something convertable to Traits::result_type.
+/// returns an ErrorOr<std::unique_ptr<lld::File>>.
 ///
 /// \param ident pair of EI_CLASS and EI_DATA.
 /// \param maxAlignment the maximum alignment of the file.
@@ -55,10 +55,10 @@ using llvm::object::ELFType;
     llvm_unreachable("Invalid alignment for ELF file!");
 #endif
 
-template <class Traits, class ...Args>
-typename Traits::result_type createELF(
-    std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
-    Args &&...args) {
+template <class Traits, class... Args>
+llvm::ErrorOr<std::unique_ptr<lld::File>>
+createELF(std::pair<unsigned char, unsigned char> ident,
+          std::size_t maxAlignment, Args &&... args) {
   if (ident.first == llvm::ELF::ELFCLASS32 &&
       ident.second == llvm::ELF::ELFDATA2LSB) {
     LLVM_CREATE_ELF_Create(4, 2, little, false, std::forward<Args>(args)...)

@@ -19,11 +19,9 @@ class X86_64LinkingContext;
 typedef llvm::object::ELFType<llvm::support::little, 2, true> X86_64ELFType;
 
 struct X86_64ELFFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
-
   template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            X86_64LinkingContext &ctx) {
+  static llvm::ErrorOr<std::unique_ptr<lld::File>>
+  create(std::unique_ptr<llvm::MemoryBuffer> mb, X86_64LinkingContext &ctx) {
     return lld::elf::ELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };

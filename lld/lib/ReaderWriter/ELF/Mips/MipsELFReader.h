@@ -18,11 +18,9 @@ namespace lld {
 namespace elf {
 
 struct MipsELFFileCreateTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
-
   template <class ELFT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            MipsLinkingContext &ctx) {
+  static llvm::ErrorOr<std::unique_ptr<lld::File>>
+  create(std::unique_ptr<llvm::MemoryBuffer> mb, MipsLinkingContext &ctx) {
     return lld::elf::MipsELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
