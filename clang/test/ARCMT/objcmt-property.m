@@ -238,3 +238,11 @@ DEPRECATED
 @property (nonatomic, readonly) int Idelegate;
 @property (nonatomic, readonly) BOOL Bdelegate;
 @end
+
+// rdar://19372798
+@protocol NSObject @end
+@protocol MyProtocol <NSObject>
+- (id)readonlyProperty;
+- (id)readWriteProperty;
+- (void)setReadWriteProperty:(id)readWriteProperty;
+@end

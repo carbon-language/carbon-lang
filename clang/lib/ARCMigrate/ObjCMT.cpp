@@ -48,7 +48,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   };
   
   void migrateDecl(Decl *D);
-  void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCContainerDecl *D);
+  void migrateObjCContainerDecl(ASTContext &Ctx, ObjCContainerDecl *D);
   void migrateProtocolConformance(ASTContext &Ctx,
                                   const ObjCImplementationDecl *ImpDecl);
   void CacheObjCNSIntegerTypedefed(const TypedefDecl *TypedefDcl);
@@ -578,7 +578,7 @@ static bool IsCategoryNameWithDeprecatedSuffix(ObjCContainerDecl *D) {
   return false;
 }
 
-void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
+void ObjCMigrateASTConsumer::migrateObjCContainerDecl(ASTContext &Ctx,
                                                       ObjCContainerDecl *D) {
   if (D->isDeprecated() || IsCategoryNameWithDeprecatedSuffix(D))
     return;
@@ -1876,13 +1876,16 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
         if (canModify(CDecl))
-          migrateObjCInterfaceDecl(Ctx, CDecl);
+          migrateObjCContainerDecl(Ctx, CDecl);
       if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(*D)) {
         if (canModify(CatDecl))
-          migrateObjCInterfaceDecl(Ctx, CatDecl);
+          migrateObjCContainerDecl(Ctx, CatDecl);
       }
-      else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
+      else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D)) {
         ObjCProtocolDecls.insert(PDecl->getCanonicalDecl());
+        if (canModify(PDecl))
+          migrateObjCContainerDecl(Ctx, PDecl);
+      }
       else if (const ObjCImplementationDecl *ImpDecl =
                dyn_cast<ObjCImplementationDecl>(*D)) {
         if ((ASTMigrateActions & FrontendOptions::ObjCMT_ProtocolConformance) &&
