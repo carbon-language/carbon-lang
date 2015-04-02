@@ -12,6 +12,7 @@
 /// ELFType depending on the runtime type needed.
 ///
 //===----------------------------------------------------------------------===//
+
 #ifndef LLD_READER_WRITER_ELF_CREATE_ELF_H
 #define LLD_READER_WRITER_ELF_CREATE_ELF_H
 
@@ -39,7 +40,7 @@ using llvm::object::ELFType;
       __VA_ARGS__);
 
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
-# define LLVM_CREATE_ELF_MaxAlignCheck(normal, low, endian, is64, ...) \
+# define LLVM_CREATE_ELF_Create(normal, low, endian, is64, ...) \
   if (maxAlignment >= normal) \
     return LLVM_CREATE_ELF_CreateELFTraits(endian, normal, is64, __VA_ARGS__) \
   else if (maxAlignment >= low) \
@@ -47,72 +48,35 @@ using llvm::object::ELFType;
   else \
     llvm_unreachable("Invalid alignment for ELF file!");
 #else
-# define LLVM_CREATE_ELF_MaxAlignCheck(normal, low, endian, is64, ...) \
+# define LLVM_CREATE_ELF_Create(normal, low, endian, is64, ...) \
   if (maxAlignment >= low) \
     return LLVM_CREATE_ELF_CreateELFTraits(endian, low, is64, __VA_ARGS__) \
   else \
     llvm_unreachable("Invalid alignment for ELF file!");
 #endif
 
-#define LLVM_CREATE_ELF_IMPL(...) \
-    if (ident.first == llvm::ELF::ELFCLASS32 && \
-        ident.second == llvm::ELF::ELFDATA2LSB) { \
-      LLVM_CREATE_ELF_MaxAlignCheck(4, 2, little, false, __VA_ARGS__) \
-    } else if (ident.first == llvm::ELF::ELFCLASS32 && \
-               ident.second == llvm::ELF::ELFDATA2MSB) { \
-      LLVM_CREATE_ELF_MaxAlignCheck(4, 2, big, false, __VA_ARGS__) \
-    } else if (ident.first == llvm::ELF::ELFCLASS64 && \
-               ident.second == llvm::ELF::ELFDATA2MSB) { \
-      LLVM_CREATE_ELF_MaxAlignCheck(8, 2, big, true, __VA_ARGS__) \
-    } else if (ident.first == llvm::ELF::ELFCLASS64 && \
-               ident.second == llvm::ELF::ELFDATA2LSB) { \
-      LLVM_CREATE_ELF_MaxAlignCheck(8, 2, little, true, __VA_ARGS__) \
-    } \
-    llvm_unreachable("Invalid ELF type!");
-
-#if LLVM_HAS_VARIADIC_TEMPLATES
 template <class Traits, class ...Args>
 typename Traits::result_type createELF(
     std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
     Args &&...args) {
-  LLVM_CREATE_ELF_IMPL(std::forward<Args>(args)...)
+  if (ident.first == llvm::ELF::ELFCLASS32 &&
+      ident.second == llvm::ELF::ELFDATA2LSB) {
+    LLVM_CREATE_ELF_Create(4, 2, little, false, std::forward<Args>(args)...)
+  } else if (ident.first == llvm::ELF::ELFCLASS32 &&
+             ident.second == llvm::ELF::ELFDATA2MSB) {
+    LLVM_CREATE_ELF_Create(4, 2, big, false, std::forward<Args>(args)...)
+  } else if (ident.first == llvm::ELF::ELFCLASS64 &&
+             ident.second == llvm::ELF::ELFDATA2MSB) {
+    LLVM_CREATE_ELF_Create(8, 2, big, true, std::forward<Args>(args)...)
+  } else if (ident.first == llvm::ELF::ELFCLASS64 &&
+             ident.second == llvm::ELF::ELFDATA2LSB) {
+    LLVM_CREATE_ELF_Create(8, 2, little, true, std::forward<Args>(args)...)
+  }
+  llvm_unreachable("Invalid ELF type!");
 }
-#else
-template <class Traits, class T1>
-typename Traits::result_type createELF(
-    std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
-    T1 &&t1) {
-  LLVM_CREATE_ELF_IMPL(std::forward<T1>(t1))
-}
-
-template <class Traits, class T1, class T2>
-typename Traits::result_type createELF(
-    std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
-    T1 &&t1, T2 &&t2) {
-  LLVM_CREATE_ELF_IMPL(std::forward<T1>(t1), std::forward<T2>(t2))
-}
-
-template <class Traits, class T1, class T2, class T3>
-typename Traits::result_type createELF(
-    std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
-    T1 &&t1, T2 &&t2, T3 &&t3) {
-  LLVM_CREATE_ELF_IMPL(std::forward<T1>(t1), std::forward<T2>(t2),
-                       std::forward<T3>(t3))
-}
-
-template <class Traits, class T1, class T2, class T3, class T4>
-typename Traits::result_type createELF(
-    std::pair<unsigned char, unsigned char> ident, std::size_t maxAlignment,
-    T1 &&t1, T2 &&t2, T3 &&t3, T4 &&t4) {
-  LLVM_CREATE_ELF_IMPL(std::forward<T1>(t1), std::forward<T2>(t2),
-                       std::forward<T3>(t3), std::forward<T4>(t4))
-}
-
-#endif // LLVM_HAS_VARIADIC_TEMPLATES
 } // end anon namespace
 
 #undef LLVM_CREATE_ELF_CreateELFTraits
-#undef LLVM_CREATE_ELF_MaxAlignCheck
-#undef LLVM_CREATE_ELF_IMPL
+#undef LLVM_CREATE_ELF_Create
 
 #endif
