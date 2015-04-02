@@ -101,13 +101,7 @@ namespace clang {
 
 /// Stmt - This represents one statement.
 ///
-#if !defined(_MSC_VER) || LLVM_MSC_PREREQ(1900)
-class LLVM_ALIGNAS(sizeof(void *)) Stmt {
-#else
-// Old MSVC has issues to align this. Drop when we retire MSVC 2013. When GCC
-// 4.7 is also gone this can be just alignof(void *).
-class Stmt {
-#endif
+class LLVM_ALIGNAS(LLVM_PTR_SIZE) Stmt {
 public:
   enum StmtClass {
     NoStmtClass = 0,
@@ -293,11 +287,6 @@ protected:
   };
 
   union {
-#if !(!defined(_MSC_VER) || LLVM_MSC_PREREQ(1900))
-    // FIXME: this is wasteful on 64-bit platforms.
-    void *Aligner;
-#endif
-
     StmtBitfields StmtBits;
     CompoundStmtBitfields CompoundStmtBits;
     ExprBitfields ExprBits;
@@ -802,7 +791,11 @@ class LabelStmt : public Stmt {
 
 public:
   LabelStmt(SourceLocation IL, LabelDecl *D, Stmt *substmt)
-      : Stmt(LabelStmtClass), IdentLoc(IL), TheDecl(D), SubStmt(substmt) {}
+      : Stmt(LabelStmtClass), IdentLoc(IL), TheDecl(D), SubStmt(substmt) {
+    static_assert(sizeof(LabelStmt) ==
+                      2 * sizeof(SourceLocation) + 2 * sizeof(void *),
+                  "LabelStmt too big");
+  }
 
   // \brief Build an empty label statement.
   explicit LabelStmt(EmptyShell Empty) : Stmt(LabelStmtClass, Empty) { }
@@ -1316,8 +1309,12 @@ public:
 ///
 class BreakStmt : public Stmt {
   SourceLocation BreakLoc;
+
 public:
-  BreakStmt(SourceLocation BL) : Stmt(BreakStmtClass), BreakLoc(BL) {}
+  BreakStmt(SourceLocation BL) : Stmt(BreakStmtClass), BreakLoc(BL) {
+    static_assert(sizeof(BreakStmt) == 2 * sizeof(SourceLocation),
+                  "BreakStmt too large");
+  }
 
   /// \brief Build an empty break statement.
   explicit BreakStmt(EmptyShell Empty) : Stmt(BreakStmtClass, Empty) { }
