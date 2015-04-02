@@ -23,8 +23,6 @@ public:
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
                                   const Reference &) const override;
-
-  static const Registry::KindStrings kindStrings[];
 };
 
 } // end namespace elf
