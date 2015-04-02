@@ -3249,3 +3249,15 @@ define <16 x i16> @shuffle_v16i16_23_uu_03_uu_20_20_05_uu_31_uu_11_uu_28_28_13_u
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 23, i32 undef, i32 3, i32 undef, i32 20, i32 20, i32 5, i32 undef, i32 31, i32 undef, i32 11, i32 undef, i32 28, i32 28, i32 13, i32 undef>
   ret <16 x i16> %shuffle
 }
+
+define <16 x i16> @insert_v16i16_0elt_into_zero_vector(i16* %ptr) {
+; ALL-LABEL: insert_v16i16_0elt_into_zero_vector:
+; ALL:       # BB#0:
+; ALL-NEXT:    movzwl (%rdi), %eax
+; ALL-NEXT:    vmovd %eax, %xmm0
+; ALL-NEXT:    retq
+  %val = load i16, i16* %ptr
+  %i0 = insertelement <16 x i16> zeroinitializer, i16 %val, i32 0
+  ret <16 x i16> %i0
+}
+
