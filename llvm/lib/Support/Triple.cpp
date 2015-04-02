@@ -1111,7 +1111,7 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
       .Cases("v7m", "v7-m", "cortex-m3")
       .Cases("v7em", "v7e-m", "cortex-m4")
       .Cases("v8", "v8a", "v8-a", "cortex-a53")
-      .Cases("v8.1a", "v8.1-a", "generic-armv8.1-a")
+      .Cases("v8.1a", "v8.1-a", "generic")
       .Default(nullptr);
   else
     result = llvm::StringSwitch<const char *>(MArch)
