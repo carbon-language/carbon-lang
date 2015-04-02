@@ -165,9 +165,9 @@ public:
   const char *getSection() const;
 
   /// Global values are always pointers.
-  inline PointerType *getType() const {
-    return cast<PointerType>(User::getType());
-  }
+  PointerType *getType() const { return cast<PointerType>(User::getType()); }
+
+  Type *getValueType() const { return getType()->getElementType(); }
 
   static LinkageTypes getLinkOnceLinkage(bool ODR) {
     return ODR ? LinkOnceODRLinkage : LinkOnceAnyLinkage;
@@ -343,11 +343,11 @@ public:
   virtual void eraseFromParent() = 0;
 
   /// Get the module that this global value is contained inside of...
-  inline Module *getParent() { return Parent; }
-  inline const Module *getParent() const { return Parent; }
+  Module *getParent() { return Parent; }
+  const Module *getParent() const { return Parent; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Value *V) {
+  static bool classof(const Value *V) {
     return V->getValueID() == Value::FunctionVal ||
            V->getValueID() == Value::GlobalVariableVal ||
            V->getValueID() == Value::GlobalAliasVal;

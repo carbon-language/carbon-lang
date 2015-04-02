@@ -2313,14 +2313,17 @@ std::error_code BitcodeReader::ParseConstants() {
         Elts.push_back(ValueList.getConstantFwdRef(Record[OpNum++], ElTy));
       }
 
-      ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
-      V = ConstantExpr::getGetElementPtr(Elts[0], Indices,
-                                         BitCode ==
-                                           bitc::CST_CODE_CE_INBOUNDS_GEP);
       if (PointeeType &&
-          PointeeType != cast<GEPOperator>(V)->getSourceElementType())
+          PointeeType !=
+              cast<SequentialType>(Elts[0]->getType()->getScalarType())
+                  ->getElementType())
         return Error("Explicit gep operator type does not match pointee type "
                      "of pointer operand");
+
+      ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
+      V = ConstantExpr::getGetElementPtr(PointeeType, Elts[0], Indices,
+                                         BitCode ==
+                                             bitc::CST_CODE_CE_INBOUNDS_GEP);
       break;
     }
     case bitc::CST_CODE_CE_SELECT: {  // CE_SELECT: [opval#, opval#, opval#]

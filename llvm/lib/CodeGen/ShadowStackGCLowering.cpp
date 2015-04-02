@@ -239,7 +239,7 @@ Constant *ShadowStackGCLowering::GetFrameMap(Function &F) {
   Constant *GEPIndices[2] = {
       ConstantInt::get(Type::getInt32Ty(F.getContext()), 0),
       ConstantInt::get(Type::getInt32Ty(F.getContext()), 0)};
-  return ConstantExpr::getGetElementPtr(GV, GEPIndices);
+  return ConstantExpr::getGetElementPtr(FrameMap->getType(), GV, GEPIndices);
 }
 
 Type *ShadowStackGCLowering::GetConcreteStackEntryType(Function &F) {

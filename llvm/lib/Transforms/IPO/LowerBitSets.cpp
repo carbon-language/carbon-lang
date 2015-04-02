@@ -349,7 +349,8 @@ void LowerBitSets::allocateByteArrays() {
 
     Constant *Idxs[] = {ConstantInt::get(IntPtrTy, 0),
                         ConstantInt::get(IntPtrTy, ByteArrayOffsets[I])};
-    Constant *GEP = ConstantExpr::getInBoundsGetElementPtr(ByteArray, Idxs);
+    Constant *GEP = ConstantExpr::getInBoundsGetElementPtr(
+        ByteArrayConst->getType(), ByteArray, Idxs);
 
     // Create an alias instead of RAUW'ing the gep directly. On x86 this ensures
     // that the pc-relative displacement is folded into the lea instead of the
@@ -546,8 +547,8 @@ void LowerBitSets::buildBitSetsFromGlobals(
     // Multiply by 2 to account for padding elements.
     Constant *CombinedGlobalIdxs[] = {ConstantInt::get(Int32Ty, 0),
                                       ConstantInt::get(Int32Ty, I * 2)};
-    Constant *CombinedGlobalElemPtr =
-        ConstantExpr::getGetElementPtr(CombinedGlobal, CombinedGlobalIdxs);
+    Constant *CombinedGlobalElemPtr = ConstantExpr::getGetElementPtr(
+        NewInit->getType(), CombinedGlobal, CombinedGlobalIdxs);
     if (LinkerSubsectionsViaSymbols) {
       Globals[I]->replaceAllUsesWith(CombinedGlobalElemPtr);
     } else {

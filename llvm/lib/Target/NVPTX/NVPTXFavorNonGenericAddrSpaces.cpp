@@ -132,9 +132,8 @@ bool NVPTXFavorNonGenericAddrSpaces::hoistAddrSpaceCastFromGEP(
   } else {
     // GEP is a constant expression.
     Constant *NewGEPCE = ConstantExpr::getGetElementPtr(
-        cast<Constant>(Cast->getOperand(0)),
-        Indices,
-        GEP->isInBounds());
+        GEP->getSourceElementType(), cast<Constant>(Cast->getOperand(0)),
+        Indices, GEP->isInBounds());
     GEP->replaceAllUsesWith(
         ConstantExpr::getAddrSpaceCast(NewGEPCE, GEP->getType()));
   }

@@ -132,32 +132,32 @@ public:
 
   Constant *CreateGetElementPtr(Constant *C,
                                 ArrayRef<Constant *> IdxList) const {
-    return Fold(ConstantExpr::getGetElementPtr(C, IdxList));
+    return Fold(ConstantExpr::getGetElementPtr(nullptr, C, IdxList));
   }
   Constant *CreateGetElementPtr(Constant *C, Constant *Idx) const {
     // This form of the function only exists to avoid ambiguous overload
     // warnings about whether to convert Idx to ArrayRef<Constant *> or
     // ArrayRef<Value *>.
-    return Fold(ConstantExpr::getGetElementPtr(C, Idx));
+    return Fold(ConstantExpr::getGetElementPtr(nullptr, C, Idx));
   }
   Constant *CreateGetElementPtr(Constant *C,
                                 ArrayRef<Value *> IdxList) const {
-    return Fold(ConstantExpr::getGetElementPtr(C, IdxList));
+    return Fold(ConstantExpr::getGetElementPtr(nullptr, C, IdxList));
   }
 
   Constant *CreateInBoundsGetElementPtr(Constant *C,
                                         ArrayRef<Constant *> IdxList) const {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList));
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(nullptr, C, IdxList));
   }
   Constant *CreateInBoundsGetElementPtr(Constant *C, Constant *Idx) const {
     // This form of the function only exists to avoid ambiguous overload
     // warnings about whether to convert Idx to ArrayRef<Constant *> or
     // ArrayRef<Value *>.
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, Idx));
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(nullptr, C, Idx));
   }
   Constant *CreateInBoundsGetElementPtr(Constant *C,
                                         ArrayRef<Value *> IdxList) const {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList));
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(nullptr, C, IdxList));
   }
 
   //===--------------------------------------------------------------------===//

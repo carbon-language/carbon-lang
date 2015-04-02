@@ -308,7 +308,8 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
     Constant *GA = ConstantExpr::getBitCast(const_cast<GlobalValue*>(GV), Ty);
     Ty = Type::getInt32Ty(*DAG.getContext());
     Constant *Idx = ConstantInt::get(Ty, Offset);
-    Constant *GAI = ConstantExpr::getGetElementPtr(GA, Idx);
+    Constant *GAI = ConstantExpr::getGetElementPtr(
+        Type::getInt8Ty(*DAG.getContext()), GA, Idx);
     SDValue CP = DAG.getConstantPool(GAI, MVT::i32);
     return DAG.getLoad(getPointerTy(), DL, DAG.getEntryNode(), CP,
                        MachinePointerInfo(), false, false, false, 0);

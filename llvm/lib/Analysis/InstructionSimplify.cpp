@@ -2978,10 +2978,12 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         // what constant folding can make out of it.
         Constant *Null = Constant::getNullValue(GLHS->getPointerOperandType());
         SmallVector<Value *, 4> IndicesLHS(GLHS->idx_begin(), GLHS->idx_end());
-        Constant *NewLHS = ConstantExpr::getGetElementPtr(Null, IndicesLHS);
+        Constant *NewLHS = ConstantExpr::getGetElementPtr(
+            GLHS->getSourceElementType(), Null, IndicesLHS);
 
         SmallVector<Value *, 4> IndicesRHS(GRHS->idx_begin(), GRHS->idx_end());
-        Constant *NewRHS = ConstantExpr::getGetElementPtr(Null, IndicesRHS);
+        Constant *NewRHS = ConstantExpr::getGetElementPtr(
+            GLHS->getSourceElementType(), Null, IndicesRHS);
         return ConstantExpr::getICmp(Pred, NewLHS, NewRHS);
       }
     }
@@ -3241,18 +3243,18 @@ Value *llvm::SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
 
 /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
 /// fold the result.  If not, this returns null.
-static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
+static Value *SimplifyGEPInst(Type *SrcTy, ArrayRef<Value *> Ops,
+                              const Query &Q, unsigned) {
   // The type of the GEP pointer operand.
-  PointerType *PtrTy = cast<PointerType>(Ops[0]->getType()->getScalarType());
-  unsigned AS = PtrTy->getAddressSpace();
+  unsigned AS =
+      cast<PointerType>(Ops[0]->getType()->getScalarType())->getAddressSpace();
 
   // getelementptr P -> P.
   if (Ops.size() == 1)
     return Ops[0];
 
   // Compute the (pointer) type returned by the GEP instruction.
-  Type *LastType =
-      GetElementPtrInst::getIndexedType(PtrTy->getElementType(), Ops.slice(1));
+  Type *LastType = GetElementPtrInst::getIndexedType(SrcTy, Ops.slice(1));
   Type *GEPTy = PointerType::get(LastType, AS);
   if (VectorType *VT = dyn_cast<VectorType>(Ops[0]->getType()))
     GEPTy = VectorType::get(GEPTy, VT->getNumElements());
@@ -3265,7 +3267,7 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
     if (match(Ops[1], m_Zero()))
       return Ops[0];
 
-    Type *Ty = PtrTy->getElementType();
+    Type *Ty = SrcTy;
     if (Ty->isSized()) {
       Value *P;
       uint64_t C;
@@ -3319,14 +3321,17 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
     if (!isa<Constant>(Ops[i]))
       return nullptr;
 
-  return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]), Ops.slice(1));
+  return ConstantExpr::getGetElementPtr(SrcTy, cast<Constant>(Ops[0]),
+                                        Ops.slice(1));
 }
 
 Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyGEPInst(Ops, Query(DL, TLI, DT, AC, CxtI), RecursionLimit);
+  return ::SimplifyGEPInst(
+      cast<PointerType>(Ops[0]->getType()->getScalarType())->getElementType(),
+      Ops, Query(DL, TLI, DT, AC, CxtI), RecursionLimit);
 }
 
 /// SimplifyInsertValueInst - Given operands for an InsertValueInst, see if we

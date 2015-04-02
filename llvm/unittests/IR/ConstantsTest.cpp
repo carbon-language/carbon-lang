@@ -249,7 +249,8 @@ TEST(ConstantsTest, AsInstructionsTest) {
   //        not a normal one!
   //CHECK(ConstantExpr::getGetElementPtr(Global, V, false),
   //      "getelementptr i32*, i32** @dummy, i32 1");
-  CHECK(ConstantExpr::getInBoundsGetElementPtr(Global, V),
+  CHECK(ConstantExpr::getInBoundsGetElementPtr(PointerType::getUnqual(Int32Ty),
+                                               Global, V),
         "getelementptr inbounds i32*, i32** @dummy, i32 1");
 
   CHECK(ConstantExpr::getExtractElement(P6, One), "extractelement <2 x i16> "
@@ -266,7 +267,8 @@ TEST(ConstantsTest, ReplaceWithConstantTest) {
 
   Constant *Global =
       M->getOrInsertGlobal("dummy", PointerType::getUnqual(Int32Ty));
-  Constant *GEP = ConstantExpr::getGetElementPtr(Global, One);
+  Constant *GEP = ConstantExpr::getGetElementPtr(
+      PointerType::getUnqual(Int32Ty), Global, One);
   EXPECT_DEATH(Global->replaceAllUsesWith(GEP),
                "this->replaceAllUsesWith\\(expr\\(this\\)\\) is NOT valid!");
 }
@@ -333,7 +335,7 @@ TEST(ConstantsTest, GEPReplaceWithConstant) {
   auto *C1 = ConstantInt::get(IntTy, 1);
   auto *Placeholder = new GlobalVariable(
       *M, IntTy, false, GlobalValue::ExternalWeakLinkage, nullptr);
-  auto *GEP = ConstantExpr::getGetElementPtr(Placeholder, C1);
+  auto *GEP = ConstantExpr::getGetElementPtr(IntTy, Placeholder, C1);
   ASSERT_EQ(GEP->getOperand(0), Placeholder);
 
   auto *Ref =

@@ -1057,41 +1057,43 @@ public:
   /// all elements must be Constant's.
   ///
   /// \param OnlyIfReducedTy see \a getWithOperands() docs.
-  static Constant *getGetElementPtr(Constant *C, ArrayRef<Constant *> IdxList,
+  static Constant *getGetElementPtr(Type *Ty, Constant *C,
+                                    ArrayRef<Constant *> IdxList,
                                     bool InBounds = false,
                                     Type *OnlyIfReducedTy = nullptr) {
     return getGetElementPtr(
-        C, makeArrayRef((Value * const *)IdxList.data(), IdxList.size()),
+        Ty, C, makeArrayRef((Value * const *)IdxList.data(), IdxList.size()),
         InBounds, OnlyIfReducedTy);
   }
-  static Constant *getGetElementPtr(Constant *C, Constant *Idx,
+  static Constant *getGetElementPtr(Type *Ty, Constant *C, Constant *Idx,
                                     bool InBounds = false,
                                     Type *OnlyIfReducedTy = nullptr) {
     // This form of the function only exists to avoid ambiguous overload
     // warnings about whether to convert Idx to ArrayRef<Constant *> or
     // ArrayRef<Value *>.
-    return getGetElementPtr(C, cast<Value>(Idx), InBounds, OnlyIfReducedTy);
+    return getGetElementPtr(Ty, C, cast<Value>(Idx), InBounds, OnlyIfReducedTy);
   }
-  static Constant *getGetElementPtr(Constant *C, ArrayRef<Value *> IdxList,
+  static Constant *getGetElementPtr(Type *Ty, Constant *C,
+                                    ArrayRef<Value *> IdxList,
                                     bool InBounds = false,
                                     Type *OnlyIfReducedTy = nullptr);
 
   /// Create an "inbounds" getelementptr. See the documentation for the
   /// "inbounds" flag in LangRef.html for details.
-  static Constant *getInBoundsGetElementPtr(Constant *C,
+  static Constant *getInBoundsGetElementPtr(Type *Ty, Constant *C,
                                             ArrayRef<Constant *> IdxList) {
-    return getGetElementPtr(C, IdxList, true);
+    return getGetElementPtr(Ty, C, IdxList, true);
   }
-  static Constant *getInBoundsGetElementPtr(Constant *C,
+  static Constant *getInBoundsGetElementPtr(Type *Ty, Constant *C,
                                             Constant *Idx) {
     // This form of the function only exists to avoid ambiguous overload
     // warnings about whether to convert Idx to ArrayRef<Constant *> or
     // ArrayRef<Value *>.
-    return getGetElementPtr(C, Idx, true);
+    return getGetElementPtr(Ty, C, Idx, true);
   }
-  static Constant *getInBoundsGetElementPtr(Constant *C,
+  static Constant *getInBoundsGetElementPtr(Type *Ty, Constant *C,
                                             ArrayRef<Value *> IdxList) {
-    return getGetElementPtr(C, IdxList, true);
+    return getGetElementPtr(Ty, C, IdxList, true);
   }
 
   static Constant *getExtractElement(Constant *Vec, Constant *Idx,
