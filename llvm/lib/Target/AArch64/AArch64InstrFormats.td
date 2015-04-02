@@ -1637,6 +1637,10 @@ multiclass AddSub<bit isSub, string mnemonic,
                   SDPatternOperator OpNode = null_frag> {
   let hasSideEffects = 0, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   // Add/Subtract immediate
+  // Increase the weight of the immediate variant to try to match it before
+  // the extended register variant.
+  // We used to match the register variant before the immediate when the
+  // register argument could be implicitly zero-extended.
   let AddedComplexity = 6 in
   def Wri  : BaseAddSubImm<isSub, 0, GPR32sp, GPR32sp, addsub_shifted_imm32,
                            mnemonic, OpNode> {
