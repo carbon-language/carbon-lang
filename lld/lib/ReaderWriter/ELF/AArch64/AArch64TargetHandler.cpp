@@ -17,9 +17,8 @@ using namespace lld;
 using namespace elf;
 
 AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
-    : _ctx(ctx),
-      _aarch64TargetLayout(new AArch64TargetLayout<AArch64ELFType>(ctx)),
-      _aarch64RelocationHandler(new AArch64TargetRelocationHandler()) {}
+    : _ctx(ctx), _targetLayout(new AArch64TargetLayout<AArch64ELFType>(ctx)),
+      _relocationHandler(new AArch64TargetRelocationHandler()) {}
 
 static const Registry::KindStrings kindStrings[] = {
 #define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
@@ -37,10 +36,10 @@ std::unique_ptr<Writer> AArch64TargetHandler::getWriter() {
   switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return llvm::make_unique<AArch64ExecutableWriter<AArch64ELFType>>(
-        _ctx, *_aarch64TargetLayout.get());
+        _ctx, *_targetLayout);
   case llvm::ELF::ET_DYN:
     return llvm::make_unique<AArch64DynamicLibraryWriter<AArch64ELFType>>(
-        _ctx, *_aarch64TargetLayout.get());
+        _ctx, *_targetLayout);
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

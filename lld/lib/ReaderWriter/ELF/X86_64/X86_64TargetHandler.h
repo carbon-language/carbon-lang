@@ -36,7 +36,7 @@ public:
   void registerRelocationNames(Registry &registry) override;
 
   const X86_64TargetRelocationHandler &getRelocationHandler() const override {
-    return *_x86_64RelocationHandler;
+    return *_relocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {
@@ -51,8 +51,8 @@ public:
 
 protected:
   X86_64LinkingContext &_ctx;
-  std::unique_ptr<X86_64TargetLayout> _x86_64TargetLayout;
-  std::unique_ptr<X86_64TargetRelocationHandler> _x86_64RelocationHandler;
+  std::unique_ptr<X86_64TargetLayout> _targetLayout;
+  std::unique_ptr<X86_64TargetRelocationHandler> _relocationHandler;
 };
 
 } // end namespace elf

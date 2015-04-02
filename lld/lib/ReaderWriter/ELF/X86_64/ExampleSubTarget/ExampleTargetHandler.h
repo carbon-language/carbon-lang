@@ -23,7 +23,7 @@ public:
   std::unique_ptr<Writer> getWriter() override;
 
 private:
-  ExampleLinkingContext &_exampleContext;
+  ExampleLinkingContext &_ctx;
 };
 } // end namespace elf
 } // end namespace lld

@@ -32,7 +32,7 @@ public:
   void registerRelocationNames(Registry &registry) override;
 
   const AArch64TargetRelocationHandler &getRelocationHandler() const override {
-    return *_aarch64RelocationHandler;
+    return *_relocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {
@@ -47,8 +47,8 @@ public:
 
 private:
   AArch64LinkingContext &_ctx;
-  std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _aarch64TargetLayout;
-  std::unique_ptr<AArch64TargetRelocationHandler> _aarch64RelocationHandler;
+  std::unique_ptr<AArch64TargetLayout<AArch64ELFType>> _targetLayout;
+  std::unique_ptr<AArch64TargetRelocationHandler> _relocationHandler;
 };
 
 } // end namespace elf

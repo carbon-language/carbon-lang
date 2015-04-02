@@ -21,7 +21,7 @@ class X86_64TargetLayout;
 class X86_64TargetRelocationHandler final : public TargetRelocationHandler {
 public:
   X86_64TargetRelocationHandler(X86_64TargetLayout &layout)
-      : _tlsSize(0), _x86_64Layout(layout) {}
+      : _tlsSize(0), _layout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
@@ -30,7 +30,7 @@ public:
 private:
   // Cached size of the TLS segment.
   mutable uint64_t _tlsSize;
-  X86_64TargetLayout &_x86_64Layout;
+  X86_64TargetLayout &_layout;
 };
 
 } // end namespace elf

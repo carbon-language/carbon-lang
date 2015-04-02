@@ -27,10 +27,10 @@ std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
   switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return llvm::make_unique<HexagonExecutableWriter<HexagonELFType>>(
-        _ctx, *_targetLayout.get());
+        _ctx, *_targetLayout);
   case llvm::ELF::ET_DYN:
     return llvm::make_unique<HexagonDynamicLibraryWriter<HexagonELFType>>(
-        _ctx, *_targetLayout.get());
+        _ctx, *_targetLayout);
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

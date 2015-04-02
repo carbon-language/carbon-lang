@@ -64,7 +64,7 @@ public:
   void registerRelocationNames(Registry &registry) override;
 
   const ARMTargetRelocationHandler &getRelocationHandler() const override {
-    return *_armRelocationHandler;
+    return *_relocationHandler;
   }
 
   std::unique_ptr<Reader> getObjReader() override {
@@ -79,8 +79,8 @@ public:
 
 private:
   ARMLinkingContext &_ctx;
-  std::unique_ptr<ARMTargetLayout<ARMELFType>> _armTargetLayout;
-  std::unique_ptr<ARMTargetRelocationHandler> _armRelocationHandler;
+  std::unique_ptr<ARMTargetLayout<ARMELFType>> _targetLayout;
+  std::unique_ptr<ARMTargetRelocationHandler> _relocationHandler;
 };
 
 } // end namespace elf

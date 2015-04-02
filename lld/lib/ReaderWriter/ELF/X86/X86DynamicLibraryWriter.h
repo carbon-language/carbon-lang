@@ -42,14 +42,14 @@ private:
 
   std::unique_ptr<GOTFile> _gotFile;
   X86LinkingContext &_ctx;
-  X86TargetLayout<ELFT> &_x86Layout;
+  X86TargetLayout<ELFT> &_layout;
 };
 
 template <class ELFT>
 X86DynamicLibraryWriter<ELFT>::X86DynamicLibraryWriter(
     X86LinkingContext &ctx, X86TargetLayout<ELFT> &layout)
     : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)),
-      _ctx(ctx), _x86Layout(layout) {}
+      _ctx(ctx), _layout(layout) {}
 
 template <class ELFT>
 bool X86DynamicLibraryWriter<ELFT>::createImplicitFiles(

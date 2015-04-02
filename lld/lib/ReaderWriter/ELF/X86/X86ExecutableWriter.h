@@ -34,13 +34,13 @@ protected:
 
 private:
   X86LinkingContext &_ctx;
-  X86TargetLayout<ELFT> &_x86Layout;
+  X86TargetLayout<ELFT> &_layout;
 };
 
 template <class ELFT>
 X86ExecutableWriter<ELFT>::X86ExecutableWriter(X86LinkingContext &ctx,
                                                X86TargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _x86Layout(layout) {}
+    : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _layout(layout) {}
 
 template <class ELFT>
 bool X86ExecutableWriter<ELFT>::createImplicitFiles(
