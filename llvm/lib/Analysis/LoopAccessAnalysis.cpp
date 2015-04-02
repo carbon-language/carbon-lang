@@ -1211,9 +1211,8 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
 
 std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
     Instruction *Loc, const SmallVectorImpl<int> *PtrPartition) const {
-  Instruction *tnullptr = nullptr;
   if (!PtrRtCheck.Need)
-    return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
+    return std::make_pair(nullptr, nullptr);
 
   unsigned NumPointers = PtrRtCheck.Pointers.size();
   SmallVector<TrackingVH<Value> , 2> Starts;
@@ -1283,6 +1282,9 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
       MemoryRuntimeCheck = IsConflict;
     }
   }
+
+  if (!MemoryRuntimeCheck)
+    return std::make_pair(nullptr, nullptr);
 
   // We have to do this trickery because the IRBuilder might fold the check to a
   // constant expression in which case there is no Instruction anchored in a
