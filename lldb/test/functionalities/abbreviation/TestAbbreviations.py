@@ -174,7 +174,7 @@ class AbbreviationsTestCase(TestBase):
         self.expect("i d symt",
                     patterns = ["Dumping symbol table for [0-9]+ modules."])
 
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             self.expect("i li",
                         substrs = [ 'a.out',
                                     '/usr/lib/dyld',

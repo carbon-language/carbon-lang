@@ -89,7 +89,7 @@ class RegisterCommandsTestCase(TestBase):
     # platform specific logging of the specified category
     def log_enable(self, category):
         self.platform = ""
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             self.platform = "" # TODO: add support for "log enable darwin registers"
 
         if self.getPlatform() == "freebsd":

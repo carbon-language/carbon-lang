@@ -108,7 +108,7 @@ class TestInlineStepping(TestBase):
         test_stack_depth = True
         # Work around for <rdar://problem/16363195>, the darwin unwinder seems flakey about whether it duplicates the first frame 
         # or not, which makes counting stack depth unreliable.
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             test_stack_depth = False
 
         for step_pattern in step_sequence:

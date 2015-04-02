@@ -40,7 +40,7 @@ class CommandLineCompletionTestCase(TestBase):
         if self.TraceOn():
             child.logfile = sys.stdout
 
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             child.sendline('set env(TERM) xterm')
         else:
             child.sendline('set env(TERM) vt100')

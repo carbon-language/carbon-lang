@@ -130,7 +130,7 @@ class ArrayTypesTestCase(TestBase):
 
         # Sanity check the print representation of thread.
         thr = str(thread)
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             tidstr = "tid = 0x%4.4x" % thread.GetThreadID()
         else:
             tidstr = "tid = %u" % thread.GetThreadID()

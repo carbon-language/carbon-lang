@@ -20,7 +20,7 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_listen_for_and_print_event()
 
-    @skipUnlessPlatform(["darwin", "macosx", "freebsd"])
+    @skipUnlessPlatform(getDarwinOSTriples() + ["freebsd"])
     @python_api_test
     @dwarf_test
     def test_listen_for_and_print_event_with_dwarf(self):

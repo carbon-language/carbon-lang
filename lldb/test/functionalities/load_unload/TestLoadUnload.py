@@ -24,7 +24,7 @@ class LoadUnloadTestCase(TestBase):
                                 '// Set break point at this line for test_lldb_process_load_and_unload_commands().')
         self.line_d_function = line_number('d.c',
                                            '// Find this line number within d_dunction().')
-        if self.getPlatform() != "darwin":
+        if not self.platformIsDarwin():
             if "LD_LIBRARY_PATH" in os.environ:
                 self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.environ["LD_LIBRARY_PATH"] + ":" + os.getcwd())
             else:
@@ -38,7 +38,7 @@ class LoadUnloadTestCase(TestBase):
         # Invoke the default build rule.
         self.buildDefault()
 
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             dylibName = 'libloadunload_d.dylib'
         else:
             dylibName = 'libloadunload_d.so'
@@ -93,7 +93,7 @@ class LoadUnloadTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             dylibName = 'libloadunload_d.dylib'
             dsymName = 'libloadunload_d.dylib.dSYM'
         else:
@@ -112,7 +112,7 @@ class LoadUnloadTestCase(TestBase):
         # we pick up the hidden dylib.
 
         env_cmd_string = "settings set target.env-vars " + self.dylibPath + "=" + new_dir
-        if self.getPlatform() != "darwin":
+        if not self.platformIsDarwin():
             env_cmd_string += ":" + os.getcwd()
 
         if self.TraceOn():
@@ -164,7 +164,7 @@ class LoadUnloadTestCase(TestBase):
                     error=True, matching=False,
             patterns = ["1 match found .* %s" % self.mydir])
 
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             dylibName = 'libloadunload_a.dylib'
         else:
             dylibName = 'libloadunload_a.so'

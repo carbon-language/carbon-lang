@@ -87,7 +87,7 @@ class CrashingInferiorTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
 
     def check_stop_reason(self):
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             stop_reason = 'stop reason = EXC_BAD_ACCESS'
         else:
             stop_reason = 'stop reason = invalid address'

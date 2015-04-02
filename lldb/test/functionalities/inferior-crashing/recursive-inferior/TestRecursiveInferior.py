@@ -90,7 +90,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
 
     def check_stop_reason(self):
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             stop_reason = 'stop reason = EXC_BAD_ACCESS'
         else:
             stop_reason = 'stop reason = invalid address'
@@ -207,13 +207,13 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.check_stop_reason()
 
         expected_state = 'exited' # Provide the exit code.
-        if self.getPlatform() == "darwin":
+        if self.platformIsDarwin():
             expected_state = 'stopped' # TODO: Determine why 'next' and 'continue' have no effect after a crash.
 
         self.expect("next",
             substrs = ['Process', expected_state])
 
-        if self.getPlatform() != "darwin": # if stopped, we will have a process around
+        if not self.platformIsDarwin(): # if stopped, we will have a process around
             self.expect("thread list", error=True,substrs = ['Process must be launched'])
 
     def recursive_inferior_crashing_expr_step_expr(self):
