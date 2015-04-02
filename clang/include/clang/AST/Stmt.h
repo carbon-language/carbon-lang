@@ -101,7 +101,7 @@ namespace clang {
 
 /// Stmt - This represents one statement.
 ///
-class LLVM_ALIGNAS(sizeof(void *)) Stmt {
+class Stmt {
 public:
   enum StmtClass {
     NoStmtClass = 0,
@@ -287,6 +287,9 @@ protected:
   };
 
   union {
+    // FIXME: this is wasteful on 64-bit platforms.
+    void *Aligner;
+
     StmtBitfields StmtBits;
     CompoundStmtBitfields CompoundStmtBits;
     ExprBitfields ExprBits;
