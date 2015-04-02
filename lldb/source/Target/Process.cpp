@@ -749,9 +749,10 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
     m_private_run_lock (),
     m_currently_handling_event(false),
     m_stop_info_override_callback (NULL),
-    m_finalize_called(false),
+    m_finalizing (false),
+    m_finalize_called (false),
     m_clear_thread_plans_on_stop (false),
-    m_force_next_event_delivery(false),
+    m_force_next_event_delivery (false),
     m_last_broadcast_state (eStateInvalid),
     m_destroy_in_process (false),
     m_can_jit(eCanJITDontKnow)
@@ -822,6 +823,8 @@ Process::GetGlobalProperties()
 void
 Process::Finalize()
 {
+    m_finalizing = true;
+    
     // Destroy this process if needed
     switch (GetPrivateState())
     {
@@ -1832,6 +1835,12 @@ Process::GetImageInfoAddress()
 uint32_t
 Process::LoadImage (const FileSpec &image_spec, Error &error)
 {
+    if (m_finalizing)
+    {
+        error.SetErrorString("process is tearing itself down");
+        return LLDB_INVALID_IMAGE_TOKEN;
+    }
+
     char path[PATH_MAX];
     image_spec.GetPath(path, sizeof(path));
 
@@ -1951,6 +1960,13 @@ Error
 Process::UnloadImage (uint32_t image_token)
 {
     Error error;
+
+    if (m_finalizing)
+    {
+        error.SetErrorString("process is tearing itself down");
+        return error;
+    }
+
     if (image_token < m_image_tokens.size())
     {
         const addr_t image_addr = m_image_tokens[image_token];
@@ -2025,6 +2041,9 @@ Process::UnloadImage (uint32_t image_token)
 const lldb::ABISP &
 Process::GetABI()
 {
+    if (m_finalizing)
+        return lldb::ABISP();
+
     if (!m_abi_sp)
         m_abi_sp = ABI::FindPlugin(m_target.GetArchitecture());
     return m_abi_sp;
@@ -2033,6 +2052,9 @@ Process::GetABI()
 LanguageRuntime *
 Process::GetLanguageRuntime(lldb::LanguageType language, bool retry_if_null)
 {
+    if (m_finalizing)
+        return nullptr;
+
     LanguageRuntimeCollection::iterator pos;
     pos = m_language_runtimes.find (language);
     if (pos == m_language_runtimes.end() || (retry_if_null && !(*pos).second))
@@ -2067,6 +2089,9 @@ Process::GetObjCLanguageRuntime (bool retry_if_null)
 bool
 Process::IsPossibleDynamicValue (ValueObject& in_value)
 {
+    if (m_finalizing)
+        return false;
+
     if (in_value.IsDynamic())
         return false;
     LanguageType known_type = in_value.GetObjectRuntimeLanguage();

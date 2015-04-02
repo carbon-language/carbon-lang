@@ -3171,7 +3171,8 @@ protected:
     ArchSpec::StopInfoOverrideCallbackType m_stop_info_override_callback;
     bool                        m_currently_handling_do_on_removals;
     bool                        m_resume_requested;         // If m_currently_handling_event or m_currently_handling_do_on_removals are true, Resume will only request a resume, using this flag to check.
-    bool                        m_finalize_called;
+    bool                        m_finalizing; // This is set at the beginning of Process::Finalize() to stop functions from looking up or creating things during a finalize call
+    bool                        m_finalize_called; // This is set at the end of Process::Finalize()
     bool                        m_clear_thread_plans_on_stop;
     bool                        m_force_next_event_delivery;
     lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.
