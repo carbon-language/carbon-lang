@@ -36,8 +36,7 @@ class MipsELFObjectReader
 
 public:
   MipsELFObjectReader(MipsLinkingContext &ctx)
-      : BaseReaderType(ctx, llvm::ELF::EM_MIPS),
-        _flagMerger(ctx.getELFFlagsMerger()) {}
+      : BaseReaderType(ctx), _flagMerger(ctx.getELFFlagsMerger()) {}
 
   std::error_code
   loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
@@ -58,8 +57,7 @@ class MipsELFDSOReader : public ELFDSOReader<ELFT, MipsLinkingContext> {
 
 public:
   MipsELFDSOReader(MipsLinkingContext &ctx)
-      : BaseReaderType(ctx, llvm::ELF::EM_MIPS),
-        _flagMerger(ctx.getELFFlagsMerger()) {}
+      : BaseReaderType(ctx), _flagMerger(ctx.getELFFlagsMerger()) {}
 
   std::error_code
   loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,

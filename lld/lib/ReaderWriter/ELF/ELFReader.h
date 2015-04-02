@@ -23,13 +23,12 @@ class ELFObjectReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  ELFObjectReader(ContextT &ctx, uint64_t machine)
-      : _ctx(ctx), _machine(machine) {}
+  ELFObjectReader(ContextT &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &buf) const override {
     return (magic == llvm::sys::fs::file_magic::elf_relocatable &&
-            elfHeader(buf)->e_machine == _machine);
+            elfHeader(buf)->e_machine == ContextT::machine);
   }
 
   std::error_code
@@ -54,7 +53,6 @@ public:
 
 protected:
   ContextT &_ctx;
-  uint64_t _machine;
 };
 
 struct DynamicFileCreateELFTraits {
@@ -72,13 +70,12 @@ class ELFDSOReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  ELFDSOReader(ContextT &ctx, uint64_t machine)
-      : _ctx(ctx), _machine(machine) {}
+  ELFDSOReader(ContextT &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &buf) const override {
     return (magic == llvm::sys::fs::file_magic::elf_shared_object &&
-            elfHeader(buf)->e_machine == _machine);
+            elfHeader(buf)->e_machine == ContextT::machine);
   }
 
   std::error_code
@@ -103,7 +100,6 @@ public:
 
 protected:
   ContextT &_ctx;
-  uint64_t _machine;
 };
 
 } // namespace elf

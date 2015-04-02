@@ -34,15 +34,14 @@ class HexagonELFObjectReader
 public:
   HexagonELFObjectReader(HexagonLinkingContext &ctx)
       : ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits,
-                        HexagonLinkingContext>(ctx, llvm::ELF::EM_HEXAGON) {}
+                        HexagonLinkingContext>(ctx) {}
 };
 
 class HexagonELFDSOReader
     : public ELFDSOReader<HexagonELFType, HexagonLinkingContext> {
 public:
   HexagonELFDSOReader(HexagonLinkingContext &ctx)
-      : ELFDSOReader<HexagonELFType,
-                     HexagonLinkingContext>(ctx, llvm::ELF::EM_HEXAGON) {}
+      : ELFDSOReader<HexagonELFType, HexagonLinkingContext>(ctx) {}
 };
 
 } // namespace elf

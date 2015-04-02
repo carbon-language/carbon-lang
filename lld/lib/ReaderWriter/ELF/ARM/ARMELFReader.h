@@ -34,14 +34,14 @@ class ARMELFObjectReader
 public:
   ARMELFObjectReader(ARMLinkingContext &ctx)
       : ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
-                        ARMLinkingContext>(ctx, llvm::ELF::EM_ARM) {}
+                        ARMLinkingContext>(ctx) {}
 };
 
 class ARMELFDSOReader
     : public ELFDSOReader<ARMELFType, ARMLinkingContext> {
 public:
   ARMELFDSOReader(ARMLinkingContext &ctx)
-      : ELFDSOReader<ARMELFType, ARMLinkingContext>(ctx, llvm::ELF::EM_ARM) {}
+      : ELFDSOReader<ARMELFType, ARMLinkingContext>(ctx) {}
 };
 
 } // namespace elf

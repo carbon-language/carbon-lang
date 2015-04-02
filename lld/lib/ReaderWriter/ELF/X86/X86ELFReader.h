@@ -34,15 +34,14 @@ class X86ELFObjectReader
 public:
   X86ELFObjectReader(X86LinkingContext &ctx)
       : ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
-                        X86LinkingContext>(ctx, llvm::ELF::EM_386) {}
+                        X86LinkingContext>(ctx) {}
 };
 
 class X86ELFDSOReader
     : public ELFDSOReader<X86ELFType, X86LinkingContext> {
 public:
   X86ELFDSOReader(X86LinkingContext &ctx)
-      : ELFDSOReader<X86ELFType,
-                     X86LinkingContext>(ctx, llvm::ELF::EM_386) {}
+      : ELFDSOReader<X86ELFType, X86LinkingContext>(ctx) {}
 };
 
 } // namespace elf

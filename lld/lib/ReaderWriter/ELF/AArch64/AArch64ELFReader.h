@@ -34,15 +34,14 @@ class AArch64ELFObjectReader
 public:
   AArch64ELFObjectReader(AArch64LinkingContext &ctx)
       : ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
-                        AArch64LinkingContext>(ctx, llvm::ELF::EM_AARCH64) {}
+                        AArch64LinkingContext>(ctx) {}
 };
 
 class AArch64ELFDSOReader
     : public ELFDSOReader<AArch64ELFType, AArch64LinkingContext> {
 public:
   AArch64ELFDSOReader(AArch64LinkingContext &ctx)
-      : ELFDSOReader<AArch64ELFType,
-                     AArch64LinkingContext>(ctx, llvm::ELF::EM_AARCH64) {}
+      : ELFDSOReader<AArch64ELFType, AArch64LinkingContext>(ctx) {}
 };
 
 } // namespace elf

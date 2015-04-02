@@ -34,15 +34,14 @@ class X86_64ELFObjectReader
 public:
   X86_64ELFObjectReader(X86_64LinkingContext &ctx)
       : ELFObjectReader<X86_64ELFType, X86_64ELFFileCreateELFTraits,
-                        X86_64LinkingContext>(ctx, llvm::ELF::EM_X86_64) {}
+                        X86_64LinkingContext>(ctx) {}
 };
 
 class X86_64ELFDSOReader
     : public ELFDSOReader<X86_64ELFType, X86_64LinkingContext> {
 public:
   X86_64ELFDSOReader(X86_64LinkingContext &ctx)
-      : ELFDSOReader<X86_64ELFType,
-                     X86_64LinkingContext>(ctx, llvm::ELF::EM_X86_64) {}
+      : ELFDSOReader<X86_64ELFType, X86_64LinkingContext>(ctx) {}
 };
 
 } // namespace elf
