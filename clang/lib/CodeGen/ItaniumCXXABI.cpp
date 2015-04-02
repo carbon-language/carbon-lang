@@ -1388,7 +1388,7 @@ llvm::Value *ItaniumCXXABI::getVTableAddressPointInStructor(
 
 llvm::Constant *ItaniumCXXABI::getVTableAddressPointForConstExpr(
     BaseSubobject Base, const CXXRecordDecl *VTableClass) {
-  llvm::Constant *VTable = getAddrOfVTable(VTableClass, CharUnits());
+  auto *VTable = getAddrOfVTable(VTableClass, CharUnits());
 
   // Find the appropriate vtable within the vtable group.
   uint64_t AddressPoint = CGM.getItaniumVTableContext()
@@ -1399,7 +1399,8 @@ llvm::Constant *ItaniumCXXABI::getVTableAddressPointForConstExpr(
     llvm::ConstantInt::get(CGM.Int64Ty, AddressPoint)
   };
 
-  return llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Indices);
+  return llvm::ConstantExpr::getInBoundsGetElementPtr(VTable->getValueType(),
+                                                      VTable, Indices);
 }
 
 llvm::GlobalVariable *ItaniumCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
@@ -2606,7 +2607,8 @@ void ItaniumRTTIBuilder::BuildVTablePointer(const Type *Ty) {
 
   // The vtable address point is 2.
   llvm::Constant *Two = llvm::ConstantInt::get(PtrDiffTy, 2);
-  VTable = llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Two);
+  VTable =
+      llvm::ConstantExpr::getInBoundsGetElementPtr(CGM.Int8PtrTy, VTable, Two);
   VTable = llvm::ConstantExpr::getBitCast(VTable, CGM.Int8PtrTy);
 
   Fields.push_back(VTable);

@@ -1678,14 +1678,13 @@ struct NullReturnState {
 
 /// getConstantGEP() - Help routine to construct simple GEPs.
 static llvm::Constant *getConstantGEP(llvm::LLVMContext &VMContext,
-                                      llvm::Constant *C,
-                                      unsigned idx0,
+                                      llvm::GlobalVariable *C, unsigned idx0,
                                       unsigned idx1) {
   llvm::Value *Idxs[] = {
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), idx0),
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), idx1)
   };
-  return llvm::ConstantExpr::getGetElementPtr(C, Idxs);
+  return llvm::ConstantExpr::getGetElementPtr(C->getValueType(), C, Idxs);
 }
 
 /// hasObjCExceptionAttribute - Return true if this class or any super
@@ -6999,10 +6998,10 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   llvm::Value *VTableIdx = llvm::ConstantInt::get(CGM.Int32Ty, 2);
 
   llvm::Constant *Values[] = {
-    llvm::ConstantExpr::getGetElementPtr(VTableGV, VTableIdx),
-    GetClassName(ID->getObjCRuntimeNameAsString()),
-    GetClassGlobal(ClassName.str())
-  };
+      llvm::ConstantExpr::getGetElementPtr(VTableGV->getValueType(), VTableGV,
+                                           VTableIdx),
+      GetClassName(ID->getObjCRuntimeNameAsString()),
+      GetClassGlobal(ClassName.str())};
   llvm::Constant *Init =
     llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
 

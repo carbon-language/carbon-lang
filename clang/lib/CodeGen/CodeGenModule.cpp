@@ -2633,7 +2633,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     llvm::Constant *GV = CreateRuntimeVariable(Ty,
                                            "__CFConstantStringClassReference");
     // Decay array -> ptr
-    V = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+    V = llvm::ConstantExpr::getGetElementPtr(Ty, GV, Zeros);
     CFConstantStringClassRef = V;
   }
   else
@@ -2686,7 +2686,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   }
 
   // String.
-  Fields[2] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+  Fields[2] = llvm::ConstantExpr::getGetElementPtr(GV->getType(), GV, Zeros);
 
   if (isUTF16)
     // Cast the UTF16 string to the correct type.
@@ -2740,7 +2740,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
       llvm::Type *PTy = llvm::ArrayType::get(Ty, 0);
       GV = CreateRuntimeVariable(PTy, str);
       // Decay array -> ptr
-      V = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
+      V = llvm::ConstantExpr::getGetElementPtr(PTy, GV, Zeros);
       ConstantStringClassRef = V;
     }
   }
@@ -2800,8 +2800,9 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   // of the string is via this class initializer.
   CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
   GV->setAlignment(Align.getQuantity());
-  Fields[1] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
-  
+  Fields[1] =
+      llvm::ConstantExpr::getGetElementPtr(GV->getValueType(), GV, Zeros);
+
   // String length.
   llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
   Fields[2] = llvm::ConstantInt::get(Ty, StringLength);
