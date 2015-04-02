@@ -153,10 +153,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
       Amount = -Amount;
 
-    const Mips16InstrInfo &TII =
-        *static_cast<const Mips16InstrInfo *>(STI.getInstrInfo());
-
-    TII.adjustStackPtr(Mips::SP, Amount, MBB, I);
+    STI.getInstrInfo()->adjustStackPtr(Mips::SP, Amount, MBB, I);
   }
 
   MBB.erase(I);

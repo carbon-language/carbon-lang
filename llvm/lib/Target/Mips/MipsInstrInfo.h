@@ -117,6 +117,10 @@ public:
                                 const TargetRegisterInfo *TRI,
                                 int64_t Offset) const = 0;
 
+  virtual void adjustStackPtr(unsigned SP, int64_t Amount,
+                              MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const = 0;
+
   /// Create an instruction which has the same operands and memory operands
   /// as MI but has a new opcode.
   MachineInstrBuilder genInstrWithNewOpc(unsigned NewOpc,

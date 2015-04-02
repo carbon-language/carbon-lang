@@ -611,9 +611,6 @@ MipsSEFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 void MipsSEFrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  const MipsSEInstrInfo &TII =
-      *static_cast<const MipsSEInstrInfo *>(STI.getInstrInfo());
-
   if (!hasReservedCallFrame(MF)) {
     int64_t Amount = I->getOperand(0).getImm();
 
@@ -621,7 +618,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       Amount = -Amount;
 
     unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
-    TII.adjustStackPtr(SP, Amount, MBB, I);
+    STI.getInstrInfo()->adjustStackPtr(SP, Amount, MBB, I);
   }
 
   MBB.erase(I);
