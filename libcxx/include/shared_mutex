@@ -193,6 +193,7 @@ shared_timed_mutex::try_lock_until(
             if (__status == cv_status::timeout)
             {
                 __state_ &= ~__write_entered_;
+                __gate1_.notify_all();
                 return false;
             }
         }
