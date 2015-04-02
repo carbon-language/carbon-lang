@@ -29,31 +29,6 @@ class TerminatorInst;
 class LLVMContext;
 class BlockAddress;
 
-template<> struct ilist_traits<Instruction>
-  : public SymbolTableListTraits<Instruction, BasicBlock> {
-
-  /// \brief Return a node that marks the end of a list.
-  ///
-  /// The sentinel is relative to this instance, so we use a non-static
-  /// method.
-  Instruction *createSentinel() const {
-    // Since i(p)lists always publicly derive from their corresponding traits,
-    // placing a data member in this class will augment the i(p)list.  But since
-    // the NodeTy is expected to be publicly derive from ilist_node<NodeTy>,
-    // there is a legal viable downcast from it to NodeTy. We use this trick to
-    // superimpose an i(p)list with a "ghostly" NodeTy, which becomes the
-    // sentinel. Dereferencing the sentinel is forbidden (save the
-    // ilist_node<NodeTy>), so no one will ever notice the superposition.
-    return static_cast<Instruction*>(&Sentinel);
-  }
-  static void destroySentinel(Instruction*) {}
-
-  Instruction *provideInitialHead() const { return createSentinel(); }
-  Instruction *ensureHead(Instruction*) const { return createSentinel(); }
-  static void noteHead(Instruction*, Instruction*) {}
-private:
-  mutable ilist_half_node<Instruction> Sentinel;
-};
 
 /// \brief LLVM Basic Block Representation
 ///

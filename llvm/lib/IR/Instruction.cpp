@@ -62,8 +62,8 @@ void Instruction::removeFromParent() {
   getParent()->getInstList().remove(this);
 }
 
-void Instruction::eraseFromParent() {
-  getParent()->getInstList().erase(this);
+iplist<Instruction>::iterator Instruction::eraseFromParent() {
+  return getParent()->getInstList().erase(this);
 }
 
 /// insertBefore - Insert an unlinked instructions into a basic block

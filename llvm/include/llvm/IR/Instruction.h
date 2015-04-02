@@ -18,6 +18,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/SymbolTableListTraits.h"
 #include "llvm/IR/User.h"
 
 namespace llvm {
@@ -25,10 +26,27 @@ namespace llvm {
 class FastMathFlags;
 class LLVMContext;
 class MDNode;
+class BasicBlock;
 struct AAMDNodes;
 
-template<typename ValueSubClass, typename ItemParentClass>
-  class SymbolTableListTraits;
+template <>
+struct ilist_traits<Instruction>
+    : public SymbolTableListTraits<Instruction, BasicBlock> {
+
+  /// \brief Return a node that marks the end of a list.
+  ///
+  /// The sentinel is relative to this instance, so we use a non-static
+  /// method.
+  Instruction *createSentinel() const;
+  static void destroySentinel(Instruction *) {}
+
+  Instruction *provideInitialHead() const { return createSentinel(); }
+  Instruction *ensureHead(Instruction *) const { return createSentinel(); }
+  static void noteHead(Instruction *, Instruction *) {}
+
+private:
+  mutable ilist_half_node<Instruction> Sentinel;
+};
 
 class Instruction : public User, public ilist_node<Instruction> {
   void operator=(const Instruction &) = delete;
@@ -69,7 +87,8 @@ public:
   /// eraseFromParent - This method unlinks 'this' from the containing basic
   /// block and deletes it.
   ///
-  void eraseFromParent();
+  /// \returns an iterator pointing to the element after the erased one
+  iplist<Instruction>::iterator eraseFromParent();
 
   /// insertBefore - Insert an unlinked instructions into a basic block
   /// immediately before the specified instruction.
@@ -492,6 +511,17 @@ protected:
   virtual Instruction *clone_impl() const = 0;
 
 };
+
+Instruction *ilist_traits<Instruction>::createSentinel() const {
+  // Since i(p)lists always publicly derive from their corresponding traits,
+  // placing a data member in this class will augment the i(p)list.  But since
+  // the NodeTy is expected to be publicly derive from ilist_node<NodeTy>,
+  // there is a legal viable downcast from it to NodeTy. We use this trick to
+  // superimpose an i(p)list with a "ghostly" NodeTy, which becomes the
+  // sentinel. Dereferencing the sentinel is forbidden (save the
+  // ilist_node<NodeTy>), so no one will ever notice the superposition.
+  return static_cast<Instruction *>(&Sentinel);
+}
 
 // Instruction* is only 4-byte aligned.
 template<>
