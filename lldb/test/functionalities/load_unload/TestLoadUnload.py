@@ -75,7 +75,7 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("settings show target.env-vars")
 
         remove_dyld_path_cmd = "settings remove target.env-vars " + self.dylibPath
-        self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
+        self.addTearDownHook(lambda: self.dbg.HandleCommand(remove_dyld_path_cmd))
 
         self.runCmd("run")
 
@@ -121,7 +121,7 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("settings show target.env-vars")
 
         remove_dyld_path_cmd = "settings remove target.env-vars " + self.dylibPath
-        self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
+        self.addTearDownHook(lambda: self.dbg.HandleCommand(remove_dyld_path_cmd))
 
         lldbutil.run_break_set_by_file_and_line (self, "d.c", self.line_d_function, num_expected_locations=1, loc_exact=True)
 
