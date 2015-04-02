@@ -257,13 +257,8 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
       // Parse statement
       AssociatedStmt = ParseStatement();
       Actions.ActOnFinishOfCompoundStmt();
-      if (!AssociatedStmt.isUsable()) {
-        Actions.ActOnCapturedRegionError();
-        CreateDirective = false;
-      } else {
-        AssociatedStmt = Actions.ActOnCapturedRegionEnd(AssociatedStmt.get());
-        CreateDirective = AssociatedStmt.isUsable();
-      }
+      AssociatedStmt = Actions.ActOnOpenMPRegionEnd(AssociatedStmt, Clauses);
+      CreateDirective = AssociatedStmt.isUsable();
     }
     if (CreateDirective)
       Directive = Actions.ActOnOpenMPExecutableDirective(
