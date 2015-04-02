@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__clang__) && defined(_MSC_VER)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wwritable-strings"
+#endif
+
 int opterr = 1;     /* if error message should be printed */
 int optind = 1;     /* index into parent argv vector */
 int optopt = '?';   /* character checked for validity */
@@ -36,14 +41,6 @@ static char *place = EMSG; /* option letter processing */
 /* XXX: set optreset to 1 rather than these two */
 static int nonopt_start = -1; /* first non option argument (for permute) */
 static int nonopt_end = -1;   /* first option after non options (for permute) */
-
-/* Error messages */
-static const char recargchar[] = "option requires an argument -- %c";
-static const char recargstring[] = "option requires an argument -- %s";
-static const char ambig[] = "ambiguous option -- %.*s";
-static const char noarg[] = "option doesn't take an argument -- %.*s";
-static const char illoptchar[] = "unknown option -- %c";
-static const char illoptstring[] = "unknown option -- %s";
 
 /*
 * Compute the greatest common divisor of a and b.
@@ -467,3 +464,7 @@ const struct option *long_options, int *idx)
     return (getopt_internal(nargc, nargv, options, long_options, idx,
         FLAG_PERMUTE | FLAG_LONGONLY));
 }
+
+#if defined(__clang__) && defined(_MSC_VER)
+#pragma clang diagnostic pop
+#endif

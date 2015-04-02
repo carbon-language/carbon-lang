@@ -18,7 +18,8 @@ namespace lldb {
 class LLDB_API SBCommunication
 {
 public:
-    enum {
+    FLAGS_ANONYMOUS_ENUM()
+    {
         eBroadcastBitDisconnected           = (1 << 0), ///< Sent when the communications connection is lost.
         eBroadcastBitReadThreadGotBytes     = (1 << 1), ///< Sent by the read thread when bytes become available.
         eBroadcastBitReadThreadDidExit      = (1 << 2), ///< Sent by the read thread when it exits to inform clients.

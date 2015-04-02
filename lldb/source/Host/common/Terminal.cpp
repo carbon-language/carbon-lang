@@ -180,20 +180,18 @@ TerminalState::Save (int fd, bool save_process_group)
 bool
 TerminalState::Restore () const
 {
+#ifndef LLDB_DISABLE_POSIX
     if (IsValid())
     {
         const int fd = m_tty.GetFileDescriptor();
-#ifndef LLDB_DISABLE_POSIX
         if (TFlagsIsValid())
             fcntl (fd, F_SETFL, m_tflags);
-#endif
 
 #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (TTYStateIsValid())
             tcsetattr (fd, TCSANOW, m_termios_ap.get());
 #endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
 
-#ifndef LLDB_DISABLE_POSIX
         if (ProcessGroupIsValid())
         {
             // Save the original signal handler.
@@ -204,9 +202,9 @@ TerminalState::Restore () const
             // Restore the original signal handler.
             signal (SIGTTOU, saved_sigttou_callback);
         }
-#endif
         return true;
     }
+#endif
     return false;
 }
 

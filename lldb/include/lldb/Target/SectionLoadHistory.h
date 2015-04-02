@@ -23,7 +23,7 @@ namespace lldb_private {
 class SectionLoadHistory
 {
 public:
-    enum {
+    enum : unsigned {
         // Pass eStopIDNow to any function that takes a stop ID to get
         // the current value.
         eStopIDNow = UINT32_MAX

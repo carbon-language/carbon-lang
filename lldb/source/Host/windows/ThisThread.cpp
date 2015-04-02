@@ -18,6 +18,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
+#if defined(_MSC_VER) && !defined(__clang__)
+
 namespace
 {
 static const DWORD MS_VC_EXCEPTION = 0x406D1388;
@@ -33,19 +35,23 @@ struct THREADNAME_INFO
 #pragma pack(pop)
 }
 
+#endif
+
 void
 ThisThread::SetName(llvm::StringRef name)
 {
 // Other compilers don't yet support SEH, so we can only set the thread if compiling with MSVC.
 // TODO(zturner): Once clang-cl supports SEH, relax this conditional.
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
     THREADNAME_INFO info;
     info.dwType = 0x1000;
     info.szName = name.data();
     info.dwThreadId = ::GetCurrentThreadId();
     info.dwFlags = 0;
 
-    __try { ::RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR *)&info); }
+    __try {
+        ::RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR *)&info);
+    }
     __except(EXCEPTION_EXECUTE_HANDLER) {}
 #endif
 }

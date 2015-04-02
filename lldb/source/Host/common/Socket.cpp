@@ -704,7 +704,7 @@ int Socket::SetOption(int level, int option_name, int option_value)
 uint16_t Socket::GetLocalPortNumber(const NativeSocket& socket)
 {
     // We bound to port zero, so we need to figure out which port we actually bound to
-    if (socket >= 0)
+    if (socket != kInvalidSocketValue)
     {
         SocketAddress sock_addr;
         socklen_t sock_addr_len = sock_addr.GetMaxLength ();
@@ -723,7 +723,7 @@ uint16_t Socket::GetLocalPortNumber() const
 std::string  Socket::GetLocalIPAddress () const
 {
     // We bound to port zero, so we need to figure out which port we actually bound to
-    if (m_socket >= 0)
+    if (m_socket != kInvalidSocketValue)
     {
         SocketAddress sock_addr;
         socklen_t sock_addr_len = sock_addr.GetMaxLength ();
@@ -735,7 +735,7 @@ std::string  Socket::GetLocalIPAddress () const
 
 uint16_t Socket::GetRemotePortNumber () const
 {
-    if (m_socket >= 0)
+    if (m_socket != kInvalidSocketValue)
     {
         SocketAddress sock_addr;
         socklen_t sock_addr_len = sock_addr.GetMaxLength ();
@@ -748,7 +748,7 @@ uint16_t Socket::GetRemotePortNumber () const
 std::string Socket::GetRemoteIPAddress () const
 {
     // We bound to port zero, so we need to figure out which port we actually bound to
-    if (m_socket >= 0)
+    if (m_socket != kInvalidSocketValue)
     {
         SocketAddress sock_addr;
         socklen_t sock_addr_len = sock_addr.GetMaxLength ();

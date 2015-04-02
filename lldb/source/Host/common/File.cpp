@@ -811,7 +811,6 @@ File::Write (const void *buf, size_t &num_bytes, off_t &offset)
         if (!error.Fail())
             SeekFromStart(cur);
 
-        ssize_t bytes_written = after - cur;
         offset = after;
 #endif
     }

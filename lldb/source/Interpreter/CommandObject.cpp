@@ -1027,18 +1027,15 @@ CommandObject::AddIDsArgumentData(CommandArgumentEntry &arg, CommandArgumentType
 const char * 
 CommandObject::GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type)
 {
-    if (arg_type >=0 && arg_type < eArgTypeLastArg)
-        return g_arguments_data[arg_type].arg_name;
-    return nullptr;
-
+    assert(arg_type < eArgTypeLastArg && "Invalid argument type passed to GetArgumentTypeAsCString");
+    return g_arguments_data[arg_type].arg_name;
 }
 
 const char * 
 CommandObject::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type)
 {
-    if (arg_type >=0 && arg_type < eArgTypeLastArg)
-        return g_arguments_data[arg_type].help_text;
-    return nullptr;
+    assert(arg_type < eArgTypeLastArg && "Invalid argument type passed to GetArgumentDescriptionAsCString");
+    return g_arguments_data[arg_type].help_text;
 }
 
 Target *

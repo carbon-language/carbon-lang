@@ -125,7 +125,7 @@ public:
                                                                  const char* setting,
                                                                  const lldb::TargetSP& target_sp);
 
-    friend class IOHandlerPythonInterpreter;
+    friend class ::IOHandlerPythonInterpreter;
 
     ScriptInterpreterPython (CommandInterpreter &interpreter);
 

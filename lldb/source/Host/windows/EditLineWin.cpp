@@ -194,7 +194,7 @@ el_gets (EditLine *el, int *length)
 {
     // print the prompt if we have one
     if ( _prompt != NULL )
-        printf( _prompt );
+        printf("%s", _prompt);
     // create a buffer for the user input
     char *buffer = new char[ MAX_PATH ];
     // try to get user input string
@@ -247,10 +247,10 @@ el_set (EditLine *el, int code, ...)
 
             // get the function pointer from the arg list
             void *func_vp = (void*)va_arg(vl, el_prompt_func);
-            char  escape = (char)va_arg(vl, int);
+            va_arg(vl, int);
             // call to get the prompt as a string
             el_prompt_func func_fp = (el_prompt_func)func_vp;
-            const char *newPrompt = func_fp(el);
+            _prompt = func_fp(el);
         }
         break;
 

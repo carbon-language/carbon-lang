@@ -71,7 +71,12 @@ public:
         eEncodingIsSyntheticUID
     } EncodingDataType;
 
-    typedef enum ResolveStateTag
+    // We must force the underlying type of the enum to be unsigned here.  Not all compilers
+    // behave the same with regards to the default underlying type of an enum, but because
+    // this enum is used in an enum bitfield and integer comparisons are done with the value
+    // we need to guarantee that it's always unsigned so that, for example, eResolveStateFull
+    // doesn't compare less than eResolveStateUnresolved when used in a 2-bit bitfield.
+    typedef enum ResolveStateTag : unsigned
     {
         eResolveStateUnresolved = 0,
         eResolveStateForward    = 1,
