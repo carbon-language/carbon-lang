@@ -2041,9 +2041,6 @@ Process::UnloadImage (uint32_t image_token)
 const lldb::ABISP &
 Process::GetABI()
 {
-    if (m_finalizing)
-        return lldb::ABISP();
-
     if (!m_abi_sp)
         m_abi_sp = ABI::FindPlugin(m_target.GetArchitecture());
     return m_abi_sp;
