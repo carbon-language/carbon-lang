@@ -54,7 +54,7 @@ void partition(Module &M, const ModulePartitionMap &PMap) {
         if (KVPair.second.count(&Orig)) {
           copyGVInitializer(New, Orig, VMap);
         }
-        if (New.getLinkage() == GlobalValue::PrivateLinkage) {
+        if (New.hasLocalLinkage()) {
           New.setLinkage(GlobalValue::ExternalLinkage);
           New.setVisibility(GlobalValue::HiddenVisibility);
         }
@@ -64,7 +64,7 @@ void partition(Module &M, const ModulePartitionMap &PMap) {
       [&](Function &New, const Function &Orig, ValueToValueMapTy &VMap) {
         if (KVPair.second.count(&Orig))
           copyFunctionBody(New, Orig, VMap);
-        if (New.getLinkage() == GlobalValue::InternalLinkage) {
+        if (New.hasLocalLinkage()) {
           New.setLinkage(GlobalValue::ExternalLinkage);
           New.setVisibility(GlobalValue::HiddenVisibility);
         }
