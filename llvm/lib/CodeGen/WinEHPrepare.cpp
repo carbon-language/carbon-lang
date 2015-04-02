@@ -883,6 +883,7 @@ CloningDirector::CloningAction WinEHCatchDirector::handleBeginCatch(
   if (isa<ConstantPointerNull>(ExceptionObjectVar))
     return CloningDirector::SkipInstruction;
   AllocaInst *AI = dyn_cast<AllocaInst>(ExceptionObjectVar);
+  (void)AI;
   assert(AI && AI->isStaticAlloca() && "catch parameter is not static alloca");
   Materializer.escapeCatchObject(ExceptionObjectVar);
   return CloningDirector::SkipInstruction;
