@@ -39,24 +39,10 @@ namespace {
 #endif
 
 // Define some fixed alignment types to use in these tests.
-#if __has_feature(cxx_alignas)
-struct alignas(1) A1 { };
-struct alignas(2) A2 { };
-struct alignas(4) A4 { };
-struct alignas(8) A8 { };
-#elif defined(__GNUC__)
-struct A1 { } __attribute__((aligned(1)));
-struct A2 { } __attribute__((aligned(2)));
-struct A4 { } __attribute__((aligned(4)));
-struct A8 { } __attribute__((aligned(8)));
-#elif defined(_MSC_VER)
-__declspec(align(1)) struct A1 { };
-__declspec(align(2)) struct A2 { };
-__declspec(align(4)) struct A4 { };
-__declspec(align(8)) struct A8 { };
-#else
-# error No supported align as directive.
-#endif
+struct LLVM_ALIGNAS(1) A1 {};
+struct LLVM_ALIGNAS(2) A2 {};
+struct LLVM_ALIGNAS(4) A4 {};
+struct LLVM_ALIGNAS(8) A8 {};
 
 struct S1 {};
 struct S2 { char a; };

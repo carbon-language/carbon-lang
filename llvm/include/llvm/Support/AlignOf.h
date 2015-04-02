@@ -70,37 +70,10 @@ inline unsigned alignOf() { return AlignOf<T>::Alignment; }
 // MSVC requires special handling here.
 #ifndef _MSC_VER
 
-#if __has_feature(cxx_alignas)
 template<std::size_t Alignment, std::size_t Size>
 struct AlignedCharArray {
-  alignas(Alignment) char buffer[Size];
+  LLVM_ALIGNAS(Alignment) char buffer[Size];
 };
-
-#elif defined(__GNUC__) || defined(__IBM_ATTRIBUTES)
-/// \brief Create a type with an aligned char buffer.
-template<std::size_t Alignment, std::size_t Size>
-struct AlignedCharArray;
-
-#define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
-  template<std::size_t Size> \
-  struct AlignedCharArray<x, Size> { \
-    __attribute__((aligned(x))) char buffer[Size]; \
-  };
-
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(1)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(2)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(4)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(64)
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
-
-#undef LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT
-
-#else
-# error No supported align as directive.
-#endif
 
 #else // _MSC_VER
 

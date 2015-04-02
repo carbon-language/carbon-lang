@@ -281,6 +281,20 @@
 # define LLVM_ASSUME_ALIGNED(p, a) (p)
 #endif
 
+/// \macro LLVM_ALIGNAS
+/// \brief Used to specify a minimum alignment for a structure or variable. The
+/// alignment must be a constant integer.
+///
+/// Note that __declspec(align) has special quirks, it's not legal to pass a
+/// structure with __declspec(align) as a formal parameter.
+#ifdef _MSC_VER
+# define LLVM_ALIGNAS(x) __declspec(align(x))
+#elif __GNUC__ && !__has_feature(cxx_alignas) && !LLVM_GNUC_PREREQ(4, 8, 0)
+# define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
+#else
+# define LLVM_ALIGNAS(x) alignas(x)
+#endif
+
 /// \macro LLVM_FUNCTION_NAME
 /// \brief Expands to __func__ on compilers which support it.  Otherwise,
 /// expands to a compiler-dependent replacement.
