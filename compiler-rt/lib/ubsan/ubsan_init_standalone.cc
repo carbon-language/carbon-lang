@@ -13,7 +13,7 @@
 
 #include "ubsan_platform.h"
 #if !CAN_SANITIZE_UB
-# error "UBSan is not supported on this platform!
+# error "UBSan is not supported on this platform!"
 #endif
 
 #include "ubsan_init.h"
