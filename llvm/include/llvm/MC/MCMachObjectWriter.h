@@ -257,6 +257,8 @@ public:
   void computeSectionAddresses(const MCAssembler &Asm,
                                const MCAsmLayout &Layout);
 
+  void markAbsoluteVariableSymbols(MCAssembler &Asm,
+                                   const MCAsmLayout &Layout);
   void ExecutePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 

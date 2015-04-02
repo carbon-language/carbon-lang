@@ -55,7 +55,13 @@ void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert(!IsUsed && "Cannot set a variable that has already been used.");
   assert(Value && "Invalid variable value!");
   this->Value = Value;
-  this->Section = nullptr;
+
+  // Variables should always be marked as in the same "section" as the value.
+  const MCSection *Section = Value->FindAssociatedSection();
+  if (Section)
+    setSection(*Section);
+  else
+    setUndefined();
 }
 
 void MCSymbol::print(raw_ostream &OS) const {

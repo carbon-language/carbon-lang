@@ -15,7 +15,6 @@
 #define LLVM_MC_MCSYMBOL_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -43,9 +42,8 @@ namespace llvm {
 
     /// Section - The section the symbol is defined in. This is null for
     /// undefined symbols, and the special AbsolutePseudoSection value for
-    /// absolute symbols. If this is a variable symbol, this caches the
-    /// variable value's section.
-    mutable const MCSection *Section;
+    /// absolute symbols.
+    const MCSection *Section;
 
     /// Value - If non-null, the value for a variable symbol.
     const MCExpr *Value;
@@ -70,12 +68,6 @@ namespace llvm {
 
     MCSymbol(const MCSymbol&) = delete;
     void operator=(const MCSymbol&) = delete;
-    const MCSection *getSectionPtr() const {
-      if (Section || !Value)
-        return Section;
-      return Section = Value->FindAssociatedSection();
-    }
-
   public:
     /// getName - Get the symbol name.
     StringRef getName() const { return Name; }
@@ -111,7 +103,7 @@ namespace llvm {
     ///
     /// Defined symbols are either absolute or in some section.
     bool isDefined() const {
-      return getSectionPtr() != nullptr;
+      return Section != nullptr;
     }
 
     /// isInSection - Check if this symbol is defined in some section (i.e., it
@@ -127,26 +119,26 @@ namespace llvm {
 
     /// isAbsolute - Check if this is an absolute symbol.
     bool isAbsolute() const {
-      return getSectionPtr() == AbsolutePseudoSection;
+      return Section == AbsolutePseudoSection;
     }
 
     /// getSection - Get the section associated with a defined, non-absolute
     /// symbol.
     const MCSection &getSection() const {
       assert(isInSection() && "Invalid accessor!");
-      return *getSectionPtr();
+      return *Section;
     }
 
     /// setSection - Mark the symbol as defined in the section \p S.
-    void setSection(const MCSection &S) {
-      assert(!isVariable() && "Cannot set section of variable");
-      Section = &S;
-    }
+    void setSection(const MCSection &S) { Section = &S; }
 
     /// setUndefined - Mark the symbol as undefined.
     void setUndefined() {
       Section = nullptr;
     }
+
+    /// setAbsolute - Mark the symbol as absolute.
+    void setAbsolute() { Section = AbsolutePseudoSection; }
 
     /// @}
     /// @name Variable Symbols

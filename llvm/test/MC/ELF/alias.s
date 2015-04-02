@@ -24,15 +24,6 @@ bar5 = bar4
 bar6 = bar5
 bar6:
 
-// Test that indirect local aliases do not appear as symbols.
-.data
-.Llocal:
-
-.text
-leaq .Llocal1(%rip), %rdi
-.Llocal1 = .Llocal2
-.Llocal2 = .Llocal
-
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name:  (0)
