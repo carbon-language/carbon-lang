@@ -35,6 +35,7 @@
 #include <clc/math/acos.h>
 #include <clc/math/acospi.h>
 #include <clc/math/asin.h>
+#include <clc/math/asinh.h>
 #include <clc/math/atan.h>
 #include <clc/math/atan2.h>
 #include <clc/math/copysign.h>
