@@ -111,8 +111,10 @@ std::error_code ARMExecutableWriter<ELFT>::setELFHeader() {
     if (const auto *ea = dyn_cast<DefinedAtom>(al->_atom)) {
       switch (ea->codeModel()) {
       case DefinedAtom::codeNA:
-        if (al->_virtualAddr & 0x3)
-          llvm_unreachable("Two least bits must be zero for ARM entry point");
+        if (al->_virtualAddr & 0x3) {
+          llvm::report_fatal_error(
+              "Two least bits must be zero for ARM entry point");
+        }
       break;
       case DefinedAtom::codeARMThumb:
         // Fixup entry point for Thumb code.
