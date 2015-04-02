@@ -584,6 +584,8 @@ public:
   }
 
   void swap(DenseMap& RHS) {
+    this->incrementEpoch();
+    RHS.incrementEpoch();
     std::swap(Buckets, RHS.Buckets);
     std::swap(NumEntries, RHS.NumEntries);
     std::swap(NumTombstones, RHS.NumTombstones);
