@@ -476,7 +476,7 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
   {
     ParseScopeFlags FilterScope(this, getCurScope()->getFlags() |
                                           Scope::SEHFilterScope);
-    FilterExpr = ParseExpression();
+    FilterExpr = Actions.CorrectDelayedTyposInExpr(ParseExpression());
   }
 
   if (getLangOpts().Borland) {

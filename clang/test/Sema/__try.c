@@ -281,3 +281,9 @@ void test_jump_out_of___finally() {
     }();
   }
 }
+
+void test_typo_in_except() {
+  __try {
+  } __except(undeclared_identifier) { // expected-error {{use of undeclared identifier 'undeclared_identifier'}} expected-error {{expected expression}}
+  }
+}
