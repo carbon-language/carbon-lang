@@ -313,10 +313,6 @@ public:
     return _copiedDynSymNames.count(sla->name());
   }
 
-  /// \brief Handle SORT_BY_PRIORITY.
-  void sortOutputSectionByPriority(StringRef outputSectionName,
-                                   StringRef prefix);
-
 protected:
   /// \brief TargetLayouts may use these functions to reorder the input sections
   /// in a order defined by their ABI.
@@ -334,10 +330,6 @@ protected:
     return unique_bump_ptr<RelocationTable<ELFT>>(
         new (_allocator) RelocationTable<ELFT>(_ctx, name, order));
   }
-
-private:
-  /// Helper function that returns the priority value from an input section.
-  uint32_t getPriorityFromSectionName(StringRef sectionName) const;
 
 protected:
   llvm::BumpPtrAllocator _allocator;
@@ -669,44 +661,6 @@ template <class ELFT> void DefaultLayout<ELFT>::createOutputSections() {
     }
     outputSection->appendSection(si);
   }
-}
-
-template <class ELFT>
-uint32_t
-DefaultLayout<ELFT>::getPriorityFromSectionName(StringRef sectionName) const {
-  StringRef priority = sectionName.drop_front().rsplit('.').second;
-  uint32_t prio;
-  if (priority.getAsInteger(10, prio))
-    return std::numeric_limits<uint32_t>::max();
-  return prio;
-}
-
-template <class ELFT>
-void DefaultLayout<ELFT>::sortOutputSectionByPriority(
-    StringRef outputSectionName, StringRef prefix) {
-  OutputSection<ELFT> *outputSection = findOutputSection(outputSectionName);
-  if (!outputSection)
-    return;
-
-  auto sections = outputSection->sections();
-
-  std::sort(sections.begin(), sections.end(),
-            [&](Chunk<ELFT> *lhs, Chunk<ELFT> *rhs) {
-              Section<ELFT> *lhsSection = dyn_cast<Section<ELFT>>(lhs);
-              Section<ELFT> *rhsSection = dyn_cast<Section<ELFT>>(rhs);
-              if (!lhsSection || !rhsSection)
-                return false;
-              StringRef lhsSectionName = lhsSection->inputSectionName();
-              StringRef rhsSectionName = rhsSection->inputSectionName();
-
-              if (!prefix.empty()) {
-                if (!lhsSectionName.startswith(prefix) ||
-                    !rhsSectionName.startswith(prefix))
-                  return false;
-              }
-              return getPriorityFromSectionName(lhsSectionName) <
-                     getPriorityFromSectionName(rhsSectionName);
-            });
 }
 
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {

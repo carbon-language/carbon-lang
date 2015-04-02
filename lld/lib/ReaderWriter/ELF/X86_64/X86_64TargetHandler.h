@@ -19,13 +19,42 @@
 
 namespace lld {
 namespace elf {
+
 class X86_64TargetLayout : public TargetLayout<X86_64ELFType> {
 public:
   X86_64TargetLayout(X86_64LinkingContext &ctx) : TargetLayout(ctx) {}
 
   void finalizeOutputSectionLayout() override {
-    sortOutputSectionByPriority(".init_array", ".init_array");
-    sortOutputSectionByPriority(".fini_array", ".fini_array");
+    sortOutputSectionByPriority<X86_64ELFType>(".init_array");
+    sortOutputSectionByPriority<X86_64ELFType>(".fini_array");
+  }
+
+private:
+  uint32_t getPriority(StringRef sectionName) const {
+    StringRef priority = sectionName.drop_front().rsplit('.').second;
+    uint32_t prio;
+    if (priority.getAsInteger(10, prio))
+      return std::numeric_limits<uint32_t>::max();
+    return prio;
+  }
+
+  template <typename T> void sortOutputSectionByPriority(StringRef prefix) {
+    OutputSection<T> *section = findOutputSection(prefix);
+    if (!section)
+      return;
+    auto sections = section->sections();
+    std::sort(sections.begin(), sections.end(),
+              [&](Chunk<T> *lhs, Chunk<T> *rhs) {
+                Section<T> *lhsSection = dyn_cast<Section<T>>(lhs);
+                Section<T> *rhsSection = dyn_cast<Section<T>>(rhs);
+                if (!lhsSection || !rhsSection)
+                  return false;
+                StringRef lhsName = lhsSection->inputSectionName();
+                StringRef rhsName = rhsSection->inputSectionName();
+                if (!lhsName.startswith(prefix) || !rhsName.startswith(prefix))
+                  return false;
+                return getPriority(lhsName) < getPriority(rhsName);
+              });
   }
 };
 
