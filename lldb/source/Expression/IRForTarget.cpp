@@ -2455,7 +2455,7 @@ IRForTarget::BuildRelocation(llvm::Type *type, uint64_t offset)
 
     llvm::ArrayRef<llvm::Constant *> offsets(offset_array, 1);
 
-    llvm::Constant *reloc_getelementptr = ConstantExpr::getGetElementPtr(m_reloc_placeholder, offsets);
+    llvm::Constant *reloc_getelementptr = ConstantExpr::getGetElementPtr(type, m_reloc_placeholder, offsets);
     llvm::Constant *reloc_getbitcast = ConstantExpr::getBitCast(reloc_getelementptr, type);
 
     return reloc_getbitcast;
