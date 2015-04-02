@@ -73,6 +73,12 @@ class ObjCModulesTestCase(TestBase):
 
         self.expect("expr array.count", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSUInteger", "3"])
+
+        self.expect("p *[NSURL URLWithString:@\"http://lldb.llvm.org\"]", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["NSURL", "isa", "_urlString"])
+
+        self.expect("p [NSURL URLWithString:@\"http://lldb.llvm.org\"].scheme", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["http"])
             
 if __name__ == '__main__':
     import atexit
