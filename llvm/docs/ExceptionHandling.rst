@@ -519,25 +519,29 @@ action.
 
 A code of ``i32 1`` indicates a catch action, which expects three additional
 arguments. Different EH schemes give different meanings to the three arguments,
-but the first argument indicates whether the catch should fire, the second is a
-pointer to stack object where the exception object should be stored, and the
-third is the code to run to catch the exception.
+but the first argument indicates whether the catch should fire, the second is
+the frameescape index of the exception object, and the third is the code to run
+to catch the exception.
 
 For Windows C++ exception handling, the first argument for a catch handler is a
-pointer to the RTTI type descriptor for the object to catch. The third argument
-is a pointer to a function implementing the catch. This function returns the
-address of the basic block where execution should resume after handling the
-exception.
+pointer to the RTTI type descriptor for the object to catch. The second
+argument is an index into the argument list of the ``llvm.frameescape`` call in
+the main function. The exception object will be copied into the provided stack
+object. If the exception object is not required, this argument should be -1.
+The third argument is a pointer to a function implementing the catch.  This
+function returns the address of the basic block where execution should resume
+after handling the exception.
 
 For Windows SEH, the first argument is a pointer to the filter function, which
 indicates if the exception should be caught or not.  The second argument is
-typically null. The third argument is the address of a basic block where the
-exception will be handled. In other words, catch handlers are not outlined in
-SEH. After running cleanups, execution immediately resumes at this PC.
+typically negative one. The third argument is the address of a basic block
+where the exception will be handled. In other words, catch handlers are not
+outlined in SEH. After running cleanups, execution immediately resumes at this
+PC.
 
 In order to preserve the structure of the CFG, a call to '``llvm.eh.actions``'
-must be followed by an ':ref:`indirectbr <i_indirectbr>`' instruction that jumps
-to the result of the intrinsic call.
+must be followed by an ':ref:`indirectbr <i_indirectbr>`' instruction that
+jumps to the result of the intrinsic call.
 
 ``llvm.eh.unwindhelp``
 ----------------------

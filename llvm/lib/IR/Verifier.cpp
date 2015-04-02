@@ -3204,6 +3204,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert(!SawFrameEscape,
            "multiple calls to llvm.frameescape in one function", &CI);
     for (Value *Arg : CI.arg_operands()) {
+      if (isa<ConstantPointerNull>(Arg))
+        continue; // Null values are allowed as placeholders.
       auto *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts());
       Assert(AI && AI->isStaticAlloca(),
              "llvm.frameescape only accepts static allocas", &CI);

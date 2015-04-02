@@ -78,7 +78,11 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @llvm.eh.handlermapentry._J
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@"
 ; CHECK-NEXT:           catch i8* null
-; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry.H to i8*), i32* %i, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch", i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry._J to i8*), i64* %ll, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1", i32 1, i8* bitcast (%eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" to i8*), %class.SomeClass** %obj, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2", i32 1, i8* null, i8* null, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch3")
+; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(
+; CHECK-SAME:	     i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry.H to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch",
+; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry._J to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1",
+; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2",
+; CHECK-SAME:        i32 1, i8* null, i32 -1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch3")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %catch14.split, label %catch10.split, label %catch6.split, label %catch.split]
 
 lpad:                                             ; preds = %entry

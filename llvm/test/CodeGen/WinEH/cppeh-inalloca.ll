@@ -65,7 +65,7 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
-; CHECK-NEXT:   [[RECOVER:\%recover.*]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32* %e, i8* (i8*, i8*)* @"\01?test@@YAHUA@@@Z.catch", i32 0, void (i8*, i8*)* @"\01?test@@YAHUA@@@Z.cleanup")
+; CHECK-NEXT:   [[RECOVER:\%recover.*]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAHUA@@@Z.catch", i32 0, void (i8*, i8*)* @"\01?test@@YAHUA@@@Z.cleanup")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %cleanup]
 
 lpad:                                             ; preds = %entry

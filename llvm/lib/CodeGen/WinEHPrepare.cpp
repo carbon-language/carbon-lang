@@ -52,6 +52,12 @@ namespace {
 // frame allocation structure.
 typedef MapVector<Value *, TinyPtrVector<AllocaInst *>> FrameVarInfoMap;
 
+// TinyPtrVector cannot hold nullptr, so we need our own sentinel that isn't
+// quite null.
+AllocaInst *getCatchObjectSentinel() {
+  return static_cast<AllocaInst *>(nullptr) + 1;
+}
+
 typedef SmallSet<BasicBlock *, 4> VisitedBlockSet;
 
 class LandingPadActions;
@@ -106,6 +112,8 @@ public:
   ~WinEHFrameVariableMaterializer() {}
 
   virtual Value *materializeValueFor(Value *V) override;
+
+  void escapeCatchObject(Value *V);
 
 private:
   FrameVarInfoMap &FrameVarInfo;
@@ -193,13 +201,13 @@ public:
   CloningAction handleResume(ValueToValueMapTy &VMap, const ResumeInst *Resume,
                              BasicBlock *NewBB) override;
 
-  const Value *getExceptionVar() { return ExceptionObjectVar; }
+  Value *getExceptionVar() { return ExceptionObjectVar; }
   TinyPtrVector<BasicBlock *> &getReturnTargets() { return ReturnTargets; }
 
 private:
   Value *CurrentSelector;
 
-  const Value *ExceptionObjectVar;
+  Value *ExceptionObjectVar;
   TinyPtrVector<BasicBlock *> ReturnTargets;
 };
 
@@ -405,11 +413,17 @@ bool WinEHPrepare::prepareExceptionHandlers(
       if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
         ActionArgs.push_back(ConstantInt::get(Int32Type, 1));
         ActionArgs.push_back(CatchAction->getSelector());
+        // Find the frame escape index of the exception object alloca in the
+        // parent.
+        int FrameEscapeIdx = -1;
         Value *EHObj = const_cast<Value *>(CatchAction->getExceptionVar());
-        if (EHObj)
-          ActionArgs.push_back(EHObj);
-        else
-          ActionArgs.push_back(ConstantPointerNull::get(Int8PtrType));
+        if (EHObj && !isa<ConstantPointerNull>(EHObj)) {
+          auto I = FrameVarInfo.find(EHObj);
+          assert(I != FrameVarInfo.end() &&
+                 "failed to map llvm.eh.begincatch var");
+          FrameEscapeIdx = std::distance(FrameVarInfo.begin(), I);
+        }
+        ActionArgs.push_back(ConstantInt::get(Int32Type, FrameEscapeIdx));
       } else {
         ActionArgs.push_back(ConstantInt::get(Int32Type, 0));
       }
@@ -495,10 +509,15 @@ bool WinEHPrepare::prepareExceptionHandlers(
       }
     }
 
-    // If the parent alloca is no longer used and only one of the handlers used
-    // it, erase the parent and leave the copy in the outlined handler.
-    if (ParentAlloca->getNumUses() == 0 && Allocas.size() == 1) {
+    // If the parent alloca is used by exactly one handler and is not a catch
+    // parameter, erase the parent and leave the copy in the outlined handler.
+    // Catch parameters are indicated by a single null pointer in Allocas.
+    if (ParentAlloca->getNumUses() == 0 && Allocas.size() == 1 &&
+        Allocas[0] != getCatchObjectSentinel()) {
       ParentAlloca->eraseFromParent();
+      // FIXME: Put a null entry in the llvm.frameescape call because we've
+      // already created llvm.eh.actions calls with indices into it.
+      AllocasToEscape.push_back(Constant::getNullValue(Int8PtrType));
       continue;
     }
 
@@ -507,6 +526,8 @@ bool WinEHPrepare::prepareExceptionHandlers(
 
     // Next replace all outlined allocas that are mapped to it.
     for (AllocaInst *TempAlloca : Allocas) {
+      if (TempAlloca == getCatchObjectSentinel())
+        continue; // Skip catch parameter sentinels.
       Function *HandlerFn = TempAlloca->getParent()->getParent();
       // FIXME: Sink this GEP into the blocks where it is used.
       Builder.SetInsertPoint(TempAlloca);
@@ -859,6 +880,11 @@ CloningDirector::CloningAction WinEHCatchDirector::handleBeginCatch(
                                           "llvm.eh.begincatch found while "
                                           "outlining catch handler.");
   ExceptionObjectVar = Inst->getOperand(1)->stripPointerCasts();
+  if (isa<ConstantPointerNull>(ExceptionObjectVar))
+    return CloningDirector::SkipInstruction;
+  AllocaInst *AI = dyn_cast<AllocaInst>(ExceptionObjectVar);
+  assert(AI && AI->isStaticAlloca() && "catch parameter is not static alloca");
+  Materializer.escapeCatchObject(ExceptionObjectVar);
   return CloningDirector::SkipInstruction;
 }
 
@@ -1043,6 +1069,15 @@ Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {
 
   // Don't materialize other values.
   return nullptr;
+}
+
+void WinEHFrameVariableMaterializer::escapeCatchObject(Value *V) {
+  // Catch parameter objects have to live in the parent frame. When we see a use
+  // of a catch parameter, add a sentinel to the multimap to indicate that it's
+  // used from another handler. This will prevent us from trying to sink the
+  // alloca into the handler and ensure that the catch parameter is present in
+  // the call to llvm.frameescape.
+  FrameVarInfo[V].push_back(getCatchObjectSentinel());
 }
 
 // This function maps the catch and cleanup handlers that are reachable from the
