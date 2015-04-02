@@ -16,8 +16,8 @@ using namespace llvm::object;
 
 namespace lld {
 
-std::unique_ptr<Writer> createWriterELF(TargetHandler *handler) {
-  return std::move(handler->getWriter());
+std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &ctx) {
+  return ctx.getTargetHandler().getWriter();
 }
 
 } // namespace lld
