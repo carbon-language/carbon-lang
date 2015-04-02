@@ -512,7 +512,7 @@ protected:
 
 };
 
-Instruction *ilist_traits<Instruction>::createSentinel() const {
+inline Instruction *ilist_traits<Instruction>::createSentinel() const {
   // Since i(p)lists always publicly derive from their corresponding traits,
   // placing a data member in this class will augment the i(p)list.  But since
   // the NodeTy is expected to be publicly derive from ilist_node<NodeTy>,
