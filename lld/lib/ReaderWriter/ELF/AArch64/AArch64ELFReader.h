@@ -10,11 +10,12 @@
 #ifndef LLD_READER_WRITER_AARCH64_AARCH64_ELF_READER_H
 #define LLD_READER_WRITER_AARCH64_AARCH64_ELF_READER_H
 
-#include "AArch64ELFFile.h"
 #include "ELFReader.h"
 
 namespace lld {
 namespace elf {
+
+class AArch64LinkingContext;
 
 typedef llvm::object::ELFType<llvm::support::little, 2, true> AArch64ELFType;
 
@@ -24,7 +25,7 @@ struct AArch64ELFFileCreateELFTraits {
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
                             AArch64LinkingContext &ctx) {
-    return lld::elf::AArch64ELFFile<ELFT>::create(std::move(mb), ctx);
+    return lld::elf::ELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 

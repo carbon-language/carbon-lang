@@ -10,7 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_AARCH64_AARCH64_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_AARCH64_AARCH64_TARGET_HANDLER_H
 
-#include "AArch64ELFFile.h"
 #include "AArch64ELFReader.h"
 #include "AArch64RelocationHandler.h"
 #include "TargetLayout.h"

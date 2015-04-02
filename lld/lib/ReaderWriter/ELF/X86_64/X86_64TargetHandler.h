@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_ELF_X86_64_X86_64_TARGET_HANDLER_H
 
 #include "TargetLayout.h"
-#include "X86_64ELFFile.h"
 #include "X86_64ELFReader.h"
 #include "X86_64LinkingContext.h"
 #include "X86_64RelocationHandler.h"
