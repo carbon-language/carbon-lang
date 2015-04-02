@@ -107,3 +107,28 @@ define i64 @slsr_gep_uglygep([10 x [5 x %struct.S]]* %input, i64 %s, i64 %t) {
   %2 = add i64 %1, %v2
   ret i64 %2
 }
+
+define i32 @slsr_out_of_bounds_gep(i32* %input, i32 %s) {
+; CHECK-LABEL: @slsr_out_of_bounds_gep(
+  ; v0 = input[0];
+  %p0 = getelementptr i32, i32* %input, i64 0
+  %v0 = load i32, i32* %p0
+
+  ; v1 = input[(long)s];
+  %t = sext i32 %s to i64
+  %p1 = getelementptr i32, i32* %input, i64 %t
+; CHECK: %p1 = getelementptr i32, i32* %input, i64 %t
+  %v1 = load i32, i32* %p1
+
+  ; v2 = input[(long)(s * 2)];
+  %s2 = mul nsw i32 %s, 2
+  %t2 = sext i32 %s2 to i64
+  %p2 = getelementptr i32, i32* %input, i64 %t2
+; CHECK: %p2 = getelementptr i32, i32* %p1, i64 %t
+  %v2 = load i32, i32* %p2
+
+  ; return v0 + v1 + v2;
+  %1 = add i32 %v0, %v1
+  %2 = add i32 %1, %v2
+  ret i32 %2
+}
