@@ -113,12 +113,13 @@ void BackgroundThread(void *arg) {
 }
 
 void MaybeStartBackgroudThread() {
-  if (!SANITIZER_LINUX) return;  // Need to implement/test on other platforms.
+#if SANITIZER_LINUX  // Need to implement/test on other platforms.
   // Start the background thread if one of the rss limits is given.
   if (!common_flags()->hard_rss_limit_mb &&
       !common_flags()->soft_rss_limit_mb) return;
   if (!&real_pthread_create) return;  // Can't spawn the thread anyway.
   internal_start_thread(BackgroundThread, nullptr);
+#endif
 }
 
 }  // namespace __sanitizer

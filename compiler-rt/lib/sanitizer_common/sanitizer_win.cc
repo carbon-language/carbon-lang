@@ -353,9 +353,26 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
 };
 
 #ifndef SANITIZER_GO
+// We can't use atexit() directly at __asan_init time as the CRT is not fully
+// initialized at this point.  Place the functions into a vector and use
+// atexit() as soon as it is ready for use (i.e. after .CRT$XIC initializers).
+InternalMmapVectorNoCtor<void (*)(void)> atexit_functions;
+
 int Atexit(void (*function)(void)) {
-  return atexit(function);
+  atexit_functions.push_back(function);
+  return 0;
 }
+
+static int RunAtexit() {
+  int ret = 0;
+  for (uptr i = 0; i < atexit_functions.size(); ++i) {
+    ret |= atexit(atexit_functions[i]);
+  }
+  return ret;
+}
+
+#pragma section(".CRT$XID", long, read)  // NOLINT
+static __declspec(allocate(".CRT$XID")) int (*__run_atexit)() = RunAtexit;
 #endif
 
 // ------------------ sanitizer_libc.h

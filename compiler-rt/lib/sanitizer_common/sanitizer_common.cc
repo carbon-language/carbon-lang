@@ -219,8 +219,15 @@ const char *StripPathPrefix(const char *filepath,
 const char *StripModuleName(const char *module) {
   if (module == 0)
     return 0;
-  if (const char *slash_pos = internal_strrchr(module, '/'))
+  if (SANITIZER_WINDOWS) {
+    // On Windows, both slash and backslash are possible.
+    // Pick the one that goes last.
+    if (const char *bslash_pos = internal_strrchr(module, '\\'))
+      return StripModuleName(bslash_pos + 1);
+  }
+  if (const char *slash_pos = internal_strrchr(module, '/')) {
     return slash_pos + 1;
+  }
   return module;
 }
 

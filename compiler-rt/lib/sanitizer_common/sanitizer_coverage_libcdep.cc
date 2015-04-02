@@ -834,9 +834,7 @@ void InitializeCoverage(bool enabled, const char *dir) {
   coverage_dir = dir;
   coverage_data.Init();
   if (enabled) coverage_data.Enable();
-#if !SANITIZER_WINDOWS
   if (!common_flags()->coverage_direct) Atexit(__sanitizer_cov_dump);
-#endif
 }
 
 void ReInitializeCoverage(bool enabled, const char *dir) {
