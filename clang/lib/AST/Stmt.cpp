@@ -940,8 +940,7 @@ void ForStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
 }
 
 SwitchStmt::SwitchStmt(const ASTContext &C, VarDecl *Var, Expr *cond)
-  : Stmt(SwitchStmtClass), FirstCase(nullptr), AllEnumCasesCovered(0)
-{
+    : Stmt(SwitchStmtClass), FirstCase(nullptr, false) {
   setConditionVariable(C, Var);
   SubExprs[COND] = cond;
   SubExprs[BODY] = nullptr;
