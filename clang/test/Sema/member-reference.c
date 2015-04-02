@@ -20,5 +20,5 @@ void g(void) {
 }
 
 int PR17762(struct simple c) {
-  return c->i; // expected-error {{member reference type 'struct simple' is not a pointer; maybe you meant to use '.'?}}
+  return c->i; // expected-error {{member reference type 'struct simple' is not a pointer; did you mean to use '.'?}}
 }

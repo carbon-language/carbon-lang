@@ -5,7 +5,7 @@
 
 int main() {
     void (^arc_fail)() = ^() {  // expected-warning {{block pointer variable 'arc_fail' is uninitialized when captured by block}} \
-                                // expected-note {{maybe you meant to use __block 'arc_fail'}}
+                                // expected-note {{did you mean to use __block 'arc_fail'}}
        arc_fail(); // BOOM
     };
 }

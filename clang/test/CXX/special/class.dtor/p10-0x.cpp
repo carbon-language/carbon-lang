@@ -27,9 +27,9 @@ void a(const A *x, int i, int *pi) {
   y->~decltype(A())(); // expected-error{{use of undeclared identifier 'y'}}
 
   typedef int *intp;
-  i->~decltype(int())(); // expected-error{{member reference type 'int' is not a pointer; maybe you meant to use '.'?}}
+  i->~decltype(int())(); // expected-error{{member reference type 'int' is not a pointer; did you mean to use '.'?}}
   i.~decltype(int())();
-  i->~decltype(intp())(); // expected-error{{member reference type 'int' is not a pointer; maybe you meant to use '.'?}} \
+  i->~decltype(intp())(); // expected-error{{member reference type 'int' is not a pointer; did you mean to use '.'?}} \
                              expected-error{{the type of object expression ('int') does not match the type being destroyed ('decltype(intp())' (aka 'int *')) in pseudo-destructor expression}}
   i.~decltype(intp())(); // expected-error{{the type of object expression ('int') does not match the type being destroyed ('decltype(intp())' (aka 'int *')) in pseudo-destructor expression}}
   pi->~decltype(int())();
