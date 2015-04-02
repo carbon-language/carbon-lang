@@ -74,7 +74,7 @@ void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   for (auto sec : this->_layout.sections())
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms()) {
-        if (_writeHelper.hasGlobalGOTEntry(atom->_atom)) {
+        if (_targetLayout.getGOTSection().hasGlobalGOTEntry(atom->_atom)) {
           this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
                                                atom->_virtualAddr, atom);
           continue;
@@ -98,7 +98,7 @@ void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     // FIXME (simon): Consider to move this check to the
     // MipsELFUndefinedAtom class method. That allows to
     // handle more complex coditions in the future.
-    if (_writeHelper.hasGlobalGOTEntry(a))
+    if (_targetLayout.getGOTSection().hasGlobalGOTEntry(a))
       this->_dynamicSymbolTable->addSymbol(a, ELF::SHN_UNDEF);
 
   // Skip our immediate parent class method

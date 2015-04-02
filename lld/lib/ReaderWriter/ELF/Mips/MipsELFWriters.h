@@ -47,10 +47,6 @@ public:
     setAtomValue("__gnu_local_gp", gp);
   }
 
-  bool hasGlobalGOTEntry(const Atom *a) const {
-    return _targetLayout.getGOTSection().hasGlobalGOTEntry(a);
-  }
-
   std::unique_ptr<RuntimeFile<ELFT>> createRuntimeFile() {
     auto file = llvm::make_unique<RuntimeFile<ELFT>>(_ctx, "Mips runtime file");
     if (_ctx.isDynamic()) {
