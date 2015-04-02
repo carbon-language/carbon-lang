@@ -24,7 +24,7 @@ namespace clang {
 
 // Defined in ASTContext.h
 void *operator new(size_t Bytes, const clang::ASTContext &C,
-                   size_t Alignment = 16);
+                   size_t Alignment = 8);
 // FIXME: Being forced to not have a default argument here due to redeclaration
 //        rules on default arguments sucks
 void *operator new[](size_t Bytes, const clang::ASTContext &C,

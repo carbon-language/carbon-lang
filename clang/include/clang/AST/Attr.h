@@ -65,7 +65,7 @@ protected:
 public:
   // Forward so that the regular new and delete do not hide global ones.
   void* operator new(size_t Bytes, ASTContext &C,
-                     size_t Alignment = 16) throw() {
+                     size_t Alignment = 8) throw() {
     return ::operator new(Bytes, C, Alignment);
   }
   void operator delete(void *Ptr, ASTContext &C,
