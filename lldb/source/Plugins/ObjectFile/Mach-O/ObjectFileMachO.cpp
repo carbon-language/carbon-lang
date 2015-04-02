@@ -1464,7 +1464,9 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
             if (m_data.GetU32(&offset, &encryption_cmd, 2) == NULL)
                 break;
 
-            if (encryption_cmd.cmd == LC_ENCRYPTION_INFO)
+            // LC_ENCRYPTION_INFO and LC_ENCRYPTION_INFO_64 have the same sizes for
+            // the 3 fields we care about, so treat them the same.
+            if (encryption_cmd.cmd == LC_ENCRYPTION_INFO || encryption_cmd.cmd == LC_ENCRYPTION_INFO_64)
             {
                 if (m_data.GetU32(&offset, &encryption_cmd.cryptoff, 3))
                 {
