@@ -1766,9 +1766,11 @@ void FunctionStackPoisoner::poisonStack() {
   uint64_t LocalStackSize = L.FrameSize;
   bool DoStackMalloc =
       ClUseAfterReturn && LocalStackSize <= kMaxStackMallocSize;
-  // Don't do dynamic alloca in presence of inline asm: too often it
-  // makes assumptions on which registers are available.
+  // Don't do dynamic alloca in presence of inline asm: too often it makes
+  // assumptions on which registers are available. Don't do stack malloc in the
+  // presence of inline asm on 32-bit platforms for the same reason.
   bool DoDynamicAlloca = ClDynamicAllocaStack && !HasNonEmptyInlineAsm;
+  DoStackMalloc &= !HasNonEmptyInlineAsm || ASan.LongSize != 32;
 
   Value *StaticAlloca =
       DoDynamicAlloca ? nullptr : createAllocaForLayout(IRB, L, false);
