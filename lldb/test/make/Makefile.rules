@@ -184,6 +184,8 @@ cxx_linker_notdir = $(if $(findstring clang,$(1)), \
                                         $(subst cc,c++,$(1))))))
 cxx_linker = $(if $(findstring /,$(1)),$(join $(dir $(1)), $(call cxx_linker_notdir,$(notdir $(1)))),$(call cxx_linker_notdir,$(1)))
 
+OBJCOPY = objcopy
+
 #----------------------------------------------------------------------
 # Windows specific options
 #----------------------------------------------------------------------
@@ -202,7 +204,15 @@ endif
 # Android specific options
 #----------------------------------------------------------------------
 ifeq "$(OS)" "Android"
-	LDFLAGS += -pie
+    objcopy_notdir = $(if $(findstring clang,$(1)), \
+                          $(subst clang,objcopy,$(1)), \
+                               $(if $(findstring gcc,$(1)), \
+                                    $(subst gcc,objcopy,$(1)), \
+                                    $(subst cc,objcopy,$(1))))))
+    objcopy = $(if $(findstring /,$(1)),$(join $(dir $(1)), $(call objcopy_notdir,$(notdir $(1)))),$(call objcopy_notdir,$(1)))
+
+    LDFLAGS += -pie
+    OBJCOPY = $(call objcopy $(CC))
 endif
 
 #----------------------------------------------------------------------
@@ -342,8 +352,8 @@ ifneq "$(MAKE_DSYM)" "NO"
 endif
 else
 ifeq "$(SPLIT_DEBUG_SYMBOLS)" "YES"
-	objcopy --only-keep-debug "$(EXE)" "$(DSYM)"
-	objcopy --strip-debug --add-gnu-debuglink="$(DSYM)" "$(EXE)" "$(EXE)"
+	$(OBJCOPY) --only-keep-debug "$(EXE)" "$(DSYM)"
+	$(OBJCOPY) --strip-debug --add-gnu-debuglink="$(DSYM)" "$(EXE)" "$(EXE)"
 endif
 endif
 endif
@@ -392,8 +402,8 @@ endif
 else
 	$(LD) $(LDFLAGS) $(DYLIB_OBJECTS) -shared -o "$(DYLIB_FILENAME)"
 ifeq "$(SPLIT_DEBUG_SYMBOLS)" "YES"
-	objcopy --only-keep-debug "$(DYLIB_FILENAME)" "$(DYLIB_FILENAME).debug"
-	objcopy --strip-debug --add-gnu-debuglink="$(DYLIB_FILENAME).debug" "$(DYLIB_FILENAME)" "$(DYLIB_FILENAME)"
+	$(OBJCOPY) --only-keep-debug "$(DYLIB_FILENAME)" "$(DYLIB_FILENAME).debug"
+	$(OBJCOPY) --strip-debug --add-gnu-debuglink="$(DYLIB_FILENAME).debug" "$(DYLIB_FILENAME)" "$(DYLIB_FILENAME)"
 endif
 endif
 
