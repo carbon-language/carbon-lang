@@ -256,6 +256,12 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorMemberCallExpr(
   } else if (UseVirtualCall) {
     Callee = CGM.getCXXABI().getVirtualFunctionPointer(*this, MD, This, Ty);
   } else {
+    if (SanOpts.has(SanitizerKind::CFINVCall) &&
+        MD->getParent()->isDynamicClass()) {
+      llvm::Value *VTable = GetVTablePtr(This, Int8PtrTy);
+      EmitVTablePtrCheckForCall(MD, VTable);
+    }
+
     if (getLangOpts().AppleKext && MD->isVirtual() && HasQualifier)
       Callee = BuildAppleKextVirtualCall(MD, Qualifier, Ty);
     else if (!DevirtualizedMethod)

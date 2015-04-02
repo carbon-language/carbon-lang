@@ -82,8 +82,10 @@ SANITIZER("dataflow", DataFlow)
 SANITIZER("cfi-cast-strict", CFICastStrict)
 SANITIZER("cfi-derived-cast", CFIDerivedCast)
 SANITIZER("cfi-unrelated-cast", CFIUnrelatedCast)
-SANITIZER("cfi-vptr", CFIVptr)
-SANITIZER_GROUP("cfi", CFI, CFIDerivedCast | CFIUnrelatedCast | CFIVptr)
+SANITIZER("cfi-nvcall", CFINVCall)
+SANITIZER("cfi-vcall", CFIVCall)
+SANITIZER_GROUP("cfi", CFI,
+                CFIDerivedCast | CFIUnrelatedCast | CFINVCall | CFIVCall)
 
 // -fsanitize=undefined-trap includes sanitizers from -fsanitize=undefined
 // that can be used without runtime support, generally by providing extra

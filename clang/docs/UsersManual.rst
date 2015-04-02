@@ -974,7 +974,9 @@ are listed below.
       dynamic type. Implies ``-flto``.
    -  ``-fsanitize=cfi-unrelated-cast``: Cast from ``void*`` or another
       unrelated type to the wrong dynamic type. Implies ``-flto``.
-   -  ``-fsanitize=cfi-vptr``: Use of an object whose vptr is of the
+   -  ``-fsanitize=cfi-nvcall``: Non-virtual call via an object whose vptr is of
+      the wrong dynamic type. Implies ``-flto``.
+   -  ``-fsanitize=cfi-vcall``: Virtual call via an object whose vptr is of the
       wrong dynamic type. Implies ``-flto``.
    -  ``-fsanitize=enum``: Load of a value of an enumerated type which
       is not in the range of representable values for that enumerated

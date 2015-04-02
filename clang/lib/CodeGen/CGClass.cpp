@@ -2088,14 +2088,6 @@ llvm::Value *CodeGenFunction::GetVTablePtr(llvm::Value *This,
   return VTable;
 }
 
-void CodeGenFunction::EmitVTablePtrCheckForCall(const CXXMethodDecl *MD,
-                                                llvm::Value *VTable) {
-  if (!SanOpts.has(SanitizerKind::CFIVptr))
-    return;
-
-  EmitVTablePtrCheck(MD->getParent(), VTable);
-}
-
 // If a class has a single non-virtual base and does not introduce or override
 // virtual member functions or fields, it will have the same layout as its base.
 // This function returns the least derived such class.
@@ -2129,6 +2121,15 @@ LeastDerivedClassWithSameLayout(const CXXRecordDecl *RD) {
 
   return LeastDerivedClassWithSameLayout(
       RD->bases_begin()->getType()->getAsCXXRecordDecl());
+}
+
+void CodeGenFunction::EmitVTablePtrCheckForCall(const CXXMethodDecl *MD,
+                                                llvm::Value *VTable) {
+  const CXXRecordDecl *ClassDecl = MD->getParent();
+  if (!SanOpts.has(SanitizerKind::CFICastStrict))
+    ClassDecl = LeastDerivedClassWithSameLayout(ClassDecl);
+
+  EmitVTablePtrCheck(ClassDecl, VTable);
 }
 
 void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,

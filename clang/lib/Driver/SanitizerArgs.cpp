@@ -48,7 +48,7 @@ enum SanitizeKind : uint64_t {
   RecoverableByDefault = Undefined | Integer,
   Unrecoverable = Address | Unreachable | Return,
   LegacyFsanitizeRecoverMask = Undefined | Integer,
-  NeedsLTO = CFIDerivedCast | CFIUnrelatedCast | CFIVptr,
+  NeedsLTO = CFI,
 };
 }
 

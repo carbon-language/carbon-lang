@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-linux -fsanitize=cfi-vptr -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux -fsanitize=cfi-vcall -emit-llvm -o - %s | FileCheck %s
 
 struct A {
   A();
@@ -49,7 +49,7 @@ void af(A *a) {
 
 // CHECK: define internal void @_Z2dfPN12_GLOBAL__N_11DE
 void df(D *d) {
-  // CHECK: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"[{{.*}}cfi-vptr.cpp]N12_GLOBAL__N_11DE")
+  // CHECK: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"[{{.*}}cfi-vcall.cpp]N12_GLOBAL__N_11DE")
   d->f();
 }
 
@@ -67,7 +67,7 @@ void foo() {
 // CHECK-DAG: !{!"1A", [10 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
 // CHECK-DAG: !{!"1B", [10 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
 // CHECK-DAG: !{!"1C", [10 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 72}
-// CHECK-DAG: !{!"[{{.*}}cfi-vptr.cpp]N12_GLOBAL__N_11DE", [10 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
+// CHECK-DAG: !{!"[{{.*}}cfi-vcall.cpp]N12_GLOBAL__N_11DE", [10 x i8*]* @_ZTVN12_GLOBAL__N_11DE, i64 32}
 // CHECK-DAG: !{!"1A", [5 x i8*]* @_ZTV1B, i64 32}
 // CHECK-DAG: !{!"1B", [5 x i8*]* @_ZTV1B, i64 32}
 // CHECK-DAG: !{!"1A", [5 x i8*]* @_ZTV1C, i64 32}

@@ -27,8 +27,8 @@ the program must be structured such that certain object files are compiled
 with CFI enabled, and are statically linked into the program. This may
 preclude the use of shared libraries in some cases.
 
-Clang currently implements forward-edge CFI for virtual calls. More schemes
-are under development.
+Clang currently implements forward-edge CFI for member function calls and
+bad cast checking. More schemes are under development.
 
 .. _gold plugin: http://llvm.org/docs/GoldPlugin.html
 
@@ -38,11 +38,11 @@ Forward-Edge CFI for Virtual Calls
 This scheme checks that virtual calls take place using a vptr of the correct
 dynamic type; that is, the dynamic type of the called object must be a
 derived class of the static type of the object used to make the call.
-This CFI scheme can be enabled on its own using ``-fsanitize=cfi-vptr``.
+This CFI scheme can be enabled on its own using ``-fsanitize=cfi-vcall``.
 
 For this scheme to work, all translation units containing the definition
 of a virtual member function (whether inline or not) must be compiled
-with ``-fsanitize=cfi-vptr`` enabled and be statically linked into the
+with ``-fsanitize=cfi-vcall`` enabled and be statically linked into the
 program. Classes in the C++ standard library (under namespace ``std``) are
 exempted from checking, and therefore programs may be linked against a
 pre-built standard library, but this may change in the future.
@@ -94,6 +94,23 @@ and be statically linked into the program. Classes in the C++ standard library
 (under namespace ``std``) are exempted from checking, and therefore programs
 may be linked against a pre-built standard library, but this may change in
 the future.
+
+Non-Virtual Member Function Call Checking
+-----------------------------------------
+
+This scheme checks that non-virtual calls take place using an object of
+the correct dynamic type; that is, the dynamic type of the called object
+must be a derived class of the static type of the object used to make the
+call. The checks are currently only introduced where the object is of a
+polymorphic class type.  This CFI scheme can be enabled on its own using
+``-fsanitize=cfi-nvcall``.
+
+For this scheme to work, all translation units containing the definition
+of a virtual member function (whether inline or not) must be compiled
+with ``-fsanitize=cfi-nvcall`` enabled and be statically linked into the
+program. Classes in the C++ standard library (under namespace ``std``) are
+exempted from checking, and therefore programs may be linked against a
+pre-built standard library, but this may change in the future.
 
 .. _cfi-strictness:
 
