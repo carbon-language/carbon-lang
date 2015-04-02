@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECLGROUP_H
 #define LLVM_CLANG_AST_DECLGROUP_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -24,13 +25,9 @@ class Decl;
 class DeclGroup;
 class DeclGroupIterator;
 
-class DeclGroup {
+class LLVM_ALIGNAS(sizeof(void *)) DeclGroup {
   // FIXME: Include a TypeSpecifier object.
-  union {
-    unsigned NumDecls;
-
-    Decl *Aligner;
-  };
+  unsigned NumDecls;
 
 private:
   DeclGroup() : NumDecls(0) {}

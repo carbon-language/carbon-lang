@@ -460,21 +460,12 @@ public:
 ///     friend void foo<>(T);
 ///   };
 /// \endcode
-class DependentFunctionTemplateSpecializationInfo {
-  struct CA {
-    /// The number of potential template candidates.
-    unsigned NumTemplates;
+class LLVM_ALIGNAS(sizeof(void *)) DependentFunctionTemplateSpecializationInfo {
+  /// The number of potential template candidates.
+  unsigned NumTemplates;
 
-    /// The number of template arguments.
-    unsigned NumArgs;
-  };
-
-  union {
-    // Force sizeof to be a multiple of sizeof(void*) so that the
-    // trailing data is aligned.
-    void *Aligner;
-    struct CA d;
-  };
+  /// The number of template arguments.
+  unsigned NumArgs;
 
   /// The locations of the left and right angle brackets.
   SourceRange AngleLocs;
@@ -490,9 +481,7 @@ public:
 
   /// \brief Returns the number of function templates that this might
   /// be a specialization of.
-  unsigned getNumTemplates() const {
-    return d.NumTemplates;
-  }
+  unsigned getNumTemplates() const { return NumTemplates; }
 
   /// \brief Returns the i'th template candidate.
   FunctionTemplateDecl *getTemplate(unsigned I) const {
@@ -507,9 +496,7 @@ public:
   }
 
   /// \brief Returns the number of explicit template arguments that were given.
-  unsigned getNumTemplateArgs() const {
-    return d.NumArgs;
-  }
+  unsigned getNumTemplateArgs() const { return NumArgs; }
 
   /// \brief Returns the nth template argument.
   const TemplateArgumentLoc &getTemplateArg(unsigned I) const {

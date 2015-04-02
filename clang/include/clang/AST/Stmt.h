@@ -101,7 +101,7 @@ namespace clang {
 
 /// Stmt - This represents one statement.
 ///
-class Stmt {
+class LLVM_ALIGNAS(sizeof(void *)) Stmt {
 public:
   enum StmtClass {
     NoStmtClass = 0,
@@ -287,9 +287,6 @@ protected:
   };
 
   union {
-    // FIXME: this is wasteful on 64-bit platforms.
-    void *Aligner;
-
     StmtBitfields StmtBits;
     CompoundStmtBitfields CompoundStmtBits;
     ExprBitfields ExprBits;
@@ -341,13 +338,12 @@ private:
 
 protected:
   /// \brief Construct an empty statement.
-  explicit Stmt(StmtClass SC, EmptyShell) {
-    StmtBits.sClass = SC;
-    if (StatisticsEnabled) Stmt::addStmtClass(SC);
-  }
+  explicit Stmt(StmtClass SC, EmptyShell) : Stmt(SC) {}
 
 public:
   Stmt(StmtClass SC) {
+    static_assert(sizeof(*this) % llvm::AlignOf<void *>::Alignment == 0,
+                  "Insufficient alignment!");
     StmtBits.sClass = SC;
     if (StatisticsEnabled) Stmt::addStmtClass(SC);
   }
