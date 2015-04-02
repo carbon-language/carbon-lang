@@ -99,10 +99,6 @@ void Printer::getAnalysisUsage(AnalysisUsage &AU) const {
 
 static const char *DescKind(GC::PointKind Kind) {
   switch (Kind) {
-  case GC::Loop:
-    return "loop";
-  case GC::Return:
-    return "return";
   case GC::PreCall:
     return "pre-call";
   case GC::PostCall:

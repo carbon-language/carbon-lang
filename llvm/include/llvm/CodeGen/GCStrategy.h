@@ -60,11 +60,11 @@
 
 namespace llvm {
 namespace GC {
-/// PointKind - The type of a collector-safe point.
+/// PointKind - Used to indicate whether the address of the call instruction
+/// or the address after the call instruction is listed in the stackmap.  For
+/// most runtimes, PostCall safepoints are appropriate.
 ///
 enum PointKind {
-  Loop,    ///< Instr is a loop (backwards branch).
-  Return,  ///< Instr is a return instruction.
   PreCall, ///< Instr is a call instruction.
   PostCall ///< Instr is the return address of a call.
 };
