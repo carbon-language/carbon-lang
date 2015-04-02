@@ -9,6 +9,9 @@
 //
 // UNSUPPORTED: libcpp-has-no-threads
 
+// NOTE: TSAN will report this test as leaking a thread.
+// XFAIL: tsan
+
 // <thread>
 
 // class thread
@@ -53,8 +56,11 @@ int main()
     {
         assert(G::n_alive == 0);
         assert(!G::op_run);
-        std::thread t((G()));
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        G g;
+        {
+          std::thread t(g);
+          std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }
     }
     assert(false);
 }

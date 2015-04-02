@@ -45,7 +45,8 @@ bool G::op_run = false;
 int main()
 {
     {
-        std::thread t0((G()));
+        G g;
+        std::thread t0(g);
         pthread_t pid = t0.native_handle();
         assert(pid != 0);
         t0.join();

@@ -48,13 +48,16 @@ int main()
     {
         assert(G::n_alive == 0);
         assert(!G::op_run);
-        std::thread t0(G(), 5, 5.5);
+        {
+        G g;
+        std::thread t0(g, 5, 5.5);
         std::thread::id id = t0.get_id();
         std::thread t1;
         t1 = std::move(t0);
         assert(t1.get_id() == id);
         assert(t0.get_id() == std::thread::id());
         t1.join();
+        }
         assert(G::n_alive == 0);
         assert(G::op_run);
     }

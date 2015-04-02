@@ -45,7 +45,8 @@ bool G::op_run = false;
 int main()
 {
     {
-        std::thread t0((G()));
+        G g;
+        std::thread t0(g);
         assert(t0.joinable());
         t0.join();
         assert(!t0.joinable());

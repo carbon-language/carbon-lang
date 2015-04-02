@@ -13,6 +13,9 @@
 // memory is not freed. This will cause ASAN to fail.
 // XFAIL: asan
 
+// NOTE: TSAN will report this test as leaking a thread.
+// XFAIL: tsan
+
 // <thread>
 
 // class thread
@@ -62,14 +65,13 @@ void f1()
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     std::set_terminate(f1);
     {
-        std::thread t0(G(), 5, 5.5);
+        G g;
+        std::thread t0(g, 5, 5.5);
         std::thread::id id = t0.get_id();
         std::thread t1;
         t0 = std::move(t1);
         assert(false);
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
