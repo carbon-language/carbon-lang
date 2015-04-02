@@ -7,14 +7,14 @@
 # CHECK: Contents of section .rel.plt:
 # CHECK: 400074 00104000
 # CHECK: Contents of section .plt:
-# CHECK: 400080 00c68fe2 00ca8ce2 78ffbce5
+# CHECK: 40007c 00c68fe2 00ca8ce2 7cffbce5
 # CHECK: Contents of section .text:
-# CHECK: 4001ac 00482de9 04b08de2 d4ffffeb b0ffffeb
+# CHECK: 4001a8 00482de9 04b08de2 d4ffffeb b0ffffeb
 #                                             ^ bl #-320 (to address 0x400080=__plt_ifunc_myfunc)
 # CHECK: Contents of section .got.plt:
-# CHECK: 401000 c4004000
+# CHECK: 401000 c0004000
 # CHECK: SYMBOL TABLE:
-# CHECK: 004000c4 g       .text	00000020 myfunc
+# CHECK: 004000c0 g       .text	00000020 myfunc
 # CHECK: 00400074 g       *ABS*	00000000 __rel_iplt_start
 # CHECK: 0040007c g       *ABS*	00000000 __rel_iplt_end
 

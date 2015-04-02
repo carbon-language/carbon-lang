@@ -20,7 +20,7 @@
 #include "ARMLinkingContext.h"
 #include "Atoms.h"
 #include "lld/Core/Simple.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 
@@ -51,13 +51,15 @@ static const uint8_t ARMGotAtomContent[4] = {0};
 
 // .plt values (other entries)
 static const uint8_t ARMPltAtomContent[12] = {
-    0x00, 0xc0, 0x8f,
-    0xe2, // add    ip, pc, #offset[G0]
-    0x00, 0xc0, 0x8c,
-    0xe2, // add    ip, ip, #offset[G1]
+    0x00, 0xc0, 0x8f, 0xe2,  // add ip, pc, #offset[G0]
+    0x00, 0xc0, 0x8c, 0xe2,  // add ip, ip, #offset[G1]
+    0x00, 0xf0, 0xbc, 0xe5   // ldr pc, [ip, #offset[G2]]!
+};
 
-    0x00, 0xf0, 0xbc,
-    0xe5, // ldr    pc, [ip, #offset[G2]]!
+// Veneer for switching from Thumb to ARM code for PLT entries.
+static const uint8_t ARMPltVeneerAtomContent[4] = {
+    0x78, 0x47,              // bx pc
+    0x00, 0x00               // nop
 };
 
 /// \brief Atoms that hold veneer code.
@@ -121,22 +123,48 @@ public:
 /// \brief Atoms that are used by ARM dynamic linking
 class ARMGOTAtom : public GOTAtom {
 public:
-  ARMGOTAtom(const File &f, StringRef secName) : GOTAtom(f, secName) {}
+  ARMGOTAtom(const File &f) : GOTAtom(f, ".got") {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(ARMGotAtomContent);
   }
 
   Alignment alignment() const override { return 4; }
+
+protected:
+  // Constructor for PLTGOT atom.
+  ARMGOTAtom(const File &f, StringRef secName) : GOTAtom(f, secName) {}
+};
+
+class ARMGOTPLTAtom : public ARMGOTAtom {
+public:
+  ARMGOTPLTAtom(const File &f) : ARMGOTAtom(f, ".got.plt") {}
 };
 
 class ARMPLTAtom : public PLTAtom {
 public:
-  ARMPLTAtom(const File &f, StringRef secName) : PLTAtom(f, secName) {}
+  ARMPLTAtom(const File &f) : PLTAtom(f, ".plt") {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(ARMPltAtomContent);
   }
+
+  Alignment alignment() const override { return 4; }
+};
+
+class ARMPLTVeneerAtom : public PLTAtom {
+public:
+  ARMPLTVeneerAtom(const File &f) : PLTAtom(f, ".plt") {}
+
+  DefinedAtom::CodeModel codeModel() const override {
+    return DefinedAtom::codeARMThumb;
+  }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(ARMPltVeneerAtomContent);
+  }
+
+  Alignment alignment() const override { return 4; }
 };
 
 class ELFPassFile : public SimpleFile {
@@ -172,7 +200,7 @@ template <class Derived> class ARMRelocationPass : public Pass {
     case R_ARM_JUMP24:
     case R_ARM_THM_JUMP24:
     case R_ARM_THM_JUMP11:
-      static_cast<Derived *>(this)->handleIFUNC(ref);
+      static_cast<Derived *>(this)->handleIFUNC(atom, ref);
       static_cast<Derived *>(this)->handleVeneer(atom, ref);
       break;
     case R_ARM_TLS_IE32:
@@ -188,10 +216,15 @@ template <class Derived> class ARMRelocationPass : public Pass {
 
 protected:
   std::error_code handleVeneer(const DefinedAtom &atom, const Reference &ref) {
+    const VeneerAtom *(Derived::*getVeneer)(const DefinedAtom *, StringRef) =
+        nullptr;
     const auto kindValue = ref.kindValue();
     switch (kindValue) {
     case R_ARM_JUMP24:
+      getVeneer = &Derived::getVeneer_ARM_B_BL;
+      break;
     case R_ARM_THM_JUMP24:
+      getVeneer = &Derived::getVeneer_THM_B_BL;
       break;
     default:
       return std::error_code();
@@ -226,19 +259,9 @@ protected:
       llvm_unreachable(errStr.c_str());
     }
 
-    const Atom *veneer = nullptr;
-    switch (kindValue) {
-    case R_ARM_JUMP24:
-      veneer = static_cast<Derived *>(this)
-                   ->getVeneer_ARM_B_BL(target, secName);
-      break;
-    case R_ARM_THM_JUMP24:
-      veneer = static_cast<Derived *>(this)
-                   ->getVeneer_THM_B_BL(target, secName);
-      break;
-    default:
-      llvm_unreachable("Unhandled reference type for veneer generation");
-    }
+    assert(getVeneer && "The veneer handler is missing");
+    const Atom *veneer =
+        (static_cast<Derived *>(this)->*getVeneer)(target, secName);
 
     assert(veneer && "The veneer is not set");
     const_cast<Reference &>(ref).setTarget(veneer);
@@ -257,64 +280,113 @@ protected:
   /// \brief Create a GOT entry for TLS with reloc type and addend specified.
   template <Reference::KindValue R_ARM_TLS, Reference::Addend A = 0>
   const GOTAtom *getGOTTLSEntry(const DefinedAtom *da) {
-    auto got = _gotMap.find(da);
-    if (got != _gotMap.end())
-      return got->second;
-    auto g = new (_file._alloc) ARMGOTAtom(_file, ".got");
+    if (auto got = _gotAtoms.lookup(da))
+      return got;
+    auto g = new (_file._alloc) ARMGOTAtom(_file);
     g->addReferenceELF_ARM(R_ARM_TLS, 0, da, A);
 #ifndef NDEBUG
     g->_name = "__got_tls_";
     g->_name += da->name();
 #endif
-    _gotMap[da] = g;
-    _gotVector.push_back(g);
+    _gotAtoms[da] = g;
     return g;
   }
 
-  /// \brief Create a PLT entry referencing PLTGOT entry.
+  /// \brief get a veneer for a PLT entry.
+  const PLTAtom *getPLTVeneer(const DefinedAtom *da, PLTAtom *pa,
+                              StringRef source) {
+    auto va = new (_file._alloc) ARMPLTVeneerAtom(_file);
+    // Fake reference to show connection between veneer and PLT entry.
+    va->addReferenceELF_ARM(R_ARM_NONE, 0, pa, 0);
+#ifndef NDEBUG
+    va->_name = "__plt_from_thumb";
+    va->_name += source;
+    va->_name += da->name();
+#endif
+    _pltAtoms[da] = PLTWithVeneer(pa, va);
+    return va;
+  }
+
+  typedef const GOTAtom *(Derived::*GOTFactory)(const DefinedAtom *);
+
+  /// \brief get a PLT entry referencing PLTGOT entry.
   ///
-  /// The function creates the PLT entry object and passes ownership
-  /// over it to the caller.
-  PLTAtom *createPLTforGOT(const GOTAtom *ga) {
-    auto pa = new (_file._alloc) ARMPLTAtom(_file, ".plt");
+  /// If the entry does not exist, both GOT and PLT entry are created.
+  const PLTAtom *getPLTEntry(const DefinedAtom *da, bool fromThumb,
+                             GOTFactory gotFactory, StringRef source) {
+    auto pltVeneer = _pltAtoms.lookup(da);
+    if (!pltVeneer.empty()) {
+      // Return clean PLT entry provided it is ARM code.
+      if (!fromThumb)
+        return pltVeneer._plt;
+
+      // Check if veneer is present for Thumb to ARM transition.
+      if (pltVeneer._veneer)
+        return pltVeneer._veneer;
+
+      // Create veneer for existing PLT entry.
+      return getPLTVeneer(da, pltVeneer._plt, source);
+    }
+
+    // Create specific GOT entry.
+    const auto *ga = (static_cast<Derived *>(this)->*gotFactory)(da);
+    assert(_gotAtoms.lookup(da) == ga &&
+           "GOT entry should be added to the map");
+    assert(ga->customSectionName() == ".got.plt" &&
+           "GOT entry should be in a special section");
+
+    // Create PLT entry for the GOT entry.
+    auto pa = new (_file._alloc) ARMPLTAtom(_file);
     pa->addReferenceELF_ARM(R_ARM_ALU_PC_G0_NC, 0, ga, -8);
     pa->addReferenceELF_ARM(R_ARM_ALU_PC_G1_NC, 4, ga, -4);
     pa->addReferenceELF_ARM(R_ARM_LDR_PC_G2, 8, ga, 0);
+#ifndef NDEBUG
+    pa->_name = "__plt";
+    pa->_name += source;
+    pa->_name += da->name();
+#endif
+    // Since all PLT entries are in ARM code, Thumb to ARM
+    // switching should be added if the relocated place contais Thumb code.
+    if (fromThumb)
+      return getPLTVeneer(da, pa, source);
+
+    // Otherwise just add PLT entry and return it to the caller.
+    _pltAtoms[da] = PLTWithVeneer(pa);
     return pa;
   }
 
-  /// \brief get the PLT entry for a given IFUNC Atom.
-  ///
-  /// If the entry does not exist. Both the GOT and PLT entry is created.
-  const PLTAtom *getIFUNCPLTEntry(const DefinedAtom *da) {
-    auto plt = _pltMap.find(da);
-    if (plt != _pltMap.end())
-      return plt->second;
-    auto ga = new (_file._alloc) ARMGOTAtom(_file, ".got.plt");
-    ga->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
-    ga->addReferenceELF_ARM(R_ARM_IRELATIVE, 0, da, 0);
-    auto pa = createPLTforGOT(ga);
+  /// \brief Create the GOT entry for a given IFUNC Atom.
+  const GOTAtom *createIFUNCGOTEntry(const DefinedAtom *da) {
+    assert(!_gotAtoms.lookup(da) && "IFUNC GOT entry already exists");
+    auto g = new (_file._alloc) ARMGOTPLTAtom(_file);
+    g->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
+    g->addReferenceELF_ARM(R_ARM_IRELATIVE, 0, da, 0);
 #ifndef NDEBUG
-    ga->_name = "__got_ifunc_";
-    ga->_name += da->name();
-    pa->_name = "__plt_ifunc_";
-    pa->_name += da->name();
+    g->_name = "__got_ifunc_";
+    g->_name += da->name();
 #endif
-    _gotMap[da] = ga;
-    _pltMap[da] = pa;
-    _gotVector.push_back(ga);
-    _pltVector.push_back(pa);
-    return pa;
+    _gotAtoms[da] = g;
+    return g;
+  }
+
+  /// \brief get the PLT entry for a given IFUNC Atom.
+  const PLTAtom *getIFUNCPLTEntry(const DefinedAtom *da, bool fromThumb) {
+    StringRef source;
+#ifndef NDEBUG
+    source = "_ifunc_";
+#endif
+    return getPLTEntry(da, fromThumb, &Derived::createIFUNCGOTEntry, source);
   }
 
   /// \brief Redirect the call to the PLT stub for the target IFUNC.
   ///
   /// This create a PLT and GOT entry for the IFUNC if one does not exist. The
   /// GOT entry and a IRELATIVE relocation to the original target resolver.
-  std::error_code handleIFUNC(const Reference &ref) {
+  std::error_code handleIFUNC(const DefinedAtom &atom, const Reference &ref) {
     auto target = dyn_cast<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver) {
-      const_cast<Reference &>(ref).setTarget(getIFUNCPLTEntry(target));
+      const_cast<Reference &>(ref).setTarget(
+          getIFUNCPLTEntry(target, isThumbCode(atom.codeModel())));
     }
     return std::error_code();
   }
@@ -322,7 +394,7 @@ protected:
   /// \brief Create a GOT entry containing 0.
   const GOTAtom *getNullGOT() {
     if (!_null) {
-      _null = new (_file._alloc) ARMGOTAtom(_file, ".got.plt");
+      _null = new (_file._alloc) ARMGOTPLTAtom(_file);
 #ifndef NDEBUG
       _null->_name = "__got_null";
 #endif
@@ -331,17 +403,15 @@ protected:
   }
 
   const GOTAtom *getGOT(const DefinedAtom *da) {
-    auto got = _gotMap.find(da);
-    if (got != _gotMap.end())
-      return got->second;
-    auto g = new (_file._alloc) ARMGOTAtom(_file, ".got");
+    if (auto got = _gotAtoms.lookup(da))
+      return got;
+    auto g = new (_file._alloc) ARMGOTAtom(_file);
     g->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
 #ifndef NDEBUG
     g->_name = "__got_";
     g->_name += da->name();
 #endif
-    _gotMap[da] = g;
-    _gotVector.push_back(g);
+    _gotAtoms[da] = g;
     return g;
   }
 
@@ -392,19 +462,27 @@ public:
 
     // Add all created atoms to the link.
     uint64_t ordinal = 0;
-    for (auto &plt : _pltVector) {
-      plt->setOrdinal(ordinal++);
-      mf->addAtom(*plt);
+    for (auto &pltKV : _pltAtoms) {
+      auto &plt = pltKV.second;
+      if (auto *v = plt._veneer) {
+        v->setOrdinal(ordinal++);
+        mf->addAtom(*v);
+      }
+      auto *p = plt._plt;
+      p->setOrdinal(ordinal++);
+      mf->addAtom(*p);
     }
     if (_null) {
       _null->setOrdinal(ordinal++);
       mf->addAtom(*_null);
     }
-    for (auto &got : _gotVector) {
+    for (auto &gotKV : _gotAtoms) {
+      auto &got = gotKV.second;
       got->setOrdinal(ordinal++);
       mf->addAtom(*got);
     }
-    for (auto &veneer : _veneerVector) {
+    for (auto &veneerKV : _veneerAtoms) {
+      auto &veneer = veneerKV.second;
       veneer->setOrdinal(ordinal++);
       mf->addAtom(*veneer);
     }
@@ -416,20 +494,25 @@ protected:
   const ELFLinkingContext &_ctx;
 
   /// \brief Map Atoms to their GOT entries.
-  llvm::DenseMap<const Atom *, GOTAtom *> _gotMap;
+  llvm::MapVector<const Atom *, GOTAtom *> _gotAtoms;
 
-  /// \brief Map Atoms to their PLT entries.
-  llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
+  /// \brief Map Atoms to their PLT entries depending on the code model.
+  struct PLTWithVeneer {
+    PLTWithVeneer(PLTAtom *p = nullptr, PLTAtom *v = nullptr)
+        : _plt(p), _veneer(v) {}
+
+    bool empty() const {
+      assert((_plt || !_veneer) && "Veneer appears without PLT entry");
+      return !_plt && !_veneer;
+    }
+
+    PLTAtom *_plt;
+    PLTAtom *_veneer;
+  };
+  llvm::MapVector<const Atom *, PLTWithVeneer> _pltAtoms;
 
   /// \brief Map Atoms to their veneers.
-  llvm::DenseMap<const Atom *, VeneerAtom *> _veneerMap;
-
-  /// \brief the list of GOT/PLT atoms
-  std::vector<GOTAtom *> _gotVector;
-  std::vector<PLTAtom *> _pltVector;
-
-  /// \brief the list of veneer atoms.
-  std::vector<VeneerAtom *> _veneerVector;
+  llvm::MapVector<const Atom *, VeneerAtom *> _veneerAtoms;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null = nullptr;
@@ -450,10 +533,8 @@ public:
   /// \brief Get the veneer for ARM B/BL instructions.
   const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    auto veneer = _veneerMap.find(da);
-    if (_veneerMap.end() != veneer)
-      return veneer->second;
-
+    if (auto veneer = _veneerAtoms.lookup(da))
+      return veneer;
     auto v = new (_file._alloc) Veneer_ARM_B_BL_StaticAtom(_file, secName);
     v->addReferenceELF_ARM(R_ARM_ABS32, 4, da, 0);
 
@@ -461,18 +542,15 @@ public:
     v->_name += da->name();
     v->_name += "_from_arm";
 
-    _veneerMap[da] = v;
-    _veneerVector.push_back(v);
+    _veneerAtoms[da] = v;
     return v;
   }
 
   /// \brief Get the veneer for Thumb B/BL instructions.
   const VeneerAtom *getVeneer_THM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    auto veneer = _veneerMap.find(da);
-    if (_veneerMap.end() != veneer)
-      return veneer->second;
-
+    if (auto veneer = _veneerAtoms.lookup(da))
+      return veneer;
     auto v = new (_file._alloc) Veneer_THM_B_BL_StaticAtom(_file, secName);
     v->addReferenceELF_ARM(R_ARM_JUMP24, 4, da, 0);
 
@@ -480,8 +558,7 @@ public:
     v->_name += da->name();
     v->_name += "_from_thumb";
 
-    _veneerMap[da] = v;
-    _veneerVector.push_back(v);
+    _veneerAtoms[da] = v;
     return v;
   }
 
