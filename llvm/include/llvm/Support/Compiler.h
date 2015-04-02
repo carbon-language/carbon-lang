@@ -283,7 +283,8 @@
 
 /// \macro LLVM_ALIGNAS
 /// \brief Used to specify a minimum alignment for a structure or variable. The
-/// alignment must be a constant integer.
+/// alignment must be a constant integer. Use LLVM_PTR_SIZE to compute
+/// alignments in terms of the size of a pointer.
 ///
 /// Note that __declspec(align) has special quirks, it's not legal to pass a
 /// structure with __declspec(align) as a formal parameter.
@@ -293,6 +294,22 @@
 # define LLVM_ALIGNAS(x) __attribute__((aligned(x)))
 #else
 # define LLVM_ALIGNAS(x) alignas(x)
+#endif
+
+/// \macro LLVM_PTR_SIZE
+/// \brief A constant integer equivalent to the value of sizeof(void*).
+/// Generally used in combination with LLVM_ALIGNAS or when doing computation in
+/// the preprocessor.
+#ifdef __SIZEOF_POINTER__
+# define LLVM_PTR_SIZE __SIZEOF_POINTER__
+#elif defined(_WIN64)
+# define LLVM_PTR_SIZE 8
+#elif defined(_WIN32)
+# define LLVM_PTR_SIZE 4
+#elif defined(_MSC_VER)
+# error "could not determine LLVM_PTR_SIZE as a constant int for MSVC"
+#else
+# define LLVM_PTR_SIZE sizeof(void *)
 #endif
 
 /// \macro LLVM_FUNCTION_NAME
