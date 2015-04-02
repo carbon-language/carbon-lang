@@ -199,7 +199,7 @@ __kmpc_ok_to_fork(ident_t *loc)
             return __kmp_par_range < 0;
         }
     }
-    if (sscanf(semi3 + 1, "%d", &line_no) == 1) {
+    if (KMP_SSCANF(semi3 + 1, "%d", &line_no) == 1) {
         if ((line_no >= __kmp_par_range_lb) && (line_no <= __kmp_par_range_ub)) {
             return __kmp_par_range > 0;
         }
@@ -1396,7 +1396,7 @@ void
 kmpc_set_defaults( char const * str )
 {
     // __kmp_aux_set_defaults initializes the library if needed
-    __kmp_aux_set_defaults( str, strlen( str ) );
+    __kmp_aux_set_defaults( str, KMP_STRLEN( str ) );
 }
 
 int

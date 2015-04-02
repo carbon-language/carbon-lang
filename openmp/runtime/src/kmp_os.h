@@ -850,3 +850,6 @@ enum kmp_warnings_level {
 #endif // __cplusplus
 
 #endif /* KMP_OS_H */
+// Safe C API
+#include "kmp_safe_c_api.h"
+

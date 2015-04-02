@@ -102,12 +102,12 @@ __kmp_env_get( char const * name ) {
     #if KMP_OS_UNIX
         char const * value = getenv( name );
         if ( value != NULL ) {
-            size_t len = strlen( value ) + 1;
+            size_t len = KMP_STRLEN( value ) + 1;
             result = (char *) KMP_INTERNAL_MALLOC( len );
             if ( result == NULL ) {
 		KMP_FATAL( MemoryAllocFailed );
             }; // if
-            strncpy( result, value, len );
+            KMP_STRNCPY_S( result, len, value, len );
         }; // if
     #elif KMP_OS_WINDOWS
         /*
@@ -393,19 +393,19 @@ ___kmp_env_blk_parse_windows(
             int          len;     // Length of variable.
             count = 0;
             var = env;            // The first variable starts and beginning of environment block.
-            len = strlen( var );
+            len = KMP_STRLEN( var );
             while ( len != 0 ) {
                 ++ count;
                 size = size + len + 1;
                 var = var + len + 1; // Move pointer to the beginning of the next variable.
-                len = strlen( var );
+                len = KMP_STRLEN( var );
             }; // while
             size = size + 1;         // Total size of env block, including terminating zero byte.
         }
 
         // Copy original block to bulk, we will modify bulk, not original block.
         bulk = (char *) allocate( size );
-        memcpy( bulk, env, size );
+        KMP_MEMCPY_S( bulk, size, env, size );
         // Allocate vars array.
         vars = (kmp_env_var_t *) allocate( count * sizeof( kmp_env_var_t ) );
 
@@ -415,7 +415,7 @@ ___kmp_env_blk_parse_windows(
             int    len;     // Length of variable.
             count = 0;
             var = bulk;
-            len = strlen( var );
+            len = KMP_STRLEN( var );
             while ( len != 0 ) {
                 // Save variable in vars array.
                 __kmp_str_split( var, '=', & name, & value );
@@ -424,7 +424,7 @@ ___kmp_env_blk_parse_windows(
                 ++ count;
                 // Get the next var.
                 var = var + len + 1;
-                len = strlen( var );
+                len = KMP_STRLEN( var );
             }; // while
         }
 
@@ -462,7 +462,7 @@ ___kmp_env_blk_parse_unix(
         count = 0;
         size  = 0;
         while ( env[ count ] != NULL ) {
-            size += strlen( env[ count ] ) + 1;
+            size += KMP_STRLEN( env[ count ] ) + 1;
             ++ count;
         }; // while
     }
@@ -481,8 +481,8 @@ ___kmp_env_blk_parse_unix(
         var = bulk;
         for ( i = 0; i < count; ++ i ) {
             // Copy variable to bulk.
-            len = strlen( env[ i ] );
-            memcpy( var, env[ i ], len + 1 );
+            len = KMP_STRLEN( env[ i ] );
+            KMP_MEMCPY_S( var, size, env[ i ], len + 1 );
             // Save found variable in vars array.
             __kmp_str_split( var, '=', & name, & value );
             vars[ i ].name  = name;

@@ -699,7 +699,7 @@ xexpand(KMP_API_NAME_GOMP_TASK)(void (*func)(void *), void *data, void (*copy_fu
             (*copy_func)(task->shareds, data);
         }
         else {
-            memcpy(task->shareds, data, arg_size);
+            KMP_MEMCPY(task->shareds, data, arg_size);
         }
     }
 

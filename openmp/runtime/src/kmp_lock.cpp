@@ -1130,9 +1130,9 @@ __kmp_set_ticket_lock_flags( kmp_ticket_lock_t *lck, kmp_lock_flags_t flags )
 #define TRACE_BUF_ELE	1024
 static char traces[TRACE_BUF_ELE][128] = { 0 }
 static int tc = 0;
-#define TRACE_LOCK(X,Y)          sprintf( traces[tc++ % TRACE_BUF_ELE], "t%d at %s\n", X, Y );
-#define TRACE_LOCK_T(X,Y,Z)      sprintf( traces[tc++ % TRACE_BUF_ELE], "t%d at %s%d\n", X,Y,Z );
-#define TRACE_LOCK_HT(X,Y,Z,Q)   sprintf( traces[tc++ % TRACE_BUF_ELE], "t%d at %s %d,%d\n", X, Y, Z, Q );
+#define TRACE_LOCK(X,Y)          KMP_SNPRINTF( traces[tc++ % TRACE_BUF_ELE], 128,  "t%d at %s\n", X, Y );
+#define TRACE_LOCK_T(X,Y,Z)      KMP_SNPRINTF( traces[tc++ % TRACE_BUF_ELE], 128, "t%d at %s%d\n", X,Y,Z );
+#define TRACE_LOCK_HT(X,Y,Z,Q)   KMP_SNPRINTF( traces[tc++ % TRACE_BUF_ELE], 128, "t%d at %s %d,%d\n", X, Y, Z, Q );
 
 static void
 __kmp_dump_queuing_lock( kmp_info_t *this_thr, kmp_int32 gtid,
@@ -2035,9 +2035,9 @@ FILE * __kmp_open_stats_file()
     if (strcmp (__kmp_speculative_statsfile, "-") == 0)
         return stdout;
 
-    size_t buffLen = strlen( __kmp_speculative_statsfile ) + 20;
+    size_t buffLen = KMP_STRLEN( __kmp_speculative_statsfile ) + 20;
     char buffer[buffLen];
-    snprintf (&buffer[0], buffLen, __kmp_speculative_statsfile,
+    KMP_SNPRINTF (&buffer[0], buffLen, __kmp_speculative_statsfile,
       (kmp_int32)getpid());
     FILE * result = fopen(&buffer[0], "w");
 
@@ -3147,7 +3147,7 @@ __kmp_insert_indirect_lock(kmp_indirect_lock_t *lck)
         kmp_lock_index_t size = __kmp_indirect_lock_table_size;
         kmp_indirect_lock_t **old_table = __kmp_indirect_lock_table;
         __kmp_indirect_lock_table = (kmp_indirect_lock_t **)__kmp_allocate(2*next*sizeof(kmp_indirect_lock_t *));
-        memcpy(__kmp_indirect_lock_table, old_table, next*sizeof(kmp_indirect_lock_t *));
+        KMP_MEMCPY(__kmp_indirect_lock_table, old_table, next*sizeof(kmp_indirect_lock_t *));
         __kmp_free(old_table);
         __kmp_indirect_lock_table_size = 2*next;
     }
@@ -3826,7 +3826,7 @@ __kmp_lock_table_insert( kmp_user_lock_p lck )
             size = __kmp_user_lock_table.allocated * 2;
         }
         table = (kmp_user_lock_p *)__kmp_allocate( sizeof( kmp_user_lock_p ) * size );
-        memcpy( table + 1, __kmp_user_lock_table.table + 1, sizeof( kmp_user_lock_p ) * ( __kmp_user_lock_table.used - 1 ) );
+        KMP_MEMCPY( table + 1, __kmp_user_lock_table.table + 1, sizeof( kmp_user_lock_p ) * ( __kmp_user_lock_table.used - 1 ) );
         table[ 0 ] = (kmp_user_lock_p)__kmp_user_lock_table.table;
             // We cannot free the previos table now, sinse it may be in use by other
             // threads. So save the pointer to the previous table in in the first element of the

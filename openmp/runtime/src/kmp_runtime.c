@@ -325,7 +325,7 @@ __kmp_print_storage_map_gtid( int gtid, void *p1, void *p2, size_t size, char co
     va_list ap;
 
     va_start( ap, format);
-    sprintf( buffer, "OMP storage map: %p %p%8lu %s\n", p1, p2, (unsigned long) size, format );
+    KMP_SNPRINTF( buffer, sizeof(buffer), "OMP storage map: %p %p%8lu %s\n", p1, p2, (unsigned long) size, format );
     __kmp_acquire_bootstrap_lock( & __kmp_stdio_lock );
     __kmp_vprintf( kmp_err, buffer, ap );
 #if KMP_PRINT_DATA_PLACEMENT
@@ -387,7 +387,7 @@ __kmp_warn( char const * format, ... )
 
     va_start( ap, format );
 
-    snprintf( buffer, sizeof(buffer) , "OMP warning: %s\n", format );
+    KMP_SNPRINTF( buffer, sizeof(buffer) , "OMP warning: %s\n", format );
     __kmp_acquire_bootstrap_lock( & __kmp_stdio_lock );
     __kmp_vprintf( kmp_err, buffer, ap );
     __kmp_release_bootstrap_lock( & __kmp_stdio_lock );
@@ -1458,7 +1458,7 @@ __kmp_fork_call(
     if ( __kmp_stkpadding > 0 &&  __kmp_root[gtid] != NULL ) {
         /* Some systems prefer the stack for the root thread(s) to start with */
         /* some gap from the parent stack to prevent false sharing. */
-        void *dummy = alloca(__kmp_stkpadding);
+        void *dummy = KMP_ALLOCA(__kmp_stkpadding);
         /* These 2 lines below are so this does not get optimized out */
         if ( __kmp_stkpadding > KMP_MAX_STKPADDING )
             __kmp_stkpadding += (short)((kmp_int64)dummy);
@@ -1604,7 +1604,7 @@ __kmp_fork_call(
 #if KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
         void *   args[ argc ];
 #else
-        void * * args = (void**) alloca( argc * sizeof( void * ) );
+        void * * args = (void**) KMP_ALLOCA( argc * sizeof( void * ) );
 #endif /* KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) */
 
         __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
@@ -2745,7 +2745,7 @@ __kmp_reallocate_team_arrays(kmp_team_t *team, int max_nth) {
     #endif
     __kmp_allocate_team_arrays(team, max_nth);
 
-    memcpy(team->t.t_threads, oldThreads, team->t.t_nproc * sizeof (kmp_info_t*));
+    KMP_MEMCPY(team->t.t_threads, oldThreads, team->t.t_nproc * sizeof (kmp_info_t*));
 
     __kmp_free(oldThreads);
 }
@@ -3257,8 +3257,8 @@ __kmp_expand_threads(int nWish, int nNeed) {
         } while(newCapacity < minimumRequiredCapacity);
         newThreads = (kmp_info_t**) __kmp_allocate((sizeof(kmp_info_t*) + sizeof(kmp_root_t*)) * newCapacity + CACHE_LINE);
         newRoot = (kmp_root_t**) ((char*)newThreads + sizeof(kmp_info_t*) * newCapacity );
-        memcpy(newThreads, __kmp_threads, __kmp_threads_capacity * sizeof(kmp_info_t*));
-        memcpy(newRoot, __kmp_root, __kmp_threads_capacity * sizeof(kmp_root_t*));
+        KMP_MEMCPY(newThreads, __kmp_threads, __kmp_threads_capacity * sizeof(kmp_info_t*));
+        KMP_MEMCPY(newRoot, __kmp_root, __kmp_threads_capacity * sizeof(kmp_root_t*));
         memset(newThreads + __kmp_threads_capacity, 0,
                (newCapacity - __kmp_threads_capacity) * sizeof(kmp_info_t*));
         memset(newRoot + __kmp_threads_capacity, 0,
@@ -5783,8 +5783,8 @@ __kmp_register_library_startup(
             if ( tail != NULL ) {
                 long * flag_addr = 0;
                 long   flag_val  = 0;
-                sscanf( flag_addr_str, "%p",  & flag_addr );
-                sscanf( flag_val_str,  "%lx", & flag_val  );
+                KMP_SSCANF( flag_addr_str, "%p",  & flag_addr );
+                KMP_SSCANF( flag_val_str,  "%lx", & flag_val  );
                 if ( flag_addr != 0 && flag_val != 0 && strcmp( file_name, "" ) != 0 ) {
                     // First, check whether environment-encoded address is mapped into addr space.
                     // If so, dereference it to see if it still has the right value.

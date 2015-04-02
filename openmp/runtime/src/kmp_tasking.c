@@ -1978,8 +1978,9 @@ __kmp_realloc_task_threads_data( kmp_info_t *thread, kmp_task_team_t *task_team 
                 new_data = (kmp_thread_data_t *)
                             __kmp_allocate( nthreads * sizeof(kmp_thread_data_t) );
                 // copy old data to new data
-                memcpy( (void *) new_data, (void *) old_data,
-                        maxthreads * sizeof(kmp_taskdata_t *) );
+                KMP_MEMCPY_S( (void *) new_data, nthreads * sizeof(kmp_thread_data_t),
+                            (void *) old_data,
+                            maxthreads * sizeof(kmp_taskdata_t *) );
 
 #ifdef BUILD_TIED_TASK_STACK
                 // GEH: Figure out if this is the right thing to do

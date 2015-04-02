@@ -101,7 +101,7 @@ static kmp_mutex_align_t   __kmp_wait_mx;
 static void
 __kmp_print_cond( char *buffer, kmp_cond_align_t *cond )
 {
-    sprintf( buffer, "(cond (lock (%ld, %d)), (descr (%p)))",
+    KMP_SNPRINTF( buffer, 128, "(cond (lock (%ld, %d)), (descr (%p)))",
                       cond->c_cond.__c_lock.__status, cond->c_cond.__c_lock.__spinlock,
                       cond->c_cond.__c_waiting );
 }
@@ -227,7 +227,7 @@ __kmp_affinity_bind_thread( int which )
     KMP_ASSERT2(KMP_AFFINITY_CAPABLE(),
       "Illegal set affinity operation when not capable");
 
-    kmp_affin_mask_t *mask = (kmp_affin_mask_t *)alloca(__kmp_affin_mask_size);
+    kmp_affin_mask_t *mask = (kmp_affin_mask_t *)KMP_ALLOCA(__kmp_affin_mask_size);
     KMP_CPU_ZERO(mask);
     KMP_CPU_SET(which, mask);
     __kmp_set_system_affinity(mask, TRUE);
@@ -732,7 +732,7 @@ __kmp_launch_worker( void *thr )
 
 #if KMP_OS_LINUX || KMP_OS_FREEBSD
     if ( __kmp_stkoffset > 0 && gtid > 0 ) {
-        padding = alloca( gtid * __kmp_stkoffset );
+        padding = KMP_ALLOCA( gtid * __kmp_stkoffset );
     }
 #endif
 
@@ -2300,7 +2300,7 @@ __kmp_is_address_mapped( void * addr ) {
             if ( rc == EOF ) {
                 break;
             }; // if
-            KMP_ASSERT( rc == 3 && strlen( perms ) == 4 ); // Make sure all fields are read.
+            KMP_ASSERT( rc == 3 && KMP_STRLEN( perms ) == 4 ); // Make sure all fields are read.
 
             // Ending address is not included in the region, but beginning is.
             if ( ( addr >= beginning ) && ( addr < ending ) ) {
@@ -2475,7 +2475,7 @@ __kmp_get_load_balance( int max )
 
             // Construct task_path.
             task_path.used = task_path_fixed_len;    // Reset task_path to "/proc/".
-            __kmp_str_buf_cat( & task_path, proc_entry->d_name, strlen( proc_entry->d_name ) );
+            __kmp_str_buf_cat( & task_path, proc_entry->d_name, KMP_STRLEN( proc_entry->d_name ) );
             __kmp_str_buf_cat( & task_path, "/task", 5 );
 
             task_dir = opendir( task_path.str );
@@ -2510,7 +2510,7 @@ __kmp_get_load_balance( int max )
                         //  __kmp_str_buf_print( & stat_path, "%s/%s/stat", task_path.str, task_entry->d_name );
                         // but seriae of __kmp_str_buf_cat works a bit faster.
                         stat_path.used = stat_path_fixed_len;    // Reset stat path to its fixed part.
-                        __kmp_str_buf_cat( & stat_path, task_entry->d_name, strlen( task_entry->d_name ) );
+                        __kmp_str_buf_cat( & stat_path, task_entry->d_name, KMP_STRLEN( task_entry->d_name ) );
                         __kmp_str_buf_cat( & stat_path, "/stat", 5 );
 
                         // Note: Low-level API (open/read/close) is used. High-level API

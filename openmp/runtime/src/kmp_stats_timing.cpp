@@ -54,7 +54,7 @@ double tsc_tick_count::tick_time()
         for (;*start == ' '; start++)
             ;
     
-        char * end = brand + strlen(brand) - 3;
+        char * end = brand + KMP_STRLEN(brand) - 3;
         uint64_t multiplier;
 
         if (*end == 'M') multiplier = 1000LL*1000LL;

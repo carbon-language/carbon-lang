@@ -1190,7 +1190,7 @@ __kmp_launch_worker( void *arg )
 #endif /* KMP_ARCH_X86 || KMP_ARCH_X86_64 */
 
     if ( __kmp_stkoffset > 0 && gtid > 0 ) {
-        padding = _alloca( gtid * __kmp_stkoffset );
+        padding = KMP_ALLOCA( gtid * __kmp_stkoffset );
     }
 
     KMP_FSYNC_RELEASING( &this_thr -> th.th_info.ds.ds_alive );

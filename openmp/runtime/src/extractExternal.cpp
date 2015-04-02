@@ -139,8 +139,8 @@ private:
 	    data = new char[length = _length];
 	}
 	*(unsigned*)data = length;
-	memcpy(data + sizeof(unsigned), _data + sizeof(unsigned),
-	       length - sizeof(unsigned));
+	KMP_MEMCPY(data + sizeof(unsigned), _data + sizeof(unsigned),
+	           length - sizeof(unsigned));
 	makeDirectory();
     }
 public:
@@ -192,7 +192,7 @@ public:
 	    size_t l = str.size();
 	    if(l > 8) {
 		directory.insert(make_pair(str, p - data));
-		memcpy(p, str.c_str(), l);
+		KMP_MEMCPY(p, str.c_str(), l);
 		p[l] = 0;
 		p += l + 1;
 	    }
@@ -211,7 +211,7 @@ public:
 	if(str.size() <= 8) {
 	    // encoded directly
 	    ((char*)&r)[7] = 0;
-	    strncpy((char*)&r, str.c_str(), 8);
+	    KMP_STRNCPY_S((char*)&r, sizeof(r), str.c_str(), 8);
 	    return r;
 	} else {
 	    // represented as index into table

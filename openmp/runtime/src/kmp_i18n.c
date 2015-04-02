@@ -864,7 +864,7 @@ __kmp_msg_error_code(
     msg.type = kmp_mt_syserr;
     msg.num  = code;
     msg.str  = sys_error( code );
-    msg.len  = strlen( msg.str );
+    msg.len  = KMP_STRLEN( msg.str );
     return msg;
 
 } // __kmp_msg_error_code
@@ -880,7 +880,7 @@ __kmp_msg_error_mesg(
     msg.type = kmp_mt_syserr;
     msg.num  = 0;
     msg.str  = __kmp_str_format( "%s", mesg );
-    msg.len  = strlen( msg.str );
+    msg.len  = KMP_STRLEN( msg.str );
     return msg;
 
 } // __kmp_msg_error_mesg

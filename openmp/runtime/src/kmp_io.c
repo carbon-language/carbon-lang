@@ -1,5 +1,5 @@
 /*
- * kmp_io.c -- RTL IO
+ * KMP_IO.c -- RTL IO
  */
 
 
@@ -169,9 +169,9 @@ __kmp_vprintf( enum kmp_io __kmp_io, char const * format, va_list ap )
         int chars = 0;
 
         #ifdef KMP_DEBUG_PIDS
-            chars = sprintf( db, "pid=%d: ", (kmp_int32)getpid() );
+            chars = KMP_SNPRINTF( db, __kmp_debug_buf_chars, "pid=%d: ", (kmp_int32)getpid() );
         #endif
-        chars += vsprintf( db, format, ap );
+        chars += KMP_VSNPRINTF( db, __kmp_debug_buf_chars, format, ap );
 
         if ( chars + 1 > __kmp_debug_buf_chars ) {
             if ( chars + 1 > __kmp_debug_buf_warn_chars ) {

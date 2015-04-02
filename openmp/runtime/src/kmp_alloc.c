@@ -785,7 +785,7 @@ bgetr(  kmp_info_t *th, void *buf, bufsize size)
 
     KMP_DEBUG_ASSERT(osize > 0);
 
-    (void) memcpy((char *) nbuf, (char *) buf, /* Copy the data */
+    (void) KMP_MEMCPY((char *) nbuf, (char *) buf, /* Copy the data */
              (size_t) ((size < osize) ? size : osize));
     brel( th, buf );
 
@@ -1178,7 +1178,7 @@ bufdump(  kmp_info_t *th, void *buf )
         }
 
         for (i = 0; i < l; i++) {
-            (void) sprintf(bhex + i * 3, "%02X ", bdump[i]);
+            (void) KMP_SNPRINTF(bhex + i * 3, sizeof(bhex), "%02X ", bdump[i]);
             if (bdump[i] > 0x20 && bdump[i] < 0x7F)
                 bascii[ i ] = bdump[ i ];
             else

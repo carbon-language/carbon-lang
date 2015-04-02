@@ -1046,7 +1046,7 @@ FTN_SET_DEFAULTS( char const * str
 {
     #ifndef KMP_STUB
         #ifdef PASS_ARGS_BY_VALUE
-            int len = (int)strlen( str );
+            int len = (int)KMP_STRLEN( str );
         #endif
         __kmp_aux_set_defaults( str, len );
     #endif

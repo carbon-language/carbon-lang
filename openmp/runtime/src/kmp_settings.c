@@ -37,7 +37,7 @@ __kmp_convert_to_double( char const * s )
 {
     double result;
 
-    if ( sscanf( s, "%lf", &result ) < 1 ) {
+    if ( KMP_SSCANF( s, "%lf", &result ) < 1 ) {
         result = 0.0;
     }
 
@@ -171,7 +171,7 @@ __kmp_convert_to_seconds( char const * data )
     if (data == NULL) return (0);
     value = 0;
     mult = '\0';
-    nvalues = sscanf (data, "%d%c%c", &value, &mult, &extra);
+    nvalues = KMP_SSCANF (data, "%d%c%c", &value, &mult, &extra);
     if (nvalues < 1) return (0);
     if (nvalues == 1) mult = '\0';
     if (nvalues == 3) return (-1);
@@ -221,7 +221,7 @@ __kmp_convert_to_milliseconds( char const * data )
     if ( __kmp_str_match( "infinit", -1, data)) return (INT_MAX);
     value = (double) 0.0;
     mult = '\0';
-    nvalues = sscanf (data, "%lf%c%c", &value, &mult, &extra);
+    nvalues = KMP_SSCANF (data, "%lf%c%c", &value, &mult, &extra);
     if (nvalues < 1) return (-1);
     if (nvalues == 1) mult = '\0';
     if (nvalues == 3) return (-1);
@@ -272,7 +272,7 @@ __kmp_convert_to_nanoseconds(         // R: Time in nanoseconds, or ~0 in case o
     if ( str == NULL || str[ 0 ] == 0 ) {    // No string or empty string.
         return 0;                            // Default value.
     }; // if
-    rc = sscanf( str, "%lf%c%c", &value, &unit, &extra );
+    rc = KMP_SSCANF( str, "%lf%c%c", &value, &unit, &extra );
     switch ( rc ) {
         case 0: {             // Value is not parsed.
             return ~ 0;
@@ -545,9 +545,9 @@ __kmp_stg_parse_par_range(
     int *        out_lb,
     int *        out_ub
 ) {
-    size_t len = strlen( value + 1 );
+    size_t len = KMP_STRLEN( value + 1 );
     par_range_to_print = (char *) KMP_INTERNAL_MALLOC( len +1 );
-    strncpy( par_range_to_print, value, len + 1);
+    KMP_STRNCPY_S( par_range_to_print, len + 1, value, len + 1);
     __kmp_par_range = +1;
     __kmp_par_range_lb = 0;
     __kmp_par_range_ub = INT_MAX;
@@ -585,7 +585,7 @@ __kmp_stg_parse_par_range(
         if (( ! __kmp_strcasecmp_with_sentinel( "range", value, '=' ))
           || ( ! __kmp_strcasecmp_with_sentinel( "incl_range", value, '=' ))) {
             value = strchr( value, '=' ) + 1;
-            if ( sscanf( value, "%d:%d", out_lb, out_ub ) != 2 ) {
+            if ( KMP_SSCANF( value, "%d:%d", out_lb, out_ub ) != 2 ) {
                 goto par_range_error;
             }
             *out_range = +1;
@@ -597,7 +597,7 @@ __kmp_stg_parse_par_range(
         }
         if ( ! __kmp_strcasecmp_with_sentinel( "excl_range", value, '=' )) {
             value = strchr( value, '=' ) + 1;
-            if ( sscanf( value, "%d:%d", out_lb, out_ub) != 2 ) {
+            if ( KMP_SSCANF( value, "%d:%d", out_lb, out_ub) != 2 ) {
                 goto par_range_error;
             }
             *out_range = -1;
@@ -1972,7 +1972,7 @@ __kmp_parse_affinity_proc_id_list( const char *var, const char *env,
     {
         int len = next - env;
         char *retlist = (char *)__kmp_allocate((len + 1) * sizeof(char));
-        memcpy(retlist, env, len * sizeof(char));
+        KMP_MEMCPY_S(retlist, (len+1)*sizeof(char), env, len * sizeof(char));
         retlist[len] = '\0';
         *proclist = retlist;
     }
@@ -2833,7 +2833,7 @@ __kmp_parse_place_list( const char *var, const char *env, char **place_list )
     {
         int len = scan - env;
         char *retlist = (char *)__kmp_allocate((len + 1) * sizeof(char));
-        memcpy(retlist, env, len * sizeof(char));
+        KMP_MEMCPY_S(retlist, (len+1)*sizeof(char), env, len * sizeof(char));
         retlist[len] = '\0';
         *place_list = retlist;
     }
@@ -3507,7 +3507,7 @@ static void
 __kmp_stg_parse_schedule( char const * name, char const * value, void * data ) {
 
     if ( value != NULL ) {
-        size_t length = strlen( value );
+        size_t length = KMP_STRLEN( value );
         if ( length > INT_MAX ) {
             KMP_WARNING( LongValue, name );
         } else {
@@ -3581,7 +3581,7 @@ __kmp_stg_parse_omp_schedule( char const * name, char const * value, void * data
 {
     size_t      length;
     if( value ) {
-        length = strlen( value );
+        length = KMP_STRLEN( value );
         if( length ) {
             char *comma = (char *) strchr( value, ',' );
             if( value[ length - 1 ] == '"' || value[ length -1 ] == '\'')
@@ -5315,7 +5315,7 @@ __kmp_env_print() {
         char const * name  = block.vars[ i ].name;
         char const * value = block.vars[ i ].value;
         if (
-            ( strlen( name ) > 4 && strncmp( name, "KMP_", 4 ) == 0 )
+            ( KMP_STRLEN( name ) > 4 && strncmp( name, "KMP_", 4 ) == 0 )
             || strncmp( name, "OMP_", 4 ) == 0
             #ifdef KMP_GOMP_COMPAT
                 || strncmp( name, "GOMP_", 5 ) == 0

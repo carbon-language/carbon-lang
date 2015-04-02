@@ -114,7 +114,7 @@ __kmp_init_common_data( void *pc_addr, size_t pc_size )
     for (i = pc_size;  i > 0; --i) {
         if (*p++ != '\0') {
             d->data = __kmp_allocate( pc_size );
-            memcpy( d->data, pc_addr, pc_size );
+            KMP_MEMCPY( d->data, pc_addr, pc_size );
             break;
         }
     }
@@ -137,7 +137,7 @@ __kmp_copy_common_data( void *pc_addr, struct private_data *d )
             if (d->data == 0)
                 memset( & addr[ offset ], '\0', d->size );
             else
-                memcpy( & addr[ offset ], d->data, d->size );
+                KMP_MEMCPY( & addr[ offset ], d->data, d->size );
             offset += d->size;
         }
     }
