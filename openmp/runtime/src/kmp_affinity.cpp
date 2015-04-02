@@ -323,7 +323,6 @@ public:
         number of levels along the longest path from root to any leaf. It corresponds to the
         number of entries in numPerLevel if we exclude all but one trailing 1. */
     kmp_uint32 depth;
-    kmp_uint32 base_depth;
     kmp_uint32 base_num_threads;
     bool uninitialized;
 
@@ -395,24 +394,23 @@ public:
         for (kmp_uint32 i=1; i<depth; ++i)
             skipPerLevel[i] = numPerLevel[i-1] * skipPerLevel[i-1];
 
-        base_depth = depth;
     }
 };
 
 static hierarchy_info machine_hierarchy;
 
 void __kmp_get_hierarchy(kmp_uint32 nproc, kmp_bstate_t *thr_bar) {
+    kmp_uint32 depth;
     if (machine_hierarchy.uninitialized)
         machine_hierarchy.init(NULL, nproc);
 
-    if (nproc <= machine_hierarchy.base_num_threads)
-        machine_hierarchy.depth = machine_hierarchy.base_depth;
-    KMP_DEBUG_ASSERT(machine_hierarchy.depth > 0);
-    while (nproc > machine_hierarchy.skipPerLevel[machine_hierarchy.depth-1]) {
-        machine_hierarchy.depth++;
-        machine_hierarchy.skipPerLevel[machine_hierarchy.depth-1] = 2*machine_hierarchy.skipPerLevel[machine_hierarchy.depth-2];
+    depth = machine_hierarchy.depth;
+    KMP_DEBUG_ASSERT(depth > 0);
+    while (nproc > machine_hierarchy.skipPerLevel[depth-1]) {
+        depth++;
+        machine_hierarchy.skipPerLevel[depth-1] = 2*machine_hierarchy.skipPerLevel[depth-2];
     }
-    thr_bar->depth = machine_hierarchy.depth;
+    thr_bar->depth = depth;
     thr_bar->base_leaf_kids = (kmp_uint8)machine_hierarchy.numPerLevel[0]-1;
     thr_bar->skip_per_level = machine_hierarchy.skipPerLevel;
 }
