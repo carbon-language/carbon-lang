@@ -12,7 +12,7 @@
 #include "X86_64TargetHandler.h"
 
 using namespace lld;
-using namespace elf;
+using namespace lld::elf;
 
 X86_64LinkingContext::X86_64LinkingContext(
     llvm::Triple triple, std::unique_ptr<TargetHandler> handler)
@@ -32,6 +32,19 @@ void X86_64LinkingContext::addPasses(PassManager &pm) {
 std::unique_ptr<ELFLinkingContext>
 X86_64LinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::x86_64)
-    return llvm::make_unique<elf::X86_64LinkingContext>(triple);
+    return llvm::make_unique<X86_64LinkingContext>(triple);
   return nullptr;
+}
+
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/x86_64.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_ENTRY(LLD_R_X86_64_GOTRELINDEX),
+  LLD_KIND_STRING_END
+};
+
+void X86_64LinkingContext::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF,
+                        Reference::KindArch::x86_64, kindStrings);
 }

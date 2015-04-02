@@ -24,8 +24,6 @@ class AArch64TargetHandler final : public TargetHandler {
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 
-  void registerRelocationNames(Registry &registry) override;
-
   const AArch64TargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }

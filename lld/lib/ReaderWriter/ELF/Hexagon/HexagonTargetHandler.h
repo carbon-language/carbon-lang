@@ -100,8 +100,6 @@ class HexagonTargetHandler final : public TargetHandler {
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
-  void registerRelocationNames(Registry &registry) override;
-
   const HexagonTargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }

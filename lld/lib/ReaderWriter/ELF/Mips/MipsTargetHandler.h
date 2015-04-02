@@ -90,12 +90,6 @@ public:
       : RuntimeFile<ELFT>(ctx, "Mips runtime file") {}
 };
 
-/// \brief Auxiliary class holds relocation's names table.
-class MipsRelocationStringTable {
-public:
-  static void registerTable(Registry &registry);
-};
-
 /// \brief TargetHandler for Mips
 template <class ELFT> class MipsTargetHandler final : public TargetHandler {
 public:
@@ -129,10 +123,6 @@ public:
     default:
       llvm_unreachable("unsupported output type");
     }
-  }
-
-  void registerRelocationNames(Registry &registry) override {
-    MipsRelocationStringTable::registerTable(registry);
   }
 
 private:

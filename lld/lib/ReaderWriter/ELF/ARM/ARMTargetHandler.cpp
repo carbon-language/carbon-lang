@@ -19,18 +19,6 @@ ARMTargetHandler::ARMTargetHandler(ARMLinkingContext &ctx)
     : _ctx(ctx), _targetLayout(new ARMTargetLayout<ARMELFType>(ctx)),
       _relocationHandler(new ARMTargetRelocationHandler(*_targetLayout)) {}
 
-static const Registry::KindStrings kindStrings[] = {
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-#include "llvm/Support/ELFRelocs/ARM.def"
-#undef ELF_RELOC
-  LLD_KIND_STRING_END
-};
-
-void ARMTargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::ARM,
-                        kindStrings);
-}
-
 std::unique_ptr<Writer> ARMTargetHandler::getWriter() {
   switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:

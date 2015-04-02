@@ -22,9 +22,10 @@ public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   ARMLinkingContext(llvm::Triple);
 
-  bool isRelaOutputFormat() const override { return false; }
-
   void addPasses(PassManager &) override;
+  void registerRelocationNames(Registry &r) override;
+
+  bool isRelaOutputFormat() const override { return false; }
 
   uint64_t getBaseAddress() const override {
     if (_baseAddress == 0)

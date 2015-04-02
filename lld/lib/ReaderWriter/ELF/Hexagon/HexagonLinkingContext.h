@@ -26,6 +26,7 @@ public:
   HexagonLinkingContext(llvm::Triple triple);
 
   void addPasses(PassManager &) override;
+  void registerRelocationNames(Registry &r) override;
 
   bool isDynamicRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)

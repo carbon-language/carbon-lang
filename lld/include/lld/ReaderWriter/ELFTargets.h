@@ -16,7 +16,7 @@ namespace lld {
 namespace elf {
 
 #define LLVM_TARGET(TargetName) \
-  class TargetName##LinkingContext final : public ELFLinkingContext { \
+  class TargetName##LinkingContext : public ELFLinkingContext { \
   public: \
     static std::unique_ptr<ELFLinkingContext> create(llvm::Triple); \
   };

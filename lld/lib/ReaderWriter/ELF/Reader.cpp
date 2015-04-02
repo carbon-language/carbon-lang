@@ -32,7 +32,7 @@ void Registry::addSupportELFObjects(ELFLinkingContext &ctx) {
   add(std::move(ctx.getTargetHandler().getObjReader()));
 
   // Tell registry about the relocation name to number mapping for this arch.
-  ctx.getTargetHandler().registerRelocationNames(*this);
+  ctx.registerRelocationNames(*this);
 }
 
 void Registry::addSupportELFDynamicSharedObjects(ELFLinkingContext &ctx) {

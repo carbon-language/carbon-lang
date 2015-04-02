@@ -61,8 +61,6 @@ class ARMTargetHandler final : public TargetHandler {
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
 
-  void registerRelocationNames(Registry &registry) override;
-
   const ARMTargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }

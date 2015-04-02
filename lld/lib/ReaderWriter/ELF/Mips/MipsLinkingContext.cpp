@@ -127,3 +127,23 @@ bool MipsLinkingContext::isRelativeReloc(const Reference &r) const {
     return false;
   }
 }
+
+const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/Mips.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_GLOBAL_GOT),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_32_HI16),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_64_HI16),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_GLOBAL_26),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_HI16),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_LO16),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_STO_PLT),
+  LLD_KIND_STRING_ENTRY(LLD_R_MICROMIPS_GLOBAL_26_S1),
+  LLD_KIND_STRING_END
+};
+
+void MipsLinkingContext::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF,
+                        Reference::KindArch::Mips, kindStrings);
+}

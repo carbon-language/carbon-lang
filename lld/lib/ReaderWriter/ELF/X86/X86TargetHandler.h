@@ -24,8 +24,6 @@ class X86TargetHandler final : public TargetHandler {
 public:
   X86TargetHandler(X86LinkingContext &ctx);
 
-  void registerRelocationNames(Registry &registry) override;
-
   const X86TargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }

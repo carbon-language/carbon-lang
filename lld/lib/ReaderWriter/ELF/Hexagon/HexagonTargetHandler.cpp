@@ -313,15 +313,3 @@ void elf::HexagonLinkingContext::addPasses(PassManager &pm) {
     pm.add(llvm::make_unique<DynamicGOTPLTPass>(*this));
   ELFLinkingContext::addPasses(pm);
 }
-
-static const Registry::KindStrings kindStrings[] = {
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-#include "llvm/Support/ELFRelocs/Hexagon.def"
-#undef ELF_RELOC
-  LLD_KIND_STRING_END
-};
-
-void HexagonTargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF,
-                        Reference::KindArch::Hexagon, kindStrings);
-}

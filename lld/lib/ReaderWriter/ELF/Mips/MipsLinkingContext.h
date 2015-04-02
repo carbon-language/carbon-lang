@@ -47,6 +47,7 @@ public:
 
   uint32_t getMergedELFFlags() const;
   MipsELFFlagsMerger &getELFFlagsMerger();
+  void registerRelocationNames(Registry &r) override;
 
   // ELFLinkingContext
   uint64_t getBaseAddress() const override;

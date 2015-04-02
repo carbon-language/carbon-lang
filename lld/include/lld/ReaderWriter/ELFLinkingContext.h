@@ -55,7 +55,6 @@ public:
 class TargetHandler {
 public:
   virtual ~TargetHandler() {}
-  virtual void registerRelocationNames(Registry &) = 0;
 
   /// Determines how relocations need to be applied.
   virtual const elf::TargetRelocationHandler &getRelocationHandler() const = 0;
@@ -172,6 +171,8 @@ public:
     assert(_targetHandler && "Got null TargetHandler!");
     return *_targetHandler;
   }
+
+  virtual void registerRelocationNames(Registry &) = 0;
 
   void addPasses(PassManager &pm) override;
 

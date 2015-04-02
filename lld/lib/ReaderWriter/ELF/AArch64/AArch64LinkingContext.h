@@ -28,6 +28,7 @@ public:
   AArch64LinkingContext(llvm::Triple);
 
   void addPasses(PassManager &) override;
+  void registerRelocationNames(Registry &r) override;
 
   uint64_t getBaseAddress() const override {
     if (_baseAddress == 0)

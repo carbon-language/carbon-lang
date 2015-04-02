@@ -11,39 +11,54 @@
 #include "ARMRelocationPass.h"
 #include "ARMTargetHandler.h"
 
-using namespace lld;
-using namespace lld::elf;
+namespace lld {
+namespace elf {
 
 std::unique_ptr<ELFLinkingContext>
-elf::ARMLinkingContext::create(llvm::Triple triple) {
+ARMLinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::arm)
-    return llvm::make_unique<elf::ARMLinkingContext>(triple);
+    return llvm::make_unique<ARMLinkingContext>(triple);
   return nullptr;
 }
 
-elf::ARMLinkingContext::ARMLinkingContext(llvm::Triple triple)
+ARMLinkingContext::ARMLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, llvm::make_unique<ARMTargetHandler>(*this)) {}
 
-void elf::ARMLinkingContext::addPasses(PassManager &pm) {
+void ARMLinkingContext::addPasses(PassManager &pm) {
   auto pass = createARMRelocationPass(*this);
   if (pass)
     pm.add(std::move(pass));
   ELFLinkingContext::addPasses(pm);
 }
 
-bool elf::isARMCode(const DefinedAtom *atom) {
+bool isARMCode(const DefinedAtom *atom) {
   return isARMCode(atom->codeModel());
 }
 
-bool elf::isARMCode(DefinedAtom::CodeModel codeModel) {
+bool isARMCode(DefinedAtom::CodeModel codeModel) {
   return !isThumbCode(codeModel);
 }
 
-bool elf::isThumbCode(const DefinedAtom *atom) {
+bool isThumbCode(const DefinedAtom *atom) {
   return isThumbCode(atom->codeModel());
 }
 
-bool elf::isThumbCode(DefinedAtom::CodeModel codeModel) {
+bool isThumbCode(DefinedAtom::CodeModel codeModel) {
   return codeModel == DefinedAtom::codeARMThumb ||
          codeModel == DefinedAtom::codeARM_t;
 }
+
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/ARM.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_END
+};
+
+void ARMLinkingContext::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::ARM,
+                        kindStrings);
+}
+
+} // namespace elf
+} // namespace lld

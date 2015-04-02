@@ -20,6 +20,7 @@ class X86LinkingContext final : public ELFLinkingContext {
 public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   X86LinkingContext(llvm::Triple);
+  void registerRelocationNames(Registry &r) override;
 
   /// \brief X86 has only two relative relocation
   /// a) for supporting IFUNC relocs - R_386_IRELATIVE

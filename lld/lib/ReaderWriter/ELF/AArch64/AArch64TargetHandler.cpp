@@ -20,18 +20,6 @@ AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
     : _ctx(ctx), _targetLayout(new TargetLayout<AArch64ELFType>(ctx)),
       _relocationHandler(new AArch64TargetRelocationHandler()) {}
 
-static const Registry::KindStrings kindStrings[] = {
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-#include "llvm/Support/ELFRelocs/AArch64.def"
-#undef ELF_RELOC
-  LLD_KIND_STRING_END
-};
-
-void AArch64TargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF,
-                        Reference::KindArch::AArch64, kindStrings);
-}
-
 std::unique_ptr<Writer> AArch64TargetHandler::getWriter() {
   switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:

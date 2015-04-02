@@ -20,19 +20,6 @@ X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &ctx)
     : _ctx(ctx), _targetLayout(new X86_64TargetLayout(ctx)),
       _relocationHandler(new X86_64TargetRelocationHandler(*_targetLayout)) {}
 
-static const Registry::KindStrings kindStrings[] = {
-#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
-#include "llvm/Support/ELFRelocs/x86_64.def"
-#undef ELF_RELOC
-  LLD_KIND_STRING_ENTRY(LLD_R_X86_64_GOTRELINDEX),
-  LLD_KIND_STRING_END
-};
-
-void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
-  registry.addKindTable(Reference::KindNamespace::ELF,
-                        Reference::KindArch::x86_64, kindStrings);
-}
-
 std::unique_ptr<Writer> X86_64TargetHandler::getWriter() {
   switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:

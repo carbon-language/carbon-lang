@@ -14,13 +14,26 @@
 #include "llvm/Support/ErrorOr.h"
 
 using namespace lld;
+using namespace lld::elf;
 
 std::unique_ptr<ELFLinkingContext>
-elf::X86LinkingContext::create(llvm::Triple triple) {
+X86LinkingContext::create(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::x86)
-    return llvm::make_unique<elf::X86LinkingContext>(triple);
+    return llvm::make_unique<X86LinkingContext>(triple);
   return nullptr;
 }
 
-elf::X86LinkingContext::X86LinkingContext(llvm::Triple triple)
+X86LinkingContext::X86LinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, llvm::make_unique<X86TargetHandler>(*this)) {}
+
+static const Registry::KindStrings kindStrings[] = {
+#define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
+#include "llvm/Support/ELFRelocs/i386.def"
+#undef ELF_RELOC
+  LLD_KIND_STRING_END
+};
+
+void X86LinkingContext::registerRelocationNames(Registry &registry) {
+  registry.addKindTable(Reference::KindNamespace::ELF, Reference::KindArch::x86,
+                        kindStrings);
+}
