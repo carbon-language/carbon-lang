@@ -341,11 +341,6 @@ protected:
       }
   }
 
-  void swap(DenseMapBase& RHS) {
-    std::swap(getNumEntries(), RHS.getNumEntries());
-    std::swap(getNumTombstones(), RHS.getNumTombstones());
-  }
-
   static unsigned getHashValue(const KeyT &Val) {
     return KeyInfoT::getHashValue(Val);
   }
