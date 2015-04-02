@@ -83,20 +83,13 @@ private:
   llvm::Optional<AtomLayout *> _gpDispAtom;
 };
 
-/// \brief Mips Runtime file.
-template <class ELFT> class MipsRuntimeFile final : public RuntimeFile<ELFT> {
-public:
-  MipsRuntimeFile(MipsLinkingContext &ctx)
-      : RuntimeFile<ELFT>(ctx, "Mips runtime file") {}
-};
-
 /// \brief TargetHandler for Mips
 template <class ELFT> class MipsTargetHandler final : public TargetHandler {
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)
-      : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<ELFT>(ctx)),
-        _targetLayout(new MipsTargetLayout<ELFT>(ctx)),
-        _relocationHandler(createMipsRelocationHandler<ELFT>(ctx, *_targetLayout)) {}
+      : _ctx(ctx), _targetLayout(new MipsTargetLayout<ELFT>(ctx)),
+        _relocationHandler(
+            createMipsRelocationHandler<ELFT>(ctx, *_targetLayout)) {}
 
   std::unique_ptr<Reader> getObjReader() override {
     return llvm::make_unique<MipsELFObjectReader<ELFT>>(_ctx);
@@ -127,7 +120,6 @@ public:
 
 private:
   MipsLinkingContext &_ctx;
-  std::unique_ptr<MipsRuntimeFile<ELFT>> _runtimeFile;
   std::unique_ptr<MipsTargetLayout<ELFT>> _targetLayout;
   std::unique_ptr<TargetRelocationHandler> _relocationHandler;
 };

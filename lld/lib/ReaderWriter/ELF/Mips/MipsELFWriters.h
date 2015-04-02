@@ -14,7 +14,6 @@
 namespace lld {
 namespace elf {
 
-template <class ELFT> class MipsRuntimeFile;
 template <class ELFT> class MipsTargetLayout;
 
 template <typename ELFT> class MipsELFWriter {
@@ -52,8 +51,8 @@ public:
     return _targetLayout.getGOTSection().hasGlobalGOTEntry(a);
   }
 
-  std::unique_ptr<MipsRuntimeFile<ELFT>> createRuntimeFile() {
-    auto file = llvm::make_unique<MipsRuntimeFile<ELFT>>(_ctx);
+  std::unique_ptr<RuntimeFile<ELFT>> createRuntimeFile() {
+    auto file = llvm::make_unique<RuntimeFile<ELFT>>(_ctx, "Mips runtime file");
     if (_ctx.isDynamic()) {
       file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       file->addAbsoluteAtom("_gp");
