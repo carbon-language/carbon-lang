@@ -283,9 +283,17 @@ CompactUnwindInfo::ScanIndex (const ProcessSP &process_sp)
 
         uint32_t indexCount = m_unwindinfo_data.GetU32(&offset);
 
-        if (m_unwind_header.version != 1)
+        if (m_unwind_header.common_encodings_array_offset > m_unwindinfo_data.GetByteSize()
+            || m_unwind_header.personality_array_offset > m_unwindinfo_data.GetByteSize()
+            || indexSectionOffset > m_unwindinfo_data.GetByteSize()
+            || offset > m_unwindinfo_data.GetByteSize())
         {
+            Host::SystemLog (Host::eSystemLogError,
+                    "error: Invalid offset encountered in compact unwind info, skipping\n");
+            // don't trust anything from this compact_unwind section if it looks
+            // blatently invalid data in the header.
             m_indexes_computed = eLazyBoolNo;
+            return;
         }
 
         // Parse the basic information from the indexes

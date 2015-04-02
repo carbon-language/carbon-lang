@@ -365,6 +365,31 @@ DWARFCallFrameInfo::GetFDEIndex ()
             cie_offset = current_entry + 4 - cie_id;
         }
 
+        if (next_entry > m_cfi_data.GetByteSize() + 1)
+        {
+            Host::SystemLog (Host::eSystemLogError,
+                    "error: Invalid fde/cie next entry offset of 0x%x found in cie/fde at 0x%x\n",
+                    next_entry,
+                    current_entry);
+            // Don't trust anything in this eh_frame section if we find blatently 
+            // invalid data.
+            m_fde_index.Clear();
+            m_fde_index_initialized = true;
+            return;
+        }
+        if (cie_offset > m_cfi_data.GetByteSize())
+        {
+            Host::SystemLog (Host::eSystemLogError,
+                    "error: Invalid cie offset of 0x%x found in cie/fde at 0x%x\n",
+                    cie_offset,
+                    current_entry);
+            // Don't trust anything in this eh_frame section if we find blatently 
+            // invalid data.
+            m_fde_index.Clear();
+            m_fde_index_initialized = true;
+            return;
+        }
+
         if (cie_id == 0 || cie_id == UINT32_MAX || len == 0)
         {
             m_cie_map[current_entry] = ParseCIE (current_entry);
