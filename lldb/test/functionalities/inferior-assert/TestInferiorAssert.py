@@ -2,7 +2,7 @@
 
 import os, time
 import unittest2
-import lldb, lldbutil
+import lldb, lldbutil, lldbplatformutil
 from lldbtest import *
 
 class AssertingInferiorTestCase(TestBase):
@@ -149,8 +149,7 @@ class AssertingInferiorTestCase(TestBase):
         self.check_stop_reason()
 
         # lldb should be able to read from registers from the inferior after asserting.
-        self.expect("register read eax",
-            substrs = ['eax = 0x'])
+        lldbplatformutil.check_first_register_readable(self)
 
     def inferior_asserting_disassemble(self):
         """Test that lldb can disassemble frames after asserting."""

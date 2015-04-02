@@ -2,7 +2,7 @@
 
 import os, time
 import unittest2
-import lldb, lldbutil
+import lldb, lldbutil, lldbplatformutil
 import sys
 from lldbtest import *
 
@@ -157,8 +157,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.check_stop_reason()
 
         # lldb should be able to read from registers from the inferior after crashing.
-        self.expect("register read eax",
-            substrs = ['eax = 0x'])
+        lldbplatformutil.check_first_register_readable(self)
 
     def recursive_inferior_crashing_expr(self):
         """Test that the lldb expression interpreter can read symbols after crashing."""
@@ -192,8 +191,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
             substrs = ['(int) $0 ='])
 
         # lldb should be able to read from registers from the inferior after crashing.
-        self.expect("register read eax",
-            substrs = ['eax = 0x'])
+        lldbplatformutil.check_first_register_readable(self)
 
         # And it should report the correct line number.
         self.expect("thread backtrace all",
