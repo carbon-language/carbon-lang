@@ -28,21 +28,9 @@ struct ARMELFFileCreateELFTraits {
   }
 };
 
-class ARMELFObjectReader
-    : public ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
-                             ARMLinkingContext> {
-public:
-  ARMELFObjectReader(ARMLinkingContext &ctx)
-      : ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
-                        ARMLinkingContext>(ctx) {}
-};
-
-class ARMELFDSOReader
-    : public ELFDSOReader<ARMELFType, ARMLinkingContext> {
-public:
-  ARMELFDSOReader(ARMLinkingContext &ctx)
-      : ELFDSOReader<ARMELFType, ARMLinkingContext>(ctx) {}
-};
+typedef ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
+                        ARMLinkingContext> ARMELFObjectReader;
+typedef ELFDSOReader<ARMELFType, ARMLinkingContext> ARMELFDSOReader;
 
 } // namespace elf
 } // namespace lld

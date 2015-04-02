@@ -28,21 +28,10 @@ struct AArch64ELFFileCreateELFTraits {
   }
 };
 
-class AArch64ELFObjectReader
-    : public ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
-                             AArch64LinkingContext> {
-public:
-  AArch64ELFObjectReader(AArch64LinkingContext &ctx)
-      : ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
-                        AArch64LinkingContext>(ctx) {}
-};
+typedef ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
+                        AArch64LinkingContext> AArch64ELFObjectReader;
 
-class AArch64ELFDSOReader
-    : public ELFDSOReader<AArch64ELFType, AArch64LinkingContext> {
-public:
-  AArch64ELFDSOReader(AArch64LinkingContext &ctx)
-      : ELFDSOReader<AArch64ELFType, AArch64LinkingContext>(ctx) {}
-};
+typedef ELFDSOReader<AArch64ELFType, AArch64LinkingContext> AArch64ELFDSOReader;
 
 } // namespace elf
 } // namespace lld

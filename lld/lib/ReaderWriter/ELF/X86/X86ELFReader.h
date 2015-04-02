@@ -28,21 +28,9 @@ struct X86ELFFileCreateELFTraits {
   }
 };
 
-class X86ELFObjectReader
-    : public ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
-                             X86LinkingContext> {
-public:
-  X86ELFObjectReader(X86LinkingContext &ctx)
-      : ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
-                        X86LinkingContext>(ctx) {}
-};
-
-class X86ELFDSOReader
-    : public ELFDSOReader<X86ELFType, X86LinkingContext> {
-public:
-  X86ELFDSOReader(X86LinkingContext &ctx)
-      : ELFDSOReader<X86ELFType, X86LinkingContext>(ctx) {}
-};
+typedef ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
+                        X86LinkingContext> X86ELFObjectReader;
+typedef ELFDSOReader<X86ELFType, X86LinkingContext> X86ELFDSOReader;
 
 } // namespace elf
 } // namespace lld
