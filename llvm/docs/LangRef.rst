@@ -348,13 +348,13 @@ added in the future:
 "``anyregcc``" - Dynamic calling convention for code patching
     This is a special convention that supports patching an arbitrary code
     sequence in place of a call site. This convention forces the call
-    arguments into registers but allows them to be dynamcially
+    arguments into registers but allows them to be dynamically
     allocated. This can currently only be used with calls to
     llvm.experimental.patchpoint because only this intrinsic records
     the location of its arguments in a side table. See :doc:`StackMaps`.
 "``preserve_mostcc``" - The `PreserveMost` calling convention
-    This calling convention attempts to make the code in the caller as little
-    intrusive as possible. This calling convention behaves identical to the `C`
+    This calling convention attempts to make the code in the caller as
+    unintrusive as possible. This convention behaves identically to the `C`
     calling convention on how arguments and return values are passed, but it
     uses a different set of caller/callee-saved registers. This alleviates the
     burden of saving and recovering a large register set before and after the
