@@ -64,8 +64,6 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   }
 
   typedef int (*MainFnPtr)(int, char*[]);
-  auto Main = reinterpret_cast<MainFnPtr>(
-                static_cast<uintptr_t>(MainSym.getAddress()));
-
+  auto Main = OrcLazyJIT::fromTargetAddress<MainFnPtr>(MainSym.getAddress());
   return Main(ArgC, ArgV);
 }
