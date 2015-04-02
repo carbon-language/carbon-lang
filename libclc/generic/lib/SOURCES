@@ -63,6 +63,7 @@ math/acos.cl
 math/acospi.cl
 math/asin.cl
 math/asinh.cl
+math/asinpi.cl
 math/atan.cl
 math/atan2.cl
 math/copysign.cl
