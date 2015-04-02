@@ -131,3 +131,20 @@ uint64_t MipsFrameLowering::estimateStackSize(const MachineFunction &MF) const {
 
   return RoundUpToAlignment(Offset, getStackAlignment());
 }
+
+// Eliminate ADJCALLSTACKDOWN, ADJCALLSTACKUP pseudo instructions
+void MipsFrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I) const {
+  unsigned SP = STI.getABI().IsN64() ? Mips::SP_64 : Mips::SP;
+
+  if (!hasReservedCallFrame(MF)) {
+    int64_t Amount = I->getOperand(0).getImm();
+    if (I->getOpcode() == Mips::ADJCALLSTACKDOWN)
+      Amount = -Amount;
+
+    STI.getInstrInfo()->adjustStackPtr(SP, Amount, MBB, I);
+  }
+
+  MBB.erase(I);
+}

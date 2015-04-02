@@ -32,6 +32,11 @@ public:
 
   bool hasFP(const MachineFunction &MF) const override;
 
+  void
+  eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator I) const override;
+
 protected:
   uint64_t estimateStackSize(const MachineFunction &MF) const;
 };
