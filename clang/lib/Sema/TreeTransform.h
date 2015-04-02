@@ -6670,7 +6670,16 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
     if (!D->getAssociatedStmt()) {
       return StmtError();
     }
-    AssociatedStmt = getDerived().TransformStmt(D->getAssociatedStmt());
+    getDerived().getSema().ActOnOpenMPRegionStart(D->getDirectiveKind(),
+                                                  /*CurScope=*/nullptr);
+    StmtResult Body;
+    {
+      Sema::CompoundScopeRAII CompoundScope(getSema());
+      Body = getDerived().TransformStmt(
+          cast<CapturedStmt>(D->getAssociatedStmt())->getCapturedStmt());
+    }
+    AssociatedStmt =
+        getDerived().getSema().ActOnOpenMPRegionEnd(Body, TClauses);
     if (AssociatedStmt.isInvalid()) {
       return StmtError();
     }

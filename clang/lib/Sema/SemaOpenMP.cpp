@@ -1199,7 +1199,7 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
     if (isOpenMPPrivate(Clause->getClauseKind())) {
       for (auto *VarRef : Clause->children()) {
         if (auto *E = cast_or_null<Expr>(VarRef)) {
-          MarkDeclarationsReferencedInExpr(cast<Expr>(E));
+          MarkDeclarationsReferencedInExpr(E);
         }
       }
     }

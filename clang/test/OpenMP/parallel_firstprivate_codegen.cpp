@@ -45,6 +45,8 @@ T tmain() {
     vec[0] = t_var;
     s_arr[0] = var;
   }
+#pragma omp parallel firstprivate(t_var)
+  {}
   return T();
 }
 
