@@ -650,6 +650,8 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   MDNode *Var = SD->getVariable();
   MDNode *Expr = SD->getExpression();
   DebugLoc DL = SD->getDebugLoc();
+  assert(DIVariable(Var)->isValidLocationForIntrinsic(DL) &&
+         "Expected inlined-at fields to agree");
 
   if (SD->getKind() == SDDbgValue::FRAMEIX) {
     // Stack address; this needs to be lowered in target-dependent fashion.

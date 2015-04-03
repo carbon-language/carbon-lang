@@ -1587,6 +1587,14 @@ public:
 
   Metadata *getRawInlinedAt() const { return getOperand(4); }
 
+  /// \brief Check that a location is valid for this variable.
+  ///
+  /// Check that \c DL has the same inlined-at location as this variable,
+  /// making them valid for the same \a DbgInfoIntrinsic.
+  bool isValidLocationForIntrinsic(const MDLocation *DL) const {
+    return getInlinedAt() == (DL ? DL->getInlinedAt() : nullptr);
+  }
+
   /// \brief Get an inlined version of this variable.
   ///
   /// Returns a version of this with \a getAlinedAt() set to \c InlinedAt.

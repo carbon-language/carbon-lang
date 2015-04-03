@@ -204,6 +204,8 @@ void llvm::calculateDbgValueHistory(const MachineFunction *MF,
       // as index into History. The full variables including the
       // piece expressions are attached to the MI.
       DIVariable Var = MI.getDebugVariable();
+      assert(Var->isValidLocationForIntrinsic(MI.getDebugLoc()) &&
+             "Expected inlined-at fields to agree");
 
       if (unsigned PrevReg = Result.getRegisterForVar(Var))
         dropRegDescribedVar(RegVars, PrevReg, Var);

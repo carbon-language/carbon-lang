@@ -1131,6 +1131,8 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
                                      false);
 
     if (Op) {
+      assert(DI->getVariable()->isValidLocationForIntrinsic(DbgLoc) &&
+             "Expected inlined-at fields to agree");
       if (Op->isReg()) {
         Op->setIsDebug(true);
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -1155,6 +1157,8 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
     const DbgValueInst *DI = cast<DbgValueInst>(II);
     const MCInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     const Value *V = DI->getValue();
+    assert(DI->getVariable()->isValidLocationForIntrinsic(DbgLoc) &&
+           "Expected inlined-at fields to agree");
     if (!V) {
       // Currently the optimizer can produce this; insert an undef to
       // help debugging.  Probably the optimizer should not do this.

@@ -734,6 +734,8 @@ void DwarfDebug::collectVariableInfoFromMMITable(
       continue;
 
     DIVariable DV(VI.Var);
+    assert(DV->isValidLocationForIntrinsic(VI.Loc) &&
+           "Expected inlined-at fields to agree");
     DIExpression Expr(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
     auto RegVar = make_unique<DbgVariable>(DV, Expr, this, VI.Slot);

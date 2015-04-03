@@ -824,8 +824,9 @@ private:
   /// corresponding DBG_VALUE machine instruction for it now. At the end of
   /// instruction selection, they will be inserted to the entry BB.
   bool EmitFuncArgumentDbgValue(const Value *V, MDLocalVariable *Variable,
-                                MDExpression *Expr, int64_t Offset,
-                                bool IsIndirect, const SDValue &N);
+                                MDExpression *Expr, MDLocation *DL,
+                                int64_t Offset, bool IsIndirect,
+                                const SDValue &N);
 
   /// Return the next block after MBB, or nullptr if there is none.
   MachineBasicBlock *NextBlock(MachineBasicBlock *MBB);

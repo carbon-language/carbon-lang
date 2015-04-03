@@ -357,6 +357,8 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    const MDNode *Variable, const MDNode *Expr) {
   assert(DIVariable(Variable).Verify() && "not a DIVariable");
   assert(DIExpression(Expr)->isValid() && "not a DIExpression");
+  assert(DIVariable(Variable)->isValidLocationForIntrinsic(DL) &&
+         "Expected inlined-at fields to agree");
   if (IsIndirect)
     return BuildMI(MF, DL, MCID)
         .addReg(Reg, RegState::Debug)

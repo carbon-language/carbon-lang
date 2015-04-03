@@ -1000,12 +1000,14 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
     unsigned DbgSDNodeOrder = DDI.getSDNodeOrder();
     MDLocalVariable *Variable = DI->getVariable();
     MDExpression *Expr = DI->getExpression();
+    assert(Variable->isValidLocationForIntrinsic(dl) &&
+           "Expected inlined-at fields to agree");
     uint64_t Offset = DI->getOffset();
     // A dbg.value for an alloca is always indirect.
     bool IsIndirect = isa<AllocaInst>(V) || Offset != 0;
     SDDbgValue *SDV;
     if (Val.getNode()) {
-      if (!EmitFuncArgumentDbgValue(V, Variable, Expr, Offset, IsIndirect,
+      if (!EmitFuncArgumentDbgValue(V, Variable, Expr, dl, Offset, IsIndirect,
                                     Val)) {
         SDV = DAG.getDbgValue(Variable, Expr, Val.getNode(), Val.getResNo(),
                               IsIndirect, Offset, dl, DbgSDNodeOrder);
@@ -4450,7 +4452,7 @@ static unsigned getTruncatedArgReg(const SDValue &N) {
 /// At the end of instruction selection, they will be inserted to the entry BB.
 bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
     const Value *V, MDLocalVariable *Variable, MDExpression *Expr,
-    int64_t Offset, bool IsIndirect, const SDValue &N) {
+    MDLocation *DL, int64_t Offset, bool IsIndirect, const SDValue &N) {
   const Argument *Arg = dyn_cast<Argument>(V);
   if (!Arg)
     return false;
@@ -4501,13 +4503,15 @@ bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
   if (!Op)
     return false;
 
+  assert(Variable->isValidLocationForIntrinsic(DL) &&
+         "Expected inlined-at fields to agree");
   if (Op->isReg())
     FuncInfo.ArgDbgValues.push_back(
-        BuildMI(MF, getCurDebugLoc(), TII->get(TargetOpcode::DBG_VALUE),
-                IsIndirect, Op->getReg(), Offset, Variable, Expr));
+        BuildMI(MF, DL, TII->get(TargetOpcode::DBG_VALUE), IsIndirect,
+                Op->getReg(), Offset, Variable, Expr));
   else
     FuncInfo.ArgDbgValues.push_back(
-        BuildMI(MF, getCurDebugLoc(), TII->get(TargetOpcode::DBG_VALUE))
+        BuildMI(MF, DL, TII->get(TargetOpcode::DBG_VALUE))
             .addOperand(*Op)
             .addImm(Offset)
             .addMetadata(Variable)
@@ -4676,7 +4680,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         else {
           // Address is an argument, so try to emit its dbg value using
           // virtual register info from the FuncInfo.ValueMap.
-          EmitFuncArgumentDbgValue(Address, Variable, Expression, 0, false, N);
+          EmitFuncArgumentDbgValue(Address, Variable, Expression, dl, 0, false,
+                                   N);
           return nullptr;
         }
       } else if (AI)
@@ -4693,7 +4698,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     } else {
       // If Address is an argument then try to emit its dbg value using
       // virtual register info from the FuncInfo.ValueMap.
-      if (!EmitFuncArgumentDbgValue(Address, Variable, Expression, 0, false,
+      if (!EmitFuncArgumentDbgValue(Address, Variable, Expression, dl, 0, false,
                                     N)) {
         // If variable is pinned by a alloca in dominating bb then
         // use StaticAllocaMap.
@@ -4744,7 +4749,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       if (N.getNode()) {
         // A dbg.value for an alloca is always indirect.
         bool IsIndirect = isa<AllocaInst>(V) || Offset != 0;
-        if (!EmitFuncArgumentDbgValue(V, Variable, Expression, Offset,
+        if (!EmitFuncArgumentDbgValue(V, Variable, Expression, dl, Offset,
                                       IsIndirect, N)) {
           SDV = DAG.getDbgValue(Variable, Expression, N.getNode(), N.getResNo(),
                                 IsIndirect, Offset, dl, SDNodeOrder);
