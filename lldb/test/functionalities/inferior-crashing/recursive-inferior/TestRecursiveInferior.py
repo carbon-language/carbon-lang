@@ -67,7 +67,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.recursive_inferior_crashing_step_after_break()
 
     @skipIfFreeBSD # llvm.org/pr16684
-    @expectedFailureLinux('llvm.org/pr16684')
     def test_recursive_inferior_crashing_step_after_break_dwarf(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDwarf()
@@ -80,7 +79,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.recursive_inferior_crashing_expr_step_expr()
 
     @expectedFailureFreeBSD('llvm.org/pr15989') # Couldn't allocate space for the stack frame
-    @expectedFailureLinux('llvm.org/pr15989') # Couldn't allocate space for the stack frame
     def test_recursive_inferior_crashing_expr_step_and_expr_dwarf(self):
         """Test that lldb expressions work before and after stepping after a crash."""
         self.buildDwarf()
@@ -207,14 +205,16 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.check_stop_reason()
 
         expected_state = 'exited' # Provide the exit code.
-        if self.platformIsDarwin():
+        if self.platformIsDarwin() or self.platformIsLinux():
             expected_state = 'stopped' # TODO: Determine why 'next' and 'continue' have no effect after a crash.
 
         self.expect("next",
             substrs = ['Process', expected_state])
 
-        if not self.platformIsDarwin(): # if stopped, we will have a process around
+        if expected_state == 'exited':
             self.expect("thread list", error=True,substrs = ['Process must be launched'])
+        else:
+            self.check_stop_reason()
 
     def recursive_inferior_crashing_expr_step_expr(self):
         """Test that lldb expressions work before and after stepping after a crash."""

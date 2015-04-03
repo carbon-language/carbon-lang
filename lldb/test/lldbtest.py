@@ -1395,6 +1395,11 @@ class Base(unittest2.TestCase):
         platform_name = self.getPlatform()
         return platform_name in getDarwinOSTriples()
 
+    def platformIsLinux(self):
+        """Returns true if the OS triple for the selected platform is any valid apple OS"""
+        platform_name = self.getPlatform()
+        return platform_name == "linux"
+
     def getPlatform(self):
         """Returns the platform the test suite is running on."""
         platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
