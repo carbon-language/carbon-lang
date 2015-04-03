@@ -15,22 +15,13 @@
 namespace lld {
 namespace elf {
 
-#define LLVM_TARGET(TargetName) \
-  class TargetName##LinkingContext : public ELFLinkingContext { \
-  public: \
-    static std::unique_ptr<ELFLinkingContext> create(llvm::Triple); \
-  };
-
-// FIXME: #include "llvm/Config/Targets.def"
-LLVM_TARGET(AArch64)
-LLVM_TARGET(ARM)
-LLVM_TARGET(Hexagon)
-LLVM_TARGET(Mips)
-LLVM_TARGET(X86)
-LLVM_TARGET(Example)
-LLVM_TARGET(X86_64)
-
-#undef LLVM_TARGET
+std::unique_ptr<ELFLinkingContext> createAArch64LinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createARMLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createExampleLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createHexagonLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createMipsLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createX86LinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createX86_64LinkingContext(llvm::Triple);
 
 } // end namespace elf
 } // end namespace lld

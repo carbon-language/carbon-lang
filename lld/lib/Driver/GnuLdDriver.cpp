@@ -350,17 +350,13 @@ void GnuLdDriver::addPlatformSearchDirs(ELFLinkingContext &ctx,
 std::unique_ptr<ELFLinkingContext>
 GnuLdDriver::createELFLinkingContext(llvm::Triple triple) {
   std::unique_ptr<ELFLinkingContext> p;
-  // FIXME: #include "llvm/Config/Targets.def"
-#define LLVM_TARGET(targetName) \
-  if ((p = elf::targetName##LinkingContext::create(triple))) return p;
-  LLVM_TARGET(AArch64)
-  LLVM_TARGET(ARM)
-  LLVM_TARGET(Hexagon)
-  LLVM_TARGET(Mips)
-  LLVM_TARGET(X86)
-  LLVM_TARGET(Example)
-  LLVM_TARGET(X86_64)
-#undef LLVM_TARGET
+  if ((p = elf::createAArch64LinkingContext(triple))) return p;
+  if ((p = elf::createARMLinkingContext(triple))) return p;
+  if ((p = elf::createExampleLinkingContext(triple))) return p;
+  if ((p = elf::createHexagonLinkingContext(triple))) return p;
+  if ((p = elf::createMipsLinkingContext(triple))) return p;
+  if ((p = elf::createX86LinkingContext(triple))) return p;
+  if ((p = elf::createX86_64LinkingContext(triple))) return p;
   return nullptr;
 }
 

@@ -15,7 +15,7 @@ namespace lld {
 namespace elf {
 
 std::unique_ptr<ELFLinkingContext>
-ARMLinkingContext::create(llvm::Triple triple) {
+createARMLinkingContext(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::arm)
     return llvm::make_unique<ARMLinkingContext>(triple);
   return nullptr;

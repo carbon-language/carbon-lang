@@ -10,12 +10,13 @@
 #include "AArch64LinkingContext.h"
 #include "AArch64RelocationPass.h"
 #include "AArch64TargetHandler.h"
+#include "lld/ReaderWriter/ELFTargets.h"
 
 using namespace lld;
 using namespace lld::elf;
 
 std::unique_ptr<ELFLinkingContext>
-AArch64LinkingContext::create(llvm::Triple triple) {
+elf::createAArch64LinkingContext(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::aarch64)
     return llvm::make_unique<AArch64LinkingContext>(triple);
   return nullptr;

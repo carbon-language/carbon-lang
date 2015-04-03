@@ -12,12 +12,13 @@
 #include "MipsLinkingContext.h"
 #include "MipsRelocationPass.h"
 #include "MipsTargetHandler.h"
+#include "lld/ReaderWriter/ELFTargets.h"
 
 using namespace lld;
 using namespace lld::elf;
 
 std::unique_ptr<ELFLinkingContext>
-MipsLinkingContext::create(llvm::Triple triple) {
+elf::createMipsLinkingContext(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::mipsel ||
       triple.getArch() == llvm::Triple::mips64el)
     return llvm::make_unique<MipsLinkingContext>(triple);

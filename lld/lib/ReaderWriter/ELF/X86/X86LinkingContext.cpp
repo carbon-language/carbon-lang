@@ -10,6 +10,7 @@
 #include "X86LinkingContext.h"
 #include "X86TargetHandler.h"
 #include "lld/Core/LLVM.h"
+#include "lld/ReaderWriter/ELFTargets.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorOr.h"
 
@@ -17,7 +18,7 @@ using namespace lld;
 using namespace lld::elf;
 
 std::unique_ptr<ELFLinkingContext>
-X86LinkingContext::create(llvm::Triple triple) {
+elf::createX86LinkingContext(llvm::Triple triple) {
   if (triple.getArch() == llvm::Triple::x86)
     return llvm::make_unique<X86LinkingContext>(triple);
   return nullptr;
