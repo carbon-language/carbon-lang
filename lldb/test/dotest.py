@@ -1064,13 +1064,12 @@ def setupSysPath():
             return
         
         # If our lldb supports the -P option, use it to find the python path:
-        init_in_python_dir = 'lldb/__init__.py'
+        init_in_python_dir = os.path.join('lldb', '__init__.py')
         lldb_dash_p_result = None
 
-        if lldbHere:
-            lldb_dash_p_result = subprocess.check_output([lldbHere, "-P"], stderr=subprocess.STDOUT)
-        elif lldbExec:
-            lldb_dash_p_result = subprocess.check_output([lldbExec, "-P"], stderr=subprocess.STDOUT)
+        lldbExecutable = lldbHere if lldbHere else lldbExec
+        if lldbExecutable:
+            lldb_dash_p_result = subprocess.check_output([lldbExecutable, "-P"], stderr=subprocess.STDOUT)
 
         if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")) \
 							  and not lldb_dash_p_result.startswith("Traceback"):
@@ -1092,38 +1091,51 @@ def setupSysPath():
                 if "freebsd" in sys.platform or "linux" in sys.platform:
                     os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPath, '..', '..')
         
-        if not lldbPath: 
-            dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
-            dbgPath2 = os.path.join(base, *(xcode4_build_dir + dbg + python_resource_dir))
-            dbcPath  = os.path.join(base, *(xcode3_build_dir + dbc + python_resource_dir))
-            dbcPath2 = os.path.join(base, *(xcode4_build_dir + dbc + python_resource_dir))
-            relPath  = os.path.join(base, *(xcode3_build_dir + rel + python_resource_dir))
-            relPath2 = os.path.join(base, *(xcode4_build_dir + rel + python_resource_dir))
-            baiPath  = os.path.join(base, *(xcode3_build_dir + bai + python_resource_dir))
-            baiPath2 = os.path.join(base, *(xcode4_build_dir + bai + python_resource_dir))
-    
-            if os.path.isfile(os.path.join(dbgPath, init_in_python_dir)):
-                lldbPath = dbgPath
-            elif os.path.isfile(os.path.join(dbgPath2, init_in_python_dir)):
-                lldbPath = dbgPath2
-            elif os.path.isfile(os.path.join(dbcPath, init_in_python_dir)):
-                lldbPath = dbcPath
-            elif os.path.isfile(os.path.join(dbcPath2, init_in_python_dir)):
-                lldbPath = dbcPath2
-            elif os.path.isfile(os.path.join(relPath, init_in_python_dir)):
-                lldbPath = relPath
-            elif os.path.isfile(os.path.join(relPath2, init_in_python_dir)):
-                lldbPath = relPath2
-            elif os.path.isfile(os.path.join(baiPath, init_in_python_dir)):
-                lldbPath = baiPath
-            elif os.path.isfile(os.path.join(baiPath2, init_in_python_dir)):
-                lldbPath = baiPath2
-
         if not lldbPath:
-            print 'This script requires lldb.py to be in either ' + dbgPath + ',',
-            print relPath + ', or ' + baiPath + '. Some tests might fail.'
+            if platform.system() == "Darwin":
+                dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
+                dbgPath2 = os.path.join(base, *(xcode4_build_dir + dbg + python_resource_dir))
+                dbcPath  = os.path.join(base, *(xcode3_build_dir + dbc + python_resource_dir))
+                dbcPath2 = os.path.join(base, *(xcode4_build_dir + dbc + python_resource_dir))
+                relPath  = os.path.join(base, *(xcode3_build_dir + rel + python_resource_dir))
+                relPath2 = os.path.join(base, *(xcode4_build_dir + rel + python_resource_dir))
+                baiPath  = os.path.join(base, *(xcode3_build_dir + bai + python_resource_dir))
+                baiPath2 = os.path.join(base, *(xcode4_build_dir + bai + python_resource_dir))
+
+                if os.path.isfile(os.path.join(dbgPath, init_in_python_dir)):
+                    lldbPath = dbgPath
+                elif os.path.isfile(os.path.join(dbgPath2, init_in_python_dir)):
+                    lldbPath = dbgPath2
+                elif os.path.isfile(os.path.join(dbcPath, init_in_python_dir)):
+                    lldbPath = dbcPath
+                elif os.path.isfile(os.path.join(dbcPath2, init_in_python_dir)):
+                    lldbPath = dbcPath2
+                elif os.path.isfile(os.path.join(relPath, init_in_python_dir)):
+                    lldbPath = relPath
+                elif os.path.isfile(os.path.join(relPath2, init_in_python_dir)):
+                    lldbPath = relPath2
+                elif os.path.isfile(os.path.join(baiPath, init_in_python_dir)):
+                    lldbPath = baiPath
+                elif os.path.isfile(os.path.join(baiPath2, init_in_python_dir)):
+                    lldbPath = baiPath2
+
+                if not lldbPath:
+                    print 'This script requires lldb.py to be in either ' + dbgPath + ',',
+                    print relPath + ', or ' + baiPath + '. Some tests might fail.'
+            else:
+                print "Unable to load lldb extension module.  Possible reasons for this include:"
+                print "  1) LLDB was built with LLDB_DISABLE_PYTHON=1"
+                print "  2) PYTHONPATH and PYTHONHOME are not set correctly.  PYTHONHOME should refer to"
+                print "     the version of Python that LLDB built and linked against, and PYTHONPATH"
+                print "     should contain the Lib directory for the same python distro, as well as the"
+                print "     location of LLDB\'s site-packages folder."
+                print "  3) A different version of Python than that which was built against is exported in"
+                print "     the system\'s PATH environment variable, causing conflicts."
+                print "  4) The executable '%s' could not be found.  Please check " % lldbExecutable
+                print "     that it exists and is executable."
 
     if lldbPath:
+        lldbPath = os.path.normpath(lldbPath)
         # Some of the code that uses this path assumes it hasn't resolved the Versions... link.  
         # If the path we've constructed looks like that, then we'll strip out the Versions/A part.
         (before, frameWithVersion, after) = lldbPath.rpartition("LLDB.framework/Versions/A")
