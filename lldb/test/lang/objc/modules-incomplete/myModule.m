@@ -8,7 +8,7 @@
 }
 -(int)privateMethod {
   printf("Hello private!\n");
-  return 3;
+  return 5;
 }
 @end
 
