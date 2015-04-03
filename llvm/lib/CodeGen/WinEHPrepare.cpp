@@ -607,20 +607,6 @@ bool WinEHPrepare::prepareExceptionHandlers(
   Builder.SetInsertPoint(&F.getEntryBlock().back());
   Builder.CreateCall(FrameEscapeFn, AllocasToEscape);
 
-  // Insert an alloca for the EH state in the entry block. On x86, we will also
-  // insert stores to update the EH state, but on other ISAs, the runtime does
-  // it for us.
-  // FIXME: This record is different on x86.
-  Type *UnwindHelpTy = Type::getInt64Ty(Context);
-  AllocaInst *UnwindHelp =
-      new AllocaInst(UnwindHelpTy, "unwindhelp", &F.getEntryBlock().front());
-  Builder.CreateStore(llvm::ConstantInt::get(UnwindHelpTy, -2), UnwindHelp,
-                      /*isVolatile=*/true);
-  Function *UnwindHelpFn =
-      Intrinsic::getDeclaration(M, Intrinsic::eh_unwindhelp);
-  Builder.CreateCall(UnwindHelpFn,
-                     Builder.CreateBitCast(UnwindHelp, Int8PtrType));
-
   // Clean up the handler action maps we created for this function
   DeleteContainerSeconds(CatchHandlerMap);
   CatchHandlerMap.clear();

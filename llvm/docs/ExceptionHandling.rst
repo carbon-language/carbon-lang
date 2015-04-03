@@ -543,18 +543,6 @@ In order to preserve the structure of the CFG, a call to '``llvm.eh.actions``'
 must be followed by an ':ref:`indirectbr <i_indirectbr>`' instruction that
 jumps to the result of the intrinsic call.
 
-``llvm.eh.unwindhelp``
-----------------------
-
-.. code-block:: llvm
-
-  void @llvm.eh.unwindhelp(i8*)
-
-This intrinsic designates the provided static alloca as the unwind help object.
-This object is used by Windows native exception handling on non-x86 platforms
-where xdata unwind information is used. It is typically an 8 byte chunk of
-memory treated as two 32-bit integers.
-
 
 SJLJ Intrinsics
 ---------------

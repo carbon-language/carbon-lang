@@ -38,7 +38,7 @@ $_TI1H = comdat any
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:        .long   ("$ip2state$?test1@@YAXXZ")@IMGREL
-; CHECK-NEXT:        .long   64
+; CHECK-NEXT:        .long   32
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:"$stateUnwindMap$?test1@@YAXXZ":
@@ -98,7 +98,7 @@ entry:
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   4
 ; CHECK-NEXT:        .long   ("$ip2state$?test2@@YAX_N@Z")@IMGREL
-; CHECK-NEXT:        .long   64
+; CHECK-NEXT:        .long   40
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:"$stateUnwindMap$?test2@@YAX_N@Z":
@@ -117,8 +117,6 @@ entry:
 ; CHECK-NEXT:        .long   0
 
 define void @"\01?test2@@YAX_N@Z"(i1 zeroext %b) #2 {
-entry:
-  %unwindhelp = alloca i64
   %b.addr = alloca i8, align 1
   %s = alloca %struct.S, align 1
   %exn.slot = alloca i8*
@@ -126,10 +124,7 @@ entry:
   %s1 = alloca %struct.S, align 1
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
-  %0 = bitcast i64* %unwindhelp to i8*
-  store volatile i64 -2, i64* %unwindhelp
   call void (...)* @llvm.frameescape(%struct.S* %s, %struct.S* %s1)
-  call void @llvm.eh.unwindhelp(i8* %0)
   call void @"\01?may_throw@@YAXXZ"()
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont unwind label %lpad1

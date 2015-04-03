@@ -47,14 +47,10 @@ $"\01??_R0?AVSomeClass@@@8" = comdat any
 
 ; CHECK: define void @"\01?test@@YAXXZ"() #0 {
 ; CHECK: entry:
-; CHECK:   [[UNWINDHELP:\%.+]] = alloca i64
 ; CHECK:   [[OBJ_PTR:\%.+]] = alloca %class.SomeClass*, align 8
 ; CHECK:   [[LL_PTR:\%.+]] = alloca i64, align 8
 ; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   call void (...)* @llvm.frameescape(i32* [[I_PTR]], i64* [[LL_PTR]], %class.SomeClass** [[OBJ_PTR]])
-; CHECK:   store volatile i64 -2, i64* [[UNWINDHELP]]
-; CHECK:   [[TMP:\%.+]] = bitcast i64* [[UNWINDHELP]] to i8*
-; CHECK:   call void @llvm.eh.unwindhelp(i8* [[TMP]])
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
 

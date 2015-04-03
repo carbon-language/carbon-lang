@@ -33,8 +33,8 @@ $"\01??_R0H@8" = comdat any
 define internal i8* @"\01?f@@YAXXZ.catch"(i8*, i8*) #4 {
 entry:
   %.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?f@@YAXXZ" to i8*), i8* %1, i32 0)
-  %2 = bitcast i8* %.i8 to i32**
-  %3 = bitcast i32** %2 to i8*
+  %bc2 = bitcast i8* %.i8 to i32**
+  %bc3 = bitcast i32** %bc2 to i8*
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont2 unwind label %lpad1
 
@@ -42,7 +42,7 @@ invoke.cont2:                                     ; preds = %entry
   ret i8* blockaddress(@"\01?f@@YAXXZ", %try.cont)
 
 lpad1:                                            ; preds = %entry
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %lp4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           cleanup
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.N.0
   %recover = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
@@ -50,8 +50,6 @@ lpad1:                                            ; preds = %entry
 }
 
 ; CHECK-LABEL: "?f@@YAXXZ.catch":
-; CHECK: ".L?f@@YAXXZ.catch$parent_frame_offset" = 56
-; CHECK:         movq    %rdx, 56(%rsp)
 ; CHECK:        .seh_handlerdata
 ; CHECK:        .long   ("$cppxdata$?f@@YAXXZ")@IMGREL
 
@@ -81,15 +79,11 @@ lpad:                                             ; preds = %entry
 
 define void @"\01?f@@YAXXZ"() #0 {
 entry:
-  %unwindhelp = alloca i64
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
   %0 = alloca i32*, align 8
   %1 = alloca double, align 8
   call void (...)* @llvm.frameescape(i32** %0, double* %1)
-  store volatile i64 -2, i64* %unwindhelp
-  %2 = bitcast i64* %unwindhelp to i8*
-  call void @llvm.eh.unwindhelp(i8* %2)
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont unwind label %lpad2
 
@@ -97,7 +91,7 @@ invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
 lpad2:                                            ; preds = %entry
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.8
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.N.0
   %recover = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.8 to i8*), i32 0, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch", i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
@@ -108,7 +102,7 @@ try.cont:                                         ; preds = %lpad2, %invoke.cont
           to label %try.cont8 unwind label %lpad1
 
 lpad1:
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.N.0
   %recover2 = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
   indirectbr i8* %recover2, [label %try.cont8]
@@ -128,7 +122,7 @@ try.cont8:                                        ; preds = %lpad2, %try.cont
 ; CHECK-NEXT:        .long   ("$tryMap$?f@@YAXXZ")@IMGREL
 ; CHECK-NEXT:        .long   3
 ; CHECK-NEXT:        .long   ("$ip2state$?f@@YAXXZ")@IMGREL
-; CHECK-NEXT:        .long   64
+; CHECK-NEXT:        .long   32
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:"$stateUnwindMap$?f@@YAXXZ":
@@ -193,9 +187,6 @@ declare void @llvm.frameescape(...) #3
 
 ; Function Attrs: nounwind readnone
 declare i8* @llvm.framerecover(i8*, i8*, i32) #2
-
-; Function Attrs: nounwind
-declare void @llvm.eh.unwindhelp(i8*) #3
 
 declare void @llvm.donothing(...)
 

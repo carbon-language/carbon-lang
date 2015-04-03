@@ -2267,12 +2267,6 @@ static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
   return makeArrayRef(std::begin(XMMArgRegs64Bit), std::end(XMMArgRegs64Bit));
 }
 
-static bool isOutlinedHandler(const MachineFunction &MF) {
-  const MachineModuleInfo &MMI = MF.getMMI();
-  const Function *F = MF.getFunction();
-  return MMI.getWinEHParent(F) != F;
-}
-
 SDValue
 X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                         CallingConv::ID CallConv,
@@ -2424,6 +2418,13 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         MFI->CreateFixedObject(1, StackSize, true));
   }
 
+  MachineModuleInfo &MMI = MF.getMMI();
+  const Function *WinEHParent = nullptr;
+  if (IsWin64 && MMI.hasWinEHFuncInfo(Fn))
+    WinEHParent = MMI.getWinEHParent(Fn);
+  bool IsWinEHOutlined = WinEHParent && WinEHParent != Fn;
+  bool IsWinEHParent = WinEHParent && WinEHParent == Fn;
+
   // Figure out if XMM registers are in use.
   assert(!(MF.getTarget().Options.UseSoftFloat &&
            Fn->hasFnAttribute(Attribute::NoImplicitFloat)) &&
@@ -2512,14 +2513,13 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
     if (!MemOps.empty())
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
-  } else if (IsWin64 && isOutlinedHandler(MF)) {
+  } else if (IsWinEHOutlined) {
     // Get to the caller-allocated home save location.  Add 8 to account
     // for the return address.
     int HomeOffset = TFI.getOffsetOfLocalArea() + 8;
     FuncInfo->setRegSaveFrameIndex(MFI->CreateFixedObject(
         /*Size=*/1, /*SPOffset=*/HomeOffset + 8, /*Immutable=*/false));
 
-    MachineModuleInfo &MMI = MF.getMMI();
     MMI.getWinEHFuncInfo(Fn)
         .CatchHandlerParentFrameObjIdx[const_cast<Function *>(Fn)] =
         FuncInfo->getRegSaveFrameIndex();
@@ -2599,6 +2599,17 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   FuncInfo->setArgumentStackSize(StackSize);
+
+  if (IsWinEHParent) {
+    int UnwindHelpFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
+    SDValue StackSlot = DAG.getFrameIndex(UnwindHelpFI, MVT::i64);
+    MMI.getWinEHFuncInfo(MF.getFunction()).UnwindHelpFrameIdx = UnwindHelpFI;
+    SDValue Neg2 = DAG.getConstant(-2, MVT::i64);
+    Chain = DAG.getStore(Chain, dl, Neg2, StackSlot,
+                         MachinePointerInfo::getFixedStack(UnwindHelpFI),
+                         /*isVolatile=*/true,
+                         /*isNonTemporal=*/false, /*Alignment=*/0);
+  }
 
   return Chain;
 }
