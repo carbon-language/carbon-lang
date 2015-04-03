@@ -124,6 +124,9 @@ public:
     FileSpecList &
     GetDebugFileSearchPaths ();
     
+    FileSpecList &
+    GetClangModuleSearchPaths ();
+    
     bool
     GetEnableSyntheticValue () const;
     
@@ -557,6 +560,9 @@ public:
 
     static FileSpecList
     GetDefaultDebugFileSearchPaths ();
+    
+    static FileSpecList
+    GetDefaultClangModuleSearchPaths ();
 
     static ArchSpec
     GetDefaultArchitecture ();

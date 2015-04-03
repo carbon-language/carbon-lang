@@ -309,6 +309,18 @@ ClangModulesDeclVendor::Create(Target &target)
         compiler_invocation_arguments.push_back(module_cache_argument);
     }
     
+    FileSpecList &module_search_paths = target.GetClangModuleSearchPaths();
+    
+    for (size_t spi = 0, spe = module_search_paths.GetSize(); spi < spe; ++spi)
+    {
+        const FileSpec &search_path = module_search_paths.GetFileSpecAtIndex(spi);
+        
+        std::string search_path_argument = "-I";
+        search_path_argument.append(search_path.GetPath());
+        
+        compiler_invocation_arguments.push_back(search_path_argument);
+    }
+    
     {
         FileSpec clang_resource_dir = GetResourceDir();
         
