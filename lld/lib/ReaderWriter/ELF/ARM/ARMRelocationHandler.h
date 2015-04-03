@@ -10,10 +10,11 @@
 #ifndef LLD_READER_WRITER_ELF_ARM_ARM_RELOCATION_HANDLER_H
 #define LLD_READER_WRITER_ELF_ARM_ARM_RELOCATION_HANDLER_H
 
-#include "ARMTargetHandler.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 namespace lld {
 namespace elf {
+
 typedef llvm::object::ELFType<llvm::support::little, 2, false> ARMELFType;
 
 template <class ELFT> class ARMTargetLayout;

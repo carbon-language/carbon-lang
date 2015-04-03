@@ -9,14 +9,14 @@
 #ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_HANDLER_H
 #define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_HANDLER_H
 
-#include "HexagonSectionChunks.h"
-#include "HexagonTargetHandler.h"
-#include "lld/ReaderWriter/RelocationHelperFunctions.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 namespace lld {
 namespace elf {
-
 class HexagonTargetHandler;
+template <class ELFT> class HexagonTargetLayout;
+
+typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 
 class HexagonTargetRelocationHandler final : public TargetRelocationHandler {
 public:

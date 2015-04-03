@@ -10,7 +10,7 @@
 #ifndef X86_64_RELOCATION_HANDLER_H
 #define X86_64_RELOCATION_HANDLER_H
 
-#include "X86_64TargetHandler.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 namespace lld {
 namespace elf {

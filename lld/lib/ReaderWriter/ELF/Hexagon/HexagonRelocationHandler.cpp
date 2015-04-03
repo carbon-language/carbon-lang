@@ -9,8 +9,9 @@
 
 #include "HexagonLinkingContext.h"
 #include "HexagonRelocationFunctions.h"
-#include "HexagonTargetHandler.h"
 #include "HexagonRelocationHandler.h"
+#include "HexagonTargetHandler.h"
+#include "lld/ReaderWriter/RelocationHelperFunctions.h"
 #include "llvm/Support/Endian.h"
 
 using namespace lld;
