@@ -94,6 +94,11 @@ TEST_F(FormatTestProto, MessageFieldAttributes) {
                "  bbbbbbbbbbbbbbbb: BBBBBBBBBB\n"
                "}];");
   verifyFormat("repeated double value = 1 [(aaaaaaa.aaaaaaaaa) = {\n"
+               "  type: \"AAAAAAAAAA\"\n"
+               "  is: \"AAAAAAAAAA\"\n"
+               "  or: \"BBBBBBBBBB\"\n"
+               "}];");
+  verifyFormat("repeated double value = 1 [(aaaaaaa.aaaaaaaaa) = {\n"
                "  aaaaaaaaaaaaaaaa: AAAAAAAAAA,\n"
                "  bbbbbbb: BBBB,\n"
                "  bbbb: BBB\n"
