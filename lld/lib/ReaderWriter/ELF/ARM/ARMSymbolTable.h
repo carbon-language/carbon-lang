@@ -28,7 +28,7 @@ public:
 template <class ELFT>
 ARMSymbolTable<ELFT>::ARMSymbolTable(const ELFLinkingContext &ctx)
     : SymbolTable<ELFT>(ctx, ".symtab",
-                        DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
+                        TargetLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
 
 template <class ELFT>
 void ARMSymbolTable<ELFT>::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,

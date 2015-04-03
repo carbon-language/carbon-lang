@@ -9,7 +9,6 @@
 #ifndef LLD_READER_WRITER_ELF_OUTPUT_WRITER_H
 #define LLD_READER_WRITER_ELF_OUTPUT_WRITER_H
 
-#include "DefaultLayout.h"
 #include "ELFFile.h"
 #include "TargetLayout.h"
 #include "lld/Core/Instrumentation.h"
@@ -350,7 +349,7 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
   _layout.assignFileOffsetsForMiscSections();
   for (auto sec : _layout.sections())
     if (auto section = dyn_cast<Section<ELFT>>(sec))
-      if (!DefaultLayout<ELFT>::hasOutputSegment(section))
+      if (!TargetLayout<ELFT>::hasOutputSegment(section))
         _shdrtab->updateSection(section);
 }
 
@@ -398,11 +397,11 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
 
   _symtab = std::move(this->createSymbolTable());
   _strtab.reset(new (_alloc) StringTable<ELFT>(
-      _ctx, ".strtab", DefaultLayout<ELFT>::ORDER_STRING_TABLE));
+      _ctx, ".strtab", TargetLayout<ELFT>::ORDER_STRING_TABLE));
   _shstrtab.reset(new (_alloc) StringTable<ELFT>(
-      _ctx, ".shstrtab", DefaultLayout<ELFT>::ORDER_SECTION_STRINGS));
+      _ctx, ".shstrtab", TargetLayout<ELFT>::ORDER_SECTION_STRINGS));
   _shdrtab.reset(new (_alloc) SectionHeader<ELFT>(
-      _ctx, DefaultLayout<ELFT>::ORDER_SECTION_HEADERS));
+      _ctx, TargetLayout<ELFT>::ORDER_SECTION_HEADERS));
   _layout.addSection(_symtab.get());
   _layout.addSection(_strtab.get());
   _layout.addSection(_shstrtab.get());
@@ -416,8 +415,7 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
     if (!section || section->outputSectionName() != ".eh_frame")
       continue;
     _ehFrameHeader.reset(new (_alloc) EHFrameHeader<ELFT>(
-        _ctx, ".eh_frame_hdr", _layout,
-        DefaultLayout<ELFT>::ORDER_EH_FRAMEHDR));
+        _ctx, ".eh_frame_hdr", _layout, TargetLayout<ELFT>::ORDER_EH_FRAMEHDR));
     _layout.addSection(_ehFrameHeader.get());
     break;
   }
@@ -425,10 +423,10 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   if (_ctx.isDynamic()) {
     _dynamicTable = std::move(createDynamicTable());
     _dynamicStringTable.reset(new (_alloc) StringTable<ELFT>(
-        _ctx, ".dynstr", DefaultLayout<ELFT>::ORDER_DYNAMIC_STRINGS, true));
+        _ctx, ".dynstr", TargetLayout<ELFT>::ORDER_DYNAMIC_STRINGS, true));
     _dynamicSymbolTable = std::move(createDynamicSymbolTable());
     _hashTable.reset(new (_alloc) HashSection<ELFT>(
-        _ctx, ".hash", DefaultLayout<ELFT>::ORDER_HASH));
+        _ctx, ".hash", TargetLayout<ELFT>::ORDER_HASH));
     // Set the hash table in the dynamic symbol table so that the entries in the
     // hash table can be created
     _dynamicSymbolTable->setHashTable(_hashTable.get());
@@ -453,7 +451,7 @@ template <class ELFT>
 unique_bump_ptr<SymbolTable<ELFT>>
     OutputELFWriter<ELFT>::createSymbolTable() {
   return unique_bump_ptr<SymbolTable<ELFT>>(new (_alloc) SymbolTable<ELFT>(
-      this->_ctx, ".symtab", DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE));
+      this->_ctx, ".symtab", TargetLayout<ELFT>::ORDER_SYMBOL_TABLE));
 }
 
 /// \brief create dynamic table
@@ -461,7 +459,7 @@ template <class ELFT>
 unique_bump_ptr<DynamicTable<ELFT>>
     OutputELFWriter<ELFT>::createDynamicTable() {
   return unique_bump_ptr<DynamicTable<ELFT>>(new (_alloc) DynamicTable<ELFT>(
-      this->_ctx, _layout, ".dynamic", DefaultLayout<ELFT>::ORDER_DYNAMIC));
+      this->_ctx, _layout, ".dynamic", TargetLayout<ELFT>::ORDER_DYNAMIC));
 }
 
 /// \brief create dynamic symbol table
@@ -471,7 +469,7 @@ unique_bump_ptr<DynamicSymbolTable<ELFT>>
   return unique_bump_ptr<DynamicSymbolTable<ELFT>>(
       new (_alloc)
           DynamicSymbolTable<ELFT>(this->_ctx, _layout, ".dynsym",
-                                   DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
+                                   TargetLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS));
 }
 
 template <class ELFT>

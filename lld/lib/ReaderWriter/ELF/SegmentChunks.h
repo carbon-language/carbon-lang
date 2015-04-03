@@ -29,7 +29,7 @@
 namespace lld {
 namespace elf {
 
-template <typename ELFT> class DefaultLayout;
+template <typename ELFT> class TargetLayout;
 
 /// \brief A segment can be divided into segment slices
 ///        depending on how the segments can be split
@@ -527,7 +527,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       // segment. If we see a tbss section, don't add memory size to addr The
       // fileOffset is automatically taken care of since TBSS section does not
       // end up using file size
-      if ((*si)->order() != DefaultLayout<ELFT>::ORDER_TBSS)
+      if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
         curSliceSize = (*si)->memSize();
     } else {
       uint64_t curAddr = curSliceAddress + curSliceSize;
@@ -610,7 +610,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         // any segment. If we see a tbss section, don't add memory size to addr
         // The fileOffset is automatically taken care of since TBSS section does
         // not end up using file size.
-        if ((*si)->order() != DefaultLayout<ELFT>::ORDER_TBSS)
+        if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
           curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
         else
           curSliceSize = newAddr - curSliceAddress;

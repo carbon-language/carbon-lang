@@ -9,7 +9,7 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_DYNAMIC_TABLE_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_DYNAMIC_TABLE_H
 
-#include "DefaultLayout.h"
+#include "TargetLayout.h"
 #include "SectionChunks.h"
 
 namespace lld {
@@ -23,7 +23,7 @@ public:
   MipsDynamicTable(const ELFLinkingContext &ctx,
                    MipsTargetLayout<MipsELFType> &layout)
       : DynamicTable<MipsELFType>(ctx, layout, ".dynamic",
-                                  DefaultLayout<MipsELFType>::ORDER_DYNAMIC),
+                                  TargetLayout<MipsELFType>::ORDER_DYNAMIC),
         _targetLayout(layout) {}
 
   void createDefaultEntries() override {

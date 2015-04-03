@@ -116,7 +116,7 @@ template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
   OutputELFWriter<ELFT>::createDefaultSections();
   if (this->_ctx.isDynamic()) {
     _interpSection.reset(new (this->_alloc) InterpSection<ELFT>(
-        this->_ctx, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
+        this->_ctx, ".interp", TargetLayout<ELFT>::ORDER_INTERP,
         this->_ctx.getInterpreter()));
     this->_layout.addSection(_interpSection.get());
   }

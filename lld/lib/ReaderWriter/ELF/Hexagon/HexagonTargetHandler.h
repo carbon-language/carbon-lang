@@ -40,8 +40,8 @@ public:
        (contentType == DefinedAtom::typeZeroFillFast))
       return ORDER_SDATA;
 
-    return DefaultLayout<HexagonELFType>::getSectionOrder(name, contentType,
-                                                          contentPermissions);
+    return TargetLayout<HexagonELFType>::getSectionOrder(name, contentType,
+                                                         contentPermissions);
   }
 
   /// \brief Return the appropriate input section name.
@@ -53,7 +53,7 @@ public:
     default:
       break;
     }
-    return DefaultLayout<HexagonELFType>::getInputSectionName(da);
+    return TargetLayout<HexagonELFType>::getInputSectionName(da);
   }
 
   /// \brief Gets or creates a section.
@@ -64,7 +64,7 @@ public:
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
-    return DefaultLayout<HexagonELFType>::createSection(
+    return TargetLayout<HexagonELFType>::createSection(
         name, contentType, contentPermissions, sectionOrder);
   }
 
@@ -74,7 +74,7 @@ public:
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
 
-    return DefaultLayout<HexagonELFType>::getSegmentType(section);
+    return TargetLayout<HexagonELFType>::getSegmentType(section);
   }
 
   Section<HexagonELFType> *getSDataSection() const {

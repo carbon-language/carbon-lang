@@ -39,7 +39,7 @@ public:
       return _gotSection;
     if (type == DefinedAtom::typeStub && name == ".plt")
       return _pltSection;
-    return DefaultLayout<ELFT>::createSection(name, type, permissions, order);
+    return TargetLayout<ELFT>::createSection(name, type, permissions, order);
   }
 
   /// \brief GP offset relative to .got section.
@@ -63,10 +63,10 @@ public:
   Layout::SectionOrder getSectionOrder(StringRef name, int32_t contentType,
                                        int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeStub) && (name.startswith(".text")))
-      return DefaultLayout<ELFT>::ORDER_TEXT;
+      return TargetLayout<ELFT>::ORDER_TEXT;
 
-    return DefaultLayout<ELFT>::getSectionOrder(name, contentType,
-                                                contentPermissions);
+    return TargetLayout<ELFT>::getSectionOrder(name, contentType,
+                                               contentPermissions);
   }
 
 protected:
@@ -130,7 +130,7 @@ public:
 
   MipsSymbolTable(const ELFLinkingContext &ctx)
       : SymbolTable<ELFT>(ctx, ".symtab",
-                          DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
+                          TargetLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
 
   void addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
                       int64_t addr) override {
@@ -172,7 +172,7 @@ public:
   MipsDynamicSymbolTable(const ELFLinkingContext &ctx,
                          MipsTargetLayout<ELFT> &layout)
       : DynamicSymbolTable<ELFT>(ctx, layout, ".dynsym",
-                                 DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS),
+                                 TargetLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS),
         _targetLayout(layout) {}
 
   void sortSymbols() override {
