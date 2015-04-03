@@ -245,11 +245,15 @@ ARMBaseRegisterInfo::getRegAllocationHints(unsigned VirtReg,
   // This register should preferably be even (Odd == 0) or odd (Odd == 1).
   // Check if the other part of the pair has already been assigned, and provide
   // the paired register as the first hint.
+  unsigned Paired = Hint.second;
+  if (Paired == 0)
+    return;
+
   unsigned PairedPhys = 0;
-  if (VRM && VRM->hasPhys(Hint.second)) {
-    PairedPhys = getPairedGPR(VRM->getPhys(Hint.second), Odd, this);
-    if (PairedPhys && MRI.isReserved(PairedPhys))
-      PairedPhys = 0;
+  if (TargetRegisterInfo::isPhysicalRegister(Paired)) {
+    PairedPhys = Paired;
+  } else if (VRM && VRM->hasPhys(Paired)) {
+    PairedPhys = getPairedGPR(VRM->getPhys(Paired), Odd, this);
   }
 
   // First prefer the paired physreg.
@@ -284,9 +288,14 @@ ARMBaseRegisterInfo::updateRegAllocHint(unsigned Reg, unsigned NewReg,
     // change.
     unsigned OtherReg = Hint.second;
     Hint = MRI->getRegAllocationHint(OtherReg);
-    if (Hint.second == Reg)
-      // Make sure the pair has not already divorced.
+    // Make sure the pair has not already divorced.
+    if (Hint.second == Reg) {
       MRI->setRegAllocationHint(OtherReg, Hint.first, NewReg);
+      if (TargetRegisterInfo::isVirtualRegister(NewReg))
+        MRI->setRegAllocationHint(NewReg,
+            Hint.first == (unsigned)ARMRI::RegPairOdd ? ARMRI::RegPairEven
+            : ARMRI::RegPairOdd, OtherReg);
+    }
   }
 }
 
