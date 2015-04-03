@@ -1,5 +1,4 @@
 ; RUN: opt -mtriple=x86_64-pc-windows-msvc -winehprepare -S -o - < %s | FileCheck %s
-; XFAIL: *
 
 ; This test is based on the following code:
 ;
@@ -40,11 +39,9 @@ $"\01??_R0H@8" = comdat any
 ; CHECK: define void @"\01?test@@YAXXZ"()
 ; CHECK: entry:
 ; CHECK:   %i = alloca i32, align 4
-; ------------================= FAIL here =================------------
 ; CHECK:   %j = alloca i32, align 4
 ; CHECK:   %f = alloca float, align 4
-; ------------================= FAIL here =================------------
-; CHECK:   call void (...)* @llvm.frameescape(i32* %i, float* %f, int32* %j)
+; CHECK:   call void (...)* @llvm.frameescape(i32* %i, float* %f, i32* %j)
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -66,7 +63,7 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*)
-; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32* %i, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch" to i8*), i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), float* %f, i8* bitcast (i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
+; CHECK:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch", i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
 ; CHECK:   indirectbr i8* [[RECOVER]], [label %try.cont10, label %try.cont19]
 
 lpad:                                             ; preds = %entry
@@ -186,16 +183,10 @@ eh.resume:                                        ; preds = %lpad16, %catch.disp
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[I_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
-; ------------================= FAIL here =================------------
-; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
-; CHECK:   [[F_PTR:\%.+]] = bitcast i8* [[RECOVER_F]] to float*
-; ------------================= FAIL here =================------------
-; CHECK:   [[RECOVER_J:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
-; CHECK:   [[J_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont2 unwind label %[[LPAD1_LABEL:lpad[0-9]*]]
 ;
-; CHECK: invoke.cont2:                                     ; preds = %entry
+; CHECK: invoke.cont2:                                     ; preds = %[[LPAD1_LABEL]], %entry
 ; CHECK:   [[TMP1:\%.+]] = load i32, i32* [[I_PTR]], align 4
 ; CHECK:   invoke void @"\01?handle_int@@YAXH@Z"(i32 [[TMP1]])
 ; CHECK:           to label %invoke.cont9 unwind label %[[LPAD8_LABEL:lpad[0-9]*]]
@@ -204,9 +195,8 @@ eh.resume:                                        ; preds = %lpad16, %catch.disp
 ; CHECK:   [[LPAD1_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*)
-; ------------================= FAIL here =================------------
-; CHECK:   [[RECOVER1:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD1_VAL]], i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32* [[J_PTR]], i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2" to i8*), i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), float* [[F_PTR1]], i8* bitcast (i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
-; CHECK:   indirectbr i8* [[RECOVER1]], []
+; CHECK:   [[RECOVER1:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2", i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
+; CHECK:   indirectbr i8* [[RECOVER1]], [label %invoke.cont2]
 ;
 ; CHECK: invoke.cont9:
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont10)
@@ -214,30 +204,28 @@ eh.resume:                                        ; preds = %lpad16, %catch.disp
 ; CHECK: [[LPAD8_LABEL]]:{{[ ]+}}; preds = %invoke.cont2
 ; CHECK:   [[LPAD8_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*)
-; ------------================= FAIL here =================------------
-; CHECK:   [[RECOVER2:\%.+]] = call i8* (...)* @llvm.eh.actions({ i8*, i32 } [[LPAD8_VAL]], i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), float* [[F_PTR1]], i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
+; CHECK:   [[RECOVER2:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
 ; CHECK:   indirectbr i8* [[RECOVER2]], []
 ;
 ; CHECK: }
 
 ; CHECK: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_F1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
-; CHECK:   [[F_PTR1:\%.+]] = bitcast i8* [[RECOVER_F1]] to float*
-; CHECK:   [[TMP2:\%.+]] = load float, float* [[F_PTR1]], align 4
+; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   [[F_PTR:\%.+]] = bitcast i8* [[RECOVER_F]] to float*
+; CHECK:   [[TMP2:\%.+]] = load float, float* [[F_PTR]], align 4
 ; CHECK:   call void @"\01?handle_float@@YAXM@Z"(float [[TMP2]])
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont19)
 ; CHECK: }
 
 ; CHECK: define internal i8* @"\01?test@@YAXXZ.catch2"(i8*, i8*)
 ; CHECK: entry:
-; ------------================= FAIL here =================------------
-; SHOULD-CHECK:   [[J_PTR1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   [[RECOVER_J:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   [[J_PTR:\%.+]] = bitcast i8* [[RECOVER_J]] to i32*
 ; CHECK:   [[RECOVER_I1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I1]] to i32*
-; CHECK:   [[TMP3:\%.+]] = load i32, i32* [[J_PTR1]], align 4
+; CHECK:   [[TMP3:\%.+]] = load i32, i32* [[J_PTR]], align 4
 ; CHECK:   store i32 [[TMP3]], i32* [[I_PTR1]]
-; ------------================= FAIL here =================------------
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ.catch", %invoke.cont2)
 ; CHECK: }
 

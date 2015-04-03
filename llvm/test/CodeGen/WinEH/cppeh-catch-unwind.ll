@@ -208,7 +208,6 @@ eh.resume:                                        ; preds = %catch.dispatch7
 ; CHECK:   [[LPAD5_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK:           cleanup
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
-; CHECK:   unreachable
 ; CHECK: }
 
 declare %class.SomeClass* @"\01??0SomeClass@@QEAA@XZ"(%class.SomeClass* returned) #1
