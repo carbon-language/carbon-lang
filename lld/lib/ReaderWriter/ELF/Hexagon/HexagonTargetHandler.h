@@ -35,8 +35,9 @@ public:
   }
 
   /// \brief Return the section order for a input section
-  Layout::SectionOrder getSectionOrder(
-      StringRef name, int32_t contentType, int32_t contentPermissions) override {
+  typename TargetLayout<HexagonELFType>::SectionOrder
+  getSectionOrder(StringRef name, int32_t contentType,
+                  int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return ORDER_SDATA;
@@ -61,7 +62,8 @@ public:
   AtomSection<HexagonELFType> *
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
-                Layout::SectionOrder sectionOrder) override {
+                typename TargetLayout<HexagonELFType>::SectionOrder
+                    sectionOrder) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
@@ -70,7 +72,7 @@ public:
   }
 
   /// \brief get the segment type for the section thats defined by the target
-  Layout::SegmentType
+  typename TargetLayout<HexagonELFType>::SegmentType
   getSegmentType(Section<HexagonELFType> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;

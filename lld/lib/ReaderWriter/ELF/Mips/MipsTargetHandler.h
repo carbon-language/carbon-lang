@@ -32,9 +32,10 @@ public:
   const MipsGOTSection<ELFT> &getGOTSection() const { return *_gotSection; }
   const MipsPLTSection<ELFT> &getPLTSection() const { return *_pltSection; }
 
-  AtomSection<ELFT> *createSection(StringRef name, int32_t type,
-                                   DefinedAtom::ContentPermissions permissions,
-                                   Layout::SectionOrder order) override {
+  AtomSection<ELFT> *
+  createSection(StringRef name, int32_t type,
+                DefinedAtom::ContentPermissions permissions,
+                typename TargetLayout<ELFT>::SectionOrder order) override {
     if (type == DefinedAtom::typeGOT && name == ".got")
       return _gotSection;
     if (type == DefinedAtom::typeStub && name == ".plt")
@@ -60,8 +61,9 @@ public:
   }
 
   /// \brief Return the section order for a input section
-  Layout::SectionOrder getSectionOrder(StringRef name, int32_t contentType,
-                                       int32_t contentPermissions) override {
+  typename TargetLayout<ELFT>::SectionOrder
+  getSectionOrder(StringRef name, int32_t contentType,
+                  int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeStub) && (name.startswith(".text")))
       return TargetLayout<ELFT>::ORDER_TEXT;
 

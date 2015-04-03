@@ -13,7 +13,6 @@
 #include "Atoms.h"
 #include "Chunk.h"
 #include "HeaderChunks.h"
-#include "Layout.h"
 #include "SectionChunks.h"
 #include "SegmentChunks.h"
 #include "lld/Core/Instrumentation.h"
@@ -38,9 +37,11 @@ namespace elf {
 ///        sections and segments in the order determined by the target ELF
 ///        format. The writer creates a single instance of the TargetLayout
 ///        class
-template<class ELFT>
-class TargetLayout : public Layout {
+template <class ELFT> class TargetLayout {
 public:
+  typedef uint32_t SectionOrder;
+  typedef uint32_t SegmentType;
+  typedef uint32_t Flags;
 
   // The order in which the sections appear in the output file
   // If its determined, that the layout needs to change
@@ -166,9 +167,11 @@ public:
   TargetLayout(ELFLinkingContext &ctx)
       : _ctx(ctx), _linkerScriptSema(ctx.linkerScriptSema()) {}
 
+  virtual ~TargetLayout() = default;
+
   /// \brief Return the section order for a input section
-  SectionOrder getSectionOrder(StringRef name, int32_t contentType,
-                               int32_t contentPermissions) override;
+  virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
+                                       int32_t contentPermissions);
 
   /// \brief Return the name of the input section by decoding the input
   /// sectionChoice.
@@ -186,14 +189,17 @@ public:
              const DefinedAtom *da);
 
   /// \brief Gets the segment for a output section
-  virtual Layout::SegmentType getSegmentType(Section<ELFT> *section) const;
+  virtual typename TargetLayout<ELFT>::SegmentType
+  getSegmentType(Section<ELFT> *section) const;
 
   /// \brief Returns true/false depending on whether the section has a Output
   //         segment or not
   static bool hasOutputSegment(Section<ELFT> *section);
 
-  // Adds an atom to the section
-  ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom) override;
+  /// \brief Append the Atom to the layout and create appropriate sections.
+  /// \returns A reference to the atom layout or an error. The atom layout will
+  /// be updated as linking progresses.
+  virtual ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom);
 
   /// \brief Find an output Section given a section name.
   OutputSection<ELFT> *findOutputSection(StringRef name) {
@@ -228,9 +234,11 @@ public:
                                        StringRef memberPath,
                                        StringRef sectionName);
 
-  void assignSectionsToSegments() override;
+  /// \brief associates a section to a segment
+  virtual void assignSectionsToSegments();
 
-  void assignVirtualAddress() override;
+  /// \brief associates a virtual address to the segment, section, and the atom
+  virtual void assignVirtualAddress();
 
   void assignFileOffsetsForMiscSections();
 
@@ -249,7 +257,8 @@ public:
       si->doPreFlight();
   }
 
-  const AtomLayout *findAtomLayoutByName(StringRef name) const override {
+  /// \brief find the Atom in the current layout
+  virtual const AtomLayout *findAtomLayoutByName(StringRef name) const {
     for (auto sec : _sections)
       if (auto section = dyn_cast<Section<ELFT>>(sec))
         if (auto *al = section->findAtomLayoutByName(name))
@@ -352,13 +361,13 @@ protected:
 };
 
 template <class ELFT>
-Layout::SectionOrder
+typename TargetLayout<ELFT>::SectionOrder
 TargetLayout<ELFT>::getSectionOrder(StringRef name, int32_t contentType,
                                     int32_t contentPermissions) {
   switch (contentType) {
   case DefinedAtom::typeResolver:
   case DefinedAtom::typeCode:
-    return llvm::StringSwitch<Layout::SectionOrder>(name)
+    return llvm::StringSwitch<typename TargetLayout<ELFT>::SectionOrder>(name)
         .StartsWith(".eh_frame_hdr", ORDER_EH_FRAMEHDR)
         .StartsWith(".eh_frame", ORDER_EH_FRAME)
         .StartsWith(".init", ORDER_INIT)
@@ -371,7 +380,7 @@ TargetLayout<ELFT>::getSectionOrder(StringRef name, int32_t contentType,
 
   case DefinedAtom::typeData:
   case DefinedAtom::typeDataFast:
-    return llvm::StringSwitch<Layout::SectionOrder>(name)
+    return llvm::StringSwitch<typename TargetLayout<ELFT>::SectionOrder>(name)
         .StartsWith(".init_array", ORDER_INIT_ARRAY)
         .StartsWith(".fini_array", ORDER_FINI_ARRAY)
         .StartsWith(".dynamic", ORDER_DYNAMIC)
@@ -384,7 +393,7 @@ TargetLayout<ELFT>::getSectionOrder(StringRef name, int32_t contentType,
     return ORDER_BSS;
 
   case DefinedAtom::typeGOT:
-    return llvm::StringSwitch<Layout::SectionOrder>(name)
+    return llvm::StringSwitch<typename TargetLayout<ELFT>::SectionOrder>(name)
         .StartsWith(".got.plt", ORDER_GOT_PLT)
         .Default(ORDER_GOT);
 
@@ -468,7 +477,7 @@ TargetLayout<ELFT>::getOutputSectionName(StringRef archivePath,
 
 /// \brief Gets the segment for a output section
 template <class ELFT>
-Layout::SegmentType
+typename TargetLayout<ELFT>::SegmentType
 TargetLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
   switch (section->order()) {
   case ORDER_INTERP:

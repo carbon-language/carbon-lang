@@ -11,12 +11,12 @@
 #define LLD_READER_WRITER_ELF_SECTION_CHUNKS_H
 
 #include "Chunk.h"
-#include "Layout.h"
 #include "TargetHandler.h"
 #include "Writer.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/Parallel.h"
 #include "lld/Core/range.h"
+#include "lld/ReaderWriter/AtomLayout.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
@@ -35,6 +35,7 @@ namespace elf {
 template <class> class OutputSection;
 using namespace llvm::ELF;
 template <class ELFT> class Segment;
+template <class ELFT> class TargetLayout;
 
 /// \brief An ELF section.
 template <class ELFT> class Section : public Chunk<ELFT> {
@@ -67,7 +68,9 @@ public:
   uint32_t getType() const { return _type; }
   uint32_t getLink() const { return _link; }
   uint32_t getInfo() const { return _info; }
-  Layout::SegmentType getSegmentType() const { return _segmentType; }
+  typename TargetLayout<ELFT>::SegmentType getSegmentType() const {
+    return _segmentType;
+  }
 
   /// \brief Return the type of content that the section contains
   virtual int getContentType() const override {
@@ -86,7 +89,8 @@ public:
   StringRef segmentKindToStr() const;
 
   /// \brief Records the segmentType, that this section belongs to
-  void setSegmentType(const Layout::SegmentType segmentType) {
+  void
+  setSegmentType(const typename TargetLayout<ELFT>::SegmentType segmentType) {
     this->_segmentType = segmentType;
   }
 
@@ -141,7 +145,7 @@ protected:
   /// \brief Is this the first section in the output section.
   bool _isFirstSectionInOutputSection = false;
   /// \brief the output ELF segment type of this section.
-  Layout::SegmentType _segmentType = SHT_NULL;
+  typename TargetLayout<ELFT>::SegmentType _segmentType = SHT_NULL;
   /// \brief Input section name.
   StringRef _inputSectionName;
   /// \brief Output section name.

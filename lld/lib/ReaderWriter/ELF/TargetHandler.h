@@ -16,7 +16,6 @@
 #ifndef LLD_READER_WRITER_ELF_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_TARGET_HANDLER_H
 
-#include "Layout.h"
 #include "lld/Core/Atom.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
