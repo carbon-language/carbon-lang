@@ -2284,25 +2284,25 @@ Value *FortifiedLibCallSimplifier::optimizeStrpCpyChk(CallInst *CI,
   // st[rp]cpy_chk call which may fail at runtime if the size is too long.
   // TODO: It might be nice to get a maximum length out of the possible
   // string lengths for varying.
-  if (isFortifiedCallFoldable(CI, 2, 1, true)) {
-    Value *Ret = EmitStrCpy(Dst, Src, B, TLI, Name.substr(2, 6));
-    return Ret;
-  } else if (!OnlyLowerUnknownSize) {
-    // Maybe we can stil fold __st[rp]cpy_chk to __memcpy_chk.
-    uint64_t Len = GetStringLength(Src);
-    if (Len == 0)
-      return nullptr;
+  if (isFortifiedCallFoldable(CI, 2, 1, true))
+    return EmitStrCpy(Dst, Src, B, TLI, Name.substr(2, 6));
 
-    Type *SizeTTy = DL.getIntPtrType(CI->getContext());
-    Value *LenV = ConstantInt::get(SizeTTy, Len);
-    Value *Ret = EmitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI);
-    // If the function was an __stpcpy_chk, and we were able to fold it into
-    // a __memcpy_chk, we still need to return the correct end pointer.
-    if (Ret && Func == LibFunc::stpcpy_chk)
-      return B.CreateGEP(B.getInt8Ty(), Dst, ConstantInt::get(SizeTTy, Len - 1));
-    return Ret;
-  }
-  return nullptr;
+  if (OnlyLowerUnknownSize)
+    return nullptr;
+
+  // Maybe we can stil fold __st[rp]cpy_chk to __memcpy_chk.
+  uint64_t Len = GetStringLength(Src);
+  if (Len == 0)
+    return nullptr;
+
+  Type *SizeTTy = DL.getIntPtrType(CI->getContext());
+  Value *LenV = ConstantInt::get(SizeTTy, Len);
+  Value *Ret = EmitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI);
+  // If the function was an __stpcpy_chk, and we were able to fold it into
+  // a __memcpy_chk, we still need to return the correct end pointer.
+  if (Ret && Func == LibFunc::stpcpy_chk)
+    return B.CreateGEP(B.getInt8Ty(), Dst, ConstantInt::get(SizeTTy, Len - 1));
+  return Ret;
 }
 
 Value *FortifiedLibCallSimplifier::optimizeStrpNCpyChk(CallInst *CI,
