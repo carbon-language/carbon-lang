@@ -998,8 +998,8 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
     const DbgValueInst *DI = DDI.getDI();
     DebugLoc dl = DDI.getdl();
     unsigned DbgSDNodeOrder = DDI.getSDNodeOrder();
-    MDNode *Variable = DI->getVariable();
-    MDNode *Expr = DI->getExpression();
+    MDLocalVariable *Variable = DI->getVariable();
+    MDExpression *Expr = DI->getExpression();
     uint64_t Offset = DI->getOffset();
     // A dbg.value for an alloca is always indirect.
     bool IsIndirect = isa<AllocaInst>(V) || Offset != 0;
@@ -4448,11 +4448,9 @@ static unsigned getTruncatedArgReg(const SDValue &N) {
 /// EmitFuncArgumentDbgValue - If the DbgValueInst is a dbg_value of a function
 /// argument, create the corresponding DBG_VALUE machine instruction for it now.
 /// At the end of instruction selection, they will be inserted to the entry BB.
-bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V,
-                                                   MDNode *Variable,
-                                                   MDNode *Expr, int64_t Offset,
-                                                   bool IsIndirect,
-                                                   const SDValue &N) {
+bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
+    const Value *V, MDLocalVariable *Variable, MDExpression *Expr,
+    int64_t Offset, bool IsIndirect, const SDValue &N) {
   const Argument *Arg = dyn_cast<Argument>(V);
   if (!Arg)
     return false;
@@ -4636,8 +4634,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    MDNode *Variable = DI.getVariable();
-    MDNode *Expression = DI.getExpression();
+    MDLocalVariable *Variable = DI.getVariable();
+    MDExpression *Expression = DI.getExpression();
     const Value *Address = DI.getAddress();
     DIVariable DIVar(Variable);
     assert((!DIVar || DIVar.isVariable()) &&
@@ -4724,8 +4722,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (!DIVar)
       return nullptr;
 
-    MDNode *Variable = DI.getVariable();
-    MDNode *Expression = DI.getExpression();
+    MDLocalVariable *Variable = DI.getVariable();
+    MDExpression *Expression = DI.getExpression();
     uint64_t Offset = DI.getOffset();
     const Value *V = DI.getValue();
     if (!V)
