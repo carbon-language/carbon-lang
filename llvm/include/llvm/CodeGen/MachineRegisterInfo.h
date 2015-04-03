@@ -620,22 +620,25 @@ public:
 
   /// setRegAllocationHint - Specify a register allocation hint for the
   /// specified virtual register.
-  void setRegAllocationHint(unsigned Reg, unsigned Type, unsigned PrefReg) {
-    RegAllocHints[Reg].first  = Type;
-    RegAllocHints[Reg].second = PrefReg;
+  void setRegAllocationHint(unsigned VReg, unsigned Type, unsigned PrefReg) {
+    assert(TargetRegisterInfo::isVirtualRegister(VReg));
+    RegAllocHints[VReg].first  = Type;
+    RegAllocHints[VReg].second = PrefReg;
   }
 
   /// getRegAllocationHint - Return the register allocation hint for the
   /// specified virtual register.
   std::pair<unsigned, unsigned>
-  getRegAllocationHint(unsigned Reg) const {
-    return RegAllocHints[Reg];
+  getRegAllocationHint(unsigned VReg) const {
+    assert(TargetRegisterInfo::isVirtualRegister(VReg));
+    return RegAllocHints[VReg];
   }
 
   /// getSimpleHint - Return the preferred register allocation hint, or 0 if a
   /// standard simple hint (Type == 0) is not set.
-  unsigned getSimpleHint(unsigned Reg) const {
-    std::pair<unsigned, unsigned> Hint = getRegAllocationHint(Reg);
+  unsigned getSimpleHint(unsigned VReg) const {
+    assert(TargetRegisterInfo::isVirtualRegister(VReg));
+    std::pair<unsigned, unsigned> Hint = getRegAllocationHint(VReg);
     return Hint.first ? 0 : Hint.second;
   }
 
