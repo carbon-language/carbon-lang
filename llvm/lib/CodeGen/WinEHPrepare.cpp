@@ -682,7 +682,6 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
   // and remap return instructions in the nested handlers that should return
   // to an address in the outlined handler.
   Function *OutlinedHandlerFn = OutlinedBB->getParent();
-  const BasicBlock *OriginalBB = OriginalLPad->getParent();
   BasicBlock::const_iterator II = OriginalLPad;
   ++II;
   // The instruction after the landing pad should now be a call to eh.actions.
@@ -693,7 +692,6 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
   // Remap the exception variables into the outlined function.
   WinEHFrameVariableMaterializer Materializer(OutlinedHandlerFn, FrameVarInfo);
   SmallVector<BlockAddress *, 4> ActionTargets;
-  unsigned NumArgs = EHActions->getNumArgOperands();
   SmallVector<ActionHandler *, 4> ActionList;
   parseEHActions(EHActions, ActionList);
   for (auto *Action : ActionList) {
