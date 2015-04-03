@@ -3884,8 +3884,8 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
                                    "switch.tableidx.zext");
 
       Value *GEPIndices[] = { Builder.getInt32(0), Index };
-      Value *GEP = Builder.CreateInBoundsGEP(Array, GEPIndices,
-                                             "switch.gep");
+      Value *GEP = Builder.CreateInBoundsGEP(Array->getValueType(), Array,
+                                             GEPIndices, "switch.gep");
       return Builder.CreateLoad(GEP, "switch.load");
     }
   }

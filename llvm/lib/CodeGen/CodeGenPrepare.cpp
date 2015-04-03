@@ -1081,8 +1081,9 @@ static void ScalarizeMaskedLoad(CallInst *CI) {
     //
     CondBlock = IfBlock->splitBasicBlock(InsertPt, "cond.load");
     Builder.SetInsertPoint(InsertPt);
-    
-    Value* Gep = Builder.CreateInBoundsGEP(FirstEltPtr, Builder.getInt32(Idx));
+
+    Value *Gep =
+        Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
     LoadInst* Load = Builder.CreateLoad(Gep, false);
     VResult = Builder.CreateInsertElement(VResult, Load, Builder.getInt32(Idx));
 
@@ -1176,7 +1177,8 @@ static void ScalarizeMaskedStore(CallInst *CI) {
     Builder.SetInsertPoint(InsertPt);
     
     Value *OneElt = Builder.CreateExtractElement(Src, Builder.getInt32(Idx));
-    Value* Gep = Builder.CreateInBoundsGEP(FirstEltPtr, Builder.getInt32(Idx));
+    Value *Gep =
+        Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
     Builder.CreateStore(OneElt, Gep);
 
     // Create "else" block, fill it in the next iteration

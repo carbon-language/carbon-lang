@@ -480,7 +480,8 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
         Type *CharTy = Type::getInt8PtrTy(Basis.Ins->getContext(), AS);
         Reduced = Builder.CreateBitCast(Basis.Ins, CharTy);
         if (InBounds)
-          Reduced = Builder.CreateInBoundsGEP(Reduced, Bump);
+          Reduced =
+              Builder.CreateInBoundsGEP(Builder.getInt8Ty(), Reduced, Bump);
         else
           Reduced = Builder.CreateGEP(Builder.getInt8Ty(), Reduced, Bump);
         Reduced = Builder.CreateBitCast(Reduced, C.Ins->getType());
@@ -489,7 +490,7 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
         // Canonicalize bump to pointer size.
         Bump = Builder.CreateSExtOrTrunc(Bump, IntPtrTy);
         if (InBounds)
-          Reduced = Builder.CreateInBoundsGEP(Basis.Ins, Bump);
+          Reduced = Builder.CreateInBoundsGEP(nullptr, Basis.Ins, Bump);
         else
           Reduced = Builder.CreateGEP(nullptr, Basis.Ins, Bump);
       }

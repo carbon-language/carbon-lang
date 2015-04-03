@@ -82,8 +82,9 @@ createReplacementInstr(ConstantExpr *CE, Instruction *Instr) {
     case Instruction::GetElementPtr: {
       SmallVector<Value *,4> CEOpVec(CE->op_begin(), CE->op_end());
       ArrayRef<Value *> CEOps(CEOpVec);
-      return dyn_cast<Instruction>(Builder.CreateInBoundsGEP(CEOps[0],
-                                                             CEOps.slice(1)));
+      return dyn_cast<Instruction>(Builder.CreateInBoundsGEP(
+          cast<GEPOperator>(CE)->getSourceElementType(), CEOps[0],
+          CEOps.slice(1)));
     }
     case Instruction::Add:
     case Instruction::Sub:
@@ -212,7 +213,8 @@ bool XCoreLowerThreadLocal::lowerGlobal(GlobalVariable *GV) {
     SmallVector<Value *, 2> Indices;
     Indices.push_back(Constant::getNullValue(Type::getInt64Ty(Ctx)));
     Indices.push_back(ThreadID);
-    Value *Addr = Builder.CreateInBoundsGEP(NewGV, Indices);
+    Value *Addr =
+        Builder.CreateInBoundsGEP(NewGV->getValueType(), NewGV, Indices);
     U->replaceUsesOfWith(GV, Addr);
   }
 

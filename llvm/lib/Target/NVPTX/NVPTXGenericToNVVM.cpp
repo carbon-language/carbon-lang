@@ -347,6 +347,7 @@ Value *GenericToNVVM::remapConstantExpr(Module *M, Function *F, ConstantExpr *C,
                      NewOperands[0],
                      makeArrayRef(&NewOperands[1], NumOperands - 1))
                : Builder.CreateInBoundsGEP(
+                     cast<GEPOperator>(C)->getSourceElementType(),
                      NewOperands[0],
                      makeArrayRef(&NewOperands[1], NumOperands - 1));
   case Instruction::Select:

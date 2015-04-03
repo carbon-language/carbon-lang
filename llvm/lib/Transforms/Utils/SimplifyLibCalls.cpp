@@ -476,7 +476,7 @@ Value *LibCallSimplifier::optimizeStpCpy(CallInst *CI, IRBuilder<> &B) {
   Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
   if (Dst == Src) { // stpcpy(x,x)  -> x+strlen(x)
     Value *StrLen = EmitStrLen(Src, B, DL, TLI);
-    return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : nullptr;
+    return StrLen ? B.CreateInBoundsGEP(B.getInt8Ty(), Dst, StrLen) : nullptr;
   }
 
   // See if we can get the length of the input string.
@@ -2276,7 +2276,7 @@ Value *FortifiedLibCallSimplifier::optimizeStrpCpyChk(CallInst *CI,
   // __stpcpy_chk(x,x,...)  -> x+strlen(x)
   if (Func == LibFunc::stpcpy_chk && !OnlyLowerUnknownSize && Dst == Src) {
     Value *StrLen = EmitStrLen(Src, B, DL, TLI);
-    return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : nullptr;
+    return StrLen ? B.CreateInBoundsGEP(B.getInt8Ty(), Dst, StrLen) : nullptr;
   }
 
   // If a) we don't have any length information, or b) we know this will

@@ -21,6 +21,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/ConstantFolder.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Operator.h"
@@ -243,7 +244,7 @@ public:
   /// filled in with the null terminated string value specified.  The new global
   /// variable will be marked mergable with any others of the same contents.  If
   /// Name is specified, it is the name of the global variable created.
-  Value *CreateGlobalString(StringRef Str, const Twine &Name = "");
+  GlobalVariable *CreateGlobalString(StringRef Str, const Twine &Name = "");
 
   /// \brief Get a constant value representing either true or false.
   ConstantInt *getInt1(bool V) {
@@ -1034,6 +1035,10 @@ public:
   }
   Value *CreateInBoundsGEP(Value *Ptr, ArrayRef<Value *> IdxList,
                            const Twine &Name = "") {
+    return CreateInBoundsGEP(nullptr, Ptr, IdxList, Name);
+  }
+  Value *CreateInBoundsGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
+                           const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {
       // Every index must be constant.
       size_t i, e;
@@ -1041,10 +1046,10 @@ public:
         if (!isa<Constant>(IdxList[i]))
           break;
       if (i == e)
-        return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, IdxList),
+        return Insert(Folder.CreateInBoundsGetElementPtr(Ty, PC, IdxList),
                       Name);
     }
-    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, IdxList), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(Ty, Ptr, IdxList), Name);
   }
   Value *CreateGEP(Value *Ptr, Value *Idx, const Twine &Name = "") {
     return CreateGEP(nullptr, Ptr, Idx, Name);
@@ -1153,10 +1158,10 @@ public:
   /// \brief Same as CreateGlobalString, but return a pointer with "i8*" type
   /// instead of a pointer to array of i8.
   Value *CreateGlobalStringPtr(StringRef Str, const Twine &Name = "") {
-    Value *gv = CreateGlobalString(Str, Name);
+    GlobalVariable *gv = CreateGlobalString(Str, Name);
     Value *zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Value *Args[] = { zero, zero };
-    return CreateInBoundsGEP(gv, Args, Name);
+    return CreateInBoundsGEP(gv->getValueType(), gv, Args, Name);
   }
 
   //===--------------------------------------------------------------------===//

@@ -1552,7 +1552,8 @@ static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
   if (Indices.size() == 1 && cast<ConstantInt>(Indices.back())->isZero())
     return BasePtr;
 
-  return IRB.CreateInBoundsGEP(BasePtr, Indices, NamePrefix + "sroa_idx");
+  return IRB.CreateInBoundsGEP(nullptr, BasePtr, Indices,
+                               NamePrefix + "sroa_idx");
 }
 
 /// \brief Get a natural GEP off of the BasePtr walking through Ty toward
@@ -1803,7 +1804,8 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
 
     OffsetPtr = Int8PtrOffset == 0
                     ? Int8Ptr
-                    : IRB.CreateInBoundsGEP(Int8Ptr, IRB.getInt(Int8PtrOffset),
+                    : IRB.CreateInBoundsGEP(IRB.getInt8Ty(), Int8Ptr,
+                                            IRB.getInt(Int8PtrOffset),
                                             NamePrefix + "sroa_raw_idx");
   }
   Ptr = OffsetPtr;
@@ -3250,7 +3252,8 @@ private:
     void emitFunc(Type *Ty, Value *&Agg, const Twine &Name) {
       assert(Ty->isSingleValueType());
       // Load the single value and insert it using the indices.
-      Value *GEP = IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep");
+      Value *GEP =
+          IRB.CreateInBoundsGEP(nullptr, Ptr, GEPIndices, Name + ".gep");
       Value *Load = IRB.CreateLoad(GEP, Name + ".load");
       Agg = IRB.CreateInsertValue(Agg, Load, Indices, Name + ".insert");
       DEBUG(dbgs() << "          to: " << *Load << "\n");
@@ -3283,7 +3286,7 @@ private:
       // Extract the single value and store it using the indices.
       Value *Store = IRB.CreateStore(
           IRB.CreateExtractValue(Agg, Indices, Name + ".extract"),
-          IRB.CreateInBoundsGEP(Ptr, GEPIndices, Name + ".gep"));
+          IRB.CreateInBoundsGEP(nullptr, Ptr, GEPIndices, Name + ".gep"));
       (void)Store;
       DEBUG(dbgs() << "          to: " << *Store << "\n");
     }
