@@ -414,3 +414,11 @@ define <4 x i32> @pr20114(<4 x i32> %__mask) {
   %masked_new.i.i.i = and <4 x i32> bitcast (<2 x i64> <i64 ptrtoint (<4 x i32> (<4 x i32>)* @pr20114 to i64), i64 ptrtoint (<4 x i32> (<4 x i32>)* @pr20114 to i64)> to <4 x i32>), %mask01.i
   ret <4 x i32> %masked_new.i.i.i
 }
+
+define <2 x i32*> @pr23113(<4 x i32*> %A) {
+; CHECK-LABEL: @pr20114
+; CHECK: %[[V:.*]] = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
+; CHECK-NEXT: ret <2 x i32*> %[[V]]
+  %1 = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
+  ret <2 x i32*> %1
+}

@@ -987,8 +987,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     unsigned BegIdx = Mask.front();
     VectorType *SrcTy = cast<VectorType>(V->getType());
     unsigned VecBitWidth = SrcTy->getBitWidth();
-    unsigned SrcElemBitWidth =
-        SrcTy->getElementType()->getPrimitiveSizeInBits();
+    unsigned SrcElemBitWidth = DL.getTypeSizeInBits(SrcTy->getElementType());
     assert(SrcElemBitWidth && "vector elements must have a bitwidth");
     unsigned SrcNumElems = SrcTy->getNumElements();
     SmallVector<BitCastInst *, 8> BCs;
@@ -1000,7 +999,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
           BCs.push_back(BC);
     for (BitCastInst *BC : BCs) {
       Type *TgtTy = BC->getDestTy();
-      unsigned TgtElemBitWidth = TgtTy->getPrimitiveSizeInBits();
+      unsigned TgtElemBitWidth = DL.getTypeSizeInBits(TgtTy);
       if (!TgtElemBitWidth)
         continue;
       unsigned TgtNumElems = VecBitWidth / TgtElemBitWidth;
