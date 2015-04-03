@@ -84,6 +84,7 @@ static Reference::Addend readAddend(const uint8_t *location,
   switch (kindValue) {
   case R_ARM_ABS32:
   case R_ARM_REL32:
+  case R_ARM_TARGET1:
   case R_ARM_GOT_BREL:
   case R_ARM_BASE_PREL:
   case R_ARM_TLS_IE32:
@@ -528,6 +529,14 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   case R_ARM_REL32:
     relocR_ARM_REL32(location, relocVAddress, targetVAddress, addend,
                      addressesThumb);
+    break;
+  case R_ARM_TARGET1:
+    if (_armLayout.target1Rel())
+      relocR_ARM_REL32(location, relocVAddress, targetVAddress, addend,
+                       addressesThumb);
+    else
+      relocR_ARM_ABS32(location, relocVAddress, targetVAddress, addend,
+                       addressesThumb);
     break;
   case R_ARM_THM_CALL:
     // TODO: consider adding bool variable to disable J1 & J2 for archs

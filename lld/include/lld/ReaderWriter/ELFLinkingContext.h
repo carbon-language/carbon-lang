@@ -302,6 +302,10 @@ public:
   script::Sema &linkerScriptSema() { return _linkerScriptSema; }
   const script::Sema &linkerScriptSema() const { return _linkerScriptSema; }
 
+  // Set R_ARM_TARGET1 relocation behaviour
+  bool armTarget1Rel() const { return _armTarget1Rel; }
+  void setArmTarget1Rel(bool value) { _armTarget1Rel = value; }
+
 protected:
   ELFLinkingContext(llvm::Triple triple, std::unique_ptr<TargetHandler> handler)
       : _triple(triple), _targetHandler(std::move(handler)) {}
@@ -327,6 +331,7 @@ protected:
   bool _stripSymbols = false;
   bool _alignSegments = true;
   bool _collectStats = false;
+  bool _armTarget1Rel = false;
   uint64_t _maxPageSize = 0x1000;
 
   OutputMagic _outputMagic;

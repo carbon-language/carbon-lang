@@ -45,6 +45,8 @@ public:
     llvm_unreachable("TLS segment not found");
   }
 
+  bool target1Rel() const { return _ctx.armTarget1Rel(); }
+
 private:
   // TCB block size of the TLS.
   enum { TCB_SIZE = 0x8 };

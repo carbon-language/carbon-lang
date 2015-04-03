@@ -313,6 +313,16 @@ def alias_output_filetype: Joined<["--"], "output-filetype=">,
       Alias<output_filetype>;
 
 //===----------------------------------------------------------------------===//
+/// Target Specific Options
+//===----------------------------------------------------------------------===//
+def grp_targetopts : OptionGroup<"opts">,
+     HelpText<"ARCH SPECIFIC OPTIONS">;
+def arm_target1_rel : Flag<["--"], "arm-target1-rel">,
+     Group<grp_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_REL32">;
+def arm_target1_abs : Flag<["--"], "arm-target1-abs">,
+     Group<grp_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_ABS32">;
+
+//===----------------------------------------------------------------------===//
 /// Ignored options
 //===----------------------------------------------------------------------===//
 def grp_ignored: OptionGroup<"ignored">,
