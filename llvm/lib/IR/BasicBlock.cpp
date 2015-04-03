@@ -94,8 +94,8 @@ void BasicBlock::removeFromParent() {
   getParent()->getBasicBlockList().remove(this);
 }
 
-void BasicBlock::eraseFromParent() {
-  getParent()->getBasicBlockList().erase(this);
+iplist<BasicBlock>::iterator BasicBlock::eraseFromParent() {
+  return getParent()->getBasicBlockList().erase(this);
 }
 
 /// Unlink this basic block from its current function and

@@ -28,6 +28,23 @@ class LandingPadInst;
 class TerminatorInst;
 class LLVMContext;
 class BlockAddress;
+class Function;
+
+// Traits for intrusive list of basic blocks...
+template<> struct ilist_traits<BasicBlock>
+  : public SymbolTableListTraits<BasicBlock, Function> {
+
+  BasicBlock *createSentinel() const;
+  static void destroySentinel(BasicBlock*) {}
+
+  BasicBlock *provideInitialHead() const { return createSentinel(); }
+  BasicBlock *ensureHead(BasicBlock*) const { return createSentinel(); }
+  static void noteHead(BasicBlock*, BasicBlock*) {}
+
+  static ValueSymbolTable *getSymTab(Function *ItemParent);
+private:
+  mutable ilist_half_node<BasicBlock> Sentinel;
+};
 
 
 /// \brief LLVM Basic Block Representation
@@ -151,7 +168,9 @@ public:
   void removeFromParent();
 
   /// \brief Unlink 'this' from the containing function and delete it.
-  void eraseFromParent();
+  ///
+  // \returns an iterator pointing to the element after the erased one.
+  iplist<BasicBlock>::iterator eraseFromParent();
 
   /// \brief Unlink this basic block from its current function and insert it
   /// into the function that \p MovePos lives in, right before \p MovePos.
@@ -306,6 +325,12 @@ private:
     Value::setValueSubclassData(D);
   }
 };
+
+// createSentinel is used to get hold of the node that marks the end of the
+// list... (same trick used here as in ilist_traits<Instruction>)
+inline BasicBlock *ilist_traits<BasicBlock>::createSentinel() const {
+    return static_cast<BasicBlock*>(&Sentinel);
+}
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock, LLVMBasicBlockRef)
