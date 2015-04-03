@@ -421,11 +421,16 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
 
       HandlerMaps.push_back(HandlerMapXData);
 
+      int CatchHigh = -1;
+      for (WinEHHandlerType &HT : TBME.HandlerArray)
+        CatchHigh =
+            std::max(CatchHigh, FuncInfo.CatchHandlerMaxState[HT.Handler]);
+
       assert(TBME.TryLow <= TBME.TryHigh);
-      assert(TBME.CatchHigh > TBME.TryHigh);
+      assert(CatchHigh > TBME.TryHigh);
       OS.EmitIntValue(TBME.TryLow, 4);                    // TryLow
       OS.EmitIntValue(TBME.TryHigh, 4);                   // TryHigh
-      OS.EmitIntValue(TBME.CatchHigh, 4);                 // CatchHigh
+      OS.EmitIntValue(CatchHigh, 4);                      // CatchHigh
       OS.EmitIntValue(TBME.HandlerArray.size(), 4);       // NumCatches
       OS.EmitValue(createImageRel32(HandlerMapXData), 4); // HandlerArray
     }

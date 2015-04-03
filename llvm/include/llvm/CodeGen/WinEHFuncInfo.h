@@ -128,7 +128,6 @@ struct WinEHHandlerType {
 struct WinEHTryBlockMapEntry {
   int TryLow;
   int TryHigh;
-  int CatchHigh;
   SmallVector<WinEHHandlerType, 1> HandlerArray;
 };
 
@@ -136,6 +135,7 @@ struct WinEHFuncInfo {
   DenseMap<const LandingPadInst *, int> LandingPadStateMap;
   DenseMap<const Function *, int> CatchHandlerParentFrameObjIdx;
   DenseMap<const Function *, int> CatchHandlerParentFrameObjOffset;
+  DenseMap<const Function *, int> CatchHandlerMaxState;
   SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
   SmallVector<std::pair<MCSymbol *, int>, 4> IPToStateList;

@@ -137,12 +137,12 @@ try.cont8:                                        ; preds = %lpad2, %try.cont
 ; CHECK-NEXT:"$tryMap$?f@@YAXXZ":
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:        .long   1
-; CHECK-NEXT:        .long   2147483647
+; CHECK-NEXT:        .long   2
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:        .long   ("$handlerMap$0$?f@@YAXXZ")@IMGREL
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   2
-; CHECK-NEXT:        .long   2147483647
+; CHECK-NEXT:        .long   3
 ; CHECK-NEXT:        .long   1
 ; CHECK-NEXT:        .long   ("$handlerMap$1$?f@@YAXXZ")@IMGREL
 ; CHECK-NEXT:"$handlerMap$0$?f@@YAXXZ":

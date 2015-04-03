@@ -300,11 +300,7 @@ void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
   WinEHTryBlockMapEntry TBME;
   TBME.TryLow = TryLow;
   TBME.TryHigh = TryHigh;
-  // FIXME: This should be revisited when we want to throw inside a catch
-  // handler.
-  TBME.CatchHigh = INT_MAX;
   assert(TBME.TryLow <= TBME.TryHigh);
-  assert(TBME.CatchHigh > TBME.TryHigh);
   for (CatchHandler *CH : Handlers) {
     WinEHHandlerType HT;
     if (CH->getSelector()->isNullValue()) {
@@ -444,6 +440,8 @@ void WinEHNumbering::calculateStateNumbers(const Function &F) {
     ActionList.clear();
     FuncInfo.LandingPadStateMap[LPI] = currentEHNumber();
   }
+
+  FuncInfo.CatchHandlerMaxState[&F] = NextState - 1;
 }
 
 /// clear - Clear out all the function-specific state. This returns this
