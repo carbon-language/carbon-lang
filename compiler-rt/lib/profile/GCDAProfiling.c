@@ -294,6 +294,11 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4],
     }
   }
 
+  /* Try to flock the file to serialize concurrent processes writing out to the
+   * same GCDA. This can fail if the filesystem doesn't support it, but in that
+   * case we'll just carry on with the old racy behaviour and hope for the best.
+   */
+  flock(fd, LOCK_EX);
   output_file = fdopen(fd, mode);
 
   /* Initialize the write buffer. */
@@ -493,6 +498,7 @@ void llvm_gcda_end_file() {
     }
 
     fclose(output_file);
+    flock(fd, LOCK_UN);
     output_file = NULL;
     write_buffer = NULL;
   }
