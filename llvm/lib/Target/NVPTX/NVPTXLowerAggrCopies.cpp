@@ -84,9 +84,11 @@ static void convertTransferToLoop(
   ind->addIncoming(ConstantInt::get(indType, 0), origBB);
 
   // load from srcAddr+ind
-  Value *val = loop.CreateLoad(loop.CreateGEP(srcAddr, ind), srcVolatile);
+  Value *val = loop.CreateLoad(loop.CreateGEP(loop.getInt8Ty(), srcAddr, ind),
+                               srcVolatile);
   // store at dstAddr+ind
-  loop.CreateStore(val, loop.CreateGEP(dstAddr, ind), dstVolatile);
+  loop.CreateStore(val, loop.CreateGEP(loop.getInt8Ty(), dstAddr, ind),
+                   dstVolatile);
 
   // The value for ind coming from backedge is (ind + 1)
   Value *newind = loop.CreateAdd(ind, ConstantInt::get(indType, 1));
@@ -116,7 +118,7 @@ static void convertMemSetToLoop(Instruction *splitAt, Value *dstAddr,
   PHINode *ind = loop.CreatePHI(len->getType(), 0);
   ind->addIncoming(ConstantInt::get(len->getType(), 0), origBB);
 
-  loop.CreateStore(val, loop.CreateGEP(dstAddr, ind), false);
+  loop.CreateStore(val, loop.CreateGEP(val->getType(), dstAddr, ind), false);
 
   Value *newind = loop.CreateAdd(ind, ConstantInt::get(len->getType(), 1));
   ind->addIncoming(newind, loopBB);

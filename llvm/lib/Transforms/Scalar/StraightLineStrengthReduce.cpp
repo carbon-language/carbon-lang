@@ -482,7 +482,7 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
         if (InBounds)
           Reduced = Builder.CreateInBoundsGEP(Reduced, Bump);
         else
-          Reduced = Builder.CreateGEP(Reduced, Bump);
+          Reduced = Builder.CreateGEP(Builder.getInt8Ty(), Reduced, Bump);
         Reduced = Builder.CreateBitCast(Reduced, C.Ins->getType());
       } else {
         // C = gep Basis, Bump
@@ -491,7 +491,7 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
         if (InBounds)
           Reduced = Builder.CreateInBoundsGEP(Basis.Ins, Bump);
         else
-          Reduced = Builder.CreateGEP(Basis.Ins, Bump);
+          Reduced = Builder.CreateGEP(nullptr, Basis.Ins, Bump);
       }
     }
     break;

@@ -925,7 +925,7 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Value *ZExtPred = Builder.CreateZExt(Pred, Builder.getInt64Ty());
   Arg = std::next(Fn->arg_begin());
   Arg->setName("counters");
-  Value *GEP = Builder.CreateGEP(Arg, ZExtPred);
+  Value *GEP = Builder.CreateGEP(Type::getInt64PtrTy(*Ctx), Arg, ZExtPred);
   Value *Counter = Builder.CreateLoad(GEP, "counter");
   Cond = Builder.CreateICmpEQ(Counter,
                               Constant::getNullValue(

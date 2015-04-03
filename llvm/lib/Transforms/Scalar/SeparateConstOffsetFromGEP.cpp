@@ -757,14 +757,16 @@ void SeparateConstOffsetFromGEP::lowerToSingleIndexGEPs(
         }
       }
       // Create an ugly GEP with a single index for each index.
-      ResultPtr = Builder.CreateGEP(ResultPtr, Idx, "uglygep");
+      ResultPtr =
+          Builder.CreateGEP(Builder.getInt8Ty(), ResultPtr, Idx, "uglygep");
     }
   }
 
   // Create a GEP with the constant offset index.
   if (AccumulativeByteOffset != 0) {
     Value *Offset = ConstantInt::get(IntPtrTy, AccumulativeByteOffset);
-    ResultPtr = Builder.CreateGEP(ResultPtr, Offset, "uglygep");
+    ResultPtr =
+        Builder.CreateGEP(Builder.getInt8Ty(), ResultPtr, Offset, "uglygep");
   }
   if (ResultPtr->getType() != Variadic->getType())
     ResultPtr = Builder.CreateBitCast(ResultPtr, Variadic->getType());
