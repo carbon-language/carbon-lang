@@ -1026,27 +1026,22 @@ define <4 x float> @pr20087(<4 x float> %a, <4 x float> *%ptr) {
 }
 
 ; Edge case for insertps where we end up with a shuffle with mask=<0, 7, -1, -1>
-define void @insertps_pr20411(i32* noalias nocapture %RET) #1 {
+define void @insertps_pr20411(<4 x i32> %shuffle109, <4 x i32> %shuffle116, i32* noalias nocapture %RET) #1 {
 ; X32-LABEL: insertps_pr20411:
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    pshufd {{.*#+}} xmm0 = mem[2,3,0,1]
-; X32-NEXT:    pshufd {{.*#+}} xmm1 = mem[3,1,2,3]
-; X32-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1],xmm0[2,3],xmm1[4,5,6,7]
+; X32-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
+; X32-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
 ; X32-NEXT:    movdqu %xmm1, (%eax)
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_pr20411:
 ; X64:       ## BB#0:
-; X64-NEXT:    pshufd {{.*#+}} xmm0 = mem[2,3,0,1]
-; X64-NEXT:    pshufd {{.*#+}} xmm1 = mem[3,1,2,3]
-; X64-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1],xmm0[2,3],xmm1[4,5,6,7]
+; X64-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
+; X64-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
 ; X64-NEXT:    movdqu %xmm1, (%rdi)
 ; X64-NEXT:    retq
-  %gather_load = shufflevector <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>, <8 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-  %shuffle109 = shufflevector <4 x i32> <i32 4, i32 5, i32 6, i32 7>, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>  ; 4 5 6 7
-  %shuffle116 = shufflevector <8 x i32> %gather_load, <8 x i32> undef, <4 x i32> <i32 3, i32 undef, i32 undef, i32 undef> ; 3 x x x
-  %shuffle117 = shufflevector <4 x i32> %shuffle109, <4 x i32> %shuffle116, <4 x i32> <i32 4, i32 3, i32 undef, i32 undef> ; 3 7 x x
+  %shuffle117 = shufflevector <4 x i32> %shuffle109, <4 x i32> %shuffle116, <4 x i32> <i32 0, i32 7, i32 undef, i32 undef>
   %ptrcast = bitcast i32* %RET to <4 x i32>*
   store <4 x i32> %shuffle117, <4 x i32>* %ptrcast, align 4
   ret void

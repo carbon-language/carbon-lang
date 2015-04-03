@@ -6,7 +6,7 @@ define x86_mmx @t0(i32 %A) nounwind {
 ; X86-32-LABEL: t0:
 ; X86-32:       ## BB#0:
 ; X86-32:    movd {{[0-9]+}}(%esp), %xmm0
-; X86-32-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,0,1]
+; X86-32-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,1,1]
 ; X86-32-NEXT:    movlpd %xmm0, (%esp)
 ; X86-32-NEXT:    movq (%esp), %mm0
 ; X86-32-NEXT:    addl $12, %esp

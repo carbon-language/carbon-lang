@@ -17,7 +17,7 @@ define void @test1() {
 
 define void @test2() {
 ;CHECK-LABEL: @test2
-;CHECK: pshufd
+;CHECK: pcmpeqd
   store <1 x i64> < i64 -1 >, <1 x i64>* @M1
   store <2 x i32> < i32 -1, i32 -1 >, <2 x i32>* @M2
   ret void

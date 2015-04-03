@@ -1086,7 +1086,7 @@ define <2 x i32> @test_concat_diff_v1i32_v1i32(i32 %a, i32 %b) {
 ; CHECK-LABEL: test_concat_diff_v1i32_v1i32:
 ; CHECK: sqabs s{{[0-9]+}}, s{{[0-9]+}}
 ; CHECK: sqabs s{{[0-9]+}}, s{{[0-9]+}}
-; CHECK-NEXT: zip1 {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+; CHECK: ins {{v[0-9]+}}.s[1], w{{[0-9]+}}
 entry:
   %c = tail call i32 @llvm.aarch64.neon.sqabs.i32(i32 %a)
   %d = insertelement <2 x i32> undef, i32 %c, i32 0

@@ -11980,6 +11980,43 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       return V;
   }
 
+  // Attempt to combine a shuffle of 2 inputs of 'scalar sources' -
+  // BUILD_VECTOR or SCALAR_TO_VECTOR into a single BUILD_VECTOR.
+  if (Level < AfterLegalizeVectorOps && TLI.isTypeLegal(VT)) {
+    SmallVector<SDValue, 8> Ops;
+    for (int M : SVN->getMask()) {
+      SDValue Op = DAG.getUNDEF(VT.getScalarType());
+      if (M >= 0) {
+        int Idx = M % NumElts;
+        SDValue &S = (M < (int)NumElts ? N0 : N1);
+        if (S.getOpcode() == ISD::BUILD_VECTOR && S.hasOneUse()) {
+          Op = S.getOperand(Idx);
+        } else if (S.getOpcode() == ISD::SCALAR_TO_VECTOR && S.hasOneUse()) {
+          if (Idx == 0)
+            Op = S.getOperand(0);
+        } else {
+          // Operand can't be combined - bail out.
+          break;
+        }
+      }
+      Ops.push_back(Op);
+    }
+    if (Ops.size() == VT.getVectorNumElements()) {
+      // BUILD_VECTOR requires all inputs to be of the same type, find the
+      // maximum type and extend them all.
+      EVT SVT = VT.getScalarType();
+      if (SVT.isInteger())
+        for (SDValue &Op : Ops)
+          SVT = (SVT.bitsLT(Op.getValueType()) ? Op.getValueType() : SVT);
+      if (SVT != VT.getScalarType())
+        for (SDValue &Op : Ops)
+          Op = TLI.isZExtFree(Op.getValueType(), SVT)
+                   ? DAG.getZExtOrTrunc(Op, SDLoc(N), SVT)
+                   : DAG.getSExtOrTrunc(Op, SDLoc(N), SVT);
+      return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), VT, Ops);
+    }
+  }
+
   // If this shuffle only has a single input that is a bitcasted shuffle,
   // attempt to merge the 2 shuffles and suitably bitcast the inputs/output
   // back to their original types.
