@@ -420,6 +420,8 @@ namespace lldb {
         eLanguageTypeC_plus_plus_14  = 0x0021,   ///< ISO C++:2014.
         eLanguageTypeFortran03       = 0x0022,   ///< ISO Fortran 2003.
         eLanguageTypeFortran08       = 0x0023,   ///< ISO Fortran 2008.
+        // Vendor Extensions
+        eLanguageTypeExtRenderScript = 0x8e57,   ///< RenderScript
         eNumLanguageTypes
     };
     
