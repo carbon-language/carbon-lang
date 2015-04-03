@@ -775,6 +775,10 @@ const MCSection *MCExpr::FindAssociatedSection() const {
     if (RHS_S == MCSymbol::AbsolutePseudoSection)
       return LHS_S;
 
+    // Not always correct, but probably the best we can do without more context.
+    if (BE->getOpcode() == MCBinaryExpr::Sub)
+      return MCSymbol::AbsolutePseudoSection;
+
     // Otherwise, return the first non-null section.
     return LHS_S ? LHS_S : RHS_S;
   }
