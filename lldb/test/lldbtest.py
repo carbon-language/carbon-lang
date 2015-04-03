@@ -362,8 +362,8 @@ def system(commands, **kwargs):
             print >> sbuf
             print >> sbuf, "os command:", shellCommand
             print >> sbuf, "with pid:", pid
-            print >> sbuf, "stdout:", output
-            print >> sbuf, "stderr:", error
+            print >> sbuf, "stdout:", this_output
+            print >> sbuf, "stderr:", this_error
             print >> sbuf, "retcode:", retcode
             print >> sbuf
 
