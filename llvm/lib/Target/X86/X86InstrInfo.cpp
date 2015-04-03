@@ -559,6 +559,15 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::MMX_PABSWrr64,     X86::MMX_PABSWrm64,     0 },
     { X86::MMX_PSHUFWri,      X86::MMX_PSHUFWmi,      0 },
 
+    // 3DNow! version of foldable instructions
+    { X86::PF2IDrr,         X86::PF2IDrm,             0 },
+    { X86::PF2IWrr,         X86::PF2IWrm,             0 },
+    { X86::PFRCPrr,         X86::PFRCPrm,             0 },
+    { X86::PFRSQRTrr,       X86::PFRSQRTrm,           0 },
+    { X86::PI2FDrr,         X86::PI2FDrm,             0 },
+    { X86::PI2FWrr,         X86::PI2FWrm,             0 },
+    { X86::PSWAPDrr,        X86::PSWAPDrm,            0 },
+
     // AVX 128-bit versions of foldable instructions
     { X86::Int_VCOMISDrr,   X86::Int_VCOMISDrm,       0 },
     { X86::Int_VCOMISSrr,   X86::Int_VCOMISSrm,       0 },
@@ -1200,6 +1209,25 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::MMX_PUNPCKLDQirr,  X86::MMX_PUNPCKLDQirm,  0 },
     { X86::MMX_PUNPCKLWDirr,  X86::MMX_PUNPCKLWDirm,  0 },
     { X86::MMX_PXORirr,       X86::MMX_PXORirm,       0 },
+
+    // 3DNow! version of foldable instructions
+    { X86::PAVGUSBrr,         X86::PAVGUSBrm,         0 },
+    { X86::PFACCrr,           X86::PFACCrm,           0 },
+    { X86::PFADDrr,           X86::PFADDrm,           0 },
+    { X86::PFCMPEQrr,         X86::PFCMPEQrm,         0 },
+    { X86::PFCMPGErr,         X86::PFCMPGErm,         0 },
+    { X86::PFCMPGTrr,         X86::PFCMPGTrm,         0 },
+    { X86::PFMAXrr,           X86::PFMAXrm,           0 },
+    { X86::PFMINrr,           X86::PFMINrm,           0 },
+    { X86::PFMULrr,           X86::PFMULrm,           0 },
+    { X86::PFNACCrr,          X86::PFNACCrm,          0 },
+    { X86::PFPNACCrr,         X86::PFPNACCrm,         0 },
+    { X86::PFRCPIT1rr,        X86::PFRCPIT1rm,        0 },
+    { X86::PFRCPIT2rr,        X86::PFRCPIT2rm,        0 },
+    { X86::PFRSQIT1rr,        X86::PFRSQIT1rm,        0 },
+    { X86::PFSUBrr,           X86::PFSUBrm,           0 },
+    { X86::PFSUBRrr,          X86::PFSUBRrm,          0 },
+    { X86::PMULHRWrr,         X86::PMULHRWrm,         0 },
 
     // AVX 128-bit versions of foldable instructions
     { X86::VCVTSD2SSrr,       X86::VCVTSD2SSrm,        0 },
