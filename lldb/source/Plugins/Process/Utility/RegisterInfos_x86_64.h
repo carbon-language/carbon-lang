@@ -27,10 +27,6 @@
      LLVM_EXTENSION offsetof(XSAVE, ymmh[reg_index]) + \
      (32 * reg_index))
 
-#define DR_OFFSET(reg_index) \
-    (LLVM_EXTENSION offsetof(UserArea, dbg) + \
-     LLVM_EXTENSION offsetof(DBG, dr[reg_index]))
-
 #ifdef DECLARE_REGISTER_INFOS_X86_64_STRUCT
 
 // Number of bytes needed to represent a FPR.

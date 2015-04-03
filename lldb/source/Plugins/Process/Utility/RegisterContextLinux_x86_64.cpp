@@ -73,6 +73,11 @@ struct UserArea
     uint64_t fault_address; // Control register CR3.
 };
 
+
+#define DR_OFFSET(reg_index) \
+    (LLVM_EXTENSION offsetof(UserArea, dbg) + \
+     LLVM_EXTENSION offsetof(DBG, dr[reg_index]))
+
 //---------------------------------------------------------------------------
 // Include RegisterInfos_x86_64 to declare our g_register_infos_x86_64 structure.
 //---------------------------------------------------------------------------
