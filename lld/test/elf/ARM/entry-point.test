@@ -17,8 +17,8 @@
 # 3. Check wrong entry point address align for ARM code.
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-arm-wrong.o
 # RUN: not lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
-# RUN: --noinhibit-exec %t-arm-wrong.o -o %t-arm-wrong 2> %t-arm-wrong
-# FileCheck -check-prefix=ARM-WRONG %s < %t-arm-wrong
+# RUN: --noinhibit-exec %t-arm-wrong.o -o %t-arm-wrong 2> %t-error
+# FileCheck -check-prefix=ARM-WRONG %s < %t-error
 #
 # ARM-WRONG: Two least bits must be zero for ARM entry point
 
