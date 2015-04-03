@@ -41,7 +41,6 @@ template <class ELFT> class TargetLayout {
 public:
   typedef uint32_t SectionOrder;
   typedef uint32_t SegmentType;
-  typedef uint32_t Flags;
 
   // The order in which the sections appear in the output file
   // If its determined, that the layout needs to change
