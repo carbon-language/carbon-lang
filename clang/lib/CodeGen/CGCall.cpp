@@ -1939,7 +1939,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // If the value is offset in memory, apply the offset now.
       if (unsigned Offs = ArgI.getDirectOffset()) {
         Ptr = Builder.CreateBitCast(Ptr, Builder.getInt8PtrTy());
-        Ptr = Builder.CreateConstGEP1_32(Ptr, Offs);
+        Ptr = Builder.CreateConstGEP1_32(Builder.getInt8Ty(), Ptr, Offs);
         Ptr = Builder.CreateBitCast(Ptr,
                           llvm::PointerType::getUnqual(ArgI.getCoerceToType()));
       }
@@ -2334,7 +2334,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       // If the value is offset in memory, apply the offset now.
       if (unsigned Offs = RetAI.getDirectOffset()) {
         V = Builder.CreateBitCast(V, Builder.getInt8PtrTy());
-        V = Builder.CreateConstGEP1_32(V, Offs);
+        V = Builder.CreateConstGEP1_32(Builder.getInt8Ty(), V, Offs);
         V = Builder.CreateBitCast(V,
                          llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
       }
@@ -3201,7 +3201,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // If the value is offset in memory, apply the offset now.
       if (unsigned Offs = ArgInfo.getDirectOffset()) {
         SrcPtr = Builder.CreateBitCast(SrcPtr, Builder.getInt8PtrTy());
-        SrcPtr = Builder.CreateConstGEP1_32(SrcPtr, Offs);
+        SrcPtr = Builder.CreateConstGEP1_32(Builder.getInt8Ty(), SrcPtr, Offs);
         SrcPtr = Builder.CreateBitCast(SrcPtr,
                        llvm::PointerType::getUnqual(ArgInfo.getCoerceToType()));
 
@@ -3463,7 +3463,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       llvm::Value *StorePtr = DestPtr;
       if (unsigned Offs = RetAI.getDirectOffset()) {
         StorePtr = Builder.CreateBitCast(StorePtr, Builder.getInt8PtrTy());
-        StorePtr = Builder.CreateConstGEP1_32(StorePtr, Offs);
+        StorePtr =
+            Builder.CreateConstGEP1_32(Builder.getInt8Ty(), StorePtr, Offs);
         StorePtr = Builder.CreateBitCast(StorePtr,
                            llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
       }
