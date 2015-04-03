@@ -24,6 +24,7 @@
 // C++ Includes
 #include <algorithm>
 #include <map>
+#include <mutex>
 
 // Other libraries and framework includes
 

@@ -12,6 +12,7 @@
 
 // C++ Includes
 #include <list>
+#include <mutex>
 #include <vector>
 
 // Other libraries and framework includes

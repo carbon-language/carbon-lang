@@ -13,6 +13,7 @@
 
 // C++ Includes
 #include "llvm/Support/MathExtras.h"
+#include <mutex>
 
 // Other libraries and framework includes
 #include "lldb/Core/DataBuffer.h"
