@@ -14,6 +14,14 @@
 #
 # THM-ENTRY: Entry: 0x400075
 
+# 3. Check wrong entry point address align for ARM code.
+# RUN: yaml2obj -format=elf -docnum 3 %s > %t-arm-wrong.o
+# RUN: not lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
+# RUN: --noinhibit-exec %t-arm-wrong.o -o %t-arm-wrong 2> %t-arm-wrong
+# FileCheck -check-prefix=ARM-WRONG %s < %t-arm-wrong
+#
+# ARM-WRONG: Two least bits must be zero for ARM entry point
+
 # arm.o
 ---
 FileHeader:
@@ -74,4 +82,35 @@ Symbols:
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000000001
+
+# arm-wrong.o
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_ARM
+  Flags:           [ EF_ARM_EABI_VER5 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x0000000000000006
+    Content:         04B02DE500B08DE20030A0E30300A0E100D04BE204B09DE41EFF2FE1
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+  - Name:            .bss
+    Type:            SHT_NOBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+Symbols:
+  Global:
+    - Name:            _start
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x0000000000000002
 ...
