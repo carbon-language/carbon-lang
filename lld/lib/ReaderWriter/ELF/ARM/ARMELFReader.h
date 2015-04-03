@@ -18,16 +18,8 @@ namespace elf {
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> ARMELFType;
 
-struct ARMELFFileCreateELFTraits {
-  template <class ELFT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, ARMLinkingContext &ctx) {
-    return lld::elf::ARMELFFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
-typedef ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
-                        ARMLinkingContext> ARMELFObjectReader;
+typedef ELFObjectReader<ARMELFType, ARMLinkingContext, lld::elf::ARMELFFile>
+    ARMELFObjectReader;
 typedef ELFDSOReader<ARMELFType, ARMLinkingContext> ARMELFDSOReader;
 
 } // namespace elf

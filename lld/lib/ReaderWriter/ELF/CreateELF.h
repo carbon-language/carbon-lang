@@ -36,8 +36,7 @@ using llvm::object::ELFType;
 /// \param args arguments forwarded to CreateELFTraits<T>::create.
 
 #define LLVM_CREATE_ELF_CreateELFTraits(endian, align, is64, ...) \
-  Traits::template create<ELFType<llvm::support::endian, align, is64>>( \
-      __VA_ARGS__);
+  new FileT<ELFType<llvm::support::endian, align, is64>>(__VA_ARGS__);
 
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
 # define LLVM_CREATE_ELF_Create(normal, low, endian, is64, ...) \
@@ -50,15 +49,16 @@ using llvm::object::ELFType;
 #else
 # define LLVM_CREATE_ELF_Create(normal, low, endian, is64, ...) \
   if (maxAlignment >= low) \
-    return LLVM_CREATE_ELF_CreateELFTraits(endian, low, is64, __VA_ARGS__) \
+    file = LLVM_CREATE_ELF_CreateELFTraits(endian, low, is64, __VA_ARGS__) \
   else \
     llvm_unreachable("Invalid alignment for ELF file!");
 #endif
 
-template <class Traits, class... Args>
+template <template <typename ELFT> class FileT, class... Args>
 llvm::ErrorOr<std::unique_ptr<lld::File>>
 createELF(std::pair<unsigned char, unsigned char> ident,
           std::size_t maxAlignment, Args &&... args) {
+  lld::File *file = nullptr;
   if (ident.first == llvm::ELF::ELFCLASS32 &&
       ident.second == llvm::ELF::ELFDATA2LSB) {
     LLVM_CREATE_ELF_Create(4, 2, little, false, std::forward<Args>(args)...)
@@ -72,8 +72,11 @@ createELF(std::pair<unsigned char, unsigned char> ident,
              ident.second == llvm::ELF::ELFDATA2LSB) {
     LLVM_CREATE_ELF_Create(8, 2, little, true, std::forward<Args>(args)...)
   }
-  llvm_unreachable("Invalid ELF type!");
+  if (!file)
+    llvm_unreachable("Invalid ELF type!");
+  return std::unique_ptr<lld::File>(file);
 }
+
 } // end anon namespace
 
 #undef LLVM_CREATE_ELF_CreateELFTraits

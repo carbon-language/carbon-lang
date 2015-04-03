@@ -18,16 +18,8 @@ namespace elf {
 class X86LinkingContext;
 typedef llvm::object::ELFType<llvm::support::little, 2, false> X86ELFType;
 
-struct X86ELFFileCreateELFTraits {
-  template <class ELFT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, X86LinkingContext &ctx) {
-    return lld::elf::ELFFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
-typedef ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
-                        X86LinkingContext> X86ELFObjectReader;
+typedef ELFObjectReader<X86ELFType, X86LinkingContext, lld::elf::ELFFile>
+    X86ELFObjectReader;
 typedef ELFDSOReader<X86ELFType, X86LinkingContext> X86ELFDSOReader;
 
 } // namespace elf

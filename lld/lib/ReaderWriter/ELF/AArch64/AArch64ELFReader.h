@@ -19,16 +19,8 @@ class AArch64LinkingContext;
 
 typedef llvm::object::ELFType<llvm::support::little, 2, true> AArch64ELFType;
 
-struct AArch64ELFFileCreateELFTraits {
-  template <class ELFT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, AArch64LinkingContext &ctx) {
-    return lld::elf::ELFFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
-typedef ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
-                        AArch64LinkingContext> AArch64ELFObjectReader;
+typedef ELFObjectReader<AArch64ELFType, AArch64LinkingContext,
+                        lld::elf::ELFFile> AArch64ELFObjectReader;
 
 typedef ELFDSOReader<AArch64ELFType, AArch64LinkingContext> AArch64ELFDSOReader;
 

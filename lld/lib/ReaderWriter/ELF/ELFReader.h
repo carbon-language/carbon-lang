@@ -18,7 +18,7 @@
 namespace lld {
 namespace elf {
 
-template <typename ELFT, typename ELFTraitsT, typename ContextT>
+template <typename ELFT, typename ContextT, template <typename> class FileT>
 class ELFObjectReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
@@ -36,8 +36,7 @@ public:
            std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f =
-        createELF<ELFTraitsT>(llvm::object::getElfArchType(mb->getBuffer()),
+    auto f = createELF<FileT>(llvm::object::getElfArchType(mb->getBuffer()),
                               maxAlignment, std::move(mb), _ctx);
     if (std::error_code ec = f.getError())
       return ec;
@@ -53,14 +52,6 @@ public:
 
 protected:
   ContextT &_ctx;
-};
-
-struct DynamicFileCreateELFTraits {
-  template <typename ELFT, typename ContextT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, ContextT &ctx) {
-    return DynamicFile<ELFT>::create(std::move(mb), ctx);
-  }
 };
 
 template <typename ELFT, typename ContextT>
@@ -81,9 +72,9 @@ public:
            std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<DynamicFileCreateELFTraits>(
-        llvm::object::getElfArchType(mb->getBuffer()),
-        maxAlignment, std::move(mb), _ctx);
+    auto f =
+        createELF<DynamicFile>(llvm::object::getElfArchType(mb->getBuffer()),
+                               maxAlignment, std::move(mb), _ctx);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));

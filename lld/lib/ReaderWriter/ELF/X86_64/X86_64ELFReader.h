@@ -18,16 +18,8 @@ namespace elf {
 class X86_64LinkingContext;
 typedef llvm::object::ELFType<llvm::support::little, 2, true> X86_64ELFType;
 
-struct X86_64ELFFileCreateELFTraits {
-  template <class ELFT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, X86_64LinkingContext &ctx) {
-    return lld::elf::ELFFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
-typedef ELFObjectReader<X86_64ELFType, X86_64ELFFileCreateELFTraits,
-                        X86_64LinkingContext> X86_64ELFObjectReader;
+typedef ELFObjectReader<X86_64ELFType, X86_64LinkingContext, lld::elf::ELFFile>
+    X86_64ELFObjectReader;
 typedef ELFDSOReader<X86_64ELFType, X86_64LinkingContext> X86_64ELFDSOReader;
 
 } // namespace elf

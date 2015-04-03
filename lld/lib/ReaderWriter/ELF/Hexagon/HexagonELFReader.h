@@ -18,16 +18,8 @@ namespace elf {
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 
-struct HexagonELFFileCreateELFTraits {
-  template <class ELFT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, HexagonLinkingContext &ctx) {
-    return lld::elf::HexagonELFFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
-typedef ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits,
-                        HexagonLinkingContext> HexagonELFObjectReader;
+typedef ELFObjectReader<HexagonELFType, HexagonLinkingContext,
+                        lld::elf::HexagonELFFile> HexagonELFObjectReader;
 typedef ELFDSOReader<HexagonELFType, HexagonLinkingContext> HexagonELFDSOReader;
 
 } // namespace elf

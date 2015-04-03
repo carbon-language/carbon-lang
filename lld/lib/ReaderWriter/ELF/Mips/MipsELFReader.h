@@ -17,19 +17,10 @@
 namespace lld {
 namespace elf {
 
-struct MipsELFFileCreateTraits {
-  template <class ELFT>
-  static llvm::ErrorOr<std::unique_ptr<lld::File>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, MipsLinkingContext &ctx) {
-    return lld::elf::MipsELFFile<ELFT>::create(std::move(mb), ctx);
-  }
-};
-
 template <class ELFT>
 class MipsELFObjectReader
-    : public ELFObjectReader<ELFT, MipsELFFileCreateTraits,
-                             MipsLinkingContext> {
-  typedef ELFObjectReader<ELFT, MipsELFFileCreateTraits, MipsLinkingContext>
+    : public ELFObjectReader<ELFT, MipsLinkingContext, lld::elf::MipsELFFile> {
+  typedef ELFObjectReader<ELFT, MipsLinkingContext, lld::elf::MipsELFFile>
       BaseReaderType;
 
 public:
