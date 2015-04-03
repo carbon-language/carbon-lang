@@ -213,7 +213,7 @@ Value *Scatterer::operator[](unsigned I) {
       CV[0] = Builder.CreateBitCast(V, Ty, V->getName() + ".i0");
     }
     if (I != 0)
-      CV[I] = Builder.CreateConstGEP1_32(CV[0], I,
+      CV[I] = Builder.CreateConstGEP1_32(nullptr, CV[0], I,
                                          V->getName() + ".i" + Twine(I));
   } else {
     // Search through a chain of InsertElementInsts looking for element I.

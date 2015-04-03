@@ -1214,7 +1214,8 @@ void DFSanFunction::storeShadow(Value *Addr, uint64_t Size, uint64_t Align,
     Value *ShadowVecAddr =
         IRB.CreateBitCast(ShadowAddr, PointerType::getUnqual(ShadowVecTy));
     do {
-      Value *CurShadowVecAddr = IRB.CreateConstGEP1_32(ShadowVecAddr, Offset);
+      Value *CurShadowVecAddr =
+          IRB.CreateConstGEP1_32(ShadowVecTy, ShadowVecAddr, Offset);
       IRB.CreateAlignedStore(ShadowVec, CurShadowVecAddr, ShadowAlign);
       Size -= ShadowVecSize;
       ++Offset;
@@ -1222,7 +1223,8 @@ void DFSanFunction::storeShadow(Value *Addr, uint64_t Size, uint64_t Align,
     Offset *= ShadowVecSize;
   }
   while (Size > 0) {
-    Value *CurShadowAddr = IRB.CreateConstGEP1_32(ShadowAddr, Offset);
+    Value *CurShadowAddr =
+        IRB.CreateConstGEP1_32(DFS.ShadowTy, ShadowAddr, Offset);
     IRB.CreateAlignedStore(Shadow, CurShadowAddr, ShadowAlign);
     --Size;
     ++Offset;
