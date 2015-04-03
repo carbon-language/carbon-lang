@@ -842,7 +842,7 @@ ProcessKDP::Initialize()
         PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                        GetPluginDescriptionStatic(),
                                        CreateInstance,
-                                       DebuggerInitialize);a
+                                       DebuggerInitialize);
 
         Log::Callbacks log_callbacks = {
             ProcessKDPLog::DisableLog,
