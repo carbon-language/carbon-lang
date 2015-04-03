@@ -5,6 +5,7 @@
 #include "Plugins/Process/Linux/ThreadStateCoordinator.h"
 
 using namespace lldb_private;
+using namespace process_linux;
 
 namespace
 {
