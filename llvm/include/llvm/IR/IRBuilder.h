@@ -1028,7 +1028,7 @@ public:
         if (!isa<Constant>(IdxList[i]))
           break;
       if (i == e)
-        return Insert(Folder.CreateGetElementPtr(PC, IdxList), Name);
+        return Insert(Folder.CreateGetElementPtr(Ty, PC, IdxList), Name);
     }
     return Insert(GetElementPtrInst::Create(Ty, Ptr, IdxList), Name);
   }
@@ -1041,7 +1041,8 @@ public:
         if (!isa<Constant>(IdxList[i]))
           break;
       if (i == e)
-        return Insert(Folder.CreateInBoundsGetElementPtr(PC, IdxList), Name);
+        return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, IdxList),
+                      Name);
     }
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, IdxList), Name);
   }
@@ -1051,20 +1052,21 @@ public:
   Value *CreateGEP(Type *Ty, Value *Ptr, Value *Idx, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return Insert(Folder.CreateGetElementPtr(PC, IC), Name);
+        return Insert(Folder.CreateGetElementPtr(Ty, PC, IC), Name);
     return Insert(GetElementPtrInst::Create(Ty, Ptr, Idx), Name);
   }
   Value *CreateInBoundsGEP(Value *Ptr, Value *Idx, const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
-        return Insert(Folder.CreateInBoundsGetElementPtr(PC, IC), Name);
+        return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, IC),
+                      Name);
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateGetElementPtr(PC, Idx), Name);
+      return Insert(Folder.CreateGetElementPtr(nullptr, PC, Idx), Name);
 
     return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idx), Name);
   }
@@ -1073,7 +1075,7 @@ public:
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idx), Name);
+      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idx), Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
   }
@@ -1085,7 +1087,7 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateGetElementPtr(PC, Idxs), Name);
+      return Insert(Folder.CreateGetElementPtr(nullptr, PC, Idxs), Name);
 
     return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idxs), Name);
   }
@@ -1097,7 +1099,8 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idxs), Name);
+      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idxs),
+                    Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
   }
@@ -1105,7 +1108,7 @@ public:
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateGetElementPtr(PC, Idx), Name);
+      return Insert(Folder.CreateGetElementPtr(nullptr, PC, Idx), Name);
 
     return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idx), Name);
   }
@@ -1114,7 +1117,7 @@ public:
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idx), Name);
+      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idx), Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
   }
@@ -1126,7 +1129,7 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateGetElementPtr(PC, Idxs), Name);
+      return Insert(Folder.CreateGetElementPtr(nullptr, PC, Idxs), Name);
 
     return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idxs), Name);
   }
@@ -1138,7 +1141,8 @@ public:
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(PC, Idxs), Name);
+      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idxs),
+                    Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
   }
