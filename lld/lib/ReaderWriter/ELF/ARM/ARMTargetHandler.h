@@ -11,8 +11,8 @@
 #define LLD_READER_WRITER_ELF_ARM_ARM_TARGET_HANDLER_H
 
 #include "ARMELFFile.h"
-#include "ARMELFReader.h"
 #include "ARMRelocationHandler.h"
+#include "ELFReader.h"
 #include "TargetLayout.h"
 #include "llvm/ADT/Optional.h"
 
@@ -60,6 +60,11 @@ private:
 };
 
 class ARMTargetHandler final : public TargetHandler {
+  typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFTy;
+  typedef ELFObjectReader<ELFTy, ARMLinkingContext, lld::elf::ARMELFFile>
+      ObjReader;
+  typedef ELFDSOReader<ELFTy, ARMLinkingContext> DSOReader;
+
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
 
@@ -68,18 +73,18 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<ARMELFObjectReader>(_ctx);
+    return llvm::make_unique<ObjReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<ARMELFDSOReader>(_ctx);
+    return llvm::make_unique<DSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 private:
   ARMLinkingContext &_ctx;
-  std::unique_ptr<ARMTargetLayout<ARMELFType>> _targetLayout;
+  std::unique_ptr<ARMTargetLayout<ELFTy>> _targetLayout;
   std::unique_ptr<ARMTargetRelocationHandler> _relocationHandler;
 };
 

@@ -10,8 +10,8 @@
 #ifndef LLD_READER_WRITER_ELF_AARCH64_AARCH64_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_AARCH64_AARCH64_TARGET_HANDLER_H
 
-#include "AArch64ELFReader.h"
 #include "AArch64RelocationHandler.h"
+#include "ELFReader.h"
 #include "TargetLayout.h"
 #include "lld/Core/Simple.h"
 
@@ -20,6 +20,11 @@ namespace elf {
 class AArch64LinkingContext;
 
 class AArch64TargetHandler final : public TargetHandler {
+  typedef llvm::object::ELFType<llvm::support::little, 2, true> ELFTy;
+  typedef ELFObjectReader<ELFTy, AArch64LinkingContext, lld::elf::ELFFile>
+      ObjReader;
+  typedef ELFDSOReader<AArch64ELFType, AArch64LinkingContext> DSOReader;
+
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 
@@ -28,18 +33,18 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<AArch64ELFObjectReader>(_ctx);
+    return llvm::make_unique<ObjReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<AArch64ELFDSOReader>(_ctx);
+    return llvm::make_unique<DSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 private:
   AArch64LinkingContext &_ctx;
-  std::unique_ptr<TargetLayout<AArch64ELFType>> _targetLayout;
+  std::unique_ptr<TargetLayout<ELFTy>> _targetLayout;
   std::unique_ptr<AArch64TargetRelocationHandler> _relocationHandler;
 };
 

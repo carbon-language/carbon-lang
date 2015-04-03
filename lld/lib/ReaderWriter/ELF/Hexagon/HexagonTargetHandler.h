@@ -10,7 +10,8 @@
 #ifndef HEXAGON_TARGET_HANDLER_H
 #define HEXAGON_TARGET_HANDLER_H
 
-#include "HexagonELFReader.h"
+#include "ELFReader.h"
+#include "HexagonELFFile.h"
 #include "HexagonExecutableAtoms.h"
 #include "HexagonRelocationHandler.h"
 #include "HexagonSectionChunks.h"
@@ -97,6 +98,11 @@ private:
 
 /// \brief TargetHandler for Hexagon
 class HexagonTargetHandler final : public TargetHandler {
+  typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFTy;
+  typedef ELFObjectReader<ELFTy, HexagonLinkingContext,
+                          lld::elf::HexagonELFFile> ObjReader;
+  typedef ELFDSOReader<ELFTy, HexagonLinkingContext> ELFDSOReader;
+
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
@@ -105,19 +111,19 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<HexagonELFObjectReader>(_ctx);
+    return llvm::make_unique<ObjReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<HexagonELFDSOReader>(_ctx);
+    return llvm::make_unique<ELFDSOReader>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
 
 private:
   HexagonLinkingContext &_ctx;
-  std::unique_ptr<HexagonRuntimeFile<HexagonELFType>> _runtimeFile;
-  std::unique_ptr<HexagonTargetLayout<HexagonELFType>> _targetLayout;
+  std::unique_ptr<HexagonRuntimeFile<ELFTy>> _runtimeFile;
+  std::unique_ptr<HexagonTargetLayout<ELFTy>> _targetLayout;
   std::unique_ptr<HexagonTargetRelocationHandler> _relocationHandler;
 };
 
