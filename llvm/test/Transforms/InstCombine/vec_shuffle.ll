@@ -416,7 +416,7 @@ define <4 x i32> @pr20114(<4 x i32> %__mask) {
 }
 
 define <2 x i32*> @pr23113(<4 x i32*> %A) {
-; CHECK-LABEL: @pr20114
+; CHECK-LABEL: @pr23113
 ; CHECK: %[[V:.*]] = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
 ; CHECK-NEXT: ret <2 x i32*> %[[V]]
   %1 = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
