@@ -16,6 +16,7 @@ class IncompleteModulesTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
+    @unittest2.expectedFailure("rdar://20416388")
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
@@ -23,6 +24,7 @@ class IncompleteModulesTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @skipIfLinux
+    @unittest2.expectedFailure("rdar://20416388")
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
