@@ -140,6 +140,29 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   std::string ViewerPath;
   GraphSession S;
 
+#ifdef __APPLE__
+  if (S.TryFindProgram("open", ViewerPath)) {
+    std::vector<const char *> args;
+    args.push_back(ViewerPath.c_str());
+    if (wait)
+      args.push_back("-W");
+    args.push_back(Filename.c_str());
+    args.push_back(nullptr);
+    errs() << "Trying 'open' program... ";
+    if (!ExecGraphViewer(ViewerPath, args, Filename, wait, ErrMsg))
+      return false;
+  }
+#endif
+  if (S.TryFindProgram("xdg-open", ViewerPath)) {
+    std::vector<const char *> args;
+    args.push_back(ViewerPath.c_str());
+    args.push_back(Filename.c_str());
+    args.push_back(nullptr);
+    errs() << "Trying 'xdg-open' program... ";
+    if (!ExecGraphViewer(ViewerPath, args, Filename, wait, ErrMsg))
+      return false;
+  }
+
   // Graphviz
   if (S.TryFindProgram("Graphviz", ViewerPath)) {
     std::vector<const char *> args;
