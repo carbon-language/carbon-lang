@@ -952,6 +952,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::CMPPSrri,        X86::CMPPSrmi,      TB_ALIGN_16 },
     { X86::CMPSDrr,         X86::CMPSDrm,       0 },
     { X86::CMPSSrr,         X86::CMPSSrm,       0 },
+    { X86::CRC32r32r32,     X86::CRC32r32m32,   0 },
+    { X86::CRC32r64r64,     X86::CRC32r64m64,   0 },
     { X86::DIVPDrr,         X86::DIVPDrm,       TB_ALIGN_16 },
     { X86::DIVPSrr,         X86::DIVPSrm,       TB_ALIGN_16 },
     { X86::DIVSDrr,         X86::DIVSDrm,       0 },
