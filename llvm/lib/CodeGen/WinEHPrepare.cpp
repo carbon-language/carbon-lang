@@ -875,7 +875,7 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
     // save the association of the blocks in LPadTargetBlocks.  The
     // return instructions which are created from these branches will be
     // replaced after all landing pads have been outlined.
-    for (auto &MapEntry : VMap) {
+    for (const auto &MapEntry : VMap) {
       // VMap maps all values and blocks that were just cloned, but dead
       // blocks which were pruned will map to nullptr.
       if (!isa<BasicBlock>(MapEntry.first) || MapEntry.second == nullptr)
