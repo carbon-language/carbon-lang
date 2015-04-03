@@ -90,17 +90,17 @@ def macosx_copy_file_for_heap( vDictArgs, vstrFrameworkPythonDir ):
     if eOSType != utilsOsType.EnumOsType.Darwin:
         return (bOk, strMsg);
 
-    strHeapDir = vstrFrameworkPythonDir + "/macosx/heap";
+    strHeapDir = os.path.join(vstrFrameworkPythonDir, "macosx", "heap");
     strHeapDir = os.path.normcase( strHeapDir );
     if (os.path.exists( strHeapDir ) and os.path.isdir( strHeapDir )):
         return (bOk, strMsg);
 
     os.makedirs( strHeapDir );
 
-    strRoot = vDictArgs[ "--srcRoot" ];
-    strSrc = strRoot + "/examples/darwin/heap_find/heap/heap_find.cpp";
+    strRoot = os.path.normpath(vDictArgs[ "--srcRoot" ]);
+    strSrc = os.path.join(strRoot, "examples", "darwin", "heap_find", "heap", "heap_find.cpp");
     shutil.copy( strSrc, strHeapDir );
-    strSrc = strRoot + "/examples/darwin/heap_find/heap/Makefile";
+    strSrc = os.path.join(strRoot, "examples", "darwin", "heap_find", "heap", "Makefile");
     shutil.copy( strSrc, strHeapDir );
 
     return (bOk, strMsg);
@@ -147,8 +147,7 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
             shutil.copy( strPkgFile, strPkgDir );
 
     # Create a packet init files if there wasn't one
-    strPkgIniFile = strPkgDir + "/__init__.py";
-    strPkgIniFile = os.path.normcase( strPkgIniFile );
+    strPkgIniFile = os.path.normpath(os.path.join(strPkgDir, "__init__.py"));
     if os.path.exists( strPkgIniFile ) and os.path.isfile( strPkgIniFile ):
         return (bOk, strMsg);
 
@@ -190,9 +189,9 @@ def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfg
     bDbg = vDictArgs.has_key( "-d" );
     strMsg = "";
 
-    strSrc = vstrCfgBldDir + "/lldb.py";
+    strSrc = os.path.join(vstrCfgBldDir, "lldb.py");
     strSrc = os.path.normcase( strSrc );
-    strDst = vstrFrameworkPythonDir + "/__init__.py";
+    strDst = os.path.join(vstrFrameworkPythonDir, "__init__.py");
     strDst = os.path.normcase( strDst );
 
     if not os.path.exists( strSrc ):
@@ -282,7 +281,7 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
     bOk = True;
     strErrMsg = "";
     bDbg = vDictArgs.has_key( "-d" );
-    strTarget = "%s/%s" % (vstrFrameworkPythonDir, vstrTargetFile);
+    strTarget = os.path.join(vstrFrameworkPythonDir, vstrTargetFile);
     strTarget = os.path.normcase( strTarget );
     strSrc = "";
 
@@ -293,16 +292,15 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
         return (bOk, strErrMsg);
     else:
         # Resolve vstrSrcFile path relatively the build directory
-        strBuildDir = "";
         if eOSType == utilsOsType.EnumOsType.Windows:
             # On a Windows platform the vstrFrameworkPythonDir looks like:
             # llvm\\build\\Lib\\site-packages\\lldb
-            strBuildDir = "../../..";
+            strBuildDir = os.path.join("..", "..", "..");
         else:
             # On a UNIX style platform the vstrFrameworkPythonDir looks like:
             # llvm/build/lib/python2.7/site-packages/lldb
-            strBuildDir = "../../../..";
-        strSrc = os.path.normcase( "%s/%s" % (strBuildDir, vstrSrcFile) );
+            strBuildDir = os.path.join("..", "..", "..", "..");
+        strSrc = os.path.normcase(os.path.join(strBuildDir, vstrSrcFile));
 
     if eOSType == utilsOsType.EnumOsType.Unknown:
         bOk = False;
@@ -358,18 +356,17 @@ def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName
 
     bMakeFileCalled = vDictArgs.has_key( "-m" );
     if not bMakeFileCalled:
-        strSrc = "lib/LLDB";
+        strSrc = os.path.join("lib", "LLDB");
     else:
         strLibFileExtn = "";
         if eOSType == utilsOsType.EnumOsType.Windows:
-            strLibFileExtn = ".dll";
-            strSrc = "bin/liblldb%s" % strLibFileExtn;
+            strSrc = os.path.join("bin", "liblldb.dll");
         else:
             if eOSType == utilsOsType.EnumOsType.Darwin:
                 strLibFileExtn = ".dylib";
             else:
                 strLibFileExtn = ".so";
-            strSrc = "lib/liblldb%s" % strLibFileExtn;
+            strSrc = os.path.join("lib", "liblldb" + strLibFileExtn);
 
     bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
 
@@ -395,7 +392,7 @@ def make_symlink_darwin_debug( vDictArgs, vstrFrameworkPythonDir, vstrDarwinDebu
     if not bMakeFileCalled:
         return (bOk, strErrMsg);
     else:
-        strSrc = "bin/lldb-launcher";
+        strSrc = os.path.join("bin", "lldb-launcher");
 
     bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
 
@@ -428,7 +425,7 @@ def make_symlink_argdumper( vDictArgs, vstrFrameworkPythonDir, vstrArgdumperFile
         strExeFileExtn = "";
         if eOSType == utilsOsType.EnumOsType.Windows:
             strExeFileExtn = ".exe";
-        strSrc = "bin/argdumper%s" % strExeFileExtn;
+        strSrc = os.path.join("bin", "argdumper" + strExeFileExtn);
 
     bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
 
@@ -550,18 +547,17 @@ def get_framework_python_dir_windows( vDictArgs ):
     strPythonInstallDir = "";
     bHaveArgPrefix = vDictArgs.has_key( "--prefix" );
     if bHaveArgPrefix:
-        strPythonInstallDir = vDictArgs[ "--prefix" ];
+        strPythonInstallDir = os.path.normpath(vDictArgs[ "--prefix" ]);
 
     bHaveArgCmakeBuildConfiguration = vDictArgs.has_key( "--cmakeBuildConfiguration" );
     if bHaveArgCmakeBuildConfiguration:
-        strPythonInstallDir += '/' + vDictArgs[ "--cmakeBuildConfiguration" ];
+        strPythonInstallDir = os.path.join(strPythonInstallDir, vDictArgs["--cmakeBuildConfiguration"]);
 
     if strPythonInstallDir.__len__() != 0:
         strWkDir = get_python_lib( True, False, strPythonInstallDir );
     else:
         strWkDir = get_python_lib( True, False );
-    strWkDir += "/lldb";
-    strWkDir = os.path.normcase( strWkDir );
+    strWkDir = os.path.normcase(os.path.join(strWkDir, "lldb"));
 
     return (bOk, strWkDir, strErrMsg);
 
@@ -590,11 +586,11 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
         # We are being built by XCode, so all the lldb Python files can go
         # into the LLDB.framework/Resources/Python subdirectory.
         strWkDir = vDictArgs[ "--targetDir" ];
-        strWkDir += "/LLDB.framework";
+        strWkDir += os.path.join(strWkDir, "LLDB.framework");
         if os.path.exists( strWkDir ):
             if bDbg:
                 print strMsgFoundLldbFrameWkDir % strWkDir;
-            strWkDir += "/Resources/Python/lldb";
+            strWkDir = os.path.join(strWkDir, "Resources", "Python", "lldb");
             strWkDir = os.path.normcase( strWkDir );
         else:
             bOk = False;
@@ -694,16 +690,16 @@ def main( vDictArgs ):
         bOk, strMsg = copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs,
                                                         strFrameworkPythonDir,
                                                         strCfgBldDir );
-    strRoot = vDictArgs[ "--srcRoot" ];
+    strRoot = os.path.normpath(vDictArgs[ "--srcRoot" ]);
     if bOk:
         # lldb
-        listPkgFiles = [ strRoot + "/source/Interpreter/embedded_interpreter.py" ];
+        listPkgFiles = [ os.path.join(strRoot, "source", "Interpreter", "embedded_interpreter.py") ];
         bOk, strMsg = create_py_pkg( vDictArgs, strFrameworkPythonDir, "", listPkgFiles );
 
     if bOk:
         # lldb/formatters/cpp
-        listPkgFiles = [ strRoot + "/examples/synthetic/gnu_libstdcpp.py",
-                         strRoot + "/examples/synthetic/libcxx.py" ];
+        listPkgFiles = [ os.path.join(strRoot, "examples", "synthetic", "gnu_libstdcpp.py"),
+                         os.path.join(strRoot, "examples", "synthetic", "libcxx.py") ];
         bOk, strMsg = create_py_pkg( vDictArgs, strFrameworkPythonDir, "/formatters/cpp", listPkgFiles );
 
     if bOk:
@@ -717,27 +713,27 @@ def main( vDictArgs ):
         # lldb/formatters
         # Having these files copied here ensure that lldb/formatters is a
         # valid package itself
-        listPkgFiles = [ strRoot + "/examples/summaries/cocoa/cache.py",
-                         strRoot + "/examples/summaries/cocoa/metrics.py",
-                         strRoot + "/examples/summaries/cocoa/attrib_fromdict.py",
-                         strRoot + "/examples/summaries/cocoa/Logger.py" ];
+        listPkgFiles = [ os.path.join(strRoot, "examples", "summaries", "cocoa", "cache.py"),
+                         os.path.join(strRoot, "examples", "summaries", "cocoa", "metrics.py"),
+                         os.path.join(strRoot, "examples", "summaries", "cocoa", "attrib_fromdict.py"),
+                         os.path.join(strRoot, "examples", "summaries", "cocoa", "Logger.py") ];
         bOk, strMsg = create_py_pkg( vDictArgs, strFrameworkPythonDir, "/formatters", listPkgFiles );
 
     if bOk:
         # lldb/utils
-        listPkgFiles = [ strRoot + "/examples/python/symbolication.py" ];
+        listPkgFiles = [ os.path.join(strRoot, "examples", "python", "symbolication.py") ];
         bOk, strMsg = create_py_pkg( vDictArgs, strFrameworkPythonDir, "/utils", listPkgFiles );
 
     if bOk and (eOSType == utilsOsType.EnumOsType.Darwin):
         # lldb/macosx
-        listPkgFiles = [ strRoot + "/examples/python/crashlog.py",
-                         strRoot + "/examples/darwin/heap_find/heap.py" ];
+        listPkgFiles = [ os.path.join(strRoot, "examples", "python", "crashlog.py"),
+                         os.path.join(strRoot, "examples", "darwin", "heap_find", "heap.py") ];
         bOk, strMsg = create_py_pkg( vDictArgs, strFrameworkPythonDir, "/macosx", listPkgFiles );
 
     if bOk and (eOSType == utilsOsType.EnumOsType.Darwin):
         # lldb/diagnose
-        listPkgFiles = [ strRoot + "/examples/python/diagnose_unwind.py",
-                         strRoot + "/examples/python/diagnose_nsstring.py" ];
+        listPkgFiles = [ os.path.join(strRoot, "examples", "python", "diagnose_unwind.py"),
+                         os.path.join(strRoot, "examples", "python", "diagnose_nsstring.py") ];
         bOk, strMsg = create_py_pkg( vDictArgs, strFrameworkPythonDir, "/diagnose", listPkgFiles );
 
     if bOk:

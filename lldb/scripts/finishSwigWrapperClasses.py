@@ -199,9 +199,8 @@ def run_post_process( vStrScriptLang, vstrFinishFileName, vDictArgs ):
     nResult = 0;
     strStatusMsg = "";
     strScriptFile = vstrFinishFileName % vStrScriptLang;
-    strScriptFileDir = "%s%s/%s" % (vDictArgs[ "--srcRoot" ], "/scripts",
-                                    vStrScriptLang);
-    strScriptFilePath = "%s/%s" % (strScriptFileDir, strScriptFile);
+    strScriptFileDir = os.path.normpath(os.path.join(vDictArgs["--srcRoot"], "scripts", vStrScriptLang));
+    strScriptFilePath = os.path.join(strScriptFileDir, strScriptFile);
 
     # Check for the existence of the script file
     strPath = os.path.normcase( strScriptFilePath );
@@ -245,7 +244,7 @@ def run_post_process_for_each_script_supported( vDictArgs ):
     dbg = utilsDebug.CDebugFnVerbose( "run_post_process_for_each_script_supported()" );
     nResult = 0;
     strStatusMsg = "";
-    strScriptDir = vDictArgs[ "--srcRoot" ] + "/scripts";
+    strScriptDir = os.path.normpath(os.path.join(vDictArgs["--srcRoot"], "scripts"));
     strFinishFileName = "finishSwig%sLLDB.py";
 
     # Check for the existence of the scripts folder
