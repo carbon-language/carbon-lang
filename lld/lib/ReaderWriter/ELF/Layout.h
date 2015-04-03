@@ -22,11 +22,11 @@
 namespace lld {
 namespace elf {
 
-/// \brief The ELFLayout is an abstract class for managing the final layout for
+/// \brief The Layout is an abstract class for managing the final layout for
 ///        the kind of binaries(Shared Libraries / Relocatables / Executables 0
 ///        Each architecture (Hexagon, MIPS) would have a concrete
 ///        subclass derived from Layout for generating each binary thats
-//         needed by the lld linker
+///        needed by the lld linker
 class Layout {
 public:
   typedef uint32_t SectionOrder;
