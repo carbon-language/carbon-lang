@@ -95,7 +95,7 @@ ProcessWindows::Initialize()
         PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                       GetPluginDescriptionStatic(),
                                       CreateInstance);
-    }
+    });
 }
 
 //------------------------------------------------------------------------------
