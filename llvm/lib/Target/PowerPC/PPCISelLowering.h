@@ -368,10 +368,6 @@ namespace llvm {
     /// VSPLTB/VSPLTH/VSPLTW.
     bool isSplatShuffleMask(ShuffleVectorSDNode *N, unsigned EltSize);
 
-    /// isAllNegativeZeroVector - Returns true if all elements of build_vector
-    /// are -0.0.
-    bool isAllNegativeZeroVector(SDNode *N);
-
     /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
     /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
     unsigned getVSPLTImmediate(SDNode *N, unsigned EltSize, SelectionDAG &DAG);
