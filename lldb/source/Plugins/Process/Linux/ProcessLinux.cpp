@@ -53,16 +53,14 @@ ProcessLinux::CreateInstance(Target &target, Listener &listener, const FileSpec 
 void
 ProcessLinux::Initialize()
 {
-    static bool g_initialized = false;
+    static std::once_flag g_once_flag;
 
-    if (!g_initialized)
-    {
-        g_initialized = true;
+    std::call_once(g_once_flag, []() {
         PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                       GetPluginDescriptionStatic(),
                                       CreateInstance);
         ProcessPOSIXLog::Initialize(GetPluginNameStatic());
-    }
+    });
 }
 
 //------------------------------------------------------------------------------

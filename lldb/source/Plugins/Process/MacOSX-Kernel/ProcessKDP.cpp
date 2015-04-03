@@ -835,24 +835,23 @@ ProcessKDP::DoSignal (int signo)
 void
 ProcessKDP::Initialize()
 {
-    static bool g_initialized = false;
-    
-    if (g_initialized == false)
+    static std::once_flag g_once_flag;
+
+    std::call_once(g_once_flag, []()
     {
-        g_initialized = true;
         PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                        GetPluginDescriptionStatic(),
                                        CreateInstance,
-                                       DebuggerInitialize);
-        
+                                       DebuggerInitialize);a
+
         Log::Callbacks log_callbacks = {
             ProcessKDPLog::DisableLog,
             ProcessKDPLog::EnableLog,
             ProcessKDPLog::ListLogCategories
         };
-        
+
         Log::RegisterLogChannel (ProcessKDP::GetPluginNameStatic(), log_callbacks);
-    }
+    });
 }
 
 void
