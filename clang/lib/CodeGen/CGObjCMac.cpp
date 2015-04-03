@@ -3815,8 +3815,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   //  - Call setjmp on the exception data buffer.
   llvm::Constant *Zero = llvm::ConstantInt::get(CGF.Builder.getInt32Ty(), 0);
   llvm::Value *GEPIndexes[] = { Zero, Zero, Zero };
-  llvm::Value *SetJmpBuffer =
-    CGF.Builder.CreateGEP(ExceptionData, GEPIndexes, "setjmp_buffer");
+  llvm::Value *SetJmpBuffer = CGF.Builder.CreateGEP(
+      ObjCTypes.ExceptionDataTy, ExceptionData, GEPIndexes, "setjmp_buffer");
   llvm::CallInst *SetJmpResult = CGF.EmitNounwindRuntimeCall(
       ObjCTypes.getSetJmpFn(), SetJmpBuffer, "setjmp_result");
   SetJmpResult->setCanReturnTwice();
