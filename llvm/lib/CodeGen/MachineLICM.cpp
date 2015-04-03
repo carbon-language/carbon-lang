@@ -214,7 +214,8 @@ namespace {
     /// CanCauseHighRegPressure - Visit BBs from header to current BB,
     /// check if hoisting an instruction of the given cost matrix can cause high
     /// register pressure.
-    bool CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost, bool Cheap);
+    bool CanCauseHighRegPressure(const DenseMap<unsigned, int> &Cost,
+                                 bool Cheap);
 
     /// UpdateBackTraceRegPressure - Traverse the back trace from header to
     /// the current block and update their register pressures to reflect the
@@ -1125,27 +1126,23 @@ bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
 /// CanCauseHighRegPressure - Visit BBs from header to current BB, check
 /// if hoisting an instruction of the given cost matrix can cause high
 /// register pressure.
-bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost,
+bool MachineLICM::CanCauseHighRegPressure(const DenseMap<unsigned, int>& Cost,
                                           bool CheapInstr) {
-  for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
-       CI != CE; ++CI) {
-    if (CI->second <= 0)
+  for (const auto &ClassAndCost : Cost) {
+    if (ClassAndCost.second <= 0)
       continue;
 
-    unsigned RCId = CI->first;
-    unsigned Limit = RegLimit[RCId];
-    int Cost = CI->second;
+    unsigned Class = ClassAndCost.first;
+    int Limit = RegLimit[Class];
 
     // Don't hoist cheap instructions if they would increase register pressure,
     // even if we're under the limit.
     if (CheapInstr && !HoistCheapInsts)
       return true;
 
-    for (unsigned i = BackTrace.size(); i != 0; --i) {
-      SmallVectorImpl<unsigned> &RP = BackTrace[i-1];
-      if (RP[RCId] + Cost >= Limit)
+    for (const auto &RP : BackTrace)
+      if (static_cast<int>(RP[Class]) + ClassAndCost.second >= Limit)
         return true;
-    }
   }
 
   return false;
