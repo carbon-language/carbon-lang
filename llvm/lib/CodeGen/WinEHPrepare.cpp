@@ -733,6 +733,8 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
       ActionTargets.push_back(NewBA);
     }
   }
+  DeleteContainerPointers(ActionList);
+  ActionList.clear();
   OutlinedBB->getInstList().push_back(EHActions);
 
   // Insert an indirect branch into the outlined landing pad BB.
