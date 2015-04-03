@@ -56,11 +56,9 @@ protected:
 };
 
 struct DynamicFileCreateELFTraits {
-  typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
-
-  template<typename ELFT, typename ContextT>
-  static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            ContextT &ctx) {
+  template <typename ELFT, typename ContextT>
+  static llvm::ErrorOr<std::unique_ptr<lld::File>>
+  create(std::unique_ptr<llvm::MemoryBuffer> mb, ContextT &ctx) {
     return DynamicFile<ELFT>::create(std::move(mb), ctx);
   }
 };
