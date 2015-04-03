@@ -101,12 +101,12 @@ Big big_return() { return Big(); }
 
 
 void small_arg(Small s) {}
-// LINUX-LABEL: define void @_Z9small_arg5Small(%struct.Small* byval align 4 %s)
+// LINUX-LABEL: define void @_Z9small_arg5Small(i32 %s.0)
 // WIN32: define void @"\01?small_arg@@YAXUSmall@@@Z"(%struct.Small* byval align 4 %s)
 // WIN64: define void @"\01?small_arg@@YAXUSmall@@@Z"(i32 %s.coerce)
 
 void medium_arg(Medium s) {}
-// LINUX-LABEL: define void @_Z10medium_arg6Medium(%struct.Medium* byval align 4 %s)
+// LINUX-LABEL: define void @_Z10medium_arg6Medium(i32 %s.0, i32 %s.1)
 // WIN32: define void @"\01?medium_arg@@YAXUMedium@@@Z"(%struct.Medium* byval align 4 %s)
 // WIN64: define void @"\01?medium_arg@@YAXUMedium@@@Z"(i64 %s.coerce)
 
@@ -229,7 +229,7 @@ class Class {
   // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUEmptyWithCtor@@@Z"(%class.Class* %this, i8 %s.coerce)
 
   void thiscall_method_arg(Small s) {}
-  // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE5Small(%class.Class* %this, %struct.Small* byval align 4 %s)
+  // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE5Small(%class.Class* %this, i32 %s.0)
   // WIN32: define {{.*}} void @"\01?thiscall_method_arg@Class@@QAEXUSmall@@@Z"(%class.Class* %this, %struct.Small* byval align 4 %s)
   // WIN64: define linkonce_odr void @"\01?thiscall_method_arg@Class@@QEAAXUSmall@@@Z"(%class.Class* %this, i32 %s.coerce)
 

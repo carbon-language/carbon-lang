@@ -339,8 +339,14 @@ static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
   //
   // FIXME: This needs to be generalized to handle classes as well.
   const RecordDecl *RD = RT->getDecl();
-  if (!RD->isStruct() || isa<CXXRecordDecl>(RD))
+  if (!RD->isStruct())
     return false;
+
+  // We try to expand CLike CXXRecordDecl.
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+    if (!CXXRD->isCLike())
+      return false;
+  }
 
   uint64_t Size = 0;
 

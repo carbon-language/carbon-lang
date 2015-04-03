@@ -21,7 +21,7 @@ A &f4();
 void test() {
   A a;
 
-  // CHECK32: call i32 bitcast (i32 (%struct.A*, %struct.A*, %struct.A*, %struct.A*)* @f1 to i32 (i8*, %struct.A*, %struct.A*, %struct.A*, %struct.A*)*)(i8* nest bitcast (i32 (%struct.A*, %struct.A*, %struct.A*, %struct.A*)* @f1 to i8*)
+  // CHECK32: call i32 bitcast (i32 (i32, i32, i32, i32, i32, i32, i32, i32)* @f1 to i32 (i8*, i32, i32, i32, i32, i32, i32, i32, i32)*)(i8* nest bitcast (i32 (i32, i32, i32, i32, i32, i32, i32, i32)* @f1 to i8*)
   // CHECK64: call i32 bitcast (i32 (i64, i64, i64, i64, i64, i64, %struct.A*)* @f1 to i32 (i8*, i64, i64, i64, i64, i64, i64, %struct.A*)*)(i8* nest bitcast (i32 (i64, i64, i64, i64, i64, i64, %struct.A*)* @f1 to i8*)
   __builtin_call_with_static_chain(f1(a, a, a, a), f1);
 
