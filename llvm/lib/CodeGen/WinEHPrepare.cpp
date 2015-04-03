@@ -1595,7 +1595,7 @@ CleanupHandler *WinEHPrepare::findCleanupHandler(BasicBlock *StartBB,
 // This is a public function, declared in WinEHFuncInfo.h and is also
 // referenced by WinEHNumbering in FunctionLoweringInfo.cpp.
 void llvm::parseEHActions(const IntrinsicInst *II,
-  SmallVectorImpl<ActionHandler *> &Actions) {
+                          SmallVectorImpl<ActionHandler *> &Actions) {
   for (unsigned I = 0, E = II->getNumArgOperands(); I != E;) {
     uint64_t ActionKind =
       cast<ConstantInt>(II->getArgOperand(I))->getZExtValue();
@@ -1609,14 +1609,14 @@ void llvm::parseEHActions(const IntrinsicInst *II,
       CH->setHandlerBlockOrFunc(Handler);
       CH->setExceptionVarIndex(EHObjIndexVal);
       Actions.push_back(CH);
-    }
-    else {
-      assert(ActionKind == 0 && "expected a cleanup or a catch action!");
+    } else if (ActionKind == 0) {
       Constant *Handler = cast<Constant>(II->getArgOperand(I + 1));
       I += 2;
       auto *CH = new CleanupHandler(/*BB=*/nullptr);
       CH->setHandlerBlockOrFunc(Handler);
       Actions.push_back(CH);
+    } else {
+      llvm_unreachable("Expected either a catch or cleanup handler!");
     }
   }
   std::reverse(Actions.begin(), Actions.end());

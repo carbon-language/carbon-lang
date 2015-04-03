@@ -450,9 +450,16 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::Create(
             ParentFrameOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
 
+        MCSymbol *FrameAllocOffset =
+            Asm->OutContext.getOrCreateFrameAllocSymbol(
+                GlobalValue::getRealLinkageName(F->getName()),
+                HT.CatchObjRecoverIdx);
+        const MCSymbolRefExpr *FrameAllocOffsetRef = MCSymbolRefExpr::Create(
+            FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
+
         OS.EmitIntValue(HT.Adjectives, 4);                    // Adjectives
         OS.EmitValue(createImageRel32(HT.TypeDescriptor), 4); // Type
-        OS.EmitIntValue(HT.CatchObjOffset, 4);                // CatchObjOffset
+        OS.EmitValue(FrameAllocOffsetRef, 4);                 // CatchObjOffset
         OS.EmitValue(createImageRel32(HT.Handler), 4);        // Handler
         OS.EmitValue(ParentFrameOffsetRef, 4);                // ParentFrameOffset
       }

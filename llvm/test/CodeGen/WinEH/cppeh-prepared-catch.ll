@@ -148,13 +148,13 @@ try.cont8:                                        ; preds = %lpad2, %try.cont
 ; CHECK-NEXT:"$handlerMap$0$?f@@YAXXZ":
 ; CHECK-NEXT:        .long   8
 ; CHECK-NEXT:        .long   "??_R0H@8"@IMGREL
-; CHECK-NEXT:        .long   0
+; CHECK-NEXT:        .long   ".L?f@@YAXXZ$frame_escape_0"
 ; CHECK-NEXT:        .long   "?f@@YAXXZ.catch"@IMGREL
 ; CHECK-NEXT:        .long   ".L?f@@YAXXZ.catch$parent_frame_offset"
 ; CHECK-NEXT:"$handlerMap$1$?f@@YAXXZ":
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   "??_R0N@8"@IMGREL
-; CHECK-NEXT:        .long   0
+; CHECK-NEXT:        .long   ".L?f@@YAXXZ$frame_escape_1"
 ; CHECK-NEXT:        .long   "?f@@YAXXZ.catch1"@IMGREL
 ; CHECK-NEXT:        .long   ".L?f@@YAXXZ.catch1$parent_frame_offset"
 ; CHECK-NEXT:"$ip2state$?f@@YAXXZ":

@@ -5410,8 +5410,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
              "can only escape static allocas");
       int FI = FuncInfo.StaticAllocaMap[Slot];
       MCSymbol *FrameAllocSym =
-          MF.getMMI().getContext().getOrCreateFrameAllocSymbol(MF.getName(),
-                                                               Idx);
+          MF.getMMI().getContext().getOrCreateFrameAllocSymbol(
+              GlobalValue::getRealLinkageName(MF.getName()), Idx);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, dl,
               TII->get(TargetOpcode::FRAME_ALLOC))
           .addSym(FrameAllocSym)
@@ -5431,8 +5431,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     auto *Idx = cast<ConstantInt>(I.getArgOperand(2));
     unsigned IdxVal = unsigned(Idx->getLimitedValue(INT_MAX));
     MCSymbol *FrameAllocSym =
-        MF.getMMI().getContext().getOrCreateFrameAllocSymbol(Fn->getName(),
-                                                             IdxVal);
+        MF.getMMI().getContext().getOrCreateFrameAllocSymbol(
+            GlobalValue::getRealLinkageName(Fn->getName()), IdxVal);
 
     // Create a TargetExternalSymbol for the label to avoid any target lowering
     // that would make this PC relative.

@@ -75,6 +75,7 @@ public:
 
   void setExceptionVar(const Value *Val) { ExceptionObjectVar = Val; }
   void setExceptionVarIndex(int Index) { ExceptionObjectIndex = Index;  }
+  int getExceptionVarIndex() const { return ExceptionObjectIndex; }
   void setReturnTargets(TinyPtrVector<BasicBlock *> &Targets) {
     ReturnTargets = Targets;
   }
@@ -120,8 +121,7 @@ struct WinEHUnwindMapEntry {
 struct WinEHHandlerType {
   int Adjectives;
   GlobalVariable *TypeDescriptor;
-  int CatchObjIdx;
-  int CatchObjOffset;
+  int CatchObjRecoverIdx;
   Function *Handler;
 };
 
