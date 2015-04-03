@@ -74,10 +74,10 @@ land.end:                                         ; preds = %land.rhs, %entry
 
 cleanup.action:                                   ; preds = %land.end
   store %struct.C* %agg.tmp.ensured, %struct.C** %this.addr.i, align 8, !dbg !22
-  call void @llvm.dbg.declare(metadata %struct.C** %this.addr.i, metadata !29, metadata !MDExpression()), !dbg !31
+  call void @llvm.dbg.declare(metadata %struct.C** %this.addr.i, metadata !129, metadata !MDExpression()), !dbg !31
   %this1.i = load %struct.C*, %struct.C** %this.addr.i, !dbg !22
   store %struct.C* %this1.i, %struct.C** %this.addr.i.i, align 8, !dbg !21
-  call void @llvm.dbg.declare(metadata %struct.C** %this.addr.i.i, metadata !32, metadata !MDExpression()), !dbg !33
+  call void @llvm.dbg.declare(metadata %struct.C** %this.addr.i.i, metadata !132, metadata !MDExpression()), !dbg !33
   %this1.i.i = load %struct.C*, %struct.C** %this.addr.i.i, !dbg !21
   br label %cleanup.done, !dbg !22
 
@@ -94,7 +94,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.C** %this.addr, metadata !29, metadata !MDExpression()), !dbg !38
   %this1 = load %struct.C*, %struct.C** %this.addr
   store %struct.C* %this1, %struct.C** %this.addr.i, align 8, !dbg !37
-  call void @llvm.dbg.declare(metadata %struct.C** %this.addr.i, metadata !32, metadata !MDExpression()), !dbg !39
+  call void @llvm.dbg.declare(metadata %struct.C** %this.addr.i, metadata !232, metadata !MDExpression()), !dbg !39
   %this1.i = load %struct.C*, %struct.C** %this.addr.i, !dbg !37
   ret void, !dbg !37
 }
@@ -154,6 +154,11 @@ attributes #2 = { nounwind readnone }
 !31 = !MDLocation(line: 0, scope: !17, inlinedAt: !22)
 !32 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !16, type: !30)
 !33 = !MDLocation(line: 0, scope: !16, inlinedAt: !21)
+
+!129 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !17, type: !30, inlinedAt: !22)
+!132 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !16, type: !30, inlinedAt: !21)
+!232 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !16, type: !30, inlinedAt: !37)
+
 !34 = !MDLocation(line: 5, scope: !35)
 !35 = distinct !MDLexicalBlock(line: 5, column: 0, file: !5, scope: !36)
 !36 = distinct !MDLexicalBlock(line: 5, column: 0, file: !5, scope: !12)

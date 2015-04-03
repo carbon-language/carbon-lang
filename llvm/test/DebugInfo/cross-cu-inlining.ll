@@ -75,7 +75,7 @@ entry:
   %1 = bitcast i32* %x.addr.i to i8*
   call void @llvm.lifetime.start(i64 4, i8* %1)
   store i32 %0, i32* %x.addr.i, align 4
-  call void @llvm.dbg.declare(metadata i32* %x.addr.i, metadata !20, metadata !MDExpression()), !dbg !21
+  call void @llvm.dbg.declare(metadata i32* %x.addr.i, metadata !120, metadata !MDExpression()), !dbg !21
   %2 = load i32, i32* %x.addr.i, align 4, !dbg !22
   %mul.i = mul nsw i32 %2, 2, !dbg !22
   %3 = bitcast i32* %x.addr.i to i8*, !dbg !22
@@ -133,6 +133,9 @@ attributes #3 = { nounwind }
 !18 = !{!"clang version 3.5.0 "}
 !19 = !MDLocation(line: 4, scope: !4)
 !20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 1, scope: !12, file: !13, type: !8)
+
+!120 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 1, scope: !12, file: !13, type: !8, inlinedAt: !19)
+
 !21 = !MDLocation(line: 1, scope: !12, inlinedAt: !19)
 !22 = !MDLocation(line: 2, scope: !12, inlinedAt: !19)
 !23 = !MDLocation(line: 1, scope: !12)

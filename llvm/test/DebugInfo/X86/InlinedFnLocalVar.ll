@@ -15,8 +15,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 define i32 @bar() nounwind ssp {
 entry:
   %0 = load i32, i32* @i, align 4, !dbg !17            ; <i32> [#uses=2]
-  tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !9, metadata !MDExpression()), !dbg !19
-  tail call void @llvm.dbg.declare(metadata !29, metadata !10, metadata !MDExpression()), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !109, metadata !MDExpression()), !dbg !19
+  tail call void @llvm.dbg.declare(metadata !29, metadata !110, metadata !MDExpression()), !dbg !21
   %1 = mul nsw i32 %0, %0, !dbg !22               ; <i32> [#uses=2]
   store i32 %1, i32* @i, align 4, !dbg !17
   ret i32 %1, !dbg !23
@@ -36,6 +36,10 @@ entry:
 !8 = !{!5}
 !9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5)
 !10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12)
+
+!109 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5, inlinedAt: !17)
+!110 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12, inlinedAt: !17)
+
 !11 = distinct !MDLexicalBlock(line: 9, column: 0, file: !1, scope: !0)
 !12 = !MDCompositeType(tag: DW_TAG_structure_type, name: "X", line: 10, size: 64, align: 32, file: !27, scope: !0, elements: !13)
 !13 = !{!14, !15}

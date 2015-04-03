@@ -61,8 +61,8 @@ declare float* @bar(i32) optsize
 
 define void @foobar() nounwind optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.S1* @p, i64 0, metadata !9, metadata !MDExpression()) nounwind, !dbg !31
-  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !18, metadata !MDExpression()) nounwind, !dbg !35
+  tail call void @llvm.dbg.value(metadata %struct.S1* @p, i64 0, metadata !109, metadata !MDExpression()) nounwind, !dbg !31
+  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !118, metadata !MDExpression()) nounwind, !dbg !35
   store i32 1, i32* getelementptr inbounds (%struct.S1, %struct.S1* @p, i64 0, i32 1), align 8, !dbg !36
   %call.i = tail call float* @bar(i32 1) nounwind optsize, !dbg !37
   store float* %call.i, float** getelementptr inbounds (%struct.S1, %struct.S1* @p, i64 0, i32 0), align 8, !dbg !37
@@ -83,7 +83,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !6 = !MDSubprogram(name: "foobar", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: !1, type: !7, function: void ()* @foobar)
 !7 = !MDSubroutineType(types: !8)
 !8 = !{null}
-!9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "sp", line: 7, arg: 1, scope: !0, file: !1, type: !10, inlinedAt: !32)
+!9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "sp", line: 7, arg: 1, scope: !0, file: !1, type: !10)
+
+!109 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "sp", line: 7, arg: 1, scope: !0, file: !1, type: !10, inlinedAt: !32)
+
 !10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !2, baseType: !11)
 !11 = !MDDerivedType(tag: DW_TAG_typedef, name: "S1", line: 4, file: !42, scope: !2, baseType: !12)
 !12 = !MDCompositeType(tag: DW_TAG_structure_type, name: "S1", line: 1, size: 128, align: 64, file: !42, scope: !2, elements: !13)
@@ -92,7 +95,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !2, baseType: !16)
 !16 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
 !17 = !MDDerivedType(tag: DW_TAG_member, name: "nums", line: 3, size: 32, align: 32, offset: 64, file: !42, scope: !1, baseType: !5)
-!18 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "nums", line: 7, arg: 2, scope: !0, file: !1, type: !5, inlinedAt: !32)
+!18 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "nums", line: 7, arg: 2, scope: !0, file: !1, type: !5)
+
+!118 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "nums", line: 7, arg: 2, scope: !0, file: !1, type: !5, inlinedAt: !32)
+
 !19 = !MDGlobalVariable(name: "p", line: 14, isLocal: false, isDefinition: true, scope: !2, file: !1, type: !11, variable: %struct.S1* @p)
 !20 = !MDLocation(line: 7, column: 13, scope: !0)
 !21 = !MDLocation(line: 7, column: 21, scope: !0)

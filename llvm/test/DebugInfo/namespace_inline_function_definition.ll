@@ -42,7 +42,7 @@ entry:
   store i32 0, i32* %retval
   %0 = load i32, i32* @x, align 4, !dbg !16
   store i32 %0, i32* %i.addr.i, align 4
-  call void @llvm.dbg.declare(metadata i32* %i.addr.i, metadata !17, metadata !MDExpression()), !dbg !18
+  call void @llvm.dbg.declare(metadata i32* %i.addr.i, metadata !117, metadata !MDExpression()), !dbg !18
   %1 = load i32, i32* %i.addr.i, align 4, !dbg !18
   %mul.i = mul nsw i32 %1, 2, !dbg !18
   ret i32 %mul.i, !dbg !16
@@ -88,5 +88,8 @@ attributes #2 = { nounwind readnone }
 !15 = !{!"clang version 3.5.0 "}
 !16 = !MDLocation(line: 5, scope: !4)
 !17 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
+
+!117 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8, inlinedAt: !16)
+
 !18 = !MDLocation(line: 6, scope: !9, inlinedAt: !16)
 !19 = !MDLocation(line: 6, scope: !9)
