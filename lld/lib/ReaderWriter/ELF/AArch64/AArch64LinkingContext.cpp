@@ -10,7 +10,6 @@
 #include "AArch64LinkingContext.h"
 #include "AArch64RelocationPass.h"
 #include "AArch64TargetHandler.h"
-#include "lld/ReaderWriter/ELFTargets.h"
 
 using namespace lld;
 using namespace lld::elf;

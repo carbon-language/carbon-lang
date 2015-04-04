@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/ELFTargets.h"
 #include "X86_64LinkingContext.h"
 #include "X86_64RelocationPass.h"
 #include "X86_64TargetHandler.h"

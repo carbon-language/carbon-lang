@@ -9,7 +9,6 @@
 
 #include "HexagonLinkingContext.h"
 #include "HexagonTargetHandler.h"
-#include "lld/ReaderWriter/ELFTargets.h"
 
 using namespace lld;
 using namespace lld::elf;

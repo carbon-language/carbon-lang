@@ -12,7 +12,6 @@
 #include "MipsLinkingContext.h"
 #include "MipsRelocationPass.h"
 #include "MipsTargetHandler.h"
-#include "lld/ReaderWriter/ELFTargets.h"
 
 using namespace lld;
 using namespace lld::elf;

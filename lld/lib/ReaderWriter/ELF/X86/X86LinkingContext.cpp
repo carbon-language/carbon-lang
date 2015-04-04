@@ -10,7 +10,6 @@
 #include "X86LinkingContext.h"
 #include "X86TargetHandler.h"
 #include "lld/Core/LLVM.h"
-#include "lld/ReaderWriter/ELFTargets.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorOr.h"
 

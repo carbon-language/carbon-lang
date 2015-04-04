@@ -9,7 +9,6 @@
 
 #include "ExampleLinkingContext.h"
 #include "ExampleTargetHandler.h"
-#include "lld/ReaderWriter/ELFTargets.h"
 
 using namespace lld;
 using namespace elf;

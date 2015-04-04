@@ -38,6 +38,14 @@ class Reference;
 namespace elf {
 class ELFWriter;
 
+std::unique_ptr<ELFLinkingContext> createAArch64LinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createARMLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createExampleLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createHexagonLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createMipsLinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createX86LinkingContext(llvm::Triple);
+std::unique_ptr<ELFLinkingContext> createX86_64LinkingContext(llvm::Triple);
+
 class TargetRelocationHandler {
 public:
   virtual ~TargetRelocationHandler() {}
@@ -361,6 +369,7 @@ protected:
   // in the current linking context via _linkerScriptSema.
   script::Sema _linkerScriptSema;
 };
+
 } // end namespace lld
 
 #endif
