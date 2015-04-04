@@ -41,14 +41,16 @@ class TargetSelectionDAGInfo;
 
 class SDVTListNode : public FoldingSetNode {
   friend struct FoldingSetTrait<SDVTListNode>;
-  /// FastID - A reference to an Interned FoldingSetNodeID for this node.
+  /// A reference to an Interned FoldingSetNodeID for this node.
   /// The Allocator in SelectionDAG holds the data.
   /// SDVTList contains all types which are frequently accessed in SelectionDAG.
-  /// The size of this list is not expected big so it won't introduce memory penalty.
+  /// The size of this list is not expected to be big so it won't introduce
+  /// a memory penalty.
   FoldingSetNodeIDRef FastID;
   const EVT *VTs;
   unsigned int NumVTs;
-  /// The hash value for SDVTList is fixed so cache it to avoid hash calculation
+  /// The hash value for SDVTList is fixed, so cache it to avoid
+  /// hash calculation.
   unsigned HashValue;
 public:
   SDVTListNode(const FoldingSetNodeIDRef ID, const EVT *VT, unsigned int Num) :
@@ -61,8 +63,8 @@ public:
   }
 };
 
-// Specialize FoldingSetTrait for SDVTListNode
-// To avoid computing temp FoldingSetNodeID and hash value.
+/// Specialize FoldingSetTrait for SDVTListNode
+/// to avoid computing temp FoldingSetNodeID and hash value.
 template<> struct FoldingSetTrait<SDVTListNode> : DefaultFoldingSetTrait<SDVTListNode> {
   static void Profile(const SDVTListNode &X, FoldingSetNodeID& ID) {
     ID = X.FastID;
@@ -98,7 +100,7 @@ private:
   static void createNode(const SDNode &);
 };
 
-/// SDDbgInfo - Keeps track of dbg_value information through SDISel.  We do
+/// Keeps track of dbg_value information through SDISel.  We do
 /// not build SDNodes for these so as not to perturb the generated code;
 /// instead the info is kept off to the side in this structure. Each SDNode may
 /// have one or more associated dbg_value entries. This information is kept in
@@ -159,10 +161,10 @@ public:
 class SelectionDAG;
 void checkForCycles(const SelectionDAG *DAG, bool force = false);
 
-/// SelectionDAG class - This is used to represent a portion of an LLVM function
-/// in a low-level Data Dependence DAG representation suitable for instruction
-/// selection.  This DAG is constructed as the first step of instruction
-/// selection in order to allow implementation of machine specific optimizations
+/// This is used to represent a portion of an LLVM function in a low-level
+/// Data Dependence DAG representation suitable for instruction selection.
+/// This DAG is constructed as the first step of instruction selection in order
+/// to allow implementation of machine specific optimizations
 /// and code simplifications.
 ///
 /// The representation used by the SelectionDAG is a target-independent
@@ -178,40 +180,39 @@ class SelectionDAG {
   LLVMContext *Context;
   CodeGenOpt::Level OptLevel;
 
-  /// EntryNode - The starting token.
+  /// The starting token.
   SDNode EntryNode;
 
-  /// Root - The root of the entire DAG.
+  /// The root of the entire DAG.
   SDValue Root;
 
-  /// AllNodes - A linked list of nodes in the current DAG.
+  /// A linked list of nodes in the current DAG.
   ilist<SDNode> AllNodes;
 
-  /// NodeAllocatorType - The AllocatorType for allocating SDNodes. We use
+  /// The AllocatorType for allocating SDNodes. We use
   /// pool allocation with recycling.
   typedef RecyclingAllocator<BumpPtrAllocator, SDNode, sizeof(LargestSDNode),
                              AlignOf<MostAlignedSDNode>::Alignment>
     NodeAllocatorType;
 
-  /// NodeAllocator - Pool allocation for nodes.
+  /// Pool allocation for nodes.
   NodeAllocatorType NodeAllocator;
 
-  /// CSEMap - This structure is used to memoize nodes, automatically performing
+  /// This structure is used to memoize nodes, automatically performing
   /// CSE with existing nodes when a duplicate is requested.
   FoldingSet<SDNode> CSEMap;
 
-  /// OperandAllocator - Pool allocation for machine-opcode SDNode operands.
+  /// Pool allocation for machine-opcode SDNode operands.
   BumpPtrAllocator OperandAllocator;
 
-  /// Allocator - Pool allocation for misc. objects that are created once per
-  /// SelectionDAG.
+  /// Pool allocation for misc. objects that are created once per SelectionDAG.
   BumpPtrAllocator Allocator;
 
-  /// DbgInfo - Tracks dbg_value information through SDISel.
+  /// Tracks dbg_value information through SDISel.
   SDDbgInfo *DbgInfo;
 
 public:
-  /// DAGUpdateListener - Clients of various APIs that cause global effects on
+  /// Clients of various APIs that cause global effects on
   /// the DAG can optionally implement this interface.  This allows the clients
   /// to handle the various sorts of updates that happen.
   ///
@@ -232,15 +233,15 @@ public:
       DAG.UpdateListeners = Next;
     }
 
-    /// NodeDeleted - The node N that was deleted and, if E is not null, an
+    /// The node N that was deleted and, if E is not null, an
     /// equivalent node E that replaced it.
     virtual void NodeDeleted(SDNode *N, SDNode *E);
 
-    /// NodeUpdated - The node N that was updated.
+    /// The node N that was updated.
     virtual void NodeUpdated(SDNode *N);
   };
 
-  /// NewNodesMustHaveLegalTypes - When true, additional steps are taken to
+  /// When true, additional steps are taken to
   /// ensure that getConstant() and similar functions return DAG nodes that
   /// have legal types. This is important after type legalization since
   /// any illegally typed nodes generated after this point will not experience
@@ -251,13 +252,12 @@ private:
   /// DAGUpdateListener is a friend so it can manipulate the listener stack.
   friend struct DAGUpdateListener;
 
-  /// UpdateListeners - Linked list of registered DAGUpdateListener instances.
+  /// Linked list of registered DAGUpdateListener instances.
   /// This stack is maintained by DAGUpdateListener RAII.
   DAGUpdateListener *UpdateListeners;
 
-  /// setGraphColorHelper - Implementation of setSubgraphColor.
+  /// Implementation of setSubgraphColor.
   /// Return whether we had to truncate the search.
-  ///
   bool setSubgraphColorHelper(SDNode *N, const char *Color,
                               DenseSet<SDNode *> &visited,
                               int level, bool &printed);
@@ -269,14 +269,11 @@ public:
   explicit SelectionDAG(const TargetMachine &TM, llvm::CodeGenOpt::Level);
   ~SelectionDAG();
 
-  /// init - Prepare this SelectionDAG to process code in the given
-  /// MachineFunction.
-  ///
+  /// Prepare this SelectionDAG to process code in the given MachineFunction.
   void init(MachineFunction &mf);
 
-  /// clear - Clear state and free memory necessary to make this
+  /// Clear state and free memory necessary to make this
   /// SelectionDAG ready to process a new block.
-  ///
   void clear();
 
   MachineFunction &getMachineFunction() const { return *MF; }
@@ -286,8 +283,7 @@ public:
   const TargetSelectionDAGInfo &getSelectionDAGInfo() const { return *TSI; }
   LLVMContext *getContext() const {return Context; }
 
-  /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
-  ///
+  /// Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
   void viewGraph(const std::string &Title);
   void viewGraph();
 
@@ -295,24 +291,21 @@ public:
   std::map<const SDNode *, std::string> NodeGraphAttrs;
 #endif
 
-  /// clearGraphAttrs - Clear all previously defined node graph attributes.
+  /// Clear all previously defined node graph attributes.
   /// Intended to be used from a debugging tool (eg. gdb).
   void clearGraphAttrs();
 
-  /// setGraphAttrs - Set graph attributes for a node. (eg. "color=red".)
-  ///
+  /// Set graph attributes for a node. (eg. "color=red".)
   void setGraphAttrs(const SDNode *N, const char *Attrs);
 
-  /// getGraphAttrs - Get graph attributes for a node. (eg. "color=red".)
+  /// Get graph attributes for a node. (eg. "color=red".)
   /// Used from getNodeAttributes.
   const std::string getGraphAttrs(const SDNode *N) const;
 
-  /// setGraphColor - Convenience for setting node color attribute.
-  ///
+  /// Convenience for setting node color attribute.
   void setGraphColor(const SDNode *N, const char *Color);
 
-  /// setGraphColor - Convenience for setting subgraph color attribute.
-  ///
+  /// Convenience for setting subgraph color attribute.
   void setSubgraphColor(SDNode *N, const char *Color);
 
   typedef ilist<SDNode>::const_iterator allnodes_const_iterator;
@@ -325,17 +318,15 @@ public:
     return AllNodes.size();
   }
 
-  /// getRoot - Return the root tag of the SelectionDAG.
-  ///
+  /// Return the root tag of the SelectionDAG.
   const SDValue &getRoot() const { return Root; }
 
-  /// getEntryNode - Return the token chain corresponding to the entry of the
-  /// function.
+  /// Return the token chain corresponding to the entry of the function.
   SDValue getEntryNode() const {
     return SDValue(const_cast<SDNode *>(&EntryNode), 0);
   }
 
-  /// setRoot - Set the current root tag of the SelectionDAG.
+  /// Set the current root tag of the SelectionDAG.
   ///
   const SDValue &setRoot(SDValue N) {
     assert((!N.getNode() || N.getValueType() == MVT::Other) &&
@@ -348,22 +339,22 @@ public:
     return Root;
   }
 
-  /// Combine - This iterates over the nodes in the SelectionDAG, folding
+  /// This iterates over the nodes in the SelectionDAG, folding
   /// certain types of nodes together, or eliminating superfluous nodes.  The
   /// Level argument controls whether Combine is allowed to produce nodes and
   /// types that are illegal on the target.
   void Combine(CombineLevel Level, AliasAnalysis &AA,
                CodeGenOpt::Level OptLevel);
 
-  /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
-  /// only uses types natively supported by the target.  Returns "true" if it
-  /// made any changes.
+  /// This transforms the SelectionDAG into a SelectionDAG that
+  /// only uses types natively supported by the target.
+  /// Returns "true" if it made any changes.
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
   bool LegalizeTypes();
 
-  /// Legalize - This transforms the SelectionDAG into a SelectionDAG that is
+  /// This transforms the SelectionDAG into a SelectionDAG that is
   /// compatible with the target instruction selector, as indicated by the
   /// TargetLowering object.
   ///
@@ -392,7 +383,7 @@ public:
   /// UpdatedNodes with any new nodes replacing those originally in the DAG.
   bool LegalizeOp(SDNode *N, SmallSetVector<SDNode *, 16> &UpdatedNodes);
 
-  /// LegalizeVectors - This transforms the SelectionDAG into a SelectionDAG
+  /// This transforms the SelectionDAG into a SelectionDAG
   /// that only uses vector math operations supported by the target.  This is
   /// necessary as a separate step from Legalize because unrolling a vector
   /// operation can introduce illegal types, which requires running
@@ -405,16 +396,14 @@ public:
   /// the graph.
   bool LegalizeVectors();
 
-  /// RemoveDeadNodes - This method deletes all unreachable nodes in the
-  /// SelectionDAG.
+  /// This method deletes all unreachable nodes in the SelectionDAG.
   void RemoveDeadNodes();
 
-  /// DeleteNode - Remove the specified node from the system.  This node must
+  /// Remove the specified node from the system.  This node must
   /// have no referrers.
   void DeleteNode(SDNode *N);
 
-  /// getVTList - Return an SDVTList that represents the list of values
-  /// specified.
+  /// Return an SDVTList that represents the list of values specified.
   SDVTList getVTList(EVT VT);
   SDVTList getVTList(EVT VT1, EVT VT2);
   SDVTList getVTList(EVT VT1, EVT VT2, EVT VT3);
@@ -561,10 +550,9 @@ public:
                            SDValue STy,
                            SDValue Rnd, SDValue Sat, ISD::CvtCode Code);
 
-  /// getVectorShuffle - Return an ISD::VECTOR_SHUFFLE node.  The number of
-  /// elements in VT, which must be a vector type, must match the number of
-  /// mask elements NumElts.  A integer mask element equal to -1 is treated as
-  /// undefined.
+  /// Return an ISD::VECTOR_SHUFFLE node. The number of elements in VT,
+  /// which must be a vector type, must match the number of mask elements
+  /// NumElts. An integer mask element equal to -1 is treated as undefined.
   SDValue getVectorShuffle(EVT VT, SDLoc dl, SDValue N1, SDValue N2,
                            const int *MaskElts);
   SDValue getVectorShuffle(EVT VT, SDLoc dl, SDValue N1, SDValue N2,
@@ -580,63 +568,62 @@ public:
   /// Example: shuffle A, B, <0,5,2,7> -> shuffle B, A, <4,1,6,3>
   SDValue getCommutedVectorShuffle(const ShuffleVectorSDNode &SV);
 
-  /// getAnyExtOrTrunc - Convert Op, which must be of integer type, to the
+  /// Convert Op, which must be of integer type, to the
   /// integer type VT, by either any-extending or truncating it.
   SDValue getAnyExtOrTrunc(SDValue Op, SDLoc DL, EVT VT);
 
-  /// getSExtOrTrunc - Convert Op, which must be of integer type, to the
+  /// Convert Op, which must be of integer type, to the
   /// integer type VT, by either sign-extending or truncating it.
   SDValue getSExtOrTrunc(SDValue Op, SDLoc DL, EVT VT);
 
-  /// getZExtOrTrunc - Convert Op, which must be of integer type, to the
+  /// Convert Op, which must be of integer type, to the
   /// integer type VT, by either zero-extending or truncating it.
   SDValue getZExtOrTrunc(SDValue Op, SDLoc DL, EVT VT);
 
-  /// getZeroExtendInReg - Return the expression required to zero extend the Op
+  /// Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.
   SDValue getZeroExtendInReg(SDValue Op, SDLoc DL, EVT SrcTy);
 
-  /// getAnyExtendVectorInReg - Return an operation which will any-extend the
-  /// low lanes of the operand into the specified vector type. For example,
+  /// Return an operation which will any-extend the low lanes of the operand
+  /// into the specified vector type. For example,
   /// this can convert a v16i8 into a v4i32 by any-extending the low four
   /// lanes of the operand from i8 to i32.
   SDValue getAnyExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT);
 
-  /// getSignExtendVectorInReg - Return an operation which will sign extend the
-  /// low lanes of the operand into the specified vector type. For example,
+  /// Return an operation which will sign extend the low lanes of the operand
+  /// into the specified vector type. For example,
   /// this can convert a v16i8 into a v4i32 by sign extending the low four
   /// lanes of the operand from i8 to i32.
   SDValue getSignExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT);
 
-  /// getZeroExtendVectorInReg - Return an operation which will zero extend the
-  /// low lanes of the operand into the specified vector type. For example,
+  /// Return an operation which will zero extend the low lanes of the operand
+  /// into the specified vector type. For example,
   /// this can convert a v16i8 into a v4i32 by zero extending the low four
   /// lanes of the operand from i8 to i32.
   SDValue getZeroExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT);
 
-  /// getBoolExtOrTrunc - Convert Op, which must be of integer type, to the
-  /// integer type VT, by using an extension appropriate for the target's
+  /// Convert Op, which must be of integer type, to the integer type VT,
+  /// by using an extension appropriate for the target's
   /// BooleanContent for type OpVT or truncating it.
   SDValue getBoolExtOrTrunc(SDValue Op, SDLoc SL, EVT VT, EVT OpVT);
 
-  /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
+  /// Create a bitwise NOT operation as (XOR Val, -1).
   SDValue getNOT(SDLoc DL, SDValue Val, EVT VT);
 
   /// \brief Create a logical NOT operation as (XOR Val, BooleanOne).
   SDValue getLogicalNOT(SDLoc DL, SDValue Val, EVT VT);
 
-  /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
-  /// a glue result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
-  /// useful SDLoc.
+  /// Return a new CALLSEQ_START node, which always must have a glue result
+  /// (to ensure it's not CSE'd).  CALLSEQ_START does not have a useful SDLoc.
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op, SDLoc DL) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain,  Op };
     return getNode(ISD::CALLSEQ_START, DL, VTs, Ops);
   }
 
-  /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
-  /// glue result (to ensure it's not CSE'd).  CALLSEQ_END does not have
-  /// a useful SDLoc.
+  /// Return a new CALLSEQ_END node, which always must have a
+  /// glue result (to ensure it's not CSE'd).
+  /// CALLSEQ_END does not have a useful SDLoc.
   SDValue getCALLSEQ_END(SDValue Chain, SDValue Op1, SDValue Op2,
                            SDValue InGlue, SDLoc DL) {
     SDVTList NodeTys = getVTList(MVT::Other, MVT::Glue);
@@ -649,18 +636,17 @@ public:
     return getNode(ISD::CALLSEQ_END, DL, NodeTys, Ops);
   }
 
-  /// getUNDEF - Return an UNDEF node.  UNDEF does not have a useful SDLoc.
+  /// Return an UNDEF node. UNDEF does not have a useful SDLoc.
   SDValue getUNDEF(EVT VT) {
     return getNode(ISD::UNDEF, SDLoc(), VT);
   }
 
-  /// getGLOBAL_OFFSET_TABLE - Return a GLOBAL_OFFSET_TABLE node.  This does
-  /// not have a useful SDLoc.
+  /// Return a GLOBAL_OFFSET_TABLE node. This does not have a useful SDLoc.
   SDValue getGLOBAL_OFFSET_TABLE(EVT VT) {
     return getNode(ISD::GLOBAL_OFFSET_TABLE, SDLoc(), VT);
   }
 
-  /// getNode - Gets or creates the specified node.
+  /// Gets or creates the specified node.
   ///
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N);
@@ -692,10 +678,9 @@ public:
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
 
-  /// getStackArgumentTokenFactor - Compute a TokenFactor to force all
-  /// the incoming stack arguments to be loaded from the stack. This is
-  /// used in tail call lowering to protect stack arguments from being
-  /// clobbered.
+  /// Compute a TokenFactor to force all the incoming stack arguments to be
+  /// loaded from the stack. This is used in tail call lowering to protect
+  /// stack arguments from being clobbered.
   SDValue getStackArgumentTokenFactor(SDValue Chain);
 
   SDValue getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst, SDValue Src,
@@ -712,7 +697,7 @@ public:
                     SDValue Size, unsigned Align, bool isVol,
                     MachinePointerInfo DstPtrInfo);
 
-  /// getSetCC - Helper function to make it easier to build SetCC's if you just
+  /// Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDValue.
   ///
   SDValue getSetCC(SDLoc DL, EVT VT, SDValue LHS, SDValue RHS,
@@ -726,8 +711,8 @@ public:
     return getNode(ISD::SETCC, DL, VT, LHS, RHS, getCondCode(Cond));
   }
 
-  // getSelect - Helper function to make it easier to build Select's if you just
-  // have operands and don't want to check for vector.
+  /// Helper function to make it easier to build Select's if you just
+  /// have operands and don't want to check for vector.
   SDValue getSelect(SDLoc DL, EVT VT, SDValue Cond,
                     SDValue LHS, SDValue RHS) {
     assert(LHS.getValueType() == RHS.getValueType() &&
@@ -738,7 +723,7 @@ public:
                    Cond, LHS, RHS);
   }
 
-  /// getSelectCC - Helper function to make it easier to build SelectCC's if you
+  /// Helper function to make it easier to build SelectCC's if you
   /// just have an ISD::CondCode instead of an SDValue.
   ///
   SDValue getSelectCC(SDLoc DL, SDValue LHS, SDValue RHS,
@@ -747,12 +732,12 @@ public:
                    LHS, RHS, True, False, getCondCode(Cond));
   }
 
-  /// getVAArg - VAArg produces a result and token chain, and takes a pointer
+  /// VAArg produces a result and token chain, and takes a pointer
   /// and a source value as input.
   SDValue getVAArg(EVT VT, SDLoc dl, SDValue Chain, SDValue Ptr,
                    SDValue SV, unsigned Align);
 
-  /// getAtomicCmpSwap - Gets a node for an atomic cmpxchg op. There are two
+  /// Gets a node for an atomic cmpxchg op. There are two
   /// valid Opcodes. ISD::ATOMIC_CMO_SWAP produces the value loaded and a
   /// chain result. ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS produces the value loaded,
   /// a success flag (initially i1), and a chain.
@@ -769,7 +754,7 @@ public:
                            AtomicOrdering FailureOrdering,
                            SynchronizationScope SynchScope);
 
-  /// getAtomic - Gets a node for an atomic op, produces result (if relevant)
+  /// Gets a node for an atomic op, produces result (if relevant)
   /// and chain and takes 2 operands.
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Val, const Value *PtrVal,
@@ -780,15 +765,15 @@ public:
                     AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
 
-  /// getAtomic - Gets a node for an atomic op, produces result and chain and
+  /// Gets a node for an atomic op, produces result and chain and
   /// takes 1 operand.
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, EVT VT,
                     SDValue Chain, SDValue Ptr, MachineMemOperand *MMO,
                     AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
 
-  /// getAtomic - Gets a node for an atomic op, produces result and chain and
-  /// takes N operands.
+  /// Gets a node for an atomic op, produces result and chain and takes N
+  /// operands.
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTList,
                     ArrayRef<SDValue> Ops, MachineMemOperand *MMO,
                     AtomicOrdering SuccessOrdering,
@@ -798,7 +783,7 @@ public:
                     ArrayRef<SDValue> Ops, MachineMemOperand *MMO,
                     AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
-  /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
+  /// Creates a MemIntrinsicNode that may produce a
   /// result and takes a list of operands. Opcode may be INTRINSIC_VOID,
   /// INTRINSIC_W_CHAIN, or a target-specific opcode with a value not
   /// less than FIRST_TARGET_MEMORY_OPCODE.
@@ -813,10 +798,10 @@ public:
                               ArrayRef<SDValue> Ops,
                               EVT MemVT, MachineMemOperand *MMO);
 
-  /// getMergeValues - Create a MERGE_VALUES node from the given operands.
+  /// Create a MERGE_VALUES node from the given operands.
   SDValue getMergeValues(ArrayRef<SDValue> Ops, SDLoc dl);
 
-  /// getLoad - Loads are not normal binary operators: their result type is not
+  /// Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
   SDValue getLoad(EVT VT, SDLoc dl, SDValue Chain, SDValue Ptr,
@@ -848,8 +833,7 @@ public:
                   SDValue Chain, SDValue Ptr, SDValue Offset,
                   EVT MemVT, MachineMemOperand *MMO);
 
-  /// getStore - Helper function to build ISD::STORE nodes.
-  ///
+  /// Helper function to build ISD::STORE nodes.
   SDValue getStore(SDValue Chain, SDLoc dl, SDValue Val, SDValue Ptr,
                    MachinePointerInfo PtrInfo, bool isVolatile,
                    bool isNonTemporal, unsigned Alignment,
@@ -872,21 +856,21 @@ public:
   SDValue getMaskedStore(SDValue Chain, SDLoc dl, SDValue Val,
                          SDValue Ptr, SDValue Mask, EVT MemVT,
                          MachineMemOperand *MMO, bool IsTrunc);
-  /// getSrcValue - Construct a node to track a Value* through the backend.
+  /// Construct a node to track a Value* through the backend.
   SDValue getSrcValue(const Value *v);
 
-  /// getMDNode - Return an MDNodeSDNode which holds an MDNode.
+  /// Return an MDNodeSDNode which holds an MDNode.
   SDValue getMDNode(const MDNode *MD);
 
-  /// getAddrSpaceCast - Return an AddrSpaceCastSDNode.
+  /// Return an AddrSpaceCastSDNode.
   SDValue getAddrSpaceCast(SDLoc dl, EVT VT, SDValue Ptr,
                            unsigned SrcAS, unsigned DestAS);
 
-  /// getShiftAmountOperand - Return the specified value casted to
+  /// Return the specified value casted to
   /// the target's desired shift amount type.
   SDValue getShiftAmountOperand(EVT LHSTy, SDValue Op);
 
-  /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
+  /// *Mutate* the specified node in-place to have the
   /// specified operands.  If the resultant node already exists in the DAG,
   /// this does not modify the specified node, instead it returns the node that
   /// already exists.  If the resultant node does not exist in the DAG, the
@@ -902,7 +886,7 @@ public:
                                SDValue Op3, SDValue Op4, SDValue Op5);
   SDNode *UpdateNodeOperands(SDNode *N, ArrayRef<SDValue> Ops);
 
-  /// SelectNodeTo - These are used for target selectors to *mutate* the
+  /// These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
   /// operands.  Note that target opcodes are stored as
   /// ~TargetOpcode in the node opcode field.  The resultant node is returned.
@@ -932,12 +916,12 @@ public:
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, SDVTList VTs,
                        ArrayRef<SDValue> Ops);
 
-  /// MorphNodeTo - This *mutates* the specified node to have the specified
+  /// This *mutates* the specified node to have the specified
   /// return type, opcode, and operands.
   SDNode *MorphNodeTo(SDNode *N, unsigned Opc, SDVTList VTs,
                       ArrayRef<SDValue> Ops);
 
-  /// getMachineNode - These are used for target selectors to create a new node
+  /// These are used for target selectors to create a new node
   /// with specified return type(s), MachineInstr opcode, and operands.
   ///
   /// Note that getMachineNode returns the resultant node.  If there is already
@@ -976,25 +960,20 @@ public:
   MachineSDNode *getMachineNode(unsigned Opcode, SDLoc dl, SDVTList VTs,
                                 ArrayRef<SDValue> Ops);
 
-  /// getTargetExtractSubreg - A convenience function for creating
-  /// TargetInstrInfo::EXTRACT_SUBREG nodes.
+  /// A convenience function for creating TargetInstrInfo::EXTRACT_SUBREG nodes.
   SDValue getTargetExtractSubreg(int SRIdx, SDLoc DL, EVT VT,
                                  SDValue Operand);
 
-  /// getTargetInsertSubreg - A convenience function for creating
-  /// TargetInstrInfo::INSERT_SUBREG nodes.
+  /// A convenience function for creating TargetInstrInfo::INSERT_SUBREG nodes.
   SDValue getTargetInsertSubreg(int SRIdx, SDLoc DL, EVT VT,
                                 SDValue Operand, SDValue Subreg);
 
-  /// getNodeIfExists - Get the specified node if it's already available, or
-  /// else return NULL.
+  /// Get the specified node if it's already available, or else return NULL.
   SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs, ArrayRef<SDValue> Ops,
                           bool nuw = false, bool nsw = false,
                           bool exact = false);
 
-  /// getDbgValue - Creates a SDDbgValue node.
-  ///
-  /// SDNode
+  /// Creates a SDDbgValue node.
   SDDbgValue *getDbgValue(MDNode *Var, MDNode *Expr, SDNode *N, unsigned R,
                           bool IsIndirect, uint64_t Off, DebugLoc DL,
                           unsigned O);
@@ -1007,16 +986,16 @@ public:
   SDDbgValue *getFrameIndexDbgValue(MDNode *Var, MDNode *Expr, unsigned FI,
                                     uint64_t Off, DebugLoc DL, unsigned O);
 
-  /// RemoveDeadNode - Remove the specified node from the system. If any of its
+  /// Remove the specified node from the system. If any of its
   /// operands then becomes dead, remove them as well. Inform UpdateListener
   /// for each node deleted.
   void RemoveDeadNode(SDNode *N);
 
-  /// RemoveDeadNodes - This method deletes the unreachable nodes in the
+  /// This method deletes the unreachable nodes in the
   /// given list, and any nodes that become unreachable as a result.
   void RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes);
 
-  /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+  /// Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
   /// version if 'From' is known to have a single result, use the second
   /// if you have two nodes with identical results (or if 'To' has a superset
@@ -1035,30 +1014,29 @@ public:
   void ReplaceAllUsesWith(SDNode *From, SDNode *To);
   void ReplaceAllUsesWith(SDNode *From, const SDValue *To);
 
-  /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
+  /// Replace any uses of From with To, leaving
   /// uses of other values produced by From.Val alone.
   void ReplaceAllUsesOfValueWith(SDValue From, SDValue To);
 
-  /// ReplaceAllUsesOfValuesWith - Like ReplaceAllUsesOfValueWith, but
-  /// for multiple values at once. This correctly handles the case where
+  /// Like ReplaceAllUsesOfValueWith, but for multiple values at once.
+  /// This correctly handles the case where
   /// there is an overlap between the From values and the To values.
   void ReplaceAllUsesOfValuesWith(const SDValue *From, const SDValue *To,
                                   unsigned Num);
 
-  /// AssignTopologicalOrder - Topological-sort the AllNodes list and a
+  /// Topological-sort the AllNodes list and a
   /// assign a unique node id for each node in the DAG based on their
   /// topological order. Returns the number of nodes.
   unsigned AssignTopologicalOrder();
 
-  /// RepositionNode - Move node N in the AllNodes list to be immediately
+  /// Move node N in the AllNodes list to be immediately
   /// before the given iterator Position. This may be used to update the
   /// topological ordering when the list of nodes is modified.
   void RepositionNode(allnodes_iterator Position, SDNode *N) {
     AllNodes.insert(Position, AllNodes.remove(N));
   }
 
-  /// isCommutativeBinOp - Returns true if the opcode is a commutative binary
-  /// operation.
+  /// Returns true if the opcode is a commutative binary operation.
   static bool isCommutativeBinOp(unsigned Opcode) {
     // FIXME: This should get its info from the td file, so that we can include
     // target info.
@@ -1099,19 +1077,19 @@ public:
     }
   }
 
-  /// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the
+  /// Add a dbg_value SDNode. If SD is non-null that means the
   /// value is produced by SD.
   void AddDbgValue(SDDbgValue *DB, SDNode *SD, bool isParameter);
 
-  /// GetDbgValues - Get the debug values which reference the given SDNode.
+  /// Get the debug values which reference the given SDNode.
   ArrayRef<SDDbgValue*> GetDbgValues(const SDNode* SD) {
     return DbgInfo->getSDDbgValues(SD);
   }
 
-  /// TransferDbgValues - Transfer SDDbgValues.
+  /// Transfer SDDbgValues.
   void TransferDbgValues(SDValue From, SDValue To);
 
-  /// hasDebugValues - Return true if there are any SDDbgValue nodes associated
+  /// Return true if there are any SDDbgValue nodes associated
   /// with this SelectionDAG.
   bool hasDebugValues() const { return !DbgInfo->empty(); }
 
@@ -1126,28 +1104,27 @@ public:
 
   void dump() const;
 
-  /// CreateStackTemporary - Create a stack temporary, suitable for holding the
+  /// Create a stack temporary, suitable for holding the
   /// specified value type.  If minAlign is specified, the slot size will have
   /// at least that alignment.
   SDValue CreateStackTemporary(EVT VT, unsigned minAlign = 1);
 
-  /// CreateStackTemporary - Create a stack temporary suitable for holding
+  /// Create a stack temporary suitable for holding
   /// either of the specified value types.
   SDValue CreateStackTemporary(EVT VT1, EVT VT2);
 
-  /// FoldConstantArithmetic -
   SDValue FoldConstantArithmetic(unsigned Opcode, EVT VT,
                                  SDNode *Cst1, SDNode *Cst2);
 
-  /// FoldSetCC - Constant fold a setcc to true or false.
+  /// Constant fold a setcc to true or false.
   SDValue FoldSetCC(EVT VT, SDValue N1,
                     SDValue N2, ISD::CondCode Cond, SDLoc dl);
 
-  /// SignBitIsZero - Return true if the sign bit of Op is known to be zero.  We
-  /// use this predicate to simplify operations downstream.
+  /// Return true if the sign bit of Op is known to be zero.
+  /// We use this predicate to simplify operations downstream.
   bool SignBitIsZero(SDValue Op, unsigned Depth = 0) const;
 
-  /// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We
+  /// Return true if 'Op & Mask' is known to be zero.  We
   /// use this predicate to simplify operations downstream.  Op and Mask are
   /// known to be the same type.
   bool MaskedValueIsZero(SDValue Op, const APInt &Mask, unsigned Depth = 0)
@@ -1160,7 +1137,7 @@ public:
   void computeKnownBits(SDValue Op, APInt &KnownZero, APInt &KnownOne,
                         unsigned Depth = 0) const;
 
-  /// ComputeNumSignBits - Return the number of times the sign bit of the
+  /// Return the number of times the sign bit of the
   /// register is replicated into the other bits.  We know that at least 1 bit
   /// is always equal to the sign bit (itself), but other cases can give us
   /// information.  For example, immediately after an "SRA X, 2", we know that
@@ -1169,26 +1146,26 @@ public:
   /// class to allow target nodes to be understood.
   unsigned ComputeNumSignBits(SDValue Op, unsigned Depth = 0) const;
 
-  /// isBaseWithConstantOffset - Return true if the specified operand is an
+  /// Return true if the specified operand is an
   /// ISD::ADD with a ConstantSDNode on the right-hand side, or if it is an
   /// ISD::OR with a ConstantSDNode that is guaranteed to have the same
   /// semantics as an ADD.  This handles the equivalence:
   ///     X|Cst == X+Cst iff X&Cst = 0.
   bool isBaseWithConstantOffset(SDValue Op) const;
 
-  /// isKnownNeverNan - Test whether the given SDValue is known to never be NaN.
+  /// Test whether the given SDValue is known to never be NaN.
   bool isKnownNeverNaN(SDValue Op) const;
 
-  /// isKnownNeverZero - Test whether the given SDValue is known to never be
+  /// Test whether the given SDValue is known to never be
   /// positive or negative Zero.
   bool isKnownNeverZero(SDValue Op) const;
 
-  /// isEqualTo - Test whether two SDValues are known to compare equal. This
+  /// Test whether two SDValues are known to compare equal. This
   /// is true if they are the same value, or if one is negative zero and the
   /// other positive zero.
   bool isEqualTo(SDValue A, SDValue B) const;
 
-  /// UnrollVectorOp - Utility function used by legalize and lowering to
+  /// Utility function used by legalize and lowering to
   /// "unroll" a vector operation by splitting out the scalars and operating
   /// on each element individually.  If the ResNE is 0, fully unroll the vector
   /// op. If ResNE is less than the width of the vector op, unroll up to ResNE.
@@ -1196,43 +1173,40 @@ public:
   /// vector op and fill the end of the resulting vector with UNDEFS.
   SDValue UnrollVectorOp(SDNode *N, unsigned ResNE = 0);
 
-  /// isConsecutiveLoad - Return true if LD is loading 'Bytes' bytes from a
-  /// location that is 'Dist' units away from the location that the 'Base' load
-  /// is loading from.
+  /// Return true if LD is loading 'Bytes' bytes from a location that is 'Dist'
+  /// units away from the location that the 'Base' load is loading from.
   bool isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base,
                          unsigned Bytes, int Dist) const;
 
-  /// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
+  /// Infer alignment of a load / store address. Return 0 if
   /// it cannot be inferred.
   unsigned InferPtrAlignment(SDValue Ptr) const;
 
-  /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
+  /// Compute the VTs needed for the low/hi parts of a type
   /// which is split (or expanded) into two not necessarily identical pieces.
   std::pair<EVT, EVT> GetSplitDestVTs(const EVT &VT) const;
 
-  /// SplitVector - Split the vector with EXTRACT_SUBVECTOR using the provides
+  /// Split the vector with EXTRACT_SUBVECTOR using the provides
   /// VTs and return the low/high part.
   std::pair<SDValue, SDValue> SplitVector(const SDValue &N, const SDLoc &DL,
                                           const EVT &LoVT, const EVT &HiVT);
 
-  /// SplitVector - Split the vector with EXTRACT_SUBVECTOR and return the
-  /// low/high part.
+  /// Split the vector with EXTRACT_SUBVECTOR and return the low/high part.
   std::pair<SDValue, SDValue> SplitVector(const SDValue &N, const SDLoc &DL) {
     EVT LoVT, HiVT;
     std::tie(LoVT, HiVT) = GetSplitDestVTs(N.getValueType());
     return SplitVector(N, DL, LoVT, HiVT);
   }
 
-  /// SplitVectorOperand - Split the node's operand with EXTRACT_SUBVECTOR and
+  /// Split the node's operand with EXTRACT_SUBVECTOR and
   /// return the low/high part.
   std::pair<SDValue, SDValue> SplitVectorOperand(const SDNode *N, unsigned OpNo)
   {
     return SplitVector(N->getOperand(OpNo), SDLoc(N));
   }
 
-  /// ExtractVectorElements - Append the extracted elements from Start to Count
-  /// out of the vector Op in Args. If Count is 0, all of the elements will be
-  /// extracted.
+  /// Append the extracted elements from Start to Count out of the vector Op
+  /// in Args. If Count is 0, all of the elements will be extracted.
   void ExtractVectorElements(SDValue Op, SmallVectorImpl<SDValue> &Args,
                              unsigned Start = 0, unsigned Count = 0);
 
@@ -1258,10 +1232,10 @@ private:
                                 SDValue N1, SDValue N2, bool nuw, bool nsw,
                                 bool exact);
 
-  /// VTList - List of non-single value types.
+  /// List of non-single value types.
   FoldingSet<SDVTListNode> VTListMap;
 
-  /// CondCodeNodes - Maps to auto-CSE operations.
+  /// Maps to auto-CSE operations.
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
   std::vector<SDNode*> ValueTypeNodes;
