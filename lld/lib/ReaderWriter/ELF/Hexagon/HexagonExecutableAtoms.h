@@ -17,11 +17,10 @@ namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 class HexagonLinkingContext;
 
-template <class HexagonELFType> class HexagonRuntimeFile
-  : public RuntimeFile<HexagonELFType> {
+template <class ELFT> class HexagonRuntimeFile : public RuntimeFile<ELFT> {
 public:
   HexagonRuntimeFile(HexagonLinkingContext &ctx)
-      : RuntimeFile<HexagonELFType>(ctx, "Hexagon runtime file") {}
+      : RuntimeFile<ELFT>(ctx, "Hexagon runtime file") {}
 };
 } // elf
 } // lld

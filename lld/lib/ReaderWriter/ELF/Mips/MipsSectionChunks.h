@@ -16,12 +16,12 @@ template <typename ELFT> class MipsTargetLayout;
 class MipsLinkingContext;
 
 /// \brief Handle Mips GOT section
-template <class ELFType> class MipsGOTSection : public AtomSection<ELFType> {
+template <class ELFT> class MipsGOTSection : public AtomSection<ELFT> {
 public:
   MipsGOTSection(const MipsLinkingContext &ctx)
-      : AtomSection<ELFType>(ctx, ".got", DefinedAtom::typeGOT,
-                             DefinedAtom::permRW_,
-                             MipsTargetLayout<ELFType>::ORDER_GOT),
+      : AtomSection<ELFT>(ctx, ".got", DefinedAtom::typeGOT,
+                          DefinedAtom::permRW_,
+                          MipsTargetLayout<ELFT>::ORDER_GOT),
         _hasNonLocal(false), _localCount(0) {
     this->_flags |= SHF_MIPS_GPREL;
     this->_alignment = 4;
@@ -60,14 +60,14 @@ public:
       case LLD_R_MIPS_GLOBAL_GOT:
         _hasNonLocal = true;
         _posMap[r->target()] = _posMap.size();
-        return AtomSection<ELFType>::appendAtom(atom);
+        return AtomSection<ELFT>::appendAtom(atom);
       case R_MIPS_TLS_TPREL32:
       case R_MIPS_TLS_DTPREL32:
       case R_MIPS_TLS_TPREL64:
       case R_MIPS_TLS_DTPREL64:
         _hasNonLocal = true;
         _tlsMap[r->target()] = _tlsMap.size();
-        return AtomSection<ELFType>::appendAtom(atom);
+        return AtomSection<ELFT>::appendAtom(atom);
       case R_MIPS_TLS_DTPMOD32:
       case R_MIPS_TLS_DTPMOD64:
         _hasNonLocal = true;
@@ -78,7 +78,7 @@ public:
     if (!_hasNonLocal)
       ++_localCount;
 
-    return AtomSection<ELFType>::appendAtom(atom);
+    return AtomSection<ELFT>::appendAtom(atom);
   }
 
 private:
@@ -96,12 +96,12 @@ private:
 };
 
 /// \brief Handle Mips PLT section
-template <class ELFType> class MipsPLTSection : public AtomSection<ELFType> {
+template <class ELFT> class MipsPLTSection : public AtomSection<ELFT> {
 public:
   MipsPLTSection(const MipsLinkingContext &ctx)
-      : AtomSection<ELFType>(ctx, ".plt", DefinedAtom::typeGOT,
-                             DefinedAtom::permR_X,
-                             MipsTargetLayout<ELFType>::ORDER_PLT) {}
+      : AtomSection<ELFT>(ctx, ".plt", DefinedAtom::typeGOT,
+                          DefinedAtom::permR_X,
+                          MipsTargetLayout<ELFT>::ORDER_PLT) {}
 
   const AtomLayout *findPLTLayout(const Atom *plt) const {
     auto it = _pltLayoutMap.find(plt);
@@ -109,7 +109,7 @@ public:
   }
 
   const lld::AtomLayout *appendAtom(const Atom *atom) override {
-    const auto *layout = AtomSection<ELFType>::appendAtom(atom);
+    const auto *layout = AtomSection<ELFT>::appendAtom(atom);
 
     const DefinedAtom *da = cast<DefinedAtom>(atom);
 

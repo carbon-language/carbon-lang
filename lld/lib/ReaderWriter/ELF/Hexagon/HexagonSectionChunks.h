@@ -17,13 +17,11 @@ template <typename ELFT> class HexagonTargetLayout;
 class HexagonLinkingContext;
 
 /// \brief Handle Hexagon SData section
-template <class HexagonELFType>
-class SDataSection : public AtomSection<HexagonELFType> {
+template <class ELFT> class SDataSection : public AtomSection<ELFT> {
 public:
   SDataSection(const HexagonLinkingContext &ctx)
-      : AtomSection<HexagonELFType>(
-            ctx, ".sdata", DefinedAtom::typeDataFast, 0,
-            HexagonTargetLayout<HexagonELFType>::ORDER_SDATA) {
+      : AtomSection<ELFT>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
+                          HexagonTargetLayout<ELFT>::ORDER_SDATA) {
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC | SHF_WRITE;
     this->_alignment = 4096;
@@ -49,8 +47,7 @@ public:
 
 }; // SDataSection
 
-template <class HexagonELFType>
-void SDataSection<HexagonELFType>::doPreFlight() {
+template <class ELFT> void SDataSection<ELFT>::doPreFlight() {
   // sort the atoms on the alignments they have been set
   std::stable_sort(this->_atoms.begin(), this->_atoms.end(),
                                              [](const lld::AtomLayout * A,

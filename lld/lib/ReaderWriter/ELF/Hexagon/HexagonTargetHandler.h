@@ -22,28 +22,28 @@ namespace elf {
 class HexagonLinkingContext;
 
 /// \brief TargetLayout for Hexagon
-template <class HexagonELFType>
-class HexagonTargetLayout final : public TargetLayout<HexagonELFType> {
+template <class ELFT>
+class HexagonTargetLayout final : public TargetLayout<ELFT> {
 public:
   enum HexagonSectionOrder {
     ORDER_SDATA = 205
   };
 
   HexagonTargetLayout(HexagonLinkingContext &hti)
-      : TargetLayout<HexagonELFType>(hti), _sdataSection() {
-    _sdataSection = new (_alloc) SDataSection<HexagonELFType>(hti);
+      : TargetLayout<ELFT>(hti), _sdataSection() {
+    _sdataSection = new (_alloc) SDataSection<ELFT>(hti);
   }
 
   /// \brief Return the section order for a input section
-  typename TargetLayout<HexagonELFType>::SectionOrder
+  typename TargetLayout<ELFT>::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
                   int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return ORDER_SDATA;
 
-    return TargetLayout<HexagonELFType>::getSectionOrder(name, contentType,
-                                                         contentPermissions);
+    return TargetLayout<ELFT>::getSectionOrder(name, contentType,
+                                               contentPermissions);
   }
 
   /// \brief Return the appropriate input section name.
@@ -55,34 +55,31 @@ public:
     default:
       break;
     }
-    return TargetLayout<HexagonELFType>::getInputSectionName(da);
+    return TargetLayout<ELFT>::getInputSectionName(da);
   }
 
   /// \brief Gets or creates a section.
-  AtomSection<HexagonELFType> *
-  createSection(StringRef name, int32_t contentType,
-                DefinedAtom::ContentPermissions contentPermissions,
-                typename TargetLayout<HexagonELFType>::SectionOrder
-                    sectionOrder) override {
+  AtomSection<ELFT> *createSection(
+      StringRef name, int32_t contentType,
+      DefinedAtom::ContentPermissions contentPermissions,
+      typename TargetLayout<ELFT>::SectionOrder sectionOrder) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
-    return TargetLayout<HexagonELFType>::createSection(
-        name, contentType, contentPermissions, sectionOrder);
+    return TargetLayout<ELFT>::createSection(name, contentType,
+                                             contentPermissions, sectionOrder);
   }
 
   /// \brief get the segment type for the section thats defined by the target
-  typename TargetLayout<HexagonELFType>::SegmentType
-  getSegmentType(Section<HexagonELFType> *section) const override {
+  typename TargetLayout<ELFT>::SegmentType
+  getSegmentType(Section<ELFT> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
 
-    return TargetLayout<HexagonELFType>::getSegmentType(section);
+    return TargetLayout<ELFT>::getSegmentType(section);
   }
 
-  Section<HexagonELFType> *getSDataSection() const {
-    return _sdataSection;
-  }
+  Section<ELFT> *getSDataSection() const { return _sdataSection; }
 
   uint64_t getGOTSymAddr() {
     if (!_gotSymAtom.hasValue())
@@ -94,7 +91,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator _alloc;
-  SDataSection<HexagonELFType> *_sdataSection = nullptr;
+  SDataSection<ELFT> *_sdataSection = nullptr;
   llvm::Optional<AtomLayout *> _gotSymAtom;
 };
 

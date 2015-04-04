@@ -15,21 +15,19 @@
 namespace lld {
 namespace elf {
 
-template <class ELFType> class MipsTargetLayout;
+template <class ELFT> class MipsTargetLayout;
 
-template <class MipsELFType>
-class MipsDynamicTable : public DynamicTable<MipsELFType> {
+template <class ELFT> class MipsDynamicTable : public DynamicTable<ELFT> {
 public:
-  MipsDynamicTable(const ELFLinkingContext &ctx,
-                   MipsTargetLayout<MipsELFType> &layout)
-      : DynamicTable<MipsELFType>(ctx, layout, ".dynamic",
-                                  TargetLayout<MipsELFType>::ORDER_DYNAMIC),
+  MipsDynamicTable(const ELFLinkingContext &ctx, MipsTargetLayout<ELFT> &layout)
+      : DynamicTable<ELFT>(ctx, layout, ".dynamic",
+                           TargetLayout<ELFT>::ORDER_DYNAMIC),
         _targetLayout(layout) {}
 
   void createDefaultEntries() override {
-    DynamicTable<MipsELFType>::createDefaultEntries();
+    DynamicTable<ELFT>::createDefaultEntries();
 
-    typename DynamicTable<MipsELFType>::Elf_Dyn dyn;
+    typename DynamicTable<ELFT>::Elf_Dyn dyn;
 
     // Version id for the Runtime Linker Interface.
     dyn.d_un.d_val = 1;
@@ -69,7 +67,7 @@ public:
   }
 
   void updateDynamicTable() override {
-    DynamicTable<MipsELFType>::updateDynamicTable();
+    DynamicTable<ELFT>::updateDynamicTable();
 
     // Assign the minimum segment address to the DT_MIPS_BASE_ADDRESS tag.
     auto baseAddr = std::numeric_limits<uint64_t>::max();
@@ -106,7 +104,7 @@ private:
   std::size_t _dt_gotsym;
   std::size_t _dt_pltgot;
   std::size_t _dt_baseaddr;
-  MipsTargetLayout<MipsELFType> &_targetLayout;
+  MipsTargetLayout<ELFT> &_targetLayout;
 };
 
 } // end namespace elf
