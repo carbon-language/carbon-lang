@@ -163,6 +163,14 @@ TEST_F(FormatTestJS, MethodsInObjectLiterals) {
                "    doSomething(this.value + val);\n"
                "  }\n"
                "};");
+  verifyFormat("var o = {\n"
+               "  someMethod(val) {  // method\n"
+               "    doSomething(this.value + val);\n"
+               "  },\n"
+               "  someOtherMethod(val) {  // method\n"
+               "    doSomething(this.value + val);\n"
+               "  }\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, SpacesInContainerLiterals) {

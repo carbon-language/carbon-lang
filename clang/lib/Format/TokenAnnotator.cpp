@@ -342,7 +342,8 @@ private:
                Style.Language == FormatStyle::LK_Proto) &&
               Previous->is(tok::identifier))
             Previous->Type = TT_SelectorName;
-          if (CurrentToken->is(tok::colon))
+          if (CurrentToken->is(tok::colon) ||
+              Style.Language == FormatStyle::LK_JavaScript)
             Left->Type = TT_DictLiteral;
         }
         if (!consumeToken())
