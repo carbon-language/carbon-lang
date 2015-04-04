@@ -45,6 +45,10 @@ public:
 
   StringRef getDSOName() const override { return _soname; }
 
+  static bool canParse(file_magic magic) {
+    return magic == file_magic::elf_shared_object;
+  }
+
 protected:
   std::error_code doParse() override {
     std::error_code ec;

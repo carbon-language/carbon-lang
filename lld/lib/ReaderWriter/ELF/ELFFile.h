@@ -22,7 +22,6 @@ namespace elf {
 /// \brief Read a binary, find out based on the symbol table contents what kind
 /// of symbol it is and create corresponding atoms for it
 template <class ELFT> class ELFFile : public File {
-
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
@@ -101,6 +100,10 @@ public:
       : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
         _ordinal(0), _doStringsMerge(ctx.mergeCommonStrings()),
         _useWrap(ctx.wrapCalls().size()), _ctx(ctx) {}
+
+  static bool canParse(file_magic magic) {
+    return magic == file_magic::elf_relocatable;
+  }
 
   virtual Reference::KindArch kindArch();
 

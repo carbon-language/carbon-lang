@@ -18,8 +18,7 @@
 namespace lld {
 namespace elf {
 
-template <typename ELFT, typename ContextT, template <typename> class FileT,
-          int FileMagic>
+template <typename ELFT, typename ContextT, template <typename> class FileT>
 class ELFReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
@@ -28,7 +27,8 @@ public:
 
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &buf) const override {
-    return magic == FileMagic && elfHeader(buf)->e_machine == ContextT::machine;
+    return (FileT<ELFT>::canParse(magic) &&
+            elfHeader(buf)->e_machine == ContextT::machine);
   }
 
   std::error_code
@@ -57,12 +57,10 @@ protected:
 };
 
 template <typename ELFT, typename ContextT, template <typename> class FileT>
-using ELFObjectReader = ELFReader<ELFT, ContextT, FileT,
-                                  llvm::sys::fs::file_magic::elf_relocatable>;
+using ELFObjectReader = ELFReader<ELFT, ContextT, FileT>;
 
 template <typename ELFT, typename ContextT>
-using ELFDSOReader = ELFReader<ELFT, ContextT, DynamicFile,
-                               llvm::sys::fs::file_magic::elf_shared_object>;
+using ELFDSOReader = ELFReader<ELFT, ContextT, DynamicFile>;
 
 } // namespace elf
 } // namespace lld
