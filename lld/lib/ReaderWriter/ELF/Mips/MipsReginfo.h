@@ -52,9 +52,9 @@ namespace elf {
 
 struct MipsReginfo {
   uint32_t _gpRegMask = 0;
-  uint32_t _cpRegMask[4] = {0};
+  uint32_t _cpRegMask[4];
 
-  MipsReginfo() = default;
+  MipsReginfo() { memset(_cpRegMask, 0, sizeof(_cpRegMask)); }
 
   template <class ElfReginfo> MipsReginfo(const ElfReginfo &elf) {
     _gpRegMask = elf.ri_gprmask;
