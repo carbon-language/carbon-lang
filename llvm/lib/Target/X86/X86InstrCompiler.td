@@ -1232,6 +1232,8 @@ def : Pat<(store (add (loadi64 addr:$dst), 0x00000000800000000), addr:$dst),
 // with implicit zero-extension instead of a 64-bit and if the immediate has at
 // least 32 bits of leading zeros. If in addition the last 32 bits can be
 // represented with a sign extension of a 8 bit constant, use that.
+// This can also reduce instruction size by eliminating the need for the REX
+// prefix.
 
 let AddedComplexity = 1 in // Give priority over i64immSExt8.
 def : Pat<(and GR64:$src, i64immZExt32SExt8:$imm),
