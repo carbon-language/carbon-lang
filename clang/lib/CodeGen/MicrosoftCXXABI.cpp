@@ -1255,7 +1255,7 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualFunctionCall(
       // FIXME: Update the code that emits this adjustment in thunks prologues.
       This = CGF.Builder.CreateConstGEP1_32(This, StaticOffset.getQuantity());
     } else {
-      This = CGF.Builder.CreateConstInBoundsGEP1_32(This,
+      This = CGF.Builder.CreateConstInBoundsGEP1_32(CGF.Int8Ty, This,
                                                     StaticOffset.getQuantity());
     }
   }
@@ -1310,8 +1310,8 @@ llvm::Value *MicrosoftCXXABI::adjustThisParameterInVirtualFunctionPrologue(
 
   This = CGF.Builder.CreateBitCast(This, charPtrTy);
   assert(Adjustment.isPositive());
-  This =
-      CGF.Builder.CreateConstInBoundsGEP1_32(This, -Adjustment.getQuantity());
+  This = CGF.Builder.CreateConstInBoundsGEP1_32(CGF.Int8Ty, This,
+                                                -Adjustment.getQuantity());
   return CGF.Builder.CreateBitCast(This, thisTy);
 }
 
@@ -1871,7 +1871,7 @@ MicrosoftCXXABI::performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
   }
 
   if (RA.NonVirtual)
-    V = CGF.Builder.CreateConstInBoundsGEP1_32(V, RA.NonVirtual);
+    V = CGF.Builder.CreateConstInBoundsGEP1_32(CGF.Int8Ty, V, RA.NonVirtual);
 
   // Cast back to the original type.
   return CGF.Builder.CreateBitCast(V, Ret->getType());

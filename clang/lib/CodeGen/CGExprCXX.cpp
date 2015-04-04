@@ -784,12 +784,10 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
   llvm_unreachable("bad evaluation kind");
 }
 
-void
-CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
-                                         QualType ElementType,
-                                         llvm::Value *BeginPtr,
-                                         llvm::Value *NumElements,
-                                         llvm::Value *AllocSizeWithoutCookie) {
+void CodeGenFunction::EmitNewArrayInitializer(
+    const CXXNewExpr *E, QualType ElementType, llvm::Type *ElementTy,
+    llvm::Value *BeginPtr, llvm::Value *NumElements,
+    llvm::Value *AllocSizeWithoutCookie) {
   // If we have a type with trivial initialization and no initializer,
   // there's nothing to do.
   if (!E->hasInitializer())
@@ -815,7 +813,8 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
     if (const ConstantArrayType *CAT = dyn_cast_or_null<ConstantArrayType>(
             AllocType->getAsArrayTypeUnsafe())) {
       unsigned AS = CurPtr->getType()->getPointerAddressSpace();
-      llvm::Type *AllocPtrTy = ConvertTypeForMem(AllocType)->getPointerTo(AS);
+      ElementTy = ConvertTypeForMem(AllocType);
+      llvm::Type *AllocPtrTy = ElementTy->getPointerTo(AS);
       CurPtr = Builder.CreateBitCast(CurPtr, AllocPtrTy);
       InitListElements *= getContext().getConstantArrayElementCount(CAT);
     }
@@ -845,7 +844,8 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
       // initialization loops.
       StoreAnyExprIntoOneUnit(*this, ILE->getInit(i),
                               ILE->getInit(i)->getType(), CurPtr);
-      CurPtr = Builder.CreateConstInBoundsGEP1_32(CurPtr, 1, "array.exp.next");
+      CurPtr = Builder.CreateConstInBoundsGEP1_32(ElementTy, CurPtr, 1,
+                                                  "array.exp.next");
     }
 
     // The remaining elements are filled with the array filler expression.
@@ -1006,7 +1006,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
 
   // Advance to the next element by adjusting the pointer type as necessary.
   llvm::Value *NextPtr =
-      Builder.CreateConstInBoundsGEP1_32(CurPtr, 1, "array.next");
+      Builder.CreateConstInBoundsGEP1_32(ElementTy, CurPtr, 1, "array.next");
 
   // Check whether we've gotten to the end of the array and, if so,
   // exit the loop.
@@ -1018,13 +1018,12 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
 }
 
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
-                               QualType ElementType,
-                               llvm::Value *NewPtr,
-                               llvm::Value *NumElements,
+                               QualType ElementType, llvm::Type *ElementTy,
+                               llvm::Value *NewPtr, llvm::Value *NumElements,
                                llvm::Value *AllocSizeWithoutCookie) {
   ApplyDebugLocation DL(CGF, E);
   if (E->isArray())
-    CGF.EmitNewArrayInitializer(E, ElementType, NewPtr, NumElements,
+    CGF.EmitNewArrayInitializer(E, ElementType, ElementTy, NewPtr, NumElements,
                                 AllocSizeWithoutCookie);
   else if (const Expr *Init = E->getInitializer())
     StoreAnyExprIntoOneUnit(CGF, Init, E->getAllocatedType(), NewPtr);
@@ -1332,11 +1331,11 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                                                        E, allocType);
   }
 
-  llvm::Type *elementPtrTy
-    = ConvertTypeForMem(allocType)->getPointerTo(AS);
+  llvm::Type *elementTy = ConvertTypeForMem(allocType);
+  llvm::Type *elementPtrTy = elementTy->getPointerTo(AS);
   llvm::Value *result = Builder.CreateBitCast(allocation, elementPtrTy);
 
-  EmitNewInitializer(*this, E, allocType, result, numElements,
+  EmitNewInitializer(*this, E, allocType, elementTy, result, numElements,
                      allocSizeWithoutCookie);
   if (E->isArray()) {
     // NewPtr is a pointer to the base element type.  If we're

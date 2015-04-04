@@ -37,7 +37,8 @@ static void AssignToArrayRange(CodeGen::CGBuilderTy &Builder,
                                unsigned LastIndex) {
   // Alternatively, we could emit this as a loop in the source.
   for (unsigned I = FirstIndex; I <= LastIndex; ++I) {
-    llvm::Value *Cell = Builder.CreateConstInBoundsGEP1_32(Array, I);
+    llvm::Value *Cell =
+        Builder.CreateConstInBoundsGEP1_32(Builder.getInt8Ty(), Array, I);
     Builder.CreateStore(Value, Cell);
   }
 }
@@ -1358,7 +1359,8 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
   } else {
     // 9 is %eflags, which doesn't get a size on Darwin for some
     // reason.
-    Builder.CreateStore(Four8, Builder.CreateConstInBoundsGEP1_32(Address, 9));
+    Builder.CreateStore(
+        Four8, Builder.CreateConstInBoundsGEP1_32(CGF.Int8Ty, Address, 9));
 
     // 11-16 are st(0..5).  Not sure why we stop at 5.
     // These have size 12, which is sizeof(long double) on
