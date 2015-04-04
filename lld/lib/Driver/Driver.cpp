@@ -63,49 +63,49 @@ FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
 }
 
 /// This is where the link is actually performed.
-bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
+bool Driver::link(LinkingContext &ctx, raw_ostream &diagnostics) {
   // Honor -mllvm
-  if (!context.llvmOptions().empty()) {
-    unsigned numArgs = context.llvmOptions().size();
+  if (!ctx.llvmOptions().empty()) {
+    unsigned numArgs = ctx.llvmOptions().size();
     const char **args = new const char *[numArgs + 2];
     args[0] = "lld (LLVM option parsing)";
     for (unsigned i = 0; i != numArgs; ++i)
-      args[i + 1] = context.llvmOptions()[i];
+      args[i + 1] = ctx.llvmOptions()[i];
     args[numArgs + 1] = 0;
     llvm::cl::ParseCommandLineOptions(numArgs + 1, args);
   }
-  if (context.getNodes().empty())
+  if (ctx.getNodes().empty())
     return false;
 
-  for (std::unique_ptr<Node> &ie : context.getNodes())
+  for (std::unique_ptr<Node> &ie : ctx.getNodes())
     if (FileNode *node = dyn_cast<FileNode>(ie.get()))
-      context.getTaskGroup().spawn([node] { node->getFile()->parse(); });
+      ctx.getTaskGroup().spawn([node] { node->getFile()->parse(); });
 
   std::vector<std::unique_ptr<File>> internalFiles;
-  context.createInternalFiles(internalFiles);
+  ctx.createInternalFiles(internalFiles);
   for (auto i = internalFiles.rbegin(), e = internalFiles.rend(); i != e; ++i) {
-    auto &members = context.getNodes();
+    auto &members = ctx.getNodes();
     members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 
   // Give target a chance to add files.
   std::vector<std::unique_ptr<File>> implicitFiles;
-  context.createImplicitFiles(implicitFiles);
+  ctx.createImplicitFiles(implicitFiles);
   for (auto i = implicitFiles.rbegin(), e = implicitFiles.rend(); i != e; ++i) {
-    auto &members = context.getNodes();
+    auto &members = ctx.getNodes();
     members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 
   // Give target a chance to postprocess input files.
   // Mach-O uses this chance to move all object files before library files.
   // ELF adds specific undefined symbols resolver.
-  context.finalizeInputFiles();
+  ctx.finalizeInputFiles();
 
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");
-  Resolver resolver(context);
+  Resolver resolver(ctx);
   if (!resolver.resolve()) {
-    context.getTaskGroup().sync();
+    ctx.getTaskGroup().sync();
     return false;
   }
   std::unique_ptr<MutableFile> merged = resolver.resultFile();
@@ -114,14 +114,14 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   // Run passes on linked atoms.
   ScopedTask passTask(getDefaultDomain(), "Passes");
   PassManager pm;
-  context.addPasses(pm);
+  ctx.addPasses(pm);
   pm.runOnFile(merged);
   passTask.end();
 
   // Give linked atoms to Writer to generate output file.
   ScopedTask writeTask(getDefaultDomain(), "Write");
-  if (std::error_code ec = context.writeFile(*merged)) {
-    diagnostics << "Failed to write file '" << context.outputPath()
+  if (std::error_code ec = ctx.writeFile(*merged)) {
+    diagnostics << "Failed to write file '" << ctx.outputPath()
                 << "': " << ec.message() << "\n";
     return false;
   }
