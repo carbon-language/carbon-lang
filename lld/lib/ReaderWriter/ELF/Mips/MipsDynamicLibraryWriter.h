@@ -13,6 +13,7 @@
 #include "MipsDynamicTable.h"
 #include "MipsELFWriters.h"
 #include "MipsLinkingContext.h"
+#include "MipsSectionChunks.h"
 
 namespace lld {
 namespace elf {
@@ -32,6 +33,7 @@ protected:
   bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override;
+  void createDefaultSections() override;
 
   std::error_code setELFHeader() override {
     DynamicLibraryWriter<ELFT>::setELFHeader();
@@ -46,6 +48,7 @@ protected:
 private:
   MipsELFWriter<ELFT> _writeHelper;
   MipsTargetLayout<ELFT> &_targetLayout;
+  unique_bump_ptr<Section<ELFT>> _reginfo;
 };
 
 template <class ELFT>
@@ -67,6 +70,19 @@ void MipsDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
   _writeHelper.finalizeMipsRuntimeAtomValues();
+}
+
+template <class ELFT>
+void MipsDynamicLibraryWriter<ELFT>::createDefaultSections() {
+  DynamicLibraryWriter<ELFT>::createDefaultSections();
+  const auto &mask =
+      static_cast<const MipsLinkingContext &>(this->_ctx).getMergeReginfoMask();
+  if (!ELFT::Is64Bits && mask.hasValue()) {
+    _reginfo = unique_bump_ptr<Section<ELFT>>(
+        new (this->_alloc)
+            MipsReginfoSection<ELFT>(this->_ctx, _targetLayout, *mask));
+    this->_layout.addSection(_reginfo.get());
+  }
 }
 
 template <class ELFT>

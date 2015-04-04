@@ -1,12 +1,12 @@
 # Check reading GP0 value from .MIPS.options section
 #
 # RUN: yaml2obj -format=elf %s > %t.o
-# RUN: lld -flavor gnu -target mipsel -e G1 -shared -o %t.so %t.o
+# RUN: lld -flavor gnu -target mips64el -e G1 -shared -o %t.so %t.o
 # RUN: llvm-readobj -symbols %t.so | FileCheck -check-prefix=SYM %s
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=SEC %s
 
 # SYM:      Name: L1 (1)
-# SYM-NEXT: Value: 0xCC
+# SYM-NEXT: Value: 0x134
 # SYM-NEXT: Size: 4
 # SYM-NEXT: Binding: Local (0x0)
 # SYM-NEXT: Type: Function (0x2)
@@ -21,18 +21,17 @@
 # SYM-NEXT: Other: 0
 # SYM-NEXT: Section: Absolute (0xFFF1)
 
-# 0xffff80dc == 0x0 (addend) + 0x00cc (L1) + 0x1000 (GP0) - 0x8ff0 (_gp)
+# 0xffff8144 == 0x0 (addend) + 0x0134 (L1) + 0x1000 (GP0) - 0x8ff0 (_gp)
 # SEC:      Contents of section .rodata:
-# SEC-NEXT:  00d4 dc80ffff 00000000 00000000 00000000  ................
+# SEC-NEXT:  013c 4481ffff 00000000 00000000 00000000
 
 !ELF
 FileHeader:
-  Class:    ELFCLASS32
+  Class:    ELFCLASS64
   Data:     ELFDATA2LSB
   Type:     ET_REL
   Machine:  EM_MIPS
-  Flags:    [ EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC,
-              EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2 ]
+  Flags:    [ EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_64R2 ]
 Sections:
 - Name:         .text
   Type:         SHT_PROGBITS
@@ -47,7 +46,7 @@ Sections:
   Size:         16
 
 - Name:         .rel.rodata
-  Type:         SHT_REL
+  Type:         SHT_RELA
   Link:         .symtab
   Info:         .rodata
   AddressAlign: 0x04
@@ -60,7 +59,7 @@ Sections:
   Type:         SHT_MIPS_OPTIONS
   Flags:        [ SHF_ALLOC ]
   AddressAlign: 0x01
-  Content:      "0128000000000000000000000000000000000000000000000000000000100000"
+  Content:      "012800000000000000000000000000000000000000000000000000000000000000100000"
 
 Symbols:
   Local:

@@ -47,8 +47,20 @@ std::error_code MipsLinkingContext::mergeHeaderFlags(uint8_t fileClass,
   return _flagsMerger.mergeHeaderFlags(fileClass, flags);
 }
 
+void MipsLinkingContext::mergeReginfoMask(const MipsReginfo &info) {
+  if (_reginfoMask.hasValue())
+    _reginfoMask->merge(info);
+  else
+    _reginfoMask = info;
+}
+
 uint32_t MipsLinkingContext::getMergedELFFlags() const {
   return _flagsMerger.getMergedELFFlags();
+}
+
+const llvm::Optional<MipsReginfo> &
+MipsLinkingContext::getMergeReginfoMask() const {
+  return _reginfoMask;
 }
 
 uint64_t MipsLinkingContext::getBaseAddress() const {

@@ -161,6 +161,8 @@ private:
     typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
     typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
 
+    auto &ctx = static_cast<MipsLinkingContext &>(this->_ctx);
+
     if (const Elf_Shdr *sec = findSectionByType(SHT_MIPS_OPTIONS)) {
       auto contents = this->getSectionContents(sec);
       if (std::error_code ec = contents.getError())
@@ -172,9 +174,12 @@ private:
           return make_dynamic_error_code(
               StringRef("Invalid size of MIPS_OPTIONS section"));
 
-        const auto *opt = reinterpret_cast<const Elf_Mips_Options *>(raw.data());
+        const auto *opt =
+            reinterpret_cast<const Elf_Mips_Options *>(raw.data());
         if (opt->kind == ODK_REGINFO) {
-          _gp0 = reinterpret_cast<const Elf_RegInfo *>(opt + 1)->ri_gp_value;
+          const auto *regInfo = reinterpret_cast<const Elf_RegInfo *>(opt + 1);
+          ctx.mergeReginfoMask(*regInfo);
+          _gp0 = regInfo->ri_gp_value;
           break;
         }
         raw = raw.slice(opt->size);
@@ -189,7 +194,9 @@ private:
         return make_dynamic_error_code(
             StringRef("Invalid size of MIPS_REGINFO section"));
 
-      _gp0 = reinterpret_cast<const Elf_RegInfo *>(raw.data())->ri_gp_value;
+      const auto *regInfo = reinterpret_cast<const Elf_RegInfo *>(raw.data());
+      ctx.mergeReginfoMask(*regInfo);
+      _gp0 = regInfo->ri_gp_value;
     }
     return std::error_code();
   }

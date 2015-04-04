@@ -77,16 +77,6 @@ Sections:
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x04
     Size:            0x00
-  - Name:            .reginfo
-    Type:            SHT_MIPS_REGINFO
-    Flags:           [ SHF_ALLOC ]
-    AddressAlign:    0x01
-    Size:            0x18
-  - Name:            .MIPS.abiflags
-    Type:            SHT_MIPS_ABIFLAGS
-    Flags:           [ SHF_ALLOC ]
-    AddressAlign:    0x08
-    Content:         '000020010101000100000000000000000000000000000000'
 Symbols:
   Local:
     - Name:            .text
@@ -98,12 +88,6 @@ Symbols:
     - Name:            .bss
       Type:            STT_SECTION
       Section:         .bss
-    - Name:            .reginfo
-      Type:            STT_SECTION
-      Section:         .reginfo
-    - Name:            .MIPS.abiflags
-      Type:            STT_SECTION
-      Section:         .MIPS.abiflags
   Global:
     - Name:            main
       Section:         .text

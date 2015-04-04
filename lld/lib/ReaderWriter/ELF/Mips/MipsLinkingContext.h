@@ -10,6 +10,7 @@
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 
 #include "MipsELFFlagsMerger.h"
+#include "MipsReginfo.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 namespace lld {
@@ -46,7 +47,11 @@ public:
   MipsLinkingContext(llvm::Triple triple);
 
   std::error_code mergeHeaderFlags(uint8_t fileClass, uint64_t flags) override;
+  void mergeReginfoMask(const MipsReginfo &info);
+
   uint32_t getMergedELFFlags() const;
+  const llvm::Optional<MipsReginfo> &getMergeReginfoMask() const;
+
   void registerRelocationNames(Registry &r) override;
 
   // ELFLinkingContext
@@ -62,6 +67,7 @@ public:
 
 private:
   MipsELFFlagsMerger _flagsMerger;
+  llvm::Optional<MipsReginfo> _reginfoMask;
 };
 
 } // elf

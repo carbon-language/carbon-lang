@@ -6,20 +6,20 @@
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=SEC %s
 
 # SYM:      Name: L1 (1)
-# SYM-NEXT: Value: 0xCC
+# SYM-NEXT: Value: 0x104
 # SYM-NEXT: Size: 4
 # SYM-NEXT: Binding: Local (0x0)
 # SYM-NEXT: Type: Function (0x2)
 # SYM-NEXT: Other: 0
-# SYM-NEXT: Section: .text (0x4)
+# SYM-NEXT: Section: .text (0x5)
 
 # SYM:      Name: G1 (4)
-# SYM-NEXT: Value: 0xD0
+# SYM-NEXT: Value: 0x108
 # SYM-NEXT: Size: 4
 # SYM-NEXT: Binding: Global (0x1)
 # SYM-NEXT: Type: Function (0x2)
 # SYM-NEXT: Other: 0
-# SYM-NEXT: Section: .text (0x4)
+# SYM-NEXT: Section: .text (0x5)
 
 # SYM:      Name: _gp (34)
 # SYM-NEXT: Value: 0x8FF0
@@ -29,9 +29,9 @@
 # SYM-NEXT: Other: 0
 # SYM-NEXT: Section: Absolute (0xFFF1)
 
-# 0x160db == 0xffff (addend) + 0x00cc (L1) + 0x01f000 (GP0) - 0x8ff0 (_gp)
+# 0x6113 == 0xffff (addend) + 0x0104 (L1) + 0x01f000 (GP0) - 0x8ff0 (_gp)
 # SEC:      Contents of section .rodata:
-# SEC-NEXT:  00d4 db600008 00000000 00000000 00000000  .`..............
+# SEC-NEXT:  010c 13610008 00000000 00000000 00000000
 
 !ELF
 FileHeader:

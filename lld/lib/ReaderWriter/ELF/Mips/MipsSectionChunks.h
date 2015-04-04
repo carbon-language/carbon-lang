@@ -9,11 +9,58 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
 
+#include "MipsReginfo.h"
+
 namespace lld {
 namespace elf {
 
 template <typename ELFT> class MipsTargetLayout;
 class MipsLinkingContext;
+
+/// \brief Handle Mips .reginfo section
+template <class ELFT> class MipsReginfoSection : public Section<ELFT> {
+public:
+  MipsReginfoSection(const ELFLinkingContext &ctx,
+                     MipsTargetLayout<ELFT> &targetLayout,
+                     const MipsReginfo &reginfo)
+      : Section<ELFT>(ctx, ".reginfo", "MipsReginfo"),
+        _targetLayout(targetLayout) {
+    this->setOrder(MipsTargetLayout<ELFT>::ORDER_RO_NOTE);
+    this->_entSize = sizeof(Elf_RegInfo);
+    this->_fsize = sizeof(Elf_RegInfo);
+    this->_msize = sizeof(Elf_RegInfo);
+    this->_alignment = 4;
+    this->_type = SHT_MIPS_REGINFO;
+    this->_flags = SHF_ALLOC;
+
+    memset(&_reginfo, 0, sizeof(_reginfo));
+    _reginfo.ri_gprmask = reginfo._gpRegMask;
+    _reginfo.ri_cprmask[0] = reginfo._cpRegMask[0];
+    _reginfo.ri_cprmask[1] = reginfo._cpRegMask[1];
+    _reginfo.ri_cprmask[2] = reginfo._cpRegMask[2];
+    _reginfo.ri_cprmask[3] = reginfo._cpRegMask[3];
+  }
+
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override {
+    uint8_t *dest = buffer.getBufferStart() + this->fileOffset();
+    std::memcpy(dest, &_reginfo, this->_fsize);
+  }
+
+  void finalize() override {
+    const AtomLayout *gpAtom = _targetLayout.getGP();
+    _reginfo.ri_gp_value = gpAtom ? gpAtom->_virtualAddr : 0;;
+
+    if (this->_outputSection)
+      this->_outputSection->setType(this->_type);
+  }
+
+private:
+  typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+
+  Elf_RegInfo _reginfo;
+  MipsTargetLayout<ELFT> &_targetLayout;
+};
 
 /// \brief Handle Mips GOT section
 template <class ELFT> class MipsGOTSection : public AtomSection<ELFT> {
