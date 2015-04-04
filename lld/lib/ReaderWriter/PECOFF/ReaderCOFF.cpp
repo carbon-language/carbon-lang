@@ -1049,8 +1049,7 @@ class COFFObjectReader : public Reader {
 public:
   COFFObjectReader(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
-  bool canParse(file_magic magic, StringRef ext,
-                const MemoryBuffer &) const override {
+  bool canParse(file_magic magic, const MemoryBuffer &) const override {
     return magic == llvm::sys::fs::file_magic::coff_object;
   }
 

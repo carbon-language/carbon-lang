@@ -988,8 +988,7 @@ namespace {
 
 class NativeReader : public Reader {
 public:
-  virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &mb) const override {
+  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
     const NativeFileHeader *const header =
         reinterpret_cast<const NativeFileHeader *>(mb.getBufferStart());
     return (memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC,

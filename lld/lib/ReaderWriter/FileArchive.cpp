@@ -265,9 +265,8 @@ class ArchiveReader : public Reader {
 public:
   ArchiveReader(bool logLoading) : _logLoading(logLoading) {}
 
-  bool canParse(file_magic magic, StringRef,
-                const MemoryBuffer &) const override {
-    return (magic == llvm::sys::fs::file_magic::archive);
+  bool canParse(file_magic magic, const MemoryBuffer &) const override {
+    return magic == llvm::sys::fs::file_magic::archive;
   }
 
   std::error_code

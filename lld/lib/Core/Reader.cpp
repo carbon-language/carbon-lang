@@ -13,7 +13,6 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include <memory>
 #include <system_error>
 
@@ -32,15 +31,13 @@ void Registry::add(std::unique_ptr<YamlIOTaggedDocumentHandler> handler) {
 std::error_code
 Registry::loadFile(std::unique_ptr<MemoryBuffer> mb,
                    std::vector<std::unique_ptr<File>> &result) const {
-  // Get file type.
+  // Get file magic.
   StringRef content(mb->getBufferStart(), mb->getBufferSize());
   llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(content);
-  // Get file extension.
-  StringRef extension = llvm::sys::path::extension(mb->getBufferIdentifier());
 
   // Ask each registered reader if it can handle this file type or extension.
   for (const std::unique_ptr<Reader> &reader : _readers) {
-    if (!reader->canParse(fileType, extension, *mb))
+    if (!reader->canParse(fileType, *mb))
       continue;
     if (std::error_code ec = reader->loadFile(std::move(mb), *this, result))
       return ec;

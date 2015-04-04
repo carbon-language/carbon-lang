@@ -25,10 +25,9 @@ public:
 
   ELFReader(ContextT &ctx) : _ctx(ctx) {}
 
-  bool canParse(file_magic magic, StringRef,
-                const MemoryBuffer &buf) const override {
+  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
     return (FileT<ELFT>::canParse(magic) &&
-            elfHeader(buf)->e_machine == ContextT::machine);
+            elfHeader(mb)->e_machine == ContextT::machine);
   }
 
   std::error_code

@@ -45,10 +45,8 @@ public:
   /// Sniffs the file to determine if this Reader can parse it.
   /// The method is called with:
   /// 1) the file_magic enumeration returned by identify_magic()
-  /// 2) the file extension (e.g. ".obj")
-  /// 3) the whole file content buffer if the above is not enough.
-  virtual bool canParse(file_magic magic, StringRef fileExtension,
-                        const MemoryBuffer &mb) const = 0;
+  /// 2) the whole file content buffer if the above is not enough.
+  virtual bool canParse(file_magic magic, const MemoryBuffer &mb) const = 0;
 
   /// \brief Parse a supplied buffer (already filled with the contents of a
   /// file) and create a File object.
