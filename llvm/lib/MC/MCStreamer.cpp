@@ -669,12 +669,6 @@ void MCStreamer::SwitchSection(const MCSection *Section,
   MCSectionSubPair curSection = SectionStack.back().first;
   SectionStack.back().second = curSection;
   if (MCSectionSubPair(Section, Subsection) != curSection) {
-    const MCSection *CurSec = curSection.first;
-    if (CurSec && CurSec->isUnique()) {
-      MCSymbol *Sym = curSection.first->getEndSymbol(Context);
-      if (!Sym->isInSection())
-        EmitLabel(Sym);
-    }
     SectionStack.back().first = MCSectionSubPair(Section, Subsection);
     assert(!Section->hasEnded() && "Section already ended");
     ChangeSection(Section, Subsection);

@@ -39,11 +39,10 @@ private:
   mutable MCSymbol *End;
 
 protected:
-  MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin, bool Unique)
-      : Begin(Begin), End(nullptr), Variant(V), Kind(K), Unique(Unique) {}
+  MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
+      : Begin(Begin), End(nullptr), Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
-  bool Unique;
 
 public:
   virtual ~MCSection();
@@ -55,7 +54,6 @@ public:
   MCSymbol *getBeginSymbol() const { return Begin; }
   MCSymbol *getEndSymbol(MCContext &Ctx) const;
   bool hasEnded() const;
-  bool isUnique() const { return Unique; }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

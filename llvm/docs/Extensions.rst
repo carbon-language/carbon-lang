@@ -165,6 +165,29 @@ and ``.bar`` is associated to ``.foo``.
 	.section	.foo,"bw",discard, "sym"
 	.section	.bar,"rd",associative, "sym"
 
+
+ELF-Dependent
+-------------
+
+``.section`` Directive
+^^^^^^^^^^^^^^^^^^^^^^
+
+In order to support creating multiple sections with the same name and comdat,
+it is possible to add an unique number at the end of the ``.seciton`` directive.
+For example, the following code creates two sections named ``.text``.
+
+.. code-block:: gas
+
+	.section	.text,"ax",@progbits,unique 1
+        nop
+
+	.section	.text,"ax",@progbits,unique 2
+        nop
+
+
+The unique number is not present in the resulting object at all. It is just used
+in the assembler to differentiate the sections.
+
 Target Specific Behaviour
 =========================
 

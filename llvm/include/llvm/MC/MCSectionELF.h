@@ -39,6 +39,8 @@ class MCSectionELF : public MCSection {
   /// below.
   unsigned Flags;
 
+  unsigned UniqueID;
+
   /// EntrySize - The size of each entry in this section. This size only
   /// makes sense for sections that contain fixed-sized entries. If a
   /// section does not contain fixed-sized entries 'EntrySize' will be 0.
@@ -49,10 +51,10 @@ class MCSectionELF : public MCSection {
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags, SectionKind K,
-               unsigned entrySize, const MCSymbol *group, bool Unique,
+               unsigned entrySize, const MCSymbol *group, unsigned UniqueID,
                MCSymbol *Begin)
-      : MCSection(SV_ELF, K, Begin, Unique), SectionName(Section), Type(type),
-        Flags(flags), EntrySize(entrySize), Group(group) {}
+      : MCSection(SV_ELF, K, Begin), SectionName(Section), Type(type),
+        Flags(flags), UniqueID(UniqueID), EntrySize(entrySize), Group(group) {}
   ~MCSectionELF();
 
   void setSectionName(StringRef Name) { SectionName = Name; }
@@ -73,6 +75,9 @@ public:
                             const MCExpr *Subsection) const override;
   bool UseCodeAlign() const override;
   bool isVirtualSection() const override;
+
+  bool isUnique() const { return UniqueID != ~0U; }
+  unsigned getUniqueID() const { return UniqueID; }
 
   static bool classof(const MCSection *S) {
     return S->getVariant() == SV_ELF;

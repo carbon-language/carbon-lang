@@ -34,6 +34,7 @@ namespace llvm {
 
 class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
   bool UseInitArray;
+  mutable unsigned NextUniqueID = 0;
 
 public:
   TargetLoweringObjectFileELF() : UseInitArray(false) {}

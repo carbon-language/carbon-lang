@@ -379,7 +379,7 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
   const MCExpr *Subsection = nullptr;
   bool UseLastGroup = false;
   StringRef UniqueStr;
-  bool Unique = false;
+  int64_t UniqueID = ~0;
 
   // Set the defaults first.
   if (SectionName == ".fini" || SectionName == ".init" ||
@@ -470,7 +470,12 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
           return TokError("expected identifier in directive");
         if (UniqueStr != "unique")
           return TokError("expected 'unique'");
-        Unique = true;
+        if (getParser().parseAbsoluteExpression(UniqueID))
+          return true;
+        if (UniqueID < 0)
+          return TokError("unique id must be positive");
+        if (!isUInt<32>(UniqueID) || UniqueID == ~0U)
+          return TokError("unique id is too large");
       }
     }
   }
@@ -520,7 +525,7 @@ EndStmt:
   }
 
   const MCSection *ELFSection = getContext().getELFSection(
-      SectionName, Type, Flags, Size, GroupName, Unique);
+      SectionName, Type, Flags, Size, GroupName, UniqueID);
   getStreamer().SwitchSection(ELFSection, Subsection);
 
   if (getContext().getGenDwarfForAssembly()) {

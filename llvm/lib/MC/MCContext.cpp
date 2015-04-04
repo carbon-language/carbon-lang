@@ -273,9 +273,12 @@ void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
   if (const MCSymbol *Group = Section->getGroup())
     GroupName = Group->getName();
 
-  ELFUniquingMap.erase(ELFSectionKey{Section->getSectionName(), GroupName});
-  auto I = ELFUniquingMap.insert(std::make_pair(ELFSectionKey{Name, GroupName},
-                                                Section)).first;
+  unsigned UniqueID = Section->getUniqueID();
+  ELFUniquingMap.erase(
+      ELFSectionKey{Section->getSectionName(), GroupName, UniqueID});
+  auto I = ELFUniquingMap.insert(std::make_pair(
+                                     ELFSectionKey{Name, GroupName, UniqueID},
+                                     Section)).first;
   StringRef CachedName = I->first.SectionName;
   const_cast<MCSectionELF*>(Section)->setSectionName(CachedName);
 }
@@ -294,7 +297,7 @@ MCContext::createELFRelSection(StringRef Name, unsigned Type, unsigned Flags,
 
 const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                              unsigned Flags, unsigned EntrySize,
-                                             StringRef Group, bool Unique,
+                                             StringRef Group, unsigned UniqueID,
                                              const char *BeginSymName) {
   MCSymbol *GroupSym = nullptr;
   if (!Group.empty()) {
@@ -304,9 +307,9 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
 
   // Do the lookup, if we have a hit, return it.
   auto IterBool = ELFUniquingMap.insert(
-      std::make_pair(ELFSectionKey{Section, Group}, nullptr));
+      std::make_pair(ELFSectionKey{Section, Group, UniqueID}, nullptr));
   auto &Entry = *IterBool.first;
-  if (!IterBool.second && !Unique)
+  if (!IterBool.second)
     return Entry.second;
 
   StringRef CachedName = Entry.first.SectionName;
@@ -322,9 +325,8 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
     Begin = createTempSymbol(BeginSymName, false);
 
   MCSectionELF *Result = new (*this) MCSectionELF(
-      CachedName, Type, Flags, Kind, EntrySize, GroupSym, Unique, Begin);
-  if (!Unique)
-    Entry.second = Result;
+      CachedName, Type, Flags, Kind, EntrySize, GroupSym, UniqueID, Begin);
+  Entry.second = Result;
   return Result;
 }
 
@@ -332,14 +334,14 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                              unsigned Flags, unsigned EntrySize,
                                              StringRef Group,
                                              const char *BeginSymName) {
-  return getELFSection(Section, Type, Flags, EntrySize, Group, false,
+  return getELFSection(Section, Type, Flags, EntrySize, Group, ~0,
                        BeginSymName);
 }
 
 const MCSectionELF *MCContext::CreateELFGroupSection() {
   MCSectionELF *Result = new (*this)
       MCSectionELF(".group", ELF::SHT_GROUP, 0, SectionKind::getReadOnly(), 4,
-                   nullptr, false, nullptr);
+                   nullptr, ~0, nullptr);
   return Result;
 }
 
