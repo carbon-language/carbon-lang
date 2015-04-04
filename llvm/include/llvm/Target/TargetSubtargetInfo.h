@@ -42,15 +42,17 @@ template <typename T> class SmallVectorImpl;
 /// be exposed through a TargetSubtargetInfo-derived class.
 ///
 class TargetSubtargetInfo : public MCSubtargetInfo {
-  TargetSubtargetInfo(const TargetSubtargetInfo&) = delete;
-  void operator=(const TargetSubtargetInfo&) = delete;
+  TargetSubtargetInfo(const TargetSubtargetInfo &) = delete;
+  void operator=(const TargetSubtargetInfo &) = delete;
+
 protected: // Can only create subclasses...
   TargetSubtargetInfo();
+
 public:
   // AntiDepBreakMode - Type of anti-dependence breaking that should
   // be performed before post-RA scheduling.
   typedef enum { ANTIDEP_NONE, ANTIDEP_CRITICAL, ANTIDEP_ALL } AntiDepBreakMode;
-  typedef SmallVectorImpl<const TargetRegisterClass*> RegClassVector;
+  typedef SmallVectorImpl<const TargetRegisterClass *> RegClassVector;
 
   virtual ~TargetSubtargetInfo();
 
@@ -89,8 +91,9 @@ public:
   /// MCSchedClassDesc with the isVariant property. This may return the ID of
   /// another variant SchedClass, but repeated invocation must quickly terminate
   /// in a nonvariant SchedClass.
-  virtual unsigned resolveSchedClass(unsigned SchedClass, const MachineInstr *MI,
-                                     const TargetSchedModel* SchedModel) const {
+  virtual unsigned resolveSchedClass(unsigned SchedClass,
+                                     const MachineInstr *MI,
+                                     const TargetSchedModel *SchedModel) const {
     return 0;
   }
 
@@ -128,20 +131,16 @@ public:
   /// scheduling heuristics (no custom MachineSchedStrategy) to make
   /// changes to the generic scheduling policy.
   virtual void overrideSchedPolicy(MachineSchedPolicy &Policy,
-                                   MachineInstr *begin,
-                                   MachineInstr *end,
+                                   MachineInstr *begin, MachineInstr *end,
                                    unsigned NumRegionInstrs) const {}
 
   // \brief Perform target specific adjustments to the latency of a schedule
   // dependency.
-  virtual void adjustSchedDependency(SUnit *def, SUnit *use,
-                                     SDep& dep) const { }
+  virtual void adjustSchedDependency(SUnit *def, SUnit *use, SDep &dep) const {}
 
   // For use with PostRAScheduling: get the anti-dependence breaking that should
   // be performed before post-RA scheduling.
-  virtual AntiDepBreakMode getAntiDepBreakMode() const {
-    return ANTIDEP_NONE;
-  }
+  virtual AntiDepBreakMode getAntiDepBreakMode() const { return ANTIDEP_NONE; }
 
   // For use with PostRAScheduling: in CriticalPathRCs, return any register
   // classes that should only be considered for anti-dependence breaking if they
@@ -177,9 +176,7 @@ public:
   }
 
   /// Enable tracking of subregister liveness in register allocator.
-  virtual bool enableSubRegLiveness() const {
-    return false;
-  }
+  virtual bool enableSubRegLiveness() const { return false; }
 };
 
 } // End llvm namespace
