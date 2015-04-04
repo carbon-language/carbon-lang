@@ -16,6 +16,9 @@
 // CHECK-DAG: @"_CT??_R0?AUVariadic@@@8??_OVariadic@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor14* @"\01??_R0?AUVariadic@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.Variadic*, %struct.Variadic*)* @"\01??_OVariadic@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
 // CHECK-DAG: @"_CT??_R0?AUTemplateWithDefault@@@8??$?_OH@TemplateWithDefault@@QAEXAAU0@@Z1" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 0, i8* bitcast (%rtti.TypeDescriptor25* @"\01??_R0?AUTemplateWithDefault@@@8" to i8*), i32 0, i32 -1, i32 0, i32 1, i8* bitcast (void (%struct.TemplateWithDefault*, %struct.TemplateWithDefault*)* @"\01??$?_OH@TemplateWithDefault@@QAEXAAU0@@Z" to i8*) }, section ".xdata", comdat
 // CHECK-DAG: @"_CTA2$$T" = linkonce_odr unnamed_addr constant %eh.CatchableTypeArray.2 { i32 2, [2 x %eh.CatchableType*] [%eh.CatchableType* @"_CT??_R0$$T@84", %eh.CatchableType* @"_CT??_R0PAX@84"] }, section ".xdata", comdat
+// CHECK-DAG: @"_CT??_R0P6AXXZ@84" = linkonce_odr unnamed_addr constant %eh.CatchableType { i32 1, i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0P6AXXZ@8" to i8*), i32 0, i32 -1, i32 0, i32 4, i8* null }, section ".xdata", comdat
+// CHECK-DAG: @_CTA1P6AXXZ = linkonce_odr unnamed_addr constant %eh.CatchableTypeArray.1 { i32 1, [1 x %eh.CatchableType*] [%eh.CatchableType* @"_CT??_R0P6AXXZ@84"] }, section ".xdata", comdat
+// CHECK-DAG: @_TI1P6AXXZ = linkonce_odr unnamed_addr constant %eh.ThrowInfo { i32 0, i8* null, i8* null, i8* bitcast (%eh.CatchableTypeArray.1* @_CTA1P6AXXZ to i8*) }, section ".xdata", comdat
 
 
 struct N { ~N(); };
@@ -103,4 +106,10 @@ void *GetExceptionInfo_test0() {
 // CHECK-LABEL: @"\01?GetExceptionInfo_test0@@YAPAXXZ"
 // CHECK:  ret i8* bitcast (%eh.ThrowInfo* @_TI1H to i8*)
   return std::__GetExceptionInfo(0);
+}
+
+void *GetExceptionInfo_test1() {
+// CHECK-LABEL: @"\01?GetExceptionInfo_test1@@YAPAXXZ"
+// CHECK:  ret i8* bitcast (%eh.ThrowInfo* @_TI1P6AXXZ to i8*)
+  return std::__GetExceptionInfo<void (*)()>(&h);
 }

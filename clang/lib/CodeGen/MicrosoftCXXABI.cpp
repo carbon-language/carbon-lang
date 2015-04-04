@@ -3597,9 +3597,10 @@ llvm::GlobalVariable *MicrosoftCXXABI::getCatchableTypeArray(QualType T) {
   //         - a standard pointer conversion (4.10) not involving conversions to
   //           pointers to private or protected or ambiguous classes
   //
-  // All pointers are convertible to pointer-to-void so ensure that it is in the
-  // CatchableTypeArray.
-  if (IsPointer)
+  // C++14 [conv.ptr]p2:
+  //   A prvalue of type "pointer to cv T," where T is an object type, can be
+  //   converted to a prvalue of type "pointer to cv void".
+  if (IsPointer && T->getPointeeType()->isObjectType())
     CatchableTypes.insert(getCatchableType(getContext().VoidPtrTy));
 
   // C++14 [except.handle]p3:
