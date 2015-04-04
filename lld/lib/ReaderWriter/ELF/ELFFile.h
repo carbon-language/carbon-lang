@@ -102,9 +102,6 @@ public:
         _ordinal(0), _doStringsMerge(ctx.mergeCommonStrings()),
         _useWrap(ctx.wrapCalls().size()), _ctx(ctx) {}
 
-  static ErrorOr<std::unique_ptr<ELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx);
-
   virtual Reference::KindArch kindArch();
 
   /// \brief Create symbols from LinkingContext.
@@ -477,13 +474,6 @@ public:
     llvm_unreachable("cannot add atoms to Runtime files");
   }
 };
-
-template <class ELFT>
-ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
-ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb,
-                      ELFLinkingContext &ctx) {
-  return llvm::make_unique<ELFFile<ELFT>>(std::move(mb), ctx);
-}
 
 template <class ELFT>
 std::error_code ELFFile<ELFT>::doParse() {

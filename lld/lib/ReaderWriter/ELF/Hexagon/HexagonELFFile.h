@@ -112,12 +112,6 @@ public:
   HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, HexagonLinkingContext &ctx)
       : ELFFile<ELFT>(std::move(mb), ctx) {}
 
-  static ErrorOr<std::unique_ptr<HexagonELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, HexagonLinkingContext &ctx) {
-    return std::unique_ptr<HexagonELFFile<ELFT>>(
-        new HexagonELFFile<ELFT>(std::move(mb), ctx));
-  }
-
   bool isCommonSymbol(const Elf_Sym *symbol) const override {
     switch (symbol->st_shndx) {
     // Common symbols

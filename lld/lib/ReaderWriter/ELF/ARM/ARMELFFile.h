@@ -60,12 +60,6 @@ public:
   ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx)
       : ELFFile<ELFT>(std::move(mb), ctx) {}
 
-  static ErrorOr<std::unique_ptr<ARMELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx) {
-    return std::unique_ptr<ARMELFFile<ELFT>>(
-        new ARMELFFile<ELFT>(std::move(mb), ctx));
-  }
-
 protected:
   /// Returns initial addend; for ARM it is 0, because it is read
   /// during the relocations applying
