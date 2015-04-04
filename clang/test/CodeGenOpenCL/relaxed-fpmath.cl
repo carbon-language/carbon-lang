@@ -2,7 +2,6 @@
 // RUN: %clang_cc1 %s -emit-llvm -cl-fast-relaxed-math -o - | FileCheck %s -check-prefix=FAST
 // RUN: %clang_cc1 %s -emit-llvm -cl-finite-math-only -o - | FileCheck %s -check-prefix=FINITE
 // RUN: %clang_cc1 %s -emit-llvm -cl-unsafe-math-optimizations -o - | FileCheck %s -check-prefix=UNSAFE
-// RUN: %clang_cc1 %s -emit-llvm -cl-no-signed-zeros -o - | FileCheck %s -check-prefix=NOSZ
 
 typedef __attribute__(( ext_vector_type(4) )) float float4;
 
@@ -13,7 +12,6 @@ float spscalardiv(float a, float b) {
   // FAST: fdiv fast float
   // FINITE: fdiv nnan ninf float
   // UNSAFE: fdiv nnan float
-  // NOSZ: fdiv nsz float
   return a / b;
 }
 // CHECK: attributes
