@@ -82,6 +82,15 @@ int main() {
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be
   // CHECK-FIXES: {{^  }}static_assert(ZERO_MACRO , "Report me!");
 
+  assert(0);
+
+#define false false
+  assert(false);
+
+#define false 0
+  assert(false);
+#undef false
+
   assert(10==5 && "Report me!");
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be
   // CHECK-FIXES: {{^  }}static_assert(10==5 , "Report me!");
