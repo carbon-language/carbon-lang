@@ -42,7 +42,6 @@ typedef llvm::object::ELFType<llvm::support::big, 2, true> Mips64BEType;
 
 class MipsLinkingContext final : public ELFLinkingContext {
 public:
-  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   static const int machine = llvm::ELF::EM_MIPS;
   MipsLinkingContext(llvm::Triple triple);
 

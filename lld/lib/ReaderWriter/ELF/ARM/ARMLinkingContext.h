@@ -19,7 +19,6 @@ namespace elf {
 
 class ARMLinkingContext final : public ELFLinkingContext {
 public:
-  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   static const int machine = llvm::ELF::EM_ARM;
   ARMLinkingContext(llvm::Triple);
 
