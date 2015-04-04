@@ -1568,10 +1568,11 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
       ArrayType *VarArgArrayTy = ArrayType::get(DFSF.DFS.ShadowTy, VarArgSize);
       AllocaInst *VarArgShadow =
           new AllocaInst(VarArgArrayTy, "", DFSF.F->getEntryBlock().begin());
-      Args.push_back(IRB.CreateConstGEP2_32(VarArgShadow, 0, 0));
+      Args.push_back(IRB.CreateConstGEP2_32(VarArgArrayTy, VarArgShadow, 0, 0));
       for (unsigned n = 0; i != e; ++i, ++n) {
-        IRB.CreateStore(DFSF.getShadow(*i),
-                        IRB.CreateConstGEP2_32(VarArgShadow, 0, n));
+        IRB.CreateStore(
+            DFSF.getShadow(*i),
+            IRB.CreateConstGEP2_32(VarArgArrayTy, VarArgShadow, 0, n));
         Args.push_back(*i);
       }
     }
