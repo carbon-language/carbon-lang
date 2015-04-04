@@ -298,18 +298,41 @@ namespace llvm {
     }
 
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                      unsigned Flags) {
+      return getELFSection(Section, Type, Flags, nullptr);
+    }
+
+    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                       unsigned Flags,
-                                      const char *BeginSymName = nullptr);
+                                      const char *BeginSymName) {
+      return getELFSection(Section, Type, Flags, 0, "", BeginSymName);
+    }
+
+    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                      unsigned Flags, unsigned EntrySize,
+                                      StringRef Group) {
+      return getELFSection(Section, Type, Flags, EntrySize, Group, nullptr);
+    }
 
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                       unsigned Flags, unsigned EntrySize,
                                       StringRef Group,
-                                      const char *BeginSymName = nullptr);
+                                      const char *BeginSymName) {
+      return getELFSection(Section, Type, Flags, EntrySize, Group, ~0,
+                           BeginSymName);
+    }
+
+    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                      unsigned Flags, unsigned EntrySize,
+                                      StringRef Group, unsigned UniqueID) {
+      return getELFSection(Section, Type, Flags, EntrySize, Group, UniqueID,
+                           nullptr);
+    }
 
     const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                       unsigned Flags, unsigned EntrySize,
                                       StringRef Group, unsigned UniqueID,
-                                      const char *BeginSymName = nullptr);
+                                      const char *BeginSymName);
 
     const MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
                                             unsigned Flags, unsigned EntrySize,

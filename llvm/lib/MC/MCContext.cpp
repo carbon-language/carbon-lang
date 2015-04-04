@@ -262,12 +262,6 @@ MCContext::getMachOSection(StringRef Segment, StringRef Section,
                                             Reserved2, Kind, Begin);
 }
 
-const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
-                                             unsigned Flags,
-                                             const char *BeginSymName) {
-  return getELFSection(Section, Type, Flags, 0, "", BeginSymName);
-}
-
 void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
   StringRef GroupName;
   if (const MCSymbol *Group = Section->getGroup())
@@ -328,14 +322,6 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
       CachedName, Type, Flags, Kind, EntrySize, GroupSym, UniqueID, Begin);
   Entry.second = Result;
   return Result;
-}
-
-const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
-                                             unsigned Flags, unsigned EntrySize,
-                                             StringRef Group,
-                                             const char *BeginSymName) {
-  return getELFSection(Section, Type, Flags, EntrySize, Group, ~0,
-                       BeginSymName);
 }
 
 const MCSectionELF *MCContext::CreateELFGroupSection() {
