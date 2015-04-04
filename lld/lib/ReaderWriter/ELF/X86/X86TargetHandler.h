@@ -27,7 +27,7 @@ class X86TargetHandler final : public TargetHandler {
 public:
   X86TargetHandler(X86LinkingContext &ctx);
 
-  const X86TargetRelocationHandler &getRelocationHandler() const override {
+  const TargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }
 

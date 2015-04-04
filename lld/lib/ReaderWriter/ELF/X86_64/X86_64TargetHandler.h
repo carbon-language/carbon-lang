@@ -65,7 +65,7 @@ class X86_64TargetHandler : public TargetHandler {
 public:
   X86_64TargetHandler(X86_64LinkingContext &ctx);
 
-  const X86_64TargetRelocationHandler &getRelocationHandler() const override {
+  const TargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }
 

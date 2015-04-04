@@ -107,7 +107,7 @@ class HexagonTargetHandler final : public TargetHandler {
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
-  const HexagonTargetRelocationHandler &getRelocationHandler() const override {
+  const TargetRelocationHandler &getRelocationHandler() const override {
     return *_relocationHandler;
   }
 
