@@ -1079,14 +1079,14 @@ public:
 
     return Insert(GetElementPtrInst::Create(Ty, Ptr, Idx), Name);
   }
-  Value *CreateConstInBoundsGEP1_32(Value *Ptr, unsigned Idx0,
+  Value *CreateConstInBoundsGEP1_32(Type *Ty, Value *Ptr, unsigned Idx0,
                                     const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idx), Name);
+      return Insert(Folder.CreateInBoundsGetElementPtr(Ty, PC, Idx), Name);
 
-    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(Ty, Ptr, Idx), Name);
   }
   Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
                     const Twine &Name = "") {
