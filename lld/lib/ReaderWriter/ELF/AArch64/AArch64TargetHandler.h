@@ -21,9 +21,8 @@ class AArch64LinkingContext;
 
 class AArch64TargetHandler final : public TargetHandler {
   typedef llvm::object::ELFType<llvm::support::little, 2, true> ELFTy;
-  typedef ELFObjectReader<ELFTy, AArch64LinkingContext, lld::elf::ELFFile>
-      ObjReader;
-  typedef ELFDSOReader<AArch64ELFType, AArch64LinkingContext> DSOReader;
+  typedef ELFReader<ELFTy, AArch64LinkingContext, ELFFile> ObjReader;
+  typedef ELFReader<ELFTy, AArch64LinkingContext, DynamicFile> DSOReader;
 
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);

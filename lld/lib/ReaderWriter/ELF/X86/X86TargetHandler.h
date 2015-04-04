@@ -21,9 +21,8 @@ class X86LinkingContext;
 
 class X86TargetHandler final : public TargetHandler {
   typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFTy;
-  typedef ELFObjectReader<ELFTy, X86LinkingContext, lld::elf::ELFFile>
-      ObjReader;
-  typedef ELFDSOReader<ELFTy, X86LinkingContext> DSOReader;
+  typedef ELFReader<ELFTy, X86LinkingContext, ELFFile> ObjReader;
+  typedef ELFReader<ELFTy, X86LinkingContext, DynamicFile> DSOReader;
 
 public:
   X86TargetHandler(X86LinkingContext &ctx);

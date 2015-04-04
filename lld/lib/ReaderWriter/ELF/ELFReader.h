@@ -56,12 +56,6 @@ protected:
   ContextT &_ctx;
 };
 
-template <typename ELFT, typename ContextT, template <typename> class FileT>
-using ELFObjectReader = ELFReader<ELFT, ContextT, FileT>;
-
-template <typename ELFT, typename ContextT>
-using ELFDSOReader = ELFReader<ELFT, ContextT, DynamicFile>;
-
 } // namespace elf
 } // namespace lld
 

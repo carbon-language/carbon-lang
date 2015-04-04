@@ -88,9 +88,8 @@ private:
 
 /// \brief TargetHandler for Mips
 template <class ELFT> class MipsTargetHandler final : public TargetHandler {
-  typedef ELFObjectReader<ELFT, MipsLinkingContext, lld::elf::MipsELFFile>
-      ObjReader;
-  typedef ELFDSOReader<ELFT, MipsLinkingContext> DSOReader;
+  typedef ELFReader<ELFT, MipsLinkingContext, MipsELFFile> ObjReader;
+  typedef ELFReader<ELFT, MipsLinkingContext, DynamicFile> DSOReader;
 
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)

@@ -61,9 +61,8 @@ private:
 
 class ARMTargetHandler final : public TargetHandler {
   typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFTy;
-  typedef ELFObjectReader<ELFTy, ARMLinkingContext, lld::elf::ARMELFFile>
-      ObjReader;
-  typedef ELFDSOReader<ELFTy, ARMLinkingContext> DSOReader;
+  typedef ELFReader<ELFTy, ARMLinkingContext, ARMELFFile> ObjReader;
+  typedef ELFReader<ELFTy, ARMLinkingContext, DynamicFile> DSOReader;
 
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
