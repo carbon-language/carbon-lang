@@ -734,7 +734,8 @@ void CodeGenFunction::ExpandTypeFromArgs(
   auto Exp = getTypeExpansion(Ty, getContext());
   if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
     for (int i = 0, n = CAExp->NumElts; i < n; i++) {
-      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(LV.getAddress(), 0, i);
+      llvm::Value *EltAddr =
+          Builder.CreateConstGEP2_32(nullptr, LV.getAddress(), 0, i);
       LValue LV = MakeAddrLValue(EltAddr, CAExp->EltTy);
       ExpandTypeFromArgs(CAExp->EltTy, LV, AI);
     }
@@ -775,7 +776,7 @@ void CodeGenFunction::ExpandTypeToArgs(
   if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
     llvm::Value *Addr = RV.getAggregateAddr();
     for (int i = 0, n = CAExp->NumElts; i < n; i++) {
-      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(Addr, 0, i);
+      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(nullptr, Addr, 0, i);
       RValue EltRV =
           convertTempToRValue(EltAddr, CAExp->EltTy, SourceLocation());
       ExpandTypeToArgs(CAExp->EltTy, EltRV, IRFuncTy, IRCallArgs, IRCallArgPos);
@@ -843,7 +844,7 @@ EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
     return SrcPtr;
 
   // GEP into the first element.
-  SrcPtr = CGF.Builder.CreateConstGEP2_32(SrcPtr, 0, 0, "coerce.dive");
+  SrcPtr = CGF.Builder.CreateConstGEP2_32(SrcSTy, SrcPtr, 0, 0, "coerce.dive");
 
   // If the first element is a struct, recurse.
   llvm::Type *SrcTy =
@@ -981,7 +982,7 @@ static void BuildAggStore(CodeGenFunction &CGF, llvm::Value *Val,
   if (llvm::StructType *STy =
         dyn_cast<llvm::StructType>(Val->getType())) {
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      llvm::Value *EltPtr = CGF.Builder.CreateConstGEP2_32(DestPtr, 0, i);
+      llvm::Value *EltPtr = CGF.Builder.CreateConstGEP2_32(STy, DestPtr, 0, i);
       llvm::Value *Elt = CGF.Builder.CreateExtractValue(Val, i);
       llvm::StoreInst *SI = CGF.Builder.CreateStore(Elt, EltPtr,
                                                     DestIsVolatile);
@@ -1961,7 +1962,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
             auto AI = FnArgs[FirstIRArg + i];
             AI->setName(Arg->getName() + ".coerce" + Twine(i));
-            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(Ptr, 0, i);
+            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(STy, Ptr, 0, i);
             Builder.CreateStore(AI, EltPtr);
           }
         } else {
@@ -1974,7 +1975,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
             auto AI = FnArgs[FirstIRArg + i];
             AI->setName(Arg->getName() + ".coerce" + Twine(i));
-            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(TempV, 0, i);
+            llvm::Value *EltPtr =
+                Builder.CreateConstGEP2_32(ArgI.getCoerceToType(), TempV, 0, i);
             Builder.CreateStore(AI, EltPtr);
           }
 
@@ -3233,7 +3235,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
         assert(NumIRArgs == STy->getNumElements());
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-          llvm::Value *EltPtr = Builder.CreateConstGEP2_32(SrcPtr, 0, i);
+          llvm::Value *EltPtr = Builder.CreateConstGEP2_32(STy, SrcPtr, 0, i);
           llvm::LoadInst *LI = Builder.CreateLoad(EltPtr);
           // We don't know what we're loading from.
           LI->setAlignment(1);

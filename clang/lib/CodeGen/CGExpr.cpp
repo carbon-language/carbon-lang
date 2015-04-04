@@ -3369,7 +3369,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
       llvm::Value *CalleePrefixStruct = Builder.CreateBitCast(
           Callee, llvm::PointerType::getUnqual(PrefixStructTy));
       llvm::Value *CalleeSigPtr =
-          Builder.CreateConstGEP2_32(CalleePrefixStruct, 0, 0);
+          Builder.CreateConstGEP2_32(PrefixStructTy, CalleePrefixStruct, 0, 0);
       llvm::Value *CalleeSig = Builder.CreateLoad(CalleeSigPtr);
       llvm::Value *CalleeSigMatch = Builder.CreateICmpEQ(CalleeSig, PrefixSig);
 
@@ -3379,7 +3379,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
 
       EmitBlock(TypeCheck);
       llvm::Value *CalleeRTTIPtr =
-          Builder.CreateConstGEP2_32(CalleePrefixStruct, 0, 1);
+          Builder.CreateConstGEP2_32(PrefixStructTy, CalleePrefixStruct, 0, 1);
       llvm::Value *CalleeRTTI = Builder.CreateLoad(CalleeRTTIPtr);
       llvm::Value *CalleeRTTIMatch =
           Builder.CreateICmpEQ(CalleeRTTI, FTRTTIConst);
