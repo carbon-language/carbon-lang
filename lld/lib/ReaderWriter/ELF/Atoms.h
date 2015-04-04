@@ -13,6 +13,7 @@
 #include "TargetHandler.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Simple.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <memory>

@@ -17,6 +17,7 @@
 #include "lld/Core/Parallel.h"
 #include "lld/Core/range.h"
 #include "lld/ReaderWriter/AtomLayout.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
