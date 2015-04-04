@@ -29,7 +29,7 @@ define i64 @t3(i64 %x) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t3:
 ; CHECK: sbbq %rax, %rax
-; CHECK: andq $64, %rax
+; CHECK: andl $64, %eax
   %0 = icmp ult i64 %x, 18                        ; <i1> [#uses=1]
   %iftmp.2.0 = select i1 %0, i64 64, i64 0        ; <i64> [#uses=1]
   ret i64 %iftmp.2.0

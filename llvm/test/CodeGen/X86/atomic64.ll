@@ -48,7 +48,7 @@ define void @atomic_fetch_and64() nounwind {
 ; X64:       lock
 ; X64:       andq $3
   %t2 = atomicrmw and  i64* @sc64, i64 5 acquire
-; X64:       andq
+; X64:       andl
 ; X64:       lock
 ; X64:       cmpxchgq
   %t3 = atomicrmw and  i64* @sc64, i64 %t2 acquire

@@ -1233,6 +1233,7 @@ def : Pat<(store (add (loadi64 addr:$dst), 0x00000000800000000), addr:$dst),
 // least 32 bits of leading zeros. If in addition the last 32 bits can be
 // represented with a sign extension of a 8 bit constant, use that.
 
+let AddedComplexity = 1 in // Give priority over i64immSExt8.
 def : Pat<(and GR64:$src, i64immZExt32SExt8:$imm),
           (SUBREG_TO_REG
             (i64 0),
@@ -1241,6 +1242,7 @@ def : Pat<(and GR64:$src, i64immZExt32SExt8:$imm),
               (i32 (GetLo8XForm imm:$imm))),
             sub_32bit)>;
 
+let AddedComplexity = 1 in // Give priority over i64immSExt32.
 def : Pat<(and GR64:$src, i64immZExt32:$imm),
           (SUBREG_TO_REG
             (i64 0),
@@ -1267,16 +1269,19 @@ def : Pat<(and GR16:$src1, 0xff),
       Requires<[Not64BitMode]>;
 
 // r & (2^32-1) ==> movz
+let AddedComplexity = 1 in // Give priority over i64immZExt32.
 def : Pat<(and GR64:$src, 0x00000000FFFFFFFF),
           (SUBREG_TO_REG (i64 0),
                          (MOV32rr (EXTRACT_SUBREG GR64:$src, sub_32bit)),
                          sub_32bit)>;
 // r & (2^16-1) ==> movz
+let AddedComplexity = 1 in // Give priority over i64immZExt32.
 def : Pat<(and GR64:$src, 0xffff),
           (SUBREG_TO_REG (i64 0),
                       (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR64:$src, sub_16bit))),
                       sub_32bit)>;
 // r & (2^8-1) ==> movz
+let AddedComplexity = 1 in // Give priority over i64immSExt32.
 def : Pat<(and GR64:$src, 0xff),
           (SUBREG_TO_REG (i64 0),
                          (MOVZX32rr8 (i8 (EXTRACT_SUBREG GR64:$src, sub_8bit))),

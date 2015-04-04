@@ -3,7 +3,7 @@
 define i64 @z() nounwind {
 ; CHECK:      movq    $tm_nest_level@TPOFF, %r[[R0:[abcd]]]x
 ; CHECK-NEXT: addl    %fs:0, %e[[R0]]x
-; CHECK-NEXT: andq    $100, %r[[R0]]x
+; CHECK-NEXT: andl    $100, %e[[R0]]x
 
   ret i64 and (i64 ptrtoint (i32* @tm_nest_level to i64), i64 100)
 }

@@ -260,7 +260,7 @@ entry:
   %and = and i64 %x, 2147483647
   ret i64 %and
 ; CHECK-LABEL: bzhi64_small_constant_mask:
-; CHECK: andq  $2147483647, %r[[ARG1]]
+; CHECK: andl  $2147483647, %e[[ARG1]]
 }
 
 define i32 @blsi32(i32 %x) nounwind readnone {

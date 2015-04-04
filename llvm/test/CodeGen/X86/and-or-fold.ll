@@ -21,6 +21,6 @@ entry:
   %tmp1 = and i64 %x, 123127
   %tmp2 = or i64 %tmp1, 3
   ret i64 %tmp2
-; DARWIN-OPT:       andq $123124
+; DARWIN-OPT:       andl $123124
 ; DARWIN-OPT-NEXT:  leaq 3
 }

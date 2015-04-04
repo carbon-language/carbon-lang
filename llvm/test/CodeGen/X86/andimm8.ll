@@ -17,3 +17,15 @@ define void @foo(i64 %zed, i64* %x) nounwind {
   store i64 %t2, i64* %x, align 8
   ret void
 }
+
+define i64 @bar(i64 %zed) nounwind {
+; CHECK:  andl     $42, %edi               # encoding: [0x83,0xe7,0x2a]
+  %t1 = and i64 %zed, 42
+  ret i64 %t1
+}
+
+define i64 @baz(i64 %zed) nounwind {
+; CHECK:  andl $2147483647, %edi      # encoding: [0x81,0xe7,0xff,0xff,0xff,0x7f]
+  %t1 = and i64 %zed, 2147483647
+  ret i64 %t1
+}
