@@ -48,11 +48,11 @@ public:
     return std::error_code();
   }
 
-  const Elf_Ehdr *elfHeader(const MemoryBuffer &buf) const {
+private:
+  static const Elf_Ehdr *elfHeader(const MemoryBuffer &buf) {
     return reinterpret_cast<const Elf_Ehdr *>(buf.getBuffer().data());
   }
 
-protected:
   ContextT &_ctx;
 };
 
