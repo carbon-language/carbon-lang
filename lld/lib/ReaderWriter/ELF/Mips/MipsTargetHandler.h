@@ -9,8 +9,9 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_HANDLER_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_HANDLER_H
 
+#include "ELFReader.h"
 #include "MipsDynamicLibraryWriter.h"
-#include "MipsELFReader.h"
+#include "MipsELFFile.h"
 #include "MipsExecutableWriter.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationHandler.h"
@@ -87,6 +88,10 @@ private:
 
 /// \brief TargetHandler for Mips
 template <class ELFT> class MipsTargetHandler final : public TargetHandler {
+  typedef ELFObjectReader<ELFT, MipsLinkingContext, lld::elf::MipsELFFile>
+      ObjReader;
+  typedef ELFDSOReader<ELFT, MipsLinkingContext> DSOReader;
+
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)
       : _ctx(ctx), _targetLayout(new MipsTargetLayout<ELFT>(ctx)),
@@ -94,11 +99,11 @@ public:
             createMipsRelocationHandler<ELFT>(ctx, *_targetLayout)) {}
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<MipsELFObjectReader<ELFT>>(_ctx);
+    return llvm::make_unique<ObjReader>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<MipsELFDSOReader<ELFT>>(_ctx);
+    return llvm::make_unique<DSOReader>(_ctx);
   }
 
   const TargetRelocationHandler &getRelocationHandler() const override {

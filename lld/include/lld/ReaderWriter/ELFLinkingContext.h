@@ -306,6 +306,14 @@ public:
   bool armTarget1Rel() const { return _armTarget1Rel; }
   void setArmTarget1Rel(bool value) { _armTarget1Rel = value; }
 
+  /// Each time a reader reads a new file, this member function is called
+  /// with the file's ELF magics. This is supposed to "merge" all attributes
+  /// to generate output ELF file magic. This can also reject input files
+  /// if they conflict with previous input files.
+  virtual std::error_code mergeHeaderFlags(uint8_t fileClass, uint64_t flags) {
+    return std::error_code();
+  }
+
 protected:
   ELFLinkingContext(llvm::Triple triple, std::unique_ptr<TargetHandler> handler)
       : _triple(triple), _targetHandler(std::move(handler)) {}

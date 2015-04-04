@@ -104,8 +104,10 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");
   Resolver resolver(context);
-  if (!resolver.resolve())
+  if (!resolver.resolve()) {
+    context.getTaskGroup().sync();
     return false;
+  }
   std::unique_ptr<MutableFile> merged = resolver.resultFile();
   resolveTask.end();
 

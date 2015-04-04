@@ -43,12 +43,13 @@ MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, createTarget(triple, *this)),
       _flagsMerger(triple.isArch64Bit()) {}
 
-uint32_t MipsLinkingContext::getMergedELFFlags() const {
-  return _flagsMerger.getMergedELFFlags();
+std::error_code MipsLinkingContext::mergeHeaderFlags(uint8_t fileClass,
+                                                     uint64_t flags) {
+  return _flagsMerger.mergeHeaderFlags(fileClass, flags);
 }
 
-MipsELFFlagsMerger &MipsLinkingContext::getELFFlagsMerger() {
-  return _flagsMerger;
+uint32_t MipsLinkingContext::getMergedELFFlags() const {
+  return _flagsMerger.getMergedELFFlags();
 }
 
 uint64_t MipsLinkingContext::getBaseAddress() const {

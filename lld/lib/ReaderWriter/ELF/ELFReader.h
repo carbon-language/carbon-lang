@@ -34,6 +34,10 @@ public:
   std::error_code
   loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
            std::vector<std::unique_ptr<File>> &result) const override {
+    const Elf_Ehdr *hdr = elfHeader(*mb);
+    if (auto ec = _ctx.mergeHeaderFlags(hdr->getFileClass(), hdr->e_flags))
+      return ec;
+
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<FileT>(llvm::object::getElfArchType(mb->getBuffer()),
