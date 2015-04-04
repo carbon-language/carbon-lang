@@ -1598,7 +1598,8 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::ADD, VT, N0C, N1C);
   // canonicalize constant to RHS
-  if (N0C && !N1C)
+  if (isConstantIntBuildVectorOrConstantInt(N0) &&
+     !isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::ADD, SDLoc(N), VT, N1, N0);
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
@@ -1995,8 +1996,9 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   if (N0IsConst && N1IsConst)
     return DAG.FoldConstantArithmetic(ISD::MUL, VT, N0.getNode(), N1.getNode());
 
-  // canonicalize constant to RHS
-  if (N0IsConst && !N1IsConst)
+  // canonicalize constant to RHS (vector doesn't have to splat)
+  if (isConstantIntBuildVectorOrConstantInt(N0) &&
+     !isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::MUL, SDLoc(N), VT, N1, N0);
   // fold (mul x, 0) -> 0
   if (N1IsConst && ConstValue1 == 0)
@@ -2829,7 +2831,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::AND, VT, N0C, N1C);
   // canonicalize constant to RHS
-  if (N0C && !N1C)
+  if (isConstantIntBuildVectorOrConstantInt(N0) &&
+     !isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::AND, SDLoc(N), VT, N1, N0);
   // fold (and x, -1) -> x
   if (N1C && N1C->isAllOnesValue())
@@ -3545,7 +3548,8 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::OR, VT, N0C, N1C);
   // canonicalize constant to RHS
-  if (N0C && !N1C)
+  if (isConstantIntBuildVectorOrConstantInt(N0) &&
+     !isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::OR, SDLoc(N), VT, N1, N0);
   // fold (or x, 0) -> x
   if (N1C && N1C->isNullValue())
@@ -3887,7 +3891,8 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::XOR, VT, N0C, N1C);
   // canonicalize constant to RHS
-  if (N0C && !N1C)
+  if (isConstantIntBuildVectorOrConstantInt(N0) &&
+     !isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::XOR, SDLoc(N), VT, N1, N0);
   // fold (xor x, 0) -> x
   if (N1C && N1C->isNullValue())
