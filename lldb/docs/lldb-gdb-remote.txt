@@ -528,7 +528,7 @@ Reply:
 // "qPlatform_chmod"
 //
 // BRIEF
-//  Creates a new directory on the connected remote machine.
+//  Change the permissions of a file on the connected remote machine.
 //
 // PRIORITY TO IMPLEMENT
 //  Low. This command allows LLDB clients to change the permissions of
