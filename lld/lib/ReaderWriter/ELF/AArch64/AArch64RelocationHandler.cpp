@@ -322,9 +322,10 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
-  uint8_t *location = atomContent + ref.offsetInAtom();
-  uint64_t targetVAddress = writer.addressOfAtom(ref.target());
-  uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
+  uint8_t *loc = atomContent + ref.offsetInAtom();
+  uint64_t target = writer.addressOfAtom(ref.target());
+  uint64_t reloc = atom._virtualAddr + ref.offsetInAtom();
+  int64_t addend = ref.addend();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return std::error_code();
@@ -333,15 +334,13 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
   case R_AARCH64_NONE:
     break;
   case R_AARCH64_ABS64:
-    relocR_AARCH64_ABS64(location, relocVAddress, targetVAddress, ref.addend());
+    relocR_AARCH64_ABS64(loc, reloc, target, addend);
     break;
   case R_AARCH64_PREL32:
-    relocR_AARCH64_PREL32(location, relocVAddress, targetVAddress,
-                          ref.addend());
+    relocR_AARCH64_PREL32(loc, reloc, target, addend);
     break;
   case R_AARCH64_ABS32:
-    return relocR_AARCH64_ABS32(location, relocVAddress, targetVAddress,
-                                ref.addend());
+    return relocR_AARCH64_ABS32(loc, reloc, target, addend);
   // Runtime only relocations. Ignore here.
   case R_AARCH64_RELATIVE:
   case R_AARCH64_IRELATIVE:
@@ -349,76 +348,59 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
   case R_AARCH64_GLOB_DAT:
     break;
   case R_AARCH64_ADR_PREL_PG_HI21:
-    relocR_AARCH64_ADR_PREL_PG_HI21(location, relocVAddress, targetVAddress,
-                                    ref.addend());
+    relocR_AARCH64_ADR_PREL_PG_HI21(loc, reloc, target, addend);
     break;
   case R_AARCH64_ADR_PREL_LO21:
-    relocR_AARCH64_ADR_PREL_LO21(location, relocVAddress, targetVAddress,
-                                 ref.addend());
+    relocR_AARCH64_ADR_PREL_LO21(loc, reloc, target, addend);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
-    relocR_AARCH64_ADD_ABS_LO12_NC(location, relocVAddress, targetVAddress,
-                                   ref.addend());
+    relocR_AARCH64_ADD_ABS_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_CALL26:
   case R_AARCH64_JUMP26:
-    relocJump26(location, relocVAddress, targetVAddress, ref.addend());
+    relocJump26(loc, reloc, target, addend);
     break;
   case R_AARCH64_CONDBR19:
-    relocR_AARCH64_CONDBR19(location, relocVAddress, targetVAddress,
-                            ref.addend());
+    relocR_AARCH64_CONDBR19(loc, reloc, target, addend);
     break;
   case R_AARCH64_ADR_GOT_PAGE:
-    relocR_AARCH64_ADR_GOT_PAGE(location, relocVAddress, targetVAddress,
-                                ref.addend());
+    relocR_AARCH64_ADR_GOT_PAGE(loc, reloc, target, addend);
     break;
   case R_AARCH64_LD64_GOT_LO12_NC:
-    relocR_AARCH64_LD64_GOT_LO12_NC(location, relocVAddress, targetVAddress,
-                                    ref.addend());
+    relocR_AARCH64_LD64_GOT_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_LDST8_ABS_LO12_NC:
-    relocR_AARCH64_LDST8_ABS_LO12_NC(location, relocVAddress, targetVAddress,
-                                     ref.addend());
+    relocR_AARCH64_LDST8_ABS_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_LDST16_ABS_LO12_NC:
-    relocR_AARCH64_LDST16_ABS_LO12_NC(location, relocVAddress, targetVAddress,
-                                      ref.addend());
+    relocR_AARCH64_LDST16_ABS_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_LDST32_ABS_LO12_NC:
-    relocR_AARCH64_LDST32_ABS_LO12_NC(location, relocVAddress, targetVAddress,
-                                      ref.addend());
+    relocR_AARCH64_LDST32_ABS_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_LDST64_ABS_LO12_NC:
-    relocR_AARCH64_LDST64_ABS_LO12_NC(location, relocVAddress, targetVAddress,
-                                      ref.addend());
+    relocR_AARCH64_LDST64_ABS_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_LDST128_ABS_LO12_NC:
-    relocR_AARCH64_LDST128_ABS_LO12_NC(location, relocVAddress, targetVAddress,
-                                       ref.addend());
+    relocR_AARCH64_LDST128_ABS_LO12_NC(loc, reloc, target, addend);
     break;
   case ADD_AARCH64_GOTRELINDEX:
-    relocADD_AARCH64_GOTRELINDEX(location, relocVAddress, targetVAddress,
-                                 ref.addend());
+    relocADD_AARCH64_GOTRELINDEX(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-    relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(location, relocVAddress,
-                                             targetVAddress, ref.addend());
+    relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-    relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(location, relocVAddress,
-                                               targetVAddress, ref.addend());
+    relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
-    relocR_AARCH64_TLSLE_ADD_TPREL_HI12(location, relocVAddress, targetVAddress,
-                                        ref.addend());
+    relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-    relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(location, relocVAddress,
-                                           targetVAddress, ref.addend());
+    relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target, addend);
     break;
   default:
     return make_unhandled_reloc_error();
   }
-
   return std::error_code();
 }

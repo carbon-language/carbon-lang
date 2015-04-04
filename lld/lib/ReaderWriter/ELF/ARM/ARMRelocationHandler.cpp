@@ -500,9 +500,9 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
-  uint8_t *location = atomContent + ref.offsetInAtom();
-  uint64_t targetVAddress = writer.addressOfAtom(ref.target());
-  uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
+  uint8_t *loc = atomContent + ref.offsetInAtom();
+  uint64_t target = writer.addressOfAtom(ref.target());
+  uint64_t reloc = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return std::error_code();
@@ -510,102 +510,87 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
 
   // Calculate proper initial addend for the relocation
   const Reference::Addend addend =
-      readAddend(location, ref.kindValue()) + ref.addend();
+      readAddend(loc, ref.kindValue()) + ref.addend();
 
   // Flags that the relocation addresses Thumb instruction
-  bool addressesThumb = false;
-
+  bool thumb = false;
   if (const auto *definedAtom = dyn_cast<DefinedAtom>(ref.target())) {
-    addressesThumb = isThumbCode(definedAtom);
+    thumb = isThumbCode(definedAtom);
   }
 
   switch (ref.kindValue()) {
   case R_ARM_NONE:
     break;
   case R_ARM_ABS32:
-    relocR_ARM_ABS32(location, relocVAddress, targetVAddress, addend,
-                     addressesThumb);
+    relocR_ARM_ABS32(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_REL32:
-    relocR_ARM_REL32(location, relocVAddress, targetVAddress, addend,
-                     addressesThumb);
+    relocR_ARM_REL32(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_TARGET1:
     if (_armLayout.target1Rel())
-      relocR_ARM_REL32(location, relocVAddress, targetVAddress, addend,
-                       addressesThumb);
+      relocR_ARM_REL32(loc, reloc, target, addend, thumb);
     else
-      relocR_ARM_ABS32(location, relocVAddress, targetVAddress, addend,
-                       addressesThumb);
+      relocR_ARM_ABS32(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_THM_CALL:
     // TODO: consider adding bool variable to disable J1 & J2 for archs
     // before ARMv6
-    relocR_ARM_THM_CALL(location, relocVAddress, targetVAddress, addend, true,
-                        addressesThumb);
+    relocR_ARM_THM_CALL(loc, reloc, target, addend, true, thumb);
     break;
   case R_ARM_CALL:
-    relocR_ARM_CALL(location, relocVAddress, targetVAddress, addend,
-                    addressesThumb);
+    relocR_ARM_CALL(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_JUMP24:
-    relocR_ARM_JUMP24(location, relocVAddress, targetVAddress, addend,
-                      addressesThumb);
+    relocR_ARM_JUMP24(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_THM_JUMP24:
-    relocR_ARM_THM_JUMP24(location, relocVAddress, targetVAddress, addend,
-                          addressesThumb);
+    relocR_ARM_THM_JUMP24(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_THM_JUMP11:
-    relocR_ARM_THM_JUMP11(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_THM_JUMP11(loc, reloc, target, addend);
     break;
   case R_ARM_MOVW_ABS_NC:
-    relocR_ARM_MOVW_ABS_NC(location, relocVAddress, targetVAddress, addend,
-                           addressesThumb);
+    relocR_ARM_MOVW_ABS_NC(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_MOVT_ABS:
-    relocR_ARM_MOVT_ABS(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_MOVT_ABS(loc, reloc, target, addend);
     break;
   case R_ARM_THM_MOVW_ABS_NC:
-    relocR_ARM_THM_MOVW_ABS_NC(location, relocVAddress, targetVAddress, addend,
-                               addressesThumb);
+    relocR_ARM_THM_MOVW_ABS_NC(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_THM_MOVT_ABS:
-    relocR_ARM_THM_MOVT_ABS(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_THM_MOVT_ABS(loc, reloc, target, addend);
     break;
   case R_ARM_PREL31:
-    relocR_ARM_PREL31(location, relocVAddress, targetVAddress, addend,
-                     addressesThumb);
+    relocR_ARM_PREL31(loc, reloc, target, addend, thumb);
     break;
   case R_ARM_TLS_IE32:
-    relocR_ARM_TLS_IE32(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_TLS_IE32(loc, reloc, target, addend);
     break;
   case R_ARM_TLS_LE32:
-    relocR_ARM_TLS_LE32(location, relocVAddress, targetVAddress, addend,
-                        _armLayout.getTPOffset());
+    relocR_ARM_TLS_LE32(loc, reloc, target, addend, _armLayout.getTPOffset());
     break;
   case R_ARM_GOT_BREL:
-    relocR_ARM_GOT_BREL(location, relocVAddress, targetVAddress, addend,
-                        _armLayout.getGOTSymAddr());
+    relocR_ARM_GOT_BREL(loc, reloc, target, addend, _armLayout.getGOTSymAddr());
     break;
   case R_ARM_BASE_PREL:
     // GOT origin is used for NULL symbol and when explicitly specified
-    if (!targetVAddress ||
-        ref.target()->name().equals("_GLOBAL_OFFSET_TABLE_")) {
-      targetVAddress = _armLayout.getGOTSymAddr();
+    if (!target || ref.target()->name().equals("_GLOBAL_OFFSET_TABLE_")) {
+      target = _armLayout.getGOTSymAddr();
     } else {
       llvm_unreachable("Segment-base relative addressing is not supported");
     }
-    relocR_ARM_BASE_PREL(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_BASE_PREL(loc, reloc, target, addend);
     break;
   case R_ARM_ALU_PC_G0_NC:
-    relocR_ARM_ALU_PC_G0_NC(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_ALU_PC_G0_NC(loc, reloc, target, addend);
     break;
   case R_ARM_ALU_PC_G1_NC:
-    relocR_ARM_ALU_PC_G1_NC(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_ALU_PC_G1_NC(loc, reloc, target, addend);
     break;
   case R_ARM_LDR_PC_G2:
-    relocR_ARM_LDR_PC_G2(location, relocVAddress, targetVAddress, addend);
+    relocR_ARM_LDR_PC_G2(loc, reloc, target, addend);
     break;
   case R_ARM_IRELATIVE:
     // Runtime only relocations. Ignore here.

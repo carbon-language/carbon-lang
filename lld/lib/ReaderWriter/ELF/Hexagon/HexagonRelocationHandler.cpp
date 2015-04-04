@@ -214,67 +214,67 @@ std::error_code HexagonTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
-  uint8_t *location = atomContent + ref.offsetInAtom();
-  uint64_t targetVAddress = writer.addressOfAtom(ref.target());
-  uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
+  uint8_t *loc = atomContent + ref.offsetInAtom();
+  uint64_t target = writer.addressOfAtom(ref.target());
+  uint64_t reloc = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Hexagon);
   switch (ref.kindValue()) {
   case R_HEX_B22_PCREL:
-    relocBNPCREL(location, relocVAddress, targetVAddress, ref.addend(), 21);
+    relocBNPCREL(loc, reloc, target, ref.addend(), 21);
     break;
   case R_HEX_B15_PCREL:
-    relocBNPCREL(location, relocVAddress, targetVAddress, ref.addend(), 14);
+    relocBNPCREL(loc, reloc, target, ref.addend(), 14);
     break;
   case R_HEX_B9_PCREL:
-    relocBNPCREL(location, relocVAddress, targetVAddress, ref.addend(), 8);
+    relocBNPCREL(loc, reloc, target, ref.addend(), 8);
     break;
   case R_HEX_LO16:
-    relocLO16(location, relocVAddress, targetVAddress, ref.addend());
+    relocLO16(loc, reloc, target, ref.addend());
     break;
   case R_HEX_HI16:
-    relocHI16(location, relocVAddress, targetVAddress, ref.addend());
+    relocHI16(loc, reloc, target, ref.addend());
     break;
   case R_HEX_32:
-    reloc32(location, relocVAddress, targetVAddress, ref.addend());
+    reloc32(loc, reloc, target, ref.addend());
     break;
   case R_HEX_32_6_X:
-    reloc32_6_X(location, relocVAddress, targetVAddress, ref.addend());
+    reloc32_6_X(loc, reloc, target, ref.addend());
     break;
   case R_HEX_B32_PCREL_X:
-    relocHexB32PCRELX(location, relocVAddress, targetVAddress, ref.addend());
+    relocHexB32PCRELX(loc, reloc, target, ref.addend());
     break;
   case R_HEX_B22_PCREL_X:
-    relocHexBNPCRELX(location, relocVAddress, targetVAddress, ref.addend(), 21);
+    relocHexBNPCRELX(loc, reloc, target, ref.addend(), 21);
     break;
   case R_HEX_B15_PCREL_X:
-    relocHexBNPCRELX(location, relocVAddress, targetVAddress, ref.addend(), 14);
+    relocHexBNPCRELX(loc, reloc, target, ref.addend(), 14);
     break;
   case R_HEX_B13_PCREL_X:
-    relocHexBNPCRELX(location, relocVAddress, targetVAddress, ref.addend(), 12);
+    relocHexBNPCRELX(loc, reloc, target, ref.addend(), 12);
     break;
   case R_HEX_B9_PCREL_X:
-    relocHexBNPCRELX(location, relocVAddress, targetVAddress, ref.addend(), 8);
+    relocHexBNPCRELX(loc, reloc, target, ref.addend(), 8);
     break;
   case R_HEX_B7_PCREL_X:
-    relocHexBNPCRELX(location, relocVAddress, targetVAddress, ref.addend(), 6);
+    relocHexBNPCRELX(loc, reloc, target, ref.addend(), 6);
     break;
   case R_HEX_GPREL16_0:
-    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGPRELN(loc, reloc, target, ref.addend(),
                    _targetLayout.getSDataSection()->virtualAddr(), 0);
     break;
   case R_HEX_GPREL16_1:
-    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGPRELN(loc, reloc, target, ref.addend(),
                    _targetLayout.getSDataSection()->virtualAddr(), 1);
     break;
   case R_HEX_GPREL16_2:
-    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGPRELN(loc, reloc, target, ref.addend(),
                    _targetLayout.getSDataSection()->virtualAddr(), 2);
     break;
   case R_HEX_GPREL16_3:
-    relocHexGPRELN(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGPRELN(loc, reloc, target, ref.addend(),
                    _targetLayout.getSDataSection()->virtualAddr(), 3);
     break;
   case R_HEX_16_X:
@@ -285,55 +285,55 @@ std::error_code HexagonTargetRelocationHandler::applyRelocation(
   case R_HEX_8_X:
   case R_HEX_7_X:
   case R_HEX_6_X:
-    relocHex_N_X(location, relocVAddress, targetVAddress, ref.addend());
+    relocHex_N_X(loc, reloc, target, ref.addend());
     break;
   case R_HEX_6_PCREL_X:
-    relocHex6PCRELX(location, relocVAddress, targetVAddress, ref.addend());
+    relocHex6PCRELX(loc, reloc, target, ref.addend());
     break;
   case R_HEX_JMP_SLOT:
   case R_HEX_GLOB_DAT:
     break;
   case R_HEX_GOTREL_32:
-    relocHexGOTREL_32(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGOTREL_32(loc, reloc, target, ref.addend(),
                       _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_LO16:
-    relocHexGOTREL_HILO16(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGOTREL_HILO16(loc, reloc, target, ref.addend(),
                           _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_HI16:
-    relocHexGOTREL_HILO16(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGOTREL_HILO16(loc, reloc, target, ref.addend(),
                           _targetLayout.getGOTSymAddr(), 16);
     break;
   case R_HEX_GOT_LO16:
-    relocHexGOTLO16(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOTLO16(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_HI16:
-    relocHexGOTHI16(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOTHI16(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_32:
-    relocHexGOT32(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOT32(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_16:
-    relocHexGOT16(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOT16(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_32_6_X:
-    relocHexGOT32_6_X(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOT32_6_X(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_16_X:
-    relocHexGOT16_X(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOT16_X(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOT_11_X:
-    relocHexGOT11_X(location, targetVAddress, _targetLayout.getGOTSymAddr());
+    relocHexGOT11_X(loc, target, _targetLayout.getGOTSymAddr());
     break;
   case R_HEX_GOTREL_32_6_X:
-    relocHexGOTRELSigned(location, relocVAddress, targetVAddress, ref.addend(),
+    relocHexGOTRELSigned(loc, reloc, target, ref.addend(),
                          _targetLayout.getGOTSymAddr(), 6);
     break;
   case R_HEX_GOTREL_16_X:
   case R_HEX_GOTREL_11_X:
-    relocHexGOTRELUnsigned(location, relocVAddress, targetVAddress,
-                           ref.addend(), _targetLayout.getGOTSymAddr());
+    relocHexGOTRELUnsigned(loc, reloc, target, ref.addend(),
+                           _targetLayout.getGOTSymAddr());
     break;
 
   default:

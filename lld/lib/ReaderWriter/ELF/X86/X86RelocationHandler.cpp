@@ -33,23 +33,22 @@ std::error_code X86TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
-  uint8_t *location = atomContent + ref.offsetInAtom();
-  uint64_t targetVAddress = writer.addressOfAtom(ref.target());
-  uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
+  uint8_t *loc = atomContent + ref.offsetInAtom();
+  uint64_t target = writer.addressOfAtom(ref.target());
+  uint64_t reloc = atom._virtualAddr + ref.offsetInAtom();
 
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::x86);
   switch (ref.kindValue()) {
   case R_386_32:
-    reloc32(location, relocVAddress, targetVAddress, ref.addend());
+    reloc32(loc, reloc, target, ref.addend());
     break;
   case R_386_PC32:
-    relocPC32(location, relocVAddress, targetVAddress, ref.addend());
+    relocPC32(loc, reloc, target, ref.addend());
     break;
   default:
     return make_unhandled_reloc_error();
   }
-
   return std::error_code();
 }
