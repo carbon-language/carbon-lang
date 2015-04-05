@@ -285,7 +285,14 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
     Sizes = isl_multi_val_set_val(Sizes, i, isl_val_int_from_si(Ctx, tileSize));
   }
 
-  auto Res = isl_schedule_node_band_tile(Node, Sizes);
+  isl_schedule_node *Res;
+
+  if (DisableTiling) {
+    isl_multi_val_free(Sizes);
+    Res = Node;
+  } else {
+    Res = isl_schedule_node_band_tile(Node, Sizes);
+  }
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
     return Res;
