@@ -693,7 +693,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
 }
 
 void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
-  bool Vector = PollyVectorizerChoice != VECTORIZER_NONE;
+  bool Vector = PollyVectorizerChoice == VECTORIZER_POLLY;
 
   if (Vector && IslAstInfo::isInnermostParallel(For) &&
       !IslAstInfo::isReductionParallel(For)) {
