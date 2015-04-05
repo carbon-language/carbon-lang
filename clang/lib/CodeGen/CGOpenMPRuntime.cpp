@@ -303,8 +303,8 @@ llvm::Value *CGOpenMPRuntime::emitUpdateLocation(CodeGenFunction &CGF,
   }
 
   // char **psource = &.kmpc_loc_<flags>.addr.psource;
-  auto *PSource =
-      CGF.Builder.CreateConstInBoundsGEP2_32(LocValue, 0, IdentField_PSource);
+  auto *PSource = CGF.Builder.CreateConstInBoundsGEP2_32(IdentTy, LocValue, 0,
+                                                         IdentField_PSource);
 
   auto OMPDebugLoc = OpenMPDebugLocMap.lookup(Loc.getRawEncoding());
   if (OMPDebugLoc == nullptr) {
@@ -1021,16 +1021,18 @@ static llvm::Value *emitCopyprivateCopyFunction(
         cast<VarDecl>(cast<DeclRefExpr>(SrcExprs[I])->getDecl()),
         [&]() -> llvm::Value *{
           return CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-              CGF.Builder.CreateAlignedLoad(CGF.Builder.CreateStructGEP(RHS, I),
-                                            CGM.PointerAlignInBytes),
+              CGF.Builder.CreateAlignedLoad(
+                  CGF.Builder.CreateStructGEP(nullptr, RHS, I),
+                  CGM.PointerAlignInBytes),
               CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
         });
     Scope.addPrivate(
         cast<VarDecl>(cast<DeclRefExpr>(DstExprs[I])->getDecl()),
         [&]() -> llvm::Value *{
           return CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-              CGF.Builder.CreateAlignedLoad(CGF.Builder.CreateStructGEP(LHS, I),
-                                            CGM.PointerAlignInBytes),
+              CGF.Builder.CreateAlignedLoad(
+                  CGF.Builder.CreateStructGEP(nullptr, LHS, I),
+                  CGM.PointerAlignInBytes),
               CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
         });
   }
@@ -1108,7 +1110,8 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     auto *CopyprivateList =
         CGF.CreateMemTemp(CopyprivateArrayTy, ".omp.copyprivate.cpr_list");
     for (unsigned I = 0, E = CopyprivateVars.size(); I < E; ++I) {
-      auto *Elem = CGF.Builder.CreateStructGEP(CopyprivateList, I);
+      auto *Elem = CGF.Builder.CreateStructGEP(
+          CopyprivateList->getAllocatedType(), CopyprivateList, I);
       CGF.Builder.CreateAlignedStore(
           CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
               CGF.EmitLValue(CopyprivateVars[I]).getAddress(), CGF.VoidPtrTy),
@@ -1391,7 +1394,7 @@ static QualType createKmpTaskTRecordDecl(CodeGenModule &CGM,
 static llvm::Value *
 emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
                       QualType KmpInt32Ty, QualType KmpTaskTPtrQTy,
-                      QualType SharedsPtrTy, llvm::Value *TaskFunction) {
+                      QualType SharedsPtrTy, llvm::Value *TaskFunction, llvm::Type *KmpTaskTTy) {
   auto &C = CGM.getContext();
   FunctionArgList Args;
   ImplicitParamDecl GtidArg(C, /*DC=*/nullptr, Loc, /*Id=*/nullptr, KmpInt32Ty);
@@ -1419,12 +1422,12 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   auto TaskTypeArgAddr = CGF.EmitLoadOfScalar(
       CGF.GetAddrOfLocalVar(&TaskTypeArg), /*Volatile=*/false,
       CGM.PointerAlignInBytes, KmpTaskTPtrQTy, Loc);
-  auto *PartidPtr = CGF.Builder.CreateStructGEP(TaskTypeArgAddr,
+  auto *PartidPtr = CGF.Builder.CreateStructGEP(KmpTaskTTy, TaskTypeArgAddr,
                                                 /*Idx=*/KmpTaskTPartId);
   auto *PartidParam = CGF.EmitLoadOfScalar(
       PartidPtr, /*Volatile=*/false,
       C.getTypeAlignInChars(KmpInt32Ty).getQuantity(), KmpInt32Ty, Loc);
-  auto *SharedsPtr = CGF.Builder.CreateStructGEP(TaskTypeArgAddr,
+  auto *SharedsPtr = CGF.Builder.CreateStructGEP(KmpTaskTTy, TaskTypeArgAddr,
                                                  /*Idx=*/KmpTaskTShareds);
   auto *SharedsParam =
       CGF.EmitLoadOfScalar(SharedsPtr, /*Volatile=*/false,
@@ -1453,14 +1456,16 @@ void CGOpenMPRuntime::emitTaskCall(
   auto KmpTaskQTy =
       createKmpTaskTRecordDecl(CGM, KmpInt32Ty, KmpRoutineEntryPtrQTy);
   QualType KmpTaskTPtrQTy = C.getPointerType(KmpTaskQTy);
-  auto KmpTaskTPtrTy = CGF.ConvertType(KmpTaskQTy)->getPointerTo();
+  auto *KmpTaskTTy = CGF.ConvertType(KmpTaskQTy);
+  auto *KmpTaskTPtrTy = KmpTaskTTy->getPointerTo();
   auto KmpTaskTySize = CGM.getSize(C.getTypeSizeInChars(KmpTaskQTy));
   QualType SharedsPtrTy = C.getPointerType(SharedsTy);
 
   // Build a proxy function kmp_int32 .omp_task_entry.(kmp_int32 gtid,
   // kmp_task_t *tt);
-  auto *TaskEntry = emitProxyTaskFunction(CGM, Loc, KmpInt32Ty, KmpTaskTPtrQTy,
-                                          SharedsPtrTy, TaskFunction);
+  auto *TaskEntry =
+      emitProxyTaskFunction(CGM, Loc, KmpInt32Ty, KmpTaskTPtrQTy, SharedsPtrTy,
+                            TaskFunction, KmpTaskTTy);
 
   // Build call kmp_task_t * __kmpc_omp_task_alloc(ident_t *, kmp_int32 gtid,
   // kmp_int32 flags, size_t sizeof_kmp_task_t, size_t sizeof_shareds,
@@ -1493,7 +1498,7 @@ void CGOpenMPRuntime::emitTaskCall(
   if (!SharedsTy->getAsStructureType()->getDecl()->field_empty())
     CGF.EmitAggregateCopy(
         CGF.EmitLoadOfScalar(
-            CGF.Builder.CreateStructGEP(NewTaskNewTaskTTy,
+            CGF.Builder.CreateStructGEP(KmpTaskTTy, NewTaskNewTaskTTy,
                                         /*Idx=*/KmpTaskTShareds),
             /*Volatile=*/false, CGM.PointerAlignInBytes, SharedsPtrTy, Loc),
         Shareds, SharedsTy);
@@ -1502,7 +1507,7 @@ void CGOpenMPRuntime::emitTaskCall(
   CGF.Builder.CreateAlignedStore(
       llvm::ConstantPointerNull::get(
           cast<llvm::PointerType>(KmpRoutineEntryPtrTy)),
-      CGF.Builder.CreateStructGEP(NewTaskNewTaskTTy,
+      CGF.Builder.CreateStructGEP(KmpTaskTTy, NewTaskNewTaskTTy,
                                   /*Idx=*/KmpTaskTDestructors),
       CGM.PointerAlignInBytes);
 

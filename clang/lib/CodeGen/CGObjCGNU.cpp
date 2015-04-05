@@ -675,8 +675,8 @@ class CGObjCGNUstep : public CGObjCGNU {
       slot->setMetadata(msgSendMDKind, node);
 
       // Load the imp from the slot
-      llvm::Value *imp =
-        Builder.CreateLoad(Builder.CreateStructGEP(slot.getInstruction(), 4));
+      llvm::Value *imp = Builder.CreateLoad(
+          Builder.CreateStructGEP(nullptr, slot.getInstruction(), 4));
 
       // The lookup function may have changed the receiver, so make sure we use
       // the new one.
@@ -693,7 +693,7 @@ class CGObjCGNUstep : public CGObjCGNU {
         CGF.EmitNounwindRuntimeCall(SlotLookupSuperFn, lookupArgs);
       slot->setOnlyReadsMemory();
 
-      return Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
+      return Builder.CreateLoad(Builder.CreateStructGEP(nullptr, slot, 4));
     }
   public:
     CGObjCGNUstep(CodeGenModule &Mod) : CGObjCGNU(Mod, 9, 3) {
@@ -1016,7 +1016,7 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
 llvm::Value *CGObjCGNU::GetClassNamed(CodeGenFunction &CGF,
                                       const std::string &Name,
                                       bool isWeak) {
-  llvm::Value *ClassName = CGM.GetAddrOfConstantCString(Name);
+  llvm::GlobalVariable *ClassNameGV = CGM.GetAddrOfConstantCString(Name);
   // With the incompatible ABI, this will need to be replaced with a direct
   // reference to the class symbol.  For the compatible nonfragile ABI we are
   // still performing this lookup at run time but emitting the symbol for the
@@ -1026,7 +1026,8 @@ llvm::Value *CGObjCGNU::GetClassNamed(CodeGenFunction &CGF,
   // with memoized versions or with static references if it's safe to do so.
   if (!isWeak)
     EmitClassRef(Name);
-  ClassName = CGF.Builder.CreateStructGEP(ClassName, 0);
+  llvm::Value *ClassName =
+      CGF.Builder.CreateStructGEP(ClassNameGV->getValueType(), ClassNameGV, 0);
 
   llvm::Constant *ClassLookupFn =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, PtrToInt8Ty, true),
@@ -1279,11 +1280,11 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
     }
   }
   // Cast the pointer to a simplified version of the class structure
+  llvm::Type *CastTy = llvm::StructType::get(IdTy, IdTy, nullptr);
   ReceiverClass = Builder.CreateBitCast(ReceiverClass,
-      llvm::PointerType::getUnqual(
-        llvm::StructType::get(IdTy, IdTy, nullptr)));
+                                        llvm::PointerType::getUnqual(CastTy));
   // Get the superclass pointer
-  ReceiverClass = Builder.CreateStructGEP(ReceiverClass, 1);
+  ReceiverClass = Builder.CreateStructGEP(CastTy, ReceiverClass, 1);
   // Load the superclass pointer
   ReceiverClass = Builder.CreateLoad(ReceiverClass);
   // Construct the structure used to look up the IMP
@@ -1291,8 +1292,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
       Receiver->getType(), IdTy, nullptr);
   llvm::Value *ObjCSuper = Builder.CreateAlloca(ObjCSuperTy);
 
-  Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuper, 0));
-  Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
+  Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuperTy, ObjCSuper, 0));
+  Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuperTy, ObjCSuper, 1));
 
   ObjCSuper = EnforceType(Builder, ObjCSuper, PtrToObjCSuperTy);
 

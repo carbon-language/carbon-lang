@@ -1790,8 +1790,9 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
     CGF.CreateTempAlloca(ObjCTypes.SuperTy, "objc_super");
   llvm::Value *ReceiverAsObject =
     CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy);
-  CGF.Builder.CreateStore(ReceiverAsObject,
-                          CGF.Builder.CreateStructGEP(ObjCSuper, 0));
+  CGF.Builder.CreateStore(
+      ReceiverAsObject,
+      CGF.Builder.CreateStructGEP(ObjCTypes.SuperTy, ObjCSuper, 0));
 
   // If this is a class message the metaclass is passed as the target.
   llvm::Value *Target;
@@ -1804,20 +1805,20 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       // the class's "isa" pointer.  The following assumes that
       // isa" is the first ivar in a class (which it must be).
       Target = EmitClassRef(CGF, Class->getSuperClass());
-      Target = CGF.Builder.CreateStructGEP(Target, 0);
+      Target = CGF.Builder.CreateStructGEP(ObjCTypes.ClassTy, Target, 0);
       Target = CGF.Builder.CreateLoad(Target);
     } else {
-      llvm::Value *MetaClassPtr = EmitMetaClassRef(Class);
-      llvm::Value *SuperPtr = CGF.Builder.CreateStructGEP(MetaClassPtr, 1);
+      llvm::Constant *MetaClassPtr = EmitMetaClassRef(Class);
+      llvm::Value *SuperPtr =
+          CGF.Builder.CreateStructGEP(ObjCTypes.ClassTy, MetaClassPtr, 1);
       llvm::Value *Super = CGF.Builder.CreateLoad(SuperPtr);
       Target = Super;
     }
-  } 
-  else if (isCategoryImpl)
+  } else if (isCategoryImpl)
     Target = EmitClassRef(CGF, Class->getSuperClass());
   else {
     llvm::Value *ClassPtr = EmitSuperClassRef(Class);
-    ClassPtr = CGF.Builder.CreateStructGEP(ClassPtr, 1);
+    ClassPtr = CGF.Builder.CreateStructGEP(ObjCTypes.ClassTy, ClassPtr, 1);
     Target = CGF.Builder.CreateLoad(ClassPtr);
   }
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
@@ -1825,8 +1826,8 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   llvm::Type *ClassTy =
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
-  CGF.Builder.CreateStore(Target,
-                          CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+  CGF.Builder.CreateStore(
+      Target, CGF.Builder.CreateStructGEP(ObjCTypes.SuperTy, ObjCSuper, 1));
   return EmitMessageSend(CGF, Return, ResultType,
                          EmitSelector(CGF, Sel),
                          ObjCSuper, ObjCTypes.SuperPtrCTy,
@@ -6568,7 +6569,8 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
   args[1].RV = RValue::get(mref);
 
   // Load the function to call from the message ref table.
-  llvm::Value *callee = CGF.Builder.CreateStructGEP(mref, 0);
+  llvm::Value *callee =
+      CGF.Builder.CreateStructGEP(ObjCTypes.MessageRefTy, mref, 0);
   callee = CGF.Builder.CreateLoad(callee, "msgSend_fn");
 
   callee = CGF.Builder.CreateBitCast(callee, MSI.MessengerType);
@@ -6733,8 +6735,9 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 
   llvm::Value *ReceiverAsObject =
     CGF.Builder.CreateBitCast(Receiver, ObjCTypes.ObjectPtrTy);
-  CGF.Builder.CreateStore(ReceiverAsObject,
-                          CGF.Builder.CreateStructGEP(ObjCSuper, 0));
+  CGF.Builder.CreateStore(
+      ReceiverAsObject,
+      CGF.Builder.CreateStructGEP(ObjCTypes.SuperTy, ObjCSuper, 0));
 
   // If this is a class message the metaclass is passed as the target.
   llvm::Value *Target;
@@ -6748,8 +6751,8 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   llvm::Type *ClassTy =
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
-  CGF.Builder.CreateStore(Target,
-                          CGF.Builder.CreateStructGEP(ObjCSuper, 1));
+  CGF.Builder.CreateStore(
+      Target, CGF.Builder.CreateStructGEP(ObjCTypes.SuperTy, ObjCSuper, 1));
 
   return (isVTableDispatchedSelector(Sel))
     ? EmitVTableMessageSend(CGF, Return, ResultType, Sel,

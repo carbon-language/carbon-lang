@@ -635,8 +635,9 @@ void CodeGenFunction::EmitScalarInit(const Expr *init, const ValueDecl *D,
     if (capturedByInit) {
       // We can use a simple GEP for this because it can't have been
       // moved yet.
-      tempLV.setAddress(Builder.CreateStructGEP(tempLV.getAddress(),
-                                   getByRefValueLLVMField(cast<VarDecl>(D))));
+      tempLV.setAddress(
+          Builder.CreateStructGEP(nullptr, tempLV.getAddress(),
+                                  getByRefValueLLVMField(cast<VarDecl>(D)).second));
     }
 
     llvm::PointerType *ty

@@ -52,8 +52,10 @@ DominatingValue<RValue>::saved_type::save(CodeGenFunction &CGF, RValue rv) {
       llvm::StructType::get(V.first->getType(), V.second->getType(),
                             (void*) nullptr);
     llvm::Value *addr = CGF.CreateTempAlloca(ComplexTy, "saved-complex");
-    CGF.Builder.CreateStore(V.first, CGF.Builder.CreateStructGEP(addr, 0));
-    CGF.Builder.CreateStore(V.second, CGF.Builder.CreateStructGEP(addr, 1));
+    CGF.Builder.CreateStore(V.first,
+                            CGF.Builder.CreateStructGEP(ComplexTy, addr, 0));
+    CGF.Builder.CreateStore(V.second,
+                            CGF.Builder.CreateStructGEP(ComplexTy, addr, 1));
     return saved_type(addr, ComplexAddress);
   }
 
@@ -82,9 +84,9 @@ RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
     return RValue::getAggregate(CGF.Builder.CreateLoad(Value));
   case ComplexAddress: {
     llvm::Value *real =
-      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(Value, 0));
+      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(nullptr, Value, 0));
     llvm::Value *imag =
-      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(Value, 1));
+      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(nullptr, Value, 1));
     return RValue::getComplex(real, imag);
   }
   }

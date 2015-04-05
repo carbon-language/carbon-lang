@@ -621,8 +621,8 @@ static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
     }
 
     // GEP down to the address.
-    llvm::Value *addr = CGF.Builder.CreateStructGEP(blockInfo.Address,
-                                                    capture.getIndex());
+    llvm::Value *addr = CGF.Builder.CreateStructGEP(
+        blockInfo.StructureType, blockInfo.Address, capture.getIndex());
 
     // We can use that GEP as the dominating IP.
     if (!blockInfo.DominatingIP)
@@ -721,6 +721,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
   // Build the block descriptor.
   llvm::Constant *descriptor = buildBlockDescriptor(CGM, blockInfo);
 
+  llvm::Type *blockTy = blockInfo.StructureType;
   llvm::AllocaInst *blockAddr = blockInfo.Address;
   assert(blockAddr && "block has no address!");
 
@@ -732,14 +733,14 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
   if (blockInfo.UsesStret) flags |= BLOCK_USE_STRET;
 
   // Initialize the block literal.
-  Builder.CreateStore(isa, Builder.CreateStructGEP(blockAddr, 0, "block.isa"));
+  Builder.CreateStore(isa, Builder.CreateStructGEP(blockTy, blockAddr, 0, "block.isa"));
   Builder.CreateStore(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
-                      Builder.CreateStructGEP(blockAddr, 1, "block.flags"));
+                      Builder.CreateStructGEP(blockTy, blockAddr, 1, "block.flags"));
   Builder.CreateStore(llvm::ConstantInt::get(IntTy, 0),
-                      Builder.CreateStructGEP(blockAddr, 2, "block.reserved"));
-  Builder.CreateStore(blockFn, Builder.CreateStructGEP(blockAddr, 3,
+                      Builder.CreateStructGEP(blockTy, blockAddr, 2, "block.reserved"));
+  Builder.CreateStore(blockFn, Builder.CreateStructGEP(blockTy, blockAddr, 3,
                                                        "block.invoke"));
-  Builder.CreateStore(descriptor, Builder.CreateStructGEP(blockAddr, 4,
+  Builder.CreateStore(descriptor, Builder.CreateStructGEP(blockTy, blockAddr, 4,
                                                           "block.descriptor"));
 
   // Finally, capture all the values into the block.
@@ -747,7 +748,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
   // First, 'this'.
   if (blockDecl->capturesCXXThis()) {
-    llvm::Value *addr = Builder.CreateStructGEP(blockAddr,
+    llvm::Value *addr = Builder.CreateStructGEP(blockTy, blockAddr,
                                                 blockInfo.CXXThisIndex,
                                                 "block.captured-this.addr");
     Builder.CreateStore(LoadCXXThis(), addr);
@@ -767,7 +768,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     // This will be a [[type]]*, except that a byref entry will just be
     // an i8**.
     llvm::Value *blockField =
-      Builder.CreateStructGEP(blockAddr, capture.getIndex(),
+      Builder.CreateStructGEP(blockTy, blockAddr, capture.getIndex(),
                               "block.captured");
 
     // Compute the address of the thing we're going to move into the
@@ -779,7 +780,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
         BlockInfo->getCapture(variable);
 
       // This is a [[type]]*, except that a byref entry wil just be an i8**.
-      src = Builder.CreateStructGEP(LoadBlockStruct(),
+      src = Builder.CreateStructGEP(BlockInfo->StructureType, LoadBlockStruct(),
                                     enclosingCapture.getIndex(),
                                     "block.capture.addr");
     } else if (blockDecl->isConversionFromLambda()) {
@@ -964,7 +965,8 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr *E,
     Builder.CreateBitCast(Callee, BlockLiteralTy, "block.literal");
 
   // Get the function pointer from the literal.
-  llvm::Value *FuncPtr = Builder.CreateStructGEP(BlockLiteral, 3);
+  llvm::Value *FuncPtr = Builder.CreateStructGEP(
+      CGM.getGenericBlockLiteralType(), BlockLiteral, 3);
 
   BlockLiteral = Builder.CreateBitCast(BlockLiteral, VoidPtrTy);
 
@@ -1004,26 +1006,27 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const VarDecl *variable,
   if (capture.isConstant()) return LocalDeclMap[variable];
 
   llvm::Value *addr =
-    Builder.CreateStructGEP(LoadBlockStruct(), capture.getIndex(),
-                            "block.capture.addr");
+      Builder.CreateStructGEP(BlockInfo->StructureType, LoadBlockStruct(),
+                              capture.getIndex(), "block.capture.addr");
 
   if (isByRef) {
     // addr should be a void** right now.  Load, then cast the result
     // to byref*.
 
     addr = Builder.CreateLoad(addr);
-    llvm::PointerType *byrefPointerType
-      = llvm::PointerType::get(BuildByRefType(variable), 0);
+    auto *byrefType = BuildByRefType(variable);
+    llvm::PointerType *byrefPointerType = llvm::PointerType::get(byrefType, 0);
     addr = Builder.CreateBitCast(addr, byrefPointerType,
                                  "byref.addr");
 
     // Follow the forwarding pointer.
-    addr = Builder.CreateStructGEP(addr, 1, "byref.forwarding");
+    addr = Builder.CreateStructGEP(byrefType, addr, 1, "byref.forwarding");
     addr = Builder.CreateLoad(addr, "byref.addr.forwarded");
 
     // Cast back to byref* and GEP over to the actual object.
     addr = Builder.CreateBitCast(addr, byrefPointerType);
-    addr = Builder.CreateStructGEP(addr, getByRefValueLLVMField(variable), 
+    addr = Builder.CreateStructGEP(byrefType, addr,
+                                   getByRefValueLLVMField(variable).second,
                                    variable->getNameAsString());
   }
 
@@ -1185,9 +1188,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   // If we have a C++ 'this' reference, go ahead and force it into
   // existence now.
   if (blockDecl->capturesCXXThis()) {
-    llvm::Value *addr = Builder.CreateStructGEP(BlockPointer,
-                                                blockInfo.CXXThisIndex,
-                                                "block.captured-this");
+    llvm::Value *addr =
+        Builder.CreateStructGEP(blockInfo.StructureType, BlockPointer,
+                                blockInfo.CXXThisIndex, "block.captured-this");
     CXXThisValue = Builder.CreateLoad(addr, "this");
   }
 
@@ -1402,8 +1405,8 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
     }
 
     unsigned index = capture.getIndex();
-    llvm::Value *srcField = Builder.CreateStructGEP(src, index);
-    llvm::Value *dstField = Builder.CreateStructGEP(dst, index);
+    llvm::Value *srcField = Builder.CreateStructGEP(blockInfo.StructureType, src, index);
+    llvm::Value *dstField = Builder.CreateStructGEP(blockInfo.StructureType, dst, index);
 
     // If there's an explicit copy expression, we do that.
     if (copyExpr) {
@@ -1560,7 +1563,8 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
     }
 
     unsigned index = capture.getIndex();
-    llvm::Value *srcField = Builder.CreateStructGEP(src, index);
+    llvm::Value *srcField =
+        Builder.CreateStructGEP(blockInfo.StructureType, src, index);
 
     // If there's an explicit copy expression, we do that.
     if (dtor) {
@@ -1799,13 +1803,13 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
     llvm::Value *destField = CGF.GetAddrOfLocalVar(&dst);
     destField = CGF.Builder.CreateLoad(destField);
     destField = CGF.Builder.CreateBitCast(destField, byrefPtrType);
-    destField = CGF.Builder.CreateStructGEP(destField, valueFieldIndex, "x");
+    destField = CGF.Builder.CreateStructGEP(&byrefType, destField, valueFieldIndex, "x");
 
     // src->x
     llvm::Value *srcField = CGF.GetAddrOfLocalVar(&src);
     srcField = CGF.Builder.CreateLoad(srcField);
     srcField = CGF.Builder.CreateBitCast(srcField, byrefPtrType);
-    srcField = CGF.Builder.CreateStructGEP(srcField, valueFieldIndex, "x");
+    srcField = CGF.Builder.CreateStructGEP(&byrefType, srcField, valueFieldIndex, "x");
 
     byrefInfo.emitCopy(CGF, destField, srcField);
   }  
@@ -1866,7 +1870,7 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
     llvm::Value *V = CGF.GetAddrOfLocalVar(&src);
     V = CGF.Builder.CreateLoad(V);
     V = CGF.Builder.CreateBitCast(V, byrefType.getPointerTo(0));
-    V = CGF.Builder.CreateStructGEP(V, byrefValueIndex, "x");
+    V = CGF.Builder.CreateStructGEP(&byrefType, V, byrefValueIndex, "x");
 
     byrefInfo.emitDispose(CGF, V);
   }
@@ -1923,7 +1927,7 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
   const VarDecl &var = *emission.Variable;
   QualType type = var.getType();
 
-  unsigned byrefValueIndex = getByRefValueLLVMField(&var);
+  unsigned byrefValueIndex = getByRefValueLLVMField(&var).second;
 
   if (const CXXRecordDecl *record = type->getAsCXXRecordDecl()) {
     const Expr *copyExpr = CGM.getContext().getBlockVarCopyInits(&var);
@@ -1993,17 +1997,19 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
   return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex, byrefInfo);
 }
 
-unsigned CodeGenFunction::getByRefValueLLVMField(const ValueDecl *VD) const {
+std::pair<llvm::Type *, unsigned>
+CodeGenFunction::getByRefValueLLVMField(const ValueDecl *VD) const {
   assert(ByRefValueInfo.count(VD) && "Did not find value!");
   
-  return ByRefValueInfo.find(VD)->second.second;
+  return ByRefValueInfo.find(VD)->second;
 }
 
 llvm::Value *CodeGenFunction::BuildBlockByrefAddress(llvm::Value *BaseAddr,
                                                      const VarDecl *V) {
-  llvm::Value *Loc = Builder.CreateStructGEP(BaseAddr, 1, "forwarding");
+  auto P = getByRefValueLLVMField(V);
+  llvm::Value *Loc = Builder.CreateStructGEP(P.first, BaseAddr, 1, "forwarding");
   Loc = Builder.CreateLoad(Loc);
-  Loc = Builder.CreateStructGEP(Loc, getByRefValueLLVMField(V),
+  Loc = Builder.CreateStructGEP(P.first, Loc, P.second,
                                 V->getNameAsString());
   return Loc;
 }
@@ -2141,11 +2147,11 @@ void CodeGenFunction::emitByrefStructureInit(const AutoVarEmission &emission) {
   if (type.isObjCGCWeak())
     isa = 1;
   V = Builder.CreateIntToPtr(Builder.getInt32(isa), Int8PtrTy, "isa");
-  Builder.CreateStore(V, Builder.CreateStructGEP(addr, 0, "byref.isa"));
+  Builder.CreateStore(V, Builder.CreateStructGEP(nullptr, addr, 0, "byref.isa"));
 
   // Store the address of the variable into its own forwarding pointer.
   Builder.CreateStore(addr,
-                      Builder.CreateStructGEP(addr, 1, "byref.forwarding"));
+                      Builder.CreateStructGEP(nullptr, addr, 1, "byref.forwarding"));
 
   // Blocks ABI:
   //   c) the flags field is set to either 0 if no helper functions are
@@ -2193,22 +2199,22 @@ void CodeGenFunction::emitByrefStructureInit(const AutoVarEmission &emission) {
   }
   
   Builder.CreateStore(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
-                      Builder.CreateStructGEP(addr, 2, "byref.flags"));
+                      Builder.CreateStructGEP(nullptr, addr, 2, "byref.flags"));
 
   CharUnits byrefSize = CGM.GetTargetTypeStoreSize(byrefType);
   V = llvm::ConstantInt::get(IntTy, byrefSize.getQuantity());
-  Builder.CreateStore(V, Builder.CreateStructGEP(addr, 3, "byref.size"));
+  Builder.CreateStore(V, Builder.CreateStructGEP(nullptr, addr, 3, "byref.size"));
 
   if (helpers) {
-    llvm::Value *copy_helper = Builder.CreateStructGEP(addr, 4);
+    llvm::Value *copy_helper = Builder.CreateStructGEP(nullptr, addr, 4);
     Builder.CreateStore(helpers->CopyHelper, copy_helper);
 
-    llvm::Value *destroy_helper = Builder.CreateStructGEP(addr, 5);
+    llvm::Value *destroy_helper = Builder.CreateStructGEP(nullptr, addr, 5);
     Builder.CreateStore(helpers->DisposeHelper, destroy_helper);
   }
   if (ByRefHasLifetime && HasByrefExtendedLayout) {
     llvm::Constant* ByrefLayoutInfo = CGM.getObjCRuntime().BuildByrefLayout(CGM, type);
-    llvm::Value *ByrefInfoAddr = Builder.CreateStructGEP(addr, helpers ? 6 : 4,
+    llvm::Value *ByrefInfoAddr = Builder.CreateStructGEP(nullptr, addr, helpers ? 6 : 4,
                                                          "byref.layout");
     // cast destination to pointer to source type.
     llvm::Type *DesTy = ByrefLayoutInfo->getType();

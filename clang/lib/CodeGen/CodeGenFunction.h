@@ -851,7 +851,8 @@ public:
   
   /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
   /// number that holds the value.
-  unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
+  std::pair<llvm::Type *, unsigned>
+  getByRefValueLLVMField(const ValueDecl *VD) const;
 
   /// BuildBlockByrefAddress - Computes address location of the
   /// variable which is declared as __block.
@@ -1896,8 +1897,8 @@ public:
     llvm::Value *getObjectAddress(CodeGenFunction &CGF) const {
       if (!IsByRef) return Address;
 
-      return CGF.Builder.CreateStructGEP(Address,
-                                         CGF.getByRefValueLLVMField(Variable),
+      auto F = CGF.getByRefValueLLVMField(Variable);
+      return CGF.Builder.CreateStructGEP(F.first, Address, F.second,
                                          Variable->getNameAsString());
     }
   };

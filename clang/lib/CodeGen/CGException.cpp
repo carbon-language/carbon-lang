@@ -1437,7 +1437,7 @@ void CodeGenFunction::EmitSEHExceptionCodeSave() {
   llvm::Type *RecordTy = CGM.Int32Ty->getPointerTo();
   llvm::Type *PtrsTy = llvm::StructType::get(RecordTy, CGM.VoidPtrTy, nullptr);
   Ptrs = Builder.CreateBitCast(Ptrs, PtrsTy->getPointerTo());
-  llvm::Value *Rec = Builder.CreateStructGEP(Ptrs, 0);
+  llvm::Value *Rec = Builder.CreateStructGEP(PtrsTy, Ptrs, 0);
   Rec = Builder.CreateLoad(Rec);
   llvm::Value *Code = Builder.CreateLoad(Rec);
   Code = Builder.CreateZExt(Code, CGM.IntPtrTy);

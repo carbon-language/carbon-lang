@@ -2077,7 +2077,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     assert(E->getSubExpr()->getType()->isAnyComplexType());
 
     unsigned Idx = E->getOpcode() == UO_Imag;
-    return MakeAddrLValue(Builder.CreateStructGEP(LV.getAddress(),
+    return MakeAddrLValue(Builder.CreateStructGEP(nullptr, LV.getAddress(),
                                                   Idx, "idx"),
                           ExprTy);
   }
@@ -2675,7 +2675,7 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
     unsigned Idx = RL.getLLVMFieldNo(field);
     if (Idx != 0)
       // For structs, we GEP to the field that the record layout suggests.
-      Addr = Builder.CreateStructGEP(Addr, Idx, field->getName());
+      Addr = Builder.CreateStructGEP(nullptr, Addr, Idx, field->getName());
     // Get the access type.
     llvm::Type *PtrTy = llvm::Type::getIntNPtrTy(
       getLLVMContext(), Info.StorageSize,
@@ -2710,7 +2710,7 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
   } else {
     // For structs, we GEP to the field that the record layout suggests.
     unsigned idx = CGM.getTypes().getCGRecordLayout(rec).getLLVMFieldNo(field);
-    addr = Builder.CreateStructGEP(addr, idx, field->getName());
+    addr = Builder.CreateStructGEP(nullptr, addr, idx, field->getName());
 
     // If this is a reference field, load the reference right now.
     if (const ReferenceType *refType = type->getAs<ReferenceType>()) {
@@ -2789,7 +2789,7 @@ CodeGenFunction::EmitLValueForFieldInitialization(LValue Base,
   const CGRecordLayout &RL =
     CGM.getTypes().getCGRecordLayout(Field->getParent());
   unsigned idx = RL.getLLVMFieldNo(Field);
-  llvm::Value *V = Builder.CreateStructGEP(Base.getAddress(), idx);
+  llvm::Value *V = Builder.CreateStructGEP(nullptr, Base.getAddress(), idx);
   assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
 
   // Make sure that the address is pointing to the right type.  This is critical
