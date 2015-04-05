@@ -228,7 +228,7 @@ public:
       Return.merge(Op);
     }
 
-    if (HasMultipleParams)
+    if (HasMultipleParams && Return.isValid())
       return ValidatorResult(SCEVType::PARAM, Expr);
 
     // TODO: Check for NSW and NUW.
