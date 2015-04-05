@@ -7539,13 +7539,6 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
     // This just handles C1 * C2 for vectors. Other vector folds are below.
     if (SDValue FoldedVOp = SimplifyVBinOp(N))
       return FoldedVOp;
-
-    // Canonicalize vector constant to RHS.
-    if (N0.getOpcode() == ISD::BUILD_VECTOR &&
-        N1.getOpcode() != ISD::BUILD_VECTOR)
-      if (auto *BV0 = dyn_cast<BuildVectorSDNode>(N0))
-        if (BV0->isConstant())
-          return DAG.getNode(N->getOpcode(), SDLoc(N), VT, N1, N0);
   }
 
   // fold (fmul c1, c2) -> c1*c2
@@ -7553,7 +7546,8 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
     return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0, N1);
 
   // canonicalize constant to RHS
-  if (N0CFP && !N1CFP)
+  if (isConstantFPBuildVectorOrConstantFP(N0) &&
+     !isConstantFPBuildVectorOrConstantFP(N1))
     return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N1, N0);
 
   // fold (fmul A, 1.0) -> A
