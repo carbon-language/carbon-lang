@@ -33,7 +33,7 @@ public:
     this->_type = SHT_MIPS_REGINFO;
     this->_flags = SHF_ALLOC;
 
-    memset(&_reginfo, 0, sizeof(_reginfo));
+    std::memset(&_reginfo, 0, sizeof(_reginfo));
     _reginfo.ri_gprmask = reginfo._gpRegMask;
     _reginfo.ri_cprmask[0] = reginfo._cpRegMask[0];
     _reginfo.ri_cprmask[1] = reginfo._cpRegMask[1];
@@ -58,6 +58,63 @@ public:
 private:
   typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
 
+  Elf_RegInfo _reginfo;
+  MipsTargetLayout<ELFT> &_targetLayout;
+};
+
+/// \brief Handle .MIPS.options section
+template <class ELFT> class MipsOptionsSection : public Section<ELFT> {
+public:
+  typedef typename std::vector<MipsReginfo>::const_iterator mask_const_iterator;
+
+  MipsOptionsSection(const ELFLinkingContext &ctx,
+                     MipsTargetLayout<ELFT> &targetLayout,
+                     const MipsReginfo &reginfo)
+      : Section<ELFT>(ctx, ".MIPS.options", "MipsOptions"),
+        _targetLayout(targetLayout) {
+    this->setOrder(MipsTargetLayout<ELFT>::ORDER_RO_NOTE);
+    this->_entSize = 1;
+    this->_alignment = 8;
+    this->_fsize = llvm::RoundUpToAlignment(
+        sizeof(Elf_Mips_Options) + sizeof(Elf_RegInfo), this->_alignment);
+    this->_msize = this->_fsize;
+    this->_type = SHT_MIPS_OPTIONS;
+    this->_flags = SHF_ALLOC | SHF_MIPS_NOSTRIP;
+
+    _header.kind = ODK_REGINFO;
+    _header.size = this->_fsize;
+    _header.section = 0;
+    _header.info = 0;
+
+    std::memset(&_reginfo, 0, sizeof(_reginfo));
+    _reginfo.ri_gprmask = reginfo._gpRegMask;
+    _reginfo.ri_cprmask[0] = reginfo._cpRegMask[0];
+    _reginfo.ri_cprmask[1] = reginfo._cpRegMask[1];
+    _reginfo.ri_cprmask[2] = reginfo._cpRegMask[2];
+    _reginfo.ri_cprmask[3] = reginfo._cpRegMask[3];
+  }
+
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override {
+    uint8_t *dest = buffer.getBufferStart() + this->fileOffset();
+    std::memset(dest, 0, this->_fsize);
+    std::memcpy(dest, &_header, sizeof(_header));
+    std::memcpy(dest + sizeof(_header), &_reginfo, sizeof(_reginfo));
+  }
+
+  void finalize() override {
+    const AtomLayout *gpAtom = _targetLayout.getGP();
+    _reginfo.ri_gp_value = gpAtom ? gpAtom->_virtualAddr : 0;;
+
+    if (this->_outputSection)
+      this->_outputSection->setType(this->_type);
+  }
+
+private:
+  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
+  typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+
+  Elf_Mips_Options _header;
   Elf_RegInfo _reginfo;
   MipsTargetLayout<ELFT> &_targetLayout;
 };

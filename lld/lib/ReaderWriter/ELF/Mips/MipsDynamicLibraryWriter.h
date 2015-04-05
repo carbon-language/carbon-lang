@@ -75,14 +75,17 @@ void MipsDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
 template <class ELFT>
 void MipsDynamicLibraryWriter<ELFT>::createDefaultSections() {
   DynamicLibraryWriter<ELFT>::createDefaultSections();
-  const auto &mask =
-      static_cast<const MipsLinkingContext &>(this->_ctx).getMergeReginfoMask();
-  if (!ELFT::Is64Bits && mask.hasValue()) {
+  const auto &ctx = static_cast<const MipsLinkingContext &>(this->_ctx);
+  const auto &mask = ctx.getMergeReginfoMask();
+  if (!mask.hasValue())
+    return;
+  if (ELFT::Is64Bits)
     _reginfo = unique_bump_ptr<Section<ELFT>>(
-        new (this->_alloc)
-            MipsReginfoSection<ELFT>(this->_ctx, _targetLayout, *mask));
-    this->_layout.addSection(_reginfo.get());
-  }
+        new (this->_alloc) MipsOptionsSection<ELFT>(ctx, _targetLayout, *mask));
+  else
+    _reginfo = unique_bump_ptr<Section<ELFT>>(
+        new (this->_alloc) MipsReginfoSection<ELFT>(ctx, _targetLayout, *mask));
+  this->_layout.addSection(_reginfo.get());
 }
 
 template <class ELFT>
