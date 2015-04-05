@@ -57,10 +57,15 @@ To build and install llgo:
 Running
 -------
 
+llgo-go is llgo's version of the "go" command. It has the same command line
+interface as go, and works the same way, but it uses llgo to compile.
+
+llgoi is an interactive REPL for Go. It supports expressions, statements, most
+declarations and imports, including binary imports from the standard library
+and source imports from $GOPATH. See docs/llgoi.rst for more information.
+
 llgo is the compiler binary. It has a command line interface that is intended
-to be compatible to a large extent with gccgo. It can be used with the go
-command shipped with Go 1.4 or later by setting $GCCGO to the path to the
-llgo executable and supplying the "-compiler gccgo" flags to "go build".
+to be compatible to a large extent with gccgo.
 
 Contributing
 ------------
