@@ -128,7 +128,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
                                         ? libName.drop_front()
                                         : Twine("lib", libName) + ".so");
       if (exists(path.str()))
-        return StringRef(*new (_allocator) std::string(path.str()));
+        return path.str().copy(_allocator);
     }
     // Search for static libraries too
     buildSearchPath(path, dir, _sysrootPath);
@@ -136,7 +136,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
                                       ? libName.drop_front()
                                       : Twine("lib", libName) + ".a");
     if (exists(path.str()))
-      return StringRef(*new (_allocator) std::string(path.str()));
+      return path.str().copy(_allocator);
   }
   if (hasColonPrefix && exists(libName.drop_front()))
       return libName.drop_front();
@@ -151,7 +151,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
     path.assign(_sysrootPath);
     path.append(fileName);
     if (exists(path.str()))
-      return StringRef(*new (_allocator) std::string(path.str()));
+      return path.str().copy(_allocator);
   } else if (exists(fileName)) {
     return fileName;
   }
@@ -163,7 +163,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
     buildSearchPath(path, dir, _sysrootPath);
     llvm::sys::path::append(path, fileName);
     if (exists(path.str()))
-      return StringRef(*new (_allocator) std::string(path.str()));
+      return path.str().copy(_allocator);
   }
   return make_error_code(llvm::errc::no_such_file_or_directory);
 }
