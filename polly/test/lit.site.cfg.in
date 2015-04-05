@@ -39,7 +39,6 @@ else:
     config.substitutions.append(('%loadPolly', ''))
 
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
-config.substitutions.append(('%vector-opt', '-polly-vectorizer=polly'))
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@POLLY_SOURCE_DIR@/test/lit.cfg")

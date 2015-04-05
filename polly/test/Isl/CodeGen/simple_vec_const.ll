@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-codegen-isl %vector-opt -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-codegen-isl -polly-vectorizer=polly -S < %s | FileCheck %s
 
 ;#define N 1024
 ;float A[N];
