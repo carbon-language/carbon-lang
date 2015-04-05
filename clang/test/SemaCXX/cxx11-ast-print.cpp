@@ -40,8 +40,8 @@ const char *p9 = 0x42e3F_fritz;
 const char *p10 = 3.300e+15_fritz;
 
 template <class C, C...> const char *operator"" _suffix();
-// CHECK: const char *PR23120 = operator "" _suffix<wchar_t, 66615>();
-const char *PR23120 = L"𐐷"_suffix;
+// CHECK: const char *PR23120 = operator "" _suffix<char32_t, 66615>();
+const char *PR23120 = U"𐐷"_suffix;
 
 // CHECK: ;
 ;
