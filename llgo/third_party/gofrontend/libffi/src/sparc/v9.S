@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------
    v9.S - Copyright (c) 2000, 2003, 2004, 2008 Red Hat, Inc.
-
+   
    SPARC 64-bit Foreign Function Interface 
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -27,103 +27,178 @@
 #define LIBFFI_ASM	
 #include <fficonfig.h>
 #include <ffi.h>
+#include <ffi_cfi.h>
+#include "internal.h"
 
 #ifdef SPARC64
 
-#define STACKFRAME 176		/* Minimum stack framesize for SPARC 64-bit */
+#define C2(X, Y)  X ## Y
+#define C1(X, Y)  C2(X, Y)
+
+#ifdef __USER_LABEL_PREFIX__
+# define C(Y)	C1(__USER_LABEL_PREFIX__, Y)
+#else
+# define C(Y)	Y
+#endif
+#define L(Y)	C1(.L, Y)
+
+.macro E index
+	.align	16
+	.org	2b + \index * 16
+.endm
+
 #define STACK_BIAS 2047
-#define ARGS (128)		/* Offset of register area in frame */
 
-.text
+	.text
         .align 8
-.globl ffi_call_v9
-.globl _ffi_call_v9
+	.globl	C(ffi_call_v9)
+	.type	C(ffi_call_v9),@function
+	FFI_HIDDEN(C(ffi_call_v9))
 
-ffi_call_v9:
-_ffi_call_v9:
-.LLFB1:
-	save	%sp, -STACKFRAME, %sp
-.LLCFI0:
+C(ffi_call_v9):
+	cfi_startproc
+	save	%sp, %o4, %sp
+	cfi_def_cfa_register(%fp)
+	cfi_window_save
 	
-	sub	%sp, %i2, %sp	! alloca() space in stack for frame to set up
-	add	%sp, STACKFRAME+STACK_BIAS, %l0	! %l0 has start of 
-						! frame to set up
+	mov	%i0, %o0			! copy cif
+	add	%sp, STACK_BIAS+128+48, %o1	! load args area
+	mov	%i2, %o2			! copy rvalue
+	call	C(ffi_prep_args_v9)
+	 mov	%i3, %o3			! copy avalue
 
-	mov	%l0, %o0	! call routine to set up frame
-	call	%i0
-	 mov	%i1, %o1	! (delay)
-	brz,pt	%o0, 1f
-	 ldx	[%l0+ARGS], %o0	! call foreign function
+	andcc	%o0, SPARC_FLAG_FP_ARGS, %g0	! need fp regs?
+	add	%sp, 48, %sp			! deallocate prep frame
+	be,pt	%xcc, 1f
+	 mov	%o0, %l0			! save flags
 
-	ldd	[%l0+ARGS], %f0
-	ldd	[%l0+ARGS+8], %f2
-	ldd	[%l0+ARGS+16], %f4
-	ldd	[%l0+ARGS+24], %f6
-	ldd	[%l0+ARGS+32], %f8
-	ldd	[%l0+ARGS+40], %f10
-	ldd	[%l0+ARGS+48], %f12
-	ldd	[%l0+ARGS+56], %f14
-	ldd	[%l0+ARGS+64], %f16
-	ldd	[%l0+ARGS+72], %f18
-	ldd	[%l0+ARGS+80], %f20
-	ldd	[%l0+ARGS+88], %f22
-	ldd	[%l0+ARGS+96], %f24
-	ldd	[%l0+ARGS+104], %f26
-	ldd	[%l0+ARGS+112], %f28
-	ldd	[%l0+ARGS+120], %f30
+	ldd	[%sp+STACK_BIAS+128], %f0	! load all fp arg regs
+	ldd	[%sp+STACK_BIAS+128+8], %f2
+	ldd	[%sp+STACK_BIAS+128+16], %f4
+	ldd	[%sp+STACK_BIAS+128+24], %f6
+	ldd	[%sp+STACK_BIAS+128+32], %f8
+	ldd	[%sp+STACK_BIAS+128+40], %f10
+	ldd	[%sp+STACK_BIAS+128+48], %f12
+	ldd	[%sp+STACK_BIAS+128+56], %f14
+	ldd	[%sp+STACK_BIAS+128+64], %f16
+	ldd	[%sp+STACK_BIAS+128+72], %f18
+	ldd	[%sp+STACK_BIAS+128+80], %f20
+	ldd	[%sp+STACK_BIAS+128+88], %f22
+	ldd	[%sp+STACK_BIAS+128+96], %f24
+	ldd	[%sp+STACK_BIAS+128+104], %f26
+	ldd	[%sp+STACK_BIAS+128+112], %f28
+	ldd	[%sp+STACK_BIAS+128+120], %f30
 
-1:	ldx	[%l0+ARGS+8], %o1
-	ldx	[%l0+ARGS+16], %o2
-	ldx	[%l0+ARGS+24], %o3
-	ldx	[%l0+ARGS+32], %o4
-	ldx	[%l0+ARGS+40], %o5
-	call	%i5
-	 sub	%l0, STACK_BIAS, %sp	! (delay) switch to frame
+1:	ldx	[%sp+STACK_BIAS+128], %o0	! load all int arg regs
+	ldx	[%sp+STACK_BIAS+128+8], %o1
+	ldx	[%sp+STACK_BIAS+128+16], %o2
+	ldx	[%sp+STACK_BIAS+128+24], %o3
+	ldx	[%sp+STACK_BIAS+128+32], %o4
+	ldx	[%sp+STACK_BIAS+128+40], %o5
+	call	%i1
+	 mov	%i5, %g5			! load static chain
 
-	! If the return value pointer is NULL, assume no return value.
-	brz,pn	%i4, done
+0:	call	1f		! load pc in %o7
+	 and	%l0, SPARC_FLAG_RET_MASK, %l1
+1:	sll	%l1, 4, %l1
+	add	%o7, %l1, %o7	! o7 = 0b + ret_type*16
+	jmp	%o7+(2f-0b)
 	 nop
 
-	cmp	%i3, FFI_TYPE_INT
-	be,a,pt	%icc, done
-	 stx	%o0, [%i4+0]	! (delay)
-
-	cmp	%i3, FFI_TYPE_FLOAT
-	be,a,pn	%icc, done
-	 st	%f0, [%i4+0]	! (delay)
-
-	cmp	%i3, FFI_TYPE_DOUBLE
-	be,a,pn	%icc, done
-	 std	%f0, [%i4+0]	! (delay)
-
-	cmp	%i3, FFI_TYPE_STRUCT
-	be,pn	%icc, dostruct
-
-	cmp	%i3, FFI_TYPE_LONGDOUBLE
-	bne,pt	%icc, done
+	.align	16
+2:
+E SPARC_RET_VOID
+	return	%i7+8
 	 nop
-	std	%f0, [%i4+0]
-	std	%f2, [%i4+8]
+E SPARC_RET_STRUCT
+	add	%sp, STACK_BIAS-64+128+48, %l2
+	sub	%sp, 64, %sp
+	b	8f
+	 stx	%o0, [%l2]
+E SPARC_RET_UINT8
+	and	%o0, 0xff, %i0
+	return	%i7+8
+	  stx	%o0, [%o2]
+E SPARC_RET_SINT8
+	sll	%o0, 24, %o0
+	sra	%o0, 24, %i0
+	return	%i7+8
+	 stx	%o0, [%o2]
+E SPARC_RET_UINT16
+	sll	%o0, 16, %o0
+	srl	%o0, 16, %i0
+	return	%i7+8
+	 stx	%o0, [%o2]
+E SPARC_RET_SINT16
+	sll	%o0, 16, %o0
+	sra	%o0, 16, %i0
+	return	%i7+8
+	 stx	%o0, [%o2]
+E SPARC_RET_UINT32
+	srl	%o0, 0, %i0
+	return	%i7+8
+	 stx	%o0, [%o2]
+E SP_V9_RET_SINT32
+	sra	%o0, 0, %i0
+	return	%i7+8
+	 stx	%o0, [%o2]
+E SPARC_RET_INT64
+	stx	%o0, [%i2]
+	return	%i7+8
+	 nop
+E SPARC_RET_INT128
+	stx	%o0, [%i2]
+	stx	%o1, [%i2+8]
+	return	%i7+8
+	 nop
+E SPARC_RET_F_8
+	st	%f7, [%i2+7*4]
+	nop
+	st	%f6, [%i2+6*4]
+	nop
+E SPARC_RET_F_6
+	st	%f5, [%i2+5*4]
+	nop
+	st	%f4, [%i2+4*4]
+	nop
+E SPARC_RET_F_4
+	std	%f2, [%i2+2*4]
+	return	%i7+8
+	 std	%f0, [%o2]
+E SPARC_RET_F_2
+	return	%i7+8
+	 std	%f0, [%o2]
+E SP_V9_RET_F_3
+	st	%f2, [%i2+2*4]
+	nop
+	st	%f1, [%i2+1*4]
+	nop
+E SPARC_RET_F_1
+	return	%i7+8
+	 st	%f0, [%o2]
 
-done:	ret
-	 restore
+	! Finish the SPARC_RET_STRUCT sequence.
+	.align	8
+8:	stx	%o1, [%l2+8]
+	stx	%o2, [%l2+16]
+	stx	%o3, [%l2+24]
+	std	%f0, [%l2+32]
+	std	%f2, [%l2+40]
+	std	%f4, [%l2+48]
+	std	%f6, [%l2+56]
 
-dostruct:
-	/* This will not work correctly for unions. */
-	stx	%o0, [%i4+0]
-	stx	%o1, [%i4+8]
-	stx	%o2, [%i4+16]
-	stx	%o3, [%i4+24]
-	std	%f0, [%i4+32]
-	std	%f2, [%i4+40]
-	std	%f4, [%i4+48]
-	std	%f6, [%i4+56]
-	ret
-	 restore
-.LLFE1:
+	! Copy the structure into place.
+	srl	%l0, SPARC_SIZEMASK_SHIFT, %o0	! load size_mask
+	mov	%i2, %o1			! load dst
+	mov	%l2, %o2			! load src_gp
+	call	C(ffi_struct_float_copy)
+	 add	%l2, 32, %o3			! load src_fp
 
-.ffi_call_v9_end:
-	.size	ffi_call_v9,.ffi_call_v9_end-ffi_call_v9
+	return	%i7+8
+	 nop
+
+	cfi_endproc
+	.size	C(ffi_call_v9), . - C(ffi_call_v9)
 
 
 #undef STACKFRAME
@@ -136,15 +211,40 @@ dostruct:
 
    Receives the closure argument in %g1.   */
 
-	.text
 	.align 8
-	.globl ffi_closure_v9
+	.globl	C(ffi_go_closure_v9)
+	.type	C(ffi_go_closure_v9),@function
+	FFI_HIDDEN(C(ffi_go_closure_v9))
 
-ffi_closure_v9:
-.LLFB2:
+C(ffi_go_closure_v9):
+	cfi_startproc
 	save	%sp, -STACKFRAME, %sp
-.LLCFI1:
+	cfi_def_cfa_register(%fp)
+	cfi_window_save
 
+	ldx	[%g5+8], %o0
+	ldx	[%g5+16], %o1
+	b	0f
+	 mov	%g5, %o2
+
+	cfi_endproc
+	.size	C(ffi_go_closure_v9), . - C(ffi_go_closure_v9)
+
+	.align 8
+	.globl	C(ffi_closure_v9)
+	.type	C(ffi_closure_v9),@function
+	FFI_HIDDEN(C(ffi_closure_v9))
+
+C(ffi_closure_v9):
+	cfi_startproc
+	save	%sp, -STACKFRAME, %sp
+	cfi_def_cfa_register(%fp)
+	cfi_window_save
+
+	ldx	[%g1+FFI_TRAMPOLINE_SIZE], %o0
+	ldx	[%g1+FFI_TRAMPOLINE_SIZE+8], %o1
+	ldx	[%g1+FFI_TRAMPOLINE_SIZE+16], %o2
+0:
 	! Store all of the potential argument registers in va_list format.
 	stx	%i0, [FP+128+0]
 	stx	%i1, [FP+128+8]
@@ -172,134 +272,106 @@ ffi_closure_v9:
 	std     %f30, [FP-8]
 
 	! Call ffi_closure_sparc_inner to do the bulk of the work.
-	mov	%g1, %o0
-	add	%fp, STACK_BIAS-160, %o1
-	add	%fp, STACK_BIAS+128, %o2
-	call	ffi_closure_sparc_inner_v9
-	 add	%fp, STACK_BIAS-128, %o3
+	add	%fp, STACK_BIAS-160, %o3
+	add	%fp, STACK_BIAS+128, %o4
+	call	C(ffi_closure_sparc_inner_v9)
+	 add	%fp, STACK_BIAS-128, %o5
 
-	! Load up the return value in the proper type.
-	! See ffi_prep_cif_machdep for the list of cases.
-	cmp	%o0, FFI_TYPE_VOID
-	be,pn	%icc, done1
+0:	call	1f		! load pc in %o7
+	 and	%o0, SPARC_FLAG_RET_MASK, %o0
+1:	sll	%o0, 4, %o0	! o2 = i2 * 16
+	add	%o7, %o0, %o7	! o7 = 0b + i2*16
+	jmp	%o7+(2f-0b)
+	 nop
 
-	cmp	%o0, FFI_TYPE_INT
-	be,pn	%icc, integer
-
-	cmp	%o0, FFI_TYPE_FLOAT
-	be,a,pn	%icc, done1
-	 ld	[FP-160], %f0
-
-	cmp	%o0, FFI_TYPE_DOUBLE
-	be,a,pn	%icc, done1
-	 ldd	[FP-160], %f0
-
-#if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
-	cmp	%o0, FFI_TYPE_LONGDOUBLE
-	be,a,pn	%icc, longdouble1
-	 ldd	[FP-160], %f0
-#endif
-
-	! FFI_TYPE_STRUCT
-	ldx	[FP-152], %i1
-	ldx	[FP-144], %i2
-	ldx	[FP-136], %i3
-	ldd	[FP-160], %f0
-	ldd	[FP-152], %f2
-	ldd	[FP-144], %f4
-	ldd	[FP-136], %f6
-
-integer:
+	! Note that we cannot load the data in the delay slot of
+	! the return insn because the data is in the stack frame
+	! that is deallocated by the return.
+	.align	16
+2:
+E SPARC_RET_VOID
+	return	%i7+8
+	 nop
+E SPARC_RET_STRUCT
 	ldx	[FP-160], %i0
+	ldd	[FP-160], %f0
+	b	8f
+	 ldx	[FP-152], %i1
+E SPARC_RET_UINT8
+	ldub	[FP-160+7], %i0
+	return	%i7+8
+	 nop
+E SPARC_RET_SINT8
+	ldsb	[FP-160+7], %i0
+	return	%i7+8
+	 nop
+E SPARC_RET_UINT16
+	lduh	[FP-160+6], %i0
+	return	%i7+8
+	 nop
+E SPARC_RET_SINT16
+	ldsh	[FP-160+6], %i0
+	return	%i7+8
+	 nop
+E SPARC_RET_UINT32
+	lduw	[FP-160+4], %i0
+	return	%i7+8
+	 nop
+E SP_V9_RET_SINT32
+	ldsw	[FP-160+4], %i0
+	return	%i7+8
+	 nop
+E SPARC_RET_INT64
+	ldx	[FP-160], %i0
+	return	%i7+8
+	 nop
+E SPARC_RET_INT128
+	ldx	[FP-160], %i0
+	ldx	[FP-160+8], %i1
+	return	%i7+8
+	 nop
+E SPARC_RET_F_8
+	ld	[FP-160+7*4], %f7
+	nop
+	ld	[FP-160+6*4], %f6
+	nop
+E SPARC_RET_F_6
+	ld	[FP-160+5*4], %f5
+	nop
+	ld	[FP-160+4*4], %f4
+	nop
+E SPARC_RET_F_4
+	ldd	[FP-160], %f0
+	ldd	[FP-160+8], %f2
+	return	%i7+8
+	 nop
+E SPARC_RET_F_2
+	ldd	[FP-160], %f0
+	return	%i7+8
+	 nop
+E SP_V9_RET_F_3
+	ld	[FP-160+2*4], %f2
+	nop
+	ld	[FP-160+1*4], %f1
+	nop
+E SPARC_RET_F_1
+	ld	[FP-160], %f0
+	return	%i7+8
+	 nop
 
-done1:
-	ret
-	 restore
+	! Finish the SPARC_RET_STRUCT sequence.
+	.align	8
+8:	ldd	[FP-152], %f2
+	ldx	[FP-144], %i2
+	ldd	[FP-144], %f4
+	ldx	[FP-136], %i3
+	ldd	[FP-136], %f6
+	return	%i7+8
+	 nop
 
-#if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
-longdouble1:
-	ldd	[FP-152], %f2
-	ret
-	 restore
-#endif
-.LLFE2:
-
-.ffi_closure_v9_end:
-	.size	ffi_closure_v9,.ffi_closure_v9_end-ffi_closure_v9
-
-#ifdef HAVE_RO_EH_FRAME
-	.section	".eh_frame",#alloc
-#else
-	.section	".eh_frame",#alloc,#write
-#endif
-.LLframe1:
-	.uaword	.LLECIE1-.LLSCIE1	! Length of Common Information Entry
-.LLSCIE1:
-	.uaword	0x0	! CIE Identifier Tag
-	.byte	0x1	! CIE Version
-	.ascii "zR\0"	! CIE Augmentation
-	.byte	0x1	! uleb128 0x1; CIE Code Alignment Factor
-	.byte	0x78	! sleb128 -8; CIE Data Alignment Factor
-	.byte	0xf	! CIE RA Column
-	.byte	0x1	! uleb128 0x1; Augmentation size
-#ifdef HAVE_AS_SPARC_UA_PCREL
-	.byte	0x1b	! FDE Encoding (pcrel sdata4)
-#else
-	.byte	0x50	! FDE Encoding (aligned absolute)
-#endif
-	.byte	0xc	! DW_CFA_def_cfa
-	.byte	0xe	! uleb128 0xe
-	.byte	0xff,0xf	! uleb128 0x7ff
-	.align 8
-.LLECIE1:
-.LLSFDE1:
-	.uaword	.LLEFDE1-.LLASFDE1	! FDE Length
-.LLASFDE1:
-	.uaword	.LLASFDE1-.LLframe1	! FDE CIE offset
-#ifdef HAVE_AS_SPARC_UA_PCREL
-	.uaword	%r_disp32(.LLFB1)
-	.uaword	.LLFE1-.LLFB1		! FDE address range
-#else
-	.align 8
-	.xword	.LLFB1
-	.uaxword	.LLFE1-.LLFB1	! FDE address range
-#endif
-	.byte	0x0	! uleb128 0x0; Augmentation size
-	.byte	0x4	! DW_CFA_advance_loc4
-	.uaword	.LLCFI0-.LLFB1
-	.byte	0xd	! DW_CFA_def_cfa_register
-	.byte	0x1e	! uleb128 0x1e
-	.byte	0x2d	! DW_CFA_GNU_window_save
-	.byte	0x9	! DW_CFA_register
-	.byte	0xf	! uleb128 0xf
-	.byte	0x1f	! uleb128 0x1f
-	.align 8
-.LLEFDE1:
-.LLSFDE2:
-	.uaword	.LLEFDE2-.LLASFDE2	! FDE Length
-.LLASFDE2:
-	.uaword	.LLASFDE2-.LLframe1	! FDE CIE offset
-#ifdef HAVE_AS_SPARC_UA_PCREL
-	.uaword	%r_disp32(.LLFB2)
-	.uaword	.LLFE2-.LLFB2		! FDE address range
-#else
-	.align 8
-	.xword	.LLFB2
-	.uaxword	.LLFE2-.LLFB2	! FDE address range
-#endif
-	.byte	0x0	! uleb128 0x0; Augmentation size
-	.byte	0x4	! DW_CFA_advance_loc4
-	.uaword	.LLCFI1-.LLFB2
-	.byte	0xd	! DW_CFA_def_cfa_register
-	.byte	0x1e	! uleb128 0x1e
-	.byte	0x2d	! DW_CFA_GNU_window_save
-	.byte	0x9	! DW_CFA_register
-	.byte	0xf	! uleb128 0xf
-	.byte	0x1f	! uleb128 0x1f
-	.align 8
-.LLEFDE2:
-#endif
-
+	cfi_endproc
+	.size	C(ffi_closure_v9), . - C(ffi_closure_v9)
+#endif /* SPARC64 */
 #ifdef __linux__
 	.section	.note.GNU-stack,"",@progbits
 #endif

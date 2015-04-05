@@ -46,42 +46,36 @@ typedef signed long            ffi_sarg;
 
 typedef enum ffi_abi {
   FFI_FIRST_ABI = 0,
-  FFI_V8,
-  FFI_V8PLUS,
-  /* See below for the COMPAT_V9 rationale.  */
-  FFI_COMPAT_V9,
-  FFI_V9,
-  FFI_LAST_ABI,
 #ifdef SPARC64
-  FFI_DEFAULT_ABI = FFI_V9
+  FFI_V9,
+  FFI_DEFAULT_ABI = FFI_V9,
 #else
-  FFI_DEFAULT_ABI = FFI_V8
+  FFI_V8,
+  FFI_DEFAULT_ABI = FFI_V8,
 #endif
+  FFI_LAST_ABI
 } ffi_abi;
 #endif
 
-#define V8_ABI_P(abi) ((abi) == FFI_V8 || (abi) == FFI_V8PLUS)
-#define V9_ABI_P(abi) ((abi) == FFI_COMPAT_V9 || (abi) == FFI_V9)
+#define FFI_TARGET_SPECIFIC_STACK_SPACE_ALLOCATION 1
+#define FFI_TARGET_HAS_COMPLEX_TYPE 1
 
-#define FFI_TARGET_SPECIFIC_VARIADIC 1
-
-/* The support of variadic functions was broken in the original implementation
-   of the FFI_V9 ABI.  This has been fixed by adding one extra field to the
-   CIF structure (nfixedargs field), which means that the ABI of libffi itself
-   has changed.  In order to support applications using the original ABI, we
-   have renamed FFI_V9 into FFI_COMPAT_V9 and defined a new FFI_V9 value.  */
 #ifdef SPARC64
-#define FFI_EXTRA_CIF_FIELDS unsigned int nfixedargs
+# define FFI_TARGET_SPECIFIC_VARIADIC 1
+# define FFI_EXTRA_CIF_FIELDS  unsigned int nfixedargs
 #endif
 
 /* ---- Definitions for closures ----------------------------------------- */
 
 #define FFI_CLOSURES 1
+#define FFI_GO_CLOSURES 1
+#define FFI_NATIVE_RAW_API 0
+
 #ifdef SPARC64
 #define FFI_TRAMPOLINE_SIZE 24
 #else
 #define FFI_TRAMPOLINE_SIZE 16
 #endif
-#define FFI_NATIVE_RAW_API 0
 
 #endif
+

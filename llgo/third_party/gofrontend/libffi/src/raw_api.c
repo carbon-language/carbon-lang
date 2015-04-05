@@ -88,6 +88,10 @@ ffi_raw_to_ptrarray (ffi_cif *cif, ffi_raw *raw, void **args)
 	  break;
 #endif
 
+	case FFI_TYPE_COMPLEX:
+	  *args = (raw++)->ptr;
+	  break;
+
 	case FFI_TYPE_POINTER:
 	  *args = (void*) &(raw++)->ptr;
 	  break;
@@ -112,6 +116,11 @@ ffi_raw_to_ptrarray (ffi_cif *cif, ffi_raw *raw, void **args)
 	}
       else
 #endif
+      if ((*tp)->type == FFI_TYPE_COMPLEX)
+	{
+	  *args = (raw++)->ptr;
+	}
+      else
 	{
 	  *args = (void*) raw;
 	  raw += ALIGN ((*tp)->size, sizeof (void*)) / sizeof (void*);
@@ -166,6 +175,10 @@ ffi_ptrarray_to_raw (ffi_cif *cif, void **args, ffi_raw *raw)
 	  (raw++)->ptr = *args;
 	  break;
 #endif
+
+	case FFI_TYPE_COMPLEX:
+	  (raw++)->ptr = *args;
+	  break;
 
 	case FFI_TYPE_POINTER:
 	  (raw++)->ptr = **(void***) args;

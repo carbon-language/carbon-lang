@@ -3,7 +3,8 @@
 AUTOMAKE_OPTIONS=foreign
 
 DISTCLEANFILES=ffitarget.h
-EXTRA_DIST=ffi.h.in ffi_common.h
+noinst_HEADERS=ffi_common.h ffi_cfi.h
+EXTRA_DIST=ffi.h.in
 
 # Where generated headers like ffitarget.h get installed.
 gcc_version   := $(shell cat $(top_srcdir)/../gcc/BASE-VER)

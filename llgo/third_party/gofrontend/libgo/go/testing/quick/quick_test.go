@@ -7,7 +7,6 @@ package quick
 import (
 	"math/rand"
 	"reflect"
-	"runtime"
 	"testing"
 )
 
@@ -158,12 +157,10 @@ func TestCheckEqual(t *testing.T) {
 	reportError("fFloat32Alias", CheckEqual(fFloat32Alias, fFloat32Alias, nil), t)
 	reportError("fFloat64", CheckEqual(fFloat64, fFloat64, nil), t)
 	reportError("fFloat64Alias", CheckEqual(fFloat64Alias, fFloat64Alias, nil), t)
-	if runtime.GOARCH != "alpha" {
-		reportError("fComplex64", CheckEqual(fComplex64, fComplex64, nil), t)
-		reportError("fComplex64Alias", CheckEqual(fComplex64Alias, fComplex64Alias, nil), t)
-		reportError("fComplex128", CheckEqual(fComplex128, fComplex128, nil), t)
-		reportError("fComplex128Alias", CheckEqual(fComplex128Alias, fComplex128Alias, nil), t)
-	}
+	reportError("fComplex64", CheckEqual(fComplex64, fComplex64, nil), t)
+	reportError("fComplex64Alias", CheckEqual(fComplex64Alias, fComplex64Alias, nil), t)
+	reportError("fComplex128", CheckEqual(fComplex128, fComplex128, nil), t)
+	reportError("fComplex128Alias", CheckEqual(fComplex128Alias, fComplex128Alias, nil), t)
 	reportError("fInt16", CheckEqual(fInt16, fInt16, nil), t)
 	reportError("fInt16Alias", CheckEqual(fInt16Alias, fInt16Alias, nil), t)
 	reportError("fInt32", CheckEqual(fInt32, fInt32, nil), t)

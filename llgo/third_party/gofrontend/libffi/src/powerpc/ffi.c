@@ -70,8 +70,12 @@ ffi_prep_cif_machdep_var (ffi_cif *cif,
 #endif
 }
 
-void
-ffi_call(ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
+static void
+ffi_call_int (ffi_cif *cif,
+	      void (*fn) (void),
+	      void *rvalue,
+	      void **avalue,
+	      void *closure)
 {
   /* The final SYSV ABI says that structures smaller or equal 8 bytes
      are returned in r3/r4.  A draft ABI used by linux instead returns
@@ -97,9 +101,10 @@ ffi_call(ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
     ecif.rvalue = alloca (cif->rtype->size);
 
 #ifdef POWERPC64
-  ffi_call_LINUX64 (&ecif, -(long) cif->bytes, cif->flags, ecif.rvalue, fn);
+  ffi_call_LINUX64 (&ecif, fn, ecif.rvalue, cif->flags, closure,
+		    -(long) cif->bytes);
 #else
-  ffi_call_SYSV (&ecif, -cif->bytes, cif->flags, ecif.rvalue, fn);
+  ffi_call_SYSV (&ecif, fn, ecif.rvalue, cif->flags, closure, -cif->bytes);
 #endif
 
   /* Check for a bounce-buffered return value */
@@ -125,6 +130,18 @@ ffi_call(ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
     }
 }
 
+void
+ffi_call (ffi_cif *cif, void (*fn) (void), void *rvalue, void **avalue)
+{
+  ffi_call_int (cif, fn, rvalue, avalue, NULL);
+}
+
+void
+ffi_call_go (ffi_cif *cif, void (*fn) (void), void *rvalue, void **avalue,
+	     void *closure)
+{
+  ffi_call_int (cif, fn, rvalue, avalue, closure);
+}
 
 ffi_status
 ffi_prep_closure_loc (ffi_closure *closure,
@@ -138,4 +155,19 @@ ffi_prep_closure_loc (ffi_closure *closure,
 #else
   return ffi_prep_closure_loc_sysv (closure, cif, fun, user_data, codeloc);
 #endif
+}
+
+ffi_status
+ffi_prep_go_closure (ffi_go_closure *closure,
+		     ffi_cif *cif,
+		     void (*fun) (ffi_cif *, void *, void **, void *))
+{
+#ifdef POWERPC64
+  closure->tramp = ffi_go_closure_linux64;
+#else
+  closure->tramp = ffi_go_closure_sysv;
+#endif
+  closure->cif = cif;
+  closure->fun = fun;
+  return FFI_OK;
 }

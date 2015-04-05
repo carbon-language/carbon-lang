@@ -106,9 +106,9 @@ main (void)
   CHECK(ffi_prep_closure_loc(pcl, &cif, test_fn, NULL, code) == FFI_OK);
 
   res = ((int (*)(int, ...))(code))(si, s1, l1, s2);
-  // { dg-output "4 5 6 10 11 12 13 14 20 21" }
+  /* { dg-output "4 5 6 10 11 12 13 14 20 21" } */
   printf("res: %d\n", (int) res);
-  // { dg-output "\nres: 42" }
+  /* { dg-output "\nres: 42" } */
 
   exit(0);
 }

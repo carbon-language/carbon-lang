@@ -237,8 +237,7 @@ timerproc(void* dummy __attribute__ ((unused)))
 			arg = t->arg;
 			seq = t->seq;
 			runtime_unlock(&timers.lock);
-			__go_set_closure(fv);
-			f(arg, seq);
+			__builtin_call_with_static_chain(f(arg, seq), fv);
 
 			// clear f and arg to avoid leak while sleeping for next timer
 			f = nil;

@@ -54,6 +54,11 @@ void ffi_type_test(ffi_type *a, char *file, int line)
   FFI_ASSERT_AT(a->type <= FFI_TYPE_LAST, file, line);
   FFI_ASSERT_AT(a->type == FFI_TYPE_VOID || a->size > 0, file, line);
   FFI_ASSERT_AT(a->type == FFI_TYPE_VOID || a->alignment > 0, file, line);
-  FFI_ASSERT_AT(a->type != FFI_TYPE_STRUCT || a->elements != NULL, file, line);
+  FFI_ASSERT_AT((a->type != FFI_TYPE_STRUCT && a->type != FFI_TYPE_COMPLEX)
+		|| a->elements != NULL, file, line);
+  FFI_ASSERT_AT(a->type != FFI_TYPE_COMPLEX
+		|| (a->elements != NULL
+		    && a->elements[0] != NULL && a->elements[1] == NULL),
+		file, line);
 
 }

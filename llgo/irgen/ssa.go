@@ -379,7 +379,7 @@ func (u *unit) defineFunction(f *ssa.Function) {
 			elemTypes[i+1] = u.llvmtypes.ToLLVM(fv.Type())
 		}
 		structType := llvm.StructType(elemTypes, false)
-		closure := fr.runtime.getClosure.call(fr)[0]
+		closure := fr.function.Param(fti.chainIndex)
 		closure = fr.builder.CreateBitCast(closure, llvm.PointerType(structType, 0), "")
 		for i, fv := range f.FreeVars {
 			ptr := fr.builder.CreateStructGEP(closure, i+1, "")
@@ -507,14 +507,16 @@ func (fr *frame) emitInitPrologue() llvm.BasicBlock {
 
 	fr.builder.SetInsertPointAtEnd(initBlock)
 	fr.builder.CreateStore(llvm.ConstInt(llvm.Int1Type(), 1, false), initGuard)
-	ftyp := llvm.FunctionType(llvm.VoidType(), nil, false)
+	int8ptr := llvm.PointerType(fr.types.ctx.Int8Type(), 0)
+	ftyp := llvm.FunctionType(llvm.VoidType(), []llvm.Type{int8ptr}, false)
 	for _, pkg := range fr.pkg.Object.Imports() {
 		initname := ManglePackagePath(pkg.Path()) + "..import"
 		initfn := fr.module.Module.NamedFunction(initname)
 		if initfn.IsNil() {
 			initfn = llvm.AddFunction(fr.module.Module, initname, ftyp)
 		}
-		fr.builder.CreateCall(initfn, nil, "")
+		args := []llvm.Value{llvm.Undef(int8ptr)}
+		fr.builder.CreateCall(initfn, args, "")
 	}
 
 	return initBlock
@@ -1288,6 +1290,7 @@ func (fr *frame) callInstruction(instr ssa.CallInstruction) []*govalue {
 	}
 
 	var fn *govalue
+	var chain llvm.Value
 	if call.IsInvoke() {
 		var recv *govalue
 		fn, recv = fr.interfaceMethod(fr.llvmvalue(call.Value), call.Value.Type(), call.Method)
@@ -1300,9 +1303,9 @@ func (fr *frame) callInstruction(instr ssa.CallInstruction) []*govalue {
 		} else {
 			// First-class function values are stored as *{*fnptr}, so
 			// we must extract the function pointer. We must also
-			// call __go_set_closure, in case the function is a closure.
+			// set the chain, in case the function is a closure.
 			fn = fr.value(call.Value)
-			fr.runtime.setClosure.call(fr, fn.value)
+			chain = fn.value
 			fnptr := fr.builder.CreateBitCast(fn.value, llvm.PointerType(fn.value.Type(), 0), "")
 			fnptr = fr.builder.CreateLoad(fnptr, "")
 			fn = newValue(fnptr, fn.Type())
@@ -1315,7 +1318,7 @@ func (fr *frame) callInstruction(instr ssa.CallInstruction) []*govalue {
 			}
 		}
 	}
-	return fr.createCall(fn, args)
+	return fr.createCall(fn, chain, args)
 }
 
 func hasDefer(f *ssa.Function) bool {

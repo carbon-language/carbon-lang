@@ -33,8 +33,9 @@
 #ifdef POWERPC64
 	FFI_HIDDEN (ffi_closure_LINUX64)
 	.globl  ffi_closure_LINUX64
-# if _CALL_ELF == 2
 	.text
+	.cfi_startproc
+# if _CALL_ELF == 2
 ffi_closure_LINUX64:
 	addis	%r2, %r12, .TOC.-ffi_closure_LINUX64@ha
 	addi	%r2, %r2, .TOC.-ffi_closure_LINUX64@l
@@ -73,20 +74,18 @@ ffi_closure_LINUX64:
 #  define RETVAL PARMSAVE+64
 # endif
 
-.LFB1:
 # if _CALL_ELF == 2
 	ld	%r12, FFI_TRAMPOLINE_SIZE(%r11)		# closure->cif
 	mflr	%r0
 	lwz	%r12, 28(%r12)				# cif->flags
 	mtcrf	0x40, %r12
 	addi	%r12, %r1, PARMSAVE
-	bt	7, .Lparmsave
+	bt	7, 0f
 	# Our caller has not allocated a parameter save area.
 	# We need to allocate one here and use it to pass gprs to
 	# ffi_closure_helper_LINUX64.
 	addi	%r12, %r1, -STACKFRAME+PARMSAVE
-.Lparmsave:
-	std	%r0, 16(%r1)
+0:
 	# Save general regs into parm save area
 	std	%r3, 0(%r12)
 	std	%r4, 8(%r12)
@@ -98,8 +97,12 @@ ffi_closure_LINUX64:
 	std	%r10, 56(%r12)
 
 	# load up the pointer to the parm save area
-	mr	%r5, %r12
+	mr	%r7, %r12
 # else
+	# copy r2 to r11 and load TOC into r2
+	mr	%r11, %r2
+	ld	%r2, 16(%r2)
+
 	mflr	%r0
 	# Save general regs into parm save area
 	# This is the parameter save area set up by our caller.
@@ -112,12 +115,19 @@ ffi_closure_LINUX64:
 	std	%r9, PARMSAVE+48(%r1)
 	std	%r10, PARMSAVE+56(%r1)
 
+	# load up the pointer to the parm save area
+	addi	%r7, %r1, PARMSAVE
+# endif
 	std	%r0, 16(%r1)
 
-	# load up the pointer to the parm save area
-	addi	%r5, %r1, PARMSAVE
-# endif
+	# closure->cif
+	ld	%r3, FFI_TRAMPOLINE_SIZE(%r11)
+	# closure->fun
+	ld	%r4, FFI_TRAMPOLINE_SIZE+8(%r11)
+	# closure->user_data
+	ld	%r5, FFI_TRAMPOLINE_SIZE+16(%r11)
 
+.Ldoclosure:
 	# next save fpr 1 to fpr 13
 	stfd	%f1, -104+(0*8)(%r1)
 	stfd	%f2, -104+(1*8)(%r1)
@@ -134,16 +144,14 @@ ffi_closure_LINUX64:
 	stfd	%f13, -104+(12*8)(%r1)
 
 	# load up the pointer to the saved fpr registers */
-	addi	%r6, %r1, -104
+	addi	%r8, %r1, -104
 
 	# load up the pointer to the result storage
-	addi	%r4, %r1, -STACKFRAME+RETVAL
+	addi	%r6, %r1, -STACKFRAME+RETVAL
 
 	stdu	%r1, -STACKFRAME(%r1)
-.LCFI0:
-
-	# get the context pointer from the trampoline
-	mr	%r3, %r11
+	.cfi_def_cfa_offset STACKFRAME
+	.cfi_offset 65, 16
 
 	# make the call
 # if defined _CALL_LINUX || _CALL_ELF == 2
@@ -178,7 +186,9 @@ ffi_closure_LINUX64:
 # case FFI_TYPE_VOID
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 	nop
 # case FFI_TYPE_INT
 # ifdef __LITTLE_ENDIAN__
@@ -188,17 +198,23 @@ ffi_closure_LINUX64:
 # endif
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_FLOAT
 	lfs %f1, RETVAL+0(%r1)
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_DOUBLE
 	lfd %f1, RETVAL+0(%r1)
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_LONGDOUBLE
 	lfd %f1, RETVAL+0(%r1)
 	mtlr %r0
@@ -212,7 +228,9 @@ ffi_closure_LINUX64:
 # endif
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_SINT8
 # ifdef __LITTLE_ENDIAN__
 	lbz %r3, RETVAL+0(%r1)
@@ -231,7 +249,9 @@ ffi_closure_LINUX64:
 	mtlr %r0
 .Lfinish:
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_SINT16
 # ifdef __LITTLE_ENDIAN__
 	lha %r3, RETVAL+0(%r1)
@@ -240,7 +260,9 @@ ffi_closure_LINUX64:
 # endif
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_UINT32
 # ifdef __LITTLE_ENDIAN__
 	lwz %r3, RETVAL+0(%r1)
@@ -249,7 +271,9 @@ ffi_closure_LINUX64:
 # endif
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_SINT32
 # ifdef __LITTLE_ENDIAN__
 	lwa %r3, RETVAL+0(%r1)
@@ -258,27 +282,37 @@ ffi_closure_LINUX64:
 # endif
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_UINT64
 	ld %r3, RETVAL+0(%r1)
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_SINT64
 	ld %r3, RETVAL+0(%r1)
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_TYPE_STRUCT
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 	nop
 # case FFI_TYPE_POINTER
 	ld %r3, RETVAL+0(%r1)
 	mtlr %r0
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 # case FFI_V2_TYPE_FLOAT_HOMOG
 	lfs %f1, RETVAL+0(%r1)
 	lfs %f2, RETVAL+4(%r1)
@@ -295,7 +329,9 @@ ffi_closure_LINUX64:
 	lfd %f7, RETVAL+48(%r1)
 	lfd %f8, RETVAL+56(%r1)
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 .Lmorefloat:
 	lfs %f4, RETVAL+12(%r1)
 	mtlr %r0
@@ -304,13 +340,16 @@ ffi_closure_LINUX64:
 	lfs %f7, RETVAL+24(%r1)
 	lfs %f8, RETVAL+28(%r1)
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 .Lsmall:
 # ifdef __LITTLE_ENDIAN__
 	ld %r3,RETVAL+0(%r1)
 	mtlr %r0
 	ld %r4,RETVAL+8(%r1)
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
 # else
 	# A struct smaller than a dword is returned in the low bits of r3
@@ -324,63 +363,124 @@ ffi_closure_LINUX64:
 	mtlr %r0
 	ld %r4,RETVAL+8(%r1)
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	blr
+	.cfi_def_cfa_offset STACKFRAME
 .Lsmalldown:
 	addi %r5, %r5, FFI_V2_TYPE_SMALL_STRUCT + 7
 	mtlr %r0
 	sldi %r5, %r5, 3
 	addi %r1, %r1, STACKFRAME
+	.cfi_def_cfa_offset 0
 	srd %r3, %r3, %r5
 	blr
 # endif
 
-.LFE1:
-	.long	0
-	.byte	0,12,0,1,128,0,0,0
+	.cfi_endproc
 # if _CALL_ELF == 2
 	.size	ffi_closure_LINUX64,.-ffi_closure_LINUX64
 # else
 #  ifdef _CALL_LINUX
 	.size	ffi_closure_LINUX64,.-.L.ffi_closure_LINUX64
 #  else
+	.long	0
+	.byte	0,12,0,1,128,0,0,0
 	.size	.ffi_closure_LINUX64,.-.ffi_closure_LINUX64
 #  endif
 # endif
 
-	.section	.eh_frame,EH_FRAME_FLAGS,@progbits
-.Lframe1:
-	.4byte	.LECIE1-.LSCIE1	 # Length of Common Information Entry
-.LSCIE1:
-	.4byte	0x0	 # CIE Identifier Tag
-	.byte	0x1	 # CIE Version
-	.ascii "zR\0"	 # CIE Augmentation
-	.uleb128 0x1	 # CIE Code Alignment Factor
-	.sleb128 -8	 # CIE Data Alignment Factor
-	.byte	0x41	 # CIE RA Column
-	.uleb128 0x1	 # Augmentation size
-	.byte	0x14	 # FDE Encoding (pcrel udata8)
-	.byte	0xc	 # DW_CFA_def_cfa
-	.uleb128 0x1
-	.uleb128 0x0
-	.align 3
-.LECIE1:
-.LSFDE1:
-	.4byte	.LEFDE1-.LASFDE1	 # FDE Length
-.LASFDE1:
-	.4byte	.LASFDE1-.Lframe1	 # FDE CIE offset
-	.8byte	.LFB1-.	 # FDE initial location
-	.8byte	.LFE1-.LFB1	 # FDE address range
-	.uleb128 0x0	 # Augmentation size
-	.byte	0x2	 # DW_CFA_advance_loc1
-	.byte	.LCFI0-.LFB1
-	.byte	0xe	 # DW_CFA_def_cfa_offset
-	.uleb128 STACKFRAME
-	.byte	0x11	 # DW_CFA_offset_extended_sf
-	.uleb128 0x41
-	.sleb128 -2
-	.align 3
-.LEFDE1:
 
+	FFI_HIDDEN (ffi_go_closure_linux64)
+	.globl  ffi_go_closure_linux64
+	.text
+	.cfi_startproc
+# if _CALL_ELF == 2
+ffi_go_closure_linux64:
+	addis	%r2, %r12, .TOC.-ffi_go_closure_linux64@ha
+	addi	%r2, %r2, .TOC.-ffi_go_closure_linux64@l
+	.localentry ffi_go_closure_linux64, . - ffi_go_closure_linux64
+# else
+	.section        ".opd","aw"
+	.align  3
+ffi_go_closure_linux64:
+#  ifdef _CALL_LINUX
+	.quad   .L.ffi_go_closure_linux64,.TOC.@tocbase,0
+	.type   ffi_go_closure_linux64,@function
+	.text
+.L.ffi_go_closure_linux64:
+#  else
+	FFI_HIDDEN (.ffi_go_closure_linux64)
+	.globl  .ffi_go_closure_linux64
+	.quad   .ffi_go_closure_linux64,.TOC.@tocbase,0
+	.size   ffi_go_closure_linux64,24
+	.type   .ffi_go_closure_linux64,@function
+	.text
+.ffi_go_closure_linux64:
+#  endif
+# endif
+
+# if _CALL_ELF == 2
+	ld	%r12, 8(%r11)				# closure->cif
+	mflr	%r0
+	lwz	%r12, 28(%r12)				# cif->flags
+	mtcrf	0x40, %r12
+	addi	%r12, %r1, PARMSAVE
+	bt	7, 0f
+	# Our caller has not allocated a parameter save area.
+	# We need to allocate one here and use it to pass gprs to
+	# ffi_closure_helper_LINUX64.
+	addi	%r12, %r1, -STACKFRAME+PARMSAVE
+0:
+	# Save general regs into parm save area
+	std	%r3, 0(%r12)
+	std	%r4, 8(%r12)
+	std	%r5, 16(%r12)
+	std	%r6, 24(%r12)
+	std	%r7, 32(%r12)
+	std	%r8, 40(%r12)
+	std	%r9, 48(%r12)
+	std	%r10, 56(%r12)
+
+	# load up the pointer to the parm save area
+	mr	%r7, %r12
+# else
+	mflr	%r0
+	# Save general regs into parm save area
+	# This is the parameter save area set up by our caller.
+	std	%r3, PARMSAVE+0(%r1)
+	std	%r4, PARMSAVE+8(%r1)
+	std	%r5, PARMSAVE+16(%r1)
+	std	%r6, PARMSAVE+24(%r1)
+	std	%r7, PARMSAVE+32(%r1)
+	std	%r8, PARMSAVE+40(%r1)
+	std	%r9, PARMSAVE+48(%r1)
+	std	%r10, PARMSAVE+56(%r1)
+
+	# load up the pointer to the parm save area
+	addi	%r7, %r1, PARMSAVE
+# endif
+	std	%r0, 16(%r1)
+
+	# closure->cif
+	ld	%r3, 8(%r11)
+	# closure->fun
+	ld	%r4, 16(%r11)
+	# user_data
+	mr	%r5, %r11
+	b	.Ldoclosure
+
+	.cfi_endproc
+# if _CALL_ELF == 2
+	.size	ffi_go_closure_linux64,.-ffi_go_closure_linux64
+# else
+#  ifdef _CALL_LINUX
+	.size	ffi_go_closure_linux64,.-.L.ffi_go_closure_linux64
+#  else
+	.long	0
+	.byte	0,12,0,1,128,0,0,0
+	.size	.ffi_go_closure_linux64,.-.ffi_go_closure_linux64
+#  endif
+# endif
 #endif
 
 #if (defined __ELF__ && defined __linux__) || _CALL_ELF == 2

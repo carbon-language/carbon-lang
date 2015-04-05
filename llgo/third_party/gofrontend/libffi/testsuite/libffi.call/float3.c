@@ -9,6 +9,8 @@
 #include "ffitest.h"
 #include "float.h"
 
+#include <math.h>
+
 static double floating_1(float a, double b, long double c)
 {
   return (double) a + b + (double) c;
@@ -49,7 +51,7 @@ int main (void)
 
   ffi_call(&cif, FFI_FN(floating_1), &rd, values);
 
-  CHECK(rd - floating_1(f, d, ld) < DBL_EPSILON);
+  CHECK(fabs(rd - floating_1(f, d, ld)) < DBL_EPSILON);
 
   args[0] = &ffi_type_longdouble;
   values[0] = &ld;
@@ -66,7 +68,7 @@ int main (void)
 
   ffi_call(&cif, FFI_FN(floating_2), &rd, values);
 
-  CHECK(rd - floating_2(ld, d, f) < DBL_EPSILON);
+  CHECK(fabs(rd - floating_2(ld, d, f)) < DBL_EPSILON);
 
   exit (0);
 }

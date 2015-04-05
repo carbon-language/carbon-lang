@@ -195,7 +195,6 @@ struct	Location
 
 struct	G
 {
-	void*	closure;	// Closure value.
 	Defer*	defer;
 	Panic*	panic;
 	void*	exception;	// current exception being thrown
@@ -832,9 +831,6 @@ extern uint32 runtime_in_callers;
 int32 getproccount(void);
 
 #define PREFETCH(p) __builtin_prefetch(p)
-
-void	__go_set_closure(void*);
-void*	__go_get_closure(void);
 
 bool	runtime_gcwaiting(void);
 void	runtime_badsignal(int);

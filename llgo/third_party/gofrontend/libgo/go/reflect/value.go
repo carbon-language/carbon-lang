@@ -308,9 +308,6 @@ func (v Value) CallSlice(in []Value) []Value {
 
 var callGC bool // for testing; see TestCallMethodJump
 
-var makeFuncStubFn = makeFuncStub
-var makeFuncStubCode = **(**uintptr)(unsafe.Pointer(&makeFuncStubFn))
-
 func (v Value) call(op string, in []Value) []Value {
 	// Get function pointer, type.
 	t := v.typ
@@ -387,17 +384,6 @@ func (v Value) call(op string, in []Value) []Value {
 		panic("reflect.Value.Call: wrong argument count")
 	}
 	nout := t.NumOut()
-
-	// If target is makeFuncStub, short circuit the unpack onto stack /
-	// pack back into []Value for the args and return values.  Just do the
-	// call directly.
-	// We need to do this here because otherwise we have a situation where
-	// reflect.callXX calls makeFuncStub, neither of which knows the
-	// layout of the args.  That's bad for precise gc & stack copying.
-	x := (*makeFuncImpl)(fn)
-	if x.code == makeFuncStubCode {
-		return x.call(in)
-	}
 
 	if v.flag&flagMethod != 0 {
 		nin++
@@ -1120,16 +1106,6 @@ func (v Value) Pointer() uintptr {
 	case Chan, Map, Ptr, UnsafePointer:
 		return uintptr(v.pointer())
 	case Func:
-		if v.flag&flagMethod != 0 {
-			// As the doc comment says, the returned pointer is an
-			// underlying code pointer but not necessarily enough to
-			// identify a single function uniquely. All method expressions
-			// created via reflect have the same underlying code pointer,
-			// so their Pointers are equal. The function used here must
-			// match the one used in makeMethodValue.
-			f := makeFuncStub
-			return **(**uintptr)(unsafe.Pointer(&f))
-		}
 		p := v.pointer()
 		// Non-nil func value points at data block.
 		// First word of data block is actual code.

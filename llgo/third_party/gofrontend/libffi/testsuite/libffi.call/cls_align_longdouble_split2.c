@@ -5,10 +5,8 @@
 	Originator:		Blake Chaffin	6/18/2007
 */
 
-/* { dg-excess-errors "no long double format" { xfail x86_64-*-mingw* x86_64-*-cygwin* } } */
 /* { dg-do run { xfail strongarm*-*-* } } */
 /* { dg-options -mlong-double-128 { target powerpc64*-*-linux* } } */
-/* { dg-output "" { xfail x86_64-*-mingw* x86_64-*-cygwin* } } */
 
 #include "ffitest.h"
 

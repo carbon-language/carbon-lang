@@ -32,8 +32,9 @@
 #ifdef POWERPC64
 	.hidden	ffi_call_LINUX64
 	.globl	ffi_call_LINUX64
-# if _CALL_ELF == 2
 	.text
+	.cfi_startproc
+# if _CALL_ELF == 2
 ffi_call_LINUX64:
 	addis	%r2, %r12, .TOC.-ffi_call_LINUX64@ha
 	addi	%r2, %r2, .TOC.-ffi_call_LINUX64@l
@@ -57,20 +58,26 @@ ffi_call_LINUX64:
 .ffi_call_LINUX64:
 #  endif
 # endif
-.LFB1:
 	mflr	%r0
 	std	%r28, -32(%r1)
 	std	%r29, -24(%r1)
 	std	%r30, -16(%r1)
 	std	%r31, -8(%r1)
+	std	%r7, 8(%r1)	/* closure, saved in cr field.  */
 	std	%r0, 16(%r1)
 
 	mr	%r28, %r1	/* our AP.  */
-.LCFI0:
-	stdux	%r1, %r1, %r4
-	mr	%r31, %r5	/* flags, */
-	mr	%r30, %r6	/* rvalue, */
-	mr	%r29, %r7	/* function address.  */
+	.cfi_def_cfa_register 28
+	.cfi_offset 65, 16
+	.cfi_offset 31, -8
+	.cfi_offset 30, -16
+	.cfi_offset 29, -24
+	.cfi_offset 28, -32
+
+	stdux	%r1, %r1, %r8
+	mr	%r31, %r6	/* flags, */
+	mr	%r30, %r5	/* rvalue, */
+	mr	%r29, %r4	/* function address.  */
 /* Save toc pointer, not for the ffi_prep_args64 call, but for the later
    bctrl function call.  */
 # if _CALL_ELF == 2
@@ -92,7 +99,6 @@ ffi_call_LINUX64:
 # else
 	ld	%r12, 0(%r29)
 	ld	%r2, 8(%r29)
-	ld	%r11, 16(%r29)
 # endif
 	/* Now do the call.  */
 	/* Set up cr1 with bits 4-7 of the flags.  */
@@ -130,6 +136,7 @@ ffi_call_LINUX64:
 2:
 
 	/* Make the call.  */
+	ld	%r11, 8(%r28)
 	bctrl
 
 	/* This must follow the call immediately, the unwinder
@@ -151,6 +158,7 @@ ffi_call_LINUX64:
 .Ldone_return_value:
 	/* Restore the registers we used and return.  */
 	mr	%r1, %r28
+	.cfi_def_cfa_register 1
 	ld	%r0, 16(%r28)
 	ld	%r28, -32(%r28)
 	mtlr	%r0
@@ -160,6 +168,7 @@ ffi_call_LINUX64:
 	blr
 
 .Lfp_return_value:
+	.cfi_def_cfa_register 28
 	bf	28, .Lfloat_return_value
 	stfd	%f1, 0(%r30)
 	mtcrf	0x02, %r31 /* cr6  */
@@ -199,60 +208,18 @@ ffi_call_LINUX64:
 	std	%r4, 8(%r30)
 	b	.Ldone_return_value
 
-.LFE1:
-	.long	0
-	.byte	0,12,0,1,128,4,0,0
+	.cfi_endproc
 # if _CALL_ELF == 2
 	.size	ffi_call_LINUX64,.-ffi_call_LINUX64
 # else
 #  ifdef _CALL_LINUX
 	.size	ffi_call_LINUX64,.-.L.ffi_call_LINUX64
 #  else
+	.long	0
+	.byte	0,12,0,1,128,4,0,0
 	.size	.ffi_call_LINUX64,.-.ffi_call_LINUX64
 #  endif
 # endif
-
-	.section	.eh_frame,EH_FRAME_FLAGS,@progbits
-.Lframe1:
-	.4byte	.LECIE1-.LSCIE1	 # Length of Common Information Entry
-.LSCIE1:
-	.4byte	0x0	 # CIE Identifier Tag
-	.byte	0x1	 # CIE Version
-	.ascii "zR\0"	 # CIE Augmentation
-	.uleb128 0x1	 # CIE Code Alignment Factor
-	.sleb128 -8	 # CIE Data Alignment Factor
-	.byte	0x41	 # CIE RA Column
-	.uleb128 0x1	 # Augmentation size
-	.byte	0x14	 # FDE Encoding (pcrel udata8)
-	.byte	0xc	 # DW_CFA_def_cfa
-	.uleb128 0x1
-	.uleb128 0x0
-	.align 3
-.LECIE1:
-.LSFDE1:
-	.4byte	.LEFDE1-.LASFDE1	 # FDE Length
-.LASFDE1:
-	.4byte	.LASFDE1-.Lframe1	 # FDE CIE offset
-	.8byte	.LFB1-.	 # FDE initial location
-	.8byte	.LFE1-.LFB1	 # FDE address range
-	.uleb128 0x0	 # Augmentation size
-	.byte	0x2	 # DW_CFA_advance_loc1
-	.byte	.LCFI0-.LFB1
-	.byte	0xd	 # DW_CFA_def_cfa_register
-	.uleb128 0x1c
-	.byte	0x11	 # DW_CFA_offset_extended_sf
-	.uleb128 0x41
-	.sleb128 -2
-	.byte	0x9f	 # DW_CFA_offset, column 0x1f
-	.uleb128 0x1
-	.byte	0x9e	 # DW_CFA_offset, column 0x1e
-	.uleb128 0x2
-	.byte	0x9d	 # DW_CFA_offset, column 0x1d
-	.uleb128 0x3
-	.byte	0x9c	 # DW_CFA_offset, column 0x1c
-	.uleb128 0x4
-	.align 3
-.LEFDE1:
 
 #endif
 

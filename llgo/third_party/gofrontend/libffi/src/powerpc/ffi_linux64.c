@@ -667,7 +667,8 @@ flush_icache (char *wraddr, char *xaddr, int size)
 }
 #endif
 
-ffi_status
+
+ffi_status FFI_HIDDEN
 ffi_prep_closure_loc_linux64 (ffi_closure *closure,
 			      ffi_cif *cif,
 			      void (*fun) (ffi_cif *, void *, void **, void *),
@@ -688,16 +689,17 @@ ffi_prep_closure_loc_linux64 (ffi_closure *closure,
 				/* 2:	.quad	context		*/
   *(void **) &tramp[4] = (void *) ffi_closure_LINUX64;
   *(void **) &tramp[6] = codeloc;
-  flush_icache ((char *)tramp, (char *)codeloc, FFI_TRAMPOLINE_SIZE);
+  flush_icache ((char *) tramp, (char *) codeloc, 4 * 4);
 #else
   void **tramp = (void **) &closure->tramp[0];
 
   if (cif->abi < FFI_LINUX || cif->abi >= FFI_LAST_ABI)
     return FFI_BAD_ABI;
 
-  /* Copy function address and TOC from ffi_closure_LINUX64.  */
-  memcpy (tramp, (char *) ffi_closure_LINUX64, 16);
-  tramp[2] = codeloc;
+  /* Copy function address and TOC from ffi_closure_LINUX64 OPD.  */
+  memcpy (&tramp[0], (void **) ffi_closure_LINUX64, sizeof (void *));
+  tramp[1] = codeloc;
+  memcpy (&tramp[2], (void **) ffi_closure_LINUX64 + 1, sizeof (void *));
 #endif
 
   closure->cif = cif;
@@ -709,8 +711,12 @@ ffi_prep_closure_loc_linux64 (ffi_closure *closure,
 
 
 int FFI_HIDDEN
-ffi_closure_helper_LINUX64 (ffi_closure *closure, void *rvalue,
-			    unsigned long *pst, ffi_dblfl *pfr)
+ffi_closure_helper_LINUX64 (ffi_cif *cif,
+			    void (*fun) (ffi_cif *, void *, void **, void *),
+			    void *user_data,
+			    void *rvalue,
+			    unsigned long *pst,
+			    ffi_dblfl *pfr)
 {
   /* rvalue is the pointer to space for return value in closure assembly */
   /* pst is the pointer to parameter save area
@@ -720,11 +726,9 @@ ffi_closure_helper_LINUX64 (ffi_closure *closure, void *rvalue,
   void **avalue;
   ffi_type **arg_types;
   unsigned long i, avn, nfixedargs;
-  ffi_cif *cif;
   ffi_dblfl *end_pfr = pfr + NUM_FPR_ARG_REGISTERS64;
   unsigned long align;
 
-  cif = closure->cif;
   avalue = alloca (cif->nargs * sizeof (void *));
 
   /* Copy the caller's structure return value address so that the
@@ -924,8 +928,7 @@ ffi_closure_helper_LINUX64 (ffi_closure *closure, void *rvalue,
       i++;
     }
 
-
-  (closure->fun) (cif, rvalue, avalue, closure->user_data);
+  (*fun) (cif, rvalue, avalue, user_data);
 
   /* Tell ffi_closure_LINUX64 how to perform return type promotions.  */
   if ((cif->flags & FLAG_RETURNS_SMST) != 0)

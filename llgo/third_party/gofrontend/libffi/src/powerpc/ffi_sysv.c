@@ -36,7 +36,7 @@
 
 
 /* About the SYSV ABI.  */
-#define ASM_NEEDS_REGISTERS 4
+#define ASM_NEEDS_REGISTERS 6
 #define NUM_GPR_ARG_REGISTERS 8
 #define NUM_FPR_ARG_REGISTERS 8
 
@@ -654,18 +654,18 @@ ffi_prep_closure_loc_sysv (ffi_closure *closure,
 
   tramp = (unsigned int *) &closure->tramp[0];
   tramp[0] = 0x7c0802a6;  /*   mflr    r0 */
-  tramp[1] = 0x4800000d;  /*   bl      10 <trampoline_initial+0x10> */
-  tramp[4] = 0x7d6802a6;  /*   mflr    r11 */
-  tramp[5] = 0x7c0803a6;  /*   mtlr    r0 */
-  tramp[6] = 0x800b0000;  /*   lwz     r0,0(r11) */
-  tramp[7] = 0x816b0004;  /*   lwz     r11,4(r11) */
-  tramp[8] = 0x7c0903a6;  /*   mtctr   r0 */
-  tramp[9] = 0x4e800420;  /*   bctr */
-  *(void **) &tramp[2] = (void *) ffi_closure_SYSV; /* function */
-  *(void **) &tramp[3] = codeloc;                   /* context */
+  tramp[1] = 0x429f0005;  /*   bcl     20,31,.+4 */
+  tramp[2] = 0x7d6802a6;  /*   mflr    r11 */
+  tramp[3] = 0x7c0803a6;  /*   mtlr    r0 */
+  tramp[4] = 0x800b0018;  /*   lwz     r0,24(r11) */
+  tramp[5] = 0x816b001c;  /*   lwz     r11,28(r11) */
+  tramp[6] = 0x7c0903a6;  /*   mtctr   r0 */
+  tramp[7] = 0x4e800420;  /*   bctr */
+  *(void **) &tramp[8] = (void *) ffi_closure_SYSV; /* function */
+  *(void **) &tramp[9] = codeloc;                   /* context */
 
   /* Flush the icache.  */
-  flush_icache ((char *)tramp, (char *)codeloc, FFI_TRAMPOLINE_SIZE);
+  flush_icache ((char *)tramp, (char *)codeloc, 8 * 4);
 
   closure->cif = cif;
   closure->fun = fun;
@@ -682,8 +682,12 @@ ffi_prep_closure_loc_sysv (ffi_closure *closure,
    following helper function to do most of the work.  */
 
 int
-ffi_closure_helper_SYSV (ffi_closure *closure, void *rvalue,
-			 unsigned long *pgr, ffi_dblfl *pfr,
+ffi_closure_helper_SYSV (ffi_cif *cif,
+			 void (*fun) (ffi_cif *, void *, void **, void *),
+			 void *user_data,
+			 void *rvalue,
+			 unsigned long *pgr,
+			 ffi_dblfl *pfr,
 			 unsigned long *pst)
 {
   /* rvalue is the pointer to space for return value in closure assembly */
@@ -699,7 +703,6 @@ ffi_closure_helper_SYSV (ffi_closure *closure, void *rvalue,
 #endif
   long             ng = 0;   /* number of general registers already used */
 
-  ffi_cif *cif = closure->cif;
   unsigned       size     = cif->rtype->size;
   unsigned short rtypenum = cif->rtype->type;
 
@@ -915,7 +918,7 @@ ffi_closure_helper_SYSV (ffi_closure *closure, void *rvalue,
     i++;
   }
 
-  (closure->fun) (cif, rvalue, avalue, closure->user_data);
+  (*fun) (cif, rvalue, avalue, user_data);
 
   /* Tell ffi_closure_SYSV how to perform return type promotions.
      Because the FFI_SYSV ABI returns the structures <= 8 bytes in

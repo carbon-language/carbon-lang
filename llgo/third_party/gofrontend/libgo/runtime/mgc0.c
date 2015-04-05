@@ -133,8 +133,8 @@ clearpools(void)
 
 	// clear sync.Pool's
 	if(poolcleanup != nil) {
-		__go_set_closure(poolcleanup);
-		poolcleanup->fn();
+		__builtin_call_with_static_chain(poolcleanup->fn(),
+						 poolcleanup);
 	}
 
 	for(pp=runtime_allp; (p=*pp) != nil; pp++) {

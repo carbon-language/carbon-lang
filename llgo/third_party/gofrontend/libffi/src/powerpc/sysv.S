@@ -31,34 +31,35 @@
 #include <powerpc/asm.h>
 
 #ifndef POWERPC64
-	.globl ffi_prep_args_SYSV
+FFI_HIDDEN(ffi_call_SYSV)
 ENTRY(ffi_call_SYSV)
-.LFB1:
+	.cfi_startproc
 	/* Save the old stack pointer as AP.  */
-	mr	%r8,%r1
+	mr	%r10,%r1
+	.cfi_def_cfa_register 10
 
-.LCFI0:
 	/* Allocate the stack space we need.  */
-	stwux	%r1,%r1,%r4
+	stwux	%r1,%r1,%r8
 	/* Save registers we use.  */
 	mflr	%r9
-	stw	%r28,-16(%r8)
-.LCFI1:
-	stw	%r29,-12(%r8)
-.LCFI2:
-	stw	%r30, -8(%r8)
-.LCFI3:
-	stw	%r31, -4(%r8)
-.LCFI4:
-	stw	%r9,   4(%r8)
-.LCFI5:
+	stw	%r28,-16(%r10)
+	stw	%r29,-12(%r10)
+	stw	%r30, -8(%r10)
+	stw	%r31, -4(%r10)
+	stw	%r9,   4(%r10)
+	.cfi_offset 65, 4
+	.cfi_offset 31, -4
+	.cfi_offset 30, -8
+	.cfi_offset 29, -12
+	.cfi_offset 28, -16
 
 	/* Save arguments over call...  */
-	mr	%r31,%r5	/* flags, */
-	mr	%r30,%r6	/* rvalue, */
-	mr	%r29,%r7	/* function address, */
-	mr	%r28,%r8	/* our AP. */
-.LCFI6:
+	stw	%r7,   -20(%r10)	/* closure, */
+	mr	%r31,%r6		/* flags, */
+	mr	%r30,%r5		/* rvalue, */
+	mr	%r29,%r4		/* function address, */
+	mr	%r28,%r10		/* our AP. */
+	.cfi_def_cfa_register 28
 
 	/* Call ffi_prep_args_SYSV.  */
 	mr	%r4,%r1
@@ -70,35 +71,36 @@ ENTRY(ffi_call_SYSV)
 	/* Get the address to call into CTR.  */
 	mtctr	%r29
 	/* Load all those argument registers.  */
-	lwz	%r3,-16-(8*4)(%r28)
-	lwz	%r4,-16-(7*4)(%r28)
-	lwz	%r5,-16-(6*4)(%r28)
-	lwz	%r6,-16-(5*4)(%r28)
+	lwz	%r3,-24-(8*4)(%r28)
+	lwz	%r4,-24-(7*4)(%r28)
+	lwz	%r5,-24-(6*4)(%r28)
+	lwz	%r6,-24-(5*4)(%r28)
 	bf-	5,1f
 	nop
-	lwz	%r7,-16-(4*4)(%r28)
-	lwz	%r8,-16-(3*4)(%r28)
-	lwz	%r9,-16-(2*4)(%r28)
-	lwz	%r10,-16-(1*4)(%r28)
+	lwz	%r7,-24-(4*4)(%r28)
+	lwz	%r8,-24-(3*4)(%r28)
+	lwz	%r9,-24-(2*4)(%r28)
+	lwz	%r10,-24-(1*4)(%r28)
 	nop
 1:
 
 #ifndef __NO_FPRS__
 	/* Load all the FP registers.  */
 	bf-	6,2f
-	lfd	%f1,-16-(8*4)-(8*8)(%r28)
-	lfd	%f2,-16-(8*4)-(7*8)(%r28)
-	lfd	%f3,-16-(8*4)-(6*8)(%r28)
-	lfd	%f4,-16-(8*4)-(5*8)(%r28)
+	lfd	%f1,-24-(8*4)-(8*8)(%r28)
+	lfd	%f2,-24-(8*4)-(7*8)(%r28)
+	lfd	%f3,-24-(8*4)-(6*8)(%r28)
+	lfd	%f4,-24-(8*4)-(5*8)(%r28)
 	nop
-	lfd	%f5,-16-(8*4)-(4*8)(%r28)
-	lfd	%f6,-16-(8*4)-(3*8)(%r28)
-	lfd	%f7,-16-(8*4)-(2*8)(%r28)
-	lfd	%f8,-16-(8*4)-(1*8)(%r28)
+	lfd	%f5,-24-(8*4)-(4*8)(%r28)
+	lfd	%f6,-24-(8*4)-(3*8)(%r28)
+	lfd	%f7,-24-(8*4)-(2*8)(%r28)
+	lfd	%f8,-24-(8*4)-(1*8)(%r28)
 #endif
 2:
 
 	/* Make the call.  */
+	lwz	%r11, -20(%r28)
 	bctrl
 
 	/* Now, deal with the return value.  */
@@ -125,11 +127,24 @@ L(done_return_value):
 	lwz	%r30, -8(%r28)
 	lwz	%r29,-12(%r28)
 	lwz	%r28,-16(%r28)
+	.cfi_remember_state
+	/* At this point we don't have a cfa register.  Say all our
+	   saved regs have been restored.  */
+	.cfi_same_value 65
+	.cfi_same_value 31
+	.cfi_same_value 30
+	.cfi_same_value 29
+	.cfi_same_value 28
+	/* Hopefully this works..  */
+	.cfi_def_cfa_register 1
+	.cfi_offset 1, 0
 	lwz	%r1,0(%r1)
+	.cfi_same_value 1
 	blr
 
 #ifndef __NO_FPRS__
 L(fp_return_value):
+	.cfi_restore_state
 	bf	28,L(float_return_value)
 	stfd	%f1,0(%r30)
 	mtcrf   0x02,%r31 /* cr6  */
@@ -150,69 +165,9 @@ L(small_struct_return_value):
 	stw %r3, 0(%r30)
 	stw %r4, 4(%r30)
 	b L(done_return_value)
+	.cfi_endproc
 
-.LFE1:
 END(ffi_call_SYSV)
-
-      .section	".eh_frame",EH_FRAME_FLAGS,@progbits
-.Lframe1:
-      .4byte    .LECIE1-.LSCIE1  /*  Length of Common Information Entry */
-.LSCIE1:
-      .4byte    0x0      /*  CIE Identifier Tag */
-      .byte     0x1      /*  CIE Version */
-#if defined _RELOCATABLE || defined __PIC__
-      .ascii	"zR\0"   /*  CIE Augmentation */
-#else
-      .ascii	"\0"	 /*  CIE Augmentation */
-#endif
-      .uleb128  0x1      /*  CIE Code Alignment Factor */
-      .sleb128  -4	 /*  CIE Data Alignment Factor */
-      .byte     0x41     /*  CIE RA Column */
-#if defined _RELOCATABLE || defined __PIC__
-      .uleb128  0x1      /*  Augmentation size */
-      .byte	0x1b	 /*  FDE Encoding (pcrel sdata4) */
-#endif
-      .byte     0xc      /*  DW_CFA_def_cfa */
-      .uleb128  0x1
-      .uleb128  0x0
-      .align 2
-.LECIE1:
-.LSFDE1:
-      .4byte    .LEFDE1-.LASFDE1         /*  FDE Length */
-.LASFDE1:
-      .4byte    .LASFDE1-.Lframe1         /*  FDE CIE offset */
-#if defined _RELOCATABLE || defined __PIC__
-      .4byte    .LFB1-.  /*  FDE initial location */
-#else
-      .4byte    .LFB1    /*  FDE initial location */
-#endif
-      .4byte    .LFE1-.LFB1      /*  FDE address range */
-#if defined _RELOCATABLE || defined __PIC__
-      .uleb128  0x0	 /*  Augmentation size */
-#endif
-      .byte     0x4      /*  DW_CFA_advance_loc4 */
-      .4byte    .LCFI0-.LFB1
-      .byte     0xd      /*  DW_CFA_def_cfa_register */
-      .uleb128  0x08
-      .byte     0x4      /*  DW_CFA_advance_loc4 */
-      .4byte    .LCFI5-.LCFI0
-      .byte     0x11     /*  DW_CFA_offset_extended_sf */
-      .uleb128  0x41
-      .sleb128  -1
-      .byte     0x9f     /*  DW_CFA_offset, column 0x1f */
-      .uleb128  0x1
-      .byte     0x9e     /*  DW_CFA_offset, column 0x1e */
-      .uleb128  0x2
-      .byte     0x9d     /*  DW_CFA_offset, column 0x1d */
-      .uleb128  0x3
-      .byte     0x9c     /*  DW_CFA_offset, column 0x1c */
-      .uleb128  0x4
-      .byte     0x4      /*  DW_CFA_advance_loc4 */
-      .4byte    .LCFI6-.LCFI5
-      .byte     0xd      /*  DW_CFA_def_cfa_register */
-      .uleb128  0x1c
-      .align 2
-.LEFDE1:
 
 #if defined __ELF__ && defined __linux__
 	.section	.note.GNU-stack,"",@progbits

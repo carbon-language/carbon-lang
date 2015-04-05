@@ -3,12 +3,12 @@
    Limitations:	none.
    PR:		none.
    Originator:	From the original ffitest.c  */
-
-/* { dg-excess-errors "fails" { target x86_64-*-mingw* x86_64-*-cygwin* } } */
-/* { dg-do run { xfail x86_64-*-mingw* x86_64-*-cygwin* } } */
+/* { dg-do run } */
 
 #include "ffitest.h"
 #include "float.h"
+
+#include <math.h>
 
 static long double ldblit(float f)
 {
@@ -49,7 +49,7 @@ int main (void)
 #endif
 
   /* These are not always the same!! Check for a reasonable delta */
-  if (ld - ldblit(f) < LDBL_EPSILON)
+  if (fabsl(ld - ldblit(f)) < LDBL_EPSILON)
     puts("long double return value tests ok!");
   else
     CHECK(0);

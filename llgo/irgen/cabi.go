@@ -511,6 +511,7 @@ type functionTypeInfo struct {
 	retAttr      llvm.Attribute
 	argInfos     []argInfo
 	retInf       retInfo
+	chainIndex   int
 }
 
 func (fi *functionTypeInfo) declare(m llvm.Module, name string) llvm.Value {
@@ -524,8 +525,12 @@ func (fi *functionTypeInfo) declare(m llvm.Module, name string) llvm.Value {
 	return fn
 }
 
-func (fi *functionTypeInfo) call(ctx llvm.Context, allocaBuilder llvm.Builder, builder llvm.Builder, callee llvm.Value, args []llvm.Value) []llvm.Value {
+func (fi *functionTypeInfo) call(ctx llvm.Context, allocaBuilder llvm.Builder, builder llvm.Builder, callee llvm.Value, chain llvm.Value, args []llvm.Value) []llvm.Value {
 	callArgs := make([]llvm.Value, len(fi.argAttrs))
+	if chain.C == nil {
+		chain = llvm.Undef(llvm.PointerType(ctx.Int8Type(), 0))
+	}
+	callArgs[fi.chainIndex] = chain
 	for i, a := range args {
 		fi.argInfos[i].encode(ctx, allocaBuilder, builder, callArgs, a)
 	}
@@ -539,8 +544,12 @@ func (fi *functionTypeInfo) call(ctx llvm.Context, allocaBuilder llvm.Builder, b
 	return fi.retInf.decode(ctx, allocaBuilder, builder, call)
 }
 
-func (fi *functionTypeInfo) invoke(ctx llvm.Context, allocaBuilder llvm.Builder, builder llvm.Builder, callee llvm.Value, args []llvm.Value, cont, lpad llvm.BasicBlock) []llvm.Value {
+func (fi *functionTypeInfo) invoke(ctx llvm.Context, allocaBuilder llvm.Builder, builder llvm.Builder, callee llvm.Value, chain llvm.Value, args []llvm.Value, cont, lpad llvm.BasicBlock) []llvm.Value {
 	callArgs := make([]llvm.Value, len(fi.argAttrs))
+	if chain.C == nil {
+		chain = llvm.Undef(llvm.PointerType(ctx.Int8Type(), 0))
+	}
+	callArgs[fi.chainIndex] = chain
 	for i, a := range args {
 		fi.argInfos[i].encode(ctx, allocaBuilder, builder, callArgs, a)
 	}
@@ -604,6 +613,11 @@ func (tm *llvmTypeMap) getFunctionTypeInfo(args []types.Type, results []types.Ty
 			fi.retInf = &indirectRetInfo{numResults: len(results), resultsType: resultsType}
 		}
 	}
+
+	// Allocate an argument for the call chain.
+	fi.chainIndex = len(argTypes)
+	argTypes = append(argTypes, llvm.PointerType(tm.ctx.Int8Type(), 0))
+	fi.argAttrs = append(fi.argAttrs, llvm.NestAttribute)
 
 	// Keep track of the number of INTEGER/SSE class registers remaining.
 	remainingInt := 6

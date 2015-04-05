@@ -341,7 +341,8 @@ func (c *compiler) buildPackageInitData(mainPkg *ssa.Package) gccgoimporter.Init
 }
 
 func (c *compiler) createInitMainFunction(mainPkg *ssa.Package) {
-	ftyp := llvm.FunctionType(llvm.VoidType(), nil, false)
+	int8ptr := llvm.PointerType(c.types.ctx.Int8Type(), 0)
+	ftyp := llvm.FunctionType(llvm.VoidType(), []llvm.Type{int8ptr}, false)
 	initMain := llvm.AddFunction(c.module.Module, "__go_init_main", ftyp)
 	c.addCommonFunctionAttrs(initMain)
 	entry := llvm.AddBasicBlock(initMain, "entry")
@@ -350,10 +351,12 @@ func (c *compiler) createInitMainFunction(mainPkg *ssa.Package) {
 	defer builder.Dispose()
 	builder.SetInsertPointAtEnd(entry)
 
+	args := []llvm.Value{llvm.Undef(int8ptr)}
+
 	if !c.GccgoABI {
 		initfn := c.module.Module.NamedFunction("main..import")
 		if !initfn.IsNil() {
-			builder.CreateCall(initfn, nil, "")
+			builder.CreateCall(initfn, args, "")
 		}
 		builder.CreateRetVoid()
 		return
@@ -366,7 +369,7 @@ func (c *compiler) createInitMainFunction(mainPkg *ssa.Package) {
 		if initfn.IsNil() {
 			initfn = llvm.AddFunction(c.module.Module, init.InitFunc, ftyp)
 		}
-		builder.CreateCall(initfn, nil, "")
+		builder.CreateCall(initfn, args, "")
 	}
 
 	builder.CreateRetVoid()

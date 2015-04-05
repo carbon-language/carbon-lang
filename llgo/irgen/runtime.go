@@ -41,12 +41,12 @@ func (rfi *runtimeFnInfo) call(f *frame, args ...llvm.Value) []llvm.Value {
 }
 
 func (rfi *runtimeFnInfo) callOnly(f *frame, args ...llvm.Value) []llvm.Value {
-	return rfi.fi.call(f.llvmtypes.ctx, f.allocaBuilder, f.builder, rfi.fn, args)
+	return rfi.fi.call(f.llvmtypes.ctx, f.allocaBuilder, f.builder, rfi.fn, llvm.Value{nil}, args)
 }
 
 func (rfi *runtimeFnInfo) invoke(f *frame, lpad llvm.BasicBlock, args ...llvm.Value) []llvm.Value {
 	contbb := llvm.AddBasicBlock(f.function, "")
-	return rfi.fi.invoke(f.llvmtypes.ctx, f.allocaBuilder, f.builder, rfi.fn, args, contbb, lpad)
+	return rfi.fi.invoke(f.llvmtypes.ctx, f.allocaBuilder, f.builder, rfi.fn, llvm.Value{nil}, args, contbb, lpad)
 }
 
 // runtimeInterface is a struct containing references to
@@ -76,7 +76,6 @@ type runtimeInterface struct {
 	Defer,
 	deferredRecover,
 	emptyInterfaceCompare,
-	getClosure,
 	Go,
 	ifaceE2I2,
 	ifaceI2I2,
@@ -117,7 +116,6 @@ type runtimeInterface struct {
 	selectsend,
 	selectgo,
 	sendBig,
-	setClosure,
 	setDeferRetaddr,
 	strcmp,
 	stringiter2,
@@ -228,11 +226,6 @@ func newRuntimeInterface(module llvm.Module, tm *llvmTypeMap) (*runtimeInterface
 			rfi:  &ri.emptyInterfaceCompare,
 			args: []types.Type{EmptyInterface, EmptyInterface},
 			res:  []types.Type{Int},
-		},
-		{
-			name: "__go_get_closure",
-			rfi:  &ri.getClosure,
-			res:  []types.Type{UnsafePointer},
 		},
 		{
 			name: "__go_go",
@@ -447,11 +440,6 @@ func newRuntimeInterface(module llvm.Module, tm *llvmTypeMap) (*runtimeInterface
 			name: "__go_send_big",
 			rfi:  &ri.sendBig,
 			args: []types.Type{UnsafePointer, UnsafePointer, UnsafePointer},
-		},
-		{
-			name: "__go_set_closure",
-			rfi:  &ri.setClosure,
-			args: []types.Type{UnsafePointer},
 		},
 		{
 			name: "__go_set_defer_retaddr",

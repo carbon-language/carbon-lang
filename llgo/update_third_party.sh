@@ -1,10 +1,10 @@
 #!/bin/sh -e
 
 gofrontendrepo=https://code.google.com/p/gofrontend
-gofrontendrev=a6e10414311a
+gofrontendrev=07baa07598ea
 
 gccrepo=svn://gcc.gnu.org/svn/gcc/trunk
-gccrev=216268
+gccrev=219477
 
 gotoolsrepo=https://go.googlesource.com/tools
 gotoolsrev=d4e70101500b43ffe705d4c45e50dd4f1c8e3b2e
@@ -63,10 +63,14 @@ rm \
   third_party/gofrontend/libffi/ChangeLog \
   third_party/gofrontend/libffi/doc/libffi.texi \
   third_party/gofrontend/libffi/msvcc.sh \
-  third_party/gofrontend/libffi/testsuite/lib/libffi.exp \
+  third_party/gofrontend/libffi/testsuite/config/default.exp \
   third_party/gofrontend/libffi/testsuite/libffi.call/call.exp \
+  third_party/gofrontend/libffi/testsuite/libffi.complex/complex.exp \
+  third_party/gofrontend/libffi/testsuite/libffi.go/go.exp \
   third_party/gofrontend/libffi/testsuite/libffi.special/special.exp \
-  third_party/gofrontend/libffi/testsuite/config/default.exp
+  third_party/gofrontend/libffi/testsuite/lib/libffi.exp \
+  third_party/gofrontend/libffi/testsuite/lib/target-libpath.exp \
+  third_party/gofrontend/libffi/testsuite/lib/wrapper.exp
 
 # The build requires these files to exist.
 touch \

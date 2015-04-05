@@ -60,6 +60,9 @@ ffi_java_raw_size (ffi_cif *cif)
 	case FFI_TYPE_STRUCT:
 	  /* No structure parameters in Java.	*/
 	  abort();
+	case FFI_TYPE_COMPLEX:
+	  /* Not supported yet.  */
+	  abort();
 	default:
 	  result += FFI_SIZEOF_JAVA_RAW;
       }
@@ -104,6 +107,10 @@ ffi_java_raw_to_ptrarray (ffi_cif *cif, ffi_java_raw *raw, void **args)
 	  *args = (void*) &(raw++)->ptr;
 	  break;
 
+	case FFI_TYPE_COMPLEX:
+	  /* Not supported yet.  */
+	  abort();
+
 	default:
 	  *args = raw;
 	  raw +=
@@ -126,6 +133,9 @@ ffi_java_raw_to_ptrarray (ffi_cif *cif, ffi_java_raw *raw, void **args)
 	  *args = (void*) raw;
 	  raw += 2;
 	  break;
+	case FFI_TYPE_COMPLEX:
+	  /* Not supported yet.  */
+	  abort();
 	default:
 	  *args = (void*) raw++;
       }
@@ -254,6 +264,10 @@ ffi_java_rvalue_to_raw (ffi_cif *cif, void *rvalue)
       *(SINT64 *)rvalue <<= 32;
       break;
 
+    case FFI_TYPE_COMPLEX:
+      /* Not supported yet.  */
+      abort();
+
     default:
       break;
     }
@@ -278,6 +292,10 @@ ffi_java_raw_to_rvalue (ffi_cif *cif, void *rvalue)
     case FFI_TYPE_INT:
       *(SINT64 *)rvalue >>= 32;
       break;
+
+    case FFI_TYPE_COMPLEX:
+      /* Not supported yet.  */
+      abort();
 
     default:
       break;

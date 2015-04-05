@@ -1,5 +1,5 @@
 /* internal.h -- Internal header file for stack backtrace library.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ extern void backtrace_atomic_store_int (int *, int);
 /* We have neither the sync nor the atomic functions.  These will
    never be called.  */
 
-#define backtrace_atomic_load_pointer(p) (abort(), 0)
+#define backtrace_atomic_load_pointer(p) (abort(), (void *) NULL)
 #define backtrace_atomic_load_int(p) (abort(), 0)
 #define backtrace_atomic_store_pointer(p, v) abort()
 #define backtrace_atomic_store_size_t(p, v) abort()

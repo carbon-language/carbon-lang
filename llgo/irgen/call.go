@@ -20,7 +20,7 @@ import (
 
 // createCall emits the code for a function call,
 // taking into account receivers, and panic/defer.
-func (fr *frame) createCall(fn *govalue, argValues []*govalue) []*govalue {
+func (fr *frame) createCall(fn *govalue, chain llvm.Value, argValues []*govalue) []*govalue {
 	fntyp := fn.Type().Underlying().(*types.Signature)
 	typinfo := fr.types.getSignatureInfo(fntyp)
 
@@ -30,10 +30,10 @@ func (fr *frame) createCall(fn *govalue, argValues []*govalue) []*govalue {
 	}
 	var results []llvm.Value
 	if fr.unwindBlock.IsNil() {
-		results = typinfo.call(fr.types.ctx, fr.allocaBuilder, fr.builder, fn.value, args)
+		results = typinfo.call(fr.types.ctx, fr.allocaBuilder, fr.builder, fn.value, chain, args)
 	} else {
 		contbb := llvm.AddBasicBlock(fr.function, "")
-		results = typinfo.invoke(fr.types.ctx, fr.allocaBuilder, fr.builder, fn.value, args, contbb, fr.unwindBlock)
+		results = typinfo.invoke(fr.types.ctx, fr.allocaBuilder, fr.builder, fn.value, chain, args, contbb, fr.unwindBlock)
 	}
 
 	resultValues := make([]*govalue, len(results))

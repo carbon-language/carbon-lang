@@ -56,22 +56,39 @@ typedef union
 } ffi_dblfl;
 
 void FFI_HIDDEN ffi_closure_SYSV (void);
-void FFI_HIDDEN ffi_call_SYSV(extended_cif *, unsigned, unsigned, unsigned *,
-			      void (*)(void));
+void FFI_HIDDEN ffi_go_closure_sysv (void);
+void FFI_HIDDEN ffi_call_SYSV(extended_cif *, void (*)(void), void *,
+			      unsigned, void *, int);
 
 void FFI_HIDDEN ffi_prep_types_sysv (ffi_abi);
 ffi_status FFI_HIDDEN ffi_prep_cif_sysv (ffi_cif *);
-int FFI_HIDDEN ffi_closure_helper_SYSV (ffi_closure *, void *, unsigned long *,
+ffi_status FFI_HIDDEN ffi_prep_closure_loc_sysv (ffi_closure *,
+						 ffi_cif *,
+						 void (*) (ffi_cif *, void *,
+							   void **, void *),
+						 void *, void *);
+int FFI_HIDDEN ffi_closure_helper_SYSV (ffi_cif *,
+					void (*) (ffi_cif *, void *,
+						  void **, void *),
+					void *, void *, unsigned long *,
 					ffi_dblfl *, unsigned long *);
 
-void FFI_HIDDEN ffi_call_LINUX64(extended_cif *, unsigned long, unsigned long,
-				 unsigned long *, void (*)(void));
+void FFI_HIDDEN ffi_call_LINUX64(extended_cif *, void (*) (void), void *,
+				 unsigned long, void *, long);
 void FFI_HIDDEN ffi_closure_LINUX64 (void);
+void FFI_HIDDEN ffi_go_closure_linux64 (void);
 
 void FFI_HIDDEN ffi_prep_types_linux64 (ffi_abi);
 ffi_status FFI_HIDDEN ffi_prep_cif_linux64 (ffi_cif *);
 ffi_status FFI_HIDDEN ffi_prep_cif_linux64_var (ffi_cif *, unsigned int,
 						unsigned int);
 void FFI_HIDDEN ffi_prep_args64 (extended_cif *, unsigned long *const);
-int FFI_HIDDEN ffi_closure_helper_LINUX64 (ffi_closure *, void *,
+ffi_status FFI_HIDDEN ffi_prep_closure_loc_linux64 (ffi_closure *, ffi_cif *,
+						    void (*) (ffi_cif *, void *,
+							      void **, void *),
+						    void *, void *);
+int FFI_HIDDEN ffi_closure_helper_LINUX64 (ffi_cif *,
+					   void (*) (ffi_cif *, void *,
+						     void **, void *),
+					   void *, void *,
 					   unsigned long *, ffi_dblfl *);

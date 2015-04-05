@@ -7,25 +7,24 @@
 package reflect
 
 import (
-	"runtime"
 	"unsafe"
 )
 
 // makeFuncImpl is the closure value implementing the function
 // returned by MakeFunc.
 type makeFuncImpl struct {
-	code uintptr
-	typ  *funcType
-	fn   func([]Value) []Value
+	// These first three words are layed out like ffi_go_closure.
+	code    uintptr
+	ffi_cif unsafe.Pointer
+	ffi_fun func(unsafe.Pointer, unsafe.Pointer)
+
+	typ *funcType
+	fn  func([]Value) []Value
 
 	// For gccgo we use the same entry point for functions and for
 	// method values.
 	method int
 	rcvr   Value
-
-	// When using FFI, hold onto the FFI closure for the garbage
-	// collector.
-	ffi *ffiData
 }
 
 // MakeFunc returns a new function of the given Type
@@ -58,36 +57,16 @@ func MakeFunc(typ Type, fn func(args []Value) (results []Value)) Value {
 	t := typ.common()
 	ftyp := (*funcType)(unsafe.Pointer(t))
 
-	var code uintptr
-	var ffi *ffiData
-	switch runtime.GOARCH {
-	case "amd64", "386", "s390", "s390x":
-		// Indirect Go func value (dummy) to obtain actual
-		// code address. (A Go func value is a pointer to a C
-		// function pointer. http://golang.org/s/go11func.)
-		dummy := makeFuncStub
-		code = **(**uintptr)(unsafe.Pointer(&dummy))
-	default:
-		code, ffi = makeFuncFFI(ftyp, fn)
-	}
-
 	impl := &makeFuncImpl{
-		code:   code,
 		typ:    ftyp,
 		fn:     fn,
 		method: -1,
-		ffi:    ffi,
 	}
+
+	makeFuncFFI(ftyp, unsafe.Pointer(impl))
 
 	return Value{t, unsafe.Pointer(&impl), flag(Func) | flagIndir}
 }
-
-// makeFuncStub is an assembly function that is the code half of
-// the function returned from MakeFunc. It expects a *callReflectFunc
-// as its context register, and its job is to invoke callReflect(ctxt, frame)
-// where ctxt is the context register and frame is a pointer to the first
-// word in the passed-in argument frame.
-func makeFuncStub()
 
 // makeMethodValue converts v from the rcvr+method index representation
 // of a method value to an actual method func value, which is
@@ -123,16 +102,7 @@ func makeMethodValue(op string, v Value) Value {
 		rcvr:   rcvr,
 	}
 
-	switch runtime.GOARCH {
-	case "amd64", "386":
-		// Indirect Go func value (dummy) to obtain actual
-		// code address. (A Go func value is a pointer to a C
-		// function pointer. http://golang.org/s/go11func.)
-		dummy := makeFuncStub
-		fv.code = **(**uintptr)(unsafe.Pointer(&dummy))
-	default:
-		fv.code, fv.ffi = makeFuncFFI(ftyp, fv.call)
-	}
+	makeFuncFFI(ftyp, unsafe.Pointer(fv))
 
 	return Value{ft, unsafe.Pointer(&fv), v.flag&flagRO | flag(Func) | flagIndir}
 }
@@ -158,16 +128,7 @@ func makeValueMethod(v Value) Value {
 		rcvr:   v,
 	}
 
-	switch runtime.GOARCH {
-	case "amd64", "386", "s390", "s390x":
-		// Indirect Go func value (dummy) to obtain actual
-		// code address. (A Go func value is a pointer to a C
-		// function pointer. http://golang.org/s/go11func.)
-		dummy := makeFuncStub
-		impl.code = **(**uintptr)(unsafe.Pointer(&dummy))
-	default:
-		impl.code, impl.ffi = makeFuncFFI(ftyp, impl.call)
-	}
+	makeFuncFFI(ftyp, unsafe.Pointer(impl))
 
 	return Value{t, unsafe.Pointer(&impl), v.flag&flagRO | flag(Func) | flagIndir}
 }
