@@ -401,7 +401,7 @@ Reading JScop 'for.cond =&gt; for.end30' in function 'main' from
 <pre class="code">
 opt -basicaa \
     -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
-    -polly-codegen -polly-vectorizer=polly -enable-polly-openmp matmul.preopt.ll \
+    -polly-codegen -polly-vectorizer=polly -polly-parallel matmul.preopt.ll \
   | opt -O3 &gt; matmul.polly.interchanged+tiled+openmp.ll</pre>
 <pre>
 Reading JScop 'for.cond =&gt; for.end19' in function 'init_array' from

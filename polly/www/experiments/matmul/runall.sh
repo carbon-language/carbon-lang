@@ -60,7 +60,7 @@ opt -basicaa -polly-import-jscop \
     | opt -O3 > matmul.polly.interchanged+tiled+vector.ll
 opt -basicaa -polly-import-jscop \
     -polly-import-jscop-postfix=interchanged+tiled+vector -polly-codegen \
-    matmul.preopt.ll -polly-vectorizer=polly -enable-polly-openmp\
+    matmul.preopt.ll -polly-vectorizer=polly -polly-parallel\
     | opt -O3 > matmul.polly.interchanged+tiled+vector+openmp.ll
 opt matmul.preopt.ll | opt -O3 > matmul.normalopt.ll
 

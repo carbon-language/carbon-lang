@@ -59,9 +59,9 @@ compiler flags (Polly is only available at -O3).
 <h2>Automatic OpenMP code generation</h2>
 
 To automatically detect parallel loops and generate OpenMP code for them you
-also need to add <b>-mllvm -enable-polly-openmp -lgomp</b> to your CFLAGS.
+also need to add <b>-mllvm -polly-parallel -lgomp</b> to your CFLAGS.
 
-<pre class="code">pollycc -O3 -mllvm -polly -mllvm -enable-polly-openmp -lgomp file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -polly -mllvm -polly-parallel -lgomp file.c</pre>
 
 <h2>Automatic Vector code generation</h2>
 
