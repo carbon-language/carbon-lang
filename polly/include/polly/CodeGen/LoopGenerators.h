@@ -181,7 +181,7 @@ private:
   /// @param Values The values which should be stored in the struct.
   ///
   /// @return The created struct.
-  Value *storeValuesIntoStruct(SetVector<Value *> &Values);
+  AllocaInst *storeValuesIntoStruct(SetVector<Value *> &Values);
 
   /// @brief Extract all values from the @p Struct and construct the mapping.
   ///
@@ -189,8 +189,8 @@ private:
   /// @param Struct The struct holding all the values in @p Values.
   /// @param VMap   A map to associate every element of @p Values with the
   ///               new llvm value loaded from the @p Struct.
-  void extractValuesFromStruct(SetVector<Value *> Values, Value *Struct,
-                               ValueToValueMapTy &VMap);
+  void extractValuesFromStruct(SetVector<Value *> Values, Type *Ty,
+                               Value *Struct, ValueToValueMapTy &VMap);
 
   /// @brief Create the definition of the parallel subfunction.
   Function *createSubFnDefinition();
@@ -206,7 +206,7 @@ private:
   /// @param SubFn  The newly created subfunction is returned here.
   ///
   /// @return The newly created induction variable.
-  Value *createSubFn(Value *Stride, Value *Struct,
+  Value *createSubFn(Value *Stride, AllocaInst *Struct,
                      SetVector<Value *> UsedValues, ValueToValueMapTy &VMap,
                      Function **SubFn);
 };

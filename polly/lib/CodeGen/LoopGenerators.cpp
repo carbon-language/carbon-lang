@@ -147,18 +147,16 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
 Value *ParallelLoopGenerator::createParallelLoop(
     Value *LB, Value *UB, Value *Stride, SetVector<Value *> &UsedValues,
     ValueToValueMapTy &Map, BasicBlock::iterator *LoopBody) {
-  Value *Struct, *IV, *SubFnParam;
   Function *SubFn;
 
-  Struct = storeValuesIntoStruct(UsedValues);
-
+  AllocaInst *Struct = storeValuesIntoStruct(UsedValues);
   BasicBlock::iterator BeforeLoop = Builder.GetInsertPoint();
-  IV = createSubFn(Stride, Struct, UsedValues, Map, &SubFn);
+  Value *IV = createSubFn(Stride, Struct, UsedValues, Map, &SubFn);
   *LoopBody = Builder.GetInsertPoint();
   Builder.SetInsertPoint(BeforeLoop);
 
-  SubFnParam = Builder.CreateBitCast(Struct, Builder.getInt8PtrTy(),
-                                     "polly.par.userContext");
+  Value *SubFnParam = Builder.CreateBitCast(Struct, Builder.getInt8PtrTy(),
+                                            "polly.par.userContext");
 
   // Add one as the upper bound provided by openmp is a < comparison
   // whereas the codegenForSequential function creates a <= comparison.
@@ -272,7 +270,7 @@ Function *ParallelLoopGenerator::createSubFnDefinition() {
   return SubFn;
 }
 
-Value *
+AllocaInst *
 ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
   SmallVector<Type *, 8> Members;
 
@@ -285,14 +283,14 @@ ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
   BasicBlock &EntryBB = Builder.GetInsertBlock()->getParent()->getEntryBlock();
   Instruction *IP = EntryBB.getFirstInsertionPt();
   StructType *Ty = StructType::get(Builder.getContext(), Members);
-  Value *Struct = new AllocaInst(Ty, 0, "polly.par.userContext", IP);
+  AllocaInst *Struct = new AllocaInst(Ty, 0, "polly.par.userContext", IP);
 
   // Mark the start of the lifetime for the parameter struct.
   ConstantInt *SizeOf = Builder.getInt64(DL.getTypeAllocSize(Ty));
   Builder.CreateLifetimeStart(Struct, SizeOf);
 
   for (unsigned i = 0; i < Values.size(); i++) {
-    Value *Address = Builder.CreateStructGEP(Struct, i);
+    Value *Address = Builder.CreateStructGEP(Ty, Struct, i);
     Builder.CreateStore(Values[i], Address);
   }
 
@@ -300,15 +298,16 @@ ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
 }
 
 void ParallelLoopGenerator::extractValuesFromStruct(
-    SetVector<Value *> OldValues, Value *Struct, ValueToValueMapTy &Map) {
+    SetVector<Value *> OldValues, Type *Ty, Value *Struct,
+    ValueToValueMapTy &Map) {
   for (unsigned i = 0; i < OldValues.size(); i++) {
-    Value *Address = Builder.CreateStructGEP(Struct, i);
+    Value *Address = Builder.CreateStructGEP(Ty, Struct, i);
     Value *NewValue = Builder.CreateLoad(Address);
     Map[OldValues[i]] = NewValue;
   }
 }
 
-Value *ParallelLoopGenerator::createSubFn(Value *Stride, Value *StructData,
+Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
                                           SetVector<Value *> Data,
                                           ValueToValueMapTy &Map,
                                           Function **SubFnPtr) {
@@ -338,7 +337,8 @@ Value *ParallelLoopGenerator::createSubFn(Value *Stride, Value *StructData,
   UserContext = Builder.CreateBitCast(SubFn->arg_begin(), StructData->getType(),
                                       "polly.par.userContext");
 
-  extractValuesFromStruct(Data, UserContext, Map);
+  extractValuesFromStruct(Data, StructData->getAllocatedType(), UserContext,
+                          Map);
   Builder.CreateBr(CheckNextBB);
 
   // Add code to check if another set of iterations will be executed.
