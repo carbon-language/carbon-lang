@@ -50,7 +50,7 @@ public:
   void mergeReginfoMask(const MipsReginfo &info);
 
   uint32_t getMergedELFFlags() const;
-  const llvm::Optional<MipsReginfo> &getMergeReginfoMask() const;
+  const llvm::Optional<MipsReginfo> &getMergedReginfoMask() const;
 
   void registerRelocationNames(Registry &r) override;
 

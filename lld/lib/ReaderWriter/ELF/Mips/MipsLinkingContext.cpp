@@ -59,7 +59,7 @@ uint32_t MipsLinkingContext::getMergedELFFlags() const {
 }
 
 const llvm::Optional<MipsReginfo> &
-MipsLinkingContext::getMergeReginfoMask() const {
+MipsLinkingContext::getMergedReginfoMask() const {
   return _reginfoMask;
 }
 

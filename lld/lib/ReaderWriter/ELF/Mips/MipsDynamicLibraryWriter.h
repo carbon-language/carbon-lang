@@ -76,7 +76,7 @@ template <class ELFT>
 void MipsDynamicLibraryWriter<ELFT>::createDefaultSections() {
   DynamicLibraryWriter<ELFT>::createDefaultSections();
   const auto &ctx = static_cast<const MipsLinkingContext &>(this->_ctx);
-  const auto &mask = ctx.getMergeReginfoMask();
+  const auto &mask = ctx.getMergedReginfoMask();
   if (!mask.hasValue())
     return;
   if (ELFT::Is64Bits)

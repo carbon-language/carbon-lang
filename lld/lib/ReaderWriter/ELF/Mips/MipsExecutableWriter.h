@@ -127,7 +127,7 @@ void MipsExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 template <class ELFT> void MipsExecutableWriter<ELFT>::createDefaultSections() {
   ExecutableWriter<ELFT>::createDefaultSections();
   const auto &ctx = static_cast<const MipsLinkingContext &>(this->_ctx);
-  const auto &mask = ctx.getMergeReginfoMask();
+  const auto &mask = ctx.getMergedReginfoMask();
   if (!mask.hasValue())
     return;
   if (ELFT::Is64Bits)
