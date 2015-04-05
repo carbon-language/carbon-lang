@@ -1102,16 +1102,20 @@ public:
   }
   Value *CreateConstInBoundsGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
                                     const Twine &Name = "") {
+    return CreateConstInBoundsGEP2_32(nullptr, Ptr, Idx0, Idx1, Name);
+  }
+  Value *CreateConstInBoundsGEP2_32(Type *Ty, Value *Ptr, unsigned Idx0, unsigned Idx1,
+                                    const Twine &Name = "") {
     Value *Idxs[] = {
       ConstantInt::get(Type::getInt32Ty(Context), Idx0),
       ConstantInt::get(Type::getInt32Ty(Context), Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idxs),
+      return Insert(Folder.CreateInBoundsGetElementPtr(Ty, PC, Idxs),
                     Name);
 
-    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
+    return Insert(GetElementPtrInst::CreateInBounds(Ty, Ptr, Idxs), Name);
   }
   Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
@@ -1156,7 +1160,10 @@ public:
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
   }
   Value *CreateStructGEP(Value *Ptr, unsigned Idx, const Twine &Name = "") {
-    return CreateConstInBoundsGEP2_32(Ptr, 0, Idx, Name);
+    return CreateStructGEP(nullptr, Ptr, Idx, Name);
+  }
+  Value *CreateStructGEP(Type *Ty, Value *Ptr, unsigned Idx, const Twine &Name = "") {
+    return CreateConstInBoundsGEP2_32(Ty, Ptr, 0, Idx, Name);
   }
 
   /// \brief Same as CreateGlobalString, but return a pointer with "i8*" type

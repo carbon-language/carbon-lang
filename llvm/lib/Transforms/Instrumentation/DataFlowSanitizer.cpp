@@ -1472,17 +1472,16 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
           Args.push_back(DFSF.getShadow(*i));
 
         if (FT->isVarArg()) {
-          auto LabelVAAlloca =
-              new AllocaInst(ArrayType::get(DFSF.DFS.ShadowTy,
-                                            CS.arg_size() - FT->getNumParams()),
-                             "labelva", DFSF.F->getEntryBlock().begin());
+          auto *LabelVATy = ArrayType::get(DFSF.DFS.ShadowTy, CS.arg_size() - FT->getNumParams());
+          auto *LabelVAAlloca = new AllocaInst(LabelVATy, "labelva",
+                                               DFSF.F->getEntryBlock().begin());
 
           for (unsigned n = 0; i != CS.arg_end(); ++i, ++n) {
-            auto LabelVAPtr = IRB.CreateStructGEP(LabelVAAlloca, n);
+            auto LabelVAPtr = IRB.CreateStructGEP(LabelVATy, LabelVAAlloca, n);
             IRB.CreateStore(DFSF.getShadow(*i), LabelVAPtr);
           }
 
-          Args.push_back(IRB.CreateStructGEP(LabelVAAlloca, 0));
+          Args.push_back(IRB.CreateStructGEP(LabelVATy, LabelVAAlloca, 0));
         }
 
         if (!FT->getReturnType()->isVoidTy()) {
