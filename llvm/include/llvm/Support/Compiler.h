@@ -223,6 +223,16 @@
 #define LLVM_ATTRIBUTE_RETURNS_NONNULL
 #endif
 
+/// \macro LLVM_ATTRIBUTE_RETURNS_NOALIAS Used to mark a function as returning a
+/// pointer that does not alias any other valid pointer.
+#ifdef __GNUC__
+#define LLVM_ATTRIBUTE_RETURNS_NOALIAS __attribute__((__malloc__))
+#elif defined(_MSC_VER)
+#define LLVM_ATTRIBUTE_RETURNS_NOALIAS __declspec(restrict)
+#else
+#define LLVM_ATTRIBUTE_RETURNS_NOALIAS
+#endif
+
 /// LLVM_EXTENSION - Support compilers where we have a keyword to suppress
 /// pedantic diagnostics.
 #ifdef __GNUC__
