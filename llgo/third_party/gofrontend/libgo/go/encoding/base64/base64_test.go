@@ -342,3 +342,19 @@ func TestDecoderIssue7733(t *testing.T) {
 		t.Errorf("DecodeString = %q; want abcd", s)
 	}
 }
+
+func BenchmarkEncodeToString(b *testing.B) {
+	data := make([]byte, 8192)
+	b.SetBytes(int64(len(data)))
+	for i := 0; i < b.N; i++ {
+		StdEncoding.EncodeToString(data)
+	}
+}
+
+func BenchmarkDecodeString(b *testing.B) {
+	data := StdEncoding.EncodeToString(make([]byte, 8192))
+	b.SetBytes(int64(len(data)))
+	for i := 0; i < b.N; i++ {
+		StdEncoding.DecodeString(data)
+	}
+}

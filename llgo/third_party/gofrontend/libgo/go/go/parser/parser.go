@@ -641,6 +641,7 @@ func (p *parser) parseArrayType() ast.Expr {
 	}
 
 	lbrack := p.expect(token.LBRACK)
+	p.exprLev++
 	var len ast.Expr
 	// always permit ellipsis for more fault-tolerant parsing
 	if p.tok == token.ELLIPSIS {
@@ -649,6 +650,7 @@ func (p *parser) parseArrayType() ast.Expr {
 	} else if p.tok != token.RBRACK {
 		len = p.parseRhs()
 	}
+	p.exprLev--
 	p.expect(token.RBRACK)
 	elt := p.parseType()
 
@@ -823,9 +825,10 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 		// parameter or result variable is the function body.
 		p.declare(field, nil, scope, ast.Var, idents...)
 		p.resolve(typ)
-		if p.tok == token.COMMA {
-			p.next()
+		if !p.atComma("parameter list") {
+			return
 		}
+		p.next()
 		for p.tok != token.RPAREN && p.tok != token.EOF {
 			idents := p.parseIdentList()
 			typ := p.parseVarType(ellipsisOk)
@@ -840,15 +843,15 @@ func (p *parser) parseParameterList(scope *ast.Scope, ellipsisOk bool) (params [
 			}
 			p.next()
 		}
-	} else {
-		// Type { "," Type } (anonymous parameters)
-		params = make([]*ast.Field, len(list))
-		for i, typ := range list {
-			p.resolve(typ)
-			params[i] = &ast.Field{Type: typ}
-		}
+		return
 	}
 
+	// Type { "," Type } (anonymous parameters)
+	params = make([]*ast.Field, len(list))
+	for i, typ := range list {
+		p.resolve(typ)
+		params[i] = &ast.Field{Type: typ}
+	}
 	return
 }
 
@@ -2041,7 +2044,16 @@ func (p *parser) parseForStmt() ast.Stmt {
 		prevLev := p.exprLev
 		p.exprLev = -1
 		if p.tok != token.SEMICOLON {
-			s2, isRange = p.parseSimpleStmt(rangeOk)
+			if p.tok == token.RANGE {
+				// "for range x" (nil lhs in assignment)
+				pos := p.pos
+				p.next()
+				y := []ast.Expr{&ast.UnaryExpr{OpPos: pos, Op: token.RANGE, X: p.parseRhs()}}
+				s2 = &ast.AssignStmt{Rhs: y}
+				isRange = true
+			} else {
+				s2, isRange = p.parseSimpleStmt(rangeOk)
+			}
 		}
 		if !isRange && p.tok == token.SEMICOLON {
 			p.next()
@@ -2066,12 +2078,14 @@ func (p *parser) parseForStmt() ast.Stmt {
 		// check lhs
 		var key, value ast.Expr
 		switch len(as.Lhs) {
-		case 2:
-			key, value = as.Lhs[0], as.Lhs[1]
+		case 0:
+			// nothing to do
 		case 1:
 			key = as.Lhs[0]
+		case 2:
+			key, value = as.Lhs[0], as.Lhs[1]
 		default:
-			p.errorExpected(as.Lhs[0].Pos(), "1 or 2 expressions")
+			p.errorExpected(as.Lhs[len(as.Lhs)-1].Pos(), "at most 2 expressions")
 			return &ast.BadStmt{From: pos, To: p.safePos(body.End())}
 		}
 		// parseSimpleStmt returned a right-hand side that
@@ -2296,36 +2310,6 @@ func (p *parser) parseGenDecl(keyword token.Token, f parseSpecFunction) *ast.Gen
 	}
 }
 
-func (p *parser) parseReceiver(scope *ast.Scope) *ast.FieldList {
-	if p.trace {
-		defer un(trace(p, "Receiver"))
-	}
-
-	par := p.parseParameters(scope, false)
-
-	// must have exactly one receiver
-	if par.NumFields() != 1 {
-		p.errorExpected(par.Opening, "exactly one receiver")
-		par.List = []*ast.Field{{Type: &ast.BadExpr{From: par.Opening, To: par.Closing + 1}}}
-		return par
-	}
-
-	// recv type must be of the form ["*"] identifier
-	recv := par.List[0]
-	base := deref(recv.Type)
-	if _, isIdent := base.(*ast.Ident); !isIdent {
-		if _, isBad := base.(*ast.BadExpr); !isBad {
-			// only report error if it's a new one
-			p.errorExpected(base.Pos(), "(unqualified) identifier")
-		}
-		par.List = []*ast.Field{
-			{Type: &ast.BadExpr{From: recv.Pos(), To: p.safePos(recv.End())}},
-		}
-	}
-
-	return par
-}
-
 func (p *parser) parseFuncDecl() *ast.FuncDecl {
 	if p.trace {
 		defer un(trace(p, "FunctionDecl"))
@@ -2337,7 +2321,7 @@ func (p *parser) parseFuncDecl() *ast.FuncDecl {
 
 	var recv *ast.FieldList
 	if p.tok == token.LPAREN {
-		recv = p.parseReceiver(scope)
+		recv = p.parseParameters(scope, false)
 	}
 
 	ident := p.parseIdent()

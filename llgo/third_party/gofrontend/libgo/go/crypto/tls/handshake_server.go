@@ -57,10 +57,10 @@ func (c *Conn) serverHandshake() error {
 		if err := hs.establishKeys(); err != nil {
 			return err
 		}
-		if err := hs.sendFinished(); err != nil {
+		if err := hs.sendFinished(c.firstFinished[:]); err != nil {
 			return err
 		}
-		if err := hs.readFinished(); err != nil {
+		if err := hs.readFinished(nil); err != nil {
 			return err
 		}
 		c.didResume = true
@@ -73,13 +73,13 @@ func (c *Conn) serverHandshake() error {
 		if err := hs.establishKeys(); err != nil {
 			return err
 		}
-		if err := hs.readFinished(); err != nil {
+		if err := hs.readFinished(c.firstFinished[:]); err != nil {
 			return err
 		}
 		if err := hs.sendSessionTicket(); err != nil {
 			return err
 		}
-		if err := hs.sendFinished(); err != nil {
+		if err := hs.sendFinished(nil); err != nil {
 			return err
 		}
 	}
@@ -163,13 +163,21 @@ Curves:
 	if len(hs.clientHello.serverName) > 0 {
 		c.serverName = hs.clientHello.serverName
 	}
-	// Although sending an empty NPN extension is reasonable, Firefox has
-	// had a bug around this. Best to send nothing at all if
-	// config.NextProtos is empty. See
-	// https://code.google.com/p/go/issues/detail?id=5445.
-	if hs.clientHello.nextProtoNeg && len(config.NextProtos) > 0 {
-		hs.hello.nextProtoNeg = true
-		hs.hello.nextProtos = config.NextProtos
+
+	if len(hs.clientHello.alpnProtocols) > 0 {
+		if selectedProto, fallback := mutualProtocol(hs.clientHello.alpnProtocols, c.config.NextProtos); !fallback {
+			hs.hello.alpnProtocol = selectedProto
+			c.clientProtocol = selectedProto
+		}
+	} else {
+		// Although sending an empty NPN extension is reasonable, Firefox has
+		// had a bug around this. Best to send nothing at all if
+		// config.NextProtos is empty. See
+		// https://code.google.com/p/go/issues/detail?id=5445.
+		if hs.clientHello.nextProtoNeg && len(config.NextProtos) > 0 {
+			hs.hello.nextProtoNeg = true
+			hs.hello.nextProtos = config.NextProtos
+		}
 	}
 
 	if len(config.Certificates) == 0 {
@@ -178,7 +186,16 @@ Curves:
 	}
 	hs.cert = &config.Certificates[0]
 	if len(hs.clientHello.serverName) > 0 {
-		hs.cert = config.getCertificateForName(hs.clientHello.serverName)
+		chi := &ClientHelloInfo{
+			CipherSuites:    hs.clientHello.cipherSuites,
+			ServerName:      hs.clientHello.serverName,
+			SupportedCurves: hs.clientHello.supportedCurves,
+			SupportedPoints: hs.clientHello.supportedPoints,
+		}
+		if hs.cert, err = config.getCertificate(chi); err != nil {
+			c.sendAlert(alertInternalError)
+			return false, err
+		}
 	}
 
 	_, hs.ecdsaOk = hs.cert.PrivateKey.(*ecdsa.PrivateKey)
@@ -205,6 +222,18 @@ Curves:
 	if hs.suite == nil {
 		c.sendAlert(alertHandshakeFailure)
 		return false, errors.New("tls: no cipher suite supported by both client and server")
+	}
+
+	// See https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00.
+	for _, id := range hs.clientHello.cipherSuites {
+		if id == TLS_FALLBACK_SCSV {
+			// The client is doing a fallback connection.
+			if hs.clientHello.vers < c.config.MaxVersion {
+				c.sendAlert(alertInappropriateFallback)
+				return false, errors.New("tls: client using inppropriate protocol fallback")
+			}
+			break
+		}
 	}
 
 	return false, nil
@@ -470,7 +499,7 @@ func (hs *serverHandshakeState) establishKeys() error {
 	return nil
 }
 
-func (hs *serverHandshakeState) readFinished() error {
+func (hs *serverHandshakeState) readFinished(out []byte) error {
 	c := hs.c
 
 	c.readRecord(recordTypeChangeCipherSpec)
@@ -510,6 +539,7 @@ func (hs *serverHandshakeState) readFinished() error {
 	}
 
 	hs.finishedHash.Write(clientFinished.marshal())
+	copy(out, verify)
 	return nil
 }
 
@@ -539,7 +569,7 @@ func (hs *serverHandshakeState) sendSessionTicket() error {
 	return nil
 }
 
-func (hs *serverHandshakeState) sendFinished() error {
+func (hs *serverHandshakeState) sendFinished(out []byte) error {
 	c := hs.c
 
 	c.writeRecord(recordTypeChangeCipherSpec, []byte{1})
@@ -550,6 +580,7 @@ func (hs *serverHandshakeState) sendFinished() error {
 	c.writeRecord(recordTypeHandshake, finished.marshal())
 
 	c.cipherSuite = hs.suite.id
+	copy(out, finished.verifyData)
 
 	return nil
 }

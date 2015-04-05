@@ -9,7 +9,6 @@ package pprof_test
 import (
 	"bytes"
 	"fmt"
-	"hash/crc32"
 	"math/big"
 	"os/exec"
 	"regexp"
@@ -22,35 +21,65 @@ import (
 	"unsafe"
 )
 
-func TestCPUProfile(t *testing.T) {
-	buf := make([]byte, 100000)
-	testCPUProfile(t, []string{"crc32.update"}, func() {
-		// This loop takes about a quarter second on a 2 GHz laptop.
-		// We only need to get one 100 Hz clock tick, so we've got
-		// a 25x safety buffer.
-		for i := 0; i < 1000; i++ {
-			crc32.ChecksumIEEE(buf)
+func cpuHogger(f func()) {
+	// We only need to get one 100 Hz clock tick, so we've got
+	// a 25x safety buffer.
+	// But do at least 500 iterations (which should take about 100ms),
+	// otherwise TestCPUProfileMultithreaded can fail if only one
+	// thread is scheduled during the 250ms period.
+	t0 := time.Now()
+	for i := 0; i < 500 || time.Since(t0) < 250*time.Millisecond; i++ {
+		f()
+	}
+}
+
+var (
+	salt1 = 0
+	salt2 = 0
+)
+
+// The actual CPU hogging function.
+// Must not call other functions nor access heap/globals in the loop,
+// otherwise under race detector the samples will be in the race runtime.
+func cpuHog1() {
+	foo := salt1
+	for i := 0; i < 1e5; i++ {
+		if foo > 0 {
+			foo *= foo
+		} else {
+			foo *= foo + 1
 		}
+	}
+	salt1 = foo
+}
+
+func cpuHog2() {
+	foo := salt2
+	for i := 0; i < 1e5; i++ {
+		if foo > 0 {
+			foo *= foo
+		} else {
+			foo *= foo + 2
+		}
+	}
+	salt2 = foo
+}
+
+func TestCPUProfile(t *testing.T) {
+	testCPUProfile(t, []string{"pprof_test.cpuHog1"}, func() {
+		cpuHogger(cpuHog1)
 	})
 }
 
 func TestCPUProfileMultithreaded(t *testing.T) {
-	buf := make([]byte, 100000)
 	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(2))
-	testCPUProfile(t, []string{"crc32.update"}, func() {
+	testCPUProfile(t, []string{"pprof_test.cpuHog1", "pprof_test.cpuHog2"}, func() {
 		c := make(chan int)
 		go func() {
-			for i := 0; i < 2000; i++ {
-				crc32.Update(0, crc32.IEEETable, buf)
-			}
+			cpuHogger(cpuHog1)
 			c <- 1
 		}()
-		// This loop takes about a quarter second on a 2 GHz laptop.
-		// We only need to get one 100 Hz clock tick, so we've got
-		// a 25x safety buffer.
-		for i := 0; i < 2000; i++ {
-			crc32.ChecksumIEEE(buf)
-		}
+		cpuHogger(cpuHog2)
 		<-c
 	})
 }
@@ -110,7 +139,7 @@ func testCPUProfile(t *testing.T, need []string, f func()) {
 	f()
 	StopCPUProfile()
 
-	// Check that profile is well formed and contains ChecksumIEEE.
+	// Check that profile is well formed and contains need.
 	have := make([]uintptr, len(need))
 	parseProfile(t, prof.Bytes(), func(count uintptr, stk []uintptr) {
 		for _, pc := range stk {
@@ -118,6 +147,7 @@ func testCPUProfile(t *testing.T, need []string, f func()) {
 			if f == nil {
 				continue
 			}
+			t.Log(f.Name(), count)
 			for i, name := range need {
 				if strings.Contains(f.Name(), name) {
 					have[i] += count
@@ -220,7 +250,7 @@ func TestGoroutineSwitch(t *testing.T) {
 			// exists to record a PC without a traceback. Those are okay.
 			if len(stk) == 2 {
 				f := runtime.FuncForPC(stk[1])
-				if f != nil && (f.Name() == "System" || f.Name() == "ExternalCode") {
+				if f != nil && (f.Name() == "System" || f.Name() == "ExternalCode" || f.Name() == "GC") {
 					return
 				}
 			}
@@ -282,39 +312,45 @@ func TestBlockProfile(t *testing.T) {
 	tests := [...]TestCase{
 		{"chan recv", blockChanRecv, `
 [0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
-#	0x[0-9,a-f]+	runtime\.chanrecv1\+0x[0-9,a-f]+	.*/src/pkg/runtime/chan.goc:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.blockChanRecv\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime\.chanrecv1\+0x[0-9,a-f]+	.*/src/runtime/chan.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockChanRecv\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
 `},
 		{"chan send", blockChanSend, `
 [0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
-#	0x[0-9,a-f]+	runtime\.chansend1\+0x[0-9,a-f]+	.*/src/pkg/runtime/chan.goc:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.blockChanSend\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime\.chansend1\+0x[0-9,a-f]+	.*/src/runtime/chan.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockChanSend\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
 `},
 		{"chan close", blockChanClose, `
 [0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
-#	0x[0-9,a-f]+	runtime\.chanrecv1\+0x[0-9,a-f]+	.*/src/pkg/runtime/chan.goc:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.blockChanClose\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime\.chanrecv1\+0x[0-9,a-f]+	.*/src/runtime/chan.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockChanClose\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
 `},
 		{"select recv async", blockSelectRecvAsync, `
 [0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
-#	0x[0-9,a-f]+	runtime\.selectgo\+0x[0-9,a-f]+	.*/src/pkg/runtime/chan.goc:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.blockSelectRecvAsync\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime\.selectgo\+0x[0-9,a-f]+	.*/src/runtime/select.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockSelectRecvAsync\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
 `},
 		{"select send sync", blockSelectSendSync, `
 [0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
-#	0x[0-9,a-f]+	runtime\.selectgo\+0x[0-9,a-f]+	.*/src/pkg/runtime/chan.goc:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.blockSelectSendSync\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime\.selectgo\+0x[0-9,a-f]+	.*/src/runtime/select.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockSelectSendSync\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
 `},
 		{"mutex", blockMutex, `
 [0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
-#	0x[0-9,a-f]+	sync\.\(\*Mutex\)\.Lock\+0x[0-9,a-f]+	.*/src/pkg/sync/mutex\.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.blockMutex\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
-#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/pkg/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	sync\.\(\*Mutex\)\.Lock\+0x[0-9,a-f]+	.*/src/sync/mutex\.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockMutex\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+`},
+		{"cond", blockCond, `
+[0-9]+ [0-9]+ @ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+ 0x[0-9,a-f]+
+#	0x[0-9,a-f]+	sync\.\(\*Cond\)\.Wait\+0x[0-9,a-f]+	.*/src/sync/cond\.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.blockCond\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
+#	0x[0-9,a-f]+	runtime/pprof_test\.TestBlockProfile\+0x[0-9,a-f]+	.*/src/runtime/pprof/pprof_test.go:[0-9]+
 `},
 	}
 
@@ -401,4 +437,18 @@ func blockMutex() {
 		mu.Unlock()
 	}()
 	mu.Lock()
+}
+
+func blockCond() {
+	var mu sync.Mutex
+	c := sync.NewCond(&mu)
+	mu.Lock()
+	go func() {
+		time.Sleep(blockDelay)
+		mu.Lock()
+		c.Signal()
+		mu.Unlock()
+	}()
+	c.Wait()
+	mu.Unlock()
 }

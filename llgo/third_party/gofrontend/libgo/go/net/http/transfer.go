@@ -11,12 +11,17 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http/internal"
 	"net/textproto"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 )
+
+// ErrLineTooLong is returned when reading request or response bodies
+// with malformed chunked encoding.
+var ErrLineTooLong = internal.ErrLineTooLong
 
 type errorReader struct {
 	err error
@@ -198,7 +203,7 @@ func (t *transferWriter) WriteBody(w io.Writer) error {
 	// Write body
 	if t.Body != nil {
 		if chunked(t.TransferEncoding) {
-			cw := newChunkedWriter(w)
+			cw := internal.NewChunkedWriter(w)
 			_, err = io.Copy(cw, t.Body)
 			if err == nil {
 				err = cw.Close()
@@ -223,7 +228,7 @@ func (t *transferWriter) WriteBody(w io.Writer) error {
 	}
 
 	if !t.ResponseToHEAD && t.ContentLength != -1 && t.ContentLength != ncopy {
-		return fmt.Errorf("http: Request.ContentLength=%d with Body length %d",
+		return fmt.Errorf("http: ContentLength=%d with Body length %d",
 			t.ContentLength, ncopy)
 	}
 
@@ -298,7 +303,7 @@ func readTransfer(msg interface{}, r *bufio.Reader) (err error) {
 		t.StatusCode = rr.StatusCode
 		t.ProtoMajor = rr.ProtoMajor
 		t.ProtoMinor = rr.ProtoMinor
-		t.Close = shouldClose(t.ProtoMajor, t.ProtoMinor, t.Header)
+		t.Close = shouldClose(t.ProtoMajor, t.ProtoMinor, t.Header, true)
 		isResponse = true
 		if rr.Request != nil {
 			t.RequestMethod = rr.Request.Method
@@ -365,7 +370,7 @@ func readTransfer(msg interface{}, r *bufio.Reader) (err error) {
 		if noBodyExpected(t.RequestMethod) {
 			t.Body = eofReader
 		} else {
-			t.Body = &body{src: newChunkedReader(r), hdr: msg, r: r, closing: t.Close}
+			t.Body = &body{src: internal.NewChunkedReader(r), hdr: msg, r: r, closing: t.Close}
 		}
 	case realLength == 0:
 		t.Body = eofReader
@@ -497,7 +502,7 @@ func fixLength(isResponse bool, status int, requestMethod string, header Header,
 // Determine whether to hang up after sending a request and body, or
 // receiving a response and body
 // 'header' is the request headers
-func shouldClose(major, minor int, header Header) bool {
+func shouldClose(major, minor int, header Header, removeCloseHeader bool) bool {
 	if major < 1 {
 		return true
 	} else if major == 1 && minor == 0 {
@@ -509,7 +514,9 @@ func shouldClose(major, minor int, header Header) bool {
 		// TODO: Should split on commas, toss surrounding white space,
 		// and check each field.
 		if strings.ToLower(header.get("Connection")) == "close" {
-			header.Del("Connection")
+			if removeCloseHeader {
+				header.Del("Connection")
+			}
 			return true
 		}
 	}

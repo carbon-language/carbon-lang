@@ -68,9 +68,10 @@ func (s *simplifier) Visit(node ast.Node) ast.Visitor {
 		// a slice expression of the form: s[a:len(s)]
 		// can be simplified to: s[a:]
 		// if s is "simple enough" (for now we only accept identifiers)
-		if s.hasDotImport {
-			// if dot imports are present, we cannot be certain that an
-			// unresolved "len" identifier refers to the predefined len()
+		if n.Max != nil || s.hasDotImport {
+			// - 3-index slices always require the 2nd and 3rd index
+			// - if dot imports are present, we cannot be certain that an
+			//   unresolved "len" identifier refers to the predefined len()
 			break
 		}
 		if s, _ := n.X.(*ast.Ident); s != nil && s.Obj != nil {
@@ -96,14 +97,24 @@ func (s *simplifier) Visit(node ast.Node) ast.Visitor {
 		//       x, y := b[:n], b[n:]
 
 	case *ast.RangeStmt:
-		// a range of the form: for x, _ = range v {...}
+		// - a range of the form: for x, _ = range v {...}
 		// can be simplified to: for x = range v {...}
-		if ident, _ := n.Value.(*ast.Ident); ident != nil && ident.Name == "_" {
+		// - a range of the form: for _ = range v {...}
+		// can be simplified to: for range v {...}
+		if isBlank(n.Value) {
 			n.Value = nil
+		}
+		if isBlank(n.Key) && n.Value == nil {
+			n.Key = nil
 		}
 	}
 
 	return s
+}
+
+func isBlank(x ast.Expr) bool {
+	ident, ok := x.(*ast.Ident)
+	return ok && ident.Name == "_"
 }
 
 func simplify(f *ast.File) {
@@ -117,5 +128,34 @@ func simplify(f *ast.File) {
 		}
 	}
 
+	// remove empty declarations such as "const ()", etc
+	removeEmptyDeclGroups(f)
+
 	ast.Walk(&s, f)
+}
+
+func removeEmptyDeclGroups(f *ast.File) {
+	i := 0
+	for _, d := range f.Decls {
+		if g, ok := d.(*ast.GenDecl); !ok || !isEmpty(f, g) {
+			f.Decls[i] = d
+			i++
+		}
+	}
+	f.Decls = f.Decls[:i]
+}
+
+func isEmpty(f *ast.File, g *ast.GenDecl) bool {
+	if g.Doc != nil || g.Specs != nil {
+		return false
+	}
+
+	for _, c := range f.Comments {
+		// if there is a comment in the declaration, it is not considered empty
+		if g.Pos() <= c.Pos() && c.End() <= g.End() {
+			return false
+		}
+	}
+
+	return true
 }

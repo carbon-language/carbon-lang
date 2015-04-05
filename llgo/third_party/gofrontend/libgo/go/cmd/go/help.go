@@ -81,7 +81,8 @@ single directory, the command is applied to a single synthesized
 package made up of exactly those files, ignoring any build constraints
 in those files and ignoring any other files in the directory.
 
-File names that begin with "." or "_" are ignored by the go tool.
+Directory and file names that begin with "." or "_" are ignored
+by the go tool, as are directories named "testdata".
 	`,
 }
 
@@ -153,6 +154,11 @@ A few common code hosting sites have special syntax:
 
 		import "launchpad.net/~user/project/branch"
 		import "launchpad.net/~user/project/branch/sub/directory"
+
+	IBM DevOps Services (Git)
+
+		import "hub.jazz.net/git/user/project"
+		import "hub.jazz.net/git/user/project/sub/directory"
 
 For code hosted on other servers, import paths may either be qualified
 with the version control type, or the go tool can dynamically fetch
@@ -229,7 +235,26 @@ listed in the GOPATH environment variable (see 'go help gopath').
 
 The go command attempts to download the version of the
 package appropriate for the Go release being used.
-Run 'go help install' for more.
+Run 'go help get' for more.
+
+Import path checking
+
+When the custom import path feature described above redirects to a
+known code hosting site, each of the resulting packages has two possible
+import paths, using the custom domain or the known hosting site.
+
+A package statement is said to have an "import comment" if it is immediately
+followed (before the next newline) by a comment of one of these two forms:
+
+	package math // import "path"
+	package math /* import "path" */
+
+The go command will refuse to install a package with an import comment
+unless it is being referred to by that import path. In this way, import comments
+let package authors make sure the custom import path is used and not a
+direct path to the underlying code hosting site.
+
+See https://golang.org/s/go14customimport for details.
 	`,
 }
 

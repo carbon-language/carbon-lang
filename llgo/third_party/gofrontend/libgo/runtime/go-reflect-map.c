@@ -24,7 +24,7 @@ mapaccess (struct __go_map_type *mt, void *m, void *key)
 {
   struct __go_map *map = (struct __go_map *) m;
 
-  __go_assert (mt->__common.__code == GO_MAP);
+  __go_assert ((mt->__common.__code & GO_CODE_MASK) == GO_MAP);
   if (map == NULL)
     return NULL;
   else
@@ -40,7 +40,7 @@ mapassign (struct __go_map_type *mt, void *m, void *key, void *val)
   struct __go_map *map = (struct __go_map *) m;
   void *p;
 
-  __go_assert (mt->__common.__code == GO_MAP);
+  __go_assert ((mt->__common.__code & GO_CODE_MASK) == GO_MAP);
   if (map == NULL)
     runtime_panicstring ("assignment to entry in nil map");
   p = __go_map_index (map, key, 1);
@@ -55,7 +55,7 @@ mapdelete (struct __go_map_type *mt, void *m, void *key)
 {
   struct __go_map *map = (struct __go_map *) m;
 
-  __go_assert (mt->__common.__code == GO_MAP);
+  __go_assert ((mt->__common.__code & GO_CODE_MASK) == GO_MAP);
   if (map == NULL)
     return;
   __go_map_delete (map, key);
@@ -81,7 +81,7 @@ mapiterinit (struct __go_map_type *mt, void *m)
 {
   struct __go_hash_iter *it;
 
-  __go_assert (mt->__common.__code == GO_MAP);
+  __go_assert ((mt->__common.__code & GO_CODE_MASK) == GO_MAP);
   it = __go_alloc (sizeof (struct __go_hash_iter));
   __go_mapiterinit ((struct __go_map *) m, it);
   return (unsigned char *) it;

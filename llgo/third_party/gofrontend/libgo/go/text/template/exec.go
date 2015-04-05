@@ -393,7 +393,7 @@ func (s *state) idealConstant(constant *parse.NumberNode) reflect.Value {
 	switch {
 	case constant.IsComplex:
 		return reflect.ValueOf(constant.Complex128) // incontrovertible.
-	case constant.IsFloat && strings.IndexAny(constant.Text, ".eE") >= 0:
+	case constant.IsFloat && !isHexConstant(constant.Text) && strings.IndexAny(constant.Text, ".eE") >= 0:
 		return reflect.ValueOf(constant.Float64)
 	case constant.IsInt:
 		n := int(constant.Int64)
@@ -405,6 +405,10 @@ func (s *state) idealConstant(constant *parse.NumberNode) reflect.Value {
 		s.errorf("%s overflows int", constant.Text)
 	}
 	return zero
+}
+
+func isHexConstant(s string) bool {
+	return len(s) > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')
 }
 
 func (s *state) evalFieldNode(dot reflect.Value, field *parse.FieldNode, args []parse.Node, final reflect.Value) reflect.Value {
@@ -542,7 +546,7 @@ func (s *state) evalCall(dot, fun reflect.Value, node parse.Node, name string, a
 	argv := make([]reflect.Value, numIn)
 	// Args must be evaluated. Fixed args first.
 	i := 0
-	for ; i < numFixed; i++ {
+	for ; i < numFixed && i < len(args); i++ {
 		argv[i] = s.evalArg(dot, typ.In(i), args[i])
 	}
 	// Now the ... args.
@@ -632,6 +636,8 @@ func (s *state) evalArg(dot reflect.Value, typ reflect.Type, n parse.Node) refle
 		return s.validateType(s.evalPipeline(dot, arg), typ)
 	case *parse.IdentifierNode:
 		return s.evalFunction(dot, arg, arg, nil, zero)
+	case *parse.ChainNode:
+		return s.validateType(s.evalChainNode(dot, arg, nil, zero), typ)
 	}
 	switch typ.Kind() {
 	case reflect.Bool:

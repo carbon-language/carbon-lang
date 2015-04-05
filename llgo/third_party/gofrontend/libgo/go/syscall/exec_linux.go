@@ -14,17 +14,27 @@ import (
 //sysnb	raw_prctl(option int, arg2 int, arg3 int, arg4 int, arg5 int) (ret int, err Errno)
 //prctl(option _C_int, arg2 _C_long, arg3 _C_long, arg4 _C_long, arg5 _C_long) _C_int
 
+// SysProcIDMap holds Container ID to Host ID mappings used for User Namespaces in Linux.
+// See user_namespaces(7).
+type SysProcIDMap struct {
+	ContainerID int // Container ID.
+	HostID      int // Host ID.
+	Size        int // Size.
+}
+
 type SysProcAttr struct {
-	Chroot     string      // Chroot.
-	Credential *Credential // Credential.
-	Ptrace     bool        // Enable tracing.
-	Setsid     bool        // Create session.
-	Setpgid    bool        // Set process group ID to new pid (SYSV setpgrp)
-	Setctty    bool        // Set controlling terminal to fd Ctty (only meaningful if Setsid is set)
-	Noctty     bool        // Detach fd 0 from controlling terminal
-	Ctty       int         // Controlling TTY fd (Linux only)
-	Pdeathsig  Signal      // Signal that the process will get when its parent dies (Linux only)
-	Cloneflags uintptr     // Flags for clone calls (Linux only)
+	Chroot      string         // Chroot.
+	Credential  *Credential    // Credential.
+	Ptrace      bool           // Enable tracing.
+	Setsid      bool           // Create session.
+	Setpgid     bool           // Set process group ID to new pid (SYSV setpgrp)
+	Setctty     bool           // Set controlling terminal to fd Ctty (only meaningful if Setsid is set)
+	Noctty      bool           // Detach fd 0 from controlling terminal
+	Ctty        int            // Controlling TTY fd (Linux only)
+	Pdeathsig   Signal         // Signal that the process will get when its parent dies (Linux only)
+	Cloneflags  uintptr        // Flags for clone calls (Linux only)
+	UidMappings []SysProcIDMap // User ID mappings for user namespaces.
+	GidMappings []SysProcIDMap // Group ID mappings for user namespaces.
 }
 
 // Implemented in runtime package.
@@ -46,8 +56,10 @@ func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr
 	var (
 		r1     uintptr
 		err1   Errno
+		err2   Errno
 		nextfd int
 		i      int
+		p      [2]int
 	)
 
 	// Guard against side effects of shuffling fds below.
@@ -62,6 +74,14 @@ func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr
 		fd[i] = int(ufd)
 	}
 	nextfd++
+
+	// Allocate another pipe for parent to child communication for
+	// synchronizing writing of User ID/Group ID mappings.
+	if sys.UidMappings != nil || sys.GidMappings != nil {
+		if err := forkExecPipe(p[:]); err != nil {
+			return 0, err.(Errno)
+		}
+	}
 
 	// About to call fork.
 	// No more allocation or calls of non-assembly functions.
@@ -79,10 +99,41 @@ func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr
 	if r1 != 0 {
 		// parent; return PID
 		runtime_AfterFork()
-		return int(r1), 0
+		pid = int(r1)
+
+		if sys.UidMappings != nil || sys.GidMappings != nil {
+			Close(p[0])
+			err := writeUidGidMappings(pid, sys)
+			if err != nil {
+				err2 = err.(Errno)
+			}
+			RawSyscall(SYS_WRITE, uintptr(p[1]), uintptr(unsafe.Pointer(&err2)), unsafe.Sizeof(err2))
+			Close(p[1])
+		}
+
+		return pid, 0
 	}
 
 	// Fork succeeded, now in child.
+
+	// Wait for User ID/Group ID mappings to be written.
+	if sys.UidMappings != nil || sys.GidMappings != nil {
+		if _, _, err1 = RawSyscall(SYS_CLOSE, uintptr(p[1]), 0, 0); err1 != 0 {
+			goto childerror
+		}
+		r1, _, err1 = RawSyscall(SYS_READ, uintptr(p[0]), uintptr(unsafe.Pointer(&err2)), unsafe.Sizeof(err2))
+		if err1 != 0 {
+			goto childerror
+		}
+		if r1 != unsafe.Sizeof(err2) {
+			err1 = EINVAL
+			goto childerror
+		}
+		if err2 != 0 {
+			err1 = err2
+			goto childerror
+		}
+	}
 
 	// Parent death signal
 	if sys.Pdeathsig != 0 {
@@ -281,4 +332,54 @@ func forkExecPipe(p []int) (err error) {
 		_, err = fcntl(p[1], F_SETFD, FD_CLOEXEC)
 	}
 	return
+}
+
+// writeIDMappings writes the user namespace User ID or Group ID mappings to the specified path.
+func writeIDMappings(path string, idMap []SysProcIDMap) error {
+	fd, err := Open(path, O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+
+	data := ""
+	for _, im := range idMap {
+		data = data + itoa(im.ContainerID) + " " + itoa(im.HostID) + " " + itoa(im.Size) + "\n"
+	}
+
+	bytes, err := ByteSliceFromString(data)
+	if err != nil {
+		Close(fd)
+		return err
+	}
+
+	if _, err := Write(fd, bytes); err != nil {
+		Close(fd)
+		return err
+	}
+
+	if err := Close(fd); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// writeUidGidMappings writes User ID and Group ID mappings for user namespaces
+// for a process and it is called from the parent process.
+func writeUidGidMappings(pid int, sys *SysProcAttr) error {
+	if sys.UidMappings != nil {
+		uidf := "/proc/" + itoa(pid) + "/uid_map"
+		if err := writeIDMappings(uidf, sys.UidMappings); err != nil {
+			return err
+		}
+	}
+
+	if sys.GidMappings != nil {
+		gidf := "/proc/" + itoa(pid) + "/gid_map"
+		if err := writeIDMappings(gidf, sys.GidMappings); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -319,6 +319,9 @@
 /* Define to 1 if you have the `unlinkat' function. */
 #undef HAVE_UNLINKAT
 
+/* Define to 1 if you have the `unsetenv' function. */
+#undef HAVE_UNSETENV
+
 /* Define to 1 if you have the `unshare' function. */
 #undef HAVE_UNSHARE
 

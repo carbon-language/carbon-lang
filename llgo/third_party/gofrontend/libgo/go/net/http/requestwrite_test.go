@@ -280,7 +280,7 @@ var reqWriteTests = []reqWriteTest{
 			ContentLength: 10, // but we're going to send only 5 bytes
 		},
 		Body:      []byte("12345"),
-		WantError: errors.New("http: Request.ContentLength=10 with Body length 5"),
+		WantError: errors.New("http: ContentLength=10 with Body length 5"),
 	},
 
 	// Request with a ContentLength of 4 but an 8 byte body.
@@ -294,7 +294,7 @@ var reqWriteTests = []reqWriteTest{
 			ContentLength: 4, // but we're going to try to send 8 bytes
 		},
 		Body:      []byte("12345678"),
-		WantError: errors.New("http: Request.ContentLength=4 with Body length 8"),
+		WantError: errors.New("http: ContentLength=4 with Body length 8"),
 	},
 
 	// Request with a 5 ContentLength and nil body.
@@ -562,4 +562,62 @@ func mustParseURL(s string) *url.URL {
 		panic(fmt.Sprintf("Error parsing URL %q: %v", s, err))
 	}
 	return u
+}
+
+type writerFunc func([]byte) (int, error)
+
+func (f writerFunc) Write(p []byte) (int, error) { return f(p) }
+
+// TestRequestWriteError tests the Write err != nil checks in (*Request).write.
+func TestRequestWriteError(t *testing.T) {
+	failAfter, writeCount := 0, 0
+	errFail := errors.New("fake write failure")
+
+	// w is the buffered io.Writer to write the request to.  It
+	// fails exactly once on its Nth Write call, as controlled by
+	// failAfter. It also tracks the number of calls in
+	// writeCount.
+	w := struct {
+		io.ByteWriter // to avoid being wrapped by a bufio.Writer
+		io.Writer
+	}{
+		nil,
+		writerFunc(func(p []byte) (n int, err error) {
+			writeCount++
+			if failAfter == 0 {
+				err = errFail
+			}
+			failAfter--
+			return len(p), err
+		}),
+	}
+
+	req, _ := NewRequest("GET", "http://example.com/", nil)
+	const writeCalls = 4 // number of Write calls in current implementation
+	sawGood := false
+	for n := 0; n <= writeCalls+2; n++ {
+		failAfter = n
+		writeCount = 0
+		err := req.Write(w)
+		var wantErr error
+		if n < writeCalls {
+			wantErr = errFail
+		}
+		if err != wantErr {
+			t.Errorf("for fail-after %d Writes, err = %v; want %v", n, err, wantErr)
+			continue
+		}
+		if err == nil {
+			sawGood = true
+			if writeCount != writeCalls {
+				t.Fatalf("writeCalls constant is outdated in test")
+			}
+		}
+		if writeCount > writeCalls || writeCount > n+1 {
+			t.Errorf("for fail-after %d, saw unexpectedly high (%d) write calls", n, writeCount)
+		}
+	}
+	if !sawGood {
+		t.Fatalf("writeCalls constant is outdated in test")
+	}
 }

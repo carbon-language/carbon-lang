@@ -87,7 +87,7 @@ func Sqrt(x float64) float64 {
 //
 //
 // Notes:  Rounding mode detection omitted.  The constants "mask", "shift",
-// and "bias" are found in src/pkg/math/bits.go
+// and "bias" are found in src/math/bits.go
 
 // Sqrt returns the square root of x.
 //

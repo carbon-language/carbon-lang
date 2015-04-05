@@ -88,6 +88,11 @@ type AddrType struct {
 	BasicType
 }
 
+// An UnspecifiedType represents an implicit, unknown, ambiguous or nonexistent type.
+type UnspecifiedType struct {
+	BasicType
+}
+
 // qualifiers
 
 // A QualType represents a type that has the C/C++ "const", "restrict", or "volatile" qualifier.
@@ -113,7 +118,12 @@ func (t *ArrayType) String() string {
 	return "[" + strconv.FormatInt(t.Count, 10) + "]" + t.Type.String()
 }
 
-func (t *ArrayType) Size() int64 { return t.Count * t.Type.Size() }
+func (t *ArrayType) Size() int64 {
+	if t.Count == -1 {
+		return 0
+	}
+	return t.Count * t.Type.Size()
+}
 
 // A VoidType represents the C void type.
 type VoidType struct {
@@ -364,32 +374,36 @@ func (d *Data) readType(name string, r typeReader, off Offset, typeCache map[Off
 		t.StrideBitSize, _ = e.Val(AttrStrideSize).(int64)
 
 		// Accumulate dimensions,
-		ndim := 0
+		var dims []int64
 		for kid := next(); kid != nil; kid = next() {
 			// TODO(rsc): Can also be TagEnumerationType
 			// but haven't seen that in the wild yet.
 			switch kid.Tag {
 			case TagSubrangeType:
-				max, ok := kid.Val(AttrUpperBound).(int64)
+				count, ok := kid.Val(AttrCount).(int64)
 				if !ok {
-					max = -2 // Count == -1, as in x[].
+					// Old binaries may have an upper bound instead.
+					count, ok = kid.Val(AttrUpperBound).(int64)
+					if ok {
+						count++ // Length is one more than upper bound.
+					} else if len(dims) == 0 {
+						count = -1 // As in x[].
+					}
 				}
-				if ndim == 0 {
-					t.Count = max + 1
-				} else {
-					// Multidimensional array.
-					// Create new array type underneath this one.
-					t.Type = &ArrayType{Type: t.Type, Count: max + 1}
-				}
-				ndim++
+				dims = append(dims, count)
 			case TagEnumerationType:
 				err = DecodeError{name, kid.Offset, "cannot handle enumeration type as array bound"}
 				goto Error
 			}
 		}
-		if ndim == 0 {
+		if len(dims) == 0 {
 			// LLVM generates this for x[].
-			t.Count = -1
+			dims = []int64{-1}
+		}
+
+		t.Count = dims[0]
+		for i := len(dims) - 1; i >= 1; i-- {
+			t.Type = &ArrayType{Type: t.Type, Count: dims[i]}
 		}
 
 	case TagBaseType:
@@ -417,6 +431,17 @@ func (d *Data) readType(name string, r typeReader, off Offset, typeCache map[Off
 			typ = new(BoolType)
 		case encComplexFloat:
 			typ = new(ComplexType)
+			if name == "complex" {
+				// clang writes out 'complex' instead of 'complex float' or 'complex double'.
+				// clang also writes out a byte size that we can use to distinguish.
+				// See issue 8694.
+				switch byteSize, _ := e.Val(AttrByteSize).(int64); byteSize {
+				case 8:
+					name = "complex float"
+				case 16:
+					name = "complex double"
+				}
+			}
 		case encFloat:
 			typ = new(FloatType)
 		case encSigned:
@@ -465,7 +490,7 @@ func (d *Data) readType(name string, r typeReader, off Offset, typeCache map[Off
 		t.StructName, _ = e.Val(AttrName).(string)
 		t.Incomplete = e.Val(AttrDeclaration) != nil
 		t.Field = make([]*StructField, 0, 8)
-		var lastFieldType Type
+		var lastFieldType *Type
 		var lastFieldBitOffset int64
 		for kid := next(); kid != nil; kid = next() {
 			if kid.Tag == TagMember {
@@ -507,7 +532,7 @@ func (d *Data) readType(name string, r typeReader, off Offset, typeCache map[Off
 					// (DWARF writes out 0-length arrays as if they were 1-length arrays.)
 					zeroArray(lastFieldType)
 				}
-				lastFieldType = f.Type
+				lastFieldType = &f.Type
 				lastFieldBitOffset = bito
 			}
 		}
@@ -624,6 +649,15 @@ func (d *Data) readType(name string, r typeReader, off Offset, typeCache map[Off
 		typeCache[off] = t
 		t.Name, _ = e.Val(AttrName).(string)
 		t.Type = typeOf(e)
+
+	case TagUnspecifiedType:
+		// Unspecified type (DWARF v3 §5.2)
+		// Attributes:
+		//	AttrName: name
+		t := new(UnspecifiedType)
+		typ = t
+		typeCache[off] = t
+		t.Name, _ = e.Val(AttrName).(string)
 	}
 
 	if err != nil {
@@ -647,13 +681,16 @@ Error:
 	return nil, err
 }
 
-func zeroArray(t Type) {
-	for {
-		at, ok := t.(*ArrayType)
-		if !ok {
-			break
-		}
-		at.Count = 0
-		t = at.Type
+func zeroArray(t *Type) {
+	if t == nil {
+		return
 	}
+	at, ok := (*t).(*ArrayType)
+	if !ok || at.Type.Size() == 0 {
+		return
+	}
+	// Make a copy to avoid invalidating typeCache.
+	tt := *at
+	tt.Count = 0
+	*t = &tt
 }

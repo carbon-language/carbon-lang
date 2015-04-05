@@ -15,6 +15,8 @@ import (
 	"testing"
 )
 
+var supportsSymlinks = true
+
 type PathTest struct {
 	path, result string
 }
@@ -629,6 +631,8 @@ var winisabstests = []IsAbsTest{
 	{`\`, false},
 	{`\Windows`, false},
 	{`c:a\b`, false},
+	{`c:\a\b`, true},
+	{`c:/a/b`, true},
 	{`\\host\share\foo`, true},
 	{`//host/share/foo/bar`, true},
 }
@@ -719,7 +723,7 @@ func TestEvalSymlinks(t *testing.T) {
 		if d.dest == "" {
 			err = os.Mkdir(path, 0755)
 		} else {
-			if runtime.GOOS != "windows" {
+			if supportsSymlinks {
 				err = os.Symlink(d.dest, path)
 			}
 		}
@@ -729,7 +733,9 @@ func TestEvalSymlinks(t *testing.T) {
 	}
 
 	var tests []EvalSymlinksTest
-	if runtime.GOOS == "windows" {
+	if supportsSymlinks {
+		tests = EvalSymlinksTests
+	} else {
 		for _, d := range EvalSymlinksTests {
 			if d.path == d.dest {
 				// will test only real files and directories
@@ -742,15 +748,13 @@ func TestEvalSymlinks(t *testing.T) {
 				tests = append(tests, d2)
 			}
 		}
-	} else {
-		tests = EvalSymlinksTests
 	}
 
 	// Evaluate the symlink farm.
 	for _, d := range tests {
 		path := simpleJoin(tmpDir, d.path)
 		dest := simpleJoin(tmpDir, d.dest)
-		if filepath.IsAbs(d.dest) {
+		if filepath.IsAbs(d.dest) || os.IsPathSeparator(d.dest[0]) {
 			dest = d.dest
 		}
 		if p, err := filepath.EvalSymlinks(path); err != nil {
@@ -785,12 +789,6 @@ var absTests = []string{
 }
 
 func TestAbs(t *testing.T) {
-	oldwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal("Getwd failed: ", err)
-	}
-	defer os.Chdir(oldwd)
-
 	root, err := ioutil.TempDir("", "TestAbs")
 	if err != nil {
 		t.Fatal("TempDir failed: ", err)
@@ -812,6 +810,19 @@ func TestAbs(t *testing.T) {
 		if err != nil {
 			t.Fatal("Mkdir failed: ", err)
 		}
+	}
+
+	if runtime.GOOS == "windows" {
+		vol := filepath.VolumeName(root)
+		var extra []string
+		for _, path := range absTests {
+			if strings.Index(path, "$") != -1 {
+				continue
+			}
+			path = vol + path
+			extra = append(extra, path)
+		}
+		absTests = append(absTests, extra...)
 	}
 
 	err = os.Chdir(absTestDirs[0])

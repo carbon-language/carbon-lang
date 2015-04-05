@@ -1063,20 +1063,18 @@ func TestTransportConcurrency(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(numReqs)
 
-	tr := &Transport{
-		Dial: func(netw, addr string) (c net.Conn, err error) {
-			// Due to the Transport's "socket late
-			// binding" (see idleConnCh in transport.go),
-			// the numReqs HTTP requests below can finish
-			// with a dial still outstanding.  So count
-			// our dials as work too so the leak checker
-			// doesn't complain at us.
-			wg.Add(1)
-			defer wg.Done()
-			return net.Dial(netw, addr)
-		},
-	}
+	// Due to the Transport's "socket late binding" (see
+	// idleConnCh in transport.go), the numReqs HTTP requests
+	// below can finish with a dial still outstanding.  To keep
+	// the leak checker happy, keep track of pending dials and
+	// wait for them to finish (and be closed or returned to the
+	// idle pool) before we close idle connections.
+	SetPendingDialHooks(func() { wg.Add(1) }, wg.Done)
+	defer SetPendingDialHooks(nil, nil)
+
+	tr := &Transport{}
 	defer tr.CloseIdleConnections()
+
 	c := &Client{Transport: tr}
 	reqs := make(chan string)
 	defer close(reqs)
@@ -1703,26 +1701,40 @@ Content-Length: %d
 }
 
 type proxyFromEnvTest struct {
-	req     string // URL to fetch; blank means "http://example.com"
-	env     string
-	noenv   string
+	req string // URL to fetch; blank means "http://example.com"
+
+	env      string // HTTP_PROXY
+	httpsenv string // HTTPS_PROXY
+	noenv    string // NO_RPXY
+
 	want    string
 	wanterr error
 }
 
 func (t proxyFromEnvTest) String() string {
 	var buf bytes.Buffer
+	space := func() {
+		if buf.Len() > 0 {
+			buf.WriteByte(' ')
+		}
+	}
 	if t.env != "" {
 		fmt.Fprintf(&buf, "http_proxy=%q", t.env)
 	}
+	if t.httpsenv != "" {
+		space()
+		fmt.Fprintf(&buf, "https_proxy=%q", t.httpsenv)
+	}
 	if t.noenv != "" {
-		fmt.Fprintf(&buf, " no_proxy=%q", t.noenv)
+		space()
+		fmt.Fprintf(&buf, "no_proxy=%q", t.noenv)
 	}
 	req := "http://example.com"
 	if t.req != "" {
 		req = t.req
 	}
-	fmt.Fprintf(&buf, " req=%q", req)
+	space()
+	fmt.Fprintf(&buf, "req=%q", req)
 	return strings.TrimSpace(buf.String())
 }
 
@@ -1733,7 +1745,15 @@ var proxyFromEnvTests = []proxyFromEnvTest{
 	{env: "https://cache.corp.example.com", want: "https://cache.corp.example.com"},
 	{env: "http://127.0.0.1:8080", want: "http://127.0.0.1:8080"},
 	{env: "https://127.0.0.1:8080", want: "https://127.0.0.1:8080"},
+
+	// Don't use secure for http
+	{req: "http://insecure.tld/", env: "http.proxy.tld", httpsenv: "secure.proxy.tld", want: "http://http.proxy.tld"},
+	// Use secure for https.
+	{req: "https://secure.tld/", env: "http.proxy.tld", httpsenv: "secure.proxy.tld", want: "http://secure.proxy.tld"},
+	{req: "https://secure.tld/", env: "http.proxy.tld", httpsenv: "https://secure.proxy.tld", want: "https://secure.proxy.tld"},
+
 	{want: "<nil>"},
+
 	{noenv: "example.com", req: "http://example.com/", env: "proxy", want: "<nil>"},
 	{noenv: ".example.com", req: "http://example.com/", env: "proxy", want: "<nil>"},
 	{noenv: "ample.com", req: "http://example.com/", env: "proxy", want: "http://proxy"},
@@ -1745,6 +1765,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 	ResetProxyEnv()
 	for _, tt := range proxyFromEnvTests {
 		os.Setenv("HTTP_PROXY", tt.env)
+		os.Setenv("HTTPS_PROXY", tt.httpsenv)
 		os.Setenv("NO_PROXY", tt.noenv)
 		ResetCachedEnvironment()
 		reqURL := tt.req
@@ -2096,6 +2117,136 @@ func TestTransportClosesBodyOnError(t *testing.T) {
 	default:
 		t.Errorf("didn't see Body.Close")
 	}
+}
+
+func TestTransportDialTLS(t *testing.T) {
+	var mu sync.Mutex // guards following
+	var gotReq, didDial bool
+
+	ts := httptest.NewTLSServer(HandlerFunc(func(w ResponseWriter, r *Request) {
+		mu.Lock()
+		gotReq = true
+		mu.Unlock()
+	}))
+	defer ts.Close()
+	tr := &Transport{
+		DialTLS: func(netw, addr string) (net.Conn, error) {
+			mu.Lock()
+			didDial = true
+			mu.Unlock()
+			c, err := tls.Dial(netw, addr, &tls.Config{
+				InsecureSkipVerify: true,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return c, c.Handshake()
+		},
+	}
+	defer tr.CloseIdleConnections()
+	client := &Client{Transport: tr}
+	res, err := client.Get(ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	mu.Lock()
+	if !gotReq {
+		t.Error("didn't get request")
+	}
+	if !didDial {
+		t.Error("didn't use dial hook")
+	}
+}
+
+// Test for issue 8755
+// Ensure that if a proxy returns an error, it is exposed by RoundTrip
+func TestRoundTripReturnsProxyError(t *testing.T) {
+	badProxy := func(*http.Request) (*url.URL, error) {
+		return nil, errors.New("errorMessage")
+	}
+
+	tr := &Transport{Proxy: badProxy}
+
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+
+	_, err := tr.RoundTrip(req)
+
+	if err == nil {
+		t.Error("Expected proxy error to be returned by RoundTrip")
+	}
+}
+
+// tests that putting an idle conn after a call to CloseIdleConns does return it
+func TestTransportCloseIdleConnsThenReturn(t *testing.T) {
+	tr := &Transport{}
+	wantIdle := func(when string, n int) bool {
+		got := tr.IdleConnCountForTesting("|http|example.com") // key used by PutIdleTestConn
+		if got == n {
+			return true
+		}
+		t.Errorf("%s: idle conns = %d; want %d", when, got, n)
+		return false
+	}
+	wantIdle("start", 0)
+	if !tr.PutIdleTestConn() {
+		t.Fatal("put failed")
+	}
+	if !tr.PutIdleTestConn() {
+		t.Fatal("second put failed")
+	}
+	wantIdle("after put", 2)
+	tr.CloseIdleConnections()
+	if !tr.IsIdleForTesting() {
+		t.Error("should be idle after CloseIdleConnections")
+	}
+	wantIdle("after close idle", 0)
+	if tr.PutIdleTestConn() {
+		t.Fatal("put didn't fail")
+	}
+	wantIdle("after second put", 0)
+
+	tr.RequestIdleConnChForTesting() // should toggle the transport out of idle mode
+	if tr.IsIdleForTesting() {
+		t.Error("shouldn't be idle after RequestIdleConnChForTesting")
+	}
+	if !tr.PutIdleTestConn() {
+		t.Fatal("after re-activation")
+	}
+	wantIdle("after final put", 1)
+}
+
+// This tests that an client requesting a content range won't also
+// implicitly ask for gzip support. If they want that, they need to do it
+// on their own.
+// golang.org/issue/8923
+func TestTransportRangeAndGzip(t *testing.T) {
+	defer afterTest(t)
+	reqc := make(chan *Request, 1)
+	ts := httptest.NewServer(HandlerFunc(func(w ResponseWriter, r *Request) {
+		reqc <- r
+	}))
+	defer ts.Close()
+
+	req, _ := NewRequest("GET", ts.URL, nil)
+	req.Header.Set("Range", "bytes=7-11")
+	res, err := DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case r := <-reqc:
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			t.Error("Transport advertised gzip support in the Accept header")
+		}
+		if r.Header.Get("Range") == "" {
+			t.Error("no Range in request")
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("timeout")
+	}
+	res.Body.Close()
 }
 
 func wantBody(res *http.Response, err error, want string) error {

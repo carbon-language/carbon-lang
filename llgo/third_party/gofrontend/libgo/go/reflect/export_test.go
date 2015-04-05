@@ -17,3 +17,11 @@ func IsRO(v Value) bool {
 
 var ArrayOf = arrayOf
 var CallGC = &callGC
+
+const PtrSize = ptrSize
+const BitsPointer = bitsPointer
+const BitsScalar = bitsScalar
+
+func FuncLayout(t Type, rcvr Type) (frametype Type, argSize, retOffset uintptr, stack []byte) {
+	return
+}

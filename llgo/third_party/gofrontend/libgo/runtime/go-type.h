@@ -54,9 +54,11 @@ struct String;
 #define GO_STRUCT 25
 #define GO_UNSAFE_POINTER 26
 
+#define GO_DIRECT_IFACE (1 << 5)
+#define GO_GC_PROG (1 << 6)
 #define GO_NO_POINTERS (1 << 7)
 
-#define GO_CODE_MASK 0x7f
+#define GO_CODE_MASK 0x1f
 
 /* For each Go type the compiler constructs one of these structures.
    This is used for type reflection, interfaces, maps, and reference
@@ -310,7 +312,8 @@ struct __go_struct_type
 static inline _Bool
 __go_is_pointer_type (const struct __go_type_descriptor *td)
 {
-  return td->__code == GO_PTR || td->__code == GO_UNSAFE_POINTER;
+  return ((td->__code & GO_CODE_MASK) == GO_PTR
+	  || (td->__code & GO_CODE_MASK) == GO_UNSAFE_POINTER);
 }
 
 extern _Bool

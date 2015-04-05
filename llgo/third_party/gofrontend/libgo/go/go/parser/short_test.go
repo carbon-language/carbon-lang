@@ -35,6 +35,11 @@ var valids = []string{
 	`package p; func f() { for _ = range "foo" + "bar" {} };`,
 	`package p; func f() { var s []int; g(s[:], s[i:], s[:j], s[i:j], s[i:j:k], s[:j:k]) };`,
 	`package p; var ( _ = (struct {*T}).m; _ = (interface {T}).m )`,
+	`package p; func ((T),) m() {}`,
+	`package p; func ((*T),) m() {}`,
+	`package p; func (*(T),) m() {}`,
+	`package p; func _(x []int) { for range x {} }`,
+	`package p; func _() { if [T{}.n]int{} {} }`,
 }
 
 func TestValid(t *testing.T) {
@@ -89,6 +94,7 @@ var invalids = []string{
 	`package p; func f() { go f /* ERROR HERE "function must be invoked" */ }`,
 	`package p; func f() { defer func() {} /* ERROR HERE "function must be invoked" */ }`,
 	`package p; func f() { go func() { func() { f(x func /* ERROR "expected '\)'" */ (){}) } } }`,
+	`package p; func f() (a b string /* ERROR "expected '\)'" */ , ok bool) // issue 8656`,
 }
 
 func TestInvalid(t *testing.T) {

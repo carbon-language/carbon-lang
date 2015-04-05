@@ -13,7 +13,7 @@
 	The verbs:
 
 	General:
-		%v	the value in a default format.
+		%v	the value in a default format
 			when printing structs, the plus flag (%+v) adds field names
 		%#v	a Go-syntax representation of the value
 		%T	a Go-syntax representation of the type of the value
@@ -38,8 +38,8 @@
 		%E	scientific notation, e.g. -1234.456E+78
 		%f	decimal point but no exponent, e.g. 123.456
 		%F	synonym for %f
-		%g	whichever of %e or %f produces more compact output
-		%G	whichever of %E or %f produces more compact output
+		%g	%e for large exponents, %f otherwise
+		%G	%E for large exponents, %F otherwise
 	String and slice of bytes:
 		%s	the uninterpreted bytes of the string or slice
 		%q	a double-quoted string safely escaped with Go syntax
@@ -50,6 +50,21 @@
 
 	There is no 'u' flag.  Integers are printed unsigned if they have unsigned type.
 	Similarly, there is no need to specify the size of the operand (int8, int64).
+
+	The default format for %v is:
+		bool:                    %t
+		int, int8 etc.:          %d
+		uint, uint8 etc.:        %d, %x if printed with %#v
+		float32, complex64, etc: %g
+		string:                  %s
+		chan:                    %p
+		pointer:                 %p
+	For compound objects, the elements are printed using these rules, recursively,
+	laid out like this:
+		struct:             {field0 field1 ...}
+		array, slice:       [elem0  elem1 ...]
+		maps:               map[key1:value1 key2:value2]
+		pointer to above:   &{}, &[], &map[]
 
 	Width is specified by an optional decimal number immediately following the verb.
 	If absent, the width is whatever is necessary to represent the value.
@@ -63,16 +78,20 @@
 		%9.2f  width 9, precision 2
 		%9.f   width 9, precision 0
 
-	Width and precision are measured in units of Unicode code points.
-	(This differs from C's printf where the units are numbers
-	of bytes.) Either or both of the flags may be replaced with the
-	character '*', causing their values to be obtained from the next
-	operand, which must be of type int.
+	Width and precision are measured in units of Unicode code points,
+	that is, runes. (This differs from C's printf where the
+	units are always measured in bytes.) Either or both of the flags
+	may be replaced with the character '*', causing their values to be
+	obtained from the next operand, which must be of type int.
 
-	For most values, width is the minimum number of characters to output,
+	For most values, width is the minimum number of runes to output,
 	padding the formatted form with spaces if necessary.
-	For strings, precision is the maximum number of characters to output,
-	truncating if necessary.
+
+	For strings, byte slices and byte arrays, however, precision
+	limits the length of the input to be formatted (not the size of
+	the output), truncating if necessary. Normally it is measured in
+	runes, but for these types when formatted with the %x or %X format
+	it is measured in bytes.
 
 	For floating-point values, width sets the minimum width of the field and
 	precision sets the number of places after the decimal, if appropriate,
@@ -147,6 +166,10 @@
 		func (x X) String() string { return Sprintf("<%s>", x) }
 	convert the value before recurring:
 		func (x X) String() string { return Sprintf("<%s>", string(x)) }
+	Infinite recursion can also be triggered by self-referential data
+	structures, such as a slice that contains itself as an element, if
+	that type has a String method. Such pathologies are rare, however,
+	and the package does not protect against them.
 
 	Explicit argument indexes:
 
@@ -160,7 +183,7 @@
 
 	For example,
 		fmt.Sprintf("%[2]d %[1]d\n", 11, 22)
-	will yield "22, 11", while
+	will yield "22 11", while
 		fmt.Sprintf("%[3]*.[2]*[1]f", 12.0, 2, 6),
 	equivalent to
 		fmt.Sprintf("%6.2f", 12.0),

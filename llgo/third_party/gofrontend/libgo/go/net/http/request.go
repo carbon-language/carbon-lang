@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -390,10 +391,16 @@ func (req *Request) write(w io.Writer, usingProxy bool, extraHeaders Header) err
 		w = bw
 	}
 
-	fmt.Fprintf(w, "%s %s HTTP/1.1\r\n", valueOrDefault(req.Method, "GET"), ruri)
+	_, err := fmt.Fprintf(w, "%s %s HTTP/1.1\r\n", valueOrDefault(req.Method, "GET"), ruri)
+	if err != nil {
+		return err
+	}
 
 	// Header lines
-	fmt.Fprintf(w, "Host: %s\r\n", host)
+	_, err = fmt.Fprintf(w, "Host: %s\r\n", host)
+	if err != nil {
+		return err
+	}
 
 	// Use the defaultUserAgent unless the Header contains one, which
 	// may be blank to not send the header.
@@ -404,7 +411,10 @@ func (req *Request) write(w io.Writer, usingProxy bool, extraHeaders Header) err
 		}
 	}
 	if userAgent != "" {
-		fmt.Fprintf(w, "User-Agent: %s\r\n", userAgent)
+		_, err = fmt.Fprintf(w, "User-Agent: %s\r\n", userAgent)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Process Body,ContentLength,Close,Trailer
@@ -429,7 +439,10 @@ func (req *Request) write(w io.Writer, usingProxy bool, extraHeaders Header) err
 		}
 	}
 
-	io.WriteString(w, "\r\n")
+	_, err = io.WriteString(w, "\r\n")
+	if err != nil {
+		return err
+	}
 
 	// Write body and trailer
 	err = tw.WriteBody(w)
@@ -507,6 +520,35 @@ func NewRequest(method, urlStr string, body io.Reader) (*Request, error) {
 	}
 
 	return req, nil
+}
+
+// BasicAuth returns the username and password provided in the request's
+// Authorization header, if the request uses HTTP Basic Authentication.
+// See RFC 2617, Section 2.
+func (r *Request) BasicAuth() (username, password string, ok bool) {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return
+	}
+	return parseBasicAuth(auth)
+}
+
+// parseBasicAuth parses an HTTP Basic Authentication string.
+// "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" returns ("Aladdin", "open sesame", true).
+func parseBasicAuth(auth string) (username, password string, ok bool) {
+	if !strings.HasPrefix(auth, "Basic ") {
+		return
+	}
+	c, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(auth, "Basic "))
+	if err != nil {
+		return
+	}
+	cs := string(c)
+	s := strings.IndexByte(cs, ':')
+	if s < 0 {
+		return
+	}
+	return cs[:s], cs[s+1:], true
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP
@@ -623,6 +665,7 @@ func ReadRequest(b *bufio.Reader) (req *Request, err error) {
 		return nil, err
 	}
 
+	req.Close = shouldClose(req.ProtoMajor, req.ProtoMinor, req.Header, false)
 	return req, nil
 }
 
@@ -807,8 +850,10 @@ func (r *Request) ParseMultipartForm(maxMemory int64) error {
 
 // FormValue returns the first value for the named component of the query.
 // POST and PUT body parameters take precedence over URL query string values.
-// FormValue calls ParseMultipartForm and ParseForm if necessary.
-// To access multiple values of the same key use ParseForm.
+// FormValue calls ParseMultipartForm and ParseForm if necessary and ignores
+// any errors returned by these functions.
+// To access multiple values of the same key, call ParseForm and
+// then inspect Request.Form directly.
 func (r *Request) FormValue(key string) string {
 	if r.Form == nil {
 		r.ParseMultipartForm(defaultMaxMemory)
@@ -821,7 +866,8 @@ func (r *Request) FormValue(key string) string {
 
 // PostFormValue returns the first value for the named component of the POST
 // or PUT request body. URL query parameters are ignored.
-// PostFormValue calls ParseMultipartForm and ParseForm if necessary.
+// PostFormValue calls ParseMultipartForm and ParseForm if necessary and ignores
+// any errors returned by these functions.
 func (r *Request) PostFormValue(key string) string {
 	if r.PostForm == nil {
 		r.ParseMultipartForm(defaultMaxMemory)

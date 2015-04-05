@@ -25,6 +25,7 @@ package runtime
 #define string __reflection
 #define KindPtr GO_PTR
 #define KindNoPointers GO_NO_POINTERS
+#define kindMask GO_CODE_MASK
 
 // GCCGO SPECIFIC CHANGE
 //
@@ -935,7 +936,7 @@ func SetFinalizer(obj Eface, finalizer Eface) {
 		runtime_printf("runtime.SetFinalizer: first argument is nil interface\n");
 		goto throw;
 	}
-	if(obj.__type_descriptor->__code != GO_PTR) {
+	if((obj.__type_descriptor->kind&kindMask) != GO_PTR) {
 		runtime_printf("runtime.SetFinalizer: first argument is %S, not pointer\n", *obj.__type_descriptor->__reflection);
 		goto throw;
 	}
@@ -956,14 +957,14 @@ func SetFinalizer(obj Eface, finalizer Eface) {
 	if(!runtime_mlookup(obj.__object, &base, &size, nil) || obj.__object != base) {
 		// As an implementation detail we allow to set finalizers for an inner byte
 		// of an object if it could come from tiny alloc (see mallocgc for details).
-		if(ot->__element_type == nil || (ot->__element_type->__code&KindNoPointers) == 0 || ot->__element_type->__size >= TinySize) {
+		if(ot->__element_type == nil || (ot->__element_type->kind&KindNoPointers) == 0 || ot->__element_type->__size >= TinySize) {
 			runtime_printf("runtime.SetFinalizer: pointer not at beginning of allocated block (%p)\n", obj.__object);
 			goto throw;
 		}
 	}
 	if(finalizer.__type_descriptor != nil) {
 		runtime_createfing();
-		if(finalizer.__type_descriptor->__code != GO_FUNC)
+		if((finalizer.__type_descriptor->kind&kindMask) != GO_FUNC)
 			goto badfunc;
 		ft = (const FuncType*)finalizer.__type_descriptor;
 		if(ft->__dotdotdot || ft->__in.__count != 1)
@@ -971,12 +972,12 @@ func SetFinalizer(obj Eface, finalizer Eface) {
 		fint = *(Type**)ft->__in.__values;
 		if(__go_type_descriptors_equal(fint, obj.__type_descriptor)) {
 			// ok - same type
-		} else if(fint->__code == GO_PTR && (fint->__uncommon == nil || fint->__uncommon->__name == nil || obj.type->__uncommon == nil || obj.type->__uncommon->__name == nil) && __go_type_descriptors_equal(((const PtrType*)fint)->__element_type, ((const PtrType*)obj.type)->__element_type)) {
+		} else if((fint->kind&kindMask) == GO_PTR && (fint->__uncommon == nil || fint->__uncommon->__name == nil || obj.type->__uncommon == nil || obj.type->__uncommon->__name == nil) && __go_type_descriptors_equal(((const PtrType*)fint)->__element_type, ((const PtrType*)obj.type)->__element_type)) {
 			// ok - not same type, but both pointers,
 			// one or the other is unnamed, and same element type, so assignable.
-		} else if(fint->kind == GO_INTERFACE && ((const InterfaceType*)fint)->__methods.__count == 0) {
+		} else if((fint->kind&kindMask) == GO_INTERFACE && ((const InterfaceType*)fint)->__methods.__count == 0) {
 			// ok - satisfies empty interface
-		} else if(fint->kind == GO_INTERFACE && __go_convert_interface_2(fint, obj.__type_descriptor, 1) != nil) {
+		} else if((fint->kind&kindMask) == GO_INTERFACE && __go_convert_interface_2(fint, obj.__type_descriptor, 1) != nil) {
 			// ok - satisfies non-empty interface
 		} else
 			goto badfunc;

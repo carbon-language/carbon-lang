@@ -56,6 +56,7 @@ set(LLGO_GO_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/env.go
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/fix.go
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/fmt.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/generate.go
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/get.go
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/go11.go
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/help.go

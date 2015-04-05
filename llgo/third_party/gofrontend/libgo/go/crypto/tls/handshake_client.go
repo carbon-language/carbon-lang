@@ -6,11 +6,11 @@ package tls
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/subtle"
 	"crypto/x509"
-	"encoding/asn1"
 	"errors"
 	"fmt"
 	"io"
@@ -37,6 +37,18 @@ func (c *Conn) clientHandshake() error {
 		return errors.New("tls: either ServerName or InsecureSkipVerify must be specified in the tls.Config")
 	}
 
+	nextProtosLength := 0
+	for _, proto := range c.config.NextProtos {
+		if l := len(proto); l == 0 || l > 255 {
+			return errors.New("tls: invalid NextProtos value")
+		} else {
+			nextProtosLength += 1 + l
+		}
+	}
+	if nextProtosLength > 0xffff {
+		return errors.New("tls: NextProtos values too large")
+	}
+
 	hello := &clientHelloMsg{
 		vers:                c.config.maxVersion(),
 		compressionMethods:  []uint8{compressionNone},
@@ -47,6 +59,7 @@ func (c *Conn) clientHandshake() error {
 		supportedPoints:     []uint8{pointFormatUncompressed},
 		nextProtoNeg:        len(c.config.NextProtos) > 0,
 		secureRenegotiation: true,
+		alpnProtocols:       c.config.NextProtos,
 	}
 
 	possibleCipherSuites := c.config.cipherSuites()
@@ -174,10 +187,10 @@ NextCipherSuite:
 		if err := hs.readSessionTicket(); err != nil {
 			return err
 		}
-		if err := hs.readFinished(); err != nil {
+		if err := hs.readFinished(c.firstFinished[:]); err != nil {
 			return err
 		}
-		if err := hs.sendFinished(); err != nil {
+		if err := hs.sendFinished(nil); err != nil {
 			return err
 		}
 	} else {
@@ -187,13 +200,13 @@ NextCipherSuite:
 		if err := hs.establishKeys(); err != nil {
 			return err
 		}
-		if err := hs.sendFinished(); err != nil {
+		if err := hs.sendFinished(c.firstFinished[:]); err != nil {
 			return err
 		}
 		if err := hs.readSessionTicket(); err != nil {
 			return err
 		}
-		if err := hs.readFinished(); err != nil {
+		if err := hs.readFinished(nil); err != nil {
 			return err
 		}
 	}
@@ -332,8 +345,8 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 		}
 
 		// We need to search our list of client certs for one
-		// where SignatureAlgorithm is RSA and the Issuer is in
-		// certReq.certificateAuthorities
+		// where SignatureAlgorithm is acceptable to the server and the
+		// Issuer is in certReq.certificateAuthorities
 	findCert:
 		for i, chain := range c.config.Certificates {
 			if !rsaAvail && !ecdsaAvail {
@@ -360,7 +373,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 
 				if len(certReq.certificateAuthorities) == 0 {
 					// they gave us an empty list, so just take the
-					// first RSA cert from c.config.Certificates
+					// first cert from c.config.Certificates
 					chainToSend = &chain
 					break findCert
 				}
@@ -415,22 +428,24 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 			hasSignatureAndHash: c.vers >= VersionTLS12,
 		}
 
-		switch key := c.config.Certificates[0].PrivateKey.(type) {
-		case *ecdsa.PrivateKey:
-			digest, _, hashId := hs.finishedHash.hashForClientCertificate(signatureECDSA)
-			r, s, err := ecdsa.Sign(c.config.rand(), key, digest)
-			if err == nil {
-				signed, err = asn1.Marshal(ecdsaSignature{r, s})
-			}
+		key, ok := chainToSend.PrivateKey.(crypto.Signer)
+		if !ok {
+			c.sendAlert(alertInternalError)
+			return fmt.Errorf("tls: client certificate private key of type %T does not implement crypto.Signer", chainToSend.PrivateKey)
+		}
+		switch key.Public().(type) {
+		case *ecdsa.PublicKey:
+			digest, hashFunc, hashId := hs.finishedHash.hashForClientCertificate(signatureECDSA)
+			signed, err = key.Sign(c.config.rand(), digest, hashFunc)
 			certVerify.signatureAndHash.signature = signatureECDSA
 			certVerify.signatureAndHash.hash = hashId
-		case *rsa.PrivateKey:
+		case *rsa.PublicKey:
 			digest, hashFunc, hashId := hs.finishedHash.hashForClientCertificate(signatureRSA)
-			signed, err = rsa.SignPKCS1v15(c.config.rand(), key, hashFunc, digest)
+			signed, err = key.Sign(c.config.rand(), digest, hashFunc)
 			certVerify.signatureAndHash.signature = signatureRSA
 			certVerify.signatureAndHash.hash = hashId
 		default:
-			err = errors.New("unknown private key type")
+			err = fmt.Errorf("tls: unknown client certificate key type: %T", key)
 		}
 		if err != nil {
 			c.sendAlert(alertInternalError)
@@ -483,9 +498,29 @@ func (hs *clientHandshakeState) processServerHello() (bool, error) {
 		return false, errors.New("tls: server selected unsupported compression format")
 	}
 
-	if !hs.hello.nextProtoNeg && hs.serverHello.nextProtoNeg {
+	clientDidNPN := hs.hello.nextProtoNeg
+	clientDidALPN := len(hs.hello.alpnProtocols) > 0
+	serverHasNPN := hs.serverHello.nextProtoNeg
+	serverHasALPN := len(hs.serverHello.alpnProtocol) > 0
+
+	if !clientDidNPN && serverHasNPN {
 		c.sendAlert(alertHandshakeFailure)
 		return false, errors.New("server advertised unrequested NPN extension")
+	}
+
+	if !clientDidALPN && serverHasALPN {
+		c.sendAlert(alertHandshakeFailure)
+		return false, errors.New("server advertised unrequested ALPN extension")
+	}
+
+	if serverHasNPN && serverHasALPN {
+		c.sendAlert(alertHandshakeFailure)
+		return false, errors.New("server advertised both NPN and ALPN extensions")
+	}
+
+	if serverHasALPN {
+		c.clientProtocol = hs.serverHello.alpnProtocol
+		c.clientProtocolFallback = false
 	}
 
 	if hs.serverResumedSession() {
@@ -497,7 +532,7 @@ func (hs *clientHandshakeState) processServerHello() (bool, error) {
 	return false, nil
 }
 
-func (hs *clientHandshakeState) readFinished() error {
+func (hs *clientHandshakeState) readFinished(out []byte) error {
 	c := hs.c
 
 	c.readRecord(recordTypeChangeCipherSpec)
@@ -522,6 +557,7 @@ func (hs *clientHandshakeState) readFinished() error {
 		return errors.New("tls: server's Finished message was incorrect")
 	}
 	hs.finishedHash.Write(serverFinished.marshal())
+	copy(out, verify)
 	return nil
 }
 
@@ -553,7 +589,7 @@ func (hs *clientHandshakeState) readSessionTicket() error {
 	return nil
 }
 
-func (hs *clientHandshakeState) sendFinished() error {
+func (hs *clientHandshakeState) sendFinished(out []byte) error {
 	c := hs.c
 
 	c.writeRecord(recordTypeChangeCipherSpec, []byte{1})
@@ -572,6 +608,7 @@ func (hs *clientHandshakeState) sendFinished() error {
 	finished.verifyData = hs.finishedHash.clientSum(hs.masterSecret)
 	hs.finishedHash.Write(finished.marshal())
 	c.writeRecord(recordTypeHandshake, finished.marshal())
+	copy(out, finished.verifyData)
 	return nil
 }
 
@@ -584,18 +621,18 @@ func clientSessionCacheKey(serverAddr net.Addr, config *Config) string {
 	return serverAddr.String()
 }
 
-// mutualProtocol finds the mutual Next Protocol Negotiation protocol given the
-// set of client and server supported protocols. The set of client supported
-// protocols must not be empty. It returns the resulting protocol and flag
+// mutualProtocol finds the mutual Next Protocol Negotiation or ALPN protocol
+// given list of possible protocols and a list of the preference order. The
+// first list must not be empty. It returns the resulting protocol and flag
 // indicating if the fallback case was reached.
-func mutualProtocol(clientProtos, serverProtos []string) (string, bool) {
-	for _, s := range serverProtos {
-		for _, c := range clientProtos {
+func mutualProtocol(protos, preferenceProtos []string) (string, bool) {
+	for _, s := range preferenceProtos {
+		for _, c := range protos {
 			if s == c {
 				return s, false
 			}
 		}
 	}
 
-	return clientProtos[0], true
+	return protos[0], true
 }

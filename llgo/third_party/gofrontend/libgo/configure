@@ -2511,7 +2511,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ac_config_headers="$ac_config_headers config.h"
 
 
-libtool_VERSION=6:0:0
+libtool_VERSION=7:0:0
 
 
 # Default to --enable-multilib
@@ -14805,7 +14805,7 @@ else
 fi
 
 
-for ac_func in strerror_r strsignal wait4 mincore setenv dl_iterate_phdr
+for ac_func in strerror_r strsignal wait4 mincore setenv unsetenv dl_iterate_phdr
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

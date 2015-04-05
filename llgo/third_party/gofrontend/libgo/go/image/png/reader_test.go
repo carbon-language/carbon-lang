@@ -30,6 +30,7 @@ var filenames = []string{
 	"basn3p01",
 	"basn3p02",
 	"basn3p04",
+	"basn3p04-31i",
 	"basn3p08",
 	"basn3p08-trns",
 	"basn4a08",
@@ -186,6 +187,13 @@ func sng(w io.WriteCloser, filename string, png image.Image) {
 					c = 0
 				}
 			}
+			if c != 0 {
+				for c != 8/bitdepth {
+					b = b << uint(bitdepth)
+					c++
+				}
+				fmt.Fprintf(w, "%02x", b)
+			}
 		}
 		io.WriteString(w, "\n")
 	}
@@ -235,8 +243,8 @@ func TestReader(t *testing.T) {
 
 		// Compare the two, in SNG format, line by line.
 		for {
-			pdone := pb.Scan()
-			sdone := sb.Scan()
+			pdone := !pb.Scan()
+			sdone := !sb.Scan()
 			if pdone && sdone {
 				break
 			}
@@ -347,4 +355,8 @@ func BenchmarkDecodePaletted(b *testing.B) {
 
 func BenchmarkDecodeRGB(b *testing.B) {
 	benchmarkDecode(b, "testdata/benchRGB.png", 4)
+}
+
+func BenchmarkDecodeInterlacing(b *testing.B) {
+	benchmarkDecode(b, "testdata/benchRGB-interlace.png", 4)
 }

@@ -44,7 +44,7 @@ const uintptr unsafe_Pointer_gc[] = {sizeof(void*), GC_APTR, 0, GC_END};
 const struct __go_type_descriptor unsafe_Pointer =
 {
   /* __code */
-  GO_UNSAFE_POINTER,
+  GO_UNSAFE_POINTER | GO_DIRECT_IFACE,
   /* __align */
   __alignof (void *),
   /* __field_align */
@@ -89,7 +89,7 @@ const struct __go_ptr_type pointer_unsafe_Pointer =
   /* __common */
   {
     /* __code */
-    GO_PTR,
+    GO_PTR | GO_DIRECT_IFACE,
     /* __align */
     __alignof (void *),
     /* __field_align */

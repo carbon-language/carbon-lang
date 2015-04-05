@@ -85,6 +85,20 @@ func TestEmptyImport(t *testing.T) {
 	}
 }
 
+func TestEmptyFolderImport(t *testing.T) {
+	_, err := Import(".", "testdata/empty", 0)
+	if _, ok := err.(*NoGoError); !ok {
+		t.Fatal(`Import("testdata/empty") did not return NoGoError.`)
+	}
+}
+
+func TestMultiplePackageImport(t *testing.T) {
+	_, err := Import(".", "testdata/multi", 0)
+	if _, ok := err.(*MultiplePackageError); !ok {
+		t.Fatal(`Import("testdata/multi") did not return MultiplePackageError.`)
+	}
+}
+
 func TestLocalDirectory(t *testing.T) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -153,22 +167,36 @@ func (r readNopCloser) Close() error {
 	return nil
 }
 
+var (
+	ctxtP9      = Context{GOARCH: "arm", GOOS: "plan9"}
+	ctxtAndroid = Context{GOARCH: "arm", GOOS: "android"}
+)
+
 var matchFileTests = []struct {
+	ctxt  Context
 	name  string
 	data  string
 	match bool
 }{
-	{"foo_arm.go", "", true},
-	{"foo1_arm.go", "// +build linux\n\npackage main\n", false},
-	{"foo_darwin.go", "", false},
-	{"foo.go", "", true},
-	{"foo1.go", "// +build linux\n\npackage main\n", false},
-	{"foo.badsuffix", "", false},
+	{ctxtP9, "foo_arm.go", "", true},
+	{ctxtP9, "foo1_arm.go", "// +build linux\n\npackage main\n", false},
+	{ctxtP9, "foo_darwin.go", "", false},
+	{ctxtP9, "foo.go", "", true},
+	{ctxtP9, "foo1.go", "// +build linux\n\npackage main\n", false},
+	{ctxtP9, "foo.badsuffix", "", false},
+	{ctxtAndroid, "foo_linux.go", "", true},
+	{ctxtAndroid, "foo_android.go", "", true},
+	{ctxtAndroid, "foo_plan9.go", "", false},
+	{ctxtAndroid, "android.go", "", true},
+	{ctxtAndroid, "plan9.go", "", true},
+	{ctxtAndroid, "plan9_test.go", "", true},
+	{ctxtAndroid, "arm.s", "", true},
+	{ctxtAndroid, "amd64.s", "", true},
 }
 
 func TestMatchFile(t *testing.T) {
 	for _, tt := range matchFileTests {
-		ctxt := Context{GOARCH: "arm", GOOS: "plan9"}
+		ctxt := tt.ctxt
 		ctxt.OpenFile = func(path string) (r io.ReadCloser, err error) {
 			if path != "x+"+tt.name {
 				t.Fatalf("OpenFile asked for %q, expected %q", path, "x+"+tt.name)
@@ -182,5 +210,15 @@ func TestMatchFile(t *testing.T) {
 		if match != tt.match || err != nil {
 			t.Fatalf("MatchFile(%q) = %v, %v, want %v, nil", tt.name, match, err, tt.match)
 		}
+	}
+}
+
+func TestImportCmd(t *testing.T) {
+	p, err := Import("cmd/internal/objfile", "", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(filepath.ToSlash(p.Dir), "src/cmd/internal/objfile") {
+		t.Fatalf("Import cmd/internal/objfile returned Dir=%q, want %q", filepath.ToSlash(p.Dir), ".../src/cmd/internal/objfile")
 	}
 }

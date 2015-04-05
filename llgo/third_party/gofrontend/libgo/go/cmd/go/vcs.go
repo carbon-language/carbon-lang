@@ -33,6 +33,9 @@ type vcsCmd struct {
 
 	scheme  []string
 	pingCmd string
+
+	remoteRepo  func(v *vcsCmd, rootDir string) (remoteRepo string, err error)
+	resolveRepo func(v *vcsCmd, rootDir, remoteRepo string) (realRepo string, err error)
 }
 
 // A tagCmd describes a command to list available tags
@@ -81,8 +84,17 @@ var vcsHg = &vcsCmd{
 	tagSyncCmd:     "update -r {tag}",
 	tagSyncDefault: "update default",
 
-	scheme:  []string{"https", "http", "ssh"},
-	pingCmd: "identify {scheme}://{repo}",
+	scheme:     []string{"https", "http", "ssh"},
+	pingCmd:    "identify {scheme}://{repo}",
+	remoteRepo: hgRemoteRepo,
+}
+
+func hgRemoteRepo(vcsHg *vcsCmd, rootDir string) (remoteRepo string, err error) {
+	out, err := vcsHg.runOutput(rootDir, "paths default")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
 
 // vcsGit describes how to use Git.
@@ -104,8 +116,38 @@ var vcsGit = &vcsCmd{
 	tagSyncCmd:     "checkout {tag}",
 	tagSyncDefault: "checkout master",
 
-	scheme:  []string{"git", "https", "http", "git+ssh"},
-	pingCmd: "ls-remote {scheme}://{repo}",
+	scheme:     []string{"git", "https", "http", "git+ssh"},
+	pingCmd:    "ls-remote {scheme}://{repo}",
+	remoteRepo: gitRemoteRepo,
+}
+
+func gitRemoteRepo(vcsGit *vcsCmd, rootDir string) (remoteRepo string, err error) {
+	outb, err := vcsGit.runOutput(rootDir, "remote -v")
+	if err != nil {
+		return "", err
+	}
+	out := string(outb)
+
+	// Expect:
+	// origin	https://github.com/rsc/pdf (fetch)
+	// origin	https://github.com/rsc/pdf (push)
+	// use first line only.
+
+	if !strings.HasPrefix(out, "origin\t") {
+		return "", fmt.Errorf("unable to parse output of git remote -v")
+	}
+	out = strings.TrimPrefix(out, "origin\t")
+	i := strings.Index(out, "\n")
+	if i < 0 {
+		return "", fmt.Errorf("unable to parse output of git remote -v")
+	}
+	out = out[:i]
+	i = strings.LastIndex(out, " ")
+	if i < 0 {
+		return "", fmt.Errorf("unable to parse output of git remote -v")
+	}
+	out = out[:i]
+	return strings.TrimSpace(string(out)), nil
 }
 
 // vcsBzr describes how to use Bazaar.
@@ -123,8 +165,51 @@ var vcsBzr = &vcsCmd{
 	tagSyncCmd:     "update -r {tag}",
 	tagSyncDefault: "update -r revno:-1",
 
-	scheme:  []string{"https", "http", "bzr", "bzr+ssh"},
-	pingCmd: "info {scheme}://{repo}",
+	scheme:      []string{"https", "http", "bzr", "bzr+ssh"},
+	pingCmd:     "info {scheme}://{repo}",
+	remoteRepo:  bzrRemoteRepo,
+	resolveRepo: bzrResolveRepo,
+}
+
+func bzrRemoteRepo(vcsBzr *vcsCmd, rootDir string) (remoteRepo string, err error) {
+	outb, err := vcsBzr.runOutput(rootDir, "config parent_location")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(outb)), nil
+}
+
+func bzrResolveRepo(vcsBzr *vcsCmd, rootDir, remoteRepo string) (realRepo string, err error) {
+	outb, err := vcsBzr.runOutput(rootDir, "info "+remoteRepo)
+	if err != nil {
+		return "", err
+	}
+	out := string(outb)
+
+	// Expect:
+	// ...
+	//   (branch root|repository branch): <URL>
+	// ...
+
+	found := false
+	for _, prefix := range []string{"\n  branch root: ", "\n  repository branch: "} {
+		i := strings.Index(out, prefix)
+		if i >= 0 {
+			out = out[i+len(prefix):]
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", fmt.Errorf("unable to parse output of bzr info")
+	}
+
+	i := strings.Index(out, "\n")
+	if i < 0 {
+		return "", fmt.Errorf("unable to parse output of bzr info")
+	}
+	out = out[:i]
+	return strings.TrimSpace(string(out)), nil
 }
 
 // vcsSvn describes how to use Subversion.
@@ -138,8 +223,34 @@ var vcsSvn = &vcsCmd{
 	// There is no tag command in subversion.
 	// The branch information is all in the path names.
 
-	scheme:  []string{"https", "http", "svn", "svn+ssh"},
-	pingCmd: "info {scheme}://{repo}",
+	scheme:     []string{"https", "http", "svn", "svn+ssh"},
+	pingCmd:    "info {scheme}://{repo}",
+	remoteRepo: svnRemoteRepo,
+}
+
+func svnRemoteRepo(vcsSvn *vcsCmd, rootDir string) (remoteRepo string, err error) {
+	outb, err := vcsSvn.runOutput(rootDir, "info")
+	if err != nil {
+		return "", err
+	}
+	out := string(outb)
+
+	// Expect:
+	// ...
+	// Repository Root: <URL>
+	// ...
+
+	i := strings.Index(out, "\nRepository Root: ")
+	if i < 0 {
+		return "", fmt.Errorf("unable to parse output of svn info")
+	}
+	out = out[i+len("\nRepository Root: "):]
+	i = strings.Index(out, "\n")
+	if i < 0 {
+		return "", fmt.Errorf("unable to parse output of svn info")
+	}
+	out = out[:i]
+	return strings.TrimSpace(string(out)), nil
 }
 
 func (v *vcsCmd) String() string {
@@ -361,7 +472,14 @@ var httpPrefixRE = regexp.MustCompile(`^https?:`)
 func repoRootForImportPath(importPath string) (*repoRoot, error) {
 	rr, err := repoRootForImportPathStatic(importPath, "")
 	if err == errUnknownSite {
-		rr, err = repoRootForImportDynamic(importPath)
+		// If there are wildcards, look up the thing before the wildcard,
+		// hoping it applies to the wildcarded parts too.
+		// This makes 'go get rsc.io/pdf/...' work in a fresh GOPATH.
+		lookup := strings.TrimSuffix(importPath, "/...")
+		if i := strings.Index(lookup, "/.../"); i >= 0 {
+			lookup = lookup[:i]
+		}
+		rr, err = repoRootForImportDynamic(lookup)
 
 		// repoRootForImportDynamic returns error detail
 		// that is irrelevant if the user didn't intend to use a
@@ -465,11 +583,11 @@ func repoRootForImportPathStatic(importPath, scheme string) (*repoRoot, error) {
 func repoRootForImportDynamic(importPath string) (*repoRoot, error) {
 	slash := strings.Index(importPath, "/")
 	if slash < 0 {
-		return nil, errors.New("import path doesn't contain a slash")
+		return nil, errors.New("import path does not contain a slash")
 	}
 	host := importPath[:slash]
 	if !strings.Contains(host, ".") {
-		return nil, errors.New("import path doesn't contain a hostname")
+		return nil, errors.New("import path does not begin with hostname")
 	}
 	urlStr, body, err := httpsOrHTTP(importPath)
 	if err != nil {
@@ -611,6 +729,15 @@ var vcsPaths = []*vcsPath{
 		vcs:    "bzr",
 		repo:   "https://{root}",
 		check:  launchpadVCS,
+	},
+
+	// IBM DevOps Services (JazzHub)
+	{
+		prefix: "hub.jazz.net/git",
+		re:     `^(?P<root>hub.jazz.net/git/[a-z0-9]+/[A-Za-z0-9_.\-]+)(/[A-Za-z0-9_.\-]+)*$`,
+		vcs:    "git",
+		repo:   "https://{root}",
+		check:  noVCSSuffix,
 	},
 
 	// General syntax for any server.

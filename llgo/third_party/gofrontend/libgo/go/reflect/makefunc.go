@@ -79,7 +79,7 @@ func MakeFunc(typ Type, fn func(args []Value) (results []Value)) Value {
 		ffi:    ffi,
 	}
 
-	return Value{t, unsafe.Pointer(&impl), flag(Func<<flagKindShift) | flagIndir}
+	return Value{t, unsafe.Pointer(&impl), flag(Func) | flagIndir}
 }
 
 // makeFuncStub is an assembly function that is the code half of
@@ -103,8 +103,8 @@ func makeMethodValue(op string, v Value) Value {
 
 	// Ignoring the flagMethod bit, v describes the receiver, not the method type.
 	fl := v.flag & (flagRO | flagAddr | flagIndir)
-	fl |= flag(v.typ.Kind()) << flagKindShift
-	rcvr := Value{v.typ, v.ptr /* v.scalar, */, fl}
+	fl |= flag(v.typ.Kind())
+	rcvr := Value{v.typ, v.ptr, fl}
 
 	// v.Type returns the actual type of the method value.
 	ft := v.Type().(*rtype)
@@ -134,7 +134,7 @@ func makeMethodValue(op string, v Value) Value {
 		fv.code, fv.ffi = makeFuncFFI(ftyp, fv.call)
 	}
 
-	return Value{ft, unsafe.Pointer(&fv), v.flag&flagRO | flag(Func)<<flagKindShift | flagIndir}
+	return Value{ft, unsafe.Pointer(&fv), v.flag&flagRO | flag(Func) | flagIndir}
 }
 
 // makeValueMethod takes a method function and returns a function that
@@ -169,7 +169,7 @@ func makeValueMethod(v Value) Value {
 		impl.code, impl.ffi = makeFuncFFI(ftyp, impl.call)
 	}
 
-	return Value{t, unsafe.Pointer(&impl), flag(Func<<flagKindShift) | flagIndir}
+	return Value{t, unsafe.Pointer(&impl), v.flag&flagRO | flag(Func) | flagIndir}
 }
 
 // Call the function represented by a makeFuncImpl.

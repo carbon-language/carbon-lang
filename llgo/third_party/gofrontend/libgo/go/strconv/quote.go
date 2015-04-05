@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate go run makeisprint.go -output isprint.go
+
 package strconv
 
 import (
@@ -141,11 +143,21 @@ func AppendQuoteRuneToASCII(dst []byte, r rune) []byte {
 
 // CanBackquote reports whether the string s can be represented
 // unchanged as a single-line backquoted string without control
-// characters other than space and tab.
+// characters other than tab.
 func CanBackquote(s string) bool {
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if (c < ' ' && c != '\t') || c == '`' || c == '\u007F' {
+	for len(s) > 0 {
+		r, wid := utf8.DecodeRuneInString(s)
+		s = s[wid:]
+		if wid > 1 {
+			if r == '\ufeff' {
+				return false // BOMs are invisible and should not be quoted.
+			}
+			continue // All other multibyte runes are correctly encoded and assumed printable.
+		}
+		if r == utf8.RuneError {
+			return false
+		}
+		if (r < ' ' && r != '\t') || r == '`' || r == '\u007F' {
 			return false
 		}
 	}

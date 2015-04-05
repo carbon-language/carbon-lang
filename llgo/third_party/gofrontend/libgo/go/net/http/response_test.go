@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http/internal"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -376,6 +377,34 @@ some body`,
 
 		"Body here\n",
 	},
+
+	// 206 Partial Content. golang.org/issue/8923
+	{
+		"HTTP/1.1 206 Partial Content\r\n" +
+			"Content-Type: text/plain; charset=utf-8\r\n" +
+			"Accept-Ranges: bytes\r\n" +
+			"Content-Range: bytes 0-5/1862\r\n" +
+			"Content-Length: 6\r\n\r\n" +
+			"foobar",
+
+		Response{
+			Status:     "206 Partial Content",
+			StatusCode: 206,
+			Proto:      "HTTP/1.1",
+			ProtoMajor: 1,
+			ProtoMinor: 1,
+			Request:    dummyReq("GET"),
+			Header: Header{
+				"Accept-Ranges":  []string{"bytes"},
+				"Content-Length": []string{"6"},
+				"Content-Type":   []string{"text/plain; charset=utf-8"},
+				"Content-Range":  []string{"bytes 0-5/1862"},
+			},
+			ContentLength: 6,
+		},
+
+		"foobar",
+	},
 }
 
 func TestReadResponse(t *testing.T) {
@@ -451,7 +480,7 @@ func TestReadResponseCloseInMiddle(t *testing.T) {
 		}
 		var wr io.Writer = &buf
 		if test.chunked {
-			wr = newChunkedWriter(wr)
+			wr = internal.NewChunkedWriter(wr)
 		}
 		if test.compressed {
 			buf.WriteString("Content-Encoding: gzip\r\n")

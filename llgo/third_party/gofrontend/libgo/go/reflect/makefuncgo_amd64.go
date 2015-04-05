@@ -224,7 +224,7 @@ argloop:
 	for _, rt := range ftyp.in {
 		c1, c2 := amd64Classify(rt)
 
-		fl := flag(rt.Kind()) << flagKindShift
+		fl := flag(rt.Kind())
 		if c2 == amd64NoClass {
 
 			// Argument is passed in a single register or
@@ -364,10 +364,11 @@ argloop:
 	if len(out) == 1 && ret2 == amd64NoClass {
 		v := out[0]
 		var w unsafe.Pointer
-		if v.Kind() == Ptr || v.Kind() == UnsafePointer {
+		switch v.Kind() {
+		case Ptr, UnsafePointer, Chan, Func, Map:
 			w = v.pointer()
-		} else {
-			w = unsafe.Pointer(loadScalar(v.ptr, v.typ.size))
+		default:
+			memmove(unsafe.Pointer(&w), v.ptr, v.typ.size)
 		}
 		switch ret1 {
 		case amd64Integer:
@@ -439,7 +440,7 @@ func amd64Memarg(in []Value, ap uintptr, rt *rtype) ([]Value, uintptr) {
 	p := unsafe_New(rt)
 	memmove(p, unsafe.Pointer(ap), rt.size)
 
-	v := Value{rt, p, flag(rt.Kind()<<flagKindShift) | flagIndir}
+	v := Value{rt, p, flag(rt.Kind()) | flagIndir}
 	in = append(in, v)
 	ap += rt.size
 	return in, ap

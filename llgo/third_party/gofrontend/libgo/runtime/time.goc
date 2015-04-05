@@ -66,9 +66,9 @@ static void siftdown(int32);
 
 // Ready the goroutine e.data.
 static void
-ready(int64 now, Eface e)
+ready(Eface e, uintptr seq)
 {
-	USED(now);
+	USED(seq);
 
 	runtime_ready(e.__object);
 }
@@ -91,6 +91,7 @@ runtime_tsleep(int64 ns, const char *reason)
 	t.period = 0;
 	t.fv = &readyv;
 	t.arg.__object = g;
+	t.seq = 0;
 	runtime_lock(&timers.lock);
 	addtimer(&t);
 	runtime_parkunlock(&timers.lock, reason);
@@ -203,8 +204,9 @@ timerproc(void* dummy __attribute__ ((unused)))
 	int64 delta, now;
 	Timer *t;
 	FuncVal *fv;
-	void (*f)(int64, Eface);
+	void (*f)(Eface, uintptr);
 	Eface arg;
+	uintptr seq;
 
 	for(;;) {
 		runtime_lock(&timers.lock);
@@ -233,9 +235,10 @@ timerproc(void* dummy __attribute__ ((unused)))
 			fv = t->fv;
 			f = (void*)t->fv->fn;
 			arg = t->arg;
+			seq = t->seq;
 			runtime_unlock(&timers.lock);
 			__go_set_closure(fv);
-			f(now, arg);
+			f(arg, seq);
 
 			// clear f and arg to avoid leak while sleeping for next timer
 			f = nil;

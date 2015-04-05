@@ -6,7 +6,8 @@ package strings
 
 import "io"
 
-// A Replacer replaces a list of strings with replacements.
+// Replacer replaces a list of strings with replacements.
+// It is safe for concurrent use by multiple goroutines.
 type Replacer struct {
 	r replacer
 }
@@ -15,15 +16,6 @@ type Replacer struct {
 type replacer interface {
 	Replace(s string) string
 	WriteString(w io.Writer, s string) (n int, err error)
-}
-
-// byteBitmap represents bytes which are sought for replacement.
-// byteBitmap is 256 bits wide, with a bit set for each old byte to be
-// replaced.
-type byteBitmap [256 / 32]uint32
-
-func (m *byteBitmap) set(b byte) {
-	m[b>>5] |= uint32(1 << (b & 31))
 }
 
 // NewReplacer returns a new Replacer from a list of old, new string pairs.
@@ -48,30 +40,29 @@ func NewReplacer(oldnew ...string) *Replacer {
 	}
 
 	if allNewBytes {
-		bb := &byteReplacer{}
-		for i := 0; i < len(oldnew); i += 2 {
-			o, n := oldnew[i][0], oldnew[i+1][0]
-			if bb.old[o>>5]&uint32(1<<(o&31)) != 0 {
-				// Later old->new maps do not override previous ones with the same old string.
-				continue
-			}
-			bb.old.set(o)
-			bb.new[o] = n
+		r := byteReplacer{}
+		for i := range r {
+			r[i] = byte(i)
 		}
-		return &Replacer{r: bb}
+		// The first occurrence of old->new map takes precedence
+		// over the others with the same old string.
+		for i := len(oldnew) - 2; i >= 0; i -= 2 {
+			o := oldnew[i][0]
+			n := oldnew[i+1][0]
+			r[o] = n
+		}
+		return &Replacer{r: &r}
 	}
 
-	bs := &byteStringReplacer{}
-	for i := 0; i < len(oldnew); i += 2 {
-		o, new := oldnew[i][0], oldnew[i+1]
-		if bs.old[o>>5]&uint32(1<<(o&31)) != 0 {
-			// Later old->new maps do not override previous ones with the same old string.
-			continue
-		}
-		bs.old.set(o)
-		bs.new[o] = []byte(new)
+	r := byteStringReplacer{}
+	// The first occurrence of old->new map takes precedence
+	// over the others with the same old string.
+	for i := len(oldnew) - 2; i >= 0; i -= 2 {
+		o := oldnew[i][0]
+		n := oldnew[i+1]
+		r[o] = []byte(n)
 	}
-	return &Replacer{r: bs}
+	return &Replacer{r: &r}
 }
 
 // Replace returns a copy of s with all replacements performed.
@@ -323,6 +314,15 @@ func (r *genericReplacer) WriteString(w io.Writer, s string) (n int, err error) 
 	var last, wn int
 	var prevMatchEmpty bool
 	for i := 0; i <= len(s); {
+		// Fast path: s[i] is not a prefix of any pattern.
+		if i != len(s) && r.root.priority == 0 {
+			index := int(r.mapping[s[i]])
+			if index == r.tableSize || r.root.table[index] == nil {
+				i++
+				continue
+			}
+		}
+
 		// Ignore the empty match iff the previous loop found the empty match.
 		val, keylen, match := r.lookup(s[i:], prevMatchEmpty)
 		prevMatchEmpty = match && keylen == 0
@@ -409,24 +409,18 @@ func (r *singleStringReplacer) WriteString(w io.Writer, s string) (n int, err er
 
 // byteReplacer is the implementation that's used when all the "old"
 // and "new" values are single ASCII bytes.
-type byteReplacer struct {
-	// old has a bit set for each old byte that should be replaced.
-	old byteBitmap
-
-	// replacement byte, indexed by old byte. only valid if
-	// corresponding old bit is set.
-	new [256]byte
-}
+// The array contains replacement bytes indexed by old byte.
+type byteReplacer [256]byte
 
 func (r *byteReplacer) Replace(s string) string {
 	var buf []byte // lazily allocated
 	for i := 0; i < len(s); i++ {
 		b := s[i]
-		if r.old[b>>5]&uint32(1<<(b&31)) != 0 {
+		if r[b] != b {
 			if buf == nil {
 				buf = []byte(s)
 			}
-			buf[i] = r.new[b]
+			buf[i] = r[b]
 		}
 	}
 	if buf == nil {
@@ -447,9 +441,7 @@ func (r *byteReplacer) WriteString(w io.Writer, s string) (n int, err error) {
 		ncopy := copy(buf, s[:])
 		s = s[ncopy:]
 		for i, b := range buf[:ncopy] {
-			if r.old[b>>5]&uint32(1<<(b&31)) != 0 {
-				buf[i] = r.new[b]
-			}
+			buf[i] = r[b]
 		}
 		wn, err := w.Write(buf[:ncopy])
 		n += wn
@@ -461,27 +453,20 @@ func (r *byteReplacer) WriteString(w io.Writer, s string) (n int, err error) {
 }
 
 // byteStringReplacer is the implementation that's used when all the
-// "old" values are single ASCII bytes but the "new" values vary in
-// size.
-type byteStringReplacer struct {
-	// old has a bit set for each old byte that should be replaced.
-	old byteBitmap
-
-	// replacement string, indexed by old byte. only valid if
-	// corresponding old bit is set.
-	new [256][]byte
-}
+// "old" values are single ASCII bytes but the "new" values vary in size.
+// The array contains replacement byte slices indexed by old byte.
+// A nil []byte means that the old byte should not be replaced.
+type byteStringReplacer [256][]byte
 
 func (r *byteStringReplacer) Replace(s string) string {
-	newSize := 0
+	newSize := len(s)
 	anyChanges := false
 	for i := 0; i < len(s); i++ {
 		b := s[i]
-		if r.old[b>>5]&uint32(1<<(b&31)) != 0 {
+		if r[b] != nil {
 			anyChanges = true
-			newSize += len(r.new[b])
-		} else {
-			newSize++
+			// The -1 is because we are replacing 1 byte with len(r[b]) bytes.
+			newSize += len(r[b]) - 1
 		}
 	}
 	if !anyChanges {
@@ -491,8 +476,8 @@ func (r *byteStringReplacer) Replace(s string) string {
 	bi := buf
 	for i := 0; i < len(s); i++ {
 		b := s[i]
-		if r.old[b>>5]&uint32(1<<(b&31)) != 0 {
-			n := copy(bi, r.new[b])
+		if r[b] != nil {
+			n := copy(bi, r[b])
 			bi = bi[n:]
 		} else {
 			bi[0] = b
@@ -502,48 +487,32 @@ func (r *byteStringReplacer) Replace(s string) string {
 	return string(buf)
 }
 
-// WriteString maintains one buffer that's at most 32KB.  The bytes in
-// s are enumerated and the buffer is filled.  If it reaches its
-// capacity or a byte has a replacement, the buffer is flushed to w.
 func (r *byteStringReplacer) WriteString(w io.Writer, s string) (n int, err error) {
-	// TODO(bradfitz): use io.WriteString with slices of s instead.
-	bufsize := 32 << 10
-	if len(s) < bufsize {
-		bufsize = len(s)
-	}
-	buf := make([]byte, bufsize)
-	bi := buf[:0]
-
+	sw := getStringWriter(w)
+	last := 0
 	for i := 0; i < len(s); i++ {
 		b := s[i]
-		var new []byte
-		if r.old[b>>5]&uint32(1<<(b&31)) != 0 {
-			new = r.new[b]
-		} else {
-			bi = append(bi, b)
+		if r[b] == nil {
+			continue
 		}
-		if len(bi) == cap(bi) || (len(bi) > 0 && len(new) > 0) {
-			nw, err := w.Write(bi)
-			n += nw
-			if err != nil {
-				return n, err
-			}
-			bi = buf[:0]
-		}
-		if len(new) > 0 {
-			nw, err := w.Write(new)
+		if last != i {
+			nw, err := sw.WriteString(s[last:i])
 			n += nw
 			if err != nil {
 				return n, err
 			}
 		}
-	}
-	if len(bi) > 0 {
-		nw, err := w.Write(bi)
+		last = i + 1
+		nw, err := w.Write(r[b])
 		n += nw
 		if err != nil {
 			return n, err
 		}
 	}
-	return n, nil
+	if last != len(s) {
+		var nw int
+		nw, err = sw.WriteString(s[last:])
+		n += nw
+	}
+	return
 }

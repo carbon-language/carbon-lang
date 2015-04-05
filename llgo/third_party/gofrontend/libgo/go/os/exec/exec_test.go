@@ -250,7 +250,7 @@ func TestPipeLookPathLeak(t *testing.T) {
 }
 
 func numOpenFDS(t *testing.T) (n int, lsof []byte) {
-	lsof, err := exec.Command("lsof", "-n", "-p", strconv.Itoa(os.Getpid())).Output()
+	lsof, err := exec.Command("lsof", "-b", "-n", "-p", strconv.Itoa(os.Getpid())).Output()
 	if err != nil {
 		t.Skip("skipping test; error finding or running lsof")
 	}
@@ -262,15 +262,7 @@ var testedAlreadyLeaked = false
 // basefds returns the number of expected file descriptors
 // to be present in a process at start.
 func basefds() uintptr {
-	n := os.Stderr.Fd() + 1
-
-	// Go runtime for 32-bit Plan 9 requires that /dev/bintime
-	// be kept open.
-	// See ../../runtime/time_plan9_386.c:/^runtime·nanotime
-	if runtime.GOOS == "plan9" && runtime.GOARCH == "386" {
-		n++
-	}
-	return n
+	return os.Stderr.Fd() + 1
 }
 
 func closeUnexpectedFds(t *testing.T, m string) {
@@ -387,8 +379,9 @@ func TestExtraFilesFDShuffle(t *testing.T) {
 }
 
 func TestExtraFiles(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("no operating system support; skipping")
+	switch runtime.GOOS {
+	case "nacl", "windows":
+		t.Skipf("skipping test on %q", runtime.GOOS)
 	}
 
 	// Ensure that file descriptors have not already been leaked into

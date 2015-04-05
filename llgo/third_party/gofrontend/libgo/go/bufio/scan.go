@@ -36,6 +36,7 @@ type Scanner struct {
 	start        int       // First non-processed byte in buf.
 	end          int       // End of data in buf.
 	err          error     // Sticky error.
+	empties      int       // Count of successive empty tokens.
 }
 
 // SplitFunc is the signature of the split function used to tokenize the
@@ -64,8 +65,9 @@ var (
 )
 
 const (
-	// Maximum size used to buffer a token. The actual maximum token size
-	// may be smaller as the buffer may need to include, for instance, a newline.
+	// MaxScanTokenSize is the maximum size used to buffer a token.
+	// The actual maximum token size may be smaller as the buffer
+	// may need to include, for instance, a newline.
 	MaxScanTokenSize = 64 * 1024
 )
 
@@ -107,11 +109,15 @@ func (s *Scanner) Text() string {
 // After Scan returns false, the Err method will return any error that
 // occurred during scanning, except that if it was io.EOF, Err
 // will return nil.
+// Split panics if the split function returns 100 empty tokens without
+// advancing the input. This is a common error mode for scanners.
 func (s *Scanner) Scan() bool {
 	// Loop until we have a token.
 	for {
 		// See if we can get a token with what we already have.
-		if s.end > s.start {
+		// If we've run out of data but have an error, give the split function
+		// a chance to recover any remaining, possibly empty token.
+		if s.end > s.start || s.err != nil {
 			advance, token, err := s.split(s.buf[s.start:s.end], s.err != nil)
 			if err != nil {
 				s.setErr(err)
@@ -122,6 +128,15 @@ func (s *Scanner) Scan() bool {
 			}
 			s.token = token
 			if token != nil {
+				if s.err == nil || advance > 0 {
+					s.empties = 0
+				} else {
+					// Returning tokens not advancing input at EOF.
+					s.empties++
+					if s.empties > 100 {
+						panic("bufio.Scan: 100 empty tokens without progressing")
+					}
+				}
 				return true
 			}
 		}
@@ -169,6 +184,7 @@ func (s *Scanner) Scan() bool {
 				break
 			}
 			if n > 0 {
+				s.empties = 0
 				break
 			}
 			loop++
@@ -326,9 +342,6 @@ func ScanWords(data []byte, atEOF bool) (advance int, token []byte, err error) {
 			break
 		}
 	}
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
 	// Scan until space, marking end of word.
 	for width, i := 0, start; i < len(data); i += width {
 		var r rune
@@ -342,5 +355,5 @@ func ScanWords(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		return len(data), data[start:], nil
 	}
 	// Request more data.
-	return 0, nil, nil
+	return start, nil, nil
 }

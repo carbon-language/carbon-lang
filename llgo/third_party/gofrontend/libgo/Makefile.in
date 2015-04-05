@@ -164,14 +164,15 @@ am__DEPENDENCIES_2 = bufio.lo bytes.lo bytes/index.lo crypto.lo \
 	go/printer.lo go/scanner.lo go/token.lo hash/adler32.lo \
 	hash/crc32.lo hash/crc64.lo hash/fnv.lo net/http/cgi.lo \
 	net/http/cookiejar.lo net/http/fcgi.lo net/http/httptest.lo \
-	net/http/httputil.lo net/http/pprof.lo image/color.lo \
-	image/color/palette.lo image/draw.lo image/gif.lo \
-	image/jpeg.lo image/png.lo index/suffixarray.lo io/ioutil.lo \
-	log/syslog.lo log/syslog/syslog_c.lo math/big.lo math/cmplx.lo \
-	math/rand.lo mime/multipart.lo net/http.lo net/mail.lo \
-	net/rpc.lo net/smtp.lo net/textproto.lo net/url.lo \
-	old/regexp.lo old/template.lo os/exec.lo $(am__DEPENDENCIES_1) \
-	os/signal.lo os/user.lo path/filepath.lo regexp/syntax.lo \
+	net/http/httputil.lo net/http/internal.lo net/http/pprof.lo \
+	image/color.lo image/color/palette.lo image/draw.lo \
+	image/gif.lo image/jpeg.lo image/png.lo index/suffixarray.lo \
+	internal/syscall.lo io/ioutil.lo log/syslog.lo \
+	log/syslog/syslog_c.lo math/big.lo math/cmplx.lo math/rand.lo \
+	mime/multipart.lo net/http.lo net/mail.lo net/rpc.lo \
+	net/smtp.lo net/textproto.lo net/url.lo old/regexp.lo \
+	old/template.lo os/exec.lo $(am__DEPENDENCIES_1) os/signal.lo \
+	os/user.lo path/filepath.lo regexp/syntax.lo \
 	net/rpc/jsonrpc.lo runtime/debug.lo runtime/pprof.lo \
 	sync/atomic.lo sync/atomic_c.lo text/scanner.lo \
 	text/tabwriter.lo text/template.lo text/template/parse.lo \
@@ -218,15 +219,15 @@ am__objects_6 = go-append.lo go-assert.lo go-assert-interface.lo \
 	go-type-complex.lo go-type-eface.lo go-type-error.lo \
 	go-type-float.lo go-type-identity.lo go-type-interface.lo \
 	go-type-string.lo go-typedesc-equal.lo go-unsafe-new.lo \
-	go-unsafe-newarray.lo go-unsafe-pointer.lo go-unwind.lo \
-	go-varargs.lo env_posix.lo heapdump.lo $(am__objects_1) \
-	mcache.lo mcentral.lo $(am__objects_2) mfixalloc.lo mgc0.lo \
-	mheap.lo msize.lo $(am__objects_3) panic.lo parfor.lo print.lo \
-	proc.lo runtime.lo signal_unix.lo thread.lo yield.lo \
-	$(am__objects_4) chan.lo cpuprof.lo go-iface.lo lfstack.lo \
-	malloc.lo map.lo mprof.lo netpoll.lo rdebug.lo reflect.lo \
-	runtime1.lo sema.lo sigqueue.lo string.lo time.lo \
-	$(am__objects_5)
+	go-unsafe-newarray.lo go-unsafe-pointer.lo go-unsetenv.lo \
+	go-unwind.lo go-varargs.lo env_posix.lo heapdump.lo \
+	$(am__objects_1) mcache.lo mcentral.lo $(am__objects_2) \
+	mfixalloc.lo mgc0.lo mheap.lo msize.lo $(am__objects_3) \
+	panic.lo parfor.lo print.lo proc.lo runtime.lo signal_unix.lo \
+	thread.lo yield.lo $(am__objects_4) chan.lo cpuprof.lo \
+	go-iface.lo lfstack.lo malloc.lo map.lo mprof.lo netpoll.lo \
+	rdebug.lo reflect.lo runtime1.lo sema.lo sigqueue.lo string.lo \
+	time.lo $(am__objects_5)
 am_libgo_llgo_la_OBJECTS = $(am__objects_6)
 libgo_llgo_la_OBJECTS = $(am_libgo_llgo_la_OBJECTS)
 libgo_llgo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -838,6 +839,7 @@ runtime_files = \
 	runtime/go-unsafe-new.c \
 	runtime/go-unsafe-newarray.c \
 	runtime/go-unsafe-pointer.c \
+	runtime/go-unsetenv.c \
 	runtime/go-unwind.c \
 	runtime/go-varargs.c \
 	runtime/env_posix.c \
@@ -992,7 +994,7 @@ go_mime_files = \
 @LIBGO_IS_FREEBSD_FALSE@@LIBGO_IS_IRIX_FALSE@@LIBGO_IS_LINUX_FALSE@@LIBGO_IS_NETBSD_FALSE@@LIBGO_IS_SOLARIS_FALSE@go_net_sock_file = go/net/sock_bsd.go
 @LIBGO_IS_FREEBSD_FALSE@@LIBGO_IS_IRIX_FALSE@@LIBGO_IS_LINUX_FALSE@@LIBGO_IS_NETBSD_TRUE@@LIBGO_IS_SOLARIS_FALSE@go_net_sock_file = go/net/sock_bsd.go
 @LIBGO_IS_FREEBSD_TRUE@@LIBGO_IS_IRIX_FALSE@@LIBGO_IS_LINUX_FALSE@@LIBGO_IS_SOLARIS_FALSE@go_net_sock_file = go/net/sock_bsd.go
-@LIBGO_IS_IRIX_FALSE@@LIBGO_IS_LINUX_FALSE@@LIBGO_IS_SOLARIS_TRUE@go_net_sock_file = go/net/sock_solaris.go
+@LIBGO_IS_IRIX_FALSE@@LIBGO_IS_LINUX_FALSE@@LIBGO_IS_SOLARIS_TRUE@go_net_sock_file = go/net/sock_stub.go
 @LIBGO_IS_IRIX_TRUE@@LIBGO_IS_LINUX_FALSE@go_net_sock_file = go/net/sock_linux.go
 @LIBGO_IS_LINUX_TRUE@go_net_sock_file = go/net/sock_linux.go
 @LIBGO_IS_FREEBSD_FALSE@@LIBGO_IS_IRIX_FALSE@@LIBGO_IS_LINUX_FALSE@@LIBGO_IS_NETBSD_FALSE@@LIBGO_IS_SOLARIS_FALSE@go_net_sockopt_file = go/net/sockopt_bsd.go
@@ -1180,7 +1182,6 @@ go_runtime_files = \
 	go/runtime/extern.go \
 	go/runtime/mem.go \
 	go/runtime/softfloat64.go \
-	go/runtime/type.go \
 	version.go
 
 go_sort_files = \
@@ -1348,9 +1349,12 @@ go_crypto_md5_files = \
 	go/crypto/md5/md5block.go \
 	go/crypto/md5/md5block_generic.go
 
+@LIBGO_IS_LINUX_FALSE@crypto_rand_file = 
+@LIBGO_IS_LINUX_TRUE@crypto_rand_file = go/crypto/rand/rand_linux.go
 go_crypto_rand_files = \
 	go/crypto/rand/rand.go \
 	go/crypto/rand/rand_unix.go \
+	$(crypto_rand_file) \
 	go/crypto/rand/util.go
 
 go_crypto_rc4_files = \
@@ -1469,9 +1473,11 @@ go_encoding_csv_files = \
 go_encoding_gob_files = \
 	go/encoding/gob/decode.go \
 	go/encoding/gob/decoder.go \
+	go/encoding/gob/dec_helpers.go \
 	go/encoding/gob/doc.go \
 	go/encoding/gob/encode.go \
 	go/encoding/gob/encoder.go \
+	go/encoding/gob/enc_helpers.go \
 	go/encoding/gob/error.go \
 	go/encoding/gob/type.go
 
@@ -1649,7 +1655,6 @@ go_mime_multipart_files = \
 	go/mime/multipart/writer.go
 
 go_net_http_files = \
-	go/net/http/chunked.go \
 	go/net/http/client.go \
 	go/net/http/cookie.go \
 	go/net/http/filetransport.go \
@@ -1702,11 +1707,13 @@ go_net_http_pprof_files = \
 	go/net/http/pprof/pprof.go
 
 go_net_http_httputil_files = \
-	go/net/http/httputil/chunked.go \
 	go/net/http/httputil/dump.go \
 	go/net/http/httputil/httputil.go \
 	go/net/http/httputil/persist.go \
 	go/net/http/httputil/reverseproxy.go
+
+go_net_http_internal_files = \
+	go/net/http/internal/chunked.go
 
 go_old_regexp_files = \
 	go/old/regexp/regexp.go
@@ -1737,7 +1744,8 @@ go_path_filepath_files = \
 	go/path/filepath/match.go \
 	go/path/filepath/path.go \
 	go/path/filepath/path_unix.go \
-	go/path/filepath/symlink.go
+	go/path/filepath/symlink.go \
+	go/path/filepath/symlink_unix.go
 
 go_regexp_syntax_files = \
 	go/regexp/syntax/compile.go \
@@ -1775,7 +1783,8 @@ go_text_template_parse_files = \
 	go/text/template/parse/parse.go
 
 go_sync_atomic_files = \
-	go/sync/atomic/doc.go
+	go/sync/atomic/doc.go \
+	go/sync/atomic/value.go
 
 go_sync_atomic_c_files = \
 	go/sync/atomic/atomic.c
@@ -1918,9 +1927,16 @@ go_syscall_c_files = \
 
 go_syscall_test_files = \
 	$(syscall_creds_test_file) \
+	go/syscall/export_test.go \
 	go/syscall/mmap_unix_test.go \
 	go/syscall/syscall_test.go \
 	go/syscall/syscall_unix_test.go
+
+@LIBGO_IS_LINUX_FALSE@internal_syscall_getrandom_file = 
+@LIBGO_IS_LINUX_TRUE@internal_syscall_getrandom_file = go/internal/syscall/getrandom_linux.go
+go_internal_syscall_files = \
+	go/internal/syscall/dummy.go \
+	$(internal_syscall_getrandom_file)
 
 @LIBGO_IS_LINUX_FALSE@os_lib_inotify_lo = 
 
@@ -2030,6 +2046,7 @@ libgo_go_objs = \
 	net/http/fcgi.lo \
 	net/http/httptest.lo \
 	net/http/httputil.lo \
+	net/http/internal.lo \
 	net/http/pprof.lo \
 	image/color.lo \
 	image/color/palette.lo \
@@ -2038,6 +2055,7 @@ libgo_go_objs = \
 	image/jpeg.lo \
 	image/png.lo \
 	index/suffixarray.lo \
+	internal/syscall.lo \
 	io/ioutil.lo \
 	log/syslog.lo \
 	log/syslog/syslog_c.lo \
@@ -2169,7 +2187,8 @@ CHECK_DEPS = $(toolexeclibgo_DATA) $(toolexeclibgoarchive_DATA) \
 	$(toolexeclibgounicode_DATA) $(am__append_1) $(am__append_2)
 # At least for now, we need -static-libgo for this test, because
 # otherwise we can't get the line numbers.
-runtime_pprof_check_GOCFLAGS = -static-libgo
+# Also use -fno-inline to get better results from the memory profiler.
+runtime_pprof_check_GOCFLAGS = -static-libgo -fno-inline
 
 # How to build a .gox file from a .lo file.
 BUILDGOX = \
@@ -2278,6 +2297,7 @@ TEST_PACKAGES = \
 	net/http/fcgi/check \
 	net/http/httptest/check \
 	net/http/httputil/check \
+	net/http/internal/check \
 	net/mail/check \
 	net/rpc/check \
 	net/smtp/check \
@@ -2513,6 +2533,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/go-unsafe-new.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/go-unsafe-newarray.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/go-unsafe-pointer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/go-unsetenv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/go-unwind.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/go-varargs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heapdump.Plo@am__quote@
@@ -3028,6 +3049,13 @@ go-unsafe-pointer.lo: runtime/go-unsafe-pointer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/go-unsafe-pointer.c' object='go-unsafe-pointer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o go-unsafe-pointer.lo `test -f 'runtime/go-unsafe-pointer.c' || echo '$(srcdir)/'`runtime/go-unsafe-pointer.c
+
+go-unsetenv.lo: runtime/go-unsetenv.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT go-unsetenv.lo -MD -MP -MF $(DEPDIR)/go-unsetenv.Tpo -c -o go-unsetenv.lo `test -f 'runtime/go-unsetenv.c' || echo '$(srcdir)/'`runtime/go-unsetenv.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/go-unsetenv.Tpo $(DEPDIR)/go-unsetenv.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/go-unsetenv.c' object='go-unsetenv.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o go-unsetenv.lo `test -f 'runtime/go-unsetenv.c' || echo '$(srcdir)/'`runtime/go-unsetenv.c
 
 go-unwind.lo: runtime/go-unwind.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT go-unwind.lo -MD -MP -MF $(DEPDIR)/go-unwind.Tpo -c -o go-unwind.lo `test -f 'runtime/go-unwind.c' || echo '$(srcdir)/'`runtime/go-unwind.c
@@ -5496,6 +5524,15 @@ net/http/httputil/check: $(check_deps)
 	@$(CHECK)
 .PHONY: net/http/httputil/check
 
+@go_include@ net/http/internal.lo.dep
+net/http/internal.lo.dep: $(go_net_http_internal_files)
+	$(BUILDDEPS)
+net/http/internal.lo: $(go_net_http_internal_files)
+	$(BUILDPACKAGE)
+net/http/internal/check: $(CHECK_DEPS)
+	@$(CHECK)
+.PHONY: net/http/internal/check
+
 @go_include@ net/http/pprof.lo.dep
 net/http/pprof.lo.dep: $(go_net_http_pprof_files)
 	$(BUILDDEPS)
@@ -5695,6 +5732,15 @@ syscall/wait.lo: go/syscall/wait.c
 syscall/check: $(CHECK_DEPS)
 	@$(CHECK)
 .PHONY: syscall/check
+
+@go_include@ internal/syscall.lo.dep
+internal/syscall.lo.dep: $(go_internal_syscall_files)
+	$(BUILDDEPS)
+internal/syscall.lo: $(go_internal_syscall_files)
+	$(BUILDPACKAGE)
+internal/syscall/check: $(CHECK_DEPS)
+	@$(CHECK)
+.PHONY: internal/syscall/check
 
 bufio.gox: bufio.lo
 	$(BUILDGOX)
@@ -5951,6 +5997,9 @@ net/http/httputil.gox: net/http/httputil.lo
 net/http/pprof.gox: net/http/pprof.lo
 	$(BUILDGOX)
 
+net/http/internal.gox: net/http/internal.lo
+	$(BUILDGOX)
+
 net/rpc/jsonrpc.gox: net/rpc/jsonrpc.lo
 	$(BUILDGOX)
 
@@ -5978,6 +6027,9 @@ runtime/pprof.gox: runtime/pprof.lo
 	$(BUILDGOX)
 
 sync/atomic.gox: sync/atomic.lo
+	$(BUILDGOX)
+
+internal/syscall.gox: internal/syscall.lo
 	$(BUILDGOX)
 
 text/scanner.gox: text/scanner.lo

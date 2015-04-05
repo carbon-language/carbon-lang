@@ -41,7 +41,7 @@ __go_convert_interface_2 (const struct __go_type_descriptor *lhs_descriptor,
       return NULL;
     }
 
-  __go_assert (lhs_descriptor->__code == GO_INTERFACE);
+  __go_assert ((lhs_descriptor->__code & GO_CODE_MASK) == GO_INTERFACE);
   lhs_interface = (const struct __go_interface_type *) lhs_descriptor;
   lhs_method_count = lhs_interface->__methods.__count;
   lhs_methods = ((const struct __go_interface_method *)

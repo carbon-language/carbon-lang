@@ -30,9 +30,9 @@ __go_check_interface_type (
 
   if (lhs_descriptor != rhs_descriptor
       && !__go_type_descriptors_equal (lhs_descriptor, rhs_descriptor)
-      && (lhs_descriptor->__code != GO_UNSAFE_POINTER
+      && ((lhs_descriptor->__code & GO_CODE_MASK) != GO_UNSAFE_POINTER
 	  || !__go_is_pointer_type (rhs_descriptor))
-      && (rhs_descriptor->__code != GO_UNSAFE_POINTER
+      && ((rhs_descriptor->__code & GO_CODE_MASK) != GO_UNSAFE_POINTER
 	  || !__go_is_pointer_type (lhs_descriptor)))
     {
       struct __go_empty_interface panic_arg;

@@ -335,6 +335,15 @@ if [ "x$xgofiles" != "x" ]; then
 	havex=true
 fi
 
+testmain=
+if $havex && fgrep 'func TestMain(' $xgofiles >/dev/null 2>&1; then
+  package=`grep '^package[ 	]' $xgofiles | sed 1q | sed -e 's/.* //'`
+  testmain="${package}.TestMain"
+elif test -n "$gofiles" && fgrep 'func TestMain(' $gofiles >/dev/null 2>&1; then
+  package=`grep '^package[ 	]' $gofiles | sed 1q | sed -e 's/.* //'`
+  testmain="${package}.TestMain"
+fi
+
 set -e
 
 package=`echo ${srcdir} | sed -e 's|^.*libgo/go/||'`
@@ -415,14 +424,19 @@ localname() {
 	fi
 	echo 'import "testing"'
 	echo 'import __regexp__ "regexp"' # rename in case tested package is called regexp
+	if ! test -n "$testmain"; then
+		echo 'import __os__ "os"'
+	fi
 	# test array
 	echo
 	echo 'var tests = []testing.InternalTest {'
 	for i in $tests
 	do
 		n=$(testname $i)
-		j=$(localname $i)
-		echo '	{"'$n'", '$j'},'
+		if test "$n" != "TestMain"; then
+			j=$(localname $i)
+			echo '	{"'$n'", '$j'},'
+		fi
 	done
 	echo '}'
 
@@ -467,8 +481,15 @@ func matchString(pat, str string) (result bool, err error) {
 }
 
 func main() {
-	testing.Main(matchString, tests, benchmarks, examples)
-}'
+	m := testing.MainStart(matchString, tests, benchmarks, examples)
+'
+	if test -n "$testmain"; then
+		echo "	${testmain}(m)"
+	else
+		echo '	__os__.Exit(m.Run())'
+	fi
+
+	echo '}'
 }>_testmain.go
 
 case "x$dejagnu" in

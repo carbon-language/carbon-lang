@@ -64,7 +64,6 @@ func (e EscapeError) Error() string {
 
 // Return true if the specified character should be escaped when
 // appearing in a URL string, according to RFC 3986.
-// When 'all' is true the full range of reserved characters are matched.
 func shouldEscape(c byte, mode encoding) bool {
 	// §2.3 Unreserved characters (alphanum)
 	if 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || '0' <= c && c <= '9' {
@@ -86,10 +85,12 @@ func shouldEscape(c byte, mode encoding) bool {
 			// last two as well. That leaves only ? to escape.
 			return c == '?'
 
-		case encodeUserPassword: // §3.2.2
-			// The RFC allows ; : & = + $ , in userinfo, so we must escape only @ and /.
-			// The parsing of userinfo treats : as special so we must escape that too.
-			return c == '@' || c == '/' || c == ':'
+		case encodeUserPassword: // §3.2.1
+			// The RFC allows ';', ':', '&', '=', '+', '$', and ',' in
+			// userinfo, so we must escape only '@', '/', and '?'.
+			// The parsing of userinfo treats ':' as special so we must escape
+			// that too.
+			return c == '@' || c == '/' || c == '?' || c == ':'
 
 		case encodeQueryComponent: // §3.4
 			// The RFC reserves (so we must escape) everything.
@@ -440,6 +441,24 @@ func parseAuthority(authority string) (user *Userinfo, host string, err error) {
 }
 
 // String reassembles the URL into a valid URL string.
+// The general form of the result is one of:
+//
+//	scheme:opaque
+//	scheme://userinfo@host/path?query#fragment
+//
+// If u.Opaque is non-empty, String uses the first form;
+// otherwise it uses the second form.
+//
+// In the second form, the following rules apply:
+//	- if u.Scheme is empty, scheme: is omitted.
+//	- if u.User is nil, userinfo@ is omitted.
+//	- if u.Host is empty, host/ is omitted.
+//	- if u.Scheme and u.Host are empty and u.User is nil,
+//	   the entire scheme://userinfo@host/ is omitted.
+//	- if u.Host is non-empty and u.Path begins with a /,
+//	   the form host/path does not add its own /.
+//	- if u.RawQuery is empty, ?query is omitted.
+//	- if u.Fragment is empty, #fragment is omitted.
 func (u *URL) String() string {
 	var buf bytes.Buffer
 	if u.Scheme != "" {

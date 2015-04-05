@@ -24,7 +24,14 @@ func init() {
 	}
 	freedFrom := make(map[dbConn]string)
 	putConnHook = func(db *DB, c *driverConn) {
-		if c.listElem != nil {
+		idx := -1
+		for i, v := range db.freeConn {
+			if v == c {
+				idx = i
+				break
+			}
+		}
+		if idx >= 0 {
 			// print before panic, as panic may get lost due to conflicting panic
 			// (all goroutines asleep) elsewhere, since we might not unlock
 			// the mutex in freeConn here.
@@ -79,15 +86,14 @@ func closeDB(t testing.TB, db *DB) {
 			t.Errorf("Error closing fakeConn: %v", err)
 		}
 	})
-	for node, i := db.freeConn.Front(), 0; node != nil; node, i = node.Next(), i+1 {
-		dc := node.Value.(*driverConn)
+	for i, dc := range db.freeConn {
 		if n := len(dc.openStmt); n > 0 {
 			// Just a sanity check. This is legal in
 			// general, but if we make the tests clean up
 			// their statements first, then we can safely
 			// verify this is always zero here, and any
 			// other value is a leak.
-			t.Errorf("while closing db, freeConn %d/%d had %d open stmts; want 0", i, db.freeConn.Len(), n)
+			t.Errorf("while closing db, freeConn %d/%d had %d open stmts; want 0", i, len(db.freeConn), n)
 		}
 	}
 	err := db.Close()
@@ -105,10 +111,10 @@ func closeDB(t testing.TB, db *DB) {
 // numPrepares assumes that db has exactly 1 idle conn and returns
 // its count of calls to Prepare
 func numPrepares(t *testing.T, db *DB) int {
-	if n := db.freeConn.Len(); n != 1 {
+	if n := len(db.freeConn); n != 1 {
 		t.Fatalf("free conns = %d; want 1", n)
 	}
-	return (db.freeConn.Front().Value.(*driverConn)).ci.(*fakeConn).numPrepare
+	return db.freeConn[0].ci.(*fakeConn).numPrepare
 }
 
 func (db *DB) numDeps() int {
@@ -133,7 +139,7 @@ func (db *DB) numDepsPollUntil(want int, d time.Duration) int {
 func (db *DB) numFreeConns() int {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	return db.freeConn.Len()
+	return len(db.freeConn)
 }
 
 func (db *DB) dumpDeps(t *testing.T) {
@@ -435,6 +441,33 @@ func TestExec(t *testing.T) {
 	}
 }
 
+func TestTxPrepare(t *testing.T) {
+	db := newTestDB(t, "")
+	defer closeDB(t, db)
+	exec(t, db, "CREATE|t1|name=string,age=int32,dead=bool")
+	tx, err := db.Begin()
+	if err != nil {
+		t.Fatalf("Begin = %v", err)
+	}
+	stmt, err := tx.Prepare("INSERT|t1|name=?,age=?")
+	if err != nil {
+		t.Fatalf("Stmt, err = %v, %v", stmt, err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec("Bobby", 7)
+	if err != nil {
+		t.Fatalf("Exec = %v", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		t.Fatalf("Commit = %v", err)
+	}
+	// Commit() should have closed the statement
+	if !stmt.closed {
+		t.Fatal("Stmt not closed after Commit")
+	}
+}
+
 func TestTxStmt(t *testing.T) {
 	db := newTestDB(t, "")
 	defer closeDB(t, db)
@@ -457,6 +490,10 @@ func TestTxStmt(t *testing.T) {
 	err = tx.Commit()
 	if err != nil {
 		t.Fatalf("Commit = %v", err)
+	}
+	// Commit() should have closed the statement
+	if !txs.closed {
+		t.Fatal("Stmt not closed after Commit")
 	}
 }
 
@@ -650,10 +687,10 @@ func TestQueryRowClosingStmt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if db.freeConn.Len() != 1 {
+	if len(db.freeConn) != 1 {
 		t.Fatalf("expected 1 free conn")
 	}
-	fakeConn := (db.freeConn.Front().Value.(*driverConn)).ci.(*fakeConn)
+	fakeConn := db.freeConn[0].ci.(*fakeConn)
 	if made, closed := fakeConn.stmtsMade, fakeConn.stmtsClosed; made != closed {
 		t.Errorf("statement close mismatch: made %d, closed %d", made, closed)
 	}
@@ -878,13 +915,13 @@ func TestMaxIdleConns(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx.Commit()
-	if got := db.freeConn.Len(); got != 1 {
+	if got := len(db.freeConn); got != 1 {
 		t.Errorf("freeConns = %d; want 1", got)
 	}
 
 	db.SetMaxIdleConns(0)
 
-	if got := db.freeConn.Len(); got != 0 {
+	if got := len(db.freeConn); got != 0 {
 		t.Errorf("freeConns after set to zero = %d; want 0", got)
 	}
 
@@ -893,7 +930,7 @@ func TestMaxIdleConns(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx.Commit()
-	if got := db.freeConn.Len(); got != 0 {
+	if got := len(db.freeConn); got != 0 {
 		t.Errorf("freeConns = %d; want 0", got)
 	}
 }
@@ -1180,10 +1217,10 @@ func TestCloseConnBeforeStmts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if db.freeConn.Len() != 1 {
-		t.Fatalf("expected 1 freeConn; got %d", db.freeConn.Len())
+	if len(db.freeConn) != 1 {
+		t.Fatalf("expected 1 freeConn; got %d", len(db.freeConn))
 	}
-	dc := db.freeConn.Front().Value.(*driverConn)
+	dc := db.freeConn[0]
 	if dc.closed {
 		t.Errorf("conn shouldn't be closed")
 	}
@@ -1342,6 +1379,11 @@ func TestErrBadConnReconnect(t *testing.T) {
 		return nil
 	})
 
+	// Provide a way to force a re-prepare of a statement on next execution
+	forcePrepare := func(stmt *Stmt) {
+		stmt.css = nil
+	}
+
 	// stmt.Exec
 	stmt1, err := db.Prepare("INSERT|t1|name=?,age=?,dead=?")
 	if err != nil {
@@ -1349,9 +1391,7 @@ func TestErrBadConnReconnect(t *testing.T) {
 	}
 	defer stmt1.Close()
 	// make sure we must prepare the stmt first
-	for _, cs := range stmt1.css {
-		cs.dc.inUse = true
-	}
+	forcePrepare(stmt1)
 
 	stmtExec := func() error {
 		_, err := stmt1.Exec("Gopher", 3, false)
@@ -1367,9 +1407,7 @@ func TestErrBadConnReconnect(t *testing.T) {
 	}
 	defer stmt2.Close()
 	// make sure we must prepare the stmt first
-	for _, cs := range stmt2.css {
-		cs.dc.inUse = true
-	}
+	forcePrepare(stmt2)
 
 	stmtQuery := func() error {
 		rows, err := stmt2.Query()
@@ -1708,7 +1746,7 @@ func doConcurrentTest(t testing.TB, ct concurrentTest) {
 
 	for i := 0; i < maxProcs*2; i++ {
 		go func() {
-			for _ = range reqs {
+			for range reqs {
 				err := ct.test(t)
 				if err != nil {
 					wg.Done()
@@ -1750,7 +1788,7 @@ func manyConcurrentQueries(t testing.TB) {
 
 	for i := 0; i < maxProcs*2; i++ {
 		go func() {
-			for _ = range reqs {
+			for range reqs {
 				rows, err := stmt.Query()
 				if err != nil {
 					t.Errorf("error on query:  %v", err)

@@ -71,6 +71,7 @@ typedef struct __go_map Hmap;
 #define string __reflection
 #define KindPtr GO_PTR
 #define KindNoPointers GO_NO_POINTERS
+#define kindMask GO_CODE_MASK
 // PtrType aka __go_ptr_type
 #define elem __element_type
 
@@ -946,7 +947,7 @@ scanblock(Workbuf *wbuf, bool keepworking)
 						continue;
 
 					obj = eface->__object;
-					if((t->__code & ~KindNoPointers) == KindPtr) {
+					if((t->__code & kindMask) == KindPtr) {
 						// Only use type information if it is a pointer-containing type.
 						// This matches the GC programs written by cmd/gc/reflect.c's
 						// dgcsym1 in case TPTR32/case TPTR64. See rationale there.
@@ -984,7 +985,7 @@ scanblock(Workbuf *wbuf, bool keepworking)
 						continue;
 
 					obj = iface->__object;
-					if((t->__code & ~KindNoPointers) == KindPtr) {
+					if((t->__code & kindMask) == KindPtr) {
 						// Only use type information if it is a pointer-containing type.
 						// This matches the GC programs written by cmd/gc/reflect.c's
 						// dgcsym1 in case TPTR32/case TPTR64. See rationale there.
@@ -2369,6 +2370,8 @@ gc(struct gc_args *args)
 		// Sweep all spans eagerly.
 		while(runtime_sweepone() != (uintptr)-1)
 			gcstats.npausesweep++;
+		// Do an additional mProf_GC, because all 'free' events are now real as well.
+		runtime_MProf_GC();
 	}
 
 	runtime_MProf_GC();
@@ -2514,7 +2517,7 @@ runfinq(void* dummy __attribute__ ((unused)))
 
 				f = &fb->fin[i];
 				fint = ((const Type**)f->ft->__in.array)[0];
-				if(fint->__code == KindPtr) {
+				if((fint->__code & kindMask) == KindPtr) {
 					// direct use of pointer
 					param = &f->arg;
 				} else if(((const InterfaceType*)fint)->__methods.__count == 0) {

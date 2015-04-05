@@ -1600,6 +1600,7 @@ const (
 	gccgoRuntimeTypeKindSTRING         = 24
 	gccgoRuntimeTypeKindSTRUCT         = 25
 	gccgoRuntimeTypeKindUNSAFE_POINTER = 26
+	gccgoRuntimeTypeKindDIRECT_IFACE   = (1 << 5)
 	gccgoRuntimeTypeKindNO_POINTERS    = (1 << 7)
 )
 
@@ -1669,7 +1670,7 @@ func runtimeTypeKind(t types.Type) (k uint8) {
 		case types.String:
 			k = gccgoRuntimeTypeKindSTRING
 		case types.UnsafePointer:
-			k = gccgoRuntimeTypeKindUNSAFE_POINTER
+			k = gccgoRuntimeTypeKindUNSAFE_POINTER | gccgoRuntimeTypeKindDIRECT_IFACE
 		default:
 			panic("unrecognized builtin type")
 		}
@@ -1680,7 +1681,7 @@ func runtimeTypeKind(t types.Type) (k uint8) {
 	case *types.Struct:
 		k = gccgoRuntimeTypeKindSTRUCT
 	case *types.Pointer:
-		k = gccgoRuntimeTypeKindPTR
+		k = gccgoRuntimeTypeKindPTR | gccgoRuntimeTypeKindDIRECT_IFACE
 	case *types.Signature:
 		k = gccgoRuntimeTypeKindFUNC
 	case *types.Interface:

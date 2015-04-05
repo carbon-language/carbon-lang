@@ -8,6 +8,7 @@ package runtime_test
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -19,7 +20,6 @@ func TestCgoSignalDeadlock(t *testing.T) {
 	if testing.Short() && runtime.GOOS == "windows" {
 		t.Skip("Skipping in short mode") // takes up to 64 seconds
 	}
-	t.Skip("gccgo does not have a go command")
 	got := executeTest(t, cgoSignalDeadlockSource, nil)
 	want := "OK\n"
 	if got != want {
@@ -32,6 +32,21 @@ func TestCgoTraceback(t *testing.T) {
 	want := "OK\n"
 	if got != want {
 		t.Fatalf("expected %q, but got %q", want, got)
+	}
+}
+
+func TestCgoExternalThreadPanic(t *testing.T) {
+	if runtime.GOOS == "plan9" {
+		t.Skipf("no pthreads on %s", runtime.GOOS)
+	}
+	csrc := cgoExternalThreadPanicC
+	if runtime.GOOS == "windows" {
+		csrc = cgoExternalThreadPanicC_windows
+	}
+	got := executeTest(t, cgoExternalThreadPanicSource, nil, "main.c", csrc)
+	want := "panic: BOOM"
+	if !strings.Contains(got, want) {
+		t.Fatalf("want failure containing %q. output:\n%s\n", want, got)
 	}
 }
 
@@ -116,5 +131,66 @@ func main() {
 	buf := make([]byte, 1)
 	runtime.Stack(buf, true)
 	fmt.Printf("OK\n")
+}
+`
+
+const cgoExternalThreadPanicSource = `
+package main
+
+// void start(void);
+import "C"
+
+func main() {
+	C.start()
+	select {}
+}
+
+//export gopanic
+func gopanic() {
+	panic("BOOM")
+}
+`
+
+const cgoExternalThreadPanicC = `
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+
+void gopanic(void);
+
+static void*
+die(void* x)
+{
+	gopanic();
+	return 0;
+}
+
+void
+start(void)
+{
+	pthread_t t;
+	if(pthread_create(&t, 0, die, 0) != 0)
+		printf("pthread_create failed\n");
+}
+`
+
+const cgoExternalThreadPanicC_windows = `
+#include <stdlib.h>
+#include <stdio.h>
+
+void gopanic(void);
+
+static void*
+die(void* x)
+{
+	gopanic();
+	return 0;
+}
+
+void
+start(void)
+{
+	if(_beginthreadex(0, 0, die, 0, 0, 0) != 0)
+		printf("_beginthreadex failed\n");
 }
 `

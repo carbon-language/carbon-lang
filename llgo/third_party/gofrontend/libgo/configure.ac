@@ -11,7 +11,7 @@ AC_INIT(package-unused, version-unused,, libgo)
 AC_CONFIG_SRCDIR(Makefile.am)
 AC_CONFIG_HEADER(config.h)
 
-libtool_VERSION=6:0:0
+libtool_VERSION=7:0:0
 AC_SUBST(libtool_VERSION)
 
 AM_ENABLE_MULTILIB(, ..)
@@ -551,7 +551,7 @@ fi
 
 AM_CONDITIONAL(HAVE_SYS_MMAN_H, test "$ac_cv_header_sys_mman_h" = yes)
 
-AC_CHECK_FUNCS(strerror_r strsignal wait4 mincore setenv dl_iterate_phdr)
+AC_CHECK_FUNCS(strerror_r strsignal wait4 mincore setenv unsetenv dl_iterate_phdr)
 AM_CONDITIONAL(HAVE_STRERROR_R, test "$ac_cv_func_strerror_r" = yes)
 AM_CONDITIONAL(HAVE_WAIT4, test "$ac_cv_func_wait4" = yes)
 

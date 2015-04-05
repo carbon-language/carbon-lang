@@ -14,11 +14,12 @@ func runtimeNano() int64
 // Interface to timers implemented in package runtime.
 // Must be in sync with ../runtime/runtime.h:/^struct.Timer$
 type runtimeTimer struct {
-	i      int32
+	i      int
 	when   int64
 	period int64
-	f      func(int64, interface{}) // NOTE: must not be closure
+	f      func(interface{}, uintptr) // NOTE: must not be closure
 	arg    interface{}
+	seq    uintptr
 }
 
 // when is a helper function for setting the 'when' field of a runtimeTimer.
@@ -42,6 +43,7 @@ func stopTimer(*runtimeTimer) bool
 // The Timer type represents a single event.
 // When the Timer expires, the current time will be sent on C,
 // unless the Timer was created by AfterFunc.
+// A Timer must be created with NewTimer or AfterFunc.
 type Timer struct {
 	C <-chan Time
 	r runtimeTimer
@@ -53,6 +55,9 @@ type Timer struct {
 // Stop does not close the channel, to prevent a read from the channel succeeding
 // incorrectly.
 func (t *Timer) Stop() bool {
+	if t.r.f == nil {
+		panic("time: Stop called on uninitialized Timer")
+	}
 	return stopTimer(&t.r)
 }
 
@@ -76,6 +81,9 @@ func NewTimer(d Duration) *Timer {
 // It returns true if the timer had been active, false if the timer had
 // expired or been stopped.
 func (t *Timer) Reset(d Duration) bool {
+	if t.r.f == nil {
+		panic("time: Reset called on uninitialized Timer")
+	}
 	w := when(d)
 	active := stopTimer(&t.r)
 	t.r.when = w
@@ -83,7 +91,7 @@ func (t *Timer) Reset(d Duration) bool {
 	return active
 }
 
-func sendTime(now int64, c interface{}) {
+func sendTime(c interface{}, seq uintptr) {
 	// Non-blocking send of time on c.
 	// Used in NewTimer, it cannot block anyway (buffer).
 	// Used in NewTicker, dropping sends on the floor is
@@ -117,6 +125,6 @@ func AfterFunc(d Duration, f func()) *Timer {
 	return t
 }
 
-func goFunc(now int64, arg interface{}) {
+func goFunc(arg interface{}, seq uintptr) {
 	go arg.(func())()
 }

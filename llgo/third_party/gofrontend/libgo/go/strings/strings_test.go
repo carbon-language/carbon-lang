@@ -168,6 +168,15 @@ func BenchmarkIndex(b *testing.B) {
 	}
 }
 
+func BenchmarkLastIndex(b *testing.B) {
+	if got := Index(benchmarkString, "v"); got != 17 {
+		b.Fatalf("wrong index: expected 17, got=%d", got)
+	}
+	for i := 0; i < b.N; i++ {
+		LastIndex(benchmarkString, "v")
+	}
+}
+
 func BenchmarkIndexByte(b *testing.B) {
 	if got := IndexByte(benchmarkString, 'v'); got != 17 {
 		b.Fatalf("wrong index: expected 17, got=%d", got)
@@ -1069,8 +1078,11 @@ func makeBenchInputHard() string {
 		"hello", "world",
 	}
 	x := make([]byte, 0, 1<<20)
-	for len(x) < 1<<20 {
+	for {
 		i := rand.Intn(len(tokens))
+		if len(x)+len(tokens[i]) >= 1<<20 {
+			break
+		}
 		x = append(x, tokens[i]...)
 	}
 	return string(x)
@@ -1084,6 +1096,12 @@ func benchmarkIndexHard(b *testing.B, sep string) {
 	}
 }
 
+func benchmarkLastIndexHard(b *testing.B, sep string) {
+	for i := 0; i < b.N; i++ {
+		LastIndex(benchInputHard, sep)
+	}
+}
+
 func benchmarkCountHard(b *testing.B, sep string) {
 	for i := 0; i < b.N; i++ {
 		Count(benchInputHard, sep)
@@ -1093,6 +1111,10 @@ func benchmarkCountHard(b *testing.B, sep string) {
 func BenchmarkIndexHard1(b *testing.B) { benchmarkIndexHard(b, "<>") }
 func BenchmarkIndexHard2(b *testing.B) { benchmarkIndexHard(b, "</pre>") }
 func BenchmarkIndexHard3(b *testing.B) { benchmarkIndexHard(b, "<b>hello world</b>") }
+
+func BenchmarkLastIndexHard1(b *testing.B) { benchmarkLastIndexHard(b, "<>") }
+func BenchmarkLastIndexHard2(b *testing.B) { benchmarkLastIndexHard(b, "</pre>") }
+func BenchmarkLastIndexHard3(b *testing.B) { benchmarkLastIndexHard(b, "<b>hello world</b>") }
 
 func BenchmarkCountHard1(b *testing.B) { benchmarkCountHard(b, "<>") }
 func BenchmarkCountHard2(b *testing.B) { benchmarkCountHard(b, "</pre>") }
@@ -1172,5 +1194,11 @@ func BenchmarkSplit2(b *testing.B) {
 func BenchmarkSplit3(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Split(benchInputHard, "hello")
+	}
+}
+
+func BenchmarkRepeat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Repeat("-", 80)
 	}
 }

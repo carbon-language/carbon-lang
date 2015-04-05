@@ -44,7 +44,7 @@
 //     }
 //
 // The benchmark function must run the target code b.N times.
-// The benchmark package will vary b.N until the benchmark function lasts
+// During benchark execution, b.N is adjusted until the benchmark function lasts
 // long enough to be timed reliably.  The output
 //     BenchmarkHello    10000000    282 ns/op
 // means that the loop ran 10000000 times at a speed of 282 ns per loop.
@@ -241,6 +241,11 @@ func decorate(s string) string {
 	}
 	buf.WriteByte('\n')
 	return buf.String()
+}
+
+// fmtDuration returns a string representing d in the form "87.00s".
+func fmtDuration(d time.Duration) string {
+	return fmt.Sprintf("%.2fs", d.Seconds())
 }
 
 // TB is the interface common to T and B.
@@ -492,15 +497,15 @@ func (m *M) Run() int {
 }
 
 func (t *T) report() {
-	tstr := fmt.Sprintf("(%.2f seconds)", t.duration.Seconds())
-	format := "--- %s: %s %s\n%s"
+	dstr := fmtDuration(t.duration)
+	format := "--- %s: %s (%s)\n%s"
 	if t.Failed() {
-		fmt.Printf(format, "FAIL", t.name, tstr, t.output)
+		fmt.Printf(format, "FAIL", t.name, dstr, t.output)
 	} else if *chatty {
 		if t.Skipped() {
-			fmt.Printf(format, "SKIP", t.name, tstr, t.output)
+			fmt.Printf(format, "SKIP", t.name, dstr, t.output)
 		} else {
-			fmt.Printf(format, "PASS", t.name, tstr, t.output)
+			fmt.Printf(format, "PASS", t.name, dstr, t.output)
 		}
 	}
 }
@@ -615,6 +620,7 @@ func after() {
 			fmt.Fprintf(os.Stderr, "testing: %s\n", err)
 			os.Exit(2)
 		}
+		runtime.GC() // materialize all statistics
 		if err = pprof.WriteHeapProfile(f); err != nil {
 			fmt.Fprintf(os.Stderr, "testing: can't write %s: %s\n", *memProfile, err)
 			os.Exit(2)

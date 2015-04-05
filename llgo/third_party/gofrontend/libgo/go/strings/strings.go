@@ -43,13 +43,29 @@ func explode(s string, n int) []string {
 // primeRK is the prime base used in Rabin-Karp algorithm.
 const primeRK = 16777619
 
-// hashstr returns the hash and the appropriate multiplicative
+// hashStr returns the hash and the appropriate multiplicative
 // factor for use in Rabin-Karp algorithm.
-func hashstr(sep string) (uint32, uint32) {
+func hashStr(sep string) (uint32, uint32) {
 	hash := uint32(0)
 	for i := 0; i < len(sep); i++ {
 		hash = hash*primeRK + uint32(sep[i])
+	}
+	var pow, sq uint32 = 1, primeRK
+	for i := len(sep); i > 0; i >>= 1 {
+		if i&1 != 0 {
+			pow *= sq
+		}
+		sq *= sq
+	}
+	return hash, pow
+}
 
+// hashStrRev returns the hash of the reverse of sep and the
+// appropriate multiplicative factor for use in Rabin-Karp algorithm.
+func hashStrRev(sep string) (uint32, uint32) {
+	hash := uint32(0)
+	for i := len(sep) - 1; i >= 0; i-- {
+		hash = hash*primeRK + uint32(sep[i])
 	}
 	var pow, sq uint32 = 1, primeRK
 	for i := len(sep); i > 0; i >>= 1 {
@@ -85,7 +101,8 @@ func Count(s, sep string) int {
 		}
 		return 0
 	}
-	hashsep, pow := hashstr(sep)
+	// Rabin-Karp search
+	hashsep, pow := hashStr(sep)
 	h := uint32(0)
 	for i := 0; i < len(sep); i++ {
 		h = h*primeRK + uint32(s[i])
@@ -139,8 +156,8 @@ func Index(s, sep string) int {
 	case n > len(s):
 		return -1
 	}
-	// Hash sep.
-	hashsep, pow := hashstr(sep)
+	// Rabin-Karp search
+	hashsep, pow := hashStr(sep)
 	var h uint32
 	for i := 0; i < n; i++ {
 		h = h*primeRK + uint32(s[i])
@@ -163,22 +180,41 @@ func Index(s, sep string) int {
 // LastIndex returns the index of the last instance of sep in s, or -1 if sep is not present in s.
 func LastIndex(s, sep string) int {
 	n := len(sep)
-	if n == 0 {
+	switch {
+	case n == 0:
 		return len(s)
-	}
-	c := sep[0]
-	if n == 1 {
+	case n == 1:
 		// special case worth making fast
+		c := sep[0]
 		for i := len(s) - 1; i >= 0; i-- {
 			if s[i] == c {
 				return i
 			}
 		}
 		return -1
+	case n == len(s):
+		if sep == s {
+			return 0
+		}
+		return -1
+	case n > len(s):
+		return -1
 	}
-	// n > 1
-	for i := len(s) - n; i >= 0; i-- {
-		if s[i] == c && s[i:i+n] == sep {
+	// Rabin-Karp search from the end of the string
+	hashsep, pow := hashStrRev(sep)
+	last := len(s) - n
+	var h uint32
+	for i := len(s) - 1; i >= last; i-- {
+		h = h*primeRK + uint32(s[i])
+	}
+	if h == hashsep && s[last:] == sep {
+		return last
+	}
+	for i := last - 1; i >= 0; i-- {
+		h *= primeRK
+		h += uint32(s[i])
+		h -= pow * uint32(s[i+n])
+		if h == hashsep && s[i:i+n] == sep {
 			return i
 		}
 	}
@@ -189,13 +225,8 @@ func LastIndex(s, sep string) int {
 // r, or -1 if rune is not present in s.
 func IndexRune(s string, r rune) int {
 	switch {
-	case r < 0x80:
-		b := byte(r)
-		for i := 0; i < len(s); i++ {
-			if s[i] == b {
-				return i
-			}
-		}
+	case r < utf8.RuneSelf:
+		return IndexByte(s, byte(r))
 	default:
 		for i, c := range s {
 			if c == r {
@@ -311,6 +342,8 @@ func Fields(s string) []string {
 // FieldsFunc splits the string s at each run of Unicode code points c satisfying f(c)
 // and returns an array of slices of s. If all code points in s satisfy f(c) or the
 // string is empty, an empty slice is returned.
+// FieldsFunc makes no guarantees about the order in which it calls f(c).
+// If f does not return consistent results for a given c, FieldsFunc may crash.
 func FieldsFunc(s string, f func(rune) bool) []string {
 	// First count the fields.
 	n := 0
@@ -423,9 +456,10 @@ func Map(mapping func(rune) rune, s string) string {
 // Repeat returns a new string consisting of count copies of the string s.
 func Repeat(s string, count int) string {
 	b := make([]byte, len(s)*count)
-	bp := 0
-	for i := 0; i < count; i++ {
-		bp += copy(b[bp:], s)
+	bp := copy(b, s)
+	for bp < len(b) {
+		copy(b[bp:], b[:bp])
+		bp *= 2
 	}
 	return string(b)
 }
@@ -634,6 +668,9 @@ func TrimSuffix(s, suffix string) string {
 
 // Replace returns a copy of the string s with the first n
 // non-overlapping instances of old replaced by new.
+// If old is empty, it matches at the beginning of the string
+// and after each UTF-8 sequence, yielding up to k+1 replacements
+// for a k-rune string.
 // If n < 0, there is no limit on the number of replacements.
 func Replace(s, old, new string, n int) string {
 	if old == new || n == 0 {

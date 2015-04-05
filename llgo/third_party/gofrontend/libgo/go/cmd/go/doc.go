@@ -19,6 +19,7 @@ The commands are:
     env         print Go environment information
     fix         run go tool fix on packages
     fmt         run gofmt on package sources
+    generate    generate Go files by processing source
     get         download and install packages and dependencies
     install     compile and install packages and dependencies
     list        list packages
@@ -75,6 +76,7 @@ and test commands:
 
 	-a
 		force rebuilding of packages that are already up-to-date.
+		In Go releases, does not apply to the standard library.
 	-n
 		print the commands but do not run them.
 	-p n
@@ -82,7 +84,7 @@ and test commands:
 		The default is the number of CPUs available.
 	-race
 		enable data race detection.
-		Supported only on linux/amd64, darwin/amd64 and windows/amd64.
+		Supported only on linux/amd64, freebsd/amd64, darwin/amd64 and windows/amd64.
 	-v
 		print the names of packages as they are compiled.
 	-work
@@ -219,17 +221,121 @@ To run gofmt with specific options, run gofmt itself.
 See also: go fix, go vet.
 
 
+Generate Go files by processing source
+
+Usage:
+
+	go generate [-run regexp] [file.go... | packages]
+
+Generate runs commands described by directives within existing
+files. Those commands can run any process but the intent is to
+create or update Go source files, for instance by running yacc.
+
+Go generate is never run automatically by go build, go get, go test,
+and so on. It must be run explicitly.
+
+Go generate scans the file for directives, which are lines of
+the form,
+
+	//go:generate command argument...
+
+(note: no leading spaces and no space in "//go") where command
+is the generator to be run, corresponding to an executable file
+that can be run locally. It must either be in the shell path
+(gofmt), a fully qualified path (/usr/you/bin/mytool), or a
+command alias, described below.
+
+Note that go generate does not parse the file, so lines that look
+like directives in comments or multiline strings will be treated
+as directives.
+
+The arguments to the directive are space-separated tokens or
+double-quoted strings passed to the generator as individual
+arguments when it is run.
+
+Quoted strings use Go syntax and are evaluated before execution; a
+quoted string appears as a single argument to the generator.
+
+Go generate sets several variables when it runs the generator:
+
+	$GOARCH
+		The execution architecture (arm, amd64, etc.)
+	$GOOS
+		The execution operating system (linux, windows, etc.)
+	$GOFILE
+		The base name of the file.
+	$GOPACKAGE
+		The name of the package of the file containing the directive.
+
+Other than variable substitution and quoted-string evaluation, no
+special processing such as "globbing" is performed on the command
+line.
+
+As a last step before running the command, any invocations of any
+environment variables with alphanumeric names, such as $GOFILE or
+$HOME, are expanded throughout the command line. The syntax for
+variable expansion is $NAME on all operating systems.  Due to the
+order of evaluation, variables are expanded even inside quoted
+strings. If the variable NAME is not set, $NAME expands to the
+empty string.
+
+A directive of the form,
+
+	//go:generate -command xxx args...
+
+specifies, for the remainder of this source file only, that the
+string xxx represents the command identified by the arguments. This
+can be used to create aliases or to handle multiword generators.
+For example,
+
+	//go:generate -command yacc go tool yacc
+
+specifies that the command "yacc" represents the generator
+"go tool yacc".
+
+Generate processes packages in the order given on the command line,
+one at a time. If the command line lists .go files, they are treated
+as a single package. Within a package, generate processes the
+source files in a package in file name order, one at a time. Within
+a source file, generate runs generators in the order they appear
+in the file, one at a time.
+
+If any generator returns an error exit status, "go generate" skips
+all further processing for that package.
+
+The generator is run in the package's source directory.
+
+Go generate accepts one specific flag:
+
+	-run=""
+		if non-empty, specifies a regular expression to
+		select directives whose command matches the expression.
+
+It also accepts the standard build flags -v, -n, and -x.
+The -v flag prints the names of packages and files as they are
+processed.
+The -n flag prints commands that would be executed.
+The -x flag prints commands as they are executed.
+
+For more about specifying packages, see 'go help packages'.
+
+
 Download and install packages and dependencies
 
 Usage:
 
-	go get [-d] [-fix] [-t] [-u] [build flags] [packages]
+	go get [-d] [-f] [-fix] [-t] [-u] [build flags] [packages]
 
 Get downloads and installs the packages named by the import paths,
 along with their dependencies.
 
 The -d flag instructs get to stop after downloading the packages; that is,
 it instructs get not to install the packages.
+
+The -f flag, valid only when -u is set, forces get -u not to verify that
+each package has been checked out from the source control repository
+implied by its import path. This can be useful if the source is a local fork
+of the original.
 
 The -fix flag instructs get to run the fix tool on the downloaded packages
 before resolving dependencies or building the code.
@@ -291,28 +397,29 @@ syntax of package template.  The default output is equivalent to -f
 '{{.ImportPath}}'. The struct being passed to the template is:
 
     type Package struct {
-        Dir        string // directory containing package sources
-        ImportPath string // import path of package in dir
-        Name       string // package name
-        Doc        string // package documentation string
-        Target     string // install path
-        Goroot     bool   // is this package in the Go root?
-        Standard   bool   // is this package part of the standard Go library?
-        Stale      bool   // would 'go install' do anything for this package?
-        Root       string // Go root or Go path dir containing this package
+        Dir           string // directory containing package sources
+        ImportPath    string // import path of package in dir
+        ImportComment string // path in import comment on package statement
+        Name          string // package name
+        Doc           string // package documentation string
+        Target        string // install path
+        Goroot        bool   // is this package in the Go root?
+        Standard      bool   // is this package part of the standard Go library?
+        Stale         bool   // would 'go install' do anything for this package?
+        Root          string // Go root or Go path dir containing this package
 
         // Source files
-        GoFiles  []string       // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
-        CgoFiles []string       // .go sources files that import "C"
+        GoFiles        []string // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
+        CgoFiles       []string // .go sources files that import "C"
         IgnoredGoFiles []string // .go sources ignored due to build constraints
-        CFiles   []string       // .c source files
-        CXXFiles []string       // .cc, .cxx and .cpp source files
-        MFiles   []string       // .m source files
-        HFiles   []string       // .h, .hh, .hpp and .hxx source files
-        SFiles   []string       // .s source files
-        SwigFiles []string      // .swig files
-        SwigCXXFiles []string   // .swigcxx files
-        SysoFiles []string      // .syso object files to add to archive
+        CFiles         []string // .c source files
+        CXXFiles       []string // .cc, .cxx and .cpp source files
+        MFiles         []string // .m source files
+        HFiles         []string // .h, .hh, .hpp and .hxx source files
+        SFiles         []string // .s source files
+        SwigFiles      []string // .swig files
+        SwigCXXFiles   []string // .swigcxx files
+        SysoFiles      []string // .syso object files to add to archive
 
         // Cgo directives
         CgoCFLAGS    []string // cgo: flags for C compiler
@@ -431,16 +538,23 @@ non-test installation.
 
 In addition to the build flags, the flags handled by 'go test' itself are:
 
-	-c  Compile the test binary to pkg.test but do not run it.
-	    (Where pkg is the last element of the package's import path.)
+	-c
+		Compile the test binary to pkg.test but do not run it
+		(where pkg is the last element of the package's import path).
+		The file name can be changed with the -o flag.
+
+	-exec xprog
+	    Run the test binary using xprog. The behavior is the same as
+	    in 'go run'. See 'go help run' for details.
 
 	-i
 	    Install packages that are dependencies of the test.
 	    Do not run the test.
 
-	-exec xprog
-	    Run the test binary using xprog. The behavior is the same as
-	    in 'go run'. See 'go help run' for details.
+	-o file
+		Compile the test binary to the named file.
+		The test still runs (unless -c or -i is specified).
+
 
 The test binary also accepts flags that control execution of the test; these
 flags are also accessible by 'go test'.  See 'go help testflag' for details.
@@ -488,7 +602,7 @@ Usage:
 
 Vet runs the Go vet command on the packages named by the import paths.
 
-For more about vet, see 'godoc code.google.com/p/go.tools/cmd/vet'.
+For more about vet, see 'godoc golang.org/x/tools/cmd/vet'.
 For more about specifying packages, see 'go help packages'.
 
 To run the vet tool with specific options, run 'go tool vet'.
@@ -681,6 +795,11 @@ A few common code hosting sites have special syntax:
 		import "launchpad.net/~user/project/branch"
 		import "launchpad.net/~user/project/branch/sub/directory"
 
+	IBM DevOps Services (Git)
+
+		import "hub.jazz.net/git/user/project"
+		import "hub.jazz.net/git/user/project/sub/directory"
+
 For code hosted on other servers, import paths may either be qualified
 with the version control type, or the go tool can dynamically fetch
 the import path over https/http and discover where the code resides
@@ -756,7 +875,26 @@ listed in the GOPATH environment variable (see 'go help gopath').
 
 The go command attempts to download the version of the
 package appropriate for the Go release being used.
-Run 'go help install' for more.
+Run 'go help get' for more.
+
+Import path checking
+
+When the custom import path feature described above redirects to a
+known code hosting site, each of the resulting packages has two possible
+import paths, using the custom domain or the known hosting site.
+
+A package statement is said to have an "import comment" if it is immediately
+followed (before the next newline) by a comment of one of these two forms:
+
+	package math // import "path"
+	package math /* import "path" * /
+
+The go command will refuse to install a package with an import comment
+unless it is being referred to by that import path. In this way, import comments
+let package authors make sure the custom import path is used and not a
+direct path to the underlying code hosting site.
+
+See https://golang.org/s/go14customimport for details.
 
 
 Description of package lists
@@ -812,7 +950,8 @@ single directory, the command is applied to a single synthesized
 package made up of exactly those files, ignoring any build constraints
 in those files and ignoring any other files in the directory.
 
-File names that begin with "." or "_" are ignored by the go tool.
+Directory and file names that begin with "." or "_" are ignored
+by the go tool, as are directories named "testdata".
 
 
 Description of testing flags
@@ -844,6 +983,7 @@ control the execution of any test:
 	-blockprofile block.out
 	    Write a goroutine blocking profile to the specified file
 	    when all tests are complete.
+	    Writes test binary as -c would.
 
 	-blockprofilerate n
 	    Control the detail provided in goroutine blocking profiles by
@@ -875,8 +1015,7 @@ control the execution of any test:
 	    Sets -cover.
 
 	-coverprofile cover.out
-	    Write a coverage profile to the specified file after all tests
-	    have passed.
+	    Write a coverage profile to the file after all tests have passed.
 	    Sets -cover.
 
 	-cpu 1,2,4
@@ -886,10 +1025,11 @@ control the execution of any test:
 
 	-cpuprofile cpu.out
 	    Write a CPU profile to the specified file before exiting.
+	    Writes test binary as -c would.
 
 	-memprofile mem.out
-	    Write a memory profile to the specified file after all tests
-	    have passed.
+	    Write a memory profile to the file after all tests have passed.
+	    Writes test binary as -c would.
 
 	-memprofilerate n
 	    Enable more precise (and expensive) memory profiles by setting

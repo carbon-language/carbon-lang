@@ -9,7 +9,7 @@
 #include "arch.h"
 #include "malloc.h"
 
-extern Slice syscall_Envs __asm__ (GOSYM_PREFIX "syscall.Envs");
+extern Slice envs;
 
 const byte*
 runtime_getenv(const char *s)
@@ -22,8 +22,8 @@ runtime_getenv(const char *s)
 
 	bs = (const byte*)s;
 	len = runtime_findnull(bs);
-	envv = (String*)syscall_Envs.__values;
-	envc = syscall_Envs.__count;
+	envv = (String*)envs.__values;
+	envc = envs.__count;
 	for(i=0; i<envc; i++){
 		if(envv[i].len <= len)
 			continue;

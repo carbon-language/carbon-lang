@@ -31,9 +31,6 @@ func newRot13Reader(r io.Reader) *rot13Reader {
 
 func (r13 *rot13Reader) Read(p []byte) (int, error) {
 	n, err := r13.r.Read(p)
-	if err != nil {
-		return n, err
-	}
 	for i := 0; i < n; i++ {
 		c := p[i] | 0x20 // lowercase byte
 		if 'a' <= c && c <= 'm' {
@@ -42,7 +39,7 @@ func (r13 *rot13Reader) Read(p []byte) (int, error) {
 			p[i] -= 13
 		}
 	}
-	return n, nil
+	return n, err
 }
 
 // Call ReadByte to accumulate the text of a file
@@ -438,7 +435,7 @@ func TestUnreadRuneError(t *testing.T) {
 	if err != nil {
 		t.Error("unexpected error on ReadRune (2):", err)
 	}
-	for _ = range buf {
+	for range buf {
 		_, err = r.ReadByte()
 		if err != nil {
 			t.Error("unexpected error on ReadByte (2):", err)
@@ -462,6 +459,18 @@ func TestUnreadRuneError(t *testing.T) {
 	}
 	if r.UnreadRune() == nil {
 		t.Error("expected error after UnreadByte (3)")
+	}
+	// Test error after ReadSlice.
+	_, _, err = r.ReadRune() // reset state
+	if err != nil {
+		t.Error("unexpected error on ReadRune (4):", err)
+	}
+	_, err = r.ReadSlice(0)
+	if err != io.EOF {
+		t.Error("unexpected error on ReadSlice (4):", err)
+	}
+	if r.UnreadRune() == nil {
+		t.Error("expected error after ReadSlice (4)")
 	}
 }
 

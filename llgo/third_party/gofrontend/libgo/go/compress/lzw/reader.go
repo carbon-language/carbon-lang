@@ -6,12 +6,16 @@
 // described in T. A. Welch, ``A Technique for High-Performance Data
 // Compression'', Computer, 17(6) (June 1984), pp 8-19.
 //
-// In particular, it implements LZW as used by the GIF, TIFF and PDF file
+// In particular, it implements LZW as used by the GIF and PDF file
 // formats, which means variable-width codes up to 12 bits and the first
 // two non-literal codes are a clear code and an EOF code.
+//
+// The TIFF file format uses a similar but incompatible version of the LZW
+// algorithm. See the golang.org/x/image/tiff/lzw package for an
+// implementation.
 package lzw
 
-// TODO(nigeltao): check that TIFF and PDF use LZW in the same way as GIF,
+// TODO(nigeltao): check that PDF uses LZW in the same way as GIF,
 // modulo LSB/MSB packing order.
 
 import (
@@ -218,6 +222,8 @@ func (d *decoder) Close() error {
 
 // NewReader creates a new io.ReadCloser.
 // Reads from the returned io.ReadCloser read and decompress data from r.
+// If r does not also implement io.ByteReader,
+// the decompressor may read more data than necessary from r.
 // It is the caller's responsibility to call Close on the ReadCloser when
 // finished reading.
 // The number of bits to use for literal codes, litWidth, must be in the

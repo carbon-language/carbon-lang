@@ -97,8 +97,9 @@ func BenchmarkDeferMany(b *testing.B) {
 // The value reported will include the padding between runtime.gogo and the
 // next function in memory. That's fine.
 func TestRuntimeGogoBytes(t *testing.T) {
-	if GOOS == "nacl" {
-		t.Skip("skipping on nacl")
+	switch GOOS {
+	case "android", "nacl":
+		t.Skipf("skipping on %s", GOOS)
 	}
 
 	dir, err := ioutil.TempDir("", "go-build")
@@ -107,7 +108,7 @@ func TestRuntimeGogoBytes(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	out, err := exec.Command("go", "build", "-o", dir+"/hello", "../../../test/helloworld.go").CombinedOutput()
+	out, err := exec.Command("go", "build", "-o", dir+"/hello", "../../test/helloworld.go").CombinedOutput()
 	if err != nil {
 		t.Fatalf("building hello world: %v\n%s", err, out)
 	}
@@ -159,8 +160,8 @@ var faultAddrs = []uint64{
 	// or else malformed.
 	0xffffffffffffffff,
 	0xfffffffffffff001,
-	// no 0xffffffffffff0001; 0xffff0001 is mapped for 32-bit user space on OS X
-	// no 0xfffffffffff00001; 0xfff00001 is mapped for 32-bit user space sometimes on Linux
+	0xffffffffffff0001,
+	0xfffffffffff00001,
 	0xffffffffff000001,
 	0xfffffffff0000001,
 	0xffffffff00000001,
@@ -175,6 +176,8 @@ var faultAddrs = []uint64{
 }
 
 func TestSetPanicOnFault(t *testing.T) {
+	t.Skip("skipping for llgo due to lack of non-call exception support")
+
 	// This currently results in a fault in the signal trampoline on
 	// dragonfly/386 - see issue 7421.
 	if GOOS == "dragonfly" && GOARCH == "386" {
@@ -184,29 +187,68 @@ func TestSetPanicOnFault(t *testing.T) {
 	old := debug.SetPanicOnFault(true)
 	defer debug.SetPanicOnFault(old)
 
+	nfault := 0
 	for _, addr := range faultAddrs {
-		if Compiler == "gccgo" && GOARCH == "386" && (addr&0xff000000) != 0 {
-			// On gccgo these addresses can be used for
-			// the thread stack.
-			continue
-		}
-		testSetPanicOnFault(t, uintptr(addr))
+		testSetPanicOnFault(t, uintptr(addr), &nfault)
+	}
+	if nfault == 0 {
+		t.Fatalf("none of the addresses faulted")
 	}
 }
 
-func testSetPanicOnFault(t *testing.T, addr uintptr) {
+func testSetPanicOnFault(t *testing.T, addr uintptr, nfault *int) {
 	if GOOS == "nacl" {
 		t.Skip("nacl doesn't seem to fault on high addresses")
 	}
 
 	defer func() {
-		if err := recover(); err == nil {
-			t.Fatalf("did not find error in recover")
+		if err := recover(); err != nil {
+			*nfault++
 		}
 	}()
 
-	var p *int
-	p = (*int)(unsafe.Pointer(addr))
-	println(*p)
-	t.Fatalf("still here - should have faulted on address %#x", addr)
+	// The read should fault, except that sometimes we hit
+	// addresses that have had C or kernel pages mapped there
+	// readable by user code. So just log the content.
+	// If no addresses fault, we'll fail the test.
+	v := *(*byte)(unsafe.Pointer(addr))
+	t.Logf("addr %#x: %#x\n", addr, v)
+}
+
+func eqstring_generic(s1, s2 string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	// optimization in assembly versions:
+	// if s1.str == s2.str { return true }
+	for i := 0; i < len(s1); i++ {
+		if s1[i] != s2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func TestEqString(t *testing.T) {
+	// This isn't really an exhaustive test of eqstring, it's
+	// just a convenient way of documenting (via eqstring_generic)
+	// what eqstring does.
+	s := []string{
+		"",
+		"a",
+		"c",
+		"aaa",
+		"ccc",
+		"cccc"[:3], // same contents, different string
+		"1234567890",
+	}
+	for _, s1 := range s {
+		for _, s2 := range s {
+			x := s1 == s2
+			y := eqstring_generic(s1, s2)
+			if x != y {
+				t.Errorf(`eqstring("%s","%s") = %t, want %t`, s1, s2, x, y)
+			}
+		}
+	}
 }

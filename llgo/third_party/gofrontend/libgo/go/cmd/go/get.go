@@ -16,7 +16,7 @@ import (
 )
 
 var cmdGet = &Command{
-	UsageLine: "get [-d] [-fix] [-t] [-u] [build flags] [packages]",
+	UsageLine: "get [-d] [-f] [-fix] [-t] [-u] [build flags] [packages]",
 	Short:     "download and install packages and dependencies",
 	Long: `
 Get downloads and installs the packages named by the import paths,
@@ -24,6 +24,11 @@ along with their dependencies.
 
 The -d flag instructs get to stop after downloading the packages; that is,
 it instructs get not to install the packages.
+
+The -f flag, valid only when -u is set, forces get -u not to verify that
+each package has been checked out from the source control repository
+implied by its import path. This can be useful if the source is a local fork
+of the original.
 
 The -fix flag instructs get to run the fix tool on the downloaded packages
 before resolving dependencies or building the code.
@@ -53,6 +58,7 @@ See also: go build, go install, go clean.
 }
 
 var getD = cmdGet.Flag.Bool("d", false, "")
+var getF = cmdGet.Flag.Bool("f", false, "")
 var getT = cmdGet.Flag.Bool("t", false, "")
 var getU = cmdGet.Flag.Bool("u", false, "")
 var getFix = cmdGet.Flag.Bool("fix", false, "")
@@ -63,6 +69,10 @@ func init() {
 }
 
 func runGet(cmd *Command, args []string) {
+	if *getF && !*getU {
+		fatalf("go get: cannot use -f flag without -u")
+	}
+
 	// Phase 1.  Download/update.
 	var stk importStack
 	for _, arg := range downloadPaths(args) {
@@ -151,7 +161,9 @@ func download(arg string, stk *importStack, getTestDeps bool) {
 	}
 
 	// Only process each package once.
-	if downloadCache[arg] {
+	// (Unless we're fetching test dependencies for this package,
+	// in which case we want to process it again.)
+	if downloadCache[arg] && !getTestDeps {
 		return
 	}
 	downloadCache[arg] = true
@@ -264,6 +276,25 @@ func downloadPackage(p *Package) error {
 			return err
 		}
 		repo = "<local>" // should be unused; make distinctive
+
+		// Double-check where it came from.
+		if *getU && vcs.remoteRepo != nil && !*getF {
+			dir := filepath.Join(p.build.SrcRoot, rootPath)
+			if remote, err := vcs.remoteRepo(vcs, dir); err == nil {
+				if rr, err := repoRootForImportPath(p.ImportPath); err == nil {
+					repo := rr.repo
+					if rr.vcs.resolveRepo != nil {
+						resolved, err := rr.vcs.resolveRepo(rr.vcs, dir, repo)
+						if err == nil {
+							repo = resolved
+						}
+					}
+					if remote != repo {
+						return fmt.Errorf("%s is from %s, should be from %s", dir, remote, repo)
+					}
+				}
+			}
+		}
 	} else {
 		// Analyze the import path to determine the version control system,
 		// repository, and the import path for the root of the repository.

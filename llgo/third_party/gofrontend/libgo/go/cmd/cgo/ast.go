@@ -272,7 +272,7 @@ func (f *File) walk(x interface{}, context string, visit func(*File, interface{}
 
 	case nil:
 
-	// These are ordered and grouped to match ../../pkg/go/ast/ast.go
+	// These are ordered and grouped to match ../../go/ast/ast.go
 	case *ast.Field:
 		if len(n.Names) == 0 && context == "field" {
 			f.walk(&n.Type, "embed-type", visit)
@@ -307,6 +307,9 @@ func (f *File) walk(x interface{}, context string, visit func(*File, interface{}
 		}
 		if n.High != nil {
 			f.walk(&n.High, "expr", visit)
+		}
+		if n.Max != nil {
+			f.walk(&n.Max, "expr", visit)
 		}
 	case *ast.TypeAssertExpr:
 		f.walk(&n.X, "expr", visit)

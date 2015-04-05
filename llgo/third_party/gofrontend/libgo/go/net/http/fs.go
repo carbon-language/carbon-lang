@@ -22,8 +22,12 @@ import (
 	"time"
 )
 
-// A Dir implements http.FileSystem using the native file
-// system restricted to a specific directory tree.
+// A Dir implements FileSystem using the native file system restricted to a
+// specific directory tree.
+//
+// While the FileSystem.Open method takes '/'-separated paths, a Dir's string
+// value is a filename on the native file system, not a URL, so it is separated
+// by filepath.Separator, which isn't necessarily '/'.
 //
 // An empty Dir is treated as ".".
 type Dir string
@@ -139,7 +143,7 @@ func serveContent(w ResponseWriter, r *Request, name string, modtime time.Time, 
 	if checkLastModified(w, r, modtime) {
 		return
 	}
-	rangeReq, done := checkETag(w, r)
+	rangeReq, done := checkETag(w, r, modtime)
 	if done {
 		return
 	}
@@ -212,12 +216,6 @@ func serveContent(w ResponseWriter, r *Request, name string, modtime time.Time, 
 			code = StatusPartialContent
 			w.Header().Set("Content-Range", ra.contentRange(size))
 		case len(ranges) > 1:
-			for _, ra := range ranges {
-				if ra.start > size {
-					Error(w, err.Error(), StatusRequestedRangeNotSatisfiable)
-					return
-				}
-			}
 			sendSize = rangesMIMESize(ranges, ctype, size)
 			code = StatusPartialContent
 
@@ -281,11 +279,14 @@ func checkLastModified(w ResponseWriter, r *Request, modtime time.Time) bool {
 }
 
 // checkETag implements If-None-Match and If-Range checks.
-// The ETag must have been previously set in the ResponseWriter's headers.
+//
+// The ETag or modtime must have been previously set in the
+// ResponseWriter's headers.  The modtime is only compared at second
+// granularity and may be the zero value to mean unknown.
 //
 // The return value is the effective request "Range" header to use and
 // whether this request is now considered done.
-func checkETag(w ResponseWriter, r *Request) (rangeReq string, done bool) {
+func checkETag(w ResponseWriter, r *Request, modtime time.Time) (rangeReq string, done bool) {
 	etag := w.Header().get("Etag")
 	rangeReq = r.Header.get("Range")
 
@@ -296,11 +297,17 @@ func checkETag(w ResponseWriter, r *Request) (rangeReq string, done bool) {
 	// We only support ETag versions.
 	// The caller must have set the ETag on the response already.
 	if ir := r.Header.get("If-Range"); ir != "" && ir != etag {
-		// TODO(bradfitz): handle If-Range requests with Last-Modified
-		// times instead of ETags? I'd rather not, at least for
-		// now. That seems like a bug/compromise in the RFC 2616, and
-		// I've never heard of anybody caring about that (yet).
-		rangeReq = ""
+		// The If-Range value is typically the ETag value, but it may also be
+		// the modtime date. See golang.org/issue/8367.
+		timeMatches := false
+		if !modtime.IsZero() {
+			if t, err := ParseTime(ir); err == nil && t.Unix() == modtime.Unix() {
+				timeMatches = true
+			}
+		}
+		if !timeMatches {
+			rangeReq = ""
+		}
 	}
 
 	if inm := r.Header.get("If-None-Match"); inm != "" {
@@ -378,7 +385,7 @@ func serveFile(w ResponseWriter, r *Request, fs FileSystem, name string, redirec
 
 	// use contents of index.html for directory, if present
 	if d.IsDir() {
-		index := name + indexPage
+		index := strings.TrimSuffix(name, "/") + indexPage
 		ff, err := fs.Open(index)
 		if err == nil {
 			defer ff.Close()
@@ -400,7 +407,7 @@ func serveFile(w ResponseWriter, r *Request, fs FileSystem, name string, redirec
 		return
 	}
 
-	// serverContent will check modification time
+	// serveContent will check modification time
 	sizeFunc := func() (int64, error) { return d.Size(), nil }
 	serveContent(w, r, d.Name(), d.ModTime(), sizeFunc, f)
 }

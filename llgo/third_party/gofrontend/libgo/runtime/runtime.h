@@ -400,7 +400,7 @@ struct	Timers
 // If this struct changes, adjust ../syscall/net_nacl.go:/runtimeTimer.
 struct	Timer
 {
-	int32	i;	// heap index
+	intgo	i;	// heap index
 
 	// Timer wakes up at when, and then at when+period, ... (period > 0 only)
 	// each time calling f(now, arg) in the timer goroutine, so f must be
@@ -409,6 +409,7 @@ struct	Timer
 	int64	period;
 	FuncVal	*fv;
 	Eface	arg;
+	uintptr	seq;
 };
 
 // Lock-free stack node.
@@ -774,8 +775,6 @@ void	runtime_printany(Eface)
      __asm__ (GOSYM_PREFIX "runtime.Printany");
 void	runtime_newTypeAssertionError(const String*, const String*, const String*, const String*, Eface*)
      __asm__ (GOSYM_PREFIX "runtime.NewTypeAssertionError");
-void	runtime_newErrorString(String, Eface*)
-     __asm__ (GOSYM_PREFIX "runtime.NewErrorString");
 void	runtime_newErrorCString(const char*, Eface*)
      __asm__ (GOSYM_PREFIX "runtime.NewErrorCString");
 

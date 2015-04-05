@@ -198,6 +198,26 @@ func TestChan(t *testing.T) {
 	}
 }
 
+func TestNonblockRecvRace(t *testing.T) {
+	n := 10000
+	if testing.Short() {
+		n = 100
+	}
+	for i := 0; i < n; i++ {
+		c := make(chan int, 1)
+		c <- 1
+		go func() {
+			select {
+			case <-c:
+			default:
+				t.Fatal("chan is not ready")
+			}
+		}()
+		close(c)
+		<-c
+	}
+}
+
 func TestSelfSelect(t *testing.T) {
 	// Ensure that send/recv on the same chan in select
 	// does not crash nor deadlock.
@@ -430,6 +450,67 @@ func TestMultiConsumer(t *testing.T) {
 	}
 }
 
+func TestShrinkStackDuringBlockedSend(t *testing.T) {
+	// make sure that channel operations still work when we are
+	// blocked on a channel send and we shrink the stack.
+	// NOTE: this test probably won't fail unless stack.c:StackDebug
+	// is set to >= 1.
+	const n = 10
+	c := make(chan int)
+	done := make(chan struct{})
+
+	go func() {
+		for i := 0; i < n; i++ {
+			c <- i
+			// use lots of stack, briefly.
+			stackGrowthRecursive(20)
+		}
+		done <- struct{}{}
+	}()
+
+	for i := 0; i < n; i++ {
+		x := <-c
+		if x != i {
+			t.Errorf("bad channel read: want %d, got %d", i, x)
+		}
+		// Waste some time so sender can finish using lots of stack
+		// and block in channel send.
+		time.Sleep(1 * time.Millisecond)
+		// trigger GC which will shrink the stack of the sender.
+		runtime.GC()
+	}
+	<-done
+}
+
+func TestSelectDuplicateChannel(t *testing.T) {
+	// This test makes sure we can queue a G on
+	// the same channel multiple times.
+	c := make(chan int)
+	d := make(chan int)
+	e := make(chan int)
+
+	// goroutine A
+	go func() {
+		select {
+		case <-c:
+		case <-c:
+		case <-d:
+		}
+		e <- 9
+	}()
+	time.Sleep(time.Millisecond) // make sure goroutine A gets qeueued first on c
+
+	// goroutine B
+	go func() {
+		<-c
+	}()
+	time.Sleep(time.Millisecond) // make sure goroutine B gets queued on c before continuing
+
+	d <- 7 // wake up A, it dequeues itself from c.  This operation used to corrupt c.recvq.
+	<-e    // A tells us it's done
+	c <- 8 // wake up B.  This operation used to fail because c.recvq was corrupted (it tries to wake up an already running G instead of B)
+}
+
 func BenchmarkChanNonblocking(b *testing.B) {
 	myc := make(chan int)
 	b.RunParallel(func(pb *testing.PB) {
@@ -458,7 +539,35 @@ func BenchmarkSelectUncontended(b *testing.B) {
 	})
 }
 
-func BenchmarkSelectContended(b *testing.B) {
+func BenchmarkSelectSyncContended(b *testing.B) {
+	myc1 := make(chan int)
+	myc2 := make(chan int)
+	myc3 := make(chan int)
+	done := make(chan int)
+	b.RunParallel(func(pb *testing.PB) {
+		go func() {
+			for {
+				select {
+				case myc1 <- 0:
+				case myc2 <- 0:
+				case myc3 <- 0:
+				case <-done:
+					return
+				}
+			}
+		}()
+		for pb.Next() {
+			select {
+			case <-myc1:
+			case <-myc2:
+			case <-myc3:
+			}
+		}
+	})
+	close(done)
+}
+
+func BenchmarkSelectAsyncContended(b *testing.B) {
 	procs := runtime.GOMAXPROCS(0)
 	myc1 := make(chan int, procs)
 	myc2 := make(chan int, procs)
@@ -476,11 +585,11 @@ func BenchmarkSelectContended(b *testing.B) {
 }
 
 func BenchmarkSelectNonblock(b *testing.B) {
+	myc1 := make(chan int)
+	myc2 := make(chan int)
+	myc3 := make(chan int, 1)
+	myc4 := make(chan int, 1)
 	b.RunParallel(func(pb *testing.PB) {
-		myc1 := make(chan int)
-		myc2 := make(chan int)
-		myc3 := make(chan int, 1)
-		myc4 := make(chan int, 1)
 		for pb.Next() {
 			select {
 			case <-myc1:

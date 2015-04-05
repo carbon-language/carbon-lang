@@ -495,6 +495,7 @@ runtime_files = \
 	runtime/go-unsafe-new.c \
 	runtime/go-unsafe-newarray.c \
 	runtime/go-unsafe-pointer.c \
+	runtime/go-unsetenv.c \
 	runtime/go-unwind.c \
 	runtime/go-varargs.c \
 	runtime/env_posix.c \
@@ -695,7 +696,7 @@ go_net_sockoptip_file = go/net/sockoptip_linux.go go/net/sockoptip_posix.go
 else
 if LIBGO_IS_SOLARIS
 go_net_cgo_file = go/net/cgo_linux.go
-go_net_sock_file = go/net/sock_solaris.go
+go_net_sock_file = go/net/sock_stub.go
 go_net_sockopt_file = go/net/sockopt_solaris.go
 go_net_sockoptip_file = go/net/sockoptip_stub.go
 else
@@ -997,7 +998,6 @@ go_runtime_files = \
 	go/runtime/extern.go \
 	go/runtime/mem.go \
 	go/runtime/softfloat64.go \
-	go/runtime/type.go \
 	version.go
 
 version.go: s-version; @true
@@ -1187,10 +1187,19 @@ go_crypto_md5_files = \
 	go/crypto/md5/md5.go \
 	go/crypto/md5/md5block.go \
 	go/crypto/md5/md5block_generic.go
+
+if LIBGO_IS_LINUX
+crypto_rand_file = go/crypto/rand/rand_linux.go
+else
+crypto_rand_file =
+endif
+
 go_crypto_rand_files = \
 	go/crypto/rand/rand.go \
 	go/crypto/rand/rand_unix.go \
+	$(crypto_rand_file) \
 	go/crypto/rand/util.go
+
 go_crypto_rc4_files = \
 	go/crypto/rc4/rc4.go \
 	go/crypto/rc4/rc4_ref.go
@@ -1289,9 +1298,11 @@ go_encoding_csv_files = \
 go_encoding_gob_files = \
 	go/encoding/gob/decode.go \
 	go/encoding/gob/decoder.go \
+	go/encoding/gob/dec_helpers.go \
 	go/encoding/gob/doc.go \
 	go/encoding/gob/encode.go \
 	go/encoding/gob/encoder.go \
+	go/encoding/gob/enc_helpers.go \
 	go/encoding/gob/error.go \
 	go/encoding/gob/type.go
 go_encoding_hex_files = \
@@ -1452,7 +1463,6 @@ go_mime_multipart_files = \
 	go/mime/multipart/writer.go
 
 go_net_http_files = \
-	go/net/http/chunked.go \
 	go/net/http/client.go \
 	go/net/http/cookie.go \
 	go/net/http/filetransport.go \
@@ -1496,12 +1506,12 @@ go_net_http_httptest_files = \
 go_net_http_pprof_files = \
 	go/net/http/pprof/pprof.go
 go_net_http_httputil_files = \
-	go/net/http/httputil/chunked.go \
 	go/net/http/httputil/dump.go \
 	go/net/http/httputil/httputil.go \
 	go/net/http/httputil/persist.go \
 	go/net/http/httputil/reverseproxy.go
-
+go_net_http_internal_files = \
+	go/net/http/internal/chunked.go
 
 go_old_regexp_files = \
 	go/old/regexp/regexp.go
@@ -1535,7 +1545,8 @@ go_path_filepath_files = \
 	go/path/filepath/match.go \
 	go/path/filepath/path.go \
 	go/path/filepath/path_unix.go \
-	go/path/filepath/symlink.go
+	go/path/filepath/symlink.go \
+	go/path/filepath/symlink_unix.go
 
 go_regexp_syntax_files = \
 	go/regexp/syntax/compile.go \
@@ -1570,7 +1581,8 @@ go_text_template_parse_files = \
 	go/text/template/parse/parse.go
 
 go_sync_atomic_files = \
-	go/sync/atomic/doc.go
+	go/sync/atomic/doc.go \
+	go/sync/atomic/value.go
 go_sync_atomic_c_files = \
 	go/sync/atomic/atomic.c
 
@@ -1784,9 +1796,20 @@ go_syscall_c_files = \
 
 go_syscall_test_files = \
 	$(syscall_creds_test_file) \
+	go/syscall/export_test.go \
 	go/syscall/mmap_unix_test.go \
 	go/syscall/syscall_test.go \
 	go/syscall/syscall_unix_test.go
+
+if LIBGO_IS_LINUX
+internal_syscall_getrandom_file = go/internal/syscall/getrandom_linux.go
+else
+internal_syscall_getrandom_file =
+endif
+
+go_internal_syscall_files = \
+	go/internal/syscall/dummy.go \
+	$(internal_syscall_getrandom_file)
 
 libcalls.go: s-libcalls; @true
 s-libcalls: libcalls-list go/syscall/mksyscall.awk $(go_base_syscall_files)
@@ -1957,6 +1980,7 @@ libgo_go_objs = \
 	net/http/fcgi.lo \
 	net/http/httptest.lo \
 	net/http/httputil.lo \
+	net/http/internal.lo \
 	net/http/pprof.lo \
 	image/color.lo \
 	image/color/palette.lo \
@@ -1965,6 +1989,7 @@ libgo_go_objs = \
 	image/jpeg.lo \
 	image/png.lo \
 	index/suffixarray.lo \
+	internal/syscall.lo \
 	io/ioutil.lo \
 	log/syslog.lo \
 	log/syslog/syslog_c.lo \
@@ -3160,6 +3185,15 @@ net/http/httputil/check: $(check_deps)
 	@$(CHECK)
 .PHONY: net/http/httputil/check
 
+@go_include@ net/http/internal.lo.dep
+net/http/internal.lo.dep: $(go_net_http_internal_files)
+	$(BUILDDEPS)
+net/http/internal.lo: $(go_net_http_internal_files)
+	$(BUILDPACKAGE)
+net/http/internal/check: $(CHECK_DEPS)
+	@$(CHECK)
+.PHONY: net/http/internal/check
+
 @go_include@ net/http/pprof.lo.dep
 net/http/pprof.lo.dep: $(go_net_http_pprof_files)
 	$(BUILDDEPS)
@@ -3260,7 +3294,8 @@ runtime/pprof/check: $(CHECK_DEPS)
 .PHONY: runtime/pprof/check
 # At least for now, we need -static-libgo for this test, because
 # otherwise we can't get the line numbers.
-runtime_pprof_check_GOCFLAGS = -static-libgo
+# Also use -fno-inline to get better results from the memory profiler.
+runtime_pprof_check_GOCFLAGS = -static-libgo -fno-inline
 
 @go_include@ sync/atomic.lo.dep
 sync/atomic.lo.dep: $(go_sync_atomic_files)
@@ -3362,6 +3397,15 @@ syscall/wait.lo: go/syscall/wait.c
 syscall/check: $(CHECK_DEPS)
 	@$(CHECK)
 .PHONY: syscall/check
+
+@go_include@ internal/syscall.lo.dep
+internal/syscall.lo.dep: $(go_internal_syscall_files)
+	$(BUILDDEPS)
+internal/syscall.lo: $(go_internal_syscall_files)
+	$(BUILDPACKAGE)
+internal/syscall/check: $(CHECK_DEPS)
+	@$(CHECK)
+.PHONY: internal/syscall/check
 
 # How to build a .gox file from a .lo file.
 BUILDGOX = \
@@ -3623,6 +3667,9 @@ net/http/httputil.gox: net/http/httputil.lo
 net/http/pprof.gox: net/http/pprof.lo
 	$(BUILDGOX)
 
+net/http/internal.gox: net/http/internal.lo
+	$(BUILDGOX)
+
 net/rpc/jsonrpc.gox: net/rpc/jsonrpc.lo
 	$(BUILDGOX)
 
@@ -3650,6 +3697,9 @@ runtime/pprof.gox: runtime/pprof.lo
 	$(BUILDGOX)
 
 sync/atomic.gox: sync/atomic.lo
+	$(BUILDGOX)
+
+internal/syscall.gox: internal/syscall.lo
 	$(BUILDGOX)
 
 text/scanner.gox: text/scanner.lo
@@ -3773,6 +3823,7 @@ TEST_PACKAGES = \
 	net/http/fcgi/check \
 	net/http/httptest/check \
 	net/http/httputil/check \
+	net/http/internal/check \
 	net/mail/check \
 	net/rpc/check \
 	net/smtp/check \

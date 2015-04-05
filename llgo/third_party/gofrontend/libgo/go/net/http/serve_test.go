@@ -15,6 +15,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net"
 	. "net/http"
 	"net/http/httptest"
@@ -777,6 +778,35 @@ func TestChunkedResponseHeaders(t *testing.T) {
 	}
 }
 
+func TestIdentityResponseHeaders(t *testing.T) {
+	defer afterTest(t)
+	log.SetOutput(ioutil.Discard) // is noisy otherwise
+	defer log.SetOutput(os.Stderr)
+
+	ts := httptest.NewServer(HandlerFunc(func(w ResponseWriter, r *Request) {
+		w.Header().Set("Transfer-Encoding", "identity")
+		w.(Flusher).Flush()
+		fmt.Fprintf(w, "I am an identity response.")
+	}))
+	defer ts.Close()
+
+	res, err := Get(ts.URL)
+	if err != nil {
+		t.Fatalf("Get error: %v", err)
+	}
+	defer res.Body.Close()
+
+	if g, e := res.TransferEncoding, []string(nil); !reflect.DeepEqual(g, e) {
+		t.Errorf("expected TransferEncoding of %v; got %v", e, g)
+	}
+	if _, haveCL := res.Header["Content-Length"]; haveCL {
+		t.Errorf("Unexpected Content-Length")
+	}
+	if !res.Close {
+		t.Errorf("expected Connection: close; got %v", res.Close)
+	}
+}
+
 // Test304Responses verifies that 304s don't declare that they're
 // chunking in their response headers and aren't allowed to produce
 // output.
@@ -1186,6 +1216,82 @@ func TestTimeoutHandler(t *testing.T) {
 	if g, e := <-writeErrors, ErrHandlerTimeout; g != e {
 		t.Errorf("expected Write error of %v; got %v", e, g)
 	}
+}
+
+// See issues 8209 and 8414.
+func TestTimeoutHandlerRace(t *testing.T) {
+	defer afterTest(t)
+
+	delayHi := HandlerFunc(func(w ResponseWriter, r *Request) {
+		ms, _ := strconv.Atoi(r.URL.Path[1:])
+		if ms == 0 {
+			ms = 1
+		}
+		for i := 0; i < ms; i++ {
+			w.Write([]byte("hi"))
+			time.Sleep(time.Millisecond)
+		}
+	})
+
+	ts := httptest.NewServer(TimeoutHandler(delayHi, 20*time.Millisecond, ""))
+	defer ts.Close()
+
+	var wg sync.WaitGroup
+	gate := make(chan bool, 10)
+	n := 50
+	if testing.Short() {
+		n = 10
+		gate = make(chan bool, 3)
+	}
+	for i := 0; i < n; i++ {
+		gate <- true
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer func() { <-gate }()
+			res, err := Get(fmt.Sprintf("%s/%d", ts.URL, rand.Intn(50)))
+			if err == nil {
+				io.Copy(ioutil.Discard, res.Body)
+				res.Body.Close()
+			}
+		}()
+	}
+	wg.Wait()
+}
+
+// See issues 8209 and 8414.
+func TestTimeoutHandlerRaceHeader(t *testing.T) {
+	defer afterTest(t)
+
+	delay204 := HandlerFunc(func(w ResponseWriter, r *Request) {
+		w.WriteHeader(204)
+	})
+
+	ts := httptest.NewServer(TimeoutHandler(delay204, time.Nanosecond, ""))
+	defer ts.Close()
+
+	var wg sync.WaitGroup
+	gate := make(chan bool, 50)
+	n := 500
+	if testing.Short() {
+		n = 10
+	}
+	for i := 0; i < n; i++ {
+		gate <- true
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer func() { <-gate }()
+			res, err := Get(ts.URL)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			defer res.Body.Close()
+			io.Copy(ioutil.Discard, res.Body)
+		}()
+	}
+	wg.Wait()
 }
 
 // Verifies we don't path.Clean() on the wrong parts in redirects.
@@ -2405,13 +2511,13 @@ func TestServerConnState(t *testing.T) {
 	}
 
 	want := map[int][]ConnState{
-		1: []ConnState{StateNew, StateActive, StateIdle, StateActive, StateClosed},
-		2: []ConnState{StateNew, StateActive, StateIdle, StateActive, StateClosed},
-		3: []ConnState{StateNew, StateActive, StateHijacked},
-		4: []ConnState{StateNew, StateActive, StateHijacked},
-		5: []ConnState{StateNew, StateClosed},
-		6: []ConnState{StateNew, StateActive, StateClosed},
-		7: []ConnState{StateNew, StateActive, StateIdle, StateClosed},
+		1: {StateNew, StateActive, StateIdle, StateActive, StateClosed},
+		2: {StateNew, StateActive, StateIdle, StateActive, StateClosed},
+		3: {StateNew, StateActive, StateHijacked},
+		4: {StateNew, StateActive, StateHijacked},
+		5: {StateNew, StateClosed},
+		6: {StateNew, StateActive, StateClosed},
+		7: {StateNew, StateActive, StateIdle, StateClosed},
 	}
 	logString := func(m map[int][]ConnState) string {
 		var b bytes.Buffer
@@ -2531,6 +2637,126 @@ func TestServerConnStateNew(t *testing.T) {
 	}
 }
 
+type closeWriteTestConn struct {
+	rwTestConn
+	didCloseWrite bool
+}
+
+func (c *closeWriteTestConn) CloseWrite() error {
+	c.didCloseWrite = true
+	return nil
+}
+
+func TestCloseWrite(t *testing.T) {
+	var srv Server
+	var testConn closeWriteTestConn
+	c, err := ExportServerNewConn(&srv, &testConn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ExportCloseWriteAndWait(c)
+	if !testConn.didCloseWrite {
+		t.Error("didn't see CloseWrite call")
+	}
+}
+
+// This verifies that a handler can Flush and then Hijack.
+//
+// An similar test crashed once during development, but it was only
+// testing this tangentially and temporarily until another TODO was
+// fixed.
+//
+// So add an explicit test for this.
+func TestServerFlushAndHijack(t *testing.T) {
+	defer afterTest(t)
+	ts := httptest.NewServer(HandlerFunc(func(w ResponseWriter, r *Request) {
+		io.WriteString(w, "Hello, ")
+		w.(Flusher).Flush()
+		conn, buf, _ := w.(Hijacker).Hijack()
+		buf.WriteString("6\r\nworld!\r\n0\r\n\r\n")
+		if err := buf.Flush(); err != nil {
+			t.Error(err)
+		}
+		if err := conn.Close(); err != nil {
+			t.Error(err)
+		}
+	}))
+	defer ts.Close()
+	res, err := Get(ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	all, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "Hello, world!"; string(all) != want {
+		t.Errorf("Got %q; want %q", all, want)
+	}
+}
+
+// golang.org/issue/8534 -- the Server shouldn't reuse a connection
+// for keep-alive after it's seen any Write error (e.g. a timeout) on
+// that net.Conn.
+//
+// To test, verify we don't timeout or see fewer unique client
+// addresses (== unique connections) than requests.
+func TestServerKeepAliveAfterWriteError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in -short mode")
+	}
+	defer afterTest(t)
+	const numReq = 3
+	addrc := make(chan string, numReq)
+	ts := httptest.NewUnstartedServer(HandlerFunc(func(w ResponseWriter, r *Request) {
+		addrc <- r.RemoteAddr
+		time.Sleep(500 * time.Millisecond)
+		w.(Flusher).Flush()
+	}))
+	ts.Config.WriteTimeout = 250 * time.Millisecond
+	ts.Start()
+	defer ts.Close()
+
+	errc := make(chan error, numReq)
+	go func() {
+		defer close(errc)
+		for i := 0; i < numReq; i++ {
+			res, err := Get(ts.URL)
+			if res != nil {
+				res.Body.Close()
+			}
+			errc <- err
+		}
+	}()
+
+	timeout := time.NewTimer(numReq * 2 * time.Second) // 4x overkill
+	defer timeout.Stop()
+	addrSeen := map[string]bool{}
+	numOkay := 0
+	for {
+		select {
+		case v := <-addrc:
+			addrSeen[v] = true
+		case err, ok := <-errc:
+			if !ok {
+				if len(addrSeen) != numReq {
+					t.Errorf("saw %d unique client addresses; want %d", len(addrSeen), numReq)
+				}
+				if numOkay != 0 {
+					t.Errorf("got %d successful client requests; want 0", numOkay)
+				}
+				return
+			}
+			if err == nil {
+				numOkay++
+			}
+		case <-timeout.C:
+			t.Fatal("timeout waiting for requests to complete")
+		}
+	}
+}
+
 func BenchmarkClientServer(b *testing.B) {
 	b.ReportAllocs()
 	b.StopTimer()
@@ -2560,24 +2786,44 @@ func BenchmarkClientServer(b *testing.B) {
 }
 
 func BenchmarkClientServerParallel4(b *testing.B) {
-	benchmarkClientServerParallel(b, 4)
+	benchmarkClientServerParallel(b, 4, false)
 }
 
 func BenchmarkClientServerParallel64(b *testing.B) {
-	benchmarkClientServerParallel(b, 64)
+	benchmarkClientServerParallel(b, 64, false)
 }
 
-func benchmarkClientServerParallel(b *testing.B, parallelism int) {
+func BenchmarkClientServerParallelTLS4(b *testing.B) {
+	benchmarkClientServerParallel(b, 4, true)
+}
+
+func BenchmarkClientServerParallelTLS64(b *testing.B) {
+	benchmarkClientServerParallel(b, 64, true)
+}
+
+func benchmarkClientServerParallel(b *testing.B, parallelism int, useTLS bool) {
 	b.ReportAllocs()
-	ts := httptest.NewServer(HandlerFunc(func(rw ResponseWriter, r *Request) {
+	ts := httptest.NewUnstartedServer(HandlerFunc(func(rw ResponseWriter, r *Request) {
 		fmt.Fprintf(rw, "Hello world.\n")
 	}))
+	if useTLS {
+		ts.StartTLS()
+	} else {
+		ts.Start()
+	}
 	defer ts.Close()
 	b.ResetTimer()
 	b.SetParallelism(parallelism)
 	b.RunParallel(func(pb *testing.PB) {
+		noVerifyTransport := &Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		defer noVerifyTransport.CloseIdleConnections()
+		client := &Client{Transport: noVerifyTransport}
 		for pb.Next() {
-			res, err := Get(ts.URL)
+			res, err := client.Get(ts.URL)
 			if err != nil {
 				b.Logf("Get: %v", err)
 				continue

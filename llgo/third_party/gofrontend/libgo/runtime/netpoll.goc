@@ -79,9 +79,9 @@ static struct
 
 static bool	netpollblock(PollDesc*, int32, bool);
 static G*	netpollunblock(PollDesc*, int32, bool);
-static void	deadline(int64, Eface);
-static void	readDeadline(int64, Eface);
-static void	writeDeadline(int64, Eface);
+static void	deadline(Eface, uintptr);
+static void	readDeadline(Eface, uintptr);
+static void	writeDeadline(Eface, uintptr);
 static PollDesc*	allocPollDesc(void);
 static intgo	checkerr(PollDesc *pd, int32 mode);
 
@@ -197,22 +197,25 @@ func runtime_pollSetDeadline(pd *PollDesc, d int64, mode int) {
 		// Copy current seq into the timer arg.
 		// Timer func will check the seq against current descriptor seq,
 		// if they differ the descriptor was reused or timers were reset.
-		pd->rt.arg.type = (Type*)pd->seq;
+		pd->rt.arg.type = nil; // should be *pollDesc type descriptor.
 		pd->rt.arg.data = pd;
+		pd->rt.seq = pd->seq;
 		runtime_addtimer(&pd->rt);
 	} else {
 		if(pd->rd > 0) {
 			pd->rt.fv = &readDeadlineFn;
 			pd->rt.when = pd->rd;
-			pd->rt.arg.type = (Type*)pd->seq;
+			pd->rt.arg.type = nil; // should be *pollDesc type descriptor.
 			pd->rt.arg.data = pd;
+			pd->rt.seq = pd->seq;
 			runtime_addtimer(&pd->rt);
 		}
 		if(pd->wd > 0) {
 			pd->wt.fv = &writeDeadlineFn;
 			pd->wt.when = pd->wd;
-			pd->wt.arg.type = (Type*)pd->seq;
+			pd->wt.arg.type = nil; // should be *pollDesc type descriptor.
 			pd->wt.arg.data = pd;
+			pd->wt.seq = pd->seq;
 			runtime_addtimer(&pd->wt);
 		}
 	}
@@ -389,19 +392,16 @@ netpollunblock(PollDesc *pd, int32 mode, bool ioready)
 }
 
 static void
-deadlineimpl(int64 now, Eface arg, bool read, bool write)
+deadlineimpl(Eface arg, uintptr seq, bool read, bool write)
 {
 	PollDesc *pd;
-	uint32 seq;
 	G *rg, *wg;
 
-	USED(now);
 	pd = (PollDesc*)arg.data;
-	// This is the seq when the timer was set.
-	// If it's stale, ignore the timer event.
-	seq = (uintptr)arg.type;
 	rg = wg = nil;
 	runtime_lock(&pd->lock);
+	// Seq arg is seq when the timer was set.
+	// If it's stale, ignore the timer event.
 	if(seq != pd->seq) {
 		// The descriptor was reused or timers were reset.
 		runtime_unlock(&pd->lock);
@@ -429,21 +429,21 @@ deadlineimpl(int64 now, Eface arg, bool read, bool write)
 }
 
 static void
-deadline(int64 now, Eface arg)
+deadline(Eface arg, uintptr seq)
 {
-	deadlineimpl(now, arg, true, true);
+	deadlineimpl(arg, seq, true, true);
 }
 
 static void
-readDeadline(int64 now, Eface arg)
+readDeadline(Eface arg, uintptr seq)
 {
-	deadlineimpl(now, arg, true, false);
+	deadlineimpl(arg, seq, true, false);
 }
 
 static void
-writeDeadline(int64 now, Eface arg)
+writeDeadline(Eface arg, uintptr seq)
 {
-	deadlineimpl(now, arg, false, true);
+	deadlineimpl(arg, seq, false, true);
 }
 
 static PollDesc*

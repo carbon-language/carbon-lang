@@ -17,6 +17,13 @@
 // These calls return err == nil to indicate success; otherwise
 // err is an operating system error describing the failure.
 // On most systems, that error has type syscall.Errno.
+//
+// NOTE: This package is locked down. Code outside the standard
+// Go repository should be migrated to use the corresponding
+// package in the go.sys subrepository. That is also where updates
+// required by new systems or versions should be applied.
+// See https://golang.org/s/go1.4-syscall for more information.
+//
 package syscall
 
 import "unsafe"
@@ -85,3 +92,8 @@ func (ts *Timespec) Nano() int64 {
 func (tv *Timeval) Nano() int64 {
 	return int64(tv.Sec)*1e9 + int64(tv.Usec)*1000
 }
+
+// use is a no-op, but the compiler cannot see that it is.
+// Calling use(p) ensures that p is kept live until that point.
+//go:noescape
+func use(p unsafe.Pointer)

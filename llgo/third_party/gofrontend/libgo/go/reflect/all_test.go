@@ -679,7 +679,7 @@ var deepEqualTests = []DeepEqualTest{
 	{1, nil, false},
 	{fn1, fn3, false},
 	{fn3, fn3, false},
-	{[][]int{[]int{1}}, [][]int{[]int{2}}, false},
+	{[][]int{{1}}, [][]int{{2}}, false},
 
 	// Nil vs empty: not the same.
 	{[]int{}, []int(nil), false},
@@ -2507,10 +2507,21 @@ func TestAllocations(t *testing.T) {
 	noAlloc(t, 100, func(j int) {
 		var i interface{}
 		var v Value
-		i = 42 + j
+
+		// We can uncomment this when compiler escape analysis
+		// is good enough to see that the integer assigned to i
+		// does not escape and therefore need not be allocated.
+		//
+		// i = 42 + j
+		// v = ValueOf(i)
+		// if int(v.Int()) != 42+j {
+		// 	panic("wrong int")
+		// }
+
+		i = func(j int) int { return j }
 		v = ValueOf(i)
-		if int(v.Int()) != 42+j {
-			panic("wrong int")
+		if v.Interface().(func(int) int)(j) != j {
+			panic("wrong result")
 		}
 	})
 }
@@ -2571,6 +2582,15 @@ func TestSlice(t *testing.T) {
 	if vs != s[3:5] {
 		t.Errorf("s.Slice(3, 5) = %q; expected %q", vs, s[3:5])
 	}
+
+	rv := ValueOf(&xs).Elem()
+	rv = rv.Slice(3, 4)
+	ptr2 := rv.Pointer()
+	rv = rv.Slice(5, 5)
+	ptr3 := rv.Pointer()
+	if ptr3 != ptr2 {
+		t.Errorf("xs.Slice(3,4).Slice3(5,5).Pointer() = %#x, want %#x", ptr3, ptr2)
+	}
 }
 
 func TestSlice3(t *testing.T) {
@@ -2609,6 +2629,15 @@ func TestSlice3(t *testing.T) {
 	s := "hello world"
 	rv = ValueOf(&s).Elem()
 	shouldPanic(func() { rv.Slice3(1, 2, 3) })
+
+	rv = ValueOf(&xs).Elem()
+	rv = rv.Slice3(3, 5, 7)
+	ptr2 := rv.Pointer()
+	rv = rv.Slice3(4, 4, 4)
+	ptr3 := rv.Pointer()
+	if ptr3 != ptr2 {
+		t.Errorf("xs.Slice3(3,5,7).Slice3(4,4,4).Pointer() = %#x, want %#x", ptr3, ptr2)
+	}
 }
 
 func TestSetLenCap(t *testing.T) {
@@ -2664,6 +2693,26 @@ func TestFuncArg(t *testing.T) {
 	r := ValueOf(f1).Call([]Value{ValueOf(100), ValueOf(f2)})
 	if r[0].Int() != 101 {
 		t.Errorf("function returned %d, want 101", r[0].Int())
+	}
+}
+
+func TestStructArg(t *testing.T) {
+	type padded struct {
+		B string
+		C int32
+	}
+	var (
+		gotA  padded
+		gotB  uint32
+		wantA = padded{"3", 4}
+		wantB = uint32(5)
+	)
+	f := func(a padded, b uint32) {
+		gotA, gotB = a, b
+	}
+	ValueOf(f).Call([]Value{ValueOf(wantA), ValueOf(wantB)})
+	if gotA != wantA || gotB != wantB {
+		t.Errorf("function called with (%v, %v), want (%v, %v)", gotA, gotB, wantA, wantB)
 	}
 }
 
@@ -3244,6 +3293,44 @@ func TestConvert(t *testing.T) {
 	}
 }
 
+type ComparableStruct struct {
+	X int
+}
+
+type NonComparableStruct struct {
+	X int
+	Y map[string]int
+}
+
+var comparableTests = []struct {
+	typ Type
+	ok  bool
+}{
+	{TypeOf(1), true},
+	{TypeOf("hello"), true},
+	{TypeOf(new(byte)), true},
+	{TypeOf((func())(nil)), false},
+	{TypeOf([]byte{}), false},
+	{TypeOf(map[string]int{}), false},
+	{TypeOf(make(chan int)), true},
+	{TypeOf(1.5), true},
+	{TypeOf(false), true},
+	{TypeOf(1i), true},
+	{TypeOf(ComparableStruct{}), true},
+	{TypeOf(NonComparableStruct{}), false},
+	{TypeOf([10]map[string]int{}), false},
+	{TypeOf([10]string{}), true},
+	{TypeOf(new(interface{})).Elem(), true},
+}
+
+func TestComparable(t *testing.T) {
+	for _, tt := range comparableTests {
+		if ok := tt.typ.Comparable(); ok != tt.ok {
+			t.Errorf("TypeOf(%v).Comparable() = %v, want %v", tt.typ, ok, tt.ok)
+		}
+	}
+}
+
 func TestOverflow(t *testing.T) {
 	if ovf := V(float64(0)).OverflowFloat(1e300); ovf {
 		t.Errorf("%v wrongly overflows float64", 1e300)
@@ -3290,6 +3377,9 @@ func checkSameType(t *testing.T, x, y interface{}) {
 }
 
 func TestArrayOf(t *testing.T) {
+	// TODO(rsc): Finish ArrayOf and enable-test.
+	t.Skip("ArrayOf is not finished (and not exported)")
+
 	// check construction and use of type not in binary
 	type T int
 	at := ArrayOf(10, TypeOf(T(1)))
@@ -3910,4 +4000,167 @@ func TestCallMethodJump(t *testing.T) {
 
 	// Stop garbage collecting during reflect.call.
 	*CallGC = false
+}
+
+func TestMakeFuncStackCopy(t *testing.T) {
+	target := func(in []Value) []Value {
+		runtime.GC()
+		useStack(16)
+		return []Value{ValueOf(9)}
+	}
+
+	var concrete func(*int, int) int
+	fn := MakeFunc(ValueOf(concrete).Type(), target)
+	ValueOf(&concrete).Elem().Set(fn)
+	x := concrete(nil, 7)
+	if x != 9 {
+		t.Errorf("have %#q want 9", x)
+	}
+}
+
+// use about n KB of stack
+func useStack(n int) {
+	if n == 0 {
+		return
+	}
+	var b [1024]byte // makes frame about 1KB
+	useStack(n - 1 + int(b[99]))
+}
+
+type Impl struct{}
+
+func (Impl) f() {}
+
+func TestValueString(t *testing.T) {
+	rv := ValueOf(Impl{})
+	if rv.String() != "<reflect_test.Impl Value>" {
+		t.Errorf("ValueOf(Impl{}).String() = %q, want %q", rv.String(), "<reflect_test.Impl Value>")
+	}
+
+	method := rv.Method(0)
+	if method.String() != "<func() Value>" {
+		t.Errorf("ValueOf(Impl{}).Method(0).String() = %q, want %q", method.String(), "<func() Value>")
+	}
+}
+
+func TestInvalid(t *testing.T) {
+	// Used to have inconsistency between IsValid() and Kind() != Invalid.
+	type T struct{ v interface{} }
+
+	v := ValueOf(T{}).Field(0)
+	if v.IsValid() != true || v.Kind() != Interface {
+		t.Errorf("field: IsValid=%v, Kind=%v, want true, Interface", v.IsValid(), v.Kind())
+	}
+	v = v.Elem()
+	if v.IsValid() != false || v.Kind() != Invalid {
+		t.Errorf("field elem: IsValid=%v, Kind=%v, want false, Invalid", v.IsValid(), v.Kind())
+	}
+}
+
+// Issue 8917.
+func TestLargeGCProg(t *testing.T) {
+	fv := ValueOf(func([256]*byte) {})
+	fv.Call([]Value{ValueOf([256]*byte{})})
+}
+
+// Issue 9179.
+func TestCallGC(t *testing.T) {
+	f := func(a, b, c, d, e string) {
+	}
+	g := func(in []Value) []Value {
+		runtime.GC()
+		return nil
+	}
+	typ := ValueOf(f).Type()
+	f2 := MakeFunc(typ, g).Interface().(func(string, string, string, string, string))
+	f2("four", "five5", "six666", "seven77", "eight888")
+}
+
+type funcLayoutTest struct {
+	rcvr, t            Type
+	argsize, retOffset uintptr
+	stack              []byte
+}
+
+var funcLayoutTests []funcLayoutTest
+
+func init() {
+	var argAlign = PtrSize
+	if runtime.GOARCH == "amd64p32" {
+		argAlign = 2 * PtrSize
+	}
+	roundup := func(x uintptr, a uintptr) uintptr {
+		return (x + a - 1) / a * a
+	}
+
+	funcLayoutTests = append(funcLayoutTests,
+		funcLayoutTest{
+			nil,
+			ValueOf(func(a, b string) string { return "" }).Type(),
+			4 * PtrSize,
+			4 * PtrSize,
+			[]byte{BitsPointer, BitsScalar, BitsPointer},
+		})
+
+	var r []byte
+	if PtrSize == 4 {
+		r = []byte{BitsScalar, BitsScalar, BitsScalar, BitsPointer}
+	} else {
+		r = []byte{BitsScalar, BitsScalar, BitsPointer}
+	}
+	funcLayoutTests = append(funcLayoutTests,
+		funcLayoutTest{
+			nil,
+			ValueOf(func(a, b, c uint32, p *byte, d uint16) {}).Type(),
+			roundup(3*4, PtrSize) + PtrSize + 2,
+			roundup(roundup(3*4, PtrSize)+PtrSize+2, argAlign),
+			r,
+		})
+
+	funcLayoutTests = append(funcLayoutTests,
+		funcLayoutTest{
+			nil,
+			ValueOf(func(a map[int]int, b uintptr, c interface{}) {}).Type(),
+			4 * PtrSize,
+			4 * PtrSize,
+			[]byte{BitsPointer, BitsScalar, BitsPointer, BitsPointer},
+		})
+
+	type S struct {
+		a, b uintptr
+		c, d *byte
+	}
+	funcLayoutTests = append(funcLayoutTests,
+		funcLayoutTest{
+			nil,
+			ValueOf(func(a S) {}).Type(),
+			4 * PtrSize,
+			4 * PtrSize,
+			[]byte{BitsScalar, BitsScalar, BitsPointer, BitsPointer},
+		})
+
+	funcLayoutTests = append(funcLayoutTests,
+		funcLayoutTest{
+			ValueOf((*byte)(nil)).Type(),
+			ValueOf(func(a uintptr, b *int) {}).Type(),
+			3 * PtrSize,
+			roundup(3*PtrSize, argAlign),
+			[]byte{BitsPointer, BitsScalar, BitsPointer},
+		})
+}
+
+func TestFuncLayout(t *testing.T) {
+	t.Skip("gccgo does not use funcLayout")
+	for _, lt := range funcLayoutTests {
+		_, argsize, retOffset, stack := FuncLayout(lt.t, lt.rcvr)
+		if argsize != lt.argsize {
+			t.Errorf("funcLayout(%v, %v).argsize=%d, want %d", lt.t, lt.rcvr, argsize, lt.argsize)
+		}
+		if retOffset != lt.retOffset {
+			t.Errorf("funcLayout(%v, %v).retOffset=%d, want %d", lt.t, lt.rcvr, retOffset, lt.retOffset)
+		}
+		if !bytes.Equal(stack, lt.stack) {
+			t.Errorf("funcLayout(%v, %v).stack=%v, want %v", lt.t, lt.rcvr, stack, lt.stack)
+		}
+	}
 }

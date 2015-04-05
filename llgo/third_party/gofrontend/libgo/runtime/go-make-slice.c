@@ -30,7 +30,7 @@ __go_make_slice2 (const struct __go_type_descriptor *td, uintptr_t len,
   uintptr_t size;
   struct __go_open_array ret;
 
-  __go_assert (td->__code == GO_SLICE);
+  __go_assert ((td->__code & GO_CODE_MASK) == GO_SLICE);
   std = (const struct __go_slice_type *) td;
 
   ilen = (intgo) len;

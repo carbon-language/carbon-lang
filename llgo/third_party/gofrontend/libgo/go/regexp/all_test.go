@@ -6,6 +6,7 @@ package regexp
 
 import (
 	"reflect"
+	"regexp/syntax"
 	"strings"
 	"testing"
 )
@@ -473,9 +474,19 @@ func TestSplit(t *testing.T) {
 	}
 }
 
-// This ran out of stack before issue 7608 was fixed.
+// Check that one-pass cutoff does trigger.
 func TestOnePassCutoff(t *testing.T) {
-	MustCompile(`^(?:x{1,1000}){1,1000}$`)
+	re, err := syntax.Parse(`^x{1,1000}y{1,1000}$`, syntax.Perl)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	p, err := syntax.Compile(re.Simplify())
+	if err != nil {
+		t.Fatalf("compile: %v", err)
+	}
+	if compileOnePass(p) != notOnePass {
+		t.Fatalf("makeOnePass succeeded; wanted notOnePass")
+	}
 }
 
 func BenchmarkLiteral(b *testing.B) {

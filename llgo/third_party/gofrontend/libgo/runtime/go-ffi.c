@@ -52,6 +52,14 @@ go_array_to_ffi (const struct __go_array_type *descriptor)
   ret = (ffi_type *) __go_alloc (sizeof (ffi_type));
   ret->type = FFI_TYPE_STRUCT;
   len = descriptor->__len;
+  if (len == 0)
+    {
+      /* The libffi library won't accept an empty struct.  */
+      ret->elements = (ffi_type **) __go_alloc (2 * sizeof (ffi_type *));
+      ret->elements[0] = &ffi_type_void;
+      ret->elements[1] = NULL;
+      return ret;
+    }
   ret->elements = (ffi_type **) __go_alloc ((len + 1) * sizeof (ffi_type *));
   element = go_type_to_ffi (descriptor->__element_type);
   for (i = 0; i < len; ++i)
@@ -92,11 +100,16 @@ go_struct_to_ffi (const struct __go_struct_type *descriptor)
   int i;
 
   field_count = descriptor->__fields.__count;
-  if (field_count == 0) {
-    return &ffi_type_void;
-  }
   ret = (ffi_type *) __go_alloc (sizeof (ffi_type));
   ret->type = FFI_TYPE_STRUCT;
+  if (field_count == 0)
+    {
+      /* The libffi library won't accept an empty struct.  */
+      ret->elements = (ffi_type **) __go_alloc (2 * sizeof (ffi_type *));
+      ret->elements[0] = &ffi_type_void;
+      ret->elements[1] = NULL;
+      return ret;
+    }
   fields = (const struct __go_struct_field *) descriptor->__fields.__values;
   ret->elements = (ffi_type **) __go_alloc ((field_count + 1)
 					    * sizeof (ffi_type *));

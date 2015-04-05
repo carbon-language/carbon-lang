@@ -9,7 +9,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
@@ -258,6 +257,16 @@ type serverTest struct {
 	expectedPeerCerts []string
 	// config, if not nil, contains a custom Config to use for this test.
 	config *Config
+	// expectAlert, if true, indicates that a fatal alert should be returned
+	// when handshaking with the server.
+	expectAlert bool
+	// expectHandshakeErrorIncluding, when not empty, contains a string
+	// that must be a substring of the error resulting from the handshake.
+	expectHandshakeErrorIncluding string
+	// validate, if not nil, is a function that will be called with the
+	// ConnectionState of the resulting connection. It returns false if the
+	// ConnectionState is unacceptable.
+	validate func(ConnectionState) error
 }
 
 var defaultClientCommand = []string{"openssl", "s_client", "-no_ticket"}
@@ -354,20 +363,30 @@ func (test *serverTest) run(t *testing.T, write bool) {
 		config = testConfig
 	}
 	server := Server(serverConn, config)
-	peerCertsChan := make(chan []*x509.Certificate, 1)
+	connStateChan := make(chan ConnectionState, 1)
 	go func() {
-		if _, err := server.Write([]byte("hello, world\n")); err != nil {
+		var err error
+		if _, err = server.Write([]byte("hello, world\n")); err != nil {
 			t.Logf("Error from Server.Write: %s", err)
+		}
+		if len(test.expectHandshakeErrorIncluding) > 0 {
+			if err == nil {
+				t.Errorf("Error expected, but no error returned")
+			} else if s := err.Error(); !strings.Contains(s, test.expectHandshakeErrorIncluding) {
+				t.Errorf("Error expected containing '%s' but got '%s'", test.expectHandshakeErrorIncluding, s)
+			}
 		}
 		server.Close()
 		serverConn.Close()
-		peerCertsChan <- server.ConnectionState().PeerCertificates
+		connStateChan <- server.ConnectionState()
 	}()
 
 	if !write {
 		flows, err := test.loadData()
 		if err != nil {
-			t.Fatalf("%s: failed to load data from %s", test.name, test.dataPath())
+			if !test.expectAlert {
+				t.Fatalf("%s: failed to load data from %s", test.name, test.dataPath())
+			}
 		}
 		for i, b := range flows {
 			if i%2 == 0 {
@@ -376,17 +395,24 @@ func (test *serverTest) run(t *testing.T, write bool) {
 			}
 			bb := make([]byte, len(b))
 			n, err := io.ReadFull(clientConn, bb)
-			if err != nil {
-				t.Fatalf("%s #%d: %s\nRead %d, wanted %d, got %x, wanted %x\n", test.name, i+1, err, n, len(bb), bb[:n], b)
-			}
-			if !bytes.Equal(b, bb) {
-				t.Fatalf("%s #%d: mismatch on read: got:%x want:%x", test.name, i+1, bb, b)
+			if test.expectAlert {
+				if err == nil {
+					t.Fatal("Expected read failure but read succeeded")
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("%s #%d: %s\nRead %d, wanted %d, got %x, wanted %x\n", test.name, i+1, err, n, len(bb), bb[:n], b)
+				}
+				if !bytes.Equal(b, bb) {
+					t.Fatalf("%s #%d: mismatch on read: got:%x want:%x", test.name, i+1, bb, b)
+				}
 			}
 		}
 		clientConn.Close()
 	}
 
-	peerCerts := <-peerCertsChan
+	connState := <-connStateChan
+	peerCerts := connState.PeerCertificates
 	if len(peerCerts) == len(test.expectedPeerCerts) {
 		for i, peerCert := range peerCerts {
 			block, _ := pem.Decode([]byte(test.expectedPeerCerts[i]))
@@ -396,6 +422,12 @@ func (test *serverTest) run(t *testing.T, write bool) {
 		}
 	} else {
 		t.Fatalf("%s: mismatch on peer list length: %d (wanted) != %d (got)", test.name, len(test.expectedPeerCerts), len(peerCerts))
+	}
+
+	if test.validate != nil {
+		if err := test.validate(connState); err != nil {
+			t.Fatalf("validate callback returned error: %s", err)
+		}
 	}
 
 	if write {
@@ -408,7 +440,9 @@ func (test *serverTest) run(t *testing.T, write bool) {
 		recordingConn.Close()
 		if len(recordingConn.flows) < 3 {
 			childProcess.Stdout.(*bytes.Buffer).WriteTo(os.Stdout)
-			t.Fatalf("Handshake failed")
+			if len(test.expectHandshakeErrorIncluding) == 0 {
+				t.Fatalf("Handshake failed")
+			}
 		}
 		recordingConn.WriteTo(out)
 		fmt.Printf("Wrote %s\n", path)
@@ -498,6 +532,49 @@ func TestHandshakeServerECDHEECDSAAES(t *testing.T) {
 	runServerTestTLS12(t, test)
 }
 
+func TestHandshakeServerALPN(t *testing.T) {
+	config := *testConfig
+	config.NextProtos = []string{"proto1", "proto2"}
+
+	test := &serverTest{
+		name: "ALPN",
+		// Note that this needs OpenSSL 1.0.2 because that is the first
+		// version that supports the -alpn flag.
+		command: []string{"openssl", "s_client", "-alpn", "proto2,proto1"},
+		config:  &config,
+		validate: func(state ConnectionState) error {
+			// The server's preferences should override the client.
+			if state.NegotiatedProtocol != "proto1" {
+				return fmt.Errorf("Got protocol %q, wanted proto1", state.NegotiatedProtocol)
+			}
+			return nil
+		},
+	}
+	runServerTestTLS12(t, test)
+}
+
+func TestHandshakeServerALPNNoMatch(t *testing.T) {
+	config := *testConfig
+	config.NextProtos = []string{"proto3"}
+
+	test := &serverTest{
+		name: "ALPN-NoMatch",
+		// Note that this needs OpenSSL 1.0.2 because that is the first
+		// version that supports the -alpn flag.
+		command: []string{"openssl", "s_client", "-alpn", "proto2,proto1"},
+		config:  &config,
+		validate: func(state ConnectionState) error {
+			// Rather than reject the connection, Go doesn't select
+			// a protocol when there is no overlap.
+			if state.NegotiatedProtocol != "" {
+				return fmt.Errorf("Got protocol %q, wanted ''", state.NegotiatedProtocol)
+			}
+			return nil
+		},
+	}
+	runServerTestTLS12(t, test)
+}
+
 // TestHandshakeServerSNI involves a client sending an SNI extension of
 // "snitest.com", which happens to match the CN of testSNICertificate. The test
 // verifies that the server correctly selects that certificate.
@@ -505,6 +582,61 @@ func TestHandshakeServerSNI(t *testing.T) {
 	test := &serverTest{
 		name:    "SNI",
 		command: []string{"openssl", "s_client", "-no_ticket", "-cipher", "AES128-SHA", "-servername", "snitest.com"},
+	}
+	runServerTestTLS12(t, test)
+}
+
+// TestHandshakeServerSNICertForName is similar to TestHandshakeServerSNI, but
+// tests the dynamic GetCertificate method
+func TestHandshakeServerSNIGetCertificate(t *testing.T) {
+	config := *testConfig
+
+	// Replace the NameToCertificate map with a GetCertificate function
+	nameToCert := config.NameToCertificate
+	config.NameToCertificate = nil
+	config.GetCertificate = func(clientHello *ClientHelloInfo) (*Certificate, error) {
+		cert, _ := nameToCert[clientHello.ServerName]
+		return cert, nil
+	}
+	test := &serverTest{
+		name:    "SNI",
+		command: []string{"openssl", "s_client", "-no_ticket", "-cipher", "AES128-SHA", "-servername", "snitest.com"},
+		config:  &config,
+	}
+	runServerTestTLS12(t, test)
+}
+
+// TestHandshakeServerSNICertForNameNotFound is similar to
+// TestHandshakeServerSNICertForName, but tests to make sure that when the
+// GetCertificate method doesn't return a cert, we fall back to what's in
+// the NameToCertificate map.
+func TestHandshakeServerSNIGetCertificateNotFound(t *testing.T) {
+	config := *testConfig
+
+	config.GetCertificate = func(clientHello *ClientHelloInfo) (*Certificate, error) {
+		return nil, nil
+	}
+	test := &serverTest{
+		name:    "SNI",
+		command: []string{"openssl", "s_client", "-no_ticket", "-cipher", "AES128-SHA", "-servername", "snitest.com"},
+		config:  &config,
+	}
+	runServerTestTLS12(t, test)
+}
+
+// TestHandshakeServerSNICertForNameError tests to make sure that errors in
+// GetCertificate result in a tls alert.
+func TestHandshakeServerSNIGetCertificateError(t *testing.T) {
+	config := *testConfig
+
+	config.GetCertificate = func(clientHello *ClientHelloInfo) (*Certificate, error) {
+		return nil, fmt.Errorf("Test error in GetCertificate")
+	}
+	test := &serverTest{
+		name:        "SNI",
+		command:     []string{"openssl", "s_client", "-no_ticket", "-cipher", "AES128-SHA", "-servername", "snitest.com"},
+		config:      &config,
+		expectAlert: true,
 	}
 	runServerTestTLS12(t, test)
 }
@@ -525,7 +657,7 @@ func TestCipherSuiteCertPreferenceECDSA(t *testing.T) {
 	config = *testConfig
 	config.CipherSuites = []uint16{TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA}
 	config.Certificates = []Certificate{
-		Certificate{
+		{
 			Certificate: [][]byte{testECDSACertificate},
 			PrivateKey:  testECDSAPrivateKey,
 		},
@@ -581,6 +713,16 @@ func TestResumptionDisabled(t *testing.T) {
 
 	// One needs to manually confirm that the handshake in the golden data
 	// file for ResumeDisabled does not include a resumption handshake.
+}
+
+func TestFallbackSCSV(t *testing.T) {
+	test := &serverTest{
+		name: "FallbackSCSV",
+		// OpenSSL 1.0.1j is needed for the -fallback_scsv option.
+		command: []string{"openssl", "s_client", "-fallback_scsv"},
+		expectHandshakeErrorIncluding: "inppropriate protocol fallback",
+	}
+	runServerTestTLS11(t, test)
 }
 
 // cert.pem and key.pem were generated with generate_cert.go

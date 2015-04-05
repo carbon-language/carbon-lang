@@ -14,6 +14,7 @@ import (
 	"os"
 	pathpkg "path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -25,16 +26,17 @@ type Package struct {
 	// Note: These fields are part of the go command's public API.
 	// See list.go.  It is okay to add fields, but not to change or
 	// remove existing ones.  Keep in sync with list.go
-	Dir         string `json:",omitempty"` // directory containing package sources
-	ImportPath  string `json:",omitempty"` // import path of package in dir
-	Name        string `json:",omitempty"` // package name
-	Doc         string `json:",omitempty"` // package documentation string
-	Target      string `json:",omitempty"` // install path
-	Goroot      bool   `json:",omitempty"` // is this package found in the Go root?
-	Standard    bool   `json:",omitempty"` // is this package part of the standard Go library?
-	Stale       bool   `json:",omitempty"` // would 'go install' do anything for this package?
-	Root        string `json:",omitempty"` // Go root or Go path dir containing this package
-	ConflictDir string `json:",omitempty"` // Dir is hidden by this other directory
+	Dir           string `json:",omitempty"` // directory containing package sources
+	ImportPath    string `json:",omitempty"` // import path of package in dir
+	ImportComment string `json:",omitempty"` // path in import comment on package statement
+	Name          string `json:",omitempty"` // package name
+	Doc           string `json:",omitempty"` // package documentation string
+	Target        string `json:",omitempty"` // install path
+	Goroot        bool   `json:",omitempty"` // is this package found in the Go root?
+	Standard      bool   `json:",omitempty"` // is this package part of the standard Go library?
+	Stale         bool   `json:",omitempty"` // would 'go install' do anything for this package?
+	Root          string `json:",omitempty"` // Go root or Go path dir containing this package
+	ConflictDir   string `json:",omitempty"` // Dir is hidden by this other directory
 
 	// Source files
 	GoFiles        []string `json:",omitempty"` // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
@@ -103,6 +105,7 @@ func (p *Package) copyBuild(pp *build.Package) {
 
 	p.Dir = pp.Dir
 	p.ImportPath = pp.ImportPath
+	p.ImportComment = pp.ImportComment
 	p.Name = pp.Name
 	p.Doc = pp.Doc
 	p.Root = pp.Root
@@ -218,7 +221,7 @@ func dirToImportPath(dir string) string {
 }
 
 func makeImportValid(r rune) rune {
-	// Should match Go spec, compilers, and ../../pkg/go/parser/parser.go:/isValidImport.
+	// Should match Go spec, compilers, and ../../go/parser/parser.go:/isValidImport.
 	const illegalChars = `!"#$%&'()*,:;<=>?[\]^{|}` + "`\uFFFD"
 	if !unicode.IsGraphic(r) || unicode.IsSpace(r) || strings.ContainsRune(illegalChars, r) {
 		return '_'
@@ -244,6 +247,9 @@ func loadImport(path string, srcDir string, stk *importStack, importPos []token.
 		importPath = dirToImportPath(filepath.Join(srcDir, path))
 	}
 	if p := packageCache[importPath]; p != nil {
+		if perr := disallowInternal(srcDir, p, stk); perr != p {
+			return perr
+		}
 		return reusePackage(p, stk)
 	}
 
@@ -258,16 +264,23 @@ func loadImport(path string, srcDir string, stk *importStack, importPos []token.
 	//
 	// TODO: After Go 1, decide when to pass build.AllowBinary here.
 	// See issue 3268 for mistakes to avoid.
-	bp, err := buildContext.Import(path, srcDir, 0)
+	bp, err := buildContext.Import(path, srcDir, build.ImportComment)
 	bp.ImportPath = importPath
 	if gobin != "" {
 		bp.BinDir = gobin
+	}
+	if err == nil && !isLocal && bp.ImportComment != "" && bp.ImportComment != path {
+		err = fmt.Errorf("code in directory %s expects import %q", bp.Dir, bp.ImportComment)
 	}
 	p.load(stk, bp, err)
 	if p.Error != nil && len(importPos) > 0 {
 		pos := importPos[0]
 		pos.Filename = shortPath(pos.Filename)
 		p.Error.Pos = pos.String()
+	}
+
+	if perr := disallowInternal(srcDir, p, stk); perr != p {
+		return perr
 	}
 
 	return p
@@ -298,12 +311,82 @@ func reusePackage(p *Package, stk *importStack) *Package {
 	return p
 }
 
+// disallowInternal checks that srcDir is allowed to import p.
+// If the import is allowed, disallowInternal returns the original package p.
+// If not, it returns a new package containing just an appropriate error.
+func disallowInternal(srcDir string, p *Package, stk *importStack) *Package {
+	// golang.org/s/go14internal:
+	// An import of a path containing the element “internal”
+	// is disallowed if the importing code is outside the tree
+	// rooted at the parent of the “internal” directory.
+	//
+	// ... For Go 1.4, we will implement the rule first for $GOROOT, but not $GOPATH.
+
+	// Only applies to $GOROOT.
+	if !p.Standard {
+		return p
+	}
+
+	// The stack includes p.ImportPath.
+	// If that's the only thing on the stack, we started
+	// with a name given on the command line, not an
+	// import. Anything listed on the command line is fine.
+	if len(*stk) == 1 {
+		return p
+	}
+
+	// Check for "internal" element: four cases depending on begin of string and/or end of string.
+	i, ok := findInternal(p.ImportPath)
+	if !ok {
+		return p
+	}
+
+	// Internal is present.
+	// Map import path back to directory corresponding to parent of internal.
+	if i > 0 {
+		i-- // rewind over slash in ".../internal"
+	}
+	parent := p.Dir[:i+len(p.Dir)-len(p.ImportPath)]
+	if hasPathPrefix(filepath.ToSlash(srcDir), filepath.ToSlash(parent)) {
+		return p
+	}
+
+	// Internal is present, and srcDir is outside parent's tree. Not allowed.
+	perr := *p
+	perr.Error = &PackageError{
+		ImportStack: stk.copy(),
+		Err:         "use of internal package not allowed",
+	}
+	perr.Incomplete = true
+	return &perr
+}
+
+// findInternal looks for the final "internal" path element in the given import path.
+// If there isn't one, findInternal returns ok=false.
+// Otherwise, findInternal returns ok=true and the index of the "internal".
+func findInternal(path string) (index int, ok bool) {
+	// Four cases, depending on internal at start/end of string or not.
+	// The order matters: we must return the index of the final element,
+	// because the final one produces the most restrictive requirement
+	// on the importer.
+	switch {
+	case strings.HasSuffix(path, "/internal"):
+		return len(path) - len("internal"), true
+	case strings.Contains(path, "/internal/"):
+		return strings.LastIndex(path, "/internal/") + 1, true
+	case path == "internal", strings.HasPrefix(path, "internal/"):
+		return 0, true
+	}
+	return 0, false
+}
+
 type targetDir int
 
 const (
-	toRoot targetDir = iota // to bin dir inside package root (default)
-	toTool                  // GOROOT/pkg/tool
-	toBin                   // GOROOT/bin
+	toRoot    targetDir = iota // to bin dir inside package root (default)
+	toTool                     // GOROOT/pkg/tool
+	toBin                      // GOROOT/bin
+	stalePath                  // the old import path; fail to build
 )
 
 // goTools is a map of Go program import path to install target directory.
@@ -316,10 +399,14 @@ var goTools = map[string]targetDir{
 	"cmd/nm":                               toTool,
 	"cmd/objdump":                          toTool,
 	"cmd/pack":                             toTool,
+	"cmd/pprof":                            toTool,
 	"cmd/yacc":                             toTool,
-	"code.google.com/p/go.tools/cmd/cover": toTool,
-	"code.google.com/p/go.tools/cmd/godoc": toBin,
-	"code.google.com/p/go.tools/cmd/vet":   toTool,
+	"golang.org/x/tools/cmd/cover":         toTool,
+	"golang.org/x/tools/cmd/godoc":         toBin,
+	"golang.org/x/tools/cmd/vet":           toTool,
+	"code.google.com/p/go.tools/cmd/cover": stalePath,
+	"code.google.com/p/go.tools/cmd/godoc": stalePath,
+	"code.google.com/p/go.tools/cmd/vet":   stalePath,
 }
 
 // expandScanner expands a scanner.List error into all the errors in the list.
@@ -380,6 +467,13 @@ func (p *Package) load(stk *importStack, bp *build.Package, err error) *Package 
 	}
 
 	if p.Name == "main" {
+		// Report an error when the old code.google.com/p/go.tools paths are used.
+		if goTools[p.ImportPath] == stalePath {
+			newPath := strings.Replace(p.ImportPath, "code.google.com/p/go.", "golang.org/x/", 1)
+			e := fmt.Sprintf("the %v command has moved; use %v instead.", p.ImportPath, newPath)
+			p.Error = &PackageError{Err: e}
+			return p
+		}
 		_, elem := filepath.Split(p.Dir)
 		full := buildContext.GOOS + "_" + buildContext.GOARCH + "/" + elem
 		if buildContext.GOOS != toolGOOS || buildContext.GOARCH != toolGOARCH {
@@ -482,7 +576,7 @@ func (p *Package) load(stk *importStack, bp *build.Package, err error) *Package 
 
 	// Build list of imported packages and full dependency list.
 	imports := make([]*Package, 0, len(p.Imports))
-	deps := make(map[string]bool)
+	deps := make(map[string]*Package)
 	for i, path := range importPaths {
 		if path == "C" {
 			continue
@@ -505,10 +599,10 @@ func (p *Package) load(stk *importStack, bp *build.Package, err error) *Package 
 			path = p1.ImportPath
 			importPaths[i] = path
 		}
-		deps[path] = true
+		deps[path] = p1
 		imports = append(imports, p1)
-		for _, dep := range p1.Deps {
-			deps[dep] = true
+		for _, dep := range p1.deps {
+			deps[dep.ImportPath] = dep
 		}
 		if p1.Incomplete {
 			p.Incomplete = true
@@ -522,7 +616,7 @@ func (p *Package) load(stk *importStack, bp *build.Package, err error) *Package 
 	}
 	sort.Strings(p.Deps)
 	for _, dep := range p.Deps {
-		p1 := packageCache[dep]
+		p1 := deps[dep]
 		if p1 == nil {
 			panic("impossible: missing entry in package cache for " + dep + " imported by " + p.ImportPath)
 		}
@@ -537,6 +631,16 @@ func (p *Package) load(stk *importStack, bp *build.Package, err error) *Package 
 		p.target = ""
 	}
 	p.Target = p.target
+
+	// Check for C code compiled with Plan 9 C compiler.
+	// No longer allowed except in runtime and runtime/cgo, for now.
+	if len(p.CFiles) > 0 && !p.usesCgo() && (!p.Standard || p.ImportPath != "runtime") {
+		p.Error = &PackageError{
+			ImportStack: stk.copy(),
+			Err:         fmt.Sprintf("C source files not allowed when not using cgo: %s", strings.Join(p.CFiles, " ")),
+		}
+		return p
+	}
 
 	// In the absence of errors lower in the dependency tree,
 	// check for case-insensitive collisions of import paths.
@@ -599,6 +703,12 @@ func computeStale(pkgs ...*Package) {
 	}
 }
 
+// The runtime version string takes one of two forms:
+// "go1.X[.Y]" for Go releases, and "devel +hash" at tip.
+// Determine whether we are in a released copy by
+// inspecting the version.
+var isGoRelease = strings.HasPrefix(runtime.Version(), "go1")
+
 // isStale reports whether package p needs to be rebuilt.
 func isStale(p *Package, topRoot map[string]bool) bool {
 	if p.Standard && (p.ImportPath == "unsafe" || buildContext.Compiler == "gccgo") {
@@ -619,7 +729,16 @@ func isStale(p *Package, topRoot map[string]bool) bool {
 		return false
 	}
 
-	if buildA || p.target == "" || p.Stale {
+	// If we are running a release copy of Go, do not rebuild the standard packages.
+	// They may not be writable anyway, but they are certainly not changing.
+	// This makes 'go build -a' skip the standard packages when using an official release.
+	// See issue 4106 and issue 8290.
+	pkgBuildA := buildA
+	if p.Standard && isGoRelease {
+		pkgBuildA = false
+	}
+
+	if pkgBuildA || p.target == "" || p.Stale {
 		return true
 	}
 
@@ -707,23 +826,12 @@ func loadPackage(arg string, stk *importStack) *Package {
 			arg = sub
 		}
 	}
-	if strings.HasPrefix(arg, "cmd/") {
+	if strings.HasPrefix(arg, "cmd/") && !strings.Contains(arg[4:], "/") {
 		if p := cmdCache[arg]; p != nil {
 			return p
 		}
 		stk.push(arg)
 		defer stk.pop()
-
-		if strings.Contains(arg[4:], "/") {
-			p := &Package{
-				Error: &PackageError{
-					ImportStack: stk.copy(),
-					Err:         fmt.Sprintf("invalid import path: cmd/... is reserved for Go commands"),
-					hard:        true,
-				},
-			}
-			return p
-		}
 
 		bp, err := buildContext.ImportDir(filepath.Join(gorootSrc, arg), 0)
 		bp.ImportPath = arg

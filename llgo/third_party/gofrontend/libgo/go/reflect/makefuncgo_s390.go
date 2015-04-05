@@ -232,7 +232,7 @@ func S390MakeFuncStubGo(regs *s390_regs, c *makeFuncImpl) {
 argloop:
 	for _, rt := range ftyp.in {
 		class, off_reg, off_slot := s390ClassifyParameter(rt)
-		fl := flag(rt.Kind()) << flagKindShift
+		fl := flag(rt.Kind())
 		switch class {
 		case s390_empty:
 			v := Value{rt, nil, fl | flagIndir}
@@ -338,10 +338,11 @@ argloop:
 		// Single return value in a general or floating point register.
 		v := out[0]
 		var w uintptr
-		if v.Kind() == Ptr || v.Kind() == UnsafePointer {
+		switch v.Kind() {
+		case Ptr, UnsafePointer, Chan, Func, Map:
 			w = uintptr(v.pointer())
-		} else {
-			w = uintptr(loadScalar(v.ptr, v.typ.size))
+		default:
+			memmove(unsafe.Pointer(&w), v.ptr, v.typ.size)
 			if ret_off_reg != 0 {
 				w = s390ReloadForRegister(
 					ret_type, w, ret_off_reg)
@@ -394,7 +395,7 @@ func s390_add_stackreg(in []Value, ap uintptr, rt *rtype, offset uintptr) ([]Val
 	p := unsafe_New(rt)
 	memmove(p, unsafe.Pointer(ap), rt.size)
 
-	v := Value{rt, p, flag(rt.Kind()<<flagKindShift) | flagIndir}
+	v := Value{rt, p, flag(rt.Kind()) | flagIndir}
 	in = append(in, v)
 	ap += rt.size
 	ap = align(ap, s390_arch_stack_slot_align)
@@ -413,7 +414,7 @@ func s390_add_memarg(in []Value, ap uintptr, rt *rtype) ([]Value, uintptr) {
 	p := unsafe_New(rt)
 	memmove(p, *(*unsafe.Pointer)(unsafe.Pointer(ap)), rt.size)
 
-	v := Value{rt, p, flag(rt.Kind()<<flagKindShift) | flagIndir}
+	v := Value{rt, p, flag(rt.Kind()) | flagIndir}
 	in = append(in, v)
 	ap += s390_arch_stack_slot_align
 

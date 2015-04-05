@@ -42,6 +42,8 @@ type reader struct {
 }
 
 // NewReader returns an io.Reader which decompresses bzip2 data from r.
+// If r does not also implement io.ByteReader,
+// the decompressor may read more data than necessary from r.
 func NewReader(r io.Reader) io.Reader {
 	bz2 := new(reader)
 	bz2.br = newBitReader(r)
@@ -261,6 +263,11 @@ func (bz2 *reader) readBlock() (err error) {
 		}
 	}
 
+	if numSymbols == 0 {
+		// There must be an EOF symbol.
+		return StructuralError("no symbols in input")
+	}
+
 	// A block uses between two and six different Huffman trees.
 	numHuffmanTrees := br.ReadBits(3)
 	if numHuffmanTrees < 2 || numHuffmanTrees > 6 {
@@ -307,10 +314,10 @@ func (bz2 *reader) readBlock() (err error) {
 
 	// Now we decode the arrays of code-lengths for each tree.
 	lengths := make([]uint8, numSymbols)
-	for i := 0; i < numHuffmanTrees; i++ {
+	for i := range huffmanTrees {
 		// The code lengths are delta encoded from a 5-bit base value.
 		length := br.ReadBits(5)
-		for j := 0; j < numSymbols; j++ {
+		for j := range lengths {
 			for {
 				if !br.ReadBit() {
 					break
@@ -333,6 +340,12 @@ func (bz2 *reader) readBlock() (err error) {
 	}
 
 	selectorIndex := 1 // the next tree index to use
+	if len(treeIndexes) == 0 {
+		return StructuralError("no tree selectors given")
+	}
+	if int(treeIndexes[0]) >= len(huffmanTrees) {
+		return StructuralError("tree selector out of range")
+	}
 	currentHuffmanTree := huffmanTrees[treeIndexes[0]]
 	bufIndex := 0 // indexes bz2.buf, the output buffer.
 	// The output of the move-to-front transform is run-length encoded and
@@ -350,6 +363,12 @@ func (bz2 *reader) readBlock() (err error) {
 	decoded := 0 // counts the number of symbols decoded by the current tree.
 	for {
 		if decoded == 50 {
+			if selectorIndex >= numSelectors {
+				return StructuralError("insufficient selector indices for number of symbols")
+			}
+			if int(treeIndexes[selectorIndex]) >= len(huffmanTrees) {
+				return StructuralError("tree selector out of range")
+			}
 			currentHuffmanTree = huffmanTrees[treeIndexes[selectorIndex]]
 			selectorIndex++
 			decoded = 0

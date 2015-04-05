@@ -9,11 +9,20 @@ import (
 	"fmt"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	. "time"
 )
+
+// Go runtime uses different Windows timers for time.Now and sleeping.
+// These can tick at different frequencies and can arrive out of sync.
+// The effect can be seen, for example, as time.Sleep(100ms) is actually
+// shorter then 100ms when measured as difference between time.Now before and
+// after time.Sleep call. This was observed on Windows XP SP3 (windows/386).
+// windowsInaccuracy is to ignore such errors.
+const windowsInaccuracy = 17 * Millisecond
 
 func TestSleep(t *testing.T) {
 	const delay = 100 * Millisecond
@@ -23,8 +32,12 @@ func TestSleep(t *testing.T) {
 	}()
 	start := Now()
 	Sleep(delay)
+	delayadj := delay
+	if runtime.GOOS == "windows" {
+		delayadj -= windowsInaccuracy
+	}
 	duration := Now().Sub(start)
-	if duration < delay {
+	if duration < delayadj {
 		t.Fatalf("Sleep(%s) slept for only %s", delay, duration)
 	}
 }
@@ -150,10 +163,14 @@ func TestAfter(t *testing.T) {
 	const delay = 100 * Millisecond
 	start := Now()
 	end := <-After(delay)
-	if duration := Now().Sub(start); duration < delay {
+	delayadj := delay
+	if runtime.GOOS == "windows" {
+		delayadj -= windowsInaccuracy
+	}
+	if duration := Now().Sub(start); duration < delayadj {
 		t.Fatalf("After(%s) slept for only %d ns", delay, duration)
 	}
-	if min := start.Add(delay); end.Before(min) {
+	if min := start.Add(delayadj); end.Before(min) {
 		t.Fatalf("After(%s) expect >= %s, got %s", delay, min, end)
 	}
 }
@@ -388,7 +405,27 @@ func TestOverflowRuntimeTimer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping in short mode, see issue 6874")
 	}
-	if err := CheckRuntimeTimerOverflow(); err != nil {
-		t.Fatalf(err.Error())
+	// This may hang forever if timers are broken. See comment near
+	// the end of CheckRuntimeTimerOverflow in internal_test.go.
+	CheckRuntimeTimerOverflow()
+}
+
+func checkZeroPanicString(t *testing.T) {
+	e := recover()
+	s, _ := e.(string)
+	if want := "called on uninitialized Timer"; !strings.Contains(s, want) {
+		t.Errorf("panic = %v; want substring %q", e, want)
 	}
+}
+
+func TestZeroTimerResetPanics(t *testing.T) {
+	defer checkZeroPanicString(t)
+	var tr Timer
+	tr.Reset(1)
+}
+
+func TestZeroTimerStopPanics(t *testing.T) {
+	defer checkZeroPanicString(t)
+	var tr Timer
+	tr.Stop()
 }

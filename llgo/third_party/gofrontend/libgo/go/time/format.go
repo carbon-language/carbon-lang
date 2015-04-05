@@ -7,7 +7,7 @@ package time
 import "errors"
 
 // These are predefined layouts for use in Time.Format and Time.Parse.
-// The reference time used in the layouts is:
+// The reference time used in the layouts is the specific time:
 //	Mon Jan 2 15:04:05 MST 2006
 // which is Unix time 1136239445. Since MST is GMT-0700,
 // the reference time can be thought of as
@@ -402,7 +402,7 @@ func (t Time) String() string {
 
 // Format returns a textual representation of the time value formatted
 // according to layout, which defines the format by showing how the reference
-// time,
+// time, defined to be
 //	Mon Jan 2 15:04:05 -0700 MST 2006
 // would be displayed if it were the value; it serves as an example of the
 // desired output. The same display rules will then be applied to the time
@@ -556,7 +556,7 @@ func (t Time) Format(layout string) string {
 				b = append(b, '+')
 			}
 			b = appendUint(b, uint(zone/60), '0')
-			if std == stdISO8601ColonTZ || std == stdNumColonTZ {
+			if std == stdISO8601ColonTZ || std == stdNumColonTZ || std == stdISO8601ColonSecondsTZ || std == stdNumColonSecondsTZ {
 				b = append(b, ':')
 			}
 			b = appendUint(b, uint(zone%60), '0')
@@ -676,6 +676,7 @@ func skip(value, prefix string) (string, error) {
 
 // Parse parses a formatted string and returns the time value it represents.
 // The layout  defines the format by showing how the reference time,
+// defined to be
 //	Mon Jan 2 15:04:05 -0700 MST 2006
 // would be interpreted if it were the value; it serves as an example of
 // the input format. The same interpretation will then be made to the
@@ -704,7 +705,7 @@ func skip(value, prefix string) (string, error) {
 // The zone abbreviation "UTC" is recognized as UTC regardless of location.
 // If the zone abbreviation is unknown, Parse records the time as being
 // in a fabricated location with the given zone abbreviation and a zero offset.
-// This choice means that such a time can be parse and reformatted with the
+// This choice means that such a time can be parsed and reformatted with the
 // same layout losslessly, but the exact instant used in the representation will
 // differ by the actual zone offset. To avoid such problems, prefer time layouts
 // that use a numeric zone offset, or use ParseInLocation.

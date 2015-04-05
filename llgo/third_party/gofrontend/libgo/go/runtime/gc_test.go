@@ -10,6 +10,7 @@ import (
 	"runtime/debug"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 func TestGcSys(t *testing.T) {
@@ -165,6 +166,37 @@ func TestGcLastTime(t *testing.T) {
 	if t0 > last || last > t1 {
 		t.Fatalf("bad last GC time: got %v, want [%v, %v]", last, t0, t1)
 	}
+	pause := ms.PauseNs[(ms.NumGC+255)%256]
+	// Due to timer granularity, pause can actually be 0 on windows
+	// or on virtualized environments.
+	if pause == 0 {
+		t.Logf("last GC pause was 0")
+	} else if pause > 10e9 {
+		t.Logf("bad last GC pause: got %v, want [0, 10e9]", pause)
+	}
+}
+
+var hugeSink interface{}
+
+func TestHugeGCInfo(t *testing.T) {
+	// The test ensures that compiler can chew these huge types even on weakest machines.
+	// The types are not allocated at runtime.
+	if hugeSink != nil {
+		// 400MB on 32 bots, 4TB on 64-bits.
+		const n = (400 << 20) + (unsafe.Sizeof(uintptr(0))-4)<<40
+		hugeSink = new([n]*byte)
+		hugeSink = new([n]uintptr)
+		hugeSink = new(struct {
+			x float64
+			y [n]*byte
+			z []string
+		})
+		hugeSink = new(struct {
+			x float64
+			y [n]uintptr
+			z []string
+		})
+	}
 }
 
 func BenchmarkSetTypeNoPtr1(b *testing.B) {
@@ -235,4 +267,28 @@ func BenchmarkAllocation(b *testing.B) {
 	for i := 0; i < ngo; i++ {
 		<-result
 	}
+}
+
+func TestPrintGC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping in short mode")
+	}
+	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(2))
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				runtime.GC()
+			}
+		}
+	}()
+	for i := 0; i < 1e4; i++ {
+		func() {
+			defer print("")
+		}()
+	}
+	close(done)
 }

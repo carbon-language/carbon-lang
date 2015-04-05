@@ -100,6 +100,7 @@
 //	- "go1.1", from Go version 1.1 onward
 //	- "go1.2", from Go version 1.2 onward
 //	- "go1.3", from Go version 1.3 onward
+//	- "go1.4", from Go version 1.4 onward
 //	- any additional words listed in ctxt.BuildTags
 //
 // If a file's name, after stripping the extension and a possible _test suffix,
@@ -107,12 +108,10 @@
 //	*_GOOS
 // 	*_GOARCH
 // 	*_GOOS_GOARCH
-// (example: source_windows_amd64.go) or the literals:
-//	GOOS
-// 	GOARCH
-// (example: windows.go) where GOOS and GOARCH represent any known operating
-// system and architecture values respectively, then the file is considered to
-// have an implicit build constraint requiring those terms.
+// (example: source_windows_amd64.go) where GOOS and GOARCH represent
+// any known operating system and architecture values respectively, then
+// the file is considered to have an implicit build constraint requiring
+// those terms.
 //
 // To keep a file from being considered for the build:
 //
@@ -133,5 +132,8 @@
 // Naming a file dns_windows.go will cause it to be included only when
 // building the package for Windows; similarly, math_386.s will be included
 // only when building the package for 32-bit x86.
+//
+// Using GOOS=android matches build tags and files as for GOOS=linux
+// in addition to android tags and files.
 //
 package build

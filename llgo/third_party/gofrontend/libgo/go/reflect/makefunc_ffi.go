@@ -56,7 +56,7 @@ func ffiCall(ftyp *funcType, fn func([]Value) []Value, params unsafe.Pointer, re
 	for _, rt := range ftyp.in {
 		p := unsafe_New(rt)
 		memmove(p, *(*unsafe.Pointer)(ap), rt.size)
-		v := Value{rt, p, flag(rt.Kind()<<flagKindShift) | flagIndir}
+		v := Value{rt, p, flag(rt.Kind()) | flagIndir}
 		in = append(in, v)
 		ap = (unsafe.Pointer)(uintptr(ap) + ptrSize)
 	}

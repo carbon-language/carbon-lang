@@ -75,7 +75,7 @@ func MakeFuncStubGo(regs *i386Regs, c *makeFuncImpl) {
 		p := unsafe_New(rt)
 		memmove(p, unsafe.Pointer(ap), rt.size)
 
-		v := Value{rt, p, flag(rt.Kind()<<flagKindShift) | flagIndir}
+		v := Value{rt, p, flag(rt.Kind()) | flagIndir}
 		in = append(in, v)
 		ap += rt.size
 	}
@@ -128,15 +128,12 @@ func MakeFuncStubGo(regs *i386Regs, c *makeFuncImpl) {
 
 	v := out[0]
 	switch v.Kind() {
-	case Ptr, UnsafePointer:
+	case Ptr, UnsafePointer, Chan, Func, Map:
 		regs.eax = uint32(uintptr(v.pointer()))
-	case Float32:
-		regs.st0 = float64(*(*float32)(v.ptr))
-		regs.sf = true
-	case Float64:
-		regs.st0 = *(*float64)(v.ptr)
+	case Float32, Float64:
+		regs.st0 = v.Float()
 		regs.sf = true
 	default:
-		regs.eax = uint32(loadScalar(v.ptr, v.typ.size))
+		memmove(unsafe.Pointer(&regs.eax), v.ptr, v.typ.size)
 	}
 }
