@@ -243,7 +243,12 @@ func TestIterGrowWithGC(t *testing.T) {
 
 func testConcurrentReadsAfterGrowth(t *testing.T, useReflect bool) {
 	if runtime.GOMAXPROCS(-1) == 1 {
-		defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(16))
+		if runtime.GOARCH == "s390" {
+			// Test uses too much address space on 31-bit S390.
+			defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(8))
+		} else {
+			defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(16))
+		}
 	}
 	numLoop := 10
 	numGrowStep := 250

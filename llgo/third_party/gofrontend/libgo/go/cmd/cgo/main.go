@@ -130,21 +130,43 @@ func usage() {
 }
 
 var ptrSizeMap = map[string]int64{
-	"386":   4,
-	"amd64": 8,
-	"arm":   4,
-	"ppc64": 8,
+	"386":     4,
+	"alpha":   8,
+	"amd64":   8,
+	"arm":     4,
+	"arm64":   8,
+	"m68k":    4,
+	"mipso32": 4,
+	"mipsn32": 4,
+	"mipso64": 8,
+	"mipsn64": 8,
+	"ppc":     4,
+	"ppc64":   8,
 	"ppc64le": 8,
-	"s390x": 8,
+	"s390":    4,
+	"s390x":   8,
+	"sparc":   4,
+	"sparc64": 8,
 }
 
 var intSizeMap = map[string]int64{
-	"386":   4,
-	"amd64": 8,
-	"arm":   4,
-	"ppc64": 8,
+	"386":     4,
+	"alpha":   8,
+	"amd64":   8,
+	"arm":     4,
+	"arm64":   8,
+	"m68k":    4,
+	"mipso32": 4,
+	"mipsn32": 4,
+	"mipso64": 8,
+	"mipsn64": 8,
+	"ppc":     4,
+	"ppc64":   8,
 	"ppc64le": 8,
-	"s390x": 8,
+	"s390":    4,
+	"s390x":   8,
+	"sparc":   4,
+	"sparc64": 8,
 }
 
 var cPrefix string

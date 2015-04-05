@@ -7,6 +7,7 @@
 package runtime_test
 
 import (
+	"os/exec"
 	"runtime"
 	"strings"
 	"testing"
@@ -47,6 +48,30 @@ func TestCgoExternalThreadPanic(t *testing.T) {
 	want := "panic: BOOM"
 	if !strings.Contains(got, want) {
 		t.Fatalf("want failure containing %q. output:\n%s\n", want, got)
+	}
+}
+
+func TestCgoExternalThreadSIGPROF(t *testing.T) {
+	// issue 9456.
+	switch runtime.GOOS {
+	case "plan9", "windows":
+		t.Skipf("no pthreads on %s", runtime.GOOS)
+	case "darwin":
+		// static constructor needs external linking, but we don't support
+		// external linking on OS X 10.6.
+		out, err := exec.Command("uname", "-r").Output()
+		if err != nil {
+			t.Fatalf("uname -r failed: %v", err)
+		}
+		// OS X 10.6 == Darwin 10.x
+		if strings.HasPrefix(string(out), "10.") {
+			t.Skipf("no external linking on OS X 10.6")
+		}
+	}
+	got := executeTest(t, cgoExternalThreadSIGPROFSource, nil)
+	want := "OK\n"
+	if got != want {
+		t.Fatalf("expected %q, but got %q", want, got)
 	}
 }
 
@@ -192,5 +217,48 @@ start(void)
 {
 	if(_beginthreadex(0, 0, die, 0, 0, 0) != 0)
 		printf("_beginthreadex failed\n");
+}
+`
+
+const cgoExternalThreadSIGPROFSource = `
+package main
+
+/*
+#include <stdint.h>
+#include <signal.h>
+#include <pthread.h>
+
+volatile int32_t spinlock;
+
+static void *thread1(void *p) {
+	(void)p;
+	while (spinlock == 0)
+		;
+	pthread_kill(pthread_self(), SIGPROF);
+	spinlock = 0;
+	return NULL;
+}
+__attribute__((constructor)) void issue9456() {
+	pthread_t tid;
+	pthread_create(&tid, 0, thread1, NULL);
+}
+*/
+import "C"
+
+import (
+	"runtime"
+	"sync/atomic"
+	"unsafe"
+)
+
+func main() {
+	// This test intends to test that sending SIGPROF to foreign threads
+	// before we make any cgo call will not abort the whole process, so
+	// we cannot make any cgo call here. See http://golang.org/issue/9456.
+	atomic.StoreInt32((*int32)(unsafe.Pointer(&C.spinlock)), 1)
+	for atomic.LoadInt32((*int32)(unsafe.Pointer(&C.spinlock))) == 1 {
+		runtime.Gosched()
+	}
+	println("OK")
 }
 `

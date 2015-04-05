@@ -1240,11 +1240,6 @@ grep '^type _inotify_event ' gen-sysinfo.go | \
 grep '^const _CLONE_' gen-sysinfo.go | \
   sed -e 's/^\(const \)_\(CLONE_[^= ]*\)\(.*\)$/\1\2 = _\2/' >> ${OUT}
 
-# The Solaris 11 Update 1 _zone_net_addr_t struct.
-grep '^type _zone_net_addr_t ' gen-sysinfo.go | \
-    sed -e 's/_in6_addr/[16]byte/' \
-    >> ${OUT}
-
 # Struct sizes.
 set cmsghdr Cmsghdr ip_mreq IPMreq ip_mreqn IPMreqn ipv6_mreq IPv6Mreq \
     ifaddrmsg IfAddrmsg ifinfomsg IfInfomsg in_pktinfo Inet4Pktinfo \

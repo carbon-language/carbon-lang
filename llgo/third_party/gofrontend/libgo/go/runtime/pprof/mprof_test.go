@@ -85,10 +85,12 @@ func TestMemoryProfiler(t *testing.T) {
 #	0x[0-9,a-f]+	runtime_pprof_test\.TestMemoryProfiler\+0x[0-9,a-f]+	.*/mprof_test.go:64
 `, (1<<10)*memoryProfilerRun, (1<<20)*memoryProfilerRun),
 
-		fmt.Sprintf(`0: 0 \[%v: %v\] @ 0x[0-9,a-f x]+
+		// This should start with "0: 0" but gccgo's imprecise
+		// GC means that sometimes the value is not collected.
+		fmt.Sprintf(`(0|%v): (0|%v) \[%v: %v\] @ 0x[0-9,a-f x]+
 #	0x[0-9,a-f]+	pprof_test\.allocateTransient2M\+0x[0-9,a-f]+	.*/mprof_test.go:30
 #	0x[0-9,a-f]+	runtime_pprof_test\.TestMemoryProfiler\+0x[0-9,a-f]+	.*/mprof_test.go:65
-`, memoryProfilerRun, (2<<20)*memoryProfilerRun),
+`, memoryProfilerRun, (2<<20)*memoryProfilerRun, memoryProfilerRun, (2<<20)*memoryProfilerRun),
 	}
 
 	for _, test := range tests {

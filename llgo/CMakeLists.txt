@@ -80,6 +80,7 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFF
   COMMAND ${CMAKE_BINARY_DIR}/bin/llgo -static-libgo
           -o ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
           ${LLGO_GO_SOURCES}
+          ${CMAKE_CURRENT_BINARY_DIR}/libgo/zstdpkglist.go
   DEPENDS llgo libgo ${LLGO_GO_SOURCES}
   COMMENT "Building Go executable llgo-go"
   VERBATIM)

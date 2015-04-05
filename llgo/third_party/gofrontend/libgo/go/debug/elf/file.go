@@ -532,6 +532,9 @@ func (f *File) applyRelocations(dst []byte, rels []byte) error {
 	if f.Class == ELFCLASS64 && f.Machine == EM_AARCH64 {
 		return f.applyRelocationsARM64(dst, rels)
 	}
+	if f.Class == ELFCLASS32 && f.Machine == EM_PPC {
+		return f.applyRelocationsPPC(dst, rels)
+	}
 	if f.Class == ELFCLASS64 && f.Machine == EM_PPC64 {
 		return f.applyRelocationsPPC64(dst, rels)
 	}
@@ -677,6 +680,46 @@ func (f *File) applyRelocationsARM64(dst []byte, rels []byte) error {
 	return nil
 }
 
+func (f *File) applyRelocationsPPC(dst []byte, rels []byte) error {
+	// 12 is the size of Rela32.
+	if len(rels)%12 != 0 {
+		return errors.New("length of relocation section is not a multiple of 12")
+	}
+
+	symbols, _, err := f.getSymbols(SHT_SYMTAB)
+	if err != nil {
+		return err
+	}
+
+	b := bytes.NewReader(rels)
+	var rela Rela32
+
+	for b.Len() > 0 {
+		binary.Read(b, f.ByteOrder, &rela)
+		symNo := rela.Info >> 8
+		t := R_PPC(rela.Info & 0xff)
+
+		if symNo == 0 || symNo > uint32(len(symbols)) {
+			continue
+		}
+		sym := &symbols[symNo-1]
+		if SymType(sym.Info&0xf) != STT_SECTION {
+			// We don't handle non-section relocations for now.
+			continue
+		}
+
+		switch t {
+		case R_PPC_ADDR32:
+			if rela.Off+4 >= uint32(len(dst)) || rela.Addend < 0 {
+				continue
+			}
+			f.ByteOrder.PutUint32(dst[rela.Off:rela.Off+4], uint32(rela.Addend))
+		}
+	}
+
+	return nil
+}
+
 func (f *File) applyRelocationsPPC64(dst []byte, rels []byte) error {
 	// 24 is the size of Rela64.
 	if len(rels)%24 != 0 {
@@ -785,7 +828,7 @@ func (f *File) DWARF() (*dwarf.Data, error) {
 	// If there's a relocation table for .debug_info, we have to process it
 	// now otherwise the data in .debug_info is invalid for x86-64 objects.
 	rela := f.Section(".rela.debug_info")
-	if rela != nil && rela.Type == SHT_RELA && (f.Machine == EM_X86_64 || f.Machine == EM_AARCH64 || f.Machine == EM_PPC64 || f.Machine == EM_S390) {
+	if rela != nil && rela.Type == SHT_RELA && (f.Machine == EM_X86_64 || f.Machine == EM_AARCH64 || f.Machine == EM_PPC || f.Machine == EM_PPC64 || f.Machine == EM_S390) {
 		data, err := rela.Data()
 		if err != nil {
 			return nil, err

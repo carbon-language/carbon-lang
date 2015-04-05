@@ -384,17 +384,18 @@ func runTest(cmd *Command, args []string) {
 		delete(deps, "unsafe")
 
 		all := []string{}
-		if reqPkgSrc {
-			for path := range deps {
-				if !build.IsLocalImport(path) {
-					all = append(all, path)
-				}
+		for path := range deps {
+			if !build.IsLocalImport(path) {
+				all = append(all, path)
 			}
 		}
 		sort.Strings(all)
 
 		a := &action{}
 		for _, p := range packagesForBuild(all) {
+			if !reqStdPkgSrc && p.Standard {
+				continue
+			}
 			a.deps = append(a.deps, b.action(modeInstall, modeInstall, p))
 		}
 		b.do(a)
@@ -563,7 +564,7 @@ func (b *builder) test(p *Package) (buildAction, runAction, printAction *action,
 	stk.push(p.ImportPath + " (test)")
 	for _, path := range p.TestImports {
 		p1 := loadImport(path, p.Dir, &stk, p.build.TestImportPos[path])
-		if !reqPkgSrc && p1.Root == "" {
+		if !reqStdPkgSrc && p1.Standard {
 			continue
 		}
 		if p1.Error != nil {
@@ -591,7 +592,7 @@ func (b *builder) test(p *Package) (buildAction, runAction, printAction *action,
 			continue
 		}
 		p1 := loadImport(path, p.Dir, &stk, p.build.XTestImportPos[path])
-		if !reqPkgSrc && p1.Root == "" {
+		if !reqStdPkgSrc && p1.Standard {
 			continue
 		}
 		if p1.Error != nil {
@@ -691,10 +692,11 @@ func (b *builder) test(p *Package) (buildAction, runAction, printAction *action,
 			build: &build.Package{
 				ImportPos: p.build.XTestImportPos,
 			},
-			imports: ximports,
-			pkgdir:  testDir,
-			fake:    true,
-			Stale:   true,
+			imports:  ximports,
+			pkgdir:   testDir,
+			fake:     true,
+			external: true,
+			Stale:    true,
 		}
 		if pxtestNeedsPtest {
 			pxtest.imports = append(pxtest.imports, ptest)
@@ -722,7 +724,7 @@ func (b *builder) test(p *Package) (buildAction, runAction, printAction *action,
 			pmain.imports = append(pmain.imports, ptest)
 		} else {
 			p1 := loadImport(dep, "", &stk, nil)
-			if !reqPkgSrc && p1.Root == "" {
+			if !reqStdPkgSrc && p1.Standard {
 				continue
 			}
 			if p1.Error != nil {

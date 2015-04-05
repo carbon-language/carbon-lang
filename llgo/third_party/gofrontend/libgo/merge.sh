@@ -40,12 +40,14 @@ repository=$1
 old_rev=`sed 1q MERGE`
 
 rm -rf ${OLDDIR}
-hg clone -r ${old_rev} ${repository} ${OLDDIR}
+git clone ${repository} ${OLDDIR}
+(cd ${OLDDIR} && git checkout ${old_rev})
 
 rm -rf ${NEWDIR}
-hg clone -u ${rev} ${repository} ${NEWDIR}
+git clone ${repository} ${NEWDIR}
+(cd ${NEWDIR} && git checkout ${rev})
 
-new_rev=`cd ${NEWDIR} && hg log -r ${rev} | sed 1q | sed -e 's/.*://'`
+new_rev=`cd ${NEWDIR} && git log | sed 1q | sed -e 's/commit //'`
 
 merge() {
   name=$1
@@ -69,7 +71,7 @@ merge() {
   elif test -f ${old}; then
     # The file exists in the old version.
     if ! test -f ${libgo}; then
-      echo "merge.sh: $name: skipping: exists in old and new hg, but not in libgo"
+      echo "merge.sh: $name: skipping: exists in old and new git, but not in libgo"
       continue
     fi
     if cmp -s ${old} ${libgo}; then
@@ -136,6 +138,16 @@ merge_c() {
   fi
 }
 
+if test -f VERSION; then
+  if ! cmp -s ${NEWDIR}/VERSION VERSION; then
+    cp ${NEWDIR}/VERSION .
+  fi
+else
+  if test -f ${NEWDIR}/VERSION; then
+    cp ${NEWDIR}/VERSION .
+  fi
+fi
+
 (cd ${NEWDIR}/src && find . -name '*.go' -print) | while read f; do
   oldfile=${OLDDIR}/src/$f
   newfile=${NEWDIR}/src/$f
@@ -150,11 +162,10 @@ done
   if ! test -d ${oldtd}; then
     continue
   fi
-  (cd ${oldtd} && hg status -A .) | while read f; do
-    if test "`basename $f`" = ".hgignore"; then
+  (cd ${oldtd} && git ls-files .) | while read f; do
+    if test "`basename $f`" = ".gitignore"; then
       continue
     fi
-    f=`echo $f | sed -e 's/^..//'`
     name=$d/$f
     oldfile=${oldtd}/$f
     newfile=${newtd}/$f
@@ -179,11 +190,10 @@ for c in $cmdlist; do
     if ! test -d ${oldtd}; then
       continue
     fi
-    (cd ${oldtd} && hg status -A .) | while read f; do
-      if test "`basename $f`" = ".hgignore"; then
+    (cd ${oldtd} && git ls-files .) | while read f; do
+      if test "`basename $f`" = ".gitignore"; then
         continue
       fi
-      f=`echo $f | sed -e 's/^..//'`
       name=$d/$f
       oldfile=${oldtd}/$f
       newfile=${newtd}/$f

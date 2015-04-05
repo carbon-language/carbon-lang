@@ -24,6 +24,9 @@ func TestFinalizerType(t *testing.T) {
 	if runtime.GOARCH != "amd64" {
 		t.Skipf("Skipping on non-amd64 machine")
 	}
+	if runtime.Compiler == "gccgo" {
+		t.Skip("skipping for gccgo")
+	}
 
 	ch := make(chan bool, 10)
 	finalize := func(x *int) {
@@ -80,6 +83,9 @@ type bigValue struct {
 func TestFinalizerInterfaceBig(t *testing.T) {
 	if runtime.GOARCH != "amd64" {
 		t.Skipf("Skipping on non-amd64 machine")
+	}
+	if runtime.Compiler == "gccgo" {
+		t.Skip("skipping for gccgo")
 	}
 	ch := make(chan bool)
 	done := make(chan bool, 1)
@@ -174,6 +180,9 @@ func adjChunks() (*objtype, *objtype) {
 func TestEmptySlice(t *testing.T) {
 	if true { // disable until bug 7564 is fixed.
 		return
+	}
+	if runtime.Compiler == "gccgo" {
+		t.Skip("skipping for gccgo")
 	}
 	x, y := adjChunks()
 

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "runtime.h"
+#include "malloc.h"
 #include "go-alloc.h"
 #include "go-assert.h"
 #include "map.h"
@@ -63,7 +64,8 @@ __go_map_rehash (struct __go_map *map)
 	}
     }
 
-  __go_free (old_buckets);
+  if (old_bucket_count * sizeof (void *) >= TinySize)
+    __go_free (old_buckets);
 
   map->__bucket_count = new_bucket_count;
   map->__buckets = new_buckets;

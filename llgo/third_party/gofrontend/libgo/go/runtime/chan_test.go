@@ -202,6 +202,11 @@ func TestNonblockRecvRace(t *testing.T) {
 	n := 10000
 	if testing.Short() {
 		n = 100
+	} else {
+		if runtime.GOARCH == "s390" {
+			// Test uses too much address space on 31-bit S390.
+			t.Skip("skipping long test on s390")
+		}
 	}
 	for i := 0; i < n; i++ {
 		c := make(chan int, 1)

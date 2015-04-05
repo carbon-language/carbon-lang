@@ -129,6 +129,11 @@ static void
 error_callback (void *data __attribute__ ((unused)),
 		const char *msg, int errnum)
 {
+  if (errnum == -1)
+    {
+      /* No debug info available.  Carry on as best we can.  */
+      return;
+    }
   if (errnum != 0)
     runtime_printf ("%s errno %d\n", msg, errnum);
   runtime_throw (msg);

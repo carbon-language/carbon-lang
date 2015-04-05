@@ -132,7 +132,8 @@ var buildLdflags []string    // -ldflags flag
 var buildGccgoflags []string // -gccgoflags flag
 var buildRace bool           // -race flag
 
-var reqPkgSrc bool // req src for Imports
+// Require the source for go std packages
+var reqStdPkgSrc bool
 var buildContext = build.Default
 var buildToolchain toolchain = noToolchain{}
 
@@ -187,9 +188,9 @@ func addBuildFlags(cmd *Command) {
 	cmd.Flag.BoolVar(&buildRace, "race", false, "")
 	switch build.Default.Compiler {
 	case "gc":
-		reqPkgSrc = true
+		reqStdPkgSrc = true
 	case "gccgo":
-		reqPkgSrc = false
+		reqStdPkgSrc = false
 	}
 }
 
@@ -579,7 +580,7 @@ func (b *builder) action(mode buildMode, depMode buildMode, p *Package) *action 
 	// are writing is not the cgo we need to use.
 
 	if goos == runtime.GOOS && goarch == runtime.GOARCH && !buildRace {
-		if reqPkgSrc {
+		if reqStdPkgSrc {
 			if len(p.CgoFiles) > 0 || p.Standard && p.ImportPath == "runtime/cgo" {
 				var stk importStack
 				p1 := loadPackage("cmd/cgo", &stk)
@@ -1920,6 +1921,7 @@ func (tools gccgoToolchain) ld(b *builder, p *Package, out string, allactions []
 	// and all LDFLAGS from cgo dependencies.
 	apackagesSeen := make(map[*Package]bool)
 	afiles := []string{}
+	xfiles := []string{}
 	ldflags := b.gccArchArgs()
 	cgoldflags := []string{}
 	usesCgo := false
@@ -1935,7 +1937,12 @@ func (tools gccgoToolchain) ld(b *builder, p *Package, out string, allactions []
 		if !a.p.Standard {
 			if a.p != nil && !apackagesSeen[a.p] {
 				apackagesSeen[a.p] = true
-				if a.p.fake {
+				if a.p.fake && a.p.external {
+					// external _tests, if present must come before
+					// internal _tests. Store these on a seperate list
+					// and place them at the head after this loop.
+					xfiles = append(xfiles, a.target)
+				} else if a.p.fake {
 					// move _test files to the top of the link order
 					afiles = append([]string{a.target}, afiles...)
 				} else {
@@ -1944,6 +1951,7 @@ func (tools gccgoToolchain) ld(b *builder, p *Package, out string, allactions []
 			}
 		}
 	}
+	afiles = append(xfiles, afiles...)
 
 	for _, a := range allactions {
 		if a.p != nil {

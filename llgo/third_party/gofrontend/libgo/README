@@ -3,24 +3,23 @@ See ../README.
 This is the runtime support library for the Go programming language.
 This library is intended for use with the Go frontend.
 
-The library has only been tested on GNU/Linux using glibc.  It should
-not be difficult to port to other operating systems.
+This library should not be stripped when it is installed.  Go code
+relies on being able to look up file/line information, which comes
+from the debugging info using the libbacktrace library.
 
-The library has only been tested on x86/x86_64 systems.  It should not
-be difficult to port to other architectures.
+The library has only been tested on GNU/Linux using glibc, and on
+Solaris.  It should not be difficult to port to other operating
+systems.
 
 Directories:
 
 go
-  A copy of the Go library from http://golang.org/, with a few
-  changes for gccgo.  Notably, the reflection interface is different.
+  A copy of the Go library from http://golang.org/, with several
+  changes for gccgo.
 
 runtime
   Runtime functions, written in C, which are called directly by the
   compiler or by the library.
-
-syscalls
-  System call support.
 
 Contributing
 ============

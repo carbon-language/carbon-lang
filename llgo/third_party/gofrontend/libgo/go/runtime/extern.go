@@ -39,6 +39,10 @@ a comma-separated list of name=val pairs. Supported names are:
 	gcdead: setting gcdead=1 causes the garbage collector to clobber all stack slots
 	that it thinks are dead.
 
+	memprofilerate:  setting memprofilerate=X changes the setting for
+	runtime.MemProfileRate.  Refer to the description of this variable for how
+	it is used and its default value.
+
 	scheddetail: setting schedtrace=X and scheddetail=1 causes the scheduler to emit
 	detailed multiline info every X milliseconds, describing state of the scheduler,
 	processors, threads and goroutines.

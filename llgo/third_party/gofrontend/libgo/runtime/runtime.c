@@ -22,6 +22,10 @@ enum {
 // gotraceback value.
 static uint32 traceback_cache = ~(uint32)0;
 
+extern volatile intgo runtime_MemProfileRate
+  __asm__ (GOSYM_PREFIX "runtime.MemProfileRate");
+
+
 // The GOTRACEBACK environment variable controls the
 // behavior of a Go program that is crashing and exiting.
 //	GOTRACEBACK=0   suppress all tracebacks
@@ -315,6 +319,11 @@ runtime_signalstack(byte *p, int32 n)
 
 DebugVars	runtime_debug;
 
+// Holds variables parsed from GODEBUG env var,
+// except for "memprofilerate" since there is an
+// existing var for that value which is int
+// instead of in32 and might have an
+// initial value.
 static struct {
 	const char* name;
 	int32*	value;
@@ -349,7 +358,12 @@ runtime_parsedebugvars(void)
 	for(;;) {
 		for(i=0; i<(intgo)nelem(dbgvar); i++) {
 			n = runtime_findnull((const byte*)dbgvar[i].name);
-			if(runtime_mcmp(p, dbgvar[i].name, n) == 0 && p[n] == '=')
+			if(runtime_mcmp(p, "memprofilerate", n) == 0 && p[n] == '=')
+				// Set the MemProfileRate directly since it
+				// is an int, not int32, and should only lbe
+				// set here if specified by GODEBUG
+				runtime_MemProfileRate = runtime_atoi(p+n+1);
+			else if(runtime_mcmp(p, dbgvar[i].name, n) == 0 && p[n] == '=')
 				*dbgvar[i].value = runtime_atoi(p+n+1);
 		}
 		p = (const byte *)runtime_strstr((const char *)p, ",");

@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 gofrontendrepo=https://code.google.com/p/gofrontend
-gofrontendrev=07baa07598ea
+gofrontendrev=15a24202fa42
 
 gccrepo=svn://gcc.gnu.org/svn/gcc/trunk
 gccrev=219477

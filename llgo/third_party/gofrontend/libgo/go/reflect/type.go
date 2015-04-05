@@ -248,12 +248,12 @@ const (
 // with a unique tag like `reflect:"array"` or `reflect:"ptr"`
 // so that code cannot convert from, say, *arrayType to *ptrType.
 type rtype struct {
-	kind       uint8   // enumeration for C
-	align      int8    // alignment of variable with this type
-	fieldAlign uint8   // alignment of struct field with this type
-	_          uint8   // unused/padding
+	kind       uint8 // enumeration for C
+	align      int8  // alignment of variable with this type
+	fieldAlign uint8 // alignment of struct field with this type
+	_          uint8 // unused/padding
 	size       uintptr
-	hash       uint32  // hash of type; avoids computation in hash tables
+	hash       uint32 // hash of type; avoids computation in hash tables
 
 	hashfn  uintptr // hash function code
 	equalfn uintptr // equality function code
@@ -1582,8 +1582,9 @@ func MapOf(key, elem Type) Type {
 
 // gcProg is a helper type for generatation of GC pointer info.
 type gcProg struct {
-	gc   []byte
-	size uintptr // size of type in bytes
+	gc     []byte
+	size   uintptr // size of type in bytes
+	hasPtr bool
 }
 
 func (gc *gcProg) append(v byte) {
@@ -1644,11 +1645,14 @@ func (gc *gcProg) appendWord(v byte) {
 	gc.gc[nptr/2] &= ^(3 << ((nptr%2)*4 + 2))
 	gc.gc[nptr/2] |= v << ((nptr%2)*4 + 2)
 	gc.size += ptrsize
+	if v == bitsPointer {
+		gc.hasPtr = true
+	}
 }
 
-func (gc *gcProg) finalize() unsafe.Pointer {
+func (gc *gcProg) finalize() (unsafe.Pointer, bool) {
 	if gc.size == 0 {
-		return nil
+		return nil, false
 	}
 	ptrsize := unsafe.Sizeof(uintptr(0))
 	gc.align(ptrsize)
@@ -1663,7 +1667,7 @@ func (gc *gcProg) finalize() unsafe.Pointer {
 			gc.appendWord(extractGCWord(gc.gc, i))
 		}
 	}
-	return unsafe.Pointer(&gc.gc[0])
+	return unsafe.Pointer(&gc.gc[0]), gc.hasPtr
 }
 
 func extractGCWord(gc []byte, i uintptr) byte {
@@ -1708,10 +1712,6 @@ func bucketOf(ktyp, etyp *rtype) *rtype {
 	for i := 0; i < int(bucketSize*unsafe.Sizeof(uint8(0))/ptrsize); i++ {
 		gc.append(bitsScalar)
 	}
-	gc.append(bitsPointer) // overflow
-	if runtime.GOARCH == "amd64p32" {
-		gc.append(bitsScalar)
-	}
 	// keys
 	for i := 0; i < bucketSize; i++ {
 		gc.appendProg(ktyp)
@@ -1720,10 +1720,15 @@ func bucketOf(ktyp, etyp *rtype) *rtype {
 	for i := 0; i < bucketSize; i++ {
 		gc.appendProg(etyp)
 	}
+	// overflow
+	gc.append(bitsPointer)
+	if runtime.GOARCH == "amd64p32" {
+		gc.append(bitsScalar)
+	}
 
 	b := new(rtype)
 	b.size = gc.size
-	// b.gc[0] = gc.finalize()
+	// b.gc[0], _ = gc.finalize()
 	b.kind |= kindGCProg
 	s := "bucket(" + *ktyp.string + "," + *etyp.string + ")"
 	b.string = &s

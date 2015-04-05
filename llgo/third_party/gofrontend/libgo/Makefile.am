@@ -971,11 +971,25 @@ s-version: Makefile
 	rm -f version.go.tmp
 	echo "package runtime" > version.go.tmp
 	echo 'const defaultGoroot = "$(prefix)"' >> version.go.tmp
-	echo 'const theVersion = "'`$(GOC) --version | sed 1q`'"' >> version.go.tmp
+	echo 'const theVersion = "'`cat $(srcdir)/VERSION | sed 1q`' '`$(GOC) --version | sed 1q`'"' >> version.go.tmp
 	echo 'const theGoarch = "'$(GOARCH)'"' >> version.go.tmp
 	echo 'const theGoos = "'$(GOOS)'"' >> version.go.tmp
 	echo 'const theGccgoToolDir = "$(libexecsubdir)"' >> version.go.tmp
 	$(SHELL) $(srcdir)/mvifdiff.sh version.go.tmp version.go
+	$(STAMP) $@
+
+noinst_DATA = zstdpkglist.go
+
+# Generate the list of go std packages that were included in libgo
+zstdpkglist.go: s-zstdpkglist; @true
+s-zstdpkglist: Makefile
+	rm -f zstdpkglist.go.tmp
+	echo 'package main' > zstdpkglist.go.tmp
+	echo "" >> zstdpkglist.go.tmp
+	echo 'var stdpkg = map[string]bool{' >> zstdpkglist.go.tmp
+	echo $(libgo_go_objs) 'unsafe.lo' 'runtime/cgo.lo' | sed 's/\.lo /\": true,\n/g' | sed 's/\.lo/\": true,/' | sed 's/-go//' | grep -v _c | sed 's/^/\t\"/' | sort | uniq >> zstdpkglist.go.tmp
+	echo '}' >> zstdpkglist.go.tmp
+	$(SHELL) $(srcdir)/mvifdiff.sh zstdpkglist.go.tmp zstdpkglist.go
 	$(STAMP) $@
 
 go_sort_files = \

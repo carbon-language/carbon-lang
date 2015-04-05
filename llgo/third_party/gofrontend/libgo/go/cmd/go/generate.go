@@ -106,6 +106,7 @@ The generator is run in the package's source directory.
 Go generate accepts one specific flag:
 
 	-run=""
+		TODO: This flag is unimplemented.
 		if non-empty, specifies a regular expression to
 		select directives whose command matches the expression.
 
@@ -255,6 +256,10 @@ func (g *Generator) split(line string) []string {
 	// Parse line, obeying quoted strings.
 	var words []string
 	line = line[len("//go:generate ") : len(line)-1] // Drop preamble and final newline.
+	// There may still be a carriage return.
+	if len(line) > 0 && line[len(line)-1] == '\r' {
+		line = line[:len(line)-1]
+	}
 	// One (possibly quoted) word per iteration.
 Words:
 	for {

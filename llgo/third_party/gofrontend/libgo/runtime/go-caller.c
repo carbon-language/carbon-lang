@@ -37,36 +37,12 @@ callback (void *data, uintptr_t pc __attribute__ ((unused)),
 {
   struct caller *c = (struct caller *) data;
 
-  if (function == NULL)
-    {
-      c->fn.str = NULL;
-      c->fn.len = 0;
-    }
-  else
-    {
-      byte *s;
-
-      c->fn.len = __builtin_strlen (function);
-      s = runtime_malloc (c->fn.len);
-      __builtin_memcpy (s, function, c->fn.len);
-      c->fn.str = s;
-    }
-
-  if (filename == NULL)
-    {
-      c->file.str = NULL;
-      c->file.len = 0;
-    }
-  else
-    {
-      byte *s;
-
-      c->file.len = __builtin_strlen (filename);
-      s = runtime_malloc (c->file.len);
-      __builtin_memcpy (s, filename, c->file.len);
-      c->file.str = s;
-    }
-
+  /* The libbacktrace library says that these strings might disappear,
+     but with the current implementation they won't.  We can't easily
+     allocate memory here, so for now assume that we can save a
+     pointer to the strings.  */
+  c->fn = runtime_gostringnocopy ((const byte *) function);
+  c->file = runtime_gostringnocopy ((const byte *) filename);
   c->line = lineno;
 
   return 0;
