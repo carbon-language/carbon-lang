@@ -188,7 +188,7 @@ func run(t *testing.T, dir, input string, success successPredicate) bool {
 		inputs = append(inputs, i)
 	}
 
-	conf := loader.Config{SourceImports: true}
+	var conf loader.Config
 	if _, err := conf.FromArgs(inputs, true); err != nil {
 		t.Errorf("FromArgs(%s) failed: %s", inputs, err)
 		return false
@@ -340,9 +340,7 @@ func TestTestmainPackage(t *testing.T) {
 // CreateTestMainPackage should return nil if there were no tests.
 func TestNullTestmainPackage(t *testing.T) {
 	var conf loader.Config
-	if err := conf.CreateFromFilenames("", "testdata/b_test.go"); err != nil {
-		t.Fatalf("ParseFile failed: %s", err)
-	}
+	conf.CreateFromFilenames("", "testdata/b_test.go")
 	iprog, err := conf.Load()
 	if err != nil {
 		t.Fatalf("CreatePackages failed: %s", err)

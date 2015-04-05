@@ -10,6 +10,7 @@ package ssa_test
 // Run with "go test -cpu=8 to" set GOMAXPROCS.
 
 import (
+	"go/ast"
 	"go/build"
 	"go/token"
 	"runtime"
@@ -37,10 +38,7 @@ func TestStdlib(t *testing.T) {
 	// Load, parse and type-check the program.
 	ctxt := build.Default // copy
 	ctxt.GOPATH = ""      // disable GOPATH
-	conf := loader.Config{
-		SourceImports: true,
-		Build:         &ctxt,
-	}
+	conf := loader.Config{Build: &ctxt}
 	if _, err := conf.FromArgs(buildutil.AllPackages(conf.Build), true); err != nil {
 		t.Errorf("FromArgs failed: %v", err)
 		return
@@ -82,9 +80,11 @@ func TestStdlib(t *testing.T) {
 	allFuncs := ssautil.AllFunctions(prog)
 
 	// Check that all non-synthetic functions have distinct names.
+	// Synthetic wrappers for exported methods should be distinct too,
+	// except for unexported ones (explained at (*Function).RelString).
 	byName := make(map[string]*ssa.Function)
 	for fn := range allFuncs {
-		if fn.Synthetic == "" {
+		if fn.Synthetic == "" || ast.IsExported(fn.Name()) {
 			str := fn.String()
 			prev := byName[str]
 			byName[str] = fn

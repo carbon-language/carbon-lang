@@ -216,8 +216,9 @@ func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, imp
 			Sizes:    compiler.llvmtypes,
 			DisableUnusedImportCheck: compiler.DisableUnusedImportCheck,
 		},
-		Build:          &buildctx.Context,
-		PackageCreated: compiler.PackageCreated,
+		ImportFromBinary: true,
+		Build:            &buildctx.Context,
+		PackageCreated:   compiler.PackageCreated,
 	}
 	// If no import path is specified, then set the import
 	// path to be the same as the package's name.

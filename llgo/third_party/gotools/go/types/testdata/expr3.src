@@ -4,6 +4,8 @@
 
 package expr3
 
+import "time"
+
 func indexes() {
 	_ = 1 /* ERROR "cannot index" */ [0]
 	_ = indexes /* ERROR "cannot index" */ [0]
@@ -26,7 +28,7 @@ func indexes() {
 	a0 = a[0]
 	_ = a0
 	var a1 int32
-	a1 = a /* ERROR "cannot assign" */ [1] 
+	a1 = a /* ERROR "cannot assign" */ [1]
 	_ = a1
 
 	_ = a[9]
@@ -100,7 +102,6 @@ func indexes() {
 	var ok mybool
 	_, ok = m["bar"]
 	_ = ok
-
 
 	var t string
 	_ = t[- /* ERROR "negative" */ 1]
@@ -185,7 +186,7 @@ func struct_literals() {
 	_ = T1{a: 0, s: "foo", u: 0, a /* ERROR "duplicate field" */: 10}
 	_ = T1{a: "foo" /* ERROR "cannot convert" */ }
 	_ = T1{c /* ERROR "unknown field" */ : 0}
-	_ = T1{T0: { /* ERROR "missing type" */ }}
+	_ = T1{T0: { /* ERROR "missing type" */ }} // struct literal element type may not be elided
 	_ = T1{T0: T0{}}
 	_ = T1{T0 /* ERROR "invalid field name" */ .a: 0}
 
@@ -201,6 +202,15 @@ func struct_literals() {
 		x int
 	}
 	_ = P /* ERROR "invalid composite literal type" */ {}
+
+	// unexported fields
+	_ = time.Time{}
+	_ = time.Time{sec /* ERROR "unknown field" */ : 0}
+	_ = time.Time{
+		0 /* ERROR implicit assignment to unexported field sec in time.Time literal */,
+		0 /* ERROR implicit assignment */ ,
+		nil /* ERROR implicit assignment */ ,
+	}
 }
 
 func array_literals() {
@@ -237,7 +247,7 @@ func array_literals() {
 
 	a0 := [...]int{}
 	assert(len(a0) == 0)
-	
+
 	a1 := [...]int{0, 1, 2}
 	assert(len(a1) == 3)
 	var a13 [3]int
@@ -245,7 +255,7 @@ func array_literals() {
 	a13 = a1
 	a14 = a1 /* ERROR "cannot assign" */
 	_, _ = a13, a14
-	
+
 	a2 := [...]int{- /* ERROR "negative" */ 1: 0}
 	_ = a2
 
@@ -254,6 +264,15 @@ func array_literals() {
 
 	a4 := [...]complex128{0, 1, 2, 1<<10-2: -1i, 1i, 400: 10, 12, 14}
 	assert(len(a4) == 1024)
+
+	// composite literal element types may be elided
+	type T []int
+	_ = [10]T{T{}, {}, 5: T{1, 2, 3}, 7: {1, 2, 3}}
+	a6 := [...]T{T{}, {}, 5: T{1, 2, 3}, 7: {1, 2, 3}}
+	assert(len(a6) == 8)
+
+	// recursively so
+	_ = [10][10]T{{}, [10]T{{}}, {{1, 2, 3}}}
 
 	// from the spec
 	type Point struct { x, y float32 }
@@ -298,6 +317,13 @@ func slice_literals() {
 	_ = S0{f /* ERROR "truncated" */ : 0}
 	_ = S0{s /* ERROR "cannot convert" */ : 0}
 
+	// composite literal element types may be elided
+	type T []int
+	_ = []T{T{}, {}, 5: T{1, 2, 3}, 7: {1, 2, 3}}
+	_ = [][]int{{1, 2, 3}, {4, 5}}
+
+	// recursively so
+	_ = [][]T{{}, []T{{}}, {{1, 2, 3}}}
 }
 
 const index2 int = 2
@@ -342,6 +368,31 @@ func map_literals() {
 	var value int
 	_ = M1{true: 1, false: 0}
 	_ = M2{nil: 0, &value: 1}
+
+	// composite literal element types may be elided
+	type T [2]int
+	_ = map[int]T{0: T{3, 4}, 1: {5, 6}}
+
+	// recursively so
+	_ = map[int][]T{0: {}, 1: {{}, T{1, 2}}}
+
+	// composite literal key types may be elided
+	_ = map[T]int{T{3, 4}: 0, {5, 6}: 1}
+
+	// recursively so
+	_ = map[[2]T]int{{}: 0, {{}}: 1, [2]T{{}}: 2, {T{1, 2}}: 3}
+
+	// composite literal element and key types may be elided
+	_ = map[T]T{{}: {}, {1, 2}: T{3, 4}, T{4, 5}: {}}
+	_ = map[T]M0{{} : {}, T{1, 2}: M0{"foo": 0}, {1, 3}: {"foo": 1}}
+
+	// recursively so
+	_ = map[[2]T][]T{{}: {}, {{}}: {{}, T{1, 2}}, [2]T{{}}: nil, {T{1, 2}}: {{}, {}}}
+
+	// from the spec
+	type Point struct { x, y float32 }
+	_ = map[string]Point{"orig": {0, 0}}
+	_ = map[*Point]string{{0, 0}: "orig"}
 }
 
 var key2 string = "bar"

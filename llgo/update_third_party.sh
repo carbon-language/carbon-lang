@@ -7,7 +7,7 @@ gccrepo=svn://gcc.gnu.org/svn/gcc/trunk
 gccrev=216268
 
 gotoolsrepo=https://go.googlesource.com/tools
-gotoolsrev=47f2109c640e97025f36c98610bd9782e815012e
+gotoolsrev=d4e70101500b43ffe705d4c45e50dd4f1c8e3b2e
 
 tempdir=$(mktemp -d /tmp/update_third_party.XXXXXX)
 gofrontenddir=$tempdir/gofrontend
@@ -83,11 +83,6 @@ cp -r $gotoolsdir/LICENSE $gotoolsdir/go third_party/gotools
 # Vendor the go.tools repository.
 find third_party/gotools -name '*.go' | xargs sed -i -e \
   's,"golang.org/x/tools/,"llvm.org/llgo/third_party/gotools/,g'
-
-# Until the version skew between the "go" tool and the compiler is resolved,
-# we patch out Go 1.4 specific code in go.tools.
-sed -i -e '/go1\.4/ d' third_party/gotools/go/exact/go13.go
-rm third_party/gotools/go/exact/go14.go
 
 # --------------------- license check ---------------------
 

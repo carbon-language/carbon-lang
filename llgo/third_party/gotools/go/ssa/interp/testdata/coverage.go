@@ -91,8 +91,8 @@ func init() {
 	}
 
 	pa1 := &[2]string{"foo", "bar"}
-	pa2 := pa1        // creates an alias
-	(*pa2)[0] = "wiz" // * required to workaround typechecker bug
+	pa2 := pa1 // creates an alias
+	pa2[0] = "wiz"
 	if x := fmt.Sprint(*pa1, *pa2); x != "[wiz bar] [wiz bar]" {
 		panic(x)
 	}
@@ -514,4 +514,21 @@ func init() {
 	}()
 	i.f()
 	panic("unreachable")
+}
+
+// Regression test for a subtle bug in which copying values would causes
+// subcomponents of aggregate variables to change address, breaking
+// aliases.
+func init() {
+	type T struct{ f int }
+	var x T
+	p := &x.f
+	x = T{}
+	*p = 1
+	if x.f != 1 {
+		panic("lost store")
+	}
+	if p != &x.f {
+		panic("unstable address")
+	}
 }

@@ -11,8 +11,10 @@ import (
 	"go/token"
 	"io"
 	"os"
-	"path/filepath"
+	"strconv"
 	"sync"
+
+	"llvm.org/llgo/third_party/gotools/go/buildutil"
 )
 
 // parseFiles parses the Go source files within directory dir and
@@ -26,21 +28,13 @@ func parseFiles(fset *token.FileSet, ctxt *build.Context, displayPath func(strin
 	if displayPath == nil {
 		displayPath = func(path string) string { return path }
 	}
-	isAbs := filepath.IsAbs
-	if ctxt.IsAbsPath != nil {
-		isAbs = ctxt.IsAbsPath
-	}
-	joinPath := filepath.Join
-	if ctxt.JoinPath != nil {
-		joinPath = ctxt.JoinPath
-	}
 	var wg sync.WaitGroup
 	n := len(files)
 	parsed := make([]*ast.File, n)
 	errors := make([]error, n)
 	for i, file := range files {
-		if !isAbs(file) {
-			file = joinPath(dir, file)
+		if !buildutil.IsAbsPath(ctxt, file) {
+			file = buildutil.JoinPath(ctxt, dir, file)
 		}
 		wg.Add(1)
 		go func(i int, file string) {
@@ -84,6 +78,32 @@ func parseFiles(fset *token.FileSet, ctxt *build.Context, displayPath func(strin
 	errors = errors[:o]
 
 	return parsed, errors
+}
+
+// scanImports returns the set of all package import paths from all
+// import specs in the specified files.
+func scanImports(files []*ast.File) map[string]bool {
+	imports := make(map[string]bool)
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			if decl, ok := decl.(*ast.GenDecl); ok && decl.Tok == token.IMPORT {
+				for _, spec := range decl.Specs {
+					spec := spec.(*ast.ImportSpec)
+
+					// NB: do not assume the program is well-formed!
+					path, err := strconv.Unquote(spec.Path.Value)
+					if err != nil {
+						continue // quietly ignore the error
+					}
+					if path == "C" || path == "unsafe" {
+						continue // skip pseudo packages
+					}
+					imports[path] = true
+				}
+			}
+		}
+	}
+	return imports
 }
 
 // ---------- Internal helpers ----------

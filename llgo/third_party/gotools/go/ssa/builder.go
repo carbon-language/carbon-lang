@@ -358,7 +358,9 @@ func (b *builder) addr(fn *Function, e ast.Expr, escaping bool) lvalue {
 			v = fn.addLocal(t, e.Lbrace)
 		}
 		v.Comment = "complit"
-		b.compLit(fn, v, e, true) // initialize in place
+		var sb storebuf
+		b.compLit(fn, v, e, true, &sb)
+		sb.emit(fn)
 		return &address{addr: v, pos: e.Lbrace, expr: e}
 
 	case *ast.ParenExpr:
@@ -420,15 +422,39 @@ func (b *builder) addr(fn *Function, e ast.Expr, escaping bool) lvalue {
 	panic(fmt.Sprintf("unexpected address expression: %T", e))
 }
 
-// exprInPlace emits to fn code to initialize the lvalue loc with the
-// value of expression e. If isZero is true, exprInPlace assumes that loc
-// holds the zero value for its type.
+type store struct {
+	lhs lvalue
+	rhs Value
+}
+
+type storebuf struct{ stores []store }
+
+func (sb *storebuf) store(lhs lvalue, rhs Value) {
+	sb.stores = append(sb.stores, store{lhs, rhs})
+}
+
+func (sb *storebuf) emit(fn *Function) {
+	for _, s := range sb.stores {
+		s.lhs.store(fn, s.rhs)
+	}
+}
+
+// assign emits to fn code to initialize the lvalue loc with the value
+// of expression e.  If isZero is true, assign assumes that loc holds
+// the zero value for its type.
 //
-// This is equivalent to loc.store(fn, b.expr(fn, e)) but may
-// generate better code in some cases, e.g. for composite literals
-// in an addressable location.
+// This is equivalent to loc.store(fn, b.expr(fn, e)), but may generate
+// better code in some cases, e.g., for composite literals in an
+// addressable location.
 //
-func (b *builder) exprInPlace(fn *Function, loc lvalue, e ast.Expr, isZero bool) {
+// If sb is not nil, assign generates code to evaluate expression e, but
+// not to update loc.  Instead, the necessary stores are appended to the
+// storebuf sb so that they can be executed later.  This allows correct
+// in-place update of existing variables when the RHS is a composite
+// literal that may reference parts of the LHS.
+//
+func (b *builder) assign(fn *Function, loc lvalue, e ast.Expr, isZero bool, sb *storebuf) {
+	// Can we initialize it in place?
 	if e, ok := unparen(e).(*ast.CompositeLit); ok {
 		// A CompositeLit never evaluates to a pointer,
 		// so if the type of the location is a pointer,
@@ -436,7 +462,12 @@ func (b *builder) exprInPlace(fn *Function, loc lvalue, e ast.Expr, isZero bool)
 		if _, ok := loc.(blank); !ok { // avoid calling blank.typ()
 			if isPointer(loc.typ()) {
 				ptr := b.addr(fn, e, true).address(fn)
-				loc.store(fn, ptr) // copy address
+				// copy address
+				if sb != nil {
+					sb.store(loc, ptr)
+				} else {
+					loc.store(fn, ptr)
+				}
 				return
 			}
 		}
@@ -447,14 +478,35 @@ func (b *builder) exprInPlace(fn *Function, loc lvalue, e ast.Expr, isZero bool)
 				// Can't in-place initialize an interface value.
 				// Fall back to copying.
 			} else {
+				// x = T{...} or x := T{...}
 				addr := loc.address(fn)
-				b.compLit(fn, addr, e, isZero) // in place
-				emitDebugRef(fn, e, addr, true)
+				if sb != nil {
+					b.compLit(fn, addr, e, isZero, sb)
+				} else {
+					var sb storebuf
+					b.compLit(fn, addr, e, isZero, &sb)
+					sb.emit(fn)
+				}
+
+				// Subtle: emit debug ref for aggregate types only;
+				// slice and map are handled by store ops in compLit.
+				switch loc.typ().Underlying().(type) {
+				case *types.Struct, *types.Array:
+					emitDebugRef(fn, e, addr, true)
+				}
+
 				return
 			}
 		}
 	}
-	loc.store(fn, b.expr(fn, e)) // copy value
+
+	// simple case: just copy
+	rhs := b.expr(fn, e)
+	if sb != nil {
+		sb.store(loc, rhs)
+	} else {
+		loc.store(fn, rhs)
+	}
 }
 
 // expr lowers a single-result expression e to SSA form, emitting code
@@ -600,7 +652,7 @@ func (b *builder) expr0(fn *Function, e ast.Expr, tv types.TypeAndValue) Value {
 		case *types.Basic, *types.Slice, *types.Pointer: // *array
 			x = b.expr(fn, e.X)
 		default:
-			unreachable()
+			panic("unreachable")
 		}
 		if e.High != nil {
 			high = b.expr(fn, e.High)
@@ -938,7 +990,7 @@ func (b *builder) localValueSpec(fn *Function, spec *ast.ValueSpec) {
 				fn.addLocalForIdent(id)
 			}
 			lval := b.addr(fn, id, false) // non-escaping
-			b.exprInPlace(fn, lval, spec.Values[i], true)
+			b.assign(fn, lval, spec.Values[i], true, nil)
 		}
 
 	case len(spec.Values) == 0:
@@ -973,37 +1025,33 @@ func (b *builder) localValueSpec(fn *Function, spec *ast.ValueSpec) {
 //
 func (b *builder) assignStmt(fn *Function, lhss, rhss []ast.Expr, isDef bool) {
 	// Side effects of all LHSs and RHSs must occur in left-to-right order.
-	var lvals []lvalue
-	for _, lhs := range lhss {
+	lvals := make([]lvalue, len(lhss))
+	isZero := make([]bool, len(lhss))
+	for i, lhs := range lhss {
 		var lval lvalue = blank{}
 		if !isBlankIdent(lhs) {
 			if isDef {
 				if obj := fn.Pkg.info.Defs[lhs.(*ast.Ident)]; obj != nil {
 					fn.addNamedLocal(obj)
+					isZero[i] = true
 				}
 			}
 			lval = b.addr(fn, lhs, false) // non-escaping
 		}
-		lvals = append(lvals, lval)
+		lvals[i] = lval
 	}
 	if len(lhss) == len(rhss) {
-		// e.g. x, y = f(), g()
-		if len(lhss) == 1 {
-			// x = type{...}
-			// Optimization: in-place construction
-			// of composite literals.
-			b.exprInPlace(fn, lvals[0], rhss[0], false)
-		} else {
-			// Parallel assignment.  All reads must occur
-			// before all updates, precluding exprInPlace.
-			var rvals []Value
-			for _, rval := range rhss {
-				rvals = append(rvals, b.expr(fn, rval))
-			}
-			for i, lval := range lvals {
-				lval.store(fn, rvals[i])
-			}
+		// Simple assignment:   x     = f()        (!isDef)
+		// Parallel assignment: x, y  = f(), g()   (!isDef)
+		// or short var decl:   x, y := f(), g()   (isDef)
+		//
+		// In all cases, the RHSs may refer to the LHSs,
+		// so we need a storebuf.
+		var sb storebuf
+		for i := range rhss {
+			b.assign(fn, lvals[i], rhss[i], isZero[i], &sb)
 		}
+		sb.emit(fn)
 	} else {
 		// e.g. x, y = pos()
 		tuple := b.exprN(fn, rhss[0])
@@ -1031,22 +1079,32 @@ func (b *builder) arrayLen(fn *Function, elts []ast.Expr) int64 {
 }
 
 // compLit emits to fn code to initialize a composite literal e at
-// address addr with type typ, typically allocated by Alloc.
+// address addr with type typ.
+//
 // Nested composite literals are recursively initialized in place
 // where possible. If isZero is true, compLit assumes that addr
 // holds the zero value for typ.
+//
+// Because the elements of a composite literal may refer to the
+// variables being updated, as in the second line below,
+//	x := T{a: 1}
+//	x = T{a: x.a}
+// all the reads must occur before all the writes.  Thus all stores to
+// loc are emitted to the storebuf sb for later execution.
 //
 // A CompositeLit may have pointer type only in the recursive (nested)
 // case when the type name is implicit.  e.g. in []*T{{}}, the inner
 // literal has type *T behaves like &T{}.
 // In that case, addr must hold a T, not a *T.
 //
-func (b *builder) compLit(fn *Function, addr Value, e *ast.CompositeLit, isZero bool) {
+func (b *builder) compLit(fn *Function, addr Value, e *ast.CompositeLit, isZero bool, sb *storebuf) {
 	typ := deref(fn.Pkg.typeOf(e))
 	switch t := typ.Underlying().(type) {
 	case *types.Struct:
 		if !isZero && len(e.Elts) != t.NumFields() {
-			emitMemClear(fn, addr, e.Lbrace)
+			// memclear
+			sb.store(&address{addr, e.Lbrace, nil},
+				zeroValue(fn, deref(addr.Type())))
 			isZero = true
 		}
 		for i, e := range e.Elts {
@@ -1071,7 +1129,7 @@ func (b *builder) compLit(fn *Function, addr Value, e *ast.CompositeLit, isZero 
 			}
 			faddr.setType(types.NewPointer(sf.Type()))
 			fn.emit(faddr)
-			b.exprInPlace(fn, &address{addr: faddr, pos: pos, expr: e}, e, isZero)
+			b.assign(fn, &address{addr: faddr, pos: pos, expr: e}, e, isZero, sb)
 		}
 
 	case *types.Array, *types.Slice:
@@ -1083,21 +1141,23 @@ func (b *builder) compLit(fn *Function, addr Value, e *ast.CompositeLit, isZero 
 			alloc := emitNew(fn, at, e.Lbrace)
 			alloc.Comment = "slicelit"
 			array = alloc
-			isZero = true
 		case *types.Array:
 			at = t
 			array = addr
-		}
 
-		if !isZero && int64(len(e.Elts)) != at.Len() {
-			emitMemClear(fn, array, e.Lbrace)
-			isZero = true
+			if !isZero && int64(len(e.Elts)) != at.Len() {
+				// memclear
+				sb.store(&address{array, e.Lbrace, nil},
+					zeroValue(fn, deref(array.Type())))
+			}
 		}
 
 		var idx *Const
 		for _, e := range e.Elts {
+			pos := e.Pos()
 			if kv, ok := e.(*ast.KeyValueExpr); ok {
 				idx = b.expr(fn, kv.Key).(*Const)
+				pos = kv.Colon
 				e = kv.Value
 			} else {
 				var idxval int64
@@ -1112,30 +1172,44 @@ func (b *builder) compLit(fn *Function, addr Value, e *ast.CompositeLit, isZero 
 			}
 			iaddr.setType(types.NewPointer(at.Elem()))
 			fn.emit(iaddr)
-			b.exprInPlace(fn, &address{addr: iaddr, pos: e.Pos(), expr: e}, e, isZero)
+			if t != at { // slice
+				// backing array is unaliased => storebuf not needed.
+				b.assign(fn, &address{addr: iaddr, pos: pos, expr: e}, e, true, nil)
+			} else {
+				b.assign(fn, &address{addr: iaddr, pos: pos, expr: e}, e, true, sb)
+			}
 		}
+
 		if t != at { // slice
 			s := &Slice{X: array}
 			s.setPos(e.Lbrace)
 			s.setType(typ)
-			emitStore(fn, addr, fn.emit(s), e.Lbrace)
+			sb.store(&address{addr: addr, pos: e.Lbrace, expr: e}, fn.emit(s))
 		}
 
 	case *types.Map:
 		m := &MakeMap{Reserve: intConst(int64(len(e.Elts)))}
 		m.setPos(e.Lbrace)
 		m.setType(typ)
-		emitStore(fn, addr, fn.emit(m), e.Lbrace)
+		fn.emit(m)
 		for _, e := range e.Elts {
 			e := e.(*ast.KeyValueExpr)
-			loc := &element{
+			loc := element{
 				m:   m,
 				k:   emitConv(fn, b.expr(fn, e.Key), t.Key()),
 				t:   t.Elem(),
 				pos: e.Colon,
 			}
-			b.exprInPlace(fn, loc, e.Value, true)
+
+			// We call assign() only because it takes care
+			// of any &-operation required in the recursive
+			// case, e.g.,
+			// map[int]*struct{}{0: {}} implies &struct{}{}.
+			// In-place update is of course impossible,
+			// and no storebuf is needed.
+			b.assign(fn, &loc, e.Value, true, nil)
 		}
+		sb.store(&address{addr: addr, pos: e.Lbrace, expr: e}, m)
 
 	default:
 		panic("unexpected CompositeLit type: " + t.String())
@@ -2125,24 +2199,12 @@ func (b *builder) buildFuncDecl(pkg *Package, decl *ast.FuncDecl) {
 	if isBlankIdent(id) {
 		return // discard
 	}
-	var fn *Function
+	fn := pkg.values[pkg.info.Defs[id]].(*Function)
 	if decl.Recv == nil && id.Name == "init" {
-		pkg.ninit++
-		fn = &Function{
-			name:      fmt.Sprintf("init#%d", pkg.ninit),
-			Signature: new(types.Signature),
-			pos:       decl.Name.NamePos,
-			Pkg:       pkg,
-			Prog:      pkg.Prog,
-			syntax:    decl,
-		}
-
 		var v Call
 		v.Call.Value = fn
 		v.setType(types.NewTuple())
 		pkg.init.emit(&v)
-	} else {
-		fn = pkg.values[pkg.info.Defs[id]].(*Function)
 	}
 	b.buildFunction(fn)
 }
@@ -2193,7 +2255,7 @@ func (p *Package) Build() {
 	// that would require package creation in topological order.
 	for name, mem := range p.Members {
 		if ast.IsExported(name) {
-			p.needMethodsOf(mem.Type())
+			p.Prog.needMethodsOf(mem.Type())
 		}
 	}
 	if p.Prog.mode&LogSource != 0 {
@@ -2243,7 +2305,7 @@ func (p *Package) Build() {
 			} else {
 				lval = blank{}
 			}
-			b.exprInPlace(init, lval, varinit.Rhs, true)
+			b.assign(init, lval, varinit.Rhs, true, nil)
 		} else {
 			// n:1 initialization: var x, y :=  f()
 			tuple := b.exprN(init, varinit.Rhs)
@@ -2300,130 +2362,4 @@ func (p *Package) typeOf(e ast.Expr) types.Type {
 	}
 	panic(fmt.Sprintf("no type for %T @ %s",
 		e, p.Prog.Fset.Position(e.Pos())))
-}
-
-// needMethodsOf ensures that runtime type information (including the
-// complete method set) is available for the specified type T and all
-// its subcomponents.
-//
-// needMethodsOf must be called for at least every type that is an
-// operand of some MakeInterface instruction, and for the type of
-// every exported package member.
-//
-// Precondition: T is not a method signature (*Signature with Recv()!=nil).
-//
-// Thread-safe.  (Called via emitConv from multiple builder goroutines.)
-//
-// TODO(adonovan): make this faster.  It accounts for 20% of SSA build
-// time.  Do we need to maintain a distinct needRTTI and methodSets per
-// package?  Using just one in the program might be much faster.
-//
-func (p *Package) needMethodsOf(T types.Type) {
-	p.methodsMu.Lock()
-	p.needMethods(T, false)
-	p.methodsMu.Unlock()
-}
-
-// Precondition: T is not a method signature (*Signature with Recv()!=nil).
-// Precondition: the p.methodsMu lock is held.
-// Recursive case: skip => don't call makeMethods(T).
-func (p *Package) needMethods(T types.Type, skip bool) {
-	// Each package maintains its own set of types it has visited.
-	if prevSkip, ok := p.needRTTI.At(T).(bool); ok {
-		// needMethods(T) was previously called
-		if !prevSkip || skip {
-			return // already seen, with same or false 'skip' value
-		}
-	}
-	p.needRTTI.Set(T, skip)
-
-	// Prune the recursion if we find a named or *named type
-	// belonging to another package.
-	var n *types.Named
-	switch T := T.(type) {
-	case *types.Named:
-		n = T
-	case *types.Pointer:
-		n, _ = T.Elem().(*types.Named)
-	}
-	if n != nil {
-		owner := n.Obj().Pkg()
-		if owner == nil {
-			return // built-in error type
-		}
-		if owner != p.Object {
-			return // belongs to another package
-		}
-	}
-
-	// All the actual method sets live in the Program so that
-	// multiple packages can share a single copy in memory of the
-	// symbols that would be compiled into multiple packages (as
-	// weak symbols).
-	if !skip && p.Prog.makeMethods(T) {
-		p.methodSets = append(p.methodSets, T)
-	}
-
-	// Recursion over signatures of each method.
-	tmset := p.Prog.MethodSets.MethodSet(T)
-	for i := 0; i < tmset.Len(); i++ {
-		sig := tmset.At(i).Type().(*types.Signature)
-		p.needMethods(sig.Params(), false)
-		p.needMethods(sig.Results(), false)
-	}
-
-	switch t := T.(type) {
-	case *types.Basic:
-		// nop
-
-	case *types.Interface:
-		// nop---handled by recursion over method set.
-
-	case *types.Pointer:
-		p.needMethods(t.Elem(), false)
-
-	case *types.Slice:
-		p.needMethods(t.Elem(), false)
-
-	case *types.Chan:
-		p.needMethods(t.Elem(), false)
-
-	case *types.Map:
-		p.needMethods(t.Key(), false)
-		p.needMethods(t.Elem(), false)
-
-	case *types.Signature:
-		if t.Recv() != nil {
-			panic(fmt.Sprintf("Signature %s has Recv %s", t, t.Recv()))
-		}
-		p.needMethods(t.Params(), false)
-		p.needMethods(t.Results(), false)
-
-	case *types.Named:
-		// A pointer-to-named type can be derived from a named
-		// type via reflection.  It may have methods too.
-		p.needMethods(types.NewPointer(T), false)
-
-		// Consider 'type T struct{S}' where S has methods.
-		// Reflection provides no way to get from T to struct{S},
-		// only to S, so the method set of struct{S} is unwanted,
-		// so set 'skip' flag during recursion.
-		p.needMethods(t.Underlying(), true)
-
-	case *types.Array:
-		p.needMethods(t.Elem(), false)
-
-	case *types.Struct:
-		for i, n := 0, t.NumFields(); i < n; i++ {
-			p.needMethods(t.Field(i).Type(), false)
-		}
-
-	case *types.Tuple:
-		for i, n := 0, t.Len(); i < n; i++ {
-			p.needMethods(t.At(i).Type(), false)
-		}
-
-	default:
-		panic(T)
-	}
 }
