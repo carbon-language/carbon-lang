@@ -1,5 +1,5 @@
-# Tests the --strip-all (-s) flag. We expect the symbol table to not contain
-# any symbol in the output file.
+# Tests the --strip-all (-s) flag.
+# We expect that .symtab and .strtab are stripped from the final executable.
 #
 # The following code was used to generate the object.
 # $ clang -c blah.c -o blah
@@ -20,9 +20,11 @@
 
 #RUN: yaml2obj -format=elf %s -o=%t.o
 #RUN: lld -flavor gnu -target x86_64 %t.o -e=main --strip-all -o %t1
-#RUN: llvm-readobj -dt %t1 | FileCheck -check-prefix CHECKSYMS %s
+#RUN: llvm-objdump -section-headers %t1 | FileCheck %s
 
-#CHECKSYMS: @
+#CHECK:  14 .shstrtab     0000007d 0000000000000000
+#CHECK-NOT:  15 .symtab       00000198 0000000000000000
+#CHECK-NOT:  16 .strtab       000000e4 0000000000000000
 
 ---
 FileHeader:

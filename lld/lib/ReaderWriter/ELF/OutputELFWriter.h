@@ -319,9 +319,11 @@ void OutputELFWriter<ELFT>::buildAtomToAddressMap(const File &file) {
     _atomToAddressMap[atom->_atom] = atom->_virtualAddr;
 
   // Set the total number of atoms in the symbol table, so that appropriate
-  // resizing of the string table can be done
-  _symtab->setNumEntries(totalDefinedAtoms + totalAbsAtoms +
-                         totalUndefinedAtoms);
+  // resizing of the string table can be done.
+  // There's no such thing as symbol table if we're stripping all the symbols
+  if (!_ctx.stripSymbols())
+    _symtab->setNumEntries(totalDefinedAtoms + totalAbsAtoms +
+                           totalUndefinedAtoms);
 }
 
 template<class ELFT>
@@ -395,18 +397,23 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   _layout.setHeader(_elfHeader.get());
   _layout.setProgramHeader(_programHeader.get());
 
-  _symtab = std::move(this->createSymbolTable());
-  _strtab.reset(new (_alloc) StringTable<ELFT>(
-      _ctx, ".strtab", TargetLayout<ELFT>::ORDER_STRING_TABLE));
+  // Don't create .symtab and .strtab sections if we're going to
+  // strip all the symbols.
+  if (!_ctx.stripSymbols()) {
+    _symtab = std::move(this->createSymbolTable());
+    _strtab.reset(new (_alloc) StringTable<ELFT>(
+        _ctx, ".strtab", TargetLayout<ELFT>::ORDER_STRING_TABLE));
+    _layout.addSection(_symtab.get());
+    _layout.addSection(_strtab.get());
+    _symtab->setStringSection(_strtab.get());
+  }
+
   _shstrtab.reset(new (_alloc) StringTable<ELFT>(
       _ctx, ".shstrtab", TargetLayout<ELFT>::ORDER_SECTION_STRINGS));
   _shdrtab.reset(new (_alloc) SectionHeader<ELFT>(
       _ctx, TargetLayout<ELFT>::ORDER_SECTION_HEADERS));
-  _layout.addSection(_symtab.get());
-  _layout.addSection(_strtab.get());
   _layout.addSection(_shstrtab.get());
   _shdrtab->setStringSection(_shstrtab.get());
-  _symtab->setStringSection(_strtab.get());
   _layout.addSection(_shdrtab.get());
 
   for (auto sec : _layout.sections()) {
