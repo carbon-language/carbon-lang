@@ -757,10 +757,12 @@ void CodeGenFunction::ExpandTypeFromArgs(
       ExpandTypeFromArgs(FD->getType(), SubLV, AI);
     }
   } else if (auto CExp = dyn_cast<ComplexExpansion>(Exp.get())) {
-    llvm::Value *RealAddr = Builder.CreateStructGEP(nullptr, LV.getAddress(), 0, "real");
+    llvm::Value *RealAddr =
+        Builder.CreateStructGEP(nullptr, LV.getAddress(), 0, "real");
     EmitStoreThroughLValue(RValue::get(*AI++),
                            MakeAddrLValue(RealAddr, CExp->EltTy));
-    llvm::Value *ImagAddr = Builder.CreateStructGEP(nullptr, LV.getAddress(), 1, "imag");
+    llvm::Value *ImagAddr =
+        Builder.CreateStructGEP(nullptr, LV.getAddress(), 1, "imag");
     EmitStoreThroughLValue(RValue::get(*AI++),
                            MakeAddrLValue(ImagAddr, CExp->EltTy));
   } else {
@@ -2272,8 +2274,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       llvm::Function::arg_iterator EI = CurFn->arg_end();
       --EI;
       llvm::Value *ArgStruct = EI;
-      llvm::Value *SRet =
-          Builder.CreateStructGEP(nullptr, ArgStruct, RetAI.getInAllocaFieldIndex());
+      llvm::Value *SRet = Builder.CreateStructGEP(
+          nullptr, ArgStruct, RetAI.getInAllocaFieldIndex());
       RV = Builder.CreateLoad(SRet, "sret");
     }
     break;
@@ -3061,7 +3063,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       IRCallArgs[IRFunctionArgs.getSRetArgNo()] = SRetPtr;
     } else {
       llvm::Value *Addr =
-          Builder.CreateStructGEP(ArgMemory->getAllocatedType(), ArgMemory, RetAI.getInAllocaFieldIndex());
+          Builder.CreateStructGEP(ArgMemory->getAllocatedType(), ArgMemory,
+                                  RetAI.getInAllocaFieldIndex());
       Builder.CreateStore(SRetPtr, Addr);
     }
   }
@@ -3095,14 +3098,16 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
             cast<llvm::Instruction>(RV.getAggregateAddr());
         CGBuilderTy::InsertPoint IP = Builder.saveIP();
         Builder.SetInsertPoint(Placeholder);
-        llvm::Value *Addr = Builder.CreateStructGEP(
-            ArgMemory->getAllocatedType(), ArgMemory, ArgInfo.getInAllocaFieldIndex());
+        llvm::Value *Addr =
+            Builder.CreateStructGEP(ArgMemory->getAllocatedType(), ArgMemory,
+                                    ArgInfo.getInAllocaFieldIndex());
         Builder.restoreIP(IP);
         deferPlaceholderReplacement(Placeholder, Addr);
       } else {
         // Store the RValue into the argument struct.
         llvm::Value *Addr =
-            Builder.CreateStructGEP(ArgMemory->getAllocatedType(), ArgMemory, ArgInfo.getInAllocaFieldIndex());
+            Builder.CreateStructGEP(ArgMemory->getAllocatedType(), ArgMemory,
+                                    ArgInfo.getInAllocaFieldIndex());
         unsigned AS = Addr->getType()->getPointerAddressSpace();
         llvm::Type *MemType = ConvertTypeForMem(I->Ty)->getPointerTo(AS);
         // There are some cases where a trivial bitcast is not avoidable.  The

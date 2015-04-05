@@ -1292,8 +1292,10 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
       Receiver->getType(), IdTy, nullptr);
   llvm::Value *ObjCSuper = Builder.CreateAlloca(ObjCSuperTy);
 
-  Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuperTy, ObjCSuper, 0));
-  Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuperTy, ObjCSuper, 1));
+  Builder.CreateStore(Receiver,
+                      Builder.CreateStructGEP(ObjCSuperTy, ObjCSuper, 0));
+  Builder.CreateStore(ReceiverClass,
+                      Builder.CreateStructGEP(ObjCSuperTy, ObjCSuper, 1));
 
   ObjCSuper = EnforceType(Builder, ObjCSuper, PtrToObjCSuperTy);
 

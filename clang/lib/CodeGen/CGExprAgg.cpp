@@ -666,7 +666,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     CGF.EmitAggExpr(E->getSubExpr(), atomicSlot);
 
     llvm::Value *valueAddr =
-      Builder.CreateStructGEP(nullptr, atomicSlot.getAddr(), 0);
+        Builder.CreateStructGEP(nullptr, atomicSlot.getAddr(), 0);
     RValue rvalue = RValue::getAggregate(valueAddr, atomicSlot.isVolatile());
     return EmitFinalDestCopy(valueType, rvalue);
   }

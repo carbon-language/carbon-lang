@@ -2774,8 +2774,8 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
                                         QualType Ty,
                                         CodeGenFunction &CGF) {
-  llvm::Value *overflow_arg_area_p =
-    CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 2, "overflow_arg_area_p");
+  llvm::Value *overflow_arg_area_p = CGF.Builder.CreateStructGEP(
+      nullptr, VAListAddr, 2, "overflow_arg_area_p");
   llvm::Value *overflow_arg_area =
     CGF.Builder.CreateLoad(overflow_arg_area_p, "overflow_arg_area");
 
@@ -3790,10 +3790,12 @@ llvm::Value *PPC64_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
     ImagAddr = Builder.CreateIntToPtr(ImagAddr, PBaseTy);
     llvm::Value *Real = Builder.CreateLoad(RealAddr, false, ".vareal");
     llvm::Value *Imag = Builder.CreateLoad(ImagAddr, false, ".vaimag");
-    llvm::AllocaInst *Ptr = CGF.CreateTempAlloca(CGT.ConvertTypeForMem(Ty),
-                                            "vacplx");
-    llvm::Value *RealPtr = Builder.CreateStructGEP(Ptr->getAllocatedType(), Ptr, 0, ".real");
-    llvm::Value *ImagPtr = Builder.CreateStructGEP(Ptr->getAllocatedType(), Ptr, 1, ".imag");
+    llvm::AllocaInst *Ptr =
+        CGF.CreateTempAlloca(CGT.ConvertTypeForMem(Ty), "vacplx");
+    llvm::Value *RealPtr =
+        Builder.CreateStructGEP(Ptr->getAllocatedType(), Ptr, 0, ".real");
+    llvm::Value *ImagPtr =
+        Builder.CreateStructGEP(Ptr->getAllocatedType(), Ptr, 1, ".imag");
     Builder.CreateStore(Real, RealPtr, false);
     Builder.CreateStore(Imag, ImagPtr, false);
     return Ptr;
@@ -4123,13 +4125,15 @@ llvm::Value *AArch64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr,
   int RegSize = IsIndirect ? 8 : getContext().getTypeSize(Ty) / 8;
   if (!IsFPR) {
     // 3 is the field number of __gr_offs
-    reg_offs_p = CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 3, "gr_offs_p");
+    reg_offs_p =
+        CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 3, "gr_offs_p");
     reg_offs = CGF.Builder.CreateLoad(reg_offs_p, "gr_offs");
     reg_top_index = 1; // field number for __gr_top
     RegSize = llvm::RoundUpToAlignment(RegSize, 8);
   } else {
     // 4 is the field number of __vr_offs.
-    reg_offs_p = CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 4, "vr_offs_p");
+    reg_offs_p =
+        CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 4, "vr_offs_p");
     reg_offs = CGF.Builder.CreateLoad(reg_offs_p, "vr_offs");
     reg_top_index = 2; // field number for __vr_top
     RegSize = 16 * NumRegs;
@@ -4190,8 +4194,8 @@ llvm::Value *AArch64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr,
   CGF.EmitBlock(InRegBlock);
 
   llvm::Value *reg_top_p = nullptr, *reg_top = nullptr;
-  reg_top_p =
-      CGF.Builder.CreateStructGEP(nullptr, VAListAddr, reg_top_index, "reg_top_p");
+  reg_top_p = CGF.Builder.CreateStructGEP(nullptr, VAListAddr, reg_top_index,
+                                          "reg_top_p");
   reg_top = CGF.Builder.CreateLoad(reg_top_p, "reg_top");
   llvm::Value *BaseAddr = CGF.Builder.CreateGEP(reg_top, reg_offs);
   llvm::Value *RegAddr = nullptr;
@@ -4225,7 +4229,8 @@ llvm::Value *AArch64ABIInfo::EmitAAPCSVAArg(llvm::Value *VAListAddr,
       llvm::Value *LoadAddr = CGF.Builder.CreateGEP(BaseAddr, BaseOffset);
       LoadAddr = CGF.Builder.CreateBitCast(
           LoadAddr, llvm::PointerType::getUnqual(BaseTy));
-      llvm::Value *StoreAddr = CGF.Builder.CreateStructGEP(Tmp->getAllocatedType(), Tmp, i);
+      llvm::Value *StoreAddr =
+          CGF.Builder.CreateStructGEP(Tmp->getAllocatedType(), Tmp, i);
 
       llvm::Value *Elem = CGF.Builder.CreateLoad(LoadAddr);
       CGF.Builder.CreateStore(Elem, StoreAddr);
@@ -5286,8 +5291,8 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     RegPadding = Padding; // values are passed in the low bits of a GPR
   }
 
-  llvm::Value *RegCountPtr =
-    CGF.Builder.CreateStructGEP(nullptr, VAListAddr, RegCountField, "reg_count_ptr");
+  llvm::Value *RegCountPtr = CGF.Builder.CreateStructGEP(
+      nullptr, VAListAddr, RegCountField, "reg_count_ptr");
   llvm::Value *RegCount = CGF.Builder.CreateLoad(RegCountPtr, "reg_count");
   llvm::Type *IndexTy = RegCount->getType();
   llvm::Value *MaxRegsV = llvm::ConstantInt::get(IndexTy, MaxRegs);
@@ -5311,7 +5316,7 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Value *RegOffset =
     CGF.Builder.CreateAdd(ScaledRegCount, RegBase, "reg_offset");
   llvm::Value *RegSaveAreaPtr =
-    CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 3, "reg_save_area_ptr");
+      CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 3, "reg_save_area_ptr");
   llvm::Value *RegSaveArea =
     CGF.Builder.CreateLoad(RegSaveAreaPtr, "reg_save_area");
   llvm::Value *RawRegAddr =
@@ -5330,8 +5335,8 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   CGF.EmitBlock(InMemBlock);
 
   // Work out the address of a stack argument.
-  llvm::Value *OverflowArgAreaPtr =
-    CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 2, "overflow_arg_area_ptr");
+  llvm::Value *OverflowArgAreaPtr = CGF.Builder.CreateStructGEP(
+      nullptr, VAListAddr, 2, "overflow_arg_area_ptr");
   llvm::Value *OverflowArgArea =
     CGF.Builder.CreateLoad(OverflowArgAreaPtr, "overflow_arg_area");
   llvm::Value *PaddingV = llvm::ConstantInt::get(IndexTy, Padding);

@@ -84,9 +84,9 @@ RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
     return RValue::getAggregate(CGF.Builder.CreateLoad(Value));
   case ComplexAddress: {
     llvm::Value *real =
-      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(nullptr, Value, 0));
+        CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(nullptr, Value, 0));
     llvm::Value *imag =
-      CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(nullptr, Value, 1));
+        CGF.Builder.CreateLoad(CGF.Builder.CreateStructGEP(nullptr, Value, 1));
     return RValue::getComplex(real, imag);
   }
   }

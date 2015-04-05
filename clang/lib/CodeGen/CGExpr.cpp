@@ -2077,9 +2077,8 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     assert(E->getSubExpr()->getType()->isAnyComplexType());
 
     unsigned Idx = E->getOpcode() == UO_Imag;
-    return MakeAddrLValue(Builder.CreateStructGEP(nullptr, LV.getAddress(),
-                                                  Idx, "idx"),
-                          ExprTy);
+    return MakeAddrLValue(
+        Builder.CreateStructGEP(nullptr, LV.getAddress(), Idx, "idx"), ExprTy);
   }
   case UO_PreInc:
   case UO_PreDec: {
