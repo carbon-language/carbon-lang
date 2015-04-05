@@ -1100,10 +1100,6 @@ public:
 
     return Insert(GetElementPtrInst::Create(Ty, Ptr, Idxs), Name);
   }
-  Value *CreateConstInBoundsGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1,
-                                    const Twine &Name = "") {
-    return CreateConstInBoundsGEP2_32(nullptr, Ptr, Idx0, Idx1, Name);
-  }
   Value *CreateConstInBoundsGEP2_32(Type *Ty, Value *Ptr, unsigned Idx0,
                                     unsigned Idx1, const Twine &Name = "") {
     Value *Idxs[] = {
@@ -1157,9 +1153,6 @@ public:
                     Name);
 
     return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
-  }
-  Value *CreateStructGEP(Value *Ptr, unsigned Idx, const Twine &Name = "") {
-    return CreateStructGEP(nullptr, Ptr, Idx, Name);
   }
   Value *CreateStructGEP(Type *Ty, Value *Ptr, unsigned Idx,
                          const Twine &Name = "") {
