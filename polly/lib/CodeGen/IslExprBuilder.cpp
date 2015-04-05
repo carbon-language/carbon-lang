@@ -130,10 +130,12 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
     if (!IndexOp) {
       IndexOp = NextIndex;
     } else {
-      assert(NextIndex->getType()->getScalarSizeInBits() <=
-                 IndexOp->getType()->getScalarSizeInBits() &&
-             "Truncating the index type may not be save");
-      NextIndex = Builder.CreateIntCast(NextIndex, IndexOp->getType(), true);
+      Type *Ty = getWidestType(NextIndex->getType(), IndexOp->getType());
+
+      if (Ty != NextIndex->getType())
+        NextIndex = Builder.CreateIntCast(NextIndex, Ty, true);
+      if (Ty != IndexOp->getType())
+        IndexOp = Builder.CreateIntCast(IndexOp, Ty, true);
 
       IndexOp =
           Builder.CreateAdd(IndexOp, NextIndex, "polly.access.add." + BaseName);
@@ -153,7 +155,9 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
     if (Ty != IndexOp->getType())
       IndexOp = Builder.CreateSExtOrTrunc(IndexOp, Ty,
                                           "polly.access.sext." + BaseName);
-
+    if (Ty != DimSize->getType())
+      DimSize = Builder.CreateSExtOrTrunc(DimSize, Ty,
+                                          "polly.access.sext." + BaseName);
     IndexOp =
         Builder.CreateMul(IndexOp, DimSize, "polly.access.mul." + BaseName);
   }
