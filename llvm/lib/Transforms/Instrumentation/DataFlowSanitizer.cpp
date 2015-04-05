@@ -1472,7 +1472,8 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
           Args.push_back(DFSF.getShadow(*i));
 
         if (FT->isVarArg()) {
-          auto *LabelVATy = ArrayType::get(DFSF.DFS.ShadowTy, CS.arg_size() - FT->getNumParams());
+          auto *LabelVATy = ArrayType::get(DFSF.DFS.ShadowTy,
+                                           CS.arg_size() - FT->getNumParams());
           auto *LabelVAAlloca = new AllocaInst(LabelVATy, "labelva",
                                                DFSF.F->getEntryBlock().begin());
 
