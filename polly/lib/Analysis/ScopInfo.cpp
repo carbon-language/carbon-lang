@@ -25,6 +25,7 @@
 #include "polly/Support/ScopHelper.h"
 #include "polly/TempScopInfo.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -1543,7 +1544,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     isl_set_free(AGDomain);
   }
 
-  DenseMap<const Value *, SmallPtrSet<MemoryAccess *, 8>> ReadOnlyPairs;
+  MapVector<const Value *, SmallPtrSet<MemoryAccess *, 8>> ReadOnlyPairs;
   SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
   for (AliasGroupTy &AG : AliasGroups) {
     NonReadOnlyBaseValues.clear();
