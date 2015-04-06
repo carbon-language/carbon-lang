@@ -168,6 +168,35 @@ public:
   void replaceAllUsesWith(MDNode *D);
 };
 
+#define DECLARE_SIMPLIFY_DESCRIPTOR(DESC)                                      \
+  class DESC;                                                                  \
+  template <> struct simplify_type<const DESC>;                                \
+  template <> struct simplify_type<DESC>;
+DECLARE_SIMPLIFY_DESCRIPTOR(DIDescriptor)
+DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIScope)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIType)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIBasicType)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIDerivedType)
+DECLARE_SIMPLIFY_DESCRIPTOR(DICompositeType)
+DECLARE_SIMPLIFY_DESCRIPTOR(DISubroutineType)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIFile)
+DECLARE_SIMPLIFY_DESCRIPTOR(DICompileUnit)
+DECLARE_SIMPLIFY_DESCRIPTOR(DISubprogram)
+DECLARE_SIMPLIFY_DESCRIPTOR(DILexicalBlock)
+DECLARE_SIMPLIFY_DESCRIPTOR(DILexicalBlockFile)
+DECLARE_SIMPLIFY_DESCRIPTOR(DINameSpace)
+DECLARE_SIMPLIFY_DESCRIPTOR(DITemplateTypeParameter)
+DECLARE_SIMPLIFY_DESCRIPTOR(DITemplateValueParameter)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIGlobalVariable)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIVariable)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIExpression)
+DECLARE_SIMPLIFY_DESCRIPTOR(DILocation)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIObjCProperty)
+DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
+#undef DECLARE_SIMPLIFY_DESCRIPTOR
+
 /// \brief This is used to represent ranges, for array bounds.
 class DISubrange : public DIDescriptor {
 public:
@@ -1120,6 +1149,37 @@ public:
   unsigned getLineNumber() const { return get()->getLine(); }
   StringRef getName() const { return get()->getName(); }
 };
+
+#define SIMPLIFY_DESCRIPTOR(DESC)                                              \
+  template <> struct simplify_type<const DESC> {                               \
+    typedef Metadata *SimpleType;                                              \
+    static SimpleType getSimplifiedValue(const DESC &DI) { return DI; }        \
+  };                                                                           \
+  template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
+SIMPLIFY_DESCRIPTOR(DIDescriptor)
+SIMPLIFY_DESCRIPTOR(DISubrange)
+SIMPLIFY_DESCRIPTOR(DIEnumerator)
+SIMPLIFY_DESCRIPTOR(DIScope)
+SIMPLIFY_DESCRIPTOR(DIType)
+SIMPLIFY_DESCRIPTOR(DIBasicType)
+SIMPLIFY_DESCRIPTOR(DIDerivedType)
+SIMPLIFY_DESCRIPTOR(DICompositeType)
+SIMPLIFY_DESCRIPTOR(DISubroutineType)
+SIMPLIFY_DESCRIPTOR(DIFile)
+SIMPLIFY_DESCRIPTOR(DICompileUnit)
+SIMPLIFY_DESCRIPTOR(DISubprogram)
+SIMPLIFY_DESCRIPTOR(DILexicalBlock)
+SIMPLIFY_DESCRIPTOR(DILexicalBlockFile)
+SIMPLIFY_DESCRIPTOR(DINameSpace)
+SIMPLIFY_DESCRIPTOR(DITemplateTypeParameter)
+SIMPLIFY_DESCRIPTOR(DITemplateValueParameter)
+SIMPLIFY_DESCRIPTOR(DIGlobalVariable)
+SIMPLIFY_DESCRIPTOR(DIVariable)
+SIMPLIFY_DESCRIPTOR(DIExpression)
+SIMPLIFY_DESCRIPTOR(DILocation)
+SIMPLIFY_DESCRIPTOR(DIObjCProperty)
+SIMPLIFY_DESCRIPTOR(DIImportedEntity)
+#undef SIMPLIFY_DESCRIPTOR
 
 /// \brief Find subprogram that is enclosing this scope.
 DISubprogram getDISubprogram(const MDNode *Scope);
