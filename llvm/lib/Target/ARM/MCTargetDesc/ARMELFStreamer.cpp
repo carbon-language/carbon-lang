@@ -1083,14 +1083,13 @@ inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
   }
 
   // Get .ARM.extab or .ARM.exidx section
-  const MCSectionELF *EHSection = nullptr;
-  if (const MCSymbol *Group = FnSection.getGroup()) {
-    EHSection =
-        getContext().getELFSection(EHSecName, Type, Flags | ELF::SHF_GROUP,
-                                   FnSection.getEntrySize(), Group->getName());
-  } else {
-    EHSection = getContext().getELFSection(EHSecName, Type, Flags);
-  }
+  const MCSymbol *Group = FnSection.getGroup();
+  if (Group)
+    Flags |= ELF::SHF_GROUP;
+  const MCSectionELF *EHSection =
+      getContext().getELFSection(EHSecName, Type, Flags, 0, Group,
+                                 FnSection.getUniqueID(), nullptr, &FnSection);
+
   assert(EHSection && "Failed to get the required EH section");
 
   // Switch to .ARM.extab or .ARM.exidx section

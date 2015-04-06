@@ -334,6 +334,12 @@ namespace llvm {
                                       StringRef Group, unsigned UniqueID,
                                       const char *BeginSymName);
 
+    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                      unsigned Flags, unsigned EntrySize,
+                                      const MCSymbol *Group, unsigned UniqueID,
+                                      const char *BeginSymName,
+                                      const MCSectionELF *Associated);
+
     const MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
                                             unsigned Flags, unsigned EntrySize,
                                             const MCSymbol *Group,

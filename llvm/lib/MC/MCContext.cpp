@@ -295,11 +295,22 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                              StringRef Group, unsigned UniqueID,
                                              const char *BeginSymName) {
   MCSymbol *GroupSym = nullptr;
-  if (!Group.empty()) {
+  if (!Group.empty())
     GroupSym = GetOrCreateSymbol(Group);
-    Group = GroupSym->getName();
-  }
 
+  return getELFSection(Section, Type, Flags, EntrySize, GroupSym, UniqueID,
+                       BeginSymName, nullptr);
+}
+
+const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
+                                             unsigned Flags, unsigned EntrySize,
+                                             const MCSymbol *GroupSym,
+                                             unsigned UniqueID,
+                                             const char *BeginSymName,
+                                             const MCSectionELF *Associated) {
+  StringRef Group = "";
+  if (GroupSym)
+    Group = GroupSym->getName();
   // Do the lookup, if we have a hit, return it.
   auto IterBool = ELFUniquingMap.insert(
       std::make_pair(ELFSectionKey{Section, Group, UniqueID}, nullptr));
@@ -321,7 +332,7 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
 
   MCSectionELF *Result =
       new (*this) MCSectionELF(CachedName, Type, Flags, Kind, EntrySize,
-                               GroupSym, UniqueID, Begin, nullptr);
+                               GroupSym, UniqueID, Begin, Associated);
   Entry.second = Result;
   return Result;
 }
