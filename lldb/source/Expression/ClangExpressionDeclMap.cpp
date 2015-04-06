@@ -598,13 +598,17 @@ ClangExpressionDeclMap::GetFunctionAddress
         Mangled mangled(name, is_mangled);
                 
         CPPLanguageRuntime::MethodName method_name(mangled.GetDemangledName());
-        
-        llvm::StringRef basename = method_name.GetBasename();
-        
-        if (!basename.empty())
+
+        // the C++ context must be empty before we can think of searching for symbol by a simple basename
+        if (method_name.GetContext().empty())
         {
-            FindCodeSymbolInContext(ConstString(basename), m_parser_vars->m_sym_ctx, sc_list);
-            sc_list_size = sc_list.GetSize();
+            llvm::StringRef basename = method_name.GetBasename();
+            
+            if (!basename.empty())
+            {
+                FindCodeSymbolInContext(ConstString(basename), m_parser_vars->m_sym_ctx, sc_list);
+                sc_list_size = sc_list.GetSize();
+            }
         }
     }
 
