@@ -223,7 +223,7 @@ static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
         llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
         llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  write32le(location, result | read32le(location));
+  write32le(location, immlo | immhi | read32le(location));
 }
 
 // R_AARCH64_LD64_GOT_LO12_NC
