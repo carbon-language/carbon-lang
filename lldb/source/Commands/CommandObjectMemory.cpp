@@ -744,6 +744,7 @@ protected:
             auto data_addr = addr;
             auto count = item_count;
             item_count = 0;
+            bool break_on_no_NULL = false;
             while (item_count < count)
             {
                 std::string buffer;
@@ -756,17 +757,24 @@ protected:
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
+                
                 if (item_byte_size == read)
                 {
                     result.AppendWarningWithFormat("unable to find a NULL terminated string at 0x%" PRIx64 ".Consider increasing the maximum read length.\n", data_addr);
-                    break;
+                    --read;
+                    break_on_no_NULL = true;
                 }
-                read+=1; // account for final NULL byte
+                else
+                    ++read; // account for final NULL byte
+                
                 memcpy(data_ptr, &buffer[0], read);
                 data_ptr += read;
                 data_addr += read;
                 bytes_read += read;
                 item_count++; // if we break early we know we only read item_count strings
+                
+                if (break_on_no_NULL)
+                    break;
             }
             data_sp.reset(new DataBufferHeap(data_sp->GetBytes(),bytes_read+1));
         }
