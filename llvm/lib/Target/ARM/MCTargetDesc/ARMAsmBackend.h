@@ -47,6 +47,8 @@ public:
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value, bool IsPCRel) const override;
 
+  unsigned getRelaxedOpcode(unsigned Op) const;
+
   bool mayNeedRelaxation(const MCInst &Inst) const override;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,

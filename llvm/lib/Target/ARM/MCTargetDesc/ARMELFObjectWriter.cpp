@@ -81,7 +81,9 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
   unsigned Type = 0;
   if (IsPCRel) {
     switch ((unsigned)Fixup.getKind()) {
-    default: llvm_unreachable("Unimplemented");
+    default:
+      report_fatal_error("unsupported relocation on symbol");
+      return ELF::R_ARM_NONE;
     case FK_Data_4:
       switch (Modifier) {
       default: llvm_unreachable("Unsupported Modifier");
@@ -147,7 +149,9 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {
-    default: llvm_unreachable("invalid fixup kind!");
+    default:
+      report_fatal_error("unsupported relocation on symbol");
+      return ELF::R_ARM_NONE;
     case FK_Data_1:
       switch (Modifier) {
       default: llvm_unreachable("unsupported Modifier");

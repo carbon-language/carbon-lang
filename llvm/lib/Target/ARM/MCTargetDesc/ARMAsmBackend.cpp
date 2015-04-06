@@ -153,18 +153,20 @@ void ARMAsmBackend::handleAssemblerFlag(MCAssemblerFlag Flag) {
 }
 } // end anonymous namespace
 
-static unsigned getRelaxedOpcode(unsigned Op) {
+unsigned ARMAsmBackend::getRelaxedOpcode(unsigned Op) const {
+  bool HasThumb2 = STI->getFeatureBits() & ARM::FeatureThumb2;
+
   switch (Op) {
   default:
     return Op;
   case ARM::tBcc:
-    return ARM::t2Bcc;
+    return HasThumb2 ? ARM::t2Bcc : Op;
   case ARM::tLDRpci:
-    return ARM::t2LDRpci;
+    return HasThumb2 ? ARM::t2LDRpci : Op;
   case ARM::tADR:
-    return ARM::t2ADR;
+    return HasThumb2 ? ARM::t2ADR : Op;
   case ARM::tB:
-    return ARM::t2B;
+    return HasThumb2 ? ARM::t2B : Op;
   case ARM::tCBZ:
     return ARM::tHINT;
   case ARM::tCBNZ:

@@ -88,6 +88,7 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:
+  case ARM::fixup_arm_thumb_br:
     return false;
 
     // Handle 24-bit branch kinds.
@@ -99,12 +100,6 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
     RelocType = unsigned(MachO::ARM_RELOC_BR24);
     // Report as 'long', even though that is not quite accurate.
     Log2Size = llvm::Log2_32(4);
-    return true;
-
-    // Handle Thumb branches.
-  case ARM::fixup_arm_thumb_br:
-    RelocType = unsigned(MachO::ARM_THUMB_RELOC_BR22);
-    Log2Size = llvm::Log2_32(2);
     return true;
 
   case ARM::fixup_t2_uncondbranch:
