@@ -148,7 +148,7 @@ public:
     StringRef targetSymbolName = targetAtom->name();
     if (targetAtom->definition() != Atom::definitionRegular)
       return targetAtom;
-    if ((llvm::dyn_cast<DefinedAtom>(targetAtom))->scope() ==
+    if (llvm::cast<DefinedAtom>(targetAtom)->scope() ==
         DefinedAtom::scopeTranslationUnit)
       return targetAtom;
     if (!redirectReferenceUsingUndefAtom(sourceSymbol, targetSymbol))
