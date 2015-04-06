@@ -124,19 +124,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     break;
   }
-  case 'd': {
-    if (Name.startswith("dbg.declare") && F->arg_size() == 2) {
-      F->setName(Name + ".old");
-      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::dbg_declare);
-      return true;
-    }
-    if (Name.startswith("dbg.value") && F->arg_size() == 3) {
-      F->setName(Name + ".old");
-      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::dbg_value);
-      return true;
-    }
-    break;
-  }
 
   case 'o':
     // We only need to change the name to match the mangling including the
@@ -352,23 +339,6 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
 bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
   // Nothing to do yet.
   return false;
-}
-
-static MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
-  if (!DbgNode || Elt >= DbgNode->getNumOperands())
-    return nullptr;
-  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(Elt));
-}
-
-static MetadataAsValue *getExpression(Value *VarOperand, Function *F) {
-  // Old-style DIVariables have an optional expression as the 8th element.
-  DIExpression Expr(getNodeField(
-      cast<MDNode>(cast<MetadataAsValue>(VarOperand)->getMetadata()), 8));
-  if (!Expr) {
-    DIBuilder DIB(*F->getParent(), /*AllowUnresolved*/ false);
-    Expr = DIB.createExpression();
-  }
-  return MetadataAsValue::get(F->getContext(), Expr);
 }
 
 // Handles upgrading SSE2 and AVX2 PSLLDQ intrinsics by converting them
@@ -753,25 +723,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   default:
     llvm_unreachable("Unknown function for CallInst upgrade.");
 
-  // Upgrade debug intrinsics to use an additional DIExpression argument.
-  case Intrinsic::dbg_declare: {
-    auto NewCI =
-        Builder.CreateCall3(NewFn, CI->getArgOperand(0), CI->getArgOperand(1),
-                            getExpression(CI->getArgOperand(1), F), Name);
-    NewCI->setDebugLoc(CI->getDebugLoc());
-    CI->replaceAllUsesWith(NewCI);
-    CI->eraseFromParent();
-    return;
-  }
-  case Intrinsic::dbg_value: {
-    auto NewCI = Builder.CreateCall4(
-        NewFn, CI->getArgOperand(0), CI->getArgOperand(1), CI->getArgOperand(2),
-        getExpression(CI->getArgOperand(2), F), Name);
-    NewCI->setDebugLoc(CI->getDebugLoc());
-    CI->replaceAllUsesWith(NewCI);
-    CI->eraseFromParent();
-    return;
-  }
   case Intrinsic::ctlz:
   case Intrinsic::cttz:
     assert(CI->getNumArgOperands() == 1 &&
