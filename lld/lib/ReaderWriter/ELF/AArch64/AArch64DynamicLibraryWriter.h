@@ -24,7 +24,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override {
     return DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
@@ -53,13 +53,12 @@ AArch64DynamicLibraryWriter<ELFT>::AArch64DynamicLibraryWriter(
       _ctx(ctx), _layout(layout) {}
 
 template <class ELFT>
-bool AArch64DynamicLibraryWriter<ELFT>::createImplicitFiles(
+void AArch64DynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
   _gotFile->addAtom(*new (_gotFile->_alloc) GlobalOffsetTableAtom(*_gotFile));
   _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
   result.push_back(std::move(_gotFile));
-  return true;
 }
 
 } // namespace elf

@@ -24,7 +24,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override {
     return DynamicLibraryWriter::finalizeDefaultAtomValues();
@@ -48,13 +48,12 @@ X86_64DynamicLibraryWriter::X86_64DynamicLibraryWriter(
     X86_64LinkingContext &ctx, X86_64TargetLayout &layout)
     : DynamicLibraryWriter(ctx, layout), _gotFile(new GOTFile(ctx)) {}
 
-bool X86_64DynamicLibraryWriter::createImplicitFiles(
+void X86_64DynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter::createImplicitFiles(result);
   _gotFile->addAtom(*new (_gotFile->_alloc) GlobalOffsetTableAtom(*_gotFile));
   _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
   result.push_back(std::move(_gotFile));
-  return true;
 }
 
 } // namespace elf

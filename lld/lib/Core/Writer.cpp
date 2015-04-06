@@ -16,8 +16,4 @@ Writer::Writer() {
 
 Writer::~Writer() {
 }
-
-bool Writer::createImplicitFiles(std::vector<std::unique_ptr<File> > &) {
-  return true;
-}
 } // end namespace lld

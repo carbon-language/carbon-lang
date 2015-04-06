@@ -685,7 +685,7 @@ uint32_t MachOLinkingContext::dylibCompatVersion(StringRef installName) const {
     return 0x1000; // 1.0
 }
 
-bool MachOLinkingContext::createImplicitFiles(
+void MachOLinkingContext::createImplicitFiles(
                             std::vector<std::unique_ptr<File> > &result) {
   // Add indirect dylibs by asking each linked dylib to add its indirects.
   // Iterate until no more dylibs get loaded.
@@ -699,7 +699,7 @@ bool MachOLinkingContext::createImplicitFiles(
   }
 
   // Let writer add output type specific extras.
-  return writer().createImplicitFiles(result);
+  writer().createImplicitFiles(result);
 }
 
 

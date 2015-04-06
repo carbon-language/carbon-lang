@@ -23,7 +23,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool
+  void
   createImplicitFiles(std::vector<std::unique_ptr<File>> &result) override {
     ExecutableWriter::createImplicitFiles(result);
     _gotFile->addAtom(*new (_gotFile->_alloc)
@@ -31,7 +31,6 @@ protected:
     if (_ctx.isDynamic())
       _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
     result.push_back(std::move(_gotFile));
-    return true;
   }
 
   void finalizeDefaultAtomValues() override {

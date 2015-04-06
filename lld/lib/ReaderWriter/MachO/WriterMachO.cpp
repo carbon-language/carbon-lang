@@ -45,7 +45,7 @@ public:
     return writeBinary(*nFile->get(), path);
   }
 
-  bool createImplicitFiles(std::vector<std::unique_ptr<File> > &r) override {
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &r) override {
     // When building main executables, add _main as required entry point.
     if (_context.outputTypeHasEntry())
       r.emplace_back(new CEntryFile(_context));
@@ -55,8 +55,6 @@ public:
     // Final linked images can access a symbol for their mach_header.
     if (_context.outputMachOType() != llvm::MachO::MH_OBJECT)
       r.emplace_back(new MachHeaderAliasFile(_context));
-
-    return true;
   }
 private:
    const MachOLinkingContext  &_context;

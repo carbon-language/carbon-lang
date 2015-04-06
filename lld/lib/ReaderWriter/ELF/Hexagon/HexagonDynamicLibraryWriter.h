@@ -26,7 +26,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override;
 
@@ -54,13 +54,12 @@ HexagonDynamicLibraryWriter<ELFT>::HexagonDynamicLibraryWriter(
       _runtimeFile(new HexagonRuntimeFile<ELFT>(ctx)) {}
 
 template <class ELFT>
-bool HexagonDynamicLibraryWriter<ELFT>::createImplicitFiles(
+void HexagonDynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
   // Add the default atoms as defined for hexagon
   addDefaultAtoms();
   result.push_back(std::move(_runtimeFile));
-  return true;
 }
 
 template <class ELFT>

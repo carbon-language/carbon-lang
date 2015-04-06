@@ -137,7 +137,7 @@ void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
       currentGroupEnd->getSize() + 1);
 }
 
-bool PECOFFLinkingContext::createImplicitFiles(
+void PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
   std::vector<std::unique_ptr<Node>> &members = getNodes();
 
@@ -160,8 +160,6 @@ bool PECOFFLinkingContext::createImplicitFiles(
   std::unique_ptr<FileNode> exportNode(new FileNode(
       llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this)));
   addLibraryFile(std::move(exportNode));
-
-  return true;
 }
 
 /// Returns the section name in the resulting executable.

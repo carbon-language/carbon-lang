@@ -23,7 +23,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override {
     return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
@@ -52,14 +52,13 @@ AArch64ExecutableWriter<ELFT>::AArch64ExecutableWriter(
       _ctx(ctx), _layout(layout) {}
 
 template <class ELFT>
-bool AArch64ExecutableWriter<ELFT>::createImplicitFiles(
+void AArch64ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
   _gotFile->addAtom(*new (_gotFile->_alloc) GlobalOffsetTableAtom(*_gotFile));
   if (_ctx.isDynamic())
     _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
   result.push_back(std::move(_gotFile));
-  return true;
 }
 
 } // namespace elf

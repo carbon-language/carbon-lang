@@ -30,7 +30,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override;
   void createDefaultSections() override;
@@ -58,11 +58,10 @@ MipsDynamicLibraryWriter<ELFT>::MipsDynamicLibraryWriter(
       _targetLayout(layout) {}
 
 template <class ELFT>
-bool MipsDynamicLibraryWriter<ELFT>::createImplicitFiles(
+void MipsDynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
   result.push_back(std::move(_writeHelper.createRuntimeFile()));
-  return true;
 }
 
 template <class ELFT>

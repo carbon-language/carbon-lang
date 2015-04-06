@@ -22,7 +22,7 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override {
     return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
@@ -43,10 +43,9 @@ X86ExecutableWriter<ELFT>::X86ExecutableWriter(X86LinkingContext &ctx,
     : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _layout(layout) {}
 
 template <class ELFT>
-bool X86ExecutableWriter<ELFT>::createImplicitFiles(
+void X86ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
-  return true;
 }
 
 } // namespace elf

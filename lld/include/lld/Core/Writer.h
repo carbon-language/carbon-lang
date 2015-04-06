@@ -34,7 +34,7 @@ public:
   /// \brief This method is called by Core Linking to give the Writer a chance
   /// to add file format specific "files" to set of files to be linked. This is
   /// how file format specific atoms can be added to the link.
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
+  virtual void createImplicitFiles(std::vector<std::unique_ptr<File>> &) {}
 
 protected:
   // only concrete subclasses can be instantiated

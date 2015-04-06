@@ -37,9 +37,9 @@ std::error_code LinkingContext::writeFile(const File &linkedFile) const {
   return this->writer().writeFile(linkedFile, _outputPath);
 }
 
-bool LinkingContext::createImplicitFiles(
-    std::vector<std::unique_ptr<File> > &result) {
-  return this->writer().createImplicitFiles(result);
+void LinkingContext::createImplicitFiles(
+    std::vector<std::unique_ptr<File>> &result) {
+  this->writer().createImplicitFiles(result);
 }
 
 std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {

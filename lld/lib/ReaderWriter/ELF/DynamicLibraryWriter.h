@@ -29,7 +29,7 @@ public:
 protected:
   void buildDynamicSymbolTable(const File &file) override;
   void addDefaultAtoms() override;
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
   void finalizeDefaultAtomValues() override;
 
 protected:
@@ -66,13 +66,12 @@ template <class ELFT> void DynamicLibraryWriter<ELFT>::addDefaultAtoms() {
 
 /// \brief Hook in lld to add CRuntime file
 template <class ELFT>
-bool DynamicLibraryWriter<ELFT>::createImplicitFiles(
+void DynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File> > &result) {
   // Add the default atoms as defined by executables
   DynamicLibraryWriter<ELFT>::addDefaultAtoms();
   OutputELFWriter<ELFT>::createImplicitFiles(result);
   result.push_back(std::move(_runtimeFile));
-  return true;
 }
 
 template <class ELFT>

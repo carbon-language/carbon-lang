@@ -28,7 +28,7 @@ protected:
   void buildDynamicSymbolTable(const File &file) override;
 
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   void finalizeDefaultAtomValues() override;
   void createDefaultSections() override;
@@ -110,11 +110,10 @@ void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 }
 
 template <class ELFT>
-bool MipsExecutableWriter<ELFT>::createImplicitFiles(
+void MipsExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
   result.push_back(std::move(_writeHelper.createRuntimeFile()));
-  return true;
 }
 
 template <class ELFT>

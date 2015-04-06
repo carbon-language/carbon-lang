@@ -133,7 +133,7 @@ protected:
   virtual void addDefaultAtoms();
 
   // Add any runtime files and their atoms to the output
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   // Finalize the default atom values
   virtual void finalizeDefaultAtomValues();
@@ -363,7 +363,7 @@ template <class ELFT> void OutputELFWriter<ELFT>::addDefaultAtoms() {
 }
 
 template <class ELFT>
-bool OutputELFWriter<ELFT>::createImplicitFiles(
+void OutputELFWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   // Add the virtual archive to resolve undefined symbols.
   // The file will be added later in the linking context.
@@ -375,7 +375,6 @@ bool OutputELFWriter<ELFT>::createImplicitFiles(
       llvm::make_unique<DynamicSymbolFile<ELFT>>(ctx, std::move(callback)));
   // Add script defined symbols
   result.push_back(std::move(_scriptFile));
-  return true;
 }
 
 template <class ELFT>
