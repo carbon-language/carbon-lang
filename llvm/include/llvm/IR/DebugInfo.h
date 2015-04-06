@@ -301,22 +301,11 @@ public:
   static DIRef get(const Metadata *MD) { return DIRef(MD); }
 };
 
-template <typename T>
-T DIRef<T>::resolve(const DITypeIdentifierMap &Map) const {
-  if (!Val)
-    return T();
-
-  if (const MDNode *MD = dyn_cast<MDNode>(Val))
-    return T(MD);
-
-  const MDString *MS = cast<MDString>(Val);
-  // Find the corresponding MDNode.
-  DITypeIdentifierMap::const_iterator Iter = Map.find(MS);
-  assert(Iter != Map.end() && "Identifier not in the type map?");
-  assert(DIDescriptor(Iter->second).isType() &&
-         "MDNode in DITypeIdentifierMap should be a DIType.");
-  return T(Iter->second);
-}
+template <>
+DIDescriptor DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const;
+template <>
+DIScope DIRef<DIScope>::resolve(const DITypeIdentifierMap &Map) const;
+template <> DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const;
 
 /// \brief Handle fields that are references to DIDescriptors.
 template <>

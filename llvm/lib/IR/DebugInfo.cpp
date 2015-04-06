@@ -685,6 +685,20 @@ template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
   return DITypeRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
 }
 
+template <>
+DIDescriptor
+DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const {
+  return DIDescriptor(DebugNodeRef(Val).resolve(Map));
+}
+template <>
+DIScope DIRef<DIScope>::resolve(const DITypeIdentifierMap &Map) const {
+  return MDScopeRef(Val).resolve(Map);
+}
+template <>
+DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const {
+  return MDTypeRef(Val).resolve(Map);
+}
+
 bool llvm::stripDebugInfo(Function &F) {
   bool Changed = false;
   for (BasicBlock &BB : F) {

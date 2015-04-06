@@ -75,6 +75,9 @@ public:
   static TypedDebugNodeRef get(const T *N);
 
   template <class MapTy> T *resolve(const MapTy &Map) const {
+    if (!MD)
+      return nullptr;
+
     if (auto *Typed = dyn_cast<T>(MD))
       return const_cast<T *>(Typed);
 
