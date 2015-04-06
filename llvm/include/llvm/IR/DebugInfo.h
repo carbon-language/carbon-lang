@@ -355,12 +355,6 @@ public:
     return *get();
   }
 
-  operator DITypeRef() const {
-    assert(isType() &&
-           "constructing DITypeRef from an MDNode that is not a type");
-    return DITypeRef(&*getRef());
-  }
-
   bool Verify() const;
 
   DIScopeRef getContext() const { return DIScopeRef::get(get()->getScope()); }
