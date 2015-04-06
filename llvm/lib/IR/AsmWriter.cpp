@@ -1695,7 +1695,7 @@ static void writeMDTemplateTypeParameter(raw_ostream &Out,
   Out << "!MDTemplateTypeParameter(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("type", N->getType(), /* ShouldSkipNull */ false);
+  Printer.printMetadata("type", N->getRawType(), /* ShouldSkipNull */ false);
   Out << ")";
 }
 
@@ -1709,7 +1709,7 @@ static void writeMDTemplateValueParameter(raw_ostream &Out,
   if (N->getTag() != dwarf::DW_TAG_template_value_parameter)
     Printer.printTag(N);
   Printer.printString("name", N->getName());
-  Printer.printMetadata("type", N->getType());
+  Printer.printMetadata("type", N->getRawType());
   Printer.printMetadata("value", N->getValue(), /* ShouldSkipNull */ false);
   Out << ")";
 }

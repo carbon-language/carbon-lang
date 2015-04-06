@@ -464,7 +464,7 @@ namespace llvm {
     /// @param Decl        Reference to the corresponding declaration.
     DIGlobalVariable createGlobalVariable(DIDescriptor Context, StringRef Name,
                                           StringRef LinkageName, DIFile File,
-                                          unsigned LineNo, DITypeRef Ty,
+                                          unsigned LineNo, DIType Ty,
                                           bool isLocalToUnit,
                                           llvm::Constant *Val,
                                           MDNode *Decl = nullptr);
@@ -473,7 +473,7 @@ namespace llvm {
     /// except that the resulting DbgNode is temporary and meant to be RAUWed.
     DIGlobalVariable createTempGlobalVariableFwdDecl(
         DIDescriptor Context, StringRef Name, StringRef LinkageName,
-        DIFile File, unsigned LineNo, DITypeRef Ty, bool isLocalToUnit,
+        DIFile File, unsigned LineNo, DIType Ty, bool isLocalToUnit,
         llvm::Constant *Val, MDNode *Decl = nullptr);
 
     /// createLocalVariable - Create a new descriptor for the specified
@@ -491,11 +491,9 @@ namespace llvm {
     /// @param ArgNo       If this variable is an argument then this argument's
     ///                    number. 1 indicates 1st argument.
     DIVariable createLocalVariable(unsigned Tag, DIDescriptor Scope,
-                                   StringRef Name,
-                                   DIFile File, unsigned LineNo,
-                                   DITypeRef Ty, bool AlwaysPreserve = false,
-                                   unsigned Flags = 0,
-                                   unsigned ArgNo = 0);
+                                   StringRef Name, DIFile File, unsigned LineNo,
+                                   DIType Ty, bool AlwaysPreserve = false,
+                                   unsigned Flags = 0, unsigned ArgNo = 0);
 
     /// createExpression - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.

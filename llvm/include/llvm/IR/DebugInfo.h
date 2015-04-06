@@ -195,6 +195,9 @@ public:
 template <typename T> class DITypedArray : public DIDescriptor {
 public:
   explicit DITypedArray(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  operator MDTuple *() const {
+    return const_cast<MDTuple *>(cast_or_null<MDTuple>(DbgNode));
+  }
   unsigned getNumElements() const {
     return DbgNode ? DbgNode->getNumOperands() : 0;
   }

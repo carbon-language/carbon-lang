@@ -466,7 +466,7 @@ public:
   uint64_t getOffsetInBits() const { return OffsetInBits; }
   unsigned getFlags() const { return Flags; }
 
-  Metadata *getScope() const { return getRawScope(); }
+  MDScopeRef getScope() const { return MDScopeRef(getRawScope()); }
   StringRef getName() const { return getStringOperand(2); }
 
 
@@ -563,7 +563,7 @@ protected:
   ~MDDerivedTypeBase() {}
 
 public:
-  Metadata *getBaseType() const { return getRawBaseType(); }
+  MDTypeRef getBaseType() const { return MDTypeRef(getRawBaseType()); }
   Metadata *getRawBaseType() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
@@ -592,7 +592,7 @@ class MDDerivedType : public MDDerivedTypeBase {
 
   static MDDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
                                 StringRef Name, MDFile *File, unsigned Line,
-                                Metadata *Scope, Metadata *BaseType,
+                                MDScopeRef Scope, MDTypeRef BaseType,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
                                 Metadata *ExtraData, StorageType Storage,
@@ -626,11 +626,10 @@ public:
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
   DEFINE_MDNODE_GET(MDDerivedType,
-                    (unsigned Tag, StringRef Name, MDFile *File,
-                     unsigned Line, Metadata *Scope, Metadata *BaseType,
-                     uint64_t SizeInBits, uint64_t AlignInBits,
-                     uint64_t OffsetInBits, unsigned Flags,
-                     Metadata *ExtraData = nullptr),
+                    (unsigned Tag, StringRef Name, MDFile *File, unsigned Line,
+                     MDScopeRef Scope, MDTypeRef BaseType, uint64_t SizeInBits,
+                     uint64_t AlignInBits, uint64_t OffsetInBits,
+                     unsigned Flags, Metadata *ExtraData = nullptr),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
 
@@ -672,7 +671,7 @@ public:
   MDTuple *getElements() const {
     return cast_or_null<MDTuple>(getRawElements());
   }
-  Metadata *getVTableHolder() const { return getRawVTableHolder(); }
+  MDTypeRef getVTableHolder() const { return MDTypeRef(getRawVTableHolder()); }
   MDTemplateParameterArray getTemplateParams() const {
     return cast_or_null<MDTuple>(getRawTemplateParams());
   }
@@ -699,7 +698,7 @@ public:
 #endif
     replaceOperandWith(4, Elements);
   }
-  void replaceVTableHolder(Metadata *VTableHolder) {
+  void replaceVTableHolder(MDTypeRef VTableHolder) {
     replaceOperandWith(5, VTableHolder);
   }
   void replaceTemplateParams(MDTemplateParameterArray TemplateParams) {
@@ -732,10 +731,10 @@ class MDCompositeType : public MDCompositeTypeBase {
 
   static MDCompositeType *
   getImpl(LLVMContext &Context, unsigned Tag, StringRef Name, Metadata *File,
-          unsigned Line, Metadata *Scope, Metadata *BaseType,
+          unsigned Line, MDScopeRef Scope, MDTypeRef BaseType,
           uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-          uint64_t Flags, Metadata *Elements, unsigned RuntimeLang,
-          Metadata *VTableHolder, Metadata *TemplateParams,
+          uint64_t Flags, MDTuple *Elements, unsigned RuntimeLang,
+          MDTypeRef VTableHolder, MDTemplateParameterArray TemplateParams,
           StringRef Identifier, StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Tag, getCanonicalMDString(Context, Name), File,
                    Line, Scope, BaseType, SizeInBits, AlignInBits, OffsetInBits,
@@ -761,12 +760,12 @@ class MDCompositeType : public MDCompositeTypeBase {
 
 public:
   DEFINE_MDNODE_GET(MDCompositeType,
-                    (unsigned Tag, StringRef Name, Metadata *File,
-                     unsigned Line, Metadata *Scope, Metadata *BaseType,
-                     uint64_t SizeInBits, uint64_t AlignInBits,
-                     uint64_t OffsetInBits, unsigned Flags, Metadata *Elements,
-                     unsigned RuntimeLang, Metadata *VTableHolder,
-                     Metadata *TemplateParams = nullptr,
+                    (unsigned Tag, StringRef Name, MDFile *File, unsigned Line,
+                     MDScopeRef Scope, MDTypeRef BaseType, uint64_t SizeInBits,
+                     uint64_t AlignInBits, uint64_t OffsetInBits,
+                     unsigned Flags, MDTuple *Elements, unsigned RuntimeLang,
+                     MDTypeRef VTableHolder,
+                     MDTemplateParameterArray TemplateParams = nullptr,
                      StringRef Identifier = ""),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, Elements, RuntimeLang,
@@ -1033,7 +1032,7 @@ public:
   unsigned getLine() const { return SubclassData32; }
   unsigned getColumn() const { return SubclassData16; }
   MDLocalScope *getScope() const {
-    return cast_or_null<MDLocalScope>(getRawScope());
+    return cast<MDLocalScope>(getRawScope());
   }
   MDLocation *getInlinedAt() const {
     return cast_or_null<MDLocation>(getRawInlinedAt());
@@ -1090,14 +1089,14 @@ class MDSubprogram : public MDLocalScope {
   ~MDSubprogram() {}
 
   static MDSubprogram *
-  getImpl(LLVMContext &Context, Metadata *Scope, StringRef Name,
+  getImpl(LLVMContext &Context, MDScopeRef Scope, StringRef Name,
           StringRef LinkageName, MDFile *File, unsigned Line,
           MDSubroutineType *Type, bool IsLocalToUnit, bool IsDefinition,
-          unsigned ScopeLine, Metadata *ContainingType, unsigned Virtuality,
+          unsigned ScopeLine, MDTypeRef ContainingType, unsigned Virtuality,
           unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
-          ConstantAsMetadata *Function, MDTuple *TemplateParams,
-          MDSubprogram *Declaration, MDTuple *Variables, StorageType Storage,
-          bool ShouldCreate = true) {
+          ConstantAsMetadata *Function, MDTemplateParameterArray TemplateParams,
+          MDSubprogram *Declaration, MDLocalVariableArray Variables,
+          StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
                    IsLocalToUnit, IsDefinition, ScopeLine, ContainingType,
@@ -1124,18 +1123,20 @@ class MDSubprogram : public MDLocalScope {
   }
 
 public:
-  DEFINE_MDNODE_GET(
-      MDSubprogram,
-      (Metadata * Scope, StringRef Name, StringRef LinkageName, MDFile *File,
-       unsigned Line, MDSubroutineType *Type, bool IsLocalToUnit,
-       bool IsDefinition, unsigned ScopeLine, Metadata *ContainingType,
-       unsigned Virtuality, unsigned VirtualIndex, unsigned Flags,
-       bool IsOptimized, ConstantAsMetadata *Function = nullptr,
-       MDTuple *TemplateParams = nullptr, MDSubprogram *Declaration = nullptr,
-       MDTuple *Variables = nullptr),
-      (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit, IsDefinition,
-       ScopeLine, ContainingType, Virtuality, VirtualIndex, Flags, IsOptimized,
-       Function, TemplateParams, Declaration, Variables))
+  DEFINE_MDNODE_GET(MDSubprogram,
+                    (MDScopeRef Scope, StringRef Name, StringRef LinkageName,
+                     MDFile *File, unsigned Line, MDSubroutineType *Type,
+                     bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
+                     MDTypeRef ContainingType, unsigned Virtuality,
+                     unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
+                     ConstantAsMetadata *Function = nullptr,
+                     MDTemplateParameterArray TemplateParams = nullptr,
+                     MDSubprogram *Declaration = nullptr,
+                     MDLocalVariableArray Variables = nullptr),
+                    (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
+                     IsDefinition, ScopeLine, ContainingType, Virtuality,
+                     VirtualIndex, Flags, IsOptimized, Function, TemplateParams,
+                     Declaration, Variables))
   DEFINE_MDNODE_GET(
       MDSubprogram,
       (Metadata * Scope, MDString *Name, MDString *LinkageName, Metadata *File,
@@ -1160,7 +1161,7 @@ public:
   bool isDefinition() const { return IsDefinition; }
   bool isOptimized() const { return IsOptimized; }
 
-  Metadata *getScope() const { return getRawScope(); }
+  MDScopeRef getScope() const { return MDScopeRef(getRawScope()); }
 
   StringRef getName() const { return getStringOperand(2); }
   StringRef getDisplayName() const { return getStringOperand(3); }
@@ -1172,7 +1173,9 @@ public:
   MDSubroutineType *getType() const {
     return cast_or_null<MDSubroutineType>(getRawType());
   }
-  Metadata *getContainingType() const { return getRawContainingType(); }
+  MDTypeRef getContainingType() const {
+    return MDTypeRef(getRawContainingType());
+  }
 
   ConstantAsMetadata *getFunction() const {
     return cast_or_null<ConstantAsMetadata>(getRawFunction());
@@ -1386,9 +1389,10 @@ protected:
 
 public:
   StringRef getName() const { return getStringOperand(0); }
-  Metadata *getType() const { return getOperand(1); }
+  MDTypeRef getType() const { return MDTypeRef(getRawType()); }
 
   MDString *getRawName() const { return getOperandAs<MDString>(0); }
+  Metadata *getRawType() const { return getOperand(1); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTemplateTypeParameterKind ||
@@ -1407,7 +1411,7 @@ class MDTemplateTypeParameter : public MDTemplateParameter {
   ~MDTemplateTypeParameter() {}
 
   static MDTemplateTypeParameter *getImpl(LLVMContext &Context, StringRef Name,
-                                          Metadata *Type, StorageType Storage,
+                                          MDTypeRef Type, StorageType Storage,
                                           bool ShouldCreate = true) {
     return getImpl(Context, getCanonicalMDString(Context, Name), Type, Storage,
                    ShouldCreate);
@@ -1421,7 +1425,7 @@ class MDTemplateTypeParameter : public MDTemplateParameter {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDTemplateTypeParameter, (StringRef Name, Metadata *Type),
+  DEFINE_MDNODE_GET(MDTemplateTypeParameter, (StringRef Name, MDTypeRef Type),
                     (Name, Type))
   DEFINE_MDNODE_GET(MDTemplateTypeParameter, (MDString * Name, Metadata *Type),
                     (Name, Type))
@@ -1444,7 +1448,7 @@ class MDTemplateValueParameter : public MDTemplateParameter {
   ~MDTemplateValueParameter() {}
 
   static MDTemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
-                                           StringRef Name, Metadata *Type,
+                                           StringRef Name, MDTypeRef Type,
                                            Metadata *Value, StorageType Storage,
                                            bool ShouldCreate = true) {
     return getImpl(Context, Tag, getCanonicalMDString(Context, Name), Type,
@@ -1462,7 +1466,7 @@ class MDTemplateValueParameter : public MDTemplateParameter {
 
 public:
   DEFINE_MDNODE_GET(MDTemplateValueParameter, (unsigned Tag, StringRef Name,
-                                               Metadata *Type, Metadata *Value),
+                                               MDTypeRef Type, Metadata *Value),
                     (Tag, Name, Type, Value))
   DEFINE_MDNODE_GET(MDTemplateValueParameter, (unsigned Tag, MDString *Name,
                                                Metadata *Type, Metadata *Value),
@@ -1494,7 +1498,7 @@ public:
   MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
   StringRef getName() const { return getStringOperand(1); }
   MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
-  Metadata *getType() const { return getRawType(); }
+  MDTypeRef getType() const { return MDTypeRef(getRawType()); }
 
   Metadata *getRawScope() const { return getOperand(0); }
   MDString *getRawName() const { return getOperandAs<MDString>(1); }
@@ -1527,7 +1531,7 @@ class MDGlobalVariable : public MDVariable {
 
   static MDGlobalVariable *
   getImpl(LLVMContext &Context, MDScope *Scope, StringRef Name,
-          StringRef LinkageName, MDFile *File, unsigned Line, Metadata *Type,
+          StringRef LinkageName, MDFile *File, unsigned Line, MDTypeRef Type,
           bool IsLocalToUnit, bool IsDefinition, ConstantAsMetadata *Variable,
           MDDerivedType *StaticDataMemberDeclaration, StorageType Storage,
           bool ShouldCreate = true) {
@@ -1553,7 +1557,7 @@ class MDGlobalVariable : public MDVariable {
 public:
   DEFINE_MDNODE_GET(MDGlobalVariable,
                     (MDScope * Scope, StringRef Name, StringRef LinkageName,
-                     MDFile *File, unsigned Line, Metadata *Type,
+                     MDFile *File, unsigned Line, MDTypeRef Type,
                      bool IsLocalToUnit, bool IsDefinition,
                      ConstantAsMetadata *Variable,
                      MDDerivedType *StaticDataMemberDeclaration),
@@ -1610,7 +1614,7 @@ class MDLocalVariable : public MDVariable {
 
   static MDLocalVariable *getImpl(LLVMContext &Context, unsigned Tag,
                                   MDScope *Scope, StringRef Name, MDFile *File,
-                                  unsigned Line, Metadata *Type, unsigned Arg,
+                                  unsigned Line, MDTypeRef Type, unsigned Arg,
                                   unsigned Flags, MDLocation *InlinedAt,
                                   StorageType Storage,
                                   bool ShouldCreate = true) {
@@ -1634,7 +1638,7 @@ class MDLocalVariable : public MDVariable {
 public:
   DEFINE_MDNODE_GET(MDLocalVariable,
                     (unsigned Tag, MDLocalScope *Scope, StringRef Name,
-                     MDFile *File, unsigned Line, Metadata *Type, unsigned Arg,
+                     MDFile *File, unsigned Line, MDTypeRef Type, unsigned Arg,
                      unsigned Flags, MDLocation *InlinedAt = nullptr),
                     (Tag, Scope, Name, File, Line, Type, Arg, Flags, InlinedAt))
   DEFINE_MDNODE_GET(MDLocalVariable,

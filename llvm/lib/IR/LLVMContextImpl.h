@@ -653,10 +653,10 @@ template <> struct MDNodeKeyImpl<MDTemplateTypeParameter> {
 
   MDNodeKeyImpl(StringRef Name, Metadata *Type) : Name(Name), Type(Type) {}
   MDNodeKeyImpl(const MDTemplateTypeParameter *N)
-      : Name(N->getName()), Type(N->getType()) {}
+      : Name(N->getName()), Type(N->getRawType()) {}
 
   bool isKeyOf(const MDTemplateTypeParameter *RHS) const {
-    return Name == RHS->getName() && Type == RHS->getType();
+    return Name == RHS->getName() && Type == RHS->getRawType();
   }
   unsigned getHashValue() const { return hash_combine(Name, Type); }
 };
@@ -670,12 +670,12 @@ template <> struct MDNodeKeyImpl<MDTemplateValueParameter> {
   MDNodeKeyImpl(unsigned Tag, StringRef Name, Metadata *Type, Metadata *Value)
       : Tag(Tag), Name(Name), Type(Type), Value(Value) {}
   MDNodeKeyImpl(const MDTemplateValueParameter *N)
-      : Tag(N->getTag()), Name(N->getName()), Type(N->getType()),
+      : Tag(N->getTag()), Name(N->getName()), Type(N->getRawType()),
         Value(N->getValue()) {}
 
   bool isKeyOf(const MDTemplateValueParameter *RHS) const {
     return Tag == RHS->getTag() && Name == RHS->getName() &&
-           Type == RHS->getType() && Value == RHS->getValue();
+           Type == RHS->getRawType() && Value == RHS->getValue();
   }
   unsigned getHashValue() const { return hash_combine(Tag, Name, Type, Value); }
 };

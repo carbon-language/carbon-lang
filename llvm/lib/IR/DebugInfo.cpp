@@ -257,7 +257,7 @@ DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
 
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TypedTrackingMDRef<MDCompositeTypeBase> N(get());
-  N->replaceVTableHolder(ContainingType.getRef());
+  N->replaceVTableHolder(MDTypeRef::get(ContainingType));
   DbgNode = N;
 }
 
