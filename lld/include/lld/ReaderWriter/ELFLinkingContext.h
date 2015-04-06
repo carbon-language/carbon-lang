@@ -292,6 +292,18 @@ public:
   bool alignSegments() const { return _alignSegments; }
   void setAlignSegments(bool align) { _alignSegments = align; }
 
+  /// \brief Enable new dtags.
+  /// If this flag is set lld emits DT_RUNPATH instead of
+  /// DT_RUNPATH. They are functionally equivalent except for
+  /// the following two differences:
+  /// - DT_RUNPATH is searched after LD_LIBRARY_PATH, while
+  /// DT_RPATH is searched before.
+  /// - DT_RUNPATH is used only to search for direct dependencies
+  /// of the object it's contained in, while DT_RPATH is used
+  /// for indirect dependencies as well.
+  bool getEnableNewDtags() const { return _enableNewDtags; }
+  void setEnableNewDtags(bool e) { _enableNewDtags = e; }
+
   /// \brief Strip symbols.
   bool stripSymbols() const { return _stripSymbols; }
   void setStripSymbols(bool strip) { _stripSymbols = strip; }
@@ -346,6 +358,7 @@ protected:
   bool _demangle = true;
   bool _stripSymbols = false;
   bool _alignSegments = true;
+  bool _enableNewDtags = false;
   bool _collectStats = false;
   bool _armTarget1Rel = false;
   uint64_t _maxPageSize = 0x1000;

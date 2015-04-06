@@ -231,6 +231,12 @@ defm defsym : mDashEq<"defsym",
 //===----------------------------------------------------------------------===//
 def grp_customopts : OptionGroup<"opts">,
      HelpText<"CUSTOM OPTIONS">;
+def disable_newdtags: Flag<["--"], "disable-new-dtags">,
+     HelpText<"Disable new dynamic tags">,
+     Group<grp_customopts>;
+def enable_newdtags: Flag<["--"], "enable-new-dtags">,
+     HelpText<"Enable new dynamic tags">,
+     Group<grp_customopts>;
 def rosegment: Flag<["--"], "rosegment">,
      HelpText<"Put read-only non-executable sections in their own segment">,
      Group<grp_customopts>;

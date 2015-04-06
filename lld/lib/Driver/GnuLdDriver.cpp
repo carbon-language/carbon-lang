@@ -620,6 +620,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->addRpathLink(path);
   }
 
+  // Enable new dynamic tags.
+  if (parsedArgs->hasArg(OPT_enable_newdtags))
+    ctx->setEnableNewDtags(true);
+
   // Support --wrap option.
   for (auto *arg : parsedArgs->filtered(OPT_wrap))
     ctx->addWrapForSymbol(arg->getValue());

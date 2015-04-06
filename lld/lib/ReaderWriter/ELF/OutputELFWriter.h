@@ -280,7 +280,7 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     auto rpath = new (_alloc) std::string(join(rpathList.begin(),
       rpathList.end(), ":"));
     Elf_Dyn dyn;
-    dyn.d_tag = DT_RPATH;
+    dyn.d_tag = _ctx.getEnableNewDtags() ? DT_RUNPATH : DT_RPATH;
     dyn.d_un.d_val = _dynamicStringTable->addString(*rpath);
     _dynamicTable->addEntry(dyn);
   }
