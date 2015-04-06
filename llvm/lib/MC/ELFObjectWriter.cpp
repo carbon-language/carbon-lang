@@ -300,6 +300,7 @@ class ELFObjectWriter : public MCObjectWriter {
     bool
     IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                            const MCSymbolData &DataA,
+                                           const MCSymbolData *DataB,
                                            const MCFragment &FB,
                                            bool InSet,
                                            bool IsPCRel) const override;
@@ -619,7 +620,7 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
 
   if (ESize) {
     int64_t Res;
-    if (!ESize->EvaluateAsAbsolute(Res, Layout))
+    if (!ESize->evaluateKnownAbsolute(Res, Layout))
       report_fatal_error("Size expression must be absolute.");
     Size = Res;
   }
@@ -1765,16 +1766,14 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     WriteDataSectionData(Asm, Layout, *Sections[i]);
 }
 
-bool
-ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                                      const MCSymbolData &DataA,
-                                                      const MCFragment &FB,
-                                                      bool InSet,
-                                                      bool IsPCRel) const {
-  if (::isWeak(DataA))
+bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
+    const MCAssembler &Asm, const MCSymbolData &DataA,
+    const MCSymbolData *DataB, const MCFragment &FB, bool InSet,
+    bool IsPCRel) const {
+  if (!InSet && (::isWeak(DataA) || (DataB && ::isWeak(*DataB))))
     return false;
   return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-                                                 Asm, DataA, FB,InSet, IsPCRel);
+      Asm, DataA, DataB, FB, InSet, IsPCRel);
 }
 
 bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {

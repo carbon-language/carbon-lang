@@ -91,12 +91,12 @@ public:
                                           const MCSymbolRefExpr *B,
                                           bool InSet) const;
 
-  virtual bool
-  IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                         const MCSymbolData &DataA,
-                                         const MCFragment &FB,
-                                         bool InSet,
-                                         bool IsPCRel) const;
+  virtual bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                                      const MCSymbolData &DataA,
+                                                      const MCSymbolData *DataB,
+                                                      const MCFragment &FB,
+                                                      bool InSet,
+                                                      bool IsPCRel) const;
 
   /// \brief True if this symbol (which is a variable) is weak. This is not
   /// just STB_WEAK, but more generally whether or not we can evaluate

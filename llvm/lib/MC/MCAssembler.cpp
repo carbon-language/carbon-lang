@@ -502,9 +502,8 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
         IsResolved = false;
       } else {
         const MCSymbolData &DataA = getSymbolData(SA);
-        IsResolved =
-          getWriter().IsSymbolRefDifferenceFullyResolvedImpl(*this, DataA,
-                                                             *DF, false, true);
+        IsResolved = getWriter().IsSymbolRefDifferenceFullyResolvedImpl(
+            *this, DataA, nullptr, *DF, false, true);
       }
     }
   } else {
