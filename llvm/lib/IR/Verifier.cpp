@@ -2540,9 +2540,7 @@ void Verifier::visitRangeMetadata(Instruction& I,
 void Verifier::visitLoadInst(LoadInst &LI) {
   PointerType *PTy = dyn_cast<PointerType>(LI.getOperand(0)->getType());
   Assert(PTy, "Load operand must be a pointer.", &LI);
-  Type *ElTy = PTy->getElementType();
-  Assert(ElTy == LI.getType(),
-         "Load result type does not match pointer operand type!", &LI, ElTy);
+  Type *ElTy = LI.getType();
   Assert(LI.getAlignment() <= Value::MaximumAlignment,
          "huge alignment values are unsupported", &LI);
   if (LI.isAtomic()) {
