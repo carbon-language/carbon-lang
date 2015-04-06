@@ -1033,6 +1033,56 @@ void TempMDNodeDeleter::operator()(MDNode *Node) const {
   MDNode::deleteTemporary(Node);
 }
 
+/// \brief Typed iterator through MDNode operands.
+///
+/// An iterator that transforms an \a MDNode::iterator into an iterator over a
+/// particular Metadata subclass.
+template <class T>
+class TypedMDOperandIterator
+    : std::iterator<std::input_iterator_tag, T *, std::ptrdiff_t, void, T *> {
+  MDNode::op_iterator I;
+
+public:
+  explicit TypedMDOperandIterator(MDNode::op_iterator I) : I(I) {}
+  T *operator*() const { return cast_or_null<T>(*I); }
+  TypedMDOperandIterator &operator++() {
+    ++I;
+    return *this;
+  }
+  TypedMDOperandIterator operator++(int) {
+    TypedMDOperandIterator Temp(*this);
+    ++I;
+    return Temp;
+  }
+  bool operator==(const TypedMDOperandIterator &X) const { return I == X.I; }
+  bool operator!=(const TypedMDOperandIterator &X) const { return I != X.I; }
+};
+
+/// \brief Typed, array-like tuple of metadata.
+///
+/// This is a wrapper for \a MDTuple that makes it act like an array holding a
+/// particular type of metadata.
+template <class T> class MDTupleTypedArrayWrapper {
+  const MDTuple *N = nullptr;
+
+public:
+  MDTupleTypedArrayWrapper(const MDTuple *N) : N(N) {}
+  operator MDTuple *() const { return const_cast<MDTuple *>(N); }
+  MDTuple *operator->() const { return const_cast<MDTuple *>(N); }
+  MDTuple &operator*() const { return *const_cast<MDTuple *>(N); }
+
+  unsigned size() const { return N->getNumOperands(); }
+  T *operator[](unsigned I) const { return cast_or_null<T>(N->getOperand(I)); }
+
+  typedef TypedMDOperandIterator<T> iterator;
+  iterator begin() const { return iterator(N->op_begin()); }
+  iterator end() const { return iterator(N->op_end()); }
+};
+
+#define HANDLE_METADATA(CLASS)                                                 \
+  typedef MDTupleTypedArrayWrapper<CLASS> CLASS##Array;
+#include "llvm/IR/Metadata.def"
+
 //===----------------------------------------------------------------------===//
 /// \brief A tuple of MDNodes.
 ///

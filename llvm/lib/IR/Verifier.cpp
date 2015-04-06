@@ -3401,8 +3401,8 @@ void Verifier::verifyTypeRefs() {
 
   // Visit all the compile units again to check the type references.
   for (auto *CU : CUs->operands())
-    if (auto *Ts = cast<MDCompileUnit>(CU)->getRetainedTypes())
-      for (auto &Op : Ts->operands())
+    if (auto Ts = cast<MDCompileUnit>(CU)->getRetainedTypes())
+      for (MDType *Op : Ts)
         if (auto *T = dyn_cast<MDCompositeType>(Op))
           TypeRefs.erase(T->getRawIdentifier());
   if (TypeRefs.empty())

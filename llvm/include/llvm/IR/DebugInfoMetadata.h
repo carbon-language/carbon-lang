@@ -607,7 +607,7 @@ public:
     return cast_or_null<MDTuple>(getRawElements());
   }
   Metadata *getVTableHolder() const { return getRawVTableHolder(); }
-  MDTuple *getTemplateParams() const {
+  MDTemplateParameterArray getTemplateParams() const {
     return cast_or_null<MDTuple>(getRawTemplateParams());
   }
   StringRef getIdentifier() const { return getStringOperand(7); }
@@ -636,7 +636,7 @@ public:
   void replaceVTableHolder(Metadata *VTableHolder) {
     replaceOperandWith(5, VTableHolder);
   }
-  void replaceTemplateParams(MDTuple *TemplateParams) {
+  void replaceTemplateParams(MDTemplateParameterArray TemplateParams) {
     replaceOperandWith(6, TemplateParams);
   }
   /// @}
@@ -844,19 +844,19 @@ public:
   StringRef getProducer() const { return getStringOperand(1); }
   StringRef getFlags() const { return getStringOperand(2); }
   StringRef getSplitDebugFilename() const { return getStringOperand(3); }
-  MDTuple *getEnumTypes() const {
+  MDCompositeTypeArray getEnumTypes() const {
     return cast_or_null<MDTuple>(getRawEnumTypes());
   }
-  MDTuple *getRetainedTypes() const {
+  MDTypeArray getRetainedTypes() const {
     return cast_or_null<MDTuple>(getRawRetainedTypes());
   }
-  MDTuple *getSubprograms() const {
+  MDSubprogramArray getSubprograms() const {
     return cast_or_null<MDTuple>(getRawSubprograms());
   }
-  MDTuple *getGlobalVariables() const {
+  MDGlobalVariableArray getGlobalVariables() const {
     return cast_or_null<MDTuple>(getRawGlobalVariables());
   }
-  MDTuple *getImportedEntities() const {
+  MDImportedEntityArray getImportedEntities() const {
     return cast_or_null<MDTuple>(getRawImportedEntities());
   }
 
@@ -1103,13 +1103,13 @@ public:
   ConstantAsMetadata *getFunction() const {
     return cast_or_null<ConstantAsMetadata>(getRawFunction());
   }
-  MDTuple *getTemplateParams() const {
+  MDTemplateParameterArray getTemplateParams() const {
     return cast_or_null<MDTuple>(getRawTemplateParams());
   }
   MDSubprogram *getDeclaration() const {
     return cast_or_null<MDSubprogram>(getRawDeclaration());
   }
-  MDTuple *getVariables() const {
+  MDLocalVariableArray getVariables() const {
     return cast_or_null<MDTuple>(getRawVariables());
   }
 
