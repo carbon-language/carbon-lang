@@ -28,11 +28,11 @@
 !9 = !MDBasicType()
 !10 = !MDBasicType(tag: DW_TAG_base_type, name: "", size: 0, align: 0, encoding: 0)
 
-; CHECK-NEXT: !9 = distinct !{}
+; CHECK-NEXT: !9 = !MDTemplateTypeParameter(type: !6)
 ; CHECK-NEXT: !10 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 ; CHECK-NEXT: !11 = distinct !{}
 ; CHECK-NEXT: !12 = !MDFile(filename: "", directory: "")
-!11 = distinct !{}
+!11 = !MDTemplateTypeParameter(type: !7)
 !12 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 !13 = distinct !{}
 !14 = !MDFile(filename: "", directory: "")
@@ -44,7 +44,7 @@
 ; CHECK-NEXT: !15 = distinct !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", scope: !14, file: !10, line: 3, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !16, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !15, templateParams: !18, identifier: "MangledBase")
 ; CHECK-NEXT: !16 = !{!17}
 ; CHECK-NEXT: !17 = !MDDerivedType(tag: DW_TAG_member, name: "field", scope: !15, file: !10, line: 4, baseType: !6, size: 32, align: 32, offset: 32, flags: DIFlagPublic)
-; CHECK-NEXT: !18 = !{!6}
+; CHECK-NEXT: !18 = !{!9}
 ; CHECK-NEXT: !19 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived", scope: !14, file: !10, line: 3, baseType: !15, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !20, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !15, templateParams: !18, identifier: "MangledBase")
 ; CHECK-NEXT: !20 = !{!21}
 ; CHECK-NEXT: !21 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !19, baseType: !15)
@@ -55,7 +55,7 @@
 !17 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", scope: !16, file: !12, line: 3, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !18, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !17, templateParams: !20, identifier: "MangledBase")
 !18 = !{!19}
 !19 = !MDDerivedType(tag: DW_TAG_member, name: "field", scope: !17, file: !12, line: 4, baseType: !7, size: 32, align: 32, offset: 32, flags: DIFlagPublic)
-!20 = !{!7}
+!20 = !{!11}
 !21 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived", scope: !16, file: !12, line: 3, baseType: !17, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !22, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !17, templateParams: !20, identifier: "MangledBase")
 !22 = !{!23}
 !23 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !21, baseType: !17)

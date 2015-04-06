@@ -307,6 +307,8 @@ private:
   void visitMDLexicalBlockBase(const MDLexicalBlockBase &N);
   void visitMDTemplateParameter(const MDTemplateParameter &N);
 
+  void visitTemplateParams(const MDNode &N, const Metadata &RawParams);
+
   /// \brief Check for a valid string-based type reference.
   ///
   /// Checks if \c MD is a string-based type reference.  If it is, keeps track
@@ -826,6 +828,15 @@ static bool hasConflictingReferenceFlags(unsigned Flags) {
          (Flags & DebugNode::FlagRValueReference);
 }
 
+void Verifier::visitTemplateParams(const MDNode &N, const Metadata &RawParams) {
+  auto *Params = dyn_cast<MDTuple>(&RawParams);
+  Assert(Params, "invalid template params", &N, &RawParams);
+  for (Metadata *Op : Params->operands()) {
+    Assert(Op && isa<MDTemplateParameter>(Op), "invalid template parameter", &N,
+           Params, Op);
+  }
+}
+
 void Verifier::visitMDCompositeType(const MDCompositeType &N) {
   // Common derived type checks.
   visitMDDerivedTypeBase(N);
@@ -846,6 +857,8 @@ void Verifier::visitMDCompositeType(const MDCompositeType &N) {
          "invalid composite elements", &N, N.getRawElements());
   Assert(!hasConflictingReferenceFlags(N.getFlags()), "invalid reference flags",
          &N);
+  if (auto *Params = N.getRawTemplateParams())
+    visitTemplateParams(N, *Params);
 }
 
 void Verifier::visitMDSubroutineType(const MDSubroutineType &N) {
@@ -924,21 +937,15 @@ void Verifier::visitMDSubprogram(const MDSubprogram &N) {
     Assert(F && FT && isa<FunctionType>(FT->getElementType()),
            "invalid function", &N, F, FT);
   }
-  if (N.getRawTemplateParams()) {
-    auto *Params = dyn_cast<MDTuple>(N.getRawTemplateParams());
-    Assert(Params, "invalid template params", &N, Params);
-    for (Metadata *Op : Params->operands()) {
-      Assert(Op && isa<MDTemplateParameter>(Op), "invalid template parameter",
-             &N, Params, Op);
-    }
-  }
+  if (auto *Params = N.getRawTemplateParams())
+    visitTemplateParams(N, *Params);
   if (auto *S = N.getRawDeclaration()) {
     Assert(isa<MDSubprogram>(S) && !cast<MDSubprogram>(S)->isDefinition(),
            "invalid subprogram declaration", &N, S);
   }
-  if (N.getRawVariables()) {
-    auto *Vars = dyn_cast<MDTuple>(N.getRawVariables());
-    Assert(Vars, "invalid variable list", &N, Vars);
+  if (auto *RawVars = N.getRawVariables()) {
+    auto *Vars = dyn_cast<MDTuple>(RawVars);
+    Assert(Vars, "invalid variable list", &N, RawVars);
     for (Metadata *Op : Vars->operands()) {
       Assert(Op && isa<MDLocalVariable>(Op), "invalid local variable", &N, Vars,
              Op);
