@@ -1,5 +1,7 @@
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.64bit.exe.macho-x86_64 | FileCheck %s -check-prefix=OBJC2_64BIT_EXE
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.64bit.obj.macho-x86_64 | FileCheck %s -check-prefix=OBJC2_64BIT_OBJ
+# RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.32bit.exe.macho-i386 | FileCheck %s -check-prefix=OBJC2_32BIT_EXE
+# RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.32bit.obj.macho-i386 | FileCheck %s -check-prefix=OBJC2_32BIT_OBJ
 
 OBJC2_64BIT_EXE: Contents of (__DATA,__objc_classlist) section
 OBJC2_64BIT_EXE: 0000000100002028 0x1000029f0
@@ -204,3 +206,411 @@ OBJC2_64BIT_OBJ: 0000000000001aa8 0x1a50 l_OBJC_PROTOCOL_$_NSApplicationDelegate
 OBJC2_64BIT_OBJ: Contents of (__DATA,__objc_imageinfo) section
 OBJC2_64BIT_OBJ:   version 0
 OBJC2_64BIT_OBJ:     flags 0x0
+
+OBJC2_32BIT_EXE: Objective-C segment
+OBJC2_32BIT_EXE: Contents of (__DATA,__objc_classlist) section
+OBJC2_32BIT_EXE: 00006068 0x6a84
+OBJC2_32BIT_EXE:            isa 0x6a70
+OBJC2_32BIT_EXE:     superclass 0x0
+OBJC2_32BIT_EXE:          cache 0x0
+OBJC2_32BIT_EXE:         vtable 0x0
+OBJC2_32BIT_EXE:           data 0x66e0 (struct class_ro_t *)
+OBJC2_32BIT_EXE:                     flags 0x184 RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_EXE:             instanceStart 4
+OBJC2_32BIT_EXE:              instanceSize 8
+OBJC2_32BIT_EXE:                ivarLayout 0x52c2
+OBJC2_32BIT_EXE:                 layout map: 0x01 
+OBJC2_32BIT_EXE:                      name 0x5279 AppDelegate
+OBJC2_32BIT_EXE:               baseMethods 0x6614 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		   entsize 12
+OBJC2_32BIT_EXE: 		     count 10
+OBJC2_32BIT_EXE: 		      name 0x454c application:didFinishLaunchingWithOptions:
+OBJC2_32BIT_EXE: 		     types 0x562b c16@0:4@8@12
+OBJC2_32BIT_EXE: 		       imp 0x23c0
+OBJC2_32BIT_EXE: 		      name 0x4593 applicationWillResignActive:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x25f0
+OBJC2_32BIT_EXE: 		      name 0x4a6a applicationDidEnterBackground:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x2640
+OBJC2_32BIT_EXE: 		      name 0x4a89 applicationWillEnterForeground:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x2690
+OBJC2_32BIT_EXE: 		      name 0x4577 applicationDidBecomeActive:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x26e0
+OBJC2_32BIT_EXE: 		      name 0x463e applicationWillTerminate:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x2730
+OBJC2_32BIT_EXE: 		      name 0x42da splitViewController:collapseSecondaryViewController:ontoPrimaryViewController:
+OBJC2_32BIT_EXE: 		     types 0x5351 c20@0:4@8@12@16
+OBJC2_32BIT_EXE: 		       imp 0x2780
+OBJC2_32BIT_EXE: 		      name 0x4e21 .cxx_destruct
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x2a70
+OBJC2_32BIT_EXE: 		      name 0x40fc window
+OBJC2_32BIT_EXE: 		     types 0x5c80 @8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x2a00
+OBJC2_32BIT_EXE: 		      name 0x4d1a setWindow:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x2a30
+OBJC2_32BIT_EXE:             baseProtocols 0x65dc
+OBJC2_32BIT_EXE:                       count 2
+OBJC2_32BIT_EXE: 		      list[0] 0x6ae8 (struct protocol_t *)
+OBJC2_32BIT_EXE: 			      isa 0x0
+OBJC2_32BIT_EXE: 			     name 0x5285 UISplitViewControllerDelegate
+OBJC2_32BIT_EXE: 			protocols 0x0
+OBJC2_32BIT_EXE: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 	  optionalInstanceMethods 0x6088
+OBJC2_32BIT_EXE: 	     optionalClassMethods 0x0
+OBJC2_32BIT_EXE: 	       instanceProperties 0x0
+OBJC2_32BIT_EXE: 		      list[1] 0x6b40 (struct protocol_t *)
+OBJC2_32BIT_EXE: 			      isa 0x0
+OBJC2_32BIT_EXE: 			     name 0x52a3 UIApplicationDelegate
+OBJC2_32BIT_EXE: 			protocols 0x62e8
+OBJC2_32BIT_EXE: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 	  optionalInstanceMethods 0x62f4
+OBJC2_32BIT_EXE: 	     optionalClassMethods 0x0
+OBJC2_32BIT_EXE: 	       instanceProperties 0x6518
+OBJC2_32BIT_EXE:                     ivars 0x6694
+OBJC2_32BIT_EXE:                     entsize 20
+OBJC2_32BIT_EXE:                       count 1
+OBJC2_32BIT_EXE: 			   offset 0x6a5c 4
+OBJC2_32BIT_EXE: 			     name 0x4e2f _window
+OBJC2_32BIT_EXE: 			     type 0x5d4b @"UIWindow"
+OBJC2_32BIT_EXE: 			alignment 2
+OBJC2_32BIT_EXE: 			     size 4
+OBJC2_32BIT_EXE:            weakIvarLayout 0x0
+OBJC2_32BIT_EXE:            baseProperties 0x66b0
+OBJC2_32BIT_EXE:                     entsize 8
+OBJC2_32BIT_EXE:                       count 5
+OBJC2_32BIT_EXE: 			     name 0x5df3 window
+OBJC2_32BIT_EXE: 			attributes 0x5e0b T@"UIWindow",&,N,V_window
+OBJC2_32BIT_EXE: 			     name 0x5dab hash
+OBJC2_32BIT_EXE: 			attributes 0x5db0 TI,R
+OBJC2_32BIT_EXE: 			     name 0x5db5 superclass
+OBJC2_32BIT_EXE: 			attributes 0x5dc0 T#,R
+OBJC2_32BIT_EXE: 			     name 0x5dc5 description
+OBJC2_32BIT_EXE: 			attributes 0x5dd1 T@"NSString",R,C
+OBJC2_32BIT_EXE: 			     name 0x5de2 debugDescription
+OBJC2_32BIT_EXE: 			attributes 0x5dd1 T@"NSString",R,C
+OBJC2_32BIT_EXE: Meta Class
+OBJC2_32BIT_EXE:            isa 0x0
+OBJC2_32BIT_EXE:     superclass 0x0
+OBJC2_32BIT_EXE:          cache 0x0
+OBJC2_32BIT_EXE:         vtable 0x0
+OBJC2_32BIT_EXE:           data 0x65ec (struct class_ro_t *)
+OBJC2_32BIT_EXE:                     flags 0x185 RO_META RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_EXE:             instanceStart 20
+OBJC2_32BIT_EXE:              instanceSize 20
+OBJC2_32BIT_EXE:                ivarLayout 0x0
+OBJC2_32BIT_EXE:                      name 0x5279 AppDelegate
+OBJC2_32BIT_EXE:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE:             baseProtocols 0x65dc
+OBJC2_32BIT_EXE:                       count 2
+OBJC2_32BIT_EXE: 		      list[0] 0x6ae8 (struct protocol_t *)
+OBJC2_32BIT_EXE: 			      isa 0x0
+OBJC2_32BIT_EXE: 			     name 0x5285 UISplitViewControllerDelegate
+OBJC2_32BIT_EXE: 			protocols 0x0
+OBJC2_32BIT_EXE: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 	  optionalInstanceMethods 0x6088
+OBJC2_32BIT_EXE: 	     optionalClassMethods 0x0
+OBJC2_32BIT_EXE: 	       instanceProperties 0x0
+OBJC2_32BIT_EXE: 		      list[1] 0x6b40 (struct protocol_t *)
+OBJC2_32BIT_EXE: 			      isa 0x0
+OBJC2_32BIT_EXE: 			     name 0x52a3 UIApplicationDelegate
+OBJC2_32BIT_EXE: 			protocols 0x62e8
+OBJC2_32BIT_EXE: 		  instanceMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		     classMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE: 	  optionalInstanceMethods 0x62f4
+OBJC2_32BIT_EXE: 	     optionalClassMethods 0x0
+OBJC2_32BIT_EXE: 	       instanceProperties 0x6518
+OBJC2_32BIT_EXE:                     ivars 0x0
+OBJC2_32BIT_EXE:            weakIvarLayout 0x0
+OBJC2_32BIT_EXE:            baseProperties 0x0
+OBJC2_32BIT_EXE: 0000606c 0x6a98
+OBJC2_32BIT_EXE:            isa 0x6aac
+OBJC2_32BIT_EXE:     superclass 0x0
+OBJC2_32BIT_EXE:          cache 0x0
+OBJC2_32BIT_EXE:         vtable 0x0
+OBJC2_32BIT_EXE:           data 0x6838 (struct class_ro_t *)
+OBJC2_32BIT_EXE:                     flags 0x184 RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_EXE:             instanceStart 4
+OBJC2_32BIT_EXE:              instanceSize 12
+OBJC2_32BIT_EXE:                ivarLayout 0x52d9
+OBJC2_32BIT_EXE:                 layout map: 0x02 
+OBJC2_32BIT_EXE:                      name 0x52c4 MasterViewController
+OBJC2_32BIT_EXE:               baseMethods 0x6730 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		   entsize 12
+OBJC2_32BIT_EXE: 		     count 15
+OBJC2_32BIT_EXE: 		      name 0x4e37 awakeFromNib
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x2ab0
+OBJC2_32BIT_EXE: 		      name 0x4ea2 viewDidLoad
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x2c20
+OBJC2_32BIT_EXE: 		      name 0x4f43 didReceiveMemoryWarning
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x2e80
+OBJC2_32BIT_EXE: 		      name 0x4ec3 insertNewObject:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x2ed0
+OBJC2_32BIT_EXE: 		      name 0x5119 prepareForSegue:sender:
+OBJC2_32BIT_EXE: 		     types 0x57b1 v16@0:4@8@12
+OBJC2_32BIT_EXE: 		       imp 0x3160
+OBJC2_32BIT_EXE: 		      name 0x5131 numberOfSectionsInTableView:
+OBJC2_32BIT_EXE: 		     types 0x5326 i12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x34c0
+OBJC2_32BIT_EXE: 		      name 0x514e tableView:numberOfRowsInSection:
+OBJC2_32BIT_EXE: 		     types 0x5d57 i16@0:4@8i12
+OBJC2_32BIT_EXE: 		       imp 0x3520
+OBJC2_32BIT_EXE: 		      name 0x516f tableView:cellForRowAtIndexPath:
+OBJC2_32BIT_EXE: 		     types 0x5422 @16@0:4@8@12
+OBJC2_32BIT_EXE: 		       imp 0x35e0
+OBJC2_32BIT_EXE: 		      name 0x5190 tableView:canEditRowAtIndexPath:
+OBJC2_32BIT_EXE: 		     types 0x562b c16@0:4@8@12
+OBJC2_32BIT_EXE: 		       imp 0x37e0
+OBJC2_32BIT_EXE: 		      name 0x51b1 tableView:commitEditingStyle:forRowAtIndexPath:
+OBJC2_32BIT_EXE: 		     types 0x5d64 v20@0:4@8i12@16
+OBJC2_32BIT_EXE: 		       imp 0x3880
+OBJC2_32BIT_EXE: 		      name 0x4e21 .cxx_destruct
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3b40
+OBJC2_32BIT_EXE: 		      name 0x51e1 detailViewController
+OBJC2_32BIT_EXE: 		     types 0x5c80 @8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3a30
+OBJC2_32BIT_EXE: 		      name 0x4f2a setDetailViewController:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x3a60
+OBJC2_32BIT_EXE: 		      name 0x4f5b objects
+OBJC2_32BIT_EXE: 		     types 0x5c80 @8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3aa0
+OBJC2_32BIT_EXE: 		      name 0x4f68 setObjects:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x3af0
+OBJC2_32BIT_EXE:             baseProtocols 0x0
+OBJC2_32BIT_EXE:                     ivars 0x67ec
+OBJC2_32BIT_EXE:                     entsize 20
+OBJC2_32BIT_EXE:                       count 2
+OBJC2_32BIT_EXE: 			   offset 0x6a60 4
+OBJC2_32BIT_EXE: 			     name 0x51f6 _detailViewController
+OBJC2_32BIT_EXE: 			     type 0x5d74 @"DetailViewController"
+OBJC2_32BIT_EXE: 			alignment 2
+OBJC2_32BIT_EXE: 			     size 4
+OBJC2_32BIT_EXE: 			   offset 0x6a64 8
+OBJC2_32BIT_EXE: 			     name 0x520c _objects
+OBJC2_32BIT_EXE: 			     type 0x5d8c @"NSMutableArray"
+OBJC2_32BIT_EXE: 			alignment 2
+OBJC2_32BIT_EXE: 			     size 4
+OBJC2_32BIT_EXE:            weakIvarLayout 0x0
+OBJC2_32BIT_EXE:            baseProperties 0x6820
+OBJC2_32BIT_EXE:                     entsize 8
+OBJC2_32BIT_EXE:                       count 2
+OBJC2_32BIT_EXE: 			     name 0x5e35 detailViewController
+OBJC2_32BIT_EXE: 			attributes 0x5e4a T@"DetailViewController",&,N,V_detailViewController
+OBJC2_32BIT_EXE: 			     name 0x5e7e objects
+OBJC2_32BIT_EXE: 			attributes 0x5e86 T@"NSMutableArray",&,V_objects
+OBJC2_32BIT_EXE: Meta Class
+OBJC2_32BIT_EXE:            isa 0x0
+OBJC2_32BIT_EXE:     superclass 0x0
+OBJC2_32BIT_EXE:          cache 0x0
+OBJC2_32BIT_EXE:         vtable 0x0
+OBJC2_32BIT_EXE:           data 0x6708 (struct class_ro_t *)
+OBJC2_32BIT_EXE:                     flags 0x185 RO_META RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_EXE:             instanceStart 20
+OBJC2_32BIT_EXE:              instanceSize 20
+OBJC2_32BIT_EXE:                ivarLayout 0x0
+OBJC2_32BIT_EXE:                      name 0x52c4 MasterViewController
+OBJC2_32BIT_EXE:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE:             baseProtocols 0x0
+OBJC2_32BIT_EXE:                     ivars 0x0
+OBJC2_32BIT_EXE:            weakIvarLayout 0x0
+OBJC2_32BIT_EXE:            baseProperties 0x0
+OBJC2_32BIT_EXE: 00006070 0x6ac0
+OBJC2_32BIT_EXE:            isa 0x6ad4
+OBJC2_32BIT_EXE:     superclass 0x0
+OBJC2_32BIT_EXE:          cache 0x0
+OBJC2_32BIT_EXE:         vtable 0x0
+OBJC2_32BIT_EXE:           data 0x6938 (struct class_ro_t *)
+OBJC2_32BIT_EXE:                     flags 0x184 RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_EXE:             instanceStart 4
+OBJC2_32BIT_EXE:              instanceSize 12
+OBJC2_32BIT_EXE:                ivarLayout 0x52f0
+OBJC2_32BIT_EXE:                 layout map: 0x01 0x10 
+OBJC2_32BIT_EXE:                      name 0x52db DetailViewController
+OBJC2_32BIT_EXE:               baseMethods 0x6888 (struct method_list_t *)
+OBJC2_32BIT_EXE: 		   entsize 12
+OBJC2_32BIT_EXE: 		     count 8
+OBJC2_32BIT_EXE: 		      name 0x5061 setDetailItem:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x3c70
+OBJC2_32BIT_EXE: 		      name 0x5215 configureView
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3d20
+OBJC2_32BIT_EXE: 		      name 0x4ea2 viewDidLoad
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3e20
+OBJC2_32BIT_EXE: 		      name 0x4f43 didReceiveMemoryWarning
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3e80
+OBJC2_32BIT_EXE: 		      name 0x4e21 .cxx_destruct
+OBJC2_32BIT_EXE: 		     types 0x5d44 v8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3f90
+OBJC2_32BIT_EXE: 		      name 0x41a0 detailItem
+OBJC2_32BIT_EXE: 		     types 0x5c80 @8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3ed0
+OBJC2_32BIT_EXE: 		      name 0x5223 detailDescriptionLabel
+OBJC2_32BIT_EXE: 		     types 0x5c80 @8@0:4
+OBJC2_32BIT_EXE: 		       imp 0x3f00
+OBJC2_32BIT_EXE: 		      name 0x523a setDetailDescriptionLabel:
+OBJC2_32BIT_EXE: 		     types 0x5608 v12@0:4@8
+OBJC2_32BIT_EXE: 		       imp 0x3f40
+OBJC2_32BIT_EXE:             baseProtocols 0x0
+OBJC2_32BIT_EXE:                     ivars 0x68f0
+OBJC2_32BIT_EXE:                     entsize 20
+OBJC2_32BIT_EXE:                       count 2
+OBJC2_32BIT_EXE: 			   offset 0x6a68 4
+OBJC2_32BIT_EXE: 			     name 0x5255 _detailItem
+OBJC2_32BIT_EXE: 			     type 0x5d9e @
+OBJC2_32BIT_EXE: 			alignment 2
+OBJC2_32BIT_EXE: 			     size 4
+OBJC2_32BIT_EXE: 			   offset 0x6a6c 8
+OBJC2_32BIT_EXE: 			     name 0x5261 _detailDescriptionLabel
+OBJC2_32BIT_EXE: 			     type 0x5da0 @"UILabel"
+OBJC2_32BIT_EXE: 			alignment 2
+OBJC2_32BIT_EXE: 			     size 4
+OBJC2_32BIT_EXE:            weakIvarLayout 0x52f3
+OBJC2_32BIT_EXE:                 layout map: 0x11 
+OBJC2_32BIT_EXE:            baseProperties 0x6920
+OBJC2_32BIT_EXE:                     entsize 8
+OBJC2_32BIT_EXE:                       count 2
+OBJC2_32BIT_EXE: 			     name 0x5ea5 detailItem
+OBJC2_32BIT_EXE: 			attributes 0x5eb0 T@,&,N,V_detailItem
+OBJC2_32BIT_EXE: 			     name 0x5ec4 detailDescriptionLabel
+OBJC2_32BIT_EXE: 			attributes 0x5edb T@"UILabel",W,N,V_detailDescriptionLabel
+OBJC2_32BIT_EXE: Meta Class
+OBJC2_32BIT_EXE:            isa 0x0
+OBJC2_32BIT_EXE:     superclass 0x0
+OBJC2_32BIT_EXE:          cache 0x0
+OBJC2_32BIT_EXE:         vtable 0x0
+OBJC2_32BIT_EXE:           data 0x6860 (struct class_ro_t *)
+OBJC2_32BIT_EXE:                     flags 0x185 RO_META RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_EXE:             instanceStart 20
+OBJC2_32BIT_EXE:              instanceSize 20
+OBJC2_32BIT_EXE:                ivarLayout 0x0
+OBJC2_32BIT_EXE:                      name 0x52db DetailViewController
+OBJC2_32BIT_EXE:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_EXE:             baseProtocols 0x0
+OBJC2_32BIT_EXE:                     ivars 0x0
+OBJC2_32BIT_EXE:            weakIvarLayout 0x0
+OBJC2_32BIT_EXE:            baseProperties 0x0
+OBJC2_32BIT_EXE: Contents of (__DATA,__objc_classrefs) section
+OBJC2_32BIT_EXE: 00006a30 0x0
+OBJC2_32BIT_EXE: 00006a34 0x6ac0
+OBJC2_32BIT_EXE: 00006a38 0x0
+OBJC2_32BIT_EXE: 00006a3c 0x0
+OBJC2_32BIT_EXE: 00006a40 0x0
+OBJC2_32BIT_EXE: 00006a44 0x0
+OBJC2_32BIT_EXE: 00006a48 0x0
+OBJC2_32BIT_EXE: 00006a4c 0x0
+OBJC2_32BIT_EXE: 00006a50 0x6a84
+OBJC2_32BIT_EXE: Contents of (__DATA,__objc_superrefs) section
+OBJC2_32BIT_EXE: 00006a54 0x6a98
+OBJC2_32BIT_EXE: 00006a58 0x6ac0
+OBJC2_32BIT_EXE: Contents of (__DATA,__objc_protolist) section
+OBJC2_32BIT_EXE: 00006074 0x6ae8
+OBJC2_32BIT_EXE: 00006078 0x6b14
+OBJC2_32BIT_EXE: 0000607c 0x6b40
+OBJC2_32BIT_EXE: Contents of (__DATA,__objc_imageinfo) section
+OBJC2_32BIT_EXE:   version 0
+OBJC2_32BIT_EXE:     flags 0x20
+
+OBJC2_32BIT_OBJ: /Volumes/SandBox/llvm/test/tools/llvm-objdump/X86/Inputs/Objc2.32bit.obj.macho-i386:
+OBJC2_32BIT_OBJ: Objective-C segment
+OBJC2_32BIT_OBJ: Contents of (__DATA,__objc_classlist) section
+OBJC2_32BIT_OBJ: 00003ae4 0x3914 _OBJC_CLASS_$_DetailViewController
+OBJC2_32BIT_OBJ:            isa 0x3928 _OBJC_METACLASS_$_DetailViewController
+OBJC2_32BIT_OBJ:     superclass 0x0 _OBJC_CLASS_$_UIViewController
+OBJC2_32BIT_OBJ:          cache 0x0 __objc_empty_cache
+OBJC2_32BIT_OBJ:         vtable 0x0 -[DetailViewController setDetailItem:]
+OBJC2_32BIT_OBJ:           data 0x3a38 (struct class_ro_t *)
+OBJC2_32BIT_OBJ:                     flags 0x184 RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_OBJ:             instanceStart 4
+OBJC2_32BIT_OBJ:              instanceSize 12
+OBJC2_32BIT_OBJ:                ivarLayout 0x3955
+OBJC2_32BIT_OBJ:                 layout map: 0x01 0x10 
+OBJC2_32BIT_OBJ:                      name 0x3940 DetailViewController
+OBJC2_32BIT_OBJ:               baseMethods 0x3988 (struct method_list_t *)
+OBJC2_32BIT_OBJ: 		   entsize 12
+OBJC2_32BIT_OBJ: 		     count 8
+OBJC2_32BIT_OBJ: 		      name 0x3899 setDetailItem:
+OBJC2_32BIT_OBJ: 		     types 0x3a60 v12@0:4@8
+OBJC2_32BIT_OBJ: 		       imp 0x0 -[DetailViewController setDetailItem:]
+OBJC2_32BIT_OBJ: 		      name 0x3830 configureView
+OBJC2_32BIT_OBJ: 		     types 0x3a6a v8@0:4
+OBJC2_32BIT_OBJ: 		       imp 0xb0 -[DetailViewController configureView]
+OBJC2_32BIT_OBJ: 		      name 0x3875 viewDidLoad
+OBJC2_32BIT_OBJ: 		     types 0x3a6a v8@0:4
+OBJC2_32BIT_OBJ: 		       imp 0x1b0 -[DetailViewController viewDidLoad]
+OBJC2_32BIT_OBJ: 		      name 0x3881 didReceiveMemoryWarning
+OBJC2_32BIT_OBJ: 		     types 0x3a6a v8@0:4
+OBJC2_32BIT_OBJ: 		       imp 0x210 -[DetailViewController didReceiveMemoryWarning]
+OBJC2_32BIT_OBJ: 		      name 0x38a8 .cxx_destruct
+OBJC2_32BIT_OBJ: 		     types 0x3a6a v8@0:4
+OBJC2_32BIT_OBJ: 		       imp 0x320 -[DetailViewController .cxx_destruct]
+OBJC2_32BIT_OBJ: 		      name 0x383e detailItem
+OBJC2_32BIT_OBJ: 		     types 0x3a71 @8@0:4
+OBJC2_32BIT_OBJ: 		       imp 0x260 -[DetailViewController detailItem]
+OBJC2_32BIT_OBJ: 		      name 0x3849 detailDescriptionLabel
+OBJC2_32BIT_OBJ: 		     types 0x3a71 @8@0:4
+OBJC2_32BIT_OBJ: 		       imp 0x290 -[DetailViewController detailDescriptionLabel]
+OBJC2_32BIT_OBJ: 		      name 0x38b6 setDetailDescriptionLabel:
+OBJC2_32BIT_OBJ: 		     types 0x3a60 v12@0:4@8
+OBJC2_32BIT_OBJ: 		       imp 0x2d0 -[DetailViewController setDetailDescriptionLabel:]
+OBJC2_32BIT_OBJ:             baseProtocols 0x0
+OBJC2_32BIT_OBJ:                     ivars 0x39f0
+OBJC2_32BIT_OBJ:                     entsize 20
+OBJC2_32BIT_OBJ:                       count 2
+OBJC2_32BIT_OBJ: 			   offset 0x3828 4
+OBJC2_32BIT_OBJ: 			     name 0x38d1 _detailItem
+OBJC2_32BIT_OBJ: 			     type 0x3a78 @
+OBJC2_32BIT_OBJ: 			alignment 2
+OBJC2_32BIT_OBJ: 			     size 4
+OBJC2_32BIT_OBJ: 			   offset 0x382c 8
+OBJC2_32BIT_OBJ: 			     name 0x38dd _detailDescriptionLabel
+OBJC2_32BIT_OBJ: 			     type 0x3a7a @"UILabel"
+OBJC2_32BIT_OBJ: 			alignment 2
+OBJC2_32BIT_OBJ: 			     size 4
+OBJC2_32BIT_OBJ:            weakIvarLayout 0x3958
+OBJC2_32BIT_OBJ:                 layout map: 0x11 
+OBJC2_32BIT_OBJ:            baseProperties 0x3a20
+OBJC2_32BIT_OBJ:                     entsize 8
+OBJC2_32BIT_OBJ:                       count 2
+OBJC2_32BIT_OBJ: 			     name 0x3a85 detailItem
+OBJC2_32BIT_OBJ: 			attributes 0x3a90 T@,&,N,V_detailItem
+OBJC2_32BIT_OBJ: 			     name 0x3aa4 detailDescriptionLabel
+OBJC2_32BIT_OBJ: 			attributes 0x3abb T@"UILabel",W,N,V_detailDescriptionLabel
+OBJC2_32BIT_OBJ: Meta Class
+OBJC2_32BIT_OBJ:            isa 0x0 _OBJC_METACLASS_$_NSObject
+OBJC2_32BIT_OBJ:     superclass 0x0 _OBJC_METACLASS_$_UIViewController
+OBJC2_32BIT_OBJ:          cache 0x0 __objc_empty_cache
+OBJC2_32BIT_OBJ:         vtable 0x0 -[DetailViewController setDetailItem:]
+OBJC2_32BIT_OBJ:           data 0x3960 (struct class_ro_t *)
+OBJC2_32BIT_OBJ:                     flags 0x185 RO_META RO_HAS_CXX_STRUCTORS
+OBJC2_32BIT_OBJ:             instanceStart 20
+OBJC2_32BIT_OBJ:              instanceSize 20
+OBJC2_32BIT_OBJ:                ivarLayout 0x0
+OBJC2_32BIT_OBJ:                      name 0x3940 DetailViewController
+OBJC2_32BIT_OBJ:               baseMethods 0x0 (struct method_list_t *)
+OBJC2_32BIT_OBJ:             baseProtocols 0x0
+OBJC2_32BIT_OBJ:                     ivars 0x0
+OBJC2_32BIT_OBJ:            weakIvarLayout 0x0
+OBJC2_32BIT_OBJ:            baseProperties 0x0
+OBJC2_32BIT_OBJ: Contents of (__DATA,__objc_superrefs) section
+OBJC2_32BIT_OBJ: 0000393c 0x3914 _OBJC_CLASS_$_DetailViewController
+OBJC2_32BIT_OBJ: Contents of (__DATA,__objc_imageinfo) section
+OBJC2_32BIT_OBJ:   version 0
+OBJC2_32BIT_OBJ:     flags 0x20
