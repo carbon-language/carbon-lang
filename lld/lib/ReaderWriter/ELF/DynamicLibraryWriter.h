@@ -60,6 +60,7 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 }
 
 template <class ELFT> void DynamicLibraryWriter<ELFT>::addDefaultAtoms() {
+  OutputELFWriter<ELFT>::addDefaultAtoms();
   _runtimeFile->addAbsoluteAtom("_end");
 }
 
@@ -76,6 +77,7 @@ bool DynamicLibraryWriter<ELFT>::createImplicitFiles(
 
 template <class ELFT>
 void DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
+  OutputELFWriter<ELFT>::finalizeDefaultAtomValues();
   lld::AtomLayout *underScoreEndAtom = this->_layout.findAbsoluteAtom("_end");
   assert(underScoreEndAtom);
 
