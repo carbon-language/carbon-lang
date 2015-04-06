@@ -637,8 +637,6 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 
 std::unique_ptr<DIE>
 DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity &Module) {
-  assert(Module.Verify() &&
-         "Use one of the MDNode * overloads to handle invalid metadata");
   std::unique_ptr<DIE> IMDie = make_unique<DIE>((dwarf::Tag)Module.getTag());
   insertDIE(Module, IMDie.get());
   DIE *EntityDie;

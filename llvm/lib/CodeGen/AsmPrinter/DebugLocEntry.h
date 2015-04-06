@@ -42,7 +42,7 @@ public:
     }
     Value(const MDNode *Var, const MDNode *Expr, MachineLocation Loc)
         : Variable(Var), Expression(Expr), EntryKind(E_Location), Loc(Loc) {
-      assert(DIVariable(Var).Verify());
+      assert(isa<MDLocalVariable>(Var));
       assert(DIExpression(Expr)->isValid());
     }
 

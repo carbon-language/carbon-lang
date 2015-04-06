@@ -421,7 +421,6 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
 void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
                                                   const MDNode *N) {
   DIImportedEntity Module(N);
-  assert(Module.Verify());
   if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
     D->addChild(TheCU.constructImportedEntityDIE(Module));
 }
@@ -1499,9 +1498,10 @@ static void emitDebugLocValue(const AsmPrinter &AP,
                                     Streamer);
   // Regular entry.
   if (Value.isInt()) {
-    DIBasicType BTy(DV.getType().resolve(TypeIdentifierMap));
-    if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
-                         BTy.getEncoding() == dwarf::DW_ATE_signed_char))
+    MDType *T = DV.getType().resolve(TypeIdentifierMap);
+    auto *B = dyn_cast<MDBasicType>(T);
+    if (B && (B->getEncoding() == dwarf::DW_ATE_signed ||
+              B->getEncoding() == dwarf::DW_ATE_signed_char))
       DwarfExpr.AddSignedConstant(Value.getInt());
     else
       DwarfExpr.AddUnsignedConstant(Value.getInt());

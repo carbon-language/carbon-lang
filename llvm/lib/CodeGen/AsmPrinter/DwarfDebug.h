@@ -88,7 +88,6 @@ public:
     : Var(V), Expr(1, E), TheDIE(nullptr), DotDebugLocOffset(~0U),
       MInsn(nullptr), DD(DD) {
     FrameIndex.push_back(FI);
-    assert(Var.Verify());
     assert(!E || E->isValid());
   }
 

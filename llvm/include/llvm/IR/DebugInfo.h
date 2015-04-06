@@ -98,8 +98,6 @@ protected:
 public:
   explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
 
-  bool Verify() const;
-
   MDNode *get() const { return const_cast<MDNode *>(DbgNode); }
   operator MDNode *() const { return get(); }
   MDNode *operator->() const { return get(); }
@@ -188,7 +186,6 @@ public:
 
   int64_t getLo() const { return get()->getLo(); }
   int64_t getCount() const { return get()->getCount(); }
-  bool Verify() const;
 };
 
 /// \brief This descriptor holds an array of nodes with type T.
@@ -227,7 +224,6 @@ public:
 
   StringRef getName() const { return get()->getName(); }
   int64_t getEnumValue() const { return get()->getValue(); }
-  bool Verify() const;
 };
 
 template <typename T> class DIRef;
@@ -355,8 +351,6 @@ public:
     return *get();
   }
 
-  bool Verify() const;
-
   DIScopeRef getContext() const { return DIScopeRef::get(get()->getScope()); }
   StringRef getName() const { return get()->getName(); }
   unsigned getLineNumber() const { return get()->getLine(); }
@@ -416,8 +410,6 @@ public:
   }
 
   unsigned getEncoding() const { return get()->getEncoding(); }
-
-  bool Verify() const;
 };
 
 /// \brief A simple derived type
@@ -465,8 +457,6 @@ public:
 
     return nullptr;
   }
-
-  bool Verify() const;
 };
 
 /// \brief Types that refer to multiple other types.
@@ -528,8 +518,6 @@ public:
     return DIArray(get()->getTemplateParams());
   }
   MDString *getIdentifier() const { return get()->getRawIdentifier(); }
-
-  bool Verify() const;
 };
 
 class DISubroutineType : public DICompositeType {
@@ -568,7 +556,6 @@ public:
 
   /// \brief Retrieve the MDNode for the directory/file pair.
   MDNode *getFileNode() const { return get(); }
-  bool Verify() const;
 };
 
 /// \brief A wrapper for a compile unit.
@@ -614,8 +601,6 @@ public:
     return get()->getSplitDebugFilename();
   }
   unsigned getEmissionKind() const { return get()->getEmissionKind(); }
-
-  bool Verify() const;
 };
 
 /// \brief This is a wrapper for a subprogram (e.g. a function).
@@ -661,8 +646,6 @@ public:
   DITypeRef getContainingType() const {
     return DITypeRef::get(get()->getContainingType());
   }
-
-  bool Verify() const;
 
   /// \brief Check if this provides debugging information for the function F.
   bool describes(const Function *F);
@@ -744,7 +727,6 @@ public:
       return N->getColumn();
     return 0;
   }
-  bool Verify() const;
 };
 
 /// \brief This is a wrapper for a lexical block with a filename change.
@@ -768,7 +750,6 @@ public:
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
   DILexicalBlock getScope() const { return DILexicalBlock(get()->getScope()); }
   unsigned getDiscriminator() const { return get()->getDiscriminator(); }
-  bool Verify() const;
 };
 
 /// \brief A wrapper for a C++ style name space.
@@ -790,7 +771,6 @@ public:
   StringRef getName() const { return get()->getName(); }
   unsigned getLineNumber() const { return get()->getLine(); }
   DIScope getContext() const { return DIScope(get()->getScope()); }
-  bool Verify() const;
 };
 
 /// \brief This is a wrapper for template type parameter.
@@ -813,7 +793,6 @@ public:
   StringRef getName() const { return get()->getName(); }
 
   DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
-  bool Verify() const;
 };
 
 /// \brief This is a wrapper for template value parameter.
@@ -837,7 +816,6 @@ public:
   StringRef getName() const { return get()->getName(); }
   DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
   Metadata *getValue() const { return get()->getValue(); }
-  bool Verify() const;
 };
 
 /// \brief This is a wrapper for a global variable.
@@ -880,8 +858,6 @@ public:
   DIDerivedType getStaticDataMemberDeclaration() const {
     return DIDerivedType(get()->getStaticDataMemberDeclaration());
   }
-
-  bool Verify() const;
 };
 
 /// \brief This is a wrapper for a variable (e.g. parameter, local, global etc).
@@ -922,8 +898,6 @@ public:
   /// \brief If this variable is inlined then return inline location.
   MDNode *getInlinedAt() const { return DIDescriptor(get()->getInlinedAt()); }
 
-  bool Verify() const;
-
   /// \brief Check if this is a "__block" variable (Apple Blocks).
   bool isBlockByrefVariable(const DITypeIdentifierMap &Map) const {
     return (getType().resolve(Map)).isBlockByrefStruct();
@@ -959,9 +933,6 @@ public:
     assert(get() && "Expected valid pointer");
     return *get();
   }
-
-  // Don't call this.  Call isValid() directly.
-  bool Verify() const = delete;
 
   /// \brief Return the number of elements in the complex expression.
   unsigned getNumElements() const { return get()->getNumElements(); }
@@ -1063,7 +1034,6 @@ public:
   }
   StringRef getFilename() const { return getScope().getFilename(); }
   StringRef getDirectory() const { return getScope().getDirectory(); }
-  bool Verify() const;
   bool atSameLineAs(const DILocation &Other) const {
     return (getLineNumber() == Other.getLineNumber() &&
             getFilename() == Other.getFilename());
@@ -1140,8 +1110,6 @@ public:
   /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
   /// the type as a DITypeRef here.
   DIType getType() const { return DIType(get()->getType()); }
-
-  bool Verify() const;
 };
 
 /// \brief An imported module (C++ using directive or similar).
@@ -1167,7 +1135,6 @@ public:
   }
   unsigned getLineNumber() const { return get()->getLine(); }
   StringRef getName() const { return get()->getName(); }
-  bool Verify() const;
 };
 
 /// \brief Find subprogram that is enclosing this scope.

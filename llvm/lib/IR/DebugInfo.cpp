@@ -80,22 +80,6 @@ unsigned DIDescriptor::splitFlags(unsigned Flags,
   return Flags;
 }
 
-bool DIDescriptor::Verify() const {
-  return DbgNode &&
-         (DIDerivedType(DbgNode).Verify() ||
-          DICompositeType(DbgNode).Verify() || DIBasicType(DbgNode).Verify() ||
-          DIVariable(DbgNode).Verify() || DISubprogram(DbgNode).Verify() ||
-          DIGlobalVariable(DbgNode).Verify() || DIFile(DbgNode).Verify() ||
-          DICompileUnit(DbgNode).Verify() || DINameSpace(DbgNode).Verify() ||
-          DILexicalBlock(DbgNode).Verify() ||
-          DILexicalBlockFile(DbgNode).Verify() ||
-          DISubrange(DbgNode).Verify() || DIEnumerator(DbgNode).Verify() ||
-          DIObjCProperty(DbgNode).Verify() ||
-          DITemplateTypeParameter(DbgNode).Verify() ||
-          DITemplateValueParameter(DbgNode).Verify() ||
-          DIImportedEntity(DbgNode).Verify());
-}
-
 static Metadata *getField(const MDNode *DbgNode, unsigned Elt) {
   if (!DbgNode || Elt >= DbgNode->getNumOperands())
     return nullptr;
@@ -175,9 +159,6 @@ void DIDescriptor::replaceAllUsesWith(MDNode *D) {
   Node->replaceAllUsesWith(D);
 }
 
-bool DICompileUnit::Verify() const { return isCompileUnit(); }
-bool DIObjCProperty::Verify() const { return isObjCProperty(); }
-
 #ifndef NDEBUG
 /// \brief Check if a value can be a reference to a type.
 static bool isTypeRef(const Metadata *MD) {
@@ -206,43 +187,6 @@ static bool isDescriptorRef(const Metadata *MD) {
   return isa<MDNode>(MD);
 }
 #endif
-
-bool DIType::Verify() const { return isType(); }
-bool DIBasicType::Verify() const { return isBasicType(); }
-bool DIDerivedType::Verify() const { return isDerivedType(); }
-bool DICompositeType::Verify() const { return isCompositeType(); }
-bool DISubprogram::Verify() const { return isSubprogram(); }
-bool DIGlobalVariable::Verify() const { return isGlobalVariable(); }
-bool DIVariable::Verify() const { return isVariable(); }
-
-bool DILocation::Verify() const {
-  return dyn_cast_or_null<MDLocation>(DbgNode);
-}
-bool DINameSpace::Verify() const {
-  return dyn_cast_or_null<MDNamespace>(DbgNode);
-}
-bool DIFile::Verify() const { return dyn_cast_or_null<MDFile>(DbgNode); }
-bool DIEnumerator::Verify() const {
-  return dyn_cast_or_null<MDEnumerator>(DbgNode);
-}
-bool DISubrange::Verify() const {
-  return dyn_cast_or_null<MDSubrange>(DbgNode);
-}
-bool DILexicalBlock::Verify() const {
-  return dyn_cast_or_null<MDLexicalBlock>(DbgNode);
-}
-bool DILexicalBlockFile::Verify() const {
-  return dyn_cast_or_null<MDLexicalBlockFile>(DbgNode);
-}
-bool DITemplateTypeParameter::Verify() const {
-  return dyn_cast_or_null<MDTemplateTypeParameter>(DbgNode);
-}
-bool DITemplateValueParameter::Verify() const {
-  return dyn_cast_or_null<MDTemplateValueParameter>(DbgNode);
-}
-bool DIImportedEntity::Verify() const {
-  return dyn_cast_or_null<MDImportedEntity>(DbgNode);
-}
 
 void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
   TypedTrackingMDRef<MDCompositeTypeBase> N(get());
@@ -342,18 +286,15 @@ StringRef DIScope::getDirectory() const {
 }
 
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
-  assert(Verify() && "Expected compile unit");
   get()->replaceSubprograms(cast_or_null<MDTuple>(Subprograms.get()));
 }
 
 void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
-  assert(Verify() && "Expected compile unit");
   get()->replaceGlobalVariables(cast_or_null<MDTuple>(GlobalVariables.get()));
 }
 
 DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
                                         DILexicalBlockFile NewScope) {
-  assert(Verify());
   assert(NewScope && "Expected valid scope");
 
   const auto *Old = cast<MDLocation>(DbgNode);
@@ -368,13 +309,11 @@ unsigned DILocation::computeNewDiscriminator(LLVMContext &Ctx) {
 
 DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
                                        LLVMContext &VMContext) {
-  assert(DIVariable(DV).Verify() && "Expected a DIVariable");
   return cast<MDLocalVariable>(DV)
       ->withInline(cast_or_null<MDLocation>(InlinedScope));
 }
 
 DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
-  assert(DIVariable(DV).Verify() && "Expected a DIVariable");
   return cast<MDLocalVariable>(DV)->withoutInline();
 }
 

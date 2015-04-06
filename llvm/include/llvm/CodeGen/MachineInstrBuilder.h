@@ -174,7 +174,7 @@ public:
 
   const MachineInstrBuilder &addMetadata(const MDNode *MD) const {
     MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
-    assert((MI->isDebugValue() ? MI->getDebugVariable().Verify() : true) &&
+    assert((MI->isDebugValue() ? MI->getDebugVariable().isVariable() : true) &&
            "first MDNode argument of a DBG_VALUE not a DIVariable");
     return *this;
   }
@@ -355,7 +355,7 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(DIVariable(Variable).Verify() && "not a DIVariable");
+  assert(isa<MDLocalVariable>(Variable) && "not a DIVariable");
   assert(DIExpression(Expr)->isValid() && "not a DIExpression");
   assert(DIVariable(Variable)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
@@ -384,7 +384,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(DIVariable(Variable).Verify() && "not a DIVariable");
+  assert(isa<MDLocalVariable>(Variable) && "not a DIVariable");
   assert(DIExpression(Expr)->isValid() && "not a DIExpression");
   MachineFunction &MF = *BB.getParent();
   MachineInstr *MI =

@@ -175,7 +175,6 @@ createImportedModule(LLVMContext &C, dwarf::Tag Tag, DIScope Context,
                      Metadata *NS, unsigned Line, StringRef Name,
                      SmallVectorImpl<TrackingMDNodeRef> &AllImportedModules) {
   DIImportedEntity M = MDImportedEntity::get(C, Tag, Context, NS, Line, Name);
-  assert(M.Verify() && "Imported module should be valid");
   AllImportedModules.emplace_back(M.get());
   return M;
 }
@@ -741,33 +740,23 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
 
 DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
                                        DIFile File, unsigned LineNo) {
-  DINameSpace R = MDNamespace::get(VMContext, getNonCompileUnitScope(Scope),
-                                   File, Name, LineNo);
-  assert(R.Verify() &&
-         "createNameSpace should return a verifiable DINameSpace");
-  return R;
+  return MDNamespace::get(VMContext, getNonCompileUnitScope(Scope), File, Name,
+                          LineNo);
 }
 
 DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
                                                      DIFile File,
                                                      unsigned Discriminator) {
-  DILexicalBlockFile R = MDLexicalBlockFile::get(
-      VMContext, Scope, File.getFileNode(), Discriminator);
-  assert(
-      R.Verify() &&
-      "createLexicalBlockFile should return a verifiable DILexicalBlockFile");
-  return R;
+  return MDLexicalBlockFile::get(VMContext, Scope, File.getFileNode(),
+                                 Discriminator);
 }
 
 DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
                                              unsigned Line, unsigned Col) {
   // Make these distinct, to avoid merging two lexical blocks on the same
   // file/line/column.
-  DILexicalBlock R = MDLexicalBlock::getDistinct(
-      VMContext, getNonCompileUnitScope(Scope), File.getFileNode(), Line, Col);
-  assert(R.Verify() &&
-         "createLexicalBlock should return a verifiable DILexicalBlock");
-  return R;
+  return MDLexicalBlock::getDistinct(VMContext, getNonCompileUnitScope(Scope),
+                                     File.getFileNode(), Line, Col);
 }
 
 static Value *getDbgIntrinsicValueImpl(LLVMContext &VMContext, Value *V) {

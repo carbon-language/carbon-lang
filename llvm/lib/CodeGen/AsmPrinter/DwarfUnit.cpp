@@ -440,8 +440,6 @@ void DwarfUnit::addSourceLine(DIE &Die, DIObjCProperty Ty) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
-  assert(NS.Verify());
-
   addSourceLine(Die, NS.getLineNumber(), NS.getFilename(), NS.getDirectory());
 }
 
@@ -1571,7 +1569,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
 
 /// getOrCreateStaticMemberDIE - Create new DIE for C++ static member.
 DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
-  if (!DT.Verify())
+  if (!DT)
     return nullptr;
 
   // Construct the context before querying for the existence of the DIE in case
