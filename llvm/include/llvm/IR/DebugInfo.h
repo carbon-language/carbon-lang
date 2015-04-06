@@ -58,65 +58,6 @@ class DIObjCProperty;
 /// \brief Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
 
-class DIHeaderFieldIterator
-    : public std::iterator<std::input_iterator_tag, StringRef, std::ptrdiff_t,
-                           const StringRef *, StringRef> {
-  StringRef Header;
-  StringRef Current;
-
-public:
-  DIHeaderFieldIterator() {}
-  explicit DIHeaderFieldIterator(StringRef Header)
-      : Header(Header), Current(Header.slice(0, Header.find('\0'))) {}
-  StringRef operator*() const { return Current; }
-  const StringRef *operator->() const { return &Current; }
-  DIHeaderFieldIterator &operator++() {
-    increment();
-    return *this;
-  }
-  DIHeaderFieldIterator operator++(int) {
-    DIHeaderFieldIterator X(*this);
-    increment();
-    return X;
-  }
-  bool operator==(const DIHeaderFieldIterator &X) const {
-    return Current.data() == X.Current.data();
-  }
-  bool operator!=(const DIHeaderFieldIterator &X) const {
-    return !(*this == X);
-  }
-
-  StringRef getHeader() const { return Header; }
-  StringRef getCurrent() const { return Current; }
-  StringRef getPrefix() const {
-    if (Current.begin() == Header.begin())
-      return StringRef();
-    return Header.slice(0, Current.begin() - Header.begin() - 1);
-  }
-  StringRef getSuffix() const {
-    if (Current.end() == Header.end())
-      return StringRef();
-    return Header.slice(Current.end() - Header.begin() + 1, StringRef::npos);
-  }
-
-  /// \brief Get the current field as a number.
-  ///
-  /// Convert the current field into a number.  Return \c 0 on error.
-  template <class T> T getNumber() const {
-    T Int;
-    if (getCurrent().getAsInteger(0, Int))
-      return 0;
-    return Int;
-  }
-
-private:
-  void increment() {
-    assert(Current.data() != nullptr && "Cannot increment past the end");
-    StringRef Suffix = getSuffix();
-    Current = Suffix.slice(0, Suffix.find('\0'));
-  }
-};
-
 /// \brief A thin wraper around MDNode to access encoded debug info.
 ///
 /// This should not be stored in a container, because the underlying MDNode may
@@ -149,21 +90,10 @@ public:
 protected:
   const MDNode *DbgNode;
 
-  StringRef getStringField(unsigned Elt) const;
-  unsigned getUnsignedField(unsigned Elt) const {
-    return (unsigned)getUInt64Field(Elt);
-  }
-  uint64_t getUInt64Field(unsigned Elt) const;
-  int64_t getInt64Field(unsigned Elt) const;
   DIDescriptor getDescriptorField(unsigned Elt) const;
-
   template <typename DescTy> DescTy getFieldAs(unsigned Elt) const {
     return DescTy(getDescriptorField(Elt));
   }
-
-  GlobalVariable *getGlobalVariableField(unsigned Elt) const;
-  Constant *getConstantField(unsigned Elt) const;
-  Function *getFunctionField(unsigned Elt) const;
 
 public:
   explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
@@ -187,35 +117,6 @@ public:
 
   bool operator==(DIDescriptor Other) const { return DbgNode == Other.DbgNode; }
   bool operator!=(DIDescriptor Other) const { return !operator==(Other); }
-
-  StringRef getHeader() const { return getStringField(0); }
-
-  size_t getNumHeaderFields() const {
-    return std::distance(DIHeaderFieldIterator(getHeader()),
-                         DIHeaderFieldIterator());
-  }
-
-  DIHeaderFieldIterator header_begin() const {
-    return DIHeaderFieldIterator(getHeader());
-  }
-  DIHeaderFieldIterator header_end() const { return DIHeaderFieldIterator(); }
-
-  DIHeaderFieldIterator getHeaderIterator(unsigned Index) const {
-    // Since callers expect an empty string for out-of-range accesses, we can't
-    // use std::advance() here.
-    for (auto I = header_begin(), E = header_end(); I != E; ++I, --Index)
-      if (!Index)
-        return I;
-    return header_end();
-  }
-
-  StringRef getHeaderField(unsigned Index) const {
-    return *getHeaderIterator(Index);
-  }
-
-  template <class T> T getHeaderFieldAs(unsigned Index) const {
-    return getHeaderIterator(Index).getNumber<T>();
-  }
 
   uint16_t getTag() const {
     if (auto *N = dyn_cast_or_null<DebugNode>(get()))

@@ -106,54 +106,9 @@ static MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
   return dyn_cast_or_null<MDNode>(getField(DbgNode, Elt));
 }
 
-static StringRef getStringField(const MDNode *DbgNode, unsigned Elt) {
-  if (MDString *MDS = dyn_cast_or_null<MDString>(getField(DbgNode, Elt)))
-    return MDS->getString();
-  return StringRef();
-}
-
-StringRef DIDescriptor::getStringField(unsigned Elt) const {
-  return ::getStringField(DbgNode, Elt);
-}
-
-uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
-  if (auto *C = getConstantField(Elt))
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      return CI->getZExtValue();
-
-  return 0;
-}
-
-int64_t DIDescriptor::getInt64Field(unsigned Elt) const {
-  if (auto *C = getConstantField(Elt))
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      return CI->getZExtValue();
-
-  return 0;
-}
-
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
   MDNode *Field = getNodeField(DbgNode, Elt);
   return DIDescriptor(Field);
-}
-
-GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
-  return dyn_cast_or_null<GlobalVariable>(getConstantField(Elt));
-}
-
-Constant *DIDescriptor::getConstantField(unsigned Elt) const {
-  if (!DbgNode)
-    return nullptr;
-
-  if (Elt < DbgNode->getNumOperands())
-    if (auto *C =
-            dyn_cast_or_null<ConstantAsMetadata>(DbgNode->getOperand(Elt)))
-      return C->getValue();
-  return nullptr;
-}
-
-Function *DIDescriptor::getFunctionField(unsigned Elt) const {
-  return dyn_cast_or_null<Function>(getConstantField(Elt));
 }
 
 /// \brief Return the size reported by the variable's type.
