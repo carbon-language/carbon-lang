@@ -151,3 +151,5 @@ COMMON_FLAG(const char *, stack_trace_format, "DEFAULT",
             "Use DEFAULT to get default format.")
 COMMON_FLAG(bool, no_huge_pages_for_shadow, true,
             "If true, the shadow is not allowed to use huge pages. ")
+COMMON_FLAG(bool, strict_string_checks, false,
+            "If set check that string arguments are properly null-terminated")

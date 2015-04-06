@@ -102,6 +102,13 @@
 #define COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED (0)
 #endif
 
+#define COMMON_INTERCEPTOR_READ_STRING_OF_LEN(ctx, s, len, n)       \
+    COMMON_INTERCEPTOR_READ_RANGE((ctx), (s),                       \
+      common_flags()->strict_string_checks ? (len) + 1 : (n) )
+
+#define COMMON_INTERCEPTOR_READ_STRING(ctx, s, n)                   \
+    COMMON_INTERCEPTOR_READ_STRING_OF_LEN((ctx), (s), REAL(strlen)(s), (n))
+
 #ifndef COMMON_INTERCEPTOR_ON_DLOPEN
 #define COMMON_INTERCEPTOR_ON_DLOPEN(filename, flag) {}
 #endif
@@ -159,7 +166,8 @@ UNUSED static void DeleteInterceptorMetadata(void *addr) {
 INTERCEPTOR(char*, textdomain, const char *domainname) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, textdomain, domainname);
-  char* domain = REAL(textdomain)(domainname);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, domainname, 0);
+  char *domain = REAL(textdomain)(domainname);
   if (domain) {
     COMMON_INTERCEPTOR_INITIALIZE_RANGE(domain, REAL(strlen)(domain) + 1);
   }
@@ -185,8 +193,8 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
     c2 = (unsigned char)s2[i];
     if (c1 != c2 || c1 == '\0') break;
   }
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, i + 1);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, i + 1);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, s1, i + 1);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, s2, i + 1);
   return CharCmpX(c1, c2);
 }
 
@@ -231,8 +239,8 @@ INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
     c2 = (unsigned char)s2[i];
     if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
   }
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, i + 1);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, i + 1);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, s1, i + 1);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, s2, i + 1);
   return CharCaseCmp(c1, c2);
 }
 
@@ -727,12 +735,12 @@ INTERCEPTOR(char *, strptime, char *s, char *format, __sanitizer_tm *tm) {
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
   char *res = REAL(strptime)(s, format, tm);
-  if (res) {
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, s, res - s);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, s, res ? res - s : 0);
+  if (res && tm) {
     // Do not call unpoison_tm here, because strptime does not, in fact,
     // initialize the entire struct tm. For example, tm_zone pointer is left
     // uninitialized.
-    if (tm) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm, sizeof(*tm));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tm, sizeof(*tm));
   }
   return res;
 }
@@ -1513,6 +1521,7 @@ INTERCEPTOR(int, glob, const char *pattern, int flags,
             __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob, pattern, flags, errfunc, pglob);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, pattern, 0);
   __sanitizer_glob_t glob_copy = {
       0,                  0,                   0,
       0,                  wrapped_gl_closedir, wrapped_gl_readdir,
@@ -1543,6 +1552,7 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
             __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob64, pattern, flags, errfunc, pglob);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, pattern, 0);
   __sanitizer_glob_t glob_copy = {
       0,                  0,                   0,
       0,                  wrapped_gl_closedir, wrapped_gl_readdir,
@@ -1689,6 +1699,7 @@ INTERCEPTOR(char *, inet_ntop, int af, const void *src, char *dst, u32 size) {
 INTERCEPTOR(int, inet_pton, int af, const char *src, void *dst) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, inet_pton, af, src, dst);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, src, 0);
   // FIXME: figure out read size based on the address family.
   // FIXME: under ASan the call below may write to freed memory and corrupt
   // its metadata. See
@@ -2359,6 +2370,37 @@ INTERCEPTOR(char *, get_current_dir_name, int fake) {
 #define INIT_GET_CURRENT_DIR_NAME
 #endif
 
+UNUSED static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
+  CHECK(endptr);
+  if (nptr == *endptr) {
+    // No digits were found at strtol call, we need to find out the last
+    // symbol accessed by strtoll on our own.
+    // We get this symbol by skipping leading blanks and optional +/- sign.
+    while (IsSpace(*nptr)) nptr++;
+    if (*nptr == '+' || *nptr == '-') nptr++;
+    *endptr = const_cast<char *>(nptr);
+  }
+  CHECK(*endptr >= nptr);
+}
+
+UNUSED static inline void StrtolFixAndCheck(void *ctx, const char *nptr,
+                             char **endptr, char *real_endptr, int base) {
+  if (endptr != 0) {
+    *endptr = real_endptr;
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, endptr, sizeof(*endptr));
+  }
+  // If base has unsupported value, strtol can exit with EINVAL
+  // without reading any characters. So do additional checks only
+  // if base is valid.
+  bool is_valid_base = (base == 0) || (2 <= base && base <= 36);
+  if (is_valid_base) {
+    FixRealStrtolEndptr(nptr, &real_endptr);
+  }
+  COMMON_INTERCEPTOR_READ_STRING(ctx, nptr, is_valid_base ?
+                                 (real_endptr - nptr) + 1 : 0);
+}
+
+
 #if SANITIZER_INTERCEPT_STRTOIMAX
 INTERCEPTOR(INTMAX_T, strtoimax, const char *nptr, char **endptr, int base) {
   void *ctx;
@@ -2366,8 +2408,9 @@ INTERCEPTOR(INTMAX_T, strtoimax, const char *nptr, char **endptr, int base) {
   // FIXME: under ASan the call below may write to freed memory and corrupt
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
-  INTMAX_T res = REAL(strtoimax)(nptr, endptr, base);
-  if (endptr) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, endptr, sizeof(*endptr));
+  char *real_endptr;
+  INTMAX_T res = REAL(strtoimax)(nptr, &real_endptr, base);
+  StrtolFixAndCheck(ctx, nptr, endptr, real_endptr, base);
   return res;
 }
 
@@ -2377,8 +2420,9 @@ INTERCEPTOR(INTMAX_T, strtoumax, const char *nptr, char **endptr, int base) {
   // FIXME: under ASan the call below may write to freed memory and corrupt
   // its metadata. See
   // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
-  INTMAX_T res = REAL(strtoumax)(nptr, endptr, base);
-  if (endptr) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, endptr, sizeof(*endptr));
+  char *real_endptr;
+  INTMAX_T res = REAL(strtoumax)(nptr, &real_endptr, base);
+  StrtolFixAndCheck(ctx, nptr, endptr, real_endptr, base);
   return res;
 }
 
@@ -3642,6 +3686,7 @@ INTERCEPTOR(char *, tempnam, char *dir, char *pfx) {
 INTERCEPTOR(int, pthread_setname_np, uptr thread, const char *name) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_setname_np, thread, name);
+  COMMON_INTERCEPTOR_READ_STRING(ctx, name, 0);
   COMMON_INTERCEPTOR_SET_PTHREAD_NAME(ctx, thread, name);
   return REAL(pthread_setname_np)(thread, name);
 }
@@ -4699,6 +4744,7 @@ INTERCEPTOR(int, fclose, __sanitizer_FILE *fp) {
 INTERCEPTOR(void*, dlopen, const char *filename, int flag) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER_NOIGNORE(ctx, dlopen, filename, flag);
+  if (filename) COMMON_INTERCEPTOR_READ_STRING(ctx, filename, 0);
   COMMON_INTERCEPTOR_ON_DLOPEN(filename, flag);
   void *res = REAL(dlopen)(filename, flag);
   COMMON_INTERCEPTOR_LIBRARY_LOADED(filename, res);

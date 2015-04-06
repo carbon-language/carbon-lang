@@ -75,6 +75,13 @@ struct AsanInterceptorContext {
 #define ASAN_WRITE_RANGE(ctx, offset, size) \
   ACCESS_MEMORY_RANGE(ctx, offset, size, true)
 
+#define ASAN_READ_STRING_OF_LEN(ctx, s, len, n)                 \
+  ASAN_READ_RANGE((ctx), (s),                                   \
+    common_flags()->strict_string_checks ? (len) + 1 : (n))
+
+#define ASAN_READ_STRING(ctx, s, n)                             \
+  ASAN_READ_STRING_OF_LEN((ctx), (s), REAL(strlen)(s), (n))
+
 // Behavior of functions like "memcpy" or "strcpy" is undefined
 // if memory intervals overlap. We report error in this case.
 // Macro is used to avoid creation of new frames.
@@ -475,8 +482,9 @@ INTERCEPTOR(char*, strchr, const char *str, int c) {
   ENSURE_ASAN_INITED();
   char *result = REAL(strchr)(str, c);
   if (flags()->replace_str) {
-    uptr bytes_read = (result ? result - str : REAL(strlen)(str)) + 1;
-    ASAN_READ_RANGE(ctx, str, bytes_read);
+    uptr len = REAL(strlen)(str);
+    uptr bytes_read = (result ? result - str : len) + 1;
+    ASAN_READ_STRING_OF_LEN(ctx, str, len, bytes_read);
   }
   return result;
 }
@@ -505,7 +513,7 @@ INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
     uptr from_length = REAL(strlen)(from);
     ASAN_READ_RANGE(ctx, from, from_length + 1);
     uptr to_length = REAL(strlen)(to);
-    ASAN_READ_RANGE(ctx, to, to_length);
+    ASAN_READ_STRING_OF_LEN(ctx, to, to_length, to_length);
     ASAN_WRITE_RANGE(ctx, to + to_length, from_length + 1);
     // If the copying actually happens, the |from| string should not overlap
     // with the resulting string starting at |to|, which has a length of
@@ -527,7 +535,7 @@ INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
     uptr copy_length = Min(size, from_length + 1);
     ASAN_READ_RANGE(ctx, from, copy_length);
     uptr to_length = REAL(strlen)(to);
-    ASAN_READ_RANGE(ctx, to, to_length);
+    ASAN_READ_STRING_OF_LEN(ctx, to, to_length, to_length);
     ASAN_WRITE_RANGE(ctx, to + to_length, from_length + 1);
     if (from_length > 0) {
       CHECK_RANGES_OVERLAP("strncat", to, to_length + copy_length + 1,
@@ -629,23 +637,6 @@ INTERCEPTOR(uptr, strnlen, const char *s, uptr maxlen) {
 }
 #endif  // ASAN_INTERCEPT_STRNLEN
 
-static inline bool IsValidStrtolBase(int base) {
-  return (base == 0) || (2 <= base && base <= 36);
-}
-
-static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
-  CHECK(endptr);
-  if (nptr == *endptr) {
-    // No digits were found at strtol call, we need to find out the last
-    // symbol accessed by strtoll on our own.
-    // We get this symbol by skipping leading blanks and optional +/- sign.
-    while (IsSpace(*nptr)) nptr++;
-    if (*nptr == '+' || *nptr == '-') nptr++;
-    *endptr = const_cast<char *>(nptr);
-  }
-  CHECK(*endptr >= nptr);
-}
-
 INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
             char **endptr, int base) {
   void *ctx;
@@ -656,13 +647,7 @@ INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
   }
   char *real_endptr;
   long result = REAL(strtol)(nptr, &real_endptr, base);  // NOLINT
-  if (endptr != 0) {
-    *endptr = real_endptr;
-  }
-  if (IsValidStrtolBase(base)) {
-    FixRealStrtolEndptr(nptr, &real_endptr);
-    ASAN_READ_RANGE(ctx, nptr, (real_endptr - nptr) + 1);
-  }
+  StrtolFixAndCheck(ctx, nptr, endptr, real_endptr, base);
   return result;
 }
 
@@ -683,7 +668,7 @@ INTERCEPTOR(int, atoi, const char *nptr) {
   // different from int). So, we just imitate this behavior.
   int result = REAL(strtol)(nptr, &real_endptr, 10);
   FixRealStrtolEndptr(nptr, &real_endptr);
-  ASAN_READ_RANGE(ctx, nptr, (real_endptr - nptr) + 1);
+  ASAN_READ_STRING(ctx, nptr, (real_endptr - nptr) + 1);
   return result;
 }
 
@@ -700,7 +685,7 @@ INTERCEPTOR(long, atol, const char *nptr) {  // NOLINT
   char *real_endptr;
   long result = REAL(strtol)(nptr, &real_endptr, 10);  // NOLINT
   FixRealStrtolEndptr(nptr, &real_endptr);
-  ASAN_READ_RANGE(ctx, nptr, (real_endptr - nptr) + 1);
+  ASAN_READ_STRING(ctx, nptr, (real_endptr - nptr) + 1);
   return result;
 }
 
@@ -715,16 +700,7 @@ INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
   }
   char *real_endptr;
   long long result = REAL(strtoll)(nptr, &real_endptr, base);  // NOLINT
-  if (endptr != 0) {
-    *endptr = real_endptr;
-  }
-  // If base has unsupported value, strtoll can exit with EINVAL
-  // without reading any characters. So do additional checks only
-  // if base is valid.
-  if (IsValidStrtolBase(base)) {
-    FixRealStrtolEndptr(nptr, &real_endptr);
-    ASAN_READ_RANGE(ctx, nptr, (real_endptr - nptr) + 1);
-  }
+  StrtolFixAndCheck(ctx, nptr, endptr, real_endptr, base);
   return result;
 }
 
@@ -738,7 +714,7 @@ INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
   char *real_endptr;
   long long result = REAL(strtoll)(nptr, &real_endptr, 10);  // NOLINT
   FixRealStrtolEndptr(nptr, &real_endptr);
-  ASAN_READ_RANGE(ctx, nptr, (real_endptr - nptr) + 1);
+  ASAN_READ_STRING(ctx, nptr, (real_endptr - nptr) + 1);
   return result;
 }
 #endif  // ASAN_INTERCEPT_ATOLL_AND_STRTOLL

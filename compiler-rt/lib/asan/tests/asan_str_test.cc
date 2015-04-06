@@ -290,9 +290,6 @@ void RunStrCmpTest(PointerToStrCmp StrCmp) {
   Ident(StrCmp(s1, s2));
   Ident(StrCmp(s1, s2 + size - 1));
   Ident(StrCmp(s1 + size - 1, s2 + size - 1));
-  s1[size - 1] = 'z';
-  s2[size - 1] = 'x';
-  Ident(StrCmp(s1, s2));
   // One of arguments points to not allocated memory.
   EXPECT_DEATH(Ident(StrCmp)(s1 - 1, s2), LeftOOBReadMessage(1));
   EXPECT_DEATH(Ident(StrCmp)(s1, s2 - 1), LeftOOBReadMessage(1));
@@ -371,17 +368,14 @@ TEST(AddressSanitizer, StrCatOOBTest) {
   // One of arguments points to not allocated memory.
   EXPECT_DEATH(strcat(to - 1, from), LeftOOBAccessMessage(1));
   EXPECT_DEATH(strcat(to, from - 1), LeftOOBReadMessage(1));
-  EXPECT_DEATH(strcat(to + to_size, from), RightOOBWriteMessage(0));
   EXPECT_DEATH(strcat(to, from + from_size), RightOOBReadMessage(0));
 
   // "from" is not zero-terminated.
   from[from_size - 1] = 'z';
   EXPECT_DEATH(strcat(to, from), RightOOBReadMessage(0));
   from[from_size - 1] = '\0';
-  // "to" is not zero-terminated.
-  memset(to, 'z', to_size);
-  EXPECT_DEATH(strcat(to, from), RightOOBWriteMessage(0));
   // "to" is too short to fit "from".
+  memset(to, 'z', to_size);
   to[to_size - from_size + 1] = '\0';
   EXPECT_DEATH(strcat(to, from), RightOOBWriteMessage(0));
   // length of "to" is just enough.
@@ -409,7 +403,6 @@ TEST(AddressSanitizer, StrNCatOOBTest) {
   // One of arguments points to not allocated memory.
   EXPECT_DEATH(strncat(to - 1, from, 2), LeftOOBAccessMessage(1));
   EXPECT_DEATH(strncat(to, from - 1, 2), LeftOOBReadMessage(1));
-  EXPECT_DEATH(strncat(to + to_size, from, 2), RightOOBWriteMessage(0));
   EXPECT_DEATH(strncat(to, from + from_size, 2), RightOOBReadMessage(0));
 
   memset(from, 'z', from_size);
@@ -417,8 +410,6 @@ TEST(AddressSanitizer, StrNCatOOBTest) {
   to[0] = '\0';
   // "from" is too short.
   EXPECT_DEATH(strncat(to, from, from_size + 1), RightOOBReadMessage(0));
-  // "to" is not zero-terminated.
-  EXPECT_DEATH(strncat(to + 1, from, 1), RightOOBWriteMessage(0));
   // "to" is too short to fit "from".
   to[0] = 'z';
   to[to_size - from_size + 1] = '\0';
@@ -508,20 +499,15 @@ void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
   EXPECT_DEATH(Atoi(array - 1), LeftOOBReadMessage(1));
   // Die if a buffer doesn't have terminating NULL.
   EXPECT_DEATH(Atoi(array), RightOOBReadMessage(0));
-  // Make last symbol a terminating NULL or other non-digit.
+  // Make last symbol a terminating NULL
   array[9] = '\0';
   Atoi(array);
-  array[9] = 'a';
-  Atoi(array);
-  Atoi(array + 9);
   // Sometimes we need to detect overflow if no digits are found.
   memset(array, ' ', 10);
   EXPECT_DEATH(Atoi(array), RightOOBReadMessage(0));
   array[9] = '-';
   EXPECT_DEATH(Atoi(array), RightOOBReadMessage(0));
   EXPECT_DEATH(Atoi(array + 9), RightOOBReadMessage(0));
-  array[8] = '-';
-  Atoi(array);
   free(array);
 }
 
@@ -546,7 +532,6 @@ typedef void(*PointerToCallStrtol)(const char*, char**, int);
 
 void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   char *array = MallocAndMemsetString(3);
-  char *endptr = NULL;
   array[0] = '1';
   array[1] = '2';
   array[2] = '3';
@@ -554,19 +539,12 @@ void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   EXPECT_DEATH(Strtol(array + 3, NULL, 0), RightOOBReadMessage(0));
   EXPECT_DEATH(Strtol(array - 1, NULL, 0), LeftOOBReadMessage(1));
   // Buffer overflow if there is no terminating null (depends on base).
-  Strtol(array, &endptr, 3);
-  EXPECT_EQ(array + 2, endptr);
   EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
   array[2] = 'z';
-  Strtol(array, &endptr, 35);
-  EXPECT_EQ(array + 2, endptr);
   EXPECT_DEATH(Strtol(array, NULL, 36), RightOOBReadMessage(0));
   // Add terminating zero to get rid of overflow.
   array[2] = '\0';
   Strtol(array, NULL, 36);
-  // Don't check for overflow if base is invalid.
-  Strtol(array - 1, NULL, -1);
-  Strtol(array + 3, NULL, 1);
   // Sometimes we need to detect overflow if no digits are found.
   array[0] = array[1] = array[2] = ' ';
   EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
@@ -574,13 +552,6 @@ void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
   array[2] = '-';
   EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
-  array[1] = '+';
-  Strtol(array, NULL, 0);
-  array[1] = array[2] = 'z';
-  Strtol(array, &endptr, 0);
-  EXPECT_EQ(array, endptr);
-  Strtol(array + 2, NULL, 0);
-  EXPECT_EQ(array, endptr);
   free(array);
 }
 
