@@ -561,17 +561,9 @@ bool WinEHPrepare::prepareExceptionHandlers(
       }
     }
 
-    // If the parent alloca is used by exactly one handler and is not a catch
-    // parameter, erase the parent and leave the copy in the outlined handler.
-    // Catch parameters are indicated by a single null pointer in Allocas.
-    if (ParentAlloca->getNumUses() == 0 && Allocas.size() == 1 &&
-        Allocas[0] != getCatchObjectSentinel()) {
-      ParentAlloca->eraseFromParent();
-      // FIXME: Put a null entry in the llvm.frameescape call because we've
-      // already created llvm.eh.actions calls with indices into it.
-      AllocasToEscape.push_back(Constant::getNullValue(Int8PtrType));
-      continue;
-    }
+    // FIXME: We should try to sink unescaped allocas from the parent frame into
+    // the child frame. If the alloca is escaped, we have to use the lifetime
+    // markers to ensure that the alloca is only live within the child frame.
 
     // Add this alloca to the list of things to escape.
     AllocasToEscape.push_back(ParentAlloca);
