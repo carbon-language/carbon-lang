@@ -589,7 +589,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
       (unsigned)Fixup.getKind() != ARM::fixup_t2_adr_pcrel_12 &&
       (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
     if (A) {
-      const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+      const MCSymbol &Sym = A->getSymbol();
       if (Asm.isThumbFunc(&Sym))
         Value |= 1;
     }
@@ -598,7 +598,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
   // the basic blocks of the same function.  Thus, we would like to resolve
   // the offset when the destination has the same MCFragment.
   if (A && (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl) {
-    const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+    const MCSymbol &Sym = A->getSymbol();
     const MCSymbolData &SymData = Asm.getSymbolData(Sym);
     IsResolved = (SymData.getFragment() == DF);
   }
