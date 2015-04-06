@@ -697,19 +697,15 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
 
     bool addAtoms = true;
 
-    // A section of type SHT_GROUP defines a grouping of sections. The name of a
-    // symbol from one of the containing object's symbol tables provides a
-    // signature
-    // for the section group. The section header of the SHT_GROUP section
-    // specifies
-    // the identifying symbol entry, as described : the sh_link member contains
-    // the section header index of the symbol table section that contains the
-    // entry.
-    // The sh_info member contains the symbol table index of the identifying
-    // entry.
-    // The sh_flags member of the section header contains 0. The name of the
-    // section
-    // (sh_name) is not specified.
+    // A section of type SHT_GROUP defines a grouping of sections. The
+    // name of a symbol from one of the containing object's symbol tables
+    // provides a signature for the section group. The section header of
+    // the SHT_GROUP section specifies the identifying symbol entry, as
+    // described: the sh_link member contains the section header index of
+    // the symbol table section that contains the entry. The sh_info
+    // member contains the symbol table index of the identifying entry.
+    // The sh_flags member of the section header contains 0. The name of
+    // the section (sh_name) is not specified.
     if (isGroupSection(section)) {
       const Elf_Word *groupMembers =
           reinterpret_cast<const Elf_Word *>(sectionContents->data());
