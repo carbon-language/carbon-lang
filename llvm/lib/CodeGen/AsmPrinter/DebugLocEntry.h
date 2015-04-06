@@ -43,7 +43,7 @@ public:
     Value(const MDNode *Var, const MDNode *Expr, MachineLocation Loc)
         : Variable(Var), Expression(Expr), EntryKind(E_Location), Loc(Loc) {
       assert(isa<MDLocalVariable>(Var));
-      assert(DIExpression(Expr)->isValid());
+      assert(cast<MDExpression>(Expr)->isValid());
     }
 
     /// The variable to which this location entry corresponds.
@@ -75,9 +75,11 @@ public:
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
     const MDNode *getVariableNode() const { return Variable; }
-    DIVariable getVariable() const { return DIVariable(Variable); }
+    DIVariable getVariable() const { return cast<MDLocalVariable>(Variable); }
     bool isBitPiece() const { return getExpression().isBitPiece(); }
-    DIExpression getExpression() const { return DIExpression(Expression); }
+    DIExpression getExpression() const {
+      return cast_or_null<MDExpression>(Expression);
+    }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
   };
@@ -101,10 +103,11 @@ public:
   /// Return true if the merge was successful.
   bool MergeValues(const DebugLocEntry &Next) {
     if (Begin == Next.Begin) {
-      DIExpression Expr(Values[0].Expression);
-      DIVariable Var(Values[0].Variable);
-      DIExpression NextExpr(Next.Values[0].Expression);
-      DIVariable NextVar(Next.Values[0].Variable);
+      DIExpression Expr = cast_or_null<MDExpression>(Values[0].Expression);
+      DIVariable Var = cast_or_null<MDLocalVariable>(Values[0].Variable);
+      DIExpression NextExpr =
+          cast_or_null<MDExpression>(Next.Values[0].Expression);
+      DIVariable NextVar = cast_or_null<MDLocalVariable>(Next.Values[0].Variable);
       if (Var == NextVar && Expr.isBitPiece() &&
           NextExpr.isBitPiece()) {
         addValues(Next.Values);

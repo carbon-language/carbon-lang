@@ -129,10 +129,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   if (!curLoc)
     return;
 
-  DIScope Scope(curLoc.getScope());
-
-  assert((!Scope || Scope.isScope()) &&
-    "Scope of a DebugLoc should be null or a DIScope.");
+  DIScope Scope = cast_or_null<MDScope>(curLoc.getScope());
   if (!Scope)
      return;
 

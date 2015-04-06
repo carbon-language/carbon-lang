@@ -153,7 +153,7 @@ public:
   }
 
   bool variableHasComplexAddress() const {
-    assert(Var.isVariable() && "Invalid complex DbgVariable!");
+    assert(Var && "Invalid complex DbgVariable!");
     assert(Expr.size() == 1 &&
            "variableHasComplexAddress() invoked on multi-FI variable");
     return Expr.back().getNumElements() > 0;

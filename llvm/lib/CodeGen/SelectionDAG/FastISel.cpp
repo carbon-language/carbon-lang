@@ -1088,9 +1088,7 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
   }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(II);
-    DIVariable DIVar(DI->getVariable());
-    assert((!DIVar || DIVar.isVariable()) &&
-           "Variable in DbgDeclareInst should be either null or a DIVariable.");
+    DIVariable DIVar = DI->getVariable();
     if (!DIVar || !FuncInfo.MF->getMMI().hasDebugInfo()) {
       DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
       return true;

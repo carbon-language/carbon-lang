@@ -134,7 +134,7 @@ template <typename T> T DbgVariable::resolve(DIRef<T> Ref) const {
 }
 
 bool DbgVariable::isBlockByrefVariable() const {
-  assert(Var.isVariable() && "Invalid complex DbgVariable!");
+  assert(Var && "Invalid complex DbgVariable!");
   return Var.isBlockByrefVariable(DD->getTypeIdentifierMap());
 }
 
@@ -171,11 +171,11 @@ DIType DbgVariable::getType() const {
     uint16_t tag = Ty.getTag();
 
     if (tag == dwarf::DW_TAG_pointer_type)
-      subType = resolve(DIDerivedType(Ty).getTypeDerivedFrom());
+      subType = resolve(DITypeRef(cast<MDDerivedType>(Ty)->getBaseType()));
 
-    DIArray Elements = DICompositeType(subType).getElements();
+    DIArray Elements(cast<MDCompositeTypeBase>(subType)->getElements());
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIDerivedType DT(Elements.getElement(i));
+      DIDerivedType DT = cast<MDDerivedTypeBase>(Elements.getElement(i));
       if (getName() == DT.getName())
         return (resolve(DT.getTypeDerivedFrom()));
     }
@@ -302,11 +302,10 @@ void DwarfDebug::addSubprogramNames(DISubprogram SP, DIE &Die) {
 bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
   if (!Context)
     return false;
-  DIDescriptor D(Context);
-  if (D.isSubprogram())
+  if (isa<MDSubprogram>(Context))
     return true;
-  if (D.isType())
-    return isSubprogramContext(resolve(DIType(Context).getContext()));
+  if (DIType T = dyn_cast<MDType>(Context))
+    return isSubprogramContext(resolve(T.getContext()));
   return false;
 }
 
@@ -420,7 +419,7 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
 
 void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
                                                   const MDNode *N) {
-  DIImportedEntity Module(N);
+  DIImportedEntity Module = cast<MDImportedEntity>(N);
   if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
     D->addChild(TheCU.constructImportedEntityDIE(Module));
 }
@@ -444,12 +443,12 @@ void DwarfDebug::beginModule() {
   SingleCU = CU_Nodes->getNumOperands() == 1;
 
   for (MDNode *N : CU_Nodes->operands()) {
-    DICompileUnit CUNode(N);
+    DICompileUnit CUNode = cast<MDCompileUnit>(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
     DIArray ImportedEntities = CUNode.getImportedEntities();
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
       ScopesWithImportedEntities.push_back(std::make_pair(
-          DIImportedEntity(ImportedEntities.getElement(i)).getContext(),
+          cast<MDImportedEntity>(ImportedEntities.getElement(i))->getScope(),
           ImportedEntities.getElement(i)));
     // Stable sort to preserve the order of appearance of imported entities.
     // This is to avoid out-of-order processing of interdependent declarations
@@ -458,24 +457,25 @@ void DwarfDebug::beginModule() {
                      ScopesWithImportedEntities.end(), less_first());
     DIArray GVs = CUNode.getGlobalVariables();
     for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
-      CU.getOrCreateGlobalVariableDIE(DIGlobalVariable(GVs.getElement(i)));
+      CU.getOrCreateGlobalVariableDIE(
+          cast<MDGlobalVariable>(GVs.getElement(i)));
     DIArray SPs = CUNode.getSubprograms();
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
       SPMap.insert(std::make_pair(SPs.getElement(i), &CU));
     DIArray EnumTypes = CUNode.getEnumTypes();
     for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i) {
-      DIType Ty(EnumTypes.getElement(i));
+      DIType Ty = cast<MDType>(EnumTypes.getElement(i));
       // The enum types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType UniqueTy(resolve(Ty.getRef()));
+      DIType UniqueTy = cast<MDType>(resolve(Ty.getRef()));
       CU.getOrCreateTypeDIE(UniqueTy);
     }
     DIArray RetainedTypes = CUNode.getRetainedTypes();
     for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i) {
-      DIType Ty(RetainedTypes.getElement(i));
+      DIType Ty = cast<MDType>(RetainedTypes.getElement(i));
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType UniqueTy(resolve(Ty.getRef()));
+      DIType UniqueTy = cast<MDType>(resolve(Ty.getRef()));
       CU.getOrCreateTypeDIE(UniqueTy);
     }
     // Emit imported_modules last so that the relevant context is already
@@ -509,7 +509,7 @@ void DwarfDebug::finishVariableDefinitions() {
 void DwarfDebug::finishSubprogramDefinitions() {
   for (const auto &P : SPMap)
     forBothCUs(*P.second, [&](DwarfCompileUnit &CU) {
-      CU.finishSubprogramDefinition(DISubprogram(P.first));
+      CU.finishSubprogramDefinition(cast<MDSubprogram>(P.first));
     });
 }
 
@@ -520,14 +520,14 @@ void DwarfDebug::collectDeadVariables() {
 
   if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
     for (MDNode *N : CU_Nodes->operands()) {
-      DICompileUnit TheCU(N);
+      DICompileUnit TheCU = cast<MDCompileUnit>(N);
       // Construct subprogram DIE and add variables DIEs.
       DwarfCompileUnit *SPCU =
           static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
       assert(SPCU && "Unable to find Compile Unit!");
       DIArray Subprograms = TheCU.getSubprograms();
       for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
-        DISubprogram SP(Subprograms.getElement(i));
+        DISubprogram SP = cast<MDSubprogram>(Subprograms.getElement(i));
         if (ProcessedSPNodes.count(SP) != 0)
           continue;
         SPCU->collectDeadVariables(SP);
@@ -732,10 +732,10 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!Scope)
       continue;
 
-    DIVariable DV(VI.Var);
+    DIVariable DV = cast<MDLocalVariable>(VI.Var);
     assert(DV->isValidLocationForIntrinsic(VI.Loc) &&
            "Expected inlined-at fields to agree");
-    DIExpression Expr(VI.Expr);
+    DIExpression Expr = cast_or_null<MDExpression>(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
     auto RegVar = make_unique<DbgVariable>(DV, Expr, this, VI.Slot);
     if (InfoHolder.addScopeVariable(Scope, RegVar.get()))
@@ -894,7 +894,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
   collectVariableInfoFromMMITable(Processed);
 
   for (const auto &I : DbgValues) {
-    DIVariable DV(I.first);
+    DIVariable DV = cast<MDLocalVariable>(I.first);
     if (Processed.count(DV))
       continue;
 
@@ -942,8 +942,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
   // Collect info for variables that were optimized out.
   DIArray Variables = SP.getVariables();
   for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
-    DIVariable DV(Variables.getElement(i));
-    assert(DV.isVariable());
+    DIVariable DV = cast<MDLocalVariable>(Variables.getElement(i));
     if (!Processed.insert(DV).second)
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.get()->getScope())) {
@@ -1140,8 +1139,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
     // The first mention of a function argument gets the CurrentFnBegin
     // label, so arguments are visible when breaking at function entry.
-    DIVariable DIVar(Ranges.front().first->getDebugVariable());
-    if (DIVar.isVariable() && DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
+    DIVariable DIVar = Ranges.front().first->getDebugVariable();
+    if (DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DIVar.getContext()).describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression().isBitPiece()) {
@@ -1198,7 +1197,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  DISubprogram SP(FnScope->getScopeNode());
+  DISubprogram SP = cast<MDSubprogram>(FnScope->getScopeNode());
   DwarfCompileUnit &TheCU = *SPMap.lookup(SP);
 
   SmallPtrSet<const MDNode *, 16> ProcessedVars;
@@ -1228,13 +1227,11 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 #endif
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
-    DISubprogram SP(AScope->getScopeNode());
-    assert(SP.isSubprogram());
+    DISubprogram SP = cast<MDSubprogram>(AScope->getScopeNode());
     // Collect info for variables that were optimized out.
     DIArray Variables = SP.getVariables();
     for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
-      DIVariable DV(Variables.getElement(i));
-      assert(DV && DV.isVariable());
+      DIVariable DV = cast<MDLocalVariable>(Variables.getElement(i));
       if (!ProcessedVars.insert(DV).second)
         continue;
       ensureAbstractVariableIsCreated(DV, DV.getContext());
@@ -1269,12 +1266,11 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
   StringRef Dir;
   unsigned Src = 1;
   unsigned Discriminator = 0;
-  if (DIScope Scope = DIScope(S)) {
-    assert(Scope.isScope());
+  if (DIScope Scope = cast_or_null<MDScope>(S)) {
     Fn = Scope.getFilename();
     Dir = Scope.getDirectory();
-    if (Scope.isLexicalBlockFile())
-      Discriminator = DILexicalBlockFile(S).getDiscriminator();
+    if (DILexicalBlockFile LBF = dyn_cast<MDLexicalBlockFile>(Scope))
+      Discriminator = LBF.getDiscriminator();
 
     unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
     Src = static_cast<DwarfCompileUnit &>(*InfoHolder.getUnits()[CUID])

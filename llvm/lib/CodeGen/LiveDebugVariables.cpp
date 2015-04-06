@@ -358,7 +358,7 @@ public:
 } // namespace
 
 void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
-  DIVariable DV(Variable);
+  DIVariable DV = cast<MDLocalVariable>(Variable);
   OS << "!\"";
   DV.printExtendedName(OS);
   OS << "\"\t";
@@ -944,7 +944,8 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
   MachineOperand &Loc = locations[LocNo];
   ++NumInsertedDebugValues;
 
-  assert(DIVariable(Variable)->isValidLocationForIntrinsic(getDebugLoc()) &&
+  assert(cast<MDLocalVariable>(Variable)
+             ->isValidLocationForIntrinsic(getDebugLoc()) &&
          "Expected inlined-at fields to agree");
   if (Loc.isReg())
     BuildMI(*MBB, I, getDebugLoc(), TII.get(TargetOpcode::DBG_VALUE),

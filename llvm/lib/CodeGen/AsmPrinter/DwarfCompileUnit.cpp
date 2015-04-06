@@ -101,7 +101,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
   if (DIE *Die = getDIE(GV))
     return Die;
 
-  assert(GV.isGlobalVariable());
+  assert(GV);
 
   DIScope GVContext = GV.getContext();
   DIType GTy = DD->resolve(GV.getType());
@@ -307,7 +307,7 @@ void DwarfCompileUnit::constructScopeDIE(
 
   DIScope DS(Scope->getScopeNode());
 
-  assert((Scope->getInlinedAt() || !DS.isSubprogram()) &&
+  assert((Scope->getInlinedAt() || !isa<MDSubprogram>(DS)) &&
          "Only handle inlined subprograms here, use "
          "constructSubprogramScopeDIE for non-inlined "
          "subprograms");
@@ -318,7 +318,7 @@ void DwarfCompileUnit::constructScopeDIE(
   // avoid creating un-used children then removing them later when we find out
   // the scope DIE is null.
   std::unique_ptr<DIE> ScopeDIE;
-  if (Scope->getParent() && DS.isSubprogram()) {
+  if (Scope->getParent() && isa<MDSubprogram>(DS)) {
     ScopeDIE = constructInlinedScopeDIE(Scope);
     if (!ScopeDIE)
       return;
@@ -340,7 +340,7 @@ void DwarfCompileUnit::constructScopeDIE(
       // There is no need to emit empty lexical block DIE.
       for (const auto &E : DD->findImportedEntitiesForScope(DS))
         Children.push_back(
-            constructImportedEntityDIE(DIImportedEntity(E.second)));
+            constructImportedEntityDIE(cast<MDImportedEntity>(E.second)));
     }
 
     // If there are only other scopes as children, put them directly in the
@@ -562,9 +562,7 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
   assert(!Scope->getInlinedAt());
   assert(!Scope->isAbstractScope());
-  DISubprogram Sub(Scope->getScopeNode());
-
-  assert(Sub.isSubprogram());
+  DISubprogram Sub = cast<MDSubprogram>(Scope->getScopeNode());
 
   DD->getProcessedSPNodes().insert(Sub);
 
@@ -607,7 +605,7 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   if (AbsDef)
     return;
 
-  DISubprogram SP(Scope->getScopeNode());
+  DISubprogram SP = cast<MDSubprogram>(Scope->getScopeNode());
 
   DIE *ContextDIE;
 
@@ -641,14 +639,14 @@ DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity &Module) {
   insertDIE(Module, IMDie.get());
   DIE *EntityDie;
   DIDescriptor Entity = resolve(Module.getEntity());
-  if (Entity.isNameSpace())
-    EntityDie = getOrCreateNameSpace(DINameSpace(Entity));
-  else if (Entity.isSubprogram())
-    EntityDie = getOrCreateSubprogramDIE(DISubprogram(Entity));
-  else if (Entity.isType())
-    EntityDie = getOrCreateTypeDIE(DIType(Entity));
-  else if (Entity.isGlobalVariable())
-    EntityDie = getOrCreateGlobalVariableDIE(DIGlobalVariable(Entity));
+  if (auto *NS = dyn_cast<MDNamespace>(Entity))
+    EntityDie = getOrCreateNameSpace(NS);
+  else if (auto *SP = dyn_cast<MDSubprogram>(Entity))
+    EntityDie = getOrCreateSubprogramDIE(SP);
+  else if (auto *T = dyn_cast<MDType>(Entity))
+    EntityDie = getOrCreateTypeDIE(T);
+  else if (auto *GV = dyn_cast<MDGlobalVariable>(Entity))
+    EntityDie = getOrCreateGlobalVariableDIE(GV);
   else
     EntityDie = getDIE(Entity);
   assert(EntityDie);
@@ -681,7 +679,7 @@ void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
   }
 }
 void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
-  assert(SP.isSubprogram() && "CU's subprogram list contains a non-subprogram");
+  assert(SP && "CU's subprogram list contains a non-subprogram");
   assert(SP.isDefinition() &&
          "CU's subprogram list contains a subprogram declaration");
   DIArray Variables = SP.getVariables();
@@ -693,8 +691,7 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
     SPDIE = getDIE(SP);
   assert(SPDIE);
   for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
-    DIVariable DV(Variables.getElement(vi));
-    assert(DV.isVariable());
+    DIVariable DV = cast<MDLocalVariable>(Variables.getElement(vi));
     DbgVariable NewVar(DV, DIExpression(), DD);
     auto VariableDie = constructVariableDIE(NewVar);
     applyVariableAttributes(NewVar, *VariableDie);

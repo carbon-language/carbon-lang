@@ -650,7 +650,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   MDNode *Var = SD->getVariable();
   MDNode *Expr = SD->getExpression();
   DebugLoc DL = SD->getDebugLoc();
-  assert(DIVariable(Var)->isValidLocationForIntrinsic(DL) &&
+  assert(cast<MDLocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
 
   if (SD->getKind() == SDDbgValue::FRAMEIX) {

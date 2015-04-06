@@ -5902,7 +5902,7 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 SDDbgValue *SelectionDAG::getDbgValue(MDNode *Var, MDNode *Expr, SDNode *N,
                                       unsigned R, bool IsIndirect, uint64_t Off,
                                       DebugLoc DL, unsigned O) {
-  assert(DIVariable(Var)->isValidLocationForIntrinsic(DL) &&
+  assert(cast<MDLocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
   return new (Allocator) SDDbgValue(Var, Expr, N, R, IsIndirect, Off, DL, O);
 }
@@ -5911,7 +5911,7 @@ SDDbgValue *SelectionDAG::getDbgValue(MDNode *Var, MDNode *Expr, SDNode *N,
 SDDbgValue *SelectionDAG::getConstantDbgValue(MDNode *Var, MDNode *Expr,
                                               const Value *C, uint64_t Off,
                                               DebugLoc DL, unsigned O) {
-  assert(DIVariable(Var)->isValidLocationForIntrinsic(DL) &&
+  assert(cast<MDLocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
   return new (Allocator) SDDbgValue(Var, Expr, C, Off, DL, O);
 }
@@ -5920,7 +5920,7 @@ SDDbgValue *SelectionDAG::getConstantDbgValue(MDNode *Var, MDNode *Expr,
 SDDbgValue *SelectionDAG::getFrameIndexDbgValue(MDNode *Var, MDNode *Expr,
                                                 unsigned FI, uint64_t Off,
                                                 DebugLoc DL, unsigned O) {
-  assert(DIVariable(Var)->isValidLocationForIntrinsic(DL) &&
+  assert(cast<MDLocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
   return new (Allocator) SDDbgValue(Var, Expr, FI, Off, DL, O);
 }
