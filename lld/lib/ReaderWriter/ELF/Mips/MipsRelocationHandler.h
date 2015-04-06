@@ -25,7 +25,8 @@ public:
 
 template <class ELFT>
 std::unique_ptr<TargetRelocationHandler>
-createMipsRelocationHandler(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout);
+createMipsRelocationHandler(MipsLinkingContext &ctx,
+                            MipsTargetLayout<ELFT> &layout);
 
 } // elf
 } // lld
