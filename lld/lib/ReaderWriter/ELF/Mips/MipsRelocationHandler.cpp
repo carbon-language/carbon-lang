@@ -30,10 +30,10 @@ struct MipsRelocationParams {
   bool _shuffle;  // Relocation's addendum/result needs to be shuffled
 };
 
-template <class ELFT> class RelocationHandler : public MipsRelocationHandler {
+template <class ELFT> class RelocationHandler : public TargetRelocationHandler {
 public:
   RelocationHandler(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout)
-    : _ctx(ctx), _targetLayout(layout) {}
+      : _ctx(ctx), _targetLayout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &writer,
                                   llvm::FileOutputBuffer &buf,
