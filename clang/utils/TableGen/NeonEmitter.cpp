@@ -1938,7 +1938,8 @@ void NeonEmitter::createIntrinsic(Record *R,
   }
 
   std::sort(NewTypeSpecs.begin(), NewTypeSpecs.end());
-  std::unique(NewTypeSpecs.begin(), NewTypeSpecs.end());
+  NewTypeSpecs.erase(std::unique(NewTypeSpecs.begin(), NewTypeSpecs.end()),
+		     NewTypeSpecs.end());
 
   for (auto &I : NewTypeSpecs) {
     Intrinsic *IT = new Intrinsic(R, Name, Proto, I.first, I.second, CK, Body,
