@@ -704,7 +704,7 @@ public:
 class DILexicalBlock : public DIScope {
 public:
   explicit DILexicalBlock(const MDNode *N = nullptr) : DIScope(N) {}
-  DILexicalBlock(const MDLexicalBlock *N) : DIScope(N) {}
+  DILexicalBlock(const MDLexicalBlockBase *N) : DIScope(N) {}
 
   MDLexicalBlockBase *get() const {
     return cast_or_null<MDLexicalBlockBase>(DIDescriptor::get());
