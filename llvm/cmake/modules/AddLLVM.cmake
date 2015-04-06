@@ -159,8 +159,10 @@ endif()
 
 function(add_link_opts target_name)
   # Pass -O3 to the linker. This enabled different optimizations on different
-  # linkers.
-  if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR WIN32))
+  # linkers. Don't do it in debug builds since it slows down the linker
+  # in a context where the optimizations are not important.
+  if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR WIN32) AND
+     NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                  LINK_FLAGS " -Wl,-O3")
   endif()
