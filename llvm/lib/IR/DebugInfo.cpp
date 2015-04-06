@@ -381,13 +381,15 @@ StringRef DIScope::getName() const {
 
 StringRef DIScope::getFilename() const {
   if (auto *N = get())
-    return ::getStringField(dyn_cast_or_null<MDNode>(N->getFile()), 0);
+    if (auto *F = N->getFile())
+      return F->getFilename();
   return "";
 }
 
 StringRef DIScope::getDirectory() const {
   if (auto *N = get())
-    return ::getStringField(dyn_cast_or_null<MDNode>(N->getFile()), 1);
+    if (auto *F = N->getFile())
+      return F->getDirectory();
   return "";
 }
 
