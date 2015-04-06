@@ -53,6 +53,10 @@ class GoogleTest(TestFormat):
             ln = ln[index*2:]
             if ln.endswith('.'):
                 nested_tests.append(ln)
+            elif ln.startswith('DISABLED_'):
+                # Gtest will internally skip these tests. No need to launch a
+                # child process for it.
+                continue
             else:
                 yield ''.join(nested_tests) + ln
 
