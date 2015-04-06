@@ -3102,7 +3102,8 @@ walk_pointer_list_32(const char *listname, const SectionRef S,
     if (i + sizeof(uint32_t) > S.getSize())
       outs() << listname << " list pointer extends past end of (" << SegName
              << "," << SectName << ") section\n";
-    outs() << format("%08" PRIx32, S.getAddress() + i) << " ";
+    uint32_t Address = S.getAddress() + i;
+    outs() << format("%08" PRIx32, Address) << " ";
 
     if (O->isLittleEndian() != sys::IsLittleEndianHost)
       sys::swapByteOrder(p);
