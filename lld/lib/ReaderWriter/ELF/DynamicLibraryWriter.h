@@ -27,10 +27,10 @@ public:
         _runtimeFile(new RuntimeFile<ELFT>(ctx, "C runtime")) {}
 
 protected:
-  virtual void buildDynamicSymbolTable(const File &file);
-  virtual void addDefaultAtoms();
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
-  virtual void finalizeDefaultAtomValues();
+  void buildDynamicSymbolTable(const File &file) override;
+  void addDefaultAtoms() override;
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+  void finalizeDefaultAtomValues() override;
 
 protected:
   std::unique_ptr<RuntimeFile<ELFT> > _runtimeFile;
