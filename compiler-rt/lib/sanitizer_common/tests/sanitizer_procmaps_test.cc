@@ -37,8 +37,7 @@ TEST(MemoryMappingLayout, DumpListOfModules) {
   const char *binary_name = last_slash ? last_slash + 1 : argv0;
   MemoryMappingLayout memory_mapping(false);
   const uptr kMaxModules = 100;
-  LoadedModule *modules =
-      (LoadedModule *)malloc(kMaxModules * sizeof(LoadedModule));
+  LoadedModule modules[kMaxModules];
   uptr n_modules = memory_mapping.DumpListOfModules(modules, kMaxModules, 0);
   EXPECT_GT(n_modules, 0U);
   bool found = false;
@@ -51,7 +50,6 @@ TEST(MemoryMappingLayout, DumpListOfModules) {
     modules[i].clear();
   }
   EXPECT_TRUE(found);
-  free(modules);
 }
 
 }  // namespace __sanitizer

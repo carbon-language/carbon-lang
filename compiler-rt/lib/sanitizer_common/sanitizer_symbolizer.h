@@ -137,10 +137,21 @@ class Symbolizer {
   /// Platform-specific function for creating a Symbolizer object.
   static Symbolizer *PlatformInit();
 
-  virtual bool PlatformFindModuleNameAndOffsetForAddress(
-      uptr address, const char **module_name, uptr *module_offset) {
+  bool FindModuleNameAndOffsetForAddress(uptr address, const char **module_name,
+                                         uptr *module_offset);
+  LoadedModule *FindModuleForAddress(uptr address);
+  // FIXME: get rid of this virtual method, just use GetListOfModules directly.
+  // The only reason we don't do it right away is that GetListOfModules is
+  // currently implemented in a libcdep file.
+  virtual uptr PlatformGetListOfModules(LoadedModule *modules,
+                                        uptr max_modules) {
     UNIMPLEMENTED();
   }
+  LoadedModule modules_[kMaxNumberOfModules];
+  uptr n_modules_;
+  // If stale, need to reload the modules before looking up addresses.
+  bool modules_fresh_;
+
   // Platform-specific default demangler, must not return nullptr.
   virtual const char *PlatformDemangle(const char *name) { UNIMPLEMENTED(); }
   virtual void PlatformPrepareForSandboxing() { UNIMPLEMENTED(); }

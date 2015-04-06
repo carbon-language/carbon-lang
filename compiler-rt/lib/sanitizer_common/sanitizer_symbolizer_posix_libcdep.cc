@@ -352,9 +352,14 @@ class InternalSymbolizer : public SymbolizerTool {
 class POSIXSymbolizer : public Symbolizer {
  public:
   explicit POSIXSymbolizer(IntrusiveList<SymbolizerTool> tools)
-      : Symbolizer(tools), n_modules_(0), modules_fresh_(false) {}
+      : Symbolizer(tools) {}
 
  private:
+  uptr PlatformGetListOfModules(LoadedModule *modules,
+                                uptr max_modules) override {
+    return ::GetListOfModules(modules, max_modules, /* filter */ nullptr);
+  }
+
   const char *PlatformDemangle(const char *name) override {
     return DemangleCXXABI(name);
   }
@@ -365,52 +370,6 @@ class POSIXSymbolizer : public Symbolizer {
     CacheBinaryName();
 #endif
   }
-
-  LoadedModule *FindModuleForAddress(uptr address) {
-    bool modules_were_reloaded = false;
-    if (!modules_fresh_) {
-      for (uptr i = 0; i < n_modules_; i++)
-        modules_[i].clear();
-      n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts,
-                                    /* filter */ 0);
-      CHECK_GT(n_modules_, 0);
-      CHECK_LT(n_modules_, kMaxNumberOfModuleContexts);
-      modules_fresh_ = true;
-      modules_were_reloaded = true;
-    }
-    for (uptr i = 0; i < n_modules_; i++) {
-      if (modules_[i].containsAddress(address)) {
-        return &modules_[i];
-      }
-    }
-    // Reload the modules and look up again, if we haven't tried it yet.
-    if (!modules_were_reloaded) {
-      // FIXME: set modules_fresh_ from dlopen()/dlclose() interceptors.
-      // It's too aggressive to reload the list of modules each time we fail
-      // to find a module for a given address.
-      modules_fresh_ = false;
-      return FindModuleForAddress(address);
-    }
-    return 0;
-  }
-
-  bool PlatformFindModuleNameAndOffsetForAddress(uptr address,
-                                                 const char **module_name,
-                                                 uptr *module_offset) override {
-    LoadedModule *module = FindModuleForAddress(address);
-    if (module == 0)
-      return false;
-    *module_name = module->full_name();
-    *module_offset = address - module->base_address();
-    return true;
-  }
-
-  // 16K loaded modules should be enough for everyone.
-  static const uptr kMaxNumberOfModuleContexts = 1 << 14;
-  LoadedModule modules_[kMaxNumberOfModuleContexts];
-  uptr n_modules_;
-  // If stale, need to reload the modules before looking up addresses.
-  bool modules_fresh_;
 };
 
 static SymbolizerTool *ChooseExternalSymbolizer(LowLevelAllocator *allocator) {

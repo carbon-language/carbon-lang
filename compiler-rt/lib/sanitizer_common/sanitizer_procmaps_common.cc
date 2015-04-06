@@ -130,7 +130,6 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
       continue;
     if (filter && !filter(cur_name))
       continue;
-    void *mem = &modules[n_modules];
     // Don't subtract 'cur_beg' from the first entry:
     // * If a binary is compiled w/o -pie, then the first entry in
     //   process maps is likely the binary itself (all dynamic libs
@@ -143,7 +142,8 @@ uptr MemoryMappingLayout::DumpListOfModules(LoadedModule *modules,
     //   shadow memory of the tool), so the module can't be the
     //   first entry.
     uptr base_address = (i ? cur_beg : 0) - cur_offset;
-    LoadedModule *cur_module = new(mem) LoadedModule(cur_name, base_address);
+    LoadedModule *cur_module = &modules[n_modules];
+    cur_module->set(cur_name, base_address);
     cur_module->addAddressRange(cur_beg, cur_end, prot & kProtectionExecute);
     n_modules++;
   }

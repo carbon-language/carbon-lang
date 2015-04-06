@@ -129,21 +129,6 @@ const char *WinSymbolizerTool::Demangle(const char *name) {
     return name;
 }
 
-bool FindModuleNameAndOffsetForAddress(uptr addr, const char **module_name,
-                                       uptr *module_offset) {
-  InitializeDbgHelpIfNeeded();
-
-  IMAGEHLP_MODULE64 mod_info;
-  internal_memset(&mod_info, 0, sizeof(mod_info));
-  mod_info.SizeOfStruct = sizeof(mod_info);
-  if (SymGetModuleInfo64(GetCurrentProcess(), addr, &mod_info)) {
-    *module_name = mod_info.ImageName;
-    *module_offset = addr - (uptr)mod_info.BaseOfImage;
-    return true;
-  }
-  return false;
-}
-
 // TODO(kuba.brecka): To be merged with POSIXSymbolizer.
 class WinSymbolizer : public Symbolizer {
  public:
@@ -151,10 +136,9 @@ class WinSymbolizer : public Symbolizer {
       : Symbolizer(tools) {}
 
  private:
-  bool PlatformFindModuleNameAndOffsetForAddress(
-      uptr addr, const char **module_name, uptr *module_offset) override {
-    return ::FindModuleNameAndOffsetForAddress(addr, module_name,
-                                               module_offset);
+  uptr PlatformGetListOfModules(LoadedModule *modules,
+                                uptr max_modules) override {
+    return ::GetListOfModules(modules, max_modules, /* filter */ nullptr);
   }
   const char *PlatformDemangle(const char *name) override { return name; }
   void PlatformPrepareForSandboxing() override { }

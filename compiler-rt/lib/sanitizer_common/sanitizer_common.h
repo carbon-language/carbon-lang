@@ -39,6 +39,9 @@ const uptr kWordSizeInBits = 8 * kWordSize;
 
 const uptr kMaxPathLength = 4096;
 
+// 16K loaded modules should be enough for everyone.
+static const uptr kMaxNumberOfModules = 1 << 14;
+
 const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
 
 extern const char *SanitizerToolName;  // Can be changed by the tool.
@@ -548,8 +551,8 @@ uptr InternalBinarySearch(const Container &v, uptr first, uptr last,
 // executable or a shared object).
 class LoadedModule {
  public:
-  LoadedModule() : full_name_(nullptr), base_address_(0) {}
-  LoadedModule(const char *module_name, uptr base_address);
+  LoadedModule() : full_name_(nullptr), base_address_(0) { ranges_.clear(); }
+  void set(const char *module_name, uptr base_address);
   void clear();
   void addAddressRange(uptr beg, uptr end, bool executable);
   bool containsAddress(uptr address) const;

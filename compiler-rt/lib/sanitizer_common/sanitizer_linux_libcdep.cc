@@ -436,9 +436,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     return 0;
   if (data->filter && !data->filter(module_name.data()))
     return 0;
-  void *mem = &data->modules[data->current_n];
-  LoadedModule *cur_module = new(mem) LoadedModule(module_name.data(),
-                                                   info->dlpi_addr);
+  LoadedModule *cur_module = &data->modules[data->current_n];
+  cur_module->set(module_name.data(), info->dlpi_addr);
   data->current_n++;
   for (int i = 0; i < info->dlpi_phnum; i++) {
     const Elf_Phdr *phdr = &info->dlpi_phdr[i];

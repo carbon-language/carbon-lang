@@ -35,7 +35,6 @@
 
 namespace __sanitizer {
 
-static const uptr kMaxNumberOfModules = 1 << 14;
 static const uptr kMaxTextSize = 64 * 1024;
 
 struct CachedMapping {
