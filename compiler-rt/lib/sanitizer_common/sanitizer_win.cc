@@ -243,7 +243,7 @@ void DumpProcessMap() {
     if (mi.end_address != 0) {
       Printf("\t%p-%p %s\n", mi.base_address, mi.end_address,
              mi.filepath[0] ? mi.filepath : "[no name]");
-    } else if (mi.filepath) {
+    } else if (mi.filepath[0]) {
       Printf("\t??\?-??? %s\n", mi.filepath);
     } else {
       Printf("\t???\n");
