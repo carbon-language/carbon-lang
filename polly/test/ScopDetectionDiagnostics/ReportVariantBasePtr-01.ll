@@ -22,8 +22,8 @@ entry:
   br label %entry.split
 
 entry.split:                                      ; preds = %entry
-  tail call void @llvm.dbg.value(metadata %struct.b* %A, i64 0, metadata !16), !dbg !23
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !17), !dbg !25
+  tail call void @llvm.dbg.value(metadata %struct.b* %A, i64 0, metadata !16, metadata !MDExpression()), !dbg !23
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !17, metadata !MDExpression()), !dbg !25
   %b = getelementptr inbounds %struct.b, %struct.b* %A, i64 0, i32 0, !dbg !26
   br label %for.body, !dbg !27
 
@@ -53,7 +53,7 @@ for.end:                                          ; preds = %for.body
   ret void, !dbg !34
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

@@ -18,8 +18,8 @@ entry:
   br label %entry.split
 
 entry.split:                                      ; preds = %entry
-  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13), !dbg !14
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13, metadata !MDExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !MDExpression()), !dbg !18
   br label %for.body, !dbg !19
 
 for.body:                                         ; preds = %entry.split, %for.body
@@ -29,7 +29,7 @@ for.body:                                         ; preds = %entry.split, %for.b
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %idxprom1, !dbg !20
   store i32 0, i32* %arrayidx, align 4, !dbg !20
   %1 = add nsw i32 %0, 1, !dbg !21
-  tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !16), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !16, metadata !MDExpression()), !dbg !18
   %exitcond = icmp ne i32 %1, 42, !dbg !19
   br i1 %exitcond, label %for.body, label %for.end, !dbg !19
 
@@ -37,9 +37,9 @@ for.end:                                          ; preds = %for.body
   ret void, !dbg !22
 }
 
-declare void @llvm.dbg.declare(metadata, metadata)
+declare void @llvm.dbg.declare(metadata, metadata, metadata)
 
-declare void @llvm.dbg.value(metadata, i64, metadata)
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

@@ -17,9 +17,9 @@ entry:
   br label %entry.split
 
 entry.split:                                      ; preds = %entry
-  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13), !dbg !14
-  tail call void @llvm.dbg.value(metadata i32* %B, i64 0, metadata !15), !dbg !16
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18), !dbg !20
+  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13, metadata !MDExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32* %B, i64 0, metadata !15, metadata !MDExpression()), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18, metadata !MDExpression()), !dbg !20
   br label %for.body, !dbg !21
 
 for.body:                                         ; preds = %entry.split, %for.body
@@ -28,7 +28,7 @@ for.body:                                         ; preds = %entry.split, %for.b
   %arrayidx2 = getelementptr i32, i32* %A, i64 %indvar, !dbg !22
   %0 = load i32, i32* %arrayidx, align 4, !dbg !22
   store i32 %0, i32* %arrayidx2, align 4, !dbg !22
-  tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !18), !dbg !20
+  tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !18, metadata !MDExpression()), !dbg !20
   %indvar.next = add i64 %indvar, 1, !dbg !21
   %exitcond = icmp ne i64 %indvar.next, 42, !dbg !21
   br i1 %exitcond, label %for.body, label %for.end, !dbg !21
@@ -37,8 +37,8 @@ for.end:                                          ; preds = %for.body
   ret void, !dbg !23
 }
 
-declare void @llvm.dbg.declare(metadata, metadata)
-declare void @llvm.dbg.value(metadata, i64, metadata)
+declare void @llvm.dbg.declare(metadata, metadata, metadata)
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!10, !11}

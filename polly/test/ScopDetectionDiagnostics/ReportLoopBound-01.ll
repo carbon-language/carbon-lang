@@ -17,9 +17,10 @@ entry:
   br label %entry.split
 
 entry.split:                                      ; preds = %entry
-  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13), !dbg !14
-  tail call void @llvm.dbg.value(metadata i32 %n, i64 0, metadata !15), !dbg !16
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18), !dbg !20
+  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13, metadata !MDExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13, metadata !MDExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32 %n, i64 0, metadata !15, metadata !MDExpression()), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18, metadata !MDExpression()), !dbg !20
   %idxprom = sext i32 %n to i64, !dbg !21
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %idxprom, !dbg !21
   %0 = load i32, i32* %arrayidx, align 4, !dbg !21
@@ -35,7 +36,7 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %1 = add i64 %indvar, 1, !dbg !24
   %inc = trunc i64 %1 to i32, !dbg !21
   store i32 0, i32* %arrayidx2, align 4, !dbg !24
-  tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !18), !dbg !20
+  tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !18, metadata !MDExpression()), !dbg !20
   %2 = load i32, i32* %arrayidx, align 4, !dbg !21
   %cmp = icmp slt i32 %inc, %2, !dbg !21
   %indvar.next = add i64 %indvar, 1, !dbg !21
@@ -48,9 +49,9 @@ for.end:                                          ; preds = %for.cond.for.end_cr
   ret void, !dbg !27
 }
 
-declare void @llvm.dbg.declare(metadata, metadata)
+declare void @llvm.dbg.declare(metadata, metadata, metadata)
 
-declare void @llvm.dbg.value(metadata, i64, metadata)
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }
