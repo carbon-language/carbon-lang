@@ -704,7 +704,7 @@ public:
 class DILexicalBlock : public DIScope {
 public:
   explicit DILexicalBlock(const MDNode *N = nullptr) : DIScope(N) {}
-  DILexicalBlock(const MDLexicalBlockBase *N) : DIScope(N) {}
+  DILexicalBlock(const MDLexicalBlock *N) : DIScope(N) {}
 
   MDLexicalBlockBase *get() const {
     return cast_or_null<MDLexicalBlockBase>(DIDescriptor::get());
@@ -745,12 +745,10 @@ public:
     return *get();
   }
 
-  DIScope getContext() const { return get()->getScope(); }
+  DIScope getContext() const { return getScope(); }
   unsigned getLineNumber() const { return getScope().getLineNumber(); }
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
-  DILexicalBlock getScope() const {
-    return dyn_cast<MDLexicalBlockBase>(get()->getScope());
-  }
+  DILexicalBlock getScope() const { return DILexicalBlock(get()->getScope()); }
   unsigned getDiscriminator() const { return get()->getDiscriminator(); }
 };
 
@@ -1052,9 +1050,11 @@ public:
     // Since discriminators are associated with lexical blocks, make
     // sure this location is a lexical block before retrieving its
     // value.
-    if (auto *F = dyn_cast<MDLexicalBlockFile>(get()->getScope()))
-      return F->getDiscriminator();
-    return 0;
+    return getScope().isLexicalBlockFile()
+               ? DILexicalBlockFile(
+                     cast<MDNode>(cast<MDLocation>(DbgNode)->getScope()))
+                     .getDiscriminator()
+               : 0;
   }
 
   /// \brief Generate a new discriminator value for this location.
