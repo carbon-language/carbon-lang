@@ -51,8 +51,8 @@ bool FoldingSetNodeIDRef::operator<(FoldingSetNodeIDRef RHS) const {
 ///
 void FoldingSetNodeID::AddPointer(const void *Ptr) {
   // Note: this adds pointers to the hash using sizes and endianness that
-  // depend on the host.  It doesn't matter however, because hashing on
-  // pointer values in inherently unstable.  Nothing  should depend on the 
+  // depend on the host. It doesn't matter, however, because hashing on
+  // pointer values is inherently unstable. Nothing should depend on the
   // ordering of nodes in the folding set.
   Bits.append(reinterpret_cast<unsigned *>(&Ptr),
               reinterpret_cast<unsigned *>(&Ptr+1));
