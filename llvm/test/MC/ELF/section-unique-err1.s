@@ -2,4 +2,4 @@
 
 // CHECK:  error: expected absolute expression
 
-        .section	.text,"ax",@progbits,unique "abc"
+        .section	.text,"ax",@progbits,unique, "abc"

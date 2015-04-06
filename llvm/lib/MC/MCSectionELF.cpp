@@ -149,7 +149,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   }
 
   if (isUnique())
-    OS << ",unique " << UniqueID;
+    OS << ",unique," << UniqueID;
 
   OS << '\n';
 

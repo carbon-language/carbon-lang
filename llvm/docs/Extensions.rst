@@ -178,10 +178,10 @@ For example, the following code creates two sections named ``.text``.
 
 .. code-block:: gas
 
-	.section	.text,"ax",@progbits,unique 1
+	.section	.text,"ax",@progbits,unique,1
         nop
 
-	.section	.text,"ax",@progbits,unique 2
+	.section	.text,"ax",@progbits,unique,2
         nop
 
 

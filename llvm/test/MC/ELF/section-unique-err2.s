@@ -2,4 +2,4 @@
 
 // CHECK:  error: unique id must be positive
 
-        .section	.text,"ax",@progbits,unique -1
+        .section	.text,"ax",@progbits,unique, -1

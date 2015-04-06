@@ -470,6 +470,9 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
           return TokError("expected identifier in directive");
         if (UniqueStr != "unique")
           return TokError("expected 'unique'");
+        if (getLexer().isNot(AsmToken::Comma))
+          return TokError("expected commma");
+        Lex();
         if (getParser().parseAbsoluteExpression(UniqueID))
           return true;
         if (UniqueID < 0)
