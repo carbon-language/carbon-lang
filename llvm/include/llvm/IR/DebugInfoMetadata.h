@@ -41,6 +41,54 @@
 
 namespace llvm {
 
+/// \brief Pointer union between a subclass of DebugNode and MDString.
+///
+/// \a MDCompositeType can be referenced via an \a MDString unique identifier.
+/// This class allows some type safety in the face of that, requiring either a
+/// node of a particular type or an \a MDString.
+template <class T> class TypedDebugNodeRef {
+  const Metadata *MD = nullptr;
+
+public:
+  TypedDebugNodeRef(std::nullptr_t) {}
+
+  /// \brief Construct from a raw pointer.
+  explicit TypedDebugNodeRef(const Metadata *MD) : MD(MD) {
+    assert((!MD || isa<MDString>(MD) || isa<T>(MD)) && "Expected valid ref");
+  }
+
+  template <class U>
+  TypedDebugNodeRef(
+      const TypedDebugNodeRef<U> &X,
+      typename std::enable_if<std::is_convertible<U *, T *>::value>::type * =
+          nullptr)
+      : MD(X) {}
+
+  operator Metadata *() const { return const_cast<Metadata *>(MD); }
+
+  bool operator==(const TypedDebugNodeRef<T> &X) const { return MD == X.MD; };
+  bool operator!=(const TypedDebugNodeRef<T> &X) const { return MD != X.MD; };
+
+  /// \brief Create a reference.
+  ///
+  /// Get a reference to \c N, using an \a MDString reference if available.
+  static TypedDebugNodeRef get(const T *N);
+
+  template <class MapTy> T *resolve(const MapTy &Map) const {
+    if (auto *Typed = dyn_cast<T>(MD))
+      return const_cast<T *>(Typed);
+
+    auto *S = cast<MDString>(MD);
+    auto I = Map.find(S);
+    assert(I != Map.end() && "Missing identifier in type map");
+    return cast<T>(I->second);
+  }
+};
+
+typedef TypedDebugNodeRef<DebugNode> DebugNodeRef;
+typedef TypedDebugNodeRef<MDScope> MDScopeRef;
+typedef TypedDebugNodeRef<MDType> MDTypeRef;
+
 /// \brief Tagged DWARF-like metadata node.
 ///
 /// A metadata node with a DWARF tag (i.e., a constant named \c DW_TAG_*,
@@ -88,6 +136,8 @@ public:
     FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic
   };
 
+  DebugNodeRef getRef() const { return DebugNodeRef::get(this); }
+
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:
@@ -115,6 +165,18 @@ public:
     }
   }
 };
+
+template <class T>
+struct simplify_type<const TypedDebugNodeRef<T>> {
+  typedef Metadata *SimpleType;
+  static SimpleType getSimplifiedValue(const TypedDebugNodeRef<T> &MD) {
+    return MD;
+  }
+};
+
+template <class T>
+struct simplify_type<TypedDebugNodeRef<T>>
+    : simplify_type<const TypedDebugNodeRef<T>> {};
 
 /// \brief Generic tagged DWARF-like metadata node.
 ///
@@ -305,6 +367,8 @@ public:
                              : static_cast<Metadata *>(getOperand(0));
   }
 
+  MDScopeRef getRef() const { return MDScopeRef::get(this); }
+
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:
@@ -413,6 +477,8 @@ public:
     assert(!isUniqued() && "Cannot set flags on uniqued nodes");
     Flags = NewFlags;
   }
+
+  MDTypeRef getRef() const { return MDTypeRef::get(this); }
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
@@ -723,6 +789,14 @@ public:
     return MD->getMetadataID() == MDCompositeTypeKind;
   }
 };
+
+template <class T> TypedDebugNodeRef<T> TypedDebugNodeRef<T>::get(const T *N) {
+  if (N)
+    if (auto *Composite = dyn_cast<MDCompositeType>(N))
+      if (auto *S = Composite->getRawIdentifier())
+        return TypedDebugNodeRef<T>(S);
+  return TypedDebugNodeRef<T>(N);
+}
 
 /// \brief Type array for a subprogram.
 ///

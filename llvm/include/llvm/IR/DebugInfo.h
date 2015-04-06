@@ -290,6 +290,12 @@ template <typename T> class DIRef {
   explicit DIRef(const Metadata *V);
 
 public:
+  template <class U>
+  DIRef(const TypedDebugNodeRef<U> &Ref,
+        typename std::enable_if<std::is_convertible<U *, T>::value>::type * =
+            nullptr)
+      : Val(Ref) {}
+
   T resolve(const DITypeIdentifierMap &Map) const;
   operator Metadata *() const { return const_cast<Metadata *>(Val); }
 

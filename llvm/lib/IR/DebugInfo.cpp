@@ -253,14 +253,7 @@ void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
   DbgNode = N;
 }
 
-DIScopeRef DIScope::getRef() const {
-  if (!isCompositeType())
-    return DIScopeRef(*this);
-  DICompositeType DTy(DbgNode);
-  if (!DTy.getIdentifier())
-    return DIScopeRef(*this);
-  return DIScopeRef(DTy.getIdentifier());
-}
+DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
 
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TypedTrackingMDRef<MDCompositeTypeBase> N(get());
