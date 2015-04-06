@@ -48,13 +48,17 @@ class MCSectionELF : public MCSection {
 
   const MCSymbol *Group;
 
+  /// Depending on the type of the section this is sh_link or sh_info.
+  const MCSectionELF *Associated;
+
 private:
   friend class MCContext;
   MCSectionELF(StringRef Section, unsigned type, unsigned flags, SectionKind K,
                unsigned entrySize, const MCSymbol *group, unsigned UniqueID,
-               MCSymbol *Begin)
+               MCSymbol *Begin, const MCSectionELF *Associated)
       : MCSection(SV_ELF, K, Begin), SectionName(Section), Type(type),
-        Flags(flags), UniqueID(UniqueID), EntrySize(entrySize), Group(group) {}
+        Flags(flags), UniqueID(UniqueID), EntrySize(entrySize), Group(group),
+        Associated(Associated) {}
   ~MCSectionELF();
 
   void setSectionName(StringRef Name) { SectionName = Name; }
@@ -78,6 +82,8 @@ public:
 
   bool isUnique() const { return UniqueID != ~0U; }
   unsigned getUniqueID() const { return UniqueID; }
+
+  const MCSectionELF *getAssociatedSection() const { return Associated; }
 
   static bool classof(const MCSection *S) {
     return S->getVariant() == SV_ELF;

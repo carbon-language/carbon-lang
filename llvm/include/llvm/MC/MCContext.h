@@ -336,7 +336,8 @@ namespace llvm {
 
     const MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
                                             unsigned Flags, unsigned EntrySize,
-                                            const MCSymbol *Group);
+                                            const MCSymbol *Group,
+                                            const MCSectionELF *Associated);
 
     void renameELFSection(const MCSectionELF *Section, StringRef Name);
 
