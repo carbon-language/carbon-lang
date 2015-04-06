@@ -12,6 +12,7 @@
 #include "MipsELFFlagsMerger.h"
 #include "MipsReginfo.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
+#include <mutex>
 
 namespace lld {
 namespace elf {
@@ -67,6 +68,7 @@ public:
 
 private:
   MipsELFFlagsMerger _flagsMerger;
+  std::mutex _maskMutex;
   llvm::Optional<MipsReginfo> _reginfoMask;
 };
 

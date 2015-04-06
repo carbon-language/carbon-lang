@@ -48,6 +48,7 @@ std::error_code MipsLinkingContext::mergeHeaderFlags(uint8_t fileClass,
 }
 
 void MipsLinkingContext::mergeReginfoMask(const MipsReginfo &info) {
+  std::lock_guard<std::mutex> lock(_maskMutex);
   if (_reginfoMask.hasValue())
     _reginfoMask->merge(info);
   else
