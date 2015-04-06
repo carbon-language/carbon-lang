@@ -147,8 +147,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
                                               "Could not read profile: %0");
       getDiags().Report(DiagID) << EC.message();
-    }
-    PGOReader = std::move(ReaderOrErr.get());
+    } else
+      PGOReader = std::move(ReaderOrErr.get());
   }
 
   // If coverage mapping generation is enabled, create the
