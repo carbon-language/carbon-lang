@@ -110,8 +110,8 @@ llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
   // possible.
   if (!BufferOrError) {
     StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
-    Buffer.setPointer(MemoryBuffer::getNewMemBuffer(ContentsEntry->getSize(),
-                                                    "<invalid>").release());
+    Buffer.setPointer(MemoryBuffer::getNewUninitMemBuffer(
+                          ContentsEntry->getSize(), "<invalid>").release());
     char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
     for (unsigned i = 0, e = ContentsEntry->getSize(); i != e; ++i)
       Ptr[i] = FillStr[i % FillStr.size()];
