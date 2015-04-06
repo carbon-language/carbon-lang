@@ -2860,10 +2860,12 @@ enum Distro {
   DebianSqueeze,
   DebianWheezy,
   DebianJessie,
+  DebianStretch,
   Exherbo,
   RHEL4,
   RHEL5,
   RHEL6,
+  RHEL7,
   Fedora,
   OpenSUSE,
   UbuntuHardy,
@@ -2879,11 +2881,13 @@ enum Distro {
   UbuntuRaring,
   UbuntuSaucy,
   UbuntuTrusty,
+  UbuntuUtopic,
+  UbuntuVivid,
   UnknownDistro
 };
 
 static bool IsRedhat(enum Distro Distro) {
-  return Distro == Fedora || (Distro >= RHEL4 && Distro <= RHEL6);
+  return Distro == Fedora || (Distro >= RHEL4 && Distro <= RHEL7);
 }
 
 static bool IsOpenSUSE(enum Distro Distro) {
@@ -2891,11 +2895,11 @@ static bool IsOpenSUSE(enum Distro Distro) {
 }
 
 static bool IsDebian(enum Distro Distro) {
-  return Distro >= DebianLenny && Distro <= DebianJessie;
+  return Distro >= DebianLenny && Distro <= DebianStretch;
 }
 
 static bool IsUbuntu(enum Distro Distro) {
-  return Distro >= UbuntuHardy && Distro <= UbuntuTrusty;
+  return Distro >= UbuntuHardy && Distro <= UbuntuVivid;
 }
 
 static Distro DetectDistro(llvm::Triple::ArchType Arch) {
@@ -2922,6 +2926,8 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
           .Case("raring", UbuntuRaring)
           .Case("saucy", UbuntuSaucy)
           .Case("trusty", UbuntuTrusty)
+          .Case("utopic", UbuntuUtopic)
+          .Case("vivid", UbuntuVivid)
           .Default(UnknownDistro);
     return Version;
   }
@@ -2933,7 +2939,9 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
       return Fedora;
     if (Data.startswith("Red Hat Enterprise Linux") ||
         Data.startswith("CentOS")) {
-      if (Data.find("release 6") != StringRef::npos)
+      if (Data.find("release 7") != StringRef::npos)
+        return RHEL7;
+      else if (Data.find("release 6") != StringRef::npos)
         return RHEL6;
       else if (Data.find("release 5") != StringRef::npos)
         return RHEL5;
@@ -2954,6 +2962,8 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
       return DebianWheezy;
     else if (Data.startswith("jessie/sid")  || Data[0] == '8')
       return DebianJessie;
+    else if (Data.startswith("stretch/sid") || Data[0] == '9')
+      return DebianStretch;
     return UnknownDistro;
   }
 
@@ -3150,8 +3160,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   if (IsRedhat(Distro))
     ExtraOpts.push_back("--no-add-needed");
 
-  if (Distro == DebianSqueeze || Distro == DebianWheezy ||
-      Distro == DebianJessie || IsOpenSUSE(Distro) ||
+  if ((IsDebian(Distro) && Distro >= DebianSqueeze) || IsOpenSUSE(Distro) ||
       (IsRedhat(Distro) && Distro != RHEL4 && Distro != RHEL5) ||
       (IsUbuntu(Distro) && Distro >= UbuntuKarmic))
     ExtraOpts.push_back("--build-id");
