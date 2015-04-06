@@ -2853,6 +2853,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         break;
       case ISD::FNEG:
       case ISD::FABS:
+      case ISD::FCEIL:
+      case ISD::FTRUNC:
+      case ISD::FFLOOR:
       case ISD::FP_EXTEND:
       case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
@@ -2870,6 +2873,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         }
         if (Ops.size() == VT.getVectorNumElements())
           return getNode(ISD::BUILD_VECTOR, DL, VT, Ops);
+        break;
       }
       }
     }
