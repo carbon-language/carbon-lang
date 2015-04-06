@@ -24,13 +24,13 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &);
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
-  virtual void finalizeDefaultAtomValues() {
+  void finalizeDefaultAtomValues() override {
     return DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
   }
 
-  virtual void addDefaultAtoms() {
+  void addDefaultAtoms() override {
     return DynamicLibraryWriter<ELFT>::addDefaultAtoms();
   }
 

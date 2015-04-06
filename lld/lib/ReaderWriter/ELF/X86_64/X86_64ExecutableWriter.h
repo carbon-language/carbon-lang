@@ -23,8 +23,8 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  virtual bool
-  createImplicitFiles(std::vector<std::unique_ptr<File>> &result) {
+  bool
+  createImplicitFiles(std::vector<std::unique_ptr<File>> &result) override {
     ExecutableWriter::createImplicitFiles(result);
     _gotFile->addAtom(*new (_gotFile->_alloc)
                       GlobalOffsetTableAtom(*_gotFile));
@@ -34,11 +34,11 @@ protected:
     return true;
   }
 
-  virtual void finalizeDefaultAtomValues() {
+  void finalizeDefaultAtomValues() override {
     return ExecutableWriter::finalizeDefaultAtomValues();
   }
 
-  virtual void addDefaultAtoms() {
+  void addDefaultAtoms() override {
     return ExecutableWriter::addDefaultAtoms();
   }
 
