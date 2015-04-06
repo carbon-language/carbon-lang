@@ -528,7 +528,6 @@ OBJC2_32BIT_EXE: Contents of (__DATA,__objc_imageinfo) section
 OBJC2_32BIT_EXE:   version 0
 OBJC2_32BIT_EXE:     flags 0x20
 
-OBJC2_32BIT_OBJ: /Volumes/SandBox/llvm/test/tools/llvm-objdump/X86/Inputs/Objc2.32bit.obj.macho-i386:
 OBJC2_32BIT_OBJ: Objective-C segment
 OBJC2_32BIT_OBJ: Contents of (__DATA,__objc_classlist) section
 OBJC2_32BIT_OBJ: 00003ae4 0x3914 _OBJC_CLASS_$_DetailViewController
