@@ -162,7 +162,7 @@ APInt& APInt::operator=(uint64_t RHS) {
   return clearUnusedBits();
 }
 
-/// Profile - This method 'profiles' an APInt for use with FoldingSet.
+/// This method 'profiles' an APInt for use with FoldingSet.
 void APInt::Profile(FoldingSetNodeID& ID) const {
   ID.AddInteger(BitWidth);
 
@@ -176,7 +176,7 @@ void APInt::Profile(FoldingSetNodeID& ID) const {
     ID.AddInteger(pVal[i]);
 }
 
-/// add_1 - This function adds a single "digit" integer, y, to the multiple
+/// This function adds a single "digit" integer, y, to the multiple
 /// "digit" integer array,  x[]. x[] is modified to reflect the addition and
 /// 1 is returned if there is a carry out, otherwise 0 is returned.
 /// @returns the carry of the addition.
@@ -202,7 +202,7 @@ APInt& APInt::operator++() {
   return clearUnusedBits();
 }
 
-/// sub_1 - This function subtracts a single "digit" (64-bit word), y, from
+/// This function subtracts a single "digit" (64-bit word), y, from
 /// the multi-digit integer array, x[], propagating the borrowed 1 value until
 /// no further borrowing is neeeded or it runs out of "digits" in x.  The result
 /// is 1 if "borrowing" exhausted the digits in x, or 0 if x was not exhausted.
@@ -231,7 +231,7 @@ APInt& APInt::operator--() {
   return clearUnusedBits();
 }
 
-/// add - This function adds the integer array x to the integer array Y and
+/// This function adds the integer array x to the integer array Y and
 /// places the result in dest.
 /// @returns the carry out from the addition
 /// @brief General addition of 64-bit integer arrays
@@ -680,12 +680,12 @@ bool APInt::isSplat(unsigned SplatSizeInBits) const {
   return *this == rotl(SplatSizeInBits);
 }
 
-/// HiBits - This function returns the high "numBits" bits of this APInt.
+/// This function returns the high "numBits" bits of this APInt.
 APInt APInt::getHiBits(unsigned numBits) const {
   return APIntOps::lshr(*this, BitWidth - numBits);
 }
 
-/// LoBits - This function returns the low "numBits" bits of this APInt.
+/// This function returns the low "numBits" bits of this APInt.
 APInt APInt::getLoBits(unsigned numBits) const {
   return APIntOps::lshr(APIntOps::shl(*this, BitWidth - numBits),
                         BitWidth - numBits);
@@ -861,7 +861,7 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, unsigned width) {
   return isNeg ? -Tmp : Tmp;
 }
 
-/// RoundToDouble - This function converts this APInt to a double.
+/// This function converts this APInt to a double.
 /// The layout for double is as following (IEEE Standard 754):
 ///  --------------------------------------
 /// |  Sign    Exponent    Fraction    Bias |
@@ -2269,9 +2269,8 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
   std::reverse(Str.begin()+StartDig, Str.end());
 }
 
-/// toString - This returns the APInt as a std::string.  Note that this is an
-/// inefficient method.  It is better to pass in a SmallVector/SmallString
-/// to the methods above.
+/// Returns the APInt as a std::string. Note that this is an inefficient method.
+/// It is better to pass in a SmallVector/SmallString to the methods above.
 std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
   SmallString<40> S;
   toString(S, Radix, Signed, /* formatAsCLiteral = */false);
