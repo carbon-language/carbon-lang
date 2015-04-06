@@ -871,6 +871,10 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_c
                 ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
                 const size_t field_bit_width = field_clang_type.GetBitSize(&thread);
 
+                // if we don't know the size of the field (e.g. invalid type), just bail out
+                if (field_bit_width == 0)
+                    break;
+                
                 // If there are any unaligned fields, this is stored in memory.
                 if (field_bit_offset % field_bit_width != 0)
                 {
