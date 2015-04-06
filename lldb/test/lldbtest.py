@@ -1364,7 +1364,10 @@ class Base(unittest2.TestCase):
     def getArchitecture(self):
         """Returns the architecture in effect the test suite is running with."""
         module = builder_module()
-        return module.getArchitecture()
+        arch = module.getArchitecture()
+        if arch == 'amd64':
+            arch = 'x86_64'
+        return arch
 
     def getCompiler(self):
         """Returns the compiler in effect the test suite is running with."""
