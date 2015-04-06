@@ -140,16 +140,6 @@ class SanitizerCoverageModule : public ModulePass {
 
 }  // namespace
 
-static Function *checkInterfaceFunction(Constant *FuncOrBitcast) {
-  if (Function *F = dyn_cast<Function>(FuncOrBitcast))
-     return F;
-  std::string Err;
-  raw_string_ostream Stream(Err);
-  Stream << "SanitizerCoverage interface function redefined: "
-         << *FuncOrBitcast;
-  report_fatal_error(Err);
-}
-
 bool SanitizerCoverageModule::runOnModule(Module &M) {
   if (!CoverageLevel) return false;
   C = &(M.getContext());
@@ -167,16 +157,18 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   ReturnInst::Create(*C, BasicBlock::Create(*C, "", CtorFunc));
   appendToGlobalCtors(M, CtorFunc, kSanCtorAndDtorPriority);
 
-  SanCovFunction = checkInterfaceFunction(
+  SanCovFunction = checkSanitizerInterfaceFunction(
       M.getOrInsertFunction(kSanCovName, VoidTy, Int32PtrTy, nullptr));
-  SanCovWithCheckFunction = checkInterfaceFunction(
+  SanCovWithCheckFunction = checkSanitizerInterfaceFunction(
       M.getOrInsertFunction(kSanCovWithCheckName, VoidTy, Int32PtrTy, nullptr));
-  SanCovIndirCallFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
-  SanCovTraceCmpFunction = checkInterfaceFunction(M.getOrInsertFunction(
-      kSanCovTraceCmp, VoidTy, Int64Ty, Int64Ty, Int64Ty, nullptr));
+  SanCovIndirCallFunction =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
+  SanCovTraceCmpFunction =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          kSanCovTraceCmp, VoidTy, Int64Ty, Int64Ty, Int64Ty, nullptr));
 
-  SanCovModuleInit = checkInterfaceFunction(M.getOrInsertFunction(
+  SanCovModuleInit = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
       kSanCovModuleInitName, Type::getVoidTy(*C), Int32PtrTy, IntptrTy,
       Int8PtrTy, Int8PtrTy, nullptr));
   SanCovModuleInit->setLinkage(Function::ExternalLinkage);
@@ -186,9 +178,9 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
                             /*hasSideEffects=*/true);
 
   if (ClExperimentalTracing) {
-    SanCovTraceEnter = checkInterfaceFunction(
+    SanCovTraceEnter = checkSanitizerInterfaceFunction(
         M.getOrInsertFunction(kSanCovTraceEnter, VoidTy, Int32PtrTy, nullptr));
-    SanCovTraceBB = checkInterfaceFunction(
+    SanCovTraceBB = checkSanitizerInterfaceFunction(
         M.getOrInsertFunction(kSanCovTraceBB, VoidTy, Int32PtrTy, nullptr));
   }
 

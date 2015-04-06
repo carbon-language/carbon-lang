@@ -20,6 +20,7 @@ class Module;
 class Function;
 class GlobalValue;
 class GlobalVariable;
+class Constant;
 template <class PtrType> class SmallPtrSetImpl;
 
 /// Append F to the list of global ctors of module M with the given Priority.
@@ -36,6 +37,12 @@ void appendToGlobalDtors(Module &M, Function *F, int Priority);
 GlobalVariable *collectUsedGlobalVariables(Module &M,
                                            SmallPtrSetImpl<GlobalValue *> &Set,
                                            bool CompilerUsed);
+
+// Validate the result of Module::getOrInsertFunction called for an interface
+// function of given sanitizer. If the instrumented module defines a function
+// with the same name, their prototypes must match, otherwise
+// getOrInsertFunction returns a bitcast.
+Function *checkSanitizerInterfaceFunction(Constant *FuncOrBitcast);
 } // End llvm namespace
 
 #endif //  LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
