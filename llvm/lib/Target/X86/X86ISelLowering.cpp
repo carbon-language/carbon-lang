@@ -4460,6 +4460,29 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
   SDLoc dl(Op);
   SDValue V;
   bool First = true;
+
+  // SSE4.1 - use PINSRB to insert each byte directly.
+  if (Subtarget->hasSSE41()) {
+    for (unsigned i = 0; i < 16; ++i) {
+      bool isNonZero = (NonZeros & (1 << i)) != 0;
+      if (isNonZero) {
+        if (First) {
+          if (NumZero)
+            V = getZeroVector(MVT::v16i8, Subtarget, DAG, dl);
+          else
+            V = DAG.getUNDEF(MVT::v16i8);
+          First = false;
+        }
+        V = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl,
+                        MVT::v16i8, V, Op.getOperand(i),
+                        DAG.getIntPtrConstant(i));
+      }
+    }
+
+    return V;
+  }
+
+  // Pre-SSE4.1 - merge byte pairs and insert with PINSRW.
   for (unsigned i = 0; i < 16; ++i) {
     bool ThisIsNonZero = (NonZeros & (1 << i)) != 0;
     if (ThisIsNonZero && First) {

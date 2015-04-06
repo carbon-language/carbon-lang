@@ -100,37 +100,29 @@ define <8 x i8> @foo3_8(<8 x float> %src) {
 ;
 ; CHECK-WIDE-LABEL: foo3_8:
 ; CHECK-WIDE:       ## BB#0:
-; CHECK-WIDE-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[3,1,2,3]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %eax
-; CHECK-WIDE-NEXT:    shll $8, %eax
-; CHECK-WIDE-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %ecx
-; CHECK-WIDE-NEXT:    movzbl %cl, %ecx
-; CHECK-WIDE-NEXT:    orl %eax, %ecx
-; CHECK-WIDE-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %eax
-; CHECK-WIDE-NEXT:    shll $8, %eax
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %edx
-; CHECK-WIDE-NEXT:    movzbl %dl, %edx
-; CHECK-WIDE-NEXT:    orl %eax, %edx
-; CHECK-WIDE-NEXT:    vpinsrw $0, %edx, %xmm0, %xmm1
-; CHECK-WIDE-NEXT:    vpinsrw $1, %ecx, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $0, %eax, %xmm0, %xmm1
+; CHECK-WIDE-NEXT:    vmovshdup %xmm0, %xmm2    ## xmm2 = xmm0[1,1,3,3]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $1, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vpermilpd $1, %xmm0, %xmm2 ## xmm2 = xmm0[1,0]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $2, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vpermilps $231, %xmm0, %xmm2 ## xmm2 = xmm0[3,1,2,3]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $3, %eax, %xmm1, %xmm1
 ; CHECK-WIDE-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; CHECK-WIDE-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $4, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vmovshdup %xmm0, %xmm2    ## xmm2 = xmm0[1,1,3,3]
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
-; CHECK-WIDE-NEXT:    shll $8, %eax
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %ecx
-; CHECK-WIDE-NEXT:    movzbl %cl, %ecx
-; CHECK-WIDE-NEXT:    orl %eax, %ecx
-; CHECK-WIDE-NEXT:    vpinsrw $2, %ecx, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; CHECK-WIDE-NEXT:    vpinsrb $5, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vpermilpd $1, %xmm0, %xmm2 ## xmm2 = xmm0[1,0]
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
-; CHECK-WIDE-NEXT:    shll $8, %eax
-; CHECK-WIDE-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %ecx
-; CHECK-WIDE-NEXT:    movzbl %cl, %ecx
-; CHECK-WIDE-NEXT:    orl %eax, %ecx
-; CHECK-WIDE-NEXT:    vpinsrw $3, %ecx, %xmm1, %xmm0
+; CHECK-WIDE-NEXT:    vpinsrb $6, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vpermilps $231, %xmm0, %xmm0 ## xmm0 = xmm0[3,1,2,3]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $7, %eax, %xmm1, %xmm0
 ; CHECK-WIDE-NEXT:    vzeroupper
 ; CHECK-WIDE-NEXT:    retl
   %res = fptosi <8 x float> %src to <8 x i8>
@@ -145,21 +137,17 @@ define <4 x i8> @foo3_4(<4 x float> %src) {
 ;
 ; CHECK-WIDE-LABEL: foo3_4:
 ; CHECK-WIDE:       ## BB#0:
-; CHECK-WIDE-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[3,1,2,3]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %eax
-; CHECK-WIDE-NEXT:    shll $8, %eax
-; CHECK-WIDE-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %ecx
-; CHECK-WIDE-NEXT:    movzbl %cl, %ecx
-; CHECK-WIDE-NEXT:    orl %eax, %ecx
-; CHECK-WIDE-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %eax
-; CHECK-WIDE-NEXT:    shll $8, %eax
-; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %edx
-; CHECK-WIDE-NEXT:    movzbl %dl, %edx
-; CHECK-WIDE-NEXT:    orl %eax, %edx
-; CHECK-WIDE-NEXT:    vpinsrw $0, %edx, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    vpinsrw $1, %ecx, %xmm0, %xmm0
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $0, %eax, %xmm0, %xmm1
+; CHECK-WIDE-NEXT:    vmovshdup %xmm0, %xmm2    ## xmm2 = xmm0[1,1,3,3]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $1, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vpermilpd $1, %xmm0, %xmm2 ## xmm2 = xmm0[1,0]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $2, %eax, %xmm1, %xmm1
+; CHECK-WIDE-NEXT:    vpermilps $231, %xmm0, %xmm0 ## xmm0 = xmm0[3,1,2,3]
+; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %eax
+; CHECK-WIDE-NEXT:    vpinsrb $3, %eax, %xmm1, %xmm0
 ; CHECK-WIDE-NEXT:    retl
   %res = fptosi <4 x float> %src to <4 x i8>
   ret <4 x i8> %res
