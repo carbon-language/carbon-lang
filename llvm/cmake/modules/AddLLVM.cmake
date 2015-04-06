@@ -158,35 +158,38 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 function(add_link_opts target_name)
-  # Pass -O3 to the linker. This enabled different optimizations on different
-  # linkers. Don't do it in debug builds since it slows down the linker
-  # in a context where the optimizations are not important.
-  if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR WIN32) AND
-     NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,-O3")
-  endif()
+  # Don't use linker optimizations in debug builds since it slows down the
+  # linker in a context where the optimizations are not important.
+  if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 
-  if(LLVM_LINKER_IS_GOLD)
-    # With gold gc-sections is always safe.
-    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                 LINK_FLAGS " -Wl,--gc-sections")
-    # Note that there is a bug with -Wl,--icf=safe so it is not safe
-    # to enable. See https://sourceware.org/bugzilla/show_bug.cgi?id=17704.
-  endif()
-
-  if(NOT LLVM_NO_DEAD_STRIP)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-      # ld64's implementation of -dead_strip breaks tools that use plugins.
+    # Pass -O3 to the linker. This enabled different optimizations on different
+    # linkers.
+    if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR WIN32))
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS " -Wl,-dead_strip")
-    elseif(NOT WIN32 AND NOT LLVM_LINKER_IS_GOLD)
-      # Object files are compiled with -ffunction-data-sections.
-      # Versions of bfd ld < 2.23.1 have a bug in --gc-sections that breaks
-      # tools that use plugins. Always pass --gc-sections once we require
-      # a newer linker.
+                   LINK_FLAGS " -Wl,-O3")
+    endif()
+
+    if(LLVM_LINKER_IS_GOLD)
+      # With gold gc-sections is always safe.
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,--gc-sections")
+      # Note that there is a bug with -Wl,--icf=safe so it is not safe
+      # to enable. See https://sourceware.org/bugzilla/show_bug.cgi?id=17704.
+    endif()
+
+    if(NOT LLVM_NO_DEAD_STRIP)
+      if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        # ld64's implementation of -dead_strip breaks tools that use plugins.
+        set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                     LINK_FLAGS " -Wl,-dead_strip")
+      elseif(NOT WIN32 AND NOT LLVM_LINKER_IS_GOLD)
+        # Object files are compiled with -ffunction-data-sections.
+        # Versions of bfd ld < 2.23.1 have a bug in --gc-sections that breaks
+        # tools that use plugins. Always pass --gc-sections once we require
+        # a newer linker.
+        set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                     LINK_FLAGS " -Wl,--gc-sections")
+      endif()
     endif()
   endif()
 endfunction(add_link_opts)
