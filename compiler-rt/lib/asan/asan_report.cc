@@ -578,6 +578,11 @@ void DescribeThread(AsanThreadContext *context) {
   InternalScopedString str(1024);
   str.append("Thread T%d%s", context->tid,
              ThreadNameWithParenthesis(context->tid, tname, sizeof(tname)));
+  if (context->parent_tid == kInvalidTid) {
+    str.append(" created by unknown thread\n");
+    Printf("%s", str.data());
+    return;
+  }
   str.append(
       " created by T%d%s here:\n", context->parent_tid,
       ThreadNameWithParenthesis(context->parent_tid, tname, sizeof(tname)));
