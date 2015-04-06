@@ -153,7 +153,6 @@ void Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
     llvm::errs() << "SymbolTable: error while merging " << atom.name()
                  << "\n";
     llvm::report_fatal_error("duplicate symbol error");
-    return;
   }
 
   for (const Reference *r : atom) {
