@@ -745,10 +745,7 @@ public:
     return *get();
   }
 
-  DIScope getContext() const { return getScope(); }
-  unsigned getLineNumber() const { return getScope().getLineNumber(); }
-  unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
-  DILexicalBlock getScope() const { return DILexicalBlock(get()->getScope()); }
+  DIScope getContext() const { return get()->getScope(); }
   unsigned getDiscriminator() const { return get()->getDiscriminator(); }
 };
 
@@ -1050,11 +1047,9 @@ public:
     // Since discriminators are associated with lexical blocks, make
     // sure this location is a lexical block before retrieving its
     // value.
-    return getScope().isLexicalBlockFile()
-               ? DILexicalBlockFile(
-                     cast<MDNode>(cast<MDLocation>(DbgNode)->getScope()))
-                     .getDiscriminator()
-               : 0;
+    if (auto *F = dyn_cast<MDLexicalBlockFile>(get()->getScope()))
+      return F->getDiscriminator();
+    return 0;
   }
 
   /// \brief Generate a new discriminator value for this location.

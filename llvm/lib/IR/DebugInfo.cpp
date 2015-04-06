@@ -498,9 +498,6 @@ void DebugInfoFinder::processScope(DIScope Scope) {
   if (Scope.isLexicalBlock()) {
     DILexicalBlock LB(Scope);
     processScope(LB.getContext());
-  } else if (Scope.isLexicalBlockFile()) {
-    DILexicalBlockFile LBF = DILexicalBlockFile(Scope);
-    processScope(LBF.getScope());
   } else if (Scope.isNameSpace()) {
     DINameSpace NS(Scope);
     processScope(NS.getContext());
