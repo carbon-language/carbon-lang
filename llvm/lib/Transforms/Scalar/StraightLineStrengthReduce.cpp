@@ -353,8 +353,6 @@ void StraightLineStrengthReduce::factorArrayIndex(Value *ArrayIdx,
       ArrayIdx, ElementSize, GEP);
   Value *LHS = nullptr;
   ConstantInt *RHS = nullptr;
-  // TODO: handle shl. e.g., we could treat (S << 2) as (S * 4).
-  //
   // One alternative is matching the SCEV of ArrayIdx instead of ArrayIdx
   // itself. This would allow us to handle the shl case for free. However,
   // matching SCEVs has two issues:
@@ -370,6 +368,13 @@ void StraightLineStrengthReduce::factorArrayIndex(Value *ArrayIdx,
     // SLSR is currently unsafe if i * S may overflow.
     // GEP = Base + sext(LHS *nsw RHS) * ElementSize
     allocateCandidateAndFindBasisForGEP(Base, RHS, LHS, ElementSize, GEP);
+  } else if (match(ArrayIdx, m_NSWShl(m_Value(LHS), m_ConstantInt(RHS)))) {
+    // GEP = Base + sext(LHS <<nsw RHS) * ElementSize
+    //     = Base + sext(LHS *nsw (1 << RHS)) * ElementSize
+    APInt One(RHS->getBitWidth(), 1);
+    ConstantInt *PowerOf2 =
+        ConstantInt::get(RHS->getContext(), One << RHS->getValue());
+    allocateCandidateAndFindBasisForGEP(Base, PowerOf2, LHS, ElementSize, GEP);
   }
 }
 

@@ -14,7 +14,7 @@ define i32 @slsr_gep(i32* %input, i64 %s) {
   %v1 = load i32, i32* %p1
 
   ; v2 = input[s * 2];
-  %s2 = mul nsw i64 %s, 2
+  %s2 = shl nsw i64 %s, 1
   %p2 = getelementptr inbounds i32, i32* %input, i64 %s2
 ; CHECK: %p2 = getelementptr inbounds i32, i32* %p1, i64 %s
   %v2 = load i32, i32* %p2
@@ -38,7 +38,7 @@ define i32 @slsr_gep_sext(i32* %input, i32 %s) {
   %v1 = load i32, i32* %p1
 
   ; v2 = input[(long)(s * 2)];
-  %s2 = mul nsw i32 %s, 2
+  %s2 = shl nsw i32 %s, 1
   %t2 = sext i32 %s2 to i64
   %p2 = getelementptr inbounds i32, i32* %input, i64 %t2
 ; CHECK: %p2 = getelementptr inbounds i32, i32* %p1, i64 %t
@@ -57,7 +57,7 @@ define i32 @slsr_gep_2d([10 x [5 x i32]]* %input, i64 %s, i64 %t) {
   %v0 = load i32, i32* %p0
 
   ; v1 = input[s * 2][t];
-  %s2 = mul nsw i64 %s, 2
+  %s2 = shl nsw i64 %s, 1
 ; CHECK: [[BUMP:%[a-zA-Z0-9]+]] = mul i64 %s, 5
   %p1 = getelementptr inbounds [10 x [5 x i32]], [10 x [5 x i32]]* %input, i64 0, i64 %s2, i64 %t
 ; CHECK: %p1 = getelementptr inbounds i32, i32* %p0, i64 [[BUMP]]
@@ -90,7 +90,7 @@ define i64 @slsr_gep_uglygep([10 x [5 x %struct.S]]* %input, i64 %s, i64 %t) {
   %v0 = load i64, i64* %p0
 
   ; v1 = input[s * 2][t].f1;
-  %s2 = mul nsw i64 %s, 2
+  %s2 = shl nsw i64 %s, 1
 ; CHECK: [[BUMP:%[a-zA-Z0-9]+]] = mul i64 %s, 60
   %p1 = getelementptr inbounds [10 x [5 x %struct.S]], [10 x [5 x %struct.S]]* %input, i64 0, i64 %s2, i64 %t, i32 0
 ; CHECK: getelementptr inbounds i8, i8* %{{[0-9]+}}, i64 [[BUMP]]
@@ -121,7 +121,7 @@ define i32 @slsr_out_of_bounds_gep(i32* %input, i32 %s) {
   %v1 = load i32, i32* %p1
 
   ; v2 = input[(long)(s * 2)];
-  %s2 = mul nsw i32 %s, 2
+  %s2 = shl nsw i32 %s, 1
   %t2 = sext i32 %s2 to i64
   %p2 = getelementptr i32, i32* %input, i64 %t2
 ; CHECK: %p2 = getelementptr i32, i32* %p1, i64 %t
