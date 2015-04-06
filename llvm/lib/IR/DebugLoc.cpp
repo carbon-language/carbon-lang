@@ -50,8 +50,7 @@ MDNode *DebugLoc::getInlinedAtScope() const {
 DebugLoc DebugLoc::getFnDebugLoc() const {
   // FIXME: Add a method on \a MDLocation that does this work.
   const MDNode *Scope = getInlinedAtScope();
-  DISubprogram SP = getDISubprogram(Scope);
-  if (SP.isSubprogram())
+  if (DISubprogram SP = getDISubprogram(Scope))
     return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
 
   return DebugLoc();
@@ -87,13 +86,8 @@ void DebugLoc::print(raw_ostream &OS) const {
     return;
 
   // Print source line info.
-  DIScope Scope(getScope());
-  assert((!Scope || Scope.isScope()) &&
-         "Scope of a DebugLoc should be null or a DIScope.");
-  if (Scope)
-    OS << Scope.getFilename();
-  else
-    OS << "<unknown>";
+  DIScope Scope = cast<MDScope>(getScope());
+  OS << Scope.getFilename();
   OS << ':' << getLine();
   if (getCol() != 0)
     OS << ':' << getCol();

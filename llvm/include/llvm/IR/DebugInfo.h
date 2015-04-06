@@ -408,7 +408,7 @@ public:
   bool isRValueReference() const {
     return (getFlags() & FlagRValueReference) != 0;
   }
-  bool isValid() const { return DbgNode && isType(); }
+  bool isValid() const { return DbgNode && isa<MDType>(*this); }
 };
 
 /// \brief A basic type, like 'int' or 'float'.
@@ -507,7 +507,7 @@ public:
   }
 
   DIArray getElements() const {
-    assert(!isSubroutineType() && "no elements for DISubroutineType");
+    assert(!isa<MDSubroutineType>(*this) && "no elements for DISubroutineType");
     return DIArray(get()->getElements());
   }
 

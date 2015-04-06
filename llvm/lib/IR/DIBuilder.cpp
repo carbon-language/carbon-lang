@@ -75,7 +75,7 @@ void DIBuilder::trackIfUnresolved(MDNode *N) {
 
 void DIBuilder::finalize() {
   DIArray Enums = getOrCreateArray(AllEnumTypes);
-  DIType(TempEnumTypes).replaceAllUsesWith(Enums);
+  TempEnumTypes->replaceAllUsesWith(Enums);
 
   SmallVector<Metadata *, 16> RetainValues;
   // Declarations and definitions of the same type may be retained. Some
@@ -87,27 +87,27 @@ void DIBuilder::finalize() {
     if (RetainSet.insert(AllRetainTypes[I]).second)
       RetainValues.push_back(AllRetainTypes[I]);
   DIArray RetainTypes = getOrCreateArray(RetainValues);
-  DIType(TempRetainTypes).replaceAllUsesWith(RetainTypes);
+  TempRetainTypes->replaceAllUsesWith(RetainTypes);
 
   DIArray SPs = getOrCreateArray(AllSubprograms);
-  DIType(TempSubprograms).replaceAllUsesWith(SPs);
+  TempSubprograms->replaceAllUsesWith(SPs);
   for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
-    DISubprogram SP(SPs.getElement(i));
+    DISubprogram SP = cast<MDSubprogram>(SPs.getElement(i));
     if (MDNode *Temp = SP.getVariablesNodes()) {
       const auto &PV = PreservedVariables.lookup(SP);
       SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
       DIArray AV = getOrCreateArray(Variables);
-      DIType(Temp).replaceAllUsesWith(AV);
+      Temp->replaceAllUsesWith(AV);
     }
   }
 
   DIArray GVs = getOrCreateArray(AllGVs);
-  DIType(TempGVs).replaceAllUsesWith(GVs);
+  TempGVs->replaceAllUsesWith(GVs);
 
   SmallVector<Metadata *, 16> RetainValuesI(AllImportedModules.begin(),
                                             AllImportedModules.end());
   DIArray IMs = getOrCreateArray(RetainValuesI);
-  DIType(TempImportedModules).replaceAllUsesWith(IMs);
+  TempImportedModules->replaceAllUsesWith(IMs);
 
   // Now that all temp nodes have been replaced or deleted, resolve remaining
   // cycles.
@@ -151,7 +151,7 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 
   // TODO: Switch to getDistinct().  We never want to merge compile units based
   // on contents.
-  MDNode *CUNode = MDCompileUnit::get(
+  MDCompileUnit *CUNode = MDCompileUnit::get(
       VMContext, Lang, MDFile::get(VMContext, Filename, Directory), Producer,
       isOptimized, Flags, RunTimeVer, SplitName, Kind, TempEnumTypes,
       TempRetainTypes, TempSubprograms, TempGVs, TempImportedModules);
@@ -167,7 +167,7 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
   }
 
   trackIfUnresolved(CUNode);
-  return DICompileUnit(CUNode);
+  return CUNode;
 }
 
 static DIImportedEntity
@@ -261,7 +261,7 @@ DIBuilder::createMemberPointerType(DIType PointeeTy, DIType Base,
 }
 
 DIDerivedType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
-  assert(RTy.isType() && "Unable to create reference type");
+  assert(RTy && "Unable to create reference type");
   return MDDerivedType::get(VMContext, Tag, "", nullptr, 0, nullptr,
                             MDTypeRef::get(RTy), 0, 0, 0, 0);
 }
@@ -276,8 +276,8 @@ DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
 
 DIDerivedType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
   // typedefs are encoded in DIDerivedType format.
-  assert(Ty.isType() && "Invalid type!");
-  assert(FriendTy.isType() && "Invalid friend type!");
+  assert(Ty && "Invalid type!");
+  assert(FriendTy && "Invalid friend type!");
   return MDDerivedType::get(VMContext, dwarf::DW_TAG_friend, "", nullptr, 0,
                             MDTypeRef::get(Ty), MDTypeRef::get(FriendTy), 0, 0,
                             0, 0);
@@ -286,7 +286,7 @@ DIDerivedType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
 DIDerivedType DIBuilder::createInheritance(DIType Ty, DIType BaseTy,
                                            uint64_t BaseOffset,
                                            unsigned Flags) {
-  assert(Ty.isType() && "Unable to create inheritance");
+  assert(Ty && "Unable to create inheritance");
   return MDDerivedType::get(VMContext, dwarf::DW_TAG_inheritance, "", nullptr,
                             0, MDTypeRef::get(Ty), MDTypeRef::get(BaseTy), 0, 0,
                             BaseOffset, Flags);
@@ -395,7 +395,7 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
                                            DIType VTableHolder,
                                            MDNode *TemplateParams,
                                            StringRef UniqueIdentifier) {
-  assert((!Context || Context.isScope() || Context.isType()) &&
+  assert((!Context || isa<MDScope>(Context)) &&
          "createClassType should be called with a valid Context");
   // TAG_class_type is encoded in DICompositeType format.
   DICompositeType R = MDCompositeType::get(
@@ -564,7 +564,7 @@ DITypeArray DIBuilder::getOrCreateTypeArray(ArrayRef<Metadata *> Elements) {
   SmallVector<llvm::Metadata *, 16> Elts;
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     if (Elements[i] && isa<MDNode>(Elements[i]))
-      Elts.push_back(MDTypeRef::get(DIType(cast<MDNode>(Elements[i]))));
+      Elts.push_back(MDTypeRef::get(cast<MDType>(Elements[i])));
     else
       Elts.push_back(Elements[i]);
   }
@@ -576,11 +576,10 @@ DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
 }
 
 static void checkGlobalVariableScope(DIDescriptor Context) {
-  MDNode *TheCtx = getNonCompileUnitScope(Context);
-  if (DIScope(TheCtx).isCompositeType()) {
-    assert(!DICompositeType(TheCtx).getIdentifier() &&
+  if (DICompositeType CT =
+          dyn_cast_or_null<MDCompositeType>(getNonCompileUnitScope(Context)))
+    assert(!CT.getIdentifier() &&
            "Context of a global variable should not be a type with identifier");
-  }
 }
 
 DIGlobalVariable DIBuilder::createGlobalVariable(
@@ -618,9 +617,7 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
   // FIXME: Why is "!Context" okay here?
   // FIXME: WHy doesn't this check for a subprogram or lexical block (AFAICT
   // the only valid scopes)?
-  DIDescriptor Context(getNonCompileUnitScope(Scope));
-  assert((!Context || Context.isScope()) &&
-         "createLocalVariable should be called with a valid Context");
+  DIScope Context = getNonCompileUnitScope(Scope);
 
   auto *Node = MDLocalVariable::get(
       VMContext, Tag, cast_or_null<MDLocalScope>(Context.get()), Name, File,
@@ -723,19 +720,17 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
          "Methods should have both a Context and a context that isn't "
          "the compile unit.");
   // FIXME: Do we want to use different scope/lines?
-  auto *Node = MDSubprogram::get(
-      VMContext, MDScopeRef::get(DIScope(Context)), Name, LinkageName, F.get(),
-      LineNo, cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit,
+  auto *SP = MDSubprogram::get(
+      VMContext, MDScopeRef::get(cast<MDScope>(Context)), Name, LinkageName,
+      F.get(), LineNo, cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit,
       isDefinition, LineNo, MDTypeRef::get(VTableHolder), VK, VIndex, Flags,
       isOptimized, getConstantOrNull(Fn), cast_or_null<MDTuple>(TParam),
       nullptr, nullptr);
 
   if (isDefinition)
-    AllSubprograms.push_back(Node);
-  DISubprogram S(Node);
-  assert(S.isSubprogram() && "createMethod should return a valid DISubprogram");
-  trackIfUnresolved(S);
-  return S;
+    AllSubprograms.push_back(SP);
+  trackIfUnresolved(SP);
+  return SP;
 }
 
 DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
@@ -767,8 +762,7 @@ static Value *getDbgIntrinsicValueImpl(LLVMContext &VMContext, Value *V) {
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
                                       DIExpression Expr,
                                       Instruction *InsertBefore) {
-  assert(VarInfo.isVariable() &&
-         "empty or invalid DIVariable passed to dbg.declare");
+  assert(VarInfo && "empty or invalid DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -783,8 +777,7 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
                                       DIExpression Expr,
                                       BasicBlock *InsertAtEnd) {
-  assert(VarInfo.isVariable() &&
-         "empty or invalid DIVariable passed to dbg.declare");
+  assert(VarInfo && "empty or invalid DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -807,8 +800,7 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIExpression Expr,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
-  assert(VarInfo.isVariable() &&
-         "empty or invalid DIVariable passed to dbg.value");
+  assert(VarInfo && "empty or invalid DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -826,8 +818,7 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIExpression Expr,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
-  assert(VarInfo.isVariable() &&
-         "empty or invalid DIVariable passed to dbg.value");
+  assert(VarInfo && "empty or invalid DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
