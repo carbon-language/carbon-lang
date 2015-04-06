@@ -31,12 +31,12 @@ class STLTestCase(TestBase):
 
     @python_api_test
     @dsym_test
+    @skipUnlessDarwin
     def test_SBType_template_aspects_with_dsym(self):
         """Test APIs for getting template arguments from an SBType."""
         self.buildDsym()
         self.sbtype_template_apis()
 
-    @skipIfGcc # llvm.org/pr15036: crashes during DWARF parsing when built with GCC
     @expectedFailureIcc # icc 13.1 and 14-beta do not emit DW_TAG_template_type_parameter
     @python_api_test
     @dwarf_test
