@@ -294,7 +294,7 @@ public:
 
   /// \brief Enable new dtags.
   /// If this flag is set lld emits DT_RUNPATH instead of
-  /// DT_RUNPATH. They are functionally equivalent except for
+  /// DT_RPATH. They are functionally equivalent except for
   /// the following two differences:
   /// - DT_RUNPATH is searched after LD_LIBRARY_PATH, while
   /// DT_RPATH is searched before.
