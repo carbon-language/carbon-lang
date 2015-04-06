@@ -25,7 +25,10 @@ class MiTestCaseBase(Base):
     def tearDown(self):
         if self.TraceOn():
             print "\n\nContents of %s:" % self.mylog
-            print open(self.mylog, "r").read()
+            try:
+                print open(self.mylog, "r").read()
+            except IOError:
+                pass
         Base.tearDown(self)
 
     def spawnLldbMi(self, args=None):
