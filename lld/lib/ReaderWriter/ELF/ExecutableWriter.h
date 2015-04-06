@@ -16,9 +16,6 @@ namespace elf {
 using namespace llvm;
 using namespace llvm::object;
 
-template<class ELFT>
-class ExecutableWriter;
-
 //===----------------------------------------------------------------------===//
 //  ExecutableWriter Class
 //===----------------------------------------------------------------------===//
