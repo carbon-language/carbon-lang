@@ -808,8 +808,11 @@ TSAN_INTERCEPTOR(void*, mmap64, void *addr, long_t sz, int prot,
 
 TSAN_INTERCEPTOR(int, munmap, void *addr, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(munmap, addr, sz);
-  DontNeedShadowFor((uptr)addr, sz);
-  ctx->metamap.ResetRange(thr, pc, (uptr)addr, (uptr)sz);
+  if (sz != 0) {
+    // If sz == 0, munmap will return EINVAL and don't unmap any memory.
+    DontNeedShadowFor((uptr)addr, sz);
+    ctx->metamap.ResetRange(thr, pc, (uptr)addr, (uptr)sz);
+  }
   int res = REAL(munmap)(addr, sz);
   return res;
 }
