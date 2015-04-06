@@ -1512,9 +1512,12 @@ void ELFObjectWriter::writeSection(MCAssembler &Asm,
   uint64_t sh_info = 0;
 
   switch(Section.getType()) {
+  default:
+    // Nothing to do.
+    break;
+
   case ELF::SHT_DYNAMIC:
     sh_link = ShStrTabBuilder.getOffset(Section.getSectionName());
-    sh_info = 0;
     break;
 
   case ELF::SHT_REL:
@@ -1536,29 +1539,10 @@ void ELFObjectWriter::writeSection(MCAssembler &Asm,
     sh_link = SymbolTableIndex;
     break;
 
-  case ELF::SHT_PROGBITS:
-  case ELF::SHT_STRTAB:
-  case ELF::SHT_NOBITS:
-  case ELF::SHT_NOTE:
-  case ELF::SHT_NULL:
-  case ELF::SHT_ARM_ATTRIBUTES:
-  case ELF::SHT_INIT_ARRAY:
-  case ELF::SHT_FINI_ARRAY:
-  case ELF::SHT_PREINIT_ARRAY:
-  case ELF::SHT_X86_64_UNWIND:
-  case ELF::SHT_MIPS_REGINFO:
-  case ELF::SHT_MIPS_OPTIONS:
-  case ELF::SHT_MIPS_ABIFLAGS:
-    // Nothing to do.
-    break;
-
   case ELF::SHT_GROUP:
     sh_link = SymbolTableIndex;
     sh_info = GroupSymbolIndex;
     break;
-
-  default:
-    llvm_unreachable("FIXME: sh_type value not supported!");
   }
 
   if (TargetObjectWriter->getEMachine() == ELF::EM_ARM &&
