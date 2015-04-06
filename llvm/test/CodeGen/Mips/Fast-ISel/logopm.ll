@@ -68,11 +68,12 @@ entry:
 
 ; Function Attrs: noinline nounwind
 define void @andUb1() #0 {
+; clang uses i8 constants for booleans, so we test with an i8 1.
 entry:
-  %0 = load i8, i8* @ub1, align 1, !tbaa !2
-  %conv = trunc i8 %0 to i1
-  %and = and i1 %conv, 1
-  %conv1 = zext i1 %and to i8
+  %x = load i8, i8* @ub1, align 1, !tbaa !2
+  %and = and i8 %x, 1
+  %conv = trunc i8 %and to i1
+  %conv1 = zext i1 %conv to i8
   store i8 %conv1, i8* @ub, align 1, !tbaa !2
 ; CHECK-LABEL:  .ent    andUb1
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
@@ -138,10 +139,10 @@ entry:
 ; Function Attrs: noinline nounwind
 define void @orUb1() #0 {
 entry:
-  %0 = load i8, i8* @ub1, align 1, !tbaa !2
-  %conv = trunc i8 %0 to i1
-  %or = or i1 %conv, 1
-  %conv1 = zext i1 %or to i8
+  %x = load i8, i8* @ub1, align 1, !tbaa !2
+  %or = or i8 %x, 1
+  %conv = trunc i8 %or to i1
+  %conv1 = zext i1 %conv to i8
   store i8 %conv1, i8* @ub, align 1, !tbaa !2
 ; CHECK-LABEL:  .ent    orUb1
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
@@ -208,10 +209,10 @@ entry:
 ; Function Attrs: noinline nounwind
 define void @xorUb1() #0 {
 entry:
-  %0 = load i8, i8* @ub1, align 1, !tbaa !2
-  %conv = trunc i8 %0 to i1
-  %xor = xor i1 %conv, 1
-  %conv1 = zext i1 %xor to i8
+  %x = load i8, i8* @ub1, align 1, !tbaa !2
+  %xor = xor i8 1, %x
+  %conv = trunc i8 %xor to i1
+  %conv1 = zext i1 %conv to i8
   store i8 %conv1, i8* @ub, align 1, !tbaa !2
 ; CHECK-LABEL:  .ent    xorUb1
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)

@@ -425,7 +425,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
 
   // Check if the second operand is a constant and handle it appropriately.
   if (const auto *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-    uint64_t Imm = CI->getZExtValue();
+    uint64_t Imm = CI->getSExtValue();
 
     // Transform "sdiv exact X, 8" -> "sra X, 3".
     if (ISDOpcode == ISD::SDIV && isa<BinaryOperator>(I) &&
