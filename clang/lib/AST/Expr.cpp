@@ -2942,11 +2942,19 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass:
   case CUDAKernelCallExprClass:
+  case UserDefinedLiteralClass: {
+    // We don't know a call definitely has side effects, except for calls
+    // to pure/const functions that definitely don't.
+    // If the call itself is considered side-effect free, check the operands.
+    const Decl *FD = cast<CallExpr>(this)->getCalleeDecl();
+    bool IsPure = FD && (FD->hasAttr<ConstAttr>() || FD->hasAttr<PureAttr>());
+    if (IsPure || !IncludePossibleEffects)
+      break;
+    return true;
+  }
+
   case BlockExprClass:
   case CXXBindTemporaryExprClass:
-  case UserDefinedLiteralClass:
-    // We don't know a call definitely has side effects, but we can check the
-    // call's operands.
     if (!IncludePossibleEffects)
       break;
     return true;
