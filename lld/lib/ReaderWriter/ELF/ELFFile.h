@@ -671,10 +671,13 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
   // Holds all the atoms that are part of the section. They are the targets of
   // the kindGroupChild reference.
   llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> atomsForSection;
+
   // group sections have a mapping of the section header to the
   // signature/section.
   llvm::DenseMap<const Elf_Shdr *, std::pair<StringRef, StringRef>>
       groupSections;
+  llvm::DenseMap<const Elf_Shdr *, StringRef> linkOnceSections;
+
   // Contains a list of comdat sections for a group.
   llvm::DenseMap<const Elf_Shdr *, std::vector<StringRef>> comdatSections;
   for (auto &i : _sectionSymbols) {
@@ -722,14 +725,12 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
       ErrorOr<StringRef> symbolName = _objFile->getSymbolName(symtab, symbol);
       if (std::error_code ec = symbolName.getError())
         return ec;
-      groupSections.insert(
-          std::make_pair(section, std::make_pair(*symbolName, *sectionName)));
+      groupSections.insert({section, {*symbolName, *sectionName}});
       continue;
     }
 
     if (isGnuLinkOnceSection(*sectionName)) {
-      groupSections.insert(
-          std::make_pair(section, std::make_pair(*sectionName, *sectionName)));
+      linkOnceSections.insert({section, *sectionName});
       addAtoms = false;
     }
 
@@ -862,12 +863,12 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
   for (auto &sect : groupSections) {
     StringRef signature = sect.second.first;
     StringRef groupSectionName = sect.second.second;
-    if (isGnuLinkOnceSection(signature))
-      handleGnuLinkOnceSection(signature, atomsForSection, sect.first);
-    else if (isGroupSection(sect.first))
-      handleSectionGroup(signature, groupSectionName, atomsForSection,
-                         comdatSections, sect.first);
+    handleSectionGroup(signature, groupSectionName, atomsForSection,
+                       comdatSections, sect.first);
   }
+
+  for (auto &sect : linkOnceSections)
+    handleGnuLinkOnceSection(sect.second, atomsForSection, sect.first);
 
   updateReferences();
   return std::error_code();
