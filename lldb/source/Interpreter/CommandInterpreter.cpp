@@ -1457,10 +1457,10 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
                 else
                 {
                     result_str.Printf (" %s", option.c_str());
-                    if (value_type != OptionParser::eOptionalArgument)
-                        result_str.Printf (" ");
-                    if (value.compare ("<OptionParser::eNoArgument>") != 0)
+                    if (value_type != OptionParser::eNoArgument)
                     {
+                        if (value_type != OptionParser::eOptionalArgument)
+                            result_str.Printf (" ");
                         int index = GetOptionArgumentPosition (value.c_str());
                         if (index == 0)
                             result_str.Printf ("%s", value.c_str());
