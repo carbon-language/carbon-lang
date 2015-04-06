@@ -576,10 +576,12 @@ DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
 }
 
 static void checkGlobalVariableScope(DIDescriptor Context) {
+#ifndef NDEBUG
   if (DICompositeType CT =
           dyn_cast_or_null<MDCompositeType>(getNonCompileUnitScope(Context)))
     assert(!CT.getIdentifier() &&
            "Context of a global variable should not be a type with identifier");
+#endif
 }
 
 DIGlobalVariable DIBuilder::createGlobalVariable(
