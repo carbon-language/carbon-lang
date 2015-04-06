@@ -89,6 +89,42 @@ typedef TypedDebugNodeRef<DebugNode> DebugNodeRef;
 typedef TypedDebugNodeRef<MDScope> MDScopeRef;
 typedef TypedDebugNodeRef<MDType> MDTypeRef;
 
+class MDTypeRefArray {
+  const MDTuple *N = nullptr;
+
+public:
+  MDTypeRefArray(const MDTuple *N) : N(N) {}
+  operator MDTuple *() const { return const_cast<MDTuple *>(N); }
+  MDTuple *operator->() const { return const_cast<MDTuple *>(N); }
+  MDTuple &operator*() const { return *const_cast<MDTuple *>(N); }
+
+  unsigned size() const { return N->getNumOperands(); }
+  MDTypeRef operator[](unsigned I) const { return MDTypeRef(N->getOperand(I)); }
+
+  class iterator : std::iterator<std::input_iterator_tag, MDTypeRef,
+                                 std::ptrdiff_t, void, MDTypeRef> {
+    MDNode::op_iterator I;
+
+  public:
+    explicit iterator(MDNode::op_iterator I) : I(I) {}
+    MDTypeRef operator*() const { return MDTypeRef(*I); }
+    iterator &operator++() {
+      ++I;
+      return *this;
+    }
+    iterator operator++(int) {
+      iterator Temp(*this);
+      ++I;
+      return Temp;
+    }
+    bool operator==(const iterator &X) const { return I == X.I; }
+    bool operator!=(const iterator &X) const { return I != X.I; }
+  };
+
+  iterator begin() const { return iterator(N->op_begin()); }
+  iterator end() const { return iterator(N->op_end()); }
+};
+
 /// \brief Tagged DWARF-like metadata node.
 ///
 /// A metadata node with a DWARF tag (i.e., a constant named \c DW_TAG_*,
@@ -826,7 +862,7 @@ public:
 
   TempMDSubroutineType clone() const { return cloneImpl(); }
 
-  MDTuple *getTypeArray() const { return getElements(); }
+  MDTypeRefArray getTypeArray() const { return getElements(); }
   Metadata *getRawTypeArray() const { return getRawElements(); }
 
   static bool classof(const Metadata *MD) {
