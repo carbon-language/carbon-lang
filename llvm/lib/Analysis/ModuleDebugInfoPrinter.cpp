@@ -103,8 +103,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
     if (!T.getName().empty())
       O << ' ' << T.getName();
     printFile(O, T.getFilename(), T.getDirectory(), T.getLineNumber());
-    if (T.isBasicType()) {
-      DIBasicType BT(T.get());
+    if (DIBasicType BT = dyn_cast<MDBasicType>(T)) {
       O << " ";
       if (const char *Encoding =
               dwarf::AttributeEncodingString(BT.getEncoding()))
@@ -118,8 +117,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
       else
         O << "unknown-tag(" << T.getTag() << ")";
     }
-    if (T.isCompositeType()) {
-      DICompositeType CT(T.get());
+    if (DICompositeType CT = dyn_cast<MDCompositeType>(T)) {
       if (auto *S = CT.getIdentifier())
         O << " (identifier: '" << S->getString() << "')";
     }

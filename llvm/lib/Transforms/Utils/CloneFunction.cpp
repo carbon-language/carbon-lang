@@ -186,7 +186,8 @@ static void CloneDebugInfoMetadata(Function *NewFunc, const Function *OldFunc,
   // Ensure that OldFunc appears in the map.
   // (if it's already there it must point to NewFunc anyway)
   VMap[OldFunc] = NewFunc;
-  DISubprogram NewSubprogram(MapMetadata(OldSubprogramMDNode, VMap));
+  DISubprogram NewSubprogram =
+      cast<MDSubprogram>(MapMetadata(OldSubprogramMDNode, VMap));
 
   for (DICompileUnit CU : Finder.compile_units()) {
     DIArray Subprograms(CU.getSubprograms());

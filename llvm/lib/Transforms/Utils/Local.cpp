@@ -998,10 +998,8 @@ static bool LdStHasDebugValue(DIVariable &DIVar, Instruction *I) {
 /// that has an associated llvm.dbg.decl intrinsic.
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            StoreInst *SI, DIBuilder &Builder) {
-  DIVariable DIVar(DDI->getVariable());
-  DIExpression DIExpr(DDI->getExpression());
-  assert((!DIVar || DIVar.isVariable()) &&
-         "Variable in DbgDeclareInst should be either null or a DIVariable.");
+  DIVariable DIVar = DDI->getVariable();
+  DIExpression DIExpr = DDI->getExpression();
   if (!DIVar)
     return false;
 
@@ -1029,10 +1027,8 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 /// that has an associated llvm.dbg.decl intrinsic.
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            LoadInst *LI, DIBuilder &Builder) {
-  DIVariable DIVar(DDI->getVariable());
-  DIExpression DIExpr(DDI->getExpression());
-  assert((!DIVar || DIVar.isVariable()) &&
-         "Variable in DbgDeclareInst should be either null or a DIVariable.");
+  DIVariable DIVar = DDI->getVariable();
+  DIExpression DIExpr = DDI->getExpression();
   if (!DIVar)
     return false;
 
@@ -1112,10 +1108,8 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   if (!DDI)
     return false;
   DebugLoc Loc = DDI->getDebugLoc();
-  DIVariable DIVar(DDI->getVariable());
-  DIExpression DIExpr(DDI->getExpression());
-  assert((!DIVar || DIVar.isVariable()) &&
-         "Variable in DbgDeclareInst should be either null or a DIVariable.");
+  DIVariable DIVar = DDI->getVariable();
+  DIExpression DIExpr = DDI->getExpression();
   if (!DIVar)
     return false;
 
