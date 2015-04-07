@@ -30,12 +30,6 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
                                 *TAB.createObjectWriter(OS), OS)),
       CurSectionData(nullptr), EmitEHFrame(true), EmitDebugFrame(false) {}
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                   raw_ostream &OS, MCCodeEmitter *Emitter_,
-                                   MCAssembler *Assembler)
-    : MCStreamer(Context), Assembler(Assembler), CurSectionData(nullptr),
-      EmitEHFrame(true), EmitDebugFrame(false) {}
-
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();
   delete &Assembler->getEmitter();

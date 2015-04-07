@@ -51,8 +51,6 @@ class MCObjectStreamer : public MCStreamer {
 protected:
   MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                    MCCodeEmitter *Emitter);
-  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
-                   MCCodeEmitter *Emitter, MCAssembler *Assembler);
   ~MCObjectStreamer();
 
 public:
