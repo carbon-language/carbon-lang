@@ -262,8 +262,8 @@ protected:
       const Elf_Shdr *shdr);
 
   /// Process the Undefined symbol and create an atom for it.
-  ErrorOr<ELFUndefinedAtom<ELFT> *>
-  handleUndefinedSymbol(StringRef symName, const Elf_Sym *sym) {
+  ELFUndefinedAtom<ELFT> *createUndefinedAtom(StringRef symName,
+                                              const Elf_Sym *sym) {
     return new (_readerStorage) ELFUndefinedAtom<ELFT>(*this, symName, sym);
   }
 
@@ -460,16 +460,16 @@ public:
   /// \brief add an undefined atom
   virtual Atom *addUndefinedAtom(StringRef symbolName) {
     assert(!symbolName.empty() && "UndefinedAtoms must have a name");
-    Elf_Sym *symbol = new (this->_readerStorage) Elf_Sym;
-    symbol->st_name = 0;
-    symbol->st_value = 0;
-    symbol->st_shndx = llvm::ELF::SHN_UNDEF;
-    symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_NOTYPE);
-    symbol->setVisibility(llvm::ELF::STV_DEFAULT);
-    symbol->st_size = 0;
-    auto newAtom = this->handleUndefinedSymbol(symbolName, symbol);
-    this->_undefinedAtoms._atoms.push_back(*newAtom);
-    return *newAtom;
+    Elf_Sym *sym = new (this->_readerStorage) Elf_Sym;
+    sym->st_name = 0;
+    sym->st_value = 0;
+    sym->st_shndx = llvm::ELF::SHN_UNDEF;
+    sym->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_NOTYPE);
+    sym->setVisibility(llvm::ELF::STV_DEFAULT);
+    sym->st_size = 0;
+    ELFUndefinedAtom<ELFT> *atom = this->createUndefinedAtom(symbolName, sym);
+    this->_undefinedAtoms._atoms.push_back(atom);
+    return atom;
   }
 
   // cannot add atoms to Runtime file
@@ -646,10 +646,10 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
             std::make_pair(&*SymI, wrapAtom->getValue()));
         continue;
       }
-      ErrorOr<ELFUndefinedAtom<ELFT> *> undefAtom =
-          handleUndefinedSymbol(*symbolName, &*SymI);
-      _undefinedAtoms._atoms.push_back(*undefAtom);
-      _symbolToAtomMapping.insert(std::make_pair(&*SymI, *undefAtom));
+      ELFUndefinedAtom<ELFT> *undefAtom =
+          createUndefinedAtom(*symbolName, &*SymI);
+      _undefinedAtoms._atoms.push_back(undefAtom);
+      _symbolToAtomMapping.insert(std::make_pair(&*SymI, undefAtom));
     } else if (isCommonSymbol(&*SymI)) {
       ErrorOr<ELFCommonAtom<ELFT> *> commonAtom =
           handleCommonSymbol(*symbolName, &*SymI);
