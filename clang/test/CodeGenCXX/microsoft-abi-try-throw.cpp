@@ -21,7 +21,7 @@ int main() {
     external(); // TRY: invoke void @"\01?external@@YAXXZ"
   } catch (int) {
     rv = 1;
-    // TRY: call void @llvm.eh.begincatch(i8* %{{.*}}, i8* %{{.*}})
+    // TRY: call void @llvm.eh.begincatch(i8* %{{.*}}, i8* null)
     // TRY: call void @llvm.eh.endcatch()
   }
 #endif

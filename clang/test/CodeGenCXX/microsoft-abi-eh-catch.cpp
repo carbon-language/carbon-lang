@@ -48,6 +48,18 @@ extern "C" void catch_int() {
 // WIN64: call void @handle_exception(i8* %[[e_i8]])
 // WIN64: call void @llvm.eh.endcatch()
 
+extern "C" void catch_int_unnamed() {
+  try {
+    might_throw();
+  } catch (int) {
+  }
+}
+
+// WIN64-LABEL: define void @catch_int_unnamed()
+// WIN64: landingpad { i8*, i32 }
+// WIN64: call void @llvm.eh.begincatch(i8* %{{.*}}, i8* null)
+// WIN64: call void @llvm.eh.endcatch()
+
 struct A {
   A();
   A(const A &o);

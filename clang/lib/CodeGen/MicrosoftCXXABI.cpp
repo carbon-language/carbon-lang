@@ -809,7 +809,9 @@ void MicrosoftCXXABI::emitBeginCatch(CodeGenFunction &CGF,
   llvm::Function *BeginCatch =
       CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_begincatch);
 
-  if (!CatchParam) {
+  // If this is a catch-all or the catch parameter is unnamed, we don't need to
+  // emit an alloca to the object.
+  if (!CatchParam || !CatchParam->getDeclName()) {
     llvm::Value *Args[2] = {Exn, llvm::Constant::getNullValue(CGF.Int8PtrTy)};
     CGF.EmitNounwindRuntimeCall(BeginCatch, Args);
     CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalAndEHCleanup);
