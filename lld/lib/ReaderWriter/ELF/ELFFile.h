@@ -450,7 +450,7 @@ public:
       : ELFFile<ELFT>(name, ctx) {}
 
   /// \brief add a global absolute atom
-  virtual Atom *addAbsoluteAtom(StringRef symbolName) {
+  virtual void addAbsoluteAtom(StringRef symbolName) {
     assert(!symbolName.empty() && "AbsoluteAtoms must have a name");
     Elf_Sym *sym = new (this->_readerStorage) Elf_Sym;
     sym->st_name = 0;
@@ -461,11 +461,10 @@ public:
     sym->st_size = 0;
     ELFAbsoluteAtom<ELFT> *atom = this->createAbsoluteAtom(symbolName, sym, -1);
     this->_absoluteAtoms._atoms.push_back(atom);
-    return atom;
   }
 
   /// \brief add an undefined atom
-  virtual Atom *addUndefinedAtom(StringRef symbolName) {
+  virtual void addUndefinedAtom(StringRef symbolName) {
     assert(!symbolName.empty() && "UndefinedAtoms must have a name");
     Elf_Sym *sym = new (this->_readerStorage) Elf_Sym;
     sym->st_name = 0;
@@ -476,7 +475,6 @@ public:
     sym->st_size = 0;
     ELFUndefinedAtom<ELFT> *atom = this->createUndefinedAtom(symbolName, sym);
     this->_undefinedAtoms._atoms.push_back(atom);
-    return atom;
   }
 
   // cannot add atoms to Runtime file

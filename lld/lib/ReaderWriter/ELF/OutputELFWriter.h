@@ -37,7 +37,7 @@ public:
   SymbolFile(ELFLinkingContext &ctx)
       : RuntimeFile<ELFT>(ctx, "Dynamic absolute symbols") {}
 
-  Atom *addUndefinedAtom(StringRef) override {
+  void addUndefinedAtom(StringRef) override {
     llvm_unreachable("Cannot add undefined atoms to resolve undefined symbols");
   }
 
