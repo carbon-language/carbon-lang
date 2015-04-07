@@ -25,10 +25,12 @@ void OrcX86_64::insertResolverBlock(
   // address.
   const unsigned X86_64_TrampolineLength = 6;
 
-  // List of x86-64 GPRs to save.
-  std::array<const char *, 11> GPRs = {{
-      "rbx", "r12", "r13", "r14", "r15", // Callee saved (rbp preserved below).
-      "rdi", "rsi", "rdx", "rcx", "r8", "r9",   // Int args.
+  // List of x86-64 GPRs to save. Note - RBP saved separately below.
+  std::array<const char *, 14> GPRs = {{
+      "rax", "rbx", "rcx", "rdx",
+      "rsi", "rdi", "r8", "r9",
+      "r10", "r11", "r12", "r13",
+      "r14", "r15"
     }};
 
   // Address of the executeCompileCallback function.
@@ -62,7 +64,12 @@ void OrcX86_64::insertResolverBlock(
     AsmStream << "  pushq   %" << GPR << "\n";
 
   // Store floating-point state with FXSAVE.
-  AsmStream << "  subq    $512, %rsp\n"
+  // Note: We need to keep the stack 16-byte aligned, so if we've emitted an odd
+  //       number of 64-bit pushes so far (GPRs.size() plus 1 for RBP) then add
+  //       an extra 64 bits of padding to the FXSave area.
+  unsigned Padding = (GPRs.size() + 1) % 2 ? 8 : 0;
+  unsigned FXSaveSize = 512 + Padding;
+  AsmStream << "  subq    $" << FXSaveSize << ", %rsp\n"
             << "  fxsave  (%rsp)\n"
 
   // Load callback manager address, compute trampoline address, call JIT.
@@ -79,7 +86,7 @@ void OrcX86_64::insertResolverBlock(
 
   // Restore the floating point state.
             << "  fxrstor (%rsp)\n"
-            << "  addq    $512, %rsp\n";
+            << "  addq    $" << FXSaveSize << ", %rsp\n";
 
   for (const auto &GPR : make_range(GPRs.rbegin(), GPRs.rend()))
     AsmStream << "  popq    %" << GPR << "\n";
