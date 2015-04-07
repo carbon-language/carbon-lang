@@ -386,8 +386,12 @@ ConnectionFileDescriptor::Read(void *dst, size_t dst_len, uint32_t timeout_usec,
         status = eConnectionStatusTimedOut;
         return 0;
     }
-    else if (m_shutting_down)
-        return eConnectionStatusError;
+
+    if (m_shutting_down)
+    {
+        status = eConnectionStatusError;
+        return 0;
+    }
 
     status = BytesAvailable(timeout_usec, error_ptr);
     if (status != eConnectionStatusSuccess)
