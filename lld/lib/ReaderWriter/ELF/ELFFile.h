@@ -925,13 +925,12 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
 template <class ELFT> std::error_code ELFFile<ELFT>::createAtomsFromContext() {
   if (!_useWrap)
     return std::error_code();
-  // Steps :-
+  // Steps:
   // a) Create an undefined atom for the symbol specified by the --wrap option,
-  // as that
-  // may be needed to be pulled from an archive.
+  //    as that may be needed to be pulled from an archive.
   // b) Create an undefined atom for __wrap_<symbolname>.
   // c) All references to the symbol specified by wrap should point to
-  // __wrap_<symbolname>
+  //    __wrap_<symbolname>
   // d) All references to __real_symbol should point to the <symbol>
   for (auto &wrapsym : _ctx.wrapCalls()) {
     StringRef wrapStr = wrapsym.getKey();
