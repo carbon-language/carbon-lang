@@ -339,6 +339,10 @@ public:
     bool needsChecking(unsigned I, unsigned J,
                        const SmallVectorImpl<int> *PtrPartition) const;
 
+    /// \brief Return true if any pointer requires run-time checking according
+    /// to needsChecking.
+    bool needsAnyChecking(const SmallVectorImpl<int> *PtrPartition) const;
+
     /// \brief Print the list run-time memory checks necessary.
     ///
     /// If \p PtrPartition is set, it contains the partition number for

@@ -177,6 +177,17 @@ void LoopAccessInfo::RuntimePointerCheck::print(
       }
 }
 
+bool LoopAccessInfo::RuntimePointerCheck::needsAnyChecking(
+    const SmallVectorImpl<int> *PtrPartition) const {
+  unsigned NumPointers = Pointers.size();
+
+  for (unsigned I = 0; I < NumPointers; ++I)
+    for (unsigned J = I + 1; J < NumPointers; ++J)
+      if (needsChecking(I, J, PtrPartition))
+        return true;
+  return false;
+}
+
 namespace {
 /// \brief Analyses memory accesses in a loop.
 ///
