@@ -425,6 +425,178 @@
               is built correctly and is available to the default Python interpreter, run:
             </p>
             <code>&gt; python -c 'import lldb'</code></p>
+
+            <h2>Cross-compiling LLDB</h2>
+            <p>
+              In order to debug remote targets running different architectures than your host, you
+              will need to compile LLDB (or at least the server component) for the target. While
+              the easiest solution is to just compile it locally on the target, this is often not
+              feasable, and in these cases you will need to cross-compile LLDB on your host.
+            </p>
+
+            <p>
+              Cross-compilation is often a daunting task and has a lot of quirks which depend on
+              the exact host and target architectures, so it is not possible to give a universal
+              guide which will work on all platforms. However, here we try to provide an overview
+              of the cross-compilation process along with the main things you should look out for.
+            </p>
+
+            <p>
+              First, you will need a working toolchain which is capable of producing binaries for
+              the target architecture. Since you already have a checkout of clang and lldb, you
+              can compile a host version of clang in a separate folder and use that.
+              Alternatively you can use system clang or even cross-gcc if your distribution
+              provides such packages (e.g., <code>g++-aarch64-linux-gnu</code> on Ubuntu). On
+              Android, a working toolchain can be produced by downloading the Android NDK and
+              running the contained <code>make-standalone-toolchain.sh</code> script.
+            </p>
+
+            <p>
+              Next, you will need a copy of the required target headers and libraries on your
+              host. The libraries can be usually obtained by copying from the target machine,
+              however the headers are often not found there, especially in case of embedded
+              platforms. In this case, you will need to obtain them from another source, either
+              a cross-package if one is available, or cross-compiling the respective library from
+              source. Fortunately the list of LLDB dependencies is not big and if you are only
+              interested in the server component, you can reduce this even further by passing the
+              appropriate cmake options, such as:
+            </p>
+            <code>
+              -DLLDB_DISABLE_LIBEDIT=1<br/>
+              -DLLDB_DISABLE_CURSES=1<br/>
+              -DLLDB_DISABLE_PYTHON=1<br/>
+              -DLLVM_ENABLE_TERMINFO=0
+            </code>
+            <p>
+              In this case you, will often not need anything other than the standard C and C++
+              libraries.
+            </p>
+
+            <p>
+              In the case of Android, all required headers and libraries are provided by the
+              aforementioned <code>make-standalone-toolchain.sh</code> script.
+            </p>
+
+            <p>
+              Once all of the dependencies are in place, it's just a matter of configuring the
+              build system with the locations and arguments of all the necessary tools. The most
+              important cmake options here are:
+            </p>
+            <dl>
+                <dt>CMAKE_CROSSCOMPILING</dt>
+                <dd>Set to 1 to enable cross-compilation.</dd>
+
+                <dt>CMAKE_LIBRARY_ARCHITECTURE</dt>
+                <dd>Affects the cmake search path when looking for libraries. You may need to set
+                this to your architecture triple if you do not specify all your include and
+                library paths explicitly.</dd>
+
+                <dt>CMAKE_C_COMPILER, CMAKE_CXX_COMPILER</dt>
+                <dd>C and C++ compilers for the target architecture</dd>
+
+                <dt>CMAKE_C_FLAGS, CMAKE_CXX_FLAGS</dt>
+                <dd>The flags for the C and C++ target compilers. You may need to specify the
+                exact target cpu and abi besides the include paths for the target headers.</dd>
+
+                <dt>CMAKE_EXE_LINKER_FLAGS</dt>
+                <dd>The flags to be passed to the linker. Usually just a list of library search
+                paths referencing the target libraries.</dd>
+
+                <dt>LLVM_TABLEGEN, CLANG_TABLEGEN</dt>
+                <dd>Paths to llvm-tblgen and clang-tblgen for the <em>host</em> architecture. If
+                you already have built clang for the host, you can point these variables to the
+                executables in your build directory. If not, you will need to build the
+                llvm-tblgen and clang-tblgen host targets at least.<dd>
+
+                <dt>LLVM_HOST_TRIPLE</dt>
+                <dd>The triple of the system that lldb (or lldb-server) will run on. Not setting
+                this (or setting it incorrectly) can cause a lot of issues with remote debugging
+                as a lot of the choices lldb makes depend on the triple reported by the remote
+                platform.</dd>
+            </dl>
+            <p>
+              You can of course also specify the usual cmake options like CMAKE_BUILD_TYPE, etc.
+            </p>
+
+            <h3>Example 1: Cross-compiling for linux arm64 on Ubuntu host</h3>
+
+            <p>
+              Ubuntu already provides the packages necessary to cross-compile LLDB for arm64. It
+              is sufficient to install pacakges gcc-aarch64-linux-gnu, g++-aarch64-linux-gnu,
+              binutils-aarch64-linux-gnu. Then it is possible to prepare the cmake build with the
+              following parameters:
+            </p>
+            <code>
+              -DCMAKE_CROSSCOMPILING=1 \<br/>
+              -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \<br/>
+              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \<br/>
+              -DLLVM_HOST_TRIPLE=aarch64-unknown-linux-gnu \<br/>
+              -DLLVM_TABLEGEN=&lt;path-to-host&gt;/bin/llvm-tblgen \<br/>
+              -DCLANG_TABLEGEN=&lt;path-to-host&gt;/bin/clang-tblgen \<br/>
+              -DLLDB_DISABLE_PYTHON=1 \<br/>
+              -DLLDB_DISABLE_LIBEDIT=1 \<br/>
+              -DLLDB_DISABLE_CURSES=1
+            </code>
+
+            <p>
+              An alternative (and recommended) way to compile LLDB is with clang. Unfortunately,
+              clang is not able to find all the include paths necessary for a successful
+              cross-compile, so we need to help it with a couple of CFLAGS options. In my case it
+              was sufficient to add the following arguments to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS
+              (in addition to changing CMAKE_C(XX)_COMPILER to point to clang compilers):
+            </p>
+            <code>
+              -target aarch64-linux-gnu \<br/>
+              -I /usr/aarch64-linux-gnu/include/c++/4.8.2/aarch64-linux-gnu \<br/>
+              -I /usr/aarch64-linux-gnu/include
+            </code>
+
+            <p>
+              If you wanted to build a full version of LLDB and avoid passing
+              -DLLDB_DISABLE_PYTHON and other options, you would need to obtain the target
+              versions of the respective libraries. The easiest way to achive this is to use the
+              <code>qemu-debootstrap</code> utility, which can prepare a system image using qemu
+              and chroot to simulate the target environment. Then you can install the necessary
+              packages in this environment (python-dev, libedit-dev, etc.) and point your
+              compiler to use them using the correct -I and -L arguments.
+            </p>
+
+            <h3>Example 2: Cross-compiling for Android on Linux</h3>
+
+            <p>
+              All tools needed to build LLDB for android are available in the Android NDK. For
+              example, we can produce an x86 toolchain along with all the libraries and headers
+              by running
+            </p>
+            <code>
+              ./build/tools/make-standalone-toolchain.sh \<br/>
+              --platform=android-21 \<br/>
+              --toolchain=x86-4.9 \<br/>
+              --install-dir=$HOME/Toolchains/x86-android-toolchain
+            </code>
+            <p>
+              from inside the unzipped NDK. Toolchains for other architectures can be produced in
+              a similar manner.
+            </p>
+
+            <p>
+              For Android we provide a Android.cmake script which sets a lot of the required
+              options automatically. A cmake build can therefore be prepared with the following parameters:
+            </p>
+            <code>
+              -DCMAKE_TOOLCHAIN_FILE=cmake/platforms/Android.cmake \<br/>
+              -DANDROID_TOOLCHAIN_DIR=$HOME/Toolchains/x86-android-toolchain \<br/>
+              -DANDROID_ABI=x86 \<br/>
+              -DLLVM_HOST_TRIPLE=i386-unknown-linux-android \<br/>
+              -DLLVM_TABLEGEN=&lt;path-to-host&gt;/bin/llvm-tblgen \<br/>
+              -DCLANG_TABLEGEN=&lt;path-to-host&gt;/bin/clang-tblgen
+            </code>
+
+            <p>
+              Note that the full LLVM build is not functional on android yet, so simply runing
+              <code>ninja</code> will not work. You will need to manually specify the target you
+              want to build: <code>lldb</code>, <code>lldb-server</code>, etc.
+            </p>
           </div>
           <div class="postfooter"></div>
         </div>
