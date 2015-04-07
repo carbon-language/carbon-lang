@@ -112,13 +112,7 @@ class ELFObjectWriter : public MCObjectWriter {
                               const MCAsmLayout &Layout,
                               const MCSectionELF &Section);
 
-    /*static bool isFixupKindX86RIPRel(unsigned Kind) {
-      return Kind == X86::reloc_riprel_4byte ||
-        Kind == X86::reloc_riprel_4byte_movq_load;
-    }*/
-
-    /// ELFSymbolData - Helper struct for containing some precomputed
-    /// information on symbols.
+    /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
       MCSymbolData *SymbolData;
       uint64_t StringIndex;
