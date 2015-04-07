@@ -84,3 +84,16 @@ template <typename T> void n(T) {
   static_assert(sizeof(k) == alignof(long long), "");
 }
 template void n(long long);
+
+namespace PR22042 {
+template <typename T>
+void Fun(T A) {
+  typedef int __attribute__((__aligned__(A))) T1; // expected-error {{requested alignment is dependent but declaration is not dependent}}
+  int k1[__alignof__(T1)];
+}
+
+template <int N>
+struct S {
+  typedef __attribute__((aligned(N))) int Field[sizeof(N)]; // expected-error {{requested alignment is dependent but declaration is not dependent}}
+};
+}
