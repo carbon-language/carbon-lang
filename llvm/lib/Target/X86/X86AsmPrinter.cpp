@@ -722,28 +722,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     }
   }
 
-  if (TT.isOSBinFormatELF()) {
-    const TargetLoweringObjectFileELF &TLOFELF =
-      static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
-
-    MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
-
-    // Output stubs for external and common global variables.
-    MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
-    if (!Stubs.empty()) {
-      OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
-      const DataLayout *TD = TM.getDataLayout();
-
-      for (const auto &Stub : Stubs) {
-        OutStreamer.EmitLabel(Stub.first);
-        OutStreamer.EmitSymbolValue(Stub.second.getPointer(),
-                                    TD->getPointerSize());
-      }
-      Stubs.clear();
-    }
-
+  if (TT.isOSBinFormatELF())
     SM.serializeToStackMapSection();
-  }
 }
 
 //===----------------------------------------------------------------------===//

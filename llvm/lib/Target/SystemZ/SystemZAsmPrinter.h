@@ -38,7 +38,6 @@ public:
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                              unsigned AsmVariant, const char *ExtraCode,
                              raw_ostream &OS) override;
-  void EmitEndOfAsmFile(Module &M) override;
 };
 } // end namespace llvm
 

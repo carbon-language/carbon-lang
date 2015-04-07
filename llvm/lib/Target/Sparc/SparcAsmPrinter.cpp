@@ -58,7 +58,6 @@ namespace {
 
     void EmitFunctionBodyStart() override;
     void EmitInstruction(const MachineInstr *MI) override;
-    void EmitEndOfAsmFile(Module &M) override;
 
     static const char *getRegisterName(unsigned RegNo) {
       return SparcInstPrinter::getRegisterName(RegNo);
@@ -440,23 +439,6 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   O << ']';
 
   return false;
-}
-
-void SparcAsmPrinter::EmitEndOfAsmFile(Module &M) {
-  const TargetLoweringObjectFileELF &TLOFELF =
-    static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
-  MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
-
-  // Generate stubs for global variables.
-  MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
-  if (!Stubs.empty()) {
-    OutStreamer.SwitchSection(TLOFELF.getDataSection());
-    unsigned PtrSize = TM.getDataLayout()->getPointerSize(0);
-    for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-      OutStreamer.EmitLabel(Stubs[i].first);
-      OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(), PtrSize);
-    }
-  }
 }
 
 // Force static initialization.
