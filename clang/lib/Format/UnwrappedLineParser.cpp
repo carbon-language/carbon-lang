@@ -841,9 +841,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       if (Line->Tokens.size() == 1 &&
           // JS doesn't have macros, and within classes colons indicate fields,
           // not labels.
-          (Style.Language != FormatStyle::LK_JavaScript ||
-           !Line->MustBeDeclaration)) {
-        if (FormatTok->Tok.is(tok::colon)) {
+          Style.Language != FormatStyle::LK_JavaScript) {
+        if (FormatTok->Tok.is(tok::colon) && !Line->MustBeDeclaration) {
           parseLabel();
           return;
         }
