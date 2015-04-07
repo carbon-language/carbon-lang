@@ -34,9 +34,6 @@ template <class ELFT> class ELFFile : public SimpleFile {
   // A Map is used to hold the atoms that have been divided up
   // after reading the section that contains Merge String attributes
   struct MergeSectionKey {
-    MergeSectionKey(const Elf_Shdr *shdr, int64_t offset)
-        : _shdr(shdr), _offset(offset) {}
-    // Data members
     const Elf_Shdr *_shdr;
     int64_t _offset;
   };
@@ -343,7 +340,7 @@ protected:
                                          unsigned int offset) {
     ELFMergeAtom<ELFT> *mergeAtom = new (_readerStorage)
         ELFMergeAtom<ELFT>(*this, sectionName, sectionHdr, contentData, offset);
-    const MergeSectionKey mergedSectionKey(sectionHdr, offset);
+    const MergeSectionKey mergedSectionKey = {sectionHdr, offset};
     if (_mergedSectionMap.find(mergedSectionKey) == _mergedSectionMap.end())
       _mergedSectionMap.insert(std::make_pair(mergedSectionKey, mergeAtom));
     return mergeAtom;
@@ -1008,7 +1005,7 @@ void ELFFile<ELFT>::updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
   if (addend < 0)
     addend = 0;
 
-  const MergeSectionKey ms(shdr, addend);
+  const MergeSectionKey ms = {shdr, addend};
   auto msec = _mergedSectionMap.find(ms);
   if (msec != _mergedSectionMap.end()) {
     ref->setTarget(msec->second);
