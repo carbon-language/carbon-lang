@@ -1831,6 +1831,15 @@ public:
     return Elements[I];
   }
 
+  /// \brief Return whether this is a piece of an aggregate variable.
+  bool isBitPiece() const;
+
+  /// \brief Return the offset of this piece in bits.
+  uint64_t getBitPieceOffset() const;
+
+  /// \brief Return the size of this piece in bits.
+  uint64_t getBitPieceSize() const;
+
   typedef ArrayRef<uint64_t>::iterator element_iterator;
   element_iterator elements_begin() const { return getElements().begin(); }
   element_iterator elements_end() const { return getElements().end(); }

@@ -65,21 +65,6 @@ unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
   return Ty.getSizeInBits();
 }
 
-bool DIExpression::isBitPiece() const {
-  unsigned N = getNumElements();
-  return N >=3 && getElement(N-3) == dwarf::DW_OP_bit_piece;
-}
-
-uint64_t DIExpression::getBitPieceOffset() const {
-  assert(isBitPiece() && "not a piece");
-  return getElement(getNumElements()-2);
-}
-
-uint64_t DIExpression::getBitPieceSize() const {
-  assert(isBitPiece() && "not a piece");
-  return getElement(getNumElements()-1);
-}
-
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//

@@ -860,18 +860,11 @@ public:
     return *get();
   }
 
-  /// \brief Return the number of elements in the complex expression.
   unsigned getNumElements() const { return get()->getNumElements(); }
-
-  /// \brief return the Idx'th complex address element.
   uint64_t getElement(unsigned I) const { return get()->getElement(I); }
-
-  /// \brief Return whether this is a piece of an aggregate variable.
-  bool isBitPiece() const;
-  /// \brief Return the offset of this piece in bits.
-  uint64_t getBitPieceOffset() const;
-  /// \brief Return the size of this piece in bits.
-  uint64_t getBitPieceSize() const;
+  bool isBitPiece() const { return get()->isBitPiece(); }
+  uint64_t getBitPieceOffset() const { return get()->getBitPieceOffset(); }
+  uint64_t getBitPieceSize() const { return get()->getBitPieceSize(); }
 };
 
 /// \brief This object holds location information.

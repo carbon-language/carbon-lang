@@ -445,6 +445,24 @@ bool MDExpression::isValid() const {
   return true;
 }
 
+bool MDExpression::isBitPiece() const {
+  assert(isValid() && "Expected valid expression");
+  if (unsigned N = getNumElements())
+    if (N >= 3)
+      return getElement(N - 3) == dwarf::DW_OP_bit_piece;
+  return false;
+}
+
+uint64_t MDExpression::getBitPieceOffset() const {
+  assert(isBitPiece() && "Expected bit piece");
+  return getElement(getNumElements() - 2);
+}
+
+uint64_t MDExpression::getBitPieceSize() const {
+  assert(isBitPiece() && "Expected bit piece");
+  return getElement(getNumElements() - 1);
+}
+
 MDObjCProperty *MDObjCProperty::getImpl(
     LLVMContext &Context, MDString *Name, Metadata *File, unsigned Line,
     MDString *GetterName, MDString *SetterName, unsigned Attributes,
