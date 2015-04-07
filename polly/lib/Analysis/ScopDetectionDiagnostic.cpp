@@ -72,7 +72,7 @@ void getDebugLocation(const Region *R, unsigned &LineBegin, unsigned &LineEnd,
       if (!DL)
         continue;
 
-      DIScope Scope(DL.getScope());
+      DIScope Scope = cast<MDScope>(DL.getScope());
 
       if (FileName.empty())
         FileName = Scope.getFilename();
