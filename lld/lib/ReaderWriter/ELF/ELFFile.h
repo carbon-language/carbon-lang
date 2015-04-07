@@ -250,9 +250,8 @@ protected:
 
   /// Handle creation of atoms for .gnu.linkonce sections.
   std::error_code handleGnuLinkOnceSection(
-      StringRef sectionName,
-      llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
-      const Elf_Shdr *shdr);
+      const Elf_Shdr *section,
+      llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection);
 
   // Handle COMDAT scetions.
   std::error_code handleSectionGroup(
@@ -670,10 +669,6 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
   // the kindGroupChild reference.
   llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> atomsForSection;
 
-  // group sections have a mapping of the section header to the
-  // signature/section.
-  llvm::DenseMap<const Elf_Shdr *, StringRef> linkOnceSections;
-
   // Contains a list of comdat sections for a group.
   for (auto &i : _sectionSymbols) {
     const Elf_Shdr *section = i.first;
@@ -697,15 +692,8 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
     if (isGroupSection(section))
       continue;
 
-    bool addAtoms = true;
-
-    if (isGnuLinkOnceSection(*sectionName)) {
-      linkOnceSections.insert({section, *sectionName});
-      addAtoms = false;
-    }
-
-    if (isSectionMemberOfGroup(section))
-      addAtoms = false;
+    bool addAtoms = (!isGnuLinkOnceSection(*sectionName) &&
+                     !isSectionMemberOfGroup(section));
 
     if (handleSectionWithNoSymbols(section, symbols)) {
       ELFDefinedAtom<ELFT> *newAtom =
@@ -828,14 +816,12 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
     }
   }
 
-  for (auto &i : _sectionSymbols) {
-    const Elf_Shdr *section = i.first;
-    if (std::error_code ec = handleSectionGroup(section, atomsForSection))
+  for (auto &i : _sectionSymbols)
+    if (std::error_code ec = handleSectionGroup(i.first, atomsForSection))
       return ec;
-  }
-
-  for (auto &sect : linkOnceSections)
-    handleGnuLinkOnceSection(sect.second, atomsForSection, sect.first);
+  for (auto &i : _sectionSymbols)
+    if (std::error_code ec = handleGnuLinkOnceSection(i.first, atomsForSection))
+      return ec;
 
   updateReferences();
   return std::error_code();
@@ -843,24 +829,28 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
 
 template <class ELFT>
 std::error_code ELFFile<ELFT>::handleGnuLinkOnceSection(
-    StringRef signature,
-    llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
-    const Elf_Shdr *shdr) {
-  // TODO: Check for errors.
+    const Elf_Shdr *section,
+    llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection) {
+  ErrorOr<StringRef> sectionName = this->getSectionName(section);
+  if (std::error_code ec = sectionName.getError())
+    return ec;
+  if (!isGnuLinkOnceSection(*sectionName))
+    return std::error_code();
+
   unsigned int referenceStart = _references.size();
   std::vector<ELFReference<ELFT> *> refs;
-  for (auto ha : atomsForSection[signature]) {
-    _groupChild[ha->symbol()] = std::make_pair(signature, shdr);
+  for (auto ha : atomsForSection[*sectionName]) {
+    _groupChild[ha->symbol()] = std::make_pair(*sectionName, section);
     ELFReference<ELFT> *ref =
         new (_readerStorage) ELFReference<ELFT>(lld::Reference::kindGroupChild);
     ref->setTarget(ha);
     refs.push_back(ref);
   }
-  atomsForSection[signature].clear();
+  atomsForSection[*sectionName].clear();
   // Create a gnu linkonce atom.
   ELFDefinedAtom<ELFT> *atom = createDefinedAtom(
-      signature, signature, nullptr, shdr, ArrayRef<uint8_t>(), referenceStart,
-      _references.size(), _references);
+      *sectionName, *sectionName, nullptr, section, ArrayRef<uint8_t>(),
+      referenceStart, _references.size(), _references);
   atom->setOrdinal(++_ordinal);
   _definedAtoms._atoms.push_back(atom);
   for (auto reference : refs)
