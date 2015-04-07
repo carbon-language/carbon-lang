@@ -45,6 +45,9 @@ protected:
     bool
     KillSpawnedProcess (lldb::pid_t pid) override;
 
+    void
+    DeleteForwardPort (lldb::pid_t pid);
+
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformAndroidRemoteGDBServer);
 

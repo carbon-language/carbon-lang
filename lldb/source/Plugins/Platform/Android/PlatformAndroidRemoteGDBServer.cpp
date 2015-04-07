@@ -80,13 +80,7 @@ PlatformAndroidRemoteGDBServer::LaunchGDBserverAndGetPort (lldb::pid_t &pid)
 bool
 PlatformAndroidRemoteGDBServer::KillSpawnedProcess (lldb::pid_t pid)
 {
-    auto it = m_port_forwards.find (pid);
-    if (it != m_port_forwards.end ())
-    {
-        DeleteForwardPortWithAdb (it->second.first, it->second.second);
-        m_port_forwards.erase (it);
-    }
-
+    DeleteForwardPort (pid);
     return m_gdb_client.KillSpawnedProcess (pid);
 }
 
@@ -109,18 +103,35 @@ PlatformAndroidRemoteGDBServer::ConnectRemote (Args& args)
 
     m_port_forwards[g_remote_platform_pid] = std::make_pair (port, device_id);
 
-    return PlatformRemoteGDBServer::ConnectRemote (args);
+    error = PlatformRemoteGDBServer::ConnectRemote (args);
+    if (error.Fail ())
+        DeleteForwardPort (g_remote_platform_pid);
+
+    return error;
 }
 
 Error
 PlatformAndroidRemoteGDBServer::DisconnectRemote ()
 {
-    auto it = m_port_forwards.find (g_remote_platform_pid);
-    if (it != m_port_forwards.end ())
-    {
-        DeleteForwardPortWithAdb (it->second.first, it->second.second);
-        m_port_forwards.erase (it);
-    }
-
+    DeleteForwardPort (g_remote_platform_pid);
     return PlatformRemoteGDBServer::DisconnectRemote ();
+}
+
+void
+PlatformAndroidRemoteGDBServer::DeleteForwardPort (lldb::pid_t pid)
+{
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+
+    auto it = m_port_forwards.find (pid);
+    if (it == m_port_forwards.end ())
+        return;
+
+    const auto& forward_val = it->second;
+    const auto error = DeleteForwardPortWithAdb (forward_val.first, forward_val.second);
+    if (error.Fail ()) {
+        if (log)
+            log->Printf ("Failed to delete port forwarding (pid=%" PRIu64 ", port=%d, device=%s): %s",
+                         pid, forward_val.first, forward_val.second.c_str (), error.AsCString ());
+    }
+    m_port_forwards.erase (it);
 }
