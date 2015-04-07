@@ -67,6 +67,7 @@ math/asinh.cl
 math/asinpi.cl
 math/atan.cl
 math/atan2.cl
+math/atanh.cl
 math/atanpi.cl
 math/copysign.cl
 math/cos.cl
