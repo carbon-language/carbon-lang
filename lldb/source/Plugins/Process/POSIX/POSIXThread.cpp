@@ -512,7 +512,10 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     if (bp_site)
     {
         lldb::break_id_t bp_id = bp_site->GetID();
-        if (bp_site->ValidForThisThread(this))
+        // If we have an operating system plug-in, we might have set a thread specific breakpoint using the
+        // operating system thread ID, so we can't make any assumptions about the thread ID so we must always
+        // report the breakpoint regardless of the thread.
+        if (bp_site->ValidForThisThread(this) || thread.GetProcess()->GetOperatingSystem () != NULL)
             SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
         else
         {
