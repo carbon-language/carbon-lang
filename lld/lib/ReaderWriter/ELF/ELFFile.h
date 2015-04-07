@@ -318,8 +318,8 @@ protected:
   }
 
   /// Process the common symbol and create an atom for it.
-  virtual ErrorOr<ELFCommonAtom<ELFT> *>
-  handleCommonSymbol(StringRef symName, const Elf_Sym *sym) {
+  virtual ELFCommonAtom<ELFT> *createCommonAtom(StringRef symName,
+                                                const Elf_Sym *sym) {
     return new (_readerStorage) ELFCommonAtom<ELFT>(*this, symName, sym);
   }
 
@@ -347,9 +347,10 @@ protected:
   }
 
   /// Process the Merge string and create an atom for it.
-  ErrorOr<ELFMergeAtom<ELFT> *>
-  handleMergeString(StringRef sectionName, const Elf_Shdr *sectionHdr,
-                    ArrayRef<uint8_t> contentData, unsigned int offset) {
+  ELFMergeAtom<ELFT> *createMergedString(StringRef sectionName,
+                                         const Elf_Shdr *sectionHdr,
+                                         ArrayRef<uint8_t> contentData,
+                                         unsigned int offset) {
     ELFMergeAtom<ELFT> *mergeAtom = new (_readerStorage)
         ELFMergeAtom<ELFT>(*this, sectionName, sectionHdr, contentData, offset);
     const MergeSectionKey mergedSectionKey(sectionHdr, offset);
@@ -607,11 +608,11 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createMergeableAtoms() {
   for (const MergeString *tai : tokens) {
     ArrayRef<uint8_t> content((const uint8_t *)tai->_string.data(),
                               tai->_string.size());
-    ErrorOr<ELFMergeAtom<ELFT> *> mergeAtom =
-        handleMergeString(tai->_sectionName, tai->_shdr, content, tai->_offset);
-    (*mergeAtom)->setOrdinal(++_ordinal);
-    _definedAtoms._atoms.push_back(*mergeAtom);
-    _mergeAtoms.push_back(*mergeAtom);
+    ELFMergeAtom<ELFT> *atom = createMergedString(tai->_sectionName, tai->_shdr,
+                                                  content, tai->_offset);
+    atom->setOrdinal(++_ordinal);
+    _definedAtoms._atoms.push_back(atom);
+    _mergeAtoms.push_back(atom);
   }
   return std::error_code();
 }
@@ -651,11 +652,10 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
       _undefinedAtoms._atoms.push_back(undefAtom);
       _symbolToAtomMapping.insert(std::make_pair(&*SymI, undefAtom));
     } else if (isCommonSymbol(&*SymI)) {
-      ErrorOr<ELFCommonAtom<ELFT> *> commonAtom =
-          handleCommonSymbol(*symbolName, &*SymI);
-      (*commonAtom)->setOrdinal(++_ordinal);
-      _definedAtoms._atoms.push_back(*commonAtom);
-      _symbolToAtomMapping.insert(std::make_pair(&*SymI, *commonAtom));
+      ELFCommonAtom<ELFT> *commonAtom = createCommonAtom(*symbolName, &*SymI);
+      commonAtom->setOrdinal(++_ordinal);
+      _definedAtoms._atoms.push_back(commonAtom);
+      _symbolToAtomMapping.insert(std::make_pair(&*SymI, commonAtom));
     } else if (isDefinedSymbol(&*SymI)) {
       _sectionSymbols[section].push_back(SymI);
     } else {

@@ -140,8 +140,8 @@ public:
   }
 
   /// Process the Common symbol and create an atom for it.
-  ErrorOr<ELFCommonAtom<ELFT> *>
-  handleCommonSymbol(StringRef symName, const Elf_Sym *sym) override {
+  ELFCommonAtom<ELFT> *createCommonAtom(StringRef symName,
+                                        const Elf_Sym *sym) override {
     return new (this->_readerStorage)
         HexagonELFCommonAtom<ELFT>(*this, symName, sym);
   }
