@@ -120,19 +120,19 @@ public:
   }
 
   const atom_collection<DefinedAtom> &defined() const override {
-    return _definedAtoms;
+    return _noDefinedAtoms;
   }
 
   const atom_collection<UndefinedAtom> &undefined() const override {
-    return _undefinedAtoms;
+    return _noUndefinedAtoms;
   }
 
   const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
-    return _sharedLibraryAtoms;
+    return _noSharedLibraryAtoms;
   }
 
   const atom_collection<AbsoluteAtom> &absolute() const override {
-    return _absoluteAtoms;
+    return _noAbsoluteAtoms;
   }
 
   /// Returns a set of all defined symbols in the archive.
@@ -251,10 +251,6 @@ private:
   std::unique_ptr<Archive> _archive;
   MemberMap _symbolMemberMap;
   InstantiatedSet _membersInstantiated;
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   bool _logLoading;
   std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
   std::map<const char *, std::unique_ptr<Future<File *>>> _preloaded;
