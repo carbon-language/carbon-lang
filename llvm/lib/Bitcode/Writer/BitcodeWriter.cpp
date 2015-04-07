@@ -892,10 +892,10 @@ static void WriteMDCompositeType(const MDCompositeType *N,
   Record.push_back(N->getAlignInBits());
   Record.push_back(N->getOffsetInBits());
   Record.push_back(N->getFlags());
-  Record.push_back(VE.getMetadataOrNullID(N->getElements()));
+  Record.push_back(VE.getMetadataOrNullID(N->getElements().get()));
   Record.push_back(N->getRuntimeLang());
   Record.push_back(VE.getMetadataOrNullID(N->getVTableHolder()));
-  Record.push_back(VE.getMetadataOrNullID(N->getTemplateParams()));
+  Record.push_back(VE.getMetadataOrNullID(N->getTemplateParams().get()));
   Record.push_back(VE.getMetadataOrNullID(N->getRawIdentifier()));
 
   Stream.EmitRecord(bitc::METADATA_COMPOSITE_TYPE, Record, Abbrev);
@@ -909,7 +909,7 @@ static void WriteMDSubroutineType(const MDSubroutineType *N,
                                   unsigned Abbrev) {
   Record.push_back(N->isDistinct());
   Record.push_back(N->getFlags());
-  Record.push_back(VE.getMetadataOrNullID(N->getTypeArray()));
+  Record.push_back(VE.getMetadataOrNullID(N->getTypeArray().get()));
 
   Stream.EmitRecord(bitc::METADATA_SUBROUTINE_TYPE, Record, Abbrev);
   Record.clear();
@@ -940,11 +940,11 @@ static void WriteMDCompileUnit(const MDCompileUnit *N,
   Record.push_back(N->getRuntimeVersion());
   Record.push_back(VE.getMetadataOrNullID(N->getRawSplitDebugFilename()));
   Record.push_back(N->getEmissionKind());
-  Record.push_back(VE.getMetadataOrNullID(N->getEnumTypes()));
-  Record.push_back(VE.getMetadataOrNullID(N->getRetainedTypes()));
-  Record.push_back(VE.getMetadataOrNullID(N->getSubprograms()));
-  Record.push_back(VE.getMetadataOrNullID(N->getGlobalVariables()));
-  Record.push_back(VE.getMetadataOrNullID(N->getImportedEntities()));
+  Record.push_back(VE.getMetadataOrNullID(N->getEnumTypes().get()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRetainedTypes().get()));
+  Record.push_back(VE.getMetadataOrNullID(N->getSubprograms().get()));
+  Record.push_back(VE.getMetadataOrNullID(N->getGlobalVariables().get()));
+  Record.push_back(VE.getMetadataOrNullID(N->getImportedEntities().get()));
 
   Stream.EmitRecord(bitc::METADATA_COMPILE_UNIT, Record, Abbrev);
   Record.clear();
@@ -971,9 +971,9 @@ static void WriteMDSubprogram(const MDSubprogram *N,
   Record.push_back(N->getFlags());
   Record.push_back(N->isOptimized());
   Record.push_back(VE.getMetadataOrNullID(N->getFunction()));
-  Record.push_back(VE.getMetadataOrNullID(N->getTemplateParams()));
+  Record.push_back(VE.getMetadataOrNullID(N->getTemplateParams().get()));
   Record.push_back(VE.getMetadataOrNullID(N->getDeclaration()));
-  Record.push_back(VE.getMetadataOrNullID(N->getVariables()));
+  Record.push_back(VE.getMetadataOrNullID(N->getVariables().get()));
 
   Stream.EmitRecord(bitc::METADATA_SUBPROGRAM, Record, Abbrev);
   Record.clear();

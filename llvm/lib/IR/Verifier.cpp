@@ -110,6 +110,10 @@ private:
     OS << '\n';
   }
 
+  template <class T> void Write(const MDTupleTypedArrayWrapper<T> &MD) {
+    Write(MD.get());
+  }
+
   void Write(const NamedMDNode *NMD) {
     if (!NMD)
       return;

@@ -97,9 +97,13 @@ class MDTypeRefArray {
 
 public:
   MDTypeRefArray(const MDTuple *N) : N(N) {}
-  operator MDTuple *() const { return const_cast<MDTuple *>(N); }
-  MDTuple *operator->() const { return const_cast<MDTuple *>(N); }
-  MDTuple &operator*() const { return *const_cast<MDTuple *>(N); }
+
+  explicit operator bool() const { return get(); }
+  explicit operator MDTuple *() const { return get(); }
+
+  MDTuple *get() const { return const_cast<MDTuple *>(N); }
+  MDTuple *operator->() const { return get(); }
+  MDTuple &operator*() const { return *get(); }
 
   // FIXME: Fix callers and remove condition on N.
   unsigned size() const { return N ? N->getNumOperands() : 0u; }
@@ -746,7 +750,7 @@ protected:
   ~MDCompositeTypeBase() {}
 
 public:
-  MDTuple *getElements() const {
+  DebugNodeArray getElements() const {
     return cast_or_null<MDTuple>(getRawElements());
   }
   MDTypeRef getVTableHolder() const { return MDTypeRef(getRawVTableHolder()); }
@@ -767,20 +771,19 @@ public:
   /// this will be RAUW'ed and deleted.  Use a \a TrackingMDRef to keep track
   /// of its movement if necessary.
   /// @{
-  void replaceElements(MDTuple *Elements) {
+  void replaceElements(DebugNodeArray Elements) {
 #ifndef NDEBUG
-    if (auto *Old = cast_or_null<MDTuple>(getElements()))
-      for (const auto &Op : Old->operands())
-        assert(std::find(Elements->op_begin(), Elements->op_end(), Op) &&
-               "Lost a member during member list replacement");
+    for (DebugNode *Op : getElements())
+      assert(std::find(Elements->op_begin(), Elements->op_end(), Op) &&
+             "Lost a member during member list replacement");
 #endif
-    replaceOperandWith(4, Elements);
+    replaceOperandWith(4, Elements.get());
   }
   void replaceVTableHolder(MDTypeRef VTableHolder) {
     replaceOperandWith(5, VTableHolder);
   }
   void replaceTemplateParams(MDTemplateParameterArray TemplateParams) {
-    replaceOperandWith(6, TemplateParams);
+    replaceOperandWith(6, TemplateParams.get());
   }
   /// @}
 
@@ -811,14 +814,14 @@ class MDCompositeType : public MDCompositeTypeBase {
   getImpl(LLVMContext &Context, unsigned Tag, StringRef Name, Metadata *File,
           unsigned Line, MDScopeRef Scope, MDTypeRef BaseType,
           uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-          uint64_t Flags, MDTuple *Elements, unsigned RuntimeLang,
+          uint64_t Flags, DebugNodeArray Elements, unsigned RuntimeLang,
           MDTypeRef VTableHolder, MDTemplateParameterArray TemplateParams,
           StringRef Identifier, StorageType Storage, bool ShouldCreate = true) {
-    return getImpl(Context, Tag, getCanonicalMDString(Context, Name), File,
-                   Line, Scope, BaseType, SizeInBits, AlignInBits, OffsetInBits,
-                   Flags, Elements, RuntimeLang, VTableHolder, TemplateParams,
-                   getCanonicalMDString(Context, Identifier), Storage,
-                   ShouldCreate);
+    return getImpl(
+        Context, Tag, getCanonicalMDString(Context, Name), File, Line, Scope,
+        BaseType, SizeInBits, AlignInBits, OffsetInBits, Flags, Elements.get(),
+        RuntimeLang, VTableHolder, TemplateParams.get(),
+        getCanonicalMDString(Context, Identifier), Storage, ShouldCreate);
   }
   static MDCompositeType *
   getImpl(LLVMContext &Context, unsigned Tag, MDString *Name, Metadata *File,
@@ -841,8 +844,8 @@ public:
                     (unsigned Tag, StringRef Name, MDFile *File, unsigned Line,
                      MDScopeRef Scope, MDTypeRef BaseType, uint64_t SizeInBits,
                      uint64_t AlignInBits, uint64_t OffsetInBits,
-                     unsigned Flags, MDTuple *Elements, unsigned RuntimeLang,
-                     MDTypeRef VTableHolder,
+                     unsigned Flags, DebugNodeArray Elements,
+                     unsigned RuntimeLang, MDTypeRef VTableHolder,
                      MDTemplateParameterArray TemplateParams = nullptr,
                      StringRef Identifier = ""),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
@@ -891,6 +894,12 @@ class MDSubroutineType : public MDCompositeTypeBase {
   ~MDSubroutineType() {}
 
   static MDSubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
+                                   MDTypeRefArray TypeArray,
+                                   StorageType Storage,
+                                   bool ShouldCreate = true) {
+    return getImpl(Context, Flags, TypeArray.get(), Storage, ShouldCreate);
+  }
+  static MDSubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
                                    Metadata *TypeArray, StorageType Storage,
                                    bool ShouldCreate = true);
 
@@ -899,12 +908,17 @@ class MDSubroutineType : public MDCompositeTypeBase {
   }
 
 public:
+  DEFINE_MDNODE_GET(MDSubroutineType,
+                    (unsigned Flags, MDTypeRefArray TypeArray),
+                    (Flags, TypeArray))
   DEFINE_MDNODE_GET(MDSubroutineType, (unsigned Flags, Metadata *TypeArray),
                     (Flags, TypeArray))
 
   TempMDSubroutineType clone() const { return cloneImpl(); }
 
-  MDTypeRefArray getTypeArray() const { return getElements(); }
+  MDTypeRefArray getTypeArray() const {
+    return cast_or_null<MDTuple>(getRawTypeArray());
+  }
   Metadata *getRawTypeArray() const { return getRawElements(); }
 
   static bool classof(const Metadata *MD) {
@@ -934,16 +948,17 @@ class MDCompileUnit : public MDScope {
   getImpl(LLVMContext &Context, unsigned SourceLanguage, MDFile *File,
           StringRef Producer, bool IsOptimized, StringRef Flags,
           unsigned RuntimeVersion, StringRef SplitDebugFilename,
-          unsigned EmissionKind, MDTuple *EnumTypes, MDTuple *RetainedTypes,
-          MDTuple *Subprograms, MDTuple *GlobalVariables,
-          MDTuple *ImportedEntities, StorageType Storage,
+          unsigned EmissionKind, MDCompositeTypeArray EnumTypes,
+          MDTypeArray RetainedTypes, MDSubprogramArray Subprograms,
+          MDGlobalVariableArray GlobalVariables,
+          MDImportedEntityArray ImportedEntities, StorageType Storage,
           bool ShouldCreate = true) {
-    return getImpl(Context, SourceLanguage, File,
-                   getCanonicalMDString(Context, Producer), IsOptimized,
-                   getCanonicalMDString(Context, Flags), RuntimeVersion,
-                   getCanonicalMDString(Context, SplitDebugFilename),
-                   EmissionKind, EnumTypes, RetainedTypes, Subprograms,
-                   GlobalVariables, ImportedEntities, Storage, ShouldCreate);
+    return getImpl(
+        Context, SourceLanguage, File, getCanonicalMDString(Context, Producer),
+        IsOptimized, getCanonicalMDString(Context, Flags), RuntimeVersion,
+        getCanonicalMDString(Context, SplitDebugFilename), EmissionKind,
+        EnumTypes.get(), RetainedTypes.get(), Subprograms.get(),
+        GlobalVariables.get(), ImportedEntities.get(), Storage, ShouldCreate);
   }
   static MDCompileUnit *
   getImpl(LLVMContext &Context, unsigned SourceLanguage, Metadata *File,
@@ -967,9 +982,10 @@ public:
                     (unsigned SourceLanguage, MDFile *File, StringRef Producer,
                      bool IsOptimized, StringRef Flags, unsigned RuntimeVersion,
                      StringRef SplitDebugFilename, unsigned EmissionKind,
-                     MDTuple *EnumTypes, MDTuple *RetainedTypes,
-                     MDTuple *Subprograms, MDTuple *GlobalVariables,
-                     MDTuple *ImportedEntities),
+                     MDCompositeTypeArray EnumTypes, MDTypeArray RetainedTypes,
+                     MDSubprogramArray Subprograms,
+                     MDGlobalVariableArray GlobalVariables,
+                     MDImportedEntityArray ImportedEntities),
                     (SourceLanguage, File, Producer, IsOptimized, Flags,
                      RuntimeVersion, SplitDebugFilename, EmissionKind,
                      EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
@@ -1028,8 +1044,12 @@ public:
   /// deleted on a uniquing collision.  In practice, uniquing collisions on \a
   /// MDCompileUnit should be fairly rare.
   /// @{
-  void replaceSubprograms(MDTuple *N) { replaceOperandWith(6, N); }
-  void replaceGlobalVariables(MDTuple *N) { replaceOperandWith(7, N); }
+  void replaceSubprograms(MDSubprogramArray N) {
+    replaceOperandWith(6, N.get());
+  }
+  void replaceGlobalVariables(MDGlobalVariableArray N) {
+    replaceOperandWith(7, N.get());
+  }
   /// @}
 
   static bool classof(const Metadata *MD) {
@@ -1179,7 +1199,7 @@ class MDSubprogram : public MDLocalScope {
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
                    IsLocalToUnit, IsDefinition, ScopeLine, ContainingType,
                    Virtuality, VirtualIndex, Flags, IsOptimized, Function,
-                   TemplateParams, Declaration, Variables, Storage,
+                   TemplateParams.get(), Declaration, Variables.get(), Storage,
                    ShouldCreate);
   }
   static MDSubprogram *

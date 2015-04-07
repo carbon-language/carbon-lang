@@ -1069,9 +1069,27 @@ template <class T> class MDTupleTypedArrayWrapper {
 public:
   MDTupleTypedArrayWrapper() = default;
   MDTupleTypedArrayWrapper(const MDTuple *N) : N(N) {}
-  operator MDTuple *() const { return const_cast<MDTuple *>(N); }
-  MDTuple *operator->() const { return const_cast<MDTuple *>(N); }
-  MDTuple &operator*() const { return *const_cast<MDTuple *>(N); }
+
+  template <class U>
+  MDTupleTypedArrayWrapper(
+      const MDTupleTypedArrayWrapper<U> &Other,
+      typename std::enable_if<std::is_convertible<U *, T *>::value>::type * =
+          nullptr)
+      : N(Other.get()) {}
+
+  template <class U>
+  explicit MDTupleTypedArrayWrapper(
+      const U &Tuple,
+      typename std::enable_if<
+          std::is_constructible<const MDTuple *, U>::value>::type * = nullptr)
+      : N(Tuple) {}
+
+  explicit operator bool() const { return get(); }
+  explicit operator MDTuple *() const { return get(); }
+
+  MDTuple *get() const { return const_cast<MDTuple *>(N); }
+  MDTuple *operator->() const { return get(); }
+  MDTuple &operator*() const { return *get(); }
 
   // FIXME: Fix callers and remove condition on N.
   unsigned size() const { return N ? N->getNumOperands() : 0u; }

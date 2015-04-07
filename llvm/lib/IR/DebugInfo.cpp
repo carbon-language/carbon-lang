@@ -206,11 +206,11 @@ StringRef DIScope::getDirectory() const {
 }
 
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
-  get()->replaceSubprograms(Subprograms);
+  get()->replaceSubprograms(MDSubprogramArray(Subprograms));
 }
 
 void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
-  get()->replaceGlobalVariables(GlobalVariables);
+  get()->replaceGlobalVariables(MDGlobalVariableArray(GlobalVariables));
 }
 
 DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,

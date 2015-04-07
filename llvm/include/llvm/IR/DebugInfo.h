@@ -439,9 +439,7 @@ public:
     return DITypeRef::get(get()->getVTableHolder());
   }
 
-  DIArray getTemplateParams() const {
-    return DIArray(get()->getTemplateParams());
-  }
+  DIArray getTemplateParams() const { return get()->getTemplateParams(); }
   MDString *getIdentifier() const { return get()->getRawIdentifier(); }
 };
 
@@ -585,7 +583,6 @@ public:
   DISubprogram getFunctionDeclaration() const {
     return DISubprogram(get()->getDeclaration());
   }
-  MDNode *getVariablesNodes() const { return getVariables(); }
   DIArray getVariables() const { return DIArray(get()->getVariables()); }
 
   unsigned isArtificial() const { return get()->isArtificial(); }

@@ -1068,10 +1068,10 @@ TEST_F(MDCompositeTypeTest, get) {
   EXPECT_EQ(AlignInBits, N->getAlignInBits());
   EXPECT_EQ(OffsetInBits, N->getOffsetInBits());
   EXPECT_EQ(Flags, N->getFlags());
-  EXPECT_EQ(Elements, N->getElements());
+  EXPECT_EQ(Elements, N->getElements().get());
   EXPECT_EQ(RuntimeLang, N->getRuntimeLang());
   EXPECT_EQ(VTableHolder, N->getVTableHolder());
-  EXPECT_EQ(TemplateParams, N->getTemplateParams());
+  EXPECT_EQ(TemplateParams, N->getTemplateParams().get());
   EXPECT_EQ(Identifier, N->getIdentifier());
 
   EXPECT_EQ(N, MDCompositeType::get(Context, Tag, Name, File, Line, Scope,
@@ -1200,11 +1200,11 @@ TEST_F(MDCompositeTypeTest, replaceOperands) {
                                  nullptr, nullptr, Identifier);
 
   auto *Elements = MDTuple::getDistinct(Context, None);
-  EXPECT_EQ(nullptr, N->getElements());
+  EXPECT_EQ(nullptr, N->getElements().get());
   N->replaceElements(Elements);
-  EXPECT_EQ(Elements, N->getElements());
+  EXPECT_EQ(Elements, N->getElements().get());
   N->replaceElements(nullptr);
-  EXPECT_EQ(nullptr, N->getElements());
+  EXPECT_EQ(nullptr, N->getElements().get());
 
   MDTypeRef VTableHolder = getCompositeType();
   EXPECT_EQ(nullptr, N->getVTableHolder());
@@ -1214,11 +1214,11 @@ TEST_F(MDCompositeTypeTest, replaceOperands) {
   EXPECT_EQ(nullptr, N->getVTableHolder());
 
   auto *TemplateParams = MDTuple::getDistinct(Context, None);
-  EXPECT_EQ(nullptr, N->getTemplateParams());
+  EXPECT_EQ(nullptr, N->getTemplateParams().get());
   N->replaceTemplateParams(TemplateParams);
-  EXPECT_EQ(TemplateParams, N->getTemplateParams());
+  EXPECT_EQ(TemplateParams, N->getTemplateParams().get());
   N->replaceTemplateParams(nullptr);
-  EXPECT_EQ(nullptr, N->getTemplateParams());
+  EXPECT_EQ(nullptr, N->getTemplateParams().get());
 }
 
 typedef MetadataTest MDSubroutineTypeTest;
@@ -1230,7 +1230,7 @@ TEST_F(MDSubroutineTypeTest, get) {
   auto *N = MDSubroutineType::get(Context, Flags, TypeArray);
   EXPECT_EQ(dwarf::DW_TAG_subroutine_type, N->getTag());
   EXPECT_EQ(Flags, N->getFlags());
-  EXPECT_EQ(TypeArray, N->getTypeArray());
+  EXPECT_EQ(TypeArray, N->getTypeArray().get());
   EXPECT_EQ(N, MDSubroutineType::get(Context, Flags, TypeArray));
 
   EXPECT_NE(N, MDSubroutineType::get(Context, Flags + 1, TypeArray));
@@ -1245,7 +1245,7 @@ TEST_F(MDSubroutineTypeTest, get) {
   EXPECT_EQ("", N->getName());
   EXPECT_EQ(nullptr, N->getBaseType());
   EXPECT_EQ(nullptr, N->getVTableHolder());
-  EXPECT_EQ(nullptr, N->getTemplateParams());
+  EXPECT_EQ(nullptr, N->getTemplateParams().get());
   EXPECT_EQ("", N->getIdentifier());
 }
 
@@ -1304,11 +1304,11 @@ TEST_F(MDCompileUnitTest, get) {
   EXPECT_EQ(RuntimeVersion, N->getRuntimeVersion());
   EXPECT_EQ(SplitDebugFilename, N->getSplitDebugFilename());
   EXPECT_EQ(EmissionKind, N->getEmissionKind());
-  EXPECT_EQ(EnumTypes, N->getEnumTypes());
-  EXPECT_EQ(RetainedTypes, N->getRetainedTypes());
-  EXPECT_EQ(Subprograms, N->getSubprograms());
-  EXPECT_EQ(GlobalVariables, N->getGlobalVariables());
-  EXPECT_EQ(ImportedEntities, N->getImportedEntities());
+  EXPECT_EQ(EnumTypes, N->getEnumTypes().get());
+  EXPECT_EQ(RetainedTypes, N->getRetainedTypes().get());
+  EXPECT_EQ(Subprograms, N->getSubprograms().get());
+  EXPECT_EQ(GlobalVariables, N->getGlobalVariables().get());
+  EXPECT_EQ(ImportedEntities, N->getImportedEntities().get());
   EXPECT_EQ(N, MDCompileUnit::get(Context, SourceLanguage, File, Producer,
                                   IsOptimized, Flags, RuntimeVersion,
                                   SplitDebugFilename, EmissionKind, EnumTypes,
@@ -1400,18 +1400,18 @@ TEST_F(MDCompileUnitTest, replaceArrays) {
       RetainedTypes, nullptr, nullptr, ImportedEntities);
 
   auto *Subprograms = MDTuple::getDistinct(Context, None);
-  EXPECT_EQ(nullptr, N->getSubprograms());
+  EXPECT_EQ(nullptr, N->getSubprograms().get());
   N->replaceSubprograms(Subprograms);
-  EXPECT_EQ(Subprograms, N->getSubprograms());
+  EXPECT_EQ(Subprograms, N->getSubprograms().get());
   N->replaceSubprograms(nullptr);
-  EXPECT_EQ(nullptr, N->getSubprograms());
+  EXPECT_EQ(nullptr, N->getSubprograms().get());
 
   auto *GlobalVariables = MDTuple::getDistinct(Context, None);
-  EXPECT_EQ(nullptr, N->getGlobalVariables());
+  EXPECT_EQ(nullptr, N->getGlobalVariables().get());
   N->replaceGlobalVariables(GlobalVariables);
-  EXPECT_EQ(GlobalVariables, N->getGlobalVariables());
+  EXPECT_EQ(GlobalVariables, N->getGlobalVariables().get());
   N->replaceGlobalVariables(nullptr);
-  EXPECT_EQ(nullptr, N->getGlobalVariables());
+  EXPECT_EQ(nullptr, N->getGlobalVariables().get());
 }
 
 typedef MetadataTest MDSubprogramTest;
@@ -1457,9 +1457,9 @@ TEST_F(MDSubprogramTest, get) {
   EXPECT_EQ(Flags, N->getFlags());
   EXPECT_EQ(IsOptimized, N->isOptimized());
   EXPECT_EQ(Function, N->getFunction());
-  EXPECT_EQ(TemplateParams, N->getTemplateParams());
+  EXPECT_EQ(TemplateParams, N->getTemplateParams().get());
   EXPECT_EQ(Declaration, N->getDeclaration());
-  EXPECT_EQ(Variables, N->getVariables());
+  EXPECT_EQ(Variables, N->getVariables().get());
   EXPECT_EQ(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
                                  ContainingType, Virtuality, VirtualIndex,

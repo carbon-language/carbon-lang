@@ -75,7 +75,7 @@ void DIBuilder::trackIfUnresolved(MDNode *N) {
 
 void DIBuilder::finalize() {
   DIArray Enums = getOrCreateArray(AllEnumTypes);
-  TempEnumTypes->replaceAllUsesWith(Enums);
+  TempEnumTypes->replaceAllUsesWith(Enums.get());
 
   SmallVector<Metadata *, 16> RetainValues;
   // Declarations and definitions of the same type may be retained. Some
@@ -87,27 +87,27 @@ void DIBuilder::finalize() {
     if (RetainSet.insert(AllRetainTypes[I]).second)
       RetainValues.push_back(AllRetainTypes[I]);
   DIArray RetainTypes = getOrCreateArray(RetainValues);
-  TempRetainTypes->replaceAllUsesWith(RetainTypes);
+  TempRetainTypes->replaceAllUsesWith(RetainTypes.get());
 
   DIArray SPs = getOrCreateArray(AllSubprograms);
-  TempSubprograms->replaceAllUsesWith(SPs);
+  TempSubprograms->replaceAllUsesWith(SPs.get());
   for (unsigned i = 0, e = SPs.size(); i != e; ++i) {
     DISubprogram SP = cast<MDSubprogram>(SPs[i]);
-    if (MDNode *Temp = SP.getVariablesNodes()) {
+    if (MDNode *Temp = SP.getVariables().get()) {
       const auto &PV = PreservedVariables.lookup(SP);
       SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
       DIArray AV = getOrCreateArray(Variables);
-      Temp->replaceAllUsesWith(AV);
+      Temp->replaceAllUsesWith(AV.get());
     }
   }
 
   DIArray GVs = getOrCreateArray(AllGVs);
-  TempGVs->replaceAllUsesWith(GVs);
+  TempGVs->replaceAllUsesWith(GVs.get());
 
   SmallVector<Metadata *, 16> RetainValuesI(AllImportedModules.begin(),
                                             AllImportedModules.end());
   DIArray IMs = getOrCreateArray(RetainValuesI);
-  TempImportedModules->replaceAllUsesWith(IMs);
+  TempImportedModules->replaceAllUsesWith(IMs.get());
 
   // Now that all temp nodes have been replaced or deleted, resolve remaining
   // cycles.
@@ -383,7 +383,7 @@ DIBuilder::createTemplateParameterPack(DIDescriptor Context, StringRef Name,
                                        DIType Ty, DIArray Val) {
   return createTemplateValueParameterHelper(
       VMContext, dwarf::DW_TAG_GNU_template_parameter_pack, Context, Name, Ty,
-      Val);
+      Val.get());
 }
 
 DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
@@ -872,7 +872,7 @@ void DIBuilder::replaceArrays(DICompositeType &T, DIArray Elements,
   // arrays explicitly if they're unresolved, or else the cycles will be
   // orphaned.
   if (Elements)
-    trackIfUnresolved(Elements);
+    trackIfUnresolved(Elements.get());
   if (TParams)
-    trackIfUnresolved(TParams);
+    trackIfUnresolved(TParams.get());
 }
