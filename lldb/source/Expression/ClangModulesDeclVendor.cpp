@@ -80,6 +80,7 @@ namespace {
         llvm::IntrusiveRefCntPtr<clang::CompilerInvocation> m_compiler_invocation;
         std::unique_ptr<clang::CompilerInstance>            m_compiler_instance;
         std::unique_ptr<clang::Parser>                      m_parser;
+        size_t                                              m_source_location_index = 0; // used to give name components fake SourceLocations
     };
 }
 
@@ -177,13 +178,12 @@ ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
     llvm::SmallVector<std::pair<clang::IdentifierInfo *, clang::SourceLocation>, 4> clang_path;
     
     {
-        size_t source_loc_counter = 0;
         clang::SourceManager &source_manager = m_compiler_instance->getASTContext().getSourceManager();
         
         for (llvm::StringRef &component : path)
         {
             clang_path.push_back(std::make_pair(&m_compiler_instance->getASTContext().Idents.get(component),
-                                                source_manager.getLocForStartOfFile(source_manager.getMainFileID()).getLocWithOffset(source_loc_counter++)));
+                                                source_manager.getLocForStartOfFile(source_manager.getMainFileID()).getLocWithOffset(m_source_location_index++)));
         }
     }
     

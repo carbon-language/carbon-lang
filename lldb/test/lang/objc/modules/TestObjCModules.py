@@ -67,8 +67,14 @@ class ObjCModulesTestCase(TestBase):
 
         self.common_setup()
 
-        self.expect("expr @import Foundation; 3", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr @import Darwin; 3", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["int", "3"])
+
+        self.expect("expr getpid()", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["pid_t"])
+
+        self.expect("expr @import Foundation; 4", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["int", "4"])
 
         self.expect("expr string.length", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSUInteger", "5"])
