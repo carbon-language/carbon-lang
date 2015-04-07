@@ -860,7 +860,7 @@ void DIBuilder::replaceArrays(DICompositeType &T, DIArray Elements,
     if (Elements)
       N->replaceElements(Elements);
     if (TParams)
-      N->replaceTemplateParams(MDTemplateParameterArray(TParams));
+      N->replaceTemplateParams(TParams.get());
     T = N.get();
   }
 
