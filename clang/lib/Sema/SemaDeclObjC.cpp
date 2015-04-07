@@ -2240,8 +2240,14 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List,
     if (getLangOpts().Modules && !getLangOpts().CurrentModule.empty())
       continue;
 
-    if (!MatchTwoMethodDeclarations(Method, List->getMethod()))
+    if (!MatchTwoMethodDeclarations(Method, List->getMethod())) {
+      // Even if two method types do not match, we would like to say
+      // there is more than one declaration so unavailability/deprecated
+      // warning is not too noisy.
+      if (!Method->isDefined())
+        List->setHasMoreThanOneDecl(true);
       continue;
+    }
 
     ObjCMethodDecl *PrevObjCMethod = List->getMethod();
 
