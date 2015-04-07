@@ -148,7 +148,7 @@ def lo5AllOne : PatLeaf<(i32 imm), [{
 
 // t2addrmode_imm12  := reg + imm12
 def t2addrmode_imm12_asmoperand : AsmOperandClass {let Name="MemUImm12Offset";}
-def t2addrmode_imm12 : Operand<i32>,
+def t2addrmode_imm12 : MemOperand,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
   let PrintMethod = "printAddrModeImm12Operand<false>";
   let EncoderMethod = "getAddrModeImm12OpValue";
@@ -178,7 +178,7 @@ def t2adrlabel : Operand<i32> {
 
 // t2addrmode_posimm8  := reg + imm8
 def MemPosImm8OffsetAsmOperand : AsmOperandClass {let Name="MemPosImm8Offset";}
-def t2addrmode_posimm8 : Operand<i32> {
+def t2addrmode_posimm8 : MemOperand {
   let PrintMethod = "printT2AddrModeImm8Operand<false>";
   let EncoderMethod = "getT2AddrModeImm8OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm8";
@@ -188,7 +188,7 @@ def t2addrmode_posimm8 : Operand<i32> {
 
 // t2addrmode_negimm8  := reg - imm8
 def MemNegImm8OffsetAsmOperand : AsmOperandClass {let Name="MemNegImm8Offset";}
-def t2addrmode_negimm8 : Operand<i32>,
+def t2addrmode_negimm8 : MemOperand,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand<false>";
   let EncoderMethod = "getT2AddrModeImm8OpValue";
@@ -199,7 +199,7 @@ def t2addrmode_negimm8 : Operand<i32>,
 
 // t2addrmode_imm8  := reg +/- imm8
 def MemImm8OffsetAsmOperand : AsmOperandClass { let Name = "MemImm8Offset"; }
-class T2AddrMode_Imm8 : Operand<i32>,
+class T2AddrMode_Imm8 : MemOperand,
                         ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let EncoderMethod = "getT2AddrModeImm8OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm8";
@@ -215,7 +215,7 @@ def t2addrmode_imm8_pre : T2AddrMode_Imm8 {
   let PrintMethod = "printT2AddrModeImm8Operand<true>";
 }
 
-def t2am_imm8_offset : Operand<i32>,
+def t2am_imm8_offset : MemOperand,
                        ComplexPattern<i32, 1, "SelectT2AddrModeImm8Offset",
                                       [], [SDNPWantRoot]> {
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
@@ -225,7 +225,7 @@ def t2am_imm8_offset : Operand<i32>,
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
 def MemImm8s4OffsetAsmOperand : AsmOperandClass {let Name = "MemImm8s4Offset";}
-class T2AddrMode_Imm8s4 : Operand<i32> {
+class T2AddrMode_Imm8s4 : MemOperand {
   let EncoderMethod = "getT2AddrModeImm8s4OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm8s4";
   let ParserMatchClass = MemImm8s4OffsetAsmOperand;
@@ -241,7 +241,7 @@ def t2addrmode_imm8s4_pre : T2AddrMode_Imm8s4 {
 }
 
 def t2am_imm8s4_offset_asmoperand : AsmOperandClass { let Name = "Imm8s4"; }
-def t2am_imm8s4_offset : Operand<i32> {
+def t2am_imm8s4_offset : MemOperand {
   let PrintMethod = "printT2AddrModeImm8s4OffsetOperand";
   let EncoderMethod = "getT2Imm8s4OpValue";
   let DecoderMethod = "DecodeT2Imm8S4";
@@ -251,7 +251,7 @@ def t2am_imm8s4_offset : Operand<i32> {
 def MemImm0_1020s4OffsetAsmOperand : AsmOperandClass {
   let Name = "MemImm0_1020s4Offset";
 }
-def t2addrmode_imm0_1020s4 : Operand<i32>,
+def t2addrmode_imm0_1020s4 : MemOperand,
                          ComplexPattern<i32, 2, "SelectT2AddrModeExclusive"> {
   let PrintMethod = "printT2AddrModeImm0_1020s4Operand";
   let EncoderMethod = "getT2AddrModeImm0_1020s4OpValue";
@@ -262,7 +262,7 @@ def t2addrmode_imm0_1020s4 : Operand<i32>,
 
 // t2addrmode_so_reg  := reg + (reg << imm2)
 def t2addrmode_so_reg_asmoperand : AsmOperandClass {let Name="T2MemRegOffset";}
-def t2addrmode_so_reg : Operand<i32>,
+def t2addrmode_so_reg : MemOperand,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
   let PrintMethod = "printT2AddrModeSoRegOperand";
   let EncoderMethod = "getT2AddrModeSORegOpValue";
@@ -273,13 +273,13 @@ def t2addrmode_so_reg : Operand<i32>,
 
 // Addresses for the TBB/TBH instructions.
 def addrmode_tbb_asmoperand : AsmOperandClass { let Name = "MemTBB"; }
-def addrmode_tbb : Operand<i32> {
+def addrmode_tbb : MemOperand {
   let PrintMethod = "printAddrModeTBB";
   let ParserMatchClass = addrmode_tbb_asmoperand;
   let MIOperandInfo = (ops GPR:$Rn, rGPR:$Rm);
 }
 def addrmode_tbh_asmoperand : AsmOperandClass { let Name = "MemTBH"; }
-def addrmode_tbh : Operand<i32> {
+def addrmode_tbh : MemOperand {
   let PrintMethod = "printAddrModeTBH";
   let ParserMatchClass = addrmode_tbh_asmoperand;
   let MIOperandInfo = (ops GPR:$Rn, rGPR:$Rm);
