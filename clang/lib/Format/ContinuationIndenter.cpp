@@ -849,7 +849,8 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   bool NoLineBreak = State.Stack.back().NoLineBreak ||
                      (Current.is(TT_TemplateOpener) &&
                       State.Stack.back().ContainsUnwrappedBuilder);
-  unsigned NestedBlockIndent = State.Stack.back().NestedBlockIndent;
+  unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
+                                        State.Stack.back().NestedBlockIndent);
   State.Stack.push_back(ParenState(NewIndent, NewIndentLevel,
                                    State.Stack.back().LastSpace,
                                    AvoidBinPacking, NoLineBreak));

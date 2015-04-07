@@ -408,10 +408,9 @@ TEST_F(FormatTestJS, MultipleFunctionLiterals) {
                "      body();\n"
                "    });");
 
-  // FIXME: This is bad, but it used to be formatted correctly by accident.
-  verifyFormat("getSomeLongPromise().then(function(value) {\n"
-               "  body();\n"
-               "}).thenCatch(function(error) { body(); });");
+  verifyFormat("getSomeLongPromise()\n"
+               "    .then(function(value) { body(); })\n"
+               "    .thenCatch(function(error) { body(); });");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

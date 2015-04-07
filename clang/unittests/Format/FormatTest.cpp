@@ -3048,35 +3048,38 @@ TEST_F(FormatTest, FormatsJoinedLinesOnSubsequentRuns) {
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {
-  EXPECT_EQ("functionCall({ int i; });", format(" functionCall ( {int i;} );"));
-  EXPECT_EQ("functionCall({\n"
-            "  int i;\n"
-            "  int j;\n"
-            "});",
-            format(" functionCall ( {int i;int j;} );"));
-  EXPECT_EQ("functionCall({\n"
-            "  int i;\n"
-            "  int j;\n"
-            "}, aaaa, bbbb, cccc);",
-            format(" functionCall ( {int i;int j;},  aaaa,   bbbb, cccc);"));
-  EXPECT_EQ("functionCall(\n"
-            "    {\n"
-            "      int i;\n"
-            "      int j;\n"
-            "    },\n"
-            "    aaaa, bbbb, // comment\n"
-            "    cccc);",
-            format(" functionCall ( {int i;int j;},  aaaa,   bbbb, // comment\n"
-                   "cccc);"));
-  EXPECT_EQ("functionCall(aaaa, bbbb, { int i; });",
-            format(" functionCall (aaaa,   bbbb, {int i;});"));
-  EXPECT_EQ("functionCall(aaaa, bbbb, {\n"
-            "  int i;\n"
-            "  int j;\n"
-            "});",
-            format(" functionCall (aaaa,   bbbb, {int i;int j;});"));
-  EXPECT_EQ("functionCall(aaaa, bbbb, { int i; });",
-            format(" functionCall (aaaa,   bbbb, {int i;});"));
+  verifyFormat("functionCall({ int i; });");
+  verifyFormat("functionCall({\n"
+               "  int i;\n"
+               "  int j;\n"
+               "});");
+  verifyFormat("functionCall({\n"
+               "  int i;\n"
+               "  int j;\n"
+               "}, aaaa, bbbb, cccc);");
+  verifyFormat("functionA(functionB({\n"
+               "            int i;\n"
+               "            int j;\n"
+               "          }),\n"
+               "          aaaa, bbbb, cccc);");
+  verifyFormat("functionCall(\n"
+               "    {\n"
+               "      int i;\n"
+               "      int j;\n"
+               "    },\n"
+               "    aaaa, bbbb, // comment\n"
+               "    cccc);");
+  verifyFormat("functionA(functionB({\n"
+               "            int i;\n"
+               "            int j;\n"
+               "          }),\n"
+               "          aaaa, bbbb, // comment\n"
+               "          cccc);");
+  verifyFormat("functionCall(aaaa, bbbb, { int i; });");
+  verifyFormat("functionCall(aaaa, bbbb, {\n"
+               "  int i;\n"
+               "  int j;\n"
+               "});");
   verifyFormat(
       "Aaa(\n"  // FIXME: There shouldn't be a linebreak here.
       "    {\n"
