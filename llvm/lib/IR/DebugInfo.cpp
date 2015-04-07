@@ -17,7 +17,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
@@ -37,48 +36,6 @@ using namespace llvm::dwarf;
 //===----------------------------------------------------------------------===//
 // DIDescriptor
 //===----------------------------------------------------------------------===//
-
-unsigned DIDescriptor::getFlag(StringRef Flag) {
-  return StringSwitch<unsigned>(Flag)
-#define HANDLE_DI_FLAG(ID, NAME) .Case("DIFlag" #NAME, Flag##NAME)
-#include "llvm/IR/DebugInfoFlags.def"
-      .Default(0);
-}
-
-const char *DIDescriptor::getFlagString(unsigned Flag) {
-  switch (Flag) {
-  default:
-    return "";
-#define HANDLE_DI_FLAG(ID, NAME)                                               \
-  case Flag##NAME:                                                             \
-    return "DIFlag" #NAME;
-#include "llvm/IR/DebugInfoFlags.def"
-  }
-}
-
-unsigned DIDescriptor::splitFlags(unsigned Flags,
-                                  SmallVectorImpl<unsigned> &SplitFlags) {
-  // Accessibility flags need to be specially handled, since they're packed
-  // together.
-  if (unsigned A = Flags & FlagAccessibility) {
-    if (A == FlagPrivate)
-      SplitFlags.push_back(FlagPrivate);
-    else if (A == FlagProtected)
-      SplitFlags.push_back(FlagProtected);
-    else
-      SplitFlags.push_back(FlagPublic);
-    Flags &= ~A;
-  }
-
-#define HANDLE_DI_FLAG(ID, NAME)                                               \
-  if (unsigned Bit = Flags & ID) {                                             \
-    SplitFlags.push_back(Bit);                                                 \
-    Flags &= ~Bit;                                                             \
-  }
-#include "llvm/IR/DebugInfoFlags.def"
-
-  return Flags;
-}
 
 static Metadata *getField(const MDNode *DbgNode, unsigned Elt) {
   if (!DbgNode || Elt >= DbgNode->getNumOperands())

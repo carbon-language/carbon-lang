@@ -3165,7 +3165,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DIFlagField &Result) {
     if (Lex.getKind() != lltok::DIFlag)
       return TokError("expected debug info flag");
 
-    Val = DIDescriptor::getFlag(Lex.getStrVal());
+    Val = DebugNode::getFlag(Lex.getStrVal());
     if (!Val)
       return TokError(Twine("invalid debug info flag flag '") +
                       Lex.getStrVal() + "'");

@@ -1443,11 +1443,11 @@ void MDFieldPrinter::printDIFlags(StringRef Name, unsigned Flags) {
   Out << FS << Name << ": ";
 
   SmallVector<unsigned, 8> SplitFlags;
-  unsigned Extra = DIDescriptor::splitFlags(Flags, SplitFlags);
+  unsigned Extra = DebugNode::splitFlags(Flags, SplitFlags);
 
   FieldSeparator FlagsFS(" | ");
   for (unsigned F : SplitFlags) {
-    const char *StringF = DIDescriptor::getFlagString(F);
+    const char *StringF = DebugNode::getFlagString(F);
     assert(StringF && "Expected valid flag");
     Out << FlagsFS << StringF;
   }

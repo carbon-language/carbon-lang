@@ -175,6 +175,16 @@ public:
     FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic
   };
 
+  static unsigned getFlag(StringRef Flag);
+  static const char *getFlagString(unsigned Flag);
+
+  /// \brief Split up a flags bitfield.
+  ///
+  /// Split \c Flags into \c SplitFlags, a vector of its components.  Returns
+  /// any remaining (unrecognized) bits.
+  static unsigned splitFlags(unsigned Flags,
+                             SmallVectorImpl<unsigned> &SplitFlags);
+
   DebugNodeRef getRef() const { return DebugNodeRef::get(this); }
 
   static bool classof(const Metadata *MD) {
