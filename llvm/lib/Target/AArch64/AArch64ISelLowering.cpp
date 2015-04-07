@@ -3515,49 +3515,10 @@ static bool selectCCOpsAreFMaxCompatible(SDValue Cmp, SDValue Result) {
   return Result->getOpcode() == ISD::FP_EXTEND && Result->getOperand(0) == Cmp;
 }
 
-SDValue AArch64TargetLowering::LowerSELECT(SDValue Op,
-                                           SelectionDAG &DAG) const {
-  SDValue CC = Op->getOperand(0);
-  SDValue TVal = Op->getOperand(1);
-  SDValue FVal = Op->getOperand(2);
-  SDLoc DL(Op);
-
-  unsigned Opc = CC.getOpcode();
-  // Optimize {s|u}{add|sub|mul}.with.overflow feeding into a select
-  // instruction.
-  if (CC.getResNo() == 1 &&
-      (Opc == ISD::SADDO || Opc == ISD::UADDO || Opc == ISD::SSUBO ||
-       Opc == ISD::USUBO || Opc == ISD::SMULO || Opc == ISD::UMULO)) {
-    // Only lower legal XALUO ops.
-    if (!DAG.getTargetLoweringInfo().isTypeLegal(CC->getValueType(0)))
-      return SDValue();
-
-    AArch64CC::CondCode OFCC;
-    SDValue Value, Overflow;
-    std::tie(Value, Overflow) = getAArch64XALUOOp(OFCC, CC.getValue(0), DAG);
-    SDValue CCVal = DAG.getConstant(OFCC, MVT::i32);
-
-    return DAG.getNode(AArch64ISD::CSEL, DL, Op.getValueType(), TVal, FVal,
-                       CCVal, Overflow);
-  }
-
-  if (CC.getOpcode() == ISD::SETCC)
-    return DAG.getSelectCC(DL, CC.getOperand(0), CC.getOperand(1), TVal, FVal,
-                           cast<CondCodeSDNode>(CC.getOperand(2))->get());
-  else
-    return DAG.getSelectCC(DL, CC, DAG.getConstant(0, CC.getValueType()), TVal,
-                           FVal, ISD::SETNE);
-}
-
-SDValue AArch64TargetLowering::LowerSELECT_CC(SDValue Op,
+SDValue AArch64TargetLowering::LowerSELECT_CC(ISD::CondCode CC, SDValue LHS,
+                                              SDValue RHS, SDValue TVal,
+                                              SDValue FVal, SDLoc dl,
                                               SelectionDAG &DAG) const {
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue TVal = Op.getOperand(2);
-  SDValue FVal = Op.getOperand(3);
-  SDLoc dl(Op);
-
   // Handle f128 first, because it will result in a comparison of some RTLIB
   // call result against zero.
   if (LHS.getValueType() == MVT::f128) {
@@ -3665,14 +3626,14 @@ SDValue AArch64TargetLowering::LowerSELECT_CC(SDValue Op,
     SDValue CCVal;
     SDValue Cmp = getAArch64Cmp(LHS, RHS, CC, CCVal, DAG, dl);
 
-    EVT VT = Op.getValueType();
+    EVT VT = TVal.getValueType();
     return DAG.getNode(Opcode, dl, VT, TVal, FVal, CCVal, Cmp);
   }
 
   // Now we know we're dealing with FP values.
   assert(LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64);
   assert(LHS.getValueType() == RHS.getValueType());
-  EVT VT = Op.getValueType();
+  EVT VT = TVal.getValueType();
 
   // Try to match this select into a max/min operation, which have dedicated
   // opcode in the instruction set.
@@ -3731,6 +3692,58 @@ SDValue AArch64TargetLowering::LowerSELECT_CC(SDValue Op,
 
   // Otherwise, return the output of the first CSEL.
   return CS1;
+}
+
+SDValue AArch64TargetLowering::LowerSELECT_CC(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue TVal = Op.getOperand(2);
+  SDValue FVal = Op.getOperand(3);
+  SDLoc DL(Op);
+  return LowerSELECT_CC(CC, LHS, RHS, TVal, FVal, DL, DAG);
+}
+
+SDValue AArch64TargetLowering::LowerSELECT(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  SDValue CCVal = Op->getOperand(0);
+  SDValue TVal = Op->getOperand(1);
+  SDValue FVal = Op->getOperand(2);
+  SDLoc DL(Op);
+
+  unsigned Opc = CCVal.getOpcode();
+  // Optimize {s|u}{add|sub|mul}.with.overflow feeding into a select
+  // instruction.
+  if (CCVal.getResNo() == 1 &&
+      (Opc == ISD::SADDO || Opc == ISD::UADDO || Opc == ISD::SSUBO ||
+       Opc == ISD::USUBO || Opc == ISD::SMULO || Opc == ISD::UMULO)) {
+    // Only lower legal XALUO ops.
+    if (!DAG.getTargetLoweringInfo().isTypeLegal(CCVal->getValueType(0)))
+      return SDValue();
+
+    AArch64CC::CondCode OFCC;
+    SDValue Value, Overflow;
+    std::tie(Value, Overflow) = getAArch64XALUOOp(OFCC, CCVal.getValue(0), DAG);
+    SDValue CCVal = DAG.getConstant(OFCC, MVT::i32);
+
+    return DAG.getNode(AArch64ISD::CSEL, DL, Op.getValueType(), TVal, FVal,
+                       CCVal, Overflow);
+  }
+
+  // Lower it the same way as we would lower a SELECT_CC node.
+  ISD::CondCode CC;
+  SDValue LHS, RHS;
+  if (CCVal.getOpcode() == ISD::SETCC) {
+    LHS = CCVal.getOperand(0);
+    RHS = CCVal.getOperand(1);
+    CC = cast<CondCodeSDNode>(CCVal->getOperand(2))->get();
+  } else {
+    LHS = CCVal;
+    RHS = DAG.getConstant(0, CCVal.getValueType());
+    CC = ISD::SETNE;
+  }
+  return LowerSELECT_CC(CC, LHS, RHS, TVal, FVal, DL, DAG);
 }
 
 SDValue AArch64TargetLowering::LowerJumpTable(SDValue Op,
