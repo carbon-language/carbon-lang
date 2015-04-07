@@ -160,13 +160,13 @@ unsigned ARMAsmBackend::getRelaxedOpcode(unsigned Op) const {
   default:
     return Op;
   case ARM::tBcc:
-    return HasThumb2 ? ARM::t2Bcc : Op;
+    return HasThumb2 ? (unsigned)ARM::t2Bcc : Op;
   case ARM::tLDRpci:
-    return HasThumb2 ? ARM::t2LDRpci : Op;
+    return HasThumb2 ? (unsigned)ARM::t2LDRpci : Op;
   case ARM::tADR:
-    return HasThumb2 ? ARM::t2ADR : Op;
+    return HasThumb2 ? (unsigned)ARM::t2ADR : Op;
   case ARM::tB:
-    return HasThumb2 ? ARM::t2B : Op;
+    return HasThumb2 ? (unsigned)ARM::t2B : Op;
   case ARM::tCBZ:
     return ARM::tHINT;
   case ARM::tCBNZ:
