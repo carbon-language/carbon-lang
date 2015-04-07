@@ -62,6 +62,21 @@ static const uint8_t ARMPltVeneerAtomContent[4] = {
     0x00, 0x00               // nop
 };
 
+// Determine proper names for mapping symbols.
+static std::string getMappingAtomName(DefinedAtom::CodeModel model,
+                                      const std::string &part) {
+  switch (model) {
+  case DefinedAtom::codeARM_a:
+    return part.empty() ? "$a" : "$a." + part;
+  case DefinedAtom::codeARM_d:
+    return part.empty() ? "$d" : "$d." + part;
+  case DefinedAtom::codeARM_t:
+    return part.empty() ? "$t" : "$t." + part;
+  default:
+    llvm_unreachable("Wrong code model of mapping atom");
+  }
+}
+
 /// \brief Atoms that hold veneer code.
 class VeneerAtom : public SimpleELFDefinedAtom {
   StringRef _section;
@@ -141,23 +156,62 @@ public:
   ARMGOTPLTAtom(const File &f) : ARMGOTAtom(f, ".got.plt") {}
 };
 
+/// \brief PLT entry atom.
+/// Serves as a mapping symbol in the release mode.
 class ARMPLTAtom : public PLTAtom {
 public:
-  ARMPLTAtom(const File &f) : PLTAtom(f, ".plt") {}
+  ARMPLTAtom(const File &f, const std::string &name)
+      : PLTAtom(f, ".plt") {
+#ifndef NDEBUG
+    _name = name;
+#else
+    // Don't move the code to any base classes since
+    // virtual codeModel method would return wrong value.
+    _name = getMappingAtomName(codeModel(), name);
+#endif
+  }
+
+  DefinedAtom::CodeModel codeModel() const override {
+#ifndef NDEBUG
+    return DefinedAtom::codeNA;
+#else
+    return DefinedAtom::codeARM_a;
+#endif
+  }
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(ARMPltAtomContent);
   }
 
   Alignment alignment() const override { return 4; }
+
+  StringRef name() const override { return _name; }
+
+private:
+  std::string _name;
 };
 
+/// \brief Veneer atom for PLT entry.
+/// Serves as a mapping symbol in the release mode.
 class ARMPLTVeneerAtom : public PLTAtom {
 public:
-  ARMPLTVeneerAtom(const File &f) : PLTAtom(f, ".plt") {}
+  ARMPLTVeneerAtom(const File &f, const std::string &name)
+      : PLTAtom(f, ".plt") {
+#ifndef NDEBUG
+    _name = name;
+#else
+    // Don't move the code to any base classes since
+    // virtual codeModel method would return wrong value.
+    _name = getMappingAtomName(codeModel(), name);
+#endif
+  }
 
   DefinedAtom::CodeModel codeModel() const override {
+#ifndef NDEBUG
     return DefinedAtom::codeARMThumb;
+#else
+    return DefinedAtom::codeARM_t;
+#endif
   }
 
   ArrayRef<uint8_t> rawContent() const override {
@@ -165,6 +219,11 @@ public:
   }
 
   Alignment alignment() const override { return 4; }
+
+  StringRef name() const override { return _name; }
+
+private:
+  std::string _name;
 };
 
 class ELFPassFile : public SimpleFile {
@@ -295,14 +354,14 @@ protected:
   /// \brief get a veneer for a PLT entry.
   const PLTAtom *getPLTVeneer(const DefinedAtom *da, PLTAtom *pa,
                               StringRef source) {
-    auto va = new (_file._alloc) ARMPLTVeneerAtom(_file);
+    std::string name = "__plt_from_thumb";
+    name += source;
+    name += da->name();
+    // Create veneer for PLT entry.
+    auto va = new (_file._alloc) ARMPLTVeneerAtom(_file, name);
     // Fake reference to show connection between veneer and PLT entry.
     va->addReferenceELF_ARM(R_ARM_NONE, 0, pa, 0);
-#ifndef NDEBUG
-    va->_name = "__plt_from_thumb";
-    va->_name += source;
-    va->_name += da->name();
-#endif
+
     _pltAtoms[da] = PLTWithVeneer(pa, va);
     return va;
   }
@@ -335,16 +394,15 @@ protected:
     assert(ga->customSectionName() == ".got.plt" &&
            "GOT entry should be in a special section");
 
+    std::string name = "__plt";
+    name += source;
+    name += da->name();
     // Create PLT entry for the GOT entry.
-    auto pa = new (_file._alloc) ARMPLTAtom(_file);
+    auto pa = new (_file._alloc) ARMPLTAtom(_file, name);
     pa->addReferenceELF_ARM(R_ARM_ALU_PC_G0_NC, 0, ga, -8);
     pa->addReferenceELF_ARM(R_ARM_ALU_PC_G1_NC, 4, ga, -4);
     pa->addReferenceELF_ARM(R_ARM_LDR_PC_G2, 8, ga, 0);
-#ifndef NDEBUG
-    pa->_name = "__plt";
-    pa->_name += source;
-    pa->_name += da->name();
-#endif
+
     // Since all PLT entries are in ARM code, Thumb to ARM
     // switching should be added if the relocated place contais Thumb code.
     if (fromThumb)
@@ -371,11 +429,7 @@ protected:
 
   /// \brief get the PLT entry for a given IFUNC Atom.
   const PLTAtom *getIFUNCPLTEntry(const DefinedAtom *da, bool fromThumb) {
-    StringRef source;
-#ifndef NDEBUG
-    source = "_ifunc_";
-#endif
-    return getPLTEntry(da, fromThumb, &Derived::createIFUNCGOTEntry, source);
+    return getPLTEntry(da, fromThumb, &Derived::createIFUNCGOTEntry, "_ifunc_");
   }
 
   /// \brief Redirect the call to the PLT stub for the target IFUNC.
