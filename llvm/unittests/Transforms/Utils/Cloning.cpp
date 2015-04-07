@@ -323,8 +323,8 @@ TEST_F(CloneFunc, SubprogramInRightCU) {
   DICompileUnit CU1 = cast<MDCompileUnit>(*Iter);
   Iter++;
   DICompileUnit CU2 = cast<MDCompileUnit>(*Iter);
-  EXPECT_TRUE(CU1.getSubprograms().getNumElements() == 0
-           || CU2.getSubprograms().getNumElements() == 0);
+  EXPECT_TRUE(CU1.getSubprograms().size() == 0 ||
+              CU2.getSubprograms().size() == 0);
 }
 
 // Test that instructions in the old function still belong to it in the

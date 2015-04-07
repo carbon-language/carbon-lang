@@ -492,13 +492,8 @@ void GCOVProfiler::emitProfileNotes() {
     raw_fd_ostream out(mangleName(CU, "gcno"), EC, sys::fs::F_None);
     std::string EdgeDestinations;
 
-    DIArray SPs = CU.getSubprograms();
     unsigned FunctionIdent = 0;
-    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
-      DISubprogram SP = cast_or_null<MDSubprogram>(SPs.getElement(i));
-      if (!SP)
-        continue;
-
+    for (DISubprogram SP : CU->getSubprograms()) {
       Function *F = SP.getFunction();
       if (!F) continue;
       if (!functionHasLines(F)) continue;
@@ -576,12 +571,8 @@ bool GCOVProfiler::emitProfileArcs() {
   bool InsertIndCounterIncrCode = false;
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
     DICompileUnit CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
-    DIArray SPs = CU.getSubprograms();
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
-    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
-      DISubprogram SP = cast_or_null<MDSubprogram>(SPs.getElement(i));
-      if (!SP)
-        continue;
+    for (DISubprogram SP : CU->getSubprograms()) {
       Function *F = SP.getFunction();
       if (!F) continue;
       if (!functionHasLines(F)) continue;

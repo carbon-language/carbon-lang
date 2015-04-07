@@ -206,11 +206,11 @@ StringRef DIScope::getDirectory() const {
 }
 
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
-  get()->replaceSubprograms(cast_or_null<MDTuple>(Subprograms.get()));
+  get()->replaceSubprograms(Subprograms);
 }
 
 void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
-  get()->replaceGlobalVariables(cast_or_null<MDTuple>(GlobalVariables.get()));
+  get()->replaceGlobalVariables(GlobalVariables);
 }
 
 DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
@@ -282,10 +282,10 @@ llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
   for (unsigned CUi = 0, CUe = CU_Nodes->getNumOperands(); CUi != CUe; ++CUi) {
     DICompileUnit CU = cast<MDCompileUnit>(CU_Nodes->getOperand(CUi));
     DIArray Retain = CU.getRetainedTypes();
-    for (unsigned Ti = 0, Te = Retain.getNumElements(); Ti != Te; ++Ti) {
-      if (!isa<MDCompositeType>(Retain.getElement(Ti)))
+    for (unsigned Ti = 0, Te = Retain.size(); Ti != Te; ++Ti) {
+      if (!isa<MDCompositeType>(Retain[Ti]))
         continue;
-      DICompositeType Ty = cast<MDCompositeType>(Retain.getElement(Ti));
+      DICompositeType Ty = cast<MDCompositeType>(Retain[Ti]);
       if (MDString *TypeId = Ty.getIdentifier()) {
         // Definition has priority over declaration.
         // Try to insert (TypeId, Ty) to Map.
@@ -330,26 +330,19 @@ void DebugInfoFinder::processModule(const Module &M) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
       DICompileUnit CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
       addCompileUnit(CU);
-      DIArray GVs = CU.getGlobalVariables();
-      for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
-        DIGlobalVariable DIG = cast<MDGlobalVariable>(GVs.getElement(i));
+      for (DIGlobalVariable DIG : CU->getGlobalVariables()) {
         if (addGlobalVariable(DIG)) {
           processScope(DIG.getContext());
           processType(DIG.getType().resolve(TypeIdentifierMap));
         }
       }
-      DIArray SPs = CU.getSubprograms();
-      for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
-        processSubprogram(cast<MDSubprogram>(SPs.getElement(i)));
-      DIArray EnumTypes = CU.getEnumTypes();
-      for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
-        processType(cast<MDType>(EnumTypes.getElement(i)));
-      DIArray RetainedTypes = CU.getRetainedTypes();
-      for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
-        processType(cast<MDType>(RetainedTypes.getElement(i)));
-      DIArray Imports = CU.getImportedEntities();
-      for (unsigned i = 0, e = Imports.getNumElements(); i != e; ++i) {
-        DIImportedEntity Import = cast<MDImportedEntity>(Imports.getElement(i));
+      for (auto *SP : CU->getSubprograms())
+        processSubprogram(SP);
+      for (auto *ET : CU->getEnumTypes())
+        processType(ET);
+      for (auto *RT : CU->getRetainedTypes())
+        processType(RT);
+      for (DIImportedEntity Import : CU->getImportedEntities()) {
         DIDescriptor Entity = Import.getEntity().resolve(TypeIdentifierMap);
         if (auto *T = dyn_cast<MDType>(Entity))
           processType(T);
@@ -377,14 +370,11 @@ void DebugInfoFinder::processType(DIType DT) {
   if (DICompositeType DCT = dyn_cast<MDCompositeTypeBase>(DT)) {
     processType(DCT.getTypeDerivedFrom().resolve(TypeIdentifierMap));
     if (DISubroutineType ST = dyn_cast<MDSubroutineType>(DCT)) {
-      DITypeArray DTA = ST.getTypeArray();
-      for (unsigned i = 0, e = DTA.getNumElements(); i != e; ++i)
-        processType(DTA.getElement(i).resolve(TypeIdentifierMap));
+      for (MDTypeRef Ref : ST->getTypeArray())
+        processType(Ref.resolve(TypeIdentifierMap));
       return;
     }
-    DIArray DA = DCT.getElements();
-    for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
-      DIDescriptor D = DA.getElement(i);
+    for (Metadata *D : DCT->getElements()->operands()) {
       if (DIType T = dyn_cast<MDType>(D))
         processType(T);
       else if (DISubprogram SP = dyn_cast<MDSubprogram>(D))
@@ -424,9 +414,7 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
     return;
   processScope(SP.getContext().resolve(TypeIdentifierMap));
   processType(SP.getType());
-  DIArray TParams = SP.getTemplateParams();
-  for (unsigned I = 0, E = TParams.getNumElements(); I != E; ++I) {
-    DIDescriptor Element = TParams.getElement(I);
+  for (auto *Element : SP.getTemplateParams()) {
     if (DITemplateTypeParameter TType =
             dyn_cast<MDTemplateTypeParameter>(Element)) {
       processType(TType.getType().resolve(TypeIdentifierMap));
@@ -685,9 +673,7 @@ llvm::makeSubprogramMap(const Module &M) {
 
   for (MDNode *N : CU_Nodes->operands()) {
     DICompileUnit CUNode = cast<MDCompileUnit>(N);
-    DIArray SPs = CUNode.getSubprograms();
-    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
-      DISubprogram SP = cast<MDSubprogram>(SPs.getElement(i));
+    for (DISubprogram SP : CUNode->getSubprograms()) {
       if (Function *F = SP.getFunction())
         R.insert(std::make_pair(F, SP));
     }

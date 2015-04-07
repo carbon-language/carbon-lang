@@ -91,8 +91,8 @@ void DIBuilder::finalize() {
 
   DIArray SPs = getOrCreateArray(AllSubprograms);
   TempSubprograms->replaceAllUsesWith(SPs);
-  for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
-    DISubprogram SP = cast<MDSubprogram>(SPs.getElement(i));
+  for (unsigned i = 0, e = SPs.size(); i != e; ++i) {
+    DISubprogram SP = cast<MDSubprogram>(SPs[i]);
     if (MDNode *Temp = SP.getVariablesNodes()) {
       const auto &PV = PreservedVariables.lookup(SP);
       SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
@@ -858,9 +858,9 @@ void DIBuilder::replaceArrays(DICompositeType &T, DIArray Elements,
   {
     TypedTrackingMDRef<MDCompositeTypeBase> N(T);
     if (Elements)
-      N->replaceElements(cast<MDTuple>(Elements.get()));
+      N->replaceElements(Elements);
     if (TParams)
-      N->replaceTemplateParams(cast<MDTuple>(TParams.get()));
+      N->replaceTemplateParams(MDTemplateParameterArray(TParams));
     T = N.get();
   }
 

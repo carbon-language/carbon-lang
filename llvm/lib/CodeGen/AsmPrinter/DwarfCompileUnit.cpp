@@ -580,8 +580,7 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   // If we have a single element of null, it is a function that returns void.
   // If we have more than one elements and the last one is null, it is a
   // variadic function.
-  if (FnArgs.getNumElements() > 1 &&
-      !FnArgs.getElement(FnArgs.getNumElements() - 1) &&
+  if (FnArgs.size() > 1 && !FnArgs[FnArgs.size() - 1] &&
       !includeMinimalInlineScopes())
     ScopeDIE.addChild(make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
 }
@@ -682,16 +681,15 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
   assert(SP && "CU's subprogram list contains a non-subprogram");
   assert(SP.isDefinition() &&
          "CU's subprogram list contains a subprogram declaration");
-  DIArray Variables = SP.getVariables();
-  if (Variables.getNumElements() == 0)
+  auto Variables = SP->getVariables();
+  if (Variables.size() == 0)
     return;
 
   DIE *SPDIE = DU->getAbstractSPDies().lookup(SP);
   if (!SPDIE)
     SPDIE = getDIE(SP);
   assert(SPDIE);
-  for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
-    DIVariable DV = cast<MDLocalVariable>(Variables.getElement(vi));
+  for (DIVariable DV : Variables) {
     DbgVariable NewVar(DV, DIExpression(), DD);
     auto VariableDie = constructVariableDIE(NewVar);
     applyVariableAttributes(NewVar, *VariableDie);

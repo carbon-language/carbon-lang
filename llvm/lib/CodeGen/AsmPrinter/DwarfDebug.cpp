@@ -174,8 +174,8 @@ DIType DbgVariable::getType() const {
       subType = resolve(DITypeRef(cast<MDDerivedType>(Ty)->getBaseType()));
 
     DIArray Elements(cast<MDCompositeTypeBase>(subType)->getElements());
-    for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIDerivedType DT = cast<MDDerivedTypeBase>(Elements.getElement(i));
+    for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
+      DIDerivedType DT = cast<MDDerivedTypeBase>(Elements[i]);
       if (getName() == DT.getName())
         return (resolve(DT.getTypeDerivedFrom()));
     }
@@ -445,34 +445,24 @@ void DwarfDebug::beginModule() {
   for (MDNode *N : CU_Nodes->operands()) {
     DICompileUnit CUNode = cast<MDCompileUnit>(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
-    DIArray ImportedEntities = CUNode.getImportedEntities();
-    for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
-      ScopesWithImportedEntities.push_back(std::make_pair(
-          cast<MDImportedEntity>(ImportedEntities.getElement(i))->getScope(),
-          ImportedEntities.getElement(i)));
+    for (auto *IE : CUNode->getImportedEntities())
+      ScopesWithImportedEntities.push_back(std::make_pair(IE->getScope(), IE));
     // Stable sort to preserve the order of appearance of imported entities.
     // This is to avoid out-of-order processing of interdependent declarations
     // within the same scope, e.g. { namespace A = base; namespace B = A; }
     std::stable_sort(ScopesWithImportedEntities.begin(),
                      ScopesWithImportedEntities.end(), less_first());
-    DIArray GVs = CUNode.getGlobalVariables();
-    for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
-      CU.getOrCreateGlobalVariableDIE(
-          cast<MDGlobalVariable>(GVs.getElement(i)));
-    DIArray SPs = CUNode.getSubprograms();
-    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
-      SPMap.insert(std::make_pair(SPs.getElement(i), &CU));
-    DIArray EnumTypes = CUNode.getEnumTypes();
-    for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i) {
-      DIType Ty = cast<MDType>(EnumTypes.getElement(i));
+    for (auto *GV : CUNode->getGlobalVariables())
+      CU.getOrCreateGlobalVariableDIE(GV);
+    for (auto *SP : CUNode->getSubprograms())
+      SPMap.insert(std::make_pair(SP, &CU));
+    for (DIType Ty : CUNode->getEnumTypes()) {
       // The enum types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
       DIType UniqueTy = cast<MDType>(resolve(Ty.getRef()));
       CU.getOrCreateTypeDIE(UniqueTy);
     }
-    DIArray RetainedTypes = CUNode.getRetainedTypes();
-    for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i) {
-      DIType Ty = cast<MDType>(RetainedTypes.getElement(i));
+    for (DIType Ty : CUNode->getRetainedTypes()) {
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
       DIType UniqueTy = cast<MDType>(resolve(Ty.getRef()));
@@ -480,8 +470,8 @@ void DwarfDebug::beginModule() {
     }
     // Emit imported_modules last so that the relevant context is already
     // available.
-    for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
-      constructAndAddImportedEntityDIE(CU, ImportedEntities.getElement(i));
+    for (auto *IE : CUNode->getImportedEntities())
+      constructAndAddImportedEntityDIE(CU, IE);
   }
 
   // Tell MMI that we have debug info.
@@ -525,9 +515,7 @@ void DwarfDebug::collectDeadVariables() {
       DwarfCompileUnit *SPCU =
           static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
       assert(SPCU && "Unable to find Compile Unit!");
-      DIArray Subprograms = TheCU.getSubprograms();
-      for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
-        DISubprogram SP = cast<MDSubprogram>(Subprograms.getElement(i));
+      for (auto *SP : TheCU->getSubprograms()) {
         if (ProcessedSPNodes.count(SP) != 0)
           continue;
         SPCU->collectDeadVariables(SP);
@@ -940,9 +928,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
   }
 
   // Collect info for variables that were optimized out.
-  DIArray Variables = SP.getVariables();
-  for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
-    DIVariable DV = cast<MDLocalVariable>(Variables.getElement(i));
+  for (DIVariable DV : SP->getVariables()) {
     if (!Processed.insert(DV).second)
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.get()->getScope())) {
@@ -1229,9 +1215,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
     DISubprogram SP = cast<MDSubprogram>(AScope->getScopeNode());
     // Collect info for variables that were optimized out.
-    DIArray Variables = SP.getVariables();
-    for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
-      DIVariable DV = cast<MDLocalVariable>(Variables.getElement(i));
+    for (DIVariable DV : SP->getVariables()) {
       if (!ProcessedVars.insert(DV).second)
         continue;
       ensureAbstractVariableIsCreated(DV, DV.getContext());

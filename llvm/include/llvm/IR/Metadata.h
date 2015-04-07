@@ -1040,9 +1040,10 @@ void TempMDNodeDeleter::operator()(MDNode *Node) const {
 template <class T>
 class TypedMDOperandIterator
     : std::iterator<std::input_iterator_tag, T *, std::ptrdiff_t, void, T *> {
-  MDNode::op_iterator I;
+  MDNode::op_iterator I = nullptr;
 
 public:
+  TypedMDOperandIterator() = default;
   explicit TypedMDOperandIterator(MDNode::op_iterator I) : I(I) {}
   T *operator*() const { return cast_or_null<T>(*I); }
   TypedMDOperandIterator &operator++() {
@@ -1066,17 +1067,20 @@ template <class T> class MDTupleTypedArrayWrapper {
   const MDTuple *N = nullptr;
 
 public:
+  MDTupleTypedArrayWrapper() = default;
   MDTupleTypedArrayWrapper(const MDTuple *N) : N(N) {}
   operator MDTuple *() const { return const_cast<MDTuple *>(N); }
   MDTuple *operator->() const { return const_cast<MDTuple *>(N); }
   MDTuple &operator*() const { return *const_cast<MDTuple *>(N); }
 
-  unsigned size() const { return N->getNumOperands(); }
+  // FIXME: Fix callers and remove condition on N.
+  unsigned size() const { return N ? N->getNumOperands() : 0u; }
   T *operator[](unsigned I) const { return cast_or_null<T>(N->getOperand(I)); }
 
+  // FIXME: Fix callers and remove condition on N.
   typedef TypedMDOperandIterator<T> iterator;
-  iterator begin() const { return iterator(N->op_begin()); }
-  iterator end() const { return iterator(N->op_end()); }
+  iterator begin() const { return N ? iterator(N->op_begin()) : iterator(); }
+  iterator end() const { return N ? iterator(N->op_end()) : iterator(); }
 };
 
 #define HANDLE_METADATA(CLASS)                                                 \

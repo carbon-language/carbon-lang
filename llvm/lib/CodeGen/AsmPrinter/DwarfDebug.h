@@ -569,6 +569,9 @@ public:
   template <typename T> T resolve(DIRef<T> Ref) const {
     return Ref.resolve(TypeIdentifierMap);
   }
+  template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const {
+    return Ref.resolve(TypeIdentifierMap);
+  }
 
   /// \brief Return the TypeIdentifierMap.
   const DITypeIdentifierMap &getTypeIdentifierMap() const {

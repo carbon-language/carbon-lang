@@ -345,6 +345,9 @@ protected:
   template <typename T> T resolve(DIRef<T> Ref) const {
     return DD->resolve(Ref);
   }
+  template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const {
+    return DD->resolve(Ref);
+  }
 
 private:
   /// constructTypeDIE - Construct basic type die from DIBasicType.

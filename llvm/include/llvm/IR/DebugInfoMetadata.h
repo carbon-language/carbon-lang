@@ -101,14 +101,16 @@ public:
   MDTuple *operator->() const { return const_cast<MDTuple *>(N); }
   MDTuple &operator*() const { return *const_cast<MDTuple *>(N); }
 
-  unsigned size() const { return N->getNumOperands(); }
+  // FIXME: Fix callers and remove condition on N.
+  unsigned size() const { return N ? N->getNumOperands() : 0u; }
   MDTypeRef operator[](unsigned I) const { return MDTypeRef(N->getOperand(I)); }
 
   class iterator : std::iterator<std::input_iterator_tag, MDTypeRef,
                                  std::ptrdiff_t, void, MDTypeRef> {
-    MDNode::op_iterator I;
+    MDNode::op_iterator I = nullptr;
 
   public:
+    iterator() = default;
     explicit iterator(MDNode::op_iterator I) : I(I) {}
     MDTypeRef operator*() const { return MDTypeRef(*I); }
     iterator &operator++() {
@@ -124,8 +126,9 @@ public:
     bool operator!=(const iterator &X) const { return I != X.I; }
   };
 
-  iterator begin() const { return iterator(N->op_begin()); }
-  iterator end() const { return iterator(N->op_end()); }
+  // FIXME: Fix callers and remove condition on N.
+  iterator begin() const { return N ? iterator(N->op_begin()) : iterator(); }
+  iterator end() const { return N ? iterator(N->op_end()) : iterator(); }
 };
 
 /// \brief Tagged DWARF-like metadata node.

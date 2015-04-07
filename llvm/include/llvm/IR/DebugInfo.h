@@ -87,6 +87,7 @@ protected:
 
 public:
   explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
+  DIDescriptor(const DebugNode *N) : DbgNode(N) {}
 
   MDNode *get() const { return const_cast<MDNode *>(DbgNode); }
   operator MDNode *() const { return get(); }
@@ -149,6 +150,9 @@ DECLARE_SIMPLIFY_DESCRIPTOR(DIObjCProperty)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 #undef DECLARE_SIMPLIFY_DESCRIPTOR
 
+typedef DebugNodeArray DIArray;
+typedef MDTypeRefArray DITypeArray;
+
 /// \brief This is used to represent ranges, for array bounds.
 class DISubrange : public DIDescriptor {
 public:
@@ -168,21 +172,6 @@ public:
   int64_t getLo() const { return get()->getLowerBound(); }
   int64_t getCount() const { return get()->getCount(); }
 };
-
-/// \brief This descriptor holds an array of nodes with type T.
-template <typename T> class DITypedArray : public DIDescriptor {
-public:
-  explicit DITypedArray(const MDNode *N = nullptr) : DIDescriptor(N) {}
-  operator MDTuple *() const {
-    return const_cast<MDTuple *>(cast_or_null<MDTuple>(DbgNode));
-  }
-  unsigned getNumElements() const {
-    return DbgNode ? DbgNode->getNumOperands() : 0;
-  }
-  T getElement(unsigned Idx) const { return getFieldAs<T>(Idx); }
-};
-
-typedef DITypedArray<DIDescriptor> DIArray;
 
 /// \brief A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
 ///
@@ -211,7 +200,6 @@ template <typename T> class DIRef;
 typedef DIRef<DIDescriptor> DIDescriptorRef;
 typedef DIRef<DIScope> DIScopeRef;
 typedef DIRef<DIType> DITypeRef;
-typedef DITypedArray<DITypeRef> DITypeArray;
 
 /// \brief A base class for various scopes.
 ///
@@ -472,9 +460,7 @@ public:
     return *get();
   }
 
-  DITypedArray<DITypeRef> getTypeArray() const {
-    return DITypedArray<DITypeRef>(get()->getTypeArray());
-  }
+  MDTypeRefArray getTypeArray() const { return get()->getTypeArray(); }
 };
 
 /// \brief This is a wrapper for a file.

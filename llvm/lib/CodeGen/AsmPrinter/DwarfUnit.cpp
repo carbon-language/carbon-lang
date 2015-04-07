@@ -542,8 +542,8 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
   DIDerivedType varField;
   DIDerivedType forwardingField;
 
-  for (unsigned i = 0, N = Fields.getNumElements(); i < N; ++i) {
-    DIDerivedType DT = cast<MDDerivedTypeBase>(Fields.getElement(i));
+  for (unsigned i = 0, N = Fields.size(); i < N; ++i) {
+    DIDerivedType DT = cast<MDDerivedTypeBase>(Fields[i]);
     StringRef fieldName = DT.getName();
     if (fieldName == "__forwarding")
       forwardingField = DT;
@@ -767,8 +767,8 @@ void DwarfUnit::addLinkageName(DIE &Die, StringRef LinkageName) {
 /// addTemplateParams - Add template parameters into buffer.
 void DwarfUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   // Add template parameters.
-  for (unsigned i = 0, e = TParams.getNumElements(); i != e; ++i) {
-    DIDescriptor Element = TParams.getElement(i);
+  for (unsigned i = 0, e = TParams.size(); i != e; ++i) {
+    DIDescriptor Element = TParams[i];
     if (auto *TTP = dyn_cast<MDTemplateTypeParameter>(Element))
       constructTemplateTypeParameterDIE(Buffer, TTP);
     else if (auto *TVP = dyn_cast<MDTemplateValueParameter>(Element))
@@ -982,8 +982,8 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
 /// constructSubprogramArguments - Construct function argument DIEs.
 void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
-  for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-    DIType Ty = resolve(Args.getElement(i));
+  for (unsigned i = 1, N = Args.size(); i < N; ++i) {
+    DIType Ty = resolve(Args[i]);
     if (!Ty) {
       assert(i == N-1 && "Unspecified parameter must be the last argument");
       createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
@@ -1013,14 +1013,13 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     break;
   case dwarf::DW_TAG_subroutine_type: {
     // Add return type. A void return won't have a type.
-    DITypeArray Elements(cast<MDSubroutineType>(CTy)->getTypeArray());
-    DIType RTy(resolve(Elements.getElement(0)));
-    if (RTy)
-      addType(Buffer, RTy);
+    auto Elements = cast<MDSubroutineType>(CTy)->getTypeArray();
+    if (Elements.size())
+      if (auto RTy = resolve(Elements[0]))
+        addType(Buffer, RTy);
 
     bool isPrototyped = true;
-    if (Elements.getNumElements() == 2 &&
-        !Elements.getElement(1))
+    if (Elements.size() == 2 && !Elements[1])
       isPrototyped = false;
 
     constructSubprogramArguments(Buffer, Elements);
@@ -1044,8 +1043,8 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_class_type: {
     // Add elements to structure type.
     DIArray Elements = CTy.getElements();
-    for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-      DIDescriptor Element = Elements.getElement(i);
+    for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
+      DIDescriptor Element = Elements[i];
       if (!Element)
         continue;
       if (auto *SP = dyn_cast<MDSubprogram>(Element))
@@ -1197,9 +1196,7 @@ DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
       addString(ParamDIE, dwarf::DW_AT_GNU_template_name,
                 cast<MDString>(Val)->getString());
     } else if (VP.getTag() == dwarf::DW_TAG_GNU_template_parameter_pack) {
-      assert(isa<MDNode>(Val));
-      DIArray A(cast<MDNode>(Val));
-      addTemplateParams(ParamDIE, A);
+      addTemplateParams(ParamDIE, cast<MDTuple>(Val));
     }
   }
 }
@@ -1317,11 +1314,12 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
   assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
-  DITypeArray Args = SPTy.getTypeArray();
+  auto Args = SPTy.getTypeArray();
   // Add a return type. If this is a type like a C/C++ void type we don't add a
   // return type.
-  if (resolve(Args.getElement(0)))
-    addType(SPDie, DIType(resolve(Args.getElement(0))));
+  if (Args.size())
+    if (auto Ty = resolve(Args[0]))
+      addType(SPDie, Ty);
 
   unsigned VK = SP.getVirtuality();
   if (VK) {
@@ -1423,8 +1421,8 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
   // Add subranges to array type.
   DIArray Elements = CTy.getElements();
-  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-    DIDescriptor Element = Elements.getElement(i);
+  for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
+    DIDescriptor Element = Elements[i];
     if (Element.getTag() == dwarf::DW_TAG_subrange_type)
       constructSubrangeDIE(Buffer, cast<MDSubrange>(Element), IdxTy);
   }
@@ -1435,8 +1433,8 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
   DIArray Elements = CTy.getElements();
 
   // Add enumerators to enumeration type.
-  for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
-    DIEnumerator Enum = dyn_cast_or_null<MDEnumerator>(Elements.getElement(i));
+  for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
+    DIEnumerator Enum = dyn_cast_or_null<MDEnumerator>(Elements[i]);
     if (Enum) {
       DIE &Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
       StringRef Name = Enum.getName();
