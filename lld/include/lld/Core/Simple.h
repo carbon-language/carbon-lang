@@ -30,50 +30,55 @@ class SimpleFile : public File {
 public:
   SimpleFile(StringRef path) : File(path, kindObject) {}
 
+  void addAtom(const DefinedAtom &a) { _defined._atoms.push_back(&a); }
+  void addAtom(const UndefinedAtom &a) { _undefined._atoms.push_back(&a); }
+  void addAtom(const SharedLibraryAtom &a) { _shared._atoms.push_back(&a); }
+  void addAtom(const AbsoluteAtom &a) { _absolute._atoms.push_back(&a); }
+
   void addAtom(const Atom &atom) {
-    if (auto *defAtom = dyn_cast<DefinedAtom>(&atom)) {
-      _definedAtoms._atoms.push_back(defAtom);
-    } else if (auto *undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
-      _undefinedAtoms._atoms.push_back(undefAtom);
-    } else if (auto *shlibAtom = dyn_cast<SharedLibraryAtom>(&atom)) {
-      _sharedLibraryAtoms._atoms.push_back(shlibAtom);
-    } else if (auto *absAtom = dyn_cast<AbsoluteAtom>(&atom)) {
-      _absoluteAtoms._atoms.push_back(absAtom);
+    if (auto *p = dyn_cast<DefinedAtom>(&atom)) {
+      _defined._atoms.push_back(p);
+    } else if (auto *p = dyn_cast<UndefinedAtom>(&atom)) {
+      _undefined._atoms.push_back(p);
+    } else if (auto *p = dyn_cast<SharedLibraryAtom>(&atom)) {
+      _shared._atoms.push_back(p);
+    } else if (auto *p = dyn_cast<AbsoluteAtom>(&atom)) {
+      _absolute._atoms.push_back(p);
     } else {
       llvm_unreachable("atom has unknown definition kind");
     }
   }
 
   void removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) {
-    auto &atoms = _definedAtoms._atoms;
+    auto &atoms = _defined._atoms;
     auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
     atoms.erase(newEnd, atoms.end());
   }
 
   const atom_collection<DefinedAtom> &defined() const override {
-    return _definedAtoms;
+    return _defined;
   }
 
   const atom_collection<UndefinedAtom> &undefined() const override {
-    return _undefinedAtoms;
+    return _undefined;
   }
 
   const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
-    return _sharedLibraryAtoms;
+    return _shared;
   }
 
   const atom_collection<AbsoluteAtom> &absolute() const override {
-    return _absoluteAtoms;
+    return _absolute;
   }
 
   typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
-  DefinedAtomRange definedAtoms() { return make_range(_definedAtoms._atoms); }
+  DefinedAtomRange definedAtoms() { return make_range(_defined._atoms); }
 
 private:
-  atom_collection_vector<DefinedAtom>        _definedAtoms;
-  atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
+  atom_collection_vector<DefinedAtom> _defined;
+  atom_collection_vector<UndefinedAtom> _undefined;
+  atom_collection_vector<SharedLibraryAtom> _shared;
+  atom_collection_vector<AbsoluteAtom> _absolute;
 };
 
 /// \brief Archive library file that may be used as a virtual container
