@@ -515,7 +515,7 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
         // If we have an operating system plug-in, we might have set a thread specific breakpoint using the
         // operating system thread ID, so we can't make any assumptions about the thread ID so we must always
         // report the breakpoint regardless of the thread.
-        if (bp_site->ValidForThisThread(this) || thread.GetProcess()->GetOperatingSystem () != NULL)
+        if (bp_site->ValidForThisThread(this) || GetProcess()->GetOperatingSystem () != NULL)
             SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
         else
         {
