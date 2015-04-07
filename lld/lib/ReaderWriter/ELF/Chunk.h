@@ -98,7 +98,7 @@ protected:
   const ELFLinkingContext &_ctx;
   uint64_t _fsize = 0;
   uint64_t _msize = 0;
-  uint64_t _alignment = 0;
+  uint64_t _alignment = 1;
   uint32_t _order = 0;
   uint64_t _ordinal = 1;
   uint64_t _start = 0;

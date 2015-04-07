@@ -530,7 +530,7 @@ private:
   int64_t _shInfo = 0;
   int64_t _entSize = 0;
   int64_t _link = 0;
-  uint64_t _alignment = 0;
+  uint64_t _alignment = 1;
   int64_t _kind = 0;
   int64_t _type = 0;
   bool _isLoadableSection = false;

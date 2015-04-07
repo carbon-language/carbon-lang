@@ -317,7 +317,7 @@ Segment<ELFT>::Segment(const ELFLinkingContext &ctx, StringRef name,
                        const typename TargetLayout<ELFT>::SegmentType type)
     : Chunk<ELFT>(name, Chunk<ELFT>::Kind::ELFSegment, ctx), _segmentType(type),
       _flags(0), _atomflags(0) {
-  this->_alignment = 0;
+  this->_alignment = 1;
   this->_fsize = 0;
   _outputMagic = ctx.getOutputMagic();
 }
