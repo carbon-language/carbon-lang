@@ -76,9 +76,8 @@ unsigned BPFMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   assert(MO.isExpr());
 
   const MCExpr *Expr = MO.getExpr();
-  MCExpr::ExprKind Kind = Expr->getKind();
 
-  assert(Kind == MCExpr::SymbolRef);
+  assert(Expr->getKind() == MCExpr::SymbolRef);
 
   if (MI.getOpcode() == BPF::JAL)
     // func call name

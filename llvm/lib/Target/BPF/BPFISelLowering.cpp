@@ -64,7 +64,7 @@ public:
     raw_string_ostream OS(Str);
 
     if (DLoc) {
-      DILocation DIL(DLoc.getAsMDNode());
+      DILocation DIL(DLoc.get());
       StringRef Filename = DIL.getFilename();
       unsigned Line = DIL.getLineNumber();
       unsigned Column = DIL.getColumnNumber();
@@ -537,12 +537,10 @@ SDValue BPFTargetLowering::LowerGlobalAddress(SDValue Op,
 MachineBasicBlock *
 BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
-  unsigned Opc = MI->getOpcode();
-
   const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
-  assert(Opc == BPF::Select && "Unexpected instr type to insert");
+  assert(MI->getOpcode() == BPF::Select && "Unexpected instr type to insert");
 
   // To "insert" a SELECT instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg
