@@ -704,7 +704,7 @@ private:
 };
 
 /// SymbolicRegion - A special, "non-concrete" region. Unlike other region
-///  clases, SymbolicRegion represents a region that serves as an alias for
+///  classes, SymbolicRegion represents a region that serves as an alias for
 ///  either a real region, a NULL pointer, etc.  It essentially is used to
 ///  map the concept of symbolic values into the domain of regions.  Symbolic
 ///  regions do not need to be typed.
