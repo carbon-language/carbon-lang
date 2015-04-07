@@ -19,10 +19,8 @@
 #include "clang/AST/Mangle.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
-#include "clang/AST/StmtVisitor.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IntrinsicInst.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -1341,110 +1339,6 @@ struct PerformSEHFinally : EHScopeStack::Cleanup  {
 };
 }
 
-namespace {
-/// Find all local variable captures in the statement.
-struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
-  CodeGenFunction &ParentCGF;
-  const VarDecl *ParentThis;
-  SmallVector<const VarDecl *, 4> Captures;
-  CaptureFinder(CodeGenFunction &ParentCGF, const VarDecl *ParentThis)
-      : ParentCGF(ParentCGF), ParentThis(ParentThis) {}
-
-  void Visit(const Stmt *S) {
-    // See if this is a capture, then recurse.
-    ConstStmtVisitor<CaptureFinder>::Visit(S);
-    for (const Stmt *Child : S->children())
-      Visit(Child);
-  }
-
-  void VisitDeclRefExpr(const DeclRefExpr *E) {
-    // If this is already a capture, just make sure we capture 'this'.
-    if (E->refersToEnclosingVariableOrCapture()) {
-      Captures.push_back(ParentThis);
-      return;
-    }
-
-    const auto *D = dyn_cast<VarDecl>(E->getDecl());
-    if (D && D->isLocalVarDeclOrParm() && D->hasLocalStorage())
-      Captures.push_back(D);
-  }
-
-  void VisitCXXThisExpr(const CXXThisExpr *E) {
-    Captures.push_back(ParentThis);
-  }
-};
-}
-
-void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
-                                         const Stmt *OutlinedStmt,
-                                         llvm::Value *ParentFP) {
-  // Find all captures in the Stmt.
-  CaptureFinder Finder(ParentCGF, ParentCGF.CXXABIThisDecl);
-  Finder.Visit(OutlinedStmt);
-
-  // Typically there are no captures and we can exit early.
-  if (Finder.Captures.empty())
-    return;
-
-  // Prepare the first two arguments to llvm.framerecover.
-  llvm::Function *FrameRecoverFn = llvm::Intrinsic::getDeclaration(
-      &CGM.getModule(), llvm::Intrinsic::framerecover);
-  llvm::Constant *ParentI8Fn =
-      llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
-
-  // Create llvm.framerecover calls for all captures.
-  for (const VarDecl *VD : Finder.Captures) {
-    if (isa<ImplicitParamDecl>(VD)) {
-      CGM.ErrorUnsupported(VD, "'this' captured by SEH");
-      CXXThisValue = llvm::UndefValue::get(ConvertTypeForMem(VD->getType()));
-      continue;
-    }
-    if (VD->getType()->isVariablyModifiedType()) {
-      CGM.ErrorUnsupported(VD, "VLA captured by SEH");
-      continue;
-    }
-
-    assert((isa<ImplicitParamDecl>(VD) || VD->isLocalVarDeclOrParm()) &&
-           "captured non-local variable");
-
-    llvm::Value *ParentVar = ParentCGF.LocalDeclMap[VD];
-    assert(ParentVar && "capture was not a local decl");
-    llvm::CallInst *RecoverCall = nullptr;
-    CGBuilderTy Builder(AllocaInsertPt);
-    if (auto *ParentAlloca = dyn_cast<llvm::AllocaInst>(ParentVar)) {
-      // Mark the variable escaped if nobody else referenced it and compute the
-      // frameescape index.
-      auto InsertPair =
-          ParentCGF.EscapedLocals.insert(std::make_pair(ParentAlloca, -1));
-      if (InsertPair.second)
-        InsertPair.first->second = ParentCGF.EscapedLocals.size() - 1;
-      int FrameEscapeIdx = InsertPair.first->second;
-      // call i8* @llvm.framerecover(i8* bitcast(@parentFn), i8* %fp, i32 N)
-      RecoverCall =
-          Builder.CreateCall3(FrameRecoverFn, ParentI8Fn, ParentFP,
-                              llvm::ConstantInt::get(Int32Ty, FrameEscapeIdx));
-
-    } else {
-      // If the parent didn't have an alloca, we're doing some nested outlining.
-      // Just clone the existing framerecover call, but tweak the FP argument to
-      // use our FP value. All other arguments are constants.
-      auto *ParentRecover =
-          cast<llvm::IntrinsicInst>(ParentVar->stripPointerCasts());
-      assert(ParentRecover->getIntrinsicID() == llvm::Intrinsic::framerecover &&
-             "expected alloca or framerecover in parent LocalDeclMap");
-      RecoverCall = cast<llvm::CallInst>(ParentRecover->clone());
-      RecoverCall->setArgOperand(1, ParentFP);
-      RecoverCall->insertBefore(AllocaInsertPt);
-    }
-
-    // Bitcast the variable, rename it, and insert it in the local decl map.
-    llvm::Value *ChildVar =
-        Builder.CreateBitCast(RecoverCall, ParentVar->getType());
-    ChildVar->setName(ParentVar->getName());
-    LocalDeclMap[VD] = ChildVar;
-  }
-}
-
 /// Create a stub filter function that will ultimately hold the code of the
 /// filter expression. The EH preparation passes in LLVM will outline the code
 /// from the main function body into this stub.
@@ -1498,9 +1392,15 @@ CodeGenFunction::GenerateSEHFilterFunction(CodeGenFunction &ParentCGF,
 
   EmitSEHExceptionCodeSave();
 
-  auto AI = Fn->arg_begin();
-  ++AI;
-  EmitCapturedLocals(ParentCGF, FilterExpr, &*AI);
+  // Insert dummy allocas for every local variable in scope. We'll initialize
+  // them and prune the unused ones after we find out which ones were
+  // referenced.
+  for (const auto &DeclPtrs : ParentCGF.LocalDeclMap) {
+    const Decl *VD = DeclPtrs.first;
+    llvm::Value *Ptr = DeclPtrs.second;
+    auto *ValTy = cast<llvm::PointerType>(Ptr->getType())->getElementType();
+    LocalDeclMap[VD] = CreateTempAlloca(ValTy, Ptr->getName() + ".filt");
+  }
 
   // Emit the original filter expression, convert to i32, and return.
   llvm::Value *R = EmitScalarExpr(FilterExpr);
@@ -1509,6 +1409,17 @@ CodeGenFunction::GenerateSEHFilterFunction(CodeGenFunction &ParentCGF,
   Builder.CreateStore(R, ReturnValue);
 
   FinishFunction(FilterExpr->getLocEnd());
+
+  for (const auto &DeclPtrs : ParentCGF.LocalDeclMap) {
+    const Decl *VD = DeclPtrs.first;
+    auto *Alloca = cast<llvm::AllocaInst>(LocalDeclMap[VD]);
+    if (Alloca->hasNUses(0)) {
+      Alloca->eraseFromParent();
+      continue;
+    }
+    ErrorUnsupported(FilterExpr,
+                     "SEH filter expression local variable capture");
+  }
 
   return Fn;
 }

@@ -877,10 +877,6 @@ private:
   typedef llvm::DenseMap<const Decl*, llvm::Value*> DeclMapTy;
   DeclMapTy LocalDeclMap;
 
-  /// Track escaped local variables with auto storage. Used during SEH
-  /// outlining to produce a call to llvm.frameescape.
-  llvm::DenseMap<llvm::AllocaInst *, int> EscapedLocals;
-
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelDecl*, JumpDest> LabelMap;
 
@@ -2010,12 +2006,6 @@ public:
   llvm::Value *EmitSEHExceptionCode();
   llvm::Value *EmitSEHExceptionInfo();
   llvm::Value *EmitSEHAbnormalTermination();
-
-  /// Scan the outlined statement for captures from the parent function. For
-  /// each capture, mark the capture as escaped and emit a call to
-  /// llvm.framerecover. Insert the framerecover result into the LocalDeclMap.
-  void EmitCapturedLocals(CodeGenFunction &ParentCGF, const Stmt *OutlinedStmt,
-                          llvm::Value *ParentFP);
 
   void EmitCXXForRangeStmt(const CXXForRangeStmt &S,
                            ArrayRef<const Attr *> Attrs = None);
