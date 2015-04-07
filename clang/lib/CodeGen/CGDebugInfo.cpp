@@ -1039,12 +1039,12 @@ llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
   llvm::DITypeArray Args(
       cast<llvm::MDSubroutineType>(getOrCreateType(QualType(Func, 0), Unit))
           ->getTypeArray());
-  assert(Args.getNumElements() && "Invalid number of arguments!");
+  assert(Args.size() && "Invalid number of arguments!");
 
   SmallVector<llvm::Metadata *, 16> Elts;
 
   // First element is always return type. For 'void' functions it is NULL.
-  Elts.push_back(Args.getElement(0));
+  Elts.push_back(Args[0]);
 
   // "this" pointer is always first argument.
   const CXXRecordDecl *RD = ThisPtr->getPointeeCXXRecordDecl();
@@ -1072,8 +1072,8 @@ llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
   }
 
   // Copy rest of the arguments.
-  for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
-    Elts.push_back(Args.getElement(i));
+  for (unsigned i = 1, e = Args.size(); i != e; ++i)
+    Elts.push_back(Args[i]);
 
   llvm::DITypeArray EltTypeArray = DBuilder.getOrCreateTypeArray(Elts);
 
