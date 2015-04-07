@@ -50,23 +50,6 @@ template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
 
-/// Returns true if the opcode is a binary operation with flags.
-static bool isBinOpWithFlags(unsigned Opcode) {
-  switch (Opcode) {
-  case ISD::SDIV:
-  case ISD::UDIV:
-  case ISD::SRA:
-  case ISD::SRL:
-  case ISD::MUL:
-  case ISD::ADD:
-  case ISD::SUB:
-  case ISD::SHL:
-    return true;
-  default:
-    return false;
-  }
-}
-
 void checkForCycles(const SDNode *N, const SelectionDAG *DAG = nullptr,
                     bool force = false);
 
@@ -966,6 +949,23 @@ public:
     InitOperands(Ops, X, Y);
   }
 };
+
+/// Returns true if the opcode is a binary operation with flags.
+static bool isBinOpWithFlags(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::MUL:
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::SHL:
+    return true;
+  default:
+    return false;
+  }
+}
 
 /// This class is an extension of BinarySDNode
 /// used from those opcodes that have associated extra flags.
