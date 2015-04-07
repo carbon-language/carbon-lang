@@ -233,14 +233,7 @@ list(REMOVE_DUPLICATES LLVM_TARGETS_TO_BUILD)
 include(AddLLVMDefinitions)
 
 option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
-
-# MSVC has a gazillion warnings with this.
-if( MSVC )
-  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." OFF)
-else()
-  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
-endif()
-
+option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
 option(LLVM_ENABLE_MODULES "Compile with C++ modules enabled." OFF)
 option(LLVM_ENABLE_CXX1Y "Compile with C++1y enabled." OFF)
 option(LLVM_ENABLE_LIBCXX "Use libc++ if available." OFF)
