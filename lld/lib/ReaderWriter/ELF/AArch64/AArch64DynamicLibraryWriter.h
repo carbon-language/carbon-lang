@@ -34,15 +34,12 @@ private:
   };
 
   std::unique_ptr<GOTFile> _gotFile;
-  AArch64LinkingContext &_ctx;
-  TargetLayout<ELFT> &_layout;
 };
 
 template <class ELFT>
 AArch64DynamicLibraryWriter<ELFT>::AArch64DynamicLibraryWriter(
     AArch64LinkingContext &ctx, TargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)),
-      _ctx(ctx), _layout(layout) {}
+    : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)) {}
 
 template <class ELFT>
 void AArch64DynamicLibraryWriter<ELFT>::createImplicitFiles(
