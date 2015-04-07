@@ -3579,11 +3579,7 @@ bool MipsAsmParser::parseSetAssignment() {
   if (Parser.parseExpression(Value))
     return reportParseError("expected valid expression after comma");
 
-  // Check if the Name already exists as a symbol.
-  MCSymbol *Sym = getContext().LookupSymbol(Name);
-  if (Sym)
-    return reportParseError("symbol already defined");
-  Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
   Sym->setVariableValue(Value);
 
   return false;
