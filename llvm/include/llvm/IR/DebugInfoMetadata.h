@@ -530,6 +530,29 @@ public:
     Flags = NewFlags;
   }
 
+  bool isPrivate() const {
+    return (getFlags() & FlagAccessibility) == FlagPrivate;
+  }
+  bool isProtected() const {
+    return (getFlags() & FlagAccessibility) == FlagProtected;
+  }
+  bool isPublic() const {
+    return (getFlags() & FlagAccessibility) == FlagPublic;
+  }
+  bool isForwardDecl() const { return getFlags() & FlagFwdDecl; }
+  bool isAppleBlockExtension() const { return getFlags() & FlagAppleBlock; }
+  bool isBlockByrefStruct() const { return getFlags() & FlagBlockByrefStruct; }
+  bool isVirtual() const { return getFlags() & FlagVirtual; }
+  bool isArtificial() const { return getFlags() & FlagArtificial; }
+  bool isObjectPointer() const { return getFlags() & FlagObjectPointer; }
+  bool isObjcClassComplete() const {
+    return getFlags() & FlagObjcClassComplete;
+  }
+  bool isVector() const { return getFlags() & FlagVector; }
+  bool isStaticMember() const { return getFlags() & FlagStaticMember; }
+  bool isLValueReference() const { return getFlags() & FlagLValueReference; }
+  bool isRValueReference() const { return getFlags() & FlagRValueReference; }
+
   MDTypeRef getRef() const { return MDTypeRef::get(this); }
 
   static bool classof(const Metadata *MD) {

@@ -330,36 +330,22 @@ public:
   // carry this is just plain insane.
   uint64_t getOffsetInBits() const { return get()->getOffsetInBits(); }
   unsigned getFlags() const { return get()->getFlags(); }
-  bool isPrivate() const {
-    return (getFlags() & FlagAccessibility) == FlagPrivate;
-  }
-  bool isProtected() const {
-    return (getFlags() & FlagAccessibility) == FlagProtected;
-  }
-  bool isPublic() const {
-    return (getFlags() & FlagAccessibility) == FlagPublic;
-  }
-  bool isForwardDecl() const { return (getFlags() & FlagFwdDecl) != 0; }
-  bool isAppleBlockExtension() const {
-    return (getFlags() & FlagAppleBlock) != 0;
-  }
-  bool isBlockByrefStruct() const {
-    return (getFlags() & FlagBlockByrefStruct) != 0;
-  }
-  bool isVirtual() const { return (getFlags() & FlagVirtual) != 0; }
-  bool isArtificial() const { return (getFlags() & FlagArtificial) != 0; }
-  bool isObjectPointer() const { return (getFlags() & FlagObjectPointer) != 0; }
-  bool isObjcClassComplete() const {
-    return (getFlags() & FlagObjcClassComplete) != 0;
-  }
-  bool isVector() const { return (getFlags() & FlagVector) != 0; }
-  bool isStaticMember() const { return (getFlags() & FlagStaticMember) != 0; }
-  bool isLValueReference() const {
-    return (getFlags() & FlagLValueReference) != 0;
-  }
-  bool isRValueReference() const {
-    return (getFlags() & FlagRValueReference) != 0;
-  }
+
+  bool isPrivate() const { return get()->isPrivate(); }
+  bool isProtected() const { return get()->isProtected(); }
+  bool isPublic() const { return get()->isPublic(); }
+  bool isForwardDecl() const { return get()->isForwardDecl(); }
+  bool isAppleBlockExtension() const { return get()->isAppleBlockExtension(); }
+  bool isBlockByrefStruct() const { return get()->isBlockByrefStruct(); }
+  bool isVirtual() const { return get()->isVirtual(); }
+  bool isArtificial() const { return get()->isArtificial(); }
+  bool isObjectPointer() const { return get()->isObjectPointer(); }
+  bool isObjcClassComplete() const { return get()->isObjcClassComplete(); }
+  bool isVector() const { return get()->isVector(); }
+  bool isStaticMember() const { return get()->isStaticMember(); }
+  bool isLValueReference() const { return get()->isLValueReference(); }
+  bool isRValueReference() const { return get()->isRValueReference(); }
+
   bool isValid() const { return DbgNode && isa<MDType>(*this); }
 };
 
