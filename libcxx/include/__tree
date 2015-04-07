@@ -802,13 +802,7 @@ public:
 
     typedef __tree_node<value_type, __void_pointer> __node;
     typedef __tree_node_base<__void_pointer>        __node_base;
-    typedef typename __alloc_traits::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-            rebind_alloc<__node>
-#else
-            rebind_alloc<__node>::other
-#endif
-                                                     __node_allocator;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __node>::type __node_allocator;
     typedef allocator_traits<__node_allocator>       __node_traits;
     typedef typename __node_traits::pointer          __node_pointer;
     typedef typename __node_traits::pointer          __node_const_pointer;

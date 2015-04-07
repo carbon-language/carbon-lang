@@ -365,24 +365,12 @@ protected:
     typedef typename allocator_traits<allocator_type>::void_pointer  void_pointer;
     typedef __forward_list_node<value_type, void_pointer>            __node;
     typedef typename __begin_node_of<value_type, void_pointer>::type __begin_node;
-    typedef typename allocator_traits<allocator_type>::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-                rebind_alloc<__node>
-#else
-                rebind_alloc<__node>::other
-#endif
-                                                      __node_allocator;
+    typedef typename __rebind_alloc_helper<allocator_traits<allocator_type>, __node>::type __node_allocator;
     typedef allocator_traits<__node_allocator>        __node_traits;
     typedef typename __node_traits::pointer           __node_pointer;
     typedef typename __node_traits::pointer           __node_const_pointer;
 
-    typedef typename allocator_traits<allocator_type>::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-                rebind_alloc<__begin_node>
-#else
-                rebind_alloc<__begin_node>::other
-#endif
-                                                      __begin_node_allocator;
+    typedef typename __rebind_alloc_helper<allocator_traits<allocator_type>, __begin_node>::type __begin_node_allocator;
     typedef typename allocator_traits<__begin_node_allocator>::pointer __begin_node_pointer;
 
     __compressed_pair<__begin_node, __node_allocator> __before_begin_;

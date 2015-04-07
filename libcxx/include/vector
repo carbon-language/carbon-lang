@@ -2125,13 +2125,7 @@ public:
     typedef _VSTD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
 private:
-    typedef typename __alloc_traits::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-                rebind_alloc<__storage_type>
-#else
-                rebind_alloc<__storage_type>::other
-#endif
-                                                     __storage_allocator;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __storage_type>::type __storage_allocator;
     typedef allocator_traits<__storage_allocator>    __storage_traits;
     typedef typename __storage_traits::pointer       __storage_pointer;
     typedef typename __storage_traits::const_pointer __const_storage_pointer;

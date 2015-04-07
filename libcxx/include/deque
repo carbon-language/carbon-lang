@@ -912,22 +912,10 @@ protected:
 
     static const difference_type __block_size = sizeof(value_type) < 256 ? 4096 / sizeof(value_type) : 16;
 
-    typedef typename __alloc_traits::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-                rebind_alloc<pointer>
-#else
-                rebind_alloc<pointer>::other
-#endif
-                                                         __pointer_allocator;
+    typedef typename __rebind_alloc_helper<__alloc_traits, pointer>::type __pointer_allocator;
     typedef allocator_traits<__pointer_allocator>        __map_traits;
     typedef typename __map_traits::pointer               __map_pointer;
-    typedef typename __alloc_traits::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-                rebind_alloc<const_pointer>
-#else
-                rebind_alloc<const_pointer>::other
-#endif
-                                                         __const_pointer_allocator;
+    typedef typename __rebind_alloc_helper<__alloc_traits, const_pointer>::type __const_pointer_allocator;
     typedef typename allocator_traits<__const_pointer_allocator>::const_pointer __map_const_pointer;
     typedef __split_buffer<pointer, __pointer_allocator> __map;
 

@@ -1635,6 +1635,16 @@ private:
             {return __a;}
 };
 
+template <class _Traits, class _Tp>
+struct __rebind_alloc_helper
+{
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+	typedef typename _Traits::template rebind_alloc<_Tp>        type;
+#else
+    typedef typename _Traits::template rebind_alloc<_Tp>::other type;
+#endif
+};
+
 // allocator
 
 template <class _Tp>
