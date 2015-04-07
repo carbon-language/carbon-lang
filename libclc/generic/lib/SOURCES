@@ -60,6 +60,7 @@ integer/sub_sat_if.ll
 integer/sub_sat_impl.ll
 integer/upsample.cl
 math/acos.cl
+math/acosh.cl
 math/acospi.cl
 math/asin.cl
 math/asinh.cl

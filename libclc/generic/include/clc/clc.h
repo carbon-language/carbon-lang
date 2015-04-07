@@ -33,6 +33,7 @@
 
 /* 6.11.2 Math Functions */
 #include <clc/math/acos.h>
+#include <clc/math/acosh.h>
 #include <clc/math/acospi.h>
 #include <clc/math/asin.h>
 #include <clc/math/asinh.h>
