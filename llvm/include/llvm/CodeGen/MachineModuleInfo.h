@@ -91,7 +91,10 @@ public:
   virtual ~MachineModuleInfoImpl();
   typedef std::vector<std::pair<MCSymbol*, StubValueTy> > SymbolListTy;
 protected:
-  static SymbolListTy GetSortedStubs(const DenseMap<MCSymbol*, StubValueTy>&);
+
+  /// Return the entries from a DenseMap in a deterministic sorted orer.
+  /// Clears the map.
+  static SymbolListTy getSortedStubs(DenseMap<MCSymbol*, StubValueTy>&);
 };
 
 //===----------------------------------------------------------------------===//

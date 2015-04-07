@@ -58,14 +58,14 @@ namespace llvm {
     }
 
     /// Accessor methods to return the set of stubs in sorted order.
-    SymbolListTy GetFnStubList() const {
-      return GetSortedStubs(FnStubs);
+    SymbolListTy GetFnStubList() {
+      return getSortedStubs(FnStubs);
     }
-    SymbolListTy GetGVStubList() const {
-      return GetSortedStubs(GVStubs);
+    SymbolListTy GetGVStubList() {
+      return getSortedStubs(GVStubs);
     }
-    SymbolListTy GetHiddenGVStubList() const {
-      return GetSortedStubs(HiddenGVStubs);
+    SymbolListTy GetHiddenGVStubList() {
+      return getSortedStubs(HiddenGVStubs);
     }
   };
 
@@ -87,8 +87,8 @@ namespace llvm {
 
     /// Accessor methods to return the set of stubs in sorted order.
 
-    SymbolListTy GetGVStubList() const {
-      return GetSortedStubs(GVStubs);
+    SymbolListTy GetGVStubList() {
+      return getSortedStubs(GVStubs);
     }
   };
 
