@@ -256,8 +256,7 @@ class ELFObjectWriter : public MCObjectWriter {
     /// \param NumRegularSections - Number of non-relocation sections.
     void computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
-                            const RevGroupMapTy &RevGroupMap,
-                            unsigned NumRegularSections);
+                            const RevGroupMapTy &RevGroupMap);
 
     void computeIndexMap(MCAssembler &Asm, SectionIndexMapTy &SectionIndexMap);
 
@@ -990,11 +989,10 @@ void ELFObjectWriter::computeIndexMap(MCAssembler &Asm,
   }
 }
 
-void
-ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
-                                    const SectionIndexMapTy &SectionIndexMap,
-                                    const RevGroupMapTy &RevGroupMap,
-                                    unsigned NumRegularSections) {
+void ELFObjectWriter::computeSymbolTable(
+    MCAssembler &Asm, const MCAsmLayout &Layout,
+    const SectionIndexMapTy &SectionIndexMap,
+    const RevGroupMapTy &RevGroupMap) {
   // FIXME: Is this the correct place to do this?
   // FIXME: Why is an undefined reference to _GLOBAL_OFFSET_TABLE_ needed?
   if (NeedsGOT) {
@@ -1695,8 +1693,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   unsigned NumRegularSections = NumUserSections + NumIndexedSections;
 
   // Compute symbol table information.
-  computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap,
-                     NumRegularSections);
+  computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap);
 
   WriteRelocations(Asm, const_cast<MCAsmLayout &>(Layout));
 
