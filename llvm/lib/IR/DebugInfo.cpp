@@ -96,35 +96,6 @@ void DIDescriptor::replaceAllUsesWith(MDNode *D) {
   Node->replaceAllUsesWith(D);
 }
 
-#ifndef NDEBUG
-/// \brief Check if a value can be a reference to a type.
-static bool isTypeRef(const Metadata *MD) {
-  if (!MD)
-    return true;
-  if (auto *S = dyn_cast<MDString>(MD))
-    return !S->getString().empty();
-  return isa<MDType>(MD);
-}
-
-/// \brief Check if a value can be a ScopeRef.
-static bool isScopeRef(const Metadata *MD) {
-  if (!MD)
-    return true;
-  if (auto *S = dyn_cast<MDString>(MD))
-    return !S->getString().empty();
-  return isa<MDScope>(MD);
-}
-
-/// \brief Check if a value can be a DescriptorRef.
-static bool isDescriptorRef(const Metadata *MD) {
-  if (!MD)
-    return true;
-  if (auto *S = dyn_cast<MDString>(MD))
-    return !S->getString().empty();
-  return isa<MDNode>(MD);
-}
-#endif
-
 DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
 
 bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
@@ -165,17 +136,17 @@ DIScopeRef DIScope::getContext() const {
     return T.getContext();
 
   if (DISubprogram SP = dyn_cast<MDSubprogram>(*this))
-    return DIScopeRef(SP.getContext());
+    return MDScopeRef(SP.getContext());
 
   if (DILexicalBlock LB = dyn_cast<MDLexicalBlockBase>(*this))
-    return DIScopeRef(LB.getContext());
+    return MDScopeRef(LB.getContext());
 
   if (DINameSpace NS = dyn_cast<MDNamespace>(*this))
-    return DIScopeRef(NS.getContext());
+    return MDScopeRef(NS.getContext());
 
   assert((isa<MDFile>(*this) || isa<MDCompileUnit>(*this)) &&
          "Unhandled type of scope.");
-  return DIScopeRef(nullptr);
+  return MDScopeRef();
 }
 
 StringRef DIScope::getName() const {
@@ -562,29 +533,6 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
       OS << "]";
     }
   }
-}
-
-template <> DIRef<DIDescriptor>::DIRef(const Metadata *V) : Val(V) {
-  assert(isDescriptorRef(V) &&
-         "DIDescriptorRef should be a MDString or MDNode");
-}
-template <> DIRef<DIScope>::DIRef(const Metadata *V) : Val(V) {
-  assert(isScopeRef(V) && "DIScopeRef should be a MDString or MDNode");
-}
-template <> DIRef<DIType>::DIRef(const Metadata *V) : Val(V) {
-  assert(isTypeRef(V) && "DITypeRef should be a MDString or MDNode");
-}
-
-template <>
-DIDescriptorRef DIDescriptor::getFieldAs<DIDescriptorRef>(unsigned Elt) const {
-  return DIDescriptorRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
-}
-template <>
-DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const {
-  return DIScopeRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
-}
-template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
-  return DITypeRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
 }
 
 template <>

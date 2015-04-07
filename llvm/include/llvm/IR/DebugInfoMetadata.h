@@ -50,6 +50,7 @@ template <class T> class TypedDebugNodeRef {
   const Metadata *MD = nullptr;
 
 public:
+  TypedDebugNodeRef() = default;
   TypedDebugNodeRef(std::nullptr_t) {}
 
   /// \brief Construct from a raw pointer.

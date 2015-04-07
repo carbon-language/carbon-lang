@@ -255,7 +255,6 @@ template <typename T> class DIRef {
   ///
   /// In the latter, MDString specifies the type identifier.
   const Metadata *Val;
-  explicit DIRef(const Metadata *V);
 
 public:
   template <class U>
@@ -266,8 +265,6 @@ public:
 
   T resolve(const DITypeIdentifierMap &Map) const;
   operator Metadata *() const { return const_cast<Metadata *>(Val); }
-
-  static DIRef get(const Metadata *MD) { return DIRef(MD); }
 };
 
 template <>
@@ -275,22 +272,6 @@ DIDescriptor DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const;
 template <>
 DIScope DIRef<DIScope>::resolve(const DITypeIdentifierMap &Map) const;
 template <> DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const;
-
-/// \brief Handle fields that are references to DIDescriptors.
-template <>
-DIDescriptorRef DIDescriptor::getFieldAs<DIDescriptorRef>(unsigned Elt) const;
-/// \brief Specialize DIRef constructor for DIDescriptorRef.
-template <> DIRef<DIDescriptor>::DIRef(const Metadata *V);
-
-/// \brief Handle fields that are references to DIScopes.
-template <> DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const;
-/// \brief Specialize DIRef constructor for DIScopeRef.
-template <> DIRef<DIScope>::DIRef(const Metadata *V);
-
-/// \brief Handle fields that are references to DITypes.
-template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const;
-/// \brief Specialize DIRef constructor for DITypeRef.
-template <> DIRef<DIType>::DIRef(const Metadata *V);
 
 /// \brief This is a wrapper for a type.
 ///
@@ -309,7 +290,7 @@ public:
     return *get();
   }
 
-  DIScopeRef getContext() const { return DIScopeRef::get(get()->getScope()); }
+  DIScopeRef getContext() const { return get()->getScope(); }
   StringRef getName() const { return get()->getName(); }
   unsigned getLineNumber() const { return get()->getLine(); }
   uint64_t getSizeInBits() const { return get()->getSizeInBits(); }
@@ -375,9 +356,7 @@ public:
     return *get();
   }
 
-  DITypeRef getTypeDerivedFrom() const {
-    return DITypeRef::get(get()->getBaseType());
-  }
+  DITypeRef getTypeDerivedFrom() const { return get()->getBaseType(); }
 
   /// \brief Return property node, if this ivar is associated with one.
   MDNode *getObjCProperty() const {
@@ -389,8 +368,8 @@ public:
   DITypeRef getClassType() const {
     assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
     if (auto *N = dyn_cast<MDDerivedType>(get()))
-      return DITypeRef::get(N->getExtraData());
-    return DITypeRef::get(nullptr);
+      return MDTypeRef(N->getExtraData());
+    return MDTypeRef();
   }
 
   Constant *getConstant() const {
@@ -435,9 +414,7 @@ public:
   }
 
   unsigned getRunTimeLang() const { return get()->getRuntimeLang(); }
-  DITypeRef getContainingType() const {
-    return DITypeRef::get(get()->getVTableHolder());
-  }
+  DITypeRef getContainingType() const { return get()->getVTableHolder(); }
 
   DIArray getTemplateParams() const { return get()->getTemplateParams(); }
   MDString *getIdentifier() const { return get()->getRawIdentifier(); }
@@ -559,14 +536,12 @@ public:
   /// \brief Get the beginning of the scope of the function (not the name).
   unsigned getScopeLineNumber() const { return get()->getScopeLine(); }
 
-  DIScopeRef getContext() const { return DIScopeRef::get(get()->getScope()); }
+  DIScopeRef getContext() const { return get()->getScope(); }
   DISubroutineType getType() const {
     return DISubroutineType(get()->getType());
   }
 
-  DITypeRef getContainingType() const {
-    return DITypeRef::get(get()->getContainingType());
-  }
+  DITypeRef getContainingType() const { return get()->getContainingType(); }
 
   /// \brief Check if this provides debugging information for the function F.
   bool describes(const Function *F);
@@ -682,8 +657,7 @@ public:
   }
 
   StringRef getName() const { return get()->getName(); }
-
-  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
+  DITypeRef getType() const { return get()->getType(); }
 };
 
 /// \brief This is a wrapper for template value parameter.
@@ -704,7 +678,7 @@ public:
   }
 
   StringRef getName() const { return get()->getName(); }
-  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
+  DITypeRef getType() const { return get()->getType(); }
   Metadata *getValue() const { return get()->getValue(); }
 };
 
@@ -736,7 +710,7 @@ public:
   DIScope getContext() const { return DIScope(get()->getScope()); }
   StringRef getFilename() const { return getFile().getFilename(); }
   StringRef getDirectory() const { return getFile().getDirectory(); }
-  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
+  DITypeRef getType() const { return get()->getType(); }
 
   GlobalVariable *getGlobal() const;
   Constant *getConstant() const {
@@ -774,7 +748,7 @@ public:
 
   DIScope getContext() const { return DIScope(get()->getScope()); }
   DIFile getFile() const { return DIFile(get()->getFile()); }
-  DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
+  DITypeRef getType() const { return get()->getType(); }
 
   bool isArtificial() const { return get()->isArtificial(); }
   bool isObjectPointer() const { return get()->isObjectPointer(); }
@@ -944,9 +918,7 @@ public:
   }
 
   DIScope getContext() const { return DIScope(get()->getScope()); }
-  DIDescriptorRef getEntity() const {
-    return DIDescriptorRef::get(get()->getEntity());
-  }
+  DIDescriptorRef getEntity() const { return get()->getEntity(); }
   unsigned getLineNumber() const { return get()->getLine(); }
   StringRef getName() const { return get()->getName(); }
 };
