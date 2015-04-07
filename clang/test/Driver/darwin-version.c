@@ -30,6 +30,9 @@
 // RUN: %clang -target x86_64-apple-macosx -mmacosx-version-min=10.10 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-OSX10 %s
 // CHECK-VERSION-OSX10: "x86_64-apple-macosx10.10.0"
+// RUN: %clang -target x86_64-apple-macosx -mmacosx-version-min= -c %s -### 2>&1 | \
+// RUN:   FileCheck --check-prefix=CHECK-VERSION-MISSING %s
+// CHECK-VERSION-MISSING: invalid version number
 
 // Check environment variable gets interpreted correctly
 // RUN: env MACOSX_DEPLOYMENT_TARGET=10.5 \
