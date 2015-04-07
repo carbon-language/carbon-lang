@@ -1079,10 +1079,10 @@ public:
 
   template <class U>
   explicit MDTupleTypedArrayWrapper(
-      const U &Tuple,
-      typename std::enable_if<
-          std::is_constructible<const MDTuple *, U>::value>::type * = nullptr)
-      : N(Tuple) {}
+      const MDTupleTypedArrayWrapper<U> &Other,
+      typename std::enable_if<!std::is_convertible<U *, T *>::value>::type * =
+          nullptr)
+      : N(Other.get()) {}
 
   explicit operator bool() const { return get(); }
   explicit operator MDTuple *() const { return get(); }
