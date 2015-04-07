@@ -67,6 +67,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
     static MIuint VarObjIdGet(void);
     static void VarObjIdResetToZero(void);
     static void VarObjClear(void);
+    static void VarObjSetFormat(varFormat_e eDefaultFormat);
 
     // Methods:
   public:
@@ -117,6 +118,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
     static const MIchar *ms_aVarFormatChars[];
     static MapKeyToVarObj_t ms_mapVarIdToVarObj;
     static MIuint ms_nVarUniqueId;
+    static varFormat_e ms_eDefaultFormat;    // overrides "natural" format
     //
     // *** Upate the copy move constructors and assignment operator ***
     varFormat_e m_eVarFormat;

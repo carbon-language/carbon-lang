@@ -117,5 +117,53 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-show unknown")
         self.expect("\^error")
 
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
+    def test_lldbmi_gdb_set_ouptut_radix(self):
+        """Test that 'lldb-mi --interpreter' works for -gdb-set output-radix."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to BP_printf
+        line = line_number('main.cpp', '// BP_printf')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running");
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Setup variable
+        self.runCmd("-var-create var_a * a");
+        self.expect("\^done,name=\"var_a\",numchild=\"0\",value=\"10\",type=\"int\",thread-id=\"1\",has_more=\"0\"")
+
+        # Test default output
+        self.runCmd("-var-evaluate-expression var_a");
+        self.expect("\^done,value=\"10\"");
+
+        # Test hex output
+        self.runCmd("-gdb-set output-radix 16");
+        self.expect("\^done");
+        self.runCmd("-var-evaluate-expression var_a");
+        self.expect("\^done,value=\"0xa\"");
+
+        # Test octal output
+        self.runCmd("-gdb-set output-radix 8");
+        self.expect("\^done");
+        self.runCmd("-var-evaluate-expression var_a");
+        self.expect("\^done,value=\"012\"");
+
+        # Test decimal output
+        self.runCmd("-gdb-set output-radix 10");
+        self.expect("\^done");
+        self.runCmd("-var-evaluate-expression var_a");
+        self.expect("\^done,value=\"10\"");
+
 if __name__ == '__main__':
     unittest2.main()

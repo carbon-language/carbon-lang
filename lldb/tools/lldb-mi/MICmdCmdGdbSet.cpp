@@ -22,6 +22,7 @@
 const CMICmdCmdGdbSet::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbSet::ms_mapGdbOptionNameToFnGdbOptionPtr = {
     {"target-async", &CMICmdCmdGdbSet::OptionFnTargetAsync},
     // { "auto-solib-add", &CMICmdCmdGdbSet::OptionFnAutoSolibAdd },    // Example code if need to implement GDB set other options
+    {"output-radix", &CMICmdCmdGdbSet::OptionFnOutputRadix},
     {"solib-search-path", &CMICmdCmdGdbSet::OptionFnSolibSearchPath},
     {"fallback", &CMICmdCmdGdbSet::OptionFnFallback}};
 
@@ -284,6 +285,58 @@ CMICmdCmdGdbSet::OptionFnSolibSearchPath(const CMIUtilString::VecString_t &vrWor
         return MIstatus::failure;
     }
 
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Carry out work to complete the GDB set option 'output-radix' to prepare
+//          and send back information asked for.
+// Type:    Method.
+// Args:    vrWords - (R) List of additional parameters used by this option.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdGdbSet::OptionFnOutputRadix(const CMIUtilString::VecString_t &vrWords)
+{
+    // Check we have at least one argument
+    if (vrWords.size() < 1)
+    {
+        m_bGbbOptionFnHasError = true;
+        m_strGdbOptionFnError = MIRSRC(IDS_CMD_ERR_GDBSET_OPT_SOLIBSEARCHPATH);
+        return MIstatus::failure;
+    }
+    const CMIUtilString &rStrValOutputRadix(vrWords[0]);
+    
+    CMICmnLLDBDebugSessionInfoVarObj::varFormat_e  format = CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Invalid;
+    MIint64 radix;
+    if (rStrValOutputRadix.ExtractNumber(radix))
+    {
+        switch (radix)
+        {
+        case 8:
+            format = CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Octal;
+            break;
+        case 10:
+            format = CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Natural;
+            break;
+        case 16:
+            format = CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Hex;
+            break;
+        default:
+            format = CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Invalid;
+            break;
+        }
+    }
+    if (format == CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Invalid)
+    {
+        m_bGbbOptionFnHasError = false;
+        SetError(CMIUtilString::Format(MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_ADD), m_cmdData.strMiCmd.c_str(), "Output Radix"));
+        return MIstatus::failure;
+    }
+    CMICmnLLDBDebugSessionInfoVarObj::VarObjSetFormat(format);
+    
     return MIstatus::success;
 }
 

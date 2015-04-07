@@ -71,6 +71,7 @@ class CMICmdCmdGdbSet : public CMICmdBase
     bool GetOptionFn(const CMIUtilString &vrGdbOptionName, FnGdbOptionPtr &vrwpFn) const;
     bool OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords);
     bool OptionFnSolibSearchPath(const CMIUtilString::VecString_t &vrWords);
+    bool OptionFnOutputRadix(const CMIUtilString::VecString_t &vrWords);
     bool OptionFnFallback(const CMIUtilString::VecString_t &vrWords);
 
     // Attributes:

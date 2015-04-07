@@ -23,6 +23,7 @@ const MIchar *CMICmnLLDBDebugSessionInfoVarObj::ms_aVarFormatChars[] = {
     "<Invalid var format>", "t", "o", "d", "x", "N"};
 CMICmnLLDBDebugSessionInfoVarObj::MapKeyToVarObj_t CMICmnLLDBDebugSessionInfoVarObj::ms_mapVarIdToVarObj;
 MIuint CMICmnLLDBDebugSessionInfoVarObj::ms_nVarUniqueId = 0; // Index from 0
+CMICmnLLDBDebugSessionInfoVarObj::varFormat_e CMICmnLLDBDebugSessionInfoVarObj::ms_eDefaultFormat = eVarFormat_Natural;
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnLLDBDebugSessionInfoVarObj constructor.
@@ -302,8 +303,13 @@ CMICmnLLDBDebugSessionInfoVarObj::GetStringFormatted(const MIuint64 vnValue, con
                                                      const CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat)
 {
     CMIUtilString strFormattedValue;
+    CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veFormat = veVarFormat;
+    if (ms_eDefaultFormat != eVarFormat_Invalid && veVarFormat == eVarFormat_Natural)
+    {
+        veFormat = ms_eDefaultFormat;
+    }
 
-    switch (veVarFormat)
+    switch (veFormat)
     {
         case eVarFormat_Binary:
             strFormattedValue = CMIUtilString::FormatBinary(vnValue);
@@ -420,6 +426,20 @@ CMICmnLLDBDebugSessionInfoVarObj::VarObjIdResetToZero(void)
 {
     ms_nVarUniqueId = 0;
 }
+
+//++ ------------------------------------------------------------------------------------
+// Details: Default format is globally used as the data format when "natural" is in effect, that is, this overrides the default
+// Type:    Static method.
+// Args:    None.
+// Returns: None.
+// Throws:  None.
+//--
+void
+CMICmnLLDBDebugSessionInfoVarObj::VarObjSetFormat(varFormat_e eDefaultFormat)
+{
+    ms_eDefaultFormat = eDefaultFormat;
+}
+
 
 //++ ------------------------------------------------------------------------------------
 // Details: A count is kept of the number of var value objects created. This is count is

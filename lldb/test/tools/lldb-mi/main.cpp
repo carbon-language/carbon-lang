@@ -12,6 +12,8 @@
 int
 main(int argc, char const *argv[])
 {
-    printf("argc=%d\n", argc);
+    int a  = 10;
+
+    printf("argc=%d\n", argc); // BP_printf
     return 0;
 }
