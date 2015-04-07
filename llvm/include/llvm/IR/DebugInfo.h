@@ -621,39 +621,14 @@ public:
   MDNode *getVariablesNodes() const { return getVariables(); }
   DIArray getVariables() const { return DIArray(get()->getVariables()); }
 
-  unsigned isArtificial() const { return (getFlags() & FlagArtificial) != 0; }
-  /// \brief Check for the "private" access specifier.
-  bool isPrivate() const {
-    return (getFlags() & FlagAccessibility) == FlagPrivate;
-  }
-  /// \brief Check for the "protected" access specifier.
-  bool isProtected() const {
-    return (getFlags() & FlagAccessibility) == FlagProtected;
-  }
-  /// \brief Check for the "public" access specifier.
-  bool isPublic() const {
-    return (getFlags() & FlagAccessibility) == FlagPublic;
-  }
-  /// \brief Check for "explicit".
-  bool isExplicit() const { return (getFlags() & FlagExplicit) != 0; }
-  /// \brief Check if this is prototyped.
-  bool isPrototyped() const { return (getFlags() & FlagPrototyped) != 0; }
-
-  /// \brief Check if this is reference-qualified.
-  ///
-  /// Return true if this subprogram is a C++11 reference-qualified non-static
-  /// member function (void foo() &).
-  unsigned isLValueReference() const {
-    return (getFlags() & FlagLValueReference) != 0;
-  }
-
-  /// \brief Check if this is rvalue-reference-qualified.
-  ///
-  /// Return true if this subprogram is a C++11 rvalue-reference-qualified
-  /// non-static member function (void foo() &&).
-  unsigned isRValueReference() const {
-    return (getFlags() & FlagRValueReference) != 0;
-  }
+  unsigned isArtificial() const { return get()->isArtificial(); }
+  bool isPrivate() const { return get()->isPrivate(); }
+  bool isProtected() const { return get()->isProtected(); }
+  bool isPublic() const { return get()->isPublic(); }
+  bool isExplicit() const { return get()->isExplicit(); }
+  bool isPrototyped() const { return get()->isPrototyped(); }
+  unsigned isLValueReference() const { return get()->isLValueReference(); }
+  unsigned isRValueReference() const { return get()->isRValueReference(); }
 };
 
 /// \brief This is a wrapper for a lexical block.

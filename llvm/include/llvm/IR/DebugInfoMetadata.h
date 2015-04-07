@@ -1236,6 +1236,35 @@ public:
   bool isDefinition() const { return IsDefinition; }
   bool isOptimized() const { return IsOptimized; }
 
+  unsigned isArtificial() const { return getFlags() & FlagArtificial; }
+  bool isPrivate() const {
+    return (getFlags() & FlagAccessibility) == FlagPrivate;
+  }
+  bool isProtected() const {
+    return (getFlags() & FlagAccessibility) == FlagProtected;
+  }
+  bool isPublic() const {
+    return (getFlags() & FlagAccessibility) == FlagPublic;
+  }
+  bool isExplicit() const { return getFlags() & FlagExplicit; }
+  bool isPrototyped() const { return getFlags() & FlagPrototyped; }
+
+  /// \brief Check if this is reference-qualified.
+  ///
+  /// Return true if this subprogram is a C++11 reference-qualified non-static
+  /// member function (void foo() &).
+  unsigned isLValueReference() const {
+    return getFlags() & FlagLValueReference;
+  }
+
+  /// \brief Check if this is rvalue-reference-qualified.
+  ///
+  /// Return true if this subprogram is a C++11 rvalue-reference-qualified
+  /// non-static member function (void foo() &&).
+  unsigned isRValueReference() const {
+    return getFlags() & FlagRValueReference;
+  }
+
   MDScopeRef getScope() const { return MDScopeRef(getRawScope()); }
 
   StringRef getName() const { return getStringOperand(2); }
