@@ -273,8 +273,8 @@ protected:
   }
 
   /// Process the Absolute symbol and create an atom for it.
-  ErrorOr<ELFAbsoluteAtom<ELFT> *>
-  handleAbsoluteSymbol(StringRef symName, const Elf_Sym *sym, int64_t value) {
+  ELFAbsoluteAtom<ELFT> *createAbsoluteAtom(StringRef symName,
+                                            const Elf_Sym *sym, int64_t value) {
     return new (_readerStorage)
         ELFAbsoluteAtom<ELFT>(*this, symName, sym, value);
   }
@@ -445,16 +445,16 @@ public:
   /// \brief add a global absolute atom
   virtual Atom *addAbsoluteAtom(StringRef symbolName) {
     assert(!symbolName.empty() && "AbsoluteAtoms must have a name");
-    Elf_Sym *symbol = new (this->_readerStorage) Elf_Sym;
-    symbol->st_name = 0;
-    symbol->st_value = 0;
-    symbol->st_shndx = llvm::ELF::SHN_ABS;
-    symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_OBJECT);
-    symbol->setVisibility(llvm::ELF::STV_DEFAULT);
-    symbol->st_size = 0;
-    auto newAtom = this->handleAbsoluteSymbol(symbolName, symbol, -1);
-    this->_absoluteAtoms._atoms.push_back(*newAtom);
-    return *newAtom;
+    Elf_Sym *sym = new (this->_readerStorage) Elf_Sym;
+    sym->st_name = 0;
+    sym->st_value = 0;
+    sym->st_shndx = llvm::ELF::SHN_ABS;
+    sym->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_OBJECT);
+    sym->setVisibility(llvm::ELF::STV_DEFAULT);
+    sym->st_size = 0;
+    ELFAbsoluteAtom<ELFT> *atom = this->createAbsoluteAtom(symbolName, sym, -1);
+    this->_absoluteAtoms._atoms.push_back(atom);
+    return atom;
   }
 
   /// \brief add an undefined atom
@@ -634,10 +634,10 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
       return ec;
 
     if (isAbsoluteSymbol(&*SymI)) {
-      ErrorOr<ELFAbsoluteAtom<ELFT> *> absAtom =
-          handleAbsoluteSymbol(*symbolName, &*SymI, (int64_t)getSymbolValue(&*SymI));
-      _absoluteAtoms._atoms.push_back(*absAtom);
-      _symbolToAtomMapping.insert(std::make_pair(&*SymI, *absAtom));
+      ELFAbsoluteAtom<ELFT> *absAtom = createAbsoluteAtom(
+          *symbolName, &*SymI, (int64_t)getSymbolValue(&*SymI));
+      _absoluteAtoms._atoms.push_back(absAtom);
+      _symbolToAtomMapping.insert(std::make_pair(&*SymI, absAtom));
     } else if (isUndefinedSymbol(&*SymI)) {
       if (_useWrap &&
           (_wrapSymbolMap.find(*symbolName) != _wrapSymbolMap.end())) {
