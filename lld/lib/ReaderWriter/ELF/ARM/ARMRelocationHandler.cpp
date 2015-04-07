@@ -117,9 +117,9 @@ static inline void applyArmReloc(uint8_t *location, uint32_t result,
   write32le(location, (read32le(location) & ~mask) | (result & mask));
 }
 
-static inline void applyThmReloc(uint8_t *location, uint16_t resHi,
-                                 uint16_t resLo, uint16_t maskHi,
-                                 uint16_t maskLo = 0xFFFF) {
+static inline void applyThumb32Reloc(uint8_t *location, uint16_t resHi,
+                                     uint16_t resLo, uint16_t maskHi,
+                                     uint16_t maskLo = 0xFFFF) {
   assert(!(resHi & ~maskHi) && !(resLo & ~maskLo));
   write16le(location, (read16le(location) & ~maskHi) | (resHi & maskHi));
   location += 2;
@@ -196,7 +196,7 @@ static void relocR_ARM_THM_B_L(uint8_t *location, uint32_t result, bool useJs) {
   const uint16_t bitI1 = (~(bitJ1 ^ bitS)) & 0x1;
   const uint16_t resLo = (bitI1 << 13) | (bitI2 << 11) | imm11;
 
-  applyThmReloc(location, resHi, resLo, 0x7FF, 0x2FFF);
+  applyThumb32Reloc(location, resHi, resLo, 0x7FF, 0x2FFF);
 }
 
 /// \brief R_ARM_THM_CALL - ((S + A) | T) - P
@@ -220,7 +220,7 @@ static void relocR_ARM_THM_CALL(uint8_t *location, uint64_t P, uint64_t S,
   relocR_ARM_THM_B_L(location, result, useJs);
 
   if (switchMode) {
-    applyThmReloc(location, 0, 0, 0, 0x1001);
+    applyThumb32Reloc(location, 0, 0, 0, 0x1001);
   }
 }
 
@@ -367,7 +367,7 @@ static void relocR_ARM_THM_MOV(uint8_t *location, uint32_t result) {
   const uint16_t bitI = (result >> 11) & 0x1;
   const uint16_t resHi = (bitI << 10) | imm4;
 
-  applyThmReloc(location, resHi, resLo, 0x40F, 0x70FF);
+  applyThumb32Reloc(location, resHi, resLo, 0x40F, 0x70FF);
 }
 
 /// \brief R_ARM_THM_MOVW_ABS_NC - (S + A) | T
