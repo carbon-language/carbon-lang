@@ -634,7 +634,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         std::min(State.LowestLevelOnLine, Current.NestingLevel);
   if (Current.isMemberAccess())
     State.Stack.back().StartOfFunctionCall =
-        Current.LastOperator ? 0 : State.Column + Current.ColumnWidth;
+        Current.LastOperator ? 0 : State.Column;
   if (Current.is(TT_SelectorName))
     State.Stack.back().ObjCSelectorNameFound = true;
   if (Current.is(TT_CtorInitializerColon)) {

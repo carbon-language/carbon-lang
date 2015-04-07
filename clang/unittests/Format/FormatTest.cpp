@@ -4085,7 +4085,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
                "       aaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa();");
   verifyFormat(
       "aaaaaaa->aaaaaaa->aaaaaaaaaaaaaaaa(\n"
-      "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "    ->aaaaaaaa(aaaaaaaaaaaaaaa);");
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaa()->aaaaaa(bbbbb)->aaaaaaaaaaaaaaaaaaa( // break\n"
@@ -4094,7 +4094,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "aaaaaaaaaaaaaaaaaaaaaaa *aaaaaaaaa =\n"
       "    aaaaaa->aaaaaaaaaaaa()\n"
       "        ->aaaaaaaaaaaaaaaa(\n"
-      "              aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "        ->aaaaaaaaaaaaaaaaa();");
   verifyGoogleFormat(
       "void f() {\n"

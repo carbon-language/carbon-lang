@@ -433,7 +433,7 @@ TEST_F(FormatTestJava, NeverAlignAfterReturn) {
                getStyleWithColumns(40));
   verifyFormat("return aaaaaaaaaaaaaaaaaaa()\n"
                "    .bbbbbbbbbbbbbbbbbbb(\n"
-               "         ccccccccccccccc)\n"
+               "        ccccccccccccccc)\n"
                "    .ccccccccccccccccccc();",
                getStyleWithColumns(40));
 }
