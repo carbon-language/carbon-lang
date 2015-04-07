@@ -122,44 +122,6 @@ public:
     return 0;
   }
 
-  bool isDerivedType() const { return get() && isa<MDDerivedTypeBase>(get()); }
-  bool isCompositeType() const {
-    return get() && isa<MDCompositeTypeBase>(get());
-  }
-  bool isSubroutineType() const {
-    return get() && isa<MDSubroutineType>(get());
-  }
-  bool isBasicType() const { return get() && isa<MDBasicType>(get()); }
-  bool isVariable() const { return get() && isa<MDLocalVariable>(get()); }
-  bool isSubprogram() const { return get() && isa<MDSubprogram>(get()); }
-  bool isGlobalVariable() const {
-    return get() && isa<MDGlobalVariable>(get());
-  }
-  bool isScope() const { return get() && isa<MDScope>(get()); }
-  bool isFile() const { return get() && isa<MDFile>(get()); }
-  bool isCompileUnit() const { return get() && isa<MDCompileUnit>(get()); }
-  bool isNameSpace() const{ return get() && isa<MDNamespace>(get()); }
-  bool isLexicalBlockFile() const {
-    return get() && isa<MDLexicalBlockFile>(get());
-  }
-  bool isLexicalBlock() const {
-    return get() && isa<MDLexicalBlockBase>(get());
-  }
-  bool isSubrange() const { return get() && isa<MDSubrange>(get()); }
-  bool isEnumerator() const { return get() && isa<MDEnumerator>(get()); }
-  bool isType() const { return get() && isa<MDType>(get()); }
-  bool isTemplateTypeParameter() const {
-    return get() && isa<MDTemplateTypeParameter>(get());
-  }
-  bool isTemplateValueParameter() const {
-    return get() && isa<MDTemplateValueParameter>(get());
-  }
-  bool isObjCProperty() const { return get() && isa<MDObjCProperty>(get()); }
-  bool isImportedEntity() const {
-    return get() && isa<MDImportedEntity>(get());
-  }
-  bool isExpression() const { return get() && isa<MDExpression>(get()); }
-
   void print(raw_ostream &OS) const;
   void dump() const;
 
@@ -200,7 +162,7 @@ DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 /// \brief This is used to represent ranges, for array bounds.
 class DISubrange : public DIDescriptor {
 public:
-  explicit DISubrange(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DISubrange() = default;
   DISubrange(const MDSubrange *N) : DIDescriptor(N) {}
 
   MDSubrange *get() const {
@@ -238,7 +200,7 @@ typedef DITypedArray<DIDescriptor> DIArray;
 /// type/precision or a file/line pair for location info.
 class DIEnumerator : public DIDescriptor {
 public:
-  explicit DIEnumerator(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIEnumerator() = default;
   DIEnumerator(const MDEnumerator *N) : DIDescriptor(N) {}
 
   MDEnumerator *get() const {
@@ -271,7 +233,7 @@ typedef DITypedArray<DITypeRef> DITypeArray;
 /// (DICompileUnit, DISubprogram, etc.), but not for, e.g., a DIType.
 class DIScope : public DIDescriptor {
 public:
-  explicit DIScope(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIScope() = default;
   DIScope(const MDScope *N) : DIDescriptor(N) {}
 
   MDScope *get() const { return cast_or_null<MDScope>(DIDescriptor::get()); }
@@ -358,7 +320,7 @@ template <> DIRef<DIType>::DIRef(const Metadata *V);
 /// others do not require a huge and empty descriptor full of zeros.
 class DIType : public DIScope {
 public:
-  explicit DIType(const MDNode *N = nullptr) : DIScope(N) {}
+  DIType() = default;
   DIType(const MDType *N) : DIScope(N) {}
 
   MDType *get() const { return cast_or_null<MDType>(DIDescriptor::get()); }
@@ -414,7 +376,7 @@ public:
 /// \brief A basic type, like 'int' or 'float'.
 class DIBasicType : public DIType {
 public:
-  explicit DIBasicType(const MDNode *N = nullptr) : DIType(N) {}
+  DIBasicType() = default;
   DIBasicType(const MDBasicType *N) : DIType(N) {}
 
   MDBasicType *get() const {
@@ -436,7 +398,7 @@ public:
 /// Or, a data member of a class/struct/union.
 class DIDerivedType : public DIType {
 public:
-  explicit DIDerivedType(const MDNode *N = nullptr) : DIType(N) {}
+  DIDerivedType() = default;
   DIDerivedType(const MDDerivedTypeBase *N) : DIType(N) {}
 
   MDDerivedTypeBase *get() const {
@@ -493,7 +455,7 @@ class DICompositeType : public DIDerivedType {
   void setArraysHelper(MDNode *Elements, MDNode *TParams);
 
 public:
-  explicit DICompositeType(const MDNode *N = nullptr) : DIDerivedType(N) {}
+  DICompositeType() = default;
   DICompositeType(const MDCompositeTypeBase *N) : DIDerivedType(N) {}
 
   MDCompositeTypeBase *get() const {
@@ -540,7 +502,7 @@ public:
 
 class DISubroutineType : public DICompositeType {
 public:
-  explicit DISubroutineType(const MDNode *N = nullptr) : DICompositeType(N) {}
+  DISubroutineType() = default;
   DISubroutineType(const MDSubroutineType *N) : DICompositeType(N) {}
 
   MDSubroutineType *get() const {
@@ -561,7 +523,7 @@ public:
 /// \brief This is a wrapper for a file.
 class DIFile : public DIScope {
 public:
-  explicit DIFile(const MDNode *N = nullptr) : DIScope(N) {}
+  DIFile() = default;
   DIFile(const MDFile *N) : DIScope(N) {}
 
   MDFile *get() const { return cast_or_null<MDFile>(DIDescriptor::get()); }
@@ -579,7 +541,7 @@ public:
 /// \brief A wrapper for a compile unit.
 class DICompileUnit : public DIScope {
 public:
-  explicit DICompileUnit(const MDNode *N = nullptr) : DIScope(N) {}
+  DICompileUnit() = default;
   DICompileUnit(const MDCompileUnit *N) : DIScope(N) {}
 
   MDCompileUnit *get() const {
@@ -624,7 +586,7 @@ public:
 /// \brief This is a wrapper for a subprogram (e.g. a function).
 class DISubprogram : public DIScope {
 public:
-  explicit DISubprogram(const MDNode *N = nullptr) : DIScope(N) {}
+  DISubprogram() = default;
   DISubprogram(const MDSubprogram *N) : DIScope(N) {}
 
   MDSubprogram *get() const {
@@ -721,7 +683,7 @@ public:
 /// \brief This is a wrapper for a lexical block.
 class DILexicalBlock : public DIScope {
 public:
-  explicit DILexicalBlock(const MDNode *N = nullptr) : DIScope(N) {}
+  DILexicalBlock() = default;
   DILexicalBlock(const MDLexicalBlockBase *N) : DIScope(N) {}
 
   MDLexicalBlockBase *get() const {
@@ -750,7 +712,7 @@ public:
 /// \brief This is a wrapper for a lexical block with a filename change.
 class DILexicalBlockFile : public DIScope {
 public:
-  explicit DILexicalBlockFile(const MDNode *N = nullptr) : DIScope(N) {}
+  DILexicalBlockFile() = default;
   DILexicalBlockFile(const MDLexicalBlockFile *N) : DIScope(N) {}
 
   MDLexicalBlockFile *get() const {
@@ -770,7 +732,7 @@ public:
 /// \brief A wrapper for a C++ style name space.
 class DINameSpace : public DIScope {
 public:
-  explicit DINameSpace(const MDNode *N = nullptr) : DIScope(N) {}
+  DINameSpace() = default;
   DINameSpace(const MDNamespace *N) : DIScope(N) {}
 
   MDNamespace *get() const {
@@ -791,8 +753,7 @@ public:
 /// \brief This is a wrapper for template type parameter.
 class DITemplateTypeParameter : public DIDescriptor {
 public:
-  explicit DITemplateTypeParameter(const MDNode *N = nullptr)
-      : DIDescriptor(N) {}
+  DITemplateTypeParameter() = default;
   DITemplateTypeParameter(const MDTemplateTypeParameter *N) : DIDescriptor(N) {}
 
   MDTemplateTypeParameter *get() const {
@@ -813,8 +774,7 @@ public:
 /// \brief This is a wrapper for template value parameter.
 class DITemplateValueParameter : public DIDescriptor {
 public:
-  explicit DITemplateValueParameter(const MDNode *N = nullptr)
-      : DIDescriptor(N) {}
+  DITemplateValueParameter() = default;
   DITemplateValueParameter(const MDTemplateValueParameter *N)
       : DIDescriptor(N) {}
 
@@ -838,7 +798,7 @@ class DIGlobalVariable : public DIDescriptor {
   DIFile getFile() const { return DIFile(get()->getFile()); }
 
 public:
-  explicit DIGlobalVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIGlobalVariable() = default;
   DIGlobalVariable(const MDGlobalVariable *N) : DIDescriptor(N) {}
 
   MDGlobalVariable *get() const {
@@ -880,7 +840,7 @@ class DIVariable : public DIDescriptor {
   unsigned getFlags() const { return get()->getFlags(); }
 
 public:
-  explicit DIVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIVariable() = default;
   DIVariable(const MDLocalVariable *N) : DIDescriptor(N) {}
 
   MDLocalVariable *get() const {
@@ -936,7 +896,7 @@ public:
 /// and have DW_OP_plus consume the topmost elements on the stack.
 class DIExpression : public DIDescriptor {
 public:
-  explicit DIExpression(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIExpression() = default;
   DIExpression(const MDExpression *N) : DIDescriptor(N) {}
 
   MDExpression *get() const {
@@ -1028,7 +988,7 @@ public:
 /// This object is not associated with any DWARF tag.
 class DILocation : public DIDescriptor {
 public:
-  explicit DILocation(const MDNode *N) : DIDescriptor(N) {}
+  DILocation() = default;
   DILocation(const MDLocation *N) : DIDescriptor(N) {}
 
   MDLocation *get() const {
@@ -1079,7 +1039,7 @@ public:
 
 class DIObjCProperty : public DIDescriptor {
 public:
-  explicit DIObjCProperty(const MDNode *N) : DIDescriptor(N) {}
+  DIObjCProperty() = default;
   DIObjCProperty(const MDObjCProperty *N) : DIDescriptor(N) {}
 
   MDObjCProperty *get() const {
@@ -1129,7 +1089,6 @@ public:
 class DIImportedEntity : public DIDescriptor {
 public:
   DIImportedEntity() = default;
-  explicit DIImportedEntity(const MDNode *N) : DIDescriptor(N) {}
   DIImportedEntity(const MDImportedEntity *N) : DIDescriptor(N) {}
 
   MDImportedEntity *get() const {
