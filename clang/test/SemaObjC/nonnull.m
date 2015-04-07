@@ -123,3 +123,5 @@ void PR18795(int (^g)(const char *h, ...) __attribute__((nonnull(1))) __attribut
 void PR18795_helper() {
   PR18795(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
 }
+
+void (^PR23117)(int *) = ^(int *p1) __attribute__((nonnull(1))) {};

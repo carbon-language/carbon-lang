@@ -51,6 +51,11 @@ namespace AttributeLangSupport {
 static bool isFunctionOrMethod(const Decl *D) {
   return (D->getFunctionType() != nullptr) || isa<ObjCMethodDecl>(D);
 }
+/// \brief Return true if the given decl has function type (function or
+/// function-typed variable) or an Objective-C method or a block.
+static bool isFunctionOrMethodOrBlock(const Decl *D) {
+  return isFunctionOrMethod(D) || isa<BlockDecl>(D);
+}
 
 /// Return true if the given decl has a declarator that should have
 /// been processed by Sema::GetTypeForDeclarator.
@@ -257,7 +262,7 @@ static bool checkFunctionOrMethodParameterIndex(Sema &S, const Decl *D,
                                                 unsigned AttrArgNum,
                                                 const Expr *IdxExpr,
                                                 uint64_t &Idx) {
-  assert(isFunctionOrMethod(D));
+  assert(isFunctionOrMethodOrBlock(D));
 
   // In C++ the implicit 'this' function parameter also counts.
   // Parameters are counted from one.
@@ -1601,7 +1606,7 @@ static void handleAnalyzerNoReturnAttr(Sema &S, Decl *D,
   
   // The checking path for 'noreturn' and 'analyzer_noreturn' are different
   // because 'analyzer_noreturn' does not impact the type.
-  if (!isFunctionOrMethod(D) && !isa<BlockDecl>(D)) {
+  if (!isFunctionOrMethodOrBlock(D)) {
     ValueDecl *VD = dyn_cast<ValueDecl>(D);
     if (!VD || (!VD->getType()->isBlockPointerType() &&
                 !VD->getType()->isFunctionPointerType())) {
