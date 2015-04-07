@@ -142,24 +142,33 @@ public:
     return _absoluteAtoms;
   }
 
-  Atom *findAtom(const Elf_Sym *sourceSymbol, const Elf_Sym *targetSymbol) {
-    // All references to atoms inside a group are through undefined atoms.
-    Atom *targetAtom = _symbolToAtomMapping.lookup(targetSymbol);
-    StringRef targetSymbolName = targetAtom->name();
-    if (targetAtom->definition() != Atom::definitionRegular)
-      return targetAtom;
-    if (llvm::cast<DefinedAtom>(targetAtom)->scope() ==
-        DefinedAtom::scopeTranslationUnit)
-      return targetAtom;
-    if (!redirectReferenceUsingUndefAtom(sourceSymbol, targetSymbol))
-      return targetAtom;
-    auto undefForGroupchild = _undefAtomsForGroupChild.find(targetSymbolName);
-    if (undefForGroupchild != _undefAtomsForGroupChild.end())
-      return undefForGroupchild->getValue();
-    auto undefGroupChildAtom =
-        new (_readerStorage) SimpleUndefinedAtom(*this, targetSymbolName);
-    _undefinedAtoms._atoms.push_back(undefGroupChildAtom);
-    return (_undefAtomsForGroupChild[targetSymbolName] = undefGroupChildAtom);
+  // Assuming sourceSymbol has a reference to targetSym, find an atom
+  // for targetSym. Usually it's just the atom for targetSym.
+  // However, if an atom is in a section group, we may want to return an
+  // undefined atom for targetSym to let the resolver to resolve the
+  // symbol. (It's because if targetSym is in a section group A, and the
+  // group A is not linked in because other file already provides a
+  // section group B, we want to resolve references to B, not to A.)
+  Atom *findAtom(const Elf_Sym *sourceSym, const Elf_Sym *targetSym) {
+    // Return the atom for targetSym if we can do so.
+    Atom *target = _symbolToAtomMapping.lookup(targetSym);
+    if (target->definition() != Atom::definitionRegular)
+      return target;
+    Atom::Scope scope = llvm::cast<DefinedAtom>(target)->scope();
+    if (scope == DefinedAtom::scopeTranslationUnit)
+      return target;
+    if (!redirectReferenceUsingUndefAtom(sourceSym, targetSym))
+      return target;
+
+    // Otherwise, create a new undefined symbol and returns it.
+    StringRef targetName = target->name();
+    auto it = _undefAtomsForGroupChild.find(targetName);
+    if (it != _undefAtomsForGroupChild.end())
+      return it->getValue();
+    auto atom = new (_readerStorage) SimpleUndefinedAtom(*this, targetName);
+    _undefAtomsForGroupChild[targetName] = atom;
+    _undefinedAtoms._atoms.push_back(atom);
+    return atom;
   }
 
 protected:
