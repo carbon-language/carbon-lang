@@ -4,7 +4,7 @@ include(cmake/modules/AddLLDB.cmake)
 
 #add_subdirectory(include)
 add_subdirectory(docs)
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT LLDB_DISABLE_PYTHON)
+if (NOT LLDB_DISABLE_PYTHON)
   add_subdirectory(scripts)
 endif ()
 add_subdirectory(source)
