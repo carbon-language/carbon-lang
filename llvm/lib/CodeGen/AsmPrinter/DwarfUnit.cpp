@@ -1015,7 +1015,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     // Add return type. A void return won't have a type.
     auto Elements = cast<MDSubroutineType>(CTy)->getTypeArray();
     if (Elements.size())
-      if (auto RTy = resolve(Elements[0]))
+      if (MDType *RTy = resolve(Elements[0]))
         addType(Buffer, RTy);
 
     bool isPrototyped = true;
@@ -1318,7 +1318,7 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
   // Add a return type. If this is a type like a C/C++ void type we don't add a
   // return type.
   if (Args.size())
-    if (auto Ty = resolve(Args[0]))
+    if (MDType *Ty = resolve(Args[0]))
       addType(SPDie, Ty);
 
   unsigned VK = SP.getVirtuality();
