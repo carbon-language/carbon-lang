@@ -1769,6 +1769,9 @@ public:
 
   Metadata *getRawInlinedAt() const { return getOperand(4); }
 
+  bool isArtificial() const { return getFlags() & FlagArtificial; }
+  bool isObjectPointer() const { return getFlags() & FlagObjectPointer; }
+
   /// \brief Check that a location is valid for this variable.
   ///
   /// Check that \c DL has the same inlined-at location as this variable,

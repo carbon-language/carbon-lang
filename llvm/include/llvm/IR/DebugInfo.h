@@ -812,14 +812,8 @@ public:
   DIFile getFile() const { return DIFile(get()->getFile()); }
   DITypeRef getType() const { return DITypeRef::get(get()->getType()); }
 
-  /// \brief Return true if this variable is marked as "artificial".
-  bool isArtificial() const {
-    return (getFlags() & FlagArtificial) != 0;
-  }
-
-  bool isObjectPointer() const {
-    return (getFlags() & FlagObjectPointer) != 0;
-  }
+  bool isArtificial() const { return get()->isArtificial(); }
+  bool isObjectPointer() const { return get()->isObjectPointer(); }
 
   /// \brief If this variable is inlined then return inline location.
   MDNode *getInlinedAt() const { return DIDescriptor(get()->getInlinedAt()); }
