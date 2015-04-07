@@ -254,12 +254,10 @@ protected:
       llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
       const Elf_Shdr *shdr);
 
-  // Handle Section groups/COMDAT scetions.
+  // Handle COMDAT scetions.
   std::error_code handleSectionGroup(
-      StringRef signature, StringRef groupSectionName,
-      llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
-      llvm::DenseMap<const Elf_Shdr *, std::vector<StringRef>> &comdatSections,
-      const Elf_Shdr *shdr);
+      const Elf_Shdr *section,
+      llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection);
 
   /// Process the Undefined symbol and create an atom for it.
   ELFUndefinedAtom<ELFT> *createUndefinedAtom(StringRef symName,
@@ -674,12 +672,9 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
 
   // group sections have a mapping of the section header to the
   // signature/section.
-  llvm::DenseMap<const Elf_Shdr *, std::pair<StringRef, StringRef>>
-      groupSections;
   llvm::DenseMap<const Elf_Shdr *, StringRef> linkOnceSections;
 
   // Contains a list of comdat sections for a group.
-  llvm::DenseMap<const Elf_Shdr *, std::vector<StringRef>> comdatSections;
   for (auto &i : _sectionSymbols) {
     const Elf_Shdr *section = i.first;
     std::vector<Elf_Sym_Iter> &symbols = i.second;
@@ -698,36 +693,11 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
     if (std::error_code ec = sectionContents.getError())
       return ec;
 
-    bool addAtoms = true;
-
-    // A section of type SHT_GROUP defines a grouping of sections. The
-    // name of a symbol from one of the containing object's symbol tables
-    // provides a signature for the section group. The section header of
-    // the SHT_GROUP section specifies the identifying symbol entry, as
-    // described: the sh_link member contains the section header index of
-    // the symbol table section that contains the entry. The sh_info
-    // member contains the symbol table index of the identifying entry.
-    // The sh_flags member of the section header contains 0. The name of
-    // the section (sh_name) is not specified.
-    if (isGroupSection(section)) {
-      const Elf_Word *groupMembers =
-          reinterpret_cast<const Elf_Word *>(sectionContents->data());
-      const long count = (section->sh_size) / sizeof(Elf_Word);
-      for (int i = 1; i < count; i++) {
-        const Elf_Shdr *sHdr = _objFile->getSection(groupMembers[i]);
-        ErrorOr<StringRef> sectionName = _objFile->getSectionName(sHdr);
-        if (std::error_code ec = sectionName.getError())
-          return ec;
-        comdatSections[section].push_back(*sectionName);
-      }
-      const Elf_Sym *symbol = _objFile->getSymbol(section->sh_info);
-      const Elf_Shdr *symtab = _objFile->getSection(section->sh_link);
-      ErrorOr<StringRef> symbolName = _objFile->getSymbolName(symtab, symbol);
-      if (std::error_code ec = symbolName.getError())
-        return ec;
-      groupSections.insert({section, {*symbolName, *sectionName}});
+    // SHT_GROUP sections are handled in the following loop.
+    if (isGroupSection(section))
       continue;
-    }
+
+    bool addAtoms = true;
 
     if (isGnuLinkOnceSection(*sectionName)) {
       linkOnceSections.insert({section, *sectionName});
@@ -858,13 +828,10 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
     }
   }
 
-  // Iterate over all the group sections to create parent atoms pointing to
-  // group-child atoms.
-  for (auto &sect : groupSections) {
-    StringRef signature = sect.second.first;
-    StringRef groupSectionName = sect.second.second;
-    handleSectionGroup(signature, groupSectionName, atomsForSection,
-                       comdatSections, sect.first);
+  for (auto &i : _sectionSymbols) {
+    const Elf_Shdr *section = i.first;
+    if (std::error_code ec = handleSectionGroup(section, atomsForSection))
+      return ec;
   }
 
   for (auto &sect : linkOnceSections)
@@ -903,27 +870,60 @@ std::error_code ELFFile<ELFT>::handleGnuLinkOnceSection(
 
 template <class ELFT>
 std::error_code ELFFile<ELFT>::handleSectionGroup(
-    StringRef signature, StringRef groupSectionName,
-    llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
-    llvm::DenseMap<const Elf_Shdr *, std::vector<StringRef>> &comdatSections,
-    const Elf_Shdr *shdr) {
-  // TODO: Check for errors.
+    const Elf_Shdr *section,
+    llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection) {
+  ErrorOr<StringRef> sectionName = this->getSectionName(section);
+  if (std::error_code ec = sectionName.getError())
+    return ec;
+  if (!isGroupSection(section))
+    return std::error_code();
+
+  auto sectionContents = getSectionContents(section);
+  if (std::error_code ec = sectionContents.getError())
+    return ec;
+
+  // A section of type SHT_GROUP defines a grouping of sections. The
+  // name of a symbol from one of the containing object's symbol tables
+  // provides a signature for the section group. The section header of
+  // the SHT_GROUP section specifies the identifying symbol entry, as
+  // described: the sh_link member contains the section header index of
+  // the symbol table section that contains the entry. The sh_info
+  // member contains the symbol table index of the identifying entry.
+  // The sh_flags member of the section header contains 0. The name of
+  // the section (sh_name) is not specified.
+  std::vector<StringRef> sectionNames;
+  const Elf_Word *groupMembers =
+      reinterpret_cast<const Elf_Word *>(sectionContents->data());
+  const size_t count = section->sh_size / sizeof(Elf_Word);
+  for (size_t i = 1; i < count; i++) {
+    const Elf_Shdr *shdr = _objFile->getSection(groupMembers[i]);
+    ErrorOr<StringRef> sectionName = _objFile->getSectionName(shdr);
+    if (std::error_code ec = sectionName.getError())
+      return ec;
+    sectionNames.push_back(*sectionName);
+  }
+  const Elf_Sym *symbol = _objFile->getSymbol(section->sh_info);
+  const Elf_Shdr *symtab = _objFile->getSection(section->sh_link);
+  ErrorOr<StringRef> symbolName = _objFile->getSymbolName(symtab, symbol);
+  if (std::error_code ec = symbolName.getError())
+    return ec;
+
   unsigned int referenceStart = _references.size();
   std::vector<ELFReference<ELFT> *> refs;
-  auto sectionNamesInGroup = comdatSections[shdr];
-  for (auto sectionName : sectionNamesInGroup) {
-    for (auto ha : atomsForSection[sectionName]) {
-      _groupChild[ha->symbol()] = std::make_pair(signature, shdr);
+  for (auto name : sectionNames) {
+    for (auto ha : atomsForSection[name]) {
+      _groupChild[ha->symbol()] = std::make_pair(*symbolName, section);
       ELFReference<ELFT> *ref = new (_readerStorage)
           ELFReference<ELFT>(lld::Reference::kindGroupChild);
       ref->setTarget(ha);
       refs.push_back(ref);
     }
-    atomsForSection[sectionName].clear();
+    atomsForSection[name].clear();
   }
-  // Create a gnu linkonce atom.
+
+  // Create an atom for comdat signature.
   ELFDefinedAtom<ELFT> *atom = createDefinedAtom(
-      signature, groupSectionName, nullptr, shdr, ArrayRef<uint8_t>(),
+      *symbolName, *sectionName, nullptr, section, ArrayRef<uint8_t>(),
       referenceStart, _references.size(), _references);
   atom->setOrdinal(++_ordinal);
   _definedAtoms._atoms.push_back(atom);
