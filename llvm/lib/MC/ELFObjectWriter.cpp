@@ -1680,17 +1680,11 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   RevGroupMapTy RevGroupMap;
   SectionIndexMapTy SectionIndexMap;
 
-  unsigned NumUserSections = Asm.size();
-
   CompressDebugSections(Asm, const_cast<MCAsmLayout &>(Layout));
-
-  const unsigned NumUserAndRelocSections = Asm.size();
   createIndexedSections(Asm, const_cast<MCAsmLayout &>(Layout), GroupMap,
                         RevGroupMap, SectionIndexMap);
-  const unsigned AllSections = Asm.size();
-  const unsigned NumIndexedSections = AllSections - NumUserAndRelocSections;
 
-  unsigned NumRegularSections = NumUserSections + NumIndexedSections;
+  unsigned NumRegularSections = Asm.size();
 
   // Compute symbol table information.
   computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap);
