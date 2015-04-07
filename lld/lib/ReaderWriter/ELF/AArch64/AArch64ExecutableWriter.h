@@ -25,10 +25,6 @@ protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
-  void finalizeDefaultAtomValues() override {
-    return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
-  }
-
 private:
   class GOTFile : public SimpleFile {
   public:

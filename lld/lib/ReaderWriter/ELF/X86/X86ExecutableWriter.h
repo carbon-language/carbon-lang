@@ -24,10 +24,6 @@ protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
-  void finalizeDefaultAtomValues() override {
-    return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
-  }
-
 private:
   X86LinkingContext &_ctx;
   TargetLayout<ELFT> &_layout;

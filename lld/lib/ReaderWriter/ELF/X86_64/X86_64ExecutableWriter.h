@@ -33,10 +33,6 @@ protected:
     result.push_back(std::move(_gotFile));
   }
 
-  void finalizeDefaultAtomValues() override {
-    return ExecutableWriter::finalizeDefaultAtomValues();
-  }
-
 private:
   class GOTFile : public SimpleFile {
   public:
