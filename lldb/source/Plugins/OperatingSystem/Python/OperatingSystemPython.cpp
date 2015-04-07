@@ -178,11 +178,18 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OS));
     
-    // First thing we have to do is get the API lock, and the run lock.  We're going to change the thread
-    // content of the process, and we're going to use python, which requires the API lock to do it.
-    // So get & hold that.  This is a recursive lock so we can grant it to any Python code called on the stack below us.
+    // First thing we have to do is to try to get the API lock, and the run lock.
+    // We're going to change the thread content of the process, and we're going
+    // to use python, which requires the API lock to do it.
+    //
+    // If someone already has the API lock, that is ok, we just want to avoid
+    // external code from making new API calls while this call is happening.
+    //
+    // This is a recursive lock so we can grant it to any Python code called on
+    // the stack below us.
     Target &target = m_process->GetTarget();
-    Mutex::Locker api_locker (target.GetAPIMutex());
+    Mutex::Locker api_locker;
+    api_locker.TryLock(target.GetAPIMutex());
     
     if (log)
         log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %" PRIu64, m_process->GetID());

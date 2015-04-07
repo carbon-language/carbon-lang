@@ -105,7 +105,7 @@ ThreadMemory::CalculateStopInfo ()
     if (m_backing_thread_sp)
     {
         lldb::StopInfoSP backing_stop_info_sp (m_backing_thread_sp->GetPrivateStopInfo());
-        if (backing_stop_info_sp)
+        if (backing_stop_info_sp && backing_stop_info_sp->IsValidForOperatingSystemThread(*this))
         {
             backing_stop_info_sp->SetThread (shared_from_this());
             SetStopInfo (backing_stop_info_sp);

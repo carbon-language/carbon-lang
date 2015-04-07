@@ -163,6 +163,19 @@ public:
     {
     }
 
+    virtual bool
+    IsValidForOperatingSystemThread (Thread &thread)
+    {
+        ProcessSP process_sp (thread.GetProcess());
+        if (process_sp)
+        {
+            BreakpointSiteSP bp_site_sp (process_sp->GetBreakpointSiteList().FindByID (m_value));
+            if (bp_site_sp)
+                return bp_site_sp->ValidForThisThread (&thread);
+        }
+        return false;
+    }
+
     virtual StopReason
     GetStopReason () const
     {

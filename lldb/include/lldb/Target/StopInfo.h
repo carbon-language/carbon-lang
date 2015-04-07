@@ -116,6 +116,12 @@ public:
         else
             m_description.clear();
     }
+
+    virtual bool
+    IsValidForOperatingSystemThread (Thread &thread)
+    {
+        return true;
+    }
     
     // Sometimes the thread plan logic will know that it wants a given stop to stop or not,
     // regardless of what the ordinary logic for that StopInfo would dictate.  The main example
