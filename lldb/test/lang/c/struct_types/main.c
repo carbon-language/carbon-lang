@@ -6,6 +6,18 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
+struct things_to_sum {
+    int a;
+    int b;
+    int c;
+};
+
+int sum_things(struct things_to_sum tts)
+{
+    return tts.a + tts.b + tts.c;
+}
+
 int main (int argc, char const *argv[])
 {
     struct point_tag {
@@ -23,5 +35,9 @@ int main (int argc, char const *argv[])
     };
     struct point_tag pt = { 2, 3, {} };
     struct rect_tag rect = {{1, 2, {}}, {3, 4, {}}};
-    return 0; //% self.expect("expression -- &pt == (struct point_tag*)0", substrs = ['false'])
+    struct things_to_sum tts = { 2, 3, 4 };
+
+    int sum = sum_things(tts); //% self.expect("expression -- &pt == (struct point_tag*)0", substrs = ['false'])
+                               //% self.expect("expression -- sum_things(tts)", substrs = ['9'])
+    return 0; 
 }
