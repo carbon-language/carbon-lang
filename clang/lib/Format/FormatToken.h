@@ -549,6 +549,10 @@ struct AdditionalKeywords {
     kw_repeated = &IdentTable.get("repeated");
     kw_required = &IdentTable.get("required");
     kw_returns = &IdentTable.get("returns");
+
+    kw_signals = &IdentTable.get("signals");
+    kw_slots = &IdentTable.get("slots");
+    kw_qslots = &IdentTable.get("Q_SLOTS");
   }
 
   // Context sensitive keywords.
@@ -583,6 +587,11 @@ struct AdditionalKeywords {
   IdentifierInfo *kw_repeated;
   IdentifierInfo *kw_required;
   IdentifierInfo *kw_returns;
+
+  // QT keywords.
+  IdentifierInfo *kw_signals;
+  IdentifierInfo *kw_slots;
+  IdentifierInfo *kw_qslots;
 };
 
 } // namespace format

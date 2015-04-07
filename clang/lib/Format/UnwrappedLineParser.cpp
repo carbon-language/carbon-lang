@@ -753,6 +753,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       parseJavaScriptEs6ImportExport();
       return;
     }
+    if (FormatTok->is(Keywords.kw_signals)) {
+      parseAccessSpecifier();
+      return;
+    }
     // In all other cases, parse the declaration.
     break;
   default:
@@ -1410,8 +1414,7 @@ void UnwrappedLineParser::parseSwitch() {
 void UnwrappedLineParser::parseAccessSpecifier() {
   nextToken();
   // Understand Qt's slots.
-  if (FormatTok->is(tok::identifier) &&
-      (FormatTok->TokenText == "slots" || FormatTok->TokenText == "Q_SLOTS"))
+  if (FormatTok->isOneOf(Keywords.kw_slots, Keywords.kw_qslots))
     nextToken();
   // Otherwise, we don't know what it is, and we'd better keep the next token.
   if (FormatTok->Tok.is(tok::colon))

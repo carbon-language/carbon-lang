@@ -80,7 +80,8 @@ private:
     if (Style.Language == FormatStyle::LK_Java ||
         Style.Language == FormatStyle::LK_JavaScript)
       return 0;
-    if (RootToken.isAccessSpecifier(false) || RootToken.isObjCAccessSpecifier())
+    if (RootToken.isAccessSpecifier(false) ||
+        RootToken.isObjCAccessSpecifier() || RootToken.is(Keywords.kw_signals))
       return Style.AccessModifierOffset;
     return 0;
   }

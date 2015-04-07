@@ -1897,6 +1897,8 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
                "  void f() {}\n"
                "public Q_SLOTS:\n"
                "  void f() {}\n"
+               "signals:\n"
+               "  void g();\n"
                "};");
 }
 
