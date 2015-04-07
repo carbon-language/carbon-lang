@@ -21,12 +21,6 @@ using namespace llvm;
 
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
 
-namespace {
-template <typename T> T unwrapDI(LLVMMetadataRef v) {
-  return v ? T(unwrap<MDNode>(v)) : T();
-}
-}
-
 LLVMDIBuilderRef LLVMNewDIBuilder(LLVMModuleRef mref) {
   Module *m = unwrap(mref);
   return wrap(new DIBuilder(*m));
@@ -64,8 +58,9 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef Dref,
                                                 unsigned Line,
                                                 unsigned Column) {
   DIBuilder *D = unwrap(Dref);
-  DILexicalBlock LB = D->createLexicalBlock(
-      unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line, Column);
+  DILexicalBlock LB =
+      D->createLexicalBlock(DIDescriptor(unwrap<MDLocalScope>(Scope)),
+                            unwrap<MDFile>(File), Line, Column);
   return wrap(LB);
 }
 
@@ -74,8 +69,9 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef Dref,
                                                     LLVMMetadataRef File,
                                                     unsigned Discriminator) {
   DIBuilder *D = unwrap(Dref);
-  DILexicalBlockFile LBF = D->createLexicalBlockFile(
-      unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Discriminator);
+  DILexicalBlockFile LBF =
+      D->createLexicalBlockFile(DIDescriptor(unwrap<MDLocalScope>(Scope)),
+                                unwrap<MDFile>(File), Discriminator);
   return wrap(LBF);
 }
 
@@ -86,9 +82,10 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
     unsigned ScopeLine, unsigned Flags, int IsOptimized, LLVMValueRef Func) {
   DIBuilder *D = unwrap(Dref);
   DISubprogram SP = D->createFunction(
-      unwrapDI<DIDescriptor>(Scope), Name, LinkageName, unwrapDI<DIFile>(File),
-      Line, unwrapDI<DICompositeType>(CompositeType), IsLocalToUnit,
-      IsDefinition, ScopeLine, Flags, IsOptimized, unwrap<Function>(Func));
+      DIDescriptor(unwrap<MDScope>(Scope)), Name, LinkageName,
+      unwrap<MDFile>(File), Line, unwrap<MDCompositeTypeBase>(CompositeType),
+      IsLocalToUnit, IsDefinition, ScopeLine, Flags, IsOptimized,
+      unwrap<Function>(Func));
   return wrap(SP);
 }
 
@@ -98,8 +95,8 @@ LLVMMetadataRef LLVMDIBuilderCreateLocalVariable(
     int AlwaysPreserve, unsigned Flags, unsigned ArgNo) {
   DIBuilder *D = unwrap(Dref);
   DIVariable V = D->createLocalVariable(
-      Tag, unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-      unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, ArgNo);
+      Tag, DIDescriptor(unwrap<MDScope>(Scope)), Name, unwrap<MDFile>(File),
+      Line, unwrap<MDType>(Ty), AlwaysPreserve, Flags, ArgNo);
   return wrap(V);
 }
 
@@ -119,7 +116,7 @@ LLVMMetadataRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Dref,
                                                uint64_t AlignInBits,
                                                const char *Name) {
   DIBuilder *D = unwrap(Dref);
-  DIDerivedType T = D->createPointerType(unwrapDI<DIType>(PointeeType),
+  DIDerivedType T = D->createPointerType(unwrap<MDType>(PointeeType),
                                          SizeInBits, AlignInBits, Name);
   return wrap(T);
 }
@@ -129,7 +126,7 @@ LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref, LLVMMetadataRef File,
                                   LLVMMetadataRef ParameterTypes) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createSubroutineType(
-      unwrapDI<DIFile>(File), unwrapDI<DITypeArray>(ParameterTypes));
+      unwrap<MDFile>(File), DITypeArray(unwrap<MDTuple>(ParameterTypes)));
   return wrap(CT);
 }
 
@@ -140,9 +137,9 @@ LLVMMetadataRef LLVMDIBuilderCreateStructType(
     LLVMMetadataRef ElementTypes) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createStructType(
-      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-      SizeInBits, AlignInBits, Flags, unwrapDI<DIType>(DerivedFrom),
-      unwrapDI<DIArray>(ElementTypes));
+      DIDescriptor(unwrap<MDScope>(Scope)), Name, unwrap<MDFile>(File), Line,
+      SizeInBits, AlignInBits, Flags, unwrap<MDType>(DerivedFrom),
+      DIArray(unwrap<MDTuple>(ElementTypes)));
   return wrap(CT);
 }
 
@@ -153,8 +150,8 @@ LLVMMetadataRef LLVMDIBuilderCreateReplaceableCompositeType(
     unsigned Flags) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createReplaceableCompositeType(
-      Tag, Name, unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line,
-      RuntimeLang, SizeInBits, AlignInBits, Flags);
+      Tag, Name, DIDescriptor(unwrap<MDScope>(Scope)), unwrap<MDFile>(File),
+      Line, RuntimeLang, SizeInBits, AlignInBits, Flags);
   return wrap(CT);
 }
 
@@ -166,8 +163,8 @@ LLVMDIBuilderCreateMemberType(LLVMDIBuilderRef Dref, LLVMMetadataRef Scope,
                               unsigned Flags, LLVMMetadataRef Ty) {
   DIBuilder *D = unwrap(Dref);
   DIDerivedType DT = D->createMemberType(
-      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-      SizeInBits, AlignInBits, OffsetInBits, Flags, unwrapDI<DIType>(Ty));
+      DIDescriptor(unwrap<MDScope>(Scope)), Name, unwrap<MDFile>(File), Line,
+      SizeInBits, AlignInBits, OffsetInBits, Flags, unwrap<MDType>(Ty));
   return wrap(DT);
 }
 
@@ -178,8 +175,8 @@ LLVMMetadataRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef Dref,
                                              LLVMMetadataRef Subscripts) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT =
-      D->createArrayType(SizeInBits, AlignInBits, unwrapDI<DIType>(ElementType),
-                         unwrapDI<DIArray>(Subscripts));
+      D->createArrayType(SizeInBits, AlignInBits, unwrap<MDType>(ElementType),
+                         DIArray(unwrap<MDTuple>(Subscripts)));
   return wrap(CT);
 }
 
@@ -189,8 +186,8 @@ LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Dref,
                                            LLVMMetadataRef Context) {
   DIBuilder *D = unwrap(Dref);
   DIDerivedType DT =
-      D->createTypedef(unwrapDI<DIType>(Ty), Name, unwrapDI<DIFile>(File), Line,
-                       unwrapDI<DIDescriptor>(Context));
+      D->createTypedef(unwrap<MDType>(Ty), Name, unwrap<MDFile>(File), Line,
+                       DIDescriptor(unwrap<MDScope>(Context)));
   return wrap(DT);
 }
 
@@ -235,8 +232,8 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,
                                              LLVMBasicBlockRef Block) {
   DIBuilder *D = unwrap(Dref);
   Instruction *Instr =
-      D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
-                       unwrapDI<DIExpression>(Expr), unwrap(Block));
+      D->insertDeclare(unwrap(Storage), unwrap<MDLocalVariable>(VarInfo),
+                       unwrap<MDExpression>(Expr), unwrap(Block));
   return wrap(Instr);
 }
 
@@ -247,7 +244,7 @@ LLVMValueRef LLVMDIBuilderInsertValueAtEnd(LLVMDIBuilderRef Dref,
                                            LLVMBasicBlockRef Block) {
   DIBuilder *D = unwrap(Dref);
   Instruction *Instr = D->insertDbgValueIntrinsic(
-      unwrap(Val), Offset, unwrapDI<DIVariable>(VarInfo),
-      unwrapDI<DIExpression>(Expr), unwrap(Block));
+      unwrap(Val), Offset, unwrap<MDLocalVariable>(VarInfo),
+      unwrap<MDExpression>(Expr), unwrap(Block));
   return wrap(Instr);
 }
