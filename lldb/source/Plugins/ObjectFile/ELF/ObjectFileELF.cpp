@@ -895,25 +895,18 @@ ObjectFileELF::GetAddressClass (addr_t file_addr)
     if (res != eAddressClassCode)
         return res;
 
-    ArchSpec arch_spec;
-    GetArchitecture(arch_spec);
-    if (arch_spec.GetMachine() != llvm::Triple::arm)
-        return res;
+    auto ub = m_address_class_map.upper_bound(file_addr);
+    if (ub == m_address_class_map.begin())
+    {
+        // No entry in the address class map before the address. Return
+        // default address class for an address in a code section.
+        return eAddressClassCode;
+    }
 
-    auto symtab = GetSymtab();
-    if (symtab == nullptr)
-        return res;
+    // Move iterator to the address class entry preceding address
+    --ub;
 
-    auto symbol = symtab->FindSymbolContainingFileAddress(file_addr);
-    if (symbol == nullptr)
-        return res;
-
-    // Thumb symbols have the lower bit set in the flags field so we just check
-    // for that.
-    if (symbol->GetFlags() & ARM_ELF_SYM_IS_THUMB)
-        res = eAddressClassCodeAlternateISA;
-
-    return res;
+    return ub->second;
 }
 
 size_t
@@ -1872,45 +1865,79 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             }
         }
 
-        ArchSpec arch;
         int64_t symbol_value_offset = 0;
         uint32_t additional_flags = 0;
 
-        if (GetArchitecture(arch) &&
-            arch.GetMachine() == llvm::Triple::arm)
+        ArchSpec arch;
+        if (GetArchitecture(arch))
         {
-            // ELF symbol tables may contain some mapping symbols. They provide
-            // information about the underlying data. There are three of them
-            // currently defined:
-            //   $a[.<any>]* - marks an ARM instruction sequence
-            //   $t[.<any>]* - marks a THUMB instruction sequence
-            //   $d[.<any>]* - marks a data item sequence (e.g. lit pool)
-            // These symbols interfere with normal debugger operations and we
-            // don't need them. We can drop them here.
-
-            static const llvm::StringRef g_armelf_arm_marker("$a");
-            static const llvm::StringRef g_armelf_thumb_marker("$t");
-            static const llvm::StringRef g_armelf_data_marker("$d");
-            llvm::StringRef symbol_name_ref(symbol_name);
-
-            if (symbol_name &&
-                (symbol_name_ref.startswith(g_armelf_arm_marker) ||
-                 symbol_name_ref.startswith(g_armelf_thumb_marker) ||
-                 symbol_name_ref.startswith(g_armelf_data_marker)))
-                continue;
-
-            // THUMB functions have the lower bit of their address set. Fixup
-            // the actual address and mark the symbol as THUMB.
-            if (symbol_type == eSymbolTypeCode && symbol.st_value & 1)
+            if (arch.GetMachine() == llvm::Triple::arm)
             {
-                // Substracting 1 from the address effectively unsets
-                // the low order bit, which results in the address
-                // actually pointing to the beginning of the symbol.
-                // This delta will be used below in conjuction with
-                // symbol.st_value to produce the final symbol_value
-                // that we store in the symtab.
-                symbol_value_offset = -1;
-                additional_flags = ARM_ELF_SYM_IS_THUMB;
+                if (symbol.getBinding() == STB_LOCAL && symbol_name && symbol_name[0] == '$')
+                {
+                    // These are reserved for the specification (e.g.: mapping
+                    // symbols). We don't want to add them to the symbol table.
+
+                    llvm::StringRef symbol_name_ref(symbol_name);
+                    if (symbol_name_ref == "$a" || symbol_name_ref.startswith("$a."))
+                    {
+                        // $a[.<any>]* - marks an ARM instruction sequence
+                        m_address_class_map[symbol.st_value] = eAddressClassCode;
+                    }
+                    else if (symbol_name_ref == "$b" || symbol_name_ref.startswith("$b.") ||
+                             symbol_name_ref == "$t" || symbol_name_ref.startswith("$t."))
+                    {
+                        // $b[.<any>]* - marks a THUMB BL instruction sequence
+                        // $t[.<any>]* - marks a THUMB instruction sequence
+                        m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
+                    }
+                    else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
+                    {
+                        // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+                        m_address_class_map[symbol.st_value] = eAddressClassData;
+                    }
+
+                    continue;
+                }
+            }
+            else if (arch.GetMachine() == llvm::Triple::aarch64)
+            {
+                if (symbol.getBinding() == STB_LOCAL && symbol_name && symbol_name[0] == '$')
+                {
+                    // These are reserved for the specification (e.g.: mapping
+                    // symbols). We don't want to add them to the symbol table.
+
+                    llvm::StringRef symbol_name_ref(symbol_name);
+                    if (symbol_name_ref == "$x" || symbol_name_ref.startswith("$x."))
+                    {
+                        // $x[.<any>]* - marks an A64 instruction sequence
+                        m_address_class_map[symbol.st_value] = eAddressClassCode;
+                    }
+                    else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
+                    {
+                        // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+                        m_address_class_map[symbol.st_value] = eAddressClassData;
+                    }
+
+                    continue;
+                }
+            }
+
+            if (arch.GetMachine() == llvm::Triple::arm)
+            {
+                // THUMB functions have the lower bit of their address set. Fixup
+                // the actual address and mark the symbol as THUMB.
+                if (symbol_type == eSymbolTypeCode && symbol.st_value & 1)
+                {
+                    // Substracting 1 from the address effectively unsets
+                    // the low order bit, which results in the address
+                    // actually pointing to the beginning of the symbol.
+                    // This delta will be used below in conjuction with
+                    // symbol.st_value to produce the final symbol_value
+                    // that we store in the symtab.
+                    symbol_value_offset = -1;
+                    additional_flags = ARM_ELF_SYM_IS_THUMB;
+                }
             }
         }
 
