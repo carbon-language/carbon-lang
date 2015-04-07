@@ -2020,7 +2020,7 @@ class MDImportedEntity : public DebugNode {
   ~MDImportedEntity() {}
 
   static MDImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
-                                   MDScope *Scope, Metadata *Entity,
+                                   MDScope *Scope, DebugNodeRef Entity,
                                    unsigned Line, StringRef Name,
                                    StorageType Storage,
                                    bool ShouldCreate = true) {
@@ -2040,7 +2040,7 @@ class MDImportedEntity : public DebugNode {
 
 public:
   DEFINE_MDNODE_GET(MDImportedEntity,
-                    (unsigned Tag, MDScope *Scope, Metadata *Entity,
+                    (unsigned Tag, MDScope *Scope, DebugNodeRef Entity,
                      unsigned Line, StringRef Name = ""),
                     (Tag, Scope, Entity, Line, Name))
   DEFINE_MDNODE_GET(MDImportedEntity,
@@ -2052,7 +2052,7 @@ public:
 
   unsigned getLine() const { return Line; }
   MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
-  Metadata *getEntity() const { return getRawEntity(); }
+  DebugNodeRef getEntity() const { return DebugNodeRef(getRawEntity()); }
   StringRef getName() const { return getStringOperand(2); }
 
   Metadata *getRawScope() const { return getOperand(0); }
