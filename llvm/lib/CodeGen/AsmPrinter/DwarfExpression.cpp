@@ -195,27 +195,27 @@ static unsigned getOffsetOrZero(unsigned OffsetInBits,
 bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
                                               unsigned MachineReg,
                                               unsigned PieceOffsetInBits) {
-  auto I = Expr.begin();
-  auto E = Expr.end();
+  auto I = Expr->expr_op_begin();
+  auto E = Expr->expr_op_end();
   if (I == E)
     return AddMachineRegPiece(MachineReg);
 
   // Pattern-match combinations for which more efficient representations exist
   // first.
   bool ValidReg = false;
-  switch (*I) {
+  switch (I->getOp()) {
   case dwarf::DW_OP_bit_piece: {
-    unsigned OffsetInBits = I->getArg(1);
-    unsigned SizeInBits   = I->getArg(2);
+    unsigned OffsetInBits = I->getArg(0);
+    unsigned SizeInBits   = I->getArg(1);
     // Piece always comes at the end of the expression.
     return AddMachineRegPiece(MachineReg, SizeInBits,
                getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
   }
   case dwarf::DW_OP_plus: {
     // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
-    auto N = I->getNext();
-    if ((N != E) && (*N == dwarf::DW_OP_deref)) {
-      unsigned Offset = I->getArg(1);
+    auto N = I.getNext();
+    if (N != E && N->getOp() == dwarf::DW_OP_deref) {
+      unsigned Offset = I->getArg(0);
       ValidReg = AddMachineRegIndirect(MachineReg, Offset);
       std::advance(I, 2);
       break;
@@ -240,20 +240,20 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
   return true;
 }
 
-void DwarfExpression::AddExpression(DIExpression::iterator I,
-                                    DIExpression::iterator E,
+void DwarfExpression::AddExpression(MDExpression::expr_op_iterator I,
+                                    MDExpression::expr_op_iterator E,
                                     unsigned PieceOffsetInBits) {
   for (; I != E; ++I) {
-    switch (*I) {
+    switch (I->getOp()) {
     case dwarf::DW_OP_bit_piece: {
-      unsigned OffsetInBits = I->getArg(1);
-      unsigned SizeInBits   = I->getArg(2);
+      unsigned OffsetInBits = I->getArg(0);
+      unsigned SizeInBits   = I->getArg(1);
       AddOpPiece(SizeInBits, getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
       break;
     }
     case dwarf::DW_OP_plus:
       EmitOp(dwarf::DW_OP_plus_uconst);
-      EmitUnsigned(I->getArg(1));
+      EmitUnsigned(I->getArg(0));
       break;
     case dwarf::DW_OP_deref:
       EmitOp(dwarf::DW_OP_deref);

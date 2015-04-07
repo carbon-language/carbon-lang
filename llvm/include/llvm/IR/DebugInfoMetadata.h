@@ -1885,6 +1885,13 @@ public:
       return T;
     }
 
+    /// \brief Get the next iterator.
+    ///
+    /// \a std::next() doesn't work because this is technically an
+    /// input_iterator, but it's a perfectly valid operation.  This is an
+    /// accessor to provide the same functionality.
+    expr_op_iterator getNext() const { return ++expr_op_iterator(*this); }
+
     bool operator==(const expr_op_iterator &X) const {
       return getBase() == X.getBase();
     }

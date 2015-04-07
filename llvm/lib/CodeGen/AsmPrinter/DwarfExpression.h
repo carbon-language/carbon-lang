@@ -97,7 +97,8 @@ public:
   /// Emit a the operations remaining the DIExpressionIterator I.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
-  void AddExpression(DIExpression::iterator I, DIExpression::iterator E,
+  void AddExpression(MDExpression::expr_op_iterator I,
+                     MDExpression::expr_op_iterator E,
                      unsigned PieceOffsetInBits = 0);
 };
 

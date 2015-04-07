@@ -523,7 +523,7 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
     assert(Expr != DV.getExpression().end() &&
            "Wrong number of expressions");
     DwarfExpr.AddMachineRegIndirect(FrameReg, Offset);
-    DwarfExpr.AddExpression(Expr->begin(), Expr->end());
+    DwarfExpr.AddExpression((*Expr)->expr_op_begin(), (*Expr)->expr_op_end());
     ++Expr;
   }
   addBlock(*VariableDie, dwarf::DW_AT_location, Loc);
@@ -773,7 +773,7 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
     ValidReg = DwarfExpr.AddMachineRegIndirect(Location.getReg(),
                                                Location.getOffset());
     if (ValidReg)
-      DwarfExpr.AddExpression(Expr.begin(), Expr.end());
+      DwarfExpr.AddExpression(Expr->expr_op_begin(), Expr->expr_op_end());
   } else
     ValidReg = DwarfExpr.AddMachineRegExpression(Expr, Location.getReg());
 

@@ -80,11 +80,6 @@ uint64_t DIExpression::getBitPieceSize() const {
   return getElement(getNumElements()-1);
 }
 
-DIExpression::iterator DIExpression::Operand::getNext() const {
-  iterator it(I);
-  return ++it;
-}
-
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//

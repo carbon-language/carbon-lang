@@ -872,66 +872,6 @@ public:
   uint64_t getBitPieceOffset() const;
   /// \brief Return the size of this piece in bits.
   uint64_t getBitPieceSize() const;
-
-  class iterator;
-  /// \brief A lightweight wrapper around an element of a DIExpression.
-  class Operand {
-    friend class iterator;
-    MDExpression::element_iterator I;
-    Operand() {}
-    Operand(MDExpression::element_iterator I) : I(I) {}
-  public:
-    /// \brief Operands such as DW_OP_piece have explicit (non-stack) arguments.
-    /// Argument 0 is the operand itself.
-    uint64_t getArg(unsigned N) const {
-      MDExpression::element_iterator In = I;
-      std::advance(In, N);
-      return *In;
-    }
-    operator uint64_t () const { return *I; }
-    /// \brief Returns underlying MDExpression::element_iterator.
-    const MDExpression::element_iterator &getBase() const { return I; }
-    /// \brief Returns the next operand.
-    iterator getNext() const;
-  };
-
-  /// \brief An iterator for DIExpression elements.
-  class iterator : public std::iterator<std::input_iterator_tag, StringRef,
-                                        unsigned, const Operand*, Operand> {
-    friend class Operand;
-    MDExpression::element_iterator I;
-    Operand Tmp;
-
-  public:
-    iterator(MDExpression::element_iterator I) : I(I) {}
-    const Operand &operator*() { return Tmp = Operand(I); }
-    const Operand *operator->() { return &(Tmp = Operand(I)); }
-    iterator &operator++() {
-      increment();
-      return *this;
-    }
-    iterator operator++(int) {
-      iterator X(*this);
-      increment();
-      return X;
-    }
-    bool operator==(const iterator &X) const { return I == X.I; }
-    bool operator!=(const iterator &X) const { return !(*this == X); }
-
-  private:
-    void increment() {
-      switch (**this) {
-      case dwarf::DW_OP_bit_piece: std::advance(I, 3); break;
-      case dwarf::DW_OP_plus:      std::advance(I, 2); break;
-      case dwarf::DW_OP_deref:     std::advance(I, 1); break;
-      default:
-        llvm_unreachable("unsupported operand");
-      }
-    }
-  };
-
-  iterator begin() const { return get()->elements_begin(); }
-  iterator end() const { return get()->elements_end(); }
 };
 
 /// \brief This object holds location information.
