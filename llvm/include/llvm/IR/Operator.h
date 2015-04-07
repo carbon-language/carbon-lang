@@ -181,17 +181,17 @@ public:
   { }
 
   /// Whether any flag is set
-  bool any() { return Flags != 0; }
+  bool any() const { return Flags != 0; }
 
   /// Set all the flags to false
   void clear() { Flags = 0; }
 
   /// Flag queries
-  bool noNaNs()          { return 0 != (Flags & NoNaNs); }
-  bool noInfs()          { return 0 != (Flags & NoInfs); }
-  bool noSignedZeros()   { return 0 != (Flags & NoSignedZeros); }
-  bool allowReciprocal() { return 0 != (Flags & AllowReciprocal); }
-  bool unsafeAlgebra()   { return 0 != (Flags & UnsafeAlgebra); }
+  bool noNaNs() const          { return 0 != (Flags & NoNaNs); }
+  bool noInfs() const          { return 0 != (Flags & NoInfs); }
+  bool noSignedZeros() const   { return 0 != (Flags & NoSignedZeros); }
+  bool allowReciprocal() const { return 0 != (Flags & AllowReciprocal); }
+  bool unsafeAlgebra() const   { return 0 != (Flags & UnsafeAlgebra); }
 
   /// Flag setters
   void setNoNaNs()          { Flags |= NoNaNs; }
