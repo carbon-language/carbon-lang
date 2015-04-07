@@ -128,12 +128,12 @@ public:
   }
 
   /// Process the Defined symbol and create an atom for it.
-  ErrorOr<ELFDefinedAtom<ELFT> *>
-  handleDefinedSymbol(StringRef symName, StringRef sectionName,
-                      const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
-                      ArrayRef<uint8_t> contentData,
-                      unsigned int referenceStart, unsigned int referenceEnd,
-                      std::vector<ELFReference<ELFT> *> &referenceList) override {
+  ELFDefinedAtom<ELFT> *
+  createDefinedAtom(StringRef symName, StringRef sectionName,
+                    const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
+                    ArrayRef<uint8_t> contentData, unsigned int referenceStart,
+                    unsigned int referenceEnd,
+                    std::vector<ELFReference<ELFT> *> &referenceList) override {
     return new (this->_readerStorage) HexagonELFDefinedAtom<ELFT>(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);

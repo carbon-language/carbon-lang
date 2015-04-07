@@ -127,11 +127,12 @@ private:
   uint64_t _tpOff = 0;
   uint64_t _dtpOff = 0;
 
-  ErrorOr<ELFDefinedAtom<ELFT> *> handleDefinedSymbol(
-      StringRef symName, StringRef sectionName, const Elf_Sym *sym,
-      const Elf_Shdr *sectionHdr, ArrayRef<uint8_t> contentData,
-      unsigned int referenceStart, unsigned int referenceEnd,
-      std::vector<ELFReference<ELFT> *> &referenceList) override {
+  ELFDefinedAtom<ELFT> *
+  createDefinedAtom(StringRef symName, StringRef sectionName,
+                    const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
+                    ArrayRef<uint8_t> contentData, unsigned int referenceStart,
+                    unsigned int referenceEnd,
+                    std::vector<ELFReference<ELFT> *> &referenceList) override {
     return new (this->_readerStorage) MipsELFDefinedAtom<ELFT>(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);
