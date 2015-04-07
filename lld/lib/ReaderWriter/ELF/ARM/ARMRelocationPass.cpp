@@ -62,6 +62,7 @@ static const uint8_t ARMPltVeneerAtomContent[4] = {
     0x00, 0x00               // nop
 };
 
+#ifdef NDEBUG
 // Determine proper names for mapping symbols.
 static std::string getMappingAtomName(DefinedAtom::CodeModel model,
                                       const std::string &part) {
@@ -76,6 +77,7 @@ static std::string getMappingAtomName(DefinedAtom::CodeModel model,
     llvm_unreachable("Wrong code model of mapping atom");
   }
 }
+#endif
 
 /// \brief Atoms that hold veneer code.
 class VeneerAtom : public SimpleELFDefinedAtom {
