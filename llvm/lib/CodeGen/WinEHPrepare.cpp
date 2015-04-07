@@ -93,6 +93,7 @@ private:
   bool outlineHandler(ActionHandler *Action, Function *SrcFn,
                       LandingPadInst *LPad, BasicBlock *StartBB,
                       FrameVarInfoMap &VarInfo);
+  void addStubInvokeToHandlerIfNeeded(Function *Handler, Value *PersonalityFn);
 
   void mapLandingPadBlocks(LandingPadInst *LPad, LandingPadActions &Actions);
   CatchHandler *findCatchHandler(BasicBlock *BB, BasicBlock *&NextBB,
@@ -756,6 +757,59 @@ static bool isSelectorDispatch(BasicBlock *BB, BasicBlock *&CatchHandler,
   return false;
 }
 
+static BasicBlock *createStubLandingPad(Function *Handler,
+                                        Value *PersonalityFn) {
+  // FIXME: Finish this!
+  LLVMContext &Context = Handler->getContext();
+  BasicBlock *StubBB = BasicBlock::Create(Context, "stub");
+  Handler->getBasicBlockList().push_back(StubBB);
+  IRBuilder<> Builder(StubBB);
+  LandingPadInst *LPad = Builder.CreateLandingPad(
+      llvm::StructType::get(Type::getInt8PtrTy(Context),
+                            Type::getInt32Ty(Context), nullptr),
+      PersonalityFn, 0);
+  LPad->setCleanup(true);
+  Builder.CreateUnreachable();
+  return StubBB;
+}
+
+// Cycles through the blocks in an outlined handler function looking for an
+// invoke instruction and inserts an invoke of llvm.donothing with an empty
+// landing pad if none is found.  The code that generates the .xdata tables for
+// the handler needs at least one landing pad to identify the parent function's
+// personality.
+void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
+                                                  Value *PersonalityFn) {
+  ReturnInst *Ret = nullptr;
+  for (BasicBlock &BB : *Handler) {
+    TerminatorInst *Terminator = BB.getTerminator();
+    // If we find an invoke, there is nothing to be done.
+    auto *II = dyn_cast<InvokeInst>(Terminator);
+    if (II)
+      return;
+    // If we've already recorded a return instruction, keep looking for invokes.
+    if (Ret)
+      continue;
+    // If we haven't recorded a return instruction yet, try this terminator.
+    Ret = dyn_cast<ReturnInst>(Terminator);
+  }
+
+  // If we got this far, the handler contains no invokes.  We should have seen
+  // at least one return.  We'll insert an invoke of llvm.donothing ahead of
+  // that return.
+  assert(Ret);
+  BasicBlock *OldRetBB = Ret->getParent();
+  BasicBlock *NewRetBB = SplitBlock(OldRetBB, Ret);
+  // SplitBlock adds an unconditional branch instruction at the end of the
+  // parent block.  We want to replace that with an invoke call, so we can
+  // erase it now.
+  OldRetBB->getTerminator()->eraseFromParent();
+  BasicBlock *StubLandingPad = createStubLandingPad(Handler, PersonalityFn);
+  Function *F =
+      Intrinsic::getDeclaration(Handler->getParent(), Intrinsic::donothing);
+  InvokeInst::Create(F, NewRetBB, StubLandingPad, None, "", OldRetBB);
+}
+
 bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
                                   LandingPadInst *LPad, BasicBlock *StartBB,
                                   FrameVarInfoMap &VarInfo) {
@@ -839,6 +893,9 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   BasicBlock *FirstClonedBB = std::next(Function::iterator(Entry));
   Entry->getInstList().splice(Entry->end(), FirstClonedBB->getInstList());
   FirstClonedBB->eraseFromParent();
+
+  // Make sure we can identify the handler's personality later.
+  addStubInvokeToHandlerIfNeeded(Handler, LPad->getPersonalityFn());
 
   if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
     WinEHCatchDirector *CatchDirector =
@@ -1136,12 +1193,9 @@ CloningDirector::CloningAction WinEHCleanupDirector::handleBeginCatch(
 
 CloningDirector::CloningAction WinEHCleanupDirector::handleEndCatch(
     ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
-  // Catch blocks within cleanup handlers will always be unreachable.
-  // We'll insert an unreachable instruction now, but it will be pruned
-  // before the cloning process is complete.
-  BasicBlock::InstListType &InstList = NewBB->getInstList();
-  InstList.push_back(new UnreachableInst(NewBB->getContext()));
-  return CloningDirector::StopCloningBB;
+  // Cleanup handlers nested within catch handlers may begin with a call to
+  // eh.endcatch.  We can just ignore that instruction.
+  return CloningDirector::SkipInstruction;
 }
 
 CloningDirector::CloningAction WinEHCleanupDirector::handleTypeIdFor(
@@ -1538,9 +1592,8 @@ CleanupHandler *WinEHPrepare::findCleanupHandler(BasicBlock *StartBB,
       CmpInst *Compare = dyn_cast<CmpInst>(Branch->getCondition());
       if (!Compare || !Compare->isEquality())
         return createCleanupHandler(CleanupHandlerMap, BB);
-      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(),
-        IE = BB->end();
-        II != IE; ++II) {
+      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+           II != IE; ++II) {
         Instruction *Inst = II;
         if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
           continue;
@@ -1556,9 +1609,8 @@ CleanupHandler *WinEHPrepare::findCleanupHandler(BasicBlock *StartBB,
     }
 
     // Anything else is either a catch block or interesting cleanup code.
-    for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(),
-      IE = BB->end();
-      II != IE; ++II) {
+    for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+         II != IE; ++II) {
       Instruction *Inst = II;
       if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
         continue;
@@ -1590,7 +1642,7 @@ void llvm::parseEHActions(const IntrinsicInst *II,
                           SmallVectorImpl<ActionHandler *> &Actions) {
   for (unsigned I = 0, E = II->getNumArgOperands(); I != E;) {
     uint64_t ActionKind =
-      cast<ConstantInt>(II->getArgOperand(I))->getZExtValue();
+        cast<ConstantInt>(II->getArgOperand(I))->getZExtValue();
     if (ActionKind == /*catch=*/1) {
       auto *Selector = cast<Constant>(II->getArgOperand(I + 1));
       ConstantInt *EHObjIndex = cast<ConstantInt>(II->getArgOperand(I + 2));
@@ -1613,4 +1665,3 @@ void llvm::parseEHActions(const IntrinsicInst *II,
   }
   std::reverse(Actions.begin(), Actions.end());
 }
-
