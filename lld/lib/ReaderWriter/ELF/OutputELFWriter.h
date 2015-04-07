@@ -370,9 +370,8 @@ void OutputELFWriter<ELFT>::createImplicitFiles(
   auto callback = [this](StringRef sym, RuntimeFile<ELFT> &file) {
     processUndefinedSymbol(sym, file);
   };
-  auto &ctx = const_cast<ELFLinkingContext &>(_ctx);
-  ctx.setUndefinesResolver(
-      llvm::make_unique<DynamicSymbolFile<ELFT>>(ctx, std::move(callback)));
+  _ctx.setUndefinesResolver(
+      llvm::make_unique<DynamicSymbolFile<ELFT>>(_ctx, std::move(callback)));
   // Add script defined symbols
   result.push_back(std::move(_scriptFile));
 }
