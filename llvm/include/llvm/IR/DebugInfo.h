@@ -427,9 +427,6 @@ public:
 class DICompositeType : public DIDerivedType {
   friend class DIBuilder;
 
-  /// \brief Set the array of member DITypes.
-  void setArraysHelper(MDNode *Elements, MDNode *TParams);
-
 public:
   DICompositeType() = default;
   DICompositeType(const MDCompositeTypeBase *N) : DIDerivedType(N) {}
@@ -449,27 +446,11 @@ public:
     return DIArray(get()->getElements());
   }
 
-private:
-  template <typename T>
-  void setArrays(DITypedArray<T> Elements, DIArray TParams = DIArray()) {
-    assert(
-        (!TParams || DbgNode->getNumOperands() == 8) &&
-        "If you're setting the template parameters this should include a slot "
-        "for that!");
-    setArraysHelper(Elements, TParams);
-  }
-
-public:
   unsigned getRunTimeLang() const { return get()->getRuntimeLang(); }
   DITypeRef getContainingType() const {
     return DITypeRef::get(get()->getVTableHolder());
   }
 
-private:
-  /// \brief Set the containing type.
-  void setContainingType(DICompositeType ContainingType);
-
-public:
   DIArray getTemplateParams() const {
     return DIArray(get()->getTemplateParams());
   }

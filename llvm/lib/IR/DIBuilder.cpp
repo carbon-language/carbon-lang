@@ -835,7 +835,11 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
 }
 
 void DIBuilder::replaceVTableHolder(DICompositeType &T, DICompositeType VTableHolder) {
-  T.setContainingType(VTableHolder);
+  {
+    TypedTrackingMDRef<MDCompositeTypeBase> N(T);
+    N->replaceVTableHolder(MDTypeRef::get(VTableHolder));
+    T = N.get();
+  }
 
   // If this didn't create a self-reference, just return.
   if (T != VTableHolder)
@@ -851,7 +855,14 @@ void DIBuilder::replaceVTableHolder(DICompositeType &T, DICompositeType VTableHo
 
 void DIBuilder::replaceArrays(DICompositeType &T, DIArray Elements,
                               DIArray TParams) {
-  T.setArrays(Elements, TParams);
+  {
+    TypedTrackingMDRef<MDCompositeTypeBase> N(T);
+    if (Elements)
+      N->replaceElements(cast<MDTuple>(Elements.get()));
+    if (TParams)
+      N->replaceTemplateParams(cast<MDTuple>(TParams.get()));
+    T = N.get();
+  }
 
   // If T isn't resolved, there's no problem.
   if (!T->isResolved())

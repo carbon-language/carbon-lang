@@ -125,22 +125,7 @@ static bool isDescriptorRef(const Metadata *MD) {
 }
 #endif
 
-void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
-  TypedTrackingMDRef<MDCompositeTypeBase> N(get());
-  if (Elements)
-    N->replaceElements(cast<MDTuple>(Elements));
-  if (TParams)
-    N->replaceTemplateParams(cast<MDTuple>(TParams));
-  DbgNode = N;
-}
-
 DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
-
-void DICompositeType::setContainingType(DICompositeType ContainingType) {
-  TypedTrackingMDRef<MDCompositeTypeBase> N(get());
-  N->replaceVTableHolder(MDTypeRef::get(ContainingType));
-  DbgNode = N;
-}
 
 bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   assert(CurFn && "Invalid function");
