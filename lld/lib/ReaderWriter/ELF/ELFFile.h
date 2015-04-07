@@ -746,16 +746,16 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
       // merged away as well as these symbols have to be part of symbol
       // resolution
       if (isMergeableStringSection(section)) {
-        if (symbol->getBinding() == llvm::ELF::STB_GLOBAL) {
-          ELFDefinedAtom<ELFT> *atom = createDefinedAtom(
-              symbolName, *sectionName, &**si, section, symbolData,
-              _references.size(), _references.size(), _references);
-          atom->setOrdinal(++_ordinal);
-          if (addAtoms)
-            _definedAtoms._atoms.push_back(atom);
-          else
-            atomsForSection[*sectionName].push_back(atom);
-        }
+        if (symbol->getBinding() != llvm::ELF::STB_GLOBAL)
+          continue;
+        ELFDefinedAtom<ELFT> *atom = createDefinedAtom(
+          symbolName, *sectionName, &**si, section, symbolData,
+          _references.size(), _references.size(), _references);
+        atom->setOrdinal(++_ordinal);
+        if (addAtoms)
+          _definedAtoms._atoms.push_back(atom);
+        else
+          atomsForSection[*sectionName].push_back(atom);
         continue;
       }
 
