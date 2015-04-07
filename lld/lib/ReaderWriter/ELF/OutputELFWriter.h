@@ -129,9 +129,6 @@ protected:
   // section header table, string table etc
   virtual void assignSectionsWithNoSegments();
 
-  // Add default atoms that need to be present in the output file
-  virtual void addDefaultAtoms();
-
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
@@ -194,7 +191,6 @@ protected:
   unique_bump_ptr<HashSection<ELFT>> _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
-  std::unique_ptr<RuntimeFile<ELFT>> _scriptFile;
 
 private:
   static StringRef maybeGetSOName(Node *node);
@@ -206,8 +202,7 @@ private:
 template <class ELFT>
 OutputELFWriter<ELFT>::OutputELFWriter(ELFLinkingContext &ctx,
                                        TargetLayout<ELFT> &layout)
-    : _ctx(ctx), _targetHandler(ctx.getTargetHandler()), _layout(layout),
-      _scriptFile(new RuntimeFile<ELFT>(ctx, "Linker script runtime")) {}
+    : _ctx(ctx), _targetHandler(ctx.getTargetHandler()), _layout(layout) {}
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildChunks(const File &file) {
@@ -355,13 +350,6 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
         _shdrtab->updateSection(section);
 }
 
-template <class ELFT> void OutputELFWriter<ELFT>::addDefaultAtoms() {
-  const llvm::StringSet<> &symbols =
-      _ctx.linkerScriptSema().getScriptDefinedSymbols();
-  for (auto &sym : symbols)
-    _scriptFile->addAbsoluteAtom(sym.getKey());
-}
-
 template <class ELFT>
 void OutputELFWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
@@ -373,7 +361,11 @@ void OutputELFWriter<ELFT>::createImplicitFiles(
   _ctx.setUndefinesResolver(
       llvm::make_unique<DynamicSymbolFile<ELFT>>(_ctx, std::move(callback)));
   // Add script defined symbols
-  result.push_back(std::move(_scriptFile));
+  auto file =
+      llvm::make_unique<RuntimeFile<ELFT>>(_ctx, "Linker script runtime");
+  for (auto &sym : this->_ctx.linkerScriptSema().getScriptDefinedSymbols())
+    file->addAbsoluteAtom(sym.getKey());
+  result.push_back(std::move(file));
 }
 
 template <class ELFT>

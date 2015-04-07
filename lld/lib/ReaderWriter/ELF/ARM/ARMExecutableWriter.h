@@ -33,10 +33,6 @@ protected:
 
   void finalizeDefaultAtomValues() override;
 
-  void addDefaultAtoms() override {
-    ExecutableWriter<ELFT>::addDefaultAtoms();
-  }
-
   /// \brief Create symbol table.
   unique_bump_ptr<SymbolTable<ELFT>> createSymbolTable() override;
 

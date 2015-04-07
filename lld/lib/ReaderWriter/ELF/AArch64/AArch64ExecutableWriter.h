@@ -29,10 +29,6 @@ protected:
     return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
   }
 
-  void addDefaultAtoms() override{
-    return ExecutableWriter<ELFT>::addDefaultAtoms();
-  }
-
 private:
   class GOTFile : public SimpleFile {
   public:

@@ -23,12 +23,10 @@ template<class ELFT>
 class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
   ExecutableWriter(ELFLinkingContext &ctx, TargetLayout<ELFT> &layout)
-      : OutputELFWriter<ELFT>(ctx, layout),
-        _runtimeFile(new RuntimeFile<ELFT>(ctx, "C runtime")) {}
+      : OutputELFWriter<ELFT>(ctx, layout) {}
 
 protected:
   void buildDynamicSymbolTable(const File &file) override;
-  void addDefaultAtoms() override;
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
   void finalizeDefaultAtomValues() override;
   void createDefaultSections() override;
@@ -38,7 +36,9 @@ protected:
   }
 
   unique_bump_ptr<InterpSection<ELFT>> _interpSection;
-  std::unique_ptr<RuntimeFile<ELFT> > _runtimeFile;
+
+private:
+  std::unique_ptr<RuntimeFile<ELFT>> createRuntimeFile();
 };
 
 //===----------------------------------------------------------------------===//
@@ -73,39 +73,36 @@ void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   OutputELFWriter<ELFT>::buildDynamicSymbolTable(file);
 }
 
-/// \brief Add absolute symbols by default. These are linker added
-/// absolute symbols
 template<class ELFT>
-void ExecutableWriter<ELFT>::addDefaultAtoms() {
-  OutputELFWriter<ELFT>::addDefaultAtoms();
-  _runtimeFile->addUndefinedAtom(this->_ctx.entrySymbolName());
-  _runtimeFile->addAbsoluteAtom("__bss_start");
-  _runtimeFile->addAbsoluteAtom("__bss_end");
-  _runtimeFile->addAbsoluteAtom("_end");
-  _runtimeFile->addAbsoluteAtom("end");
-  _runtimeFile->addAbsoluteAtom("__preinit_array_start");
-  _runtimeFile->addAbsoluteAtom("__preinit_array_end");
-  _runtimeFile->addAbsoluteAtom("__init_array_start");
-  _runtimeFile->addAbsoluteAtom("__init_array_end");
+std::unique_ptr<RuntimeFile<ELFT>> ExecutableWriter<ELFT>::createRuntimeFile() {
+  auto file = llvm::make_unique<RuntimeFile<ELFT>>(this->_ctx, "C runtime");
+  file->addUndefinedAtom(this->_ctx.entrySymbolName());
+  file->addAbsoluteAtom("__bss_start");
+  file->addAbsoluteAtom("__bss_end");
+  file->addAbsoluteAtom("_end");
+  file->addAbsoluteAtom("end");
+  file->addAbsoluteAtom("__preinit_array_start");
+  file->addAbsoluteAtom("__preinit_array_end");
+  file->addAbsoluteAtom("__init_array_start");
+  file->addAbsoluteAtom("__init_array_end");
   if (this->_ctx.isRelaOutputFormat()) {
-    _runtimeFile->addAbsoluteAtom("__rela_iplt_start");
-    _runtimeFile->addAbsoluteAtom("__rela_iplt_end");
+    file->addAbsoluteAtom("__rela_iplt_start");
+    file->addAbsoluteAtom("__rela_iplt_end");
   } else {
-    _runtimeFile->addAbsoluteAtom("__rel_iplt_start");
-    _runtimeFile->addAbsoluteAtom("__rel_iplt_end");
+    file->addAbsoluteAtom("__rel_iplt_start");
+    file->addAbsoluteAtom("__rel_iplt_end");
   }
-  _runtimeFile->addAbsoluteAtom("__fini_array_start");
-  _runtimeFile->addAbsoluteAtom("__fini_array_end");
+  file->addAbsoluteAtom("__fini_array_start");
+  file->addAbsoluteAtom("__fini_array_end");
+  return file;
 }
 
 /// \brief Hook in lld to add CRuntime file
 template <class ELFT>
 void ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File> > &result) {
-  // Add the default atoms as defined by executables
-  ExecutableWriter<ELFT>::addDefaultAtoms();
   OutputELFWriter<ELFT>::createImplicitFiles(result);
-  result.push_back(std::move(_runtimeFile));
+  result.push_back(createRuntimeFile());
 }
 
 template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {

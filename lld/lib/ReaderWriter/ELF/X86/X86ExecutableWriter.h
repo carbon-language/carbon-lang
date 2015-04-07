@@ -28,10 +28,6 @@ protected:
     return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
   }
 
-  void addDefaultAtoms() override {
-    return ExecutableWriter<ELFT>::addDefaultAtoms();
-  }
-
 private:
   X86LinkingContext &_ctx;
   TargetLayout<ELFT> &_layout;

@@ -37,32 +37,27 @@ protected:
   }
 
 private:
-  void addDefaultAtoms() override {
-    _runtimeFile->addAbsoluteAtom("_SDA_BASE_");
-    if (this->_ctx.isDynamic()) {
-      _runtimeFile->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      _runtimeFile->addAbsoluteAtom("_DYNAMIC");
-    }
-  }
-
   HexagonLinkingContext &_ctx;
   HexagonTargetLayout<ELFT> &_targetLayout;
-  std::unique_ptr<HexagonRuntimeFile<ELFT>> _runtimeFile;
 };
 
 template <class ELFT>
 HexagonExecutableWriter<ELFT>::HexagonExecutableWriter(
     HexagonLinkingContext &ctx, HexagonTargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _targetLayout(layout),
-      _runtimeFile(new HexagonRuntimeFile<ELFT>(ctx)) {}
+    : ExecutableWriter<ELFT>(ctx, layout), _ctx(ctx), _targetLayout(layout) {}
 
 template <class ELFT>
 void HexagonExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
   // Add the default atoms as defined for hexagon
-  addDefaultAtoms();
-  result.push_back(std::move(_runtimeFile));
+  auto file = llvm::make_unique<HexagonRuntimeFile<ELFT>>(_ctx);
+  file->addAbsoluteAtom("_SDA_BASE_");
+  if (this->_ctx.isDynamic()) {
+    file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+    file->addAbsoluteAtom("_DYNAMIC");
+  }
+  result.push_back(std::move(file));
 }
 
 template <class ELFT>

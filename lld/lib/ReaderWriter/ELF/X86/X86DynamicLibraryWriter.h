@@ -28,10 +28,6 @@ protected:
     return DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
   }
 
-  void addDefaultAtoms() override {
-    return DynamicLibraryWriter<ELFT>::addDefaultAtoms();
-  }
-
 private:
   class GOTFile : public SimpleFile {
   public:

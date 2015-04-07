@@ -37,10 +37,6 @@ protected:
     return ExecutableWriter::finalizeDefaultAtomValues();
   }
 
-  void addDefaultAtoms() override {
-    return ExecutableWriter::addDefaultAtoms();
-  }
-
 private:
   class GOTFile : public SimpleFile {
   public:

@@ -30,10 +30,6 @@ protected:
     return DynamicLibraryWriter::finalizeDefaultAtomValues();
   }
 
-  void addDefaultAtoms() override {
-    return DynamicLibraryWriter::addDefaultAtoms();
-  }
-
 private:
   class GOTFile : public SimpleFile {
   public:
