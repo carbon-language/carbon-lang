@@ -486,12 +486,12 @@ void llvm::sys::DisableSystemDialogsOnCrash() {}
 
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIGABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
-void llvm::sys::PrintStackTraceOnErrorSignal() {
+void llvm::sys::PrintStackTraceOnErrorSignal(bool DisableCrashReporting) {
   AddSignalHandler(PrintStackTraceSignalHandler, nullptr);
 
 #if defined(__APPLE__) && defined(ENABLE_CRASH_OVERRIDES)
   // Environment variable to disable any kind of crash dialog.
-  if (getenv("LLVM_DISABLE_CRASH_REPORT")) {
+  if (DisableCrashReporting || getenv("LLVM_DISABLE_CRASH_REPORT")) {
     mach_port_t self = mach_task_self();
 
     exception_mask_t mask = EXC_MASK_CRASH;

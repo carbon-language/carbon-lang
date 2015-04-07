@@ -23,7 +23,7 @@
 const char *TestMainArgv0;
 
 int main(int argc, char **argv) {
-  llvm::sys::PrintStackTraceOnErrorSignal();
+  llvm::sys::PrintStackTraceOnErrorSignal(true /* Disable crash reporting */);
   testing::InitGoogleTest(&argc, argv);
   llvm::cl::ParseCommandLineOptions(argc, argv);
 

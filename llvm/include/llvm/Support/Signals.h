@@ -39,7 +39,7 @@ namespace sys {
   /// When an error signal (such as SIBABRT or SIGSEGV) is delivered to the
   /// process, print a stack trace and then exit.
   /// @brief Print a stack trace if a fatal signal occurs.
-  void PrintStackTraceOnErrorSignal();
+  void PrintStackTraceOnErrorSignal(bool DisableCrashReporting = false);
 
   /// Disable all system dialog boxes that appear when the process crashes.
   void DisableSystemDialogsOnCrash();
