@@ -218,7 +218,7 @@ class ELFObjectWriter : public MCObjectWriter {
     }
 
     void WriteHeader(const MCAssembler &Asm,
-                     uint64_t SectionDataSize,
+                     uint64_t SectionHeaderOffset,
                      unsigned NumberOfSections);
 
     void WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
@@ -429,7 +429,7 @@ ELFObjectWriter::~ELFObjectWriter()
 
 // Emit the ELF header.
 void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
-                                  uint64_t SectionDataSize,
+                                  uint64_t SectionHeaderOffset,
                                   unsigned NumberOfSections) {
   // ELF Header
   // ----------
@@ -463,8 +463,7 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
   Write32(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
   WriteWord(0);                    // e_phoff, no program header for .o
-  WriteWord(SectionDataSize + (is64Bit() ? sizeof(ELF::Elf64_Ehdr) :
-            sizeof(ELF::Elf32_Ehdr)));  // e_shoff = sec hdr table off in bytes
+  WriteWord(SectionHeaderOffset);  // e_shoff = sec hdr table off in bytes
 
   // e_flags = whatever the target wants
   Write32(Asm.getELFHeaderEFlags());
@@ -1719,7 +1718,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   FileOff = RoundUpToAlignment(FileOff, NaturalAlignment);
 
-  const unsigned SectionHeaderOffset = FileOff - HeaderSize;
+  const unsigned SectionHeaderOffset = FileOff;
 
   uint64_t SectionHeaderEntrySize = is64Bit() ?
     sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr);
