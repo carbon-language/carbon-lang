@@ -455,12 +455,20 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::Create(
             ParentFrameOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
 
-        MCSymbol *FrameAllocOffset =
-            Asm->OutContext.getOrCreateFrameAllocSymbol(
-                GlobalValue::getRealLinkageName(F->getName()),
-                HT.CatchObjRecoverIdx);
-        const MCSymbolRefExpr *FrameAllocOffsetRef = MCSymbolRefExpr::Create(
-            FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
+        // Get the frame escape label with the offset of the catch object. If
+        // the index is -1, then there is no catch object, and we should emit an
+        // offset of zero, indicating that no copy will occur.
+        const MCExpr *FrameAllocOffsetRef = nullptr;
+        if (HT.CatchObjRecoverIdx >= 0) {
+          MCSymbol *FrameAllocOffset =
+              Asm->OutContext.getOrCreateFrameAllocSymbol(
+                  GlobalValue::getRealLinkageName(F->getName()),
+                  HT.CatchObjRecoverIdx);
+          FrameAllocOffsetRef = MCSymbolRefExpr::Create(
+              FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
+        } else {
+          FrameAllocOffsetRef = MCConstantExpr::Create(0, Asm->OutContext);
+        }
 
         OS.EmitIntValue(HT.Adjectives, 4);                    // Adjectives
         OS.EmitValue(createImageRel32(HT.TypeDescriptor), 4); // Type
