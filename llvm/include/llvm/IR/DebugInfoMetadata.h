@@ -303,27 +303,30 @@ class MDSubrange : public DebugNode {
   friend class MDNode;
 
   int64_t Count;
-  int64_t Lo;
+  int64_t LowerBound;
 
-  MDSubrange(LLVMContext &C, StorageType Storage, int64_t Count, int64_t Lo)
+  MDSubrange(LLVMContext &C, StorageType Storage, int64_t Count,
+             int64_t LowerBound)
       : DebugNode(C, MDSubrangeKind, Storage, dwarf::DW_TAG_subrange_type,
                   None),
-        Count(Count), Lo(Lo) {}
+        Count(Count), LowerBound(LowerBound) {}
   ~MDSubrange() {}
 
-  static MDSubrange *getImpl(LLVMContext &Context, int64_t Count, int64_t Lo,
-                             StorageType Storage, bool ShouldCreate = true);
+  static MDSubrange *getImpl(LLVMContext &Context, int64_t Count,
+                             int64_t LowerBound, StorageType Storage,
+                             bool ShouldCreate = true);
 
   TempMDSubrange cloneImpl() const {
-    return getTemporary(getContext(), getCount(), getLo());
+    return getTemporary(getContext(), getCount(), getLowerBound());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDSubrange, (int64_t Count, int64_t Lo = 0), (Count, Lo))
+  DEFINE_MDNODE_GET(MDSubrange, (int64_t Count, int64_t LowerBound = 0),
+                    (Count, LowerBound))
 
   TempMDSubrange clone() const { return cloneImpl(); }
 
-  int64_t getLo() const { return Lo; }
+  int64_t getLowerBound() const { return LowerBound; }
   int64_t getCount() const { return Count; }
 
   static bool classof(const Metadata *MD) {

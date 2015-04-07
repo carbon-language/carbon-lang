@@ -821,7 +821,7 @@ static void WriteMDSubrange(const MDSubrange *N, const ValueEnumerator &,
                             unsigned Abbrev) {
   Record.push_back(N->isDistinct());
   Record.push_back(N->getCount());
-  Record.push_back(rotateSign(N->getLo()));
+  Record.push_back(rotateSign(N->getLowerBound()));
 
   Stream.EmitRecord(bitc::METADATA_SUBRANGE, Record, Abbrev);
   Record.clear();

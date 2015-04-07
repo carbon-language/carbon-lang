@@ -848,7 +848,7 @@ TEST_F(MDSubrangeTest, get) {
   auto *N = MDSubrange::get(Context, 5, 7);
   EXPECT_EQ(dwarf::DW_TAG_subrange_type, N->getTag());
   EXPECT_EQ(5, N->getCount());
-  EXPECT_EQ(7, N->getLo());
+  EXPECT_EQ(7, N->getLowerBound());
   EXPECT_EQ(N, MDSubrange::get(Context, 5, 7));
   EXPECT_EQ(MDSubrange::get(Context, 5, 0), MDSubrange::get(Context, 5));
 
@@ -860,7 +860,7 @@ TEST_F(MDSubrangeTest, getEmptyArray) {
   auto *N = MDSubrange::get(Context, -1, 0);
   EXPECT_EQ(dwarf::DW_TAG_subrange_type, N->getTag());
   EXPECT_EQ(-1, N->getCount());
-  EXPECT_EQ(0, N->getLo());
+  EXPECT_EQ(0, N->getLowerBound());
   EXPECT_EQ(N, MDSubrange::get(Context, -1, 0));
 }
 

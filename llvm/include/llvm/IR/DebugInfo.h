@@ -175,7 +175,7 @@ public:
     return *get();
   }
 
-  int64_t getLo() const { return get()->getLo(); }
+  int64_t getLo() const { return get()->getLowerBound(); }
   int64_t getCount() const { return get()->getCount(); }
 };
 

@@ -1505,7 +1505,7 @@ static void writeMDSubrange(raw_ostream &Out, const MDSubrange *N,
   Out << "!MDSubrange(";
   MDFieldPrinter Printer(Out);
   Printer.printInt("count", N->getCount(), /* ShouldSkipZero */ false);
-  Printer.printInt("lowerBound", N->getLo());
+  Printer.printInt("lowerBound", N->getLowerBound());
   Out << ")";
 }
 

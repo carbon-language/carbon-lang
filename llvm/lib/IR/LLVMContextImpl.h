@@ -275,15 +275,17 @@ template <> struct MDNodeKeyImpl<GenericDebugNode> : MDNodeOpsKey {
 
 template <> struct MDNodeKeyImpl<MDSubrange> {
   int64_t Count;
-  int64_t Lo;
+  int64_t LowerBound;
 
-  MDNodeKeyImpl(int64_t Count, int64_t Lo) : Count(Count), Lo(Lo) {}
-  MDNodeKeyImpl(const MDSubrange *N) : Count(N->getCount()), Lo(N->getLo()) {}
+  MDNodeKeyImpl(int64_t Count, int64_t LowerBound)
+      : Count(Count), LowerBound(LowerBound) {}
+  MDNodeKeyImpl(const MDSubrange *N)
+      : Count(N->getCount()), LowerBound(N->getLowerBound()) {}
 
   bool isKeyOf(const MDSubrange *RHS) const {
-    return Count == RHS->getCount() && Lo == RHS->getLo();
+    return Count == RHS->getCount() && LowerBound == RHS->getLowerBound();
   }
-  unsigned getHashValue() const { return hash_combine(Count, Lo); }
+  unsigned getHashValue() const { return hash_combine(Count, LowerBound); }
 };
 
 template <> struct MDNodeKeyImpl<MDEnumerator> {
