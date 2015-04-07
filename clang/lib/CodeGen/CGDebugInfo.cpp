@@ -1044,7 +1044,7 @@ llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
   SmallVector<llvm::Metadata *, 16> Elts;
 
   // First element is always return type. For 'void' functions it is NULL.
-  Elts.push_back(Args[0]);
+  Elts.push_back(Args[0u]);
 
   // "this" pointer is always first argument.
   const CXXRecordDecl *RD = ThisPtr->getPointeeCXXRecordDecl();
