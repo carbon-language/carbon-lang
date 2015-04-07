@@ -171,7 +171,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  void perform(std::unique_ptr<MutableFile> &mf) override {
+  void perform(std::unique_ptr<SimpleFile> &mf) override {
     // Process all references.
     for (const auto &atom : mf->defined())
       for (const auto &ref : *atom)

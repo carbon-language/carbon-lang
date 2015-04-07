@@ -272,24 +272,6 @@ private:
   std::mutex _parseMutex;
 };
 
-/// \brief A mutable File.
-class MutableFile : public File {
-public:
-  /// \brief Add an atom to the file. Invalidates iterators for all returned
-  /// containters.
-  virtual void addAtom(const Atom&) = 0;
-
-  typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
-  virtual DefinedAtomRange definedAtoms() = 0;
-
-  virtual void
-  removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) = 0;
-
-protected:
-  /// \brief only subclasses of MutableFile can be instantiated
-  MutableFile(StringRef p) : File(p, kindObject) {}
-};
-
 /// An ErrorFile represents a file that doesn't exist.
 /// If you try to parse a file which doesn't exist, an instance of this
 /// class will be returned. That's parse method always returns an error.

@@ -96,8 +96,7 @@ public:
       _file("<mach-o GOT Pass>") { }
 
 private:
-
-  void perform(std::unique_ptr<MutableFile> &mergedFile) override {
+  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     // Scan all references in all atoms.
     for (const DefinedAtom *atom : mergedFile->defined()) {
       for (const Reference *ref : *atom) {

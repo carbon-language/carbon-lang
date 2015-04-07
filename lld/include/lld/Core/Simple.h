@@ -26,11 +26,11 @@
 
 namespace lld {
 
-class SimpleFile : public MutableFile {
+class SimpleFile : public File {
 public:
-  SimpleFile(StringRef path) : MutableFile(path) {}
+  SimpleFile(StringRef path) : File(path, kindObject) {}
 
-  void addAtom(const Atom &atom) override {
+  void addAtom(const Atom &atom) {
     if (auto *defAtom = dyn_cast<DefinedAtom>(&atom)) {
       _definedAtoms._atoms.push_back(defAtom);
     } else if (auto *undefAtom = dyn_cast<UndefinedAtom>(&atom)) {
@@ -44,8 +44,7 @@ public:
     }
   }
 
-  void
-  removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) override {
+  void removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) {
     auto &atoms = _definedAtoms._atoms;
     auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
     atoms.erase(newEnd, atoms.end());
@@ -67,9 +66,8 @@ public:
     return _absoluteAtoms;
   }
 
-  DefinedAtomRange definedAtoms() override {
-    return make_range(_definedAtoms._atoms);
-  }
+  typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
+  DefinedAtomRange definedAtoms() { return make_range(_definedAtoms._atoms); }
 
 private:
   atom_collection_vector<DefinedAtom>        _definedAtoms;

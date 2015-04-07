@@ -108,7 +108,7 @@ bool Driver::link(LinkingContext &ctx, raw_ostream &diagnostics) {
     ctx.getTaskGroup().sync();
     return false;
   }
-  std::unique_ptr<MutableFile> merged = resolver.resultFile();
+  std::unique_ptr<SimpleFile> merged = resolver.resultFile();
   resolveTask.end();
 
   // Run passes on linked atoms.

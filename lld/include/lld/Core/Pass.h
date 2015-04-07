@@ -17,7 +17,7 @@
 #include <vector>
 
 namespace lld {
-class MutableFile;
+class SimpleFile;
 
 /// Once the core linking is done (which resolves references, coalesces atoms
 /// and produces a complete Atom graph), the linker runs a series of passes
@@ -34,7 +34,7 @@ public:
   virtual ~Pass() { }
 
   /// Do the actual work of the Pass.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile) = 0;
+  virtual void perform(std::unique_ptr<SimpleFile> &mergedFile) = 0;
 
 protected:
   // Only subclassess can be instantiated.

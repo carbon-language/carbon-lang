@@ -17,7 +17,7 @@ namespace elf {
 /// \brief This pass sorts atoms in .{ctors,dtors}.<priority> sections.
 class MipsCtorsOrderPass : public Pass {
 public:
-  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
+  void perform(std::unique_ptr<SimpleFile> &mergedFile) override;
 };
 }
 }

@@ -143,8 +143,8 @@ std::vector<uint8_t> DelayImportDirectoryAtom::createContent() {
 
 // Find "___delayLoadHelper2@8" (or "__delayLoadHelper2" on x64).
 // This is not efficient but should be OK for now.
-static const Atom *
-findDelayLoadHelper(MutableFile &file, const PECOFFLinkingContext &ctx) {
+static const Atom *findDelayLoadHelper(SimpleFile &file,
+                                       const PECOFFLinkingContext &ctx) {
   StringRef sym = ctx.getDelayLoadHelperName();
   for (const DefinedAtom *atom : file.defined())
     if (atom->name() == sym)
@@ -287,7 +287,7 @@ DelayLoaderAtom::createContent(MachineTypes machine) const {
 
 } // namespace idata
 
-void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
+void IdataPass::perform(std::unique_ptr<SimpleFile> &file) {
   if (file->sharedLibrary().empty())
     return;
 
@@ -324,8 +324,8 @@ void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
   replaceSharedLibraryAtoms(*file);
 }
 
-std::map<StringRef, std::vector<COFFSharedLibraryAtom *> >
-IdataPass::groupByLoadName(MutableFile &file) {
+std::map<StringRef, std::vector<COFFSharedLibraryAtom *>>
+IdataPass::groupByLoadName(SimpleFile &file) {
   std::map<StringRef, COFFSharedLibraryAtom *> uniqueAtoms;
   for (const SharedLibraryAtom *atom : file.sharedLibrary())
     uniqueAtoms[atom->name()] =
@@ -340,7 +340,7 @@ IdataPass::groupByLoadName(MutableFile &file) {
 }
 
 /// Transforms a reference to a COFFSharedLibraryAtom to a real reference.
-void IdataPass::replaceSharedLibraryAtoms(MutableFile &file) {
+void IdataPass::replaceSharedLibraryAtoms(SimpleFile &file) {
   for (const DefinedAtom *atom : file.defined()) {
     for (const Reference *ref : *atom) {
       const Atom *target = ref->target();

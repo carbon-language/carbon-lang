@@ -254,7 +254,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  void perform(std::unique_ptr<MutableFile> &mf) override {
+  void perform(std::unique_ptr<SimpleFile> &mf) override {
     ScopedTask task(getDefaultDomain(), "AArch64 GOT/PLT Pass");
     DEBUG_WITH_TYPE(
         "AArch64", llvm::dbgs() << "Undefined Atoms"

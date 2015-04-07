@@ -209,8 +209,7 @@ public:
     : _context(context), _archHandler(_context.archHandler()),
     _stubInfo(_archHandler.stubInfo()), _file("<mach-o Stubs pass>") { }
 
-
-  void perform(std::unique_ptr<MutableFile> &mergedFile) override {
+  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     // Skip this pass if output format uses text relocations instead of stubs.
     if (!this->noTextRelocs())
       return;

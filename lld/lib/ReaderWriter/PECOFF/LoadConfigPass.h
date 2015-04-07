@@ -49,7 +49,7 @@ class LoadConfigPass : public lld::Pass {
 public:
   LoadConfigPass(PECOFFLinkingContext &ctx) : _ctx(ctx), _file(ctx) {}
 
-  void perform(std::unique_ptr<MutableFile> &file) override;
+  void perform(std::unique_ptr<SimpleFile> &file) override;
 
 private:
   PECOFFLinkingContext &_ctx;

@@ -66,7 +66,7 @@ public:
   EdataPass(PECOFFLinkingContext &ctx)
       : _ctx(ctx), _file(ctx), _is64(ctx.is64Bit()), _stringOrdinal(1024) {}
 
-  void perform(std::unique_ptr<MutableFile> &file) override;
+  void perform(std::unique_ptr<SimpleFile> &file) override;
 
 private:
   edata::EdataAtom *
@@ -80,7 +80,7 @@ private:
   edata::EdataAtom *
   createNamePointerTable(const PECOFFLinkingContext &ctx,
                          const std::vector<edata::TableEntry> &entries,
-                         MutableFile *file);
+                         SimpleFile *file);
 
   edata::EdataAtom *
   createOrdinalTable(const std::vector<edata::TableEntry> &entries,

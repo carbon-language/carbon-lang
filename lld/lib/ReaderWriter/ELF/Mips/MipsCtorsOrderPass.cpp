@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsCtorsOrderPass.h"
+#include "lld/Core/Simple.h"
 #include <algorithm>
 #include <climits>
 
@@ -48,7 +49,7 @@ static int32_t getSectionPriority(StringRef path, StringRef sectionName) {
   return priority;
 }
 
-void MipsCtorsOrderPass::perform(std::unique_ptr<MutableFile> &f) {
+void MipsCtorsOrderPass::perform(std::unique_ptr<SimpleFile> &f) {
   auto definedAtoms = f->definedAtoms();
 
   auto last = std::stable_partition(definedAtoms.begin(), definedAtoms.end(),

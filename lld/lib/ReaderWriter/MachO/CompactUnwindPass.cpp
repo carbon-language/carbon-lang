@@ -277,7 +277,7 @@ public:
         _isBig(MachOLinkingContext::isBigEndian(_context.arch())) {}
 
 private:
-  void perform(std::unique_ptr<MutableFile> &mergedFile) override {
+  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     DEBUG(llvm::dbgs() << "MachO Compact Unwind pass\n");
 
     std::map<const Atom *, CompactUnwindEntry> unwindLocs;
@@ -351,7 +351,7 @@ private:
   }
 
   void collectCompactUnwindEntries(
-      std::unique_ptr<MutableFile> &mergedFile,
+      std::unique_ptr<SimpleFile> &mergedFile,
       std::map<const Atom *, CompactUnwindEntry> &unwindLocs,
       std::vector<const Atom *> &personalities, uint32_t &numLSDAs) {
     DEBUG(llvm::dbgs() << "  Collecting __compact_unwind entries\n");
@@ -422,7 +422,7 @@ private:
   }
 
   void
-  collectDwarfFrameEntries(std::unique_ptr<MutableFile> &mergedFile,
+  collectDwarfFrameEntries(std::unique_ptr<SimpleFile> &mergedFile,
                            std::map<const Atom *, const Atom *> &dwarfFrames) {
     for (const DefinedAtom *ehFrameAtom : mergedFile->defined()) {
       if (ehFrameAtom->contentType() != DefinedAtom::typeCFI)
@@ -442,7 +442,7 @@ private:
   ///   + A synthesised reference to __eh_frame if there's no __compact_unwind
   ///     or too many personality functions to be accommodated.
   std::vector<CompactUnwindEntry> createUnwindInfoEntries(
-      const std::unique_ptr<MutableFile> &mergedFile,
+      const std::unique_ptr<SimpleFile> &mergedFile,
       const std::map<const Atom *, CompactUnwindEntry> &unwindLocs,
       const std::vector<const Atom *> &personalities,
       const std::map<const Atom *, const Atom *> &dwarfFrames) {

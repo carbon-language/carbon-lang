@@ -13,6 +13,7 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Reader.h"
+#include "lld/Core/Simple.h"
 #include "llvm/ADT/DenseMap.h"
 #include <map>
 #include <string>
@@ -20,7 +21,7 @@
 
 namespace lld {
 class DefinedAtom;
-class MutableFile;
+class SimpleFile;
 
 namespace mach_o {
 
@@ -45,17 +46,17 @@ public:
   LayoutPass(const Registry &registry, SortOverride sorter);
 
   /// Sorts atoms in mergedFile by content type then by command line order.
-  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
+  void perform(std::unique_ptr<SimpleFile> &mergedFile) override;
 
   virtual ~LayoutPass() {}
 
 private:
   // Build the followOn atoms chain as specified by the kindLayoutAfter
   // reference type
-  void buildFollowOnTable(MutableFile::DefinedAtomRange &range);
+  void buildFollowOnTable(SimpleFile::DefinedAtomRange &range);
 
   // Build a map of Atoms to ordinals for sorting the atoms
-  void buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range);
+  void buildOrdinalOverrideMap(SimpleFile::DefinedAtomRange &range);
 
   const Registry &_registry;
   SortOverride _customSorter;
@@ -83,12 +84,12 @@ private:
 
   void setChainRoot(const DefinedAtom *targetAtom, const DefinedAtom *root);
 
-  std::vector<SortKey> decorate(MutableFile::DefinedAtomRange &atomRange) const;
-  void undecorate(MutableFile::DefinedAtomRange &atomRange,
+  std::vector<SortKey> decorate(SimpleFile::DefinedAtomRange &atomRange) const;
+  void undecorate(SimpleFile::DefinedAtomRange &atomRange,
                   std::vector<SortKey> &keys) const;
 
   // Check if the follow-on graph is a correct structure. For debugging only.
-  void checkFollowonChain(MutableFile::DefinedAtomRange &range);
+  void checkFollowonChain(SimpleFile::DefinedAtomRange &range);
 };
 
 } // namespace mach_o

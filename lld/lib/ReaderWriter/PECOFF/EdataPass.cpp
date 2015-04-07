@@ -78,7 +78,7 @@ static void assignOrdinals(PECOFFLinkingContext &ctx) {
       desc.ordinal = nextOrdinal++;
 }
 
-static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
+static bool getExportedAtoms(PECOFFLinkingContext &ctx, SimpleFile *file,
                              std::vector<TableEntry> &ret) {
   std::map<StringRef, const DefinedAtom *> definedAtoms;
   for (const DefinedAtom *atom : file->defined())
@@ -135,7 +135,7 @@ EdataPass::createAddressTable(const std::vector<TableEntry> &entries,
 edata::EdataAtom *
 EdataPass::createNamePointerTable(const PECOFFLinkingContext &ctx,
                                   const std::vector<TableEntry> &entries,
-                                  MutableFile *file) {
+                                  SimpleFile *file) {
   EdataAtom *table =
       new (_alloc) EdataAtom(_file, sizeof(uint32_t) * entries.size());
 
@@ -175,7 +175,7 @@ EdataPass::createOrdinalTable(const std::vector<TableEntry> &entries,
   return ret;
 }
 
-void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
+void EdataPass::perform(std::unique_ptr<SimpleFile> &file) {
   dedupExports(_ctx);
   assignOrdinals(_ctx);
 

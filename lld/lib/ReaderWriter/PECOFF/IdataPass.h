@@ -40,9 +40,9 @@ class ImportTableEntryAtom;
 
 // A state object of this pass.
 struct IdataContext {
-  IdataContext(MutableFile &f, VirtualFile &g, const PECOFFLinkingContext &c)
+  IdataContext(SimpleFile &f, VirtualFile &g, const PECOFFLinkingContext &c)
       : file(f), dummyFile(g), ctx(c) {}
-  MutableFile &file;
+  SimpleFile &file;
   VirtualFile &dummyFile;
   const PECOFFLinkingContext &ctx;
 };
@@ -195,13 +195,13 @@ class IdataPass : public lld::Pass {
 public:
   IdataPass(const PECOFFLinkingContext &ctx) : _dummyFile(ctx), _ctx(ctx) {}
 
-  void perform(std::unique_ptr<MutableFile> &file) override;
+  void perform(std::unique_ptr<SimpleFile> &file) override;
 
 private:
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *>>
-  groupByLoadName(MutableFile &file);
+  groupByLoadName(SimpleFile &file);
 
-  void replaceSharedLibraryAtoms(MutableFile &file);
+  void replaceSharedLibraryAtoms(SimpleFile &file);
 
   // A dummy file with which all the atoms created in the pass will be
   // associated. Atoms need to be associated to an input file even if it's not

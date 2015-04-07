@@ -54,7 +54,7 @@ public:
   /// @brief do work of merging and resolving and return list
   bool resolve();
 
-  std::unique_ptr<MutableFile> resultFile() { return std::move(_result); }
+  std::unique_ptr<SimpleFile> resultFile() { return std::move(_result); }
 
 private:
   typedef std::function<void(StringRef, bool)> UndefCallback;

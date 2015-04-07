@@ -22,7 +22,7 @@ class InferSubsystemPass : public lld::Pass {
 public:
   InferSubsystemPass(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
-  void perform(std::unique_ptr<MutableFile> &file) override {
+  void perform(std::unique_ptr<SimpleFile> &file) override {
     if (_ctx.getSubsystem() != WindowsSubsystem::IMAGE_SUBSYSTEM_UNKNOWN)
       return;
 

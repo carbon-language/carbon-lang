@@ -49,7 +49,7 @@ LoadConfigAtom::LoadConfigAtom(VirtualFile &file, const DefinedAtom *sxdata,
 
 } // namespace loadcfg
 
-void LoadConfigPass::perform(std::unique_ptr<MutableFile> &file) {
+void LoadConfigPass::perform(std::unique_ptr<SimpleFile> &file) {
   if (_ctx.noSEH())
     return;
 

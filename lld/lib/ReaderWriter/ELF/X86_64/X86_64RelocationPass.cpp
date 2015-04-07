@@ -253,7 +253,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  void perform(std::unique_ptr<MutableFile> &mf) override {
+  void perform(std::unique_ptr<SimpleFile> &mf) override {
     ScopedTask task(getDefaultDomain(), "X86-64 GOT/PLT Pass");
     // Process all references.
     for (const auto &atom : mf->defined())

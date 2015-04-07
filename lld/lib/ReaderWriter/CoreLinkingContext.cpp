@@ -144,8 +144,8 @@ private:
 class OrderPass : public Pass {
 public:
   /// Sorts atoms by position
-  void perform(std::unique_ptr<MutableFile> &file) override {
-    MutableFile::DefinedAtomRange defined = file->definedAtoms();
+  void perform(std::unique_ptr<SimpleFile> &file) override {
+    SimpleFile::DefinedAtomRange defined = file->definedAtoms();
     std::sort(defined.begin(), defined.end(), DefinedAtom::compareByPosition);
   }
 };
