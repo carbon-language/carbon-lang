@@ -10,10 +10,6 @@
 // This pass performs loop invariant code motion on machine instructions. We
 // attempt to remove as much code from the body of a loop as possible.
 //
-// This pass does not attempt to throttle itself to limit register pressure.
-// The register allocation phases are expected to perform rematerialization
-// to recover when register pressure is high.
-//
 // This pass is not intended to be a replacement or a complete alternative
 // for the LLVM-IR-level LICM pass. It is only designed to hoist simple
 // constructs that are not exposed before lowering and instruction selection.
