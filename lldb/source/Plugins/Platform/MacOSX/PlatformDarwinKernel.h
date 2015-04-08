@@ -65,7 +65,7 @@ public:
         return GetPluginNameStatic();
     }
 
-    virtual uint32_t
+    uint32_t
     GetPluginVersion() override
     {
         return 1;

@@ -100,7 +100,7 @@ public:
         return;
     }
 
-    virtual clang::ExternalLoadResult
+    clang::ExternalLoadResult
     FindExternalLexicalDecls(const clang::DeclContext *decl_ctx, bool (*isKindWeWant)(clang::Decl::Kind),
                              llvm::SmallVectorImpl<clang::Decl *> &decls) override
     {
@@ -109,12 +109,11 @@ public:
         return clang::ELR_Failure;
     }
 
-    virtual bool FindExternalVisibleDeclsByName(const clang::DeclContext *decl_ctx,
-                                                clang::DeclarationName decl_name) override;
+    bool FindExternalVisibleDeclsByName(const clang::DeclContext *decl_ctx, clang::DeclarationName decl_name) override;
 
-    virtual void CompleteType(clang::TagDecl *tag_decl) override;
+    void CompleteType(clang::TagDecl *tag_decl) override;
 
-    virtual void CompleteType(clang::ObjCInterfaceDecl *objc_decl) override;
+    void CompleteType(clang::ObjCInterfaceDecl *objc_decl) override;
 
     bool layoutRecordType(const clang::RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
                           llvm::DenseMap<const clang::FieldDecl *, uint64_t> &FieldOffsets,

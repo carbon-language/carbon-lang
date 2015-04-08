@@ -34,8 +34,8 @@ class DynamicLoaderWindows : public DynamicLoader
     Error CanLoadImage () override;
     lldb::ThreadPlanSP GetStepThroughTrampolinePlan(Thread &thread, bool stop) override;
 
-    virtual ConstString GetPluginName() override;
-    virtual uint32_t GetPluginVersion() override;
+    ConstString GetPluginName() override;
+    uint32_t GetPluginVersion() override;
 };
 
 }
