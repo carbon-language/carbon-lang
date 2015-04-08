@@ -839,7 +839,6 @@ static void determineMissingVNIs(const SlotIndexes &Indexes, LiveInterval &LI) {
     }
     // Merge with previous segment if it has the same VNI.
     if (PrevValNo == S.valno && OutIt->end == S.start) {
-      fprintf(stderr, "Adjancency fix\n");
       OutIt->end = S.end;
     } else {
       // Didn't merge. Move OutIt to next segment.
@@ -982,10 +981,8 @@ void LiveInterval::constructMainRangeFromSubranges(
         // number (if they come from different subranges, but happen to have
         // the same defining instruction). VNIFixup will fix those cases.
         if (!empty() && segments.back().end == Pos &&
-            segments.back().valno == VNI) {
-          fprintf(stderr, "Need Adjacency fixup\n");
+            segments.back().valno == VNI)
           NeedVNIFixup = true;
-        }
         CurrentSegment.start = Pos;
         CurrentSegment.valno = VNI;
         ConstructingSegment = true;
