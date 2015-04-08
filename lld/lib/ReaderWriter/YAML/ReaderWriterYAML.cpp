@@ -215,8 +215,7 @@ private:
   NameToAtom _groupMap;
 };
 
-template <typename T>
-using AtomList = lld::File::atom_collection_vector<T>;
+template <typename T> using AtomList = lld::File::atom_collection<T>;
 
 /// Mapping of kind: field in yaml files.
 enum FileKinds {

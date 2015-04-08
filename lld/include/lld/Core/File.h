@@ -97,16 +97,32 @@ public:
   /// different data structures.  This class is a collection abstraction.
   /// Each concrete File instance must implement these atom_collection
   /// methods to enable clients to interate the File's atoms.
-  template <typename T>
-  class atom_collection {
+  template <typename T> class atom_collection {
   public:
-    virtual ~atom_collection() { }
-    virtual atom_iterator<T> begin() const = 0;
-    virtual atom_iterator<T> end() const = 0;
-    virtual const T *deref(const void *it) const = 0;
-    virtual void next(const void *&it) const = 0;
-    virtual uint64_t size() const = 0;
+    atom_iterator<T> begin() const {
+      const void *it = _atoms.data();
+      return atom_iterator<T>(*this, it);
+    }
+
+    atom_iterator<T> end() const {
+      const void *it = _atoms.data() + _atoms.size();
+      return atom_iterator<T>(*this, it);
+    }
+
+    const T *deref(const void *it) const {
+      return *reinterpret_cast<const T *const *>(it);
+    }
+
+    void next(const void *&it) const {
+      const T *const *p = reinterpret_cast<const T *const *>(it);
+      ++p;
+      it = reinterpret_cast<const void *>(p);
+    }
+
+    uint64_t size() const { return _atoms.size(); }
     bool empty() const { return size() == 0; }
+
+    std::vector<const T *> _atoms;
   };
 
   /// \brief The class is the iterator type used to iterate through a File's
@@ -193,40 +209,10 @@ protected:
   /// memory buffer passed to this file's constructor.
   virtual std::error_code doParse() { return std::error_code(); }
 
-  /// \brief This is a convenience class for File subclasses which manage their
-  /// atoms as a simple std::vector<>.
-  template <typename T>
-  class atom_collection_vector : public atom_collection<T> {
-  public:
-    atom_iterator<T> begin() const override {
-      const void *it = _atoms.data();
-      return atom_iterator<T>(*this, it);
-    }
-
-    atom_iterator<T> end() const override {
-      const void *it = _atoms.data() + _atoms.size();
-      return atom_iterator<T>(*this, it);
-    }
-
-    const T *deref(const void *it) const override {
-      return *reinterpret_cast<const T *const *>(it);
-    }
-
-    void next(const void *&it) const override {
-      const T *const *p = reinterpret_cast<const T *const *>(it);
-      ++p;
-      it = reinterpret_cast<const void*>(p);
-    }
-
-    uint64_t size() const override { return _atoms.size(); }
-
-    std::vector<const T *> _atoms;
-  };
-
-  static atom_collection_vector<DefinedAtom>       _noDefinedAtoms;
-  static atom_collection_vector<UndefinedAtom>     _noUndefinedAtoms;
-  static atom_collection_vector<SharedLibraryAtom> _noSharedLibraryAtoms;
-  static atom_collection_vector<AbsoluteAtom>      _noAbsoluteAtoms;
+  static atom_collection<DefinedAtom> _noDefinedAtoms;
+  static atom_collection<UndefinedAtom> _noUndefinedAtoms;
+  static atom_collection<SharedLibraryAtom> _noSharedLibraryAtoms;
+  static atom_collection<AbsoluteAtom> _noAbsoluteAtoms;
   mutable llvm::BumpPtrAllocator                  _allocator;
 
 private:

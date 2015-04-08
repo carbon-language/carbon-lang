@@ -15,10 +15,10 @@ namespace lld {
 
 File::~File() {}
 
-File::atom_collection_vector<DefinedAtom>       File::_noDefinedAtoms;
-File::atom_collection_vector<UndefinedAtom>     File::_noUndefinedAtoms;
-File::atom_collection_vector<SharedLibraryAtom> File::_noSharedLibraryAtoms;
-File::atom_collection_vector<AbsoluteAtom>      File::_noAbsoluteAtoms;
+File::atom_collection<DefinedAtom> File::_noDefinedAtoms;
+File::atom_collection<UndefinedAtom> File::_noUndefinedAtoms;
+File::atom_collection<SharedLibraryAtom> File::_noSharedLibraryAtoms;
+File::atom_collection<AbsoluteAtom> File::_noAbsoluteAtoms;
 
 std::error_code File::parse() {
   std::lock_guard<std::mutex> lock(_parseMutex);

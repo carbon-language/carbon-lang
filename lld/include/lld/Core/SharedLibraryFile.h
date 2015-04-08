@@ -54,10 +54,10 @@ protected:
   /// only subclasses of SharedLibraryFile can be instantiated
   explicit SharedLibraryFile(StringRef path) : File(path, kindSharedLibrary) {}
 
-  atom_collection_vector<DefinedAtom>        _definedAtoms;
-  atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
+  atom_collection<DefinedAtom> _definedAtoms;
+  atom_collection<UndefinedAtom> _undefinedAtoms;
+  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection<AbsoluteAtom> _absoluteAtoms;
 };
 
 } // namespace lld

@@ -123,7 +123,7 @@ public:
 
 
 private:
-  mutable atom_collection_vector<DefinedAtom> _definedAtoms;
+  mutable atom_collection<DefinedAtom> _definedAtoms;
   StringRef _machHeaderSymbolName;
 };
 

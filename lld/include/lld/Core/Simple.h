@@ -75,10 +75,10 @@ public:
   DefinedAtomRange definedAtoms() { return make_range(_defined._atoms); }
 
 private:
-  atom_collection_vector<DefinedAtom> _defined;
-  atom_collection_vector<UndefinedAtom> _undefined;
-  atom_collection_vector<SharedLibraryAtom> _shared;
-  atom_collection_vector<AbsoluteAtom> _absolute;
+  atom_collection<DefinedAtom> _defined;
+  atom_collection<UndefinedAtom> _undefined;
+  atom_collection<SharedLibraryAtom> _shared;
+  atom_collection<AbsoluteAtom> _absolute;
 };
 
 /// \brief Archive library file that may be used as a virtual container
@@ -117,10 +117,10 @@ public:
   }
 
 private:
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  atom_collection<DefinedAtom> _definedAtoms;
+  atom_collection<UndefinedAtom> _undefinedAtoms;
+  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection<AbsoluteAtom> _absoluteAtoms;
 };
 
 class SimpleReference : public Reference {

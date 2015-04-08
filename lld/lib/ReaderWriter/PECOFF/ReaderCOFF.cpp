@@ -159,10 +159,10 @@ private:
 
   std::unique_ptr<const llvm::object::COFFObjectFile> _obj;
   std::unique_ptr<MemoryBuffer> _mb;
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  atom_collection<DefinedAtom> _definedAtoms;
+  atom_collection<UndefinedAtom> _undefinedAtoms;
+  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection<AbsoluteAtom> _absoluteAtoms;
 
   // The target type of the object.
   Reference::KindArch _referenceArch;

@@ -398,7 +398,7 @@ private:
 
   // instantiate array of BASeT from IvarsT data in file
   template <typename BaseT, typename AtomT, typename IvarsT>
-  std::error_code processAtoms(atom_collection_vector<BaseT> &result,
+  std::error_code processAtoms(atom_collection<BaseT> &result,
                                const uint8_t *base, const NativeChunk *chunk) {
     std::vector<const BaseT *> vec(chunk->elementCount);
     const size_t ivarElementSize = chunk->fileSize / chunk->elementCount;
@@ -690,10 +690,10 @@ private:
 
   std::unique_ptr<MemoryBuffer>   _mb;
   const NativeFileHeader*         _header;
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  atom_collection<DefinedAtom> _definedAtoms;
+  atom_collection<UndefinedAtom> _undefinedAtoms;
+  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection<AbsoluteAtom> _absoluteAtoms;
   const uint8_t*                  _absAttributes;
   uint32_t                        _absAbsoluteMaxOffset;
   const uint8_t*                  _attributes;

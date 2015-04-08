@@ -299,7 +299,7 @@ private:
   }
 
   PECOFFLinkingContext *_ctx;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
+  atom_collection<UndefinedAtom> _undefinedAtoms;
   std::mutex _mutex;
   llvm::BumpPtrAllocator _alloc;
   bool _firstTime;

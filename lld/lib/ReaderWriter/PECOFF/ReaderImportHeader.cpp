@@ -315,8 +315,8 @@ private:
     _definedAtoms._atoms.push_back(atom);
   }
 
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection<DefinedAtom> _definedAtoms;
+  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
   mutable llvm::BumpPtrAllocator _alloc;
 
   // Does the same thing as StringRef::ltrim() but removes at most one
