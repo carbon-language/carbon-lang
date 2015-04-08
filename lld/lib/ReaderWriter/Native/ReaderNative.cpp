@@ -641,31 +641,28 @@ private:
     this->_targetsTable = new const Atom*[chunk->elementCount];
     for (uint32_t i=0; i < chunk->elementCount; ++i) {
       const uint32_t index = targetIndexes[i];
-      if ( index < _definedAtoms._elementCount ) {
+      if (index < _definedAtoms._elementCount) {
         const uint8_t* p = _definedAtoms._arrayStart
                                     + index * _definedAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const DefinedAtom*>(p);
         continue;
       }
       const uint32_t undefIndex = index - _definedAtoms._elementCount;
-      if ( undefIndex < _undefinedAtoms._elementCount ) {
+      if (undefIndex < _undefinedAtoms._elementCount) {
         const uint8_t* p = _undefinedAtoms._arrayStart
                                     + undefIndex * _undefinedAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const UndefinedAtom*>(p);
         continue;
       }
-      const uint32_t slIndex = index - _definedAtoms._elementCount
-                                     - _undefinedAtoms._elementCount;
-      if ( slIndex < _sharedLibraryAtoms._elementCount ) {
+      const uint32_t slIndex = undefIndex - _undefinedAtoms._elementCount;
+      if (slIndex < _sharedLibraryAtoms._elementCount) {
         const uint8_t* p = _sharedLibraryAtoms._arrayStart
                                   + slIndex * _sharedLibraryAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const SharedLibraryAtom*>(p);
         continue;
       }
-      const uint32_t abIndex = index - _definedAtoms._elementCount
-                                     - _undefinedAtoms._elementCount
-                                     - _sharedLibraryAtoms._elementCount;
-      if ( abIndex < _absoluteAtoms._elementCount ) {
+      const uint32_t abIndex = slIndex - _sharedLibraryAtoms._elementCount;
+      if (abIndex < _absoluteAtoms._elementCount) {
         const uint8_t* p = _absoluteAtoms._arrayStart
                                   + abIndex * _absoluteAtoms._elementSize;
         this->_targetsTable[i] = reinterpret_cast<const AbsoluteAtom*>(p);
