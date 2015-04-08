@@ -215,31 +215,8 @@ private:
   NameToAtom _groupMap;
 };
 
-// Used in NormalizedFile to hold the atoms lists.
-template <typename T> class AtomList : public lld::File::atom_collection<T> {
-public:
-  virtual lld::File::atom_iterator<T> begin() const {
-    return lld::File::atom_iterator<T>(
-        *this,
-        _atoms.empty() ? 0 : reinterpret_cast<const void *>(_atoms.data()));
-  }
-  virtual lld::File::atom_iterator<T> end() const {
-    return lld::File::atom_iterator<T>(
-        *this, _atoms.empty() ? 0 : reinterpret_cast<const void *>(
-                                        _atoms.data() + _atoms.size()));
-  }
-  virtual const T *deref(const void *it) const {
-    return *reinterpret_cast<const T *const *>(it);
-  }
-  virtual void next(const void *&it) const {
-    const T *const *p = reinterpret_cast<const T *const *>(it);
-    ++p;
-    it = reinterpret_cast<const void *>(p);
-  }
-  virtual void push_back(const T *element) { _atoms.push_back(element); }
-  virtual uint64_t size() const { return _atoms.size(); }
-  std::vector<const T *> _atoms;
-};
+template <typename T>
+using AtomList = lld::File::atom_collection_vector<T>;
 
 /// Mapping of kind: field in yaml files.
 enum FileKinds {
@@ -646,13 +623,13 @@ template <> struct MappingTraits<const lld::File *> {
         : File(file->path(), kindObject), _io(io),
           _rnb(new RefNameBuilder(*file)), _path(file->path()) {
       for (const lld::DefinedAtom *a : file->defined())
-        _definedAtoms.push_back(a);
+        _definedAtoms._atoms.push_back(a);
       for (const lld::UndefinedAtom *a : file->undefined())
-        _undefinedAtoms.push_back(a);
+        _undefinedAtoms._atoms.push_back(a);
       for (const lld::SharedLibraryAtom *a : file->sharedLibrary())
-        _sharedLibraryAtoms.push_back(a);
+        _sharedLibraryAtoms._atoms.push_back(a);
       for (const lld::AbsoluteAtom *a : file->absolute())
-        _absoluteAtoms.push_back(a);
+        _absoluteAtoms._atoms.push_back(a);
     }
     const lld::File *denormalize(IO &io);
 
