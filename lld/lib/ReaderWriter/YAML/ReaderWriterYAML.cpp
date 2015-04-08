@@ -215,7 +215,15 @@ private:
   NameToAtom _groupMap;
 };
 
-template <typename T> using AtomList = lld::File::atom_collection<T>;
+/// Mapping of Atoms.
+template <typename T> class AtomList {
+  typedef lld::File::atom_collection<T> Ty;
+
+public:
+  typename Ty::iterator begin() { return _atoms.begin(); }
+  typename Ty::iterator end() { return _atoms.end(); }
+  Ty _atoms;
+};
 
 /// Mapping of kind: field in yaml files.
 enum FileKinds {
@@ -633,17 +641,17 @@ template <> struct MappingTraits<const lld::File *> {
     const lld::File *denormalize(IO &io);
 
     const atom_collection<lld::DefinedAtom> &defined() const override {
-      return _definedAtoms;
+      return _definedAtoms._atoms;
     }
     const atom_collection<lld::UndefinedAtom> &undefined() const override {
-      return _undefinedAtoms;
+      return _undefinedAtoms._atoms;
     }
     virtual const atom_collection<lld::SharedLibraryAtom> &
     sharedLibrary() const override {
-      return _sharedLibraryAtoms;
+      return _sharedLibraryAtoms._atoms;
     }
     const atom_collection<lld::AbsoluteAtom> &absolute() const override {
-      return _absoluteAtoms;
+      return _absoluteAtoms._atoms;
     }
 
     // Allocate a new copy of this string in _storage, so the strings

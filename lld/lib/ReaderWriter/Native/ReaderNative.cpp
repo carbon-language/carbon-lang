@@ -407,7 +407,7 @@ private:
     auto *ivar = reinterpret_cast<const IvarsT *>(base + chunk->fileOffset);
     for (size_t i = 0; i < chunk->elementCount; ++i)
       vec[i] = new (_alloc) AtomT(*this, ivar++);
-    result._atoms = std::move(vec);
+    result = std::move(vec);
     return make_error_code(NativeReaderError::success);
   }
 
@@ -544,22 +544,22 @@ private:
     for (uint32_t i=0; i < chunk->elementCount; ++i) {
       const uint32_t index = targetIndexes[i];
       if (index < _definedAtoms.size()) {
-        this->_targetsTable[i] = _definedAtoms._atoms[index];
+        this->_targetsTable[i] = _definedAtoms[index];
         continue;
       }
       const uint32_t undefIndex = index - _definedAtoms.size();
       if (undefIndex < _undefinedAtoms.size()) {
-        this->_targetsTable[i] = _undefinedAtoms._atoms[index];
+        this->_targetsTable[i] = _undefinedAtoms[index];
         continue;
       }
       const uint32_t slIndex = undefIndex - _undefinedAtoms.size();
       if (slIndex < _sharedLibraryAtoms.size()) {
-        this->_targetsTable[i] = _sharedLibraryAtoms._atoms[slIndex];
+        this->_targetsTable[i] = _sharedLibraryAtoms[slIndex];
         continue;
       }
       const uint32_t abIndex = slIndex - _sharedLibraryAtoms.size();
       if (abIndex < _absoluteAtoms.size()) {
-        this->_targetsTable[i] = _absoluteAtoms._atoms[abIndex];
+        this->_targetsTable[i] = _absoluteAtoms[abIndex];
         continue;
       }
      return make_error_code(NativeReaderError::file_malformed);
@@ -718,7 +718,7 @@ inline const lld::File &NativeDefinedAtomV1::file() const {
 inline uint64_t NativeDefinedAtomV1::ordinal() const {
   const uint8_t* p = reinterpret_cast<const uint8_t*>(_ivarData);
   auto *start = reinterpret_cast<const NativeDefinedAtomV1 *>(
-      _file->_definedAtoms._atoms[0]);
+      _file->_definedAtoms[0]);
   const uint8_t *startp = reinterpret_cast<const uint8_t *>(start->_ivarData);
   return p - startp;
 }

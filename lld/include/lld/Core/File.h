@@ -91,27 +91,24 @@ public:
     return _allocator;
   }
 
-  template <typename T>
-  using atom_iterator = typename std::vector<const T *>::iterator;
+  /// The range type for the atoms. It's backed by a std::vector, but hides
+  /// its member functions so that you can only call begin or end.
+  template <typename T> class AtomRange {
+    typedef std::vector<const T *> VectorT;
 
-  template <typename T>
-  using const_atom_iterator = typename std::vector<const T *>::const_iterator;
-
-  /// \brief Different object file readers may instantiate and manage atoms with
-  /// different data structures.  This class is a collection abstraction.
-  /// Each concrete File instance must implement these atom_collection
-  /// methods to enable clients to interate the File's atoms.
-  template <typename T> class atom_collection {
   public:
-    atom_iterator<T> begin() { return _atoms.begin(); }
-    atom_iterator<T> end() { return _atoms.end(); }
-    const_atom_iterator<T> begin() const { return _atoms.begin(); }
-    const_atom_iterator<T> end() const { return _atoms.end(); }
-    uint64_t size() const { return _atoms.size(); }
-    bool empty() const { return _atoms.empty(); }
+    AtomRange(std::vector<const T *> v) : _v(v) {}
+    typename VectorT::const_iterator begin() const { return _v.begin(); }
+    typename VectorT::const_iterator end() const { return _v.end(); }
+    typename VectorT::iterator begin() { return _v.begin(); }
+    typename VectorT::iterator end() { return _v.end(); }
 
-    std::vector<const T *> _atoms;
+  private:
+    VectorT &_v;
   };
+
+  /// The type of atom mutable container.
+  template <typename T> using atom_collection = std::vector<const T *>;
 
   /// \brief Must be implemented to return the atom_collection object for
   /// all DefinedAtoms in this File.

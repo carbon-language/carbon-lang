@@ -30,27 +30,27 @@ class SimpleFile : public File {
 public:
   SimpleFile(StringRef path) : File(path, kindObject) {}
 
-  void addAtom(const DefinedAtom &a) { _defined._atoms.push_back(&a); }
-  void addAtom(const UndefinedAtom &a) { _undefined._atoms.push_back(&a); }
-  void addAtom(const SharedLibraryAtom &a) { _shared._atoms.push_back(&a); }
-  void addAtom(const AbsoluteAtom &a) { _absolute._atoms.push_back(&a); }
+  void addAtom(const DefinedAtom &a) { _defined.push_back(&a); }
+  void addAtom(const UndefinedAtom &a) { _undefined.push_back(&a); }
+  void addAtom(const SharedLibraryAtom &a) { _shared.push_back(&a); }
+  void addAtom(const AbsoluteAtom &a) { _absolute.push_back(&a); }
 
   void addAtom(const Atom &atom) {
     if (auto *p = dyn_cast<DefinedAtom>(&atom)) {
-      _defined._atoms.push_back(p);
+      _defined.push_back(p);
     } else if (auto *p = dyn_cast<UndefinedAtom>(&atom)) {
-      _undefined._atoms.push_back(p);
+      _undefined.push_back(p);
     } else if (auto *p = dyn_cast<SharedLibraryAtom>(&atom)) {
-      _shared._atoms.push_back(p);
+      _shared.push_back(p);
     } else if (auto *p = dyn_cast<AbsoluteAtom>(&atom)) {
-      _absolute._atoms.push_back(p);
+      _absolute.push_back(p);
     } else {
       llvm_unreachable("atom has unknown definition kind");
     }
   }
 
   void removeDefinedAtomsIf(std::function<bool(const DefinedAtom *)> pred) {
-    auto &atoms = _defined._atoms;
+    auto &atoms = _defined;
     auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
     atoms.erase(newEnd, atoms.end());
   }
@@ -72,7 +72,7 @@ public:
   }
 
   typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
-  DefinedAtomRange definedAtoms() { return make_range(_defined._atoms); }
+  DefinedAtomRange definedAtoms() { return make_range(_defined); }
 
 private:
   atom_collection<DefinedAtom> _defined;

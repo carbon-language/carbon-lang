@@ -87,7 +87,7 @@ protected:
         // Create an undefined atom.
         if (!name->empty()) {
           auto *newAtom = new (_alloc) ELFUndefinedAtom<ELFT>(*this, *name, &*i);
-          _undefinedAtoms._atoms.push_back(newAtom);
+          _undefinedAtoms.push_back(newAtom);
         }
         continue;
       }

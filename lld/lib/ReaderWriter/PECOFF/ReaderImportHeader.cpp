@@ -305,14 +305,14 @@ private:
                                                     StringRef dllName) {
     auto *atom = new (_alloc)
         COFFSharedLibraryAtom(*this, hint, symbolName, importName, dllName);
-    _sharedLibraryAtoms._atoms.push_back(atom);
+    _sharedLibraryAtoms.push_back(atom);
     return atom;
   }
 
   void addFuncAtom(StringRef symbolName, StringRef dllName,
                    const COFFSharedLibraryAtom *impAtom) {
     auto *atom = new (_alloc) FuncAtom(*this, symbolName, impAtom, _machine);
-    _definedAtoms._atoms.push_back(atom);
+    _definedAtoms.push_back(atom);
   }
 
   atom_collection<DefinedAtom> _definedAtoms;

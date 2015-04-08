@@ -103,7 +103,7 @@ public:
   void beforeLink() override;
 
   void addUndefinedSymbol(StringRef sym) {
-    _undefinedAtoms._atoms.push_back(new (_alloc) COFFUndefinedAtom(*this, sym));
+    _undefinedAtoms.push_back(new (_alloc) COFFUndefinedAtom(*this, sym));
   }
 
   AliasAtom *createAlias(StringRef name, const DefinedAtom *target, int cnt);
@@ -329,11 +329,11 @@ std::error_code FileCOFF::doParse() {
   if (std::error_code ec = readSymbolTable(symbols))
     return ec;
 
-  createAbsoluteAtoms(symbols, _absoluteAtoms._atoms);
+  createAbsoluteAtoms(symbols, _absoluteAtoms);
   if (std::error_code ec =
-      createUndefinedAtoms(symbols, _undefinedAtoms._atoms))
+      createUndefinedAtoms(symbols, _undefinedAtoms))
     return ec;
-  if (std::error_code ec = createDefinedSymbols(symbols, _definedAtoms._atoms))
+  if (std::error_code ec = createDefinedSymbols(symbols, _definedAtoms))
     return ec;
   if (std::error_code ec = addRelocationReferenceToAtoms())
     return ec;
@@ -862,7 +862,7 @@ void FileCOFF::createAlternateNameAtoms() {
       aliases.push_back(createAlias(alias, atom, cnt++));
   }
   for (AliasAtom *alias : aliases)
-    _definedAtoms._atoms.push_back(alias);
+    _definedAtoms.push_back(alias);
 }
 
 // Interpret the contents of .drectve section. If exists, the section contains
@@ -997,7 +997,7 @@ std::error_code FileCOFF::maybeCreateSXDataAtoms() {
       handlerFunc, 0));
   }
 
-  _definedAtoms._atoms.push_back(atom);
+  _definedAtoms.push_back(atom);
   return std::error_code();
 }
 

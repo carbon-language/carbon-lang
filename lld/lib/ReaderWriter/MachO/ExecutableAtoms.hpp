@@ -97,7 +97,7 @@ public:
 
   File *find(StringRef sym, bool dataSymbolOnly) override {
     if (sym.equals("___dso_handle") || sym.equals(_machHeaderSymbolName)) {
-      _definedAtoms._atoms.push_back(new (allocator()) MachODefinedAtom(
+      _definedAtoms.push_back(new (allocator()) MachODefinedAtom(
           *this, sym, DefinedAtom::scopeLinkageUnit,
           DefinedAtom::typeMachHeader, DefinedAtom::mergeNo, false, false,
           ArrayRef<uint8_t>(), DefinedAtom::Alignment(4096)));

@@ -230,7 +230,7 @@ private:
 
     if (_ctx->hasEntry()) {
       StringRef entrySym = _ctx->allocate(getEntry());
-      _undefinedAtoms._atoms.push_back(
+      _undefinedAtoms.push_back(
           new (_alloc) SimpleUndefinedAtom(*this, entrySym));
       _ctx->setHasEntry(true);
       _ctx->setEntrySymbolName(entrySym);
