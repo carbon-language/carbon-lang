@@ -31,3 +31,19 @@ namespace PR6770 {
     friend class f1; // expected-error{{'friend' used outside of class}}
   }
 }
+
+namespace friend_redecl_inline {
+// We had a bug where instantiating the foo friend declaration would check the
+// defined-ness of the most recent decl while checking if the canonical decl was
+// inlined.
+void foo();
+void bar();
+template <typename T>
+class C {
+  friend void foo();
+  friend inline void bar();
+};
+inline void foo() {}
+inline void bar() {}
+C<int> c;
+}
