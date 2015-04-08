@@ -5,7 +5,7 @@
 
 
 ; SI-LABEL: @simple_read2st64_f32_0_1
-; SI: ds_read2st64_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:1
+; SI: ds_read2st64_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset1:1
 ; SI: s_waitcnt lgkmcnt(0)
 ; SI: v_add_f32_e32 [[RESULT:v[0-9]+]], v[[HI_VREG]], v[[LO_VREG]]
 ; SI: buffer_store_dword [[RESULT]]
@@ -117,7 +117,7 @@ define void @odd_invalid_read2st64_f32_1(float addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2st64_f64_0_1
-; SI: ds_read2st64_b64 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:1
+; SI: ds_read2st64_b64 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset1:1
 ; SI: s_waitcnt lgkmcnt(0)
 ; SI: v_add_f64 [[RESULT:v\[[0-9]+:[0-9]+\]]], v{{\[}}[[LO_VREG]]:{{[0-9]+\]}}, v{{\[[0-9]+}}:[[HI_VREG]]{{\]}}
 ; SI: buffer_store_dwordx2 [[RESULT]]
@@ -158,7 +158,7 @@ define void @simple_read2st64_f64_1_2(double addrspace(1)* %out, double addrspac
 ; Alignment only
 
 ; SI-LABEL: @misaligned_read2st64_f64
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:0 offset1:1
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset1:1
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:128 offset1:129
 ; SI: s_endpgm
 define void @misaligned_read2st64_f64(double addrspace(1)* %out, double addrspace(3)* %lds) #0 {
@@ -237,7 +237,7 @@ define void @invalid_read2st64_f64_odd_offset(double addrspace(1)* %out, double 
 
 ; SI-LABEL: @byte_size_only_divisible_64_read2_f64
 ; SI-NOT: ds_read2st_b64
-; SI: ds_read2_b64 v{{\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset0:0 offset1:8
+; SI: ds_read2_b64 v{{\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset1:8
 ; SI: s_endpgm
 define void @byte_size_only_divisible_64_read2_f64(double addrspace(1)* %out, double addrspace(3)* %lds) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1

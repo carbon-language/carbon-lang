@@ -7,7 +7,7 @@
  @lds.f64 = addrspace(3) global [512 x double] undef, align 8
 
 ; SI-LABEL: @simple_read2_f32
-; SI: ds_read2_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:8
+; SI: ds_read2_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset1:8
 ; SI: s_waitcnt lgkmcnt(0)
 ; SI: v_add_f32_e32 [[RESULT:v[0-9]+]], v[[HI_VREG]], v[[LO_VREG]]
 ; SI: buffer_store_dword [[RESULT]]
@@ -26,7 +26,7 @@ define void @simple_read2_f32(float addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2_f32_max_offset
-; SI: ds_read2_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:255
+; SI: ds_read2_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset1:255
 ; SI: s_waitcnt lgkmcnt(0)
 ; SI: v_add_f32_e32 [[RESULT:v[0-9]+]], v[[HI_VREG]], v[[LO_VREG]]
 ; SI: buffer_store_dword [[RESULT]]
@@ -63,7 +63,7 @@ define void @simple_read2_f32_too_far(float addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2_f32_x2
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset0:0 offset1:8
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset1:8
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]] offset0:11 offset1:27
 ; SI: s_endpgm
 define void @simple_read2_f32_x2(float addrspace(1)* %out) #0 {
@@ -94,7 +94,7 @@ define void @simple_read2_f32_x2(float addrspace(1)* %out) #0 {
 
 ; Make sure there is an instruction between the two sets of reads.
 ; SI-LABEL: @simple_read2_f32_x2_barrier
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset0:0 offset1:8
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset1:8
 ; SI: s_barrier
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]] offset0:11 offset1:27
 ; SI: s_endpgm
@@ -313,7 +313,7 @@ define void @misaligned_2_simple_read2_f32(float addrspace(1)* %out, float addrs
 
 ; SI-LABEL: @simple_read2_f64
 ; SI: v_lshlrev_b32_e32 [[VPTR:v[0-9]+]], 3, {{v[0-9]+}}
-; SI: ds_read2_b64 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, [[VPTR]] offset0:0 offset1:8
+; SI: ds_read2_b64 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, [[VPTR]] offset1:8
 ; SI: v_add_f64 [[RESULT:v\[[0-9]+:[0-9]+\]]], v{{\[}}[[LO_VREG]]:{{[0-9]+\]}}, v{{\[[0-9]+}}:[[HI_VREG]]{{\]}}
 ; SI: buffer_store_dwordx2 [[RESULT]]
 ; SI: s_endpgm
@@ -331,7 +331,7 @@ define void @simple_read2_f64(double addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2_f64_max_offset
-; SI: ds_read2_b64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset0:0 offset1:255
+; SI: ds_read2_b64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset1:255
 ; SI: s_endpgm
 define void @simple_read2_f64_max_offset(double addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -366,7 +366,7 @@ define void @simple_read2_f64_too_far(double addrspace(1)* %out) #0 {
 
 ; Alignment only 4
 ; SI-LABEL: @misaligned_read2_f64
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:0 offset1:1
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset1:1
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:14 offset1:15
 ; SI: s_endpgm
 define void @misaligned_read2_f64(double addrspace(1)* %out, double addrspace(3)* %lds) #0 {
@@ -386,7 +386,7 @@ define void @misaligned_read2_f64(double addrspace(1)* %out, double addrspace(3)
 
 ; SI-LABEL: @load_constant_adjacent_offsets
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:1
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset1:1
 define void @load_constant_adjacent_offsets(i32 addrspace(1)* %out) {
   %val0 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
   %val1 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 1), align 4
@@ -397,7 +397,7 @@ define void @load_constant_adjacent_offsets(i32 addrspace(1)* %out) {
 
 ; SI-LABEL: @load_constant_disjoint_offsets
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:2
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset1:2
 define void @load_constant_disjoint_offsets(i32 addrspace(1)* %out) {
   %val0 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
   %val1 = load i32, i32 addrspace(3)* getelementptr inbounds ([4 x i32], [4 x i32] addrspace(3)* @foo, i32 0, i32 2), align 4
@@ -410,7 +410,7 @@ define void @load_constant_disjoint_offsets(i32 addrspace(1)* %out) {
 
 ; SI-LABEL: @load_misaligned64_constant_offsets
 ; SI: v_mov_b32_e32 [[ZERO:v[0-9]+]], 0{{$}}
-; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:1
+; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset1:1
 ; SI: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:2 offset1:3
 define void @load_misaligned64_constant_offsets(i64 addrspace(1)* %out) {
   %val0 = load i64, i64 addrspace(3)* getelementptr inbounds ([4 x i64], [4 x i64] addrspace(3)* @bar, i32 0, i32 0), align 4
@@ -425,8 +425,8 @@ define void @load_misaligned64_constant_offsets(i64 addrspace(1)* %out) {
 ; SI-LABEL: @load_misaligned64_constant_large_offsets
 ; SI-DAG: v_mov_b32_e32 [[BASE0:v[0-9]+]], 0x7ff8{{$}}
 ; SI-DAG: v_mov_b32_e32 [[BASE1:v[0-9]+]], 0x4000
-; SI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASE0]] offset0:0 offset1:1
-; SI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASE1]] offset0:0 offset1:1
+; SI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASE0]] offset1:1
+; SI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[BASE1]] offset1:1
 ; SI: s_endpgm
 define void @load_misaligned64_constant_large_offsets(i64 addrspace(1)* %out) {
   %val0 = load i64, i64 addrspace(3)* getelementptr inbounds ([4096 x i64], [4096 x i64] addrspace(3)* @bar.large, i32 0, i32 2048), align 4

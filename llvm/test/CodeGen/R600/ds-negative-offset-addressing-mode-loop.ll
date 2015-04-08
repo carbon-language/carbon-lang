@@ -18,7 +18,7 @@ declare void @llvm.AMDGPU.barrier.local() #1
 ; SI-DAG: v_add_i32_e32 [[VADDR0x100:v[0-9]+]], 0x100, [[VADDR]]
 ; SI-DAG: ds_read_b32 v{{[0-9]+}}, [[VADDR0x100]]
 
-; CI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[VADDR]] offset0:0 offset1:1
+; CI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[VADDR]] offset1:1
 ; CI-DAG: ds_read2_b32 v{{\[[0-9]+:[0-9]+\]}}, [[VADDR]] offset0:32 offset1:33
 ; CI-DAG: ds_read_b32 v{{[0-9]+}}, [[VADDR]] offset:256
 ; CHECK: s_endpgm

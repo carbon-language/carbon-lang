@@ -195,7 +195,7 @@ define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, 
 
 ; SI-LABEL: {{^}}load_lds_i64_align_4_with_split_offset:
 ; The tests for the case where the lo offset is 8-bits, but the hi offset is 9-bits
-; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}} offset0:0 offset1:1
+; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}} offset1:1
 ; SI: s_endpgm
 define void @load_lds_i64_align_4_with_split_offset(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
   %ptr = bitcast i64 addrspace(3)* %in to i32 addrspace(3)*
@@ -243,7 +243,7 @@ define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
 
 ; SI-LABEL: {{^}}store_lds_i64_align_4_with_split_offset:
 ; The tests for the case where the lo offset is 8-bits, but the hi offset is 9-bits
-; SI: ds_write2_b32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset0:0 offset1:1
+; SI: ds_write2_b32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset1:1
 ; SI: s_endpgm
 define void @store_lds_i64_align_4_with_split_offset(i64 addrspace(3)* %out) #0 {
   %ptr = bitcast i64 addrspace(3)* %out to i32 addrspace(3)*
