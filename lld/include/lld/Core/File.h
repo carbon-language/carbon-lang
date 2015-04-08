@@ -86,12 +86,13 @@ public:
   /// Sets the command line order of the file.
   void setOrdinal(uint64_t ordinal) const { _ordinal = ordinal; }
 
-  template <typename T> class atom_iterator; // forward reference
-
   /// For allocating any objects owned by this File.
   llvm::BumpPtrAllocator &allocator() const {
     return _allocator;
   }
+
+  template <typename T>
+  using atom_iterator = typename std::vector<const T *>::const_iterator;
 
   /// \brief Different object file readers may instantiate and manage atoms with
   /// different data structures.  This class is a collection abstraction.
@@ -99,64 +100,12 @@ public:
   /// methods to enable clients to interate the File's atoms.
   template <typename T> class atom_collection {
   public:
-    atom_iterator<T> begin() const {
-      const void *it = _atoms.data();
-      return atom_iterator<T>(*this, it);
-    }
-
-    atom_iterator<T> end() const {
-      const void *it = _atoms.data() + _atoms.size();
-      return atom_iterator<T>(*this, it);
-    }
-
-    const T *deref(const void *it) const {
-      return *reinterpret_cast<const T *const *>(it);
-    }
-
-    void next(const void *&it) const {
-      const T *const *p = reinterpret_cast<const T *const *>(it);
-      ++p;
-      it = reinterpret_cast<const void *>(p);
-    }
-
+    atom_iterator<T> begin() const { return _atoms.begin(); }
+    atom_iterator<T> end() const { return _atoms.end(); }
     uint64_t size() const { return _atoms.size(); }
-    bool empty() const { return size() == 0; }
+    bool empty() const { return _atoms.empty(); }
 
     std::vector<const T *> _atoms;
-  };
-
-  /// \brief The class is the iterator type used to iterate through a File's
-  /// Atoms. This iterator delegates the work to the associated atom_collection
-  /// object. There are four kinds of Atoms, so this iterator is templated on
-  /// the four base Atom kinds.
-  template <typename T>
-  class atom_iterator : public std::iterator<std::forward_iterator_tag, T> {
-  public:
-    atom_iterator(const atom_collection<T> &c, const void *it)
-              : _collection(&c), _it(it) { }
-
-    const T *operator*() const {
-      return _collection->deref(_it);
-    }
-    const T *operator->() const {
-      return _collection->deref(_it);
-    }
-
-    friend bool operator==(const atom_iterator<T> &lhs, const atom_iterator<T> &rhs)  {
-      return lhs._it == rhs._it;
-    }
-
-    friend bool operator!=(const atom_iterator<T> &lhs, const atom_iterator<T> &rhs)  {
-      return !(lhs == rhs);
-    }
-
-    atom_iterator<T> &operator++() {
-      _collection->next(_it);
-      return *this;
-    }
-  private:
-    const atom_collection<T> *_collection;
-    const void               *_it;
   };
 
   /// \brief Must be implemented to return the atom_collection object for
