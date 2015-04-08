@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <title>Remote debugging with LLDB</title>
+</head>
+<body>
+  <div class="www_title">
+    The <strong>LLDB</strong> Debugger
+  </div>
+
+  <div id="container">
+    <div id="content">
+
+      <!--#include virtual="sidebar.incl"-->
+
+      <div id="middle">
+        <h1 class="postheader">Remote debugging</h1>
+        <div class="postcontent">
+          <p>
+            Remote debugging refers to the act of debugging a process which is running on a
+            different system, than the debugger itself. We shall refer to the system running
+            the debugger as the <em>local</em> system, while the system running the debugged
+            process will be the <em>remote</em> system.
+          </p>
+
+          <p>
+            To enable remote debugging, LLDB employs a client-server architecture. The client
+            part runs on the local system and the remote system runs the server. The client and
+            server communicate using the gdb-remote protocol, usually transported over TCP/IP.
+            More information on the protocol can be found
+            <a href="https://sourceware.org/gdb/current/onlinedocs/gdb/Remote-Protocol.html">here</a>
+            and the LLDB-specific extensions are documented in
+            <code>docs/lldb-gdb-remote.txt</code> file inside LLDB source repository. Besides the
+            gdb-remote stub, the server part of LLDB also consists of a <em>platform</em> binary,
+            which is responsible for performing advanced debugging operations, like copying files
+            from/to the remote system and can be used to execute arbitrary shell commands on the
+            remote system.
+          </p>
+
+          <p>
+            In order to reduce code complexity and improve remote debugging experience LLDB on
+            Linux and OSX uses the remote debugging stub even when debugging a process locally.
+            This is achieved by spawning a remote stub process locally and communicating with it
+            over the loopback interface. In the case of local debugging this whole process is
+            transparent to the user. The platform binary is not used in this case, since no file
+            transfers are needed.
+          </p>
+        </div>
+        <div class="postfooter"></div>
+        <div class="post">
+          <h1 class="postheader">Preparation for remote debugging</h1>
+          <div class="postcontent">
+            <p>
+              While the process of actual debugging (stepping, backtraces, evaluating
+              expressions) is same as in the local case, in the case of remote debugging, more
+              preparation is needed as the required binaries cannot started on the remote system
+              automatically. Also, if the remote system runs a different OS or architecture, the
+              server component needs to be compiled separately.
+            </p>
+
+            <h2>Remote system</h2>
+            <p>
+              On Linux and Android, all required remote functionality is contained in the
+              <code>lldb-server</code> binary. This binary combines the functionality of the
+              platform and gdb-remote stub. A single binary fascilitates deployment and reduces
+              code size, since the two functions share a lot of code. The
+              <code>lldb-server</code> binary is also statically linked with the rest of LLDB
+              (unlike <code>lldb</code>, which dynamically links to <code>liblldb.so</code> by
+              default), so it does not have any dependencies on the rest of lldb.  On Mac OSX and
+              iOS, the remote-gdb functionality is implemented by the <code>debugserver</code>
+              binary, which you will need to deploy alongside <code>lldb-server</code>.
+            </p>
+
+            <p>
+              The binaries mentioned above need to be present on the remote system to enable
+              remote debugging. You can either compile on the remote system directly or copy them
+              from the local machine. If compiling locally and the remote architecture differs
+              from the local one, you will need to cross-compile the correct version of the binaries.
+              More information on cross-compiling LLDB can be found on the
+              <a href="build.html#cross-compilation">build</a> page.
+            </p>
+
+            <p>
+              Once the binaries are in place, you just need to run the <code>lldb-server</code>
+              in platform mode and specify the port it should listen on. For example, the command
+            </p>
+            <code>lldb-server platform --listen *:1234</code>
+            <p>
+              will start the LLDB platform and wait for incoming connections from any address to
+              port 1234. Specifying an address instead of <code>*</code> will only allow
+              connections originating from that address. Adding a <code>--server</code> parameter
+              to the command line will fork off a new process for every incoming connection,
+              allowing multiple parallel debug sessions.
+            </p>
+
+            <h2>Local system</h2>
+
+            <p>
+              On the local system, you need to let LLDB know that you intend to do remote
+              debugging. This is achieved through the <code>platform</code> command and its
+              sub-commands. As a first step you need to choose the correct platform plug-in for
+              your remote system. A list of available plug-ins can be obtained through
+              <code>platform list</code>.
+            </p>
+
+            <p>
+              The default platform is the platform <code>host</code> which is used for local
+              debugging. Apart from this, the list should contain a number of plug-ins, for
+              debugging different kinds of systems. The remote plug-ins are prefixed with
+              "<code>remote-</code>". For example, to debug a remote Linux application, you should
+              run <code>platform select remote-linux</code>.
+            </p>
+
+            <p>
+              After selecting the platform plug-in, you should receive a prompt which confirms
+              the selected platform, and states that you are not connected. This is because
+              remote plug-ins need to be connected to their remote platform counterpart to
+              operate. This is achieved using the <code>platform connect</code> command. This
+              command takes a number of arguments (as always, use the <code>help</code> command
+              to find out more), but normally you only need to specify the address to connect to,
+              e.g.:
+            </p>
+            <code>platform connect connect://host:port</code>
+
+            <p>
+              After this, you should be able to debug normally. You can use the
+              <code>process attach</code> to attach to an existing remote process or
+              <code>target create</code>, <code>process launch</code> to start a new one. The
+              platform plugin will transparently take care of uploading or downloading the
+              executable in order to be able to debug. If your application needs additional
+              files, you can transfer them using the platform commands: <code>get-file</code>,
+              <code>put-file</code>, <code>mkdir</code>, etc. The environment can be prepared
+              further using the <code>platform shell</code> command.
+            </p>
+
+          </div>
+          <div class="postfooter"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
