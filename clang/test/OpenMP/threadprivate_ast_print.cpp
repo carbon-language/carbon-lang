@@ -22,6 +22,8 @@ int a, b;
 // CHECK: int a;
 // CHECK: int b;
 #pragma omp threadprivate(a)
+#pragma omp threadprivate(a)
+// CHECK-NEXT: #pragma omp threadprivate(a)
 // CHECK-NEXT: #pragma omp threadprivate(a)
 #pragma omp threadprivate(d, b)
 // CHECK-NEXT: #pragma omp threadprivate(d,b)

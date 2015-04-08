@@ -133,25 +133,25 @@ struct S5 {
 // CHECK-DEBUG-DAG: [[ST_FLOAT_ST:@.+]] = linkonce_odr global float 2.300000e+01
 // CHECK-DEBUG-DAG: [[ST_S4_ST:@.+]] = linkonce_odr global %struct.S4 zeroinitializer
 // CHECK-DEBUG-DAG: [[LOC1:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;162;9;;\00"
-// CHECK-DEBUG-DAG: [[LOC2:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;216;9;;\00"
-// CHECK-DEBUG-DAG: [[LOC3:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;303;19;;\00"
-// CHECK-DEBUG-DAG: [[LOC4:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;328;9;;\00"
-// CHECK-DEBUG-DAG: [[LOC5:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;341;9;;\00"
-// CHECK-DEBUG-DAG: [[LOC6:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;358;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC7:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;375;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC8:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;401;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC9:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;422;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC10:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;437;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC11:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;454;27;;\00"
-// CHECK-DEBUG-DAG: [[LOC12:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;471;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC13:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;550;9;;\00"
-// CHECK-DEBUG-DAG: [[LOC14:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;567;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC15:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;593;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC16:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;614;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC17:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;629;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC18:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;646;27;;\00"
-// CHECK-DEBUG-DAG: [[LOC19:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;663;10;;\00"
-// CHECK-DEBUG-DAG: [[LOC20:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;275;9;;\00"
+// CHECK-DEBUG-DAG: [[LOC2:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;217;9;;\00"
+// CHECK-DEBUG-DAG: [[LOC3:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;304;19;;\00"
+// CHECK-DEBUG-DAG: [[LOC4:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;329;9;;\00"
+// CHECK-DEBUG-DAG: [[LOC5:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;342;9;;\00"
+// CHECK-DEBUG-DAG: [[LOC6:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;359;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC7:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;376;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC8:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;402;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC9:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;423;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC10:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;438;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC11:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;455;27;;\00"
+// CHECK-DEBUG-DAG: [[LOC12:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;main;472;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC13:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;551;9;;\00"
+// CHECK-DEBUG-DAG: [[LOC14:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;568;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC15:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;594;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC16:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;615;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC17:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;630;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC18:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;647;27;;\00"
+// CHECK-DEBUG-DAG: [[LOC19:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;foobar;664;10;;\00"
+// CHECK-DEBUG-DAG: [[LOC20:@.*]] = private unnamed_addr constant [{{[0-9]+}} x i8] c";{{.*}}threadprivate_codegen.cpp;;276;9;;\00"
 
 struct Static {
   static S3 s;
@@ -159,6 +159,7 @@ struct Static {
 };
 
 static S1 gs1(5);
+#pragma omp threadprivate(gs1)
 #pragma omp threadprivate(gs1)
 // CHECK:      define {{.*}} [[S1_CTOR:@.*]]([[S1]]* {{.*}},
 // CHECK:      define {{.*}} [[S1_DTOR:@.*]]([[S1]]* {{.*}})

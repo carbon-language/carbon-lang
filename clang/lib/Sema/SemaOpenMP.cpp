@@ -759,7 +759,7 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
   // OpenMP [2.9.2, Restrictions, C/C++, p.2-6]
   //   A threadprivate directive must lexically precede all references to any
   //   of the variables in its list.
-  if (VD->isUsed()) {
+  if (VD->isUsed() && !DSAStack->isThreadPrivate(CanonicalVD)) {
     Diag(Id.getLoc(), diag::err_omp_var_used)
         << getOpenMPDirectiveName(OMPD_threadprivate) << VD;
     return ExprError();
