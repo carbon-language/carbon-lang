@@ -10055,19 +10055,19 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
 
   int64_t ElementSizeBytes = MemVT.getSizeInBits() / 8;
   LSBaseSDNode *FirstInChain = StoreNodes[0].MemNode;
-  unsigned EarliestNodeUsed = 0;
+  unsigned LatestNodeUsed = 0;
 
   for (unsigned i=0; i < NumElem; ++i) {
     // Find a chain for the new wide-store operand. Notice that some
     // of the store nodes that we found may not be selected for inclusion
     // in the wide store. The chain we use needs to be the chain of the
-    // earliest store node which is *used* and replaced by the wide store.
-    if (StoreNodes[i].SequenceNum > StoreNodes[EarliestNodeUsed].SequenceNum)
-      EarliestNodeUsed = i;
+    // latest store node which is *used* and replaced by the wide store.
+    if (StoreNodes[i].SequenceNum < StoreNodes[LatestNodeUsed].SequenceNum)
+      LatestNodeUsed = i;
   }
 
-  // The earliest Node in the DAG.
-  LSBaseSDNode *EarliestOp = StoreNodes[EarliestNodeUsed].MemNode;
+  // The latest Node in the DAG.
+  LSBaseSDNode *LatestOp = StoreNodes[LatestNodeUsed].MemNode;
   SDLoc DL(StoreNodes[0].MemNode);
 
   SDValue StoredVal;
@@ -10126,17 +10126,17 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
     StoredVal = DAG.getConstant(StoreInt, StoreTy);
   }
 
-  SDValue NewStore = DAG.getStore(EarliestOp->getChain(), DL, StoredVal,
+  SDValue NewStore = DAG.getStore(LatestOp->getChain(), DL, StoredVal,
                                   FirstInChain->getBasePtr(),
                                   FirstInChain->getPointerInfo(),
                                   false, false,
                                   FirstInChain->getAlignment());
 
-  // Replace the first store with the new store
-  CombineTo(EarliestOp, NewStore);
+  // Replace the last store with the new store
+  CombineTo(LatestOp, NewStore);
   // Erase all other stores.
   for (unsigned i = 0; i < NumElem ; ++i) {
-    if (StoreNodes[i].MemNode == EarliestOp)
+    if (StoreNodes[i].MemNode == LatestOp)
       continue;
     StoreSDNode *St = cast<StoreSDNode>(StoreNodes[i].MemNode);
     // ReplaceAllUsesWith will replace all uses that existed when it was
@@ -10513,17 +10513,18 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (NumElem < 2)
     return false;
 
-  // The earliest Node in the DAG.
-  unsigned EarliestNodeUsed = 0;
-  LSBaseSDNode *EarliestOp = StoreNodes[EarliestNodeUsed].MemNode;
+  // The latest Node in the DAG.
+  unsigned LatestNodeUsed = 0;
   for (unsigned i=1; i<NumElem; ++i) {
     // Find a chain for the new wide-store operand. Notice that some
     // of the store nodes that we found may not be selected for inclusion
     // in the wide store. The chain we use needs to be the chain of the
-    // earliest store node which is *used* and replaced by the wide store.
-    if (StoreNodes[i].SequenceNum > StoreNodes[EarliestNodeUsed].SequenceNum)
-      EarliestNodeUsed = i;
+    // latest store node which is *used* and replaced by the wide store.
+    if (StoreNodes[i].SequenceNum < StoreNodes[LatestNodeUsed].SequenceNum)
+      LatestNodeUsed = i;
   }
+
+  LSBaseSDNode *LatestOp = StoreNodes[LatestNodeUsed].MemNode;
 
   // Find if it is better to use vectors or integers to load and store
   // to memory.
@@ -10546,7 +10547,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
                                 false, false, false,
                                 FirstLoad->getAlignment());
 
-  SDValue NewStore = DAG.getStore(EarliestOp->getChain(), StoreDL, NewLoad,
+  SDValue NewStore = DAG.getStore(LatestOp->getChain(), StoreDL, NewLoad,
                                   FirstInChain->getBasePtr(),
                                   FirstInChain->getPointerInfo(), false, false,
                                   FirstInChain->getAlignment());
@@ -10564,12 +10565,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Ld->getChain());
   }
 
-  // Replace the first store with the new store.
-  CombineTo(EarliestOp, NewStore);
+  // Replace the last store with the new store.
+  CombineTo(LatestOp, NewStore);
   // Erase all other stores.
   for (unsigned i = 0; i < NumElem ; ++i) {
     // Remove all Store nodes.
-    if (StoreNodes[i].MemNode == EarliestOp)
+    if (StoreNodes[i].MemNode == LatestOp)
       continue;
     StoreSDNode *St = cast<StoreSDNode>(StoreNodes[i].MemNode);
     DAG.ReplaceAllUsesOfValueWith(SDValue(St, 0), St->getChain());

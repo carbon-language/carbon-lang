@@ -2,7 +2,7 @@
 
 ; CHECK: merge_stores_can
 ; CHECK: callq foo
-; CHECK-NEXT: xorps %xmm0, %xmm0
+; CHECK: xorps %xmm0, %xmm0
 ; CHECK-NEXT: movups  %xmm0
 ; CHECK: callq foo
 ; CHECK: ret
