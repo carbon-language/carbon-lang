@@ -776,9 +776,8 @@ PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
             if (log)
             {
                 ModuleSP exe_module_sp = target->GetExecutableModule ();
-                log->Printf ("PlatformPOSIX::%s set selected target to %p %s", __FUNCTION__,
-                             target,
-                             exe_module_sp ? exe_module_sp->GetFileSpec().GetPath().c_str () : "<null>" );
+                log->Printf("PlatformPOSIX::%s set selected target to %p %s", __FUNCTION__, (void *)target,
+                            exe_module_sp ? exe_module_sp->GetFileSpec().GetPath().c_str() : "<null>");
             }
 
 

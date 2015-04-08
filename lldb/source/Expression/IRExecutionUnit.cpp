@@ -588,7 +588,7 @@ IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
     if (log)
     {
         log->Printf("IRExecutionUnit::allocateCodeSection(Size=0x%" PRIx64 ", Alignment=%u, SectionID=%u) = %p",
-                    (uint64_t)Size, Alignment, SectionID, return_value);
+                    (uint64_t)Size, Alignment, SectionID, (void *)return_value);
     }
 
     return return_value;
@@ -615,7 +615,7 @@ IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
     if (log)
     {
         log->Printf("IRExecutionUnit::allocateDataSection(Size=0x%" PRIx64 ", Alignment=%u, SectionID=%u) = %p",
-                    (uint64_t)Size, Alignment, SectionID, return_value);
+                    (uint64_t)Size, Alignment, SectionID, (void *)return_value);
     }
 
     return return_value;

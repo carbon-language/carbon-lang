@@ -1357,7 +1357,7 @@ IRForTarget::MaterializeInitializer (uint8_t *data, Constant *initializer)
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (log && log->GetVerbose())
-        log->Printf("  MaterializeInitializer(%p, %s)", data, PrintValue(initializer).c_str());
+        log->Printf("  MaterializeInitializer(%p, %s)", (void *)data, PrintValue(initializer).c_str());
 
     Type *initializer_type = initializer->getType();
 
