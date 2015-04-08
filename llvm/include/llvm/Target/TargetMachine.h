@@ -58,9 +58,9 @@ using legacy::PassManagerBase;
 
 //===----------------------------------------------------------------------===//
 ///
-/// TargetMachine - Primary interface to the complete machine description for
-/// the target machine.  All target-specific information should be accessible
-/// through this interface.
+/// Primary interface to the complete machine description for the target
+/// machine.  All target-specific information should be accessible through this
+/// interface.
 ///
 class TargetMachine {
   TargetMachine(const TargetMachine &) = delete;
@@ -70,25 +70,25 @@ protected: // Can only create subclasses.
                 StringRef TargetTriple, StringRef CPU, StringRef FS,
                 const TargetOptions &Options);
 
-  /// TheTarget - The Target that this machine was created for.
+  /// The Target that this machine was created for.
   const Target &TheTarget;
 
-  /// DataLayout - For ABI type size and alignment.
+  /// For ABI type size and alignment.
   const DataLayout DL;
 
-  /// TargetTriple, TargetCPU, TargetFS - Triple string, CPU name, and target
-  /// feature strings the TargetMachine instance is created with.
+  /// Triple string, CPU name, and target feature strings the TargetMachine
+  /// instance is created with.
   std::string TargetTriple;
   std::string TargetCPU;
   std::string TargetFS;
 
-  /// CodeGenInfo - Low level target information such as relocation model.
-  /// Non-const to allow resetting optimization level per-function.
+  /// Low level target information such as relocation model. Non-const to
+  /// allow resetting optimization level per-function.
   MCCodeGenInfo *CodeGenInfo;
 
-  /// AsmInfo - Contains target specific asm information.
-  ///
+  /// Contains target specific asm information.
   const MCAsmInfo *AsmInfo;
+
   const MCRegisterInfo *MRI;
   const MCInstrInfo *MII;
   const MCSubtargetInfo *STI;
@@ -106,8 +106,8 @@ public:
   StringRef getTargetCPU() const { return TargetCPU; }
   StringRef getTargetFeatureString() const { return TargetFS; }
 
-  /// getSubtargetImpl - virtual method implemented by subclasses that returns
-  /// a reference to that target's TargetSubtargetInfo-derived member variable.
+  /// Virtual method implemented by subclasses that returns a reference to that
+  /// target's TargetSubtargetInfo-derived member variable.
   virtual const TargetSubtargetInfo *getSubtargetImpl(const Function &) const {
     return nullptr;
   }
@@ -115,15 +115,15 @@ public:
     return nullptr;
   }
 
-  /// getSubtarget - This method returns a pointer to the specified type of
+  /// This method returns a pointer to the specified type of
   /// TargetSubtargetInfo.  In debug builds, it verifies that the object being
   /// returned is of the correct type.
   template <typename STC> const STC &getSubtarget(const Function &F) const {
     return *static_cast<const STC*>(getSubtargetImpl(F));
   }
 
-  /// getDataLayout - This method returns a pointer to the DataLayout for
-  /// the target. It should be unchanging for every subtarget.
+  /// This method returns a pointer to the DataLayout for the target. It should
+  /// be unchanging for every subtarget.
   const DataLayout *getDataLayout() const { return &DL; }
 
   /// \brief Reset the target options based on the function's attributes.
@@ -131,16 +131,14 @@ public:
   // from TargetMachine.
   void resetTargetOptions(const Function &F) const;
 
-  /// getMCAsmInfo - Return target specific asm information.
-  ///
+  /// Return target specific asm information.
   const MCAsmInfo *getMCAsmInfo() const { return AsmInfo; }
+
   const MCRegisterInfo *getMCRegisterInfo() const { return MRI; }
   const MCInstrInfo *getMCInstrInfo() const { return MII; }
   const MCSubtargetInfo *getMCSubtargetInfo() const { return STI; }
 
-  /// getIntrinsicInfo - If intrinsic information is available, return it.  If
-  /// not, return null.
-  ///
+  /// If intrinsic information is available, return it.  If not, return null.
   virtual const TargetIntrinsicInfo *getIntrinsicInfo() const {
     return nullptr;
   }
@@ -148,20 +146,18 @@ public:
   bool requiresStructuredCFG() const { return RequireStructuredCFG; }
   void setRequiresStructuredCFG(bool Value) { RequireStructuredCFG = Value; }
 
-  /// getRelocationModel - Returns the code generation relocation model. The
-  /// choices are static, PIC, and dynamic-no-pic, and target default.
+  /// Returns the code generation relocation model. The choices are static, PIC,
+  /// and dynamic-no-pic, and target default.
   Reloc::Model getRelocationModel() const;
 
-  /// getCodeModel - Returns the code model. The choices are small, kernel,
-  /// medium, large, and target default.
+  /// Returns the code model. The choices are small, kernel, medium, large, and
+  /// target default.
   CodeModel::Model getCodeModel() const;
 
-  /// getTLSModel - Returns the TLS model which should be used for the given
-  /// global variable.
+  /// Returns the TLS model which should be used for the given global variable.
   TLSModel::Model getTLSModel(const GlobalValue *GV) const;
 
-  /// getOptLevel - Returns the optimization level: None, Less,
-  /// Default, or Aggressive.
+  /// Returns the optimization level: None, Less, Default, or Aggressive.
   CodeGenOpt::Level getOptLevel() const;
 
   /// \brief Overrides the optimization level.
@@ -198,19 +194,19 @@ public:
   /// uses this to answer queries about the IR.
   virtual TargetIRAnalysis getTargetIRAnalysis();
 
-  /// CodeGenFileType - These enums are meant to be passed into
-  /// addPassesToEmitFile to indicate what type of file to emit, and returned by
-  /// it to indicate what type of file could actually be made.
+  /// These enums are meant to be passed into addPassesToEmitFile to indicate
+  /// what type of file to emit, and returned by it to indicate what type of
+  /// file could actually be made.
   enum CodeGenFileType {
     CGFT_AssemblyFile,
     CGFT_ObjectFile,
     CGFT_Null         // Do not emit any output.
   };
 
-  /// addPassesToEmitFile - Add passes to the specified pass manager to get the
-  /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.  This method should return true if emission of this file type
-  /// is not supported, or false on success.
+  /// Add passes to the specified pass manager to get the specified file
+  /// emitted.  Typically this will involve several steps of code generation.
+  /// This method should return true if emission of this file type is not
+  /// supported, or false on success.
   virtual bool addPassesToEmitFile(PassManagerBase &,
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
@@ -220,10 +216,10 @@ public:
     return true;
   }
 
-  /// addPassesToEmitMC - Add passes to the specified pass manager to get
-  /// machine code emitted with the MCJIT. This method returns true if machine
-  /// code is not supported. It fills the MCContext Ctx pointer which can be
-  /// used to build custom MCStreamer.
+  /// Add passes to the specified pass manager to get machine code emitted with
+  /// the MCJIT. This method returns true if machine code is not supported. It
+  /// fills the MCContext Ctx pointer which can be used to build custom
+  /// MCStreamer.
   ///
   virtual bool addPassesToEmitMC(PassManagerBase &,
                                  MCContext *&,
@@ -237,8 +233,8 @@ public:
   MCSymbol *getSymbol(const GlobalValue *GV, Mangler &Mang) const;
 };
 
-/// LLVMTargetMachine - This class describes a target machine that is
-/// implemented with the LLVM target-independent code generator.
+/// This class describes a target machine that is implemented with the LLVM
+/// target-independent code generator.
 ///
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
@@ -255,23 +251,21 @@ public:
   /// generator to answer queries about the IR.
   TargetIRAnalysis getTargetIRAnalysis() override;
 
-  /// createPassConfig - Create a pass configuration object to be used by
-  /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
+  /// Create a pass configuration object to be used by addPassToEmitX methods
+  /// for generating a pipeline of CodeGen passes.
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 
-  /// addPassesToEmitFile - Add passes to the specified pass manager to get the
-  /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.
+  /// Add passes to the specified pass manager to get the specified file
+  /// emitted.  Typically this will involve several steps of code generation.
   bool addPassesToEmitFile(PassManagerBase &PM, formatted_raw_ostream &Out,
                            CodeGenFileType FileType, bool DisableVerify = true,
                            AnalysisID StartAfter = nullptr,
                            AnalysisID StopAfter = nullptr) override;
 
-  /// addPassesToEmitMC - Add passes to the specified pass manager to get
-  /// machine code emitted with the MCJIT. This method returns true if machine
-  /// code is not supported. It fills the MCContext Ctx pointer which can be
-  /// used to build custom MCStreamer.
-  ///
+  /// Add passes to the specified pass manager to get machine code emitted with
+  /// the MCJIT. This method returns true if machine code is not supported. It
+  /// fills the MCContext Ctx pointer which can be used to build custom
+  /// MCStreamer.
   bool addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
                          raw_ostream &OS, bool DisableVerify = true) override;
 };
