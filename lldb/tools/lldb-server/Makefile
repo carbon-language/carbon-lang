@@ -12,6 +12,8 @@ TOOLNAME = lldb-server
 
 LLVMLibsOptions += -llldb -llldbUtility
 
+USEDLIBS := LLVMSupport.a
+
 include $(LLDB_LEVEL)/Makefile
 
 ifeq ($(HOST_OS),Darwin)
