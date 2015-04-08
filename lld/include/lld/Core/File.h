@@ -92,7 +92,10 @@ public:
   }
 
   template <typename T>
-  using atom_iterator = typename std::vector<const T *>::const_iterator;
+  using atom_iterator = typename std::vector<const T *>::iterator;
+
+  template <typename T>
+  using const_atom_iterator = typename std::vector<const T *>::const_iterator;
 
   /// \brief Different object file readers may instantiate and manage atoms with
   /// different data structures.  This class is a collection abstraction.
@@ -100,8 +103,10 @@ public:
   /// methods to enable clients to interate the File's atoms.
   template <typename T> class atom_collection {
   public:
-    atom_iterator<T> begin() const { return _atoms.begin(); }
-    atom_iterator<T> end() const { return _atoms.end(); }
+    atom_iterator<T> begin() { return _atoms.begin(); }
+    atom_iterator<T> end() { return _atoms.end(); }
+    const_atom_iterator<T> begin() const { return _atoms.begin(); }
+    const_atom_iterator<T> end() const { return _atoms.end(); }
     uint64_t size() const { return _atoms.size(); }
     bool empty() const { return _atoms.empty(); }
 
