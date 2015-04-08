@@ -282,19 +282,19 @@ public:
     return std::error_code();
   }
 
-  const atom_collection<DefinedAtom> &defined() const override {
+  const AtomVector<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  const atom_collection<UndefinedAtom> &undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     return _noUndefinedAtoms;
   }
 
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  const atom_collection<AbsoluteAtom> &absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _noAbsoluteAtoms;
   }
 
@@ -315,8 +315,8 @@ private:
     _definedAtoms.push_back(atom);
   }
 
-  atom_collection<DefinedAtom> _definedAtoms;
-  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
+  AtomVector<DefinedAtom> _definedAtoms;
+  AtomVector<SharedLibraryAtom> _sharedLibraryAtoms;
   mutable llvm::BumpPtrAllocator _alloc;
 
   // Does the same thing as StringRef::ltrim() but removes at most one

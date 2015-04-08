@@ -217,7 +217,7 @@ private:
 
 /// Mapping of Atoms.
 template <typename T> class AtomList {
-  typedef lld::File::atom_collection<T> Ty;
+  typedef lld::File::AtomVector<T> Ty;
 
 public:
   typename Ty::iterator begin() { return _atoms.begin(); }
@@ -582,17 +582,17 @@ template <> struct MappingTraits<const lld::File *> {
 
     const lld::File *denormalize(IO &io) { return this; }
 
-    const atom_collection<lld::DefinedAtom> &defined() const override {
+    const AtomVector<lld::DefinedAtom> &defined() const override {
       return _noDefinedAtoms;
     }
-    const atom_collection<lld::UndefinedAtom> &undefined() const override {
+    const AtomVector<lld::UndefinedAtom> &undefined() const override {
       return _noUndefinedAtoms;
     }
-    virtual const atom_collection<lld::SharedLibraryAtom> &
+    virtual const AtomVector<lld::SharedLibraryAtom> &
     sharedLibrary() const override {
       return _noSharedLibraryAtoms;
     }
-    const atom_collection<lld::AbsoluteAtom> &absolute() const override {
+    const AtomVector<lld::AbsoluteAtom> &absolute() const override {
       return _noAbsoluteAtoms;
     }
     File *find(StringRef name, bool dataSymbolOnly) override {
@@ -640,17 +640,17 @@ template <> struct MappingTraits<const lld::File *> {
     }
     const lld::File *denormalize(IO &io);
 
-    const atom_collection<lld::DefinedAtom> &defined() const override {
+    const AtomVector<lld::DefinedAtom> &defined() const override {
       return _definedAtoms._atoms;
     }
-    const atom_collection<lld::UndefinedAtom> &undefined() const override {
+    const AtomVector<lld::UndefinedAtom> &undefined() const override {
       return _undefinedAtoms._atoms;
     }
-    virtual const atom_collection<lld::SharedLibraryAtom> &
+    virtual const AtomVector<lld::SharedLibraryAtom> &
     sharedLibrary() const override {
       return _sharedLibraryAtoms._atoms;
     }
-    const atom_collection<lld::AbsoluteAtom> &absolute() const override {
+    const AtomVector<lld::AbsoluteAtom> &absolute() const override {
       return _absoluteAtoms._atoms;
     }
 

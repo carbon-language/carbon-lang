@@ -106,24 +106,24 @@ public:
     return nullptr;
   }
 
-  const atom_collection<DefinedAtom> &defined() const override {
+  const AtomVector<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
-  const atom_collection<UndefinedAtom> &undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     return _noUndefinedAtoms;
   }
 
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     return _noSharedLibraryAtoms;
   }
 
-  const atom_collection<AbsoluteAtom> &absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _noAbsoluteAtoms;
   }
 
 
 private:
-  mutable atom_collection<DefinedAtom> _definedAtoms;
+  mutable AtomVector<DefinedAtom> _definedAtoms;
   StringRef _machHeaderSymbolName;
 };
 

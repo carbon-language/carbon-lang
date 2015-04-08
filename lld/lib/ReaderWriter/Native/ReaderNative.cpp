@@ -374,16 +374,16 @@ public:
     delete [] _targetsTable;
   }
 
-  const atom_collection<DefinedAtom>&  defined() const override {
+  const AtomVector<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
-  const atom_collection<UndefinedAtom>& undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
       return _undefinedAtoms;
   }
-  const atom_collection<SharedLibraryAtom>& sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
       return _sharedLibraryAtoms;
   }
-  const atom_collection<AbsoluteAtom> &absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
@@ -398,8 +398,8 @@ private:
 
   // instantiate array of BASeT from IvarsT data in file
   template <typename BaseT, typename AtomT, typename IvarsT>
-  std::error_code processAtoms(atom_collection<BaseT> &result,
-                               const uint8_t *base, const NativeChunk *chunk) {
+  std::error_code processAtoms(AtomVector<BaseT> &result, const uint8_t *base,
+                               const NativeChunk *chunk) {
     std::vector<const BaseT *> vec(chunk->elementCount);
     const size_t ivarElementSize = chunk->fileSize / chunk->elementCount;
     if (ivarElementSize != sizeof(IvarsT))
@@ -690,10 +690,10 @@ private:
 
   std::unique_ptr<MemoryBuffer>   _mb;
   const NativeFileHeader*         _header;
-  atom_collection<DefinedAtom> _definedAtoms;
-  atom_collection<UndefinedAtom> _undefinedAtoms;
-  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection<AbsoluteAtom> _absoluteAtoms;
+  AtomVector<DefinedAtom> _definedAtoms;
+  AtomVector<UndefinedAtom> _undefinedAtoms;
+  AtomVector<SharedLibraryAtom> _sharedLibraryAtoms;
+  AtomVector<AbsoluteAtom> _absoluteAtoms;
   const uint8_t*                  _absAttributes;
   uint32_t                        _absAbsoluteMaxOffset;
   const uint8_t*                  _attributes;

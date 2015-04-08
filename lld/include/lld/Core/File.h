@@ -108,23 +108,23 @@ public:
   };
 
   /// The type of atom mutable container.
-  template <typename T> using atom_collection = std::vector<const T *>;
+  template <typename T> using AtomVector = std::vector<const T *>;
 
-  /// \brief Must be implemented to return the atom_collection object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all DefinedAtoms in this File.
-  virtual const atom_collection<DefinedAtom> &defined() const = 0;
+  virtual const AtomVector<DefinedAtom> &defined() const = 0;
 
-  /// \brief Must be implemented to return the atom_collection object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all UndefinedAtomw in this File.
-  virtual const atom_collection<UndefinedAtom> &undefined() const = 0;
+  virtual const AtomVector<UndefinedAtom> &undefined() const = 0;
 
-  /// \brief Must be implemented to return the atom_collection object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all SharedLibraryAtoms in this File.
-  virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const = 0;
+  virtual const AtomVector<SharedLibraryAtom> &sharedLibrary() const = 0;
 
-  /// \brief Must be implemented to return the atom_collection object for
+  /// \brief Must be implemented to return the AtomVector object for
   /// all AbsoluteAtoms in this File.
-  virtual const atom_collection<AbsoluteAtom> &absolute() const = 0;
+  virtual const AtomVector<AbsoluteAtom> &absolute() const = 0;
 
   /// \brief If a file is parsed using a different method than doParse(),
   /// one must use this method to set the last error status, so that
@@ -160,11 +160,11 @@ protected:
   /// memory buffer passed to this file's constructor.
   virtual std::error_code doParse() { return std::error_code(); }
 
-  static atom_collection<DefinedAtom> _noDefinedAtoms;
-  static atom_collection<UndefinedAtom> _noUndefinedAtoms;
-  static atom_collection<SharedLibraryAtom> _noSharedLibraryAtoms;
-  static atom_collection<AbsoluteAtom> _noAbsoluteAtoms;
-  mutable llvm::BumpPtrAllocator                  _allocator;
+  static AtomVector<DefinedAtom> _noDefinedAtoms;
+  static AtomVector<UndefinedAtom> _noUndefinedAtoms;
+  static AtomVector<SharedLibraryAtom> _noSharedLibraryAtoms;
+  static AtomVector<AbsoluteAtom> _noAbsoluteAtoms;
+  mutable llvm::BumpPtrAllocator _allocator;
 
 private:
   StringRef _path;
@@ -189,16 +189,16 @@ public:
 
   std::error_code doParse() override { return _ec; }
 
-  const atom_collection<DefinedAtom> &defined() const override {
+  const AtomVector<DefinedAtom> &defined() const override {
     llvm_unreachable("internal error");
   }
-  const atom_collection<UndefinedAtom> &undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     llvm_unreachable("internal error");
   }
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     llvm_unreachable("internal error");
   }
-  const atom_collection<AbsoluteAtom> &absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     llvm_unreachable("internal error");
   }
 

@@ -84,19 +84,19 @@ public:
   bool isCompatibleWithSEH() const { return _compatibleWithSEH; }
   llvm::COFF::MachineTypes getMachineType() { return _machineType; }
 
-  const atom_collection<DefinedAtom> &defined() const override {
+  const AtomVector<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  const atom_collection<UndefinedAtom> &undefined() const override {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     return _undefinedAtoms;
   }
 
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  const atom_collection<AbsoluteAtom> &absolute() const override {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
@@ -159,10 +159,10 @@ private:
 
   std::unique_ptr<const llvm::object::COFFObjectFile> _obj;
   std::unique_ptr<MemoryBuffer> _mb;
-  atom_collection<DefinedAtom> _definedAtoms;
-  atom_collection<UndefinedAtom> _undefinedAtoms;
-  atom_collection<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection<AbsoluteAtom> _absoluteAtoms;
+  AtomVector<DefinedAtom> _definedAtoms;
+  AtomVector<UndefinedAtom> _undefinedAtoms;
+  AtomVector<SharedLibraryAtom> _sharedLibraryAtoms;
+  AtomVector<AbsoluteAtom> _absoluteAtoms;
 
   // The target type of the object.
   Reference::KindArch _referenceArch;
