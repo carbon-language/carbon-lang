@@ -66,7 +66,7 @@ TEST(ToAtomsTest, basic_obj_x86_64) {
   EXPECT_FALSE(!atom_f);
   const lld::File &file = **atom_f;
   EXPECT_EQ(3U, file.defined().size());
-  lld::File::defined_iterator it = file.defined().begin();
+  auto it = file.defined().begin();
   const lld::DefinedAtom *atom1 = *it;
   ++it;
   const lld::DefinedAtom *atom2 = *it;

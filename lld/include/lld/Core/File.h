@@ -93,18 +93,6 @@ public:
     return _allocator;
   }
 
-  /// \brief For use interating over DefinedAtoms in this File.
-  typedef atom_iterator<DefinedAtom>  defined_iterator;
-
-  /// \brief For use interating over UndefinedAtoms in this File.
-  typedef atom_iterator<UndefinedAtom> undefined_iterator;
-
-  /// \brief For use interating over SharedLibraryAtoms in this File.
-  typedef atom_iterator<SharedLibraryAtom> shared_library_iterator;
-
-  /// \brief For use interating over AbsoluteAtoms in this File.
-  typedef atom_iterator<AbsoluteAtom> absolute_iterator;
-
   /// \brief Different object file readers may instantiate and manage atoms with
   /// different data structures.  This class is a collection abstraction.
   /// Each concrete File instance must implement these atom_collection
