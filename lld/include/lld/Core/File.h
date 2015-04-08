@@ -91,24 +91,22 @@ public:
     return _allocator;
   }
 
+  /// The type of atom mutable container.
+  template <typename T> using AtomVector = std::vector<const T *>;
+
   /// The range type for the atoms. It's backed by a std::vector, but hides
   /// its member functions so that you can only call begin or end.
   template <typename T> class AtomRange {
-    typedef std::vector<const T *> VectorT;
-
   public:
-    AtomRange(std::vector<const T *> v) : _v(v) {}
-    typename VectorT::const_iterator begin() const { return _v.begin(); }
-    typename VectorT::const_iterator end() const { return _v.end(); }
-    typename VectorT::iterator begin() { return _v.begin(); }
-    typename VectorT::iterator end() { return _v.end(); }
+    AtomRange(AtomVector<T> v) : _v(v) {}
+    typename AtomVector<T>::const_iterator begin() const { return _v.begin(); }
+    typename AtomVector<T>::const_iterator end() const { return _v.end(); }
+    typename AtomVector<T>::iterator begin() { return _v.begin(); }
+    typename AtomVector<T>::iterator end() { return _v.end(); }
 
   private:
-    VectorT &_v;
+    AtomVector<T> &_v;
   };
-
-  /// The type of atom mutable container.
-  template <typename T> using AtomVector = std::vector<const T *>;
 
   /// \brief Must be implemented to return the AtomVector object for
   /// all DefinedAtoms in this File.
