@@ -279,6 +279,20 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     Builder.ClearInsertionPoint();
   }
 
+  // If some of our locals escaped, insert a call to llvm.frameescape in the
+  // entry block.
+  if (!EscapedLocals.empty()) {
+    // Invert the map from local to index into a simple vector. There should be
+    // no holes.
+    SmallVector<llvm::Value *, 4> EscapeArgs;
+    EscapeArgs.resize(EscapedLocals.size());
+    for (auto &Pair : EscapedLocals)
+      EscapeArgs[Pair.second] = Pair.first;
+    llvm::Function *FrameEscapeFn = llvm::Intrinsic::getDeclaration(
+        &CGM.getModule(), llvm::Intrinsic::frameescape);
+    CGBuilderTy(AllocaInsertPt).CreateCall(FrameEscapeFn, EscapeArgs);
+  }
+
   // Remove the AllocaInsertPt instruction, which is just a convenience for us.
   llvm::Instruction *Ptr = AllocaInsertPt;
   AllocaInsertPt = nullptr;
