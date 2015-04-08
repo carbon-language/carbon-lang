@@ -19,5 +19,5 @@
 type = Library
 name = BPFDesc
 parent = BPF
-required_libraries = MC BPFAsmPrinter BPFInfo
+required_libraries = MC BPFAsmPrinter BPFInfo Support
 add_to_library_groups = BPF
