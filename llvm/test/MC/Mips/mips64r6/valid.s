@@ -12,7 +12,7 @@
 #
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips64r6 2> %t0 | FileCheck %s
 # RUN: FileCheck %s -check-prefix=WARNING < %t0
-
+a:
         .set noat
         # FIXME: Add the instructions carried forward from older ISA's
         and     $2,4           # CHECK: andi $2, $2, 4        # encoding: [0x30,0x42,0x00,0x04]
@@ -165,6 +165,11 @@
         rint.d $f2, $f4          # CHECK: rint.d $f2, $f4        # encoding: [0x46,0x20,0x20,0x9a]
         class.s $f2, $f4         # CHECK: class.s $f2, $f4       # encoding: [0x46,0x00,0x20,0x9b]
         class.d $f2, $f4         # CHECK: class.d $f2, $f4       # encoding: [0x46,0x20,0x20,0x9b]
+        j       1f               # CHECK: j $tmp0                # encoding: [0b000010AA,A,A,A]
+                                 # CHECK:                        #   fixup A - offset: 0, value: ($tmp0), kind: fixup_Mips_26
+        j       a                # CHECK: j a                    # encoding: [0b000010AA,A,A,A]
+                                 # CHECK:                        #   fixup A - offset: 0, value: a, kind: fixup_Mips_26
+        j       1328             # CHECK: j 1328                 # encoding: [0x08,0x00,0x01,0x4c]
         jr.hb   $4               # CHECK: jr.hb $4               # encoding: [0x00,0x80,0x04,0x09]
         jalr.hb $4               # CHECK: jalr.hb $4             # encoding: [0x00,0x80,0xfc,0x09]
         jalr.hb $4, $5           # CHECK: jalr.hb $4, $5         # encoding: [0x00,0xa0,0x24,0x09]
@@ -199,3 +204,5 @@
         tne     $6,$17           # CHECK: tne $6, $17            # encoding: [0x00,0xd1,0x00,0x36]
         tne     $7,$8,885        # CHECK: tne $7, $8, 885        # encoding: [0x00,0xe8,0xdd,0x76]
         xor     $2, 4            # CHECK: xori $2, $2, 4         # encoding: [0x38,0x42,0x00,0x04]
+
+1:

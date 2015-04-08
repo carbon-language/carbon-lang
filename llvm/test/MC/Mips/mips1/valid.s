@@ -1,7 +1,7 @@
 # Instructions that are valid
 #
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips1 | FileCheck %s
-
+a:
         .set noat
         abs.d     $f7,$f25             # CHECK: encoding:
         abs.s     $f9,$f16
@@ -41,6 +41,11 @@
         div.s     $f4,$f5,$f15
         divu      $zero,$25,$15
         ehb                            # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
+        j         1f                   # CHECK: j $tmp0 # encoding: [0b000010AA,A,A,A]
+                                       # CHECK:         #   fixup A - offset: 0, value: ($tmp0), kind: fixup_Mips_26
+        j         a                    # CHECK: j a     # encoding: [0b000010AA,A,A,A]
+                                       # CHECK:         #   fixup A - offset: 0, value: a, kind: fixup_Mips_26
+        j         1328                 # CHECK: j 1328  # encoding: [0x08,0x00,0x01,0x4c]
         lb        $24,-14515($10)
         lbu       $8,30195($v1)
         lh        $11,-8556($s5)
@@ -117,3 +122,5 @@
         tlbwr                          # CHECK: tlbwr                  # encoding: [0x42,0x00,0x00,0x06]
         xor       $s2,$a0,$s8
         xor       $2, 4                # CHECK: xori $2, $2, 4         # encoding: [0x38,0x42,0x00,0x04]
+
+1:
