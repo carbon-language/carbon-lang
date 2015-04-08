@@ -30,22 +30,21 @@ private:
     GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
     llvm::BumpPtrAllocator _alloc;
   };
-
-  std::unique_ptr<GOTFile> _gotFile;
 };
 
 template <class ELFT>
 X86DynamicLibraryWriter<ELFT>::X86DynamicLibraryWriter(
     X86LinkingContext &ctx, TargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)) {}
+    : DynamicLibraryWriter<ELFT>(ctx, layout) {}
 
 template <class ELFT>
 void X86DynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
-  _gotFile->addAtom(*new (_gotFile->_alloc) GlobalOffsetTableAtom(*_gotFile));
-  _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
-  result.push_back(std::move(_gotFile));
+  auto gotFile = llvm::make_unique<GOTFile>(this->_ctx);
+  gotFile->addAtom(*new (gotFile->_alloc) GlobalOffsetTableAtom(*gotFile));
+  gotFile->addAtom(*new (gotFile->_alloc) DynamicAtom(*gotFile));
+  result.push_back(std::move(gotFile));
 }
 
 } // namespace elf

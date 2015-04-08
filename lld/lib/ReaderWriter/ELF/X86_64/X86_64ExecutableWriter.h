@@ -19,18 +19,18 @@ namespace elf {
 class X86_64ExecutableWriter : public ExecutableWriter<X86_64ELFType> {
 public:
   X86_64ExecutableWriter(X86_64LinkingContext &ctx, X86_64TargetLayout &layout)
-      : ExecutableWriter(ctx, layout), _gotFile(new GOTFile(ctx)) {}
+      : ExecutableWriter(ctx, layout) {}
 
 protected:
   // Add any runtime files and their atoms to the output
   void
   createImplicitFiles(std::vector<std::unique_ptr<File>> &result) override {
     ExecutableWriter::createImplicitFiles(result);
-    _gotFile->addAtom(*new (_gotFile->_alloc)
-                      GlobalOffsetTableAtom(*_gotFile));
+    auto gotFile = llvm::make_unique<GOTFile>(this->_ctx);
+    gotFile->addAtom(*new (gotFile->_alloc) GlobalOffsetTableAtom(*gotFile));
     if (this->_ctx.isDynamic())
-      _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
-    result.push_back(std::move(_gotFile));
+      gotFile->addAtom(*new (gotFile->_alloc) DynamicAtom(*gotFile));
+    result.push_back(std::move(gotFile));
   }
 
 private:
@@ -39,8 +39,6 @@ private:
     GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
     llvm::BumpPtrAllocator _alloc;
   };
-
-  std::unique_ptr<GOTFile> _gotFile;
 };
 
 } // namespace elf

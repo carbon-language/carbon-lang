@@ -31,23 +31,22 @@ private:
     GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
     llvm::BumpPtrAllocator _alloc;
   };
-
-  std::unique_ptr<GOTFile> _gotFile;
 };
 
 template <class ELFT>
 AArch64ExecutableWriter<ELFT>::AArch64ExecutableWriter(
     AArch64LinkingContext &ctx, TargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout), _gotFile(new GOTFile(ctx)) {}
+    : ExecutableWriter<ELFT>(ctx, layout) {}
 
 template <class ELFT>
 void AArch64ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
-  _gotFile->addAtom(*new (_gotFile->_alloc) GlobalOffsetTableAtom(*_gotFile));
+  auto gotFile = llvm::make_unique<GOTFile>(this->_ctx);
+  gotFile->addAtom(*new (gotFile->_alloc) GlobalOffsetTableAtom(*gotFile));
   if (this->_ctx.isDynamic())
-    _gotFile->addAtom(*new (_gotFile->_alloc) DynamicAtom(*_gotFile));
-  result.push_back(std::move(_gotFile));
+    gotFile->addAtom(*new (gotFile->_alloc) DynamicAtom(*gotFile));
+  result.push_back(std::move(gotFile));
 }
 
 } // namespace elf
