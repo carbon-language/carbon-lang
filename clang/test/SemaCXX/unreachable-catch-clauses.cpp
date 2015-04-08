@@ -8,7 +8,6 @@ void f();
 
 void test()
 try {}
-catch (BaseEx &e) { f(); }
-catch (Ex1 &e) { f(); } // expected-note {{for type class Ex1 &}}
-catch (Ex2 &e) { f(); } // expected-warning {{exception of type Ex2 & will be caught by earlier handler}}
-
+catch (BaseEx &e) { f(); } // expected-note 2{{for type 'BaseEx &'}}
+catch (Ex1 &e) { f(); } // expected-warning {{exception of type 'Ex1 &' will be caught by earlier handler}}
+catch (Ex2 &e) { f(); } // expected-warning {{exception of type 'Ex2 &' (aka 'Ex1 &') will be caught by earlier handler}}

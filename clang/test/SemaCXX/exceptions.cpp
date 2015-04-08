@@ -146,6 +146,82 @@ namespace Decay {
 
 void rval_ref() throw (int &&); // expected-error {{rvalue reference type 'int &&' is not allowed in exception specification}} expected-warning {{C++11}}
 
+namespace HandlerInversion {
+struct B {};
+struct D : B {};
+struct D2 : D {};
+
+void f1() {
+  try {
+  } catch (B &b) { // expected-note {{for type 'HandlerInversion::B &'}}
+  } catch (D &d) { // expected-warning {{exception of type 'HandlerInversion::D &' will be caught by earlier handler}}
+  }
+}
+
+void f2() {
+  try {
+  } catch (B *b) { // expected-note {{for type 'HandlerInversion::B *'}}
+  } catch (D *d) { // expected-warning {{exception of type 'HandlerInversion::D *' will be caught by earlier handler}}
+  }
+}
+
+void f3() {
+  try {
+  } catch (D &d) { // Ok
+  } catch (B &b) {
+  }
+}
+
+void f4() {
+  try {
+  } catch (B &b) { // Ok
+  }
+}
+
+void f5() {
+  try {
+  } catch (int) {
+  } catch (float) {
+  }
+}
+
+void f6() {
+  try {
+  } catch (B &b) {  // expected-note {{for type 'HandlerInversion::B &'}}
+  } catch (D2 &d) {  // expected-warning {{exception of type 'HandlerInversion::D2 &' will be caught by earlier handler}}
+  }
+}
+
+void f7() {
+  try {
+  } catch (B *b) { // Ok
+  } catch (D &d) { // Ok
+  }
+
+  try {
+  } catch (B b) { // Ok
+  } catch (D *d) { // Ok
+  }
+}
+
+void f8() {
+  try {
+  } catch (const B &b) {  // expected-note {{for type 'const HandlerInversion::B &'}}
+  } catch (D2 &d) {  // expected-warning {{exception of type 'HandlerInversion::D2 &' will be caught by earlier handler}}
+  }
+
+  try {
+  } catch (B &b) {  // expected-note {{for type 'HandlerInversion::B &'}}
+  } catch (const D2 &d) {  // expected-warning {{exception of type 'const HandlerInversion::D2 &' will be caught by earlier handler}}
+  }
+
+  try {
+  } catch (B b) { // expected-note {{for type 'HandlerInversion::B'}}
+  } catch (D &d) { // expected-warning {{exception of type 'HandlerInversion::D &' will be caught by earlier handler}}
+  }
+}
+}
+
 namespace ConstVolatileThrow {
 struct S {
   S() {}         // expected-note{{candidate constructor not viable}}
