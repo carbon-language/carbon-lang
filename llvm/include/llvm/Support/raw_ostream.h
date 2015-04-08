@@ -20,21 +20,20 @@
 #include <system_error>
 
 namespace llvm {
-  class format_object_base;
-  class FormattedString;
-  class FormattedNumber;
-  template <typename T>
-  class SmallVectorImpl;
+class format_object_base;
+class FormattedString;
+class FormattedNumber;
+template <typename T> class SmallVectorImpl;
 
-  namespace sys {
-    namespace fs {
-      enum OpenFlags : unsigned;
-    }
-  }
+namespace sys {
+namespace fs {
+enum OpenFlags : unsigned;
+}
+}
 
-/// raw_ostream - This class implements an extremely fast bulk output stream
-/// that can *only* output to a stream.  It does not support seeking, reopening,
-/// rewinding, line buffered disciplines etc. It is a simple buffer that outputs
+/// This class implements an extremely fast bulk output stream that can *only*
+/// output to a stream.  It does not support seeking, reopening, rewinding, line
+/// buffered disciplines etc. It is a simple buffer that outputs
 /// a chunk at a time.
 class raw_ostream {
 private:
@@ -96,12 +95,11 @@ public:
   // Configuration Interface
   //===--------------------------------------------------------------------===//
 
-  /// SetBuffered - Set the stream to be buffered, with an automatically
-  /// determined buffer size.
+  /// Set the stream to be buffered, with an automatically determined buffer
+  /// size.
   void SetBuffered();
 
-  /// SetBufferSize - Set the stream to be buffered, using the
-  /// specified buffer size.
+  /// Set the stream to be buffered, using the specified buffer size.
   void SetBufferSize(size_t Size) {
     flush();
     SetBufferAndMode(new char[Size], Size, InternalBuffer);
@@ -117,10 +115,9 @@ public:
     return OutBufEnd - OutBufStart;
   }
 
-  /// SetUnbuffered - Set the stream to be unbuffered. When
-  /// unbuffered, the stream will flush after every write. This routine
-  /// will also flush the buffer immediately when the stream is being
-  /// set to unbuffered.
+  /// Set the stream to be unbuffered. When unbuffered, the stream will flush
+  /// after every write. This routine will also flush the buffer immediately
+  /// when the stream is being set to unbuffered.
   void SetUnbuffered() {
     flush();
     SetBufferAndMode(nullptr, 0, Unbuffered);
@@ -204,11 +201,11 @@ public:
 
   raw_ostream &operator<<(double N);
 
-  /// write_hex - Output \p N in hexadecimal, without any prefix or padding.
+  /// Output \p N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);
 
-  /// write_escaped - Output \p Str, turning '\\', '\t', '\n', '"', and
-  /// anything that doesn't satisfy std::isprint into an escape sequence.
+  /// Output \p Str, turning '\\', '\t', '\n', '"', and anything that doesn't
+  /// satisfy std::isprint into an escape sequence.
   raw_ostream &write_escaped(StringRef Str, bool UseHexEscapes = false);
 
   raw_ostream &write(unsigned char C);
@@ -263,8 +260,8 @@ public:
   //===--------------------------------------------------------------------===//
 
 private:
-  /// write_impl - The is the piece of the class that is implemented
-  /// by subclasses.  This writes the \p Size bytes starting at
+  /// The is the piece of the class that is implemented by subclasses.  This
+  /// writes the \p Size bytes starting at
   /// \p Ptr to the underlying stream.
   ///
   /// This function is guaranteed to only be called at a point at which it is
@@ -281,41 +278,38 @@ private:
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
 
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
+  /// Return the current position within the stream, not counting the bytes
+  /// currently in the buffer.
   virtual uint64_t current_pos() const = 0;
 
 protected:
-  /// SetBuffer - Use the provided buffer as the raw_ostream buffer. This is
-  /// intended for use only by subclasses which can arrange for the output to go
-  /// directly into the desired output buffer, instead of being copied on each
-  /// flush.
+  /// Use the provided buffer as the raw_ostream buffer. This is intended for
+  /// use only by subclasses which can arrange for the output to go directly
+  /// into the desired output buffer, instead of being copied on each flush.
   void SetBuffer(char *BufferStart, size_t Size) {
     SetBufferAndMode(BufferStart, Size, ExternalBuffer);
   }
 
-  /// preferred_buffer_size - Return an efficient buffer size for the
-  /// underlying output mechanism.
+  /// Return an efficient buffer size for the underlying output mechanism.
   virtual size_t preferred_buffer_size() const;
 
-  /// getBufferStart - Return the beginning of the current stream buffer, or 0
-  /// if the stream is unbuffered.
+  /// Return the beginning of the current stream buffer, or 0 if the stream is
+  /// unbuffered.
   const char *getBufferStart() const { return OutBufStart; }
 
   //===--------------------------------------------------------------------===//
   // Private Interface
   //===--------------------------------------------------------------------===//
 private:
-  /// SetBufferAndMode - Install the given buffer and mode.
+  /// Install the given buffer and mode.
   void SetBufferAndMode(char *BufferStart, size_t Size, BufferKind Mode);
 
-  /// flush_nonempty - Flush the current buffer, which is known to be
-  /// non-empty. This outputs the currently buffered data and resets
-  /// the buffer to empty.
+  /// Flush the current buffer, which is known to be non-empty. This outputs the
+  /// currently buffered data and resets the buffer to empty.
   void flush_nonempty();
 
-  /// copy_to_buffer - Copy data into the buffer. Size must not be
-  /// greater than the number of unused bytes in the buffer.
+  /// Copy data into the buffer. Size must not be greater than the number of
+  /// unused bytes in the buffer.
   void copy_to_buffer(const char *Ptr, size_t Size);
 };
 
@@ -323,7 +317,7 @@ private:
 // File Output Streams
 //===----------------------------------------------------------------------===//
 
-/// raw_fd_ostream - A raw_ostream that writes to a file descriptor.
+/// A raw_ostream that writes to a file descriptor.
 ///
 class raw_fd_ostream : public raw_ostream {
   int FD;
@@ -339,18 +333,17 @@ class raw_fd_ostream : public raw_ostream {
 
   uint64_t pos;
 
-  /// write_impl - See raw_ostream::write_impl.
+  /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t Size) override;
 
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
+  /// Return the current position within the stream, not counting the bytes
+  /// currently in the buffer.
   uint64_t current_pos() const override { return pos; }
 
-  /// preferred_buffer_size - Determine an efficient buffer size.
+  /// Determine an efficient buffer size.
   size_t preferred_buffer_size() const override;
 
-  /// error_detected - Set the flag indicating that an output error has
-  /// been encountered.
+  /// Set the flag indicating that an output error has been encountered.
   void error_detected() { Error = true; }
 
 public:
@@ -367,22 +360,22 @@ public:
   raw_fd_ostream(StringRef Filename, std::error_code &EC,
                  sys::fs::OpenFlags Flags);
 
-  /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
-  /// ShouldClose is true, this closes the file when the stream is destroyed.
+  /// FD is the file descriptor that this writes to.  If ShouldClose is true,
+  /// this closes the file when the stream is destroyed.
   raw_fd_ostream(int fd, bool shouldClose, bool unbuffered=false);
 
   ~raw_fd_ostream();
 
-  /// close - Manually flush the stream and close the file.
-  /// Note that this does not call fsync.
+  /// Manually flush the stream and close the file. Note that this does not call
+  /// fsync.
   void close();
 
-  /// seek - Flushes the stream and repositions the underlying file descriptor
-  /// position to the offset specified from the beginning of the file.
+  /// Flushes the stream and repositions the underlying file descriptor position
+  /// to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
 
-  /// SetUseAtomicWrite - Set the stream to attempt to use atomic writes for
-  /// individual output routines where possible.
+  /// Set the stream to attempt to use atomic writes for individual output
+  /// routines where possible.
   ///
   /// Note that because raw_ostream's are typically buffered, this flag is only
   /// sensible when used on unbuffered streams which will flush their output
@@ -401,18 +394,18 @@ public:
 
   bool has_colors() const override;
 
-  /// has_error - Return the value of the flag in this raw_fd_ostream indicating
-  /// whether an output error has been encountered.
+  /// Return the value of the flag in this raw_fd_ostream indicating whether an
+  /// output error has been encountered.
   /// This doesn't implicitly flush any pending output.  Also, it doesn't
   /// guarantee to detect all errors unless the stream has been closed.
   bool has_error() const {
     return Error;
   }
 
-  /// clear_error - Set the flag read by has_error() to false. If the error
-  /// flag is set at the time when this raw_ostream's destructor is called,
-  /// report_fatal_error is called to report the error. Use clear_error()
-  /// after handling the error to avoid this behavior.
+  /// Set the flag read by has_error() to false. If the error flag is set at the
+  /// time when this raw_ostream's destructor is called, report_fatal_error is
+  /// called to report the error. Use clear_error() after handling the error to
+  /// avoid this behavior.
   ///
   ///   "Errors should never pass silently.
   ///    Unless explicitly silenced."
@@ -423,56 +416,54 @@ public:
   }
 };
 
-/// outs() - This returns a reference to a raw_ostream for standard output.
-/// Use it like: outs() << "foo" << "bar";
+/// This returns a reference to a raw_ostream for standard output. Use it like:
+/// outs() << "foo" << "bar";
 raw_ostream &outs();
 
-/// errs() - This returns a reference to a raw_ostream for standard error.
-/// Use it like: errs() << "foo" << "bar";
+/// This returns a reference to a raw_ostream for standard error. Use it like:
+/// errs() << "foo" << "bar";
 raw_ostream &errs();
 
-/// nulls() - This returns a reference to a raw_ostream which simply discards
-/// output.
+/// This returns a reference to a raw_ostream which simply discards output.
 raw_ostream &nulls();
 
 //===----------------------------------------------------------------------===//
 // Output Stream Adaptors
 //===----------------------------------------------------------------------===//
 
-/// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
-/// simple adaptor class. This class does not encounter output errors.
+/// A raw_ostream that writes to an std::string.  This is a simple adaptor
+/// class. This class does not encounter output errors.
 class raw_string_ostream : public raw_ostream {
   std::string &OS;
 
-  /// write_impl - See raw_ostream::write_impl.
+  /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t Size) override;
 
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
+  /// Return the current position within the stream, not counting the bytes
+  /// currently in the buffer.
   uint64_t current_pos() const override { return OS.size(); }
 public:
   explicit raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
 
-  /// str - Flushes the stream contents to the target string and returns
-  ///  the string's reference.
+  /// Flushes the stream contents to the target string and returns  the string's
+  /// reference.
   std::string& str() {
     flush();
     return OS;
   }
 };
 
-/// raw_svector_ostream - A raw_ostream that writes to an SmallVector or
-/// SmallString.  This is a simple adaptor class. This class does not
-/// encounter output errors.
+/// A raw_ostream that writes to an SmallVector or SmallString.  This is a
+/// simple adaptor class. This class does not encounter output errors.
 class raw_svector_ostream : public raw_ostream {
   SmallVectorImpl<char> &OS;
 
-  /// write_impl - See raw_ostream::write_impl.
+  /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t Size) override;
 
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
+  /// Return the current position within the stream, not counting the bytes
+  /// currently in the buffer.
   uint64_t current_pos() const override;
 public:
   /// Construct a new raw_svector_ostream.
@@ -482,23 +473,23 @@ public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 
-  /// resync - This is called when the SmallVector we're appending to is changed
-  /// outside of the raw_svector_ostream's control.  It is only safe to do this
-  /// if the raw_svector_ostream has previously been flushed.
+  /// This is called when the SmallVector we're appending to is changed outside
+  /// of the raw_svector_ostream's control.  It is only safe to do this if the
+  /// raw_svector_ostream has previously been flushed.
   void resync();
 
-  /// str - Flushes the stream contents to the target vector and return a
-  /// StringRef for the vector contents.
+  /// Flushes the stream contents to the target vector and return a StringRef
+  /// for the vector contents.
   StringRef str();
 };
 
-/// raw_null_ostream - A raw_ostream that discards all output.
+/// A raw_ostream that discards all output.
 class raw_null_ostream : public raw_ostream {
-  /// write_impl - See raw_ostream::write_impl.
+  /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t size) override;
 
-  /// current_pos - Return the current position within the stream, not
-  /// counting the bytes currently in the buffer.
+  /// Return the current position within the stream, not counting the bytes
+  /// currently in the buffer.
   uint64_t current_pos() const override;
 
 public:
