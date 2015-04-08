@@ -53,7 +53,7 @@ f:
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x3C8
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 72
 // CHECK-NEXT:     Link: 7
 // CHECK-NEXT:     Info: 4

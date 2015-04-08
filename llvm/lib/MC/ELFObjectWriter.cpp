@@ -1676,8 +1676,6 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   createIndexedSections(Asm, const_cast<MCAsmLayout &>(Layout), GroupMap,
                         RevGroupMap, SectionIndexMap);
 
-  unsigned NumRegularSections = Asm.size();
-
   // Compute symbol table information.
   computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap);
 
@@ -1696,7 +1694,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   ComputeSectionOrder(Asm, Sections);
   unsigned NumSections = Sections.size();
   SectionOffsetMapTy SectionOffsetMap;
-  for (unsigned i = 0; i < NumRegularSections + 1; ++i) {
+  for (unsigned i = 0; i < NumSections; ++i) {
+
     const MCSectionELF &Section = *Sections[i];
     const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
 
@@ -1713,29 +1712,11 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   const unsigned SectionHeaderOffset = FileOff;
 
-  uint64_t SectionHeaderEntrySize = is64Bit() ?
-    sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr);
-  FileOff += (NumSections + 1) * SectionHeaderEntrySize;
-
-  for (unsigned i = NumRegularSections + 1; i < NumSections; ++i) {
-    const MCSectionELF &Section = *Sections[i];
-    const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
-
-    FileOff = RoundUpToAlignment(FileOff, SD.getAlignment());
-
-    // Remember the offset into the file for this section.
-    SectionOffsetMap[&Section] = FileOff;
-
-    // Get the size of the section in the output file (including padding).
-    FileOff += GetSectionFileSize(Layout, SD);
-  }
-
   // Write out the ELF header ...
   WriteHeader(Asm, SectionHeaderOffset, NumSections + 1);
 
-  // ... then the regular sections ...
-  // + because of .shstrtab
-  for (unsigned i = 0; i < NumRegularSections + 1; ++i)
+  // ... then the sections ...
+  for (unsigned i = 0; i < NumSections; ++i)
     WriteDataSectionData(Asm, Layout, *Sections[i]);
 
   uint64_t Padding = OffsetToAlignment(OS.tell(), NaturalAlignment);
@@ -1743,10 +1724,6 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   // ... then the section header table ...
   writeSectionHeader(Asm, GroupMap, Layout, SectionIndexMap, SectionOffsetMap);
-
-  // ... and then the remaining sections ...
-  for (unsigned i = NumRegularSections + 1; i < NumSections; ++i)
-    WriteDataSectionData(Asm, Layout, *Sections[i]);
 }
 
 bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(

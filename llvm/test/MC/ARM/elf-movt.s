@@ -42,7 +42,7 @@ barf:                                   @ @barf
 @ OBJ-NEXT:     Flags [ (0x0)
 @ OBJ-NEXT:     ]
 @ OBJ-NEXT:     Address: 0x0
-@ OBJ-NEXT:     Offset: 0x22C
+@ OBJ-NEXT:     Offset:
 @ OBJ-NEXT:     Size: 16
 @ OBJ-NEXT:     Link: 6
 @ OBJ-NEXT:     Info: 1

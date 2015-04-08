@@ -41,7 +41,7 @@ defined3:
 // CHECK-NEXT:     Flags [ (0x0)
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x320
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 24
 // CHECK-NEXT:     Link: 6
 // CHECK-NEXT:     Info: 1
