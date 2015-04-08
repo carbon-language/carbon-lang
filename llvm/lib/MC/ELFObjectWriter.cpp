@@ -247,7 +247,6 @@ class ELFObjectWriter : public MCObjectWriter {
     /// \param Asm - The assembler.
     /// \param SectionIndexMap - Maps a section to its index.
     /// \param RevGroupMap - Maps a signature symbol to the group section.
-    /// \param NumRegularSections - Number of non-relocation sections.
     void computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
                             const RevGroupMapTy &RevGroupMap);
