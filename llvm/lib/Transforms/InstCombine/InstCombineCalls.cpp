@@ -415,112 +415,35 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     }
     break;
-  case Intrinsic::uadd_with_overflow: {
-    Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-    OverflowResult OR = computeOverflowForUnsignedAdd(LHS, RHS, II);
-    if (OR == OverflowResult::NeverOverflows)
-      return CreateOverflowTuple(II, Builder->CreateNUWAdd(LHS, RHS), false);
-    if (OR == OverflowResult::AlwaysOverflows)
-      return CreateOverflowTuple(II, Builder->CreateAdd(LHS, RHS), true);
-  }
-  // FALL THROUGH uadd into sadd
-  case Intrinsic::sadd_with_overflow:
-    // Canonicalize constants into the RHS.
+
+    case Intrinsic::uadd_with_overflow: // FALLTHROUGH
+    case Intrinsic::sadd_with_overflow: // FALLTHROUGH
+    case Intrinsic::usub_with_overflow: // FALLTHROUGH
+    case Intrinsic::ssub_with_overflow: // FALLTHROUGH
+    case Intrinsic::umul_with_overflow: // FALLTHROUGH
+    case Intrinsic::smul_with_overflow: {
     if (isa<Constant>(II->getArgOperand(0)) &&
         !isa<Constant>(II->getArgOperand(1))) {
+      // Canonicalize constants into the RHS.
       Value *LHS = II->getArgOperand(0);
       II->setArgOperand(0, II->getArgOperand(1));
       II->setArgOperand(1, LHS);
       return II;
     }
 
-    // X + undef -> undef
-    if (isa<UndefValue>(II->getArgOperand(1)))
-      return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
+    OverflowCheckFlavor OCF =
+        IntrinsicIDToOverflowCheckFlavor(II->getIntrinsicID());
+    assert(OCF != OCF_INVALID && "unexpected!");
 
-    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
-      // X + 0 -> {X, false}
-      if (RHS->isZero()) {
-        return CreateOverflowTuple(II, II->getArgOperand(0), false,
-                                    /*ReUseName*/false);
-      }
-    }
+    Value *OperationResult = nullptr;
+    Constant *OverflowResult = nullptr;
+    if (OptimizeOverflowCheck(OCF, II->getArgOperand(0), II->getArgOperand(1),
+                              *II, OperationResult, OverflowResult))
+      return CreateOverflowTuple(II, OperationResult, OverflowResult);
 
-    // We can strength reduce reduce this signed add into a regular add if we
-    // can prove that it will never overflow.
-    if (II->getIntrinsicID() == Intrinsic::sadd_with_overflow) {
-      Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-      if (WillNotOverflowSignedAdd(LHS, RHS, *II)) {
-        return CreateOverflowTuple(II, Builder->CreateNSWAdd(LHS, RHS), false);
-      }
-    }
-
-    break;
-  case Intrinsic::usub_with_overflow:
-  case Intrinsic::ssub_with_overflow: {
-    Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-    // undef - X -> undef
-    // X - undef -> undef
-    if (isa<UndefValue>(LHS) || isa<UndefValue>(RHS))
-      return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
-
-    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS)) {
-      // X - 0 -> {X, false}
-      if (ConstRHS->isZero()) {
-        return CreateOverflowTuple(II, LHS, false, /*ReUseName*/false);
-      }
-    }
-    if (II->getIntrinsicID() == Intrinsic::ssub_with_overflow) {
-      if (WillNotOverflowSignedSub(LHS, RHS, *II)) {
-        return CreateOverflowTuple(II, Builder->CreateNSWSub(LHS, RHS), false);
-      }
-    } else {
-      if (WillNotOverflowUnsignedSub(LHS, RHS, *II)) {
-        return CreateOverflowTuple(II, Builder->CreateNUWSub(LHS, RHS), false);
-      }
-    }
     break;
   }
-  case Intrinsic::umul_with_overflow: {
-    Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-    OverflowResult OR = computeOverflowForUnsignedMul(LHS, RHS, II);
-    if (OR == OverflowResult::NeverOverflows)
-      return CreateOverflowTuple(II, Builder->CreateNUWMul(LHS, RHS), false);
-    if (OR == OverflowResult::AlwaysOverflows)
-      return CreateOverflowTuple(II, Builder->CreateMul(LHS, RHS), true);
-  } // FALL THROUGH
-  case Intrinsic::smul_with_overflow:
-    // Canonicalize constants into the RHS.
-    if (isa<Constant>(II->getArgOperand(0)) &&
-        !isa<Constant>(II->getArgOperand(1))) {
-      Value *LHS = II->getArgOperand(0);
-      II->setArgOperand(0, II->getArgOperand(1));
-      II->setArgOperand(1, LHS);
-      return II;
-    }
 
-    // X * undef -> undef
-    if (isa<UndefValue>(II->getArgOperand(1)))
-      return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
-
-    if (ConstantInt *RHSI = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
-      // X*0 -> {0, false}
-      if (RHSI->isZero())
-        return ReplaceInstUsesWith(CI, Constant::getNullValue(II->getType()));
-
-      // X * 1 -> {X, false}
-      if (RHSI->equalsInt(1)) {
-        return CreateOverflowTuple(II, II->getArgOperand(0), false,
-                                    /*ReUseName*/false);
-      }
-    }
-    if (II->getIntrinsicID() == Intrinsic::smul_with_overflow) {
-      Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-      if (WillNotOverflowSignedMul(LHS, RHS, *II)) {
-        return CreateOverflowTuple(II, Builder->CreateNSWMul(LHS, RHS), false);
-      }
-    }
-    break;
   case Intrinsic::minnum:
   case Intrinsic::maxnum: {
     Value *Arg0 = II->getArgOperand(0);

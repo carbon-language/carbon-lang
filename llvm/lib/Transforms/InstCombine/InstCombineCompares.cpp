@@ -2138,6 +2138,113 @@ static Instruction *ProcessUAddIdiom(Instruction &I, Value *OrigAddV,
   return ExtractValueInst::Create(Call, 1, "uadd.overflow");
 }
 
+bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
+                                         Value *RHS, Instruction &OrigI,
+                                         Value *&Result, Constant *&Overflow) {
+  assert(!(isa<Constant>(LHS) && !isa<Constant>(RHS)) &&
+         "call with a constant RHS if possible!");
+
+  auto SetResult = [&](Value *OpResult, Constant *OverflowVal, bool ReuseName) {
+    Result = OpResult;
+    Overflow = OverflowVal;
+    if (ReuseName)
+      Result->takeName(&OrigI);
+    return true;
+  };
+
+  switch (OCF) {
+  case OCF_INVALID:
+    llvm_unreachable("bad overflow check kind!");
+
+  case OCF_UNSIGNED_ADD: {
+    OverflowResult OR = computeOverflowForUnsignedAdd(LHS, RHS, &OrigI);
+    if (OR == OverflowResult::NeverOverflows)
+      return SetResult(Builder->CreateNUWAdd(LHS, RHS), Builder->getFalse(),
+                       true);
+
+    if (OR == OverflowResult::AlwaysOverflows)
+      return SetResult(Builder->CreateAdd(LHS, RHS), Builder->getTrue(), true);
+  }
+  // FALL THROUGH uadd into sadd
+  case OCF_SIGNED_ADD: {
+    // X + undef -> undef
+    if (isa<UndefValue>(RHS))
+      return SetResult(UndefValue::get(RHS->getType()),
+                       UndefValue::get(Builder->getInt1Ty()), false);
+
+    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS))
+      // X + 0 -> {X, false}
+      if (ConstRHS->isZero())
+        return SetResult(LHS, Builder->getFalse(), false);
+
+    // We can strength reduce this signed add into a regular add if we can prove
+    // that it will never overflow.
+    if (OCF == OCF_SIGNED_ADD)
+      if (WillNotOverflowSignedAdd(LHS, RHS, OrigI))
+        return SetResult(Builder->CreateNSWAdd(LHS, RHS), Builder->getFalse(),
+                         true);
+  }
+
+  case OCF_UNSIGNED_SUB:
+  case OCF_SIGNED_SUB: {
+    // undef - X -> undef
+    // X - undef -> undef
+    if (isa<UndefValue>(LHS) || isa<UndefValue>(RHS))
+      return SetResult(UndefValue::get(LHS->getType()),
+                       UndefValue::get(Builder->getInt1Ty()), false);
+
+    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS))
+      // X - 0 -> {X, false}
+      if (ConstRHS->isZero())
+        return SetResult(UndefValue::get(LHS->getType()), Builder->getFalse(),
+                         false);
+
+    if (OCF == OCF_SIGNED_SUB) {
+      if (WillNotOverflowSignedSub(LHS, RHS, OrigI))
+        return SetResult(Builder->CreateNSWSub(LHS, RHS), Builder->getFalse(),
+                         true);
+    } else {
+      if (WillNotOverflowUnsignedSub(LHS, RHS, OrigI))
+        return SetResult(Builder->CreateNUWSub(LHS, RHS), Builder->getFalse(),
+                         true);
+    }
+    break;
+  }
+
+  case OCF_UNSIGNED_MUL: {
+    OverflowResult OR = computeOverflowForUnsignedMul(LHS, RHS, &OrigI);
+    if (OR == OverflowResult::NeverOverflows)
+      return SetResult(Builder->CreateNUWMul(LHS, RHS), Builder->getFalse(),
+                       true);
+    if (OR == OverflowResult::AlwaysOverflows)
+      return SetResult(Builder->CreateMul(LHS, RHS), Builder->getTrue(), true);
+  } // FALL THROUGH
+  case OCF_SIGNED_MUL:
+    // X * undef -> undef
+    if (isa<UndefValue>(RHS))
+      return SetResult(UndefValue::get(LHS->getType()),
+                       UndefValue::get(Builder->getInt1Ty()), false);
+
+    if (ConstantInt *RHSI = dyn_cast<ConstantInt>(RHS)) {
+      // X * 0 -> {0, false}
+      if (RHSI->isZero())
+        return SetResult(Constant::getNullValue(RHS->getType()),
+                         Builder->getFalse(), false);
+
+      // X * 1 -> {X, false}
+      if (RHSI->equalsInt(1))
+        return SetResult(LHS, Builder->getFalse(), false);
+    }
+
+    if (OCF == OCF_SIGNED_MUL)
+      if (WillNotOverflowSignedMul(LHS, RHS, OrigI))
+        return SetResult(Builder->CreateNSWMul(LHS, RHS), Builder->getFalse(),
+                         true);
+  }
+
+  return false;
+}
+
 /// \brief Recognize and process idiom involving test for multiplication
 /// overflow.
 ///
