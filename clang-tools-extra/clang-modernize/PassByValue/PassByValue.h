@@ -58,13 +58,13 @@ public:
       : Transform("PassByValue", Options), Replacer(nullptr) {}
 
   /// \see Transform::apply().
-  virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) override;
+  int apply(const clang::tooling::CompilationDatabase &Database,
+            const std::vector<std::string> &SourcePaths) override;
 
 private:
   /// \brief Setups the \c IncludeDirectives for the replacer.
-  virtual bool handleBeginSource(clang::CompilerInstance &CI,
-                                 llvm::StringRef Filename) override;
+  bool handleBeginSource(clang::CompilerInstance &CI,
+                         llvm::StringRef Filename) override;
 
   std::unique_ptr<IncludeDirectives> IncludeManager;
   ConstructorParamReplacer *Replacer;

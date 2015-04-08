@@ -47,8 +47,8 @@ public:
       : Transform("ReplaceAutoPtr", Options) {}
 
   /// \see Transform::run().
-  virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) override;
+  int apply(const clang::tooling::CompilationDatabase &Database,
+            const std::vector<std::string> &SourcePaths) override;
 };
 
 #endif // CLANG_MODERNIZE_REPLACE_AUTO_PTR_H

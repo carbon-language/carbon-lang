@@ -62,8 +62,8 @@ public:
 
 private:
   /// \brief Entry point to the callback called when matches are made.
-  virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
-      override;
+  void
+  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
   unsigned &AcceptedChanges;
   unsigned &RejectedChanges;

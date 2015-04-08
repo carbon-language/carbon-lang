@@ -31,11 +31,11 @@ public:
       : Transform("AddOverride", Options) {}
 
   /// \see Transform::run().
-  virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) override;
+  int apply(const clang::tooling::CompilationDatabase &Database,
+            const std::vector<std::string> &SourcePaths) override;
 
-  virtual bool handleBeginSource(clang::CompilerInstance &CI,
-                                 llvm::StringRef Filename) override;
+  bool handleBeginSource(clang::CompilerInstance &CI,
+                         llvm::StringRef Filename) override;
 
 private:
   AddOverrideFixer *Fixer;
