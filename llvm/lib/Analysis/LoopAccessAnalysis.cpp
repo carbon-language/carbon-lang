@@ -1044,16 +1044,8 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   for (I = Stores.begin(), IE = Stores.end(); I != IE; ++I) {
     StoreInst *ST = cast<StoreInst>(*I);
     Value* Ptr = ST->getPointerOperand();
-
-    if (isUniform(Ptr)) {
-      emitAnalysis(
-          LoopAccessReport(ST)
-          << "write to a loop invariant address could not be vectorized");
-      DEBUG(dbgs() << "LAA: We don't allow storing to uniform addresses\n");
-      CanVecMem = false;
-      return;
-    }
-
+    // Check for store to loop invariant address.
+    StoreToLoopInvariantAddress |= isUniform(Ptr);
     // If we did *not* see this pointer before, insert it to  the read-write
     // list. At this phase it is only a 'write' list.
     if (Seen.insert(Ptr).second) {
@@ -1314,7 +1306,8 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                const ValueToValueMap &Strides)
     : DepChecker(SE, L), NumComparisons(0), TheLoop(L), SE(SE), DL(DL),
       TLI(TLI), AA(AA), DT(DT), NumLoads(0), NumStores(0),
-      MaxSafeDepDistBytes(-1U), CanVecMem(false) {
+      MaxSafeDepDistBytes(-1U), CanVecMem(false),
+      StoreToLoopInvariantAddress(false) {
   if (canAnalyzeLoop())
     analyzeLoop(Strides);
 }
@@ -1326,6 +1319,10 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
     else
       OS.indent(Depth) << "Memory dependences are safe with run-time checks\n";
   }
+
+  OS.indent(Depth) << "Store to invariant address was "
+                   << (StoreToLoopInvariantAddress ? "" : "not ")
+                   << "found in loop.\n";
 
   if (Report)
     OS.indent(Depth) << "Report: " << Report->str() << "\n";
