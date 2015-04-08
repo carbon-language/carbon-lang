@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "EventListenerCommon.h"
 #include "IntelJITEventsWrapper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -29,7 +28,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-using namespace llvm::jitprofiling;
 using namespace llvm::object;
 
 #define DEBUG_TYPE "amplifier-jit-event-listener"
@@ -41,7 +39,6 @@ class IntelJITEventListener : public JITEventListener {
 
   std::unique_ptr<IntelJITEventsWrapper> Wrapper;
   MethodIDMap MethodIDs;
-  FilenameCache Filenames;
 
   typedef SmallVector<const void *, 64> MethodAddressVector;
   typedef DenseMap<const void *, MethodAddressVector>  ObjectMap;

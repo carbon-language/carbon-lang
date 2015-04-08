@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "EventListenerCommon.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
@@ -28,7 +27,6 @@
 #include <fcntl.h>
 
 using namespace llvm;
-using namespace llvm::jitprofiling;
 using namespace llvm::object;
 
 #define DEBUG_TYPE "oprofile-jit-event-listener"
