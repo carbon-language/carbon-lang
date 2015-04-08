@@ -8,9 +8,14 @@ pthread_mutex_t m;
 pthread_cond_t c;
 int x;
 
+static void my_cleanup(void *arg) {
+  printf("my_cleanup\n");
+  pthread_mutex_unlock((pthread_mutex_t*)arg);
+}
+
 void *thr1(void *p) {
   pthread_mutex_lock(&m);
-  pthread_cleanup_push((void(*)(void *arg))pthread_mutex_unlock, &m);
+  pthread_cleanup_push(my_cleanup, &m);
   barrier_wait(&barrier);
   while (x == 0)
     pthread_cond_wait(&c, &m);

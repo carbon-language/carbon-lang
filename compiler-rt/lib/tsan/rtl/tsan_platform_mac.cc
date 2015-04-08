@@ -76,6 +76,8 @@ void InitializePlatform() {
 }
 
 #ifndef SANITIZER_GO
+// Note: this function runs with async signals enabled,
+// so it must not touch any tsan state.
 int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
     void *abstime), void *c, void *m, void *abstime,
     void(*cleanup)(void *arg), void *arg) {

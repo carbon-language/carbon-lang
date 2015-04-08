@@ -1056,13 +1056,25 @@ static void *init_cond(void *c, bool force = false) {
 }
 
 struct CondMutexUnlockCtx {
+  ScopedInterceptor *si;
   ThreadState *thr;
   uptr pc;
   void *m;
 };
 
 static void cond_mutex_unlock(CondMutexUnlockCtx *arg) {
+  // pthread_cond_wait interceptor has enabled async signal delivery
+  // (see BlockingCall below). Disable async signals since we are running
+  // tsan code. Also ScopedInterceptor and BlockingCall destructors won't run
+  // since the thread is cancelled, so we have to manually execute them
+  // (the thread still can run some user code due to pthread_cleanup_push).
+  ThreadSignalContext *ctx = SigCtx(arg->thr);
+  CHECK_EQ(atomic_load(&ctx->in_blocking_func, memory_order_relaxed), 1);
+  atomic_store(&ctx->in_blocking_func, 0, memory_order_relaxed);
   MutexLock(arg->thr, arg->pc, (uptr)arg->m);
+  // Undo BlockingCall ctor effects.
+  arg->thr->ignore_interceptors--;
+  arg->si->~ScopedInterceptor();
 }
 
 INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
@@ -1077,12 +1089,17 @@ INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_wait, cond, m);
   MutexUnlock(thr, pc, (uptr)m);
   MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), false);
-  CondMutexUnlockCtx arg = {thr, pc, m};
+  CondMutexUnlockCtx arg = {&si, thr, pc, m};
+  int res = 0;
   // This ensures that we handle mutex lock even in case of pthread_cancel.
   // See test/tsan/cond_cancel.cc.
-  int res = call_pthread_cancel_with_cleanup(
-      (int(*)(void *c, void *m, void *abstime))REAL(pthread_cond_wait),
-      cond, m, 0, (void(*)(void *arg))cond_mutex_unlock, &arg);
+  {
+    // Enable signal delivery while the thread is blocked.
+    BlockingCall bc(thr);
+    res = call_pthread_cancel_with_cleanup(
+        (int(*)(void *c, void *m, void *abstime))REAL(pthread_cond_wait),
+        cond, m, 0, (void(*)(void *arg))cond_mutex_unlock, &arg);
+  }
   if (res == errno_EOWNERDEAD)
     MutexRepair(thr, pc, (uptr)m);
   MutexLock(thr, pc, (uptr)m);
@@ -1094,12 +1111,16 @@ INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_timedwait, cond, m, abstime);
   MutexUnlock(thr, pc, (uptr)m);
   MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), false);
-  CondMutexUnlockCtx arg = {thr, pc, m};
+  CondMutexUnlockCtx arg = {&si, thr, pc, m};
+  int res = 0;
   // This ensures that we handle mutex lock even in case of pthread_cancel.
   // See test/tsan/cond_cancel.cc.
-  int res = call_pthread_cancel_with_cleanup(
-      REAL(pthread_cond_timedwait), cond, m, abstime,
-      (void(*)(void *arg))cond_mutex_unlock, &arg);
+  {
+    BlockingCall bc(thr);
+    res = call_pthread_cancel_with_cleanup(
+        REAL(pthread_cond_timedwait), cond, m, abstime,
+        (void(*)(void *arg))cond_mutex_unlock, &arg);
+  }
   if (res == errno_EOWNERDEAD)
     MutexRepair(thr, pc, (uptr)m);
   MutexLock(thr, pc, (uptr)m);
