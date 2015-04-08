@@ -572,9 +572,6 @@ bool LTOCodeGenerator::compileOptimized(raw_ostream &out, std::string &errMsg) {
 
   Module *mergedModule = IRLinker.getModule();
 
-  // Mark which symbols can not be internalized
-  this->applyScopeRestrictions();
-
   legacy::PassManager codeGenPasses;
 
   formatted_raw_ostream Out(out);
