@@ -199,14 +199,12 @@ protected:
   class atom_collection_vector : public atom_collection<T> {
   public:
     atom_iterator<T> begin() const override {
-      auto *it = _atoms.empty() ? nullptr
-                                : reinterpret_cast<const void *>(_atoms.data());
+      const void *it = _atoms.data();
       return atom_iterator<T>(*this, it);
     }
 
     atom_iterator<T> end() const override {
-      auto *it = _atoms.empty() ? nullptr : reinterpret_cast<const void *>(
-                                                _atoms.data() + _atoms.size());
+      const void *it = _atoms.data() + _atoms.size();
       return atom_iterator<T>(*this, it);
     }
 
