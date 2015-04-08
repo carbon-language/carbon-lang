@@ -3404,7 +3404,8 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
     // Walk the type hierarchy to diagnose when this type has already been
     // handled (duplication), or cannot be handled (derivation inversion). We
     // ignore top-level cv-qualifiers, per [except.handle]p3
-    CatchHandlerType HandlerCHT = Context.getCanonicalType(H->getCaughtType());
+    CatchHandlerType HandlerCHT =
+        (QualType)Context.getCanonicalType(H->getCaughtType());
 
     // We can ignore whether the type is a reference or a pointer; we need the
     // underlying declaration type in order to get at the underlying record
