@@ -3504,25 +3504,34 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   ARMCC::CondCodes CondCode, CondCode2;
   FPCCToARMCC(CC, CondCode, CondCode2);
 
-  // Try to generate VSEL on ARMv8.
+  // Try to generate VMAXNM/VMINNM on ARMv8.
   if (Subtarget->hasFPARMv8() && (TrueVal.getValueType() == MVT::f32 ||
                                   TrueVal.getValueType() == MVT::f64)) {
-    // We can select VMAXNM/VMINNM from a compare followed by a select with the
+    // We can use VMAXNM/VMINNM for a compare followed by a select with the
     // same operands, as follows:
-    //   c = fcmp [ogt, olt, ugt, ult] a, b
+    //   c = fcmp [?gt, ?ge, ?lt, ?le] a, b
     //   select c, a, b
-    // We only do this in unsafe-fp-math, because signed zeros and NaNs are
-    // handled differently than the original code sequence.
+    // In NoNaNsFPMath the CC will have been changed from, e.g., 'ogt' to 'gt'.
+    // We only do this transformation in UnsafeFPMath and for no-NaNs
+    // comparisons, because signed zeros and NaNs are handled differently than
+    // the original code sequence.
+    // FIXME: There are more cases that can be transformed even with NaNs,
+    // signed zeroes and safe math.  E.g. in the following, the result will be
+    // FalseVal if a is a NaN or -0./0. and that's what vmaxnm will give, too.
+    //   c = fcmp ogt, a, 0. ; select c, a, 0. => vmaxnm a, 0.
+    // FIXME: There is similar code that allows some extensions in
+    // AArch64TargetLowering::LowerSELECT_CC that should be shared with this
+    // code.
     if (getTargetMachine().Options.UnsafeFPMath) {
       if (LHS == TrueVal && RHS == FalseVal) {
-        if (CC == ISD::SETOGT || CC == ISD::SETUGT)
+        if (CC == ISD::SETGT || CC == ISD::SETGE)
           return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
-        if (CC == ISD::SETOLT || CC == ISD::SETULT)
+        if (CC == ISD::SETLT || CC == ISD::SETLE)
           return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
       } else if (LHS == FalseVal && RHS == TrueVal) {
-        if (CC == ISD::SETOLT || CC == ISD::SETULT)
+        if (CC == ISD::SETLT || CC == ISD::SETLE)
           return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
-        if (CC == ISD::SETOGT || CC == ISD::SETUGT)
+        if (CC == ISD::SETGT || CC == ISD::SETGE)
           return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
       }
     }
