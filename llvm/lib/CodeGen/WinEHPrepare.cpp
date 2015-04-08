@@ -499,6 +499,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
   // cleans up references to outlined blocks that will be deleted.
   for (auto &LPadPair : NestedLPtoOriginalLP)
     completeNestedLandingPad(&F, LPadPair.first, LPadPair.second, FrameVarInfo);
+  NestedLPtoOriginalLP.clear();
 
   F.addFnAttr("wineh-parent", F.getName());
 
@@ -554,10 +555,10 @@ bool WinEHPrepare::prepareExceptionHandlers(
           ++InsertPt;
           ParentAlloca =
               new AllocaInst(ParentInst->getType(), nullptr,
-                             ParentInst->getName() + ".reg2mem", InsertPt);
+                             ParentInst->getName() + ".reg2mem", AllocaInsertPt);
           new StoreInst(ParentInst, ParentAlloca, InsertPt);
         } else {
-          ParentAlloca = DemoteRegToStack(*ParentInst, true, ParentInst);
+          ParentAlloca = DemoteRegToStack(*ParentInst, true, AllocaInsertPt);
         }
       }
     }

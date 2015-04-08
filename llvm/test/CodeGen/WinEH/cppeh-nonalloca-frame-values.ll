@@ -55,6 +55,8 @@ $"\01??_R0H@8" = comdat any
 ; CHECK: entry:
 ; CHECK:   [[NUMEXCEPTIONS_REGMEM:\%.+]] = alloca i32
 ; CHECK:   [[I_REGMEM:\%.+]] = alloca i32
+; CHECK:   [[A_REGMEM:\%.+]] = alloca i32*
+; CHECK:   [[B_REGMEM:\%.+]] = alloca i32*
 ; CHECK:   [[E_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   [[EXCEPTIONVAL:\%.+]] = alloca [10 x i32], align 16
 ; CHECK:   [[DATA_PTR:\%.+]] = alloca i64, align 8
@@ -62,11 +64,9 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   [[TMP:\%.+]] = bitcast [10 x i32]* [[EXCEPTIONVAL]] to i8*
 ; CHECK:   call void @llvm.lifetime.start(i64 40, i8* [[TMP]])
 ; CHECK:   store i64 0, i64* [[DATA_PTR]], align 8
-; CHECK:   [[A_REGMEM:\%.+]] = alloca i32*
 ; CHECK:   [[A_PTR:\%.+]] = bitcast i64* [[DATA_PTR]] to i32*
 ; CHECK:   store i32* [[A_PTR]], i32** [[A_REGMEM]]
 ; CHECK:   [[B_PTR:\%.+]] = getelementptr inbounds %struct.SomeData, %struct.SomeData* [[TMPCAST]], i64 0, i32 1
-; CHECK:   [[B_REGMEM:\%.+]] = alloca i32*
 ; CHECK:   store i32* [[B_PTR]], i32** [[B_REGMEM]]
 ; CHECK:   store i32 0, i32* [[NUMEXCEPTIONS_REGMEM]]
 ; CHECK:   store i32 0, i32* [[I_REGMEM]]
