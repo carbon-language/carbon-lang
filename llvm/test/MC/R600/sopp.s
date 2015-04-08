@@ -1,4 +1,16 @@
-// RUN: llvm-mc -arch=amdgcn -mcpu=SI  -show-encoding %s | FileCheck %s
+// RUN: llvm-mc -arch=amdgcn -show-encoding %s | FileCheck %s
+// RUN: llvm-mc -arch=amdgcn -mcpu=SI -show-encoding %s | FileCheck %s
+
+//===----------------------------------------------------------------------===//
+// Edge Cases
+//===----------------------------------------------------------------------===//
+
+s_nop 0       // CHECK: s_nop 0 ; encoding: [0x00,0x00,0x80,0xbf] 
+s_nop 0xffff  // CHECK: s_nop 0xffff ; encoding: [0xff,0xff,0x80,0xbf]
+
+//===----------------------------------------------------------------------===//
+// Instructions
+//===----------------------------------------------------------------------===//
 
   s_nop 1            // CHECK: s_nop 1 ; encoding: [0x01,0x00,0x80,0xbf]
   s_endpgm           // CHECK: s_endpgm ; encoding: [0x00,0x00,0x81,0xbf]

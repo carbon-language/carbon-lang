@@ -99,6 +99,10 @@ public:
 
   void EmitEndOfAsmFile(Module &M) override;
 
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       unsigned AsmVariant, const char *ExtraCode,
+                       raw_ostream &O);
+
 protected:
   std::vector<std::string> DisasmLines, HexLines;
   size_t DisasmLineMaxLen;

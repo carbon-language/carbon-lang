@@ -6,6 +6,15 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+def isSICI : Predicate<
+  "Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS ||"
+  "Subtarget->getGeneration() == AMDGPUSubtarget::SEA_ISLANDS"
+>, AssemblerPredicate<"FeatureGCN1Encoding">;
+def isCI : Predicate<"Subtarget->getGeneration() "
+                      ">= AMDGPUSubtarget::SEA_ISLANDS">;
+def isVI : Predicate <
+  "Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS">,
+  AssemblerPredicate<"FeatureGCN3Encoding">;
 
 class vop {
   field bits<9> SI3;
@@ -233,13 +242,87 @@ def FRAMEri32 : Operand<iPTR> {
   let MIOperandInfo = (ops i32:$ptr, i32imm:$index);
 }
 
+def SoppBrTarget : AsmOperandClass {
+  let Name = "SoppBrTarget";
+  let ParserMethod = "parseSOppBrTarget";
+}
+
 def sopp_brtarget : Operand<OtherVT> {
   let EncoderMethod = "getSOPPBrEncoding";
   let OperandType = "OPERAND_PCREL";
+  let ParserMatchClass = SoppBrTarget;
 }
 
 include "SIInstrFormats.td"
 include "VIInstrFormats.td"
+
+def MubufOffsetMatchClass : AsmOperandClass {
+  let Name = "MubufOffset";
+  let ParserMethod = "parseMubufOptionalOps";
+  let RenderMethod = "addImmOperands";
+}
+
+class DSOffsetBaseMatchClass <string parser> : AsmOperandClass {
+  let Name = "DSOffset"#parser;
+  let ParserMethod = parser;
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isDSOffset";
+}
+
+def DSOffsetMatchClass : DSOffsetBaseMatchClass <"parseDSOptionalOps">;
+def DSOffsetGDSMatchClass : DSOffsetBaseMatchClass <"parseDSOffsetOptional">;
+
+def DSOffset01MatchClass : AsmOperandClass {
+  let Name = "DSOffset1";
+  let ParserMethod = "parseDSOff01OptionalOps";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isDSOffset01";
+}
+
+class GDSBaseMatchClass <string parser> : AsmOperandClass {
+  let Name = "GDS"#parser;
+  let PredicateMethod = "isImm";
+  let ParserMethod = parser;
+  let RenderMethod = "addImmOperands";
+}
+
+def GDSMatchClass : GDSBaseMatchClass <"parseDSOptionalOps">;
+def GDS01MatchClass : GDSBaseMatchClass <"parseDSOff01OptionalOps">;
+
+def GLCMatchClass : AsmOperandClass {
+  let Name = "GLC";
+  let PredicateMethod = "isImm";
+  let ParserMethod = "parseMubufOptionalOps";
+  let RenderMethod = "addImmOperands";
+}
+
+def SLCMatchClass : AsmOperandClass {
+  let Name = "SLC";
+  let PredicateMethod = "isImm";
+  let ParserMethod = "parseMubufOptionalOps";
+  let RenderMethod = "addImmOperands";
+}
+
+def TFEMatchClass : AsmOperandClass {
+  let Name = "TFE";
+  let PredicateMethod = "isImm";
+  let ParserMethod = "parseMubufOptionalOps";
+  let RenderMethod = "addImmOperands";
+}
+
+def OModMatchClass : AsmOperandClass {
+  let Name = "OMod";
+  let PredicateMethod = "isImm";
+  let ParserMethod = "parseVOP3OptionalOps";
+  let RenderMethod = "addImmOperands";
+}
+
+def ClampMatchClass : AsmOperandClass {
+  let Name = "Clamp";
+  let PredicateMethod = "isImm";
+  let ParserMethod = "parseVOP3OptionalOps";
+  let RenderMethod = "addImmOperands";
+}
 
 let OperandType = "OPERAND_IMMEDIATE" in {
 
@@ -254,35 +337,52 @@ def addr64 : Operand<i1> {
 }
 def mbuf_offset : Operand<i16> {
   let PrintMethod = "printMBUFOffset";
+  let ParserMatchClass = MubufOffsetMatchClass;
 }
-def ds_offset : Operand<i16> {
+class ds_offset_base <AsmOperandClass mc> : Operand<i16> {
   let PrintMethod = "printDSOffset";
+  let ParserMatchClass = mc;
 }
+def ds_offset : ds_offset_base <DSOffsetMatchClass>;
+def ds_offset_gds : ds_offset_base <DSOffsetGDSMatchClass>;
+
 def ds_offset0 : Operand<i8> {
   let PrintMethod = "printDSOffset0";
+  let ParserMatchClass = DSOffset01MatchClass;
 }
 def ds_offset1 : Operand<i8> {
   let PrintMethod = "printDSOffset1";
+  let ParserMatchClass = DSOffset01MatchClass;
 }
-def gds : Operand <i1> {
+class gds_base <AsmOperandClass mc> : Operand <i1> {
   let PrintMethod = "printGDS";
+  let ParserMatchClass = mc;
 }
+def gds : gds_base <GDSMatchClass>;
+
+def gds01 : gds_base <GDS01MatchClass>;
+
 def glc : Operand <i1> {
   let PrintMethod = "printGLC";
+  let ParserMatchClass = GLCMatchClass;
 }
 def slc : Operand <i1> {
   let PrintMethod = "printSLC";
+  let ParserMatchClass = SLCMatchClass;
 }
 def tfe : Operand <i1> {
   let PrintMethod = "printTFE";
+  let ParserMatchClass = TFEMatchClass;
 }
 
 def omod : Operand <i32> {
   let PrintMethod = "printOModSI";
+  let ParserMatchClass = OModMatchClass;
 }
 
 def ClampMod : Operand <i1> {
   let PrintMethod = "printClampSI";
+  let ParserMatchClass = ClampMatchClass;
 }
 
 } // End OperandType = "OPERAND_IMMEDIATE"
@@ -392,12 +492,18 @@ class SOP1_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
 class SOP1_Real_si <sop1 op, string opName, dag outs, dag ins, string asm> :
   SOP1 <outs, ins, asm, []>,
   SOP1e <op.SI>,
-  SIMCInstr<opName, SISubtarget.SI>;
+  SIMCInstr<opName, SISubtarget.SI> {
+  let isCodeGenOnly = 0;
+  let AssemblerPredicates = [isSICI];
+}
 
 class SOP1_Real_vi <sop1 op, string opName, dag outs, dag ins, string asm> :
   SOP1 <outs, ins, asm, []>,
   SOP1e <op.VI>,
-  SIMCInstr<opName, SISubtarget.VI>;
+  SIMCInstr<opName, SISubtarget.VI> {
+  let isCodeGenOnly = 0;
+  let AssemblerPredicates = [isVI];
+}
 
 multiclass SOP1_m <sop1 op, string opName, dag outs, dag ins, string asm,
                    list<dag> pattern> {
@@ -473,12 +579,16 @@ class SOP2_Pseudo<string opName, dag outs, dag ins, list<dag> pattern> :
 class SOP2_Real_si<sop2 op, string opName, dag outs, dag ins, string asm> :
   SOP2<outs, ins, asm, []>,
   SOP2e<op.SI>,
-  SIMCInstr<opName, SISubtarget.SI>;
+  SIMCInstr<opName, SISubtarget.SI> {
+  let AssemblerPredicates = [isSICI];
+}
 
 class SOP2_Real_vi<sop2 op, string opName, dag outs, dag ins, string asm> :
   SOP2<outs, ins, asm, []>,
   SOP2e<op.VI>,
-  SIMCInstr<opName, SISubtarget.VI>;
+  SIMCInstr<opName, SISubtarget.VI> {
+  let AssemblerPredicates = [isVI];
+}
 
 multiclass SOP2_SELECT_32 <sop2 op, string opName, list<dag> pattern> {
   def "" : SOP2_Pseudo <opName, (outs SReg_32:$dst),
@@ -540,12 +650,18 @@ class SOPK_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
 class SOPK_Real_si <sopk op, string opName, dag outs, dag ins, string asm> :
   SOPK <outs, ins, asm, []>,
   SOPKe <op.SI>,
-  SIMCInstr<opName, SISubtarget.SI>;
+  SIMCInstr<opName, SISubtarget.SI> {
+  let AssemblerPredicates = [isSICI];
+  let isCodeGenOnly = 0;
+}
 
 class SOPK_Real_vi <sopk op, string opName, dag outs, dag ins, string asm> :
   SOPK <outs, ins, asm, []>,
   SOPKe <op.VI>,
-  SIMCInstr<opName, SISubtarget.VI>;
+  SIMCInstr<opName, SISubtarget.VI> {
+  let AssemblerPredicates = [isVI];
+  let isCodeGenOnly = 0;
+}
 
 multiclass SOPK_m <sopk op, string opName, dag outs, dag ins, string opAsm,
                    string asm = opName#opAsm> {
@@ -620,13 +736,17 @@ class SMRD_Real_si <bits<5> op, string opName, bit imm, dag outs, dag ins,
                     string asm> :
   SMRD <outs, ins, asm, []>,
   SMRDe <op, imm>,
-  SIMCInstr<opName, SISubtarget.SI>;
+  SIMCInstr<opName, SISubtarget.SI> {
+  let AssemblerPredicates = [isSICI];
+}
 
 class SMRD_Real_vi <bits<8> op, string opName, bit imm, dag outs, dag ins,
                     string asm> :
   SMRD <outs, ins, asm, []>,
   SMEMe_vi <op, imm>,
-  SIMCInstr<opName, SISubtarget.VI>;
+  SIMCInstr<opName, SISubtarget.VI> {
+  let AssemblerPredicates = [isVI];
+}
 
 multiclass SMRD_m <bits<5> op, string opName, bit imm, dag outs, dag ins,
                    string asm, list<dag> pattern> {
@@ -665,8 +785,14 @@ multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
 def InputMods : OperandWithDefaultOps <i32, (ops (i32 0))> {
   let PrintMethod = "printOperandAndMods";
 }
+
+def InputModsMatchClass : AsmOperandClass {
+  let Name = "RegWithInputMods";
+}
+
 def InputModsNoDefault : Operand <i32> {
   let PrintMethod = "printOperandAndMods";
+  let ParserMatchClass = InputModsMatchClass;
 }
 
 class getNumSrcArgs<ValueType Src1, ValueType Src2> {
@@ -874,7 +1000,8 @@ class AtomicNoRet <string noRetOp, bit isRet> {
 class VOP1_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP1Common <outs, ins, "", pattern>,
   VOP <opName>,
-  SIMCInstr <opName#"_e32", SISubtarget.NONE> {
+  SIMCInstr <opName#"_e32", SISubtarget.NONE>,
+  MnemonicAlias<opName#"_e32", opName> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 
@@ -909,18 +1036,23 @@ multiclass VOP1SI_m <vop1 op, dag outs, dag ins, string asm, list<dag> pattern,
 class VOP2_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP2Common <outs, ins, "", pattern>,
   VOP <opName>,
-  SIMCInstr<opName#"_e32", SISubtarget.NONE> {
+  SIMCInstr<opName#"_e32", SISubtarget.NONE>,
+  MnemonicAlias<opName#"_e32", opName> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 }
 
 class VOP2_Real_si <string opName, vop2 op, dag outs, dag ins, string asm> :
   VOP2 <op.SI, outs, ins, opName#asm, []>,
-  SIMCInstr <opName#"_e32", SISubtarget.SI>;
+  SIMCInstr <opName#"_e32", SISubtarget.SI> {
+  let AssemblerPredicates = [isSICI];
+}
 
 class VOP2_Real_vi <string opName, vop2 op, dag outs, dag ins, string asm> :
   VOP2 <op.VI, outs, ins, opName#asm, []>,
-  SIMCInstr <opName#"_e32", SISubtarget.VI>;
+  SIMCInstr <opName#"_e32", SISubtarget.VI> {
+  let AssemblerPredicates = [isVI];
+}
 
 multiclass VOP2SI_m <vop2 op, dag outs, dag ins, string asm, list<dag> pattern,
                      string opName, string revOp> {
@@ -966,7 +1098,8 @@ class VOP3DisableModFields <bit HasSrc0Mods,
 class VOP3_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP3Common <outs, ins, "", pattern>,
   VOP <opName>,
-  SIMCInstr<opName#"_e64", SISubtarget.NONE> {
+  SIMCInstr<opName#"_e64", SISubtarget.NONE>,
+  MnemonicAlias<opName#"_e64", opName> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 }
@@ -974,22 +1107,30 @@ class VOP3_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
 class VOP3_Real_si <bits<9> op, dag outs, dag ins, string asm, string opName> :
   VOP3Common <outs, ins, asm, []>,
   VOP3e <op>,
-  SIMCInstr<opName#"_e64", SISubtarget.SI>;
+  SIMCInstr<opName#"_e64", SISubtarget.SI> {
+  let AssemblerPredicates = [isSICI];
+}
 
 class VOP3_Real_vi <bits<10> op, dag outs, dag ins, string asm, string opName> :
   VOP3Common <outs, ins, asm, []>,
   VOP3e_vi <op>,
-  SIMCInstr <opName#"_e64", SISubtarget.VI>;
+  SIMCInstr <opName#"_e64", SISubtarget.VI> {
+  let AssemblerPredicates = [isVI];
+}
 
 class VOP3b_Real_si <bits<9> op, dag outs, dag ins, string asm, string opName> :
   VOP3Common <outs, ins, asm, []>,
   VOP3be <op>,
-  SIMCInstr<opName#"_e64", SISubtarget.SI>;
+  SIMCInstr<opName#"_e64", SISubtarget.SI> {
+  let AssemblerPredicates = [isSICI];
+}
 
 class VOP3b_Real_vi <bits<10> op, dag outs, dag ins, string asm, string opName> :
   VOP3Common <outs, ins, asm, []>,
   VOP3be_vi <op>,
-  SIMCInstr <opName#"_e64", SISubtarget.VI>;
+  SIMCInstr <opName#"_e64", SISubtarget.VI> {
+  let AssemblerPredicates = [isVI];
+}
 
 multiclass VOP3_m <vop op, dag outs, dag ins, string asm, list<dag> pattern,
                    string opName, int NumSrcArgs, bit HasMods = 1> {
@@ -1131,12 +1272,16 @@ multiclass VOP2SI_3VI_m <vop3 op, string opName, dag outs, dag ins,
   }
 
   def _si : VOP2 <op.SI3{5-0}, outs, ins, asm, []>,
-            SIMCInstr <opName, SISubtarget.SI>;
+            SIMCInstr <opName, SISubtarget.SI> {
+            let AssemblerPredicates = [isSICI];
+  }
 
   def _vi : VOP3Common <outs, ins, asm, []>,
             VOP3e_vi <op.VI3>,
             VOP3DisableFields <1, 0, 0>,
-            SIMCInstr <opName, SISubtarget.VI>;
+            SIMCInstr <opName, SISubtarget.VI> {
+            let AssemblerPredicates = [isVI];
+  }
 }
 
 multiclass VOP1_Helper <vop1 op, string opName, dag outs,
@@ -1289,7 +1434,8 @@ let isCodeGenOnly = 0 in {
 class VOPC_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOPCCommon <ins, "", pattern>,
   VOP <opName>,
-  SIMCInstr<opName#"_e32", SISubtarget.NONE> {
+  SIMCInstr<opName#"_e32", SISubtarget.NONE>,
+  MnemonicAlias<opName#"_e32", opName> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 }
@@ -1540,7 +1686,9 @@ class DS_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
 class DS_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm> :
   DS <outs, ins, asm, []>,
   DSe <op>,
-  SIMCInstr <opName, SISubtarget.SI>;
+  SIMCInstr <opName, SISubtarget.SI> {
+  let isCodeGenOnly = 0;
+}
 
 class DS_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
   DS <outs, ins, asm, []>,
@@ -1554,6 +1702,7 @@ class DS_Off16_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm
   bits<16> offset;
   let offset0 = offset{7-0};
   let offset1 = offset{15-8};
+  let isCodeGenOnly = 0;
 }
 
 class DS_Off16_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm> :
@@ -1581,12 +1730,12 @@ multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A_Off8_RET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
   dag ins = (ins VGPR_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
-                 gds:$gds, M0Reg:$m0),
+                 gds01:$gds, M0Reg:$m0),
   string asm = opName#" $vdst, $addr"#"$offset0"#"$offset1$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
 
-  let data0 = 0, data1 = 0 in {
+  let data0 = 0, data1 = 0, AsmMatchConverter = "cvtDSOffset01" in {
     def _si : DS_Real_si <op, opName, outs, ins, asm>;
     def _vi : DS_Real_vi <op, opName, outs, ins, asm>;
   }
@@ -1610,12 +1759,12 @@ multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs),
   dag ins = (ins VGPR_32:$addr, rc:$data0, rc:$data1,
-              ds_offset0:$offset0, ds_offset1:$offset1, gds:$gds, M0Reg:$m0),
+              ds_offset0:$offset0, ds_offset1:$offset1, gds01:$gds, M0Reg:$m0),
   string asm = opName#" $addr, $data0, $data1"#"$offset0"#"$offset1"#"$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
 
-  let vdst = 0 in {
+  let vdst = 0, AsmMatchConverter = "cvtDSOffset01" in {
     def _si : DS_Real_si <op, opName, outs, ins, asm>;
     def _vi : DS_Real_vi <op, opName, outs, ins, asm>;
   }
@@ -1689,7 +1838,7 @@ multiclass DS_0A_RET <bits<8> op, string opName,
 
 multiclass DS_1A_RET_GDS <bits<8> op, string opName,
   dag outs = (outs VGPR_32:$vdst),
-  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
+  dag ins = (ins VGPR_32:$addr, ds_offset_gds:$offset, M0Reg:$m0),
   string asm = opName#" $vdst, $addr"#"$offset gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1798,6 +1947,20 @@ class mubuf <bits<7> si, bits<7> vi = si> {
   field bits<7> VI = vi;
 }
 
+let isCodeGenOnly = 0 in {
+
+class MUBUF_si <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
+  MUBUF <outs, ins, asm, pattern>, MUBUFe <op> {
+  let lds  = 0;
+}
+
+} // End let isCodeGenOnly = 0
+
+class MUBUF_vi <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
+  MUBUF <outs, ins, asm, pattern>, MUBUFe_vi <op> {
+  let lds = 0;
+}
+
 class MUBUFAddr64Table <bit is_addr64, string suffix = ""> {
   bit IsAddr64 = is_addr64;
   string OpName = NAME # suffix;
@@ -1841,7 +2004,7 @@ multiclass MUBUF_m <mubuf op, string opName, dag outs, dag ins, string asm,
   def "" : MUBUF_Pseudo <opName, outs, ins, pattern>,
            MUBUFAddr64Table <0>;
 
-  let addr64 = 0 in {
+  let addr64 = 0, isCodeGenOnly = 0 in {
     def _si : MUBUF_Real_si <op, opName, outs, ins, asm>;
   }
 
@@ -1854,17 +2017,12 @@ multiclass MUBUFAddr64_m <mubuf op, string opName, dag outs,
   def "" : MUBUF_Pseudo <opName, outs, ins, pattern>,
            MUBUFAddr64Table <1>;
 
-  let addr64 = 1 in {
+  let addr64 = 1, isCodeGenOnly = 0 in {
     def _si : MUBUF_Real_si <op, opName, outs, ins, asm>;
   }
 
   // There is no VI version. If the pseudo is selected, it should be lowered
   // for VI appropriately.
-}
-
-class MUBUF_si <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
-  MUBUF <outs, ins, asm, pattern>, MUBUFe <op> {
-  let lds = 0;
 }
 
 multiclass MUBUFAtomicOffset_m <mubuf op, string opName, dag outs, dag ins,

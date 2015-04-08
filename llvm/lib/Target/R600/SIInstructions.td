@@ -27,18 +27,10 @@ def SendMsgImm : Operand<i32> {
 }
 
 def isGCN : Predicate<"Subtarget->getGeneration() "
-                      ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">;
+                      ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">,
+            AssemblerPredicate<"FeatureGCN">;
 def isSI : Predicate<"Subtarget->getGeneration() "
                       "== AMDGPUSubtarget::SOUTHERN_ISLANDS">;
-def isSICI : Predicate<
-  "Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS ||"
-  "Subtarget->getGeneration() == AMDGPUSubtarget::SEA_ISLANDS"
->;
-def isCI : Predicate<"Subtarget->getGeneration() "
-                      ">= AMDGPUSubtarget::SEA_ISLANDS">;
-def isVI : Predicate <
-  "Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS"
->;
 
 def HasFlatAddressSpace : Predicate<"Subtarget.hasFlatAddressSpace()">;
 
@@ -242,9 +234,9 @@ defm S_MAX_U32 : SOP2_32 <sop2<0x09>, "s_max_u32",
 >;
 } // End Defs = [SCC]
 
-defm S_CSELECT_B32 : SOP2_SELECT_32 <sop2<0x0a>, "s_cselect_b32", []>;
 
 let Uses = [SCC] in {
+  defm S_CSELECT_B32 : SOP2_32 <sop2<0x0a>, "s_cselect_b32", []>;
   defm S_CSELECT_B64 : SOP2_64 <sop2<0x0b>, "s_cselect_b64", []>;
 } // End Uses = [SCC]
 
@@ -1639,7 +1631,6 @@ defm V_MBCNT_HI_U32_B32 : VOP2_VI3_Inst <vop23<0x24, 0x28d>, "v_mbcnt_hi_u32_b32
 defm V_LDEXP_F32 : VOP2_VI3_Inst <vop23<0x2b, 0x288>, "v_ldexp_f32",
   VOP_F32_F32_I32, AMDGPUldexp
 >;
-
 
 defm V_CVT_PKACCUM_U8_F32 : VOP2_VI3_Inst <vop23<0x2c, 0x1f0>, "v_cvt_pkaccum_u8_f32",
   VOP_I32_F32_I32>; // TODO: set "Uses = dst"

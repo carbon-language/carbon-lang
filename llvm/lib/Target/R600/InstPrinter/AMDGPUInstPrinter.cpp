@@ -127,7 +127,8 @@ void AMDGPUInstPrinter::printTFE(const MCInst *MI, unsigned OpNo,
     O << " tfe";
 }
 
-void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
+void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O,
+                                        const MCRegisterInfo &MRI) {
   switch (reg) {
   case AMDGPU::VCC:
     O << "vcc";
@@ -297,7 +298,7 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       break;
 
     default:
-      printRegOperand(Op.getReg(), O);
+      printRegOperand(Op.getReg(), O, MRI);
       break;
     }
   } else if (Op.isImm()) {

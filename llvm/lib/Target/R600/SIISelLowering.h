@@ -113,6 +113,10 @@ public:
   MachineSDNode *buildScratchRSRC(SelectionDAG &DAG,
                                   SDLoc DL,
                                   SDValue Ptr) const;
+
+  std::pair<unsigned, const TargetRegisterClass *> getRegForInlineAsmConstraint(
+                                   const TargetRegisterInfo *TRI,
+                                   const std::string &Constraint, MVT VT) const;
 };
 
 } // End namespace llvm

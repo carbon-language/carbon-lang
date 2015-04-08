@@ -71,6 +71,9 @@ private:
   int LocalMemorySize;
   bool EnableVGPRSpilling;
   bool SGPRInitBug;
+  bool IsGCN;
+  bool GCN1Encoding;
+  bool GCN3Encoding;
 
   AMDGPUFrameLowering FrameLowering;
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
