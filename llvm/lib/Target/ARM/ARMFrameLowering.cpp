@@ -311,6 +311,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     return;
 
   StackAdjustingInsts DefCFAOffsetCandidates;
+  bool HasFP = hasFP(MF);
 
   // Allocate the vararg register save area.
   if (ArgRegsSaveSize) {
@@ -327,6 +328,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       DefCFAOffsetCandidates.addInst(std::prev(MBBI),
                                      NumBytes - ArgRegsSaveSize, true);
     }
+    DefCFAOffsetCandidates.emitDefCFAOffsets(MMI, MBB, dl, TII, HasFP);
     return;
   }
 
@@ -375,7 +377,6 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // Determine starting offsets of spill areas.
-  bool HasFP = hasFP(MF);
   unsigned GPRCS1Offset = NumBytes - ArgRegsSaveSize - GPRCS1Size;
   unsigned GPRCS2Offset = GPRCS1Offset - GPRCS2Size;
   unsigned DPRAlign = DPRCSSize ? std::min(8U, Align) : 4U;
