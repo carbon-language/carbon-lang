@@ -15,6 +15,7 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_MAC
+#include "sanitizer_posix.h"
 
 namespace __sanitizer {
 

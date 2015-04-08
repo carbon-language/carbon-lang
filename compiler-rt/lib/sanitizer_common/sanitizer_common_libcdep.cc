@@ -17,6 +17,10 @@
 #include "sanitizer_stacktrace.h"
 #include "sanitizer_symbolizer.h"
 
+#if SANITIZER_POSIX
+#include "sanitizer_posix.h"
+#endif
+
 namespace __sanitizer {
 
 bool ReportFile::PrintsToTty() {

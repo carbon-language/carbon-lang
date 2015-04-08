@@ -57,12 +57,6 @@ int internal_snprintf(char *buffer, uptr length, const char *format, ...);
 // Optimized for the case when the result is true.
 bool mem_is_zero(const char *mem, uptr size);
 
-
-// Memory
-uptr internal_mmap(void *addr, uptr length, int prot, int flags,
-                   int fd, u64 offset);
-uptr internal_munmap(void *addr, uptr length);
-
 // I/O
 const fd_t kInvalidFd = -1;
 const fd_t kStdinFd = 0;
@@ -70,10 +64,6 @@ const fd_t kStdoutFd = 1;
 const fd_t kStderrFd = 2;
 uptr internal_close(fd_t fd);
 int internal_isatty(fd_t fd);
-
-// Use __sanitizer::OpenFile() instead.
-uptr internal_open(const char *filename, int flags);
-uptr internal_open(const char *filename, int flags, u32 mode);
 
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
@@ -91,39 +81,14 @@ uptr internal_rename(const char *oldpath, const char *newpath);
 void NORETURN internal__exit(int exitcode);
 uptr internal_lseek(fd_t fd, OFF_T offset, int whence);
 
-uptr internal_ptrace(int request, int pid, void *addr, void *data);
-uptr internal_waitpid(int pid, int *status, int options);
 uptr internal_getpid();
 uptr internal_getppid();
-
-int internal_fork();
 
 // Threading
 uptr internal_sched_yield();
 
-// These functions call appropriate pthread_ functions directly, bypassing
-// the interceptor. They are weak and may not be present in some tools.
-SANITIZER_WEAK_ATTRIBUTE
-int real_pthread_create(void *th, void *attr, void *(*callback)(void *),
-                        void *param);
-SANITIZER_WEAK_ATTRIBUTE
-int real_pthread_join(void *th, void **ret);
-
-#define DEFINE_REAL_PTHREAD_FUNCTIONS                                          \
-  namespace __sanitizer {                                                      \
-  int real_pthread_create(void *th, void *attr, void *(*callback)(void *),     \
-                          void *param) {                                       \
-    return REAL(pthread_create)(th, attr, callback, param);                    \
-  }                                                                            \
-  int real_pthread_join(void *th, void **ret) {                                \
-    return REAL(pthread_join(th, ret));                                        \
-  }                                                                            \
-  }  // namespace __sanitizer
-
 // Error handling
 bool internal_iserror(uptr retval, int *rverrno = 0);
-
-int internal_sigaction(int signum, const void *act, void *oldact);
 
 }  // namespace __sanitizer
 

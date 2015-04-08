@@ -9,7 +9,7 @@
 //
 // This file is shared between AddressSanitizer and ThreadSanitizer
 // run-time libraries and implements POSIX-specific functions from
-// sanitizer_libc.h.
+// sanitizer_posix.h.
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
@@ -17,6 +17,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_posix.h"
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 

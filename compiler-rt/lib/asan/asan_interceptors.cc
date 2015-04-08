@@ -23,6 +23,10 @@
 #include "asan_suppressions.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
+#if SANITIZER_POSIX
+#include "sanitizer_common/sanitizer_posix.h"
+#endif
+
 namespace __asan {
 
 // Return true if we can quickly decide that the region is unpoisoned.

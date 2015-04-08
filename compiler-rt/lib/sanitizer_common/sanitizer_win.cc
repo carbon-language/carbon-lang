@@ -395,29 +395,12 @@ static __declspec(allocate(".CRT$XID")) int (*__run_atexit)() = RunAtexit;
 #endif
 
 // ------------------ sanitizer_libc.h
-uptr internal_mmap(void *addr, uptr length, int prot, int flags,
-                   int fd, u64 offset) {
-  UNIMPLEMENTED();
-}
-
-uptr internal_munmap(void *addr, uptr length) {
-  UNIMPLEMENTED();
-}
-
 uptr internal_close(fd_t fd) {
   UNIMPLEMENTED();
 }
 
 int internal_isatty(fd_t fd) {
   return _isatty(fd);
-}
-
-uptr internal_open(const char *filename, int flags) {
-  UNIMPLEMENTED();
-}
-
-uptr internal_open(const char *filename, int flags, u32 mode) {
-  UNIMPLEMENTED();
 }
 
 fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {

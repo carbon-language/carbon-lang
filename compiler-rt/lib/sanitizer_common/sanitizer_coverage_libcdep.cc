@@ -230,17 +230,17 @@ void CoverageData::InitializeGuardArray(s32 *guards) {
 
 void CoverageData::Disable() {
   if (pc_array) {
-    internal_munmap(pc_array, sizeof(uptr) * kPcArrayMaxSize);
+    UnmapOrDie(pc_array, sizeof(uptr) * kPcArrayMaxSize);
     pc_array = nullptr;
   }
   if (cc_array) {
-    internal_munmap(cc_array, sizeof(uptr *) * kCcArrayMaxSize);
+    UnmapOrDie(cc_array, sizeof(uptr *) * kCcArrayMaxSize);
     cc_array = nullptr;
   }
   if (tr_event_array) {
-    internal_munmap(tr_event_array,
-                    sizeof(tr_event_array[0]) * kTrEventArrayMaxSize +
-                        GetMmapGranularity());
+    UnmapOrDie(tr_event_array,
+               sizeof(tr_event_array[0]) * kTrEventArrayMaxSize +
+                   GetMmapGranularity());
     tr_event_array = nullptr;
     tr_event_pointer = nullptr;
   }

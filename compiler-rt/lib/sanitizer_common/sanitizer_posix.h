@@ -1,0 +1,64 @@
+//===-- sanitizer_posix.h -------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is shared between AddressSanitizer and ThreadSanitizer
+// run-time libraries and declares some useful POSIX-specific functions.
+//===----------------------------------------------------------------------===//
+#ifndef SANITIZER_POSIX_H
+#define SANITIZER_POSIX_H
+
+// ----------- ATTENTION -------------
+// This header should NOT include any other headers from sanitizer runtime.
+#include "sanitizer_internal_defs.h"
+
+#if !SANITIZER_POSIX
+// Make it hard to accidentally use any of functions declared in this file:
+#error This file should only be included on POSIX
+#endif
+
+namespace __sanitizer {
+
+// I/O
+// Don't use directly, use __sanitizer::OpenFile() instead.
+uptr internal_open(const char *filename, int flags);
+uptr internal_open(const char *filename, int flags, u32 mode);
+
+// Memory
+uptr internal_mmap(void *addr, uptr length, int prot, int flags,
+                   int fd, u64 offset);
+uptr internal_munmap(void *addr, uptr length);
+
+uptr internal_ptrace(int request, int pid, void *addr, void *data);
+uptr internal_waitpid(int pid, int *status, int options);
+int internal_fork();
+
+// These functions call appropriate pthread_ functions directly, bypassing
+// the interceptor. They are weak and may not be present in some tools.
+SANITIZER_WEAK_ATTRIBUTE
+int real_pthread_create(void *th, void *attr, void *(*callback)(void *),
+                        void *param);
+SANITIZER_WEAK_ATTRIBUTE
+int real_pthread_join(void *th, void **ret);
+
+#define DEFINE_REAL_PTHREAD_FUNCTIONS                                          \
+  namespace __sanitizer {                                                      \
+  int real_pthread_create(void *th, void *attr, void *(*callback)(void *),     \
+                          void *param) {                                       \
+    return REAL(pthread_create)(th, attr, callback, param);                    \
+  }                                                                            \
+  int real_pthread_join(void *th, void **ret) {                                \
+    return REAL(pthread_join(th, ret));                                        \
+  }                                                                            \
+  }  // namespace __sanitizer
+
+int internal_sigaction(int signum, const void *act, void *oldact);
+
+}  // namespace __sanitizer
+
+#endif  // SANITIZER_POSIX_H

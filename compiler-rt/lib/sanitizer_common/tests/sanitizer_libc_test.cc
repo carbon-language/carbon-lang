@@ -152,7 +152,7 @@ TEST(SanitizerCommon, InternalMmapWithOffset) {
   ASSERT_EQ('B', p[1]);
 
   internal_close(fd);
-  internal_munmap(p, page_size);
+  UnmapOrDie(p, page_size);
   internal_unlink(tmpfile);
 }
 #endif

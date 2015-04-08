@@ -13,6 +13,7 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_POSIX
+#include "sanitizer_posix.h"
 #include "sanitizer_symbolizer_internal.h"
 
 #include <errno.h>

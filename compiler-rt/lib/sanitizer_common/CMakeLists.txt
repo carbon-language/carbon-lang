@@ -83,6 +83,7 @@ set(SANITIZER_HEADERS
   sanitizer_platform.h
   sanitizer_platform_interceptors.h
   sanitizer_platform_limits_posix.h
+  sanitizer_posix.h
   sanitizer_procmaps.h
   sanitizer_quarantine.h
   sanitizer_report_decorator.h
