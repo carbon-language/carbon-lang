@@ -10,6 +10,7 @@
 #ifndef LLVM_UTILS_TABLEGEN_X86DISASSEMBLERSHARED_H
 #define LLVM_UTILS_TABLEGEN_X86DISASSEMBLERSHARED_H
 
+#include <cstring>
 #include <string>
 
 #include "../../lib/Target/X86/Disassembler/X86DisassemblerDecoderCommon.h"
