@@ -129,9 +129,9 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
           : ("namespace '" + ND->getNameAsString() + "'");
 
   diag(AfterRBrace, Message)
-      << NamespaceName
-      << FixItHint::CreateReplacement(
-             OldCommentRange, std::string(SpacesBeforeComments, ' ') +
+      << NamespaceName << FixItHint::CreateReplacement(
+                              CharSourceRange::getCharRange(OldCommentRange),
+                              std::string(SpacesBeforeComments, ' ') +
                                   getNamespaceComment(ND, NeedLineBreak));
   diag(ND->getLocation(), "%0 starts here", DiagnosticIDs::Note)
       << NamespaceName;
