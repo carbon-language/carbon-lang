@@ -106,3 +106,18 @@ id f0(MDATestDocument *d) {
   return d.instance.path; // expected-error {{property 'path' cannot be found in forward class object 'MDAInstance'}}
 }
 
+// rdar://20469452
+@interface UIView @end
+
+@interface FRFakeBannerView : UIView
+@end
+
+@interface FRAdCollectionViewCell
+@property (nonatomic, weak, readonly) UIView *bannerView;
+@end
+
+@interface FRAdCollectionViewCell () 
+
+@property (nonatomic, weak, readwrite) FRFakeBannerView *bannerView;
+
+@end

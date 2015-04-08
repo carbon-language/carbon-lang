@@ -407,9 +407,11 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     // this conversion is safe only because the wider type is for a 'readonly'
     // property in primary class and 'narrowed' type for a 'readwrite' property
     // in continuation class.
-    if (!isa<ObjCObjectPointerType>(PIDecl->getType()) ||
-        !isa<ObjCObjectPointerType>(PDecl->getType()) ||
-        (!isObjCPointerConversion(PDecl->getType(), PIDecl->getType(), 
+    QualType PrimaryClassPropertyT = Context.getCanonicalType(PIDecl->getType());
+    QualType ClassExtPropertyT = Context.getCanonicalType(PDecl->getType());
+    if (!isa<ObjCObjectPointerType>(PrimaryClassPropertyT) ||
+        !isa<ObjCObjectPointerType>(ClassExtPropertyT) ||
+        (!isObjCPointerConversion(ClassExtPropertyT, PrimaryClassPropertyT,
                                   ConvertedType, IncompatibleObjC))
         || IncompatibleObjC) {
       Diag(AtLoc, 
