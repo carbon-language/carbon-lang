@@ -547,6 +547,16 @@ class SOPK_Real_vi <sopk op, string opName, dag outs, dag ins, string asm> :
   SOPKe <op.VI>,
   SIMCInstr<opName, SISubtarget.VI>;
 
+multiclass SOPK_m <sopk op, string opName, dag outs, dag ins, string opAsm,
+                   string asm = opName#opAsm> {
+  def "" : SOPK_Pseudo <opName, outs, ins, []>;
+
+  def _si : SOPK_Real_si <op, opName, outs, ins, asm>;
+
+  def _vi : SOPK_Real_vi <op, opName, outs, ins, asm>;
+
+}
+
 multiclass SOPK_32 <sopk op, string opName, list<dag> pattern> {
   def "" : SOPK_Pseudo <opName, (outs SReg_32:$dst), (ins u16imm:$src0),
     pattern>;
@@ -562,13 +572,39 @@ multiclass SOPK_SCC <sopk op, string opName, list<dag> pattern> {
   def "" : SOPK_Pseudo <opName, (outs SCCReg:$dst),
     (ins SReg_32:$src0, u16imm:$src1), pattern>;
 
-  def _si : SOPK_Real_si <op, opName, (outs SCCReg:$dst),
-    (ins SReg_32:$src0, u16imm:$src1), opName#" $dst, $src0">;
+  let DisableEncoding = "$dst" in {
+    def _si : SOPK_Real_si <op, opName, (outs SCCReg:$dst),
+      (ins SReg_32:$sdst, u16imm:$simm16), opName#" $sdst, $simm16">;
 
-  def _vi : SOPK_Real_vi <op, opName, (outs SCCReg:$dst),
-    (ins SReg_32:$src0, u16imm:$src1), opName#" $dst, $src0">;
+    def _vi : SOPK_Real_vi <op, opName, (outs SCCReg:$dst),
+      (ins SReg_32:$sdst, u16imm:$simm16), opName#" $sdst, $simm16">;
+  }
 }
 
+multiclass SOPK_32TIE <sopk op, string opName, list<dag> pattern> : SOPK_m <
+  op, opName, (outs SReg_32:$sdst), (ins SReg_32:$src0, u16imm:$simm16),
+  " $sdst, $simm16"
+>;
+
+multiclass SOPK_IMM32 <sopk op, string opName, dag outs, dag ins,
+                       string argAsm, string asm = opName#argAsm> {
+
+  def "" : SOPK_Pseudo <opName, outs, ins, []>;
+
+  def _si : SOPK <outs, ins, asm, []>,
+            SOPK64e <op.SI>,
+            SIMCInstr<opName, SISubtarget.SI> {
+              let AssemblerPredicates = [isSICI];
+              let isCodeGenOnly = 0;
+            }
+
+  def _vi : SOPK <outs, ins, asm, []>,
+            SOPK64e <op.VI>,
+            SIMCInstr<opName, SISubtarget.VI> {
+              let AssemblerPredicates = [isVI];
+              let isCodeGenOnly = 0;
+            }
+}
 //===----------------------------------------------------------------------===//
 // SMRD classes
 //===----------------------------------------------------------------------===//

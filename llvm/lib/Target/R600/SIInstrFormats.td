@@ -181,6 +181,19 @@ class SOPKe <bits<5> op> : Enc32 {
   let Inst{31-28} = 0xb; //encoding
 }
 
+class SOPK64e <bits<5> op> : Enc64 {
+  bits <7> sdst = 0;
+  bits <16> simm16;
+  bits <32> imm;
+
+  let Inst{15-0} = simm16;
+  let Inst{22-16} = sdst;
+  let Inst{27-23} = op;
+  let Inst{31-28} = 0xb;
+
+  let Inst{63-32} = imm;
+}
+
 class SOPPe <bits<7> op> : Enc32 {
   bits <16> simm16;
 
