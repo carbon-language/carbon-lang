@@ -101,7 +101,7 @@ public:
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        unsigned AsmVariant, const char *ExtraCode,
-                       raw_ostream &O);
+                       raw_ostream &O) override;
 
 protected:
   std::vector<std::string> DisasmLines, HexLines;

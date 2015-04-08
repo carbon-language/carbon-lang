@@ -116,7 +116,7 @@ public:
 
   std::pair<unsigned, const TargetRegisterClass *> getRegForInlineAsmConstraint(
                                    const TargetRegisterInfo *TRI,
-                                   const std::string &Constraint, MVT VT) const;
+                                   const std::string &Constraint, MVT VT) const override;
 };
 
 } // End namespace llvm
