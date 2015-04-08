@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-ios7.0 %s -o - | FileCheck %s
 
 @g0 = external global <3 x float>, align 16
 @g1 = external global <3 x float>, align 4
