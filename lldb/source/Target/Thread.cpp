@@ -2209,8 +2209,7 @@ Thread::GetDescription (Stream &strm, lldb::DescriptionLevel level, bool print_j
     strm.Printf("\n");
 
     StructuredData::ObjectSP thread_info = GetExtendedInfo();
-    StructuredData::ObjectSP stop_info = m_stop_info_sp->GetExtendedInfo();
-    
+
     if (print_json_thread || print_json_stopinfo)
     {
         if (thread_info && print_json_thread)
@@ -2218,13 +2217,17 @@ Thread::GetDescription (Stream &strm, lldb::DescriptionLevel level, bool print_j
             thread_info->Dump (strm);
             strm.Printf("\n");
         }
-        
-        if (stop_info && print_json_stopinfo)
+
+        if (print_json_stopinfo && m_stop_info_sp)
         {
-            stop_info->Dump (strm);
-            strm.Printf("\n");
+            StructuredData::ObjectSP stop_info = m_stop_info_sp->GetExtendedInfo();
+            if (stop_info)
+            {
+                stop_info->Dump (strm);
+                strm.Printf("\n");
+            }
         }
-        
+
         return true;
     }
 
