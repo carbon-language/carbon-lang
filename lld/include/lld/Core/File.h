@@ -223,28 +223,10 @@ protected:
     std::vector<const T *> _atoms;
   };
 
-  /// \brief This is a convenience class for File subclasses which need to
-  /// return an empty collection.
-  template <typename T>
-  class atom_collection_empty : public atom_collection<T> {
-  public:
-    atom_iterator<T> begin() const override {
-      return atom_iterator<T>(*this, nullptr);
-    }
-    atom_iterator<T> end() const override {
-      return atom_iterator<T>(*this, nullptr);
-    }
-    const T *deref(const void *it) const override {
-      llvm_unreachable("empty collection should never be accessed");
-    }
-    void next(const void *&it) const override {}
-    uint64_t size() const override { return 0; }
-  };
-
-  static atom_collection_empty<DefinedAtom>       _noDefinedAtoms;
-  static atom_collection_empty<UndefinedAtom>     _noUndefinedAtoms;
-  static atom_collection_empty<SharedLibraryAtom> _noSharedLibraryAtoms;
-  static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
+  static atom_collection_vector<DefinedAtom>       _noDefinedAtoms;
+  static atom_collection_vector<UndefinedAtom>     _noUndefinedAtoms;
+  static atom_collection_vector<SharedLibraryAtom> _noSharedLibraryAtoms;
+  static atom_collection_vector<AbsoluteAtom>      _noAbsoluteAtoms;
   mutable llvm::BumpPtrAllocator                  _allocator;
 
 private:
