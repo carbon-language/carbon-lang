@@ -165,6 +165,29 @@ C::C() { foo(); }
 // WIN32:      getelementptr inbounds i8, i8* %{{.*}}, i64 4
 // WIN32-NOT:  load
 // WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::A"*
-// WIN32:      invoke x86_thiscallcc void @"\01??1A@crash_on_partial_destroy@@UAE@XZ"
+// WIN32:      call x86_thiscallcc void @"\01??1A@crash_on_partial_destroy@@UAE@XZ"
 // WIN32: }
+}
+
+namespace dont_call_terminate {
+struct C {
+  ~C();
+};
+void g();
+void f() {
+  C c;
+  g();
+}
+
+// WIN32-LABEL: define void @"\01?f@dont_call_terminate@@YAXXZ"()
+// WIN32: invoke void @"\01?g@dont_call_terminate@@YAXXZ"()
+// WIN32-NEXT: to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+//
+// WIN32: [[cont]]
+// WIN32: call x86_thiscallcc void @"\01??1C@dont_call_terminate@@QAE@XZ"({{.*}})
+//
+// WIN32: [[lpad]]
+// WIN32-NEXT: landingpad
+// WIN32-NEXT: cleanup
+// WIN32: call x86_thiscallcc void @"\01??1C@dont_call_terminate@@QAE@XZ"({{.*}})
 }
