@@ -23,13 +23,6 @@ public:
 protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
-
-private:
-  class GOTFile : public SimpleFile {
-  public:
-    GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
-    llvm::BumpPtrAllocator _alloc;
-  };
 };
 
 template <class ELFT>
@@ -41,9 +34,9 @@ template <class ELFT>
 void X86DynamicLibraryWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
-  auto gotFile = llvm::make_unique<GOTFile>(this->_ctx);
-  gotFile->addAtom(*new (gotFile->_alloc) GlobalOffsetTableAtom(*gotFile));
-  gotFile->addAtom(*new (gotFile->_alloc) DynamicAtom(*gotFile));
+  auto gotFile = llvm::make_unique<SimpleFile>("GOTFile");
+  gotFile->addAtom(*new (gotFile->allocator()) GlobalOffsetTableAtom(*gotFile));
+  gotFile->addAtom(*new (gotFile->allocator()) DynamicAtom(*gotFile));
   result.push_back(std::move(gotFile));
 }
 

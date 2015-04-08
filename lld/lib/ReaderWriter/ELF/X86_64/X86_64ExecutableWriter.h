@@ -26,19 +26,13 @@ protected:
   void
   createImplicitFiles(std::vector<std::unique_ptr<File>> &result) override {
     ExecutableWriter::createImplicitFiles(result);
-    auto gotFile = llvm::make_unique<GOTFile>(this->_ctx);
-    gotFile->addAtom(*new (gotFile->_alloc) GlobalOffsetTableAtom(*gotFile));
+    auto gotFile = llvm::make_unique<SimpleFile>("GOTFile");
+    gotFile->addAtom(*new (gotFile->allocator())
+                         GlobalOffsetTableAtom(*gotFile));
     if (this->_ctx.isDynamic())
-      gotFile->addAtom(*new (gotFile->_alloc) DynamicAtom(*gotFile));
+      gotFile->addAtom(*new (gotFile->allocator()) DynamicAtom(*gotFile));
     result.push_back(std::move(gotFile));
   }
-
-private:
-  class GOTFile : public SimpleFile {
-  public:
-    GOTFile(const ELFLinkingContext &eti) : SimpleFile("GOTFile") {}
-    llvm::BumpPtrAllocator _alloc;
-  };
 };
 
 } // namespace elf
