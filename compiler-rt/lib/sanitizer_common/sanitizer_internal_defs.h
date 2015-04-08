@@ -81,6 +81,7 @@ typedef signed   short s16;  // NOLINT
 typedef signed   int s32;
 typedef signed   long long s64;  // NOLINT
 typedef int fd_t;
+typedef int error_t;
 
 // WARNING: OFF_T may be different from OS type off_t, depending on the value of
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls

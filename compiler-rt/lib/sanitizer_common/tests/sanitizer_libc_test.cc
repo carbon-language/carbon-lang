@@ -78,16 +78,14 @@ TEST(SanitizerCommon, FileOps) {
 
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile), "sanitizer_common.fileops.tmp.");
-  uptr openrv = OpenFile(tmpfile, WrOnly);
-  EXPECT_FALSE(internal_iserror(openrv));
-  fd_t fd = openrv;
+  fd_t fd = OpenFile(tmpfile, WrOnly);
+  ASSERT_NE(fd, kInvalidFd);
   EXPECT_EQ(len1, internal_write(fd, str1, len1));
   EXPECT_EQ(len2, internal_write(fd, str2, len2));
   internal_close(fd);
 
-  openrv = OpenFile(tmpfile, RdOnly);
-  EXPECT_FALSE(internal_iserror(openrv));
-  fd = openrv;
+  fd = OpenFile(tmpfile, RdOnly);
+  ASSERT_NE(fd, kInvalidFd);
   uptr fsize = internal_filesize(fd);
   EXPECT_EQ(len1 + len2, fsize);
 
@@ -134,12 +132,11 @@ TEST(SanitizerCommon, InternalMmapWithOffset) {
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile),
                  "sanitizer_common.internalmmapwithoffset.tmp.");
-  uptr res = OpenFile(tmpfile, RdWr);
-  ASSERT_FALSE(internal_iserror(res));
-  fd_t fd = res;
+  fd_t fd = OpenFile(tmpfile, RdWr);
+  ASSERT_NE(fd, kInvalidFd);
 
   uptr page_size = GetPageSizeCached();
-  res = internal_ftruncate(fd, page_size * 2);
+  uptr res = internal_ftruncate(fd, page_size * 2);
   ASSERT_FALSE(internal_iserror(res));
 
   res = internal_lseek(fd, page_size, SEEK_SET);

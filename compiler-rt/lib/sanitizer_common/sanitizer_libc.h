@@ -11,6 +11,7 @@
 // run-time libraries.
 // These tools can not use some of the libc functions directly because those
 // functions are intercepted. Instead, we implement a tiny subset of libc here.
+// FIXME: Some of functions declared in this file are in fact POSIX, not libc.
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_LIBC_H
 #define SANITIZER_LIBC_H

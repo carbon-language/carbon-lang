@@ -196,18 +196,20 @@ enum FileAccessMode {
   RdWr
 };
 
-uptr OpenFile(const char *filename, FileAccessMode mode);
+// Returns kInvalidFd on error.
+fd_t OpenFile(const char *filename, FileAccessMode mode,
+              error_t *errno_p = nullptr);
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
 // Returns the number of read bytes or 0 if file can not be opened.
 uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
-                      uptr max_len, int *errno_p = nullptr);
+                      uptr max_len, error_t *errno_p = nullptr);
 // Maps given file to virtual memory, and returns pointer to it
-// (or NULL if the mapping failes). Stores the size of mmaped region
+// (or NULL if mapping fails). Stores the size of mmaped region
 // in '*buff_size'.
 void *MapFileToMemory(const char *file_name, uptr *buff_size);
-void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset);
+void *MapWritableFileToMemory(void *addr, uptr size, fd_t fd, uptr offset);
 
 bool IsAccessibleMemoryRange(uptr beg, uptr size);
 

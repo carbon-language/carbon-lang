@@ -58,14 +58,13 @@ void ReportFile::ReopenIfNecessary() {
   }
 
   internal_snprintf(full_path, kMaxPathLength, "%s.%zu", path_prefix, pid);
-  uptr openrv = OpenFile(full_path, WrOnly);
-  if (internal_iserror(openrv)) {
+  fd = OpenFile(full_path, WrOnly);
+  if (fd == kInvalidFd) {
     const char *ErrorMsgPrefix = "ERROR: Can't open file: ";
     internal_write(kStderrFd, ErrorMsgPrefix, internal_strlen(ErrorMsgPrefix));
     internal_write(kStderrFd, full_path, internal_strlen(full_path));
     Die();
   }
-  fd = openrv;
   fd_pid = pid;
 }
 
@@ -136,7 +135,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 }
 
 uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
-                      uptr max_len, int *errno_p) {
+                      uptr max_len, error_t *errno_p) {
   uptr PageSize = GetPageSizeCached();
   uptr kMinFileLen = PageSize;
   uptr read_len = 0;
@@ -144,9 +143,8 @@ uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
-    uptr openrv = OpenFile(file_name, RdOnly);
-    if (internal_iserror(openrv, errno_p)) return 0;
-    fd_t fd = openrv;
+    fd_t fd = OpenFile(file_name, RdOnly, errno_p);
+    if (fd == kInvalidFd) return 0;
     UnmapOrDie(*buff, *buff_size);
     *buff = (char*)MmapOrDie(size, __func__);
     *buff_size = size;

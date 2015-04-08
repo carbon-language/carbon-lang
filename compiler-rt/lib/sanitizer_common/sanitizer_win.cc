@@ -160,7 +160,7 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   UNIMPLEMENTED();
 }
 
-void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset) {
+void *MapWritableFileToMemory(void *addr, uptr size, fd_t fd, uptr offset) {
   UNIMPLEMENTED();
 }
 
@@ -420,7 +420,7 @@ uptr internal_open(const char *filename, int flags, u32 mode) {
   UNIMPLEMENTED();
 }
 
-uptr OpenFile(const char *filename, FileAccessMode mode) {
+fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {
   UNIMPLEMENTED();
 }
 
