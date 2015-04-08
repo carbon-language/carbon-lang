@@ -50,6 +50,17 @@
 # CHECK: addu    $1, $1, $9              # encoding: [0x21,0x08,0x29,0x00]
 # CHECK: sw      $10, 57920($1)          # encoding: [0x40,0xe2,0x2a,0xac]
 
+# CHECK:     lui     $8, %hi(symbol)     # encoding: [A,A,0x08,0x3c]
+# CHECK:                                 #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
+# CHECK-NOT: move    $8, $8              # encoding: [0x21,0x40,0x00,0x01]
+# CHECK:     lw      $8, %lo(symbol)($8) # encoding: [A,A,0x08,0x8d]
+# CHECK:                                 #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
+# CHECK:     lui     $1, %hi(symbol)     # encoding: [A,A,0x01,0x3c]
+# CHECK:                                 #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
+# CHECK-NOT: move    $1, $1              # encoding: [0x21,0x08,0x20,0x00]
+# CHECK:     sw      $8, %lo(symbol)($1) # encoding: [A,A,0x28,0xac]
+# CHECK:                                 #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
+
 # CHECK: lui     $1, %hi(symbol)
 # CHECK: ldc1    $f0, %lo(symbol)($1)
 # CHECK: lui     $1, %hi(symbol)
@@ -76,6 +87,9 @@
 
     lw  $t2, 655483($a0)
     sw  $t2, 123456($t1)
+
+    lw  $8, symbol
+    sw  $8, symbol
 
     ldc1 $f0, symbol
     sdc1 $f0, symbol
