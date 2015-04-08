@@ -40,7 +40,7 @@ public:
   VerifyMatch(BoundNodesCallback *FindResultVerifier, bool *Verified)
       : Verified(Verified), FindResultReviewer(FindResultVerifier) {}
 
-  virtual void run(const MatchFinder::MatchResult &Result) override {
+  void run(const MatchFinder::MatchResult &Result) override {
     if (FindResultReviewer != nullptr) {
       *Verified |= FindResultReviewer->run(&Result.Nodes, Result.Context);
     } else {
