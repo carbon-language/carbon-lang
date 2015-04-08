@@ -816,23 +816,46 @@ static VNInfo *searchForVNI(const SlotIndexes &Indexes, LiveRange &LR,
 
 static void determineMissingVNIs(const SlotIndexes &Indexes, LiveInterval &LI) {
   SmallPtrSet<const MachineBasicBlock*, 5> Visited;
-  for (LiveRange::Segment &S : LI.segments) {
-    if (S.valno != nullptr)
-      continue;
-    // This can only happen at the begin of a basic block.
-    assert(S.start.isBlock() && "valno should only be missing at block begin");
 
-    Visited.clear();
-    const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(S.start);
-    for (const MachineBasicBlock *Pred : MBB->predecessors()) {
-      VNInfo *VNI = searchForVNI(Indexes, LI, Pred, Visited);
-      if (VNI != nullptr) {
-        S.valno = VNI;
-        break;
+  LiveRange::iterator OutIt;
+  VNInfo *PrevValNo = nullptr;
+  for (LiveRange::iterator I = LI.begin(), E = LI.end(); I != E; ++I) {
+    LiveRange::Segment &S = *I;
+    // Determine final VNI if necessary.
+    if (S.valno == nullptr) {
+      // This can only happen at the begin of a basic block.
+      assert(S.start.isBlock() && "valno should only be missing at block begin");
+
+      Visited.clear();
+      const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(S.start);
+      for (const MachineBasicBlock *Pred : MBB->predecessors()) {
+        VNInfo *VNI = searchForVNI(Indexes, LI, Pred, Visited);
+        if (VNI != nullptr) {
+          S.valno = VNI;
+          break;
+        }
       }
+      assert(S.valno != nullptr && "could not determine valno");
     }
-    assert(S.valno != nullptr && "could not determine valno");
+    // Merge with previous segment if it has the same VNI.
+    if (PrevValNo == S.valno && OutIt->end == S.start) {
+      fprintf(stderr, "Adjancency fix\n");
+      OutIt->end = S.end;
+    } else {
+      // Didn't merge. Move OutIt to next segment.
+      if (PrevValNo == nullptr)
+        OutIt = LI.begin();
+      else
+        ++OutIt;
+
+      if (OutIt != I)
+        *OutIt = *I;
+      PrevValNo = S.valno;
+    }
   }
+  // If we merged some segments chop off the end.
+  ++OutIt;
+  LI.segments.erase(OutIt, LI.end());
 }
 
 void LiveInterval::constructMainRangeFromSubranges(
@@ -955,6 +978,14 @@ void LiveInterval::constructMainRangeFromSubranges(
             NeedVNIFixup = true;
         }
 
+        // In rare cases we can produce adjacent segments with the same value
+        // number (if they come from different subranges, but happen to have
+        // the same defining instruction). VNIFixup will fix those cases.
+        if (!empty() && segments.back().end == Pos &&
+            segments.back().valno == VNI) {
+          fprintf(stderr, "Need Adjacency fixup\n");
+          NeedVNIFixup = true;
+        }
         CurrentSegment.start = Pos;
         CurrentSegment.valno = VNI;
         ConstructingSegment = true;
