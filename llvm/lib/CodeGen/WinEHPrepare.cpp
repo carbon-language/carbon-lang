@@ -555,7 +555,8 @@ bool WinEHPrepare::prepareExceptionHandlers(
           ++InsertPt;
           ParentAlloca =
               new AllocaInst(ParentInst->getType(), nullptr,
-                             ParentInst->getName() + ".reg2mem", AllocaInsertPt);
+                             ParentInst->getName() + ".reg2mem",
+                             AllocaInsertPt);
           new StoreInst(ParentInst, ParentAlloca, InsertPt);
         } else {
           ParentAlloca = DemoteRegToStack(*ParentInst, true, AllocaInsertPt);
