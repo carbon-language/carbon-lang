@@ -399,12 +399,13 @@ uptr internal_close(fd_t fd) {
   UNIMPLEMENTED();
 }
 
-int internal_isatty(fd_t fd) {
-  return _isatty(fd);
-}
-
 fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {
   UNIMPLEMENTED();
+}
+
+bool SupportsColoredOutput(fd_t fd) {
+  // FIXME: support colored output.
+  return false;
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {

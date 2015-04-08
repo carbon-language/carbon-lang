@@ -23,10 +23,10 @@
 
 namespace __sanitizer {
 
-bool ReportFile::PrintsToTty() {
+bool ReportFile::SupportsColors() {
   SpinMutexLock l(mu);
   ReopenIfNecessary();
-  return internal_isatty(fd) != 0;
+  return SupportsColoredOutput(fd);
 }
 
 bool ColorizeReports() {
@@ -37,7 +37,7 @@ bool ColorizeReports() {
 
   const char *flag = common_flags()->color;
   return internal_strcmp(flag, "always") == 0 ||
-         (internal_strcmp(flag, "auto") == 0 && report_file.PrintsToTty());
+         (internal_strcmp(flag, "auto") == 0 && report_file.SupportsColors());
 }
 
 static void (*sandboxing_callback)();

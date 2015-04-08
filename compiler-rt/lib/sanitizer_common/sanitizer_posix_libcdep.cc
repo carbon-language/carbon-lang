@@ -122,8 +122,8 @@ int Atexit(void (*function)(void)) {
 #endif
 }
 
-int internal_isatty(fd_t fd) {
-  return isatty(fd);
+bool SupportsColoredOutput(fd_t fd) {
+  return isatty(fd) != 0;
 }
 
 #ifndef SANITIZER_GO

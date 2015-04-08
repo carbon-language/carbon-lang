@@ -163,7 +163,7 @@ extern StaticSpinMutex CommonSanitizerReportMutex;
 
 struct ReportFile {
   void Write(const char *buffer, uptr length);
-  bool PrintsToTty();
+  bool SupportsColors();
   void SetReportPath(const char *path);
 
   // Don't use fields directly. They are only declared public to allow
@@ -199,6 +199,8 @@ enum FileAccessMode {
 // Returns kInvalidFd on error.
 fd_t OpenFile(const char *filename, FileAccessMode mode,
               error_t *errno_p = nullptr);
+bool SupportsColoredOutput(fd_t fd);
+
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
