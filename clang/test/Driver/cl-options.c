@@ -30,6 +30,24 @@
 // EP: "-P"
 // EP: "-o" "-"
 
+// RUN: %clang_cl /fp:fast /fp:except -### -- %s 2>&1 | FileCheck -check-prefix=fpexcept %s
+// fpexcept-NOT: -menable-unsafe-fp-math
+
+// RUN: %clang_cl /fp:fast /fp:except /fp:except- -### -- %s 2>&1 | FileCheck -check-prefix=fpexcept_ %s
+// fpexcept_: -menable-unsafe-fp-math
+
+// RUN: %clang_cl /fp:precise /fp:fast -### -- %s 2>&1 | FileCheck -check-prefix=fpfast %s
+// fpfast: -menable-unsafe-fp-math
+// fpfast: -ffast-math
+
+// RUN: %clang_cl /fp:fast /fp:precise -### -- %s 2>&1 | FileCheck -check-prefix=fpprecise %s
+// fpprecise-NOT: -menable-unsafe-fp-math
+// fpprecise-NOT: -ffast-math
+
+// RUN: %clang_cl /fp:fast /fp:strict -### -- %s 2>&1 | FileCheck -check-prefix=fpstrict %s
+// fpstrict-NOT: -menable-unsafe-fp-math
+// fpstrict-NOT: -ffast-math
+
 // RTTI is on by default; just check that we don't error.
 // RUN: %clang_cl /Zs /GR -- %s 2>&1
 
@@ -243,7 +261,6 @@
 // RUN:     /Fifoo \
 // RUN:     /Fmfoo \
 // RUN:     /FpDebug\main.pch \
-// RUN:     /fp:precise \
 // RUN:     /Frfoo \
 // RUN:     /FRfoo \
 // RUN:     /FU foo \
