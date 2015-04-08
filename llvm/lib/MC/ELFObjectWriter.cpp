@@ -368,8 +368,6 @@ void SymbolTableWriter::writeSymbol(uint32_t name, uint8_t info, uint64_t value,
 
   uint16_t Index = LargeIndex ? uint16_t(ELF::SHN_XINDEX) : shndx;
 
-  raw_svector_ostream OS(SymtabF->getContents());
-
   if (Is64Bit) {
     write(*SymtabF, name);  // st_name
     write(*SymtabF, info);  // st_info
