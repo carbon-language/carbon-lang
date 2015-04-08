@@ -251,12 +251,10 @@ namespace {
     /// if there is little to no overhead moving instructions into loops.
     void SinkIntoLoop();
 
-    /// getRegisterClassIDAndCost - For a given MI, register, and the operand
-    /// index, return the ID and cost of its representative register class by
-    /// reference.
-    void getRegisterClassIDAndCost(const MachineInstr *MI,
-                                   unsigned Reg, unsigned OpIdx,
-                                   unsigned &RCId, unsigned &RCCost) const;
+    /// getRegisterClassIDAndCost - For a given register return the ID and cost
+    /// of its representative register class by reference.
+    void getRegisterClassIDAndCost(unsigned Reg, unsigned &RCId,
+                                   unsigned &RCCost) const;
 
     /// InitRegPressure - Find all virtual register references that are liveout
     /// of the preheader to initialize the starting "register pressure". Note
@@ -844,12 +842,8 @@ static bool isOperandKill(const MachineOperand &MO, MachineRegisterInfo *MRI) {
   return MO.isKill() || MRI->hasOneNonDBGUse(MO.getReg());
 }
 
-/// getRegisterClassIDAndCost - For a given MI, register, and the operand
-/// index, return the ID and cost of its representative register class.
-void
-MachineLICM::getRegisterClassIDAndCost(const MachineInstr *MI,
-                                       unsigned Reg, unsigned OpIdx,
-                                       unsigned &RCId, unsigned &RCCost) const {
+void MachineLICM::getRegisterClassIDAndCost(unsigned Reg, unsigned &RCId,
+                                            unsigned &RCCost) const {
   const TargetRegisterClass *RC = MRI->getRegClass(Reg);
   MVT VT = *RC->vt_begin();
   if (VT == MVT::Untyped) {
@@ -913,7 +907,7 @@ MachineLICM::calcRegisterCost(const MachineInstr *MI, bool ConsiderSeen,
     // FIXME: It seems bad to use RegSeen only for some of these calculations.
     bool isNew = ConsiderSeen ? RegSeen.insert(Reg).second : false;
     unsigned RCId, RCCost;
-    getRegisterClassIDAndCost(MI, Reg, i, RCId, RCCost);
+    getRegisterClassIDAndCost(Reg, RCId, RCCost);
     int PriorCost = 0;
     if (Cost.find(RCId) != Cost.end())
       PriorCost = Cost[RCId];
