@@ -140,30 +140,24 @@ public:
         _dylibInstallName(dylibInstallName) {}
   virtual ~MachOSharedLibraryAtom() {}
 
-  virtual StringRef loadName() const override {
-    return _dylibInstallName;
-  }
+  StringRef loadName() const override { return _dylibInstallName; }
 
-  virtual bool canBeNullAtRuntime() const override {
+  bool canBeNullAtRuntime() const override {
     // FIXME: this may actually be changeable. For now, all symbols are strongly
     // defined though.
     return false;
   }
 
-  virtual const File& file() const override {
-    return _file;
-  }
+  const File &file() const override { return _file; }
 
-  virtual StringRef name() const override {
-    return _name;
-  }
+  StringRef name() const override { return _name; }
 
-  virtual Type type() const override {
+  Type type() const override {
     // Unused in MachO (I think).
     return Type::Unknown;
   }
 
-  virtual uint64_t size() const override {
+  uint64_t size() const override {
     // Unused in MachO (I think)
     return 0;
   }

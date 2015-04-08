@@ -74,7 +74,7 @@ public:
   }
 
   /// \brief Return the type of content that the section contains
-  virtual int getContentType() const override {
+  int getContentType() const override {
     if (_flags & llvm::ELF::SHF_EXECINSTR)
       return Chunk<ELFT>::ContentType::Code;
     else if (_flags & llvm::ELF::SHF_WRITE)
