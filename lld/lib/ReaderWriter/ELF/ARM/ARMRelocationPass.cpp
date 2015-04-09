@@ -32,17 +32,21 @@ namespace {
 // ARM B/BL instructions of static relocation veneer.
 // TODO: consider different instruction set for archs below ARMv5
 // (one as for Thumb may be used though it's less optimal).
-static const uint8_t Veneer_ARM_B_BL_StaticAtomContent[8] = {
-    0x04, 0xf0, 0x1f, 0xe5,  // ldr pc, [pc, #-4]
+static const uint8_t Veneer_ARM_B_BL_Static_a_AtomContent[4] = {
+    0x04, 0xf0, 0x1f, 0xe5   // ldr pc, [pc, #-4]
+};
+static const uint8_t Veneer_ARM_B_BL_Static_d_AtomContent[4] = {
     0x00, 0x00, 0x00, 0x00   // <target_symbol_address>
 };
 
 // Thumb B/BL instructions of static relocation veneer.
 // TODO: consider different instruction set for archs above ARMv5
 // (one as for ARM may be used since it's more optimal).
-static const uint8_t Veneer_THM_B_BL_StaticAtomContent[8] = {
+static const uint8_t Veneer_THM_B_BL_Static_t_AtomContent[4] = {
     0x78, 0x47,              // bx pc
-    0x00, 0x00,              // nop
+    0x00, 0x00               // nop
+};
+static const uint8_t Veneer_THM_B_BL_Static_a_AtomContent[4] = {
     0xfe, 0xff, 0xff, 0xea   // b <target_symbol_address>
 };
 
@@ -62,7 +66,6 @@ static const uint8_t ARMPltVeneerAtomContent[4] = {
     0x00, 0x00               // nop
 };
 
-#ifdef NDEBUG
 // Determine proper names for mapping symbols.
 static std::string getMappingAtomName(DefinedAtom::CodeModel model,
                                       const std::string &part) {
@@ -77,15 +80,14 @@ static std::string getMappingAtomName(DefinedAtom::CodeModel model,
     llvm_unreachable("Wrong code model of mapping atom");
   }
 }
-#endif
 
 /// \brief Atoms that hold veneer code.
 class VeneerAtom : public SimpleELFDefinedAtom {
   StringRef _section;
 
 public:
-  VeneerAtom(const File &f, StringRef secName)
-      : SimpleELFDefinedAtom(f), _section(secName) {}
+  VeneerAtom(const File &f, StringRef secName, const std::string &name = "")
+      : SimpleELFDefinedAtom(f), _section(secName), _name(name) {}
 
   Scope scope() const override { return DefinedAtom::scopeTranslationUnit; }
 
@@ -106,35 +108,77 @@ public:
   Alignment alignment() const override { return 4; }
 
   StringRef name() const override { return _name; }
+
+private:
   std::string _name;
 };
 
 /// \brief Atoms that hold veneer for statically relocated
 /// ARM B/BL instructions.
-class Veneer_ARM_B_BL_StaticAtom : public VeneerAtom {
+class Veneer_ARM_B_BL_Static_a_Atom : public VeneerAtom {
 public:
-  Veneer_ARM_B_BL_StaticAtom(const File &f, StringRef secName)
+  Veneer_ARM_B_BL_Static_a_Atom(const File &f, StringRef secName,
+                                const std::string &name)
+      : VeneerAtom(f, secName, name) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(Veneer_ARM_B_BL_Static_a_AtomContent);
+  }
+};
+
+class Veneer_ARM_B_BL_Static_d_Atom : public VeneerAtom {
+public:
+  Veneer_ARM_B_BL_Static_d_Atom(const File &f, StringRef secName)
       : VeneerAtom(f, secName) {}
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(Veneer_ARM_B_BL_StaticAtomContent);
+    return llvm::makeArrayRef(Veneer_ARM_B_BL_Static_d_AtomContent);
   }
 };
 
 /// \brief Atoms that hold veneer for statically relocated
 /// Thumb B/BL instructions.
-class Veneer_THM_B_BL_StaticAtom : public VeneerAtom {
+class Veneer_THM_B_BL_Static_t_Atom : public VeneerAtom {
 public:
-  Veneer_THM_B_BL_StaticAtom(const File &f, StringRef secName)
-      : VeneerAtom(f, secName) {}
+  Veneer_THM_B_BL_Static_t_Atom(const File &f, StringRef secName,
+                                const std::string &name)
+      : VeneerAtom(f, secName, name) {}
 
   DefinedAtom::CodeModel codeModel() const override {
     return DefinedAtom::codeARMThumb;
   }
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(Veneer_THM_B_BL_StaticAtomContent);
+    return llvm::makeArrayRef(Veneer_THM_B_BL_Static_t_AtomContent);
   }
+};
+
+class Veneer_THM_B_BL_Static_a_Atom : public VeneerAtom {
+public:
+  Veneer_THM_B_BL_Static_a_Atom(const File &f, StringRef secName)
+      : VeneerAtom(f, secName) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(Veneer_THM_B_BL_Static_a_AtomContent);
+  }
+};
+
+template <DefinedAtom::CodeModel Model>
+class ARMVeneerMappingAtom : public VeneerAtom {
+public:
+  ARMVeneerMappingAtom(const File &f, StringRef secName, StringRef name)
+      : VeneerAtom(f, secName, getMappingAtomName(Model, name)) {
+    static_assert((Model == DefinedAtom::codeARM_a ||
+                   Model == DefinedAtom::codeARM_d ||
+                   Model == DefinedAtom::codeARM_t),
+                  "Only mapping atom types are allowed");
+  }
+
+  uint64_t size() const override { return 0; }
+
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
+
+  DefinedAtom::CodeModel codeModel() const override { return Model; }
 };
 
 /// \brief Atoms that are used by ARM dynamic linking
@@ -353,6 +397,20 @@ protected:
     return g;
   }
 
+  /// \brief Add veneer with mapping symbol.
+  template <DefinedAtom::CodeModel Model>
+  void addVeneerWithMapping(const DefinedAtom *da, VeneerAtom *va,
+                            const std::string &name) {
+    assert(_veneerAtoms.lookup(da).empty() &&
+           "Veneer or mapping already exists");
+    auto *ma = new (_file._alloc)
+        ARMVeneerMappingAtom<Model>(_file, va->customSectionName(), name);
+
+    // Fake reference to show connection between the mapping symbol and veneer.
+    va->addReferenceELF_ARM(R_ARM_NONE, 0, ma, 0);
+    _veneerAtoms[da] = VeneerWithMapping(va, ma);
+  }
+
   /// \brief get a veneer for a PLT entry.
   const PLTAtom *getPLTVeneer(const DefinedAtom *da, PLTAtom *pa,
                               StringRef source) {
@@ -539,8 +597,12 @@ public:
     }
     for (auto &veneerKV : _veneerAtoms) {
       auto &veneer = veneerKV.second;
-      veneer->setOrdinal(ordinal++);
-      mf->addAtom(*veneer);
+      auto *m = veneer._mapping;
+      m->setOrdinal(ordinal++);
+      mf->addAtom(*m);
+      auto *v = veneer._veneer;
+      v->setOrdinal(ordinal++);
+      mf->addAtom(*v);
     }
   }
 
@@ -568,7 +630,20 @@ protected:
   llvm::MapVector<const Atom *, PLTWithVeneer> _pltAtoms;
 
   /// \brief Map Atoms to their veneers.
-  llvm::MapVector<const Atom *, VeneerAtom *> _veneerAtoms;
+  struct VeneerWithMapping {
+    VeneerWithMapping(VeneerAtom *v = nullptr, VeneerAtom *m = nullptr)
+        : _veneer(v), _mapping(m) {}
+
+    bool empty() const {
+      assert(((bool)_veneer == (bool)_mapping) &&
+             "Mapping symbol should always be paired with veneer");
+      return !_veneer && !_mapping;
+    }
+
+    VeneerAtom *_veneer;
+    VeneerAtom *_mapping;
+  };
+  llvm::MapVector<const Atom *, VeneerWithMapping> _veneerAtoms;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null = nullptr;
@@ -589,33 +664,47 @@ public:
   /// \brief Get the veneer for ARM B/BL instructions.
   const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    if (auto veneer = _veneerAtoms.lookup(da))
-      return veneer;
-    auto v = new (_file._alloc) Veneer_ARM_B_BL_StaticAtom(_file, secName);
-    v->addReferenceELF_ARM(R_ARM_ABS32, 4, da, 0);
+    auto veneer = _veneerAtoms.lookup(da);
+    if (!veneer.empty())
+      return veneer._veneer;
 
-    v->_name = "__";
-    v->_name += da->name();
-    v->_name += "_from_arm";
+    std::string name = "__";
+    name += da->name();
+    name += "_from_arm";
+    // Create parts of veneer with mapping symbols.
+    auto v_a = new (_file._alloc) Veneer_ARM_B_BL_Static_a_Atom(_file, secName, name);
+    addVeneerWithMapping<DefinedAtom::codeARM_a>(da, v_a, name);
+    auto v_d = new (_file._alloc) Veneer_ARM_B_BL_Static_d_Atom(_file, secName);
+    addVeneerWithMapping<DefinedAtom::codeARM_d>(v_a, v_d, name);
 
-    _veneerAtoms[da] = v;
-    return v;
+    // Fake reference to show connection between parts of veneer.
+    v_a->addReferenceELF_ARM(R_ARM_NONE, 0, v_d, 0);
+    // Real reference to fixup.
+    v_d->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
+    return v_a;
   }
 
   /// \brief Get the veneer for Thumb B/BL instructions.
   const VeneerAtom *getVeneer_THM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    if (auto veneer = _veneerAtoms.lookup(da))
-      return veneer;
-    auto v = new (_file._alloc) Veneer_THM_B_BL_StaticAtom(_file, secName);
-    v->addReferenceELF_ARM(R_ARM_JUMP24, 4, da, 0);
+    auto veneer = _veneerAtoms.lookup(da);
+    if (!veneer.empty())
+      return veneer._veneer;
 
-    v->_name = "__";
-    v->_name += da->name();
-    v->_name += "_from_thumb";
+    std::string name = "__";
+    name += da->name();
+    name += "_from_thumb";
+    // Create parts of veneer with mapping symbols.
+    auto v_t = new (_file._alloc) Veneer_THM_B_BL_Static_t_Atom(_file, secName, name);
+    addVeneerWithMapping<DefinedAtom::codeARM_t>(da, v_t, name);
+    auto v_a = new (_file._alloc) Veneer_THM_B_BL_Static_a_Atom(_file, secName);
+    addVeneerWithMapping<DefinedAtom::codeARM_a>(v_t, v_a, name);
 
-    _veneerAtoms[da] = v;
-    return v;
+    // Fake reference to show connection between parts of veneer.
+    v_t->addReferenceELF_ARM(R_ARM_NONE, 0, v_a, 0);
+    // Real reference to fixup.
+    v_a->addReferenceELF_ARM(R_ARM_JUMP24, 0, da, 0);
+    return v_t;
   }
 
   /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
