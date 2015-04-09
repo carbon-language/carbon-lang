@@ -2146,13 +2146,13 @@ char CppWriter::ID = 0;
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool CPPTargetMachine::addPassesToEmitFile(PassManagerBase &PM, raw_ostream &o,
+bool CPPTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
+                                           formatted_raw_ostream &o,
                                            CodeGenFileType FileType,
                                            bool DisableVerify,
                                            AnalysisID StartAfter,
                                            AnalysisID StopAfter) {
-  if (FileType != TargetMachine::CGFT_AssemblyFile)
-    return true;
-  PM.add(new CppWriter(cast<formatted_raw_ostream>(o)));
+  if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
+  PM.add(new CppWriter(o));
   return false;
 }

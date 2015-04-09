@@ -140,12 +140,8 @@ public:
       uint64_t current_pos() const override { return Count; }
 
     public:
-      raw_counting_ostream() : raw_ostream(SK_COUNTING), Count(0) {}
+      raw_counting_ostream() : Count(0) {}
       ~raw_counting_ostream() { flush(); }
-
-      static bool classof(const raw_ostream *OS) {
-        return OS->getKind() == SK_COUNTING;
-      }
     };
 
     raw_counting_ostream OutStream;

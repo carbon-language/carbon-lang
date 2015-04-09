@@ -207,9 +207,8 @@ public:
   /// emitted.  Typically this will involve several steps of code generation.
   /// This method should return true if emission of this file type is not
   /// supported, or false on success.
-  /// If producing assembly, the stream must be a formatted_raw_ostream.
-  /// For other formats any raw_ostream will do.
-  virtual bool addPassesToEmitFile(PassManagerBase &, raw_ostream &,
+  virtual bool addPassesToEmitFile(PassManagerBase &,
+                                   formatted_raw_ostream &,
                                    CodeGenFileType,
                                    bool /*DisableVerify*/ = true,
                                    AnalysisID /*StartAfter*/ = nullptr,
@@ -256,7 +255,9 @@ public:
   /// for generating a pipeline of CodeGen passes.
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 
-  bool addPassesToEmitFile(PassManagerBase &PM, raw_ostream &Out,
+  /// Add passes to the specified pass manager to get the specified file
+  /// emitted.  Typically this will involve several steps of code generation.
+  bool addPassesToEmitFile(PassManagerBase &PM, formatted_raw_ostream &Out,
                            CodeGenFileType FileType, bool DisableVerify = true,
                            AnalysisID StartAfter = nullptr,
                            AnalysisID StopAfter = nullptr) override;

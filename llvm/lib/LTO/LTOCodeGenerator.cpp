@@ -38,6 +38,7 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
@@ -573,11 +574,13 @@ bool LTOCodeGenerator::compileOptimized(raw_ostream &out, std::string &errMsg) {
 
   legacy::PassManager codeGenPasses;
 
+  formatted_raw_ostream Out(out);
+
   // If the bitcode files contain ARC code and were compiled with optimization,
   // the ObjCARCContractPass must be run, so do it unconditionally here.
   codeGenPasses.add(createObjCARCContractPass());
 
-  if (TargetMach->addPassesToEmitFile(codeGenPasses, out,
+  if (TargetMach->addPassesToEmitFile(codeGenPasses, Out,
                                       TargetMachine::CGFT_ObjectFile)) {
     errMsg = "target file type not supported";
     return false;
