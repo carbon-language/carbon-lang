@@ -20,6 +20,9 @@
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Core/Value.h"
 
+#include <map>
+#include <vector>
+
 namespace lldb_private {
     
     class ItaniumABILanguageRuntime :
@@ -82,6 +85,9 @@ namespace lldb_private {
         virtual lldb::SearchFilterSP
         CreateExceptionSearchFilter ();
 
+        virtual size_t
+        GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates);
+
     protected:
 
         lldb::BreakpointResolverSP
@@ -97,6 +103,8 @@ namespace lldb_private {
         ItaniumABILanguageRuntime(Process *process) : lldb_private::CPPLanguageRuntime(process) { } // Call CreateInstance instead.
         
         lldb::BreakpointSP                              m_cxx_exception_bp_sp;
+
+        static std::map<ConstString, std::vector<ConstString> > s_alternate_mangling_prefixes;
     };
     
 } // namespace lldb_private

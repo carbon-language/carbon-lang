@@ -153,6 +153,9 @@ public:
     static uint32_t
     FindEquivalentNames(ConstString type_name, std::vector<ConstString>& equivalents);
 
+    virtual size_t
+    GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates) = 0;
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from CPPLanguageRuntime can see and modify these

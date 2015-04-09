@@ -35,6 +35,7 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Target/CPPLanguageRuntime.h"
 
 #include <map>
 
@@ -226,44 +227,42 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
     {
         if (!m_decl_map->GetFunctionInfo (fun_decl, fun_addr))
         {
-            lldb_private::ConstString altnernate_name;
+            std::vector<lldb_private::ConstString> alternates;
             bool found_it = m_decl_map->GetFunctionAddress (name, fun_addr);
             if (!found_it)
             {
-                // Check for an alternate mangling for "std::basic_string<char>"
-                // that is part of the itanium C++ name mangling scheme
-                const char *name_cstr = name.GetCString();
-                if (name_cstr && strncmp(name_cstr, "_ZNKSbIcE", strlen("_ZNKSbIcE")) == 0)
+                if (log)
+                    log->Printf("Address of function \"%s\" not found.\n", name.GetCString());
+                // Check for an alternate mangling for names from the standard library.
+                // For example, "std::basic_string<...>" has an alternate mangling scheme per
+                // the Itanium C++ ABI.
+                lldb::ProcessSP process_sp = m_data_allocator.GetTarget()->GetProcessSP();
+                lldb_private::CPPLanguageRuntime *cpp_runtime = process_sp->GetCPPLanguageRuntime();
+                if (cpp_runtime && cpp_runtime->GetAlternateManglings(name, alternates))
                 {
-                    std::string alternate_mangling("_ZNKSs");
-                    alternate_mangling.append (name_cstr + strlen("_ZNKSbIcE"));
-                    altnernate_name.SetCString(alternate_mangling.c_str());
-                    found_it = m_decl_map->GetFunctionAddress (altnernate_name, fun_addr);
+                    for (size_t i = 0; i < alternates.size(); ++i)
+                    {
+                        const lldb_private::ConstString &alternate_name = alternates[i];
+                        if (log)
+                            log->Printf("Looking up address of function \"%s\" with alternate name \"%s\"",
+                                        name.GetCString(), alternate_name.GetCString());
+                        if ((found_it = m_decl_map->GetFunctionAddress (alternate_name, fun_addr)))
+                        {
+                            if (log)
+                                log->Printf("Found address of function \"%s\" with alternate name \"%s\"",
+                                            name.GetCString(), alternate_name.GetCString());
+                            break;
+                        }
+                    }
                 }
             }
 
             if (!found_it)
             {
                 lldb_private::Mangled mangled_name(name);
-                lldb_private::Mangled alt_mangled_name(altnernate_name);
-                if (log)
-                {
-                    if (alt_mangled_name)
-                        log->Printf("Function \"%s\" (alternate name \"%s\") has no address",
-                                    mangled_name.GetName().GetCString(),
-                                    alt_mangled_name.GetName().GetCString());
-                    else
-                        log->Printf("Function \"%s\" had no address",
-                                    mangled_name.GetName().GetCString());
-                }
-
                 if (m_error_stream)
                 {
-                    if (alt_mangled_name)
-                        m_error_stream->Printf("error: call to a function '%s' (alternate name '%s') that is not present in the target\n",
-                                               mangled_name.GetName().GetCString(),
-                                               alt_mangled_name.GetName().GetCString());
-                    else if (mangled_name.GetMangledName())
+                    if (mangled_name.GetMangledName())
                         m_error_stream->Printf("error: call to a function '%s' ('%s') that is not present in the target\n",
                                                mangled_name.GetName().GetCString(),
                                                mangled_name.GetMangledName().GetCString());
