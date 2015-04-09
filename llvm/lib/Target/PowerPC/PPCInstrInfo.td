@@ -726,6 +726,8 @@ def HasICBT : Predicate<"PPCSubTarget->hasICBT()">;
 def HasPartwordAtomics : Predicate<"PPCSubTarget->hasPartwordAtomics()">;
 def NoNaNsFPMath : Predicate<"TM.Options.NoNaNsFPMath">;
 def NaNsFPMath   : Predicate<"!TM.Options.NoNaNsFPMath">;
+def HasBPERMD : Predicate<"PPCSubTarget->hasBPERMD()">;
+def HasExtDiv : Predicate<"PPCSubTarget->hasExtDiv()">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Multiclass Definitions.
@@ -799,6 +801,23 @@ multiclass XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, dag OOL, dag IOL,
     def o    : XOForm_1<opcode, xo, oe, OOL, IOL,
                        !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
                        []>, isDOT, RecFormRel;
+  }
+}
+
+// Multiclass for instructions for which the non record form is not cracked
+// and the record form is cracked (i.e. divw, mullw, etc.)
+multiclass XOForm_1rcr<bits<6> opcode, bits<9> xo, bit oe, dag OOL, dag IOL,
+                      string asmbase, string asmstr, InstrItinClass itin,
+                      list<dag> pattern> {
+  let BaseName = asmbase in {
+    def NAME : XOForm_1<opcode, xo, oe, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(" ", asmstr)), itin,
+                       pattern>, RecFormRel;
+    let Defs = [CR0] in
+    def o    : XOForm_1<opcode, xo, oe, OOL, IOL,
+                       !strconcat(asmbase, !strconcat(". ", asmstr)), itin,
+                       []>, isDOT, RecFormRel, PPC970_DGroup_First,
+                       PPC970_DGroup_Cracked;
   }
 }
 
@@ -2300,14 +2319,30 @@ defm ADDC  : XOForm_1rc<31, 10, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                         [(set i32:$rT, (addc i32:$rA, i32:$rB))]>,
                         PPC970_DGroup_Cracked;
 
-defm DIVW  : XOForm_1r<31, 491, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
-                       "divw", "$rT, $rA, $rB", IIC_IntDivW,
-                       [(set i32:$rT, (sdiv i32:$rA, i32:$rB))]>,
-                       PPC970_DGroup_First, PPC970_DGroup_Cracked;
-defm DIVWU : XOForm_1r<31, 459, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
-                       "divwu", "$rT, $rA, $rB", IIC_IntDivW,
-                       [(set i32:$rT, (udiv i32:$rA, i32:$rB))]>,
-                       PPC970_DGroup_First, PPC970_DGroup_Cracked;
+defm DIVW  : XOForm_1rcr<31, 491, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                          "divw", "$rT, $rA, $rB", IIC_IntDivW,
+                          [(set i32:$rT, (sdiv i32:$rA, i32:$rB))]>;
+defm DIVWU : XOForm_1rcr<31, 459, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                          "divwu", "$rT, $rA, $rB", IIC_IntDivW,
+                          [(set i32:$rT, (udiv i32:$rA, i32:$rB))]>;
+def DIVWE : XOForm_1<31, 427, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                     "divwe $rT, $rA, $rB", IIC_IntDivW,
+                     [(set i32:$rT, (int_ppc_divwe gprc:$rA, gprc:$rB))]>,
+                     Requires<[HasExtDiv]>;
+let Defs = [CR0] in
+def DIVWEo : XOForm_1<31, 427, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                      "divwe. $rT, $rA, $rB", IIC_IntDivW,
+                      []>, isDOT, PPC970_DGroup_Cracked, PPC970_DGroup_First,
+                      Requires<[HasExtDiv]>;
+def DIVWEU : XOForm_1<31, 395, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                      "divweu $rT, $rA, $rB", IIC_IntDivW,
+                      [(set i32:$rT, (int_ppc_divweu gprc:$rA, gprc:$rB))]>,
+                      Requires<[HasExtDiv]>;
+let Defs = [CR0] in
+def DIVWEUo : XOForm_1<31, 395, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                       "divweu. $rT, $rA, $rB", IIC_IntDivW,
+                       []>, isDOT, PPC970_DGroup_Cracked, PPC970_DGroup_First,
+                       Requires<[HasExtDiv]>;
 let isCommutable = 1 in {
 defm MULHW : XOForm_1r<31, 75, 0, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
                        "mulhw", "$rT, $rA, $rB", IIC_IntMulHW,

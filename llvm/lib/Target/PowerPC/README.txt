@@ -622,6 +622,25 @@ void foo() {
   __asm__("" ::: "cr2");
 }
 
+//===-------------------------------------------------------------------------===
+Naming convention for instruction formats is very haphazard.
+We have agreed on a naming scheme as follows:
+
+<INST_form>{_<OP_type><OP_len>}+
+
+Where:
+INST_form is the instruction format (X-form, etc.)
+OP_type is the operand type - one of OPC (opcode), RD (register destination),
+                              RS (register source),
+                              RDp (destination register pair),
+                              RSp (source register pair), IM (immediate),
+                              XO (extended opcode)
+OP_len is the length of the operand in bits
+
+VSX register operands would be of length 6 (split across two fields),
+condition register fields of length 3.
+We would not need denote reserved fields in names of instruction formats.
+
 //===----------------------------------------------------------------------===//
 
 Instruction fusion was introduced in ISA 2.06 and more opportunities added in

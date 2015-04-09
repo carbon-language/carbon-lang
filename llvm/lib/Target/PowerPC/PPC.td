@@ -86,6 +86,10 @@ def FeatureISEL      : SubtargetFeature<"isel","HasISEL", "true",
                                         "Enable the isel instruction">;
 def FeaturePOPCNTD   : SubtargetFeature<"popcntd","HasPOPCNTD", "true",
                                         "Enable the popcnt[dw] instructions">;
+def FeatureBPERMD    : SubtargetFeature<"bpermd", "HasBPERMD", "true",
+                                        "Enable the bpermd instruction">;
+def FeatureExtDiv    : SubtargetFeature<"extdiv", "HasExtDiv", "true",
+                                        "Enable extended divide instructions">;
 def FeatureLDBRX     : SubtargetFeature<"ldbrx","HasLDBRX", "true",
                                         "Enable the ldbrx instruction">;
 def FeatureCMPB      : SubtargetFeature<"cmpb", "HasCMPB", "true",
@@ -132,6 +136,38 @@ def DeprecatedMFTB   : SubtargetFeature<"", "DeprecatedMFTB", "true",
                                         "Treat mftb as deprecated">;
 def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",
   "Treat vector data stream cache control instructions as deprecated">;
+
+/*  Since new processors generally contain a superset of features of those that
+    came before them, the idea is to make implementations of new processors
+    less error prone and easier to read.
+    Namely:
+        list<SubtargetFeature> Power8FeatureList = ...
+        list<SubtargetFeature> FutureProcessorSpecificFeatureList =
+            [ features that Power8 does not support ]
+        list<SubtargetFeature> FutureProcessorFeatureList =
+            !listconcat(Power8FeatureList, FutureProcessorSpecificFeatureList)
+
+    Makes it explicit and obvious what is new in FutureProcesor vs. Power8 as
+    well as providing a single point of definition if the feature set will be
+    used elsewhere.
+*/
+def ProcessorFeatures {
+  list<SubtargetFeature> Power7FeatureList =
+      [DirectivePwr7, FeatureAltivec, FeatureVSX,
+       FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
+       FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
+       FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+       FeatureFPRND, FeatureFPCVT, FeatureISEL,
+       FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
+       Feature64Bit /*, Feature64BitRegs */, FeaturePartwordAtomic,
+       FeatureBPERMD, FeatureExtDiv,
+       DeprecatedMFTB, DeprecatedDST];
+  list<SubtargetFeature> Power8SpecificFeatures =
+      [DirectivePwr8, FeatureP8Altivec, FeatureP8Vector, FeatureP8Crypto,
+       FeatureHTM, FeatureICBT];
+  list<SubtargetFeature> Power8FeatureList =
+      !listconcat(Power7FeatureList, Power8SpecificFeatures);
+}
 
 // Note: Future features to add when support is extended to more
 // recent ISA levels:
@@ -243,33 +279,6 @@ def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec,
 def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec,
                                            FeatureFRES, FeatureFRSQRTE]>;
 
-/*  Since new processors generally contain a superset of features of those that
-    came before them, the idea is to make implementations of new processors
-    less error prone and easier to read.
-    Namely:
-        list<SubtargetFeature> Power8FeatureList = ...
-        list<SubtargetFeature> FutureProcessorSpecificFeatureList =
-            [ features that Power8 does not support ]
-        list<SubtargetFeature> FutureProcessorFeatureList =
-            !listconcat(Power8FeatureList, FutureProcessorSpecificFeatureList)
-
-    Makes it explicit and obvious what is new in FutureProcesor vs. Power8 as
-    well as providing a single point of definition if the feature set will be
-    used elsewhere.
-    
-*/
-def ProcessorFeatures {
-    list<SubtargetFeature> Power8FeatureList =
-        [DirectivePwr8, FeatureAltivec, FeatureP8Altivec, FeatureVSX, 
-        FeatureP8Vector, FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, 
-        FeatureFRE, FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
-        FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX, FeatureHTM,
-        FeatureFPRND, FeatureFPCVT, FeatureISEL,
-        FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX, FeatureP8Crypto,
-        Feature64Bit /*, Feature64BitRegs */, FeatureICBT,
-        FeaturePartwordAtomic, DeprecatedMFTB, DeprecatedDST];
-}
-
 def : ProcessorModel<"970", G5Model,
                   [Directive970, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt,
@@ -339,15 +348,7 @@ def : ProcessorModel<"pwr6x", G5Model,
                    FeatureSTFIWX, FeatureLFIWAX, FeatureCMPB,
                    FeatureFPRND, Feature64Bit,
                    DeprecatedMFTB, DeprecatedDST]>;
-def : ProcessorModel<"pwr7", P7Model,
-                  [DirectivePwr7, FeatureAltivec, FeatureVSX,
-                   FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
-                   FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
-                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
-                   FeatureFPRND, FeatureFPCVT, FeatureISEL,
-                   FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
-                   Feature64Bit /*, Feature64BitRegs */, FeaturePartwordAtomic,
-                   DeprecatedMFTB, DeprecatedDST]>;
+def : ProcessorModel<"pwr7", P7Model, ProcessorFeatures.Power7FeatureList>;
 def : ProcessorModel<"pwr8", P8Model, ProcessorFeatures.Power8FeatureList>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
 def : ProcessorModel<"ppc64", G5Model,

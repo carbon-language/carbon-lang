@@ -420,12 +420,20 @@
             divwu. 2, 3, 4
 # FIXME:    divwuo 2, 3, 4
 # FIXME:    divwuo. 2, 3, 4
-# FIXME:    divwe 2, 3, 4
-# FIXME:    divwe. 2, 3, 4
+# CHECK-BE: divwe 2, 3, 4                   # encoding: [0x7c,0x43,0x23,0x56]
+# CHECK-LE: divwe 2, 3, 4                   # encoding: [0x56,0x23,0x43,0x7c]
+            divwe 2, 3, 4
+# CHECK-BE: divwe. 2, 3, 4                  # encoding: [0x7c,0x43,0x23,0x57]
+# CHECK-LE: divwe. 2, 3, 4                  # encoding: [0x57,0x23,0x43,0x7c]
+            divwe. 2, 3, 4
 # FIXME:    divweo 2, 3, 4
 # FIXME:    divweo. 2, 3, 4
-# FIXME:    divweu 2, 3, 4
-# FIXME:    divweu. 2, 3, 4
+# CHECK-BE: divweu 2, 3, 4                  # encoding: [0x7c,0x43,0x23,0x16]
+# CHECK-LE: divweu 2, 3, 4                  # encoding: [0x16,0x23,0x43,0x7c]
+            divweu 2, 3, 4
+# CHECK-BE: divweu. 2, 3, 4                 # encoding: [0x7c,0x43,0x23,0x17]
+# CHECK-LE: divweu. 2, 3, 4                 # encoding: [0x17,0x23,0x43,0x7c]
+            divweu. 2, 3, 4
 # FIXME:    divweuo 2, 3, 4
 # FIXME:    divweuo. 2, 3, 4
 
@@ -466,12 +474,20 @@
             divdu. 2, 3, 4
 # FIXME:    divduo 2, 3, 4
 # FIXME:    divduo. 2, 3, 4
-# FIXME:    divde 2, 3, 4
-# FIXME:    divde. 2, 3, 4
+# CHECK-BE: divde 2, 3, 4                   # encoding: [0x7c,0x43,0x23,0x52]
+# CHECK-LE: divde 2, 3, 4                   # encoding: [0x52,0x23,0x43,0x7c]
+            divde 2, 3, 4
+# CHECK-BE: divde. 2, 3, 4                  # encoding: [0x7c,0x43,0x23,0x53]
+# CHECK-LE: divde. 2, 3, 4                  # encoding: [0x53,0x23,0x43,0x7c]
+            divde. 2, 3, 4
 # FIXME:    divdeo 2, 3, 4
 # FIXME:    divdeo. 2, 3, 4
-# FIXME:    divdeu 2, 3, 4
-# FIXME:    divdeu. 2, 3, 4
+# CHECK-BE: divdeu 2, 3, 4                  # encoding: [0x7c,0x43,0x23,0x12]
+# CHECK-LE: divdeu 2, 3, 4                  # encoding: [0x12,0x23,0x43,0x7c]
+            divdeu 2, 3, 4
+# CHECK-BE: divdeu. 2, 3, 4                 # encoding: [0x7c,0x43,0x23,0x13]
+# CHECK-LE: divdeu. 2, 3, 4                 # encoding: [0x13,0x23,0x43,0x7c]
+            divdeu. 2, 3, 4
 # FIXME:    divdeuo 2, 3, 4
 # FIXME:    divdeuo. 2, 3, 4
 
@@ -644,7 +660,9 @@
 # CHECK-BE: popcntd 2, 3                    # encoding: [0x7c,0x62,0x03,0xf4]
 # CHECK-LE: popcntd 2, 3                    # encoding: [0xf4,0x03,0x62,0x7c]
             popcntd 2, 3
-# FIXME:    bpermd 2, 3, 4
+# CHECK-BE: bpermd 2, 3, 4                  # encoding: [0x7c,0x62,0x21,0xf8]
+# CHECK-LE: bpermd 2, 3, 4                  # encoding: [0xf8,0x21,0x62,0x7c]
+            bpermd 2, 3, 4
 
 # Fixed-point rotate and shift instructions
 

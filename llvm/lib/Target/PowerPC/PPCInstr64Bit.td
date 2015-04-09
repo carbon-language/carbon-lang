@@ -603,6 +603,10 @@ defm CNTLZD : XForm_11r<31, 58, (outs g8rc:$rA), (ins g8rc:$rS),
 def POPCNTD : XForm_11<31, 506, (outs g8rc:$rA), (ins g8rc:$rS),
                        "popcntd $rA, $rS", IIC_IntGeneral,
                        [(set i64:$rA, (ctpop i64:$rS))]>;
+def BPERMD : XForm_6<31, 252, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
+                     "bpermd $rA, $rS, $rB", IIC_IntGeneral,
+                     [(set i64:$rA, (int_ppc_bpermd g8rc:$rS, g8rc:$rB))]>,
+                     isPPC64, Requires<[HasBPERMD]>;
 
 let isCodeGenOnly = 1, isCommutable = 1 in
 def CMPB8 : XForm_6<31, 508, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
@@ -616,14 +620,30 @@ def POPCNTW : XForm_11<31, 378, (outs gprc:$rA), (ins gprc:$rS),
                        "popcntw $rA, $rS", IIC_IntGeneral,
                        [(set i32:$rA, (ctpop i32:$rS))]>;
 
-defm DIVD  : XOForm_1r<31, 489, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
-                       "divd", "$rT, $rA, $rB", IIC_IntDivD,
-                       [(set i64:$rT, (sdiv i64:$rA, i64:$rB))]>, isPPC64,
-                       PPC970_DGroup_First, PPC970_DGroup_Cracked;
-defm DIVDU : XOForm_1r<31, 457, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
-                       "divdu", "$rT, $rA, $rB", IIC_IntDivD,
-                       [(set i64:$rT, (udiv i64:$rA, i64:$rB))]>, isPPC64,
-                       PPC970_DGroup_First, PPC970_DGroup_Cracked;
+defm DIVD  : XOForm_1rcr<31, 489, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
+                          "divd", "$rT, $rA, $rB", IIC_IntDivD,
+                          [(set i64:$rT, (sdiv i64:$rA, i64:$rB))]>, isPPC64;
+defm DIVDU : XOForm_1rcr<31, 457, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
+                          "divdu", "$rT, $rA, $rB", IIC_IntDivD,
+                          [(set i64:$rT, (udiv i64:$rA, i64:$rB))]>, isPPC64;
+def DIVDE : XOForm_1<31, 425, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
+                     "divde $rT, $rA, $rB", IIC_IntDivD,
+                     [(set i64:$rT, (int_ppc_divde g8rc:$rA, g8rc:$rB))]>,
+                     isPPC64, Requires<[HasExtDiv]>;
+let Defs = [CR0] in
+def DIVDEo : XOForm_1<31, 425, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
+                      "divde. $rT, $rA, $rB", IIC_IntDivD,
+                      []>, isDOT, PPC970_DGroup_Cracked, PPC970_DGroup_First,
+                      isPPC64, Requires<[HasExtDiv]>;
+def DIVDEU : XOForm_1<31, 393, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
+                      "divdeu $rT, $rA, $rB", IIC_IntDivD,
+                      [(set i64:$rT, (int_ppc_divdeu g8rc:$rA, g8rc:$rB))]>,
+                      isPPC64, Requires<[HasExtDiv]>;
+let Defs = [CR0] in
+def DIVDEUo : XOForm_1<31, 393, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
+                       "divdeu. $rT, $rA, $rB", IIC_IntDivD,
+                       []>, isDOT, PPC970_DGroup_Cracked, PPC970_DGroup_First,
+                        isPPC64, Requires<[HasExtDiv]>;
 let isCommutable = 1 in
 defm MULLD : XOForm_1r<31, 233, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulld", "$rT, $rA, $rB", IIC_IntMulHD,
