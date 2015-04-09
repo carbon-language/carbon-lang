@@ -6672,7 +6672,7 @@ EVT AArch64TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned DstAlign,
   if (Size >= 4 &&
       (memOpAlign(SrcAlign, DstAlign, 4) ||
        (allowsMisalignedMemoryAccesses(MVT::i32, 0, 1, &Fast) && Fast)))
-    return MVT::i64;
+    return MVT::i32;
 
   return MVT::Other;
 }

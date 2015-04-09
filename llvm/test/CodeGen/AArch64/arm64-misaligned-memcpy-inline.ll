@@ -1,4 +1,4 @@
-; RUN: llc -march=arm64 -mtriple=arm64-apple-ios -aarch64-strict-align < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-ios -aarch64-strict-align < %s | FileCheck %s
 
 ; Small (16-bytes here) unaligned memcpys should stay memcpy calls if
 ; strict-alignment is turned on.
