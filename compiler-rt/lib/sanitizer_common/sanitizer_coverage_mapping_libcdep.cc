@@ -95,7 +95,7 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
     }
   }
 
-  int err;
+  error_t err;
   InternalScopedString tmp_path(64 + internal_strlen(coverage_dir));
   uptr res = internal_snprintf((char *)tmp_path.data(), tmp_path.size(),
                                "%s/%zd.sancov.map.tmp", coverage_dir,

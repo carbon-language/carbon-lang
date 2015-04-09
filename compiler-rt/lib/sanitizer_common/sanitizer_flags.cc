@@ -54,7 +54,7 @@ class FlagHandlerInclude : public FlagHandlerBase {
   bool Parse(const char *value) final {
     char *data;
     uptr data_mapped_size;
-    int err;
+    error_t err;
     uptr len =
       ReadFileToBuffer(value, &data, &data_mapped_size,
                        Max(kMaxIncludeSize, GetPageSizeCached()), &err);
