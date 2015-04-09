@@ -221,7 +221,7 @@ RSModuleDescriptor::Dump(Stream &strm) const
     strm.EOL();
     strm.IndentMore();
     strm.Indent();
-    strm.Printf("Globals: %u", m_globals.size());
+    strm.Printf("Globals: %zu", m_globals.size());
     strm.EOL();
     strm.IndentMore();
     for (const auto &global : m_globals)
@@ -230,7 +230,7 @@ RSModuleDescriptor::Dump(Stream &strm) const
     }
     strm.IndentLess();
     strm.Indent();
-    strm.Printf("Kernels: %u", m_kernels.size());
+    strm.Printf("Kernels: %zu", m_kernels.size());
     strm.EOL();
     strm.IndentMore();
     for (const auto &kernel : m_kernels)
