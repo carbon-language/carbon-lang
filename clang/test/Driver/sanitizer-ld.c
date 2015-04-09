@@ -272,3 +272,11 @@
 // CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan
 // CHECK-LSAN-ASAN-LINUX: libclang_rt.asan-x86_64
 // CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan
+
+// RUN: %clangcxx -fsanitize=address %s -### -o %t.o 2>&1 \
+// RUN:     -mmacosx-version-min=10.6 \
+// RUN:     -target x86_64-apple-darwin13.4.0 \
+// RUN:   | FileCheck --check-prefix=CHECK-ASAN-DARWIN106-CXX %s
+// CHECK-ASAN-DARWIN106-CXX: "{{.*}}ld{{(.exe)?}}"
+// CHECK-ASAN-DARWIN106-CXX: libclang_rt.asan_osx_dynamic.dylib
+// CHECK-ASAN-DARWIN106-CXX-NOT: -lc++abi
