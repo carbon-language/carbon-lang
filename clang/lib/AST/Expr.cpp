@@ -2161,12 +2161,16 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     // If this is a direct call, get the callee.
     const CallExpr *CE = cast<CallExpr>(this);
     if (const Decl *FD = CE->getCalleeDecl()) {
+      const FunctionDecl *Func = dyn_cast<FunctionDecl>(FD);
+      bool HasWarnUnusedResultAttr = Func ? Func->hasUnusedResultAttr()
+                                          : FD->hasAttr<WarnUnusedResultAttr>();
+
       // If the callee has attribute pure, const, or warn_unused_result, warn
       // about it. void foo() { strlen("bar"); } should warn.
       //
       // Note: If new cases are added here, DiagnoseUnusedExprResult should be
       // updated to match for QoI.
-      if (FD->hasAttr<WarnUnusedResultAttr>() ||
+      if (HasWarnUnusedResultAttr ||
           FD->hasAttr<PureAttr>() || FD->hasAttr<ConstAttr>()) {
         WarnE = this;
         Loc = CE->getCallee()->getLocStart();
