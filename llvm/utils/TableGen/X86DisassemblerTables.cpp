@@ -633,7 +633,7 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
   i++;
 
   for (unsigned index = 0; index < NumInstructions; ++index) {
-    o.indent(i * 2) << "{ /* " << index << " */" << "\n";
+    o.indent(i * 2) << "{ /* " << index << " */\n";
     i++;
 
     OperandListTy OperandList;
@@ -647,16 +647,10 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
     }
     o.indent(i * 2) << (OperandSets[OperandList] - 1) << ",\n";
 
-    o.indent(i * 2) << "/* " << InstructionSpecifiers[index].name << " */";
-    o << "\n";
+    o.indent(i * 2) << "/* " << InstructionSpecifiers[index].name << " */\n";
 
     i--;
-    o.indent(i * 2) << "}";
-
-    if (index + 1 < NumInstructions)
-      o << ",";
-
-    o << "\n";
+    o.indent(i * 2) << "},\n";
   }
 
   i--;
