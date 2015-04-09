@@ -1,7 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -S -triple armv7-none-eabi -emit-llvm -o - %s | FileCheck %s
 
-// CHECK: private constant { i8** } { i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTVN7PR2316510ChildClassE, i64 0, i64 2) }, align 4
-
 namespace reference {
   struct A {
     int i1, i2;
@@ -96,7 +94,18 @@ void helper(const AbstractClass &param) {
 }
 
 void foo() {
-// CHECK: call void @_ZN7PR231656helperERKNS_13AbstractClassE(%{{.*}} bitcast ({ i8** }* @{{.*}} to %{{.*}}*))
+// CHECK-LABEL: @_ZN7PR231653fooEv
+// CHECK: call {{.*}} @_ZN7PR2316510ChildClassC1Ev
+// CHECK: call void @_ZN7PR231656helperERKNS_13AbstractClassE
   helper(ChildClass());
+}
+
+struct S { struct T { int a; } t; mutable int b; };
+void f() {
+// CHECK-LABEL: _ZN7PR231651fEv
+// CHECK: alloca
+// CHECK: alloca
+// CHECK: store
+  const S::T &r = S().t;
 }
 }

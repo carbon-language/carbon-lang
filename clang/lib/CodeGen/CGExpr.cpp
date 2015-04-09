@@ -300,27 +300,26 @@ createReferenceTemporary(CodeGenFunction &CGF,
                          const MaterializeTemporaryExpr *M, const Expr *Inner) {
   switch (M->getStorageDuration()) {
   case SD_FullExpression:
-  case SD_Automatic:
+  case SD_Automatic: {
     // If we have a constant temporary array or record try to promote it into a
     // constant global under the same rules a normal constant would've been
     // promoted. This is easier on the optimizer and generally emits fewer
     // instructions.
+    QualType Ty = Inner->getType();
     if (CGF.CGM.getCodeGenOpts().MergeAllConstants &&
-        (M->getType()->isArrayType() || M->getType()->isRecordType()) &&
-        CGF.CGM.isTypeConstant(M->getType(), true))
-      if (llvm::Constant *Init =
-              CGF.CGM.EmitConstantExpr(Inner, Inner->getType(), &CGF)) {
+        (Ty->isArrayType() || Ty->isRecordType()) &&
+        CGF.CGM.isTypeConstant(Ty, true))
+      if (llvm::Constant *Init = CGF.CGM.EmitConstantExpr(Inner, Ty, &CGF)) {
         auto *GV = new llvm::GlobalVariable(
             CGF.CGM.getModule(), Init->getType(), /*isConstant=*/true,
             llvm::GlobalValue::PrivateLinkage, Init, ".ref.tmp");
-        GV->setAlignment(CGF.getContext()
-                             .getTypeAlignInChars(Inner->getType())
-                             .getQuantity());
+        GV->setAlignment(
+            CGF.getContext().getTypeAlignInChars(Ty).getQuantity());
         // FIXME: Should we put the new global into a COMDAT?
         return GV;
       }
-    return CGF.CreateMemTemp(Inner->getType(), "ref.tmp");
-
+    return CGF.CreateMemTemp(Ty, "ref.tmp");
+  }
   case SD_Thread:
   case SD_Static:
     return CGF.CGM.GetAddrOfGlobalTemporary(M, Inner);

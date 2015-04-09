@@ -510,7 +510,7 @@ namespace B19773010 {
   void PR22940_helper(const pair<void*, int>&) { }
   void PR22940() {
     // CHECK-LABEL: @_ZN9B197730107PR22940Ev
-    // CHECK-NOT: call {{.*}} @_ZN9B197730104pairIPviEC{{.}}Ev(
+    // CHECK: call {{.*}} @_ZN9B197730104pairIPviEC{{.}}Ev(
     // CHECK: call {{.*}} @_ZN9B1977301014PR22940_helperERKNS_4pairIPviEE(
     PR22940_helper(pair<void*, int>());
   }
