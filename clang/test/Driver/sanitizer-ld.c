@@ -276,6 +276,7 @@
 // RUN: %clangcxx -fsanitize=address %s -### -o %t.o 2>&1 \
 // RUN:     -mmacosx-version-min=10.6 \
 // RUN:     -target x86_64-apple-darwin13.4.0 \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN-DARWIN106-CXX %s
 // CHECK-ASAN-DARWIN106-CXX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ASAN-DARWIN106-CXX: libclang_rt.asan_osx_dynamic.dylib
