@@ -595,10 +595,49 @@ File::Sync ()
     return error;
 }
 
+#if defined (__APPLE__)
+// Darwin kernels only can read/write <= INT_MAX bytes
+#define MAX_READ_SIZE INT_MAX
+#define MAX_WRITE_SIZE INT_MAX
+#endif
+
 Error
 File::Read (void *buf, size_t &num_bytes)
 {
     Error error;
+
+#if defined (MAX_READ_SIZE)
+    if (num_bytes > MAX_READ_SIZE)
+    {
+        uint8_t *p = (uint8_t *)buf;
+        size_t bytes_left = num_bytes;
+        // Init the num_bytes read to zero
+        num_bytes = 0;
+
+        while (bytes_left > 0)
+        {
+            size_t curr_num_bytes;
+            if (bytes_left > MAX_READ_SIZE)
+                curr_num_bytes = MAX_READ_SIZE;
+            else
+                curr_num_bytes = bytes_left;
+
+            error = Read (p + num_bytes, curr_num_bytes);
+
+            // Update how many bytes were read
+            num_bytes += curr_num_bytes;
+            if (bytes_left < curr_num_bytes)
+                bytes_left = 0;
+            else
+                bytes_left -= curr_num_bytes;
+
+            if (error.Fail())
+                break;
+        }
+        return error;
+    }
+#endif
+
     ssize_t bytes_read = -1;
     if (DescriptorIsValid())
     {
@@ -642,6 +681,39 @@ Error
 File::Write (const void *buf, size_t &num_bytes)
 {
     Error error;
+
+#if defined (MAX_WRITE_SIZE)
+    if (num_bytes > MAX_WRITE_SIZE)
+    {
+        const uint8_t *p = (const uint8_t *)buf;
+        size_t bytes_left = num_bytes;
+        // Init the num_bytes written to zero
+        num_bytes = 0;
+
+        while (bytes_left > 0)
+        {
+            size_t curr_num_bytes;
+            if (bytes_left > MAX_WRITE_SIZE)
+                curr_num_bytes = MAX_WRITE_SIZE;
+            else
+                curr_num_bytes = bytes_left;
+
+            error = Write (p + num_bytes, curr_num_bytes);
+
+            // Update how many bytes were read
+            num_bytes += curr_num_bytes;
+            if (bytes_left < curr_num_bytes)
+                bytes_left = 0;
+            else
+                bytes_left -= curr_num_bytes;
+
+            if (error.Fail())
+                break;
+        }
+        return error;
+    }
+#endif
+
     ssize_t bytes_written = -1;
     if (DescriptorIsValid())
     {
@@ -687,8 +759,41 @@ File::Write (const void *buf, size_t &num_bytes)
 Error
 File::Read (void *buf, size_t &num_bytes, off_t &offset)
 {
-#ifndef _WIN32
     Error error;
+
+#if defined (MAX_READ_SIZE)
+    if (num_bytes > MAX_READ_SIZE)
+    {
+        uint8_t *p = (uint8_t *)buf;
+        size_t bytes_left = num_bytes;
+        // Init the num_bytes read to zero
+        num_bytes = 0;
+
+        while (bytes_left > 0)
+        {
+            size_t curr_num_bytes;
+            if (bytes_left > MAX_READ_SIZE)
+                curr_num_bytes = MAX_READ_SIZE;
+            else
+                curr_num_bytes = bytes_left;
+
+            error = Read (p + num_bytes, curr_num_bytes, offset);
+
+            // Update how many bytes were read
+            num_bytes += curr_num_bytes;
+            if (bytes_left < curr_num_bytes)
+                bytes_left = 0;
+            else
+                bytes_left -= curr_num_bytes;
+
+            if (error.Fail())
+                break;
+        }
+        return error;
+    }
+#endif
+
+#ifndef _WIN32
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
     {
@@ -714,15 +819,14 @@ File::Read (void *buf, size_t &num_bytes, off_t &offset)
         num_bytes = 0;
         error.SetErrorString("invalid file handle");
     }
-    return error;
 #else
     long cur = ::lseek(m_descriptor, 0, SEEK_CUR);
     SeekFromStart(offset);
-    Error error = Read(buf, num_bytes);
+    error = Read(buf, num_bytes);
     if (!error.Fail())
         SeekFromStart(cur);
-    return error;
 #endif
+    return error;
 }
 
 Error
@@ -746,7 +850,8 @@ File::Read (size_t &num_bytes, off_t &offset, bool null_terminate, DataBufferSP 
                         
                     size_t num_bytes_plus_nul_char = num_bytes + (null_terminate ? 1 : 0);
                     std::unique_ptr<DataBufferHeap> data_heap_ap;
-                    data_heap_ap.reset(new DataBufferHeap(num_bytes_plus_nul_char, '\0'));
+                    data_heap_ap.reset(new DataBufferHeap());
+                    data_heap_ap->SetByteSize(num_bytes_plus_nul_char);
                         
                     if (data_heap_ap.get())
                     {
@@ -782,6 +887,38 @@ File::Read (size_t &num_bytes, off_t &offset, bool null_terminate, DataBufferSP 
 Error
 File::Write (const void *buf, size_t &num_bytes, off_t &offset)
 {
+#if defined (MAX_WRITE_SIZE)
+    if (num_bytes > MAX_WRITE_SIZE)
+    {
+        const uint8_t *p = (const uint8_t *)buf;
+        size_t bytes_left = num_bytes;
+        // Init the num_bytes written to zero
+        num_bytes = 0;
+
+        while (bytes_left > 0)
+        {
+            size_t curr_num_bytes;
+            if (bytes_left > MAX_WRITE_SIZE)
+                curr_num_bytes = MAX_WRITE_SIZE;
+            else
+                curr_num_bytes = bytes_left;
+
+            error = Write (p + num_bytes, curr_num_bytes, offset);
+
+            // Update how many bytes were read
+            num_bytes += curr_num_bytes;
+            if (bytes_left < curr_num_bytes)
+                bytes_left = 0;
+            else
+                bytes_left -= curr_num_bytes;
+
+            if (error.Fail())
+                break;
+        }
+        return error;
+    }
+#endif
+
     Error error;
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
