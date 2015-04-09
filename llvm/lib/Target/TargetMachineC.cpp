@@ -183,7 +183,9 @@ void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
 }
 
 static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
-  formatted_raw_ostream &OS, LLVMCodeGenFileType codegen, char **ErrorMessage) {
+                                      formatted_raw_ostream &OS,
+                                      LLVMCodeGenFileType codegen,
+                                      char **ErrorMessage) {
   TargetMachine* TM = unwrap(T);
   Module* Mod = unwrap(M);
 
@@ -238,15 +240,15 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
 LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T,
   LLVMModuleRef M, LLVMCodeGenFileType codegen, char** ErrorMessage,
   LLVMMemoryBufferRef *OutMemBuf) {
-  std::string CodeString;
-  raw_string_ostream OStream(CodeString);
+  SmallString<0> CodeString;
+  raw_svector_ostream OStream(CodeString);
   formatted_raw_ostream Out(OStream);
   bool Result = LLVMTargetMachineEmit(T, M, Out, codegen, ErrorMessage);
   OStream.flush();
 
-  std::string &Data = OStream.str();
-  *OutMemBuf = LLVMCreateMemoryBufferWithMemoryRangeCopy(Data.c_str(),
-                                                     Data.length(), "");
+  StringRef Data = OStream.str();
+  *OutMemBuf =
+      LLVMCreateMemoryBufferWithMemoryRangeCopy(Data.data(), Data.size(), "");
   return Result;
 }
 
