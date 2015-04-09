@@ -24,7 +24,6 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_libc.h"
-#include "sanitizer_common/sanitizer_internal_defs.h"
 
 #include "dfsan/dfsan.h"
 
@@ -111,7 +110,8 @@ static void dfsan_check_label(dfsan_label label) {
 
 // Resolves the union of two unequal labels.  Nonequality is a precondition for
 // this function (the instrumentation pass inlines the equality test).
-dfsan_label __dfsan_union_internal(dfsan_label l1, dfsan_label l2, uptr pc) {
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+dfsan_label __dfsan_union(dfsan_label l1, dfsan_label l2) {
   DCHECK_NE(l1, l2);
 
   if (l1 == 0)
@@ -143,7 +143,6 @@ dfsan_label __dfsan_union_internal(dfsan_label l1, dfsan_label l2, uptr pc) {
       dfsan_check_label(label);
       __dfsan_label_info[label].l1 = l1;
       __dfsan_label_info[label].l2 = l2;
-      __dfsan_label_info[label].pc = pc;
     }
     atomic_store(table_ent, label, memory_order_release);
   } else if (label == kInitializingLabel) {
@@ -157,17 +156,12 @@ dfsan_label __dfsan_union_internal(dfsan_label l1, dfsan_label l2, uptr pc) {
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-dfsan_label __dfsan_union(dfsan_label l1, dfsan_label l2) {
-  return __dfsan_union_internal(l1, l2, GET_CALLER_PC());
-}
-
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 dfsan_label __dfsan_union_load(const dfsan_label *ls, uptr n) {
   dfsan_label label = ls[0];
   for (uptr i = 1; i != n; ++i) {
     dfsan_label next_label = ls[i];
     if (label != next_label)
-      label = __dfsan_union_internal(label, next_label, GET_CALLER_PC());
+      label = __dfsan_union(label, next_label);
   }
   return label;
 }
@@ -202,7 +196,7 @@ SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
 dfsan_union(dfsan_label l1, dfsan_label l2) {
   if (l1 == l2)
     return l1;
-  return __dfsan_union_internal(l1, l2, GET_CALLER_PC());
+  return __dfsan_union(l1, l2);
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
@@ -212,7 +206,6 @@ dfsan_label dfsan_create_label(const char *desc, void *userdata) {
   dfsan_check_label(label);
   __dfsan_label_info[label].l1 = __dfsan_label_info[label].l2 = 0;
   __dfsan_label_info[label].desc = desc;
-  __dfsan_label_info[label].pc = GET_CALLER_PC();
   __dfsan_label_info[label].userdata = userdata;
   return label;
 }

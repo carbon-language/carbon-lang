@@ -847,247 +847,266 @@ __dfsw_write(int fd, const void *buf, size_t count,
   *ret_label = 0;
   return write(fd, buf, count);
 }
-}
 
 // Type used to extract a dfsan_label with va_arg()
 typedef int dfsan_label_va;
 
-// Formats a chunk either a constant string or a single format directive (e.g.,
-// '%.3f').
-struct Formatter {
-  Formatter(char *str_, const char *fmt_, size_t size_)
-      : str(str_), str_off(0), size(size_), fmt_start(fmt_), fmt_cur(fmt_),
-        width(-1) {}
-
-  int format() {
-    char *tmp_fmt = build_format_string();
-    int retval =
-        snprintf(str + str_off, str_off < size ? size - str_off : 0, tmp_fmt,
-                 0 /* used only to avoid warnings */);
-    free(tmp_fmt);
-    return retval;
-  }
-
-  template <typename T> int format(T arg) {
-    char *tmp_fmt = build_format_string();
-    int retval;
-    if (width >= 0) {
-      retval = snprintf(str + str_off, str_off < size ? size - str_off : 0,
-                        tmp_fmt, width, arg);
-    } else {
-      retval = snprintf(str + str_off, str_off < size ? size - str_off : 0,
-                        tmp_fmt, arg);
-    }
-    free(tmp_fmt);
-    return retval;
-  }
-
-  char *build_format_string() {
-    size_t fmt_size = fmt_cur - fmt_start + 1;
-    char *new_fmt = (char *)malloc(fmt_size + 1);
-    assert(new_fmt);
-    internal_memcpy(new_fmt, fmt_start, fmt_size);
-    new_fmt[fmt_size] = '\0';
-    return new_fmt;
-  }
-
-  char *str_cur() { return str + str_off; }
-
-  size_t num_written_bytes(int retval) {
-    if (retval < 0) {
-      return 0;
-    }
-
-    size_t num_avail = str_off < size ? size - str_off : 0;
-    if (num_avail == 0) {
-      return 0;
-    }
-
-    size_t num_written = retval;
-    // A return value of {v,}snprintf of size or more means that the output was
-    // truncated.
-    if (num_written >= num_avail) {
-      num_written -= num_avail;
-    }
-
-    return num_written;
-  }
-
-  char *str;
-  size_t str_off;
+// A chunk of data representing the output of formatting either a constant
+// string or a single format directive.
+struct Chunk {
+  // Address of the beginning of the formatted string
+  const char *ptr;
+  // Size of the formatted string
   size_t size;
-  const char *fmt_start;
-  const char *fmt_cur;
-  int width;
+
+  // Type of DFSan label (depends on the format directive)
+  enum {
+    // Constant string, no argument and thus no label
+    NONE = 0,
+    // Label for an argument of '%n'
+    IGNORED,
+    // Label for a '%s' argument
+    STRING,
+    // Label for any other type of argument
+    NUMERIC,
+  } label_type;
+
+  // Value of the argument (if label_type == STRING)
+  const char *arg;
 };
 
+// Formats the input. The output is stored in 'str' starting from offset
+// 'off'. The format directive is represented by the first 'format_size' bytes
+// of 'format'. If 'has_size' is true, 'size' bounds the number of output
+// bytes. Returns the return value of the vsnprintf call used to format the
+// input.
+static int format_chunk(char *str, size_t off, bool has_size, size_t size,
+                        const char *format, size_t format_size, ...) {
+  char *chunk_format = (char *) malloc(format_size + 1);
+  assert(chunk_format);
+  internal_memcpy(chunk_format, format, format_size);
+  chunk_format[format_size] = '\0';
+
+  va_list ap;
+  va_start(ap, format_size);
+  int r = 0;
+  if (has_size) {
+    r = vsnprintf(str + off, off < size ? size - off : 0, chunk_format, ap);
+  } else {
+    r = vsprintf(str + off, chunk_format, ap);
+  }
+  va_end(ap);
+
+  free(chunk_format);
+  return r;
+}
+
 // Formats the input and propagates the input labels to the output. The output
-// is stored in 'str'. 'size' bounds the number of output bytes. 'format' and
-// 'ap' are the format string and the list of arguments for formatting. Returns
-// the return value vsnprintf would return.
+// is stored in 'str'. If 'has_size' is true, 'size' bounds the number of
+// output bytes. 'format' and 'ap' are the format string and the list of
+// arguments for formatting. Returns the return value vsnprintf would return.
 //
 // The function tokenizes the format string in chunks representing either a
 // constant string or a single format directive (e.g., '%.3f') and formats each
 // chunk independently into the output string. This approach allows to figure
 // out which bytes of the output string depends on which argument and thus to
 // propagate labels more precisely.
-//
-// WARNING: This implementation does not support conversion specifiers with
-// positional arguments.
-static int format_buffer(char *str, size_t size, const char *fmt,
-                         dfsan_label *va_labels, dfsan_label *ret_label,
-                         va_list ap) {
-  Formatter formatter(str, fmt, size);
+static int format_buffer(char *str, bool has_size, size_t size,
+                         const char *format, dfsan_label *va_labels,
+                         dfsan_label *ret_label, va_list ap) {
+  InternalMmapVector<Chunk> chunks(8);
+  size_t off = 0;
 
-  while (*formatter.fmt_cur) {
-    formatter.fmt_start = formatter.fmt_cur;
-    formatter.width = -1;
-    int retval = 0;
+  while (*format) {
+    chunks.push_back(Chunk());
+    Chunk& chunk = chunks.back();
+    chunk.ptr = str + off;
+    chunk.arg = nullptr;
 
-    if (*formatter.fmt_cur != '%') {
+    int status = 0;
+
+    if (*format != '%') {
       // Ordinary character. Consume all the characters until a '%' or the end
       // of the string.
-      for (; *(formatter.fmt_cur + 1) && *(formatter.fmt_cur + 1) != '%';
-           ++formatter.fmt_cur) {}
-      retval = formatter.format();
-      dfsan_set_label(0, formatter.str_cur(),
-                      formatter.num_written_bytes(retval));
+      size_t format_size = 0;
+      for (; *format && *format != '%'; ++format, ++format_size) {}
+      status = format_chunk(str, off, has_size, size, format - format_size,
+                            format_size);
+      chunk.label_type = Chunk::NONE;
     } else {
       // Conversion directive. Consume all the characters until a conversion
       // specifier or the end of the string.
-      bool end_fmt = false;
-      for (; *formatter.fmt_cur && !end_fmt; ) {
-        switch (*++formatter.fmt_cur) {
-        case 'd':
-        case 'i':
-        case 'o':
-        case 'u':
-        case 'x':
-        case 'X':
-          switch (*(formatter.fmt_cur - 1)) {
-          case 'h':
-            // Also covers the 'hh' case (since the size of the arg is still
-            // an int).
-            retval = formatter.format(va_arg(ap, int));
-            break;
-          case 'l':
-            if (formatter.fmt_cur - formatter.fmt_start >= 2 &&
-                *(formatter.fmt_cur - 2) == 'l') {
-              retval = formatter.format(va_arg(ap, long long int));
-            } else {
-              retval = formatter.format(va_arg(ap, long int));
+      bool end_format = false;
+#define FORMAT_CHUNK(t)                                                  \
+      format_chunk(str, off, has_size, size, format - format_size,  \
+                   format_size + 1, va_arg(ap, t))
+
+      for (size_t format_size = 1; *++format && !end_format; ++format_size) {
+        switch (*format) {
+          case 'd':
+          case 'i':
+          case 'o':
+          case 'u':
+          case 'x':
+          case 'X':
+            switch (*(format - 1)) {
+              case 'h':
+                // Also covers the 'hh' case (since the size of the arg is still
+                // an int).
+                status = FORMAT_CHUNK(int);
+                break;
+              case 'l':
+                if (format_size >= 2 && *(format - 2) == 'l') {
+                  status = FORMAT_CHUNK(long long int);
+                } else {
+                  status = FORMAT_CHUNK(long int);
+                }
+                break;
+              case 'q':
+                status = FORMAT_CHUNK(long long int);
+                break;
+              case 'j':
+                status = FORMAT_CHUNK(intmax_t);
+                break;
+              case 'z':
+                status = FORMAT_CHUNK(size_t);
+                break;
+              case 't':
+                status = FORMAT_CHUNK(size_t);
+                break;
+              default:
+                status = FORMAT_CHUNK(int);
             }
+            chunk.label_type = Chunk::NUMERIC;
+            end_format = true;
             break;
-          case 'q':
-            retval = formatter.format(va_arg(ap, long long int));
+
+          case 'a':
+          case 'A':
+          case 'e':
+          case 'E':
+          case 'f':
+          case 'F':
+          case 'g':
+          case 'G':
+            if (*(format - 1) == 'L') {
+              status = FORMAT_CHUNK(long double);
+            } else {
+              status = FORMAT_CHUNK(double);
+            }
+            chunk.label_type = Chunk::NUMERIC;
+            end_format = true;
             break;
-          case 'j':
-            retval = formatter.format(va_arg(ap, intmax_t));
+
+          case 'c':
+            status = FORMAT_CHUNK(int);
+            chunk.label_type = Chunk::NUMERIC;
+            end_format = true;
             break;
-          case 'z':
-          case 't':
-            retval = formatter.format(va_arg(ap, size_t));
+
+          case 's':
+            chunk.arg = va_arg(ap, char *);
+            status =
+                format_chunk(str, off, has_size, size,
+                             format - format_size, format_size + 1,
+                             chunk.arg);
+            chunk.label_type = Chunk::STRING;
+            end_format = true;
             break;
+
+          case 'p':
+            status = FORMAT_CHUNK(void *);
+            chunk.label_type = Chunk::NUMERIC;
+            end_format = true;
+            break;
+
+          case 'n':
+            *(va_arg(ap, int *)) = (int)off;
+            chunk.label_type = Chunk::IGNORED;
+            end_format = true;
+            break;
+
+          case '%':
+            status = format_chunk(str, off, has_size, size,
+                                  format - format_size, format_size + 1);
+            chunk.label_type = Chunk::NONE;
+            end_format = true;
+            break;
+
           default:
-            retval = formatter.format(va_arg(ap, int));
-          }
-          dfsan_set_label(*va_labels++, formatter.str_cur(),
-                          formatter.num_written_bytes(retval));
-          end_fmt = true;
-          break;
-
-        case 'a':
-        case 'A':
-        case 'e':
-        case 'E':
-        case 'f':
-        case 'F':
-        case 'g':
-        case 'G':
-          if (*(formatter.fmt_cur - 1) == 'L') {
-            retval = formatter.format(va_arg(ap, long double));
-          } else {
-            retval = formatter.format(va_arg(ap, double));
-          }
-          dfsan_set_label(*va_labels++, formatter.str_cur(),
-                          formatter.num_written_bytes(retval));
-          end_fmt = true;
-          break;
-
-        case 'c':
-          retval = formatter.format(va_arg(ap, int));
-          dfsan_set_label(*va_labels++, formatter.str_cur(),
-                          formatter.num_written_bytes(retval));
-          end_fmt = true;
-          break;
-
-        case 's': {
-          char *arg = va_arg(ap, char *);
-          retval = formatter.format(arg);
-          va_labels++;
-          internal_memcpy(shadow_for(formatter.str_cur()), shadow_for(arg),
-                          sizeof(dfsan_label) *
-                              formatter.num_written_bytes(retval));
-          end_fmt = true;
-          break;
-        }
-
-        case 'p':
-          retval = formatter.format(va_arg(ap, void *));
-          dfsan_set_label(*va_labels++, formatter.str_cur(),
-                          formatter.num_written_bytes(retval));
-          end_fmt = true;
-          break;
-
-        case 'n': {
-          int *ptr = va_arg(ap, int *);
-          *ptr = (int)formatter.str_off;
-          va_labels++;
-          dfsan_set_label(0, ptr, sizeof(ptr));
-          end_fmt = true;
-          break;
-        }
-
-        case '%':
-          retval = formatter.format();
-          dfsan_set_label(0, formatter.str_cur(),
-                          formatter.num_written_bytes(retval));
-          end_fmt = true;
-          break;
-
-        case '*':
-          formatter.width = va_arg(ap, int);
-          va_labels++;
-          break;
-
-        default:
-          break;
+            break;
         }
       }
+#undef FORMAT_CHUNK
     }
 
-    if (retval < 0) {
-      return retval;
+    if (status < 0) {
+      return status;
     }
 
-    formatter.fmt_cur++;
-    formatter.str_off += retval;
+    // A return value of {v,}snprintf of size or more means that the output was
+    // truncated.
+    if (has_size) {
+      if (off < size) {
+        size_t ustatus = (size_t) status;
+        chunk.size = ustatus >= (size - off) ?
+            ustatus - (size - off) : ustatus;
+      } else {
+        chunk.size = 0;
+      }
+    } else {
+      chunk.size = status;
+    }
+    off += status;
+  }
+
+  // TODO(martignlo): Decide how to combine labels (e.g., whether to ignore or
+  // not the label of the format string).
+
+  // Label each output chunk according to the label supplied as argument to the
+  // function. We need to go through all the chunks and arguments even if the
+  // string was only partially printed ({v,}snprintf case).
+  for (size_t i = 0; i < chunks.size(); ++i) {
+    const Chunk& chunk = chunks[i];
+    void *chunk_ptr = const_cast<char *>(chunk.ptr);
+
+    switch (chunk.label_type) {
+      case Chunk::NONE:
+        dfsan_set_label(0, chunk_ptr, chunk.size);
+        break;
+      case Chunk::IGNORED:
+        va_labels++;
+        dfsan_set_label(0, chunk_ptr, chunk.size);
+        break;
+      case Chunk::NUMERIC: {
+        dfsan_label label = *va_labels++;
+        dfsan_set_label(label, chunk_ptr, chunk.size);
+        break;
+      }
+      case Chunk::STRING: {
+        // Consume the label of the pointer to the string
+        va_labels++;
+        internal_memcpy(shadow_for(chunk_ptr),
+                        shadow_for(chunk.arg),
+                        sizeof(dfsan_label) * (strlen(chunk.arg)));
+        break;
+      }
+    }
   }
 
   *ret_label = 0;
 
   // Number of bytes written in total.
-  return formatter.str_off;
+  return off;
 }
 
-extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE
 int __dfsw_sprintf(char *str, const char *format, dfsan_label str_label,
                    dfsan_label format_label, dfsan_label *va_labels,
                    dfsan_label *ret_label, ...) {
   va_list ap;
   va_start(ap, ret_label);
-  int ret = format_buffer(str, ~0ul, format, va_labels, ret_label, ap);
+  int ret = format_buffer(str, false, 0, format, va_labels, ret_label, ap);
   va_end(ap);
   return ret;
 }
@@ -1099,7 +1118,7 @@ int __dfsw_snprintf(char *str, size_t size, const char *format,
                     dfsan_label *ret_label, ...) {
   va_list ap;
   va_start(ap, ret_label);
-  int ret = format_buffer(str, size, format, va_labels, ret_label, ap);
+  int ret = format_buffer(str, true, size, format, va_labels, ret_label, ap);
   va_end(ap);
   return ret;
 }
