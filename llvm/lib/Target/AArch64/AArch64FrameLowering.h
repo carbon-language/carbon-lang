@@ -22,7 +22,7 @@ class AArch64FrameLowering : public TargetFrameLowering {
 public:
   explicit AArch64FrameLowering()
       : TargetFrameLowering(StackGrowsDown, 16, 0, 16,
-                            false /*StackRealignable*/) {}
+                            true /*StackRealignable*/) {}
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI,

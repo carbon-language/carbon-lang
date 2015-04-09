@@ -93,6 +93,9 @@ public:
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;
+  // Base pointer (stack realignment) support.
+  bool canRealignStack(const MachineFunction &MF) const;
+  bool needsStackRealignment(const MachineFunction &MF) const override;
 };
 
 } // end namespace llvm

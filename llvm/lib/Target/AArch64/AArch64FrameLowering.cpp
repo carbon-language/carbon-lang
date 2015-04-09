@@ -9,6 +9,82 @@
 //
 // This file contains the AArch64 implementation of TargetFrameLowering class.
 //
+// On AArch64, stack frames are structured as follows:
+//
+// The stack grows downward.
+//
+// All of the individual frame areas on the frame below are optional, i.e. it's
+// possible to create a function so that the particular area isn't present
+// in the frame.
+//
+// At function entry, the "frame" looks as follows:
+//
+// |                                   | Higher address
+// |-----------------------------------|
+// |                                   |
+// | arguments passed on the stack     |
+// |                                   |
+// |-----------------------------------| <- sp
+// |                                   | Lower address
+//
+//
+// After the prologue has run, the frame has the following general structure.
+// Note that this doesn't depict the case where a red-zone is used. Also,
+// technically the last frame area (VLAs) doesn't get created until in the
+// main function body, after the prologue is run. However, it's depicted here
+// for completeness.
+//
+// |                                   | Higher address
+// |-----------------------------------|
+// |                                   |
+// | arguments passed on the stack     |
+// |                                   |
+// |-----------------------------------|
+// |                                   |
+// | prev_fp, prev_lr                  |
+// | (a.k.a. "frame record")           |
+// |-----------------------------------| <- fp(=x29)
+// |                                   |
+// | other callee-saved registers      |
+// |                                   |
+// |-----------------------------------|
+// |.empty.space.to.make.part.below....|
+// |.aligned.in.case.it.needs.more.than| (size of this area is unknown at
+// |.the.standard.16-byte.alignment....|  compile time; if present)
+// |-----------------------------------|
+// |                                   |
+// | local variables of fixed size     |
+// | including spill slots             |
+// |-----------------------------------| <- bp(not defined by ABI,
+// |.variable-sized.local.variables....|       LLVM chooses X19)
+// |.(VLAs)............................| (size of this area is unknown at
+// |...................................|  compile time)
+// |-----------------------------------| <- sp
+// |                                   | Lower address
+//
+//
+// To access the data in a frame, at-compile time, a constant offset must be
+// computable from one of the pointers (fp, bp, sp) to access it. The size
+// of the areas with a dotted background cannot be computed at compile-time
+// if they are present, making it required to have all three of fp, bp and
+// sp to be set up to be able to access all contents in the frame areas,
+// assuming all of the frame areas are non-empty.
+//
+// For most functions, some of the frame areas are empty. For those functions,
+// it may not be necessary to set up fp or bp:
+// * A base pointer is definitly needed when there are both VLAs and local
+//   variables with more-than-default alignment requirements.
+// * A frame pointer is definitly needed when there are local variables with
+//   more-than-default alignment requirements.
+//
+// In some cases when a base pointer is not strictly needed, it is generated
+// anyway when offsets from the frame pointer to access local variables become
+// so large that the offset can't be encoded in the immediate fields of loads
+// or stores.
+//
+// FIXME: also explain the redzone concept.
+// FIXME: also explain the concept of reserved call frames.
+//
 //===----------------------------------------------------------------------===//
 
 #include "AArch64FrameLowering.h"
@@ -39,26 +115,6 @@ static cl::opt<bool> EnableRedZone("aarch64-redzone",
 
 STATISTIC(NumRedZoneFunctions, "Number of functions using red zone");
 
-static unsigned estimateStackSize(MachineFunction &MF) {
-  const MachineFrameInfo *FFI = MF.getFrameInfo();
-  int Offset = 0;
-  for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
-    int FixedOff = -FFI->getObjectOffset(i);
-    if (FixedOff > Offset)
-      Offset = FixedOff;
-  }
-  for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
-    if (FFI->isDeadObjectIndex(i))
-      continue;
-    Offset += FFI->getObjectSize(i);
-    unsigned Align = FFI->getObjectAlignment(i);
-    // Adjust to alignment boundary
-    Offset = (Offset + Align - 1) / Align * Align;
-  }
-  // This does not include the 16 bytes used for fp and lr.
-  return (unsigned)Offset;
-}
-
 bool AArch64FrameLowering::canUseRedZone(const MachineFunction &MF) const {
   if (!EnableRedZone)
     return false;
@@ -83,16 +139,10 @@ bool AArch64FrameLowering::canUseRedZone(const MachineFunction &MF) const {
 /// pointer register.
 bool AArch64FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-
-#ifndef NDEBUG
   const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
-  assert(!RegInfo->needsStackRealignment(MF) &&
-         "No stack realignment on AArch64!");
-#endif
-
   return (MFI->hasCalls() || MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken() || MFI->hasStackMap() ||
-          MFI->hasPatchPoint());
+          MFI->hasPatchPoint() || RegInfo->needsStackRealignment(MF));
 }
 
 /// hasReservedCallFrame - Under normal circumstances, when a frame pointer is
@@ -288,11 +338,48 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   AFI->setLocalStackSize(NumBytes);
 
   // Allocate space for the rest of the frame.
-  if (NumBytes) {
-    // If we're a leaf function, try using the red zone.
-    if (!canUseRedZone(MF))
-      emitFrameOffset(MBB, MBBI, DL, AArch64::SP, AArch64::SP, -NumBytes, TII,
-                      MachineInstr::FrameSetup);
+
+  const unsigned Alignment = MFI->getMaxAlignment();
+  const bool NeedsRealignment = (Alignment > 16);
+  unsigned scratchSPReg = AArch64::SP;
+  if (NeedsRealignment) {
+    // Use the first callee-saved register as a scratch register
+    assert(MF.getRegInfo().isPhysRegUsed(AArch64::X9) &&
+           "No scratch register to align SP!");
+    scratchSPReg = AArch64::X9;
+  }
+
+  // If we're a leaf function, try using the red zone.
+  if (NumBytes && !canUseRedZone(MF))
+    // FIXME: in the case of dynamic re-alignment, NumBytes doesn't have
+    // the correct value here, as NumBytes also includes padding bytes,
+    // which shouldn't be counted here.
+    emitFrameOffset(MBB, MBBI, DL, scratchSPReg, AArch64::SP, -NumBytes, TII,
+                    MachineInstr::FrameSetup);
+
+  assert(!(NeedsRealignment && NumBytes==0) &&
+         "NumBytes should never be 0 when realignment is needed");
+
+  if (NumBytes && NeedsRealignment) {
+    const unsigned NrBitsToZero = countTrailingZeros(Alignment);
+    assert(NrBitsToZero > 1);
+    assert(scratchSPReg != AArch64::SP);
+
+    // SUB X9, SP, NumBytes
+    //   -- X9 is temporary register, so shouldn't contain any live data here,
+    //   -- free to use. This is already produced by emitFrameOffset above.
+    // AND SP, X9, 0b11111...0000
+    // The logical immediates have a non-trivial encoding. The following
+    // formula computes the encoded immediate with all ones but
+    // NrBitsToZero zero bits as least significant bits.
+    uint32_t andMaskEncoded =
+        (1                   <<12) // = N
+      | ((64-NrBitsToZero)   << 6) // immr
+      | ((64-NrBitsToZero-1) << 0) // imms
+      ;
+    BuildMI(MBB, MBBI, DL, TII->get(AArch64::ANDXri), AArch64::SP)
+      .addReg(scratchSPReg, RegState::Kill)
+      .addImm(andMaskEncoded);
   }
 
   // If we need a base pointer, set it up here. It's whatever the value of the
@@ -302,15 +389,15 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   // FIXME: Clarify FrameSetup flags here.
   // Note: Use emitFrameOffset() like above for FP if the FrameSetup flag is
   // needed.
-  //
-  if (RegInfo->hasBasePointer(MF))
-    TII->copyPhysReg(MBB, MBBI, DL, AArch64::X19, AArch64::SP, false);
+  if (RegInfo->hasBasePointer(MF)) {
+    TII->copyPhysReg(MBB, MBBI, DL, RegInfo->getBaseRegister(), AArch64::SP,
+                     false);
+  }
 
   if (needsFrameMoves) {
     const DataLayout *TD = MF.getTarget().getDataLayout();
     const int StackGrowth = -TD->getPointerSize(0);
     unsigned FramePtr = RegInfo->getFrameRegister(MF);
-
     // An example of the prologue:
     //
     //     .globl __foo
@@ -460,7 +547,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
     return;
 
-  // Initial and residual are named for consitency with the prologue. Note that
+  // Initial and residual are named for consistency with the prologue. Note that
   // in the epilogue, the residual adjustment is executed first.
   uint64_t ArgumentPopSize = 0;
   if (RetOpcode == AArch64::TCRETURNdi || RetOpcode == AArch64::TCRETURNri) {
@@ -571,9 +658,9 @@ int AArch64FrameLowering::resolveFrameIndexReference(const MachineFunction &MF,
   bool isFixed = MFI->isFixedObjectIndex(FI);
 
   // Use frame pointer to reference fixed objects. Use it for locals if
-  // there are VLAs (and thus the SP isn't reliable as a base).
-  // Make sure useFPForScavengingIndex() does the right thing for the emergency
-  // spill slot.
+  // there are VLAs or a dynamically realigned SP (and thus the SP isn't
+  // reliable as a base). Make sure useFPForScavengingIndex() does the
+  // right thing for the emergency spill slot.
   bool UseFP = false;
   if (AFI->hasStackFrame()) {
     // Note: Keeping the following as multiple 'if' statements rather than
@@ -582,7 +669,8 @@ int AArch64FrameLowering::resolveFrameIndexReference(const MachineFunction &MF,
     // Argument access should always use the FP.
     if (isFixed) {
       UseFP = hasFP(MF);
-    } else if (hasFP(MF) && !RegInfo->hasBasePointer(MF)) {
+    } else if (hasFP(MF) && !RegInfo->hasBasePointer(MF) &&
+               !RegInfo->needsStackRealignment(MF)) {
       // Use SP or FP, whichever gives us the best chance of the offset
       // being in range for direct access. If the FPOffset is positive,
       // that'll always be best, as the SP will be even further away.
@@ -597,6 +685,10 @@ int AArch64FrameLowering::resolveFrameIndexReference(const MachineFunction &MF,
         UseFP = true;
     }
   }
+
+  assert((isFixed || !RegInfo->needsStackRealignment(MF) || !UseFP) &&
+         "In the presence of dynamic stack pointer realignment, "
+         "non-argument objects cannot be accessed through the frame pointer");
 
   if (UseFP) {
     FrameReg = RegInfo->getFrameRegister(MF);
@@ -794,6 +886,9 @@ void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
   if (RegInfo->hasBasePointer(MF))
     MRI->setPhysRegUsed(RegInfo->getBaseRegister());
 
+  if (RegInfo->needsStackRealignment(MF) && !RegInfo->hasBasePointer(MF))
+    MRI->setPhysRegUsed(AArch64::X9);
+
   // If any callee-saved registers are used, the frame cannot be eliminated.
   unsigned NumGPRSpilled = 0;
   unsigned NumFPRSpilled = 0;
@@ -867,7 +962,8 @@ void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
   // The CSR spill slots have not been allocated yet, so estimateStackSize
   // won't include them.
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned CFSize = estimateStackSize(MF) + 8 * (NumGPRSpilled + NumFPRSpilled);
+  unsigned CFSize =
+      MFI->estimateStackSize(MF) + 8 * (NumGPRSpilled + NumFPRSpilled);
   DEBUG(dbgs() << "Estimated stack frame size: " << CFSize << " bytes.\n");
   bool BigStack = (CFSize >= 256);
   if (BigStack || !CanEliminateFrame || RegInfo->cannotEliminateFrame(MF))

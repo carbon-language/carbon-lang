@@ -165,7 +165,12 @@ bool AArch64RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   // large enough that referencing from the FP won't result in things being
   // in range relatively often, we can use a base pointer to allow access
   // from the other direction like the SP normally works.
+  // Furthermore, if both variable sized objects are present, and the
+  // stack needs to be dynamically re-aligned, the base pointer is the only
+  // reliable way to reference the locals.
   if (MFI->hasVarSizedObjects()) {
+    if (needsStackRealignment(MF))
+      return true;
     // Conservatively estimate whether the negative offset from the frame
     // pointer will be sufficient to reach. If a function has a smallish
     // frame, it's less likely to have lots of spills and callee saved
@@ -179,6 +184,31 @@ bool AArch64RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   }
 
   return false;
+}
+
+bool AArch64RegisterInfo::canRealignStack(const MachineFunction &MF) const {
+
+  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
+    return false;
+
+  return true;
+}
+
+// FIXME: share this with other backends with identical implementation?
+bool
+AArch64RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const Function *F = MF.getFunction();
+  unsigned StackAlign = MF.getTarget()
+                            .getSubtargetImpl(*MF.getFunction())
+                            ->getFrameLowering()
+                            ->getStackAlignment();
+  bool requiresRealignment =
+      ((MFI->getMaxAlignment() > StackAlign) ||
+       F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                       Attribute::StackAlignment));
+
+  return requiresRealignment && canRealignStack(MF);
 }
 
 unsigned
