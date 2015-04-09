@@ -43,20 +43,20 @@ MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
 MCAsmBackend *createPPCAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   StringRef TT, StringRef CPU);
 
-/// createPPCELFObjectWriter - Construct an PPC ELF object writer.
+/// Construct an PPC ELF object writer.
 MCObjectWriter *createPPCELFObjectWriter(raw_ostream &OS,
                                          bool Is64Bit,
                                          bool IsLittleEndian,
                                          uint8_t OSABI);
-/// createPPCELFObjectWriter - Construct a PPC Mach-O object writer.
+/// Construct a PPC Mach-O object writer.
 MCObjectWriter *createPPCMachObjectWriter(raw_ostream &OS, bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
-/// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
-/// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
-/// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
-/// not, since all 1s are not contiguous.
+/// Returns true iff Val consists of one contiguous run of 1s with any number of
+/// 0s on either side.  The 1s are allowed to wrap from LSB to MSB, so
+/// 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is not,
+/// since all 1s are not contiguous.
 static inline bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   if (!Val)
     return false;

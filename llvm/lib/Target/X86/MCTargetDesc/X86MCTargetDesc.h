@@ -34,7 +34,7 @@ class raw_ostream;
 
 extern Target TheX86_32Target, TheX86_64Target;
 
-/// DWARFFlavour - Flavour of dwarf regnumbers
+/// Flavour of dwarf regnumbers
 ///
 namespace DWARFFlavour {
   enum {
@@ -42,7 +42,7 @@ namespace DWARFFlavour {
   };
 }
 
-/// N86 namespace - Native X86 register numbers
+///  Native X86 register numbers
 ///
 namespace N86 {
   enum {
@@ -57,9 +57,8 @@ namespace X86_MC {
 
   void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 
-  /// createX86MCSubtargetInfo - Create a X86 MCSubtargetInfo instance.
-  /// This is exposed so Asm parser, etc. do not need to go through
-  /// TargetRegistry.
+  /// Create a X86 MCSubtargetInfo instance. This is exposed so Asm parser, etc.
+  /// do not need to go through TargetRegistry.
   MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS);
 }
@@ -81,24 +80,24 @@ MCStreamer *createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
                                      raw_ostream &OS, MCCodeEmitter *CE,
                                      bool RelaxAll);
 
-/// createX86MachObjectWriter - Construct an X86 Mach-O object writer.
+/// Construct an X86 Mach-O object writer.
 MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
                                           bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
-/// createX86ELFObjectWriter - Construct an X86 ELF object writer.
+/// Construct an X86 ELF object writer.
 MCObjectWriter *createX86ELFObjectWriter(raw_ostream &OS,
                                          bool IsELF64,
                                          uint8_t OSABI,
                                          uint16_t EMachine);
-/// createX86WinCOFFObjectWriter - Construct an X86 Win COFF object writer.
+/// Construct an X86 Win COFF object writer.
 MCObjectWriter *createX86WinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
 
-/// createX86_64MachORelocationInfo - Construct X86-64 Mach-O relocation info.
+/// Construct X86-64 Mach-O relocation info.
 MCRelocationInfo *createX86_64MachORelocationInfo(MCContext &Ctx);
 
-/// createX86_64ELFORelocationInfo - Construct X86-64 ELF relocation info.
+/// Construct X86-64 ELF relocation info.
 MCRelocationInfo *createX86_64ELFRelocationInfo(MCContext &Ctx);
 } // End llvm namespace
 

@@ -41,9 +41,8 @@ extern Target TheARMBETarget, TheThumbBETarget;
 namespace ARM_MC {
   std::string ParseARMTriple(StringRef TT, StringRef CPU);
 
-  /// createARMMCSubtargetInfo - Create a ARM MCSubtargetInfo instance.
-  /// This is exposed so Asm parser, etc. do not need to go through
-  /// TargetRegistry.
+  /// Create a ARM MCSubtargetInfo instance. This is exposed so Asm parser, etc.
+  /// do not need to go through TargetRegistry.
   MCSubtargetInfo *createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS);
 }
@@ -86,21 +85,21 @@ MCStreamer *createARMWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                      raw_ostream &OS, MCCodeEmitter *Emitter,
                                      bool RelaxAll);
 
-/// createARMELFObjectWriter - Construct an ELF Mach-O object writer.
+/// Construct an ELF Mach-O object writer.
 MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,
                                          uint8_t OSABI,
                                          bool IsLittleEndian);
 
-/// createARMMachObjectWriter - Construct an ARM Mach-O object writer.
+/// Construct an ARM Mach-O object writer.
 MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,
                                           bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
-/// createARMWinCOFFObjectWriter - Construct an ARM PE/COFF object writer.
+/// Construct an ARM PE/COFF object writer.
 MCObjectWriter *createARMWinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
 
-/// createARMMachORelocationInfo - Construct ARM Mach-O relocation info.
+/// Construct ARM Mach-O relocation info.
 MCRelocationInfo *createARMMachORelocationInfo(MCContext &Ctx);
 } // End llvm namespace
 
