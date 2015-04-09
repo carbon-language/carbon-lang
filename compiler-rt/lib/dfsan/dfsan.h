@@ -24,6 +24,7 @@ struct dfsan_label_info {
   dfsan_label l1;
   dfsan_label l2;
   const char *desc;
+  uptr pc;
   void *userdata;
 };
 
