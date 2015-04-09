@@ -2,6 +2,8 @@
 
 target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
 
+; Test the (concat_vectors (trunc), (trunc)) pattern.
+
 define <4 x i16> @test_concat_truncate_v2i64_to_v4i16(<2 x i64> %a, <2 x i64> %b) #0 {
 entry:
 ; CHECK-LABEL: test_concat_truncate_v2i64_to_v4i16:

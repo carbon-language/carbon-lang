@@ -11514,9 +11514,10 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   if (ISD::allOperandsUndef(N))
     return DAG.getUNDEF(VT);
 
-  // Optimize concat_vectors where one of the vectors is undef.
-  if (N->getNumOperands() == 2 &&
-      N->getOperand(1)->getOpcode() == ISD::UNDEF) {
+  // Optimize concat_vectors where all but the first of the vectors are undef.
+  if (std::all_of(std::next(N->op_begin()), N->op_end(), [](const SDValue &Op) {
+        return Op.getOpcode() == ISD::UNDEF;
+      })) {
     SDValue In = N->getOperand(0);
     assert(In.getValueType().isVector() && "Must concat vectors");
 
@@ -11524,6 +11525,15 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     if (In->getOpcode() == ISD::BITCAST &&
         !In->getOperand(0)->getValueType(0).isVector()) {
       SDValue Scalar = In->getOperand(0);
+
+      // If the bitcast type isn't legal, it might be a trunc of a legal type;
+      // look through the trunc so we can still do the transform:
+      //   concat_vectors(trunc(scalar), undef) -> scalar_to_vector(scalar)
+      if (Scalar->getOpcode() == ISD::TRUNCATE &&
+          !TLI.isTypeLegal(Scalar.getValueType()) &&
+          TLI.isTypeLegal(Scalar->getOperand(0).getValueType()))
+        Scalar = Scalar->getOperand(0);
+
       EVT SclTy = Scalar->getValueType(0);
 
       if (!SclTy.isFloatingPoint() && !SclTy.isInteger())
