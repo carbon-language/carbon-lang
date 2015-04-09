@@ -255,8 +255,9 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   return Success;
 }
 
-static raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
-                                    DiagnosticsEngine &Diags, bool Binary) {
+static std::unique_ptr<raw_fd_ostream>
+getOutputStream(AssemblerInvocation &Opts, DiagnosticsEngine &Diags,
+                bool Binary) {
   if (Opts.OutputPath.empty())
     Opts.OutputPath = "-";
 
@@ -266,12 +267,11 @@ static raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
     sys::RemoveFileOnSignal(Opts.OutputPath);
 
   std::error_code EC;
-  raw_fd_ostream *Out = new raw_fd_ostream(
+  auto Out = llvm::make_unique<raw_fd_ostream>(
       Opts.OutputPath, EC, (Binary ? sys::fs::F_None : sys::fs::F_Text));
   if (EC) {
     Diags.Report(diag::err_fe_unable_to_open_output) << Opts.OutputPath
                                                      << EC.message();
-    delete Out;
     return nullptr;
   }
 
@@ -315,7 +315,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     MAI->setCompressDebugSections(true);
 
   bool IsBinary = Opts.OutputType == AssemblerInvocation::FT_Obj;
-  std::unique_ptr<raw_ostream> Out(GetOutputStream(Opts, Diags, IsBinary));
+  std::unique_ptr<raw_fd_ostream> Out = getOutputStream(Opts, Diags, IsBinary);
   if (!Out)
     return true;
 
