@@ -38,28 +38,27 @@ public:
     const Elf_Ehdr *hdr = elfHeader(*mb);
     if (auto ec = _ctx.mergeHeaderFlags(hdr->getFileClass(), hdr->e_flags))
       return ec;
-    std::size_t maxAlignment =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    result.push_back(createELF(llvm::object::getElfArchType(mb->getBuffer()),
-                               maxAlignment, std::move(mb)));
+    result.push_back(createELF(std::move(mb)));
     return std::error_code();
   }
 
 private:
   /// Create an object depending on the runtime attributes and alignment
   /// of an ELF file.
-  std::unique_ptr<File> createELF(std::pair<unsigned char, unsigned char> ident,
-                                  std::size_t maxAlignment,
-                                  std::unique_ptr<MemoryBuffer> mb) const {
+  std::unique_ptr<File> createELF(std::unique_ptr<MemoryBuffer> mb) const {
     using namespace llvm::ELF;
     using namespace llvm::support;
     using llvm::object::ELFType;
-    if (maxAlignment < 2)
+
+    size_t align =
+        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
+    if (align < 2)
       llvm_unreachable("Invalid alignment for ELF file!");
 
+    unsigned char size;
+    unsigned char endian;
+    std::tie(size, endian) = llvm::object::getElfArchType(mb->getBuffer());
     File *file = nullptr;
-    unsigned char size = ident.first;
-    unsigned char endian = ident.second;
     if (size == ELFCLASS32 && endian == ELFDATA2LSB) {
       file = new FileT<ELFType<little, 2, false>>(std::move(mb), _ctx);
     } else if (size == ELFCLASS32 && endian == ELFDATA2MSB) {
