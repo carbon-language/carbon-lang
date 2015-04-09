@@ -19,8 +19,7 @@ typedef llvm::object::ELFType<llvm::support::little, 2, false> ARMELFType;
 
 template <class ELFT> class ARMTargetLayout;
 
-class ARMTargetRelocationHandler final
-    : public TargetRelocationHandler {
+class ARMTargetRelocationHandler final : public TargetRelocationHandler {
 public:
   ARMTargetRelocationHandler(ARMTargetLayout<ARMELFType> &layout)
       : _armLayout(layout) {}

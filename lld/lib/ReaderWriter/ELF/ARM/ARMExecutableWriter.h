@@ -76,7 +76,7 @@ void ARMExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 
 template <class ELFT>
 unique_bump_ptr<SymbolTable<ELFT>>
-    ARMExecutableWriter<ELFT>::createSymbolTable() {
+ARMExecutableWriter<ELFT>::createSymbolTable() {
   return unique_bump_ptr<SymbolTable<ELFT>>(
       new (this->_alloc) ARMSymbolTable<ELFT>(this->_ctx));
 }
@@ -110,11 +110,11 @@ std::error_code ARMExecutableWriter<ELFT>::setELFHeader() {
           llvm::report_fatal_error(
               "Two least bits must be zero for ARM entry point");
         }
-      break;
+        break;
       case DefinedAtom::codeARMThumb:
         // Fixup entry point for Thumb code.
         this->_elfHeader->e_entry(al->_virtualAddr | 0x1);
-      break;
+        break;
       default:
         llvm_unreachable("Wrong code model of entry point atom");
       }

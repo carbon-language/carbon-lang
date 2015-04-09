@@ -164,7 +164,7 @@ static void relocR_ARM_REL32(uint8_t *location, uint64_t P, uint64_t S,
 
 /// \brief R_ARM_PREL31 - ((S + A) | T) - P
 static void relocR_ARM_PREL31(uint8_t *location, uint64_t P, uint64_t S,
-                                  int64_t A, bool addressesThumb) {
+                              int64_t A, bool addressesThumb) {
   uint64_t T = addressesThumb;
   uint32_t result = (uint32_t)(((S + A) | T) - P);
   const uint32_t mask = 0x7FFFFFFF;
@@ -250,7 +250,7 @@ static void relocR_ARM_THM_JUMP11(uint8_t *location, uint64_t P, uint64_t S,
         llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
         llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
 
-  //we cut off first bit because it is always 1 according to p. 4.5.3
+  // we cut off first bit because it is always 1 according to p. 4.5.3
   result = (result & 0x0FFE) >> 1;
 
   applyThumb16Reloc(location, result, 0x7FF);

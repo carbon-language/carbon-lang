@@ -24,9 +24,7 @@ public:
   ARMELFMappingAtom(T&&... args)
       : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
 
-  DefinedAtom::CodeModel codeModel() const override {
-    return Model;
-  }
+  DefinedAtom::CodeModel codeModel() const override { return Model; }
 };
 
 template <class ELFT> class ARMELFDefinedAtom : public ELFDefinedAtom<ELFT> {
@@ -36,9 +34,9 @@ public:
       : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
 
   bool isThumbFunc() const {
-    const auto* symbol = this->_symbol;
+    const auto *symbol = this->_symbol;
     return symbol->getType() == llvm::ELF::STT_FUNC &&
-        (static_cast<uint64_t>(symbol->st_value) & 0x1);
+           (static_cast<uint64_t>(symbol->st_value) & 0x1);
   }
 
   /// Correct st_value for symbols addressing Thumb instructions
@@ -63,9 +61,8 @@ public:
 protected:
   /// Returns initial addend; for ARM it is 0, because it is read
   /// during the relocations applying
-  Reference::Addend getInitialAddend(ArrayRef<uint8_t>,
-                                     uint64_t,
-                                     const Elf_Rel&) const override {
+  Reference::Addend getInitialAddend(ArrayRef<uint8_t>, uint64_t,
+                                     const Elf_Rel &) const override {
     return 0;
   }
 

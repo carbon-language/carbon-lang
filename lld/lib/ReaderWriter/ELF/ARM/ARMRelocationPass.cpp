@@ -97,9 +97,7 @@ public:
 
   StringRef customSectionName() const override { return _section; }
 
-  ContentType contentType() const override {
-    return DefinedAtom::typeCode;
-  }
+  ContentType contentType() const override { return DefinedAtom::typeCode; }
 
   uint64_t size() const override { return rawContent().size(); }
 
@@ -206,8 +204,7 @@ public:
 /// Serves as a mapping symbol in the release mode.
 class ARMPLTAtom : public PLTAtom {
 public:
-  ARMPLTAtom(const File &f, const std::string &name)
-      : PLTAtom(f, ".plt") {
+  ARMPLTAtom(const File &f, const std::string &name) : PLTAtom(f, ".plt") {
 #ifndef NDEBUG
     _name = name;
 #else
@@ -375,8 +372,8 @@ protected:
 
   std::error_code handleTLSIE32(const Reference &ref) {
     if (const auto *target = dyn_cast<DefinedAtom>(ref.target())) {
-      const_cast<Reference &>(ref).setTarget(
-          static_cast<Derived *>(this)->getTLSTPOFF32(target));
+      const_cast<Reference &>(ref)
+          .setTarget(static_cast<Derived *>(this)->getTLSTPOFF32(target));
       return std::error_code();
     }
     llvm_unreachable("R_ARM_TLS_IE32 reloc targets wrong atom type");
@@ -499,8 +496,8 @@ protected:
   std::error_code handleIFUNC(const DefinedAtom &atom, const Reference &ref) {
     auto target = dyn_cast<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver) {
-      const_cast<Reference &>(ref).setTarget(
-          getIFUNCPLTEntry(target, isThumbCode(atom.codeModel())));
+      const_cast<Reference &>(ref)
+          .setTarget(getIFUNCPLTEntry(target, isThumbCode(atom.codeModel())));
     }
     return std::error_code();
   }
@@ -672,7 +669,8 @@ public:
     name += da->name();
     name += "_from_arm";
     // Create parts of veneer with mapping symbols.
-    auto v_a = new (_file._alloc) Veneer_ARM_B_BL_Static_a_Atom(_file, secName, name);
+    auto v_a =
+        new (_file._alloc) Veneer_ARM_B_BL_Static_a_Atom(_file, secName, name);
     addVeneerWithMapping<DefinedAtom::codeARM_a>(da, v_a, name);
     auto v_d = new (_file._alloc) Veneer_ARM_B_BL_Static_d_Atom(_file, secName);
     addVeneerWithMapping<DefinedAtom::codeARM_d>(v_a, v_d, name);
@@ -695,7 +693,8 @@ public:
     name += da->name();
     name += "_from_thumb";
     // Create parts of veneer with mapping symbols.
-    auto v_t = new (_file._alloc) Veneer_THM_B_BL_Static_t_Atom(_file, secName, name);
+    auto v_t =
+        new (_file._alloc) Veneer_THM_B_BL_Static_t_Atom(_file, secName, name);
     addVeneerWithMapping<DefinedAtom::codeARM_t>(da, v_t, name);
     auto v_a = new (_file._alloc) Veneer_THM_B_BL_Static_a_Atom(_file, secName);
     addVeneerWithMapping<DefinedAtom::codeARM_a>(v_t, v_a, name);
