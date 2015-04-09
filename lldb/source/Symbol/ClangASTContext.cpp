@@ -401,6 +401,9 @@ ClangASTContext::getASTContext()
                                        *getIdentifierTable(),
                                        *getSelectorTable(),
                                        *getBuiltinContext()));
+        
+        m_ast_ap->getDiagnostics().setClient(getDiagnosticConsumer(), false);
+        
         m_ast_ap->InitBuiltinTypes(*getTargetInfo());
         
         if ((m_callback_tag_decl || m_callback_objc_decl) && m_callback_baton)
@@ -408,8 +411,6 @@ ClangASTContext::getASTContext()
             m_ast_ap->getTranslationUnitDecl()->setHasExternalLexicalStorage();
             //m_ast_ap->getTranslationUnitDecl()->setHasExternalVisibleStorage();
         }
-        
-        m_ast_ap->getDiagnostics().setClient(getDiagnosticConsumer(), false);
         
         GetASTMap().Insert(m_ast_ap.get(), this);
     }
