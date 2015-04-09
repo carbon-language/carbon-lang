@@ -414,8 +414,8 @@ void AArch64MachObjectWriter::RecordRelocation(
 }
 
 MCObjectWriter *llvm::createAArch64MachObjectWriter(raw_ostream &OS,
-                                                  uint32_t CPUType,
-                                                  uint32_t CPUSubtype) {
+                                                    uint32_t CPUType,
+                                                    uint32_t CPUSubtype) {
   return createMachObjectWriter(
       new AArch64MachObjectWriter(CPUType, CPUSubtype), OS,
       /*IsLittleEndian=*/true);

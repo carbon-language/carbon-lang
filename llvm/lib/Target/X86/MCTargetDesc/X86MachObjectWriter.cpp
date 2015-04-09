@@ -575,8 +575,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
-MCObjectWriter *llvm::createX86MachObjectWriter(raw_ostream &OS,
-                                                bool Is64Bit,
+MCObjectWriter *llvm::createX86MachObjectWriter(raw_ostream &OS, bool Is64Bit,
                                                 uint32_t CPUType,
                                                 uint32_t CPUSubtype) {
   return createMachObjectWriter(new X86MachObjectWriter(Is64Bit,

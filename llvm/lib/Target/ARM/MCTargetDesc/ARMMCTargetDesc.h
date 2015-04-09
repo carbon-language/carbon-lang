@@ -86,13 +86,11 @@ MCStreamer *createARMWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                      bool RelaxAll);
 
 /// Construct an ELF Mach-O object writer.
-MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,
-                                         uint8_t OSABI,
+MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
                                          bool IsLittleEndian);
 
 /// Construct an ARM Mach-O object writer.
-MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,
-                                          bool Is64Bit,
+MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS, bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 

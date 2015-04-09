@@ -249,8 +249,8 @@ unsigned AArch64ELFObjectWriter::GetRelocType(const MCValue &Target,
 }
 
 MCObjectWriter *llvm::createAArch64ELFObjectWriter(raw_ostream &OS,
-                                                 uint8_t OSABI,
-                                                 bool IsLittleEndian) {
+                                                   uint8_t OSABI,
+                                                   bool IsLittleEndian) {
   MCELFObjectTargetWriter *MOTW =
       new AArch64ELFObjectWriter(OSABI, IsLittleEndian);
   return createELFObjectWriter(MOTW, OS, IsLittleEndian);

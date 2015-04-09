@@ -52,7 +52,7 @@ MCObjectWriter *createAArch64ELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
                                              bool IsLittleEndian);
 
 MCObjectWriter *createAArch64MachObjectWriter(raw_ostream &OS, uint32_t CPUType,
-                                            uint32_t CPUSubtype);
+                                              uint32_t CPUSubtype);
 
 MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,

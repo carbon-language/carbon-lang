@@ -81,16 +81,13 @@ MCStreamer *createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
                                      bool RelaxAll);
 
 /// Construct an X86 Mach-O object writer.
-MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
-                                          bool Is64Bit,
+MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS, bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
 /// Construct an X86 ELF object writer.
-MCObjectWriter *createX86ELFObjectWriter(raw_ostream &OS,
-                                         bool IsELF64,
-                                         uint8_t OSABI,
-                                         uint16_t EMachine);
+MCObjectWriter *createX86ELFObjectWriter(raw_ostream &OS, bool IsELF64,
+                                         uint8_t OSABI, uint16_t EMachine);
 /// Construct an X86 Win COFF object writer.
 MCObjectWriter *createX86WinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
 
