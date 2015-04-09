@@ -593,7 +593,8 @@ NOINLINE void SigLongJmpFunc1(sigjmp_buf buf) {
 
 #if !defined(__ANDROID__) && !defined(__arm__) && \
     !defined(__powerpc64__) && !defined(__powerpc__) && \
-    !defined(__aarch64__)
+    !defined(__aarch64__) && !defined(__mips__) && \
+    !defined(__mips64)
 NOINLINE void BuiltinLongJmpFunc1(jmp_buf buf) {
   // create three red zones for these two stack objects.
   int a;
@@ -616,7 +617,8 @@ TEST(AddressSanitizer, BuiltinLongJmpTest) {
   }
 }
 #endif  // !defined(__ANDROID__) && !defined(__powerpc64__) &&
-        // !defined(__powerpc__) && !defined(__arm__)
+        // !defined(__powerpc__) && !defined(__arm__) &&
+        // !defined(__mips__) && !defined(__mips64)
 
 TEST(AddressSanitizer, UnderscopeLongJmpTest) {
   static jmp_buf buf;
