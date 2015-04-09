@@ -183,7 +183,7 @@ void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
 }
 
 static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
-                                      formatted_raw_ostream &OS,
+                                      raw_ostream &OS,
                                       LLVMCodeGenFileType codegen,
                                       char **ErrorMessage) {
   TargetMachine* TM = unwrap(T);
@@ -231,8 +231,7 @@ LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
     *ErrorMessage = strdup(EC.message().c_str());
     return true;
   }
-  formatted_raw_ostream destf(dest);
-  bool Result = LLVMTargetMachineEmit(T, M, destf, codegen, ErrorMessage);
+  bool Result = LLVMTargetMachineEmit(T, M, dest, codegen, ErrorMessage);
   dest.flush();
   return Result;
 }
@@ -242,8 +241,7 @@ LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T,
   LLVMMemoryBufferRef *OutMemBuf) {
   SmallString<0> CodeString;
   raw_svector_ostream OStream(CodeString);
-  formatted_raw_ostream Out(OStream);
-  bool Result = LLVMTargetMachineEmit(T, M, Out, codegen, ErrorMessage);
+  bool Result = LLVMTargetMachineEmit(T, M, OStream, codegen, ErrorMessage);
   OStream.flush();
 
   StringRef Data = OStream.str();

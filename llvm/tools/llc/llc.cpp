@@ -335,8 +335,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
              << ": warning: ignoring -mc-relax-all because filetype != obj";
 
   {
-    formatted_raw_ostream FOS(Out->os());
-
     AnalysisID StartAfterID = nullptr;
     AnalysisID StopAfterID = nullptr;
     const PassRegistry *PR = PassRegistry::getPassRegistry();
@@ -358,7 +356,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
     }
 
     // Ask the target to add backend passes as necessary.
-    if (Target->addPassesToEmitFile(PM, FOS, FileType, NoVerify,
+    if (Target->addPassesToEmitFile(PM, Out->os(), FileType, NoVerify,
                                     StartAfterID, StopAfterID)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";

@@ -22,6 +22,7 @@
 #include "llvm-c/Disassembler.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CodeGen.h"
+#include "llvm/Support/FormattedStream.h"
 #include <cassert>
 #include <memory>
 #include <string>
@@ -52,7 +53,8 @@ namespace llvm {
   class formatted_raw_ostream;
 
   MCStreamer *createNullStreamer(MCContext &Ctx);
-  MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+  MCStreamer *createAsmStreamer(MCContext &Ctx,
+                                std::unique_ptr<formatted_raw_ostream> OS,
                                 bool isVerboseAsm, bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
@@ -469,14 +471,16 @@ namespace llvm {
       return S;
     }
 
-    MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
+    MCStreamer *createAsmStreamer(MCContext &Ctx,
+                                  std::unique_ptr<formatted_raw_ostream> OS,
                                   bool IsVerboseAsm, bool UseDwarfDirectory,
                                   MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                   MCAsmBackend *TAB, bool ShowInst) const {
-      MCStreamer *S =
-          llvm::createAsmStreamer(Ctx, OS, IsVerboseAsm, UseDwarfDirectory,
-                                  InstPrint, CE, TAB, ShowInst);
-      createAsmTargetStreamer(*S, OS, InstPrint, IsVerboseAsm);
+      formatted_raw_ostream &OSRef = *OS;
+      MCStreamer *S = llvm::createAsmStreamer(Ctx, std::move(OS), IsVerboseAsm,
+                                              UseDwarfDirectory, InstPrint, CE,
+                                              TAB, ShowInst);
+      createAsmTargetStreamer(*S, OSRef, InstPrint, IsVerboseAsm);
       return S;
     }
 

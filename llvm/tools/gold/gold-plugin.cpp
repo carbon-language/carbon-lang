@@ -31,7 +31,7 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Object/IRObjectFile.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -804,9 +804,8 @@ static void codegen(Module &M) {
 
   {
     raw_fd_ostream OS(FD, true);
-    formatted_raw_ostream FOS(OS);
 
-    if (TM->addPassesToEmitFile(CodeGenPasses, FOS,
+    if (TM->addPassesToEmitFile(CodeGenPasses, OS,
                                 TargetMachine::CGFT_ObjectFile))
       message(LDPL_FATAL, "Failed to setup codegen");
     CodeGenPasses.run(M);

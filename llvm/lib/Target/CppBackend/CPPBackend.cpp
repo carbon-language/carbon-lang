@@ -15,6 +15,7 @@
 #include "CPPTargetMachine.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -91,6 +92,7 @@ namespace {
   /// CppWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C++ translation unit.
   class CppWriter : public ModulePass {
+    std::unique_ptr<formatted_raw_ostream> OutOwner;
     formatted_raw_ostream &Out;
     const Module *TheModule;
     uint64_t uniqueNum;
@@ -105,8 +107,9 @@ namespace {
 
   public:
     static char ID;
-    explicit CppWriter(formatted_raw_ostream &o) :
-      ModulePass(ID), Out(o), uniqueNum(0), is_inline(false), indent_level(0){}
+    explicit CppWriter(std::unique_ptr<formatted_raw_ostream> o)
+        : ModulePass(ID), OutOwner(std::move(o)), Out(*OutOwner), uniqueNum(0),
+          is_inline(false), indent_level(0) {}
 
     const char *getPassName() const override { return "C++ backend"; }
 
@@ -2146,13 +2149,14 @@ char CppWriter::ID = 0;
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool CPPTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                           formatted_raw_ostream &o,
+bool CPPTargetMachine::addPassesToEmitFile(PassManagerBase &PM, raw_ostream &o,
                                            CodeGenFileType FileType,
                                            bool DisableVerify,
                                            AnalysisID StartAfter,
                                            AnalysisID StopAfter) {
-  if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
-  PM.add(new CppWriter(o));
+  if (FileType != TargetMachine::CGFT_AssemblyFile)
+    return true;
+  auto FOut = llvm::make_unique<formatted_raw_ostream>(o);
+  PM.add(new CppWriter(std::move(FOut)));
   return false;
 }
