@@ -3258,6 +3258,12 @@ protected:
     
     bool
     ProcessIOHandlerIsActive ();
+
+    bool
+    ProcessIOHandlerExists () const
+    {
+        return static_cast<bool>(m_process_input_reader);
+    }
     
     Error
     HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);

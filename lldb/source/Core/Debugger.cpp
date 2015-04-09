@@ -1519,7 +1519,7 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
             StreamFileSP error_stream_sp (GetOutputFile());
             bool top_io_handler_hid = false;
 
-            if (process_sp->ProcessIOHandlerIsActive() == false)
+            if (process_sp->ProcessIOHandlerExists() && process_sp->ProcessIOHandlerIsActive() == false)
                 top_io_handler_hid = HideTopIOHandler();
 
             if (output_stream.GetSize())
