@@ -66,9 +66,9 @@ also need to add <b>-mllvm -polly-parallel -lgomp</b> to your CFLAGS.
 <h2>Automatic Vector code generation</h2>
 
 Automatic vector code generation can be enabled by adding <b>-mllvm
--polly-vectorizer=polly</b> to your CFLAGS.
+-polly-vectorizer=stripmine</b> to your CFLAGS.
 
-<pre class="code">pollycc -O3 -mllvm -polly -mllvm -polly-vectorizer=polly file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -polly -mllvm -polly-vectorizer=stripmine file.c</pre>
 
 <h2>Extract a preoptimized LLVM-IR file</h2>
 
