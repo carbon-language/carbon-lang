@@ -80,8 +80,8 @@ public:
     SAVEDCOLOR
   };
 
-  explicit raw_ostream(bool unbuffered=false)
-    : BufferMode(unbuffered ? Unbuffered : InternalBuffer) {
+  explicit raw_ostream(bool unbuffered = false)
+      : BufferMode(unbuffered ? Unbuffered : InternalBuffer) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = nullptr;
   }
