@@ -427,6 +427,11 @@ createSeparateConstOffsetFromGEPPass(const TargetMachine *TM = nullptr,
 //
 BasicBlockPass *createLoadCombinePass();
 
+//===----------------------------------------------------------------------===//
+//
+// StraightLineStrengthReduce - This pass strength-reduces some certain
+// instruction patterns in straight-line code.
+//
 FunctionPass *createStraightLineStrengthReducePass();
 
 //===----------------------------------------------------------------------===//
