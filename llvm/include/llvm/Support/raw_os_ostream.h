@@ -33,8 +33,11 @@ class raw_os_ostream : public raw_ostream {
   uint64_t current_pos() const override;
 
 public:
-  raw_os_ostream(std::ostream &O) : OS(O) {}
+  raw_os_ostream(std::ostream &O) : raw_ostream(SK_STD_OS), OS(O) {}
   ~raw_os_ostream();
+  static bool classof(const raw_ostream *OS) {
+    return OS->getKind() == SK_STD_OS;
+  }
 };
 
 } // end llvm namespace

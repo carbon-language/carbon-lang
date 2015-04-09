@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <system_error>
 
@@ -67,6 +68,17 @@ private:
   } BufferMode;
 
 public:
+  enum StreamKind {
+    SK_FD,
+    SK_STRING,
+    SK_SVECTOR,
+    SK_NULL,
+    SK_STD_OS,
+    SK_CIRCULAR,
+    SK_FORMATTED,
+    SK_COUNTING
+  };
+
   // color order matches ANSI escape sequence, don't change
   enum Colors {
     BLACK=0,
@@ -80,8 +92,8 @@ public:
     SAVEDCOLOR
   };
 
-  explicit raw_ostream(bool unbuffered=false)
-    : BufferMode(unbuffered ? Unbuffered : InternalBuffer) {
+  explicit raw_ostream(StreamKind Kind, bool unbuffered = false)
+      : BufferMode(unbuffered ? Unbuffered : InternalBuffer), Kind(Kind) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = nullptr;
   }
@@ -259,7 +271,10 @@ public:
   // Subclass Interface
   //===--------------------------------------------------------------------===//
 
+  StreamKind getKind() const { return Kind; }
+
 private:
+  StreamKind Kind;
   /// The is the piece of the class that is implemented by subclasses.  This
   /// writes the \p Size bytes starting at
   /// \p Ptr to the underlying stream.
@@ -364,6 +379,8 @@ public:
   /// this closes the file when the stream is destroyed.
   raw_fd_ostream(int fd, bool shouldClose, bool unbuffered=false);
 
+  static bool classof(const raw_ostream *OS) { return OS->getKind() == SK_FD; }
+
   ~raw_fd_ostream();
 
   /// Manually flush the stream and close the file. Note that this does not call
@@ -443,8 +460,12 @@ class raw_string_ostream : public raw_ostream {
   /// currently in the buffer.
   uint64_t current_pos() const override { return OS.size(); }
 public:
-  explicit raw_string_ostream(std::string &O) : OS(O) {}
+  explicit raw_string_ostream(std::string &O) : raw_ostream(SK_STRING), OS(O) {}
   ~raw_string_ostream();
+
+  static bool classof(const raw_ostream *OS) {
+    return OS->getKind() == SK_STRING;
+  }
 
   /// Flushes the stream contents to the target string and returns  the string's
   /// reference.
@@ -473,6 +494,10 @@ public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 
+  static bool classof(const raw_ostream *OS) {
+    return OS->getKind() == SK_SVECTOR;
+  }
+
   /// This is called when the SmallVector we're appending to is changed outside
   /// of the raw_svector_ostream's control.  It is only safe to do this if the
   /// raw_svector_ostream has previously been flushed.
@@ -493,8 +518,11 @@ class raw_null_ostream : public raw_ostream {
   uint64_t current_pos() const override;
 
 public:
-  explicit raw_null_ostream() {}
+  explicit raw_null_ostream() : raw_ostream(SK_NULL) {}
   ~raw_null_ostream();
+  static bool classof(const raw_ostream *OS) {
+    return OS->getKind() == SK_NULL;
+  }
 };
 
 } // end llvm namespace

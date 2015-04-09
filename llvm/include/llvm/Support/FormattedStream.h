@@ -84,13 +84,19 @@ public:
   /// so it doesn't want another layer of buffering to be happening
   /// underneath it.
   ///
-  formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-    : raw_ostream(), TheStream(nullptr), DeleteStream(false), Position(0, 0) {
+  formatted_raw_ostream(raw_ostream &Stream, bool Delete = false)
+      : raw_ostream(SK_FORMATTED), TheStream(nullptr), DeleteStream(false),
+        Position(0, 0) {
     setStream(Stream, Delete);
   }
   explicit formatted_raw_ostream()
-    : raw_ostream(), TheStream(nullptr), DeleteStream(false), Position(0, 0) {
+      : raw_ostream(SK_FORMATTED), TheStream(nullptr), DeleteStream(false),
+        Position(0, 0) {
     Scanned = nullptr;
+  }
+
+  static bool classof(const raw_ostream *OS) {
+    return OS->getKind() == SK_FORMATTED;
   }
 
   ~formatted_raw_ostream() {

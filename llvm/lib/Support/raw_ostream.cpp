@@ -489,7 +489,7 @@ void format_object_base::home() {
 
 raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
                                sys::fs::OpenFlags Flags)
-    : Error(false), UseAtomicWrites(false), pos(0) {
+    : raw_ostream(SK_FD), Error(false), UseAtomicWrites(false), pos(0) {
   EC = std::error_code();
   // Handle "-" as stdout. Note that when we do this, we consider ourself
   // the owner of stdout. This means that we can do things like close the
@@ -519,8 +519,8 @@ raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
 /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
 /// ShouldClose is true, this closes the file when the stream is destroyed.
 raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
-  : raw_ostream(unbuffered), FD(fd),
-    ShouldClose(shouldClose), Error(false), UseAtomicWrites(false) {
+    : raw_ostream(SK_FD, unbuffered), FD(fd), ShouldClose(shouldClose),
+      Error(false), UseAtomicWrites(false) {
 #ifdef O_BINARY
   // Setting STDOUT to binary mode is necessary in Win32
   // to avoid undesirable linefeed conversion.
@@ -749,7 +749,8 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 // capacity. This allows raw_ostream to write directly into the correct place,
 // and we only need to set the vector size when the data is flushed.
 
-raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
+raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O)
+    : raw_ostream(SK_SVECTOR), OS(O) {
   // Set up the initial external buffer. We make sure that the buffer has at
   // least 128 bytes free; raw_ostream itself only requires 64, but we want to
   // make sure that we don't grow the buffer unnecessarily on destruction (when
