@@ -40,6 +40,21 @@
 // CHECK-NO-SIGNED-ZEROS-NO-FAST-MATH: "-cc1"
 // CHECK-NO-SIGNED-ZEROS-NO-FAST-MATH-NOT: "-fno-signed-zeros"
 //
+// RUN: %clang -### -freciprocal-math -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-RECIPROCAL-MATH %s
+// CHECK-RECIPROCAL-MATH: "-cc1"
+// CHECK-RECIPROCAL-MATH: "-freciprocal-math"
+//
+// RUN: %clang -### -fno-fast-math -freciprocal-math -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-FAST-MATH-RECIPROCAL-MATH %s
+// CHECK-NO-FAST-MATH-RECIPROCAL-MATH: "-cc1"
+// CHECK-NO-FAST-MATH-RECIPROCAL-MATH: "-freciprocal-math"
+//
+// RUN: %clang -### -freciprocal-math -fno-fast-math -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-RECIPROCAL-MATH-NO-FAST-MATH %s
+// CHECK-RECIPROCAL-MATH-NO-FAST-MATH: "-cc1"
+// CHECK-RECIPROCAL-MATH-NO-FAST-MATH-NOT: "-freciprocal-math"
+//
 // RUN: %clang -### -fno-honor-nans -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-NANS %s
 // CHECK-NO-NANS: "-cc1"

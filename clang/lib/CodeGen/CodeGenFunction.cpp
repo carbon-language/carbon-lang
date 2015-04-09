@@ -70,6 +70,9 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
   if (CGM.getCodeGenOpts().NoSignedZeros) {
     FMF.setNoSignedZeros();
   }
+  if (CGM.getCodeGenOpts().ReciprocalMath) {
+    FMF.setAllowReciprocal();
+  }
   Builder.SetFastMathFlags(FMF);
 }
 
