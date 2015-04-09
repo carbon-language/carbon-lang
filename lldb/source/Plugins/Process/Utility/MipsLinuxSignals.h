@@ -1,0 +1,37 @@
+//===-- MipsLinuxSignals.h ------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef liblldb_MipsLinuxSignals_H_
+#define liblldb_MipsLinuxSignals_H_
+
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
+#include "lldb/Target/UnixSignals.h"
+
+namespace lldb_private {
+namespace process_linux {
+
+    /// Linux specific set of Unix signals.
+    class MipsLinuxSignals
+        : public lldb_private::UnixSignals
+    {
+    public:
+        MipsLinuxSignals();
+
+    private:
+        void
+        Reset();
+    };
+
+} // namespace lldb_private
+} // namespace process_linux
+
+#endif

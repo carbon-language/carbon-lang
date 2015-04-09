@@ -3230,6 +3230,7 @@ NativeProcessLinux::GetSoftwareBreakpointTrapOpcode (size_t trap_opcode_size_hin
     static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
     static const uint8_t g_i386_opcode [] = { 0xCC };
     static const uint8_t g_mips64_opcode[] = { 0x00, 0x00, 0x00, 0x0d };
+    static const uint8_t g_mips64el_opcode[] = { 0x0d, 0x00, 0x00, 0x00 };
 
     switch (m_arch.GetMachine ())
     {
@@ -3245,9 +3246,13 @@ NativeProcessLinux::GetSoftwareBreakpointTrapOpcode (size_t trap_opcode_size_hin
         return Error ();
 
     case llvm::Triple::mips64:
-    case llvm::Triple::mips64el:
         trap_opcode_bytes = g_mips64_opcode;
         actual_opcode_size = sizeof(g_mips64_opcode);
+        return Error ();
+
+    case llvm::Triple::mips64el:
+        trap_opcode_bytes = g_mips64el_opcode;
+        actual_opcode_size = sizeof(g_mips64el_opcode);
         return Error ();
 
     default:
