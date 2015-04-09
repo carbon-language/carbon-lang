@@ -120,15 +120,6 @@ namespace llvm
       Cur = BufferArray;
       setStream(Stream, Owns);
     }
-    explicit circular_raw_ostream()
-        : raw_ostream(/*unbuffered*/true),
-            TheStream(nullptr),
-            OwnsStream(REFERENCE_ONLY),
-            BufferArray(nullptr),
-            Filled(false),
-            Banner("") {
-      Cur = BufferArray;
-    }
 
     ~circular_raw_ostream() {
       flush();
