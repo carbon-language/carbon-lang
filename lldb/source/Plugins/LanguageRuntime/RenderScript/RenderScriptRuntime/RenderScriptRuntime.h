@@ -115,6 +115,10 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     void DumpModules(Stream &strm) const;
 
+    virtual size_t GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates) {
+        return static_cast<size_t>(0);
+    }
+
   protected:
     std::vector<RSModuleDescriptor> m_rsmodules;
 
