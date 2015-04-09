@@ -804,7 +804,7 @@ void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   if (!cov_sandboxed) return;
   cov_max_block_size = args->coverage_max_block_size;
   if (args->coverage_fd >= 0) {
-    cov_fd = args->coverage_fd;
+    cov_fd = (fd_t)args->coverage_fd;
   } else {
     InternalScopedString path(kMaxPathLength);
     // Pre-open the file now. The sandbox won't allow us to do it later.

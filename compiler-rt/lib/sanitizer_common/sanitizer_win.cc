@@ -396,11 +396,17 @@ static __declspec(allocate(".CRT$XID")) int (*__run_atexit)() = RunAtexit;
 
 // ------------------ sanitizer_libc.h
 fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {
-  UNIMPLEMENTED();
+  if (mode != WrOnly)
+    UNIMPLEMENTED();
+  fd_t res = CreateFile(filename, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                        FILE_ATTRIBUTE_NORMAL, nullptr);
+  CHECK(res != kStdoutFd || kStdoutFd == kInvalidFd);
+  CHECK(res != kStderrFd || kStderrFd == kInvalidFd);
+  return res;
 }
 
 void CloseFile(fd_t fd) {
-  UNIMPLEMENTED();
+  CloseHandle(fd);
 }
 
 bool ReadFromFile(fd_t fd, void *buff, uptr buff_size, uptr *bytes_read,
@@ -415,58 +421,25 @@ bool SupportsColoredOutput(fd_t fd) {
 
 bool WriteToFile(fd_t fd, const void *buff, uptr buff_size, uptr *bytes_written,
                  error_t *error_p) {
-  if (fd != kStderrFd)
-    UNIMPLEMENTED();
+  CHECK(fd != kInvalidFd);
 
-  static HANDLE output_stream = 0;
-  // Abort immediately if we know printing is not possible.
-  if (output_stream == INVALID_HANDLE_VALUE) {
-    if (error_p) *error_p = ERROR_INVALID_HANDLE;
-    return false;
-  }
-
-  // If called for the first time, try to use stderr to output stuff,
-  // falling back to stdout if anything goes wrong.
-  bool fallback_to_stdout = false;
-  if (output_stream == 0) {
-    output_stream = GetStdHandle(STD_ERROR_HANDLE);
-    // We don't distinguish "no such handle" from error.
-    if (output_stream == 0)
-      output_stream = INVALID_HANDLE_VALUE;
-
-    if (output_stream == INVALID_HANDLE_VALUE) {
-      // Retry with stdout?
-      output_stream = GetStdHandle(STD_OUTPUT_HANDLE);
-      if (output_stream == 0)
-        output_stream = INVALID_HANDLE_VALUE;
-      if (output_stream == INVALID_HANDLE_VALUE) {
-        if (error_p) *error_p = ERROR_INVALID_HANDLE;
-        return false;
-      }
-    } else {
-      // Successfully got an stderr handle.  However, if WriteFile() fails,
-      // we can still try to fallback to stdout.
-      fallback_to_stdout = true;
-    }
+  if (fd == kStdoutFd) {
+    fd = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (fd == 0) fd = kInvalidFd;
+  } else if (fd == kStderrFd) {
+    fd = GetStdHandle(STD_ERROR_HANDLE);
+    if (fd == 0) fd = kInvalidFd;
   }
 
   DWORD internal_bytes_written;
-  if (WriteFile(output_stream, buff, buff_size, &internal_bytes_written, 0)) {
+  if (fd == kInvalidFd ||
+      WriteFile(fd, buff, buff_size, &internal_bytes_written, 0)) {
+    if (error_p) *error_p = GetLastError();
+    return false;
+  } else {
     if (bytes_written) *bytes_written = internal_bytes_written;
     return true;
   }
-
-  // Re-try with stdout if using a valid stderr handle fails.
-  if (fallback_to_stdout) {
-    output_stream = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (output_stream == 0)
-      output_stream = INVALID_HANDLE_VALUE;
-    if (output_stream != INVALID_HANDLE_VALUE)
-      return WriteToFile(fd, buff, buff_size, bytes_written, error_p);
-  }
-
-  if (error_p) *error_p = GetLastError();
-  return false;
 }
 
 bool RenameFile(const char *oldpath, const char *newpath, error_t *error_p) {

@@ -80,8 +80,15 @@ typedef signed   char s8;
 typedef signed   short s16;  // NOLINT
 typedef signed   int s32;
 typedef signed   long long s64;  // NOLINT
+#if SANITIZER_WINDOWS
+// On Windows, files are HANDLE, which is a synonim of void*.
+// Use void* to avoid including <windows.h> everywhere.
+typedef void* fd_t;
+typedef unsigned error_t;
+#else
 typedef int fd_t;
 typedef int error_t;
+#endif
 
 // WARNING: OFF_T may be different from OS type off_t, depending on the value of
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
