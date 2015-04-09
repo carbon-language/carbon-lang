@@ -75,12 +75,16 @@ static MCCodeGenInfo *createHexagonMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   X->InitMCCodeGenInfo(Reloc::Static, CM, OL);
   return X;
 }
+
 static MCInstPrinter *createHexagonMCInstPrinter(const Triple &T,
                                                  unsigned SyntaxVariant,
                                                  const MCAsmInfo &MAI,
                                                  const MCInstrInfo &MII,
                                                  const MCRegisterInfo &MRI) {
-    return new HexagonInstPrinter(MAI, MII, MRI);
+  if (SyntaxVariant == 0)
+    return(new HexagonInstPrinter(MAI, MII, MRI));
+  else
+   return nullptr;
 }
 
 // Force static initialization.
