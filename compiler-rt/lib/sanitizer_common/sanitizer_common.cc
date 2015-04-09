@@ -54,7 +54,7 @@ void ReportFile::ReopenIfNecessary() {
     if (fd_pid == pid)
       return;
     else
-      internal_close(fd);
+      CloseFile(fd);
   }
 
   internal_snprintf(full_path, kMaxPathLength, "%s.%zu", path_prefix, pid);
@@ -81,7 +81,7 @@ void ReportFile::SetReportPath(const char *path) {
 
   SpinMutexLock l(mu);
   if (fd != kStdoutFd && fd != kStderrFd && fd != kInvalidFd)
-    internal_close(fd);
+    CloseFile(fd);
   fd = kInvalidFd;
   if (internal_strcmp(path, "stdout") == 0) {
     fd = kStdoutFd;
@@ -163,7 +163,7 @@ uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
       }
       read_len += just_read;
     }
-    internal_close(fd);
+    CloseFile(fd);
     if (reached_eof)  // We've read the whole file.
       break;
   }

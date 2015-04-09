@@ -219,6 +219,10 @@ fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *errno_p) {
   return res;
 }
 
+void CloseFile(fd_t fd) {
+  internal_close(fd);
+}
+
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   fd_t fd = OpenFile(file_name, RdOnly);
   CHECK(fd != kInvalidFd);

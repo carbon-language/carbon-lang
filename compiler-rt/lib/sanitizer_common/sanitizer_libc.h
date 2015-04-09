@@ -62,7 +62,6 @@ const fd_t kInvalidFd = -1;
 const fd_t kStdinFd = 0;
 const fd_t kStdoutFd = 1;
 const fd_t kStderrFd = 2;
-uptr internal_close(fd_t fd);
 
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);

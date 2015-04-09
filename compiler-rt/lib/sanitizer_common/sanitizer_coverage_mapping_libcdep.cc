@@ -113,7 +113,7 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
     Printf("sancov.map write failed: %d\n", err);
     Die();
   }
-  internal_close(map_fd);
+  CloseFile(map_fd);
 
   InternalScopedString path(64 + internal_strlen(coverage_dir));
   res = internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.map",

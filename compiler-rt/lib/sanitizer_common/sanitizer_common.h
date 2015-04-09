@@ -199,6 +199,7 @@ enum FileAccessMode {
 // Returns kInvalidFd on error.
 fd_t OpenFile(const char *filename, FileAccessMode mode,
               error_t *errno_p = nullptr);
+void CloseFile(fd_t);
 bool SupportsColoredOutput(fd_t fd);
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.

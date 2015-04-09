@@ -350,7 +350,7 @@ static void dfsan_fini() {
     Report("INFO: DataFlowSanitizer: dumping labels to %s\n",
            flags().dump_labels_at_exit);
     dfsan_dump_labels(fd);
-    internal_close(fd);
+    CloseFile(fd);
   }
 }
 

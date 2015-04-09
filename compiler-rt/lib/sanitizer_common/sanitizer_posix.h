@@ -28,6 +28,7 @@ namespace __sanitizer {
 // Don't use directly, use __sanitizer::OpenFile() instead.
 uptr internal_open(const char *filename, int flags);
 uptr internal_open(const char *filename, int flags, u32 mode);
+uptr internal_close(fd_t fd);
 
 // Memory
 uptr internal_mmap(void *addr, uptr length, int prot, int flags,

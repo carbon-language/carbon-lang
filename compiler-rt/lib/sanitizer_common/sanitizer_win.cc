@@ -395,11 +395,11 @@ static __declspec(allocate(".CRT$XID")) int (*__run_atexit)() = RunAtexit;
 #endif
 
 // ------------------ sanitizer_libc.h
-uptr internal_close(fd_t fd) {
+fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {
   UNIMPLEMENTED();
 }
 
-fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {
+void CloseFile(fd_t fd) {
   UNIMPLEMENTED();
 }
 

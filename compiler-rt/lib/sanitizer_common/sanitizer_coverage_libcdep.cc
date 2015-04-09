@@ -245,7 +245,7 @@ void CoverageData::Disable() {
     tr_event_pointer = nullptr;
   }
   if (pc_fd != kInvalidFd) {
-    internal_close(pc_fd);
+    CloseFile(pc_fd);
     pc_fd = kInvalidFd;
   }
 }
@@ -596,7 +596,7 @@ void CoverageData::DumpTrace() {
   fd_t fd = CovOpenFile(&path, false, "trace-points");
   if (fd == kInvalidFd) return;
   internal_write(fd, out.data(), out.length());
-  internal_close(fd);
+  CloseFile(fd);
 
   fd = CovOpenFile(&path, false, "trace-compunits");
   if (fd == kInvalidFd) return;
@@ -604,7 +604,7 @@ void CoverageData::DumpTrace() {
   for (uptr i = 0; i < comp_unit_name_vec.size(); i++)
     out.append("%s\n", comp_unit_name_vec[i].copied_module_name);
   internal_write(fd, out.data(), out.length());
-  internal_close(fd);
+  CloseFile(fd);
 
   fd = CovOpenFile(&path, false, "trace-events");
   if (fd == kInvalidFd) return;
@@ -620,7 +620,7 @@ void CoverageData::DumpTrace() {
       break;
     }
   }
-  internal_close(fd);
+  CloseFile(fd);
   VReport(1, " CovDump: Trace: %zd PCs written\n", size());
   VReport(1, " CovDump: Trace: %zd Events written\n", max_idx);
 }
@@ -661,7 +661,7 @@ void CoverageData::DumpCallerCalleePairs() {
   fd_t fd = CovOpenFile(&path, false, "caller-callee");
   if (fd == kInvalidFd) return;
   internal_write(fd, out.data(), out.length());
-  internal_close(fd);
+  CloseFile(fd);
   VReport(1, " CovDump: %zd caller-callee pairs written\n", total);
 }
 
@@ -696,7 +696,7 @@ void CoverageData::DumpCounters() {
         CovOpenFile(&path, /* packed */ false, base_name, "counters-sancov");
     if (fd == kInvalidFd) return;
     internal_write(fd, bitset.data() + r.beg, r.end - r.beg);
-    internal_close(fd);
+    CloseFile(fd);
     VReport(1, " CovDump: %zd counters written for '%s'\n", r.end - r.beg,
             base_name);
   }
@@ -723,7 +723,7 @@ void CoverageData::DumpAsBitSet() {
     fd_t fd = CovOpenFile(&path, /* packed */false, base_name, "bitset-sancov");
     if (fd == kInvalidFd) return;
     internal_write(fd, out.data() + r.beg, r.end - r.beg);
-    internal_close(fd);
+    CloseFile(fd);
     VReport(1,
             " CovDump: bitset of %zd bits written for '%s', %zd bits are set\n",
             r.end - r.beg, base_name, n_set_bits);
@@ -778,12 +778,12 @@ void CoverageData::DumpOffsets() {
       fd_t fd = CovOpenFile(&path, false /* packed */, module_name);
       if (fd == kInvalidFd) continue;
       internal_write(fd, offsets.data(), offsets.size() * sizeof(offsets[0]));
-      internal_close(fd);
+      CloseFile(fd);
       VReport(1, " CovDump: %s: %zd PCs written\n", path.data(), num_offsets);
     }
   }
   if (cov_fd != kInvalidFd)
-    internal_close(cov_fd);
+    CloseFile(cov_fd);
 }
 
 void CoverageData::DumpAll() {
