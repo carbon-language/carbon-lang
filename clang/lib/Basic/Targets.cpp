@@ -744,6 +744,8 @@ class PPCTargetInfo : public TargetInfo {
   bool HasP8Crypto;
   bool HasQPX;
   bool HasHTM;
+  bool HasBPERMD;
+  bool HasExtDiv;
 
 protected:
   std::string ABI;
@@ -751,7 +753,8 @@ protected:
 public:
   PPCTargetInfo(const llvm::Triple &Triple)
     : TargetInfo(Triple), HasVSX(false), HasP8Vector(false),
-      HasP8Crypto(false), HasQPX(false), HasHTM(false) {
+      HasP8Crypto(false), HasQPX(false), HasHTM(false),
+      HasBPERMD(false), HasExtDiv(false) {
     BigEndian = (Triple.getArch() != llvm::Triple::ppc64le);
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::PPCDoubleDouble;
@@ -1011,6 +1014,16 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       continue;
     }
 
+    if (Feature == "bpermd") {
+      HasBPERMD = true;
+      continue;
+    }
+
+    if (Feature == "extdiv") {
+      HasExtDiv = true;
+      continue;
+    }
+
     if (Feature == "power8-vector") {
       HasP8Vector = true;
       continue;
@@ -1233,6 +1246,16 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Case("ppc64le", true)
     .Case("pwr8", true)
     .Default(false);
+  Features["bpermd"] = llvm::StringSwitch<bool>(CPU)
+    .Case("ppc64le", true)
+    .Case("pwr8", true)
+    .Case("pwr7", true)
+    .Default(false);
+  Features["extdiv"] = llvm::StringSwitch<bool>(CPU)
+    .Case("ppc64le", true)
+    .Case("pwr8", true)
+    .Case("pwr7", true)
+    .Default(false);
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
@@ -1243,6 +1266,8 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
     .Case("crypto", HasP8Crypto)
     .Case("qpx", HasQPX)
     .Case("htm", HasHTM)
+    .Case("bpermd", HasBPERMD)
+    .Case("extdiv", HasExtDiv)
     .Default(false);
 }
 

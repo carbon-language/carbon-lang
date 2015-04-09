@@ -283,6 +283,13 @@ BUILTIN(__builtin_set_tfiar, "vLUi", "c")
 
 BUILTIN(__builtin_ttest, "LUi", "")
 
+// Scalar built-ins
+BUILTIN(__builtin_divwe, "SiSiSi", "")
+BUILTIN(__builtin_divweu, "UiUiUi", "")
+BUILTIN(__builtin_divde, "SLLiSLLiSLLi", "")
+BUILTIN(__builtin_divdeu, "ULLiULLiULLi", "")
+BUILTIN(__builtin_bpermd, "SLLiSLLiSLLi", "")
+
 // FIXME: Obviously incomplete.
 
 #undef BUILTIN

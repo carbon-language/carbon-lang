@@ -907,6 +907,28 @@ bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 
 bool Sema::CheckPPCBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   unsigned i = 0, l = 0, u = 0;
+  bool Is64BitBltin = BuiltinID == PPC::BI__builtin_divde ||
+                      BuiltinID == PPC::BI__builtin_divdeu ||
+                      BuiltinID == PPC::BI__builtin_bpermd;
+  bool IsTarget64Bit = Context.getTargetInfo()
+                              .getTypeWidth(Context
+                                            .getTargetInfo()
+                                            .getIntPtrType()) == 64;
+  bool IsBltinExtDiv = BuiltinID == PPC::BI__builtin_divwe ||
+                       BuiltinID == PPC::BI__builtin_divweu ||
+                       BuiltinID == PPC::BI__builtin_divde ||
+                       BuiltinID == PPC::BI__builtin_divdeu;
+
+  if (Is64BitBltin && !IsTarget64Bit)
+      return Diag(TheCall->getLocStart(), diag::err_64_bit_builtin_32_bit_tgt)
+             << TheCall->getSourceRange();
+
+  if ((IsBltinExtDiv && !Context.getTargetInfo().hasFeature("extdiv")) ||
+      (BuiltinID == PPC::BI__builtin_bpermd &&
+       !Context.getTargetInfo().hasFeature("bpermd")))
+    return Diag(TheCall->getLocStart(), diag::err_ppc_builtin_only_on_pwr7)
+           << TheCall->getSourceRange();
+
   switch (BuiltinID) {
   default: return false;
   case PPC::BI__builtin_altivec_crypto_vshasigmaw:

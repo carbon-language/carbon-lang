@@ -7045,6 +7045,10 @@ def note_neon_vector_initializer_non_portable_q : Note<
   "constants">;
 def err_systemz_invalid_tabort_code : Error<
   "invalid transaction abort code">;
+def err_64_bit_builtin_32_bit_tgt : Error<
+  "this builtin is only available on 64-bit targets">;
+def err_ppc_builtin_only_on_pwr7 : Error<
+  "this builtin is only valid on POWER7 or later CPUs">;
 
 def err_builtin_longjmp_unsupported : Error<
   "__builtin_longjmp is not supported for the current target">;
