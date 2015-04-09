@@ -127,7 +127,7 @@ public:
   bool UseBigObj;
 
   WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_ostream &OS);
-  
+
   void reset() override {
     memset(&Header, 0, sizeof(Header));
     Header.Machine = TargetObjectWriter->getMachine();
@@ -1073,9 +1073,8 @@ void MCWinCOFFObjectTargetWriter::anchor() {}
 //------------------------------------------------------------------------------
 // WinCOFFObjectWriter factory function
 
-namespace llvm {
-  MCObjectWriter *createWinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
-                                            raw_ostream &OS) {
-    return new WinCOFFObjectWriter(MOTW, OS);
-  }
+MCObjectWriter *
+llvm::createWinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
+                                raw_ostream &OS) {
+  return new WinCOFFObjectWriter(MOTW, OS);
 }
