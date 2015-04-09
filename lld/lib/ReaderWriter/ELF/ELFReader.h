@@ -10,10 +10,12 @@
 #ifndef LLD_READER_WRITER_ELF_READER_H
 #define LLD_READER_WRITER_ELF_READER_H
 
-#include "CreateELF.h"
 #include "DynamicFile.h"
 #include "ELFFile.h"
+#include "lld/Core/File.h"
 #include "lld/Core/Reader.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Object/ELF.h"
 
 namespace lld {
 namespace elf {
@@ -36,18 +38,42 @@ public:
     const Elf_Ehdr *hdr = elfHeader(*mb);
     if (auto ec = _ctx.mergeHeaderFlags(hdr->getFileClass(), hdr->e_flags))
       return ec;
-
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<FileT>(llvm::object::getElfArchType(mb->getBuffer()),
-                              maxAlignment, std::move(mb), _ctx);
-    if (std::error_code ec = f.getError())
-      return ec;
-    result.push_back(std::move(*f));
+    result.push_back(createELF(llvm::object::getElfArchType(mb->getBuffer()),
+                               maxAlignment, std::move(mb)));
     return std::error_code();
   }
 
 private:
+  /// Create an object depending on the runtime attributes and alignment
+  /// of an ELF file.
+  std::unique_ptr<File> createELF(std::pair<unsigned char, unsigned char> ident,
+                                  std::size_t maxAlignment,
+                                  std::unique_ptr<MemoryBuffer> mb) const {
+    using namespace llvm::ELF;
+    using namespace llvm::support;
+    using llvm::object::ELFType;
+    if (maxAlignment < 2)
+      llvm_unreachable("Invalid alignment for ELF file!");
+
+    File *file = nullptr;
+    unsigned char size = ident.first;
+    unsigned char endian = ident.second;
+    if (size == ELFCLASS32 && endian == ELFDATA2LSB) {
+      file = new FileT<ELFType<little, 2, false>>(std::move(mb), _ctx);
+    } else if (size == ELFCLASS32 && endian == ELFDATA2MSB) {
+      file = new FileT<ELFType<big, 2, false>>(std::move(mb), _ctx);
+    } else if (size == ELFCLASS64 && endian == ELFDATA2LSB) {
+      file = new FileT<ELFType<little, 2, true>>(std::move(mb), _ctx);
+    } else if (size == ELFCLASS64 && endian == ELFDATA2MSB) {
+      file = new FileT<ELFType<big, 2, true>>(std::move(mb), _ctx);
+    }
+    if (!file)
+      llvm_unreachable("Invalid ELF type!");
+    return std::unique_ptr<File>(file);
+  }
+
   static const Elf_Ehdr *elfHeader(const MemoryBuffer &buf) {
     return reinterpret_cast<const Elf_Ehdr *>(buf.getBuffer().data());
   }
