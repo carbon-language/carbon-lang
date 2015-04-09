@@ -603,6 +603,8 @@
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B7564E14F89356008D9CB3 /* PlatformiOSSimulator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B7564C14F89356008D9CB3 /* PlatformiOSSimulator.cpp */; };
 		26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B7564D14F89356008D9CB3 /* PlatformiOSSimulator.h */; };
+		26B75B441AD6E29A001F7A57 /* MipsLinuxSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B75B421AD6E29A001F7A57 /* MipsLinuxSignals.cpp */; };
+		26B75B451AD6E29A001F7A57 /* MipsLinuxSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B75B431AD6E29A001F7A57 /* MipsLinuxSignals.h */; };
 		26B8283D142D01E9002DBC64 /* SBSection.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B8283C142D01E9002DBC64 /* SBSection.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B82840142D020F002DBC64 /* SBSection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B8283F142D020F002DBC64 /* SBSection.cpp */; };
 		26BC179918C7F2B300D2196D /* JITLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC179718C7F2B300D2196D /* JITLoader.cpp */; };
@@ -1767,6 +1769,8 @@
 		26B4E26E112F35F700AB3F64 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeValue.h; path = include/lldb/Host/TimeValue.h; sourceTree = "<group>"; };
 		26B7564C14F89356008D9CB3 /* PlatformiOSSimulator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformiOSSimulator.cpp; sourceTree = "<group>"; };
 		26B7564D14F89356008D9CB3 /* PlatformiOSSimulator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformiOSSimulator.h; sourceTree = "<group>"; };
+		26B75B421AD6E29A001F7A57 /* MipsLinuxSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MipsLinuxSignals.cpp; path = Utility/MipsLinuxSignals.cpp; sourceTree = "<group>"; };
+		26B75B431AD6E29A001F7A57 /* MipsLinuxSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MipsLinuxSignals.h; path = Utility/MipsLinuxSignals.h; sourceTree = "<group>"; };
 		26B8283C142D01E9002DBC64 /* SBSection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBSection.h; path = include/lldb/API/SBSection.h; sourceTree = "<group>"; };
 		26B8283F142D020F002DBC64 /* SBSection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSection.cpp; path = source/API/SBSection.cpp; sourceTree = "<group>"; };
 		26B8B42212EEC52A00A831B2 /* UniqueDWARFASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UniqueDWARFASTType.h; sourceTree = "<group>"; };
@@ -3802,6 +3806,8 @@
 				23059A0519532B96007B8189 /* LinuxSignals.cpp */,
 				23059A0619532B96007B8189 /* LinuxSignals.h */,
 				23173F8B192BA93F005C708F /* lldb-x86-register-enums.h */,
+				26B75B421AD6E29A001F7A57 /* MipsLinuxSignals.cpp */,
+				26B75B431AD6E29A001F7A57 /* MipsLinuxSignals.h */,
 				26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */,
 				AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */,
 				26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */,
@@ -5283,6 +5289,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */,
+				26B75B451AD6E29A001F7A57 /* MipsLinuxSignals.h in Headers */,
 				257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */,
 				26BC17AC18C7F4CB00D2196D /* ProcessElfCore.h in Headers */,
 				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
@@ -5977,6 +5984,7 @@
 				2689003B13353E0400698AC0 /* EmulateInstruction.cpp in Sources */,
 				2689003C13353E0400698AC0 /* Error.cpp in Sources */,
 				2689003D13353E0400698AC0 /* Event.cpp in Sources */,
+				26B75B441AD6E29A001F7A57 /* MipsLinuxSignals.cpp in Sources */,
 				2689003E13353E0400698AC0 /* FileSpecList.cpp in Sources */,
 				2689004013353E0400698AC0 /* Language.cpp in Sources */,
 				2689004113353E0400698AC0 /* Listener.cpp in Sources */,
