@@ -5606,7 +5606,7 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU) {
     .Cases("arm1156t2-s",  "arm1156t2f-s", "v6t2")
     .Cases("cortex-a5", "cortex-a7", "cortex-a8", "v7")
     .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait", "v7")
-    .Cases("cortex-r4", "cortex-r5", "cortex-r7", "v7r")
+    .Cases("cortex-r4", "cortex-r4f", "cortex-r5", "cortex-r7", "v7r")
     .Cases("sc000", "cortex-m0", "cortex-m0plus", "cortex-m1", "v6m")
     .Cases("sc300", "cortex-m3", "v7m")
     .Cases("cortex-m4", "cortex-m7", "v7em")
