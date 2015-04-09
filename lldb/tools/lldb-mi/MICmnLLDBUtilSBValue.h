@@ -14,6 +14,7 @@
 
 // In-house headers:
 #include "MIDataTypes.h"
+#include "MICmnMIValueTuple.h"
 
 // Declerations:
 class CMIUtilString;
@@ -29,17 +30,20 @@ class CMICmnLLDBUtilSBValue
 {
     // Methods:
   public:
-    /* ctor */ CMICmnLLDBUtilSBValue(const lldb::SBValue &vrValue, const bool vbHandleCharType = false);
+    /* ctor */ CMICmnLLDBUtilSBValue(const lldb::SBValue &vrValue, const bool vbHandleCharType = false,
+                                     const bool vbHandleArrayType = true);
     /* dtor */ ~CMICmnLLDBUtilSBValue(void);
     //
     CMIUtilString GetName(void) const;
-    CMIUtilString GetValue(void) const;
+    CMIUtilString GetValue(const bool vbExpandAggregates = false) const;
     CMIUtilString GetValueCString(void) const;
     CMIUtilString GetChildValueCString(void) const;
     CMIUtilString GetTypeName(void) const;
     CMIUtilString GetTypeNameDisplay(void) const;
     bool IsCharType(void) const;
-    bool IsChildCharType(void) const;
+    bool IsFirstChildCharType(void) const;
+    bool IsPointerType(void) const;
+    bool IsArrayType(void) const;
     bool IsLLDBVariable(void) const;
     bool IsNameUnknown(void) const;
     bool IsValueUnknown(void) const;
@@ -49,11 +53,15 @@ class CMICmnLLDBUtilSBValue
     // Methods:
   private:
     CMIUtilString ReadCStringFromHostMemory(const lldb::SBValue &vrValueObj) const;
+    bool GetSimpleValue(const bool vbHandleArrayType, CMIUtilString &vrValue) const;
+    bool GetCompositeValue(CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
 
     // Attributes:
   private:
     lldb::SBValue &m_rValue;
     const MIchar *m_pUnkwn;
-    bool m_bValidSBValue;   // True = SBValue is a valid object, false = not valid.
-    bool m_bHandleCharType; // True = Yes return text molding to char type, false = just return data.
+    const MIchar *m_pComposite;
+    bool m_bValidSBValue;    // True = SBValue is a valid object, false = not valid.
+    bool m_bHandleCharType;  // True = Yes return text molding to char type, false = just return data.
+    bool m_bHandleArrayType; // True = Yes return special stub for array type, false = just return data.
 };

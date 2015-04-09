@@ -211,7 +211,8 @@ CMICmnLLDBDebugSessionInfo::RecordBrkPtInfoDelete(const MIuint vnBrkPtId)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MIuint vThreadIdx, CMIUtilString &vwrThreadFrames)
+CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MIuint vThreadIdx, const FrameInfoFormat_e veFrameInfoFormat,
+                                            CMIUtilString &vwrThreadFrames)
 {
     lldb::SBThread thread = GetProcess().GetThreadByIndexID(vThreadIdx);
     const uint32_t nFrames = thread.GetNumFrames();
@@ -230,108 +231,8 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MI
     CMIUtilString strListCommaSeperated;
     for (MIuint nLevel = 0; nLevel < nFrames; nLevel++)
     {
-        lldb::SBFrame frame = thread.GetFrameAtIndex(nLevel);
-        lldb::addr_t pc = 0;
-        CMIUtilString fnName;
-        CMIUtilString fileName;
-        CMIUtilString path;
-        MIuint nLine = 0;
-        if (!GetFrameInfo(frame, pc, fnName, fileName, path, nLine))
-            return MIstatus::failure;
-
-        // Function args
-        CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = eVariableType_Arguments;
-        if (!MIResponseFormVariableInfo(frame, maskVarTypes, eVariableInfoFormat_AllValues, miValueList))
-            return MIstatus::failure;
-
-        const MIchar *pUnknown = "??";
-        if (fnName != pUnknown)
-        {
-            std::replace(fnName.begin(), fnName.end(), ')', ' ');
-            std::replace(fnName.begin(), fnName.end(), '(', ' ');
-            std::replace(fnName.begin(), fnName.end(), '\'', ' ');
-        }
-
         CMICmnMIValueTuple miValueTuple;
-        const CMIUtilString strLevel(CMIUtilString::Format("%d", nLevel));
-        const CMICmnMIValueConst miValueConst(strLevel);
-        const CMICmnMIValueResult miValueResult("level", miValueConst);
-        miValueTuple.Add(miValueResult);
-        if (!MIResponseFormFrameInfo2(pc, miValueList.GetString(), fnName, fileName, path, nLine, miValueTuple))
-            return MIstatus::failure;
-
-        const CMICmnMIValueResult miValueResult2("frame", miValueTuple);
-        if (nLevel != 0)
-            strListCommaSeperated += ",";
-        strListCommaSeperated += miValueResult2.GetString();
-    }
-
-    vwrThreadFrames = strListCommaSeperated;
-
-    return MIstatus::success;
-}
-
-// Todo: Refactor maybe to so only one function with this name, but not just yet
-//++ ------------------------------------------------------------------------------------
-// Details: Retrieve the specified thread's frame information.
-// Type:    Method.
-// Args:    vCmdData        - (R) A command's information.
-//          vThreadIdx      - (R) Thread index.
-//          vwrThreadFrames - (W) Frame data.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::GetThreadFrames2(const SMICmdData &vCmdData, const MIuint vThreadIdx, CMIUtilString &vwrThreadFrames)
-{
-    lldb::SBThread thread = GetProcess().GetThreadByIndexID(vThreadIdx);
-    const uint32_t nFrames = thread.GetNumFrames();
-    if (nFrames == 0)
-    {
-        // MI print "frame={}"
-        CMICmnMIValueTuple miValueTuple;
-        CMICmnMIValueResult miValueResult("frame", miValueTuple);
-        vwrThreadFrames = miValueResult.GetString();
-        return MIstatus::success;
-    }
-
-    // MI print
-    // "frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},
-    // ..."
-    CMIUtilString strListCommaSeperated;
-    for (MIuint nLevel = 0; nLevel < nFrames; nLevel++)
-    {
-        lldb::SBFrame frame = thread.GetFrameAtIndex(nLevel);
-        lldb::addr_t pc = 0;
-        CMIUtilString fnName;
-        CMIUtilString fileName;
-        CMIUtilString path;
-        MIuint nLine = 0;
-        if (!GetFrameInfo(frame, pc, fnName, fileName, path, nLine))
-            return MIstatus::failure;
-
-        // Function args
-        CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = eVariableType_Arguments;
-        if (!MIResponseFormVariableInfo2(frame, maskVarTypes, eVariableInfoFormat_AllValues, miValueList))
-            return MIstatus::failure;
-
-        const MIchar *pUnknown = "??";
-        if (fnName != pUnknown)
-        {
-            std::replace(fnName.begin(), fnName.end(), ')', ' ');
-            std::replace(fnName.begin(), fnName.end(), '(', ' ');
-            std::replace(fnName.begin(), fnName.end(), '\'', ' ');
-        }
-
-        CMICmnMIValueTuple miValueTuple;
-        const CMIUtilString strLevel(CMIUtilString::Format("%d", nLevel));
-        const CMICmnMIValueConst miValueConst(strLevel);
-        const CMICmnMIValueResult miValueResult("level", miValueConst);
-        miValueTuple.Add(miValueResult);
-        if (!MIResponseFormFrameInfo2(pc, miValueList.GetString(), fnName, fileName, path, nLine, miValueTuple))
+        if (!MIResponseFormFrameInfo(thread, nLevel, veFrameInfoFormat, miValueTuple))
             return MIstatus::failure;
 
         const CMICmnMIValueResult miValueResult2("frame", miValueTuple);
@@ -459,13 +360,9 @@ CMICmnLLDBDebugSessionInfo::AccessPath(const CMIUtilString &vPath, bool &vwbYesA
 //--
 bool
 CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo(const SMICmdData &vCmdData, const lldb::SBThread &vrThread,
-                                                     CMICmnMIValueTuple &vwrMIValueTuple)
+                                                     const ThreadInfoFormat_e veThreadInfoFormat, CMICmnMIValueTuple &vwrMIValueTuple)
 {
     lldb::SBThread &rThread = const_cast<lldb::SBThread &>(vrThread);
-
-    CMIUtilString strFrames;
-    if (!GetThreadFrames(vCmdData, rThread.GetIndexID(), strFrames))
-        return MIstatus::failure;
 
     const bool bSuspended = rThread.IsSuspended();
     const lldb::StopReason eReason = rThread.GetStopReason();
@@ -496,178 +393,24 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo(const SMICmdData &vCmdData,
         return MIstatus::failure;
 
     // Add "frame"
-    const CMICmnMIValueConst miValueConst3(strFrames, true);
-    if (!vwrMIValueTuple.Add(miValueConst3, false))
-        return MIstatus::failure;
-
-    // Add "state"
-    const CMICmnMIValueConst miValueConst4(strState);
-    const CMICmnMIValueResult miValueResult4("state", miValueConst4);
-    if (!vwrMIValueTuple.Add(miValueResult4))
-        return MIstatus::failure;
-
-    return MIstatus::success;
-}
-
-// Todo: Refactor maybe to so only one function with this name, but not just yet
-//++ ------------------------------------------------------------------------------------
-// Details: Form MI partial response by appending more MI value type objects to the
-//          tuple type object past in.
-// Type:    Method.
-// Args:    vCmdData        - (R) A command's information.
-//          vrThread        - (R) LLDB thread object.
-//          vwrMIValueTuple - (W) MI value tuple object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo3(const SMICmdData &vCmdData, const lldb::SBThread &vrThread,
-                                                      CMICmnMIValueTuple &vwrMIValueTuple)
-{
-    lldb::SBThread &rThread = const_cast<lldb::SBThread &>(vrThread);
-
-    CMIUtilString strFrames;
-    if (!GetThreadFrames2(vCmdData, rThread.GetIndexID(), strFrames))
-        return MIstatus::failure;
-
-    const bool bSuspended = rThread.IsSuspended();
-    const lldb::StopReason eReason = rThread.GetStopReason();
-    const bool bValidReason = !((eReason == lldb::eStopReasonNone) || (eReason == lldb::eStopReasonInvalid));
-    const CMIUtilString strState((bSuspended || bValidReason) ? "stopped" : "running");
-
-    // Add "id"
-    const CMIUtilString strId(CMIUtilString::Format("%d", rThread.GetIndexID()));
-    const CMICmnMIValueConst miValueConst1(strId);
-    const CMICmnMIValueResult miValueResult1("id", miValueConst1);
-    if (!vwrMIValueTuple.Add(miValueResult1))
-        return MIstatus::failure;
-
-    // Add "target-id"
-    const MIchar *pThreadName = rThread.GetName();
-    const MIuint len = (pThreadName != nullptr) ? CMIUtilString(pThreadName).length() : 0;
-    const bool bHaveName = ((pThreadName != nullptr) && (len > 0) && (len < 32) &&
-                            CMIUtilString::IsAllValidAlphaAndNumeric(*pThreadName)); // 32 is arbitary number
-    const MIchar *pThrdFmt = bHaveName ? "%s" : "Thread %d";
-    CMIUtilString strThread;
-    if (bHaveName)
-        strThread = CMIUtilString::Format(pThrdFmt, pThreadName);
-    else
-        strThread = CMIUtilString::Format(pThrdFmt, rThread.GetIndexID());
-    const CMICmnMIValueConst miValueConst2(strThread);
-    const CMICmnMIValueResult miValueResult2("target-id", miValueConst2);
-    if (!vwrMIValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
-
-    // Add "frame"
-    const CMICmnMIValueConst miValueConst3(strFrames, true);
-    if (!vwrMIValueTuple.Add(miValueConst3, false))
-        return MIstatus::failure;
-
-    // Add "state"
-    const CMICmnMIValueConst miValueConst4(strState);
-    const CMICmnMIValueResult miValueResult4("state", miValueConst4);
-    if (!vwrMIValueTuple.Add(miValueResult4))
-        return MIstatus::failure;
-
-    return MIstatus::success;
-}
-
-// Todo: Refactor maybe to so only one function with this name, but not just yet
-//++ ------------------------------------------------------------------------------------
-// Details: Form MI partial response by appending more MI value type objects to the
-//          tuple type object past in.
-// Type:    Method.
-// Args:    vCmdData        - (R) A command's information.
-//          vrThread        - (R) LLDB thread object.
-//          vwrMIValueTuple - (W) MI value tuple object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo2(const SMICmdData &vCmdData, const lldb::SBThread &vrThread,
-                                                      CMICmnMIValueTuple &vwrMIValueTuple)
-{
-    lldb::SBThread &rThread = const_cast<lldb::SBThread &>(vrThread);
-
-    const bool bSuspended = rThread.IsSuspended();
-    const lldb::StopReason eReason = rThread.GetStopReason();
-    const bool bValidReason = !((eReason == lldb::eStopReasonNone) || (eReason == lldb::eStopReasonInvalid));
-    const CMIUtilString strState((bSuspended || bValidReason) ? "stopped" : "running");
-
-    // Add "id"
-    const CMIUtilString strId(CMIUtilString::Format("%d", rThread.GetIndexID()));
-    const CMICmnMIValueConst miValueConst1(strId);
-    const CMICmnMIValueResult miValueResult1("id", miValueConst1);
-    if (!vwrMIValueTuple.Add(miValueResult1))
-        return MIstatus::failure;
-
-    // Add "target-id"
-    const MIchar *pThreadName = rThread.GetName();
-    const MIuint len = (pThreadName != nullptr) ? CMIUtilString(pThreadName).length() : 0;
-    const bool bHaveName = ((pThreadName != nullptr) && (len > 0) && (len < 32) &&
-                            CMIUtilString::IsAllValidAlphaAndNumeric(*pThreadName)); // 32 is arbitary number
-    const MIchar *pThrdFmt = bHaveName ? "%s" : "Thread %d";
-    CMIUtilString strThread;
-    if (bHaveName)
-        strThread = CMIUtilString::Format(pThrdFmt, pThreadName);
-    else
-        strThread = CMIUtilString::Format(pThrdFmt, rThread.GetIndexID());
-    const CMICmnMIValueConst miValueConst2(strThread);
-    const CMICmnMIValueResult miValueResult2("target-id", miValueConst2);
-    if (!vwrMIValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
-
-    // Add "state"
-    const CMICmnMIValueConst miValueConst4(strState);
-    const CMICmnMIValueResult miValueResult4("state", miValueConst4);
-    if (!vwrMIValueTuple.Add(miValueResult4))
-        return MIstatus::failure;
-
-    return MIstatus::success;
-}
-
-// Todo: Refactor maybe to so only one function with this name, but not just yet
-//++ ------------------------------------------------------------------------------------
-// Details: Form MI partial response by appending more MI value type objects to the
-//          tuple type object past in.
-// Type:    Method.
-// Args:    vrFrame         - (R)   LLDB thread object.
-//          vMaskVarTypes   - (R)   Construed according to VariableType_e.
-//          veVarInfoFormat - (R)   The type of variable info that should be shown.
-//          vwrMIValueList  - (W)   MI value list object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo2(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes,
-                                                        const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList)
-{
-    bool bOk = MIstatus::success;
-    lldb::SBFrame &rFrame = const_cast<lldb::SBFrame &>(vrFrame);
-
-    const bool bArg = (vMaskVarTypes & eVariableType_Arguments);
-    const bool bLocals = (vMaskVarTypes & eVariableType_Locals);
-    const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
-    const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
-    lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
-    const MIuint nArgs = listArg.GetSize();
-    for (MIuint i = 0; bOk && (i < nArgs); i++)
+    if (veThreadInfoFormat != eThreadInfoFormat_NoFrames)
     {
-        lldb::SBValue value = listArg.GetValueAtIndex(i);
-        const CMICmnLLDBUtilSBValue utilValue(value);
-        const CMICmnMIValueConst miValueConst(utilValue.GetName());
-        const CMICmnMIValueResult miValueResult("name", miValueConst);
-        CMICmnMIValueTuple miValueTuple(miValueResult);
-        const CMICmnMIValueConst miValueConst2(utilValue.GetValue());
-        const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-        miValueTuple.Add(miValueResult2);
-        bOk = vwrMiValueList.Add(miValueTuple);
+        CMIUtilString strFrames;
+        if (!GetThreadFrames(vCmdData, rThread.GetIndexID(), eFrameInfoFormat_AllArgumentsInSimpleForm, strFrames))
+            return MIstatus::failure;
+
+        const CMICmnMIValueConst miValueConst3(strFrames, true);
+        if (!vwrMIValueTuple.Add(miValueConst3, false))
+            return MIstatus::failure;
     }
 
-    return bOk;
+    // Add "state"
+    const CMICmnMIValueConst miValueConst4(strState);
+    const CMICmnMIValueResult miValueResult4("state", miValueConst4);
+    if (!vwrMIValueTuple.Add(miValueResult4))
+        return MIstatus::failure;
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -684,7 +427,8 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo2(const lldb::SBFrame &vrF
 //--
 bool
 CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes,
-                                                       const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList)
+                                                       const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList,
+                                                       const MIuint vnMaxDepth /* = 10 */)
 {
     bool bOk = MIstatus::success;
     lldb::SBFrame &rFrame = const_cast<lldb::SBFrame &>(vrFrame);
@@ -693,8 +437,6 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFr
     const bool bLocals = (vMaskVarTypes & eVariableType_Locals);
     const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
     const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
-    const MIuint nMaxRecusiveDepth = 10;
-    const MIuint nCurrentRecursiveDepth = 0;
     lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
     const MIuint nArgs = listArg.GetSize();
     for (MIuint i = 0; bOk && (i < nArgs); i++)
@@ -711,14 +453,10 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFr
                     (bIsPointerType && nChildren == 1) || // pointers
                      veVarInfoFormat == eVariableInfoFormat_AllValues) // show all values
             {
-                CMICmnMIValueList miValueList(true);
-                if (GetVariableInfo(nMaxRecusiveDepth, value, false, nCurrentRecursiveDepth, miValueList))
+                CMIUtilString strValue;
+                if (GetVariableInfo(value, vnMaxDepth == 0, strValue))
                 {
-                    CMIUtilString valueStr = miValueList.ExtractContentNoBrackets();
-                    // Surround by {} if there is , inside indicating multiple values.
-                    if (valueStr.find (',') != CMIUtilString::npos)
-                        valueStr = CMIUtilString::Format("{%s}", valueStr.c_str());
-                    const CMICmnMIValueConst miValueConst2(valueStr);
+                    const CMICmnMIValueConst miValueConst2(strValue.Escape().AddSlashes());
                     const CMICmnMIValueResult miValueResult2("value", miValueConst2);
                     miValueTuple.Add(miValueResultName); // name
                     miValueTuple.Add(miValueResult2);
@@ -736,118 +474,21 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFr
 //++ ------------------------------------------------------------------------------------
 // Details: Extract the value's name and value or recurse into child value object.
 // Type:    Method.
-// Args:    vnMaxDepth      - (R)  The max recursive depth for this function.
-//          vrValue         - (R)  LLDB value object.
-//          vbIsChildValue  - (R)  True = Value object is a child of a higher Value object,
-//                          -      False =  Value object not a child.
-//          vwrMIValueList  - (W)  MI value list object.
-//          vnDepth         - (RW) The current recursive depth of this function.
+// Args:    vrValue         - (R)  LLDB value object.
+//          vbInSimpleForm  - (R)  True = Get variable info in simple form (i.e. don't expand aggregates).
+//                          -      False = Get variable info (and expand aggregates if any).
+//          vwrStrValue  t  - (W)  The string representatin of this value.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugSessionInfo::GetVariableInfo(const MIuint vnMaxDepth, const lldb::SBValue &vrValue, const bool vbIsChildValue,
-                                            const MIuint vnDepth, CMICmnMIValueList &vwrMiValueList)
+CMICmnLLDBDebugSessionInfo::GetVariableInfo(const lldb::SBValue &vrValue, const bool vbInSimpleForm, CMIUtilString &vwrStrValue)
 {
-    // Check recursive depth
-    if (vnDepth >= vnMaxDepth)
-        return MIstatus::success;
-
-    bool bOk = MIstatus::success;
-    lldb::SBValue &rValue = const_cast<lldb::SBValue &>(vrValue);
-    const CMICmnLLDBUtilSBValue utilValue(vrValue, true);
-    const MIchar *pName = rValue.GetName();
-    MIunused(pName);
-    const bool bIsPointerType = rValue.GetType().IsPointerType();
-    const MIuint nChildren = rValue.GetNumChildren();
-    if (nChildren == 0)
-    {
-        if (vbIsChildValue)
-        {
-            // For composite types
-            const CMICmnMIValueConst miValueConst(
-                    CMIUtilString::Format("%s = %s", utilValue.GetName().c_str(), utilValue.GetValue().c_str()), true);
-            return vwrMiValueList.Add(miValueConst);
-        }
-        else
-        {
-            // Basic types
-            const CMICmnMIValueConst miValueConst(utilValue.GetValue(), true);
-            return vwrMiValueList.Add(miValueConst);
-        }
-    }
-    else if (bIsPointerType && utilValue.IsChildCharType())
-    {
-        const CMIUtilString &rText(utilValue.GetChildValueCString());
-        if (rText.empty())
-        {
-            const CMICmnMIValueConst miValueConst(utilValue.GetValue(), true);
-            bOk = vwrMiValueList.Add(miValueConst);
-        }
-        else
-        {
-            if (utilValue.IsValueUnknown())
-            {
-                const CMICmnMIValueConst miValueConst(rText, true);
-                bOk = vwrMiValueList.Add(miValueConst);
-            }
-            else
-            {
-                // Note code that has const in will not show the text suffix to the string pointer
-                // i.e. const char * pMyStr = "blah"; ==> "0x00007000"" <-- Eclipse shows this
-                // but        char * pMyStr = "blah"; ==> "0x00007000" "blah"" <-- Eclipse shows this
-                const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%s %s", utilValue.GetValue().c_str(), rText.c_str()), true);
-                bOk = vwrMiValueList.Add(miValueConst);
-            }
-        }
-        return bOk;
-    }
-    else if (bIsPointerType)
-    {
-        if (vbIsChildValue)
-        {
-            // For composite types
-            const CMICmnMIValueConst miValueConst(
-                    CMIUtilString::Format("%s = %s", utilValue.GetName().c_str(), utilValue.GetValue().c_str()), true);
-            return vwrMiValueList.Add(miValueConst);
-        }
-        else
-        {
-            // Basic types
-            const CMICmnMIValueConst miValueConst(utilValue.GetValue(), true);
-            return vwrMiValueList.Add(miValueConst);
-        }
-    }
-    else
-    {
-        CMICmnMIValueList miValueList2(true);
-        // Build parent child composite types
-        for (MIuint i = 0; bOk && (i < nChildren); i++)
-        {
-            lldb::SBValue member = rValue.GetChildAtIndex(i);
-            bOk = GetVariableInfo(vnMaxDepth, member, true, vnDepth + 1, miValueList2);
-        }
-        if (bOk)
-        {
-            CMIUtilString valueStr = miValueList2.ExtractContentNoBrackets();
-            // This is to handle case when a child has further children. For example,
-            // a struct containing another struct member
-            // value="{var_a = 10,var_b = 97 'a',inner_ = { var_d = 30 }}
-            if(vbIsChildValue)
-            {
-                const CMICmnMIValueConst miValueConst(
-                            CMIUtilString::Format("%s = { %s }", utilValue.GetName().c_str (), valueStr.c_str()), true);
-                return vwrMiValueList.Add(miValueConst);
-            }
-            else
-            {
-                const CMICmnMIValueConst miValueConst(valueStr, true);
-                return vwrMiValueList.Add(miValueConst);
-            }
-        }
-        return bOk;
-    }
+    const CMICmnLLDBUtilSBValue utilValue(vrValue, true, false);
+    const bool bExpandAggregates = vbInSimpleForm ? false : true;
+    vwrStrValue = utilValue.GetValue(bExpandAggregates);
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -856,13 +497,14 @@ CMICmnLLDBDebugSessionInfo::GetVariableInfo(const MIuint vnMaxDepth, const lldb:
 // Type:    Method.
 // Args:    vrThread        - (R) LLDB thread object.
 //          vwrMIValueTuple - (W) MI value tuple object.
+//          vArgInfo        - (R) Args information in MI response form.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.
 //--
 bool
 CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::SBThread &vrThread, const MIuint vnLevel,
-                                                    CMICmnMIValueTuple &vwrMiValueTuple)
+                                                    const FrameInfoFormat_e veFrameInfoFormat, CMICmnMIValueTuple &vwrMiValueTuple)
 {
     lldb::SBThread &rThread = const_cast<lldb::SBThread &>(vrThread);
 
@@ -879,11 +521,47 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::SBThread &vrThre
     const CMIUtilString strLevel(CMIUtilString::Format("%d", vnLevel));
     const CMICmnMIValueConst miValueConst(strLevel);
     const CMICmnMIValueResult miValueResult("level", miValueConst);
-    CMICmnMIValueTuple miValueTuple(miValueResult);
-    if (!MIResponseFormFrameInfo(pc, fnName, fileName, path, nLine, miValueTuple))
+    if (!vwrMiValueTuple.Add(miValueResult))
         return MIstatus::failure;
+    const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, pc));
+    const CMICmnMIValueConst miValueConst2(strAddr);
+    const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
+    if (!vwrMiValueTuple.Add(miValueResult2))
+        return MIstatus::failure;
+    const CMICmnMIValueConst miValueConst3(fnName);
+    const CMICmnMIValueResult miValueResult3("func", miValueConst3);
+    if (!vwrMiValueTuple.Add(miValueResult3))
+        return MIstatus::failure;
+    if (veFrameInfoFormat != eFrameInfoFormat_NoArguments)
+    {
+        CMICmnMIValueList miValueList(true);
+        const MIuint maskVarTypes = eVariableType_Arguments;
+        if (veFrameInfoFormat == eFrameInfoFormat_AllArgumentsInSimpleForm)
+        {
+            if (!MIResponseFormVariableInfo(frame, maskVarTypes, eVariableInfoFormat_AllValues, miValueList, 0))
+                return MIstatus::failure;
+        }
+        else
+            if (!MIResponseFormVariableInfo(frame, maskVarTypes, eVariableInfoFormat_AllValues, miValueList))
+                return MIstatus::failure;
 
-    vwrMiValueTuple = miValueTuple;
+        const CMICmnMIValueResult miValueResult4("args", miValueList);
+        if (!vwrMiValueTuple.Add(miValueResult4))
+            return MIstatus::failure;
+    }
+    const CMICmnMIValueConst miValueConst5(fileName);
+    const CMICmnMIValueResult miValueResult5("file", miValueConst5);
+    if (!vwrMiValueTuple.Add(miValueResult5))
+        return MIstatus::failure;
+    const CMICmnMIValueConst miValueConst6(path);
+    const CMICmnMIValueResult miValueResult6("fullname", miValueConst6);
+    if (!vwrMiValueTuple.Add(miValueResult6))
+        return MIstatus::failure;
+    const CMIUtilString strLine(CMIUtilString::Format("%d", nLine));
+    const CMICmnMIValueConst miValueConst7(strLine);
+    const CMICmnMIValueResult miValueResult7("line", miValueConst7);
+    if (!vwrMiValueTuple.Add(miValueResult7))
+        return MIstatus::failure;
 
     return MIstatus::success;
 }
@@ -925,101 +603,6 @@ CMICmnLLDBDebugSessionInfo::GetFrameInfo(const lldb::SBFrame &vrFrame, lldb::add
     vwFileName = (pFileName != nullptr) ? pFileName : pUnkwn;
 
     vwnLine = rFrame.GetLineEntry().GetLine();
-
-    return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Form MI partial response by appending more MI value type objects to the
-//          tuple type object past in.
-// Type:    Method.
-// Args:    vPc             - (R) Address number.
-//          vFnName         - (R) Function name.
-//          vFileName       - (R) File name text.
-//          vPath           - (R) Full file name and path text.
-//          vnLine          - (R) File line number.
-//          vwrMIValueTuple - (W) MI value tuple object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::addr_t vPc, const CMIUtilString &vFnName, const CMIUtilString &vFileName,
-                                                    const CMIUtilString &vPath, const MIuint vnLine, CMICmnMIValueTuple &vwrMiValueTuple)
-{
-    const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, vPc));
-    const CMICmnMIValueConst miValueConst2(strAddr);
-    const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
-    if (!vwrMiValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst3(vFnName);
-    const CMICmnMIValueResult miValueResult3("func", miValueConst3);
-    if (!vwrMiValueTuple.Add(miValueResult3))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst5(vFileName);
-    const CMICmnMIValueResult miValueResult5("file", miValueConst5);
-    if (!vwrMiValueTuple.Add(miValueResult5))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst6(vPath);
-    const CMICmnMIValueResult miValueResult6("fullname", miValueConst6);
-    if (!vwrMiValueTuple.Add(miValueResult6))
-        return MIstatus::failure;
-    const CMIUtilString strLine(CMIUtilString::Format("%d", vnLine));
-    const CMICmnMIValueConst miValueConst7(strLine);
-    const CMICmnMIValueResult miValueResult7("line", miValueConst7);
-    if (!vwrMiValueTuple.Add(miValueResult7))
-        return MIstatus::failure;
-
-    return MIstatus::success;
-}
-
-// Todo: Refactor maybe to so only one function with this name, but not just yet
-//++ ------------------------------------------------------------------------------------
-// Details: Form MI partial response by appending more MI value type objects to the
-//          tuple type object past in.
-// Type:    Method.
-// Args:    vPc             - (R) Address number.
-//          vArgInfo        - (R) Args information in MI response form.
-//          vFnName         - (R) Function name.
-//          vFileName       - (R) File name text.
-//          vPath           - (R) Full file name and path text.
-//          vnLine          - (R) File line number.
-//          vwrMIValueTuple - (W) MI value tuple object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo2(const lldb::addr_t vPc, const CMIUtilString &vArgInfo, const CMIUtilString &vFnName,
-                                                     const CMIUtilString &vFileName, const CMIUtilString &vPath, const MIuint vnLine,
-                                                     CMICmnMIValueTuple &vwrMiValueTuple)
-{
-    const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, vPc));
-    const CMICmnMIValueConst miValueConst2(strAddr);
-    const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
-    if (!vwrMiValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst3(vFnName);
-    const CMICmnMIValueResult miValueResult3("func", miValueConst3);
-    if (!vwrMiValueTuple.Add(miValueResult3))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst4(vArgInfo, true);
-    const CMICmnMIValueResult miValueResult4("args", miValueConst4);
-    if (!vwrMiValueTuple.Add(miValueResult4))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst5(vFileName);
-    const CMICmnMIValueResult miValueResult5("file", miValueConst5);
-    if (!vwrMiValueTuple.Add(miValueResult5))
-        return MIstatus::failure;
-    const CMICmnMIValueConst miValueConst6(vPath);
-    const CMICmnMIValueResult miValueResult6("fullname", miValueConst6);
-    if (!vwrMiValueTuple.Add(miValueResult6))
-        return MIstatus::failure;
-    const CMIUtilString strLine(CMIUtilString::Format("%d", vnLine));
-    const CMICmnMIValueConst miValueConst7(strLine);
-    const CMICmnMIValueResult miValueResult7("line", miValueConst7);
-    if (!vwrMiValueTuple.Add(miValueResult7))
-        return MIstatus::failure;
 
     return MIstatus::success;
 }

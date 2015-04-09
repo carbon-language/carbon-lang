@@ -213,7 +213,7 @@ CMICmdCmdStackInfoFrame::Execute(void)
 
     lldb::SBThread sbThread = sbProcess.GetSelectedThread();
     MIuint nFrameId = sbThread.GetSelectedFrame().GetFrameID();
-    if (!rSessionInfo.MIResponseFormFrameInfo(sbThread, nFrameId, m_miValueTuple))
+    if (!rSessionInfo.MIResponseFormFrameInfo(sbThread, nFrameId, CMICmnLLDBDebugSessionInfo::eFrameInfoFormat_NoArguments, m_miValueTuple))
          return MIstatus::failure;
 
     return MIstatus::success;
@@ -356,7 +356,7 @@ CMICmdCmdStackListFrames::Execute(void)
     for (MIuint nLevel = nFrameLow; nLevel < nThreadFrames; nLevel++)
     {
         CMICmnMIValueTuple miValueTuple;
-        if (!rSessionInfo.MIResponseFormFrameInfo(thread, nLevel, miValueTuple))
+        if (!rSessionInfo.MIResponseFormFrameInfo(thread, nLevel, CMICmnLLDBDebugSessionInfo::eFrameInfoFormat_NoArguments, miValueTuple))
             return MIstatus::failure;
 
         const CMICmnMIValueResult miValueResult8("frame", miValueTuple);

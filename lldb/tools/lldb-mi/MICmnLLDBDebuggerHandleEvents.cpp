@@ -1177,7 +1177,7 @@ CMICmnLLDBDebuggerHandleEvents::MiHelpGetCurrentThreadFrame(CMICmnMIValueTuple &
     }
 
     CMICmnMIValueTuple miValueTuple;
-    if (!CMICmnLLDBDebugSessionInfo::Instance().MIResponseFormFrameInfo(thread, 0, miValueTuple))
+    if (!CMICmnLLDBDebugSessionInfo::Instance().MIResponseFormFrameInfo(thread, 0, CMICmnLLDBDebugSessionInfo::eFrameInfoFormat_NoArguments, miValueTuple))
     {
         SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBOUTOFBAND_ERR_FORM_MI_RESPONSE), "MiHelpGetCurrentThreadFrame()"));
         return MIstatus::failure;
@@ -1260,19 +1260,7 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
         return bOk;
     }
 
-    CMICmnLLDBDebugSessionInfo &rSession = CMICmnLLDBDebugSessionInfo::Instance();
-
-    lldb::SBFrame frame = thread.GetFrameAtIndex(0);
-    lldb::addr_t pc = 0;
-    CMIUtilString fnName;
-    CMIUtilString fileName;
-    CMIUtilString path;
-    MIuint nLine = 0;
-    if (!rSession.GetFrameInfo(frame, pc, fnName, fileName, path, nLine))
-    {
-        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBOUTOFBAND_ERR_FRAME_INFO_GET), "MiStoppedAtBreakPoint()"));
-        return MIstatus::failure;
-    }
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
 
     // MI print
     // "*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"%d\",frame={addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[],file=\"%s\",fullname=\"%s\",line=\"%d\"},thread-id=\"%d\",stopped-threads=\"all\""
@@ -1290,12 +1278,8 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
     // frame={addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[],file=\"%s\",fullname=\"%s\",line=\"%d\"}
     if (bOk)
     {
-        CMICmnMIValueList miValueList(true);
-        const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Arguments;
-        bOk = rSession.MIResponseFormVariableInfo2(frame, maskVarTypes, CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_AllValues, miValueList);
-
         CMICmnMIValueTuple miValueTuple;
-        bOk = bOk && rSession.MIResponseFormFrameInfo2(pc, miValueList.GetString(), fnName, fileName, path, nLine, miValueTuple);
+        bOk = bOk && rSessionInfo.MIResponseFormFrameInfo(thread, 0, CMICmnLLDBDebugSessionInfo::eFrameInfoFormat_AllArguments, miValueTuple);
         const CMICmnMIValueResult miValueResult8("frame", miValueTuple);
         bOk = bOk && miOutOfBandRecord.Add(miValueResult8);
     }
@@ -1349,29 +1333,14 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
         return bOk;
     }
 
-    CMICmnLLDBDebugSessionInfo &rSession = CMICmnLLDBDebugSessionInfo::Instance();
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
 
     // MI print
     // "*stopped,reason=\"end-stepping-range\",frame={addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[\"%s\"],file=\"%s\",fullname=\"%s\",line=\"%d\"},thread-id=\"%d\",stopped-threads=\"all\""
-    lldb::SBFrame frame = thread.GetFrameAtIndex(0);
-    lldb::addr_t pc = 0;
-    CMIUtilString fnName;
-    CMIUtilString fileName;
-    CMIUtilString path;
-    MIuint nLine = 0;
-    if (!rSession.GetFrameInfo(frame, pc, fnName, fileName, path, nLine))
-    {
-        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBOUTOFBAND_ERR_FRAME_INFO_GET), "HandleProcessEventStopReasonTrace()"));
-        return MIstatus::failure;
-    }
 
     // Function args
-    CMICmnMIValueList miValueList(true);
-    const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Arguments;
-    if (!rSession.MIResponseFormVariableInfo2(frame, maskVarTypes, CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_AllValues, miValueList))
-        return MIstatus::failure;
     CMICmnMIValueTuple miValueTuple;
-    if (!rSession.MIResponseFormFrameInfo2(pc, miValueList.GetString(), fnName, fileName, path, nLine, miValueTuple))
+    if (!rSessionInfo.MIResponseFormFrameInfo(thread, 0, CMICmnLLDBDebugSessionInfo::eFrameInfoFormat_AllArguments, miValueTuple))
         return MIstatus::failure;
 
     const CMICmnMIValueConst miValueConst("end-stepping-range");

@@ -112,13 +112,13 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-evaluate-expression \"argv[0]\"")
         self.expect("\^done,value=\"0x[0-9a-f]+\"")
         self.runCmd("-var-create var6 * \"argv[0]\"")
-        self.expect("\^done,name=\"var6\",numchild=\"1\",value=\"0x[0-9a-f]+\",type=\"const char \*\",thread-id=\"1\",has_more=\"0\"")
+        self.expect("\^done,name=\"var6\",numchild=\"1\",value=\"0x[0-9a-f]+ \\\\\\\".*%s\\\\\\\"\",type=\"const char \*\",thread-id=\"1\",has_more=\"0\"" % self.myexe)
         self.runCmd("-var-evaluate-expression var6")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"")
+        self.expect("\^done,value=\"0x[0-9a-f]+ \\\\\\\".*%s\\\\\\\"\"" % self.myexe)
         self.runCmd("-var-show-attributes var6")
         self.expect("\^done,status=\"editable\"")
-        self.runCmd("-var-list-children var6")
-        #self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$15\",exp=\"\*\$15\",numchild=\"0\",type=\"const char\",thread-id=\"1\",has_more=\"0\"\}\]") #FIXME -var-list-children shows invalid thread-id
+        self.runCmd("-var-list-children --all-values var6")
+        self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$11\",exp=\"\*\$11\",numchild=\"0\",type=\"const char\",thread-id=\"4294967295\",value=\"47 '/'\",has_more=\"0\"\}\]") #FIXME -var-list-children shows invalid thread-id
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -147,7 +147,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-create var_complx * complx")
         self.expect("\^done,name=\"var_complx\",numchild=\"3\",value=\"\{\.\.\.\}\",type=\"complex_type\",thread-id=\"1\",has_more=\"0\"")
         self.runCmd("-var-create var_complx_array * complx_array")
-        self.expect("\^done,name=\"var_complx_array\",numchild=\"2\",value=\"\{\.\.\.\}\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
+        self.expect("\^done,name=\"var_complx_array\",numchild=\"2\",value=\"\[2\]\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
 
         # Go to BP_var_update_test_l
         line = line_number('main.cpp', '// BP_var_update_test_l')
@@ -183,7 +183,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that var_complex_array was updated
         self.runCmd("-var-update --all-values var_complx_array")
-        self.expect("\^done,changelist=\[\{name=\"var_complx_array\",value=\"\{\.\.\.\}\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
+        self.expect("\^done,changelist=\[\{name=\"var_complx_array\",value=\"\[2\]\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
 
 if __name__ == '__main__':
     unittest2.main()

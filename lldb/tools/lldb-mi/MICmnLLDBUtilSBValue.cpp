@@ -9,8 +9,10 @@
 
 // In-house headers:
 #include "MICmnLLDBUtilSBValue.h"
-#include "MIUtilString.h"
 #include "MICmnLLDBDebugSessionInfo.h"
+#include "MICmnMIValueConst.h"
+#include "MICmnMIValueTuple.h"
+#include "MIUtilString.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnLLDBUtilSBValue constructor.
@@ -21,10 +23,13 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBUtilSBValue::CMICmnLLDBUtilSBValue(const lldb::SBValue &vrValue, const bool vbHandleCharType /* = false */)
+CMICmnLLDBUtilSBValue::CMICmnLLDBUtilSBValue(const lldb::SBValue &vrValue, const bool vbHandleCharType /* = false */,
+                                             const bool vbHandleArrayType /* = true */)
     : m_rValue(const_cast<lldb::SBValue &>(vrValue))
     , m_pUnkwn("??")
+    , m_pComposite("{...}")
     , m_bHandleCharType(vbHandleCharType)
+    , m_bHandleArrayType(vbHandleArrayType)
 {
     m_bValidSBValue = m_rValue.IsValid();
 }
@@ -67,28 +72,138 @@ CMICmnLLDBUtilSBValue::GetName(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetValue(void) const
+CMICmnLLDBUtilSBValue::GetValue(const bool vbExpandAggregates /* = false */) const
 {
-    CMIUtilString text;
+    if (!m_bValidSBValue)
+        return m_pUnkwn;
 
-    if (m_bHandleCharType && IsCharType())
-    {
-        uint8_t val = (uint8_t)m_rValue.GetValueAsUnsigned ();
-        text += CMIUtilString::Format("%d '%c'", val, (char)val);
-    }
-    else
-    {
-        const MIchar *pValue = m_bValidSBValue ? m_rValue.GetValue() : nullptr;
-        text = (pValue != nullptr) ? pValue : m_pUnkwn;
-    }
+    const bool bHandleArrayTypeAsSimple = m_bHandleArrayType && !vbExpandAggregates;
+    CMIUtilString value;
+    const bool bIsSimpleValue = GetSimpleValue(bHandleArrayTypeAsSimple, value);
+    if (bIsSimpleValue)
+        return value;
 
-    return text;
+    if (!vbExpandAggregates)
+        return m_pComposite;
+
+    CMICmnMIValueTuple miValueTuple;
+    const bool bOk = GetCompositeValue(miValueTuple);
+    if (!bOk)
+        return m_pUnkwn;
+
+    value = miValueTuple.GetString();
+    return value;
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: If the LLDB SB Value object is a char type then form the text data string
-//          otherwise return nothing. m_bHandleCharType must be true to return text data
-//          if any.
+// Details: Retrieve from the LLDB SB Value object the value of the variable described in
+//          text if it has a simple format (not composite).
+// Type:    Method.
+// Args:    vwrValue          - (W) The SBValue in a string format.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilString &vwrValue) const
+{
+    const MIuint nChildren = m_rValue.GetNumChildren();
+    if (nChildren == 0)
+    {
+        if (m_bHandleCharType && IsCharType())
+        {
+            const uint8_t value = m_rValue.GetValueAsUnsigned();
+            const CMIUtilString prefix(CMIUtilString::Format("%c", value).Escape().AddSlashes());
+            vwrValue = CMIUtilString::Format("%hhu '%s'", value, prefix.c_str());
+            return MIstatus::success;
+        }
+        else
+        {
+            const MIchar *pValue = m_bValidSBValue ? m_rValue.GetValue() : nullptr;
+            vwrValue = pValue != nullptr ? pValue : m_pUnkwn;
+            return MIstatus::success;
+        }
+    }
+    else if (IsPointerType())
+    {
+        if (m_bHandleCharType && IsFirstChildCharType())
+        {
+            const MIchar *pValue = m_bValidSBValue ? m_rValue.GetValue() : nullptr;
+            const CMIUtilString value = pValue != nullptr ? pValue : m_pUnkwn;
+            const CMIUtilString prefix(GetChildValueCString().Escape().AddSlashes());
+            // Note code that has const in will not show the text suffix to the string pointer
+            // i.e. const char * pMyStr = "blah"; ==> "0x00007000"" <-- Eclipse shows this
+            // but        char * pMyStr = "blah"; ==> "0x00007000" "blah"" <-- Eclipse shows this
+            vwrValue = CMIUtilString::Format("%s \"%s\"", value.c_str(), prefix.c_str());
+            return MIstatus::success;
+        }
+        else
+        {
+            const MIchar *pValue = m_bValidSBValue ? m_rValue.GetValue() : nullptr;
+            vwrValue = pValue != nullptr ? pValue : m_pUnkwn;
+            return MIstatus::success;
+        }
+    }
+    else if (IsArrayType() && vbHandleArrayType)
+    {
+        vwrValue = CMIUtilString::Format("[%u]", nChildren);
+        return MIstatus::success;
+    }
+
+    // Composite variable type i.e. struct
+    return MIstatus::failure;
+}
+
+bool
+CMICmnLLDBUtilSBValue::GetCompositeValue(CMICmnMIValueTuple &vwrMiValueTuple,
+                                         const MIuint vnDepth /* = 1 */) const
+{
+    const MIuint nMaxDepth = 10;
+    const MIuint nChildren = m_rValue.GetNumChildren();
+    for (MIuint i = 0; i < nChildren; ++i)
+    {
+        const lldb::SBValue member = m_rValue.GetChildAtIndex(i);
+        const CMICmnLLDBUtilSBValue utilMember(member, m_bHandleCharType, m_bHandleArrayType);
+        const bool bHandleArrayTypeAsSimple = false;
+        CMIUtilString value;
+        const bool bIsSimpleValue = utilMember.GetSimpleValue(bHandleArrayTypeAsSimple, value);
+        if (bIsSimpleValue)
+        {
+            // OK. Value is simple (not composite) and was successfully got
+        }
+        else if (vnDepth < nMaxDepth)
+        {
+            // Need to get value from composite type
+            CMICmnMIValueTuple miValueTuple;
+            const bool bOk = utilMember.GetCompositeValue(miValueTuple, vnDepth + 1);
+            if (!bOk)
+                // Can't obtain composite type
+                value = m_pUnkwn;
+            else
+                // OK. Value is composite and was successfully got
+                value = miValueTuple.GetString();
+        }
+        else
+        {
+            // Need to get value from composite type, but vnMaxDepth is reached
+            value = m_pComposite;
+        }
+        const bool bNoQuotes = true;
+        const CMICmnMIValueConst miValueConst(value, bNoQuotes);
+        const bool bUseSpacing = true;
+        const CMICmnMIValueResult miValueResult(utilMember.GetName(), miValueConst, bUseSpacing);
+        const bool bOk = vwrMiValueTuple.Add(miValueResult, bUseSpacing);
+        if (!bOk)
+            return MIstatus::failure;
+    }
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: If the LLDB SB Value object is a char or char[] type then form the text data
+//          string otherwise return nothing. m_bHandleCharType must be true to return
+//          text data if any.
 // Type:    Method.
 // Args:    None.
 // Return:  CMIUtilString   - Text description of the variable's value.
@@ -99,7 +214,7 @@ CMICmnLLDBUtilSBValue::GetValueCString(void) const
 {
     CMIUtilString text;
 
-    if (m_bHandleCharType && IsCharType())
+    if (m_bHandleCharType && (IsCharType() || (IsArrayType() && IsFirstChildCharType())))
     {
         text = ReadCStringFromHostMemory(m_rValue);
     }
@@ -123,8 +238,8 @@ CMICmnLLDBUtilSBValue::IsCharType(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Retrieve the flag stating whether any child value object of *this object is a
-//          char type or some other type. Returns false if there are not children. Char
+// Details: Retrieve the flag stating whether first child value object of *this object is
+//          a char type or some other type. Returns false if there are not children. Char
 //          type can be signed or unsigned.
 // Type:    Method.
 // Args:    None.
@@ -132,7 +247,7 @@ CMICmnLLDBUtilSBValue::IsCharType(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsChildCharType(void) const
+CMICmnLLDBUtilSBValue::IsFirstChildCharType(void) const
 {
     const MIuint nChildren = m_rValue.GetNumChildren();
 
@@ -140,13 +255,37 @@ CMICmnLLDBUtilSBValue::IsChildCharType(void) const
     if (nChildren == 0)
         return false;
 
-    // Is it a composite type
-    if (nChildren > 1)
-        return false;
-
-    lldb::SBValue member = m_rValue.GetChildAtIndex(0);
+    const lldb::SBValue member = m_rValue.GetChildAtIndex(0);
     const CMICmnLLDBUtilSBValue utilValue(member);
     return utilValue.IsCharType();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve the flag stating whether this value object is a pointer type or some
+//          other type.
+// Type:    Method.
+// Args:    None.
+// Return:  bool    - True = Yes is a pointer type, false = some other type.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBUtilSBValue::IsPointerType(void) const
+{
+    return m_rValue.GetType().IsPointerType();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve the flag stating whether this value object is an array type or some
+//          other type.
+// Type:    Method.
+// Args:    None.
+// Return:  bool    - True = Yes is an array type, false = some other type.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBUtilSBValue::IsArrayType(void) const
+{
+    return m_rValue.GetType().IsArrayType();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -200,14 +339,11 @@ CMICmnLLDBUtilSBValue::ReadCStringFromHostMemory(const lldb::SBValue &vrValueObj
     const lldb::addr_t addr = rValue.GetLoadAddress();
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     const MIuint nBytes(128);
-    const MIchar *pBufferMemory = new MIchar[nBytes];
+    std::unique_ptr<char[]> apBufferMemory(new char[nBytes]);
     lldb::SBError error;
-    const MIuint64 nReadBytes = rSessionInfo.GetProcess().ReadMemory(addr, (void *)pBufferMemory, nBytes, error);
+    const MIuint64 nReadBytes = rSessionInfo.GetProcess().ReadMemory(addr, apBufferMemory.get(), nBytes, error);
     MIunused(nReadBytes);
-    text = CMIUtilString::Format("\\\"%s\\\"", pBufferMemory);
-    delete[] pBufferMemory;
-
-    return text;
+    return CMIUtilString(apBufferMemory.get());
 }
 
 //++ ------------------------------------------------------------------------------------

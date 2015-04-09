@@ -257,7 +257,9 @@ CMICmnLLDBDebugSessionInfoVarObj::GetVarFormatForChar(const MIchar &vrcFormat)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Return the equivalent var value formatted string for the given value type.
+// Details: Return the equivalent var value formatted string for the given value type,
+//          which was prepared for printing (i.e. value was escaped and now it's ready
+//          for wrapping into quotes).
 //          The SBValue vrValue parameter is checked by LLDB private code for valid
 //          scalar type via MI Driver proxy function as the valued returned can also be
 //          an error condition. The proxy function determines if the check was valid
@@ -272,21 +274,8 @@ CMIUtilString
 CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(const lldb::SBValue &vrValue,
                                                           const CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat)
 {
-    CMIUtilString strFormattedValue;
-
-    MIuint64 nValue = 0;
-    if (CMICmnLLDBProxySBValue::GetValueAsUnsigned(vrValue, nValue) == MIstatus::success)
-    {
-        lldb::SBValue &rValue = const_cast<lldb::SBValue &>(vrValue);
-        strFormattedValue = GetStringFormatted(nValue, rValue.GetValue(), veVarFormat);
-    }
-    else
-    {
-        // Composite variable type i.e. struct
-        strFormattedValue = "{...}";
-    }
-
-    return strFormattedValue;
+    const CMICmnLLDBUtilSBValue utilValue(vrValue, true);
+    return utilValue.GetValue().Escape().AddSlashes();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -564,7 +553,7 @@ CMICmnLLDBDebugSessionInfoVarObj::SetVarFormat(const varFormat_e veVarFormat)
 void
 CMICmnLLDBDebugSessionInfoVarObj::UpdateValue(void)
 {
-    m_strFormattedValue = CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(m_SBValue, m_eVarFormat);
+    m_strFormattedValue = GetValueStringFormatted(m_SBValue, m_eVarFormat);
 
     MIuint64 nValue = 0;
     if (CMICmnLLDBProxySBValue::GetValueAsUnsigned(m_SBValue, nValue) == MIstatus::failure)

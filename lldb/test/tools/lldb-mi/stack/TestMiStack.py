@@ -137,9 +137,9 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test -stack-list-locals: use 1 or --all-values
         self.runCmd("-stack-list-locals 1")
-        self.expect("\^done,locals=\[{name=\"var_c\",value=\"{var_a = 10,var_b = 97 'a',inner_ = { var_d = 30 }}\"}\]")
+        self.expect("\^done,locals=\[{name=\"var_c\",value=\"{var_a = 10, var_b = 97 'a', inner_ = {var_d = 30}}\"}\]")
         self.runCmd("-stack-list-locals --all-values")
-        self.expect("\^done,locals=\[{name=\"var_c\",value=\"{var_a = 10,var_b = 97 'a',inner_ = { var_d = 30 }}\"}\]")
+        self.expect("\^done,locals=\[{name=\"var_c\",value=\"{var_a = 10, var_b = 97 'a', inner_ = {var_d = 30}}\"}\]")
 
         # Test -stack-list-locals: use 2 or --simple-values
         self.runCmd("-stack-list-locals 2")
@@ -164,9 +164,9 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test -stack-list-locals: use 1 or --all-values
         self.runCmd("-stack-list-locals 1")
-        self.expect("\^done,locals=\[{name=\"array\",value=\"{\[0\] = 100,\[1\] = 200,\[2\] = 300}\"}\]")
+        self.expect("\^done,locals=\[{name=\"array\",value=\"{\[0\] = 100, \[1\] = 200, \[2\] = 300}\"}\]")
         self.runCmd("-stack-list-locals --all-values")
-        self.expect("\^done,locals=\[{name=\"array\",value=\"{\[0\] = 100,\[1\] = 200,\[2\] = 300}\"}\]")
+        self.expect("\^done,locals=\[{name=\"array\",value=\"{\[0\] = 100, \[1\] = 200, \[2\] = 300}\"}\]")
 
         # Test -stack-list-locals: use 2 or --simple-values
         self.runCmd("-stack-list-locals 2")
