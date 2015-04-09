@@ -146,7 +146,7 @@
             </p>
             <p>Finally, when you are ready to build LLDB, generate CMake with the following command line:</p>
             <code>cmake -G Ninja &lt;cmake variables&gt; &lt;path to root of llvm src tree&gt;</code>
-            <p>and run <code>ninja</code> to build LLDB, and <code>ninja check-lldb</code> to run LLDB's test suite.</p>
+            <p>and run <code>ninja</code> to build LLDB. Information about running the LLDB test suite can be found on the <a href="test.html">test</a> page.</p>
             <p>
               Following is a description of some of the most important CMake variables which you are likely to encounter.
               A variable <code>FOO</code> is set by adding <code>-DFOO=value</code> to the CMake command line.
@@ -169,11 +169,6 @@
               <li>
                 <b>PYTHON_EXECUTABLE</b>: Path to python.exe.  If doing a debug build of LLDB, note that the executable
                 is called python_d.exe.  Generally this should be set to <div align="center">&lt;python src dir&gt;\PCBuild\python(_d).exe</div>
-              </li>
-              <li>
-                <b>LLDB_TEST_COMPILER</b>: The test suite only supports testing executables that were compiled with clang.  This specifies
-                the path to the copy of clang that you wish to use to compile test executables.  To use the version
-                of clang that you compiled alongside LLDB, set this to <div align="center">&lt;folder where CMake build files are generated&gt;\bin\clang.exe</div>
               </li>
             </ul>
           </div>
@@ -367,41 +362,7 @@
               <tt>--enable-libcpp</tt> flag.
             </p>
             <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
-            <h2>Testing</h2>
-            <p>
-              By default, the <tt>check-lldb</tt> target builds the 64-bit variants of the test programs with the same
-              compiler that was used to build LLDB. It is possible to customize the architecture and compiler by appending -A and
-              -C options respectively to the CMake variable <tt>LLDB_TEST_ARGS</tt>. For example, to test LLDB against 32-bit binaries
-              built with a custom version of clang, do:
-            </p>
-            <code>
-              <br />&gt; cmake -DLLDB_TEST_ARGS="-A i386 -C /path/to/custom/clang" -G Ninja
-              <br />&gt; ninja check-lldb
-            </code>
-            <p>Note that multiple -A and -C flags can be specified to <tt>LLDB_TEST_ARGS</tt>.</p>
-            <p>
-              In addition to running all the LLDB test suites with the "check-lldb" CMake target above, it is possible to
-              run individual LLDB tests. For example, to run the test cases defined in TestInferiorCrashing.py, run:
-            </p>
-            <code>
-              <br />&gt; cd $lldb/test
-              <br />&gt; python dotest.py --executable &lt;path-to-lldb&gt;  -p TestInferiorCrashing.py
-            </code>
-            <p>
-              In addition to running a test by name, it is also possible to specify a directory path to <tt>dotest.py</tt>
-              in order to run all the tests under that directory. For example, to run all the tests under the
-              'functionalities/data-formatter' directory, run:
-            </p>
-            <code>
-              <br />&gt; python dotest.py --executable &lt;path-to-lldb&gt; functionalities/data-formatter
-            </code>
-            <p>
-              To dump additional information to <tt>stdout</tt> about how the test harness is driving LLDB, run
-              <tt>dotest.py</tt> with the <tt>-t</tt> flag. Many more options that are available. To see a list of all of them, run:
-            </p>
-            <code>
-              <br />&gt; python dotest.py -h
-            </code>
+
             <h2>Building API reference documentation</h2>
             <p>
               LLDB exposes a C++ as well as a Python API. To build the reference documentation for these two APIs, ensure you have

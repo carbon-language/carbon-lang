@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <title>Testing LLDB</title>
+</head>
+<body>
+  <div class="www_title">
+    The <strong>LLDB</strong> Debugger
+  </div>
+
+  <div id="container">
+    <div id="content">
+
+      <!--#include virtual="sidebar.incl"-->
+
+        <div class="post">
+          <h1 class="postheader">Testing LLDB</h1>
+          <div class="postcontent">
+            <p>
+              The LLDB test suite consists of Python scripts located under the
+              <tt>test</tt> directory. Each script contains a number of test cases and is usually
+              accompanied by a C (C++, ObjC, etc.) source file. Each test first compiles the
+              source file and then uses LLDB to debug the resulting executable. The tests verify
+              both the LLDB command line interface and the scripting API.
+            </p>
+
+            <p>
+              The easiest way to run the LLDB test suite is to use the <tt>check-lldb</tt> build
+              target. By default, the <tt>check-lldb</tt> target builds the test programs with
+              the same compiler that was used to build LLDB. To build the tests with a different
+              compiler, you can set the <tt>LLDB_TEST_COMPILER</tt> CMake variable. It is possible to
+              customize the architecture of the test binaries and compiler used by appending -A
+              and -C options respectively to the CMake variable <tt>LLDB_TEST_USER_ARGS</tt>. For
+              example, to test LLDB against 32-bit binaries
+              built with a custom version of clang, do:
+            </p>
+            <code>
+              <br />&gt; cmake -DLLDB_TEST_ARGS="-A i386 -C /path/to/custom/clang" -G Ninja
+              <br />&gt; ninja check-lldb
+            </code>
+            <p>Note that multiple -A and -C flags can be specified to <tt>LLDB_TEST_USER_ARGS</tt>.</p>
+            <p>
+              In addition to running all the LLDB test suites with the "check-lldb" CMake target above, it is possible to
+              run individual LLDB tests. For example, to run the test cases defined in TestInferiorCrashing.py, run:
+            </p>
+            <code>
+              <br />&gt; cd $lldb/test
+              <br />&gt; python dotest.py --executable &lt;path-to-lldb&gt;  -p TestInferiorCrashing.py
+            </code>
+            <p>
+              In addition to running a test by name, it is also possible to specify a directory path to <tt>dotest.py</tt>
+              in order to run all the tests under that directory. For example, to run all the tests under the
+              'functionalities/data-formatter' directory, run:
+            </p>
+            <code>
+              <br />&gt; python dotest.py --executable &lt;path-to-lldb&gt; functionalities/data-formatter
+            </code>
+            <p>
+              To dump additional information to <tt>stdout</tt> about how the test harness is driving LLDB, run
+              <tt>dotest.py</tt> with the <tt>-t</tt> flag. Many more options that are available. To see a list of all of them, run:
+            </p>
+            <code>
+              <br />&gt; python dotest.py -h
+            </code>
+
+            <p>
+              Besides <code>dotest.py</code>, there is also <code>dosep.py</code>, which runs
+              multiple instances of <code>dotest.py</code> in parallel, thereby greatly
+              decreasing the time it takes to run the full testsuite. The number of concurrent
+              tests is controlled by the <code>LLDB_TEST_THREADS</code> environment variable or
+              the <code>--threads</code> command line parameter. The default value is the number
+              of CPUs on your system. To pass additional options to <code>dotest.py</code>,
+              specify those options as an <code>-o</code> argument to <code>dosep.py</code>. For
+              example, the command
+            </p>
+            <code>python dosep.py -o "--executable bin/lldb -C bin/clang"</code>
+            <p>
+              will specify the lldb and clang executables to test for each dotest invocation.
+              <code>ninja check-lldb</code> is wrapper around <code>dosep.py</code>.
+            </p>
+
+            <h3>Running the test-suite remotely</h3>
+
+            <p>
+              Running the test-suite remotely is similar to the process of running a local test
+              suite, but there are two things to have in mind:
+            </p>
+            <ul>
+              <li>
+                You must have the <code>lldb-server</code> running on the remote system, ready to
+                accept multiple connections. For more information on how to setup remote
+                debugging see the <a href="remote.html">Remote debugging</a> page.
+              </li>
+              <li>
+                You must tell the test-suite how to connect to the remote system. This is
+                achieved using the <code>--platform-name</code>, <code>--platform-url</code> and
+                <code>--platform-working-dir</code> parameters to <code>dotest.py</code>. These
+                parameters correspond to the <code>platform select</code> and <code>platform
+                connect</code> LLDB commands. You will usually also need to specify the compiler and
+                architecture for the remote system.
+              </li>
+            </ul>
+            <p>
+              Currently, running the remote test suite is supported only with
+              <code>dotest.py</code> (or <code>dosep.py</code> with a single thread), but we
+              expect this issue to be adressed in the near future.
+            </p>
+
+          </div>
+          <div class="postfooter"></div>
+        </div>
+    </div>
+  </div>
+</body>
+</html>
