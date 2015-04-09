@@ -260,31 +260,22 @@ void MipsAsmPrinter::printSavedRegsBitmask() {
   unsigned AFGR64RegSize = Mips::AFGR64RegClass.getSize();
   bool HasAFGR64Reg = false;
   unsigned CSFPRegsSize = 0;
-  unsigned i, e = CSI.size();
 
-  // Set FPU Bitmask.
-  for (i = 0; i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    if (Mips::GPR32RegClass.contains(Reg))
-      break;
-
+  for (const auto &I : CSI) {
+    unsigned Reg = I.getReg();
     unsigned RegNum = TRI->getEncodingValue(Reg);
-    if (Mips::AFGR64RegClass.contains(Reg)) {
+
+    // If it's a floating point register, set the FPU Bitmask.
+    // If it's a general purpose register, set the CPU Bitmask.
+    if (Mips::FGR32RegClass.contains(Reg)) {
+      FPUBitmask |= (1 << RegNum);
+      CSFPRegsSize += FGR32RegSize;
+    } else if (Mips::AFGR64RegClass.contains(Reg)) {
       FPUBitmask |= (3 << RegNum);
       CSFPRegsSize += AFGR64RegSize;
       HasAFGR64Reg = true;
-      continue;
-    }
-
-    FPUBitmask |= (1 << RegNum);
-    CSFPRegsSize += FGR32RegSize;
-  }
-
-  // Set CPU Bitmask.
-  for (; i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    unsigned RegNum = TRI->getEncodingValue(Reg);
-    CPUBitmask |= (1 << RegNum);
+    } else if (Mips::GPR32RegClass.contains(Reg))
+      CPUBitmask |= (1 << RegNum);
   }
 
   // FP Regs are saved right below where the virtual frame pointer points to.
