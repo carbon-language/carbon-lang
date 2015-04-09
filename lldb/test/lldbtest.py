@@ -683,33 +683,21 @@ def skipUnlessDarwin(func):
     """Decorate the item to skip tests that should be skipped on any non Darwin platform."""
     return skipUnlessPlatform(getDarwinOSTriples())(func)
 
+def getPlatform():
+    platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
+    if platform.startswith('freebsd'):
+        platform = 'freebsd'
+    return platform
+
 def skipIfPlatform(oslist):
     """Decorate the item to skip tests if running on one of the listed platforms."""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            from unittest2 import case
-            self = args[0]
-            if self.getPlatform() in oslist:
-                self.skipTest("skip on %s" % (", ".join(oslist)))
-            else:
-                func(*args, **kwargs)
-        return wrapper
-    return decorator
+    return unittest2.skipIf(getPlatform() in oslist,
+                            "skip on %s" % (", ".join(oslist)))
 
 def skipUnlessPlatform(oslist):
     """Decorate the item to skip tests unless running on one of the listed platforms."""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            from unittest2 import case
-            self = args[0]
-            if not (self.getPlatform() in oslist):
-                self.skipTest("requires one of %s" % (", ".join(oslist)))
-            else:
-                func(*args, **kwargs)
-        return wrapper
-    return decorator
+    return unittest2.skipUnless(getPlatform() in oslist,
+                                "requires on of %s" % (", ".join(oslist)))
 
 def skipIfLinuxClang(func):
     """Decorate the item to skip tests that should be skipped if building on 
@@ -1405,10 +1393,7 @@ class Base(unittest2.TestCase):
 
     def getPlatform(self):
         """Returns the platform the test suite is running on."""
-        platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
-        if platform.startswith('freebsd'):
-            platform = 'freebsd'
-        return platform
+        return getPlatform()
 
     def isIntelCompiler(self):
         """ Returns true if using an Intel (ICC) compiler, false otherwise. """

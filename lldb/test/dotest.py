@@ -1320,16 +1320,6 @@ setupCrashInfoHook()
 if not skip_long_running_test:
     os.environ["LLDB_SKIP_LONG_RUNNING_TEST"] = "NO"
 
-#
-# Walk through the testdirs while collecting tests.
-#
-for testdir in testdirs:
-    os.path.walk(testdir, visit, 'Test')
-
-#
-# Now that we have loaded all the test cases, run the whole test suite.
-#
-
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
 import lldb
@@ -1382,6 +1372,16 @@ dont_do_debugserver_test = "linux" in target_platform or "freebsd" in target_pla
 
 # Don't do lldb-server (llgs) tests on anything except Linux.
 dont_do_llgs_test = not ("linux" in target_platform)
+
+#
+# Walk through the testdirs while collecting tests.
+#
+for testdir in testdirs:
+    os.path.walk(testdir, visit, 'Test')
+
+#
+# Now that we have loaded all the test cases, run the whole test suite.
+#
 
 # Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
 lldb.blacklist = blacklist
