@@ -606,8 +606,8 @@ def expectedFailureWindows(bugnumber=None, compilers=None):
 
 def expectedFailureLLGS(bugnumber=None, compilers=None):
     def fn(self):
-        # llgs local is only an option on Linux systems
-        if 'linux' not in sys.platform:
+        # llgs local is only an option on Linux targets
+        if not self.platformIsLinux():
             return False
         self.runCmd('settings show platform.plugin.linux.use-llgs-for-local')
         return 'true' in self.res.GetOutput() and self.expectedCompiler(compilers)
