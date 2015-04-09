@@ -406,11 +406,7 @@ test is a text file with comments telling lit how to run the test and check the
 result To facilitate testing, the lld project builds a tool called lld-core.
 This tool reads a YAML file (default from stdin), parses it into one or more
 lld::File objects in memory and then feeds those lld::File objects to the
-resolver phase.  The output of the resolver is written as a native object file.
-It is then read back in using the native object file reader and then pass to the
-YAML writer.  This round-about path means that all three representations
-(in-memory, binary, and text) are exercised, and any new feature has to work in
-all the representations to pass the test.
+resolver phase.
 
 
 Resolver testing
