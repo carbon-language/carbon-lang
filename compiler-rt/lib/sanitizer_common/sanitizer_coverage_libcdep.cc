@@ -814,7 +814,7 @@ void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
 
 fd_t MaybeOpenCovFile(const char *name) {
   CHECK(name);
-  if (!coverage_enabled) return -1;
+  if (!coverage_enabled) return kInvalidFd;
   InternalScopedString path(kMaxPathLength);
   return CovOpenFile(&path, true /* packed */, name);
 }
