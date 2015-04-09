@@ -23,6 +23,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 	UnwindAssembly/InstEmulation UnwindAssembly/x86 \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime \
+	LanguageRuntime/RenderScript/RenderScriptRuntime \
 	DynamicLoader/POSIX-DYLD \
 	DynamicLoader/Hexagon-DYLD \
 	DynamicLoader/MacOSX-DYLD \

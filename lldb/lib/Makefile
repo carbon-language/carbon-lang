@@ -50,6 +50,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginInstrumentationRuntimeAddressSanitizer.a \
 	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
+	lldbPluginLanguageRuntimeRenderScriptRuntime.a \
 	lldbPluginMemoryHistoryASan.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectContainerUniversalMachO.a \

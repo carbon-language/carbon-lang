@@ -30,6 +30,7 @@
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
+#include "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptRuntime.h"
 #include "Plugins/MemoryHistory/asan/MemoryHistoryASan.h"
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
 #include "Plugins/Process/elf-core/ProcessElfCore.h"
@@ -258,6 +259,7 @@ SystemInitializerFull::Initialize()
     AppleObjCRuntimeV2::Initialize();
     AppleObjCRuntimeV1::Initialize();
     SystemRuntimeMacOSX::Initialize();
+    RenderScriptRuntime::Initialize();
 
 #if defined(__linux__)
     //----------------------------------------------------------------------
@@ -361,6 +363,7 @@ SystemInitializerFull::Terminate()
     AppleObjCRuntimeV2::Terminate();
     AppleObjCRuntimeV1::Terminate();
     SystemRuntimeMacOSX::Terminate();
+    RenderScriptRuntime::Terminate();
 
 #if defined(__APPLE__)
     ProcessMachCore::Terminate();
