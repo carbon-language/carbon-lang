@@ -7713,6 +7713,10 @@ static void diagnoseArrayStarInParamType(Sema &S, QualType PType,
     diagnoseArrayStarInParamType(S, PointerTy->getPointeeType(), Loc);
     return;
   }
+  if (const auto *ReferenceTy = dyn_cast<ReferenceType>(PType)) {
+    diagnoseArrayStarInParamType(S, ReferenceTy->getPointeeType(), Loc);
+    return;
+  }
   if (const auto *ParenTy = dyn_cast<ParenType>(PType)) {
     diagnoseArrayStarInParamType(S, ParenTy->getInnerType(), Loc);
     return;
