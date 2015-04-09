@@ -6664,7 +6664,17 @@ EVT AArch64TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned DstAlign,
        (allowsMisalignedMemoryAccesses(MVT::f128, 0, 1, &Fast) && Fast)))
     return MVT::f128;
 
-  return Size >= 8 ? MVT::i64 : MVT::i32;
+  if (Size >= 8 &&
+      (memOpAlign(SrcAlign, DstAlign, 8) ||
+       (allowsMisalignedMemoryAccesses(MVT::i64, 0, 1, &Fast) && Fast)))
+    return MVT::i64;
+
+  if (Size >= 4 &&
+      (memOpAlign(SrcAlign, DstAlign, 4) ||
+       (allowsMisalignedMemoryAccesses(MVT::i32, 0, 1, &Fast) && Fast)))
+    return MVT::i64;
+
+  return MVT::Other;
 }
 
 // 12-bit optionally shifted immediates are legal for adds.
