@@ -35,8 +35,19 @@ uptr internal_mmap(void *addr, uptr length, int prot, int flags,
                    int fd, u64 offset);
 uptr internal_munmap(void *addr, uptr length);
 
+// OS
+uptr internal_filesize(fd_t fd);  // -1 on error.
+uptr internal_stat(const char *path, void *buf);
+uptr internal_lstat(const char *path, void *buf);
+uptr internal_fstat(fd_t fd, void *buf);
+uptr internal_dup2(int oldfd, int newfd);
+uptr internal_readlink(const char *path, char *buf, uptr bufsize);
+uptr internal_unlink(const char *path);
+uptr internal_lseek(fd_t fd, OFF_T offset, int whence);
+
 uptr internal_ptrace(int request, int pid, void *addr, void *data);
 uptr internal_waitpid(int pid, int *status, int options);
+
 int internal_fork();
 
 // These functions call appropriate pthread_ functions directly, bypassing

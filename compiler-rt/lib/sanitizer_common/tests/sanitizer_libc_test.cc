@@ -17,6 +17,7 @@
 #if SANITIZER_LINUX || SANITIZER_MAC
 # define SANITIZER_TEST_HAS_STAT_H 1
 # include <sys/stat.h>
+# include "sanitizer_common/sanitizer_posix.h"
 #else
 # define SANITIZER_TEST_HAS_STAT_H 0
 #endif

@@ -12,6 +12,7 @@
 
 #include "sanitizer_libignore.h"
 #include "sanitizer_flags.h"
+#include "sanitizer_posix.h"
 #include "sanitizer_procmaps.h"
 
 namespace __sanitizer {
