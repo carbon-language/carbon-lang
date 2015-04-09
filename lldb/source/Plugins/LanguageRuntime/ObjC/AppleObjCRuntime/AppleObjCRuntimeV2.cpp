@@ -38,6 +38,7 @@
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -1576,6 +1577,18 @@ AppleObjCRuntimeV2::WarnIfNoClassesCached ()
 {
     if (m_noclasses_warning_emitted)
         return;
+    
+    static ConstString g_ios_simulator("ios-simulator");
+    
+    if (m_process &&
+        m_process->GetTarget().GetPlatform() &&
+        m_process->GetTarget().GetPlatform()->GetPluginName() == g_ios_simulator)
+    {
+        // the iOS simulator does not have the objc_opt_ro class table
+        // so don't actually complain to the user
+        m_noclasses_warning_emitted = true;
+        return;
+    }
     
     Debugger &debugger(GetProcess()->GetTarget().GetDebugger());
     
