@@ -289,7 +289,7 @@ ItaniumABILanguageRuntime::GetAlternateManglings(const ConstString &mangled, std
 
     alternates.clear();
     const char *mangled_cstr = mangled.AsCString();
-    for (typename std::map<ConstString, std::vector<ConstString> >::iterator it = s_alternate_mangling_prefixes.begin();
+    for (std::map<ConstString, std::vector<ConstString> >::iterator it = s_alternate_mangling_prefixes.begin();
          it != s_alternate_mangling_prefixes.end();
          ++it)
     {
