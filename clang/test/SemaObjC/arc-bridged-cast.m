@@ -80,3 +80,12 @@ void testObjCBridgeId() {
   ref = (__bridge_retained CFAnnotatedObjectRef) CreateSomething();
   ref = (__bridge_retained CFAnnotatedObjectRef) CreateNSString();
 }
+
+// rdar://20113785
+typedef const struct __attribute__((objc_bridge(UIFont))) __CTFont * CTFontRef;
+
+id testObjCBridgeUnknownTypeToId(CTFontRef font) {
+  id x = (__bridge id)font;
+  return x;
+}
+
