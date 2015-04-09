@@ -118,8 +118,6 @@ int nested_try(void) {
 // CHECK: [[inner_try_cont]]
 // CHECK: br label %[[outer_try_cont]]
 
-// FIXME: This lowering of __finally can't actually work, it will have to
-// change.
 static unsigned g = 0;
 void basic_finally(void) {
   ++g;
@@ -138,23 +136,22 @@ void basic_finally(void) {
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[cont]]
-// CHECK: br label %[[finally:[^ ]*]]
-//
-// CHECK: [[finally]]
-// CHECK: load i32, i32* @g
-// CHECK: add i32 %{{.*}}, -1
-// CHECK: store i32 %{{.*}}, i32* @g
-// CHECK: icmp eq
-// CHECK: br i1 %{{.*}}, label
-//
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i1 zeroext false, i8* %[[fp]])
 // CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK-NEXT: cleanup
-// CHECK: br label %[[finally]]
-//
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i1 zeroext true, i8* %[[fp]])
 // CHECK: resume
+
+// CHECK: define internal void @"\01?fin$0@0@basic_finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK:   load i32, i32* @g, align 4
+// CHECK:   add i32 %{{.*}}, -1
+// CHECK:   store i32 %{{.*}}, i32* @g, align 4
+// CHECK:   ret void
 
 int returns_int(void);
 int except_return(void) {

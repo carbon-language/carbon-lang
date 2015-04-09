@@ -1021,6 +1021,12 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
+  // Returning from an outlined SEH helper is UB, and we already warn on it.
+  if (IsOutlinedSEHHelper) {
+    Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+  }
+
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
 
