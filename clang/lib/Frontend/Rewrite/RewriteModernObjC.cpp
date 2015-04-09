@@ -2689,7 +2689,7 @@ Stmt *RewriteModernObjC::RewriteObjCBoxedExpr(ObjCBoxedExpr *Exp) {
   MsgExprs.push_back(subExpr);
   
   SmallVector<QualType, 4> ArgTypes;
-  ArgTypes.push_back(Context->getObjCIdType());
+  ArgTypes.push_back(Context->getObjCClassType());
   ArgTypes.push_back(Context->getObjCSelType());
   for (const auto PI : BoxingMethod->parameters())
     ArgTypes.push_back(PI->getType());
@@ -2816,7 +2816,7 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   
   
   SmallVector<QualType, 4> ArgTypes;
-  ArgTypes.push_back(Context->getObjCIdType());
+  ArgTypes.push_back(Context->getObjCClassType());
   ArgTypes.push_back(Context->getObjCSelType());
   for (const auto *PI : ArrayMethod->params())
     ArgTypes.push_back(PI->getType());
@@ -2969,7 +2969,7 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
   
   
   SmallVector<QualType, 8> ArgTypes;
-  ArgTypes.push_back(Context->getObjCIdType());
+  ArgTypes.push_back(Context->getObjCClassType());
   ArgTypes.push_back(Context->getObjCSelType());
   for (const auto *PI : DictMethod->params()) {
     QualType T = PI->getType();
