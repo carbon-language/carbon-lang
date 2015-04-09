@@ -42,6 +42,7 @@ class CMICmnLLDBUtilSBValue
     CMIUtilString GetTypeNameDisplay(void) const;
     bool IsCharType(void) const;
     bool IsFirstChildCharType(void) const;
+    bool IsIntegerType(void) const;
     bool IsPointerType(void) const;
     bool IsArrayType(void) const;
     bool IsLLDBVariable(void) const;

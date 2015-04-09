@@ -261,6 +261,25 @@ CMICmnLLDBUtilSBValue::IsFirstChildCharType(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: Retrieve the flag stating whether this value object is a integer type or some
+//          other type. Char type can be signed or unsigned and short or long/very long.
+// Type:    Method.
+// Args:    None.
+// Return:  bool    - True = Yes is a integer type, false = some other type.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBUtilSBValue::IsIntegerType(void) const
+{
+    const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
+    return ((eType == lldb::eBasicTypeShort) || (eType == lldb::eBasicTypeUnsignedShort) ||
+            (eType == lldb::eBasicTypeInt) || (eType == lldb::eBasicTypeUnsignedInt) ||
+            (eType == lldb::eBasicTypeLong) || (eType == lldb::eBasicTypeUnsignedLong) ||
+            (eType == lldb::eBasicTypeLongLong) || (eType == lldb::eBasicTypeUnsignedLongLong) ||
+            (eType == lldb::eBasicTypeInt128) || (eType == lldb::eBasicTypeUnsignedInt128));
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: Retrieve the flag stating whether this value object is a pointer type or some
 //          other type.
 // Type:    Method.

@@ -275,6 +275,16 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(const lldb::SBValue &v
                                                           const CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat)
 {
     const CMICmnLLDBUtilSBValue utilValue(vrValue, true);
+    if (utilValue.IsIntegerType())
+    {
+        MIuint64 nValue = 0;
+        if (CMICmnLLDBProxySBValue::GetValueAsUnsigned(vrValue, nValue))
+        {
+            lldb::SBValue &rValue = const_cast<lldb::SBValue &>(vrValue);
+            return GetStringFormatted(nValue, rValue.GetValue(), veVarFormat);
+        }
+    }
+
     return utilValue.GetValue().Escape().AddSlashes();
 }
 
