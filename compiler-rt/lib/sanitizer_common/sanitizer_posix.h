@@ -30,6 +30,8 @@ uptr internal_open(const char *filename, int flags);
 uptr internal_open(const char *filename, int flags, u32 mode);
 uptr internal_close(fd_t fd);
 
+uptr internal_read(fd_t fd, void *buf, uptr count);
+
 // Memory
 uptr internal_mmap(void *addr, uptr length, int prot, int flags,
                    int fd, u64 offset);

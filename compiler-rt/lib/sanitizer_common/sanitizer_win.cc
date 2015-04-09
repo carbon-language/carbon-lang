@@ -403,13 +403,14 @@ void CloseFile(fd_t fd) {
   UNIMPLEMENTED();
 }
 
+bool ReadFromFile(fd_t fd, void *buff, uptr buff_size, uptr *bytes_read,
+                  error_t *error_p) {
+  UNIMPLEMENTED();
+}
+
 bool SupportsColoredOutput(fd_t fd) {
   // FIXME: support colored output.
   return false;
-}
-
-uptr internal_read(fd_t fd, void *buf, uptr count) {
-  UNIMPLEMENTED();
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {

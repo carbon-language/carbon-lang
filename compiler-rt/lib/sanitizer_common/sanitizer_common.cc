@@ -152,8 +152,8 @@ uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
     read_len = 0;
     bool reached_eof = false;
     while (read_len + PageSize <= size) {
-      uptr just_read = internal_read(fd, *buff + read_len, PageSize);
-      if (internal_iserror(just_read, errno_p)) {
+      uptr just_read;
+      if (!ReadFromFile(fd, *buff + read_len, PageSize, &just_read, errno_p)) {
         UnmapOrDie(*buff, *buff_size);
         return 0;
       }
