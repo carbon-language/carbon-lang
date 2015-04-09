@@ -3044,36 +3044,17 @@ ScriptInterpreterPython::InitializePrivate ()
     // Update the path python uses to search for modules to include the current directory.
 
     PyRun_SimpleString ("import sys");
-    PyRun_SimpleString ("sys.path.append ('.')");
-
-    // Find the module that owns this code and use that path we get to
-    // set the sys.path appropriately.
+    AddToSysPath(AddLocation::End, ".");
 
     FileSpec file_spec;
-    char python_dir_path[PATH_MAX];
+    // Don't denormalize paths when calling file_spec.GetPath().  On platforms that use
+    // a backslash as the path separator, this will result in executing python code containing
+    // paths with unescaped backslashes.  But Python also accepts forward slashes, so to make
+    // life easier we just use that.
     if (HostInfo::GetLLDBPath(ePathTypePythonDir, file_spec))
-    {
-        std::string python_path("sys.path.insert(0,\"");
-        size_t orig_len = python_path.length();
-        if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
-        {
-            python_path.append (python_dir_path);
-            python_path.append ("\")");
-            PyRun_SimpleString (python_path.c_str());
-            python_path.resize (orig_len);
-        }
-
-        if (HostInfo::GetLLDBPath(ePathTypeLLDBShlibDir, file_spec))
-        {
-            if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
-            {
-                python_path.append (python_dir_path);
-                python_path.append ("\")");
-                PyRun_SimpleString (python_path.c_str());
-                python_path.resize (orig_len);
-            }
-        }
-    }
+        AddToSysPath(AddLocation::Beginning, file_spec.GetPath(false));
+    if (HostInfo::GetLLDBPath(ePathTypeLLDBShlibDir, file_spec))
+        AddToSysPath(AddLocation::Beginning, file_spec.GetPath(false));
 
     PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line");
 
@@ -3088,6 +3069,28 @@ ScriptInterpreterPython::InitializePrivate ()
 
     stdin_tty_state.Restore();
 }
+
+void
+ScriptInterpreterPython::AddToSysPath(AddLocation location, std::string path)
+{
+    std::string path_copy;
+
+    std::string statement;
+    if (location == AddLocation::Beginning)
+    {
+        statement.assign("sys.path.insert(0,\"");
+        statement.append (path);
+        statement.append ("\")");
+    }
+    else
+    {
+        statement.assign("sys.path.append(\"");
+        statement.append(path);
+        statement.append("\")");
+    }
+    PyRun_SimpleString (statement.c_str());
+}
+
 
 //void
 //ScriptInterpreterPython::Terminate ()

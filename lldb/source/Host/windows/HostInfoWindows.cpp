@@ -13,7 +13,9 @@
 
 #include "lldb/Host/windows/HostInfoWindows.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Path.h"
 
 using namespace lldb_private;
 
@@ -107,11 +109,11 @@ HostInfoWindows::ComputePythonDirectory(FileSpec &file_spec)
     FileSpec lldb_file_spec;
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
-
-    char raw_path[PATH_MAX];
-    lldb_file_spec.AppendPathComponent("../lib/site-packages");
-    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
-
-    file_spec.GetDirectory().SetCString(raw_path);
+    llvm::SmallString<64> path;
+    lldb_file_spec.GetPath(path);
+    llvm::sys::path::remove_filename(path);
+    llvm::sys::path::append(path, "lib", "site-packages");
+    std::replace(path.begin(), path.end(), '\\', '/');
+    file_spec.GetDirectory().SetString(path.c_str());
     return true;
 }

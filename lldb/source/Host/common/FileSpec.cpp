@@ -798,17 +798,23 @@ FileSpec::GetPath(char *path, size_t path_max_len, bool denormalize) const
 }
 
 std::string
-FileSpec::GetPath (bool denormalize) const
+FileSpec::GetPath(bool denormalize) const
 {
     llvm::SmallString<64> result;
-    if (m_directory)
-        result.append(m_directory.GetCString());
-    if (m_filename)
-        llvm::sys::path::append(result, m_filename.GetCString());
-    if (denormalize && !result.empty())
-        DeNormalize(result, m_syntax);
-
+    GetPath(result, denormalize);
     return std::string(result.begin(), result.end());
+}
+
+void
+FileSpec::GetPath(llvm::SmallVectorImpl<char> &path, bool denormalize) const
+{
+    if (m_directory)
+        path.append(m_directory.GetCString(), m_directory.GetCString() + m_directory.GetLength());
+    if (m_filename)
+        llvm::sys::path::append(path, m_filename.GetCString());
+    Normalize(path, m_syntax);
+    if (denormalize && !path.empty())
+        DeNormalize(path, m_syntax);
 }
 
 ConstString

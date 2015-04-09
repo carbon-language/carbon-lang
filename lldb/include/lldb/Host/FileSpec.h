@@ -409,6 +409,17 @@ public:
     GetPath (bool denormalize = true) const;
 
     //------------------------------------------------------------------
+    /// Extract the full path to the file.
+    ///
+    /// Extract the directory and path into an llvm::SmallVectorImpl<>
+    ///
+    /// @return
+    ///     Returns a std::string with the directory and filename
+    ///     concatenated.
+    //------------------------------------------------------------------
+    void GetPath(llvm::SmallVectorImpl<char> &path, bool denormalize = true) const;
+
+    //------------------------------------------------------------------
     /// Extract the extension of the file.
     ///
     /// Returns a ConstString that represents the extension of the filename

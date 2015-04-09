@@ -490,6 +490,13 @@ public:
         PyGILState_STATE         m_GILState;
 	};
 protected:
+    enum class AddLocation
+    {
+        Beginning,
+        End
+    };
+
+    static void AddToSysPath(AddLocation location, std::string path);
 
     uint32_t
     IsExecutingPython () const
