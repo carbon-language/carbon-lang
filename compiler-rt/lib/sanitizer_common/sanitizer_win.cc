@@ -469,6 +469,10 @@ bool WriteToFile(fd_t fd, const void *buff, uptr buff_size, uptr *bytes_written,
   return false;
 }
 
+bool RenameFile(const char *oldpath, const char *newpath, error_t *error_p) {
+  UNIMPLEMENTED();
+}
+
 uptr internal_sched_yield() {
   Sleep(0);
   return 0;
@@ -479,10 +483,6 @@ void internal__exit(int exitcode) {
 }
 
 uptr internal_ftruncate(fd_t fd, uptr size) {
-  UNIMPLEMENTED();
-}
-
-uptr internal_rename(const char *oldpath, const char *newpath) {
   UNIMPLEMENTED();
 }
 

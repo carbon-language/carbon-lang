@@ -66,7 +66,6 @@ const fd_t kStderrFd = 2;
 uptr internal_ftruncate(fd_t fd, uptr size);
 
 // OS
-uptr internal_rename(const char *oldpath, const char *newpath);
 void NORETURN internal__exit(int exitcode);
 
 uptr internal_getpid();

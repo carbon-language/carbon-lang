@@ -118,8 +118,7 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
   res = internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.map",
                           coverage_dir, internal_getpid());
   CHECK_LE(res, path.size());
-  res = internal_rename(tmp_path.data(), path.data());
-  if (internal_iserror(res, &err)) {
+  if (!RenameFile(tmp_path.data(), path.data(), &err)) {
     Printf("sancov.map rename failed: %d\n", err);
     Die();
   }

@@ -46,6 +46,7 @@ uptr internal_fstat(fd_t fd, void *buf);
 uptr internal_dup2(int oldfd, int newfd);
 uptr internal_readlink(const char *path, char *buf, uptr bufsize);
 uptr internal_unlink(const char *path);
+uptr internal_rename(const char *oldpath, const char *newpath);
 uptr internal_lseek(fd_t fd, OFF_T offset, int whence);
 
 uptr internal_ptrace(int request, int pid, void *addr, void *data);
