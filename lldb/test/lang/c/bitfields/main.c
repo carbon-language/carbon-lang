@@ -18,7 +18,7 @@ int main (int argc, char const *argv[])
                     : 2, // Unnamed bitfield
                     b3 : 3,
                     : 2, // Unnamed bitfield (this will get removed)
-                    b4 __attribute__ ((align(16))),
+                    b4 __attribute__ ((aligned(16))),
                     b5 : 5,
                     b6 : 6,
                     b7 : 7,

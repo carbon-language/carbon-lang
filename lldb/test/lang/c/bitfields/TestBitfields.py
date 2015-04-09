@@ -35,7 +35,6 @@ class BitfieldsTestCase(TestBase):
     @python_api_test
     @dwarf_test
     @skipIfWindows # BitFields exhibit crashes in record layout on Windows (http://llvm.org/pr21800)
-    @expectedFailureGcc # GCC (4.6/4.7) generates incorrect code with unnamed bitfields.
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to inspect a bitfields variable."""
         self.buildDwarf()
@@ -155,11 +154,7 @@ class BitfieldsTestCase(TestBase):
         self.assertTrue(bits.GetTypeName() == 'Bits', "bits.GetTypeName() == 'Bits'");
         self.assertTrue(bits.GetNumChildren() == 10, "bits.GetNumChildren() == 10");
         test_compiler = self.getCompiler()
-        if "gcc" in test_compiler:
-        # Clang ignores the align attribute, so this structure isn't padded out to 
-        # 32 bytes there as the test author intended.  Suppress this test for clang
-        # till somebody has a chance to go rewrite the test source to be this big portably.
-            self.assertTrue(bits.GetByteSize() == 32, "bits.GetByteSize() == 32");
+        self.assertTrue(bits.GetByteSize() == 32, "bits.GetByteSize() == 32");
 
         # Notice the pattern of int(b1.GetValue(), 0).  We pass a base of 0
         # so that the proper radix is determined based on the contents of the
