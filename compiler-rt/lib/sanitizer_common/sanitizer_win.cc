@@ -413,14 +413,17 @@ bool SupportsColoredOutput(fd_t fd) {
   return false;
 }
 
-uptr internal_write(fd_t fd, const void *buf, uptr count) {
+bool WriteToFile(fd_t fd, const void *buff, uptr buff_size, uptr *bytes_written,
+                 error_t *error_p) {
   if (fd != kStderrFd)
     UNIMPLEMENTED();
 
   static HANDLE output_stream = 0;
   // Abort immediately if we know printing is not possible.
-  if (output_stream == INVALID_HANDLE_VALUE)
-    return 0;
+  if (output_stream == INVALID_HANDLE_VALUE) {
+    if (error_p) *error_p = ERROR_INVALID_HANDLE;
+    return false;
+  }
 
   // If called for the first time, try to use stderr to output stuff,
   // falling back to stdout if anything goes wrong.
@@ -436,8 +439,10 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
       output_stream = GetStdHandle(STD_OUTPUT_HANDLE);
       if (output_stream == 0)
         output_stream = INVALID_HANDLE_VALUE;
-      if (output_stream == INVALID_HANDLE_VALUE)
-        return 0;
+      if (output_stream == INVALID_HANDLE_VALUE) {
+        if (error_p) *error_p = ERROR_INVALID_HANDLE;
+        return false;
+      }
     } else {
       // Successfully got an stderr handle.  However, if WriteFile() fails,
       // we can still try to fallback to stdout.
@@ -445,9 +450,11 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
     }
   }
 
-  DWORD ret;
-  if (WriteFile(output_stream, buf, count, &ret, 0))
-    return ret;
+  DWORD internal_bytes_written;
+  if (WriteFile(output_stream, buff, buff_size, &internal_bytes_written, 0)) {
+    if (bytes_written) *bytes_written = internal_bytes_written;
+    return true;
+  }
 
   // Re-try with stdout if using a valid stderr handle fails.
   if (fallback_to_stdout) {
@@ -455,9 +462,11 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
     if (output_stream == 0)
       output_stream = INVALID_HANDLE_VALUE;
     if (output_stream != INVALID_HANDLE_VALUE)
-      return internal_write(fd, buf, count);
+      return WriteToFile(fd, buff, buff_size, bytes_written, error_p);
   }
-  return 0;
+
+  if (error_p) *error_p = GetLastError();
+  return false;
 }
 
 uptr internal_sched_yield() {
@@ -600,7 +609,7 @@ void BufferedStackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
 void ReportFile::Write(const char *buffer, uptr length) {
   SpinMutexLock l(mu);
   ReopenIfNecessary();
-  if (length != internal_write(fd, buffer, length)) {
+  if (!WriteToFile(fd, buffer, length)) {
     // stderr may be closed, but we may be able to print to the debugger
     // instead.  This is the case when launching a program from Visual Studio,
     // and the following routine should write to its console.

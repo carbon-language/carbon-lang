@@ -133,7 +133,7 @@ static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
   ctx->thread_registry->GetNumberOfThreads(&n_threads, &n_running_threads);
   InternalScopedBuffer<char> buf(4096);
   WriteMemoryProfile(buf.data(), buf.size(), n_threads, n_running_threads);
-  internal_write(fd, buf.data(), internal_strlen(buf.data()));
+  WriteToFile(fd, buf.data(), internal_strlen(buf.data()));
 }
 
 static void BackgroundThread(void *arg) {

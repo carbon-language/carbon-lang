@@ -200,9 +200,13 @@ enum FileAccessMode {
 fd_t OpenFile(const char *filename, FileAccessMode mode,
               error_t *errno_p = nullptr);
 void CloseFile(fd_t);
-// Returns true on success, false on error.
+
+// Return true on success, false on error.
 bool ReadFromFile(fd_t fd, void *buff, uptr buff_size,
                   uptr *bytes_read = nullptr, error_t *error_p = nullptr);
+bool WriteToFile(fd_t fd, const void *buff, uptr buff_size,
+                 uptr *bytes_written = nullptr, error_t *error_p = nullptr);
+
 bool SupportsColoredOutput(fd_t fd);
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.

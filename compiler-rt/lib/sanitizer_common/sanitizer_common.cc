@@ -61,8 +61,8 @@ void ReportFile::ReopenIfNecessary() {
   fd = OpenFile(full_path, WrOnly);
   if (fd == kInvalidFd) {
     const char *ErrorMsgPrefix = "ERROR: Can't open file: ";
-    internal_write(kStderrFd, ErrorMsgPrefix, internal_strlen(ErrorMsgPrefix));
-    internal_write(kStderrFd, full_path, internal_strlen(full_path));
+    WriteToFile(kStderrFd, ErrorMsgPrefix, internal_strlen(ErrorMsgPrefix));
+    WriteToFile(kStderrFd, full_path, internal_strlen(full_path));
     Die();
   }
   fd_pid = pid;

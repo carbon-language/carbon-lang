@@ -108,8 +108,7 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
     Die();
   }
 
-  res = internal_write(map_fd, text.data(), text.length());
-  if (internal_iserror(res, &err)) {
+  if (!WriteToFile(map_fd, text.data(), text.length(), nullptr, &err)) {
     Printf("sancov.map write failed: %d\n", err);
     Die();
   }

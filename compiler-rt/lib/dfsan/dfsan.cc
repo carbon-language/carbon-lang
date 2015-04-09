@@ -309,12 +309,12 @@ dfsan_dump_labels(int fd) {
     char buf[64];
     internal_snprintf(buf, sizeof(buf), "%u %u %u ", l,
                       __dfsan_label_info[l].l1, __dfsan_label_info[l].l2);
-    internal_write(fd, buf, internal_strlen(buf));
+    WriteToFile(fd, buf, internal_strlen(buf));
     if (__dfsan_label_info[l].l1 == 0 && __dfsan_label_info[l].desc) {
-      internal_write(fd, __dfsan_label_info[l].desc,
-                     internal_strlen(__dfsan_label_info[l].desc));
+      WriteToFile(fd, __dfsan_label_info[l].desc,
+                  internal_strlen(__dfsan_label_info[l].desc));
     }
-    internal_write(fd, "\n", 1);
+    WriteToFile(fd, "\n", 1);
   }
 }
 
