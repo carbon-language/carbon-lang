@@ -243,6 +243,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakPoint(const lldb::SBEvent &vEv
             break;
         case lldb::eBreakpointEventTypeLocationsResolved:
             pEventType = "eBreakpointEventTypeLocationsResolved";
+            bOk = HandleEventSBBreakpointCmn(vEvent);
             break;
         case lldb::eBreakpointEventTypeEnabled:
             pEventType = "eBreakpointEventTypeEnabled";
