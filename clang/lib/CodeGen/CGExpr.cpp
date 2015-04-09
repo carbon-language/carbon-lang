@@ -309,12 +309,13 @@ createReferenceTemporary(CodeGenFunction &CGF,
         (M->getType()->isArrayType() || M->getType()->isRecordType()) &&
         CGF.CGM.isTypeConstant(M->getType(), true))
       if (llvm::Constant *Init =
-              CGF.CGM.EmitConstantExpr(Inner, M->getType(), &CGF)) {
+              CGF.CGM.EmitConstantExpr(Inner, Inner->getType(), &CGF)) {
         auto *GV = new llvm::GlobalVariable(
             CGF.CGM.getModule(), Init->getType(), /*isConstant=*/true,
             llvm::GlobalValue::PrivateLinkage, Init, ".ref.tmp");
-        GV->setAlignment(
-            CGF.getContext().getTypeAlignInChars(M->getType()).getQuantity());
+        GV->setAlignment(CGF.getContext()
+                             .getTypeAlignInChars(Inner->getType())
+                             .getQuantity());
         // FIXME: Should we put the new global into a COMDAT?
         return GV;
       }
