@@ -53,6 +53,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 
+#include "Plugins/Platform/MacOSX/PlatformiOSSimulator.h"
+
 #include <vector>
 
 using namespace lldb;
@@ -1578,11 +1580,9 @@ AppleObjCRuntimeV2::WarnIfNoClassesCached ()
     if (m_noclasses_warning_emitted)
         return;
     
-    static ConstString g_ios_simulator("ios-simulator");
-    
     if (m_process &&
         m_process->GetTarget().GetPlatform() &&
-        m_process->GetTarget().GetPlatform()->GetPluginName() == g_ios_simulator)
+        m_process->GetTarget().GetPlatform()->GetPluginName() == PlatformiOSSimulator::GetPluginNameStatic())
     {
         // the iOS simulator does not have the objc_opt_ro class table
         // so don't actually complain to the user
