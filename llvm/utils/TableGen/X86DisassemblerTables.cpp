@@ -597,7 +597,7 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
   o << "static const struct OperandSpecifier x86OperandSets[]["
     << X86_MAX_OPERANDS << "] = {\n";
 
-  typedef std::vector<std::pair<const char *, const char *> > OperandListTy;
+  typedef std::vector<std::pair<OperandEncoding, OperandType> > OperandListTy;
   std::map<OperandListTy, unsigned> OperandSets;
 
   unsigned OperandSetNum = 0;
@@ -606,12 +606,10 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
 
     for (unsigned OperandIndex = 0; OperandIndex < X86_MAX_OPERANDS;
          ++OperandIndex) {
-      const char *Encoding =
-        stringForOperandEncoding((OperandEncoding)InstructionSpecifiers[Index]
-                                 .operands[OperandIndex].encoding);
-      const char *Type =
-        stringForOperandType((OperandType)InstructionSpecifiers[Index]
-                             .operands[OperandIndex].type);
+      OperandEncoding Encoding = (OperandEncoding)InstructionSpecifiers[Index]
+                                 .operands[OperandIndex].encoding;
+      OperandType Type = (OperandType)InstructionSpecifiers[Index]
+                         .operands[OperandIndex].type;
       OperandList.push_back(std::make_pair(Encoding, Type));
     }
     unsigned &N = OperandSets[OperandList];
@@ -621,8 +619,9 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
 
     o << "  { /* " << (OperandSetNum - 1) << " */\n";
     for (unsigned i = 0, e = OperandList.size(); i != e; ++i) {
-      o << "    { " << OperandList[i].first << ", "
-        << OperandList[i].second << " },\n";
+      const char *Encoding = stringForOperandEncoding(OperandList[i].first);
+      const char *Type     = stringForOperandType(OperandList[i].second);
+      o << "    { " << Encoding << ", " << Type << " },\n";
     }
     o << "  },\n";
   }
@@ -640,12 +639,10 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o,
     OperandListTy OperandList;
     for (unsigned OperandIndex = 0; OperandIndex < X86_MAX_OPERANDS;
          ++OperandIndex) {
-      const char *Encoding =
-        stringForOperandEncoding((OperandEncoding)InstructionSpecifiers[index]
-                                 .operands[OperandIndex].encoding);
-      const char *Type =
-        stringForOperandType((OperandType)InstructionSpecifiers[index]
-                             .operands[OperandIndex].type);
+      OperandEncoding Encoding = (OperandEncoding)InstructionSpecifiers[index]
+                                 .operands[OperandIndex].encoding;
+      OperandType Type = (OperandType)InstructionSpecifiers[index]
+                         .operands[OperandIndex].type;
       OperandList.push_back(std::make_pair(Encoding, Type));
     }
     o.indent(i * 2) << (OperandSets[OperandList] - 1) << ",\n";
