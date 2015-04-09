@@ -255,6 +255,14 @@ def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
                                     FeatureTrustZone, FeatureT2XtPk,
                                     FeatureCrypto, FeatureCRC]>;
 
+def ProcR4      : SubtargetFeature<"r4", "ARMProcFamily", "CortexR4",
+                                   "Cortex-R4 ARM processors",
+                                   [FeatureHWDiv,
+                                    FeatureAvoidPartialCPSR,
+                                    FeatureDSPThumb2, FeatureT2XtPk,
+                                    HasV7Ops, FeatureDB, FeatureHasRAS,
+                                    FeatureRClass]>;
+
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
                                    "Cortex-R5 ARM processors",
                                    [FeatureSlowFPBrcc,
@@ -390,6 +398,16 @@ def : ProcessorModel<"krait",       CortexA9Model,
                                      FeatureNEON, FeatureDB,
                                      FeatureDSPThumb2, FeatureHasRAS,
                                      FeatureAClass]>;
+
+// FIXME: R4 has currently the same ProcessorModel as A8.
+def : ProcessorModel<"cortex-r4",   CortexA8Model,
+                                    [ProcR4]>;
+
+// FIXME: R4F has currently the same ProcessorModel as A8.
+def : ProcessorModel<"cortex-r4f",  CortexA8Model,
+                                    [ProcR4,
+                                     FeatureSlowFPBrcc, FeatureHasSlowFPVMLx,
+                                     FeatureVFP3, FeatureVFPOnlySP, FeatureD16]>;
 
 // FIXME: R5 has currently the same ProcessorModel as A8.
 def : ProcessorModel<"cortex-r5",   CortexA8Model,

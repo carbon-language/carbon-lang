@@ -81,6 +81,8 @@
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=+fp-only-sp  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M7-FAST
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 | FileCheck %s --check-prefix=CORTEX-M7-DOUBLE
 ; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r4 | FileCheck %s --check-prefix=CORTEX-R4
+; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r4f | FileCheck %s --check-prefix=CORTEX-R4F
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-R5-FAST
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
@@ -1011,6 +1013,49 @@
 ; CORTEX-M7-NOFPU-FAST-NOT:  .eabi_attribute 21
 ; CORTEX-M7-NOFPU-FAST-NOT:  .eabi_attribute 22
 ; CORTEX-M7-NOFPU-FAST:  .eabi_attribute 23, 1
+
+; CORTEX-R4:  .cpu cortex-r4
+; CORTEX-R4:  .eabi_attribute 6, 10
+; CORTEX-R4:  .eabi_attribute 7, 82
+; CORTEX-R4:  .eabi_attribute 8, 1
+; CORTEX-R4:  .eabi_attribute 9, 2
+; CORTEX-R4-NOT:  .fpu vfpv3-d16
+; CORTEX-R4-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; CORTEX-R4:  .eabi_attribute 20, 1
+; CORTEX-R4:  .eabi_attribute 21, 1
+; CORTEX-R4-NOT:  .eabi_attribute 22
+; CORTEX-R4:  .eabi_attribute 23, 3
+; CORTEX-R4:  .eabi_attribute 24, 1
+; CORTEX-R4:  .eabi_attribute 25, 1
+; CORTEX-R4-NOT:  .eabi_attribute 28
+; CORTEX-R4-NOT:  .eabi_attribute 36
+; CORTEX-R4:  .eabi_attribute 38, 1
+; CORTEX-R4-NOT:  .eabi_attribute 42
+; CORTEX-R4-NOT:  .eabi_attribute 44
+; CORTEX-R4-NOT:  .eabi_attribute 68
+
+; CORTEX-R4F:  .cpu cortex-r4f
+; CORTEX-R4F:  .eabi_attribute 6, 10
+; CORTEX-R4F:  .eabi_attribute 7, 82
+; CORTEX-R4F:  .eabi_attribute 8, 1
+; CORTEX-R4F:  .eabi_attribute 9, 2
+; CORTEX-R4F:  .fpu vfpv3-d16
+; CORTEX-R4F-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; CORTEX-R4F:  .eabi_attribute 20, 1
+; CORTEX-R4F:  .eabi_attribute 21, 1
+; CORTEX-R4F-NOT:  .eabi_attribute 22
+; CORTEX-R4F:  .eabi_attribute 23, 3
+; CORTEX-R4F:  .eabi_attribute 24, 1
+; CORTEX-R4F:  .eabi_attribute 25, 1
+; CORTEX-R4F:  .eabi_attribute 27, 1
+; CORTEX-R4F-NOT:  .eabi_attribute 28
+; CORTEX-R4F-NOT:  .eabi_attribute 36
+; CORTEX-R4F:  .eabi_attribute 38, 1
+; CORTEX-R4F-NOT:  .eabi_attribute 42
+; CORTEX-R4F-NOT:  .eabi_attribute 44
+; CORTEX-R4F-NOT:  .eabi_attribute 68
 
 ; CORTEX-R5:  .cpu cortex-r5
 ; CORTEX-R5:  .eabi_attribute 6, 10

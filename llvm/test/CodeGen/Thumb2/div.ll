@@ -4,6 +4,10 @@
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMBV7M
 ; RUN: llc -mtriple=thumb-apple-darwin -mcpu=swift %s -o - \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
+; RUN: llc -mtriple=thumb-apple-darwin -mcpu=cortex-r4 %s -o - \
+; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
+; RUN: llc -mtriple=thumb-apple-darwin -mcpu=cortex-r4f %s -o - \
+; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
 ; RUN: llc -mtriple=thumb-apple-darwin -mcpu=cortex-r5 %s -o - \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
 
