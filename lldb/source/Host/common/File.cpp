@@ -887,6 +887,8 @@ File::Read (size_t &num_bytes, off_t &offset, bool null_terminate, DataBufferSP 
 Error
 File::Write (const void *buf, size_t &num_bytes, off_t &offset)
 {
+    Error error;
+
 #if defined (MAX_WRITE_SIZE)
     if (num_bytes > MAX_WRITE_SIZE)
     {
@@ -919,7 +921,6 @@ File::Write (const void *buf, size_t &num_bytes, off_t &offset)
     }
 #endif
 
-    Error error;
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
     {
