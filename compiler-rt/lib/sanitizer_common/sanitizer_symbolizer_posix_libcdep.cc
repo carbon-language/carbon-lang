@@ -355,11 +355,6 @@ class POSIXSymbolizer : public Symbolizer {
       : Symbolizer(tools) {}
 
  private:
-  uptr PlatformGetListOfModules(LoadedModule *modules,
-                                uptr max_modules) override {
-    return ::GetListOfModules(modules, max_modules, /* filter */ nullptr);
-  }
-
   const char *PlatformDemangle(const char *name) override {
     return DemangleCXXABI(name);
   }
