@@ -65,13 +65,11 @@ define double @test_FMSUB_EXT3(float %A, float %B, double %C) {
     %G = fsub double %F, %C         ; <double> [#uses=1]
     ret double %G
 ; CHECK-LABEL: test_FMSUB_EXT3:
-; CHECK: fneg
-; CHECK-NEXT: fmsub
+; CHECK: fnmadd
 ; CHECK-NEXT: blr
                                 
 ; CHECK-VSX-LABEL: test_FMSUB_EXT3:
-; CHECK-VSX: xsnegdp
-; CHECK-VSX-NEXT: xsmsubmdp
+; CHECK-VSX: xsnmaddmdp
 ; CHECK-VSX-NEXT: blr
 }
     
@@ -82,12 +80,10 @@ define double @test_FMSUB_EXT4(float %A, float %B, double %C) {
     %G = fsub double %F, %C         ; <double> [#uses=1]
     ret double %G
 ; CHECK-LABEL: test_FMSUB_EXT4:
-; CHECK: fneg
-; CHECK-NEXT: fmsub
+; CHECK: fnmadd
 ; CHECK-NEXT: blr
                                 
 ; CHECK-VSX-LABEL: test_FMSUB_EXT4:
-; CHECK-VSX: xsnegdp
-; CHECK-VSX-NEXT: xsmsubmdp
+; CHECK-VSX: xsnmaddmdp
 ; CHECK-VSX-NEXT: blr
 }  
