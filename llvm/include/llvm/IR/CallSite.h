@@ -350,15 +350,13 @@ private:
 
 class CallSite : public CallSiteBase<Function, Value, User, Instruction,
                                      CallInst, InvokeInst, User::op_iterator> {
-  typedef CallSite::CallSiteBase Base;
-
 public:
   CallSite() {}
-  CallSite(Base B) : Base(B) {}
-  CallSite(CallInst *CI) : Base(CI) {}
-  CallSite(InvokeInst *II) : Base(II) {}
-  explicit CallSite(Instruction *II) : Base(II) {}
-  explicit CallSite(Value *V) : Base(V) {}
+  CallSite(CallSiteBase B) : CallSiteBase(B) {}
+  CallSite(CallInst *CI) : CallSiteBase(CI) {}
+  CallSite(InvokeInst *II) : CallSiteBase(II) {}
+  explicit CallSite(Instruction *II) : CallSiteBase(II) {}
+  explicit CallSite(Value *V) : CallSiteBase(V) {}
 
   bool operator==(const CallSite &CS) const { return I == CS.I; }
   bool operator!=(const CallSite &CS) const { return I != CS.I; }
@@ -372,15 +370,13 @@ private:
 
 /// ImmutableCallSite - establish a view to a call site for examination
 class ImmutableCallSite : public CallSiteBase<> {
-  typedef ImmutableCallSite::CallSiteBase Base;
-
 public:
   ImmutableCallSite() {}
-  ImmutableCallSite(const CallInst *CI) : Base(CI) {}
-  ImmutableCallSite(const InvokeInst *II) : Base(II) {}
-  explicit ImmutableCallSite(const Instruction *II) : Base(II) {}
-  explicit ImmutableCallSite(const Value *V) : Base(V) {}
-  ImmutableCallSite(CallSite CS) : Base(CS.getInstruction()) {}
+  ImmutableCallSite(const CallInst *CI) : CallSiteBase(CI) {}
+  ImmutableCallSite(const InvokeInst *II) : CallSiteBase(II) {}
+  explicit ImmutableCallSite(const Instruction *II) : CallSiteBase(II) {}
+  explicit ImmutableCallSite(const Value *V) : CallSiteBase(V) {}
+  ImmutableCallSite(CallSite CS) : CallSiteBase(CS.getInstruction()) {}
 };
 
 } // End llvm namespace
