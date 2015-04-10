@@ -1301,6 +1301,48 @@ class OMPReductionClause : public OMPVarListClause<OMPReductionClause> {
   /// \brief Sets the nested name specifier.
   void setQualifierLoc(NestedNameSpecifierLoc NSL) { QualifierLoc = NSL; }
 
+  /// \brief Set list of helper expressions, required for proper codegen of the
+  /// clause. These expressions represent LHS expression in the final
+  /// reduction expression performed by the reduction clause.
+  void setLHSExprs(ArrayRef<Expr *> LHSExprs);
+
+  /// \brief Get the list of helper LHS expressions.
+  MutableArrayRef<Expr *> getLHSExprs() {
+    return MutableArrayRef<Expr *>(varlist_end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getLHSExprs() const {
+    return llvm::makeArrayRef(varlist_end(), varlist_size());
+  }
+
+  /// \brief Set list of helper expressions, required for proper codegen of the
+  /// clause. These expressions represent RHS expression in the final
+  /// reduction expression performed by the reduction clause.
+  /// Also, variables in these expressions are used for proper initialization of
+  /// reduction copies.
+  void setRHSExprs(ArrayRef<Expr *> RHSExprs);
+
+  /// \brief Get the list of helper destination expressions.
+  MutableArrayRef<Expr *> getRHSExprs() {
+    return MutableArrayRef<Expr *>(getLHSExprs().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getRHSExprs() const {
+    return llvm::makeArrayRef(getLHSExprs().end(), varlist_size());
+  }
+
+  /// \brief Set list of helper reduction expressions, required for proper
+  /// codegen of the clause. These expressions are binary expressions or
+  /// operator/custom reduction call that calculates new value from source
+  /// helper expressions to destination helper expressions.
+  void setReductionOps(ArrayRef<Expr *> ReductionOps);
+
+  /// \brief Get the list of helper reduction expressions.
+  MutableArrayRef<Expr *> getReductionOps() {
+    return MutableArrayRef<Expr *>(getRHSExprs().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getReductionOps() const {
+    return llvm::makeArrayRef(getRHSExprs().end(), varlist_size());
+  }
+
 public:
   /// \brief Creates clause with a list of variables \a VL.
   ///
@@ -1311,12 +1353,30 @@ public:
   /// \param VL The variables in the clause.
   /// \param QualifierLoc The nested-name qualifier with location information
   /// \param NameInfo The full name info for reduction identifier.
+  /// \param LHSExprs List of helper expressions for proper generation of
+  /// assignment operation required for copyprivate clause. This list represents
+  /// LHSs of the reduction expressions.
+  /// \param RHSExprs List of helper expressions for proper generation of
+  /// assignment operation required for copyprivate clause. This list represents
+  /// RHSs of the reduction expressions.
+  /// Also, variables in these expressions are used for proper initialization of
+  /// reduction copies.
+  /// \param ReductionOps List of helper expressions that represents reduction
+  /// expressions:
+  /// \code
+  /// LHSExprs binop RHSExprs;
+  /// operator binop(LHSExpr, RHSExpr);
+  /// <CutomReduction>(LHSExpr, RHSExpr);
+  /// \endcode
+  /// Required for proper codegen of final reduction operation performed by the
+  /// reduction clause.
   ///
   static OMPReductionClause *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
          SourceLocation ColonLoc, SourceLocation EndLoc, ArrayRef<Expr *> VL,
          NestedNameSpecifierLoc QualifierLoc,
-         const DeclarationNameInfo &NameInfo);
+         const DeclarationNameInfo &NameInfo, ArrayRef<Expr *> LHSExprs,
+         ArrayRef<Expr *> RHSExprs, ArrayRef<Expr *> ReductionOps);
   /// \brief Creates an empty clause with the place for \a N variables.
   ///
   /// \param C AST context.
@@ -1330,6 +1390,33 @@ public:
   const DeclarationNameInfo &getNameInfo() const { return NameInfo; }
   /// \brief Gets the nested name specifier.
   NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
+
+  typedef MutableArrayRef<Expr *>::iterator helper_expr_iterator;
+  typedef ArrayRef<const Expr *>::iterator helper_expr_const_iterator;
+  typedef llvm::iterator_range<helper_expr_iterator> helper_expr_range;
+  typedef llvm::iterator_range<helper_expr_const_iterator>
+      helper_expr_const_range;
+
+  helper_expr_const_range lhs_exprs() const {
+    return helper_expr_const_range(getLHSExprs().begin(), getLHSExprs().end());
+  }
+  helper_expr_range lhs_exprs() {
+    return helper_expr_range(getLHSExprs().begin(), getLHSExprs().end());
+  }
+  helper_expr_const_range rhs_exprs() const {
+    return helper_expr_const_range(getRHSExprs().begin(), getRHSExprs().end());
+  }
+  helper_expr_range rhs_exprs() {
+    return helper_expr_range(getRHSExprs().begin(), getRHSExprs().end());
+  }
+  helper_expr_const_range reduction_ops() const {
+    return helper_expr_const_range(getReductionOps().begin(),
+                                   getReductionOps().end());
+  }
+  helper_expr_range reduction_ops() {
+    return helper_expr_range(getReductionOps().begin(),
+                             getReductionOps().end());
+  }
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),

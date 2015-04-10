@@ -2032,10 +2032,39 @@ public:
   void EmitOMPAggregateAssign(LValue OriginalAddr, llvm::Value *PrivateAddr,
                               const Expr *AssignExpr, QualType Type,
                               const VarDecl *VDInit);
+  /// \brief Emit atomic update code for constructs: \a X = \a X \a BO \a E or
+  /// \a X = \a E \a BO \a E.
+  ///
+  /// \param X Value to be updated.
+  /// \param E Update value.
+  /// \param BO Binary operation for update operation.
+  /// \param IsXLHSInRHSPart true if \a X is LHS in RHS part of the update
+  /// expression, false otherwise.
+  /// \param AO Atomic ordering of the generated atomic instructions.
+  /// \param CommonGen Code generator for complex expressions that cannot be
+  /// expressed through atomicrmw instruction.
+  void EmitOMPAtomicSimpleUpdateExpr(
+      LValue X, RValue E, BinaryOperatorKind BO, bool IsXLHSInRHSPart,
+      llvm::AtomicOrdering AO, SourceLocation Loc,
+      const llvm::function_ref<RValue(RValue)> &CommonGen);
   void EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
                                  OMPPrivateScope &PrivateScope);
   void EmitOMPPrivateClause(const OMPExecutableDirective &D,
                             OMPPrivateScope &PrivateScope);
+  /// \brief Emit initial code for reduction variables. Creates reduction copies
+  /// and initializes them with the values according to OpenMP standard.
+  ///
+  /// \param D Directive (possibly) with the 'reduction' clause.
+  /// \param PrivateScope Private scope for capturing reduction variables for
+  /// proper codegen in internal captured statement.
+  ///
+  void EmitOMPReductionClauseInit(const OMPExecutableDirective &D,
+                                  OMPPrivateScope &PrivateScope);
+  /// \brief Emit final update of reduction values to original variables at
+  /// the end of the directive.
+  ///
+  /// \param D Directive that has at least one 'reduction' directives.
+  void EmitOMPReductionClauseFinal(const OMPExecutableDirective &D);
 
   void EmitOMPParallelDirective(const OMPParallelDirective &S);
   void EmitOMPSimdDirective(const OMPSimdDirective &S);

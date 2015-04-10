@@ -5234,19 +5234,19 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
   switch (OOK) {
   case OO_Plus:
   case OO_Minus:
-    BOK = BO_AddAssign;
+    BOK = BO_Add;
     break;
   case OO_Star:
-    BOK = BO_MulAssign;
+    BOK = BO_Mul;
     break;
   case OO_Amp:
-    BOK = BO_AndAssign;
+    BOK = BO_And;
     break;
   case OO_Pipe:
-    BOK = BO_OrAssign;
+    BOK = BO_Or;
     break;
   case OO_Caret:
-    BOK = BO_XorAssign;
+    BOK = BO_Xor;
     break;
   case OO_AmpAmp:
     BOK = BO_LAnd;
@@ -5254,7 +5254,44 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
   case OO_PipePipe:
     BOK = BO_LOr;
     break;
-  default:
+  case OO_New:
+  case OO_Delete:
+  case OO_Array_New:
+  case OO_Array_Delete:
+  case OO_Slash:
+  case OO_Percent:
+  case OO_Tilde:
+  case OO_Exclaim:
+  case OO_Equal:
+  case OO_Less:
+  case OO_Greater:
+  case OO_LessEqual:
+  case OO_GreaterEqual:
+  case OO_PlusEqual:
+  case OO_MinusEqual:
+  case OO_StarEqual:
+  case OO_SlashEqual:
+  case OO_PercentEqual:
+  case OO_CaretEqual:
+  case OO_AmpEqual:
+  case OO_PipeEqual:
+  case OO_LessLess:
+  case OO_GreaterGreater:
+  case OO_LessLessEqual:
+  case OO_GreaterGreaterEqual:
+  case OO_EqualEqual:
+  case OO_ExclaimEqual:
+  case OO_PlusPlus:
+  case OO_MinusMinus:
+  case OO_Comma:
+  case OO_ArrowStar:
+  case OO_Arrow:
+  case OO_Call:
+  case OO_Subscript:
+  case OO_Conditional:
+  case NUM_OVERLOADED_OPERATORS:
+    llvm_unreachable("Unexpected reduction identifier");
+  case OO_None:
     if (auto II = DN.getAsIdentifierInfo()) {
       if (II->isStr("max"))
         BOK = BO_GT;
@@ -5276,11 +5313,17 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
   }
 
   SmallVector<Expr *, 8> Vars;
+  SmallVector<Expr *, 8> LHSs;
+  SmallVector<Expr *, 8> RHSs;
+  SmallVector<Expr *, 8> ReductionOps;
   for (auto RefExpr : VarList) {
     assert(RefExpr && "nullptr expr in OpenMP reduction clause.");
     if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
+      LHSs.push_back(nullptr);
+      RHSs.push_back(nullptr);
+      ReductionOps.push_back(nullptr);
       continue;
     }
 
@@ -5289,6 +5332,9 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
         RefExpr->containsUnexpandedParameterPack()) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
+      LHSs.push_back(nullptr);
+      RHSs.push_back(nullptr);
+      ReductionOps.push_back(nullptr);
       continue;
     }
 
@@ -5381,23 +5427,6 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
           << VD;
       continue;
     }
-    bool Suppress = getDiagnostics().getSuppressAllDiagnostics();
-    getDiagnostics().setSuppressAllDiagnostics(true);
-    ExprResult ReductionOp =
-        BuildBinOp(DSAStack->getCurScope(), ReductionId.getLocStart(), BOK,
-                   RefExpr, RefExpr);
-    getDiagnostics().setSuppressAllDiagnostics(Suppress);
-    if (ReductionOp.isInvalid()) {
-      Diag(ELoc, diag::err_omp_reduction_id_not_compatible) << Type
-                                                            << ReductionIdRange;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
-      continue;
-    }
-
     // OpenMP [2.14.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct]
     //  Variables with the predetermined data-sharing attributes may not be
@@ -5440,55 +5469,160 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
         continue;
       }
     }
-
-    CXXRecordDecl *RD = getLangOpts().CPlusPlus
-                            ? Type.getNonReferenceType()->getAsCXXRecordDecl()
-                            : nullptr;
-    // FIXME This code must be replaced by actual constructing/destructing of
-    // the reduction variable.
-    if (RD) {
-      CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
-      PartialDiagnostic PD =
-          PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
-      if (!CD ||
-          CheckConstructorAccess(ELoc, CD,
-                                 InitializedEntity::InitializeTemporary(Type),
-                                 CD->getAccess(), PD) == AR_inaccessible ||
-          CD->isDeleted()) {
-        Diag(ELoc, diag::err_omp_required_method)
-            << getOpenMPClauseName(OMPC_reduction) << 0;
-        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
-                      VarDecl::DeclarationOnly;
-        Diag(VD->getLocation(),
-             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-            << VD;
-        Diag(RD->getLocation(), diag::note_previous_decl) << RD;
-        continue;
+    Type = Type.getNonLValueExprType(Context).getUnqualifiedType();
+    auto *LHSVD = BuildVarDecl(*this, ELoc, Type, ".reduction.lhs");
+    auto *RHSVD = BuildVarDecl(*this, ELoc, Type, VD->getName());
+    // Add initializer for private variable.
+    Expr *Init = nullptr;
+    switch (BOK) {
+    case BO_Add:
+    case BO_Xor:
+    case BO_Or:
+    case BO_LOr:
+      // '+', '-', '^', '|', '||' reduction ops - initializer is '0'.
+      if (Type->isScalarType() || Type->isAnyComplexType()) {
+        Init = ActOnIntegerConstant(ELoc, /*Val=*/0).get();
       }
-      MarkFunctionReferenced(ELoc, CD);
-      DiagnoseUseOfDecl(CD, ELoc);
-
-      CXXDestructorDecl *DD = RD->getDestructor();
-      if (DD) {
-        if (CheckDestructorAccess(ELoc, DD, PD) == AR_inaccessible ||
-            DD->isDeleted()) {
-          Diag(ELoc, diag::err_omp_required_method)
-              << getOpenMPClauseName(OMPC_reduction) << 4;
-          bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
-                        VarDecl::DeclarationOnly;
-          Diag(VD->getLocation(),
-               IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-              << VD;
-          Diag(RD->getLocation(), diag::note_previous_decl) << RD;
-          continue;
+      break;
+    case BO_Mul:
+    case BO_LAnd:
+      if (Type->isScalarType() || Type->isAnyComplexType()) {
+        // '*' and '&&' reduction ops - initializer is '1'.
+        Init = ActOnIntegerConstant(ELoc, /*Val=*/1).get();
+      }
+      break;
+    case BO_And: {
+      // '&' reduction op - initializer is '~0'.
+      QualType OrigType = Type;
+      if (auto *ComplexTy = OrigType->getAs<ComplexType>()) {
+        Type = ComplexTy->getElementType();
+      }
+      if (Type->isRealFloatingType()) {
+        llvm::APFloat InitValue =
+            llvm::APFloat::getAllOnesValue(Context.getTypeSize(Type),
+                                           /*isIEEE=*/true);
+        Init = FloatingLiteral::Create(Context, InitValue, /*isexact=*/true,
+                                       Type, ELoc);
+      } else if (Type->isScalarType()) {
+        auto Size = Context.getTypeSize(Type);
+        QualType IntTy = Context.getIntTypeForBitwidth(Size, /*Signed=*/0);
+        llvm::APInt InitValue = llvm::APInt::getAllOnesValue(Size);
+        Init = IntegerLiteral::Create(Context, InitValue, IntTy, ELoc);
+      }
+      if (Init && OrigType->isAnyComplexType()) {
+        // Init = 0xFFFF + 0xFFFFi;
+        auto *Im = new (Context) ImaginaryLiteral(Init, OrigType);
+        Init = CreateBuiltinBinOp(ELoc, BO_Add, Init, Im).get();
+      }
+      Type = OrigType;
+      break;
+    }
+    case BO_LT:
+    case BO_GT: {
+      // 'min' reduction op - initializer is 'Largest representable number in
+      // the reduction list item type'.
+      // 'max' reduction op - initializer is 'Least representable number in
+      // the reduction list item type'.
+      if (Type->isIntegerType() || Type->isPointerType()) {
+        bool IsSigned = Type->hasSignedIntegerRepresentation();
+        auto Size = Context.getTypeSize(Type);
+        QualType IntTy =
+            Context.getIntTypeForBitwidth(Size, /*Signed=*/IsSigned);
+        llvm::APInt InitValue =
+            (BOK != BO_LT)
+                ? IsSigned ? llvm::APInt::getSignedMinValue(Size)
+                           : llvm::APInt::getMinValue(Size)
+                : IsSigned ? llvm::APInt::getSignedMaxValue(Size)
+                           : llvm::APInt::getMaxValue(Size);
+        Init = IntegerLiteral::Create(Context, InitValue, IntTy, ELoc);
+        if (Type->isPointerType()) {
+          // Cast to pointer type.
+          auto CastExpr = BuildCStyleCastExpr(
+              SourceLocation(), Context.getTrivialTypeSourceInfo(Type, ELoc),
+              SourceLocation(), Init);
+          if (CastExpr.isInvalid())
+            continue;
+          Init = CastExpr.get();
         }
-        MarkFunctionReferenced(ELoc, DD);
-        DiagnoseUseOfDecl(DD, ELoc);
+      } else if (Type->isRealFloatingType()) {
+        llvm::APFloat InitValue = llvm::APFloat::getLargest(
+            Context.getFloatTypeSemantics(Type), BOK != BO_LT);
+        Init = FloatingLiteral::Create(Context, InitValue, /*isexact=*/true,
+                                       Type, ELoc);
+      }
+      break;
+    }
+    case BO_PtrMemD:
+    case BO_PtrMemI:
+    case BO_MulAssign:
+    case BO_Div:
+    case BO_Rem:
+    case BO_Sub:
+    case BO_Shl:
+    case BO_Shr:
+    case BO_LE:
+    case BO_GE:
+    case BO_EQ:
+    case BO_NE:
+    case BO_AndAssign:
+    case BO_XorAssign:
+    case BO_OrAssign:
+    case BO_Assign:
+    case BO_AddAssign:
+    case BO_SubAssign:
+    case BO_DivAssign:
+    case BO_RemAssign:
+    case BO_ShlAssign:
+    case BO_ShrAssign:
+    case BO_Comma:
+      llvm_unreachable("Unexpected reduction operation");
+    }
+    if (Init) {
+      AddInitializerToDecl(RHSVD, Init, /*DirectInit=*/false,
+                           /*TypeMayContainAuto=*/false);
+    } else {
+      ActOnUninitializedDecl(RHSVD, /*TypeMayContainAuto=*/false);
+    }
+    if (!RHSVD->hasInit()) {
+      Diag(ELoc, diag::err_omp_reduction_id_not_compatible) << Type
+                                                            << ReductionIdRange;
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+    auto *LHSDRE = BuildDeclRefExpr(LHSVD, Type, VK_LValue, ELoc).get();
+    auto *RHSDRE = BuildDeclRefExpr(RHSVD, Type, VK_LValue, ELoc).get();
+    ExprResult ReductionOp =
+        BuildBinOp(DSAStack->getCurScope(), ReductionId.getLocStart(), BOK,
+                   LHSDRE, RHSDRE);
+    if (ReductionOp.isUsable()) {
+      if (BOK != BO_LOr && BOK != BO_LAnd) {
+        ReductionOp =
+            BuildBinOp(DSAStack->getCurScope(), ReductionId.getLocStart(),
+                       BO_Assign, LHSDRE, ReductionOp.get());
+      } else {
+        auto *ConditionalOp = new (Context) ConditionalOperator(
+            ReductionOp.get(), SourceLocation(), LHSDRE, SourceLocation(),
+            RHSDRE, Type, VK_LValue, OK_Ordinary);
+        ReductionOp =
+            BuildBinOp(DSAStack->getCurScope(), ReductionId.getLocStart(),
+                       BO_Assign, LHSDRE, ConditionalOp);
+      }
+      if (ReductionOp.isUsable()) {
+        ReductionOp = ActOnFinishFullExpr(ReductionOp.get());
       }
     }
+    if (ReductionOp.isInvalid())
+      continue;
 
     DSAStack->addDSA(VD, DE, OMPC_reduction);
     Vars.push_back(DE);
+    LHSs.push_back(LHSDRE);
+    RHSs.push_back(RHSDRE);
+    ReductionOps.push_back(ReductionOp.get());
   }
 
   if (Vars.empty())
@@ -5496,7 +5630,8 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
 
   return OMPReductionClause::Create(
       Context, StartLoc, LParenLoc, ColonLoc, EndLoc, Vars,
-      ReductionIdScopeSpec.getWithLocInContext(Context), ReductionId);
+      ReductionIdScopeSpec.getWithLocInContext(Context), ReductionId, LHSs,
+      RHSs, ReductionOps);
 }
 
 OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,

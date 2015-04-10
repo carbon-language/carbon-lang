@@ -103,6 +103,21 @@ private:
     // kmp_int32 cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
     // kmp_int32 didit);
     OMPRTL__kmpc_copyprivate,
+    // Call to kmp_int32 __kmpc_reduce(ident_t *loc, kmp_int32 global_tid,
+    // kmp_int32 num_vars, size_t reduce_size, void *reduce_data, void
+    // (*reduce_func)(void *lhs_data, void *rhs_data), kmp_critical_name *lck);
+    OMPRTL__kmpc_reduce,
+    // Call to kmp_int32 __kmpc_reduce_nowait(ident_t *loc, kmp_int32
+    // global_tid, kmp_int32 num_vars, size_t reduce_size, void *reduce_data,
+    // void (*reduce_func)(void *lhs_data, void *rhs_data), kmp_critical_name
+    // *lck);
+    OMPRTL__kmpc_reduce_nowait,
+    // Call to void __kmpc_end_reduce(ident_t *loc, kmp_int32 global_tid,
+    // kmp_critical_name *lck);
+    OMPRTL__kmpc_end_reduce,
+    // Call to void __kmpc_end_reduce_nowait(ident_t *loc, kmp_int32 global_tid,
+    // kmp_critical_name *lck);
+    OMPRTL__kmpc_end_reduce_nowait,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -511,11 +526,54 @@ public:
                             llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
                             llvm::Value *TaskFunction, QualType SharedsTy,
                             llvm::Value *Shareds);
+
   /// \brief Emit code for the directive that does not require outlining.
   ///
   /// \param CodeGen Code generation sequence for the \a D directive.
   virtual void emitInlinedDirective(CodeGenFunction &CGF,
                                     const RegionCodeGenTy &CodeGen);
+  /// \brief Emit a code for reduction clause. Next code should be emitted for
+  /// reduction:
+  /// \code
+  ///
+  /// static kmp_critical_name lock = { 0 };
+  ///
+  /// void reduce_func(void *lhs[<n>], void *rhs[<n>]) {
+  ///  ...
+  ///  *(Type<i>*)lhs[i] = RedOp<i>(*(Type<i>*)lhs[i], *(Type<i>*)rhs[i]);
+  ///  ...
+  /// }
+  ///
+  /// ...
+  /// void *RedList[<n>] = {&<RHSExprs>[0], ..., &<RHSExprs>[<n>-1]};
+  /// switch (__kmpc_reduce{_nowait}(<loc>, <gtid>, <n>, sizeof(RedList),
+  /// RedList, reduce_func, &<lock>)) {
+  /// case 1:
+  ///  ...
+  ///  <LHSExprs>[i] = RedOp<i>(*<LHSExprs>[i], *<RHSExprs>[i]);
+  ///  ...
+  /// __kmpc_end_reduce{_nowait}(<loc>, <gtid>, &<lock>);
+  /// break;
+  /// case 2:
+  ///  ...
+  ///  Atomic(<LHSExprs>[i] = RedOp<i>(*<LHSExprs>[i], *<RHSExprs>[i]));
+  ///  ...
+  /// break;
+  /// default:;
+  /// }
+  /// \endcode
+  ///
+  /// \param LHSExprs List of LHS in \a ReductionOps reduction operations.
+  /// \param RHSExprs List of RHS in \a ReductionOps reduction operations.
+  /// \param ReductionOps List of reduction operations in form 'LHS binop RHS'
+  /// or 'operator binop(LHS, RHS)'.
+  /// \param WithNowait true if parent directive has also nowait clause, false
+  /// otherwise.
+  virtual void emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
+                             ArrayRef<const Expr *> LHSExprs,
+                             ArrayRef<const Expr *> RHSExprs,
+                             ArrayRef<const Expr *> ReductionOps,
+                             bool WithNowait);
 };
 
 } // namespace CodeGen

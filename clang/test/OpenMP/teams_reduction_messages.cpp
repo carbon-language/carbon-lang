@@ -11,7 +11,7 @@ struct S1; // expected-note {{declared here}} expected-note 4 {{forward declarat
 extern S1 a;
 class S2 {
   mutable int a;
-  S2 &operator+=(const S2 &arg) { return (*this); }
+  S2 &operator+(const S2 &arg) { return (*this); } // expected-note 4 {{implicitly declared private here}}
 
 public:
   S2() : a(0) {}
@@ -28,17 +28,17 @@ class S3 {
 public:
   S3() : a(0) {}
   S3(const S3 &s3) : a(s3.a) {}
-  S3 operator+=(const S3 &arg1) { return arg1; }
+  S3 operator+(const S3 &arg1) { return arg1; }
 };
-int operator+=(const S3 &arg1, const S3 &arg2) { return 5; }
+int operator+(const S3 &arg1, const S3 &arg2) { return 5; }
 S3 c;               // expected-note 2 {{'c' defined here}}
 const S3 ca[5];     // expected-note 2 {{'ca' defined here}}
 extern const int f; // expected-note 4 {{'f' declared here}}
-class S4 {          // expected-note {{'S4' declared here}}
+class S4 {
   int a;
-  S4();
+  S4(); // expected-note {{implicitly declared private here}}
   S4(const S4 &s4);
-  S4 &operator+=(const S4 &arg) { return (*this); }
+  S4 &operator+(const S4 &arg) { return (*this); }
 
 public:
   S4(int v) : a(v) {}
@@ -46,26 +46,26 @@ public:
 S4 &operator&=(S4 &arg1, S4 &arg2) { return arg1; }
 class S5 {
   int a;
-  S5() : a(0) {}
+  S5() : a(0) {} // expected-note {{implicitly declared private here}}
   S5(const S5 &s5) : a(s5.a) {}
-  S5 &operator+=(const S5 &arg);
+  S5 &operator+(const S5 &arg);
 
 public:
   S5(int v) : a(v) {}
 };
-class S6 {
+class S6 { // expected-note 2 {{candidate function (the implicit copy assignment operator) not viable: no known conversion from 'int' to 'const S6' for 1st argument}}
   int a;
 
 public:
   S6() : a(6) {}
   operator int() { return 6; }
-} o; // expected-note 2 {{'o' defined here}}
+} o;
 
 S3 h, k;
 #pragma omp threadprivate(h) // expected-note 2 {{defined as threadprivate or thread local}}
 
 template <class T>       // expected-note {{declared here}}
-T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
+T tmain(T argc) {
   const T d = T();       // expected-note 4 {{'d' defined here}}
   const T da[5] = {T()}; // expected-note 2 {{'da' defined here}}
   T qa[5] = {T()};
@@ -74,7 +74,7 @@ T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
   S3 &p = k;                   // expected-note 2 {{'p' defined here}}
   const T &r = da[(int)i];     // expected-note 2 {{'r' defined here}}
   T &q = qa[(int)i];           // expected-note 2 {{'q' defined here}}
-  T fl;                        // expected-note {{'fl' defined here}}
+  T fl;
 #pragma omp target
 #pragma omp teams reduction // expected-error {{expected '(' after 'reduction'}}
   foo();
@@ -97,10 +97,10 @@ T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
 #pragma omp teams reduction(\) // expected-error {{expected unqualified-id}} expected-warning {{missing ':' after reduction identifier - ignoring}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(& : argc // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{variable of type 'float' is not valid for specified reduction operation}}
+#pragma omp teams reduction(& : argc // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{invalid operands to binary expression ('float' and 'float')}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(| : argc, // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{variable of type 'float' is not valid for specified reduction operation}}
+#pragma omp teams reduction(| : argc, // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{invalid operands to binary expression ('float' and 'float')}}
   foo();
 #pragma omp target
 #pragma omp teams reduction(|| : argc ? i : argc) // expected-error 2 {{expected variable name}}
@@ -115,7 +115,7 @@ T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
 #pragma omp teams reduction(^ : T) // expected-error {{'T' does not refer to a value}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(+ : a, b, c, d, f) // expected-error {{reduction variable with incomplete type 'S1'}} expected-error 3 {{const-qualified variable cannot be reduction}}
+#pragma omp teams reduction(+ : a, b, c, d, f) // expected-error {{reduction variable with incomplete type 'S1'}} expected-error 3 {{const-qualified variable cannot be reduction}} expected-error 3 {{'operator+' is a private member of 'S2'}}
   foo();
 #pragma omp target
 #pragma omp teams reduction(min : a, b, c, d, f) // expected-error {{reduction variable with incomplete type 'S1'}} expected-error 2 {{arguments of OpenMP clause 'reduction' for 'min' or 'max' must be of arithmetic type}} expected-error 3 {{const-qualified variable cannot be reduction}}
@@ -133,7 +133,7 @@ T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
 #pragma omp teams reduction(- : da) // expected-error {{a reduction variable with array type 'const int [5]'}} expected-error {{a reduction variable with array type 'const float [5]'}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(^ : fl) // expected-error {{variable of type 'float' is not valid for specified reduction operation}}
+#pragma omp teams reduction(^ : fl) // expected-error {{invalid operands to binary expression ('float' and 'float')}}
   foo();
 #pragma omp target
 #pragma omp teams reduction(&& : S2::S2s)
@@ -145,7 +145,7 @@ T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
 #pragma omp teams reduction(+ : h, k) // expected-error {{threadprivate or thread local variable cannot be reduction}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(+ : o) // expected-error {{variable of type 'class S6' is not valid for specified reduction operation}}
+#pragma omp teams reduction(+ : o) // expected-error {{no viable overloaded '='}}
   foo();
 #pragma omp target
 #pragma omp teams private(i), reduction(+ : j), reduction(+ : q) // expected-error 4 {{argument of OpenMP clause 'reduction' must reference the same object in all threads}}
@@ -187,14 +187,14 @@ int main(int argc, char **argv) {
   const int d = 5;       // expected-note 2 {{'d' defined here}}
   const int da[5] = {0}; // expected-note {{'da' defined here}}
   int qa[5] = {0};
-  S4 e(4); // expected-note {{'e' defined here}}
-  S5 g(5); // expected-note {{'g' defined here}}
+  S4 e(4);
+  S5 g(5);
   int i;
   int &j = i;                  // expected-note 2 {{'j' defined here}}
   S3 &p = k;                   // expected-note 2 {{'p' defined here}}
   const int &r = da[i];        // expected-note {{'r' defined here}}
   int &q = qa[i];              // expected-note {{'q' defined here}}
-  float fl;                    // expected-note {{'fl' defined here}}
+  float fl;
 #pragma omp target
 #pragma omp teams reduction // expected-error {{expected '(' after 'reduction'}}
   foo();
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
 #pragma omp teams reduction(^ : S1) // expected-error {{'S1' does not refer to a value}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(+ : a, b, c, d, f) // expected-error {{reduction variable with incomplete type 'S1'}} expected-error 2 {{const-qualified variable cannot be reduction}}
+#pragma omp teams reduction(+ : a, b, c, d, f) // expected-error {{reduction variable with incomplete type 'S1'}} expected-error 2 {{const-qualified variable cannot be reduction}} expected-error {{'operator+' is a private member of 'S2'}}
   foo();
 #pragma omp target
 #pragma omp teams reduction(min : a, b, c, d, f) // expected-error {{reduction variable with incomplete type 'S1'}} expected-error 2 {{arguments of OpenMP clause 'reduction' for 'min' or 'max' must be of arithmetic type}} expected-error 2 {{const-qualified variable cannot be reduction}}
@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
 #pragma omp teams reduction(- : da) // expected-error {{a reduction variable with array type 'const int [5]'}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(^ : fl) // expected-error {{variable of type 'float' is not valid for specified reduction operation}}
+#pragma omp teams reduction(^ : fl) // expected-error {{invalid operands to binary expression ('float' and 'float')}}
   foo();
 #pragma omp target
 #pragma omp teams reduction(&& : S2::S2s)
@@ -262,13 +262,13 @@ int main(int argc, char **argv) {
 #pragma omp teams reduction(&& : S2::S2sc) // expected-error {{const-qualified variable cannot be reduction}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(& : e, g) // expected-error {{reduction variable must have an accessible, unambiguous default constructor}} expected-error {{variable of type 'S5' is not valid for specified reduction operation}}
+#pragma omp teams reduction(& : e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{invalid operands to binary expression ('S4' and 'S4')}} expected-error {{calling a private constructor of class 'S5'}} expected-error {{invalid operands to binary expression ('S5' and 'S5')}}
   foo();
 #pragma omp target
 #pragma omp teams reduction(+ : h, k) // expected-error {{threadprivate or thread local variable cannot be reduction}}
   foo();
 #pragma omp target
-#pragma omp teams reduction(+ : o) // expected-error {{variable of type 'class S6' is not valid for specified reduction operation}}
+#pragma omp teams reduction(+ : o) // expected-error {{no viable overloaded '='}}
   foo();
 #pragma omp target
 #pragma omp teams private(i), reduction(+ : j), reduction(+ : q) // expected-error 2 {{argument of OpenMP clause 'reduction' must reference the same object in all threads}}

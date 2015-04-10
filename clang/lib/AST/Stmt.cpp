@@ -1457,16 +1457,42 @@ void OMPLoopDirective::setFinals(ArrayRef<Expr *> A) {
   std::copy(A.begin(), A.end(), getFinals().begin());
 }
 
+void OMPReductionClause::setLHSExprs(ArrayRef<Expr *> LHSExprs) {
+  assert(
+      LHSExprs.size() == varlist_size() &&
+      "Number of LHS expressions is not the same as the preallocated buffer");
+  std::copy(LHSExprs.begin(), LHSExprs.end(), varlist_end());
+}
+
+void OMPReductionClause::setRHSExprs(ArrayRef<Expr *> RHSExprs) {
+  assert(
+      RHSExprs.size() == varlist_size() &&
+      "Number of RHS expressions is not the same as the preallocated buffer");
+  std::copy(RHSExprs.begin(), RHSExprs.end(), getLHSExprs().end());
+}
+
+void OMPReductionClause::setReductionOps(ArrayRef<Expr *> ReductionOps) {
+  assert(ReductionOps.size() == varlist_size() && "Number of reduction "
+                                                  "expressions is not the same "
+                                                  "as the preallocated buffer");
+  std::copy(ReductionOps.begin(), ReductionOps.end(), getRHSExprs().end());
+}
+
 OMPReductionClause *OMPReductionClause::Create(
     const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
     SourceLocation EndLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VL,
-    NestedNameSpecifierLoc QualifierLoc, const DeclarationNameInfo &NameInfo) {
+    NestedNameSpecifierLoc QualifierLoc, const DeclarationNameInfo &NameInfo,
+    ArrayRef<Expr *> LHSExprs, ArrayRef<Expr *> RHSExprs,
+    ArrayRef<Expr *> ReductionOps) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPReductionClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * VL.size());
+                         4 * sizeof(Expr *) * VL.size());
   OMPReductionClause *Clause = new (Mem) OMPReductionClause(
       StartLoc, LParenLoc, EndLoc, ColonLoc, VL.size(), QualifierLoc, NameInfo);
   Clause->setVarRefs(VL);
+  Clause->setLHSExprs(LHSExprs);
+  Clause->setRHSExprs(RHSExprs);
+  Clause->setReductionOps(ReductionOps);
   return Clause;
 }
 
@@ -1474,7 +1500,7 @@ OMPReductionClause *OMPReductionClause::CreateEmpty(const ASTContext &C,
                                                     unsigned N) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPReductionClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * N);
+                         4 * sizeof(Expr *) * N);
   return new (Mem) OMPReductionClause(N);
 }
 
