@@ -81,7 +81,8 @@
                 </p>
                 <p>
                   Note that if you plan to do both debug and release builds of LLDB, you will need to
-                  compile both debug and release builds of Python.
+                  compile both debug and release builds of Python.  The same applies if you plan to build
+                  both x86 and x64 configurations of LLDB
                 </p>
               </li>
               <li>
@@ -93,56 +94,20 @@
                   folder.
                 </p>
               </li>
-              <li><p>Install GnuWin32, making sure &lt;GnuWin32 install dir&gt;\bin is added to your PATH environment variable.</p></li>
-              <li><p>Install SWIG for Windows, making sure &lt;SWIG install dir&gt; is added to your PATH environment variable.</p></li>
-              <li>
-                <p>(Optional) Create a file somewhere on your disk called llvm_env.bat and add the following code to it:</p>
-                <code>
-                  @ECHO OFF<br /><br />
-                  IF "%1" == "build" goto do_build<br />
-                  IF "%1" == "dev" goto do_dev<br />
-                  ECHO Unknown option, expected "build" or "dev"<br />
-                  goto do_end<br /><br />
-                  :do_build<br />
-                  ECHO Initializing MSVC Build Environment...<br />
-                  CALL "c:\Program Files (x86)\Microsoft Visual Studio 12.0\vc\vcvarsall.bat"<br />
-                  ECHO Initializing Python environment...<br />
-                  set PYTHONPATH=&lt;python src dir&gt;\Lib;&lt;cmake gen dir&gt;\lib\site-packages<br />
-                  set PATH=%PATH%;&lt;python src dir&gt;\PCbuild<br />
-                  goto do_end<br /><br />
-                  :do_dev<br />
-                  set PYTHONPATH=<br />
-                  goto do_end<br />
-                  :do_end<br />
-                </code>
-              </li>
               <li>
                 <p>
-                  (Optional) To make the process of setting up the environment before building more convenient, you can
-                  optionally create a shortcut with the following properties:
+                  Run lldb/scripts/install_custom_python.py so to "install" your custom build of Python to a
+                  canonical directory structure.
                 </p>
-                <code>%windir%\system32\cmd.exe /K &lt;path-to-llvm_env.bat&gt; build</code>
               </li>
+              <li><p>Install GnuWin32, making sure &lt;GnuWin32 install dir&gt;\bin is added to your PATH environment variable.</p></li>
+              <li><p>Install SWIG for Windows, making sure &lt;SWIG install dir&gt; is added to your PATH environment variable.</p></li>
             </ol>
             <h2>Building LLDB</h2>
             <p>
               Any command prompt from which you build LLDB should have a valid Visual Studio environment setup.
               This means you should run vcvarsall.bat or open an appropriate Visual Studio Command Prompt
-              corresponding to the version you wish to use.  Additionally, in order for LLDB to be able to locate
-              Python to link against, you will need to set up your PYTHONPATH environment variable to contain two
-              additional values:
-            </p>
-            <ol>
-              <li>&lt;python src dir&gt;\Lib</li>
-              <li>&lt;folder where CMake build files are generated&gt;\lib\site-packages</li>
-            </ol>
-            <p>
-              The first allows your custom built python installation to locate its system libraries, and
-              the second allows Python to locate the LLDB extension module.
-            </p>
-            <p>
-              Steps 6 and 7 of <a href="#WindowsPreliminaries">Preliminaries</a> describe a method for simplifying
-              this setup.
+              corresponding to the version you wish to use.
             </p>
             <p>Finally, when you are ready to build LLDB, generate CMake with the following command line:</p>
             <code>cmake -G Ninja &lt;cmake variables&gt; &lt;path to root of llvm src tree&gt;</code>
@@ -159,16 +124,17 @@
                 a crash, rather than having to reproduce a failure or use a crash dump.
               </li>
               <li>
-                <b>PYTHON_LIBRARY</b>: Path to python27.lib.  If doing a debug build, note that the library is called
-                python27_d.lib.  Generally this should be set to <div align="center">&lt;python src dir&gt;\PCBuild\python27(_d).lib</div>
+                <b>PYTHON_HOME</b> (Required): Path the folder you specified in the --dest argument to install_custom_python.py.
+                Note that install_custom_python.py will create x86 and x64 subdirectories under this folder.  PYTHON_HOME should
+                refer to the correct architecture-specific folder.
               </li>
               <li>
-                <b>PYTHON_INCLUDE_DIR</b>: Path to python include directory.  Generally this should be set to
-                <div align="center">&lt;python src dir&gt;\Include</div>
-              </li>
-              <li>
-                <b>PYTHON_EXECUTABLE</b>: Path to python.exe.  If doing a debug build of LLDB, note that the executable
-                is called python_d.exe.  Generally this should be set to <div align="center">&lt;python src dir&gt;\PCBuild\python(_d).exe</div>
+                <b>LLDB_RELOCATABLE_PYTHON</b> (Default=0): When this is 0, LLDB will bind statically to the location specified
+                in the PYTHON_HOME CMake variable, ignoring any value of PYTHONHOME set in the environment.  This is most useful for
+                developers who simply want to run LLDB after they build it.  If you wish to move a build of LLDB to a different
+                machine where Python will be in a different location, setting LLDB_RELOCATABLE_PYTHON to 1 will cause Python to
+                use its default mechanism for finding the python installation at runtime (looking for installed Pythons, or using
+                the PYTHONHOME environment variable if it is specified).
               </li>
             </ul>
           </div>

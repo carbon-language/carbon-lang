@@ -3024,6 +3024,9 @@ ScriptInterpreterPython::InitializePrivate ()
     TerminalState stdin_tty_state;
     stdin_tty_state.Save(STDIN_FILENO, false);
 
+#if defined(LLDB_PYTHON_HOME)
+    Py_SetPythonHome(LLDB_PYTHON_HOME);
+#endif
     PyGILState_STATE gstate;
     Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
     bool threads_already_initialized = false;
