@@ -142,13 +142,13 @@ private:
           }
         }
       }
-      else if (isa<MemberExpr>(E)) {
+      else if (const auto *ME = dyn_cast<MemberExpr>(E)) {
         // No points-to analysis, just look at the member
-        const Decl * EmeMD = dyn_cast<MemberExpr>(E)->getMemberDecl();
+        const Decl *EmeMD = ME->getMemberDecl();
         while (i != e) {
           --i;
-          if (isa<MemberExpr>(i->variable)) {
-            if (dyn_cast<MemberExpr>(i->variable)->getMemberDecl() == EmeMD)
+          if (const auto *ME_i = dyn_cast<MemberExpr>(i->variable)) {
+            if (ME_i->getMemberDecl() == EmeMD)
               i = toScanFor.erase (i);
           }
         }
