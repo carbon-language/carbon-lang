@@ -72,9 +72,13 @@ void UnmapOrDie(void *addr, uptr size);
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size);
 void *MmapNoReserveOrDie(uptr size, const char *mem_type);
 void *MmapFixedOrDie(uptr fixed_addr, uptr size);
-void *Mprotect(uptr fixed_addr, uptr size);
+void *MmapNoAccess(uptr fixed_addr, uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.
 void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
+// Disallow access to a memory range.  Use MmapNoAccess to allocate an
+// unaccessible memory.
+bool MprotectNoAccess(uptr addr, uptr size);
+
 // Used to check if we can map shadow memory to a fixed location.
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 void FlushUnneededShadowMemory(uptr addr, uptr size);

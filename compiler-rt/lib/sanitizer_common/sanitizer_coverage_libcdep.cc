@@ -211,8 +211,9 @@ void CoverageData::Enable() {
   tr_event_array = reinterpret_cast<u32 *>(MmapNoReserveOrDie(
       sizeof(tr_event_array[0]) * kTrEventArrayMaxSize + GetMmapGranularity(),
       "CovInit::tr_event_array"));
-  Mprotect(reinterpret_cast<uptr>(&tr_event_array[kTrEventArrayMaxSize]),
-           GetMmapGranularity());
+  MprotectNoAccess(
+      reinterpret_cast<uptr>(&tr_event_array[kTrEventArrayMaxSize]),
+      GetMmapGranularity());
   tr_event_array_size = kTrEventArrayMaxSize;
   tr_event_pointer = tr_event_array;
 

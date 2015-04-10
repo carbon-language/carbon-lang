@@ -310,7 +310,7 @@ class ScopedStackSpaceWithGuard {
     // in the future.
     guard_start_ = (uptr)MmapOrDie(stack_size_ + guard_size_,
                                    "ScopedStackWithGuard");
-    CHECK_EQ(guard_start_, (uptr)Mprotect((uptr)guard_start_, guard_size_));
+    CHECK(MprotectNoAccess((uptr)guard_start_, guard_size_));
   }
   ~ScopedStackSpaceWithGuard() {
     UnmapOrDie((void *)guard_start_, stack_size_ + guard_size_);

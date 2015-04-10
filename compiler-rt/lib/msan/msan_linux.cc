@@ -56,7 +56,7 @@ static bool CheckMemoryRangeAvailability(uptr beg, uptr size) {
 static bool ProtectMemoryRange(uptr beg, uptr size) {
   if (size > 0) {
     uptr end = beg + size - 1;
-    if (!Mprotect(beg, size)) {
+    if (!MmapNoAccess(beg, size)) {
       Printf("FATAL: Cannot protect memory range %p - %p.\n", beg, end);
       return false;
     }

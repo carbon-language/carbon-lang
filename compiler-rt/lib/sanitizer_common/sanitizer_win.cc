@@ -125,7 +125,7 @@ void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
   return MmapOrDie(size, mem_type);
 }
 
-void *Mprotect(uptr fixed_addr, uptr size) {
+void *MmapNoAccess(uptr fixed_addr, uptr size) {
   void *res = VirtualAlloc((LPVOID)fixed_addr, size,
                            MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
   if (res == 0)
@@ -134,6 +134,12 @@ void *Mprotect(uptr fixed_addr, uptr size) {
            SanitizerToolName, size, size, fixed_addr, GetLastError());
   return res;
 }
+
+bool MprotectNoAccess(uptr addr, uptr size) {
+  DWORD old_protection;
+  return VirtualProtect((LPVOID)addr, size, PAGE_NOACCESS, &old_protection);
+}
+
 
 void FlushUnneededShadowMemory(uptr addr, uptr size) {
   // This is almost useless on 32-bits.

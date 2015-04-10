@@ -45,7 +45,7 @@ static uptr PC(uptr idx) {
 void FastUnwindTest::SetUp() {
   size_t ps = GetPageSize();
   mapping = MmapOrDie(2 * ps, "FastUnwindTest");
-  Mprotect((uptr)mapping, ps);
+  MprotectNoAccess((uptr)mapping, ps);
 
   // Unwinder may peek 1 word down from the starting FP.
   fake_stack = (uhwptr *)((uptr)mapping + ps + sizeof(uhwptr));

@@ -298,7 +298,7 @@ static void InitializeHighMemEnd() {
 }
 
 static void ProtectGap(uptr a, uptr size) {
-  void *res = Mprotect(a, size);
+  void *res = MmapNoAccess(a, size);
   if (a == (uptr)res)
     return;
   Report("ERROR: Failed to protect the shadow gap. "

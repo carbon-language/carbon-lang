@@ -199,11 +199,15 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
   return (void *)p;
 }
 
-void *Mprotect(uptr fixed_addr, uptr size) {
+void *MmapNoAccess(uptr fixed_addr, uptr size) {
   return (void *)internal_mmap((void*)fixed_addr, size,
                                PROT_NONE,
                                MAP_PRIVATE | MAP_ANON | MAP_FIXED |
                                MAP_NORESERVE, -1, 0);
+}
+
+bool MprotectNoAccess(uptr addr, uptr size) {
+  return 0 == internal_mprotect((void*)addr, size, PROT_NONE);
 }
 
 fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *errno_p) {

@@ -59,6 +59,10 @@ uptr internal_munmap(void *addr, uptr length) {
   return munmap(addr, length);
 }
 
+int internal_mprotect(void *addr, uptr length, int prot) {
+  return mprotect(addr, length, prot);
+}
+
 uptr internal_close(fd_t fd) {
   return close(fd);
 }

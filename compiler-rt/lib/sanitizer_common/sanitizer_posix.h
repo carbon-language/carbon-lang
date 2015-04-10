@@ -37,6 +37,7 @@ uptr internal_write(fd_t fd, const void *buf, uptr count);
 uptr internal_mmap(void *addr, uptr length, int prot, int flags,
                    int fd, u64 offset);
 uptr internal_munmap(void *addr, uptr length);
+int internal_mprotect(void *addr, uptr length, int prot);
 
 // OS
 uptr internal_filesize(fd_t fd);  // -1 on error.
