@@ -3,20 +3,20 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
 # RUN: lld -flavor gnu -target mipsel -e T0 \
-# RUN:     -pcrel-eh-reloc -o %t.exe %t1.o %t2.o %t.so
+# RUN:     -pcrel-eh-reloc -o %t.exe %t1.o %t2.o
 # RUN: llvm-objdump -s -t %t.exe | FileCheck -check-prefix=RAW %s
 
 # RAW:      Contents of section .gnu_extab:
-# RAW-NEXT:  400158 00e7ffff ff000000 a01e0000 00000000
-#                     ^ 0x400140 + 0 - 0x400159 = 0xffffffe7
-#                                     ^ 0x402000 + 0 - 0x400160 = 0x1ea0
+# RAW-NEXT:  400148 00e7ffff ff000000 b01e0000 00000000
+#                     ^ 0x400130 + 0 - 0x400149 = 0xffffffe7
+#                                     ^ 0x402000 + 0 - 0x400150 = 0x1eb0
 #           E1 GOT entry = 0xffff8020 = -32736 ^
 # RAW:      Contents of section .got:
 # RAW-NEXT:  401000 00000000 00000080
 
 # RAW: SYMBOL TABLE:
 # RAW: 00402000 l    .data  00000004 L1
-# RAW: 00400140 g  F .text  00000004 T1
+# RAW: 00400130 g  F .text  00000004 T1
 
 # t1.o
 ---
