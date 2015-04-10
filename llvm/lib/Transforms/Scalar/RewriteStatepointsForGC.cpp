@@ -85,6 +85,22 @@ INITIALIZE_PASS_END(RewriteStatepointsForGC, "rewrite-statepoints-for-gc",
                     "Make relocations explicit at statepoints", false, false)
 
 namespace {
+struct GCPtrLivenessData {
+  /// Values defined in this block.
+  DenseMap<BasicBlock *, DenseSet<Value *>> KillSet;
+  /// Values used in this block (and thus live); does not included values
+  /// killed within this block.
+  DenseMap<BasicBlock *, DenseSet<Value *>> LiveSet;
+
+  /// Values live into this basic block (i.e. used by any
+  /// instruction in this basic block or ones reachable from here)
+  DenseMap<BasicBlock *, DenseSet<Value *>> LiveIn;
+
+  /// Values live out of this basic block (i.e. live into
+  /// any successor block)
+  DenseMap<BasicBlock *, DenseSet<Value *>> LiveOut;
+};
+
 // The type of the internal cache used inside the findBasePointers family
 // of functions.  From the callers perspective, this is an opaque type and
 // should not be inspected.
@@ -118,6 +134,15 @@ struct PartiallyConstructedSafepointRecord {
   Instruction *UnwindToken;
 };
 }
+
+/// Compute the live-in set for every basic block in the function
+static void computeLiveInValues(DominatorTree &DT, Function &F,
+                                GCPtrLivenessData &Data);
+
+/// Given results from the dataflow liveness computation, find the set of live
+/// Values at a particular instruction.
+static void findLiveSetAtInst(Instruction *inst, GCPtrLivenessData &Data,
+                              StatepointLiveSetTy &out);
 
 // TODO: Once we can get to the GCStrategy, this becomes
 // Optional<bool> isGCManagedPointer(const Value *V) const override {
@@ -172,113 +197,6 @@ static bool isUnhandledGCPointerType(Type *Ty) {
 }
 #endif
 
-/// Return true if the Value is a gc reference type which is potentially used
-/// after the instruction 'loc'.  This is only used with the edge reachability
-/// liveness code.  Note: It is assumed the V dominates loc.
-static bool isLiveGCReferenceAt(Value &V, Instruction *Loc, DominatorTree &DT,
-                                LoopInfo *LI) {
-  if (!isHandledGCPointerType(V.getType()))
-    return false;
-
-  if (V.use_empty())
-    return false;
-
-  // Given assumption that V dominates loc, this may be live
-  return true;
-}
-
-// Conservatively identifies any definitions which might be live at the
-// given instruction. The  analysis is performed immediately before the
-// given instruction. Values defined by that instruction are not considered
-// live.  Values used by that instruction are considered live.
-//
-// preconditions: valid IR graph, term is either a terminator instruction or
-// a call instruction, pred is the basic block of term, DT, LI are valid
-//
-// side effects: none, does not mutate IR
-//
-//  postconditions: populates liveValues as discussed above
-static void findLiveGCValuesAtInst(Instruction *term, BasicBlock *pred,
-                                   DominatorTree &DT, LoopInfo *LI,
-                                   StatepointLiveSetTy &liveValues) {
-  liveValues.clear();
-
-  assert(isa<CallInst>(term) || isa<InvokeInst>(term) || term->isTerminator());
-
-  Function *F = pred->getParent();
-
-  auto is_live_gc_reference =
-      [&](Value &V) { return isLiveGCReferenceAt(V, term, DT, LI); };
-
-  // Are there any gc pointer arguments live over this point?  This needs to be
-  // special cased since arguments aren't defined in basic blocks.
-  for (Argument &arg : F->args()) {
-    assert(!isUnhandledGCPointerType(arg.getType()) &&
-           "support for FCA unimplemented");
-
-    if (is_live_gc_reference(arg)) {
-      liveValues.insert(&arg);
-    }
-  }
-
-  // Walk through all dominating blocks - the ones which can contain
-  // definitions used in this block - and check to see if any of the values
-  // they define are used in locations potentially reachable from the
-  // interesting instruction.
-  BasicBlock *BBI = pred;
-  while (true) {
-    if (TraceLSP) {
-      errs() << "[LSP] Looking at dominating block " << pred->getName() << "\n";
-    }
-    assert(DT.dominates(BBI, pred));
-    assert(isPotentiallyReachable(BBI, pred, &DT) &&
-           "dominated block must be reachable");
-
-    // Walk through the instructions in dominating blocks and keep any
-    // that have a use potentially reachable from the block we're
-    // considering putting the safepoint in
-    for (Instruction &inst : *BBI) {
-      if (TraceLSP) {
-        errs() << "[LSP] Looking at instruction ";
-        inst.dump();
-      }
-
-      if (pred == BBI && (&inst) == term) {
-        if (TraceLSP) {
-          errs() << "[LSP] stopped because we encountered the safepoint "
-                    "instruction.\n";
-        }
-
-        // If we're in the block which defines the interesting instruction,
-        // we don't want to include any values as live which are defined
-        // _after_ the interesting line or as part of the line itself
-        // i.e. "term" is the call instruction for a call safepoint, the
-        // results of the call should not be considered live in that stackmap
-        break;
-      }
-
-      assert(!isUnhandledGCPointerType(inst.getType()) &&
-             "support for FCA unimplemented");
-
-      if (is_live_gc_reference(inst)) {
-        if (TraceLSP) {
-          errs() << "[LSP] found live value for this safepoint ";
-          inst.dump();
-          term->dump();
-        }
-        liveValues.insert(&inst);
-      }
-    }
-    if (!DT.getNode(BBI)->getIDom()) {
-      assert(BBI == &F->getEntryBlock() &&
-             "failed to find a dominator for something other than "
-             "the entry block");
-      break;
-    }
-    BBI = DT.getNode(BBI)->getIDom()->getBlock();
-  }
-}
-
 static bool order_by_name(llvm::Value *a, llvm::Value *b) {
   if (a->hasName() && b->hasName()) {
     return -1 == a->getName().compare(b->getName());
@@ -292,16 +210,17 @@ static bool order_by_name(llvm::Value *a, llvm::Value *b) {
   }
 }
 
-/// Find the initial live set. Note that due to base pointer
-/// insertion, the live set may be incomplete.
-static void
-analyzeParsePointLiveness(DominatorTree &DT, const CallSite &CS,
-                          PartiallyConstructedSafepointRecord &result) {
+// Conservatively identifies any definitions which might be live at the
+// given instruction. The  analysis is performed immediately before the
+// given instruction. Values defined by that instruction are not considered
+// live.  Values used by that instruction are considered live.
+static void analyzeParsePointLiveness(
+    DominatorTree &DT, GCPtrLivenessData &OriginalLivenessData,
+    const CallSite &CS, PartiallyConstructedSafepointRecord &result) {
   Instruction *inst = CS.getInstruction();
 
-  BasicBlock *BB = inst->getParent();
   StatepointLiveSetTy liveset;
-  findLiveGCValuesAtInst(inst, BB, DT, nullptr, liveset);
+  findLiveSetAtInst(inst, OriginalLivenessData, liveset);
 
   if (PrintLiveSet) {
     // Note: This output is used by several of the test cases
@@ -1048,56 +967,23 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
   result.NewInsertedDefs = NewInsertedDefs;
 }
 
-/// Check for liveness of items in the insert defs and add them to the live
-/// and base pointer sets
-static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
-                          const DenseSet<Value *> &allInsertedDefs,
-                          PartiallyConstructedSafepointRecord &result) {
-  Instruction *inst = CS.getInstruction();
+/// Given an updated version of the dataflow liveness results, update the
+/// liveset and base pointer maps for the call site CS.
+static void recomputeLiveInValues(GCPtrLivenessData &RevisedLivenessData,
+                                  const CallSite &CS,
+                                  PartiallyConstructedSafepointRecord &result);
 
-  auto liveset = result.liveset;
-  auto PointerToBase = result.PointerToBase;
-
-  auto is_live_gc_reference =
-      [&](Value &V) { return isLiveGCReferenceAt(V, inst, DT, nullptr); };
-
-  // For each new definition, check to see if a) the definition dominates the
-  // instruction we're interested in, and b) one of the uses of that definition
-  // is edge-reachable from the instruction we're interested in.  This is the
-  // same definition of liveness we used in the intial liveness analysis
-  for (Value *newDef : allInsertedDefs) {
-    if (liveset.count(newDef)) {
-      // already live, no action needed
-      continue;
-    }
-
-    // PERF: Use DT to check instruction domination might not be good for
-    // compilation time, and we could change to optimal solution if this
-    // turn to be a issue
-    if (!DT.dominates(cast<Instruction>(newDef), inst)) {
-      // can't possibly be live at inst
-      continue;
-    }
-
-    if (is_live_gc_reference(*newDef)) {
-      // Add the live new defs into liveset and PointerToBase
-      liveset.insert(newDef);
-      PointerToBase[newDef] = newDef;
-    }
-  }
-
-  result.liveset = liveset;
-  result.PointerToBase = PointerToBase;
-}
-
-static void fixupLiveReferences(
-    Function &F, DominatorTree &DT, Pass *P,
-    const DenseSet<llvm::Value *> &allInsertedDefs, ArrayRef<CallSite> toUpdate,
+static void recomputeLiveInValues(
+    Function &F, DominatorTree &DT, Pass *P, ArrayRef<CallSite> toUpdate,
     MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
+  // TODO-PERF: reuse the original liveness, then simply run the dataflow
+  // again.  The old values are still live and will help it stablize quickly.
+  GCPtrLivenessData RevisedLivenessData;
+  computeLiveInValues(DT, F, RevisedLivenessData);
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
     const CallSite &CS = toUpdate[i];
-    fixupLiveness(DT, CS, allInsertedDefs, info);
+    recomputeLiveInValues(RevisedLivenessData, CS, info);
   }
 }
 
@@ -1689,40 +1575,13 @@ static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
 static void findLiveReferences(
     Function &F, DominatorTree &DT, Pass *P, ArrayRef<CallSite> toUpdate,
     MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
+  GCPtrLivenessData OriginalLivenessData;
+  computeLiveInValues(DT, F, OriginalLivenessData);
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
     const CallSite &CS = toUpdate[i];
-    analyzeParsePointLiveness(DT, CS, info);
+    analyzeParsePointLiveness(DT, OriginalLivenessData, CS, info);
   }
-}
-
-static void addBasesAsLiveValues(StatepointLiveSetTy &liveset,
-                                 DenseMap<Value *, Value *> &PointerToBase) {
-  // Identify any base pointers which are used in this safepoint, but not
-  // themselves relocated.  We need to relocate them so that later inserted
-  // safepoints can get the properly relocated base register.
-  DenseSet<Value *> missing;
-  for (Value *L : liveset) {
-    assert(PointerToBase.find(L) != PointerToBase.end());
-    Value *base = PointerToBase[L];
-    assert(base);
-    if (liveset.find(base) == liveset.end()) {
-      assert(PointerToBase.find(base) == PointerToBase.end());
-      // uniqued by set insert
-      missing.insert(base);
-    }
-  }
-
-  // Note that we want these at the end of the list, otherwise
-  // register placement gets screwed up once we lower to STATEPOINT
-  // instructions.  This is an utter hack, but there doesn't seem to be a
-  // better one.
-  for (Value *base : missing) {
-    assert(base);
-    liveset.insert(base);
-    PointerToBase[base] = base;
-  }
-  assert(liveset.size() == PointerToBase.size());
 }
 
 /// Remove any vector of pointers from the liveset by scalarizing them over the
@@ -1943,22 +1802,11 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     insertUseHolderAfter(CS, Bases, holders);
   }
 
-  // Add the bases explicitly to the live vector set.  This may result in a few
-  // extra relocations, but the base has to be available whenever a pointer
-  // derived from it is used.  Thus, we need it to be part of the statepoint's
-  // gc arguments list.  TODO: Introduce an explicit notion (in the following
-  // code) of the GC argument list as seperate from the live Values at a
-  // given statepoint.
-  for (size_t i = 0; i < records.size(); i++) {
-    struct PartiallyConstructedSafepointRecord &info = records[i];
-    addBasesAsLiveValues(info.liveset, info.PointerToBase);
-  }
+  // By selecting base pointers, we've effectively inserted new uses. Thus, we
+  // need to rerun liveness.  We may *also* have inserted new defs, but that's
+  // not the key issue.
+  recomputeLiveInValues(F, DT, P, toUpdate, records);
 
-  // If we inserted any new values, we need to adjust our notion of what is
-  // live at a particular safepoint.
-  if (!allInsertedDefs.empty()) {
-    fixupLiveReferences(F, DT, P, allInsertedDefs, toUpdate, records);
-  }
   if (PrintBasePointers) {
     for (size_t i = 0; i < records.size(); i++) {
       struct PartiallyConstructedSafepointRecord &info = records[i];
@@ -2096,4 +1944,246 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
 
   MadeChange |= insertParsePoints(F, DT, this, ParsePointNeeded);
   return MadeChange;
+}
+
+// liveness computation via standard dataflow
+// -------------------------------------------------------------------
+
+// TODO: Consider using bitvectors for liveness, the set of potentially
+// interesting values should be small and easy to pre-compute.
+
+/// Is this value a constant consisting of entirely null values?
+static bool isConstantNull(Value *V) {
+  return isa<Constant>(V) && cast<Constant>(V)->isNullValue();
+}
+
+/// Compute the live-in set for the location rbegin starting from
+/// the live-out set of the basic block
+static void computeLiveInValues(BasicBlock::reverse_iterator rbegin,
+                                BasicBlock::reverse_iterator rend,
+                                DenseSet<Value *> &LiveTmp) {
+
+  for (BasicBlock::reverse_iterator ritr = rbegin; ritr != rend; ritr++) {
+    Instruction *I = &*ritr;
+
+    // KILL/Def - Remove this definition from LiveIn
+    LiveTmp.erase(I);
+
+    // Don't consider *uses* in PHI nodes, we handle their contribution to
+    // predecessor blocks when we seed the LiveOut sets
+    if (isa<PHINode>(I))
+      continue;
+
+    // USE - Add to the LiveIn set for this instruction
+    for (Value *V : I->operands()) {
+      assert(!isUnhandledGCPointerType(V->getType()) &&
+             "support for FCA unimplemented");
+      if (isHandledGCPointerType(V->getType()) && !isConstantNull(V) &&
+          !isa<UndefValue>(V)) {
+        // The choice to exclude null and undef is arbitrary here.  Reconsider?
+        LiveTmp.insert(V);
+      }
+    }
+  }
+}
+
+static void computeLiveOutSeed(BasicBlock *BB, DenseSet<Value *> &LiveTmp) {
+
+  for (BasicBlock *Succ : successors(BB)) {
+    const BasicBlock::iterator E(Succ->getFirstNonPHI());
+    for (BasicBlock::iterator I = Succ->begin(); I != E; I++) {
+      PHINode *Phi = cast<PHINode>(&*I);
+      Value *V = Phi->getIncomingValueForBlock(BB);
+      assert(!isUnhandledGCPointerType(V->getType()) &&
+             "support for FCA unimplemented");
+      if (isHandledGCPointerType(V->getType()) && !isConstantNull(V) &&
+          !isa<UndefValue>(V)) {
+        // The choice to exclude null and undef is arbitrary here.  Reconsider?
+        LiveTmp.insert(V);
+      }
+    }
+  }
+}
+
+static DenseSet<Value *> computeKillSet(BasicBlock *BB) {
+  DenseSet<Value *> KillSet;
+  for (Instruction &I : *BB)
+    if (isHandledGCPointerType(I.getType()))
+      KillSet.insert(&I);
+  return KillSet;
+}
+
+/// Check that the items in 'Live' dominate 'TI'.  This is used as a basic
+/// sanity check for the liveness computation.
+static void checkBasicSSA(DominatorTree &DT, DenseSet<Value *> &Live,
+                          TerminatorInst *TI, bool TermOkay = false) {
+#ifndef NDEBUG
+  for (Value *V : Live) {
+    if (auto *I = dyn_cast<Instruction>(V)) {
+      // The terminator can be a member of the LiveOut set.  LLVM's definition
+      // of instruction dominance states that V does not dominate itself.  As
+      // such, we need to special case this to allow it.
+      if (TermOkay && TI == I)
+        continue;
+      assert(DT.dominates(I, TI) &&
+             "basic SSA liveness expectation violated by liveness analysis");
+    }
+  }
+#endif
+}
+
+/// Check that all the liveness sets used during the computation of liveness
+/// obey basic SSA properties.  This is useful for finding cases where we miss
+/// a def.
+static void checkBasicSSA(DominatorTree &DT, GCPtrLivenessData &Data,
+                          BasicBlock &BB) {
+  checkBasicSSA(DT, Data.LiveSet[&BB], BB.getTerminator());
+  checkBasicSSA(DT, Data.LiveOut[&BB], BB.getTerminator(), true);
+  checkBasicSSA(DT, Data.LiveIn[&BB], BB.getTerminator());
+}
+
+static void computeLiveInValues(DominatorTree &DT, Function &F,
+                                GCPtrLivenessData &Data) {
+
+  DenseSet<BasicBlock *> WorklistSet;
+  SmallVector<BasicBlock *, 200> Worklist;
+  auto AddPredsToWorklist = [&](BasicBlock *BB) {
+    for (BasicBlock *Pred : predecessors(BB))
+      if (WorklistSet.insert(Pred).second)
+        Worklist.push_back(Pred);
+  };
+  auto NextItem = [&]() {
+    BasicBlock *BB = Worklist.back();
+    Worklist.pop_back();
+    WorklistSet.erase(BB);
+    return BB;
+  };
+
+  // Seed the liveness for each individual block
+  for (BasicBlock &BB : F) {
+    Data.KillSet[&BB] = computeKillSet(&BB);
+    Data.LiveSet[&BB].clear();
+    computeLiveInValues(BB.rbegin(), BB.rend(), Data.LiveSet[&BB]);
+
+#ifndef NDEBUG
+    for (Value *Kill : Data.KillSet[&BB])
+      assert(!Data.LiveSet[&BB].count(Kill) && "live set contains kill");
+#endif
+
+    Data.LiveOut[&BB] = DenseSet<Value *>();
+    computeLiveOutSeed(&BB, Data.LiveOut[&BB]);
+    Data.LiveIn[&BB] = Data.LiveSet[&BB];
+    set_union(Data.LiveIn[&BB], Data.LiveOut[&BB]);
+    set_subtract(Data.LiveIn[&BB], Data.KillSet[&BB]);
+    if (!Data.LiveIn[&BB].empty())
+      AddPredsToWorklist(&BB);
+  }
+
+  // Propagate that liveness until stable
+  while (!Worklist.empty()) {
+    BasicBlock *BB = NextItem();
+
+    // Compute our new liveout set, then exit early if it hasn't changed
+    // despite the contribution of our successor.
+    DenseSet<Value *> LiveOut = Data.LiveOut[BB];
+    const auto OldLiveOutSize = LiveOut.size();
+    for (BasicBlock *Succ : successors(BB)) {
+      assert(Data.LiveIn.count(Succ));
+      set_union(LiveOut, Data.LiveIn[Succ]);
+    }
+    // assert OutLiveOut is a subset of LiveOut
+    if (OldLiveOutSize == LiveOut.size()) {
+      // If the sets are the same size, then we didn't actually add anything
+      // when unioning our successors LiveIn  Thus, the LiveIn of this block
+      // hasn't changed.
+      continue;
+    }
+    Data.LiveOut[BB] = LiveOut;
+
+    // Apply the effects of this basic block
+    DenseSet<Value *> LiveTmp = LiveOut;
+    set_union(LiveTmp, Data.LiveSet[BB]);
+    set_subtract(LiveTmp, Data.KillSet[BB]);
+
+    assert(Data.LiveIn.count(BB));
+    const DenseSet<Value *> &OldLiveIn = Data.LiveIn[BB];
+    // assert: OldLiveIn is a subset of LiveTmp
+    if (OldLiveIn.size() != LiveTmp.size()) {
+      Data.LiveIn[BB] = LiveTmp;
+      AddPredsToWorklist(BB);
+    }
+  } // while( !worklist.empty() )
+
+#ifndef NDEBUG
+  // Sanity check our ouput against SSA properties.  This helps catch any
+  // missing kills during the above iteration.
+  for (BasicBlock &BB : F) {
+    checkBasicSSA(DT, Data, BB);
+  }
+#endif
+}
+
+static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
+                              StatepointLiveSetTy &Out) {
+
+  BasicBlock *BB = Inst->getParent();
+
+  // Note: The copy is intentional and required
+  assert(Data.LiveOut.count(BB));
+  DenseSet<Value *> LiveOut = Data.LiveOut[BB];
+
+  // We want to handle the statepoint itself oddly.  It's
+  // call result is not live (normal), nor are it's arguments
+  // (unless they're used again later).  This adjustment is
+  // specifically what we need to relocate
+  BasicBlock::reverse_iterator rend(Inst);
+  computeLiveInValues(BB->rbegin(), rend, LiveOut);
+  LiveOut.erase(Inst);
+  Out.insert(LiveOut.begin(), LiveOut.end());
+}
+
+static void recomputeLiveInValues(GCPtrLivenessData &RevisedLivenessData,
+                                  const CallSite &CS,
+                                  PartiallyConstructedSafepointRecord &Info) {
+  Instruction *Inst = CS.getInstruction();
+  StatepointLiveSetTy Updated;
+  findLiveSetAtInst(Inst, RevisedLivenessData, Updated);
+
+#ifndef NDEBUG
+  DenseSet<Value *> Bases;
+  for (auto KVPair : Info.PointerToBase) {
+    Bases.insert(KVPair.second);
+  }
+#endif
+  // We may have base pointers which are now live that weren't before.  We need
+  // to update the PointerToBase structure to reflect this.
+  for (auto V : Updated)
+    if (!Info.PointerToBase.count(V)) {
+      assert(Bases.count(V) && "can't find base for unexpected live value");
+      Info.PointerToBase[V] = V;
+      continue;
+    }
+
+#ifndef NDEBUG
+  for (auto V : Updated) {
+    assert(Info.PointerToBase.count(V) &&
+           "must be able to find base for live value");
+  }
+#endif
+
+  // Remove any stale base mappings - this can happen since our liveness is
+  // more precise then the one inherent in the base pointer analysis
+  DenseSet<Value *> ToErase;
+  for (auto KVPair : Info.PointerToBase)
+    if (!Updated.count(KVPair.first))
+      ToErase.insert(KVPair.first);
+  for (auto V : ToErase)
+    Info.PointerToBase.erase(V);
+
+#ifndef NDEBUG
+  for (auto KVPair : Info.PointerToBase)
+    assert(Updated.count(KVPair.first) && "record for non-live value");
+#endif
+
+  Info.liveset = Updated;
 }

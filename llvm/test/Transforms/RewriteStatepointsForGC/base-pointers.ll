@@ -76,7 +76,9 @@ loop:                                             ; preds = %loop, %entry
 ; CHECK-LABEL: loop
 ; CHECK:   %base_phi = phi i64 addrspace(1)*
 ; CHECK-DAG: [ %base_obj, %entry ]
-; CHECK-DAG: [ %base_select.relocated, %loop ]
+; Given the two selects are equivelent, so are their base phis - ideally,
+; we'd have commoned these, but that's a missed optimization, not correctness.
+; CHECK-DAG: [ [[DISCARD:%base_select.*.relocated]], %loop ]
 ; CHECK-NOT: base_phi2
 ; CHECK: next = select
 ; CHECK: base_select
