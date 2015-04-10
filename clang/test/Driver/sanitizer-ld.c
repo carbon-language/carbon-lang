@@ -273,7 +273,7 @@
 // CHECK-LSAN-ASAN-LINUX: libclang_rt.asan-x86_64
 // CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan
 
-// RUN: %clangcxx -fsanitize=address %s -### -o %t.o 2>&1 \
+// RUN: %clangxx -fsanitize=address %s -### -o %t.o 2>&1 \
 // RUN:     -mmacosx-version-min=10.6 \
 // RUN:     -target x86_64-apple-darwin13.4.0 \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
