@@ -24,7 +24,7 @@ static int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 
 /// \brief R_386_PC32 - word32: S + A - P
 static int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
-  uint32_t result = (uint32_t)((S + A) - P);
+  uint32_t result = (uint32_t)(S + A - P);
   write32le(location, result + read32le(location));
   return 0;
 }

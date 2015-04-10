@@ -38,7 +38,7 @@ static uint32_t scatterBits(uint32_t val, uint32_t mask) {
 
 static void relocBNPCREL(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
                          int32_t nBits) {
-  int32_t result = (uint32_t)(((S + A) - P) >> 2);
+  int32_t result = (uint32_t)((S + A - P) >> 2);
   int32_t range = 1 << nBits;
   if (result < range && result > -range) {
     result = scatterBits(result, findv4bitmask(loc));

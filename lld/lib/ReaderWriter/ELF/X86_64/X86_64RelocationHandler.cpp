@@ -23,7 +23,7 @@ static void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 
 /// \brief R_X86_64_PC32 - word32: S + A - P
 static void relocPC32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
-  uint32_t result = (uint32_t)((S + A) - P);
+  uint32_t result = (uint32_t)(S + A - P);
   write32le(location, result + read32le(location));
 }
 
@@ -50,14 +50,14 @@ static void reloc16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 
 /// \brief R_X86_64_PC16 - word16: S + A - P
 static void relocPC16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
-  uint16_t result = (uint16_t)((S + A) - P);
+  uint16_t result = (uint16_t)(S + A - P);
   write16le(location, result | read16le(location));
   // TODO: Check for overflow.
 }
 
 /// \brief R_X86_64_PC64 - word64: S + A - P
 static void relocPC64(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
-  int64_t result = (uint64_t)((S + A) - P);
+  int64_t result = (uint64_t)(S + A - P);
   write64le(location, result | read64le(location));
 }
 

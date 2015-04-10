@@ -441,7 +441,7 @@ static void relocR_ARM_ALU_PC_GN_NC(uint8_t *location, uint32_t result) {
 /// \brief R_ARM_ALU_PC_G0_NC - ((S + A) | T) - P => S + A - P
 static void relocR_ARM_ALU_PC_G0_NC(uint8_t *location, uint64_t P, uint64_t S,
                                     int64_t A) {
-  int32_t result = (int32_t)((S + A) - P);
+  int32_t result = (int32_t)(S + A - P);
 
   if (result < 0)
     llvm_unreachable(
@@ -460,7 +460,7 @@ static void relocR_ARM_ALU_PC_G0_NC(uint8_t *location, uint64_t P, uint64_t S,
 /// \brief R_ARM_ALU_PC_G1_NC - ((S + A) | T) - P => S + A - P
 static void relocR_ARM_ALU_PC_G1_NC(uint8_t *location, uint64_t P, uint64_t S,
                                     int64_t A) {
-  int32_t result = (int32_t)((S + A) - P);
+  int32_t result = (int32_t)(S + A - P);
 
   if (result < 0)
     llvm_unreachable(
@@ -479,7 +479,7 @@ static void relocR_ARM_ALU_PC_G1_NC(uint8_t *location, uint64_t P, uint64_t S,
 /// \brief R_ARM_LDR_PC_G2 - S + A - P
 static void relocR_ARM_LDR_PC_G2(uint8_t *location, uint64_t P, uint64_t S,
                                  int64_t A) {
-  int32_t result = (int32_t)((S + A) - P);
+  int32_t result = (int32_t)(S + A - P);
 
   if (result < 0)
     llvm_unreachable(

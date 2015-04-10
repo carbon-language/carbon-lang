@@ -42,7 +42,7 @@ static void relocR_AARCH64_ABS64(uint8_t *location, uint64_t P, uint64_t S,
 /// \brief R_AARCH64_PREL32 - word32: S + A - P
 static void relocR_AARCH64_PREL32(uint8_t *location, uint64_t P, uint64_t S,
                                   int64_t A) {
-  int32_t result = (int32_t)((S + A) - P);
+  int32_t result = (int32_t)(S + A - P);
   write32le(location, result + (int32_t)read32le(location));
 }
 
@@ -84,7 +84,7 @@ static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
 /// \brief R_AARCH64_ADR_PREL_LO21 - S + A - P
 static void relocR_AARCH64_ADR_PREL_LO21(uint8_t *location, uint64_t P,
                                          uint64_t S, int64_t A) {
-  uint64_t result = (S + A) - P;
+  uint64_t result = S + A - P;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
   immlo = immlo << 29;
@@ -114,7 +114,7 @@ static void relocR_AARCH64_ADD_ABS_LO12_NC(uint8_t *location, uint64_t P,
 }
 
 static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
-  int32_t result = (int32_t)((S + A) - P);
+  int32_t result = (int32_t)(S + A - P);
   result &= 0x0FFFFFFC;
   result >>= 2;
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
@@ -128,7 +128,7 @@ static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 /// \brief R_AARCH64_CONDBR19
 static void relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P, uint64_t S,
                                     int64_t A) {
-  int32_t result = (int32_t)((S + A) - P);
+  int32_t result = (int32_t)(S + A - P);
   result &= 0x01FFFFC;
   result <<= 3;
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
