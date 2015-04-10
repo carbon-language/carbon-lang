@@ -787,6 +787,8 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     if (StrOpc == AArch64::STPDpre || StrOpc == AArch64::STPXpre)
       MIB.addReg(AArch64::SP, RegState::Define);
 
+    MBB.addLiveIn(Reg1);
+    MBB.addLiveIn(Reg2);
     MIB.addReg(Reg2, getPrologueDeath(MF, Reg2))
         .addReg(Reg1, getPrologueDeath(MF, Reg1))
         .addReg(AArch64::SP)
