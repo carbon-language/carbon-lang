@@ -35,9 +35,8 @@ public:
   PECOFFLinkingContext() { setDeadStripping(true); }
 
   struct Version {
-    Version(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
-    int majorVersion;
-    int minorVersion;
+    int major;
+    int minor;
   };
 
   struct ExportDesc {
