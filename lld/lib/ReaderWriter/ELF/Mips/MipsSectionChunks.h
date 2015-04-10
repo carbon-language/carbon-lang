@@ -48,8 +48,7 @@ public:
   }
 
   void finalize() override {
-    const AtomLayout *gpAtom = _targetLayout.getGP();
-    _reginfo.ri_gp_value = gpAtom ? gpAtom->_virtualAddr : 0;;
+    _reginfo.ri_gp_value = _targetLayout.getGPAddr();
 
     if (this->_outputSection)
       this->_outputSection->setType(this->_type);
@@ -103,8 +102,7 @@ public:
   }
 
   void finalize() override {
-    const AtomLayout *gpAtom = _targetLayout.getGP();
-    _reginfo.ri_gp_value = gpAtom ? gpAtom->_virtualAddr : 0;;
+    _reginfo.ri_gp_value = _targetLayout.getGPAddr();
 
     if (this->_outputSection)
       this->_outputSection->setType(this->_type);

@@ -528,8 +528,7 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Mips);
 
-  AtomLayout *gpAtom = _targetLayout.getGP();
-  uint64_t gpAddr = gpAtom ? gpAtom->_virtualAddr : 0;
+  uint64_t gpAddr = _targetLayout.getGPAddr();
 
   AtomLayout *gpDispAtom = _targetLayout.getGPDisp();
   bool isGpDisp = gpDispAtom && ref.target() == gpDispAtom->_atom;

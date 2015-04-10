@@ -47,11 +47,13 @@ public:
   /// \brief GP offset relative to .got section.
   uint64_t getGPOffset() const { return 0x7FF0; }
 
-  /// \brief Get '_gp' symbol atom layout.
-  AtomLayout *getGP() {
-    std::call_once(_gpOnce,
-                   [this]() { _gpAtom = this->findAbsoluteAtom("_gp"); });
-    return _gpAtom;
+  /// \brief Get '_gp' symbol address.
+  uint64_t getGPAddr() {
+    std::call_once(_gpOnce, [this]() {
+      if (AtomLayout *a = this->findAbsoluteAtom("_gp"))
+        _gpAddr = a->_virtualAddr;
+    });
+    return _gpAddr;
   }
 
   /// \brief Get '_gp_disp' symbol atom layout.
@@ -83,7 +85,7 @@ protected:
 private:
   MipsGOTSection<ELFT> *_gotSection;
   MipsPLTSection<ELFT> *_pltSection;
-  AtomLayout *_gpAtom = nullptr;
+  uint64_t _gpAddr = 0;
   AtomLayout *_gpDispAtom = nullptr;
   std::once_flag _gpOnce;
   std::once_flag _gpDispOnce;
