@@ -693,11 +693,11 @@ static bool SinkCast(CastInst *CI) {
       InsertedCast =
         CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "",
                          InsertPt);
-      MadeChange = true;
     }
 
     // Replace a use of the cast with a use of the new cast.
     TheUse = InsertedCast;
+    MadeChange = true;
     ++NumCastUses;
   }
 
@@ -834,17 +834,19 @@ static bool SinkCmpExpression(CmpInst *CI) {
         CmpInst::Create(CI->getOpcode(),
                         CI->getPredicate(),  CI->getOperand(0),
                         CI->getOperand(1), "", InsertPt);
-      MadeChange = true;
     }
 
     // Replace a use of the cmp with a use of the new cmp.
     TheUse = InsertedCmp;
+    MadeChange = true;
     ++NumCmpUses;
   }
 
   // If we removed all uses, nuke the cmp.
-  if (CI->use_empty())
+  if (CI->use_empty()) {
     CI->eraseFromParent();
+    MadeChange = true;
+  }
 
   return MadeChange;
 }
