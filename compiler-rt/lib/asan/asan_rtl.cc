@@ -297,9 +297,9 @@ static void InitializeHighMemEnd() {
   CHECK_EQ((kHighMemBeg % GetPageSizeCached()), 0);
 }
 
-static void ProtectGap(uptr a, uptr size) {
-  void *res = MmapNoAccess(a, size);
-  if (a == (uptr)res)
+static void ProtectGap(uptr addr, uptr size) {
+  void *res = MmapNoAccess(addr, size);
+  if (addr == (uptr)res)
     return;
   Report("ERROR: Failed to protect the shadow gap. "
          "ASan cannot proceed correctly. ABORTING.\n");
