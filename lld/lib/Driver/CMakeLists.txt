@@ -31,7 +31,6 @@ add_llvm_library(lldDriver
     lldExampleSubTarget
     lldX86_64ELFTarget
     lldCore
-    lldNative
     lldReaderWriter
     lldYAML
     LLVMObject
