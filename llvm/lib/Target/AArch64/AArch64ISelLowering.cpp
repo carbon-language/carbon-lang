@@ -281,14 +281,39 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
 
-  // f16 is storage-only, so we promote operations to f32 if we know this is
-  // valid, and ignore them otherwise. The operations not mentioned here will
-  // fail to select, but this is not a major problem as no source language
-  // should be emitting native f16 operations yet.
-  setOperationAction(ISD::FADD, MVT::f16, Promote);
-  setOperationAction(ISD::FDIV, MVT::f16, Promote);
-  setOperationAction(ISD::FMUL, MVT::f16, Promote);
-  setOperationAction(ISD::FSUB, MVT::f16, Promote);
+  // f16 is a storage-only type, always promote it to f32.
+  setOperationAction(ISD::SETCC,       MVT::f16,  Promote);
+  setOperationAction(ISD::BR_CC,       MVT::f16,  Promote);
+  setOperationAction(ISD::SELECT_CC,   MVT::f16,  Promote);
+  setOperationAction(ISD::SELECT,      MVT::f16,  Promote);
+  setOperationAction(ISD::FADD,        MVT::f16,  Promote);
+  setOperationAction(ISD::FSUB,        MVT::f16,  Promote);
+  setOperationAction(ISD::FMUL,        MVT::f16,  Promote);
+  setOperationAction(ISD::FDIV,        MVT::f16,  Promote);
+  setOperationAction(ISD::FREM,        MVT::f16,  Promote);
+  setOperationAction(ISD::FMA,         MVT::f16,  Promote);
+  setOperationAction(ISD::FNEG,        MVT::f16,  Promote);
+  setOperationAction(ISD::FABS,        MVT::f16,  Promote);
+  setOperationAction(ISD::FCEIL,       MVT::f16,  Promote);
+  setOperationAction(ISD::FCOPYSIGN,   MVT::f16,  Promote);
+  setOperationAction(ISD::FCOS,        MVT::f16,  Promote);
+  setOperationAction(ISD::FFLOOR,      MVT::f16,  Promote);
+  setOperationAction(ISD::FNEARBYINT,  MVT::f16,  Promote);
+  setOperationAction(ISD::FPOW,        MVT::f16,  Promote);
+  setOperationAction(ISD::FPOWI,       MVT::f16,  Promote);
+  setOperationAction(ISD::FRINT,       MVT::f16,  Promote);
+  setOperationAction(ISD::FSIN,        MVT::f16,  Promote);
+  setOperationAction(ISD::FSINCOS,     MVT::f16,  Promote);
+  setOperationAction(ISD::FSQRT,       MVT::f16,  Promote);
+  setOperationAction(ISD::FEXP,        MVT::f16,  Promote);
+  setOperationAction(ISD::FEXP2,       MVT::f16,  Promote);
+  setOperationAction(ISD::FLOG,        MVT::f16,  Promote);
+  setOperationAction(ISD::FLOG2,       MVT::f16,  Promote);
+  setOperationAction(ISD::FLOG10,      MVT::f16,  Promote);
+  setOperationAction(ISD::FROUND,      MVT::f16,  Promote);
+  setOperationAction(ISD::FTRUNC,      MVT::f16,  Promote);
+  setOperationAction(ISD::FMINNUM,     MVT::f16,  Promote);
+  setOperationAction(ISD::FMAXNUM,     MVT::f16,  Promote);
 
   // v4f16 is also a storage-only type, so promote it to v4f32 when that is
   // known to be safe.
@@ -1558,6 +1583,14 @@ SDValue AArch64TargetLowering::LowerFP_TO_INT(SDValue Op,
   if (Op.getOperand(0).getValueType().isVector())
     return LowerVectorFP_TO_INT(Op, DAG);
 
+  // f16 conversions are promoted to f32.
+  if (Op.getOperand(0).getValueType() == MVT::f16) {
+    SDLoc dl(Op);
+    return DAG.getNode(
+        Op.getOpcode(), dl, Op.getValueType(),
+        DAG.getNode(ISD::FP_EXTEND, dl, MVT::f32, Op.getOperand(0)));
+  }
+
   if (Op.getOperand(0).getValueType() != MVT::f128) {
     // It's legal except when f128 is involved
     return Op;
@@ -1606,6 +1639,15 @@ SDValue AArch64TargetLowering::LowerINT_TO_FP(SDValue Op,
                                             SelectionDAG &DAG) const {
   if (Op.getValueType().isVector())
     return LowerVectorINT_TO_FP(Op, DAG);
+
+  // f16 conversions are promoted to f32.
+  if (Op.getValueType() == MVT::f16) {
+    SDLoc dl(Op);
+    return DAG.getNode(
+        ISD::FP_ROUND, dl, MVT::f16,
+        DAG.getNode(Op.getOpcode(), dl, MVT::f32, Op.getOperand(0)),
+        DAG.getIntPtrConstant(0));
+  }
 
   // i128 conversions are libcalls.
   if (Op.getOperand(0).getValueType() == MVT::i128)

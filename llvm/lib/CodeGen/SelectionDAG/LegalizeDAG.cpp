@@ -4033,6 +4033,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
       Node->getOpcode() == ISD::SETCC) {
     OVT = Node->getOperand(0).getSimpleValueType();
   }
+  if (Node->getOpcode() == ISD::BR_CC)
+    OVT = Node->getOperand(2).getSimpleValueType();
   MVT NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
   SDLoc dl(Node);
   SDValue Tmp1, Tmp2, Tmp3;
@@ -4188,11 +4190,28 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
                                   Tmp1, Tmp2, Node->getOperand(2)));
     break;
   }
+  case ISD::BR_CC: {
+    unsigned ExtOp = ISD::FP_EXTEND;
+    if (NVT.isInteger()) {
+      ISD::CondCode CCCode =
+        cast<CondCodeSDNode>(Node->getOperand(1))->get();
+      ExtOp = isSignedIntSetCC(CCCode) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+    }
+    Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(2));
+    Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(3));
+    Results.push_back(DAG.getNode(ISD::BR_CC, dl, Node->getValueType(0),
+                                  Node->getOperand(0), Node->getOperand(1),
+                                  Tmp1, Tmp2, Node->getOperand(4)));
+    break;
+  }
   case ISD::FADD:
   case ISD::FSUB:
   case ISD::FMUL:
   case ISD::FDIV:
   case ISD::FREM:
+  case ISD::FMINNUM:
+  case ISD::FMAXNUM:
+  case ISD::FCOPYSIGN:
   case ISD::FPOW: {
     Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(0));
     Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(1));
@@ -4201,10 +4220,40 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
                                   Tmp3, DAG.getIntPtrConstant(0)));
     break;
   }
-  case ISD::FLOG2:
-  case ISD::FEXP2:
+  case ISD::FMA: {
+    Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(0));
+    Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(1));
+    Tmp3 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(2));
+    Results.push_back(
+        DAG.getNode(ISD::FP_ROUND, dl, OVT,
+                    DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1, Tmp2, Tmp3),
+                    DAG.getIntPtrConstant(0)));
+    break;
+  }
+  case ISD::FPOWI: {
+    Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(0));
+    Tmp2 = Node->getOperand(1);
+    Tmp3 = DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1, Tmp2);
+    Results.push_back(DAG.getNode(ISD::FP_ROUND, dl, OVT,
+                                  Tmp3, DAG.getIntPtrConstant(0)));
+    break;
+  }
+  case ISD::FFLOOR:
+  case ISD::FCEIL:
+  case ISD::FRINT:
+  case ISD::FNEARBYINT:
+  case ISD::FROUND:
+  case ISD::FTRUNC:
+  case ISD::FNEG:
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS:
   case ISD::FLOG:
-  case ISD::FEXP: {
+  case ISD::FLOG2:
+  case ISD::FLOG10:
+  case ISD::FABS:
+  case ISD::FEXP:
+  case ISD::FEXP2: {
     Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(0));
     Tmp2 = DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1);
     Results.push_back(DAG.getNode(ISD::FP_ROUND, dl, OVT,
