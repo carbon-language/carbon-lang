@@ -326,6 +326,10 @@ public:
   bool armTarget1Rel() const { return _armTarget1Rel; }
   void setArmTarget1Rel(bool value) { _armTarget1Rel = value; }
 
+  // Set R_MIPS_EH relocation behaviour.
+  bool mipsPcRelEhRel() const { return _mipsPcRelEhRel; }
+  void setMipsPcRelEhRel(bool value) { _mipsPcRelEhRel = value; }
+
   /// Each time a reader reads a new file, this member function is called
   /// with the file's ELF magics. This is supposed to "merge" all attributes
   /// to generate output ELF file magic. This can also reject input files
@@ -361,6 +365,7 @@ protected:
   bool _enableNewDtags = false;
   bool _collectStats = false;
   bool _armTarget1Rel = false;
+  bool _mipsPcRelEhRel = false;
   uint64_t _maxPageSize = 0x1000;
 
   OutputMagic _outputMagic;

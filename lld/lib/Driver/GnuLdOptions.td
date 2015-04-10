@@ -329,6 +329,15 @@ def arm_target1_abs : Flag<["--"], "arm-target1-abs">,
      Group<grp_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_ABS32">;
 
 //===----------------------------------------------------------------------===//
+/// MIPS Target Specific Options
+//===----------------------------------------------------------------------===//
+def grp_mips_targetopts : OptionGroup<"MIPS SPECIFIC OPTIONS">,
+     Group<grp_targetopts>;
+def pcrel_eh_reloc : Flag<["-", "--"], "pcrel-eh-reloc">,
+     Group<grp_mips_targetopts>,
+     HelpText<"Interpret R_MIPS_EH as R_MIPS_PC32">;
+
+//===----------------------------------------------------------------------===//
 /// Ignored options
 //===----------------------------------------------------------------------===//
 def grp_ignored: OptionGroup<"ignored">,

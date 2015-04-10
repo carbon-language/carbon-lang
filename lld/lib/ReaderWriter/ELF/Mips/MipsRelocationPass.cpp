@@ -599,6 +599,9 @@ void RelocationPass<ELFT>::collectReferenceInfo(
     return;
 
   auto refKind = ref.kindValue();
+  if (refKind == R_MIPS_EH && this->_ctx.mipsPcRelEhRel())
+    ref.setKindValue(R_MIPS_PC32);
+
   if (!isConstrainSym(atom, refKind))
     return;
 

@@ -557,6 +557,19 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
          << "--arm-target1-abs\n";
   }
 
+  // Process MIPS specific options.
+  if (triple.getArch() == llvm::Triple::mips ||
+      triple.getArch() == llvm::Triple::mipsel ||
+      triple.getArch() == llvm::Triple::mips64 ||
+      triple.getArch() == llvm::Triple::mips64el)
+    ctx->setMipsPcRelEhRel(parsedArgs->hasArg(OPT_pcrel_eh_reloc));
+  else {
+    for (const auto *arg : parsedArgs->filtered(OPT_grp_mips_targetopts)) {
+      diag << "warning: ignoring unsupported MIPS specific argument: "
+           << arg->getSpelling() << "\n";
+    }
+  }
+
   for (auto *arg : parsedArgs->filtered(OPT_L))
     ctx->addSearchPath(arg->getValue());
 
