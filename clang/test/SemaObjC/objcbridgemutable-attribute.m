@@ -23,7 +23,8 @@ void Test(NSMutableDictionary *md, NSDictionary *nd, CFMutableDictionaryRef mcf,
 
   (void) (CFMutableDictionaryRef)md;
   (void) (CFMutableDictionaryRef)nd; // expected-warning {{'NSDictionary' cannot bridge to 'CFMutableDictionaryRef' (aka 'struct __CFDictionary *')}}
-  (void) (NSDictionary *)mcf;  // expected-warning {{'CFMutableDictionaryRef' (aka 'struct __CFDictionary *') bridges to NSMutableDictionary, not 'NSDictionary'}}
+  (void) (NSDictionary *)mcf; // ok, bridgt_type NSMutableDictionary can be type-cast to its super class.
+  NSDictionary *nsdobj = (NSMutableDictionary*)0;
   (void) (NSMutableDictionary *)mcf; // ok;
   (void) (NSMutableDictionary *)bmcf; // expected-error {{CF object of type 'CFMutableDictionaryB2Ref' (aka 'struct __CFDictionaryB2 *') is bridged to 'P', which is not an Objective-C class}}
   

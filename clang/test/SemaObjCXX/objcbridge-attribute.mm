@@ -62,7 +62,8 @@ void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2
                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka '__CFErrorRef *') into ARC}}
   (void)(MyError*)cf; // expected-error {{cast of C pointer type 'CFErrorRef2' (aka '__CFErrorRef *') to Objective-C pointer type 'MyError *' requires a bridged cast}} \
                         // expected-note {{__bridge to convert directly (no change in ownership)}} \
-                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka '__CFErrorRef *') into ARC}}
+                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka '__CFErrorRef *') into ARC}} \
+			// expected-warning {{'CFErrorRef2' (aka '__CFErrorRef *') bridges to NSError, not 'MyError'}}
   (void)(NSUColor *)cf2; // expected-error {{cast of C pointer type 'CFUColor2Ref' (aka '__CFUPrimeColor *') to Objective-C pointer type 'NSUColor *' requires a bridged cast}} \
                          // expected-note {{use __bridge to convert directly (no change in ownership)}} \
                          // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFUColor2Ref' (aka '__CFUPrimeColor *') into ARC}}
@@ -201,7 +202,7 @@ void Test8(CFMyPersonalErrorRef cf) {
 void Test9(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2) {
   (void)(__bridge NSString *)cf; // expected-warning {{'CFErrorRef2' (aka '__CFErrorRef *') bridges to NSError, not 'NSString'}}
   (void)(__bridge NSError *)cf; // okay
-  (void)(__bridge MyError*)cf; // okay,
+  (void)(__bridge MyError*)cf; // expected-warning {{'CFErrorRef2' (aka '__CFErrorRef *') bridges to NSError, not 'MyError'}} 
   (void)(__bridge NSUColor *)cf2; // okay
   (void)(__bridge CFErrorRef)ns; // okay
   (void)(__bridge CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka '__CFErrorRef *')}}

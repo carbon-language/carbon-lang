@@ -3357,7 +3357,7 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr,
               ObjCInterfaceDecl *CastClass
                 = InterfacePointerType->getObjectType()->getInterface();
               if ((CastClass == ExprClass) ||
-                  (CastClass && ExprClass->isSuperClassOf(CastClass)))
+                  (CastClass && CastClass->isSuperClassOf(ExprClass)))
                 return true;
               if (warn)
                 S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)

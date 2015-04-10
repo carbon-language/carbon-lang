@@ -62,7 +62,8 @@ void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2
                        // expected-note {{use __bridge_transfer with C-style cast to transfer ownership of a +1 'CFErrorRef2' (aka '__CFErrorRef *') into ARC}}
   (void)static_cast<MyError*>(cf); // expected-error {{cast of C pointer type 'CFErrorRef2' (aka '__CFErrorRef *') to Objective-C pointer type 'MyError *' requires a bridged cast}} \
                         // expected-note {{use __bridge with C-style cast to convert directly (no change in ownership)}} \
-                        // expected-note {{use __bridge_transfer with C-style cast to transfer ownership of a +1 'CFErrorRef2' (aka '__CFErrorRef *') into ARC}}
+                        // expected-note {{use __bridge_transfer with C-style cast to transfer ownership of a +1 'CFErrorRef2' (aka '__CFErrorRef *') into ARC}} \
+			// expected-warning {{'CFErrorRef2' (aka '__CFErrorRef *') bridges to NSError, not 'MyError'}}
   (void)static_cast<NSUColor *>(cf2); // expected-error {{cast of C pointer type 'CFUColor2Ref' (aka '__CFUPrimeColor *') to Objective-C pointer type 'NSUColor *' requires a bridged cast}} \
                          // expected-note {{use __bridge with C-style cast to convert directly (no change in ownership)}} \
                          // expected-note {{use __bridge_transfer with C-style cast to transfer ownership of a +1 'CFUColor2Ref' (aka '__CFUPrimeColor *') into ARC}}

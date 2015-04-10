@@ -73,7 +73,7 @@ typedef CFErrorRef1 CFErrorRef2; // expected-note {{declared here}}
 void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2) {
   (void)(NSString *)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'NSString'}}
   (void)(NSError *)cf; // okay
-  (void)(MyError*)cf; // okay,
+  (void)(MyError*)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'MyError'}} 
   (void)(NSUColor *)cf2; // okay
   (void)(CFErrorRef)ns; // okay
   (void)(CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
@@ -140,4 +140,15 @@ CFDictionaryRef bar() __attribute__((cf_returns_not_retained));
 
 void Test9() {
   NSNumber *w2 = (NSNumber*) bar(); // expected-error {{CF object of type 'CFDictionaryRef' (aka 'struct __CFDictionary *') is bridged to 'NSDictionary', which is not an Objective-C class}}
+}
+
+// rdar://18311183
+@interface NSObject @end
+
+@interface NSFont : NSObject @end
+
+typedef struct __attribute__ ((objc_bridge(NSFont))) __CFFontRef * CFFontRef;
+
+void Test10(CFFontRef cf) {
+  (void)(__bridge NSObject *)cf;
 }
