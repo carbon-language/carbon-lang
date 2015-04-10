@@ -60,7 +60,12 @@ include "AArch64SchedA57WriteRes.td"
 // Cortex-A57. The Cortex-A57 types are directly associated with resources, so
 // defining the aliases precludes the need for mapping them using WriteRes. The
 // aliases are sufficient for creating a coarse, working model. As the model
-// evolves, InstRWs will be used to override these SchedAliases.
+// evolves, InstRWs will be used to override some of these SchedAliases.
+//
+// WARNING: Using SchedAliases is convenient and works well for latency and
+//          resource lookup for instructions. However, this creates an entry in
+//          AArch64WriteLatencyTable with a WriteResourceID of 0, breaking
+//          any SchedReadAdvance since the lookup will fail.
 
 def : SchedAlias<WriteImm,   A57Write_1cyc_1I>;
 def : SchedAlias<WriteI,     A57Write_1cyc_1I>;
@@ -70,8 +75,8 @@ def : SchedAlias<WriteExtr,  A57Write_1cyc_1I>;
 def : SchedAlias<WriteIS,    A57Write_1cyc_1I>;
 def : SchedAlias<WriteID32,  A57Write_19cyc_1M>;
 def : SchedAlias<WriteID64,  A57Write_35cyc_1M>;
-def : SchedAlias<WriteIM32,  A57Write_3cyc_1M>;
-def : SchedAlias<WriteIM64,  A57Write_5cyc_1M>;
+def : WriteRes<WriteIM32, [A57UnitM]> { let Latency = 3; }
+def : WriteRes<WriteIM64, [A57UnitM]> { let Latency = 5; }
 def : SchedAlias<WriteBr,    A57Write_1cyc_1B>;
 def : SchedAlias<WriteBrReg, A57Write_1cyc_1B>;
 def : SchedAlias<WriteLD,    A57Write_4cyc_1L>;
