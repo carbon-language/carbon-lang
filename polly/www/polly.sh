@@ -28,11 +28,11 @@ mkdir -p ${LLVM_BUILD}
 cd ${LLVM_BUILD}
 
 if which cmake ; then
-    cmake -DCMAKE_PREFIX_PATH=${ISL_INSTALL} ${LLVM_SRC}
+    cmake ${LLVM_SRC}
     make -j$procs -l$procs
     make check-polly
 else
-    ${LLVM_SRC}/configure --with-isl=${ISL_INSTALL}
+    ${LLVM_SRC}/configure
     make -j$procs -l$procs
     make check-polly -C tools/polly/test/
 fi
