@@ -26,8 +26,6 @@ lld is a new set of modular code for creating linker tools.
 
   * Extensive unit tests
   * Internal linker model can be dumped/read to textual format
-  * Internal linker model can be dumped/read to a new native format
-  * Native format designed to be fast to read and write
   * Additional linking features can be plugged in as "passes"
   * OS specific and CPU specific code factored out
 

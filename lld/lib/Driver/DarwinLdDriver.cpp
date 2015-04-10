@@ -544,7 +544,6 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (!ctx.doNothing()) {
     ctx.registry().addSupportMachOObjects(ctx);
     ctx.registry().addSupportArchives(ctx.logInputFiles());
-    ctx.registry().addSupportNativeObjects();
     ctx.registry().addSupportYamlFiles();
   }
 

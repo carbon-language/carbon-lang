@@ -19,22 +19,6 @@
 
 namespace lld {
 
-const std::error_category &native_reader_category();
-
-enum class NativeReaderError {
-  success = 0,
-  unknown_file_format,
-  file_too_short,
-  file_malformed,
-  unknown_chunk_type,
-  memory_error,
-  conflicting_target_machine,
-};
-
-inline std::error_code make_error_code(NativeReaderError e) {
-  return std::error_code(static_cast<int>(e), native_reader_category());
-}
-
 const std::error_category &YamlReaderCategory();
 
 enum class YamlReaderError {
@@ -72,8 +56,6 @@ std::error_code make_dynamic_error_code(const Twine &msg);
 } // end namespace lld
 
 namespace std {
-template <>
-struct is_error_code_enum<lld::NativeReaderError> : std::true_type {};
 template <> struct is_error_code_enum<lld::YamlReaderError> : std::true_type {};
 template <>
 struct is_error_code_enum<lld::LinkerScriptReaderError> : std::true_type {};

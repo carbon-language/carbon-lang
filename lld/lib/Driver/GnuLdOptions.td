@@ -313,7 +313,7 @@ def stats : Flag<["--"], "stats">,
 def grp_extns : OptionGroup<"opts">,
      HelpText<"Extensions">;
 def output_filetype: Separate<["--"], "output-filetype">,
-      HelpText<"Specify what type of output file that lld creates, YAML/Native">,
+      HelpText<"Specify yaml to create an output in YAML format">,
       Group<grp_extns>;
 def alias_output_filetype: Joined<["--"], "output-filetype=">,
       Alias<output_filetype>;

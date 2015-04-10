@@ -312,11 +312,10 @@ std::error_code FileCOFF::doParse() {
 
   if (getMachineType() != llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN &&
       getMachineType() != _ctx.getMachineType()) {
-    llvm::errs() << "module machine type '"
-                 << getMachineName(getMachineType())
-                 << "' conflicts with target machine type '"
-                 << getMachineName(_ctx.getMachineType()) << "'\n";
-    return NativeReaderError::conflicting_target_machine;
+    return make_dynamic_error_code(Twine("module machine type '") +
+                                   getMachineName(getMachineType()) +
+                                   "' conflicts with target machine type '" +
+                                   getMachineName(_ctx.getMachineType()) + "'");
   }
 
   if (std::error_code ec = getReferenceArch(_referenceArch))

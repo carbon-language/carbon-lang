@@ -75,9 +75,6 @@ bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   case LinkingContext::OutputFileType::YAML:
     _writer = createWriterYAML(*this);
     break;
-  case LinkingContext::OutputFileType::Native:
-    llvm_unreachable("Unimplemented");
-    break;
   default:
     _writer = createWriterELF(*this);
     break;

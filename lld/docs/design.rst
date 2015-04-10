@@ -300,59 +300,12 @@ and the ivars programmatically set.
 lld::File representations
 -------------------------
 
-Just as LLVM has three representations of its IR model, lld has three
+Just as LLVM has three representations of its IR model, lld has two
 representations of its File/Atom/Reference model:
 
  * In memory, abstract C++ classes (lld::Atom, lld::Reference, and lld::File).
 
  * textual (in YAML)
-
- * binary format ("native")
-
-Binary File Format
-~~~~~~~~~~~~~~~~~~
-
-In theory, lld::File objects could be written to disk in an existing Object File
-format standard (e.g. ELF).  Instead we choose to define a new binary file
-format. There are two main reasons for this: fidelity and performance.  In order
-for lld to work as a linker on all platforms, its internal model must be rich
-enough to model all CPU and OS linking features.  But if we choose an existing
-Object File format as the lld binary format, that means an on going need to
-retrofit each platform specific feature needed from alternate platforms into the
-existing Object File format.  Having our own "native" binary format side steps
-that issue.  We still need to be able to binary encode all the features, but
-once the in-memory model can represent the feature, it is straight forward to
-binary encode it.
-
-The reason to use a binary file format at all, instead of a textual file format,
-is speed.  You want the binary format to be as fast as possible to read into the
-in-memory model. Given that we control the in-memory model and the binary
-format, the obvious way to make reading super fast it to make the file format be
-basically just an array of atoms.  The reader just mmaps in the file and looks
-at the header to see how many atoms there are and instantiate that many atom
-objects with the atom attribute information coming from that array.  The trick
-is designing this in a way that can be extended as the Atom mode evolves and new
-attributes are added.
-
-The native object file format starts with a header that lists how many "chunks"
-are in the file.  A chunk is an array of "ivar data".  The native file reader
-instantiates an array of Atom objects (with one large malloc call).  Each atom
-contains just a pointer to its vtable and a pointer to its ivar data.  All
-methods on lld::Atom are virtual, so all the method implementations return
-values based on the ivar data to which it has a pointer.  If a new linking
-features is added which requires a change to the lld::Atom model, a new native
-reader class (e.g. version 2) is defined which knows how to read the new feature
-information from the new ivar data.  The old reader class (e.g. version 1) is
-updated to do its best to model (the lack of the new feature) given the old ivar
-data in existing native object files.
-
-With this model for the native file format, files can be read and turned
-into the in-memory graph of lld::Atoms with just a few memory allocations.
-And the format can easily adapt over time to new features.
-
-The binary file format follows the ReaderWriter patterns used in lld. The lld
-library comes with the classes: ReaderNative and WriterNative.  So, switching
-between file formats is as easy as switching which Reader subclass is used.
 
 
 Textual representations in YAML

@@ -77,7 +77,6 @@ bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
   CoreLinkingContext ctx;
 
   // Register possible input file parsers.
-  ctx.registry().addSupportNativeObjects();
   ctx.registry().addSupportYamlFiles();
   ctx.registry().addKindTable(Reference::KindNamespace::testing,
                               Reference::KindArch::all, coreKindStrings);

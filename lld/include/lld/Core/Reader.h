@@ -36,7 +36,7 @@ class MachOLinkingContext;
 /// \brief An abstract class for reading object files, library files, and
 /// executable files.
 ///
-/// Each file format (e.g. ELF, mach-o, PECOFF, native, etc) have a concrete
+/// Each file format (e.g. ELF, mach-o, PECOFF, etc) have a concrete
 /// subclass of Reader.
 class Reader {
 public:
@@ -115,7 +115,6 @@ public:
   // as parameters to the addSupport*() method.
   void addSupportArchives(bool logLoading);
   void addSupportYamlFiles();
-  void addSupportNativeObjects();
   void addSupportCOFFObjects(PECOFFLinkingContext &);
   void addSupportCOFFImportLibraries(PECOFFLinkingContext &);
   void addSupportMachOObjects(MachOLinkingContext &);

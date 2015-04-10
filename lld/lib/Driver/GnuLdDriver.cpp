@@ -645,7 +645,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   ctx->registry().addSupportELFObjects(*ctx);
   ctx->registry().addSupportArchives(ctx->logInputFiles());
   ctx->registry().addSupportYamlFiles();
-  ctx->registry().addSupportNativeObjects();
   if (ctx->allowLinkWithDynamicLibraries())
     ctx->registry().addSupportELFDynamicSharedObjects(*ctx);
 
@@ -751,9 +750,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     switch (ctx->outputFileType()) {
     case LinkingContext::OutputFileType::YAML:
       ctx->setOutputPath("-");
-      break;
-    case LinkingContext::OutputFileType::Native:
-      ctx->setOutputPath("a.native");
       break;
     default:
       ctx->setOutputPath("a.out");

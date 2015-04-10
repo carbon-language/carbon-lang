@@ -52,10 +52,9 @@ Where to start
 --------------
 
 The lld project already has a skeleton of source code for Readers for
-``ELF``, ``PECOFF``, ``MachO``, and lld's native Atom graph format
-(both binary ``Native`` and ``YAML`` representations).  If your file format
-is a variant of one of those, you should modify the existing Reader to
-support your variant. This is done by customizing the Options
+``ELF``, ``PECOFF``, ``MachO``, and lld's native ``YAML`` graph format.
+If your file format is a variant of one of those, you should modify the
+existing Reader to support your variant. This is done by customizing the Options
 class for the Reader and making appropriate changes to the ``.cpp`` file to
 interpret those options and act accordingly.
 

@@ -41,7 +41,6 @@ public:
   enum class OutputFileType : uint8_t {
     Default, // The default output type for this target
     YAML,    // The output type is set to YAML
-    Native   // The output file format is Native (Atoms)
   };
 
   virtual ~LinkingContext();
@@ -273,13 +272,11 @@ public:
   /// Set the various output file types that the linker would
   /// create
   bool setOutputFileType(StringRef outputFileType) {
-    if (outputFileType.equals_lower("yaml"))
+    if (outputFileType.equals_lower("yaml")) {
       _outputFileType = OutputFileType::YAML;
-    else if (outputFileType.equals_lower("native"))
-      _outputFileType = OutputFileType::YAML;
-    else
-      return false;
-    return true;
+      return true;
+    }
+    return false;
   }
 
   /// Returns the output file type that that the linker needs to create.
