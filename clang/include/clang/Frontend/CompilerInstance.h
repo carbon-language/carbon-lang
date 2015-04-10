@@ -151,11 +151,11 @@ class CompilerInstance : public ModuleLoader {
   struct OutputFile {
     std::string Filename;
     std::string TempFilename;
-    raw_ostream *OS;
+    std::unique_ptr<raw_ostream> OS;
 
     OutputFile(const std::string &filename, const std::string &tempFilename,
-               raw_ostream *os)
-      : Filename(filename), TempFilename(tempFilename), OS(os) { }
+               std::unique_ptr<raw_ostream> OS)
+        : Filename(filename), TempFilename(tempFilename), OS(std::move(OS)) {}
   };
 
   /// The list of active output files.
@@ -518,7 +518,7 @@ public:
   /// addOutputFile - Add an output file onto the list of tracked output files.
   ///
   /// \param OutFile - The output file info.
-  void addOutputFile(const OutputFile &OutFile);
+  void addOutputFile(OutputFile &&OutFile);
 
   /// clearOutputFiles - Clear the output file list, destroying the contained
   /// output streams.
