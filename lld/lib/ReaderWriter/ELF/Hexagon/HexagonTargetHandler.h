@@ -82,17 +82,18 @@ public:
   Section<ELFT> *getSDataSection() const { return _sdataSection; }
 
   uint64_t getGOTSymAddr() {
-    if (!_gotSymAtom.hasValue())
-      _gotSymAtom = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-    if (*_gotSymAtom)
-      return (*_gotSymAtom)->_virtualAddr;
-    return 0;
+    std::call_once(_gotOnce, [this]() {
+      if (AtomLayout *got = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_"))
+        _gotAddr = got->_virtualAddr;
+    });
+    return _gotAddr;
   }
 
 private:
   llvm::BumpPtrAllocator _alloc;
   SDataSection<ELFT> *_sdataSection = nullptr;
-  llvm::Optional<AtomLayout *> _gotSymAtom;
+  uint64_t _gotAddr = 0;
+  std::once_flag _gotOnce;
 };
 
 /// \brief TargetHandler for Hexagon
