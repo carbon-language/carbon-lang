@@ -11,6 +11,7 @@ add_clang_library(clangTidyReadabilityModule
   RedundantStringCStrCheck.cpp
   RedundantSmartptrGetCheck.cpp
   ShrinkToFitCheck.cpp
+  SimplifyBooleanExprCheck.cpp
 
   LINK_LIBS
   clangAST
