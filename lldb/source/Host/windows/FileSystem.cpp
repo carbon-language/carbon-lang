@@ -12,6 +12,7 @@
 #include <shellapi.h>
 
 #include "lldb/Host/FileSystem.h"
+#include "llvm/Support/FileSystem.h"
 
 using namespace lldb_private;
 
@@ -27,8 +28,12 @@ FileSystem::MakeDirectory(const char *path, uint32_t file_permissions)
     // On Win32, the mode parameter is ignored, as Windows files and directories support a
     // different permission model than POSIX.
     Error error;
-    if (!::CreateDirectory(path, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
-        error.SetError(::GetLastError(), lldb::eErrorTypeWin32);
+    const auto err_code = llvm::sys::fs::create_directories(path, true);
+    if (err_code)
+    {
+        error.SetErrorString(err_code.message().c_str());
+    }
+
     return error;
 }
 
