@@ -49,16 +49,17 @@ public:
 
   /// \brief Get '_gp' symbol atom layout.
   AtomLayout *getGP() {
-    if (!_gpAtom.hasValue())
-      _gpAtom = this->findAbsoluteAtom("_gp");
-    return *_gpAtom;
+    std::call_once(_gpOnce,
+                   [this]() { _gpAtom = this->findAbsoluteAtom("_gp"); });
+    return _gpAtom;
   }
 
   /// \brief Get '_gp_disp' symbol atom layout.
   AtomLayout *getGPDisp() {
-    if (!_gpDispAtom.hasValue())
+    std::call_once(_gpDispOnce, [this]() {
       _gpDispAtom = this->findAbsoluteAtom("_gp_disp");
-    return *_gpDispAtom;
+    });
+    return _gpDispAtom;
   }
 
   /// \brief Return the section order for a input section
@@ -82,8 +83,10 @@ protected:
 private:
   MipsGOTSection<ELFT> *_gotSection;
   MipsPLTSection<ELFT> *_pltSection;
-  llvm::Optional<AtomLayout *> _gpAtom;
-  llvm::Optional<AtomLayout *> _gpDispAtom;
+  AtomLayout *_gpAtom = nullptr;
+  AtomLayout *_gpDispAtom = nullptr;
+  std::once_flag _gpOnce;
+  std::once_flag _gpDispOnce;
 };
 
 /// \brief TargetHandler for Mips
