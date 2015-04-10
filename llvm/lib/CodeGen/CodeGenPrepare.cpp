@@ -747,13 +747,60 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   return SinkCast(CI);
 }
 
-/// OptimizeCmpExpression - sink the given CmpInst into user blocks to reduce
+/// CombineUAddWithOverflow - try to combine CI into a call to the
+/// llvm.uadd.with.overflow intrinsic if possible.
+///
+/// Return true if any changes were made.
+static bool CombineUAddWithOverflow(CmpInst *CI) {
+  Value *A, *B;
+  Instruction *AddI;
+  if (!match(CI,
+             m_UAddWithOverflow(m_Value(A), m_Value(B), m_Instruction(AddI))))
+    return false;
+
+  Type *Ty = AddI->getType();
+  if (!isa<IntegerType>(Ty))
+    return false;
+
+  // We don't want to move around uses of condition values this late, so we we
+  // check if it is legal to create the call to the intrinsic in the basic
+  // block containing the icmp:
+
+  if (AddI->getParent() != CI->getParent() && !AddI->hasOneUse())
+    return false;
+
+#ifndef NDEBUG
+  // Someday m_UAddWithOverflow may get smarter, but this is a safe assumption
+  // for now:
+  if (AddI->hasOneUse())
+    assert(*AddI->user_begin() == CI && "expected!");
+#endif
+
+  Module *M = CI->getParent()->getParent()->getParent();
+  Value *F = Intrinsic::getDeclaration(M, Intrinsic::uadd_with_overflow, Ty);
+
+  auto *InsertPt = AddI->hasOneUse() ? CI : AddI;
+
+  auto *UAddWithOverflow =
+      CallInst::Create(F, {A, B}, "uadd.overflow", InsertPt);
+  auto *UAdd = ExtractValueInst::Create(UAddWithOverflow, 0, "uadd", InsertPt);
+  auto *Overflow =
+      ExtractValueInst::Create(UAddWithOverflow, 1, "overflow", InsertPt);
+
+  CI->replaceAllUsesWith(Overflow);
+  AddI->replaceAllUsesWith(UAdd);
+  CI->eraseFromParent();
+  AddI->eraseFromParent();
+  return true;
+}
+
+/// SinkCmpExpression - Sink the given CmpInst into user blocks to reduce
 /// the number of virtual registers that must be created and coalesced.  This is
 /// a clear win except on targets with multiple condition code registers
 ///  (PowerPC), where it might lose; some adjustment may be wanted there.
 ///
 /// Return true if any changes are made.
-static bool OptimizeCmpExpression(CmpInst *CI) {
+static bool SinkCmpExpression(CmpInst *CI) {
   BasicBlock *DefBB = CI->getParent();
 
   /// InsertedCmp - Only insert a cmp in each block once.
@@ -800,6 +847,16 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
     CI->eraseFromParent();
 
   return MadeChange;
+}
+
+static bool OptimizeCmpExpression(CmpInst *CI) {
+  if (SinkCmpExpression(CI))
+    return true;
+
+  if (CombineUAddWithOverflow(CI))
+    return true;
+
+  return false;
 }
 
 /// isExtractBitsCandidateUse - Check if the candidates could

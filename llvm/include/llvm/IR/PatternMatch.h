@@ -295,6 +295,9 @@ template <typename Class> struct bind_ty {
 /// \brief Match a value, capturing it if we match.
 inline bind_ty<Value> m_Value(Value *&V) { return V; }
 
+/// \brief Match an instruction, capturing it if we match.
+inline bind_ty<Instruction> m_Instruction(Instruction *&I) { return I; }
+
 /// \brief Match a binary operator, capturing it if we match.
 inline bind_ty<BinaryOperator> m_BinOp(BinaryOperator *&I) { return I; }
 
@@ -1101,6 +1104,52 @@ template <typename LHS, typename RHS>
 inline MaxMin_match<FCmpInst, LHS, RHS, ufmax_pred_ty>
 m_UnordFMax(const LHS &L, const RHS &R) {
   return MaxMin_match<FCmpInst, LHS, RHS, ufmax_pred_ty>(L, R);
+}
+
+//===----------------------------------------------------------------------===//
+// Matchers for overflow check patterns: e.g. (a + b) u< a
+//
+
+template <typename LHS_t, typename RHS_t, typename Sum_t>
+struct UAddWithOverflow_match {
+  LHS_t L;
+  RHS_t R;
+  Sum_t S;
+
+  UAddWithOverflow_match(const LHS_t &L, const RHS_t &R, const Sum_t &S)
+      : L(L), R(R), S(S) {}
+
+  template <typename OpTy> bool match(OpTy *V) {
+    Value *ICmpLHS, *ICmpRHS;
+    ICmpInst::Predicate Pred;
+    if (!m_ICmp(Pred, m_Value(ICmpLHS), m_Value(ICmpRHS)).match(V))
+      return false;
+
+    Value *AddLHS, *AddRHS;
+    auto AddExpr = m_Add(m_Value(AddLHS), m_Value(AddRHS));
+
+    // (a + b) u< a, (a + b) u< b
+    if (Pred == ICmpInst::ICMP_ULT)
+      if (AddExpr.match(ICmpLHS) && (ICmpRHS == AddLHS || ICmpRHS == AddRHS))
+        return L.match(AddLHS) && R.match(AddRHS) && S.match(ICmpLHS);
+
+    // a >u (a + b), b >u (a + b)
+    if (Pred == ICmpInst::ICMP_UGT)
+      if (AddExpr.match(ICmpRHS) && (ICmpLHS == AddLHS || ICmpLHS == AddRHS))
+        return L.match(AddLHS) && R.match(AddRHS) && S.match(ICmpRHS);
+
+    return false;
+  }
+};
+
+/// \brief Match an icmp instruction checking for unsigned overflow on addition.
+///
+/// S is matched to the addition whose result is being checked for overflow, and
+/// L and R are matched to the LHS and RHS of S.
+template <typename LHS_t, typename RHS_t, typename Sum_t>
+UAddWithOverflow_match<LHS_t, RHS_t, Sum_t>
+m_UAddWithOverflow(const LHS_t &L, const RHS_t &R, const Sum_t &S) {
+  return UAddWithOverflow_match<LHS_t, RHS_t, Sum_t>(L, R, S);
 }
 
 /// \brief Match an 'unordered' floating point minimum function.

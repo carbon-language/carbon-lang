@@ -2109,35 +2109,6 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   return ExtractValueInst::Create(Call, 1, "sadd.overflow");
 }
 
-static Instruction *ProcessUAddIdiom(Instruction &I, Value *OrigAddV,
-                                     InstCombiner &IC) {
-  // Don't bother doing this transformation for pointers, don't do it for
-  // vectors.
-  if (!isa<IntegerType>(OrigAddV->getType())) return nullptr;
-
-  // If the add is a constant expr, then we don't bother transforming it.
-  Instruction *OrigAdd = dyn_cast<Instruction>(OrigAddV);
-  if (!OrigAdd) return nullptr;
-
-  Value *LHS = OrigAdd->getOperand(0), *RHS = OrigAdd->getOperand(1);
-
-  // Put the new code above the original add, in case there are any uses of the
-  // add between the add and the compare.
-  InstCombiner::BuilderTy *Builder = IC.Builder;
-  Builder->SetInsertPoint(OrigAdd);
-
-  Module *M = I.getParent()->getParent()->getParent();
-  Type *Ty = LHS->getType();
-  Value *F = Intrinsic::getDeclaration(M, Intrinsic::uadd_with_overflow, Ty);
-  CallInst *Call = Builder->CreateCall2(F, LHS, RHS, "uadd");
-  Value *Add = Builder->CreateExtractValue(Call, 0);
-
-  IC.ReplaceInstUsesWith(*OrigAdd, Add);
-
-  // The original icmp gets replaced with the overflow value.
-  return ExtractValueInst::Create(Call, 1, "uadd.overflow");
-}
-
 bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
                                          Value *RHS, Instruction &OrigI,
                                          Value *&Result, Constant *&Overflow) {
@@ -3539,21 +3510,18 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(I.getPredicate(), ConstantExpr::getNot(RHSC), A);
     }
 
-    // (a+b) <u a  --> llvm.uadd.with.overflow.
-    // (a+b) <u b  --> llvm.uadd.with.overflow.
-    if (I.getPredicate() == ICmpInst::ICMP_ULT &&
-        match(Op0, m_Add(m_Value(A), m_Value(B))) &&
-        (Op1 == A || Op1 == B))
-      if (Instruction *R = ProcessUAddIdiom(I, Op0, *this))
-        return R;
-
-    // a >u (a+b)  --> llvm.uadd.with.overflow.
-    // b >u (a+b)  --> llvm.uadd.with.overflow.
-    if (I.getPredicate() == ICmpInst::ICMP_UGT &&
-        match(Op1, m_Add(m_Value(A), m_Value(B))) &&
-        (Op0 == A || Op0 == B))
-      if (Instruction *R = ProcessUAddIdiom(I, Op1, *this))
-        return R;
+    Instruction *AddI = nullptr;
+    if (match(&I, m_UAddWithOverflow(m_Value(A), m_Value(B),
+                                     m_Instruction(AddI))) &&
+        isa<IntegerType>(A->getType())) {
+      Value *Result;
+      Constant *Overflow;
+      if (OptimizeOverflowCheck(OCF_UNSIGNED_ADD, A, B, *AddI, Result,
+                                Overflow)) {
+        ReplaceInstUsesWith(*AddI, Result);
+        return ReplaceInstUsesWith(I, Overflow);
+      }
+    }
 
     // (zext a) * (zext b)  --> llvm.umul.with.overflow.
     if (match(Op0, m_Mul(m_ZExt(m_Value(A)), m_ZExt(m_Value(B))))) {
