@@ -11,13 +11,30 @@
 #include "HexagonRelocationFunctions.h"
 #include "HexagonRelocationHandler.h"
 #include "HexagonTargetHandler.h"
-#include "lld/ReaderWriter/RelocationHelperFunctions.h"
 #include "llvm/Support/Endian.h"
 
 using namespace lld;
 using namespace lld::elf;
 using namespace llvm::ELF;
 using namespace llvm::support::endian;
+
+// Scatter val's bits as specified by the mask. Example:
+//
+//  Val:    0bABCDEFG
+//  Mask:   0b10111100001011
+//  Output: 0b00ABCD0000E0FG
+static uint32_t scatterBits(uint32_t val, uint32_t mask) {
+  uint32_t result = 0;
+  size_t off = 0;
+  for (size_t bit = 0; bit < 32; ++bit) {
+    if ((mask >> bit) & 1) {
+      uint32_t valBit = (val >> off) & 1;
+      result |= valBit << bit;
+      ++off;
+    }
+  }
+  return result;
+}
 
 #define APPLY_RELOC(result)                                                    \
   write32le(location, result | read32le(location));
@@ -27,7 +44,7 @@ static int relocBNPCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
   int32_t result = (uint32_t)(((S + A) - P) >> 2);
   int32_t range = 1 << nBits;
   if (result < range && result > -range) {
-    result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+    result = scatterBits(result, findv4bitmask(location));
     APPLY_RELOC(result);
     return 0;
   }
@@ -37,7 +54,7 @@ static int relocBNPCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 /// \brief Word32_LO: 0x00c03fff : (S + A) : Truncate
 static int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
-  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
+  result = scatterBits(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
@@ -45,7 +62,7 @@ static int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
 static int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A) >> 16);
-  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
+  result = scatterBits(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
@@ -62,7 +79,7 @@ static int reloc32_6_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int64_t range = ((int64_t)1) << 32;
   if (result > range)
     return 1;
-  result = lld::scatterBits<int32_t>(result, 0xfff3fff);
+  result = scatterBits(result, 0xfff3fff);
   APPLY_RELOC(result);
   return 0;
 }
@@ -71,7 +88,7 @@ static int reloc32_6_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 static int relocHexB32PCRELX(uint8_t *location, uint64_t P, uint64_t S,
                              uint64_t A) {
   int64_t result = ((S + A - P) >> 6);
-  result = lld::scatterBits<int32_t>(result, 0xfff3fff);
+  result = scatterBits(result, 0xfff3fff);
   APPLY_RELOC(result);
   return 0;
 }
@@ -82,7 +99,7 @@ static int relocHexBNPCRELX(uint8_t *location, uint64_t P, uint64_t S,
   int32_t result = ((S + A - P) & 0x3f);
   int32_t range = 1 << nbits;
   if (result < range && result > -range) {
-    result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+    result = scatterBits(result, findv4bitmask(location));
     APPLY_RELOC(result);
     return 0;
   }
@@ -93,7 +110,7 @@ static int relocHexBNPCRELX(uint8_t *location, uint64_t P, uint64_t S,
 static int relocHex6PCRELX(uint8_t *location, uint64_t P, uint64_t S,
                            uint64_t A) {
   int32_t result = (S + A - P);
-  result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+  result = scatterBits(result, findv4bitmask(location));
   APPLY_RELOC(result);
   return 0;
 }
@@ -101,7 +118,7 @@ static int relocHex6PCRELX(uint8_t *location, uint64_t P, uint64_t S,
 // R_HEX_N_X : Word32_U6 : (S + A) : Unsigned Truncate
 static int relocHex_N_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (S + A);
-  result = lld::scatterBits<uint32_t>(result, findv4bitmask(location));
+  result = scatterBits(result, findv4bitmask(location));
   APPLY_RELOC(result);
   return 0;
 }
@@ -112,7 +129,7 @@ static int relocHexGPRELN(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
   int32_t result = (int64_t)((S + A - GP) >> nShiftBits);
   int32_t range = 1L << 16;
   if (result <= range) {
-    result = lld::scatterBits<uint32_t>(result, findv4bitmask(location));
+    result = scatterBits(result, findv4bitmask(location));
     APPLY_RELOC(result);
     return 0;
   }
@@ -122,7 +139,7 @@ static int relocHexGPRELN(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
 /// \brief Word32_LO: 0x00c03fff : (G) : Truncate
 static int relocHexGOTLO16(uint8_t *location, uint64_t A, uint64_t GOT) {
   int32_t result = (int32_t)(A-GOT);
-  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
+  result = scatterBits(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
@@ -130,7 +147,7 @@ static int relocHexGOTLO16(uint8_t *location, uint64_t A, uint64_t GOT) {
 /// \brief Word32_LO: 0x00c03fff : (G) >> 16 : Truncate
 static int relocHexGOTHI16(uint8_t *location, uint64_t A, uint64_t GOT) {
   int32_t result = (int32_t)((A-GOT) >> 16);
-  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
+  result = scatterBits(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
@@ -147,7 +164,7 @@ static int relocHexGOT16(uint8_t *location, uint64_t A, uint64_t GOT) {
   int32_t result = (int32_t)(GOT-A);
   int32_t range = 1L << 16;
   if (result <= range) {
-    result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+    result = scatterBits(result, findv4bitmask(location));
     APPLY_RELOC(result);
     return 0;
   }
@@ -156,7 +173,7 @@ static int relocHexGOT16(uint8_t *location, uint64_t A, uint64_t GOT) {
 
 static int relocHexGOT32_6_X(uint8_t *location, uint64_t A, uint64_t GOT) {
   int32_t result = (int32_t)((A-GOT) >> 6);
-  result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+  result = scatterBits(result, findv4bitmask(location));
   APPLY_RELOC(result);
   return 0;
 }
@@ -165,7 +182,7 @@ static int relocHexGOT16_X(uint8_t *location, uint64_t A, uint64_t GOT) {
   int32_t result = (int32_t)(A-GOT);
   int32_t range = 1L << 6;
   if (result <= range) {
-    result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+    result = scatterBits(result, findv4bitmask(location));
     APPLY_RELOC(result);
     return 0;
   }
@@ -174,7 +191,7 @@ static int relocHexGOT16_X(uint8_t *location, uint64_t A, uint64_t GOT) {
 
 static int relocHexGOT11_X(uint8_t *location, uint64_t A, uint64_t GOT) {
   uint32_t result = (uint32_t)(A-GOT);
-  result = lld::scatterBits<uint32_t>(result, findv4bitmask(location));
+  result = scatterBits(result, findv4bitmask(location));
   APPLY_RELOC(result);
   return 0;
 }
@@ -182,7 +199,7 @@ static int relocHexGOT11_X(uint8_t *location, uint64_t A, uint64_t GOT) {
 static int relocHexGOTRELSigned(uint8_t *location, uint64_t P, uint64_t S,
                                 uint64_t A, uint64_t GOT, int shiftBits = 0) {
   int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
-  result = lld::scatterBits<int32_t>(result, findv4bitmask(location));
+  result = scatterBits(result, findv4bitmask(location));
   APPLY_RELOC(result);
   return 0;
 }
@@ -190,7 +207,7 @@ static int relocHexGOTRELSigned(uint8_t *location, uint64_t P, uint64_t S,
 static int relocHexGOTRELUnsigned(uint8_t *location, uint64_t P, uint64_t S,
                                   uint64_t A, uint64_t GOT, int shiftBits = 0) {
   uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
-  result = lld::scatterBits<uint32_t>(result, findv4bitmask(location));
+  result = scatterBits(result, findv4bitmask(location));
   APPLY_RELOC(result);
   return 0;
 }
@@ -198,7 +215,7 @@ static int relocHexGOTRELUnsigned(uint8_t *location, uint64_t P, uint64_t S,
 static int relocHexGOTREL_HILO16(uint8_t *location, uint64_t P, uint64_t S,
                                  uint64_t A, uint64_t GOT, int shiftBits = 0) {
   int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
-  result = lld::scatterBits<int32_t>(result, 0x00c03fff);
+  result = scatterBits(result, 0x00c03fff);
   APPLY_RELOC(result);
   return 0;
 }
