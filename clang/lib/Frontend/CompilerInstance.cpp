@@ -524,27 +524,29 @@ void CompilerInstance::addOutputFile(OutputFile &&OutFile) {
 }
 
 void CompilerInstance::clearOutputFiles(bool EraseFiles) {
-  for (std::list<OutputFile>::iterator
-         it = OutputFiles.begin(), ie = OutputFiles.end(); it != ie; ++it) {
-    if (!it->TempFilename.empty()) {
+  for (OutputFile &OF : OutputFiles) {
+    // Manually close the stream before we rename it.
+    OF.OS.reset();
+
+    if (!OF.TempFilename.empty()) {
       if (EraseFiles) {
-        llvm::sys::fs::remove(it->TempFilename);
+        llvm::sys::fs::remove(OF.TempFilename);
       } else {
-        SmallString<128> NewOutFile(it->Filename);
+        SmallString<128> NewOutFile(OF.Filename);
 
         // If '-working-directory' was passed, the output filename should be
         // relative to that.
         FileMgr->FixupRelativePath(NewOutFile);
         if (std::error_code ec =
-                llvm::sys::fs::rename(it->TempFilename, NewOutFile)) {
+                llvm::sys::fs::rename(OF.TempFilename, NewOutFile)) {
           getDiagnostics().Report(diag::err_unable_to_rename_temp)
-            << it->TempFilename << it->Filename << ec.message();
+            << OF.TempFilename << OF.Filename << ec.message();
 
-          llvm::sys::fs::remove(it->TempFilename);
+          llvm::sys::fs::remove(OF.TempFilename);
         }
       }
-    } else if (!it->Filename.empty() && EraseFiles)
-      llvm::sys::fs::remove(it->Filename);
+    } else if (!OF.Filename.empty() && EraseFiles)
+      llvm::sys::fs::remove(OF.Filename);
 
   }
   OutputFiles.clear();
