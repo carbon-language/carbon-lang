@@ -3951,6 +3951,7 @@ public:
                 return true; // Don't do any updating when we are running
             }
         }
+
         
         ValueObjectList local_values;
         if (frame_block)
@@ -3966,7 +3967,18 @@ public:
                     const DynamicValueType use_dynamic = eDynamicDontRunTarget;
                     const size_t num_locals = locals->GetSize();
                     for (size_t i=0; i<num_locals; ++i)
-                        local_values.Append(frame->GetValueObjectForFrameVariable (locals->GetVariableAtIndex(i), use_dynamic));
+                    {
+                        ValueObjectSP value_sp = frame->GetValueObjectForFrameVariable (locals->GetVariableAtIndex(i), use_dynamic);
+                        if (value_sp)
+                        {
+                            ValueObjectSP synthetic_value_sp = value_sp->GetSyntheticValue();
+                            if (synthetic_value_sp)
+                                local_values.Append(synthetic_value_sp);
+                            else
+                                local_values.Append(value_sp);
+
+                        }
+                    }
                     // Update the values
                     SetValues(local_values);
                 }
