@@ -152,7 +152,7 @@ int finally_with_return() {
   }
 }
 // CHECK-LABEL: define i32 @finally_with_return()
-// CHECK-NEXT: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
 // CHECK-NEXT: call void @"\01?fin$0@0@finally_with_return@@"(i1 zeroext false, i8* %[[fp]])
 // CHECK-NEXT: ret i32 42
 
