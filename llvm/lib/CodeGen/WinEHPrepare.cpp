@@ -1231,6 +1231,9 @@ CloningDirector::CloningAction WinEHCleanupDirector::handleInvoke(
   NewCall->setDebugLoc(Invoke->getDebugLoc());
   VMap[Invoke] = NewCall;
 
+  // Remap the operands.
+  llvm::RemapInstruction(NewCall, VMap, RF_None, nullptr, &Materializer);
+
   // Insert an unconditional branch to the normal destination.
   BranchInst::Create(Invoke->getNormalDest(), NewBB);
 
@@ -1239,7 +1242,7 @@ CloningDirector::CloningAction WinEHCleanupDirector::handleInvoke(
 
   // We just added a terminator to the cloned block.
   // Tell the caller to stop processing the current basic block.
-  return CloningDirector::StopCloningBB;
+  return CloningDirector::CloneSuccessors;
 }
 
 CloningDirector::CloningAction WinEHCleanupDirector::handleResume(
