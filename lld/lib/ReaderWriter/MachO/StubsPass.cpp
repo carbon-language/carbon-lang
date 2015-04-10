@@ -206,8 +206,8 @@ private:
 class StubsPass : public Pass {
 public:
   StubsPass(const MachOLinkingContext &context)
-    : _context(context), _archHandler(_context.archHandler()),
-    _stubInfo(_archHandler.stubInfo()), _file("<mach-o Stubs pass>") { }
+      : _ctx(context), _archHandler(_ctx.archHandler()),
+        _stubInfo(_archHandler.stubInfo()), _file("<mach-o Stubs pass>") {}
 
   void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     // Skip this pass if output format uses text relocations instead of stubs.
@@ -245,9 +245,9 @@ public:
     SimpleDefinedAtom *helperCommonAtom =
         new (_file.allocator()) StubHelperCommonAtom(_file, _stubInfo);
     SimpleDefinedAtom *helperCacheNLPAtom =
-        new (_file.allocator()) NonLazyPointerAtom(_file, _context.is64Bit());
+        new (_file.allocator()) NonLazyPointerAtom(_file, _ctx.is64Bit());
     SimpleDefinedAtom *helperBinderNLPAtom =
-        new (_file.allocator()) NonLazyPointerAtom(_file, _context.is64Bit());
+        new (_file.allocator()) NonLazyPointerAtom(_file, _ctx.is64Bit());
     addReference(helperCommonAtom, _stubInfo.stubHelperCommonReferenceToCache,
                  helperCacheNLPAtom);
     addOptReference(
@@ -285,7 +285,7 @@ public:
     for (const Atom *target : targetsNeedingStubs) {
       StubAtom *stub = new (_file.allocator()) StubAtom(_file, _stubInfo);
       LazyPointerAtom *lp =
-          new (_file.allocator()) LazyPointerAtom(_file, _context.is64Bit());
+          new (_file.allocator()) LazyPointerAtom(_file, _ctx.is64Bit());
       StubHelperAtom *helper =
           new (_file.allocator()) StubHelperAtom(_file, _stubInfo);
 
@@ -355,7 +355,7 @@ private:
   typedef llvm::DenseMap<const Atom*,
                          llvm::SmallVector<const Reference *, 8>> TargetToUses;
 
-  const MachOLinkingContext                      &_context;
+  const MachOLinkingContext &_ctx;
   mach_o::ArchHandler                            &_archHandler;
   const ArchHandler::StubInfo                    &_stubInfo;
   MachOFile                                       _file;

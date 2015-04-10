@@ -26,18 +26,18 @@ namespace mach_o {
 
 class MachOWriter : public Writer {
 public:
-  MachOWriter(const MachOLinkingContext &ctxt) : _context(ctxt) { }
+  MachOWriter(const MachOLinkingContext &ctxt) : _ctx(ctxt) {}
 
   std::error_code writeFile(const lld::File &file, StringRef path) override {
     // Construct empty normalized file from atoms.
     ErrorOr<std::unique_ptr<NormalizedFile>> nFile =
-                                normalized::normalizedFromAtoms(file, _context);
+        normalized::normalizedFromAtoms(file, _ctx);
     if (std::error_code ec = nFile.getError())
       return ec;
 
     // For testing, write out yaml form of normalized file.
-    if (_context.printAtoms()) {
-      std::unique_ptr<Writer> yamlWriter = createWriterYAML(_context);
+    if (_ctx.printAtoms()) {
+      std::unique_ptr<Writer> yamlWriter = createWriterYAML(_ctx);
       yamlWriter->writeFile(file, "-");
     }
 
@@ -47,17 +47,17 @@ public:
 
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &r) override {
     // When building main executables, add _main as required entry point.
-    if (_context.outputTypeHasEntry())
-      r.emplace_back(new CEntryFile(_context));
+    if (_ctx.outputTypeHasEntry())
+      r.emplace_back(new CEntryFile(_ctx));
     // If this can link with dylibs, need helper function (dyld_stub_binder).
-    if (_context.needsStubsPass())
-      r.emplace_back(new StubHelperFile(_context));
+    if (_ctx.needsStubsPass())
+      r.emplace_back(new StubHelperFile(_ctx));
     // Final linked images can access a symbol for their mach_header.
-    if (_context.outputMachOType() != llvm::MachO::MH_OBJECT)
-      r.emplace_back(new MachHeaderAliasFile(_context));
+    if (_ctx.outputMachOType() != llvm::MachO::MH_OBJECT)
+      r.emplace_back(new MachHeaderAliasFile(_ctx));
   }
 private:
-   const MachOLinkingContext  &_context;
+  const MachOLinkingContext &_ctx;
  };
 
 

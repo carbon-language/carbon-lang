@@ -104,15 +104,15 @@ public:
 class DOSStubChunk : public HeaderChunk {
 public:
   explicit DOSStubChunk(const PECOFFLinkingContext &ctx)
-      : HeaderChunk(), _context(ctx) {
+      : HeaderChunk(), _ctx(ctx) {
     // Minimum size of DOS stub is 64 bytes. The next block (PE header) needs to
     // be aligned on 8 byte boundary.
-    size_t size = std::max(_context.getDosStub().size(), (size_t)64);
+    size_t size = std::max(_ctx.getDosStub().size(), (size_t)64);
     _size = llvm::RoundUpToAlignment(size, 8);
   }
 
   void write(uint8_t *buffer) override {
-    ArrayRef<uint8_t> array = _context.getDosStub();
+    ArrayRef<uint8_t> array = _ctx.getDosStub();
     std::memcpy(buffer, array.data(), array.size());
     auto *header = reinterpret_cast<llvm::object::dos_header *>(buffer);
     header->AddressOfRelocationTable = sizeof(llvm::object::dos_header);
@@ -120,7 +120,7 @@ public:
   }
 
 private:
-  const PECOFFLinkingContext &_context;
+  const PECOFFLinkingContext &_ctx;
 };
 
 /// A PEHeaderChunk represents PE header including COFF header.

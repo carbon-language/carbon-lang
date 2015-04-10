@@ -105,7 +105,7 @@ private:
   bool addByName(const Atom &);
   bool addByContent(const DefinedAtom &);
 
-  LinkingContext &_context;
+  LinkingContext &_ctx;
   AtomToAtom _replacedAtoms;
   NameToAtom _nameTable;
   NameToAtom _groupTable;

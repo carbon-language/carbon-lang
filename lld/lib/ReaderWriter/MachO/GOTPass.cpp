@@ -92,8 +92,8 @@ private:
 class GOTPass : public Pass {
 public:
   GOTPass(const MachOLinkingContext &context)
-    : _context(context), _archHandler(_context.archHandler()),
-      _file("<mach-o GOT Pass>") { }
+      : _ctx(context), _archHandler(_ctx.archHandler()),
+        _file("<mach-o GOT Pass>") {}
 
 private:
   void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
@@ -154,7 +154,7 @@ private:
     auto pos = _targetToGOT.find(target);
     if (pos == _targetToGOT.end()) {
       GOTEntryAtom *gotEntry = new (_file.allocator())
-          GOTEntryAtom(_file, _context.is64Bit(), target->name());
+          GOTEntryAtom(_file, _ctx.is64Bit(), target->name());
       _targetToGOT[target] = gotEntry;
       const ArchHandler::ReferenceInfo &nlInfo = _archHandler.stubInfo().
                                                 nonLazyPointerReferenceToBinder;
@@ -165,8 +165,7 @@ private:
     return pos->second;
   }
 
-
-  const MachOLinkingContext                       &_context;
+  const MachOLinkingContext &_ctx;
   mach_o::ArchHandler                             &_archHandler;
   MachOFile                                        _file;
   llvm::DenseMap<const Atom*, const GOTEntryAtom*> _targetToGOT;

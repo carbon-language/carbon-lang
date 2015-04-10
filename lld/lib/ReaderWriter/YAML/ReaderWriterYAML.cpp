@@ -1230,7 +1230,7 @@ namespace yaml {
 
 class Writer : public lld::Writer {
 public:
-  Writer(const LinkingContext &context) : _context(context) {}
+  Writer(const LinkingContext &context) : _ctx(context) {}
 
   std::error_code writeFile(const lld::File &file, StringRef outPath) override {
     // Create stream to path.
@@ -1241,8 +1241,8 @@ public:
 
     // Create yaml Output writer, using yaml options for context.
     YamlContext yamlContext;
-    yamlContext._linkingContext = &_context;
-    yamlContext._registry = &_context.registry();
+    yamlContext._ctx = &_ctx;
+    yamlContext._registry = &_ctx.registry();
     llvm::yaml::Output yout(out, &yamlContext);
 
     // Write yaml output.
@@ -1253,7 +1253,7 @@ public:
   }
 
 private:
-  const LinkingContext &_context;
+  const LinkingContext &_ctx;
 };
 
 } // end namespace yaml

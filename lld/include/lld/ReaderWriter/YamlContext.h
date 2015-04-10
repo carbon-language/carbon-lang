@@ -31,10 +31,10 @@ using lld::mach_o::normalized::NormalizedFile;
 /// different context info.  This struct supports all clients.
 struct YamlContext {
   YamlContext()
-      : _linkingContext(nullptr), _registry(nullptr), _file(nullptr),
+      : _ctx(nullptr), _registry(nullptr), _file(nullptr),
         _normalizeMachOFile(nullptr) {}
 
-  const LinkingContext *_linkingContext;
+  const LinkingContext *_ctx;
   const Registry *_registry;
   File *_file;
   NormalizedFile *_normalizeMachOFile;

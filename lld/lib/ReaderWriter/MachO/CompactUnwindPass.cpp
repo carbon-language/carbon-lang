@@ -272,9 +272,9 @@ private:
 class CompactUnwindPass : public Pass {
 public:
   CompactUnwindPass(const MachOLinkingContext &context)
-      : _context(context), _archHandler(_context.archHandler()),
+      : _ctx(context), _archHandler(_ctx.archHandler()),
         _file("<mach-o Compact Unwind Pass>"),
-        _isBig(MachOLinkingContext::isBigEndian(_context.arch())) {}
+        _isBig(MachOLinkingContext::isBigEndian(_ctx.arch())) {}
 
 private:
   void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
@@ -515,7 +515,7 @@ private:
     return entry;
   }
 
-  const MachOLinkingContext &_context;
+  const MachOLinkingContext &_ctx;
   mach_o::ArchHandler &_archHandler;
   MachOFile _file;
   bool _isBig;

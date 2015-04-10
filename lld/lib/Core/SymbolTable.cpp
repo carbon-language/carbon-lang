@@ -28,7 +28,7 @@
 #include <vector>
 
 namespace lld {
-SymbolTable::SymbolTable(LinkingContext &context) : _context(context) {}
+SymbolTable::SymbolTable(LinkingContext &context) : _ctx(context) {}
 
 bool SymbolTable::add(const UndefinedAtom &atom) { return addByName(atom); }
 
@@ -185,7 +185,7 @@ bool SymbolTable::addByName(const Atom &newAtom) {
       // fallthrough
     }
     case MCR_Error:
-      if (!_context.getAllowDuplicates()) {
+      if (!_ctx.getAllowDuplicates()) {
         llvm::errs() << "Duplicate symbols: "
                      << existing->name()
                      << ":"
@@ -207,8 +207,7 @@ bool SymbolTable::addByName(const Atom &newAtom) {
     const UndefinedAtom* newUndef = cast<UndefinedAtom>(&newAtom);
 
     bool sameCanBeNull = (existingUndef->canBeNull() == newUndef->canBeNull());
-    if (!sameCanBeNull &&
-        _context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+    if (!sameCanBeNull && _ctx.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
       llvm::errs() << "lld warning: undefined symbol "
                    << existingUndef->name()
                    << " has different weakness in "
@@ -244,14 +243,14 @@ bool SymbolTable::addByName(const Atom &newAtom) {
         (curShLib->canBeNullAtRuntime() == newShLib->canBeNullAtRuntime());
     bool sameName = curShLib->loadName().equals(newShLib->loadName());
     if (sameName && !sameNullness &&
-        _context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+        _ctx.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
       // FIXME: need diagonstics interface for writing warning messages
       llvm::errs() << "lld warning: shared library symbol "
                    << curShLib->name() << " has different weakness in "
                    << curShLib->file().path() << " and in "
                    << newShLib->file().path();
     }
-    if (!sameName && _context.warnIfCoalesableAtomsHaveDifferentLoadName()) {
+    if (!sameName && _ctx.warnIfCoalesableAtomsHaveDifferentLoadName()) {
       // FIXME: need diagonstics interface for writing warning messages
       llvm::errs() << "lld warning: shared library symbol "
                    << curShLib->name() << " has different load path in "
@@ -268,7 +267,7 @@ bool SymbolTable::addByName(const Atom &newAtom) {
   }
 
   // Give context a chance to change which is kept.
-  _context.notifySymbolTableCoalesce(existing, &newAtom, useNew);
+  _ctx.notifySymbolTableCoalesce(existing, &newAtom, useNew);
 
   if (useNew) {
     // Update name table to use new atom.
