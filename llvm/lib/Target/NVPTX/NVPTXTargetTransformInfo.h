@@ -61,6 +61,8 @@ public:
 
   bool hasBranchDivergence() { return true; }
 
+  bool isSourceOfDivergence(const Value *V);
+
   unsigned getArithmeticInstrCost(
       unsigned Opcode, Type *Ty,
       TTI::OperandValueKind Opd1Info = TTI::OK_AnyValue,

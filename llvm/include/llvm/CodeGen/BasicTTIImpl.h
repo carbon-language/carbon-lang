@@ -114,6 +114,8 @@ public:
 
   bool hasBranchDivergence() { return false; }
 
+  bool isSourceOfDivergence(const Value *V) { return false; }
+
   bool isLegalAddImmediate(int64_t imm) {
     return getTLI()->isLegalAddImmediate(imm);
   }
