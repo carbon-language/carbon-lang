@@ -669,7 +669,7 @@ public:
   /// stored here on success.
   /// \param TempPathName [out] - If given, the temporary file path name
   /// will be stored here on success.
-  static llvm::raw_fd_ostream *
+  static std::unique_ptr<llvm::raw_fd_ostream>
   createOutputFile(StringRef OutputPath, std::error_code &Error, bool Binary,
                    bool RemoveFileOnSignal, StringRef BaseInput,
                    StringRef Extension, bool UseTemporary,

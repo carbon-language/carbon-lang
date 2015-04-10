@@ -575,9 +575,9 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool CreateMissingDirectories) {
   std::string OutputPathName, TempPathName;
   std::error_code EC;
-  std::unique_ptr<llvm::raw_fd_ostream> OS(createOutputFile(
+  std::unique_ptr<llvm::raw_fd_ostream> OS = createOutputFile(
       OutputPath, EC, Binary, RemoveFileOnSignal, InFile, Extension,
-      UseTemporary, CreateMissingDirectories, &OutputPathName, &TempPathName));
+      UseTemporary, CreateMissingDirectories, &OutputPathName, &TempPathName);
   if (!OS) {
     getDiagnostics().Report(diag::err_fe_unable_to_open_output) << OutputPath
                                                                 << EC.message();
@@ -593,7 +593,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   return Ret;
 }
 
-llvm::raw_fd_ostream *CompilerInstance::createOutputFile(
+std::unique_ptr<llvm::raw_fd_ostream> CompilerInstance::createOutputFile(
     StringRef OutputPath, std::error_code &Error, bool Binary,
     bool RemoveFileOnSignal, StringRef InFile, StringRef Extension,
     bool UseTemporary, bool CreateMissingDirectories,
@@ -681,7 +681,7 @@ llvm::raw_fd_ostream *CompilerInstance::createOutputFile(
   if (TempPathName)
     *TempPathName = TempFile;
 
-  return OS.release();
+  return OS;
 }
 
 // Initialization Utilities
