@@ -927,7 +927,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(LOCAL_REDECLARATIONS);
   RECORD(OBJC_CATEGORIES);
   RECORD(MACRO_OFFSET);
-  RECORD(MACRO_TABLE);
   RECORD(LATE_PARSED_TEMPLATE);
   RECORD(OPTIMIZE_PRAGMA_OPTIONS);
 
@@ -2083,13 +2082,10 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   llvm::array_pod_sort(MacroDirectives.begin(), MacroDirectives.end(),
                        &compareMacroDirectives);
 
-  llvm::OnDiskChainedHashTableGenerator<ASTMacroTableTrait> Generator;
-
   // Emit the macro directives as a list and associate the offset with the
   // identifier they belong to.
   for (unsigned I = 0, N = MacroDirectives.size(); I != N; ++I) {
     const IdentifierInfo *Name = MacroDirectives[I].first;
-    uint64_t MacroDirectiveOffset = Stream.GetCurrentBitNo();
     MacroDirective *MD = MacroDirectives[I].second;
 
     // If the macro or identifier need no updates, don't write the macro history
@@ -2127,15 +2123,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     if (Record.empty())
       continue;
 
+    IdentMacroDirectivesOffsetMap[Name] = Stream.GetCurrentBitNo();
     Stream.EmitRecord(PP_MACRO_DIRECTIVE_HISTORY, Record);
     Record.clear();
-
-    IdentMacroDirectivesOffsetMap[Name] = MacroDirectiveOffset;
-
-    IdentID NameID = getIdentifierRef(Name);
-    ASTMacroTableTrait::Data data;
-    data.MacroDirectivesOffset = MacroDirectiveOffset;
-    Generator.insert(NameID, data);
   }
 
   /// \brief Offsets of each of the macros into the bitstream, indexed by
@@ -2211,33 +2201,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
   Stream.ExitBlock();
 
-  // Create the on-disk hash table in a buffer.
-  SmallString<4096> MacroTable;
-  uint32_t BucketOffset;
-  {
-    using namespace llvm::support;
-    llvm::raw_svector_ostream Out(MacroTable);
-    // Make sure that no bucket is at offset 0
-    endian::Writer<little>(Out).write<uint32_t>(0);
-    BucketOffset = Generator.Emit(Out);
-  }
-
-  // Write the macro table
-  using namespace llvm;
-  BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(MACRO_TABLE));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-  unsigned MacroTableAbbrev = Stream.EmitAbbrev(Abbrev);
-
-  Record.push_back(MACRO_TABLE);
-  Record.push_back(BucketOffset);
-  Stream.EmitRecordWithBlob(MacroTableAbbrev, Record, MacroTable);
-  Record.clear();
-
   // Write the offsets table for macro IDs.
   using namespace llvm;
-  Abbrev = new BitCodeAbbrev();
+  auto *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(MACRO_OFFSET));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macros
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // first ID

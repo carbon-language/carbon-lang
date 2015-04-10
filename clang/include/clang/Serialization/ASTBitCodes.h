@@ -543,9 +543,7 @@ namespace clang {
       /// macro definition.
       MACRO_OFFSET = 47,
 
-      /// \brief Mapping table from the identifier ID to the offset of the
-      /// macro directive history for the identifier.
-      MACRO_TABLE = 48,
+      // ID 48 used to be a table of macros.
 
       /// \brief Record code for undefined but used functions and variables that
       /// need a definition in this TU.
