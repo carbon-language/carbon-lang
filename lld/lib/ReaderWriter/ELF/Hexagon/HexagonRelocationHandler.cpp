@@ -38,7 +38,7 @@ static uint32_t scatterBits(uint32_t val, uint32_t mask) {
 
 static void relocBNPCREL(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
                          int32_t nBits) {
-  int32_t result = (uint32_t)((S + A - P) >> 2);
+  int32_t result = (S + A - P) >> 2;
   int32_t range = 1 << nBits;
   if (result < range && result > -range) {
     result = scatterBits(result, findv4bitmask(loc));
@@ -48,27 +48,27 @@ static void relocBNPCREL(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) : Truncate
 static void relocLO16(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
-  uint32_t result = (uint32_t)(S + A);
+  uint32_t result = S + A;
   result = scatterBits(result, 0x00c03fff);
   write32le(loc, result | read32le(loc));
 }
 
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
 static void relocHI16(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
-  uint32_t result = (uint32_t)((S + A) >> 16);
+  uint32_t result = (S + A) >> 16;
   result = scatterBits(result, 0x00c03fff);
   write32le(loc, result | read32le(loc));
 }
 
 /// \brief Word32: 0xffffffff : (S + A) : Truncate
 static void reloc32(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
-  uint32_t result = (uint32_t)(S + A);
+  uint32_t result = S + A;
   write32le(loc, result | read32le(loc));
 }
 
 static void reloc32_6_X(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
-  int64_t result = ((S + A) >> 6);
-  int64_t range = ((int64_t)1) << 32;
+  int64_t result = (S + A) >> 6;
+  int64_t range = int64_t(1) << 32;
   if (result > range)
   result = scatterBits(result, 0xfff3fff);
   write32le(loc, result | read32le(loc));
@@ -77,7 +77,7 @@ static void reloc32_6_X(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
 // R_HEX_B32_PCREL_X
 static void relocHexB32PCRELX(uint8_t *loc, uint64_t P, uint64_t S,
                               uint64_t A) {
-  int64_t result = ((S + A - P) >> 6);
+  int64_t result = (S + A - P) >> 6;
   result = scatterBits(result, 0xfff3fff);
   write32le(loc, result | read32le(loc));
 }
@@ -85,7 +85,7 @@ static void relocHexB32PCRELX(uint8_t *loc, uint64_t P, uint64_t S,
 // R_HEX_BN_PCREL_X
 static void relocHexBNPCRELX(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
                              int nbits) {
-  int32_t result = ((S + A - P) & 0x3f);
+  int32_t result = (S + A - P) & 0x3f;
   int32_t range = 1 << nbits;
   if (result < range && result > -range) {
     result = scatterBits(result, findv4bitmask(loc));
@@ -95,14 +95,14 @@ static void relocHexBNPCRELX(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
 
 // R_HEX_6_PCREL_X
 static void relocHex6PCRELX(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
-  int32_t result = (S + A - P);
+  int32_t result = S + A - P;
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 // R_HEX_N_X : Word32_U6 : (S + A) : Unsigned Truncate
 static void relocHex_N_X(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
-  uint32_t result = (S + A);
+  uint32_t result = S + A;
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
@@ -110,7 +110,7 @@ static void relocHex_N_X(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A) {
 // GP REL relocs
 static void relocHexGPRELN(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
                            uint64_t GP, int nShiftBits) {
-  int32_t result = (int64_t)((S + A - GP) >> nShiftBits);
+  int32_t result = (S + A - GP) >> nShiftBits;
   int32_t range = 1L << 16;
   if (result <= range) {
     result = scatterBits(result, findv4bitmask(loc));
@@ -120,27 +120,27 @@ static void relocHexGPRELN(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
 
 /// \brief Word32_LO: 0x00c03fff : (G) : Truncate
 static void relocHexGOTLO16(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  int32_t result = (int32_t)(A-GOT);
+  int32_t result = A - GOT;
   result = scatterBits(result, 0x00c03fff);
   write32le(loc, result | read32le(loc));
 }
 
 /// \brief Word32_LO: 0x00c03fff : (G) >> 16 : Truncate
 static void relocHexGOTHI16(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  int32_t result = (int32_t)((A-GOT) >> 16);
+  int32_t result = (A - GOT) >> 16;
   result = scatterBits(result, 0x00c03fff);
   write32le(loc, result | read32le(loc));
 }
 
 /// \brief Word32: 0xffffffff : (G) : Truncate
 static void relocHexGOT32(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  int32_t result = (int32_t)(GOT - A);
+  int32_t result = GOT - A;
   write32le(loc, result | read32le(loc));
 }
 
 /// \brief Word32_U16 : (G) : Truncate
 static void relocHexGOT16(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  int32_t result = (int32_t)(GOT-A);
+  int32_t result = GOT - A;
   int32_t range = 1L << 16;
   if (result <= range) {
     result = scatterBits(result, findv4bitmask(loc));
@@ -149,13 +149,13 @@ static void relocHexGOT16(uint8_t *loc, uint64_t A, uint64_t GOT) {
 }
 
 static void relocHexGOT32_6_X(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  int32_t result = (int32_t)((A-GOT) >> 6);
+  int32_t result = (A - GOT) >> 6;
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOT16_X(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  int32_t result = (int32_t)(A-GOT);
+  int32_t result = A - GOT;
   int32_t range = 1L << 6;
   if (result <= range) {
     result = scatterBits(result, findv4bitmask(loc));
@@ -164,35 +164,35 @@ static void relocHexGOT16_X(uint8_t *loc, uint64_t A, uint64_t GOT) {
 }
 
 static void relocHexGOT11_X(uint8_t *loc, uint64_t A, uint64_t GOT) {
-  uint32_t result = (uint32_t)(A-GOT);
+  uint32_t result = A - GOT;
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOTRELSigned(uint8_t *loc, uint64_t P, uint64_t S,
                                  uint64_t A, uint64_t GOT, int shiftBits) {
-  int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
+  int32_t result = (S + A - GOT) >> shiftBits;
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOTRELUnsigned(uint8_t *loc, uint64_t P, uint64_t S,
                                    uint64_t A, uint64_t GOT) {
-  uint32_t result = (uint32_t)(S + A - GOT);
+  uint32_t result = S + A - GOT;
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOTREL_HILO16(uint8_t *loc, uint64_t P, uint64_t S,
                                   uint64_t A, uint64_t GOT, int shiftBits) {
-  int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
+  int32_t result = (S + A - GOT) >> shiftBits;
   result = scatterBits(result, 0x00c03fff);
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOTREL_32(uint8_t *loc, uint64_t P, uint64_t S, uint64_t A,
                               uint64_t GOT) {
-  int32_t result = (int32_t)(S + A - GOT);
+  int32_t result = S + A - GOT;
   write32le(loc, result | read32le(loc));
 }
 
