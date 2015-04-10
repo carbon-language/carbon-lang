@@ -106,7 +106,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
     if (!Res.isNonLocal()) {
       Deps[Inst].insert(std::make_pair(getInstTypePair(Res),
                                        static_cast<BasicBlock *>(nullptr)));
-    } else if (CallSite CS = cast<Value>(Inst)) {
+    } else if (auto CS = CallSite(Inst)) {
       const MemoryDependenceAnalysis::NonLocalDepInfo &NLDI =
         MDA.getNonLocalCallDependency(CS);
 

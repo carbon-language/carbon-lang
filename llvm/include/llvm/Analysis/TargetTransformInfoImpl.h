@@ -410,7 +410,7 @@ public:
           ->getGEPCost(GEP->getPointerOperand(), Indices);
     }
 
-    if (ImmutableCallSite CS = U) {
+    if (auto CS = ImmutableCallSite(U)) {
       const Function *F = CS.getCalledFunction();
       if (!F) {
         // Just use the called value type.

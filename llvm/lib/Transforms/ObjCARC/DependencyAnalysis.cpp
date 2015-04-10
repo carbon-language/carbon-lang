@@ -45,7 +45,7 @@ bool llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
   default: break;
   }
 
-  ImmutableCallSite CS = static_cast<const Value *>(Inst);
+  ImmutableCallSite CS(Inst);
   assert(CS && "Only calls can alter reference counts!");
 
   // See if AliasAnalysis can help us with the call.
@@ -99,7 +99,7 @@ bool llvm::objcarc::CanUse(const Instruction *Inst, const Value *Ptr,
     // of any other dynamic reference-counted pointers.
     if (!IsPotentialRetainableObjPtr(ICI->getOperand(1), *PA.getAA()))
       return false;
-  } else if (ImmutableCallSite CS = static_cast<const Value *>(Inst)) {
+  } else if (auto CS = ImmutableCallSite(Inst)) {
     // For calls, just check the arguments (and not the callee operand).
     for (ImmutableCallSite::arg_iterator OI = CS.arg_begin(),
          OE = CS.arg_end(); OI != OE; ++OI) {

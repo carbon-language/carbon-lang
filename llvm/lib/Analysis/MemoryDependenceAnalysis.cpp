@@ -223,7 +223,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       continue;
     }
 
-    if (CallSite InstCS = cast<Value>(Inst)) {
+    if (auto InstCS = CallSite(Inst)) {
       // Debug intrinsics don't cause dependences.
       if (isa<DbgInfoIntrinsic>(Inst)) continue;
       // If these two calls do not interfere, look past it.

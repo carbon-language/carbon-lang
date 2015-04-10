@@ -150,7 +150,7 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
         if (MSI->isVolatile())
           return true;
         GS.StoredType = GlobalStatus::Stored;
-      } else if (ImmutableCallSite C = I) {
+      } else if (auto C = ImmutableCallSite(I)) {
         if (!C.isCallee(&U))
           return true;
         GS.IsLoaded = true;

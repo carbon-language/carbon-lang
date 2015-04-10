@@ -46,12 +46,13 @@ template <typename FunTy = const Function,
 class CallSiteBase {
 protected:
   PointerIntPair<InstrTy*, 1, bool> I;
-public:
+
   CallSiteBase() : I(nullptr, false) {}
   CallSiteBase(CallTy *CI) : I(CI, true) { assert(CI); }
   CallSiteBase(InvokeTy *II) : I(II, false) { assert(II); }
-  CallSiteBase(ValTy *II) { *this = get(II); }
-protected:
+  explicit CallSiteBase(ValTy *II) { *this = get(II); }
+
+private:
   /// CallSiteBase::get - This static method is sort of like a constructor.  It
   /// will create an appropriate call site for a Call or Invoke instruction, but
   /// it can also create a null initialized CallSiteBase object for something
@@ -349,15 +350,15 @@ private:
 
 class CallSite : public CallSiteBase<Function, Value, User, Instruction,
                                      CallInst, InvokeInst, User::op_iterator> {
-  typedef CallSiteBase<Function, Value, User, Instruction,
-                       CallInst, InvokeInst, User::op_iterator> Base;
+  typedef CallSite::CallSiteBase Base;
+
 public:
   CallSite() {}
   CallSite(Base B) : Base(B) {}
-  CallSite(Value* V) : Base(V) {}
   CallSite(CallInst *CI) : Base(CI) {}
   CallSite(InvokeInst *II) : Base(II) {}
-  CallSite(Instruction *II) : Base(II) {}
+  explicit CallSite(Instruction *II) : Base(II) {}
+  explicit CallSite(Value *V) : Base(V) {}
 
   bool operator==(const CallSite &CS) const { return I == CS.I; }
   bool operator!=(const CallSite &CS) const { return I != CS.I; }
@@ -371,13 +372,14 @@ private:
 
 /// ImmutableCallSite - establish a view to a call site for examination
 class ImmutableCallSite : public CallSiteBase<> {
-  typedef CallSiteBase<> Base;
+  typedef ImmutableCallSite::CallSiteBase Base;
+
 public:
   ImmutableCallSite() {}
-  ImmutableCallSite(const Value* V) : Base(V) {}
   ImmutableCallSite(const CallInst *CI) : Base(CI) {}
   ImmutableCallSite(const InvokeInst *II) : Base(II) {}
-  ImmutableCallSite(const Instruction *II) : Base(II) {}
+  explicit ImmutableCallSite(const Instruction *II) : Base(II) {}
+  explicit ImmutableCallSite(const Value *V) : Base(V) {}
   ImmutableCallSite(CallSite CS) : Base(CS.getInstruction()) {}
 };
 

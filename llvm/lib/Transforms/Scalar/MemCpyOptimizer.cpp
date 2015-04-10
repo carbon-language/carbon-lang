@@ -1045,7 +1045,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
         RepeatInstruction = processMemCpy(M);
       else if (MemMoveInst *M = dyn_cast<MemMoveInst>(I))
         RepeatInstruction = processMemMove(M);
-      else if (CallSite CS = (Value*)I) {
+      else if (auto CS = CallSite(I)) {
         for (unsigned i = 0, e = CS.arg_size(); i != e; ++i)
           if (CS.isByValArgument(i))
             MadeChange |= processByValArgument(CS, i);

@@ -2934,7 +2934,7 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   if (const LoadInst *LI = dyn_cast<LoadInst>(V))
     return LI->getMetadata(LLVMContext::MD_nonnull);
 
-  if (ImmutableCallSite CS = V)
+  if (auto CS = ImmutableCallSite(V))
     if (CS.isReturnNonNull())
       return true;
 

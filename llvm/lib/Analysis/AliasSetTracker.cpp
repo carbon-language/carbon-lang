@@ -187,7 +187,7 @@ bool AliasSet::aliasesUnknownInst(Instruction *Inst, AliasAnalysis &AA) const {
     return false;
 
   for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
-    CallSite C1 = getUnknownInst(i), C2 = Inst;
+    CallSite C1(getUnknownInst(i)), C2(Inst);
     if (!C1 || !C2 ||
         AA.getModRefInfo(C1, C2) != AliasAnalysis::NoModRef ||
         AA.getModRefInfo(C2, C1) != AliasAnalysis::NoModRef)

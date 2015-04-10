@@ -158,7 +158,7 @@ bool AAEval::runOnFunction(Function &F) {
     if (EvalAAMD && isa<StoreInst>(&*I))
       Stores.insert(&*I);
     Instruction &Inst = *I;
-    if (CallSite CS = cast<Value>(&Inst)) {
+    if (auto CS = CallSite(&Inst)) {
       Value *Callee = CS.getCalledValue();
       // Skip actual functions for direct function calls.
       if (!isa<Function>(Callee) && isInterestingPointer(Callee))

@@ -525,7 +525,7 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
 
   // Return values from call sites specifically marked as dereferenceable are
   // also okay.
-  if (ImmutableCallSite CS = V) {
+  if (auto CS = ImmutableCallSite(V)) {
     if (uint64_t Bytes = CS.getDereferenceableBytes(0)) {
       Type *Ty = V->getType()->getPointerElementType();
       if (Ty->isSized() && DL.getTypeStoreSize(Ty) <= Bytes)
@@ -595,7 +595,7 @@ bool Value::isDereferenceablePointer(const DataLayout &DL) const {
     APInt DerefBytes(Offset.getBitWidth(), 0);
     if (const Argument *A = dyn_cast<Argument>(BV))
       DerefBytes = A->getDereferenceableBytes();
-    else if (ImmutableCallSite CS = BV)
+    else if (auto CS = ImmutableCallSite(BV))
       DerefBytes = CS.getDereferenceableBytes(0);
 
     if (DerefBytes.getBoolValue() && Offset.isNonNegative()) {

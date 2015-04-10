@@ -862,7 +862,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
     // Update the callgraph to know that the callsite has been transformed.
     CallGraphNode *CalleeNode = CG[Call->getParent()->getParent()];
-    CalleeNode->replaceCallEdge(Call, New, NF_CGN);
+    CalleeNode->replaceCallEdge(CS, CallSite(New), NF_CGN);
 
     if (!Call->use_empty()) {
       Call->replaceAllUsesWith(New);

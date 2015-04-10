@@ -84,7 +84,7 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
         continue;
       }
 
-      if (CallSite CS = I) {
+      if (auto CS = CallSite(I)) {
         // If this is the function being called then we treat it like a load and
         // ignore it.
         if (CS.isCallee(&U))

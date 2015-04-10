@@ -482,7 +482,7 @@ DAE::Liveness DAE::SurveyUse(const Use *U,
       return Result;
     }
 
-    if (ImmutableCallSite CS = V) {
+    if (auto CS = ImmutableCallSite(V)) {
       const Function *F = CS.getCalledFunction();
       if (F) {
         // Used in a direct call.
