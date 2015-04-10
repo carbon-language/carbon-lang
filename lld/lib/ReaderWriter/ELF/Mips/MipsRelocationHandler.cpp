@@ -56,6 +56,7 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_32:
   case R_MIPS_GPREL32:
   case R_MIPS_PC32:
+  case R_MIPS_EH:
     return {4, 0xffffffff, 0, false};
   case LLD_R_MIPS_32_HI16:
     return {4, 0xffff0000, 0, false};
@@ -401,6 +402,7 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
     return relocPcLo16(relAddr, tgtAddr, addend);
   case R_MICROMIPS_LO16:
     return relocLo16(relAddr, tgtAddr, addend, isGP, true);
+  case R_MIPS_EH:
   case R_MIPS_GOT16:
   case R_MIPS_CALL16:
   case R_MIPS_GOT_DISP:
