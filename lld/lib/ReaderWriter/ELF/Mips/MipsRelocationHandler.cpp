@@ -157,7 +157,7 @@ static uint64_t reloc64(uint64_t S, int64_t A) { return S + A; }
 static uint64_t relocSub(uint64_t S, int64_t A) { return S - A; }
 
 /// \brief R_MIPS_PC32
-/// local/external: word32 S + A i- P (truncate)
+/// local/external: word32 S + A - P (truncate)
 static uint32_t relocpc32(uint64_t P, uint64_t S, int64_t A) {
   return S + A - P;
 }
