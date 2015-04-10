@@ -129,6 +129,6 @@ void parallel_single() {
   foo();
 }
 // TERM_DEBUG-DAG: [[DBG_LOC_START]] = !MDLocation(line: [[@LINE-12]],
-// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !MDLocation(line: [[@LINE-13]],
+// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !MDLocation(line: [[@LINE-3]],
 
 #endif

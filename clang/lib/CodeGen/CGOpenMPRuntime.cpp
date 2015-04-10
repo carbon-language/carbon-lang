@@ -31,37 +31,58 @@ namespace {
 /// \brief Base class for handling code generation inside OpenMP regions.
 class CGOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
 public:
-  CGOpenMPRegionInfo(const OMPExecutableDirective &D, const CapturedStmt &CS)
-      : CGCapturedStmtInfo(CS, CR_OpenMP), Directive(D) {}
+  /// \brief Kinds of OpenMP regions used in codegen.
+  enum CGOpenMPRegionKind {
+    /// \brief Region with outlined function for standalone 'parallel'
+    /// directive.
+    ParallelOutlinedRegion,
+    /// \brief Region with outlined function for standalone 'task' directive.
+    TaskOutlinedRegion,
+    /// \brief Region for constructs that do not require function outlining,
+    /// like 'for', 'sections', 'atomic' etc. directives.
+    InlinedRegion,
+  };
 
-  CGOpenMPRegionInfo(const OMPExecutableDirective &D)
-      : CGCapturedStmtInfo(CR_OpenMP), Directive(D) {}
+  CGOpenMPRegionInfo(const CapturedStmt &CS,
+                     const CGOpenMPRegionKind RegionKind,
+                     const RegionCodeGenTy &CodeGen)
+      : CGCapturedStmtInfo(CS, CR_OpenMP), RegionKind(RegionKind),
+        CodeGen(CodeGen) {}
+
+  CGOpenMPRegionInfo(const CGOpenMPRegionKind RegionKind,
+                     const RegionCodeGenTy &CodeGen)
+      : CGCapturedStmtInfo(CR_OpenMP), RegionKind(RegionKind),
+        CodeGen(CodeGen) {}
 
   /// \brief Get a variable or parameter for storing global thread id
   /// inside OpenMP construct.
   virtual const VarDecl *getThreadIDVariable() const = 0;
 
+  /// \brief Emit the captured statement body.
+  virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) override;
+
   /// \brief Get an LValue for the current ThreadID variable.
   /// \return LValue for thread id variable. This LValue always has type int32*.
   virtual LValue getThreadIDVariableLValue(CodeGenFunction &CGF);
 
-    /// \brief Emit the captured statement body.
-  virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) override;
+  CGOpenMPRegionKind getRegionKind() const { return RegionKind; }
 
   static bool classof(const CGCapturedStmtInfo *Info) {
     return Info->getKind() == CR_OpenMP;
   }
+
 protected:
-  /// \brief OpenMP executable directive associated with the region.
-  const OMPExecutableDirective &Directive;
+  CGOpenMPRegionKind RegionKind;
+  const RegionCodeGenTy &CodeGen;
 };
 
 /// \brief API for captured statement code generation in OpenMP constructs.
 class CGOpenMPOutlinedRegionInfo : public CGOpenMPRegionInfo {
 public:
-  CGOpenMPOutlinedRegionInfo(const OMPExecutableDirective &D,
-                             const CapturedStmt &CS, const VarDecl *ThreadIDVar)
-      : CGOpenMPRegionInfo(D, CS), ThreadIDVar(ThreadIDVar) {
+  CGOpenMPOutlinedRegionInfo(const CapturedStmt &CS, const VarDecl *ThreadIDVar,
+                             const RegionCodeGenTy &CodeGen)
+      : CGOpenMPRegionInfo(CS, ParallelOutlinedRegion, CodeGen),
+        ThreadIDVar(ThreadIDVar) {
     assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
   }
   /// \brief Get a variable or parameter for storing global thread id
@@ -69,8 +90,15 @@ public:
   virtual const VarDecl *getThreadIDVariable() const override {
     return ThreadIDVar;
   }
+
   /// \brief Get the name of the capture helper.
   StringRef getHelperName() const override { return ".omp_outlined."; }
+
+  static bool classof(const CGCapturedStmtInfo *Info) {
+    return CGOpenMPRegionInfo::classof(Info) &&
+           cast<CGOpenMPRegionInfo>(Info)->getRegionKind() ==
+               ParallelOutlinedRegion;
+  }
 
 private:
   /// \brief A variable or parameter storing global thread id for OpenMP
@@ -81,12 +109,11 @@ private:
 /// \brief API for captured statement code generation in OpenMP constructs.
 class CGOpenMPTaskOutlinedRegionInfo : public CGOpenMPRegionInfo {
 public:
-  CGOpenMPTaskOutlinedRegionInfo(const OMPExecutableDirective &D,
-                                 const CapturedStmt &CS,
+  CGOpenMPTaskOutlinedRegionInfo(const CapturedStmt &CS,
                                  const VarDecl *ThreadIDVar,
-                                 const VarDecl *PartIDVar)
-      : CGOpenMPRegionInfo(D, CS), ThreadIDVar(ThreadIDVar),
-        PartIDVar(PartIDVar) {
+                                 const RegionCodeGenTy &CodeGen)
+      : CGOpenMPRegionInfo(CS, TaskOutlinedRegion, CodeGen),
+        ThreadIDVar(ThreadIDVar) {
     assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
   }
   /// \brief Get a variable or parameter for storing global thread id
@@ -98,33 +125,40 @@ public:
   /// \brief Get an LValue for the current ThreadID variable.
   virtual LValue getThreadIDVariableLValue(CodeGenFunction &CGF) override;
 
-  /// \brief Emit the captured statement body.
-  virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) override;
-
   /// \brief Get the name of the capture helper.
   StringRef getHelperName() const override { return ".omp_outlined."; }
+
+  static bool classof(const CGCapturedStmtInfo *Info) {
+    return CGOpenMPRegionInfo::classof(Info) &&
+           cast<CGOpenMPRegionInfo>(Info)->getRegionKind() ==
+               TaskOutlinedRegion;
+  }
 
 private:
   /// \brief A variable or parameter storing global thread id for OpenMP
   /// constructs.
   const VarDecl *ThreadIDVar;
-  /// \brief A variable or parameter storing part id for OpenMP tasking
-  /// constructs.
-  const VarDecl *PartIDVar;
 };
 
 /// \brief API for inlined captured statement code generation in OpenMP
 /// constructs.
 class CGOpenMPInlinedRegionInfo : public CGOpenMPRegionInfo {
 public:
-  CGOpenMPInlinedRegionInfo(const OMPExecutableDirective &D,
-                            CodeGenFunction::CGCapturedStmtInfo *OldCSI)
-      : CGOpenMPRegionInfo(D), OldCSI(OldCSI),
+  CGOpenMPInlinedRegionInfo(CodeGenFunction::CGCapturedStmtInfo *OldCSI,
+                            const RegionCodeGenTy &CodeGen)
+      : CGOpenMPRegionInfo(InlinedRegion, CodeGen), OldCSI(OldCSI),
         OuterRegionInfo(dyn_cast_or_null<CGOpenMPRegionInfo>(OldCSI)) {}
   // \brief Retrieve the value of the context parameter.
   virtual llvm::Value *getContextValue() const override {
     if (OuterRegionInfo)
       return OuterRegionInfo->getContextValue();
+    llvm_unreachable("No context value for inlined OpenMP region");
+  }
+  virtual void setContextValue(llvm::Value *V) override {
+    if (OuterRegionInfo) {
+      OuterRegionInfo->setContextValue(V);
+      return;
+    }
     llvm_unreachable("No context value for inlined OpenMP region");
   }
   /// \brief Lookup the captured field decl for a variable.
@@ -149,16 +183,48 @@ public:
 
   /// \brief Get the name of the capture helper.
   virtual StringRef getHelperName() const override {
+    if (auto *OuterRegionInfo = getOldCSI())
+      return OuterRegionInfo->getHelperName();
     llvm_unreachable("No helper name for inlined OpenMP construct");
   }
 
   CodeGenFunction::CGCapturedStmtInfo *getOldCSI() const { return OldCSI; }
+
+  static bool classof(const CGCapturedStmtInfo *Info) {
+    return CGOpenMPRegionInfo::classof(Info) &&
+           cast<CGOpenMPRegionInfo>(Info)->getRegionKind() == InlinedRegion;
+  }
 
 private:
   /// \brief CodeGen info about outer OpenMP region.
   CodeGenFunction::CGCapturedStmtInfo *OldCSI;
   CGOpenMPRegionInfo *OuterRegionInfo;
 };
+
+/// \brief RAII for emitting code of OpenMP constructs.
+class InlinedOpenMPRegionRAII {
+  CodeGenFunction &CGF;
+
+public:
+  /// \brief Constructs region for combined constructs.
+  /// \param CodeGen Code generation sequence for combined directives. Includes
+  /// a list of functions used for code generation of implicitly inlined
+  /// regions.
+  InlinedOpenMPRegionRAII(CodeGenFunction &CGF, const RegionCodeGenTy &CodeGen)
+      : CGF(CGF) {
+    // Start emission for the construct.
+    CGF.CapturedStmtInfo =
+        new CGOpenMPInlinedRegionInfo(CGF.CapturedStmtInfo, CodeGen);
+  }
+  ~InlinedOpenMPRegionRAII() {
+    // Restore original CapturedStmtInfo only if we're done with code emission.
+    auto *OldCSI =
+        cast<CGOpenMPInlinedRegionInfo>(CGF.CapturedStmtInfo)->getOldCSI();
+    delete CGF.CapturedStmtInfo;
+    CGF.CapturedStmtInfo = OldCSI;
+  }
+};
+
 } // namespace
 
 LValue CGOpenMPRegionInfo::getThreadIDVariableLValue(CodeGenFunction &CGF) {
@@ -172,15 +238,18 @@ LValue CGOpenMPRegionInfo::getThreadIDVariableLValue(CodeGenFunction &CGF) {
           ->getPointeeType());
 }
 
-void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, const Stmt *S) {
-  CodeGenFunction::OMPPrivateScope PrivateScope(CGF);
-  CGF.EmitOMPPrivateClause(Directive, PrivateScope);
-  CGF.EmitOMPFirstprivateClause(Directive, PrivateScope);
-  if (PrivateScope.Privatize())
-    // Emit implicit barrier to synchronize threads and avoid data races.
-    CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, Directive.getLocStart(),
-                                               OMPD_unknown);
-  CGCapturedStmtInfo::EmitBody(CGF, S);
+void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, const Stmt * /*S*/) {
+  // 1.2.2 OpenMP Language Terminology
+  // Structured block - An executable statement with a single entry at the
+  // top and a single exit at the bottom.
+  // The point of exit cannot be a branch out of the structured block.
+  // longjmp() and throw() must not violate the entry/exit criteria.
+  CGF.EHStack.pushTerminate();
+  {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    CodeGen(CGF);
+  }
+  CGF.EHStack.popTerminate();
 }
 
 LValue CGOpenMPTaskOutlinedRegionInfo::getThreadIDVariableLValue(
@@ -188,14 +257,6 @@ LValue CGOpenMPTaskOutlinedRegionInfo::getThreadIDVariableLValue(
   return CGF.MakeNaturalAlignAddrLValue(
       CGF.GetAddrOfLocalVar(getThreadIDVariable()),
       getThreadIDVariable()->getType());
-}
-
-void CGOpenMPTaskOutlinedRegionInfo::EmitBody(CodeGenFunction &CGF,
-                                              const Stmt *S) {
-  if (PartIDVar) {
-    // TODO: emit code for untied tasks.
-  }
-  CGCapturedStmtInfo::EmitBody(CGF, S);
 }
 
 CGOpenMPRuntime::CGOpenMPRuntime(CodeGenModule &CGM)
@@ -216,13 +277,14 @@ void CGOpenMPRuntime::clear() {
 }
 
 llvm::Value *
-CGOpenMPRuntime::emitOutlinedFunction(const OMPExecutableDirective &D,
-                                      const VarDecl *ThreadIDVar) {
+CGOpenMPRuntime::emitParallelOutlinedFunction(const OMPExecutableDirective &D,
+                                              const VarDecl *ThreadIDVar,
+                                              const RegionCodeGenTy &CodeGen) {
   assert(ThreadIDVar->getType()->isPointerType() &&
          "thread id variable must be of type kmp_int32 *");
   const CapturedStmt *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
-  CGOpenMPOutlinedRegionInfo CGInfo(D, *CS, ThreadIDVar);
+  CGOpenMPOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen);
   CGF.CapturedStmtInfo = &CGInfo;
   return CGF.GenerateCapturedStmtFunction(*CS);
 }
@@ -230,12 +292,12 @@ CGOpenMPRuntime::emitOutlinedFunction(const OMPExecutableDirective &D,
 llvm::Value *
 CGOpenMPRuntime::emitTaskOutlinedFunction(const OMPExecutableDirective &D,
                                           const VarDecl *ThreadIDVar,
-                                          const VarDecl *PartIDVar) {
+                                          const RegionCodeGenTy &CodeGen) {
   assert(!ThreadIDVar->getType()->isPointerType() &&
          "thread id variable must be of type kmp_int32 for tasks");
   auto *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
-  CGOpenMPTaskOutlinedRegionInfo CGInfo(D, *CS, ThreadIDVar, PartIDVar);
+  CGOpenMPTaskOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen);
   CGF.CapturedStmtInfo = &CGInfo;
   return CGF.GenerateCapturedStmtFunction(*CS);
 }
@@ -906,9 +968,21 @@ llvm::Value *CGOpenMPRuntime::getCriticalRegionLock(StringRef CriticalName) {
   return getOrCreateInternalVariable(KmpCriticalNameTy, Name.concat(".var"));
 }
 
-void CGOpenMPRuntime::emitCriticalRegion(
-    CodeGenFunction &CGF, StringRef CriticalName,
-    const std::function<void()> &CriticalOpGen, SourceLocation Loc) {
+namespace {
+class CallEndCleanup : public EHScopeStack::Cleanup {
+private:
+  const RegionCodeGenTy CodeGen;
+
+public:
+  CallEndCleanup(const RegionCodeGenTy &CodeGen) : CodeGen(CodeGen) {}
+  void Emit(CodeGenFunction &CGF, Flags /*flags*/) override { CodeGen(CGF); }
+};
+} // namespace
+
+void CGOpenMPRuntime::emitCriticalRegion(CodeGenFunction &CGF,
+                                         StringRef CriticalName,
+                                         const RegionCodeGenTy &CriticalOpGen,
+                                         SourceLocation Loc) {
   auto RegionLock = getCriticalRegionLock(CriticalName);
   // __kmpc_critical(ident_t *, gtid, Lock);
   // CriticalOpGen();
@@ -916,14 +990,21 @@ void CGOpenMPRuntime::emitCriticalRegion(
   // Prepare arguments and build a call to __kmpc_critical
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
                          RegionLock};
-  CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_critical), Args);
-  CriticalOpGen();
-  // Build a call to __kmpc_end_critical
-  CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_critical), Args);
+  {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_critical), Args);
+    emitInlinedDirective(CGF, CriticalOpGen);
+    // Build a call to __kmpc_end_critical
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
+        NormalAndEHCleanup, [this, Args](CodeGenFunction &CGF) {
+          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_critical),
+                              Args);
+        });
+  }
 }
 
 static void emitIfStmt(CodeGenFunction &CGF, llvm::Value *IfCond,
-                       const std::function<void()> &BodyOpGen) {
+                       const RegionCodeGenTy &BodyOpGen) {
   llvm::Value *CallBool = CGF.EmitScalarConversion(
       IfCond,
       CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/true),
@@ -934,14 +1015,14 @@ static void emitIfStmt(CodeGenFunction &CGF, llvm::Value *IfCond,
   // Generate the branch (If-stmt)
   CGF.Builder.CreateCondBr(CallBool, ThenBlock, ContBlock);
   CGF.EmitBlock(ThenBlock);
-  BodyOpGen();
+  CGF.CGM.getOpenMPRuntime().emitInlinedDirective(CGF, BodyOpGen);
   // Emit the rest of bblocks/branches
   CGF.EmitBranch(ContBlock);
   CGF.EmitBlock(ContBlock, true);
 }
 
 void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
-                                       const std::function<void()> &MasterOpGen,
+                                       const RegionCodeGenTy &MasterOpGen,
                                        SourceLocation Loc) {
   // if(__kmpc_master(ident_t *, gtid)) {
   //   MasterOpGen();
@@ -951,12 +1032,14 @@ void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
   auto *IsMaster =
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_master), Args);
-  emitIfStmt(CGF, IsMaster, [&]() -> void {
-    MasterOpGen();
+  emitIfStmt(CGF, IsMaster, [&](CodeGenFunction &CGF) -> void {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    MasterOpGen(CGF);
     // Build a call to __kmpc_end_master.
     // OpenMP [1.2.2 OpenMP Language Terminology]
     // For C/C++, an executable statement, possibly compound, with a single
-    // entry at the top and a single exit at the bottom, or an OpenMP construct.
+    // entry at the top and a single exit at the bottom, or an OpenMP
+    // construct.
     // * Access to the structured block must not be the result of a branch.
     // * The point of exit cannot be a branch out of the structured block.
     // * The point of entry must not be a call to setjmp().
@@ -967,7 +1050,12 @@ void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
     // structured block.
     // It is analyzed in Sema, so we can just call __kmpc_end_master() on
     // fallthrough rather than pushing a normal cleanup for it.
-    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_master), Args);
+    // Build a call to __kmpc_end_critical
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
+        NormalAndEHCleanup, [this, Args](CodeGenFunction &CGF) {
+          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_master),
+                              Args);
+        });
   });
 }
 
@@ -1046,7 +1134,7 @@ static llvm::Value *emitCopyprivateCopyFunction(
 }
 
 void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
-                                       const std::function<void()> &SingleOpGen,
+                                       const RegionCodeGenTy &SingleOpGen,
                                        SourceLocation Loc,
                                        ArrayRef<const Expr *> CopyprivateVars,
                                        ArrayRef<const Expr *> SrcExprs,
@@ -1076,8 +1164,9 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
   auto *IsSingle =
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_single), Args);
-  emitIfStmt(CGF, IsSingle, [&]() -> void {
-    SingleOpGen();
+  emitIfStmt(CGF, IsSingle, [&](CodeGenFunction &CGF) -> void {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    SingleOpGen(CGF);
     if (DidIt) {
       // did_it = 1;
       CGF.Builder.CreateAlignedStore(CGF.Builder.getInt32(1), DidIt,
@@ -1097,7 +1186,11 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     // structured block.
     // It is analyzed in Sema, so we can just call __kmpc_end_single() on
     // fallthrough rather than pushing a normal cleanup for it.
-    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_single), Args);
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
+        NormalAndEHCleanup, [this, Args](CodeGenFunction &CGF) {
+          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_end_single),
+                              Args);
+        });
   });
   // call __kmpc_copyprivate(ident_t *, gtid, <buf_size>, <copyprivate list>,
   // <copy_func>, did_it);
@@ -1277,6 +1370,7 @@ void CGOpenMPRuntime::emitForFinish(CodeGenFunction &CGF, SourceLocation Loc,
   assert((ScheduleKind == OMPC_SCHEDULE_static ||
           ScheduleKind == OMPC_SCHEDULE_unknown) &&
          "Non-static schedule kinds are not yet implemented");
+  (void)ScheduleKind;
   // Call __kmpc_for_static_fini(ident_t *loc, kmp_int32 tid);
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc, OMP_IDENT_KMPC),
                          getThreadID(CGF, Loc)};
@@ -1522,23 +1616,9 @@ void CGOpenMPRuntime::emitTaskCall(
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_omp_task), TaskArgs);
 }
 
-InlinedOpenMPRegionRAII::InlinedOpenMPRegionRAII(
-    CodeGenFunction &CGF, const OMPExecutableDirective &D)
-    : CGF(CGF) {
-  CGF.CapturedStmtInfo = new CGOpenMPInlinedRegionInfo(D, CGF.CapturedStmtInfo);
-  // 1.2.2 OpenMP Language Terminology
-  // Structured block - An executable statement with a single entry at the
-  // top and a single exit at the bottom.
-  // The point of exit cannot be a branch out of the structured block.
-  // longjmp() and throw() must not violate the entry/exit criteria.
-  CGF.EHStack.pushTerminate();
-}
-
-InlinedOpenMPRegionRAII::~InlinedOpenMPRegionRAII() {
-  CGF.EHStack.popTerminate();
-  auto *OldCSI =
-      cast<CGOpenMPInlinedRegionInfo>(CGF.CapturedStmtInfo)->getOldCSI();
-  delete CGF.CapturedStmtInfo;
-  CGF.CapturedStmtInfo = OldCSI;
+void CGOpenMPRuntime::emitInlinedDirective(CodeGenFunction &CGF,
+                                           const RegionCodeGenTy &CodeGen) {
+  InlinedOpenMPRegionRAII Region(CGF, CodeGen);
+  CGF.CapturedStmtInfo->EmitBody(CGF, /*S=*/nullptr);
 }
 

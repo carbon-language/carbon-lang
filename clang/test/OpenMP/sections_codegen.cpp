@@ -96,6 +96,7 @@ int main() {
 // CHECK-NEXT:  br label %[[END]]
 // CHECK:       [[END]]
 // CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SINGLE_LOC]],
+// CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(
 // CHECK-NEXT:  ret
 // CHECK:       [[TERM_LPAD]]
 // CHECK:       call void @__clang_call_terminate(i8*

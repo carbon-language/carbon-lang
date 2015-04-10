@@ -43,7 +43,10 @@ namespace CodeGen {
 class CodeGenFunction;
 class CodeGenModule;
 
+typedef llvm::function_ref<void(CodeGenFunction &)> RegionCodeGenTy;
+
 class CGOpenMPRuntime {
+private:
   enum OpenMPRTLFunction {
     /// \brief Call to void __kmpc_fork_call(ident_t *loc, kmp_int32 argc,
     /// kmpc_micro microtask, ...);
@@ -284,25 +287,27 @@ public:
   virtual ~CGOpenMPRuntime() {}
   virtual void clear();
 
-  /// \brief Emits outlined function for the specified OpenMP directive \a D.
-  /// This outlined function has type void(*)(kmp_int32 *ThreadID, kmp_int32
-  /// BoundID, struct context_vars*).
+  /// \brief Emits outlined function for the specified OpenMP parallel directive
+  /// \a D. This outlined function has type void(*)(kmp_int32 *ThreadID,
+  /// kmp_int32 BoundID, struct context_vars*).
   /// \param D OpenMP directive.
   /// \param ThreadIDVar Variable for thread id in the current OpenMP region.
-  ///
-  virtual llvm::Value *emitOutlinedFunction(const OMPExecutableDirective &D,
-                                            const VarDecl *ThreadIDVar);
+  /// \param CodeGen Code generation sequence for the \a D directive.
+  virtual llvm::Value *
+  emitParallelOutlinedFunction(const OMPExecutableDirective &D,
+                               const VarDecl *ThreadIDVar,
+                               const RegionCodeGenTy &CodeGen);
 
   /// \brief Emits outlined function for the OpenMP task directive \a D. This
   /// outlined function has type void(*)(kmp_int32 ThreadID, kmp_int32
   /// PartID, struct context_vars*).
   /// \param D OpenMP directive.
   /// \param ThreadIDVar Variable for thread id in the current OpenMP region.
-  /// \param PartIDVar If not nullptr - variable used for part id in tasks.
+  /// \param CodeGen Code generation sequence for the \a D directive.
   ///
   virtual llvm::Value *emitTaskOutlinedFunction(const OMPExecutableDirective &D,
                                                 const VarDecl *ThreadIDVar,
-                                                const VarDecl *PartIDVar);
+                                                const RegionCodeGenTy &CodeGen);
 
   /// \brief Cleans up references to the objects in finished function.
   ///
@@ -334,14 +339,14 @@ public:
   /// \param CriticalOpGen Generator for the statement associated with the given
   /// critical region.
   virtual void emitCriticalRegion(CodeGenFunction &CGF, StringRef CriticalName,
-                                  const std::function<void()> &CriticalOpGen,
+                                  const RegionCodeGenTy &CriticalOpGen,
                                   SourceLocation Loc);
 
   /// \brief Emits a master region.
   /// \param MasterOpGen Generator for the statement associated with the given
   /// master region.
   virtual void emitMasterRegion(CodeGenFunction &CGF,
-                                const std::function<void()> &MasterOpGen,
+                                const RegionCodeGenTy &MasterOpGen,
                                 SourceLocation Loc);
 
   /// \brief Emits code for a taskyield directive.
@@ -351,7 +356,7 @@ public:
   /// \param SingleOpGen Generator for the statement associated with the given
   /// single region.
   virtual void emitSingleRegion(CodeGenFunction &CGF,
-                                const std::function<void()> &SingleOpGen,
+                                const RegionCodeGenTy &SingleOpGen,
                                 SourceLocation Loc,
                                 ArrayRef<const Expr *> CopyprivateVars,
                                 ArrayRef<const Expr *> SrcExprs,
@@ -506,17 +511,13 @@ public:
                             llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
                             llvm::Value *TaskFunction, QualType SharedsTy,
                             llvm::Value *Shareds);
+  /// \brief Emit code for the directive that does not require outlining.
+  ///
+  /// \param CodeGen Code generation sequence for the \a D directive.
+  virtual void emitInlinedDirective(CodeGenFunction &CGF,
+                                    const RegionCodeGenTy &CodeGen);
 };
 
-/// \brief RAII for emitting code of CapturedStmt without function outlining.
-class InlinedOpenMPRegionRAII {
-  CodeGenFunction &CGF;
-
-public:
-  InlinedOpenMPRegionRAII(CodeGenFunction &CGF,
-                          const OMPExecutableDirective &D);
-  ~InlinedOpenMPRegionRAII();
-};
 } // namespace CodeGen
 } // namespace clang
 

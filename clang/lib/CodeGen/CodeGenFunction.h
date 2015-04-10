@@ -192,7 +192,7 @@ public:
 
     CapturedRegionKind getKind() const { return Kind; }
 
-    void setContextValue(llvm::Value *V) { ThisValue = V; }
+    virtual void setContextValue(llvm::Value *V) { ThisValue = V; }
     // \brief Retrieve the value of the context parameter.
     virtual llvm::Value *getContextValue() const { return ThisValue; }
 
@@ -2061,9 +2061,10 @@ private:
   /// Helpers for the OpenMP loop directives.
   void EmitOMPLoopBody(const OMPLoopDirective &Directive,
                        bool SeparateIter = false);
-  void EmitOMPInnerLoop(const Stmt &S, bool RequiresCleanup,
-                        const Expr *LoopCond, const Expr *IncExpr,
-                        const std::function<void()> &BodyGen);
+  void
+  EmitOMPInnerLoop(const Stmt &S, bool RequiresCleanup, const Expr *LoopCond,
+                   const Expr *IncExpr,
+                   const llvm::function_ref<void(CodeGenFunction &)> &BodyGen);
   void EmitOMPSimdFinal(const OMPLoopDirective &S);
   void EmitOMPWorksharingLoop(const OMPLoopDirective &S);
   void EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
