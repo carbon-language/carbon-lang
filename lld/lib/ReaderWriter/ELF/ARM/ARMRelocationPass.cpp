@@ -526,6 +526,14 @@ protected:
     return g;
   }
 
+  std::error_code handleGOT(const Reference &ref) {
+    if (isa<UndefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getNullGOT());
+    else if (const auto *da = dyn_cast<DefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getGOT(da));
+    return std::error_code();
+  }
+
 public:
   ARMRelocationPass(const ELFLinkingContext &ctx) : _file(ctx), _ctx(ctx) {}
 
@@ -710,13 +718,38 @@ public:
   const GOTAtom *getTLSTPOFF32(const DefinedAtom *da) {
     return getGOTTLSEntry<R_ARM_TLS_LE32>(da);
   }
+};
+
+/// This implements the dynamic relocation model. GOT and PLT entries are
+/// created for references that cannot be directly resolved.
+class ARMDynamicRelocationPass final
+    : public ARMRelocationPass<ARMDynamicRelocationPass> {
+public:
+  ARMDynamicRelocationPass(const elf::ARMLinkingContext &ctx)
+      : ARMRelocationPass(ctx) {}
+
+  /// \brief Get the veneer for ARM B/BL instructions.
+  const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
+                                       StringRef secName) {
+    llvm_unreachable("Handle ARM veneer");
+  }
+
+  /// \brief Get the veneer for Thumb B/BL instructions.
+  const VeneerAtom *getVeneer_THM_B_BL(const DefinedAtom *da,
+                                       StringRef secName) {
+    llvm_unreachable("Handle Thumb veneer");
+  }
+
+  /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
+  const GOTAtom *getTLSTPOFF32(const DefinedAtom *da) {
+    llvm_unreachable("Handle TLS TPOFF32");
+  }
 
   std::error_code handleGOT(const Reference &ref) {
-    if (isa<UndefinedAtom>(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getNullGOT());
-    else if (const auto *da = dyn_cast<DefinedAtom>(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getGOT(da));
-    return std::error_code();
+    if (const auto sla = dyn_cast<const SharedLibraryAtom>(ref.target())) {
+      llvm_unreachable("Handle shared GOT entries");
+    }
+    return ARMRelocationPass::handleGOT(ref);
   }
 };
 
@@ -727,7 +760,7 @@ lld::elf::createARMRelocationPass(const ARMLinkingContext &ctx) {
   switch (ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     if (ctx.isDynamic())
-      llvm_unreachable("Unhandled output file type");
+      return llvm::make_unique<ARMDynamicRelocationPass>(ctx);
     return llvm::make_unique<ARMStaticRelocationPass>(ctx);
   default:
     llvm_unreachable("Unhandled output file type");
