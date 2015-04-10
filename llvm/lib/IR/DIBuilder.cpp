@@ -93,11 +93,11 @@ void DIBuilder::finalize() {
   TempSubprograms->replaceAllUsesWith(SPs.get());
   for (unsigned i = 0, e = SPs.size(); i != e; ++i) {
     DISubprogram SP = cast<MDSubprogram>(SPs[i]);
-    if (MDNode *Temp = SP.getVariables().get()) {
+    if (MDTuple *Temp = SP.getVariables().get()) {
       const auto &PV = PreservedVariables.lookup(SP);
       SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
       DIArray AV = getOrCreateArray(Variables);
-      Temp->replaceAllUsesWith(AV.get());
+      TempMDTuple(Temp)->replaceAllUsesWith(AV.get());
     }
   }
 
@@ -143,18 +143,19 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 
   // TODO: Once we make MDCompileUnit distinct, stop using temporaries here
   // (just start with operands assigned to nullptr).
-  TempEnumTypes = MDTuple::getTemporary(VMContext, None).release();
-  TempRetainTypes = MDTuple::getTemporary(VMContext, None).release();
-  TempSubprograms = MDTuple::getTemporary(VMContext, None).release();
-  TempGVs = MDTuple::getTemporary(VMContext, None).release();
-  TempImportedModules = MDTuple::getTemporary(VMContext, None).release();
+  TempEnumTypes = MDTuple::getTemporary(VMContext, None);
+  TempRetainTypes = MDTuple::getTemporary(VMContext, None);
+  TempSubprograms = MDTuple::getTemporary(VMContext, None);
+  TempGVs = MDTuple::getTemporary(VMContext, None);
+  TempImportedModules = MDTuple::getTemporary(VMContext, None);
 
   // TODO: Switch to getDistinct().  We never want to merge compile units based
   // on contents.
   MDCompileUnit *CUNode = MDCompileUnit::get(
       VMContext, Lang, MDFile::get(VMContext, Filename, Directory), Producer,
-      isOptimized, Flags, RunTimeVer, SplitName, Kind, TempEnumTypes,
-      TempRetainTypes, TempSubprograms, TempGVs, TempImportedModules);
+      isOptimized, Flags, RunTimeVer, SplitName, Kind, TempEnumTypes.get(),
+      TempRetainTypes.get(), TempSubprograms.get(), TempGVs.get(),
+      TempImportedModules.get());
 
   // Create a named metadata so that it is easier to find cu in a module.
   // Note that we only generate this when the caller wants to actually

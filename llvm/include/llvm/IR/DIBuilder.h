@@ -57,11 +57,11 @@ namespace llvm {
     Module &M;
     LLVMContext &VMContext;
 
-    MDTuple *TempEnumTypes;
-    MDTuple *TempRetainTypes;
-    MDTuple *TempSubprograms;
-    MDTuple *TempGVs;
-    MDTuple *TempImportedModules;
+    TempMDTuple TempEnumTypes;
+    TempMDTuple TempRetainTypes;
+    TempMDTuple TempSubprograms;
+    TempMDTuple TempGVs;
+    TempMDTuple TempImportedModules;
 
     Function *DeclareFn;     // llvm.dbg.declare
     Function *ValueFn;       // llvm.dbg.value
