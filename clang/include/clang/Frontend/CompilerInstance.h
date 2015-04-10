@@ -156,6 +156,9 @@ class CompilerInstance : public ModuleLoader {
     OutputFile(const std::string &filename, const std::string &tempFilename,
                std::unique_ptr<raw_ostream> OS)
         : Filename(filename), TempFilename(tempFilename), OS(std::move(OS)) {}
+    OutputFile(OutputFile &&O)
+        : Filename(std::move(O.Filename)),
+          TempFilename(std::move(O.TempFilename)), OS(std::move(O.OS)) {}
   };
 
   /// The list of active output files.
