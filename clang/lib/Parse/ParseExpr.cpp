@@ -928,7 +928,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     Res = Actions.ActOnIdExpression(
         getCurScope(), ScopeSpec, TemplateKWLoc, Name, Tok.is(tok::l_paren),
         isAddressOfOperand, std::move(Validator),
-        /*IsInlineAsmIdentifier=*/false, &Replacement);
+        /*IsInlineAsmIdentifier=*/false,
+        Tok.is(tok::r_paren) ? nullptr : &Replacement);
     if (!Res.isInvalid() && !Res.get()) {
       UnconsumeToken(Replacement);
       return ParseCastExpression(isUnaryExpression, isAddressOfOperand,

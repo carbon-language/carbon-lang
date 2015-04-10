@@ -799,7 +799,10 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
       //   The operand of the decltype specifier is an unevaluated operand.
       EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
                                                    nullptr,/*IsDecltype=*/true);
-      Result = Actions.CorrectDelayedTyposInExpr(ParseExpression());
+      Result =
+          Actions.CorrectDelayedTyposInExpr(ParseExpression(), [](Expr *E) {
+            return E->hasPlaceholderType() ? ExprError() : E;
+          });
       if (Result.isInvalid()) {
         DS.SetTypeSpecError();
         if (SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch)) {
