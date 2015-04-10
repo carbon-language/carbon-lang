@@ -53,6 +53,15 @@ static const uint8_t Veneer_THM_B_BL_Static_a_AtomContent[4] = {
 // .got values
 static const uint8_t ARMGotAtomContent[4] = {0};
 
+// .plt value (entry 0)
+static const uint8_t ARMPlt0AtomContent[20] = {
+    0x04, 0xe0, 0x2d, 0xe5,  // push {lr}
+    0x04, 0xe0, 0x9f, 0xe5,  // ldr lr, [pc, #4]
+    0x0e, 0xe0, 0x8f, 0xe0,  // add lr, pc, lr
+    0x00, 0xf0, 0xbe, 0xe5,  // ldr pc, [lr, #0]!
+    0x00, 0x00, 0x00, 0x00   // <got1_symbol_address>
+};
+
 // .plt values (other entries)
 static const uint8_t ARMPltAtomContent[12] = {
     0x00, 0xc0, 0x8f, 0xe2,  // add ip, pc, #offset[G0]
@@ -198,6 +207,41 @@ protected:
 class ARMGOTPLTAtom : public ARMGOTAtom {
 public:
   ARMGOTPLTAtom(const File &f) : ARMGOTAtom(f, ".got.plt") {}
+};
+
+/// \brief PLT0 entry atom.
+/// Serves as a mapping symbol in the release mode.
+class ARMPLT0Atom : public PLT0Atom {
+public:
+  ARMPLT0Atom(const File &f, const std::string &name)
+      : PLT0Atom(f) {
+#ifndef NDEBUG
+    _name = name;
+#else
+    // Don't move the code to any base classes since
+    // virtual codeModel method would return wrong value.
+    _name = getMappingAtomName(codeModel(), name);
+#endif
+  }
+
+  DefinedAtom::CodeModel codeModel() const override {
+#ifndef NDEBUG
+    return DefinedAtom::codeNA;
+#else
+    return DefinedAtom::codeARM_a;
+#endif
+  }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(ARMPlt0AtomContent);
+  }
+
+  Alignment alignment() const override { return 4; }
+
+  StringRef name() const override { return _name; }
+
+private:
+  std::string _name;
 };
 
 /// \brief PLT entry atom.
@@ -585,6 +629,10 @@ public:
 
     // Add all created atoms to the link.
     uint64_t ordinal = 0;
+    if (_plt0) {
+      _plt0->setOrdinal(ordinal++);
+      mf->addAtom(*_plt0);
+    }
     for (auto &pltKV : _pltAtoms) {
       auto &plt = pltKV.second;
       if (auto *v = plt._veneer) {
@@ -598,6 +646,12 @@ public:
     if (_null) {
       _null->setOrdinal(ordinal++);
       mf->addAtom(*_null);
+    }
+    if (_plt0) {
+      _got0->setOrdinal(ordinal++);
+      mf->addAtom(*_got0);
+      _got1->setOrdinal(ordinal++);
+      mf->addAtom(*_got1);
     }
     for (auto &gotKV : _gotAtoms) {
       auto &got = gotKV.second;
@@ -656,6 +710,14 @@ protected:
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null = nullptr;
+
+  /// \brief The got and plt entries for .PLT0. This is used to call into the
+  /// dynamic linker for symbol resolution.
+  /// @{
+  PLT0Atom *_plt0 = nullptr;
+  GOTAtom *_got0 = nullptr;
+  GOTAtom *_got1 = nullptr;
+  /// @}
 };
 
 /// This implements the static relocation model. Meaning GOT and PLT entries are
@@ -737,8 +799,36 @@ public:
   ARMDynamicRelocationPass(const elf::ARMLinkingContext &ctx)
       : ARMRelocationPass(ctx) {}
 
+  /// \brief get the PLT entry for a given atom.
+  const PLTAtom *getPLTEntry(const SharedLibraryAtom *sla, bool fromThumb) {
+    return getPLT(sla, fromThumb, &ARMDynamicRelocationPass::createPLTGOT);
+  }
+
+  /// \brief Create the GOT entry for a given atom.
+  const GOTAtom *createPLTGOT(const Atom *da) {
+    assert(!_gotAtoms.lookup(da) && "PLTGOT entry already exists");
+    auto g = new (_file._alloc) ARMGOTPLTAtom(_file);
+    g->addReferenceELF_ARM(R_ARM_ABS32, 0, getPLT0(), 0);
+    g->addReferenceELF_ARM(R_ARM_JUMP_SLOT, 0, da, 0);
+#ifndef NDEBUG
+    g->_name = "__got_plt0_";
+    g->_name += da->name();
+#endif
+    _gotAtoms[da] = g;
+    return g;
+  }
+
   /// \brief Handle ordinary relocation references.
   std::error_code handlePlain(const DefinedAtom &atom, const Reference &ref) {
+    if (auto sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
+      if (sla->type() == SharedLibraryAtom::Type::Data) {
+        llvm_unreachable("Handle object entries");
+      } else if (sla->type() == SharedLibraryAtom::Type::Code) {
+        const_cast<Reference &>(ref)
+            .setTarget(getPLTEntry(sla, isThumbCode(atom.codeModel())));
+      }
+      return std::error_code();
+    }
     return handleIFUNC(atom, ref);
   }
 
@@ -757,6 +847,24 @@ public:
   /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
   const GOTAtom *getTLSTPOFF32(const DefinedAtom *da) {
     llvm_unreachable("Handle TLS TPOFF32");
+  }
+
+  const PLT0Atom *getPLT0() {
+    if (_plt0)
+      return _plt0;
+    // Fill in the null entry.
+    getNullGOT();
+    _plt0 = new (_file._alloc) ARMPLT0Atom(_file, "__PLT0");
+    _got0 = new (_file._alloc) ARMGOTPLTAtom(_file);
+    _got1 = new (_file._alloc) ARMGOTPLTAtom(_file);
+    _plt0->addReferenceELF_ARM(R_ARM_REL32, 16, _got1, 0);
+    // Fake reference to show connection between the GOT and PLT entries.
+    _plt0->addReferenceELF_ARM(R_ARM_NONE, 0, _got0, 0);
+#ifndef NDEBUG
+    _got0->_name = "__got0";
+    _got1->_name = "__got1";
+#endif
+    return _plt0;
   }
 
   std::error_code handleGOT(const Reference &ref) {
