@@ -275,11 +275,15 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
   // Calculate EH numbers for WinEH.
-  if (fn.getFnAttribute("wineh-parent").getValueAsString() == fn.getName()) {
-    WinEHNumbering Num(MMI.getWinEHFuncInfo(&fn));
-    Num.calculateStateNumbers(fn);
-    // Pop everything on the handler stack.
-    Num.processCallSite(None, ImmutableCallSite());
+  if (fn.hasFnAttribute("wineh-parent")) {
+    const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
+    WinEHFuncInfo &FI = MMI.getWinEHFuncInfo(WinEHParentFn);
+    if (FI.LandingPadStateMap.empty()) {
+      WinEHNumbering Num(FI);
+      Num.calculateStateNumbers(*WinEHParentFn);
+      // Pop everything on the handler stack.
+      Num.processCallSite(None, ImmutableCallSite());
+    }
   }
 }
 

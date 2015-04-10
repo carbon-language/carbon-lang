@@ -142,7 +142,11 @@ struct WinEHFuncInfo {
   int UnwindHelpFrameIdx;
   int UnwindHelpFrameOffset;
 
-  WinEHFuncInfo() : UnwindHelpFrameIdx(INT_MAX), UnwindHelpFrameOffset(-1) {}
+  unsigned NumIPToStateFuncsVisited;
+
+  WinEHFuncInfo()
+      : UnwindHelpFrameIdx(INT_MAX), UnwindHelpFrameOffset(-1),
+        NumIPToStateFuncsVisited(0) {}
 };
 
 }

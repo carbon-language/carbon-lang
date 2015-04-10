@@ -343,7 +343,11 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
     }
   }
 
-  if (ParentF != F)
+  // Defer emission until we've visited the parent function and all the catch
+  // handlers.
+  if (ParentF == F || FuncInfo.CatchHandlerMaxState.count(F))
+    ++FuncInfo.NumIPToStateFuncsVisited;
+  if (FuncInfo.NumIPToStateFuncsVisited != FuncInfo.CatchHandlerMaxState.size())
     return;
 
   MCSymbol *UnwindMapXData = nullptr;
