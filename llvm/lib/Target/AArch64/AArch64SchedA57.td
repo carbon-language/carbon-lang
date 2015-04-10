@@ -127,6 +127,15 @@ def : InstRW<[A57Write_1cyc_1B_1I], (instrs BL)>;
 def : InstRW<[A57Write_2cyc_1B_1I], (instrs BLR)>;
 
 
+// Shifted Register with Shift == 0
+// ----------------------------------------------------------------------------
+
+def A57WriteISReg : SchedWriteVariant<[
+       SchedVar<RegShiftedPred, [WriteISReg]>,
+       SchedVar<NoSchedPred, [WriteI]>]>;
+def : InstRW<[A57WriteISReg], (instregex ".*rs$")>;
+
+
 // Divide and Multiply Instructions
 // -----------------------------------------------------------------------------
 
