@@ -170,22 +170,21 @@ static void relocHexGOT11_X(uint8_t *loc, uint64_t A, uint64_t GOT) {
 }
 
 static void relocHexGOTRELSigned(uint8_t *loc, uint64_t P, uint64_t S,
-                                 uint64_t A, uint64_t GOT, int shiftBits = 0) {
+                                 uint64_t A, uint64_t GOT, int shiftBits) {
   int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOTRELUnsigned(uint8_t *loc, uint64_t P, uint64_t S,
-                                   uint64_t A, uint64_t GOT,
-                                   int shiftBits = 0) {
-  uint32_t result = (uint32_t)((S + A - GOT) >> shiftBits);
+                                   uint64_t A, uint64_t GOT) {
+  uint32_t result = (uint32_t)(S + A - GOT);
   result = scatterBits(result, findv4bitmask(loc));
   write32le(loc, result | read32le(loc));
 }
 
 static void relocHexGOTREL_HILO16(uint8_t *loc, uint64_t P, uint64_t S,
-                                  uint64_t A, uint64_t GOT, int shiftBits = 0) {
+                                  uint64_t A, uint64_t GOT, int shiftBits) {
   int32_t result = (int32_t)((S + A - GOT) >> shiftBits);
   result = scatterBits(result, 0x00c03fff);
   write32le(loc, result | read32le(loc));
@@ -286,7 +285,7 @@ std::error_code HexagonTargetRelocationHandler::applyRelocation(
     break;
   case R_HEX_GOTREL_LO16:
     relocHexGOTREL_HILO16(loc, reloc, target, ref.addend(),
-                          _targetLayout.getGOTSymAddr());
+                          _targetLayout.getGOTSymAddr(), 0);
     break;
   case R_HEX_GOTREL_HI16:
     relocHexGOTREL_HILO16(loc, reloc, target, ref.addend(),
