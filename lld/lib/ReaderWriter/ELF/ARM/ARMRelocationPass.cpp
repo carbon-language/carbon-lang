@@ -384,16 +384,11 @@ protected:
   /// \brief Create a GOT entry for TLS with reloc type and addend specified.
   template <Reference::KindValue R_ARM_TLS, Reference::Addend A = 0>
   const GOTAtom *getGOTTLSEntry(const DefinedAtom *da) {
-    if (auto got = _gotAtoms.lookup(da))
-      return got;
-    auto g = new (_file._alloc) ARMGOTAtom(_file);
-    g->addReferenceELF_ARM(R_ARM_TLS, 0, da, A);
+    StringRef source;
 #ifndef NDEBUG
-    g->_name = "__got_tls_";
-    g->_name += da->name();
+    source = "_tls_";
 #endif
-    _gotAtoms[da] = g;
-    return g;
+    return getGOT<R_ARM_TLS, A>(da, source);
   }
 
   /// \brief Add veneer with mapping symbol.
@@ -411,10 +406,9 @@ protected:
   }
 
   /// \brief get a veneer for a PLT entry.
-  const PLTAtom *getPLTVeneer(const DefinedAtom *da, PLTAtom *pa,
-                              StringRef source) {
+  const PLTAtom *getPLTVeneer(const Atom *da, PLTAtom *pa, StringRef source) {
     std::string name = "__plt_from_thumb";
-    name += source;
+    name += source.empty() ? "_" : source;
     name += da->name();
     // Create veneer for PLT entry.
     auto va = new (_file._alloc) ARMPLTVeneerAtom(_file, name);
@@ -425,13 +419,13 @@ protected:
     return va;
   }
 
-  typedef const GOTAtom *(Derived::*GOTFactory)(const DefinedAtom *);
+  typedef const GOTAtom *(Derived::*GOTFactory)(const Atom *);
 
   /// \brief get a PLT entry referencing PLTGOT entry.
   ///
   /// If the entry does not exist, both GOT and PLT entry are created.
-  const PLTAtom *getPLTEntry(const DefinedAtom *da, bool fromThumb,
-                             GOTFactory gotFactory, StringRef source) {
+  const PLTAtom *getPLT(const Atom *da, bool fromThumb, GOTFactory gotFactory,
+                        StringRef source = "") {
     auto pltVeneer = _pltAtoms.lookup(da);
     if (!pltVeneer.empty()) {
       // Return clean PLT entry provided it is ARM code.
@@ -454,7 +448,7 @@ protected:
            "GOT entry should be in a special section");
 
     std::string name = "__plt";
-    name += source;
+    name += source.empty() ? "_" : source;
     name += da->name();
     // Create PLT entry for the GOT entry.
     auto pa = new (_file._alloc) ARMPLTAtom(_file, name);
@@ -473,7 +467,7 @@ protected:
   }
 
   /// \brief Create the GOT entry for a given IFUNC Atom.
-  const GOTAtom *createIFUNCGOTEntry(const DefinedAtom *da) {
+  const GOTAtom *createIFUNCGOT(const Atom *da) {
     assert(!_gotAtoms.lookup(da) && "IFUNC GOT entry already exists");
     auto g = new (_file._alloc) ARMGOTPLTAtom(_file);
     g->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
@@ -488,7 +482,7 @@ protected:
 
   /// \brief get the PLT entry for a given IFUNC Atom.
   const PLTAtom *getIFUNCPLTEntry(const DefinedAtom *da, bool fromThumb) {
-    return getPLTEntry(da, fromThumb, &Derived::createIFUNCGOTEntry, "_ifunc_");
+    return getPLT(da, fromThumb, &Derived::createIFUNCGOT, "_ifunc_");
   }
 
   /// \brief Redirect the call to the PLT stub for the target IFUNC.
@@ -515,24 +509,32 @@ protected:
     return _null;
   }
 
-  const GOTAtom *getGOT(const DefinedAtom *da) {
+  /// \brief Create regular GOT entry which cannot be used in PLTGOT operation.
+  template <Reference::KindValue R_ARM_REL, Reference::Addend A = 0>
+  const GOTAtom *getGOT(const Atom *da, StringRef source = "") {
     if (auto got = _gotAtoms.lookup(da))
       return got;
     auto g = new (_file._alloc) ARMGOTAtom(_file);
-    g->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
+    g->addReferenceELF_ARM(R_ARM_REL, 0, da, A);
 #ifndef NDEBUG
-    g->_name = "__got_";
+    g->_name = "__got";
+    g->_name += source.empty() ? "_" : source;
     g->_name += da->name();
 #endif
     _gotAtoms[da] = g;
     return g;
   }
 
+  /// \brief get GOT entry for a regular defined atom.
+  const GOTAtom *getGOTEntry(const DefinedAtom *da) {
+    return getGOT<R_ARM_ABS32>(da);
+  }
+
   std::error_code handleGOT(const Reference &ref) {
     if (isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getNullGOT());
     else if (const auto *da = dyn_cast<DefinedAtom>(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getGOT(da));
+      const_cast<Reference &>(ref).setTarget(getGOTEntry(da));
     return std::error_code();
   }
 
