@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "ppc-loop-data-prefetch"
 #include "PPC.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CodeMetrics.h"
@@ -110,8 +111,10 @@ bool PPCLoopDataPrefetch::runOnFunction(Function &F) {
 
   bool MadeChange = false;
 
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end();
-       I != E; ++I) {
+  if (LI->empty())
+    return MadeChange;
+
+  for (auto I = df_begin(*LI->begin()), E = df_end(*LI->begin()); I != E; ++I) {
     Loop *L = *I;
     MadeChange |= runOnLoop(L);
   }
