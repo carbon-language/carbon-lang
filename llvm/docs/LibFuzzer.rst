@@ -256,6 +256,21 @@ You can run both fuzzers on the same corpus in parallel::
 
 Periodically restart both fuzzers so that they can use each other's findings.
 
+How good is my fuzzer?
+----------------------
+
+Once you implement your target function ``TestOneInput`` and fuzz it to death,
+you will want to know whether the function or the corpus can be improved further.
+One easy to use metric is, of course, code coverage.
+You can get the coverage for your corpus like this::
+
+  ASAN_OPTIONS=coverage_pcs=1 ./fuzzer CORPUS_DIR -runs=0
+
+This will run all the tests in the CORPUS_DIR but will not generate any new tests
+and dump covered PCs to disk before exiting.
+Then you can subtract the set of covered PCs from the set of all instrumented PCs in the binary,
+see SanitizerCoverage_ for details.
+
 Fuzzing components of LLVM
 ==========================
 
