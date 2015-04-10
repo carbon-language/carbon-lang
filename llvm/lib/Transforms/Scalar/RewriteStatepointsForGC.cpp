@@ -49,11 +49,11 @@ static cl::opt<bool> TraceLSP("trace-rewrite-statepoints", cl::Hidden,
 // Print the liveset found at the insert location
 static cl::opt<bool> PrintLiveSet("spp-print-liveset", cl::Hidden,
                                   cl::init(false));
-static cl::opt<bool> PrintLiveSetSize("spp-print-liveset-size",
-                                      cl::Hidden, cl::init(false));
+static cl::opt<bool> PrintLiveSetSize("spp-print-liveset-size", cl::Hidden,
+                                      cl::init(false));
 // Print out the base pointers for debugging
-static cl::opt<bool> PrintBasePointers("spp-print-base-pointers",
-                                       cl::Hidden, cl::init(false));
+static cl::opt<bool> PrintBasePointers("spp-print-base-pointers", cl::Hidden,
+                                       cl::init(false));
 
 namespace {
 struct RewriteStatepointsForGC : public FunctionPass {
@@ -134,7 +134,7 @@ static bool isGCPointerType(const Type *T) {
 // Return true if this type is one which a) is a gc pointer or contains a GC
 // pointer and b) is of a type this code expects to encounter as a live value.
 // (The insertion code will assert that a type which matches (a) and not (b)
-// is not encountered.) 
+// is not encountered.)
 static bool isHandledGCPointerType(Type *T) {
   // We fully support gc pointers
   if (isGCPointerType(T))
@@ -151,17 +151,16 @@ static bool isHandledGCPointerType(Type *T) {
 /// Returns true if this type contains a gc pointer whether we know how to
 /// handle that type or not.
 static bool containsGCPtrType(Type *Ty) {
-  if(isGCPointerType(Ty))
+  if (isGCPointerType(Ty))
     return true;
   if (VectorType *VT = dyn_cast<VectorType>(Ty))
     return isGCPointerType(VT->getScalarType());
   if (ArrayType *AT = dyn_cast<ArrayType>(Ty))
     return containsGCPtrType(AT->getElementType());
   if (StructType *ST = dyn_cast<StructType>(Ty))
-    return std::any_of(ST->subtypes().begin(), ST->subtypes().end(),
-                       [](Type *SubType) {
-                         return containsGCPtrType(SubType);
-                       });
+    return std::any_of(
+        ST->subtypes().begin(), ST->subtypes().end(),
+        [](Type *SubType) { return containsGCPtrType(SubType); });
   return false;
 }
 
@@ -325,7 +324,7 @@ analyzeParsePointLiveness(DominatorTree &DT, const CallSite &CS,
 }
 
 /// If we can trivially determine that this vector contains only base pointers,
-/// return the base instruction.  
+/// return the base instruction.
 static Value *findBaseOfVector(Value *I) {
   assert(I->getType()->isVectorTy() &&
          cast<VectorType>(I->getType())->getElementType()->isPointerTy() &&
@@ -347,7 +346,7 @@ static Value *findBaseOfVector(Value *I) {
   if (isa<UndefValue>(I))
     // utterly meaningless, but useful for dealing with partially optimized
     // code.
-    return I; 
+    return I;
 
   // Due to inheritance, this must be _after_ the global variable and undef
   // checks
@@ -401,7 +400,7 @@ static Value *findBaseDefiningValue(Value *I) {
   if (isa<UndefValue>(I))
     // utterly meaningless, but useful for dealing with
     // partially optimized code.
-    return I; 
+    return I;
 
   // Due to inheritance, this must be _after_ the global variable and undef
   // checks
@@ -476,9 +475,9 @@ static Value *findBaseDefiningValue(Value *I) {
     // predicate.  From the perspective of base pointers, we just treat it
     // like a load.
     return I;
-  
+
   assert(!isa<AtomicRMWInst>(I) && "Xchg handled above, all others are "
-         "binary ops which don't apply to pointers");
+                                   "binary ops which don't apply to pointers");
 
   // The aggregate ops.  Aggregates can either be in the heap or on the
   // stack, but in either case, this is simply a field load.  As a result,
@@ -495,7 +494,7 @@ static Value *findBaseDefiningValue(Value *I) {
   // return a value which dynamically selects from amoung several base
   // derived pointers (each with it's own base potentially).  It's the job of
   // the caller to resolve these.
-  assert((isa<SelectInst>(I) || isa<PHINode>(I)) && 
+  assert((isa<SelectInst>(I) || isa<PHINode>(I)) &&
          "missing instruction case in findBaseDefiningValing");
   return I;
 }
@@ -696,7 +695,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
     done = true;
     // Since we're adding elements to 'states' as we run, we can't keep
     // iterators into the set.
-    SmallVector<Value*, 16> Keys;
+    SmallVector<Value *, 16> Keys;
     Keys.reserve(states.size());
     for (auto Pair : states) {
       Value *V = Pair.first;
@@ -786,7 +785,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   // We want to keep naming deterministic in the loop that follows, so
   // sort the keys before iteration.  This is useful in allowing us to
   // write stable tests. Note that there is no invalidation issue here.
-  SmallVector<Value*, 16> Keys;
+  SmallVector<Value *, 16> Keys;
   Keys.reserve(states.size());
   for (auto Pair : states) {
     Value *V = Pair.first;
@@ -801,7 +800,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
     if (!state.isConflict())
       continue;
-    
+
     if (isa<PHINode>(v)) {
       int num_preds =
           std::distance(pred_begin(v->getParent()), pred_end(v->getParent()));
@@ -847,7 +846,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
     if (!state.isConflict())
       continue;
-    
+
     if (PHINode *basephi = dyn_cast<PHINode>(state.getBase())) {
       PHINode *phi = cast<PHINode>(v);
       unsigned NumPHIValues = phi->getNumIncomingValues();
@@ -988,14 +987,15 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
 // post condition: PointerToBase contains one (derived, base) pair for every
 // pointer in live.  Note that derived can be equal to base if the original
 // pointer was a base pointer.
-static void findBasePointers(const StatepointLiveSetTy &live,
-                             DenseMap<llvm::Value *, llvm::Value *> &PointerToBase,
-                             DominatorTree *DT, DefiningValueMapTy &DVCache,
-                             DenseSet<llvm::Value *> &NewInsertedDefs) {
+static void
+findBasePointers(const StatepointLiveSetTy &live,
+                 DenseMap<llvm::Value *, llvm::Value *> &PointerToBase,
+                 DominatorTree *DT, DefiningValueMapTy &DVCache,
+                 DenseSet<llvm::Value *> &NewInsertedDefs) {
   // For the naming of values inserted to be deterministic - which makes for
   // much cleaner and more stable tests - we need to assign an order to the
   // live values.  DenseSets do not provide a deterministic order across runs.
-  SmallVector<Value*, 64> Temp;
+  SmallVector<Value *, 64> Temp;
   Temp.insert(Temp.end(), live.begin(), live.end());
   std::sort(Temp.begin(), Temp.end(), order_by_name);
   for (Value *ptr : Temp) {
@@ -1010,7 +1010,7 @@ static void findBasePointers(const StatepointLiveSetTy &live,
     // If you see this trip and like to live really dangerously, the code should
     // be correct, just with idioms the verifier can't handle.  You can try
     // disabling the verifier at your own substaintial risk.
-    assert(!isa<ConstantPointerNull>(base) && 
+    assert(!isa<ConstantPointerNull>(base) &&
            "the relocation code needs adjustment to handle the relocation of "
            "a null pointer constant without causing false positives in the "
            "safepoint ir verifier.");
@@ -1024,13 +1024,14 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
                              PartiallyConstructedSafepointRecord &result) {
   DenseMap<llvm::Value *, llvm::Value *> PointerToBase;
   DenseSet<llvm::Value *> NewInsertedDefs;
-  findBasePointers(result.liveset, PointerToBase, &DT, DVCache, NewInsertedDefs);
+  findBasePointers(result.liveset, PointerToBase, &DT, DVCache,
+                   NewInsertedDefs);
 
   if (PrintBasePointers) {
     // Note: Need to print these in a stable order since this is checked in
     // some tests.
     errs() << "Base Pairs (w/o Relocation):\n";
-    SmallVector<Value*, 64> Temp;
+    SmallVector<Value *, 64> Temp;
     Temp.reserve(PointerToBase.size());
     for (auto Pair : PointerToBase) {
       Temp.push_back(Pair.first);
@@ -1038,8 +1039,8 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
     std::sort(Temp.begin(), Temp.end(), order_by_name);
     for (Value *Ptr : Temp) {
       Value *Base = PointerToBase[Ptr];
-      errs() << " derived %" << Ptr->getName() << " base %"
-             << Base->getName() << "\n";
+      errs() << " derived %" << Ptr->getName() << " base %" << Base->getName()
+             << "\n";
     }
   }
 
@@ -1091,8 +1092,7 @@ static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
 
 static void fixupLiveReferences(
     Function &F, DominatorTree &DT, Pass *P,
-    const DenseSet<llvm::Value *> &allInsertedDefs,
-    ArrayRef<CallSite> toUpdate,
+    const DenseSet<llvm::Value *> &allInsertedDefs, ArrayRef<CallSite> toUpdate,
     MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
@@ -1189,7 +1189,7 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> liveVariables,
     // combination.  This results is some blow up the function declarations in
     // the IR, but removes the need for argument bitcasts which shrinks the IR
     // greatly and makes it much more readable.
-    SmallVector<Type *, 1> types;                    // one per 'any' type
+    SmallVector<Type *, 1> types;                 // one per 'any' type
     types.push_back(liveVariables[i]->getType()); // result type
     Value *gc_relocate_decl = Intrinsic::getDeclaration(
         M, Intrinsic::experimental_gc_relocate, types);
@@ -1342,7 +1342,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   // Take the name of the original value call if it had one.
   token->takeName(CS.getInstruction());
 
-  // The GCResult is already inserted, we just need to find it
+// The GCResult is already inserted, we just need to find it
 #ifndef NDEBUG
   Instruction *toReplace = CS.getInstruction();
   assert((toReplace->hasNUses(0) || toReplace->hasNUses(1)) &&
@@ -1360,7 +1360,6 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
 
   // Second, create a gc.relocate for every live variable
   CreateGCRelocates(liveVariables, live_start, basePtrs, token, Builder);
-
 }
 
 namespace {
@@ -1392,7 +1391,7 @@ static void stablize_order(SmallVectorImpl<Value *> &basevec,
 
 // Replace an existing gc.statepoint with a new one and a set of gc.relocates
 // which make the relocations happening at this safepoint explicit.
-// 
+//
 // WARNING: Does not do any fixup to adjust users of the original live
 // values.  That's the callers responsibility.
 static void
@@ -1470,8 +1469,8 @@ static void relocationViaAlloca(
   // record initial number of (static) allocas; we'll check we have the same
   // number when we get done.
   int InitialAllocaNum = 0;
-  for (auto I = F.getEntryBlock().begin(), E = F.getEntryBlock().end(); 
-       I != E; I++)
+  for (auto I = F.getEntryBlock().begin(), E = F.getEntryBlock().end(); I != E;
+       I++)
     if (isa<AllocaInst>(*I))
       InitialAllocaNum++;
 #endif
@@ -1513,8 +1512,8 @@ static void relocationViaAlloca(
     // In case if it was invoke statepoint
     // we will insert stores for exceptional path gc relocates.
     if (isa<InvokeInst>(Statepoint)) {
-      insertRelocationStores(info.UnwindToken->users(),
-                             allocaMap, visitedLiveValues);
+      insertRelocationStores(info.UnwindToken->users(), allocaMap,
+                             visitedLiveValues);
     }
 
 #ifndef NDEBUG
@@ -1544,7 +1543,7 @@ static void relocationViaAlloca(
     };
 
     // Insert the clobbering stores.  These may get intermixed with the
-    // gc.results and gc.relocates, but that's fine.  
+    // gc.results and gc.relocates, but that's fine.
     if (auto II = dyn_cast<InvokeInst>(Statepoint)) {
       InsertClobbersAt(II->getNormalDest()->getFirstInsertionPt());
       InsertClobbersAt(II->getUnwindDest()->getFirstInsertionPt());
@@ -1611,7 +1610,7 @@ static void relocationViaAlloca(
         assert(!inst->isTerminator() &&
                "The only TerminatorInst that can produce a value is "
                "InvokeInst which is handled above.");
-         store->insertAfter(inst);
+        store->insertAfter(inst);
       }
     } else {
       assert((isa<Argument>(def) || isa<GlobalVariable>(def) ||
@@ -1629,8 +1628,8 @@ static void relocationViaAlloca(
   }
 
 #ifndef NDEBUG
-  for (auto I = F.getEntryBlock().begin(), E = F.getEntryBlock().end(); 
-       I != E; I++)
+  for (auto I = F.getEntryBlock().begin(), E = F.getEntryBlock().end(); I != E;
+       I++)
     if (isa<AllocaInst>(*I))
       InitialAllocaNum--;
   assert(InitialAllocaNum == 0 && "We must not introduce any extra allocas");
@@ -1733,7 +1732,7 @@ static void addBasesAsLiveValues(StatepointLiveSetTy &liveset,
 /// slightly non-trivial since it requires a format change.  Given how rare
 /// such cases are (for the moment?) scalarizing is an acceptable comprimise.
 static void splitVectorValues(Instruction *StatepointInst,
-                              StatepointLiveSetTy& LiveSet, DominatorTree &DT) {
+                              StatepointLiveSetTy &LiveSet, DominatorTree &DT) {
   SmallVector<Value *, 16> ToSplit;
   for (Value *V : LiveSet)
     if (isa<VectorType>(V->getType()))
@@ -1744,19 +1743,19 @@ static void splitVectorValues(Instruction *StatepointInst,
 
   Function &F = *(StatepointInst->getParent()->getParent());
 
-  DenseMap<Value*, AllocaInst*> AllocaMap;
+  DenseMap<Value *, AllocaInst *> AllocaMap;
   // First is normal return, second is exceptional return (invoke only)
-  DenseMap<Value*, std::pair<Value*,Value*>> Replacements;
+  DenseMap<Value *, std::pair<Value *, Value *>> Replacements;
   for (Value *V : ToSplit) {
     LiveSet.erase(V);
 
-    AllocaInst *Alloca = new AllocaInst(V->getType(), "",
-                                        F.getEntryBlock().getFirstNonPHI());
+    AllocaInst *Alloca =
+        new AllocaInst(V->getType(), "", F.getEntryBlock().getFirstNonPHI());
     AllocaMap[V] = Alloca;
 
     VectorType *VT = cast<VectorType>(V->getType());
     IRBuilder<> Builder(StatepointInst);
-    SmallVector<Value*, 16> Elements;
+    SmallVector<Value *, 16> Elements;
     for (unsigned i = 0; i < VT->getNumElements(); i++)
       Elements.push_back(Builder.CreateExtractElement(V, Builder.getInt32(i)));
     LiveSet.insert(Elements.begin(), Elements.end());
@@ -1780,7 +1779,7 @@ static void splitVectorValues(Instruction *StatepointInst,
     } else {
       InvokeInst *Invoke = cast<InvokeInst>(StatepointInst);
       // We've already normalized - check that we don't have shared destination
-      // blocks 
+      // blocks
       BasicBlock *NormalDest = Invoke->getNormalDest();
       assert(!isa<PHINode>(NormalDest->begin()));
       BasicBlock *UnwindDest = Invoke->getUnwindDest();
@@ -1796,7 +1795,7 @@ static void splitVectorValues(Instruction *StatepointInst,
     AllocaInst *Alloca = AllocaMap[V];
 
     // Capture all users before we start mutating use lists
-    SmallVector<Instruction*, 16> Users;
+    SmallVector<Instruction *, 16> Users;
     for (User *U : V->users())
       Users.push_back(cast<Instruction>(U));
 
@@ -1804,8 +1803,8 @@ static void splitVectorValues(Instruction *StatepointInst,
       if (auto Phi = dyn_cast<PHINode>(I)) {
         for (unsigned i = 0; i < Phi->getNumIncomingValues(); i++)
           if (V == Phi->getIncomingValue(i)) {
-            LoadInst *Load = new LoadInst(Alloca, "",
-                                 Phi->getIncomingBlock(i)->getTerminator());
+            LoadInst *Load = new LoadInst(
+                Alloca, "", Phi->getIncomingBlock(i)->getTerminator());
             Phi->setIncomingValue(i, Load);
           }
       } else {
@@ -1820,7 +1819,7 @@ static void splitVectorValues(Instruction *StatepointInst,
       Store->insertAfter(I);
     else
       Store->insertAfter(Alloca);
-    
+
     // Normal return for invoke, or call return
     Instruction *Replacement = cast<Instruction>(Replacements[V].first);
     (new StoreInst(Replacement, Alloca))->insertAfter(Replacement);
@@ -1831,7 +1830,7 @@ static void splitVectorValues(Instruction *StatepointInst,
   }
 
   // apply mem2reg to promote alloca to SSA
-  SmallVector<AllocaInst*, 16> Allocas;
+  SmallVector<AllocaInst *, 16> Allocas;
   for (Value *V : ToSplit)
     Allocas.push_back(AllocaMap[V]);
   PromoteMemToReg(Allocas, DT);
@@ -2056,7 +2055,7 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
     return false;
 
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  
+
   // Gather all the statepoints which need rewritten.  Be careful to only
   // consider those in reachable code since we need to ask dominance queries
   // when rewriting.  We'll delete the unreachable ones in a moment.
@@ -2073,7 +2072,7 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
   }
 
   bool MadeChange = false;
-  
+
   // Delete any unreachable statepoints so that we don't have unrewritten
   // statepoints surviving this pass.  This makes testing easier and the
   // resulting IR less confusing to human readers.  Rather than be fancy, we
