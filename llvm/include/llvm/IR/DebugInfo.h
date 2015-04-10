@@ -63,10 +63,6 @@ typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
 /// This should not be stored in a container, because the underlying MDNode may
 /// change in certain situations.
 class DIDescriptor {
-  // Befriends DIRef so DIRef can befriend the protected member
-  // function: getFieldAs<DIRef>.
-  template <typename T> friend class DIRef;
-
 public:
   /// \brief Duplicated debug info flags.
   ///
@@ -79,11 +75,6 @@ public:
 
 protected:
   const MDNode *DbgNode;
-
-  DIDescriptor getDescriptorField(unsigned Elt) const;
-  template <typename DescTy> DescTy getFieldAs(unsigned Elt) const {
-    return DescTy(getDescriptorField(Elt));
-  }
 
 public:
   explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
@@ -245,8 +236,6 @@ public:
 ///
 /// Abstracts over direct and identifier-based metadata references.
 template <typename T> class DIRef {
-  template <typename DescTy>
-  friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
   friend DIScopeRef DIScope::getContext() const;
   friend DIScopeRef DIScope::getRef() const;
   friend class DIType;

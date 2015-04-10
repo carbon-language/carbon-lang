@@ -33,25 +33,6 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-//===----------------------------------------------------------------------===//
-// DIDescriptor
-//===----------------------------------------------------------------------===//
-
-static Metadata *getField(const MDNode *DbgNode, unsigned Elt) {
-  if (!DbgNode || Elt >= DbgNode->getNumOperands())
-    return nullptr;
-  return DbgNode->getOperand(Elt);
-}
-
-static MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
-  return dyn_cast_or_null<MDNode>(getField(DbgNode, Elt));
-}
-
-DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
-  MDNode *Field = getNodeField(DbgNode, Elt);
-  return DIDescriptor(Field);
-}
-
 /// \brief Return the size reported by the variable's type.
 unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
   DIType Ty = getType().resolve(Map);
