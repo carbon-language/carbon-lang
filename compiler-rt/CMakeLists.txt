@@ -238,12 +238,13 @@ if(NOT COMPILER_RT_DEBUG AND NOT MSVC)
 endif()
 
 # Determine if we should restrict stack frame sizes.
-# Stack frames on PowerPC and in debug biuld can be much larger than
+# Stack frames on PowerPC and Mips and in debug biuld can be much larger than
 # anticipated.
 # FIXME: Fix all sanitizers and add -Wframe-larger-than to
 # SANITIZER_COMMON_FLAGS
 if(COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG AND NOT COMPILER_RT_DEBUG
-   AND NOT ${LLVM_NATIVE_ARCH} STREQUAL "PowerPC")
+   AND NOT ${LLVM_NATIVE_ARCH} STREQUAL "PowerPC"
+   AND NOT ${LLVM_NATIVE_ARCH} STREQUAL "Mips")
   set(SANITIZER_LIMIT_FRAME_SIZE TRUE)
 else()
   set(SANITIZER_LIMIT_FRAME_SIZE FALSE)
