@@ -333,6 +333,8 @@ class raw_fd_ostream : public raw_ostream {
 
   uint64_t pos;
 
+  bool SupportsSeeking;
+
   /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t Size) override;
 
@@ -369,6 +371,8 @@ public:
   /// Manually flush the stream and close the file. Note that this does not call
   /// fsync.
   void close();
+
+  bool supportsSeeking() { return SupportsSeeking; }
 
   /// Flushes the stream and repositions the underlying file descriptor position
   /// to the offset specified from the beginning of the file.

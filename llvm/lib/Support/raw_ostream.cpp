@@ -525,7 +525,8 @@ raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
 
   // Get the starting position.
   off_t loc = ::lseek(FD, 0, SEEK_CUR);
-  if (loc == (off_t)-1)
+  SupportsSeeking = loc != (off_t)-1;
+  if (!SupportsSeeking)
     pos = 0;
   else
     pos = static_cast<uint64_t>(loc);
