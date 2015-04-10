@@ -79,8 +79,9 @@ std::unique_ptr<ASTConsumer>
 GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
-  raw_ostream *OS = nullptr;
-  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
+  raw_ostream *OS =
+      ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile);
+  if (!OS)
     return nullptr;
 
   if (!CI.getFrontendOpts().RelocatablePCH)
@@ -89,28 +90,27 @@ GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
                                          nullptr, Sysroot, OS);
 }
 
-bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
-                                                    StringRef InFile,
-                                                    std::string &Sysroot,
-                                                    std::string &OutputFile,
-                                                    raw_ostream *&OS) {
+raw_ostream *GeneratePCHAction::ComputeASTConsumerArguments(
+    CompilerInstance &CI, StringRef InFile, std::string &Sysroot,
+    std::string &OutputFile) {
   Sysroot = CI.getHeaderSearchOpts().Sysroot;
   if (CI.getFrontendOpts().RelocatablePCH && Sysroot.empty()) {
     CI.getDiagnostics().Report(diag::err_relocatable_without_isysroot);
-    return true;
+    return nullptr;
   }
 
   // We use createOutputFile here because this is exposed via libclang, and we
   // must disable the RemoveFileOnSignal behavior.
   // We use a temporary to avoid race conditions.
-  OS = CI.createOutputFile(CI.getFrontendOpts().OutputFile, /*Binary=*/true,
-                           /*RemoveFileOnSignal=*/false, InFile,
-                           /*Extension=*/"", /*useTemporary=*/true);
+  raw_ostream *OS =
+      CI.createOutputFile(CI.getFrontendOpts().OutputFile, /*Binary=*/true,
+                          /*RemoveFileOnSignal=*/false, InFile,
+                          /*Extension=*/"", /*useTemporary=*/true);
   if (!OS)
-    return true;
+    return nullptr;
 
   OutputFile = CI.getFrontendOpts().OutputFile;
-  return false;
+  return OS;
 }
 
 std::unique_ptr<ASTConsumer>

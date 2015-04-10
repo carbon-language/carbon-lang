@@ -966,9 +966,9 @@ PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
                                             StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
-  raw_ostream *OS = nullptr;
-  if (GeneratePCHAction::ComputeASTConsumerArguments(CI, InFile, Sysroot,
-                                                     OutputFile, OS))
+  raw_ostream *OS = GeneratePCHAction::ComputeASTConsumerArguments(
+      CI, InFile, Sysroot, OutputFile);
+  if (!OS)
     return nullptr;
 
   if (!CI.getFrontendOpts().RelocatablePCH)
