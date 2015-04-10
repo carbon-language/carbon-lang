@@ -245,6 +245,16 @@ The fuzzer itself will still be mutating a string of bytes
 but before passing this input to the target library it will replace every byte ``b`` with the ``b``-th token.
 If there are less than ``b`` tokens, a space will be added instead.
 
+AFL compatibility
+-----------------
+LibFuzzer can be used in parallel with AFL_ on the same test corpus.
+Both fuzzers expect the test corpus to reside in a directory, one file per input.
+You can run both fuzzers on the same corpus in parallel::
+
+  ./afl-fuzz -i testcase_dir -o findings_dir /path/to/program -r @@
+  ./llvm-fuzz testcase_dir findings_dir  # Will write new tests to testcase_dir
+
+Periodically restart both fuzzers so that they can use each other's findings.
 
 Fuzzing components of LLVM
 ==========================
