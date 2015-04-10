@@ -125,6 +125,17 @@ char *EHScopeStack::allocate(size_t Size) {
   return StartOfData;
 }
 
+bool EHScopeStack::containsOnlyLifetimeMarkers(
+    EHScopeStack::stable_iterator Old) const {
+  for (EHScopeStack::iterator it = begin(); stabilize(it) != Old; it++) {
+    EHCleanupScope *cleanup = dyn_cast<EHCleanupScope>(&*it);
+    if (!cleanup || !cleanup->isLifetimeMarker())
+      return false;
+  }
+
+  return true;
+}
+
 EHScopeStack::stable_iterator
 EHScopeStack::getInnermostActiveNormalCleanup() const {
   for (stable_iterator si = getInnermostNormalCleanup(), se = stable_end();
@@ -748,7 +759,15 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
           Scope.getNumBranchAfters() == 1) {
         assert(!BranchThroughDest || !IsActive);
 
-        // TODO: clean up the possibly dead stores to the cleanup dest slot.
+        // Clean up the possibly dead store to the cleanup dest slot.
+        llvm::Instruction *NormalCleanupDestSlot =
+            cast<llvm::Instruction>(getNormalCleanupDestSlot());
+        if (NormalCleanupDestSlot->hasOneUse()) {
+          NormalCleanupDestSlot->user_back()->eraseFromParent();
+          NormalCleanupDestSlot->eraseFromParent();
+          NormalCleanupDest = nullptr;
+        }
+
         llvm::BasicBlock *BranchAfter = Scope.getBranchAfterBlock(0);
         InstsToAppend.push_back(llvm::BranchInst::Create(BranchAfter));
 
