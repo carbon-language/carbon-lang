@@ -1713,7 +1713,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
   // FIXME: gas has a special case for values that are 000...1111, which
   // becomes a li -1 and then a dsrl
   if (0 <= ImmValue && ImmValue <= 65535) {
-    // For 0 <= j <= 65535.
+    // For unsigned and positive signed 16-bit values (0 <= j <= 65535):
     // li d,j => ori d,$zero,j
     tmpInst.setOpcode(Mips::ORi);
     tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
@@ -1721,7 +1721,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if (ImmValue < 0 && ImmValue >= -32768) {
-    // For -32768 <= j < 0.
+    // For negative signed 16-bit values (-32768 <= j < 0):
     // li d,j => addiu d,$zero,j
     tmpInst.setOpcode(Mips::ADDiu);
     tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
@@ -1729,8 +1729,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if ((ImmValue & 0xffffffff) == ImmValue) {
-    // For any value of j that is representable as a 32-bit integer, create
-    // a sequence of:
+    // For all other values which are representable as a 32-bit integer:
     // li d,j => lui d,hi16(j)
     //           ori d,d,lo16(j)
     tmpInst.setOpcode(Mips::LUi);
@@ -1752,8 +1751,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     // | 16-bytes | 16-bytes | 16-bytes |
     // |__________|__________|__________|
     //
-    // For any value of j that is representable as a 48-bit integer, create
-    // a sequence of:
+    // For any 64-bit value that is representable as a 48-bit integer:
     // li d,j => lui d,hi16(j)
     //           ori d,d,hi16(lo32(j))
     //           dsll d,d,16
@@ -1778,7 +1776,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     // | 16-bytes | 16-bytes | 16-bytes | 16-bytes |
     // |__________|__________|__________|__________|
     //
-    // For any value of j that isn't representable as a 48-bit integer.
+    // For all other values which are representable as a 64-bit integer:
     // li d,j => lui d,hi16(j)
     //           ori d,d,lo16(hi32(j))
     //           dsll d,d,16
