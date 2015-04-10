@@ -2054,18 +2054,46 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
   if (!shouldRewriteStatepointsIn(F))
     return false;
 
-  // Gather all the statepoints which need rewritten.
+  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  
+  // Gather all the statepoints which need rewritten.  Be careful to only
+  // consider those in reachable code since we need to ask dominance queries
+  // when rewriting.  We'll delete the unreachable ones in a moment.
   SmallVector<CallSite, 64> ParsePointNeeded;
+  SmallVector<CallSite, 16> UnreachableStatepoints;
   for (Instruction &I : inst_range(F)) {
     // TODO: only the ones with the flag set!
-    if (isStatepoint(I))
-      ParsePointNeeded.push_back(CallSite(&I));
+    if (isStatepoint(I)) {
+      if (DT.isReachableFromEntry(I.getParent()))
+        ParsePointNeeded.push_back(CallSite(&I));
+      else
+        UnreachableStatepoints.push_back(CallSite(&I));
+    }
   }
+
+  bool MadeChange = false;
+  
+  // Delete any unreachable statepoints so that we don't have unrewritten
+  // statepoints surviving this pass.  This makes testing easier and the
+  // resulting IR less confusing to human readers.  Rather than be fancy, we
+  // just reuse a utility function which removes the unreachable blocks.
+  if (!UnreachableStatepoints.empty())
+    MadeChange |= removeUnreachableBlocks(F);
 
   // Return early if no work to do.
   if (ParsePointNeeded.empty())
-    return false;
+    return MadeChange;
 
-  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  return insertParsePoints(F, DT, this, ParsePointNeeded);
+  // As a prepass, go ahead and aggressively destroy single entry phi nodes.
+  // These are created by LCSSA.  They have the effect of increasing the size
+  // of liveness sets for no good reason.  It may be harder to do this post
+  // insertion since relocations and base phis can confuse things.
+  for (BasicBlock &BB : F)
+    if (BB.getUniquePredecessor()) {
+      MadeChange = true;
+      FoldSingleEntryPHINodes(&BB);
+    }
+
+  MadeChange |= insertParsePoints(F, DT, this, ParsePointNeeded);
+  return MadeChange;
 }
