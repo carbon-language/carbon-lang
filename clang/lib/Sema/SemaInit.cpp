@@ -6753,9 +6753,9 @@ bool InitializationSequence::Diagnose(Sema &S,
   case FK_TooManyInitsForScalar: {
     SourceRange R;
 
-    if (InitListExpr *InitList = dyn_cast<InitListExpr>(Args[0]))
-      R = SourceRange(InitList->getInit(0)->getLocEnd(),
-                      InitList->getLocEnd());
+    auto *InitList = dyn_cast<InitListExpr>(Args[0]);
+    if (InitList && InitList->getNumInits() == 1)
+      R = SourceRange(InitList->getInit(0)->getLocEnd(), InitList->getLocEnd());
     else
       R = SourceRange(Args.front()->getLocEnd(), Args.back()->getLocEnd());
 
