@@ -115,11 +115,7 @@ static StringRef NormalizeAttrName(StringRef AttrName) {
 // This is different from NormalizeAttrName in that it also handles names like
 // _pascal and __pascal.
 static StringRef NormalizeNameForSpellingComparison(StringRef Name) {
-  while (Name.startswith("_"))
-    Name = Name.substr(1, Name.size());
-  while (Name.endswith("_"))
-    Name = Name.substr(0, Name.size() - 1);
-  return Name;
+  return Name.trim("_");
 }
 
 // Normalize attribute spelling only if the spelling has both leading
@@ -2787,17 +2783,9 @@ static void WriteCategoryHeader(const Record *DocCategory,
 
   // If there is content, print that as well.
   std::string ContentStr = DocCategory->getValueAsString("Content");
-  if (!ContentStr.empty()) {
-    // Trim leading and trailing newlines and spaces.
-    StringRef Content(ContentStr);
-    while (Content.startswith("\r") || Content.startswith("\n") ||
-           Content.startswith(" ") || Content.startswith("\t"))
-           Content = Content.substr(1);
-    while (Content.endswith("\r") || Content.endswith("\n") ||
-           Content.endswith(" ") || Content.endswith("\t"))
-           Content = Content.substr(0, Content.size() - 1);
-    OS << Content;
-  }
+  // Trim leading and trailing newlines and spaces.
+  OS << StringRef(ContentStr).trim();
+
   OS << "\n\n";
 }
 
@@ -2919,14 +2907,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
 
   std::string ContentStr = Doc.Documentation->getValueAsString("Content");
   // Trim leading and trailing newlines and spaces.
-  StringRef Content(ContentStr);
-  while (Content.startswith("\r") || Content.startswith("\n") ||
-         Content.startswith(" ") || Content.startswith("\t"))
-    Content = Content.substr(1);
-  while (Content.endswith("\r") || Content.endswith("\n") ||
-         Content.endswith(" ") || Content.endswith("\t"))
-    Content = Content.substr(0, Content.size() - 1);
-  OS << Content;
+  OS << StringRef(ContentStr).trim();
 
   OS << "\n\n\n";
 }
