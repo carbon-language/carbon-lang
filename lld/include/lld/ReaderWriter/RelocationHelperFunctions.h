@@ -12,26 +12,6 @@
 
 namespace lld {
 
-/// Gather val's bits as specified by the mask. Example:
-///
-///  Val:    0bABCDEFGHIJKLMN
-///  Mask:   0b10111100001011
-///  Output: 0b000000ACDEFKMN
-template <typename T> T gatherBits(T val, T mask) {
-  T result = 0;
-  size_t off = 0;
-
-  for (size_t bit = 0; bit < sizeof(T) * 8; ++bit) {
-    bool maskBit = (mask >> bit) & 1;
-    if (maskBit) {
-      bool valBit = (val >> bit) & 1;
-      result |= static_cast<T>(valBit) << off;
-      ++off;
-    }
-  }
-  return result;
-}
-
 /// Scatter val's bits as specified by the mask. Example:
 ///
 ///  Val:    0bABCDEFG
