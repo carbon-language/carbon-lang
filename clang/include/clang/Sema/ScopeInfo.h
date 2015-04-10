@@ -698,9 +698,9 @@ public:
   LambdaScopeInfo(DiagnosticsEngine &Diag)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(nullptr),
       CallOperator(nullptr), NumExplicitCaptures(0), Mutable(false),
-      ExprNeedsCleanups(false), ContainsUnexpandedParameterPack(false),
-      AutoTemplateParameterDepth(0), GLTemplateParameterList(nullptr)
-  {
+      ExplicitParams(false), ExprNeedsCleanups(false),
+      ContainsUnexpandedParameterPack(false), AutoTemplateParameterDepth(0),
+      GLTemplateParameterList(nullptr) {
     Kind = SK_Lambda;
   }
 
