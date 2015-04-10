@@ -297,12 +297,14 @@ template <class Derived> class ARMRelocationPass : public Pass {
     case R_ARM_MOVT_ABS:
     case R_ARM_THM_MOVW_ABS_NC:
     case R_ARM_THM_MOVT_ABS:
+      static_cast<Derived *>(this)->handlePlain(atom, ref);
+      break;
     case R_ARM_THM_CALL:
     case R_ARM_CALL:
     case R_ARM_JUMP24:
     case R_ARM_THM_JUMP24:
     case R_ARM_THM_JUMP11:
-      static_cast<Derived *>(this)->handleIFUNC(atom, ref);
+      static_cast<Derived *>(this)->handlePlain(atom, ref);
       static_cast<Derived *>(this)->handleVeneer(atom, ref);
       break;
     case R_ARM_TLS_IE32:
@@ -666,6 +668,11 @@ public:
   ARMStaticRelocationPass(const elf::ARMLinkingContext &ctx)
       : ARMRelocationPass(ctx) {}
 
+  /// \brief Handle ordinary relocation references.
+  std::error_code handlePlain(const DefinedAtom &atom, const Reference &ref) {
+    return handleIFUNC(atom, ref);
+  }
+
   /// \brief Get the veneer for ARM B/BL instructions.
   const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
@@ -727,6 +734,11 @@ class ARMDynamicRelocationPass final
 public:
   ARMDynamicRelocationPass(const elf::ARMLinkingContext &ctx)
       : ARMRelocationPass(ctx) {}
+
+  /// \brief Handle ordinary relocation references.
+  std::error_code handlePlain(const DefinedAtom &atom, const Reference &ref) {
+    return handleIFUNC(atom, ref);
+  }
 
   /// \brief Get the veneer for ARM B/BL instructions.
   const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
