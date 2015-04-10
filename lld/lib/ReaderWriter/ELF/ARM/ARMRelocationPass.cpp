@@ -758,7 +758,7 @@ public:
   }
 
   std::error_code handleGOT(const Reference &ref) {
-    if (dyn_cast<const SharedLibraryAtom>(ref.target())) {
+    if (isa<const SharedLibraryAtom>(ref.target())) {
       llvm_unreachable("Handle shared GOT entries");
     }
     return ARMRelocationPass::handleGOT(ref);
