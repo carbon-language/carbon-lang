@@ -318,31 +318,31 @@ inline bool isIntN(unsigned N, int64_t x) {
   return N >= 64 || (-(INT64_C(1)<<(N-1)) <= x && x < (INT64_C(1)<<(N-1)));
 }
 
-/// isMask_32 - This function returns true if the argument is a sequence of ones
-/// starting at the least significant bit with the remainder zero (32 bit
-/// version).   Ex. isMask_32(0x0000FFFFU) == true.
+/// isMask_32 - This function returns true if the argument is a non-empty
+/// sequence of ones starting at the least significant bit with the remainder
+/// zero (32 bit version).  Ex. isMask_32(0x0000FFFFU) == true.
 inline bool isMask_32(uint32_t Value) {
   return Value && ((Value + 1) & Value) == 0;
 }
 
-/// isMask_64 - This function returns true if the argument is a sequence of ones
-/// starting at the least significant bit with the remainder zero (64 bit
-/// version).
+/// isMask_64 - This function returns true if the argument is a non-empty
+/// sequence of ones starting at the least significant bit with the remainder
+/// zero (64 bit version).
 inline bool isMask_64(uint64_t Value) {
   return Value && ((Value + 1) & Value) == 0;
 }
 
 /// isShiftedMask_32 - This function returns true if the argument contains a
-/// sequence of ones with the remainder zero (32 bit version.)
+/// non-empty sequence of ones with the remainder zero (32 bit version.)
 /// Ex. isShiftedMask_32(0x0000FF00U) == true.
 inline bool isShiftedMask_32(uint32_t Value) {
-  return isMask_32((Value - 1) | Value);
+  return Value && isMask_32((Value - 1) | Value);
 }
 
 /// isShiftedMask_64 - This function returns true if the argument contains a
-/// sequence of ones with the remainder zero (64 bit version.)
+/// non-empty sequence of ones with the remainder zero (64 bit version.)
 inline bool isShiftedMask_64(uint64_t Value) {
-  return isMask_64((Value - 1) | Value);
+  return Value && isMask_64((Value - 1) | Value);
 }
 
 /// isPowerOf2_32 - This function returns true if the argument is a power of
