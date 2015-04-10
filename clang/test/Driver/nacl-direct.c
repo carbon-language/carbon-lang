@@ -54,6 +54,7 @@
 // CHECK-ARM: "-internal-isystem" "{{.*}}{{/|\\\\}}..{{/|\\\\}}arm-nacl{{/|\\\\}}usr{{/|\\\\}}include"
 // CHECK-ARM: "-internal-isystem" "{{.*}}{{/|\\\\}}..{{/|\\\\}}arm-nacl{{/|\\\\}}include"
 // CHECK-ARM: as{{(.exe)?}}"
+// CHECK-ARM: "-mfloat-abi=hard"
 // CHECK-ARM: ld{{(.exe)?}}"
 // CHECK-ARM: "--build-id"
 // CHECK-ARM: "-m" "armelf_nacl"
@@ -71,6 +72,8 @@
 // CHECK-ARM-NOV7: "-triple" "armv7--nacl-gnueabihf"
 // CHECK-ARM-NOV7: "-target-abi" "aapcs-linux"
 // CHECK-ARM-NOV7: "-mfloat-abi" "hard"
+// CHECK-ARM-NOV7: as{{(.exe)?}}"
+// CHECK-ARM-NOV7: "-mfloat-abi=hard"
 
 // Test clang c++ include dirs and link line when using clang++
 
