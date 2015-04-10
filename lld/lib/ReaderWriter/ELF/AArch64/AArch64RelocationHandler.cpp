@@ -20,7 +20,7 @@ using namespace lld::elf;
 using namespace llvm;
 using namespace llvm::support::endian;
 
-#define PAGE(X) ((X) & ~0x0FFFL)
+static int64_t page(int64_t v) { return v & ~int64_t(0xFFF); }
 
 /// \brief Check X is in the interval (-2^(bits-1), 2^bits]
 static bool withinSignedUnsignedRange(int64_t X, int bits) {
@@ -64,7 +64,7 @@ static std::error_code relocR_AARCH64_ABS32(uint8_t *location, uint64_t P,
 /// \brief R_AARCH64_ADR_PREL_PG_HI21 - Page(S+A) - Page(P)
 static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
                                             uint64_t S, int64_t A) {
-  uint64_t result = (PAGE(S + A) - PAGE(P));
+  uint64_t result = (page(S + A) - page(P));
   result = result >> 12;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
@@ -210,7 +210,7 @@ static void relocR_AARCH64_LDST128_ABS_LO12_NC(uint8_t *location, uint64_t P,
 
 static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
                                         uint64_t S, int64_t A) {
-  uint64_t result = PAGE(S + A) - PAGE(P);
+  uint64_t result = page(S + A) - page(P);
   result >>= 12;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
@@ -258,7 +258,7 @@ static void relocADD_AARCH64_GOTRELINDEX(uint8_t *location, uint64_t P,
 static void relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(uint8_t *location,
                                                      uint64_t P, uint64_t S,
                                                      int64_t A) {
-  int64_t result = PAGE(S + A) - PAGE(P);
+  int64_t result = page(S + A) - page(P);
   result >>= 12;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
