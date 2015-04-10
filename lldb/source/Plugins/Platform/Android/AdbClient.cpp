@@ -49,7 +49,7 @@ AdbClient::CreateByDeviceID (const char* device_id, AdbClient &adb)
     else
     {
         if (connect_devices.size () != 1)
-            return Error ("Expected a single connected device, got instead %zu", connect_devices.size ());
+            return Error ("Expected a single connected device, got instead %" PRIu64, static_cast<uint64_t>(connect_devices.size ()));
 
         adb.SetDeviceID (connect_devices.front ());
     }
@@ -142,7 +142,7 @@ AdbClient::SendMessage (const std::string &packet)
         return error;
 
     char length_buffer[5];
-    snprintf (length_buffer, sizeof (length_buffer), "%04zx", packet.size ());
+    snprintf (length_buffer, sizeof (length_buffer), "%04x", static_cast<int>(packet.size ()));
 
     ConnectionStatus status;
 
@@ -177,8 +177,8 @@ AdbClient::ReadMessage (std::string &message)
     if (error.Fail ())
         return error;
 
-    size_t packet_len = 0;
-    sscanf (buffer, "%zx", &packet_len);
+    int packet_len = 0;
+    sscanf (buffer, "%x", &packet_len);
     std::string result (packet_len, 0);
     m_conn.Read (&result[0], packet_len, kConnTimeout, status, &error);
     if (error.Success ())
@@ -200,7 +200,7 @@ AdbClient::ReadResponseStatus()
 
     m_conn.Read (buffer, packet_len, kConnTimeout, status, &error);
     if (error.Fail ())
-      return error;
+        return error;
 
     if (strncmp (buffer, kOKAY, packet_len) != 0)
     {
