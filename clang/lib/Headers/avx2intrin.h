@@ -160,7 +160,7 @@ _mm256_blendv_epi8(__m256i __V1, __m256i __V2, __m256i __M)
 #define _mm256_blend_epi16(V1, V2, M) __extension__ ({ \
   __m256i __V1 = (V1); \
   __m256i __V2 = (V2); \
-  (__m256d)__builtin_shufflevector((__v16hi)__V1, (__v16hi)__V2, \
+  (__m256i)__builtin_shufflevector((__v16hi)__V1, (__v16hi)__V2, \
                                    (((M) & 0x01) ? 16 : 0), \
                                    (((M) & 0x02) ? 17 : 1), \
                                    (((M) & 0x04) ? 18 : 2), \
