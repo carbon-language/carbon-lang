@@ -382,6 +382,7 @@ static Value *findBaseDefiningValue(Value *I) {
   if (auto *EEI = dyn_cast<ExtractElementInst>(I)) {
     Value *VectorOperand = EEI->getVectorOperand();
     Value *VectorBase = findBaseOfVector(VectorOperand);
+    (void)VectorBase;
     assert(VectorBase && "extract element not known to be a trivial base");
     return EEI;
   }
@@ -2060,14 +2061,14 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
   // consider those in reachable code since we need to ask dominance queries
   // when rewriting.  We'll delete the unreachable ones in a moment.
   SmallVector<CallSite, 64> ParsePointNeeded;
-  SmallVector<CallSite, 16> UnreachableStatepoints;
+  bool HasUnreachableStatepoint = false;
   for (Instruction &I : inst_range(F)) {
     // TODO: only the ones with the flag set!
     if (isStatepoint(I)) {
       if (DT.isReachableFromEntry(I.getParent()))
         ParsePointNeeded.push_back(CallSite(&I));
       else
-        UnreachableStatepoints.push_back(CallSite(&I));
+        HasUnreachableStatepoint = true;
     }
   }
 
@@ -2077,7 +2078,7 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
   // statepoints surviving this pass.  This makes testing easier and the
   // resulting IR less confusing to human readers.  Rather than be fancy, we
   // just reuse a utility function which removes the unreachable blocks.
-  if (!UnreachableStatepoints.empty())
+  if (HasUnreachableStatepoint)
     MadeChange |= removeUnreachableBlocks(F);
 
   // Return early if no work to do.
