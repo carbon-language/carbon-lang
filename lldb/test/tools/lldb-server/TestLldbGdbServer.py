@@ -868,6 +868,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @debugserver_test
     @dsym_test
+    @skipIfDarwin # https://llvm.org/bugs/show_bug.cgi?id=23181: Some lldb-server tests become zombies
     @unittest2.expectedFailure()
     def test_Hc_then_Csignal_signals_correct_thread_launch_debugserver_dsym(self):
         self.init_debugserver_test()
