@@ -70,8 +70,8 @@ static void convertTransferToLoop(
 
   // srcAddr and dstAddr are expected to be pointer types,
   // so no check is made here.
-  unsigned srcAS = dyn_cast<PointerType>(srcAddr->getType())->getAddressSpace();
-  unsigned dstAS = dyn_cast<PointerType>(dstAddr->getType())->getAddressSpace();
+  unsigned srcAS = cast<PointerType>(srcAddr->getType())->getAddressSpace();
+  unsigned dstAS = cast<PointerType>(dstAddr->getType())->getAddressSpace();
 
   // Cast pointers to (char *)
   srcAddr = builder.CreateBitCast(srcAddr, Type::getInt8PtrTy(Context, srcAS));
@@ -108,7 +108,7 @@ static void convertMemSetToLoop(Instruction *splitAt, Value *dstAddr,
   origBB->getTerminator()->setSuccessor(0, loopBB);
   IRBuilder<> builder(origBB, origBB->getTerminator());
 
-  unsigned dstAS = dyn_cast<PointerType>(dstAddr->getType())->getAddressSpace();
+  unsigned dstAS = cast<PointerType>(dstAddr->getType())->getAddressSpace();
 
   // Cast pointer to the type of value getting stored
   dstAddr =

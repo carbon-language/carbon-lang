@@ -848,7 +848,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
   //     MOV  X0, WideImmediate
   //     LDR  X2, [BaseReg, X0]
   if (isa<ConstantSDNode>(RHS)) {
-    int64_t ImmOff = (int64_t)dyn_cast<ConstantSDNode>(RHS)->getZExtValue();
+    int64_t ImmOff = (int64_t)cast<ConstantSDNode>(RHS)->getZExtValue();
     unsigned Scale = Log2_32(Size);
     // Skip the immediate can be seleced by load/store addressing mode.
     // Also skip the immediate can be encoded by a single ADD (SUB is also

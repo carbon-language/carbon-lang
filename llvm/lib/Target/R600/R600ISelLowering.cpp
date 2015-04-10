@@ -1811,7 +1811,7 @@ SDValue Swz[4], SelectionDAG &DAG) const {
 
   BuildVector = CompactSwizzlableVector(DAG, BuildVector, SwizzleRemap);
   for (unsigned i = 0; i < 4; i++) {
-    unsigned Idx = dyn_cast<ConstantSDNode>(Swz[i])->getZExtValue();
+    unsigned Idx = cast<ConstantSDNode>(Swz[i])->getZExtValue();
     if (SwizzleRemap.find(Idx) != SwizzleRemap.end())
       Swz[i] = DAG.getConstant(SwizzleRemap[Idx], MVT::i32);
   }
@@ -1819,7 +1819,7 @@ SDValue Swz[4], SelectionDAG &DAG) const {
   SwizzleRemap.clear();
   BuildVector = ReorganizeVector(DAG, BuildVector, SwizzleRemap);
   for (unsigned i = 0; i < 4; i++) {
-    unsigned Idx = dyn_cast<ConstantSDNode>(Swz[i])->getZExtValue();
+    unsigned Idx = cast<ConstantSDNode>(Swz[i])->getZExtValue();
     if (SwizzleRemap.find(Idx) != SwizzleRemap.end())
       Swz[i] = DAG.getConstant(SwizzleRemap[Idx], MVT::i32);
   }

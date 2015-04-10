@@ -440,7 +440,7 @@ bool MipsFastISel::computeAddress(const Value *Obj, Address &Addr) {
 
 bool MipsFastISel::computeCallAddress(const Value *V, Address &Addr) {
   const GlobalValue *GV = dyn_cast<GlobalValue>(V);
-  if (GV && isa<Function>(GV) && dyn_cast<Function>(GV)->isIntrinsic())
+  if (GV && isa<Function>(GV) && cast<Function>(GV)->isIntrinsic())
     return false;
   if (!GV)
     return false;

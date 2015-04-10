@@ -3893,7 +3893,7 @@ static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
         const SDNode *left = N0.getOperand(0).getNode();
         const SDNode *right = N0.getOperand(1).getNode();
 
-        if (dyn_cast<ConstantSDNode>(left) || dyn_cast<ConstantSDNode>(right))
+        if (isa<ConstantSDNode>(left) || isa<ConstantSDNode>(right))
           opIsLive = true;
 
         if (!opIsLive)

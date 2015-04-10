@@ -132,7 +132,7 @@ SDNode *BPFDAGToDAGISel::Select(SDNode *Node) {
   }
 
   case ISD::FrameIndex: {
-    int FI = dyn_cast<FrameIndexSDNode>(Node)->getIndex();
+    int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     EVT VT = Node->getValueType(0);
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, VT);
     unsigned Opc = BPF::MOV_rr;

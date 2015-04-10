@@ -117,7 +117,7 @@ static void dumpNode( yaml::Node *n
     outs() << indent(Indent) << "}";
   } else if (yaml::AliasNode *an = dyn_cast<yaml::AliasNode>(n)){
     outs() << "*" << an->getName();
-  } else if (dyn_cast<yaml::NullNode>(n)) {
+  } else if (isa<yaml::NullNode>(n)) {
     outs() << prettyTag(n) << " null";
   }
 }

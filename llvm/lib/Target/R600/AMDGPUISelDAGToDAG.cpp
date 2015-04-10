@@ -345,7 +345,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     unsigned NOps = N->getNumOperands();
     for (unsigned i = 0; i < NOps; i++) {
       // XXX: Why is this here?
-      if (dyn_cast<RegisterSDNode>(N->getOperand(i))) {
+      if (isa<RegisterSDNode>(N->getOperand(i))) {
         IsRegSeq = false;
         break;
       }

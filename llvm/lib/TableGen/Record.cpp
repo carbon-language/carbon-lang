@@ -2040,7 +2040,7 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
 /// to CurRec's name.
 Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                         Init *Name, const std::string &Scoper) {
-  RecTy *Type = dyn_cast<TypedInit>(Name)->getType();
+  RecTy *Type = cast<TypedInit>(Name)->getType();
 
   BinOpInit *NewName =
     BinOpInit::get(BinOpInit::STRCONCAT, 

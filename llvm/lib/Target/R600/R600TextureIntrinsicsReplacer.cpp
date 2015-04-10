@@ -162,7 +162,7 @@ class R600TextureIntrinsicsReplacer :
     Value *SamplerId = I.getArgOperand(2);
 
     unsigned TextureType =
-        dyn_cast<ConstantInt>(I.getArgOperand(3))->getZExtValue();
+        cast<ConstantInt>(I.getArgOperand(3))->getZExtValue();
 
     unsigned SrcSelect[4] = { 0, 1, 2, 3 };
     unsigned CT[4] = {1, 1, 1, 1};
@@ -186,7 +186,7 @@ class R600TextureIntrinsicsReplacer :
     Value *SamplerId = I.getArgOperand(5);
 
     unsigned TextureType =
-        dyn_cast<ConstantInt>(I.getArgOperand(6))->getZExtValue();
+        cast<ConstantInt>(I.getArgOperand(6))->getZExtValue();
 
     unsigned SrcSelect[4] = { 0, 1, 2, 3 };
     unsigned CT[4] = {1, 1, 1, 1};

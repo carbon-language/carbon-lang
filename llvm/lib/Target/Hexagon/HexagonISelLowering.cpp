@@ -2106,7 +2106,7 @@ HexagonTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       // is Big Endian.
       unsigned OpIdx = NElts - i - 1;
       SDValue Operand = BVN->getOperand(OpIdx);
-      if (dyn_cast<ConstantSDNode>(Operand))
+      if (isa<ConstantSDNode>(Operand))
         // This operand is already in ConstVal.
         continue;
 

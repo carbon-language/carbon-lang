@@ -694,10 +694,9 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
     // We're running this loop for once for each value queried resulting in a
     // runtime of ~O(#assumes * #values).
 
-    assert(isa<IntrinsicInst>(I) &&
-           dyn_cast<IntrinsicInst>(I)->getIntrinsicID() == Intrinsic::assume &&
+    assert(I->getCalledFunction()->getIntrinsicID() == Intrinsic::assume &&
            "must be an assume intrinsic");
-    
+
     Value *Arg = I->getArgOperand(0);
 
     if (Arg == V && isValidAssumeForContext(I, Q)) {

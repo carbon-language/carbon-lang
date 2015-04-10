@@ -626,7 +626,7 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
   // Add a leading constant argument with the Flags and the calling convention
   // masked together
   CallingConv::ID CallConv = CS.getCallingConv();
-  int Flags = dyn_cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
+  int Flags = cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
   assert(Flags == 0 && "not expected to be used");
   Ops.push_back(DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
   Ops.push_back(

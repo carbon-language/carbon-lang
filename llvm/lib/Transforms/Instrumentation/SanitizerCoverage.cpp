@@ -308,7 +308,7 @@ void SanitizerCoverageModule::InjectCoverageForIndirectCalls(
     IRBuilder<> IRB(I);
     CallSite CS(I);
     Value *Callee = CS.getCalledValue();
-    if (dyn_cast<InlineAsm>(Callee)) continue;
+    if (isa<InlineAsm>(Callee)) continue;
     GlobalVariable *CalleeCache = new GlobalVariable(
         *F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
         Constant::getNullValue(Ty), "__sancov_gen_callee_cache");
