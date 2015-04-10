@@ -118,11 +118,10 @@ public:
   /// create the PCHGenerator instance returned by CreateASTConsumer.
   ///
   /// \returns true if an error occurred, false otherwise.
-  bool ComputeASTConsumerArguments(CompilerInstance &CI,
-                                   StringRef InFile,
-                                   std::string &Sysroot,
-                                   std::string &OutputFile,
-                                   raw_ostream *&OS);
+  raw_ostream *ComputeASTConsumerArguments(CompilerInstance &CI,
+                                           StringRef InFile,
+                                           std::string &Sysroot,
+                                           std::string &OutputFile);
 };
 
 class SyntaxOnlyAction : public ASTFrontendAction {
