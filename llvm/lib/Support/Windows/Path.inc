@@ -261,6 +261,7 @@ std::error_code rename(const Twine &from, const Twine &to) {
                       MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
       return std::error_code();
     DWORD LastError = ::GetLastError();
+    ec = windows_error(LastError);
     if (LastError != ERROR_ACCESS_DENIED)
       break;
     // Retry MoveFile() at ACCESS_DENIED.
