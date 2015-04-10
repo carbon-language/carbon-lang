@@ -30,14 +30,10 @@ using lld::mach_o::normalized::NormalizedFile;
 /// object.  We need to support hetergenous yaml documents which each require
 /// different context info.  This struct supports all clients.
 struct YamlContext {
-  YamlContext()
-      : _ctx(nullptr), _registry(nullptr), _file(nullptr),
-        _normalizeMachOFile(nullptr) {}
-
-  const LinkingContext *_ctx;
-  const Registry *_registry;
-  File *_file;
-  NormalizedFile *_normalizeMachOFile;
+  const LinkingContext *_ctx = nullptr;
+  const Registry *_registry = nullptr;
+  File *_file = nullptr;
+  NormalizedFile *_normalizeMachOFile = nullptr;
   StringRef _path;
 };
 
