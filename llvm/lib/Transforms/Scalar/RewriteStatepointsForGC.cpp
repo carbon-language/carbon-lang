@@ -17,6 +17,7 @@
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Dominators.h"
@@ -2045,17 +2046,14 @@ static void checkBasicSSA(DominatorTree &DT, GCPtrLivenessData &Data,
 static void computeLiveInValues(DominatorTree &DT, Function &F,
                                 GCPtrLivenessData &Data) {
 
-  DenseSet<BasicBlock *> WorklistSet;
-  SmallVector<BasicBlock *, 200> Worklist;
+  SmallSetVector<BasicBlock *, 200> Worklist;
   auto AddPredsToWorklist = [&](BasicBlock *BB) {
-    for (BasicBlock *Pred : predecessors(BB))
-      if (WorklistSet.insert(Pred).second)
-        Worklist.push_back(Pred);
+    // We use a SetVector so that we don't have duplicates in the worklist.
+    Worklist.insert(pred_begin(BB), pred_end(BB));
   };
   auto NextItem = [&]() {
     BasicBlock *BB = Worklist.back();
     Worklist.pop_back();
-    WorklistSet.erase(BB);
     return BB;
   };
 
