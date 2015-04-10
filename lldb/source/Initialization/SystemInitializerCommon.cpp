@@ -45,6 +45,7 @@
 
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
+#include "Plugins/Process/Windows/ProcessWindowsLog.h"
 #endif
 
 #include "llvm/Support/TargetSelect.h"
@@ -127,6 +128,9 @@ SystemInitializerCommon::Initialize()
 #if defined(__linux__)
     static ConstString g_linux_log_name("linux");
     ProcessPOSIXLog::Initialize(g_linux_log_name);
+#endif
+#if defined(_MSC_VER)
+    ProcessWindowsLog::Initialize();
 #endif
 #ifndef LLDB_DISABLE_PYTHON
     ScriptInterpreterPython::InitializePrivate();

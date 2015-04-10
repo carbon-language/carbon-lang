@@ -13,6 +13,7 @@ add_process_windows_subdirectory(common
   DynamicLoaderWindows.cpp
   LocalDebugDelegate.cpp
   ProcessWindows.cpp
+  ProcessWindowsLog.cpp
   TargetThreadWindows.cpp
   )
 
