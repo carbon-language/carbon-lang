@@ -870,6 +870,11 @@ void test_sprintf() {
   test_sprintf_chunk("z", "%c", 'z');
 
   // %n, %s, %d, %f, and %% already tested
+
+  // Test formatting with width passed as an argument.
+  r = sprintf(buf, "hi %*d my %*s friend %.*f", 3, 1, 6, "dear", 4, 3.14159265359);
+  assert(r == 30);
+  assert(strcmp(buf, "hi   1 my   dear friend 3.1416") == 0);
 }
 
 void test_snprintf() {
