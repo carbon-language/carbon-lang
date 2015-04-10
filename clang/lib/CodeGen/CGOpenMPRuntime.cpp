@@ -970,12 +970,18 @@ llvm::Value *CGOpenMPRuntime::getCriticalRegionLock(StringRef CriticalName) {
 
 namespace {
 class CallEndCleanup : public EHScopeStack::Cleanup {
+public:
+  typedef ArrayRef<llvm::Value *> CleanupValuesTy;
 private:
-  const RegionCodeGenTy CodeGen;
+  llvm::Value *Callee;
+  llvm::SmallVector<llvm::Value *, 8> Args;
 
 public:
-  CallEndCleanup(const RegionCodeGenTy &CodeGen) : CodeGen(CodeGen) {}
-  void Emit(CodeGenFunction &CGF, Flags /*flags*/) override { CodeGen(CGF); }
+  CallEndCleanup(llvm::Value *Callee, CleanupValuesTy Args)
+      : Callee(Callee), Args(Args.begin(), Args.end()) {}
+  void Emit(CodeGenFunction &CGF, Flags /*flags*/) override {
+    CGF.EmitRuntimeCall(Callee, Args);
+  }
 };
 } // namespace
 
@@ -995,15 +1001,8 @@ void CGOpenMPRuntime::emitCriticalRegion(CodeGenFunction &CGF,
     emitInlinedDirective(CGF, CriticalOpGen);
     // Build a call to __kmpc_end_critical
     CGF.EHStack.pushCleanup<CallEndCleanup>(
-        NormalAndEHCleanup, [Loc, CriticalName](CodeGenFunction &CGF) {
-          llvm::Value *Args[] = {
-              CGF.CGM.getOpenMPRuntime().emitUpdateLocation(CGF, Loc),
-              CGF.CGM.getOpenMPRuntime().getThreadID(CGF, Loc),
-              CGF.CGM.getOpenMPRuntime().getCriticalRegionLock(CriticalName)};
-          CGF.EmitRuntimeCall(CGF.CGM.getOpenMPRuntime().createRuntimeFunction(
-                                  OMPRTL__kmpc_end_critical),
-                              Args);
-        });
+        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_critical),
+        llvm::makeArrayRef(Args));
   }
 }
 
@@ -1056,14 +1055,8 @@ void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
     // fallthrough rather than pushing a normal cleanup for it.
     // Build a call to __kmpc_end_critical
     CGF.EHStack.pushCleanup<CallEndCleanup>(
-        NormalAndEHCleanup, [Loc](CodeGenFunction &CGF) {
-          llvm::Value *Args[] = {
-              CGF.CGM.getOpenMPRuntime().emitUpdateLocation(CGF, Loc),
-              CGF.CGM.getOpenMPRuntime().getThreadID(CGF, Loc)};
-          CGF.EmitRuntimeCall(CGF.CGM.getOpenMPRuntime().createRuntimeFunction(
-                                  OMPRTL__kmpc_end_master),
-                              Args);
-        });
+        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_master),
+        llvm::makeArrayRef(Args));
   });
 }
 
@@ -1195,14 +1188,8 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     // It is analyzed in Sema, so we can just call __kmpc_end_single() on
     // fallthrough rather than pushing a normal cleanup for it.
     CGF.EHStack.pushCleanup<CallEndCleanup>(
-        NormalAndEHCleanup, [Loc](CodeGenFunction &CGF) {
-          llvm::Value *Args[] = {
-              CGF.CGM.getOpenMPRuntime().emitUpdateLocation(CGF, Loc),
-              CGF.CGM.getOpenMPRuntime().getThreadID(CGF, Loc)};
-          CGF.EmitRuntimeCall(CGF.CGM.getOpenMPRuntime().createRuntimeFunction(
-                                  OMPRTL__kmpc_end_single),
-                              Args);
-        });
+        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_single),
+        llvm::makeArrayRef(Args));
   });
   // call __kmpc_copyprivate(ident_t *, gtid, <buf_size>, <copyprivate list>,
   // <copy_func>, did_it);
