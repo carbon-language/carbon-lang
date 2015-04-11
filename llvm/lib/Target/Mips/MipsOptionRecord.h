@@ -52,7 +52,7 @@ public:
     COP2RegClass = &(TRI->getRegClass(Mips::COP2RegClassID));
     COP3RegClass = &(TRI->getRegClass(Mips::COP3RegClassID));
   }
-  ~MipsRegInfoRecord() {}
+  ~MipsRegInfoRecord() override {}
 
   void EmitMipsOptionRecord() override;
   void SetPhysRegUsed(unsigned Reg, const MCRegisterInfo *MCRegInfo);

@@ -66,7 +66,7 @@ public:
                  ThreadLocalMode = NotThreadLocal, unsigned AddressSpace = 0,
                  bool isExternallyInitialized = false);
 
-  ~GlobalVariable() {
+  ~GlobalVariable() override {
     NumOperands = 1; // FIXME: needed by operator delete
   }
 

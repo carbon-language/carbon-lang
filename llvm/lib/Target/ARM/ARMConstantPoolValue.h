@@ -86,7 +86,7 @@ protected:
   }
 
 public:
-  virtual ~ARMConstantPoolValue();
+  ~ARMConstantPoolValue() override;
 
   ARMCP::ARMCPModifier getModifier() const { return Modifier; }
   const char *getModifierText() const;

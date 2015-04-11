@@ -173,7 +173,7 @@ public:
       HazardRec = STI.getInstrInfo()->CreateTargetHazardRecognizer(&STI, this);
   }
 
-  ~ScheduleDAGRRList() {
+  ~ScheduleDAGRRList() override {
     delete HazardRec;
     delete AvailableQueue;
   }

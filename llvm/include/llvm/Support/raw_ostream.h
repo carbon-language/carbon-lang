@@ -366,7 +366,7 @@ public:
   /// this closes the file when the stream is destroyed.
   raw_fd_ostream(int fd, bool shouldClose, bool unbuffered=false);
 
-  ~raw_fd_ostream();
+  ~raw_fd_ostream() override;
 
   /// Manually flush the stream and close the file. Note that this does not call
   /// fsync.
@@ -448,7 +448,7 @@ class raw_string_ostream : public raw_ostream {
   uint64_t current_pos() const override { return OS.size(); }
 public:
   explicit raw_string_ostream(std::string &O) : OS(O) {}
-  ~raw_string_ostream();
+  ~raw_string_ostream() override;
 
   /// Flushes the stream contents to the target string and returns  the string's
   /// reference.
@@ -475,7 +475,7 @@ public:
   /// \param O The vector to write to; this should generally have at least 128
   /// bytes free to avoid any extraneous memory overhead.
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
-  ~raw_svector_ostream();
+  ~raw_svector_ostream() override;
 
   /// This is called when the SmallVector we're appending to is changed outside
   /// of the raw_svector_ostream's control.  It is only safe to do this if the
@@ -498,7 +498,7 @@ class raw_null_ostream : public raw_ostream {
 
 public:
   explicit raw_null_ostream() {}
-  ~raw_null_ostream();
+  ~raw_null_ostream() override;
 };
 
 } // end llvm namespace

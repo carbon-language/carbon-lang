@@ -31,7 +31,7 @@ private:
 public:
   static char ID;
   explicit MachineFunctionAnalysis(const TargetMachine &tm);
-  ~MachineFunctionAnalysis();
+  ~MachineFunctionAnalysis() override;
 
   MachineFunction &getMF() const { return *MF; }
 

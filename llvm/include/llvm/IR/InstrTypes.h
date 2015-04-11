@@ -44,7 +44,7 @@ protected:
     : Instruction(Ty, iType, Ops, NumOps, InsertAtEnd) {}
 
   // Out of line virtual method, so the vtable, etc has a home.
-  ~TerminatorInst();
+  ~TerminatorInst() override;
 
   /// Virtual methods - Terminators should overload these and provide inline
   /// overrides of non-V methods.
@@ -102,7 +102,7 @@ public:
   }
 
   // Out of line virtual method, so the vtable, etc has a home.
-  ~UnaryInstruction();
+  ~UnaryInstruction() override;
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);

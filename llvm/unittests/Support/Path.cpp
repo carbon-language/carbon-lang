@@ -308,7 +308,7 @@ protected:
   /// be placed. It is removed at the end of each test (must be empty).
   SmallString<128> TestDirectory;
 
-  virtual void SetUp() {
+  void SetUp() override {
     ASSERT_NO_ERROR(
         fs::createUniqueDirectory("file-system-test", TestDirectory));
     // We don't care about this specific file.
@@ -316,9 +316,7 @@ protected:
     errs().flush();
   }
 
-  virtual void TearDown() {
-    ASSERT_NO_ERROR(fs::remove(TestDirectory.str()));
-  }
+  void TearDown() override { ASSERT_NO_ERROR(fs::remove(TestDirectory.str())); }
 };
 
 TEST_F(FileSystemTest, Unique) {

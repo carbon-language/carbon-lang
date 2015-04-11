@@ -22,7 +22,7 @@ public:
   ConcreteSymbolEnumerator(std::unique_ptr<IPDBEnumSymbols> SymbolEnumerator)
       : Enumerator(std::move(SymbolEnumerator)) {}
 
-  virtual ~ConcreteSymbolEnumerator() {}
+  ~ConcreteSymbolEnumerator() override {}
 
   uint32_t getChildCount() const override {
     return Enumerator->getChildCount();

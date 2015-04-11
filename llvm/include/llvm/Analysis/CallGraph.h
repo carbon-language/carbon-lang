@@ -318,7 +318,7 @@ public:
   static char ID; // Class identification, replacement for typeinfo
 
   CallGraphWrapperPass();
-  virtual ~CallGraphWrapperPass();
+  ~CallGraphWrapperPass() override;
 
   /// \brief The internal \c CallGraph around which the rest of this interface
   /// is wrapped.

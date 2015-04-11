@@ -64,7 +64,7 @@ private:
 
 public:
   RemoteMemoryManager() : Target(nullptr) {}
-  virtual ~RemoteMemoryManager();
+  ~RemoteMemoryManager() override;
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID,

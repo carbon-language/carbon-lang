@@ -219,7 +219,7 @@ namespace llvm {
   public:
     FullDependence(Instruction *Src, Instruction *Dst, bool LoopIndependent,
                    unsigned Levels);
-    ~FullDependence() { delete[] DV; }
+    ~FullDependence() override { delete[] DV; }
 
     /// isLoopIndependent - Returns true if this is a loop-independent
     /// dependence.

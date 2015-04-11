@@ -62,7 +62,7 @@ class Instruction : public User, public ilist_node<Instruction> {
   };
 public:
   // Out of line virtual method, so the vtable, etc has a home.
-  ~Instruction();
+  ~Instruction() override;
 
   /// user_back - Specialize the methods defined in Value, as we know that an
   /// instruction can only be used by other instructions.

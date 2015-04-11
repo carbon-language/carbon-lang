@@ -230,7 +230,7 @@ public:
                          DiagnosticHandlerFunction DiagnosticHandler);
   explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C,
                          DiagnosticHandlerFunction DiagnosticHandler);
-  ~BitcodeReader() { FreeState(); }
+  ~BitcodeReader() override { FreeState(); }
 
   std::error_code materializeForwardReferencedFunctions();
 

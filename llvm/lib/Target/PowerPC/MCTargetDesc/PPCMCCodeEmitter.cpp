@@ -44,7 +44,7 @@ public:
       : MCII(mcii), CTX(ctx),
         IsLittleEndian(ctx.getAsmInfo()->isLittleEndian()) {}
 
-  ~PPCMCCodeEmitter() {}
+  ~PPCMCCodeEmitter() override {}
 
   unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups,

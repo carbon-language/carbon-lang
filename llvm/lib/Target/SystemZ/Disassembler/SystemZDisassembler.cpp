@@ -25,7 +25,7 @@ class SystemZDisassembler : public MCDisassembler {
 public:
   SystemZDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
     : MCDisassembler(STI, Ctx) {}
-  virtual ~SystemZDisassembler() {}
+  ~SystemZDisassembler() override {}
 
   DecodeStatus getInstruction(MCInst &instr, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,

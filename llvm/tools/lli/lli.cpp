@@ -271,7 +271,7 @@ public:
         this->CacheDir[this->CacheDir.size() - 1] != '/')
       this->CacheDir += '/';
   }
-  virtual ~LLIObjectCache() {}
+  ~LLIObjectCache() override {}
 
   void notifyObjectCompiled(const Module *M, MemoryBufferRef Obj) override {
     const std::string ModuleID = M->getModuleIdentifier();

@@ -48,7 +48,7 @@ public:
   // Main entry points.
   //
   DwarfCFIException(AsmPrinter *A);
-  virtual ~DwarfCFIException();
+  ~DwarfCFIException() override;
 
   /// Emit all exception information that should come after the content.
   void endModule() override;
@@ -70,7 +70,7 @@ public:
   // Main entry points.
   //
   ARMException(AsmPrinter *A);
-  virtual ~ARMException();
+  ~ARMException() override;
 
   /// Emit all exception information that should come after the content.
   void endModule() override;

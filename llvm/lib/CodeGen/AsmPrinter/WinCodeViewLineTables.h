@@ -114,7 +114,7 @@ class WinCodeViewLineTables : public AsmPrinterHandler {
 public:
   WinCodeViewLineTables(AsmPrinter *Asm);
 
-  ~WinCodeViewLineTables() {
+  ~WinCodeViewLineTables() override {
     for (DirAndFilenameToFilepathMapTy::iterator
              I = DirAndFilenameToFilepathMap.begin(),
              E = DirAndFilenameToFilepathMap.end();

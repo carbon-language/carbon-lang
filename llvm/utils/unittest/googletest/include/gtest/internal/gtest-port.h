@@ -1165,7 +1165,7 @@ class ThreadWithParam : public ThreadWithParamBase {
     GTEST_CHECK_POSIX_SUCCESS_(
         pthread_create(&thread_, 0, &ThreadFuncWithCLinkage, base));
   }
-  ~ThreadWithParam() { Join(); }
+  ~ThreadWithParam() override { Join(); }
 
   void Join() {
     if (!finished_) {
@@ -1174,7 +1174,7 @@ class ThreadWithParam : public ThreadWithParamBase {
     }
   }
 
-  virtual void Run() {
+  void Run() override {
     if (thread_can_start_ != NULL)
       thread_can_start_->WaitForNotification();
     func_(param_);

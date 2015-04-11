@@ -39,7 +39,7 @@ public:
     : MCII(mcii), Ctx(ctx) {
   }
 
-  ~X86MCCodeEmitter() {}
+  ~X86MCCodeEmitter() override {}
 
   bool is64BitMode(const MCSubtargetInfo &STI) const {
     return (STI.getFeatureBits() & X86::Mode64Bit) != 0;

@@ -26,7 +26,8 @@ namespace {
                                 Is64Bit ?  ELF::EM_SPARCV9 : ELF::EM_SPARC,
                                 /*HasRelocationAddend*/ true) {}
 
-    virtual ~SparcELFObjectWriter() {}
+    ~SparcELFObjectWriter() override {}
+
   protected:
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;

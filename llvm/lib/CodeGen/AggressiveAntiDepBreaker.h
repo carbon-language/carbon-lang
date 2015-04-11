@@ -127,7 +127,7 @@ class RegisterClassInfo;
     AggressiveAntiDepBreaker(MachineFunction& MFi,
                           const RegisterClassInfo &RCI,
                           TargetSubtargetInfo::RegClassVector& CriticalPathRCs);
-    ~AggressiveAntiDepBreaker();
+    ~AggressiveAntiDepBreaker() override;
 
     /// Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB) override;

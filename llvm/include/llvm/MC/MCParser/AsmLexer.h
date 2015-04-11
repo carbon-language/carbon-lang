@@ -40,7 +40,7 @@ protected:
 
 public:
   AsmLexer(const MCAsmInfo &MAI);
-  ~AsmLexer();
+  ~AsmLexer() override;
 
   void setBuffer(StringRef Buf, const char *ptr = nullptr);
 

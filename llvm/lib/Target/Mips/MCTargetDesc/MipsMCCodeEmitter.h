@@ -43,7 +43,7 @@ public:
   MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_, bool IsLittle)
       : MCII(mcii), Ctx(Ctx_), IsLittleEndian(IsLittle) {}
 
-  ~MipsMCCodeEmitter() {}
+  ~MipsMCCodeEmitter() override {}
 
   void EmitByte(unsigned char C, raw_ostream &OS) const;
 

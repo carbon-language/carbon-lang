@@ -31,9 +31,7 @@ namespace {
 
 class CloneInstruction : public ::testing::Test {
 protected:
-  virtual void SetUp() {
-    V = nullptr;
-  }
+  void SetUp() override { V = nullptr; }
 
   template <typename T>
   T *clone(T *V1) {
@@ -47,7 +45,7 @@ protected:
     DeleteContainerPointers(Clones);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     eraseClones();
     DeleteContainerPointers(Orig);
     delete V;
@@ -206,16 +204,14 @@ TEST_F(CloneInstruction, CallingConvention) {
 
 class CloneFunc : public ::testing::Test {
 protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SetupModule();
     CreateOldFunc();
     CreateNewFunc();
     SetupFinder();
   }
 
-  virtual void TearDown() {
-    delete Finder;
-  }
+  void TearDown() override { delete Finder; }
 
   void SetupModule() {
     M = new Module("", C);

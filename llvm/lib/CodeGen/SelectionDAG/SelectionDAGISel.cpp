@@ -2560,7 +2560,7 @@ public:
     SelectionDAG::DAGUpdateListener(DAG),
     RecordedNodes(RN), MatchScopes(MS) { }
 
-  void NodeDeleted(SDNode *N, SDNode *E) {
+  void NodeDeleted(SDNode *N, SDNode *E) override {
     // Some early-returns here to avoid the search if we deleted the node or
     // if the update comes from MorphNodeTo (MorphNodeTo is the last thing we
     // do, so it's unnecessary to update matching state at that point).

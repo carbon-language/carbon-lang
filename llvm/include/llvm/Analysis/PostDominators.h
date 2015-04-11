@@ -30,7 +30,7 @@ struct PostDominatorTree : public FunctionPass {
     DT = new DominatorTreeBase<BasicBlock>(true);
   }
 
-  ~PostDominatorTree();
+  ~PostDominatorTree() override;
 
   bool runOnFunction(Function &F) override;
 

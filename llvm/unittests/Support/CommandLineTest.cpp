@@ -65,9 +65,7 @@ public:
   StackOption(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
     : Base(M0, M1, M2, M3) {}
 
-  ~StackOption() {
-    this->removeArgument();
-  }
+  ~StackOption() override { this->removeArgument(); }
 };
 
 

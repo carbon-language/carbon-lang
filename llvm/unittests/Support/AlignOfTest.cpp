@@ -61,12 +61,22 @@ struct D8 : S1, D4, D5 { double x[2]; };
 struct D9 : S1, D1 { S1 s1; };
 struct V1 { virtual ~V1(); };
 struct V2 { int x; virtual ~V2(); };
-struct V3 : V1 { virtual ~V3(); };
-struct V4 : virtual V2 { int y; virtual ~V4(); };
-struct V5 : V4, V3 { double z; virtual ~V5(); };
+struct V3 : V1 {
+  ~V3() override;
+};
+struct V4 : virtual V2 { int y;
+  ~V4() override;
+};
+struct V5 : V4, V3 { double z;
+  ~V5() override;
+};
 struct V6 : S1 { virtual ~V6(); };
-struct V7 : virtual V2, virtual V6 { virtual ~V7(); };
-struct V8 : V5, virtual V6, V7 { double zz; virtual ~V8(); };
+struct V7 : virtual V2, virtual V6 {
+  ~V7() override;
+};
+struct V8 : V5, virtual V6, V7 { double zz;
+  ~V8() override;
+};
 
 double S6::f() { return 0.0; }
 float D2::g() { return 0.0f; }

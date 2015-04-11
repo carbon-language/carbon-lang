@@ -135,7 +135,7 @@ private:
   // Dead defs generated during spilling.
   SmallVector<MachineInstr*, 8> DeadDefs;
 
-  ~InlineSpiller() {}
+  ~InlineSpiller() override {}
 
 public:
   InlineSpiller(MachineFunctionPass &pass, MachineFunction &mf, VirtRegMap &vrm)

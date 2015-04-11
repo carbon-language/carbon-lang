@@ -106,7 +106,7 @@ public:
   void stop() override;
 
   RemoteTargetExternal(std::string &Name) : RemoteTarget(), ChildName(Name) {}
-  virtual ~RemoteTargetExternal() {}
+  ~RemoteTargetExternal() override {}
 
 private:
   std::string ChildName;

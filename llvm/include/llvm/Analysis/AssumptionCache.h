@@ -165,7 +165,7 @@ public:
   AssumptionCache &getAssumptionCache(Function &F);
 
   AssumptionCacheTracker();
-  ~AssumptionCacheTracker();
+  ~AssumptionCacheTracker() override;
 
   void releaseMemory() override { AssumptionCaches.shrink_and_clear(); }
 

@@ -26,7 +26,7 @@ class AArch64ELFObjectWriter : public MCELFObjectTargetWriter {
 public:
   AArch64ELFObjectWriter(uint8_t OSABI, bool IsLittleEndian);
 
-  virtual ~AArch64ELFObjectWriter();
+  ~AArch64ELFObjectWriter() override;
 
 protected:
   unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,

@@ -70,7 +70,7 @@ public:
   static char ID; // Pass identification, replacement for typeid.
 
   SpillPlacement() : MachineFunctionPass(ID), nodes(nullptr) {}
-  ~SpillPlacement() { releaseMemory(); }
+  ~SpillPlacement() override { releaseMemory(); }
 
   /// BorderConstraint - A basic block has separate constraints for entry and
   /// exit.

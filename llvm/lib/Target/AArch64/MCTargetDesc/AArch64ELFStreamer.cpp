@@ -94,7 +94,7 @@ public:
       : MCELFStreamer(Context, TAB, OS, Emitter), MappingSymbolCounter(0),
         LastEMS(EMS_None) {}
 
-  ~AArch64ELFStreamer() {}
+  ~AArch64ELFStreamer() override {}
 
   void ChangeSection(const MCSection *Section,
                      const MCExpr *Subsection) override {

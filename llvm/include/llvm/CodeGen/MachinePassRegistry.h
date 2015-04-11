@@ -124,7 +124,7 @@ class RegisterPassParser : public MachinePassRegistryListener,
 public:
   RegisterPassParser(cl::Option &O)
       : cl::parser<typename RegistryClass::FunctionPassCtor>(O) {}
-  ~RegisterPassParser() { RegistryClass::setListener(nullptr); }
+  ~RegisterPassParser() override { RegistryClass::setListener(nullptr); }
 
   void initialize() {
     cl::parser<typename RegistryClass::FunctionPassCtor>::initialize();

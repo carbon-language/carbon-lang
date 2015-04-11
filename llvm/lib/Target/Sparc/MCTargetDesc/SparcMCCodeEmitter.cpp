@@ -38,7 +38,7 @@ class SparcMCCodeEmitter : public MCCodeEmitter {
 public:
   SparcMCCodeEmitter(MCContext &ctx): Ctx(ctx) {}
 
-  ~SparcMCCodeEmitter() {}
+  ~SparcMCCodeEmitter() override {}
 
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,

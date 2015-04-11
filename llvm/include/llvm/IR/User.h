@@ -60,9 +60,7 @@ protected:
     NumOperands = 0;
   }
 public:
-  ~User() {
-    Use::zap(OperandList, OperandList + NumOperands);
-  }
+  ~User() override { Use::zap(OperandList, OperandList + NumOperands); }
   /// \brief Free memory allocated for User and Use objects.
   void operator delete(void *Usr);
   /// \brief Placement delete - required by std, but never called.

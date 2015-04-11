@@ -44,7 +44,7 @@ namespace {
       errs() <<  "  " << Val << " " << Desc << " responses ("
              << Val*100/Sum << "%)\n";
     }
-    ~AliasAnalysisCounter() {
+    ~AliasAnalysisCounter() override {
       unsigned AASum = No+May+Partial+Must;
       unsigned MRSum = NoMR+JustRef+JustMod+MR;
       if (AASum + MRSum) { // Print a report if any counted queries occurred...

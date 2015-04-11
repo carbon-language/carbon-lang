@@ -25,7 +25,7 @@ namespace {
   class X86WinCOFFObjectWriter : public MCWinCOFFObjectTargetWriter {
   public:
     X86WinCOFFObjectWriter(bool Is64Bit);
-    virtual ~X86WinCOFFObjectWriter();
+    ~X86WinCOFFObjectWriter() override;
 
     unsigned getRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsCrossSection,

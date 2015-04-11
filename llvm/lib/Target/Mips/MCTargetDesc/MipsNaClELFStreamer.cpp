@@ -40,7 +40,7 @@ public:
                       MCCodeEmitter *Emitter)
       : MipsELFStreamer(Context, TAB, OS, Emitter), PendingCall(false) {}
 
-  ~MipsNaClELFStreamer() {}
+  ~MipsNaClELFStreamer() override {}
 
 private:
   // Whether we started the sandboxing sequence for calls.  Calls are bundled

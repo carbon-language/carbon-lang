@@ -143,7 +143,7 @@ public:
     : MCFragment(FType, SD), BundlePadding(0)
   {
   }
-  virtual ~MCEncodedFragment();
+  ~MCEncodedFragment() override;
 
   virtual SmallVectorImpl<char> &getContents() = 0;
   virtual const SmallVectorImpl<char> &getContents() const = 0;
@@ -182,7 +182,7 @@ public:
   {
   }
 
-  virtual ~MCEncodedFragmentWithFixups();
+  ~MCEncodedFragmentWithFixups() override;
 
   typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
   typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;

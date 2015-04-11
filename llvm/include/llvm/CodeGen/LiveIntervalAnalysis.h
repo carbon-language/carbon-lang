@@ -100,7 +100,7 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
   public:
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals();
-    virtual ~LiveIntervals();
+    ~LiveIntervals() override;
 
     // Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse,

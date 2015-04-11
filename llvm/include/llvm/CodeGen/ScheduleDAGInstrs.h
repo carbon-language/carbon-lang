@@ -158,7 +158,7 @@ namespace llvm {
                                bool RemoveKillFlags = false,
                                LiveIntervals *LIS = nullptr);
 
-    virtual ~ScheduleDAGInstrs() {}
+    ~ScheduleDAGInstrs() override {}
 
     bool isPostRA() const { return IsPostRA; }
 

@@ -194,7 +194,7 @@ public:
   ScopeMatcher(ArrayRef<Matcher *> children)
     : Matcher(Scope), Children(children.begin(), children.end()) {
   }
-  virtual ~ScopeMatcher();
+  ~ScopeMatcher() override;
 
   unsigned getNumChildren() const { return Children.size(); }
 
@@ -507,7 +507,7 @@ class SwitchOpcodeMatcher : public Matcher {
 public:
   SwitchOpcodeMatcher(ArrayRef<std::pair<const SDNodeInfo*, Matcher*> > cases)
     : Matcher(SwitchOpcode), Cases(cases.begin(), cases.end()) {}
-  virtual ~SwitchOpcodeMatcher();
+  ~SwitchOpcodeMatcher() override;
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == SwitchOpcode;
@@ -561,7 +561,7 @@ class SwitchTypeMatcher : public Matcher {
 public:
   SwitchTypeMatcher(ArrayRef<std::pair<MVT::SimpleValueType, Matcher*> > cases)
   : Matcher(SwitchType), Cases(cases.begin(), cases.end()) {}
-  virtual ~SwitchTypeMatcher();
+  ~SwitchTypeMatcher() override;
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == SwitchType;

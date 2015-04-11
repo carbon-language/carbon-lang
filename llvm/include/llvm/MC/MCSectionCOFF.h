@@ -53,7 +53,7 @@ class MCSymbol;
       assert ((Characteristics & 0x00F00000) == 0 &&
         "alignment must not be set upon section creation");
     }
-    ~MCSectionCOFF();
+    ~MCSectionCOFF() override;
 
   public:
     /// ShouldOmitSectionDirective - Decides whether a '.section' directive

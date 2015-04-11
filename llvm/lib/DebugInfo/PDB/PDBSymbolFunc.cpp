@@ -48,9 +48,10 @@ public:
     reset();
   }
 
-  uint32_t getChildCount() const { return Args.size(); }
+  uint32_t getChildCount() const override { return Args.size(); }
 
-  std::unique_ptr<PDBSymbolData> getChildAtIndex(uint32_t Index) const {
+  std::unique_ptr<PDBSymbolData>
+  getChildAtIndex(uint32_t Index) const override {
     if (Index >= Args.size())
       return nullptr;
 
@@ -58,7 +59,7 @@ public:
         Args[Index]->getSymIndexId());
   }
 
-  std::unique_ptr<PDBSymbolData> getNext() {
+  std::unique_ptr<PDBSymbolData> getNext() override {
     if (CurIter == Args.end())
       return nullptr;
     const auto &Result = **CurIter;
@@ -66,9 +67,9 @@ public:
     return Session.getConcreteSymbolById<PDBSymbolData>(Result.getSymIndexId());
   }
 
-  void reset() { CurIter = Args.empty() ? Args.end() : Args.begin(); }
+  void reset() override { CurIter = Args.empty() ? Args.end() : Args.begin(); }
 
-  FunctionArgEnumerator *clone() const {
+  FunctionArgEnumerator *clone() const override {
     return new FunctionArgEnumerator(Session, Func);
   }
 

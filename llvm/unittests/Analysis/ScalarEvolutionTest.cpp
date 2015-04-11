@@ -25,7 +25,7 @@ namespace {
 class ScalarEvolutionsTest : public testing::Test {
 protected:
   ScalarEvolutionsTest() : M("", Context), SE(*new ScalarEvolution) {}
-  ~ScalarEvolutionsTest() {
+  ~ScalarEvolutionsTest() override {
     // Manually clean up, since we allocated new SCEV objects after the
     // pass was finished.
     SE.releaseMemory();

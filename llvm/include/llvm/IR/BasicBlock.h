@@ -105,7 +105,7 @@ public:
                             BasicBlock *InsertBefore = nullptr) {
     return new BasicBlock(Context, Name, Parent, InsertBefore);
   }
-  ~BasicBlock();
+  ~BasicBlock() override;
 
   /// \brief Return the enclosing method, or null if none.
   const Function *getParent() const { return Parent; }

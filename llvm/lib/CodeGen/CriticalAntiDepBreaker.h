@@ -69,7 +69,7 @@ class TargetRegisterInfo;
 
   public:
     CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo&);
-    ~CriticalAntiDepBreaker();
+    ~CriticalAntiDepBreaker() override;
 
     /// Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB) override;

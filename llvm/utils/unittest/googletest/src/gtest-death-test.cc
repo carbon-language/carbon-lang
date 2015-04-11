@@ -334,10 +334,10 @@ class DeathTestImpl : public DeathTest {
         write_fd_(-1) {}
 
   // read_fd_ is expected to be closed and cleared by a derived class.
-  ~DeathTestImpl() { GTEST_DEATH_TEST_CHECK_(read_fd_ == -1); }
+  ~DeathTestImpl() override { GTEST_DEATH_TEST_CHECK_(read_fd_ == -1); }
 
-  void Abort(AbortReason reason);
-  virtual bool Passed(bool status_ok);
+  void Abort(AbortReason reason) override;
+  bool Passed(bool status_ok) override;
 
   const char* statement() const { return statement_; }
   const RE* regex() const { return regex_; }
@@ -744,7 +744,7 @@ class ForkingDeathTest : public DeathTestImpl {
   ForkingDeathTest(const char* statement, const RE* regex);
 
   // All of these virtual functions are inherited from DeathTest.
-  virtual int Wait();
+  int Wait() override;
 
  protected:
   void set_child_pid(pid_t child_pid) { child_pid_ = child_pid; }
@@ -780,7 +780,7 @@ class NoExecDeathTest : public ForkingDeathTest {
  public:
   NoExecDeathTest(const char* a_statement, const RE* a_regex) :
       ForkingDeathTest(a_statement, a_regex) { }
-  virtual TestRole AssumeRole();
+  TestRole AssumeRole() override;
 };
 
 // The AssumeRole process for a fork-and-run death test.  It implements a
@@ -835,7 +835,8 @@ class ExecDeathTest : public ForkingDeathTest {
   ExecDeathTest(const char* a_statement, const RE* a_regex,
                 const char* file, int line) :
       ForkingDeathTest(a_statement, a_regex), file_(file), line_(line) { }
-  virtual TestRole AssumeRole();
+  TestRole AssumeRole() override;
+
  private:
   // The name of the file in which the death test is located.
   const char* const file_;

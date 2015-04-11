@@ -156,10 +156,7 @@ LLVM_ATTRIBUTE_USED void CompileTest() {
 
 class SmallVectorTestBase : public testing::Test {
 protected:
-
-  void SetUp() {
-    Constructable::reset();
-  }
+  void SetUp() override { Constructable::reset(); }
 
   template <typename VectorT>
   void assertEmpty(VectorT & v) {

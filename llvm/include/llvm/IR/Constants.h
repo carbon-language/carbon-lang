@@ -547,7 +547,7 @@ class ConstantDataSequential : public Constant {
 protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
     : Constant(ty, VT, nullptr, 0), DataElements(Data), Next(nullptr) {}
-  ~ConstantDataSequential() { delete Next; }
+  ~ConstantDataSequential() override { delete Next; }
 
   static Constant *getImpl(StringRef Bytes, Type *Ty);
 

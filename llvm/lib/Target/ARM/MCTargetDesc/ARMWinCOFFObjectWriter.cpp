@@ -26,7 +26,7 @@ public:
     : MCWinCOFFObjectTargetWriter(COFF::IMAGE_FILE_MACHINE_ARMNT) {
     assert(!Is64Bit && "AArch64 support not yet implemented");
   }
-  virtual ~ARMWinCOFFObjectWriter() { }
+  ~ARMWinCOFFObjectWriter() override {}
 
   unsigned getRelocType(const MCValue &Target, const MCFixup &Fixup,
                         bool IsCrossSection,

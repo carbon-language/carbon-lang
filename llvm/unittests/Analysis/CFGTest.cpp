@@ -78,13 +78,13 @@ protected:
         return 0;
       }
 
-      void getAnalysisUsage(AnalysisUsage &AU) const {
+      void getAnalysisUsage(AnalysisUsage &AU) const override {
         AU.setPreservesAll();
         AU.addRequired<LoopInfoWrapperPass>();
         AU.addRequired<DominatorTreeWrapperPass>();
       }
 
-      bool runOnFunction(Function &F) {
+      bool runOnFunction(Function &F) override {
         if (!F.hasName() || F.getName() != "test")
           return false;
 

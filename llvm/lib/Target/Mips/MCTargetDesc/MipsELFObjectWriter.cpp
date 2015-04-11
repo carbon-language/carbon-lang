@@ -27,7 +27,7 @@ namespace {
     MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI,
                         bool _isN64, bool IsLittleEndian);
 
-    virtual ~MipsELFObjectWriter();
+    ~MipsELFObjectWriter() override;
 
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;

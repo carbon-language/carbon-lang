@@ -108,7 +108,7 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
 
 public:
   explicit Interpreter(std::unique_ptr<Module> M);
-  ~Interpreter();
+  ~Interpreter() override;
 
   /// runAtExitHandlers - Run any functions registered by the program's calls to
   /// atexit(3), which we intercept and store in AtExitHandlers.

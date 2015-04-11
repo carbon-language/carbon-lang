@@ -140,7 +140,7 @@ protected:
   explicit AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer);
 
 public:
-  virtual ~AsmPrinter();
+  ~AsmPrinter() override;
 
   DwarfDebug *getDwarfDebug() { return DD; }
   DwarfDebug *getDwarfDebug() const { return DD; }

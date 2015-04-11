@@ -40,7 +40,7 @@ class SectionMemoryManager : public RTDyldMemoryManager {
 
 public:
   SectionMemoryManager() { }
-  virtual ~SectionMemoryManager();
+  ~SectionMemoryManager() override;
 
   /// \brief Allocates a memory block of (at least) the given size suitable for
   /// executable code.

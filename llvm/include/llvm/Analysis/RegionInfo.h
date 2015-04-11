@@ -842,7 +842,7 @@ class RegionInfo : public RegionInfoBase<RegionTraits<Function>> {
 public:
   explicit RegionInfo();
 
-  virtual ~RegionInfo();
+  ~RegionInfo() override;
 
   // updateStatistics - Update statistic about created regions.
   void updateStatistics(Region *R) final;
@@ -858,7 +858,7 @@ public:
   static char ID;
   explicit RegionInfoPass();
 
-  ~RegionInfoPass();
+  ~RegionInfoPass() override;
 
   RegionInfo &getRegionInfo() { return RI; }
 

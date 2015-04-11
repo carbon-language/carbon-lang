@@ -44,7 +44,7 @@ namespace llvm {
 
     explicit ScheduleDAGSDNodes(MachineFunction &mf);
 
-    virtual ~ScheduleDAGSDNodes() {}
+    ~ScheduleDAGSDNodes() override {}
 
     /// Run - perform scheduling.
     ///

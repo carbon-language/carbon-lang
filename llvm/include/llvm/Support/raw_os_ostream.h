@@ -34,7 +34,7 @@ class raw_os_ostream : public raw_ostream {
 
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}
-  ~raw_os_ostream();
+  ~raw_os_ostream() override;
 };
 
 } // end llvm namespace

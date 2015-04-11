@@ -94,7 +94,7 @@ public:
     Scanned = nullptr;
   }
 
-  ~formatted_raw_ostream() {
+  ~formatted_raw_ostream() override {
     flush();
     releaseStream();
   }

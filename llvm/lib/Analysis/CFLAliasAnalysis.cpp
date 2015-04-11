@@ -161,7 +161,7 @@ struct FunctionHandle : public CallbackVH {
     assert(CFLAA != nullptr);
   }
 
-  virtual ~FunctionHandle() {}
+  ~FunctionHandle() override {}
 
   void deleted() override { removeSelfFromCache(); }
   void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
@@ -189,7 +189,7 @@ public:
     initializeCFLAliasAnalysisPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual ~CFLAliasAnalysis() {}
+  ~CFLAliasAnalysis() override {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AliasAnalysis::getAnalysisUsage(AU);

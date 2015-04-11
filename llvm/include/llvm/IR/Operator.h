@@ -42,7 +42,7 @@ protected:
   // NOTE: Cannot use = delete because it's not legal to delete
   // an overridden method that's not deleted in the base class. Cannot leave
   // this unimplemented because that leads to an ODR-violation.
-  ~Operator();
+  ~Operator() override;
 
 public:
   /// Return the opcode for this Instruction or ConstantExpr.

@@ -114,7 +114,7 @@ public:
     return new(0) Function(Ty, Linkage, N, M);
   }
 
-  ~Function();
+  ~Function() override;
 
   Type *getReturnType() const;           // Return the type of the ret val
   FunctionType *getFunctionType() const; // Return the FunctionType for me

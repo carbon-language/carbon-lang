@@ -104,7 +104,7 @@ public:
     LocalExecTLSModel
   };
 
-  ~GlobalValue() {
+  ~GlobalValue() override {
     removeDeadConstantUsers();   // remove any dead constants using this.
   }
 

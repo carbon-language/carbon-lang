@@ -23,7 +23,7 @@ namespace {
 
 class LinkModuleTest : public testing::Test {
 protected:
-  virtual void SetUp() {
+  void SetUp() override {
     M.reset(new Module("MyModule", Ctx));
     FunctionType *FTy = FunctionType::get(
         Type::getInt8PtrTy(Ctx), Type::getInt32Ty(Ctx), false /*=isVarArg*/);
@@ -56,7 +56,7 @@ protected:
     GV->setInitializer(ConstantArray::get(AT, Init));
   }
 
-  virtual void TearDown() { M.reset(); }
+  void TearDown() override { M.reset(); }
 
   LLVMContext Ctx;
   std::unique_ptr<Module> M;

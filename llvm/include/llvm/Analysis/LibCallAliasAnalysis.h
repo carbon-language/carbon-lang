@@ -36,8 +36,8 @@ namespace llvm {
         : FunctionPass(ID), LCI(LC) {
       initializeLibCallAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }
-    ~LibCallAliasAnalysis();
-    
+    ~LibCallAliasAnalysis() override;
+
     ModRefResult getModRefInfo(ImmutableCallSite CS,
                                const Location &Loc) override;
  

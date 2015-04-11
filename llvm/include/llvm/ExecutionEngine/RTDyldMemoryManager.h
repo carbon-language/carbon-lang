@@ -56,7 +56,7 @@ class RTDyldMemoryManager : public MCJITMemoryManager,
   void operator=(const RTDyldMemoryManager&) = delete;
 public:
   RTDyldMemoryManager() {}
-  virtual ~RTDyldMemoryManager();
+  ~RTDyldMemoryManager() override;
 
   void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) override;
   void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) override;

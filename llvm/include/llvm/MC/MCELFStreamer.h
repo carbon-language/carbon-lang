@@ -34,7 +34,7 @@ public:
       : MCObjectStreamer(Context, TAB, OS, Emitter),
         SeenIdent(false) {}
 
-  virtual ~MCELFStreamer();
+  ~MCELFStreamer() override;
 
   /// state management
   void reset() override {

@@ -20,7 +20,7 @@ class SystemZObjectWriter : public MCELFObjectTargetWriter {
 public:
   SystemZObjectWriter(uint8_t OSABI);
 
-  virtual ~SystemZObjectWriter();
+  ~SystemZObjectWriter() override;
 
 protected:
   // Override MCELFObjectTargetWriter.

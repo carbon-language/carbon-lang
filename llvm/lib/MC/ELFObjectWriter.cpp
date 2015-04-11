@@ -198,7 +198,7 @@ class ELFObjectWriter : public MCObjectWriter {
       MCObjectWriter::reset();
     }
 
-    virtual ~ELFObjectWriter();
+    ~ELFObjectWriter() override;
 
     void WriteWord(uint64_t W) {
       if (is64Bit())

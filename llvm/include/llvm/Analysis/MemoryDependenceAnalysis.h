@@ -329,7 +329,7 @@ namespace llvm {
 
   public:
     MemoryDependenceAnalysis();
-    ~MemoryDependenceAnalysis();
+    ~MemoryDependenceAnalysis() override;
     static char ID;
 
     /// Pass Implementation stuff.  This doesn't do any analysis eagerly.

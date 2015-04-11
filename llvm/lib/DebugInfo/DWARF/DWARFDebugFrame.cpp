@@ -197,8 +197,7 @@ public:
         DataAlignmentFactor(DataAlignmentFactor),
         ReturnAddressRegister(ReturnAddressRegister) {}
 
-  ~CIE() {
-  }
+  ~CIE() override {}
 
   uint64_t getCodeAlignmentFactor() const { return CodeAlignmentFactor; }
   int64_t getDataAlignmentFactor() const { return DataAlignmentFactor; }
@@ -245,8 +244,7 @@ public:
         InitialLocation(InitialLocation), AddressRange(AddressRange),
         LinkedCIE(Cie) {}
 
-  ~FDE() {
-  }
+  ~FDE() override {}
 
   CIE *getLinkedCIE() const { return LinkedCIE; }
 

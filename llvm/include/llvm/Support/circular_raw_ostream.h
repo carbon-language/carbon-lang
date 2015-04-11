@@ -117,7 +117,7 @@ namespace llvm
       setStream(Stream, Owns);
     }
 
-    ~circular_raw_ostream() {
+    ~circular_raw_ostream() override {
       flush();
       flushBufferWithBanner();
       releaseStream();

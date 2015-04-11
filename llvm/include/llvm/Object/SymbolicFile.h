@@ -118,7 +118,7 @@ const uint64_t UnknownAddressOrSize = ~0ULL;
 
 class SymbolicFile : public Binary {
 public:
-  virtual ~SymbolicFile();
+  ~SymbolicFile() override;
   SymbolicFile(unsigned int Type, MemoryBufferRef Source);
 
   // virtual interface.

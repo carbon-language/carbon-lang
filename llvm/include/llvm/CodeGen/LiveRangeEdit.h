@@ -122,7 +122,7 @@ public:
     MRI.setDelegate(this);
   }
 
-  ~LiveRangeEdit() { MRI.resetDelegate(this); }
+  ~LiveRangeEdit() override { MRI.resetDelegate(this); }
 
   LiveInterval &getParent() const {
    assert(Parent && "No parent LiveInterval");

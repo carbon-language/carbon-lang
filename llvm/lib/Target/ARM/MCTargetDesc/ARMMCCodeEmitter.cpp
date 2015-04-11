@@ -48,7 +48,7 @@ public:
     : MCII(mcii), CTX(ctx), IsLittleEndian(IsLittle) {
   }
 
-  ~ARMMCCodeEmitter() {}
+  ~ARMMCCodeEmitter() override {}
 
   bool isThumb(const MCSubtargetInfo &STI) const {
     return (STI.getFeatureBits() & ARM::ModeThumb) != 0;

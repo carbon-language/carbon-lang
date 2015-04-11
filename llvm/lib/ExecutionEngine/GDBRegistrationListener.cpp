@@ -103,7 +103,7 @@ public:
 
   /// Unregisters each object that was previously registered and releases all
   /// internal resources.
-  virtual ~GDBJITRegistrationListener();
+  ~GDBJITRegistrationListener() override;
 
   /// Creates an entry in the JIT registry for the buffer @p Object,
   /// which must contain an object file in executable memory with any

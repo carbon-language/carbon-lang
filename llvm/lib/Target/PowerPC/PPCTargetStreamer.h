@@ -16,7 +16,7 @@ namespace llvm {
 class PPCTargetStreamer : public MCTargetStreamer {
 public:
   PPCTargetStreamer(MCStreamer &S);
-  virtual ~PPCTargetStreamer();
+  ~PPCTargetStreamer() override;
   virtual void emitTCEntry(const MCSymbol &S) = 0;
   virtual void emitMachine(StringRef CPU) = 0;
   virtual void emitAbiVersion(int AbiVersion) = 0;

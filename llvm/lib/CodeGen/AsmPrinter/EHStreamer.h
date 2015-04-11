@@ -125,7 +125,7 @@ protected:
 
 public:
   EHStreamer(AsmPrinter *A);
-  virtual ~EHStreamer();
+  ~EHStreamer() override;
 
   // Unused.
   void setSymbolSize(const MCSymbol *Sym, uint64_t Size) override {}

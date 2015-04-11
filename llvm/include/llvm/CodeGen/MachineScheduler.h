@@ -385,7 +385,7 @@ public:
         ShouldTrackPressure(false), RPTracker(RegPressure),
         TopRPTracker(TopPressure), BotRPTracker(BotPressure) {}
 
-  virtual ~ScheduleDAGMILive();
+  ~ScheduleDAGMILive() override;
 
   /// Return true if this DAG supports VReg liveness and RegPressure.
   bool hasVRegLiveness() const override { return true; }
@@ -909,7 +909,7 @@ public:
   PostGenericScheduler(const MachineSchedContext *C):
     GenericSchedulerBase(C), Top(SchedBoundary::TopQID, "TopQ") {}
 
-  virtual ~PostGenericScheduler() {}
+  ~PostGenericScheduler() override {}
 
   void initPolicy(MachineBasicBlock::iterator Begin,
                   MachineBasicBlock::iterator End,

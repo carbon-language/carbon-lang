@@ -50,7 +50,7 @@ class PassManager : public PassManagerBase {
 public:
 
   PassManager();
-  ~PassManager();
+  ~PassManager() override;
 
   void add(Pass *P) override;
 
@@ -70,7 +70,7 @@ public:
   /// FunctionPassManager ctor - This initializes the pass manager.  It needs,
   /// but does not take ownership of, the specified Module.
   explicit FunctionPassManager(Module *M);
-  ~FunctionPassManager();
+  ~FunctionPassManager() override;
 
   void add(Pass *P) override;
 

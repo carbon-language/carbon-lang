@@ -107,7 +107,7 @@ class NumberExprAST : public ExprAST {
 
 public:
   NumberExprAST(double val) : Val(val) {}
-  virtual Value *Codegen();
+  Value *Codegen() override;
 };
 
 /// VariableExprAST - Expression class for referencing a variable, like "a".
@@ -116,7 +116,7 @@ class VariableExprAST : public ExprAST {
 
 public:
   VariableExprAST(const std::string &name) : Name(name) {}
-  virtual Value *Codegen();
+  Value *Codegen() override;
 };
 
 /// BinaryExprAST - Expression class for a binary operator.
@@ -127,7 +127,7 @@ class BinaryExprAST : public ExprAST {
 public:
   BinaryExprAST(char op, ExprAST *lhs, ExprAST *rhs)
       : Op(op), LHS(lhs), RHS(rhs) {}
-  virtual Value *Codegen();
+  Value *Codegen() override;
 };
 
 /// CallExprAST - Expression class for function calls.
@@ -138,7 +138,7 @@ class CallExprAST : public ExprAST {
 public:
   CallExprAST(const std::string &callee, std::vector<ExprAST *> &args)
       : Callee(callee), Args(args) {}
-  virtual Value *Codegen();
+  Value *Codegen() override;
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
@@ -452,13 +452,13 @@ class HelpingMemoryManager : public SectionMemoryManager {
 
 public:
   HelpingMemoryManager(MCJITHelper *Helper) : MasterHelper(Helper) {}
-  virtual ~HelpingMemoryManager() {}
+  ~HelpingMemoryManager() override {}
 
   /// This method returns the address of the specified symbol.
   /// Our implementation will attempt to find symbols in other
   /// modules associated with the MCJITHelper to cross link symbols
   /// from one generated module to another.
-  virtual uint64_t getSymbolAddress(const std::string &Name) override;
+  uint64_t getSymbolAddress(const std::string &Name) override;
 
 private:
   MCJITHelper *MasterHelper;

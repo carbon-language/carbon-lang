@@ -205,7 +205,7 @@ class MCJIT : public ExecutionEngine {
                                                       ModulePtrSet::iterator E);
 
 public:
-  ~MCJIT();
+  ~MCJIT() override;
 
   /// @name ExecutionEngine interface implementation
   /// @{

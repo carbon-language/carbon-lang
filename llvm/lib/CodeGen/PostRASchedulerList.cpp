@@ -141,7 +141,7 @@ namespace {
         TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
         SmallVectorImpl<const TargetRegisterClass *> &CriticalPathRCs);
 
-    ~SchedulePostRATDList();
+    ~SchedulePostRATDList() override;
 
     /// startBlock - Initialize register live-range state for scheduling in
     /// this block.

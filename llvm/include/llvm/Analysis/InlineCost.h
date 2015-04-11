@@ -107,7 +107,7 @@ public:
   static char ID;
 
   InlineCostAnalysis();
-  ~InlineCostAnalysis();
+  ~InlineCostAnalysis() override;
 
   // Pass interface implementation.
   void getAnalysisUsage(AnalysisUsage &AU) const override;

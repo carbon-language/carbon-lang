@@ -165,7 +165,7 @@ public:
     ToolArgs.clear();
     if (Args) ToolArgs = *Args;
   }
-  ~LLC() { delete gcc; }
+  ~LLC() override { delete gcc; }
 
   /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging

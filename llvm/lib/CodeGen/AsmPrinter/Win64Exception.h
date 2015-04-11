@@ -43,7 +43,7 @@ public:
   // Main entry points.
   //
   Win64Exception(AsmPrinter *A);
-  virtual ~Win64Exception();
+  ~Win64Exception() override;
 
   /// Emit all exception information that should come after the content.
   void endModule() override;

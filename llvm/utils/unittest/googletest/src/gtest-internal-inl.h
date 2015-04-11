@@ -431,8 +431,8 @@ class OsStackTraceGetterInterface {
 class OsStackTraceGetter : public OsStackTraceGetterInterface {
  public:
   OsStackTraceGetter() : caller_frame_(NULL) {}
-  virtual String CurrentStackTrace(int max_depth, int skip_count);
-  virtual void UponLeavingGTest();
+  String CurrentStackTrace(int max_depth, int skip_count) override;
+  void UponLeavingGTest() override;
 
   // This string is inserted in place of stack frames that are part of
   // Google Test's implementation.
@@ -465,7 +465,7 @@ class DefaultGlobalTestPartResultReporter
   explicit DefaultGlobalTestPartResultReporter(UnitTestImpl* unit_test);
   // Implements the TestPartResultReporterInterface. Reports the test part
   // result in the current test.
-  virtual void ReportTestPartResult(const TestPartResult& result);
+  void ReportTestPartResult(const TestPartResult &result) override;
 
  private:
   UnitTestImpl* const unit_test_;
@@ -481,7 +481,7 @@ class DefaultPerThreadTestPartResultReporter
   explicit DefaultPerThreadTestPartResultReporter(UnitTestImpl* unit_test);
   // Implements the TestPartResultReporterInterface. The implementation just
   // delegates to the current global test part result reporter of *unit_test_.
-  virtual void ReportTestPartResult(const TestPartResult& result);
+  void ReportTestPartResult(const TestPartResult &result) override;
 
  private:
   UnitTestImpl* const unit_test_;

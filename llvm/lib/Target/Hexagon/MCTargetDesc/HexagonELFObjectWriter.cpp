@@ -27,8 +27,8 @@ private:
 public:
   HexagonELFObjectWriter(uint8_t OSABI, StringRef C);
 
-  virtual unsigned GetRelocType(MCValue const &Target, MCFixup const &Fixup,
-                                bool IsPCRel) const override;
+  unsigned GetRelocType(MCValue const &Target, MCFixup const &Fixup,
+                        bool IsPCRel) const override;
 };
 }
 

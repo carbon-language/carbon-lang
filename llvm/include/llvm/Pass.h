@@ -250,7 +250,7 @@ public:
 
   explicit ModulePass(char &pid) : Pass(PT_Module, pid) {}
   // Force out-of-line virtual method.
-  virtual ~ModulePass();
+  ~ModulePass() override;
 };
 
 
@@ -279,7 +279,7 @@ public:
   : ModulePass(pid) {}
 
   // Force out-of-line virtual method.
-  virtual ~ImmutablePass();
+  ~ImmutablePass() override;
 };
 
 //===----------------------------------------------------------------------===//

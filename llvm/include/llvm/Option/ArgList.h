@@ -320,7 +320,7 @@ private:
 
 public:
   InputArgList(const char* const *ArgBegin, const char* const *ArgEnd);
-  ~InputArgList();
+  ~InputArgList() override;
 
   const char *getArgString(unsigned Index) const override {
     return ArgStrings[Index];
@@ -355,7 +355,7 @@ class DerivedArgList : public ArgList {
 public:
   /// Construct a new derived arg list from \p BaseArgs.
   DerivedArgList(const InputArgList &BaseArgs);
-  ~DerivedArgList();
+  ~DerivedArgList() override;
 
   const char *getArgString(unsigned Index) const override {
     return BaseArgs.getArgString(Index);

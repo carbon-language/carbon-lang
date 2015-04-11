@@ -25,7 +25,7 @@ namespace llvm {
   namespace {
     struct DPass : public FunctionPass {
       static char ID;
-      virtual bool runOnFunction(Function &F) {
+      bool runOnFunction(Function &F) override {
         DominatorTree *DT =
             &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
         PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
@@ -176,7 +176,7 @@ namespace llvm {
 
         return false;
       }
-      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      void getAnalysisUsage(AnalysisUsage &AU) const override {
         AU.addRequired<DominatorTreeWrapperPass>();
         AU.addRequired<PostDominatorTree>();
       }

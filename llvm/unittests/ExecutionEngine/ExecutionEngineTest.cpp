@@ -33,7 +33,7 @@ protected:
     Engine.reset(EngineBuilder(std::move(Owner)).setErrorStr(&Error).create());
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     ASSERT_TRUE(Engine.get() != nullptr) << "EngineBuilder returned error: '"
       << Error << "'";
   }

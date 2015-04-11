@@ -1902,7 +1902,7 @@ class TypePromotionTransaction {
       Inst->removeFromParent();
     }
 
-    ~InstructionRemover() { delete Replacer; }
+    ~InstructionRemover() override { delete Replacer; }
 
     /// \brief Really remove the instruction.
     void commit() override { delete Inst; }

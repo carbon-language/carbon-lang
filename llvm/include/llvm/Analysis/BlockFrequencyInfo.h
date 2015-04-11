@@ -34,7 +34,7 @@ public:
 
   BlockFrequencyInfo();
 
-  ~BlockFrequencyInfo();
+  ~BlockFrequencyInfo() override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 

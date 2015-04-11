@@ -26,7 +26,7 @@ protected:
   : data("this is some data")
   { }
 
-  virtual void SetUp() { }
+  void SetUp() override {}
 
   /// Common testing for different modes of getOpenFileSlice.
   /// Creates a temporary file with known contents, and uses

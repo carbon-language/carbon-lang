@@ -54,9 +54,7 @@ class DataFileStreamer : public DataStreamer {
  int Fd;
 public:
   DataFileStreamer() : Fd(0) {}
-  virtual ~DataFileStreamer() {
-    close(Fd);
-  }
+  ~DataFileStreamer() override { close(Fd); }
   size_t GetBytes(unsigned char *buf, size_t len) override {
     NumStreamFetches++;
     return read(Fd, buf, len);

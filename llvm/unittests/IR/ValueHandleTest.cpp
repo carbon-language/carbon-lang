@@ -244,8 +244,11 @@ TEST_F(ValueHandle, CallbackVH_CallbackOnDeletion) {
     RecordingVH(Value *V) : CallbackVH(V), DeletedCalls(0), AURWCalls(0) {}
 
   private:
-    virtual void deleted() { DeletedCalls++; CallbackVH::deleted(); }
-    virtual void allUsesReplacedWith(Value *) { AURWCalls++; }
+    void deleted() override {
+      DeletedCalls++;
+      CallbackVH::deleted();
+    }
+    void allUsesReplacedWith(Value *) override { AURWCalls++; }
   };
 
   RecordingVH RVH;
@@ -268,8 +271,11 @@ TEST_F(ValueHandle, CallbackVH_CallbackOnRAUW) {
       : CallbackVH(V), DeletedCalls(0), AURWArgument(nullptr) {}
 
   private:
-    virtual void deleted() { DeletedCalls++; CallbackVH::deleted(); }
-    virtual void allUsesReplacedWith(Value *new_value) {
+    void deleted() override {
+      DeletedCalls++;
+      CallbackVH::deleted();
+    }
+    void allUsesReplacedWith(Value *new_value) override {
       EXPECT_EQ(nullptr, AURWArgument);
       AURWArgument = new_value;
     }
@@ -298,11 +304,11 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
         Context(&getGlobalContext()) {}
 
   private:
-    virtual void deleted() {
+    void deleted() override {
       getValPtr()->replaceAllUsesWith(Constant::getNullValue(Type::getInt32Ty(getGlobalContext())));
       setValPtr(nullptr);
     }
-    virtual void allUsesReplacedWith(Value *new_value) {
+    void allUsesReplacedWith(Value *new_value) override {
       ASSERT_TRUE(nullptr != getValPtr());
       EXPECT_EQ(1U, getValPtr()->getNumUses());
       EXPECT_EQ(nullptr, AURWArgument);
@@ -341,12 +347,12 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
       setValPtr(V);
       ToClear[1].reset(new WeakVH(V));
     }
-    virtual void deleted() {
+    void deleted() override {
       ToClear[0].reset();
       ToClear[1].reset();
       CallbackVH::deleted();
     }
-    virtual void allUsesReplacedWith(Value *) {
+    void allUsesReplacedWith(Value *) override {
       ToClear[0].reset();
       ToClear[1].reset();
     }
@@ -388,7 +394,7 @@ TEST_F(ValueHandle, AssertingVHCheckedLast) {
       ToClear[1] = &A1;
     }
 
-    virtual void deleted() {
+    void deleted() override {
       *ToClear[0] = nullptr;
       *ToClear[1] = nullptr;
       CallbackVH::deleted();

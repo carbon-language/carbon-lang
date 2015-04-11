@@ -16,7 +16,7 @@ namespace llvm {
 class XCoreTargetStreamer : public MCTargetStreamer {
 public:
   XCoreTargetStreamer(MCStreamer &S);
-  virtual ~XCoreTargetStreamer();
+  ~XCoreTargetStreamer() override;
   virtual void emitCCTopData(StringRef Name) = 0;
   virtual void emitCCTopFunction(StringRef Name) = 0;
   virtual void emitCCBottomData(StringRef Name) = 0;

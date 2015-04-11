@@ -33,7 +33,7 @@ public:
     ObjMap[ModuleID] = copyBuffer(Obj);
   }
 
-  virtual std::unique_ptr<MemoryBuffer> getObject(const Module* M) override {
+  std::unique_ptr<MemoryBuffer> getObject(const Module *M) override {
     const MemoryBuffer* BufferFound = getObjectInternal(M);
     ModulesLookedUp.insert(M->getModuleIdentifier());
     if (!BufferFound)
@@ -84,7 +84,7 @@ protected:
     ReplacementRC = 7
   };
 
-  virtual void SetUp() {
+  void SetUp() override {
     M.reset(createEmptyModule("<main>"));
     Main = insertMainFunction(M.get(), OriginalRC);
   }

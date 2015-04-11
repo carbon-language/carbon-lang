@@ -85,13 +85,11 @@ public:
     ReservedCodeSize(0), UsedCodeSize(0), ReservedDataSizeRO(0), 
     UsedDataSizeRO(0), ReservedDataSizeRW(0), UsedDataSizeRW(0) {    
   }
-  
-  virtual bool needsToReserveAllocationSpace() {
-    return true;
-  }
 
-  virtual void reserveAllocationSpace(
-      uintptr_t CodeSize, uintptr_t DataSizeRO, uintptr_t DataSizeRW) {
+  bool needsToReserveAllocationSpace() override { return true; }
+
+  void reserveAllocationSpace(uintptr_t CodeSize, uintptr_t DataSizeRO,
+                              uintptr_t DataSizeRW) override {
     ReservedCodeSize = CodeSize;
     ReservedDataSizeRO = DataSizeRO;
     ReservedDataSizeRW = DataSizeRW;
@@ -103,15 +101,17 @@ public:
     *UsedSize = AlignedBegin + AlignedSize;
   }
 
-  virtual uint8_t* allocateDataSection(uintptr_t Size, unsigned Alignment,
-      unsigned SectionID, StringRef SectionName, bool IsReadOnly) {
+  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID, StringRef SectionName,
+                               bool IsReadOnly) override {
     useSpace(IsReadOnly ? &UsedDataSizeRO : &UsedDataSizeRW, Size, Alignment);
     return SectionMemoryManager::allocateDataSection(Size, Alignment, 
       SectionID, SectionName, IsReadOnly);
   }
 
-  uint8_t* allocateCodeSection(uintptr_t Size, unsigned Alignment, 
-      unsigned SectionID, StringRef SectionName) {
+  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID,
+                               StringRef SectionName) override {
     useSpace(&UsedCodeSize, Size, Alignment);
     return SectionMemoryManager::allocateCodeSection(Size, Alignment, 
       SectionID, SectionName);
@@ -141,8 +141,8 @@ protected:
     // that they will fail the MCJIT C API tests.
     UnsupportedEnvironments.push_back(Triple::Cygnus);
   }
-  
-  virtual void SetUp() {
+
+  void SetUp() override {
     didCallAllocateCodeSection = false;
     didAllocateCompactUnwindSection = false;
     didCallYield = false;
@@ -151,8 +151,8 @@ protected:
     Engine = nullptr;
     Error = nullptr;
   }
-  
-  virtual void TearDown() {
+
+  void TearDown() override {
     if (Engine)
       LLVMDisposeExecutionEngine(Engine);
     else if (Module)

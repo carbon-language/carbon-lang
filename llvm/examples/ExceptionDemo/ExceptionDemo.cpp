@@ -1573,7 +1573,7 @@ public:
                                  std::runtime_error::operator=(toCopy)));
   }
 
-  virtual ~OurCppRunException (void) throw () {}
+  ~OurCppRunException(void) throw() override {}
 };
 } // end anonymous namespace
 

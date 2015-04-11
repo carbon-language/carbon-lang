@@ -32,7 +32,7 @@ public:
     : MCII(mcii), Ctx(ctx) {
   }
 
-  ~SystemZMCCodeEmitter() {}
+  ~SystemZMCCodeEmitter() override {}
 
   // OVerride MCCodeEmitter.
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,

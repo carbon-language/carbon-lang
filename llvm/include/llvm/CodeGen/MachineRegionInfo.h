@@ -80,7 +80,7 @@ class MachineRegionInfo : public RegionInfoBase<RegionTraits<MachineFunction>> {
 public:
   explicit MachineRegionInfo();
 
-  virtual ~MachineRegionInfo();
+  ~MachineRegionInfo() override;
 
   // updateStatistics - Update statistic about created regions.
   void updateStatistics(MachineRegion *R) final;
@@ -98,7 +98,7 @@ public:
   static char ID;
   explicit MachineRegionInfoPass();
 
-  ~MachineRegionInfoPass();
+  ~MachineRegionInfoPass() override;
 
   MachineRegionInfo &getRegionInfo() {
     return RI;

@@ -39,7 +39,7 @@ class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
 public:
   TargetLoweringObjectFileELF() : UseInitArray(false) {}
 
-  virtual ~TargetLoweringObjectFileELF() {}
+  ~TargetLoweringObjectFileELF() override {}
 
   void emitPersonalityValue(MCStreamer &Streamer, const TargetMachine &TM,
                             const MCSymbol *Sym) const override;
@@ -88,7 +88,7 @@ public:
 
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
 public:
-  virtual ~TargetLoweringObjectFileMachO() {}
+  ~TargetLoweringObjectFileMachO() override {}
   TargetLoweringObjectFileMachO();
 
   /// Extract the dependent library name from a linker option string. Returns
@@ -136,7 +136,7 @@ public:
 
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
 public:
-  virtual ~TargetLoweringObjectFileCOFF() {}
+  ~TargetLoweringObjectFileCOFF() override {}
 
   const MCSection *
     getExplicitSectionGlobal(const GlobalValue *GV,

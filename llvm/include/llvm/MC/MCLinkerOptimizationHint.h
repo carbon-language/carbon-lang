@@ -141,7 +141,7 @@ public:
 
     public:
       raw_counting_ostream() : Count(0) {}
-      ~raw_counting_ostream() { flush(); }
+      ~raw_counting_ostream() override { flush(); }
     };
 
     raw_counting_ostream OutStream;

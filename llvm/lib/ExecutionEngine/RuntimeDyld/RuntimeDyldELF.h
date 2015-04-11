@@ -100,7 +100,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
 public:
   RuntimeDyldELF(RuntimeDyld::MemoryManager &MemMgr,
                  RuntimeDyld::SymbolResolver &Resolver);
-  virtual ~RuntimeDyldELF();
+  ~RuntimeDyldELF() override;
 
   std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
   loadObject(const object::ObjectFile &O) override;

@@ -72,7 +72,7 @@ public:
 
   MachineDominatorTree();
 
-  ~MachineDominatorTree();
+  ~MachineDominatorTree() override;
 
   DominatorTreeBase<MachineBasicBlock> &getBase() {
     applySplitCriticalEdges();

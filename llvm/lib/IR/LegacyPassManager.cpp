@@ -293,7 +293,7 @@ public:
     Pass(PT_PassManager, ID), PMDataManager() { }
 
   // Delete on the fly managers.
-  virtual ~MPPassManager() {
+  ~MPPassManager() override {
     for (std::map<Pass *, FunctionPassManagerImpl *>::iterator
            I = OnTheFlyManagers.begin(), E = OnTheFlyManagers.end();
          I != E; ++I) {

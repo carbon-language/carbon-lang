@@ -34,25 +34,27 @@ public:
                         std::unique_ptr<ArgEnumeratorType> ArgEnumerator)
       : Session(PDBSession), Enumerator(std::move(ArgEnumerator)) {}
 
-  uint32_t getChildCount() const { return Enumerator->getChildCount(); }
+  uint32_t getChildCount() const override {
+    return Enumerator->getChildCount();
+  }
 
-  std::unique_ptr<PDBSymbol> getChildAtIndex(uint32_t Index) const {
+  std::unique_ptr<PDBSymbol> getChildAtIndex(uint32_t Index) const override {
     auto FunctionArgSymbol = Enumerator->getChildAtIndex(Index);
     if (!FunctionArgSymbol)
       return nullptr;
     return Session.getSymbolById(FunctionArgSymbol->getTypeId());
   }
 
-  std::unique_ptr<PDBSymbol> getNext() {
+  std::unique_ptr<PDBSymbol> getNext() override {
     auto FunctionArgSymbol = Enumerator->getNext();
     if (!FunctionArgSymbol)
       return nullptr;
     return Session.getSymbolById(FunctionArgSymbol->getTypeId());
   }
 
-  void reset() { Enumerator->reset(); }
+  void reset() override { Enumerator->reset(); }
 
-  MyType *clone() const {
+  MyType *clone() const override {
     std::unique_ptr<ArgEnumeratorType> Clone(Enumerator->clone());
     return new FunctionArgEnumerator(Session, std::move(Clone));
   }

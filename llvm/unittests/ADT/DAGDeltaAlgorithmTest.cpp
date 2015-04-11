@@ -22,7 +22,7 @@ class FixedDAGDeltaAlgorithm : public DAGDeltaAlgorithm {
   unsigned NumTests;
 
 protected:
-  virtual bool ExecuteOneTest(const changeset_ty &Changes) {
+  bool ExecuteOneTest(const changeset_ty &Changes) override {
     ++NumTests;
     return std::includes(Changes.begin(), Changes.end(),
                          FailingSet.begin(), FailingSet.end());

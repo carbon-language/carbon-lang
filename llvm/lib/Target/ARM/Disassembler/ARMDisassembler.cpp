@@ -91,7 +91,7 @@ public:
     MCDisassembler(STI, Ctx) {
   }
 
-  ~ARMDisassembler() {}
+  ~ARMDisassembler() override {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
@@ -106,7 +106,7 @@ public:
     MCDisassembler(STI, Ctx) {
   }
 
-  ~ThumbDisassembler() {}
+  ~ThumbDisassembler() override {}
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,

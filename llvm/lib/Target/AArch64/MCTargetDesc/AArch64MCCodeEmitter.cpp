@@ -40,7 +40,7 @@ class AArch64MCCodeEmitter : public MCCodeEmitter {
 public:
   AArch64MCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx) : Ctx(ctx) {}
 
-  ~AArch64MCCodeEmitter() {}
+  ~AArch64MCCodeEmitter() override {}
 
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.

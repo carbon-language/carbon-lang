@@ -107,11 +107,12 @@ class OrcMCJITReplacement : public ExecutionEngine {
   public:
     LinkingResolver(OrcMCJITReplacement &M) : M(M) {}
 
-    RuntimeDyld::SymbolInfo findSymbol(const std::string &Name) {
+    RuntimeDyld::SymbolInfo findSymbol(const std::string &Name) override {
       return M.findMangledSymbol(Name);
     }
 
-    RuntimeDyld::SymbolInfo findSymbolInLogicalDylib(const std::string &Name) {
+    RuntimeDyld::SymbolInfo
+    findSymbolInLogicalDylib(const std::string &Name) override {
       return M.ClientResolver->findSymbolInLogicalDylib(Name);
     }
 

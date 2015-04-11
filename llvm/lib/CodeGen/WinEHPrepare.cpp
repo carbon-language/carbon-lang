@@ -136,9 +136,9 @@ class WinEHFrameVariableMaterializer : public ValueMaterializer {
 public:
   WinEHFrameVariableMaterializer(Function *OutlinedFn,
                                  FrameVarInfoMap &FrameVarInfo);
-  ~WinEHFrameVariableMaterializer() {}
+  ~WinEHFrameVariableMaterializer() override {}
 
-  virtual Value *materializeValueFor(Value *V) override;
+  Value *materializeValueFor(Value *V) override;
 
   void escapeCatchObject(Value *V);
 

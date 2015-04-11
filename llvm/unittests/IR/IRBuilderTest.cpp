@@ -26,7 +26,7 @@ namespace {
 
 class IRBuilderTest : public testing::Test {
 protected:
-  virtual void SetUp() {
+  void SetUp() override {
     M.reset(new Module("MyModule", Ctx));
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                           /*isVarArg=*/false);
@@ -36,7 +36,7 @@ protected:
                             GlobalValue::ExternalLinkage, nullptr);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     BB = nullptr;
     M.reset();
   }

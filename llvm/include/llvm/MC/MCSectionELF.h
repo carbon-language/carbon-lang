@@ -59,7 +59,7 @@ private:
       : MCSection(SV_ELF, K, Begin), SectionName(Section), Type(type),
         Flags(flags), UniqueID(UniqueID), EntrySize(entrySize), Group(group),
         Associated(Associated) {}
-  ~MCSectionELF();
+  ~MCSectionELF() override;
 
   void setSectionName(StringRef Name) { SectionName = Name; }
 
