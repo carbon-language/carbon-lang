@@ -261,7 +261,8 @@ private:
         auto CallbackInfo =
           CompileCallbackMgr.getCompileCallback(Proto->getContext());
         GlobalVariable *FunctionBodyPointer =
-          createImplPointer(*Proto, Name + AddrSuffix,
+          createImplPointer(*Proto->getType(), *Proto->getParent(),
+                            Name + AddrSuffix,
                             createIRTypedAddress(*Proto->getFunctionType(),
                                                  CallbackInfo.getAddress()));
         makeStub(*Proto, *FunctionBodyPointer);

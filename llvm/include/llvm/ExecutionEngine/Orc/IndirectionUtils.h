@@ -203,16 +203,7 @@ private:
   TargetAddress ResolverBlockAddr;
 };
 
-inline Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr) {
-  Constant *AddrIntVal =
-    ConstantInt::get(Type::getInt64Ty(FT.getContext()), Addr);
-  Constant *AddrPtrVal =
-    ConstantExpr::getCast(Instruction::IntToPtr, AddrIntVal,
-                          PointerType::get(&FT, 0));
-  return AddrPtrVal;
-}
-
-/// @brief Get an update functor for updating the value of a named function
+/// @brief Get an update functor that updates the value of a named function
 ///        pointer.
 template <typename JITLayerT>
 JITCompileCallbackManagerBase::UpdateFtor
@@ -228,13 +219,26 @@ getLocalFPUpdater(JITLayerT &JIT, typename JITLayerT::ModuleSetHandleT H,
     };
   }
 
-GlobalVariable* createImplPointer(Function &F, const Twine &Name,
-                                  Constant *Initializer);
+/// @brief Build a function pointer of FunctionType with the given constant
+///        address.
+///
+///   Usage example: Turn a trampoline address into a function pointer constant
+/// for use in a stub.
+Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr);
 
+/// @brief Create a function pointer with the given type, name, and initializer
+///        in the given Module.
+GlobalVariable* createImplPointer(PointerType &PT, Module &M,
+                                  const Twine &Name, Constant *Initializer);
+
+/// @brief Turn a function declaration into a stub function that makes an
+///        indirect call using the given function pointer.
 void makeStub(Function &F, GlobalVariable &ImplPointer);
 
 typedef std::map<Module*, DenseSet<const GlobalValue*>> ModulePartitionMap;
 
+/// @brief Extract subsections of a Module into the given Module according to
+///        the given ModulePartitionMap.
 void partition(Module &M, const ModulePartitionMap &PMap);
 
 /// @brief Struct for trivial "complete" partitioning of a module.
@@ -250,6 +254,7 @@ public:
         Functions(std::move(S.Functions)) {}
 };
 
+/// @brief Extract every function in M into a separate module.
 FullyPartitionedModule fullyPartition(Module &M);
 
 } // End namespace orc.

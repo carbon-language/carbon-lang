@@ -18,13 +18,20 @@
 namespace llvm {
 namespace orc {
 
-GlobalVariable* createImplPointer(Function &F, const Twine &Name,
-                                  Constant *Initializer) {
-  assert(F.getParent() && "Function isn't in a module.");
+Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr) {
+  Constant *AddrIntVal =
+    ConstantInt::get(Type::getInt64Ty(FT.getContext()), Addr);
+  Constant *AddrPtrVal =
+    ConstantExpr::getCast(Instruction::IntToPtr, AddrIntVal,
+                          PointerType::get(&FT, 0));
+  return AddrPtrVal;
+}
+
+GlobalVariable* createImplPointer(PointerType &PT, Module &M,
+                                  const Twine &Name, Constant *Initializer) {
   if (!Initializer)
-    Initializer = Constant::getNullValue(F.getType());
-  Module &M = *F.getParent();
-  return new GlobalVariable(M, F.getType(), false, GlobalValue::ExternalLinkage,
+    Initializer = Constant::getNullValue(&PT);
+  return new GlobalVariable(M, &PT, false, GlobalValue::ExternalLinkage,
                             Initializer, Name, nullptr,
                             GlobalValue::NotThreadLocal, 0, true);
 }
@@ -51,6 +58,7 @@ void partition(Module &M, const ModulePartitionMap &PMap) {
     auto ExtractGlobalVars =
       [&](GlobalVariable &New, const GlobalVariable &Orig,
           ValueToValueMapTy &VMap) {
+        assert(Orig.hasName() && "Extracted globals must have names.");
         if (KVPair.second.count(&Orig)) {
           copyGVInitializer(New, Orig, VMap);
         }
@@ -62,6 +70,7 @@ void partition(Module &M, const ModulePartitionMap &PMap) {
 
     auto ExtractFunctions =
       [&](Function &New, const Function &Orig, ValueToValueMapTy &VMap) {
+        assert(Orig.hasName() && "Extracted functions must have names.");
         if (KVPair.second.count(&Orig))
           copyFunctionBody(New, Orig, VMap);
         if (New.hasLocalLinkage()) {
