@@ -106,10 +106,6 @@ public:
 
   void print(raw_ostream &OS) const;
   void dump() const;
-
-  /// \brief Replace all uses of debug info referenced by this descriptor.
-  void replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D);
-  void replaceAllUsesWith(MDNode *D);
 };
 
 #define DECLARE_SIMPLIFY_DESCRIPTOR(DESC)                                      \

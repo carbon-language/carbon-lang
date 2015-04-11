@@ -50,33 +50,6 @@ unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-void DIDescriptor::replaceAllUsesWith(LLVMContext &, DIDescriptor D) {
-  assert(DbgNode && "Trying to replace an unverified type!");
-  assert(DbgNode->isTemporary() && "Expected temporary node");
-  TempMDNode Temp(get());
-
-  // Since we use a TrackingVH for the node, its easy for clients to manufacture
-  // legitimate situations where they want to replaceAllUsesWith() on something
-  // which, due to uniquing, has merged with the source. We shield clients from
-  // this detail by allowing a value to be replaced with replaceAllUsesWith()
-  // itself.
-  if (Temp.get() == D.get()) {
-    DbgNode = MDNode::replaceWithUniqued(std::move(Temp));
-    return;
-  }
-
-  Temp->replaceAllUsesWith(D.get());
-  DbgNode = D.get();
-}
-
-void DIDescriptor::replaceAllUsesWith(MDNode *D) {
-  assert(DbgNode && "Trying to replace an unverified type!");
-  assert(DbgNode != D && "This replacement should always happen");
-  assert(DbgNode->isTemporary() && "Expected temporary node");
-  TempMDNode Node(get());
-  Node->replaceAllUsesWith(D);
-}
-
 DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
 
 bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
