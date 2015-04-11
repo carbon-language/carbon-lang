@@ -1270,7 +1270,7 @@ private:
     //         pointer for the indirection to point at the trampoline.
     std::string BodyPtrName = (F->getName() + "$address").str();
     GlobalVariable *FunctionBodyPointer =
-      createImplPointer(*F, BodyPtrName,
+      createImplPointer(*F->getType(), *F->getParent(), BodyPtrName,
                         createIRTypedAddress(*F->getFunctionType(),
                                              CallbackInfo.getAddress()));
     makeStub(*F, *FunctionBodyPointer);
