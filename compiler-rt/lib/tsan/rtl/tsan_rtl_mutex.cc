@@ -36,12 +36,8 @@ struct Callback : DDCallback {
     DDCallback::lt = thr->dd_lt;
   }
 
-  virtual u32 Unwind() {
-    return CurrentStackId(thr, pc);
-  }
-  virtual int UniqueTid() {
-    return thr->unique_id;
-  }
+  u32 Unwind() override { return CurrentStackId(thr, pc); }
+  int UniqueTid() override { return thr->unique_id; }
 };
 
 void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s) {

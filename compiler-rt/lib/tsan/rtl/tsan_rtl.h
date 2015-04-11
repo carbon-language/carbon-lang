@@ -431,13 +431,13 @@ class ThreadContext : public ThreadContextBase {
   u64 epoch1;
 
   // Override superclass callbacks.
-  void OnDead();
-  void OnJoined(void *arg);
-  void OnFinished();
-  void OnStarted(void *arg);
-  void OnCreated(void *arg);
-  void OnReset();
-  void OnDetached(void *arg);
+  void OnDead() override;
+  void OnJoined(void *arg) override;
+  void OnFinished() override;
+  void OnStarted(void *arg) override;
+  void OnCreated(void *arg) override;
+  void OnReset() override;
+  void OnDetached(void *arg) override;
 };
 
 struct RacyStacks {

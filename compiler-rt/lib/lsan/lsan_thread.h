@@ -22,8 +22,8 @@ namespace __lsan {
 class ThreadContext : public ThreadContextBase {
  public:
   explicit ThreadContext(int tid);
-  void OnStarted(void *arg);
-  void OnFinished();
+  void OnStarted(void *arg) override;
+  void OnFinished() override;
   uptr stack_begin() { return stack_begin_; }
   uptr stack_end() { return stack_end_; }
   uptr tls_begin() { return tls_begin_; }

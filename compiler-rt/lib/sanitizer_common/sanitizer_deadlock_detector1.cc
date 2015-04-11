@@ -40,19 +40,20 @@ struct DD : public DDetector {
 
   explicit DD(const DDFlags *flags);
 
-  DDPhysicalThread* CreatePhysicalThread();
-  void DestroyPhysicalThread(DDPhysicalThread *pt);
+  DDPhysicalThread *CreatePhysicalThread() override;
+  void DestroyPhysicalThread(DDPhysicalThread *pt) override;
 
-  DDLogicalThread* CreateLogicalThread(u64 ctx);
-  void DestroyLogicalThread(DDLogicalThread *lt);
+  DDLogicalThread *CreateLogicalThread(u64 ctx) override;
+  void DestroyLogicalThread(DDLogicalThread *lt) override;
 
-  void MutexInit(DDCallback *cb, DDMutex *m);
-  void MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock);
-  void MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock);
-  void MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock);
-  void MutexDestroy(DDCallback *cb, DDMutex *m);
+  void MutexInit(DDCallback *cb, DDMutex *m) override;
+  void MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) override;
+  void MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock,
+                      bool trylock) override;
+  void MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) override;
+  void MutexDestroy(DDCallback *cb, DDMutex *m) override;
 
-  DDReport *GetReport(DDCallback *cb);
+  DDReport *GetReport(DDCallback *cb) override;
 
   void MutexEnsureID(DDLogicalThread *lt, DDMutex *m);
   void ReportDeadlock(DDCallback *cb, DDMutex *m);

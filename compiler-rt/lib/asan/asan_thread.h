@@ -45,8 +45,8 @@ class AsanThreadContext : public ThreadContextBase {
   u32 stack_id;
   AsanThread *thread;
 
-  void OnCreated(void *arg);
-  void OnFinished();
+  void OnCreated(void *arg) override;
+  void OnFinished() override;
 };
 
 // AsanThreadContext objects are never freed, so we need many of them.
