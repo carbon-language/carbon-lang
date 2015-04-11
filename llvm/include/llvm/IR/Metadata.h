@@ -89,7 +89,7 @@ protected:
   Metadata(unsigned ID, StorageType Storage)
       : SubclassID(ID), Storage(Storage), SubclassData16(0), SubclassData32(0) {
   }
-  ~Metadata() {}
+  ~Metadata() = default;
 
   /// \brief Default handling of a changed operand, which asserts.
   ///
@@ -253,7 +253,7 @@ protected:
       : Metadata(ID, Uniqued), ReplaceableMetadataImpl(V->getContext()), V(V) {
     assert(V && "Expected valid value");
   }
-  ~ValueAsMetadata() {}
+  ~ValueAsMetadata() = default;
 
 public:
   static ValueAsMetadata *get(Value *V);
@@ -754,7 +754,7 @@ protected:
 
   MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
          ArrayRef<Metadata *> Ops1, ArrayRef<Metadata *> Ops2 = None);
-  ~MDNode() {}
+  ~MDNode() = default;
 
   void dropAllReferences();
 

@@ -152,7 +152,7 @@ protected:
     assert(Tag < 1u << 16);
     SubclassData16 = Tag;
   }
-  ~DebugNode() {}
+  ~DebugNode() = default;
 
   template <class Ty> Ty *getOperandAs(unsigned I) const {
     return cast_or_null<Ty>(getOperand(I));
@@ -328,7 +328,7 @@ class MDSubrange : public DebugNode {
       : DebugNode(C, MDSubrangeKind, Storage, dwarf::DW_TAG_subrange_type,
                   None),
         Count(Count), LowerBound(LowerBound) {}
-  ~MDSubrange() {}
+  ~MDSubrange() = default;
 
   static MDSubrange *getImpl(LLVMContext &Context, int64_t Count,
                              int64_t LowerBound, StorageType Storage,
@@ -366,7 +366,7 @@ class MDEnumerator : public DebugNode {
                ArrayRef<Metadata *> Ops)
       : DebugNode(C, MDEnumeratorKind, Storage, dwarf::DW_TAG_enumerator, Ops),
         Value(Value) {}
-  ~MDEnumerator() {}
+  ~MDEnumerator() = default;
 
   static MDEnumerator *getImpl(LLVMContext &Context, int64_t Value,
                                StringRef Name, StorageType Storage,
@@ -411,7 +411,7 @@ protected:
   MDScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
           ArrayRef<Metadata *> Ops)
       : DebugNode(C, ID, Storage, Tag, Ops) {}
-  ~MDScope() {}
+  ~MDScope() = default;
 
 public:
   MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
@@ -461,7 +461,7 @@ class MDFile : public MDScope {
 
   MDFile(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Ops)
       : MDScope(C, MDFileKind, Storage, dwarf::DW_TAG_file_type, Ops) {}
-  ~MDFile() {}
+  ~MDFile() = default;
 
   static MDFile *getImpl(LLVMContext &Context, StringRef Filename,
                          StringRef Directory, StorageType Storage,
@@ -528,7 +528,7 @@ protected:
       : MDScope(C, ID, Storage, Tag, Ops), Line(Line), Flags(Flags),
         SizeInBits(SizeInBits), AlignInBits(AlignInBits),
         OffsetInBits(OffsetInBits) {}
-  ~MDType() {}
+  ~MDType() = default;
 
 public:
   TempMDType clone() const {
@@ -607,7 +607,7 @@ class MDBasicType : public MDType {
       : MDType(C, MDBasicTypeKind, Storage, Tag, 0, SizeInBits, AlignInBits, 0,
                0, Ops),
         Encoding(Encoding) {}
-  ~MDBasicType() {}
+  ~MDBasicType() = default;
 
   static MDBasicType *getImpl(LLVMContext &Context, unsigned Tag,
                               StringRef Name, uint64_t SizeInBits,
@@ -658,7 +658,7 @@ protected:
                     ArrayRef<Metadata *> Ops)
       : MDType(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits, OffsetInBits,
                Flags, Ops) {}
-  ~MDDerivedTypeBase() {}
+  ~MDDerivedTypeBase() = default;
 
 public:
   MDTypeRef getBaseType() const { return MDTypeRef(getRawBaseType()); }
@@ -686,7 +686,7 @@ class MDDerivedType : public MDDerivedTypeBase {
                 uint64_t OffsetInBits, unsigned Flags, ArrayRef<Metadata *> Ops)
       : MDDerivedTypeBase(C, MDDerivedTypeKind, Storage, Tag, Line, SizeInBits,
                           AlignInBits, OffsetInBits, Flags, Ops) {}
-  ~MDDerivedType() {}
+  ~MDDerivedType() = default;
 
   static MDDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
                                 StringRef Name, MDFile *File, unsigned Line,
@@ -763,7 +763,7 @@ protected:
       : MDDerivedTypeBase(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits,
                           OffsetInBits, Flags, Ops),
         RuntimeLang(RuntimeLang) {}
-  ~MDCompositeTypeBase() {}
+  ~MDCompositeTypeBase() = default;
 
 public:
   DebugNodeArray getElements() const {
@@ -824,7 +824,7 @@ class MDCompositeType : public MDCompositeTypeBase {
       : MDCompositeTypeBase(C, MDCompositeTypeKind, Storage, Tag, Line,
                             RuntimeLang, SizeInBits, AlignInBits, OffsetInBits,
                             Flags, Ops) {}
-  ~MDCompositeType() {}
+  ~MDCompositeType() = default;
 
   static MDCompositeType *
   getImpl(LLVMContext &Context, unsigned Tag, StringRef Name, Metadata *File,
@@ -907,7 +907,7 @@ class MDSubroutineType : public MDCompositeTypeBase {
       : MDCompositeTypeBase(C, MDSubroutineTypeKind, Storage,
                             dwarf::DW_TAG_subroutine_type, 0, 0, 0, 0, 0, Flags,
                             Ops) {}
-  ~MDSubroutineType() {}
+  ~MDSubroutineType() = default;
 
   static MDSubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
                                    MDTypeRefArray TypeArray,
@@ -958,7 +958,7 @@ class MDCompileUnit : public MDScope {
       : MDScope(C, MDCompileUnitKind, Storage, dwarf::DW_TAG_compile_unit, Ops),
         SourceLanguage(SourceLanguage), IsOptimized(IsOptimized),
         RuntimeVersion(RuntimeVersion), EmissionKind(EmissionKind) {}
-  ~MDCompileUnit() {}
+  ~MDCompileUnit() = default;
 
   static MDCompileUnit *
   getImpl(LLVMContext &Context, unsigned SourceLanguage, MDFile *File,
@@ -1083,7 +1083,7 @@ protected:
   MDLocalScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
                ArrayRef<Metadata *> Ops)
       : MDScope(C, ID, Storage, Tag, Ops) {}
-  ~MDLocalScope() {}
+  ~MDLocalScope() = default;
 
 public:
   /// \brief Get the subprogram for this scope.
@@ -1221,7 +1221,7 @@ class MDSubprogram : public MDLocalScope {
         Line(Line), ScopeLine(ScopeLine), Virtuality(Virtuality),
         VirtualIndex(VirtualIndex), Flags(Flags), IsLocalToUnit(IsLocalToUnit),
         IsDefinition(IsDefinition), IsOptimized(IsOptimized) {}
-  ~MDSubprogram() {}
+  ~MDSubprogram() = default;
 
   static MDSubprogram *
   getImpl(LLVMContext &Context, MDScopeRef Scope, StringRef Name,
@@ -1383,7 +1383,7 @@ protected:
   MDLexicalBlockBase(LLVMContext &C, unsigned ID, StorageType Storage,
                      ArrayRef<Metadata *> Ops)
       : MDLocalScope(C, ID, Storage, dwarf::DW_TAG_lexical_block, Ops) {}
-  ~MDLexicalBlockBase() {}
+  ~MDLexicalBlockBase() = default;
 
 public:
   MDLocalScope *getScope() const { return cast<MDLocalScope>(getRawScope()); }
@@ -1407,7 +1407,7 @@ class MDLexicalBlock : public MDLexicalBlockBase {
                  unsigned Column, ArrayRef<Metadata *> Ops)
       : MDLexicalBlockBase(C, MDLexicalBlockKind, Storage, Ops), Line(Line),
         Column(Column) {}
-  ~MDLexicalBlock() {}
+  ~MDLexicalBlock() = default;
 
   static MDLexicalBlock *getImpl(LLVMContext &Context, MDLocalScope *Scope,
                                  MDFile *File, unsigned Line, unsigned Column,
@@ -1455,7 +1455,7 @@ class MDLexicalBlockFile : public MDLexicalBlockBase {
                      unsigned Discriminator, ArrayRef<Metadata *> Ops)
       : MDLexicalBlockBase(C, MDLexicalBlockFileKind, Storage, Ops),
         Discriminator(Discriminator) {}
-  ~MDLexicalBlockFile() {}
+  ~MDLexicalBlockFile() = default;
 
   static MDLexicalBlockFile *getImpl(LLVMContext &Context, MDLocalScope *Scope,
                                      MDFile *File, unsigned Discriminator,
@@ -1504,7 +1504,7 @@ class MDNamespace : public MDScope {
       : MDScope(Context, MDNamespaceKind, Storage, dwarf::DW_TAG_namespace,
                 Ops),
         Line(Line) {}
-  ~MDNamespace() {}
+  ~MDNamespace() = default;
 
   static MDNamespace *getImpl(LLVMContext &Context, MDScope *Scope,
                               MDFile *File, StringRef Name, unsigned Line,
@@ -1549,7 +1549,7 @@ protected:
   MDTemplateParameter(LLVMContext &Context, unsigned ID, StorageType Storage,
                       unsigned Tag, ArrayRef<Metadata *> Ops)
       : DebugNode(Context, ID, Storage, Tag, Ops) {}
-  ~MDTemplateParameter() {}
+  ~MDTemplateParameter() = default;
 
 public:
   StringRef getName() const { return getStringOperand(0); }
@@ -1572,7 +1572,7 @@ class MDTemplateTypeParameter : public MDTemplateParameter {
                           ArrayRef<Metadata *> Ops)
       : MDTemplateParameter(Context, MDTemplateTypeParameterKind, Storage,
                             dwarf::DW_TAG_template_type_parameter, Ops) {}
-  ~MDTemplateTypeParameter() {}
+  ~MDTemplateTypeParameter() = default;
 
   static MDTemplateTypeParameter *getImpl(LLVMContext &Context, StringRef Name,
                                           MDTypeRef Type, StorageType Storage,
@@ -1609,7 +1609,7 @@ class MDTemplateValueParameter : public MDTemplateParameter {
                            unsigned Tag, ArrayRef<Metadata *> Ops)
       : MDTemplateParameter(Context, MDTemplateValueParameterKind, Storage, Tag,
                             Ops) {}
-  ~MDTemplateValueParameter() {}
+  ~MDTemplateValueParameter() = default;
 
   static MDTemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
                                            StringRef Name, MDTypeRef Type,
@@ -1655,7 +1655,7 @@ protected:
   MDVariable(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
              unsigned Line, ArrayRef<Metadata *> Ops)
       : DebugNode(C, ID, Storage, Tag, Ops), Line(Line) {}
-  ~MDVariable() {}
+  ~MDVariable() = default;
 
 public:
   unsigned getLine() const { return Line; }
@@ -1702,7 +1702,7 @@ class MDGlobalVariable : public MDVariable {
       : MDVariable(C, MDGlobalVariableKind, Storage, dwarf::DW_TAG_variable,
                    Line, Ops),
         IsLocalToUnit(IsLocalToUnit), IsDefinition(IsDefinition) {}
-  ~MDGlobalVariable() {}
+  ~MDGlobalVariable() = default;
 
   static MDGlobalVariable *
   getImpl(LLVMContext &Context, MDScope *Scope, StringRef Name,
@@ -1785,7 +1785,7 @@ class MDLocalVariable : public MDVariable {
                   ArrayRef<Metadata *> Ops)
       : MDVariable(C, MDLocalVariableKind, Storage, Tag, Line, Ops), Arg(Arg),
         Flags(Flags) {}
-  ~MDLocalVariable() {}
+  ~MDLocalVariable() = default;
 
   static MDLocalVariable *getImpl(LLVMContext &Context, unsigned Tag,
                                   MDScope *Scope, StringRef Name, MDFile *File,
@@ -1882,7 +1882,7 @@ class MDExpression : public MDNode {
   MDExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements)
       : MDNode(C, MDExpressionKind, Storage, None),
         Elements(Elements.begin(), Elements.end()) {}
-  ~MDExpression() {}
+  ~MDExpression() = default;
 
   static MDExpression *getImpl(LLVMContext &Context,
                                ArrayRef<uint64_t> Elements, StorageType Storage,
@@ -2021,7 +2021,7 @@ class MDObjCProperty : public DebugNode {
       : DebugNode(C, MDObjCPropertyKind, Storage, dwarf::DW_TAG_APPLE_property,
                   Ops),
         Line(Line), Attributes(Attributes) {}
-  ~MDObjCProperty() {}
+  ~MDObjCProperty() = default;
 
   static MDObjCProperty *
   getImpl(LLVMContext &Context, StringRef Name, MDFile *File, unsigned Line,
@@ -2099,7 +2099,7 @@ class MDImportedEntity : public DebugNode {
   MDImportedEntity(LLVMContext &C, StorageType Storage, unsigned Tag,
                    unsigned Line, ArrayRef<Metadata *> Ops)
       : DebugNode(C, MDImportedEntityKind, Storage, Tag, Ops), Line(Line) {}
-  ~MDImportedEntity() {}
+  ~MDImportedEntity() = default;
 
   static MDImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
                                    MDScope *Scope, DebugNodeRef Entity,

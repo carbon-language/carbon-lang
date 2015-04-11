@@ -401,9 +401,7 @@ public:
   /// NumberedTypes - The numbered types, along with their value.
   DenseMap<StructType*, unsigned> NumberedTypes;
 
-
-  TypePrinting() {}
-  ~TypePrinting() {}
+  TypePrinting() = default;
 
   void incorporateTypes(const Module &M);
 

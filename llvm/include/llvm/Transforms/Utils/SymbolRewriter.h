@@ -90,9 +90,6 @@ typedef iplist<RewriteDescriptor> RewriteDescriptorList;
 
 class RewriteMapParser {
 public:
-  RewriteMapParser() {}
-  ~RewriteMapParser() {}
-
   bool parse(const std::string &MapFile, RewriteDescriptorList *Descriptors);
 
 private:

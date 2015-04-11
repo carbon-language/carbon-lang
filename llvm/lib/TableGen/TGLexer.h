@@ -87,8 +87,7 @@ private:
 
 public:
   TGLexer(SourceMgr &SrcMgr);
-  ~TGLexer() {}
-  
+
   tgtok::TokKind Lex() {
     return CurCode = LexToken();
   }

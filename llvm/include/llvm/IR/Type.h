@@ -91,8 +91,8 @@ protected:
       NumContainedTys(0), ContainedTys(nullptr) {
     setTypeID(tid);
   }
-  ~Type() {}
-  
+  ~Type() = default;
+
   void setTypeID(TypeID ID) {
     IDAndSubclassData = (ID & 0xFF) | (IDAndSubclassData & 0xFFFFFF00);
     assert(getTypeID() == ID && "TypeID data too large for field");

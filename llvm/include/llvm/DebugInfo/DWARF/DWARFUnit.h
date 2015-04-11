@@ -46,7 +46,7 @@ protected:
                          const DWARFDebugAbbrev *DA, StringRef RS, StringRef SS,
                          StringRef SOS, StringRef AOS, bool isLittleEndian) = 0;
 
-  ~DWARFUnitSectionBase() {}
+  ~DWARFUnitSectionBase() = default;
 };
 
 /// Concrete instance of DWARFUnitSection, specialized for one Unit type.

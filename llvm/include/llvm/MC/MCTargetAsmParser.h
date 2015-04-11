@@ -75,8 +75,6 @@ struct ParseInstructionInfo {
   ParseInstructionInfo() : AsmRewrites(nullptr) {}
   ParseInstructionInfo(SmallVectorImpl<AsmRewrite> *rewrites)
     : AsmRewrites(rewrites) {}
-
-  ~ParseInstructionInfo() {}
 };
 
 /// MCTargetAsmParser - Generic interface to target specific assembly parsers.

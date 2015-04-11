@@ -820,8 +820,6 @@ public:
   inline RegionNode(Region *Parent, BasicBlock *Entry, bool isSubRegion = false)
       : RegionNodeBase<RegionTraits<Function>>(Parent, Entry, isSubRegion) {}
 
-  ~RegionNode() {}
-
   bool operator==(const Region &RN) const {
     return this == reinterpret_cast<const RegionNode *>(&RN);
   }

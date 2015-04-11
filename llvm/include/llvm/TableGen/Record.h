@@ -1442,8 +1442,6 @@ public:
     TheInit(O.TheInit), IsAnonymous(O.IsAnonymous),
     ResolveFirst(O.ResolveFirst) { }
 
-  ~Record() {}
-
   static unsigned getNewUID() { return LastID++; }
 
   unsigned getID() const { return ID; }

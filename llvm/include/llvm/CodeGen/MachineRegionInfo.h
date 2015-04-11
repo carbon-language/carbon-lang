@@ -57,8 +57,6 @@ public:
 
   }
 
-  ~MachineRegionNode() { }
-
   bool operator==(const MachineRegion &RN) const {
     return this == reinterpret_cast<const MachineRegionNode*>(&RN);
   }

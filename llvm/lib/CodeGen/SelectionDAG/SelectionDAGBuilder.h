@@ -397,7 +397,6 @@ private:
     StackProtectorDescriptor() : ParentMBB(nullptr), SuccessMBB(nullptr),
                                  FailureMBB(nullptr), Guard(nullptr),
                                  GuardReg(0) { }
-    ~StackProtectorDescriptor() { }
 
     /// Returns true if all fields of the stack protector descriptor are
     /// initialized implying that we should/are ready to emit a stack protector.

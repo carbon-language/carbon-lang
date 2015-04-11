@@ -77,9 +77,6 @@ class AssemblerConstantPools {
   ConstantPoolMapTy ConstantPools;
 
 public:
-  AssemblerConstantPools() {}
-  ~AssemblerConstantPools() {}
-
   void emitAll(MCStreamer &Streamer);
   void emitForCurrentSection(MCStreamer &Streamer);
   const MCExpr *addEntry(MCStreamer &Streamer, const MCExpr *Expr,
