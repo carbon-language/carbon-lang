@@ -54,8 +54,8 @@ private:
       return Finder.newASTConsumer();
     }
 
-    virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                       StringRef Filename) override {
+    bool BeginSourceFileAction(CompilerInstance &CI,
+                               StringRef Filename) override {
       if (!ASTFrontendAction::BeginSourceFileAction(CI, Filename))
         return false;
 

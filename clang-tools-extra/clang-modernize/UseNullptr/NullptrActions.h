@@ -31,7 +31,8 @@ public:
                llvm::ArrayRef<llvm::StringRef> UserMacros, Transform &Owner);
 
   /// \brief Entry point to the callback called when matches are made.
-  virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
+  void
+  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
   unsigned &AcceptedChanges;

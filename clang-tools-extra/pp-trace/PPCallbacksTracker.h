@@ -76,7 +76,7 @@ public:
                      std::vector<CallbackCall> &CallbackCalls,
                      clang::Preprocessor &PP);
 
-  virtual ~PPCallbacksTracker();
+  ~PPCallbacksTracker() override;
 
   // Overidden callback functions.
 

@@ -83,14 +83,14 @@ namespace sys = llvm::sys;
 class CoverageCheckerCallbacks : public PPCallbacks {
 public:
   CoverageCheckerCallbacks(CoverageChecker &Checker) : Checker(Checker) {}
-  ~CoverageCheckerCallbacks() {}
+  ~CoverageCheckerCallbacks() override {}
 
   // Include directive callback.
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
-    StringRef FileName, bool IsAngled,
-    CharSourceRange FilenameRange, const FileEntry *File,
-    StringRef SearchPath, StringRef RelativePath,
-    const Module *Imported) {
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) override {
     Checker.collectUmbrellaHeaderHeader(File->getName());
   }
 
@@ -129,7 +129,7 @@ public:
   CoverageCheckerFrontendActionFactory(CoverageChecker &Checker)
     : Checker(Checker) {}
 
-  virtual CoverageCheckerAction *create() {
+  CoverageCheckerAction *create() override {
     return new CoverageCheckerAction(Checker);
   }
 

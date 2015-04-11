@@ -631,9 +631,9 @@ public:
     PPTracker.handlePreprocessorEntry(PP, InFile);
   }
 
-  ~CollectEntitiesConsumer() { PPTracker.handlePreprocessorExit(); }
+  ~CollectEntitiesConsumer() override { PPTracker.handlePreprocessorExit(); }
 
-  virtual void HandleTranslationUnit(ASTContext &Ctx) {
+  void HandleTranslationUnit(ASTContext &Ctx) override {
     SourceManager &SM = Ctx.getSourceManager();
 
     // Collect declared entities.
@@ -691,7 +691,7 @@ public:
       : Entities(Entities), PPTracker(preprocessorTracker),
         HadErrors(HadErrors) {}
 
-  virtual CollectEntitiesAction *create() {
+  CollectEntitiesAction *create() override {
     return new CollectEntitiesAction(Entities, PPTracker, HadErrors);
   }
 

@@ -18,8 +18,8 @@ public:
   TransformA(const TransformOptions &Options)
       : Transform("TransformA", Options) {}
 
-  virtual int apply(const tooling::CompilationDatabase &,
-                    const std::vector<std::string> &) {
+  int apply(const tooling::CompilationDatabase &,
+            const std::vector<std::string> &) override {
     return 0;
   }
 
@@ -33,8 +33,8 @@ public:
   TransformB(const TransformOptions &Options)
       : Transform("TransformB", Options) {}
 
-  virtual int apply(const tooling::CompilationDatabase &,
-                    const std::vector<std::string> &) {
+  int apply(const tooling::CompilationDatabase &,
+            const std::vector<std::string> &) override {
     return 0;
   }
 

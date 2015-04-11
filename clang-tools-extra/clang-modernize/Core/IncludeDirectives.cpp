@@ -60,7 +60,7 @@ class IncludeDirectivesPPCallback : public clang::PPCallbacks {
 public:
   IncludeDirectivesPPCallback(IncludeDirectives *Self)
       : Self(Self), Guard(nullptr) {}
-  virtual ~IncludeDirectivesPPCallback() {}
+  ~IncludeDirectivesPPCallback() override {}
 
 private:
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
@@ -78,9 +78,9 @@ private:
   }
 
   // Keep track of the current file in the stack
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID) override {
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                   SrcMgr::CharacteristicKind FileType,
+                   FileID PrevFID) override {
     SourceManager &SM = Self->Sources;
     switch (Reason) {
     case EnterFile:
@@ -143,8 +143,8 @@ private:
     Self->HeaderToGuard[File] = Guard.DefineLoc;
   }
 
-  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                      const MacroDirective *MD) override {
+  void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+              const MacroDirective *MD) override {
     Guard->Count++;
 
     // If this #ifndef is the top-most directive and the symbol isn't defined
@@ -160,8 +160,8 @@ private:
     }
   }
 
-  virtual void MacroDefined(const Token &MacroNameTok,
-                            const MacroDirective *MD) override {
+  void MacroDefined(const Token &MacroNameTok,
+                    const MacroDirective *MD) override {
     Guard->Count++;
 
     // If this #define is the second directive of the file and the symbol
@@ -196,28 +196,24 @@ private:
     Guard->EndifLoc = Loc;
   }
 
-  virtual void MacroExpands(const Token &, const MacroDirective *, SourceRange,
-                            const MacroArgs *) override {
+  void MacroExpands(const Token &, const MacroDirective *, SourceRange,
+                    const MacroArgs *) override {
     Guard->Count++;
   }
-  virtual void MacroUndefined(const Token &,
-                              const MacroDirective *) override {
+  void MacroUndefined(const Token &, const MacroDirective *) override {
     Guard->Count++;
   }
-  virtual void Defined(const Token &, const MacroDirective *,
-                       SourceRange) override {
+  void Defined(const Token &, const MacroDirective *, SourceRange) override {
     Guard->Count++;
   }
-  virtual void If(SourceLocation, SourceRange,
-                  ConditionValueKind) override {
+  void If(SourceLocation, SourceRange, ConditionValueKind) override {
     Guard->Count++;
   }
-  virtual void Elif(SourceLocation, SourceRange, ConditionValueKind,
-                    SourceLocation) override {
+  void Elif(SourceLocation, SourceRange, ConditionValueKind,
+            SourceLocation) override {
     Guard->Count++;
   }
-  virtual void Ifdef(SourceLocation, const Token &,
-                     const MacroDirective *) override {
+  void Ifdef(SourceLocation, const Token &, const MacroDirective *) override {
     Guard->Count++;
   }
   void Else(SourceLocation, SourceLocation) override {

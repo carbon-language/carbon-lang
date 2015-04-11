@@ -139,7 +139,7 @@ public:
                                std::vector<CallbackCall> &CallbackCalls)
       : Ignore(Ignore), CallbackCalls(CallbackCalls) {}
 
-  virtual PPTraceAction *create() {
+  PPTraceAction *create() override {
     return new PPTraceAction(Ignore, CallbackCalls);
   }
 

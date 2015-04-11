@@ -71,7 +71,8 @@ public:
         DeferredChanges(DeferredChanges), RejectedChanges(RejectedChanges),
         MaxRisk(MaxRisk), FixerKind(FixerKind), Owner(Owner) {}
 
-  virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
+  void
+  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
   TUTrackingInfo &TUInfo;

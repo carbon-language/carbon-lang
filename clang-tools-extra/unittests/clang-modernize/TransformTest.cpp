@@ -25,8 +25,10 @@ public:
   DummyTransform(llvm::StringRef Name, const TransformOptions &Options)
       : Transform(Name, Options) {}
 
-  virtual int apply(const tooling::CompilationDatabase &,
-                    const std::vector<std::string> &) { return 0; }
+  int apply(const tooling::CompilationDatabase &,
+            const std::vector<std::string> &) override {
+    return 0;
+  }
 
   void setAcceptedChanges(unsigned Changes) {
     Transform::setAcceptedChanges(Changes);
@@ -73,7 +75,7 @@ class TimePassingASTConsumer : public ASTConsumer {
 public:
   TimePassingASTConsumer(bool *Called) : Called(Called) {}
 
-  virtual bool HandleTopLevelDecl(DeclGroupRef DeclGroup) {
+  bool HandleTopLevelDecl(DeclGroupRef DeclGroup) override {
     llvm::sys::TimeValue UserStart;
     llvm::sys::TimeValue SystemStart;
     llvm::sys::TimeValue UserNow;
@@ -102,13 +104,11 @@ struct ConsumerFactory {
 struct CallbackForwarder : public clang::tooling::SourceFileCallbacks {
   CallbackForwarder(Transform &Callee) : Callee(Callee) {}
 
-  virtual bool handleBeginSource(CompilerInstance &CI, StringRef Filename) {
+  bool handleBeginSource(CompilerInstance &CI, StringRef Filename) override {
     return Callee.handleBeginSource(CI, Filename);
   }
 
-  virtual void handleEndSource() {
-    Callee.handleEndSource();
-  }
+  void handleEndSource() override { Callee.handleEndSource(); }
 
   Transform &Callee;
 };
@@ -184,8 +184,8 @@ public:
   ModifiableCallback(const Transform &Owner)
       : Owner(Owner) {}
 
-  virtual void
-  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) {
+  void
+  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override {
     const VarDecl *Decl = Result.Nodes.getNodeAs<VarDecl>("decl");
     ASSERT_TRUE(Decl != nullptr);
 

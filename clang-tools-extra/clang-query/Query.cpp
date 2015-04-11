@@ -53,7 +53,7 @@ namespace {
 struct CollectBoundNodes : MatchFinder::MatchCallback {
   std::vector<BoundNodes> &Bindings;
   CollectBoundNodes(std::vector<BoundNodes> &Bindings) : Bindings(Bindings) {}
-  void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     Bindings.push_back(Result.Nodes);
   }
 };
