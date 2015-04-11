@@ -861,12 +861,14 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     }
   }
 
-  // Setting -mno-global-merge disables the codegen global merge pass. Setting 
-  // -mglobal-merge has no effect as the pass is enabled by default.
+  // Forward the -mglobal-merge option for explicit control over the pass.
   if (Arg *A = Args.getLastArg(options::OPT_mglobal_merge,
                                options::OPT_mno_global_merge)) {
+    CmdArgs.push_back("-backend-option");
     if (A->getOption().matches(options::OPT_mno_global_merge))
-      CmdArgs.push_back("-mno-global-merge");
+      CmdArgs.push_back("-arm-global-merge=false");
+    else
+      CmdArgs.push_back("-arm-global-merge=true");
   }
 
   if (!Args.hasFlag(options::OPT_mimplicit_float,
@@ -957,12 +959,14 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
     CmdArgs.push_back("-aarch64-fix-cortex-a53-835769=1");
   }
 
-  // Setting -mno-global-merge disables the codegen global merge pass. Setting
-  // -mglobal-merge has no effect as the pass is enabled by default.
+  // Forward the -mglobal-merge option for explicit control over the pass.
   if (Arg *A = Args.getLastArg(options::OPT_mglobal_merge,
                                options::OPT_mno_global_merge)) {
+    CmdArgs.push_back("-backend-option");
     if (A->getOption().matches(options::OPT_mno_global_merge))
-      CmdArgs.push_back("-mno-global-merge");
+      CmdArgs.push_back("-aarch64-global-merge=false");
+    else
+      CmdArgs.push_back("-aarch64-global-merge=true");
   }
 
   if (Args.hasArg(options::OPT_ffixed_x18)) {
