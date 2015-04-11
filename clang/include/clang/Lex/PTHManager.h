@@ -113,7 +113,7 @@ public:
   // The current PTH version.
   enum { Version = 10 };
 
-  ~PTHManager();
+  ~PTHManager() override;
 
   /// getOriginalSourceFile - Return the full path to the original header
   ///  file name that was used to generate the PTH cache.

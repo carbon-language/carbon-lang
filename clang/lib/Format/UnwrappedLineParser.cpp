@@ -68,7 +68,7 @@ public:
     Line.InPPDirective = true;
   }
 
-  ~ScopedMacroState() {
+  ~ScopedMacroState() override {
     TokenSource = PreviousTokenSource;
     ResetToken = Token;
     Line.InPPDirective = false;

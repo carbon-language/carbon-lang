@@ -79,7 +79,7 @@ public:
 /// process each translation unit.
 class FrontendActionFactory : public ToolAction {
 public:
-  virtual ~FrontendActionFactory();
+  ~FrontendActionFactory() override;
 
   /// \brief Invokes the compiler with a FrontendAction created by create().
   bool runInvocation(clang::CompilerInvocation *Invocation, FileManager *Files,

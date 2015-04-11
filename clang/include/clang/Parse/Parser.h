@@ -235,7 +235,7 @@ class Parser : public CodeCompletionHandler {
 
 public:
   Parser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies);
-  ~Parser();
+  ~Parser() override;
 
   const LangOptions &getLangOpts() const { return PP.getLangOpts(); }
   const TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
@@ -887,7 +887,7 @@ private:
   class LateParsedClass : public LateParsedDeclaration {
   public:
     LateParsedClass(Parser *P, ParsingClass *C);
-    virtual ~LateParsedClass();
+    ~LateParsedClass() override;
 
     void ParseLexedMethodDeclarations() override;
     void ParseLexedMemberInitializers() override;

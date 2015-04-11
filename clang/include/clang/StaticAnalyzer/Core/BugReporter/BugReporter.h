@@ -492,7 +492,7 @@ public:
   GRBugReporter(BugReporterData& d, ExprEngine& eng)
     : BugReporter(d, GRBugReporterKind), Eng(eng) {}
 
-  virtual ~GRBugReporter();
+  ~GRBugReporter() override;
 
   /// getEngine - Return the analysis engine used to analyze a given
   ///  function or method.

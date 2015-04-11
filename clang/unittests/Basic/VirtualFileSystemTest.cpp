@@ -521,9 +521,7 @@ class VFSFromYAMLTest : public ::testing::Test {
 public:
   int NumDiagnostics;
 
-  void SetUp() {
-    NumDiagnostics = 0;
-  }
+  void SetUp() override { NumDiagnostics = 0; }
 
   static void CountingDiagHandler(const SMDiagnostic &, void *Context) {
     VFSFromYAMLTest *Test = static_cast<VFSFromYAMLTest *>(Context);

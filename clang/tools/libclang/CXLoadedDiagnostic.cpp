@@ -37,7 +37,7 @@ namespace {
 class CXLoadedDiagnosticSetImpl : public CXDiagnosticSetImpl {
 public:
   CXLoadedDiagnosticSetImpl() : CXDiagnosticSetImpl(true), FakeFiles(FO) {}
-  virtual ~CXLoadedDiagnosticSetImpl() {}  
+  ~CXLoadedDiagnosticSetImpl() override {}
 
   llvm::BumpPtrAllocator Alloc;
   Strings Categories;

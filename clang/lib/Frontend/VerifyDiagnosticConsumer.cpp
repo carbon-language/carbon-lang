@@ -58,9 +58,9 @@ public:
 
   /// \brief Hook into the preprocessor and update the list of parsed
   /// files when the preprocessor indicates a new file is entered.
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID) {
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                   SrcMgr::CharacteristicKind FileType,
+                   FileID PrevFID) override {
     Verify.UpdateParsedFileStatus(SM, SM.getFileID(Loc),
                                   VerifyDiagnosticConsumer::IsParsed);
   }

@@ -246,7 +246,7 @@ public:
   /// the currently-attached diagnostic client when a diagnostic does not match 
   /// what is expected (as indicated in the source file).
   VerifyDiagnosticConsumer(DiagnosticsEngine &Diags);
-  ~VerifyDiagnosticConsumer();
+  ~VerifyDiagnosticConsumer() override;
 
   void BeginSourceFile(const LangOptions &LangOpts,
                        const Preprocessor *PP) override;

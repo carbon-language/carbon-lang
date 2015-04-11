@@ -102,7 +102,7 @@ public:
              FunctionSummariesTy *FS,
              InliningModes HowToInlineIn);
 
-  ~ExprEngine();
+  ~ExprEngine() override;
 
   /// Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(const LocationContext *L, unsigned Steps = 150000) {

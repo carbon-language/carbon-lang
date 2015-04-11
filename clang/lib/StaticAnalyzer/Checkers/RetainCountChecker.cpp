@@ -2475,9 +2475,7 @@ public:
     : ShouldResetSummaryLog(false),
       IncludeAllocationLine(shouldIncludeAllocationSiteInLeakDiagnostics(AO)) {}
 
-  virtual ~RetainCountChecker() {
-    DeleteContainerSeconds(DeadSymbolTags);
-  }
+  ~RetainCountChecker() override { DeleteContainerSeconds(DeadSymbolTags); }
 
   void checkEndAnalysis(ExplodedGraph &G, BugReporter &BR,
                         ExprEngine &Eng) const {

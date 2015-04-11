@@ -3950,9 +3950,8 @@ public:
       }
     }
   }
-  
 
-  virtual ~StmtPrinterHelper() {}
+  ~StmtPrinterHelper() override {}
 
   const LangOptions &getLangOpts() const { return LangOpts; }
   void setBlockID(signed i) { currentBlock = i; }

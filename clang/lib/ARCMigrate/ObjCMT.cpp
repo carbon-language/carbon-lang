@@ -1790,9 +1790,7 @@ public:
     : SourceMgr(SM), OS(OS) {
     OS << "[\n";
   }
-  ~JSONEditWriter() {
-    OS << "]\n";
-  }
+  ~JSONEditWriter() override { OS << "]\n"; }
 
 private:
   struct EntryWriter {

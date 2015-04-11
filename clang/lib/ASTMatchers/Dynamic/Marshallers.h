@@ -181,18 +181,20 @@ public:
         ArgKinds(ArgKinds.begin(), ArgKinds.end()) {}
 
   VariantMatcher create(const SourceRange &NameRange,
-                        ArrayRef<ParserValue> Args, Diagnostics *Error) const {
+                        ArrayRef<ParserValue> Args,
+                        Diagnostics *Error) const override {
     return Marshaller(Func, MatcherName, NameRange, Args, Error);
   }
 
-  bool isVariadic() const { return false; }
-  unsigned getNumArgs() const { return ArgKinds.size(); }
+  bool isVariadic() const override { return false; }
+  unsigned getNumArgs() const override { return ArgKinds.size(); }
   void getArgKinds(ast_type_traits::ASTNodeKind ThisKind, unsigned ArgNo,
-                   std::vector<ArgKind> &Kinds) const {
+                   std::vector<ArgKind> &Kinds) const override {
     Kinds.push_back(ArgKinds[ArgNo]);
   }
-  bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
-                       ast_type_traits::ASTNodeKind *LeastDerivedKind) const {
+  bool isConvertibleTo(
+      ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
+      ast_type_traits::ASTNodeKind *LeastDerivedKind) const override {
     return isRetKindConvertibleTo(RetKinds, Kind, Specificity,
                                   LeastDerivedKind);
   }
@@ -333,18 +335,20 @@ public:
   }
 
   VariantMatcher create(const SourceRange &NameRange,
-                        ArrayRef<ParserValue> Args, Diagnostics *Error) const {
+                        ArrayRef<ParserValue> Args,
+                        Diagnostics *Error) const override {
     return Func(MatcherName, NameRange, Args, Error);
   }
 
-  bool isVariadic() const { return true; }
-  unsigned getNumArgs() const { return 0; }
+  bool isVariadic() const override { return true; }
+  unsigned getNumArgs() const override { return 0; }
   void getArgKinds(ast_type_traits::ASTNodeKind ThisKind, unsigned ArgNo,
-                   std::vector<ArgKind> &Kinds) const {
+                   std::vector<ArgKind> &Kinds) const override {
     Kinds.push_back(ArgsKind);
   }
-  bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
-                       ast_type_traits::ASTNodeKind *LeastDerivedKind) const {
+  bool isConvertibleTo(
+      ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
+      ast_type_traits::ASTNodeKind *LeastDerivedKind) const override {
     return isRetKindConvertibleTo(RetKinds, Kind, Specificity,
                                   LeastDerivedKind);
   }
@@ -487,11 +491,11 @@ public:
   OverloadedMatcherDescriptor(ArrayRef<MatcherDescriptor *> Callbacks)
       : Overloads(Callbacks.begin(), Callbacks.end()) {}
 
-  virtual ~OverloadedMatcherDescriptor() {}
+  ~OverloadedMatcherDescriptor() override {}
 
-  virtual VariantMatcher create(const SourceRange &NameRange,
-                                ArrayRef<ParserValue> Args,
-                                Diagnostics *Error) const {
+  VariantMatcher create(const SourceRange &NameRange,
+                        ArrayRef<ParserValue> Args,
+                        Diagnostics *Error) const override {
     std::vector<VariantMatcher> Constructed;
     Diagnostics::OverloadContext Ctx(Error);
     for (const auto &O : Overloads) {
@@ -512,7 +516,7 @@ public:
     return Constructed[0];
   }
 
-  bool isVariadic() const {
+  bool isVariadic() const override {
     bool Overload0Variadic = Overloads[0]->isVariadic();
 #ifndef NDEBUG
     for (const auto &O : Overloads) {
@@ -522,7 +526,7 @@ public:
     return Overload0Variadic;
   }
 
-  unsigned getNumArgs() const {
+  unsigned getNumArgs() const override {
     unsigned Overload0NumArgs = Overloads[0]->getNumArgs();
 #ifndef NDEBUG
     for (const auto &O : Overloads) {
@@ -533,15 +537,16 @@ public:
   }
 
   void getArgKinds(ast_type_traits::ASTNodeKind ThisKind, unsigned ArgNo,
-                   std::vector<ArgKind> &Kinds) const {
+                   std::vector<ArgKind> &Kinds) const override {
     for (const auto &O : Overloads) {
       if (O->isConvertibleTo(ThisKind))
         O->getArgKinds(ThisKind, ArgNo, Kinds);
     }
   }
 
-  bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
-                       ast_type_traits::ASTNodeKind *LeastDerivedKind) const {
+  bool isConvertibleTo(
+      ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
+      ast_type_traits::ASTNodeKind *LeastDerivedKind) const override {
     for (const auto &O : Overloads) {
       if (O->isConvertibleTo(Kind, Specificity, LeastDerivedKind))
         return true;
@@ -562,9 +567,9 @@ public:
       : MinCount(MinCount), MaxCount(MaxCount), Op(Op),
         MatcherName(MatcherName) {}
 
-  virtual VariantMatcher create(const SourceRange &NameRange,
-                                ArrayRef<ParserValue> Args,
-                                Diagnostics *Error) const override {
+  VariantMatcher create(const SourceRange &NameRange,
+                        ArrayRef<ParserValue> Args,
+                        Diagnostics *Error) const override {
     if (Args.size() < MinCount || MaxCount < Args.size()) {
       const std::string MaxStr =
           (MaxCount == UINT_MAX ? "" : Twine(MaxCount)).str();

@@ -393,7 +393,7 @@ private:
     MallocBugVisitor(SymbolRef S, bool isLeak = false)
        : Sym(S), Mode(Normal), FailedReallocSymbol(nullptr), IsLeak(isLeak) {}
 
-    virtual ~MallocBugVisitor() {}
+    ~MallocBugVisitor() override {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;

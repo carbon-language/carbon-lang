@@ -44,7 +44,7 @@ public:
   explicit DelegatingDeserializationListener(
       ASTDeserializationListener *Previous, bool DeletePrevious)
       : Previous(Previous), DeletePrevious(DeletePrevious) {}
-  virtual ~DelegatingDeserializationListener() {
+  ~DelegatingDeserializationListener() override {
     if (DeletePrevious)
       delete Previous;
   }

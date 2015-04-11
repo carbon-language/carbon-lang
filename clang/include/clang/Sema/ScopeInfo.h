@@ -568,7 +568,7 @@ public:
     Kind = SK_Block;
   }
 
-  virtual ~BlockScopeInfo();
+  ~BlockScopeInfo() override;
 
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Block; 
@@ -599,7 +599,7 @@ public:
     Kind = SK_CapturedRegion;
   }
 
-  virtual ~CapturedRegionScopeInfo();
+  ~CapturedRegionScopeInfo() override;
 
   /// \brief A descriptive name for the kind of captured region this is.
   StringRef getRegionName() const {
@@ -704,7 +704,7 @@ public:
     Kind = SK_Lambda;
   }
 
-  virtual ~LambdaScopeInfo();
+  ~LambdaScopeInfo() override;
 
   /// \brief Note when all explicit captures have been added.
   void finishedExplicitCaptures() {

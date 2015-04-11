@@ -209,7 +209,7 @@ public:
 template <typename T>
 class MatcherInterface : public DynMatcherInterface {
 public:
-  virtual ~MatcherInterface() {}
+  ~MatcherInterface() override {}
 
   /// \brief Returns true if 'Node' can be matched.
   ///

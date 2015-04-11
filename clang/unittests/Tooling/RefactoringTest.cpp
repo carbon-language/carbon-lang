@@ -213,7 +213,7 @@ class FlushRewrittenFilesTest : public ::testing::Test {
 public:
    FlushRewrittenFilesTest() {}
 
-  ~FlushRewrittenFilesTest() {
+   ~FlushRewrittenFilesTest() override {
     for (llvm::StringMap<std::string>::iterator I = TemporaryFiles.begin(),
                                                 E = TemporaryFiles.end();
          I != E; ++I) {
@@ -287,7 +287,7 @@ private:
   public:
     FindConsumer(TestVisitor *Visitor) : Visitor(Visitor) {}
 
-    virtual void HandleTranslationUnit(clang::ASTContext &Context) {
+    void HandleTranslationUnit(clang::ASTContext &Context) override {
       Visitor->TraverseDecl(Context.getTranslationUnitDecl());
     }
 
@@ -299,9 +299,9 @@ private:
   public:
     TestAction(TestVisitor *Visitor) : Visitor(Visitor) {}
 
-    virtual std::unique_ptr<clang::ASTConsumer>
+    std::unique_ptr<clang::ASTConsumer>
     CreateASTConsumer(clang::CompilerInstance &compiler,
-                      llvm::StringRef dummy) {
+                      llvm::StringRef dummy) override {
       Visitor->SM = &compiler.getSourceManager();
       /// TestConsumer will be deleted by the framework calling us.
       return llvm::make_unique<FindConsumer>(Visitor);

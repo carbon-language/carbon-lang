@@ -27,7 +27,7 @@ class SimpleConstraintManager : public ConstraintManager {
 public:
   SimpleConstraintManager(SubEngine *subengine, SValBuilder &SB)
     : SU(subengine), SVB(SB) {}
-  virtual ~SimpleConstraintManager();
+  ~SimpleConstraintManager() override;
 
   //===------------------------------------------------------------------===//
   // Common implementation for the interface provided by ConstraintManager.

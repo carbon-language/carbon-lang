@@ -60,7 +60,7 @@ TEST(RangeVerifier, WrongRange) {
 
 class LabelDeclRangeVerifier : public RangeVerifier<LabelStmt> {
 protected:
-  virtual SourceRange getRange(const LabelStmt &Node) {
+  SourceRange getRange(const LabelStmt &Node) override {
     return Node.getDecl()->getSourceRange();
   }
 };
@@ -111,7 +111,7 @@ TEST(MemberExpr, ImplicitMemberRange) {
 
 class MemberExprArrowLocVerifier : public RangeVerifier<MemberExpr> {
 protected:
-  virtual SourceRange getRange(const MemberExpr &Node) {
+  SourceRange getRange(const MemberExpr &Node) override {
      return Node.getOperatorLoc();
   }
 };
@@ -201,7 +201,7 @@ TEST(InitListExpr, VectorLiteralInitListParens) {
 
 class TemplateAngleBracketLocRangeVerifier : public RangeVerifier<TypeLoc> {
 protected:
-  virtual SourceRange getRange(const TypeLoc &Node) {
+  SourceRange getRange(const TypeLoc &Node) override {
     TemplateSpecializationTypeLoc T =
         Node.getUnqualifiedLoc().castAs<TemplateSpecializationTypeLoc>();
     assert(!T.isNull());
@@ -226,7 +226,7 @@ TEST(CXXNewExpr, TypeParenRange) {
 
 class UnaryTransformTypeLocParensRangeVerifier : public RangeVerifier<TypeLoc> {
 protected:
-  virtual SourceRange getRange(const TypeLoc &Node) {
+  SourceRange getRange(const TypeLoc &Node) override {
     UnaryTransformTypeLoc T =
         Node.getUnqualifiedLoc().castAs<UnaryTransformTypeLoc>();
     assert(!T.isNull());

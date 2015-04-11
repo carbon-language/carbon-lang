@@ -28,15 +28,15 @@ public:
   TestFrontendAction(ExternalASTSource *Source) : Source(Source) {}
 
 private:
-  virtual void ExecuteAction() {
+  void ExecuteAction() override {
     getCompilerInstance().getASTContext().setExternalSource(Source);
     getCompilerInstance().getASTContext().getTranslationUnitDecl()
         ->setHasExternalVisibleStorage();
     return ASTFrontendAction::ExecuteAction();
   }
 
-  virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                         StringRef InFile) {
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override {
     return llvm::make_unique<ASTConsumer>();
   }
 
@@ -67,8 +67,8 @@ TEST(ExternalASTSourceTest, FailedLookupOccursOnce) {
   struct TestSource : ExternalASTSource {
     TestSource(unsigned &Calls) : Calls(Calls) {}
 
-    bool FindExternalVisibleDeclsByName(const DeclContext*,
-                                        DeclarationName Name) {
+    bool FindExternalVisibleDeclsByName(const DeclContext *,
+                                        DeclarationName Name) override {
       if (Name.getAsString() == "j")
         ++Calls;
       return false;

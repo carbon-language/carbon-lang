@@ -1371,7 +1371,7 @@ class ForwardingDiagnosticConsumer : public DiagnosticConsumer {
 public:
   ForwardingDiagnosticConsumer(DiagnosticConsumer &Target) : Target(Target) {}
 
-  virtual ~ForwardingDiagnosticConsumer();
+  ~ForwardingDiagnosticConsumer() override;
 
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) override;

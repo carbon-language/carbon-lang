@@ -37,7 +37,7 @@ public:
   explicit PrintMatch(bool suppressUnwrittenScope)
     : NumFoundDecls(0), SuppressUnwrittenScope(suppressUnwrittenScope) {}
 
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     const NamedDecl *ND = Result.Nodes.getNodeAs<NamedDecl>("id");
     if (!ND)
       return;

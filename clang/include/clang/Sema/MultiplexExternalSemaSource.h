@@ -51,7 +51,7 @@ public:
   ///
   MultiplexExternalSemaSource(ExternalSemaSource& s1, ExternalSemaSource& s2);
 
-  ~MultiplexExternalSemaSource();
+  ~MultiplexExternalSemaSource() override;
 
   ///\brief Appends new source to the source list.
   ///

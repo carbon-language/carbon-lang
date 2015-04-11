@@ -48,7 +48,7 @@ public:
     : CXDiagnosticImpl(CustomNoteDiagnosticKind),
       Message(Msg), Loc(L) {}
 
-  virtual ~CXDiagnosticCustomNoteImpl() {}
+  ~CXDiagnosticCustomNoteImpl() override {}
 
   CXDiagnosticSeverity getSeverity() const override {
     return CXDiagnostic_Note;
@@ -91,8 +91,8 @@ public:
                        CXDiagnosticSetImpl *mainSet)
   : DiagnosticNoteRenderer(LangOpts, DiagOpts),
     CurrentSet(mainSet), MainSet(mainSet) {}
-  
-  virtual ~CXDiagnosticRenderer() {}
+
+  ~CXDiagnosticRenderer() override {}
 
   void beginDiagnostic(DiagOrStoredDiag D,
                        DiagnosticsEngine::Level Level) override {

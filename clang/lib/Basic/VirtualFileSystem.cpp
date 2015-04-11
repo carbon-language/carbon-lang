@@ -92,7 +92,7 @@ class RealFile : public File {
   }
 
 public:
-  ~RealFile();
+  ~RealFile() override;
   ErrorOr<Status> status() override;
   ErrorOr<std::unique_ptr<MemoryBuffer>>
   getBuffer(const Twine &Name, int64_t FileSize = -1,
@@ -362,7 +362,7 @@ class DirectoryEntry : public Entry {
   Status S;
 
 public:
-  virtual ~DirectoryEntry();
+  ~DirectoryEntry() override;
   DirectoryEntry(StringRef Name, std::vector<Entry *> Contents, Status S)
       : Entry(EK_Directory, Name), Contents(std::move(Contents)),
         S(std::move(S)) {}
@@ -498,7 +498,7 @@ private:
   ErrorOr<Status> status(const Twine &Path, Entry *E);
 
 public:
-  ~VFSFromYAML();
+  ~VFSFromYAML() override;
 
   /// \brief Parses \p Buffer, which is expected to be in YAML format and
   /// returns a virtual file system representing its contents.

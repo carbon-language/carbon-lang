@@ -45,7 +45,7 @@ class HTMLDiagnostics : public PathDiagnosticConsumer {
 public:
   HTMLDiagnostics(AnalyzerOptions &AnalyzerOpts, const std::string& prefix, const Preprocessor &pp);
 
-  virtual ~HTMLDiagnostics() { FlushDiagnostics(nullptr); }
+  ~HTMLDiagnostics() override { FlushDiagnostics(nullptr); }
 
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
                             FilesMade *filesMade) override;

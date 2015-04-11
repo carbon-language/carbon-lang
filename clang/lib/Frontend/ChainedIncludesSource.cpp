@@ -27,7 +27,7 @@ using namespace clang;
 namespace {
 class ChainedIncludesSource : public ExternalSemaSource {
 public:
-  virtual ~ChainedIncludesSource();
+  ~ChainedIncludesSource() override;
 
   ExternalSemaSource &getFinalReader() const { return *FinalReader; }
 

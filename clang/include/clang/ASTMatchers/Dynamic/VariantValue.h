@@ -122,7 +122,7 @@ class VariantMatcher {
   /// It follows a similar interface as VariantMatcher itself.
   class Payload : public RefCountedBaseVPTR {
   public:
-    virtual ~Payload();
+    ~Payload() override;
     virtual llvm::Optional<DynTypedMatcher> getSingleMatcher() const = 0;
     virtual std::string getTypeAsString() const = 0;
     virtual llvm::Optional<DynTypedMatcher>

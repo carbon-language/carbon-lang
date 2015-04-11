@@ -30,7 +30,7 @@ class MultiplexConsumer : public SemaConsumer {
 public:
   // Takes ownership of the pointers in C.
   MultiplexConsumer(std::vector<std::unique_ptr<ASTConsumer>> C);
-  ~MultiplexConsumer();
+  ~MultiplexConsumer() override;
 
   // ASTConsumer
   void Initialize(ASTContext &Context) override;

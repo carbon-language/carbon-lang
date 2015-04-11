@@ -43,7 +43,7 @@ protected:
 
 public:
   FixItAction();
-  ~FixItAction();
+  ~FixItAction() override;
 };
 
 /// \brief Emits changes to temporary files and uses them for the original

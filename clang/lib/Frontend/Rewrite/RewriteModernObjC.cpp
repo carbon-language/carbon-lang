@@ -243,8 +243,8 @@ namespace {
     RewriteModernObjC(std::string inFile, raw_ostream *OS,
                 DiagnosticsEngine &D, const LangOptions &LOpts,
                 bool silenceMacroWarn, bool LineInfo);
-    
-    ~RewriteModernObjC() {}
+
+    ~RewriteModernObjC() override {}
 
     void HandleTranslationUnit(ASTContext &C) override;
 

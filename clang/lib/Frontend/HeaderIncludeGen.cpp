@@ -35,7 +35,7 @@ public:
       OwnsOutputFile(OwnsOutputFile_), ShowAllHeaders(ShowAllHeaders_),
       ShowDepth(ShowDepth_), MSStyle(MSStyle_) {}
 
-  ~HeaderIncludesCallback() {
+  ~HeaderIncludesCallback() override {
     if (OwnsOutputFile)
       delete OutputFile;
   }

@@ -537,7 +537,7 @@ class StatListener : public FileSystemStatCache {
   PTHMap &PM;
 public:
   StatListener(PTHMap &pm) : PM(pm) {}
-  ~StatListener() {}
+  ~StatListener() override {}
 
   LookupResult getStat(const char *Path, FileData &Data, bool isFile,
                        std::unique_ptr<vfs::File> *F,

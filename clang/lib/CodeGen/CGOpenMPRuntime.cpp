@@ -87,9 +87,7 @@ public:
   }
   /// \brief Get a variable or parameter for storing global thread id
   /// inside OpenMP construct.
-  virtual const VarDecl *getThreadIDVariable() const override {
-    return ThreadIDVar;
-  }
+  const VarDecl *getThreadIDVariable() const override { return ThreadIDVar; }
 
   /// \brief Get the name of the capture helper.
   StringRef getHelperName() const override { return ".omp_outlined."; }
@@ -118,12 +116,10 @@ public:
   }
   /// \brief Get a variable or parameter for storing global thread id
   /// inside OpenMP construct.
-  virtual const VarDecl *getThreadIDVariable() const override {
-    return ThreadIDVar;
-  }
+  const VarDecl *getThreadIDVariable() const override { return ThreadIDVar; }
 
   /// \brief Get an LValue for the current ThreadID variable.
-  virtual LValue getThreadIDVariableLValue(CodeGenFunction &CGF) override;
+  LValue getThreadIDVariableLValue(CodeGenFunction &CGF) override;
 
   /// \brief Get the name of the capture helper.
   StringRef getHelperName() const override { return ".omp_outlined."; }
@@ -149,7 +145,7 @@ public:
       : CGOpenMPRegionInfo(InlinedRegion, CodeGen), OldCSI(OldCSI),
         OuterRegionInfo(dyn_cast_or_null<CGOpenMPRegionInfo>(OldCSI)) {}
   // \brief Retrieve the value of the context parameter.
-  virtual llvm::Value *getContextValue() const override {
+  llvm::Value *getContextValue() const override {
     if (OuterRegionInfo)
       return OuterRegionInfo->getContextValue();
     llvm_unreachable("No context value for inlined OpenMP region");
@@ -162,27 +158,27 @@ public:
     llvm_unreachable("No context value for inlined OpenMP region");
   }
   /// \brief Lookup the captured field decl for a variable.
-  virtual const FieldDecl *lookup(const VarDecl *VD) const override {
+  const FieldDecl *lookup(const VarDecl *VD) const override {
     if (OuterRegionInfo)
       return OuterRegionInfo->lookup(VD);
     llvm_unreachable("Trying to reference VarDecl that is neither local nor "
                      "captured in outer OpenMP region");
   }
-  virtual FieldDecl *getThisFieldDecl() const override {
+  FieldDecl *getThisFieldDecl() const override {
     if (OuterRegionInfo)
       return OuterRegionInfo->getThisFieldDecl();
     return nullptr;
   }
   /// \brief Get a variable or parameter for storing global thread id
   /// inside OpenMP construct.
-  virtual const VarDecl *getThreadIDVariable() const override {
+  const VarDecl *getThreadIDVariable() const override {
     if (OuterRegionInfo)
       return OuterRegionInfo->getThreadIDVariable();
     return nullptr;
   }
 
   /// \brief Get the name of the capture helper.
-  virtual StringRef getHelperName() const override {
+  StringRef getHelperName() const override {
     if (auto *OuterRegionInfo = getOldCSI())
       return OuterRegionInfo->getHelperName();
     llvm_unreachable("No helper name for inlined OpenMP construct");

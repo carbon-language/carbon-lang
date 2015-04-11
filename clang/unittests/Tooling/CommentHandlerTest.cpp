@@ -30,11 +30,11 @@ class CommentHandlerVisitor : public TestVisitor<CommentHandlerVisitor>,
 public:
   CommentHandlerVisitor() : base(), PP(nullptr), Verified(false) {}
 
-  ~CommentHandlerVisitor() {
+  ~CommentHandlerVisitor() override {
     EXPECT_TRUE(Verified) << "CommentVerifier not accessed";
   }
 
-  virtual bool HandleComment(Preprocessor &PP, SourceRange Loc) {
+  bool HandleComment(Preprocessor &PP, SourceRange Loc) override {
     assert(&PP == this->PP && "Preprocessor changed!");
 
     SourceLocation Start = Loc.getBegin();
@@ -56,7 +56,7 @@ public:
   CommentVerifier GetVerifier();
 
 protected:
-  virtual ASTFrontendAction* CreateTestAction() {
+  ASTFrontendAction *CreateTestAction() override {
     return new CommentHandlerAction(this);
   }
 
@@ -70,8 +70,8 @@ private:
     CommentHandlerAction(CommentHandlerVisitor *Visitor)
         : TestAction(Visitor) { }
 
-    virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                       StringRef FileName) {
+    bool BeginSourceFileAction(CompilerInstance &CI,
+                               StringRef FileName) override {
       CommentHandlerVisitor *V =
           static_cast<CommentHandlerVisitor*>(this->Visitor);
       V->PP = &CI.getPreprocessor();
@@ -79,7 +79,7 @@ private:
       return true;
     }
 
-    virtual void EndSourceFileAction() {
+    void EndSourceFileAction() override {
       CommentHandlerVisitor *V =
           static_cast<CommentHandlerVisitor*>(this->Visitor);
       V->PP->removeCommentHandler(V);

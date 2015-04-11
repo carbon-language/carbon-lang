@@ -186,7 +186,7 @@ protected:
 
 public:
   ASTMergeAction(FrontendAction *AdaptedAction, ArrayRef<std::string> ASTFiles);
-  virtual ~ASTMergeAction();
+  ~ASTMergeAction() override;
 
   bool usesPreprocessorOnly() const override;
   TranslationUnitKind getTranslationUnitKind() override;

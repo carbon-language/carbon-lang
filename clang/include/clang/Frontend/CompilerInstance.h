@@ -168,7 +168,7 @@ class CompilerInstance : public ModuleLoader {
   void operator=(const CompilerInstance &) = delete;
 public:
   explicit CompilerInstance(bool BuildingModule = false);
-  ~CompilerInstance();
+  ~CompilerInstance() override;
 
   /// @name High-Level Operations
   /// {

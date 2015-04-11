@@ -1563,10 +1563,10 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
   // See the documentation in arm_neon.td for a description of these operators.
   class LowHalf : public SetTheory::Operator {
   public:
-    virtual void anchor() {}
-    virtual ~LowHalf() {}
-    virtual void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
-                       ArrayRef<SMLoc> Loc) {
+    void anchor() override {}
+    ~LowHalf() override {}
+    void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
+               ArrayRef<SMLoc> Loc) override {
       SetTheory::RecSet Elts2;
       ST.evaluate(Expr->arg_begin(), Expr->arg_end(), Elts2, Loc);
       Elts.insert(Elts2.begin(), Elts2.begin() + (Elts2.size() / 2));
@@ -1574,10 +1574,10 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
   };
   class HighHalf : public SetTheory::Operator {
   public:
-    virtual void anchor() {}
-    virtual ~HighHalf() {}
-    virtual void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
-                       ArrayRef<SMLoc> Loc) {
+    void anchor() override {}
+    ~HighHalf() override {}
+    void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
+               ArrayRef<SMLoc> Loc) override {
       SetTheory::RecSet Elts2;
       ST.evaluate(Expr->arg_begin(), Expr->arg_end(), Elts2, Loc);
       Elts.insert(Elts2.begin() + (Elts2.size() / 2), Elts2.end());
@@ -1588,10 +1588,10 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
 
   public:
     Rev(unsigned ElementSize) : ElementSize(ElementSize) {}
-    virtual void anchor() {}
-    virtual ~Rev() {}
-    virtual void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
-                       ArrayRef<SMLoc> Loc) {
+    void anchor() override {}
+    ~Rev() override {}
+    void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
+               ArrayRef<SMLoc> Loc) override {
       SetTheory::RecSet Elts2;
       ST.evaluate(Expr->arg_begin() + 1, Expr->arg_end(), Elts2, Loc);
 
@@ -1613,9 +1613,9 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
 
   public:
     MaskExpander(unsigned N) : N(N) {}
-    virtual void anchor() {}
-    virtual ~MaskExpander() {}
-    virtual void expand(SetTheory &ST, Record *R, SetTheory::RecSet &Elts) {
+    void anchor() override {}
+    ~MaskExpander() override {}
+    void expand(SetTheory &ST, Record *R, SetTheory::RecSet &Elts) override {
       unsigned Addend = 0;
       if (R->getName() == "mask0")
         Addend = 0;

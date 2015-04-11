@@ -92,7 +92,7 @@ class ClangDiagPathDiagConsumer : public PathDiagnosticConsumer {
 public:
   ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag)
     : Diag(Diag), IncludePath(false) {}
-  virtual ~ClangDiagPathDiagConsumer() {}
+  ~ClangDiagPathDiagConsumer() override {}
   StringRef getName() const override { return "ClangDiags"; }
 
   bool supportsLogicalOpControlFlow() const override { return true; }
@@ -199,7 +199,7 @@ public:
     }
   }
 
-  ~AnalysisConsumer() {
+  ~AnalysisConsumer() override {
     if (Opts->PrintStats)
       delete TUTotalTimer;
   }
@@ -373,8 +373,7 @@ public:
     return true;
   }
 
-  virtual void
-  AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) override {
+  void AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) override {
     PathConsumers.push_back(Consumer);
   }
 
@@ -724,7 +723,7 @@ class UbigraphViz : public ExplodedNode::Auditor {
 public:
   UbigraphViz(std::unique_ptr<raw_ostream> Out, StringRef Filename);
 
-  ~UbigraphViz();
+  ~UbigraphViz() override;
 
   void AddEdge(ExplodedNode *Src, ExplodedNode *Dst) override;
 };

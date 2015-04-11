@@ -559,7 +559,7 @@ public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
   ASTWriter(llvm::BitstreamWriter &Stream);
-  ~ASTWriter();
+  ~ASTWriter() override;
 
   const LangOptions &getLangOpts() const;
 
@@ -882,7 +882,7 @@ public:
                clang::Module *Module,
                StringRef isysroot, raw_ostream *Out,
                bool AllowASTWithErrors = false);
-  ~PCHGenerator();
+  ~PCHGenerator() override;
   void InitializeSema(Sema &S) override { SemaPtr = &S; }
   void HandleTranslationUnit(ASTContext &Ctx) override;
   ASTMutationListener *GetASTMutationListener() override;

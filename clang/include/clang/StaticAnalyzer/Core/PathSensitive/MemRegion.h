@@ -609,7 +609,7 @@ public:
 
   AnalysisDeclContext *getAnalysisDeclContext() const { return AC; }
 
-  virtual void dumpToStream(raw_ostream &os) const override;
+  void dumpToStream(raw_ostream &os) const override;
 
   void Profile(llvm::FoldingSetNodeID& ID) const override;
 

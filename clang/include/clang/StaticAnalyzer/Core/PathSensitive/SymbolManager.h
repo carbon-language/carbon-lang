@@ -109,7 +109,7 @@ protected:
   SymbolData(Kind k, SymbolID sym) : SymExpr(k), Sym(sym) {}
 
 public:
-  virtual ~SymbolData() {}
+  ~SymbolData() override {}
 
   SymbolID getSymbolID() const { return Sym; }
 

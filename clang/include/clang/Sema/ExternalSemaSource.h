@@ -55,7 +55,7 @@ public:
     ExternalASTSource::SemaSource = true;
   }
 
-  ~ExternalSemaSource();
+  ~ExternalSemaSource() override;
 
   /// \brief Initialize the semantic source with the Sema instance
   /// being used to perform semantic analysis on the abstract syntax

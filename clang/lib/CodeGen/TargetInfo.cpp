@@ -1625,7 +1625,7 @@ public:
     : X86_64TargetCodeGenInfo(CGT, HasAVX) {}
 
   void getDependentLibraryOption(llvm::StringRef Lib,
-                                 llvm::SmallString<24> &Opt) const {
+                                 llvm::SmallString<24> &Opt) const override {
     Opt = "\01";
     Opt += Lib;
   }
@@ -3915,8 +3915,8 @@ private:
   llvm::Value *EmitAAPCSVAArg(llvm::Value *VAListAddr, QualType Ty,
                               CodeGenFunction &CGF) const;
 
-  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                 CodeGenFunction &CGF) const override {
+  llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                         CodeGenFunction &CGF) const override {
     return isDarwinPCS() ? EmitDarwinVAArg(VAListAddr, Ty, CGF)
                          : EmitAAPCSVAArg(VAListAddr, Ty, CGF);
   }
@@ -3927,13 +3927,15 @@ public:
   AArch64TargetCodeGenInfo(CodeGenTypes &CGT, AArch64ABIInfo::ABIKind Kind)
       : TargetCodeGenInfo(new AArch64ABIInfo(CGT, Kind)) {}
 
-  StringRef getARCRetainAutoreleasedReturnValueMarker() const {
+  StringRef getARCRetainAutoreleasedReturnValueMarker() const override {
     return "mov\tfp, fp\t\t; marker for objc_retainAutoreleaseReturnValue";
   }
 
-  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const { return 31; }
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const override {
+    return 31;
+  }
 
-  virtual bool doesReturnSlotInterfereWithArgs() const { return false; }
+  bool doesReturnSlotInterfereWithArgs() const override { return false; }
 };
 }
 

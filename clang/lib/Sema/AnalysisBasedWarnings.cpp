@@ -139,7 +139,7 @@ public:
     return false;
   }
 
-  void compareAlwaysTrue(const BinaryOperator *B, bool isAlwaysTrue) {
+  void compareAlwaysTrue(const BinaryOperator *B, bool isAlwaysTrue) override {
     if (HasMacroID(B))
       return;
 
@@ -148,7 +148,8 @@ public:
         << DiagRange << isAlwaysTrue;
   }
 
-  void compareBitwiseEquality(const BinaryOperator *B, bool isAlwaysTrue) {
+  void compareBitwiseEquality(const BinaryOperator *B,
+                              bool isAlwaysTrue) override {
     if (HasMacroID(B))
       return;
 
@@ -1333,9 +1334,7 @@ class UninitValsDiagReporter : public UninitVariablesHandler {
   
 public:
   UninitValsDiagReporter(Sema &S) : S(S), uses(nullptr) {}
-  ~UninitValsDiagReporter() { 
-    flushDiagnostics();
-  }
+  ~UninitValsDiagReporter() override { flushDiagnostics(); }
 
   MappedType &getUses(const VarDecl *vd) {
     if (!uses)
@@ -1663,9 +1662,8 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     }
   }
 
-
-  virtual void handleNegativeNotHeld(StringRef Kind, Name LockName, Name Neg,
-                                     SourceLocation Loc) override {
+  void handleNegativeNotHeld(StringRef Kind, Name LockName, Name Neg,
+                             SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc,
         S.PDiag(diag::warn_acquire_requires_negative_cap)
         << Kind << LockName << Neg);
@@ -1680,17 +1678,14 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     Warnings.push_back(DelayedDiag(Warning, getNotes()));
   }
 
-
-  virtual void handleLockAcquiredBefore(StringRef Kind, Name L1Name,
-                                        Name L2Name, SourceLocation Loc)
-      override {
+  void handleLockAcquiredBefore(StringRef Kind, Name L1Name, Name L2Name,
+                                SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc,
       S.PDiag(diag::warn_acquired_before) << Kind << L1Name << L2Name);
     Warnings.push_back(DelayedDiag(Warning, getNotes()));
   }
 
-  virtual void handleBeforeAfterCycle(Name L1Name, SourceLocation Loc)
-      override {
+  void handleBeforeAfterCycle(Name L1Name, SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc,
       S.PDiag(diag::warn_acquired_before_after_cycle) << L1Name);
     Warnings.push_back(DelayedDiag(Warning, getNotes()));

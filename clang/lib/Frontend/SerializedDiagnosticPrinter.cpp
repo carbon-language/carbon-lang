@@ -61,8 +61,8 @@ public:
                  DiagnosticOptions *DiagOpts)
     : DiagnosticNoteRenderer(LangOpts, DiagOpts), Writer(Writer) {}
 
-  virtual ~SDiagsRenderer() {}
-  
+  ~SDiagsRenderer() override {}
+
 protected:
   void emitDiagnosticMessage(SourceLocation Loc,
                              PresumedLoc PLoc,
@@ -158,7 +158,7 @@ public:
     EmitPreamble();
   }
 
-  ~SDiagsWriter() {}
+  ~SDiagsWriter() override {}
 
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) override;

@@ -63,7 +63,7 @@ namespace {
         CoverageInfo(CoverageInfo),
         M(new llvm::Module(ModuleName, C)) {}
 
-    virtual ~CodeGeneratorImpl() {
+    ~CodeGeneratorImpl() override {
       // There should normally not be any leftover inline method definitions.
       assert(DeferredInlineMethodDefinitions.empty() ||
              Diags.hasErrorOccurred());

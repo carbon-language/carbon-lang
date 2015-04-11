@@ -300,7 +300,7 @@ public:
                   const MatchFinder::MatchFinderOptions &Options)
       : Matchers(Matchers), Options(Options), ActiveASTContext(nullptr) {}
 
-  ~MatchASTVisitor() {
+  ~MatchASTVisitor() override {
     if (Options.CheckProfiling) {
       Options.CheckProfiling->Records = std::move(TimeByBucket);
     }

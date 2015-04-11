@@ -86,7 +86,7 @@ public:
                 const LangOptions &LangOpts, FixItOptions *FixItOpts);
 
   /// \brief Destroy the fix-it rewriter.
-  ~FixItRewriter();
+  ~FixItRewriter() override;
 
   /// \brief Check whether there are modifications for a given file.
   bool IsModified(FileID ID) const {

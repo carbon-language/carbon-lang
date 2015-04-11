@@ -357,7 +357,7 @@ public:
   CXTranslationUnit ClangTU;
   unsigned TUFlags;
 
-  void SetUp() {
+  void SetUp() override {
     llvm::SmallString<256> Dir;
     ASSERT_FALSE(llvm::sys::fs::createUniqueDirectory("libclang-test", Dir));
     TestDir = Dir.str();
@@ -365,7 +365,7 @@ public:
               clang_defaultEditingTranslationUnitOptions();
     Index = clang_createIndex(0, 0);
   }
-  void TearDown() {
+  void TearDown() override {
     clang_disposeTranslationUnit(ClangTU);
     clang_disposeIndex(Index);
     for (const std::string &Path : Files)
