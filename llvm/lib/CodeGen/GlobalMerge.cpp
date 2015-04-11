@@ -73,9 +73,10 @@ using namespace llvm;
 
 #define DEBUG_TYPE "global-merge"
 
+// FIXME: This is only useful as a last-resort way to disable the pass.
 static cl::opt<bool>
 EnableGlobalMerge("enable-global-merge", cl::Hidden,
-                  cl::desc("Enable global merge pass"),
+                  cl::desc("Enable the global merge pass"),
                   cl::init(true));
 
 static cl::opt<bool>
