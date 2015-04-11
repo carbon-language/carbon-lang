@@ -30,7 +30,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <sstream>
 using namespace clang;
@@ -2217,29 +2216,7 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
   if (!CGF.ReturnValue->hasOneUse()) {
     llvm::BasicBlock *IP = CGF.Builder.GetInsertBlock();
     if (IP->empty()) return nullptr;
-    llvm::Instruction *I = &IP->back();
-
-    // Skip lifetime markers
-    for (llvm::BasicBlock::reverse_iterator II = IP->rbegin(),
-                                            IE = IP->rend();
-         II != IE; ++II) {
-      if (llvm::IntrinsicInst *Intrinsic =
-              dyn_cast<llvm::IntrinsicInst>(&*II)) {
-        if (Intrinsic->getIntrinsicID() == llvm::Intrinsic::lifetime_end) {
-          const llvm::Value *CastAddr = Intrinsic->getArgOperand(1);
-          ++II;
-          if (isa<llvm::BitCastInst>(&*II)) {
-            if (CastAddr == &*II) {
-              continue;
-            }
-          }
-        }
-      }
-      I = &*II;
-      break;
-    }
-
-    llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(I);
+    llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(&IP->back());
     if (!store) return nullptr;
     if (store->getPointerOperand() != CGF.ReturnValue) return nullptr;
     assert(!store->isAtomic() && !store->isVolatile()); // see below
@@ -2337,8 +2314,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 
       // If there is a dominating store to ReturnValue, we can elide
       // the load, zap the store, and usually zap the alloca.
-      if (llvm::StoreInst *SI =
-              findDominatingStoreToReturnValue(*this)) {
+      if (llvm::StoreInst *SI = findDominatingStoreToReturnValue(*this)) {
         // Reuse the debug location from the store unless there is
         // cleanup code to be emitted between the store and return
         // instruction.
