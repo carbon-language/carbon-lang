@@ -349,23 +349,16 @@ class InternalSymbolizer : public SymbolizerTool {
 
 #endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
-class POSIXSymbolizer : public Symbolizer {
- public:
-  explicit POSIXSymbolizer(IntrusiveList<SymbolizerTool> tools)
-      : Symbolizer(tools) {}
+const char *Symbolizer::PlatformDemangle(const char *name) {
+  return DemangleCXXABI(name);
+}
 
- private:
-  const char *PlatformDemangle(const char *name) override {
-    return DemangleCXXABI(name);
-  }
-
-  void PlatformPrepareForSandboxing() override {
+void Symbolizer::PlatformPrepareForSandboxing() {
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-    // Cache /proc/self/exe on Linux.
-    CacheBinaryName();
+  // Cache /proc/self/exe on Linux.
+  CacheBinaryName();
 #endif
-  }
-};
+}
 
 static SymbolizerTool *ChooseExternalSymbolizer(LowLevelAllocator *allocator) {
   const char *path = common_flags()->external_symbolizer_path;
@@ -448,7 +441,7 @@ Symbolizer *Symbolizer::PlatformInit() {
   IntrusiveList<SymbolizerTool> list;
   list.clear();
   ChooseSymbolizerTools(&list, &symbolizer_allocator_);
-  return new(symbolizer_allocator_) POSIXSymbolizer(list);
+  return new(symbolizer_allocator_) Symbolizer(list);
 }
 
 }  // namespace __sanitizer

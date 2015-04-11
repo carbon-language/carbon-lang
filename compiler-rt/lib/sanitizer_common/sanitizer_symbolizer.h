@@ -75,7 +75,7 @@ struct DataInfo {
 
 class SymbolizerTool;
 
-class Symbolizer {
+class Symbolizer final {
  public:
   /// Initialize and return platform-specific implementation of symbolizer
   /// (if it wasn't already initialized).
@@ -146,8 +146,8 @@ class Symbolizer {
   bool modules_fresh_;
 
   // Platform-specific default demangler, must not return nullptr.
-  virtual const char *PlatformDemangle(const char *name) { UNIMPLEMENTED(); }
-  virtual void PlatformPrepareForSandboxing() { UNIMPLEMENTED(); }
+  const char *PlatformDemangle(const char *name);
+  void PlatformPrepareForSandboxing();
 
   static Symbolizer *symbolizer_;
   static StaticSpinMutex init_mu_;
@@ -160,7 +160,6 @@ class Symbolizer {
   typedef IntrusiveList<SymbolizerTool>::Iterator Iterator;
   IntrusiveList<SymbolizerTool> tools_;
 
- protected:
   explicit Symbolizer(IntrusiveList<SymbolizerTool> tools);
 
   static LowLevelAllocator symbolizer_allocator_;
