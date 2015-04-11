@@ -41,9 +41,9 @@ struct PointerOffsetPair {
 };
 
 struct LoadPOPPair {
+  LoadPOPPair() = default;
   LoadPOPPair(LoadInst *L, PointerOffsetPair P, unsigned O)
       : Load(L), POP(P), InsertOrder(O) {}
-  LoadPOPPair() {}
   LoadInst *Load;
   PointerOffsetPair POP;
   /// \brief The new load needs to be created before the first load in IR order.

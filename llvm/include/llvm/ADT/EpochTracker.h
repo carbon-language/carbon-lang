@@ -30,7 +30,7 @@ public:
 
   class HandleBase {
   public:
-    HandleBase() {}
+    HandleBase() = default;
     explicit HandleBase(const DebugEpochBase *) {}
     bool isHandleInSync() const { return true; }
     const void *getEpochAddress() const { return nullptr; }

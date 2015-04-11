@@ -253,10 +253,7 @@ binary_le_impl<value_type> binary_le(value_type V) {
   return binary_le_impl<value_type>(V);
 }
 
-template <size_t NumBytes>
-struct zeros_impl {
-  zeros_impl() {}
-};
+template <size_t NumBytes> struct zeros_impl {};
 
 template <size_t NumBytes>
 raw_ostream &operator<<(raw_ostream &OS, const zeros_impl<NumBytes> &) {

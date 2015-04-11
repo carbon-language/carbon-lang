@@ -163,7 +163,7 @@ namespace {
     static const char *const BlockTag;
     static const char *const EdgeTag;
 
-    GCOVRecord() {}
+    GCOVRecord() = default;
 
     void writeBytes(const char *Bytes, int Size) {
       os->write(Bytes, Size);

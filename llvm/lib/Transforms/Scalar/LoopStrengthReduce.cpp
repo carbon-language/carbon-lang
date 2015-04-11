@@ -112,8 +112,6 @@ public:
   /// a particular register.
   SmallBitVector UsedByIndices;
 
-  RegSortData() {}
-
   void print(raw_ostream &OS) const;
   void dump() const;
 };

@@ -120,7 +120,7 @@ class UniqueID {
   uint64_t File;
 
 public:
-  UniqueID() {}
+  UniqueID() = default;
   UniqueID(uint64_t Device, uint64_t File) : Device(Device), File(File) {}
   bool operator==(const UniqueID &Other) const {
     return Device == Other.Device && File == Other.File;
