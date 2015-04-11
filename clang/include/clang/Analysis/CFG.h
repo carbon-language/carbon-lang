@@ -493,7 +493,6 @@ public:
     : Elements(C), Label(nullptr), Terminator(nullptr), LoopTarget(nullptr), 
       BlockID(blockid), Preds(C, 1), Succs(C, 1), HasNoReturnElement(false),
       Parent(parent) {}
-  ~CFGBlock() {}
 
   // Statement iterators
   typedef ElementList::iterator                      iterator;

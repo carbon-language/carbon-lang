@@ -56,7 +56,8 @@ class MacroArgs {
   MacroArgs(unsigned NumToks, bool varargsElided)
     : NumUnexpArgTokens(NumToks), VarargsElided(varargsElided),
       ArgCache(nullptr) {}
-  ~MacroArgs() {}
+  ~MacroArgs() = default;
+
 public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified
   /// macro and argument info.

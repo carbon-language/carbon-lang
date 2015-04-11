@@ -589,8 +589,6 @@ public:
    : LCtx(Ctx), Loc(s), SymMgr(symmgr),
      reapedStore(nullptr, storeMgr) {}
 
-  ~SymbolReaper() {}
-
   const LocationContext *getLocationContext() const { return LCtx; }
 
   bool isLive(SymbolRef sym);

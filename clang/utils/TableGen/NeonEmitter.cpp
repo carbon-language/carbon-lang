@@ -1563,8 +1563,6 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
   // See the documentation in arm_neon.td for a description of these operators.
   class LowHalf : public SetTheory::Operator {
   public:
-    void anchor() override {}
-    ~LowHalf() override {}
     void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
                ArrayRef<SMLoc> Loc) override {
       SetTheory::RecSet Elts2;
@@ -1574,8 +1572,6 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
   };
   class HighHalf : public SetTheory::Operator {
   public:
-    void anchor() override {}
-    ~HighHalf() override {}
     void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
                ArrayRef<SMLoc> Loc) override {
       SetTheory::RecSet Elts2;
@@ -1588,8 +1584,6 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
 
   public:
     Rev(unsigned ElementSize) : ElementSize(ElementSize) {}
-    void anchor() override {}
-    ~Rev() override {}
     void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
                ArrayRef<SMLoc> Loc) override {
       SetTheory::RecSet Elts2;
@@ -1613,8 +1607,6 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
 
   public:
     MaskExpander(unsigned N) : N(N) {}
-    void anchor() override {}
-    ~MaskExpander() override {}
     void expand(SetTheory &ST, Record *R, SetTheory::RecSet &Elts) override {
       unsigned Addend = 0;
       if (R->getName() == "mask0")

@@ -111,7 +111,7 @@ class VariantMatcher {
                               ArrayRef<VariantMatcher> InnerMatchers) const;
 
   protected:
-    ~MatcherOps() {}
+    ~MatcherOps() = default;
 
   private:
     ast_type_traits::ASTNodeKind NodeKind;

@@ -449,7 +449,7 @@ private:
                        const char **Annotations, unsigned NumAnnotations,
                        StringRef ParentName,
                        const char *BriefComment);
-  ~CodeCompletionString() { }
+  ~CodeCompletionString() = default;
 
   friend class CodeCompletionBuilder;
   friend class CodeCompletionResult;

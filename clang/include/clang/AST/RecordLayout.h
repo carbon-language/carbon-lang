@@ -159,7 +159,7 @@ private:
                   const BaseOffsetsMapTy& BaseOffsets,
                   const VBaseOffsetsMapTy& VBaseOffsets);
 
-  ~ASTRecordLayout() {}
+  ~ASTRecordLayout() = default;
 
   void Destroy(ASTContext &Ctx);
   

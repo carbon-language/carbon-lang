@@ -109,7 +109,7 @@ class MacroInfo {
 
   // Only the Preprocessor gets to create and destroy these.
   MacroInfo(SourceLocation DefLoc);
-  ~MacroInfo() {}
+  ~MacroInfo() = default;
 
 public:
   /// \brief Return the location that the macro was defined at.

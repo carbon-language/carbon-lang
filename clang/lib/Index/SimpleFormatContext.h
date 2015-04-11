@@ -44,8 +44,6 @@ public:
     Diagnostics->setClient(new IgnoringDiagConsumer, true);
   }
 
-  ~SimpleFormatContext() { }
-
   FileID createInMemoryFile(StringRef Name, StringRef Content) {
     std::unique_ptr<llvm::MemoryBuffer> Source =
         llvm::MemoryBuffer::getMemBuffer(Content);
