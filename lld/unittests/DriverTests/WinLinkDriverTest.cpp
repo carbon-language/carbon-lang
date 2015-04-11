@@ -45,8 +45,8 @@ TEST_F(WinLinkParserTest, Basic) {
 
   // Unspecified flags will have default values.
   EXPECT_FALSE(_ctx.isDll());
-  EXPECT_EQ(6, _ctx.getMinOSVersion().major);
-  EXPECT_EQ(0, _ctx.getMinOSVersion().minor);
+  EXPECT_EQ(6, _ctx.getMinOSVersion().majorVersion);
+  EXPECT_EQ(0, _ctx.getMinOSVersion().minorVersion);
   EXPECT_EQ(0x400000U, _ctx.getBaseAddress());
   EXPECT_EQ(1024 * 1024U, _ctx.getStackReserve());
   EXPECT_EQ(4096U, _ctx.getStackCommit());
@@ -230,28 +230,28 @@ TEST_F(WinLinkParserTest, MachineUnknown) {
 
 TEST_F(WinLinkParserTest, MajorImageVersion) {
   EXPECT_TRUE(parse("link.exe", "/version:7", "foo.o", nullptr));
-  EXPECT_EQ(7, _ctx.getImageVersion().major);
-  EXPECT_EQ(0, _ctx.getImageVersion().minor);
+  EXPECT_EQ(7, _ctx.getImageVersion().majorVersion);
+  EXPECT_EQ(0, _ctx.getImageVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, MajorMinorImageVersion) {
   EXPECT_TRUE(parse("link.exe", "/version:72.35", "foo.o", nullptr));
-  EXPECT_EQ(72, _ctx.getImageVersion().major);
-  EXPECT_EQ(35, _ctx.getImageVersion().minor);
+  EXPECT_EQ(72, _ctx.getImageVersion().majorVersion);
+  EXPECT_EQ(35, _ctx.getImageVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {
   EXPECT_TRUE(parse("link.exe", "/subsystem:windows,3", "foo.o", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _ctx.getSubsystem());
-  EXPECT_EQ(3, _ctx.getMinOSVersion().major);
-  EXPECT_EQ(0, _ctx.getMinOSVersion().minor);
+  EXPECT_EQ(3, _ctx.getMinOSVersion().majorVersion);
+  EXPECT_EQ(0, _ctx.getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
   EXPECT_TRUE(parse("link.exe", "/subsystem:windows,3.1", "foo.o", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _ctx.getSubsystem());
-  EXPECT_EQ(3, _ctx.getMinOSVersion().major);
-  EXPECT_EQ(1, _ctx.getMinOSVersion().minor);
+  EXPECT_EQ(3, _ctx.getMinOSVersion().majorVersion);
+  EXPECT_EQ(1, _ctx.getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, Base) {

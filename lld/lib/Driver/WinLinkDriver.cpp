@@ -132,7 +132,7 @@ static bool parseMemoryOption(StringRef arg, uint64_t &reserve,
 
 // Parse an argument for /version or /subsystem. The expected string is
 // "<integer>[.<integer>]".
-static bool parseVersion(StringRef arg, int &major, int &minor) {
+static bool parseVersion(StringRef arg, uint32_t &major, uint32_t &minor) {
   StringRef majorVersion, minorVersion;
   std::tie(majorVersion, minorVersion) = arg.split('.');
   if (minorVersion.empty())
@@ -166,12 +166,12 @@ static llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
 // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
 static bool parseSubsystem(StringRef arg,
                            llvm::COFF::WindowsSubsystem &subsystem,
-                           llvm::Optional<int> &major,
-                           llvm::Optional<int> &minor, raw_ostream &diag) {
+                           llvm::Optional<uint32_t> &major,
+                           llvm::Optional<uint32_t> &minor, raw_ostream &diag) {
   StringRef subsystemStr, osVersion;
   std::tie(subsystemStr, osVersion) = arg.split(',');
   if (!osVersion.empty()) {
-    int v1, v2;
+    uint32_t v1, v2;
     if (!parseVersion(osVersion, v1, v2))
       return false;
     major = v1;
@@ -1005,10 +1005,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   }
 
   if (auto *arg = parsedArgs->getLastArg(OPT_version)) {
-    int major, minor;
+    uint32_t major, minor;
     if (!parseVersion(arg->getValue(), major, minor))
       return false;
-    ctx.setImageVersion({major, minor});
+    ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
   }
 
   // Parse /merge:<from>=<to>.
@@ -1026,12 +1026,12 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Parse /subsystem:<subsystem>[,<majorOSVersion>[.<minorOSVersion>]].
   if (auto *arg = parsedArgs->getLastArg(OPT_subsystem)) {
     llvm::COFF::WindowsSubsystem subsystem;
-    llvm::Optional<int> major, minor;
+    llvm::Optional<uint32_t> major, minor;
     if (!parseSubsystem(arg->getValue(), subsystem, major, minor, diag))
       return false;
     ctx.setSubsystem(subsystem);
     if (major.hasValue())
-      ctx.setMinOSVersion({*major, *minor});
+      ctx.setMinOSVersion(PECOFFLinkingContext::Version(*major, *minor));
   }
 
   // Parse /section:name,[[!]{DEKPRSW}]
@@ -1143,7 +1143,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         if (name->getBaseAddress() && ctx.getBaseAddress())
           ctx.setBaseAddress(name->getBaseAddress());
       } else if (auto *ver = dyn_cast<moduledef::Version>(dir)) {
-        ctx.setImageVersion({ver->getMajorVersion(), ver->getMinorVersion()});
+        ctx.setImageVersion(PECOFFLinkingContext::Version(
+                              ver->getMajorVersion(), ver->getMinorVersion()));
       } else {
         llvm::dbgs() << static_cast<int>(dir->getKind()) << "\n";
         llvm_unreachable("Unknown module-definition directive.\n");

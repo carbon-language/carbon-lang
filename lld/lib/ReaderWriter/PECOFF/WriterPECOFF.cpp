@@ -435,16 +435,18 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   // The version number of the resultant executable/DLL. The number is purely
   // informative, and neither the linker nor the loader won't use it. User can
   // set the value using /version command line option. Default is 0.0.
-  _peHeader.MajorImageVersion = ctx.getImageVersion().major;
-  _peHeader.MinorImageVersion = ctx.getImageVersion().minor;
+  PECOFFLinkingContext::Version imageVersion = ctx.getImageVersion();
+  _peHeader.MajorImageVersion = imageVersion.majorVersion;
+  _peHeader.MinorImageVersion = imageVersion.minorVersion;
 
   // The required Windows version number. This is the internal version and
   // shouldn't be confused with product name. Windows 7 is version 6.1 and
   // Windows 8 is 6.2, for example.
-  _peHeader.MajorOperatingSystemVersion = ctx.getMinOSVersion().major;
-  _peHeader.MinorOperatingSystemVersion = ctx.getMinOSVersion().minor;
-  _peHeader.MajorSubsystemVersion = ctx.getMinOSVersion().major;
-  _peHeader.MinorSubsystemVersion = ctx.getMinOSVersion().minor;
+  PECOFFLinkingContext::Version minOSVersion = ctx.getMinOSVersion();
+  _peHeader.MajorOperatingSystemVersion = minOSVersion.majorVersion;
+  _peHeader.MinorOperatingSystemVersion = minOSVersion.minorVersion;
+  _peHeader.MajorSubsystemVersion = minOSVersion.majorVersion;
+  _peHeader.MinorSubsystemVersion = minOSVersion.minorVersion;
 
   _peHeader.Subsystem = ctx.getSubsystem();
 
