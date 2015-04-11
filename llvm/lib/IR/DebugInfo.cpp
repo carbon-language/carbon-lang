@@ -143,20 +143,6 @@ StringRef DIScope::getName() const {
   return StringRef();
 }
 
-StringRef DIScope::getFilename() const {
-  if (auto *N = get())
-    if (auto *F = N->getFile())
-      return F->getFilename();
-  return "";
-}
-
-StringRef DIScope::getDirectory() const {
-  if (auto *N = get())
-    if (auto *F = N->getFile())
-      return F->getDirectory();
-  return "";
-}
-
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
   get()->replaceSubprograms(MDSubprogramArray(Subprograms));
 }

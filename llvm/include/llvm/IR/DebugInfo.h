@@ -222,8 +222,8 @@ public:
   ///
   /// If the scope node has a name, return that, else return an empty string.
   StringRef getName() const;
-  StringRef getFilename() const;
-  StringRef getDirectory() const;
+  StringRef getFilename() const { return get()->getFilename(); }
+  StringRef getDirectory() const { return get()->getDirectory(); }
 
   /// \brief Generate a reference to this DIScope.
   ///
@@ -697,8 +697,8 @@ public:
   unsigned isDefinition() const { return get()->isDefinition(); }
 
   DIScope getContext() const { return DIScope(get()->getScope()); }
-  StringRef getFilename() const { return getFile().getFilename(); }
-  StringRef getDirectory() const { return getFile().getDirectory(); }
+  StringRef getFilename() const { return get()->getFilename(); }
+  StringRef getDirectory() const { return get()->getDirectory(); }
   DITypeRef getType() const { return get()->getType(); }
 
   GlobalVariable *getGlobal() const;
@@ -812,8 +812,8 @@ public:
   DILocation getOrigLocation() const {
     return DILocation(get()->getInlinedAt());
   }
-  StringRef getFilename() const { return getScope().getFilename(); }
-  StringRef getDirectory() const { return getScope().getDirectory(); }
+  StringRef getFilename() const { return get()->getFilename(); }
+  StringRef getDirectory() const { return get()->getDirectory(); }
   bool atSameLineAs(const DILocation &Other) const {
     return (getLineNumber() == Other.getLineNumber() &&
             getFilename() == Other.getFilename());
