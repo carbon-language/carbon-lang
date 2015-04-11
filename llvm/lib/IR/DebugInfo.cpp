@@ -90,9 +90,8 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
 }
 
 Function *DISubprogram::getFunction() const {
-  if (auto *N = get())
-    if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(N->getFunction()))
-      return dyn_cast<Function>(C->getValue());
+  if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(get()->getFunction()))
+    return dyn_cast<Function>(C->getValue());
   return nullptr;
 }
 
