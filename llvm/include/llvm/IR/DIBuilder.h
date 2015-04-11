@@ -701,6 +701,23 @@ namespace llvm {
     /// resolve cycles.
     void replaceArrays(DICompositeType &T, DIArray Elements,
                        DIArray TParems = DIArray());
+
+    /// \brief Replace a temporary node.
+    ///
+    /// Call \a MDNode::replaceAllUsesWith() on \c N, replacing it with \c
+    /// Replacement.
+    ///
+    /// If \c Replacement is the same as \c N.get(), instead call \a
+    /// MDNode::replaceWithUniqued().  In this case, the uniqued node could
+    /// have a different address, so we return the final address.
+    template <class NodeTy>
+    NodeTy *replaceTemporary(TempMDNode &&N, NodeTy *Replacement) {
+      if (N.get() == Replacement)
+        return cast<NodeTy>(MDNode::replaceWithUniqued(std::move(N)));
+
+      N->replaceAllUsesWith(Replacement);
+      return Replacement;
+    }
   };
 } // end namespace llvm
 
