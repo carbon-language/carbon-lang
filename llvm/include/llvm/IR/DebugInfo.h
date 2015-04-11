@@ -236,10 +236,6 @@ public:
 ///
 /// Abstracts over direct and identifier-based metadata references.
 template <typename T> class DIRef {
-  friend DIScopeRef DIScope::getContext() const;
-  friend DIScopeRef DIScope::getRef() const;
-  friend class DIType;
-
   /// \brief Val can be either a MDNode or a MDString.
   ///
   /// In the latter, MDString specifies the type identifier.
