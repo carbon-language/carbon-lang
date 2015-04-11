@@ -743,6 +743,7 @@ class PPCTargetInfo : public TargetInfo {
   bool HasVSX;
   bool HasP8Vector;
   bool HasP8Crypto;
+  bool HasDirectMove;
   bool HasQPX;
   bool HasHTM;
   bool HasBPERMD;
@@ -754,7 +755,7 @@ protected:
 public:
   PPCTargetInfo(const llvm::Triple &Triple)
     : TargetInfo(Triple), HasVSX(false), HasP8Vector(false),
-      HasP8Crypto(false), HasQPX(false), HasHTM(false),
+      HasP8Crypto(false), HasDirectMove(false), HasQPX(false), HasHTM(false),
       HasBPERMD(false), HasExtDiv(false) {
     BigEndian = (Triple.getArch() != llvm::Triple::ppc64le);
     LongDoubleWidth = LongDoubleAlign = 128;
@@ -1035,6 +1036,11 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       continue;
     }
 
+    if (Feature == "direct-move") {
+      HasDirectMove = true;
+      continue;
+    }
+
     if (Feature == "qpx") {
       HasQPX = true;
       continue;
@@ -1257,6 +1263,10 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Case("pwr8", true)
     .Case("pwr7", true)
     .Default(false);
+  Features["direct-move"] = llvm::StringSwitch<bool>(CPU)
+    .Case("ppc64le", true)
+    .Case("pwr8", true)
+    .Default(false);
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
@@ -1265,6 +1275,7 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
     .Case("vsx", HasVSX)
     .Case("power8-vector", HasP8Vector)
     .Case("crypto", HasP8Crypto)
+    .Case("direct-move", HasDirectMove)
     .Case("qpx", HasQPX)
     .Case("htm", HasHTM)
     .Case("bpermd", HasBPERMD)
