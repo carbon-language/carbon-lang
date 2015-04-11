@@ -163,12 +163,12 @@ def ProcessorFeatures {
        FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
        FeatureFPRND, FeatureFPCVT, FeatureISEL,
        FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
-       Feature64Bit /*, Feature64BitRegs */, FeaturePartwordAtomic,
+       Feature64Bit /*, Feature64BitRegs */,
        FeatureBPERMD, FeatureExtDiv,
        DeprecatedMFTB, DeprecatedDST];
   list<SubtargetFeature> Power8SpecificFeatures =
       [DirectivePwr8, FeatureP8Altivec, FeatureP8Vector, FeatureP8Crypto,
-       FeatureHTM, FeatureDirectMove, FeatureICBT];
+       FeatureHTM, FeatureDirectMove, FeatureICBT, FeaturePartwordAtomic];
   list<SubtargetFeature> Power8FeatureList =
       !listconcat(Power7FeatureList, Power8SpecificFeatures);
 }
