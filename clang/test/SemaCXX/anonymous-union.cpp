@@ -39,13 +39,14 @@ void X::test_unqual_references() {
   a = 0;
 }
 
-void X::test_unqual_references_const() const {
+void X::test_unqual_references_const() const { // expected-note 2{{member function 'X::test_unqual_references_const' is declared const here}}
   d = 0.0;
-  f2 = 0; // expected-error{{read-only variable is not assignable}}
-  a = 0; // expected-error{{read-only variable is not assignable}}
+  f2 = 0; // expected-error{{cannot assign to non-static data member within const member function 'test_unqual_references_const'}}
+  a = 0; // expected-error{{cannot assign to non-static data member within const member function 'test_unqual_references_const'}}
 }
 
 void test_unqual_references(X x, const X xc) {
+  // expected-note@-1 2{{variable 'xc' declared const here}}
   x.i = 0;
   x.f = 0.0;
   x.f2 = x.f;
@@ -54,8 +55,8 @@ void test_unqual_references(X x, const X xc) {
   x.a = 0;
 
   xc.d = 0.0;
-  xc.f = 0; // expected-error{{read-only variable is not assignable}}
-  xc.a = 0; // expected-error{{read-only variable is not assignable}}
+  xc.f = 0; // expected-error{{cannot assign to variable 'xc' with const-qualified type 'const X'}}
+  xc.a = 0; // expected-error{{cannot assign to variable 'xc' with const-qualified type 'const X'}}
 }
 
 

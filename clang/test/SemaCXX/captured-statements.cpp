@@ -81,11 +81,11 @@ void test_capture_var() {
 }
 
 template <typename S, typename T>
-S template_capture_var(S x, T y) {
+S template_capture_var(S x, T y) {  // expected-note{{variable 'y' declared const here}}
   #pragma clang _debug captured
   {
     x++;
-    y++;  // expected-error{{read-only variable is not assignable}}
+    y++;  // expected-error{{cannot assign to variable 'y' with const-qualified type 'const int'}}
   }
 
   return x;

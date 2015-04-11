@@ -184,8 +184,8 @@ void test17() {
 }
 
 void test18() {
-  void (^const  blockA)(void) = ^{ };
-  blockA = ^{ }; // expected-error {{read-only variable is not assignable}}
+  void (^const  blockA)(void) = ^{ };  // expected-note {{variable 'blockA' declared const here}}
+  blockA = ^{ }; // expected-error {{cannot assign to variable 'blockA' with const-qualified type 'void (^const)(void)}}
 }
 
 // rdar://7072507

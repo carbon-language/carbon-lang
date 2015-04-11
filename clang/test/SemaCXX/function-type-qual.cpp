@@ -17,8 +17,8 @@ class C {
     x = 0;
   }
 
-  void m2() const {
-    x = 0; // expected-error {{read-only variable is not assignable}}
+  void m2() const { // expected-note {{member function 'C::m2' is declared const here}}
+    x = 0; // expected-error {{cannot assign to non-static data member within const member function 'm2'}}
   }
 
   int x;
