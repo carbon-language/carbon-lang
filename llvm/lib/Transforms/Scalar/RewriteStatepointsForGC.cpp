@@ -2014,11 +2014,11 @@ static DenseSet<Value *> computeKillSet(BasicBlock *BB) {
   return KillSet;
 }
 
+#ifndef NDEBUG
 /// Check that the items in 'Live' dominate 'TI'.  This is used as a basic
 /// sanity check for the liveness computation.
 static void checkBasicSSA(DominatorTree &DT, DenseSet<Value *> &Live,
                           TerminatorInst *TI, bool TermOkay = false) {
-#ifndef NDEBUG
   for (Value *V : Live) {
     if (auto *I = dyn_cast<Instruction>(V)) {
       // The terminator can be a member of the LiveOut set.  LLVM's definition
@@ -2030,7 +2030,6 @@ static void checkBasicSSA(DominatorTree &DT, DenseSet<Value *> &Live,
              "basic SSA liveness expectation violated by liveness analysis");
     }
   }
-#endif
 }
 
 /// Check that all the liveness sets used during the computation of liveness
@@ -2042,6 +2041,7 @@ static void checkBasicSSA(DominatorTree &DT, GCPtrLivenessData &Data,
   checkBasicSSA(DT, Data.LiveOut[&BB], BB.getTerminator(), true);
   checkBasicSSA(DT, Data.LiveIn[&BB], BB.getTerminator());
 }
+#endif
 
 static void computeLiveInValues(DominatorTree &DT, Function &F,
                                 GCPtrLivenessData &Data) {
