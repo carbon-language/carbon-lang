@@ -970,7 +970,7 @@ static void WriteMDSubprogram(const MDSubprogram *N,
   Record.push_back(N->getVirtualIndex());
   Record.push_back(N->getFlags());
   Record.push_back(N->isOptimized());
-  Record.push_back(VE.getMetadataOrNullID(N->getFunction()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawFunction()));
   Record.push_back(VE.getMetadataOrNullID(N->getTemplateParams().get()));
   Record.push_back(VE.getMetadataOrNullID(N->getDeclaration()));
   Record.push_back(VE.getMetadataOrNullID(N->getVariables().get()));
@@ -1064,7 +1064,7 @@ static void WriteMDGlobalVariable(const MDGlobalVariable *N,
   Record.push_back(VE.getMetadataOrNullID(N->getType()));
   Record.push_back(N->isLocalToUnit());
   Record.push_back(N->isDefinition());
-  Record.push_back(VE.getMetadataOrNullID(N->getVariable()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawVariable()));
   Record.push_back(VE.getMetadataOrNullID(N->getStaticDataMemberDeclaration()));
 
   Stream.EmitRecord(bitc::METADATA_GLOBAL_VAR, Record, Abbrev);

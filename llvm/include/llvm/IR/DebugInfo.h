@@ -522,7 +522,7 @@ public:
   /// \brief Check if this provides debugging information for the function F.
   bool describes(const Function *F);
 
-  Function *getFunction() const;
+  Function *getFunction() const { return get()->getFunction(); }
 
   void replaceFunction(Function *F) {
     if (auto *N = get())
@@ -689,12 +689,7 @@ public:
   DITypeRef getType() const { return get()->getType(); }
 
   GlobalVariable *getGlobal() const;
-  Constant *getConstant() const {
-    if (auto *N = get())
-      if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(N->getVariable()))
-        return C->getValue();
-    return nullptr;
-  }
+  Constant *getConstant() const { return get()->getVariable(); }
   DIDerivedType getStaticDataMemberDeclaration() const {
     return DIDerivedType(get()->getStaticDataMemberDeclaration());
   }

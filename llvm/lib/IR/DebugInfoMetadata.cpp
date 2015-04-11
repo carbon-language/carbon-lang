@@ -343,6 +343,11 @@ MDSubprogram *MDSubprogram::getImpl(
                        Ops);
 }
 
+Function *MDSubprogram::getFunction() const {
+  // FIXME: Should this be looking through bitcasts?
+  return dyn_cast_or_null<Function>(getFunctionConstant());
+}
+
 void MDSubprogram::replaceFunction(Function *F) {
   replaceFunction(F ? ConstantAsMetadata::get(F)
                     : static_cast<ConstantAsMetadata *>(nullptr));

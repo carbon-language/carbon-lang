@@ -49,12 +49,6 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   return !SP.describes(CurFn);
 }
 
-Function *DISubprogram::getFunction() const {
-  if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(get()->getFunction()))
-    return dyn_cast<Function>(C->getValue());
-  return nullptr;
-}
-
 bool DISubprogram::describes(const Function *F) {
   assert(F && "Invalid function");
   if (F == getFunction())

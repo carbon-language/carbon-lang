@@ -99,9 +99,11 @@ protected:
                                       getBasicType("basictype"), 1, 2, 0, 0)
         ->getRef();
   }
+  Constant *getConstant() {
+    return ConstantInt::get(Type::getInt32Ty(Context), Counter++);
+  }
   ConstantAsMetadata *getConstantAsMetadata() {
-    return ConstantAsMetadata::get(
-        ConstantInt::get(Type::getInt32Ty(Context), Counter++));
+    return ConstantAsMetadata::get(getConstant());
   }
   MDTypeRef getCompositeType() {
     return MDCompositeType::getDistinct(
@@ -109,8 +111,8 @@ protected:
                nullptr, 32, 32, 0, 0, nullptr, 0, nullptr, nullptr, "")
         ->getRef();
   }
-  ConstantAsMetadata *getFunctionAsMetadata(StringRef Name) {
-    return ConstantAsMetadata::get(M.getOrInsertFunction(
+  Function *getFunction(StringRef Name) {
+    return cast<Function>(M.getOrInsertFunction(
         Name, FunctionType::get(Type::getVoidTy(Context), None, false)));
   }
 };
@@ -1431,7 +1433,7 @@ TEST_F(MDSubprogramTest, get) {
   unsigned VirtualIndex = 5;
   unsigned Flags = 6;
   bool IsOptimized = false;
-  ConstantAsMetadata *Function = getFunctionAsMetadata("foo");
+  llvm::Function *Function = getFunction("foo");
   MDTuple *TemplateParams = getTuple();
   MDSubprogram *Declaration = getSubprogram();
   MDTuple *Variables = getTuple();
@@ -1536,12 +1538,11 @@ TEST_F(MDSubprogramTest, get) {
                                  ContainingType, Virtuality, VirtualIndex,
                                  Flags, !IsOptimized, Function, TemplateParams,
                                  Declaration, Variables));
-  EXPECT_NE(N,
-            MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
-                              Type, IsLocalToUnit, IsDefinition, ScopeLine,
-                              ContainingType, Virtuality, VirtualIndex, Flags,
-                              IsOptimized, getFunctionAsMetadata("bar"),
-                              TemplateParams, Declaration, Variables));
+  EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
+                                 Type, IsLocalToUnit, IsDefinition, ScopeLine,
+                                 ContainingType, Virtuality, VirtualIndex,
+                                 Flags, IsOptimized, getFunction("bar"),
+                                 TemplateParams, Declaration, Variables));
   EXPECT_NE(N, MDSubprogram::get(Context, Scope, Name, LinkageName, File, Line,
                                  Type, IsLocalToUnit, IsDefinition, ScopeLine,
                                  ContainingType, Virtuality, VirtualIndex,
@@ -1592,7 +1593,7 @@ TEST_F(MDSubprogramTest, replaceFunction) {
       Function::Create(FunctionType::get(Type::getVoidTy(Context), false),
                        GlobalValue::ExternalLinkage));
   N->replaceFunction(F.get());
-  EXPECT_EQ(ConstantAsMetadata::get(F.get()), N->getFunction());
+  EXPECT_EQ(F.get(), N->getFunction());
 
   N->replaceFunction(nullptr);
   EXPECT_EQ(nullptr, N->getFunction());
@@ -1738,7 +1739,7 @@ TEST_F(MDGlobalVariableTest, get) {
   MDTypeRef Type = getDerivedType();
   bool IsLocalToUnit = false;
   bool IsDefinition = true;
-  ConstantAsMetadata *Variable = getConstantAsMetadata();
+  Constant *Variable = getConstant();
   MDDerivedType *StaticDataMemberDeclaration =
       cast<MDDerivedType>(getDerivedType());
 
@@ -1788,10 +1789,10 @@ TEST_F(MDGlobalVariableTest, get) {
   EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, Name, LinkageName, File,
                                      Line, Type, IsLocalToUnit, !IsDefinition,
                                      Variable, StaticDataMemberDeclaration));
-  EXPECT_NE(N, MDGlobalVariable::get(Context, Scope, Name, LinkageName, File,
-                                     Line, Type, IsLocalToUnit, IsDefinition,
-                                     getConstantAsMetadata(),
-                                     StaticDataMemberDeclaration));
+  EXPECT_NE(N,
+            MDGlobalVariable::get(Context, Scope, Name, LinkageName, File, Line,
+                                  Type, IsLocalToUnit, IsDefinition,
+                                  getConstant(), StaticDataMemberDeclaration));
   EXPECT_NE(N,
             MDGlobalVariable::get(Context, Scope, Name, LinkageName, File, Line,
                                   Type, IsLocalToUnit, IsDefinition, Variable,

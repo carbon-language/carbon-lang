@@ -1232,13 +1232,14 @@ class MDSubprogram : public MDLocalScope {
           MDSubroutineType *Type, bool IsLocalToUnit, bool IsDefinition,
           unsigned ScopeLine, MDTypeRef ContainingType, unsigned Virtuality,
           unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
-          ConstantAsMetadata *Function, MDTemplateParameterArray TemplateParams,
+          Constant *Function, MDTemplateParameterArray TemplateParams,
           MDSubprogram *Declaration, MDLocalVariableArray Variables,
           StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
                    IsLocalToUnit, IsDefinition, ScopeLine, ContainingType,
-                   Virtuality, VirtualIndex, Flags, IsOptimized, Function,
+                   Virtuality, VirtualIndex, Flags, IsOptimized,
+                   Function ? ConstantAsMetadata::get(Function) : nullptr,
                    TemplateParams.get(), Declaration, Variables.get(), Storage,
                    ShouldCreate);
   }
@@ -1256,8 +1257,8 @@ class MDSubprogram : public MDLocalScope {
                         getFile(), getLine(), getType(), isLocalToUnit(),
                         isDefinition(), getScopeLine(), getContainingType(),
                         getVirtuality(), getVirtualIndex(), getFlags(),
-                        isOptimized(), getFunction(), getTemplateParams(),
-                        getDeclaration(), getVariables());
+                        isOptimized(), getFunctionConstant(),
+                        getTemplateParams(), getDeclaration(), getVariables());
   }
 
 public:
@@ -1267,7 +1268,7 @@ public:
                      bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
                      MDTypeRef ContainingType, unsigned Virtuality,
                      unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
-                     ConstantAsMetadata *Function = nullptr,
+                     Constant *Function = nullptr,
                      MDTemplateParameterArray TemplateParams = nullptr,
                      MDSubprogram *Declaration = nullptr,
                      MDLocalVariableArray Variables = nullptr),
@@ -1344,8 +1345,10 @@ public:
     return MDTypeRef(getRawContainingType());
   }
 
-  ConstantAsMetadata *getFunction() const {
-    return cast_or_null<ConstantAsMetadata>(getRawFunction());
+  Constant *getFunctionConstant() const {
+    if (auto *C = cast_or_null<ConstantAsMetadata>(getRawFunction()))
+      return C->getValue();
+    return nullptr;
   }
   MDTemplateParameterArray getTemplateParams() const {
     return cast_or_null<MDTuple>(getRawTemplateParams());
@@ -1364,6 +1367,13 @@ public:
   Metadata *getRawTemplateParams() const { return getOperand(8); }
   Metadata *getRawDeclaration() const { return getOperand(9); }
   Metadata *getRawVariables() const { return getOperand(10); }
+
+  /// \brief Get a pointer to the function this subprogram describes.
+  ///
+  /// This dyn_casts \a getFunctionConstant() to \a Function.
+  ///
+  /// FIXME: Should this be looking through bitcasts?
+  Function *getFunction() const;
 
   /// \brief Replace the function.
   ///
@@ -1710,12 +1720,13 @@ class MDGlobalVariable : public MDVariable {
   static MDGlobalVariable *
   getImpl(LLVMContext &Context, MDScope *Scope, StringRef Name,
           StringRef LinkageName, MDFile *File, unsigned Line, MDTypeRef Type,
-          bool IsLocalToUnit, bool IsDefinition, ConstantAsMetadata *Variable,
+          bool IsLocalToUnit, bool IsDefinition, Constant *Variable,
           MDDerivedType *StaticDataMemberDeclaration, StorageType Storage,
           bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
-                   IsLocalToUnit, IsDefinition, Variable,
+                   IsLocalToUnit, IsDefinition,
+                   Variable ? ConstantAsMetadata::get(Variable) : nullptr,
                    StaticDataMemberDeclaration, Storage, ShouldCreate);
   }
   static MDGlobalVariable *
@@ -1736,8 +1747,7 @@ public:
   DEFINE_MDNODE_GET(MDGlobalVariable,
                     (MDScope * Scope, StringRef Name, StringRef LinkageName,
                      MDFile *File, unsigned Line, MDTypeRef Type,
-                     bool IsLocalToUnit, bool IsDefinition,
-                     ConstantAsMetadata *Variable,
+                     bool IsLocalToUnit, bool IsDefinition, Constant *Variable,
                      MDDerivedType *StaticDataMemberDeclaration),
                     (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
                      IsDefinition, Variable, StaticDataMemberDeclaration))
@@ -1755,8 +1765,10 @@ public:
   bool isDefinition() const { return IsDefinition; }
   StringRef getDisplayName() const { return getStringOperand(4); }
   StringRef getLinkageName() const { return getStringOperand(5); }
-  ConstantAsMetadata *getVariable() const {
-    return cast_or_null<ConstantAsMetadata>(getRawVariable());
+  Constant *getVariable() const {
+    if (auto *C = cast_or_null<ConstantAsMetadata>(getRawVariable()))
+      return dyn_cast<Constant>(C->getValue());
+    return nullptr;
   }
   MDDerivedType *getStaticDataMemberDeclaration() const {
     return cast_or_null<MDDerivedType>(getRawStaticDataMemberDeclaration());
