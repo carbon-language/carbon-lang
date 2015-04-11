@@ -189,7 +189,7 @@ bool AddDiscriminators::runOnFunction(Function &F) {
       // location as B's last instruction (Last), add a new
       // discriminator for First's location and all the instructions
       // in Succ that share the same location with First.
-      if (FirstDIL.atSameLineAs(LastDIL)) {
+      if (!FirstDIL->canDiscriminate(*LastDIL)) {
         // Create a new lexical scope and compute a new discriminator
         // number for it.
         StringRef Filename = FirstDIL.getFilename();

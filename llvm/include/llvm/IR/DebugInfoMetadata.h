@@ -1166,6 +1166,23 @@ public:
     return getScope();
   }
 
+  /// \brief Check whether this can be discriminated from another location.
+  ///
+  /// Check \c this can be discriminated from \c RHS in a linetable entry.
+  /// Scope and inlined-at chains are not recorded in the linetable, so they
+  /// cannot be used to distinguish basic blocks.
+  ///
+  /// The current implementation is weaker than it should be, since it just
+  /// checks filename and line.
+  ///
+  /// FIXME: Add a check for getDiscriminator().
+  /// FIXME: Add a check for getColumn().
+  /// FIXME: Change the getFilename() check to getFile() (or add one for
+  /// getDirectory()).
+  bool canDiscriminate(const MDLocation &RHS) const {
+    return getFilename() != RHS.getFilename() || getLine() != RHS.getLine();
+  }
+
   Metadata *getRawScope() const { return getOperand(0); }
   Metadata *getRawInlinedAt() const {
     if (getNumOperands() == 2)

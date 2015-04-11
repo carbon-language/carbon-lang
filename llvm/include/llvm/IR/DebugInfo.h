@@ -810,10 +810,7 @@ public:
   }
   StringRef getFilename() const { return get()->getFilename(); }
   StringRef getDirectory() const { return get()->getDirectory(); }
-  bool atSameLineAs(const DILocation &Other) const {
-    return (getLineNumber() == Other.getLineNumber() &&
-            getFilename() == Other.getFilename());
-  }
+
   /// \brief Get the DWAF discriminator.
   ///
   /// DWARF discriminators are used to distinguish identical file locations for
