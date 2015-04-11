@@ -996,6 +996,9 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::EH_SJLJ_SETJMP:  return "PPCISD::EH_SJLJ_SETJMP";
   case PPCISD::EH_SJLJ_LONGJMP: return "PPCISD::EH_SJLJ_LONGJMP";
   case PPCISD::MFOCRF:          return "PPCISD::MFOCRF";
+  case PPCISD::MFVSR:           return "PPCISD::MFVSR";
+  case PPCISD::MTVSRA:          return "PPCISD::MTVSRA";
+  case PPCISD::MTVSRZ:          return "PPCISD::MTVSRZ";
   case PPCISD::VCMP:            return "PPCISD::VCMP";
   case PPCISD::VCMPo:           return "PPCISD::VCMPo";
   case PPCISD::LBRX:            return "PPCISD::LBRX";
@@ -5911,8 +5914,46 @@ void PPCTargetLowering::LowerFP_TO_INTForReuse(SDValue Op, ReuseLoadInfo &RLI,
   RLI.MPI = MPI;
 }
 
+/// \brief Custom lowers floating point to integer conversions to use
+/// the direct move instructions available in ISA 2.07 to avoid the
+/// need for load/store combinations.
+SDValue PPCTargetLowering::LowerFP_TO_INTDirectMove(SDValue Op,
+                                                    SelectionDAG &DAG,
+                                                    SDLoc dl) const {
+  assert(Op.getOperand(0).getValueType().isFloatingPoint());
+  SDValue Src = Op.getOperand(0);
+
+  if (Src.getValueType() == MVT::f32)
+    Src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Src);
+
+  SDValue Tmp;
+  switch (Op.getSimpleValueType().SimpleTy) {
+  default: llvm_unreachable("Unhandled FP_TO_INT type in custom expander!");
+  case MVT::i32:
+    Tmp = DAG.getNode(
+        Op.getOpcode() == ISD::FP_TO_SINT
+            ? PPCISD::FCTIWZ
+            : (Subtarget.hasFPCVT() ? PPCISD::FCTIWUZ : PPCISD::FCTIDZ),
+        dl, MVT::f64, Src);
+    Tmp = DAG.getNode(PPCISD::MFVSR, dl, MVT::i32, Tmp);
+    break;
+  case MVT::i64:
+    assert((Op.getOpcode() == ISD::FP_TO_SINT || Subtarget.hasFPCVT()) &&
+           "i64 FP_TO_UINT is supported only with FPCVT");
+    Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIDZ :
+                                                        PPCISD::FCTIDUZ,
+                      dl, MVT::f64, Src);
+    Tmp = DAG.getNode(PPCISD::MFVSR, dl, MVT::i64, Tmp);
+    break;
+  }
+  return Tmp;
+}
+
 SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                                           SDLoc dl) const {
+  if (Subtarget.hasDirectMove() && Subtarget.isPPC64())
+    return LowerFP_TO_INTDirectMove(Op, DAG, dl);
+
   ReuseLoadInfo RLI;
   LowerFP_TO_INTForReuse(Op, RLI, DAG, dl);
 
@@ -5990,6 +6031,38 @@ void PPCTargetLowering::spliceIntoChain(SDValue ResChain,
   DAG.UpdateNodeOperands(TF.getNode(), ResChain, NewResChain);
 }
 
+/// \brief Custom lowers integer to floating point conversions to use
+/// the direct move instructions available in ISA 2.07 to avoid the
+/// need for load/store combinations.
+SDValue PPCTargetLowering::LowerINT_TO_FPDirectMove(SDValue Op,
+                                                    SelectionDAG &DAG,
+                                                    SDLoc dl) const {
+  assert((Op.getValueType() == MVT::f32 ||
+          Op.getValueType() == MVT::f64) &&
+         "Invalid floating point type as target of conversion");
+  assert(Subtarget.hasFPCVT() &&
+         "Int to FP conversions with direct moves require FPCVT");
+  SDValue FP;
+  SDValue Src = Op.getOperand(0);
+  bool SinglePrec = Op.getValueType() == MVT::f32;
+  bool WordInt = Src.getSimpleValueType().SimpleTy == MVT::i32;
+  bool Signed = Op.getOpcode() == ISD::SINT_TO_FP;
+  unsigned ConvOp = Signed ? (SinglePrec ? PPCISD::FCFIDS : PPCISD::FCFID) :
+                             (SinglePrec ? PPCISD::FCFIDUS : PPCISD::FCFIDU);
+
+  if (WordInt) {
+    FP = DAG.getNode(Signed ? PPCISD::MTVSRA : PPCISD::MTVSRZ,
+                     dl, MVT::f64, Src);
+    FP = DAG.getNode(ConvOp, dl, SinglePrec ? MVT::f32 : MVT::f64, FP);
+  }
+  else {
+    FP = DAG.getNode(PPCISD::MTVSRA, dl, MVT::f64, Src);
+    FP = DAG.getNode(ConvOp, dl, SinglePrec ? MVT::f32 : MVT::f64, FP);
+  }
+
+  return FP;
+}
+
 SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
                                           SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -6024,6 +6097,11 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
     return DAG.getNode(ISD::SELECT, dl, Op.getValueType(), Op.getOperand(0),
                        DAG.getConstantFP(1.0, Op.getValueType()),
                        DAG.getConstantFP(0.0, Op.getValueType()));
+
+  // If we have direct moves, we can do all the conversion, skip the store/load
+  // however, without FPCVT we can't do most conversions.
+  if (Subtarget.hasDirectMove() && Subtarget.isPPC64() && Subtarget.hasFPCVT())
+    return LowerINT_TO_FPDirectMove(Op, DAG, dl);
 
   assert((Op.getOpcode() == ISD::SINT_TO_FP || Subtarget.hasFPCVT()) &&
          "UINT_TO_FP is supported only with FPCVT");

@@ -119,6 +119,15 @@ namespace llvm {
       /// resultant GPR.  Bits corresponding to other CR regs are undefined.
       MFOCRF,
 
+      /// Direct move from a VSX register to a GPR
+      MFVSR,
+
+      /// Direct move from a GPR to a VSX register (algebraic)
+      MTVSRA,
+
+      /// Direct move from a GPR to a VSX register (zero)
+      MTVSRZ,
+
       // FIXME: Remove these once the ANDI glue bug is fixed:
       /// i1 = ANDIo_1_[EQ|GT]_BIT(i32 or i64 x) - Represents the result of the
       /// eq or gt bit of CR0 after executing andi. x, 1. This is used to
@@ -645,6 +654,10 @@ namespace llvm {
 
     void LowerFP_TO_INTForReuse(SDValue Op, ReuseLoadInfo &RLI,
                                 SelectionDAG &DAG, SDLoc dl) const;
+    SDValue LowerFP_TO_INTDirectMove(SDValue Op, SelectionDAG &DAG,
+                                     SDLoc dl) const;
+    SDValue LowerINT_TO_FPDirectMove(SDValue Op, SelectionDAG &DAG,
+                                     SDLoc dl) const;
 
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;

@@ -454,3 +454,20 @@
 # CHECK-BE: xxpermdi 7, 63, 63, 2              # encoding: [0xf0,0xff,0xfa,0x56]
 # CHECK-LE: xxpermdi 7, 63, 63, 2              # encoding: [0x56,0xfa,0xff,0xf0]
             xxswapd 7, 63
+
+# Move to/from VSR
+# CHECK-BE: mfvsrd 3, 0                        # encoding: [0x7c,0x03,0x00,0x66]
+# CHECK-LE: mfvsrd 3, 0                        # encoding: [0x66,0x00,0x03,0x7c]
+            mfvsrd 3, 0
+# CHECK-BE: mfvsrwz 5, 0                       # encoding: [0x7c,0x05,0x00,0xe6]
+# CHECK-LE: mfvsrwz 5, 0                       # encoding: [0xe6,0x00,0x05,0x7c]
+            mfvsrwz 5, 0
+# CHECK-BE: mtvsrd 0, 3                        # encoding: [0x7c,0x03,0x01,0x66]
+# CHECK-LE: mtvsrd 0, 3                        # encoding: [0x66,0x01,0x03,0x7c]
+            mtvsrd 0, 3
+# CHECK-BE: mtvsrwa 0, 3                       # encoding: [0x7c,0x03,0x01,0xa6]
+# CHECK-LE: mtvsrwa 0, 3                       # encoding: [0xa6,0x01,0x03,0x7c]
+            mtvsrwa 0, 3
+# CHECK-BE: mtvsrwz 0, 3                       # encoding: [0x7c,0x03,0x01,0xe6]
+# CHECK-LE: mtvsrwz 0, 3                       # encoding: [0xe6,0x01,0x03,0x7c]
+            mtvsrwz 0, 3

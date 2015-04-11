@@ -97,6 +97,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasICBT = false;
   HasInvariantFunctionDescriptors = false;
   HasPartwordAtomics = false;
+  HasDirectMove = false;
   IsQPXStackUnaligned = false;
   HasHTM = false;
 }

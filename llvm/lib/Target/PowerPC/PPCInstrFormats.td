@@ -764,6 +764,12 @@ class XX1Form<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{31}    = XT{5};
 }
 
+class XX1_RS6_RD5_XO<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+                     string asmstr, InstrItinClass itin, list<dag> pattern>
+  : XX1Form<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let B = 0;
+}
+
 class XX2Form<bits<6> opcode, bits<9> xo, dag OOL, dag IOL, string asmstr, 
               InstrItinClass itin, list<dag> pattern>
   : I<opcode, OOL, IOL, asmstr, itin> {

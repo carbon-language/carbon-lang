@@ -117,6 +117,7 @@ protected:
   bool HasICBT;
   bool HasInvariantFunctionDescriptors;
   bool HasPartwordAtomics;
+  bool HasDirectMove;
   bool HasHTM;
 
   /// When targeting QPX running a stock PPC64 Linux kernel where the stack
@@ -243,6 +244,7 @@ public:
     return HasInvariantFunctionDescriptors;
   }
   bool hasPartwordAtomics() const { return HasPartwordAtomics; }
+  bool hasDirectMove() const { return HasDirectMove; }
 
   bool isQPXStackUnaligned() const { return IsQPXStackUnaligned; }
   unsigned getPlatformStackAlignment() const {
