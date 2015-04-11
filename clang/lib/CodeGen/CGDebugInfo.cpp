@@ -3385,10 +3385,10 @@ void CGDebugInfo::finalize() {
   // element and the size(), so don't cache/reference them.
   for (size_t i = 0; i != ObjCInterfaceCache.size(); ++i) {
     ObjCInterfaceCacheEntry E = ObjCInterfaceCache[i];
-    E.Decl.replaceAllUsesWith(CGM.getLLVMContext(),
-                              E.Type->getDecl()->getDefinition()
-                                  ? CreateTypeDefinition(E.Type, E.Unit)
-                                  : E.Decl);
+    llvm::MDType *Ty = E.Type->getDecl()->getDefinition()
+                           ? CreateTypeDefinition(E.Type, E.Unit)
+                           : E.Decl;
+    DBuilder.replaceTemporary(llvm::TempMDType(E.Decl), Ty);
   }
 
   for (auto p : ReplaceMap) {
@@ -3400,8 +3400,8 @@ void CGDebugInfo::finalize() {
     assert(it != TypeCache.end());
     assert(it->second);
 
-    llvm::DIType RepTy = cast<llvm::MDType>(it->second);
-    Ty.replaceAllUsesWith(CGM.getLLVMContext(), RepTy);
+    DBuilder.replaceTemporary(llvm::TempMDType(Ty),
+                               cast<llvm::MDType>(it->second));
   }
 
   for (const auto &p : FwdDeclReplaceMap) {
@@ -3418,8 +3418,8 @@ void CGDebugInfo::finalize() {
     else
       Repl = it->second;
 
-    FwdDecl.replaceAllUsesWith(CGM.getLLVMContext(),
-                               llvm::DIDescriptor(cast<llvm::MDNode>(Repl)));
+    DBuilder.replaceTemporary(llvm::TempMDNode(FwdDecl),
+                              cast<llvm::MDNode>(Repl));
   }
 
   // We keep our own list of retained types, because we need to look
