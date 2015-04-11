@@ -419,6 +419,9 @@ public:
   inline StringRef getFilename() const;
   inline StringRef getDirectory() const;
 
+  StringRef getName() const;
+  MDScopeRef getScope() const;
+
   /// \brief Return the raw underlying file.
   ///
   /// An \a MDFile is an \a MDScope, but it doesn't point at a separate file

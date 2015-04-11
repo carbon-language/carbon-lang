@@ -112,37 +112,6 @@ GlobalVariable *DIGlobalVariable::getGlobal() const {
   return dyn_cast_or_null<GlobalVariable>(getConstant());
 }
 
-DIScopeRef DIScope::getContext() const {
-  if (DIType T = dyn_cast<MDType>(*this))
-    return T.getContext();
-
-  if (DISubprogram SP = dyn_cast<MDSubprogram>(*this))
-    return MDScopeRef(SP.getContext());
-
-  if (DILexicalBlock LB = dyn_cast<MDLexicalBlockBase>(*this))
-    return MDScopeRef(LB.getContext());
-
-  if (DINameSpace NS = dyn_cast<MDNamespace>(*this))
-    return MDScopeRef(NS.getContext());
-
-  assert((isa<MDFile>(*this) || isa<MDCompileUnit>(*this)) &&
-         "Unhandled type of scope.");
-  return MDScopeRef();
-}
-
-StringRef DIScope::getName() const {
-  if (DIType T = dyn_cast<MDType>(*this))
-    return T.getName();
-  if (DISubprogram SP = dyn_cast<MDSubprogram>(*this))
-    return SP.getName();
-  if (DINameSpace NS = dyn_cast<MDNamespace>(*this))
-    return NS.getName();
-  assert((isa<MDLexicalBlockBase>(*this) || isa<MDFile>(*this) ||
-          isa<MDCompileUnit>(*this)) &&
-         "Unhandled type of scope.");
-  return StringRef();
-}
-
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
   get()->replaceSubprograms(MDSubprogramArray(Subprograms));
 }

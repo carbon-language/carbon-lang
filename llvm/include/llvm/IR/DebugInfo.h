@@ -213,15 +213,8 @@ public:
     return *get();
   }
 
-  /// \brief Get the parent scope.
-  ///
-  /// Gets the parent scope for this scope node or returns a default
-  /// constructed scope.
-  DIScopeRef getContext() const;
-  /// \brief Get the scope name.
-  ///
-  /// If the scope node has a name, return that, else return an empty string.
-  StringRef getName() const;
+  inline DIScopeRef getContext() const;
+  StringRef getName() const { return get()->getName(); }
   StringRef getFilename() const { return get()->getFilename(); }
   StringRef getDirectory() const { return get()->getDirectory(); }
 
@@ -257,6 +250,8 @@ DIDescriptor DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const;
 template <>
 DIScope DIRef<DIScope>::resolve(const DITypeIdentifierMap &Map) const;
 template <> DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const;
+
+DIScopeRef DIScope::getContext() const { return get()->getScope(); }
 
 /// \brief This is a wrapper for a type.
 ///
