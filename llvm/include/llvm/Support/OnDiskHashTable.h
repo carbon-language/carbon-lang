@@ -75,13 +75,10 @@ template <typename Info> class OnDiskChainedHashTableGenerator {
   llvm::SpecificBumpPtrAllocator<Item> BA;
 
   /// \brief A linked list of values in a particular hash bucket.
-  class Bucket {
-  public:
+  struct Bucket {
     offset_type Off;
-    Item *Head;
     unsigned Length;
-
-    Bucket() {}
+    Item *Head;
   };
 
   Bucket *Buckets;
