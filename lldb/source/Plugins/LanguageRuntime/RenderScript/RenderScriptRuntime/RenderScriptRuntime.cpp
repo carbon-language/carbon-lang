@@ -221,7 +221,7 @@ RSModuleDescriptor::Dump(Stream &strm) const
     strm.EOL();
     strm.IndentMore();
     strm.Indent();
-    strm.Printf("Globals: %zu", m_globals.size());
+    strm.Printf("Globals: %" PRIu64, static_cast<uint64_t>(m_globals.size()));
     strm.EOL();
     strm.IndentMore();
     for (const auto &global : m_globals)
@@ -230,7 +230,7 @@ RSModuleDescriptor::Dump(Stream &strm) const
     }
     strm.IndentLess();
     strm.Indent();
-    strm.Printf("Kernels: %zu", m_kernels.size());
+    strm.Printf("Kernels: %" PRIu64, static_cast<uint64_t>(m_kernels.size()));
     strm.EOL();
     strm.IndentMore();
     for (const auto &kernel : m_kernels)
