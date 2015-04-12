@@ -1627,11 +1627,17 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   return true;
 }
 
-static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI) {
+static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
+                                        ScopDetection &SD) {
+
+  const ScopDetection::BoxedLoopsSetTy *BoxedLoops = SD.getBoxedLoops(&R);
+
   unsigned MinLD = INT_MAX, MaxLD = 0;
   for (BasicBlock *BB : R.blocks()) {
     if (Loop *L = LI.getLoopFor(BB)) {
       if (!R.contains(L))
+        continue;
+      if (BoxedLoops && BoxedLoops->count(L))
         continue;
       unsigned LD = L->getLoopDepth();
       MinLD = std::min(MinLD, LD);
@@ -1685,7 +1691,7 @@ void Scop::dropConstantScheduleDims() {
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            ScopDetection &SD, isl_ctx *Context)
     : SE(&ScalarEvolution), R(tempScop.getMaxRegion()), IsOptimized(false),
-      MaxLoopDepth(getMaxLoopDepthInRegion(tempScop.getMaxRegion(), LI)) {
+      MaxLoopDepth(getMaxLoopDepthInRegion(tempScop.getMaxRegion(), LI, SD)) {
   IslCtx = Context;
 
   buildContext();

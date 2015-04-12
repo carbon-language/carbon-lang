@@ -258,13 +258,15 @@ class TempScopInfo : public FunctionPass {
 
   /// @brief Build an instance of IRAccess from the Load/Store instruction.
   ///
-  /// @param Inst The Load/Store instruction that access the memory
-  /// @param L    The parent loop of the instruction
-  /// @param R    The region on which we are going to build a TempScop
+  /// @param Inst       The Load/Store instruction that access the memory
+  /// @param L          The parent loop of the instruction
+  /// @param R          The region on which we are going to build a TempScop
+  /// @param BoxedLoops The set of loops that are overapproximated in @p R.
   ///
   /// @return     The IRAccess to describe the access function of the
   ///             instruction.
-  IRAccess buildIRAccess(Instruction *Inst, Loop *L, Region *R);
+  IRAccess buildIRAccess(Instruction *Inst, Loop *L, Region *R,
+                         const ScopDetection::BoxedLoopsSetTy *BoxedLoops);
 
   /// @brief Analyze and extract the cross-BB scalar dependences (or,
   ///        dataflow dependencies) of an instruction.
