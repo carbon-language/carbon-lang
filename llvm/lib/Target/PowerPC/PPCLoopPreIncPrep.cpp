@@ -144,13 +144,9 @@ bool PPCLoopPreIncPrep::runOnFunction(Function &F) {
 
   bool MadeChange = false;
 
-  if (LI->empty())
-    return MadeChange;
-
-  for (auto I = df_begin(*LI->begin()), E = df_end(*LI->begin()); I != E; ++I) {
-    Loop *L = *I;
-    MadeChange |= runOnLoop(L);
-  }
+  for (auto I = LI->begin(), IE = LI->end(); I != IE; ++I)
+    for (auto L = df_begin(*I), LE = df_end(*I); L != LE; ++L)
+      MadeChange |= runOnLoop(*L);
 
   return MadeChange;
 }
