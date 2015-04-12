@@ -318,9 +318,8 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
     return false;
 
   // This constraint lets us deal with an overflowing trip count easily; see the
-  // comment on ModVal below.  This check is equivalent to `Log2(Count) <
-  // BEWidth`.
-  if (BEWidth < 64 && static_cast<uint64_t>(Count) > (1ULL << BEWidth))
+  // comment on ModVal below.
+  if (Log2_32(Count) > BEWidth)
     return false;
 
   // If this loop is nested, then the loop unroller changes the code in
