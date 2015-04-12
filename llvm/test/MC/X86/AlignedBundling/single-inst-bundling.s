@@ -1,5 +1,7 @@
 # RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - \
-# RUN:   | llvm-objdump -disassemble -no-show-raw-insn - | FileCheck %s
+# RUN:   | llvm-objdump -disassemble -no-show-raw-insn - | FileCheck -check-prefix=CHECK -check-prefix=CHECK-OPT %s
+# RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu -mc-relax-all %s -o - \
+# RUN:   | llvm-objdump -disassemble -no-show-raw-insn - | FileCheck -check-prefix=CHECK -check-prefix=CHECK-RELAX %s
 
 # Test simple NOP insertion for single instructions.
 
@@ -24,14 +26,17 @@ foo:
   movl    %ebx, %edi
   callq   bar
   cmpl    %r14d, %ebp
+# CHECK-RELAX:   nopl
   jle     .L_ELSE
 # Due to the padding that's inserted before the addl, the jump target
 # becomes farther by one byte.
-# CHECK:         jle 5
+# CHECK-OPT:     jle 5
+# CHECK-RELAX:   jle 7
 
   addl    %ebp, %eax
-# CHECK:          nop
-# CHECK-NEXT:     20: addl
+# CHECK-OPT:     nop
+# CHECK-OPT-NEXT:20: addl
+# CHECK-RELAX:   26: addl
 
   jmp     .L_RET
 .L_ELSE:

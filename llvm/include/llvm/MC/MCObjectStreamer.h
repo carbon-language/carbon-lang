@@ -44,10 +44,6 @@ class MCObjectStreamer : public MCStreamer {
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
 
-  // If any labels have been emitted but not assigned fragments, ensure that
-  // they get assigned, either to F if possible or to a new data fragment.
-  void flushPendingLabels(MCFragment *F);
-
 protected:
   MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                    MCCodeEmitter *Emitter);
@@ -84,6 +80,12 @@ protected:
   MCDataFragment *getOrCreateDataFragment();
 
   bool changeSectionImpl(const MCSection *Section, const MCExpr *Subsection);
+
+  /// If any labels have been emitted but not assigned fragments, ensure that
+  /// they get assigned, either to F if possible or to a new data fragment.
+  /// Optionally, it is also possible to provide an offset \p FOffset, which
+  /// will be used as a symbol offset within the fragment.
+  void flushPendingLabels(MCFragment *F, uint64_t FOffset = 0);
 
 public:
   void visitUsedSymbol(const MCSymbol &Sym) override;

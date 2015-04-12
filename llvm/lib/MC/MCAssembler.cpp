@@ -229,8 +229,9 @@ uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
   return getSectionAddressSize(SD);
 }
 
-uint64_t MCAsmLayout::computeBundlePadding(const MCFragment *F,
-                                           uint64_t FOffset, uint64_t FSize) {
+uint64_t llvm::computeBundlePadding(const MCAssembler &Assembler,
+                                    const MCFragment *F,
+                                    uint64_t FOffset, uint64_t FSize) {
   uint64_t BundleSize = Assembler.getBundleAlignSize();
   assert(BundleSize > 0 &&
          "computeBundlePadding should only be called if bundling is enabled");
@@ -332,6 +333,7 @@ MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
     getFragmentList().insert(IP, F);
     F->setParent(this);
   }
+
   return IP;
 }
 
@@ -632,7 +634,12 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
   // The fragment's offset will point to after the padding, and its computed
   // size won't include the padding.
   //
-  if (Assembler.isBundlingEnabled() && F->hasInstructions()) {
+  // When the -mc-relax-all flag is used, we optimize bundling by writting the
+  // bundle padding directly into fragments when the instructions are emitted
+  // inside the streamer.
+  //
+  if (Assembler.isBundlingEnabled() && !Assembler.getRelaxAll() &&
+      F->hasInstructions()) {
     assert(isa<MCEncodedFragment>(F) &&
            "Only MCEncodedFragment implementations have instructions");
     uint64_t FSize = Assembler.computeFragmentSize(*this, *F);
@@ -640,7 +647,8 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
     if (FSize > Assembler.getBundleAlignSize())
       report_fatal_error("Fragment can't be larger than a bundle size");
 
-    uint64_t RequiredBundlePadding = computeBundlePadding(F, F->Offset, FSize);
+    uint64_t RequiredBundlePadding = computeBundlePadding(Assembler, F,
+                                                          F->Offset, FSize);
     if (RequiredBundlePadding > UINT8_MAX)
       report_fatal_error("Padding cannot exceed 255 bytes");
     F->setBundlePadding(static_cast<uint8_t>(RequiredBundlePadding));
@@ -655,24 +663,18 @@ static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
   OW->WriteBytes(EF.getContents());
 }
 
-/// \brief Write the fragment \p F to the output file.
-static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                          const MCFragment &F) {
-  MCObjectWriter *OW = &Asm.getWriter();
-
-  // FIXME: Embed in fragments instead?
-  uint64_t FragmentSize = Asm.computeFragmentSize(Layout, F);
-
+void MCAssembler::writeFragmentPadding(const MCFragment &F, uint64_t FSize,
+                                       MCObjectWriter *OW) const {
   // Should NOP padding be written out before this fragment?
   unsigned BundlePadding = F.getBundlePadding();
   if (BundlePadding > 0) {
-    assert(Asm.isBundlingEnabled() &&
+    assert(isBundlingEnabled() &&
            "Writing bundle padding with disabled bundling");
     assert(F.hasInstructions() &&
            "Writing bundle padding for a fragment without instructions");
 
-    unsigned TotalLength = BundlePadding + static_cast<unsigned>(FragmentSize);
-    if (F.alignToBundleEnd() && TotalLength > Asm.getBundleAlignSize()) {
+    unsigned TotalLength = BundlePadding + static_cast<unsigned>(FSize);
+    if (F.alignToBundleEnd() && TotalLength > getBundleAlignSize()) {
       // If the padding itself crosses a bundle boundary, it must be emitted
       // in 2 pieces, since even nop instructions must not cross boundaries.
       //             v--------------v   <- BundleAlignSize
@@ -681,16 +683,27 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
       // | Prev |####|####|    F    |
       // ----------------------------
       //        ^-------------------^   <- TotalLength
-      unsigned DistanceToBoundary = TotalLength - Asm.getBundleAlignSize();
-      if (!Asm.getBackend().writeNopData(DistanceToBoundary, OW))
+      unsigned DistanceToBoundary = TotalLength - getBundleAlignSize();
+      if (!getBackend().writeNopData(DistanceToBoundary, OW))
           report_fatal_error("unable to write NOP sequence of " +
                              Twine(DistanceToBoundary) + " bytes");
       BundlePadding -= DistanceToBoundary;
     }
-    if (!Asm.getBackend().writeNopData(BundlePadding, OW))
+    if (!getBackend().writeNopData(BundlePadding, OW))
       report_fatal_error("unable to write NOP sequence of " +
                          Twine(BundlePadding) + " bytes");
   }
+}
+
+/// \brief Write the fragment \p F to the output file.
+static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                          const MCFragment &F) {
+  MCObjectWriter *OW = &Asm.getWriter();
+
+  // FIXME: Embed in fragments instead?
+  uint64_t FragmentSize = Asm.computeFragmentSize(Layout, F);
+
+  Asm.writeFragmentPadding(F, FragmentSize, OW);
 
   // This variable (and its dummy usage) is to participate in the assert at
   // the end of the function.

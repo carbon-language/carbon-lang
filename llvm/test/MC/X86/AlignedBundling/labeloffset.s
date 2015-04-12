@@ -2,6 +2,8 @@
 # RUN: llvm-objdump -disassemble -no-show-raw-insn -r - | FileCheck %s
 # RUN: llvm-mc -triple=i686-nacl -filetype=obj %s -o - | \
 # RUN: llvm-objdump -disassemble -no-show-raw-insn -r - | FileCheck %s
+# RUN: llvm-mc -triple=i686-nacl -filetype=obj -mc-relax-all %s -o - | \
+# RUN: llvm-objdump -disassemble -no-show-raw-insn -r - | FileCheck %s
 
         .bundle_align_mode 5
         .text
