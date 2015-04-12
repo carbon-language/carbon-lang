@@ -1502,7 +1502,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
     if (isa<DbgInfoIntrinsic>(I))
       continue;
 
-    // Only speculatively execution a single instruction (not counting the
+    // Only speculatively execute a single instruction (not counting the
     // terminator) for now.
     ++SpeculationCost;
     if (SpeculationCost > 1)
