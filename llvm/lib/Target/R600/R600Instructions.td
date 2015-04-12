@@ -683,6 +683,11 @@ def MUL_IEEE : R600_2OP_Helper <0x2, "MUL_IEEE", fmul>;
 // TODO: Do these actually match the regular fmin/fmax behavior?
 def MAX : R600_2OP_Helper <0x3, "MAX", AMDGPUfmax_legacy>;
 def MIN : R600_2OP_Helper <0x4, "MIN", AMDGPUfmin_legacy>;
+// According to https://msdn.microsoft.com/en-us/library/windows/desktop/cc308050%28v=vs.85%29.aspx
+// DX10 min/max returns the other operand if one is NaN,
+// this matches http://llvm.org/docs/LangRef.html#llvm-minnum-intrinsic
+def MAX_DX10 : R600_2OP_Helper <0x5, "MAX_DX10", fmaxnum>;
+def MIN_DX10 : R600_2OP_Helper <0x6, "MIN_DX10", fminnum>;
 
 // For the SET* instructions there is a naming conflict in TargetSelectionDAG.td,
 // so some of the instruction names don't match the asm string.
