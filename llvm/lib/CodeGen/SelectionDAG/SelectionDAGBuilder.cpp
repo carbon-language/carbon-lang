@@ -4461,8 +4461,10 @@ bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
   const TargetInstrInfo *TII = DAG.getSubtarget().getInstrInfo();
 
   // Ignore inlined function arguments here.
+  //
+  // FIXME: Should we be checking DL->inlinedAt() to determine this?
   DIVariable DV(Variable);
-  if (DV.isInlinedFnArgument(MF.getFunction()))
+  if (!DV->getScope()->getSubprogram()->describes(MF.getFunction()))
     return false;
 
   Optional<MachineOperand> Op;

@@ -39,16 +39,6 @@ using namespace llvm::dwarf;
 
 DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
 
-bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
-  assert(CurFn && "Invalid function");
-  DISubprogram SP = dyn_cast<MDSubprogram>(getContext());
-  if (!SP)
-    return false;
-  // This variable is not inlined function argument if its scope
-  // does not describe current function.
-  return !SP.describes(CurFn);
-}
-
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
   get()->replaceSubprograms(MDSubprogramArray(Subprograms));
 }

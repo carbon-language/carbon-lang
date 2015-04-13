@@ -724,9 +724,6 @@ public:
     return (getType().resolve(Map)).isBlockByrefStruct();
   }
 
-  /// \brief Check if this is an inlined function argument.
-  bool isInlinedFnArgument(const Function *CurFn);
-
   void printExtendedName(raw_ostream &OS) const;
 };
 
