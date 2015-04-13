@@ -407,3 +407,13 @@ entry:
   %obit = extractvalue %ov.result.32 %t, 1
   ret i1 %obit
 }
+
+define %ov.result.32 @ssubtest_reorder(i8 %a) {
+  %A = sext i8 %a to i32
+  %x = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 0, i32 %A)
+  ret %ov.result.32 %x
+; CHECK-LABEL: @ssubtest_reorder
+; CHECK: %x = sub nsw i32 0, %A
+; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret %ov.result.32 %1
+}

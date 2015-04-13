@@ -416,12 +416,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     break;
 
-    case Intrinsic::uadd_with_overflow: // FALLTHROUGH
-    case Intrinsic::sadd_with_overflow: // FALLTHROUGH
-    case Intrinsic::usub_with_overflow: // FALLTHROUGH
-    case Intrinsic::ssub_with_overflow: // FALLTHROUGH
-    case Intrinsic::umul_with_overflow: // FALLTHROUGH
-    case Intrinsic::smul_with_overflow: {
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::umul_with_overflow:
+  case Intrinsic::smul_with_overflow:
     if (isa<Constant>(II->getArgOperand(0)) &&
         !isa<Constant>(II->getArgOperand(1))) {
       // Canonicalize constants into the RHS.
@@ -430,7 +428,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       II->setArgOperand(1, LHS);
       return II;
     }
+    [[clang::fallthrough]];
 
+  case Intrinsic::usub_with_overflow:
+  case Intrinsic::ssub_with_overflow: {
     OverflowCheckFlavor OCF =
         IntrinsicIDToOverflowCheckFlavor(II->getIntrinsicID());
     assert(OCF != OCF_INVALID && "unexpected!");
