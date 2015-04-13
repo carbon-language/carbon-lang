@@ -1717,6 +1717,14 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SUBC, MVT::i32, Expand);
   setOperationAction(ISD::SUBC, MVT::i64, Expand);
 
+  // Only add and sub that detect overflow are the saturating ones.
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setOperationAction(ISD::UADDO, VT, Expand);
+    setOperationAction(ISD::SADDO, VT, Expand);
+    setOperationAction(ISD::USUBO, VT, Expand);
+    setOperationAction(ISD::SSUBO, VT, Expand);
+  }
+
   setOperationAction(ISD::CTPOP, MVT::i32, Expand);
   setOperationAction(ISD::CTPOP, MVT::i64, Expand);
   setOperationAction(ISD::CTTZ, MVT::i32, Expand);
