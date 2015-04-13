@@ -745,24 +745,6 @@ public:
   StringRef getObjCPropertyGetterName() const { return get()->getGetterName(); }
   StringRef getObjCPropertySetterName() const { return get()->getSetterName(); }
   unsigned getAttributes() const { return get()->getAttributes(); }
-  bool isReadOnlyObjCProperty() const {
-    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
-  }
-  bool isReadWriteObjCProperty() const {
-    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_readwrite) != 0;
-  }
-  bool isAssignObjCProperty() const {
-    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_assign) != 0;
-  }
-  bool isRetainObjCProperty() const {
-    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_retain) != 0;
-  }
-  bool isCopyObjCProperty() const {
-    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_copy) != 0;
-  }
-  bool isNonAtomicObjCProperty() const {
-    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
-  }
 
   /// \brief Get the type.
   ///

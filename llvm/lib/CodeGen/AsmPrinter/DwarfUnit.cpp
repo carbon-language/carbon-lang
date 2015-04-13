@@ -1072,20 +1072,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         StringRef SetterName = Property.getObjCPropertySetterName();
         if (!SetterName.empty())
           addString(ElemDie, dwarf::DW_AT_APPLE_property_setter, SetterName);
-        unsigned PropertyAttributes = 0;
-        if (Property.isReadOnlyObjCProperty())
-          PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_readonly;
-        if (Property.isReadWriteObjCProperty())
-          PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_readwrite;
-        if (Property.isAssignObjCProperty())
-          PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_assign;
-        if (Property.isRetainObjCProperty())
-          PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_retain;
-        if (Property.isCopyObjCProperty())
-          PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_copy;
-        if (Property.isNonAtomicObjCProperty())
-          PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_nonatomic;
-        if (PropertyAttributes)
+        if (unsigned PropertyAttributes = Property.getAttributes())
           addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, None,
                   PropertyAttributes);
 
