@@ -82,6 +82,23 @@ void AliasAnalysis::addEscapingUse(Use &U) {
   AA->addEscapingUse(U);
 }
 
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(Instruction *I, ImmutableCallSite Call) {
+  // We may have two calls
+  if (auto CS = ImmutableCallSite(I)) {
+    // Check if the two calls modify the same memory
+    return getModRefInfo(Call, CS);
+  } else {
+    // Otherwise, check if the call modifies or references the
+    // location this memory access defines.  The best we can say
+    // is that if the call references what this instruction
+    // defines, it must be clobbered by this location.
+    const AliasAnalysis::Location DefLoc = AA->getLocation(I);
+    if (getModRefInfo(Call, DefLoc) != AliasAnalysis::NoModRef)
+      return AliasAnalysis::ModRef;
+  }
+  return AliasAnalysis::NoModRef;
+}
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
