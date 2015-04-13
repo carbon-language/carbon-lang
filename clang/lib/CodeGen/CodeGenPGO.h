@@ -69,23 +69,20 @@ public:
 
   /// Check if an execution count is known for a given statement. If so, return
   /// true and put the value in Count; else return false.
-  bool getStmtCount(const Stmt *S, uint64_t &Count) {
+  Optional<uint64_t> getStmtCount(const Stmt *S) {
     if (!StmtCountMap)
-      return false;
-    llvm::DenseMap<const Stmt*, uint64_t>::const_iterator
-      I = StmtCountMap->find(S);
+      return None;
+    auto I = StmtCountMap->find(S);
     if (I == StmtCountMap->end())
-      return false;
-    Count = I->second;
-    return true;
+      return None;
+    return I->second;
   }
 
   /// If the execution count for the current statement is known, record that
   /// as the current count.
   void setCurrentStmt(const Stmt *S) {
-    uint64_t Count;
-    if (getStmtCount(S, Count))
-      setCurrentRegionCount(Count);
+    if (auto Count = getStmtCount(S))
+      setCurrentRegionCount(*Count);
   }
 
   /// Calculate branch weights appropriate for PGO data

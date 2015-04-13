@@ -880,12 +880,10 @@ llvm::MDNode *CodeGenPGO::createLoopWeights(const Stmt *Cond,
   if (!haveRegionCounts())
     return nullptr;
   uint64_t LoopCount = Cnt.getCount();
-  uint64_t CondCount = 0;
-  bool Found = getStmtCount(Cond, CondCount);
-  assert(Found && "missing expected loop condition count");
-  (void)Found;
-  if (CondCount == 0)
+  Optional<uint64_t> CondCount = getStmtCount(Cond);
+  assert(CondCount.hasValue() && "missing expected loop condition count");
+  if (*CondCount == 0)
     return nullptr;
   return createBranchWeights(LoopCount,
-                             std::max(CondCount, LoopCount) - LoopCount);
+                             std::max(*CondCount, LoopCount) - LoopCount);
 }
