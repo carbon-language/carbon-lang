@@ -1541,7 +1541,8 @@ void UnwrappedLineParser::parseRecord() {
     // it is often token-pasted.
     while (FormatTok->is(tok::identifier) || FormatTok->is(tok::coloncolon) ||
            FormatTok->is(tok::hashhash) ||
-           (Style.Language == FormatStyle::LK_Java &&
+           ((Style.Language == FormatStyle::LK_Java ||
+             Style.Language == FormatStyle::LK_JavaScript) &&
             FormatTok->isOneOf(tok::period, tok::comma)))
       nextToken();
 

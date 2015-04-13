@@ -544,6 +544,7 @@ TEST_F(FormatTestJS, ClassDeclarations) {
   verifyFormat("class C {\n  private static x: string = 12;\n}");
   verifyFormat("class C {\n  static x(): string { return 'asd'; }\n}");
   verifyFormat("class C extends P implements I {}");
+  verifyFormat("class C extends p.P implements i.I {}");
 }
 
 TEST_F(FormatTestJS, MetadataAnnotations) {
