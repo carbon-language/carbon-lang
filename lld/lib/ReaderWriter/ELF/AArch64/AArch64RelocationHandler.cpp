@@ -98,6 +98,21 @@ static std::error_code relocR_AARCH64_PREL32(uint8_t *location, uint64_t P,
   return std::error_code();
 }
 
+/// \brief R_AARCH64_PREL16 - word16: S + A - P
+static std::error_code relocR_AARCH64_PREL16(uint8_t *location, uint64_t P,
+                                             uint64_t S, int64_t A) {
+  int64_t result = S + A - P;
+  if (!withinSignedUnsignedRange(result, 16))
+    return make_out_of_range_reloc_error();
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  write16le(location, result + read16le(location));
+  return std::error_code();
+}
+
 /// \brief R_AARCH64_ADR_PREL_PG_HI21 - Page(S+A) - Page(P)
 static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
                                             uint64_t S, int64_t A) {
@@ -115,7 +130,6 @@ static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
         llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, immlo | immhi | read32le(location));
-  // TODO: Make sure this is correct!
 }
 
 /// \brief R_AARCH64_ADR_PREL_LO21 - S + A - P
@@ -382,6 +396,8 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     break;
   case R_AARCH64_PREL32:
     return relocR_AARCH64_PREL32(loc, reloc, target, addend);
+  case R_AARCH64_PREL16:
+    return relocR_AARCH64_PREL16(loc, reloc, target, addend);
   // Runtime only relocations. Ignore here.
   case R_AARCH64_RELATIVE:
   case R_AARCH64_IRELATIVE:
