@@ -10,7 +10,6 @@
 #include "MipsELFFile.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationPass.h"
-#include "MipsTargetHandler.h"
 #include "llvm/ADT/DenseSet.h"
 
 using namespace lld;

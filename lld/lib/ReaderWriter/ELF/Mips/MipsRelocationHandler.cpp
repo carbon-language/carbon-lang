@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsTargetHandler.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationHandler.h"
+#include "MipsTargetLayout.h"
 
 using namespace lld;
 using namespace elf;
