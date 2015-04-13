@@ -5,3 +5,6 @@
 // RUN: FileCheck %s
 
 // CHECK: PTH requires a seekable file for output!
+
+// MSVCRT's _lseek(SEEK_CUR) doesn't return -1 for raw_ostream::SupportSeeking.
+// REQUIRES: shell
