@@ -110,3 +110,53 @@ define i32 @test_sanitize_thread(i32 %arg) sanitize_thread {
 ; CHECK-NEXT: @noattr_callee
 ; CHECK-NEXT: ret i32
 }
+
+; Check that a function doesn't get inlined if target-cpu strings don't match
+; exactly.
+define i32 @test_target_cpu_callee0(i32 %i) "target-cpu"="corei7" {
+  ret i32 %i
+}
+
+define i32 @test_target_cpu0(i32 %i) "target-cpu"="corei7" {
+  %1 = call i32 @test_target_cpu_callee0(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_cpu0(
+; CHECK-NOT: @test_target_cpu_callee0
+}
+
+define i32 @test_target_cpu_callee1(i32 %i) "target-cpu"="x86-64" {
+  ret i32 %i
+}
+
+define i32 @test_target_cpu1(i32 %i) "target-cpu"="corei7" {
+  %1 = call i32 @test_target_cpu_callee1(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_cpu1(
+; CHECK-NEXT: @test_target_cpu_callee1
+; CHECK-NEXT: ret i32
+}
+
+; Check that a function doesn't get inlined if target-features strings don't
+; match exactly.
+define i32 @test_target_features_callee0(i32 %i)  "target-features"="+sse4.2" {
+  ret i32 %i
+}
+
+define i32 @test_target_features0(i32 %i) "target-features"="+sse4.2" {
+  %1 = call i32 @test_target_features_callee0(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_features0(
+; CHECK-NOT: @test_target_features_callee0
+}
+
+define i32 @test_target_features_callee1(i32 %i) "target-features"="+avx2" {
+  ret i32 %i
+}
+
+define i32 @test_target_features1(i32 %i) "target-features"="+sse4.2" {
+  %1 = call i32 @test_target_features_callee1(i32 %i)
+  ret i32 %1
+; CHECK-LABEL: @test_target_features1(
+; CHECK-NEXT: @test_target_features_callee1
+; CHECK-NEXT: ret i32
+}
