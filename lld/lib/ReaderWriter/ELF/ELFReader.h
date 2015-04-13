@@ -50,11 +50,8 @@ private:
     using namespace llvm::support;
     using llvm::object::ELFType;
 
-    size_t align =
-        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    if (align < 2)
+    if (uintptr_t(mb->getBufferStart()) & 1)
       llvm_unreachable("Invalid alignment for ELF file!");
-
     unsigned char size;
     unsigned char endian;
     std::tie(size, endian) = llvm::object::getElfArchType(mb->getBuffer());
