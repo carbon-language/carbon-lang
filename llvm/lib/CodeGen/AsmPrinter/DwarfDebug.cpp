@@ -1535,15 +1535,7 @@ void DebugLocEntry::finalize(const AsmPrinter &AP,
         Offset += PieceOffset-Offset;
       }
       Offset += PieceSize;
-   
-#ifndef NDEBUG
-      DIVariable Var = Piece.getVariable();
-      unsigned VarSize = Var.getSizeInBits(TypeIdentifierMap);
-      assert(PieceSize+PieceOffset <= VarSize
-             && "piece is larger than or outside of variable");
-      assert(PieceSize != VarSize
-             && "piece covers entire variable");
-#endif
+
       emitDebugLocValue(AP, TypeIdentifierMap, Streamer, Piece, PieceOffset);
     }
   } else {
