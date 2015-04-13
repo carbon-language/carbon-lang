@@ -9,9 +9,36 @@
 
 #include "OrcLazyJIT.h"
 #include "llvm/ExecutionEngine/Orc/OrcTargetSupport.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/DynamicLibrary.h"
+#include <system_error>
 
 using namespace llvm;
+
+namespace {
+
+  enum class DumpKind { NoDump, DumpFuncsToStdErr, DumpModsToStdErr,
+                        DumpModsToDisk };
+
+  cl::opt<DumpKind> OrcDumpKind("orc-lazy-debug",
+                                cl::desc("Debug dumping for the orc-lazy JIT."),
+                                cl::init(DumpKind::NoDump),
+                                cl::values(
+                                  clEnumValN(DumpKind::NoDump, "no-dump",
+                                             "Don't dump anything."),
+                                  clEnumValN(DumpKind::DumpFuncsToStdErr,
+                                             "funcs-to-stderr",
+                                             "Dump function names to stderr."),
+                                  clEnumValN(DumpKind::DumpModsToStdErr,
+                                             "mods-to-stderr",
+                                             "Dump modules to stderr."),
+                                  clEnumValN(DumpKind::DumpModsToDisk,
+                                             "mods-to-disk",
+                                             "Dump modules to the current "
+                                             "working directory. (WARNING: "
+                                             "will overwrite existing files)."),
+                                  clEnumValEnd));
+}
 
 OrcLazyJIT::CallbackManagerBuilder
 OrcLazyJIT::createCallbackManagerBuilder(Triple T) {
@@ -19,13 +46,61 @@ OrcLazyJIT::createCallbackManagerBuilder(Triple T) {
     default: return nullptr;
 
     case Triple::x86_64: {
-      typedef orc::JITCompileCallbackManager<CompileLayerT,
+      typedef orc::JITCompileCallbackManager<IRDumpLayerT,
                                              orc::OrcX86_64> CCMgrT;
-      return [](CompileLayerT &CompileLayer, RuntimeDyld::MemoryManager &MemMgr,
+      return [](IRDumpLayerT &IRDumpLayer, RuntimeDyld::MemoryManager &MemMgr,
                 LLVMContext &Context) {
-               return make_unique<CCMgrT>(CompileLayer, MemMgr, Context, 0, 64);
+               return make_unique<CCMgrT>(IRDumpLayer, MemMgr, Context, 0, 64);
              };
     }
+  }
+}
+
+OrcLazyJIT::TransformFtor OrcLazyJIT::createDebugDumper() {
+
+  switch (OrcDumpKind) {
+  case DumpKind::NoDump:
+    return [](std::unique_ptr<Module> M) { return std::move(M); };
+
+  case DumpKind::DumpFuncsToStdErr:
+    return [](std::unique_ptr<Module> M) {
+      dbgs() << "[ ";
+
+      for (const auto &F : *M) {
+        if (F.isDeclaration())
+          continue;
+
+        if (F.hasName())
+          dbgs() << F.getName() << " ";
+        else
+          dbgs() << "<anon> ";
+      }
+
+      dbgs() << "]\n";
+      return std::move(M);
+    };
+
+  case DumpKind::DumpModsToStdErr:
+    return [](std::unique_ptr<Module> M) {
+             dbgs() << "----- Module Start -----\n" << *M
+                    << "----- Module End -----\n";
+
+             return std::move(M);
+           };
+
+  case DumpKind::DumpModsToDisk:
+    return [](std::unique_ptr<Module> M) {
+             std::error_code EC;
+             raw_fd_ostream Out(M->getModuleIdentifier() + ".ll", EC,
+                                sys::fs::F_Text);
+             if (EC) {
+               errs() << "Couldn't open " << M->getModuleIdentifier()
+                      << " for dumping.\nError:" << EC.message() << "\n";
+               exit(1);
+             }
+             Out << *M;
+             return std::move(M);
+           };
   }
 }
 
