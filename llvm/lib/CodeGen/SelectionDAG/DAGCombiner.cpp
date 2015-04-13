@@ -4881,7 +4881,7 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
       SDValue N1_0 = N1->getOperand(0);
       SDValue N1_1 = N1->getOperand(1);
       SDValue N1_2 = N1->getOperand(2);
-      if (N1_2 == N2) {
+      if (N1_2 == N2 && N0.getValueType() == N1_0.getValueType()) {
         // Create the actual and node if we can generate good code for it.
         if (!TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
           SDValue And = DAG.getNode(ISD::AND, SDLoc(N), N0.getValueType(),
@@ -4900,7 +4900,7 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
       SDValue N2_0 = N2->getOperand(0);
       SDValue N2_1 = N2->getOperand(1);
       SDValue N2_2 = N2->getOperand(2);
-      if (N2_1 == N1) {
+      if (N2_1 == N1 && N0.getValueType() == N2_0.getValueType()) {
         // Create the actual or node if we can generate good code for it.
         if (!TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
           SDValue Or = DAG.getNode(ISD::OR, SDLoc(N), N0.getValueType(),
