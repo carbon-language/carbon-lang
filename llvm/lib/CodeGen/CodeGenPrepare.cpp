@@ -1288,13 +1288,25 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
                      cast<PointerType>(Arg->getType())->getAddressSpace()), 0);
       Value *Val = Arg->stripAndAccumulateInBoundsConstantOffsets(*TD, Offset);
       uint64_t Offset2 = Offset.getLimitedValue();
+      if ((Offset2 & (PrefAlign-1)) != 0)
+        continue;
       AllocaInst *AI;
-      if ((Offset2 & (PrefAlign-1)) == 0 &&
-          (AI = dyn_cast<AllocaInst>(Val)) &&
+      if ((AI = dyn_cast<AllocaInst>(Val)) &&
           AI->getAlignment() < PrefAlign &&
           TD->getTypeAllocSize(AI->getAllocatedType()) >= MinSize + Offset2)
         AI->setAlignment(PrefAlign);
-      // TODO: Also align GlobalVariables
+      // Global variables can only be aligned if they are defined in this
+      // object (i.e. they are uniquely initialized in this object), and
+      // over-aligning global variables that have an explicit section is
+      // forbidden.
+      GlobalVariable *GV;
+      if ((GV = dyn_cast<GlobalVariable>(Val)) &&
+          GV->hasUniqueInitializer() &&
+          !GV->hasSection() &&
+          GV->getAlignment() < PrefAlign &&
+          TD->getTypeAllocSize(
+            GV->getType()->getElementType()) >= MinSize + Offset2)
+        GV->setAlignment(PrefAlign);
     }
     // If this is a memcpy (or similar) then we may be able to improve the
     // alignment
