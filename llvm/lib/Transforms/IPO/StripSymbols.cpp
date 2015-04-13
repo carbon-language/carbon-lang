@@ -335,7 +335,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
 
       // If the global variable referenced by DIG is not null, the global
       // variable is live.
-      if (DIG.getGlobal())
+      if (DIG.getConstant())
         LiveGlobalVariables.push_back(DIG);
       else
         GlobalVariableChange = true;
