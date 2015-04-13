@@ -409,6 +409,15 @@ private:
       if (!Tok->Previous)
         return false;
       // Colons from ?: are handled in parseConditional().
+      if (Style.Language == FormatStyle::LK_JavaScript) {
+        if (Contexts.back().ColonIsForRangeExpr ||
+            (Contexts.size() == 1 &&
+             !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) ||
+            Contexts.back().ContextKind == tok::l_paren) {
+          Tok->Type = TT_JsTypeColon;
+          break;
+        }
+      }
       if (Contexts.back().ColonIsDictLiteral) {
         Tok->Type = TT_DictLiteral;
       } else if (Contexts.back().ColonIsObjCMethodExpr ||
@@ -422,16 +431,12 @@ private:
         if (!Contexts.back().FirstObjCSelectorName)
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
       } else if (Contexts.back().ColonIsForRangeExpr) {
-        Tok->Type = Style.Language == FormatStyle::LK_JavaScript
-                        ? TT_JsTypeColon
-                        : TT_RangeBasedForLoopColon;
+        Tok->Type = TT_RangeBasedForLoopColon;
       } else if (CurrentToken && CurrentToken->is(tok::numeric_constant)) {
         Tok->Type = TT_BitFieldColon;
       } else if (Contexts.size() == 1 &&
                  !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) {
-        if (Style.Language == FormatStyle::LK_JavaScript)
-          Tok->Type = TT_JsTypeColon;
-        else if (Tok->Previous->is(tok::r_paren))
+        if (Tok->Previous->is(tok::r_paren))
           Tok->Type = TT_CtorInitializerColon;
         else
           Tok->Type = TT_InheritanceColon;
@@ -441,9 +446,7 @@ private:
         // the colon are passed as macro arguments.
         Tok->Type = TT_ObjCMethodExpr;
       } else if (Contexts.back().ContextKind == tok::l_paren) {
-        Tok->Type = Style.Language == FormatStyle::LK_JavaScript
-                        ? TT_JsTypeColon
-                        : TT_InlineASMColon;
+        Tok->Type = TT_InlineASMColon;
       }
       break;
     case tok::kw_if:
@@ -516,6 +519,15 @@ private:
       }
       break;
     case tok::question:
+      if (Style.Language == FormatStyle::LK_JavaScript && Tok->Next &&
+          Tok->Next->isOneOf(tok::colon, tok::semi, tok::r_paren,
+                             tok::r_brace)) {
+        // Question marks before semicolons, colons, commas, etc. indicate
+        // optional types (fields, parameters), e.g.
+        // `function(x?: string, y?) {...}` or `class X {y?;}`
+        Tok->Type = TT_JsTypeOptionalQuestion;
+        break;
+      }
       parseConditional();
       break;
     case tok::kw_template:
@@ -1774,7 +1786,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
     if (Left.is(Keywords.kw_var))
       return true;
-    if (Right.is(TT_JsTypeColon))
+    if (Right.isOneOf(TT_JsTypeColon, TT_JsTypeOptionalQuestion))
       return false;
     if ((Left.is(tok::l_brace) || Right.is(tok::r_brace)) &&
         Line.First->isOneOf(Keywords.kw_import, tok::kw_export))

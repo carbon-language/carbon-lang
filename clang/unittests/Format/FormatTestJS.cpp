@@ -662,5 +662,13 @@ TEST_F(FormatTestJS, TypeArguments) {
   verifyFormat("class C extends D<E> implements F<G>, H<I> {}");
 }
 
+TEST_F(FormatTestJS, OptionalTypes) {
+  verifyFormat("function x(a?: b, c?, d?) {\n}");
+  verifyFormat("class X {\n"
+               "  y?: z;\n"
+               "  z?;\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang
