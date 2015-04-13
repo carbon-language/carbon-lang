@@ -289,21 +289,6 @@ private:
   }
 };
 
-#define EXTERN_MIPSFILE_INSTANTIATION(T)                                       \
-  EXTERN_TEMPLATE_INSTANTIATION(class MipsELFDefinedAtom<T>);                  \
-  EXTERN_TEMPLATE_INSTANTIATION(class MipsELFReference<T>);                    \
-  EXTERN_TEMPLATE_INSTANTIATION(class MipsELFFile<T>);
-
-#define MIPSFILE_INSTANTIATION(T)                                              \
-  TEMPLATE_INSTANTIATION(class MipsELFDefinedAtom<T>);                         \
-  TEMPLATE_INSTANTIATION(class MipsELFReference<T>);                           \
-  TEMPLATE_INSTANTIATION(class MipsELFFile<T>);
-
-EXTERN_MIPSFILE_INSTANTIATION(Mips32ELType)
-EXTERN_MIPSFILE_INSTANTIATION(Mips64ELType)
-EXTERN_MIPSFILE_INSTANTIATION(Mips32BEType)
-EXTERN_MIPSFILE_INSTANTIATION(Mips64BEType)
-
 } // elf
 } // lld
 
