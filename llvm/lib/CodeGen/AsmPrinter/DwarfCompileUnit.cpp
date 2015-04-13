@@ -140,12 +140,11 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
 
   // Add location.
   bool addToAccelTable = false;
-  bool isGlobalVariable = GV.getGlobal() != nullptr;
-  if (isGlobalVariable) {
+  if (auto *Global = dyn_cast_or_null<GlobalVariable>(GV.getConstant())) {
     addToAccelTable = true;
     DIELoc *Loc = new (DIEValueAllocator) DIELoc();
-    const MCSymbol *Sym = Asm->getSymbol(GV.getGlobal());
-    if (GV.getGlobal()->isThreadLocal()) {
+    const MCSymbol *Sym = Asm->getSymbol(Global);
+    if (Global->isThreadLocal()) {
       // FIXME: Make this work with -gsplit-dwarf.
       unsigned PointerSize = Asm->getDataLayout().getPointerSize();
       assert((PointerSize == 4 || PointerSize == 8) &&

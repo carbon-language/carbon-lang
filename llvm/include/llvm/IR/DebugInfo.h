@@ -681,7 +681,6 @@ public:
   StringRef getDirectory() const { return get()->getDirectory(); }
   DITypeRef getType() const { return get()->getType(); }
 
-  GlobalVariable *getGlobal() const;
   Constant *getConstant() const { return get()->getVariable(); }
   DIDerivedType getStaticDataMemberDeclaration() const {
     return DIDerivedType(get()->getStaticDataMemberDeclaration());

@@ -49,10 +49,6 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   return !SP.describes(CurFn);
 }
 
-GlobalVariable *DIGlobalVariable::getGlobal() const {
-  return dyn_cast_or_null<GlobalVariable>(getConstant());
-}
-
 void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
   get()->replaceSubprograms(MDSubprogramArray(Subprograms));
 }
