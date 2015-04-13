@@ -114,9 +114,12 @@ static std::error_code relocR_AARCH64_PREL16(uint8_t *location, uint64_t P,
 }
 
 /// \brief R_AARCH64_ADR_PREL_PG_HI21 - Page(S+A) - Page(P)
-static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
-                                            uint64_t S, int64_t A) {
-  uint64_t result = (page(S + A) - page(P));
+static std::error_code relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location,
+                                                       uint64_t P, uint64_t S,
+                                                       int64_t A) {
+  int64_t result = page(S + A) - page(P);
+  if (!isInt<32>(result))
+    return make_out_of_range_reloc_error();
   result = result >> 12;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
@@ -130,6 +133,7 @@ static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
         llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, immlo | immhi | read32le(location));
+  return std::error_code();
 }
 
 /// \brief R_AARCH64_ADR_PREL_LO21 - S + A - P
@@ -405,8 +409,7 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
   case R_AARCH64_GLOB_DAT:
     break;
   case R_AARCH64_ADR_PREL_PG_HI21:
-    relocR_AARCH64_ADR_PREL_PG_HI21(loc, reloc, target, addend);
-    break;
+    return relocR_AARCH64_ADR_PREL_PG_HI21(loc, reloc, target, addend);
   case R_AARCH64_ADR_PREL_LO21:
     relocR_AARCH64_ADR_PREL_LO21(loc, reloc, target, addend);
     break;
