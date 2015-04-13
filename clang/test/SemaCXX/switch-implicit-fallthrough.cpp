@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wimplicit-fallthrough %s
 
-
 int fallthrough(int n) {
   switch (n / 10) {
       if (n - 1) {
@@ -300,3 +299,8 @@ int fallthrough_targets(int n) {
   }
   return n;
 }
+
+[[clang::fallthrough]] int a; // expected-error {{'fallthrough' attribute only applies to empty statements}}
+[[clang::fallthrough]] int f(); // expected-error {{'fallthrough' attribute only applies to empty statements}}
+void g([[clang::fallthrough]] int p); // expected-error {{'fallthrough' attribute only applies to empty statements}}
+struct [[clang::fallthrough]] S; // expected-error {{'fallthrough' attribute only applies to empty statements}}
