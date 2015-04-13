@@ -139,7 +139,7 @@ static std::error_code relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location,
 /// \brief R_AARCH64_ADR_PREL_LO21 - S + A - P
 static std::error_code relocR_AARCH64_ADR_PREL_LO21(uint8_t *location, uint64_t P,
                                                     uint64_t S, int64_t A) {
-  uint64_t result = (S + A) - P;
+  uint64_t result = S + A - P;
   if (!isInt<20>(result))
     return make_out_of_range_reloc_error();
   uint32_t immlo = result & 0x3;
@@ -173,7 +173,7 @@ static void relocR_AARCH64_ADD_ABS_LO12_NC(uint8_t *location, uint64_t P,
 /// \brief R_AARCH64_CALL26 and R_AARCH64_JUMP26
 static std::error_code relocJump26(uint8_t *location, uint64_t P, uint64_t S,
                                    int64_t A) {
-  int64_t result = (S + A) - P;
+  int64_t result = S + A - P;
   if (!isInt<27>(result))
     return make_out_of_range_reloc_error();
   result &= 0x0FFFFFFC;
@@ -190,7 +190,7 @@ static std::error_code relocJump26(uint8_t *location, uint64_t P, uint64_t S,
 /// \brief R_AARCH64_CONDBR19
 static std::error_code relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P,
                                                uint64_t S, int64_t A) {
-  int64_t result = (S + A) - P;
+  int64_t result = S + A - P;
   if (!isInt<20>(result))
     return make_out_of_range_reloc_error();
   result &= 0x01FFFFC;
@@ -273,8 +273,9 @@ static void relocR_AARCH64_LDST128_ABS_LO12_NC(uint8_t *location, uint64_t P,
   write32le(location, result | read32le(location));
 }
 
-static std::error_code relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
-                                        uint64_t S, int64_t A) {
+static std::error_code relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location,
+                                                   uint64_t P, uint64_t S,
+                                                   int64_t A) {
   uint64_t result = page(S + A) - page(P);
   if (!isInt<32>(result))
     return make_out_of_range_reloc_error();
@@ -295,8 +296,9 @@ static std::error_code relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P
 }
 
 // R_AARCH64_LD64_GOT_LO12_NC
-static std::error_code relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location, uint64_t P,
-                                            uint64_t S, int64_t A) {
+static std::error_code relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location,
+                                                       uint64_t P, uint64_t S,
+                                                       int64_t A) {
   int32_t result = S + A;
   DEBUG(llvm::dbgs() << " S: " << Twine::utohexstr(S);
         llvm::dbgs() << " A: " << Twine::utohexstr(A);
