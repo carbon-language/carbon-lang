@@ -524,10 +524,7 @@ public:
 
   Function *getFunction() const { return get()->getFunction(); }
 
-  void replaceFunction(Function *F) {
-    if (auto *N = get())
-      N->replaceFunction(F);
-  }
+  void replaceFunction(Function *F) { get()->replaceFunction(F); }
   DIArray getTemplateParams() const {
     return DIArray(get()->getTemplateParams());
   }
