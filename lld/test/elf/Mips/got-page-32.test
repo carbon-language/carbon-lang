@@ -9,6 +9,12 @@
 # RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=RAW %s
 
 # GOT:      Symbol {
+# GOT:        Name: LT3 (12)
+# GOT-NEXT:   Value: 0x400184
+# GOT:      Symbol {
+# GOT:        Name: LT4 (16)
+# GOT-NEXT:   Value: 0x400188
+# GOT:      Symbol {
 # GOT:        Name: T0 (1)
 # GOT-NEXT:   Value: 0x400154
 # GOT:      Symbol {
@@ -56,11 +62,21 @@
 # GOT-NEXT:       Access: -32736
 # GOT-NEXT:       Initial: 0x400000
 # GOT-NEXT:     }
-# GOT-NEXT:   ]
-# GOT-NEXT:   Global entries [
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401014
 # GOT-NEXT:       Access: -32732
+# GOT-NEXT:       Initial: 0x400184
+# GOT-NEXT:     }
+# GOT-NEXT:     Entry {
+# GOT-NEXT:       Address: 0x401018
+# GOT-NEXT:       Access: -32728
+# GOT-NEXT:       Initial: 0x400000
+# GOT-NEXT:     }
+# GOT-NEXT:   ]
+# GOT-NEXT:   Global entries [
+# GOT-NEXT:     Entry {
+# GOT-NEXT:       Address: 0x40101C
+# GOT-NEXT:       Access: -32724
 # GOT-NEXT:       Initial: 0x0
 # GOT-NEXT:       Value: 0x0
 # GOT-NEXT:       Type: Function (0x2)
@@ -68,8 +84,8 @@
 # GOT-NEXT:       Name: T1@ (1)
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
-# GOT-NEXT:       Address: 0x401018
-# GOT-NEXT:       Access: -32728
+# GOT-NEXT:       Address: 0x401020
+# GOT-NEXT:       Access: -32720
 # GOT-NEXT:       Initial: 0x0
 # GOT-NEXT:       Value: 0x0
 # GOT-NEXT:       Type: Function (0x2)
@@ -81,19 +97,23 @@
 # GOT-NEXT: }
 
 # RAW:      Contents of section .text:
-# RAW-NEXT:  400154 24800000 18800000 24800000 28800000  $.......$...(...
-#                   ^ = -32732 (T1)
+# RAW-NEXT:  400154 2c800000 18800000 2c800000 30800000
+#                   ^ = -32724 (T1)
 #                            ^ = -32744 (LT1)
-#                                     ^ -32732 (T1)
-#                                              ^ -32728 (T2)
-# RAW-NEXT:  400164 1c800000 20800000 00000000 00000000  .... ...........
+#                                     ^ -32724 (T1)
+#                                              ^ -32720 (T2)
+# RAW-NEXT:  400164 1c800000 20800000 00000000 00000000
 #                   ^ -32740 (PAGE)
 #                            ^ -32736 (PAGE)
 #                                     ^ T1 OFST
 #                                              ^ T2 OFST
-# RAW-NEXT:  400174 7c010000 80010000 00000000 00000000  |...............
+# RAW-NEXT:  400174 7c010000 80010000 24800000 28800000
 #                   ^ LT1 OFST
 #                            ^ LT2 OFST
+#                                     ^ = -32732 (LT3)
+#                                              ^ -32728 (PAGE)
+# RAW-NEXT:  400184 88010000 00000000
+#                   ^ LT4 OFST
 
 # so.o
 ---
@@ -102,7 +122,8 @@ FileHeader:
   Data:    ELFDATA2LSB
   Type:    ET_REL
   Machine: EM_MIPS
-  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_32, EF_MIPS_ABI_O32]
+  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC,
+            EF_MIPS_ARCH_32, EF_MIPS_ABI_O32]
 
 Sections:
 - Name:         .text
@@ -131,14 +152,15 @@ FileHeader:
   Data:    ELFDATA2LSB
   Type:    ET_REL
   Machine: EM_MIPS
-  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_32, EF_MIPS_ABI_O32]
+  Flags:   [EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC,
+            EF_MIPS_ARCH_32, EF_MIPS_ABI_O32]
 
 Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x4
-    Size:            0x30
+    Size:            0x38
 
   - Name:            .rel.text
     Type:            SHT_RELA
@@ -176,12 +198,31 @@ Sections:
       - Offset:      0x24
         Symbol:      LT2
         Type:        R_MIPS_GOT_OFST
+      - Offset:      0x28
+        Symbol:      LT3
+        Type:        R_MIPS_GOT_DISP
+      - Offset:      0x2C
+        Symbol:      LT4
+        Type:        R_MIPS_GOT_PAGE
+      - Offset:      0x30
+        Symbol:      LT4
+        Type:        R_MIPS_GOT_OFST
 
 Symbols:
   Local:
     - Name:    .text
       Type:    STT_SECTION
       Section: .text
+    - Name:    LT3
+      Type:    STT_FUNC
+      Section: .text
+      Value:   0x30
+      Size:    0x4
+    - Name:    LT4
+      Type:    STT_FUNC
+      Section: .text
+      Value:   0x34
+      Size:    0x4
 
   Global:
     - Name:    T0
