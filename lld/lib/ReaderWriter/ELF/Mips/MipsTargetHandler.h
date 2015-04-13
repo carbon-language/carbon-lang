@@ -162,6 +162,11 @@ private:
   MipsTargetLayout<ELFT> &_targetLayout;
 };
 
+std::unique_ptr<TargetHandler>
+createMips32ELTargetHandler(MipsLinkingContext &ctx);
+std::unique_ptr<TargetHandler>
+createMips64ELTargetHandler(MipsLinkingContext &ctx);
+
 } // end namespace elf
 } // end namespace lld
 

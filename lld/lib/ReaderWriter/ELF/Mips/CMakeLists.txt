@@ -4,6 +4,8 @@ add_llvm_library(lldMipsELFTarget
   MipsLinkingContext.cpp
   MipsRelocationHandler.cpp
   MipsRelocationPass.cpp
+  MipsTargetHandler32EL.cpp
+  MipsTargetHandler64EL.cpp
   LINK_LIBS
     lldELF
     lldReaderWriter

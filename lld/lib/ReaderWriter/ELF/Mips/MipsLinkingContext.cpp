@@ -24,15 +24,13 @@ elf::createMipsLinkingContext(llvm::Triple triple) {
   return nullptr;
 }
 
-typedef std::unique_ptr<TargetHandler> TargetHandlerPtr;
-
-static TargetHandlerPtr createTarget(llvm::Triple triple,
-                                     MipsLinkingContext &ctx) {
+static std::unique_ptr<TargetHandler> createTarget(llvm::Triple triple,
+                                                   MipsLinkingContext &ctx) {
   switch (triple.getArch()) {
   case llvm::Triple::mipsel:
-    return TargetHandlerPtr(new MipsTargetHandler<Mips32ELType>(ctx));
+    return createMips32ELTargetHandler(ctx);
   case llvm::Triple::mips64el:
-    return TargetHandlerPtr(new MipsTargetHandler<Mips64ELType>(ctx));
+    return createMips64ELTargetHandler(ctx);
   default:
     llvm_unreachable("Unhandled arch");
   }
