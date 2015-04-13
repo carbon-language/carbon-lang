@@ -1,4 +1,6 @@
 add_llvm_library(lldELF
+  DynamicFile.cpp
+  ELFFile.cpp
   ELFLinkingContext.cpp
   Reader.cpp
   Writer.cpp
