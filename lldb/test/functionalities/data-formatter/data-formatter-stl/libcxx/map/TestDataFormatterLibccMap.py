@@ -20,6 +20,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @skipIfLinux # No standard locations for libc++ on Linux, so skip for now 
+    @skipIfWindows # libc++ not ported to Windows yet
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
