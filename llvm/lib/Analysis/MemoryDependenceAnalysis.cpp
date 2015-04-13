@@ -874,23 +874,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
 void MemoryDependenceAnalysis::
 getNonLocalPointerDependency(Instruction *QueryInst,
                              SmallVectorImpl<NonLocalDepResult> &Result) {
-
-  auto getLocation = [](AliasAnalysis *AA, Instruction *Inst) {
-    if (auto *I = dyn_cast<LoadInst>(Inst))
-      return AA->getLocation(I);
-    else if (auto *I = dyn_cast<StoreInst>(Inst))
-      return AA->getLocation(I);
-    else if (auto *I = dyn_cast<VAArgInst>(Inst))
-      return AA->getLocation(I);
-    else if (auto *I = dyn_cast<AtomicCmpXchgInst>(Inst))
-      return AA->getLocation(I);
-    else if (auto *I = dyn_cast<AtomicRMWInst>(Inst))
-      return AA->getLocation(I);
-    else
-      llvm_unreachable("unsupported memory instruction");
-  };
-   
-  const AliasAnalysis::Location Loc = getLocation(AA, QueryInst);
+  const AliasAnalysis::Location Loc = AA->getLocation(QueryInst);
   bool isLoad = isa<LoadInst>(QueryInst);
   BasicBlock *FromBB = QueryInst->getParent();
   assert(FromBB);

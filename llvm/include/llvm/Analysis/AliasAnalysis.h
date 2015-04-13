@@ -145,6 +145,19 @@ public:
   Location getLocation(const AtomicRMWInst *RMWI);
   static Location getLocationForSource(const MemTransferInst *MTI);
   static Location getLocationForDest(const MemIntrinsic *MI);
+  Location getLocation(const Instruction *Inst) {
+    if (auto *I = dyn_cast<LoadInst>(Inst))
+      return getLocation(I);
+    else if (auto *I = dyn_cast<StoreInst>(Inst))
+      return getLocation(I);
+    else if (auto *I = dyn_cast<VAArgInst>(Inst))
+      return getLocation(I);
+    else if (auto *I = dyn_cast<AtomicCmpXchgInst>(Inst))
+      return getLocation(I);
+    else if (auto *I = dyn_cast<AtomicRMWInst>(Inst))
+      return getLocation(I);
+    llvm_unreachable("unsupported memory instruction");
+  }
 
   /// Alias analysis result - Either we know for sure that it does not alias, we
   /// know for sure it must alias, or we don't know anything: The two pointers
