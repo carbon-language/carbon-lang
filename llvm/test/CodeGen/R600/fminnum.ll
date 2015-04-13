@@ -141,7 +141,7 @@ define void @constant_fold_fmin_f32(float addrspace(1)* %out) nounwind {
 ; EG: MEM_RAT_CACHELESS STORE_RAW [[OUT:T[0-9]+\.[XYZW]]]
 ; EG-NOT: MIN_DX10
 ; EG: MOV {{.*}}[[OUT]], literal.{{[xy]}}
-; EG: 2143289344(nan)
+; EG: 2143289344({{nan|1\.#QNAN0e\+00}})
 define void @constant_fold_fmin_f32_nan_nan(float addrspace(1)* %out) nounwind {
   %val = call float @llvm.minnum.f32(float 0x7FF8000000000000, float 0x7FF8000000000000) #0
   store float %val, float addrspace(1)* %out, align 4
