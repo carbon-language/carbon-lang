@@ -330,7 +330,7 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
 
   // If the load address doesn't alias the given address, it doesn't read
   // or write the specified memory.
-  if (!alias(getLocation(L), Loc))
+  if (Loc.Ptr && !alias(getLocation(L), Loc))
     return NoModRef;
 
   // Otherwise, a load just reads.
@@ -343,15 +343,18 @@ AliasAnalysis::getModRefInfo(const StoreInst *S, const Location &Loc) {
   if (!S->isUnordered())
     return ModRef;
 
-  // If the store address cannot alias the pointer in question, then the
-  // specified memory cannot be modified by the store.
-  if (!alias(getLocation(S), Loc))
-    return NoModRef;
+  if (Loc.Ptr) {
+    // If the store address cannot alias the pointer in question, then the
+    // specified memory cannot be modified by the store.
+    if (!alias(getLocation(S), Loc))
+      return NoModRef;
 
-  // If the pointer is a pointer to constant memory, then it could not have been
-  // modified by this store.
-  if (pointsToConstantMemory(Loc))
-    return NoModRef;
+    // If the pointer is a pointer to constant memory, then it could not have
+    // been modified by this store.
+    if (pointsToConstantMemory(Loc))
+      return NoModRef;
+
+  }
 
   // Otherwise, a store just writes.
   return Mod;
