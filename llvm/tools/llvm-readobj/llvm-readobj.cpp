@@ -325,13 +325,12 @@ static void dumpArchive(const Archive *Arc) {
 static void dumpMachOUniversalBinary(const MachOUniversalBinary *UBinary) {
   for (const MachOUniversalBinary::ObjectForArch &Obj : UBinary->objects()) {
     ErrorOr<std::unique_ptr<MachOObjectFile>> ObjOrErr = Obj.getAsObjectFile();
-    if (std::error_code EC = ObjOrErr.getError()) {
-      reportError(UBinary->getFileName(), EC.message());
-      continue;
-    }
-
-    if (MachOObjectFile *MachOObj = ObjOrErr.get().get())
-      dumpObject(MachOObj);
+    if (ObjOrErr)
+      dumpObject(&*ObjOrErr.get());
+    else if (ErrorOr<std::unique_ptr<Archive>> AOrErr = Obj.getAsArchive())
+      dumpArchive(&*AOrErr.get());
+    else
+      reportError(UBinary->getFileName(), ObjOrErr.getError().message());
   }
 }
 
