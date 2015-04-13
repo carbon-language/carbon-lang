@@ -22,7 +22,6 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr18832')
     @dwarf_test
-    @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def test_watchlocation_with_dwarf_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -s size' option."""
         self.buildDwarf(dictionary=self.d)
