@@ -487,47 +487,41 @@ void format_object_base::home() {
 //  raw_fd_ostream
 //===----------------------------------------------------------------------===//
 
-raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
-                               sys::fs::OpenFlags Flags)
-    : Error(false), UseAtomicWrites(false), pos(0) {
-  EC = std::error_code();
+static int getFD(StringRef Filename, std::error_code &EC,
+                 sys::fs::OpenFlags Flags) {
   // Handle "-" as stdout. Note that when we do this, we consider ourself
   // the owner of stdout. This means that we can do things like close the
   // file descriptor when we're done and set the "binary" flag globally.
   if (Filename == "-") {
-    FD = STDOUT_FILENO;
+    EC = std::error_code();
     // If user requested binary then put stdout into binary mode if
     // possible.
     if (!(Flags & sys::fs::F_Text))
       sys::ChangeStdoutToBinary();
-    // Close stdout when we're done, to detect any output errors.
-    ShouldClose = true;
-    return;
+    return STDOUT_FILENO;
   }
 
+  int FD;
   EC = sys::fs::openFileForWrite(Filename, FD, Flags);
+  if (EC)
+    return -1;
 
-  if (EC) {
-    ShouldClose = false;
-    return;
-  }
-
-  // Ok, we successfully opened the file, so it'll need to be closed.
-  ShouldClose = true;
+  return FD;
 }
+
+raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
+                               sys::fs::OpenFlags Flags)
+    : raw_fd_ostream(getFD(Filename, EC, Flags), true) {}
 
 /// FD is the file descriptor that this writes to.  If ShouldClose is true, this
 /// closes the file when the stream is destroyed.
 raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
-    : raw_ostream(unbuffered), FD(fd), ShouldClose(shouldClose), Error(false),
-      UseAtomicWrites(false) {
-#ifdef O_BINARY
-  // Setting STDOUT to binary mode is necessary in Win32
-  // to avoid undesirable linefeed conversion.
-  // Don't touch STDERR, or w*printf() (in assert()) would barf wide chars.
-  if (fd == STDOUT_FILENO)
-    setmode(fd, O_BINARY);
-#endif
+  : raw_ostream(unbuffered), FD(fd),
+    ShouldClose(shouldClose), Error(false), UseAtomicWrites(false) {
+  if (FD < 0 ) {
+    ShouldClose = false;
+    return;
+  }
 
   // Get the starting position.
   off_t loc = ::lseek(FD, 0, SEEK_CUR);
@@ -709,7 +703,9 @@ raw_ostream &llvm::outs() {
   // Set buffer settings to model stdout behavior.
   // Delete the file descriptor when the program exits, forcing error
   // detection. If you don't want this behavior, don't use outs().
-  static raw_fd_ostream S(STDOUT_FILENO, true);
+  std::error_code EC;
+  static raw_fd_ostream S("-", EC, sys::fs::F_None);
+  assert(!EC);
   return S;
 }
 
