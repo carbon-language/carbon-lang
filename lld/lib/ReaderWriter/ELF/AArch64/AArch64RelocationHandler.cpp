@@ -263,10 +263,12 @@ static void relocR_AARCH64_LDST128_ABS_LO12_NC(uint8_t *location, uint64_t P,
   write32le(location, result | read32le(location));
 }
 
-static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
+static std::error_code relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
                                         uint64_t S, int64_t A) {
   uint64_t result = page(S + A) - page(P);
-  result >>= 12;
+  if (!isInt<32>(result))
+    return make_out_of_range_reloc_error();
+  result = (result >> 12) & 0x3FFFF;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
   immlo = immlo << 29;
@@ -279,20 +281,23 @@ static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
         llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, immlo | immhi | read32le(location));
+  return std::error_code();
 }
 
 // R_AARCH64_LD64_GOT_LO12_NC
-static void relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location, uint64_t P,
+static std::error_code relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location, uint64_t P,
                                             uint64_t S, int64_t A) {
   int32_t result = S + A;
-  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
-        llvm::dbgs() << " S: " << Twine::utohexstr(S);
+  DEBUG(llvm::dbgs() << " S: " << Twine::utohexstr(S);
         llvm::dbgs() << " A: " << Twine::utohexstr(A);
         llvm::dbgs() << " P: " << Twine::utohexstr(P);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
+  if ((result & 0x7) != 0)
+    return make_unaligned_range_reloc_error();
   result &= 0xFF8;
   result <<= 7;
   write32le(location, result | read32le(location));
+  return std::error_code();
 }
 
 // ADD_AARCH64_GOTRELINDEX
@@ -424,11 +429,9 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     relocR_AARCH64_CONDBR19(loc, reloc, target, addend);
     break;
   case R_AARCH64_ADR_GOT_PAGE:
-    relocR_AARCH64_ADR_GOT_PAGE(loc, reloc, target, addend);
-    break;
+    return relocR_AARCH64_ADR_GOT_PAGE(loc, reloc, target, addend);
   case R_AARCH64_LD64_GOT_LO12_NC:
-    relocR_AARCH64_LD64_GOT_LO12_NC(loc, reloc, target, addend);
-    break;
+    return relocR_AARCH64_LD64_GOT_LO12_NC(loc, reloc, target, addend);
   case R_AARCH64_LDST8_ABS_LO12_NC:
     relocR_AARCH64_LDST8_ABS_LO12_NC(loc, reloc, target, addend);
     break;

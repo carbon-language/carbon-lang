@@ -25,6 +25,10 @@ inline std::error_code make_out_of_range_reloc_error() {
   return make_dynamic_error_code(Twine("Relocation out of range"));
 }
 
+inline std::error_code make_unaligned_range_reloc_error() {
+  return make_dynamic_error_code(Twine("Relocation not aligned"));
+}
+
 } // end namespace elf
 } // end namespace lld
 
