@@ -98,9 +98,9 @@ private:
 
 /// \brief TargetHandler for Hexagon
 class HexagonTargetHandler final : public TargetHandler {
-  typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFTy;
-  typedef ELFReader<ELFTy, HexagonLinkingContext, HexagonELFFile> ObjReader;
-  typedef ELFReader<ELFTy, HexagonLinkingContext, DynamicFile> ELFDSOReader;
+  typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFT;
+  typedef ELFReader<ELFT, HexagonLinkingContext, HexagonELFFile> ObjReader;
+  typedef ELFReader<ELFT, HexagonLinkingContext, DynamicFile> ELFDSOReader;
 
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
@@ -121,8 +121,8 @@ public:
 
 private:
   HexagonLinkingContext &_ctx;
-  std::unique_ptr<HexagonRuntimeFile<ELFTy>> _runtimeFile;
-  std::unique_ptr<HexagonTargetLayout<ELFTy>> _targetLayout;
+  std::unique_ptr<HexagonRuntimeFile<ELFT>> _runtimeFile;
+  std::unique_ptr<HexagonTargetLayout<ELFT>> _targetLayout;
   std::unique_ptr<HexagonTargetRelocationHandler> _relocationHandler;
 };
 

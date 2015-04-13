@@ -20,9 +20,9 @@ namespace elf {
 class AArch64LinkingContext;
 
 class AArch64TargetHandler final : public TargetHandler {
-  typedef llvm::object::ELFType<llvm::support::little, 2, true> ELFTy;
-  typedef ELFReader<ELFTy, AArch64LinkingContext, ELFFile> ObjReader;
-  typedef ELFReader<ELFTy, AArch64LinkingContext, DynamicFile> DSOReader;
+  typedef llvm::object::ELFType<llvm::support::little, 2, true> ELFT;
+  typedef ELFReader<ELFT, AArch64LinkingContext, ELFFile> ObjReader;
+  typedef ELFReader<ELFT, AArch64LinkingContext, DynamicFile> DSOReader;
 
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
@@ -43,7 +43,7 @@ public:
 
 private:
   AArch64LinkingContext &_ctx;
-  std::unique_ptr<TargetLayout<ELFTy>> _targetLayout;
+  std::unique_ptr<TargetLayout<ELFT>> _targetLayout;
   std::unique_ptr<AArch64TargetRelocationHandler> _relocationHandler;
 };
 
