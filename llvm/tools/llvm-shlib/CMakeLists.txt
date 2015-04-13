@@ -42,7 +42,9 @@ set(SOURCES
   libllvm.cpp
   )
 
-if(NOT DEFINED LLVM_EXPORTED_SYMBOL_FILE)
+llvm_map_components_to_libnames(LIB_NAMES ${LLVM_DYLIB_COMPONENTS})
+
+if(NOT DEFINED LLVM_DYLIB_EXPORTED_SYMBOL_FILE)
 
   if( WIN32 AND NOT CYGWIN )
     message(FATAL_ERROR "Auto-generation not implemented for Win32 without GNU utils. Please specify LLVM_EXPORTED_SYMBOL_FILE.")
@@ -53,8 +55,6 @@ if(NOT DEFINED LLVM_EXPORTED_SYMBOL_FILE)
 
   set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_BINARY_DIR}/libllvm.exports)
 
-  llvm_map_components_to_libnames(LIB_NAMES ${LLVM_DYLIB_COMPONENTS})
-
   foreach (lib ${LIB_NAMES})
     
     set(LIB_DIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
@@ -64,12 +64,21 @@ if(NOT DEFINED LLVM_EXPORTED_SYMBOL_FILE)
 
     list(APPEND LLVM_DYLIB_REQUIRED_EXPORTS ${LIB_EXPORTS_PATH})
 
-    add_custom_command(OUTPUT ${LIB_EXPORTS_PATH}
-      COMMAND nm ${LIB_PATH} | awk "/T _LLVM/ || /T LLVM/ { print $3 }" | sort -u | sed -e "s/^_//g" > ${LIB_EXPORTS_PATH}
-      WORKING_DIRECTORY ${LIB_DIR}
-      DEPENDS ${lib}
-      COMMENT "Generating Export list for ${lib}..."
-      VERBATIM )
+    if (LLVM_DYLIB_EXPORT_ALL)
+      add_custom_command(OUTPUT ${LIB_EXPORTS_PATH}
+        COMMAND nm ${LIB_PATH} | awk "/T / { print $3 }" | sort -u | sed -e "s/^_//g" > ${LIB_EXPORTS_PATH}
+        WORKING_DIRECTORY ${LIB_DIR}
+        DEPENDS ${lib}
+        COMMENT "Generating Export list for ${lib}..."
+        VERBATIM )
+    else()
+      add_custom_command(OUTPUT ${LIB_EXPORTS_PATH}
+        COMMAND nm ${LIB_PATH} | awk "/T _LLVM/ || /T LLVM/ { print $3 }" | sort -u | sed -e "s/^_//g" > ${LIB_EXPORTS_PATH}
+        WORKING_DIRECTORY ${LIB_DIR}
+        DEPENDS ${lib}
+        COMMENT "Generating Export list for ${lib}..."
+        VERBATIM )
+    endif()
   endforeach ()
 
   add_custom_command(OUTPUT ${LLVM_EXPORTED_SYMBOL_FILE}
@@ -79,7 +88,9 @@ if(NOT DEFINED LLVM_EXPORTED_SYMBOL_FILE)
     COMMENT "Generating combined export list...")
 
   add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
-
+else()
+  set(LLVM_EXPORTED_SYMBOL_FILE ${LLVM_DYLIB_EXPORTED_SYMBOL_FILE})
+  add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
 endif()
 
 add_llvm_library(LLVM SHARED ${SOURCES})
