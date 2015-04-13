@@ -56,6 +56,15 @@ static cl::opt<bool> PrintLiveSetSize("spp-print-liveset-size", cl::Hidden,
 static cl::opt<bool> PrintBasePointers("spp-print-base-pointers", cl::Hidden,
                                        cl::init(false));
 
+#ifdef XDEBUG
+static bool ClobberNonLive = true;
+#else
+static bool ClobberNonLive = false;
+#endif
+static cl::opt<bool, true> ClobberNonLiveOverride("rs4gc-clobber-non-live",
+                                                  cl::location(ClobberNonLive),
+                                                  cl::Hidden);
+
 namespace {
 struct RewriteStatepointsForGC : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
@@ -1403,43 +1412,45 @@ static void relocationViaAlloca(
                              visitedLiveValues);
     }
 
-#ifndef NDEBUG
-    // As a debuging aid, pretend that an unrelocated pointer becomes null at
-    // the gc.statepoint.  This will turn some subtle GC problems into slightly
-    // easier to debug SEGVs
-    SmallVector<AllocaInst *, 64> ToClobber;
-    for (auto Pair : allocaMap) {
-      Value *Def = Pair.first;
-      AllocaInst *Alloca = cast<AllocaInst>(Pair.second);
+    if (ClobberNonLive) {
+      // As a debuging aid, pretend that an unrelocated pointer becomes null at
+      // the gc.statepoint.  This will turn some subtle GC problems into
+      // slightly easier to debug SEGVs.  Note that on large IR files with
+      // lots of gc.statepoints this is extremely costly both memory and time
+      // wise.
+      SmallVector<AllocaInst *, 64> ToClobber;
+      for (auto Pair : allocaMap) {
+        Value *Def = Pair.first;
+        AllocaInst *Alloca = cast<AllocaInst>(Pair.second);
 
-      // This value was relocated
-      if (visitedLiveValues.count(Def)) {
-        continue;
+        // This value was relocated
+        if (visitedLiveValues.count(Def)) {
+          continue;
+        }
+        ToClobber.push_back(Alloca);
       }
-      ToClobber.push_back(Alloca);
-    }
 
-    auto InsertClobbersAt = [&](Instruction *IP) {
-      for (auto *AI : ToClobber) {
-        auto AIType = cast<PointerType>(AI->getType());
-        auto PT = cast<PointerType>(AIType->getElementType());
-        Constant *CPN = ConstantPointerNull::get(PT);
-        StoreInst *store = new StoreInst(CPN, AI);
-        store->insertBefore(IP);
+      auto InsertClobbersAt = [&](Instruction *IP) {
+        for (auto *AI : ToClobber) {
+          auto AIType = cast<PointerType>(AI->getType());
+          auto PT = cast<PointerType>(AIType->getElementType());
+          Constant *CPN = ConstantPointerNull::get(PT);
+          StoreInst *store = new StoreInst(CPN, AI);
+          store->insertBefore(IP);
+        }
+      };
+
+      // Insert the clobbering stores.  These may get intermixed with the
+      // gc.results and gc.relocates, but that's fine.
+      if (auto II = dyn_cast<InvokeInst>(Statepoint)) {
+        InsertClobbersAt(II->getNormalDest()->getFirstInsertionPt());
+        InsertClobbersAt(II->getUnwindDest()->getFirstInsertionPt());
+      } else {
+        BasicBlock::iterator Next(cast<CallInst>(Statepoint));
+        Next++;
+        InsertClobbersAt(Next);
       }
-    };
-
-    // Insert the clobbering stores.  These may get intermixed with the
-    // gc.results and gc.relocates, but that's fine.
-    if (auto II = dyn_cast<InvokeInst>(Statepoint)) {
-      InsertClobbersAt(II->getNormalDest()->getFirstInsertionPt());
-      InsertClobbersAt(II->getUnwindDest()->getFirstInsertionPt());
-    } else {
-      BasicBlock::iterator Next(cast<CallInst>(Statepoint));
-      Next++;
-      InsertClobbersAt(Next);
     }
-#endif
   }
   // update use with load allocas and add store for gc_relocated
   for (auto Pair : allocaMap) {
