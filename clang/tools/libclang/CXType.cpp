@@ -775,13 +775,12 @@ static long long visitRecordForValidation(const RecordDecl *RD) {
   return 0;
 }
 
-long long clang_Type_getOffsetOf(CXType PT, const char *S) {
-  // check that PT is not incomplete/dependent
-  CXCursor PC = clang_getTypeDeclaration(PT);
+static long long validateFieldParentType(CXCursor PC, CXType PT){
   if (clang_isInvalid(PC.kind))
     return CXTypeLayoutError_Invalid;
   const RecordDecl *RD =
         dyn_cast_or_null<RecordDecl>(cxcursor::getCursorDecl(PC));
+  // validate parent declaration
   if (!RD || RD->isInvalidDecl())
     return CXTypeLayoutError_Invalid;
   RD = RD->getDefinition();
@@ -789,6 +788,7 @@ long long clang_Type_getOffsetOf(CXType PT, const char *S) {
     return CXTypeLayoutError_Incomplete;
   if (RD->isInvalidDecl())
     return CXTypeLayoutError_Invalid;
+  // validate parent type
   QualType RT = GetQualType(PT);
   if (RT->isIncompleteType())
     return CXTypeLayoutError_Incomplete;
@@ -798,12 +798,25 @@ long long clang_Type_getOffsetOf(CXType PT, const char *S) {
   long long Error = visitRecordForValidation(RD);
   if (Error < 0)
     return Error;
+  return 0;
+}
+
+long long clang_Type_getOffsetOf(CXType PT, const char *S) {
+  // check that PT is not incomplete/dependent
+  CXCursor PC = clang_getTypeDeclaration(PT);
+  long long Error = validateFieldParentType(PC,PT);
+  if (Error < 0)
+    return Error;
   if (!S)
     return CXTypeLayoutError_InvalidFieldName;
   // lookup field
   ASTContext &Ctx = cxtu::getASTUnit(GetTU(PT))->getASTContext();
   IdentifierInfo *II = &Ctx.Idents.get(S);
   DeclarationName FieldName(II);
+  const RecordDecl *RD =
+        dyn_cast_or_null<RecordDecl>(cxcursor::getCursorDecl(PC));
+  // verified in validateFieldParentType
+  RD = RD->getDefinition();
   RecordDecl::lookup_result Res = RD->lookup(FieldName);
   // If a field of the parent record is incomplete, lookup will fail.
   // and we would return InvalidFieldName instead of Incomplete.
@@ -817,6 +830,25 @@ long long clang_Type_getOffsetOf(CXType PT, const char *S) {
     return Ctx.getFieldOffset(IFD);
   // we don't want any other Decl Type.
   return CXTypeLayoutError_InvalidFieldName;
+}
+
+long long clang_Cursor_getOffsetOfField(CXCursor C) {
+  if (clang_isDeclaration(C.kind)) {
+    // we need to validate the parent type
+    CXCursor PC = clang_getCursorSemanticParent(C);
+    CXType PT = clang_getCursorType(PC);
+    long long Error = validateFieldParentType(PC,PT);
+    if (Error < 0)
+      return Error;
+    // proceed with the offset calculation
+    const Decl *D = cxcursor::getCursorDecl(C);
+    ASTContext &Ctx = cxcursor::getCursorContext(C);
+    if (const FieldDecl *FD = dyn_cast_or_null<FieldDecl>(D))
+      return Ctx.getFieldOffset(FD);
+    if (const IndirectFieldDecl *IFD = dyn_cast_or_null<IndirectFieldDecl>(D))
+      return Ctx.getFieldOffset(IFD);
+  }
+  return -1;
 }
 
 enum CXRefQualifierKind clang_Type_getCXXRefQualifier(CXType T) {
@@ -906,6 +938,43 @@ CXType clang_Type_getTemplateArgumentAsType(CXType CT, unsigned i) {
   if (A.getKind() != TemplateArgument::Type)
     return MakeCXType(QualType(), GetTU(CT));
   return MakeCXType(A.getAsType(), GetTU(CT));
+}
+
+unsigned clang_Type_visitFields(CXType PT,
+                                CXFieldVisitor visitor,
+                                CXClientData client_data){
+  CXCursor PC = clang_getTypeDeclaration(PT);
+  if (clang_isInvalid(PC.kind))
+    return false;
+  const RecordDecl *RD =
+        dyn_cast_or_null<RecordDecl>(cxcursor::getCursorDecl(PC));
+  if (!RD || RD->isInvalidDecl())
+    return false;
+  RD = RD->getDefinition();
+  if (!RD || RD->isInvalidDecl())
+    return false;
+
+  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+       I != E; ++I){
+    const FieldDecl *FD = dyn_cast_or_null<FieldDecl>((*I));
+    // Callback to the client.
+    switch (visitor(cxcursor::MakeCXCursor(FD, GetTU(PT)), client_data)){
+    case CXVisit_Break:
+      return true;
+    case CXVisit_Continue:
+      break;
+    }
+  }
+  return true;
+}
+
+unsigned clang_Cursor_isAnonymous(CXCursor C){
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+  const Decl *D = cxcursor::getCursorDecl(C);
+  if (const RecordDecl *FD = dyn_cast_or_null<RecordDecl>(D))
+    return FD->isAnonymousStructOrUnion();
+  return 0;
 }
 
 } // end: extern "C"
