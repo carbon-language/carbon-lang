@@ -1049,9 +1049,20 @@ void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &S) {
       *this, S.getDirectiveName().getAsString(), CodeGen, S.getLocStart());
 }
 
-void
-CodeGenFunction::EmitOMPParallelForDirective(const OMPParallelForDirective &) {
-  llvm_unreachable("CodeGen for 'omp parallel for' is not supported yet.");
+void CodeGenFunction::EmitOMPParallelForDirective(
+    const OMPParallelForDirective &S) {
+  // Emit directive as a combined directive that consists of two implicit
+  // directives: 'parallel' with 'for' directive.
+  LexicalScope Scope(*this, S.getSourceRange());
+  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
+    CGF.EmitOMPWorksharingLoop(S);
+    // Emit implicit barrier at the end of parallel region, but this barrier
+    // is at the end of 'for' directive, so emit it as the implicit barrier for
+    // this 'for' directive.
+    CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, S.getLocStart(),
+                                               OMPD_parallel);
+  };
+  emitCommonOMPParallelDirective(*this, S, CodeGen);
 }
 
 void CodeGenFunction::EmitOMPParallelForSimdDirective(
