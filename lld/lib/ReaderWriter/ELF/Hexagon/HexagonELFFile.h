@@ -31,11 +31,10 @@ public:
   DefinedAtom::ContentType contentType() const override {
     if (this->_contentType != DefinedAtom::typeUnknown)
       return this->_contentType;
-    else if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL) {
+    if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL) {
       if (this->_section->sh_type == llvm::ELF::SHT_NOBITS)
         return (this->_contentType = DefinedAtom::typeZeroFillFast);
-      else
-        return (this->_contentType = DefinedAtom::typeDataFast);
+      return (this->_contentType = DefinedAtom::typeDataFast);
     }
     return ELFDefinedAtom<ELFT>::contentType();
   }
