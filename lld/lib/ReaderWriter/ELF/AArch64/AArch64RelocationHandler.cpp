@@ -69,6 +69,18 @@ static std::error_code relocR_AARCH64_ABS16(uint8_t *location, uint64_t P,
   return std::error_code();
 }
 
+/// \brief R_AARCH64_PREL64 - word64: S + A - P
+static void relocR_AARCH64_PREL64(uint8_t *location, uint64_t P,
+                                  uint64_t S, int64_t A) {
+  int64_t result = S + A - P;
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  write64le(location, result + read64le(location));
+}
+
 /// \brief R_AARCH64_PREL32 - word32: S + A - P
 static std::error_code relocR_AARCH64_PREL32(uint8_t *location, uint64_t P,
                                              uint64_t S, int64_t A) {
@@ -365,6 +377,9 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     return relocR_AARCH64_ABS32(loc, reloc, target, addend);
   case R_AARCH64_ABS16:
     return relocR_AARCH64_ABS16(loc, reloc, target, addend);
+  case R_AARCH64_PREL64:
+    relocR_AARCH64_PREL64(loc, reloc, target, addend);
+    break;
   case R_AARCH64_PREL32:
     return relocR_AARCH64_PREL32(loc, reloc, target, addend);
   // Runtime only relocations. Ignore here.
