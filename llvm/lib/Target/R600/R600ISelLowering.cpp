@@ -91,15 +91,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM,
   setOperationAction(ISD::SELECT, MVT::v2i32, Expand);
   setOperationAction(ISD::SELECT, MVT::v4i32, Expand);
 
-  // ADD, SUB overflow. These need to be Custom because
-  // SelectionDAGLegalize::LegalizeOp (LegalizeDAG.cpp)
-  // turns Legal into expand
-  if (Subtarget->hasCARRY())
-    setOperationAction(ISD::UADDO, MVT::i32, Custom);
-
-  if (Subtarget->hasBORROW())
-    setOperationAction(ISD::USUBO, MVT::i32, Custom);
-
   // Expand sign extension of vectors
   if (!Subtarget->hasBFE())
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
@@ -171,6 +162,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM,
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
+
+  setOperationAction(ISD::SUB, MVT::i64, Expand);
 
   // These should be replaced by UDVIREM, but it does not happen automatically
   // during Type Legalization
@@ -592,8 +585,6 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::SHL_PARTS: return LowerSHLParts(Op, DAG);
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: return LowerSRXParts(Op, DAG);
-  case ISD::UADDO: return LowerUADDSUBO(Op, DAG, ISD::ADD, AMDGPUISD::CARRY);
-  case ISD::USUBO: return LowerUADDSUBO(Op, DAG, ISD::SUB, AMDGPUISD::BORROW);
   case ISD::FCOS:
   case ISD::FSIN: return LowerTrig(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
@@ -1083,24 +1074,6 @@ SDValue R600TargetLowering::LowerSRXParts(SDValue Op, SelectionDAG &DAG) const {
   Lo = DAG.getSelectCC(DL, Shift, Width, LoSmall, LoBig, ISD::SETULT);
 
   return DAG.getNode(ISD::MERGE_VALUES, DL, DAG.getVTList(VT,VT), Lo, Hi);
-}
-
-SDValue R600TargetLowering::LowerUADDSUBO(SDValue Op, SelectionDAG &DAG,
-                                          unsigned mainop, unsigned ovf) const {
-  SDLoc DL(Op);
-  EVT VT = Op.getValueType();
-
-  SDValue Lo = Op.getOperand(0);
-  SDValue Hi = Op.getOperand(1);
-
-  SDValue OVF = DAG.getNode(ovf, DL, VT, Lo, Hi);
-  // Extend sign.
-  OVF = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, VT, OVF,
-                    DAG.getValueType(MVT::i1));
-
-  SDValue Res = DAG.getNode(mainop, DL, VT, Lo, Hi);
-
-  return DAG.getNode(ISD::MERGE_VALUES, DL, DAG.getVTList(VT, VT), Res, OVF);
 }
 
 SDValue R600TargetLowering::LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const {

@@ -7,8 +7,10 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define void @foo(i64 %a, i64 %add, i128* %retptr) {
 ; CHECK:        add.s64
 ; CHECK:        setp.lt.u64
+; CHECK:        setp.lt.u64
 ; CHECK:        selp.b64
-; CHECK:        sub.s64
+; CHECK:        selp.b64
+; CHECK:        add.s64
   %t1 = sext i64 %a to i128
   %add2 = zext i64 %add to i128
   %val = add i128 %t1, %add2

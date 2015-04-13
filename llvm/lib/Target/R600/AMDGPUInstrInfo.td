@@ -136,13 +136,6 @@ def AMDGPUumin3 : SDNode<"AMDGPUISD::UMIN3", AMDGPUDTIntTernaryOp,
   [/*SDNPCommutative, SDNPAssociative*/]
 >;
 
-// out = (src0 + src1 > 0xFFFFFFFF) ? 1 : 0
-def AMDGPUcarry : SDNode<"AMDGPUISD::CARRY", SDTIntBinOp, []>;
-
-// out = (src1 > src0) ? 1 : 0
-def AMDGPUborrow : SDNode<"AMDGPUISD::BORROW", SDTIntBinOp, []>;
-
-
 def AMDGPUcvt_f32_ubyte0 : SDNode<"AMDGPUISD::CVT_F32_UBYTE0",
   SDTIntToFPOp, []>;
 def AMDGPUcvt_f32_ubyte1 : SDNode<"AMDGPUISD::CVT_F32_UBYTE1",
