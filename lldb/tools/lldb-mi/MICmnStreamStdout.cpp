@@ -156,11 +156,9 @@ CMICmnStreamStdout::WritePriv(const CMIUtilString &vText, const CMIUtilString &v
         // Send this text to stdout
         const MIint status = ::fputs(vText.c_str(), stdout);
         if (status == EOF)
-        {
-            const CMIUtilString errMsg(CMIUtilString::Format(MIRSRC(IDS_STDOUT_ERR_NOT_ALL_DATA_WRITTEN), vText.c_str()));
-            SetErrorDescription(errMsg);
+            // Don't call the CMICmnBase::SetErrorDescription() because it will cause a stack overflow:
+            // CMICmnBase::SetErrorDescription -> CMICmnStreamStdout::Write -> CMICmnStreamStdout::WritePriv -> CMICmnBase::SetErrorDescription
             bOk = MIstatus::failure;
-        }
         else
         {
             ::fprintf(stdout, "\n");

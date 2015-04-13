@@ -176,7 +176,6 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_DRIVER_ERR_MAINLOOP, "Driver. Error in do main loop. %s"},
     {IDS_DRIVER_ERR_LOCAL_DEBUG_NOT_IMPL, "Driver. --executable argument given. Local debugging is not implemented."},
     {IDS_DRIVER_ERR_LOCAL_DEBUG_INIT, "Driver. --executable argument given. Initialising local debugging failed."},
-    {IDS_STDOUT_ERR_NOT_ALL_DATA_WRITTEN, "Stdout. Not all data was written to stream. The data '%s'"},
     {IDS_STDERR_ERR_NOT_ALL_DATA_WRITTEN, "Stderr. Not all data was written to stream. The data '%s'"},
     {IDS_CMD_ARGS_ERR_N_OPTIONS_REQUIRED, "Command Args. Missing options, %d or more required"},
     {IDS_CMD_ARGS_ERR_OPTION_NOT_FOUND, "Command Args. Option '%s' not found"},
