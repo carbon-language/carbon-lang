@@ -178,11 +178,8 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// \brief Keep track of the metadata nodes that have been checked already.
   SmallPtrSet<const Metadata *, 32> MDNodes;
 
-  /// \brief Track unresolved string-based type references.
-  SmallDenseMap<const MDString *, const MDNode *, 32> UnresolvedTypeRefs;
-
-  /// \brief Track queue of bit piece expressions to verify.
-  SmallVector<const DbgInfoIntrinsic *, 32> QueuedBitPieceExpressions;
+  /// \brief Track string-based type references.
+  SmallDenseMap<const MDString *, const MDNode *, 32> TypeRefs;
 
   /// \brief The personality function referenced by the LandingPadInsts.
   /// All LandingPadInsts within the same function must use the same
@@ -410,9 +407,6 @@ private:
 
   // Module-level debug info verification...
   void verifyTypeRefs();
-  template <class MapTy>
-  void verifyBitPieceExpression(const DbgInfoIntrinsic &I,
-                                const MapTy &TypeRefs);
   void visitUnresolvedTypeRef(const MDString *S, const MDNode *N);
 };
 } // End anonymous namespace
@@ -708,7 +702,7 @@ bool Verifier::isValidUUID(const MDNode &N, const Metadata *MD) {
 
   // Keep track of names of types referenced via UUID so we can check that they
   // actually exist.
-  UnresolvedTypeRefs.insert(std::make_pair(S, &N));
+  TypeRefs.insert(std::make_pair(S, &N));
   return true;
 }
 
@@ -3377,11 +3371,6 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
          "invalid llvm.dbg." + Kind + " intrinsic expression", &DII,
          DII.getRawExpression());
 
-  // Queue up bit piece expressions to be verified once we can resolve
-  // typerefs.
-  if (DII.getExpression()->isValid() && DII.getExpression()->isBitPiece())
-    QueuedBitPieceExpressions.push_back(&DII);
-
   // Ignore broken !dbg attachments; they're checked elsewhere.
   if (MDNode *N = DII.getDebugLoc().getAsMDNode())
     if (!isa<MDLocation>(N))
@@ -3397,66 +3386,6 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
          BB ? BB->getParent() : nullptr, Var, VarIA, Loc, LocIA);
 }
 
-template <class MapTy>
-static uint64_t getVariableSize(const MDLocalVariable &V, const MapTy &Map) {
-  // Be careful of broken types (checked elsewhere).
-  const Metadata *RawType = V.getRawType();
-  while (RawType) {
-    // Try to get the size directly.
-    if (auto *T = dyn_cast<MDType>(RawType))
-      if (uint64_t Size = T->getSizeInBits())
-        return Size;
-
-    if (auto *DT = dyn_cast<MDDerivedType>(RawType)) {
-      // Look at the base type.
-      RawType = DT->getRawBaseType();
-      continue;
-    }
-
-    if (auto *S = dyn_cast<MDString>(RawType)) {
-      // Don't error on missing types (checked elsewhere).
-      RawType = Map.lookup(S);
-      continue;
-    }
-
-    // Missing type or size.
-    break;
-  }
-
-  // Fail gracefully.
-  return 0;
-}
-
-template <class MapTy>
-void Verifier::verifyBitPieceExpression(const DbgInfoIntrinsic &I,
-                                        const MapTy &TypeRefs) {
-  MDLocalVariable *V;
-  MDExpression *E;
-  if (auto *DVI = dyn_cast<DbgValueInst>(&I)) {
-    V = DVI->getVariable();
-    E = DVI->getExpression();
-  } else {
-    auto *DDI = cast<DbgDeclareInst>(&I);
-    V = DDI->getVariable();
-    E = DDI->getExpression();
-  }
-
-  assert(V && E->isValid() && E->isBitPiece() &&
-         "Expected valid bitpieces here");
-
-  // If there's no size, the type is broken, but that should be checked
-  // elsewhere.
-  uint64_t VarSize = getVariableSize(*V, TypeRefs);
-  if (!VarSize)
-    return;
-
-  unsigned PieceSize = E->getBitPieceSize();
-  unsigned PieceOffset = E->getBitPieceOffset();
-  Assert(PieceSize + PieceOffset <= VarSize,
-         "piece is larger than or outside of variable", &I, V, E);
-  Assert(PieceSize != VarSize, "piece covers entire variable", &I, V, E);
-}
-
 void Verifier::visitUnresolvedTypeRef(const MDString *S, const MDNode *N) {
   // This is in its own function so we get an error for each bad type ref (not
   // just the first).
@@ -3468,29 +3397,18 @@ void Verifier::verifyTypeRefs() {
   if (!CUs)
     return;
 
-  // Visit all the compile units again to map the type references.
-  SmallDenseMap<const MDString *, const MDType *, 32> TypeRefs;
+  // Visit all the compile units again to check the type references.
   for (auto *CU : CUs->operands())
     if (auto Ts = cast<MDCompileUnit>(CU)->getRetainedTypes())
       for (MDType *Op : Ts)
         if (auto *T = dyn_cast<MDCompositeType>(Op))
-          if (auto *S = T->getRawIdentifier()) {
-            UnresolvedTypeRefs.erase(S);
-            TypeRefs.insert(std::make_pair(S, T));
-          }
-
-  // Verify debug intrinsic bit piece expressions.
-  for (auto *DII : QueuedBitPieceExpressions)
-    verifyBitPieceExpression(*DII, TypeRefs);
-
-  // Return early if all typerefs were resolved.
-  if (UnresolvedTypeRefs.empty())
+          TypeRefs.erase(T->getRawIdentifier());
+  if (TypeRefs.empty())
     return;
 
   // Sort the unresolved references by name so the output is deterministic.
   typedef std::pair<const MDString *, const MDNode *> TypeRef;
-  SmallVector<TypeRef, 32> Unresolved(UnresolvedTypeRefs.begin(),
-                                      UnresolvedTypeRefs.end());
+  SmallVector<TypeRef, 32> Unresolved(TypeRefs.begin(), TypeRefs.end());
   std::sort(Unresolved.begin(), Unresolved.end(),
             [](const TypeRef &LHS, const TypeRef &RHS) {
     return LHS.first->getString() < RHS.first->getString();

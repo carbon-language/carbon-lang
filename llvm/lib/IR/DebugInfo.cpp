@@ -33,6 +33,19 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
+/// \brief Return the size reported by the variable's type.
+unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
+  DIType Ty = getType().resolve(Map);
+  // Follow derived types until we reach a type that
+  // reports back a size.
+  while (isa<MDDerivedType>(Ty) && !Ty.getSizeInBits()) {
+    DIDerivedType DT = cast<MDDerivedType>(Ty);
+    Ty = DT.getTypeDerivedFrom().resolve(Map);
+  }
+  assert(Ty.getSizeInBits() && "type with size 0");
+  return Ty.getSizeInBits();
+}
+
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//

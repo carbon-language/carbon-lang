@@ -735,6 +735,9 @@ public:
   /// \brief Check if this is an inlined function argument.
   bool isInlinedFnArgument(const Function *CurFn);
 
+  /// \brief Return the size reported by the variable's type.
+  unsigned getSizeInBits(const DITypeIdentifierMap &Map);
+
   void printExtendedName(raw_ostream &OS) const;
 };
 
