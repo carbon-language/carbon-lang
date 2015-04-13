@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 < %s | FileCheck %s
+; RUN: llc -march=aarch64 -mtriple=aarch64-pc-linux-gnu < %s | FileCheck %s
 
 ; CHECK-LABEL: tail_memcpy:
 ; CHECK: b memcpy
