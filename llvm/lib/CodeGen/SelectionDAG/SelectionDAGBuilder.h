@@ -829,6 +829,10 @@ private:
 
   /// Return the next block after MBB, or nullptr if there is none.
   MachineBasicBlock *NextBlock(MachineBasicBlock *MBB);
+
+  /// Update the DAG and DAG builder with the relevant information after
+  /// a new root node has been created which could be a tail call.
+  void updateDAGForMaybeTailCall(SDValue MaybeTC);
 };
 
 } // end namespace llvm

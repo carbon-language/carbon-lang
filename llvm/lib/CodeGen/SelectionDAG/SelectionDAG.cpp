@@ -4294,7 +4294,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, SDLoc dl,
 SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
                                 SDValue Src, SDValue Size,
                                 unsigned Align, bool isVol, bool AlwaysInline,
-                                MachinePointerInfo DstPtrInfo,
+                                bool isTailCall, MachinePointerInfo DstPtrInfo,
                                 MachinePointerInfo SrcPtrInfo) {
   assert(Align && "The SDAG layer expects explicit alignment and reserves 0");
 
@@ -4352,15 +4352,16 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
                Type::getVoidTy(*getContext()),
                getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
                                  TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult();
-  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
+    .setDiscardResult()
+    .setTailCall(isTailCall);
 
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;
 }
 
 SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
                                  SDValue Src, SDValue Size,
-                                 unsigned Align, bool isVol,
+                                 unsigned Align, bool isVol, bool isTailCall,
                                  MachinePointerInfo DstPtrInfo,
                                  MachinePointerInfo SrcPtrInfo) {
   assert(Align && "The SDAG layer expects explicit alignment and reserves 0");
@@ -4407,15 +4408,16 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
                Type::getVoidTy(*getContext()),
                getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
                                  TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult();
-  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
+    .setDiscardResult()
+    .setTailCall(isTailCall);
 
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;
 }
 
 SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
                                 SDValue Src, SDValue Size,
-                                unsigned Align, bool isVol,
+                                unsigned Align, bool isVol, bool isTailCall,
                                 MachinePointerInfo DstPtrInfo) {
   assert(Align && "The SDAG layer expects explicit alignment and reserves 0");
 
@@ -4464,7 +4466,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
                Type::getVoidTy(*getContext()),
                getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
                                  TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult();
+    .setDiscardResult()
+    .setTailCall(isTailCall);
 
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;

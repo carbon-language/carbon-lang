@@ -4592,9 +4592,12 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (!Align)
       Align = 1; // @llvm.memcpy defines 0 and 1 to both mean no alignment.
     bool isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemcpy(getRoot(), sdl, Op1, Op2, Op3, Align, isVol, false,
-                              MachinePointerInfo(I.getArgOperand(0)),
-                              MachinePointerInfo(I.getArgOperand(1))));
+    bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
+    SDValue MC = DAG.getMemcpy(getRoot(), sdl, Op1, Op2, Op3, Align, isVol,
+                               false, isTC,
+                               MachinePointerInfo(I.getArgOperand(0)),
+                               MachinePointerInfo(I.getArgOperand(1)));
+    updateDAGForMaybeTailCall(MC);
     return nullptr;
   }
   case Intrinsic::memset: {
@@ -4611,8 +4614,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (!Align)
       Align = 1; // @llvm.memset defines 0 and 1 to both mean no alignment.
     bool isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemset(getRoot(), sdl, Op1, Op2, Op3, Align, isVol,
-                              MachinePointerInfo(I.getArgOperand(0))));
+    bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
+    SDValue MS = DAG.getMemset(getRoot(), sdl, Op1, Op2, Op3, Align, isVol,
+                               isTC, MachinePointerInfo(I.getArgOperand(0)));
+    updateDAGForMaybeTailCall(MS);
     return nullptr;
   }
   case Intrinsic::memmove: {
@@ -4631,9 +4636,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (!Align)
       Align = 1; // @llvm.memmove defines 0 and 1 to both mean no alignment.
     bool isVol = cast<ConstantInt>(I.getArgOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemmove(getRoot(), sdl, Op1, Op2, Op3, Align, isVol,
-                               MachinePointerInfo(I.getArgOperand(0)),
-                               MachinePointerInfo(I.getArgOperand(1))));
+    bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
+    SDValue MM = DAG.getMemmove(getRoot(), sdl, Op1, Op2, Op3, Align, isVol,
+                                isTC, MachinePointerInfo(I.getArgOperand(0)),
+                                MachinePointerInfo(I.getArgOperand(1)));
+    updateDAGForMaybeTailCall(MM);
     return nullptr;
   }
   case Intrinsic::dbg_declare: {
@@ -7794,3 +7801,17 @@ MachineBasicBlock *SelectionDAGBuilder::NextBlock(MachineBasicBlock *MBB) {
     return nullptr;
   return I;
 }
+
+/// During lowering new call nodes can be created (such as memset, etc.).
+/// Those will become new roots of the current DAG, but complications arise
+/// when they are tail calls. In such cases, the call lowering will update
+/// the root, but the builder still needs to know that a tail call has been
+/// lowered in order to avoid generating an additional return.
+void SelectionDAGBuilder::updateDAGForMaybeTailCall(SDValue MaybeTC) {
+  // If the node is null, we do have a tail call.
+  if (MaybeTC.getNode() != nullptr)
+    DAG.setRoot(MaybeTC);
+  else
+    HasTailCall = true;
+}
+

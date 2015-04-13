@@ -645,6 +645,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                               Flags.getByValAlign(),
                               /*isVolatile*/false,
                               /*AlwaysInline=*/true,
+                              /*isTailCall=*/false,
                               MachinePointerInfo(),
                               MachinePointerInfo());
       } else {

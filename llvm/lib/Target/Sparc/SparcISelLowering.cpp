@@ -727,7 +727,8 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
 
     Chain = DAG.getMemcpy(Chain, dl, FIPtr, Arg, SizeNode, Align,
                           false,        // isVolatile,
-                          (Size <= 32), // AlwaysInline if size <= 32
+                          (Size <= 32), // AlwaysInline if size <= 32,
+                          false,        // isTailCall
                           MachinePointerInfo(), MachinePointerInfo());
     ByValArgs.push_back(FIPtr);
   }

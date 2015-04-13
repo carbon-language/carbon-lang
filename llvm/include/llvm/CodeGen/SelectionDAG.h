@@ -685,16 +685,16 @@ public:
 
   SDValue getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst, SDValue Src,
                     SDValue Size, unsigned Align, bool isVol, bool AlwaysInline,
-                    MachinePointerInfo DstPtrInfo,
+                    bool isTailCall, MachinePointerInfo DstPtrInfo,
                     MachinePointerInfo SrcPtrInfo);
 
   SDValue getMemmove(SDValue Chain, SDLoc dl, SDValue Dst, SDValue Src,
-                     SDValue Size, unsigned Align, bool isVol,
+                     SDValue Size, unsigned Align, bool isVol, bool isTailCall,
                      MachinePointerInfo DstPtrInfo,
                      MachinePointerInfo SrcPtrInfo);
 
   SDValue getMemset(SDValue Chain, SDLoc dl, SDValue Dst, SDValue Src,
-                    SDValue Size, unsigned Align, bool isVol,
+                    SDValue Size, unsigned Align, bool isVol, bool isTailCall,
                     MachinePointerInfo DstPtrInfo);
 
   /// Helper function to make it easier to build SetCC's if you just
