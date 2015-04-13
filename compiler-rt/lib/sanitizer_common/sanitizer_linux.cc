@@ -128,7 +128,7 @@ uptr internal_munmap(void *addr, uptr length) {
 }
 
 int internal_mprotect(void *addr, uptr length, int prot) {
-  return internal_syscall(SYSCALL(mprotect), addr, length, prot);
+  return internal_syscall(SYSCALL(mprotect), (uptr)addr, length, prot);
 }
 
 uptr internal_close(fd_t fd) {
