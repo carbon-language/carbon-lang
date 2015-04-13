@@ -746,6 +746,23 @@ public:
   Metadata *getExtraData() const { return getRawExtraData(); }
   Metadata *getRawExtraData() const { return getOperand(4); }
 
+  /// \brief Get casted version of extra data.
+  /// @{
+  MDTypeRef getClassType() const {
+    assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
+    return MDTypeRef(getExtraData());
+  }
+  MDObjCProperty *getObjCProperty() const {
+    return dyn_cast_or_null<MDObjCProperty>(getExtraData());
+  }
+  Constant *getConstant() const {
+    assert(getTag() == dwarf::DW_TAG_member && isStaticMember());
+    if (auto *C = cast_or_null<ConstantAsMetadata>(getExtraData()))
+      return C->getValue();
+    return nullptr;
+  }
+  /// @}
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDDerivedTypeKind;
   }

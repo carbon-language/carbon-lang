@@ -315,22 +315,15 @@ public:
 
   /// \brief Return property node, if this ivar is associated with one.
   MDObjCProperty *getObjCProperty() const {
-    return dyn_cast_or_null<MDObjCProperty>(
-        cast<MDDerivedType>(get())->getExtraData());
+    return cast<MDDerivedType>(get())->getObjCProperty();
   }
 
   DITypeRef getClassType() const {
-    assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-    return MDTypeRef(cast<MDDerivedType>(get())->getExtraData());
+    return cast<MDDerivedType>(get())->getClassType();
   }
 
   Constant *getConstant() const {
-    assert(getTag() == dwarf::DW_TAG_member && isStaticMember());
-    if (auto *C = cast_or_null<ConstantAsMetadata>(
-            cast<MDDerivedType>(get())->getExtraData()))
-      return C->getValue();
-
-    return nullptr;
+    return cast<MDDerivedType>(get())->getConstant();
   }
 };
 
