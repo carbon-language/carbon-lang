@@ -1571,6 +1571,10 @@ static Function *getUseHolder(Module &M) {
 /// liftetime of the call.
 static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
                                  SmallVectorImpl<CallInst *> &holders) {
+  if (Values.empty())
+    // No values to hold live, might as well not insert the empty holder
+    return;
+
   Module *M = CS.getInstruction()->getParent()->getParent()->getParent();
   Function *Func = getUseHolder(*M);
   if (CS.isCall()) {
