@@ -94,7 +94,6 @@ class MicrosoftMangleContextImpl : public MicrosoftMangleContext {
   llvm::DenseMap<const NamedDecl *, unsigned> Uniquifier;
   llvm::DenseMap<const CXXRecordDecl *, unsigned> LambdaIds;
   llvm::DenseMap<const NamedDecl *, unsigned> SEHFilterIds;
-  llvm::DenseMap<const NamedDecl *, unsigned> SEHFinallyIds;
 
 public:
   MicrosoftMangleContextImpl(ASTContext &Context, DiagnosticsEngine &Diags)
@@ -152,8 +151,6 @@ public:
                                      raw_ostream &Out) override;
   void mangleSEHFilterExpression(const NamedDecl *EnclosingDecl,
                                  raw_ostream &Out) override;
-  void mangleSEHFinallyBlock(const NamedDecl *EnclosingDecl,
-                             raw_ostream &Out) override;
   void mangleStringLiteral(const StringLiteral *SL, raw_ostream &Out) override;
   void mangleCXXVTableBitSet(const CXXRecordDecl *RD,
                              raw_ostream &Out) override;
@@ -2469,17 +2466,6 @@ void MicrosoftMangleContextImpl::mangleSEHFilterExpression(
   //
   // <mangled-name> ::= ?filt$ <filter-number> @0
   Mangler.getStream() << "\01?filt$" << SEHFilterIds[EnclosingDecl]++ << "@0@";
-  Mangler.mangleName(EnclosingDecl);
-}
-
-void MicrosoftMangleContextImpl::mangleSEHFinallyBlock(
-    const NamedDecl *EnclosingDecl, raw_ostream &Out) {
-  MicrosoftCXXNameMangler Mangler(*this, Out);
-  // The function body is in the same comdat as the function with the handler,
-  // so the numbering here doesn't have to be the same across TUs.
-  //
-  // <mangled-name> ::= ?fin$ <filter-number> @0
-  Mangler.getStream() << "\01?fin$" << SEHFinallyIds[EnclosingDecl]++ << "@0@";
   Mangler.mangleName(EnclosingDecl);
 }
 

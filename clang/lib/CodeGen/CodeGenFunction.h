@@ -263,10 +263,6 @@ public:
   /// potentially set the return value.
   bool SawAsmBlock;
 
-  /// True if the current function is an outlined SEH helper. This can be a
-  /// finally block or filter expression.
-  bool IsOutlinedSEHHelper;
-
   const CodeGen::CGBlockInfo *BlockInfo;
   llvm::Value *BlockPointer;
 
@@ -353,6 +349,17 @@ public:
                llvm::Constant *beginCatchFn, llvm::Constant *endCatchFn,
                llvm::Constant *rethrowFn);
     void exit(CodeGenFunction &CGF);
+  };
+
+  /// Cleanups can be emitted for two reasons: normal control leaving a region
+  /// exceptional control flow leaving a region.
+  struct SEHFinallyInfo {
+    SEHFinallyInfo()
+        : FinallyBB(nullptr), ContBB(nullptr), ResumeBB(nullptr) {}
+
+    llvm::BasicBlock *FinallyBB;
+    llvm::BasicBlock *ContBB;
+    llvm::BasicBlock *ResumeBB;
   };
 
   /// Returns true inside SEH __try blocks.
@@ -1044,6 +1051,10 @@ public:
   /// which is assigned in every landing pad.
   llvm::Value *getExceptionSlot();
   llvm::Value *getEHSelectorSlot();
+
+  /// Stack slot that contains whether a __finally block is being executed as an
+  /// EH cleanup or as a normal cleanup.
+  llvm::Value *getAbnormalTerminationSlot();
 
   /// Returns the contents of the function's exception object and selector
   /// slots.
@@ -1989,18 +2000,11 @@ public:
   void EmitCXXTryStmt(const CXXTryStmt &S);
   void EmitSEHTryStmt(const SEHTryStmt &S);
   void EmitSEHLeaveStmt(const SEHLeaveStmt &S);
-  void EnterSEHTryStmt(const SEHTryStmt &S);
-  void ExitSEHTryStmt(const SEHTryStmt &S);
-
-  void startOutlinedSEHHelper(CodeGenFunction &ParentCGF, StringRef Name,
-                              QualType RetTy, FunctionArgList &Args,
-                              const Stmt *OutlinedStmt);
+  void EnterSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI);
+  void ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI);
 
   llvm::Function *GenerateSEHFilterFunction(CodeGenFunction &ParentCGF,
                                             const SEHExceptStmt &Except);
-
-  llvm::Function *GenerateSEHFinallyFunction(CodeGenFunction &ParentCGF,
-                                             const SEHFinallyStmt &Finally);
 
   void EmitSEHExceptionCodeSave();
   llvm::Value *EmitSEHExceptionCode();
