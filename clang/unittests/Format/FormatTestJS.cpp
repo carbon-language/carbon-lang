@@ -670,5 +670,9 @@ TEST_F(FormatTestJS, OptionalTypes) {
                "}");
 }
 
+TEST_F(FormatTestJS, IndexSignature) {
+  verifyFormat("var x: {[k: string]: v};");
+}
+
 } // end namespace tooling
 } // end namespace clang

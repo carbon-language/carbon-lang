@@ -413,7 +413,8 @@ private:
         if (Contexts.back().ColonIsForRangeExpr ||
             (Contexts.size() == 1 &&
              !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) ||
-            Contexts.back().ContextKind == tok::l_paren) {
+            Contexts.back().ContextKind == tok::l_paren ||
+            Contexts.back().ContextKind == tok::l_square) {
           Tok->Type = TT_JsTypeColon;
           break;
         }
