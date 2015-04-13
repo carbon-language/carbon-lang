@@ -1,7 +1,7 @@
 ; RUN: llc -march=arm < %s | FileCheck %s
 
 ; CHECK-LABEL: tail_memcpy:
-; CHECK: b memcpy
+; CHECK: b{{l?}} memcpy
 define void @tail_memcpy(i8* nocapture %p, i8* nocapture readonly %q, i32 %n) #0 {
 entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %p, i8* %q, i32 %n, i32 1, i1 false)
@@ -9,7 +9,7 @@ entry:
 }
 
 ; CHECK-LABEL: tail_memmove:
-; CHECK: b memmove
+; CHECK: b{{l?}} memmove
 define void @tail_memmove(i8* nocapture %p, i8* nocapture readonly %q, i32 %n) #0 {
 entry:
   tail call void @llvm.memmove.p0i8.p0i8.i32(i8* %p, i8* %q, i32 %n, i32 1, i1 false)
@@ -17,7 +17,7 @@ entry:
 }
 
 ; CHECK-LABEL: tail_memset:
-; CHECK: b memset
+; CHECK: b{{l?}} memset
 define void @tail_memset(i8* nocapture %p, i8 %c, i32 %n) #0 {
 entry:
   tail call void @llvm.memset.p0i8.i32(i8* %p, i8 %c, i32 %n, i32 1, i1 false)
