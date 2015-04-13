@@ -997,27 +997,32 @@ static void recomputeLiveInValues(
   }
 }
 
-// Normalize basic block to make it ready to be target of invoke statepoint.
-// It means spliting it to have single predecessor. Return newly created BB
-// ready to be successor of invoke statepoint.
-static BasicBlock *normalizeBBForInvokeSafepoint(BasicBlock *BB,
+// When inserting gc.relocate calls, we need to ensure there are no uses
+// of the original value between the gc.statepoint and the gc.relocate call.
+// One case which can arise is a phi node starting one of the successor blocks.
+// We also need to be able to insert the gc.relocates only on the path which
+// goes through the statepoint.  We might need to split an edge to make this
+// possible.  
+static BasicBlock *normalizeForInvokeSafepoint(BasicBlock *BB,
                                                  BasicBlock *InvokeParent,
                                                  Pass *P) {
-  BasicBlock *ret = BB;
+  DominatorTree *DT = nullptr;
+  if (auto *DTP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
+    DT = &DTP->getDomTree();
 
+  BasicBlock *Ret = BB;
   if (!BB->getUniquePredecessor()) {
-    ret = SplitBlockPredecessors(BB, InvokeParent, "");
+    Ret = SplitBlockPredecessors(BB, InvokeParent, "", nullptr, DT);
   }
 
-  // Another requirement for such basic blocks is to not have any phi nodes.
-  // Since we just ensured that new BB will have single predecessor,
-  // all phi nodes in it will have one value. Here it would be naturall place
-  // to
-  // remove them all. But we can not do this because we are risking to remove
-  // one of the values stored in liveset of another statepoint. We will do it
-  // later after placing all safepoints.
+  // Now that 'ret' has unique predecessor we can safely remove all phi nodes
+  // from it
+  FoldSingleEntryPHINodes(Ret);
+  assert(!isa<PHINode>(Ret->begin()));
 
-  return ret;
+  // At this point, we can safely insert a gc.relocate as the first instruction
+  // in Ret if needed.
+  return Ret;
 }
 
 static int find_index(ArrayRef<Value *> livevec, Value *val) {
@@ -1203,8 +1208,10 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     token = invoke;
 
     // Generate gc relocates in exceptional path
-    BasicBlock *unwindBlock = normalizeBBForInvokeSafepoint(
-        toReplace->getUnwindDest(), invoke->getParent(), P);
+    BasicBlock *unwindBlock = toReplace->getUnwindDest();
+    assert(!isa<PHINode>(unwindBlock->begin()) &&
+           unwindBlock->getUniquePredecessor() &&
+           "can't safely insert in this block!");
 
     Instruction *IP = &*(unwindBlock->getFirstInsertionPt());
     Builder.SetInsertPoint(IP);
@@ -1224,8 +1231,10 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
                             exceptional_token, Builder);
 
     // Generate gc relocates and returns for normal block
-    BasicBlock *normalDest = normalizeBBForInvokeSafepoint(
-        toReplace->getNormalDest(), invoke->getParent(), P);
+    BasicBlock *normalDest = toReplace->getNormalDest();
+    assert(!isa<PHINode>(normalDest->begin()) &&
+           normalDest->getUniquePredecessor() &&
+           "can't safely insert in this block!");
 
     IP = &*(normalDest->getFirstInsertionPt());
     Builder.SetInsertPoint(IP);
@@ -1722,6 +1731,19 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   }
 #endif
 
+  // When inserting gc.relocates for invokes, we need to be able to insert at
+  // the top of the successor blocks.  See the comment on
+  // normalForInvokeSafepoint on exactly what is needed.  Note that this step
+  // may restructure the CFG.  
+  for (CallSite CS : toUpdate)
+    if (CS.isInvoke()) {
+      InvokeInst *invoke = cast<InvokeInst>(CS.getInstruction());
+      normalizeForInvokeSafepoint(invoke->getNormalDest(),
+                                  invoke->getParent(), P);
+      normalizeForInvokeSafepoint(invoke->getUnwindDest(),
+                                  invoke->getParent(), P);
+    }
+
   // A list of dummy calls added to the IR to keep various values obviously
   // live in the IR.  We'll remove all of these when done.
   SmallVector<CallInst *, 64> holders;
@@ -1847,25 +1869,6 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     makeStatepointExplicit(DT, CS, P, info);
   }
   toUpdate.clear(); // prevent accident use of invalid CallSites
-
-  // In case if we inserted relocates in a different basic block than the
-  // original safepoint (this can happen for invokes). We need to be sure that
-  // original values were not used in any of the phi nodes at the
-  // beginning of basic block containing them. Because we know that all such
-  // blocks will have single predecessor we can safely assume that all phi
-  // nodes have single entry (because of normalizeBBForInvokeSafepoint).
-  // Just remove them all here.
-  for (size_t i = 0; i < records.size(); i++) {
-    Instruction *I = records[i].StatepointToken;
-
-    if (InvokeInst *invoke = dyn_cast<InvokeInst>(I)) {
-      FoldSingleEntryPHINodes(invoke->getNormalDest());
-      assert(!isa<PHINode>(invoke->getNormalDest()->begin()));
-
-      FoldSingleEntryPHINodes(invoke->getUnwindDest());
-      assert(!isa<PHINode>(invoke->getUnwindDest()->begin()));
-    }
-  }
 
   // Do all the fixups of the original live variables to their relocated selves
   SmallVector<Value *, 128> live;
