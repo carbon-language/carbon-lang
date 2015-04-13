@@ -274,7 +274,10 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     
     if (minion_sp)
         minion_sp->ImportDefinitionTo(interface_decl, decl_origin.decl);
-        
+
+    if (ObjCInterfaceDecl *super_class = interface_decl->getSuperClass())
+        RequireCompleteType(clang::QualType(super_class->getTypeForDecl(), 0));
+
     return true;
 }
 
