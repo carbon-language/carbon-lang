@@ -49,18 +49,6 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   return !SP.describes(CurFn);
 }
 
-bool DISubprogram::describes(const Function *F) {
-  assert(F && "Invalid function");
-  if (F == getFunction())
-    return true;
-  StringRef Name = getLinkageName();
-  if (Name.empty())
-    Name = getName();
-  if (F->getName() == Name)
-    return true;
-  return false;
-}
-
 GlobalVariable *DIGlobalVariable::getGlobal() const {
   return dyn_cast_or_null<GlobalVariable>(getConstant());
 }

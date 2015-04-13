@@ -1386,6 +1386,11 @@ public:
   void replaceFunction(std::nullptr_t) { replaceOperandWith(7, nullptr); }
   /// @}
 
+  /// \brief Check if this subprogram decribes the given function.
+  ///
+  /// FIXME: Should this be looking through bitcasts?
+  bool describes(const Function *F) const;
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDSubprogramKind;
   }

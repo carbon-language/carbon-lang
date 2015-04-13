@@ -348,6 +348,16 @@ Function *MDSubprogram::getFunction() const {
   return dyn_cast_or_null<Function>(getFunctionConstant());
 }
 
+bool MDSubprogram::describes(const Function *F) const {
+  assert(F && "Invalid function");
+  if (F == getFunction())
+    return true;
+  StringRef Name = getLinkageName();
+  if (Name.empty())
+    Name = getName();
+  return F->getName() == Name;
+}
+
 void MDSubprogram::replaceFunction(Function *F) {
   replaceFunction(F ? ConstantAsMetadata::get(F)
                     : static_cast<ConstantAsMetadata *>(nullptr));

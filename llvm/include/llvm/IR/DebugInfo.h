@@ -520,7 +520,7 @@ public:
   DITypeRef getContainingType() const { return get()->getContainingType(); }
 
   /// \brief Check if this provides debugging information for the function F.
-  bool describes(const Function *F);
+  bool describes(const Function *F) const { return get()->describes(F); }
 
   Function *getFunction() const { return get()->getFunction(); }
 
