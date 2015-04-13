@@ -868,9 +868,8 @@ public:
   }
 
   std::error_code handleGOT(const Reference &ref) {
-    if (isa<const SharedLibraryAtom>(ref.target())) {
-      llvm_unreachable("Handle shared GOT entries");
-    }
+    assert(!isa<const SharedLibraryAtom>(ref.target()) &&
+           "Shared GOT entries aren't handled yet");
     return ARMRelocationPass::handleGOT(ref);
   }
 };
