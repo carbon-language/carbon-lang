@@ -513,9 +513,7 @@ public:
   unsigned getScopeLineNumber() const { return get()->getScopeLine(); }
 
   DIScopeRef getContext() const { return get()->getScope(); }
-  DISubroutineType getType() const {
-    return DISubroutineType(get()->getType());
-  }
+  DISubroutineType getType() const { return get()->getType(); }
 
   DITypeRef getContainingType() const { return get()->getContainingType(); }
 
@@ -525,11 +523,9 @@ public:
   Function *getFunction() const { return get()->getFunction(); }
 
   void replaceFunction(Function *F) { get()->replaceFunction(F); }
-  DIArray getTemplateParams() const {
-    return DIArray(get()->getTemplateParams());
-  }
+  DIArray getTemplateParams() const { return get()->getTemplateParams(); }
   DISubprogram getFunctionDeclaration() const {
-    return DISubprogram(get()->getDeclaration());
+    return get()->getDeclaration();
   }
   DIArray getVariables() const { return DIArray(get()->getVariables()); }
 
