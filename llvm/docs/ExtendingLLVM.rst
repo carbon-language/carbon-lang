@@ -178,42 +178,46 @@ Adding a new instruction
   to maintain compatibility with the previous version. Only add an instruction
   if it is absolutely necessary.
 
-#. ``llvm/include/llvm/Instruction.def``:
+#. ``llvm/include/llvm/IR/Instruction.def``:
 
    add a number for your instruction and an enum name
 
-#. ``llvm/include/llvm/Instructions.h``:
+#. ``llvm/include/llvm/IR/Instructions.h``:
 
    add a definition for the class that will represent your instruction
 
-#. ``llvm/include/llvm/Support/InstVisitor.h``:
+#. ``llvm/include/llvm/IR/InstVisitor.h``:
 
    add a prototype for a visitor to your new instruction type
 
-#. ``llvm/lib/AsmParser/Lexer.l``:
+#. ``llvm/lib/AsmParser/LLLexer.cpp``:
 
    add a new token to parse your instruction from assembly text file
 
-#. ``llvm/lib/AsmParser/llvmAsmParser.y``:
+#. ``llvm/lib/AsmParser/LLParser.cpp``:
 
    add the grammar on how your instruction can be read and what it will
    construct as a result
 
-#. ``llvm/lib/Bitcode/Reader/Reader.cpp``:
+#. ``llvm/lib/Bitcode/Reader/BitcodeReader.cpp``:
 
    add a case for your instruction and how it will be parsed from bitcode
 
-#. ``llvm/lib/VMCore/Instruction.cpp``:
+#. ``llvm/lib/Bitcode/Writer/BitcodeWriter.cpp``:
+
+   add a case for your instruction and how it will be parsed from bitcode
+
+#. ``llvm/lib/IR/Instruction.cpp``:
 
    add a case for how your instruction will be printed out to assembly
 
-#. ``llvm/lib/VMCore/Instructions.cpp``:
+#. ``llvm/lib/IR/Instructions.cpp``:
 
    implement the class you defined in ``llvm/include/llvm/Instructions.h``
 
 #. Test your instruction
 
-#. ``llvm/lib/Target/*``: 
+#. ``llvm/lib/Target/*``:
 
    add support for your instruction to code generators, or add a lowering pass.
 
@@ -236,69 +240,88 @@ Adding a new type
 Adding a fundamental type
 -------------------------
 
-#. ``llvm/include/llvm/Type.h``:
+#. ``llvm/include/llvm/IR/Type.h``:
 
    add enum for the new type; add static ``Type*`` for this type
 
-#. ``llvm/lib/VMCore/Type.cpp``:
+#. ``llvm/lib/IR/Type.cpp`` and ``llvm/lib/IR/ValueTypes.cpp``:
 
    add mapping from ``TypeID`` => ``Type*``; initialize the static ``Type*``
 
-#. ``llvm/lib/AsmReader/Lexer.l``:
+#. ``llvm/llvm/llvm-c/Core.cpp``:
+
+   add enum ``LLVMTypeKind`` and modify
+   ``LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty)`` for the new type
+
+#. ``llvm/include/llvm/IR/TypeBuilder.h``:
+
+   add new class to represent new type in the hierarchy
+
+#. ``llvm/lib/AsmParser/LLLexer.cpp``:
 
    add ability to parse in the type from text assembly
 
-#. ``llvm/lib/AsmReader/llvmAsmParser.y``:
+#. ``llvm/lib/AsmParser/LLParser.cpp``:
 
    add a token for that type
+
+#. ``llvm/lib/Bitcode/Writer/BitcodeWriter.cpp``:
+
+   modify ``static void WriteTypeTable(const ValueEnumerator &VE,
+   BitstreamWriter &Stream)`` to serialize your type
+
+#. ``llvm/lib/Bitcode/Reader/BitcodeReader.cpp``:
+
+   modify ``bool BitcodeReader::ParseTypeType()`` to read your data type
+
+#. ``include/llvm/Bitcode/LLVMBitCodes.h``:
+
+   add enum ``TypeCodes`` for the new type
 
 Adding a derived type
 ---------------------
 
-#. ``llvm/include/llvm/Type.h``:
+#. ``llvm/include/llvm/IR/Type.h``:
 
    add enum for the new type; add a forward declaration of the type also
 
-#. ``llvm/include/llvm/DerivedTypes.h``:
+#. ``llvm/include/llvm/IR/DerivedTypes.h``:
 
    add new class to represent new class in the hierarchy; add forward
    declaration to the TypeMap value type
 
-#. ``llvm/lib/VMCore/Type.cpp``:
+#. ``llvm/lib/IR/Type.cpp`` and ``llvm/lib/IR/ValueTypes.cpp``:
 
-   add support for derived type to:
+   add support for derived type, notably `enum TypeID` and `is`, `get` methods.
 
-   .. code-block:: c++
+#. ``llvm/llvm/llvm-c/Core.cpp``:
 
-     std::string getTypeDescription(const Type &Ty,
-                                    std::vector<const Type*> &TypeStack)
-     bool TypesEqual(const Type *Ty, const Type *Ty2,
-                     std::map<const Type*, const Type*> &EqTypes)
+   add enum ``LLVMTypeKind`` and modify
+   `LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty)` for the new type
 
-   add necessary member functions for type, and factory methods
+#. ``llvm/include/llvm/IR/TypeBuilder.h``:
 
-#. ``llvm/lib/AsmReader/Lexer.l``:
+   add new class to represent new class in the hierarchy
 
-   add ability to parse in the type from text assembly
+#. ``llvm/lib/AsmParser/LLLexer.cpp``:
 
-#. ``llvm/lib/Bitcode/Writer/Writer.cpp``:
+   modify ``lltok::Kind LLLexer::LexIdentifier()`` to add ability to
+   parse in the type from text assembly
 
-   modify ``void BitcodeWriter::outputType(const Type *T)`` to serialize your
-   type
+#. ``llvm/lib/Bitcode/Writer/BitcodeWriter.cpp``:
 
-#. ``llvm/lib/Bitcode/Reader/Reader.cpp``:
+   modify ``static void WriteTypeTable(const ValueEnumerator &VE,
+   BitstreamWriter &Stream)`` to serialize your type
 
-   modify ``const Type *BitcodeReader::ParseType()`` to read your data type
+#. ``llvm/lib/Bitcode/Reader/BitcodeReader.cpp``:
 
-#. ``llvm/lib/VMCore/AsmWriter.cpp``:
+   modify ``bool BitcodeReader::ParseTypeType()`` to read your data type
 
-   modify
+#. ``include/llvm/Bitcode/LLVMBitCodes.h``:
 
-   .. code-block:: c++
+   add enum ``TypeCodes`` for the new type
 
-     void calcTypeName(const Type *Ty,
-                       std::vector<const Type*> &TypeStack,
-                       std::map<const Type*,std::string> &TypeNames,
-                       std::string &Result)
+#. ``llvm/lib/IR/AsmWriter.cpp``:
 
+   modify ``void TypePrinting::print(Type *Ty, raw_ostream &OS)``
    to output the new derived type
