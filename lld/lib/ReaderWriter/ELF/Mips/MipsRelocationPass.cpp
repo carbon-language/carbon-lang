@@ -536,6 +536,10 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MIPS_CALL_LO16:
   case R_MICROMIPS_GOT16:
   case R_MICROMIPS_CALL16:
+  case R_MICROMIPS_GOT_HI16:
+  case R_MICROMIPS_GOT_LO16:
+  case R_MICROMIPS_CALL_HI16:
+  case R_MICROMIPS_CALL_LO16:
   case R_MIPS_GOT_DISP:
   case R_MIPS_GOT_PAGE:
     handleGOT(ref);
@@ -618,6 +622,8 @@ void RelocationPass<ELFT>::collectReferenceInfo(
       refKind != R_MIPS_26 && refKind != R_MICROMIPS_26_S1 &&
       refKind != R_MIPS_GOT_HI16 && refKind != R_MIPS_GOT_LO16 &&
       refKind != R_MIPS_CALL_HI16 && refKind != R_MIPS_CALL_LO16 &&
+      refKind != R_MICROMIPS_GOT_HI16 && refKind != R_MICROMIPS_GOT_LO16 &&
+      refKind != R_MICROMIPS_CALL_HI16 && refKind != R_MICROMIPS_CALL_LO16 &&
       refKind != R_MIPS_EH)
     _requiresPtrEquality.insert(ref.target());
 }
@@ -649,7 +655,9 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
   if (refKind == R_MIPS_CALL16 || refKind == R_MIPS_GOT16 ||
       refKind == R_MICROMIPS_CALL16 || refKind == R_MICROMIPS_GOT16 ||
       refKind == R_MIPS_GOT_HI16 || refKind == R_MIPS_GOT_LO16 ||
-      refKind == R_MIPS_CALL_HI16 || refKind == R_MIPS_CALL_LO16)
+      refKind == R_MIPS_CALL_HI16 || refKind == R_MIPS_CALL_LO16 ||
+      refKind == R_MICROMIPS_GOT_HI16 || refKind == R_MICROMIPS_GOT_LO16 ||
+      refKind == R_MICROMIPS_CALL_HI16 || refKind == R_MICROMIPS_CALL_LO16)
     return true;
 
   if (refKind != R_MIPS_32 && refKind != R_MIPS_64)
@@ -804,7 +812,12 @@ template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
            ref.kindValue() == R_MIPS_GOT_HI16 ||
            ref.kindValue() == R_MIPS_GOT_LO16 ||
            ref.kindValue() == R_MIPS_CALL_HI16 ||
-           ref.kindValue() == R_MIPS_CALL_LO16 || ref.kindValue() == R_MIPS_EH)
+           ref.kindValue() == R_MIPS_CALL_LO16 ||
+           ref.kindValue() == R_MICROMIPS_GOT_HI16 ||
+           ref.kindValue() == R_MICROMIPS_GOT_LO16 ||
+           ref.kindValue() == R_MICROMIPS_CALL_HI16 ||
+           ref.kindValue() == R_MICROMIPS_CALL_LO16 ||
+           ref.kindValue() == R_MIPS_EH)
     ref.setTarget(getLocalGOTEntry(ref));
   else if (isLocal(ref.target()))
     ref.setTarget(getLocalGOTPageEntry(ref));

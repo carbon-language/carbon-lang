@@ -122,6 +122,10 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MICROMIPS_TLS_GD:
   case R_MICROMIPS_TLS_LDM:
   case R_MICROMIPS_TLS_GOTTPREL:
+  case R_MICROMIPS_GOT_HI16:
+  case R_MICROMIPS_GOT_LO16:
+  case R_MICROMIPS_CALL_HI16:
+  case R_MICROMIPS_CALL_LO16:
     return {4, 0xffff, 0, true};
   case R_MIPS_JALR:
     return {4, 0x0, 0, false};
@@ -226,12 +230,14 @@ static uint64_t relocGOT(uint64_t S, uint64_t GP) {
 }
 
 /// \brief R_MIPS_GOT_LO16, R_MIPS_CALL_LO16
+/// R_MICROMIPS_GOT_LO16, R_MICROMIPS_CALL_LO16
 /// rel16 G (truncate)
 static uint64_t relocGOTLo16(uint64_t S, uint64_t GP) {
   return S - GP;
 }
 
-/// \brief R_MIPS_GOT_HI16, R_MIPS_CALL_HI16
+/// \brief R_MIPS_GOT_HI16, R_MIPS_CALL_HI16,
+/// R_MICROMIPS_GOT_HI16, R_MICROMIPS_CALL_HI16
 /// rel16 %high(G) (truncate)
 static uint64_t relocGOTHi16(uint64_t S, uint64_t GP) {
   return (S - GP + 0x8000) >> 16;
@@ -420,9 +426,13 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
     return relocLo16(relAddr, tgtAddr, addend, isGP, true);
   case R_MIPS_GOT_LO16:
   case R_MIPS_CALL_LO16:
+  case R_MICROMIPS_GOT_LO16:
+  case R_MICROMIPS_CALL_LO16:
     return relocGOTLo16(tgtAddr, gpAddr);
   case R_MIPS_GOT_HI16:
   case R_MIPS_CALL_HI16:
+  case R_MICROMIPS_GOT_HI16:
+  case R_MICROMIPS_CALL_HI16:
     return relocGOTHi16(tgtAddr, gpAddr);
   case R_MIPS_EH:
   case R_MIPS_GOT16:
