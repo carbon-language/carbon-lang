@@ -39,13 +39,6 @@ static void relocR_AARCH64_ABS64(uint8_t *location, uint64_t P, uint64_t S,
   write64le(location, result | read64le(location));
 }
 
-/// \brief R_AARCH64_PREL32 - word32: S + A - P
-static void relocR_AARCH64_PREL32(uint8_t *location, uint64_t P, uint64_t S,
-                                  int64_t A) {
-  int32_t result = (int32_t)(S + A - P);
-  write32le(location, result + (int32_t)read32le(location));
-}
-
 /// \brief R_AARCH64_ABS32 - word32:  S + A
 static std::error_code relocR_AARCH64_ABS32(uint8_t *location, uint64_t P,
                                             uint64_t S, int64_t A) {
@@ -73,6 +66,23 @@ static std::error_code relocR_AARCH64_ABS16(uint8_t *location, uint64_t P,
         llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
         llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   write16le(location, result | read16le(location));
+  return std::error_code();
+}
+
+/// \brief R_AARCH64_PREL32 - word32: S + A - P
+static std::error_code relocR_AARCH64_PREL32(uint8_t *location, uint64_t P,
+                                             uint64_t S, int64_t A) {
+  int64_t result = S + A - P;
+  // ELF for the ARM 64-bit architecture manual states the overflow
+  // for R_AARCH64_PREL32 to be -2^(-31) <= X < 2^32
+  if (!withinSignedUnsignedRange(result, 32))
+    return make_out_of_range_reloc_error();
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  write32le(location, result + read32le(location));
   return std::error_code();
 }
 
@@ -351,13 +361,12 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
   case R_AARCH64_ABS64:
     relocR_AARCH64_ABS64(loc, reloc, target, addend);
     break;
-  case R_AARCH64_PREL32:
-    relocR_AARCH64_PREL32(loc, reloc, target, addend);
-    break;
   case R_AARCH64_ABS32:
     return relocR_AARCH64_ABS32(loc, reloc, target, addend);
   case R_AARCH64_ABS16:
     return relocR_AARCH64_ABS16(loc, reloc, target, addend);
+  case R_AARCH64_PREL32:
+    return relocR_AARCH64_PREL32(loc, reloc, target, addend);
   // Runtime only relocations. Ignore here.
   case R_AARCH64_RELATIVE:
   case R_AARCH64_IRELATIVE:
