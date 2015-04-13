@@ -314,24 +314,21 @@ public:
   DITypeRef getTypeDerivedFrom() const { return get()->getBaseType(); }
 
   /// \brief Return property node, if this ivar is associated with one.
-  MDNode *getObjCProperty() const {
-    if (auto *N = dyn_cast<MDDerivedType>(get()))
-      return dyn_cast_or_null<MDNode>(N->getExtraData());
-    return nullptr;
+  MDObjCProperty *getObjCProperty() const {
+    return dyn_cast_or_null<MDObjCProperty>(
+        cast<MDDerivedType>(get())->getExtraData());
   }
 
   DITypeRef getClassType() const {
     assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-    if (auto *N = dyn_cast<MDDerivedType>(get()))
-      return MDTypeRef(N->getExtraData());
-    return MDTypeRef();
+    return MDTypeRef(cast<MDDerivedType>(get())->getExtraData());
   }
 
   Constant *getConstant() const {
-    assert((getTag() == dwarf::DW_TAG_member) && isStaticMember());
-    if (auto *N = dyn_cast<MDDerivedType>(get()))
-      if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(N->getExtraData()))
-        return C->getValue();
+    assert(getTag() == dwarf::DW_TAG_member && isStaticMember());
+    if (auto *C = cast_or_null<ConstantAsMetadata>(
+            cast<MDDerivedType>(get())->getExtraData()))
+      return C->getValue();
 
     return nullptr;
   }
