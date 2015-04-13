@@ -170,8 +170,12 @@ static void relocR_AARCH64_ADD_ABS_LO12_NC(uint8_t *location, uint64_t P,
   write32le(location, result | read32le(location));
 }
 
-static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
-  int32_t result = (int32_t)(S + A - P);
+/// \brief R_AARCH64_CALL26 and R_AARCH64_JUMP26
+static std::error_code relocJump26(uint8_t *location, uint64_t P, uint64_t S,
+                                   int64_t A) {
+  int64_t result = (S + A) - P;
+  if (!isInt<27>(result))
+    return make_out_of_range_reloc_error();
   result &= 0x0FFFFFFC;
   result >>= 2;
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
@@ -180,12 +184,15 @@ static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
         llvm::dbgs() << " P: " << Twine::utohexstr(P);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, result | read32le(location));
+  return std::error_code();
 }
 
 /// \brief R_AARCH64_CONDBR19
-static void relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P, uint64_t S,
-                                    int64_t A) {
-  int32_t result = (int32_t)(S + A - P);
+static std::error_code relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P,
+                                               uint64_t S, int64_t A) {
+  int64_t result = (S + A) - P;
+  if (!isInt<20>(result))
+    return make_out_of_range_reloc_error();
   result &= 0x01FFFFC;
   result <<= 3;
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
@@ -194,6 +201,7 @@ static void relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P, uint64_t S,
         llvm::dbgs() << " P: " << Twine::utohexstr(P);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, result | read32le(location));
+  return std::error_code();
 }
 
 /// \brief R_AARCH64_LDST8_ABS_LO12_NC - S + A
@@ -317,10 +325,13 @@ static void relocADD_AARCH64_GOTRELINDEX(uint8_t *location, uint64_t P,
 }
 
 // R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21
-static void relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(uint8_t *location,
-                                                     uint64_t P, uint64_t S,
-                                                     int64_t A) {
+static std::error_code relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(uint8_t *location,
+                                                                uint64_t P,
+                                                                uint64_t S,
+                                                                int64_t A) {
   int64_t result = page(S + A) - page(P);
+  if (!isInt<32>(result))
+    return make_out_of_range_reloc_error();
   result >>= 12;
   uint32_t immlo = result & 0x3;
   uint32_t immhi = result & 0x1FFFFC;
@@ -334,6 +345,7 @@ static void relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(uint8_t *location,
         llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, immlo | immhi | read32le(location));
+  return std::error_code();
 }
 
 // R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC
@@ -352,9 +364,13 @@ static void relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(uint8_t *location,
 }
 
 /// \brief R_AARCH64_TLSLE_ADD_TPREL_HI12
-static void relocR_AARCH64_TLSLE_ADD_TPREL_HI12(uint8_t *location, uint64_t P,
-                                                uint64_t S, int64_t A) {
-  int32_t result = S + A;
+static std::error_code relocR_AARCH64_TLSLE_ADD_TPREL_HI12(uint8_t *location,
+                                                           uint64_t P,
+                                                           uint64_t S,
+                                                           int64_t A) {
+  int64_t result = S + A;
+  if (!isUInt<24>(result))
+    return make_out_of_range_reloc_error();
   result &= 0x0FFF000;
   result >>= 2;
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
@@ -363,6 +379,7 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_HI12(uint8_t *location, uint64_t P,
         llvm::dbgs() << " P: " << Twine::utohexstr(P);
         llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   write32le(location, result | read32le(location));
+  return std::error_code();
 }
 
 /// \brief R_AARCH64_TLSLE_ADD_TPREL_LO12_NC
@@ -424,11 +441,9 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     break;
   case R_AARCH64_CALL26:
   case R_AARCH64_JUMP26:
-    relocJump26(loc, reloc, target, addend);
-    break;
+    return relocJump26(loc, reloc, target, addend);
   case R_AARCH64_CONDBR19:
-    relocR_AARCH64_CONDBR19(loc, reloc, target, addend);
-    break;
+    return relocR_AARCH64_CONDBR19(loc, reloc, target, addend);
   case R_AARCH64_ADR_GOT_PAGE:
     return relocR_AARCH64_ADR_GOT_PAGE(loc, reloc, target, addend);
   case R_AARCH64_LD64_GOT_LO12_NC:
@@ -452,14 +467,12 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     relocADD_AARCH64_GOTRELINDEX(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-    relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(loc, reloc, target, addend);
-    break;
+    return relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(loc, reloc, target, addend);
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
     relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
-    relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target, addend);
-    break;
+    return relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target, addend);
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
     relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target, addend);
     break;
