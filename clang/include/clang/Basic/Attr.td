@@ -106,8 +106,6 @@ def SharedVar : SubsetSubject<Var,
 def GlobalVar : SubsetSubject<Var,
                              [{S->hasGlobalStorage()}]>;
 
-def NotAllowedOnDecls : SubsetSubject<Var, [{false}]>;
-
 // FIXME: this hack is needed because DeclNodes.td defines the base Decl node
 // type to be a class, not a definition. This makes it impossible to create an
 // attribute subject which accepts a Decl. Normally, this is not a problem,
@@ -692,8 +690,7 @@ def ExtVectorType : Attr {
 
 def FallThrough : Attr {
   let Spellings = [CXX11<"clang", "fallthrough">];
-  let Subjects = SubjectList<[NotAllowedOnDecls], ErrorDiag,
-                             "ExpectedEmptyStatement">;
+//  let Subjects = [NullStmt];
   let Documentation = [FallthroughDocs];
 }
 

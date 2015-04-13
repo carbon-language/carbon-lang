@@ -387,8 +387,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
         StringRef S = A->getValue();
         if (S.getAsInteger(0, MsanTrackOrigins) || MsanTrackOrigins < 0 ||
             MsanTrackOrigins > 2) {
-          D.Diag(clang::diag::err_drv_invalid_value) << A->getAsString(Args)
-                                                     << S;
+          D.Diag(clang::diag::err_drv_invalid_value) << A->getAsString(Args) << S;
         }
       }
     }
