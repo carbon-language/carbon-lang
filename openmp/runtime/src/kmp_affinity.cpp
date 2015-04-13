@@ -324,7 +324,7 @@ public:
         number of entries in numPerLevel if we exclude all but one trailing 1. */
     kmp_uint32 depth;
     kmp_uint32 base_num_threads;
-    bool uninitialized;
+    volatile kmp_int8 uninitialized; // 0=initialized, 1=uninitialized, 2=initialization in progress
 
     /** Level 0 corresponds to leaves. numPerLevel[i] is the number of children the parent of a
         node at level i has. For example, if we have a machine with 4 packages, 4 cores/package
@@ -346,14 +346,20 @@ public:
         }
     }
 
-    hierarchy_info() : depth(1), uninitialized(true) {}
+    hierarchy_info() : depth(1), uninitialized(1) {}
     void init(AddrUnsPair *adr2os, int num_addrs)
     {
+        kmp_int8 bool_result = KMP_COMPARE_AND_STORE_ACQ8(&uninitialized, 1, 2);
+        if (bool_result == 0) { // Wait for initialization
+            while (TCR_1(uninitialized) != 0) KMP_CPU_PAUSE();
+            return;
+        }
+        KMP_DEBUG_ASSERT(bool_result==1);
+
         /* Added explicit initialization of the depth here to prevent usage of dirty value
            observed when static library is re-initialized multiple times (e.g. when
            non-OpenMP thread repeatedly launches/joins thread that uses OpenMP). */
         depth = 1;
-        uninitialized = false;
         for (kmp_uint32 i=0; i<maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
             numPerLevel[i] = 1;
             skipPerLevel[i] = 1;
@@ -393,6 +399,11 @@ public:
 
         for (kmp_uint32 i=1; i<depth; ++i)
             skipPerLevel[i] = numPerLevel[i-1] * skipPerLevel[i-1];
+        // Fill in hierarchy in the case of oversubscription
+        for (kmp_uint32 i=depth; i<maxLevels; ++i)
+            skipPerLevel[i] = 2*skipPerLevel[i-1];
+
+        uninitialized = 0; // One writer
 
     }
 };
@@ -401,15 +412,16 @@ static hierarchy_info machine_hierarchy;
 
 void __kmp_get_hierarchy(kmp_uint32 nproc, kmp_bstate_t *thr_bar) {
     kmp_uint32 depth;
-    if (machine_hierarchy.uninitialized)
+    // The test below is true if affinity is available, but set to "none". Need to init on first use of hierarchical barrier.
+    if (TCR_1(machine_hierarchy.uninitialized))
         machine_hierarchy.init(NULL, nproc);
 
     depth = machine_hierarchy.depth;
     KMP_DEBUG_ASSERT(depth > 0);
-    while (nproc > machine_hierarchy.skipPerLevel[depth-1]) {
+    // The loop below adjusts the depth in the case of oversubscription
+    while (nproc > machine_hierarchy.skipPerLevel[depth-1] && depth<machine_hierarchy.maxLevels-1)
         depth++;
-        machine_hierarchy.skipPerLevel[depth-1] = 2*machine_hierarchy.skipPerLevel[depth-2];
-    }
+
     thr_bar->depth = depth;
     thr_bar->base_leaf_kids = (kmp_uint8)machine_hierarchy.numPerLevel[0]-1;
     thr_bar->skip_per_level = machine_hierarchy.skipPerLevel;
@@ -4601,47 +4613,70 @@ void __kmp_balanced_affinity( int tid, int nthreads )
 #else
     // affinity not supported
 
-kmp_uint32 mac_skipPerLevel[7];
-kmp_uint32 mac_depth;
-kmp_uint8 mac_leaf_kids;
-void __kmp_get_hierarchy(kmp_uint32 nproc, kmp_bstate_t *thr_bar) {
-    static int first = 1;
-    if (first) {
-        const kmp_uint32 maxLevels = 7;
-        kmp_uint32 numPerLevel[maxLevels];
+static const kmp_uint32 noaff_maxLevels=7;
+kmp_uint32 noaff_skipPerLevel[noaff_maxLevels];
+kmp_uint32 noaff_depth;
+kmp_uint8 noaff_leaf_kids;
+kmp_int8 noaff_uninitialized=1;
 
-        for (kmp_uint32 i=0; i<maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
-            numPerLevel[i] = 1;
-            mac_skipPerLevel[i] = 1;
-        }
-
-        mac_depth = 2;
-        numPerLevel[0] = nproc;
-
-        kmp_uint32 branch = 4;
-        if (numPerLevel[0] == 1) branch = nproc/4;
-        if (branch<4) branch=4;
-        for (kmp_uint32 d=0; d<mac_depth-1; ++d) { // optimize hierarchy width
-            while (numPerLevel[d] > branch || (d==0 && numPerLevel[d]>4)) { // max 4 on level 0!
-                if (numPerLevel[d] & 1) numPerLevel[d]++;
-                numPerLevel[d] = numPerLevel[d] >> 1;
-                if (numPerLevel[d+1] == 1) mac_depth++;
-                numPerLevel[d+1] = numPerLevel[d+1] << 1;
-            }
-            if(numPerLevel[0] == 1) {
-                branch = branch >> 1;
-                if (branch<4) branch = 4;
-            }
-        }
-
-        for (kmp_uint32 i=1; i<mac_depth; ++i)
-            mac_skipPerLevel[i] = numPerLevel[i-1] * mac_skipPerLevel[i-1];
-        mac_leaf_kids = (kmp_uint8)numPerLevel[0]-1;
-        first=0;
+void noaff_init(int nprocs)
+{
+    kmp_int8 result = KMP_COMPARE_AND_STORE_ACQ8(&noaff_uninitialized, 1, 2);
+    if (result == 0) return; // Already initialized
+    else if (result == 2) { // Someone else is initializing
+        while (TCR_1(noaff_uninitialized) != 0) KMP_CPU_PAUSE();
+        return;
     }
-    thr_bar->depth = mac_depth;
-    thr_bar->base_leaf_kids = mac_leaf_kids;
-    thr_bar->skip_per_level = mac_skipPerLevel;
+    KMP_DEBUG_ASSERT(result==1);
+
+    kmp_uint32 numPerLevel[noaff_maxLevels];
+    noaff_depth = 1;
+    for (kmp_uint32 i=0; i<noaff_maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
+        numPerLevel[i] = 1;
+        noaff_skipPerLevel[i] = 1;
+    }
+
+    numPerLevel[0] = 4;
+    numPerLevel[1] = nprocs/4;
+    if (nprocs%4) numPerLevel[1]++;
+
+    for (int i=noaff_maxLevels-1; i>=0; --i) // count non-empty levels to get depth
+        if (numPerLevel[i] != 1 || noaff_depth > 1) // only count one top-level '1'
+            noaff_depth++;
+
+    kmp_uint32 branch = 4;
+    if (numPerLevel[0] == 1) branch = nprocs/4;
+    if (branch<4) branch=4;
+    for (kmp_uint32 d=0; d<noaff_depth-1; ++d) { // optimize hierarchy width
+        while (numPerLevel[d] > branch || (d==0 && numPerLevel[d]>4)) { // max 4 on level 0!
+            if (numPerLevel[d] & 1) numPerLevel[d]++;
+            numPerLevel[d] = numPerLevel[d] >> 1;
+            if (numPerLevel[d+1] == 1) noaff_depth++;
+            numPerLevel[d+1] = numPerLevel[d+1] << 1;
+        }
+        if(numPerLevel[0] == 1) {
+            branch = branch >> 1;
+            if (branch<4) branch = 4;
+        }
+    }
+
+    for (kmp_uint32 i=1; i<noaff_depth; ++i)
+        noaff_skipPerLevel[i] = numPerLevel[i-1] * noaff_skipPerLevel[i-1];
+    // Fill in hierarchy in the case of oversubscription
+    for (kmp_uint32 i=noaff_depth; i<noaff_maxLevels; ++i)
+        noaff_skipPerLevel[i] = 2*noaff_skipPerLevel[i-1];
+    noaff_leaf_kids = (kmp_uint8)numPerLevel[0]-1;
+    noaff_uninitialized = 0; // One writer
+
+}
+
+void __kmp_get_hierarchy(kmp_uint32 nproc, kmp_bstate_t *thr_bar) {
+    if (noaff_uninitialized)
+        noaff_init(nproc);
+
+    thr_bar->depth = noaff_depth;
+    thr_bar->base_leaf_kids = noaff_leaf_kids;
+    thr_bar->skip_per_level = noaff_skipPerLevel;
 }
 
 #endif // KMP_AFFINITY_SUPPORTED
