@@ -1002,10 +1002,9 @@ static void recomputeLiveInValues(
 // One case which can arise is a phi node starting one of the successor blocks.
 // We also need to be able to insert the gc.relocates only on the path which
 // goes through the statepoint.  We might need to split an edge to make this
-// possible.  
-static BasicBlock *normalizeForInvokeSafepoint(BasicBlock *BB,
-                                                 BasicBlock *InvokeParent,
-                                                 Pass *P) {
+// possible.
+static BasicBlock *
+normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent, Pass *P) {
   DominatorTree *DT = nullptr;
   if (auto *DTP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
     DT = &DTP->getDomTree();
@@ -1560,41 +1559,32 @@ template <typename T> static void unique_unsorted(SmallVectorImpl<T> &Vec) {
   }
 }
 
-static Function *getUseHolder(Module &M) {
-  FunctionType *ftype =
-      FunctionType::get(Type::getVoidTy(M.getContext()), true);
-  Function *Func = cast<Function>(M.getOrInsertFunction("__tmp_use", ftype));
-  return Func;
-}
-
 /// Insert holders so that each Value is obviously live through the entire
-/// liftetime of the call.
+/// lifetime of the call.
 static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
-                                 SmallVectorImpl<CallInst *> &holders) {
+                                 SmallVectorImpl<CallInst *> &Holders) {
   if (Values.empty())
     // No values to hold live, might as well not insert the empty holder
     return;
 
   Module *M = CS.getInstruction()->getParent()->getParent()->getParent();
-  Function *Func = getUseHolder(*M);
+  // Use a dummy vararg function to actually hold the values live
+  Function *Func = cast<Function>(M->getOrInsertFunction(
+      "__tmp_use", FunctionType::get(Type::getVoidTy(M->getContext()), true)));
   if (CS.isCall()) {
     // For call safepoints insert dummy calls right after safepoint
-    BasicBlock::iterator next(CS.getInstruction());
-    next++;
-    CallInst *base_holder = CallInst::Create(Func, Values, "", next);
-    holders.push_back(base_holder);
-  } else if (CS.isInvoke()) {
-    // For invoke safepooints insert dummy calls both in normal and
-    // exceptional destination blocks
-    InvokeInst *invoke = cast<InvokeInst>(CS.getInstruction());
-    CallInst *normal_holder = CallInst::Create(
-        Func, Values, "", invoke->getNormalDest()->getFirstInsertionPt());
-    CallInst *unwind_holder = CallInst::Create(
-        Func, Values, "", invoke->getUnwindDest()->getFirstInsertionPt());
-    holders.push_back(normal_holder);
-    holders.push_back(unwind_holder);
-  } else
-    llvm_unreachable("unsupported call type");
+    BasicBlock::iterator Next(CS.getInstruction());
+    Next++;
+    Holders.push_back(CallInst::Create(Func, Values, "", Next));
+    return;
+  }
+  // For invoke safepooints insert dummy calls both in normal and
+  // exceptional destination blocks
+  auto *II = cast<InvokeInst>(CS.getInstruction());
+  Holders.push_back(CallInst::Create(
+      Func, Values, "", II->getNormalDest()->getFirstInsertionPt()));
+  Holders.push_back(CallInst::Create(
+      Func, Values, "", II->getUnwindDest()->getFirstInsertionPt()));
 }
 
 static void findLiveReferences(
@@ -1738,15 +1728,16 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   // When inserting gc.relocates for invokes, we need to be able to insert at
   // the top of the successor blocks.  See the comment on
   // normalForInvokeSafepoint on exactly what is needed.  Note that this step
-  // may restructure the CFG.  
-  for (CallSite CS : toUpdate)
-    if (CS.isInvoke()) {
-      InvokeInst *invoke = cast<InvokeInst>(CS.getInstruction());
-      normalizeForInvokeSafepoint(invoke->getNormalDest(),
-                                  invoke->getParent(), P);
-      normalizeForInvokeSafepoint(invoke->getUnwindDest(),
-                                  invoke->getParent(), P);
-    }
+  // may restructure the CFG.
+  for (CallSite CS : toUpdate) {
+    if (!CS.isInvoke())
+      continue;
+    InvokeInst *invoke = cast<InvokeInst>(CS.getInstruction());
+    normalizeForInvokeSafepoint(invoke->getNormalDest(), invoke->getParent(),
+                                P);
+    normalizeForInvokeSafepoint(invoke->getUnwindDest(), invoke->getParent(),
+                                P);
+  }
 
   // A list of dummy calls added to the IR to keep various values obviously
   // live in the IR.  We'll remove all of these when done.
