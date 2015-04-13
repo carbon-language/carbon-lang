@@ -1879,6 +1879,24 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     Statepoint statepoint(info.StatepointToken);
     live.insert(live.end(), statepoint.gc_args_begin(),
                 statepoint.gc_args_end());
+#ifndef NDEBUG
+    // Do some basic sanity checks on our liveness results before performing
+    // relocation.  Relocation can and will turn mistakes in liveness results
+    // into non-sensical code which is must harder to debug.
+    // TODO: It would be nice to test consistency as well
+    assert(DT.isReachableFromEntry(info.StatepointToken->getParent()) &&
+           "statepoint must be reachable or liveness is meaningless");
+    for (Value *V : statepoint.gc_args()) {
+      if (!isa<Instruction>(V))
+        // Non-instruction values trivial dominate all possible uses
+        continue;
+      auto LiveInst = cast<Instruction>(V);
+      assert(DT.isReachableFromEntry(LiveInst->getParent()) &&
+             "unreachable values should never be live");
+      assert(DT.dominates(LiveInst, info.StatepointToken) &&
+             "basic SSA liveness expectation violated by liveness analysis");
+    }
+#endif
   }
   unique_unsorted(live);
 
