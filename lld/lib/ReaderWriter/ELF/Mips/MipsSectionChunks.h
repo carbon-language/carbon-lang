@@ -10,6 +10,7 @@
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
 
 #include "MipsReginfo.h"
+#include "SectionChunks.h"
 
 namespace lld {
 namespace elf {

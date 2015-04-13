@@ -9,14 +9,12 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_LAYOUT_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_LAYOUT_H
 
+#include "MipsSectionChunks.h"
 #include "TargetLayout.h"
 
 namespace lld {
 namespace elf {
 
-template <typename ELFT> class MipsGOTSection;
-template <typename ELFT> class MipsPLTSection;
-template <typename ELFT> class MipsRelocationTable;
 class MipsLinkingContext;
 
 /// \brief TargetLayout for Mips
