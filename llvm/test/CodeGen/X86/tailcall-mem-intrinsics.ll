@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mtriple=x86_64-pc-linux-gnu < %s | FileCheck %s
 
 ; CHECK-LABEL: tail_memcpy
 ; CHECK: jmp memcpy
