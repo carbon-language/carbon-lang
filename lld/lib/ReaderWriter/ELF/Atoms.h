@@ -102,7 +102,7 @@ private:
 
 /// \brief ELFUndefinedAtom: These atoms store undefined symbols and are place
 /// holders that will be replaced by defined atoms later in the linking process.
-template <class ELFT> class ELFUndefinedAtom : public lld::UndefinedAtom {
+template <class ELFT> class ELFUndefinedAtom : public UndefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:

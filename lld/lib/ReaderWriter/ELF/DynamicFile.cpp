@@ -26,7 +26,7 @@ DynamicFile<ELFT>::DynamicFile(std::unique_ptr<MemoryBuffer> mb,
 template <typename ELFT>
 std::error_code DynamicFile<ELFT>::isCompatible(const MemoryBuffer &mb,
                                                 ELFLinkingContext &ctx) {
-  return lld::elf::isCompatible<ELFT>(mb, ctx);
+  return elf::isCompatible<ELFT>(mb, ctx);
 }
 
 template <class ELFT>

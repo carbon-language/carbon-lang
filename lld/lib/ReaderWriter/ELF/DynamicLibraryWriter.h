@@ -68,7 +68,7 @@ void DynamicLibraryWriter<ELFT>::createImplicitFiles(
 template <class ELFT>
 void DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
   OutputELFWriter<ELFT>::finalizeDefaultAtomValues();
-  lld::AtomLayout *underScoreEndAtom = this->_layout.findAbsoluteAtom("_end");
+  AtomLayout *underScoreEndAtom = this->_layout.findAbsoluteAtom("_end");
   assert(underScoreEndAtom);
 
   if (auto bssSection = this->_layout.findOutputSection(".bss")) {

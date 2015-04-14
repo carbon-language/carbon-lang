@@ -22,7 +22,7 @@ public:
       : _tlsSize(0), _layout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                  const lld::AtomLayout &,
+                                  const AtomLayout &,
                                   const Reference &) const override;
 
 private:

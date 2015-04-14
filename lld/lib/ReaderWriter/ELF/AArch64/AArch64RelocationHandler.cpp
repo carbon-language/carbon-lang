@@ -400,7 +400,7 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(uint8_t *location,
 }
 
 std::error_code AArch64TargetRelocationHandler::applyRelocation(
-    ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
+    ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *loc = atomContent + ref.offsetInAtom();

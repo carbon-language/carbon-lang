@@ -30,7 +30,7 @@ public:
   /// \brief Does this section have an output segment.
   bool hasOutputSegment() const override { return true; }
 
-  const lld::AtomLayout *appendAtom(const Atom *atom) override;
+  const AtomLayout *appendAtom(const Atom *atom) override;
 };
 
 /// \brief TargetLayout for Hexagon

@@ -22,7 +22,7 @@ public:
   ARMTargetRelocationHandler(ARMTargetLayout &layout) : _armLayout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                  const lld::AtomLayout &,
+                                  const AtomLayout &,
                                   const Reference &) const override;
 
 private:

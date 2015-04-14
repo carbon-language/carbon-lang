@@ -252,7 +252,7 @@ TargetLayout<ELFT>::getSection(StringRef sectionName, int32_t contentType,
 }
 
 template <class ELFT>
-ErrorOr<const lld::AtomLayout *> TargetLayout<ELFT>::addAtom(const Atom *atom) {
+ErrorOr<const AtomLayout *> TargetLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     // HACK: Ignore undefined atoms. We need to adjust the interface so that
     // undefined atoms can still be included in the output symbol table for
@@ -299,7 +299,7 @@ ErrorOr<const lld::AtomLayout *> TargetLayout<ELFT>::addAtom(const Atom *atom) {
   // Absolute atoms are not part of any section, they are global for the whole
   // link
   _absoluteAtoms.push_back(
-      new (_allocator) lld::AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
+      new (_allocator) AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
   return _absoluteAtoms.back();
 }
 

@@ -161,7 +161,7 @@ uint64_t AtomSection<ELFT>::alignOffset(uint64_t offset,
 // contains the atom, the atom file offset, the atom virtual address
 // the atom file offset is aligned appropriately as set by the Reader
 template <class ELFT>
-const lld::AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
+const AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
@@ -183,7 +183,7 @@ const lld::AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
   case DefinedAtom::typeThreadData:
   case DefinedAtom::typeRONote:
   case DefinedAtom::typeRWNote:
-    _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
+    _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
     this->_fsize = fOffset + definedAtom->size();
     this->_msize = mOffset + definedAtom->size();
     DEBUG_WITH_TYPE("Section", llvm::dbgs()
@@ -192,7 +192,7 @@ const lld::AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
                                    << fOffset << "\n");
     break;
   case DefinedAtom::typeNoAlloc:
-    _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
+    _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
     this->_fsize = fOffset + definedAtom->size();
     DEBUG_WITH_TYPE("Section", llvm::dbgs()
                                    << "[" << this->name() << " " << this << "] "
@@ -201,7 +201,7 @@ const lld::AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
     break;
   case DefinedAtom::typeThreadZeroFill:
   case DefinedAtom::typeZeroFill:
-    _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
+    _atoms.push_back(new (_alloc) AtomLayout(atom, mOffset, 0));
     this->_msize = mOffset + definedAtom->size();
     break;
   default:
@@ -249,7 +249,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   bool success = true;
-  parallel_for_each(_atoms.begin(), _atoms.end(), [&](lld::AtomLayout *ai) {
+  parallel_for_each(_atoms.begin(), _atoms.end(), [&](AtomLayout *ai) {
     DEBUG_WITH_TYPE("Section", llvm::dbgs()
                                    << "Writing atom: " << ai->_atom->name()
                                    << " | " << ai->_fileOffset << "\n");
@@ -461,8 +461,7 @@ void SymbolTable<ELFT>::addUndefinedAtom(Elf_Sym &sym,
 /// information
 template <class ELFT>
 void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
-                                  uint64_t addr,
-                                  const lld::AtomLayout *atomLayout) {
+                                  uint64_t addr, const AtomLayout *atomLayout) {
   Elf_Sym symbol;
 
   if (atom->name().empty())
@@ -548,7 +547,7 @@ template <class ELFT> void DynamicSymbolTable<ELFT>::finalize() {
   // don't have their addresses known until addresses have been assigned
   // so let's update the symbol values after they have got assigned
   for (auto &ste : this->_symbolTable) {
-    const lld::AtomLayout *atomLayout = ste._atomLayout;
+    const AtomLayout *atomLayout = ste._atomLayout;
     if (!atomLayout)
       continue;
     ste._symbol.st_value = atomLayout->_virtualAddr;

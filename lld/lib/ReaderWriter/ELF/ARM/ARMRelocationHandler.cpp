@@ -497,7 +497,7 @@ static void relocR_ARM_LDR_PC_G2(uint8_t *location, uint64_t P, uint64_t S,
 }
 
 std::error_code ARMTargetRelocationHandler::applyRelocation(
-    ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
+    ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *loc = atomContent + ref.offsetInAtom();

@@ -507,7 +507,7 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
                                            Reference &ref) {
   if (!ref.target())
     return;
-  if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return;
   assert(ref.kindArch() == Reference::KindArch::Mips);
   switch (ref.kindValue()) {
@@ -602,7 +602,7 @@ void RelocationPass<ELFT>::collectReferenceInfo(
     const MipsELFDefinedAtom<ELFT> &atom, Reference &ref) {
   if (!ref.target())
     return;
-  if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return;
 
   auto refKind = ref.kindValue();

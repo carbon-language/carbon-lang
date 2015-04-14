@@ -314,8 +314,8 @@ void HexagonLinkingContext::addPasses(PassManager &pm) {
 
 void SDataSection::doPreFlight() {
   // sort the atoms on the alignments they have been set
-  std::stable_sort(_atoms.begin(), _atoms.end(), [](const lld::AtomLayout *A,
-                                                    const lld::AtomLayout *B) {
+  std::stable_sort(_atoms.begin(), _atoms.end(), [](const AtomLayout *A,
+                                                    const AtomLayout *B) {
     const DefinedAtom *definedAtomA = cast<DefinedAtom>(A->_atom);
     const DefinedAtom *definedAtomB = cast<DefinedAtom>(B->_atom);
     int64_t alignmentA = definedAtomA->alignment().value;
@@ -353,7 +353,7 @@ const AtomLayout *SDataSection::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
   uint64_t alignment = atomAlign.value;
-  _atoms.push_back(new (_alloc) lld::AtomLayout(atom, 0, 0));
+  _atoms.push_back(new (_alloc) AtomLayout(atom, 0, 0));
   // Set the section alignment to the largest alignment
   // std::max doesn't support uint64_t
   if (_alignment < alignment)

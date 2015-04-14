@@ -38,7 +38,7 @@ public:
 
   std::error_code applyRelocation(ELFWriter &writer,
                                   llvm::FileOutputBuffer &buf,
-                                  const lld::AtomLayout &atom,
+                                  const AtomLayout &atom,
                                   const Reference &ref) const override;
 
 private:
@@ -556,9 +556,9 @@ static void relocWrite(uint64_t data, const MipsRelocationParams &params,
 
 template <class ELFT>
 std::error_code RelocationHandler<ELFT>::applyRelocation(
-    ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
+    ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
     const Reference &ref) const {
-  if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
+  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Mips);
 

@@ -148,7 +148,7 @@ public:
   typedef std::unordered_map<SegmentKey, Segment<ELFT> *, SegmentHashKey>
   SegmentMapT;
 
-  typedef typename std::vector<lld::AtomLayout *>::iterator AbsoluteAtomIterT;
+  typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
   typedef llvm::DenseSet<const Atom *> AtomSetT;
 
@@ -187,7 +187,7 @@ public:
   /// \brief Append the Atom to the layout and create appropriate sections.
   /// \returns A reference to the atom layout or an error. The atom layout will
   /// be updated as linking progresses.
-  virtual ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom);
+  virtual ErrorOr<const AtomLayout *> addAtom(const Atom *atom);
 
   /// \brief Find an output Section given a section name.
   OutputSection<ELFT> *findOutputSection(StringRef name) {
@@ -198,7 +198,7 @@ public:
   }
 
   /// \brief find a absolute atom given a name
-  lld::AtomLayout *findAbsoluteAtom(StringRef name) {
+  AtomLayout *findAbsoluteAtom(StringRef name) {
     auto iter = std::find_if(
         _absoluteAtoms.begin(), _absoluteAtoms.end(),
         [=](const AtomLayout *a) { return a->_atom->name() == name; });
@@ -314,7 +314,7 @@ protected:
   ProgramHeader<ELFT> *_programHeader;
   unique_bump_ptr<RelocationTable<ELFT>> _dynamicRelocationTable;
   unique_bump_ptr<RelocationTable<ELFT>> _pltRelocationTable;
-  std::vector<lld::AtomLayout *> _absoluteAtoms;
+  std::vector<AtomLayout *> _absoluteAtoms;
   AtomSetT _referencedDynAtoms;
   llvm::StringSet<> _copiedDynSymNames;
   ELFLinkingContext &_ctx;

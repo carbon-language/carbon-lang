@@ -30,7 +30,7 @@ ELFFile<ELFT>::ELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
 template <typename ELFT>
 std::error_code ELFFile<ELFT>::isCompatible(const MemoryBuffer &mb,
                                             ELFLinkingContext &ctx) {
-  return lld::elf::isCompatible<ELFT>(mb, ctx);
+  return elf::isCompatible<ELFT>(mb, ctx);
 }
 
 template <typename ELFT>
@@ -319,7 +319,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
           followOn = anonFollowedBy;
         } else {
           followOn = new (_readerStorage)
-              ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
+              ELFReference<ELFT>(Reference::kindLayoutAfter);
           previousAtom->addReference(followOn);
         }
       }
@@ -362,7 +362,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
         // If this is the last atom, let's not create a followon reference.
         if (anonAtom && (si + 1) != se) {
           anonFollowedBy = new (_readerStorage)
-              ELFReference<ELFT>(lld::Reference::kindLayoutAfter);
+              ELFReference<ELFT>(Reference::kindLayoutAfter);
           anonAtom->addReference(anonFollowedBy);
         }
       }
@@ -429,7 +429,7 @@ std::error_code ELFFile<ELFT>::handleGnuLinkOnceSection(
   for (auto ha : atomsForSection[*sectionName]) {
     _groupChild[ha->symbol()] = std::make_pair(*sectionName, section);
     ELFReference<ELFT> *ref =
-        new (_readerStorage) ELFReference<ELFT>(lld::Reference::kindGroupChild);
+        new (_readerStorage) ELFReference<ELFT>(Reference::kindGroupChild);
     ref->setTarget(ha);
     refs.push_back(ref);
   }
@@ -490,8 +490,8 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
   for (auto name : sectionNames) {
     for (auto ha : atomsForSection[name]) {
       _groupChild[ha->symbol()] = std::make_pair(*symbolName, section);
-      ELFReference<ELFT> *ref = new (_readerStorage)
-          ELFReference<ELFT>(lld::Reference::kindGroupChild);
+      ELFReference<ELFT> *ref =
+          new (_readerStorage) ELFReference<ELFT>(Reference::kindGroupChild);
       ref->setTarget(ha);
       refs.push_back(ref);
     }
@@ -631,7 +631,7 @@ void ELFFile<ELFT>::updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
 
 template <class ELFT> void ELFFile<ELFT>::updateReferences() {
   for (auto &ri : _references) {
-    if (ri->kindNamespace() != lld::Reference::KindNamespace::ELF)
+    if (ri->kindNamespace() != Reference::KindNamespace::ELF)
       continue;
     const Elf_Sym *symbol = _objFile->getSymbol(ri->targetSymbolIndex());
     const Elf_Shdr *shdr = _objFile->getSection(symbol);

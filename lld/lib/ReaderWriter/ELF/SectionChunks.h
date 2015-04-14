@@ -156,7 +156,7 @@ public:
   // \brief Append an atom to a Section. The atom gets pushed into a vector
   // contains the atom, the atom file offset, the atom virtual address
   // the atom file offset is aligned appropriately as set by the Reader
-  virtual const lld::AtomLayout *appendAtom(const Atom *atom);
+  virtual const AtomLayout *appendAtom(const Atom *atom);
 
   /// \brief Set the virtual address of each Atom in the Section. This
   /// routine gets called after the linker fixes up the virtual address
@@ -176,7 +176,7 @@ public:
   int64_t atomflags() const { return _contentPermissions; }
 
   /// Atom Iterators
-  typedef typename std::vector<lld::AtomLayout *>::iterator atom_iter;
+  typedef typename std::vector<AtomLayout *>::iterator atom_iter;
 
   range<atom_iter> atoms() { return _atoms; }
 
@@ -192,7 +192,7 @@ protected:
   int32_t _contentType;
   int32_t _contentPermissions;
   bool _isLoadedInMemory = true;
-  std::vector<lld::AtomLayout *> _atoms;
+  std::vector<AtomLayout *> _atoms;
   mutable std::mutex _outputMutex;
 
   void printError(const std::string &errorStr, const AtomLayout &atom,
@@ -334,7 +334,7 @@ public:
   std::size_t size() const { return _symbolTable.size(); }
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0,
-                 const lld::AtomLayout *layout = nullptr);
+                 const AtomLayout *layout = nullptr);
 
   /// \brief Get the symbol table index for an Atom. If it's not in the symbol
   /// table, return STN_UNDEF.
@@ -375,12 +375,11 @@ public:
 
 protected:
   struct SymbolEntry {
-    SymbolEntry(const Atom *a, const Elf_Sym &sym,
-                const lld::AtomLayout *layout)
+    SymbolEntry(const Atom *a, const Elf_Sym &sym, const AtomLayout *layout)
         : _atom(a), _atomLayout(layout), _symbol(sym) {}
 
     const Atom *_atom;
-    const lld::AtomLayout *_atomLayout;
+    const AtomLayout *_atomLayout;
     Elf_Sym _symbol;
   };
 

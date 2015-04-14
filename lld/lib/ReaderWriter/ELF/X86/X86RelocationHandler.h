@@ -18,7 +18,7 @@ namespace elf {
 class X86TargetRelocationHandler final : public TargetRelocationHandler {
 public:
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                  const lld::AtomLayout &,
+                                  const AtomLayout &,
                                   const Reference &) const override;
 };
 

@@ -62,7 +62,7 @@ static void relocPC64(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 }
 
 std::error_code X86_64TargetRelocationHandler::applyRelocation(
-    ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
+    ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *loc = atomContent + ref.offsetInAtom();
