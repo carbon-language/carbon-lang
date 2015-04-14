@@ -7356,7 +7356,6 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
                                                            EqualLoc,
                                                            AllowExplicit);
   InitializationSequence Seq(*this, Entity, Kind, InitE, TopLevelOfInitList);
-  Init.get();
 
   ExprResult Result = Seq.Perform(*this, Entity, Kind, InitE);
 
