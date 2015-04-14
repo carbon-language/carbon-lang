@@ -883,8 +883,8 @@ static LValue createSectionLVal(CodeGenFunction &CGF, QualType Ty,
   return LVal;
 }
 
-void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
-  LexicalScope Scope(*this, S.getSourceRange());
+static OpenMPDirectiveKind emitSections(CodeGenFunction &CGF,
+                                        const OMPExecutableDirective &S) {
   auto *Stmt = cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt();
   auto *CS = dyn_cast<CompoundStmt>(Stmt);
   if (CS && CS->size() > 1) {
@@ -904,9 +904,9 @@ void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
       // Loop counter.
       LValue IV = createSectionLVal(CGF, KmpInt32Ty, ".omp.sections.iv.");
       OpaqueValueExpr IVRefExpr(S.getLocStart(), KmpInt32Ty, VK_LValue);
-      OpaqueValueMapping OpaqueIV(CGF, &IVRefExpr, IV);
+      CodeGenFunction::OpaqueValueMapping OpaqueIV(CGF, &IVRefExpr, IV);
       OpaqueValueExpr UBRefExpr(S.getLocStart(), KmpInt32Ty, VK_LValue);
-      OpaqueValueMapping OpaqueUB(CGF, &UBRefExpr, UB);
+      CodeGenFunction::OpaqueValueMapping OpaqueUB(CGF, &UBRefExpr, UB);
       // Generate condition for loop.
       BinaryOperator Cond(&IVRefExpr, &UBRefExpr, BO_LE, C.BoolTy, VK_RValue,
                           OK_Ordinary, S.getLocStart(),
@@ -959,26 +959,27 @@ void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
                                                OMPC_SCHEDULE_static);
     };
 
-    CGM.getOpenMPRuntime().emitInlinedDirective(*this, CodeGen);
-  } else {
-    // If only one section is found - no need to generate loop, emit as a
-    // single
-    // region.
-    auto &&CodeGen = [&S](CodeGenFunction &CGF) {
-      CGF.EmitStmt(
-          cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
-      CGF.EnsureInsertPoint();
-    };
-    CGM.getOpenMPRuntime().emitSingleRegion(*this, CodeGen, S.getLocStart(),
-                                            llvm::None, llvm::None, llvm::None,
-                                            llvm::None);
+    CGF.CGM.getOpenMPRuntime().emitInlinedDirective(CGF, CodeGen);
+    return OMPD_sections;
   }
+  // If only one section is found - no need to generate loop, emit as a single
+  // region.
+  auto &&CodeGen = [Stmt](CodeGenFunction &CGF) {
+    CGF.EmitStmt(Stmt);
+    CGF.EnsureInsertPoint();
+  };
+  CGF.CGM.getOpenMPRuntime().emitSingleRegion(CGF, CodeGen, S.getLocStart(),
+                                              llvm::None, llvm::None,
+                                              llvm::None, llvm::None);
+  return OMPD_single;
+}
 
+void CodeGenFunction::EmitOMPSectionsDirective(const OMPSectionsDirective &S) {
+  LexicalScope Scope(*this, S.getSourceRange());
+  OpenMPDirectiveKind EmittedAs = emitSections(*this, S);
   // Emit an implicit barrier at the end.
   if (!S.getSingleClause(OMPC_nowait)) {
-    CGM.getOpenMPRuntime().emitBarrierCall(
-        *this, S.getLocStart(),
-        (CS && CS->size() > 1) ? OMPD_sections : OMPD_single);
+    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), EmittedAs);
   }
 }
 
@@ -1071,8 +1072,17 @@ void CodeGenFunction::EmitOMPParallelForSimdDirective(
 }
 
 void CodeGenFunction::EmitOMPParallelSectionsDirective(
-    const OMPParallelSectionsDirective &) {
-  llvm_unreachable("CodeGen for 'omp parallel sections' is not supported yet.");
+    const OMPParallelSectionsDirective &S) {
+  // Emit directive as a combined directive that consists of two implicit
+  // directives: 'parallel' with 'sections' directive.
+  LexicalScope Scope(*this, S.getSourceRange());
+  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
+    (void)emitSections(CGF, S);
+    // Emit implicit barrier at the end of parallel region.
+    CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, S.getLocStart(),
+                                               OMPD_parallel);
+  };
+  emitCommonOMPParallelDirective(*this, S, CodeGen);
 }
 
 void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {

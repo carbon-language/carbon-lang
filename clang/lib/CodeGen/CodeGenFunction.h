@@ -2085,15 +2085,16 @@ public:
   void EmitOMPTargetDirective(const OMPTargetDirective &S);
   void EmitOMPTeamsDirective(const OMPTeamsDirective &S);
 
+  void
+  EmitOMPInnerLoop(const Stmt &S, bool RequiresCleanup, const Expr *LoopCond,
+                   const Expr *IncExpr,
+                   const llvm::function_ref<void(CodeGenFunction &)> &BodyGen);
+
 private:
 
   /// Helpers for the OpenMP loop directives.
   void EmitOMPLoopBody(const OMPLoopDirective &Directive,
                        bool SeparateIter = false);
-  void
-  EmitOMPInnerLoop(const Stmt &S, bool RequiresCleanup, const Expr *LoopCond,
-                   const Expr *IncExpr,
-                   const llvm::function_ref<void(CodeGenFunction &)> &BodyGen);
   void EmitOMPSimdFinal(const OMPLoopDirective &S);
   void EmitOMPWorksharingLoop(const OMPLoopDirective &S);
   void EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,

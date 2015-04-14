@@ -1117,7 +1117,11 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
     break;
   }
   case OMPD_parallel_sections: {
+    QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
+    QualType KmpInt32PtrTy = Context.getPointerType(KmpInt32Ty);
     Sema::CapturedParamNameType Params[] = {
+        std::make_pair(".global_tid.", KmpInt32PtrTy),
+        std::make_pair(".bound_tid.", KmpInt32PtrTy),
         std::make_pair(StringRef(), QualType()) // __context with shared vars
     };
     ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
