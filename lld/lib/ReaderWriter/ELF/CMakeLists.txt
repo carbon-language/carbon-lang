@@ -4,6 +4,7 @@ add_llvm_library(lldELF
   ELFLinkingContext.cpp
   FileCommon.cpp
   Reader.cpp
+  TargetLayout.cpp
   Writer.cpp
   LINK_LIBS
     lldReaderWriter
