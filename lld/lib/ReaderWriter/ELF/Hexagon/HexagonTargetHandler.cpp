@@ -19,18 +19,16 @@ using namespace llvm::ELF;
 using llvm::makeArrayRef;
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &ctx)
-    : _ctx(ctx), _runtimeFile(new HexagonRuntimeFile<HexagonELFType>(ctx)),
-      _targetLayout(new HexagonTargetLayout<HexagonELFType>(ctx)),
+    : _ctx(ctx), _runtimeFile(new HexagonRuntimeFile(ctx)),
+      _targetLayout(new HexagonTargetLayout(ctx)),
       _relocationHandler(new HexagonTargetRelocationHandler(*_targetLayout)) {}
 
 std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
   switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return llvm::make_unique<HexagonExecutableWriter<HexagonELFType>>(
-        _ctx, *_targetLayout);
+    return llvm::make_unique<HexagonExecutableWriter>(_ctx, *_targetLayout);
   case llvm::ELF::ET_DYN:
-    return llvm::make_unique<HexagonDynamicLibraryWriter<HexagonELFType>>(
-        _ctx, *_targetLayout);
+    return llvm::make_unique<HexagonDynamicLibraryWriter>(_ctx, *_targetLayout);
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

@@ -13,12 +13,14 @@
 #include "ELFFile.h"
 
 namespace lld {
-namespace elf {
-class HexagonLinkingContext;
+class ELFLinkingContext;
 
-template <class ELFT> class HexagonRuntimeFile : public RuntimeFile<ELFT> {
+namespace elf {
+typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFT;
+
+class HexagonRuntimeFile : public RuntimeFile<ELFT> {
 public:
-  HexagonRuntimeFile(HexagonLinkingContext &ctx)
+  HexagonRuntimeFile(ELFLinkingContext &ctx)
       : RuntimeFile<ELFT>(ctx, "Hexagon runtime file") {}
 };
 } // elf

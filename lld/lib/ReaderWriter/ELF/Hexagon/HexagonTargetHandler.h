@@ -37,7 +37,6 @@ public:
 };
 
 /// \brief TargetLayout for Hexagon
-template <class ELFT>
 class HexagonTargetLayout final : public TargetLayout<ELFT> {
 public:
   enum HexagonSectionOrder {
@@ -50,7 +49,7 @@ public:
   }
 
   /// \brief Return the section order for a input section
-  typename TargetLayout<ELFT>::SectionOrder
+  TargetLayout<ELFT>::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
                   int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
@@ -74,10 +73,10 @@ public:
   }
 
   /// \brief Gets or creates a section.
-  AtomSection<ELFT> *createSection(
-      StringRef name, int32_t contentType,
-      DefinedAtom::ContentPermissions contentPermissions,
-      typename TargetLayout<ELFT>::SectionOrder sectionOrder) override {
+  AtomSection<ELFT> *
+  createSection(StringRef name, int32_t contentType,
+                DefinedAtom::ContentPermissions contentPermissions,
+                TargetLayout<ELFT>::SectionOrder sectionOrder) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
@@ -86,7 +85,7 @@ public:
   }
 
   /// \brief get the segment type for the section thats defined by the target
-  typename TargetLayout<ELFT>::SegmentType
+  TargetLayout<ELFT>::SegmentType
   getSegmentType(Section<ELFT> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
@@ -136,8 +135,8 @@ public:
 
 private:
   HexagonLinkingContext &_ctx;
-  std::unique_ptr<HexagonRuntimeFile<ELFT>> _runtimeFile;
-  std::unique_ptr<HexagonTargetLayout<ELFT>> _targetLayout;
+  std::unique_ptr<HexagonRuntimeFile> _runtimeFile;
+  std::unique_ptr<HexagonTargetLayout> _targetLayout;
   std::unique_ptr<HexagonTargetRelocationHandler> _relocationHandler;
 };
 
@@ -174,7 +173,7 @@ template <class ELFT> void SDataSection<ELFT>::doPreFlight() {
 template <class ELFT>
 SDataSection<ELFT>::SDataSection(const HexagonLinkingContext &ctx)
     : AtomSection<ELFT>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
-                        HexagonTargetLayout<ELFT>::ORDER_SDATA) {
+                        HexagonTargetLayout::ORDER_SDATA) {
   this->_type = SHT_PROGBITS;
   this->_flags = SHF_ALLOC | SHF_WRITE;
   this->_alignment = 4096;
@@ -193,8 +192,7 @@ const lld::AtomLayout *SDataSection<ELFT>::appendAtom(const Atom *atom) {
   return (this->_atoms.back());
 }
 
-template <class ELFT>
-void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout<ELFT> &layout) {
+inline void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout &layout) {
   AtomLayout *gotAtom = layout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
   OutputSection<ELFT> *gotpltSection = layout.findOutputSection(".got.plt");
   if (gotpltSection)
