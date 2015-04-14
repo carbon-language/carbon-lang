@@ -188,6 +188,36 @@ public:
   DefinedAtom::CodeModel codeModel() const override { return Model; }
 };
 
+template <class BaseAtom, DefinedAtom::CodeModel Model>
+class BaseMappingAtom : public BaseAtom {
+public:
+  BaseMappingAtom(const File &f, StringRef secName, StringRef name)
+      : BaseAtom(f, secName) {
+    static_assert((Model == DefinedAtom::codeARM_a ||
+                   Model == DefinedAtom::codeARM_d ||
+                   Model == DefinedAtom::codeARM_t),
+                  "Only mapping atom types are allowed");
+#ifndef NDEBUG
+    _name = name;
+#else
+    _name = getMappingAtomName(Model, name);
+#endif
+  }
+
+  DefinedAtom::CodeModel codeModel() const override {
+#ifndef NDEBUG
+    return isThumbCode(Model) ? DefinedAtom::codeARMThumb : DefinedAtom::codeNA;
+#else
+    return Model;
+#endif
+  }
+
+  StringRef name() const override { return _name; }
+
+private:
+  std::string _name;
+};
+
 /// \brief Atoms that are used by ARM dynamic linking
 class ARMGOTAtom : public GOTAtom {
 public:
@@ -246,71 +276,31 @@ private:
 
 /// \brief PLT entry atom.
 /// Serves as a mapping symbol in the release mode.
-class ARMPLTAtom : public PLTAtom {
+class ARMPLTAtom : public BaseMappingAtom<PLTAtom, DefinedAtom::codeARM_a> {
 public:
-  ARMPLTAtom(const File &f, const std::string &name) : PLTAtom(f, ".plt") {
-#ifndef NDEBUG
-    _name = name;
-#else
-    // Don't move the code to any base classes since
-    // virtual codeModel method would return wrong value.
-    _name = getMappingAtomName(codeModel(), name);
-#endif
-  }
-
-  DefinedAtom::CodeModel codeModel() const override {
-#ifndef NDEBUG
-    return DefinedAtom::codeNA;
-#else
-    return DefinedAtom::codeARM_a;
-#endif
-  }
+  ARMPLTAtom(const File &f, const std::string &name)
+      : BaseMappingAtom(f, ".plt", name) {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(ARMPltAtomContent);
   }
 
   Alignment alignment() const override { return 4; }
-
-  StringRef name() const override { return _name; }
-
-private:
-  std::string _name;
 };
 
 /// \brief Veneer atom for PLT entry.
 /// Serves as a mapping symbol in the release mode.
-class ARMPLTVeneerAtom : public PLTAtom {
+class ARMPLTVeneerAtom
+    : public BaseMappingAtom<PLTAtom, DefinedAtom::codeARM_t> {
 public:
   ARMPLTVeneerAtom(const File &f, const std::string &name)
-      : PLTAtom(f, ".plt") {
-#ifndef NDEBUG
-    _name = name;
-#else
-    // Don't move the code to any base classes since
-    // virtual codeModel method would return wrong value.
-    _name = getMappingAtomName(codeModel(), name);
-#endif
-  }
-
-  DefinedAtom::CodeModel codeModel() const override {
-#ifndef NDEBUG
-    return DefinedAtom::codeARMThumb;
-#else
-    return DefinedAtom::codeARM_t;
-#endif
-  }
+      : BaseMappingAtom(f, ".plt", name) {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(ARMPltVeneerAtomContent);
   }
 
   Alignment alignment() const override { return 4; }
-
-  StringRef name() const override { return _name; }
-
-private:
-  std::string _name;
 };
 
 class ELFPassFile : public SimpleFile {
