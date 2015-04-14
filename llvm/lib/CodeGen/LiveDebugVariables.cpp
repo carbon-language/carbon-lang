@@ -357,10 +357,46 @@ public:
 };
 } // namespace
 
+static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
+                          const LLVMContext &Ctx) {
+  if (!DL)
+    return;
+
+  DIScope Scope = cast<MDScope>(DL.getScope());
+  // Omit the directory, because it's likely to be long and uninteresting.
+  CommentOS << Scope.getFilename();
+  CommentOS << ':' << DL.getLine();
+  if (DL.getCol() != 0)
+    CommentOS << ':' << DL.getCol();
+
+  DebugLoc InlinedAtDL = DL.getInlinedAt();
+  if (!InlinedAtDL)
+    return;
+
+  CommentOS << " @[ ";
+  printDebugLoc(InlinedAtDL, CommentOS, Ctx);
+  CommentOS << " ]";
+}
+
+static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V) {
+  const LLVMContext &Ctx = V->getContext();
+  StringRef Res = V->getName();
+  if (!Res.empty())
+    OS << Res << "," << V->getLine();
+  if (auto *InlinedAt = V->getInlinedAt()) {
+    if (DebugLoc InlinedAtDL = InlinedAt) {
+      OS << " @[";
+      printDebugLoc(InlinedAtDL, OS, Ctx);
+      OS << "]";
+    }
+  }
+}
+
 void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
   DIVariable DV = cast<MDLocalVariable>(Variable);
   OS << "!\"";
-  DV.printExtendedName(OS);
+  printExtendedName(OS, DV);
+
   OS << "\"\t";
   if (offset)
     OS << '+' << offset;

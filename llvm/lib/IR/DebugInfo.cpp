@@ -349,41 +349,6 @@ void DIDescriptor::print(raw_ostream &OS) const {
   get()->print(OS);
 }
 
-static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
-                          const LLVMContext &Ctx) {
-  if (!DL)
-    return;
-
-  DIScope Scope = cast<MDScope>(DL.getScope());
-  // Omit the directory, because it's likely to be long and uninteresting.
-  CommentOS << Scope.getFilename();
-  CommentOS << ':' << DL.getLine();
-  if (DL.getCol() != 0)
-    CommentOS << ':' << DL.getCol();
-
-  DebugLoc InlinedAtDL = DL.getInlinedAt();
-  if (!InlinedAtDL)
-    return;
-
-  CommentOS << " @[ ";
-  printDebugLoc(InlinedAtDL, CommentOS, Ctx);
-  CommentOS << " ]";
-}
-
-void DIVariable::printExtendedName(raw_ostream &OS) const {
-  const LLVMContext &Ctx = DbgNode->getContext();
-  StringRef Res = getName();
-  if (!Res.empty())
-    OS << Res << "," << getLineNumber();
-  if (auto *InlinedAt = get()->getInlinedAt()) {
-    if (DebugLoc InlinedAtDL = InlinedAt) {
-      OS << " @[";
-      printDebugLoc(InlinedAtDL, OS, Ctx);
-      OS << "]";
-    }
-  }
-}
-
 template <>
 DIDescriptor
 DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const {

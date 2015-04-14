@@ -642,8 +642,6 @@ public:
 
   /// \brief If this variable is inlined then return inline location.
   MDNode *getInlinedAt() const { return get()->getInlinedAt(); }
-
-  void printExtendedName(raw_ostream &OS) const;
 };
 
 class DIExpression {
