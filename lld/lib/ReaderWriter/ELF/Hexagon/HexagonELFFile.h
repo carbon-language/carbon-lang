@@ -25,7 +25,7 @@ class HexagonELFDefinedAtom : public ELFDefinedAtom<ELF32LE> {
 public:
   template <typename... T>
   HexagonELFDefinedAtom(T &&... args)
-      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
+      : ELFDefinedAtom(std::forward<T>(args)...) {}
 
   DefinedAtom::ContentType contentType() const override {
     if (_contentType != DefinedAtom::typeUnknown)
@@ -35,13 +35,13 @@ public:
         return (_contentType = DefinedAtom::typeZeroFillFast);
       return (_contentType = DefinedAtom::typeDataFast);
     }
-    return ELFDefinedAtom<ELF32LE>::contentType();
+    return ELFDefinedAtom::contentType();
   }
 
   DefinedAtom::ContentPermissions permissions() const override {
     if (_section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
       return DefinedAtom::permRW_;
-    return ELFDefinedAtom<ELF32LE>::permissions();
+    return ELFDefinedAtom::permissions();
   }
 };
 
@@ -52,7 +52,7 @@ class HexagonELFCommonAtom : public ELFCommonAtom<ELF32LE> {
 public:
   HexagonELFCommonAtom(const ELFFile<ELF32LE> &file, StringRef symbolName,
                        const Elf_Sym *symbol)
-      : ELFCommonAtom<ELF32LE>(file, symbolName, symbol) {}
+      : ELFCommonAtom(file, symbolName, symbol) {}
 
   virtual bool isSmallCommonSymbol() const {
     switch (_symbol->st_shndx) {
@@ -72,7 +72,7 @@ public:
   uint64_t size() const override {
     if (isSmallCommonSymbol())
       return _symbol->st_size;
-    return ELFCommonAtom<ELF32LE>::size();
+    return ELFCommonAtom::size();
   }
 
   DefinedAtom::Merge merge() const override {
@@ -80,13 +80,13 @@ public:
       return DefinedAtom::mergeAsWeak;
     if (isSmallCommonSymbol())
       return DefinedAtom::mergeAsTentative;
-    return ELFCommonAtom<ELF32LE>::merge();
+    return ELFCommonAtom::merge();
   }
 
   DefinedAtom::ContentType contentType() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::typeZeroFillFast;
-    return ELFCommonAtom<ELF32LE>::contentType();
+    return ELFCommonAtom::contentType();
   }
 
   DefinedAtom::Alignment alignment() const override {
@@ -98,7 +98,7 @@ public:
   DefinedAtom::ContentPermissions permissions() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::permRW_;
-    return ELFCommonAtom<ELF32LE>::permissions();
+    return ELFCommonAtom::permissions();
   }
 };
 
@@ -108,7 +108,7 @@ class HexagonELFFile : public ELFFile<ELF32LE> {
 
 public:
   HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
-      : ELFFile<ELF32LE>(std::move(mb), ctx) {}
+      : ELFFile(std::move(mb), ctx) {}
 
   bool isCommonSymbol(const Elf_Sym *symbol) const override {
     switch (symbol->st_shndx) {
@@ -122,7 +122,7 @@ public:
     default:
       break;
     }
-    return ELFFile<ELF32LE>::isCommonSymbol(symbol);
+    return ELFFile::isCommonSymbol(symbol);
   }
 
   /// Process the Defined symbol and create an atom for it.

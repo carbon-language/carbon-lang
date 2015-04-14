@@ -25,12 +25,11 @@ public:
 };
 
 ARMSymbolTable::ARMSymbolTable(const ELFLinkingContext &ctx)
-    : SymbolTable<ELF32LE>(ctx, ".symtab",
-                           TargetLayout<ELF32LE>::ORDER_SYMBOL_TABLE) {}
+    : SymbolTable(ctx, ".symtab", TargetLayout<ELF32LE>::ORDER_SYMBOL_TABLE) {}
 
 void ARMSymbolTable::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
                                     int64_t addr) {
-  SymbolTable<ELF32LE>::addDefinedAtom(sym, da, addr);
+  SymbolTable::addDefinedAtom(sym, da, addr);
 
   // Set zero bit to distinguish real symbols addressing Thumb instructions.
   // Don't care about mapping symbols like $t and others.

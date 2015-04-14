@@ -27,11 +27,11 @@ protected:
 
 X86DynamicLibraryWriter::X86DynamicLibraryWriter(X86LinkingContext &ctx,
                                                  TargetLayout<ELF32LE> &layout)
-    : DynamicLibraryWriter<ELF32LE>(ctx, layout) {}
+    : DynamicLibraryWriter(ctx, layout) {}
 
 void X86DynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  DynamicLibraryWriter<ELF32LE>::createImplicitFiles(result);
+  DynamicLibraryWriter::createImplicitFiles(result);
   auto gotFile = llvm::make_unique<SimpleFile>("GOTFile");
   gotFile->addAtom(*new (gotFile->allocator()) GlobalOffsetTableAtom(*gotFile));
   gotFile->addAtom(*new (gotFile->allocator()) DynamicAtom(*gotFile));

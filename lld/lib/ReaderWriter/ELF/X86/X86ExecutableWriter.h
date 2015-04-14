@@ -26,11 +26,11 @@ protected:
 
 X86ExecutableWriter::X86ExecutableWriter(X86LinkingContext &ctx,
                                          TargetLayout<ELF32LE> &layout)
-    : ExecutableWriter<ELF32LE>(ctx, layout) {}
+    : ExecutableWriter(ctx, layout) {}
 
 void X86ExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELF32LE>::createImplicitFiles(result);
+  ExecutableWriter::createImplicitFiles(result);
 }
 
 } // namespace elf

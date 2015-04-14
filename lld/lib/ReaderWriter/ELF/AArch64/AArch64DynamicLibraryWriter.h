@@ -28,11 +28,11 @@ protected:
 
 AArch64DynamicLibraryWriter::AArch64DynamicLibraryWriter(
     AArch64LinkingContext &ctx, TargetLayout<ELF64LE> &layout)
-    : DynamicLibraryWriter<ELF64LE>(ctx, layout) {}
+    : DynamicLibraryWriter(ctx, layout) {}
 
 void AArch64DynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  DynamicLibraryWriter<ELF64LE>::createImplicitFiles(result);
+  DynamicLibraryWriter::createImplicitFiles(result);
   auto gotFile = llvm::make_unique<SimpleFile>("GOTFile");
   gotFile->addAtom(*new (gotFile->allocator()) GlobalOffsetTableAtom(*gotFile));
   gotFile->addAtom(*new (gotFile->allocator()) DynamicAtom(*gotFile));

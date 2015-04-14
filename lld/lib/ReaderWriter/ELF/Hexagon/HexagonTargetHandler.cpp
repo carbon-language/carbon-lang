@@ -342,8 +342,8 @@ void SDataSection::doPreFlight() {
 } // finalize
 
 SDataSection::SDataSection(const HexagonLinkingContext &ctx)
-    : AtomSection<ELF32LE>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
-                           HexagonTargetLayout::ORDER_SDATA) {
+    : AtomSection(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
+                  HexagonTargetLayout::ORDER_SDATA) {
   _type = SHT_PROGBITS;
   _flags = SHF_ALLOC | SHF_WRITE;
   _alignment = 4096;

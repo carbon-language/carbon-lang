@@ -58,7 +58,7 @@ class ARMELFFile : public ELFFile<ELF32LE> {
 
 public:
   ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
-      : ELFFile<ELF32LE>(std::move(mb), ctx) {}
+      : ELFFile(std::move(mb), ctx) {}
 
 protected:
   /// Returns initial addend; for ARM it is 0, because it is read

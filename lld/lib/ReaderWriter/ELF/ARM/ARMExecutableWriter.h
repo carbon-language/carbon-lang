@@ -48,16 +48,16 @@ private:
 
 ARMExecutableWriter::ARMExecutableWriter(ARMLinkingContext &ctx,
                                          ARMTargetLayout &layout)
-    : ExecutableWriter<ELF32LE>(ctx, layout), _ctx(ctx), _armLayout(layout) {}
+    : ExecutableWriter(ctx, layout), _ctx(ctx), _armLayout(layout) {}
 
 void ARMExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELF32LE>::createImplicitFiles(result);
+  ExecutableWriter::createImplicitFiles(result);
 }
 
 void ARMExecutableWriter::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
-  ExecutableWriter<ELF32LE>::finalizeDefaultAtomValues();
+  ExecutableWriter::finalizeDefaultAtomValues();
   AtomLayout *gotAtom = _armLayout.findAbsoluteAtom(gotSymbol);
   if (gotAtom) {
     if (auto gotpltSection = _armLayout.findOutputSection(".got.plt"))
@@ -86,7 +86,7 @@ void ARMExecutableWriter::processUndefinedSymbol(
 }
 
 std::error_code ARMExecutableWriter::setELFHeader() {
-  if (std::error_code ec = ExecutableWriter<ELF32LE>::setELFHeader())
+  if (std::error_code ec = ExecutableWriter::setELFHeader())
     return ec;
 
   // Set ARM-specific flags.

@@ -30,7 +30,7 @@ protected:
   void finalizeDefaultAtomValues() override;
 
   std::error_code setELFHeader() override {
-    ExecutableWriter<ELF32LE>::setELFHeader();
+    ExecutableWriter::setELFHeader();
     setHexagonELFHeader(*_elfHeader);
     return std::error_code();
   }
@@ -42,12 +42,11 @@ private:
 
 HexagonExecutableWriter::HexagonExecutableWriter(HexagonLinkingContext &ctx,
                                                  HexagonTargetLayout &layout)
-    : ExecutableWriter<ELF32LE>(ctx, layout), _ctx(ctx), _targetLayout(layout) {
-}
+    : ExecutableWriter(ctx, layout), _ctx(ctx), _targetLayout(layout) {}
 
 void HexagonExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELF32LE>::createImplicitFiles(result);
+  ExecutableWriter::createImplicitFiles(result);
   // Add the default atoms as defined for hexagon
   auto file =
       llvm::make_unique<RuntimeFile<ELF32LE>>(_ctx, "Hexagon runtime file");
@@ -61,7 +60,7 @@ void HexagonExecutableWriter::createImplicitFiles(
 
 void HexagonExecutableWriter::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
-  ExecutableWriter<ELF32LE>::finalizeDefaultAtomValues();
+  ExecutableWriter::finalizeDefaultAtomValues();
   AtomLayout *sdabaseAtom = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
   sdabaseAtom->_virtualAddr = _targetLayout.getSDataSection()->virtualAddr();
   if (_ctx.isDynamic())

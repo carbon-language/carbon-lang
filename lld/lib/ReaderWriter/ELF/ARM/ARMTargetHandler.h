@@ -22,7 +22,7 @@ namespace elf {
 
 class ARMTargetLayout : public TargetLayout<ELF32LE> {
 public:
-  ARMTargetLayout(ELFLinkingContext &ctx) : TargetLayout<ELF32LE>(ctx) {}
+  ARMTargetLayout(ELFLinkingContext &ctx) : TargetLayout(ctx) {}
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotSymOnce, [this]() {

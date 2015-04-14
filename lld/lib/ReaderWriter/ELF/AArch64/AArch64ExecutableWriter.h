@@ -27,11 +27,11 @@ protected:
 
 AArch64ExecutableWriter::AArch64ExecutableWriter(AArch64LinkingContext &ctx,
                                                  TargetLayout<ELF64LE> &layout)
-    : ExecutableWriter<ELF64LE>(ctx, layout) {}
+    : ExecutableWriter(ctx, layout) {}
 
 void AArch64ExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELF64LE>::createImplicitFiles(result);
+  ExecutableWriter::createImplicitFiles(result);
   auto gotFile = llvm::make_unique<SimpleFile>("GOTFile");
   gotFile->addAtom(*new (gotFile->allocator()) GlobalOffsetTableAtom(*gotFile));
   if (this->_ctx.isDynamic())

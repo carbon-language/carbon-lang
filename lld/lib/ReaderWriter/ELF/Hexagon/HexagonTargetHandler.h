@@ -41,17 +41,16 @@ public:
   };
 
   HexagonTargetLayout(HexagonLinkingContext &ctx)
-      : TargetLayout<ELF32LE>(ctx), _sdataSection(ctx) {}
+      : TargetLayout(ctx), _sdataSection(ctx) {}
 
   /// \brief Return the section order for a input section
-  TargetLayout<ELF32LE>::SectionOrder
+  TargetLayout::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
                   int32_t contentPermissions) override {
     if (contentType == DefinedAtom::typeDataFast ||
         contentType == DefinedAtom::typeZeroFillFast)
       return ORDER_SDATA;
-    return TargetLayout<ELF32LE>::getSectionOrder(name, contentType,
-                                                  contentPermissions);
+    return TargetLayout::getSectionOrder(name, contentType, contentPermissions);
   }
 
   /// \brief Return the appropriate input section name.
@@ -63,27 +62,27 @@ public:
     default:
       break;
     }
-    return TargetLayout<ELF32LE>::getInputSectionName(da);
+    return TargetLayout::getInputSectionName(da);
   }
 
   /// \brief Gets or creates a section.
   AtomSection<ELF32LE> *
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
-                TargetLayout<ELF32LE>::SectionOrder sectionOrder) override {
+                TargetLayout::SectionOrder sectionOrder) override {
     if (contentType == DefinedAtom::typeDataFast ||
         contentType == DefinedAtom::typeZeroFillFast)
       return &_sdataSection;
-    return TargetLayout<ELF32LE>::createSection(
-        name, contentType, contentPermissions, sectionOrder);
+    return TargetLayout::createSection(name, contentType, contentPermissions,
+                                       sectionOrder);
   }
 
   /// \brief get the segment type for the section thats defined by the target
-  TargetLayout<ELF32LE>::SegmentType
+  TargetLayout::SegmentType
   getSegmentType(Section<ELF32LE> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
-    return TargetLayout<ELF32LE>::getSegmentType(section);
+    return TargetLayout::getSegmentType(section);
   }
 
   Section<ELF32LE> *getSDataSection() { return &_sdataSection; }
