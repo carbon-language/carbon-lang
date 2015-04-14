@@ -200,6 +200,112 @@ void reallocfPtrZero1() {
   char *r = reallocf(0, 12);
 } // expected-warning {{Potential leak of memory pointed to by}}
 
+//------------------- Check usage of zero-allocated memory ---------------------
+void CheckUseZeroAllocatedNoWarn1() {
+  int *p = malloc(0);
+  free(p); // no warning
+}
+
+void CheckUseZeroAllocatedNoWarn2() {
+  int *p = alloca(0); // no warning
+}
+
+void CheckUseZeroAllocatedNoWarn3() {
+  int *p = malloc(0);
+  int *q = realloc(p, 8); // no warning
+  free(q);
+}
+
+void CheckUseZeroAllocatedNoWarn4() {
+  int *p = realloc(0, 8);
+  *p = 1; // no warning
+  free(p);
+}
+
+void CheckUseZeroAllocated1() {
+  int *p = malloc(0);
+  *p = 1; // expected-warning {{Use of zero-allocated memory}}
+  free(p);
+}
+
+char CheckUseZeroAllocated2() {
+  char *p = alloca(0);
+  return *p; // expected-warning {{Use of zero-allocated memory}}
+}
+
+void UseZeroAllocated(int *p) {
+  if (p)
+    *p = 7; // expected-warning {{Use of zero-allocated memory}}
+}
+void CheckUseZeroAllocated3() {
+  int *p = malloc(0);
+  UseZeroAllocated(p);
+}
+
+void f(char);
+void CheckUseZeroAllocated4() {
+  char *p = valloc(0);
+  f(*p); // expected-warning {{Use of zero-allocated memory}}
+  free(p);
+}
+
+void CheckUseZeroAllocated5() {
+  int *p = calloc(0, 2);
+  *p = 1; // expected-warning {{Use of zero-allocated memory}}
+  free(p);
+}
+
+void CheckUseZeroAllocated6() {
+  int *p = calloc(2, 0);
+  *p = 1; // expected-warning {{Use of zero-allocated memory}}
+  free(p);
+}
+
+void CheckUseZeroAllocated7() {
+  int *p = realloc(0, 0);
+  *p = 1; //TODO: warn about use of zero-allocated memory
+  free(p);
+}
+
+void CheckUseZeroAllocated8() {
+  int *p = malloc(8);
+  int *q = realloc(p, 0);
+  *q = 1; //TODO: warn about use of zero-allocated memory
+  free(q);
+}
+
+void CheckUseZeroAllocated9() {
+  int *p = realloc(0, 0);
+  int *q = realloc(p, 0);
+  *q = 1; //TODO: warn about use of zero-allocated memory
+  free(q);
+}
+
+void CheckUseZeroAllocatedPathNoWarn(_Bool b) {
+  int s = 0;
+  if (b)
+    s= 10;
+
+  char *p = malloc(s);
+
+  if (b)
+    *p = 1; // no warning
+
+  free(p);
+}
+
+void CheckUseZeroAllocatedPathWarn(_Bool b) {
+  int s = 10;
+  if (b)
+    s= 0;
+
+  char *p = malloc(s);
+
+  if (b)
+    *p = 1; // expected-warning {{Use of zero-allocated memory}}
+
+  free(p);
+}
 
 // This case tests that storing malloc'ed memory to a static variable which is
 // then returned is not leaked.  In the absence of known contracts for functions

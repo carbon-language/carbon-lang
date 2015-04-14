@@ -43,6 +43,11 @@ void testDeleteMalloced() {
   delete p2; // no warn
 } 
 
+void testUseZeroAllocatedMalloced() {
+  int *p1 = (int *)malloc(0);
+  *p1 = 1; // no warn
+}
+
 //----- Test free standard new
 void testFreeOpNew() {
   void *p = operator new(0);
