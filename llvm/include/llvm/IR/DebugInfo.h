@@ -581,68 +581,31 @@ public:
   Metadata *getValue() const { return get()->getValue(); }
 };
 
-/// \brief This is a wrapper for a global variable.
-class DIGlobalVariable : public DIDescriptor {
-  DIFile getFile() const { return DIFile(get()->getFile()); }
+class DIGlobalVariable {
+  MDGlobalVariable *N;
 
 public:
-  DIGlobalVariable() = default;
-  DIGlobalVariable(const MDGlobalVariable *N) : DIDescriptor(N) {}
+  DIGlobalVariable(const MDGlobalVariable *N = nullptr)
+      : N(const_cast<MDGlobalVariable *>(N)) {}
 
-  MDGlobalVariable *get() const {
-    return cast_or_null<MDGlobalVariable>(DIDescriptor::get());
-  }
-  operator MDGlobalVariable *() const { return get(); }
-  MDGlobalVariable *operator->() const { return get(); }
-  MDGlobalVariable &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  StringRef getDisplayName() const { return get()->getDisplayName(); }
-  StringRef getLinkageName() const { return get()->getLinkageName(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-  unsigned isLocalToUnit() const { return get()->isLocalToUnit(); }
-  unsigned isDefinition() const { return get()->isDefinition(); }
-
-  DIScope getContext() const { return get()->getScope(); }
-  StringRef getFilename() const { return get()->getFilename(); }
-  StringRef getDirectory() const { return get()->getDirectory(); }
-  DITypeRef getType() const { return get()->getType(); }
-
-  Constant *getConstant() const { return get()->getVariable(); }
-  DIDerivedType getStaticDataMemberDeclaration() const {
-    return get()->getStaticDataMemberDeclaration();
-  }
+  operator DIDescriptor() const { return N; }
+  operator MDGlobalVariable *() const { return N; }
+  MDGlobalVariable *operator->() const { return N; }
+  MDGlobalVariable &operator*() const { return *N; }
 };
 
-/// \brief This is a wrapper for a variable (e.g. parameter, local, global etc).
-class DIVariable : public DIDescriptor {
-  unsigned getFlags() const { return get()->getFlags(); }
+class DIVariable {
+  MDLocalVariable *N;
 
 public:
-  DIVariable() = default;
-  DIVariable(const MDLocalVariable *N) : DIDescriptor(N) {}
+  DIVariable(const MDLocalVariable *N = nullptr)
+      : N(const_cast<MDLocalVariable *>(N)) {}
 
-  MDLocalVariable *get() const {
-    return cast_or_null<MDLocalVariable>(DIDescriptor::get());
-  }
-  operator MDLocalVariable *() const { return get(); }
-  MDLocalVariable *operator->() const { return get(); }
-  MDLocalVariable &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-  unsigned getArgNumber() const { return get()->getArg(); }
-
-  DIScope getContext() const { return get()->getScope(); }
-  DIFile getFile() const { return get()->getFile(); }
-  DITypeRef getType() const { return get()->getType(); }
-
-  bool isArtificial() const { return get()->isArtificial(); }
-  bool isObjectPointer() const { return get()->isObjectPointer(); }
-
-  /// \brief If this variable is inlined then return inline location.
-  MDNode *getInlinedAt() const { return get()->getInlinedAt(); }
+  operator MDLocalVariable *() const { return N; }
+  MDLocalVariable *operator->() const { return N; }
+  MDLocalVariable &operator*() const { return *N; }
 };
+
 
 class DIExpression {
   MDExpression *N;

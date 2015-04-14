@@ -4673,7 +4673,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         Address = BCI->getOperand(0);
       // Parameters are handled specially.
       bool isParameter =
-        (DIVariable(Variable).getTag() == dwarf::DW_TAG_arg_variable ||
+        (DIVariable(Variable)->getTag() == dwarf::DW_TAG_arg_variable ||
          isa<Argument>(Address));
 
       const AllocaInst *AI = dyn_cast<AllocaInst>(Address);

@@ -335,7 +335,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
 
       // If the global variable referenced by DIG is not null, the global
       // variable is live.
-      if (DIG.getConstant())
+      if (DIG->getVariable())
         LiveGlobalVariables.push_back(DIG);
       else
         GlobalVariableChange = true;
@@ -350,7 +350,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
     }
 
     if (GlobalVariableChange) {
-      DIC.replaceGlobalVariables(DIArray(MDNode::get(C, LiveGlobalVariables)));
+      DIC.replaceGlobalVariables(MDTuple::get(C, LiveGlobalVariables));
       Changed = true;
     }
 

@@ -141,7 +141,7 @@ bool DbgVariable::isBlockByrefVariable() const {
 }
 
 DIType DbgVariable::getType() const {
-  DIType Ty = Var.getType().resolve(DD->getTypeIdentifierMap());
+  DIType Ty = Var->getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
   if (Ty->isBlockByrefStruct()) {
@@ -894,10 +894,10 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
       continue;
 
     LexicalScope *Scope = nullptr;
-    if (MDLocation *IA = DV.get()->getInlinedAt())
-      Scope = LScopes.findInlinedScope(DV.get()->getScope(), IA);
+    if (MDLocation *IA = DV->getInlinedAt())
+      Scope = LScopes.findInlinedScope(DV->getScope(), IA);
     else
-      Scope = LScopes.findLexicalScope(DV.get()->getScope());
+      Scope = LScopes.findLexicalScope(DV->getScope());
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
@@ -933,7 +933,7 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
   for (DIVariable DV : SP->getVariables()) {
     if (!Processed.insert(DV).second)
       continue;
-    if (LexicalScope *Scope = LScopes.findLexicalScope(DV.get()->getScope())) {
+    if (LexicalScope *Scope = LScopes.findLexicalScope(DV->getScope())) {
       ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
       DIExpression NoExpr;
       ConcreteVariables.push_back(make_unique<DbgVariable>(DV, NoExpr, this));
@@ -1128,8 +1128,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     // The first mention of a function argument gets the CurrentFnBegin
     // label, so arguments are visible when breaking at function entry.
     DIVariable DIVar = Ranges.front().first->getDebugVariable();
-    if (DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
-        getDISubprogram(DIVar.getContext()).describes(MF->getFunction())) {
+    if (DIVar->getTag() == dwarf::DW_TAG_arg_variable &&
+        getDISubprogram(DIVar->getScope()).describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression()->isBitPiece()) {
         // Mark all non-overlapping initial pieces.
@@ -1220,7 +1220,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     for (DIVariable DV : SP->getVariables()) {
       if (!ProcessedVars.insert(DV).second)
         continue;
-      ensureAbstractVariableIsCreated(DV, DV.getContext());
+      ensureAbstractVariableIsCreated(DV, DV->getScope());
       assert(LScopes.getAbstractScopesList().size() == NumAbstractScopes
              && "ensureAbstractVariableIsCreated inserted abstract scopes");
     }
@@ -1480,7 +1480,7 @@ static void emitDebugLocValue(const AsmPrinter &AP,
                                     Streamer);
   // Regular entry.
   if (Value.isInt()) {
-    MDType *T = DV.getType().resolve(TypeIdentifierMap);
+    MDType *T = DV->getType().resolve(TypeIdentifierMap);
     auto *B = dyn_cast<MDBasicType>(T);
     if (B && (B->getEncoding() == dwarf::DW_ATE_signed ||
               B->getEncoding() == dwarf::DW_ATE_signed_char))

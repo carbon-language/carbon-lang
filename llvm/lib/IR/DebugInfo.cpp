@@ -152,8 +152,8 @@ void DebugInfoFinder::processModule(const Module &M) {
       addCompileUnit(CU);
       for (DIGlobalVariable DIG : CU->getGlobalVariables()) {
         if (addGlobalVariable(DIG)) {
-          processScope(DIG.getContext());
-          processType(DIG.getType().resolve(TypeIdentifierMap));
+          processScope(DIG->getScope());
+          processType(DIG->getType().resolve(TypeIdentifierMap));
         }
       }
       for (auto *SP : CU->getSubprograms())
@@ -258,8 +258,8 @@ void DebugInfoFinder::processDeclare(const Module &M,
 
   if (!NodesSeen.insert(DV).second)
     return;
-  processScope(DV.getContext());
-  processType(DV.getType().resolve(TypeIdentifierMap));
+  processScope(DV->getScope());
+  processType(DV->getType().resolve(TypeIdentifierMap));
 }
 
 void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
@@ -274,8 +274,8 @@ void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
 
   if (!NodesSeen.insert(DV).second)
     return;
-  processScope(DV.getContext());
-  processType(DV.getType().resolve(TypeIdentifierMap));
+  processScope(DV->getScope());
+  processType(DV->getType().resolve(TypeIdentifierMap));
 }
 
 bool DebugInfoFinder::addType(DIType DT) {

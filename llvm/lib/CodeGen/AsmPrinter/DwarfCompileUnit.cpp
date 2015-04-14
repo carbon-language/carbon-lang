@@ -103,44 +103,44 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
 
   assert(GV);
 
-  DIScope GVContext = GV.getContext();
-  DIType GTy = DD->resolve(GV.getType());
+  DIScope GVContext = GV->getScope();
+  DIType GTy = DD->resolve(GV->getType());
 
   // Construct the context before querying for the existence of the DIE in
   // case such construction creates the DIE.
   DIE *ContextDIE = getOrCreateContextDIE(GVContext);
 
   // Add to map.
-  DIE *VariableDIE = &createAndAddDIE(GV.getTag(), *ContextDIE, GV);
+  DIE *VariableDIE = &createAndAddDIE(GV->getTag(), *ContextDIE, GV);
   DIScope DeclContext;
 
-  if (DIDerivedType SDMDecl = GV.getStaticDataMemberDeclaration()) {
+  if (DIDerivedType SDMDecl = GV->getStaticDataMemberDeclaration()) {
     DeclContext = resolve(SDMDecl.getContext());
     assert(SDMDecl.isStaticMember() && "Expected static member decl");
-    assert(GV.isDefinition());
+    assert(GV->isDefinition());
     // We need the declaration DIE that is in the static member's class.
     DIE *VariableSpecDIE = getOrCreateStaticMemberDIE(SDMDecl);
     addDIEEntry(*VariableDIE, dwarf::DW_AT_specification, *VariableSpecDIE);
   } else {
-    DeclContext = GV.getContext();
+    DeclContext = GV->getScope();
     // Add name and type.
-    addString(*VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());
+    addString(*VariableDIE, dwarf::DW_AT_name, GV->getDisplayName());
     addType(*VariableDIE, GTy);
 
     // Add scoping info.
-    if (!GV.isLocalToUnit())
+    if (!GV->isLocalToUnit())
       addFlag(*VariableDIE, dwarf::DW_AT_external);
 
     // Add line number info.
     addSourceLine(*VariableDIE, GV);
   }
 
-  if (!GV.isDefinition())
+  if (!GV->isDefinition())
     addFlag(*VariableDIE, dwarf::DW_AT_declaration);
 
   // Add location.
   bool addToAccelTable = false;
-  if (auto *Global = dyn_cast_or_null<GlobalVariable>(GV.getConstant())) {
+  if (auto *Global = dyn_cast_or_null<GlobalVariable>(GV->getVariable())) {
     addToAccelTable = true;
     DIELoc *Loc = new (DIEValueAllocator) DIELoc();
     const MCSymbol *Sym = Asm->getSymbol(Global);
@@ -173,11 +173,11 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
     }
 
     addBlock(*VariableDIE, dwarf::DW_AT_location, Loc);
-    addLinkageName(*VariableDIE, GV.getLinkageName());
+    addLinkageName(*VariableDIE, GV->getLinkageName());
   } else if (const ConstantInt *CI =
-                 dyn_cast_or_null<ConstantInt>(GV.getConstant())) {
+                 dyn_cast_or_null<ConstantInt>(GV->getVariable())) {
     addConstantValue(*VariableDIE, CI, GTy);
-  } else if (const ConstantExpr *CE = getMergedGlobalExpr(GV.getConstant())) {
+  } else if (const ConstantExpr *CE = getMergedGlobalExpr(GV->getVariable())) {
     addToAccelTable = true;
     // GV is a merged global.
     DIELoc *Loc = new (DIEValueAllocator) DIELoc();
@@ -194,15 +194,15 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
   }
 
   if (addToAccelTable) {
-    DD->addAccelName(GV.getName(), *VariableDIE);
+    DD->addAccelName(GV->getName(), *VariableDIE);
 
     // If the linkage name is different than the name, go ahead and output
     // that as well into the name table.
-    if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
-      DD->addAccelName(GV.getLinkageName(), *VariableDIE);
+    if (GV->getLinkageName() != "" && GV->getName() != GV->getLinkageName())
+      DD->addAccelName(GV->getLinkageName(), *VariableDIE);
   }
 
-  addGlobalName(GV.getName(), *VariableDIE, DeclContext);
+  addGlobalName(GV->getName(), *VariableDIE, DeclContext);
   return VariableDIE;
 }
 

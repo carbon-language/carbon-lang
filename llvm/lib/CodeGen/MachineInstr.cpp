@@ -1620,8 +1620,8 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
     if (isDebugValue() && MO.isMetadata()) {
       // Pretty print DBG_VALUE instructions.
       DIVariable DIV = dyn_cast<MDLocalVariable>(MO.getMetadata());
-      if (DIV && !DIV.getName().empty())
-        OS << "!\"" << DIV.getName() << '\"';
+      if (DIV && !DIV->getName().empty())
+        OS << "!\"" << DIV->getName() << '\"';
       else
         MO.print(OS, TRI);
     } else if (TRI && (isInsertSubreg() || isRegSequence()) && MO.isImm()) {
@@ -1711,8 +1711,8 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
   if (isDebugValue() && getOperand(e - 2).isMetadata()) {
     if (!HaveSemi) OS << ";";
     DIVariable DV = cast<MDLocalVariable>(getOperand(e - 2).getMetadata());
-    OS << " line no:" <<  DV.getLineNumber();
-    if (auto *InlinedAt = DV.getInlinedAt()) {
+    OS << " line no:" <<  DV->getLine();
+    if (auto *InlinedAt = DV->getInlinedAt()) {
       DebugLoc InlinedAtDL(InlinedAt);
       if (InlinedAtDL && MF) {
         OS << " inlined @[ ";

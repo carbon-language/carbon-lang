@@ -107,7 +107,7 @@ public:
   DIE *getDIE() const { return TheDIE; }
   void setDotDebugLocOffset(unsigned O) { DotDebugLocOffset = O; }
   unsigned getDotDebugLocOffset() const { return DotDebugLocOffset; }
-  StringRef getName() const { return Var.getName(); }
+  StringRef getName() const { return Var->getName(); }
   const MachineInstr *getMInsn() const { return MInsn; }
   const ArrayRef<int> getFrameIndex() const { return FrameIndex; }
 
@@ -130,14 +130,14 @@ public:
 
   // Translate tag to proper Dwarf tag.
   dwarf::Tag getTag() const {
-    if (Var.getTag() == dwarf::DW_TAG_arg_variable)
+    if (Var->getTag() == dwarf::DW_TAG_arg_variable)
       return dwarf::DW_TAG_formal_parameter;
 
     return dwarf::DW_TAG_variable;
   }
   /// \brief Return true if DbgVariable is artificial.
   bool isArtificial() const {
-    if (Var.isArtificial())
+    if (Var->isArtificial())
       return true;
     if (getType().isArtificial())
       return true;
@@ -145,7 +145,7 @@ public:
   }
 
   bool isObjectPointer() const {
-    if (Var.isObjectPointer())
+    if (Var->isObjectPointer())
       return true;
     if (getType().isObjectPointer())
       return true;

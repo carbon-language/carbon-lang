@@ -94,7 +94,7 @@ public:
           OS.PadToColumn(50);
           OS << ";";
         }
-        OS << " [debug variable = " << Var.getName() << "]";
+        OS << " [debug variable = " << Var->getName() << "]";
       }
       else if (const DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
         DIVariable Var(DVI->getVariable());
@@ -102,7 +102,7 @@ public:
           OS.PadToColumn(50);
           OS << ";";
         }
-        OS << " [debug variable = " << Var.getName() << "]";
+        OS << " [debug variable = " << Var->getName() << "]";
       }
     }
   }
