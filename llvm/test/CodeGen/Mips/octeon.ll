@@ -93,7 +93,7 @@ entry:
 ; ALL-LABEL: bbit0:
 ; OCTEON: bbit0   $4, 3, $[[BB0:BB[0-9_]+]]
 ; MIPS64: andi  $[[T0:[0-9]+]], $4, 8
-; MIPS64: bnez  $[[T0]], $[[BB0:BB[0-9_]+]]
+; MIPS64: beqz  $[[T0]], $[[BB0:BB[0-9_]+]]
   %bit = and i64 %a, 8
   %res = icmp eq i64 %bit, 0
   br i1 %res, label %endif, label %if
@@ -111,7 +111,7 @@ entry:
 ; MIPS64: daddiu  $[[T0:[0-9]+]], $zero, 1
 ; MIPS64: dsll    $[[T1:[0-9]+]], $[[T0]], 35
 ; MIPS64: and     $[[T2:[0-9]+]], $4, $[[T1]]
-; MIPS64: bnez    $[[T2]], $[[BB0:BB[0-9_]+]]
+; MIPS64: beqz    $[[T2]], $[[BB0:BB[0-9_]+]]
   %bit = and i64 %a, 34359738368
   %res = icmp eq i64 %bit, 0
   br i1 %res, label %endif, label %if

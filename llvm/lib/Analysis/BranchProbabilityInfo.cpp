@@ -379,14 +379,6 @@ bool BranchProbabilityInfo::calcZeroHeuristics(BasicBlock *BB) {
   if (!CV)
     return false;
 
-  // If the LHS is the result of AND'ing a value with a single bit bitmask,
-  // we don't have information about probabilities.
-  if (Instruction *LHS = dyn_cast<Instruction>(CI->getOperand(0)))
-    if (LHS->getOpcode() == Instruction::And)
-      if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(LHS->getOperand(1)))
-        if (AndRHS->getUniqueInteger().isPowerOf2())
-          return false;
-
   bool isProb;
   if (CV->isZero()) {
     switch (CI->getPredicate()) {

@@ -212,31 +212,3 @@ exit:
   ret i32 %result
 }
 
-define i32 @zero3(i32 %i, i32 %a, i32 %b) {
-; CHECK: Printing analysis {{.*}} for function 'zero3'
-entry:
-; AND'ing with a single bit bitmask essentially leads to a bool comparison,
-; meaning we don't have probability information.
-  %and = and i32 %i, 2
-  %tobool = icmp eq i32 %and, 0
-  br i1 %tobool, label %then, label %else
-; CHECK: edge entry -> then probability is 16 / 32
-; CHECK: edge entry -> else probability is 16 / 32
-
-then:
-; AND'ing with other bitmask might be something else, so we still assume the
-; usual probabilities.
-  %and2 = and i32 %i, 5
-  %tobool2 = icmp eq i32 %and2, 0
-  br i1 %tobool2, label %else, label %exit
-; CHECK: edge then -> else probability is 12 / 32
-; CHECK: edge then -> exit probability is 20 / 32
-
-else:
-  br label %exit
-
-exit:
-  %result = phi i32 [ %a, %then ], [ %b, %else ]
-  ret i32 %result
-}
-
