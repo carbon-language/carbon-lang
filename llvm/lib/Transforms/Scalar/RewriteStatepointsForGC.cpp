@@ -131,10 +131,6 @@ struct PartiallyConstructedSafepointRecord {
   /// Mapping from live pointers to a base-defining-value
   DenseMap<llvm::Value *, llvm::Value *> PointerToBase;
 
-  /// Any new values which were added to the IR during base pointer analysis
-  /// for this safepoint
-  DenseSet<llvm::Value *> NewInsertedDefs;
-
   /// The *new* gc.statepoint instruction itself.  This produces the token
   /// that normal path gc.relocates and the gc.result are tied to.
   Instruction *StatepointToken;
@@ -584,8 +580,7 @@ private:
 /// from.  For gc objects, this is simply itself.  On success, returns a value
 /// which is the base pointer.  (This is reliable and can be used for
 /// relocation.)  On failure, returns nullptr.
-static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
-                              DenseSet<llvm::Value *> &NewInsertedDefs) {
+static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   Value *def = findBaseOrBDV(I, cache);
 
   if (isKnownBaseResult(def)) {
@@ -735,7 +730,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
           std::distance(pred_begin(v->getParent()), pred_end(v->getParent()));
       assert(num_preds > 0 && "how did we reach here");
       PHINode *phi = PHINode::Create(v->getType(), num_preds, "base_phi", v);
-      NewInsertedDefs.insert(phi);
       // Add metadata marking this as a base value
       auto *const_1 = ConstantInt::get(
           Type::getInt32Ty(
@@ -752,7 +746,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
       UndefValue *undef = UndefValue::get(sel->getType());
       SelectInst *basesel = SelectInst::Create(sel->getCondition(), undef,
                                                undef, "base_select", sel);
-      NewInsertedDefs.insert(basesel);
       // Add metadata marking this as a base value
       auto *const_1 = ConstantInt::get(
           Type::getInt32Ty(
@@ -803,8 +796,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
             assert(states.count(base));
             base = states[base].getBase();
             assert(base != nullptr && "unknown PhiState!");
-            assert(NewInsertedDefs.count(base) &&
-                   "should have already added this in a prev. iteration!");
           }
 
           // In essense this assert states: the only way two
@@ -835,7 +826,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
         if (base->getType() != basephi->getType()) {
           base = new BitCastInst(base, basephi->getType(), "cast",
                                  InBB->getTerminator());
-          NewInsertedDefs.insert(base);
         }
         basephi->addIncoming(base, InBB);
       }
@@ -861,7 +851,6 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
         // The cast is needed since base traversal may strip away bitcasts
         if (base->getType() != basesel->getType()) {
           base = new BitCastInst(base, basesel->getType(), "cast", basesel);
-          NewInsertedDefs.insert(base);
         }
         basesel->setOperand(i, base);
       }
@@ -919,8 +908,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
 static void
 findBasePointers(const StatepointLiveSetTy &live,
                  DenseMap<llvm::Value *, llvm::Value *> &PointerToBase,
-                 DominatorTree *DT, DefiningValueMapTy &DVCache,
-                 DenseSet<llvm::Value *> &NewInsertedDefs) {
+                 DominatorTree *DT, DefiningValueMapTy &DVCache) {
   // For the naming of values inserted to be deterministic - which makes for
   // much cleaner and more stable tests - we need to assign an order to the
   // live values.  DenseSets do not provide a deterministic order across runs.
@@ -928,7 +916,7 @@ findBasePointers(const StatepointLiveSetTy &live,
   Temp.insert(Temp.end(), live.begin(), live.end());
   std::sort(Temp.begin(), Temp.end(), order_by_name);
   for (Value *ptr : Temp) {
-    Value *base = findBasePointer(ptr, DVCache, NewInsertedDefs);
+    Value *base = findBasePointer(ptr, DVCache);
     assert(base && "failed to find base pointer");
     PointerToBase[ptr] = base;
     assert((!isa<Instruction>(base) || !isa<Instruction>(ptr) ||
@@ -952,9 +940,7 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
                              const CallSite &CS,
                              PartiallyConstructedSafepointRecord &result) {
   DenseMap<llvm::Value *, llvm::Value *> PointerToBase;
-  DenseSet<llvm::Value *> NewInsertedDefs;
-  findBasePointers(result.liveset, PointerToBase, &DT, DVCache,
-                   NewInsertedDefs);
+  findBasePointers(result.liveset, PointerToBase, &DT, DVCache);
 
   if (PrintBasePointers) {
     // Note: Need to print these in a stable order since this is checked in
@@ -974,7 +960,6 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
   }
 
   result.PointerToBase = PointerToBase;
-  result.NewInsertedDefs = NewInsertedDefs;
 }
 
 /// Given an updated version of the dataflow liveness results, update the
@@ -1808,13 +1793,6 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   //   gep a + 1
   //   safepoint 2
   //   br loop
-  DenseSet<llvm::Value *> allInsertedDefs;
-  for (size_t i = 0; i < records.size(); i++) {
-    struct PartiallyConstructedSafepointRecord &info = records[i];
-    allInsertedDefs.insert(info.NewInsertedDefs.begin(),
-                           info.NewInsertedDefs.end());
-  }
-
   // We insert some dummy calls after each safepoint to definitely hold live
   // the base pointers which were identified for that safepoint.  We'll then
   // ask liveness for _every_ base inserted to see what is now live.  Then we
