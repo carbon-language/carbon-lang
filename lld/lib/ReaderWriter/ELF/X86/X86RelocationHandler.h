@@ -14,7 +14,6 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 2, false> X86ELFType;
 
 class X86TargetRelocationHandler final : public TargetRelocationHandler {
 public:

@@ -10,13 +10,12 @@
 #define X86_64_EXECUTABLE_WRITER_H
 
 #include "ExecutableWriter.h"
-#include "X86_64ElfType.h"
 #include "X86_64LinkingContext.h"
 
 namespace lld {
 namespace elf {
 
-class X86_64ExecutableWriter : public ExecutableWriter<X86_64ELFType> {
+class X86_64ExecutableWriter : public ExecutableWriter<ELF64LE> {
 public:
   X86_64ExecutableWriter(X86_64LinkingContext &ctx, X86_64TargetLayout &layout)
       : ExecutableWriter(ctx, layout) {}

@@ -19,13 +19,13 @@
 namespace lld {
 namespace elf {
 
-class X86_64TargetLayout : public TargetLayout<X86_64ELFType> {
+class X86_64TargetLayout : public TargetLayout<ELF64LE> {
 public:
   X86_64TargetLayout(X86_64LinkingContext &ctx) : TargetLayout(ctx) {}
 
   void finalizeOutputSectionLayout() override {
-    sortOutputSectionByPriority<X86_64ELFType>(".init_array");
-    sortOutputSectionByPriority<X86_64ELFType>(".fini_array");
+    sortOutputSectionByPriority<ELF64LE>(".init_array");
+    sortOutputSectionByPriority<ELF64LE>(".fini_array");
   }
 
 private:

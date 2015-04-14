@@ -20,8 +20,6 @@ namespace lld {
 namespace elf {
 class HexagonLinkingContext;
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFT;
-
 /// \brief Handle Hexagon SData section
 template <class ELFT> class SDataSection : public AtomSection<ELFT> {
 public:
@@ -37,27 +35,27 @@ public:
 };
 
 /// \brief TargetLayout for Hexagon
-class HexagonTargetLayout final : public TargetLayout<ELFT> {
+class HexagonTargetLayout final : public TargetLayout<ELF32LE> {
 public:
   enum HexagonSectionOrder {
     ORDER_SDATA = 205
   };
 
   HexagonTargetLayout(HexagonLinkingContext &hti)
-      : TargetLayout<ELFT>(hti), _sdataSection() {
-    _sdataSection = new (_alloc) SDataSection<ELFT>(hti);
+      : TargetLayout<ELF32LE>(hti), _sdataSection() {
+    _sdataSection = new (_alloc) SDataSection<ELF32LE>(hti);
   }
 
   /// \brief Return the section order for a input section
-  TargetLayout<ELFT>::SectionOrder
+  TargetLayout<ELF32LE>::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
                   int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return ORDER_SDATA;
 
-    return TargetLayout<ELFT>::getSectionOrder(name, contentType,
-                                               contentPermissions);
+    return TargetLayout<ELF32LE>::getSectionOrder(name, contentType,
+                                                  contentPermissions);
   }
 
   /// \brief Return the appropriate input section name.
@@ -69,31 +67,31 @@ public:
     default:
       break;
     }
-    return TargetLayout<ELFT>::getInputSectionName(da);
+    return TargetLayout<ELF32LE>::getInputSectionName(da);
   }
 
   /// \brief Gets or creates a section.
-  AtomSection<ELFT> *
+  AtomSection<ELF32LE> *
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
-                TargetLayout<ELFT>::SectionOrder sectionOrder) override {
+                TargetLayout<ELF32LE>::SectionOrder sectionOrder) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
       return _sdataSection;
-    return TargetLayout<ELFT>::createSection(name, contentType,
-                                             contentPermissions, sectionOrder);
+    return TargetLayout<ELF32LE>::createSection(
+        name, contentType, contentPermissions, sectionOrder);
   }
 
   /// \brief get the segment type for the section thats defined by the target
-  TargetLayout<ELFT>::SegmentType
-  getSegmentType(Section<ELFT> *section) const override {
+  TargetLayout<ELF32LE>::SegmentType
+  getSegmentType(Section<ELF32LE> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
 
-    return TargetLayout<ELFT>::getSegmentType(section);
+    return TargetLayout<ELF32LE>::getSegmentType(section);
   }
 
-  Section<ELFT> *getSDataSection() const { return _sdataSection; }
+  Section<ELF32LE> *getSDataSection() const { return _sdataSection; }
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotOnce, [this]() {
@@ -105,16 +103,15 @@ public:
 
 private:
   llvm::BumpPtrAllocator _alloc;
-  SDataSection<ELFT> *_sdataSection = nullptr;
+  SDataSection<ELF32LE> *_sdataSection = nullptr;
   uint64_t _gotAddr = 0;
   std::once_flag _gotOnce;
 };
 
 /// \brief TargetHandler for Hexagon
 class HexagonTargetHandler final : public TargetHandler {
-  typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFT;
-  typedef ELFReader<ELFT, HexagonLinkingContext, HexagonELFFile> ObjReader;
-  typedef ELFReader<ELFT, HexagonLinkingContext, DynamicFile> ELFDSOReader;
+  typedef ELFReader<ELF32LE, HexagonLinkingContext, HexagonELFFile> ObjReader;
+  typedef ELFReader<ELF32LE, HexagonLinkingContext, DynamicFile> ELFDSOReader;
 
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
@@ -194,13 +191,13 @@ const lld::AtomLayout *SDataSection<ELFT>::appendAtom(const Atom *atom) {
 
 inline void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout &layout) {
   AtomLayout *gotAtom = layout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-  OutputSection<ELFT> *gotpltSection = layout.findOutputSection(".got.plt");
+  OutputSection<ELF32LE> *gotpltSection = layout.findOutputSection(".got.plt");
   if (gotpltSection)
     gotAtom->_virtualAddr = gotpltSection->virtualAddr();
   else
     gotAtom->_virtualAddr = 0;
   AtomLayout *dynamicAtom = layout.findAbsoluteAtom("_DYNAMIC");
-  OutputSection<ELFT> *dynamicSection = layout.findOutputSection(".dynamic");
+  OutputSection<ELF32LE> *dynamicSection = layout.findOutputSection(".dynamic");
   if (dynamicSection)
     dynamicAtom->_virtualAddr = dynamicSection->virtualAddr();
   else

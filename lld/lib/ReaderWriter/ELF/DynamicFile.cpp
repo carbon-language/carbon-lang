@@ -13,8 +13,6 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Path.h"
 
-using llvm::object::ELFType;
-
 namespace lld {
 namespace elf {
 
@@ -100,10 +98,10 @@ template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
   return std::error_code();
 }
 
-template class DynamicFile<ELFType<llvm::support::little, 2, false>>;
-template class DynamicFile<ELFType<llvm::support::big, 2, false>>;
-template class DynamicFile<ELFType<llvm::support::little, 2, true>>;
-template class DynamicFile<ELFType<llvm::support::big, 2, true>>;
+template class DynamicFile<ELF32LE>;
+template class DynamicFile<ELF32BE>;
+template class DynamicFile<ELF64LE>;
+template class DynamicFile<ELF64BE>;
 
 } // end namespace elf
 } // end namespace lld

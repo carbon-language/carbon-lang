@@ -16,12 +16,10 @@ namespace lld {
 class ELFLinkingContext;
 
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFT;
-
-class HexagonRuntimeFile : public RuntimeFile<ELFT> {
+class HexagonRuntimeFile : public RuntimeFile<ELF32LE> {
 public:
   HexagonRuntimeFile(ELFLinkingContext &ctx)
-      : RuntimeFile<ELFT>(ctx, "Hexagon runtime file") {}
+      : RuntimeFile<ELF32LE>(ctx, "Hexagon runtime file") {}
 };
 } // elf
 } // lld

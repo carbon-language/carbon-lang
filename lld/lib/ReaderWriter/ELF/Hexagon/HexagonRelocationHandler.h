@@ -16,8 +16,6 @@ namespace elf {
 class HexagonTargetHandler;
 class HexagonTargetLayout;
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
-
 class HexagonTargetRelocationHandler final : public TargetRelocationHandler {
 public:
   HexagonTargetRelocationHandler(HexagonTargetLayout &layout)

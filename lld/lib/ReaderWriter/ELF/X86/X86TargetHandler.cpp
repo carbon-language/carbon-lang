@@ -21,11 +21,9 @@ using namespace llvm::ELF;
 std::unique_ptr<Writer> X86TargetHandler::getWriter() {
   switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return llvm::make_unique<X86ExecutableWriter<X86ELFType>>(_ctx,
-                                                              *_targetLayout);
+    return llvm::make_unique<X86ExecutableWriter>(_ctx, *_targetLayout);
   case llvm::ELF::ET_DYN:
-    return llvm::make_unique<X86DynamicLibraryWriter<X86ELFType>>(
-        _ctx, *_targetLayout);
+    return llvm::make_unique<X86DynamicLibraryWriter>(_ctx, *_targetLayout);
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:
@@ -34,5 +32,5 @@ std::unique_ptr<Writer> X86TargetHandler::getWriter() {
 }
 
 X86TargetHandler::X86TargetHandler(X86LinkingContext &ctx)
-    : _ctx(ctx), _targetLayout(new TargetLayout<X86ELFType>(ctx)),
+    : _ctx(ctx), _targetLayout(new TargetLayout<ELF32LE>(ctx)),
       _relocationHandler(new X86TargetRelocationHandler()) {}

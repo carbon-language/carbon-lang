@@ -10,14 +10,13 @@
 #define X86_64_DYNAMIC_LIBRARY_WRITER_H
 
 #include "DynamicLibraryWriter.h"
-#include "X86_64ElfType.h"
 #include "X86_64LinkingContext.h"
 #include "X86_64TargetHandler.h"
 
 namespace lld {
 namespace elf {
 
-class X86_64DynamicLibraryWriter : public DynamicLibraryWriter<X86_64ELFType> {
+class X86_64DynamicLibraryWriter : public DynamicLibraryWriter<ELF64LE> {
 public:
   X86_64DynamicLibraryWriter(X86_64LinkingContext &ctx,
                              X86_64TargetLayout &layout);

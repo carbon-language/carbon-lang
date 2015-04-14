@@ -37,11 +37,6 @@ enum {
   LLD_R_MIPS_64_HI16 = 1031,
 };
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ELType;
-typedef llvm::object::ELFType<llvm::support::little, 2, true> Mips64ELType;
-typedef llvm::object::ELFType<llvm::support::big, 2, false> Mips32BEType;
-typedef llvm::object::ELFType<llvm::support::big, 2, true> Mips64BEType;
-
 class MipsLinkingContext final : public ELFLinkingContext {
 public:
   static const int machine = llvm::ELF::EM_MIPS;

@@ -14,5 +14,5 @@ using namespace lld::elf;
 
 std::unique_ptr<TargetHandler>
 lld::elf::createMips64ELTargetHandler(MipsLinkingContext &ctx) {
-  return llvm::make_unique<MipsTargetHandler<Mips64ELType>>(ctx);
+  return llvm::make_unique<MipsTargetHandler<ELF64LE>>(ctx);
 }

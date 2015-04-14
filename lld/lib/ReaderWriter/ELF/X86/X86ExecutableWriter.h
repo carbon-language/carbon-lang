@@ -15,25 +15,22 @@
 namespace lld {
 namespace elf {
 
-template <class ELFT>
-class X86ExecutableWriter : public ExecutableWriter<ELFT> {
+class X86ExecutableWriter : public ExecutableWriter<ELF32LE> {
 public:
-  X86ExecutableWriter(X86LinkingContext &ctx, TargetLayout<ELFT> &layout);
+  X86ExecutableWriter(X86LinkingContext &ctx, TargetLayout<ELF32LE> &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 };
 
-template <class ELFT>
-X86ExecutableWriter<ELFT>::X86ExecutableWriter(X86LinkingContext &ctx,
-                                               TargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout) {}
+X86ExecutableWriter::X86ExecutableWriter(X86LinkingContext &ctx,
+                                         TargetLayout<ELF32LE> &layout)
+    : ExecutableWriter<ELF32LE>(ctx, layout) {}
 
-template <class ELFT>
-void X86ExecutableWriter<ELFT>::createImplicitFiles(
+void X86ExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELFT>::createImplicitFiles(result);
+  ExecutableWriter<ELF32LE>::createImplicitFiles(result);
 }
 
 } // namespace elf

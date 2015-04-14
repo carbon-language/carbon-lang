@@ -119,10 +119,10 @@ public:
   ArrayRef<uint8_t> rawContent() const override;
 };
 
-template <> ArrayRef<uint8_t> GOT0Atom<Mips32ELType>::rawContent() const {
+template <> ArrayRef<uint8_t> GOT0Atom<ELF32LE>::rawContent() const {
   return llvm::makeArrayRef(mipsGot0AtomContent).slice(4);
 }
-template <> ArrayRef<uint8_t> GOT0Atom<Mips64ELType>::rawContent() const {
+template <> ArrayRef<uint8_t> GOT0Atom<ELF64LE>::rawContent() const {
   return llvm::makeArrayRef(mipsGot0AtomContent);
 }
 
@@ -135,11 +135,11 @@ public:
 };
 
 template <>
-ArrayRef<uint8_t> GOTModulePointerAtom<Mips32ELType>::rawContent() const {
+ArrayRef<uint8_t> GOTModulePointerAtom<ELF32LE>::rawContent() const {
   return llvm::makeArrayRef(mipsGotModulePointerAtomContent).slice(4);
 }
 template <>
-ArrayRef<uint8_t> GOTModulePointerAtom<Mips64ELType>::rawContent() const {
+ArrayRef<uint8_t> GOTModulePointerAtom<ELF64LE>::rawContent() const {
   return llvm::makeArrayRef(mipsGotModulePointerAtomContent);
 }
 
@@ -151,11 +151,11 @@ public:
   ArrayRef<uint8_t> rawContent() const override;
 };
 
-template <> ArrayRef<uint8_t> GOTTLSGdAtom<Mips32ELType>::rawContent() const {
+template <> ArrayRef<uint8_t> GOTTLSGdAtom<ELF32LE>::rawContent() const {
     return llvm::makeArrayRef(mipsGotTlsGdAtomContent).slice(8);
 }
 
-template <> ArrayRef<uint8_t> GOTTLSGdAtom<Mips64ELType>::rawContent() const {
+template <> ArrayRef<uint8_t> GOTTLSGdAtom<ELF64LE>::rawContent() const {
     return llvm::makeArrayRef(mipsGotTlsGdAtomContent);
 }
 
@@ -1077,9 +1077,9 @@ RelocationPass<ELFT>::getObjectEntry(const SharedLibraryAtom *a) {
 static std::unique_ptr<Pass> createPass(MipsLinkingContext &ctx) {
   switch (ctx.getTriple().getArch()) {
   case llvm::Triple::mipsel:
-    return llvm::make_unique<RelocationPass<Mips32ELType>>(ctx);
+    return llvm::make_unique<RelocationPass<ELF32LE>>(ctx);
   case llvm::Triple::mips64el:
-    return llvm::make_unique<RelocationPass<Mips64ELType>>(ctx);
+    return llvm::make_unique<RelocationPass<ELF64LE>>(ctx);
   default:
     llvm_unreachable("Unhandled arch");
   }

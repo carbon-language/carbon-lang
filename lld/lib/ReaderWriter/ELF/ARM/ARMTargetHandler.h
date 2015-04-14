@@ -58,9 +58,8 @@ private:
 };
 
 class ARMTargetHandler final : public TargetHandler {
-  typedef llvm::object::ELFType<llvm::support::little, 2, false> ELFT;
-  typedef ELFReader<ELFT, ARMLinkingContext, ARMELFFile> ObjReader;
-  typedef ELFReader<ELFT, ARMLinkingContext, DynamicFile> DSOReader;
+  typedef ELFReader<ELF32LE, ARMLinkingContext, ARMELFFile> ObjReader;
+  typedef ELFReader<ELF32LE, ARMLinkingContext, DynamicFile> DSOReader;
 
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
@@ -81,7 +80,7 @@ public:
 
 private:
   ARMLinkingContext &_ctx;
-  std::unique_ptr<ARMTargetLayout<ELFT>> _targetLayout;
+  std::unique_ptr<ARMTargetLayout<ELF32LE>> _targetLayout;
   std::unique_ptr<ARMTargetRelocationHandler> _relocationHandler;
 };
 

@@ -46,6 +46,11 @@ std::unique_ptr<ELFLinkingContext> createMipsLinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createX86LinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createX86_64LinkingContext(llvm::Triple);
 
+typedef llvm::object::ELFType<llvm::support::little, 2, false> ELF32LE;
+typedef llvm::object::ELFType<llvm::support::big, 2, false> ELF32BE;
+typedef llvm::object::ELFType<llvm::support::little, 2, true> ELF64LE;
+typedef llvm::object::ELFType<llvm::support::big, 2, true> ELF64BE;
+
 class TargetRelocationHandler {
 public:
   virtual ~TargetRelocationHandler() {}

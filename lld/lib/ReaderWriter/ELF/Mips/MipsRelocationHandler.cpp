@@ -617,16 +617,16 @@ namespace elf {
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
-createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx,
-                                          MipsTargetLayout<Mips32ELType> &layout) {
-  return llvm::make_unique<RelocationHandler<Mips32ELType>>(ctx, layout);
+createMipsRelocationHandler<ELF32LE>(MipsLinkingContext &ctx,
+                                     MipsTargetLayout<ELF32LE> &layout) {
+  return llvm::make_unique<RelocationHandler<ELF32LE>>(ctx, layout);
 }
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
-createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx,
-                                          MipsTargetLayout<Mips64ELType> &layout) {
-  return llvm::make_unique<RelocationHandler<Mips64ELType>>(ctx, layout);
+createMipsRelocationHandler<ELF64LE>(MipsLinkingContext &ctx,
+                                     MipsTargetLayout<ELF64LE> &layout) {
+  return llvm::make_unique<RelocationHandler<ELF64LE>>(ctx, layout);
 }
 
 Reference::Addend readMipsRelocAddend(Reference::KindValue kind,

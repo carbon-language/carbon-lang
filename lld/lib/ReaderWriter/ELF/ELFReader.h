@@ -48,7 +48,6 @@ private:
   std::unique_ptr<File> createELF(std::unique_ptr<MemoryBuffer> mb) const {
     using namespace llvm::ELF;
     using namespace llvm::support;
-    using llvm::object::ELFType;
 
     if (uintptr_t(mb->getBufferStart()) & 1)
       llvm_unreachable("Invalid alignment for ELF file!");
@@ -57,13 +56,13 @@ private:
     std::tie(size, endian) = llvm::object::getElfArchType(mb->getBuffer());
     File *file = nullptr;
     if (size == ELFCLASS32 && endian == ELFDATA2LSB) {
-      file = new FileT<ELFType<little, 2, false>>(std::move(mb), _ctx);
+      file = new FileT<ELF32LE>(std::move(mb), _ctx);
     } else if (size == ELFCLASS32 && endian == ELFDATA2MSB) {
-      file = new FileT<ELFType<big, 2, false>>(std::move(mb), _ctx);
+      file = new FileT<ELF32BE>(std::move(mb), _ctx);
     } else if (size == ELFCLASS64 && endian == ELFDATA2LSB) {
-      file = new FileT<ELFType<little, 2, true>>(std::move(mb), _ctx);
+      file = new FileT<ELF64LE>(std::move(mb), _ctx);
     } else if (size == ELFCLASS64 && endian == ELFDATA2MSB) {
-      file = new FileT<ELFType<big, 2, true>>(std::move(mb), _ctx);
+      file = new FileT<ELF64BE>(std::move(mb), _ctx);
     }
     if (!file)
       llvm_unreachable("Invalid ELF type!");

@@ -17,16 +17,16 @@ using namespace lld;
 using namespace elf;
 
 AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
-    : _ctx(ctx), _targetLayout(new TargetLayout<AArch64ELFType>(ctx)),
+    : _ctx(ctx), _targetLayout(new TargetLayout<ELF64LE>(ctx)),
       _relocationHandler(new AArch64TargetRelocationHandler()) {}
 
 std::unique_ptr<Writer> AArch64TargetHandler::getWriter() {
   switch (this->_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return llvm::make_unique<AArch64ExecutableWriter<AArch64ELFType>>(
-        _ctx, *_targetLayout);
+    return llvm::make_unique<AArch64ExecutableWriter<ELF64LE>>(_ctx,
+                                                               *_targetLayout);
   case llvm::ELF::ET_DYN:
-    return llvm::make_unique<AArch64DynamicLibraryWriter<AArch64ELFType>>(
+    return llvm::make_unique<AArch64DynamicLibraryWriter<ELF64LE>>(
         _ctx, *_targetLayout);
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");

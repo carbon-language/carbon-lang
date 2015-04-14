@@ -10,8 +10,6 @@
 #include "ELFFile.h"
 #include "llvm/ADT/STLExtras.h"
 
-using llvm::object::ELFType;
-
 namespace lld {
 namespace elf {
 
@@ -758,15 +756,15 @@ void RuntimeFile<ELFT>::addUndefinedAtom(StringRef symbolName) {
   this->addAtom(*atom);
 }
 
-template class ELFFile<ELFType<llvm::support::little, 2, false>>;
-template class ELFFile<ELFType<llvm::support::big, 2, false>>;
-template class ELFFile<ELFType<llvm::support::little, 2, true>>;
-template class ELFFile<ELFType<llvm::support::big, 2, true>>;
+template class ELFFile<ELF32LE>;
+template class ELFFile<ELF32BE>;
+template class ELFFile<ELF64LE>;
+template class ELFFile<ELF64BE>;
 
-template class RuntimeFile<ELFType<llvm::support::little, 2, false>>;
-template class RuntimeFile<ELFType<llvm::support::big, 2, false>>;
-template class RuntimeFile<ELFType<llvm::support::little, 2, true>>;
-template class RuntimeFile<ELFType<llvm::support::big, 2, true>>;
+template class RuntimeFile<ELF32LE>;
+template class RuntimeFile<ELF32BE>;
+template class RuntimeFile<ELF64LE>;
+template class RuntimeFile<ELF64BE>;
 
 } // end namespace elf
 } // end namespace lld

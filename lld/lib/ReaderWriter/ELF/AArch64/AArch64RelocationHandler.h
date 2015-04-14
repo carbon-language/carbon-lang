@@ -14,7 +14,6 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 2, true> AArch64ELFType;
 
 class AArch64TargetRelocationHandler final : public TargetRelocationHandler {
 public:

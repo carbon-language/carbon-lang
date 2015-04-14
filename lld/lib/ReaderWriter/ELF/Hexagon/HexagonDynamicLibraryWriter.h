@@ -18,7 +18,7 @@ namespace elf {
 
 class HexagonTargetLayout;
 
-class HexagonDynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
+class HexagonDynamicLibraryWriter : public DynamicLibraryWriter<ELF32LE> {
 public:
   HexagonDynamicLibraryWriter(HexagonLinkingContext &ctx,
                               HexagonTargetLayout &layout);
@@ -30,7 +30,7 @@ protected:
   void finalizeDefaultAtomValues() override;
 
   std::error_code setELFHeader() override {
-    DynamicLibraryWriter<ELFT>::setELFHeader();
+    DynamicLibraryWriter<ELF32LE>::setELFHeader();
     setHexagonELFHeader(*this->_elfHeader);
     return std::error_code();
   }
@@ -42,12 +42,12 @@ private:
 
 HexagonDynamicLibraryWriter::HexagonDynamicLibraryWriter(
     HexagonLinkingContext &ctx, HexagonTargetLayout &layout)
-    : DynamicLibraryWriter<ELFT>(ctx, layout), _ctx(ctx),
+    : DynamicLibraryWriter<ELF32LE>(ctx, layout), _ctx(ctx),
       _targetLayout(layout) {}
 
 void HexagonDynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
+  DynamicLibraryWriter<ELF32LE>::createImplicitFiles(result);
   // Add the default atoms as defined for hexagon
   auto file = llvm::make_unique<HexagonRuntimeFile>(_ctx);
   file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
@@ -57,7 +57,7 @@ void HexagonDynamicLibraryWriter::createImplicitFiles(
 
 void HexagonDynamicLibraryWriter::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
-  DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
+  DynamicLibraryWriter<ELF32LE>::finalizeDefaultAtomValues();
   if (_ctx.isDynamic())
     finalizeHexagonRuntimeAtomValues(_targetLayout);
 }

@@ -18,8 +18,6 @@
 namespace lld {
 namespace elf {
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
-
 class HexagonLinkingContext final : public ELFLinkingContext {
 public:
   static const int machine = llvm::ELF::EM_HEXAGON;
