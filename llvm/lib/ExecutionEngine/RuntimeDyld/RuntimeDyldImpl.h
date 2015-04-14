@@ -52,7 +52,7 @@ class Twine;
 class SectionEntry {
 public:
   /// Name - section name.
-  StringRef Name;
+  std::string Name;
 
   /// Address - address in the linker's memory where the section resides.
   uint8_t *Address;
