@@ -80,6 +80,16 @@ class RSModuleDescriptor
 class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 {
   public:
+
+    enum ModuleKind
+    {
+        eModuleKindIgnored,
+        eModuleKindLibRS,
+        eModuleKindDriver,
+        eModuleKindImpl,
+        eModuleKindKernelObj
+    };
+
     ~RenderScriptRuntime() {}
 
     //------------------------------------------------------------------
@@ -92,6 +102,12 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     static lldb_private::LanguageRuntime *CreateInstance(Process *process, lldb::LanguageType language);
 
     static lldb_private::ConstString GetPluginNameStatic();
+
+    static bool IsRenderScriptModule(const lldb::ModuleSP &module_sp);
+
+    static ModuleKind GetModuleKind(const lldb::ModuleSP &module_sp);
+
+    static void ModulesDidLoad(const lldb::ProcessSP& process_sp, const ModuleList &module_list );
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -119,9 +135,15 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
         return static_cast<size_t>(0);
     }
 
+    virtual void ModulesDidLoad(const ModuleList &module_list );
+
+    void Update();
+
+    void Initiate();
+
   protected:
     std::vector<RSModuleDescriptor> m_rsmodules;
-
+    bool m_initiated;
   private:
     RenderScriptRuntime(Process *process); // Call CreateInstance instead.
 };
