@@ -318,7 +318,8 @@ private:
 /// but needs to patch in a header that needs to know the output size.
 class raw_pwrite_stream : public raw_ostream {
 public:
-  using raw_ostream::raw_ostream;
+  explicit raw_pwrite_stream(bool Unbuffered = false)
+      : raw_ostream(Unbuffered) {}
   virtual void pwrite(const char *Ptr, size_t Size, uint64_t Offset) = 0;
 };
 
