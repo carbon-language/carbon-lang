@@ -17,12 +17,12 @@
 using namespace llvm;
 
 static cl::opt<bool> PreserveBitcodeUseListOrder(
-    "preserve-bc-use-list-order",
+    "preserve-bc-uselistorder",
     cl::desc("Preserve use-list order when writing LLVM bitcode."),
     cl::init(true), cl::Hidden);
 
 static cl::opt<bool> PreserveAssemblyUseListOrder(
-    "preserve-ll-use-list-order",
+    "preserve-ll-uselistorder",
     cl::desc("Preserve use-list order when writing LLVM assembly."),
     cl::init(false), cl::Hidden);
 

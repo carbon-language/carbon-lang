@@ -53,7 +53,7 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "use-list-order"
+#define DEBUG_TYPE "uselistorder"
 
 static cl::opt<std::string> InputFilename(cl::Positional,
                                           cl::desc("<input bitcode file>"),
@@ -109,7 +109,7 @@ struct ValueMapping {
 bool TempFile::init(const std::string &Ext) {
   SmallVector<char, 64> Vector;
   DEBUG(dbgs() << " - create-temp-file\n");
-  if (auto EC = sys::fs::createTemporaryFile("use-list-order", Ext, Vector)) {
+  if (auto EC = sys::fs::createTemporaryFile("uselistorder", Ext, Vector)) {
     (void)EC;
     DEBUG(dbgs() << "error: " << EC.message() << "\n");
     return true;
@@ -172,7 +172,7 @@ std::unique_ptr<Module> TempFile::readAssembly(LLVMContext &Context) const {
   SMDiagnostic Err;
   std::unique_ptr<Module> M = parseAssemblyFile(Filename, Err, Context);
   if (!M.get())
-    DEBUG(dbgs() << "error: "; Err.print("verify-use-list-order", dbgs()));
+    DEBUG(dbgs() << "error: "; Err.print("verify-uselistorder", dbgs()));
   return M;
 }
 
@@ -343,7 +343,7 @@ static void verifyAfterRoundTrip(const Module &M,
     report_fatal_error("use-list order changed");
 }
 static void verifyBitcodeUseListOrder(const Module &M) {
-  errs() << "*** verify-use-list-order: bitcode ***\n";
+  errs() << "*** verify-uselistorder: bitcode ***\n";
   TempFile F;
   if (F.init("bc"))
     report_fatal_error("failed to initialize bitcode file");
@@ -356,7 +356,7 @@ static void verifyBitcodeUseListOrder(const Module &M) {
 }
 
 static void verifyAssemblyUseListOrder(const Module &M) {
-  errs() << "*** verify-use-list-order: assembly ***\n";
+  errs() << "*** verify-uselistorder: assembly ***\n";
   TempFile F;
   if (F.init("ll"))
     report_fatal_error("failed to initialize assembly file");
@@ -540,14 +540,14 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  errs() << "*** verify-use-list-order ***\n";
+  errs() << "*** verify-uselistorder ***\n";
   // Can't verify if order isn't preserved.
   if (!shouldPreserveBitcodeUseListOrder()) {
-    errs() << "warning: forcing -preserve-bc-use-list-order\n";
+    errs() << "warning: forcing -preserve-bc-uselistorder\n";
     setPreserveBitcodeUseListOrder(true);
   }
   if (!shouldPreserveAssemblyUseListOrder()) {
-    errs() << "warning: forcing -preserve-ll-use-list-order\n";
+    errs() << "warning: forcing -preserve-ll-uselistorder\n";
     setPreserveAssemblyUseListOrder(true);
   }
 
