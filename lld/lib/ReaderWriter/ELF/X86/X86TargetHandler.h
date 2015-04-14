@@ -20,8 +20,8 @@ namespace elf {
 class X86LinkingContext;
 
 class X86TargetHandler final : public TargetHandler {
-  typedef ELFReader<ELF32LE, X86LinkingContext, ELFFile> ObjReader;
-  typedef ELFReader<ELF32LE, X86LinkingContext, DynamicFile> DSOReader;
+  typedef ELFReader<ELFFile<ELF32LE>> ObjReader;
+  typedef ELFReader<DynamicFile<ELF32LE>> DSOReader;
 
 public:
   X86TargetHandler(X86LinkingContext &ctx);

@@ -22,8 +22,8 @@ namespace elf {
 
 /// \brief TargetHandler for Mips
 template <class ELFT> class MipsTargetHandler final : public TargetHandler {
-  typedef ELFReader<ELFT, MipsLinkingContext, MipsELFFile> ObjReader;
-  typedef ELFReader<ELFT, MipsLinkingContext, DynamicFile> DSOReader;
+  typedef ELFReader<MipsELFFile<ELFT>> ObjReader;
+  typedef ELFReader<DynamicFile<ELFT>> DSOReader;
 
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)

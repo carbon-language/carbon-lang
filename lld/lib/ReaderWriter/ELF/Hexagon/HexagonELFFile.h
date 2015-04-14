@@ -108,7 +108,7 @@ template <class ELFT> class HexagonELFFile : public ELFFile<ELFT> {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, HexagonLinkingContext &ctx)
+  HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
       : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   bool isCommonSymbol(const Elf_Sym *symbol) const override {

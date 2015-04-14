@@ -19,7 +19,7 @@ namespace elf {
 class X86LinkingContext final : public ELFLinkingContext {
 public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
-  static const int machine = llvm::ELF::EM_386;
+  int getMachineType() const override { return llvm::ELF::EM_386; }
   X86LinkingContext(llvm::Triple);
   void registerRelocationNames(Registry &r) override;
 

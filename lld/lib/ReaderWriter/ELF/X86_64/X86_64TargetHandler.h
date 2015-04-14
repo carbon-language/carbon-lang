@@ -58,9 +58,8 @@ private:
 };
 
 class X86_64TargetHandler : public TargetHandler {
-  typedef llvm::object::ELFType<llvm::support::little, 2, true> ELFT;
-  typedef ELFReader<ELFT, X86_64LinkingContext, ELFFile> ObjReader;
-  typedef ELFReader<ELFT, X86_64LinkingContext, DynamicFile> DSOReader;
+  typedef ELFReader<ELFFile<ELF64LE>> ObjReader;
+  typedef ELFReader<DynamicFile<ELF64LE>> DSOReader;
 
 public:
   X86_64TargetHandler(X86_64LinkingContext &ctx);

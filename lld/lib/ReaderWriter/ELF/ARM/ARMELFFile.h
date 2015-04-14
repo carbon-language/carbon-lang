@@ -55,7 +55,7 @@ template <class ELFT> class ARMELFFile : public ELFFile<ELFT> {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
 
 public:
-  ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx)
+  ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
       : ELFFile<ELFT>(std::move(mb), ctx) {}
 
 protected:

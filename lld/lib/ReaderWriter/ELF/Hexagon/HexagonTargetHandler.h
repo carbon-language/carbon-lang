@@ -109,8 +109,8 @@ private:
 
 /// \brief TargetHandler for Hexagon
 class HexagonTargetHandler final : public TargetHandler {
-  typedef ELFReader<ELF32LE, HexagonLinkingContext, HexagonELFFile> ObjReader;
-  typedef ELFReader<ELF32LE, HexagonLinkingContext, DynamicFile> ELFDSOReader;
+  typedef ELFReader<HexagonELFFile<ELF32LE>> ObjReader;
+  typedef ELFReader<DynamicFile<ELF32LE>> ELFDSOReader;
 
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);

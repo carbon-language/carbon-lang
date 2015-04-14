@@ -106,6 +106,7 @@ public:
   uint16_t getOutputELFType() const { return _outputELFType; }
   uint16_t getOutputMachine() const;
   bool mergeCommonStrings() const { return _mergeCommonStrings; }
+  virtual int getMachineType() const = 0;
   virtual uint64_t getBaseAddress() const { return _baseAddress; }
   virtual void setBaseAddress(uint64_t address) { _baseAddress = address; }
 

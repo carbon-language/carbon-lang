@@ -20,7 +20,7 @@ namespace elf {
 
 class HexagonLinkingContext final : public ELFLinkingContext {
 public:
-  static const int machine = llvm::ELF::EM_HEXAGON;
+  int getMachineType() const override { return llvm::ELF::EM_HEXAGON; }
   HexagonLinkingContext(llvm::Triple triple);
 
   void addPasses(PassManager &) override;

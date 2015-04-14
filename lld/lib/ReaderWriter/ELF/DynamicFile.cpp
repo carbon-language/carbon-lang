@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DynamicFile.h"
+#include "FileCommon.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/ELF.h"
@@ -28,6 +29,12 @@ DynamicFile<ELFT>::DynamicFile(std::unique_ptr<MemoryBuffer> mb,
                                ELFLinkingContext &ctx)
     : SharedLibraryFile(mb->getBufferIdentifier()), _mb(std::move(mb)),
       _ctx(ctx), _useShlibUndefines(ctx.useShlibUndefines()) {}
+
+template <typename ELFT>
+std::error_code DynamicFile<ELFT>::isCompatible(const MemoryBuffer &mb,
+                                                ELFLinkingContext &ctx) {
+  return lld::elf::isCompatible<ELFT>(mb, ctx);
+}
 
 template <class ELFT>
 const SharedLibraryAtom *DynamicFile<ELFT>::exports(StringRef name,

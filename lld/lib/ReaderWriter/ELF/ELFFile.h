@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_FILE_H
 
 #include "Atoms.h"
+#include "FileCommon.h"
 #include "llvm/ADT/MapVector.h"
 #include <map>
 #include <unordered_map>
@@ -88,6 +89,9 @@ template <class ELFT> class ELFFile : public SimpleFile {
 public:
   ELFFile(StringRef name, ELFLinkingContext &ctx);
   ELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx);
+
+  static std::error_code isCompatible(const MemoryBuffer &mb,
+                                      ELFLinkingContext &ctx);
 
   static bool canParse(file_magic magic) {
     return magic == file_magic::elf_relocatable;
@@ -333,6 +337,8 @@ protected:
       return elfReferenceToSymbol->second;
     return nullptr;
   }
+
+  static bool isCompatible(unsigned char size, unsigned char endian);
 
   llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFFile<ELFT> > _objFile;

@@ -19,7 +19,7 @@ namespace elf {
 
 class ARMLinkingContext final : public ELFLinkingContext {
 public:
-  static const int machine = llvm::ELF::EM_ARM;
+  int getMachineType() const override { return llvm::ELF::EM_ARM; }
   ARMLinkingContext(llvm::Triple);
 
   void addPasses(PassManager &) override;

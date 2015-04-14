@@ -6,7 +6,7 @@
 # RUN: not lld -flavor gnu -target mips64el -shared -o %t.so \
 # RUN:         %t-32.o %t-64.o 2>&1 | FileCheck %s
 
-# CHECK: Bitness is incompatible with that of the selected target
+# CHECK: ELF64 expected, but got ELF32
 
 # 32.o
 ---

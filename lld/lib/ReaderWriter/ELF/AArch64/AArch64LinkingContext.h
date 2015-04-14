@@ -24,7 +24,7 @@ enum {
 
 class AArch64LinkingContext final : public ELFLinkingContext {
 public:
-  static const int machine = llvm::ELF::EM_AARCH64;
+  int getMachineType() const override { return llvm::ELF::EM_AARCH64; }
   AArch64LinkingContext(llvm::Triple);
 
   void addPasses(PassManager &) override;

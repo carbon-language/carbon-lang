@@ -20,8 +20,8 @@ namespace elf {
 class AArch64LinkingContext;
 
 class AArch64TargetHandler final : public TargetHandler {
-  typedef ELFReader<ELF64LE, AArch64LinkingContext, ELFFile> ObjReader;
-  typedef ELFReader<ELF64LE, AArch64LinkingContext, DynamicFile> DSOReader;
+  typedef ELFReader<ELFFile<ELF64LE>> ObjReader;
+  typedef ELFReader<DynamicFile<ELF64LE>> DSOReader;
 
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);

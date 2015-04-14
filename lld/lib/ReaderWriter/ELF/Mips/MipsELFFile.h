@@ -88,7 +88,7 @@ private:
 
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {
 public:
-  MipsELFFile(std::unique_ptr<MemoryBuffer> mb, MipsLinkingContext &ctx)
+  MipsELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
       : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   bool isPIC() const {

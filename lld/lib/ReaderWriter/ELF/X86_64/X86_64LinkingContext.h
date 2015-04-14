@@ -30,7 +30,7 @@ protected:
 
 public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
-  static const int machine = llvm::ELF::EM_X86_64;
+  int getMachineType() const override { return llvm::ELF::EM_X86_64; }
   X86_64LinkingContext(llvm::Triple);
 
   void addPasses(PassManager &) override;

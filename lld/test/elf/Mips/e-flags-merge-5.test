@@ -6,7 +6,7 @@
 # RUN: not lld -flavor gnu -target mipsel -shared -o %t.so \
 # RUN:         %t-32.o %t-64.o 2>&1 | FileCheck %s
 
-# CHECK: Bitness is incompatible with that of the selected target
+# CHECK: ELF32 expected, but got ELF64
 
 # 32.o
 ---

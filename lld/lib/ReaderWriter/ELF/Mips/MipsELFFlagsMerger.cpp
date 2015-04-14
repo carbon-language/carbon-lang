@@ -66,11 +66,6 @@ uint32_t MipsELFFlagsMerger::getMergedELFFlags() const { return _flags; }
 
 std::error_code MipsELFFlagsMerger::mergeHeaderFlags(uint8_t newClass,
                                                      uint32_t newFlags) {
-  // Check bitness.
-  if (_is64Bit != (newClass == ELFCLASS64))
-    return make_dynamic_error_code(
-        "Bitness is incompatible with that of the selected target");
-
   // We support two ABI: O32 and N64. The last one does not have
   // the corresponding ELF flag.
   uint32_t inAbi = newFlags & EF_MIPS_ABI;

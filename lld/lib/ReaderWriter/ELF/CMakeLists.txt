@@ -2,6 +2,7 @@ add_llvm_library(lldELF
   DynamicFile.cpp
   ELFFile.cpp
   ELFLinkingContext.cpp
+  FileCommon.cpp
   Reader.cpp
   Writer.cpp
   LINK_LIBS

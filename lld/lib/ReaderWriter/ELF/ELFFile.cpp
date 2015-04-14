@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ELFFile.h"
+#include "FileCommon.h"
 #include "llvm/ADT/STLExtras.h"
 
 namespace lld {
@@ -25,6 +26,12 @@ ELFFile<ELFT>::ELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
     : SimpleFile(mb->getBufferIdentifier()), _mb(std::move(mb)), _ordinal(0),
       _doStringsMerge(ctx.mergeCommonStrings()),
       _useWrap(ctx.wrapCalls().size()), _ctx(ctx) {}
+
+template <typename ELFT>
+std::error_code ELFFile<ELFT>::isCompatible(const MemoryBuffer &mb,
+                                            ELFLinkingContext &ctx) {
+  return lld::elf::isCompatible<ELFT>(mb, ctx);
+}
 
 template <typename ELFT>
 Atom *ELFFile<ELFT>::findAtom(const Elf_Sym *sourceSym,

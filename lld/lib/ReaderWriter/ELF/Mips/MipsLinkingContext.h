@@ -39,7 +39,7 @@ enum {
 
 class MipsLinkingContext final : public ELFLinkingContext {
 public:
-  static const int machine = llvm::ELF::EM_MIPS;
+  int getMachineType() const override { return llvm::ELF::EM_MIPS; }
   MipsLinkingContext(llvm::Triple triple);
 
   std::error_code mergeHeaderFlags(uint8_t fileClass, uint64_t flags) override;
