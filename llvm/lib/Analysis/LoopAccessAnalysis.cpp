@@ -1314,10 +1314,10 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
 
 void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   if (CanVecMem) {
-    if (PtrRtCheck.empty())
-      OS.indent(Depth) << "Memory dependences are safe\n";
-    else
+    if (PtrRtCheck.Need)
       OS.indent(Depth) << "Memory dependences are safe with run-time checks\n";
+    else
+      OS.indent(Depth) << "Memory dependences are safe\n";
   }
 
   OS.indent(Depth) << "Store to invariant address was "
