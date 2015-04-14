@@ -786,7 +786,13 @@ protected:
   ~MDCompositeTypeBase() = default;
 
 public:
+  /// \brief Get the elements of the composite type.
+  ///
+  /// \note Calling this is only valid for \a MDCompositeType.  This assertion
+  /// can be removed once \a MDSubroutineType has been separated from
+  /// "composite types".
   DebugNodeArray getElements() const {
+    assert(!isa<MDSubroutineType>(this) && "no elements for DISubroutineType");
     return cast_or_null<MDTuple>(getRawElements());
   }
   MDTypeRef getVTableHolder() const { return MDTypeRef(getRawVTableHolder()); }

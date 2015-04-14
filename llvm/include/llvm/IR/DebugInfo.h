@@ -350,10 +350,7 @@ public:
   MDCompositeTypeBase *operator->() const { return get(); }
   MDCompositeTypeBase &operator*() const { return *get(); }
 
-  DIArray getElements() const {
-    assert(!isa<MDSubroutineType>(*this) && "no elements for DISubroutineType");
-    return DIArray(get()->getElements());
-  }
+  DIArray getElements() const { return get()->getElements(); }
 
   unsigned getRunTimeLang() const { return get()->getRuntimeLang(); }
   DITypeRef getContainingType() const { return get()->getVTableHolder(); }
