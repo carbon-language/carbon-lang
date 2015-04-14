@@ -79,17 +79,6 @@ public:
                    uint8_t other, uint32_t shndx, bool Reserved);
 };
 
-struct ELFRelocationEntry {
-  uint64_t Offset; // Where is the relocation.
-  const MCSymbol *Symbol;       // The symbol to relocate with.
-  unsigned Type;   // The type of the relocation.
-  uint64_t Addend; // The addend to use.
-
-  ELFRelocationEntry(uint64_t Offset, const MCSymbol *Symbol, unsigned Type,
-                     uint64_t Addend)
-      : Offset(Offset), Symbol(Symbol), Type(Type), Addend(Addend) {}
-};
-
 class ELFObjectWriter : public MCObjectWriter {
   FragmentWriter FWriter;
 
@@ -1336,31 +1325,14 @@ void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
   WriteWord(EntrySize); // sh_entsize
 }
 
-// ELF doesn't require relocations to be in any order. We sort by the r_offset,
-// just to match gnu as for easier comparison. The use type is an arbitrary way
-// of making the sort deterministic.
-static int cmpRel(const ELFRelocationEntry *AP, const ELFRelocationEntry *BP) {
-  const ELFRelocationEntry &A = *AP;
-  const ELFRelocationEntry &B = *BP;
-  if (A.Offset != B.Offset)
-    return B.Offset - A.Offset;
-  if (B.Type != A.Type)
-    return A.Type - B.Type;
-  //llvm_unreachable("ELFRelocs might be unstable!");
-  return 0;
-}
-
-static void sortRelocs(const MCAssembler &Asm,
-                       std::vector<ELFRelocationEntry> &Relocs) {
-  array_pod_sort(Relocs.begin(), Relocs.end(), cmpRel);
-}
-
 void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
                                                MCDataFragment *F,
                                                const MCSectionData *SD) {
   std::vector<ELFRelocationEntry> &Relocs = Relocations[SD];
 
-  sortRelocs(Asm, Relocs);
+  // Sort the relocation entries. Most targets just sort by Offset, but some
+  // (e.g., MIPS) have additional constraints.
+  TargetObjectWriter->sortRelocs(Asm, Relocs);
 
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     const ELFRelocationEntry &Entry = Relocs[e - i - 1];

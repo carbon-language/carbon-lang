@@ -25,6 +25,17 @@ class MCSymbol;
 class MCSymbolData;
 class MCValue;
 
+struct ELFRelocationEntry {
+  uint64_t Offset; // Where is the relocation.
+  const MCSymbol *Symbol;       // The symbol to relocate with.
+  unsigned Type;   // The type of the relocation.
+  uint64_t Addend; // The addend to use.
+
+  ELFRelocationEntry(uint64_t Offset, const MCSymbol *Symbol, unsigned Type,
+                     uint64_t Addend)
+      : Offset(Offset), Symbol(Symbol), Type(Type), Addend(Addend) {}
+};
+
 class MCELFObjectTargetWriter {
   const uint8_t OSABI;
   const uint16_t EMachine;
@@ -60,6 +71,9 @@ public:
 
   virtual bool needsRelocateWithSymbol(const MCSymbolData &SD,
                                        unsigned Type) const;
+
+  virtual void sortRelocs(const MCAssembler &Asm,
+                          std::vector<ELFRelocationEntry> &Relocs);
 
   /// @name Accessors
   /// @{
