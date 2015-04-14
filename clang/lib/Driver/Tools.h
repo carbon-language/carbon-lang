@@ -234,6 +234,11 @@ namespace arm {
 }
 
 namespace mips {
+  typedef enum {
+    NanLegacy = 1,
+    Nan2008 = 2
+  } NanEncoding;
+  NanEncoding getSupportedNanEncoding(StringRef &CPU);
   void getMipsCPUAndABI(const llvm::opt::ArgList &Args,
                         const llvm::Triple &Triple, StringRef &CPUName,
                         StringRef &ABIName);

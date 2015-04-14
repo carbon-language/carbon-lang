@@ -1118,11 +1118,21 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   if (Arg *A = Args.getLastArg(options::OPT_mnan_EQ)) {
     StringRef Val = StringRef(A->getValue());
-    if (Val == "2008")
-      Features.push_back("+nan2008");
-    else if (Val == "legacy")
-      Features.push_back("-nan2008");
-    else
+    if (Val == "2008") {
+      if (mips::getSupportedNanEncoding(CPUName) & mips::Nan2008)
+        Features.push_back("+nan2008");
+      else {
+        Features.push_back("-nan2008");
+        D.Diag(diag::warn_target_unsupported_nan2008) << CPUName;
+      }
+    } else if (Val == "legacy") {
+      if (mips::getSupportedNanEncoding(CPUName) & mips::NanLegacy)
+        Features.push_back("-nan2008");
+      else {
+        Features.push_back("+nan2008");
+        D.Diag(diag::warn_target_unsupported_nanlegacy) << CPUName;
+      }
+    } else
       D.Diag(diag::err_drv_unsupported_option_argument)
           << A->getOption().getName() << Val;
   }
@@ -5635,6 +5645,26 @@ void arm::appendEBLinkFlags(const ArgList &Args, ArgStringList &CmdArgs, const l
 
   if (LinkFlag)
     CmdArgs.push_back(LinkFlag);
+}
+
+mips::NanEncoding mips::getSupportedNanEncoding(StringRef &CPU) {
+  return (NanEncoding)llvm::StringSwitch<int>(CPU)
+      .Case("mips1", NanLegacy)
+      .Case("mips2", NanLegacy)
+      .Case("mips3", NanLegacy)
+      .Case("mips4", NanLegacy)
+      .Case("mips5", NanLegacy)
+      .Case("mips32", NanLegacy)
+      .Case("mips32r2", NanLegacy)
+      .Case("mips32r3", NanLegacy | Nan2008)
+      .Case("mips32r5", NanLegacy | Nan2008)
+      .Case("mips32r6", Nan2008)
+      .Case("mips64", NanLegacy)
+      .Case("mips64r2", NanLegacy)
+      .Case("mips64r3", NanLegacy | Nan2008)
+      .Case("mips64r5", NanLegacy | Nan2008)
+      .Case("mips64r6", Nan2008)
+      .Default(NanLegacy);
 }
 
 bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
