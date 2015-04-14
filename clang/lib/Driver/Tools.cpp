@@ -2678,6 +2678,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       assert(JA.getType() == types::TY_PP_Asm &&
              "Unexpected output type!");
     }
+
+    // Preserve use-list order by default when emitting bitcode, so that
+    // loading the bitcode up in 'opt' or 'llc' and running passes gives the
+    // same result as running passes here.  For LTO, we don't need to preserve
+    // the use-list order, since serialization to bitcode is part of the flow.
+    if (JA.getType() == types::TY_LLVM_BC) {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-preserve-bc-uselistorder");
+    }
   }
 
   // We normally speed up the clang process a bit by skipping destructors at
