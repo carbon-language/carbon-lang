@@ -192,8 +192,8 @@ bool AddDiscriminators::runOnFunction(Function &F) {
       if (!FirstDIL->canDiscriminate(*LastDIL)) {
         // Create a new lexical scope and compute a new discriminator
         // number for it.
-        StringRef Filename = FirstDIL.getFilename();
-        DIScope Scope = FirstDIL.getScope();
+        StringRef Filename = FirstDIL->getFilename();
+        DIScope Scope = FirstDIL->getScope();
         DIFile File = Builder.createFile(Filename, Scope.getDirectory());
 
         // FIXME: Calculate the discriminator here, based on local information,
@@ -204,10 +204,10 @@ bool AddDiscriminators::runOnFunction(Function &F) {
         unsigned Discriminator = FirstDIL->computeNewDiscriminator();
         DILexicalBlockFile NewScope =
             Builder.createLexicalBlockFile(Scope, File, Discriminator);
-        DILocation NewDIL =
+        auto *NewDIL =
             MDLocation::get(Ctx, FirstDIL->getLine(), FirstDIL->getColumn(),
                             NewScope, FirstDIL->getInlinedAt());
-        DebugLoc newDebugLoc = NewDIL.get();
+        DebugLoc newDebugLoc = NewDIL;
 
         // Attach this new debug location to First and every
         // instruction following First that shares the same location.
@@ -216,9 +216,9 @@ bool AddDiscriminators::runOnFunction(Function &F) {
           if (I1->getDebugLoc().get() != FirstDIL)
             break;
           I1->setDebugLoc(newDebugLoc);
-          DEBUG(dbgs() << NewDIL.getFilename() << ":" << NewDIL.getLineNumber()
-                       << ":" << NewDIL.getColumnNumber() << ":"
-                       << NewDIL.getDiscriminator() << *I1 << "\n");
+          DEBUG(dbgs() << NewDIL->getFilename() << ":" << NewDIL->getLine()
+                       << ":" << NewDIL->getColumn() << ":"
+                       << NewDIL->getDiscriminator() << *I1 << "\n");
         }
         DEBUG(dbgs() << "\n");
         Changed = true;

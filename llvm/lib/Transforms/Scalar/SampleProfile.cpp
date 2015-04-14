@@ -226,7 +226,7 @@ unsigned SampleProfileLoader::getInstWeight(Instruction &Inst) {
 
   DILocation DIL = DLoc.get();
   int LOffset = Lineno - HeaderLineno;
-  unsigned Discriminator = DIL.getDiscriminator();
+  unsigned Discriminator = DIL->getDiscriminator();
   unsigned Weight = Samples->samplesAt(LOffset, Discriminator);
   DEBUG(dbgs() << "    " << Lineno << "." << Discriminator << ":" << Inst
                << " (line offset: " << LOffset << "." << Discriminator

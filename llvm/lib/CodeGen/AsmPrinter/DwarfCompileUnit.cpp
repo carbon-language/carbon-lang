@@ -430,10 +430,10 @@ DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
 
   // Add the call site information to the DIE.
-  DILocation DL(Scope->getInlinedAt());
+  const MDLocation *IA = Scope->getInlinedAt();
   addUInt(*ScopeDIE, dwarf::DW_AT_call_file, None,
-          getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
-  addUInt(*ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
+          getOrCreateSourceID(IA->getFilename(), IA->getDirectory()));
+  addUInt(*ScopeDIE, dwarf::DW_AT_call_line, None, IA->getLine());
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.

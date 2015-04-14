@@ -663,28 +663,15 @@ public:
   MDExpression &operator*() const { return *N; }
 };
 
-/// \brief This object holds location information.
-///
-/// This object is not associated with any DWARF tag.
-class DILocation : public DIDescriptor {
+class DILocation {
+  MDLocation *N;
+
 public:
-  DILocation() = default;
-  DILocation(const MDLocation *N) : DIDescriptor(N) {}
+  DILocation(const MDLocation *N = nullptr) : N(const_cast<MDLocation *>(N)) {}
 
-  MDLocation *get() const {
-    return cast_or_null<MDLocation>(DIDescriptor::get());
-  }
-  operator MDLocation *() const { return get(); }
-  MDLocation *operator->() const { return get(); }
-  MDLocation &operator*() const { return *get(); }
-
-  unsigned getLineNumber() const { return get()->getLine(); }
-  unsigned getColumnNumber() const { return get()->getColumn(); }
-  DIScope getScope() const { return DIScope(get()->getScope()); }
-  DILocation getOrigLocation() const { return get()->getInlinedAt(); }
-  StringRef getFilename() const { return get()->getFilename(); }
-  StringRef getDirectory() const { return get()->getDirectory(); }
-  unsigned getDiscriminator() const { return get()->getDiscriminator(); }
+  operator MDLocation *() const { return N; }
+  MDLocation *operator->() const { return N; }
+  MDLocation &operator*() const { return *N; }
 };
 
 class DIObjCProperty : public DIDescriptor {

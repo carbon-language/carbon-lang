@@ -179,8 +179,8 @@ void DebugInfoFinder::processLocation(const Module &M, DILocation Loc) {
   if (!Loc)
     return;
   InitializeTypeMap(M);
-  processScope(Loc.getScope());
-  processLocation(M, Loc.getOrigLocation());
+  processScope(Loc->getScope());
+  processLocation(M, Loc->getInlinedAt());
 }
 
 void DebugInfoFinder::processType(DIType DT) {
