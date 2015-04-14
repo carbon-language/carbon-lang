@@ -1533,7 +1533,7 @@ template <class _Tp, class _Arg, bool = is_void<_Tp>::value || is_void<_Arg>::va
 struct __is_assignable_imp
     : public common_type
         <
-            decltype(__is_assignable_test(declval<_Tp>(), declval<_Arg>()))
+            decltype(_VSTD::__is_assignable_test(declval<_Tp>(), declval<_Arg>()))
         >::type {};
 
 template <class _Tp, class _Arg>
