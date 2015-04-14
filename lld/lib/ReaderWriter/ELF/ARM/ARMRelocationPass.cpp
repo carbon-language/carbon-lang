@@ -54,11 +54,13 @@ static const uint8_t Veneer_THM_B_BL_Static_a_AtomContent[4] = {
 static const uint8_t ARMGotAtomContent[4] = {0};
 
 // .plt value (entry 0)
-static const uint8_t ARMPlt0AtomContent[20] = {
+static const uint8_t ARMPlt0_a_AtomContent[16] = {
     0x04, 0xe0, 0x2d, 0xe5,  // push {lr}
     0x04, 0xe0, 0x9f, 0xe5,  // ldr lr, [pc, #4]
     0x0e, 0xe0, 0x8f, 0xe0,  // add lr, pc, lr
-    0x00, 0xf0, 0xbe, 0xe5,  // ldr pc, [lr, #0]!
+    0x00, 0xf0, 0xbe, 0xe5   // ldr pc, [lr, #0]!
+};
+static const uint8_t ARMPlt0_d_AtomContent[4] = {
     0x00, 0x00, 0x00, 0x00   // <got1_symbol_address>
 };
 
@@ -239,39 +241,38 @@ public:
   ARMGOTPLTAtom(const File &f) : ARMGOTAtom(f, ".got.plt") {}
 };
 
-/// \brief PLT0 entry atom.
-/// Serves as a mapping symbol in the release mode.
+/// \brief Proxy class to keep type compatibility with PLT0Atom.
 class ARMPLT0Atom : public PLT0Atom {
 public:
-  ARMPLT0Atom(const File &f, const std::string &name)
-      : PLT0Atom(f) {
-#ifndef NDEBUG
-    _name = name;
-#else
-    // Don't move the code to any base classes since
-    // virtual codeModel method would return wrong value.
-    _name = getMappingAtomName(codeModel(), name);
-#endif
-  }
+  ARMPLT0Atom(const File &f, StringRef) : PLT0Atom(f) {}
+};
 
-  DefinedAtom::CodeModel codeModel() const override {
-#ifndef NDEBUG
-    return DefinedAtom::codeNA;
-#else
-    return DefinedAtom::codeARM_a;
-#endif
-  }
+/// \brief PLT0 entry atom.
+/// Serves as a mapping symbol in the release mode.
+class ARMPLT0_a_Atom
+    : public BaseMappingAtom<ARMPLT0Atom, DefinedAtom::codeARM_a> {
+public:
+  ARMPLT0_a_Atom(const File &f, const std::string &name)
+      : BaseMappingAtom(f, ".plt", name) {}
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(ARMPlt0AtomContent);
+    return llvm::makeArrayRef(ARMPlt0_a_AtomContent);
   }
 
   Alignment alignment() const override { return 4; }
+};
 
-  StringRef name() const override { return _name; }
+class ARMPLT0_d_Atom
+    : public BaseMappingAtom<ARMPLT0Atom, DefinedAtom::codeARM_d> {
+public:
+  ARMPLT0_d_Atom(const File &f, const std::string &name)
+      : BaseMappingAtom(f, ".plt", name) {}
 
-private:
-  std::string _name;
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(ARMPlt0_d_AtomContent);
+  }
+
+  Alignment alignment() const override { return 4; }
 };
 
 /// \brief PLT entry atom.
@@ -622,6 +623,8 @@ public:
     if (_plt0) {
       _plt0->setOrdinal(ordinal++);
       mf->addAtom(*_plt0);
+      _plt0_d->setOrdinal(ordinal++);
+      mf->addAtom(*_plt0_d);
     }
     for (auto &pltKV : _pltAtoms) {
       auto &plt = pltKV.second;
@@ -705,6 +708,7 @@ protected:
   /// dynamic linker for symbol resolution.
   /// @{
   PLT0Atom *_plt0 = nullptr;
+  PLT0Atom *_plt0_d = nullptr;
   GOTAtom *_got0 = nullptr;
   GOTAtom *_got1 = nullptr;
   /// @}
@@ -844,12 +848,15 @@ public:
       return _plt0;
     // Fill in the null entry.
     getNullGOT();
-    _plt0 = new (_file._alloc) ARMPLT0Atom(_file, "__PLT0");
+    _plt0 = new (_file._alloc) ARMPLT0_a_Atom(_file, "__PLT0");
+    _plt0_d = new (_file._alloc) ARMPLT0_d_Atom(_file, "__PLT0_d");
     _got0 = new (_file._alloc) ARMGOTPLTAtom(_file);
     _got1 = new (_file._alloc) ARMGOTPLTAtom(_file);
-    _plt0->addReferenceELF_ARM(R_ARM_REL32, 16, _got1, 0);
+    _plt0_d->addReferenceELF_ARM(R_ARM_REL32, 0, _got1, 0);
     // Fake reference to show connection between the GOT and PLT entries.
     _plt0->addReferenceELF_ARM(R_ARM_NONE, 0, _got0, 0);
+    // Fake reference to show connection between parts of PLT entry.
+    _plt0->addReferenceELF_ARM(R_ARM_NONE, 0, _plt0_d, 0);
 #ifndef NDEBUG
     _got0->_name = "__got0";
     _got1->_name = "__got1";

@@ -48,6 +48,7 @@
 # RUN: llvm-readobj -symbols %t-arm | FileCheck -check-prefix=ARM-MAPPING %s
 
 # ARM-MAPPING: Name: {{[$]?[a]?[.]?}}__PLT0
+# ARM-MAPPING: Name: {{[$]?[d]?[.]?}}__PLT0_d
 # ARM-MAPPING: Name: {{[$]?[a]?[.]?}}__plt_fn
 
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-thm.o
@@ -56,6 +57,7 @@
 # RUN: llvm-readobj -symbols %t-thm | FileCheck -check-prefix=THM-MAPPING %s
 
 # THM-MAPPING: Name: {{[$]?[a]?[.]?}}__PLT0
+# THM-MAPPING: Name: {{[$]?[d]?[.]?}}__PLT0_d
 # THM-MAPPING: Name: {{[$]?[t]?[.]?}}__plt_from_thumb_fn
 # THM-MAPPING: Name: {{[$]?[a]?[.]?}}__plt_fn
 
