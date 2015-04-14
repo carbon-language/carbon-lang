@@ -1,6 +1,6 @@
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadMutex
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOT-SECOND
-// TSAN_OPTIONS="detect_deadlocks=1 second_deadlock_stack=1" %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SECOND
+// RUN: TSAN_OPTIONS="detect_deadlocks=1 second_deadlock_stack=1" %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SECOND
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadSpinLock
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRWLock
