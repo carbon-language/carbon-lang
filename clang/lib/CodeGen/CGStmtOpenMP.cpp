@@ -69,72 +69,93 @@ static void EmitOMPIfClause(CodeGenFunction &CGF, const Expr *Cond,
   CGF.EmitBlock(ContBlock, /*IsFinished*/ true);
 }
 
-void CodeGenFunction::EmitOMPAggregateAssign(LValue OriginalAddr,
-                                             llvm::Value *PrivateAddr,
-                                             const Expr *AssignExpr,
-                                             QualType OriginalType,
-                                             const VarDecl *VDInit) {
-  EmitBlock(createBasicBlock(".omp.assign.begin."));
-  if (!isa<CXXConstructExpr>(AssignExpr) || isTrivialInitializer(AssignExpr)) {
-    // Perform simple memcpy.
-    EmitAggregateAssign(PrivateAddr, OriginalAddr.getAddress(),
-                        AssignExpr->getType());
-  } else {
-    // Perform element-by-element initialization.
-    QualType ElementTy;
-    auto SrcBegin = OriginalAddr.getAddress();
-    auto DestBegin = PrivateAddr;
-    auto ArrayTy = OriginalType->getAsArrayTypeUnsafe();
-    auto SrcNumElements = emitArrayLength(ArrayTy, ElementTy, SrcBegin);
-    auto DestNumElements = emitArrayLength(ArrayTy, ElementTy, DestBegin);
-    auto SrcEnd = Builder.CreateGEP(SrcBegin, SrcNumElements);
-    auto DestEnd = Builder.CreateGEP(DestBegin, DestNumElements);
-    // The basic structure here is a do-while loop, because we don't
-    // need to check for the zero-element case.
-    auto BodyBB = createBasicBlock("omp.arraycpy.body");
-    auto DoneBB = createBasicBlock("omp.arraycpy.done");
-    auto IsEmpty =
-        Builder.CreateICmpEQ(DestBegin, DestEnd, "omp.arraycpy.isempty");
-    Builder.CreateCondBr(IsEmpty, DoneBB, BodyBB);
+void CodeGenFunction::EmitOMPAggregateAssign(
+    llvm::Value *DestAddr, llvm::Value *SrcAddr, QualType OriginalType,
+    const llvm::function_ref<void(llvm::Value *, llvm::Value *)> &CopyGen) {
+  // Perform element-by-element initialization.
+  QualType ElementTy;
+  auto SrcBegin = SrcAddr;
+  auto DestBegin = DestAddr;
+  auto ArrayTy = OriginalType->getAsArrayTypeUnsafe();
+  auto NumElements = emitArrayLength(ArrayTy, ElementTy, DestBegin);
+  // Cast from pointer to array type to pointer to single element.
+  SrcBegin = Builder.CreatePointerBitCastOrAddrSpaceCast(SrcBegin,
+                                                         DestBegin->getType());
+  auto DestEnd = Builder.CreateGEP(DestBegin, NumElements);
+  // The basic structure here is a while-do loop.
+  auto BodyBB = createBasicBlock("omp.arraycpy.body");
+  auto DoneBB = createBasicBlock("omp.arraycpy.done");
+  auto IsEmpty =
+      Builder.CreateICmpEQ(DestBegin, DestEnd, "omp.arraycpy.isempty");
+  Builder.CreateCondBr(IsEmpty, DoneBB, BodyBB);
 
-    // Enter the loop body, making that address the current address.
-    auto EntryBB = Builder.GetInsertBlock();
-    EmitBlock(BodyBB);
-    auto SrcElementPast = Builder.CreatePHI(SrcBegin->getType(), 2,
-                                            "omp.arraycpy.srcElementPast");
-    SrcElementPast->addIncoming(SrcEnd, EntryBB);
-    auto DestElementPast = Builder.CreatePHI(DestBegin->getType(), 2,
-                                             "omp.arraycpy.destElementPast");
-    DestElementPast->addIncoming(DestEnd, EntryBB);
+  // Enter the loop body, making that address the current address.
+  auto EntryBB = Builder.GetInsertBlock();
+  EmitBlock(BodyBB);
+  auto SrcElementCurrent =
+      Builder.CreatePHI(SrcBegin->getType(), 2, "omp.arraycpy.srcElementPast");
+  SrcElementCurrent->addIncoming(SrcBegin, EntryBB);
+  auto DestElementCurrent = Builder.CreatePHI(DestBegin->getType(), 2,
+                                              "omp.arraycpy.destElementPast");
+  DestElementCurrent->addIncoming(DestBegin, EntryBB);
 
-    // Shift the address back by one element.
-    auto NegativeOne = llvm::ConstantInt::get(SizeTy, -1, true);
-    auto DestElement = Builder.CreateGEP(DestElementPast, NegativeOne,
-                                         "omp.arraycpy.dest.element");
-    auto SrcElement = Builder.CreateGEP(SrcElementPast, NegativeOne,
-                                        "omp.arraycpy.src.element");
-    {
-      // Create RunCleanScope to cleanup possible temps.
-      CodeGenFunction::RunCleanupsScope Init(*this);
-      // Emit initialization for single element.
-      LocalDeclMap[VDInit] = SrcElement;
-      EmitAnyExprToMem(AssignExpr, DestElement,
-                       AssignExpr->getType().getQualifiers(),
-                       /*IsInitializer*/ false);
-      LocalDeclMap.erase(VDInit);
+  // Emit copy.
+  CopyGen(DestElementCurrent, SrcElementCurrent);
+
+  // Shift the address forward by one element.
+  auto DestElementNext = Builder.CreateConstGEP1_32(
+      DestElementCurrent, /*Idx0=*/1, "omp.arraycpy.dest.element");
+  auto SrcElementNext = Builder.CreateConstGEP1_32(
+      SrcElementCurrent, /*Idx0=*/1, "omp.arraycpy.src.element");
+  // Check whether we've reached the end.
+  auto Done =
+      Builder.CreateICmpEQ(DestElementNext, DestEnd, "omp.arraycpy.done");
+  Builder.CreateCondBr(Done, DoneBB, BodyBB);
+  DestElementCurrent->addIncoming(DestElementNext, Builder.GetInsertBlock());
+  SrcElementCurrent->addIncoming(SrcElementNext, Builder.GetInsertBlock());
+
+  // Done.
+  EmitBlock(DoneBB, /*IsFinished=*/true);
+}
+
+void CodeGenFunction::EmitOMPCopy(CodeGenFunction &CGF,
+                                  QualType OriginalType, llvm::Value *DestAddr,
+                                  llvm::Value *SrcAddr, const VarDecl *DestVD,
+                                  const VarDecl *SrcVD, const Expr *Copy) {
+  if (OriginalType->isArrayType()) {
+    auto *BO = dyn_cast<BinaryOperator>(Copy);
+    if (BO && BO->getOpcode() == BO_Assign) {
+      // Perform simple memcpy for simple copying.
+      CGF.EmitAggregateAssign(DestAddr, SrcAddr, OriginalType);
+    } else {
+      // For arrays with complex element types perform element by element
+      // copying.
+      CGF.EmitOMPAggregateAssign(
+          DestAddr, SrcAddr, OriginalType,
+          [&CGF, Copy, SrcVD, DestVD](llvm::Value *DestElement,
+                                          llvm::Value *SrcElement) {
+            // Working with the single array element, so have to remap
+            // destination and source variables to corresponding array
+            // elements.
+            CodeGenFunction::OMPPrivateScope Remap(CGF);
+            Remap.addPrivate(DestVD, [DestElement]() -> llvm::Value *{
+              return DestElement;
+            });
+            Remap.addPrivate(
+                SrcVD, [SrcElement]() -> llvm::Value *{ return SrcElement; });
+            (void)Remap.Privatize();
+            CGF.EmitIgnoredExpr(Copy);
+          });
     }
-
-    // Check whether we've reached the end.
-    auto Done =
-        Builder.CreateICmpEQ(DestElement, DestBegin, "omp.arraycpy.done");
-    Builder.CreateCondBr(Done, DoneBB, BodyBB);
-    DestElementPast->addIncoming(DestElement, Builder.GetInsertBlock());
-    SrcElementPast->addIncoming(SrcElement, Builder.GetInsertBlock());
-
-    // Done.
-    EmitBlock(DoneBB, true);
+  } else {
+    // Remap pseudo source variable to private copy.
+    CodeGenFunction::OMPPrivateScope Remap(CGF);
+    Remap.addPrivate(SrcVD, [SrcAddr]() -> llvm::Value *{ return SrcAddr; });
+    Remap.addPrivate(DestVD, [DestAddr]() -> llvm::Value *{ return DestAddr; });
+    (void)Remap.Privatize();
+    // Emit copying of the whole variable.
+    CGF.EmitIgnoredExpr(Copy);
   }
-  EmitBlock(createBasicBlock(".omp.assign.end."));
 }
 
 void CodeGenFunction::EmitOMPFirstprivateClause(
@@ -158,18 +179,37 @@ void CodeGenFunction::EmitOMPFirstprivateClause(
         LValue Base = MakeNaturalAlignAddrLValue(
             CapturedStmtInfo->getContextValue(),
             getContext().getTagDeclType(FD->getParent()));
-        auto OriginalAddr = EmitLValueForField(Base, FD);
+        auto *OriginalAddr = EmitLValueForField(Base, FD).getAddress();
         auto VDInit = cast<VarDecl>(cast<DeclRefExpr>(*InitsRef)->getDecl());
-        IsRegistered = PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value * {
+        IsRegistered = PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value *{
           auto Emission = EmitAutoVarAlloca(*VD);
           // Emit initialization of aggregate firstprivate vars.
-          EmitOMPAggregateAssign(OriginalAddr, Emission.getAllocatedAddress(),
-                                 VD->getInit(), (*IRef)->getType(), VDInit);
+          auto *Init = VD->getInit();
+          if (!isa<CXXConstructExpr>(Init) || isTrivialInitializer(Init)) {
+            // Perform simple memcpy.
+            EmitAggregateAssign(Emission.getAllocatedAddress(), OriginalAddr,
+                                (*IRef)->getType());
+          } else {
+            EmitOMPAggregateAssign(
+                Emission.getAllocatedAddress(), OriginalAddr,
+                (*IRef)->getType(),
+                [this, VDInit, Init](llvm::Value *DestElement,
+                                     llvm::Value *SrcElement) {
+                  // Clean up any temporaries needed by the initialization.
+                  RunCleanupsScope InitScope(*this);
+                  // Emit initialization for single element.
+                  LocalDeclMap[VDInit] = SrcElement;
+                  EmitAnyExprToMem(Init, DestElement,
+                                   Init->getType().getQualifiers(),
+                                   /*IsInitializer*/ false);
+                  LocalDeclMap.erase(VDInit);
+                });
+          }
           EmitAutoVarCleanups(Emission);
           return Emission.getAllocatedAddress();
         });
       } else
-        IsRegistered = PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value * {
+        IsRegistered = PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value *{
           // Emit private VarDecl with copy init.
           EmitDecl(*VD);
           return GetAddrOfLocalVar(VD);
@@ -994,8 +1034,8 @@ void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &S) {
 
 void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
   llvm::SmallVector<const Expr *, 8> CopyprivateVars;
+  llvm::SmallVector<const Expr *, 8> DestExprs;
   llvm::SmallVector<const Expr *, 8> SrcExprs;
-  llvm::SmallVector<const Expr *, 8> DstExprs;
   llvm::SmallVector<const Expr *, 8> AssignmentOps;
   // Check if there are any 'copyprivate' clauses associated with this
   // 'single'
@@ -1010,9 +1050,9 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
   for (CopyprivateIter I(S.clauses(), CopyprivateFilter); I; ++I) {
     auto *C = cast<OMPCopyprivateClause>(*I);
     CopyprivateVars.append(C->varlists().begin(), C->varlists().end());
+    DestExprs.append(C->destination_exprs().begin(),
+                     C->destination_exprs().end());
     SrcExprs.append(C->source_exprs().begin(), C->source_exprs().end());
-    DstExprs.append(C->destination_exprs().begin(),
-                    C->destination_exprs().end());
     AssignmentOps.append(C->assignment_ops().begin(),
                          C->assignment_ops().end());
   }
@@ -1023,7 +1063,7 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
     CGF.EnsureInsertPoint();
   };
   CGM.getOpenMPRuntime().emitSingleRegion(*this, CodeGen, S.getLocStart(),
-                                          CopyprivateVars, SrcExprs, DstExprs,
+                                          CopyprivateVars, DestExprs, SrcExprs,
                                           AssignmentOps);
   // Emit an implicit barrier at the end.
   if (!S.getSingleClause(OMPC_nowait)) {

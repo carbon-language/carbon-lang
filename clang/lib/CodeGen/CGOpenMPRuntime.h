@@ -374,8 +374,8 @@ public:
                                 const RegionCodeGenTy &SingleOpGen,
                                 SourceLocation Loc,
                                 ArrayRef<const Expr *> CopyprivateVars,
+                                ArrayRef<const Expr *> DestExprs,
                                 ArrayRef<const Expr *> SrcExprs,
-                                ArrayRef<const Expr *> DstExprs,
                                 ArrayRef<const Expr *> AssignmentOps);
 
   /// \brief Emit an implicit/explicit barrier for OpenMP threads.

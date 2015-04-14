@@ -6083,14 +6083,15 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
     //  A variable of class type (or array thereof) that appears in a
     //  copyin clause requires an accessible, unambiguous copy assignment
     //  operator for the class type.
-    auto *SrcVD = BuildVarDecl(*this, DE->getLocStart(), VD->getType(),
-                               ".copyprivate.src");
-    auto *PseudoSrcExpr = BuildDeclRefExpr(SrcVD, DE->getType(), VK_LValue,
-                                           DE->getExprLoc()).get();
-    auto *DstVD = BuildVarDecl(*this, DE->getLocStart(), VD->getType(),
-                               ".copyprivate.dst");
-    auto *PseudoDstExpr = BuildDeclRefExpr(DstVD, DE->getType(), VK_LValue,
-                                           DE->getExprLoc()).get();
+    Type = Context.getBaseElementType(Type).getUnqualifiedType();
+    auto *SrcVD =
+        BuildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.src");
+    auto *PseudoSrcExpr =
+        BuildDeclRefExpr(SrcVD, Type, VK_LValue, DE->getExprLoc()).get();
+    auto *DstVD =
+        BuildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.dst");
+    auto *PseudoDstExpr =
+        BuildDeclRefExpr(DstVD, Type, VK_LValue, DE->getExprLoc()).get();
     auto AssignmentOp = BuildBinOp(/*S=*/nullptr, DE->getExprLoc(), BO_Assign,
                                    PseudoDstExpr, PseudoSrcExpr);
     if (AssignmentOp.isInvalid())

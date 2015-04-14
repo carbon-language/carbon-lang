@@ -1106,8 +1106,9 @@ void CGOpenMPRuntime::emitTaskyieldCall(CodeGenFunction &CGF,
 }
 
 static llvm::Value *emitCopyprivateCopyFunction(
-    CodeGenModule &CGM, llvm::Type *ArgsType, ArrayRef<const Expr *> SrcExprs,
-    ArrayRef<const Expr *> DstExprs, ArrayRef<const Expr *> AssignmentOps) {
+    CodeGenModule &CGM, llvm::Type *ArgsType,
+    ArrayRef<const Expr *> CopyprivateVars, ArrayRef<const Expr *> DestExprs,
+    ArrayRef<const Expr *> SrcExprs, ArrayRef<const Expr *> AssignmentOps) {
   auto &C = CGM.getContext();
   // void copy_func(void *LHSArg, void *RHSArg);
   FunctionArgList Args;
@@ -1126,7 +1127,7 @@ static llvm::Value *emitCopyprivateCopyFunction(
   CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, CGFI, Fn);
   CodeGenFunction CGF(CGM);
   CGF.StartFunction(GlobalDecl(), C.VoidTy, Fn, CGFI, Args);
-  // Dst = (void*[n])(LHSArg);
+  // Dest = (void*[n])(LHSArg);
   // Src = (void*[n])(RHSArg);
   auto *LHS = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
       CGF.Builder.CreateAlignedLoad(CGF.GetAddrOfLocalVar(&LHSArg),
@@ -1140,32 +1141,22 @@ static llvm::Value *emitCopyprivateCopyFunction(
   // *(Type1*)Dst[1] = *(Type1*)Src[1];
   // ...
   // *(Typen*)Dst[n] = *(Typen*)Src[n];
-  CodeGenFunction::OMPPrivateScope Scope(CGF);
   for (unsigned I = 0, E = AssignmentOps.size(); I < E; ++I) {
-    Scope.addPrivate(
-        cast<VarDecl>(cast<DeclRefExpr>(SrcExprs[I])->getDecl()),
-        [&]() -> llvm::Value *{
-          return CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-              CGF.Builder.CreateAlignedLoad(
-                  CGF.Builder.CreateStructGEP(nullptr, RHS, I),
-                  CGM.PointerAlignInBytes),
-              CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
-        });
-    Scope.addPrivate(
-        cast<VarDecl>(cast<DeclRefExpr>(DstExprs[I])->getDecl()),
-        [&]() -> llvm::Value *{
-          return CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-              CGF.Builder.CreateAlignedLoad(
-                  CGF.Builder.CreateStructGEP(nullptr, LHS, I),
-                  CGM.PointerAlignInBytes),
-              CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
-        });
+    auto *DestAddr = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+        CGF.Builder.CreateAlignedLoad(
+            CGF.Builder.CreateStructGEP(nullptr, LHS, I),
+            CGM.PointerAlignInBytes),
+        CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
+    auto *SrcAddr = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+        CGF.Builder.CreateAlignedLoad(
+            CGF.Builder.CreateStructGEP(nullptr, RHS, I),
+            CGM.PointerAlignInBytes),
+        CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
+    CGF.EmitOMPCopy(CGF, CopyprivateVars[I]->getType(), DestAddr, SrcAddr,
+                    cast<VarDecl>(cast<DeclRefExpr>(DestExprs[I])->getDecl()),
+                    cast<VarDecl>(cast<DeclRefExpr>(SrcExprs[I])->getDecl()),
+                    AssignmentOps[I]);
   }
-  Scope.Privatize();
-  for (auto *E : AssignmentOps) {
-    CGF.EmitIgnoredExpr(E);
-  }
-  Scope.ForceCleanup();
   CGF.FinishFunction();
   return Fn;
 }
@@ -1235,7 +1226,7 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     // threads in the corresponding parallel region.
     auto *CpyFn = emitCopyprivateCopyFunction(
         CGM, CGF.ConvertTypeForMem(CopyprivateArrayTy)->getPointerTo(),
-        SrcExprs, DstExprs, AssignmentOps);
+        CopyprivateVars, SrcExprs, DstExprs, AssignmentOps);
     auto *BufSize = CGF.Builder.getInt32(
         C.getTypeSizeInChars(CopyprivateArrayTy).getQuantity());
     auto *CL = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(CopyprivateList,
