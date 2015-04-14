@@ -416,8 +416,12 @@ public:
   DIArray getGlobalVariables() const { return get()->getGlobalVariables(); }
   DIArray getImportedEntities() const { return get()->getImportedEntities(); }
 
-  void replaceSubprograms(DIArray Subprograms);
-  void replaceGlobalVariables(DIArray GlobalVariables);
+  void replaceSubprograms(MDSubprogramArray Subprograms) const {
+    get()->replaceSubprograms(Subprograms);
+  }
+  void replaceGlobalVariables(MDGlobalVariableArray GlobalVariables) const {
+    get()->replaceGlobalVariables(GlobalVariables);
+  }
 
   StringRef getSplitDebugFilename() const {
     return get()->getSplitDebugFilename();

@@ -33,19 +33,7 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-//===----------------------------------------------------------------------===//
-// Simple Descriptor Constructors and other Methods
-//===----------------------------------------------------------------------===//
-
 DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
-
-void DICompileUnit::replaceSubprograms(DIArray Subprograms) {
-  get()->replaceSubprograms(MDSubprogramArray(Subprograms));
-}
-
-void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
-  get()->replaceGlobalVariables(MDGlobalVariableArray(GlobalVariables));
-}
 
 DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
                                        LLVMContext &VMContext) {

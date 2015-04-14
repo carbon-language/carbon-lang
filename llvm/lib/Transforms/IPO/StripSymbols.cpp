@@ -345,7 +345,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
     // subprogram list/global variable list with our new live subprogram/global
     // variable list.
     if (SubprogramChange) {
-      DIC.replaceSubprograms(DIArray(MDNode::get(C, LiveSubprograms)));
+      DIC.replaceSubprograms(MDTuple::get(C, LiveSubprograms));
       Changed = true;
     }
 
