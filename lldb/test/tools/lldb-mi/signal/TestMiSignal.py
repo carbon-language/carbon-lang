@@ -88,12 +88,13 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         import lldbgdbserverutils
         debugserver_exe = lldbgdbserverutils.get_debugserver_exe()
         if not debugserver_exe:
-            raise Exception("debugserver not found")
+            self.skipTest("debugserver exe not found")
         hostname = "localhost"
         import random
         port = 12000 + random.randint(0,3999) # the same as GdbRemoteTestCaseBase.get_next_port
         import pexpect
         debugserver_child = pexpect.spawn("%s %s:%d" % (debugserver_exe, hostname, port))
+        self.addTearDownHook(lambda: debugserver_child.terminate(force = True))
 
         self.spawnLldbMi(args = None)
 
@@ -105,21 +106,16 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-interpreter-exec command \"process connect connect://%s:%d\"" % (hostname, port))
         self.expect("\^done")
 
-        try:
-            # Run with stop-at-entry flag
-            self.runCmd("-interpreter-exec command \"process launch -s\"")
-            self.expect("\^done")
+        # Run with stop-at-entry flag
+        self.runCmd("-interpreter-exec command \"process launch -s\"")
+        self.expect("\^done")
 
-            # Test that *stopped is printed
-            self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
+        # Test that *stopped is printed
+        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
 
-            # Exit
-            self.runCmd("-gdb-exit")
-            self.expect("\^exit")
-
-        finally:
-            # Clean up
-            debugserver_child.terminate(force = True)
+        # Exit
+        self.runCmd("-gdb-exit")
+        self.expect("\^exit")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -164,12 +160,13 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         import lldbgdbserverutils
         debugserver_exe = lldbgdbserverutils.get_debugserver_exe()
         if not debugserver_exe:
-            raise Exception("debugserver not found")
+            self.skipTest("debugserver exe not found")
         hostname = "localhost"
         import random
         port = 12000 + random.randint(0,3999) # the same as GdbRemoteTestCaseBase.get_next_port
         import pexpect
         debugserver_child = pexpect.spawn("%s %s:%d" % (debugserver_exe, hostname, port))
+        self.addTearDownHook(lambda: debugserver_child.terminate(force = True))
 
         self.spawnLldbMi(args = None)
 
@@ -181,31 +178,26 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-interpreter-exec command \"process connect connect://%s:%d\"" % (hostname, port))
         self.expect("\^done")
 
-        try:
-            # Run to main
-            self.runCmd("-break-insert -f main")
-            self.expect("\^done,bkpt={number=\"1\"")
-            #FIXME -exec-run doesn't work
-            self.runCmd("-interpreter-exec command \"process launch\"") #FIXME: self.runCmd("-exec-run")
-            self.expect("\^done")                                       #FIXME: self.expect("\^running")
-            self.expect("\*stopped,reason=\"breakpoint-hit\"")
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        #FIXME -exec-run doesn't work
+        self.runCmd("-interpreter-exec command \"process launch\"") #FIXME: self.runCmd("-exec-run")
+        self.expect("\^done")                                       #FIXME: self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-            # Set do_segfault=1 and run (to cause a segfault error)
-            self.runCmd("-data-evaluate-expression \"do_segfault=1\"")
-            self.expect("\^done,value=\"1\"")
-            self.runCmd("-exec-continue")
-            self.expect("\^running")
+        # Set do_segfault=1 and run (to cause a segfault error)
+        self.runCmd("-data-evaluate-expression \"do_segfault=1\"")
+        self.expect("\^done,value=\"1\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
 
-            # Test that *stopped is printed
-            self.expect("\*stopped,reason=\"exception-received\",exception=\"EXC_BAD_ACCESS \(code=1, address=0x0\)\",thread-id=\"1\",stopped-threads=\"all\"")
+        # Test that *stopped is printed
+        self.expect("\*stopped,reason=\"exception-received\",exception=\"EXC_BAD_ACCESS \(code=1, address=0x0\)\",thread-id=\"1\",stopped-threads=\"all\"")
 
-            # Exit
-            self.runCmd("-gdb-exit")
-            self.expect("\^exit")
-
-        finally:
-            # Clean up
-            debugserver_child.terminate(force = True)
+        # Exit
+        self.runCmd("-gdb-exit")
+        self.expect("\^exit")
 
 if __name__ == '__main__':
     unittest2.main()

@@ -44,25 +44,19 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Create alias for myexe
         complicated_myexe = "C--mpl-x file's`s @#$%^&*()_+-={}[]| name"
-        if os.path.exists(complicated_myexe):
-            os.unlink(complicated_myexe)
         os.symlink(self.myexe, complicated_myexe)
+        self.addTearDownHook(lambda: os.unlink(complicated_myexe))
 
-        try:
-            # Try to load executable with complicated filename
-            self.runCmd("-file-exec-and-symbols \"%s\"" % complicated_myexe)
-            self.expect("\^done")
+        # Try to load executable with complicated filename
+        self.runCmd("-file-exec-and-symbols \"%s\"" % complicated_myexe)
+        self.expect("\^done")
 
-            # Check that it was loaded correctly
-            self.runCmd("-break-insert -f main")
-            self.expect("\^done,bkpt={number=\"1\"")
-            self.runCmd("-exec-run")
-            self.expect("\^running")
-            self.expect("\*stopped,reason=\"breakpoint-hit\"")
-
-        finally:
-            # Clean up
-            os.unlink(complicated_myexe)
+        # Check that it was loaded correctly
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
