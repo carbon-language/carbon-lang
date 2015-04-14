@@ -41,12 +41,7 @@ public:
   bool isPLTRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
-    switch (r.kindValue()) {
-    case llvm::ELF::R_HEX_JMP_SLOT:
-      return true;
-    default:
-      return false;
-    }
+    return r.kindValue() == llvm::ELF::R_HEX_JMP_SLOT;
   }
 
   /// \brief Hexagon has only one relative relocation
@@ -54,12 +49,7 @@ public:
   bool isRelativeReloc(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
-    switch (r.kindValue()) {
-    case llvm::ELF::R_HEX_RELATIVE:
-      return true;
-    default:
-      return false;
-    }
+    return r.kindValue() == llvm::ELF::R_HEX_RELATIVE;
   }
 };
 
