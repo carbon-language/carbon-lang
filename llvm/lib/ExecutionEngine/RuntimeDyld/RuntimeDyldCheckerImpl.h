@@ -19,6 +19,7 @@ class RuntimeDyldCheckerImpl {
   friend class RuntimeDyldChecker;
   friend class RuntimeDyldImpl;
   friend class RuntimeDyldCheckerExprEval;
+  friend class RuntimeDyldELF;
 
 public:
   RuntimeDyldCheckerImpl(RuntimeDyld &RTDyld, MCDisassembler *Disassembler,

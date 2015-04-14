@@ -814,7 +814,6 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
         report_fatal_error("Program used external function '" + Name +
                            "' which could not be resolved!");
 
-      updateGOTEntries(Name, Addr);
       DEBUG(dbgs() << "Resolving relocations Name: " << Name << "\t"
                    << format("0x%lx", Addr) << "\n");
       // This list may have been updated when we called getSymbolAddress, so
