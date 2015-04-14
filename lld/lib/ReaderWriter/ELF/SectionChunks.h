@@ -1414,17 +1414,10 @@ public:
     std::memcpy(dest, bucketChainCounts, sizeof(bucketChainCounts));
     dest += sizeof(bucketChainCounts);
     // write bucket values
-    for (auto bi : _buckets) {
-      uint32_t val = (bi);
-      std::memcpy(dest, &val, sizeof(uint32_t));
-      dest += sizeof(uint32_t);
-    }
+    std::memcpy(dest, _buckets.data(), _buckets.size() * sizeof(uint32_t));
+    dest += _buckets.size() * sizeof(uint32_t);
     // write chain values
-    for (auto ci : _chains) {
-      uint32_t val = (ci);
-      std::memcpy(dest, &val, sizeof(uint32_t));
-      dest += sizeof(uint32_t);
-    }
+    std::memcpy(dest, _chains.data(), _chains.size() * sizeof(uint32_t));
   }
 
 private:
