@@ -497,17 +497,9 @@ public:
   MDLexicalBlockBase *operator->() const { return get(); }
   MDLexicalBlockBase &operator*() const { return *get(); }
 
-  DIScope getContext() const { return DIScope(get()->getScope()); }
-  unsigned getLineNumber() const {
-    if (auto *N = dyn_cast<MDLexicalBlock>(get()))
-      return N->getLine();
-    return 0;
-  }
-  unsigned getColumnNumber() const {
-    if (auto *N = dyn_cast<MDLexicalBlock>(get()))
-      return N->getColumn();
-    return 0;
-  }
+  DIScope getContext() const { return get()->getScope(); }
+  unsigned getLineNumber() const { return get()->getLine(); }
+  unsigned getColumnNumber() const { return get()->getColumn(); }
 };
 
 /// \brief This is a wrapper for a lexical block with a filename change.

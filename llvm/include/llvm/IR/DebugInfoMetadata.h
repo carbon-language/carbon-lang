@@ -1446,6 +1446,13 @@ public:
 
   Metadata *getRawScope() const { return getOperand(1); }
 
+  /// \brief Forwarding accessors to LexicalBlock.
+  ///
+  /// TODO: Remove these and update code to use \a MDLexicalBlock directly.
+  /// @{
+  inline unsigned getLine() const;
+  inline unsigned getColumn() const;
+  /// @}
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDLexicalBlockKind ||
            MD->getMetadataID() == MDLexicalBlockFileKind;
@@ -1501,6 +1508,18 @@ public:
   }
 };
 
+unsigned MDLexicalBlockBase::getLine() const {
+  if (auto *N = dyn_cast<MDLexicalBlock>(this))
+    return N->getLine();
+  return 0;
+}
+
+unsigned MDLexicalBlockBase::getColumn() const {
+  if (auto *N = dyn_cast<MDLexicalBlock>(this))
+    return N->getColumn();
+  return 0;
+}
+
 class MDLexicalBlockFile : public MDLexicalBlockBase {
   friend class LLVMContextImpl;
   friend class MDNode;
@@ -1541,6 +1560,10 @@ public:
                     (Scope, File, Discriminator))
 
   TempMDLexicalBlockFile clone() const { return cloneImpl(); }
+
+  // TODO: Remove these once they're gone from MDLexicalBlockBase.
+  unsigned getLine() const = delete;
+  unsigned getColumn() const = delete;
 
   unsigned getDiscriminator() const { return Discriminator; }
 
