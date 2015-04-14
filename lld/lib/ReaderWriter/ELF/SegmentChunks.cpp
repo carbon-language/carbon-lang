@@ -200,7 +200,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       // Align to a page only if the output is not
       // OutputMagic::NMAGIC/OutputMagic::OMAGIC
       startAddr = llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
-    } else if (!isDataPageAlignedForNMagic && needAlign(*si)) {
+    } else if (needAlign(*si)) {
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the
       // Data to a page boundary.
       startAddr = llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
