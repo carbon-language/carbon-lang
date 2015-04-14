@@ -40,15 +40,15 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
     def test_lldbmi_specialchars(self):
         """Test that 'lldb-mi --interpreter' handles complicated strings."""
 
-        self.spawnLldbMi(args = None)
-
-        # Create alias for myexe
+        # Create an alias for myexe
         complicated_myexe = "C--mpl-x file's`s @#$%^&*()_+-={}[]| name"
         os.symlink(self.myexe, complicated_myexe)
         self.addTearDownHook(lambda: os.unlink(complicated_myexe))
 
-        # Try to load executable with complicated filename
-        self.runCmd("-file-exec-and-symbols \"%s\"" % complicated_myexe)
+        self.spawnLldbMi(args = "\"%s\"" % complicated_myexe)
+
+        # Test that the executable was loaded
+        self.expect("-file-exec-and-symbols \"%s\"" % complicated_myexe, exactly = True)
         self.expect("\^done")
 
         # Check that it was loaded correctly

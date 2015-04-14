@@ -417,7 +417,7 @@ CMIDriver::ParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &v
             if (argFile.IsFilePath(strArg) || CMICmdArgValString(true, false, true).IsStringArg(strArg))
             {
                 bHaveExecutableFileNamePath = true;
-                m_strCmdLineArgExecuteableFileNamePath = argFile.GetFileNamePath(strArg);
+                m_strCmdLineArgExecuteableFileNamePath = strArg;
                 m_bHaveExecutableFileNamePathOnCmdLine = true;
             }
             // This argument is also check for in CMIDriverMgr::ParseArgs()
