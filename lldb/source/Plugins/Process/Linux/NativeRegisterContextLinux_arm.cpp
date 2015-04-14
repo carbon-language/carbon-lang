@@ -271,7 +271,7 @@ NativeRegisterContextLinux_arm::ReadAllRegisterValues (lldb::DataBufferSP &data_
 
     data_sp.reset (new DataBufferHeap (REG_CONTEXT_SIZE, 0));
     if (!data_sp)
-        return Error ("failed to allocate DataBufferHeap instance of size %" PRIu64, REG_CONTEXT_SIZE);
+        return Error ("failed to allocate DataBufferHeap instance of size %" PRIu64, (uint64_t)REG_CONTEXT_SIZE);
 
     if (!ReadGPR ())
     {
@@ -288,7 +288,7 @@ NativeRegisterContextLinux_arm::ReadAllRegisterValues (lldb::DataBufferSP &data_
     uint8_t *dst = data_sp->GetBytes ();
     if (dst == nullptr)
     {
-        error.SetErrorStringWithFormat ("DataBufferHeap instance of size %" PRIu64 " returned a null pointer", REG_CONTEXT_SIZE);
+        error.SetErrorStringWithFormat ("DataBufferHeap instance of size %" PRIu64 " returned a null pointer", (uint64_t)REG_CONTEXT_SIZE);
         return error;
     }
 
@@ -312,7 +312,7 @@ NativeRegisterContextLinux_arm::WriteAllRegisterValues (const lldb::DataBufferSP
 
     if (data_sp->GetByteSize () != REG_CONTEXT_SIZE)
     {
-        error.SetErrorStringWithFormat ("NativeRegisterContextLinux_x86_64::%s data_sp contained mismatched data size, expected %" PRIu64 ", actual %" PRIu64, __FUNCTION__, REG_CONTEXT_SIZE, data_sp->GetByteSize ());
+        error.SetErrorStringWithFormat ("NativeRegisterContextLinux_x86_64::%s data_sp contained mismatched data size, expected %" PRIu64 ", actual %" PRIu64, __FUNCTION__, (uint64_t)REG_CONTEXT_SIZE, data_sp->GetByteSize ());
         return error;
     }
 
