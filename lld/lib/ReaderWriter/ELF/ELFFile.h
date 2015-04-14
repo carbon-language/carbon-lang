@@ -338,8 +338,6 @@ protected:
     return nullptr;
   }
 
-  static bool isCompatible(unsigned char size, unsigned char endian);
-
   llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFFile<ELFT> > _objFile;
 
