@@ -62,87 +62,60 @@ template <class ELFT> DefinedAtom::Merge ELFDefinedAtom<ELFT>::merge() const {
 }
 
 template <class ELFT>
-DefinedAtom::ContentType ELFDefinedAtom<ELFT>::contentType() const {
-  if (_contentType != typeUnknown)
-    return _contentType;
+DefinedAtom::ContentType ELFDefinedAtom<ELFT>::doContentType() const {
+  using namespace llvm::ELF;
 
-  ContentType ret = typeUnknown;
-  uint64_t flags = _section->sh_flags;
-
-  if (_section->sh_type == llvm::ELF::SHT_GROUP)
+  if (_section->sh_type == SHT_GROUP)
     return typeGroupComdat;
-
   if (!_symbol && _sectionName.startswith(".gnu.linkonce"))
     return typeGnuLinkOnce;
 
-  if (!(flags & llvm::ELF::SHF_ALLOC))
+  uint64_t flags = _section->sh_flags;
+  if (!(flags & SHF_ALLOC))
     return _contentType = typeNoAlloc;
+  if (_section->sh_flags == (SHF_ALLOC | SHF_WRITE | SHF_TLS))
+    return _section->sh_type == SHT_NOBITS ? typeThreadZeroFill
+                                           : typeThreadData;
 
-  if (_section->sh_flags ==
-      (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE | llvm::ELF::SHF_TLS)) {
-    return _contentType = _section->sh_type == llvm::ELF::SHT_NOBITS
-                              ? typeThreadZeroFill
-                              : typeThreadData;
-  }
-
-  if ((_section->sh_flags == llvm::ELF::SHF_ALLOC) &&
-      (_section->sh_type == llvm::ELF::SHT_PROGBITS))
+  if (_section->sh_flags == SHF_ALLOC && _section->sh_type == SHT_PROGBITS)
     return _contentType = typeConstant;
-
-  if (_symbol->getType() == llvm::ELF::STT_GNU_IFUNC)
+  if (_symbol->getType() == STT_GNU_IFUNC)
     return _contentType = typeResolver;
-
-  if (_symbol->st_shndx == llvm::ELF::SHN_COMMON)
+  if (_symbol->st_shndx == SHN_COMMON)
     return _contentType = typeZeroFill;
 
-  switch (_section->sh_type) {
-  case llvm::ELF::SHT_PROGBITS:
-    flags &= ~llvm::ELF::SHF_ALLOC;
-    flags &= ~llvm::ELF::SHF_GROUP;
-    switch (flags) {
-    case llvm::ELF::SHF_EXECINSTR:
-    case (llvm::ELF::SHF_WRITE | llvm::ELF::SHF_EXECINSTR):
-      ret = typeCode;
-      break;
-    case llvm::ELF::SHF_WRITE:
-      ret = typeData;
-      break;
-    case (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS):
-    case llvm::ELF::SHF_STRINGS:
-    case llvm::ELF::SHF_MERGE:
-      ret = typeConstant;
-      break;
-    default:
-      ret = typeCode;
-      break;
-    }
-    break;
-  case llvm::ELF::SHT_NOTE:
-    flags &= ~llvm::ELF::SHF_ALLOC;
-    switch (flags) {
-    case llvm::ELF::SHF_WRITE:
-      ret = typeRWNote;
-      break;
-    default:
-      ret = typeRONote;
-      break;
-    }
-    break;
-  case llvm::ELF::SHT_NOBITS:
-    ret = typeZeroFill;
-    break;
-  case llvm::ELF::SHT_NULL:
-    if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
-        _symbol->st_shndx == llvm::ELF::SHN_COMMON)
-      ret = typeZeroFill;
-    break;
-  case llvm::ELF::SHT_INIT_ARRAY:
-  case llvm::ELF::SHT_FINI_ARRAY:
-    ret = typeData;
-    break;
+  if (_section->sh_type == SHT_PROGBITS) {
+    flags &= ~SHF_ALLOC;
+    flags &= ~SHF_GROUP;
+    if ((flags & SHF_STRINGS) || (flags & SHF_MERGE))
+      return typeConstant;
+    if (flags == SHF_WRITE)
+      return typeData;
+    return typeCode;
   }
+  if (_section->sh_type == SHT_NOTE) {
+    flags &= ~SHF_ALLOC;
+    return (flags == SHF_WRITE) ? typeRWNote : typeRONote;
+  }
+  if (_section->sh_type == SHT_NOBITS)
+    return typeZeroFill;
 
-  return _contentType = ret;
+  if (_section->sh_type == SHT_NULL)
+    if (_symbol->getType() == STT_COMMON || _symbol->st_shndx == SHN_COMMON)
+      return typeZeroFill;
+
+  if (_section->sh_type == SHT_INIT_ARRAY ||
+      _section->sh_type == SHT_FINI_ARRAY)
+    return typeData;
+  return typeUnknown;
+}
+
+template <class ELFT>
+DefinedAtom::ContentType ELFDefinedAtom<ELFT>::contentType() const {
+  if (_contentType != typeUnknown)
+    return _contentType;
+  _contentType = doContentType();
+  return _contentType;
 }
 
 template <class ELFT>

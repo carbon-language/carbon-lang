@@ -181,7 +181,8 @@ protected:
     return _symbol->st_value;
   }
 
-protected:
+  ContentType doContentType() const;
+
   const ELFFile<ELFT> &_owningFile;
   StringRef _symbolName;
   StringRef _sectionName;
