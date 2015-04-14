@@ -89,8 +89,8 @@ class AArch64ELFStreamer : public MCELFStreamer {
 public:
   friend class AArch64TargetELFStreamer;
 
-  AArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
-                     MCCodeEmitter *Emitter)
+  AArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
+                     raw_pwrite_stream &OS, MCCodeEmitter *Emitter)
       : MCELFStreamer(Context, TAB, OS, Emitter), MappingSymbolCounter(0),
         LastEMS(EMS_None) {}
 
@@ -211,8 +211,8 @@ MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
 }
 
 MCELFStreamer *createAArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                        raw_ostream &OS, MCCodeEmitter *Emitter,
-                                        bool RelaxAll) {
+                                        raw_pwrite_stream &OS,
+                                        MCCodeEmitter *Emitter, bool RelaxAll) {
   AArch64ELFStreamer *S = new AArch64ELFStreamer(Context, TAB, OS, Emitter);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);

@@ -126,7 +126,7 @@ public:
 
   bool UseBigObj;
 
-  WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_ostream &OS);
+  WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_pwrite_stream &OS);
 
   void reset() override {
     memset(&Header, 0, sizeof(Header));
@@ -258,7 +258,7 @@ size_t COFFSection::size() {
 // WinCOFFObjectWriter class implementation
 
 WinCOFFObjectWriter::WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
-                                         raw_ostream &OS)
+                                         raw_pwrite_stream &OS)
     : MCObjectWriter(OS, true), TargetObjectWriter(MOTW) {
   memset(&Header, 0, sizeof(Header));
 
@@ -1075,6 +1075,6 @@ void MCWinCOFFObjectTargetWriter::anchor() {}
 
 MCObjectWriter *
 llvm::createWinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
-                                raw_ostream &OS) {
+                                raw_pwrite_stream &OS) {
   return new WinCOFFObjectWriter(MOTW, OS);
 }

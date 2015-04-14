@@ -54,7 +54,7 @@ private:
   void EmitDataRegionEnd();
 
 public:
-  MCMachOStreamer(MCContext &Context, MCAsmBackend &MAB, raw_ostream &OS,
+  MCMachOStreamer(MCContext &Context, MCAsmBackend &MAB, raw_pwrite_stream &OS,
                   MCCodeEmitter *Emitter, bool DWARFMustBeAtTheEnd, bool label)
       : MCObjectStreamer(Context, MAB, OS, Emitter), LabelSections(label),
         DWARFMustBeAtTheEnd(DWARFMustBeAtTheEnd), CreatedADWARFSection(false) {}
@@ -491,7 +491,7 @@ void MCMachOStreamer::FinishImpl() {
 }
 
 MCStreamer *llvm::createMachOStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                      raw_ostream &OS, MCCodeEmitter *CE,
+                                      raw_pwrite_stream &OS, MCCodeEmitter *CE,
                                       bool RelaxAll, bool DWARFMustBeAtTheEnd,
                                       bool LabelSections) {
   MCMachOStreamer *S = new MCMachOStreamer(Context, MAB, OS, CE,

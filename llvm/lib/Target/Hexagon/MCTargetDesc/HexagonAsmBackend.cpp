@@ -57,7 +57,7 @@ public:
   ELFHexagonAsmBackend(Target const &T, uint8_t OSABI)
       : HexagonAsmBackend(T), OSABI(OSABI) {}
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
     StringRef CPU("HexagonV4");
     return createHexagonELFObjectWriter(OS, OSABI, CPU);
   }

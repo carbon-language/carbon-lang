@@ -16,6 +16,7 @@ class MCFixup;
 class MCObjectWriter;
 class MCValue;
 class raw_ostream;
+class raw_pwrite_stream;
 
   class MCWinCOFFObjectTargetWriter {
     virtual void anchor();
@@ -40,7 +41,7 @@ class raw_ostream;
   /// \param OS - The stream to write to.
   /// \returns The constructed object writer.
   MCObjectWriter *createWinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
-                                            raw_ostream &OS);
+                                            raw_pwrite_stream &OS);
 } // End llvm namespace
 
 #endif

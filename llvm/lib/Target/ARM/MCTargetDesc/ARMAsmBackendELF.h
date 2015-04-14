@@ -18,7 +18,7 @@ public:
   ARMAsmBackendELF(const Target &T, StringRef TT, uint8_t OSABI, bool IsLittle)
       : ARMAsmBackend(T, TT, IsLittle), OSABI(OSABI) {}
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
     return createARMELFObjectWriter(OS, OSABI, isLittle());
   }
 };

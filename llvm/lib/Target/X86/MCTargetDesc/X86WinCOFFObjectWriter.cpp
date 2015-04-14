@@ -90,7 +90,7 @@ unsigned X86WinCOFFObjectWriter::getRelocType(const MCValue &Target,
     llvm_unreachable("Unsupported COFF machine type.");
 }
 
-MCObjectWriter *llvm::createX86WinCOFFObjectWriter(raw_ostream &OS,
+MCObjectWriter *llvm::createX86WinCOFFObjectWriter(raw_pwrite_stream &OS,
                                                    bool Is64Bit) {
   MCWinCOFFObjectTargetWriter *MOTW = new X86WinCOFFObjectWriter(Is64Bit);
   return createWinCOFFObjectWriter(MOTW, OS);

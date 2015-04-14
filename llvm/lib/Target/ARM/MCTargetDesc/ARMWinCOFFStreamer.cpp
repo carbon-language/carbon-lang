@@ -16,8 +16,8 @@ namespace {
 class ARMWinCOFFStreamer : public MCWinCOFFStreamer {
 public:
   ARMWinCOFFStreamer(MCContext &C, MCAsmBackend &AB, MCCodeEmitter &CE,
-                     raw_ostream &OS)
-    : MCWinCOFFStreamer(C, AB, CE, OS) { }
+                     raw_pwrite_stream &OS)
+      : MCWinCOFFStreamer(C, AB, CE, OS) {}
 
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
   void EmitThumbFunc(MCSymbol *Symbol) override;
@@ -38,7 +38,8 @@ void ARMWinCOFFStreamer::EmitThumbFunc(MCSymbol *Symbol) {
 }
 
 MCStreamer *llvm::createARMWinCOFFStreamer(MCContext &Context,
-                                           MCAsmBackend &MAB, raw_ostream &OS,
+                                           MCAsmBackend &MAB,
+                                           raw_pwrite_stream &OS,
                                            MCCodeEmitter *Emitter,
                                            bool RelaxAll) {
   return new ARMWinCOFFStreamer(Context, MAB, *Emitter, OS);

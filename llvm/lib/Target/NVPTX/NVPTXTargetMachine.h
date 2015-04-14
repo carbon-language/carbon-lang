@@ -52,7 +52,7 @@ public:
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   // Emission of machine code through MCJIT is not supported.
-  bool addPassesToEmitMC(PassManagerBase &, MCContext *&, raw_ostream &,
+  bool addPassesToEmitMC(PassManagerBase &, MCContext *&, raw_pwrite_stream &,
                          bool = true) override {
     return true;
   }

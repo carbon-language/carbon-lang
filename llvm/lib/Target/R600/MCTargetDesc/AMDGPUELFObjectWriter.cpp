@@ -33,7 +33,7 @@ protected:
 AMDGPUELFObjectWriter::AMDGPUELFObjectWriter()
   : MCELFObjectTargetWriter(false, 0, 0, false) { }
 
-MCObjectWriter *llvm::createAMDGPUELFObjectWriter(raw_ostream &OS) {
+MCObjectWriter *llvm::createAMDGPUELFObjectWriter(raw_pwrite_stream &OS) {
   MCELFObjectTargetWriter *MOTW = new AMDGPUELFObjectWriter();
   return createELFObjectWriter(MOTW, OS, true);
 }

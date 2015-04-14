@@ -647,7 +647,7 @@ void MCELFStreamer::FinishImpl() {
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                    raw_ostream &OS, MCCodeEmitter *CE,
+                                    raw_pwrite_stream &OS, MCCodeEmitter *CE,
                                     bool RelaxAll) {
   MCELFStreamer *S = new MCELFStreamer(Context, MAB, OS, CE);
   if (RelaxAll)

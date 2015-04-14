@@ -335,6 +335,14 @@ static int compileModule(char **argv, LLVMContext &Context) {
              << ": warning: ignoring -mc-relax-all because filetype != obj";
 
   {
+    raw_pwrite_stream *OS = &Out->os();
+    std::unique_ptr<buffer_ostream> BOS;
+    if (FileType != TargetMachine::CGFT_AssemblyFile &&
+        !Out->os().supportsSeeking()) {
+      BOS = make_unique<buffer_ostream>(*OS);
+      OS = BOS.get();
+    }
+
     AnalysisID StartAfterID = nullptr;
     AnalysisID StopAfterID = nullptr;
     const PassRegistry *PR = PassRegistry::getPassRegistry();
@@ -356,8 +364,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     }
 
     // Ask the target to add backend passes as necessary.
-    if (Target->addPassesToEmitFile(PM, Out->os(), FileType, NoVerify,
-                                    StartAfterID, StopAfterID)) {
+    if (Target->addPassesToEmitFile(PM, *OS, FileType, NoVerify, StartAfterID,
+                                    StopAfterID)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;

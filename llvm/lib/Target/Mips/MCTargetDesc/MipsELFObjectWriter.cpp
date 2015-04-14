@@ -444,7 +444,8 @@ MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
   }
 }
 
-MCObjectWriter *llvm::createMipsELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
+MCObjectWriter *llvm::createMipsELFObjectWriter(raw_pwrite_stream &OS,
+                                                uint8_t OSABI,
                                                 bool IsLittleEndian,
                                                 bool Is64Bit) {
   MCELFObjectTargetWriter *MOTW =

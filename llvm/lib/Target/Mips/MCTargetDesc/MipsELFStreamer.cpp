@@ -70,7 +70,8 @@ void MipsELFStreamer::EmitMipsOptionRecords() {
 }
 
 MCELFStreamer *llvm::createMipsELFStreamer(MCContext &Context,
-                                           MCAsmBackend &MAB, raw_ostream &OS,
+                                           MCAsmBackend &MAB,
+                                           raw_pwrite_stream &OS,
                                            MCCodeEmitter *Emitter,
                                            bool RelaxAll) {
   return new MipsELFStreamer(Context, MAB, OS, Emitter);

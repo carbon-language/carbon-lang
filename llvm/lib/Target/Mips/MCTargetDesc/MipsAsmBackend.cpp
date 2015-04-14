@@ -155,7 +155,8 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   return Value;
 }
 
-MCObjectWriter *MipsAsmBackend::createObjectWriter(raw_ostream &OS) const {
+MCObjectWriter *
+MipsAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
   return createMipsELFObjectWriter(OS,
     MCELFObjectTargetWriter::getOSABI(OSType), IsLittle, Is64Bit);
 }

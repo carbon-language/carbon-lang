@@ -42,12 +42,12 @@ class MCObjectWriter {
   void operator=(const MCObjectWriter &) = delete;
 
 protected:
-  raw_ostream &OS;
+  raw_pwrite_stream &OS;
 
   unsigned IsLittleEndian : 1;
 
 protected: // Can only create subclasses.
-  MCObjectWriter(raw_ostream &OS, bool IsLittleEndian)
+  MCObjectWriter(raw_pwrite_stream &OS, bool IsLittleEndian)
       : OS(OS), IsLittleEndian(IsLittleEndian) {}
 
 public:

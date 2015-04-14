@@ -27,6 +27,7 @@ class MCSubtargetInfo;
 class StringRef;
 class Target;
 class raw_ostream;
+class raw_pwrite_stream;
 
 extern Target TheMipsTarget;
 extern Target TheMipselTarget;
@@ -53,7 +54,7 @@ MCAsmBackend *createMipsAsmBackendEL64(const Target &T,
                                        const MCRegisterInfo &MRI, StringRef TT,
                                        StringRef CPU);
 
-MCObjectWriter *createMipsELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
+MCObjectWriter *createMipsELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI,
                                           bool IsLittleEndian, bool Is64Bit);
 
 namespace MIPS_MC {

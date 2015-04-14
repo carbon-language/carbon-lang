@@ -26,6 +26,7 @@ class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
 class StringRef;
+class raw_pwrite_stream;
 class raw_ostream;
 
 extern Target TheSparcTarget;
@@ -38,8 +39,7 @@ MCAsmBackend *createSparcAsmBackend(const Target &T,
                                     const MCRegisterInfo &MRI,
                                     StringRef TT,
                                     StringRef CPU);
-MCObjectWriter *createSparcELFObjectWriter(raw_ostream &OS,
-                                           bool Is64Bit,
+MCObjectWriter *createSparcELFObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
                                            uint8_t OSABI);
 } // End llvm namespace
 

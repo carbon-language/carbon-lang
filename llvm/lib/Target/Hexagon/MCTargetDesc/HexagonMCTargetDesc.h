@@ -27,6 +27,7 @@ class MCSubtargetInfo;
 class Target;
 class StringRef;
 class raw_ostream;
+class raw_pwrite_stream;
 
 extern Target TheHexagonTarget;
 
@@ -40,8 +41,8 @@ MCAsmBackend *createHexagonAsmBackend(Target const &T,
                                       MCRegisterInfo const &MRI, StringRef TT,
                                       StringRef CPU);
 
-MCObjectWriter *createHexagonELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
-                                             StringRef CPU);
+MCObjectWriter *createHexagonELFObjectWriter(raw_pwrite_stream &OS,
+                                             uint8_t OSABI, StringRef CPU);
 
 } // End llvm namespace
 

@@ -378,8 +378,8 @@ void PPCMachObjectWriter::RecordPPCRelocation(
   Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
-MCObjectWriter *llvm::createPPCMachObjectWriter(raw_ostream &OS, bool Is64Bit,
-                                                uint32_t CPUType,
+MCObjectWriter *llvm::createPPCMachObjectWriter(raw_pwrite_stream &OS,
+                                                bool Is64Bit, uint32_t CPUType,
                                                 uint32_t CPUSubtype) {
   return createMachObjectWriter(
       new PPCMachObjectWriter(Is64Bit, CPUType, CPUSubtype), OS,

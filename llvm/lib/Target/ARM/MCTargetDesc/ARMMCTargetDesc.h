@@ -34,6 +34,7 @@ class StringRef;
 class Target;
 class Triple;
 class raw_ostream;
+class raw_pwrite_stream;
 
 extern Target TheARMLETarget, TheThumbLETarget;
 extern Target TheARMBETarget, TheThumbBETarget;
@@ -82,20 +83,21 @@ MCAsmBackend *createThumbBEAsmBackend(const Target &T, const MCRegisterInfo &MRI
 // Construct a PE/COFF machine code streamer which will generate a PE/COFF
 // object file.
 MCStreamer *createARMWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                     bool RelaxAll);
+                                     raw_pwrite_stream &OS,
+                                     MCCodeEmitter *Emitter, bool RelaxAll);
 
 /// Construct an ELF Mach-O object writer.
-MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
+MCObjectWriter *createARMELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI,
                                          bool IsLittleEndian);
 
 /// Construct an ARM Mach-O object writer.
-MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS, bool Is64Bit,
+MCObjectWriter *createARMMachObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
 /// Construct an ARM PE/COFF object writer.
-MCObjectWriter *createARMWinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
+MCObjectWriter *createARMWinCOFFObjectWriter(raw_pwrite_stream &OS,
+                                             bool Is64Bit);
 
 /// Construct ARM Mach-O relocation info.
 MCRelocationInfo *createARMMachORelocationInfo(MCContext &Ctx);

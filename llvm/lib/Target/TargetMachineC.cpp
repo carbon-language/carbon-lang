@@ -183,7 +183,7 @@ void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
 }
 
 static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
-                                      raw_ostream &OS,
+                                      raw_pwrite_stream &OS,
                                       LLVMCodeGenFileType codegen,
                                       char **ErrorMessage) {
   TargetMachine* TM = unwrap(T);

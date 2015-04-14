@@ -29,7 +29,7 @@ struct CPPTargetMachine : public TargetMachine {
       : TargetMachine(T, "", TT, CPU, FS, Options) {}
 
 public:
-  bool addPassesToEmitFile(PassManagerBase &PM, raw_ostream &Out,
+  bool addPassesToEmitFile(PassManagerBase &PM, raw_pwrite_stream &Out,
                            CodeGenFileType FileType, bool DisableVerify,
                            AnalysisID StartAfter,
                            AnalysisID StopAfter) override;

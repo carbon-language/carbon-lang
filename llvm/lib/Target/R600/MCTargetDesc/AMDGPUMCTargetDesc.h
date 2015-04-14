@@ -28,6 +28,7 @@ class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
+class raw_pwrite_stream;
 class raw_ostream;
 
 extern Target TheAMDGPUTarget;
@@ -44,7 +45,7 @@ MCCodeEmitter *createSIMCCodeEmitter(const MCInstrInfo &MCII,
 MCAsmBackend *createAMDGPUAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                      StringRef TT, StringRef CPU);
 
-MCObjectWriter *createAMDGPUELFObjectWriter(raw_ostream &OS);
+MCObjectWriter *createAMDGPUELFObjectWriter(raw_pwrite_stream &OS);
 } // End llvm namespace
 
 #define GET_REGINFO_ENUM

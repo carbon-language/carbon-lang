@@ -24,11 +24,12 @@ class MCSubtargetInfo;
 class MCSymbol;
 class StringRef;
 class raw_ostream;
+class raw_pwrite_stream;
 
 class MCWinCOFFStreamer : public MCObjectStreamer {
 public:
   MCWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB, MCCodeEmitter &CE,
-                    raw_ostream &OS);
+                    raw_pwrite_stream &OS);
 
   /// state management
   void reset() override {

@@ -413,7 +413,7 @@ void AArch64MachObjectWriter::RecordRelocation(
   Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
-MCObjectWriter *llvm::createAArch64MachObjectWriter(raw_ostream &OS,
+MCObjectWriter *llvm::createAArch64MachObjectWriter(raw_pwrite_stream &OS,
                                                     uint32_t CPUType,
                                                     uint32_t CPUSubtype) {
   return createMachObjectWriter(

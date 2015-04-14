@@ -33,7 +33,7 @@ class MipsELFStreamer : public MCELFStreamer {
 
 
 public:
-  MipsELFStreamer(MCContext &Context, MCAsmBackend &MAB, raw_ostream &OS,
+  MipsELFStreamer(MCContext &Context, MCAsmBackend &MAB, raw_pwrite_stream &OS,
                   MCCodeEmitter *Emitter)
       : MCELFStreamer(Context, MAB, OS, Emitter) {
 
@@ -68,7 +68,7 @@ public:
 };
 
 MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                     bool RelaxAll);
+                                     raw_pwrite_stream &OS,
+                                     MCCodeEmitter *Emitter, bool RelaxAll);
 } // namespace llvm.
 #endif

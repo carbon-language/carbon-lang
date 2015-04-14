@@ -248,7 +248,7 @@ unsigned AArch64ELFObjectWriter::GetRelocType(const MCValue &Target,
   llvm_unreachable("Unimplemented fixup -> relocation");
 }
 
-MCObjectWriter *llvm::createAArch64ELFObjectWriter(raw_ostream &OS,
+MCObjectWriter *llvm::createAArch64ELFObjectWriter(raw_pwrite_stream &OS,
                                                    uint8_t OSABI,
                                                    bool IsLittleEndian) {
   MCELFObjectTargetWriter *MOTW =

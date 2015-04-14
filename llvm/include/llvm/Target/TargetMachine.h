@@ -48,6 +48,7 @@ class TargetSubtargetInfo;
 class TargetTransformInfo;
 class formatted_raw_ostream;
 class raw_ostream;
+class raw_pwrite_stream;
 class TargetLoweringObjectFile;
 
 // The old pass manager infrastructure is hidden in a legacy namespace now.
@@ -207,7 +208,7 @@ public:
   /// emitted.  Typically this will involve several steps of code generation.
   /// This method should return true if emission of this file type is not
   /// supported, or false on success.
-  virtual bool addPassesToEmitFile(PassManagerBase &, raw_ostream &,
+  virtual bool addPassesToEmitFile(PassManagerBase &, raw_pwrite_stream &,
                                    CodeGenFileType,
                                    bool /*DisableVerify*/ = true,
                                    AnalysisID /*StartAfter*/ = nullptr,
@@ -220,9 +221,8 @@ public:
   /// fills the MCContext Ctx pointer which can be used to build custom
   /// MCStreamer.
   ///
-  virtual bool addPassesToEmitMC(PassManagerBase &,
-                                 MCContext *&,
-                                 raw_ostream &,
+  virtual bool addPassesToEmitMC(PassManagerBase &, MCContext *&,
+                                 raw_pwrite_stream &,
                                  bool /*DisableVerify*/ = true) {
     return true;
   }
@@ -256,7 +256,7 @@ public:
 
   /// Add passes to the specified pass manager to get the specified file
   /// emitted.  Typically this will involve several steps of code generation.
-  bool addPassesToEmitFile(PassManagerBase &PM, raw_ostream &Out,
+  bool addPassesToEmitFile(PassManagerBase &PM, raw_pwrite_stream &Out,
                            CodeGenFileType FileType, bool DisableVerify = true,
                            AnalysisID StartAfter = nullptr,
                            AnalysisID StopAfter = nullptr) override;
@@ -266,7 +266,8 @@ public:
   /// fills the MCContext Ctx pointer which can be used to build custom
   /// MCStreamer.
   bool addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
-                         raw_ostream &OS, bool DisableVerify = true) override;
+                         raw_pwrite_stream &OS,
+                         bool DisableVerify = true) override;
 };
 
 } // End llvm namespace

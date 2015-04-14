@@ -31,6 +31,7 @@ class Target;
 class Triple;
 class StringRef;
 class raw_ostream;
+class raw_pwrite_stream;
 
 extern Target TheX86_32Target, TheX86_64Target;
 
@@ -77,19 +78,20 @@ MCAsmBackend *createX86_64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
 ///
 /// Takes ownership of \p AB and \p CE.
 MCStreamer *createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
-                                     raw_ostream &OS, MCCodeEmitter *CE,
+                                     raw_pwrite_stream &OS, MCCodeEmitter *CE,
                                      bool RelaxAll);
 
 /// Construct an X86 Mach-O object writer.
-MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS, bool Is64Bit,
+MCObjectWriter *createX86MachObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
 /// Construct an X86 ELF object writer.
-MCObjectWriter *createX86ELFObjectWriter(raw_ostream &OS, bool IsELF64,
+MCObjectWriter *createX86ELFObjectWriter(raw_pwrite_stream &OS, bool IsELF64,
                                          uint8_t OSABI, uint16_t EMachine);
 /// Construct an X86 Win COFF object writer.
-MCObjectWriter *createX86WinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
+MCObjectWriter *createX86WinCOFFObjectWriter(raw_pwrite_stream &OS,
+                                             bool Is64Bit);
 
 /// Construct X86-64 Mach-O relocation info.
 MCRelocationInfo *createX86_64MachORelocationInfo(MCContext &Ctx);

@@ -24,6 +24,7 @@ class MCSectionData;
 class MCSymbol;
 class MCSymbolData;
 class MCValue;
+class raw_pwrite_stream;
 
 struct ELFRelocationEntry {
   uint64_t Offset; // Where is the relocation.
@@ -130,7 +131,8 @@ public:
 /// \param OS - The stream to write to.
 /// \returns The constructed object writer.
 MCObjectWriter *createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                      raw_ostream &OS, bool IsLittleEndian);
+                                      raw_pwrite_stream &OS,
+                                      bool IsLittleEndian);
 } // End llvm namespace
 
 #endif

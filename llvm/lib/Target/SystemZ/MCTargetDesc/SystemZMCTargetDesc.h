@@ -23,6 +23,7 @@ class MCRegisterInfo;
 class MCSubtargetInfo;
 class StringRef;
 class Target;
+class raw_pwrite_stream;
 class raw_ostream;
 
 extern Target TheSystemZTarget;
@@ -77,7 +78,7 @@ MCAsmBackend *createSystemZMCAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
                                         StringRef TT, StringRef CPU);
 
-MCObjectWriter *createSystemZObjectWriter(raw_ostream &OS, uint8_t OSABI);
+MCObjectWriter *createSystemZObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI);
 } // end namespace llvm
 
 // Defines symbolic names for SystemZ registers.

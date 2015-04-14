@@ -53,6 +53,7 @@ namespace llvm {
   class TargetLibraryInfo;
   class TargetMachine;
   class raw_ostream;
+  class raw_pwrite_stream;
 
 //===----------------------------------------------------------------------===//
 /// C++ class which implements the opaque lto_code_gen_t type.
@@ -137,7 +138,7 @@ struct LTOCodeGenerator {
 private:
   void initializeLTOPasses();
 
-  bool compileOptimized(raw_ostream &out, std::string &errMsg);
+  bool compileOptimized(raw_pwrite_stream &out, std::string &errMsg);
   bool compileOptimizedToFile(const char **name, std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(GlobalValue &GV, ArrayRef<StringRef> Libcalls,

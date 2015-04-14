@@ -17,7 +17,7 @@ class ARMAsmBackendWinCOFF : public ARMAsmBackend {
 public:
   ARMAsmBackendWinCOFF(const Target &T, StringRef Triple)
       : ARMAsmBackend(T, Triple, true) {}
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
     return createARMWinCOFFObjectWriter(OS, /*Is64Bit=*/false);
   }
 };

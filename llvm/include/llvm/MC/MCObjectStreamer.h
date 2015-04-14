@@ -24,6 +24,7 @@ class MCFragment;
 class MCDataFragment;
 class MCAsmBackend;
 class raw_ostream;
+class raw_pwrite_stream;
 
 /// \brief Streaming object file generation interface.
 ///
@@ -45,7 +46,7 @@ class MCObjectStreamer : public MCStreamer {
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
 
 protected:
-  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
+  MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB, raw_pwrite_stream &OS,
                    MCCodeEmitter *Emitter);
   ~MCObjectStreamer() override;
 

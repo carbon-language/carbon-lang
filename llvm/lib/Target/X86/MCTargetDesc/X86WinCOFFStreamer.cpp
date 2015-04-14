@@ -18,8 +18,8 @@ class X86WinCOFFStreamer : public MCWinCOFFStreamer {
   Win64EH::UnwindEmitter EHStreamer;
 public:
   X86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB, MCCodeEmitter *CE,
-                     raw_ostream &OS)
-    : MCWinCOFFStreamer(C, AB, *CE, OS) { }
+                     raw_pwrite_stream &OS)
+      : MCWinCOFFStreamer(C, AB, *CE, OS) {}
 
   void EmitWinEHHandlerData() override;
   void EmitWindowsUnwindTables() override;
@@ -49,8 +49,8 @@ void X86WinCOFFStreamer::FinishImpl() {
 }
 
 MCStreamer *llvm::createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
-                                           raw_ostream &OS, MCCodeEmitter *CE,
-                                           bool RelaxAll) {
+                                           raw_pwrite_stream &OS,
+                                           MCCodeEmitter *CE, bool RelaxAll) {
   X86WinCOFFStreamer *S = new X86WinCOFFStreamer(C, AB, CE, OS);
   S->getAssembler().setRelaxAll(RelaxAll);
   return S;

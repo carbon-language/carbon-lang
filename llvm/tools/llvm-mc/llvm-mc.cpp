@@ -439,6 +439,8 @@ int main(int argc, char **argv) {
   if (!Out)
     return 1;
 
+  std::unique_ptr<buffer_ostream> BOS;
+  raw_pwrite_stream *OS = &Out->os();
   std::unique_ptr<MCStreamer> Str;
 
   std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
@@ -460,7 +462,7 @@ int main(int argc, char **argv) {
       CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, Ctx);
       MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     }
-    auto FOut = llvm::make_unique<formatted_raw_ostream>(Out->os());
+    auto FOut = llvm::make_unique<formatted_raw_ostream>(*OS);
     Str.reset(TheTarget->createAsmStreamer(
         Ctx, std::move(FOut), /*asmverbose*/ true,
         /*useDwarfDirectory*/ true, IP, CE, MAB, ShowInst));
@@ -469,10 +471,16 @@ int main(int argc, char **argv) {
     Str.reset(TheTarget->createNullStreamer(Ctx));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
+
+    if (!Out->os().supportsSeeking()) {
+      BOS = make_unique<buffer_ostream>(Out->os());
+      OS = BOS.get();
+    }
+
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
-    Str.reset(TheTarget->createMCObjectStreamer(TheTriple, Ctx, *MAB, Out->os(),
-                                                CE, *STI, RelaxAll,
+    Str.reset(TheTarget->createMCObjectStreamer(TheTriple, Ctx, *MAB, *OS, CE,
+                                                *STI, RelaxAll,
                                                 /*DWARFMustBeAtTheEnd*/ false));
     if (NoExecStack)
       Str->InitSections(true);

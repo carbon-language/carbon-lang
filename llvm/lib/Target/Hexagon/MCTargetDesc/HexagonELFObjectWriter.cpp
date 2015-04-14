@@ -55,7 +55,7 @@ unsigned HexagonELFObjectWriter::GetRelocType(MCValue const &/*Target*/,
   return Type;
 }
 
-MCObjectWriter *llvm::createHexagonELFObjectWriter(raw_ostream &OS,
+MCObjectWriter *llvm::createHexagonELFObjectWriter(raw_pwrite_stream &OS,
                                                    uint8_t OSABI,
                                                    StringRef CPU) {
   MCELFObjectTargetWriter *MOTW = new HexagonELFObjectWriter(OSABI, CPU);

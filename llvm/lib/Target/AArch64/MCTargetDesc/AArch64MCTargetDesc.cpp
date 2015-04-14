@@ -123,14 +123,14 @@ static MCInstPrinter *createAArch64MCInstPrinter(const Triple &T,
 }
 
 static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
-                                     MCAsmBackend &TAB, raw_ostream &OS,
+                                     MCAsmBackend &TAB, raw_pwrite_stream &OS,
                                      MCCodeEmitter *Emitter, bool RelaxAll) {
   return createAArch64ELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
 }
 
 static MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
-                                       raw_ostream &OS, MCCodeEmitter *Emitter,
-                                       bool RelaxAll,
+                                       raw_pwrite_stream &OS,
+                                       MCCodeEmitter *Emitter, bool RelaxAll,
                                        bool DWARFMustBeAtTheEnd) {
   return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll,
                              DWARFMustBeAtTheEnd,
