@@ -759,12 +759,12 @@ static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
 
 /// Determine whether two variable pieces overlap.
 static bool piecesOverlap(DIExpression P1, DIExpression P2) {
-  if (!P1.isBitPiece() || !P2.isBitPiece())
+  if (!P1->isBitPiece() || !P2->isBitPiece())
     return true;
-  unsigned l1 = P1.getBitPieceOffset();
-  unsigned l2 = P2.getBitPieceOffset();
-  unsigned r1 = l1 + P1.getBitPieceSize();
-  unsigned r2 = l2 + P2.getBitPieceSize();
+  unsigned l1 = P1->getBitPieceOffset();
+  unsigned l2 = P2->getBitPieceOffset();
+  unsigned r1 = l1 + P1->getBitPieceSize();
+  unsigned r2 = l2 + P2->getBitPieceSize();
   // True where [l1,r1[ and [r1,r2[ overlap.
   return (l1 < r2) && (l2 < r1);
 }
@@ -836,7 +836,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     bool couldMerge = false;
 
     // If this is a piece, it may belong to the current DebugLocEntry.
-    if (DIExpr.isBitPiece()) {
+    if (DIExpr->isBitPiece()) {
       // Add this value to the list of open ranges.
       OpenRanges.push_back(Value);
 
@@ -1129,7 +1129,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     if (DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DIVar.getContext()).describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
-      if (Ranges.front().first->getDebugExpression().isBitPiece()) {
+      if (Ranges.front().first->getDebugExpression()->isBitPiece()) {
         // Mark all non-overlapping initial pieces.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
           DIExpression Piece = I->first->getDebugExpression();
@@ -1488,7 +1488,7 @@ static void emitDebugLocValue(const AsmPrinter &AP,
   } else if (Value.isLocation()) {
     MachineLocation Loc = Value.getLoc();
     DIExpression Expr = Value.getExpression();
-    if (!Expr || (Expr.getNumElements() == 0))
+    if (!Expr || !Expr->getNumElements())
       // Regular entry.
       AP.EmitDwarfRegOp(Streamer, Loc);
     else {
@@ -1523,8 +1523,8 @@ void DebugLocEntry::finalize(const AsmPrinter &AP,
     unsigned Offset = 0;
     for (auto Piece : Values) {
       DIExpression Expr = Piece.getExpression();
-      unsigned PieceOffset = Expr.getBitPieceOffset();
-      unsigned PieceSize = Expr.getBitPieceSize();
+      unsigned PieceOffset = Expr->getBitPieceOffset();
+      unsigned PieceSize = Expr->getBitPieceSize();
       assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
       if (Offset < PieceOffset) {
         // The DWARF spec seriously mandates pieces with no locations for gaps.

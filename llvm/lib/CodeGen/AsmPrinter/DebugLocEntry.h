@@ -76,7 +76,7 @@ public:
     MachineLocation getLoc() const { return Loc; }
     const MDNode *getVariableNode() const { return Variable; }
     DIVariable getVariable() const { return cast<MDLocalVariable>(Variable); }
-    bool isBitPiece() const { return getExpression().isBitPiece(); }
+    bool isBitPiece() const { return getExpression()->isBitPiece(); }
     DIExpression getExpression() const {
       return cast_or_null<MDExpression>(Expression);
     }
@@ -108,8 +108,7 @@ public:
       DIExpression NextExpr =
           cast_or_null<MDExpression>(Next.Values[0].Expression);
       DIVariable NextVar = cast_or_null<MDLocalVariable>(Next.Values[0].Variable);
-      if (Var == NextVar && Expr.isBitPiece() &&
-          NextExpr.isBitPiece()) {
+      if (Var == NextVar && Expr->isBitPiece() && NextExpr->isBitPiece()) {
         addValues(Next.Values);
         End = Next.End;
         return true;
@@ -192,8 +191,8 @@ inline bool operator==(const DebugLocEntry::Value &A,
 /// \brief Compare two pieces based on their offset.
 inline bool operator<(const DebugLocEntry::Value &A,
                       const DebugLocEntry::Value &B) {
-  return A.getExpression().getBitPieceOffset() <
-         B.getExpression().getBitPieceOffset();
+  return A.getExpression()->getBitPieceOffset() <
+         B.getExpression()->getBitPieceOffset();
 }
 
 }

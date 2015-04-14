@@ -1121,8 +1121,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
     SmallVector<uint64_t, 4> NewDIExpr;
     NewDIExpr.push_back(dwarf::DW_OP_deref);
     if (DIExpr)
-      for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i)
-        NewDIExpr.push_back(DIExpr.getElement(i));
+      NewDIExpr.append(DIExpr->elements_begin(), DIExpr->elements_end());
     DIExpr = Builder.createExpression(NewDIExpr);
   }
 

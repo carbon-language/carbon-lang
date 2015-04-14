@@ -679,9 +679,9 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   OS << V.getName();
 
   DIExpression Expr = MI->getDebugExpression();
-  if (Expr.isBitPiece())
-    OS << " [bit_piece offset=" << Expr.getBitPieceOffset()
-       << " size=" << Expr.getBitPieceSize() << "]";
+  if (Expr->isBitPiece())
+    OS << " [bit_piece offset=" << Expr->getBitPieceOffset()
+       << " size=" << Expr->getBitPieceSize() << "]";
   OS << " <- ";
 
   // The second operand is only an offset if it's an immediate.

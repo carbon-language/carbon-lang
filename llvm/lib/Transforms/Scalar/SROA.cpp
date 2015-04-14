@@ -4191,14 +4191,14 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
       // Create a piece expression describing the new partition or reuse AI's
       // expression if there is only one partition.
       DIExpression PieceExpr = Expr;
-      if (IsSplit || Expr.isBitPiece()) {
+      if (IsSplit || Expr->isBitPiece()) {
         // If this alloca is already a scalar replacement of a larger aggregate,
         // Piece.Offset describes the offset inside the scalar.
-        uint64_t Offset = Expr.isBitPiece() ? Expr.getBitPieceOffset() : 0;
+        uint64_t Offset = Expr->isBitPiece() ? Expr->getBitPieceOffset() : 0;
         uint64_t Start = Offset + Piece.Offset;
         uint64_t Size = Piece.Size;
-        if (Expr.isBitPiece()) {
-          uint64_t AbsEnd = Expr.getBitPieceOffset() + Expr.getBitPieceSize();
+        if (Expr->isBitPiece()) {
+          uint64_t AbsEnd = Expr->getBitPieceOffset() + Expr->getBitPieceSize();
           if (Start >= AbsEnd)
             // No need to describe a SROAed padding.
             continue;

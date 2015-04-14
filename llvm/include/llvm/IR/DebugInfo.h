@@ -651,30 +651,16 @@ public:
   void printExtendedName(raw_ostream &OS) const;
 };
 
-/// \brief A complex location expression in postfix notation.
-///
-/// This is (almost) a DWARF expression that modifies the location of a
-/// variable or (or the location of a single piece of a variable).
-///
-/// FIXME: Instead of DW_OP_plus taking an argument, this should use DW_OP_const
-/// and have DW_OP_plus consume the topmost elements on the stack.
-class DIExpression : public DIDescriptor {
+class DIExpression {
+  MDExpression *N;
+
 public:
-  DIExpression() = default;
-  DIExpression(const MDExpression *N) : DIDescriptor(N) {}
+  DIExpression(const MDExpression *N = nullptr)
+      : N(const_cast<MDExpression *>(N)) {}
 
-  MDExpression *get() const {
-    return cast_or_null<MDExpression>(DIDescriptor::get());
-  }
-  operator MDExpression *() const { return get(); }
-  MDExpression *operator->() const { return get(); }
-  MDExpression &operator*() const { return *get(); }
-
-  unsigned getNumElements() const { return get()->getNumElements(); }
-  uint64_t getElement(unsigned I) const { return get()->getElement(I); }
-  bool isBitPiece() const { return get()->isBitPiece(); }
-  uint64_t getBitPieceOffset() const { return get()->getBitPieceOffset(); }
-  uint64_t getBitPieceSize() const { return get()->getBitPieceSize(); }
+  operator MDExpression *() const { return N; }
+  MDExpression *operator->() const { return N; }
+  MDExpression &operator*() const { return *N; }
 };
 
 /// \brief This object holds location information.

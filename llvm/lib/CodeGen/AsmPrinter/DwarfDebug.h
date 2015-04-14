@@ -123,9 +123,9 @@ public:
       FrameIndex.append(FI.begin(), FI.end());
     }
     assert(Expr.size() > 1
-           ? std::all_of(Expr.begin(), Expr.end(),
-                         [](DIExpression &E) { return E.isBitPiece(); })
-           : (true && "conflicting locations for variable"));
+               ? std::all_of(Expr.begin(), Expr.end(),
+                             [](DIExpression &E) { return E->isBitPiece(); })
+               : (true && "conflicting locations for variable"));
   }
 
   // Translate tag to proper Dwarf tag.
@@ -156,7 +156,7 @@ public:
     assert(Var && "Invalid complex DbgVariable!");
     assert(Expr.size() == 1 &&
            "variableHasComplexAddress() invoked on multi-FI variable");
-    return Expr.back().getNumElements() > 0;
+    return Expr.back()->getNumElements() > 0;
   }
   bool isBlockByrefVariable() const;
   DIType getType() const;
