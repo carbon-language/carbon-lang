@@ -26,6 +26,7 @@
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
@@ -453,8 +454,19 @@ ClangUserExpression::Parse (Stream &error_stream,
     ApplyObjcCastHack(m_expr_text);
     //ApplyUnicharHack(m_expr_text);
 
-    std::unique_ptr<ExpressionSourceCode> source_code (ExpressionSourceCode::CreateWrapped(m_expr_prefix.c_str(), m_expr_text.c_str()));
-
+    std::string prefix = m_expr_prefix;
+    
+    if (ClangModulesDeclVendor *decl_vendor = m_target->GetClangModulesDeclVendor())
+    {
+        decl_vendor->ForEachMacro([log, &prefix] (const std::string &expansion) -> bool {
+            prefix.append(expansion);
+            prefix.append("\n");
+            return false;
+        });
+    }
+    
+    std::unique_ptr<ExpressionSourceCode> source_code (ExpressionSourceCode::CreateWrapped(prefix.c_str(), m_expr_text.c_str()));
+    
     lldb::LanguageType lang_type;
 
     if (m_cplusplus)

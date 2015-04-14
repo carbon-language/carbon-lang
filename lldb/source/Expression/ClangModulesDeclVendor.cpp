@@ -62,13 +62,16 @@ namespace {
         
         virtual bool
         AddModule(std::vector<llvm::StringRef> &path,
-                  Stream &error_stream);
+                  Stream &error_stream) override;
         
         virtual uint32_t
         FindDecls (const ConstString &name,
                    bool append,
                    uint32_t max_matches,
-                   std::vector <clang::NamedDecl*> &decls);
+                   std::vector <clang::NamedDecl*> &decls) override;
+        
+        virtual void
+        ForEachMacro(std::function<bool (const std::string &)> handler) override;
         
         ~ClangModulesDeclVendorImpl();
         
@@ -251,6 +254,146 @@ ClangModulesDeclVendorImpl::FindDecls (const ConstString &name,
     }
     
     return num_matches;
+}
+
+void
+ClangModulesDeclVendorImpl::ForEachMacro(std::function<bool (const std::string &)> handler)
+{
+    
+    for (clang::Preprocessor::macro_iterator mi = m_compiler_instance->getPreprocessor().macro_begin(),
+                                             me = m_compiler_instance->getPreprocessor().macro_end();
+         mi != me;
+         ++mi)
+    {
+        if (mi->second->getKind() == clang::MacroDirective::MD_Define)
+        {            
+            std::string macro_expansion = "#define ";
+            macro_expansion.append(mi->first->getName().str().c_str());
+                
+            if (clang::MacroInfo *macro_info = mi->second->getMacroInfo())
+            {
+                if (macro_info->isFunctionLike())
+                {
+                    macro_expansion.append("(");
+                    
+                    bool first_arg = true;
+                    
+                    for (clang::MacroInfo::arg_iterator ai = macro_info->arg_begin(),
+                                                        ae = macro_info->arg_end();
+                         ai != ae;
+                         ++ai)
+                    {
+                        if (!first_arg)
+                        {
+                            macro_expansion.append(", ");
+                        }
+                        else
+                        {
+                            first_arg = false;
+                        }
+                        
+                        macro_expansion.append((*ai)->getName().str());
+                    }
+                    
+                    if (macro_info->isC99Varargs())
+                    {
+                        if (first_arg)
+                        {
+                            macro_expansion.append("...");
+                        }
+                        else
+                        {
+                            macro_expansion.append(", ...");
+                        }
+                    }
+                    else if (macro_info->isGNUVarargs())
+                    {
+                        macro_expansion.append("...");
+                    }
+                    
+                    macro_expansion.append(")");
+                }
+                
+                macro_expansion.append(" ");
+
+                bool first_token = true;
+                
+                for (clang::MacroInfo::tokens_iterator ti = macro_info->tokens_begin(),
+                     te = macro_info->tokens_end();
+                     ti != te;
+                     ++ti)
+                {
+                    if (!first_token)
+                    {
+                        macro_expansion.append(" ");
+                    }
+                    else
+                    {
+                        first_token = false;
+                    }
+                    
+                    if (ti->isLiteral())
+                    {
+                        if (const char *literal_data = ti->getLiteralData())
+                        {
+                            std::string token_str(literal_data, ti->getLength());
+                            macro_expansion.append(token_str);
+                        }
+                        else
+                        {
+                            bool invalid = false;
+                            const char *literal_source = m_compiler_instance->getSourceManager().getCharacterData(ti->getLocation(), &invalid);
+                            
+                            if (invalid)
+                            {
+#ifdef LLDB_CONFIGURATION_DEBUG
+                                assert(!"Unhandled token kind");
+#endif
+                                macro_expansion.append("<unknown literal value>");
+                            }
+                            else
+                            {
+                                macro_expansion.append(std::string(literal_source, ti->getLength()));
+                            }
+                        }
+                    }
+                    else if (const char *punctuator_spelling = clang::tok::getPunctuatorSpelling(ti->getKind()))
+                    {
+                        macro_expansion.append(punctuator_spelling);
+                    }
+                    else if (const char *keyword_spelling = clang::tok::getKeywordSpelling(ti->getKind()))
+                    {
+                        macro_expansion.append(keyword_spelling);
+                    }
+                    else
+                    {
+                        switch (ti->getKind())
+                        {
+                            case clang::tok::TokenKind::identifier:
+                                macro_expansion.append(ti->getIdentifierInfo()->getName().str());
+                                break;
+                            case clang::tok::TokenKind::raw_identifier:
+                                macro_expansion.append(ti->getRawIdentifier().str());
+                            default:
+                                macro_expansion.append(ti->getName());
+                                break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+#ifdef LLDB_CONFIGURATION_DEBUG
+                assert(!"#define with no macro info");
+#endif
+            }
+            
+            if (handler(macro_expansion))
+            {
+                return;
+            }
+        }
+    }
 }
 
 ClangModulesDeclVendorImpl::~ClangModulesDeclVendorImpl()

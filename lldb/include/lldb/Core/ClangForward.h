@@ -72,11 +72,14 @@ namespace clang
     class FunctionTemplateSpecializationInfo;
     class GotoStmt;
     class HeaderSearchOptions;
+    class IdentifierInfo;
     class IdentifierTable;
     class IntegerLiteral;
     class LabelStmt;
     class LangOptions;
+    class MacroDirective;
     class MemberExpr;
+    class Module;
     class NamedDecl;
     class NamespaceDecl;
     class NonTypeTemplateParmDecl;

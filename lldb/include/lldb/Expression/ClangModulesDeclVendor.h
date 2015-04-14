@@ -52,6 +52,9 @@ public:
     //------------------------------------------------------------------
     virtual bool
     AddModule(std::vector<llvm::StringRef> &path, Stream &error_stream) = 0;
+    
+    virtual void
+    ForEachMacro(std::function<bool (const std::string &)> handler) = 0;
 };
     
 }
