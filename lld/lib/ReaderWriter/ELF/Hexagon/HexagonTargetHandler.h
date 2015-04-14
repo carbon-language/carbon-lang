@@ -41,8 +41,7 @@ public:
   };
 
   HexagonTargetLayout(HexagonLinkingContext &ctx)
-      : TargetLayout<ELF32LE>(ctx),
-        _sdataSection(new (_alloc) SDataSection(ctx)) {}
+      : TargetLayout<ELF32LE>(ctx), _sdataSection(ctx) {}
 
   /// \brief Return the section order for a input section
   TargetLayout<ELF32LE>::SectionOrder
@@ -75,7 +74,7 @@ public:
                 TargetLayout<ELF32LE>::SectionOrder sectionOrder) override {
     if ((contentType == DefinedAtom::typeDataFast) ||
        (contentType == DefinedAtom::typeZeroFillFast))
-      return _sdataSection;
+      return &_sdataSection;
     return TargetLayout<ELF32LE>::createSection(
         name, contentType, contentPermissions, sectionOrder);
   }
@@ -89,7 +88,7 @@ public:
     return TargetLayout<ELF32LE>::getSegmentType(section);
   }
 
-  Section<ELF32LE> *getSDataSection() const { return _sdataSection; }
+  Section<ELF32LE> *getSDataSection() { return &_sdataSection; }
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotOnce, [this]() {
@@ -100,8 +99,7 @@ public:
   }
 
 private:
-  llvm::BumpPtrAllocator _alloc;
-  SDataSection *_sdataSection = nullptr;
+  SDataSection _sdataSection;
   uint64_t _gotAddr = 0;
   std::once_flag _gotOnce;
 };
